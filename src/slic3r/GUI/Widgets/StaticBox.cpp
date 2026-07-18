@@ -1,4 +1,5 @@
 #include "StaticBox.hpp"
+#include "StateColor.hpp"
 #include "../GUI.hpp"
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -22,8 +23,8 @@ StaticBox::StaticBox()
     , radius(8)
 {
     border_color = StateColor(
-        std::make_pair(0xF0F0F1, (int) StateColor::Disabled),
-        std::make_pair(0xCECECE, (int) StateColor::Normal));
+        std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
+        std::make_pair(ThemeColor::Grey400, (int) StateColor::Normal));
 }
 
 StaticBox::StaticBox(wxWindow* parent,
@@ -115,7 +116,7 @@ wxColor StaticBox::GetParentBackgroundColor(wxWindow* parent)
     }
     if (parent)
         return parent->GetBackgroundColour();
-    return *wxWHITE;
+    return ThemeColor::White;
 }
 
 void StaticBox::ShowBadge(bool show)

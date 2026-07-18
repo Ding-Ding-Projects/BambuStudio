@@ -1,5 +1,6 @@
 #include <wx/dc.h>
 #include "TabCtrl.hpp"
+#include "StateColor.hpp"
 
 wxDEFINE_EVENT( wxEVT_TAB_SEL_CHANGING, wxCommandEvent );
 wxDEFINE_EVENT( wxEVT_TAB_SEL_CHANGED, wxCommandEvent );
@@ -34,7 +35,7 @@ TabCtrl::TabCtrl(wxWindow *      parent,
     radius = 1;
 #endif
     border_width = 1;
-    SetBorderColor(0xcecece);
+    SetBorderColor(ThemeColor::Grey400);
     sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->AddSpacer(10);
     auto hsizer = new wxBoxSizer(wxVERTICAL);
@@ -102,7 +103,7 @@ int TabCtrl::AppendItem(const wxString &item,
     btn->Create(this, item, "", wxBORDER_NONE);
     btn->SetFont(GetFont());
     btn->SetTextColor(StateColor(
-        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
+        std::make_pair(ThemeColor::TextMuted, (int) StateColor::NotChecked),
         std::make_pair(*wxLIGHT_GREY, (int) StateColor::Normal)));
     btn->SetBackgroundColor(StateColor());
     btn->SetCornerRadius(0);
@@ -311,7 +312,7 @@ void TabCtrl::doRender(wxDC& dc)
 #else
     dc.SetPen(wxPen(border_color.colorForStates(states), border_width));
     dc.DrawLine(0, size.y - BS2, size.x, size.y - BS2);
-    wxColour c("#00AE42");
+    wxColour c(ThemeColor::BrandGreen);
     dc.SetPen(wxPen(c, 1));
     dc.SetBrush(c);
     dc.DrawRoundedRectangle(x1 - radius, size.y - BS2 - border_width * 3, x2 + radius * 2 - x1, border_width * 3, radius);

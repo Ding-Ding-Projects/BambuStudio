@@ -6,6 +6,7 @@
 
 #include "Scrollbar.hpp"
 #include "ScrolledWindow.hpp"
+#include "StateColor.hpp"
 
 MyScrollbar::MyScrollbar(wxWindow *parent, wxWindowID id, wxPoint position, wxSize size, ScrolledWindow* scrolledWindow, long direction, int scrollbarWidth, int tipLength) : wxPanel(parent, id, position, size)
 {
@@ -28,7 +29,7 @@ MyScrollbar::MyScrollbar(wxWindow *parent, wxWindowID id, wxPoint position, wxSi
 
 	m_tipColor = m_parent->GetBackgroundColour();	// default value. Can be changed with SetTipColour
 	m_marginColor = m_parent->GetBackgroundColour();	// default value. Can be changed with SetMarginColour
-	m_scrollbarColor = wxColour(255,255,255);	// default value. Can be changed with SetScrollbarColour
+	m_scrollbarColor = ThemeColor::White;	// default value. Can be changed with SetScrollbarColour
 	m_scrolledWindow = scrolledWindow;
 
 	Bind(wxEVT_PAINT, &MyScrollbar::OnPaint, this);
@@ -186,7 +187,7 @@ void MyScrollbar::OnPaint(wxPaintEvent& event)
 void MyScrollbar::OnEraseBackground(wxEraseEvent & event)
 {
 	// necessary to avoid automatic background erasing
-    SetBackgroundColour(wxColor(255,255,255));
+    SetBackgroundColour(ThemeColor::White);
 }
 
 void MyScrollbar::OnMouseLeftDown(wxMouseEvent &event)

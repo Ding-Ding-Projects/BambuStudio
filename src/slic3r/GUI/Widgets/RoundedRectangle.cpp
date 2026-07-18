@@ -1,4 +1,5 @@
 #include "RoundedRectangle.hpp"
+#include "StateColor.hpp"
 #include "../wxExtensions.hpp"
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -10,7 +11,7 @@ END_EVENT_TABLE()
  RoundedRectangle::RoundedRectangle(wxWindow *parent, wxColour col, wxPoint pos, wxSize size, double radius, int type)
      : wxWindow(parent, wxID_ANY, pos, size, wxBORDER_NONE)
 {
-    SetBackgroundColour(wxColour(255,255,255));
+    SetBackgroundColour(ThemeColor::White);
     m_type   = type;
     m_color  = col;
     m_radius = radius;

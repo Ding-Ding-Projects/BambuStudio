@@ -1,5 +1,6 @@
 #include "AMSItem.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "../BitmapCache.hpp"
 #include "../I18N.hpp"
 #include "../GUI_App.hpp"
@@ -618,7 +619,7 @@ void AMSextruderImage::doRender(wxDC &dc)
         }
         else{
             dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.SetBrush(*wxWHITE);
+            dc.SetBrush(ThemeColor::White);
             dc.DrawRectangle(FromDIP(3), FromDIP(10), size.x - FromDIP(6), size.y - FromDIP(20));
         }
         dc.DrawBitmap(m_ams_extruder.bmp(), wxPoint((size.x - m_ams_extruder.GetBmpSize().x) / 2, 0));
@@ -629,7 +630,7 @@ void AMSextruderImage::doRender(wxDC &dc)
 AMSextruderImage::AMSextruderImage(wxWindow *parent, wxWindowID id, string file_name, const wxSize& size, const wxPoint &pos)
 {
     wxWindow::Create(parent, id, pos, size);
-    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    SetBackgroundColour(StateColor::darkModeColorFor(ThemeColor::White));
 
     m_ams_extruder = ScalableBitmap(this, file_name,36);
     m_file_name = file_name;
@@ -675,7 +676,7 @@ void SwitcherImage::doRender(wxDC &dc)
     auto size = GetSize();
     if (m_show_state){
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(*wxWHITE);
+        dc.SetBrush(ThemeColor::White);
         dc.DrawBitmap(m_switcher.bmp(), wxPoint((size.x - m_switcher.GetBmpSize().x) / 2, 0));
     }
     Layout();
@@ -684,7 +685,7 @@ void SwitcherImage::doRender(wxDC &dc)
 SwitcherImage::SwitcherImage(wxWindow *parent, wxWindowID id, string file_name, const wxSize& size, const wxPoint &pos)
 {
     wxWindow::Create(parent, id, pos, size);
-    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    SetBackgroundColour(StateColor::darkModeColorFor(ThemeColor::White));
     m_show_state = true;
     m_switcher = ScalableBitmap(this, file_name, 16);
     m_file_name = file_name;
@@ -850,7 +851,7 @@ void AMSextruder::TurnOff()
 void AMSextruder::create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, int nozzle_num)
 {
     wxWindow::Create(parent, id, pos, wxSize(-1, FromDIP(36)), wxBORDER_NONE);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
 
     updateNozzleNum(nozzle_num);
     Layout();
@@ -2470,7 +2471,7 @@ AMSRoadDownPart::AMSRoadDownPart(wxWindow* parent, wxWindowID id, const wxPoint&
     this->SetSize(AMS_DOWN_ROAD_SIZE);
 
     Bind(wxEVT_PAINT, &AMSRoadDownPart::paintEvent, this);
-    wxWindow::SetBackgroundColour(*wxWHITE);
+    wxWindow::SetBackgroundColour(ThemeColor::White);
 
 }
 
@@ -2957,7 +2958,7 @@ void AMSPreview::doRender(wxDC &dc)
     // draw background
     if (wxGetApp().dark_mode())
     {
-        dc.SetBrush(StateColor::darkModeColorFor(*wxWHITE));
+        dc.SetBrush(StateColor::darkModeColorFor(ThemeColor::White));
     }
     else
     {
@@ -2966,7 +2967,7 @@ void AMSPreview::doRender(wxDC &dc)
     dc.DrawRoundedRectangle(0, 0, size.x, size.y, 0);
 
     // draw container
-    auto color = *wxWHITE;
+    auto color = ThemeColor::White;
     dc.SetBrush(StateColor::darkModeColorFor(color));
     dc.DrawRoundedRectangle(0, 0, size.x, size.y, FromDIP(3));
 
@@ -3343,8 +3344,8 @@ void AMSHumidity::doRender(wxDC& dc)
             pot.x += FromDIP(2);// spacing
 
             // vertical line
-            dc.SetPen(wxPen(wxColour(194, 194, 194)));
-            dc.SetBrush(wxBrush(wxColour(194, 194, 194)));
+            dc.SetPen(wxPen(ThemeColor::Grey400));
+            dc.SetBrush(wxBrush(ThemeColor::Grey400));
             dc.DrawLine(pot.x, GetSize().y / 2 - FromDIP(10), pot.x, GetSize().y / 2 + FromDIP(10));
 
             // sun image
@@ -4065,7 +4066,7 @@ void AmsItem::show_sn_value(bool show)
 DevExtruderImage::DevExtruderImage(wxWindow *parent, wxWindowID id, int extruder_num, const wxPoint &pos, const wxSize &size) : wxWindow(parent, id, pos, wxDefaultSize), m_extruder_num(extruder_num)
 {
     // wxWindow::Create(parent, id, pos, wxSize(FromDIP(45), FromDIP(112)));
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     SetSize(wxSize(FromDIP(48), FromDIP(112)));
     SetMinSize(wxSize(FromDIP(48), FromDIP(112)));
     SetMaxSize(wxSize(FromDIP(48), FromDIP(112)));
@@ -4225,7 +4226,7 @@ FeedDirectionDialog::FeedDirectionDialog(wxWindow* parent,
     m_extruder_num(extruderNum),
     m_printer_type(printer_type)
 {
-    SetBackgroundColour(wxColour("#FFFFFF"));
+    SetBackgroundColour(ThemeColor::White);
     SetMaxSize(wxSize(FromDIP(360), FromDIP(207)));
     SetMinSize(wxSize(FromDIP(360), FromDIP(207)));
     SetSize(wxSize(FromDIP(360), FromDIP(207)));
@@ -4242,8 +4243,8 @@ FeedDirectionDialog::FeedDirectionDialog(wxWindow* parent,
     m_radioHelper->Show(false);
     m_radioHelper->SetCanFocus(false);
 
-    m_leftRadio->SetForegroundColour(*wxBLACK);
-    m_rightRadio->SetForegroundColour(*wxBLACK);
+    m_leftRadio->SetForegroundColour(ThemeColor::TextPrimary);
+    m_rightRadio->SetForegroundColour(ThemeColor::TextPrimary);
 
     topSizer->Add(m_leftRadio, 0, wxALIGN_CENTER | wxALL, FromDIP(20));
     m_extruderImage = new DevExtruderImage(this, wxID_ANY, m_extruder_num);

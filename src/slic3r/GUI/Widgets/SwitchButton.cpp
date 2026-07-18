@@ -1,5 +1,6 @@
 #include "SwitchButton.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "StaticBox.hpp"
 
 #include "../wxExtensions.hpp"
@@ -22,9 +23,9 @@ SwitchButton::SwitchButton(wxWindow* parent, wxWindowID id)
 	: wxBitmapToggleButton(parent, id, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxBU_EXACTFIT)
 	, m_on(this, "toggle_on", 16)
 	, m_off(this, "toggle_off", 16)
-    , text_color(std::pair{0xfffffe, (int) StateColor::Checked}, std::pair{0x6B6B6B, (int) StateColor::Normal})
+    , text_color(std::pair{ThemeColor::White, (int) StateColor::Checked}, std::pair{ThemeColor::TextMuted, (int) StateColor::Normal})
 	, track_color(0xD9D9D9)
-    , thumb_color(std::pair{0x00AE42, (int) StateColor::Checked}, std::pair{0xD9D9D9, (int) StateColor::Normal})
+    , thumb_color(std::pair{ThemeColor::BrandGreen, (int) StateColor::Checked}, std::pair{0xD9D9D9, (int) StateColor::Normal})
 {
 	SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
 	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { update(); e.Skip(); });
@@ -185,7 +186,7 @@ SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSiz
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
 	leftLabel = leftL;
     rightLabel = right;
 
@@ -267,24 +268,24 @@ void SwitchBoard::render(wxDC &dc)
 
 void SwitchBoard::doRender(wxDC &dc)
 {
-    wxColour disable_color = wxColour("#CECECE");
+    wxColour disable_color = wxColour(ThemeColor::Grey400);
 
     dc.SetPen(*wxTRANSPARENT_PEN);
 
-    if (is_enable) {dc.SetBrush(wxBrush(0xeeeeee));
+    if (is_enable) {dc.SetBrush(wxBrush(ThemeColor::Grey300));
     } else {dc.SetBrush(disable_color);}
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 8);
 
 	/*left*/
     if (switch_left) {
-        is_enable ? dc.SetBrush(wxBrush(wxColour(0, 174, 66))) : dc.SetBrush(disable_color);
+        is_enable ? dc.SetBrush(wxBrush(wxColour(ThemeColor::BrandGreen))) : dc.SetBrush(disable_color);
         dc.DrawRoundedRectangle(0, 0, GetSize().x / 2, GetSize().y, 8);
 	}
 
     if (switch_left) {
-		dc.SetTextForeground(*wxWHITE);
+		dc.SetTextForeground(ThemeColor::White);
     } else {
-        dc.SetTextForeground(0x333333);
+        dc.SetTextForeground(ThemeColor::TextPrimary);
 	}
 
     dc.SetFont(::Label::Body_13);
@@ -295,16 +296,16 @@ void SwitchBoard::doRender(wxDC &dc)
 
 	/*right*/
     if (switch_right) {
-        if (is_enable) {dc.SetBrush(wxBrush(wxColour(0, 174, 66)));
+        if (is_enable) {dc.SetBrush(wxBrush(wxColour(ThemeColor::BrandGreen)));
         } else {dc.SetBrush(disable_color);}
         dc.DrawRoundedRectangle(GetSize().x / 2, 0, GetSize().x / 2, GetSize().y, 8);
 	}
 
     auto right_txt_size = dc.GetTextExtent(rightLabel);
     if (switch_right) {
-        dc.SetTextForeground(*wxWHITE);
+        dc.SetTextForeground(ThemeColor::White);
     } else {
-        dc.SetTextForeground(0x333333);
+        dc.SetTextForeground(ThemeColor::TextPrimary);
     }
     dc.DrawText(rightLabel, wxPoint((GetSize().x / 2 - right_txt_size.x) / 2 + GetSize().x / 2, (GetSize().y - right_txt_size.y) / 2));
 
@@ -360,7 +361,7 @@ CustomToggleButton::CustomToggleButton(wxWindow* parent, const wxString& label, 
     Connect(wxEVT_PAINT, wxPaintEventHandler(CustomToggleButton::OnPaint));
     Connect(wxEVT_SIZE, wxSizeEventHandler(CustomToggleButton::OnSize));
     Bind(wxEVT_LEFT_DOWN, &CustomToggleButton::on_left_down, this);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     Slic3r::GUI::wxGetApp().UpdateDarkUIWin(this);
 }
 
@@ -440,7 +441,7 @@ void CustomToggleButton::doRender(wxDC& dc)
     }
     else {
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.SetPen(wxPen(wxColour("#EEEEEE")));
+        dc.SetPen(wxPen(wxColour(ThemeColor::Grey300)));
     }
     
     dc.DrawRoundedRectangle(rect, 5);
@@ -467,7 +468,7 @@ void CustomToggleButton::doRender(wxDC& dc)
         dc.SetTextForeground(m_primary_colour);
     }
     else {
-        dc.SetTextForeground(Slic3r::GUI::wxGetApp().dark_mode() ? *wxWHITE:wxColour("#5C5C5C"));
+        dc.SetTextForeground(Slic3r::GUI::wxGetApp().dark_mode() ? ThemeColor::White:wxColour(ThemeColor::TextMuted));
     }
 
     int textY = (rect.GetHeight() - dc.GetCharHeight()) / 2;
@@ -499,7 +500,7 @@ RichTooltipPopup::RichTooltipPopup(wxWindow* parent, const wxString& iconName, c
     // Add text
     wxStaticText* textCtrl = new wxStaticText(this, wxID_ANY, m_text);
     textCtrl->SetFont(Label::Body_13);
-    textCtrl->SetForegroundColour(*wxWHITE);
+    textCtrl->SetForegroundColour(ThemeColor::White);
     sizer->Add(textCtrl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(12));
     
     SetSizer(sizer);
@@ -885,16 +886,16 @@ MultiSwitchButton::MultiSwitchButton(wxWindow *parent, wxWindowID id, const wxPo
     : StaticBox(parent, id, pos, size, style)
     , sel(-1)
     , m_bg_color(StateColor(
-        std::make_pair(0xE8E8E8, (int) StateColor::NotChecked),
-        std::make_pair(0x00AE42, (int) StateColor::Normal)))
+        std::make_pair(ThemeColor::Grey400, (int) StateColor::NotChecked),
+        std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Normal)))
     , m_bg_color_grayed(StateColor(
-        std::make_pair(0xE8E8E8, (int) StateColor::NotChecked),
+        std::make_pair(ThemeColor::Grey400, (int) StateColor::NotChecked),
         std::make_pair(0x6DC48D, (int) StateColor::Normal)))
     , m_text_color(StateColor(
-        std::make_pair(0x6B6B6B, (int) StateColor::NotChecked),
-        std::make_pair(0xFFFFFE, (int) StateColor::Normal)))
+        std::make_pair(ThemeColor::TextMuted, (int) StateColor::NotChecked),
+        std::make_pair(ThemeColor::White, (int) StateColor::Normal)))
     , m_text_color_grayed(StateColor(
-        std::make_pair(0x999999, (int) StateColor::NotChecked),
+        std::make_pair(ThemeColor::TextDisabled, (int) StateColor::NotChecked),
         std::make_pair(0x99DFB2, (int) StateColor::Normal)))
     , m_button_radius(10.0)
     , m_button_padding(10, 6)

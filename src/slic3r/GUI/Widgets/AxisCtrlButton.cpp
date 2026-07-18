@@ -1,17 +1,18 @@
 #include "AxisCtrlButton.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "libslic3r/libslic3r.h"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 
-StateColor blank_bg(StateColor(std::make_pair(wxColour("#FFFFFF"), (int)StateColor::Normal)));
-static const wxColour BUTTON_BG_COL = wxColour("#EEEEEE");
-static const wxColour BUTTON_IN_BG_COL = wxColour("#CECECE");
+StateColor blank_bg(StateColor(std::make_pair(ThemeColor::White, (int)StateColor::Normal)));
+static const wxColour BUTTON_BG_COL = ThemeColor::Grey300;
+static const wxColour BUTTON_IN_BG_COL = ThemeColor::Grey400;
 
-static const wxColour bd = wxColour(0, 174, 66);
-static const wxColour text_num_color   = wxColour("#898989");
-static const wxColour BUTTON_PRESS_COL = wxColour(172, 172, 172);
+static const wxColour bd = ThemeColor::BrandGreen;
+static const wxColour text_num_color   = ThemeColor::TextMuted;
+static const wxColour BUTTON_PRESS_COL = ThemeColor::Grey450;
 static const double sqrt2 = std::sqrt(2);
 
 BEGIN_EVENT_TABLE(AxisCtrlButton, wxPanel)
@@ -36,7 +37,7 @@ AxisCtrlButton::AxisCtrlButton(wxWindow *parent, ScalableBitmap &icon, long stly
     , gap(GAP_SIZE)
     , last_pos(UNDEFINED)
     , current_pos(UNDEFINED) // don't change init value
-    , text_color(std::make_pair(0x6B6B6B, (int) StateColor::Disabled), std::make_pair(*wxBLACK, (int) StateColor::Normal))
+    , text_color(std::make_pair(ThemeColor::TextMuted, (int) StateColor::Disabled), std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
 	, state_handler(this)
 {
     m_icon = icon;

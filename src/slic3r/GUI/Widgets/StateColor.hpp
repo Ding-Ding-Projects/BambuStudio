@@ -1,49 +1,50 @@
 #ifndef slic3r_GUI_StateColor_hpp_
 #define slic3r_GUI_StateColor_hpp_
 
+#include "MD3Tokens.hpp"
+
 #include <wx/colour.h>
 
 #include <map>
 
-// Semantic light-mode color tokens. Same hex values as the literals
-// scattered across the codebase — this is just a vocabulary that makes
-// intent obvious at call sites
+// Semantic light-mode color tokens. Their stable names expose the MD3 light
+// palette without requiring call-site API changes.
 // The light→dark pairs themselves live in gDarkColors (StateColor.cpp).
 // That table accepts raw hex too, so unmigrated callers stay unaffected.
 namespace ThemeColor {
 
 // Brand
-inline const wxColour BrandGreen{"#00AE42"};        // primary accent — buttons, selected borders, focus rings
-inline const wxColour BrandGreenHovered{"#3DCB73"}; // BrandGreen button hover state (== rgb 61,203,115)
-inline const wxColour BrandGreenPressed{"#1B8844"}; // BrandGreen button pressed state (== rgb 27,136,68)
+inline const wxColour BrandGreen{"#146c2e"};        // primary accent — buttons, selected borders, focus rings
+inline const wxColour BrandGreenHovered{"#1a7d38"}; // BrandGreen button hover state
+inline const wxColour BrandGreenPressed{"#0d5322"}; // BrandGreen button pressed state
 
 // Feedback / status — pre-declared because their meaning is obvious.
 inline const wxColour Warning{"#FF6F00"}; // attention / needs-action — orange. 14+ raw-hex consumers.
-inline const wxColour Danger{"#D01B1B"};  // error / destructive — red
+inline const wxColour Danger{"#ba1a1a"};  // error / destructive — red
 
 // Hyperlink / clickable text — blue.
 inline const wxColour Link{"#0078D4"};
 
 // Text
-inline const wxColour TextPrimary{"#262E30"};   // default body text on light surfaces (== DESIGN_GRAY900)
-inline const wxColour TextSecondary{"#323A3D"}; // slightly softer heading/label text (== DESIGN_GRAY800)
-inline const wxColour TextMuted{"#6B6B6B"};     // secondary / placeholder (same hex as Grey700 below)
-inline const wxColour TextDisabled{"#909090"};  // disabled / inactive text (== DESIGN_GRAY600)
+inline const wxColour TextPrimary{"#1a1b1f"};   // default body text on light surfaces
+inline const wxColour TextSecondary{"#44464e"}; // slightly softer heading/label text
+inline const wxColour TextMuted{"#5c5f66"};     // secondary / placeholder (same hex as Grey700 below)
+inline const wxColour TextDisabled{"#9a9ba3"};  // disabled / inactive text
 
 // Pure white (card / dialog / hub fill)
-inline const wxColour White{"#FFFFFF"};
+inline const wxColour White{"#ffffff"};
 
 // Neutral grey scale — lightest (200) → darkest (700). Suffixes follow the
 // legacy WXCOLOUR_GREY* macro numbering (which skips 600); 250 and 350 are
 // half-steps for shades that sit between the macro rungs.
-inline const wxColour Grey200{"#F8F8F8"};
-inline const wxColour Grey250{"#F1F1F1"}; // panel wrap bg
-inline const wxColour Grey300{"#EEEEEE"};
-inline const wxColour Grey350{"#E8E8E8"}; // borders / dividers
-inline const wxColour Grey400{"#CECECE"};
-inline const wxColour Grey450{"#A6A9AA"}; // dividers / disabled borders (== DESIGN_GRAY400)
-inline const wxColour Grey500{"#9E9E9E"};
-inline const wxColour Grey700{"#6B6B6B"}; // same hex as TextMuted
+inline const wxColour Grey200{"#f4f2f9"};
+inline const wxColour Grey250{"#eeedf3"}; // panel wrap bg
+inline const wxColour Grey300{"#e8e7ee"};
+inline const wxColour Grey350{"#e2e1e9"}; // borders / dividers
+inline const wxColour Grey400{"#c5c6d0"};
+inline const wxColour Grey450{"#75777f"}; // dividers / disabled borders
+inline const wxColour Grey500{"#75777f"};
+inline const wxColour Grey700{"#5c5f66"}; // same hex as TextMuted
 
 } // namespace ThemeColor
 

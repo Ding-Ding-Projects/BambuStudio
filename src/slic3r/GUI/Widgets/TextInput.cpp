@@ -1,5 +1,6 @@
 #include "TextInput.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "TextCtrl.h"
 
 #include "slic3r/GUI/I18N.hpp"
@@ -21,16 +22,16 @@ END_EVENT_TABLE()
  */
 
 TextInput::TextInput()
-    : label_color(std::make_pair(0x909090, (int) StateColor::Disabled),
-                 std::make_pair(0x6B6B6B, (int) StateColor::Normal))
-    , text_color(std::make_pair(0x909090, (int) StateColor::Disabled),
-                 std::make_pair(0x262E30, (int) StateColor::Normal))
+    : label_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
+                 std::make_pair(ThemeColor::TextMuted, (int) StateColor::Normal))
+    , text_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
+                 std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
 {
     radius = 0;
     border_width = 1;
-    border_color = StateColor(std::make_pair(0xDBDBDB, (int) StateColor::Disabled), std::make_pair(0x00AE42, (int) StateColor::Hovered),
-                              std::make_pair(0xDBDBDB, (int) StateColor::Normal));
-    background_color = StateColor(std::make_pair(0xF0F0F1, (int) StateColor::Disabled), std::make_pair(*wxWHITE, (int) StateColor::Normal));
+    border_color = StateColor(std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled), std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
+                              std::make_pair(ThemeColor::Grey400, (int) StateColor::Normal));
+    background_color = StateColor(std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled), std::make_pair(ThemeColor::White, (int) StateColor::Normal));
     SetFont(Label::Body_12);
 }
 
@@ -351,7 +352,7 @@ void TextInput::render(wxDC& dc)
                 pt.y += (labelSize.y + 8);
             }
 
-            dc.SetTextForeground(wxColour(144, 144, 144));
+            dc.SetTextForeground(ThemeColor::TextDisabled);
 
             wxFont font = GetFont();
             font.SetPointSize(font.GetPointSize() - 1);// use smaller font
@@ -370,7 +371,7 @@ void TextInput::render(wxDC& dc)
 
         wxFont prefix_font = text_ctrl->GetFont();
         dc.SetFont(prefix_font);
-        dc.SetTextForeground(wxColour(144, 144, 144));
+        dc.SetTextForeground(ThemeColor::TextDisabled);
         dc.DrawText(m_prefix, wxPoint(x, y));
     }
     if (!m_unit.IsEmpty() && text_ctrl) {
@@ -383,7 +384,7 @@ void TextInput::render(wxDC& dc)
         wxFont unit_font = text_ctrl->GetFont();
         unit_font.SetPointSize(unit_font.GetPointSize() - 1);
         dc.SetFont(unit_font);
-        dc.SetTextForeground(wxColour(144, 144, 144));
+        dc.SetTextForeground(ThemeColor::TextDisabled);
         dc.DrawText(m_unit, wxPoint(x, y));
     }
 }
@@ -439,7 +440,7 @@ bool TextInput::CheckValid(bool pop_dlg) const
         }
     }
 
-    text_ctrl->SetBackgroundColour(*wxWHITE);
+    text_ctrl->SetBackgroundColour(ThemeColor::White);
     text_ctrl->SetToolTip(wxEmptyString);
     text_ctrl->Refresh();
     return true;

@@ -1,5 +1,6 @@
 #include "ImageSwitchButton.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "StaticBox.hpp"
 #include "../wxExtensions.hpp"
 
@@ -27,20 +28,20 @@ EVT_PAINT(FanSwitchButton::paintEvent)
 
 END_EVENT_TABLE()
 
-static const wxColour DEFAULT_HOVER_COL = wxColour(0, 174, 66);
-static const wxColour DEFAULT_PRESS_COL = wxColour(238, 238, 238);
+static const wxColour DEFAULT_HOVER_COL = ThemeColor::BrandGreenHovered;
+static const wxColour DEFAULT_PRESS_COL = ThemeColor::Grey300;
 
 ImageSwitchButton::ImageSwitchButton(wxWindow *parent, ScalableBitmap &img_on, ScalableBitmap &img_off, long style)
-    : text_color(std::make_pair(0x6B6B6B, (int) StateColor::Disabled), std::make_pair(*wxBLACK, (int) StateColor::Normal))
+    : text_color(std::make_pair(ThemeColor::TextMuted, (int) StateColor::Disabled), std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
 {
     radius = 0;
     m_padding = 0;
     m_on         = img_on;
     m_off        = img_off;
-    background_color = StateColor(std::make_pair(*wxWHITE, (int) StateColor::Disabled), std::make_pair(DEFAULT_PRESS_COL, (int) StateColor::Pressed),
-                                  std::make_pair(*wxWHITE, (int) StateColor::Normal));
-    border_color = StateColor(std::make_pair(*wxWHITE, (int) StateColor::Disabled), std::make_pair(DEFAULT_HOVER_COL, (int) StateColor::Focused),
-                              std::make_pair(DEFAULT_HOVER_COL, (int) StateColor::Hovered), std::make_pair(*wxWHITE, (int) StateColor::Normal));
+    background_color = StateColor(std::make_pair(ThemeColor::White, (int) StateColor::Disabled), std::make_pair(DEFAULT_PRESS_COL, (int) StateColor::Pressed),
+                                  std::make_pair(ThemeColor::White, (int) StateColor::Normal));
+    border_color = StateColor(std::make_pair(ThemeColor::White, (int) StateColor::Disabled), std::make_pair(DEFAULT_HOVER_COL, (int) StateColor::Focused),
+                              std::make_pair(DEFAULT_HOVER_COL, (int) StateColor::Hovered), std::make_pair(ThemeColor::White, (int) StateColor::Normal));
 
     StaticBox::Create(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, style);
 
@@ -194,17 +195,17 @@ void ImageSwitchButton::sendButtonEvent()
 }
 
 FanSwitchButton::FanSwitchButton(wxWindow* parent, ScalableBitmap& img_on, ScalableBitmap& img_off, long style)
-    : text_color(std::make_pair(0x6B6B6B, (int)StateColor::Disabled), std::make_pair(*wxBLACK, (int)StateColor::Normal))
+    : text_color(std::make_pair(ThemeColor::TextMuted, (int)StateColor::Disabled), std::make_pair(ThemeColor::TextPrimary, (int)StateColor::Normal))
 {
     radius = 0;
     m_padding = 0;
     m_speed = 0;
     m_on = img_on;
     m_off = img_off;
-    background_color = StateColor(std::make_pair(*wxWHITE, (int)StateColor::Disabled), std::make_pair(DEFAULT_PRESS_COL, (int)StateColor::Pressed),
-        std::make_pair(*wxWHITE, (int)StateColor::Normal));
-    border_color = StateColor(std::make_pair(*wxWHITE, (int)StateColor::Disabled), std::make_pair(DEFAULT_HOVER_COL, (int)StateColor::Focused),
-        std::make_pair(DEFAULT_HOVER_COL, (int)StateColor::Hovered), std::make_pair(*wxWHITE, (int)StateColor::Normal));
+    background_color = StateColor(std::make_pair(ThemeColor::White, (int)StateColor::Disabled), std::make_pair(DEFAULT_PRESS_COL, (int)StateColor::Pressed),
+        std::make_pair(ThemeColor::White, (int)StateColor::Normal));
+    border_color = StateColor(std::make_pair(ThemeColor::White, (int)StateColor::Disabled), std::make_pair(DEFAULT_HOVER_COL, (int)StateColor::Focused),
+        std::make_pair(DEFAULT_HOVER_COL, (int)StateColor::Hovered), std::make_pair(ThemeColor::White, (int)StateColor::Normal));
 
     StaticBox::Create(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, style);
 

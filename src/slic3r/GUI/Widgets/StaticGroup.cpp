@@ -1,5 +1,6 @@
 #include "StaticGroup.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "slic3r/GUI/I18N.hpp"
 
 StaticGroup::StaticGroup(wxWindow *parent, wxWindowID id)
@@ -9,9 +10,9 @@ StaticGroup::StaticGroup(wxWindow *parent, wxWindowID id)
     : wxStaticBox(parent, id, "")
 #endif
 {
-    SetBackgroundColour(*wxWHITE);
-    SetForegroundColour("#CECECE");
-    borderColor_ = wxColour("#CECECE");
+    SetBackgroundColour(ThemeColor::White);
+    SetForegroundColour(ThemeColor::Grey400);
+    borderColor_ = ThemeColor::Grey400;
 #ifdef __WXMSW__
     Bind(wxEVT_PAINT, &StaticGroup::OnPaint, this);
 #endif
@@ -40,7 +41,7 @@ void StaticGroup::ShowBadge(bool show)
     if (show && badge == nullptr) {
         badge = new ScalableButton(this, wxID_ANY, "badge", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 18);
         badge->SetSize(badge->GetBestSize());
-        badge->SetBackgroundColour("#F7F7F7");
+        badge->SetBackgroundColour(ThemeColor::Grey250);
         StaticGroup_layoutBadge(GetHandle(), badge->GetHandle());
     }
     if (badge && badge->IsShown() != show)

@@ -17,31 +17,36 @@
 {
 	width: 100%;
 	line-height: 0px;
-	border-radius: 8px;
+	border-radius: 15px 15px 0 0;
 	line-height: 0px;
+	background-color: var(--md-sc-high);
+	border-bottom: 1px solid var(--md-outline-variant);
 }
 
 .UG_IMG img
 {
 	width: 100%;
-    border-radius: 8px;
+	border-radius: 15px 15px 0 0;
 	aspect-ratio: 4/3;
+	object-fit: cover;
 }
 
 .UG_TITLE
 {
 	font-size: 18px;
-	font-weight: 700;
+	font-weight: 600;
 	line-height: 20px;
-	width: 100%;
-	margin-top: 20px;
+	width: auto;
+	margin-top: 14px;
 	margin-bottom: 4px;
+	padding: 0 14px;
 }
 
 .UG_DESC
 {
-	width: 100%;
+	width: auto;
 	line-height: 18px;
-	color: #4E5454;
+	color: var(--md-on-surface-variant);
 	font-size: 14px;
+	padding: 0 14px 16px;
 }

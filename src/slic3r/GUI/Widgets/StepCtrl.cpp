@@ -3,6 +3,7 @@
 
 #include "StepCtrl.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 
 wxDEFINE_EVENT( EVT_STEP_CHANGING, wxCommandEvent );
 wxDEFINE_EVENT( EVT_STEP_CHANGED, wxCommandEvent );
@@ -21,14 +22,14 @@ StepCtrlBase::StepCtrlBase(wxWindow *      parent,
                    long            style)
     : StaticBox(parent, id, pos, size, style)
     , font_tip(Label::Body_14)
-    , clr_bar(0xACACAC)
-    , clr_step(0xACACAC)
-    , clr_text(std::make_pair(0x00AE42, (int) StateColor::Checked),
-            std::make_pair(0x6B6B6B, (int) StateColor::Normal))
-    , clr_tip(0x828280)
+    , clr_bar(ThemeColor::Grey450)
+    , clr_step(ThemeColor::Grey450)
+    , clr_text(std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Checked),
+            std::make_pair(ThemeColor::TextMuted, (int) StateColor::Normal))
+    , clr_tip(ThemeColor::TextMuted)
 {
     SetFont(Label::Body_14);
-    border_color     = StateColor(*wxLIGHT_GREY);
+    border_color     = StateColor(ThemeColor::Grey400);
     StaticBox::radius = 0;
     //wxString reason;
     //IsTransparentBackgroundSupported(&reason);
@@ -255,15 +256,15 @@ StepIndicator::StepIndicator(wxWindow *parent, wxWindowID id, const wxPoint &pos
 {
     SetFont(Label::Body_12);
     font_tip = Label::Body_10;
-    clr_bar = 0xE1E1E1;
+    clr_bar = ThemeColor::Grey300;
     clr_step = StateColor(
-            std::make_pair(0xACACAC, (int) StateColor::Disabled),
-            std::make_pair(0x00AE42, 0));
+            std::make_pair(ThemeColor::Grey450, (int) StateColor::Disabled),
+            std::make_pair(ThemeColor::BrandGreen, 0));
     clr_text = StateColor(
-            std::make_pair(0xACACAC, (int) StateColor::Disabled),
-            std::make_pair(0x323A3D, (int) StateColor::Checked),
-            std::make_pair(0x6B6B6B, 0));
-    clr_tip = *wxWHITE;
+            std::make_pair(ThemeColor::Grey450, (int) StateColor::Disabled),
+            std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Checked),
+            std::make_pair(ThemeColor::TextMuted, 0));
+    clr_tip = ThemeColor::White;
     StaticBox::border_width = 0;
     radius    = bmp_ok.GetBmpHeight() / 2;
     bar_width = bmp_ok.GetBmpHeight() / 20;
@@ -365,15 +366,15 @@ FilamentStepIndicator::FilamentStepIndicator(wxWindow* parent, wxWindowID id, co
     //bmp_extruder = *cache.load_png("filament_load_extruder", FromDIP(300), FromDIP(200), false, false);
     SetFont(Label::Body_12);
     font_tip = Label::Body_12;
-    clr_bar = 0xE1E1E1;
+    clr_bar = ThemeColor::Grey300;
     clr_step = StateColor(
-        std::make_pair(0xACACAC, (int)StateColor::Disabled),
-        std::make_pair(0x00AE42, 0));
+        std::make_pair(ThemeColor::Grey450, (int)StateColor::Disabled),
+        std::make_pair(ThemeColor::BrandGreen, 0));
     clr_text = StateColor(
-        std::make_pair(0xACACAC, (int)StateColor::Disabled),
-        std::make_pair(0x323A3D, (int)StateColor::Checked),
-        std::make_pair(0x6B6B6B, 0));
-    clr_tip = *wxWHITE;
+        std::make_pair(ThemeColor::Grey450, (int)StateColor::Disabled),
+        std::make_pair(ThemeColor::TextPrimary, (int)StateColor::Checked),
+        std::make_pair(ThemeColor::TextMuted, 0));
+    clr_tip = ThemeColor::White;
     StaticBox::border_width = 0;
     radius = 9;
     bar_width = 0;
@@ -406,7 +407,7 @@ void FilamentStepIndicator::doRender(wxDC& dc)
     }
 
     dc.SetFont(::Label::Head_16);
-    dc.SetTextForeground(wxColour(0, 174, 66));
+    dc.SetTextForeground(ThemeColor::BrandGreen);
     int circleX = 20;
     int circleY = 20;
     wxSize sz = dc.GetTextExtent(L"Loading");

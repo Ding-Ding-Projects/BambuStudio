@@ -18,7 +18,7 @@ namespace Slic3r { namespace GUI {
     SetMaxSize(wxSize(-1, FromDIP(50)));
 
     Bind(wxEVT_PAINT, &SideToolsPanel::OnPaint, this);
-    SetBackgroundColour(wxColour("#FEFFFF"));
+    SetBackgroundColour(ThemeColor::White);
 
     m_printing_img = ScalableBitmap(this, "printer", 16);
     m_arrow_img    = ScalableBitmap(this, "monitor_arrow", 14);
@@ -160,7 +160,7 @@ void SideToolsPanel::doRender(wxDC &dc)
         left += (m_none_arrow_img.GetBmpSize().x + FromDIP(6));
         dc.SetFont(::Label::Body_14);
         dc.SetBackgroundMode(wxTRANSPARENT);
-        dc.SetTextForeground(*wxWHITE);
+        dc.SetTextForeground(ThemeColor::White);
 
         wxString no_printer_str = _L("No printer");
         auto sizet = dc.GetTextExtent(no_printer_str);
@@ -256,14 +256,14 @@ void SideToolsPanel::on_mouse_leave(wxMouseEvent &evt)
 SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
 {
     wxPanel::Create(parent, id, pos, size);
-    SetBackgroundColour(wxColour("#FEFFFF"));
+    SetBackgroundColour(ThemeColor::White);
 
     m_side_tools = new SideToolsPanel(this, wxID_ANY);
 
     m_connection_info = new Button(this, wxEmptyString);
-    m_connection_info->SetBackgroundColor(wxColour(255, 111, 0));
-    m_connection_info->SetBorderColor(wxColour(255, 111, 0));
-    m_connection_info->SetTextColor(*wxWHITE);
+    m_connection_info->SetBackgroundColor(ThemeColor::Warning);
+    m_connection_info->SetBorderColor(ThemeColor::Warning);
+    m_connection_info->SetTextColor(ThemeColor::White);
     m_connection_info->SetFont(::Label::Body_13);
     m_connection_info->SetCornerRadius(0);
     m_connection_info->SetSize(wxSize(FromDIP(-1), FromDIP(25)));
@@ -281,7 +281,7 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
 
 
     m_hyperlink = new wxHyperlinkCtrl(m_connection_info, wxID_ANY, _L("Failed to connect to the server"), hyperlink_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
-    m_hyperlink->SetBackgroundColour(wxColour(255, 111, 0));
+    m_hyperlink->SetBackgroundColour(ThemeColor::Warning);
 
     m_more_err_open = ScalableBitmap(this, "monitir_err_open", 16);
     m_more_err_close = ScalableBitmap(this, "monitir_err_close", 16);
@@ -345,9 +345,9 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     auto st_title_error_code = new wxStaticText(m_side_error_panel, wxID_ANY, _L("code"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     auto st_title_error_code_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
     m_st_txt_error_code = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_error_code->SetForegroundColour(0x909090);
-    st_title_error_code_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_code->SetForegroundColour(0x909090);
+    st_title_error_code->SetForegroundColour(ThemeColor::TextDisabled);
+    st_title_error_code_doc->SetForegroundColour(ThemeColor::TextDisabled);
+    m_st_txt_error_code->SetForegroundColour(ThemeColor::TextDisabled);
     st_title_error_code->SetFont(::Label::Body_12);
     st_title_error_code_doc->SetFont(::Label::Body_12);
     m_st_txt_error_code->SetFont(::Label::Body_12);
@@ -363,9 +363,9 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     auto st_title_error_desc = new wxStaticText(m_side_error_panel, wxID_ANY, wxT("desc"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     auto st_title_error_desc_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
     m_st_txt_error_desc = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_error_desc->SetForegroundColour(0x909090);
-    st_title_error_desc_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_desc->SetForegroundColour(0x909090);
+    st_title_error_desc->SetForegroundColour(ThemeColor::TextDisabled);
+    st_title_error_desc_doc->SetForegroundColour(ThemeColor::TextDisabled);
+    m_st_txt_error_desc->SetForegroundColour(ThemeColor::TextDisabled);
     st_title_error_desc->SetFont(::Label::Body_12);
     st_title_error_desc_doc->SetFont(::Label::Body_12);
     m_st_txt_error_desc->SetFont(::Label::Body_12);
@@ -380,9 +380,9 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     auto st_title_extra_info = new wxStaticText(m_side_error_panel, wxID_ANY, wxT("info"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     auto st_title_extra_info_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
     m_st_txt_extra_info = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_extra_info->SetForegroundColour(0x909090);
-    st_title_extra_info_doc->SetForegroundColour(0x909090);
-    m_st_txt_extra_info->SetForegroundColour(0x909090);
+    st_title_extra_info->SetForegroundColour(ThemeColor::TextDisabled);
+    st_title_extra_info_doc->SetForegroundColour(ThemeColor::TextDisabled);
+    m_st_txt_extra_info->SetForegroundColour(ThemeColor::TextDisabled);
     st_title_extra_info->SetFont(::Label::Body_12);
     st_title_extra_info_doc->SetFont(::Label::Body_12);
     m_st_txt_extra_info->SetFont(::Label::Body_12);
@@ -520,8 +520,8 @@ void SideTools::show_status(int status)
 
         m_hyperlink->Show();
         m_connection_info->SetLabel(wxEmptyString);
-        m_connection_info->SetBackgroundColor(0xFF6F00);
-        m_connection_info->SetBorderColor(0xFF6F00);
+        m_connection_info->SetBackgroundColor(ThemeColor::Warning);
+        m_connection_info->SetBorderColor(ThemeColor::Warning);
         m_connection_info->Show();
         m_more_button->Show();
 
@@ -534,8 +534,8 @@ void SideTools::show_status(int status)
     else if ((status & (int)MonitorStatus::MONITOR_CONNECTING) != 0) {
         m_hyperlink->Hide();
         m_connection_info->SetLabel(_L("Connecting..."));
-        m_connection_info->SetBackgroundColor(0x00AE42);
-        m_connection_info->SetBorderColor(0x00AE42);
+        m_connection_info->SetBackgroundColor(ThemeColor::BrandGreen);
+        m_connection_info->SetBorderColor(ThemeColor::BrandGreen);
         m_connection_info->Show();
         m_more_button->Hide();
         m_side_error_panel->Hide();

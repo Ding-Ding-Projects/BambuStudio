@@ -1,61 +1,55 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-fm-base: #1a1a1a;
-  --color-fm-sidebar: #222;
-  --color-fm-inner: rgba(255,255,255,0.04);
-  --color-fm-inner2: rgba(255,255,255,0.06);
-  --color-fm-input: rgba(255,255,255,0.08);
-  --color-fm-hover: rgba(255,255,255,0.08);
-  --color-fm-selected: rgba(255,255,255,0.12);
-  --color-fm-border: rgba(255,255,255,0.12);
-  --color-fm-border-focus: rgba(255,255,255,0.16);
-  --color-fm-text-strong: #fff;
-  --color-fm-text-primary: rgba(255,255,255,0.8);
-  --color-fm-text-secondary: rgba(255,255,255,0.6);
-  --color-fm-text-detail: rgba(255,255,255,0.4);
-  --color-fm-text-gray: rgba(255,255,255,0.2);
-  --color-fm-brand: #2cad00;
-  --color-fm-brand-hover: #34c400;
-  --color-fm-danger: #e04040;
+  --color-fm-base: #1b1c21;
+  --color-fm-sidebar: #202127;
+  --color-fm-inner: #25262b;
+  --color-fm-inner2: #2f3036;
+  --color-fm-input: #393a41;
+  --color-fm-hover: #393a41;
+  --color-fm-selected: #095228;
+  --color-fm-border: #4a4c54;
+  --color-fm-border-focus: #94959f;
+  --color-fm-text-strong: #e8e7ee;
+  --color-fm-text-primary: #e8e7ee;
+  --color-fm-text-secondary: #cdced8;
+  --color-fm-text-detail: #94959f;
+  --color-fm-text-gray: #4a4c54;
+  --color-fm-brand: #8bd89b;
+  --color-fm-brand-hover: #8bd89b;
+  --color-fm-danger: #ffb4ab;
   --color-fm-warning: #ed7417;
-  /* SpoolColorChip 1px inset ring; sits between the chip fill and the
-     surrounding surface. Dark theme keeps the historical low-alpha white
-     so existing chip silhouettes are unchanged. Light theme uses a low
-     alpha black so a white / near-white chip fill still has a visible
-     outline against the light surface. */
-  --color-fm-chip-ring: rgba(255,255,255,0.10);
-  /* AMS slot card header in AddEditDialog. Dark theme matches the prior
-     hardcoded #424242 + white text; light theme pulls the header tint
-     down to --color-fm-hover so the slot card no longer shows an
-     isolated dark bar on a light surface. */
-  --color-fm-slot-header: #424242;
-  --color-fm-slot-header-text: #fff;
+  /* SpoolColorChip 1px inset ring follows the MD3 outline-variant role so
+     white / near-white chip fills remain distinct from surrounding surfaces. */
+  --color-fm-chip-ring: #4a4c54;
+  /* AMS slot card headers use the highest container tone and on-surface text. */
+  --color-fm-slot-header: #393a41;
+  --color-fm-slot-header-text: #e8e7ee;
 }
 
 /* ===== Filament Light Theme Overrides ===== */
 [data-theme="light"] {
-  --color-fm-base: #f5f5f5;
-  --color-fm-sidebar: #fff;
-  --color-fm-inner: rgba(0,0,0,0.03);
-  --color-fm-inner2: rgba(0,0,0,0.05);
-  --color-fm-input: rgba(0,0,0,0.06);
-  --color-fm-hover: rgba(0,0,0,0.06);
-  --color-fm-selected: rgba(0,0,0,0.1);
-  --color-fm-border: rgba(0,0,0,0.1);
-  --color-fm-border-focus: rgba(0,0,0,0.2);
-  --color-fm-text-strong: #1a1a1a;
-  --color-fm-text-primary: rgba(0,0,0,0.8);
-  --color-fm-text-secondary: rgba(0,0,0,0.55);
-  --color-fm-text-detail: rgba(0,0,0,0.35);
-  --color-fm-text-gray: rgba(0,0,0,0.18);
-  --color-fm-brand: #2cad00;
-  --color-fm-brand-hover: #34c400;
-  --color-fm-danger: #d32f2f;
+  --color-fm-base: #faf8fd;
+  --color-fm-sidebar: #f4f2f9;
+  --color-fm-inner: #eeedf3;
+  --color-fm-inner2: #e8e7ee;
+  --color-fm-input: #e2e1e9;
+  --color-fm-hover: #e2e1e9;
+  --color-fm-selected: #a6f4b8;
+  --color-fm-border: #c5c6d0;
+  --color-fm-border-focus: #75777f;
+  --color-fm-text-strong: #1a1b1f;
+  --color-fm-text-primary: #1a1b1f;
+  --color-fm-text-secondary: #44464e;
+  --color-fm-text-detail: #75777f;
+  --color-fm-text-gray: #c5c6d0;
+  --color-fm-brand: #146c2e;
+  --color-fm-brand-hover: #146c2e;
+  --color-fm-danger: #ba1a1a;
   --color-fm-warning: #e65100;
-  --color-fm-chip-ring: rgba(0,0,0,0.18);
-  --color-fm-slot-header: rgba(0,0,0,0.06);
-  --color-fm-slot-header-text: #1a1a1a;
+  --color-fm-chip-ring: #c5c6d0;
+  --color-fm-slot-header: #e2e1e9;
+  --color-fm-slot-header-text: #1a1b1f;
 }
 
 html, body, #root {

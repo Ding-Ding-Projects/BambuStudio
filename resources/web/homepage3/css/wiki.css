@@ -3,10 +3,13 @@ html{
   padding-bottom: 0 !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
+	background-color: var(--md-surface);
 }
 
 body{
   max-width: none !important;
+	background-color: var(--md-surface);
+	color: var(--md-on-surface);
 }
 /* -----------searchBlock----------- */
 .searchBlock{
@@ -19,19 +22,27 @@ body{
 	display: flex;
 	align-items: center;
 	border-radius: 22px;
-	border: 1px solid #C2C2C2;	
+	border: 1px solid var(--md-outline-variant);
     flex-grow: 1;
-	background-color: #F7F7F7;
+	background-color: var(--md-sc-highest);
 	height: 40px;	
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .searchBtn{
 	width: 60px;
 	height: 100%;
-	border-radius: 0px 22px 22px 0px;
+	border-radius: 22px 0px 0px 22px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	color: var(--md-primary);
+	cursor: pointer;
+}
+
+.searchBtn:hover{
+	background-color: var(--md-primary-container);
 }
 
 .searchInputArea{
@@ -39,7 +50,7 @@ body{
 	align-items: center;
 	flex-grow: 1;
 	padding: 0px 22px 0px 0px;
-  border-radius: 22px 0px 0px 22px;
+	border-radius: 0px 22px 22px 0px;
 }
 
 .searchInput{
@@ -47,31 +58,41 @@ body{
 	flex-grow: 1;
 	outline: none;
 	font-size: 16px;
-	background-color: #F7F7F7;
+	background-color: transparent;
+	color: var(--md-on-surface);
+	caret-color: var(--md-primary);
+}
+
+.searchInput::placeholder{
+	color: var(--md-on-surface-variant);
 }
 
 .searchResultArea{
   width: calc(100% - 176px);
   max-height: 300px;
   overflow-y: auto;
-  background-color: #FFFFFF;
+  background-color: var(--md-sc);
   position: absolute;
   left: 88px;
   right: 0;                /* 与输入框同宽 */
   top: calc(100% - 6px);
   z-index: 2;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+	border: 1px solid var(--md-outline-variant);
+	border-radius: 16px;
+	box-shadow: 0px 12px 34px var(--md-shadow);
+	overflow: hidden;
 }
 
 .searchResult{
   height: 30px;
-  border-bottom: #C2C2C2 1px solid;
+	border-bottom: var(--md-outline-variant) 1px solid;
   line-height: 30px;
   padding: 0px 16px;
+	color: var(--md-on-surface);
 }
 
 .searchResult:hover{
-  background-color: #F0F0F0;
+	background-color: var(--md-sc-high);
   cursor: pointer;
 }
 
@@ -90,22 +111,22 @@ body{
 
 .academyTab{
   font-size: 16px;
-  color: #999;
+	color: var(--md-on-surface-variant);
   cursor: pointer;
   padding-bottom: 8px;
   border-bottom: 2px solid transparent;
   user-select: none;
-  transition: color 0.15s;
+	transition: color 0.15s, border-color 0.15s;
 }
 
 .academyTab:hover{
-  color: #333;
+	color: var(--md-on-surface);
 }
 
 .academyTab.active{
-  color: #1A1A1A;
-  font-weight: bold;
-  border-bottom: 2px solid #1A1A1A;
+	color: var(--md-primary);
+	font-weight: 600;
+	border-bottom: 2px solid var(--md-primary);
 }
 
 .academyCardArea{
@@ -121,12 +142,19 @@ body{
 
 .title {
   font-size: 24px;
-  font-weight: bold;
+	font-weight: 600;
   flex-grow: 1;
 }
 .more {
   font-size: 16px;
   cursor: pointer;
+	color: var(--md-primary);
+	font-weight: 600;
+	border-radius: 999px;
+	padding: 6px 10px;
+}
+.more:hover {
+	background-color: var(--md-primary-container);
 }
 .academyContent{
   height: 268px;
@@ -146,11 +174,19 @@ body{
   width: 240px;
   flex-shrink: 0;
   height: 100%;
-  border-radius: 12px;
-  background-color: #F8F8F8;
+	border-radius: 16px;
+	background-color: var(--md-sc-low);
+	border: 1px solid var(--md-outline-variant);
   box-sizing: border-box;
   padding: 36px 39px;
   cursor: pointer;
+	overflow: hidden;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+	border-color: var(--md-primary);
+	box-shadow: 0 3px 10px var(--md-shadow);
 }
 
 .cardImg {
@@ -159,7 +195,7 @@ body{
 }
 
 .cardTitle {
-  font-weight: bold;
+	font-weight: 600;
   text-align: center;
 }
 
@@ -193,11 +229,16 @@ body{
   background-clip: content-box;
   background-size: cover;
   cursor: pointer;
-  opacity: 0.4;
+	opacity: 0.75;
   pointer-events: auto;
+	border-radius: 50%;
+	background-color: var(--md-sc);
+	border: 1px solid var(--md-outline-variant);
+	box-shadow: 0 2px 8px var(--md-shadow);
 }
 .switchBtn:hover{
   opacity: 1;
+	background-color: var(--md-sc-highest);
 }
 
 /* -----------tutorialBlock----------- */
@@ -221,10 +262,21 @@ body{
   height: 100%;
   box-sizing: border-box;
   cursor: pointer;
+	background-color: var(--md-sc-low);
+	border: 1px solid var(--md-outline-variant);
+	border-radius: 16px;
+	overflow: hidden;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.videoCard:hover{
+	border-color: var(--md-primary);
+	box-shadow: 0 3px 10px var(--md-shadow);
 }
 
 .videoThumbnail{
   width: 352px;
+	display: block;
 }
 
 .tutorialSwitchBlock{
@@ -242,7 +294,7 @@ body{
 /* -----------topicBlock----------- */
 .topicBlock{
   padding: 48px 48px;
-  background-color: #F8F8F8;
+	background-color: var(--md-sc-low);
   margin-top: 48px;
 }
 
@@ -257,13 +309,16 @@ body{
   padding: 24px 24px;
   flex: 1 1 300px;
   min-width: 600px;
-  background-color: #FFFFFF;
-  box-sizing: border-box;;
+	background-color: var(--md-sc-lowest);
+	border: 1px solid var(--md-outline-variant);
+	border-radius: 16px;
+	box-sizing: border-box;
 }
 
 .topicTitle{
   font-size: 20px;
-  font-weight: bold;
+	font-weight: 600;
+	color: var(--md-on-surface);
 }
 
 ul{
@@ -272,7 +327,7 @@ ul{
 }
 
 li {
-  color: #00AE42;
+	color: var(--md-primary);
   cursor: pointer;
 }
 
@@ -304,14 +359,22 @@ li {
 
 .bannerTitle{
   font-size: 20px;
-  font-weight: bold;
+	font-weight: 600;
 }
 
 .bannerBtn{
-  border: 1px solid #000000;
-  border-radius: 3px;
+	border: 1px solid var(--md-primary);
+	border-radius: 999px;
   padding: 10px 45px;
   display: inline-block;
   cursor: pointer;
   margin-top: 24px;
+	color: var(--md-primary);
+	background-color: var(--md-surface);
+	font-weight: 600;
+}
+
+.bannerBtn:hover{
+	background-color: var(--md-primary);
+	color: var(--md-on-primary);
 }

@@ -1,5 +1,6 @@
 #include "SideButton.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -26,21 +27,23 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     icon_offset = 0;
     text_orientation = HO_Left;
 
-    border_color.append(0x6B6B6B, StateColor::Disabled);
-    border_color.append(wxColour(23, 129, 63), StateColor::Pressed);
-    border_color.append(wxColour(48,221,112), StateColor::Hovered);
-    border_color.append(0x00AE42, StateColor::Normal);
+    // Disabled trio kept as raw literals: light-grey text on mid-grey fill — the token
+    // greys (Grey450 on Grey700) would render dark-on-dark in light mode.
+    border_color.append(wxColour("#6B6B6B"), StateColor::Disabled);
+    border_color.append(ThemeColor::BrandGreenPressed, StateColor::Pressed);
+    border_color.append(ThemeColor::BrandGreenHovered, StateColor::Hovered);
+    border_color.append(ThemeColor::BrandGreen, StateColor::Normal);
     border_color.setTakeFocusedAsHovered(false);
 
-    text_color.append(0xACACAC, StateColor::Disabled);
-    text_color.append(0xFEFEFE, StateColor::Pressed);
-    text_color.append(0xFEFEFE, StateColor::Hovered);
-    text_color.append(0xFEFEFE, StateColor::Normal);
+    text_color.append(wxColour("#ACACAC"), StateColor::Disabled);
+    text_color.append(ThemeColor::White, StateColor::Pressed);
+    text_color.append(ThemeColor::White, StateColor::Hovered);
+    text_color.append(ThemeColor::White, StateColor::Normal);
 
-    background_color.append(0x6B6B6B, StateColor::Disabled);
-    background_color.append(wxColour(23, 129, 63), StateColor::Pressed);
-    background_color.append(wxColour(48, 221, 112), StateColor::Hovered);
-    background_color.append(0x00AE42, StateColor::Normal);
+    background_color.append(wxColour("#6B6B6B"), StateColor::Disabled);
+    background_color.append(ThemeColor::BrandGreenPressed, StateColor::Pressed);
+    background_color.append(ThemeColor::BrandGreenHovered, StateColor::Hovered);
+    background_color.append(ThemeColor::BrandGreen, StateColor::Normal);
     background_color.setTakeFocusedAsHovered(false);
 
     SetBottomColour(wxColour("#3B4446"));

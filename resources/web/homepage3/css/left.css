@@ -3,8 +3,8 @@
 	padding:0px;
 	border: 0px;
 	margin: 0px;
-    font-family: "system-ui", "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-sans;
-	border-color: #D7D7D7;
+	font-family: "Roboto", system-ui, "Segoe UI", Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+	border-color: var(--md-outline-variant);
 	user-select: none;
 }
 
@@ -14,40 +14,41 @@ html, body {
     margin: 0px;
     padding: 0px;
 	line-height: 20px;
-    font-size: 16px;	
+	font-size: 16px;
+	background-color: var(--md-sc-low);
+	color: var(--md-on-surface);
 }
 
 .ZScrol::-webkit-scrollbar {/*滚动条整体样式*/
     width: 12px;     /*高宽分别对应横竖滚动条的尺寸*/
-    height: 1px;
+	height: 10px;
 	padding: 2px;
+	width: 10px;
 }
 
 .ZScrol::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
-    border-radius: 6px;
-    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-	box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-    background-color: #AAAAAA;
+	border-radius: 8px;
+	border: 2px solid transparent;
+	background-color: var(--md-outline-variant);
+	background-clip: content-box;
 }
 
 .ZScrol::-webkit-scrollbar-track {/*滚动条里面轨道*/
-        -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-	    box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-        border-radius: 10px;
-        background: #EDEDED;
+	border-radius: 10px;
+	background: transparent;
 }
 
 
 .RedFont
 {
 	font-size:12px;
-	color: #F07E4A;		
+	color: var(--md-error);
 }
 
 .LinkBtn
 {
 	font-size:12px;
-	color: #00AE42;	
+	color: var(--md-primary);
 	cursor: pointer;
 	text-decoration: underline;
 }
@@ -74,8 +75,10 @@ body
 {
 	border-right-width: 1px;
 	border-right-style: solid;
+	border-right-color: var(--md-outline-variant);
 	width: calc(100% - 1px);
 	height: 100%;
+	background-color: var(--md-sc-low);
 }
 
 #LoginArea
@@ -90,6 +93,7 @@ body
 	width:100%;
 	border-bottom-width: 1px;
 	border-bottom-style: solid;
+	border-bottom-color: var(--md-outline-variant);
 }
 
 #LoginArea.ServerConnectFailVisible
@@ -107,6 +111,8 @@ body
 	justify-content: center;
 	user-select: none;
 	cursor:pointer;
+	border-radius: 999px;
+	padding: 0 12px;
 }
 
 #LoginBtn
@@ -122,7 +128,7 @@ body
 
 #Login1:hover #LoginBtn
 {
-	transform: scale(1.05);
+	color: var(--md-primary);
 }
 
 
@@ -136,9 +142,14 @@ body
 	padding-bottom: 0px;
 	padding-left: 5px;
 	padding-right: 5px;
-	border-radius: 4px;
-	border: 1px solid var(--remind, #FF6F00);
-	background: rgba(255, 111, 0, 0.15);
+	border-radius: 12px;
+	border: 1px solid var(--md-error);
+	background: var(--md-error-container);
+}
+
+#NoPluginTip .RedFont
+{
+	color: var(--md-on-error-container);
 }
 
 #ServerConnectFailTip
@@ -151,21 +162,22 @@ body
 	width: 100%;
 	min-height: 35px;
 	padding: 4px 8px;
-	border: 1px solid var(--remind, #FF6F00);
-	background: rgba(255, 111, 0, 0.15);
+	border: 1px solid var(--md-error);
+	border-radius: 12px;
+	background: var(--md-error-container);
 }
 
 #ServerConnectFailText
 {
 	font-size: 12px;
 	line-height: 14px;
-	color: #F07E4A;
+	color: var(--md-on-error-container);
 }
 
 
 #DownloadBtn
 {
-	color:#0A00FF;
+	color:var(--md-primary);
 }
 
 
@@ -192,6 +204,9 @@ body
 #UserAvatarIcon
 {
 	height: 36px;
+	width: 36px;
+	border-radius: 50%;
+	object-fit: cover;
 }
 
 #UserName
@@ -219,20 +234,21 @@ body
 #LogoutBtn
 {
 	font-size: 14px;
-	height: 24px;
-	line-height: 24px;
-	color: #00B731;
-	border: 1px solid  #00AE42;
-	border-radius: 4px;
+	height: 28px;
+	line-height: 28px;
+	color: var(--md-primary);
+	border: 1px solid var(--md-outline);
+	border-radius: 999px;
 	cursor: pointer;
 	margin-top: 5px;
-	padding: 0px 8px;
+	padding: 0px 12px;
 }
 
 #LogoutBtn:hover
 {
-	background: #00B731;
-	color: #fff;
+	background: var(--md-primary-container);
+	color: var(--md-on-primary-container);
+	border-color: var(--md-primary);
 }
 
 
@@ -247,10 +263,10 @@ body
 
 .BtnItem
 {
-  padding-left: 20px;	
+	padding-left: 16px;
 	padding-right: 20px;
-	height:50px;
-	line-height: 50px;
+	height:46px;
+	line-height: 46px;
 	display: flex;
 	justify-content:flex-start;
 	align-items: center;
@@ -259,12 +275,18 @@ body
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+	margin: 2px 8px;
+	border-radius: 23px;
+	box-sizing: border-box;
+	color: var(--md-on-surface-variant);
+	transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .TopDivider
 {
 	border-top-width: 1px;
 	border-top-style: solid;
+	border-top-color: var(--md-outline-variant);
 }
 
 .BtnItem[menu="online"]
@@ -284,12 +306,15 @@ body
 
 .BtnItem:hover
 {
-	background-color: #E0FCEB;
+	background-color: var(--md-secondary-container);
+	color: var(--md-on-secondary-container);
 }
 
 .BtnItemSelected
 {
-	background-color: #E0FCEB;
+	background-color: var(--md-primary-container);
+	color: var(--md-on-primary-container);
+	font-weight: 600;
 }
 
 .BtnIcon
@@ -330,22 +355,24 @@ body
 	height: 12px;
 	line-height: 12px;
 	font-size: 10px;
-	background-color: #00AE42;
-	color: white;
-	padding: 2px 4px;
+	background-color: var(--md-primary);
+	color: var(--md-on-primary);
+	padding: 2px 7px;
 	position: absolute;
 	top: calc(50% - 8px);
 	right: 12px;
 	display: none;
+	border-radius: 999px;
 }
 
 /*dropdown*/
 #DropdownWrapper {
 	visibility: hidden;
 	width: 95%;
-	border-radius: 8px;
+	border-radius: 16px;
 	overflow: hidden;
-	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 4px 12px var(--md-shadow);
+	border: 1px solid var(--md-outline-variant);
 	position: absolute;
 	z-index: 1;
 	top: 70%;
@@ -365,6 +392,7 @@ body
 	background-size: cover;
 	background-position: center center;
 	background-repeat: no-repeat;
+	border-radius: 50%;
 }
 .user-details {
 	display: flex;
@@ -391,6 +419,7 @@ body
 	align-items: center;
 	cursor: pointer;
 	transition: background 0.2s;
+	color: var(--md-on-surface-variant);
 }
 
 .LogoutIcon {
@@ -420,15 +449,16 @@ body
 	background-repeat: no-repeat;
 	background-position: center;
 	background-image: url('../img/arrow_dark_left.svg');
-    border-left: 1px solid rgba(238, 238, 238, 1);
-	border-top: 1px solid rgba(238, 238, 238, 1);
-	border-bottom: 1px solid rgba(238, 238, 238, 1);
-	border-radius: 4px 0px 0px 4px;
+	border-left: 1px solid var(--md-outline-variant);
+	border-top: 1px solid var(--md-outline-variant);
+	border-bottom: 1px solid var(--md-outline-variant);
+	border-radius: 12px 0px 0px 12px;
+	background-color: var(--md-sc);
 	z-index: 99;
 }
 
 #HideBtn:hover
 {
-	background-color: rgba(238, 238, 238, 1);
+	background-color: var(--md-sc-highest);
 }
 

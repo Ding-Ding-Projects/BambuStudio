@@ -1,5 +1,6 @@
 #include "FanControl.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "../BitmapCache.hpp"
 #include "../I18N.hpp"
 #include "../GUI_App.hpp"
@@ -32,7 +33,7 @@ void Fan::create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
     m_current_speeds  = 0;
 
     wxWindow::Create(parent, id, pos, size, wxBORDER_NONE);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
 
     m_rotate_offsets.push_back(RotateOffSet{ 2.5, wxPoint(-FromDIP(16), FromDIP(11)) });
     m_rotate_offsets.push_back(RotateOffSet{ 2.2, wxPoint(-FromDIP(20), FromDIP(11)) });
@@ -176,7 +177,7 @@ FanOperate::FanOperate(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
 void FanOperate::create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
 {
     wxWindow::Create(parent, id, pos, size, wxBORDER_NONE);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
 
     m_bitmap_add        = ScalableBitmap(this, "fan_control_add", 24);
     m_bitmap_decrease   = ScalableBitmap(this, "fan_control_decrease", 24);
@@ -314,7 +315,7 @@ void FanOperate::doRender(wxDC& dc)
 
     //txt
     dc.SetFont(::Label::Body_12);
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour("#898989")));
+    dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextMuted));
     wxString text = wxString::Format("%d%%", m_current_speeds * 10);
     wxSize text_size = dc.GetTextExtent(text);
     auto text_width = size.x - m_bitmap_decrease.GetBmpWidth() * 2;
@@ -343,7 +344,7 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
     m_bitmap_toggle_off = new ScalableBitmap(this, "toggle_off", 16);
     m_bitmap_toggle_on = new ScalableBitmap(this, "toggle_on", 16);
 
-    SetBackgroundColour(wxColour(248, 248, 248));
+    SetBackgroundColour(ThemeColor::Grey250);
 
     wxBoxSizer* m_sizer_main = new wxBoxSizer(wxHORIZONTAL);
 
@@ -356,7 +357,7 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
     m_static_bitmap_fan = new wxStaticBitmap(this, wxID_ANY, m_bitmap_fan->bmp(), wxDefaultPosition, wxDefaultSize);
 
     m_static_name = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END | wxALIGN_CENTER_HORIZONTAL);
-    m_static_name->SetBackgroundColour(wxColour(248, 248, 248));
+    m_static_name->SetBackgroundColour(ThemeColor::Grey250);
     m_static_name->SetFont(Label::Head_16);
     m_static_name->SetMinSize(wxSize(FromDIP(100), -1));
     m_static_name->SetMaxSize(wxSize(FromDIP(100), -1));
@@ -375,8 +376,8 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
     sizer_control->Add(sizer_control_top, 0, wxEXPAND, 0);
 
     m_static_status_name = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END | wxALIGN_CENTER_HORIZONTAL);
-    m_static_status_name->SetForegroundColour(wxColour("#00AE42"));
-    m_static_status_name->SetBackgroundColour(wxColour(248, 248, 248));
+    m_static_status_name->SetForegroundColour(ThemeColor::BrandGreen);
+    m_static_status_name->SetBackgroundColour(ThemeColor::Grey250);
     m_static_status_name->SetFont(Label::Head_16);
     m_static_status_name->SetMinSize(wxSize(FromDIP(100), -1));
     m_static_status_name->SetMaxSize(wxSize(FromDIP(100), -1));
@@ -629,7 +630,7 @@ static void nop_deleter_fan_control_popup(FanControlPopupNew *) {}
 FanControlPopupNew::FanControlPopupNew(wxWindow* parent, MachineObject* obj, const AirDuctData& data)
     : wxDialog(parent, wxID_ANY, wxEmptyString)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     init_names(obj);
 
     m_data = data;
@@ -647,10 +648,10 @@ FanControlPopupNew::FanControlPopupNew(wxWindow* parent, MachineObject* obj, con
     m_mode_sizer->Add(m_radio_btn_sizer, 0, wxALIGN_CENTRE_VERTICAL, 0);
 
     m_mode_text = new Label(this);
-    m_mode_text->SetBackgroundColour(*wxWHITE);
+    m_mode_text->SetBackgroundColour(ThemeColor::White);
 
     m_sub_mode_panel = new wxPanel(this, wxID_ANY);
-    m_sub_mode_panel->SetBackgroundColour(wxColour(248, 248, 248));
+    m_sub_mode_panel->SetBackgroundColour(ThemeColor::Grey250);
     m_sub_mode_sizer = new wxBoxSizer(wxVERTICAL);
     m_sub_mode_panel->SetSizer(m_sub_mode_sizer);
 
@@ -945,7 +946,7 @@ void FanControlPopupNew::msw_rescale()
 void FanControlPopupNew::paintEvent(wxPaintEvent& evt)
 {
     wxPaintDC dc(this);
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(ThemeColor::Grey450);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
@@ -1104,7 +1105,7 @@ FanControlNewSwitchPanel::FanControlNewSwitchPanel(wxWindow* parent, const wxStr
     : wxWindow(parent, wxID_ANY), switch_state_on(on)
 {
     Label* label = new Label(this);
-    label->SetBackgroundColour(wxColour(248, 248, 248));
+    label->SetBackgroundColour(ThemeColor::Grey250);
     label->SetLabelText(title);
 
     m_bitmap_toggle_off = new ScalableBitmap(this, "toggle_off", 19);
@@ -1122,7 +1123,7 @@ FanControlNewSwitchPanel::FanControlNewSwitchPanel(wxWindow* parent, const wxStr
     m_label_sizer->Add(m_switch_btn, 0, wxALIGN_RIGHT, 0);
 
     Label* tips_label = new Label(this);
-    tips_label->SetBackgroundColour(wxColour(248, 248, 248));
+    tips_label->SetBackgroundColour(ThemeColor::Grey250);
     tips_label->SetLabelText(tips);
     tips_label->Wrap(FromDIP(400));
 
@@ -1131,7 +1132,7 @@ FanControlNewSwitchPanel::FanControlNewSwitchPanel(wxWindow* parent, const wxStr
     m_sizer_main->Add(tips_label, 0, wxALL | wxALIGN_LEFT, FromDIP(5));
     SetSizer(m_sizer_main);
 
-    SetBackgroundColour(wxColour(248, 248, 248));
+    SetBackgroundColour(ThemeColor::Grey250);
     Layout();
 
     wxGetApp().UpdateDarkUIWin(this);
