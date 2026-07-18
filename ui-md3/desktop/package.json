@@ -19,7 +19,7 @@
   "build": {
     "appId": "io.github.codingmachineedge.bambustudiomd3",
     "productName": "Bambu Studio MD3",
-    "artifactName": "BambuStudioMD3-Setup-${version}.${ext}",
+    "artifactName": "BambuStudioMD3-Setup.${ext}",
     "files": ["main.js", "app/**/*"],
     "directories": { "output": "dist" },
     "win": { "target": ["nsis"] },
