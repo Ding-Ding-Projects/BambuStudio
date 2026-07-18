@@ -29,6 +29,11 @@
 {
 	padding: 0px;
 	justify-content:center;
+	height: 44px;
+	line-height: 44px;
+	margin-top: 3px;
+	margin-bottom: 3px;
+	border-radius: 22px;
 }
 
 .BtnText
@@ -73,9 +78,9 @@
 #HideBtn
 {
 	transform: scaleX(-1);
-	border-radius: 0px 4px 4px 0px;
-	border-left: 0px solid rgba(238, 238, 238, 1);
-	border-right: 1px solid rgba(238, 238, 238, 1);
+	border-radius: 0px 12px 12px 0px;
+	border-left: 0px solid var(--md-outline-variant);
+	border-right: 1px solid var(--md-outline-variant);
 }
 
 .auto-hide {
