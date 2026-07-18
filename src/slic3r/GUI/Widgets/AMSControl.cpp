@@ -1,5 +1,6 @@
 #include "AMSControl.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 #include "../I18N.hpp"
 #include "../GUI_App.hpp"
 
@@ -39,12 +40,12 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
         parse_object(obj);
     }
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     // normal mode
     //Freeze();
     m_sizer_body = new wxBoxSizer(wxVERTICAL);
     m_amswin                 = new wxWindow(this, wxID_ANY);
-    m_amswin->SetBackgroundColour(*wxWHITE);
+    m_amswin->SetBackgroundColour(ThemeColor::White);
     m_amswin->SetSize(wxSize(FromDIP(578), -1));
     m_amswin->SetMinSize(wxSize(FromDIP(578), -1));
 
@@ -159,8 +160,8 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     auto m_panel_option_left    = new wxPanel(m_amswin);
     auto m_panel_option_right   = new wxPanel(m_amswin);
 
-    m_panel_option_left->SetBackgroundColour(*wxWHITE);
-    m_panel_option_right->SetBackgroundColour(*wxWHITE);
+    m_panel_option_left->SetBackgroundColour(ThemeColor::White);
+    m_panel_option_right->SetBackgroundColour(ThemeColor::White);
 
     m_panel_option_left->SetSizer(m_sizer_option_left);
     m_panel_option_right->SetSizer(m_sizer_option_right);
@@ -172,8 +173,8 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_panel_option_right->SetMaxSize(wxSize(FromDIP(180), -1));
 
     StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
         std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
 
     StateColor btn_bg_white(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
@@ -181,17 +182,19 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
         std::pair<wxColour, int>(AMS_CONTROL_DEF_BLOCK_BK_COLOUR, StateColor::Hovered),
         std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Normal));
 
+    // wxColour(255,255,254) is a deliberate near-white that dodges gDarkColors so these
+    // stay white-on-green/grey in dark mode — do not swap for ThemeColor::White (dark-maps).
     StateColor btn_bd_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
         std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
 
     StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
     StateColor btn_text_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
         std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled));
 
     StateColor btn_text_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
     /*option switch*/
     m_switcher = new SwitcherImage(m_amswin, wxID_ANY, "fila_switch", wxSize(FromDIP(29), FromDIP(16)), wxDefaultPosition);
@@ -980,14 +983,14 @@ void AMSControl::show_switcher_status(bool show)
     {
         m_sizer_body->Add(0, 0, 1, wxEXPAND | wxTOP, FromDIP(5));
         tipPanel = new wxPanel(m_amswin);
-        tipPanel->SetBackgroundColour(wxColour(255, 153, 0));
+        tipPanel->SetBackgroundColour(ThemeColor::Warning);
         tipSizer = new wxBoxSizer(wxHORIZONTAL);
         tipPanel->SetSizer(tipSizer);
         icon = new wxStaticBitmap(tipPanel, wxID_ANY,
             wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_MESSAGE_BOX, wxSize(FromDIP(16), FromDIP(16))));
         tipSizer->Add(icon, 0, wxALL, FromDIP(8));
         tipText = new wxStaticText(tipPanel, wxID_ANY, _L("AMS has not been initialized. Please initialize it before use."));
-        tipText->SetForegroundColour(wxColour(255, 255, 255));
+        tipText->SetForegroundColour(ThemeColor::White);
         tipText->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
         tipText->Wrap(-1);
         tipText->SetMinSize(wxSize(-1, -1));

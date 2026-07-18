@@ -1,4 +1,5 @@
 #include "ProgressBar.hpp"
+#include "StateColor.hpp"
 #include "../I18N.hpp"
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -14,7 +15,7 @@ END_EVENT_TABLE()
 ProgressBar::ProgressBar(wxWindow *parent, wxWindowID id, int max, const wxPoint &pos, const wxSize &size, bool shown)
 {
     m_shownumber = shown;
-    SetBackgroundColour(wxColour(255,255,255));
+    SetBackgroundColour(ThemeColor::White);
 
     if (size.y >= miniHeight) {
         m_miniHeight = size.y;
@@ -44,8 +45,8 @@ void ProgressBar::create(wxWindow *parent, wxWindowID id, const wxPoint &pos,  w
 
      auto m_progress_bk = new StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
      m_progress_bk->SetBackgroundColour(wxColour(238, 130, 238));
-     StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                             std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
      wxBoxSizer *m_sizer_progress= new wxBoxSizer(wxHORIZONTAL);
 
@@ -196,7 +197,7 @@ void ProgressBar::doRender(wxDC &dc)
 
         dc.SetFont(::Label::Head_12);
         auto textSize = dc.GetMultiLineTextExtent(m_disable_text);
-        dc.SetTextForeground(wxColour(144, 144, 144));
+        dc.SetTextForeground(ThemeColor::TextDisabled);
         auto pt = wxPoint();
         pt.x    = (size.x - textSize.x) / 2;
         pt.y    = (size.y - textSize.y) / 2;
@@ -216,7 +217,7 @@ void ProgressBar::doRender(wxDC &dc)
 
         dc.SetFont(GetFont());
         auto textSize = dc.GetMultiLineTextExtent(wxString("000%"));
-        dc.SetTextForeground(wxColour(144, 144, 144));
+        dc.SetTextForeground(ThemeColor::TextDisabled);
         auto pt = wxPoint();
         pt.x    = (size.x - textSize.x) / 2;
         pt.y    = (size.y - textSize.y) / 2;

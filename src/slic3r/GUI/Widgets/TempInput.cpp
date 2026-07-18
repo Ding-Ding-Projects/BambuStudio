@@ -1,6 +1,7 @@
 #include "TempInput.hpp"
 #include "Label.hpp"
 #include "PopupWindow.hpp"
+#include "StateColor.hpp"
 #include "../I18N.hpp"
 #include <wx/dcgraph.h>
 #include "../GUI.hpp"
@@ -20,14 +21,14 @@ END_EVENT_TABLE()
 
 
 TempInput::TempInput()
-    : label_color(std::make_pair(wxColour(0xAC,0xAC,0xAC), (int) StateColor::Disabled),std::make_pair(0x323A3C, (int) StateColor::Normal))
-    , text_color(std::make_pair(wxColour(0xAC,0xAC,0xAC), (int) StateColor::Disabled), std::make_pair(0x6B6B6B, (int) StateColor::Normal))
+    : label_color(std::make_pair(ThemeColor::Grey450, (int) StateColor::Disabled), std::make_pair(ThemeColor::TextSecondary, (int) StateColor::Normal))
+    , text_color(std::make_pair(ThemeColor::Grey450, (int) StateColor::Disabled), std::make_pair(ThemeColor::TextMuted, (int) StateColor::Normal))
 {
     hover  = false;
     radius = 0;
-    border_color = StateColor(std::make_pair(*wxWHITE, (int) StateColor::Disabled), std::make_pair(0x00AE42, (int) StateColor::Focused), std::make_pair(0x00AE42, (int) StateColor::Hovered),
-                 std::make_pair(*wxWHITE, (int) StateColor::Normal));
-    background_color = StateColor(std::make_pair(*wxWHITE, (int) StateColor::Disabled), std::make_pair(*wxWHITE, (int) StateColor::Normal));
+    border_color = StateColor(std::make_pair(ThemeColor::White, (int) StateColor::Disabled), std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Focused), std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
+                 std::make_pair(ThemeColor::White, (int) StateColor::Normal));
+    background_color = StateColor(std::make_pair(ThemeColor::White, (int) StateColor::Disabled), std::make_pair(ThemeColor::White, (int) StateColor::Normal));
     SetFont(Label::Body_12);
 }
 
@@ -87,7 +88,7 @@ void TempInput::Create(wxWindow *parent, wxString text, wxString label, wxString
     state_handler.attach({&label_color, &text_color});
     state_handler.update_binds();
     text_ctrl = new wxTextCtrl(this, wxID_ANY, text, {5, 5}, wxDefaultSize, wxTE_PROCESS_ENTER | wxBORDER_NONE, wxTextValidator(wxFILTER_NUMERIC), wxTextCtrlNameStr);
-    text_ctrl->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    text_ctrl->SetBackgroundColour(StateColor::darkModeColorFor(ThemeColor::White));
     text_ctrl->SetMaxLength(3);
     state_handler.attach_child(text_ctrl);
     text_ctrl->Bind(wxEVT_SET_FOCUS, [this](auto &e) {
@@ -143,7 +144,7 @@ void TempInput::Create(wxWindow *parent, wxString text, wxString label, wxString
         }
     });
     text_ctrl->SetFont(Label::Body_13);
-    text_ctrl->SetForegroundColour(StateColor::darkModeColorFor(*wxBLACK));
+    text_ctrl->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
     if (!normal_icon.IsEmpty()) { this->normal_icon = ScalableBitmap(this, normal_icon.ToStdString(), 16); }
     if (!actice_icon.IsEmpty()) { this->actice_icon = ScalableBitmap(this, actice_icon.ToStdString(), 16); }
     this->round_scale_hint_icon = ScalableBitmap(this, "round", 16);
@@ -236,14 +237,14 @@ void TempInput::Warning(bool warn, WarningType type)
     if (warning_mode) {
         if (wdialog == nullptr) {
             wdialog = new PopupWindow(this);
-            wdialog->SetBackgroundColour(wxColour("#FFFFFF"));
+            wdialog->SetBackgroundColour(ThemeColor::White);
 
             wdialog->SetSizeHints(wxDefaultSize, wxDefaultSize);
 
             wxBoxSizer *sizer_body = new wxBoxSizer(wxVERTICAL);
 
             auto body = new wxPanel(wdialog, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-            body->SetBackgroundColour(wxColour("#FFFFFF"));
+            body->SetBackgroundColour(ThemeColor::White);
 
 
             wxBoxSizer *sizer_text;
@@ -256,7 +257,7 @@ void TempInput::Warning(bool warn, WarningType type)
                                             wxDefaultPosition, wxDefaultSize,
                                             wxALIGN_CENTER_HORIZONTAL);
             warning_text->SetFont(::Label::Body_12);
-            warning_text->SetForegroundColour(wxColour(255, 111, 0));
+            warning_text->SetForegroundColour(ThemeColor::Warning);
             warning_text->Wrap(-1);
             sizer_text->Add(warning_text, 1, wxEXPAND | wxTOP | wxBOTTOM, 2);
 
@@ -429,10 +430,10 @@ void TempInput::render(wxDC &dc)
     bool   align_right = GetWindowStyle() & wxRIGHT;
 
     if (warning_mode) {
-        border_color = wxColour(255, 111, 0);
+        border_color = ThemeColor::Warning;
     } else {
-        border_color = StateColor(std::make_pair(*wxWHITE, (int) StateColor::Disabled), std::make_pair(0x00AE42, (int) StateColor::Focused),
-                                  std::make_pair(0x00AE42, (int) StateColor::Hovered), std::make_pair(*wxWHITE, (int) StateColor::Normal));
+        border_color = StateColor(std::make_pair(ThemeColor::White, (int) StateColor::Disabled), std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Focused),
+                                  std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered), std::make_pair(ThemeColor::White, (int) StateColor::Normal));
     }
 
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
@@ -469,7 +470,7 @@ void TempInput::render(wxDC &dc)
         dc.SetFont(::Label::Body_12);
         auto sepSize = dc.GetMultiLineTextExtent(wxString("L"));
 
-        const wxColour& clr = Slic3r::GUI::wxGetApp().dark_mode() ? StateColor::darkModeColorFor(*wxWHITE) : *wxWHITE;
+        const wxColour& clr = Slic3r::GUI::wxGetApp().dark_mode() ? StateColor::darkModeColorFor(ThemeColor::White) : ThemeColor::White;
         dc.SetTextForeground(clr);
         dc.SetTextBackground(clr);
         dc.DrawText(wxString("L"), pt.x + (szIcon.x - sepSize.x) / 2, (size.y - sepSize.y) / 2);
@@ -484,7 +485,7 @@ void TempInput::render(wxDC &dc)
         dc.SetFont(::Label::Body_12);
         auto sepSize = dc.GetMultiLineTextExtent(wxString("R"));
 
-        const wxColour& clr = Slic3r::GUI::wxGetApp().dark_mode() ? StateColor::darkModeColorFor(*wxWHITE) : *wxWHITE;
+        const wxColour& clr = Slic3r::GUI::wxGetApp().dark_mode() ? StateColor::darkModeColorFor(ThemeColor::White) : ThemeColor::White;
         dc.SetTextForeground(clr);
         dc.SetTextBackground(clr);
         dc.DrawText(wxString("R"), pt.x + (szIcon.x - sepSize.x) / 2, (size.y - sepSize.y) / 2);
@@ -497,11 +498,11 @@ void TempInput::render(wxDC &dc)
     labelSize = dc.GetMultiLineTextExtent(wxWindow::GetLabel());
 
     if (!IsEnabled()) {
-        dc.SetTextForeground(wxColour(0xAC, 0xAC, 0xAC));
+        dc.SetTextForeground(ThemeColor::Grey450);
         dc.SetTextBackground(background_color.colorForStates((int) StateColor::Disabled));
     }
     else {
-        dc.SetTextForeground(wxColour(0x32, 0x3A, 0x3D));
+        dc.SetTextForeground(ThemeColor::TextSecondary);
         dc.SetTextBackground(background_color.colorForStates((int) states));
     }
 
@@ -517,7 +518,7 @@ void TempInput::render(wxDC &dc)
         pt.y = (size.y - labelSize.y) / 2;
     }
 
-    dc.SetTextForeground(StateColor::darkModeColorFor("#323A3C"));
+    dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextSecondary));
     dc.DrawText(text, pt);
 
     // separator

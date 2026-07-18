@@ -17,7 +17,7 @@ StaticLine::StaticLine(wxWindow *parent, bool vertical, const wxString &label, c
     , vertical(vertical)
 {
     wxWindow::SetBackgroundColour(parent->GetBackgroundColour());
-    this->lineColor = wxColour("#EEEEEE");
+    this->lineColor = ThemeColor::Grey300;
     DisableFocusFromKeyboard();
     SetFont(Label::Body_14);
     wxWindow::SetLabel(label);

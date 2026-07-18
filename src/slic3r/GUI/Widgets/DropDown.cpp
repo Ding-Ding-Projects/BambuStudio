@@ -1,5 +1,6 @@
 #include "DropDown.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 
 #include <cstdio>
 #include <wx/display.h>
@@ -36,13 +37,13 @@ END_EVENT_TABLE()
 DropDown::DropDown(std::vector<Item> &items)
     : items(items)
     , state_handler(this)
-    , border_color(0xDBDBDB)
-    , text_color(std::make_pair(0x909090, (int) StateColor::Disabled),
-        std::make_pair(0x363636, (int) StateColor::Normal))
-    , selector_border_color(std::make_pair(0x00AE42, (int) StateColor::Hovered),
-        std::make_pair(*wxWHITE, (int) StateColor::Normal))
+    , border_color(ThemeColor::Grey400)
+    , text_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
+        std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
+    , selector_border_color(std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
+        std::make_pair(ThemeColor::White, (int) StateColor::Normal))
     , selector_background_color(std::make_pair(0xEDFAF2, (int) StateColor::Checked),
-        std::make_pair(*wxWHITE, (int) StateColor::Normal))
+        std::make_pair(ThemeColor::White, (int) StateColor::Normal))
 {
 }
 
@@ -56,7 +57,7 @@ void DropDown::Create(wxWindow *parent, long style)
 {
     PopupWindow::Create(parent, wxPU_CONTAINS_CONTROLS);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    SetBackgroundColour(StateColor::darkModeColorFor(ThemeColor::White));
     state_handler.attach({&border_color, &text_color, &selector_border_color, &selector_background_color});
     state_handler.update_binds();
     if ((style & DD_NO_CHECK_ICON) == 0)
@@ -206,8 +207,8 @@ static void _DrawSplitItem(const wxWindow* w, wxDC& dc, wxString split_text, wxP
     // save dc
     auto pre_clr = dc.GetTextForeground();
     auto pre_pen = dc.GetPen();
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour(172, 172, 172)));
-    dc.SetPen(StateColor::darkModeColorFor(wxColour(166, 169, 170)));
+    dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::Grey450));
+    dc.SetPen(StateColor::darkModeColorFor(ThemeColor::Grey450));
     // miner font
     auto font = w->GetFont();
     font.SetPointSize(font.GetPointSize() - 3);
@@ -309,7 +310,7 @@ void DropDown::render(wxDC &dc)
         wxRect rect = {size.x - 6, -offset.y * size.y / height, 4,
                        size.y * size.y / height};
         dc.SetPen(wxPen(border_color.defaultColor()));
-        dc.SetBrush(wxBrush(*wxLIGHT_GREY));
+        dc.SetBrush(wxBrush(ThemeColor::Grey300));
         dc.DrawRoundedRectangle(rect, 2);
         rcContent.width -= 6;
     }
@@ -401,7 +402,7 @@ void DropDown::render(wxDC &dc)
             }
             pt.y += (rcContent.height - textSize.y) / 2;
             dc.SetFont(GetFont());
-            dc.SetTextForeground(is_dimmed ? wxColour(0xCE, 0xCE, 0xCE) : text_color.colorForStates(states2));
+            dc.SetTextForeground(is_dimmed ? ThemeColor::Grey400 : text_color.colorForStates(states2));
             dc.DrawText(text, pt);
             if (group.IsEmpty() && !item.group.IsEmpty()) {
                 auto szBmp = arrow_bitmap.GetBmpSize();

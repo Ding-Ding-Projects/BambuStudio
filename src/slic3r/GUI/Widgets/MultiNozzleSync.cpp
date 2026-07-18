@@ -1,4 +1,5 @@
 #include "MultiNozzleSync.hpp"
+#include "StateColor.hpp"
 #include "../GUI_App.hpp"
 #include "../DeviceCore/DevConfigUtil.h"
 #include "../DeviceCore/DevManager.h"
@@ -16,12 +17,12 @@ static const int RightExtruderIdx = 1;
 ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeType volume_type, int standard_count, int highflow_count, int max_nozzle_count, bool force_no_zero)
     : GUI::DPIDialog(parent, wxID_ANY, "Set nozzle count", wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX), m_volume_type(volume_type)
 {
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(ThemeColor::White);
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     wxPanel *content = new wxPanel(this);
-    content->SetBackgroundColour(*wxWHITE);
+    content->SetBackgroundColour(ThemeColor::White);
 
     wxBitmap icon        = create_scaled_bitmap("hotend_thumbnail", nullptr, FromDIP(60));
     auto    *nozzle_icon = new wxStaticBitmap(content, wxID_ANY, icon);
@@ -47,7 +48,7 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
 
         m_standard_choice = new wxChoice(content, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(100), -1), nozzle_choices);
         m_standard_choice->SetSelection(standard_count);
-        m_standard_choice->SetBackgroundColour(*wxWHITE);
+        m_standard_choice->SetBackgroundColour(ThemeColor::White);
         choice_sizer->Add(m_standard_choice, 0, wxLEFT | wxBOTTOM | wxRIGHT, FromDIP(10));
     }
 
@@ -58,12 +59,12 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
 
         m_highflow_choice = new wxChoice(content, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(100), -1), nozzle_choices);
         m_highflow_choice->SetSelection(highflow_count);
-        m_highflow_choice->SetBackgroundColour(*wxWHITE);
+        m_highflow_choice->SetBackgroundColour(ThemeColor::White);
         choice_sizer->Add(m_highflow_choice, 0, wxLEFT | wxBOTTOM | wxRIGHT, FromDIP(10));
     }
 
     m_error_label = new Label(this, "");
-    m_error_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#E14747")));
+    m_error_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Danger));
     m_error_label->SetFont(Label::Body_12);
     m_error_label->Hide();
 
@@ -115,12 +116,12 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
     content_sizer->Add(nozzle_icon, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(15));
     content_sizer->Add(choice_sizer, 0, wxALIGN_CENTRE_VERTICAL);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_confirm_btn = new Button(this, _L("Confirm"));
     m_confirm_btn->SetBackgroundColor(btn_bg_green);
-    m_confirm_btn->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+    m_confirm_btn->SetTextColor(StateColor::darkModeColorFor(ThemeColor::White));
     m_confirm_btn->SetMinSize(wxSize(FromDIP(68), FromDIP(23)));
     m_confirm_btn->SetMinSize(wxSize(FromDIP(68), FromDIP(23)));
     m_confirm_btn->SetCornerRadius(12);
@@ -190,7 +191,7 @@ void manuallySetNozzleCount(int extruder_id)
 ExtruderBadge::ExtruderBadge(wxWindow* parent) : wxPanel(parent)
 {
     wxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
-    SetBackgroundColour("#F8F8F8");
+    SetBackgroundColour(ThemeColor::Grey250);
     wxBitmap icon = create_scaled_bitmap("extruder_badge_none_selected", nullptr, FromDIP(90));
 
     auto extruder_label = new Label(this, _L("Extruder"));
@@ -331,14 +332,14 @@ HotEndTable::HotEndTable(wxWindow* parent) :  wxPanel(parent, wxID_ANY, wxDefaul
     Bind(wxEVT_PAINT, &HotEndTable::OnPaint, this);
     auto main_sizer = new wxBoxSizer(wxVERTICAL);
     auto label = new Label(this, _L("Induction Hotend Rack"));
-    label->SetBackgroundColour("#F8F8F8");
+    label->SetBackgroundColour(ThemeColor::Grey250);
 
     m_arow_nozzle_box = CreateNozzleBox({ 0,2,4 });
     m_brow_nozzle_box = CreateNozzleBox({ 1,3,5 });
     main_sizer->Add(label, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, FromDIP(5));
     main_sizer->Add(m_arow_nozzle_box, 0, wxLEFT | wxRIGHT, FromDIP(5));
     main_sizer->Add(m_brow_nozzle_box, 0, wxLEFT | wxRIGHT, FromDIP(5));
-    SetBackgroundColour("#F8F8F8");
+    SetBackgroundColour(ThemeColor::Grey250);
 
     SetSizer(main_sizer);
     Layout();
@@ -394,12 +395,14 @@ std::vector<int> HotEndTable::FilterHotEnds(const NozzleOption& option)
 
 void HotEndTable::MarkRelatedItems(const NozzleOption& option)
 {
+    // Pale green container tint (data-bearing selection fill; has its own dark pairing
+    // in gDarkColors) — deliberately NOT the BrandGreen accent: children draw dark text on it.
     const static StateColor bg_green(
         std::pair<wxColour, int>(wxColour("#DBFDE7"), StateColor::Normal)
     );
 
     const static StateColor bd_green(
-        std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     auto filtered_nozzles = FilterHotEnds(option);
     for (auto nozzle_id : filtered_nozzles) {
@@ -410,7 +413,7 @@ void HotEndTable::MarkRelatedItems(const NozzleOption& option)
         item->SetBackgroundColor(bg_green);
         item->SetBorderColor(bd_green);
         for (auto child : item->GetChildren()) {
-            child->SetBackgroundColour("#DBFDE7");
+            child->SetBackgroundColour(wxColour("#DBFDE7"));
         }
     }
     wxGetApp().UpdateDarkUIWin(this);
@@ -418,8 +421,8 @@ void HotEndTable::MarkRelatedItems(const NozzleOption& option)
 
 void HotEndTable::UnMarkRelatedItems(const NozzleOption& option)
 {
-    static const wxColour bg_color("#EEEEEE");
-    static const wxColour bd_color("#CECECE");
+    static const wxColour bg_color(ThemeColor::Grey300);
+    static const wxColour bd_color(ThemeColor::Grey400);
     const static StateColor bg_green(
         std::pair<wxColour, int>(bg_color, StateColor::Normal)
     );
@@ -447,16 +450,16 @@ void HotEndTable::UnMarkRelatedItems(const NozzleOption& option)
 StaticBox* HotEndTable::CreateNozzleBox(const std::vector<int>& nozzle_indices)
 {
     StaticBox* nozzle_box = new StaticBox(this);
-    nozzle_box->SetBackgroundColour("#F8F8F8");
-    nozzle_box->SetBorderColorNormal("#F8F8F8");
+    nozzle_box->SetBackgroundColour(ThemeColor::Grey250);
+    nozzle_box->SetBorderColorNormal(ThemeColor::Grey250);
     nozzle_box->SetCornerRadius(0);
 
     wxSizer* h_sizer = new wxBoxSizer(wxHORIZONTAL);
     for (auto idx : nozzle_indices) {
         wgtDeviceNozzleRackNozzleItem* nozzle_item = new wgtDeviceNozzleRackNozzleItem(nozzle_box, idx);
-        nozzle_item->SetBackgroundColorNormal("#EEEEEE");
+        nozzle_item->SetBackgroundColorNormal(ThemeColor::Grey300);
         for (auto& child : nozzle_item->GetChildren())
-            child->SetBackgroundColour("#EEEEEE");
+            child->SetBackgroundColour(ThemeColor::Grey300);
         m_nozzle_items[idx] = nozzle_item;
         h_sizer->Add(nozzle_item, 0, wxALL, FromDIP(8));
     }
@@ -477,7 +480,7 @@ void HotEndTable::OnPaint(wxPaintEvent& evt)
     wxPaintDC dc(this);
     wxSize size = GetClientSize();
 
-    dc.SetPen(wxPen(wxColour("#EEEEEE"), 2));
+    dc.SetPen(wxPen(ThemeColor::Grey400, 2));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, size.GetWidth()-2, size.GetHeight()-2, 5);
 }
@@ -624,18 +627,18 @@ MultiNozzleStatusTable::MultiNozzleStatusTable(wxWindow* parent): wxPanel(parent
 {
     m_badge = new ExtruderBadge(this);
 
-    SetBackgroundColour(wxColour("#F8F8F8"));
+    SetBackgroundColour(ThemeColor::Grey250);
 
     auto main_sizer    = new wxBoxSizer(wxVERTICAL);
 
     auto title_panel = new wxPanel(this);
-    title_panel->SetBackgroundColour(0xEEEEEE);
+    title_panel->SetBackgroundColour(ThemeColor::Grey300);
     auto title_sizer = new wxBoxSizer(wxHORIZONTAL);
     title_panel->SetSizer(title_sizer);
 
     Label* static_text = new Label(this, _L("Nozzle Info"));
     static_text->SetFont(Label::Head_13);
-    static_text->SetBackgroundColour(0xEEEEEE);
+    static_text->SetBackgroundColour(ThemeColor::Grey300);
 
     title_sizer->Add(static_text, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
@@ -701,7 +704,7 @@ Slic3r::GUI::MultiNozzleSyncDialog::MultiNozzleSyncDialog(wxWindow* parent,std::
 {
     m_nozzle_rack = rack;
     wxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
 
     m_tips = new Label(this, "");
     wxBoxSizer* label_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -728,18 +731,18 @@ Slic3r::GUI::MultiNozzleSyncDialog::MultiNozzleSyncDialog(wxWindow* parent,std::
     m_confirm_btn = new Button(this, _L("Confirm"), "", 0, 0, wxID_CANCEL);
 
     m_caution = new Label(this, _L("Caution: Mixing nozzle diameters in one print is not supported. If the selected size is only on one extruder, single-extruder printing will be enforced."));
-    m_caution->SetForegroundColour("#909090");
+    m_caution->SetForegroundColour(ThemeColor::TextDisabled);
     main_sizer->Add(m_caution, 0, wxLEFT | wxRIGHT, FromDIP(25));
 
     StateColor btn_bg_green(
-        std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
 
     StateColor btn_text_green(
-        std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
 
 
