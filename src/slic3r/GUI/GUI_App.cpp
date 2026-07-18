@@ -3789,24 +3789,24 @@ const wxColour GUI_App::get_label_default_clr_modified()
 void GUI_App::init_label_colours()
 {
     bool is_dark_mode = dark_mode();
-    m_color_label_modified = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::Warning) : ThemeColor::Warning;
-    m_color_label_sys      = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextSecondary) : ThemeColor::TextSecondary;
+    StateColor::SetDarkMode(is_dark_mode);
+    m_color_label_modified = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::Warning) : ThemeColor::Warning;
+    m_color_label_sys      = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextSecondary) : ThemeColor::TextSecondary;
 
 #ifdef _WIN32
-    m_color_label_default           = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : m_color_label_sys; // wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
-    m_color_highlight_label_default = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : wxSystemSettings::GetColour(/*wxSYS_COLOUR_HIGHLIGHTTEXT*/wxSYS_COLOUR_WINDOWTEXT);
-    m_color_highlight_default       = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::Grey400) : wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
-    m_color_hovered_btn_label       = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : ThemeColor::TextPrimary;
-    m_color_default_btn_label       = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : ThemeColor::TextPrimary;
-    m_color_selected_btn_bg         = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::Grey400) : ThemeColor::Grey400;
+    m_color_label_default           = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : m_color_label_sys; // wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+    m_color_highlight_label_default = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : wxSystemSettings::GetColour(/*wxSYS_COLOUR_HIGHLIGHTTEXT*/wxSYS_COLOUR_WINDOWTEXT);
+    m_color_highlight_default       = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::Grey400) : wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
+    m_color_hovered_btn_label       = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : ThemeColor::TextPrimary;
+    m_color_default_btn_label       = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : ThemeColor::TextPrimary;
+    m_color_selected_btn_bg         = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::Grey400) : ThemeColor::Grey400;
 #elif __linux__
 // ubuntu dark mode issue. https://github.com/bambulab/BambuStudio/issues/4943
-    m_color_label_default           = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : m_color_label_sys;
+    m_color_label_default           = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::TextPrimary) : m_color_label_sys;
 #else
     m_color_label_default = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
 #endif
-    m_color_window_default          = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::White) : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    StateColor::SetDarkMode(is_dark_mode);
+    m_color_window_default          = is_dark_mode ? StateColor::darkModeColorFor(ThemeColor::White) : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
 }
 
 void GUI_App::update_label_colours_from_appconfig()
