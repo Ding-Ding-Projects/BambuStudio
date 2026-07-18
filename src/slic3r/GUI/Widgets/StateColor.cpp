@@ -6,47 +6,49 @@ static bool gDarkMode = false;
 static bool operator<(wxColour const &l, wxColour const &r) { return l.GetRGBA() < r.GetRGBA(); }
 
 static std::map<wxColour, wxColour> gDarkColors{
-    {ThemeColor::BrandGreen,  "#21A452"},/*green*/
-    {ThemeColor::BrandGreenPressed, "#1C8A46"},
-    {ThemeColor::BrandGreenHovered, "#37B865"},
+    {ThemeColor::BrandGreen,  "#8bd89b"},/*green*/
+    {ThemeColor::BrandGreenPressed, "#7ac98a"},
+    {ThemeColor::BrandGreenHovered, "#9ee0ad"},
     // {"#1F8EEA", "#2778D2"},/*blue*/ -- dead, only used by disabled Notebook.cpp:80 OnPaint
-    {ThemeColor::Warning,     "#D15B00"},
-    {ThemeColor::Danger,      "#BB2A3A"},/*red*/
+    {ThemeColor::Warning,     "#ffb77c"},
+    {ThemeColor::Danger,      "#ffb4ab"},/*red*/
     {ThemeColor::Link,        "#479EF5"},/*blue*/
-    {ThemeColor::TextPrimary, "#EFEFF0"},/*black*/
-    {"#2C2C2E", "#B3B3B4"},/*black*/
-    {"#E5E7EB", "#374151"},/*gray200 -> gray800*/
-    {"#6B6B6B", "#818183"},/*gray -> */
-    {"#ACACAC", "#54545A"},/*gray -> */
-    {ThemeColor::Grey300,     "#4C4C55"},/*gray -> */
-    {ThemeColor::Grey350,     "#3E3E45"},
-    {ThemeColor::TextSecondary, "#E5E5E4"}, // #323A3D
-    {ThemeColor::TextDisabled,  "#5A5A5A"}, // #909090
-    {ThemeColor::White,       "#2D2D31"},
-    {ThemeColor::Grey200,     "#36363C"},
-    {ThemeColor::Grey250,     "#36363B"},
-    {"#3B4446", "#2D2D30"},
-    {"#CECECE", "#54545B"},
-    {"#DBFDD5", "#3B3B40"},
-    {"#000000", "#FFFFFE"},
-    {"#F4F4F4", "#36363D"},
-    {"#F7F7F7", "#333337"},
-    {"#DBDBDB", "#4A4A51"},
-    {"#EDFAF2", "#283232"},
-    {"#323A3C", "#E5E5E6"},
-    {"#6B6B6A", "#B3B3B5"},
-    {"#303A3C", "#E5E5E5"},
-    {"#FEFFFF", "#242428"},
-    {ThemeColor::Grey450,     "#2D2D29"}, // #A6A9AA
-    {"#363636", "#B2B3B5"},
-    {"#F0F0F1", "#404040"},
-    {"#9E9E9E", "#53545A"},
-    {"#D7E8DE", "#1F2B27"},
-    {"#2B3436", "#808080"},
-    {"#ABABAB", "#ABABAB"},
-    {"#D9D9D9", "#2D2D32"},
-    {"#EBF9F0", "#293F34"},
-    {"#DBFDE7", "#1F3529"}
+    {ThemeColor::TextPrimary, "#e8e7ee"},/*black*/
+    {ThemeColor::TextSecondary, "#cdced8"},
+    {ThemeColor::TextMuted,     "#a8a9b3"},
+    {ThemeColor::TextDisabled,  "#6a6b73"},
+    {ThemeColor::White,       "#202127"},
+    {ThemeColor::Grey200,     "#202127"},
+    {ThemeColor::Grey250,     "#25262b"},
+    {ThemeColor::Grey300,     "#2f3036"},/*gray -> */
+    {ThemeColor::Grey350,     "#393a41"},
+    {ThemeColor::Grey400,     "#4a4c54"},
+    {ThemeColor::Grey450,     "#94959f"},
+    {"#2C2C2E", "#e8e7ee"},/*black*/
+    {"#E5E7EB", "#393a41"},/*gray200 -> gray800*/
+    {"#6B6B6B", "#a8a9b3"},/*gray -> */
+    {"#ACACAC", "#94959f"},/*gray -> */
+    {"#3B4446", "#2f3036"},
+    {"#CECECE", "#4a4c54"},
+    {"#DBFDD5", "#095228"},
+    {"#000000", "#e8e7ee"},
+    {"#F4F4F4", "#202127"},
+    {"#F7F7F7", "#202127"},
+    {"#DBDBDB", "#4a4c54"},
+    {"#EDFAF2", "#095228"},
+    {"#323A3C", "#e8e7ee"},
+    {"#6B6B6A", "#a8a9b3"},
+    {"#303A3C", "#e8e7ee"},
+    {"#FEFFFF", "#1b1c21"},
+    {"#363636", "#e8e7ee"},
+    {"#F0F0F1", "#25262b"},
+    {"#9E9E9E", "#94959f"},
+    {"#D7E8DE", "#2b3a2f"},
+    {"#2B3436", "#cdced8"},
+    {"#ABABAB", "#94959f"},
+    {"#D9D9D9", "#393a41"},
+    {"#EBF9F0", "#095228"},
+    {"#DBFDE7", "#095228"}
     //{"#F0F0F0", "#4C4C54"},
 };
 

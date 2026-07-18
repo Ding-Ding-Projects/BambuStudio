@@ -24,11 +24,16 @@ wxFont Label::sysFont(int size, bool bold, std::string lang_code)
         face = wxString::FromUTF8("NanumGothic");
     }
     else {
-        face = wxString::FromUTF8("HarmonyOS Sans SC");
+        face = wxString::FromUTF8("Roboto");
     }
 
     wxFont font{size, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL, false, face};
     font.SetFaceName(face);
+    if (!font.IsOk() && lang_code != "ja" && lang_code != "ko") {
+        face = wxString::FromUTF8("HarmonyOS Sans SC");
+        font = wxFont{size, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL, false, face};
+        font.SetFaceName(face);
+    }
     if (!font.IsOk()) {
         font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
         if (bold) font.MakeBold();
@@ -65,6 +70,7 @@ void Label::initSysFont(std::string lang_code, bool load_font_resource)
 #ifdef __linux__
     if (load_font_resource) {
         const std::string& resource_path = Slic3r::resources_dir();
+        // TODO: Bundle Roboto TTFs in resources/fonts; HarmonyOS remains the fallback.
         wxString font_path = wxString::FromUTF8(resource_path+"/fonts/HarmonyOS_Sans_SC_Bold.ttf");
         bool result = wxFont::AddPrivateFont(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of HarmonyOS_Sans_SC_Bold returns %1%")%result;
