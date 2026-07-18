@@ -1,5 +1,6 @@
 #include "Button.hpp"
 #include "Label.hpp"
+#include "StateColor.hpp"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -30,14 +31,14 @@ Button::Button()
     : paddingSize(10, 8)
 {
     background_color = StateColor(
-        std::make_pair(0xF0F0F1, (int) StateColor::Disabled),
-        std::make_pair(0x37EE7C, (int) StateColor::Hovered | StateColor::Checked),
-        std::make_pair(0x00AE42, (int) StateColor::Checked),
+        std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
+        std::make_pair(ThemeColor::BrandGreenHovered, (int) StateColor::Hovered | StateColor::Checked),
+        std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Checked),
         std::make_pair(*wxLIGHT_GREY, (int) StateColor::Hovered),
-        std::make_pair(*wxWHITE, (int) StateColor::Normal));
+        std::make_pair(ThemeColor::White, (int) StateColor::Normal));
     text_color       = StateColor(
-        std::make_pair(*wxLIGHT_GREY, (int) StateColor::Disabled),
-        std::make_pair(*wxBLACK, (int) StateColor::Normal));
+        std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
+        std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal));
 }
 
 Button::Button(wxWindow* parent, wxString text, wxString icon, long style, int iconSize, wxWindowID btn_id)
