@@ -78,6 +78,7 @@
 #include "3DScene.hpp"
 #include "MainFrame.hpp"
 #include "slic3r/GUI/Widgets/WebView.hpp"
+#include "Widgets/StateColor.hpp"
 #include "Plater.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
@@ -326,7 +327,7 @@ public:
             wxMemoryDC memDC;
             memDC.SelectObject(bitmap);
             memDC.SetFont(m_action_font);
-            memDC.SetTextForeground(StateColor::darkModeColorFor(wxColour(144, 144, 144)));
+            memDC.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextDisabled));
             int width = bitmap.GetWidth();
             int text_height = memDC.GetTextExtent(text).GetHeight();
             int text_width = memDC.GetTextExtent(text).GetWidth();
@@ -363,13 +364,13 @@ public:
         int version_width = memDc.GetTextExtent(m_constant_text.version).GetWidth();
         int split_width = (width + title_width - version_width) / 2;
         wxRect title_rect(wxPoint(0, top_margin), wxPoint(split_width - text_padding, top_margin + title_height));
-        memDc.SetTextForeground(StateColor::darkModeColorFor(wxColour(38, 46, 48)));
+        memDc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextSecondary));
         memDc.SetFont(m_constant_text.title_font);
         memDc.DrawLabel(m_constant_text.title, title_rect, wxALIGN_RIGHT | wxALIGN_BOTTOM);
         //BBS align bottom of title and version text
         wxRect version_rect(wxPoint(split_width + text_padding, top_margin), wxPoint(width, top_margin + title_height - text_padding));
         memDc.SetFont(m_constant_text.version_font);
-        memDc.SetTextForeground(StateColor::darkModeColorFor(wxColor(134, 134, 134)));
+        memDc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextMuted));
         memDc.DrawLabel(m_constant_text.version, version_rect, wxALIGN_LEFT | wxALIGN_BOTTOM);
 
 #if BBL_INTERNAL_TESTING
@@ -406,7 +407,7 @@ public:
 
         wxMemoryDC memDC;
         memDC.SelectObject(new_bmp);
-        memDC.SetBrush(StateColor::darkModeColorFor(*wxWHITE));
+        memDC.SetBrush(StateColor::darkModeColorFor(ThemeColor::White));
         memDC.DrawRectangle(-1, -1, width + 2, height + 2);
         memDC.DrawBitmap(new_bmp, 0, 0, true);
         return new_bmp;
@@ -538,7 +539,7 @@ public:
             memDC.SelectObject(bitmap);
 
             memDC.SetFont(m_action_font);
-            memDC.SetTextForeground(wxColour(237, 107, 33));
+            memDC.SetTextForeground(ThemeColor::Warning);
             memDC.DrawText(text, int(m_scale * 60), m_action_line_y_position);
 
             memDC.SelectObject(wxNullBitmap);
@@ -603,7 +604,7 @@ public:
         memDc.DrawBitmap(logo_bmp, margin, margin, true);
 
         // draw the (white) labels inside of our black box (at the left of the splashscreen)
-        memDc.SetTextForeground(wxColour(255, 255, 255));
+        memDc.SetTextForeground(ThemeColor::White);
 
         memDc.SetFont(m_constant_text.title_font);
         memDc.DrawLabel(m_constant_text.title,   banner_rect, wxALIGN_TOP | wxALIGN_LEFT);
@@ -3777,34 +3778,34 @@ bool GUI_App::dark_mode()
 
 const wxColour GUI_App::get_label_default_clr_system()
 {
-    return dark_mode() ? wxColour(115, 220, 103) : wxColour(26, 132, 57);
+    return dark_mode() ? StateColor::darkModeColorFor(ThemeColor::BrandGreen) : ThemeColor::BrandGreen;
 }
 
 const wxColour GUI_App::get_label_default_clr_modified()
 {
-    return dark_mode() ? wxColour(253, 111, 40) : wxColour(252, 77, 1);
+    return dark_mode() ? StateColor::darkModeColorFor(ThemeColor::Warning) : ThemeColor::Warning;
 }
 
 void GUI_App::init_label_colours()
 {
     bool is_dark_mode = dark_mode();
-    m_color_label_modified = is_dark_mode ? wxColour("#F1754E") : wxColour("#F1754E");
-    m_color_label_sys      = is_dark_mode ? wxColour("#B2B3B5") : wxColour("#363636");
+    m_color_label_modified = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::Warning) : ThemeColor::Warning;
+    m_color_label_sys      = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextSecondary) : ThemeColor::TextSecondary;
 
 #ifdef _WIN32
-    m_color_label_default           = is_dark_mode ? wxColour(250, 250, 250) : m_color_label_sys; // wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
-    m_color_highlight_label_default = is_dark_mode ? wxColour(230, 230, 230): wxSystemSettings::GetColour(/*wxSYS_COLOUR_HIGHLIGHTTEXT*/wxSYS_COLOUR_WINDOWTEXT);
-    m_color_highlight_default       = is_dark_mode ? wxColour(78, 78, 78)   : wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
-    m_color_hovered_btn_label       = is_dark_mode ? wxColour(255, 255, 254) : wxColour(0,0,0);
-    m_color_default_btn_label       = is_dark_mode ? wxColour(255, 255, 254): wxColour(0,0,0);
-    m_color_selected_btn_bg         = is_dark_mode ? wxColour(84, 84, 91)   : wxColour(206, 206, 206);
+    m_color_label_default           = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : m_color_label_sys; // wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+    m_color_highlight_label_default = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : wxSystemSettings::GetColour(/*wxSYS_COLOUR_HIGHLIGHTTEXT*/wxSYS_COLOUR_WINDOWTEXT);
+    m_color_highlight_default       = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::Grey400) : wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
+    m_color_hovered_btn_label       = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : ThemeColor::TextPrimary;
+    m_color_default_btn_label       = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : ThemeColor::TextPrimary;
+    m_color_selected_btn_bg         = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::Grey400) : ThemeColor::Grey400;
 #elif __linux__
 // ubuntu dark mode issue. https://github.com/bambulab/BambuStudio/issues/4943
-    m_color_label_default           = is_dark_mode ? wxColour(250, 250, 250) : m_color_label_sys;
+    m_color_label_default           = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::TextPrimary) : m_color_label_sys;
 #else
     m_color_label_default = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
 #endif
-    m_color_window_default          = is_dark_mode ? wxColour(43, 43, 43)   : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+    m_color_window_default          = is_dark_mode ? StateColor::GetDarkMap().at(ThemeColor::White) : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
     StateColor::SetDarkMode(is_dark_mode);
 }
 
@@ -6504,7 +6505,7 @@ int GUI_App::GetSingleChoiceIndex(const wxString& message,
 {
 #ifdef _WIN32
     wxSingleChoiceDialog dialog(nullptr, message, caption, choices);
-    dialog.SetBackgroundColour(*wxWHITE);
+    dialog.SetBackgroundColour(ThemeColor::White);
     wxGetApp().UpdateDlgDarkUI(&dialog);
 
     dialog.SetSelection(initialSelection);

@@ -11,6 +11,7 @@
 #include "WebViewDialog.hpp"
 #include "PartPlate.hpp"
 #include "ReleaseNote.hpp"
+#include "Widgets/StateColor.hpp"
 
 #include <boost/log/trivial.hpp>
 
@@ -47,7 +48,7 @@ void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& it
 #ifdef __WINDOWS__
     dc.SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
 #else
-    dc.SetTextForeground(*wxWHITE);
+    dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
 #endif
 
     int textWidth = 0, textHeight = 0;
@@ -71,7 +72,7 @@ void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& it
 
 void BBLTopbarArt::DrawBackground(wxDC& dc, wxWindow* wnd, const wxRect& rect)
 {
-    dc.SetBrush(wxBrush(wxColour(38, 46, 48)));
+    dc.SetBrush(wxBrush(StateColor::darkModeColorFor(ThemeColor::Grey250)));
     wxRect clipRect = rect;
     clipRect.y -= 8;
     clipRect.height += 8;
@@ -168,7 +169,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
 #ifdef __WINDOWS__
     dc.SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
 #else
-    dc.SetTextForeground(*wxWHITE);
+    dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
 #endif
     if (item.GetState() & wxAUI_BUTTON_STATE_DISABLED)
     {
