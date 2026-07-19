@@ -40,16 +40,20 @@ The installer requests user-level privileges and uses a fixed per-user target. A
 payload is converted into explicit per-file `Delete` and deepest-directory-first `RMDir` commands.
 Uninstall therefore removes product-owned paths only, never uses recursive directory deletion, and
 leaves unknown paths and their non-empty parent directories intact. An ownership marker prevents
-installation over an unrelated non-empty directory. Upgrades run the prior ownership-scoped
-uninstaller first so obsolete product files do not survive. Source or live-destination reparse points
-and unsafe paths fail closed. Locked files preserve the uninstall registration and allow a retry.
+installation over an unrelated non-empty directory. Upgrades stage the prior ownership-scoped
+uninstaller in NSIS's private temporary directory and synchronously wait for its real cleanup and exit
+code, so obsolete product files do not survive or race the new extraction. An upgrade also refuses to
+continue if unknown paths remain after old-version cleanup. Source and live-destination file or
+directory reparse points, unsafe paths, and skipped extraction errors fail closed. Recovery metadata
+and an uninstaller are created before payload extraction, so a partial install remains removable and
+retryable. Locked files preserve the uninstall registration and allow a retry.
 Release checksums are generated from the exact artifact uploaded by the successful build. Fork
 releases do not automatically invoke the upstream WinGet or Homebrew publishing integrations.
 
 ## Verification
 
 The NSIS definition was compiled locally against the portable artifact from Windows CI run
-`29665576610`. The ownership generator emitted 6,740 file-delete commands and 276 non-recursive
-directory-removal commands, with no `RMDir /r`. 7-Zip identified a Unicode NSIS 3 archive, tested all
-6,743 files, and reported no errors. The resulting setup executable reports version `02.08.01.55`
-and remains intentionally unsigned.
+`29665576610`. The ownership generator emitted 7,016 live destination reparse checks, 6,740 total
+explicit file-delete commands, and 276 non-recursive directory-removal commands, with no `RMDir /r`.
+7-Zip identified a Unicode NSIS 3 archive, tested all 6,742 entries, and reported no errors. The
+resulting setup executable reports version `02.08.01.55` and remains intentionally unsigned.

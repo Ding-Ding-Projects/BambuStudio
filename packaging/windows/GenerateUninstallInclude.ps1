@@ -63,6 +63,12 @@ foreach ($directory in @($directories | Sort-Object Depth, RelativePath)) {
     $literalPath = ConvertTo-NsisLiteral -RelativePath $directory.RelativePath
     $lines.Add(('  !insertmacro AssertNotReparse "${{PRODUCT_INSTALL_DIR}}\{0}"' -f $literalPath))
 }
+foreach ($file in @($entries | Where-Object { -not $_.PSIsContainer } | Sort-Object FullName)) {
+    $relativePath = [System.IO.Path]::GetRelativePath($payloadRoot, $file.FullName).Replace('/', '\')
+    $literalPath = ConvertTo-NsisLiteral -RelativePath $relativePath
+    $lines.Add(('  !insertmacro AssertNotReparse "${{PRODUCT_INSTALL_DIR}}\{0}"' -f $literalPath))
+}
+$lines.Add('  !insertmacro AssertNotReparse "${PRODUCT_INSTALL_DIR}\Uninstall.exe"')
 $lines.Add('!macroend')
 $lines.Add('')
 

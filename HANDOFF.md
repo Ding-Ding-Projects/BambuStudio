@@ -29,10 +29,11 @@ No valid remote branch change remains to merge.
 - Windows compiled, installed, packaged, and uploaded the portable artifact successfully.
 - The portable artifact contains the executable, sibling DLLs, resources, and Roboto Regular/Medium/
   Bold.
-- The native NSIS definition compiled locally from that artifact; archive validation covered 6,743
-  files with no errors.
-- The hardened ownership generator produced 6,740 explicit file deletions and 276 non-recursive
-  directory removals. The generated script contains no recursive removal command.
+- The native NSIS definition compiled locally from that artifact; archive validation covered 6,742
+  entries with no errors.
+- The hardened ownership generator produced 7,016 live destination reparse checks, 6,740 total
+  explicit file deletions, and 276 non-recursive directory removals. The generated script contains no
+  recursive removal command.
 - Release tags include the workflow run number and attempt. Only the current `master` tip is marked
   latest; superseded and non-default refs remain non-latest. Build jobs have read-only repository
   permission and receive no inherited secrets.

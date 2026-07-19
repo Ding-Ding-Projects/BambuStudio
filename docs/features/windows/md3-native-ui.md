@@ -39,7 +39,7 @@ install directory and are not removed by uninstall.
 
 - Windows build job for commit `e0f6b2f92`: successful native compile, install, package, and artifact
   upload in GitHub Actions run `29665576610`.
-- Portable artifact: 6,743 files; `bambu-studio.exe`, `BambuStudio.dll`, resources, and all three
+- Portable payload: 6,739 files; `bambu-studio.exe`, `BambuStudio.dll`, resources, and all three
   Roboto TTF files present.
 - The cross-translation-unit `wxColour` comparator regression was fixed by keeping palette lookup
   inside `StateColor.cpp`; Windows CI passed after the fix.

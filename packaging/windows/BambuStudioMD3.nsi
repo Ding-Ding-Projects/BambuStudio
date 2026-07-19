@@ -55,6 +55,7 @@ UninstallIcon "${INSTALLER_ICON}"
 BrandingText "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 SetCompressor /SOLID lzma
 SetOverwrite on
+AllowSkipFiles off
 
 VIProductVersion "${FILE_VERSION}"
 VIAddVersionKey /LANG=1033 "ProductName" "${PRODUCT_NAME}"
@@ -92,10 +93,33 @@ Section "Bambu Studio MD3" SEC_MAIN
   ReadRegStr $0 HKCU "${PRODUCT_REG_KEY}" "InstallerId"
   ${If} $0 == "${PRODUCT_INSTALLER_ID}"
     ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
-      ExecWait '"${PRODUCT_INSTALL_DIR}\Uninstall.exe" /S' $1
+      ; NSIS uninstallers normally return from their copy stub before the temp
+      ; child finishes. Copy it ourselves, then _?= disables the second copy so
+      ; ExecWait observes the real cleanup and exit code.
+      InitPluginsDir
+      ClearErrors
+      CopyFiles /SILENT "${PRODUCT_INSTALL_DIR}\Uninstall.exe" "$PLUGINSDIR\BambuStudioMD3-Previous-Uninstall.exe"
+      ${If} ${Errors}
+        SetErrorLevel 2
+        MessageBox MB_ICONSTOP|MB_OK "The previous Bambu Studio MD3 uninstaller could not be staged safely. No files were changed." /SD IDOK
+        Abort
+      ${EndIf}
+
+      ClearErrors
+      ExecWait '"$PLUGINSDIR\BambuStudioMD3-Previous-Uninstall.exe" /S _?=${PRODUCT_INSTALL_DIR}' $1
+      ${If} ${Errors}
+        StrCpy $1 2
+      ${EndIf}
+      Delete "$PLUGINSDIR\BambuStudioMD3-Previous-Uninstall.exe"
+
       ${If} $1 != 0
         SetErrorLevel 2
         MessageBox MB_ICONSTOP|MB_OK "The previous Bambu Studio MD3 installation could not be removed. Close the application and retry. No new files were installed." /SD IDOK
+        Abort
+      ${EndIf}
+      ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
+        SetErrorLevel 2
+        MessageBox MB_ICONSTOP|MB_OK "Unknown paths remain in the previous Bambu Studio MD3 directory. The old application was removed, but the new version was not installed. Move those paths elsewhere and retry." /SD IDOK
         Abort
       ${EndIf}
     ${ElseIf} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
@@ -116,16 +140,33 @@ Section "Bambu Studio MD3" SEC_MAIN
   ; per-user, and only an empty or marker-owned directory is accepted.
   !insertmacro BambuMD3AssertDestinationPaths
   SetOutPath "${PRODUCT_INSTALL_DIR}"
-  File /r "${PAYLOAD_DIR}\*.*"
 
+  ; Establish a cleanup-capable partial-install state before extraction. If a
+  ; write fails or the user cancels, retrying the installer (or running the
+  ; registered uninstaller) can safely remove every owned partial path.
+  ClearErrors
   WriteUninstaller "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
+  IfErrors install_bootstrap_failed
 
+  ClearErrors
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallDir" "${PRODUCT_INSTALL_DIR}"
+  WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "DisplayName" "${PRODUCT_NAME} (incomplete installation)"
+  WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "InstallLocation" "${PRODUCT_INSTALL_DIR}"
+  WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "UninstallString" '"${PRODUCT_INSTALL_DIR}\Uninstall.exe"'
+  WriteRegDWORD HKCU "${PRODUCT_UNINSTALL_KEY}" "NoModify" 1
+  WriteRegDWORD HKCU "${PRODUCT_UNINSTALL_KEY}" "NoRepair" 1
+  IfErrors install_bootstrap_failed
+
+  ClearErrors
+  File /r "${PAYLOAD_DIR}\*.*"
+  IfErrors install_payload_failed
+
+  ClearErrors
   CreateDirectory "$SMPROGRAMS\Bambu Studio MD3"
   CreateShortcut "$SMPROGRAMS\Bambu Studio MD3\Bambu Studio MD3.lnk" "${PRODUCT_INSTALL_DIR}\${PRODUCT_EXE}" "" "${PRODUCT_INSTALL_DIR}\${PRODUCT_EXE}" 0
   CreateShortcut "$SMPROGRAMS\Bambu Studio MD3\Uninstall Bambu Studio MD3.lnk" "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
 
-  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
-  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallDir" "${PRODUCT_INSTALL_DIR}"
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "DisplayName" "${PRODUCT_NAME}"
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
@@ -134,6 +175,30 @@ Section "Bambu Studio MD3" SEC_MAIN
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "UninstallString" '"${PRODUCT_INSTALL_DIR}\Uninstall.exe"'
   WriteRegDWORD HKCU "${PRODUCT_UNINSTALL_KEY}" "NoModify" 1
   WriteRegDWORD HKCU "${PRODUCT_UNINSTALL_KEY}" "NoRepair" 1
+  IfErrors install_registration_failed
+  SetErrorLevel 0
+  Goto install_done
+
+install_bootstrap_failed:
+  Delete "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
+  DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
+  DeleteRegKey HKCU "${PRODUCT_REG_KEY}"
+  RMDir "${PRODUCT_INSTALL_DIR}"
+  SetErrorLevel 2
+  MessageBox MB_ICONSTOP|MB_OK "Bambu Studio MD3 could not create its recovery metadata. No application payload was installed." /SD IDOK
+  Abort
+
+install_payload_failed:
+  SetErrorLevel 2
+  MessageBox MB_ICONSTOP|MB_OK "Bambu Studio MD3 could not extract every application file. The recovery uninstaller was preserved; retry this installer or remove the incomplete installation from Windows Settings." /SD IDOK
+  Abort
+
+install_registration_failed:
+  SetErrorLevel 2
+  MessageBox MB_ICONSTOP|MB_OK "Bambu Studio MD3 files were installed, but Windows registration did not complete. The recovery uninstaller was preserved in the install directory." /SD IDOK
+  Abort
+
+install_done:
 SectionEnd
 
 Section "Uninstall"
