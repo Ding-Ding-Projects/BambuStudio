@@ -32,7 +32,21 @@ RequestExecutionLevel user
 !define PRODUCT_REG_KEY "Software\codingmachineedge\BambuStudioMD3"
 !define PRODUCT_PREF_KEY "Software\codingmachineedge\BambuStudioMD3Preferences"
 !define PRODUCT_UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\BambuStudioMD3"
-!define PRODUCT_INSTALL_DIR "$LOCALAPPDATA\Programs\Bambu Studio MD3"
+!ifndef PRODUCT_INSTALL_ROOT
+  !define PRODUCT_INSTALL_ROOT "$LOCALAPPDATA"
+!endif
+!ifndef PRODUCT_PROGRAMS_DIR
+  !define PRODUCT_PROGRAMS_DIR "${PRODUCT_INSTALL_ROOT}\Programs"
+!endif
+!ifndef PRODUCT_INSTALL_DIR
+  !define PRODUCT_INSTALL_DIR "${PRODUCT_PROGRAMS_DIR}\Bambu Studio MD3"
+!endif
+!ifndef PRODUCT_SHORTCUT_ROOT
+  !define PRODUCT_SHORTCUT_ROOT "$SMPROGRAMS"
+!endif
+!ifndef PRODUCT_SHORTCUT_DIR
+  !define PRODUCT_SHORTCUT_DIR "${PRODUCT_SHORTCUT_ROOT}\Bambu Studio MD3"
+!endif
 
 Var LanguageMode
 Var LanguageModeDialog
@@ -51,7 +65,7 @@ Var LanguageModeBilingual
 !macroend
 
 !macro AssertNotReparse PATH
-  System::Call 'kernel32::GetFileAttributesW(w "${PATH}") i.r8'
+  System::Call 'kernel32::GetFileAttributesW(w "${PATH}") i.R8'
   ${If} $R8 != -1
     IntOp $R9 $R8 & 0x400
     ${If} $R9 != 0
@@ -144,7 +158,7 @@ Function LanguageModePageCreate
   Pop $LanguageModeEnglish
   ${NSD_CreateRadioButton} 8u 60u 92% 14u "廣東話（香港，預覽版）"
   Pop $LanguageModeCantonese
-  ${NSD_CreateRadioButton} 8u 82u 92% 14u "English + 廣東話（香港）"
+  ${NSD_CreateRadioButton} 8u 82u 92% 14u "English + 廣東話（香港，預覽版）"
   Pop $LanguageModeBilingual
   ${NSD_CreateLabel} 8u 108u 92% 30u "You can change this later in Preferences. Existing Bambu Studio locales remain available there.$\r$\n之後可以喺偏好設定更改；其他現有語言亦會保留。"
   Pop $0
@@ -196,7 +210,30 @@ Section "Bambu Studio MD3" SEC_MAIN
   ; first removes files that no longer exist in the new payload.
   ReadRegStr $0 HKCU "${PRODUCT_REG_KEY}" "InstallerId"
   ${If} $0 == "${PRODUCT_INSTALLER_ID}"
-    ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
+    ReadRegStr $2 HKCU "${PRODUCT_REG_KEY}" "RecoveryState"
+    ${If} $2 == "bootstrap_cleanup"
+      ; A prior bootstrap could not remove a partial Uninstall.exe. The
+      ; ownership marker makes this retryable without adopting unknown paths.
+      ClearErrors
+      Delete "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
+      ${If} ${Errors}
+        SetErrorLevel 2
+        !insertmacro ShowLanguageStop \
+          "A partial Bambu Studio MD3 recovery file is still in use. Close security tools using it and retry this installer." \
+          "部分 Bambu Studio MD3 復原檔案仍然使用緊。請關閉使用緊佢嘅保安工具，再重試安裝。"
+        Abort
+      ${EndIf}
+      ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
+        SetErrorLevel 2
+        !insertmacro ShowLanguageStop \
+          "Unknown paths remain beside a partial Bambu Studio MD3 recovery file. Move those paths elsewhere and retry." \
+          "部分 Bambu Studio MD3 復原檔案旁邊仍有未知路徑。請將嗰啲路徑移去其他位置再試。"
+        Abort
+      ${EndIf}
+      RMDir "${PRODUCT_INSTALL_DIR}"
+      DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
+      DeleteRegKey HKCU "${PRODUCT_REG_KEY}"
+    ${ElseIf} ${FileExists} "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
       ; NSIS uninstallers normally return from their copy stub before the temp
       ; child finishes. Copy it ourselves, then _?= disables the second copy so
       ; ExecWait observes the real cleanup and exit code.
@@ -253,14 +290,43 @@ Section "Bambu Studio MD3" SEC_MAIN
   ; Recheck after any prior uninstaller completed. The target is fixed and
   ; per-user, and only an empty or marker-owned directory is accepted.
   !insertmacro BambuMD3AssertDestinationPaths
+  ${If} ${FileExists} "${PRODUCT_SHORTCUT_DIR}\*"
+    SetErrorLevel 2
+    !insertmacro ShowLanguageStop \
+      "The Bambu Studio MD3 Start menu directory contains unknown paths. No shortcuts or application files were changed." \
+      "Bambu Studio MD3 開始功能表資料夾有未知路徑。未有變更捷徑或者應用程式檔案。"
+    Abort
+  ${EndIf}
   SetOutPath "${PRODUCT_INSTALL_DIR}"
 
   ; Establish a cleanup-capable partial-install state before extraction. If a
   ; write fails or the user cancels, retrying the installer (or running the
   ; registered uninstaller) can safely remove every owned partial path.
   ClearErrors
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallDir" "${PRODUCT_INSTALL_DIR}"
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "LanguageMode" "$LanguageMode"
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "RecoveryState" "bootstrap_cleanup"
+  IfErrors install_bootstrap_metadata_failed
+
+  ClearErrors
   WriteUninstaller "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
   IfErrors install_bootstrap_failed
+
+  ; CI-only failure injection: hold the just-created recovery file without
+  ; delete sharing, then exercise the ownership-preserving failure path. This
+  ; define is never used for the published installer.
+  !ifdef TEST_FORCE_BOOTSTRAP_CLEANUP_FAILURE
+    System::Call 'kernel32::CreateFileW(w "${PRODUCT_INSTALL_DIR}\Uninstall.exe", i 0x80000000, i 0, p 0, i 3, i 0x80, p 0) p.R7'
+    ${If} $R7 == -1
+      ; Make a failure to establish the CI fixture distinguishable from the
+      ; cleanup failure that the fixture is intended to prove.
+      WriteRegStr HKCU "${PRODUCT_REG_KEY}" "RecoveryState" "bootstrap_test_setup_failed"
+      SetErrorLevel 2
+      Abort
+    ${EndIf}
+    Goto install_bootstrap_failed
+  !endif
 
   ClearErrors
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
@@ -275,15 +341,18 @@ Section "Bambu Studio MD3" SEC_MAIN
   WriteRegDWORD HKCU "${PRODUCT_UNINSTALL_KEY}" "NoModify" 1
   WriteRegDWORD HKCU "${PRODUCT_UNINSTALL_KEY}" "NoRepair" 1
   IfErrors install_bootstrap_failed
+  ClearErrors
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "RecoveryState" "ready"
+  IfErrors install_bootstrap_failed
 
   ClearErrors
   File /r "${PAYLOAD_DIR}\*.*"
   IfErrors install_payload_failed
 
   ClearErrors
-  CreateDirectory "$SMPROGRAMS\Bambu Studio MD3"
-  CreateShortcut "$SMPROGRAMS\Bambu Studio MD3\Bambu Studio MD3.lnk" "${PRODUCT_INSTALL_DIR}\${PRODUCT_EXE}" "" "${PRODUCT_INSTALL_DIR}\${PRODUCT_EXE}" 0
-  CreateShortcut "$SMPROGRAMS\Bambu Studio MD3\Uninstall Bambu Studio MD3.lnk" "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
+  CreateDirectory "${PRODUCT_SHORTCUT_DIR}"
+  CreateShortcut "${PRODUCT_SHORTCUT_DIR}\Bambu Studio MD3.lnk" "${PRODUCT_INSTALL_DIR}\${PRODUCT_EXE}" "" "${PRODUCT_INSTALL_DIR}\${PRODUCT_EXE}" 0
+  CreateShortcut "${PRODUCT_SHORTCUT_DIR}\Uninstall Bambu Studio MD3.lnk" "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
 
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "DisplayName" "${PRODUCT_NAME}"
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
@@ -298,14 +367,48 @@ Section "Bambu Studio MD3" SEC_MAIN
   Goto install_done
 
 install_bootstrap_failed:
+  ClearErrors
   Delete "${PRODUCT_INSTALL_DIR}\Uninstall.exe"
+  ${If} ${Errors}
+    ; Keep the ownership marker and recovery state so a later installer can
+    ; safely retry deletion instead of treating the partial file as unowned.
+    DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallDir" "${PRODUCT_INSTALL_DIR}"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "LanguageMode" "$LanguageMode"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "RecoveryState" "bootstrap_cleanup"
+    SetErrorLevel 2
+    !insertmacro ShowLanguageStop \
+      "Bambu Studio MD3 could not remove a partial recovery file. Its ownership marker was preserved; close security tools using the file and retry this installer." \
+      "Bambu Studio MD3 無法移除部分復原檔案。擁有權標記已保留；請關閉使用緊檔案嘅保安工具，再重試安裝。"
+    Abort
+  ${EndIf}
+  ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
+    DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "RecoveryState" "bootstrap_cleanup"
+    SetErrorLevel 2
+    !insertmacro ShowLanguageStop \
+      "Bambu Studio MD3 could not clean its partial recovery directory. Its ownership marker was preserved; remove unknown paths and retry." \
+      "Bambu Studio MD3 無法清理部分復原資料夾。擁有權標記已保留；請移除未知路徑再試。"
+    Abort
+  ${EndIf}
+  RMDir "${PRODUCT_INSTALL_DIR}"
+  DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
+  DeleteRegKey HKCU "${PRODUCT_REG_KEY}"
+  SetErrorLevel 2
+  !insertmacro ShowLanguageStop \
+    "Bambu Studio MD3 could not create its recovery metadata. No application payload was installed." \
+    "Bambu Studio MD3 無法建立復原資料。未有安裝應用程式檔案。"
+  Abort
+
+install_bootstrap_metadata_failed:
   DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
   DeleteRegKey HKCU "${PRODUCT_REG_KEY}"
   RMDir "${PRODUCT_INSTALL_DIR}"
   SetErrorLevel 2
   !insertmacro ShowLanguageStop \
-    "Bambu Studio MD3 could not create its recovery metadata. No application payload was installed." \
-    "Bambu Studio MD3 無法建立復原資料。未有安裝應用程式檔案。"
+    "Bambu Studio MD3 could not establish its ownership metadata. No application payload was installed." \
+    "Bambu Studio MD3 無法建立擁有權資料。未有安裝應用程式檔案。"
   Abort
 
 install_payload_failed:
@@ -362,9 +465,9 @@ Section "Uninstall"
   ; non-empty parent directories, while owned empty directories are removed.
   !insertmacro BambuMD3RemovePayloadDirectories
 
-  Delete "$SMPROGRAMS\Bambu Studio MD3\Bambu Studio MD3.lnk"
-  Delete "$SMPROGRAMS\Bambu Studio MD3\Uninstall Bambu Studio MD3.lnk"
-  RMDir "$SMPROGRAMS\Bambu Studio MD3"
+  Delete "${PRODUCT_SHORTCUT_DIR}\Bambu Studio MD3.lnk"
+  Delete "${PRODUCT_SHORTCUT_DIR}\Uninstall Bambu Studio MD3.lnk"
+  RMDir "${PRODUCT_SHORTCUT_DIR}"
 
   DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
   DeleteRegKey HKCU "${PRODUCT_REG_KEY}"

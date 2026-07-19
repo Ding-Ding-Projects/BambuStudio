@@ -714,6 +714,13 @@ if (UNIX AND NOT APPLE)
     )
 endif ()
 
+if (WIN32)
+    list(APPEND SLIC3R_GUI_SOURCES
+        GUI/WindowsNativeVisualSmoke.cpp
+        GUI/WindowsNativeVisualSmoke.hpp
+    )
+endif ()
+
 add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
 
 if (TARGET device_page_build)

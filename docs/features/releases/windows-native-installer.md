@@ -20,9 +20,13 @@ unknown path remains after old cleanup, the old application has been removed but
 not installed; the user must move that path and retry.
 
 The installer creates recovery metadata and an uninstaller before extracting the application
-payload. Extraction or final-registration failures preserve enough owned state for retry or removal.
-A locked owned file causes uninstall to fail with its ownership marker and Windows uninstall entry
-still present, allowing the user to close the application and retry.
+payload. It marks the short bootstrap interval separately and converts it to the checked `ready`
+state only after the recovery uninstaller and incomplete-install registration are written
+successfully. A failure while cleaning an incomplete bootstrap preserves its marker and recovery file
+so a later setup can cleanly retry. Extraction or final-registration failures likewise preserve
+enough owned state for retry or removal. A locked owned file causes uninstall to fail with its
+ownership marker and Windows uninstall entry still present, allowing the user to close the
+application and retry.
 
 ## Language selection and hand-off
 
@@ -30,7 +34,7 @@ Interactive setup offers exactly these baseline choices:
 
 - English (`en`)
 - 廣東話（香港，預覽版） (`yue_HK`)
-- English + 廣東話（香港） (`bilingual_en_yue_HK`)
+- English + 廣東話（香港，預覽版） (`bilingual_en_yue_HK`)
 
 Silent automation may pass `/LANGMODE=<identifier>`. An invalid value fails before setup creates an
 install directory. With no option, setup reuses a valid saved selection and otherwise defaults to
@@ -46,10 +50,14 @@ recovery wording literal.
 ## Fail-closed boundaries
 
 - A fresh non-empty target without the expected marker is never adopted.
-- Reparse points in the source payload, fixed install path, owned directories, or owned files are
-  rejected; setup must not write through a destination junction or symbolic link.
+- Reparse points in the source payload, install root, Programs parent, fixed install path, Start-menu
+  root, product shortcut directory, shortcuts, owned directories, or owned files are rejected; setup
+  must not write through a destination junction or symbolic link.
+- A pre-existing product Start-menu directory containing any path is rejected; an upgrade's staged
+  previous uninstaller must remove its owned shortcuts before new files are written.
 - The ownership generator refuses rooted/escaping paths, quotes, newlines, and output inside the
-  payload it describes.
+  payload it describes; top-level `Uninstall.exe` is reserved for the generated recovery uninstaller
+  and is rejected case-insensitively in source payloads.
 - A missing previous uninstaller, failed staged upgrade, unknown remaining path, skipped extraction,
   locked owned file, or invalid language identifier returns a nonzero result.
 - No uninstall path uses `RMDir /r` or another recursive product-directory deletion.
@@ -66,7 +74,12 @@ fixture and checks:
 4. Locked-executable uninstall failure with registration preserved, followed by a successful retry.
 5. Preservation of project and profile sentinels outside the installation directory.
 6. Rejection of an invalid mode, then bilingual install, hand-off, and uninstall.
-7. Rejection of a destination junction without writing through it.
+7. Bootstrap-cleanup failure with recovery metadata preserved, followed by a successful retry.
+8. Exact path-and-SHA equality between the installed payload and CycloneDX inventory.
+9. Rejection of an install-directory junction without writing through it.
+10. Preservation and rejection of an unknown product Start-menu entry.
+11. Rejection of product Start-menu, Programs-parent, and Start-menu-parent junctions without writing
+    through them.
 
 The test refuses to overwrite any pre-existing install, product registration, language preference,
 shortcut directory, or profile sentinel on its runner.

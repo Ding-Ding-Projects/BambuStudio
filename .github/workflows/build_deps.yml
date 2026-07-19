@@ -31,19 +31,19 @@ jobs:
 
       # Setup the environment
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           lfs: 'true'
 
       - name: load cached deps
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ${{ inputs.cache-path }}
           key: ${{ inputs.cache-key }}
 
       - name: setup dev on Windows
         if: inputs.os == 'windows-latest'
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
 
       - name: Get the date on Ubuntu and macOS
         if: inputs.os != 'windows-latest'
@@ -150,7 +150,7 @@ jobs:
       # Upload Artifacts
       - name: Upload Mac ${{ inputs.arch }} artifacts
         if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_dep_mac_${{ inputs.arch }}_${{ env.date }}
           path: ${{ github.workspace }}/deps/BambuStudio_dep_mac_${{ inputs.arch }}*.tar.gz
@@ -162,14 +162,14 @@ jobs:
 
       - name: Upload Windows artifacts
         if: inputs.os == 'windows-latest'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_dep_win64_${{ env.date }}
           path: ${{ github.workspace }}/deps/build/BambuStudio_dep*.zip
 
       - name: Upload Ubuntu artifacts
         if: ${{ ! env.ACT && (inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04') }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_dep_${{ inputs.os }}_${{ env.date }}
           path: ${{ github.workspace }}/deps/build/BambuStudio_dep_${{ inputs.os }}_*.tar.gz

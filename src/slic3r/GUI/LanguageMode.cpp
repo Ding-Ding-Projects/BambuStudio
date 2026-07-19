@@ -85,8 +85,14 @@ std::string service_language_for(const std::string &language_id)
 
 std::string local_web_language_for(const std::string &language_id)
 {
-    const std::string routed = service_language_for(language_id);
-    return routed == LANGUAGE_MODE_ENGLISH_US ? LANGUAGE_MODE_ENGLISH : routed;
+    // Embedded resources historically received the persisted Studio locale
+    // verbatim and performed their own supported-language fallback. Keep that
+    // contract for standard locales: routing zh_TW through the remote-service
+    // map would silently select Simplified Chinese instead of the existing
+    // English fallback. Only the two baseline English aliases are collapsed.
+    if (language_id == LANGUAGE_MODE_ENGLISH || language_id == LANGUAGE_MODE_ENGLISH_US)
+        return LANGUAGE_MODE_ENGLISH;
+    return language_id;
 }
 
 std::string font_language_for(const std::string &language_id)

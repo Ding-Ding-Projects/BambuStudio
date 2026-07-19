@@ -204,6 +204,18 @@ msgid "Language"
 msgstr "語言"
 
 #. reviewed-category: preferences
+msgid "Switching the language requires application restart.\n"
+msgstr "轉換語言之後要重新啟動應用程式。"
+
+#. reviewed-category: preferences
+msgid "Do you want to continue?"
+msgstr "想繼續嗎？"
+
+#. reviewed-category: preferences
+msgid "Language selection"
+msgstr "語言選擇"
+
+#. reviewed-category: preferences
 msgid "Select the language"
 msgstr "選擇語言"
 

@@ -9,7 +9,7 @@ jobs:
     if: github.repository == 'bambulab/BambuStudio'
     runs-on: windows-latest
     steps:
-      - uses: vedantmgoyal9/winget-releaser@main
+      - uses: vedantmgoyal9/winget-releaser@7bd472be23763def6e16bd06cc8b1cdfab0e2fd5 # main, reviewed 2026-07-19
         with:
           identifier: Bambulab.BambuStudio
           version: ${{ github.event.release.tag_name }}

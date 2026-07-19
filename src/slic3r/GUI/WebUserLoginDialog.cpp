@@ -421,11 +421,10 @@ bool  ZUserLogin::ShowErrorPage()
 
 std::string ZUserLogin::GetStudioLanguage()
 {
-    std::string strLanguage = wxGetApp().app_config->get("language");
-    boost::trim(strLanguage);
-    if (strLanguage.empty()) strLanguage = "en";
-
-    return strLanguage;
+    // This value is used only to construct a remote Bambu account URL. Custom
+    // local UI identifiers such as yue_HK and bilingual_en_yue_HK are not
+    // supported remote route prefixes, so use the profile's service fallback.
+    return into_u8(wxGetApp().current_language_code_safe());
 }
 
 }} // namespace Slic3r::GUI

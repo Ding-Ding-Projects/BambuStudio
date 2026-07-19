@@ -10,6 +10,9 @@ $nativePo = Join-Path $repoRoot 'bbl\i18n\yue_HK\BambuStudio_yue_HK.po'
 $nativeCoverage = Join-Path $repoRoot 'bbl\i18n\yue_HK\coverage.json'
 $nativeCompiler = Join-Path $repoRoot 'bbl\i18n\yue_HK\compile_translation.py'
 $nativeMo = Join-Path $repoRoot 'resources\i18n\yue_HK\BambuStudio.mo'
+$nativeApp = Join-Path $repoRoot 'src\slic3r\GUI\GUI_App.cpp'
+$webLogin = Join-Path $repoRoot 'src\slic3r\GUI\WebUserLoginDialog.cpp'
+$webPanel = Join-Path $repoRoot 'src\slic3r\GUI\WebViewDialog.cpp'
 $deviceRoot = Join-Path $repoRoot 'src\slic3r\GUI\DeviceWeb\device_page'
 $legacyValidator = Join-Path $repoRoot 'resources\web\data\validate-text-locales.mjs'
 $uiMd3Test = Join-Path $repoRoot 'ui-md3\tests\i18n.test.mjs'
@@ -69,6 +72,18 @@ foreach ($constant in $canonicalConstants.GetEnumerator()) {
     Assert-True ([regex]::IsMatch($nativeHeaderText, $pattern)) `
         "Native language mode '$($constant.Key)' must have canonical ID '$($constant.Value)'."
 }
+
+$nativeAppText = Get-Content -LiteralPath $nativeApp -Raw
+Assert-True ($nativeAppText.Contains('custom_language_mode || I18N::is_baseline_language_mode(requested_mode_id)')) `
+    'Baseline English no longer remains on its canonical language-mode profile.'
+$webLoginText = Get-Content -LiteralPath $webLogin -Raw
+Assert-True ($webLoginText.Contains('return into_u8(wxGetApp().current_language_code_safe());')) `
+    'Remote login routing does not use the service-safe language code.'
+$webPanelText = Get-Content -LiteralPath $webPanel -Raw
+Assert-True ($webPanelText.Contains('return into_u8(wxGetApp().current_local_web_language());')) `
+    'Local embedded pages do not use the explicit local-web language route.'
+Assert-True (([regex]::Matches($webPanelText, 'current_language_code_safe\(\)\.BeforeFirst\(')).Count -ge 4) `
+    'One or more remote MakerWorld routes do not use the service-safe language prefix.'
 
 $deviceI18nPath = Join-Path $deviceRoot 'src\i18n.tsx'
 $deviceI18n = Get-Content -LiteralPath $deviceI18nPath -Raw

@@ -13,13 +13,16 @@
   synchronous upgrade cleanup.
 - Implement installer language choice and first-launch hand-off for `en`, `yue_HK`, and
   `bilingual_en_yue_HK` while preserving existing Bambu Studio locales.
-- Add the native language-mode resolver, a curated 239-message Cantonese preview catalog, safe
+- Add the native language-mode resolver, a curated 242-message Cantonese preview catalog, safe
   English fallback, format-before-bilingual-presentation APIs, full DeviceWeb/legacy-web resources,
   and persisted Pages language behavior.
 - Add dependency-free language/resource checks, native language-mode C++ tests, installer execution
   tests, and a guarded native visual-capture script for disposable GitHub-hosted Windows runners.
 - Add a per-file CycloneDX 1.6 payload inventory, installer provenance/SBOM attestations, exact
-  three-asset draft validation, serialized publication, and an immutable-release precondition.
+  three-asset draft validation, stable idempotent reruns, serialized publication, pinned Actions, and
+  an immutable-release precondition.
+- Refresh both DeviceWeb lock graphs to zero-advisory results on 2026-07-19, regenerate the shared
+  route tree, and gate the pinned pnpm production graph on high-severity audit findings.
 
 ## In progress
 

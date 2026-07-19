@@ -12,9 +12,59 @@ permissions:
   contents: read
 
 jobs:
+  classify_changes:
+    name: Classify code changes
+    runs-on: windows-latest
+    outputs:
+      code_changed: ${{ steps.classify.outputs.code_changed }}
+    steps:
+      - name: Classify push paths
+        id: classify
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_DELETED: ${{ github.event.deleted }}
+          BEFORE_SHA: ${{ github.event.before }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $codeChanged = $true
+          if ($env:EVENT_NAME -eq 'push') {
+              if ($env:EVENT_DELETED -eq 'true') {
+                  $codeChanged = $false
+              } elseif ($env:REF_TYPE -ne 'tag' -and
+                        $env:BEFORE_SHA -match '^[0-9a-f]{40}$' -and
+                        $env:BEFORE_SHA -ne ('0' * 40)) {
+                  $headers = @{
+                      Accept                  = 'application/vnd.github+json'
+                      Authorization           = "Bearer $env:GH_TOKEN"
+                      'X-GitHub-Api-Version' = '2026-03-10'
+                      'User-Agent'            = 'BambuStudio-Windows-change-classifier'
+                  }
+                  $comparison = Invoke-RestMethod `
+                    -Uri "https://api.github.com/repos/$env:GITHUB_REPOSITORY/compare/$env:BEFORE_SHA...$env:GITHUB_SHA" `
+                    -Headers $headers `
+                    -Method Get
+                  $changedPaths = @($comparison.files | ForEach-Object { $_.filename; $_.previous_filename } |
+                      Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+                  $nonMarkdownPaths = @($changedPaths | Where-Object { $_ -notmatch '(?i)\.md$' })
+                  # GitHub caps compare-file metadata at 300 entries. At that
+                  # boundary, fail toward a full build because later files may
+                  # contain code.
+                  $codeChanged = $nonMarkdownPaths.Count -gt 0 -or @($comparison.files).Count -ge 300
+                  if (-not $codeChanged) {
+                      Write-Host 'Only Markdown evidence/documentation changed; Windows build and release jobs will be skipped.'
+                  }
+              }
+          }
+          "code_changed=$($codeChanged.ToString().ToLowerInvariant())" | Out-File `
+            -Append -FilePath $env:GITHUB_OUTPUT -Encoding utf8
+
   build_windows:
     name: Build Windows
-    if: ${{ github.event_name != 'push' || github.event.deleted != true }}
+    needs: classify_changes
+    if: ${{ needs.classify_changes.outputs.code_changed == 'true' }}
     uses: ./.github/workflows/build_check_cache.yml
     with:
       os: windows-latest
@@ -36,12 +86,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
 
       - name: Download installer artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
           pattern: BambuStudio_Windows_*_installer
           path: release
@@ -113,7 +163,9 @@ jobs:
               throw "SBOM does not bind itself to '$expectedSourceUrl'."
           }
 
-          $tag = "md3-windows-v$version-r${{ github.run_number }}.${{ github.run_attempt }}"
+          # A workflow rerun keeps the same run number, so every attempt converges
+          # on one release instead of minting another tag.
+          $tag = "md3-windows-v$version-r${{ github.run_number }}"
           $checksumPath = Join-Path $installer.DirectoryName 'BambuStudioMD3-Setup.exe.sha256'
           $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash *BambuStudioMD3-Setup.exe" | Set-Content $checksumPath -Encoding ascii
@@ -125,12 +177,12 @@ jobs:
           "sbom_path=$($sbom.FullName)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
 
       - name: Attest Windows installer provenance
-        uses: actions/attest@v4
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4
         with:
           subject-path: ${{ env.installer_path }}
 
       - name: Attest Windows installer SBOM
-        uses: actions/attest@v4
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4
         with:
           subject-path: ${{ env.installer_path }}
           sbom-path: ${{ env.sbom_path }}
@@ -174,7 +226,318 @@ jobs:
               throw 'Repository immutable releases must be enabled before a release can be published.'
           }
 
+          $apiHeaders = @{
+              Accept                  = 'application/vnd.github+json'
+              Authorization           = "Bearer $env:GH_TOKEN"
+              'X-GitHub-Api-Version' = '2026-03-10'
+              'User-Agent'            = 'BambuStudio-Windows-release-workflow'
+          }
+          $encodedTag = [Uri]::EscapeDataString($env:release_tag)
+          $releaseApiUri = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/tags/$encodedTag"
+          $expectedAssets = @{}
+          foreach ($asset in @(
+              @{ Name = 'BambuStudioMD3-Setup.exe'; Path = $env:installer_path }
+              @{ Name = 'BambuStudioMD3-Setup.exe.sha256'; Path = $env:checksum_path }
+              @{ Name = 'BambuStudioMD3.cdx.json'; Path = $env:sbom_path }
+          )) {
+              $file = Get-Item -LiteralPath $asset.Path
+              $expectedAssets[$asset.Name] = [pscustomobject]@{
+                  Name   = $asset.Name
+                  Size   = [long]$file.Length
+                  Digest = "sha256:$((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+              }
+          }
+          $expectedAssetNames = @($expectedAssets.Keys | Sort-Object)
+
+          function Get-ReleaseByTag {
+              param(
+                  [int] $MaxAttempts = 1,
+                  [switch] $RetryNotFound
+              )
+
+              $lastFailure = $null
+              for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+                  try {
+                      $statusCode = 0
+                      $response = Invoke-RestMethod `
+                          -Uri $releaseApiUri `
+                          -Headers $apiHeaders `
+                          -Method Get `
+                          -SkipHttpErrorCheck `
+                          -StatusCodeVariable statusCode
+                      if ($statusCode -eq 200) {
+                          return [pscustomobject]@{ Found = $true; Release = $response }
+                      }
+                      if ($statusCode -eq 404) {
+                          if (-not $RetryNotFound -or $attempt -eq $MaxAttempts) {
+                              return [pscustomobject]@{ Found = $false; Release = $null }
+                          }
+                          $lastFailure = 'HTTP 404 (release is not visible yet)'
+                      } else {
+                          $apiMessage = if ($response.message) { ": $($response.message)" } else { '' }
+                          $lastFailure = "HTTP $statusCode$apiMessage"
+                      }
+                  } catch {
+                      $lastFailure = $_.Exception.Message
+                  }
+
+                  if ($attempt -lt $MaxAttempts) {
+                      $delaySeconds = [int][Math]::Min([Math]::Pow(2, $attempt - 1), 8)
+                      Write-Warning "Release lookup attempt $attempt failed ($lastFailure); retrying in $delaySeconds second(s)."
+                      Start-Sleep -Seconds $delaySeconds
+                  }
+              }
+              throw "Could not read release '$env:release_tag' after $MaxAttempts attempt(s): $lastFailure"
+          }
+
+          function Get-ReleaseValidationError {
+              param(
+                  [Parameter(Mandatory)] $Release,
+                  [Parameter(Mandatory)] [ValidateSet('Draft', 'Published')] [string] $ExpectedState,
+                  [ValidateSet('LocalBuild', 'RemoteMetadata')] [string] $AssetValidation = 'LocalBuild'
+              )
+
+              $problems = [System.Collections.Generic.List[string]]::new()
+              if ([string]$Release.target_commitish -cne $env:GITHUB_SHA) {
+                  [void]$problems.Add("target '$($Release.target_commitish)' does not match '$env:GITHUB_SHA'")
+              }
+
+              $actualAssetNames = @($Release.assets | ForEach-Object { [string]$_.name } | Sort-Object)
+              if (($actualAssetNames -join "`n") -cne ($expectedAssetNames -join "`n")) {
+                  [void]$problems.Add("asset names are '$($actualAssetNames -join ', ')' instead of '$($expectedAssetNames -join ', ')'")
+              } else {
+                  foreach ($remoteAsset in @($Release.assets)) {
+                      if ([string]$remoteAsset.state -cne 'uploaded') {
+                          [void]$problems.Add("asset '$($remoteAsset.name)' is in state '$($remoteAsset.state)'")
+                      }
+                      if ($AssetValidation -eq 'LocalBuild') {
+                          $expected = $expectedAssets[[string]$remoteAsset.name]
+                          if ([long]$remoteAsset.size -ne $expected.Size) {
+                              [void]$problems.Add("asset '$($remoteAsset.name)' has size '$($remoteAsset.size)' instead of '$($expected.Size)'")
+                          }
+                          if ([string]$remoteAsset.digest -cne $expected.Digest) {
+                              [void]$problems.Add("asset '$($remoteAsset.name)' digest does not match the local file")
+                          }
+                      } else {
+                          if ([long]$remoteAsset.size -le 0) {
+                              [void]$problems.Add("asset '$($remoteAsset.name)' has an invalid size '$($remoteAsset.size)'")
+                          }
+                          if ([string]$remoteAsset.digest -cnotmatch '^sha256:[0-9a-f]{64}$') {
+                              [void]$problems.Add("asset '$($remoteAsset.name)' lacks a valid lowercase GitHub SHA-256 digest")
+                          }
+                      }
+                  }
+              }
+
+              if ($ExpectedState -eq 'Draft') {
+                  if (-not $Release.draft) {
+                      [void]$problems.Add('release is not a draft')
+                  }
+              } else {
+                  if ($Release.draft) {
+                      [void]$problems.Add('release is still a draft')
+                  }
+                  if (-not $Release.immutable) {
+                      [void]$problems.Add('release is not immutable')
+                  }
+              }
+
+              if ($problems.Count -eq 0) {
+                  return $null
+              }
+              return $problems -join '; '
+          }
+
+          function Wait-ForReleaseState {
+              param(
+                  [Parameter(Mandatory)] [ValidateSet('Draft', 'Published')] [string] $ExpectedState,
+                  [ValidateSet('LocalBuild', 'RemoteMetadata')] [string] $AssetValidation = 'LocalBuild',
+                  [int] $MaxAttempts = 6
+              )
+
+              $lastFailure = 'release was not found'
+              for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+                  try {
+                      $lookup = Get-ReleaseByTag -MaxAttempts 1 -RetryNotFound
+                      if ($lookup.Found) {
+                          $validationError = Get-ReleaseValidationError `
+                              -Release $lookup.Release `
+                              -ExpectedState $ExpectedState `
+                              -AssetValidation $AssetValidation
+                          if (-not $validationError) {
+                              return $lookup.Release
+                          }
+                          $lastFailure = $validationError
+                      } else {
+                          $lastFailure = 'release was not found'
+                      }
+                  } catch {
+                      $lastFailure = $_.Exception.Message
+                  }
+
+                  if ($attempt -lt $MaxAttempts) {
+                      $delaySeconds = [int][Math]::Min([Math]::Pow(2, $attempt - 1), 8)
+                      Write-Warning "Release state is not '$ExpectedState' yet ($lastFailure); retrying in $delaySeconds second(s)."
+                      Start-Sleep -Seconds $delaySeconds
+                  }
+              }
+              throw "Release did not reach the validated '$ExpectedState' state after $MaxAttempts attempt(s): $lastFailure"
+          }
+
+          function Assert-ExistingPublishedReleaseAssets {
+              param([Parameter(Mandatory)] $Release)
+
+              # A rerun may rebuild byte-different NSIS and SBOM files because
+              # those formats contain generated timestamps/UUIDs. Download the
+              # already-published immutable assets and prove that set is
+              # internally consistent instead of comparing it with this rebuild.
+              $downloadRoot = Join-Path $env:RUNNER_TEMP "existing-release-$env:GITHUB_RUN_ID-$([guid]::NewGuid().ToString('N'))"
+              [void](New-Item -ItemType Directory -Path $downloadRoot)
+              $downloadDirectory = $null
+              $lastDownloadFailure = $null
+              for ($attempt = 1; $attempt -le 4; $attempt++) {
+                  $candidateDirectory = Join-Path $downloadRoot "attempt-$attempt"
+                  [void](New-Item -ItemType Directory -Path $candidateDirectory)
+                  $downloadOutput = & gh release download $env:release_tag `
+                      --repo $env:GITHUB_REPOSITORY `
+                      --dir $candidateDirectory 2>&1
+                  if ($LASTEXITCODE -eq 0) {
+                      $downloadDirectory = $candidateDirectory
+                      break
+                  }
+                  $lastDownloadFailure = $downloadOutput -join [Environment]::NewLine
+                  if ($attempt -lt 4) {
+                      $delaySeconds = [int][Math]::Pow(2, $attempt - 1)
+                      Write-Warning "Release asset download attempt $attempt failed; retrying in $delaySeconds second(s)."
+                      Start-Sleep -Seconds $delaySeconds
+                  }
+              }
+              if (-not $downloadDirectory) {
+                  throw "Could not download existing immutable release assets: $lastDownloadFailure"
+              }
+
+              $downloadedFiles = @(Get-ChildItem -LiteralPath $downloadDirectory -File)
+              $downloadedNames = @($downloadedFiles.Name | Sort-Object)
+              if (($downloadedNames -join "`n") -cne ($expectedAssetNames -join "`n")) {
+                  throw "Downloaded release assets are incorrect: $($downloadedNames -join ', ')."
+              }
+
+              $remoteAssets = @{}
+              foreach ($remoteAsset in @($Release.assets)) {
+                  $remoteAssets[[string]$remoteAsset.name] = $remoteAsset
+              }
+              foreach ($downloadedFile in $downloadedFiles) {
+                  $downloadedDigest = "sha256:$((Get-FileHash -LiteralPath $downloadedFile.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+                  $apiDigest = [string]$remoteAssets[$downloadedFile.Name].digest
+                  if ($downloadedDigest -cne $apiDigest) {
+                      throw "Downloaded asset '$($downloadedFile.Name)' does not match GitHub's recorded digest."
+                  }
+              }
+
+              $installer = Get-Item -LiteralPath (Join-Path $downloadDirectory 'BambuStudioMD3-Setup.exe')
+              $checksum = Get-Item -LiteralPath (Join-Path $downloadDirectory 'BambuStudioMD3-Setup.exe.sha256')
+              $sbom = Get-Item -LiteralPath (Join-Path $downloadDirectory 'BambuStudioMD3.cdx.json')
+
+              & 'C:\Program Files\7-Zip\7z.exe' t $installer.FullName
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Existing immutable installer archive validation failed with exit code $LASTEXITCODE."
+              }
+
+              $installerHash = (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              $expectedChecksumLine = "$installerHash *BambuStudioMD3-Setup.exe"
+              $checksumLine = (Get-Content -LiteralPath $checksum.FullName -Raw).Trim()
+              if ($checksumLine -cne $expectedChecksumLine) {
+                  throw 'Existing immutable installer checksum does not match the downloaded installer.'
+              }
+
+              if ($sbom.Length -gt 16MB) {
+                  throw "Existing immutable SBOM is $($sbom.Length) bytes, above the 16 MiB attestation limit."
+              }
+              $sbomDocument = Get-Content -LiteralPath $sbom.FullName -Raw | ConvertFrom-Json
+              if ($sbomDocument.bomFormat -ne 'CycloneDX' -or $sbomDocument.specVersion -ne '1.6') {
+                  throw 'Existing immutable SBOM is not a CycloneDX 1.6 document.'
+              }
+              $components = @($sbomDocument.components)
+              if ($components.Count -lt 1000) {
+                  throw "Existing immutable SBOM contains only $($components.Count) components."
+              }
+              $componentNames = @($components | ForEach-Object { $_.name })
+              if (($componentNames | Sort-Object -Unique).Count -ne $componentNames.Count) {
+                  throw 'Existing immutable SBOM contains duplicate component names.'
+              }
+              if ($componentNames -notcontains 'bambu-studio.exe') {
+                  throw 'Existing immutable SBOM does not contain bambu-studio.exe.'
+              }
+              foreach ($component in $components) {
+                  $sha256 = @($component.hashes | Where-Object { $_.alg -eq 'SHA-256' })
+                  if ($sha256.Count -ne 1 -or $sha256[0].content -notmatch '^[0-9a-f]{64}$') {
+                      throw "Existing immutable SBOM component '$($component.name)' lacks one valid lowercase SHA-256 hash."
+                  }
+              }
+              if ($sbomDocument.metadata.component.version -ne $env:release_version) {
+                  throw "Existing immutable SBOM version '$($sbomDocument.metadata.component.version)' does not match '$env:release_version'."
+              }
+              $expectedBomRef = "pkg:github/$env:GITHUB_REPOSITORY@$env:GITHUB_SHA"
+              if ($sbomDocument.metadata.component.'bom-ref' -cne $expectedBomRef) {
+                  throw "Existing immutable SBOM source identity '$($sbomDocument.metadata.component.'bom-ref')' does not match '$expectedBomRef'."
+              }
+              $expectedSourceUrl = "https://github.com/$env:GITHUB_REPOSITORY/tree/$env:GITHUB_SHA"
+              $sourceUrls = @($sbomDocument.metadata.component.externalReferences | ForEach-Object { $_.url })
+              if ($sourceUrls -notcontains $expectedSourceUrl) {
+                  throw "Existing immutable SBOM does not bind itself to '$expectedSourceUrl'."
+              }
+          }
+
+          function Wait-ForReleaseAbsence {
+              param([int] $MaxAttempts = 6)
+
+              $lastFailure = 'release is still present'
+              for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+                  try {
+                      $lookup = Get-ReleaseByTag -MaxAttempts 1
+                      if (-not $lookup.Found) {
+                          return
+                      }
+                      $lastFailure = "release remains in draft=$($lookup.Release.draft) state"
+                  } catch {
+                      $lastFailure = $_.Exception.Message
+                  }
+                  if ($attempt -lt $MaxAttempts) {
+                      $delaySeconds = [int][Math]::Min([Math]::Pow(2, $attempt - 1), 8)
+                      Write-Warning "Release deletion is not visible yet ($lastFailure); retrying in $delaySeconds second(s)."
+                      Start-Sleep -Seconds $delaySeconds
+                  }
+              }
+              throw "Release '$env:release_tag' remained visible after cleanup: $lastFailure"
+          }
+
+          $createdDraftThisAttempt = $false
           try {
+              # A rerun uses the same tag. Accept an already-published release
+              # only when its immutable target and self-consistent assets bind
+              # to this run's source commit and product version.
+              $existing = Get-ReleaseByTag -MaxAttempts 3 -RetryNotFound
+              if ($existing.Found) {
+                  if ($existing.Release.draft) {
+                      if ([string]$existing.Release.target_commitish -cne $env:GITHUB_SHA) {
+                          throw "Existing draft release targets '$($existing.Release.target_commitish)' instead of '$env:GITHUB_SHA'; preserving it."
+                      }
+                      Write-Warning "Removing matching draft '$env:release_tag' left by an earlier attempt."
+                      & gh release delete $env:release_tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
+                      if ($LASTEXITCODE -ne 0) {
+                          throw "Could not remove the matching draft release '$env:release_tag'."
+                      }
+                      Wait-ForReleaseAbsence
+                  } else {
+                      $publishedRelease = Wait-ForReleaseState `
+                          -ExpectedState Published `
+                          -AssetValidation RemoteMetadata
+                      Assert-ExistingPublishedReleaseAssets -Release $publishedRelease
+                      Write-Host "Matching immutable release '$env:release_tag' is already published; this rerun is complete."
+                      exit 0
+                  }
+              }
+
               $createArguments = @(
                   'release', 'create', $env:release_tag,
                   $env:installer_path,
@@ -190,23 +553,9 @@ jobs:
               if ($LASTEXITCODE -ne 0) {
                   throw "Creating the draft release failed with exit code $LASTEXITCODE."
               }
+              $createdDraftThisAttempt = $true
 
-              $draftJson = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft,targetCommitish,assets 2>&1
-              if ($LASTEXITCODE -ne 0) {
-                  throw "Could not validate the draft release: $($draftJson -join [Environment]::NewLine)"
-              }
-              $draft = ($draftJson | Out-String) | ConvertFrom-Json
-              if (-not $draft.isDraft) {
-                  throw 'The release was published before its assets could be validated.'
-              }
-              if ($draft.targetCommitish -ne $env:GITHUB_SHA) {
-                  throw "Draft release targets '$($draft.targetCommitish)' instead of '$env:GITHUB_SHA'."
-              }
-              $assetNames = @($draft.assets | ForEach-Object { $_.name } | Sort-Object)
-              $expectedAssetNames = @('BambuStudioMD3-Setup.exe', 'BambuStudioMD3-Setup.exe.sha256', 'BambuStudioMD3.cdx.json') | Sort-Object
-              if (($assetNames -join "`n") -cne ($expectedAssetNames -join "`n")) {
-                  throw "Draft release assets are incorrect: $($assetNames -join ', ')."
-              }
+              [void](Wait-ForReleaseState -ExpectedState Draft)
 
               # Serialize release jobs, then resolve master immediately before
               # publication so a queued older build cannot become latest.
@@ -228,44 +577,60 @@ jobs:
                   throw "Publishing the validated draft release failed with exit code $LASTEXITCODE."
               }
 
-              $publishedJson = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft,isImmutable,targetCommitish,assets 2>&1
-              if ($LASTEXITCODE -ne 0) {
-                  throw "The publish command returned success, but final release verification failed: $($publishedJson -join [Environment]::NewLine)"
-              }
-              $published = ($publishedJson | Out-String) | ConvertFrom-Json
-              if ($published.isDraft -or -not $published.isImmutable -or $published.targetCommitish -ne $env:GITHUB_SHA) {
-                  throw 'The final release state does not match the validated draft.'
-              }
-              $publishedAssetNames = @($published.assets | ForEach-Object { $_.name } | Sort-Object)
-              if (($publishedAssetNames -join "`n") -cne ($expectedAssetNames -join "`n")) {
-                  throw "Published release assets are incorrect: $($publishedAssetNames -join ', ')."
-              }
+              # GitHub can briefly return the old draft state, a 404, or omit
+              # freshly finalized asset metadata. Bound the wait and validate
+              # the immutable release once publication becomes observable.
+              [void](Wait-ForReleaseState -ExpectedState Published)
           }
           catch {
               $originalError = $_.Exception.Message
               $releaseState = $null
               $stateKnown = $false
-              $stateJson = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft,targetCommitish 2>&1
-              if ($LASTEXITCODE -eq 0) {
-                  try {
-                      $releaseState = ($stateJson | Out-String) | ConvertFrom-Json
+              try {
+                  $failureLookup = Get-ReleaseByTag -MaxAttempts 3 -RetryNotFound
+                  if ($failureLookup.Found) {
+                      $releaseState = $failureLookup.Release
                       $stateKnown = $true
-                  } catch {
-                      Write-Warning "Could not parse release state during failure cleanup; preserving any release: $($_.Exception.Message)"
                   }
-              } else {
-                  Write-Warning "Could not determine release state during failure cleanup; preserving any release: $($stateJson -join [Environment]::NewLine)"
+              } catch {
+                  Write-Warning "Could not determine release state during failure cleanup; preserving any release: $($_.Exception.Message)"
               }
 
-              if ($stateKnown -and $releaseState.isDraft -and $releaseState.targetCommitish -eq $env:GITHUB_SHA) {
+              if ($stateKnown -and -not $releaseState.draft) {
+                  $assetValidation = if ($createdDraftThisAttempt) { 'LocalBuild' } else { 'RemoteMetadata' }
+                  $publishedError = Get-ReleaseValidationError `
+                      -Release $releaseState `
+                      -ExpectedState Published `
+                      -AssetValidation $assetValidation
+                  if (-not $publishedError) {
+                      if (-not $createdDraftThisAttempt) {
+                          try {
+                              Assert-ExistingPublishedReleaseAssets -Release $releaseState
+                          } catch {
+                              $publishedError = $_.Exception.Message
+                          }
+                      }
+                  }
+                  if (-not $publishedError) {
+                      Write-Warning "Publication completed before the failure was observed; preserving the validated immutable release '$env:release_tag'."
+                      exit 0
+                  }
+                  Write-Warning "Preserving non-draft release '$env:release_tag' because it cannot be cleaned safely: $publishedError"
+              } elseif ($stateKnown -and $releaseState.draft -and [string]$releaseState.target_commitish -ceq $env:GITHUB_SHA) {
                   & gh release delete $env:release_tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
                   if ($LASTEXITCODE -ne 0) {
                       Write-Warning "Could not clean the failed draft release '$env:release_tag'."
+                  } else {
+                      try {
+                          Wait-ForReleaseAbsence
+                      } catch {
+                          Write-Warning "Draft cleanup was requested but could not be verified: $($_.Exception.Message)"
+                      }
                   }
-              } elseif ($stateKnown -and -not $releaseState.isDraft) {
-                  Write-Warning "Publication may have completed; preserving the non-draft release '$env:release_tag'."
               } elseif ($stateKnown) {
                   Write-Warning "Draft target did not match this run; preserving release '$env:release_tag'."
+              } else {
+                  Write-Warning "No matching release state was confirmed; preserving any unknown remote state."
               }
               throw "Windows release failed: $originalError"
           }

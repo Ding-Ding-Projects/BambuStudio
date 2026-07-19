@@ -4,7 +4,7 @@
 
 - Canonical repository: `https://github.com/codingmachineedge/BambuStudio.git`
 - Branch: `master`
-- Last synchronized code commit before the current candidate fixes: `12c713c111d4c9667799feaa95d4f4a1f089e428`
+- Last synchronized code commit before the current uncommitted fixes: `31a52b614bb827966d1159c595eb9cf6deeff4c2`
 - Final candidate commit: pending final commit and push
 - Last fully published baseline: commit `1f1ecb960a19aaba18b619210ddca63629198a70`,
   Actions run `29671557311`, release `md3-windows-v02.08.01.55-r6.1`
@@ -39,17 +39,21 @@ The candidate implements these Windows features, but they are not represented he
 release:
 
 - Three canonical UI modes: English (`en`), Hong Kong Cantonese preview (`yue_HK`), and compact
-  bilingual (`bilingual_en_yue_HK`), with existing Bambu Studio locales retained.
-- A 239-message curated native Cantonese preview catalog, full 178-key DeviceWeb and 168-key legacy
+  bilingual preview (`bilingual_en_yue_HK`), with existing Bambu Studio locales retained.
+- A 242-message curated native Cantonese preview catalog, full 178-key DeviceWeb and 168-key legacy
   local-web resources, Pages language persistence/query override, English fallback, safe remote-service
   routing, and Traditional CJK font/glyph selection.
 - Installer language selection and first-launch registry hand-off, including silent `/LANGMODE=`
   validation and preference persistence across uninstall.
-- Native language-mode C++ tests, resource/placeholder checks, an installer execution matrix, and a
-  guarded three-scenario native capture test on disposable GitHub-hosted Windows runners.
+- Native language-mode/catalog C++ tests, resource/placeholder checks, an installer execution matrix,
+  and a deterministic three-scenario native text/image/JSON evidence gate on disposable
+  GitHub-hosted Windows runners.
 - CycloneDX 1.6 per-file payload inventory, GitHub installer provenance/SBOM attestations, exactly
-  three release assets, draft validation, serialized latest selection, and a required repository
-  immutable-release setting.
+  three release assets, draft digest validation, stable same-run retry tags, serialized latest
+  selection, pinned Actions, and a required repository immutable-release setting.
+- Refreshed npm and production pnpm DeviceWeb locks with zero-advisory audit results on 2026-07-19,
+  plus the route tree generated identically by both refreshed graphs. Hosted production builds also
+  fail closed on high-severity pnpm audit findings.
 - Removal of the unused public `StateColor::GetDarkMap()` accessor.
 
 The canonical `agent-global-memory` checkout is
@@ -69,7 +73,7 @@ record all of the following:
 
 - final commit and clean `master`/`origin/master` equality;
 - Actions run ID/URL and the successful Windows job names;
-- reviewed `light-en.png`, `dark-yue_HK.png`, and `light-bilingual.png` artifact;
+- reviewed `light-en.png`, `dark-yue_HK.png`, and `light-bilingual.png` plus their JSON evidence;
 - unique release tag and latest/non-latest decision;
 - installer SHA-256 and exact three release asset names;
 - CycloneDX component count, version, and commit binding;
@@ -90,8 +94,9 @@ record all of the following:
 - Native Cantonese is intentionally partial. Missing copy falls back to English; broader independent
   human review is still required for print safety, destructive actions, account/privacy, networking,
   and recovery text. Formal `zh_TW` is not a Cantonese substitute.
-- The native capture gate proves startup and nonblank output for three scenarios, not pixel-perfect
-  theme fidelity, OCR/glyph correctness, accessibility, or every screen.
+- The native capture gate proves the compiled wxWidgets evidence surface's exact scenario text, CJK
+  contract, light/dark luminance, contrast, and distinct output. It is not a golden-image comparison,
+  accessibility audit, font introspection, or traversal of ordinary product screens.
 - The file-level CycloneDX document inventories packaged bytes but is not a vulnerability or complete
   license analysis.
 

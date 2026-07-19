@@ -4,6 +4,10 @@
 
 using namespace Slic3r::GUI::I18N;
 
+#ifndef LANGUAGE_MODE_TEST_I18N_DIR
+#error "LANGUAGE_MODE_TEST_I18N_DIR must identify the checked-in resources/i18n directory"
+#endif
+
 TEST_CASE("Language modes normalize canonical IDs and compatibility aliases", "[LanguageMode]")
 {
     REQUIRE(normalize_language_mode_id(" en ") == LANGUAGE_MODE_ENGLISH);
@@ -14,6 +18,11 @@ TEST_CASE("Language modes normalize canonical IDs and compatibility aliases", "[
 
 TEST_CASE("Custom language modes keep local routes separate from services", "[LanguageMode]")
 {
+    const LanguageModeProfile english = resolve_language_mode(LANGUAGE_MODE_ENGLISH);
+    REQUIRE(english.kind == LanguageModeKind::English);
+    REQUIRE(english.canonical_id == LANGUAGE_MODE_ENGLISH);
+    REQUIRE(english.local_web_language == LANGUAGE_MODE_ENGLISH);
+
     const LanguageModeProfile cantonese = resolve_language_mode(LANGUAGE_MODE_CANTONESE_HONG_KONG);
     REQUIRE(cantonese.kind == LanguageModeKind::CantoneseHongKong);
     REQUIRE(cantonese.service_language == LANGUAGE_MODE_ENGLISH_US);
@@ -28,6 +37,11 @@ TEST_CASE("Custom language modes keep local routes separate from services", "[La
     REQUIRE(bilingual.local_web_language == LANGUAGE_MODE_ENGLISH_CANTONESE_HK);
     REQUIRE(bilingual.font_language == "zh_TW");
     REQUIRE(bilingual.is_bilingual());
+
+    const LanguageModeProfile traditional_chinese = resolve_language_mode("zh_TW");
+    REQUIRE(traditional_chinese.kind == LanguageModeKind::Standard);
+    REQUIRE(traditional_chinese.local_web_language == "zh_TW");
+    REQUIRE(traditional_chinese.local_web_language != "zh_CN");
 }
 
 TEST_CASE("Bilingual format templates are formatted before presentation", "[LanguageMode]")
@@ -49,4 +63,25 @@ TEST_CASE("Bilingual format templates are formatted before presentation", "[Lang
     const LocalizedTextRenderResult progressive = render_localized_text_progressive(formatted);
     REQUIRE(progressive.label == wxString::FromUTF8("3 files"));
     REQUIRE(progressive.secondary_tooltip.Contains(wxString::FromUTF8("3 個檔案")));
+}
+
+TEST_CASE("Checked-in Cantonese catalog loads and supplies bilingual fallback", "[LanguageMode][catalog]")
+{
+    LanguageModeService service;
+    const wxString catalog_root = wxString::FromUTF8(LANGUAGE_MODE_TEST_I18N_DIR);
+
+    REQUIRE(service.configure(LANGUAGE_MODE_CANTONESE_HONG_KONG, catalog_root));
+    REQUIRE(service.cantonese_catalog_loaded());
+    const LocalizedText cantonese = service.translate(wxString::FromUTF8("Language"));
+    REQUIRE(cantonese.primary == wxString::FromUTF8("語言"));
+    REQUIRE_FALSE(cantonese.has_secondary());
+
+    REQUIRE(service.configure(LANGUAGE_MODE_ENGLISH_CANTONESE_HK, catalog_root));
+    const LocalizedText bilingual = service.translate(wxString::FromUTF8("Language"));
+    REQUIRE(bilingual.primary == wxString::FromUTF8("Language"));
+    REQUIRE(bilingual.secondary == wxString::FromUTF8("語言"));
+
+    const LocalizedText fallback = service.translate(wxString::FromUTF8("__missing_catalog_message__"));
+    REQUIRE(fallback.primary == wxString::FromUTF8("__missing_catalog_message__"));
+    REQUIRE_FALSE(fallback.has_secondary());
 }

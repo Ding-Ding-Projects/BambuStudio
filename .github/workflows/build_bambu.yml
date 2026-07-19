@@ -25,12 +25,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           lfs: 'true'
 
       - name: load cached deps
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ${{ inputs.cache-path }}
           key: ${{ inputs.cache-key }}
@@ -107,7 +107,7 @@ jobs:
 
       - name: Upload artifacts mac
         if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}
           path: ${{ github.workspace }}/BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}.zip
@@ -115,7 +115,7 @@ jobs:
   # Windows
       - name: setup MSVC
         if: inputs.os == 'windows-latest'
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
 
       - name: Install nsis and pkgconfig
         if: inputs.os == 'windows-latest'
@@ -124,23 +124,11 @@ jobs:
           choco install nsis --version=3.12.0 --yes --no-progress
           choco install pkgconfiglite --version=0.28.0 --yes --no-progress
 
-      - name: Setup Node.js for Windows tests
+      - name: Setup Node.js for Windows checks
         if: inputs.os == 'windows-latest'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
-
-      - name: Build and type-check DeviceWeb
-        if: inputs.os == 'windows-latest'
-        working-directory: ${{ github.workspace }}\src\slic3r\GUI\DeviceWeb\device_page
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          npm ci --no-audit --no-fund
-          npm run build
-          if ($LASTEXITCODE -ne 0) {
-              throw "DeviceWeb build failed with exit code $LASTEXITCODE."
-          }
 
       - name: Test Windows release inputs
         if: inputs.os == 'windows-latest'
@@ -151,11 +139,55 @@ jobs:
       - name: Build slicer Win
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
+        shell: pwsh
         run: |
-          mkdir build
-          cd build
-          cmake .. -G "Visual Studio 18 2026" -A X64 -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 -DSLIC3R_BUILD_TESTS=OFF -DCMAKE_PREFIX_PATH="${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local" -DCMAKE_INSTALL_PREFIX="../install-dir" -DCMAKE_BUILD_TYPE=Release -DWIN10SDK_PATH="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0"
-          cmake --build . --target install --config Release -- -m
+          $ErrorActionPreference = 'Stop'
+          cmake -S . -B build `
+            -G 'Visual Studio 18 2026' `
+            -A X64 `
+            -DBBL_RELEASE_TO_PUBLIC=1 `
+            -DBBL_INTERNAL_TESTING=0 `
+            -DSLIC3R_BUILD_TESTS=OFF `
+            '-DCMAKE_PREFIX_PATH=${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local' `
+            '-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-dir' `
+            -DCMAKE_BUILD_TYPE=Release `
+            '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
+          if ($LASTEXITCODE -ne 0) {
+              throw "Configuring the production Windows build failed with exit code $LASTEXITCODE."
+          }
+
+          # Use the product CMake toolchain's hash-pinned Node 22.22.2 and
+          # pnpm 10.12.1, not a parallel npm dependency graph.
+          $pnpmExecutable = [System.IO.Path]::GetFullPath(
+              (Join-Path $env:GITHUB_WORKSPACE '..\node-cache\node-v22.22.2-win-x64\pnpm.exe')
+          )
+          if (-not (Test-Path -LiteralPath $pnpmExecutable -PathType Leaf)) {
+              throw "The hash-pinned production pnpm executable is missing at '$pnpmExecutable'."
+          }
+          Push-Location 'src\slic3r\GUI\DeviceWeb\device_page'
+          try {
+              & $pnpmExecutable audit --audit-level high
+              if ($LASTEXITCODE -ne 0) {
+                  throw "The production DeviceWeb lock has a high-severity advisory or audit failure (exit $LASTEXITCODE)."
+              }
+          }
+          finally {
+              Pop-Location
+          }
+
+          cmake --build build --target device_page_build --config Release -- -m
+          if ($LASTEXITCODE -ne 0) {
+              throw "Building and type-checking DeviceWeb failed with exit code $LASTEXITCODE."
+          }
+          git diff --exit-code -- src/slic3r/GUI/DeviceWeb/device_page/src/routeTree.gen.ts
+          if ($LASTEXITCODE -ne 0) {
+              throw 'The pinned production DeviceWeb build regenerated a stale routeTree.gen.ts.'
+          }
+
+          cmake --build build --target install --config Release -- -m
+          if ($LASTEXITCODE -ne 0) {
+              throw "Building the production Windows installer payload failed with exit code $LASTEXITCODE."
+          }
 
       - name: Build and run Windows C++ tests
         if: inputs.os == 'windows-latest'
@@ -199,10 +231,12 @@ jobs:
 
       - name: Upload native Windows visual evidence
         if: always() && inputs.os == 'windows-latest'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_Windows_native_visual_${{ env.ver }}
-          path: ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.png
+          path: |
+            ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.png
+            ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.json
           if-no-files-found: warn
 
       - name: Generate Windows payload SBOM
@@ -313,6 +347,16 @@ jobs:
           $obsoletePayloadPath = Join-Path '${{ github.workspace }}\install-dir' $obsoleteRelativePath
           $previousInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-PreviousFixture.exe'
           $previousUninstallInclude = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-PreviousFixture-UninstallFiles.nsh'
+          $ancestorGuardRoot = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-AncestorGuard'
+          $ancestorGuardPrograms = Join-Path $ancestorGuardRoot 'Programs'
+          $ancestorGuardInstallDir = Join-Path $ancestorGuardPrograms 'Bambu Studio MD3'
+          $ancestorGuardInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-AncestorGuardFixture.exe'
+          $bootstrapFailureInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-BootstrapFailureFixture.exe'
+          $shortcutGuardRoot = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-ShortcutGuard'
+          $shortcutGuardDir = Join-Path $shortcutGuardRoot 'Bambu Studio MD3'
+          $shortcutGuardInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-ShortcutGuardFixture.exe'
+          $guardPayload = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-GuardPayload'
+          $guardUninstallInclude = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-GuardPayload-UninstallFiles.nsh'
           $makensis = 'C:\Program Files (x86)\NSIS\makensis.exe'
 
           try {
@@ -333,6 +377,60 @@ jobs:
               if ($LASTEXITCODE -ne 0) {
                   throw "Creating the previous-version installer fixture failed with exit code $LASTEXITCODE."
               }
+
+              New-Item -ItemType Directory -Path $guardPayload | Out-Null
+              Set-Content -LiteralPath (Join-Path $guardPayload 'bambu-studio.exe') `
+                -Value 'CI-only destination-guard fixture.' -Encoding ascii
+              Copy-Item -LiteralPath '${{ github.workspace }}\LICENSE' `
+                -Destination (Join-Path $guardPayload 'LICENSE.txt')
+              & '${{ github.workspace }}\packaging\windows\GenerateUninstallInclude.ps1' `
+                -PayloadDir $guardPayload `
+                -OutputPath $guardUninstallInclude
+
+              & $makensis /V2 `
+                "/DPRODUCT_VERSION=$productVersion" `
+                "/DFILE_VERSION=$fileVersion" `
+                "/DPAYLOAD_DIR=$guardPayload" `
+                "/DOUT_FILE=$ancestorGuardInstaller" `
+                "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
+                "/DUNINSTALL_INCLUDE=$guardUninstallInclude" `
+                "/DPRODUCT_INSTALL_ROOT=$ancestorGuardRoot" `
+                "/DPRODUCT_PROGRAMS_DIR=$ancestorGuardPrograms" `
+                "/DPRODUCT_INSTALL_DIR=$ancestorGuardInstallDir" `
+                '${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi'
+
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Creating the ancestor-guard installer fixture failed with exit code $LASTEXITCODE."
+              }
+
+              & $makensis /V2 `
+                "/DPRODUCT_VERSION=$productVersion" `
+                "/DFILE_VERSION=$fileVersion" `
+                "/DPAYLOAD_DIR=$guardPayload" `
+                "/DOUT_FILE=$bootstrapFailureInstaller" `
+                "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
+                "/DUNINSTALL_INCLUDE=$guardUninstallInclude" `
+                /DTEST_FORCE_BOOTSTRAP_CLEANUP_FAILURE `
+                '${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi'
+
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Creating the bootstrap-failure installer fixture failed with exit code $LASTEXITCODE."
+              }
+
+              & $makensis /V2 `
+                "/DPRODUCT_VERSION=$productVersion" `
+                "/DFILE_VERSION=$fileVersion" `
+                "/DPAYLOAD_DIR=$guardPayload" `
+                "/DOUT_FILE=$shortcutGuardInstaller" `
+                "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
+                "/DUNINSTALL_INCLUDE=$guardUninstallInclude" `
+                "/DPRODUCT_SHORTCUT_ROOT=$shortcutGuardRoot" `
+                "/DPRODUCT_SHORTCUT_DIR=$shortcutGuardDir" `
+                '${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi'
+
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Creating the shortcut-guard installer fixture failed with exit code $LASTEXITCODE."
+              }
           }
           finally {
               Remove-Item -LiteralPath $obsoletePayloadPath -Force -ErrorAction SilentlyContinue
@@ -342,6 +440,12 @@ jobs:
             -Installer '${{ github.workspace }}\BambuStudioMD3-Setup.exe' `
             -PreviousInstaller $previousInstaller `
             -PreviousOwnedFile $obsoleteRelativePath `
+            -Sbom '${{ github.workspace }}\BambuStudioMD3.cdx.json' `
+            -AncestorGuardInstaller $ancestorGuardInstaller `
+            -BootstrapFailureInstaller $bootstrapFailureInstaller `
+            -ShortcutGuardInstaller $shortcutGuardInstaller `
+            -AncestorGuardRoot $ancestorGuardRoot `
+            -ShortcutGuardRoot $shortcutGuardRoot `
             -CiExecutionApproved
 
       # - name: Pack PDB
@@ -352,14 +456,14 @@ jobs:
 
       - name: Upload artifacts Win zip
         if: inputs.os == 'windows-latest'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_Windows_${{ env.ver }}_portable
           path: ${{ github.workspace }}/BambuStudio_Windows_${{ env.ver }}_portable.zip
 
       - name: Upload Windows installer
         if: inputs.os == 'windows-latest'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_Windows_${{ env.ver }}_installer
           path: |
@@ -397,7 +501,7 @@ jobs:
 
       - name: Upload artifacts Ubuntu
         if: ${{ ! env.ACT && (inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04') }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_${{inputs.os}}_${{ env.ver }}
           path: './build/Bambu_Studio_${{inputs.os}}_${{ env.ver }}.AppImage'

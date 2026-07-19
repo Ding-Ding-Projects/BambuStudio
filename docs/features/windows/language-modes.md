@@ -8,7 +8,7 @@ The Windows fork defines three canonical UI-mode identifiers:
 |---|---|---|
 | English | `en` | English source copy |
 | 廣東話（香港，預覽版） | `yue_HK` | Curated Hong Kong Cantonese where available, then English fallback |
-| English + 廣東話（香港） | `bilingual_en_yue_HK` | English primary with compact, stacked, or progressively disclosed Cantonese |
+| English + 廣東話（香港，預覽版） | `bilingual_en_yue_HK` | English primary with compact, stacked, or progressively disclosed Cantonese on migrated surfaces |
 
 These are the fork's baseline modes, not replacements for Bambu Studio's existing locales. In
 particular, formal written `zh_TW` remains a separate locale and is never relabeled as Cantonese.
@@ -20,12 +20,14 @@ catalog, embedded-web, remote-service, and font routes separate. The two custom 
 Cantonese resources but route unsupported cloud and service language headers through documented
 English fallbacks instead of leaking `yue` or `bilingual` identifiers to external services.
 
-The native Cantonese catalog currently contains 239 curated messages covering navigation,
+The native Cantonese catalog currently contains 242 curated messages covering navigation,
 preferences, file actions, slicing and printing, connection recovery, destructive actions, and
 security/error copy. The rest of the large native gettext surface falls back to English. Bilingual
 native rendering is deliberately opt-in: migrated controls retain the English and Cantonese format
 templates separately, format each variant once, and only then choose compact, stacked, or progressive
-presentation. Legacy controls remain safe and English-first until they are migrated.
+presentation. The Preferences restart confirmation is the first native bilingual surface; legacy
+controls remain safe and English-first until they are migrated. The bilingual native mode is therefore
+also labeled preview rather than implying complete dual-language coverage.
 
 Embedded surfaces have dedicated resources:
 
@@ -76,6 +78,6 @@ format-before-presentation behavior. The Windows workflow is configured to build
 target.
 
 The resources and test gates exist in the candidate code, but this documentation does not claim that
-the pending candidate Windows workflow or release has passed. The 239-message native catalog is a
+the pending candidate Windows workflow or release has passed. The 242-message native catalog is a
 preview, not complete native localization, and still needs broader independent human review—most
 importantly for safety-critical print, account, networking, and destructive flows.

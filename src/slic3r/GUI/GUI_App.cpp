@@ -20,6 +20,10 @@
 #undef SLIC3R_ALLOW_LIBSLIC3R_I18N_IN_SLIC3R
 #include "slic3r/GUI/I18N.hpp"
 
+#ifdef _WIN32
+#include "WindowsNativeVisualSmoke.hpp"
+#endif
+
 #include <algorithm>
 #include <iterator>
 #include <exception>
@@ -2822,6 +2826,12 @@ void GUI_App::UnRegisterMacPowerCallBack()
 
 bool GUI_App::OnInit()
 {
+#ifdef _WIN32
+    const WindowsNativeVisualSmokeResult native_visual_smoke = try_start_windows_native_visual_smoke();
+    if (native_visual_smoke != WindowsNativeVisualSmokeResult::NotRequested)
+        return native_visual_smoke == WindowsNativeVisualSmokeResult::Started;
+#endif
+
 #ifdef __APPLE__
     RegisterMacPowerCallBack();
 #endif
@@ -6557,7 +6567,7 @@ bool GUI_App::select_language()
     std::vector<std::pair<std::string, wxString>> language_choices {
         {I18N::LANGUAGE_MODE_ENGLISH, wxString::FromUTF8("English")},
         {I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG, wxString::FromUTF8("廣東話（香港，預覽版）")},
-        {I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK, wxString::FromUTF8("English + 廣東話（香港）")},
+        {I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK, wxString::FromUTF8("English + 廣東話（香港，預覽版）")},
     };
     for (const wxLanguageInfo *info : language_infos) {
         if (info->CanonicalName.BeforeFirst('_') == "en")
@@ -6664,9 +6674,22 @@ bool GUI_App::load_language(wxString language, bool initial)
                     wxString best_language = wxTranslations::Get()->GetBestTranslation(SLIC3R_APP_KEY, wxLANGUAGE_ENGLISH);
                     if (!best_language.IsEmpty()) {
                         m_language_info_best = wxLocale::FindLanguageInfo(best_language);
-                        BOOST_LOG_TRIVIAL(info) << boost::format("Best translation language detected (may be different from user locales): %1%") %
-                                                        m_language_info_best->CanonicalName.ToUTF8().data();
-                        app_config->set("language", m_language_info_best->CanonicalName.ToUTF8().data());
+                        if (m_language_info_best != nullptr) {
+                            BOOST_LOG_TRIVIAL(info) << boost::format("Best translation language detected (may be different from user locales): %1%") %
+                                                            m_language_info_best->CanonicalName.ToUTF8().data();
+                            app_config->set("language", m_language_info_best->CanonicalName.ToUTF8().data());
+                        } else if (I18N::is_custom_language_mode(into_u8(best_language))) {
+                            // wxWidgets can discover the shipped yue_HK catalog
+                            // even though its locale database exposes zh_HK rather
+                            // than yue_HK. Preserve the custom mode and let the
+                            // explicit profile choose its formatting locale.
+                            app_config->set("language", I18N::normalize_language_mode_id(into_u8(best_language)));
+                            BOOST_LOG_TRIVIAL(info) << "Best translation selected custom language mode: "
+                                                    << into_u8(best_language);
+                        } else {
+                            BOOST_LOG_TRIVIAL(warning) << "Ignoring translation with no wx language metadata: "
+                                                       << into_u8(best_language);
+                        }
                     }
 #ifdef __linux__
                     wxString lc_all;
@@ -6822,7 +6845,7 @@ bool GUI_App::load_language(wxString language, bool initial)
         wxTranslations::Get()->SetLanguage(language_dict);
     m_wxLocale->AddCatalog(SLIC3R_APP_KEY);
 
-    const std::string active_mode_id = custom_language_mode
+    const std::string active_mode_id = (custom_language_mode || I18N::is_baseline_language_mode(requested_mode_id))
         ? requested_profile.canonical_id
         : into_u8(language_info->CanonicalName);
     const bool mode_catalog_ready = I18N::configure_language_mode(active_mode_id, from_u8(localization_dir()));

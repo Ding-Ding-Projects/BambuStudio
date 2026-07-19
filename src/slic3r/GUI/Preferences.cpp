@@ -432,8 +432,11 @@ wxBoxSizer *PreferencesDialog::create_item_language_mode_combobox(
                 wxGetApp().plater()->save_project();
         }
 
+        auto restart_copy = I18N::translate_mode(L("Switching the language requires application restart.\n"));
+        restart_copy.primary.Trim();
+        restart_copy.secondary.Trim();
         const auto restart_text = I18N::render_localized_text_stacked(
-            I18N::translate_mode(L("Switching the language requires application restart.")).finalize_without_arguments());
+            restart_copy.finalize_without_arguments());
         const auto continue_text = I18N::render_localized_text_stacked(
             I18N::translate_mode(L("Do you want to continue?")).finalize_without_arguments());
         const auto caption_text = I18N::render_localized_text_compact(
@@ -1500,7 +1503,7 @@ wxWindow *PreferencesDialog::create_general_tab()
     std::vector<std::pair<std::string, wxString>> language_choices {
         {I18N::LANGUAGE_MODE_ENGLISH, wxString::FromUTF8("English")},
         {I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG, wxString::FromUTF8("廣東話（香港，預覽版）")},
-        {I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK, wxString::FromUTF8("English + 廣東話（香港）")},
+        {I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK, wxString::FromUTF8("English + 廣東話（香港，預覽版）")},
     };
     for (const wxLanguageInfo *info : language_infos) {
         const std::string id = into_u8(info->CanonicalName);

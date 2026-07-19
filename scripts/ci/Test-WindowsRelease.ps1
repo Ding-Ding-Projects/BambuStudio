@@ -66,6 +66,9 @@ $jsonPaths = @(& git -C $repoRoot ls-files --cached --others --exclude-standard 
         $_ -like 'ui-md3/*' -or
         $_ -like 'bbl/i18n/*'
     }
+if ($LASTEXITCODE -ne 0) {
+    throw 'Could not enumerate JSON source files with git.'
+}
 foreach ($relativePath in $jsonPaths) {
     $file = Get-Item -LiteralPath (Join-Path $repoRoot $relativePath)
     try {
@@ -79,9 +82,38 @@ foreach ($relativePath in $jsonPaths) {
 Write-Host 'Checking browser JavaScript syntax...'
 $javaScriptPaths = @(& git -C $repoRoot ls-files --cached --others --exclude-standard -- '*.js' '*.mjs') |
     Where-Object { $_ -like 'ui-md3/*' }
+if ($LASTEXITCODE -ne 0) {
+    throw 'Could not enumerate JavaScript source files with git.'
+}
 foreach ($relativePath in $javaScriptPaths) {
     $file = Get-Item -LiteralPath (Join-Path $repoRoot $relativePath)
     Invoke-Node -Arguments @('--check', $file.FullName) -FailureMessage "JavaScript syntax failure in '$($file.FullName)'"
+}
+
+Write-Host 'Checking GitHub Action references are immutable...'
+$workflowPaths = @(& git -C $repoRoot ls-files --cached --others --exclude-standard -- '.github/workflows/*.yml' '.github/workflows/*.yaml')
+if ($LASTEXITCODE -ne 0) {
+    throw 'Could not enumerate GitHub workflow files with git.'
+}
+$releaseWorkflowText = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\build_all.yml') -Raw
+Assert-True ($releaseWorkflowText.Contains('name: Classify code changes')) `
+    'Windows release workflow must classify every push before its build/release jobs.'
+Assert-True ($releaseWorkflowText.Contains('\.md$')) `
+    'Windows release workflow lacks its Markdown-only evidence handoff guard.'
+Assert-True ($releaseWorkflowText.Contains('$_.previous_filename')) `
+    'Markdown-only classification does not inspect the old side of renamed paths.'
+Assert-True ($releaseWorkflowText.Contains('@($comparison.files).Count -ge 300')) `
+    'Markdown-only classification does not fail toward a build at the compare API file cap.'
+foreach ($relativePath in $workflowPaths) {
+    $workflowText = Get-Content -LiteralPath (Join-Path $repoRoot $relativePath) -Raw
+    foreach ($match in [regex]::Matches($workflowText, '(?m)^\s*(?:-\s*)?uses:\s+([^\s#]+)')) {
+        $reference = $match.Groups[1].Value
+        if ($reference.StartsWith('./', [System.StringComparison]::Ordinal)) {
+            continue
+        }
+        Assert-True ($reference -match '@[0-9a-f]{40}$') `
+            "Workflow '$relativePath' uses mutable action reference '$reference'."
+    }
 }
 
 Write-Host 'Running dependency-free DeviceWeb tests...'
@@ -121,9 +153,25 @@ try {
     $secondContent = Get-Content -LiteralPath $second -Raw
     Assert-True ($firstContent -ceq $secondContent) 'Uninstall include generation is not deterministic.'
     Assert-True ($firstContent.Contains('!macro BambuMD3AssertDestinationPaths')) 'Destination reparse guard macro is missing.'
+    Assert-True ($firstContent.Contains('!insertmacro AssertNotReparse "${PRODUCT_INSTALL_ROOT}"')) 'Install-root reparse guard is missing.'
+    Assert-True ($firstContent.Contains('!insertmacro AssertNotReparse "${PRODUCT_PROGRAMS_DIR}"')) 'Programs-parent reparse guard is missing.'
+    Assert-True ($firstContent.Contains('!insertmacro AssertNotReparse "${PRODUCT_SHORTCUT_ROOT}"')) 'Start-menu root reparse guard is missing.'
+    Assert-True ($firstContent.Contains('!insertmacro AssertNotReparse "${PRODUCT_SHORTCUT_DIR}"')) 'Start-menu product-directory reparse guard is missing.'
     Assert-True ($firstContent.Contains('!macro BambuMD3DeletePayloadFiles')) 'Owned-file delete macro is missing.'
     Assert-True ($firstContent.Contains('!macro BambuMD3RemovePayloadDirectories')) 'Empty-directory removal macro is missing.'
     Assert-True (-not $firstContent.Contains('RMDir /r')) 'Recursive directory removal is forbidden.'
+
+    $installerSource = Get-Content -LiteralPath (Join-Path $repoRoot 'packaging\windows\BambuStudioMD3.nsi') -Raw
+    Assert-True ($installerSource.Contains('GetFileAttributesW(w "${PATH}") i.R8')) `
+        'NSIS reparse detection must write GetFileAttributesW output to $R8.'
+    Assert-True (-not $installerSource.Contains('GetFileAttributesW(w "${PATH}") i.r8')) `
+        'NSIS reparse detection still writes to $8 while reading $R8.'
+    Assert-True ($installerSource.Contains('"RecoveryState" "bootstrap_cleanup"')) `
+        'Installer bootstrap cleanup is not marked as retryable.'
+    Assert-True ($installerSource.Contains('TEST_FORCE_BOOTSTRAP_CLEANUP_FAILURE')) `
+        'Installer bootstrap recovery failure-injection fixture is missing.'
+    Assert-True ($installerSource.Contains('"RecoveryState" "bootstrap_test_setup_failed"')) `
+        'Installer bootstrap fixture setup failures are not distinguishable from the intended cleanup failure.'
 
     $deleteCount = ([regex]::Matches($firstContent, '(?m)^\s*Delete\s+')).Count
     Assert-True ($deleteCount -eq 2) "Expected two fixture payload deletes, found $deleteCount."
@@ -138,6 +186,20 @@ try {
     }
     Assert-True $insidePayloadRejected 'The generator accepted an output path inside its payload.'
     Assert-True (-not (Test-Path -LiteralPath $insidePayload)) 'Rejected in-payload output was still created.'
+
+    $reservedPayloadPath = Join-Path $payload 'UnInstall.ExE'
+    $reservedOutput = Join-Path $tempRoot 'reserved.nsh'
+    Set-Content -LiteralPath $reservedPayloadPath -Value 'must be installer-generated' -Encoding ascii
+    $reservedPathRejected = $false
+    try {
+        & $generator -PayloadDir $payload -OutputPath $reservedOutput
+    }
+    catch {
+        $reservedPathRejected = $true
+    }
+    Assert-True $reservedPathRejected 'The generator accepted a case-variant payload Uninstall.exe.'
+    Assert-True (-not (Test-Path -LiteralPath $reservedOutput)) 'Rejected reserved-path output was still created.'
+    Remove-Item -LiteralPath $reservedPayloadPath -Force
 
     Write-Host 'Exercising CycloneDX payload inventory generation...'
     Assert-True (Test-Path -LiteralPath $sbomGenerator) "Missing SBOM generator '$sbomGenerator'."

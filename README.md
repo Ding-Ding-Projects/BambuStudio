@@ -13,9 +13,10 @@ before running it. Upstream cross-platform releases remain available from
 fork's release acceptance gate.
 
 The Windows UI provides three canonical fork modes: English (`en`), playful Hong Kong Cantonese
-preview (`yue_HK`), and compact English + Cantonese (`bilingual_en_yue_HK`). Existing Bambu Studio
-locales remain available. Missing Cantonese copy falls back to English, and the native Cantonese
-catalog remains a curated preview pending broader human review. See the
+preview (`yue_HK`), and compact English + Cantonese preview (`bilingual_en_yue_HK`). Existing Bambu Studio
+locales remain available. Missing Cantonese copy falls back to English; native bilingual presentation
+is opt-in on migrated surfaces, and the Cantonese catalog remains a curated preview pending broader
+human review. See the
 [language-mode documentation](docs/features/windows/language-modes.md) for coverage and fallback
 details.
 

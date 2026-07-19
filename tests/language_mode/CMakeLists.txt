@@ -15,6 +15,9 @@ endif()
 include(${wxWidgets_USE_FILE})
 
 target_include_directories(language_mode_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_compile_definitions(language_mode_tests PRIVATE
+    LANGUAGE_MODE_TEST_I18N_DIR=R"\(${PROJECT_SOURCE_DIR}/resources/i18n\)"
+)
 target_link_libraries(language_mode_tests test_common ${wxWidgets_LIBRARIES})
 set_property(TARGET language_mode_tests PROPERTY FOLDER "tests")
 
