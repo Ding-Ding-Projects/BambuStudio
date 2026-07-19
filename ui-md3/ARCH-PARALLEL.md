@@ -2,14 +2,15 @@
 
 This extends `SPEC.md`. It restructures the app so the 9 screens can be built **in parallel, each in
 its own git worktree, with zero shared-file conflicts**, then assembled deterministically. Markup
-stays verbatim from `design-source/Bambu Studio.dc.html` — modularization is only about *where the
-code lives*, never about changing the design.
+stays verbatim from `design-source/Bambu Studio.dc.html` except for the required Settings language
+row — modularization is only about *where the code lives*, not redesigning individual screens.
 
 ## The foundation (built once, sequentially, before any fan-out)
 
 Files owned by the foundation (no screen agent may edit these):
 
 - `runtime/mini-dc.js` — the runtime (from Run 1). Screen-agnostic; unchanged by modularization.
+- `app/i18n.resources.js` + `app/i18n.js` — localization data and the shared persisted-mode runtime.
 - `app/styles.css` — MD3 tokens (from Run 1).
 - `app/searchfield.logic.js` + `<template data-component="SearchField">` — the shared component.
 - `index.html` — contains:
@@ -23,8 +24,8 @@ Files owned by the foundation (no screen agent may edit these):
   - Boot code (`app/boot.js` or inline) that: reads each `<template data-screen="ID">`, replaces the
     matching `<!--SCREEN:ID-->` placeholder in the shell template with that screen template's
     innerHTML, producing the final `main` template string; registers `SearchField` and `main`;
-    mounts `main` into `#app` with initial props `{theme,density,accent,view}` (+ `?view=/theme=/
-    density=/accent=` query overrides). A screen whose template is absent leaves an empty placeholder
+    mounts `main` into `#app` with initial props `{theme,density,accent,view,language}` (+ `?view=/theme=/
+    density=/accent=/lang=` query overrides). A screen whose template is absent leaves an empty placeholder
     (app still boots) — this is what lets a worktree run with only its own screen present.
 - `app/main.logic.js` — the `Main extends DCLogic` class holding **all shared state** (the design's
   full `this.state`) and **all shared/global methods** (hexToHsl, accentVars, go, commit, notify,
@@ -43,9 +44,8 @@ Files owned by the foundation (no screen agent may edit these):
     window.SCREENS.push(def);
   };
   ```
-  Load order in index.html: registry.js → all screen `*.logic.js` → main.logic.js (which reads
-  `window.SCREENS`). (Or main.logic first defining `Main`, then registry, then screens — pick one
-  order and document it; the foundation decides.)
+  Load order in index.html: localization resources/runtime → mini-dc → SearchField → main.logic.js
+  → registry.js → all screen `*.logic.js` → boot.js.
 
 ## A screen module (built in parallel — each agent owns exactly these two files)
 
@@ -54,7 +54,8 @@ For screen `ID` (e.g. `prepare`), the agent creates ONLY:
 1. `app/screens/ID.template.html` — a `<template data-screen="ID">` whose contents are the **verbatim
    inner markup** of that screen's `<sc-if value="{{ isID }}"> … </sc-if>` block from
    `design-source/Bambu Studio.dc.html` (copy exactly; keep the `sc-if` wrapper so the screen shows
-   only when active). Do not restyle or summarize.
+   only when active). Do not restyle or summarize. `settings.template.html` additionally owns the
+   approved language-mode row.
 
 2. `app/screens/ID.logic.js` — registers the screen:
    ```js
@@ -83,4 +84,5 @@ For screen `ID` (e.g. `prepare`), the agent creates ONLY:
    files per this contract, verifies its screen renders (boot the app with `?view=ID`), commits on
    `md3-wt-ID`.
 4. Assembly (main tree): merge each `md3-wt-ID` (all touch disjoint files) → `md3-redesign`; remove
-   worktrees; boot assembler stitches; full-app QA; commit + push.
+   worktrees; run `node ui-md3/scripts/assemble-index.mjs --write`, then `--check`; boot assembler
+   stitches; full-app QA; commit + push.

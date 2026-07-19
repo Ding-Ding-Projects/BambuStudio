@@ -173,7 +173,11 @@ assert.doesNotMatch(vmSource, /t\["tag_uid"\]\s*=\s*tray->tag_uid\s*;/);
 assert.match(vmSource, /tag_uid\.size\(\)\s*==\s*16\s*&&\s*tag_uid\.substr\(12,\s*2\)\s*==\s*"01"/);
 assert.match(vmSource, /t\["tray_id_name"\]\s*=\s*tray->tray_id_name\s*;/);
 assert.match(filaSystemSource, /ParseVal\(j_tray,\s*"tray_id_name",\s*curr_tray->tray_id_name/);
-assert.match(cloudSyncSource, /j\["trayIdName"\]\s*=\s*s\.tray_id_name\s*;/);
+assert.match(
+  cloudSyncSource,
+  /const\s+std::string\s+tray_id_name\s*=\s*s\.tray_id_name\.empty\(\)\s*\?\s*tray_id_name_by_filament_color\(s\)\s*:\s*s\.tray_id_name\s*;/,
+);
+assert.match(cloudSyncSource, /j\["trayIdName"\]\s*=\s*tray_id_name\s*;/);
 
 // ---- 1. RFID tray + setting_id resolves the preset ----
 

@@ -1,6 +1,7 @@
 #include "DeviceWebHost.hpp"
 
 #include "slic3r/GUI/GUI_App.hpp"
+#include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
 #include "libslic3r/Utils.hpp"
 
@@ -116,16 +117,17 @@ DeviceWebHost::~DeviceWebHost()
 
 wxString DeviceWebHost::BuildUrl(const std::string& path) const
 {
-    std::string lang = wxGetApp().app_config->get("language");
+    wxString lang = wxGetApp().current_local_web_language();
     if (lang.empty()) lang = "en";
+    const wxString fallback_lang = from_u8(I18N::language_mode_profile().local_web_fallback_language);
 
 #ifdef DEVICE_USE_HTTP_SERVER
     if (!m_device_http_server->is_started()) {
         m_device_http_server->start();
     }
-    wxString url = wxString::Format("http://localhost:13628/index.html?lang=%s", lang);
+    wxString url = wxString::Format("http://localhost:13628/index.html?lang=%s&fallback_lang=%s", lang, fallback_lang);
 #else
-    wxString url = wxString::Format("file://%s/web/device_page/dist/index.html?lang=%s", from_u8(resources_dir()), lang);
+    wxString url = wxString::Format("file://%s/web/device_page/dist/index.html?lang=%s&fallback_lang=%s", from_u8(resources_dir()), lang, fallback_lang);
 #endif
 
     if (!path.empty()) {

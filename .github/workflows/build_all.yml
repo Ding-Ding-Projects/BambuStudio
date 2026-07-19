@@ -26,7 +26,10 @@ jobs:
     needs: build_windows
     runs-on: windows-latest
     permissions:
+      artifact-metadata: write
+      attestations: write
       contents: write
+      id-token: write
 
     steps:
       - name: Checkout
@@ -51,10 +54,24 @@ jobs:
               throw "Expected exactly one BambuStudioMD3-Setup.exe, found $($installers.Count)."
           }
 
+          $sboms = @(Get-ChildItem release -Recurse -File -Filter 'BambuStudioMD3.cdx.json')
+          if ($sboms.Count -ne 1) {
+              throw "Expected exactly one BambuStudioMD3.cdx.json, found $($sboms.Count)."
+          }
+
           $installer = $installers[0]
+          $sbom = $sboms[0]
           & 'C:\Program Files\7-Zip\7z.exe' t $installer.FullName
           if ($LASTEXITCODE -ne 0) {
               throw "Installer archive validation failed with exit code $LASTEXITCODE."
+          }
+
+          $sbomDocument = Get-Content -LiteralPath $sbom.FullName -Raw | ConvertFrom-Json
+          if ($sbomDocument.bomFormat -ne 'CycloneDX' -or $sbomDocument.specVersion -ne '1.6') {
+              throw 'The downloaded SBOM is not a CycloneDX 1.6 document.'
+          }
+          if (@($sbomDocument.components).Count -lt 1000) {
+              throw "The downloaded SBOM contains only $(@($sbomDocument.components).Count) components."
           }
 
           $versionContent = Get-Content version.inc -Raw
@@ -72,6 +89,18 @@ jobs:
           "release_version=$version" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
           "installer_path=$($installer.FullName)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
           "checksum_path=$checksumPath" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          "sbom_path=$($sbom.FullName)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+
+      - name: Attest Windows installer provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ env.installer_path }}
+
+      - name: Attest Windows installer SBOM
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ env.installer_path }}
+          sbom-path: ${{ env.sbom_path }}
 
       - name: Publish uniquely tagged Windows release
         shell: pwsh
@@ -89,6 +118,8 @@ jobs:
               "- Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
               '- Install scope: current user (`%LOCALAPPDATA%\Programs\Bambu Studio MD3`)'
               '- Signing: unsigned; verify the accompanying SHA-256 checksum before running'
+              '- Provenance: verify with `gh attestation verify BambuStudioMD3-Setup.exe --repo codingmachineedge/BambuStudio`'
+              '- SBOM: CycloneDX 1.6 payload inventory is attached and attested'
           )
           $notes | Set-Content release-notes.md -Encoding utf8
 
@@ -108,14 +139,63 @@ jobs:
               $releaseTitle += " ($env:GITHUB_REF_NAME)"
           }
 
-          $releaseArguments = @(
-              'release', 'create', $env:release_tag,
-              $env:installer_path,
-              $env:checksum_path,
-              '--repo', $env:GITHUB_REPOSITORY,
-              '--target', $env:GITHUB_SHA,
-              '--title', $releaseTitle,
-              '--notes-file', 'release-notes.md',
-              $latestArgument
-          )
-          gh @releaseArguments
+          $draftCreated = $false
+          $published = $false
+          try {
+              $createArguments = @(
+                  'release', 'create', $env:release_tag,
+                  $env:installer_path,
+                  $env:checksum_path,
+                  $env:sbom_path,
+                  '--repo', $env:GITHUB_REPOSITORY,
+                  '--target', $env:GITHUB_SHA,
+                  '--title', $releaseTitle,
+                  '--notes-file', 'release-notes.md',
+                  '--draft'
+              )
+              & gh @createArguments
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Creating the draft release failed with exit code $LASTEXITCODE."
+              }
+              $draftCreated = $true
+
+              $draft = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft,targetCommitish,assets | ConvertFrom-Json
+              if (-not $draft.isDraft) {
+                  throw 'The release was published before its assets could be validated.'
+              }
+              if ($draft.targetCommitish -ne $env:GITHUB_SHA) {
+                  throw "Draft release targets '$($draft.targetCommitish)' instead of '$env:GITHUB_SHA'."
+              }
+              $assetNames = @($draft.assets | ForEach-Object { $_.name } | Sort-Object)
+              $expectedAssetNames = @('BambuStudioMD3-Setup.exe', 'BambuStudioMD3-Setup.exe.sha256', 'BambuStudioMD3.cdx.json') | Sort-Object
+              if (($assetNames -join "`n") -cne ($expectedAssetNames -join "`n")) {
+                  throw "Draft release assets are incorrect: $($assetNames -join ', ')."
+              }
+
+              & gh release edit $env:release_tag --repo $env:GITHUB_REPOSITORY --draft=false $latestArgument
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Publishing the validated draft release failed with exit code $LASTEXITCODE."
+              }
+              $published = $true
+          }
+          catch {
+              if ($draftCreated -and -not $published) {
+                  $releaseState = $null
+                  try {
+                      $releaseState = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft | ConvertFrom-Json
+                  }
+                  catch {
+                      $releaseState = $null
+                  }
+
+                  if ($releaseState -and -not $releaseState.isDraft) {
+                      throw "Release publication completed but final verification returned an error. The immutable published release was preserved. Original error: $($_.Exception.Message)"
+                  }
+
+                  & gh release delete $env:release_tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
+                  if ($LASTEXITCODE -ne 0) {
+                      Write-Warning "Could not clean the failed draft release '$env:release_tag'."
+                  }
+              }
+              throw
+          }

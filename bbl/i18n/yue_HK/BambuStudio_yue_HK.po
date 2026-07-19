@@ -1,0 +1,968 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Bambu Studio\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-14 20:35+0800\n"
+"PO-Revision-Date: 2026-07-19 00:00-0400\n"
+"Language: yue_HK\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Bambu Studio reviewed catalog\n"
+
+#. reviewed-category: navigation
+msgid "Home"
+msgstr "主頁"
+
+#. reviewed-category: navigation
+msgid "Prepare"
+msgstr "準備"
+
+#. reviewed-category: navigation
+msgid "Preview"
+msgstr "預覽"
+
+#. reviewed-category: navigation
+msgid "Device"
+msgstr "裝置"
+
+#. reviewed-category: navigation
+msgid "Multi-device"
+msgstr "多裝置"
+
+#. reviewed-category: navigation
+msgid "Project"
+msgstr "項目"
+
+#. reviewed-category: navigation
+msgid "Calibration"
+msgstr "校準"
+
+#. reviewed-category: navigation
+msgid "Preferences"
+msgstr "偏好設定"
+
+#. reviewed-category: navigation
+msgid "Settings"
+msgstr "設定"
+
+#. reviewed-category: navigation
+msgid "File"
+msgstr "檔案"
+
+#. reviewed-category: navigation
+msgid "Edit"
+msgstr "編輯"
+
+#. reviewed-category: navigation
+msgid "View"
+msgstr "檢視"
+
+#. reviewed-category: navigation
+msgid "Help"
+msgstr "說明"
+
+#. reviewed-category: navigation
+msgid "Back"
+msgstr "返回"
+
+#. reviewed-category: navigation
+msgid "Next"
+msgstr "下一步"
+
+#. reviewed-category: navigation
+msgid "Finish"
+msgstr "完成"
+
+#. reviewed-category: navigation
+msgid "Close"
+msgstr "關閉"
+
+#. reviewed-category: navigation
+msgid "Cancel"
+msgstr "取消"
+
+#. reviewed-category: navigation
+msgid "Confirm"
+msgstr "確認"
+
+#. reviewed-category: navigation
+msgid "OK"
+msgstr "確定"
+
+#. reviewed-category: navigation
+msgid "Apply"
+msgstr "套用"
+
+#. reviewed-category: navigation
+msgid "Reset"
+msgstr "重設"
+
+#. reviewed-category: navigation
+msgid "Search"
+msgstr "搜尋"
+
+#. reviewed-category: navigation
+msgid "Select all"
+msgstr "全部選取"
+
+#. reviewed-category: navigation
+msgid "New Project"
+msgstr "新增項目"
+
+#. reviewed-category: navigation
+msgid "Start a new project"
+msgstr "建立新項目"
+
+#. reviewed-category: navigation
+msgid "Open Project"
+msgstr "開啟項目"
+
+#. reviewed-category: navigation
+msgid "Open a project file"
+msgstr "開啟項目檔案"
+
+#. reviewed-category: navigation
+msgid "Recent projects"
+msgstr "最近使用的項目"
+
+#. reviewed-category: navigation
+msgid "Project Filaments"
+msgstr "項目耗材"
+
+#. reviewed-category: navigation
+msgid "Filament Settings"
+msgstr "耗材設定"
+
+#. reviewed-category: navigation
+msgid "Printer settings"
+msgstr "打印機設定"
+
+#. reviewed-category: navigation
+msgid "Print settings"
+msgstr "打印設定"
+
+#. reviewed-category: navigation
+msgid "Device Page"
+msgstr "裝置頁面"
+
+#. reviewed-category: navigation
+msgid "Plate Settings"
+msgstr "列印板設定"
+
+#. reviewed-category: navigation
+msgid "My Device"
+msgstr "我的裝置"
+
+#. reviewed-category: navigation
+msgid "Other Device"
+msgstr "其他裝置"
+
+#. reviewed-category: navigation
+msgid "Printer Preview"
+msgstr "打印機預覽"
+
+#. reviewed-category: navigation
+msgid "Calibration help"
+msgstr "校準說明"
+
+#. reviewed-category: navigation
+msgid "More calibrations"
+msgstr "更多校準"
+
+#. reviewed-category: navigation
+msgid "Temperature Calibration"
+msgstr "溫度校準"
+
+#. reviewed-category: navigation
+msgid "AMS Settings"
+msgstr "AMS 設定"
+
+#. reviewed-category: navigation
+msgid "Camera Setting"
+msgstr "相機設定"
+
+#. reviewed-category: preferences
+msgid "General Settings"
+msgstr "一般設定"
+
+#. reviewed-category: preferences
+msgid "User Settings"
+msgstr "使用者設定"
+
+#. reviewed-category: preferences
+msgid "3D Settings"
+msgstr "3D 設定"
+
+#. reviewed-category: preferences
+msgid "3Dconnexion settings"
+msgstr "3Dconnexion 設定"
+
+#. reviewed-category: preferences
+msgid "Language"
+msgstr "語言"
+
+#. reviewed-category: preferences
+msgid "Select the language"
+msgstr "選擇語言"
+
+#. reviewed-category: preferences
+msgid "Switching application language"
+msgstr "切換應用程式語言"
+
+#. reviewed-category: preferences
+msgid "Support beta version update."
+msgstr "接收測試版本更新。"
+
+#. reviewed-category: preferences
+msgid "With this option enabled, you can receive beta version updates."
+msgstr "啟用此選項後，你會收到測試版本更新。"
+
+#. reviewed-category: preferences
+msgid "Auto check for system presets updates"
+msgstr "自動檢查系統預設更新"
+
+#. reviewed-category: preferences
+msgid "Check for Update"
+msgstr "檢查更新"
+
+#. reviewed-category: preferences
+msgid "Always show shells in preview"
+msgstr "預覽時一律顯示外殼"
+
+#. reviewed-category: preferences
+msgid "Maximum recent projects"
+msgstr "最近項目數目上限"
+
+#. reviewed-category: preferences
+msgid "Maximum count of recent projects"
+msgstr "可顯示的最近項目數目上限"
+
+#. reviewed-category: preferences
+msgid "Show online staff-picked models on the home page"
+msgstr "在主頁顯示網上精選模型"
+
+#. reviewed-category: preferences
+msgid "Show history on the home page"
+msgstr "在主頁顯示歷史記錄"
+
+#. reviewed-category: preferences
+msgid "Host Setting"
+msgstr "主機設定"
+
+#. reviewed-category: preferences
+msgid "Reset preferences"
+msgstr "重設偏好設定"
+
+#. reviewed-category: preferences
+msgid "Are you sure you want to reset all preferences? Changes will take effect after restart."
+msgstr "確定要重設所有偏好設定嗎？變更會在重新啟動後生效。"
+
+#. reviewed-category: preferences
+msgid "Join the User Experience Improvement Program."
+msgstr "參加使用者體驗改善計劃。"
+
+#. reviewed-category: preferences
+msgid "Privacy Policy"
+msgstr "私隱政策"
+
+#. reviewed-category: preferences
+msgid "Statement about User Experience Improvement Program"
+msgstr "使用者體驗改善計劃聲明"
+
+#. reviewed-category: file-actions
+msgid "Save"
+msgstr "儲存"
+
+#. reviewed-category: file-actions
+msgid "Save Project"
+msgstr "儲存項目"
+
+#. reviewed-category: file-actions
+msgid "Save current project to file"
+msgstr "將目前項目儲存至檔案"
+
+#. reviewed-category: file-actions
+msgid "Save Project as"
+msgstr "另存項目"
+
+#. reviewed-category: file-actions
+msgid "Save current project as"
+msgstr "將目前項目另存為"
+
+#. reviewed-category: file-actions
+msgid "Save as"
+msgstr "另存為"
+
+#. reviewed-category: file-actions
+msgid "Open"
+msgstr "開啟"
+
+#. reviewed-category: file-actions
+msgid "Import"
+msgstr "匯入"
+
+#. reviewed-category: file-actions
+msgid "Export"
+msgstr "匯出"
+
+#. reviewed-category: file-actions
+msgid "Import File"
+msgstr "匯入檔案"
+
+#. reviewed-category: file-actions
+msgid "Choose files"
+msgstr "選擇檔案"
+
+#. reviewed-category: file-actions
+msgid "Import Model"
+msgstr "匯入模型"
+
+#. reviewed-category: file-actions
+msgid "Import file"
+msgstr "匯入檔案"
+
+#. reviewed-category: file-actions
+msgid "Import model and profile"
+msgstr "匯入模型及設定檔"
+
+#. reviewed-category: file-actions
+msgid "Import profile only"
+msgstr "只匯入設定檔"
+
+#. reviewed-category: file-actions
+msgid "Import model only"
+msgstr "只匯入模型"
+
+#. reviewed-category: file-actions
+msgid "Importing canceled."
+msgstr "匯入已取消。"
+
+#. reviewed-category: file-actions
+msgid "Importing done."
+msgstr "匯入完成。"
+
+#. reviewed-category: file-actions
+msgid "Export G-code"
+msgstr "匯出 G-code"
+
+#. reviewed-category: file-actions
+msgid "Export current plate as G-code"
+msgstr "將目前列印板匯出為 G-code"
+
+#. reviewed-category: file-actions
+msgid "Export Generic 3MF"
+msgstr "匯出通用 3MF"
+
+#. reviewed-category: file-actions
+msgid "Export all objects as one STL"
+msgstr "將所有物件匯出為單一 STL"
+
+#. reviewed-category: file-actions
+msgid "Export all objects as STLs"
+msgstr "將所有物件分別匯出為 STL"
+
+#. reviewed-category: file-actions
+msgid "Export current sliced file"
+msgstr "匯出目前切片檔案"
+
+#. reviewed-category: file-actions
+msgid "Export all plate sliced file"
+msgstr "匯出所有列印板切片檔案"
+
+#. reviewed-category: file-actions
+msgid "All files"
+msgstr "所有檔案"
+
+#. reviewed-category: file-actions
+msgid "Image files"
+msgstr "圖片檔案"
+
+#. reviewed-category: file-actions
+msgid "Loading file"
+msgstr "正在載入檔案"
+
+#. reviewed-category: file-actions
+msgid "File is missing"
+msgstr "檔案遺失"
+
+#. reviewed-category: file-actions
+msgid "Invalid file format."
+msgstr "檔案格式無效。"
+
+#. reviewed-category: file-actions
+msgid "Unknown filename"
+msgstr "未知檔案名稱"
+
+#. reviewed-category: file-actions
+msgid "File does NOT exist (%1%)."
+msgstr "檔案不存在（%1%）。"
+
+#. reviewed-category: file-actions
+msgid "Undo"
+msgstr "復原"
+
+#. reviewed-category: file-actions
+msgid "Redo"
+msgstr "重做"
+
+#. reviewed-category: file-actions
+msgid "Cut"
+msgstr "剪下"
+
+#. reviewed-category: file-actions
+msgid "Copy"
+msgstr "複製"
+
+#. reviewed-category: file-actions
+msgid "Paste"
+msgstr "貼上"
+
+#. reviewed-category: file-actions
+msgid "Add"
+msgstr "加入"
+
+#. reviewed-category: file-actions
+msgid "Add plate"
+msgstr "加入列印板"
+
+#. reviewed-category: file-actions
+msgid "Rename"
+msgstr "重新命名"
+
+#. reviewed-category: file-actions
+msgid "Refresh"
+msgstr "重新整理"
+
+#. reviewed-category: file-actions
+msgid "Reload file list from printer."
+msgstr "重新載入打印機檔案清單。"
+
+#. reviewed-category: file-actions
+msgid "Download selected files from printer."
+msgstr "從打印機下載所選檔案。"
+
+#. reviewed-category: file-actions
+msgid "Open Folder"
+msgstr "開啟所在資料夾"
+
+#. reviewed-category: file-actions
+msgid "Export result"
+msgstr "匯出結果"
+
+#. reviewed-category: file-actions
+msgid "Import result"
+msgstr "匯入結果"
+
+#. reviewed-category: slicing-printing
+msgid "Slice plate"
+msgstr "切片目前列印板"
+
+#. reviewed-category: slicing-printing
+msgid "Slice all"
+msgstr "全部切片"
+
+#. reviewed-category: slicing-printing
+msgid "Print plate"
+msgstr "打印目前列印板"
+
+#. reviewed-category: slicing-printing
+msgid "Print all"
+msgstr "全部打印"
+
+#. reviewed-category: slicing-printing
+msgid "Send"
+msgstr "傳送"
+
+#. reviewed-category: slicing-printing
+msgid "Send all"
+msgstr "全部傳送"
+
+#. reviewed-category: slicing-printing
+msgid "Export plate sliced file"
+msgstr "匯出列印板切片檔案"
+
+#. reviewed-category: slicing-printing
+msgid "Export all sliced file"
+msgstr "匯出所有切片檔案"
+
+#. reviewed-category: slicing-printing
+msgid "Print"
+msgstr "打印"
+
+#. reviewed-category: slicing-printing
+msgid "Printing"
+msgstr "打印中"
+
+#. reviewed-category: slicing-printing
+msgid "Printer"
+msgstr "打印機"
+
+#. reviewed-category: slicing-printing
+msgid "No printer"
+msgstr "沒有打印機"
+
+#. reviewed-category: slicing-printing
+msgid "No printers."
+msgstr "沒有打印機。"
+
+#. reviewed-category: slicing-printing
+msgid "Pause"
+msgstr "暫停"
+
+#. reviewed-category: slicing-printing
+msgid "Resume"
+msgstr "繼續"
+
+#. reviewed-category: slicing-printing
+msgid "Stop Printing"
+msgstr "停止打印"
+
+#. reviewed-category: slicing-printing
+msgid "Resume Printing"
+msgstr "繼續打印"
+
+#. reviewed-category: slicing-printing
+msgid "Failed to start printing job"
+msgstr "無法開始打印工作"
+
+#. reviewed-category: slicing-printing
+msgid "Failed to send the print job. Please try again."
+msgstr "無法傳送打印工作。請重試。"
+
+#. reviewed-category: slicing-printing
+msgid "Task canceled."
+msgstr "工作已取消。"
+
+#. reviewed-category: slicing-printing
+msgid "Cancelled"
+msgstr "已取消"
+
+#. reviewed-category: slicing-printing
+msgid "Abnormal print file data. Please slice again."
+msgstr "打印檔案資料異常。請重新切片。"
+
+#. reviewed-category: slicing-printing
+msgid "Print file not found. please slice again."
+msgstr "找不到打印檔案。請重新切片。"
+
+#. reviewed-category: slicing-printing
+msgid "Print file not found, Please slice it again and send it for printing."
+msgstr "找不到打印檔案。請重新切片後再傳送打印。"
+
+#. reviewed-category: slicing-printing
+msgid "The print file exceeds the maximum allowable size (1GB). Please simplify the model and slice again."
+msgstr "打印檔案超出大小上限（1GB）。請簡化模型後重新切片。"
+
+#. reviewed-category: slicing-printing
+msgid "The size of the print file is too large. Please adjust the file size and try again."
+msgstr "打印檔案太大。請調整檔案大小後重試。"
+
+#. reviewed-category: slicing-printing
+msgid "Sending print job over LAN"
+msgstr "正在透過 LAN 傳送打印工作"
+
+#. reviewed-category: slicing-printing
+msgid "Sending print job through cloud service"
+msgstr "正在透過雲端服務傳送打印工作"
+
+#. reviewed-category: slicing-printing
+msgid "Sending gcode file over LAN"
+msgstr "正在透過 LAN 傳送 G-code 檔案"
+
+#. reviewed-category: slicing-printing
+msgid "Sending gcode file to sdcard"
+msgstr "正在將 G-code 檔案傳送至 SD 卡"
+
+#. reviewed-category: slicing-printing
+msgid "Storage needs to be inserted before sending to printer."
+msgstr "傳送至打印機前，必須先插入儲存裝置。"
+
+#. reviewed-category: slicing-printing
+msgid "Retrieving printer information, please try again later."
+msgstr "正在取得打印機資料，請稍後再試。"
+
+#. reviewed-category: slicing-printing
+msgid "Please confirm if the printer is connected."
+msgstr "請確認打印機已連線。"
+
+#. reviewed-category: slicing-printing
+msgid "The printer is currently busy downloading. Please try again after it finishes."
+msgstr "打印機正在下載。請待下載完成後再試。"
+
+#. reviewed-category: slicing-printing
+msgid "The printer is busy and cannot switch AMS type."
+msgstr "打印機正在忙碌，無法切換 AMS 類型。"
+
+#. reviewed-category: slicing-printing
+msgid "Setting AMS slot information while printing is not supported"
+msgstr "打印期間不支援設定 AMS 槽位資料"
+
+#. reviewed-category: slicing-printing
+msgid "Setting Virtual slot information while printing is not supported"
+msgstr "打印期間不支援設定虛擬槽位資料"
+
+#. reviewed-category: slicing-printing
+msgid "Print with filaments in the AMS"
+msgstr "使用 AMS 內的耗材打印"
+
+#. reviewed-category: slicing-printing
+msgid "Print with the filament mounted on the back of chassis"
+msgstr "使用機身背面安裝的耗材打印"
+
+#. reviewed-category: slicing-printing
+msgid "Filament used in this print job"
+msgstr "此打印工作使用的耗材"
+
+#. reviewed-category: slicing-printing
+msgid "When the current material runs out, the printer would use identical filament to continue printing."
+msgstr "目前物料用完後，打印機會使用相同耗材繼續打印。"
+
+#. reviewed-category: slicing-printing
+msgid "The printer does not currently support auto refill."
+msgstr "此打印機目前不支援自動續料。"
+
+#. reviewed-category: slicing-printing
+msgid "Air Printing Detection"
+msgstr "空打偵測"
+
+#. reviewed-category: slicing-printing
+msgid "Detects clogging and filament grinding, halting printing immediately to conserve time and filament."
+msgstr "偵測堵塞及磨料，發現問題時立即停止打印，以節省時間及耗材。"
+
+#. reviewed-category: slicing-printing
+msgid "Current printer preset (Prepare page): %s"
+msgstr "目前打印機預設（準備頁面）：%s"
+
+#. reviewed-category: slicing-printing
+msgid "Current connected printer (Device page): %s (%s)"
+msgstr "目前連線的打印機（裝置頁面）：%s（%s）"
+
+#. reviewed-category: slicing-printing
+msgid "Printer not connected. Please go to the device page to connect %s before syncing."
+msgstr "打印機未連線。同步前請前往裝置頁面連接 %s。"
+
+#. reviewed-category: slicing-printing
+msgid "Calibrating... %d%%"
+msgstr "正在校準… %d%%"
+
+#. reviewed-category: slicing-printing
+msgid "Calibration completed"
+msgstr "校準完成"
+
+#. reviewed-category: slicing-printing
+msgid "Start calibration"
+msgstr "開始校準"
+
+#. reviewed-category: connection-offline
+msgid "Failed to connect to the server"
+msgstr "無法連接伺服器"
+
+#. reviewed-category: connection-offline
+msgid "Failed to connect to cloud service"
+msgstr "無法連接雲端服務"
+
+#. reviewed-category: connection-offline
+msgid "Failed to connect to the printer"
+msgstr "無法連接打印機"
+
+#. reviewed-category: connection-offline
+msgid "Connection to printer failed"
+msgstr "打印機連線失敗"
+
+#. reviewed-category: connection-offline
+msgid "Please check the network connection of the printer and Studio."
+msgstr "請檢查打印機及 Bambu Studio 的網絡連線。"
+
+#. reviewed-category: connection-offline
+msgid "Connecting..."
+msgstr "正在連線…"
+
+#. reviewed-category: connection-offline
+msgid "Cloud service connection failed. Please try again."
+msgstr "雲端服務連線失敗。請重試。"
+
+#. reviewed-category: connection-offline
+msgid "Failed to connect to the cloud device server. Please check your network and firewall."
+msgstr "無法連接雲端裝置伺服器。請檢查網絡及防火牆。"
+
+#. reviewed-category: connection-offline
+msgid "Network unavailable"
+msgstr "網絡不可用"
+
+#. reviewed-category: connection-offline
+msgid "Network unreachable"
+msgstr "無法連接網絡"
+
+#. reviewed-category: connection-offline
+msgid "Connection Failed. Please check the network and try again"
+msgstr "連線失敗。請檢查網絡後重試"
+
+#. reviewed-category: connection-offline
+msgid "Connection timed out, please check your network."
+msgstr "連線逾時，請檢查網絡。"
+
+#. reviewed-category: connection-offline
+msgid "Upload task timed out. Please check the network status and try again."
+msgstr "上載工作逾時。請檢查網絡狀態後重試。"
+
+#. reviewed-category: connection-offline
+msgid "Failed to upload print file to FTP. Please check the network status and try again."
+msgstr "無法將打印檔案上載至 FTP。請檢查網絡狀態後重試。"
+
+#. reviewed-category: connection-offline
+msgid "Please check the printer network connection."
+msgstr "請檢查打印機的網絡連線。"
+
+#. reviewed-category: connection-offline
+msgid "Login"
+msgstr "登入"
+
+#. reviewed-category: connection-offline
+msgid "Login failed"
+msgstr "登入失敗"
+
+#. reviewed-category: connection-offline
+msgid "Log Out"
+msgstr "登出"
+
+#. reviewed-category: connection-offline
+msgid "Retry"
+msgstr "重試"
+
+#. reviewed-category: connection-offline
+msgid "Download failed"
+msgstr "下載失敗"
+
+#. reviewed-category: connection-offline
+msgid "Downloading failed."
+msgstr "下載失敗。"
+
+#. reviewed-category: connection-offline
+msgid "Loading failed. Please check the network and try again."
+msgstr "載入失敗。請檢查網絡後重試。"
+
+#. reviewed-category: connection-offline
+msgid "Network Plug-in is not detected. Network related features are unavailable."
+msgstr "偵測不到網絡外掛程式。網絡相關功能無法使用。"
+
+#. reviewed-category: connection-offline
+msgid "Install network plug-in"
+msgstr "安裝網絡外掛程式"
+
+#. reviewed-category: connection-offline
+msgid "Please Install network plug-in before log in."
+msgstr "登入前請先安裝網絡外掛程式。"
+
+#. reviewed-category: connection-offline
+msgid "Open Network Test"
+msgstr "開啟網絡測試"
+
+#. reviewed-category: connection-offline
+msgid "Connect %s failed! [SN:%s, code=%s]"
+msgstr "連接 %s 失敗！[SN:%s，代碼=%s]"
+
+#. reviewed-category: connection-offline
+msgid "The device cannot handle more conversations. Please retry later."
+msgstr "裝置暫時無法處理更多連線。請稍後重試。"
+
+#. reviewed-category: connection-offline
+msgid "Multi-device/client simultaneous liveview is not supported. Please close the liveview on other devices/clients and try again."
+msgstr "不支援多個裝置或用戶端同時使用即時影像。請關閉其他裝置或用戶端的即時影像後重試。"
+
+#. reviewed-category: connection-offline
+msgid "LAN Only Liveview is off. Please turn on the liveview on printer screen."
+msgstr "LAN 模式的即時影像已關閉。請在打印機螢幕上開啟即時影像。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Warning"
+msgstr "警告"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Error"
+msgstr "錯誤"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Error!"
+msgstr "錯誤！"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Fatal error"
+msgstr "嚴重錯誤"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Critical error"
+msgstr "重大錯誤"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unknown Error."
+msgstr "未知錯誤。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unknown error."
+msgstr "未知錯誤。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Verification failed."
+msgstr "驗證失敗。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Update failed."
+msgstr "更新失敗。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Delete"
+msgstr "刪除"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Remove"
+msgstr "移除"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Delete selected"
+msgstr "刪除所選項目"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Delete all"
+msgstr "全部刪除"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Delete All"
+msgstr "全部刪除"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Delete Plate"
+msgstr "刪除列印板"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Remove the selected plate"
+msgstr "移除所選列印板"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Delete this filament"
+msgstr "刪除此耗材"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Delete selected files from printer."
+msgstr "從打印機刪除所選檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "You are going to delete %u file from printer. Are you sure to continue?"
+msgstr "即將從打印機刪除 %u 個檔案。確定要繼續嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Delete files"
+msgstr "刪除檔案"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Do you want to delete the file '%s' from printer?"
+msgstr "確定要從打印機刪除檔案「%s」嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Overwrite file"
+msgstr "覆寫檔案"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A file exists with the same name: %s, do you want to override it."
+msgstr "已有同名檔案：%s。確定要覆寫嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The current page has unsaved changes. You can continue editing or choose to save/discard before leaving."
+msgstr "目前頁面有未儲存的變更。你可繼續編輯，或在離開前選擇儲存或捨棄變更。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The current project has unsaved changes, save it before continue?"
+msgstr "目前項目有未儲存的變更。繼續前要先儲存嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The current project has unsaved changes, save it before continuing?"
+msgstr "目前項目有未儲存的變更。繼續前要先儲存嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Closing Application while some presets are modified."
+msgstr "部分預設已有變更，應用程式即將關閉。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The current style has been modified but not saved. Do you want to save it?"
+msgstr "目前樣式已有變更但尚未儲存。要儲存嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Changing style to \"%1%\" will discard current style modification.\n\nWould you like to continue anyway?"
+msgstr "切換至樣式「%1%」會捨棄目前的樣式變更。\n\n確定仍要繼續嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "You can keep the modified presets for the new project, discard or save changes as new presets."
+msgstr "你可在新項目保留已修改的預設、捨棄變更，或將變更儲存為新預設。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This file is not from a trusted site, do you want to open it anyway?"
+msgstr "此檔案並非來自受信任網站。確定仍要開啟嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The export file is in use by the system. Please close it or export with a different file name, then try again."
+msgstr "匯出檔案正由系統使用。請關閉該檔案，或改用其他檔案名稱匯出後重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Failed to save the project: an invalid setting value was found while writing the file."
+msgstr "無法儲存項目：寫入檔案時發現無效的設定值。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please check your settings and try again."
+msgstr "請檢查設定後重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "BambuStudio configuration file read failed. Please manually backup and delete it, and then restart BambuStudio software."
+msgstr "無法讀取 BambuStudio 設定檔。請先手動備份該檔案，再將其刪除，然後重新啟動 BambuStudio。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Your software certificate has been revoked, please update Bambu Studio software."
+msgstr "軟件憑證已被撤銷。請更新 Bambu Studio。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The certificate has expired. Please check the time settings or update Bambu Studio and try again."
+msgstr "憑證已過期。請檢查系統時間設定，或更新 Bambu Studio 後重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Your software is not signed, and some printing functions have been restricted. Please use the officially signed software version."
+msgstr "此軟件未經簽署，部分打印功能已受限制。請使用官方簽署的軟件版本。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Failed to install the plug-in. Please check whether it is blocked or deleted by anti-virus software."
+msgstr "外掛程式安裝失敗。請檢查防毒軟件是否封鎖或刪除了該外掛程式。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Internal error. Please try upgrading the firmware and Studio version. If the issue persists, contact customer support."
+msgstr "發生內部錯誤。請嘗試更新韌體及 Bambu Studio。如問題持續，請聯絡客戶支援。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Fatal error, exception caught: %1%"
+msgstr "發生嚴重錯誤，已攔截例外：%1%"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unknown error when export G-code."
+msgstr "匯出 G-code 時發生未知錯誤。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Quit"
+msgstr "結束"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Quit BambuStudio"
+msgstr "結束 BambuStudio"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Quit %s"
+msgstr "結束 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Operation already cancelling. Please wait few seconds."
+msgstr "正在取消操作。請稍候數秒。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Some presets are modified."
+msgstr "部分預設已有變更。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The project is no longer available."
+msgstr "此項目已不可用。"

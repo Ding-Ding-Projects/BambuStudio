@@ -3,6 +3,8 @@ RequestExecutionLevel user
 
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
+!include "FileFunc.nsh"
+!include "nsDialogs.nsh"
 
 !ifndef PRODUCT_VERSION
   !error "PRODUCT_VERSION must be provided by the build"
@@ -28,8 +30,25 @@ RequestExecutionLevel user
 !define PRODUCT_EXE "bambu-studio.exe"
 !define PRODUCT_INSTALLER_ID "codingmachineedge.BambuStudioMD3.owned-v1"
 !define PRODUCT_REG_KEY "Software\codingmachineedge\BambuStudioMD3"
+!define PRODUCT_PREF_KEY "Software\codingmachineedge\BambuStudioMD3Preferences"
 !define PRODUCT_UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\BambuStudioMD3"
 !define PRODUCT_INSTALL_DIR "$LOCALAPPDATA\Programs\Bambu Studio MD3"
+
+Var LanguageMode
+Var LanguageModeDialog
+Var LanguageModeEnglish
+Var LanguageModeCantonese
+Var LanguageModeBilingual
+
+!macro ShowLanguageStop ENGLISH CANTONESE
+  ${If} $LanguageMode == "yue_HK"
+    MessageBox MB_ICONSTOP|MB_OK "${CANTONESE}" /SD IDOK
+  ${ElseIf} $LanguageMode == "bilingual_en_yue_HK"
+    MessageBox MB_ICONSTOP|MB_OK "${ENGLISH}$\r$\n$\r$\n${CANTONESE}" /SD IDOK
+  ${Else}
+    MessageBox MB_ICONSTOP|MB_OK "${ENGLISH}" /SD IDOK
+  ${EndIf}
+!macroend
 
 !macro AssertNotReparse PATH
   System::Call 'kernel32::GetFileAttributesW(w "${PATH}") i.r8'
@@ -37,7 +56,9 @@ RequestExecutionLevel user
     IntOp $R9 $R8 & 0x400
     ${If} $R9 != 0
       SetErrorLevel 2
-      MessageBox MB_ICONSTOP|MB_OK "Bambu Studio MD3 stopped because a protected install path is a junction or symbolic link: ${PATH}" /SD IDOK
+      !insertmacro ShowLanguageStop \
+        "Bambu Studio MD3 stopped because a protected install path is a junction or symbolic link: ${PATH}" \
+        "Bambu Studio MD3 已停止，因為受保護嘅安裝路徑係接合點或者符號連結：${PATH}"
       Abort
     ${EndIf}
   ${EndIf}
@@ -70,8 +91,91 @@ VIAddVersionKey /LANG=1033 "LegalCopyright" "GNU AGPL v3"
 !define MUI_UNICON "${INSTALLER_ICON}"
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 
+Function .onInit
+  StrCpy $LanguageMode "en"
+  ReadRegStr $0 HKCU "${PRODUCT_PREF_KEY}" "LanguageMode"
+  ${If} $0 == ""
+    ReadRegStr $0 HKCU "${PRODUCT_REG_KEY}" "LanguageMode"
+  ${EndIf}
+  ${If} $0 == "en"
+  ${OrIf} $0 == "yue_HK"
+  ${OrIf} $0 == "bilingual_en_yue_HK"
+    StrCpy $LanguageMode $0
+  ${EndIf}
+
+  ${GetParameters} $R0
+  ClearErrors
+  ${GetOptions} $R0 "/LANGMODE=" $R1
+  ${IfNot} ${Errors}
+    ${If} $R1 == "en"
+    ${OrIf} $R1 == "yue_HK"
+    ${OrIf} $R1 == "bilingual_en_yue_HK"
+      StrCpy $LanguageMode $R1
+    ${Else}
+      SetErrorLevel 2
+      MessageBox MB_ICONSTOP|MB_OK "Invalid /LANGMODE value. Use en, yue_HK, or bilingual_en_yue_HK." /SD IDOK
+      Abort
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
+
+Function un.onInit
+  StrCpy $LanguageMode "en"
+  ReadRegStr $0 HKCU "${PRODUCT_PREF_KEY}" "LanguageMode"
+  ${If} $0 == ""
+    ReadRegStr $0 HKCU "${PRODUCT_REG_KEY}" "LanguageMode"
+  ${EndIf}
+  ${If} $0 == "yue_HK"
+  ${OrIf} $0 == "bilingual_en_yue_HK"
+    StrCpy $LanguageMode $0
+  ${EndIf}
+FunctionEnd
+
+Function LanguageModePageCreate
+  nsDialogs::Create 1018
+  Pop $LanguageModeDialog
+  ${If} $LanguageModeDialog == error
+    Abort
+  ${EndIf}
+
+  ${NSD_CreateLabel} 0 0 100% 28u "Choose the Bambu Studio UI language.$\r$\n揀選 Bambu Studio 介面語言。"
+  Pop $0
+  ${NSD_CreateRadioButton} 8u 38u 92% 14u "English"
+  Pop $LanguageModeEnglish
+  ${NSD_CreateRadioButton} 8u 60u 92% 14u "廣東話（香港，預覽版）"
+  Pop $LanguageModeCantonese
+  ${NSD_CreateRadioButton} 8u 82u 92% 14u "English + 廣東話（香港）"
+  Pop $LanguageModeBilingual
+  ${NSD_CreateLabel} 8u 108u 92% 30u "You can change this later in Preferences. Existing Bambu Studio locales remain available there.$\r$\n之後可以喺偏好設定更改；其他現有語言亦會保留。"
+  Pop $0
+
+  ${If} $LanguageMode == "yue_HK"
+    ${NSD_Check} $LanguageModeCantonese
+  ${ElseIf} $LanguageMode == "bilingual_en_yue_HK"
+    ${NSD_Check} $LanguageModeBilingual
+  ${Else}
+    ${NSD_Check} $LanguageModeEnglish
+  ${EndIf}
+  nsDialogs::Show
+FunctionEnd
+
+Function LanguageModePageLeave
+  ${NSD_GetState} $LanguageModeCantonese $0
+  ${If} $0 == ${BST_CHECKED}
+    StrCpy $LanguageMode "yue_HK"
+    Return
+  ${EndIf}
+  ${NSD_GetState} $LanguageModeBilingual $0
+  ${If} $0 == ${BST_CHECKED}
+    StrCpy $LanguageMode "bilingual_en_yue_HK"
+    Return
+  ${EndIf}
+  StrCpy $LanguageMode "en"
+FunctionEnd
+
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${PAYLOAD_DIR}\LICENSE.txt"
+Page custom LanguageModePageCreate LanguageModePageLeave
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
@@ -101,7 +205,9 @@ Section "Bambu Studio MD3" SEC_MAIN
       CopyFiles /SILENT "${PRODUCT_INSTALL_DIR}\Uninstall.exe" "$PLUGINSDIR\BambuStudioMD3-Previous-Uninstall.exe"
       ${If} ${Errors}
         SetErrorLevel 2
-        MessageBox MB_ICONSTOP|MB_OK "The previous Bambu Studio MD3 uninstaller could not be staged safely. No files were changed." /SD IDOK
+        !insertmacro ShowLanguageStop \
+          "The previous Bambu Studio MD3 uninstaller could not be staged safely. No files were changed." \
+          "無法安全準備上一個 Bambu Studio MD3 解除安裝程式。未有變更任何檔案。"
         Abort
       ${EndIf}
 
@@ -114,17 +220,23 @@ Section "Bambu Studio MD3" SEC_MAIN
 
       ${If} $1 != 0
         SetErrorLevel 2
-        MessageBox MB_ICONSTOP|MB_OK "The previous Bambu Studio MD3 installation could not be removed. Close the application and retry. No new files were installed." /SD IDOK
+        !insertmacro ShowLanguageStop \
+          "The previous Bambu Studio MD3 installation could not be removed. Close the application and retry. No new files were installed." \
+          "無法移除上一個 Bambu Studio MD3。請關閉程式再試。未有安裝新檔案。"
         Abort
       ${EndIf}
       ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
         SetErrorLevel 2
-        MessageBox MB_ICONSTOP|MB_OK "Unknown paths remain in the previous Bambu Studio MD3 directory. The old application was removed, but the new version was not installed. Move those paths elsewhere and retry." /SD IDOK
+        !insertmacro ShowLanguageStop \
+          "Unknown paths remain in the previous Bambu Studio MD3 directory. The old application was removed, but the new version was not installed. Move those paths elsewhere and retry." \
+          "上一個 Bambu Studio MD3 資料夾仍有未知路徑。舊程式已移除，但未有安裝新版本。請將嗰啲路徑移去其他位置再試。"
         Abort
       ${EndIf}
     ${ElseIf} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
       SetErrorLevel 2
-      MessageBox MB_ICONSTOP|MB_OK "The owned Bambu Studio MD3 directory is missing its uninstaller. No files were changed." /SD IDOK
+      !insertmacro ShowLanguageStop \
+        "The owned Bambu Studio MD3 directory is missing its uninstaller. No files were changed." \
+        "由安裝程式管理嘅 Bambu Studio MD3 資料夾欠缺解除安裝程式。未有變更任何檔案。"
       Abort
     ${Else}
       DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
@@ -132,7 +244,9 @@ Section "Bambu Studio MD3" SEC_MAIN
     ${EndIf}
   ${ElseIf} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
     SetErrorLevel 2
-    MessageBox MB_ICONSTOP|MB_OK "The Bambu Studio MD3 target directory already contains files not owned by this installer. No files were changed." /SD IDOK
+    !insertmacro ShowLanguageStop \
+      "The Bambu Studio MD3 target directory already contains files not owned by this installer. No files were changed." \
+      "Bambu Studio MD3 目標資料夾已有唔屬於呢個安裝程式嘅檔案。未有變更任何檔案。"
     Abort
   ${EndIf}
 
@@ -151,6 +265,10 @@ Section "Bambu Studio MD3" SEC_MAIN
   ClearErrors
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallDir" "${PRODUCT_INSTALL_DIR}"
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "LanguageMode" "$LanguageMode"
+  ; This user preference intentionally survives uninstall, just like app
+  ; profiles/projects, and keeps the selected mode across failed upgrades.
+  WriteRegStr HKCU "${PRODUCT_PREF_KEY}" "LanguageMode" "$LanguageMode"
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "DisplayName" "${PRODUCT_NAME} (incomplete installation)"
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "InstallLocation" "${PRODUCT_INSTALL_DIR}"
   WriteRegStr HKCU "${PRODUCT_UNINSTALL_KEY}" "UninstallString" '"${PRODUCT_INSTALL_DIR}\Uninstall.exe"'
@@ -185,17 +303,23 @@ install_bootstrap_failed:
   DeleteRegKey HKCU "${PRODUCT_REG_KEY}"
   RMDir "${PRODUCT_INSTALL_DIR}"
   SetErrorLevel 2
-  MessageBox MB_ICONSTOP|MB_OK "Bambu Studio MD3 could not create its recovery metadata. No application payload was installed." /SD IDOK
+  !insertmacro ShowLanguageStop \
+    "Bambu Studio MD3 could not create its recovery metadata. No application payload was installed." \
+    "Bambu Studio MD3 無法建立復原資料。未有安裝應用程式檔案。"
   Abort
 
 install_payload_failed:
   SetErrorLevel 2
-  MessageBox MB_ICONSTOP|MB_OK "Bambu Studio MD3 could not extract every application file. The recovery uninstaller was preserved; retry this installer or remove the incomplete installation from Windows Settings." /SD IDOK
+  !insertmacro ShowLanguageStop \
+    "Bambu Studio MD3 could not extract every application file. The recovery uninstaller was preserved; retry this installer or remove the incomplete installation from Windows Settings." \
+    "Bambu Studio MD3 無法解壓全部應用程式檔案。復原用解除安裝程式已保留；請重試，或者喺 Windows 設定移除未完成嘅安裝。"
   Abort
 
 install_registration_failed:
   SetErrorLevel 2
-  MessageBox MB_ICONSTOP|MB_OK "Bambu Studio MD3 files were installed, but Windows registration did not complete. The recovery uninstaller was preserved in the install directory." /SD IDOK
+  !insertmacro ShowLanguageStop \
+    "Bambu Studio MD3 files were installed, but Windows registration did not complete. The recovery uninstaller was preserved in the install directory." \
+    "Bambu Studio MD3 檔案已安裝，但 Windows 登記未完成。復原用解除安裝程式已保留喺安裝資料夾。"
   Abort
 
 install_done:
@@ -207,14 +331,18 @@ Section "Uninstall"
   ; Never remove files from a relocated or unexpected directory.
   ${If} $INSTDIR != "${PRODUCT_INSTALL_DIR}"
     SetErrorLevel 2
-    MessageBox MB_ICONSTOP|MB_OK "The uninstaller is not running from the expected Bambu Studio MD3 directory. No files were removed." /SD IDOK
+    !insertmacro ShowLanguageStop \
+      "The uninstaller is not running from the expected Bambu Studio MD3 directory. No files were removed." \
+      "解除安裝程式唔係由預期嘅 Bambu Studio MD3 資料夾執行。未有移除任何檔案。"
     Abort
   ${EndIf}
 
   ReadRegStr $0 HKCU "${PRODUCT_REG_KEY}" "InstallerId"
   ${If} $0 != "${PRODUCT_INSTALLER_ID}"
     SetErrorLevel 2
-    MessageBox MB_ICONSTOP|MB_OK "The Bambu Studio MD3 ownership marker is missing or invalid. No files were removed." /SD IDOK
+    !insertmacro ShowLanguageStop \
+      "The Bambu Studio MD3 ownership marker is missing or invalid. No files were removed." \
+      "Bambu Studio MD3 擁有權標記遺失或者無效。未有移除任何檔案。"
     Abort
   ${EndIf}
 
@@ -245,7 +373,9 @@ Section "Uninstall"
 
 uninstall_owned_files_failed:
   SetErrorLevel 2
-  MessageBox MB_ICONSTOP|MB_OK "Some Bambu Studio MD3 files are still in use. Close the application and run the uninstaller again. The uninstall entry was preserved." /SD IDOK
+  !insertmacro ShowLanguageStop \
+    "Some Bambu Studio MD3 files are still in use. Close the application and run the uninstaller again. The uninstall entry was preserved." \
+    "部分 Bambu Studio MD3 檔案仲使用緊。請關閉程式，再執行解除安裝程式。解除安裝項目已保留。"
   Abort
 
 uninstall_done:

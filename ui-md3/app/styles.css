@@ -34,3 +34,37 @@ a:hover{ text-decoration:underline; }
 @keyframes mdfade{ from{ opacity:0; transform:translateY(10px) scale(.99); } to{ opacity:1; transform:none; } }
 @keyframes scrimin{ from{ opacity:0; } to{ opacity:1; } }
 @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+
+/* Compact bilingual labels keep English as the primary DOM text. Short
+   Cantonese copy sits on the same baseline; longer copy uses a tiny 廣 badge
+   with the complete translation in its native tooltip. */
+.i18n-secondary{
+  margin-inline-start:.38em;
+  color:var(--md-on-surface-variant);
+  font-size:.72em;
+  font-weight:400;
+  letter-spacing:0;
+  line-height:1;
+  text-transform:none;
+  white-space:nowrap;
+  vertical-align:middle;
+}
+.i18n-secondary--inline{ opacity:.78; }
+.i18n-secondary--disclosure{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:1.45em;
+  height:1.45em;
+  padding:0 .28em;
+  border:1px solid var(--md-outline-variant);
+  border-radius:999px;
+  background:var(--md-sc-high);
+  color:var(--md-on-surface-variant);
+  cursor:help;
+  opacity:.9;
+}
+button .i18n-secondary{ color:inherit; }
+@media (max-width:760px){
+  .i18n-secondary--inline{ font-size:.68em; margin-inline-start:.28em; }
+}

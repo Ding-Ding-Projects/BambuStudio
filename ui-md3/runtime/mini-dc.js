@@ -244,6 +244,52 @@
     return `index:${index}`;
   }
 
+  const LOCALIZABLE_ATTRIBUTES = new Set(['alt', 'aria-label', 'placeholder', 'title']);
+
+  function localizationInfo(value) {
+    const i18n = global.BambuI18n;
+    if (!i18n || typeof i18n.describe !== 'function') {
+      return { text: stringValue(value), secondary: '', disclosure: false };
+    }
+    return i18n.describe(stringValue(value));
+  }
+
+  function localizeAttribute(name, value) {
+    if (!LOCALIZABLE_ATTRIBUTES.has(String(name || '').toLowerCase())) return value;
+    const i18n = global.BambuI18n;
+    if (!i18n || typeof i18n.translateAttribute !== 'function') return value;
+    return i18n.translateAttribute(stringValue(value), name);
+  }
+
+  function bilingualSecondaryVNode(key, info) {
+    const disclosure = !!info.disclosure;
+    const label = disclosure ? `廣東話：${info.secondary}` : info.secondary;
+    return {
+      type: 'element',
+      key: `${key}:i18n-secondary`,
+      tag: 'span',
+      attributes: {
+        class: disclosure
+          ? 'i18n-secondary i18n-secondary--disclosure'
+          : 'i18n-secondary i18n-secondary--inline',
+        lang: 'yue-Hant-HK',
+        title: disclosure ? label : '',
+        'data-i18n-secondary': info.secondary,
+        'aria-label': label,
+        'aria-hidden': disclosure ? 'false' : 'true'
+      },
+      events: Object.create(null),
+      hover: '',
+      children: [{
+        type: 'text',
+        key: `${key}:i18n-secondary:text`,
+        text: disclosure ? '廣' : info.secondary,
+        el: null
+      }],
+      el: null
+    };
+  }
+
   function evaluateNodes(nodes, values, scope, loopKeys, output) {
     const result = output || [];
 
@@ -279,19 +325,22 @@
 
       const key = vnodeKey(node.id, loopKeys);
       if (node.kind === 'text') {
+        const info = localizationInfo(evaluateBinding(node.value, values, scope));
         result.push({
           type: 'text',
           key,
-          text: stringValue(evaluateBinding(node.value, values, scope)),
+          text: info.text,
           el: null
         });
+        if (info.secondary) result.push(bilingualSecondaryVNode(key, info));
         continue;
       }
 
       if (node.kind === 'component') {
         const props = {};
         for (const prop of node.props) {
-          props[prop.name] = evaluateBinding(prop.value, values, scope);
+          const value = evaluateBinding(prop.value, values, scope);
+          props[prop.name] = localizeAttribute(prop.name, value);
         }
         result.push({ type: 'component', key, name: node.name, props, el: null, instance: null });
         continue;
@@ -300,7 +349,8 @@
       const attributes = Object.create(null);
       const events = Object.create(null);
       for (const attribute of node.attributes) {
-        attributes[attribute.name] = evaluateBinding(attribute.value, values, scope);
+        const value = evaluateBinding(attribute.value, values, scope);
+        attributes[attribute.name] = localizeAttribute(attribute.name, value);
       }
       for (const event of node.events) {
         const handler = evaluateBinding(event.value, values, scope);

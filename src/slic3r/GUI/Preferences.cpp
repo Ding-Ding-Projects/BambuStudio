@@ -39,6 +39,7 @@ WX_DEFINE_LIST(RadioSelectorList);
 static constexpr int TITLE_WIDTH          = 100; // row label column
 static constexpr int COMBOBOX_WIDTH       = 140;
 static constexpr int LARGE_COMBOBOX_WIDTH = 160;
+static constexpr int LANGUAGE_COMBOBOX_WIDTH = 260;
 static constexpr int INPUT_WIDTH          = 100;
 static constexpr int BTN_WIDTH            = 58; // small action button (reset / browse)
 static constexpr int BTN_HEIGHT           = 22;
@@ -46,6 +47,34 @@ static constexpr int TITLE_PADDING        = 48;
 static constexpr int ITEM_LEFT_PADDING    = 48 + 16;
 static constexpr int ITEM_RIGHT_PADDING   = 24;
 static constexpr int ITEM_MIN_HEIGHT      = 24;
+
+static wxString language_display_name(const wxLanguageInfo *info)
+{
+    if (info == nullptr)
+        return {};
+
+    const std::map<wxLanguage, wxString> names {
+        {wxLANGUAGE_CHINESE_SIMPLIFIED, wxString::FromUTF8("中文(简体)")},
+        {wxLANGUAGE_CHINESE_TRADITIONAL, wxString::FromUTF8("中文(繁體)")},
+        {wxLANGUAGE_SPANISH, wxString::FromUTF8("Español")},
+        {wxLANGUAGE_GERMAN, wxString::FromUTF8("Deutsch")},
+        {wxLANGUAGE_SWEDISH, wxString::FromUTF8("Svenska")},
+        {wxLANGUAGE_DUTCH, wxString::FromUTF8("Nederlands")},
+        {wxLANGUAGE_FRENCH, wxString::FromUTF8("Français")},
+        {wxLANGUAGE_HUNGARIAN, wxString::FromUTF8("Magyar")},
+        {wxLANGUAGE_JAPANESE, wxString::FromUTF8("日本語")},
+        {wxLANGUAGE_ITALIAN, wxString::FromUTF8("italiano")},
+        {wxLANGUAGE_KOREAN, wxString::FromUTF8("한국어")},
+        {wxLANGUAGE_RUSSIAN, wxString::FromUTF8("Русский")},
+        {wxLANGUAGE_CZECH, wxString::FromUTF8("čeština")},
+        {wxLANGUAGE_UKRAINIAN, wxString::FromUTF8("Українська")},
+        {wxLANGUAGE_PORTUGUESE_BRAZILIAN, wxString::FromUTF8("Português (Brasil)")},
+        {wxLANGUAGE_TURKISH, wxString::FromUTF8("Türkçe")},
+        {wxLANGUAGE_POLISH, wxString::FromUTF8("Polski")},
+    };
+    const auto found = names.find(static_cast<wxLanguage>(info->Language));
+    return found == names.end() ? info->Description : found->second;
+}
 
 // Scrolled panel used for every Preferences tab. wxScrolledWindow's default
 // behavior is to scroll to whatever child receives focus, which makes the
@@ -326,7 +355,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
                 Close();
                 // Reparent(nullptr);
                 GetParent()->RemoveChild(this);
-                Label::initSysFont(app_config->get_language_code());
+                Label::initSysFont(I18N::language_mode_profile().font_language);
                 wxGetApp().recreate_GUI(_L("Changing application language"));
             }
         }
@@ -335,6 +364,115 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
     });
 
     return m_sizer_combox;
+}
+
+wxBoxSizer *PreferencesDialog::create_item_language_mode_combobox(
+    wxString title, wxWindow *parent, wxString tooltip, std::string param,
+    const std::vector<std::pair<std::string, wxString>> &choices)
+{
+    assert(!choices.empty());
+
+    auto *row = new wxBoxSizer(wxHORIZONTAL);
+    row->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    row->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
+
+    auto *combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition,
+                                          wxSize(FromDIP(TITLE_WIDTH), -1), 0);
+    combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+    combo_title->SetFont(::Label::Body_13);
+    combo_title->SetToolTip(tooltip);
+    combo_title->Wrap(-1);
+    row->Add(combo_title, wxSizerFlags().CenterVertical().Proportion(1));
+
+    auto *combobox = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition,
+                                     wxSize(FromDIP(LANGUAGE_COMBOBOX_WIDTH), -1),
+                                     0, nullptr, wxCB_READONLY);
+    m_combobox_list[m_combobox_list.size()] = combobox;
+    combobox->SetFont(::Label::Body_13);
+    combobox->GetDropDown().SetFont(::Label::Body_13);
+
+    const std::string configured = I18N::normalize_language_mode_id(app_config->get(param));
+    m_current_language_selected = -1;
+    for (size_t index = 0; index < choices.size(); ++index) {
+        combobox->Append(choices[index].second);
+        const std::string candidate = I18N::normalize_language_mode_id(choices[index].first);
+        if (candidate == configured ||
+            (I18N::is_baseline_language_mode(candidate) && I18N::is_baseline_language_mode(configured)))
+            m_current_language_selected = static_cast<int>(index);
+    }
+    if (m_current_language_selected < 0)
+        m_current_language_selected = 0;
+    combobox->SetSelection(m_current_language_selected);
+    row->Add(combobox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+
+    combobox->Bind(wxEVT_LEFT_DOWN, [this, combobox](wxMouseEvent &event) {
+        m_current_language_selected = combobox->GetSelection();
+        event.Skip();
+    });
+
+    combobox->Bind(wxEVT_COMBOBOX, [this, param, choices, combobox](wxCommandEvent &event) {
+        const int selected = combobox->GetSelection();
+        if (selected == m_current_language_selected || selected < 0 ||
+            selected >= static_cast<int>(choices.size())) {
+            event.Skip();
+            return;
+        }
+
+        if (wxGetApp().plater()->is_project_dirty()) {
+            const auto result = MessageDialog(
+                static_cast<wxWindow *>(this),
+                _L("The current project has unsaved changes, save it before continuing?"),
+                wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Save"),
+                wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxCENTRE).ShowModal();
+            if (result == wxID_CANCEL) {
+                combobox->SetSelection(m_current_language_selected);
+                return;
+            }
+            if (result == wxID_YES)
+                wxGetApp().plater()->save_project();
+        }
+
+        const auto restart_text = I18N::render_localized_text_stacked(
+            I18N::translate_mode(L("Switching the language requires application restart.")).finalize_without_arguments());
+        const auto continue_text = I18N::render_localized_text_stacked(
+            I18N::translate_mode(L("Do you want to continue?")).finalize_without_arguments());
+        const auto caption_text = I18N::render_localized_text_compact(
+            I18N::translate_mode(L("Language selection")).finalize_without_arguments());
+        MessageDialog confirm(nullptr, restart_text.label + "\n\n" + continue_text.label,
+                              caption_text.label, wxICON_QUESTION | wxOK | wxCANCEL);
+        if (confirm.ShowModal() == wxID_CANCEL) {
+            combobox->SetSelection(m_current_language_selected);
+            return;
+        }
+
+        int action_buttons = UnsavedChangesDialog::ActionButtons::SAVE;
+        if (!wxGetApp().check_and_keep_current_preset_changes(
+                _L("Switching application language"),
+                _L("Switching application language while some presets are modified."), action_buttons)) {
+            combobox->SetSelection(m_current_language_selected);
+            return;
+        }
+
+        const std::string previous = app_config->get(param);
+        const std::string next = I18N::normalize_language_mode_id(choices[selected].first);
+        app_config->set(param, next);
+        app_config->save();
+        if (!wxGetApp().load_language(from_u8(next), false)) {
+            app_config->set(param, previous);
+            app_config->save();
+            combobox->SetSelection(m_current_language_selected);
+            return;
+        }
+
+        m_current_language_selected = selected;
+        Close();
+        GetParent()->RemoveChild(this);
+        Label::initSysFont(I18N::language_mode_profile().font_language);
+        wxGetApp().recreate_GUI(_L("Changing application language"));
+        event.Skip();
+    });
+
+    return row;
 }
 
 wxBoxSizer *PreferencesDialog::create_item_region_combobox(wxString title, wxWindow *parent, wxString tooltip, std::vector<wxString> vlist)
@@ -1358,7 +1496,21 @@ wxWindow *PreferencesDialog::create_general_tab()
     }
     sort_remove_duplicates(language_infos);
     std::sort(language_infos.begin(), language_infos.end(), [](const wxLanguageInfo *l, const wxLanguageInfo *r) { return l->Description < r->Description; });
-    auto item_language = create_item_language_combobox(_L("Language"), scrolled, _L("Language"), 50, "language", language_infos);
+
+    std::vector<std::pair<std::string, wxString>> language_choices {
+        {I18N::LANGUAGE_MODE_ENGLISH, wxString::FromUTF8("English")},
+        {I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG, wxString::FromUTF8("廣東話（香港，預覽版）")},
+        {I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK, wxString::FromUTF8("English + 廣東話（香港）")},
+    };
+    for (const wxLanguageInfo *info : language_infos) {
+        const std::string id = into_u8(info->CanonicalName);
+        if (info->CanonicalName.BeforeFirst('_') == "en" ||
+            I18N::is_baseline_language_mode(id) || I18N::is_custom_language_mode(id))
+            continue;
+        language_choices.emplace_back(id, language_display_name(info));
+    }
+    auto item_language = create_item_language_mode_combobox(
+        _L("Language"), scrolled, _L("Language"), "language", language_choices);
 
     std::vector<wxString> Regions     = {_L("Asia-Pacific"), _L("Chinese Mainland"), _L("Europe"), _L("North America"), _L("Others")};
     auto                  item_region = create_item_region_combobox(_L("Login Region"), scrolled, _L("Login Region"), Regions);

@@ -636,6 +636,11 @@ public:
 
     wxString        filter_string(wxString str);
     wxString        current_language_code() const { return m_wxLocale->GetCanonicalName(); }
+	// Persisted UI mode and explicit routing for local/remote consumers. Custom
+	// mode identifiers must never leak to services that only accept app locales.
+    wxString        current_language_mode() const;
+    wxString        current_local_web_language() const;
+
 	// Translate the language code to a code, for which Prusa Research maintains translations. Defaults to "en_US".
     wxString 		current_language_code_safe() const;
     bool            is_localized() const { return m_wxLocale->GetLocale() != "English"; }

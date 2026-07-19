@@ -52,11 +52,6 @@ static std::map<wxColour, wxColour> gDarkColors{
     //{"#F0F0F0", "#4C4C54"},
 };
 
-std::map<wxColour, wxColour> const & StateColor::GetDarkMap()
-{
-    return gDarkColors;
-}
-
 void StateColor::SetDarkMode(bool dark) { gDarkMode = dark; }
 
 inline wxColour darkModeColorFor2(wxColour const &color)

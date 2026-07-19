@@ -75,7 +75,6 @@ public:
 public:
     static void SetDarkMode(bool dark);
 
-    static std::map<wxColour, wxColour> const & GetDarkMap();
     static wxColour darkModeColorFor(wxColour const &color);
     static wxColour lightModeColorFor(wxColour const &color);
 

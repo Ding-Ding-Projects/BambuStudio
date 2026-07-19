@@ -20,6 +20,10 @@ import tr_TR from '@locales/tr_TR.json';
 import pt_BR from '@locales/pt_BR.json';
 import ko_KR from '@locales/ko_KR.json';
 import pl_PL from '@locales/pl_PL.json';
+import yue_HK from '@locales/yue_HK.json';
+import { buildEnglishCantoneseTranslation, languageFallbacks } from './i18nResources.ts';
+
+const bilingual_en_yue_HK = buildEnglishCantoneseTranslation(en, yue_HK);
 
 // Detect language: URL ?lang= param > localStorage > fallback 'en'
 // Consistent with other webview pages (text.js TranslatePage pattern)
@@ -37,7 +41,7 @@ i18n
   .use(initReactI18next)
   .init({
     lng: detectLanguage(),
-    fallbackLng: 'en',
+    fallbackLng: languageFallbacks,
     // Empty translation values must fall back to English instead of rendering
     // as blank UI labels (STUDIO-18236).
     returnEmptyString: false,
@@ -63,6 +67,8 @@ i18n
       pt_BR: { translation: pt_BR },
       ko_KR: { translation: ko_KR },
       pl_PL: { translation: pl_PL },
+      yue_HK: { translation: yue_HK },
+      bilingual_en_yue_HK: { translation: bilingual_en_yue_HK },
     },
     // When a key has no translation, return the key itself (English original text)
     parseMissingKeyHandler: (key) => key,

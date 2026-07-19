@@ -50,7 +50,14 @@ std::string AppConfig::get_language_code()
     std::string get_lang = get("language");
     if (get_lang.empty()) return "";
 
-    if (get_lang == "zh_CN")
+    // Preview UI-mode identifiers are local-only. Legacy HMS and device APIs
+    // accept app locale prefixes, so route both custom modes through their
+    // documented English fallback instead of leaking "yu" or "bi".
+    if (get_lang == "yue_HK" || get_lang == "bilingual_en_yue_HK")
+    {
+        get_lang = "en";
+    }
+    else if (get_lang == "zh_CN")
     {
         get_lang = "zh-cn";
     }

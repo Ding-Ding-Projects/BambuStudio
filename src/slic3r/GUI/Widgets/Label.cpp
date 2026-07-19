@@ -19,7 +19,17 @@ wxFont Label::sysFont(int size, bool bold, std::string lang_code)
 #endif
 
     wxString face;
-    if (lang_code == "ja") {
+    if (lang_code == "zh_TW" || lang_code == "zh_HK" || lang_code == "yue_HK" ||
+        lang_code == "bilingual_en_yue_HK") {
+#ifdef __WXMSW__
+        // Roboto does not contain Traditional Chinese glyphs. This Windows UI
+        // family is the preferred Cantonese/Traditional CJK face and retains
+        // normal system fallback when its optional font pack is unavailable.
+        face = wxString::FromUTF8("Microsoft JhengHei UI");
+#else
+        face = wxString::FromUTF8("Noto Sans CJK TC");
+#endif
+    } else if (lang_code == "ja") {
         face = wxString::FromUTF8("Source Han Sans JP Normal");
     } else if (lang_code == "ko") {
         face = wxString::FromUTF8("NanumGothic");

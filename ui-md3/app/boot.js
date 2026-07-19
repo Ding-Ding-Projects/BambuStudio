@@ -13,10 +13,14 @@
   DC.register('main', assembledString, Main);
 
   var qp = Object.fromEntries(new URLSearchParams(window.location.search));
+  var language = window.BambuI18n
+    ? window.BambuI18n.initialize({search:window.location.search})
+    : 'en';
   DC.mount('main', document.getElementById('app'), {
     theme:qp.theme||'dark',
     density:qp.density||'comfortable',
     accent:qp.accent||'#22c55e',
-    view:qp.view||'prepare'
+    view:qp.view||'prepare',
+    language:language
   });
 })();

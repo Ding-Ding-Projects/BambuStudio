@@ -2806,6 +2806,176 @@ var LangText={
 		"wk19": "Nauka według Tematu",
 		"wk20": "Przewodnik po Filamentach",
 		"wk21": "Odkrywaj teraz"
+	},
+	"yue_HK": {
+		"t1": "歡迎使用 Bambu Studio",
+		"t2": "幾個步驟就設定好 Bambu Studio，一齊開始啦！",
+		"t3": "使用者協議",
+		"t4": "不同意",
+		"t5": "同意",
+		"t6": "參加我哋嘅使用者<br/>體驗改善計劃，一齊令 3D 打印做得更好。",
+		"t7": "參加客戶體驗改善計劃",
+		"t8": "返回",
+		"t9": "下一步",
+		"t10": "選擇打印機",
+		"t11": "全部",
+		"t12": "全部清除",
+		"t13": "毫米噴嘴",
+		"t14": "選擇耗材",
+		"t15": "打印機",
+		"t16": "耗材類型",
+		"t17": "供應商",
+		"t18": "錯誤",
+		"t19": "請至少選擇一種耗材。",
+		"t20": "要使用預設耗材嗎？",
+		"t21": "係",
+		"t22": "唔係",
+		"t23": "發行說明",
+		"t24": "開始使用",
+		"t25": "完成",
+		"t26": "登入",
+		"t27": "註冊",
+		"t28": "模型",
+		"t29": "商城",
+		"t30": "使用手冊",
+		"t31": "新增項目",
+		"t32": "建立新項目",
+		"t33": "開啟項目",
+		"t34": "熱點",
+		"t35": "最近開啟",
+		"t36": "確定",
+		"t37": "請至少選擇一部打印機。",
+		"t38": "取消",
+		"t39": "確認",
+		"t40": "網絡已中斷，請檢查後稍後重試。",
+		"t47": "請選擇登入地區",
+		"t48": "亞太地區",
+		"t49": "中國內地",
+		"t50": "登出",
+		"t52": "略過",
+		"t53": "參加",
+		"t54": "Bambu Studio 會從真實打印嘅成功同失敗經驗中學習，改善打印質素、可靠性及整體效能。<br/><br/><span style='display:inline-block;width:2em;'></span>如你參加本計劃，打印機及軟件會分享使用及效能資料，例如裝置資料、設定、連線狀態及打印操作。這有助我們更快識別問題及改善產品。<br/><br/><span style='display:inline-block;width:2em;'></span>參加純屬自願，你可隨時在 <b>偏好設定 &gt; 使用者體驗</b> 中退出。詳情請參閱",
+		"t55": "使用者體驗改善計劃",
+		"t56": "頁面。",
+		"t57": "",
+		"t58": "",
+		"t59": "。",
+		"t60": "歐洲",
+		"t61": "北美洲",
+		"t62": "其他",
+		"t63": "變更地區後，你的帳戶將會登出。請稍後重新登入。",
+		"t64": "Bambu 網絡外掛程式",
+		"t65": "透過 WLAN 或雲端服務傳送打印工作",
+		"t66": "完整遙距控制",
+		"t67": "即時影像串流及打印機狀態監察",
+		"t68": "切片設定雲端同步",
+		"t69": "安裝 Bambu 網絡外掛程式",
+		"t70": "",
+		"t71": "正在下載",
+		"t72": "下載失敗",
+		"t73": "安裝成功。",
+		"t74": "重新啟動",
+		"t75": "Bambu 網絡外掛程式提供以下功能：",
+		"t76": "請先",
+		"t77": "安裝",
+		"t78": "網絡外掛程式，再登入",
+		"t79": "外掛程式安裝失敗。",
+		"t80": "請嘗試以下步驟：",
+		"t81": "1. 按一下",
+		"t82": "以開啟外掛程式資料夾",
+		"t83": "2. 關閉所有已開啟的 Bambu Studio",
+		"t84": "3. 刪除外掛程式資料夾內的所有檔案",
+		"t85": "4. 重新開啟 Bambu Studio，然後再次安裝外掛程式",
+		"t86": "關閉",
+		"t87": "使用者手冊",
+		"t88": "移除",
+		"t89": "開啟所在資料夾",
+		"t90": "3D 模型",
+		"t91": "下載 3D 模型",
+		"t92": "建立者",
+		"t93": "改作自",
+		"t94": "分享者",
+		"t95": "模型資料",
+		"t96": "配件",
+		"t97": "設定檔資料",
+		"t98": "模型名稱",
+		"t100": "模型描述",
+		"t101": "物料清單",
+		"t102": "組裝指南",
+		"t103": "其他",
+		"t104": "設定檔名稱",
+		"t105": "設定檔作者",
+		"t106": "設定檔描述",
+		"t107": "網上模型",
+		"t108": "更多",
+		"t109": "系統耗材",
+		"t110": "自訂耗材",
+		"t111": "建立新項目",
+		"t112": "參加計劃",
+		"t113": "你可隨時在偏好設定中更改選擇。",
+		"t114": "模型庫",
+		"t115": "批次",
+		"t116": "重試",
+		"t117": "打印記錄",
+		"t118": "打印中",
+		"t119": "成功",
+		"t120": "已取消",
+		"t121": "搜尋",
+		"t122": "搜尋網上模型",
+		"t123": "列印板",
+		"t125": "Maker’s Supply",
+		"t126": "載入緊……",
+		"t127": "請加入項目資料",
+		"t128": "編輯",
+		"t129": "項目資料",
+		"t130": "配件",
+		"t131": "設定檔資料",
+		"t132": "描述",
+		"t133": "設定檔名稱：",
+		"t134": "返回",
+		"t135": "儲存",
+		"t136": "項目名稱",
+		"t137": "圖片",
+		"t138": "加入圖片",
+		"t139": "加入配件",
+		"t140": "物料清單",
+		"t141": "組裝指南",
+		"t142": "設定檔圖片",
+		"t143": "只接受 JPG/GIF/PNG 格式，每張不超過 4MB，最多 16 張；可拖曳圖片調整次序。建議使用 4:3 比例，以獲得最佳顯示效果。",
+		"t144": "檔案類型無效",
+		"t145": "檔案大小超出限制",
+		"t146": "已超出上載數量限制",
+		"t147": "檔案上載失敗",
+		"t148": "加入",
+		"t149": "確定要清除所有最近檔案嗎？",
+		"t150": "全部選取",
+		"t151": "Bambu Lab 使用者體驗改善計劃條款",
+		"t152": "在 3D 打印社群中，我們會互相參考成功與失敗經驗，以改進切片參數及設定。Bambu Studio 亦採用相同原則，從使用者的整體成功經驗與問題中學習，持續改善效能。",
+		"t153": "為改善產品與服務的質素及效能，Bambu Studio 誠邀你參加使用者體驗改善計劃。本文件說明計劃會收集哪些資料及其用途。請在同意前仔細閱讀並充分理解本文件。你可隨時在「偏好設定－使用者體驗」中更改設定，以撤回同意。",
+		"t154": "資料收集及用途",
+		"t155": "你同意參加計劃後，系統會自動收集並傳送與裝置及使用情況相關的資料，包括：",
+		"t156": "裝置及使用者識別資料：",
+		"t158": "裝置及軟件資料：",
+		"t160": "裝置連線及設定資料：",
+		"t162": "產品及服務使用資料：",
+		"t164": "產品及服務效能資料：",
+		"t157": "裝置序號（SN）、使用者 ID、應用程式 ID，以及為記錄及關聯相關事件而產生的其他識別資料等；",
+		"t159": "作業系統名稱及類型、應用程式名稱及版本等；",
+		"t161": "IP 位址、與打印機建立網絡連線的結果及錯誤資料、網絡連線狀態、打印機系統版本、應用程式設定及連線狀態等；",
+		"t163": "使用者與應用程式互動的方式及時間、應用程式啟動與設定、與打印機互動及使用詳情、網上服務使用統計、使用者儲存、匯入或匯出檔案的中繼資料，以及所要求的服務網址等；",
+		"t165": "打印、網絡攝影機即時影像、應用程式及打印機操作等功能的效能指標及錯誤資料。",
+		"t166": "我們會使用上述資料評估及改善產品與服務。",
+		"t167": "如何退出",
+		"t168": "你可隨時在「偏好設定－使用者體驗」中更改設定，以撤回同意。",
+		"t169": "私隱保障",
+		"t170": "Bambu Lab 致力保障你的私隱。除適用法律要求外，所收集的資料不會與任何第三方分享或向其披露。除非法律規定須保存更長時間，資料只會保留至完成上述用途所需的期間。要進一步了解我們如何處理你的資料，請參閱",
+		"t171": "私隱聲明",
+		"t172": "無法連接裝置伺服器。請檢查網絡及防火牆。",
+		"wk17": "Bambu Lab 學院",
+		"wk18": "快速入門教學",
+		"wk19": "按主題學習",
+		"wk20": "耗材指南",
+		"wk21": "即刻探索"
 	}
 };
 
@@ -2828,8 +2998,10 @@ function TranslatePage()
 	
 	//alert(strLang);
 	
-	if( !LangText.hasOwnProperty(strLang) )
+	if( strLang!="bilingual_en_yue_HK" && !LangText.hasOwnProperty(strLang) )
 		strLang="en";
+
+	document.documentElement.lang = strLang==="yue_HK" ? "yue-Hant-HK" : "en";
 
     let AllNode=$(".trans");
 	let nTotal=AllNode.length;
@@ -2838,15 +3010,32 @@ function TranslatePage()
 		let OneNode=AllNode[n];
 		
 		let tid=$(OneNode).attr("tid");
-		if( LangText[strLang].hasOwnProperty(tid) )
+		let strText=GetLocalizedTextByKey(tid, strLang);
+		if(strText!==null)
 		{
-			$(OneNode).html(LangText[strLang][tid]);
+			$(OneNode).html(strText);
 		}
-		else if(strLang!='en' && LangText['en'].hasOwnProperty(tid) )
-		{
-			$(OneNode).html(LangText['en'][tid]);
-		}		
 	}
+}
+
+function GetLocalizedTextByKey(key, strLang)
+{
+	if(!LangText['en'].hasOwnProperty(key))
+		return null;
+
+	let english=LangText['en'][key];
+	if(strLang==="bilingual_en_yue_HK")
+	{
+		let cantonese=LangText['yue_HK'].hasOwnProperty(key) ? LangText['yue_HK'][key] : english;
+		if(english==="" && cantonese==="")
+			return "";
+		return '<span lang="en">'+english+'</span><br/><span lang="yue-Hant-HK">粵語：'+cantonese+'</span>';
+	}
+
+	if(LangText.hasOwnProperty(strLang) && LangText[strLang].hasOwnProperty(key))
+		return LangText[strLang][key];
+
+	return english;
 }
 
 function GetCurrentTextByKey( key )
@@ -2865,18 +3054,8 @@ function GetCurrentTextByKey( key )
 	
 	//alert(strLang);
 	
-	if( !LangText.hasOwnProperty(strLang) )
+	if( strLang!="bilingual_en_yue_HK" && !LangText.hasOwnProperty(strLang) )
 		strLang="en";
 
-	let strText='';
-	if( LangText[strLang].hasOwnProperty(key) )
-	{
-		strText=LangText[strLang][key];
-	}
-	else if(strLang!='en' && LangText['en'].hasOwnProperty(key) )
-	{
-		strText=LangText['en'][key];
-	}	
-	
-	return strText;
+	return GetLocalizedTextByKey(key, strLang) || '';
 }

@@ -124,14 +124,73 @@ jobs:
           choco install nsis --version=3.12.0 --yes --no-progress
           choco install pkgconfiglite --version=0.28.0 --yes --no-progress
 
+      - name: Setup Node.js for Windows tests
+        if: inputs.os == 'windows-latest'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Build and type-check DeviceWeb
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}\src\slic3r\GUI\DeviceWeb\device_page
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm run build
+          if ($LASTEXITCODE -ne 0) {
+              throw "DeviceWeb build failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Test Windows release inputs
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: .\scripts\ci\Test-WindowsRelease.ps1
+
       - name: Build slicer Win
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         run: |
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 18 2026" -A X64 -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 -DCMAKE_PREFIX_PATH="${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local" -DCMAKE_INSTALL_PREFIX="../install-dir" -DCMAKE_BUILD_TYPE=Release -DWIN10SDK_PATH="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0"
+          cmake .. -G "Visual Studio 18 2026" -A X64 -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 -DSLIC3R_BUILD_TESTS=ON -DCMAKE_PREFIX_PATH="${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local" -DCMAKE_INSTALL_PREFIX="../install-dir" -DCMAKE_BUILD_TYPE=Release -DWIN10SDK_PATH="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0"
           cmake --build . --target install --config Release -- -m
+
+      - name: Build and run Windows C++ tests
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}\build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          cmake --build . --target libnest2d_tests --config Release -- -m
+          if ($LASTEXITCODE -ne 0) {
+              throw "Building libnest2d_tests failed with exit code $LASTEXITCODE."
+          }
+
+          ctest -C Release --output-on-failure --no-tests=error -R '^libnest2d_tests$'
+          if ($LASTEXITCODE -ne 0) {
+              throw "libnest2d_tests failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Generate Windows payload SBOM
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $versionContent = Get-Content version.inc -Raw
+          if ($versionContent -notmatch 'set\(SLIC3R_VERSION "([^"]+)"\)') {
+              throw 'Could not read SLIC3R_VERSION from version.inc.'
+          }
+
+          .\scripts\ci\New-WindowsCycloneDxSbom.ps1 `
+            -PayloadDir '${{ github.workspace }}\install-dir' `
+            -OutputPath '${{ github.workspace }}\BambuStudioMD3.cdx.json' `
+            -Version $matches[1] `
+            -Commit '${{ github.sha }}'
 
       # - name: Create installer Win
       #   if: inputs.os == 'windows-latest'
@@ -197,6 +256,63 @@ jobs:
               throw "Installer archive validation failed with exit code $LASTEXITCODE."
           }
 
+      - name: Test Windows install, upgrade, and uninstall behavior
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $versionContent = Get-Content version.inc -Raw
+          if ($versionContent -notmatch 'set\(SLIC3R_VERSION "([^"]+)"\)') {
+              throw 'Could not read SLIC3R_VERSION from version.inc.'
+          }
+
+          $productVersion = $matches[1]
+          $numericParts = @([regex]::Matches($productVersion, '\d+') | ForEach-Object { [int]$_.Value })
+          if ($numericParts.Count -gt 4) {
+              $numericParts = @($numericParts[0..3])
+          }
+          while ($numericParts.Count -lt 4) {
+              $numericParts += 0
+          }
+          $fileVersion = $numericParts -join '.'
+
+          $obsoleteRelativePath = 'md3-ci-obsolete-owned-file.txt'
+          $obsoletePayloadPath = Join-Path '${{ github.workspace }}\install-dir' $obsoleteRelativePath
+          $previousInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-PreviousFixture.exe'
+          $previousUninstallInclude = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-PreviousFixture-UninstallFiles.nsh'
+          $makensis = 'C:\Program Files (x86)\NSIS\makensis.exe'
+
+          try {
+              Set-Content -LiteralPath $obsoletePayloadPath -Value 'Owned only by the previous CI fixture.' -Encoding ascii
+              & '${{ github.workspace }}\packaging\windows\GenerateUninstallInclude.ps1' `
+                -PayloadDir '${{ github.workspace }}\install-dir' `
+                -OutputPath $previousUninstallInclude
+
+              & $makensis /V2 `
+                "/DPRODUCT_VERSION=$productVersion" `
+                "/DFILE_VERSION=$fileVersion" `
+                "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
+                "/DOUT_FILE=$previousInstaller" `
+                "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
+                "/DUNINSTALL_INCLUDE=$previousUninstallInclude" `
+                '${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi'
+
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Creating the previous-version installer fixture failed with exit code $LASTEXITCODE."
+              }
+          }
+          finally {
+              Remove-Item -LiteralPath $obsoletePayloadPath -Force -ErrorAction SilentlyContinue
+          }
+
+          .\scripts\ci\Test-WindowsInstaller.ps1 `
+            -Installer '${{ github.workspace }}\BambuStudioMD3-Setup.exe' `
+            -PreviousInstaller $previousInstaller `
+            -PreviousOwnedFile $obsoleteRelativePath `
+            -CiExecutionApproved
+
       # - name: Pack PDB
       #   if: inputs.os == 'windows-latest'
       #   working-directory: ${{ github.workspace }}/build/src/Release
@@ -215,7 +331,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: BambuStudio_Windows_${{ env.ver }}_installer
-          path: ${{ github.workspace }}/BambuStudioMD3-Setup.exe
+          path: |
+            ${{ github.workspace }}/BambuStudioMD3-Setup.exe
+            ${{ github.workspace }}/BambuStudioMD3.cdx.json
           if-no-files-found: error
 
 

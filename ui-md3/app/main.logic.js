@@ -8,11 +8,13 @@ window.registerScreen = window.registerScreen || function(){};
 class Main extends DCLogic {
   constructor(props){
     super(props);
+    const i18n = window.BambuI18n;
     this.state = {
       view: (props && props.view) || 'prepare',
       theme: (props && props.theme) || 'dark',
       density: (props && props.density) || 'comfortable',
       accent: (props && props.accent) || '#22c55e',
+      language: i18n ? i18n.normalizeMode(props && props.language) : 'en',
       tool: 'move',
       processTab: 'Quality',
       supportOn: false,
@@ -47,7 +49,33 @@ class Main extends DCLogic {
     if (p.density && p.density !== prev.density) patch.density = p.density;
     if (p.accent && p.accent !== prev.accent) patch.accent = p.accent;
     if (p.view && p.view !== prev.view) patch.view = p.view;
+    if (p.language && p.language !== prev.language) {
+      patch.language = window.BambuI18n ? window.BambuI18n.normalizeMode(p.language) : 'en';
+    }
     if (Object.keys(patch).length) this.setState(patch);
+  }
+  tr(source){
+    return window.BambuI18n ? window.BambuI18n.translateText(source, this.state.language) : source;
+  }
+  msg(key, params){
+    return window.BambuI18n ? window.BambuI18n.message(key, params, this.state.language) : key;
+  }
+  setLanguage(mode){
+    const selected = window.BambuI18n
+      ? window.BambuI18n.setActiveMode(mode, {persist:true})
+      : 'en';
+    this.setState({language:selected});
+  }
+  render_languageModes(){
+    const current = this.state.language;
+    const modes = window.BambuI18n ? window.BambuI18n.modes : [{id:'en', label:'English'}];
+    return modes.map(mode=>{ const on=current===mode.id; return {
+      id:mode.id, label:mode.label, selected:on?'true':'false',
+      onClick:()=>this.setLanguage(mode.id),
+      bg:on?'var(--md-primary)':'transparent',
+      fg:on?'var(--md-on-primary)':'var(--md-on-surface-variant)',
+      border:on?'1px solid var(--md-primary)':'1px solid var(--md-outline-variant)'
+    };});
   }
   hexToHsl(hex){
     let h = (hex||'').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
@@ -126,8 +154,8 @@ class Main extends DCLogic {
   exMatch(name){ const q=this.state.export.contains; if(!q) return true; try{ return new RegExp(q,'i').test(name); }catch(e){ return name.toLowerCase().includes(q.toLowerCase()); } }
   toggleExportItem(name){ this.setState(st=>{ const sel={...(st.export.selected||{})}; sel[name]=!sel[name]; return {export:{...st.export, selected:sel}}; }); }
   toggleSelectAllExport(){ const ex=this.state.export; const rows=this.render_filRows().filter(f=>this.exMatch(f.name)&&(ex.type==='All'||f.type===ex.type)&&(ex.vendor==='All'||f.vendor===ex.vendor)); const sel={...(ex.selected||{})}; const all=rows.length>0&&rows.every(f=>sel[f.name]); rows.forEach(f=>sel[f.name]=!all); this.setState({export:{...ex,selected:sel}}); }
-  doExport(){ const ex=this.state.export; const sel=ex.selected||{}; const n=Object.keys(sel).filter(k=>sel[k]).length; this.setState({dialog:null}); this.notify('Exported '+n+' filament preset'+(n===1?'':'s')+' \u2192 '+ex.format, {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}); }
-  saveProject(){ this.notify('Project saved — version history bundled into .3mf', {icon:'save', duration:3800}); }
+  doExport(){ const ex=this.state.export; const sel=ex.selected||{}; const n=Object.keys(sel).filter(k=>sel[k]).length; this.setState({dialog:null}); this.notify(this.msg('exportedPresets',{count:n,suffix:n===1?'':'s',format:ex.format}), {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}); }
+  saveProject(){ this.notify(this.msg('projectSaved'), {icon:'save', duration:3800}); }
   render_filRows(){
     return [
       {name:'Bambu PLA Basic', vendor:'Bambu Lab', type:'PLA', nozzle:'220', bed:'55', color:'#111418'},
@@ -142,6 +170,7 @@ class Main extends DCLogic {
 
   commonVals(){
     const s = this.state;
+    if(window.BambuI18n) window.BambuI18n.setActiveMode(s.language, {persist:false});
     const ex = s.export; const exSel = ex.selected || {};
     const exFiltered = this.render_filRows().filter(f => this.exMatch(f.name) && (ex.type==='All'||f.type===ex.type) && (ex.vendor==='All'||f.vendor===ex.vendor));
     const exRows = exFiltered.map(f=>({ ...f, onToggle:()=>this.toggleExportItem(f.name), checkIcon: exSel[f.name]?'check_box':'check_box_outline_blank', checkColor: exSel[f.name]?'var(--md-primary)':'var(--md-on-surface-variant)', rowBg: exSel[f.name]?'var(--md-secondary-container)':'transparent' }));
@@ -150,7 +179,8 @@ class Main extends DCLogic {
     const l = this.seg(s.theme==='light'), d = this.seg(s.theme==='dark');
     const cf = this.seg(s.density==='comfortable'), cp = this.seg(s.density==='compact');
     return {
-      theme:s.theme, density:s.density,
+      theme:s.theme, density:s.density, language:s.language,
+      languageModes:this.render_languageModes(),
       accentOverride:this.accentVars(s.accent, s.theme),
       projectName:'3DBenchy_project.3mf',
       tabs:this.render_tabs(),
@@ -158,8 +188,8 @@ class Main extends DCLogic {
       menus:[
         {label:'File', onClick:()=>this.saveProject()},
         {label:'Edit', onClick:()=>this.setState({showHistory:true})},
-        {label:'View', onClick:()=>this.notify('View menu')},
-        {label:'Objects', onClick:()=>this.notify('Objects menu')},
+        {label:'View', onClick:()=>this.notify(this.msg('viewMenu'))},
+        {label:'Objects', onClick:()=>this.notify(this.msg('objectsMenu'))},
         {label:'Help', onClick:()=>this.notify('Bambu Studio — Material Design 3 · v2.0.0', {icon:'info', actionLabel:'Docs', action:()=>{}})},
       ],
       showControls:s.showControls,
@@ -171,7 +201,7 @@ class Main extends DCLogic {
       accentSwatches:this.render_accents(),
       lightBg:l.bg, lightFg:l.fg, darkBg:d.bg, darkFg:d.fg,
       comfBg:cf.bg, comfFg:cf.fg, compBg:cp.bg, compFg:cp.fg,
-      openSlice:()=>{ this.notify('Slicing Plate 1…', {icon:'hourglass_top', duration:1400}); setTimeout(()=>{ this.commit('Slice Plate 1','deployed_code'); this.notify('Plate 1 sliced · 1h 24m · 23.4 g', {icon:'check_circle', actionLabel:'Preview', action:this.go('preview'), duration:4200}); }, 1500); },
+      openSlice:()=>{ this.notify(this.msg('slicingPlate',{plate:1}), {icon:'hourglass_top', duration:1400}); setTimeout(()=>{ this.commit('Slice Plate 1','deployed_code'); this.notify(this.msg('plateSliced',{plate:1,time:'1h 24m',weight:'23.4 g'}), {icon:'check_circle', actionLabel:'Preview', action:this.go('preview'), duration:4200}); }, 1500); },
       openSend:()=>this.setState({dialog:'send'}),
       openAddFilament:()=>this.setState({dialog:'addfil'}),
       openDialog:(id)=>this.setState({dialog:id}), closeDialog:()=>this.setState({dialog:null}),
@@ -183,15 +213,15 @@ class Main extends DCLogic {
       branch: s.branch, historyHead: (s.history[0]||{}).hash,
       showHistory: s.showHistory, toggleHistory:()=>this.setState({showHistory:!s.showHistory}),
       autoCommitNote: 'Every edit is auto-committed to this project\u2019s local Git repo',
-      history: s.history.map((h,i)=>{ const on=s.selectedCommit===h.hash; return { ...h, isHead:i===0, expanded:on, chevron:on?'expand_less':'expand_more', dotBg:on?'var(--md-primary)':'var(--md-sc-highest)', dotFg:on?'var(--md-on-primary)':'var(--md-on-surface-variant)', onSelect:()=>this.setState({selectedCommit: on?null:h.hash}), restore:()=>this.notify('Restored project to #'+h.hash, {icon:'history'}) }; }),
+      history: s.history.map((h,i)=>{ const on=s.selectedCommit===h.hash; return { ...h, isHead:i===0, expanded:on, chevron:on?'expand_less':'expand_more', dotBg:on?'var(--md-primary)':'var(--md-sc-highest)', dotFg:on?'var(--md-on-primary)':'var(--md-on-surface-variant)', onSelect:()=>this.setState({selectedCommit: on?null:h.hash}), restore:()=>this.notify(this.msg('restoredProject',{hash:h.hash}), {icon:'history'}) }; }),
       addFilamentConfirm:()=>{ this.setState({dialog:null}); this.commit('Add filament: Bambu PLA Basic','palette'); },
-      sendPrint:()=>{ this.setState({dialog:null}); this.notify('Sent to Bambu Lab X1 Carbon · print starting', {icon:'send', actionLabel:'Device', action:this.go('device'), duration:4200}); },
+      sendPrint:()=>{ this.setState({dialog:null}); this.notify(this.msg('printSent',{printer:'Bambu Lab X1 Carbon'}), {icon:'send', actionLabel:'Device', action:this.go('device'), duration:4200}); },
       exportFilament:()=>this.notify('Exported \u201CBambu PLA Basic\u201D \u2192 filament preset (.bbsflmt)', {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}),
       exportAllFilaments:()=>this.notify('Exported 6 filament presets \u2192 bundle (.bbsflmt.zip)', {icon:'folder_zip', duration:4000}),
       openExport:()=>{ const all={}; this.render_filRows().forEach(f=>all[f.name]=true); this.setState({ dialog:'export', export:{...this.state.export, selected:all, contains:'', type:'All', vendor:'All'} }); },
       isDlgExport: s.dialog==='export', setExQuery:(v)=>this.setState({export:{...this.state.export, contains:v}}),
       exRows, exSelCount, exTotal: exFiltered.length, exAllIcon, exFormat: s.export.format,
-      exEmpty: exFiltered.length===0, exploreModels:()=>this.notify('Opening online model library…', {icon:'public'}),
+      exEmpty: exFiltered.length===0, exploreModels:()=>this.notify(this.msg('openingLibrary'), {icon:'public'}),
       toggleSelectAllExport:()=>this.toggleSelectAllExport(), doExport:()=>this.doExport(),
       exTypeChips: ['All','PLA','PETG','ABS','TPU'].map(t=>{const on=s.export.type===t;return{label:t,onClick:()=>this.setState({export:{...s.export,type:t}}),bg:on?'var(--md-primary)':'transparent',fg:on?'var(--md-on-primary)':'var(--md-on-surface-variant)',border:on?'1px solid var(--md-primary)':'1px solid var(--md-outline)'};}),
       exVendorChips: ['All','Bambu Lab','Generic','Polymaker'].map(t=>{const on=s.export.vendor===t;return{label:t,onClick:()=>this.setState({export:{...s.export,vendor:t}}),bg:on?'var(--md-secondary-container)':'transparent',fg:on?'var(--md-on-secondary-container)':'var(--md-on-surface-variant)',border:on?'1px solid var(--md-primary)':'1px solid var(--md-outline-variant)'};}),

@@ -37,6 +37,8 @@
 #include <wx/intl.h>
 #include <wx/version.h>
 
+#include "LanguageMode.hpp"
+
 namespace Slic3r { namespace GUI { 
 
 namespace I18N {
@@ -83,6 +85,39 @@ namespace I18N {
 	inline std::string translate_utf8(const wxString &s, const char* ctx)     { return _wxGetTranslation_ctx(s, ctx).ToUTF8().data(); }
 
 #undef _wxGetTranslation_ctx
+
+	// Stage-one language modes are opt-in: legacy translate() overloads keep
+	// their exact behavior while migrated controls can retain both variants.
+	LanguageModeService       &language_mode_service();
+	bool                       configure_language_mode(std::string_view language_mode_id, const wxString &localization_root);
+	const LanguageModeProfile &language_mode_profile();
+
+	LocalizedText translate_mode(const wxString &s);
+	LocalizedText translate_mode(const wxString &s, const wxString &plural, unsigned int n);
+	LocalizedText translate_mode(const wxString &s, const char *ctx);
+
+	inline LocalizedText translate_mode(const char *s)                { return translate_mode(wxString(s, wxConvUTF8)); }
+	inline LocalizedText translate_mode(const wchar_t *s)             { return translate_mode(wxString(s)); }
+	inline LocalizedText translate_mode(const std::string &s)         { return translate_mode(wxString(s.c_str(), wxConvUTF8)); }
+	inline LocalizedText translate_mode(const std::wstring &s)        { return translate_mode(wxString(s.c_str())); }
+
+	inline LocalizedText translate_mode(const char *s, const char *plural, unsigned int n)
+		{ return translate_mode(wxString(s, wxConvUTF8), wxString(plural, wxConvUTF8), n); }
+	inline LocalizedText translate_mode(const wchar_t *s, const wchar_t *plural, unsigned int n)
+		{ return translate_mode(wxString(s), wxString(plural), n); }
+	inline LocalizedText translate_mode(const std::string &s, const std::string &plural, unsigned int n)
+		{ return translate_mode(wxString(s.c_str(), wxConvUTF8), wxString(plural.c_str(), wxConvUTF8), n); }
+	inline LocalizedText translate_mode(const std::wstring &s, const std::wstring &plural, unsigned int n)
+		{ return translate_mode(wxString(s.c_str()), wxString(plural.c_str()), n); }
+
+	inline LocalizedText translate_mode(const char *s, const char *ctx)
+		{ return translate_mode(wxString(s, wxConvUTF8), ctx); }
+	inline LocalizedText translate_mode(const wchar_t *s, const char *ctx)
+		{ return translate_mode(wxString(s), ctx); }
+	inline LocalizedText translate_mode(const std::string &s, const char *ctx)
+		{ return translate_mode(wxString(s.c_str(), wxConvUTF8), ctx); }
+	inline LocalizedText translate_mode(const std::wstring &s, const char *ctx)
+		{ return translate_mode(wxString(s.c_str()), ctx); }
 } // namespace I18N
 
 // Return translated std::string as a wxString

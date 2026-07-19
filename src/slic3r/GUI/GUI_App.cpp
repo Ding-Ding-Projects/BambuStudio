@@ -258,6 +258,32 @@ static std::string convert_studio_language_to_api(std::string lang_code)
 }
 
 #ifdef _WIN32
+static std::string read_installer_language_mode()
+{
+    const wchar_t *keys[] = {
+        L"Software\\codingmachineedge\\BambuStudioMD3Preferences",
+        L"Software\\codingmachineedge\\BambuStudioMD3",
+    };
+    for (const wchar_t *key : keys) {
+        wchar_t value[64] = {};
+        DWORD value_size = sizeof(value);
+        const LSTATUS status = ::RegGetValueW(
+            HKEY_CURRENT_USER, key, L"LanguageMode", RRF_RT_REG_SZ,
+            nullptr, value, &value_size);
+        if (status != ERROR_SUCCESS || value[0] == L'\0')
+            continue;
+
+        const std::string normalized = I18N::normalize_language_mode_id(into_u8(wxString(value)));
+        if (normalized == I18N::LANGUAGE_MODE_ENGLISH ||
+            normalized == I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG ||
+            normalized == I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK)
+            return normalized;
+    }
+    return {};
+}
+#endif
+
+#ifdef _WIN32
 bool is_associate_files(std::wstring extend)
 {
     wchar_t app_path[MAX_PATH];
@@ -1446,7 +1472,7 @@ GUI_App::GUI_App()
 	//app config initializes early becasuse it is used in instance checking in BambuStudio.cpp
     this->init_app_config();
     if (app_config) {
-        ::Label::initSysFont(app_config->get_language_code(), false);
+        ::Label::initSysFont(I18N::resolve_language_mode(app_config->get("language")).font_language, false);
     }
     this->init_download_path();
 
@@ -6520,7 +6546,6 @@ bool GUI_App::select_language()
 {
 	wxArrayString translations = wxTranslations::Get()->GetAvailableTranslations(SLIC3R_APP_KEY);
     std::vector<const wxLanguageInfo*> language_infos;
-    language_infos.emplace_back(wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH));
     for (size_t i = 0; i < translations.GetCount(); ++ i) {
 	    const wxLanguageInfo *langinfo = wxLocale::FindLanguageInfo(translations[i]);
         if (langinfo != nullptr)
@@ -6529,49 +6554,35 @@ bool GUI_App::select_language()
     sort_remove_duplicates(language_infos);
 	std::sort(language_infos.begin(), language_infos.end(), [](const wxLanguageInfo* l, const wxLanguageInfo* r) { return l->Description < r->Description; });
 
-    wxArrayString names;
-    names.Alloc(language_infos.size());
-
-    // Some valid language should be selected since the application start up.
-    const wxLanguage current_language = wxLanguage(m_wxLocale->GetLanguage());
-    int 		     init_selection   		= -1;
-    int 			 init_selection_alt     = -1;
-    int 			 init_selection_default = -1;
-    for (size_t i = 0; i < language_infos.size(); ++ i) {
-        if (wxLanguage(language_infos[i]->Language) == current_language)
-        	// The dictionary matches the active language and country.
-            init_selection = i;
-        else if ((language_infos[i]->CanonicalName.BeforeFirst('_') == m_wxLocale->GetCanonicalName().BeforeFirst('_')) ||
-        		 // if the active language is Slovak, mark the Czech language as active.
-        	     (language_infos[i]->CanonicalName.BeforeFirst('_') == "cs" && m_wxLocale->GetCanonicalName().BeforeFirst('_') == "sk"))
-        	// The dictionary matches the active language, it does not necessarily match the country.
-        	init_selection_alt = i;
-        if (language_infos[i]->CanonicalName.BeforeFirst('_') == "en")
-        	// This will be the default selection if the active language does not match any dictionary.
-        	init_selection_default = i;
-        names.Add(language_infos[i]->Description);
+    std::vector<std::pair<std::string, wxString>> language_choices {
+        {I18N::LANGUAGE_MODE_ENGLISH, wxString::FromUTF8("English")},
+        {I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG, wxString::FromUTF8("廣東話（香港，預覽版）")},
+        {I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK, wxString::FromUTF8("English + 廣東話（香港）")},
+    };
+    for (const wxLanguageInfo *info : language_infos) {
+        if (info->CanonicalName.BeforeFirst('_') == "en")
+            continue;
+        const std::string id = into_u8(info->CanonicalName);
+        if (!I18N::is_custom_language_mode(id))
+            language_choices.emplace_back(id, info->Description);
     }
-    if (init_selection == -1)
-    	// This is the dictionary matching the active language.
-    	init_selection = init_selection_alt;
-    if (init_selection != -1)
-    	// This is the language to highlight in the choice dialog initially.
-    	init_selection_default = init_selection;
 
-    const long index = GetSingleChoiceIndex(_L("Select the language"), _L("Language"), names, init_selection_default);
+    wxArrayString names;
+    names.Alloc(language_choices.size());
+    const std::string configured = I18N::normalize_language_mode_id(into_u8(current_language_mode()));
+	int init_selection = 0;
+    for (size_t i = 0; i < language_choices.size(); ++i) {
+        names.Add(language_choices[i].second);
+        if (I18N::normalize_language_mode_id(language_choices[i].first) == configured)
+            init_selection = static_cast<int>(i);
+    }
+
+    const long index = GetSingleChoiceIndex(_L("Select the language"), _L("Language"), names, init_selection);
 	// Try to load a new language.
-    if (index != -1 && (init_selection == -1 || init_selection != index)) {
-    	const wxLanguageInfo *new_language_info = language_infos[index];
-    	if (this->load_language(new_language_info->CanonicalName, false)) {
-			// Save language at application config.
-            // Which language to save as the selected dictionary language?
-            // 1) Hopefully the language set to wxTranslations by this->load_language(), but that API is weird and we don't want to rely on its
-            //    stability in the future:
-            //    wxTranslations::Get()->GetBestTranslation(SLIC3R_APP_KEY, wxLANGUAGE_ENGLISH);
-            // 2) Current locale language may not match the dictionary name, see GH issue #3901
-            //    m_wxLocale->GetCanonicalName()
-            // 3) new_language_info->CanonicalName is a safe bet. It points to a valid dictionary name.
-			app_config->set("language", new_language_info->CanonicalName.ToUTF8().data());
+    if (index != -1 && init_selection != index) {
+        const std::string selected = I18N::normalize_language_mode_id(language_choices[index].first);
+    	if (this->load_language(from_u8(selected), false)) {
+			app_config->set("language", selected);
 			app_config->save();
     		return true;
     	}
@@ -6591,9 +6602,22 @@ bool GUI_App::load_language(wxString language, bool initial)
     	// Get the active language from PrusaSlicer.ini, or empty string if the key does not exist.
 
         language = app_config->get("language");
+#ifdef _WIN32
+        // A fresh Windows installation may select one of the three baseline
+        // modes before Bambu Studio has created its own config file. Existing
+        // app preferences always win over this installer hand-off.
+        if (language.empty()) {
+            const std::string installer_mode = read_installer_language_mode();
+            if (!installer_mode.empty()) {
+                language = from_u8(installer_mode);
+                app_config->set("language", installer_mode);
+                BOOST_LOG_TRIVIAL(info) << "language provided by the Windows installer: " << installer_mode;
+            }
+        }
+#endif
 
         /* erase the unsupported language in config files*/
-        {
+        if (!I18N::is_custom_language_mode(into_u8(language))) {
             wxLanguage cur_lang = wxLANGUAGE_UNKNOWN;
             auto cur_lang_info = wxLocale::FindLanguageInfo(language);
             if (cur_lang_info) { cur_lang = static_cast<wxLanguage> (cur_lang_info->Language);}
@@ -6657,8 +6681,16 @@ bool GUI_App::load_language(wxString language, bool initial)
         }
     }
 
-	const wxLanguageInfo *language_info = language.empty() ? nullptr : wxLocale::FindLanguageInfo(language);
-	if (! language.empty() && (language_info == nullptr || language_info->CanonicalName.empty())) {
+    const std::string requested_mode_id = into_u8(language.empty() ? from_u8(app_config->get("language")) : language);
+    const I18N::LanguageModeProfile requested_profile = I18N::resolve_language_mode(requested_mode_id);
+    const bool custom_language_mode = I18N::is_custom_language_mode(requested_mode_id);
+
+	const wxLanguageInfo *language_info = custom_language_mode
+        ? wxLocale::GetLanguageInfo(requested_profile.formatting_language)
+        : (language.empty() ? nullptr : wxLocale::FindLanguageInfo(language));
+    if (custom_language_mode && language_info == nullptr)
+        language_info = wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH_US);
+	if (!custom_language_mode && !language.empty() && (language_info == nullptr || language_info->CanonicalName.empty())) {
 		// Fix for wxWidgets issue, where the FindLanguageInfo() returns locales with undefined ANSII code (wxLANGUAGE_KONKANI or wxLANGUAGE_MANIPURI).
 		language_info = nullptr;
     	BOOST_LOG_TRIVIAL(error) << boost::format("Language code \"%1%\" is not supported") % language.ToUTF8().data();
@@ -6692,7 +6724,9 @@ bool GUI_App::load_language(wxString language, bool initial)
     //    language_info = m_language_info_system;
 
     // Alternate language code.
-    wxLanguage language_dict = wxLanguage(language_info->Language);
+    wxLanguage language_dict = custom_language_mode
+        ? wxLANGUAGE_ENGLISH_US
+        : wxLanguage(language_info->Language);
     if (language_info->CanonicalName.BeforeFirst('_') == "sk") {
     	// Slovaks understand Czech well. Give them the Czech translation.
     	language_dict = wxLANGUAGE_CZECH;
@@ -6709,6 +6743,12 @@ bool GUI_App::load_language(wxString language, bool initial)
                                     % original_lang % language_info->CanonicalName.ToUTF8().data();
     }
 #endif
+
+    if (!wxLocale::IsAvailable(language_info->Language) && custom_language_mode) {
+        BOOST_LOG_TRIVIAL(warning) << "The requested custom-mode formatting locale is unavailable; using English formatting.";
+        language_info = wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH_US);
+        language_dict = wxLANGUAGE_ENGLISH_US;
+    }
 
     if (! wxLocale::IsAvailable(language_info->Language)&&initial) {
         language_info = wxLocale::GetLanguageInfo(wxLANGUAGE_ENGLISH_UK);
@@ -6776,9 +6816,24 @@ bool GUI_App::load_language(wxString language, bool initial)
     m_wxLocale->Init(language_info->Language);
     // Override language at the active wxTranslations class (which is stored in the active m_wxLocale)
     // to load possibly different dictionary, for example, load Czech dictionary for Slovak language.
-    wxTranslations::Get()->SetLanguage(language_dict);
+    if (requested_profile.kind == I18N::LanguageModeKind::CantoneseHongKong)
+        wxTranslations::Get()->SetLanguage(from_u8(requested_profile.primary_catalog_language));
+    else
+        wxTranslations::Get()->SetLanguage(language_dict);
     m_wxLocale->AddCatalog(SLIC3R_APP_KEY);
-    m_imgui->set_language(into_u8(language_info->CanonicalName));
+
+    const std::string active_mode_id = custom_language_mode
+        ? requested_profile.canonical_id
+        : into_u8(language_info->CanonicalName);
+    const bool mode_catalog_ready = I18N::configure_language_mode(active_mode_id, from_u8(localization_dir()));
+    if (!mode_catalog_ready)
+        BOOST_LOG_TRIVIAL(warning) << "Cantonese preview catalog is unavailable; falling back safely to English: "
+                                   << into_u8(I18N::language_mode_service().cantonese_catalog_path());
+    if (custom_language_mode)
+        app_config->set("language", requested_profile.canonical_id);
+
+    m_imgui->set_language(I18N::language_mode_profile().font_language);
+    ::Label::initSysFont(I18N::language_mode_profile().font_language, false);
 
     //FIXME This is a temporary workaround, the correct solution is to switch to "C" locale during file import / export only.
     //wxSetlocale(LC_NUMERIC, "C");
@@ -7837,35 +7892,19 @@ PrintSequence GUI_App::global_print_sequence() const
     return global_print_seq;
 }
 
+wxString GUI_App::current_language_mode() const
+{
+    return from_u8(I18N::language_mode_profile().canonical_id);
+}
+
+wxString GUI_App::current_local_web_language() const
+{
+    return from_u8(I18N::language_mode_profile().local_web_language);
+}
+
 wxString GUI_App::current_language_code_safe() const
 {
-	// Translate the language code to a code, for which Prusa Research maintains translations.
-	const std::map<wxString, wxString> mapping {
-		{ "cs", 	"cs_CZ", },
-		{ "sk", 	"cs_CZ", },
-		{ "de", 	"de_DE", },
-		{ "nl", 	"nl_NL", },
-		{ "sv", 	"sv_SE", },
-		{ "es", 	"es_ES", },
-		{ "fr", 	"fr_FR", },
-		{ "it", 	"it_IT", },
-		{ "ja", 	"ja_JP", },
-		{ "ko", 	"ko_KR", },
-		{ "pl", 	"pl_PL", },
-		{ "uk", 	"uk_UA", },
-		{ "zh", 	"zh_CN", },
-		{ "ru", 	"ru_RU", },
-        { "tr",     "tr_TR", },
-        { "pt",     "pt_BR", },
-        { "hu",     "hu_HU", },
-	};
-	wxString language_code = this->current_language_code().BeforeFirst('_');
-	auto it = mapping.find(language_code);
-	if (it != mapping.end())
-		language_code = it->second;
-	else
-		language_code = "en_US";
-	return language_code;
+    return from_u8(I18N::language_mode_profile().service_language);
 }
 
 void GUI_App::open_web_page_localized(const std::string &http_address)

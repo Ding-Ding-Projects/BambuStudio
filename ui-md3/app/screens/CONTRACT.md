@@ -11,16 +11,21 @@ Screen modules must not edit the runtime, shell, shared logic, registry, boot co
 
 The authoritative classic-script order is:
 
-1. `runtime/mini-dc.js`
-2. `app/searchfield.logic.js`
-3. `app/main.logic.js`
-4. `app/screens/registry.js`
-5. all assembled `app/screens/*.logic.js` files
-6. `app/boot.js`
+1. `app/i18n.resources.js`
+2. `app/i18n.js`
+3. `runtime/mini-dc.js`
+4. `app/searchfield.logic.js`
+5. `app/main.logic.js`
+6. `app/screens/registry.js`
+7. all assembled `app/screens/*.logic.js` files
+8. `app/boot.js`
 
 `main.logic.js` defines the global `Main` class, an empty `window.SCREENS` fallback, and a no-op registry hook. `registry.js` must load after it because registration mixes screen methods into `Main.prototype`; it resets `window.SCREENS` and installs the real `registerScreen`. Screen logic then registers against that implementation. `boot.js` runs last and must also work when no screens are registered.
 
 Because the app runs from `file://`, the assembly step must inline every available screen template as a `<template data-screen="ID">` element in `index.html`; it must not fetch local template files. The assembly step also appends each available screen logic `<script>` after `registry.js` and before `boot.js`.
+
+Run `node ui-md3/scripts/assemble-index.mjs --write` after changing a modular screen template and
+`node ui-md3/scripts/assemble-index.mjs --check` in verification. The check must pass before handoff.
 
 ## Logic modules
 
@@ -68,4 +73,7 @@ The source start lines are:
 | `filament` | 584 |
 | `settings` | 613 |
 
-Do not restyle, summarize, reorder, or remove markup from a screen block. The shell assembler replaces the matching `<!--SCREEN:ID-->` marker with `template.innerHTML`; any marker without a corresponding template becomes empty.
+Do not restyle, summarize, reorder, or remove markup from a screen block. The one approved extension
+is the language-mode row in `settings.template.html`, required for the persisted English, Hong Kong
+Cantonese, and bilingual modes. The shell assembler replaces the matching `<!--SCREEN:ID-->` marker
+with `template.innerHTML`; any marker without a corresponding template becomes empty.

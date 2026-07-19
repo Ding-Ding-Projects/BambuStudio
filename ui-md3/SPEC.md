@@ -27,6 +27,9 @@ static server. No build step, no npm, no network except optional Google Fonts.
 - Runs on `file://` (so **no `fetch()` of local files** — inline templates as `<template>`
   elements or JS strings; load runtime/logic via `<script src>`; CSS via `<link>` or `<style>`).
 - Keep the code readable and close to the design's own structure so fidelity review is easy.
+- Keep localization resources separate from component logic. The interactive prototype must expose
+  exactly English, Hong Kong Cantonese, and compact bilingual modes; persist Settings selections,
+  honor a `lang` URL override for QA, and fall back to English for missing or invalid resources.
 
 ## File layout (create under `ui-md3/`)
 
@@ -170,3 +173,8 @@ The app must reproduce, pixel-close, every part of `Bambu Studio.dc.html`:
 Default boot state (match the design's props defaults): `theme:'dark'`, `density:'comfortable'`,
 `accent:'#22c55e'`, `view:'prepare'`. Expose a way to set the initial `view` (e.g. `?view=home`)
 for easy screen-by-screen QA.
+
+Language defaults to the saved preference or English. `?lang=en`, `?lang=yue_HK`, and
+`?lang=bilingual_en_yue_HK` override that load. In bilingual mode, English remains primary; short Cantonese
+labels are secondary inline copy and longer copy uses progressive disclosure to protect narrow
+layouts. Error, privacy, restore, and other sensitive wording stays literal rather than playful.

@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "i18n": "npx i18next-parser --config i18next-parser.config.js"
+    "i18n": "npx i18next-parser --config i18next-parser.config.js",
+    "test:i18n": "node --experimental-strip-types tests/i18nResources.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",

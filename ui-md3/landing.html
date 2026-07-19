@@ -54,6 +54,13 @@ header{ position:sticky; top:0; z-index:20; backdrop-filter:blur(14px);
 .iconbtn{ width:38px; height:38px; border:none; background:transparent; color:var(--md-on-surface-variant);
   border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .iconbtn:hover{ background:var(--md-sc-high); color:var(--md-on-surface); }
+.language-select{ height:36px; max-width:150px; padding:0 28px 0 10px; border:1px solid var(--md-outline-variant);
+  border-radius:18px; background:var(--md-sc); color:var(--md-on-surface); font:500 12px 'Roboto',system-ui,sans-serif; }
+.landing-i18n-secondary{ margin-inline-start:.35em; color:var(--md-on-surface-variant); font-size:.72em;
+  font-weight:400; letter-spacing:0; line-height:1; text-transform:none; white-space:nowrap; vertical-align:middle; }
+.landing-i18n-secondary.detail{ display:inline-flex; align-items:center; justify-content:center; min-width:1.45em;
+  height:1.45em; padding:0 .28em; border:1px solid var(--md-outline-variant); border-radius:999px;
+  background:var(--md-sc-high); cursor:help; }
 .btn{ display:inline-flex; align-items:center; gap:8px; height:44px; padding:0 22px; border-radius:22px; border:none;
   font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:filter .15s, background .15s, transform .1s; }
 .btn:active{ transform:translateY(1px); }
@@ -148,7 +155,8 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
   h1{ font-size:40px; } .grid{ grid-template-columns:1fr 1fr; } .steps{ grid-template-columns:1fr; }
   .you{ grid-template-columns:1fr; padding:28px; }
 }
-@media (max-width:560px){ .grid{ grid-template-columns:1fr; } .nav .navlink{ display:none; } }
+@media (max-width:560px){ .grid{ grid-template-columns:1fr; } .nav .navlink{ display:none; }
+  .language-select{ max-width:112px; } .nav{ gap:7px; } }
 </style>
 </head>
 <body>
@@ -165,6 +173,11 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
     <a class="navlink" href="#materialyou">Material You</a>
     <a class="navlink" href="#build">How it's built</a>
     <a class="navlink" href="https://github.com/codingmachineedge/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener">GitHub</a>
+    <select class="language-select" id="languageMode" aria-label="Language mode">
+      <option value="en">English</option>
+      <option value="yue_HK">廣東話（香港）</option>
+      <option value="bilingual_en_yue_HK">English + 廣東話</option>
+    </select>
     <button class="iconbtn" id="themeToggle" title="Toggle light / dark"><span data-icon id="themeIcon">light_mode</span></button>
     <a class="btn btn-filled" id="launchTop" href="index.html"><span data-icon style="font-size:20px;">rocket_launch</span> Launch app</a>
   </div>
@@ -267,15 +280,68 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
   </div>
 </footer>
 
+<script src="./app/i18n.resources.js"></script>
+<script src="./app/i18n.js"></script>
 <script>
 (function(){
+  var i18n = window.BambuI18n;
+  var activeLanguage = i18n ? i18n.initialize({search:window.location.search}) : 'en';
+
   // App entry differs between local file view (./index.html) and the Pages site (landing at root, app under /app/).
   var onPages = /github\.io$/i.test(location.hostname);
   var APP = onPages ? 'app/' : 'index.html';
+  var languageOverride = i18n && i18n.searchOverride(window.location.search);
+  if(languageOverride){ APP += '?lang=' + encodeURIComponent(i18n.normalizeMode(languageOverride)); }
   ['launchTop','launchMain','launchYou'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.setAttribute('href', APP);
   });
   document.querySelectorAll('footer a[href="index.html"]').forEach(function(a){ a.setAttribute('href', APP); });
+
+  // The landing page shares the app's saved mode and resource catalog. Text
+  // nodes keep their English source in a WeakMap so switching is lossless.
+  var originalText = new WeakMap(), originalAttrs = new WeakMap();
+  var originalDocumentTitle = document.title;
+  function renderLandingLanguage(){
+    if(!i18n) return;
+    document.title=i18n.translateText(originalDocumentTitle);
+    document.querySelectorAll('.landing-i18n-secondary').forEach(function(node){ node.remove(); });
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    var nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(node){
+      var parent=node.parentElement;
+      if(!parent || parent.closest('script,style,[data-icon],.landing-i18n-secondary')) return;
+      if(!originalText.has(node)) originalText.set(node,node.nodeValue);
+      var source=originalText.get(node), info=i18n.describe(source);
+      node.nodeValue=info.text;
+      if(!info.secondary) return;
+      var secondary=document.createElement('span');
+      secondary.className='landing-i18n-secondary '+(info.disclosure?'detail':'inline');
+      secondary.lang='yue-Hant-HK';
+      secondary.textContent=info.disclosure?'廣':info.secondary;
+      secondary.setAttribute('data-i18n-secondary',info.secondary);
+      if(info.disclosure){
+        secondary.title='廣東話：'+info.secondary;
+        secondary.setAttribute('aria-label',secondary.title);
+        secondary.tabIndex=0;
+      }else secondary.setAttribute('aria-hidden','true');
+      node.parentNode.insertBefore(secondary,node.nextSibling);
+    });
+    document.querySelectorAll('[title],[placeholder],[aria-label]').forEach(function(element){
+      var saved=originalAttrs.get(element)||{};
+      ['title','placeholder','aria-label'].forEach(function(name){
+        if(element.hasAttribute(name) && saved[name]===undefined) saved[name]=element.getAttribute(name);
+        if(saved[name]!==undefined) element.setAttribute(name,i18n.translateAttribute(saved[name],name));
+      });
+      originalAttrs.set(element,saved);
+    });
+    document.getElementById('languageMode').value=i18n.getActiveMode();
+  }
+
+  document.getElementById('languageMode').value=activeLanguage;
+  document.getElementById('languageMode').addEventListener('change',function(event){
+    i18n.setActiveMode(event.target.value,{persist:true});
+    renderLandingLanguage();
+  });
 
   // Theme toggle
   var root = document.documentElement, icon = document.getElementById('themeIcon');
@@ -344,6 +410,7 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
   });
 
   applyAccent(ACCENTS[0]);
+  renderLandingLanguage();
 })();
 </script>
 </body>
