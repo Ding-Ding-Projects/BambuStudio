@@ -29,9 +29,11 @@ Application preferences continue to use Bambu Studio's normal per-user configura
 ## Security considerations
 
 The installer is per-user and writes application files only below
-`%LOCALAPPDATA%\Programs\Bambu Studio MD3`. Its uninstaller refuses recursive deletion unless it is
-running from that exact fixed directory. User profiles and projects are outside the install directory
-and are not removed by uninstall.
+`%LOCALAPPDATA%\Programs\Bambu Studio MD3`. Its uninstaller first validates the fixed install path,
+then deletes only payload-owned files listed at build time and removes directories only when empty.
+Unknown paths are preserved. Live destination junctions/symbolic links fail closed, and locked files
+keep the uninstall registration available for retry. User profiles and projects are outside the
+install directory and are not removed by uninstall.
 
 ## Verification
 
@@ -43,3 +45,12 @@ and are not removed by uninstall.
   inside `StateColor.cpp`; Windows CI passed after the fix.
 - A final interactive light/dark visual smoke test is still awaiting explicit permission to execute
   the newly built unsigned binary in Windows Sandbox.
+
+## Language-mode gap
+
+The existing application persists a conventional locale selection and includes English and formal
+Traditional Chinese. Formal `zh_TW` is not Hong Kong Cantonese, and the app does not yet provide the
+required English/Cantonese bilingual presentation mode. A complete implementation needs a separate
+`yue_HK` catalog, bilingual progressive disclosure, embedded-web resources, CJK font/glyph coverage,
+and human review of safety-critical copy. Missing Cantonese must fall back to English, never be
+silently relabeled from `zh_TW`.

@@ -17,12 +17,18 @@ MD3 — no invented features. Runs in any browser with **zero dependencies and n
 - **Native Windows app:** use the
   [latest installer](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe).
   It is built from the C++ application by the
-  [`Windows build and release`](../.github/workflows/build_all.yml) workflow.
+  [`Windows build and release`](../.github/workflows/build_all.yml) workflow. The installer is
+  unsigned; verify the accompanying
+  [SHA-256 file](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256),
+  which confirms integrity but not publisher identity.
 - **Legacy concept wrapper:** [`desktop/`](desktop/) retains the earlier Electron prototype for
   reference; it is not the published installer.
 
 Query overrides for QA: `index.html?view=preview&theme=light&density=compact&accent=%237c5cff`
 (`view` ∈ home·prepare·preview·device·multi·project·calibration·filament·settings).
+
+The Pages/browser prototype is currently English-only. It does not yet implement the persisted
+English, Hong Kong Cantonese, and bilingual modes tracked in the native Windows roadmap.
 
 ## What's inside
 

@@ -8,13 +8,17 @@
 - Retheme Home, Filament Manager, and Device webviews.
 - Fix and verify the Windows `wxColour` lookup compile regression.
 - Produce a native per-user NSIS installer from the green Windows payload.
+- Generate ownership-scoped uninstall commands and validate the native installer locally.
+- Configure Windows-only push/manual CI with least-privilege build permissions and one unique release
+  per successful run.
 
 ## In progress
 
-- Verify the push-triggered Windows workflow creates the first uniquely tagged GitHub Release and
-  serves the stable landing-page download asset.
 - Perform an isolated Windows Sandbox visual smoke test for light mode, dark mode, and fonts after
   execution permission is confirmed.
+- Design and translate persisted English, Hong Kong Cantonese, and bilingual modes. Existing `zh_TW`
+  is formal written Chinese and is not an acceptable Cantonese substitute; full native and embedded-
+  web coverage requires dedicated translation and human safety review.
 
 ## Later
 

@@ -72,8 +72,9 @@ h1{ font-size:52px; line-height:1.05; font-weight:700; letter-spacing:-1px; marg
 h1 .accent{ color:var(--md-primary); }
 .lede{ font-size:17px; color:var(--md-on-surface-variant); max-width:520px; margin:0 0 28px; }
 .cta-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-.hint{ font-size:12.5px; color:var(--md-on-surface-variant); display:flex; align-items:center; gap:6px; }
+.hint{ font-size:12.5px; color:var(--md-on-surface-variant); display:flex; align-items:center; flex-wrap:wrap; gap:6px; line-height:1.45; }
 .hint [data-icon]{ font-size:16px; }
+.hint a{ color:var(--md-primary); font-weight:600; }
 
 /* hero art — isometric plate + model, reusing the app's own motif */
 .stage{ position:relative; height:420px; display:flex; align-items:center; justify-content:center; perspective:1400px; }
@@ -183,7 +184,7 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
           <a class="btn btn-filled" id="downloadWin" href="https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe" style="background:var(--md-secondary-container); color:var(--md-on-secondary-container); box-shadow:none;"><span data-icon style="font-size:20px;">download</span> Download native Windows app</a>
           <a class="btn btn-outline" href="https://github.com/codingmachineedge/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener"><span data-icon style="font-size:20px;">code</span> View source</a>
         </div>
-        <div class="hint" style="margin-top:16px;"><span data-icon>verified</span> Native C++ Windows build · per-user installer · SHA-256 checksum included</div>
+        <div class="hint" style="margin-top:16px;"><span data-icon>warning</span> Unsigned native C++ Windows build · per-user installer · <a href="https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256">SHA-256 file</a> · <a href="https://github.com/codingmachineedge/BambuStudio/releases/latest">release details</a>. The checksum confirms file integrity, not publisher identity.</div>
       </div>
       <div class="stage reveal" style="animation-delay:.1s">
         <div class="plate"></div>

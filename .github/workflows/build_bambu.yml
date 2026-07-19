@@ -121,8 +121,8 @@ jobs:
         if: inputs.os == 'windows-latest'
         run: |
           dir "C:/Program Files (x86)/Windows Kits/10/Include"
-          choco install nsis
-          choco install pkgconfiglite
+          choco install nsis --version=3.12.0 --yes --no-progress
+          choco install pkgconfiglite --version=0.28.0 --yes --no-progress
 
       - name: Build slicer Win
         if: inputs.os == 'windows-latest'
@@ -158,11 +158,26 @@ jobs:
           }
 
           $productVersion = $matches[1]
-          $fileVersion = (($productVersion.Split('.') | ForEach-Object { [int]$_ }) -join '.')
+          $numericParts = @([regex]::Matches($productVersion, '\d+') | ForEach-Object { [int]$_.Value })
+          if ($numericParts.Count -gt 4) {
+              $numericParts = @($numericParts[0..3])
+          }
+          while ($numericParts.Count -lt 4) {
+              $numericParts += 0
+          }
+          if ($numericParts | Where-Object { $_ -gt 65535 }) {
+              throw "Version '$productVersion' contains a component larger than 65535."
+          }
+          $fileVersion = $numericParts -join '.'
           $makensis = 'C:\Program Files (x86)\NSIS\makensis.exe'
           if (-not (Test-Path -LiteralPath $makensis)) {
               throw "NSIS compiler was not found at $makensis."
           }
+
+          $uninstallInclude = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-UninstallFiles.nsh'
+          & '${{ github.workspace }}\packaging\windows\GenerateUninstallInclude.ps1' `
+            -PayloadDir '${{ github.workspace }}\install-dir' `
+            -OutputPath $uninstallInclude
 
           & $makensis /V3 `
             "/DPRODUCT_VERSION=$productVersion" `
@@ -170,6 +185,7 @@ jobs:
             "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
             "/DOUT_FILE=${{ github.workspace }}\BambuStudioMD3-Setup.exe" `
             "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
+            "/DUNINSTALL_INCLUDE=$uninstallInclude" `
             "${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi"
 
           if ($LASTEXITCODE -ne 0) {

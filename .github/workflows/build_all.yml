@@ -1,38 +1,28 @@
 name: Windows build and release
 
 on:
-  push:
-    branches: [master]
+  push: {}
 
   pull_request:
     branches: [master]
 
-  workflow_dispatch:
-    inputs:
-      build-deps-only:
-        description: 'Only build dependencies (bypasses caching)'
-        type: boolean
-        default: false
+  workflow_dispatch: {}
 
 permissions:
-  contents: write
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  contents: read
 
 jobs:
   build_windows:
     name: Build Windows
+    if: ${{ github.event_name != 'push' || github.event.deleted != true }}
     uses: ./.github/workflows/build_check_cache.yml
     with:
       os: windows-latest
-      build-deps-only: ${{ inputs.build-deps-only || false }}
-    secrets: inherit
+      build-deps-only: false
 
   release_windows:
     name: Publish Windows release
-    if: ${{ github.event_name != 'pull_request' && inputs.build-deps-only != true }}
+    if: ${{ github.event_name != 'pull_request' }}
     needs: build_windows
     runs-on: windows-latest
     permissions:
@@ -41,6 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Download installer artifact
         uses: actions/download-artifact@v5
@@ -81,28 +73,49 @@ jobs:
           "installer_path=$($installer.FullName)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
           "checksum_path=$checksumPath" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
 
-      - name: Publish immutable Windows release
+      - name: Publish uniquely tagged Windows release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
 
-          @"
-          Native Windows build of Bambu Studio with the Material Design 3 rewrite.
+          $notes = @(
+              'Native Windows build of Bambu Studio with the Material Design 3 rewrite.'
+              ''
+              "- Version: $env:release_version"
+              "- Commit: $env:GITHUB_SHA"
+              "- Source ref: $env:GITHUB_REF"
+              "- Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+              '- Install scope: current user (`%LOCALAPPDATA%\Programs\Bambu Studio MD3`)'
+              '- Signing: unsigned; verify the accompanying SHA-256 checksum before running'
+          )
+          $notes | Set-Content release-notes.md -Encoding utf8
 
-          - Version: $env:release_version
-          - Commit: $env:GITHUB_SHA
-          - Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID
-          - Install scope: current user (`%LOCALAPPDATA%\Programs\Bambu Studio MD3`)
-          - Signing: unsigned; verify the accompanying SHA-256 checksum before running
-          "@ | Set-Content release-notes.md -Encoding utf8
+          $releaseTitle = "Bambu Studio MD3 Windows $env:release_version"
+          $latestArgument = '--latest=false'
+          if ($env:GITHUB_REF -eq 'refs/heads/master') {
+              $masterSha = (& gh api "repos/$env:GITHUB_REPOSITORY/commits/master" --jq '.sha').Trim()
+              if ($LASTEXITCODE -ne 0 -or -not $masterSha) {
+                  throw 'Could not resolve the current master commit before publishing the release.'
+              }
+              if ($masterSha -eq $env:GITHUB_SHA) {
+                  $latestArgument = '--latest'
+              } else {
+                  $releaseTitle += ' (superseded master build)'
+              }
+          } else {
+              $releaseTitle += " ($env:GITHUB_REF_NAME)"
+          }
 
-          gh release create $env:release_tag `
-            $env:installer_path `
-            $env:checksum_path `
-            --repo $env:GITHUB_REPOSITORY `
-            --target $env:GITHUB_SHA `
-            --title "Bambu Studio MD3 Windows $env:release_version" `
-            --notes-file release-notes.md `
-            --latest
+          $releaseArguments = @(
+              'release', 'create', $env:release_tag,
+              $env:installer_path,
+              $env:checksum_path,
+              '--repo', $env:GITHUB_REPOSITORY,
+              '--target', $env:GITHUB_SHA,
+              '--title', $releaseTitle,
+              '--notes-file', 'release-notes.md',
+              $latestArgument
+          )
+          gh @releaseArguments

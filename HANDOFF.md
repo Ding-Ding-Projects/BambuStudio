@@ -4,7 +4,7 @@
 
 - Canonical repository: `https://github.com/codingmachineedge/BambuStudio.git`
 - Branch: `master`
-- Last pushed implementation commit before release automation: `e0f6b2f92`
+- Native MD3 implementation baseline: `e0f6b2f92`
 - Windows CI evidence: run `29665576610`, Windows job successful
 - Pages: `https://codingmachineedge.github.io/BambuStudio/`
 
@@ -13,7 +13,7 @@ commits are ancestors of `master`.
 
 ## Remote branch reconciliation
 
-- `remote_branch_v13` is fully merged.
+- `remote_branch_v13` was fully merged, proved ancestral to `origin/master`, and deleted remotely.
 - `SaltWei-patch-1`, `bambu-pomfret/web-conflict`, `release/20260417`, and `remote_branch_v12` are
   patch-equivalent to changes already on `master`.
 - `feature/libnoise-deps` is superseded by the fuller official `bambulab/libnoise` integration.
@@ -31,13 +31,21 @@ No valid remote branch change remains to merge.
   Bold.
 - The native NSIS definition compiled locally from that artifact; archive validation covered 6,743
   files with no errors.
+- The hardened ownership generator produced 6,740 explicit file deletions and 276 non-recursive
+  directory removals. The generated script contains no recursive removal command.
+- Release tags include the workflow run number and attempt. Only the current `master` tip is marked
+  latest; superseded and non-default refs remain non-latest. Build jobs have read-only repository
+  permission and receive no inherited secrets.
 
-## Remaining external gates
+## External dependencies and remaining work
 
-- Push the release-automation/documentation commit and verify the Windows workflow and first release.
 - Interactive execution of the unsigned build requires action-time confirmation. Use a disposable
   Windows Sandbox with networking disabled, a read-only payload mapping, and a sandbox-local data
   directory.
+- Full compliance with the shared three-mode language requirement is not yet implemented. The
+  existing `zh_TW` catalog is formal written Chinese converted from `zh_CN`, not Hong Kong Cantonese.
+  Native gettext alone contains 5,579 messages, and completion also requires embedded-web resources,
+  bilingual progressive disclosure, CJK font validation, and human review of safety-critical copy.
 - The global-memory checkout at `Documents/GitHub/agent-global-memory` supplied
   `memory/SHARED_INSTRUCTIONS.md`, but its managed bootstrap could not be synchronized because that
   folder has no `origin` remote and no `scripts/sync-agent-memory.ps1`.
