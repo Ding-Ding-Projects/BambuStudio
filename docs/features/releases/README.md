@@ -1,6 +1,7 @@
 # Release features
 
-- [Native Windows installer and release pipeline](windows-native-installer.md)
+- [Native Windows installer](windows-native-installer.md)
+- [Windows CI and release supply chain](windows-release-supply-chain.md)
 
 This fork intentionally publishes a Windows installer only. Automatic upstream WinGet and Homebrew
 jobs are gated to the upstream `bambulab/BambuStudio` repository so fork releases cannot mutate those

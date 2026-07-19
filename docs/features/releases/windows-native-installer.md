@@ -1,59 +1,88 @@
-# Native Windows installer and release pipeline
+# Native Windows installer
 
 ## Behavior
 
-Every commit-bearing push and every manual dispatch runs the Windows dependency/build workflow.
-Branch/tag deletion events are ignored because they have no source tree to package. After a
-successful native build, NSIS packages the installed C++ payload as `BambuStudioMD3-Setup.exe`. The
-release job validates the NSIS archive, emits a SHA-256 checksum, creates a unique tag, and publishes
-exactly one non-draft GitHub Release. A release is marked latest only when its commit is still the
-current `master` tip; superseded or non-default refs remain non-latest.
+The Windows workflow packages the installed native C++ payload as `BambuStudioMD3-Setup.exe` with
+NSIS 3.12. The installer requests user-level privileges and uses the fixed target
+`%LOCALAPPDATA%\Programs\Bambu Studio MD3`; it does not request administrator elevation or expose an
+arbitrary destination picker. It creates current-user Start menu shortcuts and registers its
+uninstaller with Windows.
 
-Pull requests run the same Windows build but do not publish a release. The public workflow has no
-dependency-only success path, so every successful push or manual run reaches release publication.
+At build time, `GenerateUninstallInclude.ps1` converts the exact payload into explicit per-file
+`Delete` commands and deepest-directory-first, non-recursive `RMDir` commands. Uninstall therefore
+removes product-owned files only. Unknown files and their non-empty parent directories are preserved,
+and user profiles and projects remain outside the installation directory.
 
-## Configuration
+An upgrade is accepted only for a directory bearing this installer's ownership marker. The previous
+uninstaller is copied to NSIS's private temporary directory and run synchronously with `_?=` so the
+new extraction cannot race old cleanup. Files owned only by the prior version are removed. If an
+unknown path remains after old cleanup, the old application has been removed but the new version is
+not installed; the user must move that path and retry.
 
-- Workflow: `.github/workflows/build_all.yml`
-- Reusable native build: `.github/workflows/build_bambu.yml`
-- Installer definition: `packaging/windows/BambuStudioMD3.nsi`
-- Owned-file list generator: `packaging/windows/GenerateUninstallInclude.ps1`
-- Install directory: `%LOCALAPPDATA%\Programs\Bambu Studio MD3`
-- Stable latest-download asset: `BambuStudioMD3-Setup.exe`
+The installer creates recovery metadata and an uninstaller before extracting the application
+payload. Extraction or final-registration failures preserve enough owned state for retry or removal.
+A locked owned file causes uninstall to fail with its ownership marker and Windows uninstall entry
+still present, allowing the user to close the application and retry.
 
-Release tags include the application version, workflow run number, and run attempt, so an existing tag
-or immutable release is never overwritten.
+## Language selection and hand-off
 
-## Failure modes
+Interactive setup offers exactly these baseline choices:
 
-- A native build, missing dependency cache, installer compile error, or archive validation error stops
-  the workflow before release creation. A cache miss rebuilds dependencies; only a failed dependency
-  build stops publication.
-- The release job requires exactly one installer artifact; zero or duplicate matches fail closed.
-- Release publication requires the workflow's scoped `contents: write` token.
-- The installer is unsigned until a code-signing identity is configured. The checksum provides
-  integrity verification but not publisher identity.
+- English (`en`)
+- 廣東話（香港，預覽版） (`yue_HK`)
+- English + 廣東話（香港） (`bilingual_en_yue_HK`)
 
-## Security considerations
+Silent automation may pass `/LANGMODE=<identifier>`. An invalid value fails before setup creates an
+install directory. With no option, setup reuses a valid saved selection and otherwise defaults to
+English.
 
-The installer requests user-level privileges and uses a fixed per-user target. At build time, the
-payload is converted into explicit per-file `Delete` and deepest-directory-first `RMDir` commands.
-Uninstall therefore removes product-owned paths only, never uses recursive directory deletion, and
-leaves unknown paths and their non-empty parent directories intact. An ownership marker prevents
-installation over an unrelated non-empty directory. Upgrades stage the prior ownership-scoped
-uninstaller in NSIS's private temporary directory and synchronously wait for its real cleanup and exit
-code, so obsolete product files do not survive or race the new extraction. An upgrade also refuses to
-continue if unknown paths remain after old-version cleanup. Source and live-destination file or
-directory reparse points, unsafe paths, and skipped extraction errors fail closed. Recovery metadata
-and an uninstaller are created before payload extraction, so a partial install remains removable and
-retryable. Locked files preserve the uninstall registration and allow a retry.
-Release checksums are generated from the exact artifact uploaded by the successful build. Fork
-releases do not automatically invoke the upstream WinGet or Homebrew publishing integrations.
+Setup records the selection under both the product registration and
+`HKCU\Software\codingmachineedge\BambuStudioMD3Preferences\LanguageMode`. The application reads the
+persistent preference on first launch only when its own configuration does not already contain a
+language. Product and uninstall registrations are removed by a successful uninstall; the language
+preference intentionally survives. Error dialogs follow the selected mode and keep destructive and
+recovery wording literal.
 
-## Verification
+## Fail-closed boundaries
 
-The NSIS definition was compiled locally against the portable artifact from Windows CI run
-`29665576610`. The ownership generator emitted 7,016 live destination reparse checks, 6,740 total
-explicit file-delete commands, and 276 non-recursive directory-removal commands, with no `RMDir /r`.
-7-Zip identified a Unicode NSIS 3 archive, tested all 6,742 entries, and reported no errors. The
-resulting setup executable reports version `02.08.01.55` and remains intentionally unsigned.
+- A fresh non-empty target without the expected marker is never adopted.
+- Reparse points in the source payload, fixed install path, owned directories, or owned files are
+  rejected; setup must not write through a destination junction or symbolic link.
+- The ownership generator refuses rooted/escaping paths, quotes, newlines, and output inside the
+  payload it describes.
+- A missing previous uninstaller, failed staged upgrade, unknown remaining path, skipped extraction,
+  locked owned file, or invalid language identifier returns a nonzero result.
+- No uninstall path uses `RMDir /r` or another recursive product-directory deletion.
+
+## Automated behavior matrix
+
+`scripts/ci/Test-WindowsInstaller.ps1` may execute unsigned setup programs only when explicitly
+enabled on a disposable GitHub-hosted Actions runner. The workflow constructs a previous-version
+fixture and checks:
+
+1. Fresh English install, ownership marker, recovery uninstaller, registration, and shortcuts.
+2. Synchronous upgrade to `yue_HK` and removal of a file owned only by the old fixture.
+3. Preservation of an unknown file, fail-closed upgrade, removal of that test file, and clean retry.
+4. Locked-executable uninstall failure with registration preserved, followed by a successful retry.
+5. Preservation of project and profile sentinels outside the installation directory.
+6. Rejection of an invalid mode, then bilingual install, hand-off, and uninstall.
+7. Rejection of a destination junction without writing through it.
+
+The test refuses to overwrite any pre-existing install, product registration, language preference,
+shortcut directory, or profile sentinel on its runner.
+
+## Signing and verification status
+
+The installer remains unsigned. The release checksum detects an altered download but provides no
+publisher identity. GitHub provenance/SBOM attestations bind an artifact digest to the repository
+workflow; they are also not Authenticode and do not remove Windows unknown-publisher warnings. A
+trusted certificate/provider and secure signing configuration remain externally blocked.
+
+The last fully published baseline before this candidate work is release
+`md3-windows-v02.08.01.55-r6.1` from commit `1f1ecb960`, GitHub Actions run `29671557311`. Its installer
+checksum was `c66137776687585240e757ac33baa61d3693737c5aac73c145bf2d08d783a89d`. The expanded execution
+matrix above is configured in candidate code but has not yet produced a successful candidate run.
+No installer or unsigned application was executed locally while preparing this work.
+
+Release gating, CycloneDX, attestations, and immutable publication are documented separately in
+[Windows CI and release supply chain](windows-release-supply-chain.md).

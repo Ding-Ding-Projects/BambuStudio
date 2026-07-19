@@ -60,30 +60,27 @@ foreach ($relativePath in $powerShellPaths) {
 }
 
 Write-Host 'Parsing JSON resources...'
-$jsonRoots = @(
-    (Join-Path $repoRoot 'src\slic3r\GUI\DeviceWeb\device_page'),
-    (Join-Path $repoRoot 'ui-md3'),
-    (Join-Path $repoRoot 'bbl\i18n')
-)
-foreach ($jsonRoot in $jsonRoots) {
-    if (-not (Test-Path -LiteralPath $jsonRoot)) {
-        continue
+$jsonPaths = @(& git -C $repoRoot ls-files --cached --others --exclude-standard -- '*.json') |
+    Where-Object {
+        $_ -like 'src/slic3r/GUI/DeviceWeb/device_page/*' -or
+        $_ -like 'ui-md3/*' -or
+        $_ -like 'bbl/i18n/*'
     }
-
-    foreach ($file in Get-ChildItem -LiteralPath $jsonRoot -Recurse -File -Filter '*.json') {
-        try {
-            Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json -AsHashtable | Out-Null
-        }
-        catch {
-            throw "JSON parse failure in '$($file.FullName)': $($_.Exception.Message)"
-        }
+foreach ($relativePath in $jsonPaths) {
+    $file = Get-Item -LiteralPath (Join-Path $repoRoot $relativePath)
+    try {
+        Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json -AsHashtable | Out-Null
+    }
+    catch {
+        throw "JSON parse failure in '$($file.FullName)': $($_.Exception.Message)"
     }
 }
 
 Write-Host 'Checking browser JavaScript syntax...'
-$javaScriptFiles = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'ui-md3') -Recurse -File |
-    Where-Object { $_.Extension -in @('.js', '.mjs') })
-foreach ($file in $javaScriptFiles) {
+$javaScriptPaths = @(& git -C $repoRoot ls-files --cached --others --exclude-standard -- '*.js' '*.mjs') |
+    Where-Object { $_ -like 'ui-md3/*' }
+foreach ($relativePath in $javaScriptPaths) {
+    $file = Get-Item -LiteralPath (Join-Path $repoRoot $relativePath)
     Invoke-Node -Arguments @('--check', $file.FullName) -FailureMessage "JavaScript syntax failure in '$($file.FullName)'"
 }
 

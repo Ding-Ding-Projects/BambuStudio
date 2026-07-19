@@ -25,6 +25,9 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     needs: build_windows
     runs-on: windows-latest
+    concurrency:
+      group: windows-release-${{ github.repository }}
+      cancel-in-progress: false
     permissions:
       artifact-metadata: write
       attestations: write
@@ -61,6 +64,9 @@ jobs:
 
           $installer = $installers[0]
           $sbom = $sboms[0]
+          if ($sbom.Length -gt 16MB) {
+              throw "The downloaded SBOM is $($sbom.Length) bytes, above the 16 MiB attestation limit."
+          }
           & 'C:\Program Files\7-Zip\7z.exe' t $installer.FullName
           if ($LASTEXITCODE -ne 0) {
               throw "Installer archive validation failed with exit code $LASTEXITCODE."
@@ -80,6 +86,33 @@ jobs:
           }
 
           $version = $matches[1]
+          $components = @($sbomDocument.components)
+          $componentNames = @($components | ForEach-Object { $_.name })
+          if (($componentNames | Sort-Object -Unique).Count -ne $componentNames.Count) {
+              throw 'The downloaded SBOM contains duplicate component names.'
+          }
+          if ($componentNames -notcontains 'bambu-studio.exe') {
+              throw 'The downloaded SBOM does not contain bambu-studio.exe.'
+          }
+          foreach ($component in $components) {
+              $sha256 = @($component.hashes | Where-Object { $_.alg -eq 'SHA-256' })
+              if ($sha256.Count -ne 1 -or $sha256[0].content -notmatch '^[0-9a-f]{64}$') {
+                  throw "SBOM component '$($component.name)' lacks one valid lowercase SHA-256 hash."
+              }
+          }
+          if ($sbomDocument.metadata.component.version -ne $version) {
+              throw "SBOM version '$($sbomDocument.metadata.component.version)' does not match '$version'."
+          }
+          $expectedBomRef = "pkg:github/$env:GITHUB_REPOSITORY@$env:GITHUB_SHA"
+          if ($sbomDocument.metadata.component.'bom-ref' -cne $expectedBomRef) {
+              throw "SBOM source identity '$($sbomDocument.metadata.component.'bom-ref')' does not match '$expectedBomRef'."
+          }
+          $expectedSourceUrl = "https://github.com/$env:GITHUB_REPOSITORY/tree/$env:GITHUB_SHA"
+          $sourceUrls = @($sbomDocument.metadata.component.externalReferences | ForEach-Object { $_.url })
+          if ($sourceUrls -notcontains $expectedSourceUrl) {
+              throw "SBOM does not bind itself to '$expectedSourceUrl'."
+          }
+
           $tag = "md3-windows-v$version-r${{ github.run_number }}.${{ github.run_attempt }}"
           $checksumPath = Join-Path $installer.DirectoryName 'BambuStudioMD3-Setup.exe.sha256'
           $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -118,29 +151,29 @@ jobs:
               "- Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
               '- Install scope: current user (`%LOCALAPPDATA%\Programs\Bambu Studio MD3`)'
               '- Signing: unsigned; verify the accompanying SHA-256 checksum before running'
-              '- Provenance: verify with `gh attestation verify BambuStudioMD3-Setup.exe --repo codingmachineedge/BambuStudio`'
+              "- Provenance: verify with ``gh attestation verify BambuStudioMD3-Setup.exe --repo $env:GITHUB_REPOSITORY``"
               '- SBOM: CycloneDX 1.6 payload inventory is attached and attested'
+              '- Release integrity: published as a GitHub immutable release after all assets are validated in draft state'
           )
           $notes | Set-Content release-notes.md -Encoding utf8
 
           $releaseTitle = "Bambu Studio MD3 Windows $env:release_version"
-          $latestArgument = '--latest=false'
-          if ($env:GITHUB_REF -eq 'refs/heads/master') {
-              $masterSha = (& gh api "repos/$env:GITHUB_REPOSITORY/commits/master" --jq '.sha').Trim()
-              if ($LASTEXITCODE -ne 0 -or -not $masterSha) {
-                  throw 'Could not resolve the current master commit before publishing the release.'
-              }
-              if ($masterSha -eq $env:GITHUB_SHA) {
-                  $latestArgument = '--latest'
-              } else {
-                  $releaseTitle += ' (superseded master build)'
-              }
-          } else {
+          if ($env:GITHUB_REF -ne 'refs/heads/master') {
               $releaseTitle += " ($env:GITHUB_REF_NAME)"
           }
 
-          $draftCreated = $false
-          $published = $false
+          $immutableJson = & gh api `
+              -H 'Accept: application/vnd.github+json' `
+              -H 'X-GitHub-Api-Version: 2026-03-10' `
+              "repos/$env:GITHUB_REPOSITORY/immutable-releases" 2>&1
+          if ($LASTEXITCODE -ne 0) {
+              throw "Could not read immutable-release settings: $($immutableJson -join [Environment]::NewLine)"
+          }
+          $immutable = ($immutableJson | Out-String) | ConvertFrom-Json
+          if (-not $immutable.enabled) {
+              throw 'Repository immutable releases must be enabled before a release can be published.'
+          }
+
           try {
               $createArguments = @(
                   'release', 'create', $env:release_tag,
@@ -157,9 +190,12 @@ jobs:
               if ($LASTEXITCODE -ne 0) {
                   throw "Creating the draft release failed with exit code $LASTEXITCODE."
               }
-              $draftCreated = $true
 
-              $draft = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft,targetCommitish,assets | ConvertFrom-Json
+              $draftJson = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft,targetCommitish,assets 2>&1
+              if ($LASTEXITCODE -ne 0) {
+                  throw "Could not validate the draft release: $($draftJson -join [Environment]::NewLine)"
+              }
+              $draft = ($draftJson | Out-String) | ConvertFrom-Json
               if (-not $draft.isDraft) {
                   throw 'The release was published before its assets could be validated.'
               }
@@ -172,30 +208,64 @@ jobs:
                   throw "Draft release assets are incorrect: $($assetNames -join ', ')."
               }
 
-              & gh release edit $env:release_tag --repo $env:GITHUB_REPOSITORY --draft=false $latestArgument
+              # Serialize release jobs, then resolve master immediately before
+              # publication so a queued older build cannot become latest.
+              $latestArgument = '--latest=false'
+              if ($env:GITHUB_REF -eq 'refs/heads/master') {
+                  $masterSha = (& gh api "repos/$env:GITHUB_REPOSITORY/commits/master" --jq '.sha').Trim()
+                  if ($LASTEXITCODE -ne 0 -or -not $masterSha) {
+                      throw 'Could not resolve the current master commit immediately before publishing.'
+                  }
+                  if ($masterSha -eq $env:GITHUB_SHA) {
+                      $latestArgument = '--latest'
+                  } else {
+                      $releaseTitle += ' (superseded master build)'
+                  }
+              }
+
+              & gh release edit $env:release_tag --repo $env:GITHUB_REPOSITORY --title $releaseTitle --draft=false $latestArgument
               if ($LASTEXITCODE -ne 0) {
                   throw "Publishing the validated draft release failed with exit code $LASTEXITCODE."
               }
-              $published = $true
+
+              $publishedJson = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft,isImmutable,targetCommitish,assets 2>&1
+              if ($LASTEXITCODE -ne 0) {
+                  throw "The publish command returned success, but final release verification failed: $($publishedJson -join [Environment]::NewLine)"
+              }
+              $published = ($publishedJson | Out-String) | ConvertFrom-Json
+              if ($published.isDraft -or -not $published.isImmutable -or $published.targetCommitish -ne $env:GITHUB_SHA) {
+                  throw 'The final release state does not match the validated draft.'
+              }
+              $publishedAssetNames = @($published.assets | ForEach-Object { $_.name } | Sort-Object)
+              if (($publishedAssetNames -join "`n") -cne ($expectedAssetNames -join "`n")) {
+                  throw "Published release assets are incorrect: $($publishedAssetNames -join ', ')."
+              }
           }
           catch {
-              if ($draftCreated -and -not $published) {
-                  $releaseState = $null
+              $originalError = $_.Exception.Message
+              $releaseState = $null
+              $stateKnown = $false
+              $stateJson = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft,targetCommitish 2>&1
+              if ($LASTEXITCODE -eq 0) {
                   try {
-                      $releaseState = & gh release view $env:release_tag --repo $env:GITHUB_REPOSITORY --json isDraft | ConvertFrom-Json
+                      $releaseState = ($stateJson | Out-String) | ConvertFrom-Json
+                      $stateKnown = $true
+                  } catch {
+                      Write-Warning "Could not parse release state during failure cleanup; preserving any release: $($_.Exception.Message)"
                   }
-                  catch {
-                      $releaseState = $null
-                  }
+              } else {
+                  Write-Warning "Could not determine release state during failure cleanup; preserving any release: $($stateJson -join [Environment]::NewLine)"
+              }
 
-                  if ($releaseState -and -not $releaseState.isDraft) {
-                      throw "Release publication completed but final verification returned an error. The immutable published release was preserved. Original error: $($_.Exception.Message)"
-                  }
-
+              if ($stateKnown -and $releaseState.isDraft -and $releaseState.targetCommitish -eq $env:GITHUB_SHA) {
                   & gh release delete $env:release_tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
                   if ($LASTEXITCODE -ne 0) {
                       Write-Warning "Could not clean the failed draft release '$env:release_tag'."
                   }
+              } elseif ($stateKnown -and -not $releaseState.isDraft) {
+                  Write-Warning "Publication may have completed; preserving the non-draft release '$env:release_tag'."
+              } elseif ($stateKnown) {
+                  Write-Warning "Draft target did not match this run; preserving release '$env:release_tag'."
               }
-              throw
+              throw "Windows release failed: $originalError"
           }

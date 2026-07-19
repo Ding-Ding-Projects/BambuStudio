@@ -136,9 +136,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          corepack enable
-          pnpm install --frozen-lockfile
-          pnpm run build
+          npm ci --no-audit --no-fund
+          npm run build
           if ($LASTEXITCODE -ne 0) {
               throw "DeviceWeb build failed with exit code $LASTEXITCODE."
           }
@@ -155,24 +154,56 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 18 2026" -A X64 -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 -DSLIC3R_BUILD_TESTS=ON -DCMAKE_PREFIX_PATH="${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local" -DCMAKE_INSTALL_PREFIX="../install-dir" -DCMAKE_BUILD_TYPE=Release -DWIN10SDK_PATH="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0"
+          cmake .. -G "Visual Studio 18 2026" -A X64 -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 -DSLIC3R_BUILD_TESTS=OFF -DCMAKE_PREFIX_PATH="${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local" -DCMAKE_INSTALL_PREFIX="../install-dir" -DCMAKE_BUILD_TYPE=Release -DWIN10SDK_PATH="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0"
           cmake --build . --target install --config Release -- -m
 
       - name: Build and run Windows C++ tests
         if: inputs.os == 'windows-latest'
-        working-directory: ${{ github.workspace }}\build
+        working-directory: ${{ github.workspace }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          cmake --build . --target libnest2d_tests --config Release -- -m
+          cmake -S . -B build-tests `
+            -G 'Visual Studio 18 2026' `
+            -A X64 `
+            -DBBL_RELEASE_TO_PUBLIC=1 `
+            -DBBL_INTERNAL_TESTING=0 `
+            -DSLIC3R_BUILD_TESTS=ON `
+            '-DCMAKE_PREFIX_PATH=${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local' `
+            '-DCMAKE_INSTALL_PREFIX=${{ runner.temp }}\BambuStudioMD3-test-install' `
+            -DCMAKE_BUILD_TYPE=Release `
+            '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
           if ($LASTEXITCODE -ne 0) {
-              throw "Building libnest2d_tests failed with exit code $LASTEXITCODE."
+              throw "Configuring the isolated Windows C++ test tree failed with exit code $LASTEXITCODE."
           }
 
-          ctest -C Release --output-on-failure --no-tests=error -R '^libnest2d_tests$'
+          cmake --build build-tests --target libnest2d_tests language_mode_tests --config Release -- -m
           if ($LASTEXITCODE -ne 0) {
-              throw "libnest2d_tests failed with exit code $LASTEXITCODE."
+              throw "Building Windows C++ tests failed with exit code $LASTEXITCODE."
           }
+
+          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error -R '^(libnest2d_tests|language_mode_tests)$'
+          if ($LASTEXITCODE -ne 0) {
+              throw "Windows C++ tests failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Exercise native Windows light, dark, and language visuals
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          .\scripts\ci\Test-WindowsNativeVisual.ps1 `
+            -Application '${{ github.workspace }}\install-dir\bambu-studio.exe' `
+            -OutputDir '${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence' `
+            -CiExecutionApproved
+
+      - name: Upload native Windows visual evidence
+        if: always() && inputs.os == 'windows-latest'
+        uses: actions/upload-artifact@v6
+        with:
+          name: BambuStudio_Windows_native_visual_${{ env.ver }}
+          path: ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.png
+          if-no-files-found: warn
 
       - name: Generate Windows payload SBOM
         if: inputs.os == 'windows-latest'

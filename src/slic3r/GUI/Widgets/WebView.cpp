@@ -332,7 +332,7 @@ wxWebView* WebView::CreateWebView(wxWindow * parent, wxString const & url)
     if (webView) {
         webView->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
 
-        wxString language_code = Slic3r::GUI::wxGetApp().current_language_code().BeforeFirst('_');
+        wxString language_code = Slic3r::GUI::wxGetApp().current_language_code_safe().BeforeFirst('_');
         language_code          = language_code.ToStdString();
 #ifdef __WIN32__
         webView->SetUserAgent(wxString::Format("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -558,7 +558,7 @@ void WebView::ClearBambulabTokenCookies()
 void WebView::RecreateAll()
 {
     auto dark = Slic3r::GUI::wxGetApp().dark_mode();
-    wxString language_code = Slic3r::GUI::wxGetApp().current_language_code().BeforeFirst('_');
+    wxString language_code = Slic3r::GUI::wxGetApp().current_language_code_safe().BeforeFirst('_');
     language_code          = language_code.ToStdString();
     for (auto webView : g_webviews) {
         webView->SetUserAgent(wxString::Format("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) BBL-Slicer/v%s (%s) BBL-Language/%s",

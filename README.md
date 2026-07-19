@@ -3,21 +3,40 @@
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
 It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
 
-This fork publishes the Material Design 3 native Windows build through its
-[GitHub Releases page](https://github.com/codingmachineedge/BambuStudio/releases/latest). The
+This fork's maintained delivery target is the native Material Design 3 Windows application. The
 [latest Windows installer](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe)
 is a per-user install and does not require administrator elevation. It is currently unsigned; verify
-the accompanying SHA-256 file before running it. Upstream cross-platform releases remain available
-from [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
+the accompanying
+[SHA-256 file](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256)
+before running it. Upstream cross-platform releases remain available from
+[Bambu Lab](https://github.com/bambulab/BambuStudio/releases/), but macOS and Linux are outside this
+fork's release acceptance gate.
+
+The Windows UI provides three canonical fork modes: English (`en`), playful Hong Kong Cantonese
+preview (`yue_HK`), and compact English + Cantonese (`bilingual_en_yue_HK`). Existing Bambu Studio
+locales remain available. Missing Cantonese copy falls back to English, and the native Cantonese
+catalog remains a curated preview pending broader human review. See the
+[language-mode documentation](docs/features/windows/language-modes.md) for coverage and fallback
+details.
+
+The candidate Windows pipeline builds and tests the native application, exercises installer upgrade
+and recovery behavior on a disposable GitHub-hosted runner, produces a per-file CycloneDX 1.6 SBOM,
+and creates GitHub provenance and SBOM attestations for the installer. It validates all three assets
+in a draft before publication and refuses to publish unless repository immutable releases are
+enabled. These new gates still require a successful candidate run before they become release
+evidence. GitHub attestations and checksums are not Authenticode signatures; configuring a trusted
+Windows signing identity remains external work.
 
 Bambu Studio is based on [PrusaSlicer](https://github.com/prusa3d/PrusaSlicer) by Prusa Research, which is from [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community.
 
 See this fork's [wiki](https://github.com/codingmachineedge/BambuStudio/wiki),
 [feature documentation](docs/README.md), [roadmap](ROADMAP.md), and [handoff](HANDOFF.md) for the
-MD3 rewrite and Windows release details. The original documentation remains in [`doc/`](doc/).
+MD3 rewrite, verification status, and Windows release details. The original documentation remains in
+[`doc/`](doc/).
 
 # What are Bambu Studio's main features?
 Key features are:
+
 - Basic slicing features & GCode viewer
 - Multiple plates management
 - Remote control & monitoring
@@ -25,10 +44,11 @@ Key features are:
 - Auto-orient objects
 - Hybrid/Tree/Normal support types, Customized support
 - multi-material printing and rich painting tools
-- multi-platform (Win/Mac/Linux) support
+- Upstream multi-platform source support; this fork accepts native Windows releases only
 - Global/Object/Part level slicing parameters
 
 Other major features are:
+
 - Advanced cooling logic controlling fan speed and dynamic print speed
 - Auto brim according to mechanical analysis
 - Support arc path(G2/G3)
@@ -36,12 +56,16 @@ Other major features are:
 - Assembly & explosion view
 - Flushing transition-filament into infill/object during filament change
 
-# How to compile
-Following platforms are currently supported to compile:
-- Windows 64-bit, [Compile Guide](https://github.com/bambulab/BambuStudio/wiki/Windows-Compile-Guide)
-- Mac 64-bit, [Compile Guide](https://github.com/bambulab/BambuStudio/wiki/Mac-Compile-Guide)
-- Linux, [Compile Guide](https://github.com/bambulab/BambuStudio/wiki/Linux-Compile-Guide)
-  - currently we only provide linux appimages on [github releases](https://github.com/bambulab/BambuStudio/releases) for Ubuntu/Fedora, and a [flathub version](https://flathub.org/apps/com.bambulab.BambuStudio) can be used for all the linux platforms
+# How to compile on Windows
+
+Use the upstream
+[Windows compile guide](https://github.com/bambulab/BambuStudio/wiki/Windows-Compile-Guide) for a
+developer build. The fork's release configuration is encoded in
+[`.github/workflows/build_bambu.yml`](.github/workflows/build_bambu.yml) and is orchestrated by
+[`.github/workflows/build_all.yml`](.github/workflows/build_all.yml). The release workflow enables
+native C++ tests and packages the installed payload with NSIS; see the
+[Windows CI and supply-chain documentation](docs/features/releases/windows-release-supply-chain.md)
+before treating a local build as equivalent to a published artifact.
 
 # Report issue
 You can add an issue to the [github tracker](https://github.com/bambulab/BambuStudio/issues) if **it isn't already present.**

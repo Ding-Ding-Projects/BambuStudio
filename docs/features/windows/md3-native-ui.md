@@ -9,7 +9,8 @@ and the React-based Device page while retaining data-bearing colors such as fila
 printer status indicators.
 
 Roboto Regular, Medium, and Bold are installed as application resources and registered privately on
-Windows. They do not modify the user's system font collection.
+Windows. They do not modify the user's system font collection. Cantonese and Traditional CJK modes
+prefer Microsoft JhengHei UI because Roboto does not contain those glyphs.
 
 ## Configuration
 
@@ -20,7 +21,7 @@ Application preferences continue to use Bambu Studio's normal per-user configura
 ## Failure modes
 
 - Missing semantic dark-map entries fall back to their light token rather than terminating the app.
-- Missing Roboto files fall back to the existing HarmonyOS/system font path.
+- Missing or unavailable preferred fonts fall back through the existing HarmonyOS/system font path.
 - Device and cloud webviews may show offline content when networking is unavailable; native chrome
   and local slicing remain independently testable.
 - The published Windows binaries are currently unsigned. Windows may show an unknown-publisher
@@ -37,20 +38,15 @@ install directory and are not removed by uninstall.
 
 ## Verification
 
-- Windows build job for commit `e0f6b2f92`: successful native compile, install, package, and artifact
-  upload in GitHub Actions run `29665576610`.
-- Portable payload: 6,739 files; `bambu-studio.exe`, `BambuStudio.dll`, resources, and all three
-  Roboto TTF files present.
-- The cross-translation-unit `wxColour` comparator regression was fixed by keeping palette lookup
-  inside `StateColor.cpp`; Windows CI passed after the fix.
-- A final interactive light/dark visual smoke test is still awaiting explicit permission to execute
-  the newly built unsigned binary in Windows Sandbox.
+- The last fully published baseline before the current candidate work is commit `1f1ecb960`, GitHub
+  Actions run `29671557311`, release `md3-windows-v02.08.01.55-r6.1`.
+- That baseline compiled, installed, packaged, and published the native Windows payload. It contained
+  `bambu-studio.exe`, `BambuStudio.dll`, resources, and all three Roboto TTF files.
+- The cross-translation-unit `wxColour` comparator regression remains fixed by keeping palette lookup
+  inside `StateColor.cpp`; the unused public `GetDarkMap()` accessor has now been removed.
+- The candidate workflow adds a guarded native light/dark/language capture gate, but its first
+  successful evidence run and human review are still pending. No local unsigned binary was executed.
 
-## Language-mode gap
-
-The existing application persists a conventional locale selection and includes English and formal
-Traditional Chinese. Formal `zh_TW` is not Hong Kong Cantonese, and the app does not yet provide the
-required English/Cantonese bilingual presentation mode. A complete implementation needs a separate
-`yue_HK` catalog, bilingual progressive disclosure, embedded-web resources, CJK font/glyph coverage,
-and human review of safety-critical copy. Missing Cantonese must fall back to English, never be
-silently relabeled from `zh_TW`.
+Language behavior and its still-partial native coverage are documented in
+[English, Hong Kong Cantonese, and bilingual modes](language-modes.md). The capture boundary and its
+limitations are documented in [Native Windows visual smoke test](native-visual-smoke.md).

@@ -1,34 +1,29 @@
-# Bambu Studio MD3 — desktop shell
+# Bambu Studio MD3 — legacy Electron shell
 
-A thin [Electron](https://www.electronjs.org/) wrapper that packages the self-contained `ui-md3`
-web app into a Windows installer (`.exe`, NSIS). Used by the
-[`windows-installer.yml`](../../.github/workflows/windows-installer.yml) GitHub Actions workflow to
-publish installers to GitHub Releases.
+This directory retains a thin Electron wrapper around the self-contained `ui-md3` browser concept
+for local reference. It is not the native Bambu Studio application, is not built by the maintained
+Windows workflow, and is not published on this fork's Releases page.
 
-## Build locally (Windows)
+The maintained installer is generated from the native C++ payload by
+[`build_all.yml`](../../.github/workflows/build_all.yml) and
+[`build_bambu.yml`](../../.github/workflows/build_bambu.yml). Do not use an Electron package from this
+directory as release evidence for the native product.
 
-```sh
-cd ui-md3/desktop
+## Run or package the reference shell on Windows
+
+```powershell
+cd ui-md3\desktop
 npm install
-npm run dist        # -> dist/BambuStudioMD3-Setup-<version>.exe
+npm run start
+npm run dist
 ```
 
-`npm run start` runs the app without packaging.
+`prepare.js` copies `ui-md3/{index.html,landing.html,runtime,app}` into the generated, ignored
+`desktop/app/` directory so relative browser paths continue to resolve. `main.js` opens that copy in a
+1440 × 900 Electron window. `npm run dist` asks electron-builder to create a per-user NSIS package in
+`desktop/dist/`; this is a developer convenience only.
 
-## How it works
-
-- `prepare.js` copies `ui-md3/{index.html,landing.html,runtime,app}` into `./app/` (generated,
-  git-ignored), preserving the layout so relative paths resolve.
-- `main.js` opens a 1440×900 window and loads `app/index.html`.
-- `electron-builder` produces an NSIS installer with a desktop + start-menu shortcut.
-
-## Releases
-
-Push a tag like `v0.1.0` (or run the workflow manually) and the workflow builds the installer on a
-`windows-latest` runner and attaches it to the matching GitHub Release.
-
-## Notes
-
-- The installer is **unsigned** (no code-signing certificate), so Windows SmartScreen will warn on
-  first run — expected for a concept build.
-- Fonts/icons load from Google Fonts on first run; offline, the app falls back to system fonts.
+Any locally generated Electron package is unsigned and has no fork release checksum, CycloneDX
+inventory, GitHub attestation, immutable-release record, native installer behavior test, or native
+visual evidence. The three browser language modes come from the copied `ui-md3/app` resources, but
+they do not validate native wxWidgets language/font behavior.

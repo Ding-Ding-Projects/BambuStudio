@@ -1368,7 +1368,7 @@ void GUI_App::post_init()
             bool cw_showed = this->config_wizard_startup();
 
             std::string http_url = get_http_url(app_config->get_country_code());
-            std::string language = GUI::into_u8(current_language_code());
+            std::string language = GUI::into_u8(current_language_code_safe());
             std::string network_ver = Slic3r::NetworkAgent::get_version();
             bool        sys_preset  = app_config->get("sync_system_preset") == "true";
             this->preset_updater->sync(http_url, language, network_ver, sys_preset ? preset_bundle : nullptr);
@@ -7732,7 +7732,7 @@ void GUI_App::open_mall_page_dialog()
 
     //model url
 
-    wxString language_code = this->current_language_code().BeforeFirst('_');
+    wxString language_code = this->current_language_code_safe().BeforeFirst('_');
     model_url = language_code.ToStdString();
 
     if (getAgent() && mainframe) {
@@ -7773,7 +7773,7 @@ void GUI_App::open_publish_page_dialog()
     host_url = get_model_http_url(app_config->get_country_code());
 
     //publish url
-    wxString language_code = this->current_language_code().BeforeFirst('_');
+    wxString language_code = this->current_language_code_safe().BeforeFirst('_');
     model_url += (language_code.ToStdString() + "/my/models/publish");
 
     if (getAgent() && mainframe) {
