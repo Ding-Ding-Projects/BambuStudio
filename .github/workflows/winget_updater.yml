@@ -4,6 +4,9 @@ on:
     types: [ released ]
 jobs:
   publish:
+    # This upstream publisher targets Bambulab.BambuStudio and must never run
+    # for fork-specific MD3 releases.
+    if: github.repository == 'bambulab/BambuStudio'
     runs-on: windows-latest
     steps:
       - uses: vedantmgoyal9/winget-releaser@main

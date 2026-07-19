@@ -14,8 +14,12 @@ MD3 — no invented features. Runs in any browser with **zero dependencies and n
 - **Simplest:** open [`index.html`](index.html) directly in a browser (`file://`).
 - **Static server:** serve this folder and open `/index.html`.
 - **Landing page:** [`landing.html`](landing.html) — the marketing/entry page (Pages site root).
-- **Desktop app:** see [`desktop/`](desktop/) — an Electron wrapper packaged into a Windows
-  installer by the [`windows-installer`](../.github/workflows/windows-installer.yml) workflow.
+- **Native Windows app:** use the
+  [latest installer](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe).
+  It is built from the C++ application by the
+  [`Windows build and release`](../.github/workflows/build_all.yml) workflow.
+- **Legacy concept wrapper:** [`desktop/`](desktop/) retains the earlier Electron prototype for
+  reference; it is not the published installer.
 
 Query overrides for QA: `index.html?view=preview&theme=light&density=compact&accent=%237c5cff`
 (`view` ∈ home·prepare·preview·device·multi·project·calibration·filament·settings).
@@ -55,7 +59,7 @@ ui-md3/
       <id>.logic.js       that screen's render helpers + vals slice
       CONTRACT.md         the foundation↔screen contract
   design-source/        read-only original Claude Design (the source of truth) + SPEC.md, ARCH-PARALLEL.md
-  desktop/              Electron shell for the Windows installer
+  desktop/              legacy Electron concept shell (not the native release)
   landing.html          marketing / entry page
 ```
 

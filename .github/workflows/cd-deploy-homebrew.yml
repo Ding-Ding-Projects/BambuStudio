@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   homebrew-update:
+    # Fork releases are Windows-only and do not carry the upstream macOS assets.
+    if: github.repository == 'bambulab/BambuStudio'
     name: Update Homebrew Cask
     runs-on: ubuntu-24.04
     timeout-minutes: 15

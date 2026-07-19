@@ -1,61 +1,108 @@
-name: Build all
+name: Windows build and release
 
 on:
   push:
-    branches:
-     - master
-    paths:
-     - 'deps/**'
-     - 'src/**'
-     - '**/CMakeLists.txt'
-     - 'version.inc'
-     - 'bbl/**'
-     - 'resources/**'
-     - ".github/workflows/build_*.yml"
+    branches: [master]
 
   pull_request:
-    branches:
-     - master
-    paths:
-     - 'deps/**'
-     - 'src/**'
-     - '**/CMakeLists.txt'
-     - 'version.inc'
-     - ".github/workflows/build_*.yml"
-     - 'BuildLinux.sh'
-     - 'build_win.bat'
-    
-  workflow_dispatch: # manual dispatch
-      inputs:
-        build-deps-only:
-            description: 'Only build dependencies (bypasses caching)'
-            type: boolean
-            default: false
+    branches: [master]
+
+  workflow_dispatch:
+    inputs:
+      build-deps-only:
+        description: 'Only build dependencies (bypasses caching)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build_all:
-    name: Build All
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-22.04
-          - os: ubuntu-24.04
-          - os: ubuntu-26.04
-          - os: windows-latest
-          - os: macos-15-intel
-            arch: x86_64
-          - os: macos-15
-            arch: arm64
-          - os: macos-26
-            arch: arm64
+  build_windows:
+    name: Build Windows
     uses: ./.github/workflows/build_check_cache.yml
     with:
-      os: ${{ matrix.os }}
-      arch: ${{ matrix.arch }}
+      os: windows-latest
       build-deps-only: ${{ inputs.build-deps-only || false }}
     secrets: inherit
+
+  release_windows:
+    name: Publish Windows release
+    if: ${{ github.event_name != 'pull_request' && inputs.build-deps-only != true }}
+    needs: build_windows
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download installer artifact
+        uses: actions/download-artifact@v5
+        with:
+          pattern: BambuStudio_Windows_*_installer
+          path: release
+          merge-multiple: true
+
+      - name: Validate installer and prepare release metadata
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $installers = @(Get-ChildItem release -Recurse -File -Filter 'BambuStudioMD3-Setup.exe')
+          if ($installers.Count -ne 1) {
+              throw "Expected exactly one BambuStudioMD3-Setup.exe, found $($installers.Count)."
+          }
+
+          $installer = $installers[0]
+          & 'C:\Program Files\7-Zip\7z.exe' t $installer.FullName
+          if ($LASTEXITCODE -ne 0) {
+              throw "Installer archive validation failed with exit code $LASTEXITCODE."
+          }
+
+          $versionContent = Get-Content version.inc -Raw
+          if ($versionContent -notmatch 'set\(SLIC3R_VERSION "([^"]+)"\)') {
+              throw 'Could not read SLIC3R_VERSION from version.inc.'
+          }
+
+          $version = $matches[1]
+          $tag = "md3-windows-v$version-r${{ github.run_number }}.${{ github.run_attempt }}"
+          $checksumPath = Join-Path $installer.DirectoryName 'BambuStudioMD3-Setup.exe.sha256'
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash *BambuStudioMD3-Setup.exe" | Set-Content $checksumPath -Encoding ascii
+
+          "release_tag=$tag" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          "release_version=$version" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          "installer_path=$($installer.FullName)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          "checksum_path=$checksumPath" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+
+      - name: Publish immutable Windows release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          @"
+          Native Windows build of Bambu Studio with the Material Design 3 rewrite.
+
+          - Version: $env:release_version
+          - Commit: $env:GITHUB_SHA
+          - Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID
+          - Install scope: current user (`%LOCALAPPDATA%\Programs\Bambu Studio MD3`)
+          - Signing: unsigned; verify the accompanying SHA-256 checksum before running
+          "@ | Set-Content release-notes.md -Encoding utf8
+
+          gh release create $env:release_tag `
+            $env:installer_path `
+            $env:checksum_path `
+            --repo $env:GITHUB_REPOSITORY `
+            --target $env:GITHUB_SHA `
+            --title "Bambu Studio MD3 Windows $env:release_version" `
+            --notes-file release-notes.md `
+            --latest

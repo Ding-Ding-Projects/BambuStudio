@@ -3,11 +3,18 @@
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
 It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
 
-Prebuilt Windows, macOS 64-bit and Linux releases are available through the [github releases page](https://github.com/bambulab/BambuStudio/releases/).
+This fork publishes the Material Design 3 native Windows build through its
+[GitHub Releases page](https://github.com/codingmachineedge/BambuStudio/releases/latest). The
+[latest Windows installer](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe)
+is a per-user install and does not require administrator elevation. It is currently unsigned; verify
+the accompanying SHA-256 file before running it. Upstream cross-platform releases remain available
+from [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 
 Bambu Studio is based on [PrusaSlicer](https://github.com/prusa3d/PrusaSlicer) by Prusa Research, which is from [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community.
 
-See the [wiki](https://github.com/bambulab/BambuStudio/wiki) and the [documentation directory](https://github.com/bambulab/BambuStudio/tree/master/doc) for more information.
+See this fork's [wiki](https://github.com/codingmachineedge/BambuStudio/wiki),
+[feature documentation](docs/README.md), [roadmap](ROADMAP.md), and [handoff](HANDOFF.md) for the
+MD3 rewrite and Windows release details. The original documentation remains in [`doc/`](doc/).
 
 # What are Bambu Studio's main features?
 Key features are:
