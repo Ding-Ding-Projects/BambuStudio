@@ -20,6 +20,19 @@ human review. See the
 [language-mode documentation](docs/features/windows/language-modes.md) for coverage and fallback
 details.
 
+## Material Design 3 preview
+
+These deterministic captures come from the real [`ui-md3`](ui-md3/) app. Select an image to open
+the same screen, theme, density, accent, and language state in the live interactive concept.
+
+**Prepare · light theme · English**
+
+[![Bambu Studio Material Design 3 Prepare screen in the light theme and English](docs/readme-assets/material-prepare-light-en.png)](https://codingmachineedge.github.io/BambuStudio/app/?view=prepare&theme=light&density=comfortable&accent=%2322c55e&lang=en)
+
+| Preview · dark theme · Hong Kong Cantonese | Device · compact dark theme · English + Cantonese |
+| :---: | :---: |
+| [![Bambu Studio Material Design 3 Preview screen in the dark theme and Hong Kong Cantonese](docs/readme-assets/material-preview-dark-yue-hk.png)](https://codingmachineedge.github.io/BambuStudio/app/?view=preview&theme=dark&density=comfortable&accent=%237c5cff&lang=yue_HK) | [![Bambu Studio Material Design 3 Device screen in the compact dark theme with English and Cantonese](docs/readme-assets/material-device-dark-bilingual.png)](https://codingmachineedge.github.io/BambuStudio/app/?view=device&theme=dark&density=compact&accent=%2314b8a6&lang=bilingual_en_yue_HK) |
+
 The candidate Windows pipeline builds and tests the native application, exercises installer upgrade
 and recovery behavior on a disposable GitHub-hosted runner, produces a per-file CycloneDX 1.6 SBOM,
 and creates GitHub provenance and SBOM attestations for the installer. It validates all three assets
