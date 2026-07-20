@@ -3,6 +3,27 @@ project(libslic3r)
 
 include(PrecompiledHeader)
 
+add_library(libslic3r_project_history STATIC
+    ProjectHistoryManager.cpp
+    ProjectHistoryManager.hpp
+)
+target_include_directories(libslic3r_project_history PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(libslic3r_project_history PRIVATE
+    libgit2::libgit2package
+    OpenSSL::Crypto
+    Threads::Threads
+)
+if (WIN32)
+    # The bundled static OpenSSL export omits its Windows certificate-store
+    # dependency. Keep this focused target's link closure self-contained.
+    target_link_libraries(libslic3r_project_history PRIVATE crypt32)
+endif ()
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
+    ProjectHistoryManager.cpp
+    ProjectHistoryManager.hpp
+)
+encoding_check(libslic3r_project_history)
+
 string(TIMESTAMP COMPILE_TIME %Y%m%d-%H%M%S)
 set(SLIC3R_BUILD_TIME ${COMPILE_TIME})
 
@@ -618,6 +639,7 @@ set(OCCT_LIBS
 
 
 target_link_libraries(libslic3r
+    libslic3r_project_history
     noise::noise
     libnest2d
     admesh

@@ -273,6 +273,7 @@ include(CGAL/CGAL.cmake)
 include(NLopt/NLopt.cmake)
 
 include(libnoise/libnoise.cmake)
+include(libgit2/libgit2.cmake)
 
 set(OPENSSL_PKG "")
 if (DEP_BUILD_OPENSSL)
@@ -311,6 +312,7 @@ set(_dep_list
     dep_Cereal
     dep_NLopt
     dep_libnoise
+    dep_libgit2
     dep_OpenVDB
     dep_OpenCSG
     dep_OpenCV
