@@ -23,21 +23,32 @@
   an immutable-release precondition.
 - Refresh both DeviceWeb lock graphs to zero-advisory results on 2026-07-19, regenerate the shared
   route tree, and gate the pinned pnpm production graph on high-severity audit findings.
+- Deploy and browser-verify the Pages landing/app in English, Cantonese preview, and bilingual mode,
+  including query retention, persisted selection, URL override, canonical assets, and zero browser
+  errors (run `29709187022`).
+- Enable repository immutable releases and retain the workflow's fail-closed precondition.
+- Fix the `libnest2d` callback signatures exposed by run `29677702628`.
+- Make `libslic3r` own its HTTP/encryption sources, curl/OpenSSL/BCrypt dependency closure, and NanoSVG
+  parser implementation so standalone C++ tests do not rely on GUI-library side effects
+  (`5b3520072`).
 
 ## In progress
 
-- Run the complete candidate Windows workflow, fix any failures, inspect all three native capture
-  artifacts, and record final commit/run/release/checksum/SBOM/attestation/immutability evidence.
-- Enable and verify the repository immutable-release setting before the candidate release can be
-  published; the workflow intentionally fails closed when it is disabled.
+- Push `5b3520072` with this handoff update, run the complete candidate Windows workflow, and prove the
+  corrected `libnest2d_tests` link and execution. Runs `29708683379` and `29709187257` already prove
+  the production application build but failed at the earlier static test link boundary.
+- Finish the fresh local dependency build, configure/build/install the Release application, build and
+  run `libnest2d_tests` plus `language_mode_tests`, and smoke the installed GUI with a fresh isolated
+  `--datadir`.
+- Inspect all three hosted native capture artifacts and record final commit, run, release, checksum,
+  CycloneDX, attestation, and immutable-release evidence.
 - Expand the partial native Cantonese catalog beyond the curated high-value flows and obtain
   independent human review of safety-critical print, account, networking, privacy, and destructive
   copy.
-- Deploy and verify the three Pages language modes, then synchronize the repository wiki and handoff
-  with final release evidence.
-- If explicit action-time permission is provided, perform an additional local Windows Sandbox review
-  with networking disabled. No unsigned installer or application has been run locally for the current
-  candidate.
+- Synchronize the repository wiki and replace interim failure evidence in the handoff/release docs with
+  the final successful candidate evidence.
+- A low-level/headless desktop MCP is not available. Keep the guarded deterministic capture on the
+  GitHub-hosted runner; Windows Sandbox remains an optional additional review and has not been run.
 
 ## Later or externally blocked
 

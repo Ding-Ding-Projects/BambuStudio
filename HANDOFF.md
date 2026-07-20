@@ -4,15 +4,25 @@
 
 - Canonical repository: `https://github.com/codingmachineedge/BambuStudio.git`
 - Branch: `master`
-- Last synchronized code commit before the current uncommitted fixes: `31a52b614bb827966d1159c595eb9cf6deeff4c2`
-- Final candidate commit: pending final commit and push
+- Last synchronized remote commit before this handoff update:
+  `a8bc8d24d25ec1a89c2b977148324dbdaf40424e`
+- Current candidate code commit:
+  `5b35200729921b4f98a91061440a4735585eb03b`
 - Last fully published baseline: commit `1f1ecb960a19aaba18b619210ddca63629198a70`,
   Actions run `29671557311`, release `md3-windows-v02.08.01.55-r6.1`
 - Last published installer SHA-256:
   `c66137776687585240e757ac33baa61d3693737c5aac73c145bf2d08d783a89d`
-- Candidate Actions run/release/checksum/SBOM/attestation evidence: pending
-- Pages: `https://codingmachineedge.github.io/BambuStudio/`; final three-mode deployment verification
-  is pending
+- Candidate runs `29708683379` (`0d077cd3`) and `29709187257` (`a8bc8d24d`) each passed
+  the complete application build, then failed while linking `libnest2d_tests.exe` with the same 17
+  missing static-library symbols. Neither run produced artifacts or a release.
+- Commit `5b3520072` makes `libslic3r` own its HTTP/encryption sources, curl/OpenSSL/BCrypt link
+  closure, and NanoSVG parser implementation. A new Windows candidate run is required to validate it.
+- Repository immutable releases are enabled (`enabled: true`).
+- Pages: `https://codingmachineedge.github.io/BambuStudio/`; deployment run `29709187022` passed,
+  and live English, Cantonese-preview, and bilingual modes passed query, persistence, override, asset,
+  and error-free browser checks.
+- Local Windows prerequisites are installed and verified. The fresh dependency superbuild is active in
+  `deps/build-local`; the application, targeted C++ tests, and isolated local launch remain to complete.
 
 The current candidate is Windows-only. macOS and Linux source support remains upstream but is not part
 of this fork's acceptance or release work.
@@ -35,8 +45,8 @@ and stash audit after all candidate commits are pushed.
 
 ## Candidate code state
 
-The candidate implements these Windows features, but they are not represented here as a passed future
-release:
+The candidate implements these Windows features. They are not yet represented as a passed final
+release because the new link-closure commit still needs local and hosted validation:
 
 - Three canonical UI modes: English (`en`), Hong Kong Cantonese preview (`yue_HK`), and compact
   bilingual preview (`bilingual_en_yue_HK`), with existing Bambu Studio locales retained.
@@ -55,6 +65,8 @@ release:
   plus the route tree generated identically by both refreshed graphs. Hosted production builds also
   fail closed on high-severity pnpm audit findings.
 - Removal of the unused public `StateColor::GetDarkMap()` accessor.
+- Correct one- and two-item `libnest2d` test callback signatures and a self-contained static
+  `libslic3r` dependency boundary, without unresolved-symbol bypasses or GUI overlinking.
 
 The canonical `agent-global-memory` checkout is
 `C:\Users\Administrator\Documents\GitHub\agent-global-memory`. Its `origin` points to the canonical
@@ -63,13 +75,27 @@ repository, `scripts/sync-agent-memory.ps1 status` reports managed targets curre
 
 ## Verification already established
 
-The `1f1ecb960` baseline compiled, installed, packaged, and published successfully in Actions run
-`29671557311`. Its per-user NSIS archive and ownership-scoped uninstall generation were validated, and
-the published installer has the checksum recorded above. That evidence predates the new language,
-visual execution, SBOM, attestation, immutable-publication, and expanded installer-test gates.
+- The `1f1ecb960` baseline compiled, installed, packaged, and published successfully in Actions run
+  `29671557311`; its checksum is recorded above. It predates the new candidate gates.
+- Commits `0d077cd3` and `a8bc8d24d` both completed the production Windows application build on a
+  GitHub-hosted runner. Their failure is isolated to the separately configured `libnest2d_tests`
+  executable link step.
+- The first failure exposed incorrect callback signatures; `0d077cd3` fixed those signatures. The
+  later link failure consistently reported BCrypt, OpenSSL MD5, `BBL_Encrypt`, `Slic3r::Http`, and
+  NanoSVG symbols. Commit `5b3520072` assigns those implementations and link dependencies to
+  `libslic3r`, the static library that consumes them.
+- `scripts/ci/Test-WindowsRelease.ps1` passes locally after that fix. It validates PowerShell, JSON,
+  browser JavaScript, immutable Action pins, DeviceWeb behavior, deterministic uninstall generation,
+  CycloneDX generation, 242 native translations, 178 DeviceWeb translations, 168 legacy-web
+  translations, and all 13 language-mode tests.
+- Pages run `29709187022` is deployed and live three-mode browser QA passes with no console, page,
+  request, or HTTP failures.
+- Visual Studio 2026, MSVC 19.51, CMake 4.4, PowerShell 7.6.3, verified Strawberry Perl 5.42.2,
+  and pkg-config-lite 0.28 are available locally. The dependency build uses an isolated prefix and
+  does not modify the user's installed Bambu Studio profile.
 
-Do not copy the prior run number into the candidate evidence. After the complete workflow passes,
-record all of the following:
+Do not copy the baseline or failed run numbers into final release evidence. After the complete
+workflow passes, record all of the following:
 
 - final commit and clean `master`/`origin/master` equality;
 - Actions run ID/URL and the successful Windows job names;
@@ -83,14 +109,17 @@ record all of the following:
 
 ## External dependencies and remaining risk
 
-- No unsigned installer or application was executed locally for this candidate. Local Windows Sandbox
-  execution remains behind explicit action-time confirmation. The automated scripts are instead
-  hard-restricted to a disposable GitHub-hosted runner.
+- The user authorized an ordinary local application build and isolated `--datadir` smoke launch. That
+  launch is not complete yet. No candidate installer has been executed locally, and no Windows Sandbox
+  session has been run.
+- No low-level/headless desktop MCP is callable in this environment. The deterministic native capture
+  script remains hard-restricted to a real disposable GitHub-hosted runner and must not be spoofed;
+  an ordinary targeted local window smoke is separate evidence.
 - Authenticode remains externally blocked on a trusted certificate/provider and secure credential
   configuration. SHA-256 checksums and GitHub attestations are not Authenticode and do not establish a
   Windows trusted publisher.
-- The repository immutable-release setting must be enabled by an administrator and observed by the
-  workflow before publication. The candidate workflow fails closed when it is disabled.
+- The repository immutable-release setting is enabled. The candidate workflow still verifies it and
+  fails closed if it changes before publication.
 - Native Cantonese is intentionally partial. Missing copy falls back to English; broader independent
   human review is still required for print safety, destructive actions, account/privacy, networking,
   and recovery text. Formal `zh_TW` is not a Cantonese substitute.
