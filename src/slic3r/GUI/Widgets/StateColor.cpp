@@ -54,6 +54,10 @@ static std::map<wxColour, wxColour> gDarkColors{
 
 void StateColor::SetDarkMode(bool dark) { gDarkMode = dark; }
 
+bool StateColor::isDarkMode() { return gDarkMode; }
+
+wxColour StateColor::semantic(MD3::Role role) { return MD3::resolve(role, gDarkMode); }
+
 inline wxColour darkModeColorFor2(wxColour const &color)
 {
     if (!gDarkMode)
@@ -194,8 +198,8 @@ void StateColor::setTakeFocusedAsHovered(bool set) { takeFocusedAsHovered_ = set
 
 StateColor StateColor::createButtonStyleGray()
 {
-    return StateColor(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Focused),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    return StateColor(std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Focused),
+        std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 }

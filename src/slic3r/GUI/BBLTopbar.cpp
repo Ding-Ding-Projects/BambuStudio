@@ -13,6 +13,7 @@
 #include "ReleaseNote.hpp"
 #include "Widgets/StateColor.hpp"
 
+#include <algorithm>
 #include <boost/log/trivial.hpp>
 
 #define TOPBAR_ICON_SIZE  18
@@ -44,12 +45,11 @@ public:
 
 void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect)
 {
-    dc.SetFont(m_font);
-#ifdef __WINDOWS__
-    dc.SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
-#else
-    dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
-#endif
+    wxFont font = m_font;
+    if (item.GetId() == ID_TITLE)
+        font.SetWeight(wxFONTWEIGHT_SEMIBOLD);
+    dc.SetFont(font);
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
 
     int textWidth = 0, textHeight = 0;
     dc.GetTextExtent(item.GetLabel(), &textWidth, &textHeight);
@@ -72,13 +72,19 @@ void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& it
 
 void BBLTopbarArt::DrawBackground(wxDC& dc, wxWindow* wnd, const wxRect& rect)
 {
-    dc.SetBrush(wxBrush(StateColor::darkModeColorFor(ThemeColor::Grey250)));
+    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    dc.SetPen(wxPen(surface));
+    dc.SetBrush(wxBrush(surface));
     wxRect clipRect = rect;
     clipRect.y -= 8;
     clipRect.height += 8;
     dc.SetClippingRegion(clipRect);
     dc.DrawRectangle(rect);
     dc.DestroyClippingRegion();
+
+    const int divider_width = std::max(1, wnd->FromDIP(1));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), divider_width));
+    dc.DrawLine(rect.GetLeft(), rect.GetBottom(), rect.GetRight(), rect.GetBottom());
 }
 
 void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect)
@@ -132,49 +138,30 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     }
 
 
-    if (!(item.GetState() & wxAUI_BUTTON_STATE_DISABLED))
-    {
+    if (!(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
+        wxColour state_layer;
         if (item.GetState() & wxAUI_BUTTON_STATE_PRESSED)
-        {
-            dc.SetPen(wxPen(m_highlightColour));
-            dc.SetBrush(wxBrush(m_highlightColour.ChangeLightness(20)));
-            dc.DrawRectangle(rect);
-        }
+            state_layer = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
         else if ((item.GetState() & wxAUI_BUTTON_STATE_HOVER) || item.IsSticky())
-        {
-            dc.SetPen(wxPen(m_highlightColour));
-            dc.SetBrush(wxBrush(m_highlightColour.ChangeLightness(40)));
-
-            // draw an even lighter background for checked item hovers (since
-            // the hover background is the same color as the check background)
-            if (item.GetState() & wxAUI_BUTTON_STATE_CHECKED)
-                dc.SetBrush(wxBrush(m_highlightColour.ChangeLightness(50)));
-
-            dc.DrawRectangle(rect);
-        }
+            state_layer = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
         else if (item.GetState() & wxAUI_BUTTON_STATE_CHECKED)
-        {
-            // it's important to put this code in an else statement after the
-            // hover, otherwise hovers won't draw properly for checked items
-            dc.SetPen(wxPen(m_highlightColour));
-            dc.SetBrush(wxBrush(m_highlightColour.ChangeLightness(40)));
-            dc.DrawRectangle(rect);
+            state_layer = StateColor::semantic(MD3::Role::SecondaryContainer);
+
+        if (state_layer.IsOk()) {
+            wxRect state_rect = rect;
+            state_rect.Deflate(wnd->FromDIP(2), wnd->FromDIP(4));
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(state_layer));
+            dc.DrawRoundedRectangle(state_rect, wnd->FromDIP(MD3::Metrics::compact.small_radius));
         }
     }
 
     if (bmp.IsOk())
         dc.DrawBitmap(bmp, bmpX, bmpY, true);
 
-    // set the item's text color based on if it is disabled
-#ifdef __WINDOWS__
-    dc.SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
-#else
-    dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
-#endif
-    if (item.GetState() & wxAUI_BUTTON_STATE_DISABLED)
-    {
-        dc.SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
-    }
+    // Semantic foregrounds remain readable on both light and dark title surfaces.
+    dc.SetTextForeground(StateColor::semantic(
+        item.GetState() & wxAUI_BUTTON_STATE_DISABLED ? MD3::Role::Outline : MD3::Role::OnSurface));
 
     if ((m_flags & wxAUI_TB_TEXT) && !item.GetLabel().empty())
     {
@@ -204,7 +191,7 @@ void BBLTopbar::Init(wxFrame* parent)
 
     wxInitAllImageHandlers();
 
-    this->AddSpacer(5);
+    this->AddSpacer(FromDIP(MD3::Metrics::compact.gap));
 
     /*wxBitmap logo_bitmap = create_scaled_bitmap("topbar_logo", nullptr, TOPBAR_ICON_SIZE);
     wxAuiToolBarItem* logo_item = this->AddTool(ID_LOGO, "", logo_bitmap);
@@ -214,7 +201,8 @@ void BBLTopbar::Init(wxFrame* parent)
     wxBitmap file_bitmap = create_scaled_bitmap("topbar_file", nullptr, TOPBAR_ICON_SIZE);
     m_file_menu_item = this->AddTool(ID_TOP_FILE_MENU, _L("File"), file_bitmap, wxEmptyString, wxITEM_NORMAL);
 
-    this->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
+    this->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     this->AddSpacer(FromDIP(5));
 
@@ -304,7 +292,9 @@ void BBLTopbar::Init(wxFrame* parent)
 
     Realize();
     // m_toolbar_h = this->GetSize().GetHeight();
-    m_toolbar_h = FromDIP(30);
+    m_toolbar_h = FromDIP(MD3::Metrics::top_bar_height);
+    SetMinSize({-1, m_toolbar_h});
+    SetMaxSize({-1, m_toolbar_h});
 
     int client_w = parent->GetClientSize().GetWidth();
     this->SetSize(client_w, m_toolbar_h);
@@ -327,6 +317,12 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnUndo, this, wxID_UNDO);
     //this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnModelStoreClicked, this, ID_MODEL_STORE);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnPublishClicked, this, ID_PUBLISH);
+    this->Bind(wxEVT_SYS_COLOUR_CHANGED, [this](wxSysColourChangedEvent& event) {
+        SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+        Refresh(false);
+        event.Skip();
+    });
 }
 
 BBLTopbar::~BBLTopbar()
@@ -503,7 +499,6 @@ void BBLTopbar::UpdateToolbarWidth(int width)
 }
 
 void BBLTopbar::Rescale() {
-    int em = em_unit(this);
     wxAuiToolBarItem* item;
 
     /*item = this->FindTool(ID_LOGO);
@@ -535,6 +530,7 @@ void BBLTopbar::Rescale() {
     item->SetDisabledBitmap(create_scaled_bitmap("calib_sf_inactive", nullptr, TOPBAR_ICON_SIZE));
 
     item = this->FindTool(ID_TITLE);
+    item->SetMinSize({FromDIP(TOPBAR_TITLE_WIDTH), -1});
 
     /*item = this->FindTool(ID_PUBLISH);
     item->SetBitmap(create_scaled_bitmap("topbar_publish", this, TOPBAR_ICON_SIZE));
@@ -560,7 +556,16 @@ void BBLTopbar::Rescale() {
     item = this->FindTool(wxID_CLOSE_FRAME);
     item->SetBitmap(create_scaled_bitmap("topbar_close", this, TOPBAR_ICON_SIZE));
 
+    m_toolbar_h = FromDIP(MD3::Metrics::top_bar_height);
+    SetMinSize({-1, m_toolbar_h});
+    SetMaxSize({-1, m_toolbar_h});
+    SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     Realize();
+    SetSize(GetSize().GetWidth(), m_toolbar_h);
+    if (GetParent())
+        GetParent()->Layout();
+    Refresh(false);
 }
 
 void BBLTopbar::OnIconize(wxAuiToolBarEvent& event)

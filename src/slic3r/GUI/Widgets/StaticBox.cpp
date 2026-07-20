@@ -20,7 +20,7 @@ END_EVENT_TABLE()
 
 StaticBox::StaticBox()
     : state_handler(this)
-    , radius(8)
+    , radius(MD3::Metrics::compact.radius)
 {
     border_color = StateColor(
         std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
@@ -41,6 +41,12 @@ bool StaticBox::Create(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
     if (style & wxBORDER_NONE)
         border_width = 0;
     wxWindow::Create(parent, id, pos, size, style);
+    RescaleDefaultCornerRadius();
+    Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent& event) {
+        RescaleDefaultCornerRadius();
+        Refresh(false);
+        event.Skip();
+    });
     state_handler.attach({&border_color, &background_color, &background_color2});
     state_handler.update_binds();
     SetBackgroundColour(GetParentBackgroundColor(parent));
@@ -49,8 +55,22 @@ bool StaticBox::Create(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
 
 void StaticBox::SetCornerRadius(double radius)
 {
+    m_uses_default_radius = false;
     this->radius = radius;
     Refresh();
+}
+
+void StaticBox::SetDefaultCornerRadius(double radius_dip)
+{
+    m_default_radius_dip = radius_dip;
+    if (m_uses_default_radius)
+        radius = radius_dip;
+}
+
+void StaticBox::RescaleDefaultCornerRadius()
+{
+    if (m_uses_default_radius)
+        radius = FromDIP(m_default_radius_dip);
 }
 
 void StaticBox::SetBorderStyle(wxPenStyle style)

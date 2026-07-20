@@ -156,6 +156,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/StateColor.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/StaticGroup.hpp"
 #include "Widgets/MultiNozzleSync.hpp"
@@ -702,6 +703,7 @@ struct Sidebar::priv
     ScalableButton *  m_bpButton_set_filament;
     int m_menu_filament_id = -1;
     wxPanel*          m_panel_filament_subtitle{nullptr};  // "Filament" subtitle row with +/-/AMS/set buttons
+    wxStaticText*     m_text_filament_subtitle{nullptr};
     wxPanel*          m_filament_area_wrapper{nullptr};   // Wrapper panel for collapse/expand
     wxScrolledWindow* m_physical_scroll_area{nullptr};    // Scroll area for physical filaments (max 3 rows when total > 12)
     wxScrolledWindow* m_mixed_scroll_area{nullptr};       // Scroll area for mixed filaments (max 3 rows when total > 12)
@@ -2401,7 +2403,9 @@ void Sidebar::update_sync_ams_btn_enable(wxUpdateUIEvent &e)
  }
 
 Sidebar::Sidebar(Plater *parent)
-    : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(42 * wxGetApp().em_unit(), -1)), p(new priv(parent))
+    : wxPanel(parent, wxID_ANY, wxDefaultPosition,
+              wxSize(parent->FromDIP(MD3::Metrics::comfortable.sidebar_width), -1))
+    , p(new priv(parent))
 {
     Choice::register_dynamic_list("support_filament", &dynamic_filament_list);
     Choice::register_dynamic_list("support_interface_filament", &dynamic_filament_list);
@@ -2415,7 +2419,13 @@ Sidebar::Sidebar(Plater *parent)
     // As a result we can see the empty block at the bottom of the sidebar
     // But if we set this value to 5, layout will be better
     //p->scrolled->SetScrollRate(0, 5);
-    p->scrolled->SetBackgroundColour(*wxWHITE);
+    const wxColour surface_low    = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const wxColour surface_lowest = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour surface_high   = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    const wxColour outline        = StateColor::semantic(MD3::Role::OutlineVariant);
+
+    SetBackgroundColour(surface_low);
+    p->scrolled->SetBackgroundColour(surface_lowest);
 
 
     SetFont(wxGetApp().normal_font());
@@ -2434,10 +2444,10 @@ Sidebar::Sidebar(Plater *parent)
     auto* scrolled_sizer = m_scrolled_sizer = new wxBoxSizer(wxVERTICAL);
     p->scrolled->SetSizer(scrolled_sizer);
 
-    wxColour title_bg = wxColour(248, 248, 248);
-    wxColour inactive_text = wxColour(86, 86, 86);
-    wxColour active_text = wxColour(0, 0, 0);
-    wxColour static_line_col = wxColour(166, 169, 170);
+    const wxColour title_bg        = surface_low;
+    const wxColour inactive_text   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    const wxColour active_text     = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour static_line_col = outline;
 
 #ifdef __WINDOWS__
     p->scrolled->SetDoubleBuffered(true);
@@ -2449,7 +2459,7 @@ Sidebar::Sidebar(Plater *parent)
         // 1.1 create title bar resources
         p->m_panel_printer_title = new StaticBox(p->scrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE);
         p->m_panel_printer_title->SetBackgroundColor(title_bg);
-        p->m_panel_printer_title->SetBackgroundColor2(0xF1F1F1);
+        p->m_panel_printer_title->SetBackgroundColor2(title_bg);
 
         p->m_printer_icon = new ScalableButton(p->m_panel_printer_title, wxID_ANY, "printer");
         p->m_text_printer_settings = new Label(p->m_panel_printer_title, _L("Printer"), LB_PROPAGATE_MOUSE_EVENT);
@@ -2498,19 +2508,20 @@ Sidebar::Sidebar(Plater *parent)
 
         // add spliter 2
         auto spliter_2 = new ::StaticLine(p->scrolled);
-        spliter_2->SetLineColour("#CECECE");
+        spliter_2->SetLineColour(outline);
         scrolled_sizer->Add(spliter_2, 0, wxEXPAND);
 
 
         /*************************** 2. add printer content ************************/
         p->m_panel_printer_content = new wxPanel(p->scrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-        p->m_panel_printer_content->SetBackgroundColour(wxColour(255, 255, 255));
-        StateColor panel_bd_col(std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Hovered),
-                                std::pair<wxColour, int>(wxColour("#EEEEEE"), StateColor::Normal));
+        p->m_panel_printer_content->SetBackgroundColour(surface_lowest);
+        StateColor panel_bd_col(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed),
+                                std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
+                                std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 
         p->panel_printer_preset = new StaticBox(p->m_panel_printer_content);
-        p->panel_printer_preset->SetCornerRadius(8);
+        p->panel_printer_preset->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+        p->panel_printer_preset->SetBackgroundColor(surface_high);
         p->panel_printer_preset->SetBorderColor(panel_bd_col);
         p->panel_printer_preset->SetMinSize(PRINTER_PANEL_SIZE);
         p->panel_printer_preset->Bind(wxEVT_LEFT_DOWN, [this](auto & evt) {
@@ -2539,7 +2550,7 @@ Sidebar::Sidebar(Plater *parent)
         p->combo_printer = combo_printer;
 
         p->btn_connect_printer = new ScalableButton(p->panel_printer_preset, wxID_ANY, "monitor_signal_strong");
-        p->btn_connect_printer->SetBackgroundColour(wxColour(255, 255, 255));
+        p->btn_connect_printer->SetBackgroundColour(surface_high);
         p->btn_connect_printer->SetToolTip(_L("Connection"));
         p->btn_connect_printer->Bind(wxEVT_BUTTON, [this, combo_printer](wxCommandEvent)
             {
@@ -2557,7 +2568,8 @@ Sidebar::Sidebar(Plater *parent)
 
         // Bed type selection
         p->panel_printer_bed = new StaticBox(p->m_panel_printer_content);
-        p->panel_printer_bed->SetCornerRadius(8);
+        p->panel_printer_bed->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+        p->panel_printer_bed->SetBackgroundColor(surface_high);
         p->panel_printer_bed->SetBorderColor(panel_bd_col);
         p->panel_printer_bed->SetMinSize(PRINTER_PANEL_SIZE);
         p->panel_printer_bed->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
@@ -2647,15 +2659,15 @@ Sidebar::Sidebar(Plater *parent)
         btn_sync = new Button(p->m_panel_printer_content, _L("Sync info"), "printer_sync", 0, 32);
         //btn_sync->SetFont(Label::Body_8);
         btn_sync->SetToolTip(_L("Synchronize nozzle information and the number of AMS"));
-        btn_sync->SetCornerRadius(8);
+        btn_sync->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.row_height / 2));
         StateColor btn_sync_bg_col(
-                std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Pressed),
-                std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Hovered),
-                std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Normal));
+                std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Pressed),
+                std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Hovered),
+                std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
         StateColor btn_sync_bd_col(
-                std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Pressed),
-                std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Hovered),
-                std::pair<wxColour, int>(wxColour("#EEEEEE"), StateColor::Normal));
+                std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed),
+                std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
+                std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
         btn_sync->SetBackgroundColor(btn_sync_bg_col);
         btn_sync->SetBorderColor(btn_sync_bd_col);
         btn_sync->SetCanFocus(false);
@@ -2726,7 +2738,7 @@ Sidebar::Sidebar(Plater *parent)
     // add filament title
     p->m_panel_filament_title = new StaticBox(p->scrolled, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE);
     p->m_panel_filament_title->SetBackgroundColor(title_bg);
-    p->m_panel_filament_title->SetBackgroundColor2(0xF1F1F1);
+    p->m_panel_filament_title->SetBackgroundColor2(title_bg);
     p->m_panel_filament_title->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         if (p->m_flushing_volume_btn->IsShown() && e.GetPosition().x > p->m_flushing_volume_btn->GetPosition().x)
             return;
@@ -2851,15 +2863,15 @@ Sidebar::Sidebar(Plater *parent)
     // ---- "Filament" subtitle row with +/-/AMS/settings buttons ----
     {
         p->m_panel_filament_subtitle = new wxPanel(p->scrolled, wxID_ANY);
-        p->m_panel_filament_subtitle->SetBackgroundColour(*wxWHITE);
+        p->m_panel_filament_subtitle->SetBackgroundColour(surface_lowest);
         auto* subtitle_sizer = new wxBoxSizer(wxHORIZONTAL);
 
         // "Filament" label
-        auto* filament_label = new wxStaticText(p->m_panel_filament_subtitle, wxID_ANY, _L("Filament"));
-        filament_label->SetForegroundColour(wxColour("#ACACAC"));
-        filament_label->SetFont(::Label::Body_14);
+        p->m_text_filament_subtitle = new wxStaticText(p->m_panel_filament_subtitle, wxID_ANY, _L("Filament"));
+        p->m_text_filament_subtitle->SetForegroundColour(inactive_text);
+        p->m_text_filament_subtitle->SetFont(::Label::Body_14);
         // Figma: left-aligned with filament color swatches (10px padding)
-        subtitle_sizer->Add(filament_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+        subtitle_sizer->Add(p->m_text_filament_subtitle, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
 
         auto* line_panel = new wxPanel(p->m_panel_filament_subtitle, wxID_ANY);
         line_panel->SetMinSize(wxSize(-1, FromDIP(1)));
@@ -2867,7 +2879,7 @@ Sidebar::Sidebar(Plater *parent)
             wxPaintDC dc(line_panel);
             wxSize sz = line_panel->GetClientSize();
             int y = sz.GetHeight() / 2;
-            dc.SetPen(wxPen(wxColour("#CECECE"), 1, wxPENSTYLE_SOLID));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1, wxPENSTYLE_SOLID));
             dc.DrawLine(0, y, sz.GetWidth(), y);
         });
         subtitle_sizer->Add(line_panel, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
@@ -2919,18 +2931,18 @@ Sidebar::Sidebar(Plater *parent)
 
     // ---- Wrapper panel for collapse/expand of all filament content ----
     p->m_filament_area_wrapper = new wxPanel(p->scrolled, wxID_ANY);
-    p->m_filament_area_wrapper->SetBackgroundColour(*wxWHITE);
+    p->m_filament_area_wrapper->SetBackgroundColour(surface_lowest);
     auto* wrapper_sizer = new wxBoxSizer(wxVERTICAL);
 
     // ---- Physical filament scroll area (independent scrollbar) ----
     p->m_physical_scroll_area = new wxScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     p->m_physical_scroll_area->SetScrollbars(0, 100, 1, 2);
     p->m_physical_scroll_area->SetScrollRate(0, 5);
-    p->m_physical_scroll_area->SetBackgroundColour(*wxWHITE);
+    p->m_physical_scroll_area->SetBackgroundColour(surface_lowest);
     auto* phys_scroll_sizer = new wxBoxSizer(wxVERTICAL);
 
     p->m_panel_filament_content = new wxPanel(p->m_physical_scroll_area, wxID_ANY);
-    p->m_panel_filament_content->SetBackgroundColour(*wxWHITE);
+    p->m_panel_filament_content->SetBackgroundColour(surface_lowest);
 
     // BBS: filament double columns
     p->sizer_filaments = new wxBoxSizer(wxHORIZONTAL);
@@ -2962,15 +2974,15 @@ Sidebar::Sidebar(Plater *parent)
     // 1) "+ 添加混色" button (shown when no mixed filaments exist)
     {
         p->m_btn_add_mixed_filament = new wxPanel(p->m_filament_area_wrapper, wxID_ANY);
-        p->m_btn_add_mixed_filament->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#F8F8F8")));
+        p->m_btn_add_mixed_filament->SetBackgroundColour(surface_lowest);
         p->m_btn_add_mixed_filament->SetMinSize(wxSize(-1, FromDIP(23)));
 
         p->m_btn_add_mixed_filament->Bind(wxEVT_PAINT, [this](wxPaintEvent&) {
             wxPaintDC dc(p->m_btn_add_mixed_filament);
             wxSize sz = p->m_btn_add_mixed_filament->GetClientSize();
-            dc.SetBrush(wxBrush(StateColor::darkModeColorFor(wxColour("#F8F8F8"))));
-            dc.SetPen(wxPen(StateColor::darkModeColorFor(wxColour("#EEEEEE")), 1));
-            dc.DrawRectangle(0, 0, sz.GetWidth(), sz.GetHeight());
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1));
+            dc.DrawRoundedRectangle(0, 0, sz.GetWidth(), sz.GetHeight(), FromDIP(MD3::Metrics::comfortable.small_radius));
         });
 
         auto* btn_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -2982,7 +2994,7 @@ Sidebar::Sidebar(Plater *parent)
 
         auto* add_label = new wxStaticText(p->m_btn_add_mixed_filament, wxID_ANY, _L("Add Mixed Filament"),
                                            wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-        add_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#262E30")));
+        add_label->SetForegroundColour(active_text);
         add_label->SetFont(::Label::Body_13);
 
         btn_sizer->AddStretchSpacer(1);
@@ -3000,12 +3012,12 @@ Sidebar::Sidebar(Plater *parent)
     // 2) Title row: "Mixed Filament ------- + -"
     {
         p->m_panel_mixed_title = new wxPanel(p->m_filament_area_wrapper, wxID_ANY);
-        p->m_panel_mixed_title->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+        p->m_panel_mixed_title->SetBackgroundColour(surface_lowest);
         auto* title_sizer = new wxBoxSizer(wxHORIZONTAL);
 
         p->m_text_mixed_title = new wxStaticText(p->m_panel_mixed_title, wxID_ANY, _L("Mixed Filament"),
                                                    wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-        p->m_text_mixed_title->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#ACACAC")));
+        p->m_text_mixed_title->SetForegroundColour(inactive_text);
         p->m_text_mixed_title->SetFont(::Label::Body_14);
         title_sizer->Add(p->m_text_mixed_title, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
 
@@ -3015,7 +3027,7 @@ Sidebar::Sidebar(Plater *parent)
             wxPaintDC dc(mixed_line_panel);
             wxSize sz = mixed_line_panel->GetClientSize();
             int y = sz.GetHeight() / 2;
-            dc.SetPen(wxPen(wxColour("#CECECE"), 1, wxPENSTYLE_SOLID));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1, wxPENSTYLE_SOLID));
             dc.DrawLine(0, y, sz.GetWidth(), y);
         });
         title_sizer->Add(mixed_line_panel, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
@@ -3045,11 +3057,11 @@ Sidebar::Sidebar(Plater *parent)
     p->m_mixed_scroll_area = new wxScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     p->m_mixed_scroll_area->SetScrollbars(0, 100, 1, 2);
     p->m_mixed_scroll_area->SetScrollRate(0, 5);
-    p->m_mixed_scroll_area->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    p->m_mixed_scroll_area->SetBackgroundColour(surface_lowest);
     auto* mix_scroll_sizer = new wxBoxSizer(wxVERTICAL);
     {
         p->m_panel_mixed_content = new wxPanel(p->m_mixed_scroll_area, wxID_ANY);
-        p->m_panel_mixed_content->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+        p->m_panel_mixed_content->SetBackgroundColour(surface_lowest);
 
         p->m_sizer_mixed_filaments = new wxBoxSizer(wxHORIZONTAL);
         p->m_sizer_mixed_filaments->Add(new wxBoxSizer(wxVERTICAL), 1, wxEXPAND);
@@ -3074,11 +3086,11 @@ Sidebar::Sidebar(Plater *parent)
     // 4) Mixed filament warning panel (red bar, outside scroll areas)
     {
         p->m_panel_mixed_warning = new wxPanel(p->m_filament_area_wrapper, wxID_ANY);
-        p->m_panel_mixed_warning->SetBackgroundColour(wxColour("#FDE8E8"));
+        p->m_panel_mixed_warning->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
         auto* warn_sizer = new wxBoxSizer(wxHORIZONTAL);
         p->m_text_mixed_warning = new wxStaticText(p->m_panel_mixed_warning, wxID_ANY,
             _L("Mixed filament has invalid or mismatched components. Please re-edit affected entries."));
-        p->m_text_mixed_warning->SetForegroundColour(wxColour("#D32F2F"));
+        p->m_text_mixed_warning->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
         p->m_text_mixed_warning->SetFont(::Label::Body_12);
         p->m_text_mixed_warning->Wrap(FromDIP(360));
         warn_sizer->Add(p->m_text_mixed_warning, 1, wxALL, FromDIP(6));
@@ -3105,11 +3117,11 @@ Sidebar::Sidebar(Plater *parent)
     if (params_panel) {
         params_panel->get_top_panel()->Reparent(p->scrolled);
         auto spliter_1 = new ::StaticLine(p->scrolled);
-        spliter_1->SetLineColour("#A6A9AA");
+        spliter_1->SetLineColour(outline);
         scrolled_sizer->Add(spliter_1, 0, wxEXPAND);
         scrolled_sizer->Add(params_panel->get_top_panel(), 0, wxEXPAND);
         auto spliter_2 = new ::StaticLine(p->scrolled);
-        spliter_2->SetLineColour("#CECECE");
+        spliter_2->SetLineColour(outline);
         scrolled_sizer->Add(spliter_2, 0, wxEXPAND);
     }
 
@@ -3183,7 +3195,6 @@ void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {
     p->image_printer_bed->Bind(wxEVT_LEAVE_WINDOW, &Sidebar::on_leave_image_printer_bed, this);
     auto    pos  = p->panel_printer_bed->GetScreenPosition();
     auto    rect = p->panel_printer_bed->GetRect();
-    wxPoint temp_pos(pos.x + rect.GetWidth() +  FromDIP(3), pos.y);
     if (p->big_bed_image_popup == nullptr) {
         p->big_bed_image_popup = new ImageDPIFrame();
         bool exist;
@@ -3192,6 +3203,9 @@ void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {
             p->big_bed_image_popup->set_bitmap(create_scaled_bitmap("big_" + image_path, p->big_bed_image_popup, p->big_bed_image_popup->get_image_px()));
         }
     }
+    const int popup_width = std::max(p->big_bed_image_popup->GetSize().GetWidth(), p->big_bed_image_popup->GetBestSize().GetWidth());
+    const bool docked_right = p->plater->get_sidebar_docking_state() == Sidebar::Right;
+    wxPoint temp_pos(docked_right ? pos.x - popup_width - FromDIP(3) : pos.x + rect.GetWidth() + FromDIP(3), pos.y);
     p->big_bed_image_popup->SetCanFocus(false);
     p->big_bed_image_popup->SetPosition(temp_pos);
     p->big_bed_image_popup->on_show();
@@ -3785,7 +3799,7 @@ void Sidebar::change_top_border_for_mode_sizer(bool increase_border)
 
 void Sidebar::msw_rescale()
 {
-    SetMinSize(wxSize(42 * wxGetApp().em_unit(), -1));
+    SetMinSize(wxSize(FromDIP(MD3::Metrics::compact.sidebar_width), -1));
     p->m_panel_printer_title->GetSizer()->SetMinSize(-1, 3 * wxGetApp().em_unit());
     p->m_panel_filament_title->GetSizer()
         ->SetMinSize(-1, 3 * wxGetApp().em_unit());
@@ -3865,6 +3879,29 @@ void Sidebar::sys_color_changed()
 {
     wxWindowUpdateLocker noUpdates(this);
 
+    const wxColour surface_low    = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const wxColour surface_lowest = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour surface_high   = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    const wxColour on_surface     = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour on_variant     = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+
+    SetBackgroundColour(surface_low);
+    p->scrolled->SetBackgroundColour(surface_lowest);
+    p->m_panel_printer_title->SetBackgroundColor(surface_low);
+    p->m_panel_printer_title->SetBackgroundColor2(surface_low);
+    p->m_panel_printer_content->SetBackgroundColour(surface_lowest);
+    p->panel_printer_preset->SetBackgroundColor(surface_high);
+    p->panel_printer_bed->SetBackgroundColor(surface_high);
+    p->btn_connect_printer->SetBackgroundColour(surface_high);
+    p->m_panel_filament_title->SetBackgroundColor(surface_low);
+    p->m_panel_filament_title->SetBackgroundColor2(surface_low);
+    p->m_panel_filament_subtitle->SetBackgroundColour(surface_lowest);
+    p->m_text_filament_subtitle->SetForegroundColour(on_variant);
+    p->m_filament_area_wrapper->SetBackgroundColour(surface_lowest);
+    p->m_physical_scroll_area->SetBackgroundColour(surface_lowest);
+    p->m_panel_filament_content->SetBackgroundColour(surface_lowest);
+    p->m_mixed_scroll_area->SetBackgroundColour(surface_lowest);
+
 #if 0
     for (wxWindow* win : std::vector<wxWindow*>{ this, p->sliced_info->GetStaticBox(), p->object_info->GetStaticBox(), p->btn_reslice, p->btn_export_gcode })
         wxGetApp().UpdateDarkUI(win);
@@ -3918,17 +3955,21 @@ void Sidebar::sys_color_changed()
     //p->btn_export_gcode_removable->msw_rescale();
 
     // Refresh mixed filament static panels and dynamic content
-    p->m_panel_mixed_title->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
-    p->m_text_mixed_title->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#ACACAC")));
-    p->m_panel_mixed_content->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
-    p->m_btn_add_mixed_filament->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#F8F8F8")));
+    p->m_panel_mixed_title->SetBackgroundColour(surface_lowest);
+    p->m_text_mixed_title->SetForegroundColour(on_variant);
+    p->m_panel_mixed_content->SetBackgroundColour(surface_lowest);
+    p->m_btn_add_mixed_filament->SetBackgroundColour(surface_lowest);
+    p->m_panel_mixed_warning->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
+    p->m_text_mixed_warning->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     for (auto* child : p->m_btn_add_mixed_filament->GetChildren()) {
         if (auto* st = dynamic_cast<wxStaticText*>(child))
-            st->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#262E30")));
+            st->SetForegroundColour(on_surface);
     }
     update_mixed_filament_list();
 
     p->scrolled->Layout();
+    p->scrolled->Refresh();
+    Refresh();
 
     p->searcher.dlg_sys_color_changed();
 }
@@ -4832,7 +4873,9 @@ void Sidebar::pop_sync_nozzle_and_ams_dialog() {
         wxGetApp().plater()->sidebar().get_big_btn_sync_pos_size(big_btn_pt, big_btn_size);
         temp_na_info.dialog_pos = big_btn_pt + wxPoint(big_btn_size.x, big_btn_size.y) + wxPoint(FromDIP(big_btn_size.x / 10.f - 5), FromDIP(big_btn_size.y / 10.f));
 
-        int same_dialog_pos_x     = get_sidebar_pos_right_x() + FromDIP(5);
+        const bool docked_right = p->plater->get_sidebar_docking_state() == Sidebar::Right;
+        const int dialog_width = wxGetApp().preset_bundle->get_printer_extruder_count() == 1 ? 370 : 320;
+        int same_dialog_pos_x = docked_right ? GetScreenPosition().x - FromDIP(dialog_width + 5) : get_sidebar_pos_right_x() + FromDIP(5);
         temp_na_info.dialog_pos.x = same_dialog_pos_x;
         temp_na_info.dialog_pos.y += FromDIP(2);
 
@@ -4858,7 +4901,8 @@ void Sidebar::pop_finsish_sync_ams_dialog()
         get_small_btn_sync_pos_size(small_btn_pt, small_btn_size);
 
         FinishSyncAmsDialog::InputInfo temp_fsa_info;
-        auto                           same_dialog_pos_x = get_sidebar_pos_right_x() + FromDIP(5);
+        const bool                     docked_right = p->plater->get_sidebar_docking_state() == Sidebar::Right;
+        auto                           same_dialog_pos_x = docked_right ? GetScreenPosition().x - FromDIP(315) : get_sidebar_pos_right_x() + FromDIP(5);
         temp_fsa_info.dialog_pos.x                       = same_dialog_pos_x;
         temp_fsa_info.dialog_pos.y                       = small_btn_pt.y;
         temp_fsa_info.ams_btn_pos                        = small_btn_pt + wxPoint(small_btn_size.x / 2, small_btn_size.y / 2);
@@ -7228,14 +7272,14 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
     // Orca: Make sidebar dockable
     m_aui_mgr.AddPane(sidebar, wxAuiPaneInfo()
                                    .Name("sidebar")
-                                   .Left()
+                                   .Right()
                                    .CloseButton(false)
                                    .TopDockable(false)
                                    .BottomDockable(false)
                                    .Floatable(wxGetApp().app_config->get_bool("enable_sidebar_floatable"))
                                    .Resizable(true)
-                                   .MinSize(wxSize(15 * wxGetApp().em_unit(), 90 * wxGetApp().em_unit()))
-                                   .BestSize(wxSize(42 * wxGetApp().em_unit(), 90 * wxGetApp().em_unit())));
+                                   .MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), 90 * wxGetApp().em_unit()))
+                                   .BestSize(wxSize(q->FromDIP(MD3::Metrics::comfortable.sidebar_width), 90 * wxGetApp().em_unit())));
 
     auto *panel_sizer = new wxBoxSizer(wxHORIZONTAL);
     panel_sizer->Add(view3D, 1, wxEXPAND | wxALL, 0);
@@ -7251,7 +7295,13 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         // Load previous window layout
         const auto cfg    = wxGetApp().app_config;
         wxString   layout = wxString::FromUTF8(cfg->get("window_layout"));
-        if (!layout.empty()) {
+        constexpr const char *md3_layout_version = "right-sidebar-v1";
+        const bool layout_matches_md3 = cfg->get("md3_window_layout_version") == md3_layout_version;
+        if (!layout_matches_md3) {
+            // Migrate the legacy left-docked perspective once. Future launches
+            // retain the user's resized/floating MD3 perspective as before.
+            cfg->set("md3_window_layout_version", md3_layout_version);
+        } else if (!layout.empty()) {
             bool                     is_new_window_layout = true;
             std::vector<std::string> parts;
             boost::split(parts, layout, boost::is_any_of(";"));
@@ -7959,7 +8009,7 @@ void Plater::priv::reset_window_layout(int width)
         m_aui_mgr.LoadPerspective(m_default_window_layout, false);
     } else {
         auto copy = m_default_window_layout;
-        wxString old_num  = wxString::Format("%d", 42 * wxGetApp().em_unit());
+        wxString old_num  = wxString::Format("%d", q->FromDIP(MD3::Metrics::comfortable.sidebar_width));
         wxString new_num  = wxString::Format("%d", width);
         wxString str0("bestw="), str1("bestw=");
         str0 += old_num;
@@ -15593,7 +15643,8 @@ static void get_position(wxWindowBase *child, wxWindowBase *until_parent, int &x
 
 void Plater::priv::show_right_click_menu(Vec2d mouse_position, wxMenu *menu)
 {
-    // BBS: GUI refactor: move sidebar to the left
+    // Translate the canvas position into frame coordinates; the MD3 sidebar
+    // may be docked on the right or floated without affecting this menu.
     int x, y;
     get_position(current_panel, wxGetApp().mainframe, x, y);
     wxPoint position(static_cast<int>(mouse_position.x() + x), static_cast<int>(mouse_position.y() + y));

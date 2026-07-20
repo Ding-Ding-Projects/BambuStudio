@@ -32,6 +32,9 @@ public:
     void SetPageToolTip(size_t n, const wxString& strToolTip);
 
 private:
+    void ApplyTheme();
+    void StyleButton(Button* button, bool selected);
+
     // BBS: use a box sizer so tabs can shrink (Chrome-style) when space is tight
     wxBoxSizer*                     m_buttons_sizer;
     wxBoxSizer*                     m_sizer;

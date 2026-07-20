@@ -30,11 +30,12 @@ END_EVENT_TABLE()
 Button::Button()
     : paddingSize(10, 8)
 {
+    SetDefaultCornerRadius(MD3::Metrics::comfortable.row_height / 2);
     background_color = StateColor(
         std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
         std::make_pair(ThemeColor::BrandGreenHovered, (int) StateColor::Hovered | StateColor::Checked),
         std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Checked),
-        std::make_pair(*wxLIGHT_GREY, (int) StateColor::Hovered),
+        std::make_pair(ThemeColor::Grey200, (int) StateColor::Hovered),
         std::make_pair(ThemeColor::White, (int) StateColor::Normal));
     text_color       = StateColor(
         std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
@@ -180,6 +181,8 @@ void Button::SetVertical(bool vertical)
 
 void Button::Rescale()
 {
+    RescaleDefaultCornerRadius();
+
     if (this->active_icon.bmp().IsOk())
         this->active_icon.msw_rescale();
 

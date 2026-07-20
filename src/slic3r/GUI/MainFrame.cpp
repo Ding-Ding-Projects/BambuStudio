@@ -2687,6 +2687,8 @@ void MainFrame::on_sys_color_changed()
 #endif
 
     // BBS
+    if (m_topbar)
+        m_topbar->Rescale();
     m_tabpanel->Rescale();
     m_param_panel->msw_rescale();
 

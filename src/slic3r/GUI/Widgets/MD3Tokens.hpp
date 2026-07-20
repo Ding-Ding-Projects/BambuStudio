@@ -5,6 +5,32 @@
 
 namespace MD3 {
 
+enum class Role
+{
+    Surface,
+    SurfaceDim,
+    SurfaceBright,
+    SurfaceContainerLowest,
+    SurfaceContainerLow,
+    SurfaceContainer,
+    SurfaceContainerHigh,
+    SurfaceContainerHighest,
+    OnSurface,
+    OnSurfaceVariant,
+    Outline,
+    OutlineVariant,
+    Primary,
+    OnPrimary,
+    PrimaryContainer,
+    OnPrimaryContainer,
+    SecondaryContainer,
+    OnSecondaryContainer,
+    Error,
+    ErrorContainer,
+    InverseSurface,
+    InverseOn,
+};
+
 namespace Light {
 
 inline const wxColour surface{"#faf8fd"};
@@ -58,6 +84,91 @@ inline const wxColour inverseSurface{"#e3e2e9"};
 inline const wxColour inverseOn{"#2f3036"};
 
 } // namespace Dark
+
+// Resolve by semantic role instead of by light-mode RGB value. Several MD3
+// roles deliberately share a light value but diverge in dark mode (for
+// example surface and surfaceBright), so a colour-to-colour lookup cannot
+// preserve their meaning.
+inline const wxColour &resolve(Role role, bool dark)
+{
+    if (dark) {
+        switch (role) {
+        case Role::Surface: return Dark::surface;
+        case Role::SurfaceDim: return Dark::surfaceDim;
+        case Role::SurfaceBright: return Dark::surfaceBright;
+        case Role::SurfaceContainerLowest: return Dark::scLowest;
+        case Role::SurfaceContainerLow: return Dark::scLow;
+        case Role::SurfaceContainer: return Dark::sc;
+        case Role::SurfaceContainerHigh: return Dark::scHigh;
+        case Role::SurfaceContainerHighest: return Dark::scHighest;
+        case Role::OnSurface: return Dark::onSurface;
+        case Role::OnSurfaceVariant: return Dark::onSurfaceVariant;
+        case Role::Outline: return Dark::outline;
+        case Role::OutlineVariant: return Dark::outlineVariant;
+        case Role::Primary: return Dark::primary;
+        case Role::OnPrimary: return Dark::onPrimary;
+        case Role::PrimaryContainer: return Dark::primaryContainer;
+        case Role::OnPrimaryContainer: return Dark::onPrimaryContainer;
+        case Role::SecondaryContainer: return Dark::secondaryContainer;
+        case Role::OnSecondaryContainer: return Dark::onSecondaryContainer;
+        case Role::Error: return Dark::error;
+        case Role::ErrorContainer: return Dark::errorContainer;
+        case Role::InverseSurface: return Dark::inverseSurface;
+        case Role::InverseOn: return Dark::inverseOn;
+        }
+    }
+
+    switch (role) {
+    case Role::Surface: return Light::surface;
+    case Role::SurfaceDim: return Light::surfaceDim;
+    case Role::SurfaceBright: return Light::surfaceBright;
+    case Role::SurfaceContainerLowest: return Light::scLowest;
+    case Role::SurfaceContainerLow: return Light::scLow;
+    case Role::SurfaceContainer: return Light::sc;
+    case Role::SurfaceContainerHigh: return Light::scHigh;
+    case Role::SurfaceContainerHighest: return Light::scHighest;
+    case Role::OnSurface: return Light::onSurface;
+    case Role::OnSurfaceVariant: return Light::onSurfaceVariant;
+    case Role::Outline: return Light::outline;
+    case Role::OutlineVariant: return Light::outlineVariant;
+    case Role::Primary: return Light::primary;
+    case Role::OnPrimary: return Light::onPrimary;
+    case Role::PrimaryContainer: return Light::primaryContainer;
+    case Role::OnPrimaryContainer: return Light::onPrimaryContainer;
+    case Role::SecondaryContainer: return Light::secondaryContainer;
+    case Role::OnSecondaryContainer: return Light::onSecondaryContainer;
+    case Role::Error: return Light::error;
+    case Role::ErrorContainer: return Light::errorContainer;
+    case Role::InverseSurface: return Light::inverseSurface;
+    case Role::InverseOn: return Light::inverseOn;
+    }
+
+    return Light::surface;
+}
+
+struct DensityMetrics
+{
+    int gap;
+    int padding;
+    int row_height;
+    int font_size;
+    int rail_width;
+    int sidebar_width;
+    int radius;
+    int small_radius;
+};
+
+namespace Metrics {
+
+inline constexpr DensityMetrics comfortable{12, 16, 40, 14, 60, 344, 16, 10};
+inline constexpr DensityMetrics compact{7, 10, 32, 13, 50, 312, 12, 8};
+
+inline constexpr int top_bar_height         = 46;
+inline constexpr int navigation_bar_height  = 52;
+inline constexpr int prepare_actions_height = 66;
+inline constexpr int preview_timeline_height = 58;
+
+} // namespace Metrics
 
 } // namespace MD3
 

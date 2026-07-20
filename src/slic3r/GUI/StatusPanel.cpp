@@ -78,18 +78,72 @@ static const int bed_temp_range[2]        = {20, 120};
 static const int default_champer_temp_min = 20;
 static const int default_champer_temp_max = 60;
 
-/* colors */
-static const wxColour STATUS_PANEL_BG     = wxColour(238, 238, 238);
-static const wxColour STATUS_TITLE_BG     = wxColour(248, 248, 248);
-static const wxColour STATIC_BOX_LINE_COL = wxColour(238, 238, 238);
+/* Material 3 semantic colors. Resolve at use time so a live theme change gets
+ * the correct light or dark role rather than a cached startup color. */
+static wxColour device_page_color() { return StateColor::semantic(MD3::Role::Surface); }
+static wxColour device_card_color() { return StateColor::semantic(MD3::Role::SurfaceContainerLowest); }
+static wxColour device_title_color() { return StateColor::semantic(MD3::Role::SurfaceContainerLow); }
+static wxColour device_divider_color() { return StateColor::semantic(MD3::Role::OutlineVariant); }
+static wxColour device_text_color() { return StateColor::semantic(MD3::Role::OnSurface); }
+static wxColour device_secondary_text_color() { return StateColor::semantic(MD3::Role::OnSurfaceVariant); }
+static wxColour device_disabled_text_color() { return StateColor::semantic(MD3::Role::Outline); }
+static wxColour device_primary_color() { return StateColor::semantic(MD3::Role::Primary); }
+static wxColour device_primary_text_color() { return StateColor::semantic(MD3::Role::OnPrimary); }
+static wxColour device_primary_container_color() { return StateColor::semantic(MD3::Role::PrimaryContainer); }
+static wxColour device_control_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHigh); }
+static wxColour device_control_emphasis_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHighest); }
 
-static const wxColour BUTTON_NORMAL1_COL = wxColour(238, 238, 238);
-static const wxColour BUTTON_NORMAL2_COL = wxColour(206, 206, 206);
-static const wxColour BUTTON_PRESS_COL   = wxColour(172, 172, 172);
-static const wxColour BUTTON_HOVER_COL   = wxColour(0, 174, 66);
+static StateColor device_primary_button_background()
+{
+    return StateColor(std::pair<wxColour, int>(device_divider_color(), StateColor::Disabled),
+                      std::pair<wxColour, int>(device_primary_container_color(), StateColor::Pressed),
+                      std::pair<wxColour, int>(device_primary_container_color(), StateColor::Hovered),
+                      std::pair<wxColour, int>(device_primary_color(), StateColor::Normal));
+}
 
-static const wxColour DISCONNECT_TEXT_COL = wxColour(171, 172, 172);
-static const wxColour NORMAL_TEXT_COL     = wxColour(48, 58, 60);
+static StateColor device_primary_button_border()
+{
+    return StateColor(std::pair<wxColour, int>(device_divider_color(), StateColor::Disabled),
+                      std::pair<wxColour, int>(device_primary_color(), StateColor::Enabled));
+}
+
+static StateColor device_primary_button_text()
+{
+    return StateColor(std::pair<wxColour, int>(device_disabled_text_color(), StateColor::Disabled),
+                      std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer), StateColor::Pressed),
+                      std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer), StateColor::Hovered),
+                      std::pair<wxColour, int>(device_primary_text_color(), StateColor::Normal));
+}
+
+static bool is_semantic_color(const wxColour &color, MD3::Role role)
+{
+    return color == MD3::resolve(role, false) || color == MD3::resolve(role, true);
+}
+
+static void recolor_device_surface_tree(wxWindow *window)
+{
+    if (!window) return;
+
+    if (auto *line = dynamic_cast<StaticLine *>(window)) line->SetLineColour(device_divider_color());
+
+    const wxColour background = window->GetBackgroundColour();
+    if (is_semantic_color(background, MD3::Role::SurfaceContainerLowest))
+        window->SetBackgroundColour(device_card_color());
+    else if (is_semantic_color(background, MD3::Role::SurfaceContainerLow))
+        window->SetBackgroundColour(device_title_color());
+    else if (is_semantic_color(background, MD3::Role::Surface))
+        window->SetBackgroundColour(device_page_color());
+
+    const wxColour foreground = window->GetForegroundColour();
+    if (is_semantic_color(foreground, MD3::Role::OnSurface))
+        window->SetForegroundColour(device_text_color());
+    else if (is_semantic_color(foreground, MD3::Role::OnSurfaceVariant))
+        window->SetForegroundColour(device_secondary_text_color());
+
+    const wxWindowList &children = window->GetChildren();
+    for (wxWindowList::compatibility_iterator node = children.GetFirst(); node; node = node->GetNext())
+        recolor_device_surface_tree(node->GetData());
+}
 
 class CameraFullscreenCloseButton : public wxPopupWindow
 {
@@ -534,19 +588,9 @@ private:
     bool m_close_hover{ false };
     bool m_native_fullscreen{ false };
 };
-static const wxColour NORMAL_FAN_TEXT_COL = wxColour(107, 107, 107);
-static const wxColour WARNING_INFO_BG_COL = wxColour(255, 111, 0);
-static const wxColour STAGE_TEXT_COL      = wxColour(107, 107, 107);
-
-static const wxColour GROUP_STATIC_LINE_COL = wxColour(206, 206, 206);
-
 /* font and foreground colors */
 static const wxFont PAGE_TITLE_FONT = Label::Body_14;
 // static const wxFont GROUP_TITLE_FONT = Label::sysFont(17);
-
-static wxColour PAGE_TITLE_FONT_COL  = wxColour(107, 107, 107);
-static wxColour GROUP_TITLE_FONT_COL = wxColour(172, 172, 172);
-static wxColour TEXT_LIGHT_FONT_COL  = wxColour(107, 107, 107);
 
 static wxImage fail_image;
 
@@ -559,7 +603,7 @@ static wxImage fail_image;
 #define GROUP_TITLE_RIGHT_MARGIN FromDIP(15)
 
 #define NORMAL_SPACING FromDIP(5)
-#define PAGE_SPACING FromDIP(10)
+#define PAGE_SPACING FromDIP(MD3::Metrics::comfortable.padding)
 #define PAGE_MIN_WIDTH FromDIP(574)
 #define PROGRESSBAR_HEIGHT FromDIP(8)
 
@@ -799,8 +843,10 @@ ExtruderSwithingStatus::ExtruderSwithingStatus(wxWindow *parent) : wxPanel(paren
     m_switching_status_label->SetFont(::Label::Body_13);
     if (parent) { m_switching_status_label->SetBackgroundColour(parent->GetBackgroundColour()); }
 
-    StateColor e_ctrl_bg(std::pair<wxColour, int>(BUTTON_PRESS_COL, StateColor::Pressed), std::pair<wxColour, int>(BUTTON_NORMAL1_COL, StateColor::Normal));
-    StateColor e_ctrl_bd(std::pair<wxColour, int>(BUTTON_HOVER_COL, StateColor::Hovered), std::pair<wxColour, int>(BUTTON_NORMAL1_COL, StateColor::Normal));
+    StateColor e_ctrl_bg(std::pair<wxColour, int>(device_control_emphasis_color(), StateColor::Pressed),
+                         std::pair<wxColour, int>(device_control_color(), StateColor::Normal));
+    StateColor e_ctrl_bd(std::pair<wxColour, int>(device_primary_color(), StateColor::Hovered),
+                         std::pair<wxColour, int>(device_divider_color(), StateColor::Normal));
 
     m_button_quit = new Button(this, _CTX(L_CONTEXT("Quit", "Quit_Switching"), "Quit_Switching"), "", 0, FromDIP(22));
     m_button_quit->SetFont(::Label::Body_13);
@@ -955,12 +1001,12 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     wxBoxSizer *bSizer_printing_title = new wxBoxSizer(wxHORIZONTAL);
 
     m_panel_printing_title = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
-    m_panel_printing_title->SetBackgroundColour(STATUS_TITLE_BG);
+    m_panel_printing_title->SetBackgroundColour(device_title_color());
 
     m_staticText_printing = new wxStaticText(m_panel_printing_title, wxID_ANY, _L("Printing Progress"));
     m_staticText_printing->Wrap(-1);
     // m_staticText_printing->SetFont(PAGE_TITLE_FONT);
-    m_staticText_printing->SetForegroundColour(PAGE_TITLE_FONT_COL);
+    m_staticText_printing->SetForegroundColour(device_secondary_text_color());
 
     bSizer_printing_title->Add(m_staticText_printing, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, PAGE_TITLE_LEFT_MARGIN);
     bSizer_printing_title->Add(0, 0, 1, wxEXPAND, 0);
@@ -1154,7 +1200,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 #else
     m_printing_stage_value->SetFont(wxFont(11, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("HarmonyOS Sans SC")));
 #endif
-    m_printing_stage_value->SetForegroundColour(STAGE_TEXT_COL);
+    m_printing_stage_value->SetForegroundColour(device_secondary_text_color());
 
     m_printing_stage_value->Bind(wxEVT_LEFT_UP, &PrintingTaskPanel::on_stage_clicked, this);
 
@@ -1336,13 +1382,12 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_request_failed_info->SetForegroundColour(*wxRED);
     m_request_failed_info->SetFont(::Label::Body_10);
     static_request_failed_panel_sizer->Add(m_request_failed_info, 0, wxEXPAND | wxALL, FromDIP(10));
-    StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-    StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
+    StateColor btn_bg_green = device_primary_button_background();
+    StateColor btn_bd_green = device_primary_button_border();
     m_button_market_retry = new Button(m_request_failed_panel, _L("Retry"));
     m_button_market_retry->SetBackgroundColor(btn_bg_green);
     m_button_market_retry->SetBorderColor(btn_bd_green);
-    m_button_market_retry->SetTextColor(wxColour("#FFFFFE"));
+    m_button_market_retry->SetTextColor(device_primary_button_text());
     m_button_market_retry->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_button_market_retry->SetMinSize(wxSize(-1, FromDIP(26)));
     m_button_market_retry->SetCornerRadius(FromDIP(13));
@@ -1362,7 +1407,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_has_rated_prompt = new wxStaticText(m_score_subtask_info, wxID_ANY, _L("(The model has already been rated. Your rating will overwrite the previous rating.)"),
                                           wxDefaultPosition, wxDefaultSize, 0);
     m_has_rated_prompt->Wrap(-1);
-    m_has_rated_prompt->SetForegroundColour(*wxBLACK);
+    m_has_rated_prompt->SetForegroundColour(device_secondary_text_color());
     m_has_rated_prompt->SetFont(::Label::Body_10);
     m_has_rated_prompt->Hide();
 
@@ -1396,7 +1441,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_button_market_scoring = new Button(m_score_subtask_info, _L("Rate"));
     m_button_market_scoring->SetBackgroundColor(btn_bg_green);
     m_button_market_scoring->SetBorderColor(btn_bd_green);
-    m_button_market_scoring->SetTextColor(wxColour("#FFFFFE"));
+    m_button_market_scoring->SetTextColor(device_primary_button_text());
     m_button_market_scoring->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_button_market_scoring->SetMinSize(wxSize(-1, FromDIP(26)));
     m_button_market_scoring->SetCornerRadius(FromDIP(13));
@@ -1845,19 +1890,19 @@ StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint 
 
     init_bitmaps();
 
-    this->SetBackgroundColour(wxColour(0xEE, 0xEE, 0xEE));
+    this->SetBackgroundColour(device_page_color());
 
     wxBoxSizer *bSizer_status = new wxBoxSizer(wxVERTICAL);
 
     auto m_panel_separotor_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_SPACING), wxTAB_TRAVERSAL);
-    m_panel_separotor_top->SetBackgroundColour(STATUS_PANEL_BG);
+    m_panel_separotor_top->SetBackgroundColour(device_page_color());
 
     bSizer_status->Add(m_panel_separotor_top, 0, wxEXPAND | wxALL, 0);
 
     wxBoxSizer *bSizer_status_below = new wxBoxSizer(wxHORIZONTAL);
 
     auto m_panel_separotor_left = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_panel_separotor_left->SetBackgroundColour(STATUS_PANEL_BG);
+    m_panel_separotor_left->SetBackgroundColour(device_page_color());
     m_panel_separotor_left->SetMinSize(wxSize(PAGE_SPACING, -1));
 
     bSizer_status_below->Add(m_panel_separotor_left, 0, wxEXPAND | wxALL, 0);
@@ -1868,7 +1913,7 @@ StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint 
     bSizer_left->Add(m_monitoring_sizer, 1, wxEXPAND | wxALL, 0);
 
     auto m_panel_separotor1 = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_panel_separotor1->SetBackgroundColour(STATUS_PANEL_BG);
+    m_panel_separotor1->SetBackgroundColour(device_page_color());
     m_panel_separotor1->SetMinSize(wxSize(-1, PAGE_SPACING));
     m_panel_separotor1->SetMaxSize(wxSize(-1, PAGE_SPACING));
     m_monitoring_sizer->Add(m_panel_separotor1, 0, wxEXPAND, 0);
@@ -1878,20 +1923,20 @@ StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint 
     m_monitoring_sizer->Add(m_project_task_panel, 0, wxALL | wxEXPAND, 0);
 
     //    auto m_panel_separotor2 = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    //    m_panel_separotor2->SetBackgroundColour(STATUS_PANEL_BG);
+    //    m_panel_separotor2->SetBackgroundColour(device_page_color());
     //    m_panel_separotor2->SetMinSize(wxSize(-1, PAGE_SPACING));
     //    bSizer_left->Add(m_panel_separotor2, 1, wxEXPAND, 0);
 
     bSizer_status_below->Add(bSizer_left, 1, wxALL | wxEXPAND, 0);
 
     auto m_panel_separator_middle = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxTAB_TRAVERSAL);
-    m_panel_separator_middle->SetBackgroundColour(STATUS_PANEL_BG);
+    m_panel_separator_middle->SetBackgroundColour(device_page_color());
     m_panel_separator_middle->SetMinSize(wxSize(PAGE_SPACING, -1));
 
     bSizer_status_below->Add(m_panel_separator_middle, 0, wxEXPAND | wxALL, 0);
 
     m_machine_ctrl_panel = new wxPanel(this);
-    m_machine_ctrl_panel->SetBackgroundColour(*wxWHITE);
+    m_machine_ctrl_panel->SetBackgroundColour(device_card_color());
     m_machine_ctrl_panel->SetDoubleBuffered(true);
     auto m_machine_control = create_machine_control_page(m_machine_ctrl_panel);
     m_machine_ctrl_panel->SetSizer(m_machine_control);
@@ -1901,18 +1946,19 @@ StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint 
     bSizer_status_below->Add(m_machine_ctrl_panel, 0, wxALL, 0);
 
     m_panel_separator_right = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(PAGE_SPACING, -1), wxTAB_TRAVERSAL);
-    m_panel_separator_right->SetBackgroundColour(STATUS_PANEL_BG);
+    m_panel_separator_right->SetBackgroundColour(device_page_color());
 
     bSizer_status_below->Add(m_panel_separator_right, 0, wxEXPAND | wxALL, 0);
 
     bSizer_status->Add(bSizer_status_below, 1, wxALL | wxEXPAND, 0);
 
     m_panel_separotor_bottom = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_SPACING), wxTAB_TRAVERSAL);
-    m_panel_separotor_bottom->SetBackgroundColour(STATUS_PANEL_BG);
+    m_panel_separotor_bottom->SetBackgroundColour(device_page_color());
 
     bSizer_status->Add(m_panel_separotor_bottom, 0, wxEXPAND | wxALL, 0);
     this->SetSizerAndFit(bSizer_status);
     this->Layout();
+    recolor_device_surface_tree(this);
 }
 
 StatusBasePanel::~StatusBasePanel()
@@ -2025,7 +2071,7 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
     m_panel_monitoring_title = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
-    m_panel_monitoring_title->SetBackgroundColour(STATUS_TITLE_BG);
+    m_panel_monitoring_title->SetBackgroundColour(device_title_color());
 
     wxBoxSizer *bSizer_monitoring_title;
     bSizer_monitoring_title = new wxBoxSizer(wxHORIZONTAL);
@@ -2033,7 +2079,7 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
     m_staticText_monitoring = new Label(m_panel_monitoring_title, _L("Camera"));
     m_staticText_monitoring->Wrap(-1);
     // m_staticText_monitoring->SetFont(PAGE_TITLE_FONT);
-    m_staticText_monitoring->SetForegroundColour(PAGE_TITLE_FONT_COL);
+    m_staticText_monitoring->SetForegroundColour(device_secondary_text_color());
     bSizer_monitoring_title->Add(m_staticText_monitoring, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, PAGE_TITLE_LEFT_MARGIN);
 
     bSizer_monitoring_title->Add(FromDIP(13), 0, 0, 0);
@@ -2075,11 +2121,11 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
 
     m_camera_fullscreen_button = new CameraItem(m_panel_monitoring_title, "camera_fullscreen", "camera_fullscreen_hover");
     m_camera_fullscreen_button->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
-    m_camera_fullscreen_button->SetBackgroundColour(STATUS_TITLE_BG);
+    m_camera_fullscreen_button->SetBackgroundColour(device_title_color());
 
     m_setting_button = new CameraItem(m_panel_monitoring_title, "camera_setting", "camera_setting_hover");
     m_setting_button->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
-    m_setting_button->SetBackgroundColour(STATUS_TITLE_BG);
+    m_setting_button->SetBackgroundColour(device_title_color());
 
     m_bitmap_sdcard_img->SetToolTip(_L("Storage"));
     m_bitmap_timelapse_img->SetToolTip(_L("Timelapse"));
@@ -2125,45 +2171,48 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     wxBoxSizer *bSizer_right = new wxBoxSizer(wxVERTICAL);
 
     m_panel_control_title = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
-    m_panel_control_title->SetBackgroundColour(STATUS_TITLE_BG);
+    m_panel_control_title->SetBackgroundColour(device_title_color());
 
     wxBoxSizer *bSizer_control_title = new wxBoxSizer(wxHORIZONTAL);
     m_staticText_control             = new Label(m_panel_control_title, _L("Control"));
     m_staticText_control->Wrap(-1);
     // m_staticText_control->SetFont(PAGE_TITLE_FONT);
-    m_staticText_control->SetForegroundColour(PAGE_TITLE_FONT_COL);
+    m_staticText_control->SetForegroundColour(device_secondary_text_color());
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-    StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
+    StateColor btn_bg_green = device_primary_button_background();
+    StateColor btn_bd_green = device_primary_button_border();
 
     m_parts_btn = new Button(m_panel_control_title, _L("Printer Parts"));
     m_parts_btn->SetBackgroundColor(btn_bg_green);
     m_parts_btn->SetBorderColor(btn_bd_green);
-    m_parts_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_parts_btn->SetTextColor(device_primary_button_text());
     m_parts_btn->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_parts_btn->SetMinSize(wxSize(-1, FromDIP(26)));
+    m_parts_btn->SetCornerRadius(FromDIP(13));
 
     m_options_btn = new Button(m_panel_control_title, _L("Print Options"));
     m_options_btn->SetBackgroundColor(btn_bg_green);
     m_options_btn->SetBorderColor(btn_bd_green);
-    m_options_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_options_btn->SetTextColor(device_primary_button_text());
     m_options_btn->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_options_btn->SetMinSize(wxSize(-1, FromDIP(26)));
+    m_options_btn->SetCornerRadius(FromDIP(13));
 
     m_safety_btn = new Button(m_panel_control_title, _L("Safety Options"));
     m_safety_btn->SetBackgroundColor(btn_bg_green);
     m_safety_btn->SetBorderColor(btn_bd_green);
-    m_safety_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_safety_btn->SetTextColor(device_primary_button_text());
     m_safety_btn->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_safety_btn->SetMinSize(wxSize(-1, FromDIP(26)));
+    m_safety_btn->SetCornerRadius(FromDIP(13));
 
     m_calibration_btn = new Button(m_panel_control_title, _L("Calibration"));
     m_calibration_btn->SetBackgroundColor(btn_bg_green);
     m_calibration_btn->SetBorderColor(btn_bd_green);
-    m_calibration_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_calibration_btn->SetTextColor(device_primary_button_text());
     m_calibration_btn->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_calibration_btn->SetMinSize(wxSize(-1, FromDIP(26)));
+    m_calibration_btn->SetCornerRadius(FromDIP(13));
     m_calibration_btn->EnableTooltipEvenDisabled();
 
     m_options_btn->Hide();
@@ -2215,15 +2264,17 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
 
 wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
 {
-    auto sizer = new wxBoxSizer(wxVERTICAL);
-    auto box   = new StaticBox(parent);
+    auto sizer                = new wxBoxSizer(wxVERTICAL);
+    m_temperature_control_box = new StaticBox(parent);
+    auto *box                 = m_temperature_control_box;
 
-    StateColor box_colour(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    StateColor box_border_colour(std::pair<wxColour, int>(STATUS_PANEL_BG, StateColor::Normal));
+    StateColor box_colour(std::pair<wxColour, int>(device_card_color(), StateColor::Normal));
+    StateColor box_border_colour(std::pair<wxColour, int>(device_divider_color(), StateColor::Normal));
 
     box->SetBackgroundColor(box_colour);
     box->SetBorderColor(box_border_colour);
-    box->SetCornerRadius(5);
+    box->SetBackgroundColour(device_card_color());
+    box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
     box->SetMinSize(wxSize(FromDIP(586), -1));
     box->SetMaxSize(wxSize(FromDIP(586), -1));
@@ -2234,7 +2285,7 @@ wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
     m_temp_temp_line = new wxPanel(box);
     m_temp_temp_line->SetMaxSize(wxSize(FromDIP(1), -1));
     m_temp_temp_line->SetMinSize(wxSize(FromDIP(1), -1));
-    m_temp_temp_line->SetBackgroundColour(STATIC_BOX_LINE_COL);
+    m_temp_temp_line->SetBackgroundColour(device_divider_color());
 
     auto m_axis_sizer = create_axis_control(box);
     auto bedPanel     = create_bed_control(box);
@@ -2251,7 +2302,7 @@ wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
     m_temp_extruder_line = new wxPanel(box);
     m_temp_extruder_line->SetMaxSize(wxSize(FromDIP(1), -1));
     m_temp_extruder_line->SetMinSize(wxSize(FromDIP(1), -1));
-    m_temp_extruder_line->SetBackgroundColour(STATIC_BOX_LINE_COL);
+    m_temp_extruder_line->SetBackgroundColour(device_divider_color());
 
     content_sizer->Add(m_temp_extruder_line, 0, wxEXPAND, 1);
     content_sizer->Add(extruder_sizer, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(12));
@@ -2275,9 +2326,12 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     m_tempCtrl_nozzle->SetMaxTemp(300);
     m_tempCtrl_nozzle->SetBorderWidth(FromDIP(2));
 
-    StateColor tempinput_text_colour(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_TEXT_COL, (int) StateColor::Normal));
-    StateColor tempinput_border_colour(std::make_pair(*wxWHITE, (int) StateColor::Disabled), std::make_pair(BUTTON_HOVER_COL, (int) StateColor::Focused),
-                                       std::make_pair(BUTTON_HOVER_COL, (int) StateColor::Hovered), std::make_pair(*wxWHITE, (int) StateColor::Normal));
+    StateColor tempinput_text_colour(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                     std::make_pair(device_text_color(), (int) StateColor::Normal));
+    StateColor tempinput_border_colour(std::make_pair(device_card_color(), (int) StateColor::Disabled),
+                                       std::make_pair(device_primary_color(), (int) StateColor::Focused),
+                                       std::make_pair(device_primary_color(), (int) StateColor::Hovered),
+                                       std::make_pair(device_card_color(), (int) StateColor::Normal));
 
     m_tempCtrl_nozzle->SetTextColor(tempinput_text_colour);
     m_tempCtrl_nozzle->SetBorderColor(tempinput_border_colour);
@@ -2298,7 +2352,7 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     m_tempCtrl_nozzle_deputy->Hide();
 
     m_line_nozzle = new StaticLine(parent);
-    m_line_nozzle->SetLineColour(STATIC_BOX_LINE_COL);
+    m_line_nozzle->SetLineColour(device_divider_color());
     m_line_nozzle->SetSize(wxSize(FromDIP(1), -1));
     sizer->Add(m_line_nozzle, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
 
@@ -2315,7 +2369,7 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     sizer->Add(m_tempCtrl_bed, 0, wxEXPAND | wxALL, 1);
 
     auto line = new StaticLine(parent);
-    line->SetLineColour(STATIC_BOX_LINE_COL);
+    line->SetLineColour(device_divider_color());
     sizer->Add(line, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
 
     wxWindowID frame_id = wxWindow::NewControlId();
@@ -2350,13 +2404,14 @@ wxBoxSizer *StatusBasePanel::create_misc_control(wxWindow *parent)
     m_switch_speed->SetPadding(FromDIP(3));
     m_switch_speed->SetBorderWidth(FromDIP(2));
     m_switch_speed->SetFont(Label::Head_13);
-    m_switch_speed->SetTextColor(StateColor(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_TEXT_COL, (int) StateColor::Normal)));
+    m_switch_speed->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                            std::make_pair(device_text_color(), (int) StateColor::Normal)));
     m_switch_speed->SetValue(false);
 
     line_sizer->Add(m_switch_speed, 1, wxALIGN_CENTER | wxALL, 0);
 
     auto line = new StaticLine(parent, true);
-    line->SetLineColour(STATIC_BOX_LINE_COL);
+    line->SetLineColour(device_divider_color());
     line_sizer->Add(line, 0, wxEXPAND | wxTOP | wxBOTTOM, 4);
 
     /* create lamp control */
@@ -2367,18 +2422,19 @@ wxBoxSizer *StatusBasePanel::create_misc_control(wxWindow *parent)
     m_switch_lamp->SetPadding(FromDIP(3));
     m_switch_lamp->SetBorderWidth(FromDIP(2));
     m_switch_lamp->SetFont(Label::Head_13);
-    m_switch_lamp->SetTextColor(StateColor(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_TEXT_COL, (int) StateColor::Normal)));
+    m_switch_lamp->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                           std::make_pair(device_text_color(), (int) StateColor::Normal)));
     line_sizer->Add(m_switch_lamp, 1, wxALIGN_CENTER | wxALL, 0);
 
     // sizer->Add(line_sizer, 0, wxEXPAND, FromDIP(5));
     line = new StaticLine(parent);
-    line->SetLineColour(STATIC_BOX_LINE_COL);
+    line->SetLineColour(device_divider_color());
     sizer->Add(line, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
 
     m_fan_panel = new StaticBox(parent);
     m_fan_panel->SetMinSize(MISC_BUTTON_PANEL_SIZE);
     m_fan_panel->SetMaxSize(MISC_BUTTON_PANEL_SIZE);
-    m_fan_panel->SetBackgroundColor(*wxWHITE);
+    m_fan_panel->SetBackgroundColor(device_card_color());
     m_fan_panel->SetBorderWidth(0);
     m_fan_panel->SetCornerRadius(0);
 
@@ -2392,9 +2448,10 @@ wxBoxSizer *StatusBasePanel::create_misc_control(wxWindow *parent)
     m_switch_fan->SetCornerRadius(0);
     m_switch_fan->SetFont(::Label::Body_10);
     m_switch_fan->UseTextFan();
-    m_switch_fan->SetTextColor(StateColor(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_FAN_TEXT_COL, (int) StateColor::Normal)));
+    m_switch_fan->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                          std::make_pair(device_secondary_text_color(), (int) StateColor::Normal)));
 
-    m_switch_fan->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { m_fan_panel->SetBackgroundColor(wxColour(0, 174, 66)); });
+    m_switch_fan->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { m_fan_panel->SetBackgroundColor(device_primary_container_color()); });
 
     m_switch_fan->Bind(wxEVT_LEAVE_WINDOW, [this, parent](auto &e) { m_fan_panel->SetBackgroundColor(parent->GetBackgroundColour()); });
 
@@ -2405,7 +2462,7 @@ wxBoxSizer *StatusBasePanel::create_misc_control(wxWindow *parent)
     m_fan_panel->Fit();
     sizer->Add(m_fan_panel, 0, wxEXPAND, FromDIP(5));
     line = new StaticLine(parent);
-    line->SetLineColour(STATIC_BOX_LINE_COL);
+    line->SetLineColour(device_divider_color());
     sizer->Add(line, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
 
     sizer->Add(line_sizer, 0, wxEXPAND, FromDIP(5));
@@ -2451,7 +2508,8 @@ wxBoxSizer *StatusBasePanel::create_axis_control(wxWindow *parent)
     auto sizer = new wxBoxSizer(wxVERTICAL);
     sizer->AddStretchSpacer();
     m_bpButton_xy = new AxisCtrlButton(parent, m_bitmap_axis_home);
-    m_bpButton_xy->SetTextColor(StateColor(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_TEXT_COL, (int) StateColor::Normal)));
+    m_bpButton_xy->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                           std::make_pair(device_text_color(), (int) StateColor::Normal)));
     m_bpButton_xy->SetMinSize(AXIS_MIN_SIZE);
     m_bpButton_xy->SetSize(AXIS_MIN_SIZE);
     sizer->AddStretchSpacer();
@@ -2464,23 +2522,28 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
 {
     wxBoxSizer *bSizer_z_ctrl = new wxBoxSizer(wxHORIZONTAL);
     auto        panel         = new wxPanel(parent, wxID_ANY);
-    panel->SetBackgroundColour(*wxWHITE);
+    panel->SetBackgroundColour(device_card_color());
 
-    StateColor z_10_ctrl_bg(std::pair<wxColour, int>(BUTTON_PRESS_COL, StateColor::Pressed), std::pair<wxColour, int>(BUTTON_NORMAL1_COL, StateColor::Normal));
-    StateColor z_10_ctrl_bd(std::pair<wxColour, int>(BUTTON_HOVER_COL, StateColor::Hovered), std::pair<wxColour, int>(BUTTON_NORMAL1_COL, StateColor::Normal));
+    StateColor z_10_ctrl_bg(std::pair<wxColour, int>(device_primary_container_color(), StateColor::Pressed),
+                            std::pair<wxColour, int>(device_control_color(), StateColor::Normal));
+    StateColor z_10_ctrl_bd(std::pair<wxColour, int>(device_primary_color(), StateColor::Hovered),
+                            std::pair<wxColour, int>(device_control_color(), StateColor::Normal));
 
-    StateColor z_1_ctrl_bg(std::pair<wxColour, int>(BUTTON_PRESS_COL, StateColor::Pressed), std::pair<wxColour, int>(BUTTON_NORMAL2_COL, StateColor::Normal));
-    StateColor z_1_ctrl_bd(std::pair<wxColour, int>(BUTTON_HOVER_COL, StateColor::Hovered), std::pair<wxColour, int>(BUTTON_NORMAL2_COL, StateColor::Normal));
+    StateColor z_1_ctrl_bg(std::pair<wxColour, int>(device_primary_container_color(), StateColor::Pressed),
+                           std::pair<wxColour, int>(device_control_emphasis_color(), StateColor::Normal));
+    StateColor z_1_ctrl_bd(std::pair<wxColour, int>(device_primary_color(), StateColor::Hovered),
+                           std::pair<wxColour, int>(device_control_emphasis_color(), StateColor::Normal));
 
     m_bpButton_z_10 = new Button(panel, wxString("10"), "monitor_bed_up", 0, FromDIP(15));
     m_bpButton_z_10->SetFont(::Label::Body_12);
     m_bpButton_z_10->SetBorderWidth(0);
     m_bpButton_z_10->SetBackgroundColor(z_10_ctrl_bg);
     m_bpButton_z_10->SetBorderColor(z_10_ctrl_bd);
-    m_bpButton_z_10->SetTextColor(StateColor(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_TEXT_COL, (int) StateColor::Normal)));
+    m_bpButton_z_10->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                             std::make_pair(device_text_color(), (int) StateColor::Normal)));
     m_bpButton_z_10->SetMinSize(Z_BUTTON_SIZE);
     m_bpButton_z_10->SetSize(Z_BUTTON_SIZE);
-    m_bpButton_z_10->SetCornerRadius(0);
+    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
     m_bpButton_z_1 = new Button(panel, wxString(" 1"), "monitor_bed_up", 0, FromDIP(15));
     m_bpButton_z_1->SetFont(::Label::Body_12);
     m_bpButton_z_1->SetBorderWidth(0);
@@ -2488,7 +2551,9 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_1->SetBorderColor(z_1_ctrl_bd);
     m_bpButton_z_1->SetMinSize(Z_BUTTON_SIZE);
     m_bpButton_z_1->SetSize(Z_BUTTON_SIZE);
-    m_bpButton_z_1->SetTextColor(StateColor(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_TEXT_COL, (int) StateColor::Normal)));
+    m_bpButton_z_1->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                            std::make_pair(device_text_color(), (int) StateColor::Normal)));
+    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
 
     // bSizer_z_ctrl->Add(0, FromDIP(6), 0, wxEXPAND, 0);
 
@@ -2496,7 +2561,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_staticText_z_tip->SetFont(::Label::Body_12);
     if (wxGetApp().app_config->get("language") == "de_DE") m_staticText_z_tip->SetFont(::Label::Body_11);
     m_staticText_z_tip->Wrap(-1);
-    m_staticText_z_tip->SetForegroundColour(TEXT_LIGHT_FONT_COL);
+    m_staticText_z_tip->SetForegroundColour(device_secondary_text_color());
     m_bpButton_z_down_1 = new Button(panel, wxString(" 1"), "monitor_bed_down", 0, FromDIP(15));
     m_bpButton_z_down_1->SetFont(::Label::Body_12);
     m_bpButton_z_down_1->SetBorderWidth(0);
@@ -2504,7 +2569,9 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_down_1->SetBorderColor(z_1_ctrl_bd);
     m_bpButton_z_down_1->SetMinSize(Z_BUTTON_SIZE);
     m_bpButton_z_down_1->SetSize(Z_BUTTON_SIZE);
-    m_bpButton_z_down_1->SetTextColor(StateColor(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_TEXT_COL, (int) StateColor::Normal)));
+    m_bpButton_z_down_1->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                                 std::make_pair(device_text_color(), (int) StateColor::Normal)));
+    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
 
     m_bpButton_z_down_10 = new Button(panel, wxString("10"), "monitor_bed_down", 0, FromDIP(15));
     m_bpButton_z_down_10->SetFont(::Label::Body_12);
@@ -2513,7 +2580,9 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_down_10->SetBorderColor(z_10_ctrl_bd);
     m_bpButton_z_down_10->SetMinSize(Z_BUTTON_SIZE);
     m_bpButton_z_down_10->SetSize(Z_BUTTON_SIZE);
-    m_bpButton_z_down_10->SetTextColor(StateColor(std::make_pair(DISCONNECT_TEXT_COL, (int) StateColor::Disabled), std::make_pair(NORMAL_TEXT_COL, (int) StateColor::Normal)));
+    m_bpButton_z_down_10->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                                  std::make_pair(device_text_color(), (int) StateColor::Normal)));
+    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
 
     bSizer_z_ctrl->Add(m_bpButton_z_10, 0, wxEXPAND | wxLEFT | wxRIGHT, 0);
     bSizer_z_ctrl->Add(m_bpButton_z_1, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(2));
@@ -2534,13 +2603,15 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     wxBoxSizer *bSizer_e_ctrl = new wxBoxSizer(wxVERTICAL);
     auto        panel         = new wxPanel(parent, wxID_ANY);
 
-    panel->SetBackgroundColour(*wxWHITE);
+    panel->SetBackgroundColour(device_card_color());
     panel->SetSize(wxSize(FromDIP(143), -1));
     panel->SetMinSize(wxSize(FromDIP(143), -1));
     panel->SetMaxSize(wxSize(FromDIP(143), -1));
 
-    StateColor e_ctrl_bg(std::pair<wxColour, int>(BUTTON_PRESS_COL, StateColor::Pressed), std::pair<wxColour, int>(BUTTON_NORMAL1_COL, StateColor::Normal));
-    StateColor e_ctrl_bd(std::pair<wxColour, int>(BUTTON_HOVER_COL, StateColor::Hovered), std::pair<wxColour, int>(BUTTON_NORMAL1_COL, StateColor::Normal));
+    StateColor e_ctrl_bg(std::pair<wxColour, int>(device_primary_container_color(), StateColor::Pressed),
+                         std::pair<wxColour, int>(device_control_color(), StateColor::Normal));
+    StateColor e_ctrl_bd(std::pair<wxColour, int>(device_primary_color(), StateColor::Hovered),
+                         std::pair<wxColour, int>(device_control_color(), StateColor::Normal));
 
     m_nozzle_btn_panel = new SwitchBoard(panel, _L("Left"), _L("Right"), wxSize(FromDIP(126), FromDIP(26)));
     m_nozzle_btn_panel->SetAutoDisableWhenSwitch();
@@ -2550,6 +2621,7 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     m_bpButton_e_10->SetBackgroundColor(e_ctrl_bg);
     m_bpButton_e_10->SetBorderColor(e_ctrl_bd);
     m_bpButton_e_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
+    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
     m_extruder_book = new wxSimplebook(panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(45), FromDIP(112)), 0);
 
@@ -2566,13 +2638,14 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     m_bpButton_e_down_10->SetBackgroundColor(e_ctrl_bg);
     m_bpButton_e_down_10->SetBorderColor(e_ctrl_bd);
     m_bpButton_e_down_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
+    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
     m_extruder_switching_status = new ExtruderSwithingStatus(panel);
-    m_extruder_switching_status->SetForegroundColour(TEXT_LIGHT_FONT_COL);
+    m_extruder_switching_status->SetForegroundColour(device_secondary_text_color());
 
     m_extruder_label = new ::Label(panel, _L("Extruder"));
     m_extruder_label->SetFont(::Label::Body_13);
-    m_extruder_label->SetForegroundColour(TEXT_LIGHT_FONT_COL);
+    m_extruder_label->SetForegroundColour(device_secondary_text_color());
 
     bSizer_e_ctrl->Add(0, 0, 0, wxTOP, FromDIP(15));
     bSizer_e_ctrl->Add(m_nozzle_btn_panel, 0, wxALIGN_CENTER_HORIZONTAL, 0);
@@ -2594,16 +2667,16 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
 
 StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
 {
-    StateColor box_colour(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    StateColor box_border_colour(std::pair<wxColour, int>(STATUS_PANEL_BG, StateColor::Normal));
+    StateColor box_colour(std::pair<wxColour, int>(device_card_color(), StateColor::Normal));
+    StateColor box_border_colour(std::pair<wxColour, int>(device_divider_color(), StateColor::Normal));
 
     m_ams_control_box = new StaticBox(parent);
     m_ams_control_box->SetBackgroundColor(box_colour);
     m_ams_control_box->SetBorderColor(box_border_colour);
-    m_ams_control_box->SetCornerRadius(5);
+    m_ams_control_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
     m_ams_control_box->SetMinSize(wxSize(FromDIP(586), -1));
-    m_ams_control_box->SetBackgroundColour(*wxWHITE);
+    m_ams_control_box->SetBackgroundColour(device_card_color());
 
     m_ams_control = new AMSControl(m_ams_control_box, wxID_ANY);
     m_ams_control->SetDoubleBuffered(true);
@@ -2611,7 +2684,7 @@ StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
     auto sizer_box = new wxBoxSizer(wxVERTICAL);
     sizer_box->Add(m_ams_control, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, FromDIP(3));
 
-    m_ams_control_box->SetBackgroundColour(*wxWHITE);
+    m_ams_control_box->SetBackgroundColour(device_card_color());
     m_ams_control_box->SetSizer(sizer_box);
     m_ams_control_box->Layout();
     m_ams_control_box->Fit();
@@ -2626,11 +2699,11 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     m_scale_panel          = new wxPanel(parent);
     m_scale_panel->SetMinSize(wxSize(FromDIP(586), FromDIP(40)));
     m_scale_panel->SetMaxSize(wxSize(FromDIP(586), FromDIP(40)));
-    m_scale_panel->SetBackgroundColour(*wxWHITE);
+    m_scale_panel->SetBackgroundColour(device_card_color());
 
     auto m_title_filament_loading = new Label(m_scale_panel, _L("Filament loading..."));
-    m_title_filament_loading->SetBackgroundColour(*wxWHITE);
-    m_title_filament_loading->SetForegroundColour(wxColour(27, 136, 68));
+    m_title_filament_loading->SetBackgroundColour(device_card_color());
+    m_title_filament_loading->SetForegroundColour(device_primary_color());
     m_title_filament_loading->SetFont(::Label::Body_14);
 
     m_img_filament_loading = new wxStaticBitmap(m_scale_panel, wxID_ANY, create_scaled_bitmap("filament_load_fold", this, 24), wxDefaultPosition,
@@ -2649,24 +2722,24 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
 
     auto sizer_box = new wxBoxSizer(wxVERTICAL);
 
-    StateColor box_colour(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    StateColor box_border_colour(std::pair<wxColour, int>(STATUS_PANEL_BG, StateColor::Normal));
+    StateColor box_colour(std::pair<wxColour, int>(device_card_color(), StateColor::Normal));
+    StateColor box_border_colour(std::pair<wxColour, int>(device_divider_color(), StateColor::Normal));
 
     m_filament_load_box = new StaticBox(parent);
     m_filament_load_box->SetBackgroundColor(box_colour);
     m_filament_load_box->SetBorderColor(box_border_colour);
-    m_filament_load_box->SetCornerRadius(5);
+    m_filament_load_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
     m_filament_load_box->SetMinSize(wxSize(FromDIP(586), -1));
     m_filament_load_box->SetMaxSize(wxSize(FromDIP(586), -1));
-    m_filament_load_box->SetBackgroundColour(*wxWHITE);
+    m_filament_load_box->SetBackgroundColour(device_card_color());
     m_filament_load_box->SetSizer(sizer_box);
 
     m_filament_step = new FilamentLoad(m_filament_load_box, wxID_ANY);
     m_filament_step->SetDoubleBuffered(true);
-    m_filament_step->SetBackgroundColour(*wxWHITE);
+    m_filament_step->SetBackgroundColour(device_card_color());
 
     m_filament_load_img = new wxStaticBitmap(m_filament_load_box, wxID_ANY, wxNullBitmap);
-    m_filament_load_img->SetBackgroundColour(*wxWHITE);
+    m_filament_load_img->SetBackgroundColour(device_card_color());
 
     wxBoxSizer *steps_sizer = new wxBoxSizer(wxHORIZONTAL);
     steps_sizer->Add(m_filament_step, 0, wxALIGN_LEFT, FromDIP(20));
@@ -2687,6 +2760,7 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     m_button_retry->SetTextColor(btn_text_white);
     m_button_retry->SetMinSize(wxSize(FromDIP(80), FromDIP(31)));
     m_button_retry->SetBackgroundColor(btn_bg_white);
+    m_button_retry->SetCornerRadius(FromDIP(15));
     // m_button_retry->Hide();
 
     m_button_retry->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) {
@@ -2700,6 +2774,7 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     m_fila_change_abort->SetTextColor(btn_text_white);
     m_fila_change_abort->SetMinSize(wxSize(FromDIP(80), FromDIP(31)));
     m_fila_change_abort->SetBackgroundColor(btn_bg_white);
+    m_fila_change_abort->SetCornerRadius(FromDIP(15));
     m_fila_change_abort->Hide();
 
     m_fila_change_abort->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) {
@@ -2713,7 +2788,7 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     sizer_box->Add(steps_sizer, 0, wxEXPAND | wxALIGN_LEFT | wxTOP, FromDIP(5));
     sizer_box->Add(fila_change_sizer, 0, wxLEFT, FromDIP(28));
     sizer_box->Add(0, 0, 0, wxTOP, FromDIP(5));
-    m_filament_load_box->SetBackgroundColour(*wxWHITE);
+    m_filament_load_box->SetBackgroundColour(device_card_color());
     m_filament_load_box->Layout();
     m_filament_load_box->Fit();
     m_filament_load_box->Hide();
@@ -3111,17 +3186,17 @@ void StatusPanel::init_scaled_buttons()
 {
     m_project_task_panel->init_scaled_buttons();
     m_bpButton_z_10->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_10->SetCornerRadius(0);
+    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
     m_bpButton_z_1->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_1->SetCornerRadius(0);
+    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
     m_bpButton_z_down_1->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_down_1->SetCornerRadius(0);
+    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
     m_bpButton_z_down_10->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_down_10->SetCornerRadius(0);
+    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
     m_bpButton_e_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_10->SetCornerRadius(FromDIP(12));
+    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
     m_bpButton_e_down_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_down_10->SetCornerRadius(FromDIP(12));
+    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 }
 
 void StatusPanel::on_market_scoring(wxCommandEvent &event)
@@ -3508,8 +3583,8 @@ void StatusPanel::show_printing_status(bool ctrl_area, bool temp_area)
         m_bpButton_e_10->SetIcon("monitor_extruder_up_disable");
         m_bpButton_e_down_10->SetIcon("monitor_extrduer_down_disable");
 
-        m_staticText_z_tip->SetForegroundColour(DISCONNECT_TEXT_COL);
-        m_extruder_label->SetForegroundColour(DISCONNECT_TEXT_COL);
+        m_staticText_z_tip->SetForegroundColour(device_disabled_text_color());
+        m_extruder_label->SetForegroundColour(device_disabled_text_color());
     } else {
         m_bpButton_xy->Enable();
         m_bpButton_z_10->Enable();
@@ -3526,8 +3601,8 @@ void StatusPanel::show_printing_status(bool ctrl_area, bool temp_area)
         m_bpButton_e_10->SetIcon("monitor_extruder_up");
         m_bpButton_e_down_10->SetIcon("monitor_extrduer_down");
 
-        m_staticText_z_tip->SetForegroundColour(TEXT_LIGHT_FONT_COL);
-        m_extruder_label->SetForegroundColour(TEXT_LIGHT_FONT_COL);
+        m_staticText_z_tip->SetForegroundColour(device_secondary_text_color());
+        m_extruder_label->SetForegroundColour(device_secondary_text_color());
     }
 
     if (!temp_area) {
@@ -5788,12 +5863,107 @@ void StatusPanel::rescale_camera_icons()
 
 void StatusPanel::on_sys_color_changed()
 {
+    // Native wx panels do not repaint semantic backgrounds automatically when
+    // StateColor's mode flips. Re-resolve every production Device surface and
+    // refresh the custom-painted cards/buttons from their semantic roles.
+    recolor_device_surface_tree(this);
+    SetBackgroundColour(device_page_color());
+    m_machine_ctrl_panel->SetBackgroundColour(device_card_color());
+    m_panel_monitoring_title->SetBackgroundColour(device_title_color());
+    m_panel_control_title->SetBackgroundColour(device_title_color());
+    m_camera_fullscreen_button->SetBackgroundColour(device_title_color());
+    m_setting_button->SetBackgroundColour(device_title_color());
+    m_staticText_monitoring->SetForegroundColour(device_secondary_text_color());
+    m_staticText_control->SetForegroundColour(device_secondary_text_color());
+    StateColor card_background(device_card_color());
+    StateColor card_border(device_divider_color());
+    for (StaticBox *card : {m_temperature_control_box, m_ams_control_box, m_filament_load_box}) {
+        if (!card) continue;
+        card->SetBackgroundColor(card_background);
+        card->SetBackgroundColour(device_card_color());
+        card->SetBorderColor(card_border);
+        card->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+        card->Refresh();
+    }
+    if (m_fan_panel) {
+        m_fan_panel->SetBackgroundColor(device_card_color());
+        m_fan_panel->SetBackgroundColour(device_card_color());
+        m_fan_panel->Refresh();
+    }
+
+    m_temp_temp_line->SetBackgroundColour(device_divider_color());
+    m_temp_extruder_line->SetBackgroundColour(device_divider_color());
+    m_line_nozzle->SetLineColour(device_divider_color());
+
+    StateColor temp_text(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                         std::make_pair(device_text_color(), (int) StateColor::Normal));
+    StateColor temp_border(std::make_pair(device_card_color(), (int) StateColor::Disabled),
+                           std::make_pair(device_primary_color(), (int) StateColor::Focused),
+                           std::make_pair(device_primary_color(), (int) StateColor::Hovered),
+                           std::make_pair(device_card_color(), (int) StateColor::Normal));
+    for (TempInput *input : {m_tempCtrl_nozzle, m_tempCtrl_nozzle_deputy, m_tempCtrl_bed, m_tempCtrl_chamber}) {
+        input->SetTextColor(temp_text);
+        input->SetBorderColor(temp_border);
+        input->Refresh();
+    }
+
+    StateColor primary_background = device_primary_button_background();
+    StateColor primary_border     = device_primary_button_border();
+    StateColor primary_text       = device_primary_button_text();
+    for (Button *button : {m_parts_btn, m_options_btn, m_safety_btn, m_calibration_btn}) {
+        button->SetBackgroundColor(primary_background);
+        button->SetBorderColor(primary_border);
+        button->SetTextColor(primary_text);
+        button->SetCornerRadius(FromDIP(13));
+        button->Refresh();
+    }
+    for (Button *button : {m_project_task_panel->get_market_retry_buttom(), m_project_task_panel->get_market_scoring_button()}) {
+        if (!button) continue;
+        button->SetBackgroundColor(primary_background);
+        button->SetBorderColor(primary_border);
+        button->SetTextColor(primary_text);
+        button->Refresh();
+    }
+
+    StateColor control_text(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                            std::make_pair(device_text_color(), (int) StateColor::Normal));
+    StateColor control_background(std::make_pair(device_primary_container_color(), (int) StateColor::Pressed),
+                                  std::make_pair(device_control_color(), (int) StateColor::Normal));
+    StateColor control_border(std::make_pair(device_primary_color(), (int) StateColor::Hovered),
+                              std::make_pair(device_control_color(), (int) StateColor::Normal));
+    StateColor emphasized_background(std::make_pair(device_primary_container_color(), (int) StateColor::Pressed),
+                                     std::make_pair(device_control_emphasis_color(), (int) StateColor::Normal));
+    StateColor emphasized_border(std::make_pair(device_primary_color(), (int) StateColor::Hovered),
+                                 std::make_pair(device_control_emphasis_color(), (int) StateColor::Normal));
+    for (Button *button : {m_bpButton_z_10, m_bpButton_z_down_10, m_bpButton_e_10, m_bpButton_e_down_10}) {
+        button->SetBackgroundColor(control_background);
+        button->SetBorderColor(control_border);
+        button->SetTextColor(control_text);
+        button->Refresh();
+    }
+    for (Button *button : {m_bpButton_z_1, m_bpButton_z_down_1}) {
+        button->SetBackgroundColor(emphasized_background);
+        button->SetBorderColor(emphasized_border);
+        button->SetTextColor(control_text);
+        button->Refresh();
+    }
+    m_bpButton_xy->SetTextColor(control_text);
+    m_switch_speed->SetTextColor(control_text);
+    m_switch_lamp->SetTextColor(control_text);
+    m_switch_fan->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                          std::make_pair(device_secondary_text_color(), (int) StateColor::Normal)));
+    const wxColour control_label_color = m_bpButton_z_10->IsEnabled() ? device_secondary_text_color() : device_disabled_text_color();
+    m_staticText_z_tip->SetForegroundColour(control_label_color);
+    m_extruder_label->SetForegroundColour(control_label_color);
+
     m_project_task_panel->msw_rescale();
     m_bitmap_speed.msw_rescale();
     m_bitmap_speed_active.msw_rescale();
     m_switch_speed->SetImages(m_bitmap_speed, m_bitmap_speed);
     m_ams_control->msw_rescale();
     rescale_camera_icons();
+    Layout();
+    Refresh();
 }
 
 void StatusPanel::msw_rescale()

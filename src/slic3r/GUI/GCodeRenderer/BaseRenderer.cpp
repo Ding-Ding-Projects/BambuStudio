@@ -1430,18 +1430,29 @@ namespace Slic3r
                 imgui.set_next_window_pos(float(canvas_width - right_margin * m_scale), 0.0f, ImGuiCond_Always, 1.0f, 0.0f);
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0, 0.0));
-                ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(1.0f, 1.0f, 1.0f, 0.6f));
-                ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(0.42f, 0.42f, 0.42f, 1.00f));
-                ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, ImVec4(0.93f, 0.93f, 0.93f, 1.00f));
-                ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, ImVec4(0.93f, 0.93f, 0.93f, 1.00f));
-                //ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.f, 1.f, 1.f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_Border, { 1, 0, 0, 0 });
-                ImGui::SetNextWindowBgAlpha(0.8f);
-                const float max_height = 0.75f * static_cast<float>(cnv_size.get_height());
+                const ImVec4 primary = m_is_dark ? ImVec4(139.0f / 255.0f, 216.0f / 255.0f, 155.0f / 255.0f, 1.0f)
+                                                : ImVec4(20.0f / 255.0f, 108.0f / 255.0f, 46.0f / 255.0f, 1.0f);
+                const ImVec4 primary_container = m_is_dark ? ImVec4(9.0f / 255.0f, 82.0f / 255.0f, 40.0f / 255.0f, 1.0f)
+                                                          : ImVec4(166.0f / 255.0f, 244.0f / 255.0f, 184.0f / 255.0f, 1.0f);
+                const ImVec4 outline = m_is_dark ? ImVec4(74.0f / 255.0f, 76.0f / 255.0f, 84.0f / 255.0f, 1.0f)
+                                                : ImVec4(197.0f / 255.0f, 198.0f / 255.0f, 208.0f / 255.0f, 1.0f);
+                const ImVec4 surface = m_is_dark ? ImVec4(27.0f / 255.0f, 28.0f / 255.0f, 33.0f / 255.0f, 1.0f)
+                                                : ImVec4(250.0f / 255.0f, 248.0f / 255.0f, 253.0f / 255.0f, 1.0f);
+                ImGui::PushStyleColor(ImGuiCol_Separator, outline);
+                ImGui::PushStyleColor(ImGuiCol_Header, primary_container);
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, primary_container);
+                ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, outline);
+                ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, primary);
+                ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, primary);
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, surface);
+                ImGui::PushStyleColor(ImGuiCol_Border, outline);
+                ImGui::SetNextWindowBgAlpha(1.0f);
+                const float max_height = std::max(1.0f, static_cast<float>(cnv_size.get_height()) - 58.0f * m_scale);
                 const float child_height = 0.3333f * max_height;
-                ImGui::SetNextWindowSizeConstraints({ 0.0f, 0.0f }, { -1.0f, max_height });
+                const float available_width = std::max(1.0f, static_cast<float>(canvas_width) - right_margin * m_scale);
+                const float legend_max_width = std::max(1.0f, std::min(344.0f * m_scale, available_width - 12.0f * m_scale));
+                const float legend_min_width = std::min(312.0f * m_scale, legend_max_width);
+                ImGui::SetNextWindowSizeConstraints({ legend_min_width, 0.0f }, { legend_max_width, max_height });
                 imgui.begin(std::string("Legend"), ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
                 enum class EItemType : unsigned char
                 {
@@ -1467,7 +1478,8 @@ namespace Slic3r
                 float checkbox_offset = 0.0f;
                 draw_list->AddRectFilled(ImVec2(pos_rect.x, pos_rect.y - ImGui::GetStyle().WindowPadding.y),
                     ImVec2(pos_rect.x + ImGui::GetWindowWidth() + ImGui::GetFrameHeight(), pos_rect.y + ImGui::GetFrameHeight() + window_padding * 2.5),
-                    ImGui::GetColorU32(ImVec4(0, 0, 0, 0.3)));
+                    ImGui::GetColorU32(m_is_dark ? ImVec4(57.0f / 255.0f, 58.0f / 255.0f, 65.0f / 255.0f, 1.0f)
+                                                    : ImVec4(232.0f / 255.0f, 231.0f / 255.0f, 238.0f / 255.0f, 1.0f)));
                 auto append_item = [icon_size, &imgui, imperial_units, &window_padding, &draw_list, &checkbox_offset, this](
                     EItemType type,
                     const Color& color,
@@ -1738,7 +1750,7 @@ namespace Slic3r
                 if (m_fold) {
                     legend_height = ImGui::GetStyle().WindowPadding.y + ImGui::GetFrameHeight() + window_padding * 2.5;
                     imgui.end();
-                    ImGui::PopStyleColor(7);
+                    ImGui::PopStyleColor(8);
                     ImGui::PopStyleVar(2);
                     return;
                 }
@@ -2733,7 +2745,7 @@ namespace Slic3r
                     render_legend_color_arr_recommen(window_padding, is_show_left_right_result);
                 legend_height = ImGui::GetCurrentWindow()->Size.y;
                 imgui.end();
-                ImGui::PopStyleColor(7);
+                ImGui::PopStyleColor(8);
                 ImGui::PopStyleVar(2);
             }
 

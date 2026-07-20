@@ -10,14 +10,18 @@
 //BBS set font size
 #include "Widgets/Label.hpp"
 
+#include <algorithm>
 #include <wx/button.h>
+#include <wx/dcbuffer.h>
 #include <wx/sizer.h>
 
 namespace {
 constexpr int btn_width_icon      = 40;
 constexpr int btn_width_label_min = 48;
 constexpr int btn_width_label_max = 136;
-constexpr int btn_height          = 36;
+constexpr int selection_line_height = 3;
+constexpr int selection_line_inset  = 12;
+constexpr int tab_bottom_space      = 4;
 }; // namespace
 
 wxDEFINE_EVENT(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, wxCommandEvent);
@@ -29,20 +33,13 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
 
-    wxColour default_btn_bg;
-#ifdef __APPLE__
-    default_btn_bg = ThemeColor::Grey250; // Gradient #414B4E
-#else
-    default_btn_bg = ThemeColor::Grey250; // Gradient #414B4E
-#endif
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-   
-    SetBackgroundColour(default_btn_bg);
-
-    int em = em_unit(this);// Slic3r::GUI::wxGetApp().em_unit();
-    // BBS: no gap
-    m_btn_margin = 0; // std::lround(0.3 * em);
-    m_line_margin = std::lround(0.1 * em);
+    m_btn_margin = 0;
+    m_line_margin = FromDIP(selection_line_height);
+    const int navigation_height = FromDIP(MD3::Metrics::navigation_bar_height);
+    SetMinSize({-1, navigation_height});
+    SetMaxSize({-1, navigation_height});
 
     m_sizer = new wxBoxSizer(wxHORIZONTAL);
     this->SetSizer(m_sizer);
@@ -50,7 +47,7 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
     // a horizontal box sizer (instead of a flex grid) so the tab buttons can
     // shrink Chrome-style when the window is too narrow
     m_buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_sizer->Add(m_buttons_sizer, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxBOTTOM, m_btn_margin);
+    m_sizer->Add(m_buttons_sizer, 1, wxALIGN_TOP | wxLEFT, m_btn_margin);
 
     if (side_tools != NULL) {
         for (size_t idx = 0; idx < side_tools->GetItemCount(); idx++) {
@@ -63,63 +60,78 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
         m_sizer->Add(side_tools, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxBOTTOM, m_btn_margin);
     }
 
-    // BBS: disable custom paint
-    //this->Bind(wxEVT_PAINT, &ButtonsListCtrl::OnPaint, this);
-    Bind(wxEVT_SYS_COLOUR_CHANGED, [this](auto& e){
+    Bind(wxEVT_PAINT, &ButtonsListCtrl::OnPaint, this);
+    Bind(wxEVT_SYS_COLOUR_CHANGED, [this](wxSysColourChangedEvent& event) {
+        ApplyTheme();
+        event.Skip();
     });
+
+    ApplyTheme();
 }
 
 void ButtonsListCtrl::OnPaint(wxPaintEvent&)
 {
-    //Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
-    const wxSize sz = GetSize();
-    wxPaintDC dc(this);
+    wxAutoBufferedPaintDC dc(this);
+    const wxSize size = GetClientSize();
+    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
 
-    if (m_selection < 0 || m_selection >= (int)m_pageButtons.size())
+    dc.SetBackground(wxBrush(surface));
+    dc.Clear();
+
+    // Keep a quiet boundary between navigation and the active workspace.
+    const int divider_width = std::max(1, FromDIP(1));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), divider_width));
+    dc.DrawLine(0, size.y - divider_width, size.x, size.y - divider_width);
+
+    if (m_selection < 0 || m_selection >= int(m_pageButtons.size()))
         return;
 
-    wxColour selected_btn_bg(ThemeColor::BrandGreen);
-    wxColour default_btn_bg(ThemeColor::Grey250); // Gradient #414B4E
-    const wxColour& btn_marker_color = StateColor::darkModeColorFor(ThemeColor::BrandGreen);
+    // Selection remains on the surface; only this primary underline carries emphasis.
+    const wxRect button_rect = m_pageButtons[m_selection]->GetRect();
+    const int inset = FromDIP(selection_line_inset);
+    const int indicator_height = m_line_margin;
+    wxRect indicator(button_rect.x + inset,
+                     size.y - divider_width - indicator_height,
+                     std::max(1, button_rect.width - 2 * inset),
+                     indicator_height);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+    dc.DrawRoundedRectangle(indicator, indicator_height / 2.0);
+}
 
-    // highlight selected notebook button
+void ButtonsListCtrl::StyleButton(Button* button, bool selected)
+{
+    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const StateColor background(
+        std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::Pressed},
+        std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered},
+        std::pair{surface, (int) StateColor::Normal});
+    const StateColor text = selected
+        ? StateColor(
+            std::pair{StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled},
+            std::pair{StateColor::semantic(MD3::Role::Primary), (int) StateColor::Normal})
+        : StateColor(
+            std::pair{StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled},
+            std::pair{StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Hovered},
+            std::pair{StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal});
 
-    for (int idx = 0; idx < int(m_pageButtons.size()); idx++) {
-        Button* btn = m_pageButtons[idx];
+    button->SetBackgroundColor(background);
+    button->SetTextColor(text);
+    button->SetSelected(selected);
+    button->SetCornerRadius(FromDIP(MD3::Metrics::compact.small_radius));
+    button->SetPaddingSize({FromDIP(MD3::Metrics::compact.padding), FromDIP(MD3::Metrics::compact.gap)});
 
-        btn->SetBackgroundColor(idx == m_selection ? selected_btn_bg : default_btn_bg);
+    wxFont font = Slic3r::GUI::wxGetApp().normal_font();
+    font.SetWeight(selected ? wxFONTWEIGHT_SEMIBOLD : wxFONTWEIGHT_NORMAL);
+    button->SetFont(font);
+}
 
-        wxPoint pos = btn->GetPosition();
-        wxSize size = btn->GetSize();
-        const wxColour& clr = idx == m_selection ? btn_marker_color : default_btn_bg;
-        dc.SetPen(clr);
-        dc.SetBrush(clr);
-        dc.DrawRectangle(pos.x, pos.y + size.y, size.x, sz.y - size.y);
-    }
-
-#if 0
-    // highlight selected mode button
-    if (m_mode_sizer) {
-        const std::vector<ModeButton*>& mode_btns = m_mode_sizer->get_btns();
-        for (int idx = 0; idx < int(mode_btns.size()); idx++) {
-            ModeButton* btn = mode_btns[idx];
-            btn->SetBackgroundColor(btn->is_selected() ? selected_btn_bg : default_btn_bg);
-
-            //wxPoint pos = btn->GetPosition();
-            //wxSize size = btn->GetSize();
-            //const wxColour& clr = btn->is_selected() ? btn_marker_color : default_btn_bg;
-            //dc.SetPen(clr);
-            //dc.SetBrush(clr);
-            //dc.DrawRectangle(pos.x, pos.y + size.y, size.x, sz.y - size.y);
-        }
-    }
-#endif
-
-    // Draw orange bottom line
-
-    dc.SetPen(btn_marker_color);
-    dc.SetBrush(btn_marker_color);
-    dc.DrawRectangle(1, sz.y - m_line_margin, sz.x, m_line_margin);
+void ButtonsListCtrl::ApplyTheme()
+{
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    for (size_t idx = 0; idx < m_pageButtons.size(); ++idx)
+        StyleButton(m_pageButtons[idx], int(idx) == m_selection);
+    Refresh(false);
 }
 
 void ButtonsListCtrl::UpdateMode()
@@ -131,14 +143,19 @@ void ButtonsListCtrl::Rescale()
 {
     //m_mode_sizer->msw_rescale();
     int em = em_unit(this);
+    Button* selected_button = m_selection >= 0 && m_selection < int(m_pageButtons.size())
+        ? m_pageButtons[m_selection]
+        : nullptr;
     for (Button* btn : m_pageButtons) {
+        const int tab_height = FromDIP(MD3::Metrics::navigation_bar_height - tab_bottom_space);
         // BBS: keep the Chrome-style shrinkable range in sync with the DPI scale.
         if (btn->GetLabel().empty()) {
-            btn->SetMinSize({btn_width_icon * em / 10, btn_height * em / 10});
+            btn->SetMinSize({btn_width_icon * em / 10, tab_height});
         } else {
-            btn->SetMinSize({btn_width_label_min * em / 10, btn_height * em / 10});
-            btn->SetMaxSize({btn_width_label_max * em / 10, btn_height * em / 10});
+            btn->SetMinSize({btn_width_label_min * em / 10, tab_height});
+            btn->SetMaxSize({btn_width_label_max * em / 10, tab_height});
         }
+        StyleButton(btn, btn == selected_button);
         btn->Rescale();
     }
 
@@ -148,46 +165,34 @@ void ButtonsListCtrl::Rescale()
     //m_buttons_sizer->SetVGap(m_btn_margin);
     //m_buttons_sizer->SetHGap(m_btn_margin);
 
+    const int navigation_height = FromDIP(MD3::Metrics::navigation_bar_height);
+    SetMinSize({-1, navigation_height});
+    SetMaxSize({-1, navigation_height});
+    m_line_margin = FromDIP(selection_line_height);
     m_sizer->Layout();
+    Refresh(false);
 }
 
 void ButtonsListCtrl::SetSelection(int sel)
 {
-    if (m_selection == sel)
+    if (sel < 0 || sel >= int(m_pageButtons.size()))
         return;
-    // BBS: change button color
-    wxColour selected_btn_bg(ThemeColor::BrandGreen);    // Gradient #00AE42
-    if (m_selection >= 0) {
-        StateColor bg_color = StateColor(
-        std::pair{ThemeColor::Grey300, (int) StateColor::Hovered},
-        std::pair{ThemeColor::Grey250, (int) StateColor::Normal});
-        m_pageButtons[m_selection]->SetBackgroundColor(bg_color);
-        StateColor text_color = StateColor(
-        std::pair{ThemeColor::TextPrimary, (int) StateColor::Normal}
-        );
-        m_pageButtons[m_selection]->SetSelected(false);
-        m_pageButtons[m_selection]->SetTextColor(text_color);
+    if (m_selection == sel) {
+        StyleButton(m_pageButtons[sel], true);
+        Refresh(false);
+        return;
     }
+    if (m_selection >= 0 && m_selection < int(m_pageButtons.size()))
+        StyleButton(m_pageButtons[m_selection], false);
+
     m_selection = sel;
-
-    StateColor bg_color = StateColor(
-        std::pair{ThemeColor::BrandGreenHovered, (int) StateColor::Hovered},
-        std::pair{ThemeColor::BrandGreen, (int) StateColor::Normal});
-    m_pageButtons[m_selection]->SetBackgroundColor(bg_color);
-
-    StateColor text_color = StateColor(
-        std::pair{ThemeColor::White, (int) StateColor::Normal}
-        );
-    m_pageButtons[m_selection]->SetSelected(true);
-    m_pageButtons[m_selection]->SetTextColor(text_color);
-    
-    Refresh();
+    StyleButton(m_pageButtons[m_selection], true);
+    Refresh(false);
 }
 
 bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /* = false*/, const std::string &bmp_name /* = ""*/, const std::string &inactive_bmp_name)
 {
     Button * btn = new Button(this, text.empty() ? text : " " + text, bmp_name, wxNO_BORDER);
-    btn->SetCornerRadius(0);
 
     // always show the tab name as a tooltip so the user can identify a tab
     // by hovering even when it is shrunk and the label is truncated with an ellipsis.
@@ -195,28 +200,21 @@ bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /*
     if (!text.empty()) btn->SetToolTip(text);
 
     int em = em_unit(this);
+    const int tab_height = FromDIP(MD3::Metrics::navigation_bar_height - tab_bottom_space);
     // BBS set size for button
     //  Chrome-style labeled tabs may shrink down to a small floor when crowded and
     //  grow up to the preferred width (136) when there is room, so the side tools
     //  (slice/print) on the right always stay visible. Icon-only tabs keep a fixed size.
     if (text.empty()) {
-        btn->SetMinSize({btn_width_icon * em / 10, btn_height * em / 10});
+        btn->SetMinSize({btn_width_icon * em / 10, tab_height});
     } else {
         btn->SetAllowShrink(true);
-        btn->SetMinSize({btn_width_label_min * em / 10, btn_height * em / 10});
-        btn->SetMaxSize({btn_width_label_max * em / 10, btn_height * em / 10});
+        btn->SetMinSize({btn_width_label_min * em / 10, tab_height});
+        btn->SetMaxSize({btn_width_label_max * em / 10, tab_height});
     }
 
-    StateColor bg_color = StateColor(
-        std::pair{ThemeColor::Grey300, (int) StateColor::Hovered},
-        std::pair{ThemeColor::Grey250, (int) StateColor::Normal});
-
-    btn->SetBackgroundColor(bg_color);
-    StateColor text_color = StateColor(
-        std::pair{ThemeColor::TextPrimary, (int) StateColor::Normal});
-    btn->SetTextColor(text_color);
+    StyleButton(btn, bSelect);
     btn->SetInactiveIcon(inactive_bmp_name);
-    btn->SetSelected(false);
     btn->Bind(wxEVT_BUTTON, [this, btn](wxCommandEvent& event) {
         if (auto it = std::find(m_pageButtons.begin(), m_pageButtons.end(), btn); it != m_pageButtons.end()) {
             auto sel = it - m_pageButtons.begin();
@@ -240,7 +238,15 @@ bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /*
 
 void ButtonsListCtrl::RemovePage(size_t n)
 {
+    if (n >= m_pageButtons.size())
+        return;
+
     Button* btn = m_pageButtons[n];
+    if (int(n) == m_selection)
+        m_selection = -1;
+    else if (int(n) < m_selection)
+        --m_selection;
+
     m_pageButtons.erase(m_pageButtons.begin() + n);
     m_buttons_sizer->Remove(n);
 #if __WXOSX__

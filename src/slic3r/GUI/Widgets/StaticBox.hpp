@@ -2,6 +2,7 @@
 #define slic3r_GUI_StaticBox_hpp_
 
 #include "../wxExtensions.hpp"
+#include "MD3Tokens.hpp"
 #include "StateHandler.hpp"
 
 #include <wx/window.h>
@@ -44,6 +45,9 @@ public:
     void ShowBadge(bool show);
 
 protected:
+    void SetDefaultCornerRadius(double radius_dip);
+    void RescaleDefaultCornerRadius();
+
     void eraseEvent(wxEraseEvent& evt);
 
     void paintEvent(wxPaintEvent& evt);
@@ -54,6 +58,8 @@ protected:
 
 protected:
     double radius;
+    double m_default_radius_dip{MD3::Metrics::compact.radius};
+    bool   m_uses_default_radius{true};
     int border_width = 1;
     wxPenStyle border_style = wxPENSTYLE_SOLID;
     StateHandler state_handler;

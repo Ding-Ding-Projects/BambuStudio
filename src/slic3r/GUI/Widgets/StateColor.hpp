@@ -75,6 +75,10 @@ public:
 public:
     static void SetDarkMode(bool dark);
 
+    static bool isDarkMode();
+
+    static wxColour semantic(MD3::Role role);
+
     static wxColour darkModeColorFor(wxColour const &color);
     static wxColour lightModeColorFor(wxColour const &color);
 

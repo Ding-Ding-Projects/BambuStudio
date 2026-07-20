@@ -15,17 +15,18 @@ constexpr double min_delta_area = scale_(scale_(25));  // equal to 25 mm2
 constexpr double miscalculation = scale_(scale_(1));   // equal to 1 mm2
 
 static const float  LEFT_MARGIN       = 13.0f + 100.0f;  // avoid thumbnail toolbar
-static const float  HORIZONTAL_SLIDER_WINDOW_HEIGHT  = 64.0f;
+static const float  HORIZONTAL_SLIDER_WINDOW_HEIGHT  = 58.0f;
 static const float  VERTICAL_SLIDER_WINDOW_WIDTH     = 124.0f;
 static const float  GROOVE_WIDTH      = 12.0f;
 static const ImVec2 ONE_LAYER_MARGIN  = ImVec2(20.0f, 20.0f);
 static const ImVec2 ONE_LAYER_BUTTON_SIZE  = ImVec2(28.0f, 28.0f);
 
-static const ImU32 BACKGROUND_COLOR_DARK  = IM_COL32(65, 65, 71, 255);
+static const ImU32 BACKGROUND_COLOR_DARK  = IM_COL32(37, 38, 43, 255);
 static const ImU32 BACKGROUND_COLOR_LIGHT = IM_COL32(255, 255, 255, 255);
-static const ImU32 GROOVE_COLOR_DARK      = IM_COL32(45, 45, 49, 255);
-static const ImU32 GROOVE_COLOR_LIGHT     = IM_COL32(206, 206, 206, 255);
-static const ImU32 BRAND_COLOR            = IM_COL32(0, 174, 66, 255);
+static const ImU32 GROOVE_COLOR_DARK      = IM_COL32(74, 76, 84, 255);
+static const ImU32 GROOVE_COLOR_LIGHT     = IM_COL32(197, 198, 208, 255);
+static const ImU32 PRIMARY_COLOR_DARK     = IM_COL32(139, 216, 155, 255);
+static const ImU32 PRIMARY_COLOR_LIGHT    = IM_COL32(20, 108, 46, 255);
 
 
 static int m_tick_value = -1;
@@ -490,7 +491,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
     const float  triangle_offsets[3] = {-3.5f * m_scale, 3.5f * m_scale, -6.06f * m_scale};
 
     const ImU32 white_bg = m_is_dark ? BACKGROUND_COLOR_DARK : BACKGROUND_COLOR_LIGHT;
-    const ImU32 handle_clr = BRAND_COLOR;
+    const ImU32 handle_clr = m_is_dark ? PRIMARY_COLOR_DARK : PRIMARY_COLOR_LIGHT;
     const ImU32 handle_border_clr = m_is_dark ? BACKGROUND_COLOR_DARK : BACKGROUND_COLOR_LIGHT;
 
     // calculate groove size
@@ -847,14 +848,14 @@ bool IMSlider::vertical_slider(const char* str_id, int* higher_value, int* lower
     const float  one_handle_offset   = 26.0f * m_scale;
     const float  bar_width           = 28.0f * m_scale;
 
-    const float  text_frame_rounding = 2.0f * scale * m_scale;
+    const float  text_frame_rounding = 10.0f * scale * m_scale;
     const ImVec2 text_padding        = ImVec2(5.0f, 2.0f) * m_scale;
     const ImVec2 triangle_offsets[3] = {ImVec2(2.0f, 0.0f) * m_scale, ImVec2(0.0f, 8.0f) * m_scale, ImVec2(9.0f, 0.0f) * m_scale};
     ImVec2 text_content_size;
     ImVec2 text_size;
 
     const ImU32 white_bg = m_is_dark ? BACKGROUND_COLOR_DARK : BACKGROUND_COLOR_LIGHT;
-    const ImU32 handle_clr = BRAND_COLOR;
+    const ImU32 handle_clr = m_is_dark ? PRIMARY_COLOR_DARK : PRIMARY_COLOR_LIGHT;
     const ImU32 handle_border_clr = m_is_dark ? BACKGROUND_COLOR_DARK : BACKGROUND_COLOR_LIGHT;
     // calculate slider groove size
     const ImVec2 groove_start = ImVec2(pos.x + size.x - ONE_LAYER_MARGIN.x * m_scale - ONE_LAYER_BUTTON_SIZE.x * m_scale * 0.5f - GROOVE_WIDTH * m_scale * 0.5f, pos.y + text_dummy_height);
