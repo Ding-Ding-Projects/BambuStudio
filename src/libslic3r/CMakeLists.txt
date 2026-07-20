@@ -507,10 +507,19 @@ if (APPLE)
         )
 endif ()
 
+set(libslic3r_runtime_sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/BBLUtil.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/BBLUtil.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/Http.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/Http.hpp
+)
+
 add_library(libslic3r STATIC ${lisbslic3r_sources}
+    ${libslic3r_runtime_sources}
     "${CMAKE_CURRENT_BINARY_DIR}/libslic3r_version.h"
     ${OpenVDBUtils_SOURCES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${lisbslic3r_sources})
+source_group("Runtime" FILES ${libslic3r_runtime_sources})
 
 if (SLIC3R_STATIC)
     set(CGAL_Boost_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
@@ -634,6 +643,9 @@ target_link_libraries(libslic3r
     opencv_world
     ${_cgal_tgt}
     assimp::assimp
+    libcurl
+    OpenSSL::SSL
+    OpenSSL::Crypto
     )
 
 if(NOT WIN32)
@@ -641,6 +653,10 @@ if(NOT WIN32)
     if (NOT APPLE)
         target_link_libraries(libslic3r fontconfig)
     endif()
+endif()
+
+if (SLIC3R_STATIC AND NOT SLIC3R_STATIC_EXCLUDE_CURL AND UNIX AND NOT APPLE)
+    target_compile_definitions(libslic3r PRIVATE OPENSSL_CERT_OVERRIDE)
 endif()
 
 if (APPLE)
@@ -654,7 +670,10 @@ if (TARGET OpenVDB::openvdb)
 endif()
 
 if(WIN32)
-    target_link_libraries(libslic3r Psapi.lib)
+    # Boost.Filesystem's static CMake export omits its private BCrypt
+    # dependency. Consumers of libslic3r therefore need the Windows crypto
+    # provider explicitly in addition to Psapi.
+    target_link_libraries(libslic3r Psapi.lib bcrypt.lib)
 endif()
 
 if(SLIC3R_PROFILE)

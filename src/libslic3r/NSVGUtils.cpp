@@ -1,3 +1,6 @@
+// Keep the NanoSVG parser implementation with the library that exposes and
+// consumes NSVGUtils. GUI code owns only the separate rasterizer implementation.
+#define NANOSVG_IMPLEMENTATION
 #include "NSVGUtils.hpp"
 #include <array>
 #include <charconv> // to_chars
