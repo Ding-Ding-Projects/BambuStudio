@@ -50,6 +50,9 @@ jobs:
           rsync -a --exclude 'design-source' --exclude 'desktop' --exclude '*.md' --exclude 'landing.html' ui-md3/ _site/app/
           # Landing page is the site root.
           cp ui-md3/landing.html _site/index.html
+          # Keep the landing page's local-preview asset paths valid after it is lifted to the site root.
+          cp ui-md3/app/i18n.resources.js ui-md3/app/i18n.js _site/app/
+          node ui-md3/tests/assert-pages-layout.mjs _site
           echo "Composed _site:"; find _site -maxdepth 2 -type f | sort
 
       - name: Upload composed site as the Pages artifact
