@@ -981,6 +981,8 @@ void MainFrame::update_layout()
 
         m_tabpanel->Hide();
         m_plater->Hide();
+        if (m_prepare_action_bar)
+            m_prepare_action_bar->Hide();
 
         Layout();
     };
@@ -1016,6 +1018,8 @@ void MainFrame::update_layout()
         m_tabpanel->InsertPage(tp3DEditor, m_plater, _L("Prepare"), std::string("tab_3d_active"), std::string("tab_3d_active"), false);
         m_tabpanel->InsertPage(tpPreview, m_plater, _L("Preview"), std::string("tab_preview_active"), std::string("tab_preview_active"), false);
         m_main_sizer->Add(m_tabpanel, 1, wxEXPAND | wxTOP, 0);
+        m_main_sizer->Add(m_prepare_action_bar, 0, wxEXPAND);
+        show_option(m_tabpanel->GetSelection() == tp3DEditor);
 
         m_tabpanel->Bind(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, [this](wxCommandEvent& evt)
         {
@@ -1233,28 +1237,50 @@ void MainFrame::update_title_colour_after_set_title()
 
 void MainFrame::show_option(bool show)
 {
-    if (!this) { return; }
-    if (!show) {
-        if (m_slice_btn->IsShown()) {
-            m_slice_btn->Hide();
-            m_print_btn->Hide();
-            m_slice_option_btn->Hide();
-            m_print_option_btn->Hide();
-            split_line_icon->Hide();
-            expand_program_holder->Hide();
-            Layout();
-        }
-    } else {
-        if (!m_slice_btn->IsShown()) {
-            m_slice_btn->Show();
-            m_print_btn->Show();
-            m_slice_option_btn->Show();
-            m_print_option_btn->Show();
-            split_line_icon->Show();
-            expand_program_holder->Show();
-            Layout();
-        }
+    if (!m_prepare_action_bar)
+        return;
+
+    const bool should_show = show && m_layout == ESettingsLayout::Old;
+    if (m_prepare_action_bar->IsShown() == should_show)
+        return;
+
+    m_prepare_action_bar->Show(should_show);
+    if (m_main_sizer)
+        m_main_sizer->Layout();
+    Layout();
+}
+
+void MainFrame::update_prepare_action_bar_style()
+{
+    if (!m_prepare_action_bar || !m_prepare_action_bar_divider)
+        return;
+
+    const int bar_height = FromDIP(MD3::Metrics::prepare_actions_height);
+    const int divider_height = std::max(1, FromDIP(1));
+
+    m_prepare_action_bar->SetMinSize(wxSize(-1, bar_height));
+    m_prepare_action_bar->SetMaxSize(wxSize(-1, bar_height));
+    m_prepare_action_bar->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+
+    m_prepare_action_bar_divider->SetMinSize(wxSize(-1, divider_height));
+    m_prepare_action_bar_divider->SetMaxSize(wxSize(-1, divider_height));
+    m_prepare_action_bar_divider->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+
+    if (split_line_icon) {
+        split_line_icon->SetBitmap(create_scaled_bitmap("topbar_line", m_prepare_action_bar, 22));
+        split_line_icon->SetMinSize(wxSize(FromDIP(3), FromDIP(22)));
     }
+
+    // wxSizer borders are pixel values, so refresh the horizontal inset when
+    // the window crosses monitors with different DPI scales.
+    if (wxSizer* sizer = m_prepare_action_bar->GetSizer()) {
+        if (wxSizerItem* content = sizer->GetItem(static_cast<size_t>(1)))
+            content->SetBorder(FromDIP(MD3::Metrics::comfortable.padding));
+        sizer->Layout();
+    }
+
+    m_prepare_action_bar->Refresh(false);
+    m_prepare_action_bar_divider->Refresh(false);
 }
 
 void MainFrame::init_tabpanel()
@@ -1262,8 +1288,18 @@ void MainFrame::init_tabpanel()
     // wxNB_NOPAGETHEME: Disable Windows Vista theme for the Notebook background. The theme performance is terrible on Windows 10
     // with multiple high resolution displays connected.
    // BBS
-    wxBoxSizer* side_tools = create_side_tools();
-    m_tabpanel = new Notebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, side_tools, wxNB_TOP | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
+    m_prepare_action_bar = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+    m_prepare_action_bar_divider = new wxPanel(m_prepare_action_bar, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+    m_side_tools = create_side_tools(m_prepare_action_bar);
+
+    auto* action_bar_sizer = new wxBoxSizer(wxVERTICAL);
+    action_bar_sizer->Add(m_prepare_action_bar_divider, 0, wxEXPAND);
+    action_bar_sizer->Add(m_side_tools, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(MD3::Metrics::comfortable.padding));
+    m_prepare_action_bar->SetSizer(action_bar_sizer);
+    update_prepare_action_bar_style();
+    m_prepare_action_bar->Hide();
+
+    m_tabpanel = new Notebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, nullptr, wxNB_TOP | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
     m_tabpanel->SetBackgroundColour(ThemeColor::White);
 
 #ifndef __WXOSX__ // Don't call SetFont under OSX to avoid name cutting in ObjectList
@@ -1396,6 +1432,7 @@ void MainFrame::init_tabpanel()
                 m_param_panel->OnActivate();
             }
         }
+
         //else if (panel == m_param_panel)
         //    m_param_panel->OnActivate();
         else if (panel == m_monitor) {
@@ -1416,6 +1453,11 @@ void MainFrame::init_tabpanel()
             m_web_device->NavigateTo("/filament_manager", /*re_init=*/true);
 #endif
         }
+
+        // The primary Slice/Print actions belong to the Prepare workflow. Keep
+        // the entire bar in sync with the selected page so programmatic tab
+        // changes and layout rebuilds cannot leave individual controls behind.
+        show_option(sel == tp3DEditor);
 #if defined(__WXOSX__)
         // macOS root cause fix: suspend the Filament Manager WKWebView whenever it
         // is not the visible tab. Its live React SPA, if left mounted in a hidden
@@ -1442,23 +1484,6 @@ void MainFrame::init_tabpanel()
         )
             panel->SetFocus();
 #endif
-        /*switch (sel) {
-        case TabPosition::tpHome:
-            show_option(false);
-            break;
-        case TabPosition::tp3DEditor:
-            show_option(true);
-            break;
-        case TabPosition::tpPreview:
-            show_option(true);
-            break;
-        case TabPosition::tpMonitor:
-            show_option(false);
-            break;
-        default:
-            show_option(false);
-            break;
-        }*/
     });
 
     if (wxGetApp().is_editor()) {
@@ -1468,7 +1493,7 @@ void MainFrame::init_tabpanel()
             select_tab(MainFrame::tpHome);
             m_webview->load_url(url);
         });
-        m_tabpanel->AddPage(m_webview, "", "tab_home_active", "tab_home_active", false);
+        m_tabpanel->AddPage(m_webview, _L("Home"), "tab_home_active", "tab_home_active", false);
         m_tabpanel->SetPageToolTip(tpHome, _L("Home"));
         m_param_panel = new ParamsPanel(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBK_LEFT | wxTAB_TRAVERSAL);
     }
@@ -1917,15 +1942,15 @@ bool MainFrame::can_reslice() const
     return (m_plater != nullptr) && !m_plater->model().objects.empty();
 }
 
-wxBoxSizer* MainFrame::create_side_tools()
+wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 {
     enable_multi_machine = wxGetApp().is_enable_multi_machine();
     int em = em_unit();
     wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 
     /*helio*/
-    split_line_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("topbar_line", this, 22), wxDefaultPosition, wxSize(FromDIP(3), FromDIP(22)), 0);
-    expand_program_holder = new ExpandButtonHolder(this);
+    split_line_icon = new wxStaticBitmap(parent, wxID_ANY, create_scaled_bitmap("topbar_line", parent, 22), wxDefaultPosition, wxSize(FromDIP(3), FromDIP(22)), 0);
+    expand_program_holder = new ExpandButtonHolder(parent);
     expand_program_holder->addExpandButton(expand_helio_id, "helio_icon_topbar");
     expand_program_holder->addExpandButton(expand_program_id, "expand_program");
     expand_program_holder->Bind(wxEXPAND_LEFT_DOWN, [=](const wxCommandEvent& e) {
@@ -1960,8 +1985,8 @@ wxBoxSizer* MainFrame::create_side_tools()
     m_slice_select = eSlicePlate;
     m_print_select = ePrintPlate;
 
-    auto slice_panel = new wxPanel(this,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxTRANSPARENT_WINDOW);
-    auto print_panel = new wxPanel(this,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxTRANSPARENT_WINDOW);
+    auto slice_panel = new wxPanel(parent,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxTRANSPARENT_WINDOW);
+    auto print_panel = new wxPanel(parent,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxTRANSPARENT_WINDOW);
 
     m_slice_btn = new SideButton(slice_panel, _L("Slice plate"), "");
     m_slice_option_btn = new SideButton(slice_panel, "", "sidebutton_dropdown", 0, FromDIP(14));
@@ -1986,9 +2011,9 @@ wxBoxSizer* MainFrame::create_side_tools()
     sizer->Add(FromDIP(4), 0, 0, 0, 0);
     sizer->Add(split_line_icon, 0, wxALIGN_CENTER, 0);
     sizer->Add(FromDIP(6), 0, 0, 0, 0);
-    sizer->Add(slice_panel);
+    sizer->Add(slice_panel, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(FromDIP(8), 0, 0, 0, 0);
-    sizer->Add(print_panel);
+    sizer->Add(print_panel, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(FromDIP(4), 0, 0, 0, 0);
 
     sizer->Layout();
@@ -2001,12 +2026,29 @@ wxBoxSizer* MainFrame::create_side_tools()
             return;
         }
 #endif
-        wxPoint pos = m_slice_btn->ClientToScreen(wxPoint(0, 0));
-        pos.y += m_slice_btn->GetRect().height * 1.25;
-        pos.x -= (m_slice_option_btn->GetRect().width + FromDIP(380) * 0.6);
         auto curr_plate = this->m_plater->get_partplate_list().get_curr_plate();
-        m_filament_group_popup->SetPosition(pos);
+
+        // This popup used to sit below the navigation row. The action bar is
+        // now at the bottom of the window, so anchor the popup above the Slice
+        // control and clamp it to the active display before and after it refits.
+        auto position_popup = [this]() {
+            const wxSize popup_size = m_filament_group_popup->GetSize();
+            wxPoint pos = m_slice_btn->ClientToScreen(wxPoint(0, 0));
+            pos.x -= m_slice_option_btn->GetSize().x + FromDIP(228);
+            pos.y -= popup_size.y + FromDIP(8);
+
+            const wxRect display_area = wxDisplay(m_slice_btn).GetClientArea();
+            pos.x = std::max(display_area.x,
+                             std::min(pos.x, display_area.GetRight() - popup_size.x + 1));
+            pos.y = std::max(display_area.y,
+                             std::min(pos.y, display_area.GetBottom() - popup_size.y + 1));
+            m_filament_group_popup->SetPosition(pos);
+        };
+
+        position_popup();
         m_filament_group_popup->tryPopup(m_plater, curr_plate, m_slice_select == eSliceAll);
+        if (m_filament_group_popup->IsShown())
+            position_popup();
     };
 
 #ifndef __linux__
@@ -2614,12 +2656,12 @@ void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
     m_tabpanel->Rescale();
 
     update_side_button_style();
-
     m_slice_btn->Rescale();
     m_print_btn->Rescale();
     m_slice_option_btn->Rescale();
     m_print_option_btn->Rescale();
     expand_program_holder->msw_rescale();
+    update_prepare_action_bar_style();
 
     // update Plater
     wxGetApp().plater()->msw_rescale();
@@ -2678,6 +2720,8 @@ void MainFrame::on_sys_color_changed()
 
 #ifdef __WXMSW__
     wxGetApp().UpdateDarkUI(m_tabpanel);
+    if (m_prepare_action_bar)
+        wxGetApp().UpdateDarkUI(m_prepare_action_bar);
  //   m_statusbar->update_dark_ui();
 #ifdef _MSW_DARK_MODE
     // update common mode sizer
@@ -2690,6 +2734,7 @@ void MainFrame::on_sys_color_changed()
     if (m_topbar)
         m_topbar->Rescale();
     m_tabpanel->Rescale();
+    update_prepare_action_bar_style();
     m_param_panel->msw_rescale();
 
     // update Plater

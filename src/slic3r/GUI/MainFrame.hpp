@@ -145,7 +145,8 @@ class MainFrame : public DPIFrame
     bool can_reslice() const;
 
     // BBS
-    wxBoxSizer* create_side_tools();
+    wxBoxSizer* create_side_tools(wxWindow* parent);
+    void        update_prepare_action_bar_style();
 
     // MenuBar items changeable in respect to printer technology
     enum MenuItems
@@ -393,6 +394,8 @@ public:
     //wxBookCtrlBase*       m_tabpanel { nullptr };
     Notebook*             m_tabpanel{ nullptr };
     wxBoxSizer*           m_side_tools{ nullptr };
+    wxPanel*              m_prepare_action_bar{ nullptr };
+    wxPanel*              m_prepare_action_bar_divider{ nullptr };
     ParamsPanel*          m_param_panel{ nullptr };
     ParamsDialog*         m_param_dialog{ nullptr };
     //BBS
