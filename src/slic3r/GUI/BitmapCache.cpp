@@ -573,11 +573,15 @@ bool BitmapCache::load_from_svg_file_change_color(const std::string &filename, u
     if (image == nullptr) {
         return false;
     }
-    char temp_color[8];
-    strncpy(temp_color, hexColor, 7);
-    temp_color[7]             = '\0';
-    unsigned int change_color = nsvg__parseColorHex(temp_color);
-    change_color |= (unsigned int) (1.0f * 255) << 24; // opacity
+    unsigned char rgba[4];
+    if (!parse_color4(hexColor, rgba)) {
+        nsvgDelete(image);
+        return false;
+    }
+    const unsigned int change_color = static_cast<unsigned int>(rgba[0]) |
+                                      (static_cast<unsigned int>(rgba[1]) << 8) |
+                                      (static_cast<unsigned int>(rgba[2]) << 16) |
+                                      (static_cast<unsigned int>(rgba[3]) << 24);
     unsigned int green_color = 4282560000;
     for (NSVGshape* shape = image->shapes; shape != nullptr; shape = shape->next) {
         // find green color

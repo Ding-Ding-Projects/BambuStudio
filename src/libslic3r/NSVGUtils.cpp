@@ -531,7 +531,7 @@ HealedExPolygons stroke_to_expolygons(const LinesPath &lines_path, const NSVGsha
         Polylines dashes;
         for (const Slic3r::Polyline &polyline : lines_path.polylines)
             polylines_append(dashes, to_dashes(polyline, params));
-        for (const Polygon &polygon : lines_path.polygons)
+        for (const Slic3r::Polygon &polygon : lines_path.polygons)
             polylines_append(dashes, to_dashes(to_polyline(polygon), params));
         result = offset(dashes, stroke_width / 2, join_type, mitter, end_type);
     } else {
