@@ -181,7 +181,11 @@ SET PS_CURRENT_STEP=environment
 @ECHO ** Generator:    %PS_CMAKE_GENERATOR%
 @ECHO ** Using Microsoft Visual Studio installation found at:
 @ECHO **  %MSVC_DIR%
-CALL "%MSVC_DIR%\Common7\Tools\vsdevcmd.bat" -arch=%PS_ARCH% -host_arch=%PS_ARCH_HOST% -app_platform=Desktop
+REM PS_WINSDK optionally pins the Windows SDK (e.g. when a newer partial SDK
+REM install would otherwise be selected and fail with MSB8037).
+SET PS_VSDEVCMD_WINSDK=
+IF DEFINED PS_WINSDK SET PS_VSDEVCMD_WINSDK=-winsdk=%PS_WINSDK%
+CALL "%MSVC_DIR%\Common7\Tools\vsdevcmd.bat" -arch=%PS_ARCH% -host_arch=%PS_ARCH_HOST% -app_platform=Desktop %PS_VSDEVCMD_WINSDK%
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 REM Need to reset the echo state after vsdevcmd.bat clobbers it.
 @IF "%PS_ECHO_ON%" NEQ "" (echo on) ELSE (echo off)
