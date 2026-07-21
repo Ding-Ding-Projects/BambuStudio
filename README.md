@@ -46,8 +46,8 @@ Device plug-in boundary, and local Git-backed Version History dialog.
 
 The images below are deterministic captures of the separate [`ui-md3`](ui-md3/) interactive design
 reference, not screenshots of the native application. Select an image to open the same reference
-screen, theme, density, accent, and language state. Verified native captures will be added after the
-current Release build and desktop smoke pass.
+screen, theme, density, accent, and language state. The verified installed-app captures are the
+separate gallery above.
 
 **Prepare · light theme · English**
 
