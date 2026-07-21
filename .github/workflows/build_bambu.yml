@@ -259,7 +259,8 @@ jobs:
             -PayloadDir '${{ github.workspace }}\install-dir' `
             -OutputPath '${{ github.workspace }}\BambuStudioMD3.cdx.json' `
             -Version $matches[1] `
-            -Commit '${{ github.sha }}'
+            -Commit '${{ github.sha }}' `
+            -Repository '${{ github.repository }}'
 
       # - name: Create installer Win
       #   if: inputs.os == 'windows-latest'

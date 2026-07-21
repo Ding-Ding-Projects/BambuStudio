@@ -12,7 +12,12 @@ param(
 
     [Parameter(Mandatory)]
     [ValidatePattern('^[0-9a-fA-F]{40}$')]
-    [string] $Commit
+    [string] $Commit,
+
+    # GitHub owner/name identity the SBOM binds itself to. Must match the
+    # repository the release validation runs in (GITHUB_REPOSITORY).
+    [ValidatePattern('^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')]
+    [string] $Repository = 'Ding-Ding-Projects/BambuStudio'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -85,14 +90,14 @@ $bom = [ordered]@{
         }
         component = [ordered]@{
             type = 'application'
-            group = 'codingmachineedge'
+            group = ($Repository -split '/')[0]
             name = 'Bambu Studio MD3 Windows payload'
             version = $Version
-            'bom-ref' = "pkg:github/codingmachineedge/BambuStudio@$Commit"
+            'bom-ref' = "pkg:github/$Repository@$Commit"
             externalReferences = @(
                 [ordered]@{
                     type = 'vcs'
-                    url = "https://github.com/codingmachineedge/BambuStudio/tree/$Commit"
+                    url = "https://github.com/$Repository/tree/$Commit"
                 }
             )
         }
