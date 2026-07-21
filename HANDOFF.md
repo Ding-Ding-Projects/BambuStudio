@@ -13,16 +13,24 @@ release success is claimed.
 
 - Repository: `https://github.com/Ding-Ding-Projects/BambuStudio.git`
 - Branch: `master`.
-- `origin/master`: `c700c91b0` — "Tolerate 403 on the immutable-release settings probe".
-- Local `master` HEAD: `8d727d49d` — "Complete MD3 migration coverage, add model preview and dockable
-  sidebar". **Not yet pushed** to `origin/master`.
+- `origin/master` and local `master` are in sync at `ec631dfb2` — "Fix draft-release lookup and
+  refresh project documentation". Everything described in this handoff is pushed.
 - Key migration commits (all pushed): `23688c23d` (MD3 token parity with the vendored kit),
   `49a7c4d46` (UI to MD3 theme tokens and fonts), `2f968cbc1` (GUI colors to MD3 tokens),
   `2cebf9091` (Roboto Mono and mono type helpers), `e4b468c5f` (GUI colors to MD3 semantic tokens),
-  `76db0d5c1` (bind the Windows SBOM to the repository identity).
-- The working tree carries an unrelated generated change,
-  `src/slic3r/GUI/DeviceWeb/device_page/src/routeTree.gen.ts`. Preserve it as-is; do not fold it into
-  the migration commits.
+  `76db0d5c1` (SBOM repository identity), `c700c91b0` (immutable-probe 403 tolerance),
+  `8d727d49d` (completion sweep + model preview + dockable sidebar), `ec631dfb2` (draft-release
+  lookup fix + docs).
+- The unrelated generated change to
+  `src/slic3r/GUI/DeviceWeb/device_page/src/routeTree.gen.ts` lives only in the detached build
+  worktree under `.claude/worktrees/`, not in this checkout. Preserve it there; do not fold it into
+  migration commits.
+- Merged and deleted task branches (ancestry proven against `origin/master` before deletion):
+  `claude/bambu-studio-ui-migration-38d0ef`, `codex/build-and-test-lowlevel-mcp`,
+  `codex/native-material-validation`, `codex/auto-install-build-dependencies`,
+  `remote_branch_v12`. Retained: upstream `v1.x`/`release/*` branches and four historic branches
+  with unmerged work that cannot be integrated safely (`SaltWei-patch-1`,
+  `copilot/fix-ams-spinning-icon-issue`, `feature/libnoise-deps`, `bambu-pomfret/web-conflict`).
 
 ## Local build and tests
 
