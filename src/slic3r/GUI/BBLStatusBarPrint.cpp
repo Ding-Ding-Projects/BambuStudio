@@ -39,6 +39,15 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
     m_status_text->SetMinSize(wxSize(m_self->FromDIP(440), m_self->FromDIP(26)));
     m_status_text->SetFont(::Label::Body_13);
 
+    // Outlined "white" cancel button. Its fill is expressed as a monotonic
+    // surface-container state layer -- Lowest (Normal) -> High (Hovered) ->
+    // Highest (Pressed) -- and its border uses the Outline role. This
+    // interaction-ladder mapping intentionally supersedes the legacy-sweep
+    // sec. 2f per-literal table (#EEEEEE->SurfaceContainer, #CECECE->OutlineVariant,
+    // #262E30->OnSurface) for this control: a surface ladder is the idiomatic MD3
+    // state layer for a fill (OutlineVariant is a border role, wrong for a fill),
+    // and Outline is the correct border role -- an OnSurface border would render
+    // as a harsh near-white outline in dark mode.
     StateColor btn_bt_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Disabled),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Pressed),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),

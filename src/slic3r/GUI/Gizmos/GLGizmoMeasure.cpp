@@ -4,6 +4,7 @@
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/Gizmos/GizmoObjectManipulation.hpp"
 #include "slic3r/GUI/OpenGLManager.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/Utils/UndoRedo.hpp"
 
 #include "libslic3r/PresetBundle.hpp"
@@ -21,6 +22,23 @@
 
 namespace Slic3r {
 namespace GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+// Blend a base MD3 colour toward its "on" colour to approximate a Material
+// state layer (hover ~8%, pressed ~12%); alpha follows the base colour.
+inline ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
+{
+    return ImVec4(base.x + (over.x - base.x) * t, base.y + (over.y - base.y) * t,
+                  base.z + (over.z - base.z) * t, base.w);
+}
+} // namespace
 std::string GLGizmoMeasure::format_double(double value)
 {
     char buf[1024];
@@ -2040,13 +2058,13 @@ void GLGizmoMeasure::show_face_face_assembly_common() {
         m_imgui->disabled_begin(!(action.can_set_to_center_coincidence));
         {
             ImGui::PushItemWidth(set_to_center_coincidence_size);
-            ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(0 / 255.0, 174 / 255.0, 66 / 255.0, 1.0) : ImVec4(0 / 255.0, 174 / 255.0, 66 / 255.0, 1.0));
+            ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::Primary, m_is_dark_mode)); // filled primary CTA
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-                                  m_is_dark_mode ? ImVec4(50 / 255.0f, 238 / 255.0f, 61 / 255.0f, 1.00f) : ImVec4(50 / 255.0f, 238 / 255.0f, 61 / 255.0f, 1.00f));
+                                  md3_state_layer(md3_imvec4(MD3::Role::Primary, m_is_dark_mode), md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode), 0.08f));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive,
-                                  m_is_dark_mode ? ImVec4(206 / 255.0f, 206 / 255.0f, 206 / 255.0f, 1.00f) : ImVec4(206 / 255.0f, 206 / 255.0f, 206 / 255.0f, 1.00f));
+                                  md3_state_layer(md3_imvec4(MD3::Role::Primary, m_is_dark_mode), md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode), 0.12f));
             ImGui::PushStyleColor(ImGuiCol_Text,
-                                  m_is_dark_mode ? ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.00f) : ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.00f));
+                                  md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode));
             if (m_imgui->button(_L("Center coincidence"))) {
                 set_to_center_coincidence(m_same_model_object);
                 update_measurement_result();

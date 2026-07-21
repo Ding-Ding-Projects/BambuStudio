@@ -14,24 +14,21 @@ EVT_PAINT(TabButton::paintEvent)
 
 END_EVENT_TABLE()
 
-static wxColour BORDER_HOVER_COL = wxColour(0, 174, 66);
-
-const static wxColour TAB_BUTTON_BG    = wxColour("#FEFFFF");
-const static wxColour TAB_BUTTON_SEL   = wxColour(219, 253, 213, 255);
-
 TabButton::TabButton()
     : paddingSize(43, 16)
-    , text_color(*wxBLACK)
+    , text_color(StateColor::semantic(MD3::Role::OnSurface))
 {
+    // MD3 NavItem: selected pill = secondary-container; idle sits on the
+    // lowest surface. Hover promotes the border to Primary (MD3 signature).
     background_color = StateColor(
-        std::make_pair(TAB_BUTTON_SEL, (int) StateColor::Checked),
-        std::make_pair(wxColour("#FEFFFF"), (int) StateColor::Hovered),
-        std::make_pair(wxColour("#FEFFFF"), (int) StateColor::Normal));
+        std::make_pair(StateColor::semantic(MD3::Role::SecondaryContainer), (int) StateColor::Checked),
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerLowest), (int) StateColor::Hovered),
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerLowest), (int) StateColor::Normal));
 
     border_color = StateColor(
-        std::make_pair(wxColour("#FEFFFF"), (int) StateColor::Checked),
-        std::make_pair(BORDER_HOVER_COL, (int) StateColor::Hovered),
-        std::make_pair(wxColour("#FEFFFF"), (int)StateColor::Normal));
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerLowest), (int) StateColor::Checked),
+        std::make_pair(StateColor::semantic(MD3::Role::Primary), (int) StateColor::Hovered),
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerLowest), (int)StateColor::Normal));
 }
 
 TabButton::TabButton(wxWindow *parent, wxString text, ScalableBitmap &bmp, long style, int iconSize)

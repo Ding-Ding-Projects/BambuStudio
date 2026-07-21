@@ -113,6 +113,17 @@ void ButtonsListCtrl::StyleButton(Button* button, bool selected)
     // Surface, hover lifts to SurfaceContainerLow, and there is no distinct
     // pressed fill (per kit). Selection is carried by the primary text colour
     // plus the active indicator, not a filled tab.
+    //
+    // This is the intended MD3 secondary-tab spec, not a behaviour-preserving
+    // port, so two legacy interaction states are deliberately absent:
+    //  - No Pressed fill entry. While a tab is pressed it is also hovered, and
+    //    StateColor::colorForStates() matches the Hovered entry as a subset of
+    //    Pressed|Hovered, so the SurfaceContainerLow hover fill persists through
+    //    the press -- the omission is not a loss of feedback, only of a distinct
+    //    stronger pressed tint.
+    //  - Inactive tab labels stay OnSurfaceVariant across all states (no Hovered
+    //    label-darken). Hover on an inactive tab is signalled by the background
+    //    lift above rather than by darkening the label.
     const wxColour surface = StateColor::semantic(MD3::Role::Surface);
     const StateColor background(
         std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Hovered},

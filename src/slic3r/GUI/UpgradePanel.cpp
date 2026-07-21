@@ -19,9 +19,6 @@
 namespace Slic3r {
 namespace GUI {
 
-static const wxColour TEXT_NORMAL_CLR = wxColour(0, 174, 66);
-static const wxColour TEXT_FAILED_CLR = wxColour(255, 111, 0);
-
 static const std::unordered_map<wxString, wxString> ACCESSORY_DISPLAY_STR = {
     {"N3F", "AMS 2 PRO"},
     {"N3S", "AMS HT"},
@@ -47,7 +44,7 @@ enum FIRMWARE_STASUS
 MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name)
     :wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(wxColour(255, 255, 255));
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     init_bitmaps();
 
@@ -117,7 +114,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 
     m_staticText_beta_version = new wxStaticText(this, wxID_ANY, "Beta", wxDefaultPosition, wxDefaultSize, 0);
-    m_staticText_beta_version->SetForegroundColour("#778899");
+    m_staticText_beta_version->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_staticText_beta_version->Wrap(-1);
     m_staticText_beta_version->Hide();
 
@@ -136,7 +133,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_main_left_sizer->Add(m_ota_sizer, 0, wxEXPAND, 0);
 
     m_staticline = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_staticline->SetBackgroundColour(wxColour(206,206,206));
+    m_staticline->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_staticline->Show(false);
     m_main_left_sizer->Add(m_staticline, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
@@ -196,7 +193,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     show_extra_ams(false, true);
 
     m_staticline2 = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_staticline2->SetBackgroundColour(wxColour(206, 206, 206));
+    m_staticline2->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_left_sizer->Add(m_staticline2, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     // ext
@@ -238,11 +235,14 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_main_right_sizer->Add(0, FromDIP(50), 0, wxEXPAND, FromDIP(5));
 
     m_button_upgrade_firmware = new Button(this, _L("Update firmware"));
-    StateColor btn_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled), std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                      std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Enabled),
-                      std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor btn_bd(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Enabled));
-    StateColor btn_text(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled));
+    StateColor btn_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
+                      std::pair<wxColour, int>(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Enabled),
+                      std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Normal));
+    StateColor btn_bd(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Enabled));
+    StateColor btn_text(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Disabled),
+                        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
+                        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
+                        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device), StateColor::Enabled));
     m_button_upgrade_firmware->SetBackgroundColor(btn_bg);
     m_button_upgrade_firmware->SetBorderColor(btn_bd);
     m_button_upgrade_firmware->SetTextColor(btn_text);
@@ -266,6 +266,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_upgrading_sizer->Add(m_upgrade_progress, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
     m_staticText_upgrading_percent = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize);
+    m_staticText_upgrading_percent->SetFont(Label::Mono_13);
     m_staticText_upgrading_percent->Wrap(-1);
     m_upgrading_sizer->Add(m_staticText_upgrading_percent, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
@@ -281,10 +282,10 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
 
     m_staticText_release_note = new wxStaticText(this, wxID_ANY, _L("Release Note"), wxDefaultPosition, wxDefaultSize);
     m_staticText_release_note->Wrap(-1);
-    m_staticText_release_note->SetForegroundColour(wxColour(0x1F,0x8E,0xEA));
+    m_staticText_release_note->SetForegroundColour(ThemeColor::Link);
 
     auto line_release_note = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line_release_note->SetBackgroundColour(wxColour(0x1F, 0x8E, 0xEA));
+    line_release_note->SetBackgroundColour(ThemeColor::Link);
 
     sizer_release_note->Add(m_staticText_release_note, 0, wxALL, 0);
     sizer_release_note->Add(line_release_note, 1, wxEXPAND | wxALL, 0);
@@ -313,7 +314,7 @@ void MachineInfoPanel::createNozzleRackWidgets(wxBoxSizer *main_left_sizer)
 {
     // horizontal line above
     m_nozzle_rack_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_nozzle_rack_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_nozzle_rack_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_nozzle_rack_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_nozzle_rack_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -331,11 +332,11 @@ void MachineInfoPanel::createNozzleRackWidgets(wxBoxSizer *main_left_sizer)
     content_sizer->Add(m_nozzle_rack_text, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, FromDIP(50));
 
       m_nozzle_rack_update_btn = new Button(this, _L("Info"));
-    StateColor btn_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled), std::pair<wxColour, int>(wxColour(200, 200, 200), StateColor::Pressed),
-                      std::pair<wxColour, int>(wxColour(240, 240, 240), StateColor::Hovered), std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled),
-                      std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
-    StateColor btn_bd(std::pair<wxColour, int>(wxColour(200, 200, 200), StateColor::Disabled), std::pair<wxColour, int>(wxColour(150, 150, 150), StateColor::Enabled));
-    StateColor btn_text(std::pair<wxColour, int>(wxColour(150, 150, 150), StateColor::Disabled), std::pair<wxColour, int>(wxColour(0, 0, 0), StateColor::Enabled));
+    StateColor btn_bg(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                      std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                      std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    StateColor btn_bd(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::Grey500, StateColor::Enabled));
+    StateColor btn_text(std::pair<wxColour, int>(ThemeColor::Grey500, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
     m_nozzle_rack_update_btn->SetBackgroundColor(btn_bg);
     m_nozzle_rack_update_btn->SetBorderColor(btn_bd);
     m_nozzle_rack_update_btn->SetTextColor(btn_text);
@@ -354,7 +355,7 @@ void MachineInfoPanel::createNozzleRackWidgets(wxBoxSizer *main_left_sizer)
 wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
 {
     auto caption_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    caption_panel->SetBackgroundColour(wxColour(248, 248, 248));
+    caption_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     caption_panel->SetMinSize(wxSize(FromDIP(925), FromDIP(36)));
 
     wxBoxSizer *m_caption_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -367,7 +368,7 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
     m_caption_sizer->Add(m_upgrade_status_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
     m_caption_text = new wxStaticText(caption_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize);
-    m_caption_text->SetForegroundColour("#262E30");
+    m_caption_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_caption_text->Wrap(-1);
     m_caption_sizer->Add(m_caption_text, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
@@ -381,7 +382,7 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
 void MachineInfoPanel::createAirPumpWidgets(wxBoxSizer* main_left_sizer)
 {
     m_air_pump_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_air_pump_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_air_pump_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_air_pump_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
     m_air_pump_img->SetBitmap(m_img_air_pump.bmp());
@@ -406,7 +407,7 @@ void MachineInfoPanel::createAirPumpWidgets(wxBoxSizer* main_left_sizer)
 void MachineInfoPanel::createCuttingWidgets(wxBoxSizer* main_left_sizer)
 {
     m_cutting_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_cutting_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_cutting_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_cutting_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_cutting_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -434,7 +435,7 @@ void MachineInfoPanel::createExhaustFan(wxBoxSizer *main_left_sizer)
 {
 
     m_exhaustfan_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_exhaustfan_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_exhaustfan_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_exhaustfan_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_exhaustfan_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -461,7 +462,7 @@ void MachineInfoPanel::createExhaustFan(wxBoxSizer *main_left_sizer)
 void MachineInfoPanel::createLaserWidgets(wxBoxSizer* main_left_sizer)
 {
     m_laser_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_laser_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_laser_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_laser_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_lazer_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -489,7 +490,7 @@ void MachineInfoPanel::createLaserWidgets(wxBoxSizer* main_left_sizer)
 void MachineInfoPanel::createExtinguishWidgets(wxBoxSizer* main_left_sizer)
 {
     m_extinguish_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_extinguish_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_extinguish_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_extinguish_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_extinguish_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -516,7 +517,7 @@ void MachineInfoPanel::createExtinguishWidgets(wxBoxSizer* main_left_sizer)
 void MachineInfoPanel::createRotaryWidgets(wxBoxSizer *main_left_sizer)
 {
     m_rotary_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_rotary_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_rotary_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_rotary_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_rotary_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -548,7 +549,7 @@ void MachineInfoPanel::createRotaryWidgets(wxBoxSizer *main_left_sizer)
 void MachineInfoPanel::createAmshubWidgets(wxBoxSizer *main_left_sizer)
 {
     m_amshub_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_amshub_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_amshub_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_amshub_line_above, 0,wxEXPAND | wxLEFT, FromDIP(40));
 
     m_amshub_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -1327,13 +1328,13 @@ void MachineInfoPanel::show_status(int status, std::string upgrade_status_str)
             m_staticText_upgrading_info->SetLabel(_L("Updating"));
         }
 
-        m_staticText_upgrading_info->SetForegroundColour(TEXT_NORMAL_CLR);
-        m_staticText_upgrading_percent->SetForegroundColour(TEXT_NORMAL_CLR);
+        m_staticText_upgrading_info->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+        m_staticText_upgrading_percent->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
         m_staticText_upgrading_percent->Show();
     } else if (status == (int) DevFirmwareUpgradeState::UpgradingFinished) {
         if (upgrade_status_str == "UPGRADE_FAIL") {
             m_staticText_upgrading_info->SetLabel(_L("Updating failed"));
-            m_staticText_upgrading_info->SetForegroundColour(TEXT_FAILED_CLR);
+            m_staticText_upgrading_info->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
             for (size_t i = 0; i < m_upgrading_sizer->GetItemCount(); i++) { m_upgrading_sizer->Show(true); }
             m_button_upgrade_firmware->Disable();
             m_staticText_upgrading_info->Show();
@@ -1344,8 +1345,8 @@ void MachineInfoPanel::show_status(int status, std::string upgrade_status_str)
             m_staticText_upgrading_info->Show();
             for (size_t i = 0; i < m_upgrading_sizer->GetItemCount(); i++) { m_upgrading_sizer->Show(true); }
             m_button_upgrade_firmware->Disable();
-            m_staticText_upgrading_info->SetForegroundColour(TEXT_NORMAL_CLR);
-            m_staticText_upgrading_percent->SetForegroundColour(TEXT_NORMAL_CLR);
+            m_staticText_upgrading_info->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+            m_staticText_upgrading_percent->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
             m_staticText_upgrading_percent->Show();
             m_upgrade_retry_img->Hide();
         }
@@ -1449,7 +1450,7 @@ void MachineInfoPanel::show_amshub(bool show)
 void MachineInfoPanel::createFilaTrackSwitchWidgets(wxBoxSizer* main_left_sizer)
 {
     m_filatrack_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_filatrack_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_filatrack_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_filatrack_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_filatrack_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -1612,7 +1613,7 @@ void MachineInfoPanel::on_show_release_note(wxMouseEvent &event)
 UpgradePanel::UpgradePanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style)
     :wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(wxColour(238, 238, 238));
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
     auto m_main_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -1805,17 +1806,17 @@ bool UpgradePanel::Show(bool show)
      m_staticText_ams_model_id->SetFont(Label::Head_14);
 
      m_staticText_ams = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ams->SetForegroundColour("#262E30");
+     m_staticText_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams->SetFont(Label::Head_14);
      m_staticText_ams->Wrap(-1);
 
      auto m_staticText_ams_sn = new wxStaticText(this, wxID_ANY, _L("Serial:"), wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ams_sn->SetForegroundColour("#262E30");
+     m_staticText_ams_sn->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams_sn->Wrap(-1);
      m_staticText_ams_sn->SetFont(Label::Head_14);
 
      m_staticText_ams_sn_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ams_sn_val->SetForegroundColour("#262E30");
+     m_staticText_ams_sn_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams_sn_val->Wrap(-1);
 
      wxBoxSizer *m_ams_ver_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -1830,15 +1831,15 @@ bool UpgradePanel::Show(bool show)
      auto m_staticText_ams_ver = new wxStaticText(this, wxID_ANY, _L("Version:"), wxDefaultPosition, wxDefaultSize, 0);
      m_staticText_ams_ver->Wrap(-1);
      m_staticText_ams_ver->SetFont(Label::Head_14);
-     m_staticText_ams_ver->SetForegroundColour("#262E30");
+     m_staticText_ams_ver->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_ams_ver_sizer->Add(m_staticText_ams_ver, 0, wxALL, FromDIP(5));
 
      m_staticText_ams_ver_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ams_ver_val->SetForegroundColour("#262E30");
+     m_staticText_ams_ver_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams_ver_val->Wrap(-1);
 
      m_staticText_beta_version = new wxStaticText(this, wxID_ANY, "Beta", wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_beta_version->SetForegroundColour("#778899");
+     m_staticText_beta_version->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_staticText_beta_version->Wrap(-1);
      m_staticText_beta_version->Hide();
 
@@ -1888,22 +1889,22 @@ bool UpgradePanel::Show(bool show)
 
 
      m_staticText_ext = new wxStaticText(this, wxID_ANY, _L("Model:"), wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ext->SetForegroundColour("#262E30");
+     m_staticText_ext->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext->Wrap(-1);
      m_staticText_ext->SetFont(Label::Head_14);
 
      m_staticText_ext_val = new wxStaticText(this, wxID_ANY, _L("Extension Board"), wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ext_val->SetForegroundColour("#262E30");
+     m_staticText_ext_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext_val->SetFont(Label::Head_14);
      m_staticText_ext_val->Wrap(-1);
 
      auto m_staticText_ext_sn = new wxStaticText(this, wxID_ANY, _L("Serial:"), wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ext_sn->SetForegroundColour("#262E30");
+     m_staticText_ext_sn->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext_sn->Wrap(-1);
      m_staticText_ext_sn->SetFont(Label::Head_14);
 
      m_staticText_ext_sn_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ext_sn_val->SetForegroundColour("#262E30");
+     m_staticText_ext_sn_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext_sn_val->Wrap(-1);
 
      wxBoxSizer* m_ext_ver_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -1916,11 +1917,11 @@ bool UpgradePanel::Show(bool show)
      m_staticText_ext_ver = new wxStaticText(this, wxID_ANY, _L("Version:"), wxDefaultPosition, wxDefaultSize, 0);
      m_staticText_ext_ver->Wrap(-1);
      m_staticText_ext_ver->SetFont(Label::Head_14);
-     m_staticText_ext_ver->SetForegroundColour("#262E30");
+     m_staticText_ext_ver->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_ext_ver_sizer->Add(m_staticText_ext_ver, 0, wxALL, FromDIP(5));
 
      m_staticText_ext_ver_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
-     m_staticText_ext_ver_val->SetForegroundColour("#262E30");
+     m_staticText_ext_ver_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext_ver_val->Wrap(-1);
 
      ext_sizer->Add(m_staticText_ext, 0, wxALIGN_RIGHT | wxALL, FromDIP(5));

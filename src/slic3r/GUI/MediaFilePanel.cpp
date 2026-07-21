@@ -32,7 +32,7 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
     , m_bmp_empty(this, "media_empty", 0)
     , m_machine("<null>")
 {
-    SetBackgroundColour(0xEEEEEE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     Hide();
 
     wxBoxSizer * sizer = new wxBoxSizer(wxVERTICAL);
@@ -43,7 +43,7 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
 
     // File type (left side of row 1)
     StateColor background(
-        std::make_pair(0xEEEEEE, (int) StateColor::Checked),
+        std::make_pair(ThemeColor::Grey250, (int) StateColor::Checked),
         std::make_pair(*wxLIGHT_GREY, (int) StateColor::Hovered),
         std::make_pair(*wxWHITE, (int) StateColor::Normal));
     m_type_panel = new ::StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
@@ -77,12 +77,12 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
     m_button_refresh->SetCanFocus(false);
     m_button_refresh->SetBorderWidth(0);
     m_button_refresh->SetBackgroundColor(StateColor(
-        std::make_pair(wxColour("#D9D9D9"), (int) StateColor::Pressed),
-        std::make_pair(wxColour("#E8E8E8"), (int) StateColor::Hovered),
-        std::make_pair(wxColour("#EEEEEE"), (int) StateColor::Normal)));
+        std::make_pair(ThemeColor::Grey350, (int) StateColor::Pressed),
+        std::make_pair(ThemeColor::Grey300, (int) StateColor::Hovered),
+        std::make_pair(ThemeColor::Grey250, (int) StateColor::Normal)));
     m_button_refresh->SetTextColor(StateColor(
-        std::make_pair(wxColour("#ACACAC"), (int) StateColor::Disabled),
-        std::make_pair(wxColour("#3B4446"), (int) StateColor::Normal)));
+        std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
+        std::make_pair(ThemeColor::TextSecondary, (int) StateColor::Normal)));
     m_button_refresh->Enable(false);
     top_sizer->Add(m_button_refresh, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 12);
 
@@ -102,15 +102,15 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
         b->SetPaddingSize({10, 6});
         b->SetCanFocus(false);
     }
-    m_button_delete->SetBorderColorNormal(wxColor("#FF6F00"));
-    m_button_delete->SetTextColorNormal(wxColor("#FF6F00"));
+    m_button_delete->SetBorderColorNormal(ThemeColor::Warning);
+    m_button_delete->SetTextColorNormal(ThemeColor::Warning);
     m_button_management->SetBorderWidth(0);
-    m_button_management->SetBackgroundColorNormal(wxColor("#00AE42"));
-    m_button_management->SetTextColorNormal(*wxWHITE);
+    m_button_management->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+    m_button_management->SetTextColorNormal(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device));
     m_button_management->Enable(false);
     m_button_select_all->SetBorderWidth(0);
-    m_button_select_all->SetBackgroundColorNormal(wxColor("#00AE42"));
-    m_button_select_all->SetTextColorNormal(*wxWHITE);
+    m_button_select_all->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+    m_button_select_all->SetTextColorNormal(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Device));
     m_button_select_all->Enable(false);
 
     wxBoxSizer *manage_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -128,8 +128,8 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
     wxBoxSizer *storage_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_storage_tab = new ::TabCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0);
-    m_storage_tab->SetBackgroundColor(wxColour("#EEEEEE"));
-    m_storage_tab->SetBorderColor(wxColour("#EEEEEE"));
+    m_storage_tab->SetBackgroundColor(ThemeColor::Grey250);
+    m_storage_tab->SetBorderColor(ThemeColor::Grey250);
     m_storage_tab->SetFont(Label::Body_14);
     m_storage_tab->SetMinSize({-1, 36 * em_unit(this) / 10});
     m_storage_tab->AppendItem(_L("External"));
@@ -156,9 +156,9 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
     for (auto b : {m_button_year, m_button_month, m_button_all}) {
         b->SetBackgroundColor(StateColor());
         b->SetTextColor(StateColor(
-            std::make_pair(0x3B4446, (int) StateColor::Checked),
+            std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Checked),
             std::make_pair(*wxLIGHT_GREY, (int) StateColor::Hovered),
-            std::make_pair(0xABACAC, (int) StateColor::Normal)
+            std::make_pair(ThemeColor::TextSecondary, (int) StateColor::Normal)
         ));
     }
     wxBoxSizer *time_sizer = new wxBoxSizer(wxHORIZONTAL);

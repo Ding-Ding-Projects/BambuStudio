@@ -416,7 +416,7 @@ CaliPresetTipsPanel::CaliPresetTipsPanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(wxColour(238, 238, 238));
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     this->SetMinSize(wxSize(MIN_CALIBRATION_PAGE_WIDTH, -1));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
@@ -579,12 +579,12 @@ void CalibrationPresetPage::create_selection_panel(wxWindow* parent)
     m_btn_sync = new Button(parent, "", "ams_nozzle_sync");
     m_btn_sync->SetToolTip(_L("Synchronize nozzle and AMS information"));
     m_btn_sync->SetCornerRadius(8);
-    StateColor btn_sync_bg_col(std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Normal));
-    StateColor btn_sync_bd_col(std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour("#EEEEEE"), StateColor::Normal));
+    StateColor btn_sync_bg_col(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                               std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Normal));
+    StateColor btn_sync_bd_col(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed),
+                               std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal));
     m_btn_sync->SetBackgroundColor(btn_sync_bg_col);
     m_btn_sync->SetBorderColor(btn_sync_bd_col);
     m_btn_sync->SetCanFocus(false);
@@ -965,7 +965,7 @@ void CalibrationPresetPage::create_filament_list_panel(wxWindow* parent)
     m_filament_list_tips = new Label(parent, get_filament_tips());
     m_filament_list_tips->Hide();
     m_filament_list_tips->SetFont(Label::Body_13);
-    m_filament_list_tips->SetForegroundColour(wxColour(145, 145, 145));
+    m_filament_list_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_filament_list_tips->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     panel_sizer->Add(m_filament_list_tips, 0, wxBOTTOM, FromDIP(10));
 
@@ -1143,7 +1143,7 @@ void CalibrationPresetPage::create_multi_extruder_filament_list_panel(wxWindow *
         _L("Tips for calibration material: \n- Materials that can share same hot bed temperature\n- Different filament brand and family(Brand = Bambu, Family = Basic, Matte)"));
     m_filament_list_tips->Hide();
     m_filament_list_tips->SetFont(Label::Body_13);
-    m_filament_list_tips->SetForegroundColour(wxColour(145, 145, 145));
+    m_filament_list_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_filament_list_tips->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     m_multi_extruder_ams_panel_sizer->Add(m_filament_list_tips, 0, wxBOTTOM, FromDIP(10));
 
@@ -1254,7 +1254,7 @@ void CalibrationPresetPage::create_page(wxWindow* parent)
     m_warning_panel->Hide();
 
     m_error_panel = new CaliPresetWarningPanel(parent);
-    m_error_panel->set_color(wxColour(230, 92, 92));
+    m_error_panel->set_color(StateColor::semantic(MD3::Role::Error));
 
     m_tips_panel = new CaliPresetTipsPanel(parent);
 
@@ -1336,7 +1336,7 @@ void CalibrationPresetPage::stripWhiteSpace(std::string& str)
 
 void CalibrationPresetPage::update_priner_status_msg(wxString msg, bool is_warning)
 {
-    auto colour = is_warning ? wxColour(0xFF, 0x6F, 0x00) : wxColour(0x6B, 0x6B, 0x6B);
+    auto colour = is_warning ? ThemeColor::Warning : StateColor::semantic(MD3::Role::OnSurfaceVariant);
     m_statictext_printer_msg->SetForegroundColour(colour);
 
     if (msg.empty()) {
@@ -1772,8 +1772,8 @@ bool CalibrationPresetPage::is_blocking_printing()
 void CalibrationPresetPage::update_sync_button_status()
 {
     auto set_status = [this](bool synced) {
-        StateColor synced_colour(std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Normal));
-        StateColor not_synced_colour(std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Normal));
+        StateColor synced_colour(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
+        StateColor not_synced_colour(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         if (synced) {
             m_btn_sync->SetBorderColor(synced_colour);
             m_btn_sync->SetIcon("ams_nozzle_sync");

@@ -7,8 +7,26 @@
 #include "slic3r/GUI/Plater.hpp"
 #include "libslic3r/ClipperUtils.hpp"
 #include "libslic3r/ExPolygon.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 
 namespace Slic3r { namespace GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+// Blend a base MD3 colour toward its "on" colour to approximate a Material
+// state layer; alpha follows the base colour.
+inline ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
+{
+    return ImVec4(base.x + (over.x - base.x) * t, base.y + (over.y - base.y) * t,
+                  base.z + (over.z - base.z) * t, base.w);
+}
+} // namespace
 
 static const ColorRGBA DEF_COLOR   = {0.7f, 0.7f, 0.7f, 1.f};
 static const ColorRGBA SELECTED_COLOR = {0.0f, 0.5f, 0.5f, 1.0f};
@@ -677,7 +695,8 @@ void GLGizmoBrimEars::on_render_input_window(float x, float y, float bottom_limi
     if (glb_cfg.opt_enum<BrimType>("brim_type") != btBrimEars) {
         ImGui::SameLine();
         auto link_text = [&]() {
-            ImColor HyperColor = m_link_text_hover ? ImColor(0, 240, 91).Value : ImColor(0, 174, 66).Value;
+            ImVec4  link_primary = md3_imvec4(MD3::Role::Primary, m_is_dark_mode);
+            ImColor HyperColor   = m_link_text_hover ? ImColor(md3_state_layer(link_primary, md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode), 0.25f)) : ImColor(link_primary);
             ImGui::PushStyleColor(ImGuiCol_Text, ImGuiWrapper::to_ImVec4(ColorRGB::WARNING()));
             float parent_width = ImGui::GetContentRegionAvail().x;
             m_imgui->text_wrapped(_L("Warning: The brim type is not set to \"painted\",the brim ears will not take effect !"), parent_width);

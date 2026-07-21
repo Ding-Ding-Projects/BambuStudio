@@ -16,6 +16,7 @@
 
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 
 #include <boost/algorithm/string.hpp>
 
@@ -25,6 +26,16 @@ namespace Slic3r
 {
 namespace GUI
 {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+} // namespace
 
 const double GizmoObjectManipulation::in_to_mm = 25.4;
 const double GizmoObjectManipulation::mm_to_in = 0.0393700787;
@@ -726,9 +737,9 @@ bool GizmoObjectManipulation::reset_zero_button(ImGuiWrapper *imgui_wrapper, flo
      bool result;
      bool b_value = value;
      if (b_value) {
-         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+         ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::Primary, m_is_dark_mode)); // checked -> MD3 primary
+         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
+         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
      }
      auto label_utf8 = into_u8(label);
      result          = ImGui::BBLCheckbox(label_utf8.c_str(), &value);
@@ -1055,7 +1066,7 @@ void GizmoObjectManipulation::set_init_rotation(const Geometry::Transformation &
         float start_x = caption_max + space_size *1.5;
         ImGui::SameLine(start_x);
         ImGui::SetCursorPosY(start_y + (max_h - button_height) * 0.5f);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(61.f / 255.f, 203.f / 255.f, 115.f / 255.f, 1.f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
         show_align_icon(imgui_wrapper, temp_tip_caption_max, GLGizmoAlignment::AlignType::X_MIN,
                         (int) m_is_dark_mode ? GLGizmosManager::MENU_ICON_NAME::IC_ALIGN_X_MIN_DARK : GLGizmosManager::MENU_ICON_NAME::IC_ALIGN_X_MIN,
                         icon_size,

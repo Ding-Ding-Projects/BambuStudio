@@ -66,10 +66,10 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* m_sizer_main = new wxBoxSizer(wxVERTICAL);
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
 
     m_simplebook = new wxSimplebook(this);
@@ -90,20 +90,20 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
     binding_panel->SetMaxSize(wxSize(FromDIP(460), FromDIP(240)));
 
 
-    request_bind_panel->SetBackgroundColour(*wxWHITE);
-    binding_panel->SetBackgroundColour(*wxWHITE);
+    request_bind_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    binding_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_status_text = new Label(request_bind_panel, _L("Please Find the Pin Code in Account page on printer screen,\n and type in the Pin Code below."));
-    m_status_text->SetBackgroundColour(*wxWHITE);
+    m_status_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_status_text->SetFont(Label::Body_14);
     m_status_text->SetMaxSize(wxSize(FromDIP(440), -1));
     m_status_text->Wrap(FromDIP(440));
-    m_status_text->SetForegroundColour(wxColour(38, 46, 48));
+    m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_link_show_ping_code_wiki = new wxStaticText(request_bind_panel, wxID_ANY, _L("Can't find Pin Code?"));
     m_link_show_ping_code_wiki->SetFont(Label::Body_14);
-    m_link_show_ping_code_wiki->SetBackgroundColour(*wxWHITE);
-    m_link_show_ping_code_wiki->SetForegroundColour(wxColour(31, 142, 234));
+    m_link_show_ping_code_wiki->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_link_show_ping_code_wiki->SetForegroundColour(ThemeColor::Link);
 
     m_link_show_ping_code_wiki->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
     m_link_show_ping_code_wiki->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
@@ -115,7 +115,7 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
 
     m_text_input_title = new wxStaticText(request_bind_panel, wxID_ANY, _L("Pin Code"));
     m_text_input_title->SetFont(Label::Body_14);
-    m_text_input_title->SetBackgroundColour(*wxWHITE);
+    m_text_input_title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer* ping_code_input = new wxBoxSizer(wxHORIZONTAL);
 
@@ -124,7 +124,7 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
         m_text_input_single_code[i] = new TextInput(request_bind_panel, wxEmptyString, "", "", wxDefaultPosition, wxSize(FromDIP(38), FromDIP(38)), wxTE_PROCESS_ENTER | wxTE_CENTER);
         wxTextAttr textAttr;
         textAttr.SetAlignment(wxTEXT_ALIGNMENT_CENTER);
-        textAttr.SetTextColour(wxColour(34, 139, 34));
+        textAttr.SetTextColour(StateColor::semantic(MD3::Role::Primary));
         m_text_input_single_code[i]->GetTextCtrl()->SetDefaultStyle(textAttr);
         m_text_input_single_code[i]->SetFont(Label::Body_16);
         m_text_input_single_code[i]->GetTextCtrl()->SetMaxLength(1);
@@ -138,20 +138,20 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
     m_sizer_button->Add(0, 0, 1, wxEXPAND, 5);
     m_button_bind = new Button(request_bind_panel, _L("Confirm"));
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_bind->SetBackgroundColor(btn_bg_green);
-    m_button_bind->SetBorderColor(*wxWHITE);
-    m_button_bind->SetTextColor(wxColour("#FFFFFE"));
+    m_button_bind->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_button_bind->SetTextColor(ThemeColor::White);
     m_button_bind->SetSize(BIND_DIALOG_BUTTON_SIZE);
     m_button_bind->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
     m_button_bind->SetCornerRadius(FromDIP(12));
     m_button_bind->Enable(false);
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_cancel = new Button(request_bind_panel, _L("Cancel"));
     m_button_cancel->SetBackgroundColor(btn_bg_white);
@@ -189,10 +189,10 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
 
 
     auto m_loading_txt = new Label(binding_panel, _L("Binding..."));
-    m_loading_txt->SetBackgroundColour(*wxWHITE);
+    m_loading_txt->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_loading_txt->SetFont(Label::Head_16);
     auto m_loading_tip_txt = new Label(binding_panel, _L("Please confirm on the printer screen"));
-    m_loading_tip_txt->SetBackgroundColour(*wxWHITE);
+    m_loading_tip_txt->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_loading_tip_txt->SetFont(Label::Body_15);
 
     wxBoxSizer* m_sizer_binding_button = new wxBoxSizer(wxHORIZONTAL);
@@ -362,10 +362,10 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
      SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-     SetBackgroundColour(*wxWHITE);
+     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
      auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-     m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+     m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
      m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
      m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(38));
 
@@ -382,7 +382,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      m_printer_img->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_printer_img->Hide();
      m_printer_name = new wxStaticText(m_panel_left, wxID_ANY, wxEmptyString);
-     m_printer_name->SetForegroundColour(*wxBLACK);
+     m_printer_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_printer_name->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_printer_name->SetFont(::Label::Head_14);
      m_sizere_left_v->Add(m_printer_img, 0, wxALIGN_CENTER, 0);
@@ -425,13 +425,13 @@ PingCodeBindDialog::~PingCodeBindDialog() {
 
      auto m_sizer_status_text = new wxBoxSizer(wxHORIZONTAL);
      m_status_text = new wxStaticText(this, wxID_ANY, _L("Would you like to log in this printer with current account?"));
-     m_status_text->SetForegroundColour(wxColour(107, 107, 107));
+     m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_status_text->SetFont(::Label::Body_13);
      m_status_text->Wrap(-1);
 
 
      m_link_show_error = new wxStaticText(this, wxID_ANY, _L("Check the reason"));
-     m_link_show_error->SetForegroundColour(wxColour("#6b6b6b"));
+     m_link_show_error->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_link_show_error->SetFont(::Label::Head_13);
 
      m_bitmap_show_error_close = create_scaled_bitmap("link_more_error_close",nullptr, 7);
@@ -464,7 +464,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
 
      //agreement
      m_panel_agreement = new wxWindow(this,wxID_ANY);
-     m_panel_agreement->SetBackgroundColour(*wxWHITE);
+     m_panel_agreement->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_panel_agreement->SetMinSize(wxSize(FromDIP(450), -1));
      m_panel_agreement->SetMaxSize(wxSize(FromDIP(450), -1));
 
@@ -477,13 +477,13 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      auto m_checkbox_privacy = new CheckBox(m_panel_agreement, wxID_ANY);
      auto m_st_privacy_title = new Label(m_panel_agreement, _L("Read and accept"));
      m_st_privacy_title->SetFont(Label::Body_13);
-     m_st_privacy_title->SetForegroundColour(wxColour(38, 46, 48));
+     m_st_privacy_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
      auto m_link_Terms_title = new Label(m_panel_agreement, _L("Terms and Conditions"));
      m_link_Terms_title->SetFont(Label::Head_13);
      m_link_Terms_title->SetMaxSize(wxSize(FromDIP(450), -1));
      m_link_Terms_title->Wrap(FromDIP(450));
-     m_link_Terms_title->SetForegroundColour(wxColour("#00AE42"));
+     m_link_Terms_title->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
      m_link_Terms_title->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
          wxString txt = _L("Thank you for purchasing a Bambu Lab device. Before using your Bambu Lab device, please read the terms and conditions. By clicking to agree to use your Bambu Lab device, you agree to abide by the Privacy Policy and Terms of Use (collectively, the \"Terms\"). If you do not comply with or agree to the Bambu Lab Privacy Policy, please do not use Bambu Lab equipment and services.");
          ConfirmBeforeSendDialog confirm_dlg(this, wxID_ANY, _L("Terms and Conditions"), ConfirmBeforeSendDialog::ButtonStyle::ONLY_CONFIRM);
@@ -496,13 +496,13 @@ PingCodeBindDialog::~PingCodeBindDialog() {
 
      auto m_st_and_title = new Label(m_panel_agreement, _L("and"));
      m_st_and_title->SetFont(Label::Body_13);
-     m_st_and_title->SetForegroundColour(wxColour(38, 46, 48));
+     m_st_and_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
      auto m_link_privacy_title = new Label(m_panel_agreement, _L("Privacy Policy"));
      m_link_privacy_title->SetFont(Label::Head_13);
      m_link_privacy_title->SetMaxSize(wxSize(FromDIP(450), -1));
      m_link_privacy_title->Wrap(FromDIP(450));
-     m_link_privacy_title->SetForegroundColour(wxColour("#00AE42"));
+     m_link_privacy_title->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
      m_link_privacy_title->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
          std::string url;
          std::string country_code = Slic3r::GUI::wxGetApp().app_config->get_country_code();
@@ -536,13 +536,13 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      auto m_checkbox_notice = new CheckBox(m_panel_agreement, wxID_ANY);
      auto m_st_notice_title = new Label(m_panel_agreement, notice_title);
      m_st_notice_title->SetFont(Label::Body_13);
-     m_st_notice_title->SetForegroundColour(wxColour(38, 46, 48));
+     m_st_notice_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
      auto m_link_notice_title = new Label(m_panel_agreement, notice_link_title);
      m_link_notice_title->SetFont(Label::Head_13);
      m_link_notice_title->SetMaxSize(wxSize(FromDIP(450), -1));
      m_link_notice_title->Wrap(FromDIP(450));
-     m_link_notice_title->SetForegroundColour(wxColour("#0x00AE42"));
+     m_link_notice_title->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
      m_link_notice_title->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
      m_link_notice_title->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
      m_link_notice_title->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
@@ -588,7 +588,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
 
      //show bind failed info
      m_sw_bind_failed_info = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(450), FromDIP(300)), wxVSCROLL);
-     m_sw_bind_failed_info->SetBackgroundColour(*wxWHITE);
+     m_sw_bind_failed_info->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_sw_bind_failed_info->SetScrollRate(5, 5);
      m_sw_bind_failed_info->SetMinSize(wxSize(FromDIP(450), FromDIP(90)));
      m_sw_bind_failed_info->SetMaxSize(wxSize(FromDIP(450), FromDIP(90)));
@@ -611,9 +611,9 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      auto st_title_error_code = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, _L("Error code"));
      auto st_title_error_code_doc = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, ": ");
      m_st_txt_error_code = new Label(m_sw_bind_failed_info, wxEmptyString);
-     st_title_error_code->SetForegroundColour(0x909090);
-     st_title_error_code_doc->SetForegroundColour(0x909090);
-     m_st_txt_error_code->SetForegroundColour(0x909090);
+     st_title_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+     st_title_error_code_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+     m_st_txt_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      st_title_error_code->SetFont(::Label::Body_13);
      st_title_error_code_doc->SetFont(::Label::Body_13);
      m_st_txt_error_code->SetFont(::Label::Body_13);
@@ -629,9 +629,9 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      auto st_title_error_desc = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, wxT("Error desc"));
      auto st_title_error_desc_doc = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, ": ");
      m_st_txt_error_desc = new Label(m_sw_bind_failed_info, wxEmptyString);
-     st_title_error_desc->SetForegroundColour(0x909090);
-     st_title_error_desc_doc->SetForegroundColour(0x909090);
-     m_st_txt_error_desc->SetForegroundColour(0x909090);
+     st_title_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+     st_title_error_desc_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+     m_st_txt_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      st_title_error_desc->SetFont(::Label::Body_13);
      st_title_error_desc_doc->SetFont(::Label::Body_13);
      m_st_txt_error_desc->SetFont(::Label::Body_13);
@@ -646,9 +646,9 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      auto st_title_extra_info = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, wxT("Extra info"));
      auto st_title_extra_info_doc = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, ": ");
      m_st_txt_extra_info = new Label(m_sw_bind_failed_info, wxEmptyString);
-     st_title_extra_info->SetForegroundColour(0x909090);
-     st_title_extra_info_doc->SetForegroundColour(0x909090);
-     m_st_txt_extra_info->SetForegroundColour(0x909090);
+     st_title_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+     st_title_extra_info_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+     m_st_txt_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      st_title_extra_info->SetFont(::Label::Body_13);
      st_title_extra_info_doc->SetFont(::Label::Body_13);
      m_st_txt_extra_info->SetFont(::Label::Body_13);
@@ -668,31 +668,31 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      m_sizer_bind_failed_info->Add(sizer_extra_info, 0, wxLEFT, 0);
 
      m_simplebook = new wxSimplebook(this, wxID_ANY, wxDefaultPosition,BIND_DIALOG_BUTTON_PANEL_SIZE, 0);
-     m_simplebook->SetBackgroundColour(*wxWHITE);
+     m_simplebook->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
      m_status_bar = std::make_shared<BBLStatusBarBind>(m_simplebook);
 
      auto        button_panel   = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, BIND_DIALOG_BUTTON_PANEL_SIZE);
-     button_panel->SetBackgroundColour(*wxWHITE);
+     button_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      wxBoxSizer *m_sizer_button = new wxBoxSizer(wxHORIZONTAL);
      m_sizer_button->Add(0, 0, 1, wxEXPAND, 5);
      m_button_bind = new Button(button_panel, _L("Confirm"));
 
-     StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Disabled),
-         std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-         std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-         std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
+         std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+         std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
      m_button_bind->SetBackgroundColor(btn_bg_green);
-     m_button_bind->SetBorderColor(*wxWHITE);
-     m_button_bind->SetTextColor(wxColour("#FFFFFE"));
+     m_button_bind->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+     m_button_bind->SetTextColor(ThemeColor::White);
      m_button_bind->SetSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_bind->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_bind->SetCornerRadius(FromDIP(12));
      m_button_bind->Enable(false);
 
 
-     StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+     StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
      m_button_cancel = new Button(button_panel, _L("Cancel"));
      m_button_cancel->SetBackgroundColor(btn_bg_white);
@@ -968,10 +968,10 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
      std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
      SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-     SetBackgroundColour(*wxWHITE);
+     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
      auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-     m_line_top->SetBackgroundColour(wxColour("#A6A9AA"));
+     m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
      m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
      m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(38));
 
@@ -989,7 +989,7 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
      m_printer_img->Hide();
      m_printer_name     = new wxStaticText(m_panel_left, wxID_ANY, wxEmptyString);
      m_printer_name->SetFont(::Label::Head_14);
-     m_printer_name->SetForegroundColour(*wxBLACK);
+     m_printer_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_printer_name->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_sizere_left_v->Add(m_printer_img, 0, wxALIGN_CENTER, 0);
      m_sizere_left_v->Add(0, 0, 0, wxTOP, 5);
@@ -1008,7 +1008,7 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
      m_panel_right->SetCornerRadius(FromDIP(8));
      m_panel_right->SetBackgroundColor(BIND_DIALOG_GREY200);
      m_user_name = new wxStaticText(m_panel_right, wxID_ANY, wxEmptyString);
-     m_user_name->SetForegroundColour(*wxBLACK);
+     m_user_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_user_name->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_user_name->SetFont(::Label::Head_14);
      wxBoxSizer *m_sizer_right_h = new wxBoxSizer(wxHORIZONTAL);
@@ -1029,7 +1029,7 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
      m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(20));
 
      m_status_text = new wxStaticText(this, wxID_ANY, _L("Would you like to log out the printer?"), wxDefaultPosition, wxSize(BIND_DIALOG_BUTTON_PANEL_SIZE.x, -1), wxST_ELLIPSIZE_END);
-     m_status_text->SetForegroundColour(wxColour(107, 107, 107));
+     m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_status_text->SetFont(::Label::Body_13);
 
 
@@ -1038,18 +1038,18 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
 
      m_sizer_button->Add(0, 0, 1, wxEXPAND, 5);
      m_button_unbind = new Button(this, _L("Confirm"));
-     StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                             std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
      m_button_unbind->SetBackgroundColor(btn_bg_green);
-     m_button_unbind->SetBorderColor(wxColour(0, 174, 66));
-     m_button_unbind->SetTextColor(wxColour("#FFFFFE"));
+     m_button_unbind->SetBorderColor(ThemeColor::BrandGreen);
+     m_button_unbind->SetTextColor(ThemeColor::White);
      m_button_unbind->SetSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_unbind->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_unbind->SetCornerRadius(FromDIP(12));
 
 
-     StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+     StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
      m_button_cancel = new Button(this, _L("Cancel"));
      m_button_cancel->SetBackgroundColor(btn_bg_white);

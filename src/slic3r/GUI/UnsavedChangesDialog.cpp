@@ -64,8 +64,20 @@ static std::string def_text_color()
     auto clr_str = wxString::Format(wxT("#%02X%02X%02X"), def_colour.Red(), def_colour.Green(), def_colour.Blue());
     return clr_str.ToStdString();
 }
-static std::string grey     = "#808080";
-static std::string orange   = "#ed6b21";
+// Diff-markup colours, resolved at runtime like def_text_color() so they follow
+// the active theme. The modified / new-value highlight is the MD3 Primary family
+// (was legacy #ed6b21 orange); the muted / unchanged side is MD3 Outline (was
+// legacy #808080 grey).
+static std::string modified_text_color()
+{
+    const wxColour c = StateColor::semantic(MD3::Role::Primary);
+    return wxString::Format(wxT("#%02X%02X%02X"), c.Red(), c.Green(), c.Blue()).ToStdString();
+}
+static std::string neutral_text_color()
+{
+    const wxColour c = StateColor::semantic(MD3::Role::Outline);
+    return wxString::Format(wxT("#%02X%02X%02X"), c.Red(), c.Green(), c.Blue()).ToStdString();
+}
 
 static void color_string(wxString& str, const std::string& color)
 {
@@ -171,7 +183,7 @@ ModelNode::ModelNode(ModelNode* parent, const wxString& text, const wxString& ol
 
     // "color" strings
     color_string(m_old_value, def_text_color());
-    color_string(m_new_value, orange);
+    color_string(m_new_value, modified_text_color());
 
     UpdateIcons();
 }
@@ -188,14 +200,14 @@ void ModelNode::UpdateEnabling()
     };
 
     if (!m_toggle) {
-        change_text_color(m_text,      def_text_color(), grey);
-        change_text_color(m_old_value, def_text_color(), grey);
-        change_text_color(m_new_value, orange,grey);
+        change_text_color(m_text,      def_text_color(), neutral_text_color());
+        change_text_color(m_old_value, def_text_color(), neutral_text_color());
+        change_text_color(m_new_value, modified_text_color(), neutral_text_color());
     }
     else {
-        change_text_color(m_text,      grey, def_text_color());
-        change_text_color(m_old_value, grey, def_text_color());
-        change_text_color(m_new_value, grey, orange);
+        change_text_color(m_text,      neutral_text_color(), def_text_color());
+        change_text_color(m_old_value, neutral_text_color(), def_text_color());
+        change_text_color(m_new_value, neutral_text_color(), modified_text_color());
     }
     // update icons for the colors
     UpdateIcons();
@@ -205,9 +217,9 @@ void ModelNode::UpdateIcons()
 {
     // update icons for the colors, if any exists
     if (!m_old_color.IsEmpty())
-        m_old_color_bmp = get_bitmap(m_toggle ? m_old_color : wxString::FromUTF8(grey.c_str()));
+        m_old_color_bmp = get_bitmap(m_toggle ? m_old_color : wxString::FromUTF8(neutral_text_color().c_str()));
     if (!m_new_color.IsEmpty())
-        m_new_color_bmp = get_bitmap(m_toggle ? m_new_color : wxString::FromUTF8(grey.c_str()));
+        m_new_color_bmp = get_bitmap(m_toggle ? m_new_color : wxString::FromUTF8(neutral_text_color().c_str()));
 
     // update main icon, if any exists
     if (m_icon_name.empty())
@@ -780,12 +792,12 @@ static std::string none{"none"};
 #define UNSAVE_CHANGE_DIALOG_ITEM_HEIGHT FromDIP(24)
 #define UNSAVE_CHANGE_DIALOG_BUTTON_SIZE wxSize(FromDIP(70), FromDIP(24))
 
-#define THUMB_COLOR wxColor(196, 196, 196)
-#define GREY900 wxColour(38, 46, 48)
-#define GREY700 wxColour(107,107,107)
-#define GREY400 wxColour(206,206,206)
-#define GREY300 wxColour(238,238,238)
-#define GREY200 wxColour(248,248,248)
+#define THUMB_COLOR StateColor::semantic(MD3::Role::OutlineVariant)
+#define GREY900 StateColor::semantic(MD3::Role::OnSurface)
+#define GREY700 StateColor::semantic(MD3::Role::OnSurfaceVariant)
+#define GREY400 StateColor::semantic(MD3::Role::OutlineVariant)
+#define GREY300 StateColor::semantic(MD3::Role::SurfaceContainer)
+#define GREY200 StateColor::semantic(MD3::Role::SurfaceContainerLow)
 
 
 UnsavedChangesDialog::UnsavedChangesDialog(const wxString &caption, const wxString &header, const std::string &app_config_key, int act_buttons)
@@ -864,7 +876,7 @@ inline int UnsavedChangesDialog::ShowModal()
 
 void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_presets, const std::string &new_selected_preset, const wxString &header)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     // icon
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
@@ -872,7 +884,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
     m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_top_line->SetBackgroundColour(wxColour(166, 169, 170));
+    m_top_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_main->Add(m_top_line, 0, wxEXPAND, 0);
 
@@ -899,7 +911,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         wxBoxSizer *m_sizer_tab = new wxBoxSizer(wxVERTICAL);
 
         m_table_top = new wxPanel(m_panel_tab, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-        m_table_top->SetBackgroundColour(wxColour(107, 107, 107));
+        m_table_top->SetBackgroundColour(StateColor::semantic(MD3::Role::InverseSurface));
 
         wxBoxSizer *m_sizer_top = new wxBoxSizer(wxHORIZONTAL);
 
@@ -911,7 +923,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         static_temp_title            = new wxStaticText(m_panel_temp, wxID_ANY, _L("Settings"), wxDefaultPosition, wxDefaultSize, 0);
         static_temp_title->SetFont(::Label::Body_13);
         static_temp_title->Wrap(-1);
-        static_temp_title->SetForegroundColour(*wxWHITE);
+        static_temp_title->SetForegroundColour(StateColor::semantic(MD3::Role::InverseOn));
         top_title_temp_h->Add(static_temp_title, 0, wxALIGN_CENTER | wxBOTTOM | wxTOP, 5);
         top_title_temp_v->Add(top_title_temp_h, 1, wxALIGN_CENTER, 0);
         m_panel_temp->SetSizer(top_title_temp_v);
@@ -919,7 +931,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         m_sizer_top->Add(m_panel_temp, 1, wxALIGN_CENTER, 0);
 
         title_block_middle = new wxPanel(m_table_top, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-        title_block_middle->SetBackgroundColour(wxColour(172, 172, 172));
+        title_block_middle->SetBackgroundColour(StateColor::semantic(MD3::Role::Outline));
 
         m_sizer_top->Add(title_block_middle, 0, wxBOTTOM | wxEXPAND | wxTOP, 2);
         auto m_panel_oldv = new wxPanel( m_table_top, wxID_ANY, wxDefaultPosition, wxSize(UNSAVE_CHANGE_DIALOG_VALUE_WIDTH,-1), wxTAB_TRAVERSAL );
@@ -930,7 +942,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         static_oldv_title = new wxStaticText(m_panel_oldv, wxID_ANY, params ? _L(DevPrinterConfigUtil::get_toolhead_display_name(ucd_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::SentenceCase)) + ": " + get_nozzle_volume_type_name(params->nozzle) : _L("Preset(Old)"), wxDefaultPosition, wxDefaultSize, 0);
         static_oldv_title->SetFont(::Label::Body_13);
         static_oldv_title->Wrap(-1);
-        static_oldv_title->SetForegroundColour(params && params->left_to_right ? wxGetApp().get_label_clr_modified() : *wxWHITE);
+        static_oldv_title->SetForegroundColour(params && params->left_to_right ? wxGetApp().get_label_clr_modified() : StateColor::semantic(MD3::Role::InverseOn));
         top_title_oldv_h->Add(static_oldv_title, 0, wxALIGN_CENTER | wxBOTTOM | wxTOP, 5);
         top_title_oldv->Add(top_title_oldv_h, 1, wxALIGN_CENTER, 0);
         m_panel_oldv->SetSizer(top_title_oldv);
@@ -938,7 +950,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         m_sizer_top->Add(m_panel_oldv, 0, wxALIGN_CENTER, 0);
 
         title_block_right = new wxPanel(m_table_top, wxID_ANY, wxDefaultPosition, wxSize(1, -1), wxTAB_TRAVERSAL);
-        title_block_right->SetBackgroundColour(wxColour(172, 172, 172));
+        title_block_right->SetBackgroundColour(StateColor::semantic(MD3::Role::Outline));
 
         m_sizer_top->Add(title_block_right, 0, wxBOTTOM | wxEXPAND | wxTOP, 2);
 
@@ -950,7 +962,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
                                              wxDefaultPosition, wxDefaultSize, 0);
         static_newv_title->SetFont(::Label::Body_13);
         static_newv_title->Wrap(-1);
-        static_newv_title->SetForegroundColour(params && !params->left_to_right ? wxGetApp().get_label_clr_modified() : *wxWHITE);
+        static_newv_title->SetForegroundColour(params && !params->left_to_right ? wxGetApp().get_label_clr_modified() : StateColor::semantic(MD3::Role::InverseOn));
 
         top_title_newv_h->Add(static_newv_title, 0, wxALIGN_CENTER | wxBOTTOM | wxTOP, 5);
 
@@ -995,15 +1007,15 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
     auto checkbox_text = new wxStaticText(this, wxID_ANY, _L("Remember my choice."), wxDefaultPosition, wxDefaultSize, 0);
     checkbox_sizer->Add(checkbox_text, 0, wxALL | wxALIGN_CENTER, FromDIP(2));
     checkbox_text->SetFont(::Label::Body_13);
-    checkbox_text->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#323A3D")));
+    checkbox_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_sizer_button->Add(checkbox_sizer, 0, wxLEFT, FromDIP(22));
     checkbox_sizer->Show(bool(m_buttons & REMEMBER_CHOISE));
     m_sizer_button->Add(0, 0, 1, 0, 0);
 
      // Add Buttons
     wxFont      btn_font = this->GetFont().Scaled(1.4f);
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     auto add_btn = [this, m_sizer_button, btn_font, dependent_presets, btn_bg_green](Button **btn, int &btn_id, Action close_act, const wxString &label,
                                                                               bool focus, bool process_enable = true) {
@@ -1011,10 +1023,10 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
 
         if (focus) {
             (*btn)->SetBackgroundColor(btn_bg_green);
-            (*btn)->SetBorderColor(wxColour(0, 174, 66));
-            (*btn)->SetTextColor(wxColour("#FFFFFE"));
+            (*btn)->SetBorderColor(ThemeColor::BrandGreen);
+            (*btn)->SetTextColor(ThemeColor::White);
         } else {
-            (*btn)->SetTextColor(wxColour(107, 107, 107));
+            (*btn)->SetTextColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         }
 
         (*btn)->SetMinSize(UNSAVE_CHANGE_DIALOG_BUTTON_SIZE);
@@ -1864,7 +1876,7 @@ FullCompareDialog::FullCompareDialog(const wxString& option_name, const wxString
                                      const wxString& old_value_header, const wxString& new_value_header)
     : wxDialog(nullptr, wxID_ANY, option_name, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     int border = 10;
 
@@ -1909,13 +1921,13 @@ FullCompareDialog::FullCompareDialog(const wxString& option_name, const wxString
     auto add_value = [grid_sizer, border, this](wxString label, const std::set<wxString>& diff_set, bool is_colored = false) {
         wxTextCtrl* text = new wxTextCtrl(this, wxID_ANY, label, wxDefaultPosition, wxSize(400, 400), wxTE_MULTILINE | wxTE_READONLY | wxBORDER_DEFAULT | wxTE_RICH);
         wxGetApp().UpdateDarkUI(text);
-        text->SetStyle(0, label.Len(), wxTextAttr(is_colored ? wxColour(orange) : wxNullColour, wxNullColour, this->GetFont()));
+        text->SetStyle(0, label.Len(), wxTextAttr(is_colored ? wxColour(modified_text_color()) : wxNullColour, wxNullColour, this->GetFont()));
 
         for (const wxString& str : diff_set) {
             int pos = label.First(str);
             if (pos == wxNOT_FOUND)
                 continue;
-            text->SetStyle(pos, pos + (int)str.Len(), wxTextAttr(is_colored ? wxColour(orange) : wxNullColour, wxNullColour, this->GetFont().Bold()));
+            text->SetStyle(pos, pos + (int)str.Len(), wxTextAttr(is_colored ? wxColour(modified_text_color()) : wxNullColour, wxNullColour, this->GetFont().Bold()));
         }
 
         grid_sizer->Add(text, 1, wxALL | wxEXPAND, border);
@@ -1972,7 +1984,7 @@ DiffPresetDialog::DiffPresetDialog(MainFrame* mainframe)
 
     int border = 10;
     int em = em_unit();
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     assert(wxGetApp().preset_bundle);
 
     m_preset_bundle_left  = std::make_unique<PresetBundle>(*wxGetApp().preset_bundle);

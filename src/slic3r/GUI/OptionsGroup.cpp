@@ -7,6 +7,7 @@
 #include "MsgDialog.hpp"
 #include "format.hpp"
 #include "Widgets/StaticLine.hpp"
+#include "Widgets/StateColor.hpp"
 
 #include <utility>
 #include <wx/bookctrl.h>
@@ -507,7 +508,7 @@ bool OptionsGroup::activate(std::function<void()> throw_if_canceled/* = [](){}*/
 			// BBS: new layout
 			::StaticLine* stl = new ::StaticLine(m_parent, false, _(title), icon);
             stl->SetFont(Label::Head_14);
-            stl->SetForegroundColour("#262E30");
+            stl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
             sizer = new wxBoxSizer(wxVERTICAL);
             if (title.IsEmpty()) {
                 stl->Hide();

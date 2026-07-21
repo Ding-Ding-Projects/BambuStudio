@@ -7,6 +7,7 @@
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 #include "NotificationManager.hpp"
+#include "Widgets/StateColor.hpp"
 
 #include <wx/glcanvas.h>
 
@@ -56,6 +57,16 @@ static const std::vector<int> _3DCONNEXION_DEVICES =
 
 namespace Slic3r {
 namespace GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the 3D-mouse settings overlay,
+// honouring the active dark-mode flag (mirrors the ImGuiWrapper MD3 bridge).
+inline ImVec4 md3_imvec4(MD3::Role role, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, StateColor::isDarkMode());
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+} // namespace
 
 #if ENABLE_3DCONNEXION_DEVICES_DEBUG_OUTPUT
 template<typename T>
@@ -480,7 +491,7 @@ void Mouse3DController::render_settings_dialog(GLCanvas3D& canvas) const
                 canvas.request_extra_frame();
             }
 
-            const ImVec4& color = ImVec4(0.56f, 0.56f, 0.56f, 1.00f);
+            const ImVec4 color = md3_imvec4(MD3::Role::OnSurfaceVariant);
             /*imgui.text(_L("Device:"));
             ImGui::SameLine();
             imgui.text(m_device_str);*/

@@ -645,7 +645,7 @@ void TextCtrl::BUILD() {
         temp->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 
 
-    temp->SetForegroundColour(StateColor::darkModeColorFor(*wxBLACK));
+    temp->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 	wxGetApp().UpdateDarkUI(temp);
 
     if (! m_opt.multiline && !wxOSX)
@@ -1754,7 +1754,7 @@ void ColourPicker::set_undef_value(wxColourPickerCtrl* field)
 #else
     wxDC &dc2(dc);
 #endif
-    dc2.SetPen(wxPen("#F1754E", 1));
+    dc2.SetPen(wxPen(StateColor::semantic(MD3::Role::Error), 1));
 
     const wxRect rect = wxRect(0, 0, bmp.GetWidth(), bmp.GetHeight());
     dc2.DrawLine(rect.GetLeftBottom(), rect.GetTopRight());
@@ -1850,7 +1850,7 @@ void ColourPicker::update_clear_button_icon()
         wxBitmap new_bitmap = create_scaled_bitmap(icon_name, m_clear_button->GetParent(), 20, false);
         m_clear_button->SetBitmap(new_bitmap);
         m_clear_button->SetToolTip(_L("Clear color"));
-        m_clear_button->SetBackgroundColour(*wxWHITE);
+        m_clear_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         wxGetApp().UpdateDarkUI(m_clear_button);
         m_clear_button->Refresh();
     }

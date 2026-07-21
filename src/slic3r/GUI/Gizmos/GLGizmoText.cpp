@@ -9,6 +9,7 @@
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/MsgDialog.hpp"
 #include "slic3r/GUI/format.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 
 #include "libslic3r/Geometry/ConvexHull.hpp"
 #include "libslic3r/Model.hpp"
@@ -47,6 +48,17 @@ using namespace Slic3r;
 using namespace Slic3r::GUI;
 using namespace Slic3r::GUI::Emboss;
 using namespace Slic3r::Emboss;
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+} // namespace
+
 static std::size_t hash_value(wxString const &s)
 {
     boost::hash<std::string> hasher;
@@ -2085,34 +2097,19 @@ void GLGizmoText::on_update(const UpdateData &data)
 }
 
 void GLGizmoText::push_button_style(bool pressed) {
-    if (m_is_dark_mode) {
-        if (pressed) {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(43 / 255.f, 64 / 255.f, 54 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(43 / 255.f, 64 / 255.f, 54 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(43 / 255.f, 64 / 255.f, 54 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 174 / 255.f, 66 / 255.f, 1.f));
-        }
-        else {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(45.f / 255.f, 45.f / 255.f, 49.f / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(84 / 255.f, 84 / 255.f, 90 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(84 / 255.f, 84 / 255.f, 90 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(45.f / 255.f, 45.f / 255.f, 49.f / 255.f, 1.f));
-        }
+    if (pressed) {
+        // selected: filled tonal container + primary outline
+        ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
     }
     else {
-        if (pressed) {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(219 / 255.f, 253 / 255.f, 231 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(219 / 255.f, 253 / 255.f, 231 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(219 / 255.f, 253 / 255.f, 231 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 174 / 255.f, 66 / 255.f, 1.f));
-        }
-        else {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.f, 1.f, 1.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(238 / 255.f, 238 / 255.f, 238 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(238 / 255.f, 238 / 255.f, 238 / 255.f, 1.f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, 1.f));
-        }
-
+        // unselected: surface button with matching neutral outline
+        ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(m_is_dark_mode ? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainerLowest, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(m_is_dark_mode ? MD3::Role::OutlineVariant : MD3::Role::SurfaceContainer, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(m_is_dark_mode ? MD3::Role::OutlineVariant : MD3::Role::SurfaceContainer, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(m_is_dark_mode ? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainerLowest, m_is_dark_mode));
     }
 }
 
@@ -2125,10 +2122,10 @@ void GLGizmoText::push_combo_style(const float scale) {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0f * scale);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
         ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BG_DARK);
-        ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_imvec4(MD3::Role::Primary, m_is_dark_mode, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_Header, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImGuiWrapper::COL_WINDOW_BG_DARK);
         ImGui::PushStyleColor(ImGuiCol_Button, { 1.00f, 1.00f, 1.00f, 0.0f });
     }
@@ -2136,10 +2133,10 @@ void GLGizmoText::push_combo_style(const float scale) {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0f * scale);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
         ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BG);
-        ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_imvec4(MD3::Role::Primary, m_is_dark_mode, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_Header, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImGuiWrapper::COL_WINDOW_BG);
         ImGui::PushStyleColor(ImGuiCol_Button, { 1.00f, 1.00f, 1.00f, 0.0f });
     }
@@ -3926,12 +3923,12 @@ EmbossShape &TextDataBase::create_shape()
     return shape;
 }
 
-StateColor ok_btn_bg(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                     std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                     std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-StateColor ok_btn_disable_bg(std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Pressed),
-                             std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Hovered),
-                             std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Normal));
+StateColor ok_btn_bg(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                     std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                     std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+StateColor ok_btn_disable_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                             std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Hovered),
+                             std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 
 StyleNameEditDialog::StyleNameEditDialog(
     wxWindow *parent, Emboss::StyleManager &style_manager, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
@@ -3943,7 +3940,7 @@ StyleNameEditDialog::StyleNameEditDialog(
     SetBackgroundColour(*wxWHITE);
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(400), -1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(5));
 
@@ -3973,10 +3970,10 @@ StyleNameEditDialog::StyleNameEditDialog(
     m_sizer_main->Add(m_top_sizer, 0, wxEXPAND | wxALL, FromDIP(20));
 
     auto       sizer_button = new wxBoxSizer(wxHORIZONTAL);
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    StateColor       ok_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    StateColor       ok_btn_bd(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    StateColor       ok_btn_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    StateColor       ok_btn_bd(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_ok = new Button(this, _L("OK"));
     m_button_ok->Enable(true);
     m_button_ok->SetBackgroundColor(ok_btn_bg);
@@ -4004,7 +4001,7 @@ StyleNameEditDialog::StyleNameEditDialog(
     });
     m_button_cancel = new Button(this, _L("Cancel"));
     m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -4092,7 +4089,7 @@ void Slic3r::GUI::StyleNameEditDialog::add_tip_label()
     if (!m_add_tip) {
         m_add_tip = true;
         m_tip     = new Label(this, _L("Name can't be empty."));
-        m_tip->SetForegroundColour(wxColour(241, 117, 78, 255));
+        m_tip->SetForegroundColour(ThemeColor::Warning);
         m_top_sizer->Add(m_tip, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL, FromDIP(5));
         SetMinSize(wxSize(-1, StyleNameEditDialogHeight_BIG));
         SetMaxSize(wxSize(-1, StyleNameEditDialogHeight_BIG));

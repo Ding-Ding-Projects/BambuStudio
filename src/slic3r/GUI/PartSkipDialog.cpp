@@ -35,32 +35,32 @@ namespace Slic3r { namespace GUI {
 extern wxString hide_passwd(wxString url, std::vector<wxString> const &passwords);
 extern void     refresh_agora_url(char const *device, char const *dev_ver, char const *channel, void *context, void (*callback)(void *context, char const *url));
 
-StateColor percent_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled),
-                      std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Pressed),
-                      std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Hovered),
-                      std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled),
-                      std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+StateColor percent_bg(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+                      std::pair<wxColour, int>(ThemeColor::White, StateColor::Pressed),
+                      std::pair<wxColour, int>(ThemeColor::White, StateColor::Hovered),
+                      std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                      std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-static StateColor zoom_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled),
-                          std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                          std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                          std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled),
-                          std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+static StateColor zoom_bg(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+                          std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed),
+                          std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-static StateColor zoom_bd(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-static StateColor zoom_text(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+static StateColor zoom_bd(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
+static StateColor zoom_text(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
-static StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                               std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+static StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed),
+                               std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-static StateColor btn_bg_gray(std::pair<wxColour, int>(wxColour(194, 194, 194), StateColor::Pressed),
-                              std::pair<wxColour, int>(wxColour(194, 194, 194), StateColor::Hovered),
-                              std::pair<wxColour, int>(wxColour(194, 194, 194), StateColor::Normal));
+static StateColor btn_bg_gray(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                              std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Hovered),
+                              std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 
-static StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour(0, 177, 66), StateColor::Normal));
+static StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                               std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
 PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _L("Skip Objects"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
@@ -71,13 +71,13 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
 
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % Slic3r::resources_dir()).str();
     SetIcon(wxIcon(Slic3r::encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
     m_line_top->SetMinSize(wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer->Add(m_line_top, 0, wxEXPAND | wxTOP, FromDIP(0));
 
     m_simplebook = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0);
@@ -85,7 +85,7 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_simplebook->SetMaxSize(wxSize(FromDIP(720), FromDIP(535)));
     m_book_first_panel = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_book_third_panel = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_book_third_panel->SetBackgroundColour(*wxWHITE);
+    m_book_third_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_dlg_sizer         = new wxBoxSizer(wxVERTICAL);
     m_dlg_content_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_canvas_sizer      = new wxBoxSizer(wxVERTICAL);
@@ -106,13 +106,13 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_zoom_out_btn->SetIcon("canvas_zoom_out");
     m_zoom_out_btn->SetToolTip(_L("Zoom Out"));
     m_zoom_out_btn->SetBackgroundColor(zoom_bg);
-    m_zoom_out_btn->SetBorderColor(wxColour(238, 238, 238));
+    m_zoom_out_btn->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
     m_zoom_out_btn->SetCornerRadius(0);
     m_zoom_out_btn->SetMinSize(wxSize(FromDIP(56), FromDIP(28)));
 
     m_percent_label = new Button(m_book_third_panel, _L("100 %"));
     m_percent_label->SetBackgroundColor(percent_bg);
-    m_percent_label->SetBorderColor(wxColour(238, 238, 238));
+    m_percent_label->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
     m_percent_label->SetMinSize(wxSize(FromDIP(56), FromDIP(28)));
     m_percent_label->SetCornerRadius(0);
 
@@ -120,15 +120,15 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_zoom_in_btn->SetIcon("canvas_zoom_in");
     m_zoom_in_btn->SetToolTip(_L("Zoom In"));
     m_zoom_in_btn->SetBackgroundColor(zoom_bg);
-    m_zoom_in_btn->SetBorderColor(wxColour(238, 238, 238));
+    m_zoom_in_btn->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
     m_zoom_in_btn->SetMinSize(wxSize(FromDIP(56), FromDIP(28)));
     m_zoom_in_btn->SetCornerRadius(0);
 
     m_switch_drag_btn = new Button(m_book_third_panel, wxEmptyString);
     m_switch_drag_btn->SetIcon("canvas_drag");
     m_switch_drag_btn->SetToolTip(_L("Drag"));
-    m_switch_drag_btn->SetBackgroundColor(*wxWHITE);
-    m_switch_drag_btn->SetBorderColor(wxColour(238, 238, 238));
+    m_switch_drag_btn->SetBackgroundColor(ThemeColor::White);
+    m_switch_drag_btn->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
     m_switch_drag_btn->SetMinSize(wxSize(FromDIP(56), FromDIP(28)));
     m_switch_drag_btn->SetCornerRadius(0);
 
@@ -144,11 +144,11 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_all_checkbox          = new CheckBox(m_book_third_panel, wxID_ANY);
     m_all_checkbox->SetValue(false);
     m_all_checkbox->SetMinSize(wxSize(FromDIP(18), FromDIP(18)));
-    m_all_checkbox->SetBackgroundColour(*wxWHITE);
+    m_all_checkbox->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_all_label = new Label(m_book_third_panel, _L("Select All"));
     m_all_label->Wrap(-1);
     m_all_label->SetMinSize(wxSize(-1, FromDIP(18)));
-    m_all_label->SetBackgroundColour(*wxWHITE);
+    m_all_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_all_label->SetMinSize(wxSize(267, -1));
     m_all_label->SetMaxSize(wxSize(267, -1));
@@ -158,13 +158,13 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_line = new wxPanel(m_book_third_panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(267), FromDIP(1)), wxTAB_TRAVERSAL);
     m_line->SetMinSize(wxSize(FromDIP(267), 1));
     m_line->SetMaxSize(wxSize(FromDIP(267), 1));
-    m_line->SetBackgroundColour(wxColor(238, 238, 238));
+    m_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_list_view = new wxScrolledWindow(m_book_third_panel, wxID_ANY, wxDefaultPosition, wxSize(267, -1), wxHSCROLL | wxVSCROLL);
     m_list_view->SetScrollRate(5, 5);
     m_list_view->SetMinSize(wxSize(FromDIP(267), FromDIP(378)));
     m_list_view->SetMaxSize(wxSize(FromDIP(267), FromDIP(378)));
-    m_list_view->SetBackgroundColour(*wxWHITE);
+    m_list_view->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_scroll_sizer = new wxBoxSizer(wxVERTICAL);
     m_list_view->SetSizer(m_scroll_sizer);
@@ -175,20 +175,20 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
 
     m_cnt_label = new Label(m_book_third_panel, wxEmptyString);
     m_cnt_label->Wrap(-1);
-    m_cnt_label->SetBackgroundColour(*wxWHITE);
-    m_cnt_label->SetForegroundColour(wxColour(0, 174, 66));
+    m_cnt_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_cnt_label->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_cnt_label->SetFont(Label::Head_16);
     m_cnt_label->SetSize(wxSize(-1, FromDIP(20)));
     m_cnt_label->SetMaxSize(wxSize(-1, FromDIP(20)));
 
     m_tot_label = new Label(m_book_third_panel, wxEmptyString);
     m_tot_label->Wrap(-1);
-    m_tot_label->SetBackgroundColour(*wxWHITE);
+    m_tot_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_tot_label->SetMinSize(wxSize(FromDIP(200), FromDIP(20)));
 
     m_apply_btn = new Button(m_book_third_panel, _L("Skip"));
     m_apply_btn->SetBackgroundColor(btn_bg_gray);
-    m_apply_btn->SetTextColor(*wxWHITE);
+    m_apply_btn->SetTextColor(ThemeColor::White);
     // m_apply_btn->SetBorderColor(wxColour(38, 46, 48));
     m_apply_btn->SetFont(Label::Body_14);
     m_apply_btn->SetSize(wxSize(FromDIP(80), FromDIP(32)));
@@ -224,7 +224,7 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_dlg_placeholder = new wxPanel(m_book_third_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_dlg_placeholder->SetMinSize(wxSize(-1, FromDIP(15)));
     m_dlg_placeholder->SetMaxSize(wxSize(-1, FromDIP(15)));
-    m_dlg_placeholder->SetBackgroundColour(*wxWHITE);
+    m_dlg_placeholder->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_dlg_sizer->Add(m_dlg_content_sizer, 1, wxEXPAND, FromDIP(0));
     // m_dlg_sizer->Add( 0, 0, 1, wxEXPAND, FromDIP(0));
@@ -237,14 +237,14 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
 
     // page 2
     m_book_second_panel = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_book_second_panel->SetBackgroundColour(*wxWHITE);
+    m_book_second_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_book_second_sizer     = new wxBoxSizer(wxVERTICAL);
     m_book_second_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_retry_bitmap = new wxStaticBitmap(m_book_second_panel, -1, create_scaled_bitmap("partskip_retry", m_book_second_panel, 200), wxDefaultPosition, wxDefaultSize);
     m_retry_label  = new Label(m_book_second_panel, _L("Load skipping objects information failed. Please try again."));
     m_retry_label->Wrap(-1);
-    m_retry_label->SetBackgroundColour(*wxWHITE);
+    m_retry_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_book_second_sizer->Add(0, 0, 1, wxEXPAND, 0);
     m_book_second_sizer->Add(m_retry_bitmap, 0, wxALIGN_CENTER_HORIZONTAL, 0);
     m_book_second_sizer->Add(m_retry_label, 0, wxALIGN_CENTER_HORIZONTAL, 0);
@@ -253,7 +253,7 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_second_retry_btn = new Button(m_book_second_panel, _L("Retry"));
     m_second_retry_btn->SetBackgroundColor(btn_bg_green);
     // m_second_retry_btn->SetBorderColor(wxColour(38, 46, 48));
-    m_second_retry_btn->SetTextColor(*wxWHITE);
+    m_second_retry_btn->SetTextColor(ThemeColor::White);
     m_second_retry_btn->SetFont(Label::Body_14);
     m_second_retry_btn->SetSize(wxSize(FromDIP(80), FromDIP(32)));
     m_second_retry_btn->SetMinSize(wxSize(FromDIP(80), FromDIP(32)));
@@ -278,7 +278,7 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
 
     m_loading_label = new Label(m_book_first_panel, _L("Loading ..."));
     m_loading_label->Wrap(-1);
-    m_loading_label->SetBackgroundColour(*wxWHITE);
+    m_loading_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_loading_sizer->Add(m_loading_icon, 0, wxALIGN_CENTER_VERTICAL, FromDIP(0));
     m_loading_sizer->Add(m_loading_label, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -622,11 +622,11 @@ void PartSkipDialog::OnSwitchDrag(wxCommandEvent &event)
 {
     if (this->is_drag_mode()) {
         m_is_drag = false;
-        m_switch_drag_btn->SetBackgroundColor(*wxWHITE);
+        m_switch_drag_btn->SetBackgroundColor(ThemeColor::White);
         m_switch_drag_btn->SetIcon("canvas_drag");
     } else {
         m_is_drag = true;
-        m_switch_drag_btn->SetBackgroundColor(wxColour(0, 174, 66));
+        m_switch_drag_btn->SetBackgroundColor(ThemeColor::BrandGreen);
         m_switch_drag_btn->SetIcon("canvas_drag_active");
     }
     m_canvas->SwitchDrag(m_is_drag);
@@ -709,7 +709,7 @@ void PartSkipDialog::InitDialogUI()
     string slice_info = m_local_paths[2];
 
     m_switch_drag_btn->SetIcon("canvas_drag");
-    m_switch_drag_btn->SetBackgroundColor(*wxWHITE);
+    m_switch_drag_btn->SetBackgroundColor(ThemeColor::White);
     m_is_drag = false;
     m_canvas->SwitchDrag(false);
     m_canvas->SetZoomPercent(100);
@@ -777,11 +777,11 @@ void PartSkipDialog::InitDialogUI()
                 checkbox->Enable(false);
             }
             label->SetLabel(wxString::FromUTF8(m_parts_name[part_id]));
-            label->SetBackgroundColour(*wxWHITE);
-            label->SetForegroundColour(wxColor(107, 107, 107));
+            label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+            label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
             label->Wrap(-1);
             label->SetMinSize(wxSize(-1, FromDIP(18)));
-            checkbox->SetBackgroundColour(*wxWHITE);
+            checkbox->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
             checkbox->SetMinSize(wxSize(FromDIP(18), FromDIP(18)));
             checkbox->SetMaxSize(wxSize(FromDIP(18), FromDIP(18)));
 
@@ -972,7 +972,7 @@ PartSkipConfirmDialog::PartSkipConfirmDialog(wxWindow *parent) : DPIDialog(paren
 {
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % Slic3r::resources_dir()).str();
     SetIcon(wxIcon(Slic3r::encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize(wxSize(FromDIP(480), FromDIP(215)));
     SetSizeHints(wxDefaultSize, wxDefaultSize);
 
@@ -982,18 +982,18 @@ PartSkipConfirmDialog::PartSkipConfirmDialog(wxWindow *parent) : DPIDialog(paren
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
     m_line_top->SetMinSize(wxSize(FromDIP(480), 1));
     m_line_top->SetMaxSize(wxSize(FromDIP(480), 1));
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer->Add(m_line_top, 0, wxEXPAND, 0);
     m_sizer->Add(0, 0, 0, wxALL, FromDIP(15));
 
     m_msg_label = new Label(this, _L("Skipping objects."));
     m_msg_label->Wrap(-1);
-    m_msg_label->SetBackgroundColour(*wxWHITE);
+    m_msg_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_tip_label = new Label(this, _L("This action cannot be undone. Continue?"));
     m_tip_label->Wrap(-1);
-    m_tip_label->SetBackgroundColour(*wxWHITE);
-    m_tip_label->SetForegroundColour(wxColor(92, 92, 92));
+    m_tip_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_tip_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     m_sizer->Add(m_msg_label, 0, wxLEFT, FromDIP(29));
     m_sizer->Add(0, 0, 0, wxTOP, FromDIP(9));
@@ -1004,15 +1004,15 @@ PartSkipConfirmDialog::PartSkipConfirmDialog(wxWindow *parent) : DPIDialog(paren
     m_button_sizer->SetMinSize(wxSize(FromDIP(480), FromDIP(54)));
     m_button_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 177, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_apply_button = new Button(this, _L("Continue"));
     m_apply_button->SetBackgroundColor(btn_bg_green);
-    m_apply_button->SetTextColor(*wxWHITE);
+    m_apply_button->SetTextColor(ThemeColor::White);
     // m_apply_button->SetBorderColor(wxColour(38, 46, 48));
     m_apply_button->SetFont(Label::Body_14);
     m_apply_button->SetSize(wxSize(FromDIP(80), FromDIP(32)));

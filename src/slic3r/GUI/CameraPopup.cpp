@@ -2,6 +2,7 @@
 
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StateColor.hpp"
 #include "libslic3r/Utils.hpp"
 #include "BitmapCache.hpp"
 #include <wx/progdlg.h>
@@ -38,8 +39,6 @@ wxDEFINE_EVENT(EVT_SDCARD_ABSENT_HINT, wxCommandEvent);
 
 #define CAMERAPOPUP_CLICK_INTERVAL 20
 
-const wxColour TEXT_COL = wxColour(43, 52, 54);
-
 CameraPopup::CameraPopup(wxWindow *parent)
    : PopupWindow(parent, wxBORDER_NONE | wxPU_CONTAINS_CONTROLS)
 {
@@ -61,14 +60,14 @@ CameraPopup::CameraPopup(wxWindow *parent)
     m_text_recording = new wxStaticText(m_panel, wxID_ANY, _L("Auto-record Monitoring"));
     m_text_recording->Wrap(-1);
     m_text_recording->SetFont(Label::Head_14);
-    m_text_recording->SetForegroundColour(TEXT_COL);
+    m_text_recording->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_switch_recording = new SwitchButton(m_panel);
 
     //vcamera
     m_text_vcamera = new wxStaticText(m_panel, wxID_ANY, _L("Go Live"));
     m_text_vcamera->Wrap(-1);
     m_text_vcamera->SetFont(Label::Head_14);
-    m_text_vcamera->SetForegroundColour(TEXT_COL);
+    m_text_vcamera->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_switch_vcamera = new SwitchButton(m_panel);
 
     top_sizer->Add(m_text_recording, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL, FromDIP(5));
@@ -80,7 +79,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
     m_text_liveview_retry = new wxStaticText(m_panel, wxID_ANY, _L("Liveview Retry"));
     m_text_liveview_retry->Wrap(-1);
     m_text_liveview_retry->SetFont(Label::Head_14);
-    m_text_liveview_retry->SetForegroundColour(TEXT_COL);
+    m_text_liveview_retry->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_switch_liveview_retry = new SwitchButton(m_panel);
     bool auto_retry         = wxGetApp().app_config->get("liveview", "auto_retry") != "false";
     m_switch_liveview_retry->SetValue(auto_retry);
@@ -98,7 +97,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
     m_text_resolution = new wxStaticText(m_panel, wxID_ANY, _L("Resolution"));
     m_text_resolution->Wrap(-1);
     m_text_resolution->SetFont(Label::Head_14);
-    m_text_resolution->SetForegroundColour(TEXT_COL);
+    m_text_resolution->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     top_sizer->Add(m_text_resolution, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxALL, FromDIP(5));
     top_sizer->Add(0, 0, wxALL, 0);
     for (int i = 0; i < (int)RESOLUTION_OPTIONS_NUM; ++i)
@@ -116,12 +115,12 @@ CameraPopup::CameraPopup(wxWindow *parent)
     wxBoxSizer* link_sizer = new wxBoxSizer(wxVERTICAL);
     vcamera_guide_link = new Label(m_panel, text);
     vcamera_guide_link->Wrap(-1);
-    vcamera_guide_link->SetForegroundColour(wxColour(0x1F, 0x8E, 0xEA));
+    vcamera_guide_link->SetForegroundColour(ThemeColor::Link);
     auto text_size = vcamera_guide_link->GetTextExtent(text);
     vcamera_guide_link->Bind(wxEVT_LEFT_DOWN, [this, url](wxMouseEvent& e) {wxLaunchDefaultBrowser(url); });
 
     link_underline = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    link_underline->SetBackgroundColour(wxColour(0x1F, 0x8E, 0xEA));
+    link_underline->SetBackgroundColour(ThemeColor::Link);
     link_underline->SetSize(wxSize(text_size.x, 1));
     link_underline->SetMinSize(wxSize(text_size.x, 1));
 
@@ -224,7 +223,7 @@ wxWindow* CameraPopup::create_item_radiobox(wxString title, wxWindow* parent, wx
     resolution_texts.push_back(text);
     text->SetPosition(wxPoint(padding_left + radiobox->GetSize().GetWidth() + 10, (item->GetSize().GetHeight() - text->GetSize().GetHeight()) / 2));
     text->SetFont(Label::Body_13);
-    text->SetForegroundColour(0x6B6B6B);
+    text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text->Bind(wxEVT_LEFT_DOWN, [this, btn_idx](wxMouseEvent &e) {
         if (m_obj && allow_alter_resolution) {
             select_curr_radiobox(btn_idx);

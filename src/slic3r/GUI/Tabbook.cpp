@@ -14,9 +14,6 @@
 
 wxDEFINE_EVENT(wxCUSTOMEVT_TABBOOK_SEL_CHANGED, wxCommandEvent);
 
-const static wxColour TAB_BUTTON_BG  = wxColour("#FEFFFF");
-const static wxColour TAB_BUTTON_SEL = wxColour(219, 253, 213, 255);
-
 static const wxFont& TAB_BUTTON_FONT     = Label::Body_14;
 static const wxFont& TAB_BUTTON_FONT_SEL = Label::Head_14;
 
@@ -31,7 +28,7 @@ TabButtonsListCtrl::TabButtonsListCtrl(wxWindow *parent, wxBoxSizer *side_tools)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
-    SetBackgroundColour(TAB_BUTTON_BG);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     int em = em_unit(this);
     // BBS: no gap
@@ -71,11 +68,11 @@ void TabButtonsListCtrl::OnPaint(wxPaintEvent &)
 
     for (int idx = 0; idx < int(m_pageButtons.size()); idx++) {
         TabButton *btn = m_pageButtons[idx];
-        btn->SetBackgroundColor(idx == m_selection ? TAB_BUTTON_SEL : TAB_BUTTON_BG);
-        
+        btn->SetBackgroundColor(idx == m_selection ? StateColor::semantic(MD3::Role::SecondaryContainer) : StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+
         wxPoint pos = btn->GetPosition();
         wxSize size = btn->GetSize();
-        const wxColour &clr  = StateColor::darkModeColorFor(idx == m_selection ? btn_marker_color : TAB_BUTTON_BG);
+        const wxColour &clr  = StateColor::darkModeColorFor(idx == m_selection ? btn_marker_color : StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         dc.SetPen(clr);
         dc.SetBrush(clr);
         dc.DrawRectangle(pos.x, pos.y + size.y, size.x, sz.y - size.y);
@@ -104,11 +101,11 @@ void TabButtonsListCtrl::SetSelection(int sel)
     if (m_selection == sel)
         return;
     if (m_selection >= 0) {
-        m_pageButtons[m_selection]->SetBackgroundColor(TAB_BUTTON_BG);
+        m_pageButtons[m_selection]->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         m_pageButtons[m_selection]->SetFont(TAB_BUTTON_FONT);
     }
     m_selection = sel;
-    m_pageButtons[m_selection]->SetBackgroundColor(TAB_BUTTON_SEL);
+    m_pageButtons[m_selection]->SetBackgroundColor(StateColor::semantic(MD3::Role::SecondaryContainer));
     m_pageButtons[m_selection]->SetFont(TAB_BUTTON_FONT_SEL);
     Refresh();
 }
@@ -132,8 +129,8 @@ bool TabButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect
     int em = em_unit(this);
     btn->SetMinSize({BUTTON_DEF_WIDTH * em / 10, BUTTON_DEF_HEIGHT * em / 10});
 
-    btn->SetBackgroundColor(TAB_BUTTON_BG);
-    btn->SetTextColor(*wxBLACK);
+    btn->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    btn->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     btn->Bind(wxEVT_BUTTON, [this, btn](wxCommandEvent& event) {
         if (auto it = std::find(m_pageButtons.begin(), m_pageButtons.end(), btn); it != m_pageButtons.end()) {
             auto sel = it - m_pageButtons.begin();

@@ -237,7 +237,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     m_readonly_filament->SetBorderColor(StateColor(std::make_pair(ThemeColor::Grey400, (int)StateColor::Focused), std::make_pair(ThemeColor::BrandGreen, (int)StateColor::Hovered),
         std::make_pair(ThemeColor::Grey400, (int)StateColor::Normal)));
     m_readonly_filament->SetFont(::Label::Body_14);
-    m_readonly_filament->SetLabelColor(AMS_MATERIALS_SETTING_GREY800);
+    m_readonly_filament->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
     m_readonly_filament->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [](auto& e) {});
     m_readonly_filament->GetTextCtrl()->Hide();
     m_readonly_filament->Disable();

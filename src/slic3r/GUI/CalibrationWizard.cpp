@@ -73,7 +73,7 @@ CalibrationWizard::CalibrationWizard(wxWindow* parent, CalibMode mode, wxWindowI
     : wxPanel(parent, id, pos, size, style)
     , m_mode(mode)
 {
-    SetBackgroundColour(wxColour("#EEEEEE"));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 

@@ -69,7 +69,7 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     , m_media_ctrl(media_ctrl)
 {
     SetLabel("MediaPlayCtrl");
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_media_ctrl->Bind(wxEVT_MEDIA_STATECHANGED, &MediaPlayCtrl::onStateChanged, this);
     m_media_ctrl->Bind(EVT_MEDIA_CTRL_FIRST_FRAME, [this](wxCommandEvent &e) {
         if (!m_pending_start_liveview_json.empty()) {
@@ -136,10 +136,10 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     m_button_play->SetCanFocus(false);
 
     m_label_status = new Label(this, "");
-    m_label_status->SetForegroundColour(wxColour("#323A3C"));
+    m_label_status->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_label_stat = new Label(this, "");
-    m_label_stat->SetForegroundColour(wxColour("#323A3C"));
+    m_label_stat->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_media_ctrl->Bind(EVT_MEDIA_CTRL_STAT, [this](auto & e) {
 #if !BBL_RELEASE_TO_PUBLIC
         wxSize size = m_media_ctrl->GetVideoSize();

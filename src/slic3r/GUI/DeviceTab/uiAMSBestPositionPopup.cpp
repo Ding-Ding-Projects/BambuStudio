@@ -109,8 +109,8 @@ UiStyledSwitchPanel::UiStyledSwitchPanel(wxWindow* parent,
                                     wxWindowID id = wxID_ANY,
                                     const wxPoint& pos = wxDefaultPosition,
                                     const wxSize& size = wxDefaultSize,
-                                    const wxColour& borderColor = wxColour("#EEEEEE"),
-                                    const wxColour& bgColor = wxColour("#FFFFFF"),
+                                    const wxColour& borderColor = StateColor::semantic(MD3::Role::SurfaceContainer),
+                                    const wxColour& bgColor = StateColor::semantic(MD3::Role::SurfaceContainerLowest),
                                     bool borderDashed = true,
                                     int borderWidth = 2,
                                     int radius = 1,
@@ -538,7 +538,7 @@ UiAMS::UiAMS( wxWindow* parent,
          wxWindowID id = wxID_ANY,
          const wxPoint& pos = wxDefaultPosition,
          const wxSize& minSize = wxDefaultSize)
-    : UiStyledAMSPanel(parent, id, pos, wxDefaultSize, wxColour("#dbdbdb"), wxColour("#ffffff"), false, amsInfo.front().amsName),
+    : UiStyledAMSPanel(parent, id, pos, wxDefaultSize, StateColor::semantic(MD3::Role::OutlineVariant), StateColor::semantic(MD3::Role::SurfaceContainerLowest), false, amsInfo.front().amsName),
 
      m_amsInfo(amsInfo), m_minSize(minSize)
 {

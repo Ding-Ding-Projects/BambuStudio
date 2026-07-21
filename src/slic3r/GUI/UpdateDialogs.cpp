@@ -106,7 +106,7 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
     SetBackgroundColour(*wxWHITE);
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(ThemeColor::Grey400);
     m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(30));
 
@@ -126,7 +126,7 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
 
     auto m_text_up_info = new wxStaticText(this, wxID_ANY, _L("A new configuration package available, Do you want to install it?"), wxDefaultPosition, wxDefaultSize, 0);
     m_text_up_info->SetFont(::Label::Head_14);
-    m_text_up_info->SetForegroundColour(wxColour(0x26, 0x2E, 0x30));
+    m_text_up_info->SetForegroundColour(ThemeColor::TextPrimary);
     m_text_up_info->Wrap(-1);
     m_sizer_right->Add(m_text_up_info, 0, 0, 0);
 
@@ -134,7 +134,7 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
 
     auto m_scrollwindw_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)),wxVSCROLL);
     m_scrollwindw_release_note->SetScrollRate(0, 5);
-    m_scrollwindw_release_note->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
+    m_scrollwindw_release_note->SetBackgroundColour(ThemeColor::Grey200);
     m_scrollwindw_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
     m_scrollwindw_release_note->SetWindowStyle(wxVSCROLL);
 
@@ -142,11 +142,11 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
     sizer_button->Add(0, 0, 1, wxEXPAND, 5);
 
 
-	StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+	StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
                             std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
 
   
@@ -161,7 +161,7 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
 
     auto m_button_cancel = new Button(this, _L("Cancel"));
     m_button_cancel->SetBackgroundColor(*wxWHITE);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetBorderColor(ThemeColor::TextPrimary);
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));

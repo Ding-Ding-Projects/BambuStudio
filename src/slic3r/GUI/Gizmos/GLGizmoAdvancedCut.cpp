@@ -20,8 +20,19 @@
 
 #include <imgui/imgui_internal.h>
 #include "FixModelByWin10.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 namespace Slic3r {
 namespace GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+} // namespace
 
 const double       units_in_to_mm = 25.4;
 const double       units_mm_to_in = 1 / units_in_to_mm;
@@ -2684,7 +2695,7 @@ void GLGizmoAdvancedCut::render_connectors_input_window(float x, float y, float 
     render_flip_plane_button(m_connectors_editing && connectors.empty());
 
     m_imgui->text(_L("Type"));
-    ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.00f, 0.00f, 0.00f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imvec4(MD3::Role::OnSurface, m_is_dark_mode));
     bool type_changed = render_connect_type_radio_button(CutConnectorType::Plug);
     type_changed |= render_connect_type_radio_button(CutConnectorType::Dowel);
     type_changed |= render_connect_type_radio_button(CutConnectorType::Snap);
@@ -2814,9 +2825,9 @@ bool GLGizmoAdvancedCut::render_reset_button(const std::string &label_id, const 
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {1, style.ItemSpacing.y});
 
-    ImGui::PushStyleColor(ImGuiCol_Button, {0.25f, 0.25f, 0.25f, 0.0f});
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, {0.4f, 0.4f, 0.4f, 1.0f});
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, {0.4f, 0.4f, 0.4f, 1.0f});
+    ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::OutlineVariant, m_is_dark_mode, 0.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(MD3::Role::OutlineVariant, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::OutlineVariant, m_is_dark_mode));
 
     bool revert = m_imgui->button(wxString(ImGui::RevertBtn));
 

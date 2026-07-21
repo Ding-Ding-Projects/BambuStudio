@@ -48,7 +48,7 @@ static wxColour dark_or(const wxColour& light, const wxColour& dark)
 
 static wxColour texture_import_gray9000()
 {
-    return wxColour(38, 46, 48);
+    return ThemeColor::TextPrimary;
 }
 
 static wxColour texture_import_text_colour()
@@ -58,7 +58,7 @@ static wxColour texture_import_text_colour()
 
 static wxColour texture_import_separator_colour()
 {
-    return StateColor::darkModeColorFor(wxColour("#CECECE"));
+    return StateColor::semantic(MD3::Role::OutlineVariant);
 }
 
 static wxFont texture_import_section_title_font(wxWindow* win)
@@ -117,7 +117,7 @@ static bool needs_filament_swatch_border(const wxColour& colour)
 
 static wxColour filament_swatch_border_colour()
 {
-    return is_dark() ? wxColour(207, 207, 207) : wxColour(130, 130, 128);
+    return StateColor::semantic(MD3::Role::Outline);
 }
 
 static void draw_filament_swatch_border(wxDC& dc, const wxColour& colour,
@@ -260,10 +260,10 @@ void GreenSlider::OnPaint(wxPaintEvent&)
     int ts = FromDIP(8);
     int pen_w = FromDIP(2);
 
-    wxColour greenClr = IsEnabled() ? wxColour(0, 174, 66)
-                                    : dark_or(wxColour(180, 180, 180), wxColour(90, 90, 96));
-    wxColour grayClr  = IsEnabled() ? dark_or(wxColour(200, 200, 200), wxColour(90, 90, 96))
-                                    : dark_or(wxColour(220, 220, 220), wxColour(70, 70, 76));
+    wxColour greenClr = IsEnabled() ? StateColor::semantic(MD3::Role::Primary)
+                                    : StateColor::semantic(MD3::Role::OutlineVariant);
+    wxColour grayClr  = IsEnabled() ? StateColor::semantic(MD3::Role::Outline)
+                                    : StateColor::semantic(MD3::Role::OutlineVariant);
 
     int tx = xFromValue();
 
@@ -502,7 +502,7 @@ public:
         , m_can_add_filament(std::move(can_add_filament))
         , m_on_close(std::move(on_close))
     {
-        wxColour pop_bg = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
+        wxColour pop_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
         SetBackgroundColour(pop_bg);
 
         m_content = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
@@ -514,7 +514,7 @@ public:
         const int row_h   = FromDIP(32);
         const int pad     = FromDIP(8);
         const int max_visible_rows = 10;
-        const wxColour header_clr = dark_or(wxColour(0xAC, 0xAC, 0xAC), wxColour(0x81, 0x81, 0x83));
+        const wxColour header_clr = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
         auto add_section_header = [&](const wxString& label) {
             auto* hdr = new wxStaticText(m_content, wxID_ANY, label);
@@ -560,8 +560,8 @@ public:
         add_label->SetFont(af);
         decompose_label->SetFont(af);
         const bool add_enabled = !m_can_add_filament || m_can_add_filament();
-        add_label->SetForegroundColour(add_enabled ? wxColour(0x00, 0xAE, 0x42) : header_clr);
-        decompose_label->SetForegroundColour(add_enabled ? wxColour(0x00, 0xAE, 0x42) : header_clr);
+        add_label->SetForegroundColour(add_enabled ? StateColor::semantic(MD3::Role::Primary) : header_clr);
+        decompose_label->SetForegroundColour(add_enabled ? StateColor::semantic(MD3::Role::Primary) : header_clr);
         add_label->SetCursor(wxCursor(add_enabled ? wxCURSOR_HAND : wxCURSOR_ARROW));
         decompose_label->SetCursor(wxCursor(add_enabled ? wxCURSOR_HAND : wxCURSOR_ARROW));
         if (!add_enabled)
@@ -659,8 +659,8 @@ private:
 
     wxPanel* create_item_row(size_t idx, int row_h)
     {
-        wxColour row_bg    = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
-        wxColour hover_bg  = dark_or(wxColour(245, 245, 245), wxColour(0x3C, 0x3C, 0x42));
+        wxColour row_bg    = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+        wxColour hover_bg  = StateColor::semantic(MD3::Role::SurfaceContainerLow);
         wxColour name_fg   = texture_import_text_colour();
 
         wxPanel* row = new wxPanel(m_content, wxID_ANY, wxDefaultPosition, wxSize(-1, row_h));
@@ -755,10 +755,10 @@ private:
 
     wxPanel* create_mixed_item_row(const TextureFilamentEntry& entry, int row_h)
     {
-        wxColour row_bg    = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
-        wxColour hover_bg  = dark_or(wxColour(245, 245, 245), wxColour(0x3C, 0x3C, 0x42));
+        wxColour row_bg    = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+        wxColour hover_bg  = StateColor::semantic(MD3::Role::SurfaceContainerLow);
         wxColour name_fg   = texture_import_text_colour();
-        wxColour plus_fg   = dark_or(wxColour(38, 46, 48), wxColour(0xE6, 0xE6, 0xE8));
+        wxColour plus_fg   = StateColor::semantic(MD3::Role::OnSurface);
         const int idx = entry.dialog_index;
 
         wxPanel* row = new wxPanel(m_content, wxID_ANY, wxDefaultPosition, wxSize(-1, row_h));
@@ -880,7 +880,7 @@ public:
         , m_on_select(std::move(on_select))
         , m_on_close(std::move(on_close))
     {
-        wxColour pop_bg = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
+        wxColour pop_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
         SetBackgroundColour(pop_bg);
 
         auto* content = new wxPanel(this, wxID_ANY);
@@ -912,10 +912,10 @@ private:
 
     wxPanel* create_item_row(wxWindow* parent, TextureAutoMixMode mode, int row_h)
     {
-        wxColour row_bg   = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
-        wxColour hover_bg = dark_or(wxColour(245, 245, 245), wxColour(0x3C, 0x3C, 0x42));
+        wxColour row_bg   = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+        wxColour hover_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
         wxColour text_fg  = texture_import_text_colour();
-        wxColour green    = wxColour(0, 174, 66);
+        wxColour green    = StateColor::semantic(MD3::Role::Primary);
 
         wxPanel* row = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, row_h),
                                    wxTAB_TRAVERSAL | wxFULL_REPAINT_ON_RESIZE);
@@ -1847,14 +1847,14 @@ int TextureImportDialog::ShowModal()
 
 void TextureImportDialog::build_ui()
 {
-    const wxColour dialog_bg = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
+    const wxColour dialog_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     SetBackgroundColour(dialog_bg);
-    SetForegroundColour(dark_or(wxColour(50, 58, 61), wxColour(0xEF, 0xEF, 0xF0)));
+    SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     wxBoxSizer* root_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    line_top->SetBackgroundColour(dark_or(wxColour(166, 169, 170), wxColour(80, 80, 86)));
+    line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     root_sizer->Add(line_top, 0, wxEXPAND);
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -1897,8 +1897,8 @@ void TextureImportDialog::build_ui()
 
 void TextureImportDialog::build_preview_panel(wxWindow* parent, wxSizer* sizer)
 {
-    wxColour preview_bg = dark_or(wxColour(238, 238, 238), wxColour(0x3E, 0x3E, 0x45));
-    wxColour preview_bd = dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B));
+    wxColour preview_bg = StateColor::semantic(MD3::Role::SurfaceContainer);
+    wxColour preview_bd = StateColor::semantic(MD3::Role::OutlineVariant);
 
     wxPanel* preview_container = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
     preview_container->SetBackgroundColour(preview_bg);
@@ -2005,7 +2005,7 @@ void TextureImportDialog::build_preview_panel(wxWindow* parent, wxSizer* sizer)
 
 void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
 {
-    wxColour label_fg = dark_or(wxColour(50, 58, 61), wxColour(0xEF, 0xEF, 0xF0));
+    wxColour label_fg = StateColor::semantic(MD3::Role::OnSurface);
 
     wxBoxSizer* color_header_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxStaticText* lbl_colors = new wxStaticText(parent, wxID_ANY, _L("Color Count"));
@@ -2024,18 +2024,18 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
 
     {
         StateColor preset_bg(
-            std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed | StateColor::Checked),
-            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered | StateColor::Checked),
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Checked),
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Pressed),
-            std::pair<wxColour, int>(dark_or(wxColour(238, 238, 238), wxColour(0x4C, 0x4C, 0x55)), StateColor::Hovered),
-            std::pair<wxColour, int>(dark_or(wxColour(255, 255, 255), wxColour(0x2D, 0x2D, 0x31)), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed | StateColor::Checked),
+            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered | StateColor::Checked),
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Checked),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
         StateColor preset_bd(
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Checked),
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Checked),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
         StateColor preset_text(
-            std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Checked),
-            std::pair<wxColour, int>(dark_or(wxColour(50, 58, 61), wxColour(0xEF, 0xEF, 0xF0)), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::White, StateColor::Checked),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurface), StateColor::Normal));
 
         for (auto* btn : {m_btn_color_4, m_btn_color_8, m_btn_color_16}) {
             btn->SetCornerRadius(FromDIP(12));
@@ -2093,13 +2093,13 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
 
     {
         StateColor btn_bg_white(
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Pressed),
-            std::pair<wxColour, int>(dark_or(wxColour(238, 238, 238), wxColour(0x4C, 0x4C, 0x55)), StateColor::Hovered),
-            std::pair<wxColour, int>(dark_or(wxColour(255, 255, 255), wxColour(0x2D, 0x2D, 0x31)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
         StateColor btn_bd_green(
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         StateColor btn_text_green(
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
         m_btn_color_auto->SetCornerRadius(FromDIP(12));
         m_btn_color_auto->SetMinSize(wxSize(FromDIP(60), FromDIP(28)));
@@ -2140,7 +2140,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
 
     m_hint_label = new wxStaticText(parent, wxID_ANY,
         _L("Reminder: parameters changed, click Apply to take effect"));
-    m_hint_label->SetForegroundColour(wxColour(0xFF, 0x6F, 0x00));
+    m_hint_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
     m_hint_label->SetFont(texture_import_section_title_font(parent));
     m_hint_label->Hide();
     sizer->Add(m_hint_label, 0, wxBOTTOM, FromDIP(4));
@@ -2152,7 +2152,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
 
 void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
 {
-    wxColour secondary_fg = dark_or(wxColour(107, 107, 107), wxColour(0x81, 0x81, 0x83));
+    wxColour secondary_fg = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
     wxBoxSizer* header_sizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -2167,9 +2167,9 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
     m_btn_mix_reset->SetPaddingSize(wxSize(FromDIP(2), FromDIP(2)));
     {
         StateColor reset_bg(
-            std::pair<wxColour, int>(dark_or(wxColour(245, 245, 245), wxColour(0x3C, 0x3C, 0x42)), StateColor::Pressed),
-            std::pair<wxColour, int>(dark_or(wxColour(248, 248, 248), wxColour(0x35, 0x35, 0x3A)), StateColor::Hovered),
-            std::pair<wxColour, int>(dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLow), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLow), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
         m_btn_mix_reset->SetBackgroundColor(reset_bg);
         m_btn_mix_reset->SetBorderColor(StateColor());
     }
@@ -2193,11 +2193,11 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
     m_btn_auto_mix->SetMinSize(wxSize(FromDIP(178), FromDIP(28)));
     {
         StateColor btn_bg(
-            std::pair<wxColour, int>(dark_or(wxColour(245, 245, 245), wxColour(0x3C, 0x3C, 0x42)), StateColor::Pressed),
-            std::pair<wxColour, int>(dark_or(wxColour(248, 248, 248), wxColour(0x35, 0x35, 0x3A)), StateColor::Hovered),
-            std::pair<wxColour, int>(dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLow), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLow), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
         StateColor btn_bd(
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
         StateColor btn_text(
             std::pair<wxColour, int>(texture_import_text_colour(), StateColor::Normal));
         m_btn_auto_mix->SetBackgroundColor(btn_bg);
@@ -2230,7 +2230,7 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
     m_mapping_scroll = new wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition,
                                              wxSize(-1, FromDIP(300)));
     m_mapping_scroll->SetScrollRate(0, FromDIP(10));
-    m_mapping_scroll->SetBackgroundColour(dark_or(wxColour(255, 255, 255), wxColour(0x2D, 0x2D, 0x31)));
+    m_mapping_scroll->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_mapping_scroll->Bind(wxEVT_MOUSEWHEEL, &TextureImportDialog::dismiss_filament_popup_on_wheel, this);
 
     m_mapping_sizer = new wxBoxSizer(wxVERTICAL);
@@ -2245,7 +2245,7 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
         wxString::Format(
             _L("The project supports up to %d filaments. Extra filaments will be discarded."),
             (int)max_filament_count()));
-    m_drop_warning_label->SetForegroundColour(wxColour(0xFF, 0x6F, 0x00));
+    m_drop_warning_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
     m_drop_warning_label->SetFont(texture_import_section_title_font(this));
     m_drop_warning_label->Hide();
     sizer->Add(m_drop_warning_label, 0, wxALIGN_LEFT | wxBOTTOM, FromDIP(4));
@@ -2258,13 +2258,13 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     m_btn_skip->SetMinSize(wxSize(FromDIP(136), FromDIP(40)));
     {
         StateColor skip_bg(
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Pressed),
-            std::pair<wxColour, int>(dark_or(wxColour(238, 238, 238), wxColour(0x4C, 0x4C, 0x55)), StateColor::Hovered),
-            std::pair<wxColour, int>(dark_or(wxColour(255, 255, 255), wxColour(0x2D, 0x2D, 0x31)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
         StateColor skip_bd(
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
         StateColor skip_text(
-            std::pair<wxColour, int>(dark_or(wxColour(107, 107, 107), wxColour(0xB3, 0xB3, 0xB5)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::Normal));
         m_btn_skip->SetBackgroundColor(skip_bg);
         m_btn_skip->SetBorderColor(skip_bd);
         m_btn_skip->SetTextColor(skip_text);
@@ -2276,13 +2276,13 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     m_btn_ok->SetMinSize(wxSize(FromDIP(156), FromDIP(40)));
     {
         StateColor ok_bg(
-            std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         StateColor ok_bd(
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         StateColor ok_text(
-            std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
         m_btn_ok->SetBackgroundColor(ok_bg);
         m_btn_ok->SetBorderColor(ok_bd);
         m_btn_ok->SetTextColor(ok_text);
@@ -2336,11 +2336,11 @@ void TextureImportDialog::update_ui_for_state()
     if (ready && valid && is_params_dirty()) {
         m_btn_ok->Enable(true);
         StateColor gray_bg(
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
         StateColor gray_bd(
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
         StateColor gray_text(
-            std::pair<wxColour, int>(dark_or(wxColour(107, 107, 107), wxColour(0xB3, 0xB3, 0xB5)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::Normal));
         m_btn_ok->SetBackgroundColor(gray_bg);
         m_btn_ok->SetBorderColor(gray_bd);
         m_btn_ok->SetTextColor(gray_text);
@@ -2348,13 +2348,13 @@ void TextureImportDialog::update_ui_for_state()
         if (m_hint_label) m_hint_label->Show();
     } else if (ready && valid) {
         StateColor ok_bg(
-            std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         StateColor ok_bd(
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         StateColor ok_text(
-            std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
         m_btn_ok->SetBackgroundColor(ok_bg);
         m_btn_ok->SetBorderColor(ok_bd);
         m_btn_ok->SetTextColor(ok_text);
@@ -2622,17 +2622,17 @@ void TextureImportDialog::on_mesh_repair_decision_required(wxCommandEvent&)
     dlg.SetButtonLabel(wxID_YES, _L("Import without repair"));
     dlg.SetButtonLabel(wxID_NO, _L("Repair and import"), true);
     StateColor primary_bg(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     StateColor primary_bd(
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     StateColor primary_text(
-        std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     StateColor secondary_bg(
-        std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour("#EEEEEE"), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     StateColor secondary_bd(
         std::pair<wxColour, int>(texture_import_gray9000(), StateColor::Normal));
     StateColor secondary_text(
@@ -3653,12 +3653,12 @@ void TextureImportDialog::rebuild_mapping_rows()
         return wxString::Format("Filament %d", idx + 1);
     };
 
-    const wxColour dash_clr   = dark_or(wxColour(179, 179, 179), wxColour(100, 100, 106));
+    const wxColour dash_clr   = StateColor::semantic(MD3::Role::Outline);
     const wxColour hex_fg     = texture_import_text_colour();
-    const wxColour card_bg    = dark_or(wxColour(235, 235, 235), wxColour(0x3C, 0x3C, 0x42));
-    const wxColour card_bd    = dark_or(wxColour(224, 224, 224), wxColour(0x46, 0x46, 0x4C));
+    const wxColour card_bg    = StateColor::semantic(MD3::Role::SurfaceContainer);
+    const wxColour card_bd    = StateColor::semantic(MD3::Role::OutlineVariant);
     const wxColour name_fg    = texture_import_text_colour();
-    const wxColour chev_clr   = dark_or(wxColour(107, 107, 107), wxColour(0xB3, 0xB3, 0xB5));
+    const wxColour chev_clr   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
     m_mapping_rows.resize(m_current_matches.size());
     for (size_t ci = 0; ci < m_current_matches.size(); ++ci) {
@@ -4078,13 +4078,13 @@ void TextureImportDialog::highlight_view_button(int view_index)
     Button* btns[] = { m_btn_view_original, m_btn_view_multicolor };
 
     StateColor active_bg(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     StateColor active_bd(
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     StateColor active_text(
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     StateColor inactive_bg(
         std::pair<wxColour, int>(dark_or(wxColour(245, 245, 245), wxColour(0x5C, 0x5C, 0x64)), StateColor::Pressed),
@@ -4093,7 +4093,7 @@ void TextureImportDialog::highlight_view_button(int view_index)
     StateColor inactive_bd(
         std::pair<wxColour, int>(dark_or(wxColour(255, 255, 255), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
     StateColor inactive_text(
-        std::pair<wxColour, int>(dark_or(wxColour(104, 104, 104), wxColour(0xD0, 0xD0, 0xD2)), StateColor::Normal));
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::Normal));
 
     for (int i = 0; i < 2; ++i) {
         if (!btns[i]) continue;
@@ -4177,11 +4177,11 @@ void TextureImportDialog::update_confirm_button_state()
 
     if (dirty) {
         StateColor gray_bg(
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
         StateColor gray_bd(
-            std::pair<wxColour, int>(dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
         StateColor gray_text(
-            std::pair<wxColour, int>(dark_or(wxColour(107, 107, 107), wxColour(0xB3, 0xB3, 0xB5)), StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::Normal));
         m_btn_ok->SetBackgroundColor(gray_bg);
         m_btn_ok->SetBorderColor(gray_bd);
         m_btn_ok->SetTextColor(gray_text);
@@ -4189,13 +4189,13 @@ void TextureImportDialog::update_confirm_button_state()
         if (m_hint_label) m_hint_label->Show();
     } else {
         StateColor ok_bg(
-            std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         StateColor ok_bd(
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         StateColor ok_text(
-            std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
         m_btn_ok->SetBackgroundColor(ok_bg);
         m_btn_ok->SetBorderColor(ok_bd);
         m_btn_ok->SetTextColor(ok_text);

@@ -10,7 +10,7 @@ namespace GUI {
 MultiMachineItem::MultiMachineItem(wxWindow* parent, MachineObject* obj)
     : DeviceItem(parent, obj)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
 
@@ -110,7 +110,7 @@ void MultiMachineItem::DrawTextWithEllipsis(wxDC& dc, const wxString& text, int 
     wxFont font = dc.GetFont();
 
     wxSize textSize = dc.GetTextExtent(text);
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour(50, 58, 61)));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     int textWidth = textSize.GetWidth();
 
     if (textWidth > maxWidth) {
@@ -174,21 +174,21 @@ void MultiMachineItem::doRender(wxDC& dc)
         //state
         dc.SetFont(Label::Body_13);
         if (state_device == 0) {
-            dc.SetTextForeground(*wxBLACK);
+            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
             DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
         }
         else if (state_device == 1) {
-            dc.SetTextForeground(wxColour(0,174,66));
+            dc.SetTextForeground(StateColor::semantic(MD3::Role::Primary));
             DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
         }
         else if (state_device == 2)
         {
-            dc.SetTextForeground(wxColour(208,27,27));
+            dc.SetTextForeground(StateColor::semantic(MD3::Role::Error));
             DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
         }
         else if (state_device > 2 && state_device < 7) {
-            dc.SetFont(Label::Body_12);
-            dc.SetTextForeground(wxColour(0, 174, 66));
+            dc.SetFont(Label::Mono_12);
+            dc.SetTextForeground(StateColor::semantic(MD3::Role::Primary));
             if (obj_->get_curr_stage() == _L("Printing") && obj_->subtask_) {
                 //wxString layer_info = wxString::Format(_L("Layer: %d/%d"), obj_->curr_layer, obj_->total_layers);
                 wxString progress_info = wxString::Format("%d", obj_->subtask_->task_progress);
@@ -197,12 +197,12 @@ void MultiMachineItem::doRender(wxDC& dc)
                 DrawTextWithEllipsis(dc, progress_info + "%  |  " + left_time, FromDIP(DEVICE_LEFT_PRO_INFO), left, FromDIP(10));
 
 
-                dc.SetPen(wxPen(wxColour(233,233,233)));
-                dc.SetBrush(wxBrush(wxColour(233,233,233)));
+                dc.SetPen(wxPen(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
+                dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
                 dc.DrawRoundedRectangle(left, FromDIP(30), FromDIP(DEVICE_LEFT_PRO_INFO), FromDIP(10), 2);
 
-                dc.SetPen(wxPen(wxColour(0, 174, 66)));
-                dc.SetBrush(wxBrush(wxColour(0, 174, 66)));
+                dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary)));
+                dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
                 dc.DrawRoundedRectangle(left, FromDIP(30), FromDIP(DEVICE_LEFT_PRO_INFO) * (static_cast<float>(obj_->subtask_->task_progress) / 100.0f), FromDIP(10), 2);
             }
             else {
@@ -211,24 +211,24 @@ void MultiMachineItem::doRender(wxDC& dc)
 
         }
         else {
-            dc.SetTextForeground(*wxBLACK);
+            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
             DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
         }
 
         left += FromDIP(DEVICE_LEFT_PRO_INFO);
 
         //button
-        dc.SetPen(wxPen(wxColour(38, 46, 48)));
-        dc.SetBrush(wxBrush(wxColour(*wxWHITE)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline)));
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
         dc.DrawRoundedRectangle(left, (size.y - FromDIP(38)) / 2, FromDIP(90), FromDIP(38), 6);
         dc.SetFont(Label::Body_14);
-        dc.SetTextForeground(*wxBLACK);
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
         dc.DrawText(_L("View"),left + FromDIP(90) / 2 - dc.GetTextExtent(_L("View")).x / 2, (size.y -dc.GetTextExtent(_L("View")).y) / 2);
 
     }
 
     if (m_hover) {
-        dc.SetPen(wxPen(wxColour(0, 174, 66)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRoundedRectangle(0, 0, size.x, size.y, 3);
     }
@@ -271,29 +271,29 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
-    SetBackgroundColour(wxColour(0xEEEEEE));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_main_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_main_panel->SetBackgroundColour(*wxWHITE);
+    m_main_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
 
     StateColor head_bg(
-        std::pair<wxColour, int>(TABLE_HEAD_PRESSED_COLOUR, StateColor::Pressed),
-        std::pair<wxColour, int>(TABLE_HEAR_NORMAL_COLOUR, StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Normal)
     );
 
     //edit prints
     auto m_btn_bg_enable = StateColor(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)
     );
 
 
-    StateColor clean_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled), std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered), std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled),
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
-    StateColor clean_bd(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-    StateColor clean_text(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor clean_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Enabled),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
+    StateColor clean_bd(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Enabled));
+    StateColor clean_text(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurface), StateColor::Enabled));
 
     auto sizer_button_printer = new wxBoxSizer(wxHORIZONTAL);
     sizer_button_printer->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
@@ -319,12 +319,12 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     m_table_head_panel = new wxPanel(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_table_head_panel->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_table_head_panel->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
-    m_table_head_panel->SetBackgroundColour(TABLE_HEAR_NORMAL_COLOUR);
+    m_table_head_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_table_head_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_printer_name = new Button(m_table_head_panel, _L("Device Name"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE);
     m_printer_name->SetBackgroundColor(head_bg);
-    m_printer_name->SetFont(TABLE_HEAD_FONT);
+    m_printer_name->SetFont(Label::Head_11);
     m_printer_name->SetCornerRadius(0);
     m_printer_name->SetMinSize(wxSize(FromDIP(DEVICE_LEFT_DEV_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_printer_name->SetMaxSize(wxSize(FromDIP(DEVICE_LEFT_DEV_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -346,8 +346,8 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
 
 
     m_task_name = new Button(m_table_head_panel, _L("Task Name"), "", wxNO_BORDER, ICON_SINGLE_SIZE);
-    m_task_name->SetBackgroundColor(TABLE_HEAR_NORMAL_COLOUR);
-    m_task_name->SetFont(TABLE_HEAD_FONT);
+    m_task_name->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_task_name->SetFont(Label::Head_11);
     m_task_name->SetCornerRadius(0);
     m_task_name->SetMinSize(wxSize(FromDIP(DEVICE_LEFT_DEV_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_task_name->SetMaxSize(wxSize(FromDIP(DEVICE_LEFT_DEV_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -357,7 +357,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
 
     m_status = new Button(m_table_head_panel, _L("Device Status"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE);
     m_status->SetBackgroundColor(head_bg);
-    m_status->SetFont(TABLE_HEAD_FONT);
+    m_status->SetFont(Label::Head_11);
     m_status->SetCornerRadius(0);
     m_status->SetMinSize(wxSize(FromDIP(DEVICE_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_status->SetMaxSize(wxSize(FromDIP(DEVICE_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -379,8 +379,8 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
 
 
     m_action = new Button(m_table_head_panel, _L("Actions"), "", wxNO_BORDER, ICON_SINGLE_SIZE, false);
-    m_action->SetBackgroundColor(TABLE_HEAR_NORMAL_COLOUR);
-    m_action->SetFont(TABLE_HEAD_FONT);
+    m_action->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_action->SetFont(Label::Head_11);
     m_action->SetCornerRadius(0);
     m_action->SetMinSize(wxSize(FromDIP(DEVICE_LEFT_PRO_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_action->SetMaxSize(wxSize(FromDIP(DEVICE_LEFT_PRO_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -400,14 +400,14 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     m_tip_text->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetLabel(_L("Please select the devices you would like to manage here (up to 6 devices)"));
-    m_tip_text->SetForegroundColour(wxColour(50, 58, 61));
+    m_tip_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_text->SetFont(::Label::Head_20);
     m_tip_text->Wrap(-1);
 
     m_button_add = new Button(m_main_panel, _L("Add"));
     m_button_add->SetBackgroundColor(m_btn_bg_enable);
     m_button_add->SetBorderColor(m_btn_bg_enable);
-    m_button_add->SetTextColor(*wxWHITE);
+    m_button_add->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_add->SetFont(Label::Body_12);
     m_button_add->SetCornerRadius(6);
     m_button_add->SetMinSize(wxSize(FromDIP(90), FromDIP(36)));
@@ -421,7 +421,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     });
 
     m_machine_list = new wxScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_machine_list->SetBackgroundColour(*wxWHITE);
+    m_machine_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_machine_list->SetScrollRate(0, 5);
     m_machine_list->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), 10 * FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_machine_list->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), 10 * FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -432,14 +432,14 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
 
     // add flipping page
     StateColor ctrl_bg(
-        std::pair<wxColour, int>(CTRL_BUTTON_PRESSEN_COLOUR, StateColor::Pressed),
-        std::pair<wxColour, int>(CTRL_BUTTON_NORMAL_COLOUR, StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)
     );
 
     m_flipping_panel = new wxPanel(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_flipping_panel->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_flipping_panel->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
-    m_flipping_panel->SetBackgroundColour(*wxWHITE);
+    m_flipping_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_flipping_page_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_page_sizer = new wxBoxSizer(wxVERTICAL);
@@ -480,7 +480,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     });
 
     m_page_num_input = new ::TextInput(m_flipping_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(50), -1), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(wxColour("#F0F0F1"), StateColor::Disabled), std::pair<wxColour, int>(*wxWHITE, StateColor::Enabled));
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Enabled));
     m_page_num_input->SetBackgroundColor(input_bg);
     m_page_num_input->GetTextCtrl()->SetValue("1");
     wxTextValidator validator(wxFILTER_DIGITS);

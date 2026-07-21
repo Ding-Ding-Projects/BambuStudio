@@ -17,7 +17,7 @@ MultiTaskItem::MultiTaskItem(wxWindow* parent, MachineObject* obj, int type)
     : DeviceItem(parent, obj),
     m_task_type(type)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
 
@@ -37,25 +37,25 @@ MultiTaskItem::MultiTaskItem(wxWindow* parent, MachineObject* obj, int type)
 
 
     auto m_btn_bg_enable = StateColor(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)
     );
 
     m_button_resume = new Button(this, _L("Resume"));
     m_button_resume->SetBackgroundColor(m_btn_bg_enable);
     m_button_resume->SetBorderColor(m_btn_bg_enable);
     m_button_resume->SetFont(Label::Body_12);
-    m_button_resume->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+    m_button_resume->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_resume->SetMinSize(wxSize(FromDIP(70), FromDIP(35)));
     m_button_resume->SetCornerRadius(6);
 
 
-    StateColor clean_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled), std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered), std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled),
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
-    StateColor clean_bd(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-    StateColor clean_text(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor clean_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Enabled),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
+    StateColor clean_bd(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Enabled));
+    StateColor clean_text(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurface), StateColor::Enabled));
 
     m_button_cancel = new Button(this, _L("Cancel"));
     m_button_cancel->SetBackgroundColor(clean_bg);
@@ -375,21 +375,21 @@ void MultiTaskItem::doRender(wxDC& dc)
             if (state_cloud_task == 0 && m_job_id == get_obj()->profile_id_) {
                 dc.SetFont(Label::Body_13);
                 if (state_device == 0) {
-                    dc.SetTextForeground(*wxBLACK);
+                    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
                     DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
                 }
                 else if (state_device == 1) {
-                    dc.SetTextForeground(wxColour(0, 174, 66));
+                    dc.SetTextForeground(StateColor::semantic(MD3::Role::Primary));
                     DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
                 }
                 else if (state_device == 2)
                 {
-                    dc.SetTextForeground(wxColour(208, 27, 27));
+                    dc.SetTextForeground(StateColor::semantic(MD3::Role::Error));
                     DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
                 }
                 else if (state_device > 2 && state_device < 7) {
-                    dc.SetFont(Label::Body_12);
-                    dc.SetTextForeground(wxColour(0, 174, 66));
+                    dc.SetFont(Label::Mono_12);
+                    dc.SetTextForeground(StateColor::semantic(MD3::Role::Primary));
                     if (obj_->get_curr_stage() == _L("Printing") && obj_->subtask_) {
                         //wxString layer_info = wxString::Format(_L("Layer: %d/%d"), obj_->curr_layer, obj_->total_layers);
                         wxString progress_info = wxString::Format("%d", obj_->subtask_->task_progress);
@@ -397,12 +397,12 @@ void MultiTaskItem::doRender(wxDC& dc)
 
                         DrawTextWithEllipsis(dc, progress_info + "%  |  " + left_time, FromDIP(TASK_LEFT_PRO_INFO), left, FromDIP(10));
 
-                        dc.SetPen(wxPen(wxColour(233, 233, 233)));
-                        dc.SetBrush(wxBrush(wxColour(233, 233, 233)));
+                        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
+                        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
                         dc.DrawRoundedRectangle(left, FromDIP(30), FromDIP(TASK_LEFT_PRO_INFO), FromDIP(10), 2);
 
-                        dc.SetPen(wxPen(wxColour(0, 174, 66)));
-                        dc.SetBrush(wxBrush(wxColour(0, 174, 66)));
+                        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary)));
+                        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
                         dc.DrawRoundedRectangle(left, FromDIP(30), FromDIP(TASK_LEFT_PRO_INFO) * (static_cast<float>(obj_->subtask_->task_progress) / 100.0f), FromDIP(10), 2);
                     }
                     else {
@@ -410,7 +410,7 @@ void MultiTaskItem::doRender(wxDC& dc)
                     }
                 }
                 else {
-                    dc.SetTextForeground(*wxBLACK);
+                    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
                     DrawTextWithEllipsis(dc, get_state_device(), FromDIP(TASK_LEFT_PRO_INFO), left);
                 }
             }
@@ -418,15 +418,16 @@ void MultiTaskItem::doRender(wxDC& dc)
     }
     else {
         if (state_local_task == 1) {
+            dc.SetFont(Label::Mono_12);
             wxString progress_info = wxString::Format("%d", m_sending_percent);
             DrawTextWithEllipsis(dc, progress_info + "% " , FromDIP(TASK_LEFT_PRO_INFO), left, FromDIP(10));
 
-            dc.SetPen(wxPen(wxColour(233, 233, 233)));
-            dc.SetBrush(wxBrush(wxColour(233, 233, 233)));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
             dc.DrawRoundedRectangle(left, FromDIP(30), FromDIP(TASK_LEFT_PRO_INFO), FromDIP(10), 2);
 
-            dc.SetPen(wxPen(wxColour(0, 174, 66)));
-            dc.SetBrush(wxBrush(wxColour(0, 174, 66)));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary)));
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
             dc.DrawRoundedRectangle(left, FromDIP(30), FromDIP(TASK_LEFT_PRO_INFO) * (static_cast<float>(m_sending_percent) / 100.0f), FromDIP(10), 2);
         }
         /*else {
@@ -442,8 +443,8 @@ void MultiTaskItem::doRender(wxDC& dc)
     left += FromDIP(TASK_LEFT_PRO_INFO);
 
     //send time
-    dc.SetFont(Label::Body_13);
-    dc.SetTextForeground(*wxBLACK);
+    dc.SetFont(Label::Mono_13);
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
 
     if (!boost::algorithm::contains(m_send_time, "1970")) {
         DrawTextWithEllipsis(dc, m_send_time, FromDIP(TASK_LEFT_SEND_TIME), left);
@@ -452,7 +453,7 @@ void MultiTaskItem::doRender(wxDC& dc)
     left += FromDIP(TASK_LEFT_SEND_TIME);
 
     if (m_hover) {
-        dc.SetPen(wxPen(wxColour(0, 174, 66)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRoundedRectangle(0, 0, size.x, size.y, 3);
     }
@@ -464,7 +465,7 @@ void MultiTaskItem::DrawTextWithEllipsis(wxDC& dc, const wxString& text, int max
 
     wxSize textSize = dc.GetTextExtent(text);
 
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour(50, 58, 61)));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     int textWidth = textSize.GetWidth();
 
@@ -537,20 +538,20 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
-    SetBackgroundColour(wxColour("#EEEEEE"));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_main_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_main_panel->SetBackgroundColour(*wxWHITE);
+    m_main_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
 
     StateColor head_bg(
-        std::pair<wxColour, int>(TABLE_HEAD_PRESSED_COLOUR, StateColor::Pressed),
-        std::pair<wxColour, int>(TABLE_HEAR_NORMAL_COLOUR, StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Normal)
     );
 
     m_table_head_panel = new wxPanel(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_table_head_panel->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_table_head_panel->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
-    m_table_head_panel->SetBackgroundColour(TABLE_HEAR_NORMAL_COLOUR);
+    m_table_head_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_table_head_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_select_checkbox = new CheckBox(m_table_head_panel, wxID_ANY);
@@ -578,8 +579,8 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
 
 
     m_task_name = new Button(m_table_head_panel, _L("Task Name"), "", wxNO_BORDER, ICON_SINGLE_SIZE);
-    m_task_name->SetBackgroundColor(TABLE_HEAR_NORMAL_COLOUR);
-    m_task_name->SetFont(TABLE_HEAD_FONT);
+    m_task_name->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_task_name->SetFont(Label::Head_11);
     m_task_name->SetCornerRadius(0);
     m_task_name->SetMinSize(wxSize(FromDIP(TASK_LEFT_PRO_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_task_name->SetMaxSize(wxSize(FromDIP(TASK_LEFT_PRO_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -588,7 +589,7 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
 
     m_printer_name = new Button(m_table_head_panel, _L("Device Name"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE);
     m_printer_name->SetBackgroundColor(head_bg);
-    m_printer_name->SetFont(TABLE_HEAD_FONT);
+    m_printer_name->SetFont(Label::Head_11);
     m_printer_name->SetCornerRadius(0);
     m_printer_name->SetMinSize(wxSize(FromDIP(TASK_LEFT_DEV_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_printer_name->SetMaxSize(wxSize(FromDIP(TASK_LEFT_DEV_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -608,7 +609,7 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
 
     m_status = new Button(m_table_head_panel, _L("Task Status"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE);
     m_status->SetBackgroundColor(head_bg);
-    m_status->SetFont(TABLE_HEAD_FONT);
+    m_status->SetFont(Label::Head_11);
     m_status->SetCornerRadius(0);
     m_status->SetMinSize(wxSize(FromDIP(TASK_LEFT_PRO_STATE), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_status->SetMaxSize(wxSize(FromDIP(TASK_LEFT_PRO_STATE), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -627,8 +628,8 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
     m_table_head_sizer->Add(m_status, 0, wxALIGN_CENTER_VERTICAL, 0);
 
     m_info = new Button(m_table_head_panel, _L("Info"), "", wxNO_BORDER, ICON_SINGLE_SIZE);
-    m_info->SetBackgroundColor(TABLE_HEAR_NORMAL_COLOUR);
-    m_info->SetFont(TABLE_HEAD_FONT);
+    m_info->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_info->SetFont(Label::Head_11);
     m_info->SetCornerRadius(0);
     m_info->SetMinSize(wxSize(FromDIP(TASK_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_info->SetMaxSize(wxSize(FromDIP(TASK_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -637,7 +638,7 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
 
     m_send_time = new Button(m_table_head_panel, _L("Sent Time"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE, false);
     m_send_time->SetBackgroundColor(head_bg);
-    m_send_time->SetFont(TABLE_HEAD_FONT);
+    m_send_time->SetFont(Label::Head_11);
     m_send_time->SetCornerRadius(0);
     m_send_time->SetMinSize(wxSize(FromDIP(TASK_LEFT_SEND_TIME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_send_time->SetMaxSize(wxSize(FromDIP(TASK_LEFT_SEND_TIME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -656,8 +657,8 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
     m_table_head_sizer->Add(m_send_time, 0, wxALIGN_CENTER_VERTICAL, 0);
 
     m_action = new Button(m_table_head_panel, _L("Actions"), "", wxNO_BORDER, ICON_SINGLE_SIZE, false);
-    m_action->SetBackgroundColor(TABLE_HEAR_NORMAL_COLOUR);
-    m_action->SetFont(TABLE_HEAD_FONT);
+    m_action->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_action->SetFont(Label::Head_11);
     m_action->SetCornerRadius(0);
     /* m_action->SetMinSize(wxSize(FromDIP(TASK_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
      m_action->SetMaxSize(wxSize(FromDIP(TASK_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));*/
@@ -670,12 +671,12 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
     m_tip_text->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetLabel(_L("There are no tasks to be sent!"));
-    m_tip_text->SetForegroundColour(wxColour(50, 58, 61));
+    m_tip_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_text->SetFont(::Label::Head_24);
     m_tip_text->Wrap(-1);
 
     m_task_list = new wxScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_task_list->SetBackgroundColour(*wxWHITE);
+    m_task_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_task_list->SetScrollRate(0, 5);
     m_task_list->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_task_list->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), 10 * FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -692,12 +693,12 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
 
     // ctrl panel
     StateColor ctrl_bg(
-        std::pair<wxColour, int>(CTRL_BUTTON_PRESSEN_COLOUR, StateColor::Pressed),
-        std::pair<wxColour, int>(CTRL_BUTTON_NORMAL_COLOUR, StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)
     );
 
     m_ctrl_btn_panel = new wxPanel(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_ctrl_btn_panel->SetBackgroundColour(*wxWHITE);
+    m_ctrl_btn_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_ctrl_btn_panel->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_ctrl_btn_panel->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -899,28 +900,28 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
-    SetBackgroundColour(wxColour("#EEEEEE"));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_sort.set_role(SortItem::SR_SEND_TIME, true);
 
-    SetBackgroundColour(wxColour("#EEEEEE"));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_main_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_main_panel->SetBackgroundColour(*wxWHITE);
+    m_main_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
 
     StateColor head_bg(
-        std::pair<wxColour, int>(TABLE_HEAD_PRESSED_COLOUR, StateColor::Pressed),
-        std::pair<wxColour, int>(TABLE_HEAR_NORMAL_COLOUR, StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Normal)
     );
 
     StateColor ctrl_bg(
-        std::pair<wxColour, int>(CTRL_BUTTON_PRESSEN_COLOUR, StateColor::Pressed),
-        std::pair<wxColour, int>(CTRL_BUTTON_NORMAL_COLOUR, StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)
     );
 
     m_table_head_panel = new wxPanel(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_table_head_panel->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_table_head_panel->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
-    m_table_head_panel->SetBackgroundColour(TABLE_HEAR_NORMAL_COLOUR);
+    m_table_head_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_table_head_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_select_checkbox = new CheckBox(m_table_head_panel, wxID_ANY);
@@ -950,8 +951,8 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
 
 
     m_task_name = new Button(m_table_head_panel, _L("Task Name"), "", wxNO_BORDER, ICON_SINGLE_SIZE);
-    m_task_name->SetBackgroundColor(TABLE_HEAR_NORMAL_COLOUR);
-    m_task_name->SetFont(TABLE_HEAD_FONT);
+    m_task_name->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_task_name->SetFont(Label::Head_11);
     m_task_name->SetCornerRadius(0);
     m_task_name->SetMinSize(wxSize(FromDIP(TASK_LEFT_PRO_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_task_name->SetMaxSize(wxSize(FromDIP(TASK_LEFT_PRO_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -960,7 +961,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
 
     m_printer_name = new Button(m_table_head_panel, _L("Device Name"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE);
     m_printer_name->SetBackgroundColor(head_bg);
-    m_printer_name->SetFont(TABLE_HEAD_FONT);
+    m_printer_name->SetFont(Label::Head_11);
     m_printer_name->SetCornerRadius(0);
     m_printer_name->SetMinSize(wxSize(FromDIP(TASK_LEFT_DEV_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_printer_name->SetMaxSize(wxSize(FromDIP(TASK_LEFT_DEV_NAME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -980,7 +981,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
 
     m_status = new Button(m_table_head_panel, _L("Task Status"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE);
     m_status->SetBackgroundColor(head_bg);
-    m_status->SetFont(TABLE_HEAD_FONT);
+    m_status->SetFont(Label::Head_11);
     m_status->SetCornerRadius(0);
     m_status->SetMinSize(wxSize(FromDIP(TASK_LEFT_PRO_STATE), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_status->SetMaxSize(wxSize(FromDIP(TASK_LEFT_PRO_STATE), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -999,8 +1000,8 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_table_head_sizer->Add(m_status, 0, wxALIGN_CENTER_VERTICAL, 0);
 
     m_info = new Button(m_table_head_panel, _L("Info"), "", wxNO_BORDER, ICON_SINGLE_SIZE);
-    m_info->SetBackgroundColor(TABLE_HEAR_NORMAL_COLOUR);
-    m_info->SetFont(TABLE_HEAD_FONT);
+    m_info->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_info->SetFont(Label::Head_11);
     m_info->SetCornerRadius(0);
     m_info->SetMinSize(wxSize(FromDIP(TASK_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_info->SetMaxSize(wxSize(FromDIP(TASK_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -1009,7 +1010,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
 
     m_send_time = new Button(m_table_head_panel, _L("Sent Time"), "toolbar_double_directional_arrow", wxNO_BORDER, ICON_SINGLE_SIZE, false);
     m_send_time->SetBackgroundColor(head_bg);
-    m_send_time->SetFont(TABLE_HEAD_FONT);
+    m_send_time->SetFont(Label::Head_11);
     m_send_time->SetCornerRadius(0);
     m_send_time->SetMinSize(wxSize(FromDIP(TASK_LEFT_SEND_TIME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_send_time->SetMaxSize(wxSize(FromDIP(TASK_LEFT_SEND_TIME), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -1028,8 +1029,8 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_table_head_sizer->Add(m_send_time, 0, wxALIGN_CENTER_VERTICAL, 0);
 
     m_action = new Button(m_table_head_panel, _L("Actions"), "", wxNO_BORDER, ICON_SINGLE_SIZE, false);
-    m_action->SetBackgroundColor(TABLE_HEAR_NORMAL_COLOUR);
-    m_action->SetFont(TABLE_HEAD_FONT);
+    m_action->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_action->SetFont(Label::Head_11);
     m_action->SetCornerRadius(0);
     m_action->SetMinSize(wxSize(FromDIP(TASK_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_action->SetMaxSize(wxSize(FromDIP(TASK_LEFT_PRO_INFO), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -1042,7 +1043,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_tip_text->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetLabel(_L("No historical tasks!"));
-    m_tip_text->SetForegroundColour(wxColour(50, 58, 61));
+    m_tip_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_text->SetFont(::Label::Head_24);
     m_tip_text->Wrap(-1);
 
@@ -1050,13 +1051,13 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_loading_text->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_loading_text->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_loading_text->SetLabel(_L("Loading..."));
-    m_loading_text->SetForegroundColour(wxColour(50, 58, 61));
+    m_loading_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_loading_text->SetFont(::Label::Head_24);
     m_loading_text->Wrap(-1);
     m_loading_text->Show(false);
 
     m_task_list = new wxScrolledWindow(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_task_list->SetBackgroundColour(*wxWHITE);
+    m_task_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_task_list->SetScrollRate(0, 5);
     m_task_list->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_task_list->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), 10 * FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
@@ -1077,7 +1078,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_flipping_panel = new wxPanel(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_flipping_panel->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_flipping_panel->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
-    m_flipping_panel->SetBackgroundColour(*wxWHITE);
+    m_flipping_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_flipping_page_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_page_sizer = new wxBoxSizer(wxVERTICAL);
@@ -1122,7 +1123,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     });
 
     m_page_num_input = new ::TextInput(m_flipping_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(50), -1), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(wxColour("#F0F0F1"), StateColor::Disabled), std::pair<wxColour, int>(*wxWHITE, StateColor::Enabled));
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Enabled));
     m_page_num_input->SetBackgroundColor(input_bg);
     m_page_num_input->GetTextCtrl()->SetValue("1");
     wxTextValidator validator(wxFILTER_DIGITS);
@@ -1153,7 +1154,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_main_sizer->Add(m_flipping_panel, 0, wxALIGN_CENTER_HORIZONTAL, 0);
 
     m_ctrl_btn_panel = new wxPanel(m_main_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_ctrl_btn_panel->SetBackgroundColour(*wxWHITE);
+    m_ctrl_btn_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_ctrl_btn_panel->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_ctrl_btn_panel->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_btn_sizer = new wxBoxSizer(wxHORIZONTAL);

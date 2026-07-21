@@ -2457,8 +2457,8 @@ Sidebar::Sidebar(Plater *parent)
         p->m_panel_printer_title->SetBackgroundColor2(title_bg);
 
         p->m_printer_icon = new ScalableButton(p->m_panel_printer_title, wxID_ANY, "printer");
-        p->m_text_printer_settings = new Label(p->m_panel_printer_title, _L("Printer"), LB_PROPAGATE_MOUSE_EVENT);
-        // MD3 section-header typography: 11px/600, OnSurfaceVariant.
+        p->m_text_printer_settings = new Label(p->m_panel_printer_title, _L("Printer").Upper(), LB_PROPAGATE_MOUSE_EVENT);
+        // MD3 section-header typography: 11px/600 uppercase, OnSurfaceVariant.
         p->m_text_printer_settings->SetFont(Label::Head_11);
         p->m_text_printer_settings->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
@@ -2769,8 +2769,8 @@ Sidebar::Sidebar(Plater *parent)
     wxBoxSizer* bSizer39;
     bSizer39 = new wxBoxSizer( wxHORIZONTAL );
     p->m_filament_icon = new ScalableButton(p->m_panel_filament_title, wxID_ANY, "filament");
-    p->m_staticText_filament_settings = new Label(p->m_panel_filament_title, _L("Project Filaments"), LB_PROPAGATE_MOUSE_EVENT);
-    // MD3 section-header typography: 11px/600, OnSurfaceVariant.
+    p->m_staticText_filament_settings = new Label(p->m_panel_filament_title, _L("Project Filaments").Upper(), LB_PROPAGATE_MOUSE_EVENT);
+    // MD3 section-header typography: 11px/600 uppercase, OnSurfaceVariant.
     p->m_staticText_filament_settings->SetFont(Label::Head_11);
     p->m_staticText_filament_settings->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     bSizer39->Add(p->m_filament_icon, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));

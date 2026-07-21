@@ -3,6 +3,7 @@
 #include "GUI_App.hpp"
 #include "NotificationManager.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "Widgets/StateColor.hpp"
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
@@ -16,7 +17,7 @@ constexpr double min_delta_area = scale_(scale_(25));  // equal to 25 mm2
 constexpr double miscalculation = scale_(scale_(1));   // equal to 1 mm2
 
 static const float  LEFT_MARGIN       = 13.0f + 100.0f;  // avoid thumbnail toolbar
-static const float  HORIZONTAL_SLIDER_WINDOW_HEIGHT  = 58.0f;
+static const float  HORIZONTAL_SLIDER_WINDOW_HEIGHT  = static_cast<float>(MD3::Metrics::preview_timeline_height); // 58 — kit preview timeline height
 static const float  VERTICAL_SLIDER_WINDOW_WIDTH     = 124.0f;
 static const float  GROOVE_WIDTH      = 12.0f;
 static const ImVec2 ONE_LAYER_MARGIN  = ImVec2(20.0f, 20.0f);
@@ -650,7 +651,10 @@ void IMSlider::draw_custom_label_block(const ImVec2 anchor, Type type)
     }
     const ImVec2 text_size = ImGui::CalcTextSize(into_u8(label).c_str());
     const ImVec2 padding = ImVec2(4, 2) * m_scale;
-    const ImU32  clr = IM_COL32(255, 111, 0, 255);
+    // Custom-gcode marker badge — the semantic Warning accent (saturated in both
+    // themes so the white label text below stays legible).
+    const wxColour &warn = ThemeColor::Warning;
+    const ImU32  clr = IM_COL32(warn.Red(), warn.Green(), warn.Blue(), 255);
     const float  rounding = 2.0f * m_scale;
     ImVec2 block_pos = { anchor.x - text_size.x - padding.x * 2, anchor.y - text_size.y / 2 - padding.y };
     ImVec2 block_size = { text_size.x + padding.x * 2, text_size.y + padding.y * 2 };
@@ -676,7 +680,7 @@ void IMSlider::draw_ticks(const ImRect& slideable_region) {
     ImVec2 icon_offset   = ImVec2(16.0f, 7.0f) * m_scale;
     ImVec2 icon_size     = ImVec2(14.0f, 14.0f) * m_scale;
 
-    const ImU32 tick_clr = IM_COL32(144, 144, 144, 255);
+    const ImU32 tick_clr = preview_color(MD3::Role::Outline, m_is_dark);
     const ImU32 tick_hover_box_clr = preview_color(MD3::Role::PrimaryContainer, m_is_dark);
 
     auto get_tick_pos = [this, slideable_region](int tick)
@@ -772,7 +776,7 @@ void IMSlider::draw_tick_on_mouse_position(const ImRect& slideable_region) {
     ImVec2 tick_offset = ImVec2(22.0f, 14.0f) * m_scale;
     float  tick_width = 1.0f * m_scale;
 
-    const ImU32 tick_clr = IM_COL32(144, 144, 144, 255);
+    const ImU32 tick_clr = preview_color(MD3::Role::Outline, m_is_dark);
 
     float tick_pos = get_pos_from_value(v_min, v_max, tick, slideable_region);
     ImRect tick_left = ImRect(slideable_region.GetCenter().x - tick_offset.x, tick_pos - tick_width, slideable_region.GetCenter().x - tick_offset.y, tick_pos);
@@ -1142,7 +1146,7 @@ void IMSlider::render_input_custom_gcode(std::string custom_gcode)
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.f * m_scale);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 3) * m_scale);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 7) * m_scale);
-    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, m_is_dark ? ImVec4(54 / 255.0f, 54 / 255.0f, 60 / 255.0f, 1.00f) : ImVec4(245 / 255.0f, 245 / 255.0f, 245 / 255.0f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, preview_color(MD3::Role::SurfaceContainerHigh, m_is_dark));
     ImGui::GetCurrentContext()->DimBgRatio = 1.0f;
     int windows_flag =
         ImGuiWindowFlags_NoCollapse
@@ -1224,7 +1228,7 @@ void IMSlider::render_go_to_layer_dialog()
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.f * m_scale);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 3) * m_scale);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 7) * m_scale);
-    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, m_is_dark ? ImVec4(54 / 255.0f, 54 / 255.0f, 60 / 255.0f, 1.00f) : ImVec4(245 / 255.0f, 245 / 255.0f, 245 / 255.0f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, preview_color(MD3::Role::SurfaceContainerHigh, m_is_dark));
     ImGui::GetCurrentContext()->DimBgRatio = 1.0f;
     int windows_flag =
         ImGuiWindowFlags_NoCollapse

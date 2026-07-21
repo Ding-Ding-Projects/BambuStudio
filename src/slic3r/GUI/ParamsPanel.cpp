@@ -27,14 +27,14 @@ TipsDialog::TipsDialog(wxWindow *parent, const wxString &title, const wxString &
     : DPIDialog(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX),
     m_app_key(app_key)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
     m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_top_line->SetBackgroundColour(wxColour(166, 169, 170));
+    m_top_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_main->Add(m_top_line, 0, wxEXPAND, 0);
 
@@ -43,8 +43,8 @@ TipsDialog::TipsDialog(wxWindow *parent, const wxString &title, const wxString &
     m_msg = new wxStaticText(this, wxID_ANY, description, wxDefaultPosition, wxDefaultSize, 0);
     m_msg->Wrap(-1);
     m_msg->SetFont(::Label::Body_13);
-    m_msg->SetForegroundColour(wxColour(107, 107, 107));
-    m_msg->SetBackgroundColour(wxColour(255, 255, 255));
+    m_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_msg->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_sizer_main->Add(m_msg, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(40));
 
@@ -112,7 +112,7 @@ wxBoxSizer *TipsDialog::create_item_checkbox(wxString title, wxWindow *parent, w
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
     auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(-1, -1), 0);
-    checkbox_title->SetForegroundColour(wxColour(144, 144, 144));
+    checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(-1);
     m_sizer_checkbox->Add(checkbox_title, 0, wxALIGN_CENTER | wxALL, 3);
@@ -131,23 +131,23 @@ wxBoxSizer *TipsDialog::create_item_checkbox(wxString title, wxWindow *parent, w
 Button *TipsDialog::add_button(wxWindowID btn_id, const wxString &label, bool set_focus /*= false*/)
 {
     Button* btn = new Button(this, label, "", 0, 0, btn_id);
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-    StateColor btn_bd_green(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bd_green(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-    StateColor btn_text_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+    StateColor btn_text_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal));
 
     StateColor btn_bg_white(
-        std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)
     );
 
-    StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+    StateColor btn_bd_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
 
-    StateColor btn_text_white(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+    StateColor btn_text_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurface), StateColor::Normal));
 
     if (btn_id == wxID_OK || btn_id == wxID_YES) {
         btn->SetBackgroundColor(btn_bg_green);
@@ -249,7 +249,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
     : wxPanel( parent, id, pos, size, style, name )
 {
     // BBS: new layout
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 #if __WXOSX__
     m_top_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_top_sizer->SetSizeHints(this);
@@ -272,8 +272,8 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
     if (dynamic_cast<Notebook*>(parent)) {
         // BBS: new layout
         m_top_panel = new StaticBox(this, wxID_ANY, wxDefaultPosition);
-        m_top_panel->SetBackgroundColor(0xF8F8F8);
-        m_top_panel->SetBackgroundColor2(0xF1F1F1);
+        m_top_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+        m_top_panel->SetBackgroundColor2(StateColor::semantic(MD3::Role::SurfaceContainer));
 
         m_process_icon = new ScalableButton(m_top_panel, wxID_ANY, "process");
 
@@ -391,7 +391,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
     };
 
     m_page_view = new PageScrolledWindow(page_parent);
-    m_page_view->SetBackgroundColour(*wxWHITE);
+    m_page_view->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_page_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_page_view->SetSizer(m_page_sizer);
@@ -759,7 +759,7 @@ void ParamsPanel::notify_object_config_changed()
     if (has_config == m_has_object_config) return;
     m_has_object_config = has_config;
     if (has_config)
-        m_mode_region->SetTextColor2(StateColor(std::pair{0xfffffe, (int) StateColor::Checked}, std::pair{wxGetApp().get_label_clr_modified(), 0}));
+        m_mode_region->SetTextColor2(StateColor(std::pair{StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Checked}, std::pair{wxGetApp().get_label_clr_modified(), 0}));
     else
         m_mode_region->SetTextColor2(StateColor());
     m_mode_region->Rescale();

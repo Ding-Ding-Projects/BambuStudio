@@ -79,7 +79,7 @@ void MultiMachinePage::init_tabpanel()
     wxBoxSizer* sizer_side_tools = new wxBoxSizer(wxHORIZONTAL);
     sizer_side_tools->Add(m_side_tools, 1, wxEXPAND, 0);
     m_tabpanel = new Tabbook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, sizer_side_tools, wxNB_LEFT | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
-    m_tabpanel->SetBackgroundColour(wxColour("#FEFFFF"));
+    m_tabpanel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_tabpanel->Bind(wxEVT_BOOKCTRL_PAGE_CHANGED, [this](wxBookCtrlEvent& e) {; });
 
     m_local_task_manager = new LocalTaskManagerPage(m_tabpanel);
@@ -116,7 +116,7 @@ void MultiMachinePage::clear_page()
 DevicePickItem::DevicePickItem(wxWindow* parent, MachineObject* obj)
     : DeviceItem(parent, obj)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_bitmap_check_disable = ScalableBitmap(this, "check_off_disabled", 18);
     m_bitmap_check_off = ScalableBitmap(this, "check_off_focused", 18);
     m_bitmap_check_on = ScalableBitmap(this, "check_on", 18);
@@ -140,7 +140,7 @@ void DevicePickItem::DrawTextWithEllipsis(wxDC& dc, const wxString& text, int ma
     wxFont font = dc.GetFont();
 
     wxSize textSize = dc.GetTextExtent(text);
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour(50, 58, 61)));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     int textWidth = textSize.GetWidth();
 
     if (textWidth > maxWidth) {
@@ -308,7 +308,7 @@ MultiMachinePickPage::MultiMachinePickPage(Plater* plater /*= nullptr*/)
 
     app_config = get_app_config();
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     // icon
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
@@ -316,7 +316,7 @@ MultiMachinePickPage::MultiMachinePickPage(Plater* plater /*= nullptr*/)
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_label = new Label(this, _L("Select connected printers (0/6)"));
 
@@ -324,7 +324,7 @@ MultiMachinePickPage::MultiMachinePickPage(Plater* plater /*= nullptr*/)
     scroll_macine_list->SetSize(wxSize(FromDIP(400), FromDIP(10 * 30)));
     scroll_macine_list->SetMinSize(wxSize(FromDIP(400), FromDIP(10 * 30)));
     scroll_macine_list->SetMaxSize(wxSize(FromDIP(400), FromDIP(10 * 30)));
-    scroll_macine_list->SetBackgroundColour(*wxWHITE);
+    scroll_macine_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     scroll_macine_list->SetScrollRate(0, 5);
 
     sizer_machine_list = new wxBoxSizer(wxVERTICAL);

@@ -2718,7 +2718,7 @@ void AssemblyStepsUtils::render_assembly_structure_option_menu(
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered,
         md3_vec4(MD3::Role::Primary, is_dark, is_dark ? 0.60f : 0.31f));
     ImGui::PushStyleColor(ImGuiCol_Separator,
-        is_dark ? ImVec4(0.35f, 0.35f, 0.40f, 1.0f) : ImVec4(0.70f, 0.70f, 0.70f, 1.0f));
+        md3_vec4(MD3::Role::OutlineVariant, is_dark));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f * sc, 6.0f * sc));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f * sc, 4.0f * sc));
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 4.0f * sc);
@@ -3942,15 +3942,15 @@ AssemblyTreeRenderResult AssemblyStepsUtils::render_assembly_tree_selector(
 
     load_assembly_tree_icons(sc);
 
-    const ImU32 text_col      = m_is_dark ? IM_COL32(0xE0, 0xE0, 0xE0, 255) : IM_COL32(38, 46, 48, 255);
-    const ImU32 sub_text_col  = m_is_dark ? IM_COL32(0x90, 0x90, 0x90, 255) : IM_COL32(144, 144, 144, 255);
-    const ImU32 green_col     = IM_COL32(0, 174, 66, 255);
-    const ImU32 line_col      = m_is_dark ? IM_COL32(80, 80, 84, 255)  : IM_COL32(209, 213, 216, 255);
-    const ImU32 border_col    = m_is_dark ? IM_COL32(90, 90, 94, 255)  : IM_COL32(190, 190, 190, 255);
-    const ImU32 separator_col = m_is_dark ? IM_COL32(60, 60, 64, 255)  : IM_COL32(229, 229, 229, 255);
+    const ImU32 text_col      = md3_u32(MD3::Role::OnSurface, m_is_dark);
+    const ImU32 sub_text_col  = md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark);
+    const ImU32 green_col     = md3_u32(MD3::Role::Primary, m_is_dark);
+    const ImU32 line_col      = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
+    const ImU32 border_col    = md3_u32(MD3::Role::Outline, m_is_dark);
+    const ImU32 separator_col = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
     // Unchecked / partial checkbox background follows the surface color so the
     // box does not glow white on the dark panel.
-    const ImU32 checkbox_bg_col = m_is_dark ? IM_COL32(45, 45, 49, 255) : IM_COL32(255, 255, 255, 255);
+    const ImU32 checkbox_bg_col = m_is_dark ? md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark);
 
     auto to_lower_ascii = [](std::string value) {
         std::transform(value.begin(), value.end(), value.begin(),
@@ -4129,8 +4129,8 @@ AssemblyTreeRenderResult AssemblyStepsUtils::render_assembly_tree_selector(
     };
     // Selected rows use a light-green fill (figma 4092-11872, ?1); hovered rows
     // are only outlined with a light-green border (?2), no fill.
-    const ImU32 row_select_col       = m_is_dark ? IM_COL32(40, 64, 48, 255)  : IM_COL32(0xD6, 0xF0, 0xDC, 255);
-    const ImU32 row_hover_border_col = m_is_dark ? IM_COL32(0x4C, 0x8F, 0x66, 255) : IM_COL32(0x9F, 0xD9, 0xB4, 255);
+    const ImU32 row_select_col       = md3_u32(MD3::Role::SecondaryContainer, m_is_dark);
+    const ImU32 row_hover_border_col = md3_u32(MD3::Role::Primary, m_is_dark);
     bool any_row_hovered = false;
     struct VisibleAssemblyTreeRow
     {
@@ -4220,7 +4220,7 @@ AssemblyTreeRenderResult AssemblyStepsUtils::render_assembly_tree_selector(
                 child_draw_list->AddRect(row_min, row_max, row_hover_border_col, 4.0f * sc, 0, 1.0f * sc);
         } else if (hovered) {
             child_draw_list->AddRectFilled(row_min, row_max,
-                m_is_dark ? IM_COL32(58, 58, 62, 255) : IM_COL32(245, 247, 248, 255), 4.0f * sc);
+                md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark), 4.0f * sc);
         }
 
         if (options.enable_row_select && hovered) {
@@ -4266,9 +4266,9 @@ AssemblyTreeRenderResult AssemblyStepsUtils::render_assembly_tree_selector(
             const float frame_h     = ImGui::GetFontSize() + 2.0f * frame_pad_y;
             ImGui::SetCursorScreenPos(ImVec2(text_x, center_y - frame_h * 0.5f));
             ImGui::SetNextItemWidth(std::max(40.0f * sc, text_max_x - text_x));
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, m_is_dark ? ImVec4(0.16f, 0.16f, 0.18f, 1.0f) : ImVec4(0.94f, 0.94f, 0.94f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, m_is_dark ? ImVec4(0.18f, 0.18f, 0.20f, 1.0f) : ImVec4(0.92f, 0.92f, 0.92f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_FrameBgActive, m_is_dark ? ImVec4(0.20f, 0.20f, 0.22f, 1.0f) : ImVec4(0.90f, 0.90f, 0.90f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_vec4(MD3::Role::SurfaceContainerHighest, m_is_dark));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_vec4(MD3::Role::SurfaceContainerHighest, m_is_dark));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_vec4(MD3::Role::SurfaceContainerHighest, m_is_dark));
             ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f * sc);
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4.0f * sc, frame_pad_y));
             if (m_tree_item_rename_focus_pending) {
@@ -4404,7 +4404,7 @@ bool AssemblyStepsUtils::render_connection_type_btn(
     const ImVec2 btn_max(x + w, y + h);
     const float rounding = 4.0f * sc;
 
-    const ImU32 bg = m_is_dark ? IM_COL32(45, 45, 49, 255) : IM_COL32(255, 255, 255, 255);
+    const ImU32 bg = m_is_dark ? md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark);
     dl->AddRectFilled(btn_min, btn_max, bg, rounding);
     if (selected)
         dl->AddRect(btn_min, btn_max, brand_col, rounding, 0, 2.0f * sc);
@@ -4444,10 +4444,10 @@ bool AssemblyStepsUtils::render_cyber_brick_section(
     ImDrawList *dl, ImVec2 card_min, float card_w, float card_h,
     float font_sz, float small_fs, float sc)
 {
-    const ImU32 grey300 = IM_COL32(238, 238, 238, 255);
-    const ImU32 grey400 = IM_COL32(206, 206, 206, 255);
-    const ImU32 grey500 = IM_COL32(172, 172, 172, 255);
-    const ImU32 grey700 = IM_COL32(107, 107, 107, 255);
+    const ImU32 grey300 = md3_u32(MD3::Role::SurfaceContainer, m_is_dark);
+    const ImU32 grey400 = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
+    const ImU32 grey500 = md3_u32(MD3::Role::Outline, m_is_dark);
+    const ImU32 grey700 = md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark);
     const float rounding = 4.0f * sc;
 
     // "+" button (top-right)
@@ -4525,13 +4525,13 @@ int AssemblyStepsUtils::render_timeline_keyframe(
     const char *label, float label_fs, float sc,
     bool show_delete_badge)
 {
-    const ImU32 brand   = IM_COL32(0, 174, 66, 255);
-    const ImU32 grey200 = m_is_dark ? IM_COL32(50, 50, 54, 255)  : IM_COL32(248, 248, 248, 255);
-    const ImU32 grey300 = m_is_dark ? IM_COL32(60, 60, 64, 255)  : IM_COL32(238, 238, 238, 255);
-    const ImU32 grey400 = m_is_dark ? IM_COL32(70, 70, 74, 255)  : IM_COL32(206, 206, 206, 255);
-    const ImU32 grey600 = m_is_dark ? IM_COL32(0x90, 0x90, 0x90, 255) : IM_COL32(144, 144, 144, 255);
-    const ImU32 grey700 = m_is_dark ? IM_COL32(0xA0, 0xA0, 0xA0, 255) : IM_COL32(107, 107, 107, 255);
-    const ImU32 white_c = m_is_dark ? IM_COL32(55, 55, 59, 255)  : IM_COL32(255, 255, 255, 255);
+    const ImU32 brand   = md3_u32(MD3::Role::Primary, m_is_dark);
+    const ImU32 grey200 = md3_u32(MD3::Role::SurfaceContainerLow, m_is_dark);
+    const ImU32 grey300 = md3_u32(MD3::Role::SurfaceContainer, m_is_dark);
+    const ImU32 grey400 = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
+    const ImU32 grey600 = md3_u32(MD3::Role::Outline, m_is_dark);
+    const ImU32 grey700 = md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark);
+    const ImU32 white_c = m_is_dark ? md3_u32(MD3::Role::SurfaceContainerHighest, m_is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark);
     const float font_sz = ImGui::GetFontSize();
 
     int result = 0;
@@ -4578,7 +4578,7 @@ int AssemblyStepsUtils::render_timeline_keyframe(
         const ImVec2 slot_max(x + w, y + h);
 
         if (selected) {
-            dl->AddRectFilled(slot_min, slot_max, IM_COL32(44, 173, 0, 38));
+            dl->AddRectFilled(slot_min, slot_max, md3_u32(MD3::Role::Primary, m_is_dark, 38));
             dl->AddRect(slot_min, slot_max, brand, 0, 0, 1.5f * sc);
         } else {
             dl->AddRectFilled(slot_min, slot_max, grey200);
@@ -4670,9 +4670,9 @@ bool AssemblyStepsUtils::render_note_tool_btn(
     ImTextureID icon, bool selected, const char *id, float sc,
     const char *tooltip)
 {
-    const ImU32 white_c = m_is_dark ? IM_COL32(45, 45, 49, 255) : IM_COL32(255, 255, 255, 255);
-    const ImU32 grey400 = m_is_dark ? IM_COL32(70, 70, 74, 255) : IM_COL32(206, 206, 206, 255);
-    const ImU32 brand   = IM_COL32(0, 174, 66, 255);
+    const ImU32 white_c = m_is_dark ? md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark);
+    const ImU32 grey400 = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
+    const ImU32 brand   = md3_u32(MD3::Role::Primary, m_is_dark);
     const float rounding = 4.0f * sc;
 
     const ImVec2 bmin(x, y);
@@ -4719,8 +4719,8 @@ bool AssemblyStepsUtils::render_note_color_control(ImDrawList *dl, float x, floa
 
     const ImVec2 min(x, y);
     const ImVec2 max(x + w, y + h);
-    dl->AddRectFilled(min, max, m_is_dark ? IM_COL32(45, 45, 49, 255) : IM_COL32(255, 255, 255, 255), rounding);
-    dl->AddRect(min, max, m_is_dark ? IM_COL32(70, 70, 74, 255) : IM_COL32(238, 238, 238, 255), rounding);
+    dl->AddRectFilled(min, max, m_is_dark ? md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark), rounding);
+    dl->AddRect(min, max, md3_u32(MD3::Role::OutlineVariant, m_is_dark), rounding);
 
     bool changed = false;
     float sx = x + pad_x;
@@ -4731,11 +4731,11 @@ bool AssemblyStepsUtils::render_note_color_control(ImDrawList *dl, float x, floa
         const ImVec2 smax(sx + swatch_sz, sy + swatch_sz);
         dl->AddRectFilled(smin, smax, note_color_to_im_u32(item.color), swatch_rounding);
         if (item.has_border)
-            dl->AddRect(smin, smax, m_is_dark ? IM_COL32(100, 100, 104, 255) : IM_COL32(172, 172, 172, 255), swatch_rounding);
+            dl->AddRect(smin, smax, md3_u32(MD3::Role::Outline, m_is_dark), swatch_rounding);
         if (m_guide_note_color_selected == i)
             dl->AddRect(ImVec2(smin.x - 2.4f * sc, smin.y - 2.4f * sc),
                 ImVec2(smax.x + 2.4f * sc, smax.y + 2.4f * sc),
-                IM_COL32(0, 174, 66, 255), swatch_rounding + 2.4f * sc, 0, 1.8f * sc);
+                md3_u32(MD3::Role::Primary, m_is_dark), swatch_rounding + 2.4f * sc, 0, 1.8f * sc);
 
         ImGui::SetCursorScreenPos(smin);
         ImGui::PushID(item.id);
@@ -4799,8 +4799,8 @@ bool AssemblyStepsUtils::render_note_bg_color_control(ImDrawList *dl, float x, f
 
     const ImVec2 min(x, y);
     const ImVec2 max(x + w, y + h);
-    dl->AddRectFilled(min, max, m_is_dark ? IM_COL32(45, 45, 49, 255) : IM_COL32(255, 255, 255, 255), rounding);
-    dl->AddRect(min, max, m_is_dark ? IM_COL32(70, 70, 74, 255) : IM_COL32(238, 238, 238, 255), rounding);
+    dl->AddRectFilled(min, max, m_is_dark ? md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark), rounding);
+    dl->AddRect(min, max, md3_u32(MD3::Role::OutlineVariant, m_is_dark), rounding);
 
     bool changed = false;
     float sx = x + pad_x;
@@ -4811,11 +4811,11 @@ bool AssemblyStepsUtils::render_note_bg_color_control(ImDrawList *dl, float x, f
         const ImVec2 smax(sx + swatch_sz, sy + swatch_sz);
         dl->AddRectFilled(smin, smax, note_color_to_im_u32(item.color), swatch_rounding);
         if (item.has_border)
-            dl->AddRect(smin, smax, m_is_dark ? IM_COL32(100, 100, 104, 255) : IM_COL32(172, 172, 172, 255), swatch_rounding);
+            dl->AddRect(smin, smax, md3_u32(MD3::Role::Outline, m_is_dark), swatch_rounding);
         if (m_guide_note_bg_color_selected == i)
             dl->AddRect(ImVec2(smin.x - 2.4f * sc, smin.y - 2.4f * sc),
                 ImVec2(smax.x + 2.4f * sc, smax.y + 2.4f * sc),
-                IM_COL32(0, 174, 66, 255), swatch_rounding + 2.4f * sc, 0, 1.8f * sc);
+                md3_u32(MD3::Role::Primary, m_is_dark), swatch_rounding + 2.4f * sc, 0, 1.8f * sc);
 
         ImGui::SetCursorScreenPos(smin);
         ImGui::PushID(item.id);
@@ -4871,18 +4871,18 @@ bool AssemblyStepsUtils::render_footer_button(const char* id, const std::string&
     const bool hovered = ImGui::IsItemHovered();
     const bool disabled = ImGui::GetItemFlags() & ImGuiItemFlags_Disabled;
 
-    const ImU32 sec_bg     = m_is_dark ? IM_COL32(55, 55, 59, 255)   : IM_COL32(255, 255, 255, 255);
-    const ImU32 sec_border = m_is_dark ? IM_COL32(90, 90, 94, 255)   : IM_COL32(202, 202, 202, 255);
-    const ImU32 sec_text   = m_is_dark ? IM_COL32(0xE0, 0xE0, 0xE0, 255) : IM_COL32(38, 46, 48, 255);
-    const ImU32 dis_bg     = m_is_dark ? IM_COL32(60, 60, 64, 255)   : IM_COL32(238, 238, 238, 255);
-    const ImU32 dis_border = m_is_dark ? IM_COL32(70, 70, 74, 255)   : IM_COL32(206, 206, 206, 255);
+    const ImU32 sec_bg     = m_is_dark ? md3_u32(MD3::Role::SurfaceContainerHighest, m_is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark);
+    const ImU32 sec_border = md3_u32(MD3::Role::Outline, m_is_dark);
+    const ImU32 sec_text   = md3_u32(MD3::Role::OnSurface, m_is_dark);
+    const ImU32 dis_bg     = md3_u32(MD3::Role::SurfaceContainer, m_is_dark);
+    const ImU32 dis_border = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
 
     const ImU32 bg = disabled ? dis_bg :
-        (primary ? (hovered ? IM_COL32(0, 190, 74, 255) : IM_COL32(0, 174, 66, 255)) : sec_bg);
+        (primary ? md3_u32(MD3::Role::Primary, m_is_dark) : sec_bg);
     const ImU32 border = disabled ? dis_border :
-        (primary ? bg : (hovered ? IM_COL32(0, 174, 66, 255) : sec_border));
-    const ImU32 text = disabled ? IM_COL32(172, 172, 172, 255) :
-        (primary ? IM_COL32(255, 255, 255, 255) : sec_text);
+        (primary ? bg : (hovered ? md3_u32(MD3::Role::Primary, m_is_dark) : sec_border));
+    const ImU32 text = disabled ? md3_u32(MD3::Role::Outline, m_is_dark) :
+        (primary ? md3_u32(MD3::Role::OnPrimary, m_is_dark) : sec_text);
     draw_list->AddRectFilled(pos, ImVec2(pos.x + draw_size.x, pos.y + draw_size.y), bg, draw_size.y * 0.5f);
     draw_list->AddRect(pos, ImVec2(pos.x + draw_size.x, pos.y + draw_size.y), border, draw_size.y * 0.5f, 0, 2.0f * sc);
 
@@ -4912,9 +4912,9 @@ void AssemblyStepsUtils::render_export_menu_popup(const char* popup_id, float sc
     const float menu_height = win_padding * 2.0f + row_height * kExportItemCount + row_spacing * (kExportItemCount - 1);
     ImGui::SetNextWindowSize(ImVec2(menu_width, menu_height), ImGuiCond_Always);
 
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, m_is_dark ? ImVec4(45 / 255.0f, 45 / 255.0f, 49 / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 77.0f / 255.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, m_is_dark ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f) : ImVec4(38.0f / 255.0f, 46.0f / 255.0f, 48.0f / 255.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, md3_vec4(MD3::Role::SurfaceContainer, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_vec4(MD3::Role::OutlineVariant, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, m_is_dark));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * sc);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(win_padding, win_padding));
@@ -4938,7 +4938,7 @@ void AssemblyStepsUtils::render_export_menu_popup(const char* popup_id, float sc
 
             const bool hovered = ImGui::IsItemHovered();
             if (hovered) {
-                const ImU32 bg = m_is_dark ? IM_COL32(55, 55, 59, 255) : IM_COL32(240, 240, 240, 255);
+                const ImU32 bg = md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark);
                 draw_list->AddRectFilled(row_pos, ImVec2(row_pos.x + row_content_w, row_pos.y + row_height), bg, 4.0f * sc);
                 if (types[i] == ExportType::MarkDown)
                     render_panel_tooltip(markdown_tooltip, false);
@@ -4995,16 +4995,16 @@ void AssemblyStepsUtils::render_labels_show_type_menu_popup(const char* popup_id
         + row_spacing * (kTypeCount - 1);
     ImGui::SetNextWindowSize(ImVec2(menu_width, menu_height), ImGuiCond_Always);
 
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, m_is_dark ? ImVec4(45 / 255.0f, 45 / 255.0f, 49 / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 77.0f / 255.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, m_is_dark ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f) : ImVec4(38.0f / 255.0f, 46.0f / 255.0f, 48.0f / 255.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, md3_vec4(MD3::Role::SurfaceContainer, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_vec4(MD3::Role::OutlineVariant, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, m_is_dark));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * sc);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(win_padding, win_padding));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
     if (ImGui::BeginPopup(popup_id, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove)) {
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        const ImU32 brand = IM_COL32(0, 174, 66, 255);
+        const ImU32 brand = md3_u32(MD3::Role::Primary, m_is_dark);
         for (int i = 0; i < kTypeCount; ++i) {
             ImGui::PushID(i);
             ImVec2 row_pos = ImGui::GetCursorScreenPos();
@@ -5016,7 +5016,7 @@ void AssemblyStepsUtils::render_labels_show_type_menu_popup(const char* popup_id
 
             const bool hovered = ImGui::IsItemHovered();
             if (hovered) {
-                const ImU32 bg = m_is_dark ? IM_COL32(55, 55, 59, 255) : IM_COL32(240, 240, 240, 255);
+                const ImU32 bg = md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark);
                 draw_list->AddRectFilled(row_pos, ImVec2(row_pos.x + row_content_w, row_pos.y + row_height), bg, 4.0f * sc);
                 render_panel_tooltip(type_tooltips[i], false);
             }
@@ -5050,9 +5050,9 @@ bool AssemblyStepsUtils::render_checkbox(
     ImDrawList *dl, float x, float y, float sz,
     bool *checked, const char *id, float sc)
 {
-    const ImU32 white_c = IM_COL32(255, 255, 255, 255);
-    const ImU32 grey400 = IM_COL32(206, 206, 206, 255);
-    const ImU32 brand   = IM_COL32(0, 174, 66, 255);
+    const ImU32 white_c = md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark);
+    const ImU32 grey400 = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
+    const ImU32 brand   = md3_u32(MD3::Role::Primary, m_is_dark);
     const float rounding = 2.0f * sc;
 
     const ImVec2 cb_min(x, y);
@@ -5089,7 +5089,7 @@ void AssemblyStepsUtils::render_assembly_label_settings_section(
 {
     const float font_sz  = ImGui::GetFontSize();                 // title + row labels: 13px in design
     const float pill_fs  = font_sz * 12.0f / 13.0f;              // pill text: 12px in design
-    const ImU32 grey700  = m_is_dark ? IM_COL32(0xA0, 0xA0, 0xA0, 255) : IM_COL32(107, 107, 107, 255);
+    const ImU32 grey700  = md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark);
     const float pad_x    = 8.0f * sc;
     const float row_h    = 28.0f * sc;
     (void) card_h;
@@ -5166,8 +5166,7 @@ void AssemblyStepsUtils::render_assembly_label_settings_section(
         // checkbox is off it renders greyed out and ignores clicks.
         const bool  pill_enabled = m_guide_show_part_numbers;
         const ImU32 pill_col     = pill_enabled ? grey700
-                                                : (m_is_dark ? IM_COL32(0x5A, 0x5A, 0x5A, 255)
-                                                             : IM_COL32(0xC4, 0xC4, 0xC4, 255));
+                                                : md3_u32(MD3::Role::OutlineVariant, m_is_dark);
         draw_list->AddRect(pill_min, pill_max, pill_col, pill_h * 0.5f, 0, 1.0f);
         draw_list->AddText(ImGui::GetFont(), pill_fs,
             ImVec2(pill_x + (pill_w - lbl_sz.x) * 0.5f, pill_y + (pill_h - lbl_sz.y) * 0.5f),
@@ -5203,7 +5202,7 @@ void AssemblyStepsUtils::render_assembly_label_settings_section(
 void AssemblyStepsUtils::render_assembly_label_settings_popup(const char *popup_id, float sc, const ImVec2 &anchor)
 {
     const float  rounding   = 4.0f * sc;
-    const ImU32  panel_fill = m_is_dark ? IM_COL32(45, 45, 49, 255) : IM_COL32(255, 255, 255, 255);
+    const ImU32  panel_fill = md3_u32(MD3::Role::SurfaceContainer, m_is_dark);
     const float  win_pad    = 12.0f * sc;
 
     // Pre-estimate the content width so the popup never clips its widest row (the
@@ -5229,11 +5228,9 @@ void AssemblyStepsUtils::render_assembly_label_settings_popup(const char *popup_
         pos_x = margin;
     ImGui::SetNextWindowPos(ImVec2(pos_x, anchor.y), ImGuiCond_Always);
 
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, m_is_dark ? ImVec4(45 / 255.0f, 45 / 255.0f, 49 / 255.0f, 1.0f)
-                                                      : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, md3_vec4(MD3::Role::SurfaceContainer, m_is_dark));
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, m_is_dark ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
-                                                   : ImVec4(38.0f / 255.0f, 46.0f / 255.0f, 48.0f / 255.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, m_is_dark));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, rounding);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(win_pad, win_pad));
@@ -5278,15 +5275,15 @@ void AssemblyStepsUtils::render_assembly_label_settings_popup(const char *popup_
             const bool   xhover = ImGui::IsMouseHoveringRect(xmin, xmax);
             if (cross)
                 dl->AddImage(cross, xmin, xmax, ImVec2(0, 0), ImVec2(1, 1),
-                             xhover ? (m_is_dark ? IM_COL32(255, 255, 255, 255) : IM_COL32(0x26, 0x2E, 0x30, 255))
-                                    : (m_is_dark ? IM_COL32(0xC0, 0xC0, 0xC0, 255) : IM_COL32(0x80, 0x80, 0x80, 255)));
+                             xhover ? md3_u32(MD3::Role::OnSurface, m_is_dark)
+                                    : md3_u32(MD3::Role::Outline, m_is_dark));
             if (xhover && ImGui::IsMouseClicked(0))
                 ImGui::CloseCurrentPopup();
         }
 
         // Divider (Figma 4125:11529): 1px grey300 line spanning the content width.
         {
-            const ImU32  div_col = m_is_dark ? IM_COL32(60, 60, 64, 255) : IM_COL32(238, 238, 238, 255);
+            const ImU32  div_col = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
             const ImVec2 dp      = ImGui::GetCursorScreenPos();
             dl->AddLine(ImVec2(dp.x, dp.y), ImVec2(dp.x + content_w, dp.y), div_col, 1.0f * sc);
             ImGui::Dummy(ImVec2(content_w, 1.0f * sc));
@@ -5317,8 +5314,7 @@ void AssemblyStepsUtils::render_assembly_label_settings_popup(const char *popup_
             // view explosion-ratio input (GLCanvas3D). The popup pushed
             // ImGuiCol_Border transparent and FrameBg here is transparent, so
             // without this the box has neither fill nor outline.
-            const ImVec4 input_border = m_is_dark ? ImVec4(0.45f, 0.45f, 0.45f, 1.0f)
-                                                  : ImVec4(0.77f, 0.77f, 0.77f, 1.0f);
+            const ImVec4 input_border = md3_vec4(MD3::Role::Outline, m_is_dark);
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * sc);
             ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.0f * sc);
             ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
@@ -5349,8 +5345,7 @@ void AssemblyStepsUtils::render_assembly_label_settings_popup(const char *popup_
             // disc). Mirror the gizmo's window recipe so they render as hollow
             // rings: transparent FrameBg + 1px frame border with a visible border
             // color (the popup pushed ImGuiCol_Border transparent earlier).
-            const ImVec4 radio_ring = m_is_dark ? ImVec4(0.45f, 0.45f, 0.45f, 1.0f)
-                                                : ImVec4(0.77f, 0.77f, 0.77f, 1.0f);
+            const ImVec4 radio_ring = md3_vec4(MD3::Role::Outline, m_is_dark);
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * sc);
             ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
             ImGui::PushStyleColor(ImGuiCol_Border, radio_ring);
@@ -5573,15 +5568,15 @@ void AssemblyStepsUtils::render_assembly_guide_panel(float panel_x, float panel_
 
     ImGuiWrapper &imgui = *m_imgui;
 
-    const ImU32 grey900    = is_dark ? IM_COL32(0xE0, 0xE0, 0xE0, 255) : IM_COL32(38, 46, 48, 255);
-    const ImU32 grey700    = is_dark ? IM_COL32(0xA0, 0xA0, 0xA0, 255) : IM_COL32(107, 107, 107, 255);
-    const ImU32 grey600    = is_dark ? IM_COL32(0x90, 0x90, 0x90, 255) : IM_COL32(144, 144, 144, 255);
-    const ImU32 grey500    = is_dark ? IM_COL32(0x80, 0x80, 0x80, 255) : IM_COL32(172, 172, 172, 255);
-    const ImU32 grey400    = is_dark ? IM_COL32(70, 70, 74, 255)       : IM_COL32(206, 206, 206, 255);
-    const ImU32 grey300    = is_dark ? IM_COL32(60, 60, 64, 255)       : IM_COL32(238, 238, 238, 255);
-    const ImU32 grey200    = is_dark ? IM_COL32(50, 50, 54, 255)       : IM_COL32(248, 248, 248, 255);
-    const ImU32 white_col  = is_dark ? IM_COL32(55, 55, 59, 255)       : IM_COL32(255, 255, 255, 255);
-    const ImU32 brand_col  = IM_COL32(0, 174, 66, 255);
+    const ImU32 grey900    = md3_u32(MD3::Role::OnSurface, is_dark);
+    const ImU32 grey700    = md3_u32(MD3::Role::OnSurfaceVariant, is_dark);
+    const ImU32 grey600    = md3_u32(MD3::Role::Outline, is_dark);
+    const ImU32 grey500    = md3_u32(MD3::Role::Outline, is_dark);
+    const ImU32 grey400    = md3_u32(MD3::Role::OutlineVariant, is_dark);
+    const ImU32 grey300    = md3_u32(MD3::Role::SurfaceContainer, is_dark);
+    const ImU32 grey200    = md3_u32(MD3::Role::SurfaceContainerLow, is_dark);
+    const ImU32 white_col  = is_dark ? md3_u32(MD3::Role::SurfaceContainerHighest, is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, is_dark);
+    const ImU32 brand_col  = md3_u32(MD3::Role::Primary, is_dark);
 
     const float font_sz      = ImGui::GetFontSize();
     const float small_fs     = std::max(font_sz * 0.77f, 10.0f * sc);
@@ -5750,7 +5745,7 @@ void AssemblyStepsUtils::render_assembly_guide_panel(float panel_x, float panel_
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     // Zero ItemSpacing so Dummy heights match our desired_h budget exactly.
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, is_dark ? ImVec4(55/255.f, 55/255.f, 59/255.f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, is_dark ? md3_vec4(MD3::Role::SurfaceContainerHighest, is_dark) : md3_vec4(MD3::Role::SurfaceContainerLowest, is_dark));
 
     imgui.begin(std::string("##assembly_guide_panel"),
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
@@ -5764,8 +5759,8 @@ void AssemblyStepsUtils::render_assembly_guide_panel(float panel_x, float panel_
     {
         const ImVec2 header_min = win_pos;
         const ImVec2 header_max(win_pos.x + panel_w, win_pos.y + header_h);
-        const ImU32 grad_top = is_dark ? IM_COL32(48, 48, 52, 255) : IM_COL32(248, 248, 248, 255);
-        const ImU32 grad_bot = is_dark ? IM_COL32(42, 42, 46, 255) : IM_COL32(241, 241, 241, 255);
+        const ImU32 grad_top = md3_u32(MD3::Role::SurfaceContainerLow, is_dark);
+        const ImU32 grad_bot = md3_u32(MD3::Role::SurfaceContainer, is_dark);
         draw_list->AddRectFilled(header_min, header_max, grad_top, 4.0f * sc,
             m_guide_panel_collapsed ? ImDrawFlags_RoundCornersAll : ImDrawFlags_RoundCornersTop);
         draw_list->AddRectFilledMultiColor(header_min, header_max, grad_top, grad_top, grad_bot, grad_bot);
@@ -5809,7 +5804,7 @@ void AssemblyStepsUtils::render_assembly_guide_panel(float panel_x, float panel_
         if (ImGui::IsItemHovered()) {
             // Subtle hover indicator: light overlay rectangle.
             draw_list->AddRectFilled(toggle_min, toggle_max,
-                IM_COL32(38, 46, 48, 18), 3.0f * sc);
+                md3_u32(MD3::Role::OnSurface, is_dark, 18), 3.0f * sc);
             render_panel_tooltip(m_guide_panel_collapsed ? _u8L("Expand") : _u8L("Collapse"));
         }
         ImGui::PopID();
@@ -6730,8 +6725,8 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
     const float scrollbar_track_w = 14.0f * sc;
     ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, scrollbar_track_w);
     ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 2.0f * sc);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? ImVec4(45 / 255.0f, 45 / 255.0f, 49 / 255.0f, 0.98f) : ImVec4(1.0f, 1.0f, 1.0f, 0.98f));
-    ImGui::PushStyleColor(ImGuiCol_Text, m_is_dark ? ImVec4(0xE0 / 255.0f, 0xE0 / 255.0f, 0xE0 / 255.0f, 1.0f) : ImVec4(38 / 255.0f, 46 / 255.0f, 48 / 255.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? md3_vec4(MD3::Role::SurfaceContainerHigh, m_is_dark, 0.98f) : md3_vec4(MD3::Role::SurfaceContainerLowest, m_is_dark, 0.98f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, m_is_dark));
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0, 0, 0, 0));
     // Hide stock grab; draw_assembly_scrollbar_y_thumb redraws the centered thumb.
@@ -6749,7 +6744,7 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
 
     load_assembly_tree_icons(sc);
 
-    const ImU32 separator_col  = m_is_dark ? IM_COL32(60, 60, 64, 255) : IM_COL32(229, 229, 229, 255);
+    const ImU32 separator_col  = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
 
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
     const ImVec2 tree_window_min = ImGui::GetWindowPos();
@@ -6765,8 +6760,8 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
         if (m_assembly_tree_search_active) {
             const ImVec2 search_min(header_min.x, header_min.y + (header_h - search_h) * 0.5f);
             const ImVec2 search_max(search_min.x + header_w, search_min.y + search_h);
-            draw_list->AddRectFilled(search_min, search_max, m_is_dark ? IM_COL32(58, 58, 62, 255) : IM_COL32(248, 248, 248, 255), 14.0f * sc);
-            draw_list->AddRect(search_min, search_max, m_is_dark ? IM_COL32(78, 78, 82, 255) : IM_COL32(238, 238, 238, 255), 14.0f * sc);
+            draw_list->AddRectFilled(search_min, search_max, md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark), 14.0f * sc);
+            draw_list->AddRect(search_min, search_max, md3_u32(MD3::Role::OutlineVariant, m_is_dark), 14.0f * sc);
             const ImVec2 icon_min(search_min.x + 10.0f * sc, search_min.y + (search_h - 16.0f * sc) * 0.5f);
             ImTextureID list_search_tex = m_is_dark && s_assembly_tree_icons.search_dark ? s_assembly_tree_icons.search_dark : s_assembly_tree_icons.search;
             if (list_search_tex)
@@ -6799,7 +6794,7 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
             const std::string title      = show_checkbox ? _u8L("List") : _u8L("Assembly list");
             const ImVec2 title_size = ImGui::CalcTextSize(title.c_str());
             draw_list->AddText(ImVec2(header_min.x, header_min.y + (header_h - title_size.y) * 0.5f),
-                m_is_dark ? IM_COL32(0xE0, 0xE0, 0xE0, 255) : IM_COL32(38, 46, 48, 255), title.c_str());
+                md3_u32(MD3::Role::OnSurface, m_is_dark), title.c_str());
 
             {
                 const ImVec2 toggle_min(header_min.x + title_size.x + 8.0f * sc, header_min.y + (header_h - icon_sz) * 0.5f);
@@ -6856,7 +6851,7 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
         : dummy_checked;
     bool quick_select_changed = false;
     if (show_checkbox && m_show_assembly_tree_step_quick_select) {
-        ImGui::TextColored(ImVec4(172 / 255.0f, 172 / 255.0f, 172 / 255.0f, 1.0f),
+        ImGui::TextColored(md3_vec4(MD3::Role::Outline, m_is_dark),
             "%s", _u8L("Select all parts in a step").c_str());
         const float chip_h = 20.0f * sc;
         const float chip_gap = 6.0f * sc;
@@ -6897,9 +6892,9 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
 
             const ImVec2 chip_min(chip_x, chip_y);
             const ImVec2 chip_max(chip_x + chip_w, chip_y + chip_h);
-            draw_list->AddRectFilled(chip_min, chip_max, m_is_dark ? IM_COL32(65, 65, 69, 255) : IM_COL32(248, 248, 248, 255), 6.0f * sc);
+            draw_list->AddRectFilled(chip_min, chip_max, md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark), 6.0f * sc);
             draw_list->AddText(ImVec2(chip_min.x + chip_pad_x, chip_min.y + (chip_h - text_size.y) * 0.5f),
-                m_is_dark ? IM_COL32(0xC0, 0xC0, 0xC0, 255) : IM_COL32(107, 107, 107, 255), label.c_str());
+                md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark), label.c_str());
 
             ImGui::SetCursorScreenPos(chip_min);
             ImGui::PushID(chip_idx++);

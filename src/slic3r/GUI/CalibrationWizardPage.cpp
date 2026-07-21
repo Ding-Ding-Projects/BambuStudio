@@ -151,27 +151,27 @@ CaliPageButton::CaliPageButton(wxWindow* parent, CaliPageActionType type, wxStri
     : m_action_type(type),
     Button(parent, text)
 {
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-    StateColor btn_bd_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Enabled));
+    StateColor btn_bd_green(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Enabled));
 
-    StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor btn_bd_white(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
-    StateColor btn_text_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled));
+    StateColor btn_text_green(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
 
-    StateColor btn_text_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor btn_text_white(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
     switch (m_action_type)
     {
@@ -524,7 +524,7 @@ void CaliPageCaption::create_wiki(wxWindow* parent)
 {
     m_wiki_text = new Label(parent, _L("Wiki"));
     m_wiki_text->SetFont(Label::Head_14);
-    m_wiki_text->SetForegroundColour({ 0, 88, 220 });
+    m_wiki_text->SetForegroundColour(ThemeColor::Link);
     m_wiki_text->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent& e) {
         e.Skip();
         SetCursor(wxCURSOR_HAND);
@@ -573,7 +573,7 @@ CaliPageStepGuide::CaliPageStepGuide(wxWindow* parent, wxArrayString steps,
     m_step_sizer->AddSpacer(FromDIP(90));
     for (int i = 0; i < m_steps.size(); i++) {
         Label* step_text = new Label(this, m_steps[i]);
-        step_text->SetForegroundColour(wxColour(206, 206, 206));
+        step_text->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
         m_text_steps.push_back(step_text);
         m_step_sizer->Add(step_text, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(15));
         if (i != m_steps.size() - 1) {
@@ -595,9 +595,9 @@ CaliPageStepGuide::CaliPageStepGuide(wxWindow* parent, wxArrayString steps,
 void CaliPageStepGuide::set_steps(int index)
 {
     for (Label* text_step : m_text_steps) {
-        text_step->SetForegroundColour(wxColour(206, 206, 206));
+        text_step->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
     }
-    m_text_steps[index]->SetForegroundColour(*wxBLACK);
+    m_text_steps[index]->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     wxGetApp().UpdateDarkUIWin(this);
 }
@@ -613,7 +613,7 @@ void CaliPageStepGuide::set_steps_string(wxArrayString steps)
     m_step_sizer->AddSpacer(FromDIP(90));
     for (int i = 0; i < m_steps.size(); i++) {
         Label* step_text = new Label(this, m_steps[i]);
-        step_text->SetForegroundColour(wxColour(206, 206, 206));
+        step_text->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
         m_text_steps.push_back(step_text);
         m_step_sizer->Add(step_text, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(15));
         if (i != m_steps.size() - 1) {
@@ -633,7 +633,7 @@ void CaliPageStepGuide::set_steps_string(wxArrayString steps)
 CaliPagePicture::CaliPagePicture(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    SetBackgroundColour(wxColour(206, 206, 206));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     auto top_sizer = new wxBoxSizer(wxHORIZONTAL);
     top_sizer->AddStretchSpacer();
     m_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap);
@@ -660,7 +660,7 @@ PAPageHelpPanel::PAPageHelpPanel(wxWindow* parent, bool ground_panel, wxWindowID
     : wxPanel(parent, id, pos, size, style)
 {
     if (ground_panel)
-        SetBackgroundColour(wxColour(238, 238, 238));
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     else
         SetBackgroundColour(parent->GetBackgroundColour());
     int left_align_padding = ground_panel ? FromDIP(20) : 0;
@@ -715,7 +715,7 @@ void PAPageHelpPanel::create_pop_window()
 
     m_pop_win->Bind(wxEVT_PAINT, [this](auto&) {
         wxPaintDC dc(m_pop_win);
-        dc.SetPen({ 0xACACAC });
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRectangle({ 0, 0 }, m_pop_win->GetSize());
         });
@@ -920,9 +920,9 @@ void CaliPageSendingPanel::create(wxWindow* parent)
     auto st_title_error_code = new Label(m_sw_print_failed_info, _L("Error code"));
     auto st_title_error_code_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_code = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_error_code->SetForegroundColour(0x909090);
-    st_title_error_code_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_code->SetForegroundColour(0x909090);
+    st_title_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    st_title_error_code_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_st_txt_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     st_title_error_code->SetFont(::Label::Body_13);
     st_title_error_code_doc->SetFont(::Label::Body_13);
     m_st_txt_error_code->SetFont(::Label::Body_13);
@@ -937,9 +937,9 @@ void CaliPageSendingPanel::create(wxWindow* parent)
     auto st_title_error_desc = new Label(m_sw_print_failed_info, _L("Error desc"));
     auto st_title_error_desc_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_desc = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_error_desc->SetForegroundColour(0x909090);
-    st_title_error_desc_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_desc->SetForegroundColour(0x909090);
+    st_title_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    st_title_error_desc_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_st_txt_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     st_title_error_desc->SetFont(::Label::Body_13);
     st_title_error_desc_doc->SetFont(::Label::Body_13);
     m_st_txt_error_desc->SetFont(::Label::Body_13);
@@ -954,9 +954,9 @@ void CaliPageSendingPanel::create(wxWindow* parent)
     auto st_title_extra_info = new Label(m_sw_print_failed_info, _L("Extra info"));
     auto st_title_extra_info_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_extra_info = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_extra_info->SetForegroundColour(0x909090);
-    st_title_extra_info_doc->SetForegroundColour(0x909090);
-    m_st_txt_extra_info->SetForegroundColour(0x909090);
+    st_title_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    st_title_extra_info_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_st_txt_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     st_title_extra_info->SetFont(::Label::Body_13);
     st_title_extra_info_doc->SetFont(::Label::Body_13);
     m_st_txt_extra_info->SetFont(::Label::Body_13);

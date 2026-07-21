@@ -147,7 +147,7 @@ void CaliPASaveAutoPanel::create_panel(wxWindow* parent)
     m_complete_text_panel->SetSizer(complete_text_sizer);
 
     m_part_failed_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_part_failed_panel->SetBackgroundColour(wxColour(238, 238, 238));
+    m_part_failed_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     wxBoxSizer* part_failed_sizer = new wxBoxSizer(wxVERTICAL);
     m_part_failed_panel->SetSizer(part_failed_sizer);
     part_failed_sizer->AddSpacer(FromDIP(10));
@@ -176,7 +176,7 @@ void CaliPASaveAutoPanel::create_panel(wxWindow* parent)
 
     auto naming_hints = new Label(parent, _L("*We recommend you to add brand, material, type, and even humidity level in the Name"));
     naming_hints->SetFont(Label::Body_14);
-    naming_hints->SetForegroundColour(wxColour(157, 157, 157));
+    naming_hints->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_top_sizer->Add(naming_hints, 0, wxEXPAND, 0);
 
     m_top_sizer->AddSpacer(FromDIP(20));
@@ -854,7 +854,7 @@ void CaliPASaveManualPanel::create_panel(wxWindow* parent)
 
     auto naming_hints = new Label(parent, _L("*We recommend you to add brand, material, type, and even humidity level in the Name"));
     naming_hints->SetFont(Label::Body_14);
-    naming_hints->SetForegroundColour(wxColour(157, 157, 157));
+    naming_hints->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_top_sizer->Add(naming_hints, 0, wxEXPAND, 0);
 
     m_top_sizer->AddSpacer(FromDIP(20));
@@ -1340,7 +1340,7 @@ void CalibrationFlowX1SavePage::create_page(wxWindow* parent)
     m_complete_text_panel->SetSizer(complete_text_sizer);
 
     m_part_failed_panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_part_failed_panel->SetBackgroundColour(wxColour(238, 238, 238));
+    m_part_failed_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     wxBoxSizer* part_failed_sizer = new wxBoxSizer(wxVERTICAL);
     m_part_failed_panel->SetSizer(part_failed_sizer);
     part_failed_sizer->AddSpacer(FromDIP(10));

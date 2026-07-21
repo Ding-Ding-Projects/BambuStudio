@@ -13,8 +13,8 @@
 
 #include "DeviceCore/DevConfig.h"
 
-static wxColour FG_COLOR = wxColour(0x32, 0x3A, 0x3D);
-static wxColour BG_COLOR = wxColour(0xF8, 0xF8, 0xF8);
+static wxColour FG_COLOR = ThemeColor::TextPrimary; // §2f OnSurface (was #323A3D)
+static wxColour BG_COLOR = ThemeColor::Grey200;     // §2f SurfaceContainerLow (was #F8F8F8)
 
 #define CALI_FLOW_CONTENT_WIDTH  FromDIP(200)
 
@@ -30,7 +30,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     SetBackgroundColour(*wxWHITE);
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
 
     wxBoxSizer *sizer_body = new wxBoxSizer(wxHORIZONTAL);
@@ -89,7 +89,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     auto cali_left_text_body =
         new Label(cali_left_panel, _L("The calibration program detects the status of your device automatically to minimize deviation.\nIt keeps the device performing optimally."));
     cali_left_text_body->Wrap(FromDIP(260));
-    cali_left_text_body->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+    cali_left_text_body->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     cali_left_text_body->SetBackgroundColour(BG_COLOR);
     cali_left_text_body->SetFont(::Label::Body_13);
     cali_left_sizer->Add(cali_left_text_body, 0, wxLEFT, FromDIP(15));
@@ -129,11 +129,11 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     auto cali_text_right_top = new wxStaticText(cali_right_panel, wxID_ANY, _L("Calibration Flow"), wxDefaultPosition, wxDefaultSize, 0);
     cali_text_right_top->Wrap(-1);
     cali_text_right_top->SetFont(::Label::Head_14);
-    cali_text_right_top->SetForegroundColour(wxColour(0x00, 0xAE, 0x42));
+    cali_text_right_top->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     cali_text_right_top->SetBackgroundColour(BG_COLOR);
 
     auto staticline = new ::StaticLine(cali_right_panel);
-    staticline->SetLineColour(wxColour(0x00, 0xAE, 0x42));
+    staticline->SetLineColour(StateColor::semantic(MD3::Role::Primary));
     auto calibration_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_calibration_flow = new StepIndicator(cali_right_panel, wxID_ANY);
@@ -143,14 +143,14 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     m_calibration_flow->SetMinSize(wxSize(CALI_FLOW_CONTENT_WIDTH, FromDIP(160)));
     m_calibration_flow->SetSize(wxSize(CALI_FLOW_CONTENT_WIDTH, FromDIP(160)));
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
     StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
 
     m_calibration_btn = new Button(cali_right_panel, _L("Start Calibration"));
     m_calibration_btn->SetBackgroundColor(btn_bg_green);
     m_calibration_btn->SetBorderColor(btn_bd_green);
-    m_calibration_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_calibration_btn->SetTextColor(ThemeColor::White);
     m_calibration_btn->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_calibration_btn->SetMinSize(wxSize(FromDIP(128), FromDIP(26)));
 
@@ -200,7 +200,7 @@ wxWindow* CalibrationDialog::create_check_option(wxString title, wxWindow* paren
 
     auto text = new wxStaticText(checkbox, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     text->SetFont(::Label::Body_13);
-    text->SetForegroundColour(wxColour(107, 107, 107));
+    text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text->Wrap(-1);
     sizer_checkbox->Add(text, 0, wxBOTTOM | wxEXPAND | wxTOP, FromDIP(5));
 

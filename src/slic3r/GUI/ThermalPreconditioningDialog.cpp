@@ -21,7 +21,7 @@ ThermalPreconditioningDialog::ThermalPreconditioningDialog(wxWindow *parent, std
     icon.CopyFromBitmap(bitmap);
     SetIcon(icon);
     // Apply dark-mode-friendly background for the dialog
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour(255, 255, 255)));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     create_ui();
     m_refresh_timer = new wxTimer(this);
     this->Bind(wxEVT_TIMER, &ThermalPreconditioningDialog::on_timer, this);
@@ -60,7 +60,7 @@ void ThermalPreconditioningDialog::create_ui()
     time_font.SetPointSize(14);
     time_font.SetWeight(wxFONTWEIGHT_BOLD);
     m_remaining_time_label->SetFont(time_font);
-    m_remaining_time_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour(50, 58, 61)));
+    m_remaining_time_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     // Explanation text
     m_explanation_label =
@@ -68,15 +68,15 @@ void ThermalPreconditioningDialog::create_ui()
                          _L("The heated bed's thermal preconditioning helps optimize the first layer print quality. Printing will start once preconditioning is complete."),
                          wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
     m_explanation_label->Wrap(FromDIP(450));
-    m_explanation_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour(50, 58, 61)));
+    m_explanation_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_ok_button = new wxButton(this, wxID_OK, _L("OK"));
 #ifdef __WXMAC__
     m_ok_button->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
     m_ok_button->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT));
 #else
-    m_ok_button->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#B6F34F")));
-    m_ok_button->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#000000")));
+    m_ok_button->SetBackgroundColour(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device));
+    m_ok_button->SetForegroundColour(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device));
     m_ok_button->SetMinSize(wxSize(FromDIP(80), FromDIP(32)));
     m_ok_button->SetMaxSize(wxSize(FromDIP(80), FromDIP(32)));
 #endif

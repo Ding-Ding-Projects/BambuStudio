@@ -88,7 +88,7 @@ void wgtDeviceNozzleRackUprade::CreateGui()
 
     // "Nozzles"
     m_extruder_nozzle_item = new wgtDeviceNozzleRackHotendUpdate(this, "R");
-    m_extruder_nozzle_item->UpdateColourStyle(wxColour("#F8F8F8"));
+    m_extruder_nozzle_item->UpdateColourStyle(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_extruder_nozzle_item->SetExtruderNozzleId(MAIN_EXTRUDER_ID);
 
     main_sizer->Add(m_extruder_nozzle_item, 0, wxEXPAND | wxALL, FromDIP(12));
@@ -264,7 +264,7 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     m_version_new_label = new Label(info_panel);
     m_version_new_label->SetFont(Label::Body_12);
     m_version_new_label->SetBackgroundColour(WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG);
-    m_version_new_label->SetForegroundColour(wxColour(0, 168, 84)); // Green
+    m_version_new_label->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device)); // new-version accent
 
     version_h_sizer->Add(m_version_label, 0, wxALIGN_CENTER_VERTICAL);
     version_h_sizer->Add(m_version_new_label, 0, wxALIGN_CENTER_VERTICAL);
@@ -313,7 +313,7 @@ void wgtDeviceNozzleRackHotendUpdate::OnStatusIconClick(wxMouseEvent& event)
 {
     if (m_status_label->GetLabel() == _L("Refresh"))
     {
-        m_status_label->SetForegroundColour(wxColour("#A3A3A3"));
+        m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_status_label->SetLabel(_L("Refreshing"));
         m_status_bitmap->Show(false);
         // m_status_bitmap->Refresh();
@@ -591,7 +591,7 @@ void wgtDeviceNozzleRackHotendUpdate::UpdateInfo(const DevNozzle& nozzle)
 
         m_status_label->Show(true);
         m_status_bitmap->Show(true);
-        m_status_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#E14747")));
+        m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
         m_status_label->SetLabel(_L("Error"));
         m_status_bitmap->SetBitmap(m_error_icon->bmp());
         m_status_bitmap->Refresh();
@@ -617,7 +617,7 @@ void wgtDeviceNozzleRackHotendUpdate::UpdateInfo(const DevNozzle& nozzle)
         m_used_time->Show(true);
         m_status_label->Show(true);
         m_status_bitmap->Show(true);
-        m_status_label->SetForegroundColour(wxColour("#00AE42"));
+        m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
         m_status_label->SetLabel(_L("Refresh"));
         m_status_bitmap->SetBitmap(m_refresh_icon->bmp());
         m_status_bitmap->Refresh();

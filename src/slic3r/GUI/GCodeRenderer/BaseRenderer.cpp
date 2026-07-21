@@ -2859,8 +2859,11 @@ namespace Slic3r
                     const ImVec2 stats_min(stats_rect_min.x - 6.0f * m_scale, stats_rect_min.y - 4.0f * m_scale);
                     const ImVec2 stats_max(stats_rect_max.x + 6.0f * m_scale, stats_rect_max.y + 6.0f * m_scale);
                     draw_list->ChannelsSetCurrent(0);
-                    draw_list->AddRectFilled(stats_min, stats_max, ImGui::GetColorU32(surface_container_high), 12.0f * m_scale);
-                    draw_list->AddRect(stats_min, stats_max, ImGui::GetColorU32(outline), 12.0f * m_scale, 0, 1.0f * m_scale);
+                    // Statistics card: sc-highest fill + outline-variant hairline
+                    // at the card radius, matching the kit Preview statistics card.
+                    const float stats_radius = float(MD3::Metrics::comfortable.radius) * m_scale;
+                    draw_list->AddRectFilled(stats_min, stats_max, ImGui::GetColorU32(md3_imgui_color(MD3::Role::SurfaceContainerHighest, m_is_dark)), stats_radius);
+                    draw_list->AddRect(stats_min, stats_max, ImGui::GetColorU32(outline), stats_radius, 0, 1.0f * m_scale);
                     draw_list->ChannelsMerge();
                 }
                 if (m_view_type == EViewType::ColorPrint) {
@@ -2968,7 +2971,7 @@ namespace Slic3r
                     ImVec2 p1 = ImGui::GetCursorScreenPos();
                     ImVec2 p2 = ImVec2(p1.x + ImGui::GetContentRegionAvail().x, p1.y);
                     for (float i = p1.x; i < p2.x; i += (dash_length + gap_length)) {
-                        draw_list->AddLine(ImVec2(i, p1.y), ImVec2(i + dash_length, p1.y), IM_COL32(206, 206, 206, 255));
+                        draw_list->AddLine(ImVec2(i, p1.y), ImVec2(i + dash_length, p1.y), md3_imgui_col32(MD3::Role::OutlineVariant, m_is_dark));
                     }
                     };
                 ////BBS Color Arrangement Recommendation
@@ -3027,8 +3030,8 @@ namespace Slic3r
                 float AMS_container_height = is_show_left_right_result ? line_height * (tips_count - 3) + line_height / 2 :
                                                                     ams_item_height + line_height * tips_count + line_height / 2;
                 is_show_left_right_result ? ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.3f, 0.3f, 0.3f, 0.1f)) :
-                                       ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(1.f, 1.f, 1.f, 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(.15f, .18f, .19f, 1.0f));
+                                       ImGui::PushStyleColor(ImGuiCol_ChildBg, md3_imgui_color(MD3::Role::SurfaceContainerLowest, m_is_dark));
+                ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface, m_is_dark));
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(window_padding * 3, 0));
                 // ImGui::Dummy({window_padding, window_padding});
                 ImGui::BeginChild("#AMS", ImVec2(0, AMS_container_height), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
@@ -3038,7 +3041,7 @@ namespace Slic3r
                         float half_width      = available_width * 0.49f;
                         float spacing         = 18.0f * m_scale;
                         ImGui::Dummy({ window_padding, window_padding });
-                        ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(.8f, .8f, .8f, 1.0f));
+                        ImGui::PushStyleColor(ImGuiCol_Separator, md3_imgui_color(MD3::Role::OutlineVariant, m_is_dark));
                         imgui.bold_text(_u8L("Filament Grouping"));
                         ImGui::SameLine();
                         std::string tip_str = _u8L("Why this grouping");
@@ -3107,7 +3110,7 @@ namespace Slic3r
                         };
                     if (any_more_to_best) {
                         is_optimal_group = false;
-                        ImVec4 orangeColor = ImVec4(1.0f, 0.5f, 0.0f, 1.0f);
+                        ImVec4 orangeColor = theme_color_imvec4(ThemeColor::Warning, m_is_dark);
                         ImGui::PushStyleColor(ImGuiCol_Text, orangeColor);
                         imgui.text(_u8L("Tips:"));
                         imgui.text(_u8L("Current grouping of slice result is not optimal."));
@@ -3128,7 +3131,7 @@ namespace Slic3r
                         ImGui::PopStyleColor(1);
                     }
                     else if (any_less_to_single_ext) {
-                        ImVec4 color = is_show_left_right_result ? ImVec4(0.95f, 0.95f, 0.95f, 1.0f) : ImVec4(0.42f, 0.42f, 0.42f, 1.0f);
+                        ImVec4 color = md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark);
                         ImGui::PushStyleColor(ImGuiCol_Text, color);
                         wxString tip;
                         if (delta_weight_to_single_ext >= 0 && delta_change_to_single_ext >= 0)
@@ -3594,8 +3597,8 @@ namespace Slic3r
                     }
                     return ret;
                 };
-                static const ImVec4 LINE_NUMBER_COLOR = { 0, 174.0f / 255.0f, 66.0f / 255.0f, 1.0f };
-                static const ImVec4 SELECTION_RECT_COLOR = { 0, 174.0f / 255.0f, 66.0f / 255.0f, 1.0f };
+                const ImVec4 LINE_NUMBER_COLOR = md3_imgui_color(MD3::Role::Primary, m_is_dark);
+                const ImVec4 SELECTION_RECT_COLOR = md3_imgui_color(MD3::Role::Primary, m_is_dark);
                 static const ImVec4 COMMAND_COLOR = m_is_dark ? ImVec4(240.0f / 255.0f, 240.0f / 255.0f, 240.0f / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
                 static const ImVec4 PARAMETERS_COLOR = m_is_dark ? ImVec4(179.0f / 255.0f, 179.0f / 255.0f, 179.0f / 255.0f, 1.0f) : ImVec4(206.0f / 255.0f, 206.0f / 255.0f, 206.0f / 255.0f, 1.0f);
                 static const ImVec4 COMMENT_COLOR = m_is_dark ? ImVec4(129.0f / 255.0f, 129.0f / 255.0f, 129.0f / 255.0f, 1.0f) : ImVec4(172.0f / 255.0f, 172.0f / 255.0f, 172.0f / 255.0f, 1.0f);
@@ -3811,8 +3814,8 @@ namespace Slic3r
                 static float last_window_width = 0.0f;
                 size_t text_line = 0;
                 static size_t last_text_line = 0;
-                const ImU32 text_name_clr = m_is_dark ? IM_COL32(255, 255, 255, 0.88 * 255) : IM_COL32(38, 46, 48, 255);
-                const ImU32 text_value_clr = m_is_dark ? IM_COL32(255, 255, 255, 0.4 * 255) : IM_COL32(144, 144, 144, 255);
+                const ImU32 text_name_clr = md3_imgui_col32(MD3::Role::OnSurface, m_is_dark);
+                const ImU32 text_value_clr = md3_imgui_col32(MD3::Role::OnSurfaceVariant, m_is_dark);
                 ImGuiWrapper& imgui = *wxGetApp().imgui();
                 //BBS: GUI refactor: add canvas size from parameters
                 imgui.set_next_window_pos(0.5f * static_cast<float>(canvas_width), static_cast<float>(canvas_height), ImGuiCond_Always, 0.5f, 1.0f);

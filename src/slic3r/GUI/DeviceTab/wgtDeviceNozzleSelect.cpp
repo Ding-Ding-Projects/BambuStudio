@@ -31,10 +31,10 @@ static wxPanel* s_create_title(wxWindow *parent, const wxString& text)
     auto title  = new Label(panel, text);
     title->SetFont(::Label::Body_13);
     title->SetBackgroundColour(*wxWHITE);
-    title->SetForegroundColour(0x909090);
+    title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     auto split_line = new wxPanel(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    split_line->SetBackgroundColour(0xeeeeee);
+    split_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     split_line->SetMinSize(wxSize(-1, 1));
     split_line->SetMaxSize(wxSize(-1, 1));
 
@@ -54,12 +54,12 @@ void wgtDeviceNozzleRackSelect::CreateGui()
     wxColour tip_bg_clr("#FFF0E0");
     m_title_tips_dynamic = new wgtMsgBox(this);
     m_title_tips_dynamic->SetBackgroundColour(tip_bg_clr);
-    m_title_tips_dynamic->SetBorderColor(wxColour("#FF6F00"));
+    m_title_tips_dynamic->SetBorderColor(ThemeColor::Warning);
     m_title_tips_dynamic->SetCornerRadius(1);
     m_title_tips_dynamic->SetBorderWidth(1);
     auto text_label = m_title_tips_dynamic->GetTextLabel();
     text_label->SetFont(::Label::Body_12);
-    text_label->SetForegroundColour("#FF6F00");
+    text_label->SetForegroundColour(ThemeColor::Warning);
     text_label->SetBackgroundColour(tip_bg_clr);
     text_label->SetLabel(_L("Dynamic nozzles are allocated on the current plate. Picking hotend is not supported."));
     text_label->Wrap(FromDIP(300));

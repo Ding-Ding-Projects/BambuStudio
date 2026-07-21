@@ -7,6 +7,7 @@
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/format.hpp"
 #include "slic3r/GUI/OpenGLManager.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/Model.hpp"
 #include "libslic3r/QuadricEdgeCollapse.hpp"
@@ -16,6 +17,16 @@
 #include <thread>
 
 namespace Slic3r::GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+} // namespace
 
 // Extend call after only when Simplify gizmo is still alive
 static void call_after_if_active(std::function<void()> fn, GUI_App* app = &wxGetApp())
@@ -250,13 +261,13 @@ void GLGizmoSimplify::on_render_input_window(float x, float y, float bottom_limi
     std::string name = m_volume->name;
     if (name.length() > m_gui_cfg->max_char_in_name)
         name = name.substr(0, m_gui_cfg->max_char_in_name - 3) + "...";
-    m_imgui->text_colored(ImVec4(0.42f, 0.42f, 0.42f, 1.00f), name);
+    m_imgui->text_colored(md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode), name);
 
     m_imgui->text(tr_triangles + ":");
     ImGui::SameLine(text_left_width + space_size);
 
     size_t orig_triangle_count = m_volume->mesh().its.indices.size();
-    m_imgui->text_colored(ImVec4(0.42f, 0.42f, 0.42f, 1.00f), std::to_string(orig_triangle_count));
+    m_imgui->text_colored(md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode), std::to_string(orig_triangle_count));
 
     ImGui::Separator();
 
@@ -278,11 +289,11 @@ void GLGizmoSimplify::on_render_input_window(float x, float y, float bottom_limi
     ImGui::SameLine(bottom_left_width);
     ImGui::PushItemWidth(bottom_left_width - space_size);
     static int reduction = 2;
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.81f, 0.81f, 0.81f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.81f, 0.81f, 0.81f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.81f, 0.81f, 0.81f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::OutlineVariant, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imvec4(MD3::Role::OutlineVariant, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imvec4(MD3::Role::OutlineVariant, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrab, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
 
     if (m_imgui->bbl_sliderin("##ReductionLevel", &reduction, 0, 4, reduce_captions[reduction].c_str())) {
         if (reduction < 0) reduction = 0;
@@ -362,7 +373,7 @@ void GLGizmoSimplify::on_render_input_window(float x, float y, float bottom_limi
         ImGui::BBLProgressBar2(progress / 100., progress_size);
         ImGui::SameLine();
         ImGui::AlignTextToFramePadding();
-        ImGui::TextColored(ImVec4(0.42f, 0.42f, 0.42f, 1.00f), progress_text.c_str());
+        ImGui::TextColored(md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode), progress_text.c_str());
         ImGui::SameLine(bottom_left_width + slider_width +  m_imgui->scaled(1.0f));
     } else {
         ImGui::Dummy(ImVec2(bottom_left_width - space_size, -1));
@@ -373,7 +384,7 @@ void GLGizmoSimplify::on_render_input_window(float x, float y, float bottom_limi
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,12);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,ImVec2(10,3));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,ImVec2(10,0));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.15f, 0.18f, 0.19f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface, m_is_dark_mode));
 
     m_imgui->disabled_begin(is_worker_running || ! is_result_ready);
     m_imgui->push_confirm_button_style();
