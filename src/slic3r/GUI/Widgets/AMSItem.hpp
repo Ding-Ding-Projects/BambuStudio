@@ -3,6 +3,7 @@
 
 #include "../wxExtensions.hpp"
 #include "StaticBox.hpp"
+#include "StateColor.hpp" // MD3 tokens (namespace ThemeColor) for the theme-colour macros below
 #include "StepCtrl.hpp"
 #include "Button.hpp"
 #include "../DeviceManager.hpp"
@@ -16,20 +17,30 @@
 #include "slic3r/GUI/DeviceCore/DevFilaSwitch.h"
 
 
-#define AMS_CONTROL_BRAND_COLOUR wxColour(0, 174, 66)
-#define AMS_CONTROL_GRAY700 wxColour(107, 107, 107)
-#define AMS_CONTROL_GRAY800 wxColour(50, 58, 61)
-#define AMS_CONTROL_GRAY500 wxColour(172, 172, 172)
-#define AMS_CONTROL_DISABLE_COLOUR wxColour(206, 206, 206)
-#define AMS_CONTROL_DISABLE_TEXT_COLOUR wxColour(144, 144, 144)
-#define AMS_CONTROL_WHITE_COLOUR wxColour(255, 255, 255)
-#define AMS_CONTROL_BLACK_COLOUR wxColour(0, 0, 0)
-#define AMS_CONTROL_DEF_BLOCK_BK_COLOUR wxColour(238, 238, 238)
-#define AMS_CONTROL_DEF_LIB_BK_COLOUR wxColour(248, 248, 248)
-#define AMS_EXTRUDER_DEF_COLOUR wxColour(234, 234, 234)
+// MD3 migration (see intel/legacy-sweep.md §2): these theme-colour macros now
+// resolve to MD3-derived light-mode tokens in namespace ThemeColor
+// (StateColor.hpp) instead of raw wxColour literals. Every stored value is an
+// MD3 light role that is ALSO a key in the StateColor dark-map (gDarkColors in
+// StateColor.cpp), so the existing contract -- call sites store the light value
+// and dark mode is resolved at paint time via StateColor::darkModeColorFor() /
+// StateColor::colorForStates() -- keeps working unchanged for all ~18 consuming
+// files. This routes the shared macros onto the token system without pre-baking
+// a dark value (which would double-map), and fixes dark mode for the brand/
+// surface roles that previously had no dark-map entry.
+#define AMS_CONTROL_BRAND_COLOUR ThemeColor::BrandGreen          // §2a Primary            #146c2e -> dark #8bd89b
+#define AMS_CONTROL_GRAY700 ThemeColor::TextMuted                // §2f OnSurfaceVariant    #5c5f66 -> dark #a8a9b3
+#define AMS_CONTROL_GRAY800 ThemeColor::TextPrimary              // §2f OnSurface           #1a1b1f -> dark #e8e7ee
+#define AMS_CONTROL_GRAY500 ThemeColor::Grey500                  // §2f Outline             #75777f -> dark #94959f
+#define AMS_CONTROL_DISABLE_COLOUR ThemeColor::Grey400           // §2f OutlineVariant      #c5c6d0 -> dark #4a4c54
+#define AMS_CONTROL_DISABLE_TEXT_COLOUR ThemeColor::TextDisabled // §2f disabled text       #9a9ba3 -> dark #6a6b73
+#define AMS_CONTROL_WHITE_COLOUR ThemeColor::White               // §2f White               #ffffff -> dark #202127
+#define AMS_CONTROL_BLACK_COLOUR ThemeColor::TextPrimary         // §2f OnSurface           #1a1b1f -> dark #e8e7ee
+#define AMS_CONTROL_DEF_BLOCK_BK_COLOUR ThemeColor::Grey250      // §2f SurfaceContainer    #eeedf3 -> dark #25262b
+#define AMS_CONTROL_DEF_LIB_BK_COLOUR ThemeColor::Grey200        // §2f SurfaceContainerLow #f4f2f9 -> dark #202127
+#define AMS_EXTRUDER_DEF_COLOUR ThemeColor::Grey300              // §2f SurfaceContainerHigh#e8e7ee -> dark #2f3036
 #define AMS_CONTROL_MAX_COUNT 4
 #define AMS_CONTRO_CALIBRATION_BUTTON_SIZE wxSize(FromDIP(150), FromDIP(28))
-#define AMS_CONTROL_DEF_HUMIDITY_BK_COLOUR wxColour(238, 238, 238)
+#define AMS_CONTROL_DEF_HUMIDITY_BK_COLOUR ThemeColor::Grey250   // §2f SurfaceContainer    #eeedf3 -> dark #25262b
 
 
 namespace Slic3r { namespace GUI {

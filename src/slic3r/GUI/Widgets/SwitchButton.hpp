@@ -113,8 +113,8 @@ private:
     wxString m_label;
     wxBitmap m_selected_icon;
     wxBitmap m_unselected_icon;
-    wxColour m_primary_colour{wxColour("#00AE42")};
-    wxColour m_secondary_colour{wxColour("#DEF5E7")};
+    wxColour m_primary_colour{StateColor::semantic(MD3::Role::Primary)};
+    wxColour m_secondary_colour{StateColor::semantic(MD3::Role::SecondaryContainer)};
 
     bool m_isSelected;
 };

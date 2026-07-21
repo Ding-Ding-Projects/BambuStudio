@@ -24,8 +24,8 @@ SwitchButton::SwitchButton(wxWindow* parent, wxWindowID id)
 	, m_on(this, "toggle_on", 16)
 	, m_off(this, "toggle_off", 16)
     , text_color(std::pair{ThemeColor::White, (int) StateColor::Checked}, std::pair{ThemeColor::TextMuted, (int) StateColor::Normal})
-	, track_color(0xD9D9D9)
-    , thumb_color(std::pair{ThemeColor::BrandGreen, (int) StateColor::Checked}, std::pair{0xD9D9D9, (int) StateColor::Normal})
+	, track_color(ThemeColor::Grey350)
+    , thumb_color(std::pair{ThemeColor::BrandGreen, (int) StateColor::Checked}, std::pair{ThemeColor::Grey350, (int) StateColor::Normal})
 {
 	SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
 	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { update(); e.Skip(); });
@@ -484,7 +484,7 @@ RichTooltipPopup::RichTooltipPopup(wxWindow* parent, const wxString& iconName, c
     : wxPopupTransientWindow(parent, wxBORDER_NONE)
     , m_text(text)
 {
-    SetBackgroundColour(wxColour(50, 50, 50));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::InverseSurface));
     
     wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
     
@@ -500,7 +500,7 @@ RichTooltipPopup::RichTooltipPopup(wxWindow* parent, const wxString& iconName, c
     // Add text
     wxStaticText* textCtrl = new wxStaticText(this, wxID_ANY, m_text);
     textCtrl->SetFont(Label::Body_13);
-    textCtrl->SetForegroundColour(ThemeColor::White);
+    textCtrl->SetForegroundColour(StateColor::semantic(MD3::Role::InverseOn));
     sizer->Add(textCtrl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(12));
     
     SetSizer(sizer);
@@ -519,7 +519,7 @@ void RichTooltipPopup::OnPaint(wxPaintEvent& event)
 {
     wxPaintDC dc(this);
     // Just fill background - controls handle their own drawing
-    dc.SetBrush(wxBrush(wxColour(50, 50, 50)));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::InverseSurface)));
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(GetClientRect());
     event.Skip();
@@ -663,12 +663,12 @@ void ExpandButton::doRender(wxDC& dc)
 ExpandButtonHolder::ExpandButtonHolder(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
     : wxPanel(parent, id, pos, size)
 {
-#ifdef __APPLE__
-    SetBackgroundColour(wxColour("#2D2D30"));
-#else
-    SetBackgroundColour(wxColour("#3B4446"));
-#endif
-    
+    // The floating expand toolbar is an always-dark HUD surface that stays dark
+    // charcoal regardless of the app light/dark theme, so resolve MD3 dark
+    // surface tokens with a fixed dark=true (not the theme-following semantic()).
+    // #3B4446 -> SurfaceContainerHigh dark (#2f3036), matching gDarkColors.
+    SetBackgroundColour(MD3::resolve(MD3::Role::SurfaceContainerHigh, /*dark=*/true));
+
     hsizer = new wxBoxSizer(wxHORIZONTAL);
     hsizer->AddStretchSpacer(1);
     vsizer = new wxBoxSizer(wxVERTICAL);
@@ -717,18 +717,14 @@ void ExpandButtonHolder::ShowExpandButton(wxWindowID id, bool show)
          ExpandButton* expandBtn = dynamic_cast<ExpandButton*>(child);
          if (expandBtn != nullptr)
          {
+             // Always-dark HUD surfaces (see ctor): fixed dark=true MD3 tokens.
+             // Single button sits flush with the holder (SurfaceContainerHigh);
+             // the multi-button recessed track drops to SurfaceContainerLow.
              if (length <= 1) {
-                 expandBtn->SetBackgroundColour(wxColour("#3B4446"));
+                 expandBtn->SetBackgroundColour(MD3::resolve(MD3::Role::SurfaceContainerHigh, /*dark=*/true));
              }
              else {
-
-#ifdef __APPLE__
-                expandBtn->SetBackgroundColour(wxColour("#384547"));
-#else
-                expandBtn->SetBackgroundColour(wxColour("#242E30"));
-#endif
-
-                 
+                expandBtn->SetBackgroundColour(MD3::resolve(MD3::Role::SurfaceContainerLow, /*dark=*/true));
              }
          }
      }
@@ -871,13 +867,11 @@ void ExpandButtonHolder::doRender(wxDC& dc)
     wxSize size = GetSize();
     
     if (GetAvailable() > 1) {
-#ifdef __APPLE__
-        dc.SetBrush(wxBrush(wxColour("#384547")));
-        dc.SetPen(wxPen(wxColour("#384547")));
-#else
-        dc.SetBrush(wxBrush(wxColour("#242E30")));
-        dc.SetPen(wxPen(wxColour("#242E30")));
-#endif
+        // Recessed multi-button track: always-dark HUD surface (see ctor),
+        // fixed dark=true MD3 SurfaceContainerLow token.
+        const wxColour track = MD3::resolve(MD3::Role::SurfaceContainerLow, /*dark=*/true);
+        dc.SetBrush(wxBrush(track));
+        dc.SetPen(wxPen(track));
         dc.DrawRoundedRectangle(0, 0, size.x, size.y, FromDIP(10));
     }
 }
@@ -890,13 +884,13 @@ MultiSwitchButton::MultiSwitchButton(wxWindow *parent, wxWindowID id, const wxPo
         std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Normal)))
     , m_bg_color_grayed(StateColor(
         std::make_pair(ThemeColor::Grey400, (int) StateColor::NotChecked),
-        std::make_pair(0x6DC48D, (int) StateColor::Normal)))
+        std::make_pair(StateColor::semantic(MD3::Role::PrimaryContainer), (int) StateColor::Normal)))
     , m_text_color(StateColor(
         std::make_pair(ThemeColor::TextMuted, (int) StateColor::NotChecked),
         std::make_pair(ThemeColor::White, (int) StateColor::Normal)))
     , m_text_color_grayed(StateColor(
         std::make_pair(ThemeColor::TextDisabled, (int) StateColor::NotChecked),
-        std::make_pair(0x99DFB2, (int) StateColor::Normal)))
+        std::make_pair(StateColor::semantic(MD3::Role::OnPrimaryContainer), (int) StateColor::Normal)))
     , m_button_radius(10.0)
     , m_button_padding(10, 6)
 {

@@ -194,7 +194,7 @@ void SideToolsPanel::doRender(wxDC &dc)
         left += (m_arrow_img.GetBmpSize().x + FromDIP(6));
         dc.SetFont(::Label::Body_14);
         dc.SetBackgroundMode(wxTRANSPARENT);
-        dc.SetTextForeground(StateColor::darkModeColorFor(SIDE_TOOLS_GREY900));
+        dc.SetTextForeground(SIDE_TOOLS_GREY900);
 
         auto sizet = dc.GetTextExtent(m_dev_name);
         auto text_end = size.x - m_wifi_none_img.GetBmpSize().x - 20;
@@ -319,7 +319,7 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     connection_sizer_V->Fit(m_connection_info);
 
     m_side_error_panel = new wxWindow(this, wxID_ANY);
-    m_side_error_panel->SetBackgroundColour(wxColour(255, 232, 214));
+    m_side_error_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
     m_side_error_panel->SetMinSize(wxSize(-1, -1));
     m_side_error_panel->SetMaxSize(wxSize(-1, -1));
 

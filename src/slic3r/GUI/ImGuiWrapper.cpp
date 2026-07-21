@@ -150,8 +150,9 @@ static const std::map<const wchar_t, std::string> font_icons_extra_large = {
 
 const ImVec4 ImGuiWrapper::COL_GREY_DARK         = { 0.333f, 0.333f, 0.333f, 1.0f };
 const ImVec4 ImGuiWrapper::COL_GREY_LIGHT        = { 0.4f, 0.4f, 0.4f, 1.0f };
-const ImVec4 ImGuiWrapper::COL_ORANGE_DARK       = { 0.757f, 0.404f, 0.216f, 1.0f };
-const ImVec4 ImGuiWrapper::COL_ORANGE_LIGHT      = { 1.0f, 0.49f, 0.216f, 1.0f };
+// Legacy Orca/Prusa button orange retired -> MD3 Role::Primary (Brand light #146c2e).
+const ImVec4 ImGuiWrapper::COL_ORANGE_DARK       = { 20 / 255.f, 108 / 255.f, 46 / 255.f, 1.0f };
+const ImVec4 ImGuiWrapper::COL_ORANGE_LIGHT      = { 20 / 255.f, 108 / 255.f, 46 / 255.f, 1.0f };
 const ImVec4 ImGuiWrapper::COL_WINDOW_BACKGROUND = { 0.1f, 0.1f, 0.1f, 0.8f };
 const ImVec4 ImGuiWrapper::COL_BUTTON_BACKGROUND = COL_ORANGE_DARK;
 const ImVec4 ImGuiWrapper::COL_BUTTON_HOVERED    = COL_ORANGE_LIGHT;
@@ -170,14 +171,41 @@ const ImVec4 ImGuiWrapper::COL_SEPARATOR         = { 0.93f, 0.93f, 0.93f, 1.0f }
 const ImVec4 ImGuiWrapper::COL_SEPARATOR_DARK    = { 0.24f, 0.24f, 0.27f, 1.0f };
 const ImVec4 ImGuiWrapper::COL_TITLE_BG          = { 0.745f, 0.745f, 0.745f, 1.0f };
 const ImVec4 ImGuiWrapper::COL_WINDOW_BG         = { 1.000f, 1.000f, 1.000f, 1.0f };
-const ImVec4 ImGuiWrapper::COL_WINDOW_BG_DARK    = { 45 / 255.f, 45 / 255.f, 49 / 255.f, 1.f };
-const ImVec4 ImGuiWrapper::COL_BAMBU             = {0.0f, 174.0 / 255.0f, 66.0f / 255, 1.0f};
+const ImVec4 ImGuiWrapper::COL_WINDOW_BG_DARK    = { 47 / 255.f, 48 / 255.f, 54 / 255.f, 1.f }; // MD3 dark SurfaceContainerHigh (#2f3036)
+const ImVec4 ImGuiWrapper::COL_BAMBU             = {20 / 255.f, 108 / 255.f, 46 / 255.f, 1.0f}; // Bambu green #00AE42 -> MD3 Role::Primary (#146c2e)
 const ImVec4 ImGuiWrapper::COL_BAMBU_CHANGE      = {1.0f, 111.0 / 255.0f, 0.0f / 255, 1.0f};
 int ImGuiWrapper::TOOLBAR_WINDOW_FLAGS = ImGuiWindowFlags_AlwaysAutoResize
                                  | ImGuiWindowFlags_NoMove
                                  | ImGuiWindowFlags_NoResize
                                  | ImGuiWindowFlags_NoCollapse
                                  | ImGuiWindowFlags_NoTitleBar;
+
+//BBS dark-mode flag and the MD3 -> ImVec4 bridge. Defined here (ahead of the
+// widget helpers) so every ImGui surface resolves its theme colours from the
+// shared MD3 tokens instead of legacy brand-green / orange literals.
+static bool m_is_dark_mode = false;
+
+static ImVec4 md3_imgui_color(MD3::Role role, MD3::ColorScheme scheme, float alpha = 1.0f)
+{
+    const wxColour &color = MD3::resolve(role, m_is_dark_mode, scheme);
+    return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, alpha);
+}
+
+static ImVec4 md3_imgui_color(MD3::Role role, float alpha = 1.0f)
+{
+    const wxColour &color = MD3::resolve(role, m_is_dark_mode);
+    return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, alpha);
+}
+
+// Blend an MD3 role colour toward its "on" colour to approximate a Material
+// state layer (hover ~8%, pressed ~12%); alpha follows the base colour.
+static ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
+{
+    return ImVec4(base.x + (over.x - base.x) * t,
+                  base.y + (over.y - base.y) * t,
+                  base.z + (over.z - base.z) * t,
+                  base.w);
+}
 
 
 bool get_data_from_svg(const std::string &filename, unsigned int max_size_px, ThumbnailData &thumbnail_data)
@@ -783,8 +811,8 @@ bool ImGuiWrapper::bbl_slider_float_style(const std::string &label, float *v, fl
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.81f, 0.81f, 0.81f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrab, md3_imgui_color(MD3::Role::OutlineVariant));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, md3_imgui_color(MD3::Role::Primary));
 
     bool ret = bbl_slider_float(label, v, v_min,v_max, format, power, clamp,tooltip);
 
@@ -1077,9 +1105,9 @@ bool ImGuiWrapper::bbl_checkbox(const wxString &label, bool &value, bool enabled
     bool result;
     bool b_value = value;
     if (b_value) {
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imgui_color(MD3::Role::Primary));
     }
     if (!enabled) {
         float factor = b_value ? 0.8f : 1.0f;
@@ -1108,9 +1136,9 @@ bool ImGuiWrapper::bbl_radio_button(const char *label, bool active)
     bool result;
     bool b_value = active;
     if (b_value) {
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imgui_color(MD3::Role::Primary));
     }
     result = ImGui::BBLRadioButton(label,active);
     if (b_value) { ImGui::PopStyleColor(3); }
@@ -2413,14 +2441,6 @@ std::vector<unsigned char> ImGuiWrapper::load_svg(const std::string& bitmap_name
 }
 
 //BBS
-static bool m_is_dark_mode = false;
-
-static ImVec4 md3_imgui_color(MD3::Role role, MD3::ColorScheme scheme, float alpha = 1.0f)
-{
-    const wxColour &color = MD3::resolve(role, m_is_dark_mode, scheme);
-    return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, alpha);
-}
-
 void ImGuiWrapper::on_change_color_mode(bool is_dark)
 {
     m_is_dark_mode = is_dark;
@@ -2428,24 +2448,21 @@ void ImGuiWrapper::on_change_color_mode(bool is_dark)
 
 void ImGuiWrapper::push_toolbar_style(const float scale)
 {
-    const ImVec4 text = m_is_dark_mode ? ImVec4(232 / 255.0f, 231 / 255.0f, 238 / 255.0f, 1.0f)
-                                       : ImVec4(26 / 255.0f, 27 / 255.0f, 31 / 255.0f, 1.0f);
-    const ImVec4 window = m_is_dark_mode ? ImVec4(37 / 255.0f, 38 / 255.0f, 43 / 255.0f, 1.0f)
-                                         : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-    const ImVec4 title = m_is_dark_mode ? ImVec4(32 / 255.0f, 33 / 255.0f, 39 / 255.0f, 1.0f)
-                                        : ImVec4(244 / 255.0f, 242 / 255.0f, 249 / 255.0f, 1.0f);
-    const ImVec4 outline = m_is_dark_mode ? ImVec4(74 / 255.0f, 76 / 255.0f, 84 / 255.0f, 1.0f)
-                                          : ImVec4(197 / 255.0f, 198 / 255.0f, 208 / 255.0f, 1.0f);
-    const ImVec4 button = m_is_dark_mode ? ImVec4(57 / 255.0f, 58 / 255.0f, 65 / 255.0f, 1.0f)
-                                         : ImVec4(244 / 255.0f, 242 / 255.0f, 249 / 255.0f, 1.0f);
-    const ImVec4 hover = m_is_dark_mode ? ImVec4(74 / 255.0f, 76 / 255.0f, 84 / 255.0f, 1.0f)
-                                        : ImVec4(232 / 255.0f, 231 / 255.0f, 238 / 255.0f, 1.0f);
-    const ImVec4 active = m_is_dark_mode ? ImVec4(9 / 255.0f, 82 / 255.0f, 40 / 255.0f, 1.0f)
-                                         : ImVec4(226 / 255.0f, 225 / 255.0f, 233 / 255.0f, 1.0f);
-    const ImVec4 primary = m_is_dark_mode ? ImVec4(139 / 255.0f, 216 / 255.0f, 155 / 255.0f, 1.0f)
-                                          : ImVec4(20 / 255.0f, 108 / 255.0f, 46 / 255.0f, 1.0f);
-    const ImVec4 selected = m_is_dark_mode ? ImVec4(9 / 255.0f, 82 / 255.0f, 40 / 255.0f, 1.0f)
-                                           : ImVec4(166 / 255.0f, 244 / 255.0f, 184 / 255.0f, 1.0f);
+    // Neutrals/accents resolved from the shared MD3 tokens (Brand scheme). Roles
+    // are chosen so the resulting colours match the previous hand-copied values.
+    const ImVec4 text     = md3_imgui_color(MD3::Role::OnSurface);
+    const ImVec4 window   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainer)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLowest);
+    const ImVec4 title    = md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 outline  = md3_imgui_color(MD3::Role::OutlineVariant);
+    const ImVec4 button   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHighest)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 hover    = m_is_dark_mode ? md3_imgui_color(MD3::Role::OutlineVariant)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerHigh);
+    const ImVec4 active   = m_is_dark_mode ? md3_imgui_color(MD3::Role::PrimaryContainer)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerHighest);
+    const ImVec4 primary  = md3_imgui_color(MD3::Role::Primary);
+    const ImVec4 selected = md3_imgui_color(MD3::Role::PrimaryContainer);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 12.0f) * scale);
@@ -2481,10 +2498,9 @@ void ImGuiWrapper::pop_toolbar_style()
 
 void ImGuiWrapper::push_menu_style(const float scale)
 {
-    const ImVec4 popup = m_is_dark_mode ? ImVec4(37 / 255.0f, 38 / 255.0f, 43 / 255.0f, 1.0f)
-                                        : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-    const ImVec4 header = m_is_dark_mode ? ImVec4(9 / 255.0f, 82 / 255.0f, 40 / 255.0f, 1.0f)
-                                         : ImVec4(166 / 255.0f, 244 / 255.0f, 184 / 255.0f, 1.0f);
+    const ImVec4 popup  = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainer)
+                                         : md3_imgui_color(MD3::Role::SurfaceContainerLowest);
+    const ImVec4 header = md3_imgui_color(MD3::Role::PrimaryContainer);
     ImGuiWrapper::push_toolbar_style(scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f) * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.0f * scale);
@@ -2525,24 +2541,22 @@ void ImGuiWrapper::pop_menu_style()
 }
 
 void ImGuiWrapper::push_common_window_style(const float scale) {
-    const ImVec4 text = m_is_dark_mode ? ImVec4(232 / 255.0f, 231 / 255.0f, 238 / 255.0f, 1.0f)
-                                       : ImVec4(26 / 255.0f, 27 / 255.0f, 31 / 255.0f, 1.0f);
-    const ImVec4 window = m_is_dark_mode ? ImVec4(37 / 255.0f, 38 / 255.0f, 43 / 255.0f, 1.0f)
-                                         : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-    const ImVec4 title = m_is_dark_mode ? ImVec4(47 / 255.0f, 48 / 255.0f, 54 / 255.0f, 1.0f)
-                                        : ImVec4(244 / 255.0f, 242 / 255.0f, 249 / 255.0f, 1.0f);
-    const ImVec4 outline = m_is_dark_mode ? ImVec4(74 / 255.0f, 76 / 255.0f, 84 / 255.0f, 1.0f)
-                                          : ImVec4(197 / 255.0f, 198 / 255.0f, 208 / 255.0f, 1.0f);
-    const ImVec4 button = m_is_dark_mode ? ImVec4(57 / 255.0f, 58 / 255.0f, 65 / 255.0f, 1.0f)
-                                         : ImVec4(244 / 255.0f, 242 / 255.0f, 249 / 255.0f, 1.0f);
-    const ImVec4 hover = m_is_dark_mode ? ImVec4(74 / 255.0f, 76 / 255.0f, 84 / 255.0f, 1.0f)
-                                        : ImVec4(232 / 255.0f, 231 / 255.0f, 238 / 255.0f, 1.0f);
-    const ImVec4 active = m_is_dark_mode ? ImVec4(9 / 255.0f, 82 / 255.0f, 40 / 255.0f, 1.0f)
-                                         : ImVec4(226 / 255.0f, 225 / 255.0f, 233 / 255.0f, 1.0f);
-    const ImVec4 primary = m_is_dark_mode ? ImVec4(139 / 255.0f, 216 / 255.0f, 155 / 255.0f, 1.0f)
-                                          : ImVec4(20 / 255.0f, 108 / 255.0f, 46 / 255.0f, 1.0f);
-    const ImVec4 selected = m_is_dark_mode ? ImVec4(9 / 255.0f, 82 / 255.0f, 40 / 255.0f, 1.0f)
-                                           : ImVec4(166 / 255.0f, 244 / 255.0f, 184 / 255.0f, 1.0f);
+    // Neutrals/accents resolved from the shared MD3 tokens (Brand scheme). Roles
+    // are chosen so the resulting colours match the previous hand-copied values.
+    const ImVec4 text     = md3_imgui_color(MD3::Role::OnSurface);
+    const ImVec4 window   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainer)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLowest);
+    const ImVec4 title    = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHigh)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 outline  = md3_imgui_color(MD3::Role::OutlineVariant);
+    const ImVec4 button   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHighest)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 hover    = m_is_dark_mode ? md3_imgui_color(MD3::Role::OutlineVariant)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerHigh);
+    const ImVec4 active   = m_is_dark_mode ? md3_imgui_color(MD3::Role::PrimaryContainer)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerHighest);
+    const ImVec4 primary  = md3_imgui_color(MD3::Role::Primary);
+    const ImVec4 selected = md3_imgui_color(MD3::Role::PrimaryContainer);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 12.0f) * scale);
@@ -2593,21 +2607,26 @@ void ImGuiWrapper::pop_common_window_style() {
 }
 
 void ImGuiWrapper::push_confirm_button_style() {
+    // Filled Primary CTA (legacy Bambu green retired).
+    const ImVec4 primary   = md3_imgui_color(MD3::Role::Primary);
+    const ImVec4 on_primary = md3_imgui_color(MD3::Role::OnPrimary);
+    const ImVec4 hover     = md3_state_layer(primary, on_primary, 0.08f);
+    const ImVec4 active    = md3_state_layer(primary, on_primary, 0.12f);
     if (m_is_dark_mode) {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f / 255.f, 174.f / 255.f, 66.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f / 255.f, 174.f / 255.f, 66.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(61.f / 255.f, 203.f / 255.f, 115.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(27.f / 255.f, 136.f / 255.f, 68.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.f, 1.f, 1.f, 0.88f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.88f));
+        ImGui::PushStyleColor(ImGuiCol_Button, primary);
+        ImGui::PushStyleColor(ImGuiCol_Border, primary);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);
+        ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imgui_color(MD3::Role::OnPrimary, 0.88f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnPrimary, 0.88f));
     }
     else {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f / 255.f, 174.f / 255.f, 66.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f / 255.f, 174.f / 255.f, 66.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(61.f / 255.f, 203.f / 255.f, 115.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(27.f / 255.f, 136.f / 255.f, 68.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.f, 1.f, 1.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f));
+        ImGui::PushStyleColor(ImGuiCol_Button, primary);
+        ImGui::PushStyleColor(ImGuiCol_Border, primary);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);
+        ImGui::PushStyleColor(ImGuiCol_CheckMark, on_primary);
+        ImGui::PushStyleColor(ImGuiCol_Text, on_primary);
     }
 }
 
@@ -2616,22 +2635,15 @@ void ImGuiWrapper::pop_confirm_button_style() {
 }
 
 void ImGuiWrapper::push_cancel_button_style() {
-    if (m_is_dark_mode) {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, 0.64f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(73 / 255.f, 73 / 255.f, 78 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(129 / 255.f, 129 / 255.f, 131 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.f, 1.f, 1.f, 0.64f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.64f));
-    }
-    else {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.f, 1.f, 1.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(38 / 255.f, 46 / 255.f, 48 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(238.f / 255.f, 238.f / 255.f, 238.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(206.f / 255.f, 206.f / 255.f, 206.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.f, 0.f, 0.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(38.f / 255.0f, 46.f / 255.0f, 48.f / 255.0f, 1.00f));
-    }
+    // Outlined / neutral cancel button. Dark keeps a transparent fill; light
+    // seats it on the lowest surface. Border/label follow Outline / OnSurface.
+    ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(0.f, 0.f, 0.f, 0.f)
+                                                          : md3_imgui_color(MD3::Role::SurfaceContainerLowest));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_imgui_color(MD3::Role::Outline));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imgui_color(MD3::Role::SurfaceContainerHigh));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imgui_color(MD3::Role::SurfaceContainerHighest));
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imgui_color(MD3::Role::OnSurface));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface));
 }
 
 void ImGuiWrapper::pop_cancel_button_style() {
@@ -2639,16 +2651,11 @@ void ImGuiWrapper::pop_cancel_button_style() {
 }
 
 void ImGuiWrapper::push_button_disable_style() {
-    if (m_is_dark_mode) {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(54 / 255.f, 54 / 255.f, 60 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(54 / 255.f, 54 / 255.f, 60 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.4f));
-    }
-    else {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(206.f / 255.f, 206.f / 255.f, 206.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(206.f / 255.f, 206.f / 255.f, 206.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f));
-    }
+    // MD3 disabled surface + muted OnSurface label (38% opacity).
+    const ImVec4 disabled_bg = md3_imgui_color(MD3::Role::SurfaceContainerHighest);
+    ImGui::PushStyleColor(ImGuiCol_Button, disabled_bg);
+    ImGui::PushStyleColor(ImGuiCol_Border, disabled_bg);
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface, 0.38f));
 }
 
 void ImGuiWrapper::pop_button_disable_style() {
@@ -2661,20 +2668,20 @@ void ImGuiWrapper::push_combo_style(const float scale)
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0f * scale);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
         ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BG_DARK);
-        ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_imgui_color(MD3::Role::Primary, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_Header, md3_imgui_color(MD3::Role::Primary));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImGuiWrapper::COL_WINDOW_BG_DARK);
         ImGui::PushStyleColor(ImGuiCol_Button, {1.00f, 1.00f, 1.00f, 0.0f});
     } else {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0f * scale);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
         ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BG);
-        ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.5f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_imgui_color(MD3::Role::Primary, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_Header, md3_imgui_color(MD3::Role::Primary));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImGuiWrapper::COL_WINDOW_BG);
         ImGui::PushStyleColor(ImGuiCol_Button, {1.00f, 1.00f, 1.00f, 0.0f});
     }
@@ -2689,9 +2696,9 @@ void ImGuiWrapper::pop_combo_style()
 void ImGuiWrapper::push_radio_style()
 {
     if (m_is_dark_mode) {
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, to_ImVec4(decode_color_to_float_array("#00675b"))); // ORCA use orca color for radio buttons
+        ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imgui_color(MD3::Role::Primary)); // legacy Orca teal -> MD3 Primary
     } else {
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, to_ImVec4(decode_color_to_float_array("#009688"))); // ORCA use orca color for radio buttons
+        ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imgui_color(MD3::Role::Primary)); // legacy Orca teal -> MD3 Primary
     }
 }
 

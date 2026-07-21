@@ -55,6 +55,11 @@ ComboBox::ComboBox(wxWindow *parent,
         TextInput::SetBorderColor(StateColor(std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled),
             std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
             std::make_pair(ThemeColor::Grey400, (int) StateColor::Normal)));
+        // Focus tint: keep the raw 0xEDFAF2 tint. It is a key in the gDarkColors
+        // map (StateColor.cpp -> #095228), so colorForStates() re-adapts it live
+        // on every runtime dark-mode toggle. A pre-resolved
+        // semantic(SecondaryContainer) snapshot stores a concrete hex that is NOT
+        // a gDarkColors key and would stay stuck at the pre-toggle theme.
         TextInput::SetBackgroundColor(StateColor(std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
             std::make_pair(0xEDFAF2, (int) StateColor::Focused),
             std::make_pair(ThemeColor::White, (int) StateColor::Normal)));

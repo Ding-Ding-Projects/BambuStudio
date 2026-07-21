@@ -1,5 +1,6 @@
 #include "2DBed.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/Label.hpp"
 
 #include <wx/dcbuffer.h>
 
@@ -139,7 +140,8 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 
 	static const auto origin_label = wxString("(0,0)");
 	dc.SetTextForeground(wxColour(0, 0, 0));
-    dc.SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    // MD3 micro type-scale token (Roboto ~10.5px/400) for the origin annotation.
+    dc.SetFont(Label::Body_10);
 	auto extent = dc.GetTextExtent(origin_label);
 	const auto origin_label_x = origin_px(0) <= cw / 2 ? origin_px(0) + 1 : origin_px(0) - 1 - extent.GetWidth();
 	const auto origin_label_y = origin_px(1) <= ch / 2 ? origin_px(1) + 1 : origin_px(1) - 1 - extent.GetHeight();

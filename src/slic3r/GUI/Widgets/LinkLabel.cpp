@@ -1,5 +1,6 @@
 #include <wx/sizer.h>
 #include "LinkLabel.hpp"
+#include "StateColor.hpp"
 
 wxDEFINE_EVENT(EVT_LINK_LABEL_LEFT_DOWN, wxCommandEvent);
 
@@ -22,7 +23,8 @@ LinkLabel::LinkLabel(wxWindow *parent, wxString const &text, std::string url, lo
     m_underline->SetMinSize(wxSize(-1, FromDIP(1)));
     m_underline->SetMaxSize(wxSize(-1, FromDIP(1)));
 
-    SeLinkLabelBColour(*wxWHITE);
+    SeLinkLabelFColour(ThemeColor::Link);
+    SeLinkLabelBColour(ThemeColor::White);
 
     sizer->Add(m_txt, 0, wxEXPAND, 0);
     sizer->Add(m_underline, 0, wxEXPAND, 0);

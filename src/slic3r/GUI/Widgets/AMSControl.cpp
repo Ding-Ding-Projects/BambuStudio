@@ -991,7 +991,7 @@ void AMSControl::show_switcher_status(bool show)
         tipSizer->Add(icon, 0, wxALL, FromDIP(8));
         tipText = new wxStaticText(tipPanel, wxID_ANY, _L("AMS has not been initialized. Please initialize it before use."));
         tipText->SetForegroundColour(ThemeColor::White);
-        tipText->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
+        tipText->SetFont(Label::Head_10);
         tipText->Wrap(-1);
         tipText->SetMinSize(wxSize(-1, -1));
         tipSizer->Add(tipText, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxEXPAND, FromDIP(8));

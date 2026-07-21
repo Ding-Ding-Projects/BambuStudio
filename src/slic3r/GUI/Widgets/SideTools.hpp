@@ -11,11 +11,11 @@
 #include "../DeviceManager.hpp"
 #include "../wxExtensions.hpp"
 
-#define SIDE_TOOLS_GREY900 wxColour(38, 46, 48)
-#define SIDE_TOOLS_GREY600 wxColour(144, 144, 144)
-#define SIDE_TOOLS_GREY400 wxColour(206, 206, 206)
-#define SIDE_TOOLS_BRAND wxColour(0, 174, 66)
-#define SIDE_TOOLS_LIGHT_GREEN wxColour(219, 253, 231)
+#define SIDE_TOOLS_GREY900 ThemeColor::TextPrimary
+#define SIDE_TOOLS_GREY600 ThemeColor::Grey450
+#define SIDE_TOOLS_GREY400 ThemeColor::Grey400
+#define SIDE_TOOLS_BRAND ThemeColor::BrandGreen
+#define SIDE_TOOLS_LIGHT_GREEN StateColor::semantic(MD3::Role::SecondaryContainer)
 
 enum WifiSignal {
     NONE,

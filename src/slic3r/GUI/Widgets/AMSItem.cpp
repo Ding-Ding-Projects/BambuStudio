@@ -1620,7 +1620,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
             }
         }
 
-        dc.SetPen(wxPen(wxColour(130, 130, 128), 1, wxPENSTYLE_SOLID));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline), 1, wxPENSTYLE_SOLID));
         dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
 #ifdef __APPLE__
         dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(2), size.y - FromDIP(1), m_radius);
@@ -1757,7 +1757,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
 #endif
             }
             if (tmp_lib_colour.Red() > 238 && tmp_lib_colour.Green() > 238 && tmp_lib_colour.Blue() > 238) {
-                dc.SetPen(wxPen(wxColour(130, 129, 128), 1, wxPENSTYLE_SOLID));
+                dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline), 1, wxPENSTYLE_SOLID));
                 dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
                 if (m_info.material_cols.size() <= 1){
                     dc.DrawLine(FromDIP(2), top, size.x - FromDIP(4), top);
@@ -1767,7 +1767,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
         else {
             dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
             if (tmp_lib_colour.Red() > 238 && tmp_lib_colour.Green() > 238 && tmp_lib_colour.Blue() > 238) {
-                dc.SetPen(wxPen(wxColour(130, 129, 128), 2, wxPENSTYLE_SOLID));
+                dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline), 2, wxPENSTYLE_SOLID));
             }
             else {
                 dc.SetPen(wxPen(tmp_lib_colour, 2, wxPENSTYLE_SOLID));
@@ -1784,7 +1784,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
     }
 
     //border
-    dc.SetPen(wxPen(wxColour(130, 130, 128), 1, wxPENSTYLE_SOLID));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline), 1, wxPENSTYLE_SOLID));
     dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
 #ifdef __APPLE__
     dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(2), size.y - FromDIP(1), m_radius);
@@ -2390,7 +2390,7 @@ void AMSRoadUpPart::doRender(wxDC& dc)
             }
         }
         dc.SetPen(wxPen(*wxTRANSPARENT_PEN));
-        dc.SetBrush(wxBrush(wxColour(194, 194, 194)));
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::OutlineVariant)));
         //width = 0.11 * size.x, height = 0.294 * size.y;
         //dc.DrawRectangle((size.x - width) / 2, (16), (28), (10));
         //dc.DrawRectangle((size.x - width) / 2, (size.y * 0.62 - height / 2), (width), (height));

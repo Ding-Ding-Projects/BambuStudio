@@ -42,6 +42,11 @@ DropDown::DropDown(std::vector<Item> &items)
         std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
     , selector_border_color(std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
         std::make_pair(ThemeColor::White, (int) StateColor::Normal))
+    // Selected-row highlight: keep the raw 0xEDFAF2 tint. It is a key in the
+    // gDarkColors map (StateColor.cpp -> #095228), so colorForStates() re-adapts
+    // it live on every runtime dark-mode toggle. A pre-resolved
+    // semantic(SecondaryContainer) snapshot stores a concrete hex that is NOT a
+    // gDarkColors key and would stay stuck at the pre-toggle theme.
     , selector_background_color(std::make_pair(0xEDFAF2, (int) StateColor::Checked),
         std::make_pair(ThemeColor::White, (int) StateColor::Normal))
 {

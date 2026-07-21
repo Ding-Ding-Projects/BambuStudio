@@ -3,6 +3,7 @@
 
 #include <wx/window.h>
 #include "../wxExtensions.hpp"
+#include "StateColor.hpp"
 
 class ProgressBar : public wxWindow
 {
@@ -29,9 +30,9 @@ public:
     const int      miniHeight             = {14};
     double   m_radius                     = {7};
     double   m_proportion                 = {0};
-    wxColour m_progress_background_colour = {233, 233, 233};
-    wxColour m_progress_colour            = {0, 174, 66};
-    wxColour m_progress_colour_disable    = {255, 111, 0};
+    wxColour m_progress_background_colour = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    wxColour m_progress_colour            = StateColor::semantic(MD3::Role::Primary);
+    wxColour m_progress_colour_disable    = ThemeColor::Warning;
     wxString m_disable_text;
     
 

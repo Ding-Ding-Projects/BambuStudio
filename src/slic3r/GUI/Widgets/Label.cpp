@@ -9,6 +9,77 @@
 #include <wx/dcclient.h>
 #include <wx/settings.h>
 
+namespace {
+
+// Roboto is the Material Design UI face and is bundled as a private font (see
+// Label::initSysFont). CJK locales fall back to their bundled families because
+// Roboto carries no CJK glyphs.
+wxString md3FaceName(const std::string &lang_code)
+{
+    if (lang_code == "zh_TW" || lang_code == "zh_HK" || lang_code == "yue_HK" ||
+        lang_code == "bilingual_en_yue_HK") {
+#ifdef __WXMSW__
+        // Roboto does not contain Traditional Chinese glyphs. This Windows UI
+        // family is the preferred Cantonese/Traditional CJK face and retains
+        // normal system fallback when its optional font pack is unavailable.
+        return wxString::FromUTF8("Microsoft JhengHei UI");
+#else
+        return wxString::FromUTF8("Noto Sans CJK TC");
+#endif
+    } else if (lang_code == "ja") {
+        return wxString::FromUTF8("Source Han Sans JP Normal");
+    } else if (lang_code == "ko") {
+        return wxString::FromUTF8("NanumGothic");
+    }
+    return wxString::FromUTF8("Roboto");
+}
+
+// Nearest wx font-weight enum for an MD3 numeric weight (400/500/600/700). Used
+// only to seed the wxFont constructor; SetNumericWeight() then records the exact
+// design weight so font matching can pick Medium/SemiBold faces when present.
+wxFontWeight md3WeightEnum(int numeric_weight)
+{
+    if (numeric_weight >= 700) return wxFONTWEIGHT_BOLD;
+    if (numeric_weight >= 600) return wxFONTWEIGHT_SEMIBOLD;
+    if (numeric_weight >= 500) return wxFONTWEIGHT_MEDIUM;
+    return wxFONTWEIGHT_NORMAL;
+}
+
+// Build a font that follows an MD3 type token (fractional design px size + a
+// precise numeric weight). The design px -> wx point-size scaling matches
+// sysFont() so the Head_/Body_ helpers stay consistent with it.
+wxFont md3StyledFont(const MD3::TypeStyle &style, const std::string &lang_code)
+{
+    double point_size = style.size;
+#ifndef __APPLE__
+    point_size = point_size * 4.0 / 5.0; // design px -> wx point size
+#endif
+    const int          initial     = point_size < 1.0 ? 1 : static_cast<int>(point_size);
+    const wxFontWeight enum_weight = md3WeightEnum(style.weight);
+
+    wxString face = md3FaceName(lang_code);
+    wxFont   font{initial, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, enum_weight, false, face};
+    font.SetFaceName(face);
+    font.SetFractionalPointSize(point_size);
+    font.SetNumericWeight(style.weight);
+
+    if (!font.IsOk() && lang_code != "ja" && lang_code != "ko") {
+        face = wxString::FromUTF8("HarmonyOS Sans SC");
+        font = wxFont{initial, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, enum_weight, false, face};
+        font.SetFaceName(face);
+        font.SetFractionalPointSize(point_size);
+        font.SetNumericWeight(style.weight);
+    }
+    if (!font.IsOk()) {
+        font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+        font.SetNumericWeight(style.weight);
+        font.SetFractionalPointSize(point_size);
+    }
+    return font;
+}
+
+} // namespace
+
 wxFont Label::sysFont(int size, bool bold, std::string lang_code)
 {
 //#ifdef __linux__
@@ -18,25 +89,7 @@ wxFont Label::sysFont(int size, bool bold, std::string lang_code)
     size = size * 4 / 5;
 #endif
 
-    wxString face;
-    if (lang_code == "zh_TW" || lang_code == "zh_HK" || lang_code == "yue_HK" ||
-        lang_code == "bilingual_en_yue_HK") {
-#ifdef __WXMSW__
-        // Roboto does not contain Traditional Chinese glyphs. This Windows UI
-        // family is the preferred Cantonese/Traditional CJK face and retains
-        // normal system fallback when its optional font pack is unavailable.
-        face = wxString::FromUTF8("Microsoft JhengHei UI");
-#else
-        face = wxString::FromUTF8("Noto Sans CJK TC");
-#endif
-    } else if (lang_code == "ja") {
-        face = wxString::FromUTF8("Source Han Sans JP Normal");
-    } else if (lang_code == "ko") {
-        face = wxString::FromUTF8("NanumGothic");
-    }
-    else {
-        face = wxString::FromUTF8("Roboto");
-    }
+    wxString face = md3FaceName(lang_code);
 
     wxFont font{size, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL, false, face};
     font.SetFaceName(face);
@@ -102,28 +155,34 @@ void Label::initSysFont(std::string lang_code, bool load_font_resource)
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of HarmonyOS_Sans_SC_Regular returns %1%")%result;
     }
 #endif
-    Head_48 = Label::sysFont(48, true, lang_code);
-    Head_32 = Label::sysFont(32, true, lang_code);
-    Head_24 = Label::sysFont(24, true, lang_code);
-    Head_20 = Label::sysFont(20, true, lang_code);
-    Head_18 = Label::sysFont(18, true, lang_code);
-    Head_16 = Label::sysFont(16, true, lang_code);
-    Head_15 = Label::sysFont(15, true, lang_code);
-    Head_14 = Label::sysFont(14, true, lang_code);
-    Head_13 = Label::sysFont(13, true, lang_code);
-    Head_12 = Label::sysFont(12, true, lang_code);
-    Head_11 = Label::sysFont(11, true, lang_code);
-    Head_10 = Label::sysFont(10, true, lang_code);
+    // Retarget the Head_/Body_ helpers onto the MD3 type scale (see
+    // Widgets/MD3Tokens.hpp, namespace MD3::Type) so the ~1200 existing call
+    // sites inherit the design sizes and per-role weights unchanged. Head_
+    // helpers carry the title/label emphasis weights (600-700); Body_ helpers
+    // stay regular (400). Sizes/weights outside the named scale (display heads,
+    // 9/8px captions) use explicit tokens.
+    Head_48 = md3StyledFont(MD3::TypeStyle{48.0f, 700}, lang_code); // display, above scale
+    Head_32 = md3StyledFont(MD3::TypeStyle{32.0f, 700}, lang_code); // display, above scale
+    Head_24 = md3StyledFont(MD3::Type::headline, lang_code);        // 23/700
+    Head_20 = md3StyledFont(MD3::Type::page_title, lang_code);      // 20/700
+    Head_18 = md3StyledFont(MD3::Type::dialog_title, lang_code);    // 18/600
+    Head_16 = md3StyledFont(MD3::Type::section_title, lang_code);   // 16/700
+    Head_15 = md3StyledFont(MD3::Type::card_title, lang_code);      // 15/600
+    Head_14 = md3StyledFont(MD3::TypeStyle{14.0f, 600}, lang_code); // emphasized body
+    Head_13 = md3StyledFont(MD3::TypeStyle{13.5f, 600}, lang_code); // body-s size, strong
+    Head_12 = md3StyledFont(MD3::TypeStyle{12.5f, 600}, lang_code); // body-xs size, strong
+    Head_11 = md3StyledFont(MD3::Type::label, lang_code);           // 11/600
+    Head_10 = md3StyledFont(MD3::TypeStyle{10.5f, 600}, lang_code); // micro size, strong
 
-    Body_16 = Label::sysFont(16, false, lang_code);
-    Body_15 = Label::sysFont(15, false, lang_code);
-    Body_14 = Label::sysFont(14, false, lang_code);
-    Body_13 = Label::sysFont(13, false, lang_code);
-    Body_12 = Label::sysFont(12, false, lang_code);
-    Body_11 = Label::sysFont(11, false, lang_code);
-    Body_10 = Label::sysFont(10, false, lang_code);
-    Body_9  = Label::sysFont(9, false, lang_code);
-    Body_8  = Label::sysFont(8, false, lang_code);
+    Body_16 = md3StyledFont(MD3::TypeStyle{16.0f, 400}, lang_code);
+    Body_15 = md3StyledFont(MD3::TypeStyle{15.0f, 400}, lang_code);
+    Body_14 = md3StyledFont(MD3::Type::body, lang_code);            // 14/400
+    Body_13 = md3StyledFont(MD3::TypeStyle{13.0f, 400}, lang_code); // compact-density body
+    Body_12 = md3StyledFont(MD3::Type::body_xs, lang_code);         // 12.5/400
+    Body_11 = md3StyledFont(MD3::Type::caption, lang_code);         // 11.5/400
+    Body_10 = md3StyledFont(MD3::Type::micro, lang_code);           // 10.5/400
+    Body_9  = md3StyledFont(MD3::TypeStyle{9.0f, 400}, lang_code);
+    Body_8  = md3StyledFont(MD3::TypeStyle{8.0f, 400}, lang_code);
 }
 
 class WXDLLIMPEXP_CORE wxTextWrapper2

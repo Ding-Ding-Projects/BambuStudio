@@ -426,7 +426,7 @@ bool TextInput::CheckValid(bool pop_dlg) const
         wxString error_msg = checker->CheckValid(text_ctrl->GetValue());
         if (!error_msg.IsEmpty())
         {
-            text_ctrl->SetBackgroundColour(wxColour(255, 220, 220));
+            text_ctrl->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
             text_ctrl->SetToolTip(error_msg);
             text_ctrl->Refresh();
 
