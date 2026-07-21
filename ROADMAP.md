@@ -15,12 +15,13 @@
 - Retain the Windows installer, CycloneDX, checksum, attestation, immutable-release, and disposable
   runner validation gates already encoded in the workflows.
 
-## Verified native integration (local)
+## Locally verified partial native modernization
 
 - Release GUI and installed payload built locally; the installed DLL matched the Release output.
 - Full-display compositor smoke captures were reviewed for real native Home, Filament Manager,
-  Device's official plug-in gate, and File → Version history. The history dialog showed two
-  app-local Git snapshots after Save As.
+  Device's official plug-in gate, and File → Version history. This verifies those partial native
+  surfaces only; it does not establish a completed or faithful MD3 rewrite. The history dialog
+  showed two app-local Git snapshots after Save As.
 - Focused final CTest passed: language mode, project-history shutdown drain, and deterministic
   BBS 3MF export (3/3). See `HANDOFF.md` for the explicit aggregate/libnest waiver.
 - DeviceWeb's `js-yaml` audit issue was repaired in the production lock; local high-severity audit

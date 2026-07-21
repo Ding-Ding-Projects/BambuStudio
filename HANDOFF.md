@@ -2,6 +2,9 @@
 
 ## Delivered branch evidence — 2026-07-20
 
+The captures and source changes document partial native UI modernization informed by Material
+Design 3. They do not establish a completed or faithful MD3 rewrite.
+
 - Repository: `https://github.com/Ding-Ding-Projects/BambuStudio.git`
 - Delivery branch: `codex/build-and-test-lowlevel-mcp`
 - Renderer prerequisite: `b4561feaa821d159ac54ef9bb166dff85f4239ae`, cherry-picked as `9c4991c26`.
@@ -17,7 +20,7 @@
 
 ## Native smoke and screenshots
 
-The installed application was launched with an isolated `--datadir` and a real STL, then full-display compositor captures were visually reviewed. They are not `ui-md3` reference images:
+The installed application was launched with an isolated `--datadir` and a real STL, then full-display compositor captures were visually reviewed. They are evidence of partial native modernization, not `ui-md3` reference images or proof of full MD3 conformance:
 
 - `docs/readme-assets/native-material-home-light-en.png` — native Home.
 - `docs/readme-assets/native-material-filament-manager-light-en.png` — native Filament Manager, signed-out state.

@@ -3,7 +3,7 @@
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
 It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
 
-This fork's maintained delivery target is the native Material Design 3 Windows application. The
+This fork's maintained delivery target is native Windows UI modernization informed by Material Design 3. The
 [latest Windows installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe)
 is a per-user install and does not require administrator elevation. It is currently unsigned; verify
 the accompanying
@@ -20,19 +20,19 @@ human review. See the
 [language-mode documentation](docs/features/windows/language-modes.md) for coverage and fallback
 details.
 
-## Native Material Design 3
+## Native UI modernization (Material-informed)
 
-The production wxWidgets application is being rewritten around Material Design 3 roles and
-interaction patterns. The native source includes Material top-level navigation and menus,
-responsive Prepare controls, a vertical transform-tool rail, contextual Preview controls, and
-card-based Device controls. Local Release install and full-compositor native smoke evidence was
-reviewed on 2026-07-20; this is not a published-release claim.
+The production wxWidgets application contains partial native modernization informed by Material
+Design 3 roles and interaction patterns. The native source includes updated top-level navigation,
+responsive Prepare controls, a transform-tool rail, contextual Preview controls, and card-like
+Device controls. It is not a completed or faithful Material Design 3 rewrite. Local Release install
+and full-compositor smoke evidence was reviewed on 2026-07-20; this is not a published-release claim.
 
 ### Verified installed-app captures
 
 These are full-display compositor captures of the locally installed native executable, not
-`ui-md3` reference images. They show the real Home surface, signed-out Filament Manager, official
-Device plug-in boundary, and local Git-backed Version History dialog.
+`ui-md3` reference images. They are evidence of partial native modernization only; they do not
+demonstrate full Material Design 3 conformance.
 
 | Home | Filament Manager |
 | :---: | :---: |
