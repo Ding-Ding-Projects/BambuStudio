@@ -64,7 +64,7 @@ FilamentPickerDialog::FilamentPickerDialog(wxWindow *parent, const wxString& fil
         wxDefaultSize,
         wxBORDER_NONE | wxFRAME_NO_TASKBAR | wxFRAME_SHAPED)
 {
-    SetBackgroundColour(wxColour(255, 255, 255));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_color_query = new FilamentColorCodeQuery();
     m_is_data_loaded = LoadFilamentData(fila_id);
@@ -257,7 +257,7 @@ wxBoxSizer* FilamentPickerDialog::CreateInfoSection()
     // Create the container box
     wxStaticBox *info_box = new wxStaticBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition);
     info_box->SetSize(wxSize(FromDIP(240), FromDIP(24)));
-    info_box->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    info_box->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxStaticBoxSizer *box_sizer = new wxStaticBoxSizer(info_box, wxHORIZONTAL);
 
     // Create labels with ellipsize style for text overflow
@@ -282,7 +282,7 @@ wxBoxSizer* FilamentPickerDialog::CreateInfoSection()
     m_label_preview_color->SetFont(bold_font);
     m_label_preview_idx->SetFont(bold_font);
 
-    m_label_preview_type->SetForegroundColour(wxColour(128, 128, 128));
+    m_label_preview_type->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     // Layout with platform-specific spacing
 #ifdef __WXMSW__
@@ -335,9 +335,9 @@ wxBoxSizer* FilamentPickerDialog::CreateSeparatorLine()
 {
     wxBoxSizer *line_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxPanel* separator_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(1)));
-    separator_line->SetBackgroundColour(wxColour(238,238,238));
+    separator_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     wxStaticText* line_text = new wxStaticText(this, wxID_ANY, _L("Official Filament"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
-    line_text->SetForegroundColour(wxColour(128, 128, 128));
+    line_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(line_text, 0, wxEXPAND, 0);
     line_sizer->AddSpacer(FromDIP(8));
     line_sizer->Add(separator_line, 1, wxALIGN_CENTER_VERTICAL, 0);
@@ -396,7 +396,7 @@ wxScrolledWindow* FilamentPickerDialog::CreateColorGrid()
 
             if (btn) {
                 // Remove any default background and borders
-                btn->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+                btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
                 // Set tooltip with filament information
                 wxString tooltip = wxString::Format("%s", color_code->GetFilaColorName());
@@ -512,7 +512,7 @@ void FilamentPickerDialog::UpdateButtonStates(wxBitmapButton* selected_btn)
 {
     // Reset selected button appearance
     if (m_cur_selected_btn) {
-        m_cur_selected_btn->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+        m_cur_selected_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         m_cur_selected_btn->Unbind(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint, this);
         m_cur_selected_btn->Refresh();
     }
@@ -532,8 +532,8 @@ void FilamentPickerDialog::CreateMoreInfoButton()
     m_more_btn->SetMinSize(wxSize(-1, FromDIP(36)));
 
     StateColor btn_bg(
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(248, 248, 248), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Normal)
     );
 
 
@@ -551,27 +551,27 @@ wxBoxSizer* FilamentPickerDialog::CreateButtonPanel()
 
     // standard button color style
     StateColor btn_bg_green(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     StateColor btn_bd_green(
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     StateColor btn_text_green(
-        std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
 
     StateColor btn_bg_white(
-        std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
     StateColor btn_bd_white(
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal)
     );
     StateColor btn_text_white(
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal)
     );
 
     // Create Cancel button using project's Button class
@@ -747,7 +747,7 @@ void FilamentPickerDialog::OnButtonPaint(wxPaintEvent& event)
     }
 
     // Draw the green border
-    dc.SetPen(wxPen(wxColour("#00AE42"), 2));  // Green pen, 2px thick
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), 2));  // Green pen, 2px thick
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRectangle(1, 1, COLOR_BTN_SIZE.GetWidth() - 1, COLOR_BTN_SIZE.GetHeight() - 1);
 }

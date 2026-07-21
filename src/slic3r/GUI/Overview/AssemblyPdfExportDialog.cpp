@@ -32,7 +32,7 @@ AssemblyPdfExportDialog::AssemblyPdfExportDialog(wxWindow *parent, const Assembl
                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
     SetFont(wxGetApp().normal_font());
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(dlg_bg());
 
     auto *top_sizer = new wxBoxSizer(wxVERTICAL);
 

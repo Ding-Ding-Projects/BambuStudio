@@ -296,20 +296,20 @@ AboutDialog::AboutDialog()
         #endif
         version_font.SetPointSize(FromDIP(16));
         version->SetFont(version_font);
-        version->SetForegroundColour(wxColour("#FFFFFD"));
-        version->SetBackgroundColour(wxColour("#00AF42"));
+        version->SetForegroundColour(ThemeColor::White);
+        version->SetBackgroundColour(ThemeColor::BrandGreen);
         vesizer->Add(version, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, FromDIP(5));
 #if BBL_INTERNAL_TESTING
         wxString plugin_version = wxString::Format("Plugin Version: %s", wxGetApp().getAgent() ? wxGetApp().getAgent()->get_version() : "");
         wxStaticText *plugin_version_text = new wxStaticText(this, wxID_ANY, plugin_version, wxDefaultPosition, wxDefaultSize);
-        plugin_version_text->SetForegroundColour(wxColour("#FFFFFE"));
-        plugin_version_text->SetBackgroundColour(wxColour("#00AF42"));
+        plugin_version_text->SetForegroundColour(ThemeColor::White);
+        plugin_version_text->SetBackgroundColour(ThemeColor::BrandGreen);
         vesizer->Add(plugin_version_text, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, FromDIP(5));
 
         wxString build_time = wxString::Format("Build Time: %s", std::string(SLIC3R_BUILD_TIME));
         wxStaticText* build_time_text = new wxStaticText(this, wxID_ANY, build_time, wxDefaultPosition, wxDefaultSize);
-        build_time_text->SetForegroundColour(wxColour("#FFFFFE"));
-        build_time_text->SetBackgroundColour(wxColour("#00AF42"));
+        build_time_text->SetForegroundColour(ThemeColor::White);
+        build_time_text->SetBackgroundColour(ThemeColor::BrandGreen);
         vesizer->Add(build_time_text, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, FromDIP(5));
 #endif
         vesizer->Add(0, 0, 1, wxEXPAND, FromDIP(5));
@@ -331,7 +331,7 @@ AboutDialog::AboutDialog()
     for (int i = 0; i < text_list.size(); i++)
     {
         auto staticText = new wxStaticText( this, wxID_ANY, wxEmptyString,wxDefaultPosition,wxSize(FromDIP(520), -1), wxALIGN_LEFT );
-        staticText->SetForegroundColour(wxColour(107, 107, 107));
+        staticText->SetForegroundColour(ThemeColor::TextSecondary);
         staticText->SetBackgroundColour(*wxWHITE);
         staticText->SetMinSize(wxSize(FromDIP(520), -1));
         staticText->SetFont(Label::Body_12);
@@ -367,7 +367,7 @@ AboutDialog::AboutDialog()
     copyright_hor_sizer->Add(copyright_ver_sizer, 0, wxLEFT, FromDIP(20));
 
     wxStaticText *html_text = new wxStaticText(this, wxID_ANY, "Copyright(C) 2021-2025 Lunkuo All Rights Reserved", wxDefaultPosition, wxDefaultSize);
-    html_text->SetForegroundColour(wxColour(107, 107, 107));
+    html_text->SetForegroundColour(ThemeColor::TextSecondary);
 
     copyright_ver_sizer->Add(html_text, 0, wxALL , 0);
 
@@ -393,13 +393,13 @@ AboutDialog::AboutDialog()
       }
     //Add "Portions copyright" button
     Button* button_portions = new Button(this,_L("Portions copyright"));
-    StateColor report_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled), std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                         std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered), std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled),
-                         std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+    StateColor report_bg(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                         std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                         std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     button_portions->SetBackgroundColor(report_bg);
-    StateColor report_bd(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor report_bd(std::pair<wxColour, int>(ThemeColor::Grey500, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
     button_portions->SetBorderColor(report_bd);
-    StateColor report_text(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor report_text(std::pair<wxColour, int>(ThemeColor::Grey500, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
     button_portions->SetTextColor(report_text);
     button_portions->SetFont(Label::Body_12);
     button_portions->SetCornerRadius(FromDIP(12));

@@ -26,12 +26,14 @@
 namespace Slic3r {
 namespace GUI {
 
-static const wxColour COLOR_BRAND("#00AE42");
-static const wxColour COLOR_BORDER_NORMAL("#EEEEEE");
-static const wxColour COLOR_BG_CARD("#F8F8F8");
-static const wxColour COLOR_LABEL_GREY("#ACACAC");
-static const wxColour COLOR_TEXT_DARK("#262E30");
-static const wxColour COLOR_DIVIDER("#EEEEEE");
+// MD3 role tokens (light values); all consumed via StateColor::darkModeColorFor(),
+// which live-remaps them to the correct dark tone through gDarkColors.
+static const wxColour COLOR_BRAND         = ThemeColor::BrandGreen;   // Primary accent
+static const wxColour COLOR_BORDER_NORMAL = ThemeColor::Grey400;      // OutlineVariant card border
+static const wxColour COLOR_BG_CARD       = ThemeColor::Grey200;      // SurfaceContainerLow card fill
+static const wxColour COLOR_LABEL_GREY    = ThemeColor::TextMuted;    // muted label text
+static const wxColour COLOR_TEXT_DARK     = ThemeColor::TextPrimary;  // OnSurface text
+static const wxColour COLOR_DIVIDER       = ThemeColor::Grey250;      // SurfaceContainer panel
 
 // Standard CMYW base colors
 static const wxColour CMYW_CYAN(0, 255, 255);
@@ -215,7 +217,7 @@ void ColorDecomposeDialog::on_dpi_changed(const wxRect& suggested_rect)
 
 void ColorDecomposeDialog::build_ui()
 {
-    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto* main_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -372,7 +374,7 @@ wxPanel* ColorDecomposeDialog::create_mode_card(wxWindow* parent, DecomposeMode 
     auto* title_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto* title_label = new wxStaticText(card, wxID_ANY, title);
     title_label->SetFont(Label::Body_14);
-    title_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#909090")));
+    title_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     match_parent_bg(title_label, StateColor::darkModeColorFor(COLOR_BG_CARD));
     title_sizer->Add(title_label, 1, wxALIGN_CENTER_VERTICAL);
 
@@ -408,7 +410,7 @@ wxPanel* ColorDecomposeDialog::create_mode_card(wxWindow* parent, DecomposeMode 
     card->Bind(wxEVT_PAINT, [this, card, mode](wxPaintEvent&) {
         wxBufferedPaintDC dc(card);
         wxSize sz = card->GetClientSize();
-        dc.SetBackground(wxBrush(StateColor::darkModeColorFor(*wxWHITE)));
+        dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
         dc.Clear();
 
         bool selected = (m_selected_mode == mode);
@@ -459,7 +461,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
 
     // --- Arbitrary mode column (wrapped in a panel so the whole column hides together) ---
     m_arb_column_panel = new wxPanel(this, wxID_ANY);
-    m_arb_column_panel->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    m_arb_column_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* arb_col = new wxBoxSizer(wxVERTICAL);
     {
         auto* arb_header_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -501,20 +503,20 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     m_no_card_hint = new wxStaticText(this, wxID_ANY,
         _L("At least two filaments of the same material type are required for decomposition"));
     m_no_card_hint->SetFont(Label::Body_13);
-    m_no_card_hint->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#909090")));
+    m_no_card_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_no_card_hint->Wrap(FromDIP(400));
     m_no_card_hint->Hide();
     sizer->Add(m_no_card_hint, 0, wxTOP, FromDIP(8));
 
     m_limit_warning_panel = new wxPanel(this, wxID_ANY);
-    m_limit_warning_panel->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    m_limit_warning_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* warning_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto* warn_bmp = new wxStaticBitmap(m_limit_warning_panel, wxID_ANY,
         create_scaled_bitmap("obj_warning", m_limit_warning_panel, 16),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     m_limit_warning_text = new wxStaticText(m_limit_warning_panel, wxID_ANY, wxEmptyString);
     m_limit_warning_text->SetFont(Label::Body_13);
-    m_limit_warning_text->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#D32F2F")));
+    m_limit_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_limit_warning_text->Wrap(FromDIP(400));
     warning_sizer->Add(warn_bmp, 0, wxALIGN_TOP | wxRIGHT, FromDIP(6));
     warning_sizer->Add(m_limit_warning_text, 1, wxEXPAND);
@@ -531,22 +533,22 @@ wxBoxSizer* ColorDecomposeDialog::create_button_panel()
     sizer->AddStretchSpacer();
 
     m_btn_cancel = new Button(this, _L("Cancel"));
-    m_btn_cancel->SetBackgroundColor(StateColor::darkModeColorFor(*wxWHITE));
-    m_btn_cancel->SetBorderColor(StateColor::darkModeColorFor(wxColour("#CECECE")));
-    m_btn_cancel->SetTextColor(StateColor::darkModeColorFor(wxColour("#262E30")));
+    m_btn_cancel->SetBackgroundColor(ThemeColor::White);
+    m_btn_cancel->SetBorderColor(ThemeColor::Grey400);
+    m_btn_cancel->SetTextColor(ThemeColor::TextPrimary);
     m_btn_cancel->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CANCEL); });
 
     m_btn_ok = new Button(this, _L("OK"));
     m_btn_ok->SetBackgroundColor(StateColor(
-        std::make_pair(wxColour("#C2C2C2"), (int) StateColor::Disabled),
-        std::make_pair(wxColour("#00AE42"), (int) StateColor::Normal)));
+        std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled),
+        std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Normal)));
     m_btn_ok->SetBorderColor(StateColor(
-        std::make_pair(wxColour("#C2C2C2"), (int) StateColor::Disabled),
-        std::make_pair(wxColour("#00AE42"), (int) StateColor::Normal)));
+        std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled),
+        std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Normal)));
     m_btn_ok->SetTextColor(StateColor(
-        std::make_pair(*wxWHITE, (int) StateColor::Disabled),
-        std::make_pair(*wxWHITE, (int) StateColor::Normal)));
+        std::make_pair(ThemeColor::White, (int) StateColor::Disabled),
+        std::make_pair(ThemeColor::White, (int) StateColor::Normal)));
     m_btn_ok->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
         EndModal(wxID_OK);

@@ -457,8 +457,8 @@ void GLCanvas3D::LayersEditing::render_variable_layer_height_dialog(const GLCanv
     ImGui::SetCursorPosX(input_align);
     ImGui::PushItemWidth(input_box_width);
     ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imvec4(MD3::Role::Primary));
-    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.00f));
-    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.68f, 0.26f, 0.00f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imvec4(MD3::Role::Primary, 0.00f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imvec4(MD3::Role::Primary, 0.00f));
     if (ImGui::BBLDragScalar("##radius_input", ImGuiDataType_S32, &radius, 1, &v_min, &v_max)) {
         radius = std::clamp(radius, 1, 10);
         m_smooth_params.radius = (unsigned int)radius;
@@ -1175,12 +1175,13 @@ void GLCanvas3D::Tooltip::render(const Vec2d& mouse_position, GLCanvas3D& canvas
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.13f, 0.13f, 0.94f));
+    // MD3 tooltip: inverse-surface container with inverse on-surface text (theme-aware).
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imvec4(MD3::Role::InverseSurface, 0.94f));
     imgui.set_next_window_pos(position.x(), position.y(), ImGuiCond_Always, 0.0f, 0.0f);
 
     imgui.begin(wxString("canvas_tooltip"), ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoFocusOnAppearing);
     ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::InverseOn));
     ImGui::TextUnformatted(m_text.c_str());
     ImGui::PopStyleColor();
 
@@ -9672,7 +9673,7 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
     ImVec4 window_bg = ImVec4(0.82f, 0.82f, 0.82f, 0.5f);
     ImVec4 button_active = md3_imvec4(MD3::Role::Primary);
     ImVec4 button_hover = ImVec4(0.67f, 0.67f, 0.67, 1.0f);
-    ImVec4 scroll_col = ImVec4(0.77f, 0.77f, 0.77f, 1.0f);
+    ImVec4 scroll_col = md3_imvec4(MD3::Role::OutlineVariant);
     //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.f, 0.f, 0.f, 1.0f));
     //use white text as the background switch to black
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -10539,7 +10540,7 @@ void GLCanvas3D::_render_paint_toolbar() const
     ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, scrollbar_size);
     ImGui::PushStyleColor(ImGuiCol_WindowBg, window_bg);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, window_bg);
-    const ImVec4 scrollbar_grab = ImVec4(0.42f, 0.42f, 0.42f, 1.00f);
+    const ImVec4 scrollbar_grab = md3_imvec4(MD3::Role::Outline);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, scrollbar_grab);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, scrollbar_grab);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, scrollbar_grab);

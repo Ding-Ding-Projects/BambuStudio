@@ -13,6 +13,7 @@
 #include "slic3r/GUI/GUI_ObjectList.hpp"
 #include "slic3r/GUI/format.hpp"
 #include "slic3r/GUI/GUI.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/Utils/UndoRedo.hpp"
 
 
@@ -21,6 +22,16 @@
 #include <boost/log/trivial.hpp>
 
 namespace Slic3r::GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+} // namespace
 
 GLGizmoFuzzySkin::GLGizmoFuzzySkin(GLCanvas3D& parent, unsigned int sprite_id)
     : GLGizmoPainterBase(parent, sprite_id), m_current_tool(ImGui::CircleButtonIcon)
@@ -277,10 +288,10 @@ void GLGizmoFuzzySkin::on_render_input_window(float x, float y, float bottom_lim
 
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0);
         if (m_current_tool == tool_ids[i]) {
-            ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f) : ImVec4(0.86f, 0.99f, 0.91f, 1.00f)); // r, g, b, a
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_is_dark_mode ? ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f) : ImVec4(0.86f, 0.99f, 0.91f, 1.00f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, m_is_dark_mode ? ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f) : ImVec4(0.86f, 0.99f, 0.91f, 1.00f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+            ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode)); // selected tool -> MD3 primary container
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+            ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
             ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0);
         }

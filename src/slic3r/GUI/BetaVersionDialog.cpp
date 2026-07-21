@@ -40,28 +40,28 @@ BetaVersionDialog::BetaVersionDialog(wxWindow *parent)
 
     // Top separator line
     auto *line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    line_top->SetBackgroundColour(ThemeColor::Grey400);
     sizer_main->Add(line_top, 0, wxEXPAND, 0);
 
     // --- Content area ---
     auto *sizer_content = new wxBoxSizer(wxVERTICAL);
 
     m_heading_label = new Label(this, Label::Head_16, wxEmptyString, LB_AUTO_WRAP);
-    m_heading_label->SetForegroundColour(wxColour(0x26, 0x2E, 0x30));
+    m_heading_label->SetForegroundColour(ThemeColor::TextPrimary);
     sizer_content->Add(m_heading_label, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
 
     m_version_label = new Label(this, Label::Body_13, wxEmptyString, LB_AUTO_WRAP);
-    m_version_label->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+    m_version_label->SetForegroundColour(ThemeColor::TextSecondary);
     sizer_content->Add(m_version_label, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
     m_overview_label = new Label(this, Label::Body_14, wxEmptyString, LB_AUTO_WRAP);
-    m_overview_label->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+    m_overview_label->SetForegroundColour(ThemeColor::TextSecondary);
     m_overview_label->SetMinSize(wxSize(FromDIP(DETAIL_PANEL_W), -1));
     m_overview_label->SetMaxSize(wxSize(FromDIP(DETAIL_PANEL_W), -1));
     sizer_content->Add(m_overview_label, 0, wxEXPAND | wxBOTTOM, FromDIP(15));
 
     // Row 3: Detail panel with gray background
     m_detail_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_detail_panel->SetBackgroundColour(wxColour(0xF5, 0xF5, 0xF5));
+    m_detail_panel->SetBackgroundColour(ThemeColor::Grey200);
 
     m_detail_sizer = new wxBoxSizer(wxVERTICAL);
     m_detail_sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
@@ -74,20 +74,20 @@ BetaVersionDialog::BetaVersionDialog(wxWindow *parent)
     auto *sizer_button = new wxBoxSizer(wxHORIZONTAL);
 
     StateColor btn_bg_green(
-        std::pair<wxColour, int>(wxColour(27, 136, 68),     StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115),    StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR,  StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed,  StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered,  StateColor::Hovered),
+        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR,       StateColor::Normal));
 
     StateColor btn_bg_white(
-        std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE,                StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(*wxWHITE,            StateColor::Normal));
 
     // "Try Now" — brand color
     m_button_try_now = new Button(this, _L("Try Now"));
     m_button_try_now->SetBackgroundColor(btn_bg_green);
     m_button_try_now->SetBorderColor(*wxWHITE);
-    m_button_try_now->SetTextColor(wxColour("#FFFFFE"));
+    m_button_try_now->SetTextColor(ThemeColor::White);
     m_button_try_now->SetFont(Label::Body_12);
     m_button_try_now->SetSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
     m_button_try_now->SetMinSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
@@ -99,7 +99,7 @@ BetaVersionDialog::BetaVersionDialog(wxWindow *parent)
     // "Skip"
     m_button_skip = new Button(this, _L("Skip"));
     m_button_skip->SetBackgroundColor(btn_bg_white);
-    m_button_skip->SetBorderColor(wxColour(38, 46, 48));
+    m_button_skip->SetBorderColor(ThemeColor::TextPrimary);
     m_button_skip->SetFont(Label::Body_12);
     m_button_skip->SetSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
     m_button_skip->SetMinSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
@@ -111,7 +111,7 @@ BetaVersionDialog::BetaVersionDialog(wxWindow *parent)
     // "Don't show me Beta updates again"
     m_button_dont_show = new Button(this, _L("Don't show me Beta updates again"));
     m_button_dont_show->SetBackgroundColor(btn_bg_white);
-    m_button_dont_show->SetBorderColor(wxColour(38, 46, 48));
+    m_button_dont_show->SetBorderColor(ThemeColor::TextPrimary);
     m_button_dont_show->SetFont(Label::Body_12);
     m_button_dont_show->SetSize(wxSize(-1, FromDIP(BUTTON_H)));
     m_button_dont_show->SetMinSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
@@ -210,7 +210,7 @@ void BetaVersionDialog::createDetailItem(wxSizer *parent_sizer, wxWindow *parent
 
     wxString numbered_title = wxString::Format("%d. %s", index, title);
     auto *title_label = new Label(parent_win, Label::Head_13, numbered_title, LB_AUTO_WRAP);
-    title_label->SetForegroundColour(wxColour(0x26, 0x2E, 0x30));
+    title_label->SetForegroundColour(ThemeColor::TextPrimary);
     title_label->SetMinSize(wxSize(FromDIP(DETAIL_PANEL_W - 40), -1));
     title_label->SetMaxSize(wxSize(FromDIP(DETAIL_PANEL_W - 40), -1));
     item_sizer->Add(title_label, 0, wxLEFT | wxRIGHT, FromDIP(20));
@@ -229,8 +229,8 @@ void BetaVersionDialog::createDetailItem(wxSizer *parent_sizer, wxWindow *parent
 
         wxFont normal_font = Label::Body_12;
         wxFont bold_font   = Label::Body_12.Bold();
-        wxColour body_colour(0x6B, 0x6B, 0x6B);
-        wxColour bold_colour(0x26, 0x2E, 0x30);
+        wxColour body_colour = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        wxColour bold_colour = StateColor::semantic(MD3::Role::OnSurface);
 
         rtc->BeginSuppressUndo();
         int bold_pos = body.Find(bold_segment);
@@ -282,7 +282,7 @@ void BetaVersionDialog::createDetailItem(wxSizer *parent_sizer, wxWindow *parent
         body_widget = rtc;
     } else {
         auto *body_label = new Label(parent_win, Label::Body_12, body, LB_AUTO_WRAP);
-        body_label->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+        body_label->SetForegroundColour(ThemeColor::TextSecondary);
         body_label->SetMinSize(wxSize(FromDIP(BODY_WIDTH), -1));
         body_label->SetMaxSize(wxSize(FromDIP(BODY_WIDTH), -1));
         m_detail_body_labels.push_back(body_label);

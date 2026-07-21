@@ -91,7 +91,7 @@ void UiStyledAMSPanel::OnPaint(wxPaintEvent& event)
 
 
     wxFont font12(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-    dc.SetTextForeground(wxColour("#858585"));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     // dc.SetFont(font12);
     dc.SetFont(::Label::Body_12);
     wxCoord textWidth, textHeight;
@@ -211,11 +211,11 @@ void UiStyledSwitchPanel::OnPaint(wxPaintEvent& event)
     wxPen borderPen;
     if (m_borderDashed)
     {
-        borderPen = wxPen(wxColour("#ACACAC"), m_borderWidth, wxPENSTYLE_SHORT_DASH);
+        borderPen = wxPen(StateColor::semantic(MD3::Role::Outline), m_borderWidth, wxPENSTYLE_SHORT_DASH);
     }
     else
     {
-        borderPen = wxPen(wxColour("#ACACAC"), m_borderWidth, wxPENSTYLE_SOLID);
+        borderPen = wxPen(StateColor::semantic(MD3::Role::Outline), m_borderWidth, wxPENSTYLE_SOLID);
     }
     dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
     dc.SetPen(borderPen);
@@ -236,12 +236,12 @@ void UiStyledSwitchPanel::OnPaint(wxPaintEvent& event)
     dc.DrawRectangle(labelRect);
 
     // dc.SetPen(wxPen(m_borderColor, m_borderWidth, wxPENSTYLE_SHORT_DASH));
-    dc.SetPen(wxPen(wxColour("#ACACAC"), m_borderWidth, wxPENSTYLE_SHORT_DASH));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline), m_borderWidth, wxPENSTYLE_SHORT_DASH));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawLine(width / 2, offset, width / 2, height - offset);
 
     wxFont font12(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-    dc.SetTextForeground(wxColour("#000000"));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     // dc.SetFont(font12);
     dc.SetFont(::Label::Body_14);
     wxCoord textWidth, textHeight;
@@ -268,7 +268,7 @@ void UiStyledSwitchPanel::OnPaint(wxPaintEvent& event)
     int selBaseY = height - FromDIP(56);
     dc.DrawRoundedRectangle(wxRect(selBaseX, selBaseY, selWidth, selHeight), FromDIP(4));
     // wxFont font(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-    dc.SetTextForeground(wxColour("#262E30"));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     // dc.SetFont(font);
     int selTextPosX = selBaseX + (selWidth - selTextWidth) / 2;
     int selTextPosY = selBaseY + (selHeight - selTextHeight) / 2;
@@ -282,7 +282,7 @@ void UiStyledSwitchPanel::OnPaint(wxPaintEvent& event)
     int hGap = FromDIP(32);
     wxRect HL(hLBaseX, hLBaseY + FromDIP(1), hWidth, hHeight);
     wxRect HR(hLBaseX + hWidth + hGap, hLBaseY + FromDIP(1), hWidth, hHeight);
-    dc.SetBrush(wxBrush(wxColour("#D9D9D9")));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::OutlineVariant)));
     dc.SetPen(wxPen(*wxTRANSPARENT_PEN));
     dc.DrawRectangle(HL);
     dc.DrawRectangle(HR);
@@ -426,8 +426,8 @@ void UiAMSSlot::DrawLine(wxPaintDC& dc, const wxSize& cli)
     int bgRemainW = FromDIP(30);
     int forRemainW = FromDIP(30 - 8);
     //remain status bar
-    dc.SetBrush(wxBrush(wxColour("#c2c2c2")));
-    dc.SetPen(wxPen(wxColour("#c2c2c2")));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::OutlineVariant)));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant)));
     dc.DrawRoundedRectangle(wxRect(bgRemainPointX, 0, bgRemainW, bgRemainH), FromDIP(3));
 
     if (!m_bgColours.empty()) {
@@ -447,8 +447,8 @@ void UiAMSSlot::DrawLine(wxPaintDC& dc, const wxSize& cli)
 
     if (m_status == DataStatusType::ADJUST)
     {
-        dc.SetBrush(wxColour("#ff6f00"));
-        dc.SetPen(wxPen(wxColour("#ff6f00")));
+        dc.SetBrush(StateColor::darkModeColorFor(ThemeColor::Warning));
+        dc.SetPen(wxPen(StateColor::darkModeColorFor(ThemeColor::Warning)));
         //top
         int topGap = static_cast<int>(FromDIP(8) * m_scaleFactor);
         int bottomGap = static_cast<int>(FromDIP(4) * m_scaleFactor);
@@ -472,8 +472,8 @@ void UiAMSSlot::DrawLine(wxPaintDC& dc, const wxSize& cli)
 
     if (m_status != DataStatusType::UNMATCHED)
     {
-        dc.SetBrush(wxColour(144, 144, 144));
-        dc.SetPen(wxPen(wxColour(144, 144, 144)));
+        dc.SetBrush(StateColor::semantic(MD3::Role::Outline));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline)));
         dc.DrawRoundedRectangle(wxRect(FromDIP(static_cast<int>(3 * m_scaleFactor)),
                                     FromDIP(static_cast<int>(6 * m_scaleFactor)),
                                     FromDIP(static_cast<int>(4 * m_scaleFactor)),
@@ -520,12 +520,12 @@ void UiAMSSlot::OnPaint(wxPaintEvent&)
     rectangleW = static_cast<int>(rectangleW * m_scaleFactor);
     rectangleH = static_cast<int>(rectangleH * m_scaleFactor);
     wxSize cli = GetClientSize();
-    dc.SetBrush(wxBrush(wxColour("#ffffff")));
-    dc.SetPen(wxPen(wxColour("#ffffff")));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
     if (m_scaleFactor < 1.0)
     {
-        dc.SetBrush(wxBrush(wxColour("#F8F8F8")));
-        dc.SetPen(wxPen(wxColour("#F8F8F8")));
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
     }
     dc.DrawRectangle(wxRect(0, 0, cli.x, cli.y));
     DrawLine(dc, cli);
@@ -587,7 +587,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
     : wxDialog(parent, wxID_ANY, _L("Suggested rearrangement"),
                wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
-    SetBackgroundColour(wxColour("#FFFFFF"));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     // SetSize(wxSize(FromDIP(630), FromDIP(719)));
     SetMinSize(wxSize(FromDIP(630), -1));
     SetMaxSize(wxSize(FromDIP(630), -1));
@@ -600,8 +600,8 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
     suggestText = new Label(textPanel, wxEmptyString);
 
     linkwiki = new Label(textPanel, _L("How to save time?→"));
-    linkwiki->SetForegroundColour(wxColour("#00AE42"));
-    linkwiki->SetBackgroundColour(wxColour("#FFFFFF"));
+    linkwiki->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+    linkwiki->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     linkwiki->SetFont(Label::Body_14);
     linkwiki->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     linkwiki->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
@@ -618,7 +618,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
     // summaryText->SetFont(wxGetApp().normal_font());
 
     filamentSwitch = new UiStyledSwitchPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, //wxSize(FromDIP(571), FromDIP(439)),
-                                                    wxColour("#EEEEEE"), wxColour("#ffffff"), true, FromDIP(1), FromDIP(5), true);
+                                                    StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::semantic(MD3::Role::SurfaceContainerLowest), true, FromDIP(1), FromDIP(5), true);
 
 
     filamentTips = new wxStaticText(this, wxID_ANY, _L("Filament Status:"));
@@ -626,7 +626,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
 
     // statusBar = new UiStatusContainer(this);
     statusBar = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    statusBar->SetBackgroundColour(wxColour("#F8F8F8"));
+    statusBar->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     statusBar->SetMinSize(wxSize(FromDIP(570), -1));
     wxBoxSizer* statusBarSizer = new wxBoxSizer(wxHORIZONTAL);
     statusBar->SetSizer(statusBarSizer);
@@ -635,7 +635,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
     UiAMSSlot* amsSlotAdjust= new UiAMSSlot(statusBar, colourAdjust, wxString("Ax\nPLA"), DataStatusType::ADJUST, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(58), FromDIP(90)), 1.0, 1.0);
     wxStaticText* adjustLabel = new wxStaticText(statusBar, wxID_ANY, _L("Position adjustment required"));
     adjustLabel->SetFont(wxGetApp().normal_font());
-    adjustLabel->SetForegroundColour(wxColour("#6B6B6B"));
+    adjustLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     adjustGroupSizer->Add(amsSlotAdjust, 0, wxALIGN_CENTER);
     adjustGroupSizer->Add(adjustLabel, 0, wxALIGN_CENTER | wxLEFT, FromDIP(8));
@@ -644,7 +644,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
     UiAMSSlot* amsSlotOK= new UiAMSSlot(statusBar, colourOK, wxString("Ax\nPLA"), DataStatusType::OK, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(58), FromDIP(90)), 1.0, 1.0);
     wxStaticText* okLabel = new wxStaticText(statusBar, wxID_ANY, _CTX(L_CONTEXT("OK", "FilamentTrack"), "FilamentTrack"));
     okLabel->SetFont(wxGetApp().normal_font());
-    okLabel->SetForegroundColour(wxColour("#6B6B6B"));
+    okLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     okGroupSizer->Add(amsSlotOK, 0, wxALIGN_CENTER);
     okGroupSizer->Add(okLabel, 0, wxALIGN_CENTER | wxLEFT, FromDIP(8));
@@ -653,7 +653,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
     UiAMSSlot* amsSlotUnused= new UiAMSSlot(statusBar, colourUnused, wxString("Ax\nPLA"), DataStatusType::UNMATCHED, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(58), FromDIP(90)), 0.2, 1.0);
     wxStaticText* unusedLabel = new wxStaticText(statusBar, wxID_ANY, _L("Unused"));
     unusedLabel->SetFont(wxGetApp().normal_font());
-    unusedLabel->SetForegroundColour(wxColour("#6B6B6B"));
+    unusedLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     unusedGroupSizer->Add(amsSlotUnused, 0, wxALIGN_CENTER);
     unusedGroupSizer->Add(unusedLabel, 0, wxALIGN_CENTER | wxLEFT, FromDIP(8));
@@ -673,7 +673,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
     m_buttonClose = new Button(this, _L("Close"));
     m_buttonClose->SetMinSize(wxSize(FromDIP(80), FromDIP(32)));
     m_buttonClose->SetMaxSize(wxSize(FromDIP(80), FromDIP(32)));
-    m_buttonClose->SetBackgroundColor(wxColour("#00AE42"));
+    m_buttonClose->SetBackgroundColor(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
     m_buttonClose->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e){
         this->Close();
     });
@@ -717,7 +717,7 @@ void ReselectMachineDialog::Update(MachineObject* obj, const std::map<int, int>&
     {
         suggestText->SetLabel(wxString::Format(_L("Based on the diagram below, rearrange the filaments on the printer for optimal results to save approximately %s."), (save_time.empty() ? "0s" : save_time)));
         suggestText->Wrap(FromDIP(600));
-        suggestText->SetBackgroundColour(wxColour("#FFFFFF"));
+        suggestText->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
         suggestText->SetFont(Label::Body_14);
         suggestText->Show();
     }

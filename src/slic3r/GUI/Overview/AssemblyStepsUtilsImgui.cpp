@@ -847,7 +847,7 @@ void AssemblyStepsUtils::render_assemble_play_bar(float canvas_w, float bottom_y
             const float a1 = two_pi * float(i + 1) / float(segments);
             dl->AddLine(ImVec2(preview_c.x + std::cos(a0) * preview_r, preview_c.y + std::sin(a0) * preview_r),
                         ImVec2(preview_c.x + std::cos(a1) * preview_r, preview_c.y + std::sin(a1) * preview_r),
-                        IM_COL32(0x2C, 0xAD, 0x00, 230), 2.0f * sc);
+                        md3_u32(MD3::Role::Primary, m_is_dark, 230), 2.0f * sc);
         }
     }
 
@@ -1936,7 +1936,7 @@ void AssemblyStepsUtils::render_assembly_notes_on_canvas(const Vec2d &object_scr
                                  ImGui::ColorConvertFloat4ToU32(label_bg), label_rounding);
         if (text_selected)
             draw_list->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y),
-                               IM_COL32(25, 166, 77, 242), label_rounding, 0, 1.0f);
+                               md3_u32(MD3::Role::Primary, m_is_dark, 242), label_rounding, 0, 1.0f);
 
         char win_id[64];
         snprintf(win_id, sizeof(win_id), "##text_label_%d", ni);
@@ -2850,9 +2850,9 @@ void AssemblyStepsUtils::render_structure_step_option_menu(
     ImGui::SetNextWindowPos(ImVec2(anchor.x + 35.0f * sc, anchor.y), ImGuiCond_Appearing);
     ImGui::SetNextWindowSize(ImVec2(menu_width, menu_height), ImGuiCond_Always);
 
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, is_dark ? ImVec4(45 / 255.0f, 45 / 255.0f, 49 / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 77.0f / 255.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, is_dark ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f) : ImVec4(38.0f / 255.0f, 46.0f / 255.0f, 48.0f / 255.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, md3_vec4(MD3::Role::SurfaceContainer, is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_vec4(MD3::Role::OutlineVariant, is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, is_dark));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 4.0f * sc);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(win_padding, win_padding));
@@ -2878,7 +2878,7 @@ void AssemblyStepsUtils::render_structure_step_option_menu(
             }
 
             if (ImGui::IsItemHovered()) {
-                const ImU32 bg = is_dark ? IM_COL32(55, 55, 59, 255) : IM_COL32(240, 240, 240, 255);
+                const ImU32 bg = md3_u32(MD3::Role::SurfaceContainerHigh, is_dark);
                 draw_list->AddRectFilled(row_pos, ImVec2(row_pos.x + row_content_w, row_pos.y + row_height), bg, 4.0f * sc);
             }
             const ImVec2 text_size = ImGui::CalcTextSize(labels[i].c_str());
@@ -2959,18 +2959,18 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
     constexpr size_t kChipMaxChars = 20;
 
     // Colors -----------------------------------------------------------------
-    const ImU32 col_white      = m_is_dark ? IM_COL32(55, 55, 59, 255) : IM_COL32(255, 255, 255, 255);
-    const ImU32 col_header_top = m_is_dark ? IM_COL32(48, 48, 52, 255) : IM_COL32(0xF8, 0xF8, 0xF8, 255);
-    const ImU32 col_header_bot = m_is_dark ? IM_COL32(42, 42, 46, 255) : IM_COL32(0xF1, 0xF1, 0xF1, 255);
-    const ImU32 col_text_dark  = m_is_dark ? IM_COL32(0xE0, 0xE0, 0xE0, 255) : IM_COL32(0x26, 0x2E, 0x30, 255);
-    const ImU32 col_text_mid   = m_is_dark ? IM_COL32(0xA0, 0xA0, 0xA0, 255) : IM_COL32(0x6B, 0x6B, 0x6B, 255);
-    const ImU32 col_text_light = m_is_dark ? IM_COL32(0x80, 0x80, 0x80, 255) : IM_COL32(0xAC, 0xAC, 0xAC, 255);
-    const ImU32 col_card_bg    = m_is_dark ? IM_COL32(45, 45, 49, 255) : IM_COL32(0xF8, 0xF8, 0xF8, 255);
-    const ImU32 col_card_border= m_is_dark ? IM_COL32(70, 70, 74, 255) : IM_COL32(0xEE, 0xEE, 0xEE, 255);
-    const ImU32 col_brand      = IM_COL32(0x00, 0xAE, 0x42, 255);
-    const ImU32 col_brand_soft = IM_COL32(0x2C, 0xAD, 0x00, (int) (0.14f * 255.f));
-    const ImU32 col_brand_addbg= m_is_dark ? IM_COL32(0x2A, 0x3F, 0x26, 255) : IM_COL32(0xD8, 0xEA, 0xD2, 255);
-    const ImU32 col_chip_bg    = m_is_dark ? IM_COL32(65, 65, 69, 255) : IM_COL32(0xEE, 0xEE, 0xEE, 255);
+    const ImU32 col_white      = m_is_dark ? md3_u32(MD3::Role::SurfaceContainerHighest, m_is_dark) : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark);
+    const ImU32 col_header_top = md3_u32(MD3::Role::SurfaceContainerLow, m_is_dark);
+    const ImU32 col_header_bot = md3_u32(MD3::Role::SurfaceContainer, m_is_dark);
+    const ImU32 col_text_dark  = md3_u32(MD3::Role::OnSurface, m_is_dark);
+    const ImU32 col_text_mid   = md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark);
+    const ImU32 col_text_light = md3_u32(MD3::Role::Outline, m_is_dark);
+    const ImU32 col_card_bg    = md3_u32(MD3::Role::SurfaceContainerLow, m_is_dark);
+    const ImU32 col_card_border= md3_u32(MD3::Role::OutlineVariant, m_is_dark);
+    const ImU32 col_brand      = md3_u32(MD3::Role::Primary, m_is_dark);
+    const ImU32 col_brand_soft = md3_u32(MD3::Role::Primary, m_is_dark, (int) (0.14f * 255.f));
+    const ImU32 col_brand_addbg= md3_u32(MD3::Role::SecondaryContainer, m_is_dark);
+    const ImU32 col_chip_bg    = md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark);
 
     auto text_w_fn = [&](float size, const std::string &s) {
         return ImGui::GetFont()->CalcTextSizeA(size, FLT_MAX, 0.f, s.c_str()).x;
@@ -3058,7 +3058,7 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
         if (ImGui::IsItemClicked(0))
             m_structure_panel_collapsed = !m_structure_panel_collapsed;
         if (ImGui::IsItemHovered()) {
-            dl->AddRectFilled(toggle_min, toggle_max, IM_COL32(38, 46, 48, 18), 3.0f * sc);
+            dl->AddRectFilled(toggle_min, toggle_max, md3_u32(MD3::Role::OnSurface, m_is_dark, 18), 3.0f * sc);
             render_panel_tooltip(m_structure_panel_collapsed ? _u8L("Expand") : _u8L("Collapse"));
         }
         ImGui::PopID();
@@ -3079,7 +3079,7 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
         if (ImGui::IsItemClicked(0))
             ImGui::OpenPopup("##assembly_structure_option_menu");
         if (ImGui::IsItemHovered()) {
-            dl->AddRectFilled(opt_min, opt_max, IM_COL32(38, 46, 48, 18), 3.0f * sc);
+            dl->AddRectFilled(opt_min, opt_max, md3_u32(MD3::Role::OnSurface, m_is_dark, 18), 3.0f * sc);
             render_panel_tooltip(_u8L("Options"));
         }
         render_assembly_structure_option_menu(imgui, sc, m_is_dark);
@@ -3113,7 +3113,7 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
                 wxLaunchDefaultBrowser("https://e.bambulab.com/t?c=T0HuraoU2gH6ufRk");
             }
             if (ImGui::IsItemHovered()) {
-                dl->AddRectFilled(help_min, help_max, IM_COL32(38, 46, 48, 18), 3.0f * sc);
+                dl->AddRectFilled(help_min, help_max, md3_u32(MD3::Role::OnSurface, m_is_dark, 18), 3.0f * sc);
                 render_panel_tooltip(_u8L("Go to Wiki"));
             }
             ImGui::PopID();
@@ -3179,10 +3179,10 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, ImVec4(0, 0, 0, 0));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(38 / 255.f, 46 / 255.f, 48 / 255.f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(245 / 255.f, 247 / 255.f, 248 / 255.f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(236 / 255.f, 240 / 255.f, 242 / 255.f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(228 / 255.f, 235 / 255.f, 238 / 255.f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Header, md3_vec4(MD3::Role::SurfaceContainerLow, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_vec4(MD3::Role::SurfaceContainer, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_vec4(MD3::Role::SurfaceContainerHigh, m_is_dark));
     ImGui::BeginChild("##asp_cards_scroll", ImVec2(panel_w, scroll_region_h), false, scroll_flags);
 
     const ImVec2 child_pos = ImGui::GetWindowPos();
@@ -3359,9 +3359,9 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
                 m_structure_step_rename_open_pending = false;
                 m_structure_step_rename_had_focus = false;
             }
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.86f, 0.86f, 0.86f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.82f, 0.82f, 0.82f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.78f, 0.78f, 0.78f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_vec4(MD3::Role::SurfaceContainerHighest, m_is_dark));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_vec4(MD3::Role::SurfaceContainerHighest, m_is_dark));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_vec4(MD3::Role::SurfaceContainerHighest, m_is_dark));
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4.0f * sc, 2.0f * sc));
             bool confirmed = ImGui::InputText("##asp_inline_step_name",
                 m_structure_step_rename_buf, sizeof(m_structure_step_rename_buf),
@@ -3759,7 +3759,7 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
             if (ImGui::IsItemClicked(0))
                 clear_non_final_assembly_steps();
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-                dl->AddRectFilled(clear_min, clear_max, IM_COL32(38, 46, 48, 18), 3.0f * sc);
+                dl->AddRectFilled(clear_min, clear_max, md3_u32(MD3::Role::OnSurface, m_is_dark, 18), 3.0f * sc);
                 render_panel_tooltip(_u8L("Delete all assembly steps except the final assembly."));
             }
             ImGui::PopID();
@@ -3781,7 +3781,7 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
             if (ImGui::IsItemClicked(0))
                 exit_assembly_steps_editing();
             if (ImGui::IsItemHovered()) {
-                dl->AddRectFilled(exit_min, exit_max, IM_COL32(38, 46, 48, 18), 3.0f * sc);
+                dl->AddRectFilled(exit_min, exit_max, md3_u32(MD3::Role::OnSurface, m_is_dark, 18), 3.0f * sc);
                 render_panel_tooltip(_u8L("Exit the assembly step editing, you can also press the Esc button to exit"));
             }
             ImGui::PopID();
@@ -3834,9 +3834,9 @@ void AssemblyStepsUtils::render_assembly_structure_panel(float canvas_w, float c
             ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * sc);
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
             ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f * sc);
-            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.0f, 1.0f, 1.0f, 0.98f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.82f, 0.82f, 0.82f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(38 / 255.0f, 46 / 255.0f, 48 / 255.0f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_vec4(MD3::Role::SurfaceContainerLowest, m_is_dark, 0.98f));
+            ImGui::PushStyleColor(ImGuiCol_Border, md3_vec4(MD3::Role::OutlineVariant, m_is_dark));
+            ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, m_is_dark));
             ImGui::Begin("##assembly_save_project_tip", nullptr,
                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |

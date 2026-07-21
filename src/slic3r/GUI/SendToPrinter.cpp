@@ -235,7 +235,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     m_sizer_main->SetMinSize(wxSize(0, -1));
     m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(ThemeColor::Grey500);
 
     m_scrollable_region       = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_sizer_scrollable_region = new wxBoxSizer(wxVERTICAL);
@@ -270,8 +270,8 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_sizer_basic->Add(m_sizer_basic_time, 0, wxALIGN_CENTER, 0);
 
     m_line_materia = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_materia->SetForegroundColour(wxColour(238, 238, 238));
-    m_line_materia->SetBackgroundColour(wxColour(238, 238, 238));
+    m_line_materia->SetForegroundColour(ThemeColor::Grey250);
+    m_line_materia->SetBackgroundColour(ThemeColor::Grey250);
 
     wxBoxSizer *m_sizer_printer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -288,13 +288,13 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_comboBox_printer->Bind(wxEVT_COMBOBOX, &SendToPrinterDialog::on_selection_changed, this);
 
     m_sizer_printer->Add(m_comboBox_printer, 1, wxEXPAND | wxRIGHT, FromDIP(5));
-    btn_bg_enable = StateColor(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    btn_bg_enable = StateColor(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_button_refresh = new Button(this, _L("Refresh"));
     m_button_refresh->SetBackgroundColor(btn_bg_enable);
     m_button_refresh->SetBorderColor(btn_bg_enable);
-    m_button_refresh->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+    m_button_refresh->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_refresh->SetSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
     m_button_refresh->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
     m_button_refresh->SetCornerRadius(FromDIP(10));
@@ -304,7 +304,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     /*select storage*/
     m_storage_panel = new wxPanel(this);
-    m_storage_panel->SetBackgroundColour(*wxWHITE);
+    m_storage_panel->SetBackgroundColour(ThemeColor::White);
     m_storage_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_storage_panel->SetSizer(m_storage_sizer);
     m_storage_panel->Layout();
@@ -312,7 +312,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     // try to connect
     m_statictext_printer_msg = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
     m_statictext_printer_msg->SetFont(::Label::Body_13);
-    m_statictext_printer_msg->SetForegroundColour(*wxBLACK);
+    m_statictext_printer_msg->SetForegroundColour(ThemeColor::TextPrimary);
     m_statictext_printer_msg->Hide();
 
     wxBoxSizer *m_sizer_connecting      = new wxBoxSizer(wxHORIZONTAL);
@@ -320,7 +320,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     m_connecting_printer_msg = new wxStaticText(m_connecting_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
     m_connecting_printer_msg->SetFont(::Label::Body_13);
-    m_connecting_printer_msg->SetForegroundColour(*wxBLACK);
+    m_connecting_printer_msg->SetForegroundColour(ThemeColor::TextPrimary);
     m_connecting_printer_msg->SetLabel(_L("Try to connect"));
     /*m_connecting_printer_msg->Hide();*/
     m_connecting_printer_msg->Show();
@@ -337,7 +337,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     // line schedule
     m_line_schedule = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_schedule->SetBackgroundColour(wxColour(238, 238, 238));
+    m_line_schedule->SetBackgroundColour(ThemeColor::Grey250);
     m_simplebook   = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_DIALOG_SIMBOOK_SIZE, 0);
 
     // perpare mode
@@ -352,7 +352,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_button_ensure = new Button(m_panel_prepare, _L("Send"));
     m_button_ensure->SetBackgroundColor(btn_bg_enable);
     m_button_ensure->SetBorderColor(btn_bg_enable);
-    m_button_ensure->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+    m_button_ensure->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_ensure->SetSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
     m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
     m_button_ensure->SetCornerRadius(6);
@@ -371,7 +371,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     // finish mode
     m_panel_finish = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_panel_finish->SetBackgroundColour(wxColour(135, 206, 250));
+    m_panel_finish->SetBackgroundColour(ThemeColor::White);
     wxBoxSizer *m_sizer_finish   = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *m_sizer_finish_v = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_finish_h = new wxBoxSizer(wxHORIZONTAL);
@@ -382,7 +382,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     m_statictext_finish = new wxStaticText(m_panel_finish, wxID_ANY, L("send completed"), wxDefaultPosition, wxDefaultSize, 0);
     m_statictext_finish->Wrap(-1);
-    m_statictext_finish->SetForegroundColour(wxColour(0, 174, 66));
+    m_statictext_finish->SetForegroundColour(ThemeColor::BrandGreen);
     m_sizer_finish_h->Add(m_statictext_finish, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
     m_sizer_finish_v->Add(m_sizer_finish_h, 1, wxALIGN_CENTER, 0);
@@ -396,7 +396,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     //show bind failed info
     m_sw_print_failed_info = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(380), FromDIP(125)), wxVSCROLL);
-    m_sw_print_failed_info->SetBackgroundColour(*wxWHITE);
+    m_sw_print_failed_info->SetBackgroundColour(ThemeColor::White);
     m_sw_print_failed_info->SetScrollRate(0, 5);
     m_sw_print_failed_info->SetMinSize(wxSize(FromDIP(380), FromDIP(125)));
     m_sw_print_failed_info->SetMaxSize(wxSize(FromDIP(380), FromDIP(125)));
@@ -411,12 +411,12 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     auto st_title_error_code = new wxStaticText(m_sw_print_failed_info, wxID_ANY, _L("Error code"));
     auto st_title_error_code_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, ": ");
     m_st_txt_error_code = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_error_code->SetForegroundColour(0x909090);
-    st_title_error_code_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_code->SetForegroundColour(0x909090);
+    st_title_error_code->SetForegroundColour(ThemeColor::TextSecondary);
+    st_title_error_code_doc->SetForegroundColour(ThemeColor::TextSecondary);
+    m_st_txt_error_code->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_error_code->SetFont(::Label::Body_13);
     st_title_error_code_doc->SetFont(::Label::Body_13);
-    m_st_txt_error_code->SetFont(::Label::Body_13);
+    m_st_txt_error_code->SetFont(::Label::Mono_13);
     st_title_error_code->SetMinSize(wxSize(FromDIP(74), -1));
     st_title_error_code->SetMaxSize(wxSize(FromDIP(74), -1));
     m_st_txt_error_code->SetMinSize(wxSize(FromDIP(260), -1));
@@ -428,9 +428,9 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     auto st_title_error_desc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, wxT("Error desc"));
     auto st_title_error_desc_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, ": ");
     m_st_txt_error_desc = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_error_desc->SetForegroundColour(0x909090);
-    st_title_error_desc_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_desc->SetForegroundColour(0x909090);
+    st_title_error_desc->SetForegroundColour(ThemeColor::TextSecondary);
+    st_title_error_desc_doc->SetForegroundColour(ThemeColor::TextSecondary);
+    m_st_txt_error_desc->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_error_desc->SetFont(::Label::Body_13);
     st_title_error_desc_doc->SetFont(::Label::Body_13);
     m_st_txt_error_desc->SetFont(::Label::Body_13);
@@ -445,9 +445,9 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     auto st_title_extra_info = new wxStaticText(m_sw_print_failed_info, wxID_ANY, wxT("Extra info"));
     auto st_title_extra_info_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, ": ");
     m_st_txt_extra_info = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_extra_info->SetForegroundColour(0x909090);
-    st_title_extra_info_doc->SetForegroundColour(0x909090);
-    m_st_txt_extra_info->SetForegroundColour(0x909090);
+    st_title_extra_info->SetForegroundColour(ThemeColor::TextSecondary);
+    st_title_extra_info_doc->SetForegroundColour(ThemeColor::TextSecondary);
+    m_st_txt_extra_info->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_extra_info->SetFont(::Label::Body_13);
     st_title_extra_info_doc->SetFont(::Label::Body_13);
     m_st_txt_extra_info->SetFont(::Label::Body_13);
@@ -496,17 +496,17 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_rename_switch_panel->SetMaxSize(wxSize(FromDIP(420), FromDIP(25)));
 
     m_rename_normal_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_normal_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_normal_panel->SetBackgroundColour(ThemeColor::White);
     rename_sizer_v = new wxBoxSizer(wxVERTICAL);
     rename_sizer_h = new wxBoxSizer(wxHORIZONTAL);
 
     m_rename_text = new wxStaticText(m_rename_normal_panel, wxID_ANY, wxT("MyLabel"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    m_rename_text->SetForegroundColour(*wxBLACK);
+    m_rename_text->SetForegroundColour(ThemeColor::TextPrimary);
     m_rename_text->SetFont(::Label::Body_13);
     m_rename_text->SetMaxSize(wxSize(FromDIP(390), -1));
     m_rename_button = new Button(m_rename_normal_panel, "", "ams_editable", wxBORDER_NONE, FromDIP(10));
-    m_rename_button->SetBackgroundColor(*wxWHITE);
-    m_rename_button->SetBackgroundColour(*wxWHITE);
+    m_rename_button->SetBackgroundColor(ThemeColor::White);
+    m_rename_button->SetBackgroundColour(ThemeColor::White);
 
     rename_sizer_h->Add(m_rename_text, 0, wxALIGN_CENTER, 0);
     rename_sizer_h->Add(m_rename_button, 0, wxALIGN_CENTER, 0);
@@ -517,7 +517,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     //rename edit
     auto m_rename_edit_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_edit_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_edit_panel->SetBackgroundColour(ThemeColor::White);
     auto rename_edit_sizer_v = new wxBoxSizer(wxVERTICAL);
 
     m_rename_input = new ::TextInput(m_rename_edit_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
@@ -632,12 +632,12 @@ void SendToPrinterDialog::update_storage_list(const std::vector<std::string> &st
         if (storages[i] == "emmc")
         {
             storage_text->SetLabel(wxString::FromUTF8(_CTX_utf8(L_CONTEXT("Cache", "sendtoprint"), "sendtoprint")));
-            storage_text->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#000000")));
+            storage_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         }
         else
         {
             storage_text->SetLabel(wxString::FromUTF8(_CTX_utf8(L_CONTEXT("External", "sendtoprint"), "sendtoprint")));
-            storage_text->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#000000")));
+            storage_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         }
 
 
@@ -646,7 +646,7 @@ void SendToPrinterDialog::update_storage_list(const std::vector<std::string> &st
         {
             storage_text->SetLabel(wxString::FromUTF8(_CTX_utf8(L_CONTEXT("External", "sendtoprint"), "sendtoprint")));
             radiobox->Disable();
-            storage_text->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#CECECE")));
+            storage_text->SetForegroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
         }
         else
         {
@@ -755,7 +755,7 @@ void SendToPrinterDialog::prepare(int print_plate_idx)
 
 void SendToPrinterDialog::update_priner_status_msg(wxString msg, bool is_warning)
 {
-    auto colour = is_warning ? wxColour(0xFF, 0x6F, 0x00) : wxColour(0x6B, 0x6B, 0x6B);
+    auto colour = is_warning ? ThemeColor::Warning : ThemeColor::TextMuted;
     m_statictext_printer_msg->SetForegroundColour(colour);
 
     if (msg.empty()) {
@@ -1368,8 +1368,8 @@ void SendToPrinterDialog::Enable_Refresh_Button(bool en)
     if (!en) {
         if (m_button_refresh->IsEnabled()) {
             m_button_refresh->Disable();
-            m_button_refresh->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-            m_button_refresh->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+            m_button_refresh->SetBackgroundColor(ThemeColor::Grey500);
+            m_button_refresh->SetBorderColor(ThemeColor::Grey500);
         }
     } else {
         if (!m_button_refresh->IsEnabled()) {
@@ -1527,8 +1527,8 @@ void SendToPrinterDialog::Enable_Send_Button(bool en)
     if (!en) {
         if (m_button_ensure->IsEnabled()) {
             m_button_ensure->Disable();
-            m_button_ensure->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-            m_button_ensure->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+            m_button_ensure->SetBackgroundColor(ThemeColor::Grey500);
+            m_button_ensure->SetBorderColor(ThemeColor::Grey500);
             m_storage_panel->Hide();
         }
     } else {

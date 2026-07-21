@@ -6,6 +6,7 @@
 #include "slic3r/GUI/FilamentGroupPopup.hpp"
 #include "slic3r/GUI/GLToolbar.hpp"
 #include "slic3r/GUI/Widgets/MD3Tokens.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/GUI/DeviceCore/DevUtilBackend.h"
 #include "../DeviceCore/DevConfigUtil.h"
 #include "libslic3r/BuildVolume.hpp"
@@ -23,6 +24,21 @@ namespace
     ImVec4 md3_imgui_color(MD3::Role role, bool dark, MD3::ColorScheme scheme = MD3::ColorScheme::Preview, float alpha = 1.0f)
     {
         const wxColour &color = MD3::resolve(role, dark, scheme);
+        return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, alpha);
+    }
+
+    ImU32 md3_imgui_col32(MD3::Role role, bool dark, MD3::ColorScheme scheme = MD3::ColorScheme::Preview, unsigned char alpha = 255)
+    {
+        const wxColour &color = MD3::resolve(role, dark, scheme);
+        return IM_COL32(color.Red(), color.Green(), color.Blue(), alpha);
+    }
+
+    // Bridge a named semantic ThemeColor (light-mode value) into an ImGui colour,
+    // honouring the shared dark-mode remap so Warning/Danger/Link stay legible in
+    // both themes without hardcoding their dark tones at the call site.
+    ImVec4 theme_color_imvec4(const wxColour &light_value, bool dark, float alpha = 1.0f)
+    {
+        const wxColour color = dark ? StateColor::darkModeColorFor(light_value) : light_value;
         return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, alpha);
     }
 
@@ -1452,7 +1468,7 @@ namespace Slic3r
                 const ImVec4 primary = md3_imgui_color(MD3::Role::Primary, m_is_dark);
                 const ImVec4 primary_container = md3_imgui_color(MD3::Role::PrimaryContainer, m_is_dark);
                 const ImVec4 outline = md3_imgui_color(MD3::Role::OutlineVariant, m_is_dark);
-                const ImVec4 surface = md3_imgui_color(MD3::Role::Surface, m_is_dark);
+                const ImVec4 surface_low = md3_imgui_color(MD3::Role::SurfaceContainerLow, m_is_dark);
                 const ImVec4 surface_container_high = md3_imgui_color(MD3::Role::SurfaceContainerHigh, m_is_dark);
                 ImGui::PushStyleColor(ImGuiCol_Separator, outline);
                 ImGui::PushStyleColor(ImGuiCol_Header, primary_container);
@@ -1460,10 +1476,12 @@ namespace Slic3r
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, outline);
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, primary);
                 ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, primary);
-                ImGui::PushStyleColor(ImGuiCol_WindowBg, surface);
+                // Dock sidebar sits on the sc-low surface step (matches the kit
+                // Preview sidebar), with the outline-variant border already pushed.
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, surface_low);
                 ImGui::PushStyleColor(ImGuiCol_Border, outline);
                 ImGui::SetNextWindowBgAlpha(1.0f);
-                const float max_height = std::max(1.0f, static_cast<float>(cnv_size.get_height()) - 58.0f * m_scale);
+                const float max_height = std::max(1.0f, static_cast<float>(cnv_size.get_height()) - float(MD3::Metrics::preview_timeline_height) * m_scale);
                 const float child_height = 0.3333f * max_height;
                 const float available_width = std::max(1.0f, static_cast<float>(canvas_width) - right_margin * m_scale);
                 if (available_width < 112.0f * m_scale) {
@@ -1479,7 +1497,7 @@ namespace Slic3r
                 // Clamp only for genuinely narrow canvases; at normal desktop
                 // widths the dock is the same 344 DIP column as the Material
                 // reference and occupies the canvas above the bottom timeline.
-                const float legend_width = std::max(1.0f, std::min(344.0f * m_scale, available_width - 12.0f * m_scale));
+                const float legend_width = std::max(1.0f, std::min(float(MD3::Metrics::comfortable.sidebar_width) * m_scale, available_width - 12.0f * m_scale));
                 ImGui::SetNextWindowSize({ legend_width, dock_collapsed ? header_height : max_height }, ImGuiCond_Always);
                 imgui.begin(std::string("Legend"), ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove |
@@ -1576,7 +1594,7 @@ namespace Slic3r
                         // BBS render column item
                         {
                             if (callback && !checkbox && !visible)
-                                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(172 / 255.0f, 172 / 255.0f, 172 / 255.0f, 1.00f));
+                                ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark));
                             float dummy_size = type == EItemType::None ? window_padding * 3 : ImGui::GetStyle().ItemSpacing.x + icon_size;
                             ImGui::SameLine(dummy_size);
                             imgui.text(columns_offsets[0].first);
@@ -1855,6 +1873,14 @@ namespace Slic3r
                 const float minimum_chip_width = std::max(112.0f * m_scale, widest_chip_label + 24.0f * m_scale);
                 const float chip_region_width = ImGui::GetContentRegionAvail().x;
                 const int chip_columns = chip_region_width >= minimum_chip_width * 2.0f + ImGui::GetStyle().ItemSpacing.x ? 2 : 1;
+                // Material Chip palette: selected = solid Primary fill with
+                // OnPrimary text; unselected = transparent with the outline
+                // border and on-surface-variant text.  Pill radius = height / 2.
+                const ImVec4 chip_transparent = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+                const ImVec4 chip_on_primary = md3_imgui_color(MD3::Role::OnPrimary, m_is_dark);
+                const ImVec4 chip_on_surface_variant = md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark);
+                const ImVec4 chip_outline = md3_imgui_color(MD3::Role::Outline, m_is_dark);
+                const float chip_height = 30.0f * m_scale;
                 if (primary_view_count > 0 && ImGui::BeginTable("##preview_primary_views", chip_columns,
                                        ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_NoSavedSettings)) {
                     for (std::size_t chip = 0; chip < primary_view_types.size(); ++chip) {
@@ -1866,15 +1892,15 @@ namespace Slic3r
                         const int index = static_cast<int>(std::distance(view_type_items.begin(), item));
                         const bool selected = m_view_type_sel == index;
                         ImGui::PushID(index);
-                        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 16.0f * m_scale);
+                        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.5f * chip_height);
                         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * m_scale);
-                        ImGui::PushStyleColor(ImGuiCol_Button, selected ? primary_container : surface);
-                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, primary_container);
-                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, primary);
-                        ImGui::PushStyleColor(ImGuiCol_Border, selected ? primary : outline);
-                        ImGui::PushStyleColor(ImGuiCol_Text, selected ? primary : md3_imgui_color(MD3::Role::OnSurface, m_is_dark));
+                        ImGui::PushStyleColor(ImGuiCol_Button, selected ? primary : chip_transparent);
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, selected ? primary : surface_container_high);
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, selected ? primary : primary_container);
+                        ImGui::PushStyleColor(ImGuiCol_Border, selected ? primary : chip_outline);
+                        ImGui::PushStyleColor(ImGuiCol_Text, selected ? chip_on_primary : chip_on_surface_variant);
                         const std::string &chip_label = view_type_image_names[index].option_name;
-                        if (ImGui::Button(chip_label.c_str(), ImVec2(-FLT_MIN, 28.0f * m_scale))) {
+                        if (ImGui::Button(chip_label.c_str(), ImVec2(-FLT_MIN, chip_height))) {
                             m_fold = false;
                             apply_view_type_selection(index, type);
                         }

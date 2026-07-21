@@ -21,7 +21,7 @@ class SmartFilamentPanel : public wxPanel
 public:
     SmartFilamentPanel(wxWindow *parent) : wxPanel(parent)
     {
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(ThemeColor::White);
         wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 
         // space
@@ -46,7 +46,7 @@ public:
         auto *wiki_link = new LinkLabel(this, _L("Learn more"), "https://e.bambulab.com/t?c=rYwNe4U869Qa9kW1");
         wiki_link->getLabel()->SetFont(Label::Body_12);
         wiki_link->SeLinkLabelFColour(StateColor::semantic(MD3::Role::Primary));
-        wiki_link->SeLinkLabelBColour(*wxWHITE);
+        wiki_link->SeLinkLabelBColour(ThemeColor::White);
 
         auto *smart_sizer = new wxBoxSizer(wxHORIZONTAL);
         smart_sizer->Add(m_smart_filament_checkbox, 0, wxALIGN_CENTER_VERTICAL);
@@ -282,7 +282,7 @@ FilamentMapDialog::FilamentMapDialog(wxWindow                           *parent,
     , m_filament_volume_map(filament_volume_map)
     , m_filament_type(filament_type)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
 
     std::vector<FilamentMapMode> modes_to_use = normalize_auto_modes(available_modes);
     if (modes_to_use.empty()) modes_to_use = get_default_auto_modes();
@@ -373,7 +373,7 @@ void FilamentMapDialog::make_footer(wxBoxSizer *main_sizer, const FilamentMapMod
     }
 
     wxPanel *bottom_panel = new wxPanel(this);
-    bottom_panel->SetBackgroundColour(*wxWHITE);
+    bottom_panel->SetBackgroundColour(ThemeColor::White);
     wxBoxSizer *bottom_sizer = new wxBoxSizer(wxHORIZONTAL);
     bottom_panel->SetSizer(bottom_sizer);
     bottom_sizer->Fit(bottom_panel);

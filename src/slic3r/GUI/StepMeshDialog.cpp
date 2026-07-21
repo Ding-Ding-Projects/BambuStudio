@@ -28,7 +28,7 @@ static int _ITEM_WIDTH() { return _scale(30); }
 #define SLIDER_SCALE_10(val)    ((val) / 0.01)
 #define SLIDER_UNSCALE_10(val)  ((val) * 0.01)
 #define LEFT_RIGHT_PADING       FromDIP(20)
-#define FONT_COLOR              wxColour("#6B6B6B")
+#define FONT_COLOR              StateColor::semantic(MD3::Role::OnSurfaceVariant)
 
 wxDEFINE_EVENT(wxEVT_THREAD_DONE, wxCommandEvent);
 
@@ -85,7 +85,7 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
                              % Slic3r::resources_dir()).str();
     SetIcon(wxIcon(Slic3r::encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer* bSizer = new wxBoxSizer(wxVERTICAL);
     bSizer->SetMinSize(wxSize(MIN_DIALOG_WIDTH, -1));
@@ -119,11 +119,11 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
 
     wxBoxSizer* tips_sizer = new wxBoxSizer(wxVERTICAL);
     wxStaticText* info = new wxStaticText(this, wxID_ANY, _L("Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."));
-    info->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    info->SetForegroundColour(FONT_COLOR);
     wxStaticText *tips = new wxStaticText(this, wxID_ANY, _L("View Wiki for more information"));
     wxFont font(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
     font.SetUnderlined(true);
-    tips->SetForegroundColour(StateColor::darkModeColorFor(wxColour(0, 174, 66)));
+    tips->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     tips->SetFont(font);
     tips->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         wxLaunchDefaultBrowser("https://wiki.bambulab.com/en/software/bambu-studio/step");
@@ -137,7 +137,7 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     //linear_sizer->SetMinSize(wxSize(MIN_DIALOG_WIDTH, -1));
     wxStaticText* linear_title = new wxStaticText(this,
                                                   wxID_ANY, _L("Linear Deflection") + ": ");
-    linear_title->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    linear_title->SetForegroundColour(FONT_COLOR);
     linear_sizer->Add(linear_title, 0, wxALIGN_LEFT);
     linear_sizer->AddStretchSpacer(1);
     wxSlider* linear_slider = new wxSlider(this, wxID_ANY,
@@ -190,7 +190,7 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     wxBoxSizer* angle_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxStaticText* angle_title = new wxStaticText(this,
                                                   wxID_ANY, _L("Angle Deflection") + ": ");
-    angle_title->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    angle_title->SetForegroundColour(FONT_COLOR);
     angle_sizer->Add(angle_title, 0, wxALIGN_LEFT);
     angle_sizer->AddStretchSpacer(1);
     wxSlider* angle_slider = new wxSlider(this, wxID_ANY,
@@ -243,16 +243,16 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
 
     wxBoxSizer* check_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_split_compound_checkbox = new wxCheckBox(this, wxID_ANY, _L("Split compound and compsolid into multiple objects"), wxDefaultPosition, wxDefaultSize, 0);
-    m_split_compound_checkbox->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    m_split_compound_checkbox->SetForegroundColour(FONT_COLOR);
     m_split_compound_checkbox->SetValue(wxGetApp().app_config->get_bool("is_split_compound"));
     check_sizer->Add(m_split_compound_checkbox, 0, wxALIGN_LEFT);
     bSizer->Add(check_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
 
     wxBoxSizer* mesh_face_number_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxStaticText *mesh_face_number_title = new wxStaticText(this, wxID_ANY, _L("Number of triangular facets") + ": ");
-    mesh_face_number_title->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    mesh_face_number_title->SetForegroundColour(FONT_COLOR);
     mesh_face_number_text = new wxStaticText(this, wxID_ANY, _L("0"));
-    mesh_face_number_text->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    mesh_face_number_text->SetForegroundColour(FONT_COLOR);
     mesh_face_number_text->SetMinSize(wxSize(FromDIP(150), -1));
     mesh_face_number_sizer->Add(mesh_face_number_title, 0, wxALIGN_LEFT);
     mesh_face_number_sizer->Add(mesh_face_number_text, 0, wxALIGN_LEFT);
@@ -261,15 +261,15 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     wxBoxSizer* bSizer_button = new wxBoxSizer(wxHORIZONTAL);
     bSizer_button->SetMinSize(wxSize(FromDIP(100), -1));
     m_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
-    m_checkbox->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    m_checkbox->SetForegroundColour(FONT_COLOR);
     bSizer_button->Add(m_checkbox, 0, wxALIGN_LEFT);
     bSizer_button->AddStretchSpacer(1);
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_ok = new Button(this, _L("OK"));
     m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour("#FFFFFE"));
+    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_button_ok->SetTextColor(ThemeColor::White);
     m_button_ok->SetFont(Label::Body_12);
     m_button_ok->SetSize(BUTTON_SIZE);
     m_button_ok->SetMinSize(BUTTON_SIZE);
@@ -293,12 +293,12 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
         SetFocusIgnoringChildren();
     });
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_cancel = new Button(this, _L("Cancel"));
     m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(BUTTON_SIZE);
     m_button_cancel->SetMinSize(BUTTON_SIZE);

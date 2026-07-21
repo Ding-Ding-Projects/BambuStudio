@@ -12,7 +12,7 @@ namespace GUI {
 UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     : DPIDialog(parent, wxID_ANY, _L("Management user presets"))
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize({FromDIP(788), -1});
 
     m_tab_ctrl = new TabCtrl(this, wxID_ANY);
@@ -37,7 +37,7 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     m_empty_panel = new wxPanel(this);
     m_empty_panel->SetMinSize({-1, FromDIP(360)});
     m_empty_panel->SetMaxSize({-1, FromDIP(360)});
-    m_empty_panel->SetForegroundColour(wxColor("#A0A0A0"));
+    m_empty_panel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     {
         wxSizer *sizer = new wxBoxSizer(wxVERTICAL);
         wxStaticBitmap *bitmap = new wxStaticBitmap(m_empty_panel, wxID_ANY, create_scaled_bitmap(wxGetApp().dark_mode() ? "preset_empty_dark" : "preset_empty", this, 150));
@@ -51,7 +51,7 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     }
 
     m_scrolled = new wxScrolledWindow(this);
-    m_scrolled->SetBackgroundColour("#F8F8F8");
+    m_scrolled->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_scrolled->SetScrollbars(0, 100, 1, 2);
     m_scrolled->SetScrollRate(0, 5);
     m_scrolled->SetMinSize({-1, FromDIP(360)});
@@ -70,10 +70,10 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     m_check_all = new CheckBox(this);
     auto label = new Label(this, _L("Select All"));
     m_label_check_count = new Label(this);
-    m_label_check_count->SetForegroundColour("#6B6B6B");
+    m_label_check_count->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_button_delete     = new Button(this, _L("Delete"));
-    m_button_delete->SetBorderColorNormal(wxColor("#D01B1B"));
-    m_button_delete->SetTextColorNormal(wxColor("#D01B1B"));
+    m_button_delete->SetBorderColorNormal(StateColor::semantic(MD3::Role::Error));
+    m_button_delete->SetTextColorNormal(StateColor::semantic(MD3::Role::Error));
     m_check_all->Bind(wxEVT_TOGGLEBUTTON, [this](auto &evt) { evt.Skip(); on_all_checked(evt.IsChecked(), true); });
     label->Bind(wxEVT_LEFT_UP, [this](auto &evt) {
         bool checked = !m_check_all->GetValue();
@@ -421,7 +421,7 @@ void UserPresetsDialog::update_preset_counts()
         size_t n = i == 1 ? std::accumulate(m_filament_presets.begin(), m_filament_presets.end(), size_t(0),
             [](size_t t, auto &filament) { return t + filament.second.size(); }) : 0;
         if (m_preset_sizers.empty()) {
-            m_tab_ctrl->SetItemTextColour(i, wxColour("#262E30"));
+            m_tab_ctrl->SetItemTextColour(i, StateColor::semantic(MD3::Role::OnSurface));
             m_tab_ctrl->SetItemPaddingSize(i, {FromDIP(20), FromDIP(4)});
         }
         m_tab_ctrl->SetItemText(i, wxString::Format(labels[i], int(m_presets[i].size() + n)));

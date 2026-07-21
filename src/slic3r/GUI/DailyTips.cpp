@@ -614,7 +614,9 @@ void DailyTipsPanel::push_styles()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 4.0f * scale);
-    ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, m_is_dark ? ImGuiWrapper::COL_WINDOW_BG_DARK : ImGuiWrapper::COL_WINDOW_BG);
+    // MD3 scrollbar track matches the SurfaceContainerHigh panel it sits on in
+    // both themes (dark already resolved here; light previously used pure white).
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, md3_tip_vec4(MD3::Role::SurfaceContainerHigh, m_is_dark));
     // MD3 scrollbar: OutlineVariant thumb, promoting to Outline on hover/active.
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, md3_tip_vec4(MD3::Role::OutlineVariant, m_is_dark));
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, md3_tip_vec4(MD3::Role::Outline, m_is_dark));

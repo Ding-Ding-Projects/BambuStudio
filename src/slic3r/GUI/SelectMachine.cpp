@@ -174,7 +174,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_scroll_area->SetMaxSize(wxSize(FromDIP(700), FromDIP(600)));
 
     m_line_top = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(ThemeColor::Grey500);
 
     /*mode switch*/
      /*auto m_sizer_mode_switch = new wxBoxSizer(wxHORIZONTAL);
@@ -197,7 +197,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     });*/
 
     m_basic_panel = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_basic_panel->SetBackgroundColour(*wxWHITE);
+    m_basic_panel->SetBackgroundColour(ThemeColor::White);
     m_basicl_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     /*basic info*/
@@ -211,7 +211,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_thumbnailPanel->SetSize(wxSize(FromDIP(198), FromDIP(198)));
     m_thumbnailPanel->SetMinSize(wxSize(FromDIP(198), FromDIP(198)));
     m_thumbnailPanel->SetMaxSize(wxSize(FromDIP(198), FromDIP(198)));
-    m_thumbnailPanel->SetBackgroundColour(*wxWHITE);
+    m_thumbnailPanel->SetBackgroundColour(ThemeColor::White);
     m_sizer_thumbnail->Add(m_thumbnailPanel, 0, wxALIGN_CENTER, 0);
     m_panel_image->SetSizer(m_sizer_thumbnail);
     m_panel_image->Layout();
@@ -226,19 +226,19 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     auto sizer_rename = new wxBoxSizer(wxHORIZONTAL);
 
     m_rename_switch_panel = new wxSimplebook(m_basic_panel);
-    m_rename_switch_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_switch_panel->SetBackgroundColour(ThemeColor::White);
     m_rename_switch_panel->SetSize(wxSize(FromDIP(360), FromDIP(25)));
     m_rename_switch_panel->SetMinSize(wxSize(FromDIP(360), FromDIP(25)));
     m_rename_switch_panel->SetMaxSize(wxSize(FromDIP(360), FromDIP(25)));
 
     m_rename_normal_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_normal_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_normal_panel->SetBackgroundColour(ThemeColor::White);
     rename_sizer_v = new wxBoxSizer(wxVERTICAL);
     rename_sizer_h = new wxBoxSizer(wxHORIZONTAL);
 
     m_rename_text = new wxStaticText(m_rename_normal_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     m_rename_text->SetFont(::Label::Head_14);
-    m_rename_text->SetBackgroundColour(*wxWHITE);
+    m_rename_text->SetBackgroundColour(ThemeColor::White);
     m_rename_text->SetMaxSize(wxSize(FromDIP(340), -1));
     rename_editable = new ScalableBitmap(m_scroll_area, "rename_edit", 20);
     rename_editable_light = new ScalableBitmap(m_scroll_area, "rename_edit", 20);
@@ -255,7 +255,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     rename_sizer_v->Fit(m_rename_normal_panel);
 
     auto m_rename_edit_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_edit_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_edit_panel->SetBackgroundColour(ThemeColor::White);
     auto rename_edit_sizer_v = new wxBoxSizer(wxVERTICAL);
 
     m_rename_input = new ::TextInput(m_rename_edit_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
@@ -303,16 +303,16 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     print_time   = new ScalableBitmap(m_scroll_area, "print-time", 18);
     timeimg = new wxStaticBitmap(m_basic_panel, wxID_ANY, print_time->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_stext_time = new Label(m_basic_panel, wxEmptyString);
-    m_stext_time->SetFont(Label::Body_13);
+    m_stext_time->SetFont(Label::Mono_13);
 
     print_weight   = new ScalableBitmap(m_scroll_area, "print-weight", 18);
     weightimg = new wxStaticBitmap(m_basic_panel, wxID_ANY, print_weight->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_stext_weight = new Label(m_basic_panel, wxEmptyString);
-    m_stext_weight->SetFont(Label::Body_13);
+    m_stext_weight->SetFont(Label::Mono_13);
 
     /* save time info */
     m_saveTimeText = new Label(m_basic_panel, wxEmptyString);
-    m_saveTimeText->SetForegroundColour(wxColour("#FF6F00"));
+    m_saveTimeText->SetForegroundColour(ThemeColor::Warning);
     m_saveTimeText->SetFont(Label::Body_13);
     m_saveTimeText->Hide();
 
@@ -360,7 +360,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_text_printer_msg_tips->SetMinSize(wxSize(FromDIP(420), FromDIP(24)));
     m_text_printer_msg_tips->SetMaxSize(wxSize(FromDIP(420), FromDIP(24)));
     m_text_printer_msg_tips->SetFont(::Label::Body_13);
-    m_text_printer_msg_tips->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+    m_text_printer_msg_tips->SetForegroundColour(ThemeColor::TextMuted);
     m_text_printer_msg_tips->Hide();
     m_text_printer_msg_tips->GetAlignment();
 
@@ -390,10 +390,10 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     auto m_stext_filament_title = new Label(m_scroll_area, _L("Filament"));
     m_stext_filament_title->SetFont(::Label::Head_13);
-    m_stext_filament_title->SetForegroundColour(0x909090);
+    m_stext_filament_title->SetForegroundColour(ThemeColor::TextSecondary);
 
     auto m_split_line_filament = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_split_line_filament->SetBackgroundColour(0xeeeeee);
+    m_split_line_filament->SetBackgroundColour(ThemeColor::Grey250);
     m_split_line_filament->SetMinSize(wxSize(-1, 1));
     m_split_line_filament->SetMaxSize(wxSize(-1, 1));
 

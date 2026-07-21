@@ -982,17 +982,13 @@ bool MeshBooleanUI::draw_selectable(const ListItemInfo& item_info, bool selected
 
     // Draw the background of the selected state - use clipping margin to avoid covering the outer frame
     if (selected && bg_min.x < bg_max.x && bg_min.y < bg_max.y) {
-        if (m_is_dark_mode) {
-            // #244135 for dark mode selected background
-            draw_list->AddRectFilled(bg_min, bg_max, MeshBooleanConfig::COLOR_SELECTED_BG_DARK);
-        } else {
-            draw_list->AddRectFilled(bg_min, bg_max, MeshBooleanConfig::COLOR_SELECTED_BG);
-        }
+        // MD3 selected-row fill: secondary container (green tint, theme-aware).
+        draw_list->AddRectFilled(bg_min, bg_max, md3_u32(MD3::Role::SecondaryContainer, m_is_dark_mode));
     }
 
     // Draw the hover border - use the adjusted right boundary, end at the left side of the scrollbar
      if (ImGui::IsItemHovered()) {
-        draw_list->AddRect(item_min, border_max, MeshBooleanConfig::COLOR_HOVER_BORDER, 0.0f, 0, MeshBooleanConfig::BORDER_WIDTH_HOVER);
+        draw_list->AddRect(item_min, border_max, md3_u32(MD3::Role::Primary, m_is_dark_mode), 0.0f, 0, MeshBooleanConfig::BORDER_WIDTH_HOVER);
     }
 
     // Get appropriate icon for the item
@@ -1054,8 +1050,8 @@ bool MeshBooleanUI::draw_selectable(const ListItemInfo& item_info, bool selected
         // Gray color for non-entity items when Entity Only is enabled (MD3 disabled = 38% OnSurface)
         text_color = md3_u32(MD3::Role::OnSurface, m_is_dark_mode, 97);
     } else {
-        // Normal text color
-        text_color = m_is_dark_mode ? MeshBooleanConfig::COLOR_TEXT_DARK : MeshBooleanConfig::COLOR_TEXT;
+        // Normal text color -> MD3 on-surface (theme-aware).
+        text_color = md3_u32(MD3::Role::OnSurface, m_is_dark_mode);
     }
 
     // Use AddText with same rounding for start position to avoid sub-pixel blur
@@ -1248,7 +1244,7 @@ void MeshBooleanUI::draw_separator()
     float separator_start_x = (ImGui::GetWindowWidth() - m_computed_list_width) * 0.5f;
     ImVec2 separator_pos = ImGui::GetCursorScreenPos();
     separator_pos.x = ImGui::GetWindowPos().x + separator_start_x;
-    ImU32 separator_color = m_is_dark_mode ? MeshBooleanConfig::COLOR_SEPARATOR_DARK : MeshBooleanConfig::COLOR_SEPARATOR;
+    ImU32 separator_color = md3_u32(MD3::Role::OutlineVariant, m_is_dark_mode);
     draw_list->AddLine(ImVec2(separator_pos.x, separator_pos.y),
                        ImVec2(separator_pos.x + m_computed_list_width, separator_pos.y),
                        separator_color, 1.0f);

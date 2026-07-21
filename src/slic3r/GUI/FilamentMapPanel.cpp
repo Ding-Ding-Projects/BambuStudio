@@ -318,18 +318,18 @@ FilamentMapManualPanel::FilamentMapManualPanel(wxWindow                       *p
     m_errors->Hide();
 
     m_suggestion_panel = new wxPanel(this, wxID_ANY);
-    m_suggestion_panel->SetBackgroundColour(*wxWHITE);
+    m_suggestion_panel->SetBackgroundColour(BgNormalColor);
     auto suggestion_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto suggestion_text  = new Label(m_suggestion_panel, _L("Please adjust your grouping or click "));
     suggestion_text->SetFont(Label::Body_13);
     suggestion_text->SetForegroundColour(TextErrorColor);
-    suggestion_text->SetBackgroundColour(*wxWHITE);
+    suggestion_text->SetBackgroundColour(BgNormalColor);
     auto suggestion_btn   = new ScalableButton(m_suggestion_panel, wxID_ANY, "edit", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true, 14);
-    suggestion_btn->SetBackgroundColour(*wxWHITE);
+    suggestion_btn->SetBackgroundColour(BgNormalColor);
     auto suggestion_text2 = new Label(m_suggestion_panel, _L(" to set nozzle count"));
     suggestion_text2->SetFont(Label::Body_13);
     suggestion_text2->SetForegroundColour(TextErrorColor);
-    suggestion_text2->SetBackgroundColour(*wxWHITE);
+    suggestion_text2->SetBackgroundColour(BgNormalColor);
     suggestion_sizer->Add(suggestion_text, 0, wxALIGN_CENTER_VERTICAL);
     suggestion_sizer->Add(suggestion_btn, 0, wxALIGN_CENTER_VERTICAL);
     suggestion_sizer->Add(suggestion_text2, 0, wxALIGN_CENTER_VERTICAL);
@@ -471,7 +471,7 @@ private:
 
 GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &label, const wxString &detail, const std::string &icon) : wxPanel(parent)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(BgNormalColor);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     m_hover = false;
 
@@ -738,7 +738,7 @@ std::string FilamentMapAutoPanel::GetIconForMode(FilamentMapMode mode)
 
 FilamentMapSavingPanel::FilamentMapSavingPanel(wxWindow *parent) : FilamentMapPanel(parent)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(BgNormalColor);
 
     auto saving_sizer = new wxBoxSizer(wxVERTICAL);
     saving_sizer->AddSpacer(FromDIP(32));

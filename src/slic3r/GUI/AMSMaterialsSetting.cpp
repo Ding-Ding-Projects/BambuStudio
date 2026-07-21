@@ -120,7 +120,7 @@ AMSMaterialsSetting::AMSMaterialsSetting(wxWindow *parent, wxWindowID id)
 
 void AMSMaterialsSetting::create()
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
     m_panel_normal = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
@@ -133,30 +133,30 @@ void AMSMaterialsSetting::create()
     m_sizer_button->Add(0, 0, 1, wxEXPAND, 0);
 
     m_button_confirm = new Button(this, _L("Confirm"));
-    m_btn_bg_green   = StateColor(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    m_btn_bg_green   = StateColor(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_confirm->SetBackgroundColor(m_btn_bg_green);
-    m_button_confirm->SetBorderColor(wxColour(0, 174, 66));
-    m_button_confirm->SetTextColor(wxColour("#FFFFFE"));
+    m_button_confirm->SetBorderColor(ThemeColor::BrandGreen);
+    m_button_confirm->SetTextColor(ThemeColor::White);
     m_button_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_confirm->SetCornerRadius(FromDIP(12));
     m_button_confirm->Bind(wxEVT_BUTTON, &AMSMaterialsSetting::on_select_ok, this);
 
     m_button_reset = new Button(this, _L("Reset"));
-    m_btn_bg_gray = StateColor(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(*wxWHITE, StateColor::Focused),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    m_btn_bg_gray = StateColor(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::White, StateColor::Focused),
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     m_button_reset->SetBackgroundColor(m_btn_bg_gray);
-    m_button_reset->SetBorderColor(AMS_MATERIALS_SETTING_GREY900);
-    m_button_reset->SetTextColor(AMS_MATERIALS_SETTING_GREY900);
+    m_button_reset->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_reset->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     m_button_reset->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_reset->SetCornerRadius(FromDIP(12));
     m_button_reset->Bind(wxEVT_BUTTON, &AMSMaterialsSetting::on_select_reset, this);
 
     m_button_close = new Button(this, _L("Close"));
     m_button_close->SetBackgroundColor(m_btn_bg_gray);
-    m_button_close->SetBorderColor(AMS_MATERIALS_SETTING_GREY900);
-    m_button_close->SetTextColor(AMS_MATERIALS_SETTING_GREY900);
+    m_button_close->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_close->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     m_button_close->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_close->SetCornerRadius(FromDIP(12));
     m_button_close->Bind(wxEVT_BUTTON, &AMSMaterialsSetting::on_select_close, this);
@@ -222,7 +222,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     m_title_filament = new wxStaticText(parent, wxID_ANY, _L("Filament"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
     m_title_filament->SetFont(::Label::Body_13);
-    m_title_filament->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
+    m_title_filament->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_filament->Wrap(-1);
     m_sizer_filament->Add(m_title_filament, 0, wxALIGN_CENTER, 0);
 
@@ -234,8 +234,8 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     // make the style the same with disable m_input_k_val, FIXME
     m_readonly_filament = new TextInput(parent, wxEmptyString, "", "", wxDefaultPosition, AMS_MATERIALS_SETTING_COMBOX_WIDTH, wxTE_CENTRE | wxTE_PROCESS_ENTER);
-    m_readonly_filament->SetBorderColor(StateColor(std::make_pair(0xDBDBDB, (int)StateColor::Focused), std::make_pair(0x00AE42, (int)StateColor::Hovered),
-        std::make_pair(0xDBDBDB, (int)StateColor::Normal)));
+    m_readonly_filament->SetBorderColor(StateColor(std::make_pair(ThemeColor::Grey400, (int)StateColor::Focused), std::make_pair(ThemeColor::BrandGreen, (int)StateColor::Hovered),
+        std::make_pair(ThemeColor::Grey400, (int)StateColor::Normal)));
     m_readonly_filament->SetFont(::Label::Body_14);
     m_readonly_filament->SetLabelColor(AMS_MATERIALS_SETTING_GREY800);
     m_readonly_filament->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [](auto& e) {});
@@ -248,7 +248,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     m_title_colour = new wxStaticText(parent, wxID_ANY, _L("Colour"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
     m_title_colour->SetFont(::Label::Body_13);
-    m_title_colour->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
+    m_title_colour->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_colour->Wrap(-1);
     m_sizer_colour->Add(m_title_colour, 0, wxALIGN_CENTER, 0);
 
@@ -256,21 +256,21 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     m_clr_picker = new ColorPicker(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_clr_picker->set_show_full(true);
-    m_clr_picker->SetBackgroundColour(*wxWHITE);
+    m_clr_picker->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
 
     m_clr_picker->Bind(wxEVT_LEFT_DOWN, &AMSMaterialsSetting::on_clr_picker, this);
     m_sizer_colour->Add(m_clr_picker, 0, 0, 0);
     m_clr_name = new Label(parent, wxEmptyString);
-    m_clr_name->SetForegroundColour(*wxBLACK);
-    m_clr_name->SetBackgroundColour(*wxWHITE);
+    m_clr_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_clr_name->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_clr_name->SetFont(Label::Body_13);
     m_sizer_colour->Add(m_clr_name, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
 
     wxBoxSizer* m_sizer_temperature = new wxBoxSizer(wxHORIZONTAL);
     m_title_temperature = new wxStaticText(parent, wxID_ANY, _L("Nozzle\nTemperature"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
     m_title_temperature->SetFont(::Label::Body_13);
-    m_title_temperature->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
+    m_title_temperature->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_temperature->Wrap(-1);
     m_sizer_temperature->Add(m_title_temperature, 0, wxALIGN_CENTER, 0);
 
@@ -301,10 +301,10 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     wxBoxSizer* sizer_temp_txt = new wxBoxSizer(wxHORIZONTAL);
     auto m_title_max = new wxStaticText(parent, wxID_ANY, _L("max"), wxDefaultPosition, AMS_MATERIALS_SETTING_INPUT_SIZE);
-    m_title_max->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
+    m_title_max->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_max->SetFont(::Label::Body_13);
     auto m_title_min = new wxStaticText(parent, wxID_ANY, _L("min"), wxDefaultPosition, AMS_MATERIALS_SETTING_INPUT_SIZE);
-    m_title_min->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
+    m_title_min->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_min->SetFont(::Label::Body_13);
     sizer_temp_txt->Add(m_title_max, 1, wxALIGN_CENTER, 0);
     sizer_temp_txt->Add(FromDIP(10), 0, 0, 0);
@@ -321,7 +321,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
         (boost::format(_u8L("The input value should be greater than %1% and less than %2%")) % FILAMENT_MIN_TEMP % FILAMENT_MAX_TEMP).str());
     warning_text = new wxStaticText(parent, wxID_ANY, warning_string, wxDefaultPosition, wxDefaultSize, 0);
     warning_text->SetFont(::Label::Body_13);
-    warning_text->SetForegroundColour(wxColour(255, 111, 0));
+    warning_text->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
 
     warning_text->Wrap(AMS_MATERIALS_SETTING_BODY_WIDTH);
     warning_text->SetMinSize(wxSize(AMS_MATERIALS_SETTING_BODY_WIDTH, -1));
@@ -335,14 +335,14 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     auto m_title_SN = new wxStaticText(m_panel_SN, wxID_ANY, _L("SN"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
     m_title_SN->SetFont(::Label::Body_13);
-    m_title_SN->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
+    m_title_SN->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_SN->Wrap(-1);
     m_sizer_SN_inside->Add(m_title_SN, 0, wxALIGN_CENTER, 0);
 
     m_sizer_SN_inside->Add(0, 0, 0, wxEXPAND, 0);
 
     m_sn_number = new wxStaticText(m_panel_SN, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize);
-    m_sn_number->SetForegroundColour(*wxBLACK);
+    m_sn_number->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_sizer_SN_inside->Add(m_sn_number, 0, wxALIGN_CENTER, 0);
     m_sizer_SN->Add(m_sizer_SN_inside);
 
@@ -352,8 +352,8 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     wxBoxSizer* m_tip_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_tip_readonly = new Label(parent, _L(""));
-    m_tip_readonly->SetForegroundColour(*wxBLACK);
-    m_tip_readonly->SetBackgroundColour(*wxWHITE);
+    m_tip_readonly->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_tip_readonly->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_tip_readonly->SetMinSize(wxSize(FromDIP(380), -1));
     m_tip_readonly->SetMaxSize(wxSize(FromDIP(380), -1));
     m_tip_readonly->Hide();
@@ -379,7 +379,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     auto cali_title_sizer = new wxBoxSizer(wxHORIZONTAL);
     // title
     m_ratio_text   = new wxStaticText(parent, wxID_ANY, _L("Factors of Flow Dynamics Calibration"));
-    m_ratio_text->SetForegroundColour(wxColour(50, 58, 61));
+    m_ratio_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_ratio_text->SetFont(Label::Head_14);
 
     std::string language = wxGetApp().app_config->get("language");
@@ -388,9 +388,9 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
         region = "zh";
     wxString link_url = wxString::Format("https://wiki.bambulab.com/%s/software/bambu-studio/calibration_pa", region);
     m_wiki_ctrl = new wxHyperlinkCtrl(parent, wxID_ANY, "Wiki", link_url);
-    m_wiki_ctrl->SetNormalColour(*wxBLUE);
-    m_wiki_ctrl->SetHoverColour(wxColour(0, 0, 200));
-    m_wiki_ctrl->SetVisitedColour(*wxBLUE);
+    m_wiki_ctrl->SetNormalColour(StateColor::darkModeColorFor(ThemeColor::Link));
+    m_wiki_ctrl->SetHoverColour(StateColor::darkModeColorFor(ThemeColor::Link));
+    m_wiki_ctrl->SetVisitedColour(StateColor::darkModeColorFor(ThemeColor::Link));
     m_wiki_ctrl->SetFont(Label::Head_14);
     cali_title_sizer->Add(m_ratio_text, 0, wxALIGN_CENTER_VERTICAL);
     cali_title_sizer->Add(m_wiki_ctrl, 0, wxALIGN_CENTER_VERTICAL);
@@ -401,7 +401,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     m_title_nozzle_type->SetMinSize(wxSize(FromDIP(80), -1));
     m_title_nozzle_type->SetMaxSize(wxSize(FromDIP(80), -1));
     m_title_nozzle_type->SetFont(::Label::Body_13);
-    m_title_nozzle_type->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
+    m_title_nozzle_type->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_nozzle_type->Wrap(-1);
     m_sizer_nozzle_type->Add(m_title_nozzle_type, 0, wxALIGN_CENTER, 0);
     m_sizer_nozzle_type->Add(0, 0, 0, wxEXPAND, 0);
@@ -417,7 +417,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     m_title_pa_profile->SetMinSize(wxSize(FromDIP(80), -1));
     m_title_pa_profile->SetMaxSize(wxSize(FromDIP(80), -1));
     m_title_pa_profile->SetFont(::Label::Body_13);
-    m_title_pa_profile->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
+    m_title_pa_profile->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_pa_profile->Wrap(-1);
     m_sizer_cali_resutl->Add(m_title_pa_profile, 0, wxALIGN_CENTER, 0);
     m_sizer_cali_resutl->Add(0, 0, 0, wxEXPAND, 0);
@@ -435,7 +435,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     m_k_param->SetMinSize(wxSize(FromDIP(80), -1));
     m_k_param->SetMaxSize(wxSize(FromDIP(80), -1));
     m_k_param->SetFont(::Label::Body_13);
-    m_k_param->SetForegroundColour(wxColour(50, 58, 61));
+    m_k_param->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_k_param->Wrap(-1);
     kn_val_sizer->Add(m_k_param, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
 
@@ -449,7 +449,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     wxBoxSizer* n_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_n_param = new wxStaticText(parent, wxID_ANY, _L("Factor N"), wxDefaultPosition, wxDefaultSize, 0);
     m_n_param->SetFont(::Label::Body_13);
-    m_n_param->SetForegroundColour(wxColour(50, 58, 61));
+    m_n_param->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_n_param->Wrap(-1);
     kn_val_sizer->Add(m_n_param, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
     m_input_n_val = new TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_CENTRE | wxTE_PROCESS_ENTER);
@@ -474,7 +474,7 @@ void AMSMaterialsSetting::paintEvent(wxPaintEvent &evt)
 {
     auto      size = GetSize();
     wxPaintDC dc(this);
-    dc.SetPen(wxPen(StateColor::darkModeColorFor(wxColour("#000000")), 1, wxPENSTYLE_SOLID));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OnSurface), 1, wxPENSTYLE_SOLID));
     dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
     dc.DrawRectangle(0, 0, size.x, size.y);
 }
@@ -2259,8 +2259,8 @@ void AMSMaterialsSetting::on_select_filament(wxCommandEvent &evt)
         m_input_k_val->Enable(false);
         m_input_n_val->Enable(false);
         m_button_confirm->Disable();
-        m_button_confirm->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-        m_button_confirm->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+        m_button_confirm->SetBackgroundColor(StateColor::semantic(MD3::Role::Outline));
+        m_button_confirm->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
         m_comboBox_cali_result->Clear();
         m_comboBox_cali_result->SetValue(wxEmptyString);
         m_comboBox_nozzle_type->Clear();
@@ -2272,8 +2272,8 @@ void AMSMaterialsSetting::on_select_filament(wxCommandEvent &evt)
     }
     else {
         m_button_confirm->SetBackgroundColor(m_btn_bg_green);
-        m_button_confirm->SetBorderColor(wxColour(0, 174, 66));
-        m_button_confirm->SetTextColor(wxColour("#FFFFFE"));
+        m_button_confirm->SetBorderColor(ThemeColor::BrandGreen);
+        m_button_confirm->SetTextColor(ThemeColor::White);
         m_button_confirm->Enable(true);
     }
 
@@ -2642,7 +2642,7 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
     m_def_colors.push_back(wxColour("#161616"));
 
 
-    SetBackgroundColour(wxColour(*wxWHITE));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer* m_sizer_main = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* m_sizer_box = new wxBoxSizer(wxVERTICAL);
@@ -2651,18 +2651,18 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
     wxBoxSizer* m_sizer_ams = new wxBoxSizer(wxHORIZONTAL);
     auto m_title_ams = new wxStaticText(m_def_color_box, wxID_ANY, _L("AMS"), wxDefaultPosition, wxDefaultSize, 0);
     m_title_ams->SetFont(::Label::Body_14);
-    m_title_ams->SetBackgroundColour(wxColour(238, 238, 238));
+    m_title_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_sizer_ams->Add(m_title_ams, 0, wxALL, 5);
     auto ams_line = new wxPanel(m_def_color_box, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    ams_line->SetBackgroundColour(wxColour("#CECECE"));
+    ams_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     ams_line->SetMinSize(wxSize(-1, 1));
     ams_line->SetMaxSize(wxSize(-1, 1));
     m_sizer_ams->Add(ams_line, 1, wxALIGN_CENTER, 0);
 
 
     m_def_color_box->SetCornerRadius(FromDIP(10));
-    m_def_color_box->SetBackgroundColor(StateColor(std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal)));
-    m_def_color_box->SetBorderColor(StateColor(std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal)));
+    m_def_color_box->SetBackgroundColor(StateColor(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal)));
+    m_def_color_box->SetBorderColor(StateColor(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal)));
 
     //ams
     m_ams_fg_sizer = new wxFlexGridSizer(0, 8, 0, 0);
@@ -2680,7 +2680,7 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
         cp->set_color(col);
         cp->set_colors({ col });
         cp->set_selected(false);
-        cp->SetBackgroundColour(StateColor::darkModeColorFor(wxColour(238,238,238)));
+        cp->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
         m_color_pickers.push_back(cp);
         m_default_color_pickers.push_back(cp);
         m_other_fg_sizer->Add(cp, 0, wxALL, FromDIP(3));
@@ -2697,21 +2697,21 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
     wxBoxSizer* m_sizer_other = new wxBoxSizer(wxHORIZONTAL);
     auto m_title_other = new wxStaticText(m_def_color_box, wxID_ANY, _L("Other Color"), wxDefaultPosition, wxDefaultSize, 0);
     m_title_other->SetFont(::Label::Body_14);
-    m_title_other->SetBackgroundColour(wxColour(238, 238, 238));
+    m_title_other->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_sizer_other->Add(m_title_other, 0, wxALL, 5);
     auto other_line = new wxPanel(m_def_color_box, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
     other_line->SetMinSize(wxSize(-1, 1));
     other_line->SetMaxSize(wxSize(-1, 1));
-    other_line->SetBackgroundColour(wxColour("#CECECE"));
+    other_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer_other->Add(other_line, 1, wxALIGN_CENTER, 0);
 
     //custom color
     wxBoxSizer* m_sizer_custom = new wxBoxSizer(wxHORIZONTAL);
     auto m_title_custom = new wxStaticText(m_def_color_box, wxID_ANY, _L("Custom Color"), wxDefaultPosition, wxDefaultSize, 0);
     m_title_custom->SetFont(::Label::Body_14);
-    m_title_custom->SetBackgroundColour(wxColour(238, 238, 238));
+    m_title_custom->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     auto custom_line = new wxPanel(m_def_color_box, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    custom_line->SetBackgroundColour(wxColour("#CECECE"));
+    custom_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     custom_line->SetMinSize(wxSize(-1, 1));
     custom_line->SetMaxSize(wxSize(-1, 1));
     m_sizer_custom->Add(m_title_custom, 0, wxALL, 5);
@@ -2721,7 +2721,7 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
     m_custom_cp->SetSize(FromDIP(60), FromDIP(25));
     m_custom_cp->SetMinSize(wxSize(FromDIP(60), FromDIP(25)));
     m_custom_cp->SetMaxSize(wxSize(FromDIP(60), FromDIP(25)));
-    m_custom_cp->SetBorderColor(StateColor(std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal)));
+    m_custom_cp->SetBorderColor(StateColor(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal)));
     m_custom_cp->Bind(wxEVT_LEFT_DOWN, &ColorPickerPopup::on_custom_clr_picker, this);
     m_custom_cp->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {
         SetCursor(wxCURSOR_HAND);
@@ -2841,7 +2841,7 @@ void ColorPickerPopup::set_ams_colours(const std::vector<ColorItem>& ams)
         cp->set_colors(item.colors);
         cp->ctype = item.colors.size() > 1 ? item.ctype : 2;
         cp->set_selected(false);
-        cp->SetBackgroundColour(StateColor::darkModeColorFor(wxColour(238,238,238)));
+        cp->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
         m_color_pickers.push_back(cp);
         m_ams_color_pickers.push_back(cp);
         m_ams_fg_sizer->Add(cp, 0, wxALL, FromDIP(3));
@@ -2885,7 +2885,7 @@ void ColorPickerPopup::set_preset_colours(const std::vector<ColorItem>& preset_c
         cp->set_colors(item.colors);
         cp->ctype = item.colors.size() > 1 ? item.ctype : 2;
         cp->set_selected(false);
-        cp->SetBackgroundColour(StateColor::darkModeColorFor(wxColour(238,238,238)));
+        cp->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
         if (!item.name.empty()) {
             cp->SetToolTip(item.name);
         }
@@ -2945,7 +2945,7 @@ void ColorPickerPopup::set_def_colour(wxColour col, std::vector<wxColour> cols, 
 void ColorPickerPopup::paintEvent(wxPaintEvent& evt)
 {
     wxPaintDC dc(this);
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::Outline));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
@@ -2973,7 +2973,7 @@ AMSNewOfficialFilamentDlg::AMSNewOfficialFilamentDlg(wxWindow* parent)
 
 void AMSNewOfficialFilamentDlg::create()
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* sizer = new wxBoxSizer(wxVERTICAL);
 
     auto* label = new wxStaticText(this, wxID_ANY,
@@ -3040,12 +3040,12 @@ void AMSNewOfficialFilamentDlg::create()
     m_btn_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_btn_confirm->SetCornerRadius(FromDIP(12));
     m_btn_confirm->SetBackgroundColor(StateColor(
-        std::pair<wxColour, int>(wxColour(27, 136, 68),  StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66),   StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed,  StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen,   StateColor::Normal)
     ));
-    m_btn_confirm->SetBorderColor(wxColour(0, 174, 66));
-    m_btn_confirm->SetTextColor(wxColour("#FFFFFE"));
+    m_btn_confirm->SetBorderColor(ThemeColor::BrandGreen);
+    m_btn_confirm->SetTextColor(ThemeColor::White);
     m_btn_confirm->Bind(wxEVT_BUTTON, &AMSNewOfficialFilamentDlg::on_confirm, this);
 
     m_btn_cancel = new Button(this, _L("Cancel"));

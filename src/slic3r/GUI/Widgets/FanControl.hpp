@@ -24,9 +24,11 @@ Description:Fan
 **************************************************/
 #define SIZE_OF_FAN_OPERATE wxSize(154, 28)
 
-#define DRAW_TEXT_COLOUR wxColour("#898989")
-#define DRAW_HEAD_TEXT_COLOUR wxColour("#262e30")
-#define DRAW_OPERATE_LINE_COLOUR wxColour("#DEDEDE")
+// MD3 semantic retargets (macro names preserved for the FanControl.cpp consumers).
+// Neutral roles are scheme-independent, so no ColorScheme argument is required.
+#define DRAW_TEXT_COLOUR StateColor::semantic(MD3::Role::OnSurfaceVariant)
+#define DRAW_HEAD_TEXT_COLOUR StateColor::semantic(MD3::Role::OnSurface)
+#define DRAW_OPERATE_LINE_COLOUR StateColor::semantic(MD3::Role::OutlineVariant)
 
 enum FanControlType
 {

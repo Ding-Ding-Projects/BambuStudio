@@ -12,6 +12,7 @@
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/Utils/UndoRedo.hpp"
 #include "slic3r/GUI/OpenGLManager.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "libslic3r/Model.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/TriangleMesh.hpp"
@@ -21,6 +22,16 @@
 #include <imgui/imgui_internal.h>
 
 namespace Slic3r::GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+} // namespace
 
 
 GLGizmoPainterBase::GLGizmoPainterBase(GLCanvas3D& parent, unsigned int sprite_id)
@@ -367,30 +378,30 @@ void GLGizmoPainterBase::render_cursor_height_range(const Transform3d& trafo) co
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 1.0);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark_mode ? ImVec4(38 / 255.0, 46 / 255.0, 48 / 255.0, 0.7) : ImVec4(255 / 255.0, 255 / 255.0, 255 / 255.0, 0.7));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imvec4(m_is_dark_mode ? MD3::Role::SurfaceContainer : MD3::Role::SurfaceContainerLowest, m_is_dark_mode, 0.7f));
     ImGui::SetNextWindowFocus();
     imgui.set_next_window_pos(m_height_start_pos[0], m_height_start_pos[1], ImGuiCond_Always, 0.0f, 0.0f);
 
     imgui.begin(wxString("cursor_height_range"), ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration);
     ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
     ImGui::AlignTextToFramePadding();
-    ImGui::PushStyleColor(ImGuiCol_Text, m_is_dark_mode ? ImVec4(255 / 255.0, 255 / 255.0, 255 / 255.0, 0.7) : ImVec4(38 / 255.0, 46 / 255.0, 48 / 255.0, 0.7));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface, m_is_dark_mode, 0.7f));
     ImGui::TextUnformatted(_L("Bottom:").ToUTF8().data());
     ImGui::SameLine();
     ImGui::PushItemWidth(buf_size);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0);
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, m_is_dark_mode ? ImVec4(38 / 255.0, 46 / 255.0, 48 / 255.0, 0.7) : ImVec4(255 / 255.0, 255 / 255.0, 255 / 255.0, 0.7));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(m_is_dark_mode ? MD3::Role::SurfaceContainer : MD3::Role::SurfaceContainerLowest, m_is_dark_mode, 0.7f));
     ImGui::BBLInputDouble("##m_height_start_z_in_imgui", &m_height_start_z_in_imgui, 0.0f, 0.0f, "%.2f");
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor(1);//for ImGuiCol_FrameBg
     ImGui::PopStyleColor(1);//for Text
 
     ImGui::SameLine();
-    ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(38 / 255.0, 46 / 255.0, 48 / 255.0, 0.7) : ImVec4(255 / 255.0, 255 / 255.0, 255 / 255.0, 0.7));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_is_dark_mode ? ImVec4(50 / 255.0f, 58 / 255.0f, 61 / 255.0f, 1.00f) : ImVec4(238 / 255.0, 238 / 255.0, 238 / 255.0, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, m_is_dark_mode ? ImVec4(107 / 255.0f, 107 / 255.0f, 107 / 255.0f, 1.00f) : ImVec4(206 / 255.0f, 206 / 255.0f, 206 / 255.0f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(m_is_dark_mode ? MD3::Role::SurfaceContainer : MD3::Role::SurfaceContainerLowest, m_is_dark_mode, 0.7f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(m_is_dark_mode ? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainer, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::OutlineVariant, m_is_dark_mode));
     bool   btn_clicked = ImGui::Button(into_u8(m_is_dark_mode ? ImGui::ConfirmDarkIcon : ImGui::ConfirmIcon).c_str());
     ImGui::PopStyleColor(3);
 

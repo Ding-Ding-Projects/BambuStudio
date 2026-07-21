@@ -93,6 +93,35 @@ static wxColour device_primary_container_color() { return StateColor::semantic(M
 static wxColour device_control_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHigh); }
 static wxColour device_control_emphasis_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHighest); }
 
+// Roboto Mono at an explicit design px + numeric weight, for the numeric
+// values the design renders in mono at a size outside the Label::Mono_*
+// helper set (the 28px progress percentage). Mirrors the private px->point
+// scaling and Roboto-Mono/monospace fallback used by Label's md3MonoFont so
+// the glyphs match the Mono_* helpers.
+static wxFont device_mono_font(double design_px, int numeric_weight)
+{
+    double point_size = design_px;
+#ifndef __APPLE__
+    point_size = point_size * 4.0 / 5.0; // design px -> wx point size
+#endif
+    const int          initial = point_size < 1.0 ? 1 : static_cast<int>(point_size);
+    const wxFontWeight enum_weight = numeric_weight >= 700 ? wxFONTWEIGHT_BOLD :
+                                     numeric_weight >= 600 ? wxFONTWEIGHT_SEMIBOLD :
+                                     numeric_weight >= 500 ? wxFONTWEIGHT_MEDIUM :
+                                                             wxFONTWEIGHT_NORMAL;
+    wxString face = wxString::FromUTF8(MD3::Type::font_mono);
+    wxFont   font{initial, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, enum_weight, false, face};
+    font.SetFaceName(face);
+    font.SetFractionalPointSize(point_size);
+    font.SetNumericWeight(numeric_weight);
+    if (!font.IsOk()) {
+        font = wxFont{initial, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, enum_weight, false};
+        font.SetNumericWeight(numeric_weight);
+        font.SetFractionalPointSize(point_size);
+    }
+    return font;
+}
+
 static StateColor device_primary_button_background()
 {
     return StateColor(std::pair<wxColour, int>(device_divider_color(), StateColor::Disabled),
@@ -652,7 +681,7 @@ Description:Extruder
 ExtruderImage::ExtruderImage(wxWindow *parent, wxWindowID id, int nozzle_num, const wxPoint &pos, const wxSize &size)
 {
     wxWindow::Create(parent, id, pos, wxSize(FromDIP(45), FromDIP(112)));
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(device_card_color());
     m_nozzle_num = nozzle_num;
     SetSize(wxSize(FromDIP(45), FromDIP(112)));
     SetMinSize(wxSize(FromDIP(45), FromDIP(112)));
@@ -902,11 +931,11 @@ void ExtruderSwithingStatus::updateBy(const DevExtderSystem *ext_system)
     {
         if (state == DevExtderSwitchState::ES_SWITCHING) {
             m_switching_status_label->SetLabel(_L("Switching..."));
-            m_switching_status_label->SetForegroundColour(StateColor::darkModeColorFor("#262E30"));
+            m_switching_status_label->SetForegroundColour(device_text_color());
             m_switching_status_label->Show(true);
         } else if (state == DevExtderSwitchState::ES_SWITCHING_FAILED) {
             m_switching_status_label->SetLabel(_L("Switching failed"));
-            m_switching_status_label->SetForegroundColour(StateColor::darkModeColorFor(*wxRED));
+            m_switching_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
             m_switching_status_label->Show(true);
         } else {
             m_switching_status_label->Show(false);
@@ -983,7 +1012,7 @@ PrintingTaskPanel::PrintingTaskPanel(wxWindow *parent, PrintingTaskType type) : 
     m_type            = type;
     m_question_button = nullptr;
     create_panel(this);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(device_card_color());
     m_bitmap_background = ScalableBitmap(this, "thumbnail_grid", m_bitmap_thumbnail->GetSize().y);
 
     m_bitmap_thumbnail->Bind(wxEVT_PAINT, &PrintingTaskPanel::paint, this);
@@ -1032,22 +1061,22 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 #ifdef __WXOSX_MAC__
     m_staticText_subtask_value->SetFont(::Label::Body_13);
 #else
-    m_staticText_subtask_value->SetFont(wxFont(13, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("HarmonyOS Sans SC")));
+    m_staticText_subtask_value->SetFont(::Label::Body_13);
 #endif
-    m_staticText_subtask_value->SetForegroundColour(wxColour(44, 44, 46));
+    m_staticText_subtask_value->SetForegroundColour(device_text_color());
 
     m_bitmap_static_use_time = new wxStaticBitmap(task_name_panel, wxID_ANY, m_bitmap_use_time.bmp(), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
 
     m_staticText_consumption_of_time = new wxStaticText(task_name_panel, wxID_ANY, "0m", wxDefaultPosition, wxDefaultSize, 0);
     m_staticText_consumption_of_time->SetFont(::Label::Body_12);
-    m_staticText_consumption_of_time->SetForegroundColour(wxColour(0x68, 0x68, 0x68));
+    m_staticText_consumption_of_time->SetForegroundColour(device_secondary_text_color());
     m_staticText_consumption_of_time->Wrap(-1);
 
     m_bitmap_static_use_weight = new wxStaticBitmap(task_name_panel, wxID_ANY, m_bitmap_use_weight.bmp(), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
 
     m_staticText_consumption_of_weight = new wxStaticText(task_name_panel, wxID_ANY, "0g", wxDefaultPosition, wxDefaultSize, 0);
     m_staticText_consumption_of_weight->SetFont(::Label::Body_12);
-    m_staticText_consumption_of_weight->SetForegroundColour(wxColour(0x68, 0x68, 0x68));
+    m_staticText_consumption_of_weight->SetForegroundColour(device_secondary_text_color());
     m_staticText_consumption_of_weight->Wrap(-1);
 
     bSizer_task_name_hor->Add(m_staticText_subtask_value, 1, wxALL | wxEXPAND, 0);
@@ -1069,25 +1098,32 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 #ifdef __WXOSX_MAC__
     m_staticText_profile_value->SetFont(::Label::Body_11);
 #else
-    m_staticText_profile_value->SetFont(wxFont(11, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("HarmonyOS Sans SC")));
+    m_staticText_profile_value->SetFont(::Label::Body_11);
 #endif
 
-    m_staticText_profile_value->SetForegroundColour(0x6B6B6B);
+    m_staticText_profile_value->SetForegroundColour(device_secondary_text_color());
 
     auto progress_lr_panel = new wxPanel(parent, wxID_ANY);
-    progress_lr_panel->SetBackgroundColour(*wxWHITE);
+    progress_lr_panel->SetBackgroundColour(device_card_color());
 
     m_gauge_progress = new ProgressBar(progress_lr_panel, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize);
     m_gauge_progress->SetValue(0);
     m_gauge_progress->SetHeight(PROGRESSBAR_HEIGHT);
+    // Device teal fill over a neutral sc-highest track (setter names are
+    // inverted: SetProgressBackgroundColour paints the value fill,
+    // SetProgressForedColour paints the track). Panel background follows the
+    // card so the rounded track has no white corners in dark mode.
+    m_gauge_progress->SetProgressBackgroundColour(device_primary_color());
+    m_gauge_progress->SetProgressForedColour(device_control_emphasis_color());
+    m_gauge_progress->SetBackgroundColour(device_card_color());
 
     wxBoxSizer *bSizer_task_btn = new wxBoxSizer(wxHORIZONTAL);
 
     bSizer_task_btn->Add(FromDIP(10), 0, 0);
 
-    StateColor white_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled), std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Pressed),
-                        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Hovered), std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled),
-                        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+    StateColor white_bg(std::pair<wxColour, int>(device_card_color(), StateColor::Disabled), std::pair<wxColour, int>(device_card_color(), StateColor::Pressed),
+                        std::pair<wxColour, int>(device_card_color(), StateColor::Hovered), std::pair<wxColour, int>(device_card_color(), StateColor::Enabled),
+                        std::pair<wxColour, int>(device_card_color(), StateColor::Normal));
 
     std::vector<std::string> list{ "ams_rfid_1", "ams_rfid_2", "ams_rfid_3", "ams_rfid_4" };
     m_pausing_icon = new AnimaIcon(progress_lr_panel, wxID_ANY, list, "refresh_printer", 100);
@@ -1104,7 +1140,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_button_partskip->Hide();
     m_button_partskip->SetBackgroundColor(white_bg);
     m_button_partskip->SetIcon("print_control_partskip_disable");
-    m_button_partskip->SetBorderColor(*wxWHITE);
+    m_button_partskip->SetBorderColor(device_card_color());
     m_button_partskip->SetFont(Label::Body_12);
     m_button_partskip->SetCornerRadius(0);
     m_button_partskip->SetToolTip(_L("Parts Skip"));
@@ -1140,8 +1176,8 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     wxPanel    *penel_text         = new wxPanel(progress_lr_panel);
     wxPanel    *penel_finish_time  = new wxPanel(progress_lr_panel);
 
-    penel_text->SetBackgroundColour(*wxWHITE);
-    penel_finish_time->SetBackgroundColour(*wxWHITE);
+    penel_text->SetBackgroundColour(device_card_color());
+    penel_finish_time->SetBackgroundColour(device_card_color());
 
     wxBoxSizer *sizer_percent = new wxBoxSizer(wxVERTICAL);
     sizer_percent->Add(0, 0, 1, wxEXPAND, 0);
@@ -1150,12 +1186,13 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     sizer_percent_icon->Add(0, 0, 1, wxEXPAND, 0);
 
     m_staticText_progress_percent = new wxStaticText(penel_text, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0);
-    m_staticText_progress_percent->SetFont(::Label::Head_18);
-    m_staticText_progress_percent->SetMaxSize(wxSize(-1, FromDIP(20)));
+    // Signature Device percentage: Roboto Mono 28px / 600, teal.
+    m_staticText_progress_percent->SetFont(device_mono_font(28.0, 600));
+    m_staticText_progress_percent->SetMaxSize(wxSize(-1, FromDIP(34)));
     m_staticText_progress_percent->SetForegroundColour(device_primary_color());
 
     m_staticText_progress_percent_icon = new wxStaticText(penel_text, wxID_ANY, "%", wxDefaultPosition, wxDefaultSize, 0);
-    m_staticText_progress_percent_icon->SetFont(::Label::Body_11);
+    m_staticText_progress_percent_icon->SetFont(::Label::Mono_11);
     m_staticText_progress_percent_icon->SetMaxSize(wxSize(-1, FromDIP(13)));
     m_staticText_progress_percent_icon->SetForegroundColour(device_primary_color());
 
@@ -1169,12 +1206,12 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 
     m_staticText_progress_left = new wxStaticText(penel_text, wxID_ANY, L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
     m_staticText_progress_left->Wrap(-1);
-    m_staticText_progress_left->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("HarmonyOS Sans SC")));
-    m_staticText_progress_left->SetForegroundColour(wxColour(107, 107, 107));
+    m_staticText_progress_left->SetFont(::Label::Body_12);
+    m_staticText_progress_left->SetForegroundColour(device_secondary_text_color());
 
     m_staticText_layers = new wxStaticText(penel_text, wxID_ANY, _L("Layer: N/A"));
-    m_staticText_layers->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("HarmonyOS Sans SC")));
-    m_staticText_layers->SetForegroundColour(wxColour(107, 107, 107));
+    m_staticText_layers->SetFont(::Label::Body_12);
+    m_staticText_layers->SetForegroundColour(device_secondary_text_color());
     m_staticText_layers->Hide();
 
     bSizer_text->Add(sizer_percent, 0, wxEXPAND, 0);
@@ -1191,7 +1228,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_printing_stage_underline = new wxPanel(m_printing_stage_panel);
     m_printing_stage_underline->SetMaxSize(wxSize(-1, FromDIP(1)));
     m_printing_stage_underline->SetMinSize(wxSize(-1, FromDIP(1)));
-    m_printing_stage_underline->SetBackgroundColour(wxColour(146, 146, 146));
+    m_printing_stage_underline->SetBackgroundColour(device_secondary_text_color());
     m_printing_stage_underline->Hide();
 
     m_printing_stage_value = new wxStaticText(m_printing_stage_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT | wxST_ELLIPSIZE_END);
@@ -1200,7 +1237,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 #ifdef __WXOSX_MAC__
     m_printing_stage_value->SetFont(::Label::Body_11);
 #else
-    m_printing_stage_value->SetFont(wxFont(11, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("HarmonyOS Sans SC")));
+    m_printing_stage_value->SetFont(::Label::Body_11);
 #endif
     m_printing_stage_value->SetForegroundColour(device_secondary_text_color());
 
@@ -1240,7 +1277,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_question_button = new ScalableButton(m_printing_stage_panel, wxID_ANY, "thermal_question", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER,
                                            true);
     m_question_button->SetToolTip(_L("Click to view thermal preconditioning explanation"));
-    m_question_button->SetBackgroundColour(wxColour(255, 255, 255));
+    m_question_button->SetBackgroundColour(device_card_color());
     m_question_button->Hide(); // Hide by default
     m_question_button->Bind(wxEVT_LEFT_UP, &PrintingTaskPanel::on_stage_clicked, this);
     m_question_button->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent &event) {
@@ -1274,7 +1311,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_staticText_finish_time->SetLabel(finish_time_str);
     m_staticText_finish_time->Wrap(-1);
     m_staticText_finish_time->SetFont(Label::Body_14);
-    m_staticText_finish_time->SetForegroundColour(wxColour(107, 107, 107));
+    m_staticText_finish_time->SetForegroundColour(device_secondary_text_color());
     m_staticText_finish_time->SetToolTip(_L("The estimated printing time for \nmulti-color models may be inaccurate."));
     m_staticText_finish_day = new RectTextPanel(penel_finish_time);
     m_staticText_finish_day->SetMinSize(wxSize(20, 20));
@@ -1328,25 +1365,25 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_printing_sizer->Add(bSizer_subtask_info, 1, wxALL | wxEXPAND, 0);
 
     m_staticline = new wxPanel(parent, wxID_ANY);
-    m_staticline->SetBackgroundColour(wxColour(238, 238, 238));
+    m_staticline->SetBackgroundColour(device_divider_color());
     m_staticline->Layout();
     m_staticline->Hide();
 
     m_panel_error_txt = new wxPanel(parent, wxID_ANY);
-    m_panel_error_txt->SetBackgroundColour(*wxWHITE);
+    m_panel_error_txt->SetBackgroundColour(device_card_color());
 
     wxBoxSizer *static_text_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_error_text = new Label(m_panel_error_txt, "", LB_AUTO_WRAP);
-    m_error_text->SetForegroundColour(wxColour(255, 0, 0));
+    m_error_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     static_text_sizer->Add(m_error_text, 1, wxEXPAND | wxLEFT, FromDIP(17));
 
     m_button_clean = new Button(m_panel_error_txt, _L("Clear"));
-    StateColor clean_bg(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Disabled), std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered), std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Enabled),
-                        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
-    StateColor clean_bd(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-    StateColor clean_text(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor clean_bg(std::pair<wxColour, int>(device_card_color(), StateColor::Disabled), std::pair<wxColour, int>(device_control_emphasis_color(), StateColor::Pressed),
+                        std::pair<wxColour, int>(device_control_color(), StateColor::Hovered), std::pair<wxColour, int>(device_card_color(), StateColor::Enabled),
+                        std::pair<wxColour, int>(device_card_color(), StateColor::Normal));
+    StateColor clean_bd(std::pair<wxColour, int>(device_disabled_text_color(), StateColor::Disabled), std::pair<wxColour, int>(device_text_color(), StateColor::Enabled));
+    StateColor clean_text(std::pair<wxColour, int>(device_disabled_text_color(), StateColor::Disabled), std::pair<wxColour, int>(device_text_color(), StateColor::Enabled));
 
     m_button_clean->SetBackgroundColor(clean_bg);
     m_button_clean->SetBorderColor(clean_bd);
@@ -1369,19 +1406,19 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     sizer->Add(0, FromDIP(12), 0);
 
     m_score_staticline = new wxPanel(parent, wxID_ANY);
-    m_score_staticline->SetBackgroundColour(wxColour(238, 238, 238));
+    m_score_staticline->SetBackgroundColour(device_divider_color());
     m_score_staticline->Layout();
     m_score_staticline->Hide();
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
     sizer->Add(m_score_staticline, 0, wxEXPAND | wxALL, FromDIP(10));
     m_request_failed_panel = new wxPanel(parent, wxID_ANY);
-    m_request_failed_panel->SetBackgroundColour(*wxWHITE);
+    m_request_failed_panel->SetBackgroundColour(device_card_color());
     wxBoxSizer *static_request_failed_panel_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_request_failed_info                         = new wxStaticText(m_request_failed_panel, wxID_ANY,
                                                                      _L("You have completed printing the mall model, \nbut the synchronization of rating information has failed."), wxDefaultPosition,
                                                                      wxDefaultSize, 0);
     m_request_failed_info->Wrap(-1);
-    m_request_failed_info->SetForegroundColour(*wxRED);
+    m_request_failed_info->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_request_failed_info->SetFont(::Label::Body_10);
     static_request_failed_panel_sizer->Add(m_request_failed_info, 0, wxEXPAND | wxALL, FromDIP(10));
     StateColor btn_bg_green = device_primary_button_background();
@@ -1400,7 +1437,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     sizer->Add(m_request_failed_panel, 0, wxEXPAND | wxALL, FromDIP(10));
 
     m_score_subtask_info = new wxPanel(parent, wxID_ANY);
-    m_score_subtask_info->SetBackgroundColour(*wxWHITE);
+    m_score_subtask_info->SetBackgroundColour(device_card_color());
 
     wxBoxSizer   *static_score_sizer = new wxBoxSizer(wxVERTICAL);
     wxStaticText *static_score_text  = new wxStaticText(m_score_subtask_info, wxID_ANY, _L("How do you like this printing file?"), wxDefaultPosition, wxDefaultSize, 0);
@@ -1537,6 +1574,12 @@ void PrintingTaskPanel::msw_rescale()
     // m_staticText_printing->SetMinSize(wxSize(PAGE_TITLE_TEXT_WIDTH, PAGE_TITLE_HEIGHT));
     m_gauge_progress->SetHeight(PROGRESSBAR_HEIGHT);
     m_gauge_progress->Rescale();
+    // Re-resolve the teal fill / neutral track / card background so the gauge
+    // follows a live light<->dark theme flip (on_sys_color_changed reaches here
+    // via m_project_task_panel->msw_rescale()).
+    m_gauge_progress->SetProgressBackgroundColour(device_primary_color());
+    m_gauge_progress->SetProgressForedColour(device_control_emphasis_color());
+    m_gauge_progress->SetBackgroundColour(device_card_color());
     m_staticText_finish_day->Rescale();
     m_button_pause_resume->msw_rescale();
     m_button_abort->msw_rescale();
@@ -2283,8 +2326,8 @@ wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
     box->SetBackgroundColour(device_card_color());
     box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    auto *title = new Label(box, _L("Temperature"));
-    title->SetFont(Label::Head_12);
+    auto *title = new Label(box, _L("Temperature").Upper());
+    title->SetFont(Label::Head_11);
     title->SetForegroundColour(device_secondary_text_color());
 
     wxBoxSizer *content_sizer = new wxBoxSizer(wxVERTICAL);
@@ -2304,8 +2347,8 @@ StaticBox *StatusBasePanel::create_print_options_group(wxWindow *parent)
     m_print_options_box->SetBackgroundColour(device_card_color());
     m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    auto *title = new Label(m_print_options_box, _L("Print Options"));
-    title->SetFont(Label::Head_12);
+    auto *title = new Label(m_print_options_box, _L("Print Options").Upper());
+    title->SetFont(Label::Head_11);
     title->SetForegroundColour(device_secondary_text_color());
 
     auto *sizer = new wxBoxSizer(wxVERTICAL);
@@ -2324,8 +2367,8 @@ StaticBox *StatusBasePanel::create_move_group(wxWindow *parent)
     m_move_control_box->SetBackgroundColour(device_card_color());
     m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    auto *title = new Label(m_move_control_box, _L("Move"));
-    title->SetFont(Label::Head_12);
+    auto *title = new Label(m_move_control_box, _L("Move").Upper());
+    title->SetFont(Label::Head_11);
     title->SetForegroundColour(device_secondary_text_color());
 
     auto *axis_sizer = create_axis_control(m_move_control_box);
@@ -2718,8 +2761,8 @@ StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
     m_ams_control->SetDoubleBuffered(true);
 
     auto sizer_box = new wxBoxSizer(wxVERTICAL);
-    auto *title = new Label(m_ams_control_box, _L("AMS"));
-    title->SetFont(Label::Head_12);
+    auto *title = new Label(m_ams_control_box, _L("AMS").Upper());
+    title->SetFont(Label::Head_11);
     title->SetForegroundColour(device_secondary_text_color());
     sizer_box->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     sizer_box->Add(m_ams_control, 0, wxEXPAND | wxALL, FromDIP(3));
@@ -2783,11 +2826,11 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     steps_sizer->Add(m_filament_load_img, 0, wxALIGN_TOP, FromDIP(30));
     steps_sizer->AddStretchSpacer();
 
-    StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-    StateColor btn_text_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
-    StateColor btn_bg_white(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Pressed),
-                            std::pair<wxColour, int>(AMS_CONTROL_DEF_BLOCK_BK_COLOUR, StateColor::Hovered),
-                            std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Normal));
+    StateColor btn_bd_white(std::pair<wxColour, int>(device_card_color(), StateColor::Disabled), std::pair<wxColour, int>(device_text_color(), StateColor::Enabled));
+    StateColor btn_text_white(std::pair<wxColour, int>(device_disabled_text_color(), StateColor::Disabled), std::pair<wxColour, int>(device_text_color(), StateColor::Enabled));
+    StateColor btn_bg_white(std::pair<wxColour, int>(device_card_color(), StateColor::Disabled), std::pair<wxColour, int>(device_control_emphasis_color(), StateColor::Pressed),
+                            std::pair<wxColour, int>(device_control_color(), StateColor::Hovered),
+                            std::pair<wxColour, int>(device_card_color(), StateColor::Normal));
 
     wxBoxSizer* fila_change_sizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -3355,13 +3398,13 @@ void StatusPanel::on_subtask_abort(wxCommandEvent &event)
     }
     abort_dlg->update_text(_L("Are you sure you want to stop this print?"));
     abort_dlg->m_button_cancel->SetBackgroundColor(abort_dlg->btn_bg_green);
-    abort_dlg->m_button_cancel->SetBorderColor(*wxWHITE);
-    abort_dlg->m_button_cancel->SetTextColor(wxColor("#FFFFFE"));
+    abort_dlg->m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::OnPrimary));
+    abort_dlg->m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     abort_dlg->m_button_cancel->SetLabel(_L("No"));
 
     abort_dlg->m_button_ok->SetBackgroundColor(abort_dlg->btn_bg_white);
-    abort_dlg->m_button_ok->SetBorderColor(wxColor(38, 46, 48));
-    abort_dlg->m_button_ok->SetTextColor(*wxBLACK);
+    abort_dlg->m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::OnSurface));
+    abort_dlg->m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     abort_dlg->m_button_ok->SetLabel(_L("Yes"));
 
     abort_dlg->on_show();
@@ -5505,7 +5548,7 @@ void StatusPanel::on_switch_speed(wxCommandEvent &event)
 #ifdef __WXMSW__
     popUp->BindUnfocusEvent();
 #endif
-    popUp->SetBackgroundColour(StateColor::darkModeColorFor(0xeeeeee));
+    popUp->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     StepCtrl *step  = new StepCtrl(popUp, wxID_ANY);
     wxSizer  *sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->Add(step, 1, wxEXPAND, 0);
@@ -5926,6 +5969,22 @@ void StatusPanel::on_sys_color_changed()
         m_fan_panel->SetBackgroundColor(device_card_color());
         m_fan_panel->SetBackgroundColour(device_card_color());
         m_fan_panel->Refresh();
+    }
+
+    StateColor fila_change_bd(std::make_pair(device_card_color(), (int) StateColor::Disabled),
+                              std::make_pair(device_text_color(), (int) StateColor::Enabled));
+    StateColor fila_change_text(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
+                                std::make_pair(device_text_color(), (int) StateColor::Enabled));
+    StateColor fila_change_bg(std::make_pair(device_card_color(), (int) StateColor::Disabled),
+                              std::make_pair(device_control_emphasis_color(), (int) StateColor::Pressed),
+                              std::make_pair(device_control_color(), (int) StateColor::Hovered),
+                              std::make_pair(device_card_color(), (int) StateColor::Normal));
+    for (Button *button : {m_button_retry, m_fila_change_abort}) {
+        if (!button) continue;
+        button->SetBackgroundColor(fila_change_bg);
+        button->SetBorderColor(fila_change_bd);
+        button->SetTextColor(fila_change_text);
+        button->Refresh();
     }
 
     if (m_temp_extruder_line) m_temp_extruder_line->SetBackgroundColour(device_divider_color());
@@ -6379,14 +6438,14 @@ wxBoxSizer *ScoreDialog::create_broad_sizer(wxStaticBitmap *bitmap, ImageMsg &cu
     // tb: top and bottom  lr: left and right
     auto m_image_tb_broad = new wxBoxSizer(wxVERTICAL);
     auto line_top         = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::Outline));
     m_image_tb_broad->Add(line_top, 0, wxEXPAND, 0);
     cur_image_msg.image_broad.push_back(line_top);
     line_top->Hide();
 
     auto m_image_lr_broad = new wxBoxSizer(wxHORIZONTAL);
     auto line_left        = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(1, -1), wxTAB_TRAVERSAL);
-    line_left->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    line_left->SetBackgroundColour(StateColor::semantic(MD3::Role::Outline));
     m_image_lr_broad->Add(line_left, 0, wxEXPAND, 0);
     cur_image_msg.image_broad.push_back(line_left);
     line_left->Hide();
@@ -6394,14 +6453,14 @@ wxBoxSizer *ScoreDialog::create_broad_sizer(wxStaticBitmap *bitmap, ImageMsg &cu
     m_image_lr_broad->Add(bitmap, 0, wxALL, 5);
 
     auto line_right = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(1, -1), wxTAB_TRAVERSAL);
-    line_right->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    line_right->SetBackgroundColour(StateColor::semantic(MD3::Role::Outline));
     m_image_lr_broad->Add(line_right, 0, wxEXPAND, 0);
     m_image_tb_broad->Add(m_image_lr_broad, 0, wxEXPAND, 0);
     cur_image_msg.image_broad.push_back(line_right);
     line_right->Hide();
 
     auto line_bottom = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line_bottom->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    line_bottom->SetBackgroundColour(StateColor::semantic(MD3::Role::Outline));
     m_image_tb_broad->Add(line_bottom, 0, wxEXPAND, 0);
     cur_image_msg.image_broad.push_back(line_bottom);
     line_bottom->Hide();
@@ -6414,7 +6473,7 @@ wxBoxSizer *ScoreDialog::create_broad_sizer(wxStaticBitmap *bitmap, ImageMsg &cu
 
 void ScoreDialog::init()
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     SetMinSize(wxSize(FromDIP(540), FromDIP(380)));
 
     fail_image = wxImage(Slic3r::resources_dir() + "/images/oss_picture_load_failed.png", wxBITMAP_TYPE_ANY);
@@ -6497,11 +6556,11 @@ wxBoxSizer *ScoreDialog::get_comment_text_sizer()
 void ScoreDialog::create_comment_text(const wxString &comment)
 {
     m_comment_text = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(FromDIP(492), FromDIP(104)), wxTE_MULTILINE);
-    m_comment_text->SetBackgroundColour(wxColor(*wxWHITE));
+    m_comment_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     if (!comment.empty()) { m_comment_text->SetValue(comment); }
     m_comment_text->SetHint(_L("Rate this print"));
-    m_comment_text->SetBackgroundColour(*wxWHITE);
+    m_comment_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     // m_comment_text->SetForegroundColour(wxColor("#BBBBBB"));
     m_comment_text->SetMinSize(wxSize(FromDIP(492), FromDIP(104)));
 
@@ -6522,13 +6581,13 @@ wxBoxSizer *ScoreDialog::get_photo_btn_sizer()
     wxStaticBitmap *little_photo_img = new wxStaticBitmap(this, wxID_ANY, little_photo.bmp(), wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)), 0);
     m_photo_sizer->Add(little_photo_img, 0, wxEXPAND | wxLEFT, FromDIP(24));
     m_add_photo = new Label(this, _L("Add Photo"));
-    m_add_photo->SetBackgroundColour(*wxWHITE);
+    m_add_photo->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     // m_add_photo->SetForegroundColour(wxColor("#898989"));
     m_add_photo->SetSize(wxSize(-1, FromDIP(20)));
     m_photo_sizer->Add(m_add_photo, 0, wxEXPAND | wxLEFT, FromDIP(12));
 
     m_delete_photo = new Label(this, _L("Delete Photo"));
-    m_delete_photo->SetBackgroundColour(*wxWHITE);
+    m_delete_photo->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     // m_delete_photo->SetForegroundColour(wxColor("#898989"));
     m_delete_photo->SetSize(wxSize(-1, FromDIP(20)));
     m_photo_sizer->Add(m_delete_photo, 0, wxEXPAND | wxLEFT, FromDIP(12));
@@ -6740,12 +6799,12 @@ wxBoxSizer *ScoreDialog::get_button_sizer()
         }
     });
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(device_control_emphasis_color(), StateColor::Pressed), std::pair<wxColour, int>(device_control_color(), StateColor::Hovered),
+                            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal));
 
     m_button_cancel = new Button(this, _L("Cancel"));
     m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::OnSurface));
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -6790,12 +6849,12 @@ wxBoxSizer *ScoreDialog::get_main_sizer(const std::vector<std::pair<wxString, st
     wxBoxSizer *m_main_sizer = new wxBoxSizer(wxVERTICAL);
     // top line
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::Outline));
     m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(32));
 
     warning_text = new wxStaticText(this, wxID_ANY, _L("At least one successful print record of this print profile is required \nto give a positive rating(4 or 5stars)."));
-    warning_text->SetForegroundColour(*wxRED);
+    warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     warning_text->SetFont(::Label::Body_13);
 
     wxBoxSizer *score_sizer = get_score_sizer();

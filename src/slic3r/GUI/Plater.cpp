@@ -421,10 +421,10 @@ SlicedInfo::SlicedInfo(wxWindow *parent) :
 
     auto init_info_label = [this, parent, grid_sizer](wxString text_label) {
         auto *text = new wxStaticText(parent, wxID_ANY, text_label);
-        text->SetForegroundColour(*wxBLACK);
+        text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         text->SetFont(wxGetApp().small_font());
         auto info_label = new wxStaticText(parent, wxID_ANY, "N/A");
-        info_label->SetForegroundColour(*wxBLACK);
+        info_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         info_label->SetFont(wxGetApp().small_font());
         grid_sizer->Add(text, 0);
         grid_sizer->Add(info_label, 0);
@@ -469,7 +469,7 @@ class HoverLabel : public wxPanel
 public:
     HoverLabel(wxWindow *parent, const wxString &label) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
     {
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
         auto sizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -500,7 +500,7 @@ public:
 #ifdef __WXOSX__
         m_hover_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 #else
-        m_hover_btn->SetBackgroundColour(*wxWHITE);
+        m_hover_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 #endif
         sizer->Add(m_label, 0, wxALIGN_CENTER_VERTICAL);
         sizer->Add(m_brace_left, 0, wxALIGN_CENTER_VERTICAL);
@@ -1436,7 +1436,7 @@ public:
     AMSCountPopupWindow(ExtruderGroup *extruder, int index)
         : PopupWindow(extruder, wxBORDER_NONE | wxPU_CONTAINS_CONTROLS)
     {
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         auto msg  = new wxStaticText(this, wxID_ANY, _L("Set the number of AMS installed on the nozzle."));
         msg->SetFont(Label::Body_14);
         msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -1497,7 +1497,7 @@ public:
                 dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
             });
 
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         wxGetApp().UpdateDarkUIWin(this);
     }
 
@@ -1553,7 +1553,7 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
 {
     SetFont(Label::Body_10);
     SetForegroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
     ShowBadge(true);
 
@@ -1598,7 +1598,7 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
 #ifdef __WXOSX__
         btn_edit->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 #else
-        btn_edit->SetBackgroundColour(*wxWHITE);
+        btn_edit->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 #endif
         btn_edit->Hide();
         btn_edit->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this, index](auto &evt) {
@@ -1638,7 +1638,7 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     hsizer_ams->Add(ams_not_installed_msg, 0, wxALIGN_CENTER);
 
     btn_up = new ScalableButton(this, wxID_ANY, "page_up", "", {FromDIP(14), FromDIP(14)}, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 14);
-    btn_up->SetBackgroundColour(*wxWHITE);
+    btn_up->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     btn_up->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this, index](auto &evt) {
         if (page_cur > 0)
             --page_cur;
@@ -1646,7 +1646,7 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     });
     btn_up->Hide();
     btn_down = new ScalableButton(this, wxID_ANY, "page_down", "", {FromDIP(14), FromDIP(14)}, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 14);
-    btn_down->SetBackgroundColour(*wxWHITE);
+    btn_down->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     btn_down->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this, index](auto &evt) {
         if (page_cur + 1 < page_num)
             ++page_cur;
@@ -14151,7 +14151,6 @@ public:
         wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
         main_sizer->SetMinSize(wxSize(wxWindowBase::FromDIP(500, mainframe), -1));
 
-        bool is_dark_mode = wxGetApp().dark_mode();
         wxColour text_color = wxGetApp().get_label_clr_default();
 
         // Warning header — Helio brand purple mapped to the MD3 Preview accent scheme.
@@ -14212,15 +14211,15 @@ public:
         // Future support message
         Label* future_msg = new Label(this, Label::Body_13,
             _L("True multi-material support will be added in a future update."), LB_AUTO_WRAP);
-        future_msg->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#6B6B6B")));
+        future_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         future_msg->Wrap(wxWindowBase::FromDIP(470, this));
         main_sizer->Add(future_msg, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         // Option 1: Proceed with single filament
         StaticBox* option1_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
-        option1_box->SetBackgroundColor(StateColor(std::make_pair(wxColour("#F8F8F8"), (int)StateColor::Normal)));
-        option1_box->SetBorderColor(StateColor(std::make_pair(wxColour("#E8E8E8"), (int)StateColor::Normal)));
+        option1_box->SetBackgroundColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerLow), (int)StateColor::Normal)));
+        option1_box->SetBorderColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::OutlineVariant), (int)StateColor::Normal)));
         option1_box->SetBorderWidth(1);
         option1_box->SetCornerRadius(wxWindowBase::FromDIP(6, this));
 
@@ -14260,8 +14259,8 @@ public:
         option1_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
         // Critical warning for Option 1
-        wxColour critical_color = wxColour("#D32F2F");
-        wxColour critical_bg = is_dark_mode ? wxColour(60, 35, 35) : wxColour(255, 235, 235);
+        wxColour critical_color = StateColor::semantic(MD3::Role::Error);
+        wxColour critical_bg = StateColor::semantic(MD3::Role::ErrorContainer);
 
         StaticBox* critical_box = new StaticBox(option1_box, wxID_ANY, wxDefaultPosition,
                                                 wxSize(wxWindowBase::FromDIP(420, this), -1));
@@ -14277,7 +14276,7 @@ public:
         Label* critical_text = new Label(critical_box, Label::Body_12,
             _L("⚠ This is not recommended. Filament formulations vary significantly between manufacturers and materials. Helio cannot guarantee reliable results in this configuration."),
             LB_AUTO_WRAP);
-        wxColour critical_text_color = is_dark_mode ? wxColour(255, 200, 200) : wxColour(139, 0, 0);
+        wxColour critical_text_color = StateColor::semantic(MD3::Role::OnErrorContainer);
         critical_text->SetForegroundColour(critical_text_color);
         critical_text->Wrap(wxWindowBase::FromDIP(400, this));
         critical_sizer->Add(critical_text, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(10, this));
@@ -14374,9 +14373,9 @@ public:
         wxBoxSizer* option2_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option2_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_green2(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                                 std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                 std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        StateColor btn_bg_green2(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                                 std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                                 std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
         Button* goback_button = new Button(option2_box, _L("Go Back"));
         goback_button->SetBackgroundColor(btn_bg_green2);
@@ -14444,7 +14443,6 @@ public:
         wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
         main_sizer->SetMinSize(wxSize(wxWindowBase::FromDIP(500, mainframe), -1));
 
-        bool is_dark_mode = wxGetApp().dark_mode();
         wxColour text_color = wxGetApp().get_label_clr_default();
 
         // Warning header — Helio brand purple mapped to the MD3 Preview accent scheme.
@@ -14490,8 +14488,8 @@ public:
         main_sizer->Add(warning_box, 0, wxALL, wxWindowBase::FromDIP(15, this));
 
         // Option 1: Proceed with reference material
-        wxColour section_bg = is_dark_mode ? wxColour(50, 50, 55) : wxColour("#F8F8F8");
-        wxColour section_border = is_dark_mode ? wxColour(70, 70, 75) : wxColour("#E8E8E8");
+        wxColour section_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+        wxColour section_border = StateColor::semantic(MD3::Role::OutlineVariant);
 
         StaticBox* option1_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -14541,7 +14539,7 @@ public:
         option1_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
         // Note about approximation
-        wxColour note_color = is_dark_mode ? wxColour(180, 180, 180) : wxColour("#6B6B6B");
+        wxColour note_color = StateColor::semantic(MD3::Role::OnSurfaceVariant);
         Label* note_text = new Label(option1_box, Label::Body_12,
             _L("Note: Using a reference material may result in approximate or erroneous results."), LB_AUTO_WRAP);
         note_text->SetForegroundColour(note_color);
@@ -14627,9 +14625,9 @@ public:
         wxBoxSizer* option2_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option2_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                                std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                                std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
         Button* goback_button = new Button(option2_box, _L("Go Back"));
         goback_button->SetBackgroundColor(btn_bg_green);
@@ -14652,8 +14650,8 @@ public:
         main_sizer->Add(option2_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         // Option 3: Refresh & Retry - re-fetch data from server
-        wxColour option3_bg = is_dark_mode ? wxColour(40, 45, 60) : wxColour("#EBF0FA");
-        wxColour option3_border = is_dark_mode ? wxColour(80, 100, 140) : wxColour("#B0C4DE");
+        wxColour option3_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+        wxColour option3_border = StateColor::semantic(MD3::Role::OutlineVariant);
 
         StaticBox* option3_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -14681,9 +14679,9 @@ public:
         wxBoxSizer* option3_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option3_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_blue(std::pair<wxColour, int>(wxColour(40, 80, 140), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour(80, 130, 200), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour(60, 110, 180), StateColor::Normal));
+        StateColor btn_bg_blue(std::pair<wxColour, int>(ThemeColor::Link, StateColor::Pressed),
+                               std::pair<wxColour, int>(ThemeColor::Link, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::Link, StateColor::Normal));
 
         Button* refresh_button = new Button(option3_box, _L("Refresh & Retry"));
         refresh_button->SetBackgroundColor(btn_bg_blue);
@@ -15310,12 +15308,11 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
                     main_sizer->SetMinSize(wxSize(wxWindowBase::FromDIP(500, mainframe), -1));
 
-                    bool is_dark_mode = wxGetApp().dark_mode();
                     wxColour text_color = wxGetApp().get_label_clr_default();
 
                     // Warning header with purple styling (Helio brand)
-                    wxColour warning_color = wxColour("#AF7CFF");
-                    wxColour warning_bg = is_dark_mode ? wxColour(45, 35, 60) : wxColour(245, 240, 255);
+                    wxColour warning_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview);
+                    wxColour warning_bg = StateColor::semantic(MD3::Role::SecondaryContainer, MD3::ColorScheme::Preview);
 
                     m_warning_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                    wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -15346,8 +15343,8 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     main_sizer->Add(m_warning_box, 0, wxALL, wxWindowBase::FromDIP(15, this));
 
                     // Option 1: Proceed with reference printer
-                    wxColour section_bg = is_dark_mode ? wxColour(50, 50, 55) : wxColour("#F8F8F8");
-                    wxColour section_border = is_dark_mode ? wxColour(70, 70, 75) : wxColour("#E8E8E8");
+                    wxColour section_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+                    wxColour section_border = StateColor::semantic(MD3::Role::OutlineVariant);
 
                     StaticBox* option1_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                            wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -15385,7 +15382,7 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     option1_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
                     // Note about approximation
-                    wxColour note_color = is_dark_mode ? wxColour(180, 180, 180) : wxColour("#6B6B6B");
+                    wxColour note_color = StateColor::semantic(MD3::Role::OnSurfaceVariant);
                     Label* note_text = new Label(option1_box, Label::Body_12,
                         _L("Note: Using a reference printer may result in approximate or erroneous results."), LB_AUTO_WRAP);
                     note_text->SetForegroundColour(note_color);
@@ -15397,9 +15394,9 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     wxBoxSizer* option1_button_sizer = new wxBoxSizer(wxHORIZONTAL);
                     option1_button_sizer->AddStretchSpacer();
 
-                    StateColor btn_bg_purple(std::pair<wxColour, int>(wxColour(120, 80, 180), StateColor::Pressed),
-                                             std::pair<wxColour, int>(wxColour(190, 140, 255), StateColor::Hovered),
-                                             std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Normal));
+                    StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Pressed),
+                                             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Hovered),
+                                             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
                     Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
                     proceed_button->SetBackgroundColor(btn_bg_purple);
@@ -15419,9 +15416,9 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     main_sizer->Add(option1_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
                     // Option 2: Go back (recommended)
-                    wxColour option2_bg = is_dark_mode ? wxColour(30, 60, 40) : wxColour("#E8F5E9");
-                    wxColour option2_border = is_dark_mode ? wxColour(76, 175, 80) : wxColour("#4CAF50");
-                    wxColour recommended_color = is_dark_mode ? wxColour(129, 199, 132) : wxColour("#2E7D32");
+                    wxColour option2_bg = StateColor::semantic(MD3::Role::SecondaryContainer);
+                    wxColour option2_border = StateColor::semantic(MD3::Role::Primary);
+                    wxColour recommended_color = StateColor::semantic(MD3::Role::Primary);
 
                     StaticBox* option2_box = new StaticBox(this, wxID_ANY, wxDefaultPosition,
                                                            wxSize(wxWindowBase::FromDIP(470, this), -1));
@@ -15464,9 +15461,9 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     wxBoxSizer* option2_button_sizer = new wxBoxSizer(wxHORIZONTAL);
                     option2_button_sizer->AddStretchSpacer();
 
-                    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                                           std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                           std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+                    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                                           std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                                           std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
                     Button* goback_button = new Button(option2_box, _L("Go Back"));
                     goback_button->SetBackgroundColor(btn_bg_green);
@@ -16441,7 +16438,7 @@ void Plater::priv::apply_color_mode()
     orca_color            = is_dark ? StateColor::darkModeColorFor(orca_color) : StateColor::lightModeColorFor(orca_color);
     wxColour sash_color   = StateColor::semantic(MD3::Role::OutlineVariant);
     m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_COLOUR, sash_color);
-    m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR, *wxWHITE);
+    m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR, StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_SASH_COLOUR, sash_color);
     m_aui_mgr.GetArtProvider()->SetColour(wxAUI_DOCKART_BORDER_COLOUR, StateColor::semantic(MD3::Role::Outline));
 }
@@ -21098,7 +21095,7 @@ WX_DECLARE_LIST(RadioSelector, RadioSelectorList);
 class ProjectDropDialog : public DPIDialog
 {
 private:
-    wxColour          m_def_color = wxColour(255, 255, 255);
+    wxColour          m_def_color = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     RadioSelectorList m_radio_group;
     int               m_action{1};
     bool              m_show_again;
@@ -21149,7 +21146,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
     m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_top_line->SetBackgroundColour(wxColour(166, 169, 170));
+    m_top_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_main->Add(m_top_line, 0, wxEXPAND, 0);
 
@@ -21161,8 +21158,8 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_fname_title = new wxStaticText(this, wxID_ANY, _L("Please select an action"), wxDefaultPosition, wxDefaultSize, 0);
     m_fname_title->Wrap(-1);
     m_fname_title->SetFont(::Label::Body_13);
-    m_fname_title->SetForegroundColour(wxColour(107, 107, 107));
-    m_fname_title->SetBackgroundColour(wxColour(255, 255, 255));
+    m_fname_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_fname_title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_sizer_fline->Add(m_fname_title, 0, wxALL, 0);
     m_sizer_fline->Add(0, 0, 0, wxEXPAND | wxLEFT, 5);
@@ -21170,7 +21167,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_fname_f = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
     m_fname_f->SetFont(::Label::Head_13);
     m_fname_f->Wrap(-1);
-    m_fname_f->SetForegroundColour(wxColour(38, 46, 48));
+    m_fname_f->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_sizer_fline->Add(m_fname_f, 1, wxALL, 0);
 
@@ -21179,7 +21176,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_fname_s = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
     m_fname_s->SetFont(::Label::Head_13);
     m_fname_s->Wrap(-1);
-    m_fname_s->SetForegroundColour(wxColour(38, 46, 48));
+    m_fname_s->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_sizer_name->Add(m_fname_s, 1, wxALL, 0);
 
@@ -21188,8 +21185,8 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, 5);
 
     m_panel_select = new StaticBox(this, wxID_ANY, wxDefaultPosition, PROJECT_DROP_DIALOG_SELECT_PLANE_SIZE);
-    StateColor box_colour(std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Normal));
-    StateColor box_border_colour(std::pair<wxColour, int>(wxColour(*wxWHITE), StateColor::Normal));
+    StateColor box_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLow), StateColor::Normal));
+    StateColor box_border_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
 
     m_panel_select->SetBackgroundColor(box_colour);
     m_panel_select->SetBorderColor(box_border_colour);
@@ -21231,12 +21228,12 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     wxBoxSizer *m_sizer_right  = new wxBoxSizer(wxHORIZONTAL);
 
     m_confirm = new Button(this, _L("OK"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_confirm->SetBackgroundColor(btn_bg_green);
-    m_confirm->SetBorderColor(wxColour(0, 174, 66));
-    m_confirm->SetTextColor(wxColour("#FFFFFE"));
+    m_confirm->SetBorderColor(ThemeColor::BrandGreen);
+    m_confirm->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_confirm->SetSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_confirm->SetMinSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_confirm->SetCornerRadius(FromDIP(12));
@@ -21244,7 +21241,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_sizer_right->Add(m_confirm, 0, wxALL, 5);
 
     m_cancel = new Button(this, _L("Cancel"));
-    m_cancel->SetTextColor(wxColour(107, 107, 107));
+    m_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_cancel->SetSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_cancel->SetMinSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_cancel->SetCornerRadius(FromDIP(12));
@@ -21291,13 +21288,13 @@ wxBoxSizer *ProjectDropDialog ::create_item_radiobox(wxString title, wxWindow *p
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
     auto radiobox =  new RadioBox(parent);
 
-    radiobox->SetBackgroundColour(wxColour(248,248,248));
+    radiobox->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     sizer->Add(radiobox, 0, wxALL, 5);
     sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, 5);
     auto text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
     text->Wrap(-1);
-    text->SetForegroundColour(wxColour(107, 107, 107));
-    text->SetBackgroundColour(wxColour(248,248,248));
+    text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     sizer->Add(text, 0, wxALL, 5);
 
     radiobox->Bind(wxEVT_LEFT_DOWN, &ProjectDropDialog::on_select_radio, this);
@@ -21325,7 +21322,7 @@ wxBoxSizer *ProjectDropDialog::create_item_checkbox(wxString title, wxWindow *pa
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
     auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(-1, -1), 0);
-    checkbox_title->SetForegroundColour(wxColour(144,144,144));
+    checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(-1);
     m_sizer_checkbox->Add(checkbox_title, 0, wxALIGN_CENTER | wxALL, 3);
