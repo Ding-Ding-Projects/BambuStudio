@@ -78,6 +78,30 @@ wxFont md3StyledFont(const MD3::TypeStyle &style, const std::string &lang_code)
     return font;
 }
 
+// Mono variant of md3StyledFont — Roboto Mono with a generic monospace
+// fallback, for the numeric/technical values the design renders in mono.
+wxFont md3MonoFont(const MD3::TypeStyle &style)
+{
+    double point_size = style.size;
+#ifndef __APPLE__
+    point_size = point_size * 4.0 / 5.0; // design px -> wx point size
+#endif
+    const int          initial     = point_size < 1.0 ? 1 : static_cast<int>(point_size);
+    const wxFontWeight enum_weight = md3WeightEnum(style.weight);
+
+    wxString face = wxString::FromUTF8(MD3::Type::font_mono);
+    wxFont   font{initial, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, enum_weight, false, face};
+    font.SetFaceName(face);
+    font.SetFractionalPointSize(point_size);
+    font.SetNumericWeight(style.weight);
+    if (!font.IsOk()) {
+        font = wxFont{initial, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, enum_weight, false};
+        font.SetNumericWeight(style.weight);
+        font.SetFractionalPointSize(point_size);
+    }
+    return font;
+}
+
 } // namespace
 
 wxFont Label::sysFont(int size, bool bold, std::string lang_code)
@@ -128,6 +152,10 @@ wxFont Label::Body_11;
 wxFont Label::Body_10;
 wxFont Label::Body_9;
 wxFont Label::Body_8;
+wxFont Label::Mono_14;
+wxFont Label::Mono_13;
+wxFont Label::Mono_12;
+wxFont Label::Mono_11;
 
 void Label::initSysFont(std::string lang_code, bool load_font_resource)
 {
@@ -142,6 +170,17 @@ void Label::initSysFont(std::string lang_code, bool load_font_resource)
         font_path = wxString::FromUTF8(resource_path+"/fonts/Roboto-Bold.ttf");
         result = wxFont::AddPrivateFont(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of Roboto-Bold returns %1%")%result;
+        // Roboto Mono renders every numeric/technical value in the MD3 design
+        // system (temperatures, times, dimensions, commit hashes).
+        font_path = wxString::FromUTF8(resource_path+"/fonts/RobotoMono-Regular.ttf");
+        result = wxFont::AddPrivateFont(font_path);
+        BOOST_LOG_TRIVIAL(info) << boost::format("add font of RobotoMono-Regular returns %1%")%result;
+        font_path = wxString::FromUTF8(resource_path+"/fonts/RobotoMono-Medium.ttf");
+        result = wxFont::AddPrivateFont(font_path);
+        BOOST_LOG_TRIVIAL(info) << boost::format("add font of RobotoMono-Medium returns %1%")%result;
+        font_path = wxString::FromUTF8(resource_path+"/fonts/RobotoMono-Bold.ttf");
+        result = wxFont::AddPrivateFont(font_path);
+        BOOST_LOG_TRIVIAL(info) << boost::format("add font of RobotoMono-Bold returns %1%")%result;
     }
 #ifdef __linux__
     if (load_font_resource) {
@@ -183,6 +222,11 @@ void Label::initSysFont(std::string lang_code, bool load_font_resource)
     Body_10 = md3StyledFont(MD3::Type::micro, lang_code);           // 10.5/400
     Body_9  = md3StyledFont(MD3::TypeStyle{9.0f, 400}, lang_code);
     Body_8  = md3StyledFont(MD3::TypeStyle{8.0f, 400}, lang_code);
+
+    Mono_14 = md3MonoFont(MD3::TypeStyle{14.0f, 400});
+    Mono_13 = md3MonoFont(MD3::TypeStyle{13.5f, 500}); // row primary values
+    Mono_12 = md3MonoFont(MD3::TypeStyle{12.5f, 400});
+    Mono_11 = md3MonoFont(MD3::TypeStyle{11.5f, 400}); // metadata values
 }
 
 class WXDLLIMPEXP_CORE wxTextWrapper2

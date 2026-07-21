@@ -57,6 +57,13 @@ public:
 	static wxFont Body_9;
 	static wxFont Body_8;
 
+	// Roboto Mono — the MD3 canon face for numeric/technical values
+	// (temperatures, percentages, times, dimensions, commit hashes).
+	static wxFont Mono_14;
+	static wxFont Mono_13;
+	static wxFont Mono_12;
+	static wxFont Mono_11;
+
 	static void initSysFont(std::string lang_code = "", bool load_font_resource = true);
 
     static wxFont sysFont(int size, bool bold = false, std::string lang_code = "");
