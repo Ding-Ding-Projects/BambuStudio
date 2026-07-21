@@ -1,0 +1,21 @@
+/* Contextual workspace schemes — src/slic3r/GUI/Widgets/MD3Tokens.hpp.
+   Neutral surfaces, type and error roles are SHARED; only the six accent
+   roles change per workspace. Apply data-scheme="preview|device" on the
+   workspace root (inside a data-theme scope). Prepare/brand = no attribute.
+   Preview seed #7c5cff (purple) · Device seed #14b8a6 (teal). */
+[data-scheme="preview"]{
+  --md-primary:#7050e8; --md-on-primary:#ffffff; --md-primary-container:#e8ddff; --md-on-primary-container:#23005c;
+  --md-secondary-container:#e5dff3; --md-on-secondary-container:#211a2d; --md-accent:#7050e8; --md-seed:#7c5cff;
+}
+[data-theme="dark"] [data-scheme="preview"], [data-theme="dark"][data-scheme="preview"]{
+  --md-primary:#ad98ff; --md-on-primary:#2b006d; --md-primary-container:#563bc2; --md-on-primary-container:#e8ddff;
+  --md-secondary-container:#494253; --md-on-secondary-container:#e8dff5; --md-accent:#ad98ff;
+}
+[data-scheme="device"]{
+  --md-primary:#0f766e; --md-on-primary:#ffffff; --md-primary-container:#9cf2e7; --md-on-primary-container:#00201d;
+  --md-secondary-container:#cce8e3; --md-on-secondary-container:#08201d; --md-accent:#0f766e; --md-seed:#14b8a6;
+}
+[data-theme="dark"] [data-scheme="device"], [data-theme="dark"][data-scheme="device"]{
+  --md-primary:#5eead4; --md-on-primary:#003731; --md-primary-container:#005047; --md-on-primary-container:#83f5e3;
+  --md-secondary-container:#304a46; --md-on-secondary-container:#cce8e3; --md-accent:#5eead4;
+}

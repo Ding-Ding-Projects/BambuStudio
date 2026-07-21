@@ -1,0 +1,1202 @@
+<!-- @dsCard group="Bambu Studio App" viewport="1440x900" subtitle="Interactive shell — all 9 workspaces, dialogs, history drawer, theme + density + accent" name="App window" -->
+<!-- @startingPoint section="Screens" subtitle="Full app window: 9 workspaces, dialogs, version-history drawer" viewport="1440x900" -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bambu Studio MD3 — UI kit</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body,#app{height:100%;overflow:hidden;}</style>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/babel">
+// ---- Components.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+// Kit-local mirror of /components primitives (no module system in this standalone shell).
+const { useState } = React;
+const MD = window.MD = {};
+
+MD.Button = function Button({ variant = 'filled', size = 'md', icon, iconFill, elevated, onClick, title, style, children }) {
+  const [hov, setHov] = useState(false);
+  const h = { sm: 36, md: 42, lg: 44 }[size] || 42;
+  const pad = { sm: 16, md: 18, lg: 22 }[size] || 18;
+  const v = {
+    filled: { background: 'var(--md-primary)', color: 'var(--md-on-primary)', border: 'none', fontWeight: 600 },
+    tonal: { background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', border: 'none', fontWeight: 600 },
+    outlined: { background: 'transparent', color: 'var(--md-on-surface)', border: '1px solid var(--md-outline)', fontWeight: 500 },
+    text: { background: 'transparent', color: 'var(--md-primary)', border: 'none', fontWeight: 600 },
+    danger: { background: 'transparent', color: 'var(--md-error)', border: '1px solid var(--md-error)', fontWeight: 600 },
+  }[variant];
+  const hover = hov ? (variant === 'filled' ? { filter: 'brightness(1.06)' } : variant === 'tonal' ? { filter: 'brightness(1.04)' } : { background: variant === 'text' ? 'var(--md-secondary-container)' : 'var(--md-sc-high)' }) : {};
+  return <button title={title} onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: h, padding: '0 ' + pad + 'px', borderRadius: h / 2, cursor: 'pointer', fontFamily: 'var(--md-font)', fontSize: size === 'sm' ? 12.5 : size === 'lg' ? 14 : 13.5, boxShadow: elevated ? 'var(--md-elev-2)' : 'none', transition: '.15s', ...v, ...hover, ...style }}>
+    {icon && <span data-icon style={{ fontSize: size === 'sm' ? 18 : 20, fontVariationSettings: iconFill ? "'FILL' 1" : undefined }}>{icon}</span>}{children}</button>;
+};
+
+MD.IconButton = function IconButton({ icon, size = 36, iconSize, title, danger, filled, shape = 'circle', onClick, style }) {
+  const [hov, setHov] = useState(false);
+  return <button title={title} onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    style={{ width: size + (shape === 'square' ? 4 : 0), height: size, border: 'none', cursor: 'pointer', borderRadius: shape === 'circle' ? '50%' : 8,
+      background: hov ? (danger ? 'var(--md-error)' : 'var(--md-sc-high)') : filled ? 'var(--md-sc-highest)' : 'transparent',
+      color: hov && danger ? 'var(--md-on-error)' : 'var(--md-on-surface-variant)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', transition: '.15s', ...style }}>
+    <span data-icon style={{ fontSize: iconSize || (size >= 40 ? 22 : size >= 34 ? 19 : 17) }}>{icon}</span></button>;
+};
+
+MD.Chip = function Chip({ label, icon, selected, tonal, mono, onClick, style }) {
+  const [hov, setHov] = useState(false);
+  const sel = selected
+    ? tonal ? { background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', border: '1px solid var(--md-primary)' }
+            : { background: 'var(--md-primary)', color: 'var(--md-on-primary)', border: '1px solid var(--md-primary)' }
+    : { background: hov ? 'var(--md-sc-high)' : 'transparent', color: 'var(--md-on-surface-variant)', border: '1px solid var(--md-outline)' };
+  return <button onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 13px', borderRadius: 15, cursor: 'pointer', fontSize: 12, fontWeight: 500, transition: '.15s', fontFamily: mono ? 'var(--md-font-mono)' : 'var(--md-font)', ...sel, ...style }}>
+    {icon && <span data-icon style={{ fontSize: 16 }}>{icon}</span>}{label}</button>;
+};
+
+MD.SegmentedControl = function SegmentedControl({ options, value, onChange, size = 'sm', grow = true, style }) {
+  const md = size === 'md';
+  return <div style={{ display: 'flex', gap: md ? 6 : 4, padding: md ? 4 : 3, background: 'var(--md-sc-highest)', borderRadius: md ? 14 : 12, ...style }}>
+    {options.map(o => { const on = o.id === value; return <button key={o.id} onClick={() => onChange && onChange(o.id)}
+      style={{ flex: grow ? 1 : 'none', height: md ? 36 : 30, padding: '0 ' + (md ? 18 : 10) + 'px', border: 'none', borderRadius: md ? 11 : 9, cursor: 'pointer', fontSize: md ? 12.5 : 11.5, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        background: on ? 'var(--md-primary)' : 'transparent', color: on ? 'var(--md-on-primary)' : 'var(--md-on-surface-variant)', transition: '.15s' }}>
+      {o.icon && <span data-icon style={{ fontSize: 18 }}>{o.icon}</span>}{o.label}</button>; })}</div>;
+};
+
+MD.Switch = function Switch({ checked, onChange, style }) {
+  return <button onClick={() => onChange && onChange(!checked)}
+    style={{ width: 44, height: 24, borderRadius: 14, position: 'relative', cursor: 'pointer', padding: 0, flex: '0 0 auto', transition: '.15s',
+      border: '2px solid ' + (checked ? 'var(--md-primary)' : 'var(--md-outline)'), background: checked ? 'var(--md-primary)' : 'transparent', ...style }}>
+    <span style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', transition: '.15s', borderRadius: '50%', left: checked ? 22 : 4, width: checked ? 16 : 12, height: checked ? 16 : 12, background: checked ? 'var(--md-on-primary)' : 'var(--md-outline)' }} /></button>;
+};
+
+MD.SectionHeader = function SectionHeader({ icon, trailing, style, children }) {
+  return <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...style }}>
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, letterSpacing: '.6px', color: 'var(--md-on-surface-variant)', textTransform: 'uppercase' }}>
+      {icon && <span data-icon style={{ fontSize: 16 }}>{icon}</span>}{children}</div>{trailing}</div>;
+};
+
+MD.Badge = ({ style, children }) => <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 7, background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', ...style }}>{children}</span>;
+MD.ProgressBar = ({ value, height = 8, style }) => <div style={{ height, background: 'var(--md-sc-highest)', borderRadius: 6, overflow: 'hidden', ...style }}><div style={{ width: value + '%', height: '100%', background: 'var(--md-primary)', borderRadius: 6, transition: 'width .3s' }} /></div>;
+
+MD.SelectField = function SelectField({ value, filled, caption, onClick, style }) {
+  const inner = filled ? { height: 34, padding: '0 8px 0 12px', background: 'var(--md-sc-highest)', border: 'none', borderRadius: 10, gap: 4 }
+    : { height: 38, padding: '0 12px', background: 'transparent', border: '1px solid var(--md-outline)', borderRadius: 10, justifyContent: 'space-between', width: '100%' };
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: 3, ...style }}>
+    {caption && <div style={{ fontSize: 10.5, color: 'var(--md-on-surface-variant)', paddingLeft: 4 }}>{caption}</div>}
+    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', color: 'var(--md-on-surface)', fontSize: 12.5, fontFamily: 'var(--md-font)', ...inner }}>
+      <span style={{ fontWeight: filled ? 400 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+      <span data-icon style={{ fontSize: filled ? 16 : 18, color: 'var(--md-on-surface-variant)' }}>expand_more</span></button></div>;
+};
+
+MD.ValueField = ({ value, unit, minWidth = 96, style }) => <div style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 4px 0 12px', background: 'var(--md-sc-highest)', borderRadius: 10, minWidth, justifyContent: 'flex-end', ...style }}>
+  <span style={{ fontFamily: 'var(--md-font-mono)', fontSize: 12.5, fontWeight: 500, color: 'var(--md-on-surface)' }}>{value}</span>
+  {unit && <span style={{ fontSize: 11, color: 'var(--md-on-surface-variant)', paddingRight: 8 }}>{unit}</span>}</div>;
+
+MD.SearchField = function SearchField({ placeholder = 'Search', onQuery, style }) {
+  const [value, setValue] = useState('');
+  const [regex, setRegex] = useState(false);
+  return <div style={{ position: 'relative', width: '100%', fontFamily: 'var(--md-font)', ...style }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, height: 40, padding: '0 5px 0 14px', background: 'var(--md-sc-highest)', border: '1px solid var(--md-outline)', borderRadius: 22 }}>
+      <span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)' }}>search</span>
+      <input value={value} placeholder={placeholder} onChange={e => { setValue(e.target.value); onQuery && onQuery(e.target.value); }}
+        style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', outline: 'none', color: 'var(--md-on-surface)', fontSize: 13.5, fontFamily: regex ? 'var(--md-font-mono)' : 'inherit' }} />
+      {!!value && <MD.IconButton icon="close" size={30} title="Clear" onClick={() => { setValue(''); onQuery && onQuery(''); }} />}
+      <button title="Use regular expression" onClick={() => setRegex(!regex)}
+        style={{ minWidth: 32, height: 30, padding: '0 4px', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--md-font-mono)', fontSize: 12.5, fontWeight: 700,
+          background: regex ? 'var(--md-primary)' : 'var(--md-sc-low)', color: regex ? 'var(--md-on-primary)' : 'var(--md-on-surface-variant)' }}>.*</button>
+    </div></div>;
+};
+
+MD.Card = function Card({ interactive, pad = true, radius, onClick, style, children }) {
+  const [hov, setHov] = useState(false);
+  return <div onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    style={{ background: 'var(--md-sc-low)', borderRadius: radius || 'var(--radius)', cursor: interactive ? 'pointer' : 'default',
+      border: '1px solid ' + (interactive && hov ? 'var(--md-primary)' : 'var(--md-outline-variant)'), padding: pad ? 'var(--pad)' : 0, transition: 'border-color .15s', ...style }}>{children}</div>;
+};
+
+// Shared viewport mock: build plate + isometric model
+MD.Viewport = function Viewport({ children, model = true, modelStyle }) {
+  return <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'radial-gradient(120% 100% at 50% 0%, var(--md-surface-bright), var(--md-surface-dim) 70%)' }}>
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', perspective: 1400 }}>
+      <div style={{ width: 520, height: 360, transform: 'rotateX(58deg) rotateZ(-38deg)', background: 'linear-gradient(var(--md-sc-high),var(--md-sc))', border: '1px solid var(--md-outline)', borderRadius: 6,
+        backgroundImage: 'repeating-linear-gradient(0deg,transparent 0 25px, color-mix(in srgb, var(--md-outline) 34%, transparent) 25px 26px), repeating-linear-gradient(90deg,transparent 0 25px, color-mix(in srgb, var(--md-outline) 34%, transparent) 25px 26px)',
+        boxShadow: '0 40px 60px rgba(0,0,0,.28)' }} />
+    </div>
+    {model && <div style={{ position: 'absolute', left: '50%', top: '44%', transform: 'translate(-50%,-50%)', width: 150, height: 164, filter: 'drop-shadow(0 20px 16px rgba(0,0,0,.35))', ...modelStyle }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--md-primary) 84%, #fff)', clipPath: 'polygon(50% 2%, 98% 27%, 50% 52%, 2% 27%)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--md-primary) 60%, #000 8%)', clipPath: 'polygon(2% 27%, 50% 52%, 50% 98%, 2% 73%)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--md-primary) 42%, #000 22%)', clipPath: 'polygon(98% 27%, 98% 73%, 50% 98%, 50% 52%)' }} />
+    </div>}
+    {children}
+  </div>;
+};
+
+MD.Checkbox = function Checkbox({ checked, label, onChange, style }) {
+  return <button onClick={() => onChange && onChange(!checked)}
+    style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none', background: 'transparent', cursor: 'pointer',
+      color: 'var(--md-on-surface)', fontSize: 12.5, fontWeight: 500, fontFamily: 'var(--md-font)', padding: '6px 8px', borderRadius: 8, ...style }}>
+    <span data-icon style={{ fontSize: 20, color: checked ? 'var(--md-primary)' : 'var(--md-on-surface-variant)' }}>
+      {checked ? 'check_box' : 'check_box_outline_blank'}
+    </span>
+    {label}
+  </button>;
+};
+
+MD.NavItem = function NavItem({ icon, label, selected, onClick, style }) {
+  const [hov, setHov] = useState(false);
+  return <div onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    style={{ display: 'flex', alignItems: 'center', gap: 10, height: 44, padding: '0 14px', borderRadius: 22, cursor: 'pointer',
+      background: selected ? 'var(--md-secondary-container)' : hov ? 'var(--md-sc-high)' : 'transparent',
+      color: selected ? 'var(--md-on-secondary-container)' : 'var(--md-on-surface-variant)',
+      fontSize: 13.5, fontWeight: selected ? 600 : 400, fontFamily: 'var(--md-font)', ...style }}>
+    <span data-icon style={{ fontSize: 20 }}>{icon}</span> {label}
+  </div>;
+};
+
+</script>
+<script type="text/babel">
+// ---- Home.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+window.Screens = window.Screens || {};
+window.Screens.Home = function Home({ go, notify }) {
+  const { Button, Card, SearchField } = MD;
+  const quick = [
+    ['upload_file', 'Import model', 'STL, STEP, 3MF, OBJ', null],
+    ['folder_open', 'Open project', 'Resume a .3mf project', null],
+    ['public', 'Explore models', 'Browse the online library', null],
+    ['cast', 'My devices', 'Monitor & control printers', 'device'],
+  ];
+  const recent = [
+    ['3DBenchy.3mf', 'Edited 2 min ago · 23.4 g'], ['Phone stand v3.3mf', 'Yesterday · 41.2 g'],
+    ['Cable clips ×8.3mf', 'Jul 14 · 12.7 g'], ['Vase spiral.3mf', 'Jul 9 · 88.0 g'],
+  ];
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: 'var(--md-surface)' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '32px 32px 56px', display: 'flex', flexDirection: 'column', gap: 26 }}>
+        <div style={{ display: 'flex', gap: 20, alignItems: 'center', padding: '26px 28px', borderRadius: 28, background: 'linear-gradient(120deg, var(--md-primary-container), var(--md-secondary-container))', color: 'var(--md-on-primary-container)' }}>
+          <div style={{ width: 64, height: 64, borderRadius: 20, background: 'var(--md-primary)', color: 'var(--md-on-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 16px var(--md-shadow)' }}><span data-icon style={{ fontSize: 36, fontVariationSettings: "'FILL' 1" }}>deployed_code</span></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 23, fontWeight: 700 }}>Welcome back</div>
+            <div style={{ fontSize: 14, opacity: .82, marginTop: 3 }}>Start a new project, open an existing one, or continue where you left off.</div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Button variant="filled" size="lg" icon="add" elevated style={{ height: 48, borderRadius: 24 }} onClick={() => go('prepare')}>New Project</Button>
+            <Button variant="outlined" size="lg" icon="folder_open" style={{ height: 48, borderRadius: 24, border: '1px solid var(--md-primary)', color: 'var(--md-on-primary-container)' }}>Open</Button>
+          </div>
+        </div>
+        <div style={{ maxWidth: 520 }}><SearchField placeholder="Search models on MakerWorld" /></div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
+          {quick.map(q => (
+            <Card key={q[1]} interactive radius={20} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 18 }} onClick={() => q[3] ? go(q[3]) : notify(q[1], q[0])}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24 }}>{q[0]}</span></div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>{q[1]}</div>
+              <div style={{ fontSize: 12, color: 'var(--md-on-surface-variant)' }}>{q[2]}</div>
+            </Card>
+          ))}
+        </div>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 16, fontWeight: 600 }}><span data-icon style={{ fontSize: 20 }}>history</span> Recent projects</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
+            {recent.map(r => (
+              <Card key={r[0]} interactive pad={false} radius={20} style={{ overflow: 'hidden' }} onClick={() => go('prepare')}>
+                <div style={{ height: 118, background: 'repeating-linear-gradient(45deg, var(--md-sc-high) 0 10px, var(--md-sc) 10px 20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-on-surface-variant)' }}><span data-icon style={{ fontSize: 40 }}>deployed_code</span></div>
+                <div style={{ padding: '12px 14px' }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r[0]}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--md-on-surface-variant)', marginTop: 2 }}>{r[1]}</div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Prepare.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+const { useState: usePrepState } = React;
+window.Screens = window.Screens || {};
+
+const FILAMENTS = [
+  { name: 'Bambu PLA Basic', slot: 'AMS A1', type: 'PLA', color: '#22c55e' },
+  { name: 'Bambu PLA Basic', slot: 'AMS A2', type: 'PLA', color: '#f5f5f4' },
+  { name: 'Bambu PETG HF', slot: 'AMS A3', type: 'PETG', color: '#3b82f6' },
+  { name: 'Bambu Support W', slot: 'AMS A4', type: 'PLA-S', color: '#78716c' },
+];
+window.KIT_FILAMENTS = FILAMENTS;
+
+const GIZMOS = [
+  { id: 'move', icon: 'open_with', label: 'Move' }, { id: 'rotate', icon: 'rotate_right', label: 'Rotate' },
+  { id: 'scale', icon: 'open_in_full', label: 'Scale' }, { id: 'mirror', icon: 'flip', label: 'Mirror' },
+  { divider: true },
+  { id: 'lay', icon: 'align_horizontal_left', label: 'Lay on face' }, { id: 'cut', icon: 'carpenter', label: 'Cut' },
+  { id: 'support', icon: 'foundation', label: 'Supports' }, { id: 'seam', icon: 'line_start_circle', label: 'Seam painting' },
+  { id: 'color', icon: 'brush', label: 'Color painting' }, { divider: true },
+  { id: 'text', icon: 'match_case', label: 'Text' }, { id: 'measure', icon: 'straighten', label: 'Measure' },
+];
+const SCENE_TOOLS = ['center_focus_strong', 'grid_view', 'auto_fix_high', 'content_copy', 'delete', 'undo', 'redo'];
+const MANIP = [
+  { label: 'Position', x: '128.0', y: '128.0', z: '0.0' }, { label: 'Rotation', x: '0°', y: '0°', z: '45°' },
+  { label: 'Scale %', x: '120', y: '120', z: '120' }, { label: 'Size', x: '72.0', y: '37.2', z: '57.6' },
+];
+
+window.Screens.Prepare = function Prepare({ notify, openDialog }) {
+  const [tool, setTool] = usePrepState('move');
+  const [tab, setTab] = usePrepState('Quality');
+  const [support, setSupport] = usePrepState(false);
+  const { Button, IconButton, SectionHeader, SegmentedControl, Switch, SelectField, ValueField, SearchField, Badge, Viewport } = MD;
+  return (
+    <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
+      <div style={{ width: 'var(--rail)', flex: '0 0 auto', background: 'var(--md-sc-low)', borderRight: '1px solid var(--md-outline-variant)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0', gap: 3, overflowY: 'auto' }}>
+        {GIZMOS.map((g, i) => g.divider ? <div key={i} style={{ width: 28, height: 1, background: 'var(--md-outline-variant)', margin: '4px 0', flex: '0 0 auto' }} />
+          : <button key={g.id} title={g.label} onClick={() => { setTool(g.id); notify('Tool: ' + g.label, 'build'); }}
+              style={{ width: 44, height: 44, flex: '0 0 auto', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: tool === g.id ? 'var(--md-primary)' : 'transparent', color: tool === g.id ? 'var(--md-on-primary)' : 'var(--md-on-surface-variant)' }}>
+              <span data-icon style={{ fontSize: 21, fontVariationSettings: tool === g.id ? "'FILL' 1" : "'FILL' 0" }}>{g.icon}</span></button>)}
+      </div>
+      <div style={{ flex: '1 1 auto', position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 5, display: 'flex', alignItems: 'center', gap: 3, padding: 5, background: 'var(--md-sc)', border: '1px solid var(--md-outline-variant)', borderRadius: 16, boxShadow: 'var(--md-elev-3)' }}>
+          {SCENE_TOOLS.map(s => <IconButton key={s} icon={s} size={40} iconSize={22} shape="square" style={{ borderRadius: 10, width: 40 }} />)}
+        </div>
+        <Viewport>
+          <div style={{ position: 'absolute', left: 16, bottom: 16, width: 70, height: 70 }}>
+            <div style={{ position: 'absolute', left: 6, bottom: 6, width: 2, height: 40, background: 'var(--md-axis-z)' }} />
+            <div style={{ position: 'absolute', left: 6, bottom: 6, width: 40, height: 2, background: 'var(--md-axis-x)' }} />
+            <div style={{ position: 'absolute', left: 8, bottom: 8, width: 26, height: 14, background: 'var(--md-axis-y)', transform: 'skewX(-45deg)', opacity: .85 }} />
+            <div style={{ position: 'absolute', left: 1, bottom: 44, fontSize: 10, color: 'var(--md-axis-z)', fontWeight: 700 }}>Z</div>
+            <div style={{ position: 'absolute', left: 46, bottom: 0, fontSize: 10, color: 'var(--md-axis-x)', fontWeight: 700 }}>X</div>
+          </div>
+          <div style={{ position: 'absolute', right: 16, bottom: 16, display: 'flex', flexDirection: 'column', gap: 6, padding: 6, background: 'var(--md-sc)', border: '1px solid var(--md-outline-variant)', borderRadius: 26, boxShadow: 'var(--md-elev-3)' }}>
+            <IconButton icon="add" size={40} iconSize={22} /><IconButton icon="remove" size={40} iconSize={22} /><IconButton icon="filter_center_focus" size={40} iconSize={22} />
+          </div>
+          <div style={{ position: 'absolute', left: '50%', bottom: 16, transform: 'translateX(-50%)', whiteSpace: 'nowrap', display: 'flex', gap: 8, alignItems: 'center', padding: '7px 14px', background: 'var(--md-sc)', border: '1px solid var(--md-outline-variant)', borderRadius: 20, fontSize: 12.5, color: 'var(--md-on-surface-variant)', boxShadow: 'var(--md-elev-2)' }}>
+            <span data-icon style={{ fontSize: 16 }}>deployed_code</span> 1 object · 15,842 faces
+          </div>
+        </Viewport>
+        <div style={{ flex: '0 0 auto', height: 'var(--md-prepare-actions-h)', display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', background: 'var(--md-sc-low)', borderTop: '1px solid var(--md-outline-variant)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button style={{ display: 'flex', alignItems: 'center', gap: 8, height: 40, padding: '0 14px 0 10px', border: '2px solid var(--md-primary)', background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', borderRadius: 12, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+              <span data-icon style={{ fontSize: 20 }}>grid_view</span> Plate 1</button>
+            <button title="Add plate" style={{ width: 40, height: 40, border: '1px dashed var(--md-outline)', background: 'transparent', color: 'var(--md-on-surface-variant)', borderRadius: 12, cursor: 'pointer' }}><span data-icon style={{ fontSize: 20 }}>add</span></button>
+          </div>
+          <div style={{ flex: 1 }} />
+          <div style={{ textAlign: 'right', marginRight: 4, lineHeight: 1.3 }}>
+            <div style={{ fontFamily: 'var(--md-font-mono)', fontSize: 15, fontWeight: 500 }}>1h 24m</div>
+            <div style={{ fontSize: 11, color: 'var(--md-on-surface-variant)' }}>23.4 g · 7.85 m</div>
+          </div>
+          <Button variant="outlined" size="lg" icon="deployed_code" onClick={() => notify('Slicing plate 1…', 'deployed_code')} style={{ background: 'var(--md-sc-high)' }}>Slice plate</Button>
+          <Button variant="filled" size="lg" icon="print" iconFill elevated onClick={() => openDialog('send')}>Print plate</Button>
+        </div>
+      </div>
+      <div style={{ width: 'var(--sidebar)', flex: '0 0 auto', background: 'var(--md-sc-low)', borderLeft: '1px solid var(--md-outline-variant)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ padding: 'var(--pad)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <SectionHeader icon="print">Printer</SectionHeader>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: 10, background: 'var(--md-sc-highest)', borderRadius: 'var(--radius)' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 12, background: 'var(--md-sc-lowest)', border: '1px solid var(--md-outline-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-on-surface-variant)' }}><span data-icon style={{ fontSize: 30 }}>print</span></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Bambu Lab X1 Carbon</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--md-primary)', marginTop: 2 }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--md-primary)' }} /> 0.4 nozzle · Connected</div>
+            </div>
+            <IconButton icon="edit" size={34} />
+          </div>
+          <SelectField caption="Bed type" value="Textured PEI Plate" />
+        </div>
+        <div style={{ height: 1, background: 'var(--md-outline-variant)', margin: '0 var(--pad)' }} />
+        <div style={{ padding: 'var(--pad)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <SectionHeader icon="palette" trailing={<Button variant="outlined" size="sm" icon="sync" style={{ height: 30, fontSize: 11.5, color: 'var(--md-primary)', padding: '0 10px' }} onClick={() => notify('Synced with AMS', 'sync')}>Sync AMS</Button>}>Filament</SectionHeader>
+          {FILAMENTS.map(f => (
+            <div key={f.slot} style={{ display: 'flex', alignItems: 'center', gap: 10, height: 44, padding: '0 8px', background: 'var(--md-sc-highest)', borderRadius: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: f.color, border: '1px solid rgba(0,0,0,.25)', boxShadow: 'inset 0 0 0 2px var(--md-sc-highest), inset 0 0 0 3px rgba(255,255,255,.15)' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--md-on-surface-variant)' }}>{f.slot}</div>
+              </div>
+              <Badge>{f.type}</Badge>
+            </div>
+          ))}
+          <Button variant="outlined" size="sm" icon="add" style={{ color: 'var(--md-primary)' }} onClick={() => openDialog('addfil')}>Add filament</Button>
+        </div>
+        <div style={{ height: 1, background: 'var(--md-outline-variant)', margin: '0 var(--pad)' }} />
+        <div style={{ padding: 'var(--pad)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <SectionHeader icon="tune">Process</SectionHeader>
+          <SelectField value="0.20mm Standard @BBL X1C" />
+          <SegmentedControl options={['Quality', 'Strength', 'Support', 'Others'].map(t => ({ id: t, label: t }))} value={tab} onChange={setTab} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 36 }}><div style={{ flex: 1, fontSize: 12.5 }}>Layer height</div><ValueField value="0.20" unit="mm" /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 36 }}><div style={{ flex: 1, fontSize: 12.5 }}>Sparse infill density</div><ValueField value="15" unit="%" /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 36 }}><div style={{ flex: 1, fontSize: 12.5 }}>Infill pattern</div><SelectField filled value="Grid" /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 36 }}><div style={{ flex: 1, fontSize: 12.5 }}>Enable support</div><Switch checked={support} onChange={v => { setSupport(v); notify('Support ' + (v ? 'enabled' : 'disabled'), 'foundation'); }} /></div>
+          <button style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 4, height: 30, padding: '0 6px', border: 'none', background: 'transparent', color: 'var(--md-primary)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}><span data-icon style={{ fontSize: 17 }}>tune</span> Advanced settings</button>
+        </div>
+        <div style={{ height: 1, background: 'var(--md-outline-variant)', margin: '0 var(--pad)' }} />
+        <div style={{ padding: 'var(--pad)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <SectionHeader icon="account_tree" style={{ marginBottom: 2 }}>Objects</SectionHeader>
+          <SearchField placeholder="Search objects" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 8px', background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', borderRadius: 10, marginTop: 4 }}>
+            <span data-icon style={{ fontSize: 18 }}>deployed_code</span>
+            <span style={{ flex: 1, fontSize: 12.5, fontWeight: 500 }}>3DBenchy.stl</span>
+            <span data-icon style={{ fontSize: 17, opacity: .7 }}>visibility</span>
+            <div style={{ width: 16, height: 16, borderRadius: 5, background: 'var(--md-primary)', border: '1px solid rgba(0,0,0,.2)' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 32, padding: '0 8px 0 26px', color: 'var(--md-on-surface-variant)', fontSize: 12 }}>
+            <span data-icon style={{ fontSize: 16 }}>layers</span> <span style={{ flex: 1 }}>Layers &amp; height range</span>
+          </div>
+        </div>
+        <div style={{ height: 1, background: 'var(--md-outline-variant)', margin: '0 var(--pad)' }} />
+        <div style={{ padding: 'var(--pad)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <SectionHeader icon="transform">Object manipulation</SectionHeader>
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 1fr', gap: '6px 8px', alignItems: 'center' }}>
+            <div />
+            <div style={{ textAlign: 'center', fontSize: 10.5, color: 'var(--md-axis-x)', fontWeight: 600 }}>X</div>
+            <div style={{ textAlign: 'center', fontSize: 10.5, color: 'var(--md-axis-y)', fontWeight: 600 }}>Y</div>
+            <div style={{ textAlign: 'center', fontSize: 10.5, color: 'var(--md-axis-z)', fontWeight: 600 }}>Z</div>
+            {MANIP.map(r => [
+              <div key={r.label} style={{ fontSize: 11.5, color: 'var(--md-on-surface-variant)' }}>{r.label}</div>,
+              ...[r.x, r.y, r.z].map((v, i) => <div key={r.label + i} style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--md-sc-highest)', borderRadius: 8, fontFamily: 'var(--md-font-mono)', fontSize: 12 }}>{v}</div>),
+            ])}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Preview.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+const { useState: usePrevState } = React;
+window.Screens = window.Screens || {};
+
+const LEGEND = [
+  ['Inner wall', '#00e0ff'], ['Outer wall', '#ffd500'], ['Overhang wall', '#3c82f6'], ['Sparse infill', '#b28cff'],
+  ['Internal solid infill', '#ff7f50'], ['Top surface', '#ff4d6d'], ['Bottom surface', '#59c96b'], ['Bridge', '#8be9fd'],
+  ['Support', '#8a8a5c'], ['Travel', '#7a7a7a'],
+];
+
+window.Screens.Preview = function Preview({ notify }) {
+  const [layer, setLayer] = usePrevState(124);
+  const [scheme, setScheme] = usePrevState('Line type');
+  const [opts, setOpts] = usePrevState({ Travel: true, Seams: false, Retractions: false, Wipe: false });
+  const maxLayer = 180;
+  const { Chip, IconButton, SectionHeader, Viewport } = MD;
+  const optIcons = { Travel: 'route', Seams: 'line_start_circle', Retractions: 'u_turn_left', Wipe: 'water_drop' };
+  return (
+    <div data-scheme="preview" style={{ position: 'absolute', inset: 0, display: 'flex' }}>
+      <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <Viewport model={false}>
+          <div style={{ position: 'absolute', left: '50%', top: '44%', transform: 'translate(-50%,-50%)', width: 150, height: 164, filter: 'drop-shadow(0 20px 16px rgba(0,0,0,.35))' }}>
+            <div style={{ position: 'absolute', inset: 0, background: '#d2477e', clipPath: 'polygon(50% 2%, 98% 27%, 50% 52%, 2% 27%)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(-6deg, #ef6c3e 0 5px, #c85a34 5px 6px)', clipPath: 'polygon(2% 27%, 50% 52%, 50% 98%, 2% 73%)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(6deg, #b8542f 0 5px, #97452a 5px 6px)', clipPath: 'polygon(98% 27%, 98% 73%, 50% 98%, 50% 52%)' }} />
+          </div>
+          <div style={{ position: 'absolute', right: 22, top: 0, bottom: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <div style={{ fontFamily: 'var(--md-font-mono)', fontSize: 11.5, color: 'var(--md-on-surface)', background: 'var(--md-sc)', padding: '4px 9px', borderRadius: 8, border: '1px solid var(--md-outline-variant)' }}>Z {(layer * 0.2).toFixed(2)} mm</div>
+            <input type="range" min={1} max={maxLayer} value={layer} onChange={e => setLayer(Number(e.target.value))}
+              style={{ writingMode: 'vertical-lr', direction: 'rtl', width: 12, height: 300, accentColor: 'var(--md-primary)', cursor: 'pointer' }} />
+            <div style={{ fontFamily: 'var(--md-font-mono)', fontSize: 11.5, color: 'var(--md-on-surface-variant)' }}>{layer} / {maxLayer}</div>
+          </div>
+          <div style={{ position: 'absolute', left: 16, top: 16, display: 'flex', gap: 8, alignItems: 'center', padding: '7px 14px', background: 'var(--md-sc)', border: '1px solid var(--md-outline-variant)', borderRadius: 20, fontSize: 12.5, color: 'var(--md-on-surface-variant)', boxShadow: 'var(--md-elev-2)' }}>
+            <span data-icon style={{ fontSize: 16 }}>layers</span> Sliced · {maxLayer} layers
+          </div>
+        </Viewport>
+        <div style={{ flex: '0 0 auto', height: 'var(--md-preview-timeline-h)', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', background: 'var(--md-sc-low)', borderTop: '1px solid var(--md-outline-variant)' }}>
+          <IconButton icon="skip_previous" size={38} iconSize={22} />
+          <button onClick={() => notify('Playing toolpath', 'play_arrow')} style={{ width: 44, height: 44, border: 'none', background: 'var(--md-primary)', color: 'var(--md-on-primary)', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24, fontVariationSettings: "'FILL' 1" }}>play_arrow</span></button>
+          <IconButton icon="skip_next" size={38} iconSize={22} />
+          <input type="range" min={0} max={12380} defaultValue={8420} style={{ flex: 1, accentColor: 'var(--md-primary)', cursor: 'pointer' }} />
+          <span style={{ fontFamily: 'var(--md-font-mono)', fontSize: 12, color: 'var(--md-on-surface-variant)', minWidth: 120, textAlign: 'right' }}>Move 8420 / 12380</span>
+        </div>
+      </div>
+      <div style={{ width: 'var(--sidebar)', flex: '0 0 auto', background: 'var(--md-sc-low)', borderLeft: '1px solid var(--md-outline-variant)', display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: 'var(--pad)', gap: 18 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <SectionHeader icon="palette">Color scheme</SectionHeader>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {['Line type', 'Speed', 'Layer time', 'Height', 'Filament'].map(c => <Chip key={c} label={c} selected={scheme === c} onClick={() => setScheme(c)} />)}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <SectionHeader>{scheme}</SectionHeader>
+          {LEGEND.map(g => (
+            <div key={g[0]} style={{ display: 'flex', alignItems: 'center', gap: 10, height: 28 }}>
+              <span style={{ width: 16, height: 16, borderRadius: 4, background: g[1] }} />
+              <span style={{ fontSize: 12.5, color: 'var(--md-on-surface)' }}>{g[0]}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <SectionHeader icon="tune">Options</SectionHeader>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {Object.keys(opts).map(o => <Chip key={o} label={o} icon={optIcons[o]} selected={opts[o]} onClick={() => setOpts({ ...opts, [o]: !opts[o] })} />)}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, background: 'var(--md-sc-highest)', borderRadius: 'var(--radius)' }}>
+          <SectionHeader icon="insights">Statistics</SectionHeader>
+          {[['Estimated time', '1h 24m'], ['Filament', '23.4 g · 7.85 m'], ['Est. cost', '$0.47'], ['Layers', '180']].map(r => (
+            <div key={r[0]} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span style={{ color: 'var(--md-on-surface-variant)' }}>{r[0]}</span>
+              <span style={{ fontFamily: 'var(--md-font-mono)', fontWeight: 500 }}>{r[1]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Device.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+const { useState: useDevState } = React;
+window.Screens = window.Screens || {};
+
+window.Screens.Device = function Device({ notify }) {
+  const [speed, setSpeed] = useDevState('Standard');
+  const [lamp, setLamp] = useDevState(true);
+  const { Button, IconButton, SectionHeader, SegmentedControl, Switch, Card, ProgressBar } = MD;
+  const filaments = window.KIT_FILAMENTS;
+  const zBtn = (icon, label) => (
+    <button key={label} style={{ height: 40, border: 'none', background: 'var(--md-sc-highest)', color: 'var(--md-on-surface)', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13 }}>
+      <span data-icon style={{ fontSize: 18 }}>{icon}</span> {label}</button>
+  );
+  const arrow = (icon) => <button style={{ border: 'none', background: 'var(--md-sc-highest)', color: 'var(--md-on-surface)', borderRadius: 8, cursor: 'pointer' }}><span data-icon style={{ fontSize: 20 }}>{icon}</span></button>;
+  return (
+    <div data-scheme="device" style={{ position: 'absolute', inset: 0, overflow: 'auto', background: 'var(--md-surface-dim)', padding: 16 }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', maxWidth: 1300, margin: '0 auto' }}>
+        <div style={{ flex: 1.5, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+          <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--md-outline-variant)', background: '#0c0e13' }}>
+            <div style={{ position: 'relative', aspectRatio: '16/9', background: 'repeating-linear-gradient(45deg,#15171d 0 12px,#1b1e25 12px 24px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span data-icon style={{ fontSize: 52, color: '#3a3f47' }}>videocam</span>
+              <div style={{ position: 'absolute', left: 14, top: 14, display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'rgba(0,0,0,.55)', borderRadius: 12, color: '#fff', fontSize: 11, fontWeight: 600 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--md-live)', animation: 'pulse 1.6s infinite' }} /> LIVE</div>
+              <div style={{ position: 'absolute', right: 12, top: 12, display: 'flex', gap: 6 }}>
+                {['hd', 'fullscreen'].map(i => <button key={i} style={{ width: 34, height: 34, border: 'none', background: 'rgba(0,0,0,.5)', color: '#fff', borderRadius: '50%', cursor: 'pointer' }}><span data-icon style={{ fontSize: 18 }}>{i}</span></button>)}
+              </div>
+              <div style={{ position: 'absolute', left: 14, bottom: 14, display: 'flex', gap: 8 }}>
+                <span style={{ padding: '4px 10px', background: 'rgba(0,0,0,.55)', borderRadius: 10, color: '#fff', fontSize: 11.5, fontFamily: 'var(--md-font-mono)' }}>220°C</span>
+                <span style={{ padding: '4px 10px', background: 'rgba(0,0,0,.55)', borderRadius: 10, color: '#fff', fontSize: 11.5, fontFamily: 'var(--md-font-mono)' }}>60°C</span>
+              </div>
+            </div>
+          </div>
+          <Card style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+              <div style={{ width: 60, height: 60, borderRadius: 12, background: 'repeating-linear-gradient(45deg, var(--md-sc-high) 0 8px, var(--md-sc) 8px 16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-on-surface-variant)' }}><span data-icon style={{ fontSize: 30 }}>deployed_code</span></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>3DBenchy.gcode.3mf</div>
+                <div style={{ fontSize: 12.5, color: 'var(--md-on-surface-variant)', marginTop: 2 }}>Layer 124 / 180 · 42 min remaining</div>
+              </div>
+              <div style={{ fontFamily: 'var(--md-font-mono)', fontSize: 28, fontWeight: 600, color: 'var(--md-primary)' }}>68%</div>
+            </div>
+            <ProgressBar value={68} />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Button variant="tonal" size="lg" icon="pause" style={{ flex: 1 }} onClick={() => notify('Print paused', 'pause')}>Pause</Button>
+              <Button variant="danger" size="lg" icon="stop" style={{ flex: 1 }} onClick={() => notify('Print stopped', 'stop')}>Stop</Button>
+            </div>
+          </Card>
+        </div>
+        <div style={{ flex: 1, minWidth: 344, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <SectionHeader icon="thermostat">Temperature</SectionHeader>
+            {[['mode_heat', 'Nozzle', 220, 220], ['radio_button_checked', 'Bed', 60, 60], ['home_work', 'Chamber', 34, '—']].map(t => (
+              <div key={t[1]} style={{ display: 'flex', alignItems: 'center', gap: 12, height: 40 }}>
+                <span data-icon style={{ fontSize: 22, color: 'var(--md-primary)' }}>{t[0]}</span>
+                <span style={{ flex: 1, fontSize: 13.5 }}>{t[1]}</span>
+                <span style={{ fontFamily: 'var(--md-font-mono)', fontSize: 15, fontWeight: 500 }}>{t[2]}°</span>
+                <span style={{ fontSize: 12, color: 'var(--md-on-surface-variant)', fontFamily: 'var(--md-font-mono)' }}>/ {t[3]}</span>
+                <IconButton icon="edit" size={32} filled />
+              </div>
+            ))}
+          </Card>
+          <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <SectionHeader icon="speed">Print options</SectionHeader>
+            <SegmentedControl options={['Silent', 'Standard', 'Sport', 'Ludicrous'].map(m => ({ id: m, label: m }))} value={speed} onChange={m => { setSpeed(m); notify('Speed: ' + m, 'speed'); }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)' }}>mode_fan</span><span style={{ width: 100, fontSize: 13 }}>Part cooling</span><input type="range" min={0} max={100} defaultValue={100} style={{ flex: 1, accentColor: 'var(--md-primary)' }} /></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)' }}>air</span><span style={{ width: 100, fontSize: 13 }}>Aux fan</span><input type="range" min={0} max={100} defaultValue={40} style={{ flex: 1, accentColor: 'var(--md-primary)' }} /></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, height: 36 }}><span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)' }}>lightbulb</span><span style={{ flex: 1, fontSize: 13 }}>Chamber light</span><Switch checked={lamp} onChange={setLamp} /></div>
+          </Card>
+          <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <SectionHeader icon="inventory_2" trailing={<span style={{ fontSize: 11, color: 'var(--md-primary)' }}>Humidity: Dry</span>}>AMS</SectionHeader>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {filaments.map(f => (
+                <div key={f.slot} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 4px', background: 'var(--md-sc-highest)', borderRadius: 12 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: f.color, border: '1px solid rgba(0,0,0,.25)' }} />
+                  <span style={{ fontSize: 10, color: 'var(--md-on-surface-variant)' }}>{f.type}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card style={{ display: 'flex', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+              <SectionHeader icon="control_camera" style={{ alignSelf: 'flex-start' }}>Move</SectionHeader>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,40px)', gridTemplateRows: 'repeat(3,40px)', gap: 4, marginTop: 4 }}>
+                <div />{arrow('keyboard_arrow_up')}<div />
+                {arrow('keyboard_arrow_left')}
+                <button style={{ border: 'none', background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', borderRadius: 8, cursor: 'pointer' }} onClick={() => notify('Homing axes…', 'home')}><span data-icon style={{ fontSize: 18 }}>home</span></button>
+                {arrow('keyboard_arrow_right')}
+                <div />{arrow('keyboard_arrow_down')}<div />
+              </div>
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <SectionHeader>Z axis</SectionHeader>
+              {zBtn('keyboard_arrow_up', 'Z +10')}{zBtn('keyboard_arrow_down', 'Z −10')}{zBtn('vertical_align_bottom', 'Extrude')}
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Multi.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+window.Screens = window.Screens || {};
+window.Screens.Multi = function Multi({ notify }) {
+  const { Button, Card, SearchField, SectionHeader } = MD;
+  const devices = [
+    { name: 'X1 Carbon', model: 'Bambu Lab X1C', status: 'Printing', pct: 68, dot: 'var(--md-primary)' },
+    { name: 'P1S — Studio', model: 'Bambu Lab P1S', status: 'Idle', pct: 0, dot: 'var(--md-outline)' },
+    { name: 'A1 mini', model: 'Bambu Lab A1 mini', status: 'Printing', pct: 12, dot: 'var(--md-primary)' },
+    { name: 'X1E — Lab', model: 'Bambu Lab X1E', status: 'Offline', pct: 0, dot: 'var(--md-error)' },
+  ];
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'auto', background: 'var(--md-surface)', padding: '28px 32px' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ fontSize: 20, fontWeight: 700 }}>Device farm</div>
+          <div style={{ flex: 1, maxWidth: 340, margin: '0 16px' }}><SearchField placeholder="Search devices" /></div>
+          <div style={{ flex: 1 }} />
+          <Button variant="filled" size="lg" icon="add" onClick={() => notify('Add device', 'add')}>Add device</Button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
+          {devices.map(d => (
+            <Card key={d.name} style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--md-sc-highest)', color: 'var(--md-on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 26 }}>print</span></div>
+                <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{d.name}</div><div style={{ fontSize: 11.5, color: 'var(--md-on-surface-variant)' }}>{d.model}</div></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--md-on-surface-variant)' }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: d.dot }} /> {d.status}</div>
+              </div>
+              <div style={{ height: 96, borderRadius: 12, background: 'repeating-linear-gradient(45deg,#15171d 0 10px,#1b1e25 10px 20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3a3f47' }}><span data-icon style={{ fontSize: 32 }}>videocam</span></div>
+              <div style={{ height: 6, background: 'var(--md-sc-highest)', borderRadius: 4, overflow: 'hidden' }}><div style={{ width: d.pct + '%', height: '100%', background: 'var(--md-primary)' }} /></div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Project.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+const { useState: useProjState } = React;
+window.Screens = window.Screens || {};
+window.Screens.Project = function Project({ notify, openHistory }) {
+  const [cat, setCat] = useProjState('Model pictures');
+  const { Button, SearchField } = MD;
+  const cats = [
+    { label: 'Model pictures', icon: 'image', count: 3 }, { label: 'Bill of materials', icon: 'receipt_long', count: 1 },
+    { label: 'Assembly guide', icon: 'menu_book', count: 2 }, { label: 'Others', icon: 'folder', count: 4 },
+  ];
+  const files = [
+    { name: 'hull_front.png', type: 'PNG', icon: 'image' }, { name: 'hull_rear.png', type: 'PNG', icon: 'image' },
+    { name: 'cover.png', type: 'PNG', icon: 'image' }, { name: 'assembly_1.pdf', type: 'PDF', icon: 'picture_as_pdf' },
+    { name: 'assembly_2.pdf', type: 'PDF', icon: 'picture_as_pdf' }, { name: 'notes.txt', type: 'TXT', icon: 'description' },
+  ];
+  const [hovFile, setHovFile] = useProjState(null);
+  return (
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', background: 'var(--md-surface)' }}>
+      <div style={{ width: 250, flex: '0 0 auto', borderRight: '1px solid var(--md-outline-variant)', background: 'var(--md-sc-low)', padding: 'var(--pad)', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ height: 120, borderRadius: 'var(--radius)', background: 'repeating-linear-gradient(45deg, var(--md-sc-high) 0 10px, var(--md-sc) 10px 20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-on-surface-variant)' }}><span data-icon style={{ fontSize: 40 }}>deployed_code</span></div>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>3DBenchy_project</div>
+          <div style={{ fontSize: 11.5, color: 'var(--md-on-surface-variant)' }}>by you · 3 objects</div>
+        </div>
+        <div style={{ height: 1, background: 'var(--md-outline-variant)' }} />
+        {cats.map(c => {
+          const on = cat === c.label;
+          return (
+            <button key={c.label} onClick={() => setCat(c.label)}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, height: 42, padding: '0 12px', border: 'none', borderRadius: 12, cursor: 'pointer', fontSize: 13, textAlign: 'left',
+                background: on ? 'var(--md-secondary-container)' : 'transparent', color: on ? 'var(--md-on-secondary-container)' : 'var(--md-on-surface-variant)' }}>
+              <span data-icon style={{ fontSize: 20 }}>{c.icon}</span><span style={{ flex: 1 }}>{c.label}</span><span style={{ fontSize: 11, opacity: .7 }}>{c.count}</span>
+            </button>
+          );
+        })}
+        <div style={{ height: 1, background: 'var(--md-outline-variant)' }} />
+        <div style={{ padding: 14, background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', borderRadius: 'var(--radius)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: '.4px', textTransform: 'uppercase' }}><span data-icon style={{ fontSize: 16 }}>account_tree</span> Version control</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontFamily: 'var(--md-font-mono)' }}><span data-icon style={{ fontSize: 15 }}>commit</span> main · #a1f9c02</div>
+          <div style={{ fontSize: 11.5, opacity: .85 }}>6 commits · auto-saved. Bundled into the .3mf on save.</div>
+          <button onClick={openHistory} style={{ height: 34, border: 'none', borderRadius: 17, background: 'var(--md-primary)', color: 'var(--md-on-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>View history</button>
+        </div>
+      </div>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: 'var(--pad)', display: 'flex', gap: 14, alignItems: 'center', borderBottom: '1px solid var(--md-outline-variant)' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, flex: '0 0 auto' }}>{cat}</div>
+          <div style={{ flex: 1, maxWidth: 360 }}><SearchField placeholder="Search files" /></div>
+          <div style={{ flex: 1 }} />
+          <Button variant="filled" icon="add" onClick={() => notify('Add file', 'add')}>Add file</Button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--pad)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 16 }}>
+            {files.map(f => (
+              <div key={f.name} onMouseEnter={() => setHovFile(f.name)} onMouseLeave={() => setHovFile(null)}
+                style={{ border: '1px solid ' + (hovFile === f.name ? 'var(--md-primary)' : 'var(--md-outline-variant)'), background: 'var(--md-sc-low)', borderRadius: 'var(--radius)', overflow: 'hidden', cursor: 'pointer', transition: 'border-color .15s' }}>
+                <div style={{ height: 130, background: 'repeating-linear-gradient(45deg, var(--md-sc-high) 0 10px, var(--md-sc) 10px 20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-on-surface-variant)' }}><span data-icon style={{ fontSize: 38 }}>{f.icon}</span></div>
+                <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ flex: 1, fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 7, background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)' }}>{f.type}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Calibration.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+window.Screens = window.Screens || {};
+window.Screens.Calibration = function Calibration({ notify }) {
+  const { Button, Card, SearchField } = MD;
+  const cards = [
+    { title: 'Flow Dynamics', desc: 'Calibrate pressure advance for sharp corners', icon: 'water_drop' },
+    { title: 'Flow Rate', desc: 'Tune extrusion multiplier for accurate walls', icon: 'opacity' },
+    { title: 'Max Volumetric Speed', desc: 'Find the fastest reliable flow for a filament', icon: 'speed' },
+    { title: 'Temperature Tower', desc: 'Find the ideal nozzle temperature', icon: 'thermostat' },
+    { title: 'Retraction Test', desc: 'Reduce stringing and oozing', icon: 'undo' },
+    { title: 'Vertical Fine Tuning', desc: 'Correct Z-offset and first layer', icon: 'height' },
+  ];
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'auto', background: 'var(--md-surface)', padding: '28px 32px' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
+          <div style={{ fontSize: 20, fontWeight: 700 }}>Calibration</div>
+          <div style={{ flex: 1, maxWidth: 340, margin: '0 16px' }}><SearchField placeholder="Search calibrations" /></div>
+          <div style={{ flex: 1 }} />
+          <Button variant="outlined" icon="history">History</Button>
+        </div>
+        <div style={{ fontSize: 13.5, color: 'var(--md-on-surface-variant)', marginBottom: 20 }}>Fine-tune your printer and filament for the best possible print quality.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 16 }}>
+          {cards.map(c => (
+            <Card key={c.title} interactive style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: 18, textAlign: 'left' }}
+              onClick={() => notify('Starting ' + c.title + ' calibration…', c.icon)}>
+              <div style={{ width: 46, height: 46, flex: '0 0 auto', borderRadius: 14, background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24 }}>{c.icon}</span></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 600 }}>{c.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--md-on-surface-variant)', marginTop: 3, lineHeight: 1.4 }}>{c.desc}</div>
+              </div>
+              <span data-icon style={{ fontSize: 22, color: 'var(--md-primary)' }}>arrow_forward</span>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Filament.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+window.Screens = window.Screens || {};
+window.FILAMENT_ROWS = [
+  { name: 'Bambu PLA Basic', vendor: 'Bambu Lab', type: 'PLA', nozzle: '220', bed: '55', color: '#111418' },
+  { name: 'Bambu PLA Matte', vendor: 'Bambu Lab', type: 'PLA', nozzle: '210', bed: '55', color: '#e11d2e' },
+  { name: 'Bambu PETG HF', vendor: 'Bambu Lab', type: 'PETG', nozzle: '255', bed: '70', color: '#1560d4' },
+  { name: 'Bambu ABS', vendor: 'Bambu Lab', type: 'ABS', nozzle: '270', bed: '90', color: '#f5c518' },
+  { name: 'Generic TPU', vendor: 'Generic', type: 'TPU', nozzle: '230', bed: '35', color: '#16a34a' },
+  { name: 'PolyTerra PLA', vendor: 'Polymaker', type: 'PLA', nozzle: '215', bed: '55', color: '#7c5cff' },
+];
+window.Screens.Filament = function Filament({ notify, openDialog }) {
+  const { Button, IconButton, SearchField, Badge } = MD;
+  const cols = '2.4fr 1.4fr 1fr 1fr 1fr 84px';
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'auto', background: 'var(--md-surface)', padding: '24px 28px' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <div style={{ fontSize: 20, fontWeight: 700, flex: '0 0 auto' }}>Filament Manager</div>
+          <div style={{ flex: 1, maxWidth: 380 }}><SearchField placeholder="Search filaments" /></div>
+          <div style={{ flex: 1 }} />
+          <Button variant="outlined" icon="file_download" onClick={() => openDialog('export')}>Export all</Button>
+          <Button variant="outlined" icon="download" onClick={() => notify('Import filament presets', 'download')}>Import</Button>
+          <Button variant="filled" icon="add" onClick={() => openDialog('addfil')}>New filament</Button>
+        </div>
+        <div style={{ border: '1px solid var(--md-outline-variant)', borderRadius: 'var(--radius)', overflow: 'hidden', background: 'var(--md-sc-low)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 12, padding: '12px 16px', background: 'var(--md-sc-high)', fontSize: 11, fontWeight: 700, letterSpacing: '.4px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)' }}>
+            <span>Filament</span><span>Vendor</span><span>Type</span><span>Nozzle °C</span><span>Bed °C</span><span />
+          </div>
+          {window.FILAMENT_ROWS.map(f => (
+            <div key={f.name + f.color} style={{ display: 'grid', gridTemplateColumns: cols, gap: 12, padding: '12px 16px', alignItems: 'center', borderTop: '1px solid var(--md-outline-variant)', fontSize: 13 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <span style={{ width: 22, height: 22, flex: '0 0 auto', borderRadius: 6, background: f.color, border: '1px solid rgba(0,0,0,.25)' }} />
+                <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+              </span>
+              <span style={{ color: 'var(--md-on-surface-variant)' }}>{f.vendor}</span>
+              <span><Badge>{f.type}</Badge></span>
+              <span style={{ fontFamily: 'var(--md-font-mono)' }}>{f.nozzle}</span>
+              <span style={{ fontFamily: 'var(--md-font-mono)' }}>{f.bed}</span>
+              <span style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <IconButton icon="file_download" size={32} title="Export filament" onClick={() => notify('Exported ' + f.name, 'file_download')} />
+                <IconButton icon="more_vert" size={32} />
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Settings.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+const { useState: useSetState } = React;
+window.Screens = window.Screens || {};
+window.Screens.Settings = function Settings({ notify, theme, setTheme, density, setDensity, accent, setAccent, seeds }) {
+  const { SegmentedControl, Switch, SearchField, NavItem } = MD;
+  const [nav, setNav] = useSetState('Appearance');
+  const [prefs, setPrefs] = useSetState({ autoArrange: true, autoCommit: true, autoSaveToast: false, bundleRepo: true, hints: false, telemetry: false });
+  const navItems = [
+    ['palette', 'Appearance'], ['settings', 'General'], ['tune', 'Presets'], ['wifi', 'Network'], ['account_tree', 'Version control'], ['info', 'About'],
+  ];
+  const prefDefs = [
+    ['autoArrange', 'Auto-arrange on import', 'Automatically arrange new objects on the plate'],
+    ['autoCommit', 'Auto-commit every edit to Git', 'Save each undoable change to the project repository'],
+    ['autoSaveToast', 'Show “auto-saved” notifications', 'Pop a snackbar each time an edit is committed'],
+    ['bundleRepo', 'Bundle version history into .3mf', 'Include the local Git repo when saving a project'],
+    ['hints', 'Show daily tips', 'Display slicing tips on launch'],
+    ['telemetry', 'Share anonymous usage data', 'Help improve Bambu Studio'],
+  ];
+  return (
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', background: 'var(--md-surface)' }}>
+      <div style={{ width: 'var(--md-settings-nav-w)', flex: '0 0 auto', borderRight: '1px solid var(--md-outline-variant)', background: 'var(--md-sc-low)', padding: '16px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {navItems.map(n => <NavItem key={n[1]} icon={n[0]} label={n[1]} selected={nav === n[1]} onClick={() => setNav(n[1])} />)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '28px 32px' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 26 }}>
+          <SearchField placeholder="Search settings" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Appearance</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 150, fontSize: 13.5 }}>Theme</div>
+              <SegmentedControl size="md" grow={false} value={theme} onChange={setTheme} options={[{ id: 'light', label: 'Light', icon: 'light_mode' }, { id: 'dark', label: 'Dark', icon: 'dark_mode' }]} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 150, fontSize: 13.5 }}>Density</div>
+              <SegmentedControl size="md" grow={false} value={density} onChange={setDensity} options={[{ id: 'comfortable', label: 'Comfortable' }, { id: 'compact', label: 'Compact' }]} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 150, fontSize: 13.5 }}>Accent color</div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                {seeds.map(s => (
+                  <button key={s[0]} title={s[1]} onClick={() => setAccent(s[0])}
+                    style={{ width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', background: s[0], border: accent === s[0] ? '2px solid var(--md-on-surface)' : '2px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                    <span data-icon style={{ fontSize: 17, opacity: accent === s[0] ? 1 : 0 }}>check</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div style={{ height: 1, background: 'var(--md-outline-variant)' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>General</div>
+            {prefDefs.map(p => (
+              <div key={p[0]} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '10px 0' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 500 }}>{p[1]}</div>
+                  <div style={{ fontSize: 12, color: 'var(--md-on-surface-variant)', marginTop: 1 }}>{p[2]}</div>
+                </div>
+                <Switch checked={prefs[p[0]]} onChange={v => { setPrefs({ ...prefs, [p[0]]: v }); notify(p[1] + (v ? ' — on' : ' — off'), 'settings'); }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- Overlays.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+const { useState: useOvState } = React;
+window.Overlays = {};
+
+const HISTORY = [
+  { hash: 'a1f9c02', full: 'a1f9c02e8b34', message: 'Set sparse infill density → 15%', icon: 'tune', time: '2 min ago', author: 'You', files: 'process_settings.json', diff: [{ label: 'Sparse infill density', from: '10%', to: '15%' }, { label: 'Infill pattern', from: 'Gyroid', to: 'Grid' }] },
+  { hash: '7d3e5b8', full: '7d3e5b8a1c90', message: 'Rotate 3DBenchy 45° around Z', icon: 'rotate_right', time: '5 min ago', author: 'You', files: '3DBenchy.stl', diff: [{ label: 'Rotation Z', from: '0°', to: '45°' }] },
+  { hash: 'e0b41aa', full: 'e0b41aa77d12', message: 'Scale 3DBenchy 100% → 120%', icon: 'open_in_full', time: '6 min ago', author: 'You', files: '3DBenchy.stl', diff: [{ label: 'Scale', from: '100%', to: '120%' }, { label: 'Size Z', from: '48.0mm', to: '57.6mm' }] },
+  { hash: 'c92f7d1', full: 'c92f7d10ab55', message: 'Move 3DBenchy to plate center', icon: 'open_with', time: '9 min ago', author: 'You', files: '3DBenchy.stl', diff: [{ label: 'Position X', from: '96.0mm', to: '128.0mm' }, { label: 'Position Y', from: '110.0mm', to: '128.0mm' }] },
+  { hash: '4b8a1f0', full: '4b8a1f0d3e77', message: 'Add 3DBenchy.stl', icon: 'add', time: '12 min ago', author: 'You', files: '3DBenchy.stl, project.json', diff: [{ label: 'Objects', from: '0', to: '1' }, { label: 'Faces', from: '—', to: '15,842' }] },
+  { hash: '0000000', full: '000000000000', message: 'Initialize project repository', icon: 'flag', time: '12 min ago', author: 'Bambu Studio', files: 'project.3mf', diff: [{ label: 'Repository', from: '—', to: 'created' }] },
+];
+
+window.Overlays.HistoryDrawer = function HistoryDrawer({ onClose, notify }) {
+  const [sel, setSel] = useOvState('a1f9c02');
+  const { IconButton, SearchField } = MD;
+  return (
+    <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 55, background: 'var(--md-scrim)', animation: 'scrimin .2s' }}>
+      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 'var(--md-history-drawer-w)', maxWidth: '92vw', background: 'var(--md-sc)', borderLeft: '1px solid var(--md-outline-variant)', boxShadow: '-8px 0 30px var(--md-shadow)', display: 'flex', flexDirection: 'column', animation: 'mdfade .22s ease' }}>
+        <div style={{ padding: '18px 18px 14px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--md-outline-variant)' }}>
+          <span data-icon style={{ fontSize: 22, color: 'var(--md-primary)' }}>account_tree</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>Version history</div>
+            <div style={{ fontSize: 11.5, color: 'var(--md-on-surface-variant)', fontFamily: 'var(--md-font-mono)' }}>main · {HISTORY.length} commits</div>
+          </div>
+          <IconButton icon="close" onClick={onClose} />
+        </div>
+        <div style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', fontSize: 12 }}>
+          <span data-icon style={{ fontSize: 18 }}>bolt</span> Auto-commit is on — every edit is saved automatically.
+        </div>
+        <div style={{ padding: '12px 18px 4px' }}><SearchField placeholder="Search commits" /></div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+          {HISTORY.map(h => {
+            const on = sel === h.hash;
+            return (
+              <div key={h.hash}>
+                <button onClick={() => setSel(on ? null : h.hash)} style={{ width: '100%', textAlign: 'left', display: 'flex', gap: 12, padding: '10px 18px', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '0 0 auto' }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: on ? 'var(--md-primary)' : 'var(--md-sc-highest)', color: on ? 'var(--md-on-primary)' : 'var(--md-on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 17 }}>{h.icon}</span></div>
+                    <div style={{ width: 2, flex: 1, background: 'var(--md-outline-variant)', marginTop: 2, minHeight: 8 }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0, paddingBottom: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--md-on-surface)' }}>{h.message}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                      <span style={{ fontSize: 11, fontFamily: 'var(--md-font-mono)', color: 'var(--md-primary)' }}>#{h.hash}</span>
+                      <span style={{ fontSize: 11, color: 'var(--md-on-surface-variant)' }}>{h.time}</span>
+                    </div>
+                  </div>
+                  <span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)', flex: '0 0 auto' }}>{on ? 'expand_less' : 'expand_more'}</span>
+                </button>
+                {on && (
+                  <div style={{ margin: '0 18px 12px 48px', background: 'var(--md-sc-low)', border: '1px solid var(--md-outline-variant)', borderRadius: 14, overflow: 'hidden', animation: 'mdfade .16s ease' }}>
+                    <div style={{ height: 118, background: 'radial-gradient(120% 100% at 50% 0%, var(--md-surface-bright), var(--md-surface-dim))', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--md-outline-variant)' }}>
+                      <div style={{ position: 'relative', width: 92, height: 100, filter: 'drop-shadow(0 8px 8px rgba(0,0,0,.3))' }}>
+                        <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--md-primary) 84%, #fff)', clipPath: 'polygon(50% 2%, 98% 27%, 50% 52%, 2% 27%)' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--md-primary) 60%, #000 8%)', clipPath: 'polygon(2% 27%, 50% 52%, 50% 98%, 2% 73%)' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb, var(--md-primary) 42%, #000 22%)', clipPath: 'polygon(98% 27%, 98% 73%, 50% 98%, 50% 52%)' }} />
+                      </div>
+                      <div style={{ position: 'absolute', left: 10, top: 10, fontSize: 10, fontFamily: 'var(--md-font-mono)', color: 'var(--md-on-surface-variant)', background: 'var(--md-sc)', padding: '2px 7px', borderRadius: 8 }}>Plate 1 · snapshot</div>
+                    </div>
+                    <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: 'var(--md-on-surface-variant)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span data-icon style={{ fontSize: 14 }}>person</span> {h.author} · {h.time}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span data-icon style={{ fontSize: 14 }}>tag</span> <span style={{ fontFamily: 'var(--md-font-mono)' }}>{h.full}</span></div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span data-icon style={{ fontSize: 14 }}>description</span> {h.files}</div>
+                      </div>
+                      <div style={{ height: 1, background: 'var(--md-outline-variant)' }} />
+                      <div style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: '.4px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)' }}>Changes in this commit</div>
+                      {h.diff.map(d => (
+                        <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                          <span style={{ flex: 1, minWidth: 0, color: 'var(--md-on-surface)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.label}</span>
+                          <span style={{ fontFamily: 'var(--md-font-mono)', color: 'var(--md-error)', textDecoration: 'line-through', opacity: .75 }}>{d.from}</span>
+                          <span data-icon style={{ fontSize: 15, color: 'var(--md-on-surface-variant)' }}>arrow_forward</span>
+                          <span style={{ fontFamily: 'var(--md-font-mono)', color: 'var(--md-primary)' }}>{d.to}</span>
+                        </div>
+                      ))}
+                      <button onClick={() => notify('Restored project to #' + h.hash, 'history')} style={{ height: 36, marginTop: 2, border: 'none', borderRadius: 18, background: 'var(--md-secondary-container)', color: 'var(--md-on-secondary-container)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
+                        <span data-icon style={{ fontSize: 16 }}>restore</span> Restore this version</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ padding: '14px 18px', borderTop: '1px solid var(--md-outline-variant)', fontSize: 11.5, color: 'var(--md-on-surface-variant)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span data-icon style={{ fontSize: 16 }}>save</span> This repository is bundled into the .3mf when you save.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+window.Overlays.ExportDialog = function ExportDialog({ onClose, notify }) {
+  const rows = window.FILAMENT_ROWS;
+  const [q, setQ] = useOvState('');
+  const [type, setType] = useOvState('All');
+  const [vendor, setVendor] = useOvState('All');
+  const [format, setFormat] = useOvState('.bbsflmt');
+  const [sel, setSel] = useOvState(() => Object.fromEntries(rows.map(r => [r.name, true])));
+  const { Chip, IconButton, SearchField, Badge, Button, Checkbox } = MD;
+  let filtered = rows.filter(r => (type === 'All' || r.type === type) && (vendor === 'All' || r.vendor === vendor));
+  if (q) { try { const re = new RegExp(q, 'gi'); filtered = filtered.filter(r => re.test(r.name)); } catch (e) { filtered = filtered.filter(r => r.name.toLowerCase().includes(q.toLowerCase())); } }
+  const count = filtered.filter(r => sel[r.name]).length;
+  const allOn = count === filtered.length && filtered.length > 0;
+  const label = (t) => <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.4px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)', width: 56 }}>{t}</span>;
+  return (
+    <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'var(--md-scrim)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'scrimin .2s' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 580, maxWidth: '94vw', maxHeight: '88vh', background: 'var(--md-sc)', borderRadius: 28, boxShadow: 'var(--md-elev-5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'mdfade .2s' }}>
+        <div style={{ padding: '22px 24px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24 }}>file_download</span></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 18, fontWeight: 600 }}>Export filaments</div><div style={{ fontSize: 12.5, color: 'var(--md-on-surface-variant)' }}>Filter, select and bulk-export presets</div></div>
+          <IconButton icon="close" onClick={onClose} />
+        </div>
+        <div style={{ padding: '0 24px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <SearchField placeholder="Name containing… (supports regex)" onQuery={setQ} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{label('Type')}
+            {['All', 'PLA', 'PETG', 'ABS', 'TPU'].map(t => <Chip key={t} label={t} selected={type === t} onClick={() => setType(t)} />)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{label('Vendor')}
+            {['All', 'Bambu Lab', 'Generic', 'Polymaker'].map(t => <Chip key={t} label={t} tonal selected={vendor === t} onClick={() => setVendor(t)} />)}</div>
+        </div>
+        <div style={{ padding: '8px 24px', display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid var(--md-outline-variant)', background: 'var(--md-sc-low)' }}>
+          <Checkbox checked={allOn} label="Select all" onChange={() => { const next = { ...sel }; filtered.forEach(r => next[r.name] = !allOn); setSel(next); }} />
+          <div style={{ flex: 1 }} />
+          <span style={{ fontSize: 12, color: 'var(--md-on-surface-variant)', fontFamily: 'var(--md-font-mono)' }}>{count} of {filtered.length} selected</span>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '6px 12px', minHeight: 120 }}>
+          {filtered.map(r => (
+            <button key={r.name} onClick={() => setSel({ ...sel, [r.name]: !sel[r.name] })}
+              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', border: 'none', borderRadius: 12, cursor: 'pointer', background: sel[r.name] ? 'var(--md-secondary-container)' : 'transparent' }}>
+              <span data-icon style={{ fontSize: 22, color: sel[r.name] ? 'var(--md-primary)' : 'var(--md-on-surface-variant)' }}>{sel[r.name] ? 'check_box' : 'check_box_outline_blank'}</span>
+              <span style={{ width: 22, height: 22, borderRadius: 6, background: r.color, border: '1px solid rgba(0,0,0,.25)', flex: '0 0 auto' }} />
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--md-on-surface)' }}>{r.name}</span>
+              <span style={{ fontSize: 11.5, color: 'var(--md-on-surface-variant)', width: 80 }}>{r.vendor}</span>
+              <Badge>{r.type}</Badge>
+              <span style={{ fontFamily: 'var(--md-font-mono)', fontSize: 11.5, color: 'var(--md-on-surface-variant)', width: 78, textAlign: 'right' }}>{r.nozzle}/{r.bed}°</span>
+            </button>
+          ))}
+          {filtered.length === 0 && <div style={{ padding: '36px 12px', textAlign: 'center', color: 'var(--md-on-surface-variant)', fontSize: 13 }}>No filaments match your filter.</div>}
+        </div>
+        <div style={{ padding: '14px 24px', borderTop: '1px solid var(--md-outline-variant)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.4px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)' }}>Format</span>
+          {['.bbsflmt', 'JSON', 'ZIP bundle'].map(t => <Chip key={t} label={t} mono selected={format === t} onClick={() => setFormat(t)} />)}
+          <div style={{ flex: 1 }} />
+          <Button variant="text" onClick={onClose}>Cancel</Button>
+          <Button variant="filled" icon="file_download" onClick={() => { notify('Exported ' + count + ' filament presets as ' + format, 'file_download'); onClose(); }}>Export {count}</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+window.Overlays.SendDialog = function SendDialog({ onClose, notify }) {
+  const { Button, IconButton, Switch } = MD;
+  const [opts, setOpts] = useOvState({ Timelapse: true, 'Bed leveling': true, 'Flow dynamics calibration': false });
+  const icons = { Timelapse: 'videocam', 'Bed leveling': 'grid_on', 'Flow dynamics calibration': 'tune' };
+  return (
+    <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'var(--md-scrim)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'scrimin .2s' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 460, maxWidth: '92vw', background: 'var(--md-sc)', borderRadius: 28, boxShadow: 'var(--md-elev-5)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16, animation: 'mdfade .2s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24 }}>print</span></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 18, fontWeight: 600 }}>Print Plate 1</div><div style={{ fontSize: 12.5, color: 'var(--md-on-surface-variant)' }}>Send to printer over the network</div></div>
+          <IconButton icon="close" onClick={onClose} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--md-sc-highest)', borderRadius: 16 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--md-sc-lowest)', color: 'var(--md-on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24 }}>print</span></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 600 }}>Bambu Lab X1 Carbon</div><div style={{ fontSize: 11.5, color: 'var(--md-primary)' }}>● Connected · Idle</div></div>
+          <span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)' }}>expand_more</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)' }}>AMS mapping</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {window.KIT_FILAMENTS.map(f => (
+              <div key={f.slot} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 4px', background: 'var(--md-sc-highest)', borderRadius: 10 }}>
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: f.color, border: '1px solid rgba(0,0,0,.25)' }} />
+                <span style={{ fontSize: 9.5, color: 'var(--md-on-surface-variant)' }}>{f.type}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {Object.keys(opts).map(o => (
+            <div key={o} style={{ display: 'flex', alignItems: 'center', gap: 10, height: 40 }}>
+              <span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)' }}>{icons[o]}</span>
+              <span style={{ flex: 1, fontSize: 13 }}>{o}</span>
+              <Switch checked={opts[o]} onChange={v => setOpts({ ...opts, [o]: v })} style={{ transform: 'scale(.91)' }} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+          <Button variant="text" size="lg" onClick={onClose}>Cancel</Button>
+          <Button variant="filled" size="lg" icon="send" style={{ flex: 1 }} onClick={() => { notify('Plate 1 sent to X1 Carbon', 'send'); onClose(); }}>Send print</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+window.Overlays.AddFilamentDialog = function AddFilamentDialog({ onClose, notify }) {
+  const { Button, IconButton, SearchField } = MD;
+  const [q, setQ] = useOvState('');
+  const [hov, setHov] = useOvState(null);
+  const rows = window.FILAMENT_ROWS.filter(r => !q || r.name.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'var(--md-scrim)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'scrimin .2s' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 520, maxWidth: '92vw', maxHeight: '86vh', background: 'var(--md-sc)', borderRadius: 28, boxShadow: 'var(--md-elev-5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'mdfade .2s' }}>
+        <div style={{ padding: '22px 24px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24 }}>palette</span></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 18, fontWeight: 600 }}>Add filament</div><div style={{ fontSize: 12.5, color: 'var(--md-on-surface-variant)' }}>Pick a preset to add to this project</div></div>
+          <IconButton icon="close" onClose={onClose} onClick={onClose} />
+        </div>
+        <div style={{ padding: '0 24px 12px' }}><SearchField placeholder="Search filament presets" onQuery={setQ} /></div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignContent: 'start' }}>
+          {rows.map(f => (
+            <div key={f.name + f.color} onMouseEnter={() => setHov(f.name)} onMouseLeave={() => setHov(null)}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: hov === f.name ? 'var(--md-sc-high)' : 'var(--md-sc-low)', border: '1px solid ' + (hov === f.name ? 'var(--md-primary)' : 'var(--md-outline-variant)'), borderRadius: 14, cursor: 'pointer' }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: f.color, border: '1px solid rgba(0,0,0,.25)', flex: '0 0 auto' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--md-on-surface-variant)' }}>{f.vendor} · {f.type}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ padding: '14px 24px', borderTop: '1px solid var(--md-outline-variant)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <Button variant="text" size="lg" onClick={onClose}>Cancel</Button>
+          <Button variant="filled" size="lg" icon="add" onClick={() => { notify('Added filament to project', 'add'); onClose(); }}>Add to project</Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+</script>
+<script type="text/babel">
+// ---- App.jsx (inlined by assembler; edit the .jsx and re-assemble) ----
+const { useState } = React;
+
+const TABS = [
+  { id: 'home', label: 'Home', icon: 'home' }, { id: 'prepare', label: 'Prepare', icon: 'view_in_ar' },
+  { id: 'preview', label: 'Preview', icon: 'layers' }, { id: 'device', label: 'Device', icon: 'cast' },
+  { id: 'multi', label: 'Multi-device', icon: 'devices' }, { id: 'project', label: 'Project', icon: 'folder_open' },
+  { id: 'calibration', label: 'Calibration', icon: 'build' }, { id: 'filament', label: 'Filament', icon: 'palette' },
+  { id: 'settings', label: 'Settings', icon: 'settings' },
+];
+const SEEDS = [['#22c55e','Green'],['#7c5cff','Purple'],['#14b8a6','Teal'],['#3b82f6','Blue'],['#f97316','Orange'],['#ec4899','Pink']];
+
+function hexToHsl(hex){let h=hex.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const r=parseInt(h.slice(0,2),16)/255,g=parseInt(h.slice(2,4),16)/255,b=parseInt(h.slice(4,6),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let hu=0,s=0,l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)hu=(g-b)/d+(g<b?6:0);else if(mx===g)hu=(b-r)/d+2;else hu=(r-g)/d+4;hu/=6;}return{h:Math.round(hu*360),s:Math.round(s*100),l:Math.round(l*100)};}
+// accentVars() — the design source's seed→roles regeneration (see readme.md)
+function accentVars(seed, theme){
+  if(seed==='#22c55e') return {}; // brand default: keep the hand-tuned token values
+  const c=hexToHsl(seed); const h=c.h, s=Math.max(32,Math.min(92,c.s));
+  const H=l=>'hsl('+h+' '+s+'% '+l+'%)'; const Hs=(sat,l)=>'hsl('+h+' '+sat+'% '+l+'%)';
+  if(theme==='dark') return {'--md-primary':H(76),'--md-on-primary':H(16),'--md-primary-container':Hs(Math.round(s*0.9),28),'--md-on-primary-container':H(90),'--md-accent':H(70),'--md-inverse-primary':H(38),'--md-secondary-container':Hs(Math.round(s*0.35),26),'--md-on-secondary-container':H(88)};
+  return {'--md-primary':H(36),'--md-on-primary':'hsl(0 0% 100%)','--md-primary-container':Hs(Math.round(s*0.7),88),'--md-on-primary-container':H(12),'--md-accent':H(38),'--md-inverse-primary':H(76),'--md-secondary-container':Hs(Math.round(s*0.45),90),'--md-on-secondary-container':H(20)};
+}
+
+function App() {
+  const [view, setView] = useState('prepare');
+  const [theme, setTheme] = useState('dark');
+  const [density, setDensity] = useState('comfortable');
+  const [accent, setAccent] = useState('#22c55e');
+  const [pop, setPop] = useState(false);
+  const [dialog, setDialog] = useState(null);
+  const [history, setHistory] = useState(false);
+  const [snacks, setSnacks] = useState([]);
+  const [hovTab, setHovTab] = useState(null);
+  const notify = (message, icon) => {
+    const id = Date.now() + Math.random();
+    setSnacks(s => [...s, { id, message, icon: icon || 'check_circle' }].slice(-3));
+    setTimeout(() => setSnacks(s => s.filter(x => x.id !== id)), 4000);
+  };
+  const { IconButton, SegmentedControl } = MD;
+  const Screen = window.Screens[view.charAt(0).toUpperCase() + view.slice(1)];
+  const screenProps = { go: setView, notify, openDialog: setDialog, openHistory: () => setHistory(true), theme, setTheme, density, setDensity, accent, setAccent, seeds: SEEDS };
+  return (
+    <div data-theme={theme} data-density={density}
+      style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', fontFamily: 'var(--md-font)', fontSize: 'var(--fs)',
+        background: 'var(--md-surface)', color: 'var(--md-on-surface)', overflow: 'hidden', WebkitFontSmoothing: 'antialiased', ...accentVars(accent, theme) }}>
+      {/* title bar */}
+      <div style={{ height: 'var(--md-topbar-h)', flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 6, padding: '0 6px 0 12px', background: 'var(--md-sc-low)', borderBottom: '1px solid var(--md-outline-variant)' }}>
+        <div style={{ width: 26, height: 26, borderRadius: 8, background: 'var(--md-primary)', color: 'var(--md-on-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--md-elev-1)' }}>
+          <span data-icon style={{ fontSize: 18, fontVariationSettings: "'FILL' 1" }}>deployed_code</span>
+        </div>
+        <div style={{ fontWeight: 500, fontSize: 14, marginRight: 10, letterSpacing: '.1px' }}>Bambu Studio</div>
+        {['File', 'Edit', 'View', 'Objects', 'Help'].map(m => (
+          <button key={m} onClick={() => notify(m + ' menu', 'menu')} style={{ height: 30, padding: '0 10px', border: 'none', background: 'transparent', color: 'var(--md-on-surface-variant)', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>{m}</button>
+        ))}
+        <div style={{ flex: 1, height: '100%' }} />
+        <button onClick={() => setHistory(true)} title="Version history — every edit is auto-saved to this project's Git repo"
+          style={{ display: 'flex', alignItems: 'center', gap: 7, height: 30, padding: '0 12px', marginRight: 6, border: 'none', borderRadius: 16, background: 'var(--md-sc)', color: 'var(--md-on-surface-variant)', cursor: 'pointer', fontSize: 12 }}>
+          <span data-icon style={{ fontSize: 16, color: 'var(--md-primary)' }}>account_tree</span>
+          <span style={{ fontFamily: 'var(--md-font-mono)' }}>main</span>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--md-primary)', animation: 'pulse 2s infinite' }} />
+          <span style={{ fontFamily: 'var(--md-font-mono)' }}>#a1f9c02</span>
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginRight: 6, padding: '0 6px', height: 30, borderRadius: 20, background: 'var(--md-sc)', color: 'var(--md-on-surface-variant)', fontSize: 12.5 }}>
+          <span data-icon style={{ fontSize: 16 }}>description</span>
+          <span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>3DBenchy.3mf</span>
+        </div>
+        <IconButton icon="palette" size={34} iconSize={20} title="Appearance" onClick={() => setPop(!pop)} />
+        <div style={{ width: 1, height: 22, background: 'var(--md-outline-variant)', margin: '0 4px' }} />
+        <IconButton icon="remove" shape="square" size={32} iconSize={18} />
+        <IconButton icon="crop_square" shape="square" size={32} iconSize={15} />
+        <IconButton icon="close" shape="square" size={32} iconSize={18} danger />
+      </div>
+      {/* tab bar */}
+      <div style={{ height: 'var(--md-navbar-h)', flex: '0 0 auto', display: 'flex', alignItems: 'stretch', padding: '0 8px', gap: 2, background: 'var(--md-surface)', borderBottom: '1px solid var(--md-outline-variant)', overflowX: 'auto' }}>
+        {TABS.map(t => {
+          const on = t.id === view;
+          return (
+            <button key={t.id} data-screen-label={t.label} onClick={() => setView(t.id)} onMouseEnter={() => setHovTab(t.id)} onMouseLeave={() => setHovTab(null)}
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                background: hovTab === t.id ? 'var(--md-sc-low)' : 'transparent', color: on ? 'var(--md-primary)' : 'var(--md-on-surface-variant)', fontSize: 13.5, fontWeight: on ? 600 : 400 }}>
+              <span data-icon style={{ fontSize: 20, fontVariationSettings: on ? "'FILL' 1" : "'FILL' 0" }}>{t.icon}</span>
+              <span>{t.label}</span>
+              <div style={{ position: 'absolute', left: 12, right: 12, bottom: 0, height: 3, borderRadius: '3px 3px 0 0', background: on ? 'var(--md-primary)' : 'transparent' }} />
+            </button>
+          );
+        })}
+      </div>
+      {/* body */}
+      <div style={{ flex: '1 1 auto', position: 'relative', overflow: 'hidden', background: 'var(--md-surface-dim)' }}>
+        <Screen {...screenProps} />
+      </div>
+      {/* appearance popover */}
+      {pop && (
+        <div onClick={() => setPop(false)} style={{ position: 'absolute', inset: 0, zIndex: 40 }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 52, right: 12, width: 'var(--md-popover-w)', background: 'var(--md-sc)', border: '1px solid var(--md-outline-variant)', borderRadius: 24, boxShadow: 'var(--md-elev-4)', padding: 18, display: 'flex', flexDirection: 'column', gap: 16, animation: 'mdfade .18s ease' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}><span data-icon style={{ fontSize: 20 }}>palette</span> Appearance</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--md-on-surface-variant)' }}>Theme</div>
+              <SegmentedControl size="md" value={theme} onChange={setTheme} options={[{ id: 'light', label: 'Light', icon: 'light_mode' }, { id: 'dark', label: 'Dark', icon: 'dark_mode' }]} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--md-on-surface-variant)' }}>Density</div>
+              <SegmentedControl size="md" value={density} onChange={setDensity} options={[{ id: 'comfortable', label: 'Comfortable' }, { id: 'compact', label: 'Compact' }]} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--md-on-surface-variant)' }}>Accent color</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {SEEDS.map(s => (
+                  <button key={s[0]} title={s[1]} onClick={() => setAccent(s[0])}
+                    style={{ width: 34, height: 34, borderRadius: '50%', cursor: 'pointer', background: s[0], border: accent === s[0] ? '2px solid var(--md-on-surface)' : '2px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                    <span data-icon style={{ fontSize: 18, opacity: accent === s[0] ? 1 : 0 }}>check</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* overlays */}
+      {history && <window.Overlays.HistoryDrawer onClose={() => setHistory(false)} notify={notify} />}
+      {dialog === 'export' && <window.Overlays.ExportDialog onClose={() => setDialog(null)} notify={notify} />}
+      {dialog === 'send' && <window.Overlays.SendDialog onClose={() => setDialog(null)} notify={notify} />}
+      {dialog === 'addfil' && <window.Overlays.AddFilamentDialog onClose={() => setDialog(null)} notify={notify} />}
+      {/* snackbars */}
+      <div style={{ position: 'absolute', left: '50%', bottom: 22, transform: 'translateX(-50%)', zIndex: 90, display: 'flex', flexDirection: 'column-reverse', gap: 10, pointerEvents: 'none', width: 'min(560px,92vw)' }}>
+        {snacks.map(n => (
+          <div key={n.id} style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 10px 12px 16px', background: 'var(--md-inverse-surface)', color: 'var(--md-inverse-on)', borderRadius: 12, boxShadow: 'var(--md-elev-4)', animation: 'mdfade .2s ease' }}>
+            <span data-icon style={{ fontSize: 20, color: 'var(--md-inverse-primary)' }}>{n.icon}</span>
+            <span style={{ flex: 1, fontSize: 13 }}>{n.message}</span>
+            <button onClick={() => setSnacks(s => s.filter(x => x.id !== n.id))} style={{ width: 28, height: 28, border: 'none', background: 'transparent', color: 'var(--md-inverse-on)', borderRadius: '50%', cursor: 'pointer', opacity: .7 }}><span data-icon style={{ fontSize: 16 }}>close</span></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+
+</script>
+</body>
+</html>

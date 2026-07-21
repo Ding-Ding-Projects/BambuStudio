@@ -1,0 +1,21 @@
+/* Type + icon font. Roboto / Roboto Mono / Material Symbols Outlined,
+   exactly as loaded by ui-md3 (Google Fonts). */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-25..0&display=swap');
+:root{
+  --md-font:'Roboto',system-ui,sans-serif;
+  --md-font-mono:'Roboto Mono',monospace;
+  /* Type scale as used across the app (px / weight) */
+  --md-type-headline:23px;      /* 700 — hero greeting */
+  --md-type-page-title:20px;    /* 700 — page titles */
+  --md-type-dialog-title:18px;  /* 600 — dialog titles */
+  --md-type-section-title:16px; /* 600..700 — content section titles */
+  --md-type-card-title:15px;    /* 600 — card titles */
+  --md-type-body:14px;          /* 400..600 — base body (comfortable) */
+  --md-type-body-s:13.5px;      /* row primary text, buttons */
+  --md-type-body-xs:12.5px;     /* secondary rows, controls */
+  --md-type-caption:11.5px;     /* metadata */
+  --md-type-label:11px;         /* 600, uppercase, +.6px — section headers, badges */
+  --md-type-micro:10.5px;       /* field captions */
+}
+[data-icon]{ font-family:'Material Symbols Outlined'; font-weight:400; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; white-space:nowrap; word-wrap:normal; direction:ltr; -webkit-font-feature-settings:'liga'; -webkit-font-smoothing:antialiased; user-select:none; }

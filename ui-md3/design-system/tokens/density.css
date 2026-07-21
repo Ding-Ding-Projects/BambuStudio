@@ -1,0 +1,19 @@
+/* Density + fixed layout metrics — MD3::Metrics (MD3Tokens.hpp).
+   Select with data-density="comfortable|compact"; comfortable is default. */
+:root, [data-density="comfortable"]{ --gap:12px; --pad:16px; --row:40px; --fs:14px; --rail:60px; --sidebar:344px; --radius:16px; --radius-s:10px; }
+[data-density="compact"]{ --gap:7px; --pad:10px; --row:32px; --fs:13px; --rail:50px; --sidebar:312px; --radius:12px; --radius-s:8px; }
+:root{
+  /* Fixed chrome heights (density-independent) */
+  --md-topbar-h:46px;          /* title bar */
+  --md-navbar-h:52px;          /* workspace tab bar */
+  --md-prepare-actions-h:66px; /* Prepare bottom bar (plates + slice/print) */
+  --md-preview-timeline-h:58px;/* Preview move timeline */
+  /* Fixed panel widths */
+  --md-settings-nav-w:230px; --md-history-drawer-w:410px; --md-popover-w:300px;
+  /* Elevation (all tinted by --md-shadow) */
+  --md-elev-1:0 1px 2px var(--md-shadow);
+  --md-elev-2:0 2px 6px var(--md-shadow);
+  --md-elev-3:0 3px 10px var(--md-shadow);
+  --md-elev-4:0 8px 28px var(--md-shadow);
+  --md-elev-5:0 16px 44px var(--md-shadow);
+}
