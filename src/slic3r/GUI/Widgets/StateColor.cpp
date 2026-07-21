@@ -60,6 +60,10 @@ wxColour StateColor::semantic(MD3::Role role) { return MD3::resolve(role, gDarkM
 
 wxColour StateColor::semantic(MD3::Role role, MD3::ColorScheme scheme) { return MD3::resolve(role, gDarkMode, scheme); }
 
+wxColour StateColor::scrim() { return MD3::scrim(gDarkMode); }
+
+wxColour StateColor::shadowTint() { return MD3::shadowTint(gDarkMode); }
+
 inline wxColour darkModeColorFor2(wxColour const &color)
 {
     if (!gDarkMode)

@@ -3,6 +3,9 @@
 
 #include <wx/colour.h>
 
+#include <algorithm>
+#include <cmath>
+
 namespace MD3 {
 
 enum class Role
@@ -29,6 +32,9 @@ enum class Role
     ErrorContainer,
     InverseSurface,
     InverseOn,
+    OnError,
+    OnErrorContainer,
+    InversePrimary,
 };
 
 // Workspaces share the same neutral surfaces, type and error roles, while
@@ -66,6 +72,14 @@ inline const wxColour error{"#ba1a1a"};
 inline const wxColour errorContainer{"#ffdad6"};
 inline const wxColour inverseSurface{"#2f3036"};
 inline const wxColour inverseOn{"#f1f0f7"};
+inline const wxColour onError{"#ffffff"};
+inline const wxColour onErrorContainer{"#410002"};
+inline const wxColour inversePrimary{"#8bd89b"};
+
+// Overlay tints carry alpha over black. Scrim dims content behind modal
+// surfaces; shadow tints the elevation drop-shadows (see Metrics::elev*).
+inline const wxColour scrim{0, 0, 0, 82};  // rgba(0,0,0,.32)
+inline const wxColour shadow{0, 0, 0, 41}; // rgba(0,0,0,.16)
 
 } // namespace Light
 
@@ -93,8 +107,24 @@ inline const wxColour error{"#ffb4ab"};
 inline const wxColour errorContainer{"#93000a"};
 inline const wxColour inverseSurface{"#e3e2e9"};
 inline const wxColour inverseOn{"#2f3036"};
+inline const wxColour onError{"#690005"};
+inline const wxColour onErrorContainer{"#ffdad6"};
+inline const wxColour inversePrimary{"#146c2e"};
+
+// Overlay tints carry alpha over black. Dark theme deepens both tints.
+inline const wxColour scrim{0, 0, 0, 153}; // rgba(0,0,0,.6)
+inline const wxColour shadow{0, 0, 0, 128}; // rgba(0,0,0,.5)
 
 } // namespace Dark
+
+namespace Brand {
+
+// #146c2e is the approved Brand/green seed. The Brand accent role tones live
+// inline in Light::/Dark:: (resolved when scheme == ColorScheme::Brand); this
+// constant exists only for symmetric scheme metadata with Preview/Device.
+inline const wxColour seed{"#146c2e"};
+
+} // namespace Brand
 
 namespace Preview {
 
@@ -166,6 +196,9 @@ inline const wxColour &resolve(Role role, bool dark)
         case Role::ErrorContainer: return Dark::errorContainer;
         case Role::InverseSurface: return Dark::inverseSurface;
         case Role::InverseOn: return Dark::inverseOn;
+        case Role::OnError: return Dark::onError;
+        case Role::OnErrorContainer: return Dark::onErrorContainer;
+        case Role::InversePrimary: return Dark::inversePrimary;
         }
     }
 
@@ -192,6 +225,9 @@ inline const wxColour &resolve(Role role, bool dark)
     case Role::ErrorContainer: return Light::errorContainer;
     case Role::InverseSurface: return Light::inverseSurface;
     case Role::InverseOn: return Light::inverseOn;
+    case Role::OnError: return Light::onError;
+    case Role::OnErrorContainer: return Light::onErrorContainer;
+    case Role::InversePrimary: return Light::inversePrimary;
     }
 
     return Light::surface;
@@ -247,6 +283,11 @@ inline const wxColour &resolve(Role role, bool dark, ColorScheme scheme)
     }
 }
 
+// Theme-aware overlay tints. scrim() dims content behind modal surfaces;
+// shadowTint() colours every elevation drop-shadow (see Metrics::elev*).
+inline const wxColour &scrim(bool dark) { return dark ? Dark::scrim : Light::scrim; }
+inline const wxColour &shadowTint(bool dark) { return dark ? Dark::shadow : Light::shadow; }
+
 struct DensityMetrics
 {
     int gap;
@@ -259,6 +300,15 @@ struct DensityMetrics
     int small_radius;
 };
 
+// A single soft drop-shadow: offset-x and spread are always 0, and the colour
+// is the theme shadow tint (see shadowTint()). Only dy (offset-y) and blur
+// radius vary across the five-step elevation ladder.
+struct Elevation
+{
+    int dy;
+    int blur;
+};
+
 namespace Metrics {
 
 inline constexpr DensityMetrics comfortable{12, 16, 40, 14, 60, 344, 16, 10};
@@ -269,7 +319,195 @@ inline constexpr int navigation_bar_height  = 52;
 inline constexpr int prepare_actions_height = 66;
 inline constexpr int preview_timeline_height = 58;
 
+// Elevation ladder — offset-y + blur radius; colour = theme shadow tint.
+// Shadow is reserved for floating chrome; layered surfaces use container
+// steps instead.
+inline constexpr Elevation elev1{1, 2};   // logo tile
+inline constexpr Elevation elev2{2, 6};   // CTAs, chips
+inline constexpr Elevation elev3{3, 10};  // floating toolbars
+inline constexpr Elevation elev4{8, 28};  // popover, snackbar
+inline constexpr Elevation elev5{16, 44}; // dialogs
+
+// Fixed panel / dialog widths and centered-content bounds (density-independent).
+inline constexpr int settings_nav_width   = 230;
+inline constexpr int history_drawer_width = 410;
+inline constexpr int popover_width        = 300;
+inline constexpr int dialog_width_s       = 460; // Add-filament tier
+inline constexpr int dialog_width_m       = 520;
+inline constexpr int dialog_width_l       = 580; // Export/Send tier
+inline constexpr int content_max_min      = 1080;
+inline constexpr int content_max_max      = 1300;
+inline constexpr int tab_active_indicator = 3; // tab-bar active underline
+
+// Fixed shape radii (density-independent). 12/8 also appear via the compact
+// density branch, but rail/snackbar (12) and tiny controls (8) need them at
+// any density. Standalone buttons and chips use a pill radius = height / 2,
+// computed at the call site.
+inline constexpr int radius_dialog    = 28; // dialogs, hero cards
+inline constexpr int radius_home      = 20; // home cards
+inline constexpr int radius_icon_tile = 14; // icon tiles
+inline constexpr int radius_rail      = 12; // rail buttons, snackbars
+inline constexpr int radius_tiny      = 8;  // tiny controls
+
 } // namespace Metrics
+
+// Prepare / Preview / Device 3D viewport only — never UI chrome. Axis colours
+// tint the X/Y/Z gizmo and labels; live is the pulsing record/stream dot. All
+// four are theme-independent (defined once in the design kit :root).
+namespace Viewport {
+
+inline const wxColour axisX{"#ea4335"};
+inline const wxColour axisY{"#34a853"};
+inline const wxColour axisZ{"#4c8bf5"};
+inline const wxColour live{"#ff4747"};
+
+} // namespace Viewport
+
+// Type scale — px size + Roboto weight. Half-pixel sizes are intentional; keep
+// the float source of truth and round only at the wx font layer. The 11px/600
+// uppercase label with +0.6px tracking is the strongest recurring signature.
+struct TypeStyle
+{
+    float size;
+    int   weight;
+};
+
+namespace Type {
+
+inline constexpr TypeStyle headline{23.0f, 700};      // hero greeting ("Welcome back")
+inline constexpr TypeStyle page_title{20.0f, 700};    // page titles
+inline constexpr TypeStyle dialog_title{18.0f, 600};  // dialog titles
+inline constexpr TypeStyle section_title{16.0f, 700}; // content section titles (600-700)
+inline constexpr TypeStyle card_title{15.0f, 600};    // card titles
+inline constexpr TypeStyle body{14.0f, 400};          // base body; 13 compact via DensityMetrics
+inline constexpr TypeStyle body_s{13.5f, 500};        // row primary text, buttons
+inline constexpr TypeStyle body_xs{12.5f, 400};       // secondary rows, controls
+inline constexpr TypeStyle caption{11.5f, 400};       // metadata
+inline constexpr TypeStyle label{11.0f, 600};         // uppercase section labels, badges
+inline constexpr TypeStyle micro{10.5f, 400};         // field captions
+
+inline constexpr float label_tracking = 0.6f; // px letter-spacing on the uppercased label
+
+inline constexpr const char *font_family = "Roboto";
+inline constexpr const char *font_mono   = "Roboto Mono";               // numeric / technical values
+inline constexpr const char *font_icon   = "Material Symbols Outlined"; // weight 400, FILL 1 when active
+
+} // namespace Type
+
+// Live accent generator — ports accentVars() from the design kit's
+// seed-algorithm. Produces the six accent role tones for a user-picked seed.
+// The static Brand/Preview/Device sets above are hand-tuned and intentionally
+// differ from this algorithm's output; this path is for the custom seed only.
+struct AccentRoles
+{
+    wxColour primary;
+    wxColour onPrimary;
+    wxColour primaryContainer;
+    wxColour onPrimaryContainer;
+    wxColour secondaryContainer;
+    wxColour onSecondaryContainer;
+};
+
+namespace detail {
+
+// sRGB -> HSL. Hue in [0,360), saturation and lightness in [0,100]. Mirrors
+// hexToHsl() in guidelines/seed-algorithm.html.
+inline void rgbToHsl(const wxColour &c, double &h, double &s, double &l)
+{
+    const double r  = c.Red() / 255.0;
+    const double g  = c.Green() / 255.0;
+    const double b  = c.Blue() / 255.0;
+    const double mx = std::max(r, std::max(g, b));
+    const double mn = std::min(r, std::min(g, b));
+    l = (mx + mn) / 2.0;
+    if (mx == mn) {
+        h = 0.0;
+        s = 0.0;
+    } else {
+        const double d = mx - mn;
+        s = l > 0.5 ? d / (2.0 - mx - mn) : d / (mx + mn);
+        if (mx == r)
+            h = (g - b) / d + (g < b ? 6.0 : 0.0);
+        else if (mx == g)
+            h = (b - r) / d + 2.0;
+        else
+            h = (r - g) / d + 4.0;
+        h /= 6.0;
+    }
+    h *= 360.0;
+    s *= 100.0;
+    l *= 100.0;
+}
+
+// HSL (hue [0,360), saturation/lightness [0,100]) -> sRGB wxColour.
+inline wxColour hslToRgb(double h, double s, double l)
+{
+    s /= 100.0;
+    l /= 100.0;
+    const double c  = (1.0 - std::fabs(2.0 * l - 1.0)) * s;
+    const double hp = h / 60.0;
+    const double x  = c * (1.0 - std::fabs(std::fmod(hp, 2.0) - 1.0));
+    double r1 = 0.0, g1 = 0.0, b1 = 0.0;
+    if (hp < 1.0) {
+        r1 = c;
+        g1 = x;
+    } else if (hp < 2.0) {
+        r1 = x;
+        g1 = c;
+    } else if (hp < 3.0) {
+        g1 = c;
+        b1 = x;
+    } else if (hp < 4.0) {
+        g1 = x;
+        b1 = c;
+    } else if (hp < 5.0) {
+        r1 = x;
+        b1 = c;
+    } else {
+        r1 = c;
+        b1 = x;
+    }
+    const double m   = l - c / 2.0;
+    auto         to8 = [](double v) {
+        long n = std::lround(v * 255.0);
+        if (n < 0)
+            n = 0;
+        if (n > 255)
+            n = 255;
+        return static_cast<unsigned char>(n);
+    };
+    return wxColour(to8(r1 + m), to8(g1 + m), to8(b1 + m));
+}
+
+} // namespace detail
+
+// Regenerate the six accent roles from a seed colour. Saturation is clamped to
+// [32,92]; hue is preserved; the seed's own lightness is discarded (each role
+// derives its own tone). Container saturations round-half-up on s * multiplier.
+inline AccentRoles accentFromSeed(const wxColour &seed, bool dark)
+{
+    double h = 0.0, s = 0.0, l = 0.0;
+    detail::rgbToHsl(seed, h, s, l);
+    s = std::max(32.0, std::min(92.0, s));
+
+    AccentRoles roles;
+    if (dark) {
+        roles.primary              = detail::hslToRgb(h, s, 76.0);
+        roles.onPrimary            = detail::hslToRgb(h, s, 16.0);
+        roles.primaryContainer     = detail::hslToRgb(h, static_cast<double>(std::lround(s * 0.9)), 28.0);
+        roles.onPrimaryContainer   = detail::hslToRgb(h, s, 90.0);
+        roles.secondaryContainer   = detail::hslToRgb(h, static_cast<double>(std::lround(s * 0.35)), 26.0);
+        roles.onSecondaryContainer = detail::hslToRgb(h, s, 88.0);
+    } else {
+        roles.primary              = detail::hslToRgb(h, s, 36.0);
+        roles.onPrimary            = wxColour(255, 255, 255);
+        roles.primaryContainer     = detail::hslToRgb(h, static_cast<double>(std::lround(s * 0.7)), 88.0);
+        roles.onPrimaryContainer   = detail::hslToRgb(h, s, 12.0);
+        roles.secondaryContainer   = detail::hslToRgb(h, static_cast<double>(std::lround(s * 0.45)), 90.0);
+        roles.onSecondaryContainer = detail::hslToRgb(h, s, 20.0);
+    }
+    return roles;
+}
 
 } // namespace MD3
 

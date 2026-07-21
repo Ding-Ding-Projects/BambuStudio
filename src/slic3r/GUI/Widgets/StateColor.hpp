@@ -80,6 +80,11 @@ public:
     static wxColour semantic(MD3::Role role);
     static wxColour semantic(MD3::Role role, MD3::ColorScheme scheme);
 
+    // Theme-aware MD3 overlay tints (alpha over black), keyed to the current
+    // dark-mode state -- the scrim/shadow analogue of semantic().
+    static wxColour scrim();
+    static wxColour shadowTint();
+
     static wxColour darkModeColorFor(wxColour const &color);
     static wxColour lightModeColorFor(wxColour const &color);
 
