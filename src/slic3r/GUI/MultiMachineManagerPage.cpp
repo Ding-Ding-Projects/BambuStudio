@@ -271,7 +271,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
-    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_main_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_main_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_main_sizer = new wxBoxSizer(wxVERTICAL);

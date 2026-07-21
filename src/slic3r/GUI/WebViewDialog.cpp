@@ -171,14 +171,14 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     m_online_toolbar_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_online_toolbar_panel->SetSizer(m_online_toolbar_sizer);
 
-    // Icon color: map dark icons based on the StateColor mapping
-    std::string icon_color = StateColor::darkModeColorFor(wxColour("#262E30")).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
+    // Icon color: MD3 OnSurface for enabled, OutlineVariant for the disabled tint.
+    std::string icon_color = StateColor::semantic(MD3::Role::OnSurface).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
     auto make_online_toolbar_button = [this, &toolbar_bg, &icon_color](const std::string &icon, const wxString &tooltip) {
         wxBitmap bitmap = create_scaled_bitmap(icon, this, m_online_toolbar_icon_px, false, icon_color);
         auto *btn       = new wxBitmapButton(m_online_toolbar_panel, wxID_ANY, bitmap, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
         btn->SetToolTip(tooltip);
         btn->SetBackgroundColour(toolbar_bg);
-        btn->SetBitmapDisabled(create_scaled_bitmap(icon, this, m_online_toolbar_icon_px, false, StateColor::darkModeColorFor(wxColour("#c0babaff")).GetAsString(wxC2S_HTML_SYNTAX).ToStdString()));
+        btn->SetBitmapDisabled(create_scaled_bitmap(icon, this, m_online_toolbar_icon_px, false, StateColor::semantic(MD3::Role::OutlineVariant).GetAsString(wxC2S_HTML_SYNTAX).ToStdString()));
         btn->SetMinSize(wxSize(FromDIP(28), FromDIP(28)));
         return btn;
     };
@@ -2439,8 +2439,8 @@ void WebViewPanel::UpdateOnlineToolbarState()
     const bool can_show_open_button = (on_online_tab || on_makerlab_tab) && has_webview;
 
 
-    std::string enabled_color = StateColor::darkModeColorFor(wxColour("#262E30")).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
-    std::string disabled_color = StateColor::darkModeColorFor(wxColour("#c0babaff")).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
+    std::string enabled_color = StateColor::semantic(MD3::Role::OnSurface).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
+    std::string disabled_color = StateColor::semantic(MD3::Role::OutlineVariant).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
     auto update_btn_state = [this, &enabled_color, &disabled_color](wxBitmapButton *btn, bool enable, const std::string &icon) {
         if (!btn) return;
         btn->Enable(enable);

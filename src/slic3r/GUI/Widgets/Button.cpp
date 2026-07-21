@@ -5,9 +5,28 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include <wx/tipwin.h>
+#include <algorithm>
 #ifdef __APPLE__
 #include "libslic3r/MacUtils.hpp"
 #endif
+
+namespace {
+
+// Multiply a colour's RGB channels by a factor and clamp to [0,255] — the MD3
+// "state layer as brightness multiply" the digest uses for filled/tonal hover
+// (filled x1.06, tonal x1.04). Alpha is preserved.
+wxColour brightenColor(const wxColour &c, double factor)
+{
+    auto ch = [factor](unsigned char v) -> unsigned char {
+        double n = v * factor;
+        if (n < 0.0) n = 0.0;
+        if (n > 255.0) n = 255.0;
+        return static_cast<unsigned char>(n + 0.5);
+    };
+    return wxColour(ch(c.Red()), ch(c.Green()), ch(c.Blue()), c.Alpha());
+}
+
+} // namespace
 BEGIN_EVENT_TABLE(Button, StaticBox)
 
 EVT_LEFT_DOWN(Button::mouseDown)
@@ -148,6 +167,147 @@ void Button::SetTextColorNormal(wxColor const &color)
     Refresh();
 }
 
+void Button::SetVariant(Variant variant)
+{
+    m_variant     = variant;
+    m_md3_variant = true;
+    applyMD3Style();
+}
+
+void Button::SetButtonSize(Size size)
+{
+    m_button_size = size;
+    if (m_md3_variant)
+        applyMD3Style();
+}
+
+void Button::SetColorScheme(MD3::ColorScheme scheme)
+{
+    m_scheme = scheme;
+    if (m_md3_variant)
+        applyMD3Style();
+}
+
+void Button::rebuildIcons(int px)
+{
+    if (active_icon.bmp().IsOk() && !active_icon.name().empty() && active_icon.px_cnt() != px)
+        active_icon = ScalableBitmap(this, active_icon.name(), px);
+    if (inactive_icon.bmp().IsOk() && !inactive_icon.name().empty() && inactive_icon.px_cnt() != px)
+        inactive_icon = ScalableBitmap(this, inactive_icon.name(), px);
+}
+
+void Button::applyMD3Style()
+{
+    if (!m_md3_variant)
+        return;
+
+    using R = MD3::Role;
+    const MD3::ColorScheme s = m_scheme;
+
+    // Size tier geometry + label size + icon glyph size.
+    int   height = 42, hpad = 18, icon_px = 20;
+    switch (m_button_size) {
+    case Size::Small: height = 36; hpad = 16; icon_px = 18; break;
+    case Size::Large: height = 44; hpad = 22; icon_px = 20; break;
+    case Size::Medium:
+    default:          height = 42; hpad = 18; icon_px = 20; break;
+    }
+
+    // Per-size label font. The 12.5/13.5/14 weight-600 tokens already exist as
+    // Head_12/Head_13/Head_14 (see Label::initSysFont). Outlined uses weight
+    // 500, obtained by cloning the size-matched face and lowering the weight so
+    // the Roboto/CJK face and design px are preserved.
+    wxFont font = m_button_size == Size::Small ? Label::Head_12
+                : m_button_size == Size::Large ? Label::Head_14
+                                               : Label::Head_13;
+    if (m_variant == Variant::Outlined) {
+        font.SetWeight(wxFONTWEIGHT_MEDIUM);
+        font.SetNumericWeight(500);
+    }
+
+    const wxColour disabledBg  = StateColor::semantic(R::SurfaceContainerHigh);
+    const wxColour disabledTxt = ThemeColor::TextDisabled;
+    const wxColour parentBg    = StaticBox::GetParentBackgroundColor(GetParent());
+
+    StateColor bg, fg, bd;
+    int        bw = 0;
+
+    switch (m_variant) {
+    case Variant::Filled: {
+        const wxColour fill = StateColor::semantic(R::Primary, s);
+        bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
+                        std::make_pair(brightenColor(fill, 1.06), (int) StateColor::Hovered),
+                        std::make_pair(fill, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnPrimary, s), (int) StateColor::Normal));
+        bw = 0;
+        break;
+    }
+    case Variant::Tonal: {
+        const wxColour fill = StateColor::semantic(R::SecondaryContainer, s);
+        bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
+                        std::make_pair(brightenColor(fill, 1.04), (int) StateColor::Hovered),
+                        std::make_pair(fill, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s), (int) StateColor::Normal));
+        bw = 0;
+        break;
+    }
+    case Variant::Outlined: {
+        // Transparent interior (parent bg for the rest fill) + Outline ring;
+        // hover adds a SurfaceContainerHigh wash while the ring/label hold.
+        bg = StateColor(std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+                        std::make_pair(parentBg, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Normal));
+        bd = StateColor(std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::Outline), (int) StateColor::Normal));
+        bw = 1;
+        break;
+    }
+    case Variant::Text: {
+        // No border, transparent at rest; hover adds a SecondaryContainer wash.
+        bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered),
+                        std::make_pair(parentBg, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::Primary, s), (int) StateColor::Normal));
+        bw = 0;
+        break;
+    }
+    case Variant::Danger: {
+        // Transparent + Error ring/label; hover adds a SurfaceContainerHigh wash
+        // while the Error ring and Error label hold.
+        bg = StateColor(std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+                        std::make_pair(parentBg, (int) StateColor::Normal));
+        fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Normal));
+        bd = StateColor(std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Normal));
+        bw = 1;
+        break;
+    }
+    }
+
+    background_color = bg;
+    text_color       = fg;
+    if (bw > 0)
+        border_color = bd;
+
+    SetBorderWidth(bw);
+    // Pill radius = button height / 2 (18 / 21 / 22 for sm / md / lg).
+    SetCornerRadius(FromDIP(height) / 2.0);
+
+    paddingSize = wxSize(FromDIP(hpad), paddingSize.y);
+    minSize.SetHeight(FromDIP(height));
+
+    wxWindow::SetFont(font);
+    rebuildIcons(icon_px);
+
+    state_handler.update_binds();
+    messureSize();
+    Refresh();
+}
+
 bool Button::Enable(bool enable)
 {
     bool result = wxWindow::Enable(enable);
@@ -189,6 +349,13 @@ void Button::Rescale()
     if (this->inactive_icon.bmp().IsOk())
         this->inactive_icon.msw_rescale();
 
+    // Re-derive the DPI-scaled radius / padding / height / icon size for a
+    // variant Button so it survives monitor DPI changes.
+    if (m_md3_variant) {
+        applyMD3Style();
+        return;
+    }
+
     messureSize();
     Refresh();
 }
@@ -224,7 +391,9 @@ void Button::render(wxDC& dc)
     else
         icon = inactive_icon;
     wxSize padding = this->paddingSize;
-    int spacing = 5;
+    // MD3 icon->label gap is 8px (was a hardcoded 5). DIP-scaled so it holds on
+    // HiDPI; must stay in sync with the value used by messureSize().
+    int spacing = FromDIP(8);
     // Wrap text
     auto text = GetLabel();
     if (vertical && textSize.x + padding.x * 2 > size.x) {
@@ -372,11 +541,11 @@ void Button::messureSize()
     wxSize szContent = textSize.GetSize();
     if (this->active_icon.bmp().IsOk()) {
         if (szContent.y > 0) {
-            //BBS norrow size between text and icon
+            // MD3 icon->label gap is 8px; keep in sync with render()'s spacing.
             if (vertical)
-                szContent.y += 5;
+                szContent.y += FromDIP(8);
             else
-                szContent.x += 5;
+                szContent.x += FromDIP(8);
         }
         wxSize szIcon = this->active_icon.GetBmpSize();
         if (vertical) {

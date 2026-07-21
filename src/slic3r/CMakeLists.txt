@@ -362,6 +362,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/ObjColorDialog.hpp
     GUI/TextureImportDialog.hpp
     GUI/TextureImportDialog.cpp
+    GUI/ModelPreviewDialog.hpp
+    GUI/ModelPreviewDialog.cpp
     GUI/FilamentPickerDialog.cpp
     GUI/FilamentPickerDialog.hpp
     GUI/FilamentBitmapUtils.cpp

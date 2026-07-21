@@ -44,6 +44,7 @@ public:
     virtual void DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect) wxOVERRIDE;
     virtual void DrawBackground(wxDC& dc, wxWindow* wnd, const wxRect& rect) wxOVERRIDE;
     virtual void DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect) wxOVERRIDE;
+    virtual void DrawSeparator(wxDC& dc, wxWindow* wnd, const wxRect& rect) wxOVERRIDE;
 };
 
 void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect)
@@ -90,16 +91,30 @@ void BBLTopbarArt::DrawBackground(wxDC& dc, wxWindow* wnd, const wxRect& rect)
     dc.DrawLine(rect.GetLeft(), rect.GetBottom(), rect.GetRight(), rect.GetBottom());
 }
 
+void BBLTopbarArt::DrawSeparator(wxDC& dc, wxWindow* wnd, const wxRect& rect)
+{
+    // §3.8: an explicit 1px x 22px outline-variant rule, vertically centered in
+    // the bar, instead of the default AUI separator art.
+    const int thickness = std::max(1, wnd->FromDIP(1));
+    const int height    = std::min(rect.height, wnd->FromDIP(22));
+    const int x = rect.x + (rect.width - thickness) / 2;
+    const int y = rect.y + (rect.height - height) / 2;
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::OutlineVariant)));
+    dc.DrawRectangle(x, y, thickness, height);
+}
+
 void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect)
 {
     int textWidth = 0, textHeight = 0;
 
     wxFont font = m_font;
-    if (item.GetId() == ID_LOGO)
-        font.SetWeight(wxFONTWEIGHT_SEMIBOLD);
-    else if (item.GetId() == ID_TOP_FILE_MENU || item.GetId() == ID_TOP_EDIT_MENU ||
-             item.GetId() == ID_TOP_VIEW_MENU || item.GetId() == ID_TOP_OBJECTS_MENU ||
-             item.GetId() == ID_TOP_HELP_MENU)
+    // §3.2 wordmark rides at Roboto Medium (500), not SemiBold; the menu buttons
+    // (§3.3) are also Medium. Everything else keeps the inherited weight.
+    if (item.GetId() == ID_LOGO ||
+        item.GetId() == ID_TOP_FILE_MENU || item.GetId() == ID_TOP_EDIT_MENU ||
+        item.GetId() == ID_TOP_VIEW_MENU || item.GetId() == ID_TOP_OBJECTS_MENU ||
+        item.GetId() == ID_TOP_HELP_MENU)
         font.SetWeight(wxFONTWEIGHT_MEDIUM);
     dc.SetFont(font);
 
@@ -151,10 +166,14 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
 
     if (item.GetId() != ID_LOGO && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
         wxColour state_layer;
+        // §3.9: the window Close control carries a destructive hover -- its state
+        // layer fills Role::Error instead of the neutral surface-container tint
+        // used by every other title-bar control.
+        const bool is_close = item.GetId() == wxID_CLOSE_FRAME;
         if (item.GetState() & wxAUI_BUTTON_STATE_PRESSED)
-            state_layer = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+            state_layer = StateColor::semantic(is_close ? MD3::Role::Error : MD3::Role::SurfaceContainerHighest);
         else if ((item.GetState() & wxAUI_BUTTON_STATE_HOVER) || item.IsSticky())
-            state_layer = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+            state_layer = StateColor::semantic(is_close ? MD3::Role::Error : MD3::Role::SurfaceContainerHigh);
         else if (item.GetState() & wxAUI_BUTTON_STATE_CHECKED)
             state_layer = StateColor::semantic(MD3::Role::SecondaryContainer);
 
@@ -171,8 +190,18 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
         dc.DrawBitmap(bmp, bmpX, bmpY, true);
 
     // Semantic foregrounds remain readable on both light and dark title surfaces.
-    dc.SetTextForeground(StateColor::semantic(
-        item.GetState() & wxAUI_BUTTON_STATE_DISABLED ? MD3::Role::Outline : MD3::Role::OnSurface));
+    // §3.3: the File/Edit/View/Objects/Help menu labels use OnSurfaceVariant; the
+    // wordmark (and any other label) stays the stronger OnSurface.
+    MD3::Role label_role;
+    if (item.GetState() & wxAUI_BUTTON_STATE_DISABLED)
+        label_role = MD3::Role::Outline;
+    else if (item.GetId() == ID_TOP_FILE_MENU || item.GetId() == ID_TOP_EDIT_MENU ||
+             item.GetId() == ID_TOP_VIEW_MENU || item.GetId() == ID_TOP_OBJECTS_MENU ||
+             item.GetId() == ID_TOP_HELP_MENU)
+        label_role = MD3::Role::OnSurfaceVariant;
+    else
+        label_role = MD3::Role::OnSurface;
+    dc.SetTextForeground(StateColor::semantic(label_role));
 
     if ((m_flags & wxAUI_TB_TEXT) && !item.GetLabel().empty())
     {
@@ -293,6 +322,11 @@ void BBLTopbar::Init(wxFrame* parent)
     m_model_store_item = this->AddTool(ID_MODEL_STORE, "", model_store_bitmap);
     this->AddSpacer(12);
     */
+
+    // §3.8: a 1px x 22px outline-variant separator sits immediately before the
+    // window-control cluster (drawn by BBLTopbarArt::DrawSeparator).
+    this->AddSeparator();
+    this->AddSpacer(FromDIP(4));
 
     wxBitmap iconize_bitmap = create_scaled_bitmap("topbar_min", nullptr, TOPBAR_ICON_SIZE);
     wxAuiToolBarItem* iconize_btn = this->AddTool(wxID_ICONIZE_FRAME, "", iconize_bitmap);

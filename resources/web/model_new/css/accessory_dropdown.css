@@ -1,14 +1,14 @@
 .accessory-rule-wrapper {
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  border-radius: 4px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 12px;
   padding: 8px 8px;
-  background: #ffffff;
+  background: var(--md-sc-lowest);
   position: absolute;
   width: 248px;
   right: 0;
   top: -390px;
   font-size: 12px;
-  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 8px 24px 0 rgba(0, 0, 0, 0.06), 0 12px 48px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 24px var(--md-shadow);
 }
 
 .accessory-rule-list {
@@ -23,10 +23,10 @@
 .accessory-rule-card {
   position: relative;
   padding: 8px 12px;
-  border: 1px solid #E4E4E4;
-  border-radius: 8px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 10px;
   /* background: #fff; */
-  box-shadow: 0 2px 4px rgba(31, 35, 41, 0.08);
+  box-shadow: 0 2px 4px var(--md-shadow);
 }
 
 .accessory-rule-card::after {
@@ -35,19 +35,19 @@
   right: 15px;
   top: 8px;
   font-size: 16px;
-  color: #9FA3A9;
+  color: var(--md-outline);
 }
 
 .accessory-rule-card:hover {
-  border: 1px solid #50A90B;
+  border: 1px solid var(--md-primary);
 }
 .accessory-rule-card:hover .accessory-rule-title {
-  color: #50A90B;
+  color: var(--md-primary);
 }
 
 .accessory-rule-title {
   font-weight: 600;
-  color: #202124;
+  color: var(--md-on-surface);
 }
 
 .accessory-rule-meta {
@@ -56,12 +56,12 @@
   row-gap: 4px;
   column-gap: 6px;
   font-size: 13px;
-  color: #4A4D52;
+  color: var(--md-on-surface-variant);
 }
 
 .accessory-rule-meta dt {
   font-weight: 400;
-  color: #575A5F;
+  color: var(--md-on-surface-variant);
 }
 
 .accessory-rule-meta dd {

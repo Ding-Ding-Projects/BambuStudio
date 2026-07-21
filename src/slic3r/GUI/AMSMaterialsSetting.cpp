@@ -388,9 +388,13 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
         region = "zh";
     wxString link_url = wxString::Format("https://wiki.bambulab.com/%s/software/bambu-studio/calibration_pa", region);
     m_wiki_ctrl = new wxHyperlinkCtrl(parent, wxID_ANY, "Wiki", link_url);
-    m_wiki_ctrl->SetNormalColour(StateColor::darkModeColorFor(ThemeColor::Link));
-    m_wiki_ctrl->SetHoverColour(StateColor::darkModeColorFor(ThemeColor::Link));
-    m_wiki_ctrl->SetVisitedColour(StateColor::darkModeColorFor(ThemeColor::Link));
+    // Resolve the semantic Link color, then derive a slightly darker hovered tone so the
+    // link still visibly reacts on hover (the legacy code darkened blue 255->200 on hover).
+    const wxColour link_color = StateColor::darkModeColorFor(ThemeColor::Link);
+    const wxColour link_hover_color(link_color.Red() * 200 / 255, link_color.Green() * 200 / 255, link_color.Blue() * 200 / 255);
+    m_wiki_ctrl->SetNormalColour(link_color);
+    m_wiki_ctrl->SetHoverColour(link_hover_color);
+    m_wiki_ctrl->SetVisitedColour(link_color);
     m_wiki_ctrl->SetFont(Label::Head_14);
     cali_title_sizer->Add(m_ratio_text, 0, wxALIGN_CENTER_VERTICAL);
     cali_title_sizer->Add(m_wiki_ctrl, 0, wxALIGN_CENTER_VERTICAL);

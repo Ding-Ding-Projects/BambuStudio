@@ -80,9 +80,9 @@ static const int default_champer_temp_max = 60;
 
 /* Material 3 semantic colors. Resolve at use time so a live theme change gets
  * the correct light or dark role rather than a cached startup color. */
-static wxColour device_page_color() { return StateColor::semantic(MD3::Role::Surface); }
-static wxColour device_card_color() { return StateColor::semantic(MD3::Role::SurfaceContainerLowest); }
-static wxColour device_title_color() { return StateColor::semantic(MD3::Role::SurfaceContainerLow); }
+static wxColour device_page_color() { return StateColor::semantic(MD3::Role::SurfaceDim); }
+static wxColour device_card_color() { return StateColor::semantic(MD3::Role::SurfaceContainerLow); }
+static wxColour device_title_color() { return StateColor::semantic(MD3::Role::SurfaceContainer); }
 static wxColour device_divider_color() { return StateColor::semantic(MD3::Role::OutlineVariant); }
 static wxColour device_text_color() { return StateColor::semantic(MD3::Role::OnSurface); }
 static wxColour device_secondary_text_color() { return StateColor::semantic(MD3::Role::OnSurfaceVariant); }
@@ -156,11 +156,11 @@ static void recolor_device_surface_tree(wxWindow *window)
     if (auto *line = dynamic_cast<StaticLine *>(window)) line->SetLineColour(device_divider_color());
 
     const wxColour background = window->GetBackgroundColour();
-    if (is_semantic_color(background, MD3::Role::SurfaceContainerLowest))
+    if (is_semantic_color(background, MD3::Role::SurfaceContainerLow))
         window->SetBackgroundColour(device_card_color());
-    else if (is_semantic_color(background, MD3::Role::SurfaceContainerLow))
+    else if (is_semantic_color(background, MD3::Role::SurfaceContainer))
         window->SetBackgroundColour(device_title_color());
-    else if (is_semantic_color(background, MD3::Role::Surface))
+    else if (is_semantic_color(background, MD3::Role::SurfaceDim))
         window->SetBackgroundColour(device_page_color());
 
     const wxColour foreground = window->GetForegroundColour();
@@ -1228,7 +1228,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_printing_stage_underline = new wxPanel(m_printing_stage_panel);
     m_printing_stage_underline->SetMaxSize(wxSize(-1, FromDIP(1)));
     m_printing_stage_underline->SetMinSize(wxSize(-1, FromDIP(1)));
-    m_printing_stage_underline->SetBackgroundColour(device_secondary_text_color());
+    m_printing_stage_underline->SetBackgroundColour(device_divider_color());
     m_printing_stage_underline->Hide();
 
     m_printing_stage_value = new wxStaticText(m_printing_stage_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT | wxST_ELLIPSIZE_END);

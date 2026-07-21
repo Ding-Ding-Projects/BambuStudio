@@ -294,6 +294,14 @@ wxSizer* wgtDeviceNozzleRackArea::CreateRefreshBook(wxPanel* parent)
 {
     wxSizer* refresh_sizer = new wxBoxSizer(wxVERTICAL);
 
+    // Whole refresh page shares one theme-aware surface. SurfaceContainerLowest is
+    // #ffffff in light mode (unchanged from the previous *wxWHITE) and a dark
+    // surface in dark mode, so the counter's semantic() foreground and its
+    // sibling labels stay tonally paired instead of rendering light-in-dark text
+    // on a fixed-white background.
+    const wxColour refresh_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    parent->SetBackgroundColour(refresh_bg);
+
     std::vector<std::string> list{"ams_rfid_1", "ams_rfid_2", "ams_rfid_3", "ams_rfid_4"};
     m_refresh_icon = new AnimaIcon(parent, wxID_ANY, list, "refresh_printer", 100);
     m_refresh_icon->SetMinSize(wxSize(FromDIP(25), FromDIP(25)));
@@ -301,20 +309,20 @@ wxSizer* wgtDeviceNozzleRackArea::CreateRefreshBook(wxPanel* parent)
     wxSizer* progress_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     Label* progress_prefix = new Label(parent, _L("Reading "));
-    progress_prefix->SetBackgroundColour(*wxWHITE);
+    progress_prefix->SetBackgroundColour(refresh_bg);
     m_progress_refresh = new Label(parent, "(1/6)");
     m_progress_refresh->SetFont(Label::Mono_14);
-    m_progress_refresh->SetBackgroundColour(*wxWHITE);
+    m_progress_refresh->SetBackgroundColour(refresh_bg);
     m_progress_refresh->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
     Label* progress_suffix = new Label(parent, " ...");
-    progress_suffix->SetBackgroundColour(*wxWHITE);
+    progress_suffix->SetBackgroundColour(refresh_bg);
 
     progress_sizer->Add(progress_prefix, 0, wxLEFT);
     progress_sizer->Add(m_progress_refresh, 0, wxLEFT);
     progress_sizer->Add(progress_suffix, 0, wxLEFT);
 
     Label* refresh_tip = new Label(parent, _L("Please wait"));
-    refresh_tip->SetBackgroundColour(*wxWHITE);
+    refresh_tip->SetBackgroundColour(refresh_bg);
 
     refresh_sizer->Add(0, 0, 1, wxEXPAND, 0);
     refresh_sizer->Add(m_refresh_icon, 0, wxALIGN_CENTER_HORIZONTAL, 0);

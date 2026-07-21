@@ -7,6 +7,18 @@
 class wxTipWindow;
 class Button : public StaticBox
 {
+public:
+    // MD3 action-button variants. The default-constructed Button keeps its
+    // legacy white/green toggle appearance untouched (so the ~hundreds of
+    // existing call sites are unaffected); a variant is applied only when a
+    // caller opts in via SetVariant(). See applyMD3Style().
+    enum class Variant { Filled, Tonal, Outlined, Text, Danger };
+
+    // MD3 size tiers. Map to fixed heights 36/42/44, per-side h-padding
+    // 16/18/22, label sizes 12.5/13.5/14 and icon glyphs 18/20/20.
+    enum class Size { Small, Medium, Large };
+
+private:
     wxRect textSize;
     wxSize minSize; // set by outer
     wxSize paddingSize;
@@ -14,6 +26,13 @@ class Button : public StaticBox
     ScalableBitmap inactive_icon;
 
     StateColor   text_color;
+
+    // MD3 variant state (inert until SetVariant() opts a Button into the
+    // Material action-button styling).
+    Variant           m_variant       = Variant::Filled;
+    Size              m_button_size   = Size::Medium;
+    MD3::ColorScheme  m_scheme        = MD3::ColorScheme::Brand;
+    bool              m_md3_variant   = false;
 
     bool pressedDown = false;
     bool m_selected  = true;
@@ -61,6 +80,15 @@ public:
 
     void SetTextColorNormal(wxColor const &color);
 
+    // MD3 opt-in styling. SetVariant() switches the Button onto the Material
+    // action-button appearance (filled/tonal/outlined/text/danger) with the
+    // active size tier and colour scheme; SetButtonSize()/SetColorScheme()
+    // adjust an already-variant Button. All three are no-ops on the legacy
+    // default until SetVariant() is first called.
+    void SetVariant(Variant variant);
+    void SetButtonSize(Size size);
+    void SetColorScheme(MD3::ColorScheme scheme);
+
     void SetSelected(bool selected = true) { m_selected = selected; }
 
     bool Enable(bool enable = true) override;
@@ -98,6 +126,13 @@ private:
 
     void render(wxDC& dc);
     void renderWhiteCorners(wxDC &dc);
+
+    // Recompute background/text/border StateColors, border width, pill radius,
+    // fixed height, horizontal padding, font and icon glyph size from the
+    // current variant/size/scheme. Only runs when m_md3_variant is set.
+    void applyMD3Style();
+    // Rebuild the active/inactive icon bitmaps at a new glyph size (px).
+    void rebuildIcons(int px);
 
     void messureSize();
 

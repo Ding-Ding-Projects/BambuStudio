@@ -27,7 +27,14 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
+    // Resolve the neutral fills against the active theme. The raw
+    // SetForegroundColour/SetBackgroundColour paths below do not dark-map on
+    // their own, so snapshot the current MD3 tones here (light values are
+    // unchanged; dark mode now yields the dark surface/on-surface tones).
+    FG_COLOR = StateColor::semantic(MD3::Role::OnSurface);
+    BG_COLOR = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
     m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
@@ -36,7 +43,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     wxBoxSizer *sizer_body = new wxBoxSizer(wxHORIZONTAL);
     auto        body_panel = new wxPanel(this, wxID_ANY);
 
-    body_panel->SetBackgroundColour(*wxWHITE);
+    body_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     auto cali_left_panel = new StaticBox(body_panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(303), -1));
     cali_left_panel->SetBackgroundColor(BG_COLOR);
     cali_left_panel->SetBorderColor(BG_COLOR);

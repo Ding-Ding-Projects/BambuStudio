@@ -440,7 +440,7 @@ SearchItem::SearchItem(wxWindow *parent, wxString text, int index, SearchDialog*
 
     this->SetToolTip(tooltip);
 
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#FFFFFF")));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     Bind(wxEVT_ENTER_WINDOW, &SearchItem::on_mouse_enter, this);
     Bind(wxEVT_LEAVE_WINDOW, &SearchItem::on_mouse_leave, this);
     Bind(wxEVT_LEFT_DOWN, &SearchItem::on_mouse_left_down, this);
@@ -457,7 +457,7 @@ wxSize SearchItem::DrawTextString(wxDC &dc, const wxString &text, const wxPoint 
     }
 
     dc.SetBackgroundMode(wxTRANSPARENT);
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour("#323A3C")));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     dc.DrawText(text, pt);
     return dc.GetTextExtent(text);
 }
@@ -529,19 +529,19 @@ void SearchItem::OnPaint(wxPaintEvent &event)
 
 void SearchItem::on_mouse_enter(wxMouseEvent &evt)
 {
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour(238, 238, 238)));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
     Refresh();
 }
 
 void SearchItem::on_mouse_leave(wxMouseEvent &evt)
 {
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour(255, 255, 255)));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     Refresh();
 }
 
 void SearchItem::on_mouse_left_down(wxMouseEvent &evt)
 {
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour(228, 228, 228)));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     Refresh();
 }
 
@@ -584,14 +584,14 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
 
     // set border color
     Freeze();
-    SetBackgroundColour(wxColour(238, 238, 238));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     em = GUI::wxGetApp().em_unit();
 
-    m_text_color   = wxColour(38, 46, 48);
-    m_bg_colour    = wxColour(255, 255, 255);
-    m_hover_colour = wxColour(248, 248, 248);
-    m_thumb_color  = wxColour(196, 196, 196);
+    m_text_color   = StateColor::semantic(MD3::Role::OnSurface);
+    m_bg_colour    = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    m_hover_colour = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    m_thumb_color  = StateColor::semantic(MD3::Role::Outline);
 
     SetFont(GUI::wxGetApp().normal_font());
     SetSizeHints(wxDefaultSize, wxDefaultSize);
@@ -613,8 +613,8 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     //search_line = new wxTextCtrl(m_client_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 #ifdef __WXGTK__
     search_line = new TextInput(m_client_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-    search_line->SetBackgroundColour(wxColour(238, 238, 238));
-    search_line->SetForegroundColour(wxColour(43, 52, 54));
+    search_line->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    search_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     search_line->SetFont(GUI::wxGetApp().bold_font());
 #endif
 
@@ -795,13 +795,13 @@ void SearchDialog::update_list()
     m_scrolledWindow->Destroy();
 
     m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em - em), wxVSCROLL, 6, 6);
-    m_scrolledWindow->SetMarginColor(StateColor::darkModeColorFor(m_bg_colour));
-    m_scrolledWindow->SetScrollbarColor(StateColor::darkModeColorFor(m_thumb_color));
-    m_scrolledWindow->SetBackgroundColour(StateColor::darkModeColorFor(m_bg_colour));
+    m_scrolledWindow->SetMarginColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_scrolledWindow->SetScrollbarColor(StateColor::semantic(MD3::Role::Outline));
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
     auto m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
-    m_listPanel->SetBackgroundColour(StateColor::darkModeColorFor(m_bg_colour));
+    m_listPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
 
     const std::vector<FoundOption> &filters = searcher->found_options();
@@ -947,13 +947,13 @@ SearchObjectDialog::SearchObjectDialog(GUI::ObjectList* object_list, wxWindow* p
     : PopupWindow(parent, wxBORDER_NONE), m_object_list(object_list)
 {
     Freeze();
-    SetBackgroundColour(wxColour(238, 238, 238));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     em = GUI::wxGetApp().em_unit();
 
-    m_text_color = wxColour(38, 46, 48);
-    m_bg_color = wxColour(255, 255, 255);
-    m_thumb_color = wxColour(196, 196, 196);
+    m_text_color = StateColor::semantic(MD3::Role::OnSurface);
+    m_bg_color = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    m_thumb_color = StateColor::semantic(MD3::Role::Outline);
 
     SetFont(GUI::wxGetApp().normal_font());
     SetSizeHints(wxDefaultSize, wxDefaultSize);
@@ -1028,13 +1028,13 @@ void SearchObjectDialog::update_list()
     m_scrolledWindow->Destroy();
 
     m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(POPUP_WIDTH * em - (em + em / 2), POPUP_HEIGHT * em - em), wxVSCROLL, 6, 6);
-    m_scrolledWindow->SetMarginColor(StateColor::darkModeColorFor(m_bg_color));
-    m_scrolledWindow->SetScrollbarColor(StateColor::darkModeColorFor(m_thumb_color));
-    m_scrolledWindow->SetBackgroundColour(StateColor::darkModeColorFor(m_bg_color));
+    m_scrolledWindow->SetMarginColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_scrolledWindow->SetScrollbarColor(StateColor::semantic(MD3::Role::Outline));
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
     auto m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
-    m_listPanel->SetBackgroundColour(StateColor::darkModeColorFor(m_bg_color));
+    m_listPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
 
     const std::vector<std::tuple<GUI::ObjectDataViewModelNode*, wxString, wxString>>& found = m_object_list->GetModel()->get_found_list();

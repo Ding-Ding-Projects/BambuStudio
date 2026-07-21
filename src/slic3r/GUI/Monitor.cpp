@@ -40,7 +40,7 @@ namespace GUI {
 AddMachinePanel::AddMachinePanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name)
     : wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
     wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
 

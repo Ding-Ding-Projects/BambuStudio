@@ -57,6 +57,15 @@ inline ImVec4 md3_vec4(MD3::Role role, bool dark, float alpha = 1.0f)
     const wxColour &c = MD3::resolve(role, dark);
     return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
 }
+// Blend an MD3 role toward its companion colour to approximate a Material
+// state layer (hover ~8%, pressed ~12%); alpha follows the base colour.
+inline ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
+{
+    return ImVec4(base.x + (over.x - base.x) * t,
+                  base.y + (over.y - base.y) * t,
+                  base.z + (over.z - base.z) * t,
+                  base.w);
+}
 
 // UTF-8 label clipping helpers, only used by the ImGui panels below.
 std::string utf8_truncate_with_ellipsis(const std::string &s, size_t max_chars)
@@ -136,8 +145,13 @@ static void draw_assembly_scrollbar_y_thumb(ImGuiWindow *child, float sc, bool i
     const float grab_y = sb.Min.y + (sb.GetHeight() - grab_h) * scroll_t;
     const float grab_x = sb.Min.x + gap;
     const bool  hovered = sb.Contains(ImGui::GetIO().MousePos);
+    // Hovered thumb: PrimaryContainer (light #a6f4b8) matches the legacy light
+    // tint, but its dark value (#095228) is too dark to read against the dark
+    // panel. Use Primary in dark mode (#8bd89b) so the hover highlight stays
+    // visible, keeping PrimaryContainer for the well-matched light case.
     const ImU32 grab_col = hovered
-        ? md3_u32(MD3::Role::PrimaryContainer, is_dark)
+        ? (is_dark ? md3_u32(MD3::Role::Primary, is_dark)
+                   : md3_u32(MD3::Role::PrimaryContainer, is_dark))
         : md3_u32(MD3::Role::OnSurfaceVariant, is_dark, 220);
     child->DrawList->AddRectFilled(
         ImVec2(grab_x, grab_y), ImVec2(grab_x + grab_w, grab_y + grab_h),
@@ -4877,8 +4891,15 @@ bool AssemblyStepsUtils::render_footer_button(const char* id, const std::string&
     const ImU32 dis_bg     = md3_u32(MD3::Role::SurfaceContainer, m_is_dark);
     const ImU32 dis_border = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
 
+    // Primary CTA keeps a Material hover state: blend Primary ~8% toward
+    // OnPrimary (brighter green in light mode, subtly deeper but still visible
+    // in dark mode), matching the state-layer pattern used in MeshBooleanUI.
+    const ImU32 primary_bg = hovered
+        ? ImGui::ColorConvertFloat4ToU32(md3_state_layer(md3_vec4(MD3::Role::Primary, m_is_dark),
+                                                         md3_vec4(MD3::Role::OnPrimary, m_is_dark), 0.08f))
+        : md3_u32(MD3::Role::Primary, m_is_dark);
     const ImU32 bg = disabled ? dis_bg :
-        (primary ? md3_u32(MD3::Role::Primary, m_is_dark) : sec_bg);
+        (primary ? primary_bg : sec_bg);
     const ImU32 border = disabled ? dis_border :
         (primary ? bg : (hovered ? md3_u32(MD3::Role::Primary, m_is_dark) : sec_border));
     const ImU32 text = disabled ? md3_u32(MD3::Role::Outline, m_is_dark) :

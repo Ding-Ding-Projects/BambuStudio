@@ -1344,7 +1344,7 @@ wxBoxSizer* MixedFilamentDialog::create_button_panel()
     auto* sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_btn_cancel = new Button(this, _L("Cancel"));
-    m_btn_cancel->SetBackgroundColor(*wxWHITE);
+    m_btn_cancel->SetBackgroundColor(ThemeColor::White);
     m_btn_cancel->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
     m_btn_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     m_btn_cancel->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
@@ -1353,7 +1353,7 @@ wxBoxSizer* MixedFilamentDialog::create_button_panel()
     m_btn_ok = new Button(this, _L("OK"));
     m_btn_ok->SetBackgroundColor(ThemeColor::BrandGreen);
     m_btn_ok->SetBorderColor(ThemeColor::BrandGreen);
-    m_btn_ok->SetTextColor(*wxWHITE);
+    m_btn_ok->SetTextColor(ThemeColor::White);
     m_btn_ok->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_OK); });
 
@@ -1735,19 +1735,19 @@ void MixedFilamentDialog::paint_warning_panel(wxPaintEvent&)
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(0, 0, sz.GetWidth(), sz.GetHeight());
 
-    dc.SetBrush(wxBrush(wxColour(255, 245, 245)));
-    dc.SetPen(wxPen(wxColour("#E84C4C"), 1));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::ErrorContainer)));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Error), 1));
     dc.DrawRoundedRectangle(0, 0, sz.GetWidth(), sz.GetHeight(), FromDIP(4));
 
     int x = FromDIP(10);
     int cy = sz.GetHeight() / 2;
 
     int icon_r = FromDIP(7);
-    dc.SetBrush(wxBrush(wxColour("#E84C4C")));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Error)));
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawCircle(x + icon_r, cy, icon_r);
     dc.SetFont(::Label::Body_10);
-    dc.SetTextForeground(*wxWHITE);
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnError));
     wxSize ex = dc.GetTextExtent(wxT("!"));
     dc.DrawText(wxT("!"), x + icon_r - ex.GetWidth() / 2, cy - ex.GetHeight() / 2);
     x += icon_r * 2 + FromDIP(6);
@@ -1755,7 +1755,7 @@ void MixedFilamentDialog::paint_warning_panel(wxPaintEvent&)
     if (m_type_mismatch_msg.empty()) return;
 
     dc.SetFont(::Label::Body_12);
-    dc.SetTextForeground(wxColour("#E84C4C"));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::Error));
     wxString msg = m_type_mismatch_msg;
     int avail_w = sz.GetWidth() - x - FromDIP(10);
     wxSize ts = dc.GetTextExtent(msg);
@@ -1957,7 +1957,7 @@ void MixedFilamentDialog::update_component_count_ui()
             m_btn_add_material->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
             m_btn_add_material->SetToolTip(wxEmptyString);
         } else {
-            m_btn_add_material->SetTextColor(wxColour("#CECECE"));
+            m_btn_add_material->SetTextColor(StateColor::semantic(MD3::Role::OutlineVariant));
             m_btn_add_material->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
             m_btn_add_material->SetToolTip(is_three ? _L("Maximum 3 materials for mixing") : _L("Maximum number of components reached"));
         }

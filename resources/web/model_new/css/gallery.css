@@ -15,9 +15,9 @@
       -ms-flex: 0 0 560px;
           flex: 0 0 560px;
   width: 560px;
-  border-radius: 8px;
+  border-radius: 16px;
   overflow: hidden;
-  background: #f3f3f3;
+  background: var(--md-sc);
 }
 
 .bs-gallery-image {
@@ -28,6 +28,8 @@
   display: block;
 }
 
+/* Counter badge sits on top of the (theme-independent) gallery image, so it
+   keeps a fixed dark scrim + light text for legibility in both themes. */
 .bs-gallery-counter {
   position: absolute;
   right: 12px;
@@ -47,7 +49,7 @@
 }
 
 .bs-gallery-thumb {
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   margin-bottom: 16px;
@@ -64,7 +66,7 @@
 }
 
 .bs-gallery-thumb.active {
-  border: 2px solid #69c142; /* 绿色高亮 */
+  border: 2px solid var(--md-primary); /* 绿色高亮 */
 }
 
 .bs-gallery-thumb:last-child { margin-bottom: 0; }

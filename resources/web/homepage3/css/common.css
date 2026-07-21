@@ -1,3 +1,57 @@
+/*---Bundled design fonts---------------------------------------------------*/
+/* Ship Roboto / Roboto Mono with the app so the CEF webview renders the MD3
+   type system regardless of which fonts the host OS has installed. Paths are
+   relative to this file (resources/web/homepage3/css/) and point at the
+   bundled TTFs under resources/fonts/. */
+@font-face
+{
+	font-family: "Roboto";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("../../../fonts/Roboto-Regular.ttf") format("truetype");
+}
+@font-face
+{
+	font-family: "Roboto";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("../../../fonts/Roboto-Medium.ttf") format("truetype");
+}
+@font-face
+{
+	font-family: "Roboto";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("../../../fonts/Roboto-Bold.ttf") format("truetype");
+}
+@font-face
+{
+	font-family: "Roboto Mono";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("../../../fonts/RobotoMono-Regular.ttf") format("truetype");
+}
+@font-face
+{
+	font-family: "Roboto Mono";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("../../../fonts/RobotoMono-Medium.ttf") format("truetype");
+}
+@font-face
+{
+	font-family: "Roboto Mono";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("../../../fonts/RobotoMono-Bold.ttf") format("truetype");
+}
+
 /*---Material Design 3 color system---*/
 :root
 {

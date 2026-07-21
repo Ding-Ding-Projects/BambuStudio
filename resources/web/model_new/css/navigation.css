@@ -10,14 +10,14 @@
   top: 0;
   bottom: 0;
   width: 6px;
-  background: #EBEBEB; /* 浅灰导轨 */
+  background: var(--md-outline-variant); /* 浅灰导轨 */
 }
 
 .Navigation .indicator {
   position: absolute;
   left: 6px;
   width: 6px;
-  background: #1f1f1f; /* 深色活动段 */
+  background: var(--md-primary); /* 深色活动段 */
   border-radius: 2px;
   transition: top 0.25s ease, height 0.25s ease;
 }
@@ -45,6 +45,6 @@
 
 .Navigation .nav-item.active a {
   text-decoration: underline;
-  text-decoration-color: #7bc043;
+  text-decoration-color: var(--md-primary);
   text-underline-offset: 4px;
 }

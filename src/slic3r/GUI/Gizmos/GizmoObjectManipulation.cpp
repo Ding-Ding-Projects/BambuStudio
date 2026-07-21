@@ -35,6 +35,22 @@ inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
     const wxColour &c = MD3::resolve(role, dark);
     return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
 }
+// Convert a fixed design-kit colour (e.g. the theme-independent viewport axis
+// tokens) to an ImGui colour.
+inline ImVec4 imvec4_of(const wxColour &c, float alpha = 1.0f)
+{
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+// Centered single-character axis header. Mirrors ImGui::TextAlignCenter's
+// centering math (strlen("X"/"Y"/"Z") == 1), but paints the label with the MD3
+// viewport axis token instead of the hardcoded RGB baked into TextAlignCenter.
+inline void axis_header(const char *label, const wxColour &axis)
+{
+    const float item_width = ImGui::CalcItemWidth();
+    const float half_glyph = ImGui::GetFontSize() / 2.0f;
+    ImGui::SameLine(ImGui::GetCursorPos().x + (item_width - half_glyph) / 2);
+    ImGui::TextColored(imvec4_of(axis), "%s", label);
+}
 } // namespace
 
 const double GizmoObjectManipulation::in_to_mm = 25.4;
@@ -942,13 +958,13 @@ void GizmoObjectManipulation::set_init_rotation(const Geometry::Transformation &
     index       = 2;
     ImGui::SameLine(caption_max + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("X");
+    axis_header("X", MD3::Viewport::axisX);
     ImGui::SameLine(caption_max + unit_size + (++index) * space_size + temp_space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("Y");
+    axis_header("Y", MD3::Viewport::axisY);
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size + temp_space_size *1.2);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("Z");
+    axis_header("Z", MD3::Viewport::axisZ);
 
     index      = 1;
     index_unit = 1;
@@ -1301,13 +1317,13 @@ void GizmoObjectManipulation::do_render_rotate_window(ImGuiWrapper *imgui_wrappe
     imgui_wrapper->text(_L("World coordinates"));
     ImGui::SameLine(caption_max + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("X");
+    axis_header("X", MD3::Viewport::axisX);
     ImGui::SameLine(caption_max + unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("Y");
+    axis_header("Y", MD3::Viewport::axisY);
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("Z");
+    axis_header("Z", MD3::Viewport::axisZ);
 
     index      = 1;
     index_unit = 1;
@@ -1522,13 +1538,13 @@ void GizmoObjectManipulation::do_render_scale_input_window(ImGuiWrapper* imgui_w
     //ImGui::Dummy(ImVec2(caption_max, -1));
     ImGui::SameLine(caption_max + space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("X");
+    axis_header("X", MD3::Viewport::axisX);
     ImGui::SameLine(caption_max + unit_size + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("Y");
+    axis_header("Y", MD3::Viewport::axisY);
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::TextAlignCenter("Z");
+    axis_header("Z", MD3::Viewport::axisZ);
 
     index      = 2;
     index_unit = 1;

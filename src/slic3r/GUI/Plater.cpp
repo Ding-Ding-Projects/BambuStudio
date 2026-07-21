@@ -145,6 +145,7 @@
 #include "MsgDialog.hpp"
 #include "SingleChoiceDialog.hpp"
 #include "TextureImportDialog.hpp"
+#include "ModelPreviewDialog.hpp"
 #include "ProjectDirtyStateManager.hpp"
 #include "Gizmos/GLGizmoSimplify.hpp" // create suggestion notification
 #include "Gizmos/GLGizmoSVG.hpp" // Drop SVG file
@@ -2420,7 +2421,8 @@ Sidebar::Sidebar(Plater *parent)
     const wxColour outline        = StateColor::semantic(MD3::Role::OutlineVariant);
 
     SetBackgroundColour(surface_low);
-    p->scrolled->SetBackgroundColour(surface_lowest);
+    // MD3 sidebar body surface is SurfaceContainerLow (matches the panel host).
+    p->scrolled->SetBackgroundColour(surface_low);
 
 
     SetFont(wxGetApp().normal_font());
@@ -2520,7 +2522,7 @@ Sidebar::Sidebar(Plater *parent)
 
         p->panel_printer_preset = new StaticBox(p->m_panel_printer_content);
         p->panel_printer_preset->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
-        p->panel_printer_preset->SetBackgroundColor(surface_high);
+        p->panel_printer_preset->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
         p->panel_printer_preset->SetBorderColor(panel_bd_col);
         p->panel_printer_preset->SetMinSize(PRINTER_PANEL_SIZE);
         p->panel_printer_preset->Bind(wxEVT_LEFT_DOWN, [this](auto & evt) {
@@ -3212,7 +3214,12 @@ Sidebar::Sidebar(Plater *parent)
     p->object_layers->Hide();
     p->sizer_params->Add(p->object_layers->get_sizer(), 0, wxEXPAND | wxTOP, 0);
 
-    auto *sizer = new wxBoxSizer(wxVERTICAL);
+    // Explicit 1px OutlineVariant left border separating the sidebar from the
+    // adjacent 3D scene (previously relied on the neighbouring panel edge).
+    auto *sidebar_border = new ::StaticLine(this, true);
+    sidebar_border->SetLineColour(outline);
+    auto *sizer = new wxBoxSizer(wxHORIZONTAL);
+    sizer->Add(sidebar_border, 0, wxEXPAND);
     sizer->Add(p->scrolled, 1, wxEXPAND);
     SetSizer(sizer);
 
@@ -3241,9 +3248,22 @@ void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {
             p->big_bed_image_popup->set_bitmap(create_scaled_bitmap("big_" + image_path, p->big_bed_image_popup, p->big_bed_image_popup->get_image_px()));
         }
     }
-    const int popup_width = std::max(p->big_bed_image_popup->GetSize().GetWidth(), p->big_bed_image_popup->GetBestSize().GetWidth());
-    const bool docked_right = p->plater->get_sidebar_docking_state() == Sidebar::Right;
-    wxPoint temp_pos(docked_right ? pos.x - popup_width - FromDIP(3) : pos.x + rect.GetWidth() + FromDIP(3), pos.y);
+    const int popup_width  = std::max(p->big_bed_image_popup->GetSize().GetWidth(), p->big_bed_image_popup->GetBestSize().GetWidth());
+    const int popup_height = std::max(p->big_bed_image_popup->GetSize().GetHeight(), p->big_bed_image_popup->GetBestSize().GetHeight());
+    const int gap          = FromDIP(3);
+    // Place the enlarged bed image on the canvas-facing side of the docked sidebar so
+    // it never overlaps the band. Left/Right docks are vertical columns, so we offset
+    // horizontally; Top/Bottom docks are full-width horizontal bands, so we offset
+    // vertically and keep the popup aligned with the bed panel instead of shoving it
+    // to a screen edge (a horizontal offset would land it off the full-width band).
+    wxPoint temp_pos(pos.x, pos.y);
+    switch (p->plater->get_sidebar_docking_state()) {
+    case Sidebar::Right:  temp_pos.x = pos.x - popup_width - gap;      break;
+    case Sidebar::Top:    temp_pos.y = pos.y + rect.GetHeight() + gap; break;
+    case Sidebar::Bottom: temp_pos.y = pos.y - popup_height - gap;     break;
+    case Sidebar::Left:
+    default:              temp_pos.x = pos.x + rect.GetWidth() + gap;  break;
+    }
     p->big_bed_image_popup->SetCanFocus(false);
     p->big_bed_image_popup->SetPosition(temp_pos);
     p->big_bed_image_popup->on_show();
@@ -3905,11 +3925,11 @@ void Sidebar::sys_color_changed()
     const wxColour on_variant     = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
     SetBackgroundColour(surface_low);
-    p->scrolled->SetBackgroundColour(surface_lowest);
+    p->scrolled->SetBackgroundColour(surface_low);
     p->m_panel_printer_title->SetBackgroundColor(surface_low);
     p->m_panel_printer_title->SetBackgroundColor2(surface_low);
     p->m_panel_printer_content->SetBackgroundColour(surface_lowest);
-    p->panel_printer_preset->SetBackgroundColor(surface_high);
+    p->panel_printer_preset->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     p->panel_printer_bed->SetBackgroundColor(surface_high);
     StateColor card_border(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
@@ -4904,10 +4924,18 @@ void Sidebar::pop_sync_nozzle_and_ams_dialog() {
         wxGetApp().plater()->sidebar().get_big_btn_sync_pos_size(big_btn_pt, big_btn_size);
         temp_na_info.dialog_pos = big_btn_pt + wxPoint(big_btn_size.x, big_btn_size.y) + wxPoint(FromDIP(big_btn_size.x / 10.f - 5), FromDIP(big_btn_size.y / 10.f));
 
-        const bool docked_right = p->plater->get_sidebar_docking_state() == Sidebar::Right;
+        const auto docking_state   = p->plater->get_sidebar_docking_state();
+        const bool horizontal_band = docking_state == Sidebar::Top || docking_state == Sidebar::Bottom;
         const int dialog_width = wxGetApp().preset_bundle->get_printer_extruder_count() == 1 ? 370 : 320;
-        int same_dialog_pos_x = docked_right ? GetScreenPosition().x - FromDIP(dialog_width + 5) : get_sidebar_pos_right_x() + FromDIP(5);
-        temp_na_info.dialog_pos.x = same_dialog_pos_x;
+        // Left/Right docks are vertical columns: push the dialog to the canvas-facing
+        // side of the sidebar. Top/Bottom docks are full-width horizontal bands, so a
+        // horizontal offset would shove the dialog off-screen; keep it aligned under the
+        // big sync button (which already sits just below the band's canvas-facing edge).
+        if (!horizontal_band) {
+            const bool docked_right   = docking_state == Sidebar::Right;
+            temp_na_info.dialog_pos.x = docked_right ? GetScreenPosition().x - FromDIP(dialog_width + 5)
+                                                     : get_sidebar_pos_right_x() + FromDIP(5);
+        }
         temp_na_info.dialog_pos.y += FromDIP(2);
 
         wxPoint small_btn_pt;
@@ -4932,10 +4960,18 @@ void Sidebar::pop_finsish_sync_ams_dialog()
         get_small_btn_sync_pos_size(small_btn_pt, small_btn_size);
 
         FinishSyncAmsDialog::InputInfo temp_fsa_info;
-        const bool                     docked_right = p->plater->get_sidebar_docking_state() == Sidebar::Right;
-        auto                           same_dialog_pos_x = docked_right ? GetScreenPosition().x - FromDIP(315) : get_sidebar_pos_right_x() + FromDIP(5);
-        temp_fsa_info.dialog_pos.x                       = same_dialog_pos_x;
-        temp_fsa_info.dialog_pos.y                       = small_btn_pt.y;
+        const auto                     docking_state = p->plater->get_sidebar_docking_state();
+        // See pop_sync_nozzle_and_ams_dialog: offset horizontally beside the vertical
+        // Left/Right columns; for the full-width Top/Bottom bands align the dialog with
+        // the AMS button instead of pushing it to a band edge (which is off-screen).
+        if (docking_state == Sidebar::Top || docking_state == Sidebar::Bottom) {
+            temp_fsa_info.dialog_pos.x = small_btn_pt.x;
+        } else {
+            const bool docked_right    = docking_state == Sidebar::Right;
+            temp_fsa_info.dialog_pos.x = docked_right ? GetScreenPosition().x - FromDIP(315)
+                                                      : get_sidebar_pos_right_x() + FromDIP(5);
+        }
+        temp_fsa_info.dialog_pos.y = small_btn_pt.y;
         temp_fsa_info.ams_btn_pos                        = small_btn_pt + wxPoint(small_btn_size.x / 2, small_btn_size.y / 2);
         if (m_sna_dialog) { m_sna_dialog->on_hide(); }
         if (m_fna_dialog) {
@@ -6692,6 +6728,12 @@ public:
     void enable_sidebar(bool enabled);
     void collapse_sidebar(bool collapse);
     void                  update_sidebar(bool force_update = false);
+    // Dock the sidebar pane to the edge stored in "prepare_sidebar_dock".
+    // force_dock re-docks a floating pane (used when the user picks a position);
+    // reset_size re-seeds the pane best size to the density default (else the
+    // persisted/restored size is kept); update_now runs m_aui_mgr.Update() so
+    // callers can batch a later Update().
+    void                  apply_sidebar_dock(bool force_dock, bool reset_size, bool update_now);
     void                  reset_window_layout(int width);
     Sidebar::DockingState get_sidebar_docking_state();
 
@@ -7402,13 +7444,18 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
     });
 
     update();
-    // Orca: Make sidebar dockable
+    // Orca: Make sidebar dockable. All four edges are enabled so the Prepare
+    // sidebar can dock left/right/top/bottom; the actual edge + sizes are
+    // applied from the "prepare_sidebar_dock" app-config key by
+    // apply_sidebar_dock() below (default: left).
     m_aui_mgr.AddPane(sidebar, wxAuiPaneInfo()
                                    .Name("sidebar")
-                                   .Right()
+                                   .Left()
                                    .CloseButton(false)
-                                   .TopDockable(false)
-                                   .BottomDockable(false)
+                                   .LeftDockable(true)
+                                   .RightDockable(true)
+                                   .TopDockable(true)
+                                   .BottomDockable(true)
                                    .Floatable(wxGetApp().app_config->get_bool("enable_sidebar_floatable"))
                                    .Resizable(true)
                                    .MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), 90 * wxGetApp().em_unit()))
@@ -7461,6 +7508,12 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
             if (sidebar.IsShown() && sidebar.IsDocked() && sidebar.rect.GetWidth() > 0) { sidebar.BestSize(sidebar.rect.GetWidth(), sidebar.best_size.GetHeight()); }
             e.Skip();
         });
+
+        // The stored "prepare_sidebar_dock" edge is authoritative over any edge
+        // encoded in a restored perspective, so the default (left) and the user's
+        // choice both win regardless of legacy right-docked layouts. Keep the
+        // restored size (only re-seed it if the dock orientation flips).
+        apply_sidebar_dock(false, false, false);
 
         // Hide sidebar initially, will re-show it after initialization when we got proper window size
         //sidebar.Hide();
@@ -8814,8 +8867,74 @@ void Plater::priv::reset_window_layout(int width)
         copy.Replace(str0, str1, false);
         m_aui_mgr.LoadPerspective(copy, false);
     }
+    // Reset restores the default (left-based) perspective; re-assert the stored
+    // dock edge (with default sizing) so a right/top/bottom preference survives
+    // a layout reset.
+    apply_sidebar_dock(true, true, false);
     sidebar_layout.is_collapsed = false;
     update_sidebar(true);
+}
+
+void Plater::priv::apply_sidebar_dock(bool force_dock, bool reset_size, bool update_now)
+{
+    auto &pane = m_aui_mgr.GetPane(this->sidebar);
+    if (!pane.IsOk()) { return; }
+
+    std::string position = wxGetApp().app_config->get("prepare_sidebar_dock");
+    if (position != "left" && position != "right" && position != "top" && position != "bottom")
+        position = "left";
+
+    const int  em              = wxGetApp().em_unit();
+    const bool target_vertical = (position == "top" || position == "bottom");
+
+    // A restored perspective or a previous dock may carry a best size in the
+    // wrong axis (a width where we now need a height, or vice-versa). Re-seed
+    // the best size when the caller asks (user pick / reset) or whenever the
+    // dock orientation flips; otherwise keep the persisted size so the user's
+    // resized sidebar survives restarts and DPI changes.
+    const int  prev_dir          = pane.dock_direction;
+    const bool prev_vertical     = (prev_dir == wxAUI_DOCK_TOP || prev_dir == wxAUI_DOCK_BOTTOM);
+    const bool set_best_size     = reset_size || (prev_vertical != target_vertical);
+
+    // Re-dock a floating pane when the user explicitly picks an edge; otherwise
+    // honor a previously-floated sidebar (the floatable power-user feature).
+    if (force_dock || !wxGetApp().app_config->get_bool("enable_sidebar_floatable"))
+        pane.Dock();
+
+    // Land as the only pane on its edge; clear any stale row/layer/position from
+    // the previous dock so the switch is clean.
+    pane.dock_layer = 0;
+    pane.dock_row   = 0;
+    pane.dock_pos   = 0;
+
+    if (target_vertical) {
+        // Vertical stack: full-width band whose height is capped near 40% of the
+        // workspace (floor 260px). The sidebar keeps its own internal scrolling;
+        // the 3D canvas takes the remaining vertical space.
+        const int min_h   = q->FromDIP(260);
+        const int avail_h = q->GetClientSize().GetHeight();
+        const int cap_h   = avail_h > 0 ? std::max(min_h, (avail_h * 2) / 5) : min_h;
+        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), min_h));
+        if (set_best_size)
+            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::comfortable.sidebar_width), cap_h));
+        if (position == "top")
+            pane.Top();
+        else
+            pane.Bottom();
+    } else {
+        // Horizontal split: fixed-width column, existing behavior mirrored on the
+        // chosen side.
+        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), 90 * em));
+        if (set_best_size)
+            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::comfortable.sidebar_width), 90 * em));
+        if (position == "right")
+            pane.Right();
+        else
+            pane.Left();
+    }
+
+    if (update_now)
+        m_aui_mgr.Update();
 }
 
 Sidebar::DockingState Plater::priv::get_sidebar_docking_state()
@@ -8827,7 +8946,13 @@ Sidebar::DockingState Plater::priv::get_sidebar_docking_state()
         return Sidebar::None;
     }
 
-    return sidebar.dock_direction == wxAUI_DOCK_RIGHT ? Sidebar::Right : Sidebar::Left;
+    switch (sidebar.dock_direction) {
+    case wxAUI_DOCK_LEFT:   return Sidebar::Left;
+    case wxAUI_DOCK_RIGHT:  return Sidebar::Right;
+    case wxAUI_DOCK_TOP:    return Sidebar::Top;
+    case wxAUI_DOCK_BOTTOM: return Sidebar::Bottom;
+    default:                return Sidebar::Left;
+    }
 }
 
 
@@ -14290,8 +14415,8 @@ public:
         wxBoxSizer* option1_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option1_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Pressed),
-                                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Hovered),
+        StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(80), StateColor::Pressed),
+                                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(120), StateColor::Hovered),
                                  std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
         Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
@@ -14551,8 +14676,8 @@ public:
         wxBoxSizer* option1_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option1_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Pressed),
-                                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Hovered),
+        StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(80), StateColor::Pressed),
+                                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(120), StateColor::Hovered),
                                  std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
         Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
@@ -14679,9 +14804,9 @@ public:
         wxBoxSizer* option3_button_sizer = new wxBoxSizer(wxHORIZONTAL);
         option3_button_sizer->AddStretchSpacer();
 
-        StateColor btn_bg_blue(std::pair<wxColour, int>(ThemeColor::Link, StateColor::Pressed),
-                               std::pair<wxColour, int>(ThemeColor::Link, StateColor::Hovered),
-                               std::pair<wxColour, int>(ThemeColor::Link, StateColor::Normal));
+        StateColor btn_bg_blue(std::pair<wxColour, int>(StateColor::darkModeColorFor(ThemeColor::Link).ChangeLightness(80), StateColor::Pressed),
+                               std::pair<wxColour, int>(StateColor::darkModeColorFor(ThemeColor::Link).ChangeLightness(120), StateColor::Hovered),
+                               std::pair<wxColour, int>(StateColor::darkModeColorFor(ThemeColor::Link), StateColor::Normal));
 
         Button* refresh_button = new Button(option3_box, _L("Refresh & Retry"));
         refresh_button->SetBackgroundColor(btn_bg_blue);
@@ -15394,8 +15519,8 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     wxBoxSizer* option1_button_sizer = new wxBoxSizer(wxHORIZONTAL);
                     option1_button_sizer->AddStretchSpacer();
 
-                    StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Pressed),
-                                             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Hovered),
+                    StateColor btn_bg_purple(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(80), StateColor::Pressed),
+                                             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview).ChangeLightness(120), StateColor::Hovered),
                                              std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
                     Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
@@ -20106,6 +20231,25 @@ void Plater::import_model_id(wxString download_info)
 
     if (download_ok) {
         BOOST_LOG_TRIVIAL(trace) << "import_model_id: target_path = " << PathSanitizer::sanitize(target_path);
+
+        // Native OpenGL preview of the downloaded MakerWorld model. Give the
+        // user an interactive look before the model is imported into Prepare.
+        // The preview is best-effort: if the geometry cannot be extracted we
+        // fall through to the existing auto-open behaviour unchanged.
+        {
+            std::vector<std::array<float, 3>> preview_vertices;
+            std::vector<std::array<int, 3>>   preview_indices;
+            if (ModelPreviewDialog::load_geometry(target_path.string(), preview_vertices, preview_indices)
+                && !preview_vertices.empty() && !preview_indices.empty()) {
+                wxString model_name = from_u8(target_path.stem().string());
+                ModelPreviewDialog preview_dlg(this, model_name, preview_vertices, preview_indices);
+                if (preview_dlg.ShowModal() != wxID_OK) {
+                    // User closed the preview instead of opening: skip the import.
+                    return;
+                }
+            }
+        }
+
         /* load project */
         auto result = this->load_project(target_path.wstring());
         statistics_burial_data_form_mw();
@@ -21959,6 +22103,16 @@ void Plater::enable_sidebar(bool enabled) { p->enable_sidebar(enabled); }
 bool Plater::is_sidebar_collapsed() const { return p->sidebar_layout.is_collapsed; }
 void Plater::collapse_sidebar(bool show) { p->collapse_sidebar(show); }
 Sidebar::DockingState Plater::get_sidebar_docking_state() const { return p->get_sidebar_docking_state(); }
+
+void Plater::apply_sidebar_dock()
+{
+    p->apply_sidebar_dock(true, true, true);
+    // A same-width left<->right switch may relayout without firing a sidebar
+    // resize event, so proactively re-align the Prepare bottom action bar (its
+    // left/right spacers track the docked sidebar) to the new edge.
+    if (wxGetApp().mainframe)
+        wxGetApp().mainframe->update_prepare_action_bar_content();
+}
 void                  Plater::reset_window_layout(int width) { p->reset_window_layout(width); }
 //BBS
 void Plater::select_curr_plate_all() { p->select_curr_plate_all(); }
@@ -25578,6 +25732,10 @@ void Plater::msw_rescale()
     p->sidebar->msw_rescale();
 
     p->menus.msw_rescale();
+
+    // Re-apply the dock pane's FromDIP-based min size at the new DPI so the
+    // sidebar band keeps a correct floor; keep the persisted best size.
+    p->apply_sidebar_dock(false, false, true);
 
     Layout();
     GetParent()->Layout();

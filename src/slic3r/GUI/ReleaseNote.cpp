@@ -32,10 +32,19 @@
 
 namespace Slic3r { namespace GUI {
 
-// Helio dark palette constants (for ExpandCenterDialog - Welcome to Helio Additive)
+// Helio Additive dark palette (for ExpandCenterDialog - Welcome to Helio
+// Additive). An intentional, forced-dark third-party brand identity applied
+// unconditionally, regardless of the app's light/dark theme, so these named
+// brand colors are deliberately EXEMPT from the theme-aware MD3 token
+// migration — routing them through MD3::resolve()/StateColor::semantic() would
+// resolve to light-mode surfaces and break the always-dark Helio look. Standard
+// shared controls in the dialog (the green primary CTA + white text) still use
+// ThemeColor/MD3 tokens; every other surface/text control expresses the brand
+// through these named constants rather than one-off raw literals.
 namespace {
     const wxColour HELIO_BG_BASE(7, 9, 12);       // #07090C
     const wxColour HELIO_CARD_BG(14, 19, 32);     // #0E1320
+    const wxColour HELIO_CARD_HIGHLIGHT(18, 26, 43); // #121A2B (subtle hover)
     const wxColour HELIO_BORDER(255, 255, 255, 25); // rgba(255,255,255,0.10)
     const wxColour HELIO_TEXT(238, 242, 255);     // #EEF2FF
     const wxColour HELIO_MUTED(168, 176, 192);    // #A8B0C0
@@ -2423,21 +2432,23 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     button_sizer->Add(m_button_activate, 0, wxALIGN_CENTER, 0);
     button_sizer->Add(0, 0, 1, wxEXPAND, 0);
     
-    // Uninstall button - only shown when Helio is already enabled
+    // Uninstall button - only shown when Helio is already enabled. Styled as a
+    // de-emphasized Helio-brand secondary button (matching the outlined
+    // secondary buttons in HelioHistoryDialog) using the named Helio palette.
     wxBoxSizer* uninstall_sizer = new wxBoxSizer(wxHORIZONTAL);
-    StateColor btn_bg_uninstall(std::pair<wxColour, int>(wxColour(100, 100, 105), StateColor::Hovered),
-                                std::pair<wxColour, int>(wxColour(80, 80, 85), StateColor::Normal));
+    StateColor btn_bg_uninstall(std::pair<wxColour, int>(HELIO_CARD_HIGHLIGHT, StateColor::Hovered),
+                                std::pair<wxColour, int>(HELIO_CARD_BG, StateColor::Normal));
     Button* m_button_uninstall = new Button(this, _L("Uninstall"));
     m_button_uninstall->SetBackgroundColor(btn_bg_uninstall);
-    m_button_uninstall->SetBorderColor(wxColour(130, 130, 135));
-    // Use StateColor for text with bright white for all states
-    StateColor uninstall_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+    m_button_uninstall->SetBorderColor(HELIO_BORDER);
+    // Helio primary text for all states
+    StateColor uninstall_btn_text(std::pair<wxColour, int>(HELIO_TEXT, StateColor::Disabled),
+                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Hovered),
+                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Pressed),
+                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Enabled),
+                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Normal));
     m_button_uninstall->SetTextColor(uninstall_btn_text);
-    m_button_uninstall->SetTextColorNormal(wxColour(255, 255, 254));
+    m_button_uninstall->SetTextColorNormal(HELIO_TEXT);
     m_button_uninstall->SetFont(Label::Body_13);
     m_button_uninstall->SetSize(wxSize(FromDIP(120), FromDIP(28)));
     m_button_uninstall->SetMinSize(wxSize(FromDIP(120), FromDIP(28)));
@@ -2456,7 +2467,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     // Microcopy under button with info tooltip
     wxBoxSizer* microcopy_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto microcopy_text = new Label(this, Label::Body_12, _L("After slicing, click the Helio button to analyze your print."));
-    microcopy_text->SetForegroundColour(wxColour(160, 160, 160));
+    microcopy_text->SetForegroundColour(HELIO_MUTED);
     
     // Info icon with tooltip
     auto info_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("more_info", this, 14), wxDefaultPosition, wxSize(FromDIP(14), FromDIP(14)), 0);
@@ -2470,7 +2481,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     
     // Footer text
     auto footer_text = new Label(this, Label::Body_12, _L("Designed to help prints succeed — even if you're new to 3D printing."));
-    footer_text->SetForegroundColour(wxColour(180, 180, 180));
+    footer_text->SetForegroundColour(HELIO_MUTED);
     wxBoxSizer* footer_sizer = new wxBoxSizer(wxHORIZONTAL);
     footer_sizer->Add(0, 0, 1, wxEXPAND, 0);
     footer_sizer->Add(footer_text, 0, wxALIGN_CENTER, 0);

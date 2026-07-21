@@ -1331,7 +1331,7 @@ void MainFrame::update_prepare_action_bar_style()
 
     m_prepare_action_bar->SetMinSize(wxSize(-1, bar_height));
     m_prepare_action_bar->SetMaxSize(wxSize(-1, bar_height));
-    m_prepare_action_bar->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_prepare_action_bar->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     m_prepare_action_bar_divider->SetMinSize(wxSize(-1, divider_height));
     m_prepare_action_bar_divider->SetMaxSize(wxSize(-1, divider_height));
@@ -1344,29 +1344,37 @@ void MainFrame::update_prepare_action_bar_style()
 
     if (m_prepare_plate_button) {
         const wxColour primary = StateColor::semantic(MD3::Role::Primary);
+        // Active-plate chip (MD3 digest 3.2): SecondaryContainer fill,
+        // OnSecondaryContainer text, 2px Primary border, 12px radius.
         const StateColor background(
             std::pair{StateColor::semantic(MD3::Role::PrimaryContainer), (int) StateColor::Hovered},
-            std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLowest), (int) StateColor::Normal});
+            std::pair{StateColor::semantic(MD3::Role::SecondaryContainer), (int) StateColor::Normal});
         m_prepare_plate_button->SetBackgroundColor(background);
         m_prepare_plate_button->SetBorderColor(StateColor(primary));
-        m_prepare_plate_button->SetTextColor(StateColor(primary));
-        m_prepare_plate_button->SetCornerRadius(FromDIP(10));
+        m_prepare_plate_button->SetBorderWidth(FromDIP(2));
+        m_prepare_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSecondaryContainer)));
+        m_prepare_plate_button->SetCornerRadius(FromDIP(12));
         m_prepare_plate_button->SetMinSize(FromDIP(wxSize(96, 40)));
         m_prepare_plate_button->Rescale();
     }
     if (m_prepare_add_plate_button) {
+        // Add-plate (MD3 digest 3.2): dashed 1px Outline border, transparent
+        // (bar-surface) fill, 12px radius, OnSurfaceVariant glyph.
         const StateColor background(
             std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered},
-            std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLowest), (int) StateColor::Normal});
+            std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Normal});
         m_prepare_add_plate_button->SetBackgroundColor(background);
         m_prepare_add_plate_button->SetBorderColor(StateColor(StateColor::semantic(MD3::Role::Outline)));
-        m_prepare_add_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSurface)));
-        m_prepare_add_plate_button->SetCornerRadius(FromDIP(10));
+        m_prepare_add_plate_button->SetBorderWidth(FromDIP(1));
+        m_prepare_add_plate_button->SetBorderStyle(wxPENSTYLE_SHORT_DASH);
+        m_prepare_add_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSurfaceVariant)));
+        m_prepare_add_plate_button->SetCornerRadius(FromDIP(12));
         m_prepare_add_plate_button->SetMinSize(FromDIP(wxSize(40, 40)));
         m_prepare_add_plate_button->Rescale();
     }
     if (m_prepare_estimate_label) {
-        m_prepare_estimate_label->SetFont(::Label::Body_12);
+        // Numeric print estimate rendered in Roboto Mono (MD3 digest §4/§5).
+        m_prepare_estimate_label->SetFont(::Label::Mono_12);
         m_prepare_estimate_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_prepare_estimate_label->SetMinSize(FromDIP(wxSize(118, 36)));
     }
@@ -1529,13 +1537,12 @@ void MainFrame::init_tabpanel()
         //BBS
         wxWindow* panel = m_tabpanel->GetCurrentPage();
         int sel = m_tabpanel->GetSelection();
-        const bool preview_page = panel == m_plater && sel == tpPreview;
-        const bool device_page = panel == m_monitor || panel == m_printer_view ||
-                                 panel == m_multi_machine || panel == m_web_device;
-        const MD3::ColorScheme navigation_scheme = preview_page
-            ? MD3::ColorScheme::Preview
-            : (device_page ? MD3::ColorScheme::Device : MD3::ColorScheme::Brand);
-        m_tabpanel->GetBtnsListCtrl()->SetColorScheme(navigation_scheme);
+        // The navigation strip is chrome rendered ABOVE the per-workspace
+        // data-scheme scope, so its accent must ALWAYS stay the brand/seed value
+        // (MD3 §4/§13). Only the workspace body/canvas adopts the Preview/Device
+        // scheme; the tab bar never does, so it is pinned to Brand here rather
+        // than switched with the selected page.
+        m_tabpanel->GetBtnsListCtrl()->SetColorScheme(MD3::ColorScheme::Brand);
         //wxString page_text = m_tabpanel->GetPageText(sel);
         m_last_selected_tab = m_tabpanel->GetSelection();
         if (panel == m_plater) {
@@ -1668,7 +1675,7 @@ void MainFrame::init_tabpanel()
 
     if (!wxGetApp().is_fila_manager_disabled()) {
         m_web_device = new DeviceWebPage(m_tabpanel);
-        m_tabpanel->AddPage(m_web_device, _L("Filament Manager"), std::string("tab_filament_active"), std::string("tab_filament_active"), false);
+        m_tabpanel->AddPage(m_web_device, _L("Filament"), std::string("tab_filament_active"), std::string("tab_filament_active"), false);
     }
 
     // Settings is a navigation action rather than a synthetic notebook page.
@@ -2145,26 +2152,34 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
     const wxColour primary = StateColor::semantic(MD3::Role::Primary);
     const wxColour outline = StateColor::semantic(MD3::Role::Outline);
-    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    // Active-plate chip (MD3 digest 3.2): SecondaryContainer fill,
+    // OnSecondaryContainer text, 2px Primary border, 12px radius. Restyled
+    // authoritatively in update_prepare_action_bar_style(); mirrored here.
     const StateColor plate_background(
         std::pair{StateColor::semantic(MD3::Role::PrimaryContainer), (int) StateColor::Hovered},
-        std::pair{surface, (int) StateColor::Normal});
+        std::pair{StateColor::semantic(MD3::Role::SecondaryContainer), (int) StateColor::Normal});
     m_prepare_plate_button->SetBackgroundColor(plate_background);
     m_prepare_plate_button->SetBorderColor(StateColor(primary));
-    m_prepare_plate_button->SetTextColor(StateColor(primary));
-    m_prepare_plate_button->SetCornerRadius(FromDIP(10));
+    m_prepare_plate_button->SetBorderWidth(FromDIP(2));
+    m_prepare_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSecondaryContainer)));
+    m_prepare_plate_button->SetCornerRadius(FromDIP(12));
     m_prepare_plate_button->SetMinSize(FromDIP(wxSize(96, 40)));
 
+    // Add-plate (MD3 digest 3.2): dashed 1px Outline border, transparent
+    // (bar-surface) fill, 12px radius, OnSurfaceVariant glyph.
     const StateColor add_background(
         std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered},
-        std::pair{surface, (int) StateColor::Normal});
+        std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Normal});
     m_prepare_add_plate_button->SetBackgroundColor(add_background);
     m_prepare_add_plate_button->SetBorderColor(StateColor(outline));
-    m_prepare_add_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSurface)));
-    m_prepare_add_plate_button->SetCornerRadius(FromDIP(10));
+    m_prepare_add_plate_button->SetBorderWidth(FromDIP(1));
+    m_prepare_add_plate_button->SetBorderStyle(wxPENSTYLE_SHORT_DASH);
+    m_prepare_add_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSurfaceVariant)));
+    m_prepare_add_plate_button->SetCornerRadius(FromDIP(12));
     m_prepare_add_plate_button->SetMinSize(FromDIP(wxSize(40, 40)));
 
-    m_prepare_estimate_label->SetFont(::Label::Body_12);
+    // Numeric print estimate rendered in Roboto Mono (MD3 digest §4/§5).
+    m_prepare_estimate_label->SetFont(::Label::Mono_12);
     m_prepare_estimate_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_prepare_estimate_label->SetMinSize(FromDIP(wxSize(118, 36)));
 

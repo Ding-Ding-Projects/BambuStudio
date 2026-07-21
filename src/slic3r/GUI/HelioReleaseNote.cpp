@@ -44,7 +44,14 @@ namespace GUI {
 
 namespace Slic3r { namespace GUI {
 
-// Helio dark palette theme helper - defined early so it can be used throughout
+// Helio Additive dark palette — an intentional, forced-dark third-party brand
+// identity applied unconditionally, regardless of the app's light/dark theme.
+// These are brand and *data* colors (purple = simulation, blue = optimization),
+// so they are deliberately EXEMPT from the theme-aware MD3 token migration:
+// routing them through MD3::resolve()/StateColor::semantic() would resolve to
+// light-mode surfaces and break the always-dark Helio look. Standard shared
+// controls inside these dialogs (the green primary CTA + white text, warning
+// labels) still use ThemeColor/MD3 tokens.
 namespace {
     // Base background: #07090C
     const wxColour HELIO_BG_BASE(7, 9, 12);
@@ -1146,11 +1153,18 @@ static constexpr int LIMITS_DROPDOWN_WIDTH = 350;
 // Width chosen to accommodate "Preserve Surface Finish" text in dropdown
 static constexpr int PRINT_PRIORITY_DROPDOWN_WIDTH = 200;
 
+// Intentionally NOT routed through MD3 tokens. This is the Helio Additive brand
+// component's theme-decision point: the dark branch is the fixed Helio brand
+// identity (see palette note at top of file), while the light branch integrates
+// with the host OS via wxSystemSettings rather than the BambuStudio MD3 palette.
+// The purple/blue accents are brand/data colors (simulation/optimization) and
+// are carried across both modes. Migrating only the two light-mode greys to MD3
+// would clash with the surrounding system colours, so they are left as-is.
 HelioInputDialogTheme HelioInputDialog::get_theme() const
 {
     HelioInputDialogTheme theme;
     bool is_dark = wxGetApp().dark_mode();
-    
+
     if (is_dark) {
         // Helio dark palette
         theme.bg = HELIO_BG_BASE;              // #07090C

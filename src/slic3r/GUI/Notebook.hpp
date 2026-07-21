@@ -52,6 +52,9 @@ private:
     int                             m_selection {-1};
     int                             m_btn_margin;
     int                             m_line_margin;
+    // Retained for API symmetry with the workspaces, but the tab bar is chrome
+    // above the data-scheme scope: its active indicator/label accent is pinned to
+    // ColorScheme::Brand in StyleButton/OnPaint and never follows this value.
     MD3::ColorScheme                m_color_scheme{MD3::ColorScheme::Brand};
     //ModeSizer*                      m_mode_sizer {nullptr};
 };

@@ -1,6 +1,7 @@
 #include "DragCanvas.hpp"
 #include "wxExtensions.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -8,7 +9,8 @@ namespace Slic3r { namespace GUI {
 #define SHAPE_SIZE FromDIP(20)
 #define SHAPE_GAP (2 * SHAPE_SIZE)
 #define LINE_HEIGHT (SHAPE_SIZE + FromDIP(5))
-static const wxColour CANVAS_BORDER_COLOR = wxColour(0xCECECE);
+// MD3 OutlineVariant light tone for the swatch-canvas divider (was #CECECE).
+#define CANVAS_BORDER_COLOR ThemeColor::Grey400
 
 DragCanvas::DragCanvas(wxWindow* parent, const std::vector<std::string>& colors, const std::vector<int>& order)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize)

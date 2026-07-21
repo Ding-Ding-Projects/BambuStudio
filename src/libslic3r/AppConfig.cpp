@@ -186,6 +186,13 @@ void AppConfig::set_defaults()
         set_bool("ams_sync_match_full_use_color_dist", false);
     if (get("enable_sidebar_floatable").empty())
         set_bool("enable_sidebar_floatable", false);
+    // Prepare sidebar dock edge: left|right|top|bottom. Defaults to left
+    // (deliberately overrides the design kit's right placement per user request).
+    {
+        const std::string dock = get("prepare_sidebar_dock");
+        if (dock != "left" && dock != "right" && dock != "top" && dock != "bottom")
+            set("prepare_sidebar_dock", "left");
+    }
 
     if (get("export_sources_full_pathnames").empty())
         set_bool("export_sources_full_pathnames", false);

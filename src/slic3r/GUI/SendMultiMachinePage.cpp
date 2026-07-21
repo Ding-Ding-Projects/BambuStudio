@@ -267,7 +267,7 @@ SendMultiMachinePage::SendMultiMachinePage(Plater* plater)
 
     app_config = get_app_config();
 
-    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     // icon
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));

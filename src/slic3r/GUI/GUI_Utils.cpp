@@ -1,6 +1,7 @@
 #include "GUI.hpp"
 #include "GUI_Utils.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/StateColor.hpp"
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
@@ -506,7 +507,11 @@ void WikiPanel::init_components()
 
     // Create text label
     m_wiki_label = new wxStaticText(this, wxID_ANY, m_wiki_text);
-    m_wiki_label->SetForegroundColour(wxColour("#6B6B6B"));
+    // Match set_hover_state()'s non-hover branch exactly: darkModeColorFor remaps
+    // TextMuted (#5c5f66 -> #a8a9b3) in dark mode so the resting label is correct on
+    // first paint, not just after the first hover cycle. Light mode is unaffected
+    // (darkModeColorFor returns the input unchanged).
+    m_wiki_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::TextMuted));
     m_wiki_label->SetFont(Label::Body_13);
 
     // Set tooltip if provided
@@ -546,7 +551,7 @@ void WikiPanel::bind_events()
 
 void WikiPanel::set_hover_state(bool hover)
 {
-    wxColour color = hover ? wxColour("#00AE42") : wxColour("#6B6B6B");
+    wxColour color = hover ? StateColor::semantic(MD3::Role::Primary) : StateColor::darkModeColorFor(ThemeColor::TextMuted);
     m_wiki_bmp->SetBitmap(hover ? m_wiki_icon_hover->bmp() : m_wiki_icon->bmp());
     m_wiki_label->SetForegroundColour(color);
     m_wiki_label->SetFont(hover ? Label::Body_13.Underlined() : Label::Body_13);

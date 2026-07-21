@@ -170,7 +170,7 @@ Tab::Tab(ParamsPanel* parent, const wxString& title, Preset::Type type) :
     this->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 
     wxGetApp().UpdateDarkUI(this);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
 
     m_compatible_printers.type			= Preset::TYPE_PRINTER;
     m_compatible_printers.key_list		= "compatible_printers";
@@ -274,7 +274,7 @@ void Tab::create_preset_tab()
 
     m_top_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     // BBS: open this tab by select first
-    m_top_panel->SetBackgroundColour(*wxWHITE);
+    m_top_panel->SetBackgroundColour(ThemeColor::White);
     m_top_panel->Bind(wxEVT_LEFT_UP, [this](auto & e) {
         restore_last_select_item();
     });
@@ -321,8 +321,9 @@ void Tab::create_preset_tab()
 
     //search input
     m_search_item = new StaticBox(m_top_panel);
-    StateColor box_colour(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    StateColor box_border_colour(std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal));
+    // MD3 SearchField: sc-highest pill fill with an outline border.
+    StateColor box_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Normal));
+    StateColor box_border_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
 
     m_search_item->SetBackgroundColor(box_colour);
     m_search_item->SetBorderColor(box_border_colour);
@@ -332,8 +333,8 @@ void Tab::create_preset_tab()
     //StateColor::darkModeColorFor(wxColour(238, 238, 238)), wxDefaultPosition, wxSize(m_top_panel->GetSize().GetWidth(), 3 * wxGetApp().em_unit()), 8);
     auto search_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_search_input = new TextInput(m_search_item, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 | wxBORDER_NONE);
-    m_search_input->SetBackgroundColour(wxColour(238, 238, 238));
-    m_search_input->SetForegroundColour(wxColour(43, 52, 54));
+    m_search_input->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    m_search_input->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_search_input->SetFont(wxGetApp().bold_font());
 
     search_sizer->Add(new wxWindow(m_search_item, wxID_ANY, wxDefaultPosition, wxSize(0, 0)), 0, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(6));
@@ -602,14 +603,14 @@ void Tab::create_preset_tab()
         m_wiki_bmp = new wxStaticBitmap(panel, wxID_ANY, wiki_icon->bmp());
         wiki_sizer->Add(m_wiki_bmp, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxBOTTOM, 2);
         m_wiki_label = new wxStaticText(panel, wxID_ANY, _L("Wiki"));
-        m_wiki_label->SetForegroundColour(wxColour("#6B6B6B"));
+        m_wiki_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_wiki_label->SetFont(Label::Body_13);
         m_wiki_label->SetToolTip(_L("Click to learn more"));
         m_wiki_label->Hide();
         m_wiki_bmp->Hide();
         wiki_sizer->Add(m_wiki_label, 0, wxALIGN_CENTER_VERTICAL);
         auto set_hover = [this, wiki_icon, wiki_icon_hover](bool hover) {
-            wxColour color = hover ? wxColour("#00AE42") : wxColour("#6B6B6B");
+            wxColour color = hover ? StateColor::semantic(MD3::Role::Primary) : StateColor::semantic(MD3::Role::OnSurfaceVariant);
             m_wiki_bmp->SetBitmap(hover ? wiki_icon_hover->bmp() : wiki_icon->bmp());
             m_wiki_label->SetForegroundColour(color);
             m_wiki_label->SetFont(hover ? Label::Body_13.Underlined() : Label::Body_13);
@@ -955,7 +956,7 @@ void Tab::update_label_colours()
                 (m_type < Preset::TYPE_COUNT ? &m_default_text_clr : &m_modified_label_clr);
 
             m_tabctrl->SetItemTextColour(cur_item, clr == &m_modified_label_clr ? *clr : StateColor(
-                        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(*clr, (int) StateColor::Normal)));
             break;
         }
@@ -1244,13 +1245,13 @@ void Tab::update_extruder_switch_colors()
         }
         check_extruder_options_status(switch_index, sys_extruder, modified_extruder, pages_to_check);
 
-        StateColor default_color(std::make_pair(0x6B6B6B, (int) StateColor::NotChecked), std::make_pair(0xFFFFFE, (int) StateColor::Normal));
+        StateColor default_color(std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked), std::make_pair(StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Normal));
         StateColor color = modified_extruder ? StateColor(m_modified_label_clr) : default_color;
 
         if (m_extruder_switch)
             m_extruder_switch->SetButtonTextColor(switch_index, color);
         if (m_variant_combo) {
-            StateColor default_color_grayed(std::make_pair(0x999999, (int) StateColor::NotChecked), std::make_pair(0x99DFB2, (int) StateColor::Normal));
+            StateColor default_color_grayed(std::make_pair(StateColor::semantic(MD3::Role::Outline), (int) StateColor::NotChecked), std::make_pair(StateColor::semantic(MD3::Role::OnPrimaryContainer), (int) StateColor::Normal));
             Button *btn = m_variant_combo->GetButton(switch_index);
             if (btn) {
                 m_variant_combo->SetButtonTextColor(switch_index, btn->IsGrayed() ? default_color_grayed : color);
@@ -1470,7 +1471,7 @@ void Tab::update_changed_tree_ui()
 
             if (page->set_item_colour(clr))
                 m_tabctrl->SetItemTextColour(cur_item, clr == &m_modified_label_clr ? *clr : StateColor(
-                        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(*clr, (int) StateColor::Normal)));
 
             page->m_is_nonsys_values = !sys_page;
@@ -4752,7 +4753,7 @@ void TabFilament::toggle_options()
             const auto& edited_config = m_presets->get_edited_preset().config;
             bool std_dirty = saved_config.opt_serialize("filament_flush_temp") != edited_config.opt_serialize("filament_flush_temp");
             bool fast_dirty = saved_config.opt_serialize("filament_flush_temp_fast") != edited_config.opt_serialize("filament_flush_temp_fast");
-            StateColor default_color(std::make_pair(0x6B6B6B, (int) StateColor::NotChecked), std::make_pair(0xFFFFFE, (int) StateColor::Normal));
+            StateColor default_color(std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked), std::make_pair(StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Normal));
             StateColor modified_color(m_modified_label_clr);
             m_flush_mode_switch->SetButtonTextColor(0, show_fast ? (std_dirty ? modified_color : default_color) : default_color);
             m_flush_mode_switch->SetButtonTextColor(1, !show_fast ? (fast_dirty ? modified_color : default_color) : default_color);
@@ -6114,7 +6115,7 @@ void Tab::rebuild_page_tree()
             continue;
         auto itemId = m_tabctrl->AppendItem(translate_category(p->title(), m_type), p->iconID());
         m_tabctrl->SetItemTextColour(itemId, p->get_item_colour() == m_modified_label_clr ? p->get_item_colour() : StateColor(
-                        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(p->get_item_colour(), (int) StateColor::Normal)));
         if (translate_category(p->title(), m_type) == selected)
             item = itemId;
@@ -7957,7 +7958,7 @@ void Tab::update_nozzle_status_display()
 
     wxStaticText *reminder_text = new wxStaticText(this, wxID_ANY, _L("Available nozzles for current preset: "));
     reminder_text->SetFont(Label::Body_13);
-    reminder_text->SetForegroundColour(wxColour("#00AE42"));
+    reminder_text->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_nozzle_status_sizer->Add(reminder_text, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
 
     auto create_nozzle_button = [this](const wxString &name) {
@@ -7965,9 +7966,9 @@ void Tab::update_nozzle_status_display()
         btn->Create(this, name, "", wxBORDER_NONE);
         btn->SetMinSize(wxSize(24, 24));
         btn->SetFont(wxGetApp().bold_font());
-        StateColor bg_color(wxColour("#E6F7ED"));
+        StateColor bg_color(StateColor::semantic(MD3::Role::SecondaryContainer));
         btn->SetBackgroundColor(bg_color);
-        StateColor fg_color(wxColour("#00AE42"));
+        StateColor fg_color(StateColor::semantic(MD3::Role::Primary));
         btn->SetTextColor(fg_color);
         btn->SetCornerRadius(6);
         btn->Enable(false);
@@ -7983,7 +7984,7 @@ void Tab::update_nozzle_status_display()
         line->SetBackgroundStyle(wxBG_STYLE_PAINT);
         line->Bind(wxEVT_PAINT, [line](wxPaintEvent &) {
             wxPaintDC dc(line);
-            wxColour color = wxGetApp().dark_mode() ? wxColour("#6B6B6B") : wxColour("#C8C8C8");
+            wxColour color = StateColor::semantic(MD3::Role::OutlineVariant);
             dc.SetPen(wxPen(color, 1));
             int x = line->GetSize().GetWidth() / 2;
             dc.DrawLine(x, 0, x, line->GetSize().GetHeight());

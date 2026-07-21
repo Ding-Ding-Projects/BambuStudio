@@ -4943,7 +4943,7 @@ wxBoxSizer *EditFilamentPresetDialog::create_button_sizer()
     wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
 
     m_del_filament_btn = new Button(this, _L("Delete Filament"));
-    m_del_filament_btn->SetBackgroundColor(*wxRED);
+    m_del_filament_btn->SetBackgroundColor(StateColor::semantic(MD3::Role::Error));
     m_del_filament_btn->SetBorderColor(ThemeColor::White);
     m_del_filament_btn->SetTextColor(ThemeColor::White);
     m_del_filament_btn->SetFont(Label::Body_12);

@@ -111,7 +111,7 @@ AuFile::AuFile(wxWindow *parent, fs::path file_path, wxString file_name, Auxilia
     m_text_name              = new wxStaticText(m_text_panel, wxID_ANY, m_file_name, wxDefaultPosition, wxSize(panel_size.x, -1), wxST_ELLIPSIZE_END);
     m_text_name->Wrap(panel_size.x - FromDIP(10));
     m_text_name->SetFont(::Label::Body_14);
-    m_text_name->SetForegroundColour(StateColor::darkModeColorFor(*wxBLACK));
+    m_text_name->SetForegroundColour(ThemeColor::TextPrimary);
 
     m_input_name = new ::TextInput(m_text_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(panel_size.x - FromDIP(28), FromDIP(32)), wxTE_PROCESS_ENTER);
     m_input_name->GetTextCtrl()->SetFont(::Label::Body_13);
@@ -1103,7 +1103,7 @@ void AuxiliaryPanel::update_all_cover()
 
      auto m_text_designer = new wxStaticText(this, wxID_ANY, _L("Author"), wxDefaultPosition, wxSize(180, -1), 0);
      m_text_designer->Wrap(-1);
-     m_text_designer->SetForegroundColour(*wxBLACK);
+     m_text_designer->SetForegroundColour(ThemeColor::TextPrimary);
      m_sizer_designer->Add(m_text_designer, 0, wxALIGN_CENTER, 0);
 
      m_input_designer =  new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(450), FromDIP(30)), wxTE_PROCESS_ENTER);
@@ -1114,7 +1114,7 @@ void AuxiliaryPanel::update_all_cover()
      wxBoxSizer *m_sizer_model_name = new wxBoxSizer(wxHORIZONTAL);
 
      auto m_text_model_name = new wxStaticText(this, wxID_ANY, _L("Model Name"), wxDefaultPosition, wxSize(180, -1), 0);
-     m_text_model_name->SetForegroundColour(*wxBLACK);
+     m_text_model_name->SetForegroundColour(ThemeColor::TextPrimary);
      m_text_model_name->Wrap(-1);
      m_sizer_model_name->Add(m_text_model_name, 0, wxALIGN_CENTER, 0);
 

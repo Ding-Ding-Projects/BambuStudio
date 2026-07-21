@@ -32,7 +32,15 @@
 
 namespace Slic3r { namespace GUI {
 
-// Helio dark palette theme colors (matching existing Helio dialogs)
+// Helio Additive dark palette — an intentional, forced-dark third-party brand
+// identity that is applied unconditionally (see SetBackgroundColour below),
+// regardless of the app's light/dark theme. These are brand and *data* colors:
+// purple = simulation, blue = optimization; success/warning/error encode run
+// status. They are therefore deliberately EXEMPT from the theme-aware MD3 token
+// migration — routing them through MD3::resolve()/StateColor::semantic() would
+// resolve to light-mode surfaces (e.g. #faf8fd) and destroy the always-dark
+// Helio look. Standard shared controls that appear inside these dialogs (e.g.
+// the green primary CTA and its white text) still use ThemeColor/MD3 tokens.
 namespace {
     // Base background: #07090C
     const wxColour HELIO_BG_BASE(7, 9, 12);

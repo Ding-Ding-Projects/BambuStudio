@@ -155,7 +155,7 @@ class Sidebar : public wxPanel
     void update_sync_ams_btn_enable(wxUpdateUIEvent &e);
 
 public:
-    enum DockingState { None, Left, Right };
+    enum DockingState { None, Left, Right, Top, Bottom };
     Sidebar(Plater *parent);
     Sidebar(Sidebar &&) = delete;
     Sidebar(const Sidebar &) = delete;
@@ -475,6 +475,9 @@ public:
     bool is_sidebar_collapsed() const;
     void collapse_sidebar(bool show);
     Sidebar::DockingState get_sidebar_docking_state() const;
+    // Re-dock the Prepare sidebar to the edge stored in the app-config key
+    // "prepare_sidebar_dock" (left|right|top|bottom). Applies live, no restart.
+    void                  apply_sidebar_dock();
     void                  reset_window_layout(int width = -1);
     // Called after the Preferences dialog is closed and the program settings are saved.
     // Update the UI based on the current preferences.

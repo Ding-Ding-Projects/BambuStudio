@@ -357,7 +357,7 @@ void OG_CustomCtrl::OnPaint(wxPaintEvent&)
     // BBS: new layout
     if (!GetLabel().IsEmpty()) {
         dc.SetFont(Label::Head_16);
-        wxColour color = StateColor::darkModeColorFor("#283436");
+        wxColour color = StateColor::semantic(MD3::Role::OnSurface);
         draw_title(dc, {0, v_pos}, GetLabel(), &color, h_pos);
         dc.SetFont(m_font);
     }
@@ -922,7 +922,7 @@ void OG_CustomCtrl::CtrlLine::render(wxDC& dc, wxCoord h_pos, wxCoord v_pos)
         wxCoord label_actual_v_pos = v_pos;
         if (ctrl->opt_group->label_width != 0 && !og_line.label.IsEmpty()) {
             wxString label = og_line.label;
-            wxColour blink_color = StateColor::darkModeColorFor("#00AE42");
+            wxColour blink_color = StateColor::semantic(MD3::Role::Primary);
 
             dc.SetFont(ctrl->m_font);
             wxString multiline_text;
@@ -1013,7 +1013,7 @@ void OG_CustomCtrl::CtrlLine::render(wxDC& dc, wxCoord h_pos, wxCoord v_pos)
     const std::vector<Option>& option_set = og_line.get_options();
 
     wxString label = og_line.label;
-    wxColour blink_color = StateColor::darkModeColorFor("#00AE42");
+    wxColour blink_color = StateColor::semantic(MD3::Role::Primary);
     bool is_url_string = false;
     if (ctrl->opt_group->label_width != 0 && !label.IsEmpty()) {
         const wxColour* text_clr = field ? field->label_color() : og_line.full_Label_color;
@@ -1115,7 +1115,7 @@ void OG_CustomCtrl::CtrlLine::render(wxDC& dc, wxCoord h_pos, wxCoord v_pos)
                 is_url_string = false;
             else if(opt == option_set.front())
                 is_url_string = !suppress_hyperlinks && !og_line.label_path.empty();
-            wxColor c = StateColor::darkModeColorFor("#6B6B6B");
+            wxColor c = StateColor::semantic(MD3::Role::OnSurfaceVariant);
             h_pos = draw_text(dc, wxPoint(h_pos, v_pos), label, field ? (field->blink() ? &blink_color : &c) : nullptr, ctrl->opt_group->sublabel_width * ctrl->m_em_unit, is_url_string);
             h_pos += 8;
         }
@@ -1170,7 +1170,7 @@ wxCoord OG_CustomCtrl::CtrlLine::draw_text(wxDC &dc, wxPoint pos, const wxString
 
         wxColour old_clr = dc.GetTextForeground();
         wxFont old_font = dc.GetFont();
-        wxColor clr_url = StateColor::darkModeColorFor("#00AE42");
+        wxColor clr_url = StateColor::semantic(MD3::Role::Primary);
         if (is_focused && is_url) {
         // temporary workaround for the OSX because of strange Bold font behavior on BigSerf
 #ifdef __APPLE__

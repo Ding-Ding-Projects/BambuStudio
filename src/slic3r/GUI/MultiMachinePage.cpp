@@ -79,7 +79,7 @@ void MultiMachinePage::init_tabpanel()
     wxBoxSizer* sizer_side_tools = new wxBoxSizer(wxHORIZONTAL);
     sizer_side_tools->Add(m_side_tools, 1, wxEXPAND, 0);
     m_tabpanel = new Tabbook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, sizer_side_tools, wxNB_LEFT | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
-    m_tabpanel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    m_tabpanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_tabpanel->Bind(wxEVT_BOOKCTRL_PAGE_CHANGED, [this](wxBookCtrlEvent& e) {; });
 
     m_local_task_manager = new LocalTaskManagerPage(m_tabpanel);
@@ -308,7 +308,7 @@ MultiMachinePickPage::MultiMachinePickPage(Plater* plater /*= nullptr*/)
 
     app_config = get_app_config();
 
-    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     // icon
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));

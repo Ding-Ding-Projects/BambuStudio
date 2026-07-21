@@ -52,9 +52,14 @@ ComboBox::ComboBox(wxWindow *parent,
     if (style & wxCB_READONLY) {
         GetTextCtrl()->Hide();
         TextInput::SetFont(Label::Body_14);
+        // MD3 outlined SelectField rest border is Outline (#75777f), not the
+        // lighter OutlineVariant. Grey500 carries the Outline light value and is
+        // a gDarkColors key (-> #94959f = Outline dark), so it live-remaps on a
+        // runtime dark-mode toggle -- unlike a semantic() snapshot. Hover keeps
+        // Primary (BrandGreen) and disabled keeps the muted OutlineVariant tone.
         TextInput::SetBorderColor(StateColor(std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled),
             std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
-            std::make_pair(ThemeColor::Grey400, (int) StateColor::Normal)));
+            std::make_pair(ThemeColor::Grey500, (int) StateColor::Normal)));
         // Focus tint: keep the raw 0xEDFAF2 tint. It is a key in the gDarkColors
         // map (StateColor.cpp -> #095228), so colorForStates() re-adapts it live
         // on every runtime dark-mode toggle. A pre-resolved

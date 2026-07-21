@@ -3,18 +3,16 @@
 #include <wx/dcbuffer.h>
 #include "wx/graphics.h"
 #include "Widgets/Label.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r { namespace GUI {
 
-static const wxColour BgNormalColor  = wxColour("#FFFFFF");
-static const wxColour BgSelectColor  = wxColour("#EBF9F0");
-
-static const wxColour TextNormalColor = wxColour("#000000");
-static const wxColour TextSelectColor = wxColour("#00AE42");
-
-static const wxColour BorderNormalColor   = wxColour("#CECECE");
-static const wxColour BorderSelectColor = wxColour("#00AE42");
-
+// MD3 tokens for the capsule chip. Light-mode token values are fed through the
+// StateColor dark map (OnPaint) / UpdateDarkUIWin (UpdateStatus) so the same
+// values resolve correctly in both themes:
+//   fill      normal SurfaceContainerLowest (White) / selected SecondaryContainer
+//   text      normal OnSurface (TextPrimary)        / selected Primary (BrandGreen)
+//   border    normal OutlineVariant (Grey400)       / hover+selected Primary
 CapsuleButton::CapsuleButton(wxWindow *parent, wxWindowID id, const wxString &label, bool selected) : wxPanel(parent, id)
 {
     SetBackgroundColour(*wxWHITE);
@@ -69,8 +67,8 @@ void CapsuleButton::OnPaint(wxPaintEvent &event)
         wxRect rect = GetClientRect();
         gc->SetBrush(wxTransparentColour);
         gc->DrawRoundedRectangle(0, 0, rect.width, rect.height, 0);
-        wxColour bg_color     = m_selected ? BgSelectColor : BgNormalColor;
-        wxColour border_color = m_hovered || m_selected ? BorderSelectColor : BorderNormalColor;
+        wxColour bg_color     = m_selected ? MD3::Light::secondaryContainer : ThemeColor::White;
+        wxColour border_color = m_hovered || m_selected ? ThemeColor::BrandGreen : ThemeColor::Grey400;
         bg_color = StateColor::darkModeColorFor(bg_color);
         border_color = StateColor::darkModeColorFor(border_color);
         gc->SetBrush(wxBrush(bg_color));
@@ -112,14 +110,14 @@ void CapsuleButton::UpdateStatus()
 {
     if (m_selected) {
         m_btn->SetBitmap(tag_on_bmp);
-        m_label->SetForegroundColour(TextSelectColor);
-        m_label->SetBackgroundColour(BgSelectColor);
-        m_btn->SetBackgroundColour(BgSelectColor);
+        m_label->SetForegroundColour(ThemeColor::BrandGreen);
+        m_label->SetBackgroundColour(MD3::Light::secondaryContainer);
+        m_btn->SetBackgroundColour(MD3::Light::secondaryContainer);
     } else {
         m_btn->SetBitmap(tag_off_bmp);
-        m_label->SetForegroundColour(TextNormalColor);
-        m_label->SetBackgroundColour(BgNormalColor);
-        m_btn->SetBackgroundColour(BgNormalColor);
+        m_label->SetForegroundColour(ThemeColor::TextPrimary);
+        m_label->SetBackgroundColour(ThemeColor::White);
+        m_btn->SetBackgroundColour(ThemeColor::White);
     }
 
     GUI::wxGetApp().UpdateDarkUIWin(this);

@@ -881,15 +881,19 @@ void ExpandButtonHolder::doRender(wxDC& dc)
 MultiSwitchButton::MultiSwitchButton(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style)
     : StaticBox(parent, id, pos, size, style)
     , sel(-1)
+    // MD3 segmented control: selected segment = Primary fill / OnPrimary text;
+    // unselected = the SurfaceContainerHighest track it sits on (reads as
+    // transparent) with OnSurfaceVariant text. Replaces the legacy
+    // BrandGreen/White/Grey400/TextMuted literals with scheme-following tokens.
     , m_bg_color(StateColor(
-        std::make_pair(ThemeColor::Grey400, (int) StateColor::NotChecked),
-        std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Normal)))
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::Primary), (int) StateColor::Normal)))
     , m_bg_color_grayed(StateColor(
-        std::make_pair(ThemeColor::Grey400, (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
         std::make_pair(StateColor::semantic(MD3::Role::PrimaryContainer), (int) StateColor::Normal)))
     , m_text_color(StateColor(
-        std::make_pair(ThemeColor::TextMuted, (int) StateColor::NotChecked),
-        std::make_pair(ThemeColor::White, (int) StateColor::Normal)))
+        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Normal)))
     , m_text_color_grayed(StateColor(
         std::make_pair(ThemeColor::TextDisabled, (int) StateColor::NotChecked),
         std::make_pair(StateColor::semantic(MD3::Role::OnPrimaryContainer), (int) StateColor::Normal)))
@@ -898,6 +902,10 @@ MultiSwitchButton::MultiSwitchButton(wxWindow *parent, wxWindowID id, const wxPo
 {
     SetCornerRadius(m_button_radius);
     SetBorderWidth(0);
+    // Recessed SurfaceContainerHighest track behind the segments (the base
+    // StaticBox fill). Qualified so it targets the container background and not
+    // MultiSwitchButton::SetBackgroundColor(), which restyles the segments.
+    StaticBox::SetBackgroundColor(StateColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
 
     sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->AddSpacer(8);

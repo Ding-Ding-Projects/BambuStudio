@@ -94,17 +94,25 @@ void ButtonsListCtrl::OnPaint(wxPaintEvent&)
     if (m_selection < 0 || m_selection >= int(m_pageButtons.size()))
         return;
 
-    // Selection remains on the surface; only this primary underline carries emphasis.
+    // Selection remains on the surface; only this underline carries emphasis.
+    // The tab bar is chrome rendered ABOVE the per-workspace data-scheme scope,
+    // so its accent is ALWAYS the brand/seed value (MD3 §4/§13) -- it never
+    // adopts the Preview/Device scheme even while those workspaces are active.
     const wxRect button_rect = m_pageButtons[m_selection]->GetRect();
     const int inset = FromDIP(selection_line_inset);
     const int indicator_height = m_line_margin;
+    // §4: a 3px underline with only the TOP corners rounded (radius 3px 3px 0 0),
+    // anchored flush to the bar's bottom edge. wxDC has no per-corner radius, so
+    // the shape is drawn at double height with a full radius and its lower
+    // (rounded) half is clipped away below the client area, leaving crisp square
+    // bottom corners flush to the bottom while the visible top corners stay round.
     wxRect indicator(button_rect.x + inset,
-                     size.y - divider_width - indicator_height,
+                     size.y - indicator_height,
                      std::max(1, button_rect.width - 2 * inset),
-                     indicator_height);
+                     indicator_height * 2);
     dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, m_color_scheme)));
-    dc.DrawRoundedRectangle(indicator, indicator_height / 2.0);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand)));
+    dc.DrawRoundedRectangle(indicator, indicator_height);
 }
 
 void ButtonsListCtrl::StyleButton(Button* button, bool selected)
@@ -128,10 +136,13 @@ void ButtonsListCtrl::StyleButton(Button* button, bool selected)
     const StateColor background(
         std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Hovered},
         std::pair{surface, (int) StateColor::Normal});
+    // The selected-tab label, like the active indicator, is chrome and therefore
+    // pinned to the brand accent (ColorScheme::Brand) regardless of the active
+    // workspace scheme -- see the note in OnPaint and MD3 §4/§13.
     const StateColor text = selected
         ? StateColor(
             std::pair{StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled},
-            std::pair{StateColor::semantic(MD3::Role::Primary, m_color_scheme), (int) StateColor::Normal})
+            std::pair{StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand), (int) StateColor::Normal})
         : StateColor(
             std::pair{StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled},
             std::pair{StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal});

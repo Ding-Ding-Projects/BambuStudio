@@ -86,7 +86,7 @@ public:
     explicit ScrollPanel(wxWindow *parent) : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
     {
         SetScrollRate(5, 5);
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(ThemeColor::White);
     }
 
     bool ShouldScrollToChildOnFocus(wxWindow* child) override { return false; }
@@ -1144,7 +1144,7 @@ wxWindow* PreferencesDialog::create_item_downloads(wxWindow* parent, int padding
 {
     wxString download_path = wxString::FromUTF8(app_config->get("download_path"));
     auto item_panel = new wxWindow(parent, wxID_ANY);
-    item_panel->SetBackgroundColour(*wxWHITE);
+    item_panel->SetBackgroundColour(ThemeColor::White);
 
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
@@ -1228,7 +1228,7 @@ wxSizer *PreferencesDialog::create_item_radiobox(wxString title, wxWindow *paren
 PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
     : DPIDialog(parent, id, _L("Preferences"), pos, size, style)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     SetSize(wxSize(620, 580));
     m_original_use_12h_time_format = wxGetApp().app_config->get("use_12h_time_format");
     create();
@@ -1276,7 +1276,7 @@ private:
 
 PreferenceTabbar::PreferenceTabbar(wxWindow *parent) : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     auto *outer = new wxBoxSizer(wxVERTICAL);
     m_row       = new wxBoxSizer(wxHORIZONTAL);
     outer->Add(m_row, 0, wxLEFT, FromDIP(8));
@@ -1291,7 +1291,8 @@ void PreferenceTabbar::AddTab(const wxString &label)
     const int index = (int) m_labels.size();
 
     // Each tab is a column: the label on top and a 2px underline below it that
-    // turns ThemeColor::BrandGreen when the tab is selected.
+    // turns the MD3 Primary accent (StateColor::semantic(Role::Primary)) when the
+    // tab is selected.
     auto *col  = new wxBoxSizer(wxVERTICAL);
     auto *text = new wxStaticText(this, wxID_ANY, label);
     text->SetFont(::Label::Body_14);
@@ -1338,7 +1339,7 @@ void PreferenceTabbar::render()
     for (int i = 0; i < (int) m_labels.size(); ++i) {
         const bool active = (i == m_selection);
         m_labels[i]->SetFont(active ? Label::Head_14 : Label::Body_14);
-        m_underlines[i]->SetBackgroundColour(active ? ThemeColor::BrandGreen : GetBackgroundColour());
+        m_underlines[i]->SetBackgroundColour(active ? StateColor::semantic(MD3::Role::Primary) : GetBackgroundColour());
         m_underlines[i]->Refresh();
     }
     Layout();
@@ -1529,6 +1530,16 @@ wxWindow *PreferencesDialog::create_general_tab()
     std::vector<std::string> FlushOptionValues = {"all", "color change", "disabled"};
     auto item_auto_flush = create_item_combobox(_L("Auto Flush"), scrolled, _L("Auto calculate flush volumes"), "auto_calculate_flush", FlushOptionLabels, FlushOptionValues);
 
+    // Prepare panel dock edge — applies live to the Prepare workspace sidebar.
+    std::vector<wxString>    SidebarDockLabels = {_L("Left"), _L("Right"), _L("Top"), _L("Bottom")};
+    std::vector<std::string> SidebarDockValues = {"left", "right", "top", "bottom"};
+    auto item_sidebar_dock = create_item_combobox(
+        _L("Prepare panel position"), scrolled, _L("Dock the Prepare panel on the left, right, top, or bottom of the workspace."),
+        "prepare_sidebar_dock", SidebarDockLabels, SidebarDockValues, [](int) {
+            if (auto *plater = wxGetApp().plater())
+                plater->apply_sidebar_dock();
+        });
+
     auto item_single_instance = create_item_checkbox(_L("Keep only one Bambu Studio instance"), scrolled,
 #if __APPLE__
                                                      _L("On OSX there is always only one instance of app running by default. However it is allowed to run multiple instances "
@@ -1581,6 +1592,7 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->Add(item_region, flags);
     sizer->Add(item_currency, flags);
     sizer->Add(item_auto_flush, flags);
+    sizer->Add(item_sidebar_dock, flags);
 #ifdef _WIN32
     sizer->Add(item_darkmode, flags);
 #endif
@@ -1598,7 +1610,7 @@ wxWindow *PreferencesDialog::create_general_tab()
 wxWindow *PreferencesDialog::create_user_tab()
 {
     auto        scrolled = new ScrollPanel(m_book);
-    scrolled->SetBackgroundColour(*wxWHITE);
+    scrolled->SetBackgroundColour(ThemeColor::White);
     wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
 
     auto title_user = create_item_title(_L("User Settings"), scrolled, _L("User Settings"));
@@ -2017,7 +2029,7 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
 
 ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _L("Reset"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
@@ -2083,7 +2095,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     auto      *confirm_btn = new Button(this, _L("Confirm"));
     confirm_btn->SetBackgroundColor(btn_bg_green);
     confirm_btn->SetBorderColor(ThemeColor::BrandGreen);
-    confirm_btn->SetTextColor(*wxWHITE);
+    confirm_btn->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     confirm_btn->SetFont(::Label::Body_12);
     confirm_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     confirm_btn->SetCornerRadius(FromDIP(6));

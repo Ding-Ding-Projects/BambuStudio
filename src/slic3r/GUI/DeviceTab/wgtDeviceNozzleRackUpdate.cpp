@@ -149,7 +149,13 @@ void wgtDeviceNozzleRackUprade::Rescale()
     }
 }
 
-#define WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG *wxWHITE
+// Card surface for the hotend-update rows. SurfaceContainerLowest resolves to
+// #ffffff in light mode (byte-identical to the previous *wxWHITE) and flips to a
+// dark surface in dark mode, so the card fill AND border stay tonally paired
+// with the theme-aware, semantic()-driven foregrounds set below and during
+// status updates. A fixed *wxWHITE here left light-in-dark-mode text (and a
+// white StaticBox border, which UpdateDlgDarkUI does not remap) on a white card.
+#define WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG StateColor::semantic(MD3::Role::SurfaceContainerLowest)
 wgtDeviceNozzleRackHotendUpdate::wgtDeviceNozzleRackHotendUpdate(wxWindow* parent, const wxString& idx_text)
     : StaticBox(parent, wxID_ANY)
 {
