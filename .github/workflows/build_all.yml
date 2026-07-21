@@ -245,6 +245,7 @@ jobs:
           }
           $encodedTag = [Uri]::EscapeDataString($env:release_tag)
           $releaseApiUri = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/tags/$encodedTag"
+          $releaseListUri = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases?per_page=100"
           $expectedAssets = @{}
           foreach ($asset in @(
               @{ Name = 'BambuStudioMD3-Setup.exe'; Path = $env:installer_path }
@@ -280,6 +281,22 @@ jobs:
                           return [pscustomobject]@{ Found = $true; Release = $response }
                       }
                       if ($statusCode -eq 404) {
+                          # The tags endpoint never serves DRAFT releases (drafts
+                          # have no tag ref yet), so fall back to listing releases,
+                          # which includes drafts for tokens with contents scope.
+                          $listStatus = 0
+                          $releases = Invoke-RestMethod `
+                              -Uri $releaseListUri `
+                              -Headers $apiHeaders `
+                              -Method Get `
+                              -SkipHttpErrorCheck `
+                              -StatusCodeVariable listStatus
+                          if ($listStatus -eq 200) {
+                              $match = @($releases) | Where-Object { $_.tag_name -eq $env:release_tag } | Select-Object -First 1
+                              if ($match) {
+                                  return [pscustomobject]@{ Found = $true; Release = $match }
+                              }
+                          }
                           if (-not $RetryNotFound -or $attempt -eq $MaxAttempts) {
                               return [pscustomobject]@{ Found = $false; Release = $null }
                           }

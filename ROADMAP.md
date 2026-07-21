@@ -1,10 +1,54 @@
 # Roadmap
 
-## Landed on `master`
+## Landed
+
+All items below are committed on `master`. The final commit `8d727d49d` (native model preview,
+dockable Prepare sidebar, and the last migration-coverage changes) is on local `master` but was not
+yet pushed to `origin/master` (`c700c91b0`) at the time of writing, so it has no hosted CI run yet.
+
+### Material Design 3 token and typography layer
+
+- Extend `src/slic3r/GUI/Widgets/MD3Tokens.hpp` to full parity with the vendored
+  `ui-md3/design-system/` kit: the `OnError`/`OnErrorContainer`/`InversePrimary` roles, scrim and
+  shadow tints, the `elev1`–`elev5` elevation ladder, `MD3::Viewport` axis and live colors, fixed
+  panel/dialog/content metrics and shape radii, the full 11-step `MD3::Type` scale with font
+  constants, and the `accentFromSeed()` seed-ramp port (commit `23688c23d`).
+- Convert hardcoded theme colors and fonts across essentially the whole GUI tree in six waves
+  (roughly 120 files): the shared Widgets library and the ImGui theme; chrome and status bars;
+  Prepare/Plater; the preview renderer and timeline; gizmos and viewport overlays; Device,
+  StatusPanel, AMS, DeviceTab, and multi-machine surfaces; Settings, parameters, and Search; the leaf
+  dialogs including calibration; residual files; the Project webview CSS; and the Home webview
+  (verified). Conversions use `StateColor::semantic` / `ThemeColor` / `MD3::resolve`.
+- Ship Roboto and Roboto Mono under `resources/fonts`, registered privately at startup by
+  `Label::initSysFont`, and expose the `Label::Mono_*` faces for numeric and technical values.
+- Resolve contextual schemes per workspace: brand green (Prepare and general UI), Preview purple, and
+  Device teal.
+- Preserve functional data colors (filament swatches, G-code feature colors, 3D paint palettes),
+  which carry meaning and were intentionally left untouched.
+
+### Native features
+
+- Add a native OpenGL model preview for the MakerWorld "Download and Open" flow
+  (`src/slic3r/GUI/ModelPreviewDialog.hpp`/`.cpp`): an orbit/zoom/fit GL canvas in an MD3 dialog,
+  hooked pre-import in `Plater::import_model_id`, with **Open in Prepare** / **Close** actions and a
+  failure-safe fallback to the normal import.
+- Add a dockable Prepare sidebar driven by `wxAuiManager`: app-config key `prepare_sidebar_dock`
+  (`left`|`right`|`top`|`bottom`, default `left`), live re-dock from a Preferences "Prepare panel
+  position" control, DPI-correct, preserving collapse and float behavior.
+
+### Build and release tooling
+
+- Support pinning the Windows SDK via `PS_WINSDK` in `build_win.bat` and `deps-windows.cmake` as a
+  partial-SDK MSB8037 workaround.
+- Bind the SBOM generator to `pkg:github/$GITHUB_REPOSITORY` so the release identity is correct.
+- Make the immutable-release settings probe tolerate HTTP 403 and rely on post-publish
+  immutability verification instead of failing.
+
+### Earlier landed work (retained)
 
 - Establish semantic Material light/dark roles in the production native workspaces, including
-  contextual brand, Preview, and Device schemes.
-- Move the primary Prepare actions into a Material bottom bar with live sidebar spacing.
+  contextual brand, Preview, and Device schemes; move the primary Prepare actions into a Material
+  bottom bar with live sidebar spacing.
 - Add the isolated libgit2-backed project-history core and focused tests for complete `.3mf`
   snapshots, ordered commits, safe restore, Save As identity migration, collision handling, and
   shutdown draining.
@@ -15,50 +59,42 @@
 - Retain the Windows installer, CycloneDX, checksum, attestation, immutable-release, and disposable
   runner validation gates already encoded in the workflows.
 
-## Locally verified partial native modernization
+## Remaining
 
-- Release GUI and installed payload built locally; the installed DLL matched the Release output.
-- Full-display compositor smoke captures were reviewed for real native Home, Filament Manager,
-  Device's official plug-in gate, and File → Version history. This verifies those partial native
-  surfaces only; it does not establish a completed or faithful MD3 rewrite. The history dialog
-  showed two app-local Git snapshots after Save As.
-- Focused final CTest passed: language mode, project-history shutdown drain, and deterministic
-  BBS 3MF export (3/3). See `HANDOFF.md` for the explicit aggregate/libnest waiver.
-- DeviceWeb's `js-yaml` audit issue was repaired in the production lock; local high-severity audit
-  is clean. Hosted run `29806330072` remains the authoritative CI result until complete.
+### Structural component anatomy (from the parity audit)
 
-## Native integration follow-up
+The color, token, and typography layer is reported complete; the remaining deltas are component
+anatomy, not mis-colorings.
 
-- Finish review and compile fixes for the real wxWidgets/OpenGL Material implementation:
-  - Material top bar and menu structure;
-  - responsive Prepare printer/bed/filament sidebar;
-  - top scene commands and left vertical transform/gizmo rail;
-  - Prepare plate/estimate/slice/print bottom bar;
-  - contextual Preview dock, chips, timeline, and sequential-view layout; and
-  - native Device Temperature, Print Options, AMS, and Move cards.
-- Finish project-history lifecycle integration so each discrete edit boundary is staged before the
-  next edit can replace its state, manual saves are captured exactly, shutdown drains pending work,
-  and recoverable failures remain visible and retryable.
-- Finish **File → Version history**, rollback-safe restore, Save As ancestry migration, and Material
-  styling for the history dialog.
-- Finish native Cantonese strings for the new Material/history surfaces and rerun placeholder,
-  resource, and fallback checks.
-- Rerun the authoritative hosted Release configure/build/install and focused CTest after the
-  repair workflow completes.
-- Repair the upstream aggregate and `libnest2d_tests` baselines, then restore their coverage to
-  the hosted gate rather than retaining the focused waiver.
-- Smoke the installed application with a fresh isolated `--datadir` through the available low-level
-  desktop/computer-control integration. Cover import, separate edits, save, Save As, history listing,
-  safe restore, slice, Preview, Device/plugin gate, theme, localization, and resize behavior.
-- Inspect the app-local bare repository after the smoke and prove that separate edits are reachable
-  as distinct complete `.3mf` revisions in strict order.
-- Capture full-compositor screenshots of the real native Prepare, Preview, and Device surfaces,
-  visually review them, and replace or supplement the README's clearly labeled `ui-md3` reference
-  images.
-- Split the remaining changes into reviewable commits, preserve the unrelated generated-route-tree
-  change, push `master`, and monitor the resulting GitHub Actions run to completion.
-- Replace all pending fields in `HANDOFF.md` with tested commit, build, test, smoke, screenshot, and
-  hosted-run evidence.
+- Build the camera-HUD overlay system for the viewport.
+- Add the Material Symbols icon-font infrastructure so the `Material Symbols Outlined` token can back
+  real icon glyphs instead of the existing bitmap assets.
+- Finish the remaining pill-geometry variants.
+- Resolve the three theme literals currently retained intentionally over fixed bitmap assets (the
+  final scan found 21 residual literals: 18 addressed, 3 kept over fixed bitmaps).
+
+### Verification and delivery
+
+- Push local `master` (commit `8d727d49d`, the model preview and dockable sidebar) and obtain a
+  hosted CI run for those two features; the `Build BambuStudio` job passes on the already-pushed
+  migrated tree (runs `29848731027` and `29862992010`).
+- Complete a fully green hosted run that also publishes the immutable release. After the SBOM-identity
+  and immutable-probe (HTTP 403) fixes cleared their earlier failures, the publish job currently
+  still fails at the draft-release visibility stage; publication is not yet verified.
+- Capture fresh full-compositor screenshots of the fully token-migrated native Prepare, Preview, and
+  Device surfaces, visually review them, and replace the README's pre-sweep captures.
+- Preserve the unrelated generated `routeTree.gen.ts` change when splitting the remaining work into
+  reviewable commits and pushing `master`.
+
+### Project history and localization
+
+- Finish the project-history lifecycle integration so each discrete edit boundary is staged before
+  the next edit can replace its state, manual saves are captured exactly, shutdown drains pending
+  work, and recoverable failures remain visible and retryable.
+- Finish native Cantonese strings for the new Material, history, model-preview, and sidebar surfaces
+  and rerun placeholder, resource, and fallback checks.
+- Repair the upstream aggregate and `libnest2d_tests` baselines, then restore their coverage to the
+  hosted gate rather than retaining the focused waiver.
 
 ## Needed before calling Material/history complete
 

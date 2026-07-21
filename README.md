@@ -20,19 +20,43 @@ human review. See the
 [language-mode documentation](docs/features/windows/language-modes.md) for coverage and fallback
 details.
 
-## Native UI modernization (Material-informed)
+## Native UI modernization (Material Design 3)
 
-The production wxWidgets application contains partial native modernization informed by Material
-Design 3 roles and interaction patterns. The native source includes updated top-level navigation,
-responsive Prepare controls, a transform-tool rail, contextual Preview controls, and card-like
-Device controls. It is not a completed or faithful Material Design 3 rewrite. Local Release install
-and full-compositor smoke evidence was reviewed on 2026-07-20; this is not a published-release claim.
+The production wxWidgets application now consumes the vendored Material Design 3 design system
+end-to-end. The canonical in-repo design source is [`ui-md3/design-system/`](ui-md3/design-system/);
+its token values match `src/slic3r/GUI/Widgets/MD3Tokens.hpp` exactly, and the native code resolves
+colors through semantic tokens instead of hardcoded hexes. A ground-up migration converted theme
+colors and fonts across essentially the whole GUI tree (roughly 120 files over six waves), backed by
+Roboto and Roboto Mono shipped as application resources. Contextual schemes are resolved per
+workspace: brand green for Prepare and general UI, Preview purple for the G-code preview, and Device
+teal for the printer surfaces. Functional data colors (filament swatches, G-code feature colors, 3D
+paint palettes) are deliberately preserved.
 
-### Verified installed-app captures
+An element-by-element parity audit reports the color, token, and typography layer as complete. The
+remaining deltas are structural component anatomy — the camera-HUD overlay system, the Material
+Symbols icon-font infrastructure, and some pill-geometry variants — documented as future work in the
+[roadmap](ROADMAP.md), not mis-colorings. This is a completed token layer, not yet a faithful
+component-by-component Material Design 3 rewrite.
+
+Two native features were added in the same effort:
+
+- A native OpenGL model preview for the MakerWorld "Download and Open" flow shows an interactive
+  orbit/zoom/fit view before import, with **Open in Prepare** and **Close** actions and a
+  failure-safe fallback to the normal import. See
+  [MakerWorld OpenGL preview](docs/features/model-preview/makerworld-opengl-preview.md).
+- A dockable Prepare sidebar can be docked left, right, top, or bottom (default left) and re-docks
+  live from a Preferences control. See
+  [Dockable Prepare sidebar](docs/features/prepare/dockable-sidebar.md).
+
+Full documentation of the token layer, migration, failure modes, and audit result is in
+[Vendored Material Design 3 design system](docs/features/design-system/md3-design-system.md).
+
+### Installed-app captures
 
 These are full-display compositor captures of the locally installed native executable, not
-`ui-md3` reference images. They are evidence of partial native modernization only; they do not
-demonstrate full Material Design 3 conformance.
+`ui-md3` reference images. They were reviewed on 2026-07-20 and predate the full token sweep;
+fresh captures of the fully migrated tree are still pending. They demonstrate native modernization
+only, not full component-anatomy conformance.
 
 | Home | Filament Manager |
 | :---: | :---: |
@@ -46,8 +70,8 @@ demonstrate full Material Design 3 conformance.
 
 The images below are deterministic captures of the separate [`ui-md3`](ui-md3/) interactive design
 reference, not screenshots of the native application. Select an image to open the same reference
-screen, theme, density, accent, and language state. The verified installed-app captures are the
-separate gallery above.
+screen, theme, density, accent, and language state. The installed-app captures are the separate
+gallery above.
 
 **Prepare · light theme · English**
 
@@ -83,8 +107,11 @@ Windows signing identity remains external work. Local focused validation on comm
 `deterministic_bbs_3mf_tests` (3/3). This focused gate is not the full aggregate suite: the
 upstream aggregate `libslic3r_tests` has current API-drift compile failures and `libnest2d_tests`
 has known baseline runtime failures, so both are explicitly waived from this branch gate pending
-upstream repair. The prior branch run failed before C++ tests on DeviceWeb's `js-yaml` advisory;
-the lock override is repaired and the replacement run is tracked in [Actions](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29806330072).
+upstream repair. On the migrated tree the hosted `Build BambuStudio` job succeeds (runs
+[`29848731027`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29848731027) and
+[`29862992010`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29862992010)), but a
+fully green run that also publishes the immutable release has not yet completed. See
+[`HANDOFF.md`](HANDOFF.md) for the authoritative, current CI state.
 
 Bambu Studio is based on [PrusaSlicer](https://github.com/prusa3d/PrusaSlicer) by Prusa Research, which is from [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community.
 
