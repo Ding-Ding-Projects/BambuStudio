@@ -779,7 +779,7 @@ namespace Slic3r
                 const ImVec4 primary_container = md3_imgui_color(MD3::Role::PrimaryContainer, m_is_dark);
                 const ImVec4 outline = md3_imgui_color(MD3::Role::OutlineVariant, m_is_dark);
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 16.0f * m_scale);
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 12.0f) * m_scale);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f * m_scale, 12.0f * m_scale));
                 ImGui::PushStyleColor(ImGuiCol_Separator, outline);
                 ImGui::PushStyleColor(ImGuiCol_Header, primary_container);
                 ImGui::PushStyleColor(ImGuiCol_HeaderHovered, primary_container);
@@ -2828,8 +2828,10 @@ namespace Slic3r
                     default: { assert(false); break; }
                     }
                     ImGui::EndGroup();
-                    const ImVec2 stats_min = ImGui::GetItemRectMin() - ImVec2(6.0f, 4.0f) * m_scale;
-                    const ImVec2 stats_max = ImGui::GetItemRectMax() + ImVec2(6.0f, 6.0f) * m_scale;
+                    const ImVec2 stats_rect_min = ImGui::GetItemRectMin();
+                    const ImVec2 stats_rect_max = ImGui::GetItemRectMax();
+                    const ImVec2 stats_min(stats_rect_min.x - 6.0f * m_scale, stats_rect_min.y - 4.0f * m_scale);
+                    const ImVec2 stats_max(stats_rect_max.x + 6.0f * m_scale, stats_rect_max.y + 6.0f * m_scale);
                     draw_list->ChannelsSetCurrent(0);
                     draw_list->AddRectFilled(stats_min, stats_max, ImGui::GetColorU32(surface_container_high), 12.0f * m_scale);
                     draw_list->AddRect(stats_min, stats_max, ImGui::GetColorU32(outline), 12.0f * m_scale, 0, 1.0f * m_scale);

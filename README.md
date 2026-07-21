@@ -3,7 +3,7 @@
 Bambu Studio is a cutting-edge, feature-rich slicing software.  
 It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
 
-This fork's maintained delivery target is the native Material Design 3 Windows application. The
+This fork's maintained delivery target is native Windows UI modernization informed by Material Design 3. The
 [latest Windows installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe)
 is a per-user install and does not require administrator elevation. It is currently unsigned; verify
 the accompanying
@@ -20,20 +20,34 @@ human review. See the
 [language-mode documentation](docs/features/windows/language-modes.md) for coverage and fallback
 details.
 
-## Native Material Design 3
+## Native UI modernization (Material-informed)
 
-The production wxWidgets application is being rewritten around Material Design 3 roles and
-interaction patterns. The native source now includes Material top-level navigation and menus,
-responsive Prepare controls, a vertical transform-tool rail, contextual Preview controls, and
-card-based Device controls. The current native rewrite is still completing its Release build,
-desktop smoke test, and screenshot review before it is represented as a finished release.
+The production wxWidgets application contains partial native modernization informed by Material
+Design 3 roles and interaction patterns. The native source includes updated top-level navigation,
+responsive Prepare controls, a transform-tool rail, contextual Preview controls, and card-like
+Device controls. It is not a completed or faithful Material Design 3 rewrite. Local Release install
+and full-compositor smoke evidence was reviewed on 2026-07-20; this is not a published-release claim.
+
+### Verified installed-app captures
+
+These are full-display compositor captures of the locally installed native executable, not
+`ui-md3` reference images. They are evidence of partial native modernization only; they do not
+demonstrate full Material Design 3 conformance.
+
+| Home | Filament Manager |
+| :---: | :---: |
+| ![Native Home](docs/readme-assets/native-material-home-light-en.png) | ![Native Filament Manager](docs/readme-assets/native-material-filament-manager-light-en.png) |
+
+| Device boundary | Project Version History |
+| :---: | :---: |
+| ![Native Device plug-in gate](docs/readme-assets/native-material-device-plugin-gate-light-en.png) | ![Native Version History](docs/readme-assets/native-material-project-history-light-en.png) |
 
 ### Interactive design reference
 
 The images below are deterministic captures of the separate [`ui-md3`](ui-md3/) interactive design
 reference, not screenshots of the native application. Select an image to open the same reference
-screen, theme, density, accent, and language state. Verified native captures will be added after the
-current Release build and desktop smoke pass.
+screen, theme, density, accent, and language state. The verified installed-app captures are the
+separate gallery above.
 
 **Prepare · light theme · English**
 
@@ -64,7 +78,13 @@ in a draft before publication and refuses to publish unless repository immutable
 enabled. The current Material and project-history changes still require a successful final workflow
 run before they become release evidence. GitHub attestations and checksums are not Authenticode
 signatures; configuring a trusted
-Windows signing identity remains external work.
+Windows signing identity remains external work. Local focused validation on commit
+`3b00dc6aa` passed `language_mode_tests`, `project_history_tests`, and
+`deterministic_bbs_3mf_tests` (3/3). This focused gate is not the full aggregate suite: the
+upstream aggregate `libslic3r_tests` has current API-drift compile failures and `libnest2d_tests`
+has known baseline runtime failures, so both are explicitly waived from this branch gate pending
+upstream repair. The prior branch run failed before C++ tests on DeviceWeb's `js-yaml` advisory;
+the lock override is repaired and the replacement run is tracked in [Actions](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29806330072).
 
 Bambu Studio is based on [PrusaSlicer](https://github.com/prusa3d/PrusaSlicer) by Prusa Research, which is from [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community.
 

@@ -15,7 +15,19 @@
 - Retain the Windows installer, CycloneDX, checksum, attestation, immutable-release, and disposable
   runner validation gates already encoded in the workflows.
 
-## Native integration in progress
+## Locally verified partial native modernization
+
+- Release GUI and installed payload built locally; the installed DLL matched the Release output.
+- Full-display compositor smoke captures were reviewed for real native Home, Filament Manager,
+  Device's official plug-in gate, and File → Version history. This verifies those partial native
+  surfaces only; it does not establish a completed or faithful MD3 rewrite. The history dialog
+  showed two app-local Git snapshots after Save As.
+- Focused final CTest passed: language mode, project-history shutdown drain, and deterministic
+  BBS 3MF export (3/3). See `HANDOFF.md` for the explicit aggregate/libnest waiver.
+- DeviceWeb's `js-yaml` audit issue was repaired in the production lock; local high-severity audit
+  is clean. Hosted run `29806330072` remains the authoritative CI result until complete.
+
+## Native integration follow-up
 
 - Finish review and compile fixes for the real wxWidgets/OpenGL Material implementation:
   - Material top bar and menu structure;
@@ -31,9 +43,10 @@
   styling for the history dialog.
 - Finish native Cantonese strings for the new Material/history surfaces and rerun placeholder,
   resource, and fallback checks.
-- Run the authoritative Release configure/build/install on the final source state.
-- Build and run `project_history_tests`, `libnest2d_tests`, `language_mode_tests`, and
-  `scripts/ci/Test-WindowsRelease.ps1` from that state.
+- Rerun the authoritative hosted Release configure/build/install and focused CTest after the
+  repair workflow completes.
+- Repair the upstream aggregate and `libnest2d_tests` baselines, then restore their coverage to
+  the hosted gate rather than retaining the focused waiver.
 - Smoke the installed application with a fresh isolated `--datadir` through the available low-level
   desktop/computer-control integration. Cover import, separate edits, save, Save As, history listing,
   safe restore, slice, Preview, Device/plugin gate, theme, localization, and resize behavior.

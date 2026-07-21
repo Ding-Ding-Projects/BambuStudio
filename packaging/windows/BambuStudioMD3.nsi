@@ -223,6 +223,10 @@ Section "Bambu Studio MD3" SEC_MAIN
           "部分 Bambu Studio MD3 復原檔案仍然使用緊。請關閉使用緊佢嘅保安工具，再重試安裝。"
         Abort
       ${EndIf}
+      ; FileExists "directory\\*" also reports an empty directory. Remove an
+      ; empty, guarded remnant before treating what remains as unknown.
+      ClearErrors
+      RMDir "${PRODUCT_INSTALL_DIR}"
       ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
         SetErrorLevel 2
         !insertmacro ShowLanguageStop \
@@ -262,6 +266,10 @@ Section "Bambu Studio MD3" SEC_MAIN
           "無法移除上一個 Bambu Studio MD3。請關閉程式再試。未有安裝新檔案。"
         Abort
       ${EndIf}
+      ; The prior uninstaller can leave an empty root after removing its
+      ; payload. Remove it before the wildcard existence guard below.
+      ClearErrors
+      RMDir "${PRODUCT_INSTALL_DIR}"
       ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
         SetErrorLevel 2
         !insertmacro ShowLanguageStop \
@@ -269,6 +277,21 @@ Section "Bambu Studio MD3" SEC_MAIN
           "上一個 Bambu Studio MD3 資料夾仍有未知路徑。舊程式已移除，但未有安裝新版本。請將嗰啲路徑移去其他位置再試。"
         Abort
       ${EndIf}
+    ${ElseIf} $2 == "directory_cleanup"
+      ; A prior owned uninstall preserved this marker because unknown paths
+      ; blocked root removal. Recovery may proceed only after the guarded,
+      ; non-recursive removal succeeds.
+      ClearErrors
+      RMDir "${PRODUCT_INSTALL_DIR}"
+      ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
+        SetErrorLevel 2
+        !insertmacro ShowLanguageStop \
+          "Unknown paths remain in the Bambu Studio MD3 directory. No new files were installed." \
+          "Bambu Studio MD3 資料夾仍有未知路徑。未有安裝新檔案。"
+        Abort
+      ${EndIf}
+      DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
+      DeleteRegKey HKCU "${PRODUCT_REG_KEY}"
     ${ElseIf} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
       SetErrorLevel 2
       !insertmacro ShowLanguageStop \
@@ -468,6 +491,24 @@ Section "Uninstall"
   Delete "${PRODUCT_SHORTCUT_DIR}\Bambu Studio MD3.lnk"
   Delete "${PRODUCT_SHORTCUT_DIR}\Uninstall Bambu Studio MD3.lnk"
   RMDir "${PRODUCT_SHORTCUT_DIR}"
+
+  ; Do not discard ownership when a user-owned path keeps the fixed install
+  ; directory non-empty.  The next installer must fail closed while that path
+  ; exists, then be able to complete recovery after the user removes it.
+  ClearErrors
+  RMDir "${PRODUCT_INSTALL_DIR}"
+  ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\*"
+    DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallDir" "${PRODUCT_INSTALL_DIR}"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "LanguageMode" "$LanguageMode"
+    WriteRegStr HKCU "${PRODUCT_REG_KEY}" "RecoveryState" "directory_cleanup"
+    SetErrorLevel 2
+    !insertmacro ShowLanguageStop \
+      "Unknown paths remain in the Bambu Studio MD3 directory. They were preserved; remove them and retry the installer to complete recovery." \
+      "Bambu Studio MD3 資料夾仍有未知路徑。佢哋已被保留；請移除後重試安裝程式以完成復原。"
+    Abort
+  ${EndIf}
 
   DeleteRegKey HKCU "${PRODUCT_UNINSTALL_KEY}"
   DeleteRegKey HKCU "${PRODUCT_REG_KEY}"
