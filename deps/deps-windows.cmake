@@ -61,6 +61,11 @@ set(DEP_CMAKE_OPTS "-DCMAKE_POLICY_VERSION_MINIMUM=3.5")
 if (DEP_PLATFORM STREQUAL "ARM64")
     list(APPEND DEP_CMAKE_OPTS "-DCMAKE_SYSTEM_PROCESSOR=ARM64")
 endif ()
+# Forward an explicitly pinned Windows SDK to every dependency sub-build so a
+# newer partially installed SDK cannot be selected there (MSB8037).
+if (CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)
+    list(APPEND DEP_CMAKE_OPTS "-DCMAKE_SYSTEM_VERSION=${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+endif ()
 
 if (${DEP_DEBUG})
     set(DEP_BOOST_DEBUG "debug")
