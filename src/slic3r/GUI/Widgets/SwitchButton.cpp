@@ -663,11 +663,11 @@ void ExpandButton::doRender(wxDC& dc)
 ExpandButtonHolder::ExpandButtonHolder(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
     : wxPanel(parent, id, pos, size)
 {
-    // The floating expand toolbar is an always-dark HUD surface that stays dark
-    // charcoal regardless of the app light/dark theme, so resolve MD3 dark
-    // surface tokens with a fixed dark=true (not the theme-following semantic()).
-    // #3B4446 -> SurfaceContainerHigh dark (#2f3036), matching gDarkColors.
-    SetBackgroundColour(MD3::resolve(MD3::Role::SurfaceContainerHigh, /*dark=*/true));
+    // The floating expand toolbar is hosted by the title bar, so it shares the
+    // title-bar surface treatment: SurfaceContainerLow, resolved through the
+    // theme-following semantic() so the overlay stays consistent with the actual
+    // top-bar background in both light and dark themes.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     hsizer = new wxBoxSizer(wxHORIZONTAL);
     hsizer->AddStretchSpacer(1);
@@ -717,14 +717,15 @@ void ExpandButtonHolder::ShowExpandButton(wxWindowID id, bool show)
          ExpandButton* expandBtn = dynamic_cast<ExpandButton*>(child);
          if (expandBtn != nullptr)
          {
-             // Always-dark HUD surfaces (see ctor): fixed dark=true MD3 tokens.
-             // Single button sits flush with the holder (SurfaceContainerHigh);
-             // the multi-button recessed track drops to SurfaceContainerLow.
+             // Title-bar-hosted overlay (see ctor): theme-following surfaces that
+             // match the top-bar background. Single button sits flush with the
+             // holder; multi-button icons blend into the recessed track drawn in
+             // doRender(). Both resolve SurfaceContainerLow via semantic().
              if (length <= 1) {
-                 expandBtn->SetBackgroundColour(MD3::resolve(MD3::Role::SurfaceContainerHigh, /*dark=*/true));
+                 expandBtn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
              }
              else {
-                expandBtn->SetBackgroundColour(MD3::resolve(MD3::Role::SurfaceContainerLow, /*dark=*/true));
+                expandBtn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
              }
          }
      }
@@ -867,9 +868,10 @@ void ExpandButtonHolder::doRender(wxDC& dc)
     wxSize size = GetSize();
     
     if (GetAvailable() > 1) {
-        // Recessed multi-button track: always-dark HUD surface (see ctor),
-        // fixed dark=true MD3 SurfaceContainerLow token.
-        const wxColour track = MD3::resolve(MD3::Role::SurfaceContainerLow, /*dark=*/true);
+        // Recessed multi-button track: a subtle container step above the shared
+        // top-bar surface (see ctor) so the grouped pill reads against the flush
+        // SurfaceContainerLow buttons, theme-following via semantic().
+        const wxColour track = StateColor::semantic(MD3::Role::SurfaceContainer);
         dc.SetBrush(wxBrush(track));
         dc.SetPen(wxPen(track));
         dc.DrawRoundedRectangle(0, 0, size.x, size.y, FromDIP(10));

@@ -269,7 +269,8 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     m_topbar         = new BBLTopbar(this);
 #else
     auto panel_topbar = new wxPanel(this, wxID_ANY);
-    panel_topbar->SetBackgroundColour(ThemeColor::Grey250);
+    // Title-bar surface role (matches BBLTopbar's SurfaceContainerLow background).
+    panel_topbar->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     auto sizer_tobar = new wxBoxSizer(wxVERTICAL);
     panel_topbar->SetSizer(sizer_tobar);
     panel_topbar->Layout();
@@ -1407,7 +1408,8 @@ void MainFrame::init_tabpanel()
     m_prepare_action_bar->Hide();
 
     m_tabpanel = new Notebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, nullptr, wxNB_TOP | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
-    m_tabpanel->SetBackgroundColour(ThemeColor::White);
+    // Match the tab-bar (ButtonsListCtrl) Surface role; the strip repaints over it.
+    m_tabpanel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 
 #ifndef __WXOSX__ // Don't call SetFont under OSX to avoid name cutting in ObjectList
     m_tabpanel->SetFont(Slic3r::GUI::wxGetApp().normal_font());

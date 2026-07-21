@@ -4,6 +4,7 @@
 #include "SlicingProgressNotification.hpp"
 #include "GUI.hpp"
 #include "ImGuiWrapper.hpp"
+#include "Widgets/StateColor.hpp"
 #include "wxExtensions.hpp"
 #include "ObjectDataViewModel.hpp"
 #include "GUI_ObjectList.hpp"
@@ -66,6 +67,24 @@ namespace {
 			ImGui::PushStyleColor(idx, col);
 	}
 
+	// MD3 bridge for the ImGui-drawn notifications. Notifications track their own
+	// dark-mode flag, so resolve against it rather than the global StateColor
+	// state to keep surface, text and the close/minimize glyphs in lock-step.
+	inline ImVec4 to_imvec4(const wxColour &c, float alpha = 1.0f)
+	{
+		return ImVec4(c.Red() / 255.f, c.Green() / 255.f, c.Blue() / 255.f, alpha);
+	}
+	inline ImVec4 md3_notif_color(MD3::Role role, bool dark, float alpha = 1.0f)
+	{
+		return to_imvec4(MD3::resolve(role, dark), alpha);
+	}
+	// Warning has no MD3 surface role; it lives in the ThemeColor bridge with a
+	// dark tone in the StateColor map.
+	inline ImVec4 md3_notif_warning(bool dark, float alpha = 1.0f)
+	{
+		return to_imvec4(dark ? StateColor::darkModeColorFor(ThemeColor::Warning) : ThemeColor::Warning, alpha);
+	}
+
 	bool get_high_shrinkage_filament_names(std::string& filament_names)
 	{
 		Plater* plater = wxGetApp().plater();
@@ -117,15 +136,17 @@ NotificationManager::PopNotification::PopNotification(const NotificationData &n,
     if (!n.second_hypertext.empty()) {
         m_second_hypertext = n.second_hypertext;
     }
-    m_ErrorColor  = ImVec4(0.9, 0.36, 0.36, 1);
-    m_WarnColor   = ImVec4(0.99, 0.69, 0.455, 1);
-    m_NormalColor = ImVec4(0.03, 0.6, 0.18, 1);
+    // MD3 status/accent roles. use_bbl_theme() re-resolves these against the
+    // live dark-mode flag; these light defaults cover the pre-render window.
+    m_ErrorColor  = md3_notif_color(MD3::Role::Error, false);
+    m_WarnColor   = md3_notif_warning(false);
+    m_NormalColor = md3_notif_color(MD3::Role::Primary, false);
 
 	m_CurrentColor = m_NormalColor;   //Default
 
-	m_WindowBkgColor = ImVec4(1, 1, 1, 1);
-    m_TextColor      = ImVec4(.2f, .2f, .2f, 1.0f);
-    m_HyperTextColor = ImVec4(0.03, 0.6, 0.18, 1);
+	m_WindowBkgColor = md3_notif_color(MD3::Role::SurfaceContainerHigh, false);
+    m_TextColor      = md3_notif_color(MD3::Role::OnSurface, false);
+    m_HyperTextColor = md3_notif_color(MD3::Role::Primary, false);
 }
 
 // We cannot call plater()->get_current_canvas3D() from constructor, so we do it here
@@ -174,6 +195,12 @@ void NotificationManager::PopNotification::use_bbl_theme()
     OldStyle.WindowPadding             = ImVec2(0, 0);
     OldStyle.WindowRounding            = m_WindowRadius;
 
+	// Resolve the status/accent tones for the active theme (MD3 Error / Warning /
+	// Primary) before choosing the left-sign accent for this notification level.
+	m_ErrorColor  = md3_notif_color(MD3::Role::Error, m_is_dark);
+	m_WarnColor   = md3_notif_warning(m_is_dark);
+	m_NormalColor = md3_notif_color(MD3::Role::Primary, m_is_dark);
+
 	if (m_data.level == NotificationLevel::ErrorNotificationLevel)
         m_CurrentColor = m_ErrorColor;
     else if (m_data.level == NotificationLevel::WarningNotificationLevel)
@@ -190,10 +217,12 @@ void NotificationManager::PopNotification::use_bbl_theme()
  //   OldStyle.Colors[ImGuiCol_WindowBg] = m_WindowBkgColor;
  //   OldStyle.Colors[ImGuiCol_Text]     = m_TextColor;
 
-	m_WindowBkgColor = m_is_dark ? ImVec4(45 / 255.f, 45 / 255.f, 49 / 255.f, 1.f) : ImVec4(1, 1, 1, 1);
-	m_TextColor = m_is_dark ? ImVec4(224 / 255.f, 224 / 255.f, 224 / 255.f, 1.f) : ImVec4(.2f, .2f, .2f, 1.0f);
-	m_HyperTextColor = m_is_dark ? ImVec4(0.03, 0.6, 0.18, 1) : ImVec4(0.03, 0.6, 0.18, 1);
-	m_is_dark ? push_style_color(ImGuiCol_Border, {62 / 255.f, 62 / 255.f, 69 / 255.f, 1.f}, true, m_current_fade_opacity) : push_style_color(ImGuiCol_Border, m_CurrentColor, true, m_current_fade_opacity);
+	// MD3 elevated notification surface: SurfaceContainerHigh card, OnSurface
+	// body text, Primary (brand-green) hyperlink accent.
+	m_WindowBkgColor = md3_notif_color(MD3::Role::SurfaceContainerHigh, m_is_dark);
+	m_TextColor      = md3_notif_color(MD3::Role::OnSurface, m_is_dark);
+	m_HyperTextColor = md3_notif_color(MD3::Role::Primary, m_is_dark);
+	m_is_dark ? push_style_color(ImGuiCol_Border, md3_notif_color(MD3::Role::OutlineVariant, m_is_dark), true, m_current_fade_opacity) : push_style_color(ImGuiCol_Border, m_CurrentColor, true, m_current_fade_opacity);
     push_style_color(ImGuiCol_WindowBg, m_WindowBkgColor, true, m_current_fade_opacity);
     push_style_color(ImGuiCol_Text, m_TextColor, true, m_current_fade_opacity);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, m_WindowRadius / 4);
@@ -366,12 +395,16 @@ void NotificationManager::PopNotification::bbl_render_block_notification(GLCanva
 	use_bbl_theme();
     if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
 	{
-        push_style_color(ImGuiCol_Border, {245.f / 255.f, 155 / 255.f, 22 / 255.f, 1}, true, m_current_fade_opacity);
-        push_style_color(ImGuiCol_WindowBg, {245.f / 255.f, 155 / 255.f, 22 / 255.f, 1}, true, m_current_fade_opacity);
+        // Saturated warning banner (light Warning tone in both themes) reads
+        // white text; a paler dark tone would lose contrast against it.
+        const ImVec4 warn_banner = to_imvec4(ThemeColor::Warning);
+        push_style_color(ImGuiCol_Border, warn_banner, true, m_current_fade_opacity);
+        push_style_color(ImGuiCol_WindowBg, warn_banner, true, m_current_fade_opacity);
 	}
     if (m_data.level == NotificationLevel::ErrorNotificationLevel) {
-        push_style_color(ImGuiCol_Border, {225.f / 255.f, 71 / 255.f, 71 / 255.f, 1}, true, m_current_fade_opacity);
-        push_style_color(ImGuiCol_WindowBg, {225.f / 255.f, 71 / 255.f, 71 / 255.f, 1}, true, m_current_fade_opacity);
+        const ImVec4 error_banner = to_imvec4(ThemeColor::Danger);
+        push_style_color(ImGuiCol_Border, error_banner, true, m_current_fade_opacity);
+        push_style_color(ImGuiCol_WindowBg, error_banner, true, m_current_fade_opacity);
     }
 	push_style_color(ImGuiCol_Text, { 1,1,1,1 }, true, m_current_fade_opacity);
 
@@ -769,7 +802,7 @@ void NotificationManager::PopNotification::render_hypertext(
     if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
 		HyperColor = ImVec4(0.f, 0.f, 0.f, 0.4f);
 	if (m_data.level == NotificationLevel::ErrorNotificationLevel)
-		HyperColor = ImVec4(135.f / 255.f, 43 / 255.f, 43 / 255.f, 1);
+		HyperColor = md3_notif_color(MD3::Role::Error, m_is_dark);
 	if (ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
 	{
 		HyperColor.y += 0.1f;
@@ -1295,8 +1328,9 @@ void NotificationManager::ProgressBarNotification::render_bar(ImGuiWrapper& imgu
 {
 	//ImVec4 orange_color			= ImVec4(.99f, .313f, .0f, 1.0f);
 	//ImVec4 gray_color			= ImVec4(.34f, .34f, .34f, 1.0f);
+    // MD3 ProgressBar: Primary fill on a SurfaceContainerHighest track.
     ImVec4 orange_color         = m_NormalColor;
-    ImVec4 gray_color           = ImVec4(.7f, .7f, .7f, 1.0f);
+    ImVec4 gray_color           = md3_notif_color(MD3::Role::SurfaceContainerHighest, m_is_dark);
 	ImVec2 lineEnd				= ImVec2(win_pos_x - m_window_width_offset, win_pos_y + win_size_y / 2 + (m_multiline ? m_line_height / 2 : 0));
 	ImVec2 lineStart			= ImVec2(win_pos_x - win_size_x + m_left_indentation, win_pos_y + win_size_y / 2 + (m_multiline ? m_line_height / 2 : 0));
 	ImVec2 midPoint				= ImVec2(lineStart.x + (lineEnd.x - lineStart.x) * m_percentage, lineStart.y);

@@ -393,6 +393,7 @@ void ProjectHistoryDialog::populate_versions()
 void ProjectHistoryDialog::update_history_status()
 {
     m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_status_label->SetFont(Label::Body_13);
     if (m_list_truncated) {
         // TRN: %d is the number of newest local project versions currently displayed.
         m_status_label->SetLabel(wxString::Format(
@@ -462,6 +463,7 @@ void ProjectHistoryDialog::set_busy(PendingOperation operation, const wxString &
 {
     m_pending = operation;
     m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_status_label->SetFont(Label::Body_13);
     m_status_label->SetLabel(message);
     m_refresh_button->Enable(false);
     m_load_all_button->Enable(false);
@@ -503,8 +505,10 @@ void ProjectHistoryDialog::update_selection()
     m_restore_button->Enable(m_pending == PendingOperation::None && has_selection);
     if (has_selection) {
         // Showing the complete object name here makes the abbreviated table id
-        // unambiguous without forcing an excessively wide first column.
+        // unambiguous without forcing an excessively wide first column. Commit
+        // ids are technical values, so render them in the MD3 mono face.
         m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        m_status_label->SetFont(Label::Mono_13);
         m_status_label->SetLabel(_L("Selected commit: ") + wxString::FromUTF8(m_versions[selected_row].commit_id));
     } else if (!m_versions.empty())
         update_history_status();

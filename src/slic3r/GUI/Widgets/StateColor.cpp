@@ -48,7 +48,14 @@ static std::map<wxColour, wxColour> gDarkColors{
     {"#ABABAB", "#94959f"},
     {"#D9D9D9", "#393a41"},
     {"#EBF9F0", "#095228"},
-    {"#DBFDE7", "#095228"}
+    {"#DBFDE7", "#095228"},
+    // MD3 brand container-green tokens. Construction-time semantic() snapshots of
+    // the tonal greens capture the light value; these pairs live-remap them when
+    // the app toggles to dark mode (mirrors the resolve() dark tones exactly).
+    {MD3::Light::primaryContainer,     MD3::Dark::primaryContainer},     /*#a6f4b8 -> #095228*/
+    {MD3::Light::secondaryContainer,   MD3::Dark::secondaryContainer},   /*#d7e8d9 -> #2b3a2f*/
+    {MD3::Light::onPrimaryContainer,   MD3::Dark::onPrimaryContainer},   /*#00210c -> #a6f4b8*/
+    {MD3::Light::onSecondaryContainer, MD3::Dark::onSecondaryContainer}  /*#0e1f13 -> #cfe9d3*/
     //{"#F0F0F0", "#4C4C54"},
 };
 

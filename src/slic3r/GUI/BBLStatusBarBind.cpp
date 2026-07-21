@@ -21,14 +21,14 @@ BBLStatusBarBind::BBLStatusBarBind(wxWindow *parent, int id)
  : m_self{new wxPanel(parent, id == -1 ? wxID_ANY : id)} 
     , m_sizer(new wxBoxSizer(wxHORIZONTAL))
 {
-    m_self->SetBackgroundColour(wxColour(255,255,255));
+    m_self->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_self->SetMinSize(wxSize(m_self->FromDIP(450), m_self->FromDIP(30)));
 
     m_prog = new wxGauge(m_self, wxID_ANY, 100, wxDefaultPosition, wxSize(m_self->FromDIP(400), m_self->FromDIP(6)), wxGA_HORIZONTAL);
     m_prog->SetValue(0);
 
     m_stext_percent = new wxStaticText(m_self, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
-    m_stext_percent->SetForegroundColour(wxColour(107, 107, 107));
+    m_stext_percent->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_stext_percent->SetFont(::Label::Body_13);
     m_stext_percent->Wrap(-1);
 

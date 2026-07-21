@@ -11,18 +11,20 @@
 
 namespace Slic3r::GUI {
 
-static const wxColour BgNormalColor  = wxColour("#FFFFFF");
-static const wxColour BgSelectColor  = wxColour("#EBF9F0");
-static const wxColour BgDisableColor = wxColour("#CECECE");
+// MD3 light-mode role tokens (dark-map keys, so they adapt through
+// StateColor::darkModeColorFor / UpdateDarkUI). The selected-card fill uses
+// SecondaryContainer, resolved via StateColor::semantic() at paint time.
+static const wxColour BgNormalColor  = ThemeColor::White;      // SurfaceContainerLowest
+static const wxColour BgDisableColor = ThemeColor::Grey400;    // OutlineVariant
 
-static const wxColour BorderNormalColor   = wxColour("#CECECE");
-static const wxColour BorderSelectedColor = wxColour("#00AE42");
-static const wxColour BorderDisableColor  = wxColour("#EEEEEE");
+static const wxColour BorderNormalColor   = ThemeColor::Grey400;    // OutlineVariant
+static const wxColour BorderSelectedColor = ThemeColor::BrandGreen; // Primary
+static const wxColour BorderDisableColor  = ThemeColor::Grey250;    // SurfaceContainer
 
-static const wxColour TextNormalBlackColor = wxColour("#262E30");
-static const wxColour TextNormalGreyColor = wxColour("#6B6B6B");
-static const wxColour TextDisableColor = wxColour("#CECECE");
-static const wxColour TextErrorColor = wxColour("#E14747");
+static const wxColour TextNormalBlackColor = ThemeColor::TextPrimary; // OnSurface
+static const wxColour TextNormalGreyColor = ThemeColor::TextMuted;    // OnSurfaceVariant
+static const wxColour TextDisableColor = ThemeColor::TextDisabled;
+static const wxColour TextErrorColor = ThemeColor::Danger;           // Error
 
 wxDEFINE_EVENT(wxEVT_INVALID_MANUAL_MAP, wxCommandEvent);
 
@@ -542,7 +544,7 @@ void FilamentMapBtnPanel::OnPaint(wxPaintEvent &event)
         wxRect rect = GetClientRect();
         gc->SetBrush(wxTransparentColour);
         gc->DrawRoundedRectangle(0, 0, rect.width, rect.height, 0);
-        wxColour bg_color = m_selected ? BgSelectColor : BgNormalColor;
+        wxColour bg_color = m_selected ? StateColor::semantic(MD3::Role::SecondaryContainer) : BgNormalColor;
 
         wxColour border_color = m_hover || m_selected ? BorderSelectedColor : BorderNormalColor;
 
@@ -558,10 +560,11 @@ void FilamentMapBtnPanel::OnPaint(wxPaintEvent &event)
 void FilamentMapBtnPanel::UpdateStatus()
 {
     if (m_selected) {
-        m_btn->SetBackgroundColour(BgSelectColor);
-        m_label->SetBackgroundColour(BgSelectColor);
-        m_detail->SetBackgroundColour(BgSelectColor);
-        m_disable_tip->SetBackgroundColour(BgSelectColor);
+        const wxColour select_bg = StateColor::semantic(MD3::Role::SecondaryContainer);
+        m_btn->SetBackgroundColour(select_bg);
+        m_label->SetBackgroundColour(select_bg);
+        m_detail->SetBackgroundColour(select_bg);
+        m_disable_tip->SetBackgroundColour(select_bg);
     }
     else {
         m_btn->SetBackgroundColour(BgNormalColor);
@@ -750,7 +753,7 @@ FilamentMapSavingPanel::FilamentMapSavingPanel(wxWindow *parent) : FilamentMapPa
     wxString deputy_nz_saving = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt_saving, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
     auto desc_label = new Label(this, wxString::Format(_L("Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"), deputy_nz_saving, main_nz_saving));
     desc_label->SetFont(Label::Body_12);
-    desc_label->SetForegroundColour(wxColour("#6B6B6B"));
+    desc_label->SetForegroundColour(TextNormalGreyColor);
     saving_sizer->Add(desc_label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(50));
     saving_sizer->AddSpacer(FromDIP(32));
 

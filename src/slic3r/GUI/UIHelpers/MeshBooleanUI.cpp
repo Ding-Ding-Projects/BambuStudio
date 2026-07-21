@@ -3,6 +3,7 @@
 #include "slic3r/GUI/GLCanvas3D.hpp"
 #include "slic3r/GUI/Selection.hpp"
 #include "slic3r/GUI/ImGuiWrapper.hpp"
+#include "slic3r/GUI/Widgets/MD3Tokens.hpp"
 #include "slic3r/GUI/GLTexture.hpp"
 #include "slic3r/GUI/format.hpp"
 #include "slic3r/GUI/I18N.hpp"
@@ -41,6 +42,30 @@ namespace {
         explicit ImScopedID(const char* id) { ImGui::PushID(id); }
         ~ImScopedID() { ImGui::PopID(); }
     };
+
+    // MD3 -> ImGui colour bridge. Resolves the shared design-system role for the
+    // current theme instead of the legacy brand-green / grey literals. The
+    // mesh-boolean gizmo lives in the Prepare workspace, so the Brand scheme
+    // (default) applies.
+    inline ImVec4 md3_vec4(MD3::Role role, bool dark, float alpha = 1.0f)
+    {
+        const wxColour &c = MD3::resolve(role, dark);
+        return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+    }
+    inline ImU32 md3_u32(MD3::Role role, bool dark, unsigned char alpha = 255)
+    {
+        const wxColour &c = MD3::resolve(role, dark);
+        return IM_COL32(c.Red(), c.Green(), c.Blue(), alpha);
+    }
+    // Blend an MD3 role toward its companion colour to approximate a Material
+    // state layer (hover ~8%, pressed ~12%); alpha follows the base colour.
+    inline ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
+    {
+        return ImVec4(base.x + (over.x - base.x) * t,
+                      base.y + (over.y - base.y) * t,
+                      base.z + (over.z - base.z) * t,
+                      base.w);
+    }
 }
 
 namespace Slic3r {
@@ -387,22 +412,19 @@ void MeshBooleanUI::draw_action_buttons()
     // Recompute enabled using helper
     enable_button = is_ok_button_enabled();
 
-    // OK button (green)
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.00f, 0.75f, 0.30f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.00f, 0.60f, 0.22f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    // OK button (MD3 primary)
+    const ImVec4 md3_primary    = md3_vec4(MD3::Role::Primary, m_is_dark_mode);
+    const ImVec4 md3_on_primary = md3_vec4(MD3::Role::OnPrimary, m_is_dark_mode);
+    ImGui::PushStyleColor(ImGuiCol_Button, md3_primary);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_state_layer(md3_primary, md3_on_primary, 0.08f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_state_layer(md3_primary, md3_on_primary, 0.12f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_on_primary);
 
     bool ok_clicked = false;
     if (!enable_button) {
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        if (m_is_dark_mode) {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(39.0f / 255.0f, 39.0f / 255.0f, 39.0f / 255.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(108.0f / 255.0f, 108.0f / 255.0f, 108.0f / 255.0f, 1.0f));
-        } else {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(230.0f / 255.0f, 230.0f / 255.0f, 230.0f / 255.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(163.0f / 255.0f, 163.0f / 255.0f, 163.0f / 255.0f, 1.0f));
-        }
+        ImGui::PushStyleColor(ImGuiCol_Button, md3_vec4(MD3::Role::SurfaceContainerHighest, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, m_is_dark_mode, 0.38f));
     }
 
     ok_clicked = m_imgui->button((_L("Execute") + "##btn").c_str(), execute_button_width, 0.0f);
@@ -430,13 +452,8 @@ void MeshBooleanUI::draw_action_buttons()
 
     if (!cancel_enabled) {
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        if (m_is_dark_mode) {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(39.0f / 255.0f, 39.0f / 255.0f, 39.0f / 255.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(108.0f / 255.0f, 108.0f / 255.0f, 108.0f / 255.0f, 1.0f));
-        } else {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(230.0f / 255.0f, 230.0f / 255.0f, 230.0f / 255.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(163.0f / 255.0f, 163.0f / 255.0f, 163.0f / 255.0f, 1.0f));
-        }
+        ImGui::PushStyleColor(ImGuiCol_Button, md3_vec4(MD3::Role::SurfaceContainerHighest, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_vec4(MD3::Role::OnSurface, m_is_dark_mode, 0.38f));
     }
     // Note: Cancel and Reset buttons now use default button colors (no red highlighting)
 
@@ -682,11 +699,11 @@ bool MeshBooleanUI::draw_tab_button(const char* icon_name, const char* text, boo
     ImVec2 button_max = ImGui::GetItemRectMax();
 
     ImU32 bg_color = selected
-        ? ImGui::GetColorU32(ImVec4(0, 174.0f/255.0f, 66.0f/255.0f, 1.0f))
+        ? md3_u32(MD3::Role::Primary, m_is_dark_mode)
         : (ImGui::IsItemHovered()
-            ? ImGui::GetColorU32(m_is_dark_mode ? ImVec4(0.3f,0.3f,0.3f,1.0f) : ImVec4(0.9f,0.9f,0.9f,1.0f))
-            : ImGui::GetColorU32(m_is_dark_mode ? ImVec4(0.2f,0.2f,0.2f,1.0f) : ImVec4(1.0f,1.0f,1.0f,1.0f)));
-    ImU32 border_color = ImGui::GetColorU32(m_is_dark_mode ? ImVec4(0.5f,0.5f,0.5f,1.0f) : ImVec4(0.7f,0.7f,0.7f,1.0f));
+            ? md3_u32(MD3::Role::SurfaceContainerHigh, m_is_dark_mode)
+            : md3_u32(MD3::Role::SurfaceContainerLowest, m_is_dark_mode));
+    ImU32 border_color = md3_u32(MD3::Role::Outline, m_is_dark_mode);
     float rounding = MeshBooleanConfig::ROUNDING_BUTTON;
 
     if (border_type == 0) {
@@ -714,8 +731,8 @@ bool MeshBooleanUI::draw_tab_button(const char* icon_name, const char* text, boo
     if (icon_id) draw_list->AddImage(icon_id, icon_pos, ImVec2(icon_pos.x + icon_size, icon_pos.y + icon_size));
 
     ImVec2 text_pos = ImVec2(start_x + icon_size + spacing, center_y - text_size.y * 0.5f);
-    ImU32 text_color = selected ? IM_COL32(255,255,255,255)
-                                : (m_is_dark_mode ? IM_COL32(200,200,200,255) : IM_COL32(50,50,50,255));
+    ImU32 text_color = selected ? md3_u32(MD3::Role::OnPrimary, m_is_dark_mode)
+                                : md3_u32(MD3::Role::OnSurface, m_is_dark_mode);
     draw_list->AddText(text_pos, text_color, text);
 
     return clicked && enabled;
@@ -886,9 +903,9 @@ void MeshBooleanUI::draw_object_list(const std::string& table_name, ImVec2 size,
 
     // Set scrollbar color
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, IM_COL32(0, 0, 0, 0));
-    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, IM_COL32(220, 220, 220, 255));
-    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, IM_COL32(200, 200, 200, 200));
-    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, IM_COL32(180, 180, 180, 220));
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, md3_u32(MD3::Role::OutlineVariant, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, md3_u32(MD3::Role::Outline, m_is_dark_mode, 200));
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, md3_u32(MD3::Role::Outline, m_is_dark_mode, 220));
 
     // Create child window for list content - don't reduce height for bottom margin to avoid clipping
     float available_height = size.y - m_computed_list_title_height - title_to_list_spacing;
@@ -1034,8 +1051,8 @@ bool MeshBooleanUI::draw_selectable(const ListItemInfo& item_info, bool selected
     // Determine text color: gray out non-entity items when Entity Only mode is enabled
     ImU32 text_color;
     if (should_gray_out) {
-        // Gray color for non-entity items when Entity Only is enabled
-        text_color = m_is_dark_mode ? IM_COL32(108, 108, 108, 255) : IM_COL32(163, 163, 163, 255);
+        // Gray color for non-entity items when Entity Only is enabled (MD3 disabled = 38% OnSurface)
+        text_color = md3_u32(MD3::Role::OnSurface, m_is_dark_mode, 97);
     } else {
         // Normal text color
         text_color = m_is_dark_mode ? MeshBooleanConfig::COLOR_TEXT_DARK : MeshBooleanConfig::COLOR_TEXT;
@@ -1271,7 +1288,7 @@ void MeshBooleanUI::draw_progress_bar()
 
     // Draw progress bar
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
-    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, md3_vec4(MD3::Role::Primary, m_is_dark_mode));
     ImVec2 progress_size(progress_bar_width, 0.0f);
     ImGui::BBLProgressBar2(progress / 100.0f, progress_size);
     ImGui::PopStyleColor(1);
@@ -1280,7 +1297,7 @@ void MeshBooleanUI::draw_progress_bar()
     // Draw percentage text on the same line
     ImGui::SameLine(0, text_padding);
     ImGui::AlignTextToFramePadding();
-    ImGui::TextColored(ImVec4(0.42f, 0.42f, 0.42f, 1.00f), progress_text.c_str());
+    ImGui::TextColored(md3_vec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode), progress_text.c_str());
 
     ImGui::EndGroup();
 
@@ -1289,7 +1306,7 @@ void MeshBooleanUI::draw_progress_bar()
 
     // Determine status text and color based on progress
     std::string status_text;
-    ImVec4 text_color = ImVec4(0.42f, 0.42f, 0.42f, 1.0f);
+    ImVec4 text_color = md3_vec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode);
 
     if (progress < 10.0f) {
         status_text = _u8L("Preparing data...");

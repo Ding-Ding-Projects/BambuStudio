@@ -24,7 +24,7 @@ static wxString single_line_value(wxString value)
 }
 
 static wxColour dlg_bg()  { return StateColor::darkModeColorFor(*wxWHITE); }
-static wxColour label_fg() { return StateColor::darkModeColorFor(wxColour("#262E30")); }
+static wxColour label_fg() { return StateColor::semantic(MD3::Role::OnSurface); }
 }
 
 AssemblyPdfExportDialog::AssemblyPdfExportDialog(wxWindow *parent, const AssemblyPdfExportParams &params)
@@ -56,19 +56,19 @@ AssemblyPdfExportDialog::AssemblyPdfExportDialog(wxWindow *parent, const Assembl
     button_sizer->AddStretchSpacer();
 
     // Disabled palette mirrors the AMS_CONTROL_DISABLE_* tokens used elsewhere
-    StateColor ok_btn_bg(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Disabled),
-                         std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                         std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                         std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor ok_btn_bd(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Disabled),
-                         std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor ok_btn_text(std::pair<wxColour, int>(wxColour(128, 128, 128), StateColor::Disabled),
-                           std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    StateColor cancel_btn_bg(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                             std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                             std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
-    StateColor cancel_btn_bd(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
-    StateColor cancel_btn_text(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+    StateColor ok_btn_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
+                         std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                         std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor ok_btn_bd(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
+                         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor ok_btn_text(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
+                           std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    StateColor cancel_btn_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                             std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                             std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    StateColor cancel_btn_bd(std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal));
+    StateColor cancel_btn_text(std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal));
 
     const wxSize btn_size = FromDIP(wxSize(58, 24));
     m_ok_btn = new Button(this, _L("OK"));
@@ -149,10 +149,10 @@ wxTextCtrl *AssemblyPdfExportDialog::create_path_row(wxWindow *parent, wxBoxSize
     label_ctrl->SetForegroundColour(label_fg());
     auto *text_ctrl = new wxTextCtrl(parent, wxID_ANY, value, wxDefaultPosition, FromDIP(wxSize(360, -1)));
 
-    StateColor browse_bg(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                         std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                         std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
-    StateColor browse_fg(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+    StateColor browse_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                         std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                         std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    StateColor browse_fg(std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal));
     auto *browse_btn = new Button(parent, _L("Browse"));
     browse_btn->SetBackgroundColor(browse_bg);
     browse_btn->SetTextColor(browse_fg);

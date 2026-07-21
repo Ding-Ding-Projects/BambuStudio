@@ -12,11 +12,12 @@
 
 namespace Slic3r { namespace GUI {
 
-static const wxColour LabelEnableColor = wxColour("#262E30");
-static const wxColour LabelDisableColor = wxColour("#ACACAC");
-static const wxColour GreyColor = wxColour("#6B6B6B");
-static const wxColour GreenColor = wxColour("#00AE42");
-static const wxColour BackGroundColor = wxColour("#FFFFFF");
+// MD3 light-mode role tokens (dark-map keys, so they adapt through UpdateDarkUIWin).
+static const wxColour LabelEnableColor = ThemeColor::TextPrimary;   // OnSurface
+static const wxColour LabelDisableColor = ThemeColor::TextDisabled; // disabled label
+static const wxColour GreyColor = ThemeColor::TextMuted;            // OnSurfaceVariant
+static const wxColour GreenColor = ThemeColor::BrandGreen;          // Primary accent (links)
+static const wxColour BackGroundColor = ThemeColor::White;          // SurfaceContainerLowest
 
 
 static bool should_pop_up()

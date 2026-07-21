@@ -19,9 +19,10 @@ namespace {
 constexpr int btn_width_icon      = 40;
 constexpr int btn_width_label_min = 48;
 constexpr int btn_width_label_max = 136;
-constexpr int selection_line_height = 3;
 constexpr int selection_line_inset  = 12;
 constexpr int tab_bottom_space      = 4;
+// Active-indicator thickness comes from the shared chrome metric so the tab bar
+// stays in lock-step with the kit (MD3::Metrics::tab_active_indicator == 3).
 }; // namespace
 
 wxDEFINE_EVENT(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, wxCommandEvent);
@@ -36,7 +37,7 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 
     m_btn_margin = 0;
-    m_line_margin = FromDIP(selection_line_height);
+    m_line_margin = FromDIP(MD3::Metrics::tab_active_indicator);
     const int navigation_height = FromDIP(MD3::Metrics::navigation_bar_height);
     SetMinSize({-1, navigation_height});
     SetMaxSize({-1, navigation_height});
@@ -78,7 +79,9 @@ void ButtonsListCtrl::OnPaint(wxPaintEvent&)
 {
     wxAutoBufferedPaintDC dc(this);
     const wxSize size = GetClientSize();
-    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    // Kit tab-bar background is the base Surface role (not sc-lowest), so the
+    // strip reads as the workspace shell rather than a raised card.
+    const wxColour surface = StateColor::semantic(MD3::Role::Surface);
 
     dc.SetBackground(wxBrush(surface));
     dc.Clear();
@@ -106,10 +109,13 @@ void ButtonsListCtrl::OnPaint(wxPaintEvent&)
 
 void ButtonsListCtrl::StyleButton(Button* button, bool selected)
 {
-    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    // Tabs render transparent over the bar: the Normal fill matches the bar
+    // Surface, hover lifts to SurfaceContainerLow, and there is no distinct
+    // pressed fill (per kit). Selection is carried by the primary text colour
+    // plus the active indicator, not a filled tab.
+    const wxColour surface = StateColor::semantic(MD3::Role::Surface);
     const StateColor background(
-        std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::Pressed},
-        std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered},
+        std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Hovered},
         std::pair{surface, (int) StateColor::Normal});
     const StateColor text = selected
         ? StateColor(
@@ -117,7 +123,6 @@ void ButtonsListCtrl::StyleButton(Button* button, bool selected)
             std::pair{StateColor::semantic(MD3::Role::Primary, m_color_scheme), (int) StateColor::Normal})
         : StateColor(
             std::pair{StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled},
-            std::pair{StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Hovered},
             std::pair{StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal});
 
     button->SetBackgroundColor(background);
@@ -133,7 +138,7 @@ void ButtonsListCtrl::StyleButton(Button* button, bool selected)
 
 void ButtonsListCtrl::ApplyTheme()
 {
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     for (size_t idx = 0; idx < m_pageButtons.size(); ++idx)
         StyleButton(m_pageButtons[idx], int(idx) == m_selection);
     for (Button *button : m_actionButtons)
@@ -190,7 +195,7 @@ void ButtonsListCtrl::Rescale()
     const int navigation_height = FromDIP(MD3::Metrics::navigation_bar_height);
     SetMinSize({-1, navigation_height});
     SetMaxSize({-1, navigation_height});
-    m_line_margin = FromDIP(selection_line_height);
+    m_line_margin = FromDIP(MD3::Metrics::tab_active_indicator);
     m_sizer->Layout();
     Refresh(false);
 }

@@ -35,6 +35,7 @@
 #include "WipeTowerDialog.hpp"
 #include "GLToolbar.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/MD3Tokens.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_Colors.hpp"
 #include "Mouse3DController.hpp"
@@ -142,6 +143,21 @@ static constexpr const size_t VERTEX_BUFFER_RESERVE_SIZE = 131072 * 2; // 1.05MB
 
 namespace Slic3r {
 namespace GUI {
+
+// MD3 -> ImGui colour bridge for the 3D viewport overlays. Resolves shared
+// design-system roles for the current theme instead of legacy brand-green /
+// grey literals (see Widgets/MD3Tokens.hpp). The 3D editor uses the Brand
+// scheme (default); dark state follows wxGetApp().dark_mode().
+static inline ImVec4 md3_imvec4(MD3::Role role, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, wxGetApp().dark_mode());
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+static inline ImU32 md3_imu32(MD3::Role role, unsigned char alpha = 255)
+{
+    const wxColour &c = MD3::resolve(role, wxGetApp().dark_mode());
+    return IM_COL32(c.Red(), c.Green(), c.Blue(), alpha);
+}
 
 bool                                        GLCanvas3D::s_enable_bvh = true;
 std::vector<GLCanvas3D::IsolatedVolumeInfo> GLCanvas3D::s_isolated_volumes;
@@ -428,8 +444,8 @@ void GLCanvas3D::LayersEditing::render_variable_layer_height_dialog(const GLCanv
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.81f, 0.81f, 0.81f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrab, md3_imvec4(MD3::Role::OutlineVariant));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, md3_imvec4(MD3::Role::Primary));
     if(ImGui::BBLSliderScalar("##radius_slider", ImGuiDataType_S32, &radius, &v_min, &v_max)){
         radius = std::clamp(radius, 1, 10);
         m_smooth_params.radius = (unsigned int)radius;
@@ -440,7 +456,7 @@ void GLCanvas3D::LayersEditing::render_variable_layer_height_dialog(const GLCanv
     input_align = std::max(input_align, ImGui::GetCursorPosX());
     ImGui::SetCursorPosX(input_align);
     ImGui::PushItemWidth(input_box_width);
-    ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imvec4(MD3::Role::Primary));
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.00f));
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.68f, 0.26f, 0.00f));
     if (ImGui::BBLDragScalar("##radius_input", ImGuiDataType_S32, &radius, 1, &v_min, &v_max)) {
@@ -1097,7 +1113,7 @@ void GLCanvas3D::Labels::render(const std::vector<const ModelInstance*>& sorted_
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, owner.selected ? 3.0f : 1.5f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleColor(ImGuiCol_Border, owner.selected ? ImVec4(1/255.f, 174/255.f, 66/255.f, 1.0f) : ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_Border, owner.selected ? md3_imvec4(MD3::Role::Primary) : ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.4f));
         imgui.set_next_window_pos(x, y, ImGuiCond_Always, 0.5f, 0.5f);
         imgui.begin(owner.title, ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
@@ -7558,8 +7574,8 @@ void GLCanvas3D::_render_3d_navigator()
     style.Colors[ImGuizmo::COLOR::DIRECTION_X] = ImGuiWrapper::to_ImVec4(ColorRGBA::Y());
     style.Colors[ImGuizmo::COLOR::DIRECTION_Y] = ImGuiWrapper::to_ImVec4(ColorRGBA::Z());
     style.Colors[ImGuizmo::COLOR::DIRECTION_Z] = ImGuiWrapper::to_ImVec4(ColorRGBA::X());
-    style.Colors[ImGuizmo::COLOR::TEXT]        = m_is_dark ? ImVec4(224 / 255.f, 224 / 255.f, 224 / 255.f, 1.f) : ImVec4(.2f, .2f, .2f, 1.0f);
-    style.Colors[ImGuizmo::COLOR::FACE]        = m_is_dark ? ImVec4(0.23f, 0.23f, 0.23f, 1.f) : ImVec4(0.77f, 0.77f, 0.77f, 1);
+    style.Colors[ImGuizmo::COLOR::TEXT]        = md3_imvec4(MD3::Role::OnSurface);
+    style.Colors[ImGuizmo::COLOR::FACE]        = md3_imvec4(MD3::Role::SurfaceContainerHighest);
     strcpy(style.AxisLabels[ImGuizmo::Axis::Axis_X], "y");
     strcpy(style.AxisLabels[ImGuizmo::Axis::Axis_Y], "z");
     strcpy(style.AxisLabels[ImGuizmo::Axis::Axis_Z], "x");
@@ -9654,7 +9670,7 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
     float window_width = m_sel_plate_toolbar.icon_width + margin_size * 2 + (show_scroll ? 28.0f * f_scale : 20.0f * f_scale);
 
     ImVec4 window_bg = ImVec4(0.82f, 0.82f, 0.82f, 0.5f);
-    ImVec4 button_active = ImVec4(0.12f, 0.56f, 0.92, 1.0f);
+    ImVec4 button_active = md3_imvec4(MD3::Role::Primary);
     ImVec4 button_hover = ImVec4(0.67f, 0.67f, 0.67, 1.0f);
     ImVec4 scroll_col = ImVec4(0.77f, 0.77f, 0.77f, 1.0f);
     //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.f, 0.f, 0.f, 1.0f));
@@ -9715,12 +9731,12 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         ImTextureID btn_texture_id;
         if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::UNSLICED || all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICING || all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED)
         {
-            text_clr = ImVec4(0, 174.0f / 255.0f, 66.0f / 255.0f, 0.2f);
+            text_clr = md3_imvec4(MD3::Role::Primary, 0.2f);
             btn_texture_id = (ImTextureID)(intptr_t)(all_plates_stats_item->image_texture_transparent.get_id());
         }
         else
         {
-            text_clr = ImVec4(0, 174.0f / 255.0f, 66.0f / 255.0f, 1);
+            text_clr = md3_imvec4(MD3::Role::Primary, 1.0f);
             btn_texture_id = (ImTextureID)(intptr_t)(all_plates_stats_item->image_texture.get_id());
         }
         imgui.disabled_begin(wxGetApp().plater()->get_helio_process_status() == Slic3r::HelioBackgroundProcess::State::STATE_RUNNING);
@@ -9974,8 +9990,8 @@ void GLCanvas3D::_render_assembly_view_thumbnail_toolbar()
     imgui.set_next_window_pos((int)window_pos_x, (int)window_pos_y, ImGuiCond_Always, 0, 0);
     imgui.set_next_window_size(window_width, window_height, ImGuiCond_Always);
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? ImVec4(57 / 255.0f, 60 / 255.0f, 60 / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 77.0f / 255.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? md3_imvec4(MD3::Role::SurfaceContainerHigh) : md3_imvec4(MD3::Role::SurfaceContainerLowest));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(MD3::Role::OutlineVariant));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * sc);
 
@@ -9992,7 +10008,7 @@ void GLCanvas3D::_render_assembly_view_thumbnail_toolbar()
         ImVec2 uv0      = ImVec2(0.0f, 1.0f);
         ImVec2 uv1      = ImVec2(1.0f, 0.0f);
         ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-        ImU32  bg_col   = m_is_dark ? IM_COL32(68, 68, 70, 255) : IM_COL32(212, 212, 212, 212);
+        ImU32  bg_col   = md3_imu32(MD3::Role::SurfaceContainerHighest);
 
         // Center the image in the window
         ImGui::SetCursorPos(ImVec2((float)thumb_pos_x, (float)thumb_pos_y));
@@ -10141,9 +10157,9 @@ void GLCanvas3D::_render_assembly_view_preview_menu(float anchor_x, float anchor
     imgui.set_next_window_pos(menu_pos_x, menu_pos_y, ImGuiCond_Always, 0, 0);
     imgui.set_next_window_size(menu_width, menu_height, ImGuiCond_Always);
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? ImVec4(45 / 255.0f, 45 / 255.0f, 49 / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 77.0f / 255.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, m_is_dark ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f) : ImVec4(38.0f / 255.0f, 46.0f / 255.0f, 48.0f / 255.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? md3_imvec4(MD3::Role::SurfaceContainerHigh) : md3_imvec4(MD3::Role::SurfaceContainerLowest));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(MD3::Role::OutlineVariant));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * sc);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(win_padding, win_padding));
@@ -10168,8 +10184,7 @@ void GLCanvas3D::_render_assembly_view_preview_menu(float anchor_x, float anchor
         }
         bool hovered = ImGui::IsItemHovered();
         if (hovered || selected) {
-            ImU32 bg = m_is_dark ? (hovered ? IM_COL32(55, 55, 59, 255) : IM_COL32(10, 10, 10, 255))
-                                  : (hovered ? IM_COL32(240, 240, 240, 255) : IM_COL32(248, 248, 248, 255));
+            ImU32 bg = hovered ? md3_imu32(MD3::Role::SurfaceContainerHigh) : md3_imu32(MD3::Role::SurfaceContainerLow);
             ImGui::GetWindowDrawList()->AddRectFilled(row_pos, ImVec2(row_pos.x + row_content_w, row_pos.y + row_height), bg, 4.0f * sc);
         }
         ImGui::SetCursorScreenPos(ImVec2(row_pos.x + row_pad_x, row_pos.y + (row_height - icon_size.y) * 0.5f));
@@ -10501,7 +10516,7 @@ void GLCanvas3D::_render_paint_toolbar() const
 
     const float scrollbar_size = 0.375f * button_size.x;
     const ImVec4 window_bg = m_is_dark ? ImGuiWrapper::COL_WINDOW_BG_DARK : ImGuiWrapper::COL_WINDOW_BG;
-    const ImU32 border_col = m_is_dark ? IM_COL32(207, 207, 207, 255) : IM_COL32(130, 130, 128, 255);
+    const ImU32 border_col = md3_imu32(MD3::Role::Outline);
 
     constexpr float kPaintSwatchBorderDeltaE = 12.f;
     constexpr float kPaintSwatchBorderWidth  = 1.f;

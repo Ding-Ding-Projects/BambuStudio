@@ -11,6 +11,7 @@
 
 #include "../I18N.hpp"
 #include "../ImGuiWrapper.hpp"
+#include "../Widgets/MD3Tokens.hpp"
 #include "../GUI_App.hpp"
 #include "../GUI.hpp"
 #include "../GLCanvas3D.hpp"
@@ -42,6 +43,21 @@ namespace GUI {
 using namespace Slic3r;
 
 namespace {
+// MD3 -> ImGui colour bridge. Resolves shared design-system roles for the
+// current theme instead of the legacy brand-green / grey / charcoal literals
+// (see Widgets/MD3Tokens.hpp). The assembly guide overlay lives in the
+// Prepare/Overview workspace, so the Brand scheme (default) applies.
+inline ImU32 md3_u32(MD3::Role role, bool dark, unsigned char alpha = 255)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return IM_COL32(c.Red(), c.Green(), c.Blue(), alpha);
+}
+inline ImVec4 md3_vec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+
 // UTF-8 label clipping helpers, only used by the ImGui panels below.
 std::string utf8_truncate_with_ellipsis(const std::string &s, size_t max_chars)
 {
@@ -121,8 +137,8 @@ static void draw_assembly_scrollbar_y_thumb(ImGuiWindow *child, float sc, bool i
     const float grab_x = sb.Min.x + gap;
     const bool  hovered = sb.Contains(ImGui::GetIO().MousePos);
     const ImU32 grab_col = hovered
-        ? (is_dark ? IM_COL32(0x4C, 0x8F, 0x66, 255) : IM_COL32(0x9F, 0xD9, 0xB4, 255))
-        : (is_dark ? IM_COL32(144, 144, 144, 220) : IM_COL32(144, 144, 144, 217));
+        ? md3_u32(MD3::Role::PrimaryContainer, is_dark)
+        : md3_u32(MD3::Role::OnSurfaceVariant, is_dark, 220);
     child->DrawList->AddRectFilled(
         ImVec2(grab_x, grab_y), ImVec2(grab_x + grab_w, grab_y + grab_h),
         grab_col, 2.0f * sc);
@@ -444,7 +460,7 @@ void AssemblyStepsUtils::render_main(float canvas_w, float canvas_h) {
         // upscaled glyph bitmap sample between texels and look extra fuzzy.
         const ImVec2 pos(IM_FLOOR((canvas_w - text_size.x) * 0.5f), IM_FLOOR((canvas_h - text_size.y) * 0.5f));
         // Dark mode: use white text; the near-black title is unreadable on the dark canvas.
-        const ImU32 title_col = m_is_dark ? IM_COL32(255, 255, 255, 255) : IM_COL32(38, 46, 48, 255);
+        const ImU32 title_col = md3_u32(MD3::Role::OnSurface, m_is_dark);
         draw_crisp_large_text(dl, font, title_font_size, pos, title_col, title);
 
         if (is_cover_phase) {
@@ -723,9 +739,9 @@ void AssemblyStepsUtils::render_assemble_play_bar(float canvas_w, float bottom_y
     const float bar_cy      = base.y + main_cy;
     const float bar_y0      = bar_cy - BAR_H * 0.5f;
     const float bar_y1      = bar_cy + BAR_H * 0.5f;
-    const ImU32 bar_bg_col  = m_is_dark ? IM_COL32(0x7A, 0x7A, 0x7A, 255) : IM_COL32(0xCE, 0xCE, 0xCE, 255);
-    const ImU32 tick_col    = m_is_dark ? IM_COL32(0xD0, 0xD0, 0xD0, 255) : IM_COL32(0x9C, 0x9C, 0x9C, 255);
-    const ImU32 label_col   = m_is_dark ? IM_COL32(0xE6, 0xE6, 0xE6, 255) : IM_COL32(0x6B, 0x6B, 0x6B, 255);
+    const ImU32 bar_bg_col  = md3_u32(MD3::Role::OutlineVariant, m_is_dark);
+    const ImU32 tick_col    = md3_u32(MD3::Role::Outline, m_is_dark);
+    const ImU32 label_col   = md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark);
 
     dl->AddRectFilled(ImVec2(progress_x0, bar_y0), ImVec2(progress_x1, bar_y1),
                       bar_bg_col, BAR_H * 0.5f);
@@ -739,7 +755,7 @@ void AssemblyStepsUtils::render_assemble_play_bar(float canvas_w, float bottom_y
     const float fill_x1 = progress_x0 + PROGRESS_W * progress_frac;
     if (fill_x1 > progress_x0 + 0.5f) {
         dl->AddRectFilled(ImVec2(progress_x0, bar_y0), ImVec2(fill_x1, bar_y1),
-                          IM_COL32(0x2C, 0xAD, 0x00, 255), BAR_H * 0.5f);
+                          md3_u32(MD3::Role::Primary, m_is_dark), BAR_H * 0.5f);
     }
 
     bool  show_seek_drag_preview = false;
@@ -919,10 +935,10 @@ void AssemblyStepsUtils::render_assemble_play_bar(float canvas_w, float bottom_y
         ImGui::PushStyleColor(ImGuiCol_Text, text_col);
         ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.00f, 0.00f, 0.00f, 0.00f));
         ImGui::PushStyleColor(ImGuiCol_PopupBg, popup_bg);
-        ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.50f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_vec4(MD3::Role::Primary, m_is_dark));
+        ImGui::PushStyleColor(ImGuiCol_Header, md3_vec4(MD3::Role::Primary, m_is_dark));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_vec4(MD3::Role::Primary, m_is_dark, 0.50f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_vec4(MD3::Role::Primary, m_is_dark));
         // Arrow button must share the same dark mask as the text frame (not transparent).
         ImGui::PushStyleColor(ImGuiCol_Button, frame_bg);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, frame_hover);
@@ -1093,7 +1109,7 @@ void AssemblyStepsUtils::draw_arrow_svg_icon(int idx, const ImVec2 &center, cons
     ImDrawList *dl = ImGui::GetBackgroundDrawList();
     dl->AddRectFilled(box_min, box_max, IM_COL32(255, 255, 255, 255), rounding);
     dl->AddRect(box_min, box_max,
-                selected ? IM_COL32(25, 166, 77, 242) : IM_COL32(178, 178, 178, 255),
+                selected ? md3_u32(MD3::Role::Primary, m_is_dark, 242) : md3_u32(MD3::Role::Outline, m_is_dark),
                 rounding, 0, 1.0f);
     if (tex) {
         const ImVec2 img_min(center.x - icon_sz * 0.5f, center.y - icon_sz * 0.5f);
@@ -2696,11 +2712,11 @@ void AssemblyStepsUtils::render_assembly_structure_option_menu(
     bool is_dark)
 {
     ImGui::PushStyleColor(ImGuiCol_PopupBg,
-        is_dark ? ImVec4(0.18f, 0.18f, 0.20f, 0.95f) : ImVec4(0.96f, 0.96f, 0.96f, 0.98f));
+        is_dark ? md3_vec4(MD3::Role::SurfaceContainerHigh, is_dark, 0.95f) : md3_vec4(MD3::Role::SurfaceContainerLow, is_dark, 0.98f));
     ImGui::PushStyleColor(ImGuiCol_Text,
-        is_dark ? ImVec4(0.85f, 0.85f, 0.85f, 1.0f) : ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+        md3_vec4(MD3::Role::OnSurface, is_dark));
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered,
-        is_dark ? ImVec4(0.30f, 0.55f, 0.80f, 0.60f) : ImVec4(0.26f, 0.59f, 0.98f, 0.31f));
+        md3_vec4(MD3::Role::Primary, is_dark, is_dark ? 0.60f : 0.31f));
     ImGui::PushStyleColor(ImGuiCol_Separator,
         is_dark ? ImVec4(0.35f, 0.35f, 0.40f, 1.0f) : ImVec4(0.70f, 0.70f, 0.70f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f * sc, 6.0f * sc));

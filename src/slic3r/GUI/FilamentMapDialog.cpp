@@ -29,7 +29,7 @@ public:
 
         // separator
         auto *separator = new wxPanel(this);
-        separator->SetBackgroundColour(wxColour("#EEEEEE"));
+        separator->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
         main_sizer->Add(separator, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(15));
 
         // space
@@ -45,7 +45,7 @@ public:
 
         auto *wiki_link = new LinkLabel(this, _L("Learn more"), "https://e.bambulab.com/t?c=rYwNe4U869Qa9kW1");
         wiki_link->getLabel()->SetFont(Label::Body_12);
-        wiki_link->SeLinkLabelFColour(wxColour("#00AE42"));
+        wiki_link->SeLinkLabelFColour(StateColor::semantic(MD3::Role::Primary));
         wiki_link->SeLinkLabelBColour(*wxWHITE);
 
         auto *smart_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -244,24 +244,28 @@ bool try_pop_up_before_slice(bool is_slice_all, Plater* plater_ref, PartPlate* p
 }
 
 
+// Filled Primary (OK) button. Namespace-scope StateColors store MD3 light-mode
+// role tokens (ThemeColor::* are dark-map keys), so StateColor::colorForStates
+// adapts them to dark mode at paint time.
 StateColor btn_bg_green(
-    std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
-    std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-    std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-    std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+    std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
+    std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+    std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+    std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
 );
 
-static const StateColor btn_bd_green(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+static const StateColor btn_bd_green(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-static const StateColor btn_text_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+static const StateColor btn_text_green(std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-static const StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                                     std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                                     std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+// Neutral (Cancel) button — surface fill with a state-layer progression.
+static const StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed),
+                                     std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                                     std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-static const StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+static const StateColor btn_bd_white(std::pair<wxColour, int>(ThemeColor::Grey500, StateColor::Normal));
 
-static const StateColor btn_text_white(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+static const StateColor btn_text_white(std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal));
 
 FilamentMapDialog::FilamentMapDialog(wxWindow                           *parent,
                                      const std::vector<std::string>     &filament_type,
