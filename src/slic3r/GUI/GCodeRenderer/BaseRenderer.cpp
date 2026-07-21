@@ -3131,7 +3131,11 @@ namespace Slic3r
                         ImGui::PopStyleColor(1);
                     }
                     else if (any_less_to_single_ext) {
-                        ImVec4 color = md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark);
+                        // Keep the original two-tone split: emphasized text over the
+                        // left/right comparison overlay, muted on the plain panel.
+                        ImVec4 color = is_show_left_right_result
+                            ? md3_imgui_color(MD3::Role::OnSurface, m_is_dark)
+                            : md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark);
                         ImGui::PushStyleColor(ImGuiCol_Text, color);
                         wxString tip;
                         if (delta_weight_to_single_ext >= 0 && delta_change_to_single_ext >= 0)

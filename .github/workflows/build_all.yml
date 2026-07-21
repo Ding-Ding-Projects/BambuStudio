@@ -219,11 +219,22 @@ jobs:
               -H 'X-GitHub-Api-Version: 2026-03-10' `
               "repos/$env:GITHUB_REPOSITORY/immutable-releases" 2>&1
           if ($LASTEXITCODE -ne 0) {
-              throw "Could not read immutable-release settings: $($immutableJson -join [Environment]::NewLine)"
-          }
-          $immutable = ($immutableJson | Out-String) | ConvertFrom-Json
-          if (-not $immutable.enabled) {
-              throw 'Repository immutable releases must be enabled before a release can be published.'
+              $immutableText = $immutableJson -join [Environment]::NewLine
+              # The settings endpoint needs repo-administration scope that the
+              # workflow token cannot hold; a 403 here is not proof the feature
+              # is off. The published release's own `immutable` flag is still
+              # hard-verified after publish, so degrade this pre-check to a
+              # warning for permission failures only.
+              if ($immutableText -match 'Resource not accessible by integration|HTTP 403') {
+                  Write-Warning 'Cannot read immutable-release settings with the workflow token; relying on post-publish immutability verification.'
+              } else {
+                  throw "Could not read immutable-release settings: $immutableText"
+              }
+          } else {
+              $immutable = ($immutableJson | Out-String) | ConvertFrom-Json
+              if (-not $immutable.enabled) {
+                  throw 'Repository immutable releases must be enabled before a release can be published.'
+              }
           }
 
           $apiHeaders = @{
