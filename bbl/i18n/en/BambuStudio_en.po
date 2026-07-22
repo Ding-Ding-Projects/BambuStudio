@@ -18264,6 +18264,24 @@ msgstr ""
 msgid "Theme"
 msgstr ""
 
+msgid "Dry"
+msgstr ""
+
+msgid "Humid"
+msgstr ""
+
+msgid "Sync AMS"
+msgstr ""
+
+msgid "object"
+msgstr ""
+
+msgid "objects"
+msgstr ""
+
+msgid "faces"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

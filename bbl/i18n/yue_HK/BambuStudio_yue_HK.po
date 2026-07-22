@@ -1276,3 +1276,31 @@ msgstr "打印選項"
 #. reviewed-category: slicing-printing
 msgid "Move"
 msgstr "移動"
+
+#. reviewed-category: connection-offline
+msgid "Dry"
+msgstr "乾燥"
+
+#. reviewed-category: connection-offline
+msgid "Normal"
+msgstr "正常"
+
+#. reviewed-category: connection-offline
+msgid "Humid"
+msgstr "潮濕"
+
+#. reviewed-category: connection-offline
+msgid "Sync AMS"
+msgstr "同步 AMS"
+
+#. reviewed-category: slicing-printing
+msgid "object"
+msgstr "物件"
+
+#. reviewed-category: slicing-printing
+msgid "objects"
+msgstr "物件"
+
+#. reviewed-category: slicing-printing
+msgid "faces"
+msgstr "面"
