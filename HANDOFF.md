@@ -144,8 +144,12 @@ retention/pruning policy.
   Material-Symbols atlas), plus the scoped extras — CapsuleButton chip pill, Tab search-field pill,
   and CameraHUD nozzle/bed temp chips. The new Preview status string "Sliced · %1% layers" is
   catalogued (en + yue_HK 切好片喇 · 共 %1% 層, coverage 289, `.mo` rebuilt, `--check` green).
-  Wave 1 is gated on a local Release build before push. Next: Wave 2 enablers (MaterialIcon glyph
-  enum expansion; ImGui font-family/mono/Material-Symbols atlas), which unlock icon Waves 3–4.
+  Wave 1 is pushed (`70bd80309`). **Delivery policy per user 2026-07-22: ship-first — waves push
+  right after implement+review; hosted CI is the build verification and failures are fixed forward;
+  local builds run only as informational checks.** In flight concurrently: Wave 2 design
+  (MaterialIcon glyph-enum expansion + ImGui font/glyph atlas, read-only designers) and Sprint A
+  (all Wave 5/6 register gaps independent of the Wave 2 enablers, plus the project-history
+  durable-retry slice), each following implement → 2–3-lens review → fix → push.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.
