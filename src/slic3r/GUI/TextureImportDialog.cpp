@@ -1676,7 +1676,7 @@ void TexturePreviewCanvas::render_mesh()
 // TextureImportDialog
 // ============================================================
 
-wxBEGIN_EVENT_TABLE(TextureImportDialog, DPIDialog)
+wxBEGIN_EVENT_TABLE(TextureImportDialog, MD3Dialog)
     EVT_BUTTON(TextureImportDialog::ID_COLOR_4,    TextureImportDialog::on_color_preset_clicked)
     EVT_BUTTON(TextureImportDialog::ID_COLOR_8,    TextureImportDialog::on_color_preset_clicked)
     EVT_BUTTON(TextureImportDialog::ID_COLOR_16,   TextureImportDialog::on_color_preset_clicked)
@@ -1692,15 +1692,18 @@ TextureImportDialog::TextureImportDialog(
     const std::vector<TextureFilamentEntry>& filament_entries,
     std::function<bool()>            initial_cancel_callback,
     std::function<bool(int)>         initial_progress_callback)
-    : DPIDialog(parent, wxID_ANY, _L("Import Model"),
-                wxDefaultPosition, wxDefaultSize,
-                (wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) & ~(wxMINIMIZE_BOX | wxMAXIMIZE_BOX))
+    // Resizable MD3 shell: native wxRESIZE_BORDER chrome (needed for the
+    // embedded wxGLCanvas) with the MD3 header/footer panels laid inside.
+    : MD3Dialog(parent, _L("Import Model"), wxEmptyString, MaterialIcon::Palette,
+                MD3Dialog::Options{/*resizable*/ true, /*forced_dark*/ false})
     , m_textured_mesh(textured_mesh)
     , m_filament_entries(filament_entries)
     , m_initial_cancel_callback(std::move(initial_cancel_callback))
     , m_initial_progress_callback(std::move(initial_progress_callback))
 {
-    SetSize(wxSize(FromDIP(960), FromDIP(640)));
+    // Height includes headroom for the MD3 header + footer chrome so the GL
+    // preview / mapping working area matches the pre-shell layout.
+    SetSize(wxSize(FromDIP(960), FromDIP(724)));
 
     m_filament_colors_rgba.reserve(m_filament_entries.size());
     m_filament_color_strs.reserve(m_filament_entries.size());
@@ -1725,7 +1728,7 @@ TextureImportDialog::TextureImportDialog(
     Bind(EVT_TEXTURE_MESH_REPAIR_DECISION, &TextureImportDialog::on_mesh_repair_decision_required, this);
 
     build_ui();
-    SetMinSize(wxSize(FromDIP(800), FromDIP(500)));
+    SetMinSize(wxSize(FromDIP(800), FromDIP(584)));
     CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
 
@@ -1851,11 +1854,9 @@ void TextureImportDialog::build_ui()
     SetBackgroundColour(dialog_bg);
     SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-    wxBoxSizer* root_sizer = new wxBoxSizer(wxVERTICAL);
-
-    auto line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
-    root_sizer->Add(line_top, 0, wxEXPAND);
+    // The kit body sizer (pad 0/24) hosts the tool layout; the MD3 shell already
+    // owns the dialog's top-level sizer, so we only fill GetContentSizer() here.
+    wxBoxSizer* content = GetContentSizer();
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -1866,12 +1867,13 @@ void TextureImportDialog::build_ui()
     wxBoxSizer* right_sizer = new wxBoxSizer(wxVERTICAL);
     build_params_panel(this, right_sizer);
     build_mapping_panel(this, right_sizer);
-    build_bottom_buttons(right_sizer);
     main_sizer->Add(right_sizer, 2, wxEXPAND | wxALL, FromDIP(8));
 
-    root_sizer->Add(main_sizer, 1, wxEXPAND);
+    content->Add(main_sizer, 1, wxEXPAND);
 
-    SetSizer(root_sizer);
+    // Drop-warning label (body foot) + Skip/Confirm (MD3 footer).
+    build_bottom_buttons();
+
     Layout();
     Bind(wxEVT_MOUSEWHEEL, &TextureImportDialog::dismiss_filament_popup_on_wheel, this);
 
@@ -2239,8 +2241,10 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
     sizer->Add(m_mapping_scroll, 1, wxEXPAND | wxBOTTOM, FromDIP(8));
 }
 
-void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
+void TextureImportDialog::build_bottom_buttons()
 {
+    // Inline drop-warning (Error role) sits at the foot of the kit body, above
+    // the footer divider, preserving its left-aligned, full-width placement.
     m_drop_warning_label = new wxStaticText(this, wxID_ANY,
         wxString::Format(
             _L("The project supports up to %d filaments. Extra filaments will be discarded."),
@@ -2248,9 +2252,8 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     m_drop_warning_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_drop_warning_label->SetFont(texture_import_section_title_font(this));
     m_drop_warning_label->Hide();
-    sizer->Add(m_drop_warning_label, 0, wxALIGN_LEFT | wxBOTTOM, FromDIP(4));
+    GetContentSizer()->Add(m_drop_warning_label, 0, wxALIGN_LEFT | wxTOP, FromDIP(8));
 
-    wxBoxSizer* btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_btn_skip = new Button(this, _L("Skip Matching"));
     m_btn_skip->SetId(ID_BTN_SKIP);
     m_btn_skip->SetToolTip(_L("Skip filament mapping and import as a single-color model"));
@@ -2288,11 +2291,10 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
         m_btn_ok->SetTextColor(ok_text);
     }
 
-    btn_sizer->AddStretchSpacer();
-    btn_sizer->Add(m_btn_skip, 0, wxRIGHT, FromDIP(16));
-    btn_sizer->Add(m_btn_ok, 0);
-
-    sizer->Add(btn_sizer, 0, wxEXPAND | wxTOP, FromDIP(8));
+    // Kit footer: Skip (outlined pill) then Confirm (filled primary pill),
+    // clustered at the flex-end right edge in call order.
+    AddFooterButton(m_btn_skip);
+    AddFooterButton(m_btn_ok);
 }
 
 // ---- State machine ----
@@ -4242,7 +4244,7 @@ void TextureImportDialog::on_dpi_changed(const wxRect&)
     // DPIAware::rescale() only rescales fonts; it does not recompute these
     // stored pixel values. Re-apply them here so the layout stays consistent
     // when the dialog is dragged to a screen with a different DPI.
-    SetMinSize(wxSize(FromDIP(800), FromDIP(500)));
+    SetMinSize(wxSize(FromDIP(800), FromDIP(584)));
 
     const int view_button_height = FromDIP(27);
     for (Button* btn : {m_btn_view_original, m_btn_view_multicolor}) {

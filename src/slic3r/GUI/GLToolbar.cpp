@@ -315,7 +315,7 @@ int GLToolbarItem::generate_image_texture()
     return ret;
 }
 
-void GLToolbarItem::render(unsigned int tex_id, unsigned int tex_width, unsigned int tex_height, unsigned int icon_size, float toolbar_height, bool b_flip_v) const
+void GLToolbarItem::render(unsigned int tex_id, unsigned int tex_width, unsigned int tex_height, unsigned int icon_size, float toolbar_height, bool b_flip_v, float glyph_ratio, bool draw_icon) const
 {
     auto uvs = [this](unsigned int tex_width, unsigned int tex_height, unsigned int icon_size, bool b_flip_v) -> GLTexture::Quad_UVs
     {
@@ -349,7 +349,17 @@ void GLToolbarItem::render(unsigned int tex_id, unsigned int tex_width, unsigned
     float* t_render_rect = render_rect;
     if (is_visible()) {
         if (!is_collapsed()) {
-            GLTexture::render_sub_texture(tex_id, render_rect[0], render_rect[1], render_rect[2], render_rect[3], uvs(tex_width, tex_height, icon_size, b_flip_v));
+            if (draw_icon) {
+                // MD3: centre the sprite inside its tile so the mark reads at the
+                // kit size while render_rect (hit-test) stays the full tile.
+                float l = render_rect[0], r = render_rect[1], b = render_rect[2], t = render_rect[3];
+                if (glyph_ratio > 0.0f && glyph_ratio < 1.0f) {
+                    const float cx = 0.5f * (l + r), cy = 0.5f * (b + t);
+                    const float hw = 0.5f * (r - l) * glyph_ratio, hh = 0.5f * (t - b) * glyph_ratio;
+                    l = cx - hw; r = cx + hw; b = cy - hh; t = cy + hh;
+                }
+                GLTexture::render_sub_texture(tex_id, l, r, b, t, uvs(tex_width, tex_height, icon_size, b_flip_v));
+            }
         }
         else if (override_render_rect) {
             t_render_rect = override_render_rect;
@@ -413,6 +423,52 @@ GLToolbar::GLToolbar(GLToolbar::EType type, const std::string& name)
 
 GLToolbar::~GLToolbar()
 {
+    if (m_sel_glyph_tex != 0) {
+        GLuint id = static_cast<GLuint>(m_sel_glyph_tex);
+        glsafe(::glDeleteTextures(1, &id));
+        m_sel_glyph_tex = 0;
+    }
+}
+
+unsigned int GLToolbar::ensure_selected_glyph_texture(uint32_t codepoint, int px, int* out_w, int* out_h) const
+{
+    const bool dark = wxGetApp().dark_mode();
+    if (codepoint == 0 || px <= 0 || !GLIconGlyphBridge::available()) {
+        if (out_w) *out_w = 0;
+        if (out_h) *out_h = 0;
+        return 0;
+    }
+    if (m_sel_glyph_tex != 0 && codepoint == m_sel_glyph_cp && px == m_sel_glyph_px && dark == m_sel_glyph_dark) {
+        if (out_w) *out_w = m_sel_glyph_w;
+        if (out_h) *out_h = m_sel_glyph_h;
+        return m_sel_glyph_tex;
+    }
+    // Bail out of a permanently failing raster (same key) without re-attempting it
+    // every frame, but always retry once the codepoint/size/theme changes.
+    const bool same_key = codepoint == m_sel_glyph_cp && px == m_sel_glyph_px && dark == m_sel_glyph_dark;
+    if (m_sel_glyph_failed && same_key) {
+        if (out_w) *out_w = 0;
+        if (out_h) *out_h = 0;
+        return 0;
+    }
+    if (m_sel_glyph_tex != 0) {
+        GLuint old = static_cast<GLuint>(m_sel_glyph_tex);
+        glsafe(::glDeleteTextures(1, &old));
+        m_sel_glyph_tex = 0;
+    }
+    int w = 0, h = 0;
+    const wxColour on_primary = MD3::resolve(MD3::Role::OnPrimary, dark);
+    const unsigned int tex = GLIconGlyphBridge::make_glyph_texture(codepoint, px, on_primary, &w, &h);
+    m_sel_glyph_cp = codepoint;
+    m_sel_glyph_px = px;
+    m_sel_glyph_dark = dark;
+    m_sel_glyph_tex = tex;
+    m_sel_glyph_w = w;
+    m_sel_glyph_h = h;
+    m_sel_glyph_failed = (tex == 0);
+    if (out_w) *out_w = w;
+    if (out_h) *out_h = h;
+    return tex;
 }
 
 bool GLToolbar::init(const BackgroundTexture::Metadata& background_texture)
@@ -601,6 +657,20 @@ bool GLToolbar::add_separator()
     m_items.push_back(item);
     m_layout.dirty = true;
     return true;
+}
+
+bool GLToolbar::insert_separator_after(const std::string& name)
+{
+    for (size_t i = 0; i < m_items.size(); ++i) {
+        if (m_items[i] && m_items[i]->get_name() == name) {
+            GLToolbarItem::Data data;
+            const auto sep = std::make_shared<GLToolbarItem>(GLToolbarItem::Separator, data);
+            m_items.insert(m_items.begin() + i + 1, sep);
+            m_layout.dirty = true;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool GLToolbar::del_all_item()
@@ -1507,6 +1577,49 @@ bool ToolbarRenderer::needs_collapsed() const
     return false;
 }
 
+// --- MD3 viewport-toolbar geometry (forward declarations) ----------------------
+// The kit decoration helpers are defined in the anonymous namespace further down,
+// beside render_md3_toolbar_backdrop (they share md3_append_rounded_rect). They
+// are forward-declared here so the item render loops that precede that block can
+// draw per-item MD3 decoration. Constants and the kind enum are defined inline.
+namespace {
+
+enum class MD3ToolbarKind : uint8_t { None, Rail, Pill };
+
+// The atlas bakes each Material Symbol at this fraction of its sprite cell (kept
+// in sync with GLIconGlyphBridge kGlyphFillRatio). To show a mark at a target
+// fraction of the tile the sprite quad is drawn at target / fill of the tile.
+constexpr float kMD3AtlasGlyphFill = 0.72f;
+// Visible mark as a fraction of the button tile, matching the kit (rail: 21px in
+// a 44px tile; pill: 22px in a 40px tile).
+constexpr float kMD3RailMarkRatio = 21.0f / 44.0f;
+constexpr float kMD3PillMarkRatio = 22.0f / 40.0f;
+// Tile corner radius as a fraction of the tile (rail r12 on 44, pill r10 on 40).
+constexpr float kMD3RailCornerRatio = 12.0f / 44.0f;
+constexpr float kMD3PillCornerRatio = 10.0f / 40.0f;
+// Group-divider length as a fraction of the tile (kit 28px line on a 44px rail).
+constexpr float kMD3DividerRatio = 28.0f / 44.0f;
+
+MD3ToolbarKind md3_toolbar_kind(const ToolbarLayout& layout);
+float          md3_glyph_ratio(MD3ToolbarKind kind);
+// Fills a token-coloured (rounded) rect in the toolbar's billboard space via the
+// flat shader. r <= 0 yields a plain rect (dividers/state layers). No-op when the
+// flat shader is unavailable, so any non-flat context keeps its texture path.
+void md3_fill_rounded_world(float x0, float y0, float x1, float y1, float r, MD3::Role role, float alpha = 1.0f);
+// Draws the pill's per-item chrome from item.render_rect (set by the caller): a
+// SurfaceContainerHigh r10 hover state layer, or a token OutlineVariant divider in
+// place of a SeparatorLine's SVG. Returns true when the sprite must be suppressed
+// (a divider replaced it). one_px is one device pixel in world units.
+bool md3_decorate_pill_item(const GLToolbarItem& item, float tile_world, float one_px);
+// Draws the rail's selected-tile chrome: a Primary r12 fill plus the OnPrimary
+// mark (kit selected = Primary fill + OnPrimary glyph). Returns true when it drew
+// the OnPrimary mark and the atlas sprite must be suppressed; false leaves the
+// atlas Primary-tinted glyph as the selected indication. tile_device is the tile
+// size in device pixels (icons_size * layout scale).
+bool md3_decorate_rail_item(const GLToolbar& tb, const GLToolbarItem& item, float tile_world, float glyph_ratio, float inv_zoom, float tile_device);
+
+} // namespace
+
 ToolbarAutoSizeRenderer::ToolbarAutoSizeRenderer()
 {
 }
@@ -1558,6 +1671,13 @@ void ToolbarAutoSizeRenderer::render_horizontal(const GLToolbar& t_toolbar, cons
     left += scaled_border;
     top -= scaled_border;
 
+    // MD3: the horizontal main toolbar becomes the kit pill — 40px r10 tiles with
+    // 22px glyphs, a SurfaceContainerHigh hover state layer and token dividers.
+    // Gated on the glyph bridge so the SVG-sprite fallback keeps filling the tile.
+    const MD3ToolbarKind md3_kind = md3_toolbar_kind(t_layout);
+    const bool md3_on = (md3_kind == MD3ToolbarKind::Pill) && GLIconGlyphBridge::available();
+    const float md3_gr = md3_on ? md3_glyph_ratio(md3_kind) : 1.0f;
+
     // renders icons
     const auto& t_items = t_toolbar.get_items();
     const auto& t_icon_texture = t_toolbar.get_icon_texture();
@@ -1580,7 +1700,10 @@ void ToolbarAutoSizeRenderer::render_horizontal(const GLToolbar& t_toolbar, cons
                 item->render_rect[1] = left + scaled_icons_size;
                 item->render_rect[2] = top - scaled_icons_size;
                 item->render_rect[3] = top;
-                item->render(tex_id, (unsigned int)tex_width, (unsigned int)tex_height, (unsigned int)(t_layout.icons_size * t_layout.scale), t_toolbar.get_height());
+                bool md3_suppress = false;
+                if (md3_on)
+                    md3_suppress = md3_decorate_pill_item(*item, scaled_icons_size, inv_zoom * t_layout.scale);
+                item->render(tex_id, (unsigned int)tex_width, (unsigned int)tex_height, (unsigned int)(t_layout.icons_size * t_layout.scale), t_toolbar.get_height(), false, md3_gr, !md3_suppress);
             }
             //BBS: GUI refactor: GLToolbar
             if (item->is_action_with_text())
@@ -1630,6 +1753,15 @@ void ToolbarAutoSizeRenderer::render_vertical(const GLToolbar& t_toolbar, const 
     left += scaled_border;
     top -= scaled_border;
 
+    // MD3: the vertical gizmo rail becomes the kit rail — 44px r12 tiles, 21px
+    // glyphs, a Primary-filled + OnPrimary selected tile and 28px OutlineVariant
+    // group dividers. Gated on the glyph bridge so the SVG fallback is untouched.
+    const MD3ToolbarKind md3_kind = md3_toolbar_kind(t_layout);
+    const bool md3_on = (md3_kind == MD3ToolbarKind::Rail) && GLIconGlyphBridge::available();
+    const float md3_gr = md3_on ? md3_glyph_ratio(md3_kind) : 1.0f;
+    const float md3_one_px = inv_zoom * t_layout.scale;
+    const float md3_tile_device = t_layout.icons_size * t_layout.scale;
+
     // renders icons
     const auto& t_items = t_toolbar.get_items();
     const auto& t_icon_texture = t_toolbar.get_icon_texture();
@@ -1637,8 +1769,17 @@ void ToolbarAutoSizeRenderer::render_vertical(const GLToolbar& t_toolbar, const 
         if (!item->is_visible())
             continue;
 
-        if (item->is_separator())
+        if (item->is_separator()) {
+            if (md3_on) {
+                // 28px OutlineVariant divider centred in the separator band.
+                const float cx = left + 0.5f * scaled_icons_size;
+                const float cy = top - 0.5f * separator_stride;
+                const float half_w = 0.5f * kMD3DividerRatio * scaled_icons_size;
+                const float half_h = 0.5f * std::max(md3_one_px, (1.5f / 44.0f) * scaled_icons_size);
+                md3_fill_rounded_world(cx - half_w, cy - half_h, cx + half_w, cy + half_h, 0.0f, MD3::Role::OutlineVariant);
+            }
             top -= separator_stride;
+        }
         else {
             unsigned int tex_id;
             int tex_width, tex_height;
@@ -1672,7 +1813,10 @@ void ToolbarAutoSizeRenderer::render_vertical(const GLToolbar& t_toolbar, const 
                 item->render_rect[1] = left + scaled_icons_size;
                 item->render_rect[2] = top - scaled_icons_size;
                 item->render_rect[3] = top;
-                item->render(tex_id, (unsigned int)tex_width, (unsigned int)tex_height, (unsigned int)(t_layout.icons_size * t_layout.scale), t_toolbar.get_width());
+                bool md3_suppress = false;
+                if (md3_on)
+                    md3_suppress = md3_decorate_rail_item(t_toolbar, *item, scaled_icons_size, md3_gr, inv_zoom, md3_tile_device);
+                item->render(tex_id, (unsigned int)tex_width, (unsigned int)tex_height, (unsigned int)(t_layout.icons_size * t_layout.scale), t_toolbar.get_width(), false, md3_gr, !md3_suppress);
                 //BBS: GUI refactor: GLToolbar
             }
             if (item->is_action_with_text())
@@ -1763,19 +1907,113 @@ void md3_append_rounded_rect(GLModel::Geometry& geo, float x0, float y0, float x
     }
 }
 
+// Classify a toolbar as one of the two MD3-migrated viewport toolbars. The left
+// gizmo rail is the only vertical toolbar centred on both axes (the collapse rail
+// is HO_Right/VO_Top, so it is left untouched); the top scene toolbar is the
+// horizontal main toolbar. Every other toolbar keeps its legacy rendering.
+MD3ToolbarKind md3_toolbar_kind(const ToolbarLayout& layout)
+{
+    if (layout.type == ToolbarLayout::EType::Vertical
+        && layout.horizontal_orientation == ToolbarLayout::HO_Center
+        && layout.vertical_orientation == ToolbarLayout::VO_Center)
+        return MD3ToolbarKind::Rail;
+    if (layout.type == ToolbarLayout::EType::Horizontal)
+        return MD3ToolbarKind::Pill;
+    return MD3ToolbarKind::None;
+}
+
+// Fraction of the tile occupied by the atlas sprite quad so the visible mark lands
+// at the kit size (mark = fill * quad; quad = markRatio / fill of the tile).
+float md3_glyph_ratio(MD3ToolbarKind kind)
+{
+    switch (kind) {
+    case MD3ToolbarKind::Rail: return kMD3RailMarkRatio / kMD3AtlasGlyphFill;
+    case MD3ToolbarKind::Pill: return kMD3PillMarkRatio / kMD3AtlasGlyphFill;
+    default:                   return 1.0f;
+    }
+}
+
+void md3_fill_rounded_world(float x0, float y0, float x1, float y1, float r, MD3::Role role, float alpha)
+{
+    const auto& shader = wxGetApp().get_shader("flat");
+    if (!shader)
+        return;
+    const float lo_x = std::min(x0, x1), hi_x = std::max(x0, x1);
+    const float lo_y = std::min(y0, y1), hi_y = std::max(y0, y1);
+    if (hi_x - lo_x <= 0.0f || hi_y - lo_y <= 0.0f)
+        return;
+    GLModel::Geometry g;
+    g.format.type = GLModel::PrimitiveType::Triangles;
+    g.format.vertex_layout = GLModel::Geometry::EVertexLayout::P3;
+    md3_append_rounded_rect(g, lo_x, lo_y, hi_x, hi_y, r);
+    if (g.vertices_count() == 0)
+        return;
+    const Camera& camera = wxGetApp().plater()->get_camera();
+    glsafe(::glEnable(GL_BLEND));
+    glsafe(::glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    wxGetApp().bind_shader(shader);
+    shader->set_uniform("view_model_matrix", camera.get_view_matrix_for_billboard());
+    shader->set_uniform("projection_matrix", camera.get_projection_matrix());
+    GLModel model;
+    model.init_from(std::move(g));
+    model.set_color(md3_toolbar_color(role, alpha));
+    model.render_geometry();
+    wxGetApp().unbind_shader();
+    glsafe(::glDisable(GL_BLEND));
+}
+
+bool md3_decorate_pill_item(const GLToolbarItem& item, float tile_world, float one_px)
+{
+    if (item.get_type() == GLToolbarItem::EType::SeparatorLine) {
+        // Vertical group divider (kit 1px OutlineVariant rule) instead of the SVG.
+        const float cx = 0.5f * (item.render_rect[0] + item.render_rect[1]);
+        const float cy = 0.5f * (item.render_rect[2] + item.render_rect[3]);
+        const float half_h = 0.5f * kMD3DividerRatio * tile_world;
+        const float half_w = 0.5f * std::max(one_px, (1.5f / 44.0f) * tile_world);
+        md3_fill_rounded_world(cx - half_w, cy - half_h, cx + half_w, cy + half_h, 0.0f, MD3::Role::OutlineVariant);
+        return true;
+    }
+    if (item.is_hovered() && !item.is_disabled()) {
+        // SurfaceContainerHigh hover state layer (kit IconButton hover), r10.
+        const float r = kMD3PillCornerRatio * tile_world;
+        md3_fill_rounded_world(item.render_rect[0], item.render_rect[2], item.render_rect[1], item.render_rect[3], r, MD3::Role::SurfaceContainerHigh);
+    }
+    return false;
+}
+
+bool md3_decorate_rail_item(const GLToolbar& tb, const GLToolbarItem& item, float tile_world, float glyph_ratio, float inv_zoom, float tile_device)
+{
+    if (!item.is_pressed())
+        return false;
+    const uint32_t cp = GLIconGlyphBridge::glyph_for_toolbar_item(item.get_name());
+    if (cp == 0)
+        return false; // unmapped: keep the atlas Primary glyph as the selected mark
+    int gw = 0, gh = 0;
+    const int gpx = std::max(1, static_cast<int>(std::lround(kMD3AtlasGlyphFill * tile_device)));
+    const unsigned int gtex = tb.ensure_selected_glyph_texture(cp, gpx, &gw, &gh);
+    if (gtex == 0 || gw <= 0 || gh <= 0)
+        return false; // raster failed: fall back to the atlas Primary glyph
+    // Primary r12 fill, then the OnPrimary mark at the same footprint as the atlas
+    // idle glyphs (the sprite renders at glyph_ratio of its native pixels).
+    const float r = kMD3RailCornerRatio * tile_world;
+    md3_fill_rounded_world(item.render_rect[0], item.render_rect[2], item.render_rect[1], item.render_rect[3], r, MD3::Role::Primary);
+    const float cx = 0.5f * (item.render_rect[0] + item.render_rect[1]);
+    const float cy = 0.5f * (item.render_rect[2] + item.render_rect[3]);
+    const float half_w = 0.5f * static_cast<float>(gw) * glyph_ratio * inv_zoom;
+    const float half_h = 0.5f * static_cast<float>(gh) * glyph_ratio * inv_zoom;
+    GLTexture::render_sub_texture(gtex, cx - half_w, cx + half_w, cy - half_h, cy + half_h, GLTexture::FullTextureUVs);
+    return true;
+}
+
 // Paint the MD3 background for the gizmo rail / scene toolbar. Returns true when
 // it drew the chrome (the caller then skips the legacy texture); false for any
 // other toolbar or when the flat shader is unavailable (legacy path preserved).
 bool render_md3_toolbar_backdrop(const GLToolbar& t_toolbar, float left, float top, float right, float bottom)
 {
     const ToolbarLayout& layout = t_toolbar.get_layout();
-    // Left gizmo rail: the only vertical toolbar centred on both axes (the
-    // collapse rail is HO_Right/VO_Top, so it is left untouched).
-    const bool is_rail = layout.type == ToolbarLayout::EType::Vertical
-        && layout.horizontal_orientation == ToolbarLayout::HO_Center
-        && layout.vertical_orientation == ToolbarLayout::VO_Center;
-    // Top scene toolbar: the horizontal main toolbar.
-    const bool is_pill = layout.type == ToolbarLayout::EType::Horizontal;
+    const MD3ToolbarKind kind = md3_toolbar_kind(layout);
+    const bool is_rail = kind == MD3ToolbarKind::Rail;
+    const bool is_pill = kind == MD3ToolbarKind::Pill;
     if (!is_rail && !is_pill)
         return false;
 
@@ -2133,13 +2371,26 @@ void ToolbarKeepSizeRenderer::render(const GLToolbar& t_toolbar, const Camera& t
     if ((tex_id == 0) || (tex_width <= 0) || (tex_height <= 0))
         return;
 
+    // MD3: same kit-pill treatment as the auto-size horizontal path (22px glyphs,
+    // SurfaceContainerHigh hover state layer, token dividers). KeepSize is the
+    // default main-toolbar mode. Collapsed items keep the legacy sprite (their
+    // stacked override_render_rect is not a plain tile).
+    const MD3ToolbarKind md3_kind = md3_toolbar_kind(t_layout);
+    const bool md3_on = (md3_kind == MD3ToolbarKind::Pill) && GLIconGlyphBridge::available();
+    const float md3_gr = md3_on ? md3_glyph_ratio(md3_kind) : 1.0f;
+    const float md3_one_px = inv_zoom * t_layout.scale;
+    const float md3_tile_world = t_layout.icons_size * factor;
+
     const auto& t_items = t_toolbar.get_items();
     for (size_t i = 0; i < t_items.size(); ++i) {
         const auto& current_item = t_items[i];
         current_item->override_render_rect = m_p_override_render_rect;
         if (current_item->is_action() || current_item->get_type() == GLToolbarItem::EType::SeparatorLine) {
             const bool b_filp_v = !t_toolbar.is_collapsed() && current_item->is_collapse_button();
-            current_item->render(tex_id, (unsigned int)tex_width, (unsigned int)tex_height, (unsigned int)(t_layout.icons_size * t_layout.scale), t_toolbar.get_height(), b_filp_v);
+            bool md3_suppress = false;
+            if (md3_on && !current_item->is_collapsed())
+                md3_suppress = md3_decorate_pill_item(*current_item, md3_tile_world, md3_one_px);
+            current_item->render(tex_id, (unsigned int)tex_width, (unsigned int)tex_height, (unsigned int)(t_layout.icons_size * t_layout.scale), t_toolbar.get_height(), b_filp_v, md3_gr, !md3_suppress);
         }
         //BBS: GUI refactor: GLToolbar
         if (current_item->is_action_with_text())

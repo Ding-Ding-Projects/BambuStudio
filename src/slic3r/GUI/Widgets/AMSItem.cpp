@@ -132,7 +132,6 @@ bool AMSinfo::parse_ams_info(MachineObject *obj, DevAms *ams, bool remain_flag, 
                 info.ctype = 0;
                 info.material_colour = AMS_TRAY_DEFAULT_COL;
                 info.material_state = AMSCanType::AMS_CAN_TYPE_THIRDBRAND;
-                wxColour(255, 255, 255);
             }
 
             if (it->second->is_tray_info_ready() && obj->GetCalib()->IsVersionInited()) {
@@ -187,7 +186,6 @@ void AMSinfo::parse_ext_info(MachineObject* obj, DevAmsTray tray) {
         info.filament_id = "";
         info.ctype = 0;
         info.material_colour = AMS_TRAY_DEFAULT_COL;
-        wxColour(255, 255, 255);
     }
     info.material_state = AMSCanType::AMS_CAN_TYPE_VIRTUAL;
     if (tray.is_tray_info_ready() && obj->GetCalib()->IsVersionInited()) {
@@ -981,7 +979,7 @@ Description:AMSLib
 **************************************************/
 AMSLib::AMSLib(wxWindow *parent, std::string ams_idx, Caninfo info, AMSModelOriginType ext_type)
 {
-    m_border_color   = (wxColour(130, 130, 128));
+    m_border_color   = StateColor::semantic(MD3::Role::Outline);
     m_road_def_color = AMS_CONTROL_GRAY500;
     m_ext_type = ext_type;
     wxWindow::SetBackgroundColour(StateColor::darkModeColorFor(AMS_CONTROL_DEF_LIB_BK_COLOUR));
@@ -1669,7 +1667,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
         dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(2), size.y - FromDIP(1), m_radius);
 #endif
         if (m_selected) {
-            dc.SetPen(wxPen(AMS_CONTROL_BRAND_COLOUR, 3, wxPENSTYLE_SOLID));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), 3, wxPENSTYLE_SOLID));
             //dc.SetPen(wxPen(tmp_lib_colour, 2, wxPENSTYLE_SOLID));
             if (tmp_lib_colour.Alpha() == 0) {
                 dc.SetPen(wxPen(wxColour(tmp_lib_colour.Red(), tmp_lib_colour.Green(), tmp_lib_colour.Blue(), 128), 3, wxPENSTYLE_SOLID));
@@ -1686,7 +1684,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
         }
 
         if (!m_selected && m_hover) {
-            dc.SetPen(wxPen(AMS_CONTROL_BRAND_COLOUR, 3, wxPENSTYLE_SOLID));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), 3, wxPENSTYLE_SOLID));
             dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
 #ifdef __APPLE__
             dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(2), size.y - FromDIP(2), 0);
@@ -1834,7 +1832,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
 #endif
 
     if (m_selected) {
-        dc.SetPen(wxPen(AMS_CONTROL_BRAND_COLOUR, 3, wxPENSTYLE_SOLID));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), 3, wxPENSTYLE_SOLID));
         //dc.SetPen(wxPen(tmp_lib_colour, 3, wxPENSTYLE_SOLID));
         if (tmp_lib_colour.Alpha() == 0) {
             dc.SetPen(wxPen(wxColour(tmp_lib_colour.Red(), tmp_lib_colour.Green(), tmp_lib_colour.Blue(), 128), 3, wxPENSTYLE_SOLID));
@@ -1850,7 +1848,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
     }
 
     if (!m_selected && m_hover) {
-        dc.SetPen(wxPen(AMS_CONTROL_BRAND_COLOUR, 3, wxPENSTYLE_SOLID));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), 3, wxPENSTYLE_SOLID));
         dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
 #ifdef __APPLE__
             dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(2), size.y - FromDIP(2), 0);
@@ -3083,7 +3081,7 @@ void AMSPreview::doRender(wxDC &dc)
                 else {
                     wxRect rect(left, (size.y - AMS_ITEM_CUBE_SIZE.y) / 2, AMS_ITEM_CUBE_SIZE.x, AMS_ITEM_CUBE_SIZE.y);
                     if (iter->material_state == AMSCanType::AMS_CAN_TYPE_EMPTY) {
-                        dc.SetPen(wxPen(wxColor(0, 0, 0)));
+                        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OnSurfaceVariant)));
                         dc.DrawLine(rect.GetRight() - FromDIP(1), rect.GetTop() + FromDIP(1), rect.GetLeft() + FromDIP(1), rect.GetBottom() - FromDIP(1));
                     }
                     else {
@@ -3187,7 +3185,7 @@ void AMSPreview::doRender(wxDC &dc)
         BOOST_LOG_TRIVIAL(info) << "AMSPreview::doRender - No cans data available for AMS: " << m_amsinfo.ams_id;
     }
 
-    auto border_colour = AMS_CONTROL_BRAND_COLOUR;
+    auto border_colour = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device);
     if (!wxWindow::IsEnabled()) { border_colour = AMS_CONTROL_DISABLE_COLOUR; }
 
     if (m_hover) {

@@ -45,13 +45,42 @@ class MD3HeaderTile;
 // wxFRAME_SHAPED window cannot render (the shape region clips anything outside
 // the rounded rect); the shell provides the borderless 28px silhouette and the
 // shadow can be layered later without an API change. See the .cpp note.
+//
+// ADDITIVE VARIANTS (opt-in via the Options ctor; defaults reproduce the
+// classic borderless, shaped, theme-adaptive shell byte-for-byte, so every
+// subclass built on the pinned 4-arg ctor is unaffected):
+//
+//   * Options::resizable  — keep native window chrome (a wxRESIZE_BORDER title
+//     bar + resize grip) and lay the MD3 header/footer panels inside the client
+//     area, instead of the borderless wxFRAME_SHAPED rounded silhouette. For
+//     dialogs that embed a wxGLCanvas or must be user-resizable. The MD3
+//     circular close is hidden in this mode (the native title bar owns close),
+//     and no window shape / borderless-drag is applied.
+//   * Options::forced_dark — pin the shell chrome (background, header
+//     title/subtitle/close glyph, icon tile, footer divider) to the dark colour
+//     scheme regardless of the running app theme, for always-dark brand
+//     surfaces (e.g. Helio). Also toggleable post-construction via
+//     SetForcedDark().
 class MD3Dialog : public DPIDialog
 {
 public:
+    // Shell-variant options. The defaults reproduce the classic borderless,
+    // shaped shell; the pinned 4-arg ctor delegates here with Options{}.
+    struct Options
+    {
+        bool resizable   = false;
+        bool forced_dark = false;
+    };
+
     MD3Dialog(wxWindow *          parent,
               const wxString &    title,
               const wxString &    subtitle,
               MaterialIcon::Glyph header_glyph);
+    MD3Dialog(wxWindow *          parent,
+              const wxString &    title,
+              const wxString &    subtitle,
+              MaterialIcon::Glyph header_glyph,
+              const Options &     opts);
     ~MD3Dialog() override;
 
     // Body sizer. Parent body children to the dialog (`this`) and add them here;
@@ -74,6 +103,13 @@ public:
     // Contextual accent scheme (Brand/Preview/Device) for the tile + close glyph.
     void SetColorScheme(MD3::ColorScheme scheme);
 
+    // Pin (or release) dark-scheme chrome after construction; repaints the
+    // shell. The resizable flag is fixed at construction (it selects the window
+    // style) and cannot be toggled here.
+    void SetForcedDark(bool dark);
+    bool IsForcedDark() const { return m_forced_dark; }
+    bool IsResizable() const { return m_resizable; }
+
     void on_dpi_changed(const wxRect &suggested_rect) override;
 
 protected:
@@ -91,8 +127,15 @@ protected:
 private:
     void build_shell(const wxString &title, const wxString &subtitle, MaterialIcon::Glyph glyph);
     // Make w a drag handle for the borderless frame (restores movability lost
-    // with the native title bar).
+    // with the native title bar). No-op in the resizable variant (the native
+    // title bar already moves the window).
     void bind_drag(wxWindow *w);
+    // Resolve a chrome role honouring m_forced_dark (dark scheme pinned) or the
+    // live app theme otherwise.
+    wxColour chrome_color(MD3::Role role) const;
+    // (Re)apply the header close IconButton colours for a forced-dark shell;
+    // a no-op while the shell follows the live app theme.
+    void style_close_button();
 
     MD3HeaderTile *m_tile        = nullptr;
     wxStaticText * m_title_txt   = nullptr;
@@ -102,6 +145,11 @@ private:
 
     int              m_corner_radius = MD3::Metrics::radius_dialog; // 28
     MD3::ColorScheme m_scheme        = MD3::ColorScheme::Brand;
+
+    // Additive shell variants (see Options). Both default false => classic
+    // borderless, shaped, theme-adaptive shell.
+    bool m_resizable   = false;
+    bool m_forced_dark = false;
 
     // Borderless-drag state.
     bool    m_dragging = false;

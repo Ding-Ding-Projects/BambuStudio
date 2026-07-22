@@ -149,6 +149,7 @@
 #include "ProjectDirtyStateManager.hpp"
 #include "Gizmos/GLGizmoSimplify.hpp" // create suggestion notification
 #include "Gizmos/GLGizmoSVG.hpp" // Drop SVG file
+#include "Gizmos/GizmoObjectManipulation.hpp" // MD3 sidebar object-manipulation card (read-only-live mirror of the gizmo cache)
 // BBS
 #include "Widgets/ProgressDialog.hpp"
 #include "BBLStatusBar.hpp"
@@ -738,6 +739,15 @@ struct Sidebar::priv
     ObjectSettings      *object_settings{ nullptr };
     ObjectLayers        *object_layers{ nullptr };
 
+    // MD3 Object-manipulation X/Y/Z grid card (ui-md3 Prepare > Object manipulation).
+    // A read-only-live mirror of the ImGui gizmo manipulation cache
+    // (wxGetApp().obj_manipul()->get_cache()); a light UI-thread timer refreshes it
+    // while the 3D editor is shown. Numeric edit/write-back stays in the gizmo overlay.
+    wxPanel             *m_manip_panel{nullptr};
+    Label               *m_manip_cells[12]{};  // 4 rows (Position/Rotation/Scale%/Size) x 3 axes (X/Y/Z)
+    wxTimer             *m_manip_timer{nullptr};
+    void                 refresh_manip_card();
+
     wxButton *btn_export_gcode;
     wxButton *btn_reslice;
     ScalableButton *btn_send_gcode;
@@ -1022,6 +1032,12 @@ Sidebar::priv::~priv()
         timer_sync_printer->Stop();
         delete timer_sync_printer;
         timer_sync_printer = nullptr;
+    }
+    // Stop and delete the object-manipulation card refresh timer.
+    if (m_manip_timer) {
+        m_manip_timer->Stop();
+        delete m_manip_timer;
+        m_manip_timer = nullptr;
     }
     // BBS
     //delete object_manipulation;
@@ -3242,6 +3258,85 @@ Sidebar::Sidebar(Plater *parent)
     p->object_layers->Hide();
     p->sizer_params->Add(p->object_layers->get_sizer(), 0, wxEXPAND | wxTOP, 0);
 
+    // ---- Object manipulation (MD3 X/Y/Z grid card) ----
+    // Kit anatomy (ui-md3 Prepare > Object manipulation): a SectionHeader 'transform'
+    // over a 4-column grid whose axis headers are axis-coloured and whose Position /
+    // Rotation / Scale% / Size cells are h32 r8 SurfaceContainerHighest, centred in
+    // Roboto Mono. The card is a read-only-live mirror of the ImGui gizmo manipulation
+    // model; refresh_manip_card() pulls from wxGetApp().obj_manipul()->get_cache() on a
+    // light UI-thread timer while the 3D editor is shown. Numeric write-back stays in the
+    // gizmo overlay (see wave report: the manipulation write-half is a recorded deviation).
+    {
+        const wxColour surface_highest = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+        const wxColour on_surface      = StateColor::semantic(MD3::Role::OnSurface);
+        const wxColour on_variant      = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        const int      pad             = FromDIP(MD3::Metrics::active().padding);
+
+        auto *manip_divider = new ::StaticLine(p->scrolled);
+        manip_divider->SetLineColour(outline);
+        scrolled_sizer->Add(manip_divider, 0, wxEXPAND);
+
+        p->m_manip_panel = new wxPanel(p->scrolled, wxID_ANY);
+        p->m_manip_panel->SetBackgroundColour(surface_low);
+        auto *manip_vsizer = new wxBoxSizer(wxVERTICAL);
+
+        auto *manip_header = new SectionHeader(p->m_manip_panel, _L("Object manipulation"), MaterialIcon::Transform);
+        manip_vsizer->Add(manip_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
+
+        auto *grid = new wxFlexGridSizer(5, 4, FromDIP(6), FromDIP(8));
+        grid->AddGrowableCol(1, 1);
+        grid->AddGrowableCol(2, 1);
+        grid->AddGrowableCol(3, 1);
+
+        // Header row: blank corner + axis-coloured X / Y / Z (data axis colours, exempt).
+        grid->AddSpacer(1);
+        auto add_axis_head = [&](const wxString &t, const wxColour &c) {
+            auto *l = new ::Label(p->m_manip_panel, t);
+            l->SetFont(::Label::Head_11);
+            l->SetForegroundColour(c);
+            grid->Add(l, 0, wxALIGN_CENTER);
+        };
+        add_axis_head("X", MD3::Viewport::axisX);
+        add_axis_head("Y", MD3::Viewport::axisY);
+        add_axis_head("Z", MD3::Viewport::axisZ);
+
+        const wxString row_labels[4] = { _L("Position"), _L("Rotation"), _L("Scale %"), _L("Size") };
+        auto add_cell = [&](int idx) {
+            auto *cell = new StaticBox(p->m_manip_panel);
+            cell->SetCornerRadius(FromDIP(MD3::Metrics::radius_tiny));
+            cell->SetBorderWidth(0);
+            cell->SetBackgroundColor(surface_highest);
+            cell->SetMinSize(wxSize(-1, FromDIP(32)));
+            auto *val = new ::Label(cell, wxString("-"));
+            val->SetFont(::Label::Mono_12);
+            val->SetForegroundColour(on_surface);
+            val->SetBackgroundColour(surface_highest);
+            auto *cs = new wxBoxSizer(wxVERTICAL);
+            cs->AddStretchSpacer();
+            cs->Add(val, 0, wxALIGN_CENTER_HORIZONTAL);
+            cs->AddStretchSpacer();
+            cell->SetSizer(cs);
+            p->m_manip_cells[idx] = val;
+            grid->Add(cell, 1, wxEXPAND);
+        };
+        for (int r = 0; r < 4; ++r) {
+            auto *rl = new ::Label(p->m_manip_panel, row_labels[r]);
+            rl->SetFont(::Label::Body_11);
+            rl->SetForegroundColour(on_variant);
+            grid->Add(rl, 0, wxALIGN_CENTER_VERTICAL);
+            for (int c = 0; c < 3; ++c)
+                add_cell(r * 3 + c);
+        }
+
+        manip_vsizer->Add(grid, 0, wxEXPAND | wxALL, pad);
+        p->m_manip_panel->SetSizer(manip_vsizer);
+        scrolled_sizer->Add(p->m_manip_panel, 0, wxEXPAND);
+
+        p->m_manip_timer = new wxTimer();
+        p->m_manip_timer->Bind(wxEVT_TIMER, [this](wxTimerEvent &) { p->refresh_manip_card(); });
+        p->m_manip_timer->Start(250);
+    }
+
     // Explicit 1px OutlineVariant left border separating the sidebar from the
     // adjacent 3D scene (previously relied on the neighbouring panel edge).
     auto *sidebar_border = new ::StaticLine(this, true);
@@ -3262,6 +3357,56 @@ Sidebar::~Sidebar() {
         m_extruder_warning_dialog->Destroy();
         m_extruder_warning_dialog = nullptr;
     }
+}
+
+// Read-only-live refresh of the MD3 Object-manipulation grid card. Runs on the
+// sidebar UI thread (timer), mirroring the ImGui GizmoObjectManipulation display
+// cache. is_view3D_shown() is a pure pointer comparison (current_panel == view3D),
+// so it is safe to consult before the 3D canvas exists and gates the obj_manipul()
+// dereference to the moments the canvas is actually live.
+void Sidebar::priv::refresh_manip_card()
+{
+    if (!m_manip_cells[0])
+        return;
+
+    auto set = [&](int idx, const wxString &s) {
+        Label *c = m_manip_cells[idx];
+        if (c && c->GetLabel() != s)
+            c->SetLabel(s);
+    };
+
+    const wxString dash = wxString::FromUTF8("\xE2\x80\x93"); // en dash for the empty state
+
+    Plater *pl = wxGetApp().plater();
+    GizmoObjectManipulation *om = (pl && pl->is_view3D_shown()) ? wxGetApp().obj_manipul() : nullptr;
+    if (!om) {
+        for (int i = 0; i < 12; ++i)
+            set(i, dash);
+        return;
+    }
+
+    const GizmoObjectManipulation::Cache &cache = om->get_cache();
+    if (!cache.is_valid()) {
+        for (int i = 0; i < 12; ++i)
+            set(i, dash);
+        return;
+    }
+
+    const wxString degsym = wxString::FromUTF8("\xC2\xB0"); // ° (U+00B0) suffix on rotation values
+    auto ok  = [](double v) { return v < 1e300 && v > -1e300; };            // DBL_MAX/NaN guard
+    auto f1  = [&](double v) -> wxString { return ok(v) ? wxString::Format("%.1f", v) : dash; };
+    auto f0  = [&](double v) -> wxString { return ok(v) ? wxString::Format("%.0f", v) : dash; };
+    auto rot = [&](double v) -> wxString { return ok(v) ? (wxString::Format("%.0f", v) + degsym) : dash; };
+
+    const Vec3d &pos = cache.position_rounded;
+    const Vec3d &rt  = cache.rotation_rounded;
+    const Vec3d &scl = cache.scale_rounded; // stored in percent (100 == 100%)
+    const Vec3d &siz = cache.size_rounded;
+
+    set(0, f1(pos.x()));  set(1, f1(pos.y()));  set(2, f1(pos.z()));
+    set(3, rot(rt.x()));  set(4, rot(rt.y()));  set(5, rot(rt.z()));
+    set(6, f0(scl.x()));  set(7, f0(scl.y()));  set(8, f0(scl.z()));
+    set(9, f1(siz.x()));  set(10, f1(siz.y())); set(11, f1(siz.z()));
 }
 
 void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {

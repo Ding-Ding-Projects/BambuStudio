@@ -28,10 +28,14 @@
   padding: 0;
 }
 
+/* Kit NavItem typography: body-s, on-surface-variant → on-surface when
+   active/hover; selection is carried by weight + the primary rail indicator. */
 .Navigation .nav-item {
-  padding: 3px 12px;
-  font-size: 15px;
+  padding: 6px 12px;
+  font-size: var(--md-type-body-s, 13.5px);
+  color: var(--md-on-surface-variant);
   cursor: pointer;
+  transition: color .15s;
 }
 
 .Navigation .nav-item a {
@@ -39,6 +43,11 @@
   text-decoration: none;
 }
 
+.Navigation .nav-item:hover {
+  color: var(--md-on-surface);
+}
+
 .Navigation .nav-item.active {
   font-weight: 700;
+  color: var(--md-on-surface);
 }

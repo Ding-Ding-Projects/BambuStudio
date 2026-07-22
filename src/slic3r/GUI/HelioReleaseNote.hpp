@@ -37,6 +37,7 @@
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ScrolledWindow.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include <wx/hashmap.h>
 #include <wx/webview.h>
 #include <wx/html/htmlwin.h>
@@ -54,7 +55,13 @@ wxDECLARE_EVENT(EVT_UPDATE_TEXT_MSG, wxCommandEvent);
 wxDECLARE_EVENT(EVT_ERROR_DIALOG_BTN_CLICKED, wxCommandEvent);
 
 
-class HelioStatementDialog : public DPIDialog
+// Reparented onto the shared MD3 Dialog shell in its forced-dark variant: the
+// borderless rounded shell chrome (header icon tile + title/subtitle, footer
+// OutlineVariant divider, circular close) is pinned to the dark scheme so it
+// reads correctly on the always-dark HELIO_* brand surface, which is preserved
+// verbatim (the brand palette is EXEMPT). The two content pages live in the kit
+// body; the 'Got it' acknowledgement is a kit pill footer Button.
+class HelioStatementDialog : public MD3Dialog
 {
 private:
     Label *m_title{nullptr};

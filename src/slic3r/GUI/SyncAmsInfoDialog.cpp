@@ -50,8 +50,11 @@ bool SyncAmsInfoDialog::Show(bool show)
     if (show) {
         if (m_two_image_panel) {
             m_two_image_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
-            m_left_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
-            m_right_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
+            // Thumbnail button surfaces track the compare panel (SurfaceContainer)
+            // instead of the former hardcoded greys; the thumbnail itself (data
+            // imagery) is exempt and unchanged.
+            m_left_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+            m_right_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
             init_bitmaps();
         }
         if (m_options_other) { m_options_other->Hide(); }
@@ -608,7 +611,8 @@ void SyncAmsInfoDialog::updata_ui_when_priner_not_same() {
 }
 
 SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
-    DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Synchronize AMS Filament Information"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), _L("Synchronize AMS Filament Information"),
+              wxEmptyString, MaterialIcon::Sync)
     , m_input_info(info)
     , m_export_3mf_cancel(false)
     , m_mapping_popup(AmsMapingPopup(this,true))
@@ -628,8 +632,11 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     ops_no_auto.push_back(POItem{"on", "On"});
     ops_no_auto.push_back(POItem{"off", "Off"});
 
-    SetMinSize(wxSize(SyncAmsInfoDialogWidth, -1));
-    SetMaxSize(wxSize(SyncAmsInfoDialogWidth, -1));
+    // The fixed-width content (SyncAmsInfoDialogWidth) is nested in the kit body
+    // sizer (24px L/R padding), so the dialog is that much wider to keep the
+    // content area at its designed width and its computed centering spacers exact.
+    SetMinSize(wxSize(SyncAmsInfoDialogWidth + FromDIP(48), -1));
+    SetMaxSize(wxSize(SyncAmsInfoDialogWidth + FromDIP(48), -1));
 
     // bind
     Bind(wxEVT_CLOSE_WINDOW, &SyncAmsInfoDialog::on_cancel, this);
@@ -1045,10 +1052,20 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         m_show_page->SetSizer(m_sizer_show_page);
     }
     show_print_failed_info(false);
+    // The simplebook (loading/show pages) is the kit body; the shell owns the
+    // dialog's top-level sizer. NOTE: the OK/Cancel actions intentionally remain
+    // inside the show page's own row rather than the shared MD3 footer — their
+    // visibility is coordinated by the wxSimplebook page (page-parenting hides
+    // them on the loading page for free) together with show_status()-driven
+    // state handlers (updata_ui_when_priner_not_same / _after_connected_printer)
+    // whose ordering relative to the single silent ChangeSelection() page switch
+    // is nondeterministic under device polling; relocating them to one dialog
+    // footer cannot preserve that coordination. Kept as kit pill Buttons.
     m_sizer_this->Add(m_pages, 0, wxEXPAND, FromDIP(0));
-    SetSizer(m_sizer_this);
+    GetContentSizer()->Add(m_sizer_this, 1, wxEXPAND, 0);
     Layout();
     Fit();
+    UpdateShape();
     Thaw();
 
     init_bind();
@@ -1848,6 +1865,14 @@ void SyncAmsInfoDialog::on_cancel(wxCloseEvent &event)
     if (m_mapping_popup.IsShown())
         m_mapping_popup.Dismiss();
 
+    this->EndModal(wxID_CANCEL);
+}
+
+void SyncAmsInfoDialog::OnHeaderClose()
+{
+    // Mirror the native [x] / on_cancel path for the MD3 header close control.
+    if (m_mapping_popup.IsShown())
+        m_mapping_popup.Dismiss();
     this->EndModal(wxID_CANCEL);
 }
 

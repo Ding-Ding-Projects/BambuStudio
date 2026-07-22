@@ -31,6 +31,7 @@
 #include "Widgets/StaticLine.hpp"
 #include "Widgets/ProgressBar.hpp"
 #include "Widgets/ImageSwitchButton.hpp"
+#include "Widgets/Slider.hpp"
 #include "Widgets/AMSControl.hpp"
 #include "Widgets/FilamentLoad.hpp"
 #include "Widgets/FanControl.hpp"
@@ -496,9 +497,14 @@ protected:
     wxStaticText *  m_text_tasklist_caption;
 
     Label *  m_staticText_control;
-    ImageSwitchButton *m_switch_lamp;
+    // Kit Device.jsx:66 — chamber light is an MD3 Switch (SwitchButton icon mode,
+    // Device teal), not the legacy monitor_lamp_on/off ImageSwitchButton.
+    SwitchButton *m_switch_lamp;
     int               m_switch_lamp_timeout{0};
-    ImageSwitchButton *m_switch_speed;
+    // Kit Device.jsx:63 — print speed is a 4-way MD3 SegmentedControl
+    // (MultiSwitchButton, Device teal), not the legacy monitor_speed ImageSwitchButton.
+    MultiSwitchButton *m_switch_speed;
+    bool               m_speed_sync_guard{false}; // suppress the command path while syncing selection from the device
 
     /* TempInput */
     wxBoxSizer *    m_misc_ctrl_sizer{ nullptr };
@@ -520,7 +526,14 @@ protected:
     FanSwitchButton *m_switch_printing_fan;
     int             m_switch_printing_fan_timeout{0};
     FanSwitchButton *m_switch_cham_fan;
-    FanSwitchButton *m_switch_fan;
+    // Kit Device.jsx:64-65 — part-cooling + aux fans are teal MD3 range sliders.
+    // They preview the live PWM and open the authoritative FanControlPopupNew (the
+    // full PWM/mode/gating command path) on interaction; the legacy single fan
+    // ImageSwitchButton (m_switch_fan) is gone. m_fan_ctrl_anchor is the popup anchor.
+    Slider *        m_slider_part_fan{nullptr};
+    Slider *        m_slider_aux_fan{nullptr};
+    wxWindow *      m_fan_ctrl_anchor{nullptr};
+    bool            m_fan_popup_pending{false}; // debounce: one FanControlPopupNew per slider gesture
     int             m_switch_cham_fan_timeout{0};
     wxPanel*        m_switch_block_fan;
     int             m_nozzle_num{ 0 };
@@ -529,6 +542,9 @@ protected:
     float           m_fixed_aspect_ratio{1.8};
 
     AxisCtrlButton *m_bpButton_xy;
+    // Kit Device.jsx:82 — a compact 10/1 mm step SegmentedControl above the XY grid
+    // so BOTH legacy jog magnitudes (outer +10 / inner +1 rings) stay reachable.
+    MultiSwitchButton *m_axis_step_switch{nullptr};
     Button *        m_bpButton_z_10;
     Button *        m_bpButton_z_1;
     Button *        m_bpButton_z_down_1;
@@ -565,6 +581,15 @@ protected:
     wxStaticText*   m_staticText_calibration_caption;
     wxStaticText*   m_staticText_calibration_caption_top;
     wxStaticText*   m_calibration_text;
+    // Kit Device.jsx:48 — the right column is a plain stack of cards with no
+    // 'Control' title strip and no Parts/Options/Safety/Calibration pill row. Those
+    // four entry points now live behind a single trailing overflow menu (m_more_btn,
+    // MaterialIcon MoreHoriz IconButton -> wxMenu). The four Button objects are kept
+    // as invisible state-holders parented to m_action_holder (an unmanaged, always
+    // hidden panel) so every existing Show/Hide/Enable/SetLabel/SetToolTip site keeps
+    // driving their state unchanged; the menu is rebuilt from that state on open.
+    wxPanel*        m_action_holder{nullptr};
+    Button*         m_more_btn{nullptr};
     Button*         m_parts_btn;
     Button*         m_options_btn;
     Button*         m_safety_btn;
@@ -786,6 +811,8 @@ protected:
     void on_camera_leave(wxMouseEvent& event);
 
     void on_show_parts_options(wxCommandEvent& event);
+    /* trailing overflow menu hosting Parts / Print Options / Safety / Calibration */
+    void on_show_more_options(wxCommandEvent& event);
     /* print options */
     void on_show_print_options(wxCommandEvent &event);
     /* safety options */

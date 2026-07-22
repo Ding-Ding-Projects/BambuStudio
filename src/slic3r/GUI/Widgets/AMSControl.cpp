@@ -173,10 +173,14 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_panel_option_right->SetMinSize(wxSize(FromDIP(180), -1));
     m_panel_option_right->SetMaxSize(wxSize(FromDIP(180), -1));
 
+    // Device-scheme primary (teal) filled button: solid Primary at rest, tonal
+    // PrimaryContainer on hover/press. Snapshots the Device tones at construction
+    // (mirrors ConnectPrinter/UpgradePanel); the tones are theme-stable so the
+    // teal is legible on both light and dark surfaces.
     StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
-        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Normal));
 
     StateColor btn_bg_white(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled),
         std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Pressed),
@@ -184,14 +188,18 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
         std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Normal));
 
     // wxColour(255,255,254) is a deliberate near-white that dodges gDarkColors so these
-    // stay white-on-green/grey in dark mode — do not swap for ThemeColor::White (dark-maps).
+    // stay white-on-accent/grey in dark mode — do not swap for ThemeColor::White (dark-maps).
     StateColor btn_bd_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), StateColor::Enabled));
 
     StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
         std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
+    // Near-white label on the solid teal at rest; on the tonal light-teal
+    // hover/press container the label flips to OnPrimaryContainer for contrast.
     StateColor btn_text_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
         std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled));
 
     StateColor btn_text_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),

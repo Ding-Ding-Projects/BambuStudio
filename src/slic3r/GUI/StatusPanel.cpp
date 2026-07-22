@@ -774,7 +774,10 @@ static wxImage fail_image;
 #define MISC_BUTTON_3FAN_SIZE (wxSize(FromDIP(44), FromDIP(51)))
 #define TEMP_CTRL_MIN_SIZE_ALIGN_ONE_ICON (wxSize(FromDIP(125), FromDIP(52)))
 #define TEMP_CTRL_MIN_SIZE_ALIGN_TWO_ICON (wxSize(FromDIP(145), FromDIP(48)))
-#define AXIS_MIN_SIZE (wxSize(FromDIP(258), FromDIP(258)))
+// Kit Device.jsx:82 — the XY control is now a compact 3x3 arrow grid, not the
+// 258px circular dial; size the widget to the grid (3 tiles + 2 gaps) so it centers
+// cleanly in the Move card next to the Z-axis column.
+#define AXIS_MIN_SIZE (wxSize(FromDIP(168), FromDIP(168)))
 #define EXTRUDER_IMAGE_SIZE (wxSize(FromDIP(48), FromDIP(76)))
 
 static void market_model_scoring_page(int design_id)
@@ -2355,9 +2358,9 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
 
     m_panel_control_title = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
     // Kit Device.jsx:48: the right column is a plain stack of cards with no
-    // 'Control' title strip. Blend the former device_title_color band into the
-    // SurfaceDim column and hide the 'Control' label; the still-needed Printer
-    // Parts / Calibration entry points stay as a borderless top action row.
+    // 'Control' title strip and no Parts/Options/Safety/Calibration pill row. Blend
+    // the former device_title_color band into the SurfaceDim column; the strip now
+    // carries only a single trailing overflow menu (MoreHoriz IconButton).
     m_panel_control_title->SetBackgroundColour(device_page_color());
 
     wxBoxSizer *bSizer_control_title = new wxBoxSizer(wxHORIZONTAL);
@@ -2367,10 +2370,18 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_staticText_control->SetForegroundColour(device_secondary_text_color());
     m_staticText_control->Hide();
 
+    // Invisible state-holder for the four action entry points. It is never added to
+    // a sizer and stays Hidden, so its children never paint on screen; because a
+    // child's own Show()/Enable()/SetLabel()/SetToolTip() flags are independent of
+    // the parent's visibility, every existing update site keeps mutating their
+    // state, and the overflow menu is rebuilt from that state each time it opens.
+    m_action_holder = new wxPanel(parent, wxID_ANY);
+    m_action_holder->Hide();
+
     StateColor btn_bg_green = device_primary_button_background();
     StateColor btn_bd_green = device_primary_button_border();
 
-    m_parts_btn = new Button(m_panel_control_title, _L("Printer Parts"));
+    m_parts_btn = new Button(m_action_holder, _L("Printer Parts"));
     m_parts_btn->SetBackgroundColor(btn_bg_green);
     m_parts_btn->SetBorderColor(btn_bd_green);
     m_parts_btn->SetTextColor(device_primary_button_text());
@@ -2378,7 +2389,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_parts_btn->SetMinSize(wxSize(-1, FromDIP(26)));
     m_parts_btn->SetCornerRadius(FromDIP(13));
 
-    m_options_btn = new Button(m_panel_control_title, _L("Print Options"));
+    m_options_btn = new Button(m_action_holder, _L("Print Options"));
     m_options_btn->SetBackgroundColor(btn_bg_green);
     m_options_btn->SetBorderColor(btn_bd_green);
     m_options_btn->SetTextColor(device_primary_button_text());
@@ -2386,7 +2397,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_options_btn->SetMinSize(wxSize(-1, FromDIP(26)));
     m_options_btn->SetCornerRadius(FromDIP(13));
 
-    m_safety_btn = new Button(m_panel_control_title, _L("Safety Options"));
+    m_safety_btn = new Button(m_action_holder, _L("Safety Options"));
     m_safety_btn->SetBackgroundColor(btn_bg_green);
     m_safety_btn->SetBorderColor(btn_bd_green);
     m_safety_btn->SetTextColor(device_primary_button_text());
@@ -2394,7 +2405,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_safety_btn->SetMinSize(wxSize(-1, FromDIP(26)));
     m_safety_btn->SetCornerRadius(FromDIP(13));
 
-    m_calibration_btn = new Button(m_panel_control_title, _L("Calibration"));
+    m_calibration_btn = new Button(m_action_holder, _L("Calibration"));
     m_calibration_btn->SetBackgroundColor(btn_bg_green);
     m_calibration_btn->SetBorderColor(btn_bd_green);
     m_calibration_btn->SetTextColor(device_primary_button_text());
@@ -2406,14 +2417,16 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_options_btn->Hide();
     m_safety_btn->Hide();
 
-    // 'Control' label hidden above; a leading stretch keeps the entry-point
-    // buttons right-aligned in the borderless action row.
+    // Trailing overflow menu button (kit: an MD3 IconButton). MoreHoriz glyph,
+    // borderless circular ghost target; degrades to a bordered '...' label button
+    // when the icon face is unavailable.
+    m_more_btn = new Button(m_panel_control_title, MaterialIcon::available() ? wxString() : wxString("..."));
+    m_more_btn->SetIconButton(Button::IconShape::Circle, FromDIP(32));
+    if (MaterialIcon::available()) m_more_btn->SetGlyph(MaterialIcon::MoreHoriz, 20);
+    m_more_btn->SetToolTip(_L("More options"));
+
     bSizer_control_title->AddStretchSpacer(1);
-    bSizer_control_title->Add(0, 0, 1, wxEXPAND, 0);
-    bSizer_control_title->Add(m_parts_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
-    bSizer_control_title->Add(m_options_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
-    bSizer_control_title->Add(m_safety_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
-    bSizer_control_title->Add(m_calibration_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    bSizer_control_title->Add(m_more_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
 
     m_panel_control_title->SetSizer(bSizer_control_title);
     m_panel_control_title->Layout();
@@ -2624,82 +2637,108 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     return sizer;
 }
 
+// Leading Material Symbols glyph for a print-options row (icon + label + control),
+// OnSurfaceVariant at 20px per Device.jsx:64-66. Returns nullptr when the icon face
+// is unavailable so the caller can omit it and keep the row text-driven.
+static wxStaticBitmap *make_option_glyph(wxWindow *parent, uint32_t glyph, const wxColour &colour)
+{
+    if (!MaterialIcon::available()) return nullptr;
+    auto *bmp = new wxStaticBitmap(parent, wxID_ANY, MaterialIcon::bitmap(parent, glyph, 20, colour));
+    return bmp;
+}
+
 wxBoxSizer *StatusBasePanel::create_misc_control(wxWindow *parent)
 {
+    // Kit Device.jsx:62-67 — the Print Options card body is a 4-way SegmentedControl
+    // (speed) + two teal range sliders (part cooling / aux fan) + a teal Switch
+    // (chamber light). The legacy monitor_speed / monitor_lamp / monitor_fan
+    // ImageSwitchButtons and their PNGs are gone; every command path is preserved.
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-    wxBoxSizer *line_sizer = new wxBoxSizer(wxHORIZONTAL);
+    const wxColour icon_col  = device_secondary_text_color();
+    const int      label_w   = FromDIP(96);
 
-    /* create speed control */
-    m_switch_speed = new ImageSwitchButton(parent, m_bitmap_speed_active, m_bitmap_speed);
-    m_switch_speed->SetLabels(_L("100%"), _L("100%"));
-    m_switch_speed->SetMinSize(MISC_BUTTON_2FAN_SIZE);
-    m_switch_speed->SetMaxSize(MISC_BUTTON_2FAN_SIZE);
-    m_switch_speed->SetPadding(FromDIP(3));
-    m_switch_speed->SetBorderWidth(FromDIP(2));
-    m_switch_speed->SetFont(Label::Head_13);
-    m_switch_speed->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
-                                            std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    m_switch_speed->SetValue(false);
+    /* speed: 4-way segmented control (Silent / Standard / Sport / Ludicrous) */
+    m_switch_speed = new MultiSwitchButton(parent);
+    m_switch_speed->SetOptions({_L("Silent"), _L("Standard"), _L("Sport"), _L("Ludicrous")});
+    // Selected segment fills with the Device teal (Primary in the Device scheme);
+    // the recessed track and unselected text follow the neutral surface roles.
+    m_switch_speed->SetBackgroundColor(StateColor(
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), (int) StateColor::Normal)));
+    m_switch_speed->SetMinSize(wxSize(-1, FromDIP(32)));
+    m_switch_speed->SetToolTip(_L("This only takes effect during printing"));
+    // Default to Standard; harmless here (the command handler is not yet connected).
+    m_speed_sync_guard = true;
+    m_switch_speed->SetSelection(1);
+    m_speed_sync_guard = false;
+    sizer->Add(m_switch_speed, 0, wxEXPAND | wxTOP, FromDIP(2));
 
-    line_sizer->Add(m_switch_speed, 1, wxALIGN_CENTER | wxALL, 0);
-
-    auto line = new StaticLine(parent, true);
-    line->SetLineColour(device_divider_color());
-    line_sizer->Add(line, 0, wxEXPAND | wxTOP | wxBOTTOM, 4);
-
-    /* create lamp control */
-    m_switch_lamp = new ImageSwitchButton(parent, m_bitmap_lamp_on, m_bitmap_lamp_off);
-    m_switch_lamp->SetLabels(_L("Lamp"), _L("Lamp"));
-    m_switch_lamp->SetMinSize(MISC_BUTTON_2FAN_SIZE);
-    m_switch_lamp->SetMaxSize(MISC_BUTTON_2FAN_SIZE);
-    m_switch_lamp->SetPadding(FromDIP(3));
-    m_switch_lamp->SetBorderWidth(FromDIP(2));
-    m_switch_lamp->SetFont(Label::Head_13);
-    m_switch_lamp->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
-                                           std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    line_sizer->Add(m_switch_lamp, 1, wxALIGN_CENTER | wxALL, 0);
-
-    // sizer->Add(line_sizer, 0, wxEXPAND, FromDIP(5));
-    line = new StaticLine(parent);
-    line->SetLineColour(device_divider_color());
-    sizer->Add(line, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
-
+    /* part cooling + aux fan: teal sliders, hosted in m_fan_panel so the existing
+       FDM-mode Show/Hide and theme sites keep driving the fan block */
     m_fan_panel = new StaticBox(parent);
-    m_fan_panel->SetMinSize(MISC_BUTTON_PANEL_SIZE);
-    m_fan_panel->SetMaxSize(MISC_BUTTON_PANEL_SIZE);
     m_fan_panel->SetBackgroundColor(device_card_color());
+    m_fan_panel->SetBackgroundColour(device_card_color());
     m_fan_panel->SetBorderWidth(0);
     m_fan_panel->SetCornerRadius(0);
+    auto *fan_sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto fan_line_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_switch_fan        = new FanSwitchButton(m_fan_panel, m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_fan->SetValue(false);
-    m_switch_fan->SetMinSize(MISC_BUTTON_1FAN_SIZE);
-    m_switch_fan->SetMaxSize(MISC_BUTTON_1FAN_SIZE);
-    m_switch_fan->SetPadding(FromDIP(1));
-    m_switch_fan->SetBorderWidth(0);
-    m_switch_fan->SetCornerRadius(0);
-    m_switch_fan->SetFont(::Label::Body_10);
-    m_switch_fan->UseTextFan();
-    m_switch_fan->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
-                                          std::make_pair(device_secondary_text_color(), (int) StateColor::Normal)));
+    auto add_fan_row = [&](uint32_t glyph, const wxString &label, Slider *&slider, int def_val) {
+        auto *row = new wxBoxSizer(wxHORIZONTAL);
+        if (auto *g = make_option_glyph(m_fan_panel, glyph, icon_col))
+            row->Add(g, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+        auto *lbl = new Label(m_fan_panel, label);
+        lbl->SetFont(::Label::Body_13);
+        lbl->SetForegroundColour(device_text_color());
+        lbl->SetMinSize(wxSize(label_w, -1));
+        row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL);
+        slider = new Slider(m_fan_panel, def_val, 0, 100);
+        slider->SetColorScheme(MD3::ColorScheme::Device);
+        slider->SetMinSize(wxSize(FromDIP(90), FromDIP(24)));
+        row->Add(slider, 1, wxALIGN_CENTER_VERTICAL);
+        fan_sizer->Add(row, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(4));
+    };
+    add_fan_row(MaterialIcon::ModeFan, _L("Part cooling"), m_slider_part_fan, 0);
+    add_fan_row(MaterialIcon::Air, _L("Aux fan"), m_slider_aux_fan, 0);
 
-    m_switch_fan->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { m_fan_panel->SetBackgroundColor(device_primary_container_color()); });
+    // The sliders preview the live PWM and act as the entry point to the full fan
+    // control: any interaction snaps the thumb back to the device value and opens
+    // the authoritative FanControlPopupNew (which owns the PWM / air-duct mode /
+    // ctrl-off gating and the change-during-printing warning). See the deviation
+    // note in the report: direct per-fan drag-to-commit is intentionally not wired
+    // because that command path lives in FanControl.cpp / DevFan (off-limits here).
+    auto open_fan_popup = [this](int) {
+        if (m_fan_popup_pending) return; // one popup per drag gesture; motion events coalesce
+        m_fan_popup_pending = true;
+        this->CallAfter([this]() {
+            wxCommandEvent ev;
+            on_nozzle_fan_switch(ev); // modal; blocks until the fan control closes
+            m_fan_popup_pending = false;
+        });
+    };
+    m_slider_part_fan->SetOnChange(open_fan_popup);
+    m_slider_aux_fan->SetOnChange(open_fan_popup);
+    m_fan_ctrl_anchor = m_slider_part_fan;
 
-    m_switch_fan->Bind(wxEVT_LEAVE_WINDOW, [this, parent](auto &e) { m_fan_panel->SetBackgroundColor(parent->GetBackgroundColour()); });
-
-    fan_line_sizer->Add(m_switch_fan, 1, wxEXPAND | wxALL, FromDIP(2));
-
-    m_fan_panel->SetSizer(fan_line_sizer);
+    m_fan_panel->SetSizer(fan_sizer);
     m_fan_panel->Layout();
-    m_fan_panel->Fit();
-    sizer->Add(m_fan_panel, 0, wxEXPAND, FromDIP(5));
-    line = new StaticLine(parent);
-    line->SetLineColour(device_divider_color());
-    sizer->Add(line, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
+    sizer->Add(m_fan_panel, 0, wxEXPAND | wxTOP, FromDIP(6));
 
-    sizer->Add(line_sizer, 0, wxEXPAND, FromDIP(5));
+    /* chamber light: MD3 Switch (Device teal) */
+    auto *lamp_row = new wxBoxSizer(wxHORIZONTAL);
+    if (auto *g = make_option_glyph(parent, MaterialIcon::Lightbulb, icon_col))
+        lamp_row->Add(g, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    auto *lamp_lbl = new Label(parent, _L("Chamber light"));
+    lamp_lbl->SetFont(::Label::Body_13);
+    lamp_lbl->SetForegroundColour(device_text_color());
+    lamp_row->Add(lamp_lbl, 1, wxALIGN_CENTER_VERTICAL);
+    m_switch_lamp = new SwitchButton(parent);
+    m_switch_lamp->SetColorScheme(MD3::ColorScheme::Device);
+    m_switch_lamp->SetMinSize(wxSize(FromDIP(44), FromDIP(24)));
+    m_switch_lamp->SetValue(false);
+    lamp_row->Add(m_switch_lamp, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    sizer->Add(lamp_row, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(6));
+
     return sizer;
 }
 
@@ -2727,10 +2766,13 @@ void StatusBasePanel::reset_temp_misc_control()
     m_tempCtrl_chamber->Enable(true);
     m_tempCtrl_bed->Enable(true);
 
-    // reset misc control
-    m_switch_speed->SetLabels(_L("100%"), _L("100%"));
-    m_switch_speed->SetValue(false);
-    m_switch_lamp->SetLabels(_L("Lamp"), _L("Lamp"));
+    // reset misc control: default the speed segmented control to Standard (guarded
+    // so the reset does not issue a speed command), zero the fan sliders, lamp off.
+    m_speed_sync_guard = true;
+    m_switch_speed->SetSelection(1);
+    m_speed_sync_guard = false;
+    if (m_slider_part_fan) m_slider_part_fan->SetValue(0);
+    if (m_slider_aux_fan) m_slider_aux_fan->SetValue(0);
     m_switch_lamp->SetValue(false);
     /*m_switch_nozzle_fan->SetValue(false);
     m_switch_printing_fan->SetValue(false);
@@ -2739,14 +2781,34 @@ void StatusBasePanel::reset_temp_misc_control()
 
 wxBoxSizer *StatusBasePanel::create_axis_control(wxWindow *parent)
 {
+    // Kit Device.jsx:79-89 — a 3x3 arrow grid (AxisCtrlButton, rebuilt to the grid
+    // anatomy) with a compact 10/1 mm step SegmentedControl above it so BOTH legacy
+    // jog magnitudes stay reachable. The step selector drives AxisCtrlButton::SetStep;
+    // the grid still fires the same SetInt(position) contract on_axis_ctrl_xy decodes.
     auto sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->AddStretchSpacer();
+
+    m_axis_step_switch = new MultiSwitchButton(parent);
+    m_axis_step_switch->SetOptions({wxString("10"), wxString("1")});
+    m_axis_step_switch->SetBackgroundColor(StateColor(
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), (int) StateColor::Normal)));
+    m_axis_step_switch->SetMinSize(wxSize(FromDIP(120), FromDIP(28)));
+    m_axis_step_switch->SetSelection(0); // 10 mm — the legacy default (outer ring)
+    m_axis_step_switch->SetToolTip(_L("Move distance (mm)"));
+
     m_bpButton_xy = new AxisCtrlButton(parent, m_bitmap_axis_home);
     m_bpButton_xy->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
                                            std::make_pair(device_text_color(), (int) StateColor::Normal)));
     m_bpButton_xy->SetMinSize(AXIS_MIN_SIZE);
     m_bpButton_xy->SetSize(AXIS_MIN_SIZE);
+    m_bpButton_xy->SetStep(10);
+
+    m_axis_step_switch->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
+        if (m_bpButton_xy) m_bpButton_xy->SetStep(e.GetInt() == 0 ? 10 : 1);
+    });
+
     sizer->AddStretchSpacer();
+    sizer->Add(m_axis_step_switch, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(8));
     sizer->Add(m_bpButton_xy, 0, wxALIGN_CENTER | wxALL, 0);
     sizer->AddStretchSpacer();
     return sizer;
@@ -3343,14 +3405,12 @@ StatusPanel::StatusPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
     m_tempCtrl_nozzle_deputy->Connect(wxEVT_SET_FOCUS, wxFocusEventHandler(StatusPanel::on_nozzle_temp_set_focus), NULL, this);
     m_tempCtrl_chamber->Connect(wxEVT_KILL_FOCUS, wxFocusEventHandler(StatusPanel::on_cham_temp_kill_focus), NULL, this);
     m_tempCtrl_chamber->Connect(wxEVT_SET_FOCUS, wxFocusEventHandler(StatusPanel::on_cham_temp_set_focus), NULL, this);
-    m_switch_lamp->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_lamp_switch), NULL, this);
-    // m_switch_nozzle_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this); // TODO
-    // m_switch_printing_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-    // m_switch_cham_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-
-    m_switch_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this); // TODO
-    // m_switch_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-    // m_switch_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
+    // Chamber-light MD3 Switch: wxBitmapToggleButton fires wxEVT_TOGGLEBUTTON (not
+    // the ImageSwitchButton's synthetic wxEVT_COMMAND_BUTTON_CLICKED). GetValue()
+    // reflects the post-toggle state, so on_lamp_switch is unchanged.
+    m_switch_lamp->Connect(wxEVT_TOGGLEBUTTON, wxCommandEventHandler(StatusPanel::on_lamp_switch), NULL, this);
+    // Part-cooling / aux fan sliders open FanControlPopupNew via their SetOnChange
+    // callback (wired in create_misc_control); no separate fan button to bind.
 
     m_bpButton_xy->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_xy), NULL, this); // TODO
     m_bpButton_z_10->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_up_10), NULL, this);
@@ -3381,11 +3441,11 @@ StatusPanel::StatusPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
         if (m_ams_control) { m_ams_control->on_retry(); }
     });
 
-    m_switch_speed->Connect(wxEVT_LEFT_DOWN, wxCommandEventHandler(StatusPanel::on_switch_speed), NULL, this);
-    m_calibration_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_start_calibration), NULL, this);
-    m_options_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_print_options), NULL, this);
-    m_safety_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_safety_options), NULL, this);
-    m_parts_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_parts_options), NULL, this);
+    // Speed segmented control: a segment selection is the speed-level command path.
+    m_switch_speed->Connect(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEventHandler(StatusPanel::on_switch_speed), NULL, this);
+    // The four action entry points now live in the trailing overflow menu; the
+    // MoreHoriz button opens it and the menu items route straight to these handlers.
+    m_more_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_more_options), NULL, this);
 }
 
 StatusPanel::~StatusPanel()
@@ -3413,14 +3473,10 @@ StatusPanel::~StatusPanel()
     m_tempCtrl_nozzle_deputy->Disconnect(wxEVT_KILL_FOCUS, wxFocusEventHandler(StatusPanel::on_nozzle_temp_kill_focus), NULL, this);
     m_tempCtrl_nozzle_deputy->Disconnect(wxEVT_SET_FOCUS, wxFocusEventHandler(StatusPanel::on_nozzle_temp_set_focus), NULL, this);
 
-    m_switch_lamp->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_lamp_switch), NULL, this);
+    m_switch_lamp->Disconnect(wxEVT_TOGGLEBUTTON, wxCommandEventHandler(StatusPanel::on_lamp_switch), NULL, this);
     /*m_switch_nozzle_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
     m_switch_printing_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
     m_switch_cham_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);*/
-
-    // m_switch_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-    // m_switch_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-    m_switch_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
 
     m_bpButton_xy->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_xy), NULL, this);
     m_bpButton_z_10->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_up_10), NULL, this);
@@ -3430,11 +3486,8 @@ StatusPanel::~StatusPanel()
     m_bpButton_e_10->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_e_up_10), NULL, this);
     m_bpButton_e_down_10->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_e_down_10), NULL, this);
     m_nozzle_btn_panel->Disconnect(wxCUSTOMEVT_SWITCH_POS, wxCommandEventHandler(StatusPanel::on_nozzle_selected), NULL, this);
-    m_switch_speed->Disconnect(wxEVT_LEFT_DOWN, wxCommandEventHandler(StatusPanel::on_switch_speed), NULL, this);
-    m_calibration_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_start_calibration), NULL, this);
-    m_options_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_print_options), NULL, this);
-    m_safety_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_safety_options), NULL, this);
-    m_parts_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_parts_options), NULL, this);
+    m_switch_speed->Disconnect(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEventHandler(StatusPanel::on_switch_speed), NULL, this);
+    m_more_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_more_options), NULL, this);
 
     // remove warning dialogs
     if (abort_dlg != nullptr) delete abort_dlg;
@@ -3875,24 +3928,24 @@ void StatusPanel::show_printing_status(bool ctrl_area, bool temp_area)
         m_tempCtrl_bed->Enable(false);
         m_tempCtrl_chamber->Enable(false);
         m_switch_speed->Enable(false);
-        m_switch_speed->SetValue(false);
         m_switch_lamp->Enable(false);
         /*m_switch_nozzle_fan->Enable(false);
         m_switch_printing_fan->Enable(false);
         m_switch_cham_fan->Enable(false);*/
-        m_switch_fan->Enable(false);
+        if (m_slider_part_fan) m_slider_part_fan->Enable(false);
+        if (m_slider_aux_fan) m_slider_aux_fan->Enable(false);
     } else {
         m_tempCtrl_nozzle->Enable();
         m_tempCtrl_nozzle_deputy->Enable();
         m_tempCtrl_bed->Enable();
         m_tempCtrl_chamber->Enable();
         m_switch_speed->Enable();
-        m_switch_speed->SetValue(true);
         m_switch_lamp->Enable();
         /*m_switch_nozzle_fan->Enable();
         m_switch_printing_fan->Enable();
         m_switch_cham_fan->Enable();*/
-        m_switch_fan->Enable();
+        if (m_slider_part_fan) m_slider_part_fan->Enable(true);
+        if (m_slider_aux_fan) m_slider_aux_fan->Enable(true);
     }
 }
 
@@ -4122,12 +4175,17 @@ void StatusPanel::update_misc_ctrl(MachineObject *obj)
         bool is_suppt_aux_fun  = obj->GetFan()->GetSupportAuxFanData();
         bool is_suppt_cham_fun = obj->GetFan()->GetSupportChamberFan();
         if (m_fan_control_popup) { m_fan_control_popup->update_fan_data(obj); }
+        // Preview live PWM on the teal sliders (0-255 -> 0-100). SetValue does not
+        // fire the change callback, so this never opens the fan popup. Both rows stay
+        // visible per the kit; the authoritative FanControlPopupNew still governs
+        // which fans are actually controllable for this printer.
+        (void) is_suppt_aux_fun;
+        if (m_slider_part_fan) m_slider_part_fan->SetValue((obj->GetFan()->GetCoolingFanSpeed() * 100 + 127) / 255);
+        if (m_slider_aux_fan) m_slider_aux_fan->SetValue((obj->GetFan()->GetBigFan1Speed() * 100 + 127) / 255);
     } else {
         if (m_fan_panel->IsShown()) { m_fan_panel->Hide(); }
         if (m_fan_control_popup && m_fan_control_popup->IsShown()) m_fan_control_popup->Hide();
     }
-
-    obj->is_series_o() ? m_switch_fan->UseTextAirCondition() : m_switch_fan->UseTextFan();
 
     // update cham fan
 
@@ -4145,10 +4203,14 @@ void StatusPanel::update_misc_ctrl(MachineObject *obj)
     if (speed_lvl_timeout > 0)
         speed_lvl_timeout--;
     else {
-        // update speed
-        this->speed_lvl     = obj->GetPrintingSpeedLevel();
-        wxString text_speed = wxString::Format("%d%%", obj->printing_speed_mag);
-        m_switch_speed->SetLabels(text_speed, text_speed);
+        // update speed: reflect the device speed level (1-4) on the segmented
+        // control. Guarded so syncing the selection does not re-issue the command.
+        this->speed_lvl = obj->GetPrintingSpeedLevel();
+        int seg = this->speed_lvl - 1;
+        if (seg < 0 || seg > 3) seg = 1;
+        m_speed_sync_guard = true;
+        m_switch_speed->SetSelection(seg);
+        m_speed_sync_guard = false;
     }
 }
 
@@ -5753,62 +5815,31 @@ void StatusPanel::on_nozzle_temp_set_focus(wxFocusEvent &event)
 
 void StatusPanel::on_switch_speed(wxCommandEvent &event)
 {
-    auto now = boost::posix_time::microsec_clock::universal_time();
-    if ((now - speed_dismiss_time).total_milliseconds() < 200) {
-        speed_dismiss_time = now - boost::posix_time::seconds(1);
-        return;
-    }
-#if __WXOSX__
-    // MacOS has focus problem
-    PopupWindow *popUp = new PopupWindow(nullptr);
-#else
-    PopupWindow *popUp = new PopupWindow(m_switch_speed);
-#endif
-#ifdef __WXMSW__
-    popUp->BindUnfocusEvent();
-#endif
-    popUp->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
-    StepCtrl *step  = new StepCtrl(popUp, wxID_ANY);
-    wxSizer  *sizer = new wxBoxSizer(wxHORIZONTAL);
-    sizer->Add(step, 1, wxEXPAND, 0);
-    popUp->SetSizer(sizer);
-    auto em = em_unit(this);
-    popUp->SetSize(em * 36, em * 8);
-    step->SetHint(_L("This only takes effect during printing"));
-    step->AppendItem(_L("Silent"), "");
-    step->AppendItem(_L("Standard"), "");
-    step->AppendItem(_L("Sport"), "");
-    step->AppendItem(_L("Ludicrous"), "");
+    // Kit Device.jsx:63 — the 4-way SegmentedControl replaces the legacy StepCtrl
+    // popup: each segment IS a speed level, so a selection issues the same
+    // command_set_printing_speed path directly. Ignore selections driven by the
+    // device-state sync, and preserve the legacy rule that speed can only change
+    // while printing (the segment reverts to the live level otherwise).
+    if (m_speed_sync_guard) return;
+    if (!obj) return;
 
-    // default speed lvl
-    int selected_item = 1;
-    if (obj) {
-        int speed_lvl_idx = obj->GetPrintingSpeedLevel() - 1;
-        if (speed_lvl_idx >= 0 && speed_lvl_idx < 4) { selected_item = speed_lvl_idx; }
-    }
-    step->SelectItem(selected_item);
+    int seg = m_switch_speed->GetSelection();
+    if (seg < 0 || seg > 3) return;
 
     if (!obj->is_in_printing()) {
-        step->Bind(wxEVT_LEFT_DOWN, [](auto &e) { return; });
+        int cur = obj->GetPrintingSpeedLevel() - 1;
+        if (cur < 0 || cur > 3) cur = 1;
+        if (cur != seg) {
+            m_speed_sync_guard = true;
+            m_switch_speed->SetSelection(cur);
+            m_speed_sync_guard = false;
+        }
+        return;
     }
 
-    step->Bind(EVT_STEP_CHANGED, [this](auto &e) {
-        this->speed_lvl = e.GetInt() + 1;
-        if (obj) {
-            set_hold_count(this->speed_lvl_timeout);
-            obj->command_set_printing_speed((DevPrintingSpeedLevel) this->speed_lvl);
-        }
-    });
-    popUp->Bind(wxEVT_SHOW, [this, popUp](auto &e) {
-        if (!e.IsShown()) {
-            popUp->Destroy();
-            speed_dismiss_time = boost::posix_time::microsec_clock::universal_time();
-        }
-    });
-
-    wxPoint pos = m_switch_speed->ClientToScreen(wxPoint(0, -6));
-    popUp->Position(pos, {0, m_switch_speed->GetSize().y + 12});
-    popUp->Popup();
+    this->speed_lvl = seg + 1;
+    set_hold_count(this->speed_lvl_timeout);
+    obj->command_set_printing_speed((DevPrintingSpeedLevel) this->speed_lvl);
 }
 
 void StatusPanel::on_printing_fan_switch(wxCommandEvent &event)
@@ -5840,8 +5871,11 @@ void StatusPanel::on_nozzle_fan_switch(wxCommandEvent &event)
 
     m_fan_control_popup = new FanControlPopupNew(this, obj, obj->GetFan()->GetAirDuctData());
 
-    auto pos = m_switch_fan->GetScreenPosition();
-    pos.y    = pos.y + m_switch_fan->GetSize().y;
+    // Anchor below the fan slider block (the former m_switch_fan anchor); fall back
+    // to the panel if the anchor is somehow unset.
+    wxWindow *anchor = m_fan_ctrl_anchor ? m_fan_ctrl_anchor : static_cast<wxWindow *>(this);
+    auto pos = anchor->GetScreenPosition();
+    pos.y    = pos.y + anchor->GetSize().y;
 
     int  display_idx = wxDisplay::GetFromWindow(this);
     auto display     = wxDisplay(display_idx).GetClientArea();
@@ -6021,6 +6055,48 @@ void StatusPanel::on_start_calibration(wxCommandEvent &event)
             calibration_dlg->ShowModal();
         }
     }
+}
+
+void StatusPanel::on_show_more_options(wxCommandEvent &event)
+{
+    // Kit Device.jsx:48 — the Parts / Print Options / Safety / Calibration entry
+    // points live behind this trailing overflow menu. It is rebuilt each time it
+    // opens from the (hidden) action buttons' live shown/enabled/label state, so all
+    // the existing update sites keep governing availability. Each item routes to its
+    // original handler (deferred via CallAfter so the menu closes before the modal).
+    if (!m_more_btn) return;
+
+    enum { ID_PARTS = wxID_HIGHEST + 2200, ID_OPTIONS, ID_SAFETY, ID_CALI };
+    wxMenu menu;
+    if (m_parts_btn && m_parts_btn->IsShown()) {
+        menu.Append(ID_PARTS, m_parts_btn->GetLabel());
+        menu.Enable(ID_PARTS, m_parts_btn->IsEnabled());
+    }
+    if (m_options_btn && m_options_btn->IsShown()) {
+        menu.Append(ID_OPTIONS, m_options_btn->GetLabel());
+        menu.Enable(ID_OPTIONS, m_options_btn->IsEnabled());
+    }
+    if (m_safety_btn && m_safety_btn->IsShown()) {
+        menu.Append(ID_SAFETY, m_safety_btn->GetLabel());
+        menu.Enable(ID_SAFETY, m_safety_btn->IsEnabled());
+    }
+    if (m_calibration_btn) {
+        menu.Append(ID_CALI, m_calibration_btn->GetLabel());
+        menu.Enable(ID_CALI, m_calibration_btn->IsEnabled());
+    }
+
+    // Synchronous selection: the menu has already closed when this returns, so the
+    // handler's modal dialog opens cleanly. wxID_NONE means the user dismissed it.
+    int sel = m_more_btn->GetPopupMenuSelectionFromUser(menu);
+    wxCommandEvent ev;
+    if (sel == ID_PARTS)
+        on_show_parts_options(ev);
+    else if (sel == ID_OPTIONS)
+        on_show_print_options(ev);
+    else if (sel == ID_SAFETY)
+        on_show_safety_options(ev);
+    else if (sel == ID_CALI)
+        on_start_calibration(ev);
 }
 
 bool StatusPanel::is_stage_list_info_changed(MachineObject *obj)
@@ -6263,10 +6339,17 @@ void StatusPanel::on_sys_color_changed()
         button->Refresh();
     }
     m_bpButton_xy->SetTextColor(control_text);
-    m_switch_speed->SetTextColor(control_text);
-    m_switch_lamp->SetTextColor(control_text);
-    m_switch_fan->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
-                                          std::make_pair(device_secondary_text_color(), (int) StateColor::Normal)));
+    // Re-resolve the Device-teal segmented fills for the new theme (MultiSwitchButton
+    // stores its StateColors at construction, so a theme flip needs a re-apply). The
+    // Slider / SwitchButton controls resolve their colours per paint but cache a
+    // bitmap, so refresh/rescale them here.
+    StateColor seg_bg(std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+                      std::make_pair(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), (int) StateColor::Normal));
+    m_switch_speed->SetBackgroundColor(seg_bg);
+    if (m_axis_step_switch) m_axis_step_switch->SetBackgroundColor(seg_bg);
+    m_switch_lamp->Rescale();
+    if (m_slider_part_fan) m_slider_part_fan->Refresh();
+    if (m_slider_aux_fan) m_slider_aux_fan->Refresh();
     const wxColour control_label_color = m_bpButton_z_10->IsEnabled() ? device_secondary_text_color() : device_disabled_text_color();
     m_staticText_z_tip->SetForegroundColour(control_label_color);
     m_extruder_label->SetForegroundColour(control_label_color);
@@ -6275,13 +6358,6 @@ void StatusPanel::on_sys_color_changed()
     // for the new theme before it rescales, mirroring the DPI path.
     m_project_task_panel->init_bitmaps();
     m_project_task_panel->msw_rescale();
-    // Rebuild the control-switch glyphs so the Device teal follows the live
-    // light<->dark flip, then re-apply to the switches (which hold copies).
-    build_control_switch_glyphs(this, m_bitmap_lamp_on, m_bitmap_lamp_off, m_bitmap_fan_on, m_bitmap_fan_off,
-                                m_bitmap_speed, m_bitmap_speed_active);
-    m_switch_speed->SetImages(m_bitmap_speed, m_bitmap_speed);
-    m_switch_lamp->SetImages(m_bitmap_lamp_on, m_bitmap_lamp_off);
-    m_switch_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
     m_ams_control->msw_rescale();
     rescale_camera_icons();
     Layout();
@@ -6326,28 +6402,20 @@ void StatusPanel::msw_rescale()
         if (ext_img) { ext_img->msw_rescale(); }
     }
 
-    // init_bitmaps() (called at the top of msw_rescale) already rebuilt the speed
-    // glyphs at the new DPI; a ScalableBitmap::msw_rescale() here would re-rasterize
-    // from the (empty) icon name and wipe the glyph, so it is intentionally gone.
-    m_switch_speed->SetImages(m_bitmap_speed, m_bitmap_speed);
-    m_switch_speed->SetMinSize(MISC_BUTTON_2FAN_SIZE);
+    // Print-options controls rescale themselves from live tokens/DPI: the segmented
+    // control and step selector rebuild their button metrics, the switch re-renders
+    // its bitmap at the new scale, and the sliders resolve geometry per paint.
+    m_switch_speed->SetMinSize(wxSize(-1, FromDIP(32)));
     m_switch_speed->Rescale();
-    m_switch_lamp->SetImages(m_bitmap_lamp_on, m_bitmap_lamp_off);
-    m_switch_lamp->SetMinSize(MISC_BUTTON_2FAN_SIZE);
+    if (m_axis_step_switch) {
+        m_axis_step_switch->SetMinSize(wxSize(FromDIP(120), FromDIP(28)));
+        m_axis_step_switch->Rescale();
+    }
+    m_switch_lamp->SetMinSize(wxSize(FromDIP(44), FromDIP(24)));
     m_switch_lamp->Rescale();
-    /*m_switch_nozzle_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_nozzle_fan->Rescale();
-    m_switch_printing_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_printing_fan->Rescale();
-    m_switch_cham_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_cham_fan->Rescale();*/
-
-    m_switch_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_fan->Rescale();
+    if (m_slider_part_fan) { m_slider_part_fan->SetMinSize(wxSize(FromDIP(90), FromDIP(24))); m_slider_part_fan->Rescale(); }
+    if (m_slider_aux_fan) { m_slider_aux_fan->SetMinSize(wxSize(FromDIP(90), FromDIP(24))); m_slider_aux_fan->Rescale(); }
     if (m_fan_control_popup) { m_fan_control_popup->msw_rescale(); }
-
-    // m_switch_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    // m_switch_fan->Rescale();
 
     m_bpButton_z_10->Rescale();
     m_bpButton_z_1->Rescale();

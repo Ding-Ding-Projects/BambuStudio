@@ -7,95 +7,64 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 
-// MD3 Device-scheme tokens for the XY jog dial (Device.jsx Move control). The
-// dial is used only in the Device/Monitor control column, so its rings, accent
-// and numerals resolve against the Device teal scheme + neutral surfaces at
-// paint time (live theme-correct in light and dark). Geometry, hit-testing and
-// the SetInt(current_pos) event contract are unchanged: this migration retires
-// the legacy Grey300/Grey400/BrandGreen/TextMuted/White literals for MD3 roles
-// without altering any jog semantics.
-static wxColour axis_ring_outer_col() { return StateColor::semantic(MD3::Role::SurfaceContainerHighest); }
-static wxColour axis_ring_inner_col() { return StateColor::semantic(MD3::Role::SurfaceContainerHigh); }
+// MD3 Device-scheme tokens for the XY jog grid (Device.jsx Move control). The grid
+// is used only in the Device/Monitor control column, so its tiles, accent and home
+// resolve against the Device teal scheme + neutral surfaces at paint time (live
+// theme-correct in light and dark). The migration retires the circular dial's
+// arc-drawn rings and Grey/BrandGreen literals for the kit's 3x3 arrow grid while
+// preserving the SetInt(position) event contract on_axis_ctrl_xy decodes.
+static wxColour axis_tile_col()       { return StateColor::semantic(MD3::Role::SurfaceContainerHighest); }
+static wxColour axis_tile_hover_col() { return StateColor::semantic(MD3::Role::SurfaceContainerHigh); }
+static wxColour axis_press_col()      { return StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device); }
 static wxColour axis_accent_col()     { return StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device); }
-static wxColour axis_container_col()  { return StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device); }
-static wxColour axis_num_col()        { return StateColor::semantic(MD3::Role::OnSurfaceVariant); }
-static const double sqrt2 = std::sqrt(2);
+static wxColour axis_home_col()       { return StateColor::semantic(MD3::Role::SecondaryContainer, MD3::ColorScheme::Device); }
+static wxColour axis_on_home_col()    { return StateColor::semantic(MD3::Role::OnSecondaryContainer, MD3::ColorScheme::Device); }
 
 BEGIN_EVENT_TABLE(AxisCtrlButton, wxPanel)
 EVT_LEFT_DOWN(AxisCtrlButton::mouseDown)
 EVT_LEFT_UP(AxisCtrlButton::mouseReleased)
 EVT_MOTION(AxisCtrlButton::mouseMoving)
+EVT_LEAVE_WINDOW(AxisCtrlButton::mouseLeave)
+EVT_KEY_DOWN(AxisCtrlButton::keyDown)
 EVT_PAINT(AxisCtrlButton::paintEvent)
 END_EVENT_TABLE()
 
-#define OUTER_SIZE      FromDIP(105)
-#define INNER_SIZE      FromDIP(58)
-#define HOME_SIZE       FromDIP(23)
-#define BLANK_SIZE      FromDIP(24)
-#define GAP_SIZE        FromDIP(4)
+#define TILE_GAP        FromDIP(6)
+#define TILE_RADIUS     FromDIP(8)
 
 AxisCtrlButton::AxisCtrlButton(wxWindow *parent, ScalableBitmap &icon, long stlye)
-    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, stlye)
-    , r_outer(OUTER_SIZE)
-    , r_inner(INNER_SIZE)
-    , r_home(HOME_SIZE)
-    , r_blank(BLANK_SIZE)
-    , gap(GAP_SIZE)
-    , last_pos(UNDEFINED)
-    , current_pos(UNDEFINED) // don't change init value
+    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, stlye | wxWANTS_CHARS)
+    , current_cell(CELL_NONE)
     , text_color(std::make_pair(StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled), std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Normal))
-	, state_handler(this)
+    , state_handler(this)
 {
     m_icon = icon;
-	wxWindow::SetBackgroundColour(parent->GetBackgroundColour());
+    wxWindow::SetBackgroundColour(parent->GetBackgroundColour());
 
     border_color.append(axis_accent_col(), StateColor::Hovered);
+    border_color.append(axis_accent_col(), StateColor::Normal);
 
-    background_color.append(axis_ring_outer_col(), StateColor::Disabled);
-    background_color.append(axis_container_col(), StateColor::Pressed);
-    background_color.append(axis_ring_outer_col(), StateColor::Hovered);
-    background_color.append(axis_ring_outer_col(), StateColor::Normal);
-    background_color.append(axis_ring_outer_col(), StateColor::Enabled);
+    background_color.append(axis_tile_col(), StateColor::Disabled);
+    background_color.append(axis_tile_col(), StateColor::Normal);
 
-    inner_background_color.append(axis_ring_inner_col(), StateColor::Disabled);
-    inner_background_color.append(axis_container_col(), StateColor::Pressed);
-    inner_background_color.append(axis_ring_inner_col(), StateColor::Hovered);
-    inner_background_color.append(axis_ring_inner_col(), StateColor::Normal);
-    inner_background_color.append(axis_ring_inner_col(), StateColor::Enabled);
+    inner_background_color.append(axis_tile_col(), StateColor::Normal);
 
     state_handler.attach({ &border_color, &background_color });
     state_handler.update_binds();
 }
 
-void AxisCtrlButton::updateParams() {
-    r_outer = OUTER_SIZE;
-    r_inner = INNER_SIZE;
-    r_home = HOME_SIZE;
-    r_blank = BLANK_SIZE;
-    gap = GAP_SIZE;
-}
+void AxisCtrlButton::updateParams() {}
 
 void AxisCtrlButton::SetMinSize(const wxSize& size)
 {
-	wxSize cur_size = GetSize();
     if (size.GetWidth() > 0 && size.GetHeight() > 0) {
-        stretch = std::min((double)size.GetWidth() / cur_size.x,(double)size.GetHeight() / cur_size.y);
-		minSize = size;
-        updateParams();
-    }
-    else if (size.GetWidth() > 0) {
-		stretch = (double)size.GetWidth() / cur_size.x;
-		minSize.x = size.x;
-        updateParams();
-    }
-    else if (size.GetHeight() > 0) {
-		stretch = (double)size.GetHeight() / cur_size.y;
-		minSize.y = size.y;
-        updateParams();
-    }
-    else {
-		stretch = 1.0;
-        minSize = wxSize(228, 228);
+        minSize = size;
+    } else if (size.GetWidth() > 0) {
+        minSize.x = size.x;
+    } else if (size.GetHeight() > 0) {
+        minSize.y = size.y;
+    } else {
+        minSize = wxSize(168, 168);
     }
     wxWindow::SetMinSize(minSize);
     center = wxPoint(minSize.x / 2, minSize.y / 2);
@@ -136,184 +105,144 @@ void AxisCtrlButton::SetBitmap(ScalableBitmap &bmp)
     }
 }
 
+void AxisCtrlButton::SetStep(int mm)
+{
+    m_step = (mm == 1) ? 1 : 10;
+}
+
 void AxisCtrlButton::Rescale() {
-	Refresh();
+    Refresh();
+}
+
+void AxisCtrlButton::gridMetrics(int &tile, int &gap, int &ox, int &oy) const
+{
+    wxSize sz = GetSize();
+    gap       = TILE_GAP;
+    int avail = std::min(sz.x, sz.y) - 2 * gap;
+    tile      = std::max(FromDIP(28), avail / 3);
+    int grid  = 3 * tile + 2 * gap;
+    ox        = (sz.x - grid) / 2;
+    oy        = (sz.y - grid) / 2;
+}
+
+wxRect AxisCtrlButton::cellRect(int cell) const
+{
+    int tile, gap, ox, oy;
+    gridMetrics(tile, gap, ox, oy);
+    int col = 1, row = 1;
+    switch (cell) {
+    case CELL_UP:    col = 1; row = 0; break;
+    case CELL_LEFT:  col = 0; row = 1; break;
+    case CELL_HOME:  col = 1; row = 1; break;
+    case CELL_RIGHT: col = 2; row = 1; break;
+    case CELL_DOWN:  col = 1; row = 2; break;
+    default:         return wxRect();
+    }
+    return wxRect(ox + col * (tile + gap), oy + row * (tile + gap), tile, tile);
+}
+
+int AxisCtrlButton::cellFromPoint(const wxPoint& p) const
+{
+    for (int c = CELL_UP; c <= CELL_DOWN; ++c) {
+        if (cellRect(c).Contains(p)) return c;
+    }
+    return CELL_NONE;
+}
+
+int AxisCtrlButton::positionForCell(int cell) const
+{
+    switch (cell) {
+    case CELL_UP:    return m_step == 10 ? 0 : 4; // Y+
+    case CELL_LEFT:  return m_step == 10 ? 1 : 5; // X-
+    case CELL_DOWN:  return m_step == 10 ? 2 : 6; // Y-
+    case CELL_RIGHT: return m_step == 10 ? 3 : 7; // X+
+    case CELL_HOME:  return 8;                     // auto-home
+    default:         return -1;
+    }
 }
 
 void AxisCtrlButton::paintEvent(wxPaintEvent& evt)
 {
-    // depending on your system you may need to look at double-buffered dcs
     wxPaintDC dc(this);
     wxGCDC gcdc(dc);
     render(gcdc);
 }
 
-/*
- * Here we do the actual rendering. I put it in a separate
- * method so that it can work no matter what type of DC
- * (e.g. wxPaintDC or wxClientDC) is used.
- */
 void AxisCtrlButton::render(wxDC& dc)
 {
     wxGraphicsContext* gc = dc.GetGraphicsContext();
+    if (!gc) return;
 
-    int states = state_handler.states();
-	wxSize size = GetSize();
+    const bool   enabled = IsEnabled();
+    const int    st      = enabled ? 0 : (int) StateColor::Disabled;
+    const double dpi     = GetDPIScaleFactor() > 0.0 ? GetDPIScaleFactor() : 1.0;
 
-    gc->PushState();
-    gc->Translate(center.x, center.y);
+    int tile, gap, ox, oy;
+    gridMetrics(tile, gap, ox, oy);
 
-	//draw the outer ring
-    wxGraphicsPath outer_path = gc->CreatePath();
-    outer_path.AddCircle(0, 0, r_outer);
-    outer_path.AddCircle(0, 0, r_inner);
-    gc->SetPen(axis_ring_outer_col());
-    gc->SetBrush(axis_ring_outer_col());
-    gc->DrawPath(outer_path);
+    struct CellSpec { int cell; uint32_t glyph; const wchar_t *fallback; };
+    const CellSpec specs[] = {
+        {CELL_UP,    MaterialIcon::ArrowUp,    L"Y"},
+        {CELL_LEFT,  MaterialIcon::ArrowLeft,  L"-X"},
+        {CELL_HOME,  MaterialIcon::Home,       L""},
+        {CELL_RIGHT, MaterialIcon::ArrowRight, L"X"},
+        {CELL_DOWN,  MaterialIcon::ArrowDown,  L"-Y"},
+    };
 
-	//draw the inner ring
-    wxGraphicsPath inner_path = gc->CreatePath();
-    inner_path.AddCircle(0, 0, r_inner);
-    inner_path.AddCircle(0, 0, r_blank);
-    gc->SetPen(axis_ring_inner_col());
-    gc->SetBrush(axis_ring_inner_col());
-	gc->DrawPath(inner_path);
+    const int glyph_px = std::max(1, (int) (tile * 0.5 / dpi + 0.5));
 
-	//draw an arc in corresponding position
-	if (current_pos != CurrentPos::UNDEFINED) {
-		wxGraphicsPath path = gc->CreatePath();
-		if (current_pos < 4) {
-			path.AddArc(0, 0, r_outer, (5 - 2 * current_pos) * PI / 4, (7 - 2 * current_pos) * PI / 4, true);
-			path.AddArc(0, 0, r_inner, (7 - 2 * current_pos) * PI / 4, (5 - 2 * current_pos) * PI / 4, false);
-			path.CloseSubpath();
-			gc->SetBrush(wxBrush(background_color.colorForStates(states)));
-		}
-		else if (current_pos < 8) {
-			path.AddArc(0, 0, r_inner, (5 - 2 * current_pos) * PI / 4, (7 - 2 * current_pos) * PI / 4, true);
-			path.AddArc(0, 0, r_blank, (7 - 2 * current_pos) * PI / 4, (5 - 2 * current_pos) * PI / 4, false);
-			path.CloseSubpath();
-			gc->SetBrush(wxBrush(inner_background_color.colorForStates(states)));
+    for (const auto &s : specs) {
+        wxRect     r      = cellRect(s.cell);
+        const bool isHome = (s.cell == CELL_HOME);
+        const bool active = enabled && (current_cell == s.cell);
+
+        wxColour fill;
+        if (!enabled)
+            fill = isHome ? axis_home_col() : axis_tile_col();
+        else if (active && pressedDown)
+            fill = axis_press_col();
+        else if (active)
+            fill = isHome ? axis_home_col() : axis_tile_hover_col();
+        else
+            fill = isHome ? axis_home_col() : axis_tile_col();
+
+        gc->SetBrush(wxBrush(fill));
+        if (active)
+            gc->SetPen(wxPen(border_color.colorForStates(state_handler.states() | StateColor::Hovered), 2));
+        else
+            gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->DrawRoundedRectangle(r.x, r.y, r.width, r.height, TILE_RADIUS);
+
+        // Glyph colour: on-secondary-container for home; the SetTextColor role
+        // (OnSurface / Outline-when-disabled) for the arrows.
+        wxColour glyph_col = isHome ? (enabled ? axis_on_home_col() : text_color.colorForStates(StateColor::Disabled))
+                                    : text_color.colorForStates(st);
+
+        if (MaterialIcon::available()) {
+            gc->SetFont(MaterialIcon::font(glyph_px), glyph_col);
+            wxDouble gw = 0, gh = 0;
+            gc->GetTextExtent(MaterialIcon::text(s.glyph), &gw, &gh);
+            gc->DrawText(MaterialIcon::text(s.glyph), r.x + (r.width - gw) / 2, r.y + (r.height - gh) / 2);
+        } else if (isHome && m_icon.bmp().IsOk()) {
+            gc->DrawBitmap(m_icon.bmp(), r.x + (r.width - m_icon.GetBmpWidth()) / 2,
+                           r.y + (r.height - m_icon.GetBmpHeight()) / 2, m_icon.GetBmpWidth(), m_icon.GetBmpHeight());
+        } else if (!isHome) {
+            gc->SetFont(enabled ? Label::Head_12 : Label::Body_12, glyph_col);
+            wxDouble gw = 0, gh = 0;
+            gc->GetTextExtent(s.fallback, &gw, &gh);
+            gc->DrawText(s.fallback, r.x + (r.width - gw) / 2, r.y + (r.height - gh) / 2);
         }
-		gc->SetPen(wxPen(border_color.colorForStates(states),2));
-		gc->DrawPath(path);
-	}
-
-	//draw rectangle gap (the cross-shaped cut-outs read as the card surface behind)
-	gc->SetPen(GetBackgroundColour());
-	gc->SetBrush(GetBackgroundColour());
-	gc->PushState();
-	gc->Rotate(-PI / 4);
-	gc->DrawRectangle(-sqrt2 * size.x / 2, -sqrt2 * gap / 2, sqrt2 * size.x, sqrt2 * gap);
-	gc->Rotate(-PI / 2);
-	gc->DrawRectangle(-sqrt2 * size.x / 2, -sqrt2 * gap / 2, sqrt2 * size.x, sqrt2 * gap);
-	gc->PopState();
-
-	// draw the home circle
-    wxGraphicsPath home_path = gc->CreatePath();
-    home_path.AddCircle(0, 0, r_home);
-    home_path.CloseSubpath();
-    gc->PushState();
-    if (current_pos == 8) {
-        gc->SetPen(wxPen(border_color.colorForStates(states), 2));
-        gc->SetBrush(wxBrush(background_color.colorForStates(states)));
-    } else {
-        gc->SetPen(axis_ring_outer_col());
-        gc->SetBrush(axis_ring_outer_col());
     }
-    gc->DrawPath(home_path);
-
-    // Center home glyph. Prefer the MD3 Material Symbols icon font (the gc maps
-    // the PUA codepoint through the font cmap, like the axis labels below); fall
-    // back to the legacy ScalableBitmap when the icon face is unavailable so a
-    // missing TTF degrades to the old look instead of tofu. r_home is device px
-    // (FromDIP(23)); convert back to logical px for the font size so the glyph is
-    // sized correctly on HiDPI.
-    if (MaterialIcon::available()) {
-        int          home_px = 23;
-        const double dpi     = GetDPIScaleFactor();
-        if (dpi > 0.0) {
-            home_px = (int) (r_home / dpi + 0.5);
-            if (home_px < 1) home_px = 1;
-        }
-        gc->SetFont(MaterialIcon::font(home_px), text_color.colorForStates(states));
-        wxDouble gw = 0, gh = 0;
-        gc->GetTextExtent(MaterialIcon::text(MaterialIcon::Home), &gw, &gh);
-        gc->DrawText(MaterialIcon::text(MaterialIcon::Home), -gw / 2, -gh / 2);
-    } else if (m_icon.bmp().IsOk()) {
-        gc->DrawBitmap(m_icon.bmp(), -1 * m_icon.GetBmpWidth() / 2, -1 * m_icon.GetBmpHeight() / 2, m_icon.GetBmpWidth(), m_icon.GetBmpHeight());
-    }
-    gc->PopState();
-
-	//draw linear border of the arc
-	if (current_pos != CurrentPos::UNDEFINED) {
-        gc->PushState();
-        gc->SetPen(wxPen(border_color.colorForStates(states), 2));
-
-        if (current_pos == 8) {
-            wxGraphicsPath line_path = gc->CreatePath();
-            line_path.AddCircle(0, 0, r_home);
-            gc->StrokePath(line_path);
-        } else {
-            wxGraphicsPath line_path1 = gc->CreatePath();
-            wxGraphicsPath line_path2 = gc->CreatePath();
-            if (current_pos < 4) {
-                line_path1.MoveToPoint(r_inner, -sqrt2 * gap / 2);
-                line_path1.AddLineToPoint(r_outer, -sqrt2 * gap / 2);
-                line_path2.MoveToPoint(-r_inner, -sqrt2 * gap / 2);
-                line_path2.AddLineToPoint(-r_outer, -sqrt2 * gap / 2);
-            } else if (current_pos < 8) {
-                line_path1.MoveToPoint(r_blank, -sqrt2 * gap / 2);
-                line_path1.AddLineToPoint(r_inner, -sqrt2 * gap / 2);
-                line_path2.MoveToPoint(-r_blank, -sqrt2 * gap / 2);
-                line_path2.AddLineToPoint(-r_inner, -sqrt2 * gap / 2);
-            }
-            gc->Rotate(-(1 + 2 * current_pos) * PI / 4);
-            gc->StrokePath(line_path1);
-            gc->Rotate(PI / 2);
-            gc->StrokePath(line_path2);
-        }
-        gc->PopState();
-	}
-
-	//draw text
-    if (!IsEnabled())
-        gc->SetFont(Label::Body_12, text_color.colorForStates(StateColor::Disabled));
-    else
-	    gc->SetFont(Label::Head_12, text_color.colorForStates(states));
-	wxDouble w, h;
-	gc->GetTextExtent("Y", &w, &h);
-	gc->DrawText(wxT("Y"), -w / 2, -r_outer + (r_outer - r_inner) / 2 - h / 2);
-	gc->GetTextExtent("-X", &w, &h);
-	gc->DrawText(wxT("-X"), -r_outer + (r_outer - r_inner) / 2 - w / 2, - h / 2);
-	gc->GetTextExtent("-Y", &w, &h);
-	gc->DrawText(wxT("-Y"), -w / 2, r_outer - (r_outer - r_inner) / 2 - h / 2);
-	gc->GetTextExtent("X", &w, &h);
-	gc->DrawText(wxT("X"), r_outer - (r_outer - r_inner) / 2 - w / 2, -h / 2);
-
-	gc->SetFont(Label::Body_12, axis_num_col());
-
-	gc->PushState();
-	gc->Rotate(PI / 4);
-	gc->GetTextExtent("+10", &w, &h);
-	gc->DrawText(wxT("+10"), sqrt2 * gap, -r_outer + (r_outer - r_inner) / 2 - h / 2);
-	gc->GetTextExtent("+1", &w, &h);
-	gc->DrawText(wxT("+1"), sqrt2 * gap, -r_inner + (r_inner - r_blank) / 2 - h / 2);
-	gc->GetTextExtent("-1", &w, &h);
-	gc->DrawText(wxT("-1"), sqrt2 * gap, r_inner - (r_inner - r_blank) / 2 - h / 2);
-	gc->GetTextExtent("-10", &w, &h);
-	gc->DrawText(wxT("-10"), sqrt2 * gap, r_outer - (r_outer - r_inner) / 2 - h / 2);
-	gc->PopState();
-
-
-	gc->PopState();
 }
 
 void AxisCtrlButton::mouseDown(wxMouseEvent& event)
 {
     event.Skip();
-    pressedDown = true;
+    pressedDown  = true;
+    current_cell = cellFromPoint(event.GetPosition());
     SetFocus();
     CaptureMouse();
+    Refresh();
 }
 
 void AxisCtrlButton::mouseReleased(wxMouseEvent& event)
@@ -321,76 +250,56 @@ void AxisCtrlButton::mouseReleased(wxMouseEvent& event)
     event.Skip();
     if (pressedDown) {
         pressedDown = false;
-        ReleaseMouse();
-        if (wxRect({ 0, 0 }, GetSize()).Contains(event.GetPosition()))
+        if (HasCapture()) ReleaseMouse();
+        if (wxRect({0, 0}, GetSize()).Contains(event.GetPosition()))
             sendButtonEvent();
+        Refresh();
     }
 }
 
 void AxisCtrlButton::mouseMoving(wxMouseEvent& event)
 {
-    if (pressedDown)
-        return;
-	wxPoint mouse_pos(event.GetX(), event.GetY());
-	wxPoint transformed_mouse_pos = mouse_pos - center;
-	double r_temp = transformed_mouse_pos.x * transformed_mouse_pos.x + transformed_mouse_pos.y * transformed_mouse_pos.y;
-	if (r_temp > r_outer * r_outer) {
-		current_pos = CurrentPos::UNDEFINED;
-	}
-	else if (r_temp > r_inner * r_inner) {
-		if (transformed_mouse_pos.y < transformed_mouse_pos.x - gap && transformed_mouse_pos.y < -transformed_mouse_pos.x - gap)
-		{
-			current_pos = CurrentPos::OUTER_UP;
-		}
-		else if (transformed_mouse_pos.y > transformed_mouse_pos.x + gap && transformed_mouse_pos.y < -transformed_mouse_pos.x - gap)
-		{
-			current_pos = CurrentPos::OUTER_LEFT;
-		}
-		else if (transformed_mouse_pos.y > transformed_mouse_pos.x + gap && transformed_mouse_pos.y > -transformed_mouse_pos.x + gap)
-		{
-			current_pos = CurrentPos::OUTER_DOWN;
-		}
-		else if (transformed_mouse_pos.y < transformed_mouse_pos.x - gap && transformed_mouse_pos.y > -transformed_mouse_pos.x + gap)
-		{
-			current_pos = CurrentPos::OUTER_RIGHT;
-		}
-        else {
-            current_pos = CurrentPos::UNDEFINED;
-        }
-	}
-	else if (r_temp > r_blank * r_blank) {
-		if (transformed_mouse_pos.y < transformed_mouse_pos.x - gap && transformed_mouse_pos.y < -transformed_mouse_pos.x - gap)
-		{
-			current_pos = CurrentPos::INNER_UP;
-		}
-		else if (transformed_mouse_pos.y > transformed_mouse_pos.x + gap && transformed_mouse_pos.y < -transformed_mouse_pos.x - gap)
-		{
-			current_pos = CurrentPos::INNER_LEFT;
-		}
-		else if (transformed_mouse_pos.y > transformed_mouse_pos.x + gap && transformed_mouse_pos.y > -transformed_mouse_pos.x + gap)
-		{
-			current_pos = CurrentPos::INNER_DOWN;
-		}
-		else if (transformed_mouse_pos.y < transformed_mouse_pos.x - gap && transformed_mouse_pos.y > -transformed_mouse_pos.x + gap)
-		{
-			current_pos = CurrentPos::INNER_RIGHT;
-		}
-        else {
-            current_pos = CurrentPos::UNDEFINED;
-        }
-    } else if (r_temp <= r_home * r_home) {
-        current_pos = INNER_HOME;
+    if (pressedDown) return;
+    unsigned char cell = (unsigned char) cellFromPoint(event.GetPosition());
+    if (cell != current_cell) {
+        current_cell = cell;
+        Refresh();
     }
-	if (last_pos != current_pos) {
-		last_pos = current_pos;
-		Refresh();
-	}
+}
+
+void AxisCtrlButton::mouseLeave(wxMouseEvent& event)
+{
+    event.Skip();
+    if (!pressedDown && current_cell != CELL_NONE) {
+        current_cell = CELL_NONE;
+        Refresh();
+    }
+}
+
+void AxisCtrlButton::keyDown(wxKeyEvent& event)
+{
+    if (!IsEnabled()) { event.Skip(); return; }
+    int cell = CELL_NONE;
+    switch (event.GetKeyCode()) {
+    case WXK_UP:    cell = CELL_UP; break;
+    case WXK_LEFT:  cell = CELL_LEFT; break;
+    case WXK_RIGHT: cell = CELL_RIGHT; break;
+    case WXK_DOWN:  cell = CELL_DOWN; break;
+    case WXK_HOME:  cell = CELL_HOME; break;
+    default:        event.Skip(); return;
+    }
+    current_cell = (unsigned char) cell;
+    Refresh();
+    sendButtonEvent();
 }
 
 void AxisCtrlButton::sendButtonEvent()
 {
+    int position = positionForCell(current_cell);
+    if (position < 0) return;
+
     wxCommandEvent event(wxEVT_COMMAND_BUTTON_CLICKED, GetId());
     event.SetEventObject(this);
-    event.SetInt(current_pos);
+    event.SetInt(position);
     GetEventHandler()->ProcessEvent(event);
 }

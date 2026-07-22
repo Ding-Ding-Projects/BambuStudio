@@ -10,12 +10,17 @@
 #include "SelectMachine.hpp"
 #include "DeviceManager.hpp"
 #include "BaseTransparentDPIFrame.hpp"
+#include "Widgets/MD3Dialog.hpp"
 class Button;
 class CheckBox;
 class Label;
 namespace Slic3r { namespace GUI {
 class CapsuleButton;
-class SyncAmsInfoDialog : public DPIDialog
+// Reparented onto the shared MD3 Dialog shell (borderless rounded chrome, AMS
+// header icon tile + title, footer OutlineVariant divider). The wxSimplebook
+// loading/show pages, scrolled window, AMS mapping popups and fixed-width layout
+// are preserved verbatim in the kit body; see the .cpp for the footer note.
+class SyncAmsInfoDialog : public MD3Dialog
 {
     enum PageType { ptColorMap = 0, ptOverride };
     bool              m_only_exist_ext_spool_flag{false};
@@ -244,6 +249,11 @@ public:
     void set_info(SyncInfo &info);
     void on_dpi_changed(const wxRect &suggested_rect) override;
     const SyncResult &get_result() { return m_result; }
+
+protected:
+    // The header circular close mirrors the native [x] (dismiss any open mapping
+    // popup, then EndModal(wxID_CANCEL)) that the stock title bar used to own.
+    void OnHeaderClose() override;
 
 public:
     bool Show(bool show) override;

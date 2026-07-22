@@ -72,8 +72,19 @@ namespace {
     const wxColour HELIO_BLUE(79, 134, 255);
 }
 
+ // Forced-dark MD3 shell (borderless, dark-pinned chrome) so the header/footer
+ // read correctly over the always-dark HELIO_* brand surface below.
+ static MD3Dialog::Options helio_shell_opts()
+ {
+     MD3Dialog::Options o;
+     o.resizable   = false;
+     o.forced_dark = true;
+     return o;
+ }
+
  HelioStatementDialog::HelioStatementDialog(wxWindow *parent /*= nullptr*/)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Legal & Activation Terms"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), _L("Legal & Activation Terms"), wxEmptyString,
+                MaterialIcon::Info, helio_shell_opts())
 {
      shared_ptr = std::make_shared<int>(0);
 
@@ -88,10 +99,10 @@ namespace {
      icon.CopyFromBitmap(bmp);
      SetIcon(icon);
 
-     // Use Helio dark palette (not neutral charcoal)
+     // Use Helio dark palette (not neutral charcoal). This intentionally
+     // overrides the shell's dark SurfaceContainer with the exact HELIO_*
+     // brand surface (EXEMPT); the forced-dark chrome roles stay readable on it.
      SetBackgroundColour(HELIO_BG_BASE); // #07090C
-
-     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 
      // Create Legal Terms Page and PAT Page
      create_legal_page();
@@ -119,12 +130,6 @@ namespace {
      m_button_cancel->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
      m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) { EndModal(wxID_NO); });
 
-     // Button sizer for PAT page (centered)
-     wxBoxSizer* pat_button_sizer = new wxBoxSizer(wxHORIZONTAL);
-     pat_button_sizer->Add(0, 0, 1, wxEXPAND, 0);
-     pat_button_sizer->Add(m_button_cancel, 0, wxALIGN_CENTER, 0);
-     pat_button_sizer->Add(0, 0, 1, wxEXPAND, 0);
-
      // Bind checkbox event (checkbox is created in create_legal_page)
      // Note: The CheckBox class already has an internal handler that calls update()
      // We bind AFTER the checkbox is created so our handler runs after the internal one
@@ -136,9 +141,13 @@ namespace {
          e.Skip(); // Ensure event propagates
      });
 
-     main_sizer->Add(page_legal_panel, 1, wxEXPAND, 0);
-     main_sizer->Add(page_pat_panel, 0, wxEXPAND, 0);
-     main_sizer->Add(pat_button_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(30));
+     // Both content pages live in the kit body; each page owns its own action
+     // buttons ('Agree and Proceed' inside the legal page, the PAT actions
+     // inside the PAT page). The 'Got it' acknowledgement is the kit footer
+     // Button (hidden by both pages, matching the legacy behaviour).
+     GetContentSizer()->Add(page_legal_panel, 1, wxEXPAND, 0);
+     GetContentSizer()->Add(page_pat_panel, 0, wxEXPAND, 0);
+     AddFooterButton(m_button_cancel);
 
     //
     // Page show/hide based on helio_enable state
@@ -152,12 +161,10 @@ namespace {
         m_button_cancel->Hide();
     }
 
-
-     SetSizer(main_sizer);
      Layout();
      Fit();
-
      CentreOnParent();
+     UpdateShape();
  }
 
  void HelioStatementDialog::OnLoaded(wxWebViewEvent& event)
@@ -995,6 +1002,7 @@ void HelioStatementDialog::show_legal_page()
     current_page = 0;
     SetBackgroundColour(HELIO_BG_BASE);
     SetTitle(_L("Legal & Activation Terms"));
+    SetHeaderTitle(_L("Legal & Activation Terms"));
     page_legal_panel->Show();
     page_pat_panel->Hide();
     // m_button_confirm is now part of page_legal_panel, so it's shown/hidden with the panel
@@ -1008,6 +1016,7 @@ void HelioStatementDialog::show_pat_page()
     current_page = 1;
     SetBackgroundColour(HELIO_BG_BASE);
     SetTitle(_L("Activation Successful"));
+    SetHeaderTitle(_L("Activation Successful"));
     page_legal_panel->Hide();
     page_pat_panel->Show();
     // m_button_confirm is part of page_legal_panel, hidden with the panel

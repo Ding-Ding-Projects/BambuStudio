@@ -7870,7 +7870,8 @@ bool GLCanvas3D::_init_main_toolbar()
     p_main_toolbar->set_vertical_orientation(ToolbarLayout::VO_Top);
     p_main_toolbar->set_border(5.0f);
     p_main_toolbar->set_separator_size(5);
-    p_main_toolbar->set_gap_size(4);
+    // MD3 kit pill: 3px gap between the 40px tiles (pad 5 = the 5px border).
+    p_main_toolbar->set_gap_size(3);
 
     p_main_toolbar->del_all_item();
 
@@ -7886,9 +7887,11 @@ bool GLCanvas3D::_init_main_toolbar()
             p_gizmo_toolbar->set_layout_type(ToolbarLayout::EType::Vertical);
             p_gizmo_toolbar->set_horizontal_orientation(ToolbarLayout::HO_Center);
             p_gizmo_toolbar->set_vertical_orientation(ToolbarLayout::VO_Center);
-            p_gizmo_toolbar->set_border(5.0f);
-            p_gizmo_toolbar->set_separator_size(5.0f);
-            p_gizmo_toolbar->set_gap_size(4.0f);
+            // MD3 kit rail: 8px pad (border) so 44px tiles form a 60px rail, 3px
+            // gap, and a wider separator band to seat the 28px group dividers.
+            p_gizmo_toolbar->set_border(8.0f);
+            p_gizmo_toolbar->set_separator_size(9.0f);
+            p_gizmo_toolbar->set_gap_size(3.0f);
             p_gizmo_toolbar->del_all_item();
             use_vertical_gizmo_toolbar = true;
         }
@@ -8079,6 +8082,13 @@ bool GLCanvas3D::_init_main_toolbar()
             // an independent zero-based sequence.
             uint8_t gizmo_sprite_id = 0;
             m_gizmos.add_toolbar_items(p_gizmo_toolbar, gizmo_sprite_id, [](uint8_t&) {});
+            // MD3 kit rail: group the tools with 28px OutlineVariant dividers.
+            // GLGizmosManager populates a dynamic, filtered gizmo set with no
+            // separators, so the dividers are inserted here after the transform
+            // tools (…/Scale) and the paint/edit tools (…/Color Painting). Absent
+            // anchors are simply skipped, so a filtered set never mis-places one.
+            p_gizmo_toolbar->insert_separator_after("Color Painting");
+            p_gizmo_toolbar->insert_separator_after("Scale");
         }
     }
     else if (m_gizmos.is_enabled()) {
@@ -9198,6 +9208,10 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
     //BBS: GUI refactor: GLToolbar
     float size = GLToolbar::Default_Icons_Size * scale;
     //float main_size = GLGizmosManager::Default_Icons_Size * scale;
+    // MD3: the gizmo rail uses larger 44px tiles than the 40px main-toolbar tiles.
+    // The multiplier is applied to the rail's icon size and mirrored in the rail
+    // height fit below so picking, centring and DPI scaling stay coherent.
+    const float rail_tile_mul = 44.0f / GLToolbar::Default_Icons_Size;
 
     // Set current size for all top toolbars. It will be used for next calculations
     GLToolbar& collapse_toolbar = wxGetApp().plater()->get_collapse_toolbar();
@@ -9209,6 +9223,8 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
     }
     if (p_gizmo_toolbar) {
         p_gizmo_toolbar->set_scale(sc);
+        // MD3: 44px rail base tile (retina scale carried separately via set_scale).
+        p_gizmo_toolbar->set_icons_size(GLToolbar::Default_Icons_Size * rail_tile_mul);
     }
 
     collapse_toolbar.set_scale(sc);
@@ -9222,7 +9238,8 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
         p_main_toolbar->set_icons_size(size);
     }
     if (p_gizmo_toolbar) {
-        p_gizmo_toolbar->set_icons_size(size);
+        // MD3: 44px rail tiles vs the 40px main-toolbar tiles.
+        p_gizmo_toolbar->set_icons_size(size * rail_tile_mul);
     }
     collapse_toolbar.set_icons_size(wxGetApp().plater()->get_collapse_toolbar_size());
 #endif // ENABLE_RETINA_GL
@@ -9257,8 +9274,11 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
     if (p_gizmo_toolbar && p_gizmo_toolbar->is_enabled()) {
         const int rail_items = p_gizmo_toolbar->get_visible_items_cnt();
         if (rail_items > 0) {
+            // MD3: the rail's per-item height is the 44px tile (size * rail_tile_mul),
+            // so both the non-item remainder and the fit denominator use it.
+            const float rail_item_px = size * rail_tile_mul;
             const float rail_non_item_height = std::max(0.0f,
-                p_gizmo_toolbar->get_height() - size * static_cast<float>(rail_items));
+                p_gizmo_toolbar->get_height() - rail_item_px * static_cast<float>(rail_items));
             const float rail_gap = 8.0f * get_scale();
             float bottom_inset = rail_gap;
             if (wxGetApp().show_3d_navigator() && can_show_3d_navigator()) {
@@ -9267,7 +9287,7 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
             const float available_height = std::max(0.0f,
                 static_cast<float>(cnv_size.get_height()) - get_gizmo_toolbar_top_inset() - bottom_inset);
             const float rail_scale = std::max(0.0f, available_height - rail_non_item_height) /
-                (static_cast<float>(rail_items) * GLToolbar::Default_Icons_Size);
+                (static_cast<float>(rail_items) * GLToolbar::Default_Icons_Size * rail_tile_mul);
             new_v_scale = std::min(new_v_scale, rail_scale);
         }
     }
