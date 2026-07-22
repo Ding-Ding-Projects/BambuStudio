@@ -2,9 +2,11 @@
 
 ## Landed
 
-All items below are committed on `master`. The final commit `8d727d49d` (native model preview,
-dockable Prepare sidebar, and the last migration-coverage changes) is on local `master` but was not
-yet pushed to `origin/master` (`c700c91b0`) at the time of writing, so it has no hosted CI run yet.
+All items below are committed and pushed on `master`. Commit `8d727d49d` (native model preview,
+dockable Prepare sidebar, and the last migration-coverage changes) is pushed, built, and shipped:
+hosted run `29877040307` (head `ec631dfb2`) completed fully green — including the previously failing
+`Publish Windows release` job — and published the non-draft release
+`md3-windows-v02.08.01.55-r37` (installer, SHA-256, CycloneDX SBOM).
 
 ### Material Design 3 token and typography layer
 
@@ -69,18 +71,26 @@ anatomy, not mis-colorings.
 - Build the camera-HUD overlay system for the viewport.
 - Add the Material Symbols icon-font infrastructure so the `Material Symbols Outlined` token can back
   real icon glyphs instead of the existing bitmap assets.
-- Finish the remaining pill-geometry variants.
-- Resolve the three theme literals currently retained intentionally over fixed bitmap assets (the
-  final scan found 21 residual literals: 18 addressed, 3 kept over fixed bitmaps).
+- Finish the remaining pill-geometry variants. The shared Widgets library is done — every kit "pill"
+  (Button, SwitchButton, SideButton call sites) derives its radius from height / 2 at paint/layout,
+  DPI-safe, now named as `MD3::Metrics::pill_radius(height)`; segmented controls are deliberately not
+  pills. What remains is feature-level chrome/settings controls with no dedicated widget class:
+  filter/choice chips, the search-field pill, and the settings nav-item pill.
+- The three theme literals retained over fixed bitmap assets are now anchored and justified in
+  `docs/features/design-system/md3-design-system.md` ("Retained theme literals"): the assembly-tree
+  delete badge (`AssemblyStepsUtilsImgui.cpp:4646-4647`, bound to the light-baked `cross_dark.svg`)
+  and the Helio header banner (`HelioReleaseNote.cpp:3168-3169`, bound to the `helio_icon` brand
+  bitmap). They are intentional until the icon-font / brand-asset infrastructure lets baked glyph
+  colors be tinted from tokens. Two further intentional retentions — the coupled preview-timeline
+  step marker (`AssemblyStepsUtilsImgui.cpp:823`/`:835`) and the amber "unsaved view" dot
+  (`:4606`, which needs an amber/warning role) — are tracked as token-parity follow-ups.
 
 ### Verification and delivery
 
-- Push local `master` (commit `8d727d49d`, the model preview and dockable sidebar) and obtain a
-  hosted CI run for those two features; the `Build BambuStudio` job passes on the already-pushed
-  migrated tree (runs `29848731027` and `29862992010`).
-- Complete a fully green hosted run that also publishes the immutable release. After the SBOM-identity
-  and immutable-probe (HTTP 403) fixes cleared their earlier failures, the publish job currently
-  still fails at the draft-release visibility stage; publication is not yet verified.
+- ~~Push local `master` and obtain a hosted CI run~~ — done: run `29877040307` (head `ec631dfb2`).
+- ~~Complete a fully green hosted run that also publishes the immutable release~~ — done: the same
+  run published non-draft release `md3-windows-v02.08.01.55-r37` with installer, SHA-256 checksum,
+  and CycloneDX SBOM; the draft-visibility failure was cleared by the lookup fix in `ec631dfb2`.
 - Capture fresh full-compositor screenshots of the fully token-migrated native Prepare, Preview, and
   Device surfaces, visually review them, and replace the README's pre-sweep captures.
 - Preserve the unrelated generated `routeTree.gen.ts` change when splitting the remaining work into

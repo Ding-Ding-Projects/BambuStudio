@@ -13,8 +13,11 @@ release success is claimed.
 
 - Repository: `https://github.com/Ding-Ding-Projects/BambuStudio.git`
 - Branch: `master`.
-- `origin/master` and local `master` are in sync at `ec631dfb2` — "Fix draft-release lookup and
-  refresh project documentation". Everything described in this handoff is pushed.
+- `origin/master` is at `a29f629c0` — "Ship the Material Symbols Outlined icon font" (the vendored
+  variable TTF + Apache-2.0 license from google/material-design-icons, first commit of the
+  structural-anatomy waves). Everything described in this handoff is pushed. Work-in-progress waves
+  land on `claude/md3-structural-waves` in the `.claude/worktrees` build worktree and are pushed to
+  `master` per completed wave.
 - Key migration commits (all pushed): `23688c23d` (MD3 token parity with the vendored kit),
   `49a7c4d46` (UI to MD3 theme tokens and fonts), `2f968cbc1` (GUI colors to MD3 tokens),
   `2cebf9091` (Roboto Mono and mono type helpers), `e4b468c5f` (GUI colors to MD3 semantic tokens),
@@ -50,16 +53,18 @@ release success is claimed.
   [`29862992010`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29862992010)
   (head `c700c91b0`, `origin/master`). Both overall runs are marked failure because the separate
   `Publish Windows release` job fails.
-- The publish failure has moved. The SBOM-identity fix (`76db0d5c1`) and the immutable-probe HTTP 403
-  tolerance (`c700c91b0`) cleared their earlier failures — the settings probe now warns and relies on
-  post-publish verification instead of failing. In run `29862992010` the "Publish uniquely tagged
-  Windows release" step now fails later, at the draft-release visibility stage (repeated
-  HTTP 404 "release is not visible yet", then an exception). A fully green run that also publishes the
-  immutable release has **not** yet succeeded; do not claim it did.
-- The two new features (model preview, dockable sidebar) live in local commit `8d727d49d`, which is
-  not yet pushed and therefore has no hosted run.
-- No installer, SBOM, checksum, release, attestation, or Authenticode success is claimed. Authenticode
-  provisioning remains external work.
+- **The publish pipeline is green.** Run
+  [`29877040307`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29877040307)
+  (head `ec631dfb2`, which contains the draft-release lookup fix and the `8d727d49d` feature commit)
+  completed with **both** `Build BambuStudio` and `Publish Windows release` succeeding on
+  2026-07-22Z. It published the non-draft release
+  [`md3-windows-v02.08.01.55-r37`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-windows-v02.08.01.55-r37)
+  with `BambuStudioMD3-Setup.exe` (~208 MB), its `.sha256`, and the CycloneDX SBOM
+  (`BambuStudioMD3.cdx.json`). The earlier SBOM-identity (`76db0d5c1`), immutable-probe 403
+  (`c700c91b0`), and draft-visibility (`ec631dfb2`) fixes are all verified by this run. The model
+  preview and dockable sidebar are therefore pushed, built, and shipped in that installer.
+- Authenticode provisioning remains external work; GitHub attestations and SHA-256 checksums stand in
+  for it in the published release.
 
 ## Native smoke and screenshots
 
@@ -91,13 +96,19 @@ retention/pruning policy.
 
 ## Deferred work
 
-- Push local `master` (`8d727d49d`) and obtain a hosted CI run for the model preview and dockable
-  sidebar.
-- Achieve a fully green publish run: the current blocker is the draft-release visibility failure in
-  the publish step, not the already-fixed SBOM-identity or immutable-probe issues.
-- Complete the structural component anatomy from the audit: camera-HUD overlay, Material Symbols
-  icon-font infrastructure, remaining pill-geometry variants, and the three theme literals retained
-  over fixed bitmap assets.
+- ~~Push local `master` (`8d727d49d`) and obtain a hosted CI run~~ — done; verified by green run
+  `29877040307` and published release `md3-windows-v02.08.01.55-r37`.
+- ~~Achieve a fully green publish run~~ — done; same run and release as above.
+- **In progress (multi-agent waves, 2026-07-21/22):** the structural component anatomy from the
+  audit — camera-HUD overlay for the Device camera card, Material Symbols icon-font infrastructure
+  (font asset already pushed in `a29f629c0`), remaining feature-level pill-geometry variants, the
+  three retained bitmap-bound theme literals, and Cantonese strings for the new surfaces. Each wave
+  is committed and pushed to `master` as it completes. Scope detail: the shared Widgets pills are
+  already done and DPI-safe via `MD3::Metrics::pill_radius(height)`; the remaining pill variants are
+  feature-level (chips, search-field, settings nav-item). The three retained theme literals are
+  anchored in `docs/features/design-system/md3-design-system.md` (assembly-tree delete badge over
+  `cross_dark.svg`; Helio header banner over `helio_icon`) and become resolvable once the icon-font
+  infrastructure can tint glyphs from tokens.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.
