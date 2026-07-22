@@ -195,16 +195,41 @@ retention/pruning policy.
   `exclude:[NotWorking]` quarantine is invalid Catch2 syntax (would not apply). Executable repair
   plan recorded: port the config keys, fix the Catch2 exclusion to `~[NotWorking]`, optionally
   split a runtime-passing `libslic3r` subset into CI.
-  **Remaining open fronts (21 register rows):** GL toolbar/rail chrome + viewport overlays (blocked
-  on a tint-capable GL background path — the `flat_texture` shader has no tint uniform), the six
-  deep Prepare-sidebar rebuilds wrapping live-bound widgets, device XY dial→grid (dual-step jog
-  semantics conflict), device control strip/temp rows/print options/AMS card, preset-editor TabCtrl
-  nav pills, three partial dialog shells (TextureImport resizable-GL, SyncAms simplebook, Helio
-  always-dark), the project-webview page (recorded deviation candidate), and the deferred
-  `raw-wxmessagebox` cross-cutting sweep (44 sites, now unblocked by the MsgDialog shell); plus
-  fresh screenshots and the test repair above. An MD3 installer overhaul (encoding fix for the
-  mojibake language page, Material-styled pages, and a build-from-source mode with bounded
-  opencode auto-repair) is implemented in a parallel workflow and ships separately.
+  **Installer overhaul shipped (`3c12a1771`):** the NSIS installer is restyled to MD3 (custom
+  Welcome/language/install-mode/build-progress/Finish pages, documented D1–D7 Win32 deviation
+  list) and the mojibake language page is fixed at the root (UTF-8 BOM + `/INPUTCHARSET UTF8` on
+  all five makensis calls — the Cantonese strings were being read as CP-1252). A new
+  build-from-source mode bootstraps Git/Node.js/VS Build Tools, installs opencode, and builds the
+  release source with a bounded five-cycle fully non-interactive opencode auto-repair loop
+  (blanket-allow config scoped to the clone, question stays deny); the build page is non-closable
+  while the build runs. Review hardening before ship: `FileReadUTF16LE` for manifest/status reads
+  (plain `FileRead` truncated UTF-16LE, which would have made from-source uninstalls delete
+  nothing), and a declined prebuilt fallback can no longer advance into INSTFILES with a partial
+  payload. Compiles at makensis 3.12 EXIT=0 locally; silent-mode CI fixtures unchanged.
+  From-source is interactive-only and never runs in CI; its first end-to-end run on a real
+  machine is still an open verification item, and `PRODUCT_SOURCE_REPO_URL` defaults to a
+  placeholder the owner should confirm.
+  **Wave 8 shipped: register 113 done / 16 open.** Eleven Opus agents (marshal + 8 groups + 2
+  reviewers + fixer; both reviews CLEAN, fixer verified with zero edits). Landed: the
+  `raw-wxmessagebox` sweep (22 live sites across 8 files onto the MD3 MessageDialog with exact
+  return-code preservation; early-boot/fatal-handler sites deliberately left native with reasons
+  recorded), preset-editor NavItem pills via a new TabCtrl leading-glyph API, device temperature
+  rows (teal glyphs + mono values + trailing edit IconButton, live AMS humidity wired), GL
+  gizmo-rail/scene-toolbar background chrome plus the viewport zoom cluster and object stat pill,
+  filament subtitle row folded into its SectionHeader, four new cmap-verified MaterialIcon glyphs,
+  and runtime Density/Accent application (`MD3::Metrics::active()` + accent-seed override;
+  density is restart-scoped until ~40 call sites adopt `active()`). Catalogs at 322 (`--check`
+  green).
+  **Remaining open fronts (16 register rows, all excluded-with-reason):** six Prepare-sidebar
+  rebuilds wrapping live-bound widgets (ParamsPanel tree, preset combo rows, ObjectList, printer
+  identity, bed SelectField, manipulation card), device XY dial→grid (dual-step jog semantics
+  conflict — deviation candidate), device AMS card rebuild, device print-options (blocked only on
+  StatusPanel.hpp ownership next wave) and the control-strip remainder, the two GL toolbar
+  anatomy relocations (chrome landed; geometry/hit-testing relocation deferred), three dialog
+  shells with structural blockers (TextureImport needs resize+GL which the shaped shell cannot
+  host, SyncAms simplebook, Helio always-dark vs theme-following shell), and the project-webview
+  page (recorded-deviation candidate). Plus fresh screenshots, the test repair plan above, and
+  first-run verification of the from-source installer.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.
