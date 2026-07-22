@@ -118,11 +118,15 @@ retention/pruning policy.
     Widgets pills are already DPI-safe (`applyMD3Style`/`Rescale`); each residual bitmap-bound
     theme literal is anchored and justified in `docs/features/design-system/md3-design-system.md`
     rather than unsafely tokenized.
-  The three C++ commits are gated on the local incremental Release build now running; they are
-  pushed the moment it passes. Twelve Opus agents (plan → implement → 3-lens adversarial review →
-  fix) produced them; the review's one blocker (wxBitmapBundle absent from the vendored wx 3.1.5)
-  is already fixed. Known follow-up: the HUD's `_L("LIVE")` badge string still needs catalog
-  entries (en identity, yue_HK) and a `.mo` rebuild.
+  **All four waves are pushed** (`origin/master` = `a924a9f1f`). The three C++ commits passed the
+  local incremental Release build gate first: 0 errors, "All steps completed successfully",
+  41 minutes, MaterialIcon/CameraHUD/StatusPanel compiled and linked (only the pre-existing
+  LNK4098 warning). Twelve Opus agents (plan → implement → 3-lens adversarial review → fix)
+  produced them; the review's one blocker (wxBitmapBundle absent from the vendored wx 3.1.5) was
+  fixed before commit. Hosted CI runs for these pushes were in progress at the time of writing; the
+  local gate did not build the test binaries, so `language_mode_tests` for the new Cantonese
+  assertions is proven by CI, not locally. Known follow-up: the HUD's `_L("LIVE")` badge string
+  still needs catalog entries (en identity, yue_HK) and a `.mo` rebuild.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.
