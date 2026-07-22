@@ -18228,6 +18228,42 @@ msgstr ""
 msgid "and %d more"
 msgstr ""
 
+msgid "Accent color"
+msgstr ""
+
+msgid "Appearance"
+msgstr ""
+
+msgid "Bambu Studio"
+msgstr ""
+
+msgid "Comfortable"
+msgstr ""
+
+msgid "Compact"
+msgstr ""
+
+msgid "Dark"
+msgstr ""
+
+msgid "Light"
+msgstr ""
+
+msgid "Pink"
+msgstr ""
+
+msgid "Purple"
+msgstr ""
+
+msgid "Search settings"
+msgstr ""
+
+msgid "Teal"
+msgstr ""
+
+msgid "Theme"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

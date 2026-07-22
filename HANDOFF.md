@@ -161,11 +161,50 @@ retention/pruning policy.
   Project-history retry semantics shipped: durable failure notification with Retry, retained
   failures surfaced in the history dialog with per-item and bulk retry, orphaned-manifest adoption
   on restart; new error-flow strings catalogued (en + yue_HK, coverage 294, `.mo` `--check` green).
-  **Remaining open fronts:** the three Wave 3 icon slices freed by Sprint A (MainFrame/Plater/
-  StatusPanel), SideTools signal draw, FilamentGroupPopup surface anatomy, Slice/Print leading
-  glyphs (SideButton glyph path), the notification-snackbar recolor, Wave 7 large restructures
-  (title-bar/dialog shells/GL toolbar bridge), fresh screenshots, and the aggregate-test repair
-  re-scope.
+  **Sprint B shipped** (`3aa4bb972`, release `md3-windows-v02.08.01.55-r53`): the ten-group glyph
+  and anatomy sweep — MainFrame/Plater/StatusPanel icon slices, SideTools signal draw,
+  FilamentGroupPopup anatomy, Slice/Print leading glyphs, snackbar recolor, and every formerly
+  glyph-blocked row; 16 gaps, review traced every symbol clean, two verified defects fixed.
+  Register stood at 73 done / 56 open. CI green down the entire train (r37–r53 releases published).
+  **Wave 7 shipped (this push, 2026-07-22): register now 108 done / 21 open.** The prior session
+  hit its usage limit mid-Wave-7; this session salvaged the marshal partition from the session
+  export and relaunched — 14 Opus agents (10 disjoint-owner groups + read-only test-repair scout +
+  2 adversarial reviewers + fixer). Landed: the `MD3Dialog` borderless shell primitive and the
+  whole MsgDialog family + 10 leaf dialogs reparented onto it; the `GLIconGlyphBridge`
+  glyph→GL-texture bridge routing the 3D-editor toolbar and gizmo rail to Material Symbols
+  (capability-gated, SVG fallback intact); title bar to kit anatomy (brand tile, history chip,
+  project chip, appearance button; Save/Undo/Redo/Publish removed from the caption, Calibration
+  re-homed as a text menu button); Preferences rebuilt (230px NavRail, new Appearance section with
+  Theme/Density/Accent controls — density/accent persist but await runtime wiring); Preview
+  timeline transport bar; device farm list→card grid; StatusPanel section headers + Z/extruder
+  glyphs; Prepare-sidebar safe subset. Reviewers found 3 real defects, all fixed: SendToPrinter
+  and PublishDialog header-X paths bypassed job teardown (both now route the original close
+  handlers), plus a `-Wreorder` cleanup. Three agents' final reports died on the recurring
+  StructuredOutput retry-cap; their edits landed and were recovered from transcripts. New strings
+  catalogued: 12 en entries, 21 yue_HK entries (coverage 315, `.mo` rebuilt, `--check` green).
+  Local informational Release build gate passed (0 errors, exe + dll relinked).
+  During the ship a parallel push by codingmachineedge (`ef6fd59f2`/`156f9dd2d`) landed a
+  hand-rolled variant of the same device-section-headers row; the wave was rebased onto it and
+  the reviewed kit-SectionHeader version supersedes it at the tip (the parallel commits remain
+  ancestors; their register edit had introduced a corrupted duplicate row, repaired here).
+  **Test-repair re-scope (scout, read-only) — premise correction:** the CI waiver is pure omission
+  (only 3 targets built/run); `libslic3r_tests` has NO statically-provable compile blocker — the
+  provable drift is RUNTIME: PrusaSlicer config keys removed in BambuStudio (`perimeters`→
+  `wall_loops`, `first_layer_height`→`initial_layer_print_height`, etc.) throw or null-deref in
+  `test_config.cpp`/`test_placeholder_parser.cpp`; `libnest2d_tests` compiles, and its
+  `exclude:[NotWorking]` quarantine is invalid Catch2 syntax (would not apply). Executable repair
+  plan recorded: port the config keys, fix the Catch2 exclusion to `~[NotWorking]`, optionally
+  split a runtime-passing `libslic3r` subset into CI.
+  **Remaining open fronts (21 register rows):** GL toolbar/rail chrome + viewport overlays (blocked
+  on a tint-capable GL background path — the `flat_texture` shader has no tint uniform), the six
+  deep Prepare-sidebar rebuilds wrapping live-bound widgets, device XY dial→grid (dual-step jog
+  semantics conflict), device control strip/temp rows/print options/AMS card, preset-editor TabCtrl
+  nav pills, three partial dialog shells (TextureImport resizable-GL, SyncAms simplebook, Helio
+  always-dark), the project-webview page (recorded deviation candidate), and the deferred
+  `raw-wxmessagebox` cross-cutting sweep (44 sites, now unblocked by the MsgDialog shell); plus
+  fresh screenshots and the test repair above. An MD3 installer overhaul (encoding fix for the
+  mojibake language page, Material-styled pages, and a build-from-source mode with bounded
+  opencode auto-repair) is implemented in a parallel workflow and ships separately.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.

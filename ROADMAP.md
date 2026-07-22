@@ -63,19 +63,26 @@ hosted run `29877040307` (head `ec631dfb2`) completed fully green — including 
 
 ## Remaining
 
-### Structural component anatomy (from the parity audit)
+### Structural component anatomy (from the parity register)
 
-The color, token, and typography layer is reported complete; the remaining deltas are component
-anatomy, not mis-colorings.
+The canonical tracker is `docs/features/design-system/md3-parity-register.md` — **108 done / 21
+open** after Wave 7 (2026-07-22). Landed since the audit: camera HUD, Material Symbols icon-font
+infrastructure and the full raster→glyph sweeps, the rebuilt shared widget library
+(SearchField/Slider/Checkbox/Radio/Switch/segmented controls), the `MD3Dialog` shell with the
+MsgDialog family and ten leaf dialogs reparented onto it, the `GLIconGlyphBridge` glyph→GL-texture
+bridge for the 3D toolbar and gizmo rail, the kit title bar, the Preferences NavRail + Appearance
+section, the Preview timeline transport bar, and the device farm card grid. The 21 open rows are:
 
-- Build the camera-HUD overlay system for the viewport.
-- Add the Material Symbols icon-font infrastructure so the `Material Symbols Outlined` token can back
-  real icon glyphs instead of the existing bitmap assets.
-- Finish the remaining pill-geometry variants. The shared Widgets library is done — every kit "pill"
-  (Button, SwitchButton, SideButton call sites) derives its radius from height / 2 at paint/layout,
-  DPI-safe, now named as `MD3::Metrics::pill_radius(height)`; segmented controls are deliberately not
-  pills. What remains is feature-level chrome/settings controls with no dedicated widget class:
-  filter/choice chips, the search-field pill, and the settings nav-item pill.
+- GL toolbar/rail background chrome and the viewport zoom/stat overlays — blocked on a
+  tint-capable GL rounded-rect path (the `flat_texture` shader has no tint uniform).
+- Six deep Prepare-sidebar rebuilds that wrap live-bound widgets (printer identity card, bed
+  SelectField, filament info-rows, Process card, Objects card, manipulation card).
+- Device deep anatomy: XY dial→grid (dual-step jog semantics), control strip, temperature rows,
+  print-options controls, AMS card rebuild.
+- Preset-editor TabCtrl nav pills (needs a TabCtrl leading-glyph API).
+- Three partial dialog shells (TextureImport resizable-GL, SyncAms simplebook, Helio always-dark)
+  and the project-webview page (deviation candidate).
+- The `raw-wxmessagebox` cross-cutting sweep (44 sites) — now unblocked by the MsgDialog shell.
 - The three theme literals retained over fixed bitmap assets are now anchored and justified in
   `docs/features/design-system/md3-design-system.md` ("Retained theme literals"): the assembly-tree
   delete badge (`AssemblyStepsUtilsImgui.cpp:4646-4647`, bound to the light-baked `cross_dark.svg`)

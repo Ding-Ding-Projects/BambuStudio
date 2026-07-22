@@ -1192,3 +1192,87 @@ msgstr "呢啲復原快照已經保留喺呢部裝置。重試就可以將佢哋
 #. reviewed-category: destructive-dirty-error-security
 msgid "and %d more"
 msgstr "仲有 %d 個"
+
+#. reviewed-category: preferences
+msgid "Appearance"
+msgstr "外觀"
+
+#. reviewed-category: preferences
+msgid "Theme"
+msgstr "主題"
+
+#. reviewed-category: preferences
+msgid "Light"
+msgstr "淺色"
+
+#. reviewed-category: preferences
+msgid "Dark"
+msgstr "深色"
+
+#. reviewed-category: preferences
+msgid "Density"
+msgstr "密度"
+
+#. reviewed-category: preferences
+msgid "Comfortable"
+msgstr "舒適"
+
+#. reviewed-category: preferences
+msgid "Compact"
+msgstr "緊湊"
+
+#. reviewed-category: preferences
+msgid "Accent color"
+msgstr "強調色"
+
+#. reviewed-category: preferences
+msgid "Green"
+msgstr "綠色"
+
+#. reviewed-category: preferences
+msgid "Purple"
+msgstr "紫色"
+
+#. reviewed-category: preferences
+msgid "Teal"
+msgstr "藍綠色"
+
+#. reviewed-category: preferences
+msgid "Blue"
+msgstr "藍色"
+
+#. reviewed-category: preferences
+msgid "Pink"
+msgstr "粉紅色"
+
+#. reviewed-category: preferences
+msgid "Orange"
+msgstr "橙色"
+
+#. reviewed-category: preferences
+msgid "Search settings"
+msgstr "搜尋設定"
+
+#. reviewed-category: preferences
+msgid "Developer Tools"
+msgstr "開發者工具"
+
+#. reviewed-category: file-actions
+msgid "Management user presets"
+msgstr "管理用戶預設"
+
+#. reviewed-category: connection-offline
+msgid "Humidity"
+msgstr "濕度"
+
+#. reviewed-category: connection-offline
+msgid "Temperature"
+msgstr "溫度"
+
+#. reviewed-category: connection-offline
+msgid "Print Options"
+msgstr "打印選項"
+
+#. reviewed-category: slicing-printing
+msgid "Move"
+msgstr "移動"
