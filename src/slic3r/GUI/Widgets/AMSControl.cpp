@@ -1,5 +1,6 @@
 #include "AMSControl.hpp"
 #include "Label.hpp"
+#include "MaterialIcon.hpp"
 #include "StateColor.hpp"
 #include "../I18N.hpp"
 #include "../GUI_App.hpp"
@@ -212,8 +213,9 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_button_ams_setting_normal = ScalableBitmap(this, "ams_setting_normal", 24);
     m_button_ams_setting_hover = ScalableBitmap(this, "ams_setting_hover", 24);
     m_button_ams_setting_press = ScalableBitmap(this, "ams_setting_press", 24);
+    update_ams_setting_bitmaps();
 
-    m_button_ams_setting = new wxStaticBitmap(m_panel_option_left, wxID_ANY, m_button_ams_setting_normal.bmp(), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)));
+    m_button_ams_setting = new wxStaticBitmap(m_panel_option_left, wxID_ANY, m_button_ams_setting_bmp_normal, wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)));
     m_button_ams_setting->SetMaxSize(wxSize(FromDIP(24), FromDIP(24)));
     m_button_ams_setting->SetMinSize(wxSize(FromDIP(24), FromDIP(24)));
     m_button_ams_setting->SetSize(wxSize(FromDIP(24), FromDIP(24)));
@@ -315,17 +317,17 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_button_auto_refill->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(AMSControl::auto_refill), NULL, this);
 
     m_button_ams_setting->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_hover.bmp());
+        m_button_ams_setting->SetBitmap(m_button_ams_setting_bmp_hover);
         e.Skip();
     });
     m_button_ams_setting->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_press.bmp());
+        m_button_ams_setting->SetBitmap(m_button_ams_setting_bmp_press);
         on_ams_setting_click(e);
         e.Skip();
     });
 
     m_button_ams_setting->Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_normal.bmp());
+        m_button_ams_setting->SetBitmap(m_button_ams_setting_bmp_normal);
         e.Skip();
     });
 
@@ -600,12 +602,30 @@ void AMSControl::StopRridLoading(wxString amsid, wxString canid)
     }
 }
 
+void AMSControl::update_ams_setting_bitmaps()
+{
+    // Prefer the MD3 Material Symbols 'settings' glyph, expressing rest/hover/press
+    // state through colour (Device scheme accent on press) rather than three baked
+    // rasters. Fall back to the legacy ams_setting_* bitmaps when the icon font is
+    // unavailable so a missing TTF degrades to the old look instead of tofu.
+    if (MaterialIcon::available()) {
+        m_button_ams_setting_bmp_normal = MaterialIcon::bitmap(this, MaterialIcon::Settings, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        m_button_ams_setting_bmp_hover  = MaterialIcon::bitmap(this, MaterialIcon::Settings, 24, StateColor::semantic(MD3::Role::OnSurface));
+        m_button_ams_setting_bmp_press  = MaterialIcon::bitmap(this, MaterialIcon::Settings, 24, StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+    } else {
+        m_button_ams_setting_bmp_normal = m_button_ams_setting_normal.bmp();
+        m_button_ams_setting_bmp_hover  = m_button_ams_setting_hover.bmp();
+        m_button_ams_setting_bmp_press  = m_button_ams_setting_press.bmp();
+    }
+}
+
 void AMSControl::msw_rescale()
 {
     m_button_ams_setting_normal.msw_rescale();
     m_button_ams_setting_hover.msw_rescale();
     m_button_ams_setting_press.msw_rescale();
-    m_button_ams_setting->SetBitmap(m_button_ams_setting_normal.bmp());
+    update_ams_setting_bitmaps();
+    m_button_ams_setting->SetBitmap(m_button_ams_setting_bmp_normal);
 
     m_extruder->msw_rescale();
 

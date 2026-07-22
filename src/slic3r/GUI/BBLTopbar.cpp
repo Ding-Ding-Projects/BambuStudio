@@ -12,12 +12,20 @@
 #include "PartPlate.hpp"
 #include "ReleaseNote.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include <algorithm>
 #include <boost/log/trivial.hpp>
 
 #define TOPBAR_ICON_SIZE  18
 #define TOPBAR_TITLE_WIDTH  300
+
+// Reconciled window-control glyph sizes (titlebar-window-controls-raster +
+// topbar-chrome-raster-to-glyph overlap): minimize/close read at the standard
+// 18px chrome size; the box glyphs (crop_square maximize, filter_none restore)
+// have a heavier bounding-box weight, so they are dialed to 15px for balance.
+#define TOPBAR_WINDOW_ICON_SIZE   18
+#define TOPBAR_WINDOW_BOX_SIZE    15
 
 using namespace Slic3r;
 
@@ -37,6 +45,24 @@ enum CUSTOM_ID
     ID_TOOL_BAR = 3200,
     ID_AMS_NOTEBOOK,
 };
+
+// Wave 3 (topbar-chrome-raster-to-glyph / titlebar-window-controls-raster):
+// title-bar tool icons are now Material Symbols glyphs rendered to a DPI-correct
+// bitmap in a semantic colour, replacing the legacy create_scaled_bitmap PNGs
+// (topbar_save/undo/redo/publish/min/max/win/close + *_inactive). State is
+// expressed through colour, never the font FILL axis: enabled tools take an
+// OnSurface glyph, disabled tools an Outline glyph in place of the retired
+// *_inactive rasters. When the Material Symbols face is unavailable the call
+// degrades to the original raster (the AxisCtrlButton capability-gate idiom) so a
+// missing TTF falls back to the old look instead of tofu.
+static wxBitmap topbar_glyph_bitmap(wxWindow *ref, uint32_t glyph, int glyph_px,
+                                    MD3::Role role, const std::string &fallback_png,
+                                    int fallback_px)
+{
+    if (MaterialIcon::available())
+        return MaterialIcon::bitmap(ref, glyph, glyph_px, StateColor::semantic(role));
+    return create_scaled_bitmap(fallback_png, ref, fallback_px);
+}
 
 class BBLTopbarArt : public wxAuiDefaultToolBarArt
 {
@@ -274,31 +300,39 @@ void BBLTopbar::Init(wxFrame* parent)
     // Cross-platform modifier prefix ("Ctrl+" / "⌘") for the tooltip shortcuts.
     const wxString ctrl = wxString::FromUTF8(Slic3r::GUI::shortkey_ctrl_prefix().c_str());
 
-    wxBitmap save_bitmap = create_scaled_bitmap("topbar_save", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap save_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Save, TOPBAR_ICON_SIZE,
+                                               MD3::Role::OnSurface, "topbar_save", TOPBAR_ICON_SIZE);
     m_save_item          = this->AddTool(wxID_SAVE, "", save_bitmap);
-    wxBitmap save_inactive_bitmap = create_scaled_bitmap("topbar_save_inactive", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap save_inactive_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Save, TOPBAR_ICON_SIZE,
+                                               MD3::Role::Outline, "topbar_save_inactive", TOPBAR_ICON_SIZE);
     m_save_item->SetDisabledBitmap(save_inactive_bitmap);
     m_save_item->SetShortHelp(_L("Save Project") + " (" + ctrl + "S)");
     this->AddSpacer(FromDIP(10));
 
-    wxBitmap undo_bitmap = create_scaled_bitmap("topbar_undo", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap undo_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Undo, TOPBAR_ICON_SIZE,
+                                               MD3::Role::OnSurface, "topbar_undo", TOPBAR_ICON_SIZE);
     m_undo_item = this->AddTool(wxID_UNDO, "", undo_bitmap);
-    wxBitmap undo_inactive_bitmap = create_scaled_bitmap("topbar_undo_inactive", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap undo_inactive_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Undo, TOPBAR_ICON_SIZE,
+                                               MD3::Role::Outline, "topbar_undo_inactive", TOPBAR_ICON_SIZE);
     m_undo_item->SetDisabledBitmap(undo_inactive_bitmap);
     m_undo_item->SetShortHelp(_L("Undo") + " (" + ctrl + "Z)");
 
     this->AddSpacer(FromDIP(10));
 
-    wxBitmap redo_bitmap = create_scaled_bitmap("topbar_redo", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap redo_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Redo, TOPBAR_ICON_SIZE,
+                                               MD3::Role::OnSurface, "topbar_redo", TOPBAR_ICON_SIZE);
     m_redo_item = this->AddTool(wxID_REDO, "", redo_bitmap);
-    wxBitmap redo_inactive_bitmap = create_scaled_bitmap("topbar_redo_inactive", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap redo_inactive_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Redo, TOPBAR_ICON_SIZE,
+                                               MD3::Role::Outline, "topbar_redo_inactive", TOPBAR_ICON_SIZE);
     m_redo_item->SetDisabledBitmap(redo_inactive_bitmap);
     m_redo_item->SetShortHelp(_L("Redo") + " (" + ctrl + "Y)");
 
     this->AddSpacer(FromDIP(10));
 
-    wxBitmap calib_bitmap          = create_scaled_bitmap("calib_sf", nullptr, TOPBAR_ICON_SIZE);
-    wxBitmap calib_bitmap_inactive = create_scaled_bitmap("calib_sf_inactive", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap calib_bitmap          = topbar_glyph_bitmap(this, MaterialIcon::Tune, TOPBAR_ICON_SIZE,
+                                               MD3::Role::OnSurface, "calib_sf", TOPBAR_ICON_SIZE);
+    wxBitmap calib_bitmap_inactive = topbar_glyph_bitmap(this, MaterialIcon::Tune, TOPBAR_ICON_SIZE,
+                                               MD3::Role::Outline, "calib_sf_inactive", TOPBAR_ICON_SIZE);
     m_calib_item                   = this->AddTool(ID_CALIB, _L("Calibration"), calib_bitmap);
     m_calib_item->SetDisabledBitmap(calib_bitmap_inactive);
 
@@ -311,9 +345,11 @@ void BBLTopbar::Init(wxFrame* parent)
     this->AddSpacer(FromDIP(10));
     this->AddStretchSpacer(1);
 
-    m_publish_bitmap = create_scaled_bitmap("topbar_publish", nullptr, TOPBAR_ICON_SIZE);
+    m_publish_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Publish, TOPBAR_ICON_SIZE,
+                                           MD3::Role::OnSurface, "topbar_publish", TOPBAR_ICON_SIZE);
     m_publish_item = this->AddTool(ID_PUBLISH, "", m_publish_bitmap);
-    m_publish_disable_bitmap = create_scaled_bitmap("topbar_publish_disable", nullptr, TOPBAR_ICON_SIZE);
+    m_publish_disable_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Publish, TOPBAR_ICON_SIZE,
+                                           MD3::Role::Outline, "topbar_publish_disable", TOPBAR_ICON_SIZE);
     m_publish_item->SetDisabledBitmap(m_publish_disable_bitmap);
     this->EnableTool(m_publish_item->GetId(), false);
     this->AddSpacer(FromDIP(4));
@@ -328,13 +364,16 @@ void BBLTopbar::Init(wxFrame* parent)
     this->AddSeparator();
     this->AddSpacer(FromDIP(4));
 
-    wxBitmap iconize_bitmap = create_scaled_bitmap("topbar_min", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap iconize_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Minimize, TOPBAR_WINDOW_ICON_SIZE,
+                                                  MD3::Role::OnSurface, "topbar_min", TOPBAR_ICON_SIZE);
     wxAuiToolBarItem* iconize_btn = this->AddTool(wxID_ICONIZE_FRAME, "", iconize_bitmap);
 
     this->AddSpacer(FromDIP(4));
 
-    maximize_bitmap = create_scaled_bitmap("topbar_max", nullptr, TOPBAR_ICON_SIZE);
-    window_bitmap = create_scaled_bitmap("topbar_win", nullptr, TOPBAR_ICON_SIZE);
+    maximize_bitmap = topbar_glyph_bitmap(this, MaterialIcon::CropSquare, TOPBAR_WINDOW_BOX_SIZE,
+                                          MD3::Role::OnSurface, "topbar_max", TOPBAR_ICON_SIZE);
+    window_bitmap = topbar_glyph_bitmap(this, MaterialIcon::FilterNone, TOPBAR_WINDOW_BOX_SIZE,
+                                        MD3::Role::OnSurface, "topbar_win", TOPBAR_ICON_SIZE);
     if (m_frame->IsMaximized()) {
         maximize_btn = this->AddTool(wxID_MAXIMIZE_FRAME, "", window_bitmap);
     }
@@ -344,7 +383,8 @@ void BBLTopbar::Init(wxFrame* parent)
 
     this->AddSpacer(FromDIP(4));
 
-    wxBitmap close_bitmap = create_scaled_bitmap("topbar_close", nullptr, TOPBAR_ICON_SIZE);
+    wxBitmap close_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Close, TOPBAR_WINDOW_ICON_SIZE,
+                                                MD3::Role::OnSurface, "topbar_close", TOPBAR_ICON_SIZE);
     wxAuiToolBarItem* close_btn = this->AddTool(wxID_CLOSE_FRAME, "", close_bitmap);
 
     Realize();
@@ -632,20 +672,28 @@ void BBLTopbar::Rescale() {
     //item->SetBitmap(create_scaled_bitmap("topbar_open", nullptr, TOPBAR_ICON_SIZE));
 
     item = this->FindTool(wxID_SAVE);
-    item->SetBitmap(create_scaled_bitmap("topbar_save", this, TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(create_scaled_bitmap("topbar_save_inactive", nullptr, TOPBAR_ICON_SIZE));
+    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Save, TOPBAR_ICON_SIZE,
+                                        MD3::Role::OnSurface, "topbar_save", TOPBAR_ICON_SIZE));
+    item->SetDisabledBitmap(topbar_glyph_bitmap(this, MaterialIcon::Save, TOPBAR_ICON_SIZE,
+                                        MD3::Role::Outline, "topbar_save_inactive", TOPBAR_ICON_SIZE));
 
     item = this->FindTool(wxID_UNDO);
-    item->SetBitmap(create_scaled_bitmap("topbar_undo", this, TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(create_scaled_bitmap("topbar_undo_inactive", nullptr, TOPBAR_ICON_SIZE));
+    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Undo, TOPBAR_ICON_SIZE,
+                                        MD3::Role::OnSurface, "topbar_undo", TOPBAR_ICON_SIZE));
+    item->SetDisabledBitmap(topbar_glyph_bitmap(this, MaterialIcon::Undo, TOPBAR_ICON_SIZE,
+                                        MD3::Role::Outline, "topbar_undo_inactive", TOPBAR_ICON_SIZE));
 
     item = this->FindTool(wxID_REDO);
-    item->SetBitmap(create_scaled_bitmap("topbar_redo", this, TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(create_scaled_bitmap("topbar_redo_inactive", nullptr, TOPBAR_ICON_SIZE));
+    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Redo, TOPBAR_ICON_SIZE,
+                                        MD3::Role::OnSurface, "topbar_redo", TOPBAR_ICON_SIZE));
+    item->SetDisabledBitmap(topbar_glyph_bitmap(this, MaterialIcon::Redo, TOPBAR_ICON_SIZE,
+                                        MD3::Role::Outline, "topbar_redo_inactive", TOPBAR_ICON_SIZE));
 
     item = this->FindTool(ID_CALIB);
-    item->SetBitmap(create_scaled_bitmap("calib_sf", nullptr, TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(create_scaled_bitmap("calib_sf_inactive", nullptr, TOPBAR_ICON_SIZE));
+    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Tune, TOPBAR_ICON_SIZE,
+                                        MD3::Role::OnSurface, "calib_sf", TOPBAR_ICON_SIZE));
+    item->SetDisabledBitmap(topbar_glyph_bitmap(this, MaterialIcon::Tune, TOPBAR_ICON_SIZE,
+                                        MD3::Role::Outline, "calib_sf_inactive", TOPBAR_ICON_SIZE));
 
     /*item = this->FindTool(ID_PUBLISH);
     item->SetBitmap(create_scaled_bitmap("topbar_publish", this, TOPBAR_ICON_SIZE));
@@ -656,11 +704,14 @@ void BBLTopbar::Rescale() {
     */
 
     item = this->FindTool(wxID_ICONIZE_FRAME);
-    item->SetBitmap(create_scaled_bitmap("topbar_min", this, TOPBAR_ICON_SIZE));
+    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Minimize, TOPBAR_WINDOW_ICON_SIZE,
+                                        MD3::Role::OnSurface, "topbar_min", TOPBAR_ICON_SIZE));
 
     item = this->FindTool(wxID_MAXIMIZE_FRAME);
-    maximize_bitmap = create_scaled_bitmap("topbar_max", this, TOPBAR_ICON_SIZE);
-    window_bitmap   = create_scaled_bitmap("topbar_win", this, TOPBAR_ICON_SIZE);
+    maximize_bitmap = topbar_glyph_bitmap(this, MaterialIcon::CropSquare, TOPBAR_WINDOW_BOX_SIZE,
+                                          MD3::Role::OnSurface, "topbar_max", TOPBAR_ICON_SIZE);
+    window_bitmap   = topbar_glyph_bitmap(this, MaterialIcon::FilterNone, TOPBAR_WINDOW_BOX_SIZE,
+                                          MD3::Role::OnSurface, "topbar_win", TOPBAR_ICON_SIZE);
     if (m_frame->IsMaximized()) {
         item->SetBitmap(window_bitmap);
     }
@@ -669,7 +720,8 @@ void BBLTopbar::Rescale() {
     }
 
     item = this->FindTool(wxID_CLOSE_FRAME);
-    item->SetBitmap(create_scaled_bitmap("topbar_close", this, TOPBAR_ICON_SIZE));
+    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Close, TOPBAR_WINDOW_ICON_SIZE,
+                                        MD3::Role::OnSurface, "topbar_close", TOPBAR_ICON_SIZE));
 
     m_toolbar_h = FromDIP(MD3::Metrics::top_bar_height);
     SetMinSize({-1, m_toolbar_h});

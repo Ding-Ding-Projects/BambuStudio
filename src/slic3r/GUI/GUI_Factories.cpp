@@ -5,6 +5,8 @@
 #include "GUI_Factories.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include "I18N.hpp"
 #include "Plater.hpp"
 #include "ObjectDataViewModel.hpp"
@@ -763,7 +765,12 @@ wxMenuItem* MenuFactory::append_menu_item_settings(wxMenu* menu_)
 
     // Add full settings list
     auto  menu_item = new wxMenuItem(menu, wxID_ANY, menu_name);
-    menu_item->SetBitmap(create_scaled_bitmap("cog"));
+    // Wave 3 (object-outliner-tree-icons): the settings submenu leading icon is
+    // the MD3 settings glyph (OnSurfaceVariant); fall back to the legacy cog
+    // raster when the icon face is unavailable.
+    menu_item->SetBitmap(MaterialIcon::available()
+                             ? MaterialIcon::bitmap(object_list, MaterialIcon::Settings, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+                             : create_scaled_bitmap("cog", object_list));
     menu_item->SetSubMenu(create_settings_popupmenu(menu, is_object_settings, item));
 
     return menu->Append(menu_item);

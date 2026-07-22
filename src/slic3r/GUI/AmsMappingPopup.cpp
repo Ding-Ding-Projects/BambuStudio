@@ -13,6 +13,7 @@
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include <wx/progdlg.h>
 #include <wx/clipbrd.h>
@@ -1758,8 +1759,17 @@ void AmsHumidityTipPopup::render(wxDC& dc)
 
 void AmsHumidityTipPopup::doRender(wxDC& dc)
 {
-    //close
-    dc.DrawBitmap(close_img.bmp(), GetSize().x - close_img.GetBmpWidth() - FromDIP(38), FromDIP(24));
+    //close -> Material Symbols 'close' glyph when available, else legacy raster.
+    {
+        const int cx = GetSize().x - close_img.GetBmpWidth() - FromDIP(38);
+        const int cy = FromDIP(24);
+        if (MaterialIcon::available()) {
+            MaterialIcon::drawCentered(dc, MaterialIcon::Close, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant),
+                                       wxRect(cx, cy, close_img.GetBmpWidth(), close_img.GetBmpHeight()));
+        } else {
+            dc.DrawBitmap(close_img.bmp(), cx, cy);
+        }
+    }
 
     //background
     dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
@@ -1798,7 +1808,12 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
     wxBoxSizer* sizer_top_tips = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* sizer_tip_top = new wxBoxSizer(wxHORIZONTAL);
 
-    arrows_top = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("ams_arrow", this, 8), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
+    // Callout arrow pointing back to the example item -> Material Symbols
+    // 'chevron_left' glyph when available, else the legacy ams_arrow raster.
+    wxBitmap arrow_top_bmp = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::ChevronLeft, 8, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+        : create_scaled_bitmap("ams_arrow", this, 8);
+    arrows_top = new wxStaticBitmap(this, wxID_ANY, arrow_top_bmp, wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
     sizer_tip_top->Add(arrows_top, 0, wxALIGN_CENTER, 0);
 
     tip_top = new wxStaticText(this, wxID_ANY, _L("Filament used in this print job"), wxDefaultPosition, wxDefaultSize, 0);
@@ -1814,7 +1829,10 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
 
     wxBoxSizer* sizer_tip_bottom = new wxBoxSizer(wxHORIZONTAL);
 
-    arrows_bottom = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("ams_arrow", this, 8), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
+    wxBitmap arrow_bottom_bmp = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::ChevronLeft, 8, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+        : create_scaled_bitmap("ams_arrow", this, 8);
+    arrows_bottom = new wxStaticBitmap(this, wxID_ANY, arrow_bottom_bmp, wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
     tip_bottom = new wxStaticText(this, wxID_ANY, _L("AMS slot used for this filament"), wxDefaultPosition, wxDefaultSize, 0);
     tip_bottom->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 

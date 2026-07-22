@@ -14,6 +14,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "BackgroundSlicingProcess.hpp"
 #include "ConnectPrinter.hpp"
 
@@ -70,6 +71,18 @@
 #define S_RACK_NOZZLE_SUGEEST_RESLICE_FILA _L("Please re-slice to avoid filament waste.")
 
 namespace Slic3r { namespace GUI {
+
+// Wave 3 (shared-dialog-action-icons): swap a legacy monochrome dialog action/
+// status raster for its Material Symbols glyph, coloured from a semantic role so it
+// follows the active light/dark theme. Falls back to the raster when the icon face
+// is unavailable so a missing TTF degrades to the old look instead of tofu.
+static wxBitmap dialog_action_glyph(wxWindow *win, uint32_t glyph, MD3::Role role,
+                                    const std::string &raster, int px)
+{
+    if (MaterialIcon::available())
+        return MaterialIcon::bitmap(win, glyph, px, StateColor::semantic(role));
+    return create_scaled_bitmap(raster, win, px);
+}
 
 wxDEFINE_EVENT(EVT_SWITCH_PRINT_OPTION, wxCommandEvent);
 wxDEFINE_EVENT(EVT_UPDATE_USER_MACHINE_LIST, wxCommandEvent);
@@ -242,7 +255,10 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_rename_text->SetMaxSize(wxSize(FromDIP(340), -1));
     rename_editable = new ScalableBitmap(m_scroll_area, "rename_edit", 20);
     rename_editable_light = new ScalableBitmap(m_scroll_area, "rename_edit", 20);
-    m_rename_button = new wxStaticBitmap(m_rename_normal_panel, wxID_ANY, rename_editable->bmp(), wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)), 0);
+    // Wave 3 (shared-dialog-action-icons): rename affordance -> edit glyph.
+    m_rename_button = new wxStaticBitmap(m_rename_normal_panel, wxID_ANY,
+        dialog_action_glyph(m_rename_normal_panel, MaterialIcon::Edit, MD3::Role::OnSurfaceVariant, "rename_edit", 20),
+        wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)), 0);
     m_rename_button->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
     m_rename_button->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
 
@@ -301,12 +317,17 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     wxBoxSizer *m_sizer_basic_weight_time = new wxBoxSizer(wxHORIZONTAL);
 
     print_time   = new ScalableBitmap(m_scroll_area, "print-time", 18);
-    timeimg = new wxStaticBitmap(m_basic_panel, wxID_ANY, print_time->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
+    // Wave 3 (shared-dialog-action-icons): print-time -> schedule glyph, print-weight -> scale glyph.
+    timeimg = new wxStaticBitmap(m_basic_panel, wxID_ANY,
+        dialog_action_glyph(m_basic_panel, MaterialIcon::Schedule, MD3::Role::OnSurfaceVariant, "print-time", 18),
+        wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_stext_time = new Label(m_basic_panel, wxEmptyString);
     m_stext_time->SetFont(Label::Mono_13);
 
     print_weight   = new ScalableBitmap(m_scroll_area, "print-weight", 18);
-    weightimg = new wxStaticBitmap(m_basic_panel, wxID_ANY, print_weight->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
+    weightimg = new wxStaticBitmap(m_basic_panel, wxID_ANY,
+        dialog_action_glyph(m_basic_panel, MaterialIcon::Scale, MD3::Role::OnSurfaceVariant, "print-weight", 18),
+        wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_stext_weight = new Label(m_basic_panel, wxEmptyString);
     m_stext_weight->SetFont(Label::Mono_13);
 
@@ -332,12 +353,13 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     /*last & next page*/
     auto last_plate_sizer = new wxBoxSizer(wxVERTICAL);
-    m_bitmap_last_plate = new wxStaticBitmap(m_basic_panel, wxID_ANY, create_scaled_bitmap("go_last_plate", m_scroll_area, 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
+    // Wave 3 (shared-dialog-action-icons): plate navigation arrows -> chevron glyphs.
+    m_bitmap_last_plate = new wxStaticBitmap(m_basic_panel, wxID_ANY, dialog_action_glyph(m_basic_panel, MaterialIcon::ChevronLeft, MD3::Role::OnSurfaceVariant, "go_last_plate", 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
     m_bitmap_last_plate->Hide();
     last_plate_sizer->Add(m_bitmap_last_plate, 0, wxALIGN_CENTER, 0);
 
     auto next_plate_sizer = new wxBoxSizer(wxVERTICAL);
-    m_bitmap_next_plate = new wxStaticBitmap(m_basic_panel, wxID_ANY, create_scaled_bitmap("go_next_plate", m_scroll_area, 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
+    m_bitmap_next_plate = new wxStaticBitmap(m_basic_panel, wxID_ANY, dialog_action_glyph(m_basic_panel, MaterialIcon::ChevronRight, MD3::Role::OnSurfaceVariant, "go_next_plate", 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
     m_bitmap_next_plate->Hide();
     next_plate_sizer->Add(m_bitmap_next_plate, 0, wxALIGN_CENTER, 0);
 
@@ -402,7 +424,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_ams_backup_tip->SetFont(::Label::Head_13);
     m_ams_backup_tip->SetForegroundColour(ThemeColor::BrandGreen);
     m_ams_backup_tip->SetBackgroundColour(ThemeColor::White);
-    img_ams_backup = new wxStaticBitmap(m_scroll_area, wxID_ANY, create_scaled_bitmap("automatic_material_renewal", this, 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)), 0);
+    // Wave 3 (shared-dialog-action-icons): auto-refill renewal -> sync glyph (Primary accent).
+    img_ams_backup = new wxStaticBitmap(m_scroll_area, wxID_ANY, dialog_action_glyph(this, MaterialIcon::Sync, MD3::Role::Primary, "automatic_material_renewal", 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)), 0);
     img_ams_backup->SetBackgroundColour(ThemeColor::White);
 
     m_sizer_autorefill->Add(0, 0, 1, wxEXPAND, 0);
@@ -588,8 +611,14 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     auto option_timelapse = new PrintOption(m_options_other, _L("Timelapse"), wxEmptyString, ops_no_auto, "timelapse");
 
     // timelapse storage location folder button (shown only when is_support_internal_timelapse)
-    m_timelapse_folder_btn = new ScalableButton(m_options_other, wxID_ANY, "folder-closed", wxEmptyString,
+    // Wave 3 (shared-dialog-action-icons): timelapse storage-location -> folder_open
+    // glyph (normal OnSurfaceVariant / hover OnSurface / active Primary). Empty raster
+    // name on the glyph path so ScalableButton::msw_rescale can't clobber the bitmap.
+    const bool folder_btn_use_glyph = MaterialIcon::available();
+    m_timelapse_folder_btn = new ScalableButton(m_options_other, wxID_ANY, folder_btn_use_glyph ? std::string() : std::string("folder-closed"), wxEmptyString,
         wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    if (folder_btn_use_glyph)
+        m_timelapse_folder_btn->SetBitmap(MaterialIcon::bitmap(m_timelapse_folder_btn, MaterialIcon::FolderOpen, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_timelapse_folder_btn->SetBackgroundColour(ThemeColor::White);
     m_timelapse_folder_btn->SetToolTip(_L("Select timelapse storage location"));
     m_timelapse_folder_btn->Hide();
@@ -599,7 +628,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_timelapse_folder_btn->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent& e) {
         // hover: only switch if popup is not open (popup open = active state)
         if (!m_timelapse_storage_popup || !m_timelapse_storage_popup->IsShown())
-            m_timelapse_folder_btn->SetBitmap(create_scaled_bitmap("folder-closed-hover", m_timelapse_folder_btn, 16));
+            m_timelapse_folder_btn->SetBitmap(dialog_action_glyph(m_timelapse_folder_btn, MaterialIcon::FolderOpen, MD3::Role::OnSurface, "folder-closed-hover", 16));
         e.Skip();
     });
     m_timelapse_folder_btn->Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent& e) {
@@ -643,7 +672,12 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_pa_value_switch->SetValue(true);
     m_pa_value_switch->Bind(wxEVT_TOGGLEBUTTON, &SelectMachineDialog::on_pa_value_switch_changed, this);
 
-    m_pa_value_tips = new ScalableButton(m_pa_value_panel, wxID_ANY, "icon_qusetion", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    // Wave 3 (shared-dialog-action-icons): PA help tip -> help glyph. Empty raster
+    // name on the glyph path so ScalableButton::msw_rescale can't clobber the bitmap.
+    const bool pa_tips_use_glyph = MaterialIcon::available();
+    m_pa_value_tips = new ScalableButton(m_pa_value_panel, wxID_ANY, pa_tips_use_glyph ? std::string() : std::string("icon_qusetion"), wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    if (pa_tips_use_glyph)
+        m_pa_value_tips->SetBitmap(MaterialIcon::bitmap(m_pa_value_tips, MaterialIcon::Help, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_pa_value_tips->SetBackgroundColour(ThemeColor::White);
     m_pa_value_tips->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e){
         std::string language = wxGetApp().app_config->get("language");
@@ -680,7 +714,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     wxSizer* m_options_line_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxSizer* m_options_line_right_sizer = new wxBoxSizer(wxVERTICAL);
-    m_options_line_bmp = new wxStaticBitmap(m_options_line_panel, wxID_ANY, create_scaled_bitmap("warning", m_options_line_panel, 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
+    // Wave 3 (shared-dialog-action-icons): calibration-reuse warning -> warning glyph.
+    m_options_line_bmp = new wxStaticBitmap(m_options_line_panel, wxID_ANY, dialog_action_glyph(m_options_line_panel, MaterialIcon::Warning, MD3::Role::OnSurfaceVariant, "warning", 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
     m_options_line_label = new Label(m_options_line_panel, _L("If the filament/nozzle of the main extruder hasn't changed, the last calibration value will be reused. The auxiliary extruder will use the system default value."));
     m_options_line_label->SetBackgroundColour(ThemeColor::White);
     m_options_line_label->SetForegroundColour(ThemeColor::Warning);
@@ -786,7 +821,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     wxBoxSizer *m_sizer_finish_h = new wxBoxSizer(wxHORIZONTAL);
 
     auto imgsize      = FromDIP(25);
-    auto completedimg = new wxStaticBitmap(m_panel_finish, wxID_ANY, create_scaled_bitmap("completed", m_panel_finish, 25), wxDefaultPosition, wxSize(imgsize, imgsize), 0);
+    // Wave 3 (shared-dialog-action-icons): send-completed -> task_alt glyph (Primary).
+    auto completedimg = new wxStaticBitmap(m_panel_finish, wxID_ANY, dialog_action_glyph(m_panel_finish, MaterialIcon::TaskAlt, MD3::Role::Primary, "completed", 25), wxDefaultPosition, wxSize(imgsize, imgsize), 0);
     m_sizer_finish_h->Add(completedimg, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
     m_statictext_finish = new wxStaticText(m_panel_finish, wxID_ANY, L("send completed"), wxDefaultPosition, wxDefaultSize, 0);
@@ -2536,7 +2572,7 @@ void SelectMachineDialog::update_timelapse_folder_btn_icon()
 {
     if (!m_timelapse_folder_btn) return;
     // always restore to normal (grey) �� active state is managed by popup open/close
-    m_timelapse_folder_btn->SetBitmap(create_scaled_bitmap("folder-closed", m_timelapse_folder_btn, 16));
+    m_timelapse_folder_btn->SetBitmap(dialog_action_glyph(m_timelapse_folder_btn, MaterialIcon::FolderOpen, MD3::Role::OnSurfaceVariant, "folder-closed", 16));
     m_timelapse_folder_btn->Refresh();
 }
 
@@ -2622,7 +2658,7 @@ void SelectMachineDialog::show_timelapse_folder_popup()
     m_timelapse_storage_popup->Position(pos, wxSize(0, 0));
 
     // switch to active icon before showing popup
-    m_timelapse_folder_btn->SetBitmap(create_scaled_bitmap("folder-closed-active", m_timelapse_folder_btn, 16));
+    m_timelapse_folder_btn->SetBitmap(dialog_action_glyph(m_timelapse_folder_btn, MaterialIcon::FolderOpen, MD3::Role::Primary, "folder-closed-active", 16));
     m_timelapse_folder_btn->Refresh();
 
     m_timelapse_storage_popup->Popup();
@@ -2750,8 +2786,9 @@ void SelectMachineDialog::show_timelapse_storage_dialog(MachineObject* obj)
 
     // warning icon + text row
     auto* msg_sizer = new wxBoxSizer(wxHORIZONTAL);
+    // Wave 3 (shared-dialog-action-icons): confirm-dialog warning -> warning glyph.
     auto* warn_bmp  = new wxStaticBitmap(&dlg, wxID_ANY,
-        create_scaled_bitmap("obj_warning", &dlg, 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
+        dialog_action_glyph(&dlg, MaterialIcon::Warning, MD3::Role::OnSurfaceVariant, "obj_warning", 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     auto* msg_label = new Label(&dlg, body_text);
     msg_label->SetFont(Label::Body_14);
     msg_label->SetForegroundColour(ThemeColor::TextPrimary);
@@ -4286,9 +4323,9 @@ void SelectMachineDialog::Enable_Send_Button(bool en)
 void SelectMachineDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     print_time->msw_rescale();
-    timeimg->SetBitmap(print_time->bmp());
+    timeimg->SetBitmap(dialog_action_glyph(m_basic_panel, MaterialIcon::Schedule, MD3::Role::OnSurfaceVariant, "print-time", 18));
     print_weight->msw_rescale();
-    weightimg->SetBitmap(print_weight->bmp());
+    weightimg->SetBitmap(dialog_action_glyph(m_basic_panel, MaterialIcon::Scale, MD3::Role::OnSurfaceVariant, "print-weight", 18));
     rename_editable->msw_rescale();
     rename_editable_light->msw_rescale();
     if (ams_mapping_help_icon != nullptr) {
@@ -4310,7 +4347,7 @@ void SelectMachineDialog::on_dpi_changed(const wxRect &suggested_rect)
 
     m_mapping_popup.msw_rescale();
 
-    m_options_line_bmp->SetBitmap(create_scaled_bitmap("warning", m_options_line_panel, 25));
+    m_options_line_bmp->SetBitmap(dialog_action_glyph(m_options_line_panel, MaterialIcon::Warning, MD3::Role::OnSurfaceVariant, "warning", 25));
 
     m_statictext_ams_msg->Rescale();
     m_text_printer_msg->Rescale();
@@ -5253,13 +5290,16 @@ void SelectMachineDialog::update_page_turn_state(bool show)
 
 void SelectMachineDialog::sys_color_changed()
 {
+    // Wave 3 (shared-dialog-action-icons): keep the rename affordance on the edit
+    // glyph across theme switches; the glyph recolours via its semantic role, so both
+    // light/dark map to the same helper (the raster fallback also used one asset).
     if (wxGetApp(). dark_mode()) {
         //rename_button->SetIcon("ams_editable_light");
-        m_rename_button->SetBitmap(rename_editable_light->bmp());
+        m_rename_button->SetBitmap(dialog_action_glyph(m_rename_button, MaterialIcon::Edit, MD3::Role::OnSurfaceVariant, "rename_edit", 20));
 
     }
     else {
-        m_rename_button->SetBitmap(rename_editable->bmp());
+        m_rename_button->SetBitmap(dialog_action_glyph(m_rename_button, MaterialIcon::Edit, MD3::Role::OnSurfaceVariant, "rename_edit", 20));
     }
     m_rename_button->Refresh();
 }
@@ -7022,7 +7062,11 @@ bool SelectMachineDialog::is_used_filament(int fila_logic_id) const
 
      update_title_display();
 
-     m_printoption_tips = new ScalableButton(this, wxID_ANY, "icon_qusetion", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+     // Wave 3 (shared-dialog-action-icons): print-option help tip -> help glyph.
+     const bool printoption_tips_use_glyph = MaterialIcon::available();
+     m_printoption_tips = new ScalableButton(this, wxID_ANY, printoption_tips_use_glyph ? std::string() : std::string("icon_qusetion"), wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+     if (printoption_tips_use_glyph)
+         m_printoption_tips->SetBitmap(MaterialIcon::bitmap(m_printoption_tips, MaterialIcon::Help, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
      m_printoption_tips->SetMinSize(wxSize(FromDIP(18), FromDIP(18)));
      m_printoption_tips->SetMaxSize(wxSize(FromDIP(18), FromDIP(18)));
 
@@ -7661,7 +7705,11 @@ void PrinterInfoBox::Create()
     m_stext_printer_title->SetFont(::Label::Head_13);
     m_stext_printer_title->SetForegroundColour(ThemeColor::TextSecondary);
 
-    m_button_question = new ScalableButton(this, wxID_ANY, "icon_qusetion", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    // Wave 3 (shared-dialog-action-icons): printer-connect help -> help glyph.
+    const bool question_use_glyph = MaterialIcon::available();
+    m_button_question = new ScalableButton(this, wxID_ANY, question_use_glyph ? std::string() : std::string("icon_qusetion"), wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    if (question_use_glyph)
+        m_button_question->SetBitmap(MaterialIcon::bitmap(m_button_question, MaterialIcon::Help, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_button_question->Bind(wxEVT_BUTTON, &PrinterInfoBox::OnBtnQuestionClicked, this);
     m_button_question->SetToolTip(_L("Click here if you can't connect to the printer"));
     m_button_question->SetMinSize(wxSize(FromDIP(18), FromDIP(18)));
@@ -7694,7 +7742,11 @@ void PrinterInfoBox::Create()
     m_comboBox_printer->SetBackgroundColor(ThemeColor::White);
     m_comboBox_printer->Bind(wxEVT_COMBOBOX, &SelectMachineDialog::on_selection_changed, m_select_dialog);
 
-    m_button_refresh = new ScalableButton(printer_staticbox, wxID_ANY, "refresh_printer", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    // Wave 3 (shared-dialog-action-icons): printer-list refresh -> refresh glyph.
+    const bool refresh_use_glyph = MaterialIcon::available();
+    m_button_refresh = new ScalableButton(printer_staticbox, wxID_ANY, refresh_use_glyph ? std::string() : std::string("refresh_printer"), wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    if (refresh_use_glyph)
+        m_button_refresh->SetBitmap(MaterialIcon::bitmap(m_button_refresh, MaterialIcon::Refresh, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_button_refresh->Bind(wxEVT_BUTTON, &SelectMachineDialog::on_refresh, m_select_dialog);
 
     sizer_printer_staticbox->Add(0, 0, 0, wxLEFT, FromDIP(7));

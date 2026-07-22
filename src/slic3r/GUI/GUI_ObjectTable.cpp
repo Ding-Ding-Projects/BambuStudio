@@ -9,6 +9,8 @@
 //#include "libslic3r/Model.hpp"
 //#include "Plater.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include "GUI.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
@@ -705,39 +707,50 @@ void GridCellSupportRenderer::Draw(wxGrid& grid,
     wxGridCellRenderer::Draw(grid, attr, dc, rect, row, col, isSelected);
     wxString value = table->GetValue(row, col);
     if (grid_row->row_type != table->GridRowType::row_volume || col != table->GridColType::col_printable) {
+        // Wave 3 (object-outliner-tree-icons): draw the boolean cell as an MD3
+        // check_box (checked, Primary) / check_box_outline_blank (unchecked,
+        // OnSurfaceVariant) glyph. Fall back to the legacy check_on /
+        // check_off_focused rasters when the icon face is unavailable.
         if (cur_option.value) {
+            if (MaterialIcon::available()) {
+                MaterialIcon::drawCentered(dc, MaterialIcon::CheckBox, 18, StateColor::semantic(MD3::Role::Primary), rect);
+            } else {
+                auto check_on = create_scaled_bitmap("check_on", nullptr, 18);
+                dc.SetPen(*wxTRANSPARENT_PEN);
 
-            auto check_on = create_scaled_bitmap("check_on", nullptr, 18);
-            dc.SetPen(*wxTRANSPARENT_PEN);
+                auto offsetx = 0;
+                auto offsety = 0;
 
-            auto offsetx = 0;
-            auto offsety = 0;
+                #ifdef  __WXOSX_MAC__
+                offsetx = (width - 18) / 2;
+                offsety = (height - 18) / 2;
+                #else
+                offsetx = (width - check_on.GetSize().x) / 2;
+                offsety = (height - check_on.GetSize().y) / 2;
+                #endif //  __WXOSX_MAC__
 
-            #ifdef  __WXOSX_MAC__
-            offsetx = (width - 18) / 2;
-            offsety = (height - 18) / 2;
-            #else
-            offsetx = (width - check_on.GetSize().x) / 2;
-            offsety = (height - check_on.GetSize().y) / 2;
-            #endif //  __WXOSX_MAC__
-
-            dc.DrawBitmap(check_on, rect.x + offsetx, rect.y + offsety);
+                dc.DrawBitmap(check_on, rect.x + offsetx, rect.y + offsety);
+            }
     } else {
-            auto check_off = create_scaled_bitmap("check_off_focused", nullptr, 18);
-            dc.SetPen(*wxTRANSPARENT_PEN);
+            if (MaterialIcon::available()) {
+                MaterialIcon::drawCentered(dc, MaterialIcon::CheckBoxOutlineBlank, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant), rect);
+            } else {
+                auto check_off = create_scaled_bitmap("check_off_focused", nullptr, 18);
+                dc.SetPen(*wxTRANSPARENT_PEN);
 
-            auto offsetx = 0;
-            auto offsety = 0;
+                auto offsetx = 0;
+                auto offsety = 0;
 
-            #ifdef __WXOSX_MAC__
-            offsetx = (width - 18) / 2;
-            offsety = (height - 18) / 2;
-            #else
-            offsetx = (width - check_off.GetSize().x) / 2;
-            offsety = (height - check_off.GetSize().y) / 2;
-            #endif //  __WXOSX_MAC__
+                #ifdef __WXOSX_MAC__
+                offsetx = (width - 18) / 2;
+                offsety = (height - 18) / 2;
+                #else
+                offsetx = (width - check_off.GetSize().x) / 2;
+                offsety = (height - check_off.GetSize().y) / 2;
+                #endif //  __WXOSX_MAC__
 
-            dc.DrawBitmap(check_off, rect.x + offsetx, rect.y + offsety);
+                dc.DrawBitmap(check_off, rect.x + offsetx, rect.y + offsety);
+            }
         }
     }
 
@@ -2830,7 +2843,13 @@ ObjectTablePanel::ObjectTablePanel( wxWindow* parent, wxWindowID id, const wxPoi
 
 int ObjectTablePanel::init_bitmap()
 {
-    m_undo_bitmap = create_scaled_bitmap("lock_normal", nullptr, 18);
+    // Wave 3 (object-outliner-tree-icons): the per-cell "value changed" marker is
+    // an MD3 lock glyph (OnSurfaceVariant), rendered to a bitmap because the grid
+    // renderer consumes a wxBitmap. Fall back to the legacy lock raster when the
+    // icon face is unavailable.
+    m_undo_bitmap = MaterialIcon::available()
+                        ? MaterialIcon::bitmap(this, MaterialIcon::Lock, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+                        : create_scaled_bitmap("lock_normal", nullptr, 18);
     m_color_bitmaps = get_extruder_color_icons();
 
     return 0;

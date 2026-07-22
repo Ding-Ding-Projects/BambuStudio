@@ -1,5 +1,7 @@
 #include "ObjectDataViewModel.hpp"
 #include "wxExtensions.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include "BitmapCache.hpp"
 #include "GUI_App.hpp"
 #include "GUI_Factories.hpp"
@@ -38,6 +40,59 @@ static constexpr char LayerIcon[]       = "blank";
 static constexpr char WarningIcon[]     = "obj_warning";
 static constexpr char WarningManifoldIcon[] = "obj_warning";
 static constexpr char LockIcon[]            = "cut_";
+
+// ---------------------------------------------------------------------------
+// Wave 3 (object-outliner-tree-icons): the object tree renders its feature
+// badges and the printable toggle through the wxDataViewCtrl model, which hands
+// the control a wxBitmap per cell (a glyph cannot be drawn in-place here — the
+// model interface is bitmap-only). These helpers rasterize the MD3 Material
+// Symbols glyph the kit specifies for each badge, coloured from a semantic role
+// so the badge follows the active light/dark theme, and fall back to the legacy
+// raster icon when the icon face is unavailable so a missing TTF degrades to the
+// old look instead of tofu.
+// The DPI reference for tree badges: the app's top window is the MainFrame that
+// hosts the object tree, so its content-scale factor is what the badge must be
+// rasterized at. MaterialIcon::bitmap pins the scale to 1.0 when handed a null
+// window and the toolkit then upsamples the glyph (soft/undersized on HiDPI);
+// create_scaled_bitmap likewise reads the window's DPI. Returns null before
+// SetTopWindow() runs (early construction), which both paths degrade safely to
+// the primary-display scale, and the icons are rebuilt crisply on the first
+// Rescale()/msw_rescale() once the frame exists.
+static wxWindow *tree_icon_dpi_ref() { return wxGetApp().GetTopWindow(); }
+
+static wxBitmap tree_feature_bitmap(const std::string &legacy_name, int px)
+{
+    wxWindow *dpiRef = tree_icon_dpi_ref();
+    if (MaterialIcon::available()) {
+        struct GlyphSpec { uint32_t cp; MD3::Role role; };
+        static const std::map<std::string, GlyphSpec> glyphs = {
+            { "toolbar_variable_layer_height", { MaterialIcon::Layers,              MD3::Role::OnSurfaceVariant } },
+            { "mmu_segmentation",              { MaterialIcon::Palette,             MD3::Role::OnSurfaceVariant } },
+            { "toolbar_support",               { MaterialIcon::Hardware,            MD3::Role::OnSurfaceVariant } },
+            { "toolbar_fuzzyskin",             { MaterialIcon::Grain,               MD3::Role::OnSurfaceVariant } },
+            { "objlist_sinking",               { MaterialIcon::VerticalAlignBottom, MD3::Role::OnSurfaceVariant } },
+            { "dot",                           { MaterialIcon::FiberManualRecord,   MD3::Role::OnSurfaceVariant } },
+        };
+        const auto it = glyphs.find(legacy_name);
+        if (it != glyphs.end())
+            return MaterialIcon::bitmap(dpiRef, it->second.cp, px, StateColor::semantic(it->second.role));
+    }
+    return create_scaled_bitmap(legacy_name, dpiRef, px);
+}
+
+// Printable toggle badge: a filled Primary check_box when printable, an
+// OnSurfaceVariant check_box_outline_blank when not. Falls back to the legacy
+// check_on / check_off_focused rasters when the icon face is unavailable.
+static wxBitmap tree_printable_bitmap(bool printable, int px)
+{
+    wxWindow *dpiRef = tree_icon_dpi_ref();
+    if (MaterialIcon::available())
+        return MaterialIcon::bitmap(dpiRef,
+                                    printable ? MaterialIcon::CheckBox : MaterialIcon::CheckBoxOutlineBlank,
+                                    px,
+                                    StateColor::semantic(printable ? MD3::Role::Primary : MD3::Role::OnSurfaceVariant));
+    return create_scaled_bitmap(printable ? "check_on" : "check_off_focused", dpiRef, px);
+}
 
 ObjectDataViewModelNode::ObjectDataViewModelNode(PartPlate* part_plate, wxString name) :
     m_parent(nullptr),
@@ -174,7 +229,7 @@ bool ObjectDataViewModelNode::valid()
 
 void ObjectDataViewModelNode::sys_color_changed()
 {
-    m_printable_icon = m_printable == piUndef ? m_empty_bmp : create_scaled_bitmap(m_printable == piPrintable ? "check_on" : "check_off_focused");
+    m_printable_icon = m_printable == piUndef ? m_empty_bmp : tree_printable_bitmap(m_printable == piPrintable, 16);
 }
 
 void ObjectDataViewModelNode::set_icons()
@@ -203,14 +258,14 @@ void ObjectDataViewModelNode::set_printable_icon(PrintIndicator printable)
         return;
     m_printable = printable;
     m_printable_icon = m_printable == piUndef ? m_empty_bmp :
-                       create_scaled_bitmap(m_printable == piPrintable ? "check_on" : "check_off_focused");
+                       tree_printable_bitmap(m_printable == piPrintable, 16);
 }
 
 void ObjectDataViewModelNode::set_variable_height_icon(VaryHeightIndicator vari_height) {
     if (m_variable_height == vari_height)
         return;
     m_variable_height = vari_height;
-    m_variable_height_icon = m_variable_height == hiUnVariable ? m_empty_bmp : create_scaled_bitmap("toolbar_variable_layer_height", nullptr, 20);
+    m_variable_height_icon = m_variable_height == hiUnVariable ? m_empty_bmp : tree_feature_bitmap("toolbar_variable_layer_height", 20);
 }
 
 void ObjectDataViewModelNode::set_action_icon(bool enable)
@@ -232,9 +287,9 @@ void ObjectDataViewModelNode::set_color_icon(bool enable, bool force)
         return;
     m_color_enable = enable;
     if ((m_type & itObject) && enable)
-        m_color_icon = create_scaled_bitmap("mmu_segmentation");
+        m_color_icon = tree_feature_bitmap("mmu_segmentation", 16);
     else
-        m_color_icon = create_scaled_bitmap("dot");
+        m_color_icon = tree_feature_bitmap("dot", 16);
 }
 
 void ObjectDataViewModelNode::set_support_icon(bool enable, bool force)
@@ -243,9 +298,9 @@ void ObjectDataViewModelNode::set_support_icon(bool enable, bool force)
         return;
     m_support_enable = enable;
     if ((m_type & itObject) && enable)
-        m_support_icon = create_scaled_bitmap("toolbar_support");
+        m_support_icon = tree_feature_bitmap("toolbar_support", 16);
     else
-        m_support_icon = create_scaled_bitmap("dot");
+        m_support_icon = tree_feature_bitmap("dot", 16);
 }
 
 void ObjectDataViewModelNode::set_fuzzyskin_icon(bool enable, bool force)
@@ -253,9 +308,9 @@ void ObjectDataViewModelNode::set_fuzzyskin_icon(bool enable, bool force)
     if (!force && m_fuzzyskin_enable == enable) return;
     m_fuzzyskin_enable = enable;
     if ((m_type & itObject) && enable)
-        m_fuzzyskin_icon = create_scaled_bitmap("toolbar_fuzzyskin");
+        m_fuzzyskin_icon = tree_feature_bitmap("toolbar_fuzzyskin", 16);
     else
-        m_fuzzyskin_icon = create_scaled_bitmap("dot");
+        m_fuzzyskin_icon = tree_feature_bitmap("dot", 16);
 }
 
 void ObjectDataViewModelNode::set_sinking_icon(bool enable, bool force)
@@ -264,9 +319,9 @@ void ObjectDataViewModelNode::set_sinking_icon(bool enable, bool force)
         return;
     m_sink_enable = enable;
     if ((m_type & itObject) && enable)
-        m_sinking_icon = create_scaled_bitmap("objlist_sinking");
+        m_sinking_icon = tree_feature_bitmap("objlist_sinking", 16);
     else
-        m_sinking_icon = create_scaled_bitmap("dot");
+        m_sinking_icon = tree_feature_bitmap("dot", 16);
 }
 
 void ObjectDataViewModelNode::set_warning_icon(const std::string& warning_icon_name)
@@ -318,9 +373,9 @@ void ObjectDataViewModelNode::msw_rescale()
         m_action_icon = create_scaled_bitmap(m_action_icon_name);
 
     if (m_printable != piUndef)
-        m_printable_icon = create_scaled_bitmap(m_printable == piPrintable ? "obj_printable" : "obj_unprintable");
+        m_printable_icon = tree_printable_bitmap(m_printable == piPrintable, 16);
 
-    m_variable_height_icon = m_variable_height == hiUnVariable ? m_empty_bmp : create_scaled_bitmap("toolbar_variable_layer_height", nullptr, 20);
+    m_variable_height_icon = m_variable_height == hiUnVariable ? m_empty_bmp : tree_feature_bitmap("toolbar_variable_layer_height", 20);
 
     if (!m_opt_categories.empty())
         update_settings_digest_bitmaps();
@@ -473,7 +528,7 @@ ObjectDataViewModel::ObjectDataViewModel()
     m_lock_bmp = create_scaled_bitmap(LockIcon);
 
     for (auto item : INFO_ITEMS)
-        m_info_bmps[item.first] = create_scaled_bitmap(item.second.bmp_name);
+        m_info_bmps[item.first] = tree_feature_bitmap(item.second.bmp_name, 16);
 
 
     m_plate_outside = nullptr;
@@ -584,7 +639,7 @@ void ObjectDataViewModel::UpdateBitmapForNode(ObjectDataViewModelNode *node)
             bmps.emplace_back(m_lock_bmp);
         if (is_volume_node) {
             if (!bmps.empty()) // ORCA: Add spacing between icons if there are multiple
-                bmps.emplace_back(create_scaled_bitmap("dot", nullptr, int(wxGetApp().em_unit() / 10) * 4));
+                bmps.emplace_back(tree_feature_bitmap("dot", int(wxGetApp().em_unit() / 10) * 4));
             bmps.emplace_back(node->is_text_volume() ? m_text_volume_bmps[vol_type] :
                 node->is_svg_volume() ? m_svg_volume_bmps[vol_type] :
                 m_volume_bmps[vol_type]);
@@ -2418,7 +2473,7 @@ void ObjectDataViewModel::Rescale()
     m_lock_bmp = create_scaled_bitmap(LockIcon);
 
     for (auto item : INFO_ITEMS)
-        m_info_bmps[item.first] = create_scaled_bitmap(item.second.bmp_name);
+        m_info_bmps[item.first] = tree_feature_bitmap(item.second.bmp_name, 16);
 
     wxDataViewItemArray all_items;
     GetAllChildren(wxDataViewItem(0), all_items);

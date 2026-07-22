@@ -25,6 +25,7 @@
 
 #include <slic3r/GUI/Widgets/WebView.hpp>
 #include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 
 namespace pt = boost::property_tree;
 
@@ -165,32 +166,46 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     m_online_container->Hide();
 
     m_online_toolbar_panel = new wxPanel(m_online_container);
-    wxColour toolbar_bg = StateColor::darkModeColorFor(*wxWHITE);
+    // Toolbar surface: MD3 SurfaceContainerLowest (the legacy darkModeColorFor(white)
+    // dark-mapped to sc-low, one step too light for a webview toolbar chrome).
+    wxColour toolbar_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     m_online_toolbar_panel->SetBackgroundColour(toolbar_bg);
     m_online_container->SetBackgroundColour(m_online_toolbar_panel->GetBackgroundColour());
     m_online_toolbar_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_online_toolbar_panel->SetSizer(m_online_toolbar_sizer);
 
-    // Icon color: MD3 OnSurface for enabled, OutlineVariant for the disabled tint.
-    std::string icon_color = StateColor::semantic(MD3::Role::OnSurface).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
-    auto make_online_toolbar_button = [this, &toolbar_bg, &icon_color](const std::string &icon, const wxString &tooltip) {
-        wxBitmap bitmap = create_scaled_bitmap(icon, this, m_online_toolbar_icon_px, false, icon_color);
-        auto *btn       = new wxBitmapButton(m_online_toolbar_panel, wxID_ANY, bitmap, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+    // Icon tints: MD3 OnSurface for enabled, OutlineVariant for the disabled state.
+    wxColour icon_enabled  = StateColor::semantic(MD3::Role::OnSurface);
+    wxColour icon_disabled = StateColor::semantic(MD3::Role::OutlineVariant);
+    // Prefer Material Symbols glyphs; fall back to the legacy raster SVGs when the
+    // icon font is unavailable so a missing TTF degrades to the old look, not tofu.
+    const bool use_glyphs = MaterialIcon::available();
+    auto make_online_toolbar_button = [this, &toolbar_bg, &icon_enabled, &icon_disabled, use_glyphs]
+        (uint32_t glyph, const std::string &raster_icon, const wxString &tooltip) {
+        wxBitmap enabled_bmp, disabled_bmp;
+        if (use_glyphs) {
+            enabled_bmp  = MaterialIcon::bitmap(this, glyph, m_online_toolbar_icon_px, icon_enabled);
+            disabled_bmp = MaterialIcon::bitmap(this, glyph, m_online_toolbar_icon_px, icon_disabled);
+        } else {
+            enabled_bmp  = create_scaled_bitmap(raster_icon, this, m_online_toolbar_icon_px, false, icon_enabled.GetAsString(wxC2S_HTML_SYNTAX).ToStdString());
+            disabled_bmp = create_scaled_bitmap(raster_icon, this, m_online_toolbar_icon_px, false, icon_disabled.GetAsString(wxC2S_HTML_SYNTAX).ToStdString());
+        }
+        auto *btn = new wxBitmapButton(m_online_toolbar_panel, wxID_ANY, enabled_bmp, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
         btn->SetToolTip(tooltip);
         btn->SetBackgroundColour(toolbar_bg);
-        btn->SetBitmapDisabled(create_scaled_bitmap(icon, this, m_online_toolbar_icon_px, false, StateColor::semantic(MD3::Role::OutlineVariant).GetAsString(wxC2S_HTML_SYNTAX).ToStdString()));
+        btn->SetBitmapDisabled(disabled_bmp);
         btn->SetMinSize(wxSize(FromDIP(28), FromDIP(28)));
         return btn;
     };
 
     wxBoxSizer *left_group  = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *right_group = new wxBoxSizer(wxHORIZONTAL);
-    m_online_back_btn    = make_online_toolbar_button("mall_control_back", _CTX(L_CONTEXT("Back", "WebView"), "WebView"));
-    m_online_refresh_btn = make_online_toolbar_button("mall_control_refresh", _L("Refresh"));
+    m_online_back_btn    = make_online_toolbar_button(MaterialIcon::ArrowBack, "mall_control_back", _CTX(L_CONTEXT("Back", "WebView"), "WebView"));
+    m_online_refresh_btn = make_online_toolbar_button(MaterialIcon::Refresh, "mall_control_refresh", _L("Refresh"));
     left_group->Add(m_online_back_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
     left_group->Add(m_online_refresh_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
-    m_online_open_browser_btn = make_online_toolbar_button("open_in_browser", _L("Open in browser"));
+    m_online_open_browser_btn = make_online_toolbar_button(MaterialIcon::OpenInNew, "open_in_browser", _L("Open in browser"));
     right_group->Add(m_online_open_browser_btn, 0, wxALIGN_CENTER_VERTICAL);
 
     m_online_toolbar_sizer->Add(left_group, 0, wxALIGN_CENTER_VERTICAL);
@@ -2439,22 +2454,28 @@ void WebViewPanel::UpdateOnlineToolbarState()
     const bool can_show_open_button = (on_online_tab || on_makerlab_tab) && has_webview;
 
 
-    std::string enabled_color = StateColor::semantic(MD3::Role::OnSurface).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
-    std::string disabled_color = StateColor::semantic(MD3::Role::OutlineVariant).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
-    auto update_btn_state = [this, &enabled_color, &disabled_color](wxBitmapButton *btn, bool enable, const std::string &icon) {
+    // Icon tints: MD3 OnSurface enabled / OutlineVariant disabled. Prefer Material
+    // Symbols glyphs; fall back to the legacy raster SVGs when the icon font is
+    // unavailable so a missing TTF degrades to the old look, not tofu.
+    wxColour   enabled_color  = StateColor::semantic(MD3::Role::OnSurface);
+    wxColour   disabled_color = StateColor::semantic(MD3::Role::OutlineVariant);
+    const bool use_glyphs     = MaterialIcon::available();
+    auto update_btn_state = [this, &enabled_color, &disabled_color, use_glyphs](wxBitmapButton *btn, bool enable, uint32_t glyph, const std::string &icon) {
         if (!btn) return;
         btn->Enable(enable);
-        const int px = m_online_toolbar_icon_px;
-        btn->SetBitmap(enable ? create_scaled_bitmap(icon, this, px, false, enabled_color)
-                              : create_scaled_bitmap(icon, this, px, false, disabled_color));
+        const int       px   = m_online_toolbar_icon_px;
+        const wxColour &tint = enable ? enabled_color : disabled_color;
+        wxBitmap        bmp  = use_glyphs ? MaterialIcon::bitmap(this, glyph, px, tint)
+                                          : create_scaled_bitmap(icon, this, px, false, tint.GetAsString(wxC2S_HTML_SYNTAX).ToStdString());
+        btn->SetBitmap(bmp);
     };
 
     bool can_go_back = false;
     if (can_show_open_button)
         can_go_back = active_webview->CanGoBack();
 
-    update_btn_state(m_online_back_btn, can_go_back, "mall_control_back");
-    update_btn_state(m_online_refresh_btn, can_show_open_button, "mall_control_refresh");
+    update_btn_state(m_online_back_btn, can_go_back, MaterialIcon::ArrowBack, "mall_control_back");
+    update_btn_state(m_online_refresh_btn, can_show_open_button, MaterialIcon::Refresh, "mall_control_refresh");
     if (m_online_open_browser_btn) {
         bool has_url = false;
         if (can_show_open_button) {

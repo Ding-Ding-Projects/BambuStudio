@@ -10,6 +10,8 @@
 #include "MainFrame.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -26,45 +28,57 @@ namespace GUI {
         wxBoxSizer* m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
         auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-        m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+        // MD3 OutlineVariant divider (the legacy wxColour(166,169,170) had no
+        // entry in the dark-remap table, so it stayed light in dark mode).
+        m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
         m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
 
         m_web_control_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, MODEL_MALL_PAGE_CONTROL_SIZE, wxTAB_TRAVERSAL);
-        m_web_control_panel->SetBackgroundColour(*wxWHITE);
+        // MD3 SurfaceContainerLowest toolbar chrome (was a raw *wxWHITE fill).
+        m_web_control_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         m_web_control_panel->SetSize(MODEL_MALL_PAGE_CONTROL_SIZE);
 
 
         wxBoxSizer* m_sizer_web_control = new wxBoxSizer(wxHORIZONTAL);
 
-        auto m_control_back = new ScalableButton(m_web_control_panel, wxID_ANY, "mall_control_back", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
-        m_control_back->SetBackgroundColour(*wxWHITE);
-        m_control_back->SetSize(wxSize(FromDIP(25), FromDIP(30)));
-        m_control_back->SetMinSize(wxSize(FromDIP(25), FromDIP(30)));
-        m_control_back->SetMaxSize(wxSize(FromDIP(25), FromDIP(30)));
+        // MD3 store-toolbar nav actions: Material Symbols glyphs (arrow_back /
+        // arrow_forward / refresh) tinted OnSurfaceVariant on the
+        // SurfaceContainerLowest panel. Capability-gated: when the icon font is
+        // unavailable, fall back to the legacy mall_control_* raster assets so a
+        // missing TTF degrades to the old look rather than rendering tofu.
+        const wxColour ctrl_panel_bg  = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+        const wxColour ctrl_icon_col  = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        const int      ctrl_icon_px   = 16;
+        const bool     use_ctrl_glyph = MaterialIcon::available();
 
+        auto make_control_button = [&](const std::string &raster_name, uint32_t glyph) -> ScalableButton * {
+            // Empty icon name on the glyph path: ScalableButton::msw_rescale()
+            // (reached via UpdateDarkUI) reloads m_current_icon_name over the
+            // bitmap, so leaving it empty keeps the glyph from being clobbered.
+            ScalableButton *btn = new ScalableButton(
+                m_web_control_panel, wxID_ANY,
+                use_ctrl_glyph ? std::string() : raster_name,
+                wxEmptyString, wxDefaultSize, wxDefaultPosition,
+                wxBU_EXACTFIT | wxNO_BORDER, true);
+            if (use_ctrl_glyph)
+                btn->SetBitmap(MaterialIcon::bitmap(this, glyph, ctrl_icon_px, ctrl_icon_col));
+            btn->SetBackgroundColour(ctrl_panel_bg);
+            btn->SetSize(wxSize(FromDIP(25), FromDIP(30)));
+            btn->SetMinSize(wxSize(FromDIP(25), FromDIP(30)));
+            btn->SetMaxSize(wxSize(FromDIP(25), FromDIP(30)));
+            btn->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { SetCursor(wxCursor(wxCURSOR_HAND)); });
+            btn->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { SetCursor(wxCursor(wxCURSOR_ARROW)); });
+            return btn;
+        };
+
+        auto m_control_back = make_control_button("mall_control_back", MaterialIcon::ArrowBack);
         m_control_back->Bind(wxEVT_LEFT_DOWN, &ModelMallDialog::on_back, this);
-        m_control_back->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCursor(wxCURSOR_HAND));});
-        m_control_back->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCursor(wxCURSOR_ARROW));});
 
-
-        auto m_control_forward = new ScalableButton(m_web_control_panel, wxID_ANY, "mall_control_forward", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
-        m_control_forward->SetBackgroundColour(*wxWHITE);
-        m_control_forward->SetSize(wxSize(FromDIP(25), FromDIP(30)));
-        m_control_forward->SetMinSize(wxSize(FromDIP(25), FromDIP(30)));
-        m_control_forward->SetMaxSize(wxSize(FromDIP(25), FromDIP(30)));
-
+        auto m_control_forward = make_control_button("mall_control_forward", MaterialIcon::ArrowForward);
         m_control_forward->Bind(wxEVT_LEFT_DOWN, &ModelMallDialog::on_forward, this);
-        m_control_forward->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCursor(wxCURSOR_HAND)); });
-        m_control_forward->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCursor(wxCURSOR_ARROW)); });
 
-        auto m_control_refresh = new ScalableButton(m_web_control_panel, wxID_ANY, "mall_control_refresh", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
-        m_control_refresh->SetBackgroundColour(*wxWHITE);
-        m_control_refresh->SetSize(wxSize(FromDIP(25), FromDIP(30)));
-        m_control_refresh->SetMinSize(wxSize(FromDIP(25), FromDIP(30)));
-        m_control_refresh->SetMaxSize(wxSize(FromDIP(25), FromDIP(30)));
+        auto m_control_refresh = make_control_button("mall_control_refresh", MaterialIcon::Refresh);
         m_control_refresh->Bind(wxEVT_LEFT_DOWN, &ModelMallDialog::on_refresh, this);
-        m_control_refresh->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCursor(wxCURSOR_HAND)); });
-        m_control_refresh->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCursor(wxCURSOR_ARROW)); });
 
 #ifdef __APPLE__
         m_control_back->SetToolTip(_L("Click to return (Command + Left Arrow)"));

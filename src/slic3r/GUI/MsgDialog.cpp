@@ -14,6 +14,7 @@
 #include <boost/algorithm/string/replace.hpp>
 
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "libslic3r/libslic3r.h"
 #include "libslic3r/Utils.hpp"
 #include "GUI.hpp"
@@ -228,10 +229,26 @@ void MsgDialog::apply_style(long style)
     if (style & wxNO)       add_button(wxID_NO, false,_L("No"));
     if (style & wxCANCEL)   add_button(wxID_CANCEL, false, _L("Cancel"));
 
-    logo->SetBitmap( create_scaled_bitmap(style & wxAPPLY        ? "completed" :
-                                          style & wxICON_WARNING        ? "obj_warning" :
-                                          style & wxICON_INFORMATION    ? "info"        :
-                                          style & wxICON_QUESTION       ? "question"    : "BambuStudio", this, 64, style & wxICON_ERROR));
+    // Wave 3 (shared-dialog-action-icons): render the dialog status glyph from the
+    // Material Symbols face, coloured from a semantic role so it follows the theme.
+    // Non-status dialogs (no icon style flag) keep the brand-logo raster. Falls back
+    // to the legacy raster set when the icon font is unavailable so a missing TTF
+    // degrades to the old look instead of tofu.
+    uint32_t  status_cp   = 0;
+    MD3::Role status_role = MD3::Role::OnSurfaceVariant;
+    if      (style & wxAPPLY)             { status_cp = MaterialIcon::TaskAlt; status_role = MD3::Role::Primary; }
+    else if (style & wxICON_ERROR)        { status_cp = MaterialIcon::Error;   status_role = MD3::Role::Error; }
+    else if (style & wxICON_WARNING)      { status_cp = MaterialIcon::Warning; status_role = MD3::Role::OnSurfaceVariant; }
+    else if (style & wxICON_INFORMATION)  { status_cp = MaterialIcon::Info;    status_role = MD3::Role::Primary; }
+    else if (style & wxICON_QUESTION)     { status_cp = MaterialIcon::Help;    status_role = MD3::Role::OnSurfaceVariant; }
+    if (MaterialIcon::available() && status_cp != 0) {
+        logo->SetBitmap(MaterialIcon::bitmap(this, status_cp, 64, StateColor::semantic(status_role)));
+    } else {
+        logo->SetBitmap( create_scaled_bitmap(style & wxAPPLY        ? "completed" :
+                                              style & wxICON_WARNING        ? "obj_warning" :
+                                              style & wxICON_INFORMATION    ? "info"        :
+                                              style & wxICON_QUESTION       ? "question"    : "BambuStudio", this, 64, style & wxICON_ERROR));
+    }
 }
 
 void MsgDialog::finalize()
@@ -639,7 +656,12 @@ Newer3mfVersionDialog::Newer3mfVersionDialog(wxWindow *parent, const Semver *fil
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
 
     wxBoxSizer *    content_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticBitmap *info_bitmap   = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("info", nullptr, 60), wxDefaultPosition, wxSize(FromDIP(70), FromDIP(70)), 0);
+    // Wave 3 (shared-dialog-action-icons): info status glyph, semantic Primary; falls
+    // back to the legacy raster when the Material Symbols face is unavailable.
+    wxBitmap        info_bmp      = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::Info, 60, StateColor::semantic(MD3::Role::Primary))
+        : create_scaled_bitmap("info", this, 60);
+    wxStaticBitmap *info_bitmap   = new wxStaticBitmap(this, wxID_ANY, info_bmp, wxDefaultPosition, wxSize(FromDIP(70), FromDIP(70)), 0);
     wxBoxSizer *    msg_sizer     = get_msg_sizer();
     content_sizer->Add(info_bitmap, 0, wxEXPAND | wxALL, FromDIP(5));
     content_sizer->Add(msg_sizer, 0, wxEXPAND | wxALL, FromDIP(5));

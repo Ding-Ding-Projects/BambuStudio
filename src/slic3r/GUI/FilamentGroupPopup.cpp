@@ -7,6 +7,10 @@
 #include "PartPlate.hpp"
 #include "FilamentMapDialog.hpp"
 #include "DeviceCore/DevConfigUtil.h"
+#include "Widgets/MaterialIcon.hpp"
+
+#include <wx/dcmemory.h>
+#include <wx/graphics.h>
 
 #include <algorithm>
 
@@ -85,9 +89,80 @@ bool open_filament_group_wiki()
     return false;
 }
 
+wxBitmap FilamentGroupPopup::MakeRadioGlyphBitmap(bool checked, bool hover, bool disabled)
+{
+    // Logical footprint of the indicator (matches the kit inline radios; the
+    // wxBitmapButton auto-sizes to the bitmap, so the row spacer follows).
+    const int kRadioPx = 18;
+
+    const wxColour primary   = StateColor::semantic(MD3::Role::Primary);          // checked
+    const wxColour onSurfVar = StateColor::semantic(MD3::Role::OnSurfaceVariant); // unchecked
+    // MD3 disabled = the role colour dimmed via alpha (mirrors Widgets/RadioBox).
+    const wxColour glyphColour = disabled
+        ? wxColour(onSurfVar.Red(), onSurfVar.Green(), onSurfVar.Blue(), 97)
+        : (checked ? primary : onSurfVar);
+
+    const uint32_t cp = checked ? MaterialIcon::RadioButtonChecked
+                                : MaterialIcon::RadioButtonUnchecked;
+
+    wxBitmap glyph = MaterialIcon::bitmap(this, cp, kRadioPx, glyphColour);
+    if (!hover)
+        return glyph;
+
+    // Hover: composite a translucent MD3 state-layer disc (the glyph's own role
+    // colour at ~10% alpha) behind the glyph, kept within the control footprint
+    // so the row layout is unchanged.
+    double scale = GetDPIScaleFactor();
+    if (scale <= 0.0)
+        scale = 1.0;
+    const int dev_w = glyph.GetWidth();
+    const int dev_h = glyph.GetHeight();
+
+    wxBitmap out(dev_w, dev_h);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+    out.UseAlpha();
+#endif
+    {
+        wxMemoryDC mdc(out);
+        mdc.SetBackground(*wxTRANSPARENT_BRUSH);
+        mdc.Clear();
+        wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+        if (gc) {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            const wxColour layer(glyphColour.Red(), glyphColour.Green(), glyphColour.Blue(), 26);
+            gc->SetPen(*wxTRANSPARENT_PEN);
+            gc->SetBrush(wxBrush(layer));
+            gc->DrawEllipse(0, 0, dev_w, dev_h);
+            gc->DrawBitmap(glyph, 0, 0, dev_w, dev_h);
+            delete gc; // flush before the bitmap is read
+        }
+        mdc.SelectObject(wxNullBitmap);
+    }
+#if wxCHECK_VERSION(3, 1, 6)
+    out.SetScaleFactor(scale); // lay out at logical px on HiDPI
+#endif
+    return out;
+}
+
 void FilamentGroupPopup::CreateBmps()
 {
-    checked_bmp = create_scaled_bitmap("map_mode_on", nullptr, 16);;
+    // MD3: draw the radio indicators from the Material Symbols icon font
+    // (radio_button_checked / radio_button_unchecked) recoloured through semantic
+    // roles -- checked = Primary, unchecked = OnSurfaceVariant, disabled = dimmed --
+    // instead of the legacy map_mode_* raster PNGs. State is carried by glyph +
+    // colour, never the font FILL axis. Fall back to the bundled bitmaps when the
+    // icon face is unavailable so a missing TTF degrades to the legacy look. This
+    // is re-invoked from Init() on a dark-mode toggle, so the baked colours refresh.
+    if (MaterialIcon::available()) {
+        checked_bmp         = MakeRadioGlyphBitmap(/*checked*/ true,  /*hover*/ false, /*disabled*/ false);
+        unchecked_bmp       = MakeRadioGlyphBitmap(/*checked*/ false, /*hover*/ false, /*disabled*/ false);
+        disabled_bmp        = MakeRadioGlyphBitmap(/*checked*/ false, /*hover*/ false, /*disabled*/ true);
+        checked_hover_bmp   = MakeRadioGlyphBitmap(/*checked*/ true,  /*hover*/ true,  /*disabled*/ false);
+        unchecked_hover_bmp = MakeRadioGlyphBitmap(/*checked*/ false, /*hover*/ true,  /*disabled*/ false);
+        return;
+    }
+
+    checked_bmp = create_scaled_bitmap("map_mode_on", nullptr, 16);
     unchecked_bmp = create_scaled_bitmap("map_mode_off", nullptr, 16);
     disabled_bmp = create_scaled_bitmap("map_mode_disabled", nullptr, 16);
     checked_hover_bmp = create_scaled_bitmap("map_mode_on_hovered", nullptr, 16);
