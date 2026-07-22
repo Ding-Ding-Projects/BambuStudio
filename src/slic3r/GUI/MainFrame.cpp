@@ -50,6 +50,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "BindDialog.hpp"
 #include "../Utils/MacDarkMode.hpp"
 
@@ -1385,9 +1386,17 @@ void MainFrame::update_prepare_action_bar_style()
     m_prepare_action_bar_divider->SetMaxSize(wxSize(-1, divider_height));
     m_prepare_action_bar_divider->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
-    if (split_line_icon) {
-        split_line_icon->SetBitmap(create_scaled_bitmap("topbar_line", m_prepare_action_bar, 22));
-        split_line_icon->SetMinSize(wxSize(FromDIP(3), FromDIP(22)));
+    if (m_prepare_split_line) {
+        // Re-apply the OutlineVariant tone and DPI-scaled geometry so the divider
+        // stays theme-correct and crisp across monitor/DPI changes.
+        m_prepare_split_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+        m_prepare_split_line->SetMinSize(wxSize(FromDIP(1), FromDIP(22)));
+    }
+    if (m_prepare_expand_btn) {
+        // Re-derive the ghost IconButton's neutral rest fill/geometry now that the
+        // bar's SurfaceContainerLow background is applied (Rescale re-runs the MD3
+        // styling), keeping it theme- and DPI-correct.
+        m_prepare_expand_btn->Rescale();
     }
 
     if (m_prepare_plate_button) {
@@ -2220,6 +2229,10 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     m_prepare_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSecondaryContainer)));
     m_prepare_plate_button->SetCornerRadius(FromDIP(12));
     m_prepare_plate_button->SetMinSize(FromDIP(wxSize(96, 40)));
+    // Leading grid_view glyph (MD3 Prepare kit §62-63), coloured by the chip's
+    // OnSecondaryContainer text role. Button self-gates on MaterialIcon::available():
+    // no glyph (label-only chip) when the Material Symbols face is unavailable.
+    m_prepare_plate_button->SetGlyph(MaterialIcon::GridView, 20);
 
     // Add-plate (MD3 digest 3.2): dashed 1px Outline border, transparent
     // (bar-surface) fill, 12px radius, OnSurfaceVariant glyph.
@@ -2233,6 +2246,13 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     m_prepare_add_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_prepare_add_plate_button->SetCornerRadius(FromDIP(12));
     m_prepare_add_plate_button->SetMinSize(FromDIP(wxSize(40, 40)));
+    // Replace the literal '+' label with a 20px 'add' glyph (MD3 Prepare kit §64),
+    // coloured by the button's OnSurfaceVariant text role. Capability-gated: the
+    // '+' text stays as the fallback when the Material Symbols face is unavailable.
+    if (MaterialIcon::available()) {
+        m_prepare_add_plate_button->SetLabel(wxEmptyString);
+        m_prepare_add_plate_button->SetGlyph(MaterialIcon::Add, 20);
+    }
 
     style_prepare_estimate(m_prepare_estimate_label, m_prepare_estimate_detail);
     m_prepare_estimate_label->SetMinSize(FromDIP(wxSize(118, -1)));
@@ -2272,10 +2292,25 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     });
 
     /*helio*/
-    split_line_icon = new wxStaticBitmap(parent, wxID_ANY, create_scaled_bitmap("topbar_line", parent, 22), wxDefaultPosition, wxSize(FromDIP(3), FromDIP(22)), 0);
+    // MD3 divider: a 1px OutlineVariant vertical rule replaces the legacy raster
+    // 'topbar_line' separator bitmap. It mirrors the action bar's own horizontal
+    // divider (a thin panel filled with the OutlineVariant token), so it is
+    // theme- and DPI-adaptive without any raster asset.
+    m_prepare_split_line = new wxPanel(parent, wxID_ANY, wxDefaultPosition,
+                                       wxSize(FromDIP(1), FromDIP(22)), wxBORDER_NONE);
+    m_prepare_split_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_prepare_split_line->SetMinSize(wxSize(FromDIP(1), FromDIP(22)));
+
+    // The Helio mark is a genuine brand asset (exempt): it stays a raster bitmap
+    // and is never recoloured. The generic 'expand program' affordance, however,
+    // is legacy raster chrome — when the Material Symbols face is available it
+    // migrates to the borderless glyph IconButton below, and the raster
+    // ExpandButton is retained only as the capability fallback.
+    const bool action_icons_ok = MaterialIcon::available();
     expand_program_holder = new ExpandButtonHolder(parent);
     expand_program_holder->addExpandButton(expand_helio_id, "helio_icon_topbar");
-    expand_program_holder->addExpandButton(expand_program_id, "expand_program");
+    if (!action_icons_ok)
+        expand_program_holder->addExpandButton(expand_program_id, "expand_program");
     expand_program_holder->Bind(wxEXPAND_LEFT_DOWN, [=](const wxCommandEvent& e) {
 
         if (e.GetInt() == expand_helio_id) {
@@ -2301,8 +2336,23 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
     // Set tooltip for Helio expand button
     expand_program_holder->SetExpandButtonRichTooltip(expand_helio_id, "monitor_speed", _L("Unlock faster, more reliable, warp-free prints with Helio Additive."));
-    // Set tooltip for program expand button (same tooltip as Helio for consistency)
-    expand_program_holder->SetExpandButtonRichTooltip(expand_program_id, "monitor_speed", _L("Unlock faster, more reliable, warp-free prints with Helio Additive."));
+    // Set tooltip for the raster program expand button (capability fallback only)
+    if (!action_icons_ok)
+        expand_program_holder->SetExpandButtonRichTooltip(expand_program_id, "monitor_speed", _L("Unlock faster, more reliable, warp-free prints with Helio Additive."));
+
+    // Material Symbols expand affordance: a borderless ghost IconButton drawn with
+    // an expand chevron (OnSurfaceVariant, hover SurfaceContainerHigh) that opens
+    // the same ExpandCenterDialog. Replaces the raster 'expand_program' chrome.
+    if (action_icons_ok) {
+        m_prepare_expand_btn = new Button(parent, wxEmptyString);
+        m_prepare_expand_btn->SetIconButton(Button::IconShape::Circle, 34);
+        m_prepare_expand_btn->SetGlyph(MaterialIcon::ExpandLess);
+        m_prepare_expand_btn->SetToolTip(_L("Unlock faster, more reliable, warp-free prints with Helio Additive."));
+        m_prepare_expand_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+            ExpandCenterDialog dlg;
+            dlg.ShowModal();
+        });
+    }
 
     /*slice*/
     m_slice_select = eSlicePlate;
@@ -2330,6 +2380,13 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     print_panel->SetSizer(print_sizer);
 
     update_side_button_style();
+    // Leading Material Symbols glyphs (MD3 Prepare kit §71-72): Slice = deployed_code
+    // (outlined action), Print = print. The vendored Material Symbols face is static
+    // Outlined, so the Print 'filled' emphasis is carried by its Primary/OnPrimary
+    // fill (set in update_side_button_style), not a FILL-axis swap. SideButton
+    // self-gates on MaterialIcon::available(): the label alone shows when absent.
+    m_slice_btn->SetLeadingGlyph(MaterialIcon::DeployedCode);
+    m_print_btn->SetLeadingGlyph(MaterialIcon::Print);
     m_slice_option_btn->Enable();
     m_print_option_btn->Enable();
     sizer->Add(m_prepare_plate_button, 0, wxALIGN_CENTER_VERTICAL);
@@ -2338,8 +2395,10 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     sizer->Add(0, 0, 1, wxEXPAND, 0);
     sizer->Add(estimate_col, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
     sizer->Add(expand_program_holder, 0, wxALIGN_CENTER, 0);
+    if (m_prepare_expand_btn)
+        sizer->Add(m_prepare_expand_btn, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(FromDIP(4), 0, 0, 0, 0);
-    sizer->Add(split_line_icon, 0, wxALIGN_CENTER, 0);
+    sizer->Add(m_prepare_split_line, 0, wxALIGN_CENTER, 0);
     sizer->Add(FromDIP(6), 0, 0, 0, 0);
     sizer->Add(slice_panel, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(FromDIP(8), 0, 0, 0, 0);
@@ -3055,6 +3114,8 @@ void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
     m_slice_option_btn->Rescale();
     m_print_option_btn->Rescale();
     expand_program_holder->msw_rescale();
+    if (m_prepare_expand_btn)
+        m_prepare_expand_btn->Rescale();
     update_prepare_action_bar_style();
 
     // update Plater

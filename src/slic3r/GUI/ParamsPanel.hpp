@@ -81,7 +81,8 @@ class ParamsPanel : public wxPanel
         wxBoxSizer* m_mode_sizer { nullptr };
         // // BBS: new layout
         StaticBox* m_top_panel{ nullptr };
-        ScalableButton* m_process_icon{ nullptr };
+        // MD3: the Process leading icon is a borderless IconButton drawing the Tune glyph.
+        Button* m_process_icon{ nullptr };
         wxStaticText* m_title_label { nullptr };
         SwitchButton* m_mode_region { nullptr };
         ScalableButton *m_tips_arrow{nullptr};
@@ -114,9 +115,11 @@ class ParamsPanel : public wxPanel
         wxScrolledWindow* m_page_view { nullptr };
         wxBoxSizer* m_page_sizer { nullptr };
 
-        ScalableButton*		m_setting_btn { nullptr };
+        // MD3: object-table + compare controls are borderless IconButtons drawing
+        // GridView (table) and SwapHoriz (compare) glyphs; search stays raster.
+        Button*				m_setting_btn { nullptr };
         ScalableButton*		m_search_btn { nullptr };
-        ScalableButton*		m_compare_btn { nullptr };
+        Button*				m_compare_btn { nullptr };
 
         wxBitmap m_toggle_on_icon;
         wxBitmap m_toggle_off_icon;

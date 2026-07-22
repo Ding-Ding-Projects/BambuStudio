@@ -4,6 +4,7 @@
 #include <wx/dcgraph.h>
 #include "Label.hpp"
 #include "StateColor.hpp"
+#include "MaterialIcon.hpp"
 #include "../GUI_App.hpp"
 #include "../wxExtensions.hpp"
 #include "../I18N.hpp"
@@ -27,11 +28,7 @@ namespace Slic3r { namespace GUI {
     m_none_arrow_img    = ScalableBitmap(this, "monitor_none_arrow", 14);
     m_none_add_img      = ScalableBitmap(this, "monitor_none_add", 14);
 
-    m_wifi_none_img     = ScalableBitmap(this, "monitor_signal_no", 18);
-    m_wifi_weak_img     = ScalableBitmap(this, "monitor_signal_weak", 18);
-    m_wifi_middle_img   = ScalableBitmap(this, "monitor_signal_middle", 18);
-    m_wifi_strong_img   = ScalableBitmap(this, "monitor_signal_strong", 18);
-    m_network_wired_img = ScalableBitmap(this, "monitor_network_wired", 18);
+    init_signal_bitmaps();
 
     m_intetval_timer = new wxTimer();
     m_intetval_timer->SetOwner(this);
@@ -92,6 +89,31 @@ bool SideToolsPanel::is_in_interval()
     return m_is_in_interval;
 }
 
+void SideToolsPanel::init_signal_bitmaps()
+{
+    // MD3: render the Wi-Fi / wired connectivity indicators from the Material
+    // Symbols icon font instead of the legacy monitor_signal_*/monitor_network_wired
+    // rasters. The Wi-Fi signal level is carried by the glyph shape (4-bar /
+    // 3-bar / 2-bar / null); state is expressed through colour, never the FILL
+    // axis. Fall back to the bundled bitmaps when the icon face is unavailable so
+    // a missing TTF degrades to the legacy look instead of tofu.
+    if (MaterialIcon::available()) {
+        const wxColour signal_on  = StateColor::semantic(MD3::Role::Primary);
+        const wxColour signal_off = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        m_wifi_strong_img   = MaterialIcon::bitmap(this, MaterialIcon::SignalWifi4Bar,          18, signal_on);
+        m_wifi_middle_img   = MaterialIcon::bitmap(this, MaterialIcon::NetworkWifi3Bar,         18, signal_on);
+        m_wifi_weak_img     = MaterialIcon::bitmap(this, MaterialIcon::NetworkWifi2Bar,         18, signal_off);
+        m_wifi_none_img     = MaterialIcon::bitmap(this, MaterialIcon::SignalWifiStatusbarNull, 18, signal_off);
+        m_network_wired_img = MaterialIcon::bitmap(this, MaterialIcon::Lan,                     18, signal_on);
+    } else {
+        m_wifi_strong_img   = create_scaled_bitmap("monitor_signal_strong", this, 18);
+        m_wifi_middle_img   = create_scaled_bitmap("monitor_signal_middle", this, 18);
+        m_wifi_weak_img     = create_scaled_bitmap("monitor_signal_weak", this, 18);
+        m_wifi_none_img     = create_scaled_bitmap("monitor_signal_no", this, 18);
+        m_network_wired_img = create_scaled_bitmap("monitor_network_wired", this, 18);
+    }
+}
+
 void SideToolsPanel::msw_rescale()
 {
     m_printing_img.msw_rescale();
@@ -101,10 +123,7 @@ void SideToolsPanel::msw_rescale()
     m_none_arrow_img.msw_rescale();
     m_none_add_img.msw_rescale();
 
-    m_wifi_none_img.msw_rescale();
-    m_wifi_weak_img.msw_rescale();
-    m_wifi_middle_img.msw_rescale();
-    m_wifi_strong_img.msw_rescale();
+    init_signal_bitmaps();
 
     Refresh();
 }
@@ -164,7 +183,7 @@ void SideToolsPanel::doRender(wxDC &dc)
 
         wxString no_printer_str = _L("No printer");
         auto sizet = dc.GetTextExtent(no_printer_str);
-        auto left_add_bitmap = size.x - FromDIP(30) - m_wifi_none_img.GetBmpSize().x - m_none_add_img.GetBmpSize().x;
+        auto left_add_bitmap = size.x - FromDIP(30) - ScalableBitmap::GetBmpSize(m_wifi_none_img).x - m_none_add_img.GetBmpSize().x;
         auto size_width = left_add_bitmap - left;
 
         if (sizet.x > size_width) {
@@ -183,7 +202,7 @@ void SideToolsPanel::doRender(wxDC &dc)
 
         dc.DrawText(no_printer_str, wxPoint(left, (size.y - sizet.y) / 2));
 
-        left = size.x - FromDIP(30) - m_wifi_none_img.GetBmpSize().x;
+        left = size.x - FromDIP(30) - ScalableBitmap::GetBmpSize(m_wifi_none_img).x;
         dc.DrawBitmap(m_none_add_img.bmp(), left, (size.y - m_none_add_img.GetBmpSize().y) / 2);
     } else {
         dc.DrawBitmap(m_printing_img.bmp(), left, (size.y - m_printing_img.GetBmpSize().y) / 2);
@@ -197,7 +216,7 @@ void SideToolsPanel::doRender(wxDC &dc)
         dc.SetTextForeground(SIDE_TOOLS_GREY900);
 
         auto sizet = dc.GetTextExtent(m_dev_name);
-        auto text_end = size.x - m_wifi_none_img.GetBmpSize().x - 20;
+        auto text_end = size.x - ScalableBitmap::GetBmpSize(m_wifi_none_img).x - 20;
 
         wxString finally_name = m_dev_name;
         if (sizet.x > (text_end - left)) {
@@ -214,12 +233,12 @@ void SideToolsPanel::doRender(wxDC &dc)
 
         dc.DrawText(finally_name, wxPoint(left, (size.y - sizet.y) / 2));
 
-        left = size.x - FromDIP(18) - m_wifi_none_img.GetBmpSize().x;
-        if (m_wifi_type == WifiSignal::NONE) dc.DrawBitmap(m_wifi_none_img.bmp(), left, (size.y - m_wifi_none_img.GetBmpSize().y) / 2);
-        if (m_wifi_type == WifiSignal::WEAK) dc.DrawBitmap(m_wifi_weak_img.bmp(), left, (size.y - m_wifi_weak_img.GetBmpSize().y) / 2);
-        if (m_wifi_type == WifiSignal::MIDDLE) dc.DrawBitmap(m_wifi_middle_img.bmp(), left, (size.y - m_wifi_middle_img.GetBmpSize().y) / 2);
-        if (m_wifi_type == WifiSignal::STRONG) dc.DrawBitmap(m_wifi_strong_img.bmp(), left, (size.y - m_wifi_strong_img.GetBmpSize().y) / 2);
-        if (m_wifi_type == WifiSignal::WIRED)  dc.DrawBitmap(m_network_wired_img.bmp(), left, (size.y - m_network_wired_img.GetBmpSize().y) / 2);
+        left = size.x - FromDIP(18) - ScalableBitmap::GetBmpSize(m_wifi_none_img).x;
+        if (m_wifi_type == WifiSignal::NONE) dc.DrawBitmap(m_wifi_none_img, left, (size.y - ScalableBitmap::GetBmpSize(m_wifi_none_img).y) / 2);
+        if (m_wifi_type == WifiSignal::WEAK) dc.DrawBitmap(m_wifi_weak_img, left, (size.y - ScalableBitmap::GetBmpSize(m_wifi_weak_img).y) / 2);
+        if (m_wifi_type == WifiSignal::MIDDLE) dc.DrawBitmap(m_wifi_middle_img, left, (size.y - ScalableBitmap::GetBmpSize(m_wifi_middle_img).y) / 2);
+        if (m_wifi_type == WifiSignal::STRONG) dc.DrawBitmap(m_wifi_strong_img, left, (size.y - ScalableBitmap::GetBmpSize(m_wifi_strong_img).y) / 2);
+        if (m_wifi_type == WifiSignal::WIRED)  dc.DrawBitmap(m_network_wired_img, left, (size.y - ScalableBitmap::GetBmpSize(m_network_wired_img).y) / 2);
     }
 
     if (m_hover) {

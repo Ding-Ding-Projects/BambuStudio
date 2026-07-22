@@ -2,6 +2,7 @@
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "StaticBox.hpp"
+#include "MaterialIcon.hpp"
 
 #include "../wxExtensions.hpp"
 #include "../Utils/MacDarkMode.hpp"
@@ -588,53 +589,57 @@ void CustomToggleButton::render(wxDC& dc)
 
 void CustomToggleButton::doRender(wxDC& dc)
 {
+    // MD3 filter Chip (kit selection/Chip.prompt.md): a pill (r = height/2) with a
+    // 1px border, a 16px leading glyph, and OnSurfaceVariant/Primary text. The
+    // selected state keeps the tonal SecondaryContainer fill + Primary
+    // border/foreground; unselected is transparent with a 1px Outline border.
     wxRect rect = GetClientRect();
     wxSize textRect = dc.GetMultiLineTextExtent(m_label);
-    wxSize iconRect = m_selected_icon.GetSize();
-    int iconRectWidth = iconRect.GetWidth();
-    int iconRectHeight = iconRect.GetHeight();
-#ifdef __APPLE__
-    iconRectWidth = FromDIP(16);
-    iconRectHeight = FromDIP(16);
-#endif
-    int left = (rect.GetSize().x -  textRect.GetWidth() - iconRectWidth - FromDIP(6)) / 2;
 
-    // Draw background
+    // Leading glyph occupies a 16px logical box (DPI-safe).
+    const int iconRectWidth  = FromDIP(16);
+    const int iconRectHeight = FromDIP(16);
+    int left = (rect.GetSize().x - textRect.GetWidth() - iconRectWidth - FromDIP(6)) / 2;
+
+    // Shared foreground for the glyph and the label so the chip reads as one
+    // token: Primary when selected, otherwise OnSurfaceVariant (per Chip.prompt.md:
+    // "Unselected: transparent + 1px outline border + on-surface-variant text").
+    // semantic() resolves the current theme, matching the Outline border below.
+    const wxColour fg = m_isSelected
+        ? m_primary_colour
+        : StateColor::semantic(MD3::Role::OnSurfaceVariant);
+
+    // Draw background: pill radius = height/2, 1px border (Primary selected /
+    // Outline unselected), keeping the semantic SecondaryContainer selected fill.
     if (m_isSelected) {
         dc.SetBrush(wxBrush(m_secondary_colour));
         dc.SetPen(wxPen(m_primary_colour));
     }
     else {
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.SetPen(wxPen(wxColour(ThemeColor::Grey300)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline)));
     }
-    
-    dc.DrawRoundedRectangle(rect, 5);
 
-    // Draw icon
-    if (m_isSelected) {
-        if (m_selected_icon.IsOk()) {
-            int iconY = (rect.GetHeight() - iconRectHeight) / 2;
-            dc.DrawBitmap(m_selected_icon, left, iconY, true);
-            left += iconRectWidth + FromDIP(6);
-        }
+    dc.DrawRoundedRectangle(rect, rect.GetHeight() / 2.0);
+
+    // Draw the leading glyph: a live 16px Material Symbol (Send = the send-mode
+    // tag). Degrade to the raster PNG when the icon font is unavailable.
+    const int iconY = (rect.GetHeight() - iconRectHeight) / 2;
+    if (MaterialIcon::available()) {
+        MaterialIcon::drawCentered(dc, MaterialIcon::Send, 16, fg,
+                                   wxRect(left, iconY, iconRectWidth, iconRectHeight));
+        left += iconRectWidth + FromDIP(6);
     } else {
-        if (m_unselected_icon.IsOk()) {
-            int iconY = (rect.GetHeight() - iconRectHeight) / 2;
-            dc.DrawBitmap(m_unselected_icon, left, iconY, true);
+        const wxBitmap &icon = m_isSelected ? m_selected_icon : m_unselected_icon;
+        if (icon.IsOk()) {
+            dc.DrawBitmap(icon, left, iconY, true);
             left += iconRectWidth + FromDIP(6);
         }
     }
 
     // Draw text
     dc.SetFont(::Label::Head_13);
-
-    if (m_isSelected) {
-        dc.SetTextForeground(m_primary_colour);
-    }
-    else {
-        dc.SetTextForeground(Slic3r::GUI::wxGetApp().dark_mode() ? ThemeColor::White:wxColour(ThemeColor::TextMuted));
-    }
+    dc.SetTextForeground(fg);
 
     int textY = (rect.GetHeight() - dc.GetCharHeight()) / 2;
     dc.DrawText(m_label, left, textY);

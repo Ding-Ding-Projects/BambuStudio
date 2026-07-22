@@ -10,6 +10,7 @@
 #include "Widgets/MaterialIcon.hpp"
 
 #include <wx/dcmemory.h>
+#include <wx/dcclient.h>
 #include <wx/graphics.h>
 
 #include <algorithm>
@@ -21,7 +22,10 @@ static const wxColour LabelEnableColor = ThemeColor::TextPrimary;   // OnSurface
 static const wxColour LabelDisableColor = ThemeColor::TextDisabled; // disabled label
 static const wxColour GreyColor = ThemeColor::TextMuted;            // OnSurfaceVariant
 static const wxColour GreenColor = ThemeColor::BrandGreen;          // Primary accent (links)
-static const wxColour BackGroundColor = ThemeColor::White;          // SurfaceContainerLowest
+// MD3 popover sits on SurfaceContainer (the kit App.jsx popover surface), not the
+// former White/SurfaceContainerLowest. Grey250 is the SurfaceContainer light token
+// (#eeedf3) and is a gDarkColors key, so it remaps to #25262b through UpdateDarkUIWin.
+static const wxColour BackGroundColor = ThemeColor::Grey250;        // SurfaceContainer
 
 
 static bool should_pop_up()
@@ -396,7 +400,11 @@ void FilamentGroupPopup::DrawRoundedCorner(int radius)
 #ifdef __WIN32__
     HWND hwnd = GetHWND();
     if (hwnd) {
-        HRGN hrgn = CreateRoundRectRgn(0, 0, GetRect().GetWidth(), GetRect().GetHeight(), radius, radius);
+        // FromDIP so the corner tracks the monitor DPI (CreateRoundRectRgn takes the
+        // ellipse diameter in device px, i.e. corner radius = r / 2 -- OnPaint's
+        // OutlineVariant border is drawn at the matching FromDIP(16) / 2 radius).
+        const int r = FromDIP(radius);
+        HRGN hrgn = CreateRoundRectRgn(0, 0, GetRect().GetWidth(), GetRect().GetHeight(), r, r);
         SetWindowRgn(hwnd, hrgn, FALSE);
 
         SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
@@ -555,7 +563,62 @@ void FilamentGroupPopup::tryClose() { StartTimer(); }
 
 void FilamentGroupPopup::OnPaint(wxPaintEvent&)
 {
+    // MD3 surface anatomy (kit App.jsx popover): a SurfaceContainer card with a 1px
+    // OutlineVariant border, the rounded window region, and a SecondaryContainer wash
+    // behind the selected row. Elevation is carried by the tonal SurfaceContainer step
+    // over the app Surface plus the outline border (MD3's bordered-container elevation
+    // expression); a literal elev-4 drop shadow needs window-manager cooperation that
+    // lives outside this popup (see the followup note).
     DrawRoundedCorner(16);
+
+    wxPaintDC dc(this);
+    wxGCDC    gdc(dc);
+    if (gdc.GetGraphicsContext())
+        gdc.GetGraphicsContext()->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+
+    const wxSize   size    = GetClientSize();
+    const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainer);
+    const wxColour outline = StateColor::semantic(MD3::Role::OutlineVariant);
+    const wxColour wash    = StateColor::semantic(MD3::Role::SecondaryContainer);
+
+    const int corner   = FromDIP(16) / 2;        // matches the window-region corner radius
+    const int border_w = std::max(1, FromDIP(1));
+
+    // Base surface fill -- also clears the previous frame's wash before it is redrawn.
+    gdc.SetPen(*wxTRANSPARENT_PEN);
+    gdc.SetBrush(wxBrush(surface));
+    gdc.DrawRectangle(0, 0, size.x, size.y);
+
+    // Selected-row wash: a rounded SecondaryContainer pane spanning the row. The row's
+    // controls carry the same fill (UpdateButtonStatus) so the wash reads as one
+    // continuous surface rather than patches behind each control.
+    int sel = -1;
+    for (size_t i = 0; i < m_all_modes.size(); ++i) {
+        if (m_all_modes[i] == m_mode) { sel = static_cast<int>(i); break; }
+    }
+    if (sel >= 0 && static_cast<size_t>(sel) < radio_btns.size() &&
+        radio_btns[sel] && radio_btns[sel]->IsShown()) {
+        wxRect row = radio_btns[sel]->GetRect()
+                         .Union(button_labels[sel]->GetRect())
+                         .Union(detail_infos[sel]->GetRect());
+        const int wash_inset_x = FromDIP(8);
+        const int wash_pad_y   = FromDIP(6);
+        row.x      = wash_inset_x;
+        row.width  = size.x - 2 * wash_inset_x;
+        row.y     -= wash_pad_y;
+        row.height += 2 * wash_pad_y;
+        if (row.width > 0 && row.height > 0) {
+            gdc.SetBrush(wxBrush(wash));
+            gdc.SetPen(*wxTRANSPARENT_PEN);
+            gdc.DrawRoundedRectangle(row, FromDIP(8));
+        }
+    }
+
+    // 1px OutlineVariant border tracing the rounded card edge.
+    gdc.SetBrush(*wxTRANSPARENT_BRUSH);
+    gdc.SetPen(wxPen(outline, border_w));
+    gdc.DrawRoundedRectangle(border_w / 2, border_w / 2,
+                             size.x - border_w, size.y - border_w, corner);
 }
 
 void FilamentGroupPopup::StartTimer() { m_timer->StartOnce(300); }
@@ -605,13 +668,28 @@ void FilamentGroupPopup::OnEnterWindow(wxMouseEvent &) { ResetTimer(); }
 
 void FilamentGroupPopup::UpdateButtonStatus(int hover_idx)
 {
+    // Theme-resolved now (not via UpdateDarkUIWin) because selection changes happen
+    // between dark-mode passes: the selected row's controls take the SecondaryContainer
+    // wash, every other row sits on the plain SurfaceContainer surface.
+    const wxColour surface_bg = StateColor::semantic(MD3::Role::SurfaceContainer);
+    const wxColour wash_bg    = StateColor::semantic(MD3::Role::SecondaryContainer);
+
     for (size_t i = 0; i < m_all_modes.size(); ++i) {
         FilamentMapMode mode = m_all_modes[i];
-        
+
         // Skip unavailable modes
         if (std::find(m_available_modes.begin(), m_available_modes.end(), mode) == m_available_modes.end())
             continue;
-            
+
+        // MD3 selection wash: the AutoForMatch row is never washed while disconnected
+        // (it is forced off the selection in Init), so exclude it here too.
+        const bool selected = (mode == m_mode) && !(mode == fmmAutoForMatch && !m_connected);
+        const wxColour row_bg = selected ? wash_bg : surface_bg;
+        radio_btns[i]->SetBackgroundColour(row_bg);
+        button_labels[i]->SetBackgroundColour(row_bg);
+        button_desps[i]->SetBackgroundColour(row_bg);
+        detail_infos[i]->SetBackgroundColour(row_bg);
+
 #if 0  // do not display global mode tag
         if (mode == global_mode)
             global_mode_tags[i]->Show();
@@ -640,6 +718,7 @@ void FilamentGroupPopup::UpdateButtonStatus(int hover_idx)
 
     Layout();
     Fit();
+    Refresh(); // repaint the selection wash / surface behind the rows
 }
 
 }} // namespace Slic3r::GUI

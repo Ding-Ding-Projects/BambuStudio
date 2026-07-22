@@ -27,6 +27,7 @@
 #include <wx/display.h>
 #include <wx/dcbuffer.h>
 #include <wx/dcgraph.h>
+#include <wx/graphics.h>
 #include <wx/frame.h>
 #include <wx/mstream.h>
 #include <wx/sstream.h>
@@ -62,6 +63,7 @@
 #include "ThermalPreconditioningDialog.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 
 namespace Slic3r { namespace GUI {
@@ -143,6 +145,117 @@ static StateColor device_primary_button_text()
                       std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
                       std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
                       std::pair<wxColour, int>(device_primary_text_color(), StateColor::Normal));
+}
+
+// Build a monochrome control/status icon as a Material Symbols glyph rendered at
+// a logical px in colour, degrading to the legacy raster (fallback_name) when the
+// icon face is unavailable. The consumers (ImageSwitchButton / FanSwitchButton /
+// wxStaticBitmap) hold copies and never re-rasterize from the name, so the glyph
+// survives their Rescale(); no ScalableBitmap::msw_rescale() is ever called on
+// the glyph-backed members.
+static ScalableBitmap device_glyph_scalable(wxWindow *ref, uint32_t glyph, int px, const wxColour &colour, const std::string &fallback_name)
+{
+    if (MaterialIcon::available()) {
+        ScalableBitmap sb;
+        sb.bmp() = MaterialIcon::bitmap(ref, glyph, px, colour);
+        return sb;
+    }
+    return ScalableBitmap(ref, fallback_name, px);
+}
+
+// Idle print-thumbnail placeholder: a rounded-12 SurfaceContainerHighest tile
+// carrying a centered 'deployed_code' Material Symbol (OnSurfaceVariant), per the
+// kit's idle camera-card thumbnail (Device.jsx:34). Mirrors MaterialIcon::bitmap's
+// DPI compositing (logical->device via gc->Scale + SetScaleFactor) so it lays out
+// at logical_px like the legacy raster. Callers fall back to the raster when the
+// icon face is unavailable.
+static wxBitmap device_idle_thumbnail_tile(wxWindow *ref, int logical_px)
+{
+    const double scale = (ref && ref->GetDPIScaleFactor() > 0.0) ? ref->GetDPIScaleFactor() : 1.0;
+    const int    dev   = std::max(1, static_cast<int>(std::ceil(logical_px * scale)));
+    wxBitmap     bmp(dev, dev);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+    bmp.UseAlpha();
+#endif
+    {
+        wxMemoryDC mdc(bmp);
+        mdc.SetBackground(*wxTRANSPARENT_BRUSH);
+        mdc.Clear();
+        wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+        if (gc) {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            gc->Scale(scale, scale);
+            gc->SetPen(*wxTRANSPARENT_PEN);
+            gc->SetBrush(wxBrush(device_control_emphasis_color()));
+            // Logical coordinate space (gc is already DPI-scaled), so the radius is
+            // the raw kit metric (comfortable.radius == 16) — no FromDIP here.
+            gc->DrawRoundedRectangle(0, 0, logical_px, logical_px, MD3::Metrics::comfortable.radius);
+            const int glyph_px = std::max(1, static_cast<int>(logical_px * 0.4 + 0.5));
+            gc->SetFont(MaterialIcon::font(glyph_px), device_secondary_text_color());
+            double gw = 0, gh = 0;
+            gc->GetTextExtent(MaterialIcon::text(MaterialIcon::DeployedCode), &gw, &gh);
+            gc->DrawText(MaterialIcon::text(MaterialIcon::DeployedCode), (logical_px - gw) / 2.0, (logical_px - gh) / 2.0);
+            delete gc; // flush before the bitmap is read
+        }
+        mdc.SelectObject(wxNullBitmap);
+    }
+#if wxCHECK_VERSION(3, 1, 6)
+    bmp.SetScaleFactor(scale);
+#endif
+    return bmp;
+}
+
+// Camera-HUD status indicators as Material Symbols on the fixed-dark strip
+// (on-dark colours, never theme-swapped): active states use the kit 'live'
+// accent, absent/off use the muted on-dark grey, storage-abnormal keeps its
+// warning hue. Rebuilt identically by init_bitmaps() and rescale_camera_icons().
+static void build_hud_status_glyphs(wxWindow *ref,
+                                    ScalableBitmap &sd_normal, ScalableBitmap &sd_abnormal, ScalableBitmap &sd_no,
+                                    ScalableBitmap &rec_on, ScalableBitmap &rec_off,
+                                    ScalableBitmap &tl_on, ScalableBitmap &tl_off,
+                                    ScalableBitmap &vc_on, ScalableBitmap &vc_off)
+{
+    const wxColour on   = CameraHUD::Glyph();
+    const wxColour off  = CameraHUD::GlyphMuted();
+    const wxColour live = MD3::Viewport::live;
+    // Storage-abnormal keeps a warning read via the semantic Error role, resolved
+    // dark since the HUD is fixed-dark (no theme swap, no raw literal).
+    const wxColour warn = MD3::resolve(MD3::Role::Error, true, MD3::ColorScheme::Device);
+    sd_normal   = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, on, "sdcard_state_normal_dark");
+    sd_abnormal = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, warn, "sdcard_state_abnormal_dark");
+    sd_no       = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, off, "sdcard_state_no_dark");
+    rec_on  = device_glyph_scalable(ref, MaterialIcon::RadioButtonChecked, 20, live, "monitor_recording_on_dark");
+    rec_off = device_glyph_scalable(ref, MaterialIcon::RadioButtonChecked, 20, off, "monitor_recording_off_dark");
+    tl_on   = device_glyph_scalable(ref, MaterialIcon::Timelapse, 20, live, "monitor_timelapse_on_dark");
+    tl_off  = device_glyph_scalable(ref, MaterialIcon::Timelapse, 20, off, "monitor_timelapse_off_dark");
+    vc_on   = device_glyph_scalable(ref, MaterialIcon::Videocam, 20, live, "monitor_vcamera_on_dark");
+    vc_off  = device_glyph_scalable(ref, MaterialIcon::Videocam, 20, off, "monitor_vcamera_off_dark");
+}
+
+// Filament-loading disclosure chevron in the Device accent: expanded (box shown)
+// -> expand_more, collapsed (fold) -> expand_less, degrading to the legacy
+// filament_load_expand/fold rasters when the icon face is unavailable.
+static wxBitmap filament_loading_chevron(wxWindow *ref, bool expanded)
+{
+    if (MaterialIcon::available())
+        return MaterialIcon::bitmap(ref, expanded ? MaterialIcon::ExpandMore : MaterialIcon::ExpandLess, 24, device_primary_color());
+    return create_scaled_bitmap(expanded ? "filament_load_expand" : "filament_load_fold", ref, 24);
+}
+
+// Control-bar switch icons (lamp / fan / speed) as Material Symbols in the Device
+// accent (on) / OnSurfaceVariant (off), degrading to the legacy monitor_* rasters.
+// Rebuilt by init_bitmaps() and on a live theme flip so the teal follows the theme.
+static void build_control_switch_glyphs(wxWindow *ref,
+                                        ScalableBitmap &lamp_on, ScalableBitmap &lamp_off,
+                                        ScalableBitmap &fan_on, ScalableBitmap &fan_off,
+                                        ScalableBitmap &speed, ScalableBitmap &speed_active)
+{
+    lamp_on      = device_glyph_scalable(ref, MaterialIcon::Lightbulb, 24, device_primary_color(), "monitor_lamp_on");
+    lamp_off     = device_glyph_scalable(ref, MaterialIcon::Lightbulb, 24, device_secondary_text_color(), "monitor_lamp_off");
+    fan_on       = device_glyph_scalable(ref, MaterialIcon::ModeFan, 22, device_primary_color(), "monitor_fan_on");
+    fan_off      = device_glyph_scalable(ref, MaterialIcon::ModeFan, 22, device_secondary_text_color(), "monitor_fan_off");
+    speed        = device_glyph_scalable(ref, MaterialIcon::Speed, 24, device_secondary_text_color(), "monitor_speed");
+    speed_active = device_glyph_scalable(ref, MaterialIcon::Speed, 24, device_primary_color(), "monitor_speed_active");
 }
 
 static bool is_semantic_color(const wxColour &color, MD3::Role role, MD3::ColorScheme scheme = MD3::ColorScheme::Brand)
@@ -1590,6 +1703,13 @@ void PrintingTaskPanel::msw_rescale()
     m_button_pause_resume->Rescale();
     m_button_abort->Rescale();
     m_bitmap_thumbnail->SetSize(TASK_THUMBNAIL_SIZE);
+    // If the idle placeholder is on screen, re-blit the freshly rebuilt tile
+    // (init_bitmaps runs just before this in both the DPI and theme paths) so a
+    // DPI / theme change re-renders it; the paint handler draws m_thumbnail_bmp_display.
+    if (m_bitmap_thumbnail && m_thumbnail_bmp_display_name == m_thumbnail_placeholder.name()) {
+        m_thumbnail_bmp_display = m_thumbnail_placeholder.bmp();
+        m_bitmap_thumbnail->Refresh();
+    }
 
     {
         for (int i = 0; i < m_score_star.size(); ++i) {
@@ -1610,9 +1730,22 @@ void PrintingTaskPanel::msw_rescale()
 
 void PrintingTaskPanel::init_bitmaps()
 {
+    // Idle thumbnail placeholder -> rounded-12 SurfaceContainerHighest tile with a
+    // centered 'deployed_code' glyph (kit idle camera-card thumbnail). The legacy
+    // raster stays the fallback and preserves the placeholder name so the
+    // set_thumbnail_img de-dup still keys off it.
     m_thumbnail_placeholder = ScalableBitmap(this, "monitor_placeholder", 120);
-    m_bitmap_use_time       = ScalableBitmap(this, "print_info_time", 16);
-    m_bitmap_use_weight     = ScalableBitmap(this, "print_info_weight", 16);
+    if (MaterialIcon::available())
+        m_thumbnail_placeholder.bmp() = device_idle_thumbnail_tile(this, 120);
+    // Time / weight metadata glyphs -> schedule / scale (OnSurfaceVariant),
+    // degrading to the print_info_time/weight rasters when unavailable.
+    m_bitmap_use_time   = device_glyph_scalable(this, MaterialIcon::Schedule, 16, device_secondary_text_color(), "print_info_time");
+    m_bitmap_use_weight = device_glyph_scalable(this, MaterialIcon::Scale, 16, device_secondary_text_color(), "print_info_weight");
+    // Apply the metadata glyphs to the (already-wired) static bitmaps so they show
+    // and re-track DPI / theme changes; create_panel builds those before the first
+    // init_bitmaps() call, so guard against a pre-wiring invocation.
+    if (m_bitmap_static_use_time)   m_bitmap_static_use_time->SetBitmap(m_bitmap_use_time.bmp());
+    if (m_bitmap_static_use_weight) m_bitmap_static_use_weight->SetBitmap(m_bitmap_use_weight.bmp());
 }
 
 void PrintingTaskPanel::init_scaled_buttons()
@@ -2085,16 +2218,24 @@ void StatusBasePanel::on_camera_fullscreen(wxMouseEvent &event)
 void StatusBasePanel::init_bitmaps()
 {
     static Slic3r::GUI::BitmapCache cache;
-    m_bitmap_item_prediction = create_scaled_bitmap("monitor_item_prediction", nullptr, 16);
-    m_bitmap_item_cost       = create_scaled_bitmap("monitor_item_cost", nullptr, 16);
-    m_bitmap_item_print      = create_scaled_bitmap("monitor_item_print", nullptr, 18);
+    // Monochrome control/status glyphs -> Material Symbols (Device teal where
+    // accented; OnSurfaceVariant otherwise). Each degrades to its legacy raster
+    // when the icon face is missing so a stripped TTF shows the old look, not tofu.
+    m_bitmap_item_prediction = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::Schedule, 16, device_secondary_text_color())
+        : create_scaled_bitmap("monitor_item_prediction", nullptr, 16);
+    m_bitmap_item_cost = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::Payments, 16, device_secondary_text_color())
+        : create_scaled_bitmap("monitor_item_cost", nullptr, 16);
+    m_bitmap_item_print = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::Print, 18, device_secondary_text_color())
+        : create_scaled_bitmap("monitor_item_print", nullptr, 18);
+    // Home stays raster: AxisCtrlButton already draws the center 'home' Material
+    // Symbol itself (MaterialIcon::Home) and only falls back to this bitmap when
+    // the icon face is unavailable, so this must remain the legacy raster.
     m_bitmap_axis_home       = ScalableBitmap(this, "monitor_axis_home", 32);
-    m_bitmap_lamp_on         = ScalableBitmap(this, "monitor_lamp_on", 24);
-    m_bitmap_lamp_off        = ScalableBitmap(this, "monitor_lamp_off", 24);
-    m_bitmap_fan_on          = ScalableBitmap(this, "monitor_fan_on", 22);
-    m_bitmap_fan_off         = ScalableBitmap(this, "monitor_fan_off", 22);
-    m_bitmap_speed           = ScalableBitmap(this, "monitor_speed", 24);
-    m_bitmap_speed_active    = ScalableBitmap(this, "monitor_speed_active", 24);
+    build_control_switch_glyphs(this, m_bitmap_lamp_on, m_bitmap_lamp_off, m_bitmap_fan_on, m_bitmap_fan_off,
+                                m_bitmap_speed, m_bitmap_speed_active);
 
     m_thumbnail_brokenimg = ScalableBitmap(this, "monitor_brokenimg", 120);
     m_thumbnail_sdcard    = ScalableBitmap(this, "monitor_sdcard_thumbnail", 120);
@@ -2105,16 +2246,11 @@ void StatusBasePanel::init_bitmaps()
     m_bitmap_extruder_filled_unload = *cache.load_png("monitor_extruder_filled_unload", FromDIP(28), FromDIP(70), false, false);
 
     // The camera HUD interior is ALWAYS dark (kCardBg), in both app themes, so
-    // the status-indicator glyphs always use the on-dark ("_dark") PNG variants.
-    m_bitmap_sdcard_state_abnormal = ScalableBitmap(this, "sdcard_state_abnormal_dark", 20);
-    m_bitmap_sdcard_state_normal   = ScalableBitmap(this, "sdcard_state_normal_dark", 20);
-    m_bitmap_sdcard_state_no       = ScalableBitmap(this, "sdcard_state_no_dark", 20);
-    m_bitmap_recording_on          = ScalableBitmap(this, "monitor_recording_on_dark", 20);
-    m_bitmap_recording_off         = ScalableBitmap(this, "monitor_recording_off_dark", 20);
-    m_bitmap_timelapse_on          = ScalableBitmap(this, "monitor_timelapse_on_dark", 20);
-    m_bitmap_timelapse_off         = ScalableBitmap(this, "monitor_timelapse_off_dark", 20);
-    m_bitmap_vcamera_on            = ScalableBitmap(this, "monitor_vcamera_on_dark", 20);
-    m_bitmap_vcamera_off           = ScalableBitmap(this, "monitor_vcamera_off_dark", 20);
+    // the status-indicator glyphs use fixed on-dark colours and are never
+    // theme-swapped (the legacy "_dark" rasters remain the graceful fallback).
+    build_hud_status_glyphs(this, m_bitmap_sdcard_state_normal, m_bitmap_sdcard_state_abnormal, m_bitmap_sdcard_state_no,
+                            m_bitmap_recording_on, m_bitmap_recording_off, m_bitmap_timelapse_on, m_bitmap_timelapse_off,
+                            m_bitmap_vcamera_on, m_bitmap_vcamera_off);
 }
 
 wxBoxSizer *StatusBasePanel::create_monitoring_page()
@@ -2779,7 +2915,7 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     m_title_filament_loading->SetForegroundColour(device_primary_color());
     m_title_filament_loading->SetFont(::Label::Body_14);
 
-    m_img_filament_loading = new wxStaticBitmap(m_scale_panel, wxID_ANY, create_scaled_bitmap("filament_load_fold", this, 24), wxDefaultPosition,
+    m_img_filament_loading = new wxStaticBitmap(m_scale_panel, wxID_ANY, filament_loading_chevron(this, false), wxDefaultPosition,
                                                 wxSize(FromDIP(24), FromDIP(24)), 0);
 
     sizer_scale_panel->Add(0, 0, 0, wxLEFT, FromDIP(20));
@@ -2873,10 +3009,10 @@ void StatusBasePanel::expand_filament_loading(wxMouseEvent &e)
     auto tag_show = false;
     if (m_filament_load_box->IsShown()) {
         tag_show = false;
-        m_img_filament_loading->SetBitmap(create_scaled_bitmap("filament_load_fold", this, 24));
+        m_img_filament_loading->SetBitmap(filament_loading_chevron(this, false));
     } else {
         tag_show = true;
-        m_img_filament_loading->SetBitmap(create_scaled_bitmap("filament_load_expand", this, 24));
+        m_img_filament_loading->SetBitmap(filament_loading_chevron(this, true));
     }
 
     if (obj) {
@@ -2935,7 +3071,7 @@ void StatusBasePanel::show_filament_load_group(bool show)
     if (m_scale_panel->IsShown() != show) {
         m_scale_panel->Show(show);
         if (!show) {
-            m_img_filament_loading->SetBitmap(create_scaled_bitmap("filament_load_fold", this, 24));
+            m_img_filament_loading->SetBitmap(filament_loading_chevron(this, false));
             m_img_filament_loading->Refresh();
         }
 
@@ -5904,15 +6040,9 @@ void StatusPanel::rescale_camera_icons()
     if (m_camera_hud) m_camera_hud->msw_rescale();
 
     // Always-dark variants: the HUD interior is fixed-dark in both app themes.
-    m_bitmap_sdcard_state_abnormal = ScalableBitmap(this, "sdcard_state_abnormal_dark", 20);
-    m_bitmap_sdcard_state_normal   = ScalableBitmap(this, "sdcard_state_normal_dark", 20);
-    m_bitmap_sdcard_state_no       = ScalableBitmap(this, "sdcard_state_no_dark", 20);
-    m_bitmap_recording_on          = ScalableBitmap(this, "monitor_recording_on_dark", 20);
-    m_bitmap_recording_off         = ScalableBitmap(this, "monitor_recording_off_dark", 20);
-    m_bitmap_timelapse_on          = ScalableBitmap(this, "monitor_timelapse_on_dark", 20);
-    m_bitmap_timelapse_off         = ScalableBitmap(this, "monitor_timelapse_off_dark", 20);
-    m_bitmap_vcamera_on            = ScalableBitmap(this, "monitor_vcamera_on_dark", 20);
-    m_bitmap_vcamera_off           = ScalableBitmap(this, "monitor_vcamera_off_dark", 20);
+    build_hud_status_glyphs(this, m_bitmap_sdcard_state_normal, m_bitmap_sdcard_state_abnormal, m_bitmap_sdcard_state_no,
+                            m_bitmap_recording_on, m_bitmap_recording_off, m_bitmap_timelapse_on, m_bitmap_timelapse_off,
+                            m_bitmap_vcamera_on, m_bitmap_vcamera_off);
 
     if (m_media_play_ctrl->IsStreaming()) {
         m_bitmap_vcamera_img->SetBitmap(m_bitmap_vcamera_on.bmp());
@@ -6054,10 +6184,17 @@ void StatusPanel::on_sys_color_changed()
     m_staticText_z_tip->SetForegroundColour(control_label_color);
     m_extruder_label->SetForegroundColour(control_label_color);
 
+    // Rebuild the task-panel glyphs (idle thumbnail tile + time/weight metadata)
+    // for the new theme before it rescales, mirroring the DPI path.
+    m_project_task_panel->init_bitmaps();
     m_project_task_panel->msw_rescale();
-    m_bitmap_speed.msw_rescale();
-    m_bitmap_speed_active.msw_rescale();
+    // Rebuild the control-switch glyphs so the Device teal follows the live
+    // light<->dark flip, then re-apply to the switches (which hold copies).
+    build_control_switch_glyphs(this, m_bitmap_lamp_on, m_bitmap_lamp_off, m_bitmap_fan_on, m_bitmap_fan_off,
+                                m_bitmap_speed, m_bitmap_speed_active);
     m_switch_speed->SetImages(m_bitmap_speed, m_bitmap_speed);
+    m_switch_lamp->SetImages(m_bitmap_lamp_on, m_bitmap_lamp_off);
+    m_switch_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
     m_ams_control->msw_rescale();
     rescale_camera_icons();
     Layout();
@@ -6102,9 +6239,9 @@ void StatusPanel::msw_rescale()
         if (ext_img) { ext_img->msw_rescale(); }
     }
 
-    m_bitmap_speed.msw_rescale();
-    m_bitmap_speed_active.msw_rescale();
-
+    // init_bitmaps() (called at the top of msw_rescale) already rebuilt the speed
+    // glyphs at the new DPI; a ScalableBitmap::msw_rescale() here would re-rasterize
+    // from the (empty) icon name and wipe the glyph, so it is intentionally gone.
     m_switch_speed->SetImages(m_bitmap_speed, m_bitmap_speed);
     m_switch_speed->SetMinSize(MISC_BUTTON_2FAN_SIZE);
     m_switch_speed->Rescale();

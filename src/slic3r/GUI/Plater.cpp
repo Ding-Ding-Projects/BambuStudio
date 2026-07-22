@@ -161,6 +161,7 @@
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/ComboBox.hpp"
@@ -2989,8 +2990,22 @@ Sidebar::Sidebar(Plater *parent)
     });
     wrapper_sizer->Add(p->m_physical_scroll_area, 0, wxEXPAND, 0);
 
-    p->btn_add_filament_row = new Button(p->m_filament_area_wrapper, _L("Add filament"), "add_filament", 0, 16);
-    p->btn_add_filament_row->SetFont(::Label::Body_12);
+    p->btn_add_filament_row = new Button(p->m_filament_area_wrapper, _L("Add filament"), "add_filament", 0, 18);
+    // MD3 (kit Prepare.jsx:101 — outlined sm button, leading 'add' glyph 18px): draw the
+    // leading icon as a Material Symbols 'add' glyph. SetGlyph routes through the shared
+    // MaterialIcon font path (live-recoloured by the button's text colour = Primary) and
+    // keeps the raster 'add_filament' bitmap as the graceful fallback, drawn only when
+    // MaterialIcon::available() is false.
+    p->btn_add_filament_row->SetGlyph(MaterialIcon::Add, 18);
+    // Kit body size for a sm outlined button is 12.5px / weight 500. Mirror the canonical
+    // MD3 Button::applyMD3Style Outlined-Small font (Head_12 = 12.5/600 lowered to 500)
+    // in place of the legacy Body_12.
+    {
+        wxFont add_filament_font = ::Label::Head_12;
+        add_filament_font.SetWeight(wxFONTWEIGHT_MEDIUM);
+        add_filament_font.SetNumericWeight(500);
+        p->btn_add_filament_row->SetFont(add_filament_font);
+    }
     p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.row_height / 2));
     p->btn_add_filament_row->SetPaddingSize({FromDIP(12), FromDIP(8)});
     p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::comfortable.row_height)});

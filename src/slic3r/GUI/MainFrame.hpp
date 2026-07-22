@@ -427,7 +427,13 @@ public:
     wxWindowID expand_program_id = wxNewId();
     wxWindowID expand_helio_id = wxNewId();
 
-    wxStaticBitmap* split_line_icon{nullptr};
+    // MD3 action-bar chrome: a 1px OutlineVariant vertical divider (replaces the
+    // legacy raster 'topbar_line' bitmap) and, when the Material Symbols face is
+    // available, a borderless glyph IconButton for the expand affordance (the
+    // raster ExpandButton in expand_program_holder is the capability fallback).
+    // The Helio brand mark stays a raster brand asset inside expand_program_holder.
+    wxPanel* m_prepare_split_line{nullptr};
+    Button* m_prepare_expand_btn{nullptr};
     ExpandButtonHolder* expand_program_holder{nullptr};
 
     SidePopup*  m_slice_option_pop_up{ nullptr };

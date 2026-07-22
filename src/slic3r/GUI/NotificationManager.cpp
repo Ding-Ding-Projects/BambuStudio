@@ -85,6 +85,32 @@ namespace {
 		return to_imvec4(dark ? StateColor::darkModeColorFor(ThemeColor::Warning) : ThemeColor::Warning, alpha);
 	}
 
+	// MD3 elevation-4 drop shadow (kit Snackbar: box-shadow 0 8px 24px) for the
+	// ImGui-drawn snackbar. Rendered into the background draw list so it sits
+	// behind the toast window; the opaque surface covers the shadow's core, so
+	// only the offset + blur fringe reads as elevation. Approximated with a few
+	// stacked rounded rects since the ImGui draw list has no gaussian blur.
+	inline void md3_draw_elevation4_shadow(ImDrawList *draw_list, const ImVec2 &win_min, const ImVec2 &win_max,
+	                                       float rounding, float scale, float opacity)
+	{
+		if (draw_list == nullptr || opacity <= 0.0f)
+			return;
+		const float y_offset = 8.0f * scale;   // kit vertical offset
+		const float blur     = 24.0f * scale;  // kit blur radius -> outward spread
+		const int   layers   = 10;
+		for (int i = 0; i < layers; ++i) {
+			const float f      = (float) i / (float) (layers - 1); // 0 (tight) .. 1 (outer)
+			const float expand = blur * f;
+			// Quadratic falloff: tight inner layers dark, outer blur faint.
+			const float a = 0.22f * (1.0f - f) * (1.0f - f) * opacity;
+			if (a <= 0.001f)
+				continue;
+			const ImVec2 mn(win_min.x - expand, win_min.y - expand + y_offset);
+			const ImVec2 mx(win_max.x + expand, win_max.y + expand + y_offset);
+			draw_list->AddRectFilled(mn, mx, IM_COL32(0, 0, 0, (int) (a * 255.0f + 0.5f)), rounding + expand);
+		}
+	}
+
 	bool get_high_shrinkage_filament_names(std::string& filament_names)
 	{
 		Plater* plater = wxGetApp().plater();
@@ -140,13 +166,17 @@ NotificationManager::PopNotification::PopNotification(const NotificationData &n,
     // live dark-mode flag; these light defaults cover the pre-render window.
     m_ErrorColor  = md3_notif_color(MD3::Role::Error, false);
     m_WarnColor   = md3_notif_warning(false);
-    m_NormalColor = md3_notif_color(MD3::Role::Primary, false);
+    // Normal-level status accent uses the inverse-surface companion tone so the
+    // left sign / action read against the dark MD3 snackbar surface.
+    m_NormalColor = md3_notif_color(MD3::Role::InversePrimary, false);
 
 	m_CurrentColor = m_NormalColor;   //Default
 
-	m_WindowBkgColor = md3_notif_color(MD3::Role::SurfaceContainerHigh, false);
-    m_TextColor      = md3_notif_color(MD3::Role::OnSurface, false);
-    m_HyperTextColor = md3_notif_color(MD3::Role::Primary, false);
+	// MD3 snackbar: inverse-surface card, inverse-on body text, inverse-primary
+	// hyperlink/action accent. use_bbl_theme() re-resolves against the live flag.
+	m_WindowBkgColor = md3_notif_color(MD3::Role::InverseSurface, false);
+    m_TextColor      = md3_notif_color(MD3::Role::InverseOn, false);
+    m_HyperTextColor = md3_notif_color(MD3::Role::InversePrimary, false);
 }
 
 // We cannot call plater()->get_current_canvas3D() from constructor, so we do it here
@@ -158,7 +188,7 @@ void NotificationManager::PopNotification::ensure_ui_inited()
     }
 
     if (!m_WindowRadius_inited) {
-        m_WindowRadius        = 4.0f * wxGetApp().plater()->get_current_canvas3D()->get_scale();
+        m_WindowRadius        = 12.0f * wxGetApp().plater()->get_current_canvas3D()->get_scale();
         m_WindowRadius_inited = true;
     }
 }
@@ -199,7 +229,7 @@ void NotificationManager::PopNotification::use_bbl_theme()
 	// Primary) before choosing the left-sign accent for this notification level.
 	m_ErrorColor  = md3_notif_color(MD3::Role::Error, m_is_dark);
 	m_WarnColor   = md3_notif_warning(m_is_dark);
-	m_NormalColor = md3_notif_color(MD3::Role::Primary, m_is_dark);
+	m_NormalColor = md3_notif_color(MD3::Role::InversePrimary, m_is_dark);
 
 	if (m_data.level == NotificationLevel::ErrorNotificationLevel)
         m_CurrentColor = m_ErrorColor;
@@ -217,15 +247,18 @@ void NotificationManager::PopNotification::use_bbl_theme()
  //   OldStyle.Colors[ImGuiCol_WindowBg] = m_WindowBkgColor;
  //   OldStyle.Colors[ImGuiCol_Text]     = m_TextColor;
 
-	// MD3 elevated notification surface: SurfaceContainerHigh card, OnSurface
-	// body text, Primary (brand-green) hyperlink accent.
-	m_WindowBkgColor = md3_notif_color(MD3::Role::SurfaceContainerHigh, m_is_dark);
-	m_TextColor      = md3_notif_color(MD3::Role::OnSurface, m_is_dark);
-	m_HyperTextColor = md3_notif_color(MD3::Role::Primary, m_is_dark);
+	// MD3 elevated snackbar surface: InverseSurface card, InverseOn body text,
+	// InversePrimary hyperlink/action accent. The elev-4 drop shadow (drawn in
+	// render()) defines the edge, so the surface carries no outline.
+	m_WindowBkgColor = md3_notif_color(MD3::Role::InverseSurface, m_is_dark);
+	m_TextColor      = md3_notif_color(MD3::Role::InverseOn, m_is_dark);
+	m_HyperTextColor = md3_notif_color(MD3::Role::InversePrimary, m_is_dark);
+	// Keep the border color push to balance restore_default_theme()'s PopStyleColor(3),
+	// but the border is not drawn (WindowBorderSize == 0) — the shadow stands in.
 	m_is_dark ? push_style_color(ImGuiCol_Border, md3_notif_color(MD3::Role::OutlineVariant, m_is_dark), true, m_current_fade_opacity) : push_style_color(ImGuiCol_Border, m_CurrentColor, true, m_current_fade_opacity);
     push_style_color(ImGuiCol_WindowBg, m_WindowBkgColor, true, m_current_fade_opacity);
     push_style_color(ImGuiCol_Text, m_TextColor, true, m_current_fade_opacity);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, m_WindowRadius / 4);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 }
 
 
@@ -265,8 +298,8 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	Size          cnv_size = canvas.get_canvas_size();
 	ImGuiWrapper& imgui = *wxGetApp().imgui();
 	ImVec2        mouse_pos = ImGui::GetMousePos();
-    float         right_gap  = right_margin + (move_from_overlay ? overlay_width + m_line_height * 5 : 0);
 	bool          fading_pop = false;
+	(void) move_from_overlay; (void) overlay_width; (void) right_margin; // MD3 snackbar is canvas-centered, ignores the side overlay
 
 	if (m_line_height != ImGui::CalcTextSize("A").y)
 		init();
@@ -276,22 +309,34 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	// top y of window
 	m_top_y = initial_y + m_window_height;
 
-	// position of upper-right corner
-	ImVec2 win_pos(1.0f * (float)cnv_size.get_width() - right_gap, 1.0f * (float)cnv_size.get_height() - m_top_y);
-	imgui.set_next_window_pos(win_pos.x, win_pos.y, ImGuiCond_Always, 1.0f, 0.0f);
+	// MD3 snackbar geometry: a bottom-centered column of cards, each
+	// min(560px, 92vw) wide. Override the content width so the surface matches
+	// the kit; text was wrapped at the (narrower) base width, which still fits.
+	ensure_ui_inited();
+	const float scale   = canvas.get_scale();
+	const float toast_w = std::min(560.0f * scale, 0.92f * (float) cnv_size.get_width());
+	m_window_width = toast_w;
+
+	// Horizontally centered (top-center pivot), stacked upward from the bottom.
+	ImVec2 win_pos(0.5f * (float) cnv_size.get_width(), 1.0f * (float) cnv_size.get_height() - m_top_y);
+	imgui.set_next_window_pos(win_pos.x, win_pos.y, ImGuiCond_Always, 0.5f, 0.0f);
 	imgui.set_next_window_size(m_window_width, m_window_height, ImGuiCond_Always);
 
-	// Cache the screen-space rect (window is anchored by its top-right corner).
-	m_rendered_win_min   = ImVec2(win_pos.x - m_window_width, win_pos.y);
-	m_rendered_win_max   = ImVec2(win_pos.x, win_pos.y + m_window_height);
+	// Cache the screen-space rect (window is anchored by its top-center point).
+	m_rendered_win_min   = ImVec2(win_pos.x - m_window_width * 0.5f, win_pos.y);
+	m_rendered_win_max   = ImVec2(win_pos.x + m_window_width * 0.5f, win_pos.y + m_window_height);
 	m_rendered_this_frame = true;
+
+	// MD3 elevation-4 drop shadow (kit: 0 8px 24px), drawn behind the toast.
+	md3_draw_elevation4_shadow(ImGui::GetBackgroundDrawList(), m_rendered_win_min, m_rendered_win_max,
+	                           m_WindowRadius, scale, m_state == EState::FadingOut ? m_current_fade_opacity : 1.0f);
 
 	// find if hovered FIXME:  do it only in update state?
 	if (m_state == EState::Hovered) {
 		init();
 	}
 
-	if (mouse_pos.x < win_pos.x && mouse_pos.x > win_pos.x - m_window_width && mouse_pos.y > win_pos.y && mouse_pos.y < win_pos.y + m_window_height) {
+	if (mouse_pos.x > m_rendered_win_min.x && mouse_pos.x < m_rendered_win_max.x && mouse_pos.y > win_pos.y && mouse_pos.y < win_pos.y + m_window_height) {
 		// Uncomment if imgui window focus is needed on hover. I cant find any case.
 		//ImGui::SetNextWindowFocus();
 		set_hovered();
@@ -317,14 +362,19 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	int window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (imgui.begin(name, window_flags)) {
 		ImVec2 win_size = ImGui::GetWindowSize();
+		// The render helpers below expect the window's top-right corner (they
+		// derive the left edge and the close-button hit-box from it). The toast
+		// is now center-anchored, so recover the real top-right from ImGui.
+		ImVec2 real_pos = ImGui::GetWindowPos();
+		ImVec2 win_tr(real_pos.x + win_size.x, real_pos.y);
 
-		bbl_render_left_sign(imgui, win_size.x, win_size.y, win_pos.x, win_pos.y);
+		bbl_render_left_sign(imgui, win_size.x, win_size.y, win_tr.x, win_tr.y);
 		render_left_sign(imgui);
-		render_text(imgui, win_size.x, win_size.y, win_pos.x, win_pos.y);
-		render_close_button(imgui, win_size.x, win_size.y, win_pos.x, win_pos.y);
+		render_text(imgui, win_size.x, win_size.y, win_tr.x, win_tr.y);
+		render_close_button(imgui, win_size.x, win_size.y, win_tr.x, win_tr.y);
         m_minimize_b_visible = false;
         if (m_multiline && m_lines_count > 3)
-			render_minimize_button(imgui, win_pos.x, win_pos.y);
+			render_minimize_button(imgui, win_tr.x, win_tr.y);
 	}
 	imgui.end();
 

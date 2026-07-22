@@ -313,8 +313,8 @@ private:
     wxStaticText *  m_request_failed_info;
     wxStaticBitmap* m_bitmap_thumbnail;
     int             m_plate_index { -1 };
-    wxStaticBitmap* m_bitmap_static_use_time;
-    wxStaticBitmap* m_bitmap_static_use_weight;
+    wxStaticBitmap* m_bitmap_static_use_time{ nullptr };
+    wxStaticBitmap* m_bitmap_static_use_weight{ nullptr };
     AnimaIcon*      m_pausing_icon;
     AnimaIcon*      m_stopping_icon;
     Button*         m_button_pause_resume;

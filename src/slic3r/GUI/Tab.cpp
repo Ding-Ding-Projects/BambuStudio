@@ -284,8 +284,9 @@ void Tab::create_preset_tab()
     });
 
     //add_scaled_button(panel, &m_btn_compare_preset, "compare");
-    add_scaled_button(m_top_panel, &m_btn_save_preset, "save");
-    add_scaled_button(m_top_panel, &m_btn_delete_preset, "cross");
+    // MD3: save / delete are borderless IconButtons drawing the Save / Close glyphs.
+    add_md3_icon_button(m_top_panel, &m_btn_save_preset, MaterialIcon::Save, "save");
+    add_md3_icon_button(m_top_panel, &m_btn_delete_preset, MaterialIcon::Close, "cross");
     //if (m_type == Preset::Type::TYPE_PRINTER)
     //    add_scaled_button(panel, &m_btn_edit_ph_printer, "cog");
 
@@ -318,9 +319,12 @@ void Tab::create_preset_tab()
 
     set_tooltips_text();
 
-    add_scaled_button(m_top_panel, &m_undo_btn,        m_bmp_white_bullet.name());
-    add_scaled_button(m_top_panel, &m_undo_to_sys_btn, m_bmp_white_bullet.name());
-    add_scaled_button(m_top_panel, &m_btn_search,      "search");
+    // MD3: the undo / undo-to-system controls are IconButtons; their glyph (and
+    // capability-gated raster fallback) is swapped per preset state in
+    // update_undo_buttons(). The neutral "no change" state is a dot glyph.
+    add_md3_icon_button(m_top_panel, &m_undo_btn,        MaterialIcon::FiberManualRecord, m_bmp_white_bullet.name());
+    add_md3_icon_button(m_top_panel, &m_undo_to_sys_btn, MaterialIcon::FiberManualRecord, m_bmp_white_bullet.name());
+    add_md3_icon_button(m_top_panel, &m_btn_search,      MaterialIcon::Search, "search");
     m_btn_search->SetToolTip(_L("Search in preset"));
 
     //search input
@@ -805,6 +809,22 @@ void Tab::add_scaled_button(wxWindow* parent,
     *btn = new ScalableButton(parent, wxID_ANY, icon_name, label, wxDefaultSize, wxDefaultPosition, style, true);
     (*btn)->SetBackgroundColour(parent->GetBackgroundColour());
     m_scaled_buttons.push_back(*btn);
+}
+
+void Tab::add_md3_icon_button(wxWindow* parent,
+                              Button** btn,
+                              uint32_t glyph,
+                              const std::string& fallback_icon)
+{
+    // The raster icon (loaded by name) is passed to the ctor so the borderless
+    // IconButton has a graceful fallback when the Material Symbols face is
+    // unavailable; Button::render() draws the glyph when MaterialIcon::available().
+    *btn = new Button(parent, wxEmptyString, wxString::FromUTF8(fallback_icon.c_str()));
+    // Circular ghost target: 32px edge (fits the 30px toolbar row), rest
+    // transparent + OnSurfaceVariant, hover SurfaceContainerHigh (per the kit).
+    (*btn)->SetIconButton(Button::IconShape::Circle, 32);
+    (*btn)->SetGlyph(glyph);
+    m_md3_icon_buttons.push_back(*btn);
 }
 
 void Tab::add_scaled_bitmap(wxWindow* parent,
@@ -1534,10 +1554,17 @@ void Tab::update_changed_tree_ui()
 void Tab::update_undo_buttons()
 {
     // BBS: restore all pages in preset
-    m_undo_btn->        SetBitmap_(m_presets->get_edited_preset().is_dirty ? m_bmp_value_revert: m_bmp_white_bullet);
-    m_undo_to_sys_btn-> SetBitmap_(m_is_nonsys_values   ? *m_bmp_non_system : m_bmp_value_lock);
+    // MD3: swap the Material Symbol (Undo when there are edits to revert, a neutral
+    // dot otherwise; SettingsBackupRestore when the value differs from system, a
+    // Lock when it matches) together with its capability-gated raster fallback so
+    // the correct icon still shows when the Material Symbols face is unavailable.
+    const bool is_dirty = m_presets->get_edited_preset().is_dirty;
+    m_undo_btn->SetIcon(wxString::FromUTF8((is_dirty ? m_bmp_value_revert.name() : m_bmp_white_bullet.name()).c_str()));
+    m_undo_btn->SetGlyph(is_dirty ? MaterialIcon::Undo : MaterialIcon::FiberManualRecord);
+    m_undo_to_sys_btn->SetIcon(wxString::FromUTF8((m_is_nonsys_values ? m_bmp_non_system->name() : m_bmp_value_lock.name()).c_str()));
+    m_undo_to_sys_btn->SetGlyph(m_is_nonsys_values ? MaterialIcon::SettingsBackupRestore : MaterialIcon::Lock);
 
-    m_undo_btn->SetToolTip(m_presets->get_edited_preset().is_dirty ? _L("Click to reset all settings to the last saved preset.") : m_ttg_white_bullet);
+    m_undo_btn->SetToolTip(is_dirty ? _L("Click to reset all settings to the last saved preset.") : m_ttg_white_bullet);
     m_undo_to_sys_btn->SetToolTip(m_is_nonsys_values ? *m_ttg_non_system : m_ttg_value_lock);
 }
 
@@ -1729,6 +1756,8 @@ void Tab::msw_rescale()
     // rescale buttons and cached bitmaps
     for (const auto btn : m_scaled_buttons)
         btn->msw_rescale();
+    for (const auto btn : m_md3_icon_buttons)
+        btn->Rescale();
     for (const auto bmp : m_scaled_bitmaps)
         bmp->msw_rescale();
 
@@ -1790,6 +1819,8 @@ void Tab::sys_color_changed()
     // update buttons and cached bitmaps
     for (const auto btn : m_scaled_buttons)
         btn->msw_rescale();
+    for (const auto btn : m_md3_icon_buttons)
+        btn->Rescale();
     for (const auto bmp : m_scaled_bitmaps)
         bmp->msw_rescale();
     if (m_detach_preset_btn)

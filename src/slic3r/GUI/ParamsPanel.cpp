@@ -16,6 +16,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "GUI_Factories.hpp"
 
 
@@ -275,7 +276,12 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         m_top_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
         m_top_panel->SetBackgroundColor2(StateColor::semantic(MD3::Role::SurfaceContainer));
 
-        m_process_icon = new ScalableButton(m_top_panel, wxID_ANY, "process");
+        // MD3: leading Process icon as a borderless circular IconButton (hover
+        // SurfaceContainerHigh, OnSurfaceVariant) drawing the Tune glyph; the
+        // "process" raster is kept as a capability-gated fallback.
+        m_process_icon = new Button(m_top_panel, wxEmptyString, "process");
+        m_process_icon->SetIconButton(Button::IconShape::Circle, 32);
+        m_process_icon->SetGlyph(MaterialIcon::Tune);
 
         m_title_label = new Label(m_top_panel, _L("Process"));
 
@@ -296,11 +302,21 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         //m_search_btn->SetToolTip(format_wxstr(_L("Search in settings [%1%]"), "Ctrl+F"));
         //m_search_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { wxGetApp().plater()->search(false); });
 
-        m_compare_btn = new ScalableButton(m_top_panel, wxID_ANY, "compare", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+        // MD3: compare presets IconButton. 'compare_arrows' is absent from the
+        // frozen Material Symbols font, so draw the nearest available glyph
+        // (SwapHoriz); the "compare" raster stays as a capability-gated fallback.
+        m_compare_btn = new Button(m_top_panel, wxEmptyString, "compare");
+        m_compare_btn->SetIconButton(Button::IconShape::Circle, 32);
+        m_compare_btn->SetGlyph(MaterialIcon::SwapHoriz);
         m_compare_btn->SetToolTip(_L("Compare presets"));
         m_compare_btn->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { wxGetApp().mainframe->diff_dialog.show(); }));
 
-        m_setting_btn = new ScalableButton(m_top_panel, wxID_ANY, "table", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+        // MD3: object-settings table IconButton. 'table' is absent from the frozen
+        // font, so draw the nearest available glyph (GridView); the "table" raster
+        // stays as a capability-gated fallback.
+        m_setting_btn = new Button(m_top_panel, wxEmptyString, "table");
+        m_setting_btn->SetIconButton(Button::IconShape::Circle, 32);
+        m_setting_btn->SetGlyph(MaterialIcon::GridView);
         m_setting_btn->SetToolTip(_L("View all object's settings"));
         m_setting_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { wxGetApp().plater()->PopupObjectTable(-1, -1, {0, 0}); });
 
@@ -698,10 +714,11 @@ void ParamsPanel::update_mode()
 
 void ParamsPanel::msw_rescale()
 {
-    if (m_process_icon) m_process_icon->msw_rescale();
-    if (m_setting_btn) m_setting_btn->msw_rescale();
+    // MD3 IconButtons rescale via Button::Rescale(); the raster search/tips arrows still use msw_rescale().
+    if (m_process_icon) m_process_icon->Rescale();
+    if (m_setting_btn) m_setting_btn->Rescale();
     if (m_search_btn) m_search_btn->msw_rescale();
-    if (m_compare_btn) m_compare_btn->msw_rescale();
+    if (m_compare_btn) m_compare_btn->Rescale();
     if (m_tips_arrow) m_tips_arrow->msw_rescale();
     if (m_left_sizer) m_left_sizer->SetMinSize(wxSize(40 * em_unit(this), -1));
     if (m_mode_sizer)

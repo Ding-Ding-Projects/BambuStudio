@@ -55,11 +55,15 @@ private:
     ScalableBitmap  m_none_arrow_img;
     ScalableBitmap  m_none_add_img;
 
-    ScalableBitmap  m_wifi_none_img;
-    ScalableBitmap  m_wifi_weak_img;
-    ScalableBitmap  m_wifi_middle_img;
-    ScalableBitmap  m_wifi_strong_img;
-    ScalableBitmap  m_network_wired_img;
+    // MD3: connectivity indicators are rendered from the Material Symbols icon
+    // font (signal level carried by the glyph shape, state by colour). Held as
+    // plain wxBitmaps because init_signal_bitmaps() rebuilds them per DPI and
+    // falls back to the legacy rasters when the icon face is unavailable.
+    wxBitmap        m_wifi_none_img;
+    wxBitmap        m_wifi_weak_img;
+    wxBitmap        m_wifi_middle_img;
+    wxBitmap        m_wifi_strong_img;
+    wxBitmap        m_network_wired_img;
 
 protected:
     wxStaticBitmap *m_bitmap_info;
@@ -84,6 +88,7 @@ protected:
     void OnPaint(wxPaintEvent &event);
     void render(wxDC &dc);
     void doRender(wxDC &dc);
+    void init_signal_bitmaps();
     void on_mouse_enter(wxMouseEvent &evt);
     void on_mouse_leave(wxMouseEvent &evt);
     void on_mouse_left_down(wxMouseEvent &evt);
