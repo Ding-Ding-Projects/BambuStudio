@@ -943,6 +943,50 @@ void PreferencesDialog::set_dark_mode()
 #endif
 }
 
+// Sync the MD3 runtime density + accent token state (MD3Tokens.hpp) to the
+// persisted Appearance choices. Called at Preferences construction so the tokens
+// reflect the user's saved selection; widgets/dialogs built afterwards read the
+// active density metrics and the accent-recoloured roles. (Applying the accent
+// at first-window startup — before any Preferences dialog exists — is
+// restart-scoped; see the followup.)
+static void apply_persisted_md3_appearance()
+{
+    auto *cfg = wxGetApp().app_config;
+    if (!cfg)
+        return;
+    MD3::Metrics::setDensity(cfg->get("ui_density") == "compact" ? MD3::Metrics::Density::Compact
+                                                                 : MD3::Metrics::Density::Comfortable);
+    std::string seed = cfg->get("ui_accent_seed");
+    if (seed.empty())
+        seed = "#146c2e"; // Brand seed clears the override -> pristine Brand tones
+    MD3::setAccentSeed(wxColour(wxString::FromUTF8(seed)));
+}
+
+// Re-theme the live UI after an Appearance accent/density change, reusing the
+// same fan-out the light/dark toggle performs (see apply_dark_mode): push
+// freshly-resolved MD3 role colours to the wx widget tree, refresh the 3D
+// viewport chrome, then repaint/relayout the open Preferences dialog so its
+// swatches, nav pills and segmented controls update at once. Accent (colour)
+// changes propagate live; a density change fully re-lays-out only windows built
+// after the change (restart-scoped for already-open windows — see the followup).
+static void refresh_md3_appearance(wxWindow *dialog)
+{
+#ifdef _MSW_DARK_MODE
+    wxGetApp().force_colors_update();
+    wxGetApp().update_ui_from_settings();
+#endif
+    if (wxGetApp().plater()) {
+        SimpleEvent evt = SimpleEvent(EVT_GLCANVAS_COLOR_MODE_CHANGED);
+        wxPostEvent(wxGetApp().plater(), evt);
+    }
+    if (wxGetApp().mainframe)
+        wxGetApp().mainframe->Refresh();
+    if (dialog) {
+        dialog->Refresh();
+        dialog->Layout();
+    }
+}
+
 wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param)
 {
     wxBoxSizer *m_sizer_checkbox  = new wxBoxSizer(wxHORIZONTAL);
@@ -1241,6 +1285,10 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
     SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     SetSize(wxSize(780, 580));
     m_original_use_12h_time_format = wxGetApp().app_config->get("use_12h_time_format");
+    // Sync the MD3 density/accent token state to the persisted Appearance choices
+    // before the tabs are built so this dialog and later-constructed surfaces
+    // resolve the saved density metrics and accent roles.
+    apply_persisted_md3_appearance();
     create();
     wxGetApp().UpdateDlgDarkUI(this);
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
@@ -1645,8 +1693,9 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         e.Skip();
     });
 
-    // Density: comfortable / compact SegmentedControl. Persistence only — the
-    // runtime Metrics selector lives in shared foundation (see followups).
+    // Density: comfortable / compact SegmentedControl. Persists ui_density and
+    // drives the MD3 runtime density state (MD3::Metrics::setDensity) so later-
+    // built surfaces reflect the choice; a live re-theme refresh follows.
     auto *density = new MultiSwitchButton(scrolled);
     m_segmented_list.push_back(density);
     density->SetOptions({_L("Comfortable"), _L("Compact")});
@@ -1654,13 +1703,17 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     const std::string density_val = app_config->get("ui_density");
     density->SetSelection(density_val == "compact" ? 1 : 0);
     density->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
-        app_config->set("ui_density", e.GetInt() == 1 ? "compact" : "comfortable");
+        const bool compact = e.GetInt() == 1;
+        app_config->set("ui_density", compact ? "compact" : "comfortable");
         app_config->save();
+        MD3::Metrics::setDensity(compact ? MD3::Metrics::Density::Compact : MD3::Metrics::Density::Comfortable);
+        refresh_md3_appearance(this);
         e.Skip();
     });
 
-    // Accent: swatch row. Persistence only — the accent-seed regen infra lives in
-    // shared foundation (MD3Tokens accentFromSeed / scheme wiring; see followups).
+    // Accent: swatch row. Persists ui_accent_seed and applies the seed to the MD3
+    // accent roles at runtime (MD3::setAccentSeed recomputes Primary/*Container
+    // for light+dark); a live re-theme refresh then repaints the UI.
     const std::vector<std::pair<wxString, wxString>> seeds = {
         {"#146c2e", _L("Green")}, {"#7c5cff", _L("Purple")}, {"#14b8a6", _L("Teal")},
         {"#2563eb", _L("Blue")},  {"#d81b60", _L("Pink")},   {"#ea580c", _L("Orange")},
@@ -1676,8 +1729,10 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         auto             *sw  = new AccentSwatch(scrolled, wxColour(seeds[i].first), sel, [this, hex, swatches, i]() {
             app_config->set("ui_accent_seed", hex);
             app_config->save();
+            MD3::setAccentSeed(wxColour(wxString::FromUTF8(hex)));
             for (size_t j = 0; j < swatches->size(); ++j)
                 (*swatches)[j]->SetSelected(j == i);
+            refresh_md3_appearance(this);
         });
         sw->SetToolTip(seeds[i].second);
         swatches->push_back(sw);

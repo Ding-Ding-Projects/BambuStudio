@@ -547,16 +547,25 @@ void Tab::create_preset_tab()
     m_tabctrl = new TabCtrl(panel, wxID_ANY, wxDefaultPosition, wxSize(20 * m_em_unit, -1),
         wxTR_NO_BUTTONS | wxTR_HIDE_ROOT | wxTR_SINGLE | wxTR_NO_LINES | wxBORDER_NONE | wxWANTS_CHARS | wxTR_FULL_ROW_HIGHLIGHT);
     m_tabctrl->Bind(wxEVT_RIGHT_DOWN, [this](auto &e) {}); // disable right select
-    // Category NavItem label uses the kit NavItem body scale (13.5 -> Body_13)
-    // rather than the legacy Body_14. The full NavItem-pill reskin (h44 r22
-    // SecondaryContainer pill + 20px leading Material Symbol glyph) lives in the
-    // shared TabCtrl widget, whose AppendItem currently ignores the image slot.
+    // Setting-category nav: MD3 NavItem pills (h44 r22, selected
+    // SecondaryContainer/OnSecondaryContainer 600, hover SurfaceContainerHigh,
+    // idle OnSurfaceVariant 400) with a 20px leading Material Symbol per category
+    // (mapped in rebuild_page_tree via category_glyph). SetNavItemStyle turns the
+    // shared TabCtrl from its flat underline-indicator strip into the pill strip;
+    // labels use the kit NavItem body scale (13.5 -> Body_13). Pill/label/glyph
+    // colours resolve from MD3 roles; the container's own background keeps the
+    // app dark-mode pass (UpdateDarkUI) so the strip (which the idle pills match)
+    // stays theme-correct on runtime theme toggles.
     m_tabctrl->SetFont(Label::Body_13);
+    m_tabctrl->SetNavItemStyle(true);
     //m_left_sizer->Add(m_tabctrl, 1, wxEXPAND);
     const int img_sz = int(32 * scale_factor + 0.5f);
     m_icons = new wxImageList(img_sz, img_sz, false, 1);
     // Index of the last icon inserted into $self->{icons}.
     m_icon_count = -1;
+    // Fallback raster path kept reachable: when the Material Symbols face is
+    // unavailable the item glyphs degrade gracefully and this image list remains
+    // the assigned bitmap surface (unpopulated by design here — glyphs lead).
     m_tabctrl->AssignImageList(m_icons);
     wxGetApp().UpdateDarkUI(m_tabctrl);
 
@@ -1023,6 +1032,7 @@ void Tab::update_label_colours()
                 (m_type < Preset::TYPE_COUNT ? &m_default_text_clr : &m_modified_label_clr);
 
             m_tabctrl->SetItemTextColour(cur_item, clr == &m_modified_label_clr ? *clr : StateColor(
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSecondaryContainer), (int) StateColor::Checked),
                         std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(*clr, (int) StateColor::Normal)));
             break;
@@ -1538,6 +1548,7 @@ void Tab::update_changed_tree_ui()
 
             if (page->set_item_colour(clr))
                 m_tabctrl->SetItemTextColour(cur_item, clr == &m_modified_label_clr ? *clr : StateColor(
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSecondaryContainer), (int) StateColor::Checked),
                         std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(*clr, (int) StateColor::Normal)));
 
@@ -1852,6 +1863,9 @@ void Tab::sys_color_changed()
     wxGetApp().UpdateDarkUI(this);
     wxGetApp().UpdateDarkUI(m_tabctrl);
 #endif
+    // Re-bake the NavItem-pill fills for the new theme (the item buttons are not
+    // recreated here); item text colours are refreshed by update_changed_tree_ui.
+    m_tabctrl->RefreshItemStyles();
     update_changed_tree_ui();
 
     // update options_groups
@@ -6188,6 +6202,34 @@ void Tab::load_current_preset()
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__<<boost::format(": exit");
 }
 
+// Map a setting-category (canonical English page title, as passed to
+// add_options_page) to a Material Symbols glyph for the NavItem-pill leading
+// icon. The glyph is drawn ~20px leading the translated label and inherits the
+// item's state colour. Every codepoint is a value already present in the
+// MaterialIcon enum; unmapped categories fall back to the generic 'tune' glyph.
+static uint32_t category_glyph(const wxString &title)
+{
+    if (title == "Quality")                  return MaterialIcon::Tune;
+    if (title == "Strength")                 return MaterialIcon::Grain;
+    if (title == "Speed")                    return MaterialIcon::Speed;
+    if (title == "Support")                  return MaterialIcon::Foundation;
+    if (title == "Others")                   return MaterialIcon::MoreHoriz;
+    if (title == "Frequent")                 return MaterialIcon::Star;
+    if (title == "Plate Settings")           return MaterialIcon::GridView;
+    if (title == "Setting Overrides")        return MaterialIcon::Edit;
+    if (title == "Filament")                 return MaterialIcon::Palette;
+    if (title == "Cooling")                  return MaterialIcon::ModeFan;
+    if (title == "Advanced")                 return MaterialIcon::Settings;
+    if (title == "Notes")                    return MaterialIcon::TextFields;
+    if (title == "Multi Filament")           return MaterialIcon::Layers;
+    if (title == "Basic information")        return MaterialIcon::Info;
+    if (title == "Machine gcode")            return MaterialIcon::Build;
+    if (title == "Motion ability")           return MaterialIcon::Speed;
+    if (title == "Single extruder MM setup") return MaterialIcon::Print;
+    if (title.StartsWith("Extruder"))        return MaterialIcon::Print;
+    return MaterialIcon::Tune;
+}
+
 //Regerenerate content of the page tree.
 void Tab::rebuild_page_tree()
 {
@@ -6211,7 +6253,9 @@ void Tab::rebuild_page_tree()
         if (!p->get_show())
             continue;
         auto itemId = m_tabctrl->AppendItem(translate_category(p->title(), m_type), p->iconID());
+        m_tabctrl->SetItemGlyph(itemId, category_glyph(p->title()));
         m_tabctrl->SetItemTextColour(itemId, p->get_item_colour() == m_modified_label_clr ? p->get_item_colour() : StateColor(
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSecondaryContainer), (int) StateColor::Checked),
                         std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(p->get_item_colour(), (int) StateColor::Normal)));
         if (translate_category(p->title(), m_type) == selected)

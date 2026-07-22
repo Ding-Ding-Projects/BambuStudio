@@ -6,7 +6,10 @@
 #include <wx/textctrl.h>
 #include "StaticBox.hpp"
 
+#include <cstdint>
 #include <unordered_set>
+
+class Button;
 
 wxDECLARE_EVENT(wxCUSTOMEVT_SET_TEMP_FINISH, wxCommandEvent);
 
@@ -27,6 +30,18 @@ class TempInput : public wxNavigationEnabled<StaticBox>
     ScalableBitmap actice_icon;
     ScalableBitmap degree_icon;
     ScalableBitmap round_scale_hint_icon;/*the size hint of icon, use to compute size*/
+
+    // MD3 Device temperature row (kit Device.jsx:49-60): a 22px teal Material
+    // Symbols glyph replaces the monitor_*_temp raster icons, and a trailing
+    // filled edit IconButton fronts the editable target field. The glyph is
+    // capability-gated (falls back to the raster icons when the icon face is
+    // missing) and the active/normal state is carried by colour, preserving the
+    // heating indication the swapped icons used to convey.
+    uint32_t m_glyph_icon{0};
+    int      m_glyph_px{22};
+    wxColour m_glyph_active_color;
+    wxColour m_glyph_normal_color;
+    Button * m_edit_btn{nullptr};
 
     StateColor   label_color;
     StateColor   text_color;
@@ -95,7 +110,15 @@ public:
     void SetIconActive();
     void SetIconNormal();
 
-   void SetReadOnly(bool ro) { m_read_only = ro; }
+    // Adopt a Material Symbols glyph (drawn live in teal) in place of the raster
+    // leading icon; px is the design-px glyph size (kit: 22). Capability-gated at
+    // paint time, so passing a glyph never regresses a stripped-font build.
+    void SetGlyphIcon(uint32_t glyph, int px = 22);
+    // Active (heating) / normal glyph colours, re-pushed on theme change so the
+    // teal follows the live light<->dark flip.
+    void SetGlyphColors(const wxColour &active, const wxColour &normal);
+
+   void SetReadOnly(bool ro);
 
     void SetMaxTemp(int temp);
     void SetMinTemp(int temp);

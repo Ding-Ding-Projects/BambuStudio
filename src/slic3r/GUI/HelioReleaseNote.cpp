@@ -10,6 +10,7 @@
 #include "GUI_Preview.hpp"
 #include "MainFrame.hpp"
 #include "format.hpp"
+#include "MsgDialog.hpp"
 
 // Forward declaration - function is defined in Plater.cpp
 namespace Slic3r {
@@ -747,10 +748,12 @@ void HelioStatementDialog::create_pat_page()
                 BOOST_LOG_TRIVIAL(info) << "Dialog closed";
             } catch (const std::exception& ex) {
                 BOOST_LOG_TRIVIAL(error) << "Error opening History dialog: " << ex.what();
-                wxMessageBox(wxString::Format("Error opening History dialog: %s", ex.what()), "Error", wxOK | wxICON_ERROR);
+                MessageDialog dlg(nullptr, wxString::Format("Error opening History dialog: %s", ex.what()), "Error", wxOK | wxICON_ERROR);
+                dlg.ShowModal();
             } catch (...) {
                 BOOST_LOG_TRIVIAL(error) << "Unknown error opening History dialog";
-                wxMessageBox("Unknown error opening History dialog", "Error", wxOK | wxICON_ERROR);
+                MessageDialog dlg(nullptr, "Unknown error opening History dialog", "Error", wxOK | wxICON_ERROR);
+                dlg.ShowModal();
             }
         });
     });

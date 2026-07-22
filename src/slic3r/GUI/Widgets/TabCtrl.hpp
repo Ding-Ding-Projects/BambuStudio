@@ -20,6 +20,14 @@ class TabCtrl : public StaticBox
     // a Preview/Device workspace recolours to that context (defaults to Brand).
     MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
 
+    // Opt-in MD3 NavItem-pill styling (preset-editor setting-category nav). Off
+    // by default so the flat secondary-tab-strip consumers (media storage tabs,
+    // user-preset collections) keep the underline-indicator look. When on, each
+    // item renders as an h44 r22 pill (selected SecondaryContainer, hover
+    // SurfaceContainerHigh, idle blending into the strip) and the Primary
+    // underline indicator is suppressed. Toggled via SetNavItemStyle().
+    bool m_pill_style = false;
+
 public:
     TabCtrl(wxWindow *      parent,
              wxWindowID      id,
@@ -64,6 +72,25 @@ public:
 
     void SetItemTextColour(unsigned int item, const StateColor &col);
 
+    // Optional leading Material Symbols glyph for one item, drawn ~20px leading
+    // the label in the item's state-resolved text colour (selected accent / idle
+    // OnSurfaceVariant; state is expressed through colour, never the FILL axis).
+    // Capability-gated inside Button::SetGlyph (MaterialIcon::available()): when
+    // the face is missing it falls back to the raster-icon path, leaving the
+    // assigned wxImageList mechanism intact. codepoint 0 clears the glyph.
+    void SetItemGlyph(unsigned int item, uint32_t glyph);
+
+    // Enable/disable MD3 NavItem-pill styling for the whole control (see
+    // m_pill_style). Restyles every existing item and every item appended after.
+    void SetNavItemStyle(bool pill);
+
+    // Re-bake the (theme-varying) pill fill for every item. The pill background
+    // StateColor captures the current theme's SecondaryContainer/High at build
+    // time, so a runtime theme toggle (which does not recreate the item buttons)
+    // must call this to refresh it. No-op when not in pill mode; the item text
+    // colour is refreshed by the owner (Tab::update_changed_tree_ui).
+    void RefreshItemStyles();
+
     // Recolour the active-label accent and active indicator for the current
     // workspace scheme (Brand / Preview / Device). Re-applies the scheme-aware
     // default label colour to every tab and repaints the indicator.
@@ -83,10 +110,20 @@ private:
 
     void relayout();
 
-    // Scheme-aware default tab label colour: active (Checked) -> Primary in the
-    // current scheme, inactive -> OnSurfaceVariant. Weight (600/400) is carried
-    // separately by the bold-font mechanism.
+    // Scheme-aware default tab label colour. In pill mode: active (Checked) ->
+    // OnSecondaryContainer on the SecondaryContainer pill, inactive ->
+    // OnSurfaceVariant. In the flat strip: active -> Primary in the current
+    // scheme, inactive -> OnSurfaceVariant. Weight (600/400) is carried
+    // separately by the bold-font mechanism, and the leading glyph inherits this
+    // colour via Button::render().
     StateColor tabTextColor() const;
+
+    // Pill-mode background StateColor: selected SecondaryContainer (current
+    // scheme), hover SurfaceContainerHigh, idle = the strip background.
+    StateColor navPillBg() const;
+
+    // Apply the current mode's geometry + fill to one item button (pill vs flat).
+    void applyItemStyle(Button *btn);
 
     void buttonClicked(wxCommandEvent & event);
     void keyDown(wxKeyEvent &event);

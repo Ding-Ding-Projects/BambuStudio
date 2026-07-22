@@ -147,6 +147,17 @@ static StateColor device_primary_button_text()
                       std::pair<wxColour, int>(device_primary_text_color(), StateColor::Normal));
 }
 
+// Coarse humidity state word for the AMS card header's teal trailing label
+// (kit Device.jsx:69). Keyed on AMSinfo::get_humidity_display_idx(), where 5 is
+// driest and 1 is wettest (per the AMS percent->index mapping in AMSItem). Used
+// only when a unit reports a level but no percentage.
+static wxString device_humidity_state_word(int display_idx)
+{
+    if (display_idx >= 4) return _L("Dry");
+    if (display_idx == 3) return _L("Normal");
+    return _L("Humid");
+}
+
 // Build a monochrome control/status icon as a Material Symbols glyph rendered at
 // a logical px in colour, degrading to the legacy raster (fallback_name) when the
 // icon face is unavailable. The consumers (ImageSwitchButton / FanSwitchButton /
@@ -2343,13 +2354,18 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     wxBoxSizer *bSizer_right = new wxBoxSizer(wxVERTICAL);
 
     m_panel_control_title = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
-    m_panel_control_title->SetBackgroundColour(device_title_color());
+    // Kit Device.jsx:48: the right column is a plain stack of cards with no
+    // 'Control' title strip. Blend the former device_title_color band into the
+    // SurfaceDim column and hide the 'Control' label; the still-needed Printer
+    // Parts / Calibration entry points stay as a borderless top action row.
+    m_panel_control_title->SetBackgroundColour(device_page_color());
 
     wxBoxSizer *bSizer_control_title = new wxBoxSizer(wxHORIZONTAL);
     m_staticText_control             = new Label(m_panel_control_title, _L("Control"));
     m_staticText_control->Wrap(-1);
     // m_staticText_control->SetFont(PAGE_TITLE_FONT);
     m_staticText_control->SetForegroundColour(device_secondary_text_color());
+    m_staticText_control->Hide();
 
     StateColor btn_bg_green = device_primary_button_background();
     StateColor btn_bd_green = device_primary_button_border();
@@ -2390,7 +2406,9 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_options_btn->Hide();
     m_safety_btn->Hide();
 
-    bSizer_control_title->Add(m_staticText_control, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, PAGE_TITLE_LEFT_MARGIN);
+    // 'Control' label hidden above; a leading stretch keeps the entry-point
+    // buttons right-aligned in the borderless action row.
+    bSizer_control_title->AddStretchSpacer(1);
     bSizer_control_title->Add(0, 0, 1, wxEXPAND, 0);
     bSizer_control_title->Add(m_parts_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
     bSizer_control_title->Add(m_options_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
@@ -2541,6 +2559,12 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
 
     m_tempCtrl_nozzle->SetTextColor(tempinput_text_colour);
     m_tempCtrl_nozzle->SetBorderColor(tempinput_border_colour);
+    // Kit Device.jsx:51-53: the monitor_*_temp rasters become 22px teal Material
+    // Symbols (nozzle mode_heat / bed radio_button_checked / chamber home_work).
+    // Capability-gated in TempInput's paint path, so a stripped icon face keeps
+    // the raster icons; teal (heating) / OnSurfaceVariant (idle) via glyph colours.
+    m_tempCtrl_nozzle->SetGlyphIcon(MaterialIcon::ModeHeat, 22);
+    m_tempCtrl_nozzle->SetGlyphColors(device_primary_color(), device_secondary_text_color());
 
     m_tempCtrl_nozzle_deputy = new TempInput(parent, nozzle_id, TEMP_BLANK_STR, TempInputType::TEMP_OF_NORMAL_TYPE, TEMP_BLANK_STR, wxString("monitor_nozzle_temp"),
                                              wxString("monitor_nozzle_temp_active"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
@@ -2552,6 +2576,8 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
 
     m_tempCtrl_nozzle_deputy->SetTextColor(tempinput_text_colour);
     m_tempCtrl_nozzle_deputy->SetBorderColor(tempinput_border_colour);
+    m_tempCtrl_nozzle_deputy->SetGlyphIcon(MaterialIcon::ModeHeat, 22);
+    m_tempCtrl_nozzle_deputy->SetGlyphColors(device_primary_color(), device_secondary_text_color());
 
     sizer->Add(m_tempCtrl_nozzle_deputy, 0, wxEXPAND | wxALL, 1);
     sizer->Add(m_tempCtrl_nozzle, 0, wxEXPAND | wxALL, 1);
@@ -2572,6 +2598,8 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     m_tempCtrl_bed->SetBorderWidth(FromDIP(2));
     m_tempCtrl_bed->SetTextColor(tempinput_text_colour);
     m_tempCtrl_bed->SetBorderColor(tempinput_border_colour);
+    m_tempCtrl_bed->SetGlyphIcon(MaterialIcon::RadioButtonChecked, 22);
+    m_tempCtrl_bed->SetGlyphColors(device_primary_color(), device_secondary_text_color());
     sizer->Add(m_tempCtrl_bed, 0, wxEXPAND | wxALL, 1);
 
     auto line = new StaticLine(parent);
@@ -2589,6 +2617,8 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     m_tempCtrl_chamber->SetBorderWidth(FromDIP(2));
     m_tempCtrl_chamber->SetTextColor(tempinput_text_colour);
     m_tempCtrl_chamber->SetBorderColor(tempinput_border_colour);
+    m_tempCtrl_chamber->SetGlyphIcon(MaterialIcon::HomeWork, 22);
+    m_tempCtrl_chamber->SetGlyphColors(device_primary_color(), device_secondary_text_color());
     sizer->Add(m_tempCtrl_chamber, 0, wxEXPAND | wxALL, 1);
 
     return sizer;
@@ -4196,6 +4226,36 @@ void StatusPanel::update_ams(MachineObject *obj)
         info.ams_id = ams->first;
         if (ams->second->IsExist() && info.parse_ams_info(obj, ams->second, obj->GetFilaSystem()->IsDetectRemainEnabled(), obj->is_support_ams_humidity)) {
             ams_info.push_back(info);
+        }
+    }
+
+    // Wave-7 debt: bind the AMS-header teal 'Humidity' trailing label to live
+    // humidity from the first unit that reports real data (percentage when the
+    // unit sends one, else a coarse Dry/Normal/Humid word from the 1-5 level).
+    // Gated on the device flag + raw fields because get_humidity_display_idx()
+    // defaults to 1, so support_humidity() alone would read as spurious humidity.
+    if (m_ams_humidity_label) {
+        const AMSinfo *hum = nullptr;
+        if (obj->is_support_ams_humidity) {
+            for (const auto &info : ams_info) {
+                if (info.ams_humidity_percent >= 0 || (info.ams_humidity >= 1 && info.ams_humidity <= 5)) {
+                    hum = &info;
+                    break;
+                }
+            }
+        }
+        wxString hum_text;
+        if (hum) {
+            if (hum->ams_humidity_percent >= 0)
+                hum_text = _L("Humidity") + wxString::Format(": %d%%", hum->ams_humidity_percent);
+            else
+                hum_text = _L("Humidity") + ": " + device_humidity_state_word(hum->get_humidity_display_idx());
+        }
+        const bool want_show = (hum != nullptr);
+        if (m_ams_humidity_label->IsShown() != want_show) m_ams_humidity_label->Show(want_show);
+        if (want_show && m_ams_humidity_label->GetLabel() != hum_text) {
+            m_ams_humidity_label->SetLabel(hum_text);
+            if (m_ams_control_box) m_ams_control_box->Layout();
         }
     }
 
@@ -6111,6 +6171,8 @@ void StatusPanel::on_sys_color_changed()
     // Device title colour; just repaint it so the badge/chips redraw crisply.
     if (m_camera_hud) m_camera_hud->Refresh();
     m_staticText_control->SetForegroundColour(device_secondary_text_color());
+    // Keep the (title-strip-free) action row blended into the SurfaceDim column.
+    if (m_panel_control_title) m_panel_control_title->SetBackgroundColour(device_page_color());
     StateColor card_background(device_card_color());
     StateColor card_border(device_divider_color());
     for (StaticBox *card : {m_temperature_control_box, m_print_options_box, m_ams_control_box, m_move_control_box, m_filament_load_box}) {
@@ -6155,6 +6217,8 @@ void StatusPanel::on_sys_color_changed()
     for (TempInput *input : {m_tempCtrl_nozzle, m_tempCtrl_nozzle_deputy, m_tempCtrl_bed, m_tempCtrl_chamber}) {
         input->SetTextColor(temp_text);
         input->SetBorderColor(temp_border);
+        // Re-resolve the teal/idle glyph colours for the new theme.
+        input->SetGlyphColors(device_primary_color(), device_secondary_text_color());
         input->Refresh();
     }
 

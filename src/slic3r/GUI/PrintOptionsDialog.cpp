@@ -2038,7 +2038,8 @@ void PrinterPartsDialog::OnWikiClicked(wxMouseEvent& e)
     if (!url.IsEmpty()) {
         wxLaunchDefaultBrowser(url);
     } else {
-        wxMessageBox(_L("No wiki link available for this printer."), _L("Error"), wxOK | wxICON_ERROR, this);
+        MessageDialog dlg(this, _L("No wiki link available for this printer."), _L("Error"), wxOK | wxICON_ERROR);
+        dlg.ShowModal();
     }
 }// PrinterPartsDialog::OnWikiClicked
 

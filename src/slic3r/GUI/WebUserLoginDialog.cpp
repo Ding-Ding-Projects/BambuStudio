@@ -22,6 +22,7 @@
 
 #include <nlohmann/json.hpp>
 #include "MainFrame.hpp"
+#include "MsgDialog.hpp"
 #include <boost/dll.hpp>
 
 #include <sstream>
@@ -335,7 +336,8 @@ void ZUserLogin::OnScriptMessage(wxWebViewEvent &evt)
             return;
         }
     } catch (std::exception &e) {
-        wxMessageBox(e.what(), "parse json failed", wxICON_WARNING);
+        MessageDialog dlg(this, e.what(), "parse json failed", wxOK | wxICON_WARNING);
+        dlg.ShowModal();
         Close();
     }
 }

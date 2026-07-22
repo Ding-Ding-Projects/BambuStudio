@@ -168,6 +168,11 @@ enum Glyph : uint32_t {
     Padding                 = 0xE9C8,
     Compress                = 0xE94D,
     Timeline                = 0xE922,
+    // --- Orient toolbar + device/objects downstream (cmap-verified) ---
+    Rotation3D              = 0xE84D, // '3d_rotation'; the exact 'screen_rotation' mark is absent from this font, so the orient toolbar item uses this 3D-rotate glyph
+    Visibility              = 0xE8F4, // object-outliner show / hide toggle
+    Person                  = 0xE7FD, // device / account identity
+    Air                     = 0xEFD8, // aux / chamber fan airflow (distinct from ModeFan, the main part-cooling fan)
     // --- Aliases for names absent from the vendored font (nearest verified glyph) ---
     Download                = 0xE171, // 'file_download' is not in this font; 'download' is the Material Symbols name
     SettingsBackupRestore   = 0xE8BA, // 'restore' is not in this font (use for undo-to-system-value / restore defaults)

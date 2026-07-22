@@ -9332,6 +9332,182 @@ void GLCanvas3D::_render_overlays()
     }
     m_labels.render(sorted_instances);
     _render_3d_navigator();
+
+    // MD3 viewport chrome (Prepare 3D editor only): a bottom-right zoom cluster
+    // wired to the existing camera zoom commands and a bottom-centre object stat
+    // pill. Additive overlays, drawn above the scene and the GL toolbars; they
+    // never remove or reroute existing viewport interaction. Icons are drawn as
+    // vector primitives so the chrome carries no glyph-font dependency.
+    if (m_canvas_type == ECanvasType::CanvasView3D) {
+        const Size  cnv_size = get_canvas_size();
+        const float cnv_w    = static_cast<float>(cnv_size.get_width());
+        const float cnv_h    = static_cast<float>(cnv_size.get_height());
+        const float sc       = std::max(0.5f, get_scale());
+        if (cnv_w > 1.0f && cnv_h > 1.0f) {
+            ImGuiWrapper&   imgui = *wxGetApp().imgui();
+            const wxColour& sh    = MD3::shadowTint(wxGetApp().dark_mode());
+
+            auto draw_soft_shadow = [&](ImDrawList* dl, const ImVec2& a, const ImVec2& b, float rounding, float dy) {
+                for (int i = 3; i >= 1; --i) {
+                    const float g   = static_cast<float>(i) * sc;
+                    const ImU32 col = IM_COL32(sh.Red(), sh.Green(), sh.Blue(), static_cast<int>((sh.Alpha() * 0.5f) / static_cast<float>(i)));
+                    dl->AddRectFilled(ImVec2(a.x - g, a.y - g + dy), ImVec2(b.x + g, b.y + g + dy), col, rounding + g);
+                }
+            };
+
+            // Vector icon marks: 0 add, 1 remove, 2 filter_center_focus, 3 deployed_code.
+            auto draw_icon = [&](ImDrawList* dl, float cx, float cy, float s, int type, ImU32 col) {
+                const float h  = s * 0.5f;
+                const float th = std::max(1.5f, 2.0f * sc);
+                switch (type) {
+                case 0:
+                    dl->AddLine(ImVec2(cx - h, cy), ImVec2(cx + h, cy), col, th);
+                    dl->AddLine(ImVec2(cx, cy - h), ImVec2(cx, cy + h), col, th);
+                    break;
+                case 1:
+                    dl->AddLine(ImVec2(cx - h, cy), ImVec2(cx + h, cy), col, th);
+                    break;
+                case 2: {
+                    dl->AddCircleFilled(ImVec2(cx, cy), std::max(1.5f, 2.0f * sc), col, 12);
+                    const float b = h;
+                    const float l = h * 0.5f;
+                    const ImVec2 corner[4] = { ImVec2(cx - b, cy - b), ImVec2(cx + b, cy - b), ImVec2(cx + b, cy + b), ImVec2(cx - b, cy + b) };
+                    const ImVec2 ax[4]     = { ImVec2(1, 0), ImVec2(-1, 0), ImVec2(-1, 0), ImVec2(1, 0) };
+                    const ImVec2 ay[4]     = { ImVec2(0, 1), ImVec2(0, 1), ImVec2(0, -1), ImVec2(0, -1) };
+                    for (int k = 0; k < 4; ++k) {
+                        dl->AddLine(corner[k], ImVec2(corner[k].x + ax[k].x * l, corner[k].y + ax[k].y * l), col, th);
+                        dl->AddLine(corner[k], ImVec2(corner[k].x + ay[k].x * l, corner[k].y + ay[k].y * l), col, th);
+                    }
+                    break;
+                }
+                case 3: {
+                    ImVec2      p[6];
+                    const float ct = std::max(1.0f, 1.4f * sc);
+                    for (int k = 0; k < 6; ++k) {
+                        const float a = (static_cast<float>(k) * 60.0f - 90.0f) * static_cast<float>(PI) / 180.0f;
+                        p[k] = ImVec2(cx + h * std::cos(a), cy + h * std::sin(a));
+                    }
+                    dl->AddPolyline(p, 6, col, ImDrawFlags_Closed, ct);
+                    dl->AddLine(p[1], ImVec2(cx, cy), col, ct);
+                    dl->AddLine(p[3], ImVec2(cx, cy), col, ct);
+                    dl->AddLine(p[5], ImVec2(cx, cy), col, ct);
+                    break;
+                }
+                default: break;
+                }
+            };
+
+            const int overlay_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+                | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings
+                | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
+
+            // Bottom-right zoom cluster (r26 SurfaceContainer card, elev-3).
+            {
+                const float pad    = 6.0f * sc;
+                const float btn    = 40.0f * sc;
+                const float gap    = 6.0f * sc;
+                const float margin = 16.0f * sc;
+                const float card_w = pad * 2.0f + btn;
+                const float card_h = pad * 2.0f + btn * 3.0f + gap * 2.0f;
+                imgui.set_next_window_pos(cnv_w - card_w - margin, cnv_h - card_h - margin, ImGuiCond_Always, 0.0f, 0.0f);
+                imgui.set_next_window_size(card_w, card_h, ImGuiCond_Always);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+                imgui.begin(std::string("md3_zoom_cluster"), overlay_flags);
+                ImDrawList*  dl       = ImGui::GetWindowDrawList();
+                const ImVec2 wp       = ImGui::GetWindowPos();
+                const ImVec2 we       = ImVec2(wp.x + card_w, wp.y + card_h);
+                const float  rounding = 26.0f * sc;
+                draw_soft_shadow(dl, wp, we, rounding, static_cast<float>(MD3::Metrics::elev3.dy) * sc);
+                dl->AddRectFilled(wp, we, md3_imu32(MD3::Role::SurfaceContainer), rounding);
+                dl->AddRect(wp, we, md3_imu32(MD3::Role::OutlineVariant), rounding, 0, std::max(1.0f, sc));
+                const int marks[3] = { 0, 1, 2 };
+                for (int i = 0; i < 3; ++i) {
+                    const float bx = wp.x + pad;
+                    const float by = wp.y + pad + static_cast<float>(i) * (btn + gap);
+                    ImGui::SetCursorScreenPos(ImVec2(bx, by));
+                    ImGui::PushID(i);
+                    const bool clicked = ImGui::InvisibleButton("zoombtn", ImVec2(btn, btn));
+                    const bool hovered = ImGui::IsItemHovered();
+                    ImGui::PopID();
+                    if (hovered)
+                        dl->AddRectFilled(ImVec2(bx, by), ImVec2(bx + btn, by + btn), md3_imu32(MD3::Role::SurfaceContainerHigh), 10.0f * sc);
+                    draw_icon(dl, bx + btn * 0.5f, by + btn * 0.5f, 22.0f * sc, marks[i], md3_imu32(MD3::Role::OnSurfaceVariant));
+                    if (clicked) {
+                        if (i == 0)      _update_camera_zoom(1.0);
+                        else if (i == 1) _update_camera_zoom(-1.0);
+                        else             zoom_to_fit();
+                    }
+                }
+                imgui.end();
+                ImGui::PopStyleColor(1);
+                ImGui::PopStyleVar(2);
+            }
+
+            // Bottom-centre object stat pill (r20 SurfaceContainer, deployed_code + counts).
+            const size_t obj_count = (m_model != nullptr) ? m_model->objects.size() : 0;
+            if (obj_count > 0) {
+                size_t face_count = 0;
+                for (const ModelObject* o : m_model->objects)
+                    if (o != nullptr)
+                        face_count += o->facets_count();
+
+                std::string digits = std::to_string(face_count);
+                std::string faces_grouped;
+                int         grp = 0;
+                for (auto it = digits.rbegin(); it != digits.rend(); ++it) {
+                    if (grp != 0 && grp % 3 == 0)
+                        faces_grouped.push_back(',');
+                    faces_grouped.push_back(*it);
+                    ++grp;
+                }
+                std::reverse(faces_grouped.begin(), faces_grouped.end());
+
+                const std::string obj_word = (obj_count == 1) ? _u8L("object") : _u8L("objects");
+                const std::string seg1     = std::to_string(obj_count) + " " + obj_word;
+                const std::string seg2     = faces_grouped + " " + _u8L("faces");
+
+                const float  icon_sz = 16.0f * sc;
+                const float  pad_x   = 14.0f * sc;
+                const float  pad_y   = 7.0f * sc;
+                const float  gap     = 8.0f * sc;
+                const float  dot_r   = std::max(1.5f, 2.0f * sc);
+                const ImVec2 s1      = ImGui::CalcTextSize(seg1.c_str());
+                const ImVec2 s2      = ImGui::CalcTextSize(seg2.c_str());
+                const float  text_h  = std::max(s1.y, s2.y);
+                const float  content_w = icon_sz + gap + s1.x + gap + dot_r * 2.0f + gap + s2.x;
+                const float  pill_w  = pad_x * 2.0f + content_w;
+                const float  pill_h  = pad_y * 2.0f + std::max(icon_sz, text_h);
+                const float  margin  = 16.0f * sc;
+                imgui.set_next_window_pos(cnv_w * 0.5f, cnv_h - margin, ImGuiCond_Always, 0.5f, 1.0f);
+                imgui.set_next_window_size(pill_w, pill_h, ImGuiCond_Always);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+                imgui.begin(std::string("md3_object_stat_pill"), overlay_flags | ImGuiWindowFlags_NoInputs);
+                ImDrawList*  dl       = ImGui::GetWindowDrawList();
+                const ImVec2 wp       = ImGui::GetWindowPos();
+                const ImVec2 we       = ImVec2(wp.x + pill_w, wp.y + pill_h);
+                const float  rounding = 20.0f * sc;
+                draw_soft_shadow(dl, wp, we, rounding, static_cast<float>(MD3::Metrics::elev2.dy) * sc);
+                dl->AddRectFilled(wp, we, md3_imu32(MD3::Role::SurfaceContainer), rounding);
+                dl->AddRect(wp, we, md3_imu32(MD3::Role::OutlineVariant), rounding, 0, std::max(1.0f, sc));
+                const ImU32 fg  = md3_imu32(MD3::Role::OnSurfaceVariant);
+                const float cy  = wp.y + pill_h * 0.5f;
+                draw_icon(dl, wp.x + pad_x + icon_sz * 0.5f, cy, icon_sz, 3, fg);
+                float tx = wp.x + pad_x + icon_sz + gap;
+                dl->AddText(ImVec2(tx, wp.y + (pill_h - s1.y) * 0.5f), fg, seg1.c_str());
+                tx += s1.x + gap;
+                dl->AddCircleFilled(ImVec2(tx + dot_r, cy), dot_r, fg, 8);
+                tx += dot_r * 2.0f + gap;
+                dl->AddText(ImVec2(tx, wp.y + (pill_h - s2.y) * 0.5f), fg, seg2.c_str());
+                imgui.end();
+                ImGui::PopStyleColor(1);
+                ImGui::PopStyleVar(2);
+            }
+        }
+    }
 }
 
 void GLCanvas3D::_render_style_editor()

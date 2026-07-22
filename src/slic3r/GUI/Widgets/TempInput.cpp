@@ -1,5 +1,7 @@
 #include "TempInput.hpp"
 #include "Label.hpp"
+#include "Button.hpp"
+#include "MaterialIcon.hpp"
 #include "PopupWindow.hpp"
 #include "StateColor.hpp"
 #include "../I18N.hpp"
@@ -8,6 +10,46 @@
 #include "../GUI_App.hpp"
 
 wxDEFINE_EVENT(wxCUSTOMEVT_SET_TEMP_FINISH, wxCommandEvent);
+
+// Roboto Mono at an explicit design px + numeric weight, mirroring the MD3 type
+// scale's design-px -> wx point-size conversion, for the numeric temperature
+// values the kit renders in mono (current 15/500, target 12). Cached per size so
+// the label measurement and the render pass share one metric.
+static wxFont temp_mono_font(double design_px, int numeric_weight)
+{
+    double point_size = design_px;
+#ifndef __APPLE__
+    point_size = point_size * 4.0 / 5.0; // design px -> wx point size
+#endif
+    const int          initial     = point_size < 1.0 ? 1 : static_cast<int>(point_size);
+    const wxFontWeight enum_weight = numeric_weight >= 700 ? wxFONTWEIGHT_BOLD :
+                                     numeric_weight >= 600 ? wxFONTWEIGHT_SEMIBOLD :
+                                     numeric_weight >= 500 ? wxFONTWEIGHT_MEDIUM :
+                                                             wxFONTWEIGHT_NORMAL;
+    wxString face = wxString::FromUTF8(MD3::Type::font_mono);
+    wxFont   font{initial, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, enum_weight, false, face};
+    font.SetFaceName(face);
+    font.SetFractionalPointSize(point_size);
+    font.SetNumericWeight(numeric_weight);
+    if (!font.IsOk()) {
+        font = wxFont{initial, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, enum_weight, false};
+        font.SetNumericWeight(numeric_weight);
+        font.SetFractionalPointSize(point_size);
+    }
+    return font;
+}
+
+// The current-value (15/500) and target (12) mono faces, resolved once.
+static const wxFont &temp_current_font()
+{
+    static wxFont f = temp_mono_font(15, 500);
+    return f;
+}
+static const wxFont &temp_target_font()
+{
+    static wxFont f = temp_mono_font(12, 500);
+    return f;
+}
 
 BEGIN_EVENT_TABLE(TempInput, wxPanel)
 EVT_MOTION(TempInput::mouseMoved)
@@ -143,12 +185,33 @@ void TempInput::Create(wxWindow *parent, wxString text, wxString label, wxString
             e.Skip();
         }
     });
-    text_ctrl->SetFont(Label::Body_13);
-    text_ctrl->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
+    // Target temperature in Roboto Mono 12 / OnSurfaceVariant (kit Device.jsx:56).
+    text_ctrl->SetFont(temp_target_font());
+    text_ctrl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     if (!normal_icon.IsEmpty()) { this->normal_icon = ScalableBitmap(this, normal_icon.ToStdString(), 16); }
     if (!actice_icon.IsEmpty()) { this->actice_icon = ScalableBitmap(this, actice_icon.ToStdString(), 16); }
     this->round_scale_hint_icon = ScalableBitmap(this, "round", 16);
     this->degree_icon = ScalableBitmap(this, "degree", 16);
+
+    // Trailing filled edit IconButton fronting the editable target field (kit
+    // Device.jsx:57). Clicking it focuses the field to enter edit mode; the field
+    // stays directly editable so every validation/commit path is preserved.
+    // Hidden when the icon face is unavailable or the row is read-only (Chamber).
+    m_glyph_active_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device);
+    m_glyph_normal_color = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    m_edit_btn = new Button(this, wxEmptyString, wxEmptyString, wxBORDER_NONE);
+    m_edit_btn->SetIconButton(Button::IconShape::Circle, 32, /*filled*/ true, /*danger*/ false);
+    m_edit_btn->SetGlyph(MaterialIcon::Edit, 18);
+    m_edit_btn->SetCanFocus(false);
+    m_edit_btn->SetMinSize(FromDIP(wxSize(32, 32)));
+    m_edit_btn->SetSize(FromDIP(wxSize(32, 32)));
+    m_edit_btn->SetToolTip(_L("Edit"));
+    m_edit_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        if (m_read_only) return;
+        text_ctrl->SetFocus();
+    });
+    m_edit_btn->Show(!m_read_only && MaterialIcon::available());
+
     messureSize();
 }
 
@@ -306,6 +369,30 @@ void TempInput::SetIconNormal()
     }
 }
 
+void TempInput::SetGlyphIcon(uint32_t glyph, int px)
+{
+    m_glyph_icon = glyph;
+    if (px > 0) m_glyph_px = px;
+    messureSize();
+    Refresh();
+}
+
+void TempInput::SetGlyphColors(const wxColour &active, const wxColour &normal)
+{
+    if (active.IsOk()) m_glyph_active_color = active;
+    if (normal.IsOk()) m_glyph_normal_color = normal;
+    Refresh();
+}
+
+void TempInput::SetReadOnly(bool ro)
+{
+    m_read_only = ro;
+    if (m_edit_btn) {
+        m_edit_btn->Show(!ro && MaterialIcon::available());
+        Layout();
+    }
+}
+
 void TempInput::SetMaxTemp(int temp) { max_temp = temp; }
 
 void TempInput::SetMinTemp(int temp) { min_temp = temp; }
@@ -337,6 +424,11 @@ void TempInput::Rescale()
     if (this->actice_icon.bmp().IsOk()) this->actice_icon.msw_rescale();
     if (this->degree_icon.bmp().IsOk()) this->degree_icon.msw_rescale();
     if (this->round_scale_hint_icon.bmp().IsOk()) this->round_scale_hint_icon.msw_rescale();
+    if (m_edit_btn) {
+        m_edit_btn->SetMinSize(FromDIP(wxSize(32, 32)));
+        m_edit_btn->SetSize(FromDIP(wxSize(32, 32)));
+        m_edit_btn->Rescale();
+    }
     messureSize();
 }
 
@@ -372,7 +464,9 @@ void TempInput::DoSetSize(int x, int y, int width, int height, int sizeFlags)
     padding_left = FromDIP(10);
     auto       left = padding_left;
     wxClientDC dc(this);
-    if (normal_icon.bmp().IsOk()) {
+    if (m_glyph_icon != 0 && MaterialIcon::available()) {
+        left += FromDIP(m_glyph_px);
+    } else if (normal_icon.bmp().IsOk()) {
         wxSize szIcon = normal_icon.GetBmpSize();
         left += szIcon.x;
     }
@@ -386,7 +480,7 @@ void TempInput::DoSetSize(int x, int y, int width, int height, int sizeFlags)
     }
 
     // label
-    dc.SetFont(::Label::Head_14);
+    dc.SetFont(temp_current_font());
     labelSize = dc.GetMultiLineTextExtent(wxWindow::GetLabel());
     left += labelSize.x;
 
@@ -394,7 +488,7 @@ void TempInput::DoSetSize(int x, int y, int width, int height, int sizeFlags)
     left += 10;
 
     // separator
-    dc.SetFont(::Label::Body_12);
+    dc.SetFont(temp_target_font());
     auto sepSize = dc.GetMultiLineTextExtent(wxString("/"));
     left += sepSize.x;
 
@@ -402,6 +496,14 @@ void TempInput::DoSetSize(int x, int y, int width, int height, int sizeFlags)
     auto textSize = text_ctrl->GetTextExtent(wxString("0000"));
     text_ctrl->SetSize(textSize);
     text_ctrl->SetPosition({left, (GetSize().y - text_ctrl->GetSize().y) / 2});
+
+    // trailing filled edit IconButton, right-aligned in the row's trailing space
+    if (m_edit_btn && m_edit_btn->IsShown()) {
+        wxSize bs = m_edit_btn->GetSize();
+        int    bx = GetSize().x - bs.x - FromDIP(6);
+        int    by = (GetSize().y - bs.y) / 2;
+        m_edit_btn->SetPosition({bx, by});
+    }
 }
 
 void TempInput::DoSetToolTipText(wxString const &tip)
@@ -441,21 +543,32 @@ void TempInput::render(wxDC &dc)
     padding_left = FromDIP(10);
     wxPoint pt = {padding_left, 0};
     wxSize szIcon;
-    if (normal_icon.bmp().IsOk()) szIcon = normal_icon.GetBmpSize();
-    else if (actice_icon.bmp().IsOk()) szIcon = actice_icon.GetBmpSize();
+    const bool glyph_mode = (m_glyph_icon != 0 && MaterialIcon::available());
+    if (glyph_mode) {
+        // 22px teal Material Symbol (kit Device.jsx:53) replacing the monitor_*_temp
+        // rasters; teal while heating (actice), OnSurfaceVariant otherwise so the
+        // active-state signal the swapped icons carried is preserved via colour.
+        const int gpx = FromDIP(m_glyph_px);
+        szIcon        = wxSize(gpx, gpx);
+        wxColour gcol = actice ? m_glyph_active_color : m_glyph_normal_color;
+        if (!gcol.IsOk()) gcol = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device);
+        MaterialIcon::drawCentered(dc, m_glyph_icon, m_glyph_px, gcol, wxRect(pt.x, 0, gpx, size.y));
+    } else {
+        if (normal_icon.bmp().IsOk()) szIcon = normal_icon.GetBmpSize();
+        else if (actice_icon.bmp().IsOk()) szIcon = actice_icon.GetBmpSize();
 
-    if (actice_icon.bmp().IsOk() && actice) {
-        szIcon = actice_icon.GetBmpSize();
-        pt.y = (size.y - szIcon.y) / 2;
-        dc.DrawBitmap(actice_icon.bmp(), pt);
-    }
-    else {
-        actice = false;
-    }
-    if (normal_icon.bmp().IsOk() && !actice) {
-        szIcon = normal_icon.GetBmpSize();
-        pt.y = (size.y - szIcon.y) / 2;
-        dc.DrawBitmap(normal_icon.bmp(), pt);
+        if (actice_icon.bmp().IsOk() && actice) {
+            szIcon = actice_icon.GetBmpSize();
+            pt.y   = (size.y - szIcon.y) / 2;
+            dc.DrawBitmap(actice_icon.bmp(), pt);
+        } else {
+            actice = false;
+        }
+        if (normal_icon.bmp().IsOk() && !actice) {
+            szIcon = normal_icon.GetBmpSize();
+            pt.y   = (size.y - szIcon.y) / 2;
+            dc.DrawBitmap(normal_icon.bmp(), pt);
+        }
     }
 
     pt.x += szIcon.x + 9;
@@ -492,9 +605,9 @@ void TempInput::render(wxDC &dc)
         pt.x += szIcon.x + 3;
     }
 
-    // label
+    // label (current temperature) in Roboto Mono 15 / 500 (kit Device.jsx:55)
     auto text = wxWindow::GetLabel();
-    dc.SetFont(::Label::Head_14);
+    dc.SetFont(temp_current_font());
     labelSize = dc.GetMultiLineTextExtent(wxWindow::GetLabel());
 
     if (!IsEnabled()) {
@@ -521,10 +634,10 @@ void TempInput::render(wxDC &dc)
     dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextSecondary));
     dc.DrawText(text, pt);
 
-    // separator
-    dc.SetFont(::Label::Body_12);
+    // separator "/" in the target's mono 12 face, OnSurfaceVariant when enabled
+    dc.SetFont(temp_target_font());
     auto sepSize = dc.GetMultiLineTextExtent(wxString("/"));
-    dc.SetTextForeground(text_color.colorForStates(states));
+    dc.SetTextForeground(IsEnabled() ? StateColor::semantic(MD3::Role::OnSurfaceVariant) : text_color.colorForStates(states));
     dc.SetTextBackground(background_color.colorForStates(states));
     pt.x += labelSize.x + 10;
     pt.y = (size.y - sepSize.y) / 2;
@@ -549,7 +662,10 @@ void TempInput::messureMiniSize()
     auto height = 0;
 
     wxClientDC dc(this);
-    if (normal_icon.bmp().IsOk()) {
+    if (m_glyph_icon != 0 && MaterialIcon::available()) {
+        width += FromDIP(m_glyph_px);
+        height = FromDIP(m_glyph_px);
+    } else if (normal_icon.bmp().IsOk()) {
         wxSize szIcon = normal_icon.GetBmpSize();
         width += szIcon.x;
         height = szIcon.y;
@@ -564,8 +680,8 @@ void TempInput::messureMiniSize()
     }
     width += 3;
 
-    // label
-    dc.SetFont(::Label::Head_14);
+    // label (current temperature) in Roboto Mono 15 / 500
+    dc.SetFont(temp_current_font());
     labelSize = dc.GetMultiLineTextExtent(wxWindow::GetLabel());
     width += labelSize.x;
     height = labelSize.y > height ? labelSize.y : height;
@@ -574,7 +690,7 @@ void TempInput::messureMiniSize()
     width += 10;
 
     // separator
-    dc.SetFont(::Label::Body_12);
+    dc.SetFont(temp_target_font());
     auto sepSize = dc.GetMultiLineTextExtent(wxString("/"));
     width += sepSize.x;
     height = sepSize.y > height ? sepSize.y : height;
@@ -588,6 +704,14 @@ void TempInput::messureMiniSize()
     auto flagSize = degree_icon.GetBmpSize();
     width += flagSize.x;
     height = flagSize.y > height ? flagSize.y : height;
+
+    // trailing edit IconButton reservation, so the button never overlaps the
+    // value even at the row's minimum width
+    if (m_edit_btn && m_edit_btn->IsShown()) {
+        wxSize bs = m_edit_btn->GetMinSize();
+        width += bs.x + FromDIP(8);
+        height = bs.y > height ? bs.y : height;
+    }
 
     if (size.x < width) {
         size.x = width;
@@ -609,7 +733,10 @@ void TempInput::messureSize()
     auto height = 0;
 
     wxClientDC dc(this);
-    if (normal_icon.bmp().IsOk()) {
+    if (m_glyph_icon != 0 && MaterialIcon::available()) {
+        width += FromDIP(m_glyph_px);
+        height = FromDIP(m_glyph_px);
+    } else if (normal_icon.bmp().IsOk()) {
         wxSize szIcon = normal_icon.GetBmpSize();
         width += szIcon.x;
         height = szIcon.y;
@@ -624,8 +751,8 @@ void TempInput::messureSize()
     }
     width += 3;
 
-    // label
-    dc.SetFont(::Label::Head_14);
+    // label (current temperature) in Roboto Mono 15 / 500
+    dc.SetFont(temp_current_font());
     labelSize = dc.GetMultiLineTextExtent(wxWindow::GetLabel());
     width += labelSize.x;
     height = labelSize.y > height ? labelSize.y : height;
@@ -634,7 +761,7 @@ void TempInput::messureSize()
     width += 10;
 
     // separator
-    dc.SetFont(::Label::Body_12);
+    dc.SetFont(temp_target_font());
     auto sepSize = dc.GetMultiLineTextExtent(wxString("/"));
     width += sepSize.x;
     height = sepSize.y > height ? sepSize.y : height;
@@ -648,6 +775,14 @@ void TempInput::messureSize()
     auto flagSize = degree_icon.GetBmpSize();
     width += flagSize.x;
     height = flagSize.y > height ? flagSize.y : height;
+
+    // trailing edit IconButton reservation, so the button never overlaps the
+    // value even at the row's minimum width
+    if (m_edit_btn && m_edit_btn->IsShown()) {
+        wxSize bs = m_edit_btn->GetMinSize();
+        width += bs.x + FromDIP(8);
+        height = bs.y > height ? bs.y : height;
+    }
 
     if (size.x < width) {
         size.x = width;

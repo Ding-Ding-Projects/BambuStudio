@@ -709,13 +709,12 @@ struct Sidebar::priv
     wxStaticLine *              m_staticline1;
     StaticBox* m_panel_filament_title;
     wxStaticText* m_staticText_filament_settings;
-    ScalableButton *  m_bpButton_add_filament;
-    ScalableButton *  m_bpButton_del_filament;
-    ScalableButton *  m_bpButton_ams_filament;
-    ScalableButton *  m_bpButton_set_filament;
+    // MD3: the legacy 'Filament' subtitle row (Body_14 label + hand-painted divider + four
+    // raster ScalableButtons add/delete/ams-sync/settings) was retired. AMS sync moved to the
+    // Filament SectionHeader trailing slot as an outlined MD3 button; add is the full-width
+    // 'Add filament' button; delete/settings fold into the per-row filament menu.
+    Button *          m_btn_sync_ams_header{nullptr};
     int m_menu_filament_id = -1;
-    wxPanel*          m_panel_filament_subtitle{nullptr};  // "Filament" subtitle row with +/-/AMS/set buttons
-    wxStaticText*     m_text_filament_subtitle{nullptr};
     wxPanel*          m_filament_area_wrapper{nullptr};   // Wrapper panel for collapse/expand
     wxScrolledWindow* m_physical_scroll_area{nullptr};    // Scroll area for physical filaments (max 3 rows when total > 12)
     wxScrolledWindow* m_mixed_scroll_area{nullptr};       // Scroll area for mixed filaments (max 3 rows when total > 12)
@@ -2394,7 +2393,8 @@ void Sidebar::update_sync_ams_btn_enable(wxUpdateUIEvent &e)
      if (m_last_slice_state != p->plater->is_background_process_slicing()) {
          m_last_slice_state = p->plater->is_background_process_slicing();
          btn_sync->Enable(!m_last_slice_state);
-         ams_btn->Enable(!m_last_slice_state);
+         // MD3: the AMS-sync affordance is now the Filament SectionHeader trailing button.
+         if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Enable(!m_last_slice_state);
          Refresh();
      }
  }
@@ -2784,11 +2784,9 @@ Sidebar::Sidebar(Plater *parent)
             return;
         if (!p->m_filament_area_wrapper->IsShown()) {
             p->m_filament_area_wrapper->Show();
-            p->m_panel_filament_subtitle->Show();
             recalc_filament_scroll_sizes();
         } else {
             p->m_filament_area_wrapper->Hide();
-            p->m_panel_filament_subtitle->Hide();
         }
         m_scrolled_sizer->Layout();
         e.Skip();
@@ -2916,81 +2914,53 @@ Sidebar::Sidebar(Plater *parent)
     bSizer39->Hide(p->m_flushing_volume_btn);
     bSizer39->Add(FromDIP(12), 0, 0, 0, 0 );
 
+    // ---- AMS sync: kit SectionHeader trailing outlined MD3 button ----
+    // (MD3 filament-subtitle-row-legacy-raster-buttons; kit Prepare.jsx:90 — Sync AMS as the
+    // Filament header trailing control: outlined, h30, 11.5, Primary, leading 'sync' glyph.)
+    // Replaces the retired raster 'ams_fila_sync' ScalableButton from the old subtitle row;
+    // the sync_ams_list() command, tooltip, popup anchor and slice-time enable/disable are
+    // all preserved. Sits to the right of the purge/flush controls so it falls inside the
+    // existing collapse-toggle protection zone (see the title LEFT_DOWN hit-test above).
+    p->m_btn_sync_ams_header = new Button(p->m_panel_filament_title, _L("Sync AMS"), "ams_fila_sync", 0, 16);
+    // SetGlyph routes the leading icon through the shared MaterialIcon font path (live-tinted
+    // by the button's Primary text colour); the raster 'ams_fila_sync' bitmap is the graceful
+    // fallback, drawn only when MaterialIcon::available() is false.
+    p->m_btn_sync_ams_header->SetGlyph(MaterialIcon::Sync, 16);
+    p->m_btn_sync_ams_header->SetFont(Label::Body_11);
+    p->m_btn_sync_ams_header->SetPaddingSize(wxSize(FromDIP(10), FromDIP(3)));
+    p->m_btn_sync_ams_header->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    p->m_btn_sync_ams_header->SetMinSize({-1, FromDIP(30)});
+    p->m_btn_sync_ams_header->SetMaxSize({-1, FromDIP(30)});
+    p->m_btn_sync_ams_header->SetToolTip(_L("Synchronize filament list from AMS"));
+    p->m_btn_sync_ams_header->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)));
+    p->m_btn_sync_ams_header->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+    p->m_btn_sync_ams_header->SetTextColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
+    p->m_btn_sync_ams_header->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { sync_ams_list(); });
+    p->m_btn_sync_ams_header->Bind(wxEVT_UPDATE_UI, &Sidebar::update_sync_ams_btn_enable, this);
+    p->m_btn_sync_ams_header->Rescale();
+    bSizer39->Add(p->m_btn_sync_ams_header, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+
     bSizer39->Add(FromDIP(16), 0, 0, 0, 0);
 
-    // ---- "Filament" subtitle row with +/-/AMS/settings buttons ----
-    {
-        p->m_panel_filament_subtitle = new wxPanel(p->scrolled, wxID_ANY);
-        p->m_panel_filament_subtitle->SetBackgroundColour(surface_lowest);
-        auto* subtitle_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-        // "Filament" label
-        p->m_text_filament_subtitle = new wxStaticText(p->m_panel_filament_subtitle, wxID_ANY, _L("Filament"));
-        p->m_text_filament_subtitle->SetForegroundColour(inactive_text);
-        p->m_text_filament_subtitle->SetFont(::Label::Body_14);
-        // Figma: left-aligned with filament color swatches (10px padding)
-        subtitle_sizer->Add(p->m_text_filament_subtitle, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
-
-        auto* line_panel = new wxPanel(p->m_panel_filament_subtitle, wxID_ANY);
-        line_panel->SetMinSize(wxSize(-1, FromDIP(1)));
-        line_panel->Bind(wxEVT_PAINT, [line_panel](wxPaintEvent&) {
-            wxPaintDC dc(line_panel);
-            wxSize sz = line_panel->GetClientSize();
-            int y = sz.GetHeight() / 2;
-            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1, wxPENSTYLE_SOLID));
-            dc.DrawLine(0, y, sz.GetWidth(), y);
-        });
-        subtitle_sizer->Add(line_panel, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
-
-        // + button
-        ScalableButton* add_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "add_filament");
-        add_btn->SetToolTip(_L("Add one filament"));
-        apply_scalable_glyph(add_btn, MaterialIcon::Add, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        add_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
-            add_filament();
-        });
-        p->m_bpButton_add_filament = add_btn;
-        subtitle_sizer->Add(add_btn, 0, wxALIGN_CENTER_VERTICAL);
-        add_btn->Hide(); // The full-width outlined action below the rows is the primary add affordance.
-
-        // - button
-        ScalableButton* del_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "delete_filament");
-        del_btn->SetToolTip(_L("Remove last filament"));
-        apply_scalable_glyph(del_btn, MaterialIcon::Remove, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        del_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
-            delete_filament();
-        });
-        p->m_bpButton_del_filament = del_btn;
-        subtitle_sizer->Add(del_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
-
-        // AMS sync button
-        ams_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "ams_fila_sync", wxEmptyString, wxDefaultSize, wxDefaultPosition,
-                                     wxBU_EXACTFIT | wxNO_BORDER, false, 18);
-        ams_btn->SetToolTip(_L("Synchronize filament list from AMS"));
-        apply_scalable_glyph(ams_btn, MaterialIcon::Sync, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        ams_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
-            sync_ams_list();
-        });
-        ams_btn->Bind(wxEVT_UPDATE_UI, &Sidebar::update_sync_ams_btn_enable, this);
-        p->m_bpButton_ams_filament = ams_btn;
-        subtitle_sizer->Add(ams_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
-
-        // Settings button
-        ScalableButton* set_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "settings");
-        set_btn->SetToolTip(_L("Set filaments to use"));
-        apply_scalable_glyph(set_btn, MaterialIcon::Settings, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        set_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e) {
-            p->editing_filament = -1;
-            wxGetApp().run_wizard(ConfigWizard::RR_USER, ConfigWizard::SP_FILAMENTS);
-        });
-        p->m_bpButton_set_filament = set_btn;
-        subtitle_sizer->Add(set_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
-        subtitle_sizer->Add(FromDIP(16), 0, 0, 0, 0);
-
-        subtitle_sizer->SetMinSize(-1, FromDIP(28));
-        p->m_panel_filament_subtitle->SetSizer(subtitle_sizer);
-        scrolled_sizer->Add(p->m_panel_filament_subtitle, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(5));
-    }
+    // ---- (removed) legacy 'Filament' subtitle row ----
+    // The Body_14 label + hand-painted divider + four raster ScalableButtons
+    // (add_filament / delete_filament / ams_fila_sync / settings) are retired per MD3
+    // (filament-subtitle-row-legacy-raster-buttons). Their commands are preserved elsewhere:
+    //   - add_filament()      -> the full-width outlined 'Add filament' button below the rows;
+    //   - delete_filament()   -> the per-row filament menu 'Delete' item (filament_action_menu);
+    //   - sync_ams_list()     -> the outlined 'Sync AMS' button in the Filament SectionHeader
+    //                            trailing slot (created above);
+    //   - filament settings   -> the config wizard, reachable from the preset combo items and
+    //                            the add-filament flow (run_wizard SP_FILAMENTS).
 
     // ---- Wrapper panel for collapse/expand of all filament content ----
     p->m_filament_area_wrapper = new wxPanel(p->scrolled, wxID_ANY);
@@ -3453,7 +3423,7 @@ void Sidebar::update_all_preset_comboboxes()
         //only show connection button for not-BBL printer
         p->btn_connect_printer->Hide();
         //only show sync-ams button for BBL printer
-        p->m_bpButton_ams_filament->Show();
+        if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Show();
         //update print button default value for bbl or third-party printer
         p_mainframe->set_print_button_to_default(MainFrame::PrintSelectType::ePrintPlate);
         AppConfig* config = wxGetApp().app_config;
@@ -3495,7 +3465,7 @@ void Sidebar::update_all_preset_comboboxes()
         p->combo_printer_bed->Enable();
     } else {
         p->btn_connect_printer->Show();
-        p->m_bpButton_ams_filament->Hide();
+        if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Hide();
         reset_bed_type_combox_choices();
         p_mainframe->set_print_button_to_default(MainFrame::PrintSelectType::eSendGcode);
         auto cfg = preset_bundle.printers.get_edited_preset().config;
@@ -3906,22 +3876,16 @@ void Sidebar::msw_rescale()
 
     p->adjust_filament_title_layout();
     p->m_filament_icon->msw_rescale();
-    p->m_bpButton_add_filament->msw_rescale();
-    p->m_bpButton_del_filament->msw_rescale();
-    p->m_bpButton_ams_filament->msw_rescale();
-    p->m_bpButton_set_filament->msw_rescale();
+    // MD3: the AMS-sync affordance is now a shared Button; its SetGlyph icon survives Rescale().
+    if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Rescale();
     // ScalableButton::msw_rescale reloaded the raster icons above; re-paint the
-    // MD3 Material Symbols glyphs at the new DPI so the section headers / subtitle
-    // stay glyph-based (no-op when the icon face is unavailable).
+    // MD3 Material Symbols glyphs at the new DPI so the section headers stay
+    // glyph-based (no-op when the icon face is unavailable).
     {
         const wxColour glyph_col = StateColor::semantic(MD3::Role::OnSurfaceVariant);
         apply_scalable_glyph(p->m_printer_icon, MaterialIcon::Print, 16, glyph_col);
         apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, glyph_col);
         apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, glyph_col);
-        apply_scalable_glyph(p->m_bpButton_add_filament, MaterialIcon::Add, 16, glyph_col);
-        apply_scalable_glyph(p->m_bpButton_del_filament, MaterialIcon::Remove, 16, glyph_col);
-        apply_scalable_glyph(p->m_bpButton_ams_filament, MaterialIcon::Sync, 18, glyph_col);
-        apply_scalable_glyph(p->m_bpButton_set_filament, MaterialIcon::Settings, 16, glyph_col);
     }
     p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::compact.row_height / 2));
     p->btn_add_filament_row->SetPaddingSize({FromDIP(10), FromDIP(6)});
@@ -4012,8 +3976,6 @@ void Sidebar::sys_color_changed()
     p->btn_connect_printer->SetBackgroundColour(surface_high);
     p->m_panel_filament_title->SetBackgroundColor(surface_low);
     p->m_panel_filament_title->SetBackgroundColor2(surface_low);
-    p->m_panel_filament_subtitle->SetBackgroundColour(surface_lowest);
-    p->m_text_filament_subtitle->SetForegroundColour(on_variant);
     p->m_filament_area_wrapper->SetBackgroundColour(surface_lowest);
     p->m_physical_scroll_area->SetBackgroundColour(surface_lowest);
     p->m_panel_filament_content->SetBackgroundColour(surface_lowest);
@@ -4053,19 +4015,14 @@ void Sidebar::sys_color_changed()
     p->m_printer_setting->msw_rescale();
     p->m_printer_setting->msw_rescale();
     p->m_filament_icon->msw_rescale();
-    p->m_bpButton_add_filament->msw_rescale();
-    p->m_bpButton_del_filament->msw_rescale();
-    p->m_bpButton_ams_filament->msw_rescale();
-    p->m_bpButton_set_filament->msw_rescale();
+    // MD3: the AMS-sync affordance is now a shared Button; semantic StateColors re-resolve
+    // to the new theme automatically and its SetGlyph icon survives Rescale().
+    if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Rescale();
     // Re-tint the MD3 Material Symbols glyphs to the new theme's OnSurfaceVariant
     // (the raster reloads above would otherwise revert them; no-op without the face).
     apply_scalable_glyph(p->m_printer_icon, MaterialIcon::Print, 16, on_variant);
     apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, on_variant);
     apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, on_variant);
-    apply_scalable_glyph(p->m_bpButton_add_filament, MaterialIcon::Add, 16, on_variant);
-    apply_scalable_glyph(p->m_bpButton_del_filament, MaterialIcon::Remove, 16, on_variant);
-    apply_scalable_glyph(p->m_bpButton_ams_filament, MaterialIcon::Sync, 18, on_variant);
-    apply_scalable_glyph(p->m_bpButton_set_filament, MaterialIcon::Settings, 16, on_variant);
     p->m_flushing_volume_btn->Rescale();
     p->m_purge_mode_btn->Rescale();
 
@@ -4334,12 +4291,17 @@ void Sidebar::change_filament(size_t from_id, size_t to_id)
                 }
             }
             if (target_uses_source) {
-                int ret = wxMessageBox(
+                // MD3: route the raw wxMessageBox through the kit MessageDialog shell
+                // (MsgDialog.hpp). Style flags are preserved verbatim; the confirm branch now
+                // compares against wxID_OK because MessageDialog::ShowModal returns wxID_*
+                // dialog ids (wxMessageBox returned the wxOK flag).
+                MessageDialog dlg(
+                    wxGetApp().plater(),
                     _L("The target mixed filament uses this physical filament as a component. "
                        "Merging will remove this physical filament and may invalidate the mixed filament. Continue?"),
                     _L("Warning"),
                     wxOK | wxCANCEL | wxICON_WARNING);
-                if (ret != wxOK)
+                if (dlg.ShowModal() != wxID_OK)
                     return;
             }
         }
@@ -4587,8 +4549,11 @@ void Sidebar::get_big_btn_sync_pos_size(wxPoint &pt, wxSize &size)
 }
 
 void Sidebar::get_small_btn_sync_pos_size(wxPoint &pt, wxSize &size) {
-    size = ams_btn->GetSize();
-    pt   = ams_btn->GetScreenPosition();
+    // MD3: the small AMS-sync affordance is now the Filament SectionHeader trailing button.
+    if (p->m_btn_sync_ams_header) {
+        size = p->m_btn_sync_ams_header->GetSize();
+        pt   = p->m_btn_sync_ams_header->GetScreenPosition();
+    }
 }
 
 void Sidebar::set_extruder_nozzle_count(int extruder_id, int nozzle_count)

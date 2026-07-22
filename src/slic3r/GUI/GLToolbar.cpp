@@ -4,10 +4,13 @@
 #include "GLToolbar.hpp"
 
 #include "slic3r/GUI/GLCanvas3D.hpp"
+#include "slic3r/GUI/GLModel.hpp"
+#include "slic3r/GUI/GLShader.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/Camera.hpp"
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/Gizmos/GLIconGlyphBridge.hpp"
+#include "slic3r/GUI/Widgets/MD3Tokens.hpp"
 
 #include <wx/event.h>
 #include <wx/bitmap.h>
@@ -1693,8 +1696,171 @@ void ToolbarAutoSizeRenderer::render_vertical(const GLToolbar& t_toolbar, const 
     }
 }
 
+// --- MD3 viewport-toolbar background chrome ------------------------------------
+// The two migrated OpenGL viewport toolbars — the left gizmo rail and the top
+// scene toolbar — resolve their icons to Material Symbols (see GLIconGlyphBridge)
+// but still painted the legacy 9-slice toolbar_background.png behind them. These
+// helpers paint the kit background instead: a SurfaceContainerLow rail with a 1px
+// OutlineVariant right divider, and a rounded SurfaceContainer pill with a 1px
+// OutlineVariant border + soft elevation. The flat_texture shader carries no tint
+// uniform, so the chrome is drawn as token-coloured geometry through the "flat"
+// shader in the same billboard space the textures used. Every other toolbar and
+// any context without the shader keeps its texture background untouched.
+namespace {
+
+constexpr float kMD3HalfPi = 1.57079632679f;
+
+inline ColorRGBA md3_toolbar_color(MD3::Role role, float alpha = 1.0f)
+{
+    const wxColour& c = MD3::resolve(role, wxGetApp().dark_mode());
+    return ColorRGBA(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+
+// Append a filled axis-aligned rectangle (two triangles, z = 0) to a P3 geometry.
+void md3_append_rect(GLModel::Geometry& geo, float x0, float y0, float x1, float y1)
+{
+    const unsigned int base = static_cast<unsigned int>(geo.vertices_count());
+    geo.add_vertex(Vec3f(x0, y0, 0.0f));
+    geo.add_vertex(Vec3f(x1, y0, 0.0f));
+    geo.add_vertex(Vec3f(x1, y1, 0.0f));
+    geo.add_vertex(Vec3f(x0, y1, 0.0f));
+    geo.add_triangle(base + 0, base + 1, base + 2);
+    geo.add_triangle(base + 0, base + 2, base + 3);
+}
+
+// Append a filled rounded rectangle (three centre bars + four corner fans).
+void md3_append_rounded_rect(GLModel::Geometry& geo, float x0, float y0, float x1, float y1, float r)
+{
+    const float w = x1 - x0;
+    const float h = y1 - y0;
+    if (w <= 0.0f || h <= 0.0f)
+        return;
+    r = std::min(r, 0.5f * std::min(w, h));
+    if (r <= 0.0f) {
+        md3_append_rect(geo, x0, y0, x1, y1);
+        return;
+    }
+    md3_append_rect(geo, x0, y0 + r, x1, y1 - r);     // middle band (full width)
+    md3_append_rect(geo, x0 + r, y0, x1 - r, y0 + r); // bottom edge
+    md3_append_rect(geo, x0 + r, y1 - r, x1 - r, y1); // top edge
+
+    const struct { float cx, cy, a0; } corners[4] = {
+        { x1 - r, y0 + r, -kMD3HalfPi }, // bottom-right
+        { x1 - r, y1 - r, 0.0f },        // top-right
+        { x0 + r, y1 - r, kMD3HalfPi },  // top-left
+        { x0 + r, y0 + r, 2.0f * kMD3HalfPi }, // bottom-left
+    };
+    const int seg = 6;
+    for (const auto& c : corners) {
+        const unsigned int center = static_cast<unsigned int>(geo.vertices_count());
+        geo.add_vertex(Vec3f(c.cx, c.cy, 0.0f));
+        for (int i = 0; i <= seg; ++i) {
+            const float a = c.a0 + kMD3HalfPi * (static_cast<float>(i) / static_cast<float>(seg));
+            geo.add_vertex(Vec3f(c.cx + r * std::cos(a), c.cy + r * std::sin(a), 0.0f));
+        }
+        for (int i = 0; i < seg; ++i)
+            geo.add_triangle(center, center + 1 + i, center + 2 + i);
+    }
+}
+
+// Paint the MD3 background for the gizmo rail / scene toolbar. Returns true when
+// it drew the chrome (the caller then skips the legacy texture); false for any
+// other toolbar or when the flat shader is unavailable (legacy path preserved).
+bool render_md3_toolbar_backdrop(const GLToolbar& t_toolbar, float left, float top, float right, float bottom)
+{
+    const ToolbarLayout& layout = t_toolbar.get_layout();
+    // Left gizmo rail: the only vertical toolbar centred on both axes (the
+    // collapse rail is HO_Right/VO_Top, so it is left untouched).
+    const bool is_rail = layout.type == ToolbarLayout::EType::Vertical
+        && layout.horizontal_orientation == ToolbarLayout::HO_Center
+        && layout.vertical_orientation == ToolbarLayout::VO_Center;
+    // Top scene toolbar: the horizontal main toolbar.
+    const bool is_pill = layout.type == ToolbarLayout::EType::Horizontal;
+    if (!is_rail && !is_pill)
+        return false;
+
+    const auto& shader = wxGetApp().get_shader("flat");
+    if (!shader)
+        return false;
+
+    const Camera& camera = wxGetApp().plater()->get_camera();
+    const float inv_zoom = static_cast<float>(camera.get_inv_zoom());
+    const float px = inv_zoom * layout.scale; // one device-independent pixel in world units
+    if (!(px > 0.0f))
+        return false;
+
+    const float x0 = std::min(left, right);
+    const float x1 = std::max(left, right);
+    const float y0 = std::min(top, bottom);
+    const float y1 = std::max(top, bottom);
+    if (x1 - x0 <= 0.0f || y1 - y0 <= 0.0f)
+        return false;
+
+    glsafe(::glEnable(GL_BLEND));
+    glsafe(::glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    wxGetApp().bind_shader(shader);
+    shader->set_uniform("view_model_matrix", camera.get_view_matrix_for_billboard());
+    shader->set_uniform("projection_matrix", camera.get_projection_matrix());
+
+    auto draw = [](GLModel::Geometry&& g, const ColorRGBA& col) {
+        if (g.vertices_count() == 0)
+            return;
+        GLModel model;
+        model.init_from(std::move(g));
+        model.set_color(col);
+        model.render_geometry();
+    };
+    auto new_geo = []() {
+        GLModel::Geometry g;
+        g.format.type = GLModel::PrimitiveType::Triangles;
+        g.format.vertex_layout = GLModel::Geometry::EVertexLayout::P3;
+        return g;
+    };
+
+    if (is_rail) {
+        GLModel::Geometry fill = new_geo();
+        md3_append_rect(fill, x0, y0, x1, y1);
+        draw(std::move(fill), md3_toolbar_color(MD3::Role::SurfaceContainerLow));
+
+        GLModel::Geometry edge = new_geo();
+        md3_append_rect(edge, x1 - px, y0, x1, y1);
+        draw(std::move(edge), md3_toolbar_color(MD3::Role::OutlineVariant));
+    }
+    else {
+        const float r = 16.0f * px; // r16 pill
+        // Soft elevation-3 shadow, feathered across a few translucent layers so the
+        // hard-edged fill approximates the kit's blurred drop shadow.
+        const wxColour& sh = MD3::shadowTint(wxGetApp().dark_mode());
+        const float sh_dy = static_cast<float>(MD3::Metrics::elev3.dy) * px;
+        const float base_a = (sh.Alpha() / 255.0f) * 0.5f;
+        for (int i = 3; i >= 1; --i) {
+            const float grow = static_cast<float>(i) * px;
+            GLModel::Geometry s = new_geo();
+            md3_append_rounded_rect(s, x0 - grow, y0 - sh_dy - grow, x1 + grow, y1 - sh_dy + grow, r + grow);
+            draw(std::move(s), ColorRGBA(sh.Red() / 255.0f, sh.Green() / 255.0f, sh.Blue() / 255.0f, base_a / static_cast<float>(i)));
+        }
+
+        GLModel::Geometry border = new_geo();
+        md3_append_rounded_rect(border, x0, y0, x1, y1, r);
+        draw(std::move(border), md3_toolbar_color(MD3::Role::OutlineVariant));
+
+        GLModel::Geometry fill = new_geo();
+        md3_append_rounded_rect(fill, x0 + px, y0 + px, x1 - px, y1 - px, r - px);
+        draw(std::move(fill), md3_toolbar_color(MD3::Role::SurfaceContainer));
+    }
+
+    wxGetApp().unbind_shader();
+    glsafe(::glDisable(GL_BLEND));
+    return true;
+}
+
+} // namespace
+
 void ToolbarAutoSizeRenderer::render_background(const GLToolbar& t_toolbar, float left, float top, float right, float bottom, float border) const
 {
+    if (render_md3_toolbar_backdrop(t_toolbar, left, top, right, bottom))
+        return;
+
     const auto& t_background_texture = t_toolbar.get_background_texture();
     unsigned int tex_id = t_background_texture.texture.get_id();
     float tex_width = (float)t_background_texture.texture.get_width();
@@ -2007,6 +2173,9 @@ void ToolbarKeepSizeRenderer::render_vertical(const GLToolbar& t_toolbar)
 
 void ToolbarKeepSizeRenderer::render_background(const GLToolbar& t_toolbar, float left, float top, float right, float bottom, float border) const
 {
+    if (render_md3_toolbar_backdrop(t_toolbar, left, top, right, bottom))
+        return;
+
     const auto& t_background_texture = t_toolbar.get_background_texture();
     unsigned int tex_id = t_background_texture.texture.get_id();
     if (tex_id < 0) {

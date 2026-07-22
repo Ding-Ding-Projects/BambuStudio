@@ -43,9 +43,10 @@ bool available();
 //     (Move / Rotate / Scale / Flatten / Cut / MeshBoolean / FdmSupports / Seam /
 //     Text / Svg / "Color Painting" / FuzzySkin / "Mesause" / Assembly / Simplify /
 //     BrimEars)
-// Returns 0 when the name has no MD3 mapping (e.g. "orient" -> screen_rotation,
-// which is absent from the vendored font, and the separator sprites): the caller
-// keeps that item's raster sprite.
+// Returns 0 when the name has no MD3 mapping (e.g. the separator sprites): the
+// caller keeps that item's raster sprite. "orient" maps to Rotation3D (the
+// Material '3d_rotation' mark) because the exact 'screen_rotation' glyph is
+// absent from the vendored font.
 uint32_t glyph_for_toolbar_item(const std::string& item_name);
 
 // One row of the toolbar sprite atlas that should be overpainted with a glyph.

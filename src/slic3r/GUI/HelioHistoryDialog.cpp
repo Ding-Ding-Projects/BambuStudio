@@ -14,6 +14,7 @@
 #include "Widgets/StaticLine.hpp"
 #include "Plater.hpp"
 #include "BackgroundSlicingProcess.hpp"
+#include "MsgDialog.hpp"
 
 #include <wx/dcgraph.h>
 #include <wx/sizer.h>
@@ -701,7 +702,8 @@ void HelioHistoryDialog::on_helio_completion(wxEvent& event)
 void HelioHistoryDialog::on_download_gcode(const std::string& gcode_url, const std::string& run_name)
 {
     if (gcode_url.empty()) {
-        wxMessageBox(_L("GCode URL is not available"), _L("Download Error"), wxOK | wxICON_ERROR);
+        MessageDialog dlg(this, _L("GCode URL is not available"), _L("Download Error"), wxOK | wxICON_ERROR);
+        dlg.ShowModal();
         return;
     }
 
@@ -752,32 +754,36 @@ void HelioHistoryDialog::on_download_gcode(const std::string& gcode_url, const s
                 file.Write(downloaded_content.data(), downloaded_content.size());
                 file.Close();
 
-                wxMessageBox(
+                MessageDialog dlg(this,
                     wxString::Format(_L("GCode file downloaded successfully!\n\nSaved to: %s"), wxString(save_path)),
                     _L("Download Complete"),
                     wxOK | wxICON_INFORMATION);
+                dlg.ShowModal();
 
                 BOOST_LOG_TRIVIAL(info) << "GCode file saved successfully: " << save_path;
             } else {
-                wxMessageBox(
+                MessageDialog dlg(this,
                     wxString::Format(_L("Failed to open file for writing:\n%s"), wxString(save_path)),
                     _L("Download Error"),
                     wxOK | wxICON_ERROR);
+                dlg.ShowModal();
                 BOOST_LOG_TRIVIAL(error) << "Failed to open file for writing: " << save_path;
             }
         } catch (const std::exception& e) {
-            wxMessageBox(
+            MessageDialog dlg(this,
                 wxString::Format(_L("Error saving file: %s"), wxString(e.what())),
                 _L("Download Error"),
                 wxOK | wxICON_ERROR);
+            dlg.ShowModal();
             BOOST_LOG_TRIVIAL(error) << "Error saving file: " << e.what();
         }
     } else {
-        wxMessageBox(
+        MessageDialog dlg(this,
             wxString::Format(_L("Failed to download GCode file.\n\nError: %s"),
                 wxString(error_msg.empty() ? "Unknown error" : error_msg)),
             _L("Download Error"),
             wxOK | wxICON_ERROR);
+        dlg.ShowModal();
     }
 }
 
@@ -796,7 +802,8 @@ void HelioHistoryDialog::on_view_details_opt(const HelioQuery::OptimizationRun& 
         run.name, run.status, run.printer_name, run.material_name,
         run.number_of_layers, run.quality_mean_improvement, run.quality_std_improvement);
 
-    wxMessageBox(details, _L("Optimization Details"), wxOK | wxICON_INFORMATION);
+    MessageDialog dlg(this, details, _L("Optimization Details"), wxOK | wxICON_INFORMATION);
+    dlg.ShowModal();
 }
 
 void HelioHistoryDialog::on_view_details_sim(const HelioQuery::SimulationRun& run)
@@ -814,7 +821,8 @@ void HelioHistoryDialog::on_view_details_sim(const HelioQuery::SimulationRun& ru
         run.name, run.status, run.printer_name, run.material_name,
         run.number_of_layers, run.print_outcome);
 
-    wxMessageBox(details, _L("Simulation Details"), wxOK | wxICON_INFORMATION);
+    MessageDialog dlg(this, details, _L("Simulation Details"), wxOK | wxICON_INFORMATION);
+    dlg.ShowModal();
 }
 
 wxString HelioHistoryDialog::format_time_ago(const std::chrono::system_clock::time_point& timestamp)

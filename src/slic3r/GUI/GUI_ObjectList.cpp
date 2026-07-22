@@ -3048,7 +3048,8 @@ void ObjectList::split(bool ignore_warning)
     const auto filament_cnt = (filament_colors == nullptr) ? size_t(1) : filament_colors->size();
     if (!volume->is_splittable()) {
         if (!ignore_warning) {
-            wxMessageBox(_(L("The target object contains only one part and can not be split.")));
+            MessageDialog dlg(this, _(L("The target object contains only one part and can not be split.")));
+            dlg.ShowModal();
         }
         return;
     }

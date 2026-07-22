@@ -114,7 +114,9 @@ uint32_t glyph_for_toolbar_item(const std::string& item_name)
         // --- main 3D-editor toolbar (GLCanvas3D::_init_main_toolbar) ---
         {"add", G::FolderOpen},
         {"addplate", G::GridView},
-        // "orient" -> screen_rotation: glyph absent from the vendored font -> keep raster.
+        // 'screen_rotation' is absent from the vendored font; the auto-orient tool
+        // uses the '3d_rotation' mark (distinct from the Rotate gizmo's rotate_right).
+        {"orient", G::Rotation3D},
         {"arrange", G::AutoAwesomeMosaic},
         {"layersediting", G::Layers},
         {"splitobjects", G::CallSplit},
