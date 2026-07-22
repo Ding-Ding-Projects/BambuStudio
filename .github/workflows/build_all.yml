@@ -190,7 +190,11 @@ jobs:
       - name: Publish uniquely tagged Windows release
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
+          # The github-actions integration started receiving HTTP 403 on release
+          # creation (org-side restriction, 2026-07-22) even with contents: write;
+          # TOKEN_GITHUB is an owner PAT that publishes on its behalf. Falls back
+          # to the workflow token where the secret is absent (e.g. forks).
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
 
