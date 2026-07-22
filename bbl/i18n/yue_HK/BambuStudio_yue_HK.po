@@ -1124,3 +1124,43 @@ msgstr "無法準備所選項目版本。"
 #. reviewed-category: destructive-dirty-error-security
 msgid "The selected version was not restored."
 msgstr "所選版本未能還原。"
+
+#. reviewed-category: file-actions
+msgid "Preview model"
+msgstr "預覽模型"
+
+#. reviewed-category: file-actions
+msgid "Drag to rotate, scroll to zoom, double-click to fit"
+msgstr "拖曳嚟旋轉，捲動嚟縮放，㩒兩下就啱曬個視窗"
+
+#. reviewed-category: file-actions
+msgid "Fit to view"
+msgstr "啱曬視窗"
+
+#. reviewed-category: file-actions
+msgid "Open in Prepare"
+msgstr "喺準備頁開啟"
+
+#. reviewed-category: preferences
+msgid "Prepare panel position"
+msgstr "準備面板位置"
+
+#. reviewed-category: preferences
+msgid "Dock the Prepare panel on the left, right, top, or bottom of the workspace."
+msgstr "將準備面板停靠喺工作區嘅左邊、右邊、上邊或者下邊。"
+
+#. reviewed-category: preferences
+msgid "Left"
+msgstr "左"
+
+#. reviewed-category: preferences
+msgid "Right"
+msgstr "右"
+
+#. reviewed-category: preferences
+msgid "Top"
+msgstr "上"
+
+#. reviewed-category: preferences
+msgid "Bottom"
+msgstr "下"

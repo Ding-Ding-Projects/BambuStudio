@@ -76,10 +76,26 @@ TEST_CASE("Checked-in Cantonese catalog loads and supplies bilingual fallback", 
     REQUIRE(cantonese.primary == wxString::FromUTF8("語言"));
     REQUIRE_FALSE(cantonese.has_secondary());
 
+    // New model-preview and Prepare-dock surfaces resolve fully in standalone yue mode.
+    const LocalizedText cantonese_open = service.translate(wxString::FromUTF8("Open in Prepare"));
+    REQUIRE(cantonese_open.primary == wxString::FromUTF8("喺準備頁開啟"));
+    REQUIRE_FALSE(cantonese_open.has_secondary());
+    const LocalizedText cantonese_left = service.translate(wxString::FromUTF8("Left"));
+    REQUIRE(cantonese_left.primary == wxString::FromUTF8("左"));
+    REQUIRE_FALSE(cantonese_left.has_secondary());
+
     REQUIRE(service.configure(LANGUAGE_MODE_ENGLISH_CANTONESE_HK, catalog_root));
     const LocalizedText bilingual = service.translate(wxString::FromUTF8("Language"));
     REQUIRE(bilingual.primary == wxString::FromUTF8("Language"));
     REQUIRE(bilingual.secondary == wxString::FromUTF8("語言"));
+
+    // Bilingual mode carries English primary with the Cantonese secondary for the same new keys.
+    const LocalizedText bilingual_open = service.translate(wxString::FromUTF8("Open in Prepare"));
+    REQUIRE(bilingual_open.primary == wxString::FromUTF8("Open in Prepare"));
+    REQUIRE(bilingual_open.secondary == wxString::FromUTF8("喺準備頁開啟"));
+    const LocalizedText bilingual_left = service.translate(wxString::FromUTF8("Left"));
+    REQUIRE(bilingual_left.primary == wxString::FromUTF8("Left"));
+    REQUIRE(bilingual_left.secondary == wxString::FromUTF8("左"));
 
     const LocalizedText fallback = service.translate(wxString::FromUTF8("__missing_catalog_message__"));
     REQUIRE(fallback.primary == wxString::FromUTF8("__missing_catalog_message__"));

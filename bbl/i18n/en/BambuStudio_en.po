@@ -18189,6 +18189,24 @@ msgstr ""
 msgid "Browse and restore local Git-backed project versions"
 msgstr ""
 
+msgid "Preview model"
+msgstr ""
+
+msgid "Drag to rotate, scroll to zoom, double-click to fit"
+msgstr ""
+
+msgid "Fit to view"
+msgstr ""
+
+msgid "Open in Prepare"
+msgstr ""
+
+msgid "Prepare panel position"
+msgstr ""
+
+msgid "Dock the Prepare panel on the left, right, top, or bottom of the workspace."
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 
