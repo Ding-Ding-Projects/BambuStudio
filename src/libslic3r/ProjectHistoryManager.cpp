@@ -1001,7 +1001,6 @@ public:
 
     ~Impl()
     {
-        m_stop_requested.store(true, std::memory_order_release);
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_stopping = true;
@@ -1067,8 +1066,12 @@ public:
         identity_hashes.erase(std::unique(identity_hashes.begin(), identity_hashes.end()), identity_hashes.end());
         for (const std::string &identity_hash : identity_hashes) {
             auto lock = std::make_unique<InterprocessFileLock>();
-            if (!lock->acquire(m_lock_root / (identity_hash + ".lock"),
-                               [this] { return m_stop_requested.load(std::memory_order_acquire); }, error))
+            // Shutdown rejects newly enqueued work but joins the worker only after
+            // work already accepted by it has been committed.  Do not cancel a
+            // queued operation merely because it is waiting on another process's
+            // bounded lock; otherwise a Save As or commit can be silently lost
+            // during application shutdown.
+            if (!lock->acquire(m_lock_root / (identity_hash + ".lock"), {}, error))
                 return false;
             locks.emplace_back(std::move(lock));
         }
@@ -1617,7 +1620,6 @@ private:
     ProjectHistoryError               m_initialization_error;
     bool                              m_libgit2_initialized{false};
     bool                              m_stopping{false};
-    std::atomic<bool>                 m_stop_requested{false};
     std::mutex                        m_mutex;
     std::condition_variable           m_condition;
     std::deque<std::function<void()>> m_jobs;
