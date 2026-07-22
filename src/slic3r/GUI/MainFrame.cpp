@@ -1258,6 +1258,41 @@ void MainFrame::show_option(bool show)
     Layout();
 }
 
+namespace {
+
+// Stable child name so the two update paths can recover the second (detail)
+// line of the two-tier print estimate without a new MainFrame member.
+constexpr const char *PREPARE_ESTIMATE_DETAIL_NAME = "md3_prepare_estimate_detail";
+
+// Roboto Mono 15/500 for the estimate's time line (MD3 Prepare kit line 1).
+// Derived from the 14px mono preset so the platform's design-px -> point
+// scaling is inherited rather than re-derived.
+wxFont prepare_estimate_time_font()
+{
+    wxFont font = ::Label::Mono_14;
+    if (font.IsOk())
+        font.SetFractionalPointSize(font.GetFractionalPointSize() * 15.0 / 14.0);
+    font.SetNumericWeight(500);
+    return font;
+}
+
+// Two-tier estimate styling (MD3 Prepare kit §67-70): line 1 = print time in
+// Roboto Mono 15/500 OnSurface; line 2 = weight / length in 11px
+// OnSurfaceVariant. Applied both at build time and on Rescale/theme rebuild.
+void style_prepare_estimate(wxStaticText *time_line, wxStaticText *detail_line)
+{
+    if (time_line) {
+        time_line->SetFont(prepare_estimate_time_font());
+        time_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    }
+    if (detail_line) {
+        detail_line->SetFont(::Label::Body_11);
+        detail_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    }
+}
+
+} // namespace
+
 void MainFrame::update_prepare_action_bar_content()
 {
     if (!m_prepare_action_bar || !m_plater)
@@ -1298,21 +1333,34 @@ void MainFrame::update_prepare_action_bar_content()
         m_prepare_add_plate_button->Enable(m_plater->can_add_plate());
 
     if (m_prepare_estimate_label) {
-        wxString estimate = _L("Not sliced");
+        // Two-tier estimate (MD3 Prepare kit §67-70): line 1 is the print time,
+        // line 2 is the material weight / length ("23.4 g · 7.85 m").
+        wxString time_text = _L("Not sliced");
+        wxString detail_text;
         if (plate && plate->is_slice_result_valid()) {
             if (GCodeProcessorResult *result = plate->get_slice_result(); result != nullptr && !result->print_statistics.modes.empty()) {
                 const float seconds = result->print_statistics.modes.front().time;
-                const double grams = plate->fff_print() != nullptr
-                    ? plate->fff_print()->print_statistics().total_weight
-                    : 0.0;
+                double grams  = 0.0;
+                double meters = 0.0;
+                if (auto *print = plate->fff_print(); print != nullptr) {
+                    grams  = print->print_statistics().total_weight;
+                    meters = print->print_statistics().total_used_filament / 1000.0; // mm -> m
+                }
                 if (seconds > 0.0f) {
-                    estimate = from_u8(short_time(get_time_dhms(seconds)));
+                    time_text = from_u8(short_time(get_time_dhms(seconds)));
                     if (grams > 0.0)
-                        estimate += wxString::Format("\n%.1f g", grams);
+                        detail_text = wxString::Format("%.1f g", grams);
+                    if (meters > 0.0) {
+                        if (!detail_text.empty())
+                            detail_text += wxString::FromUTF8(" \xC2\xB7 "); // middle dot
+                        detail_text += wxString::Format("%.2f m", meters);
+                    }
                 }
             }
         }
-        m_prepare_estimate_label->SetLabel(estimate);
+        m_prepare_estimate_label->SetLabel(time_text);
+        if (wxWindow *detail = m_prepare_action_bar->FindWindow(PREPARE_ESTIMATE_DETAIL_NAME))
+            static_cast<wxStaticText *>(detail)->SetLabel(detail_text);
     }
 
     if (wxSizer *sizer = m_prepare_action_bar->GetSizer())
@@ -1373,10 +1421,13 @@ void MainFrame::update_prepare_action_bar_style()
         m_prepare_add_plate_button->Rescale();
     }
     if (m_prepare_estimate_label) {
-        // Numeric print estimate rendered in Roboto Mono (MD3 digest §4/§5).
-        m_prepare_estimate_label->SetFont(::Label::Mono_12);
-        m_prepare_estimate_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        m_prepare_estimate_label->SetMinSize(FromDIP(wxSize(118, 36)));
+        // Two-tier print estimate (MD3 Prepare kit §67-70): time line in Roboto
+        // Mono 15/500 OnSurface, weight/length line in 11px OnSurfaceVariant.
+        wxStaticText *detail = nullptr;
+        if (wxWindow *w = m_prepare_action_bar->FindWindow(PREPARE_ESTIMATE_DETAIL_NAME))
+            detail = static_cast<wxStaticText *>(w);
+        style_prepare_estimate(m_prepare_estimate_label, detail);
+        m_prepare_estimate_label->SetMinSize(FromDIP(wxSize(118, -1)));
     }
 
     // wxSizer borders are pixel values, so refresh the horizontal inset when
@@ -1622,7 +1673,7 @@ void MainFrame::init_tabpanel()
     }
 
     m_plater = new Plater(this, this);
-    m_plater->SetBackgroundColour(ThemeColor::White);
+    m_plater->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
     m_plater->Hide();
 
     wxGetApp().plater_ = m_plater;
@@ -1647,7 +1698,7 @@ void MainFrame::init_tabpanel()
 
         //BBS add pages
     m_monitor = new MonitorPanel(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_monitor->SetBackgroundColour(ThemeColor::White);
+    m_monitor->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
     m_tabpanel->AddPage(m_monitor, _L("Device"), std::string("tab_monitor_active"), std::string("tab_monitor_active"), false);
 
     m_printer_view = new PrinterWebView(m_tabpanel);
@@ -1660,17 +1711,17 @@ void MainFrame::init_tabpanel()
 
     if (wxGetApp().is_enable_multi_machine()) {
         m_multi_machine = new MultiMachinePage(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-        m_multi_machine->SetBackgroundColour(ThemeColor::White);
+        m_multi_machine->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
         // TODO: change the bitmap
         m_tabpanel->AddPage(m_multi_machine, _L("Multi-device"), std::string("tab_multi_active"), std::string("tab_multi_active"), false);
     }
 
     m_project = new ProjectPanel(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_project->SetBackgroundColour(ThemeColor::White);
+    m_project->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
     m_tabpanel->AddPage(m_project, _L("Project"), std::string("tab_auxiliary_avtice"), std::string("tab_auxiliary_avtice"), false);
 
     m_calibration = new CalibrationPanel(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_calibration->SetBackgroundColour(ThemeColor::White);
+    m_calibration->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
     m_tabpanel->AddPage(m_calibration, _L("Calibration"), std::string("tab_calibration_active"), std::string("tab_calibration_active"), false);
 
     if (!wxGetApp().is_fila_manager_disabled()) {
@@ -2147,8 +2198,13 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
     m_prepare_plate_button = new Button(parent, _L("Plate 1"), "", wxNO_BORDER);
     m_prepare_add_plate_button = new Button(parent, "+", "", wxNO_BORDER);
+    // Two-tier print estimate (MD3 Prepare kit §67-70): a stacked time line
+    // (Roboto Mono 15/500) over a weight/length line (11px OnSurfaceVariant).
     m_prepare_estimate_label = new wxStaticText(parent, wxID_ANY, _L("Not sliced"),
                                                  wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+    wxStaticText *m_prepare_estimate_detail = new wxStaticText(parent, wxID_ANY, wxEmptyString,
+                                                 wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+    m_prepare_estimate_detail->SetName(PREPARE_ESTIMATE_DETAIL_NAME);
 
     const wxColour primary = StateColor::semantic(MD3::Role::Primary);
     const wxColour outline = StateColor::semantic(MD3::Role::Outline);
@@ -2178,10 +2234,12 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     m_prepare_add_plate_button->SetCornerRadius(FromDIP(12));
     m_prepare_add_plate_button->SetMinSize(FromDIP(wxSize(40, 40)));
 
-    // Numeric print estimate rendered in Roboto Mono (MD3 digest §4/§5).
-    m_prepare_estimate_label->SetFont(::Label::Mono_12);
-    m_prepare_estimate_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    m_prepare_estimate_label->SetMinSize(FromDIP(wxSize(118, 36)));
+    style_prepare_estimate(m_prepare_estimate_label, m_prepare_estimate_detail);
+    m_prepare_estimate_label->SetMinSize(FromDIP(wxSize(118, -1)));
+
+    wxBoxSizer *estimate_col = new wxBoxSizer(wxVERTICAL);
+    estimate_col->Add(m_prepare_estimate_label, 0, wxALIGN_RIGHT);
+    estimate_col->Add(m_prepare_estimate_detail, 0, wxALIGN_RIGHT);
 
     m_prepare_plate_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         if (!m_plater)
@@ -2275,7 +2333,7 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     sizer->Add(FromDIP(8), 0, 0, 0, 0);
     sizer->Add(m_prepare_add_plate_button, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(0, 0, 1, wxEXPAND, 0);
-    sizer->Add(m_prepare_estimate_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    sizer->Add(estimate_col, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
     sizer->Add(expand_program_holder, 0, wxALIGN_CENTER, 0);
     sizer->Add(FromDIP(4), 0, 0, 0, 0);
     sizer->Add(split_line_icon, 0, wxALIGN_CENTER, 0);

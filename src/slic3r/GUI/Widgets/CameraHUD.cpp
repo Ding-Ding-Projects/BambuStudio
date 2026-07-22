@@ -8,6 +8,7 @@
 #include <wx/graphics.h>
 
 #include "../I18N.hpp" // _L
+#include "Label.hpp"   // ::Label::Mono_11 (Roboto Mono 11.5/400)
 
 namespace Slic3r { namespace GUI {
 
@@ -18,6 +19,13 @@ constexpr int    kPulseTick   = 50;   // ms between repaints of the dot
 constexpr int    kChipDIP     = 34;
 constexpr int    kChipGlyphPx = 18;   // logical px; the gc scales it by DPI
 constexpr int    kHudHeight   = 44;
+constexpr int    kTempChipPadX  = 10; // kit temp-chip horizontal padding
+constexpr int    kTempChipPillH = 22; // pill height (matches the LIVE badge)
+constexpr int    kTempChipGap   = 6;  // gap between the nozzle / bed chips
+
+// "°C" as a UTF-8 unit suffix. Kept split ("\xC2\xB0" "C") so the trailing 'C'
+// is not swallowed into the \x hex escape.
+inline wxString deg_c(int value) { return wxString::Format("%d", value) + wxString::FromUTF8("\xC2\xB0" "C"); }
 } // namespace
 
 // ---------------------------------------------------------------------------
@@ -173,6 +181,82 @@ void CameraHUD::CameraHUDChip::on_paint(wxPaintEvent &)
 }
 
 // ===========================================================================
+// CameraHUDTempChip
+// ===========================================================================
+CameraHUD::CameraHUDTempChip::CameraHUDTempChip(wxWindow *parent)
+    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
+{
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
+#ifdef __WINDOWS__
+    SetDoubleBuffered(true);
+#endif
+    SetFont(::Label::Mono_11);
+    Bind(wxEVT_PAINT, &CameraHUDTempChip::on_paint, this);
+}
+
+void CameraHUD::CameraHUDTempChip::SetText(const wxString &text)
+{
+    if (m_text == text)
+        return;
+    m_text = text;
+    InvalidateBestSize();
+    if (wxWindow *p = GetParent())
+        p->Layout();
+    Refresh();
+}
+
+void CameraHUD::CameraHUDTempChip::msw_rescale()
+{
+    InvalidateBestSize();
+    Refresh();
+}
+
+wxSize CameraHUD::CameraHUDTempChip::DoGetBestSize() const
+{
+    // Measure the current value (or a 3-digit placeholder so an empty chip still
+    // reserves a sane width) in the mono face and pad to the kit pill geometry.
+    int      tw = 0, th = 0;
+    wxString probe = m_text.empty() ? wxString("000") + wxString::FromUTF8("\xC2\xB0" "C") : m_text;
+    GetTextExtent(probe, &tw, &th, nullptr, nullptr, &::Label::Mono_11);
+    return wxSize(tw + 2 * FromDIP(kTempChipPadX), FromDIP(kTempChipPillH));
+}
+
+void CameraHUD::CameraHUDTempChip::on_paint(wxPaintEvent &)
+{
+    wxAutoBufferedPaintDC pdc(this);
+    wxGCDC                dc(pdc);
+    wxGraphicsContext *   gc = dc.GetGraphicsContext();
+    if (!gc)
+        return;
+    gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+    const wxSize sz = GetClientSize();
+
+    // Fill with the band colour first, then lay a translucent-black pill exactly
+    // like the LIVE badge (kit rgba(0,0,0,.55)), so the chip reads over the
+    // fixed-dark strip in both app themes.
+    const wxColour behind = GetParent() ? GetParent()->GetBackgroundColour() : CameraHUD::CardBg();
+    gc->SetPen(*wxTRANSPARENT_PEN);
+    gc->SetBrush(wxBrush(behind));
+    gc->DrawRectangle(0, 0, sz.x, sz.y);
+
+    if (m_text.empty())
+        return;
+
+    const double pillH  = FromDIP(kTempChipPillH);
+    const double pillY  = (sz.y - pillH) / 2.0;
+    const double radius = FromDIP(10);
+    gc->SetBrush(wxBrush(wxColour(0, 0, 0, 140)));
+    gc->DrawRoundedRectangle(0, pillY, sz.x, pillH, radius);
+
+    // The pill spans the whole (best-fitted) chip; centre the mono value so a
+    // minor DC/gc metric difference never clips it.
+    gc->SetFont(::Label::Mono_11, *wxWHITE);
+    wxDouble tw = 0, thd = 0, desc = 0, lead = 0;
+    gc->GetTextExtent(m_text, &tw, &thd, &desc, &lead);
+    gc->DrawText(m_text, (sz.x - tw) / 2.0, pillY + (pillH - thd) / 2.0);
+}
+
+// ===========================================================================
 // CameraHUD
 // ===========================================================================
 CameraHUD::CameraHUD(wxWindow *parent)
@@ -188,6 +272,17 @@ CameraHUD::CameraHUD(wxWindow *parent)
     auto *hsizer = new wxBoxSizer(wxHORIZONTAL);
     // Left: reserve room for the painted LIVE badge (drawn in on_paint).
     m_badge_spacer = hsizer->Add(FromDIP(80), FromDIP(kHudHeight), 0);
+
+    // Nozzle / bed temperature chips, immediately right of the LIVE badge (the
+    // kit groups the temp readouts with the live/status chrome). Hidden until a
+    // printer is connected and StatusPanel feeds SetTemperatures().
+    m_nozzle_chip = new CameraHUDTempChip(this);
+    m_bed_chip    = new CameraHUDTempChip(this);
+    m_nozzle_chip->Hide();
+    m_bed_chip->Hide();
+    hsizer->Add(m_nozzle_chip, 0, wxALIGN_CENTER_VERTICAL);
+    hsizer->Add(m_bed_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(kTempChipGap));
+
     hsizer->AddStretchSpacer();
 
     // Status indicators (filled by StatusPanel), then the two control chips.
@@ -234,6 +329,42 @@ void CameraHUD::SetLiveActive(bool live)
     }
 }
 
+void CameraHUD::SetTemperatures(int nozzle_c, int bed_c)
+{
+    bool changed = false;
+    if (m_nozzle_chip) {
+        m_nozzle_chip->SetText(deg_c(nozzle_c));
+        if (!m_nozzle_chip->IsShown()) {
+            m_nozzle_chip->Show();
+            changed = true;
+        }
+    }
+    if (m_bed_chip) {
+        m_bed_chip->SetText(deg_c(bed_c));
+        if (!m_bed_chip->IsShown()) {
+            m_bed_chip->Show();
+            changed = true;
+        }
+    }
+    if (changed)
+        Layout();
+}
+
+void CameraHUD::HideTemperatures()
+{
+    bool changed = false;
+    if (m_nozzle_chip && m_nozzle_chip->IsShown()) {
+        m_nozzle_chip->Hide();
+        changed = true;
+    }
+    if (m_bed_chip && m_bed_chip->IsShown()) {
+        m_bed_chip->Hide();
+        changed = true;
+    }
+    if (changed)
+        Layout();
+}
+
 bool CameraHUD::Enable(bool enable)
 {
     const bool ret = wxPanel::Enable(enable);
@@ -259,6 +390,10 @@ void CameraHUD::msw_rescale()
         m_setting_chip->msw_rescale();
     if (m_fullscreen_chip)
         m_fullscreen_chip->msw_rescale();
+    if (m_nozzle_chip)
+        m_nozzle_chip->msw_rescale();
+    if (m_bed_chip)
+        m_bed_chip->msw_rescale();
     Layout();
     Refresh();
 }

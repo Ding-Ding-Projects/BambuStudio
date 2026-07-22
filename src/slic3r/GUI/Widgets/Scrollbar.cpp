@@ -8,6 +8,8 @@
 #include "ScrolledWindow.hpp"
 #include "StateColor.hpp"
 
+#include <wx/dcgraph.h>
+
 MyScrollbar::MyScrollbar(wxWindow *parent, wxWindowID id, wxPoint position, wxSize size, ScrolledWindow* scrolledWindow, long direction, int scrollbarWidth, int tipLength) : wxPanel(parent, id, position, size)
 {
 	m_parent = parent;
@@ -29,7 +31,7 @@ MyScrollbar::MyScrollbar(wxWindow *parent, wxWindowID id, wxPoint position, wxSi
 
 	m_tipColor = m_parent->GetBackgroundColour();	// default value. Can be changed with SetTipColour
 	m_marginColor = m_parent->GetBackgroundColour();	// default value. Can be changed with SetMarginColour
-	m_scrollbarColor = ThemeColor::White;	// default value. Can be changed with SetScrollbarColour
+	m_scrollbarColor = StateColor::semantic(MD3::Role::OutlineVariant);	// default value. Can be changed with SetScrollbarColour
 	m_scrolledWindow = scrolledWindow;
 
 	Bind(wxEVT_PAINT, &MyScrollbar::OnPaint, this);
@@ -39,6 +41,9 @@ MyScrollbar::MyScrollbar(wxWindow *parent, wxWindowID id, wxPoint position, wxSi
 	Bind(wxEVT_LEFT_UP, &MyScrollbar::OnMouseLeftUp, this);
 	Bind(wxEVT_MOTION, &MyScrollbar::OnMouseMove, this);
 	Bind(wxEVT_MOUSEWHEEL, &MyScrollbar::OnMouseWheel, this);
+	// repaint so the thumb hover highlight (Outline) tracks the pointer entering/leaving
+	Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent &e){ Refresh(); e.Skip(); });
+	Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent &e){ Refresh(); e.Skip(); });
 }
 
 void MyScrollbar::SetViewStart(int start)
@@ -137,10 +142,19 @@ void MyScrollbar::OnPaint(wxPaintEvent& event)
 		dc.DrawRectangle(0, 0, scrollbarSide, actualDim);	// left side of the scrollbar 
 		dc.DrawRectangle(m_marginWidth - scrollbarSide, 0, scrollbarSide, actualDim);	// right side of the scrollbar 
 
-		// draw the scrollbar
-		dc.SetPen(m_scrollbarColor);
-		dc.SetBrush(m_scrollbarColor);
-        dc.DrawRectangle(scrollbarSide, scrollbarStart + m_tipLength, m_scrollbarWidth, scrollbarLength - 2 * m_tipLength);	 
+		// draw the rounded MD3 thumb: OutlineVariant at rest, Outline on hover, 2px inset, r~8
+		int    inset  = (m_scrollbarWidth >= 6) ? 2 : 0;
+		wxRect thumbRect(scrollbarSide + inset, scrollbarStart + m_tipLength,
+		                 m_scrollbarWidth - 2 * inset, scrollbarLength - 2 * m_tipLength);
+		int    radius = thumbRect.width / 2;
+		if (radius > 8) radius = 8;
+		wxColour thumbColor = thumbRect.Contains(ScreenToClient(wxGetMousePosition()))
+		                          ? StateColor::semantic(MD3::Role::Outline)
+		                          : m_scrollbarColor;
+		wxGCDC gcdc(dc);
+		gcdc.SetPen(wxPen(thumbColor));
+		gcdc.SetBrush(wxBrush(thumbColor));
+		gcdc.DrawRoundedRectangle(thumbRect, radius);
 	}
 	else if (m_direction == wxHSCROLL && actualDim < m_virtualDim)	// if actualDim >= m_virtualDim, the scrollbar is hidden, no need to paint it
 	{
@@ -177,17 +191,27 @@ void MyScrollbar::OnPaint(wxPaintEvent& event)
 		dc.DrawRectangle(0, m_marginWidth - scrollbarSide, actualDim, scrollbarSide);	// below the scrollbar 
 		dc.DrawRectangle(actualDim, 0, m_marginWidth, m_marginWidth);	// lower right corner of the scrolled window   
 
-		// draw the scrollbar
-		dc.SetPen(m_scrollbarColor);
-		dc.SetBrush(m_scrollbarColor);
-		dc.DrawRectangle(scrollbarStart + m_tipLength, scrollbarSide, scrollbarLength - 2 * m_tipLength, m_scrollbarWidth);
+		// draw the rounded MD3 thumb: OutlineVariant at rest, Outline on hover, 2px inset, r~8
+		int    inset  = (m_scrollbarWidth >= 6) ? 2 : 0;
+		wxRect thumbRect(scrollbarStart + m_tipLength, scrollbarSide + inset,
+		                 scrollbarLength - 2 * m_tipLength, m_scrollbarWidth - 2 * inset);
+		int    radius = thumbRect.height / 2;
+		if (radius > 8) radius = 8;
+		wxColour thumbColor = thumbRect.Contains(ScreenToClient(wxGetMousePosition()))
+		                          ? StateColor::semantic(MD3::Role::Outline)
+		                          : m_scrollbarColor;
+		wxGCDC gcdc(dc);
+		gcdc.SetPen(wxPen(thumbColor));
+		gcdc.SetBrush(wxBrush(thumbColor));
+		gcdc.DrawRoundedRectangle(thumbRect, radius);
 	}
 }
 
 void MyScrollbar::OnEraseBackground(wxEraseEvent & event)
 {
-	// necessary to avoid automatic background erasing
-    SetBackgroundColour(ThemeColor::White);
+	// necessary to avoid automatic background erasing; the track blends with the
+	// parent surface (transparent track) rather than a raw White fill
+    SetBackgroundColour(m_parent->GetBackgroundColour());
 }
 
 void MyScrollbar::OnMouseLeftDown(wxMouseEvent &event)
@@ -225,8 +249,10 @@ void MyScrollbar::OnMouseLeftUp(wxMouseEvent &event)
 void MyScrollbar::OnMouseMove(wxMouseEvent &event)
 { 
 	int dMotion, actualDim; 
-	if (!event.Dragging())
+	if (!event.Dragging()) {
+		Refresh();	// update the thumb hover highlight as the pointer moves over it
 		return;	// button is not pressed, the user doesn't scroll
+	}
 
 	actualDim = m_actualDim;
 

@@ -42,6 +42,15 @@ namespace
         return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, alpha);
     }
 
+    // Theme-aware modal scrim: black tinted with the MD3 scrim alpha. Replaces the
+    // previous hardcoded ImVec4(0,0,0,0.3) dimming rectangles behind the
+    // sequential G-code text panels with the shared scrim token.
+    ImVec4 md3_imgui_scrim(bool dark)
+    {
+        const wxColour &color = MD3::scrim(dark);
+        return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, color.Alpha() / 255.0f);
+    }
+
     std::string get_view_type_string(Slic3r::GUI::gcode::EViewType view_type)
     {
         if (view_type == Slic3r::GUI::gcode::EViewType::Summary)
@@ -1461,6 +1470,34 @@ namespace Slic3r
                 bool is_support_dynamic_nozzle_map = group_result && group_result->is_support_dynamic_nozzle_map();
                 bool is_show_left_right_result = is_support_dynamic_nozzle_map && wxGetApp().sidebar().is_fila_switch_ready();
                 ImGuiWrapper& imgui = *wxGetApp().imgui();
+                // Kit Preview parity: a top-left viewport status pill ("Sliced ·
+                // N layers"). Additive chrome only - bg SurfaceContainer, r20, a 1px
+                // OutlineVariant border and OnSurfaceVariant text. (The kit's leading
+                // 'layers' Material Symbol and elev-2 blur are omitted: the ImGui
+                // atlas has no Material Symbols font and ImGui has no blur primitive.)
+                const int status_layer_count = static_cast<int>(get_layers_zs().size());
+                if (status_layer_count > 0) {
+                    const std::string status_text =
+                        (boost::format(_u8L("Sliced · %1% layers")) % status_layer_count).str();
+                    imgui.set_next_window_pos(16.0f * m_scale, 16.0f * m_scale, ImGuiCond_Always, 0.0f, 0.0f);
+                    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, float(MD3::Metrics::radius_home) * m_scale);
+                    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f * m_scale);
+                    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14.0f * m_scale, 7.0f * m_scale));
+                    ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imgui_color(MD3::Role::SurfaceContainer, m_is_dark));
+                    ImGui::PushStyleColor(ImGuiCol_Border, md3_imgui_color(MD3::Role::OutlineVariant, m_is_dark));
+                    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark));
+                    ImGui::SetNextWindowBgAlpha(1.0f);
+                    imgui.begin(std::string("Preview status pill"),
+                                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                                ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                                ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize |
+                                ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav |
+                                ImGuiWindowFlags_NoInputs);
+                    imgui.text(status_text);
+                    imgui.end();
+                    ImGui::PopStyleColor(3);
+                    ImGui::PopStyleVar(3);
+                }
                 //BBS: GUI refactor: move to the right
                 imgui.set_next_window_pos(float(canvas_width - right_margin * m_scale), 0.0f, ImGuiCond_Always, 1.0f, 0.0f);
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -1541,8 +1578,14 @@ namespace Slic3r
                         switch (type) {
                         default:
                         case EItemType::Rect: {
-                            draw_list->AddRectFilled({ pos.x + 1.0f * m_scale, pos.y + 3.0f * m_scale }, { pos.x + icon_size - 1.0f * m_scale, pos.y + icon_size + 1.0f * m_scale },
-                                ImGui::GetColorU32({ color[0], color[1], color[2], color[3] }));
+                            // Kit legend swatch: a 16x16 (scaled) rounded rect, r4,
+                            // vertically centred in the icon cell. The fill colour is
+                            // functional data and is preserved unchanged.
+                            const float swatch_size  = 16.0f * m_scale;
+                            const float swatch_round = 4.0f * m_scale;
+                            const float swatch_top   = pos.y + 0.5f * (icon_size - swatch_size) + 2.0f * m_scale;
+                            draw_list->AddRectFilled({ pos.x, swatch_top }, { pos.x + swatch_size, swatch_top + swatch_size },
+                                ImGui::GetColorU32({ color[0], color[1], color[2], color[3] }), swatch_round);
                             break;
                         }
                         case EItemType::Circle: {
@@ -1771,8 +1814,11 @@ namespace Slic3r
                 ImGui::Dummy({ window_padding, window_padding });
                 ImGui::Dummy({ window_padding, window_padding });
                 ImGui::SameLine();
-                std::string title = _u8L("Slicing Result");
-                imgui.bold_text(title);
+                // The kit Preview dock opens directly on the "Color scheme"
+                // SectionHeader, so the legacy bold "Slicing Result" dock title is
+                // dropped. A zero-width spacer keeps this header line (and the
+                // fold/unfold control below) anchored to the top of the dock.
+                ImGui::Dummy(ImVec2(0.0f, ImGui::GetFrameHeight()));
 
                 // BBS support helio
                 std::wstring btn_name;
@@ -1804,7 +1850,17 @@ namespace Slic3r
                 ImGui::Dummy({ window_padding, window_padding });
                 ImGui::Dummy({ window_padding, window_padding });
                 ImGui::SameLine();
-                imgui.bold_text(_u8L("Color Scheme"));
+                // Kit SectionHeader treatment for the "Color scheme" label:
+                // uppercase, OnSurfaceVariant, semibold weight. (The kit's 11px
+                // size, +.6px tracking and leading 'palette' Material Symbol await a
+                // Material Symbols ImGui font, which is not yet registered.)
+                std::string color_scheme_label = _u8L("Color Scheme");
+                for (char &scheme_ch : color_scheme_label)
+                    if (scheme_ch >= 'a' && scheme_ch <= 'z')
+                        scheme_ch = static_cast<char>(scheme_ch - 'a' + 'A');
+                ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark));
+                imgui.bold_text(color_scheme_label);
+                ImGui::PopStyleColor();
                 auto curr_plate_index = wxGetApp().plater()->get_partplate_list().get_curr_plate_index();
                 if (wxGetApp().plater()->get_helio_process_status() != m_last_helio_process_status || m_gcode_result->update_imgui_flag) {
                     auto load_only_gcode = wxGetApp().plater()->only_gcode_mode();
@@ -3029,7 +3085,7 @@ namespace Slic3r
                     tips_count = 5;
                 float AMS_container_height = is_show_left_right_result ? line_height * (tips_count - 3) + line_height / 2 :
                                                                     ams_item_height + line_height * tips_count + line_height / 2;
-                is_show_left_right_result ? ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.3f, 0.3f, 0.3f, 0.1f)) :
+                is_show_left_right_result ? ImGui::PushStyleColor(ImGuiCol_ChildBg, md3_imgui_color(MD3::Role::SurfaceContainer, m_is_dark)) :
                                        ImGui::PushStyleColor(ImGuiCol_ChildBg, md3_imgui_color(MD3::Role::SurfaceContainerLowest, m_is_dark));
                 ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface, m_is_dark));
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(window_padding * 3, 0));
@@ -3050,11 +3106,11 @@ namespace Slic3r
                         ImGui::Separator();
                         ImGui::PopStyleColor();
                         ImGui::Dummy({ window_padding, window_padding });
-                        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.00f, 0.00f, 0.00f, 0.1f));
+                        ImGui::PushStyleColor(ImGuiCol_ChildBg, md3_imgui_color(MD3::Role::SurfaceContainerLow, m_is_dark));
                         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(window_padding * 2, window_padding));
                         ImDrawList *child_begin_draw_list = ImGui::GetWindowDrawList();
                         ImVec2      cursor_pos            = ImGui::GetCursorScreenPos();
-                        child_begin_draw_list->AddRectFilled(cursor_pos, ImVec2(cursor_pos.x + half_width, cursor_pos.y + line_height), IM_COL32(0, 0, 0, 20));
+                        child_begin_draw_list->AddRectFilled(cursor_pos, ImVec2(cursor_pos.x + half_width, cursor_pos.y + line_height), md3_imgui_col32(MD3::Role::SurfaceContainerHigh, m_is_dark));
                         std::string br_pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
                         ImGui::BeginChild("#LeftAMS", ImVec2(half_width, ams_item_height), false, ImGuiWindowFlags_AlwaysUseWindowPadding);
                         {
@@ -3072,7 +3128,7 @@ namespace Slic3r
                         }
                         ImGui::SameLine();
                         cursor_pos = ImGui::GetCursorScreenPos();
-                        child_begin_draw_list->AddRectFilled(cursor_pos, ImVec2(cursor_pos.x + half_width, cursor_pos.y + line_height), IM_COL32(0, 0, 0, 20));
+                        child_begin_draw_list->AddRectFilled(cursor_pos, ImVec2(cursor_pos.x + half_width, cursor_pos.y + line_height), md3_imgui_col32(MD3::Role::SurfaceContainerHigh, m_is_dark));
                         ImGui::BeginChild("#RightAMS", ImVec2(half_width, ams_item_height), false, ImGuiWindowFlags_AlwaysUseWindowPadding);
                         {
                             std::string br_main_nz = DevPrinterConfigUtil::get_toolhead_display_name(br_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::SentenceCase);
@@ -3480,7 +3536,7 @@ namespace Slic3r
 
                 float previousWindowWidth = right;
 
-                auto place_window = [text_height, thermal_indexes, top, wnd_height, f_lines_count, start_id, end_id](std::string heading, size_t index_id, float right) {
+                auto place_window = [this, text_height, thermal_indexes, top, wnd_height, f_lines_count, start_id, end_id](std::string heading, size_t index_id, float right) {
                     ImGuiWrapper& imgui = *wxGetApp().imgui();
                     const ImGuiStyle& style = ImGui::GetStyle();
                     imgui.set_next_window_pos(right - 0.4f, top, ImGuiCond_Always, 1.0f, 0.0f);
@@ -3500,7 +3556,7 @@ namespace Slic3r
 
                     ImVec2 rectMax = ImVec2(pos_rect.x + ImGui::GetContentRegionAvail().x, pos_rect.y + textHeight);
 
-                    draw_list->AddRectFilled(rectMin, rectMax, ImGui::GetColorU32(ImVec4(0, 0, 0, 0.3)));
+                    draw_list->AddRectFilled(rectMin, rectMax, ImGui::GetColorU32(md3_imgui_scrim(m_is_dark)));
                     ImGui::SetCursorPosY(0.5f * (wnd_height - f_lines_count * text_height - (f_lines_count - 1.0f) * style.ItemSpacing.y));
 
                     const float item_size = imgui.calc_text_size_new(std::string_view{ "X: 000.000  " }).x;
@@ -3603,9 +3659,15 @@ namespace Slic3r
                 };
                 const ImVec4 LINE_NUMBER_COLOR = md3_imgui_color(MD3::Role::Primary, m_is_dark);
                 const ImVec4 SELECTION_RECT_COLOR = md3_imgui_color(MD3::Role::Primary, m_is_dark);
-                static const ImVec4 COMMAND_COLOR = m_is_dark ? ImVec4(240.0f / 255.0f, 240.0f / 255.0f, 240.0f / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-                static const ImVec4 PARAMETERS_COLOR = m_is_dark ? ImVec4(179.0f / 255.0f, 179.0f / 255.0f, 179.0f / 255.0f, 1.0f) : ImVec4(206.0f / 255.0f, 206.0f / 255.0f, 206.0f / 255.0f, 1.0f);
-                static const ImVec4 COMMENT_COLOR = m_is_dark ? ImVec4(129.0f / 255.0f, 129.0f / 255.0f, 129.0f / 255.0f, 1.0f) : ImVec4(172.0f / 255.0f, 172.0f / 255.0f, 172.0f / 255.0f, 1.0f);
+                // G-code syntax tokens resolved from the MD3 on-surface steps:
+                // command = OnSurface, parameters = OnSurfaceVariant, comment = a
+                // dimmed OnSurfaceVariant. The sequential G-code panel is a fixed
+                // dark translucent overlay (COL_WINDOW_BACKGROUND) in both themes,
+                // so the tokens resolve against the *dark* surface to stay legible.
+                // (Dropped `static` so a theme change is picked up on the next frame.)
+                const ImVec4 COMMAND_COLOR = md3_imgui_color(MD3::Role::OnSurface, true);
+                const ImVec4 PARAMETERS_COLOR = md3_imgui_color(MD3::Role::OnSurfaceVariant, true);
+                const ImVec4 COMMENT_COLOR = md3_imgui_color(MD3::Role::OnSurfaceVariant, true, MD3::ColorScheme::Preview, 0.62f);
                 if (!m_visible || m_filename.empty() || m_lines_ends.empty() || curr_line_id == 0)
                     return;
                 // window height
@@ -3670,7 +3732,7 @@ namespace Slic3r
 
                 ImVec2 rectMax = ImVec2(pos_rect.x + ImGui::GetContentRegionAvail().x, pos_rect.y + textHeight);
 
-                draw_list->AddRectFilled(rectMin, rectMax, ImGui::GetColorU32(ImVec4(0, 0, 0, 0.3)));
+                draw_list->AddRectFilled(rectMin, rectMax, ImGui::GetColorU32(md3_imgui_scrim(m_is_dark)));
 
                 // center the text in the window by pushing down the first line
                 const float f_lines_count = static_cast<float>(lines_count);

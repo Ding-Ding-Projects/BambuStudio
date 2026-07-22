@@ -792,9 +792,9 @@ void IMSlider::draw_tick_on_mouse_position(const ImRect& slideable_region) {
 void IMSlider::show_tooltip(const std::string tooltip) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 6 * m_scale, 3 * m_scale });
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, { 3 * m_scale });
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BACKGROUND);
-    ImGui::PushStyleColor(ImGuiCol_Border, { 0,0,0,0 });
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, preview_color(MD3::Role::SurfaceContainer, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Border, preview_color(MD3::Role::OutlineVariant, m_is_dark));
+    ImGui::PushStyleColor(ImGuiCol_Text, preview_color(MD3::Role::OnSurface, m_is_dark));
     ImGui::BeginTooltip();
     ImGui::TextUnformatted(tooltip.c_str());
     ImGui::EndTooltip();

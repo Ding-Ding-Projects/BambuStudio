@@ -24,7 +24,7 @@ ProgressBar::ProgressBar(wxWindow *parent, wxWindowID id, int max, const wxPoint
     }
 
     m_max = max;
-    m_radius = m_miniHeight / 2;
+    m_radius = defaultRadius;
     wxSize temp_size(size.x, m_miniHeight);
 
     SetFont(Label::Head_12);
@@ -135,7 +135,7 @@ void ProgressBar::SetMinSize(const wxSize &size)
         return;
     }
 
-    m_radius = m_miniHeight / 2.4;
+    m_radius = defaultRadius;
     wxWindow::SetMinSize({size.x, m_miniHeight});
     // SetSize(size);
     SetRadius(m_radius);
@@ -174,12 +174,16 @@ void ProgressBar::doRender(wxDC &dc)
 {
     if (m_step >= m_max) m_step = m_max;
     wxSize size   = GetSize();
+    // The kit uses a fixed soft radius (r6); clamp it to the track's half-height
+    // so short bars round to a clean stadium end (matching CSS border-radius)
+    // while taller bars keep the soft r6 corner instead of a full height/2 pill.
+    const double drawRadius = (m_radius > size.y / 2.0) ? size.y / 2.0 : m_radius;
     dc.SetPen(wxPen(m_progress_background_colour, 1));
     dc.SetBrush(wxBrush(m_progress_background_colour));
     if (m_radius == 0) {
         dc.DrawRectangle(0, 0, size.x, size.y);
     } else {
-        dc.DrawRoundedRectangle(0, 0, size.x, size.y, m_radius);
+        dc.DrawRoundedRectangle(0, 0, size.x, size.y, drawRadius);
     }
 
     //draw progress
@@ -192,7 +196,7 @@ void ProgressBar::doRender(wxDC &dc)
         if (m_radius == 0) {
             dc.DrawRectangle(0, 0, m_proportion, size.y);
         } else {
-            dc.DrawRoundedRectangle(0, 0, m_proportion, size.y, m_radius);
+            dc.DrawRoundedRectangle(0, 0, m_proportion, size.y, drawRadius);
         }
 
         dc.SetFont(::Label::Head_12);
@@ -212,26 +216,12 @@ void ProgressBar::doRender(wxDC &dc)
         if (m_radius == 0) {
             dc.DrawRectangle(0, 0, m_proportion, size.y);
         } else {
-            dc.DrawRoundedRectangle(0, 0, m_proportion, size.y, m_radius);
+            dc.DrawRoundedRectangle(0, 0, m_proportion, size.y, drawRadius);
         }
 
-        dc.SetFont(GetFont());
-        auto textSize = dc.GetMultiLineTextExtent(wxString("000%"));
-        dc.SetTextForeground(ThemeColor::TextDisabled);
-        auto pt = wxPoint();
-        pt.x    = (size.x - textSize.x) / 2;
-        pt.y    = (size.y - textSize.y) / 2;
-
-        auto text = wxString("");
-        if (m_step < 10) {
-            text = wxString::Format("%d", m_step);
-        } else {
-            text = wxString::Format("%d", m_step);
-        }
-
-        if (m_shownumber) {
-            dc.DrawText(text + wxString("%"), pt);
-        }
+        // Kit ProgressBar bakes no percentage text into the bar itself
+        // (ui-md3 containment/ProgressBar.jsx); any readout is externalized
+        // to an adjacent label by the caller.
     }
 
 }

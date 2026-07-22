@@ -138,6 +138,14 @@ retention/pruning policy.
   wave plan; implementation proceeds register-wave by register-wave (each build-gated and pushed),
   folding in the already-scoped feature-pill (CapsuleButton 5px→pill, Tab search field 5px→pill),
   camera-HUD temp-chip, and project-history durable-retry slices.
+  **Register Wave 1 is implemented** (17 Opus implement groups, zero unfinished assignments; 3-lens
+  review found 4 findings — 3 fixed, 1 verified false positive): 22 register rows done and 2 partial
+  (the Preview section-header `palette` and status-pill `layers` glyphs wait on the Wave 2 ImGui
+  Material-Symbols atlas), plus the scoped extras — CapsuleButton chip pill, Tab search-field pill,
+  and CameraHUD nozzle/bed temp chips. The new Preview status string "Sliced · %1% layers" is
+  catalogued (en + yue_HK 切好片喇 · 共 %1% 層, coverage 289, `.mo` rebuilt, `--check` green).
+  Wave 1 is gated on a local Release build before push. Next: Wave 2 enablers (MaterialIcon glyph
+  enum expansion; ImGui font-family/mono/Material-Symbols atlas), which unlock icon Waves 3–4.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.

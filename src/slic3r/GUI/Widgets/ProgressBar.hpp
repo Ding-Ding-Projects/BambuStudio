@@ -27,8 +27,11 @@ public:
     int      m_max                        = {100};
     int      m_step                       = {0};
     int      m_miniHeight                 = {0};
-    const int      miniHeight             = {14};
-    double   m_radius                     = {7};
+    // Kit ProgressBar geometry (ui-md3 containment/ProgressBar.jsx): 8px track,
+    // soft-rounded r6 corners (a fixed radius, not a height/2 stadium pill).
+    const int      miniHeight             = {8};
+    const double   defaultRadius          = {6};
+    double   m_radius                     = {6};
     double   m_proportion                 = {0};
     wxColour m_progress_background_colour = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
     wxColour m_progress_colour            = StateColor::semantic(MD3::Role::Primary);
@@ -48,7 +51,7 @@ public:
     void         Rescale();
     void         SetHeight(int height) {
         m_minHeight = height;
-        m_radius    = m_minHeight / 2;
+        m_radius    = defaultRadius;
         SetSize(GetSize().x,  height);
     }
     virtual void SetMinSize(const wxSize &size) override;

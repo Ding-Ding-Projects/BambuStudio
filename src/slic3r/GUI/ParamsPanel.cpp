@@ -131,13 +131,13 @@ wxBoxSizer *TipsDialog::create_item_checkbox(wxString title, wxWindow *parent, w
 Button *TipsDialog::add_button(wxWindowID btn_id, const wxString &label, bool set_focus /*= false*/)
 {
     Button* btn = new Button(this, label, "", 0, 0, btn_id);
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor btn_bg_primary(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+                              std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+                              std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
 
-    StateColor btn_bd_green(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor btn_bd_primary(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
 
-    StateColor btn_text_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal));
+    StateColor btn_text_primary(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal));
 
     StateColor btn_bg_white(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Pressed),
@@ -150,9 +150,9 @@ Button *TipsDialog::add_button(wxWindowID btn_id, const wxString &label, bool se
     StateColor btn_text_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurface), StateColor::Normal));
 
     if (btn_id == wxID_OK || btn_id == wxID_YES) {
-        btn->SetBackgroundColor(btn_bg_green);
-        btn->SetBorderColor(btn_bd_green);
-        btn->SetTextColor(btn_text_green);
+        btn->SetBackgroundColor(btn_bg_primary);
+        btn->SetBorderColor(btn_bd_primary);
+        btn->SetTextColor(btn_text_primary);
     }
 
     if (btn_id == wxID_CANCEL || btn_id == wxID_NO) {
@@ -166,7 +166,7 @@ Button *TipsDialog::add_button(wxWindowID btn_id, const wxString &label, bool se
 
     btn->SetSize(TIPS_DIALOG_BUTTON_SIZE);
     btn->SetMinSize(TIPS_DIALOG_BUTTON_SIZE);
-    btn->SetCornerRadius(FromDIP(12));
+    btn->SetCornerRadius(MD3::Metrics::pill_radius(TIPS_DIALOG_BUTTON_SIZE.GetHeight()));
     btn->Bind(wxEVT_BUTTON, [this, btn_id](wxCommandEvent &) {
         if (m_show_again) {
             if (!m_app_key.empty()) {

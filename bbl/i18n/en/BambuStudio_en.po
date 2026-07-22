@@ -18210,6 +18210,9 @@ msgstr ""
 msgid "LIVE"
 msgstr ""
 
+msgid "Sliced · %1% layers"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

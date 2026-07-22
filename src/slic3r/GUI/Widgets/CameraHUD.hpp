@@ -56,6 +56,32 @@ public:
         bool           m_hover{false};
     };
 
+    // A small custom-painted temperature pill (e.g. "220°C") shown in the band.
+    // Mirrors the MD3 kit's camera-card temperature chips (Device.jsx:26-29):
+    // Roboto Mono 11.5, white text, translucent-black pill (r10) over the
+    // fixed-dark strip. Its width auto-fits the value; StatusPanel feeds it once
+    // per refresh via CameraHUD::SetTemperatures and it hides when no printer is
+    // connected. Fixed-dark like the rest of the band, so it needs no re-tint.
+    class CameraHUDTempChip : public wxWindow
+    {
+    public:
+        explicit CameraHUDTempChip(wxWindow *parent);
+        ~CameraHUDTempChip() override = default;
+
+        // Set the pill text; re-fits the pill and re-lays out the band when the
+        // width changes. A no-op when the text is unchanged.
+        void SetText(const wxString &text);
+        void msw_rescale();
+
+    protected:
+        wxSize DoGetBestSize() const override;
+
+    private:
+        void on_paint(wxPaintEvent &evt);
+
+        wxString m_text;
+    };
+
     explicit CameraHUD(wxWindow *parent);
     ~CameraHUD() override;
 
@@ -63,6 +89,12 @@ public:
     // refresh cycle: it reconciles the pulse timer with the live flag and the
     // current on-screen visibility, so the timer never runs on a hidden page.
     void SetLiveActive(bool live);
+
+    // Nozzle / bed temperature chips (kit camera-card temp readouts). Fed once
+    // per refresh from StatusPanel::update_temp_ctrl; HideTemperatures() clears
+    // them when no printer is connected. Values are in whole degrees Celsius.
+    void SetTemperatures(int nozzle_c, int bed_c);
+    void HideTemperatures();
 
     bool Enable(bool enable = true) override;
     void msw_rescale();
@@ -85,10 +117,12 @@ private:
     void on_paint(wxPaintEvent &evt);
     void on_pulse(wxTimerEvent &evt);
 
-    CameraHUDChip *m_setting_chip{nullptr};
-    CameraHUDChip *m_fullscreen_chip{nullptr};
-    wxBoxSizer *   m_status_slot{nullptr};
-    wxSizerItem *  m_badge_spacer{nullptr};
+    CameraHUDChip *    m_setting_chip{nullptr};
+    CameraHUDChip *    m_fullscreen_chip{nullptr};
+    CameraHUDTempChip *m_nozzle_chip{nullptr};
+    CameraHUDTempChip *m_bed_chip{nullptr};
+    wxBoxSizer *       m_status_slot{nullptr};
+    wxSizerItem *      m_badge_spacer{nullptr};
 
     wxTimer m_pulse_timer;
     bool    m_live{false};

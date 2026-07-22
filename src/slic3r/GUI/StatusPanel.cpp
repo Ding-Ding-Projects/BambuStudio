@@ -1397,7 +1397,13 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_panel_error_txt->SetSizer(static_text_sizer);
     m_panel_error_txt->Hide();
 
-    sizer->Add(m_panel_printing_title, 0, wxEXPAND | wxALL, 0);
+    // device-progress-title-strip: the kit progress Card has no full-width
+    // "Printing Progress" title strip (Device.jsx:32-46). Drop the strip from
+    // the card layout and fold the thumbnail + name/sub + percent rows directly
+    // into the card body. The strip widget is kept allocated but hidden (never
+    // added to a sizer) so the existing calibration/msw_rescale references to it
+    // stay valid without any legacy chrome being rendered.
+    m_panel_printing_title->Hide();
     sizer->Add(0, FromDIP(12), 0);
     sizer->Add(m_printing_sizer, 0, wxEXPAND | wxALL, 0);
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
@@ -3712,6 +3718,11 @@ void StatusPanel::update_temp_ctrl(MachineObject *obj)
     int     bed_target_temp = bed->GetBedTempTarget();
     m_tempCtrl_bed->SetCurrTemp((int) bed_cur_temp);
 
+    // Feed the always-dark camera-HUD temperature chips once per refresh (kit
+    // camera-card readouts). Main-extruder nozzle current + bed current.
+    if (m_camera_hud)
+        m_camera_hud->SetTemperatures(obj->GetExtderSystem()->GetNozzleTempCurrent(MAIN_EXTRUDER_ID), (int) bed_cur_temp);
+
     auto limit = obj->get_bed_temperature_limit();
     if (obj->bed_temp_range.size() > 1) { limit = obj->bed_temp_range[1]; }
     m_tempCtrl_bed->SetMaxTemp(limit);
@@ -5873,6 +5884,7 @@ void StatusPanel::show_status(int status)
         if (m_camera_hud) {
             m_camera_hud->Enable(false);
             m_camera_hud->SetLiveActive(false);
+            m_camera_hud->HideTemperatures();
         }
     } else if ((status & (int) MonitorStatus::MONITOR_NORMAL) != 0) {
         show_printing_status(true, true);

@@ -170,7 +170,8 @@ Tab::Tab(ParamsPanel* parent, const wxString& title, Preset::Type type) :
     this->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 
     wxGetApp().UpdateDarkUI(this);
-    SetBackgroundColour(ThemeColor::White);
+    // MD3: the preset-editor body is the content-pane Surface role.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 
     m_compatible_printers.type			= Preset::TYPE_PRINTER;
     m_compatible_printers.key_list		= "compatible_printers";
@@ -274,7 +275,8 @@ void Tab::create_preset_tab()
 
     m_top_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     // BBS: open this tab by select first
-    m_top_panel->SetBackgroundColour(ThemeColor::White);
+    // MD3: the top toolbar panel sits one container step above the body.
+    m_top_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_top_panel->Bind(wxEVT_LEFT_UP, [this](auto & e) {
         restore_last_select_item();
     });
@@ -327,7 +329,10 @@ void Tab::create_preset_tab()
 
     m_search_item->SetBackgroundColor(box_colour);
     m_search_item->SetBorderColor(box_border_colour);
-    m_search_item->SetCornerRadius(5);
+    // MD3 SearchField is a stadium pill; its radius is derived from the
+    // control's real (DPI-scaled) height once the sizer has fitted it (see
+    // below) so it stays a true pill at any DPI/density instead of a fixed
+    // 5px corner.
 
 
     //StateColor::darkModeColorFor(wxColour(238, 238, 238)), wxDefaultPosition, wxSize(m_top_panel->GetSize().GetWidth(), 3 * wxGetApp().em_unit()), 8);
@@ -368,6 +373,8 @@ void Tab::create_preset_tab()
     m_search_item->SetSizer(search_sizer);
     m_search_item->Layout();
     search_sizer->Fit(m_search_item);
+    // MD3: stadium radius = half the fitted (DPI-scaled) control height.
+    m_search_item->SetCornerRadius(MD3::Metrics::pill_radius(m_search_item->GetSize().GetHeight()));
 
     m_search_item->Hide();
     //m_btn_search->SetId(wxID_FIND_PROCESS);
@@ -1714,6 +1721,11 @@ void Tab::msw_rescale()
         m_active_page->msw_rescale();
 
     m_tabctrl->Rescale();
+
+    // MD3: keep the search field a true stadium pill after a DPI/density
+    // change by re-deriving the radius from its current (rescaled) height.
+    if (m_search_item && m_search_item->GetSize().GetHeight() > 0)
+        m_search_item->SetCornerRadius(MD3::Metrics::pill_radius(m_search_item->GetSize().GetHeight()));
 
     //BBS: GUI refactor
     //Layout();

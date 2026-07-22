@@ -26,6 +26,7 @@
 
 #include <sstream>
 #include <slic3r/GUI/Widgets/WebView.hpp>
+#include <slic3r/GUI/Widgets/StateColor.hpp>
 using namespace std;
 
 using namespace nlohmann;
@@ -42,25 +43,41 @@ int ZUserLogin::web_sequence_id = 20000;
 
 ZUserLogin::ZUserLogin() : wxDialog((wxWindow *) (wxGetApp().mainframe), wxID_ANY, "BambuStudio")
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     // Url
     NetworkAgent* agent = wxGetApp().getAgent();
     if (!agent) {
         std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
         SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
         wxBoxSizer* m_sizer_main = new wxBoxSizer(wxVERTICAL);
         auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-        m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+        m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
         m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
 
         auto* m_message = new wxStaticText(this, wxID_ANY, _L("Bambu Network plug-in not detected."), wxDefaultPosition, wxDefaultSize, 0);
-        m_message->SetForegroundColour(*wxBLACK);
+        m_message->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         m_message->Wrap(FromDIP(360));
 
         auto m_download_hyperlink = new wxHyperlinkCtrl(this, wxID_ANY, _L("Click here to download it."), wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+        // Style the link with the semantic Link token (theme-aware) instead of the wx generic
+        // blue, deriving a hovered tone that always moves AWAY from the surface for visible
+        // feedback: lighten toward white on dark surfaces, darken toward black on light ones
+        // (the MD3 state-layer direction is theme-aware, so a fixed darken would reduce
+        // contrast against the dark SurfaceContainerLowest fill).
+        const wxColour link_color = StateColor::darkModeColorFor(ThemeColor::Link);
+        wxColour link_hover_color;
+        if (StateColor::isDarkMode())
+            link_hover_color = wxColour(link_color.Red() + (255 - link_color.Red()) * 55 / 255,
+                                        link_color.Green() + (255 - link_color.Green()) * 55 / 255,
+                                        link_color.Blue() + (255 - link_color.Blue()) * 55 / 255);
+        else
+            link_hover_color = wxColour(link_color.Red() * 200 / 255, link_color.Green() * 200 / 255, link_color.Blue() * 200 / 255);
+        m_download_hyperlink->SetNormalColour(link_color);
+        m_download_hyperlink->SetHoverColour(link_hover_color);
+        m_download_hyperlink->SetVisitedColour(link_color);
         m_download_hyperlink->Bind(wxEVT_HYPERLINK, [this](wxCommandEvent& event) {
             this->Close();
             wxGetApp().ShowDownNetPluginDlg();

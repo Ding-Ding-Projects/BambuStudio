@@ -21,6 +21,9 @@ constexpr int btn_width_label_min = 48;
 constexpr int btn_width_label_max = 136;
 constexpr int selection_line_inset  = 12;
 constexpr int tab_bottom_space      = 4;
+// Kit per-tab horizontal padding (TabBar.jsx padding '0 16px'); the compact
+// density padding (10) reads too tight against the kit's 16px cells.
+constexpr int tab_horizontal_padding = 16;
 // Active-indicator thickness comes from the shared chrome metric so the tab bar
 // stays in lock-step with the kit (MD3::Metrics::tab_active_indicator == 3).
 }; // namespace
@@ -150,11 +153,27 @@ void ButtonsListCtrl::StyleButton(Button* button, bool selected)
     button->SetBackgroundColor(background);
     button->SetTextColor(text);
     button->SetSelected(selected);
-    button->SetCornerRadius(FromDIP(MD3::Metrics::compact.small_radius));
-    button->SetPaddingSize({FromDIP(MD3::Metrics::compact.padding), FromDIP(MD3::Metrics::compact.gap)});
+    // §4.3: the tab hover/selection fill is a flat, full-cell rectangle that
+    // spans the tab cell edge-to-edge -- NOT a rounded pill inset in the cell.
+    // wxDC draws a radius-0 rounded rect as a plain rectangle, so pinning the
+    // tab Button corner radius to 0 yields the kit's flat hover layer.
+    button->SetCornerRadius(0);
+    // Kit tab metrics (TabBar.jsx): 16px per-side horizontal padding. The
+    // icon-label gap is a separate 8px handled inside Button::messureSize and
+    // is already correct, so only the horizontal padding moves off the compact
+    // density value (10). Vertical padding stays at the compact gap since the
+    // tab height is pinned by SetMinSize.
+    button->SetPaddingSize({FromDIP(tab_horizontal_padding), FromDIP(MD3::Metrics::compact.gap)});
 
-    wxFont font = Slic3r::GUI::wxGetApp().normal_font();
-    font.SetWeight(selected ? wxFONTWEIGHT_SEMIBOLD : wxFONTWEIGHT_NORMAL);
+    // Kit tab label is body-s 13.5px: active SemiBold/600, inactive Normal/400.
+    // Head_13 already carries the 13.5px/600 face (px-pinned), so clone it and
+    // drop to weight 400 for inactive tabs -- this preserves the design px size
+    // in both states, unlike the previous em-driven normal_font().
+    wxFont font = Label::Head_13;
+    if (!selected) {
+        font.SetWeight(wxFONTWEIGHT_NORMAL);
+        font.SetNumericWeight(400);
+    }
     button->SetFont(font);
 }
 

@@ -86,7 +86,9 @@ public:
     explicit ScrollPanel(wxWindow *parent) : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
     {
         SetScrollRate(5, 5);
-        SetBackgroundColour(ThemeColor::White);
+        // Content pane surface — driven by role so dark resolves via semantic()
+        // instead of the legacy White->dark swap map.
+        SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     }
 
     bool ShouldScrollToChildOnFocus(wxWindow* child) override { return false; }
@@ -1228,7 +1230,8 @@ wxSizer *PreferencesDialog::create_item_radiobox(wxString title, wxWindow *paren
 PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
     : DPIDialog(parent, id, _L("Preferences"), pos, size, style)
 {
-    SetBackgroundColour(ThemeColor::White);
+    // Root dialog surface (kit Settings root = Surface); resolves by role in dark.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     SetSize(wxSize(620, 580));
     m_original_use_12h_time_format = wxGetApp().app_config->get("use_12h_time_format");
     create();
@@ -1276,7 +1279,9 @@ private:
 
 PreferenceTabbar::PreferenceTabbar(wxWindow *parent) : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
 {
-    SetBackgroundColour(ThemeColor::White);
+    // Nav-rail strip surface (kit Settings nav = SurfaceContainerLow), layering it
+    // one container step off the Surface content pane; resolves by role in dark.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     auto *outer = new wxBoxSizer(wxVERTICAL);
     m_row       = new wxBoxSizer(wxHORIZONTAL);
     outer->Add(m_row, 0, wxLEFT, FromDIP(8));
@@ -1610,7 +1615,6 @@ wxWindow *PreferencesDialog::create_general_tab()
 wxWindow *PreferencesDialog::create_user_tab()
 {
     auto        scrolled = new ScrollPanel(m_book);
-    scrolled->SetBackgroundColour(ThemeColor::White);
     wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
 
     auto title_user = create_item_title(_L("User Settings"), scrolled, _L("User Settings"));
@@ -2009,12 +2013,13 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
     m_button_list[m_button_list.size()] = btn_reset_warnings;
     m_button_list[m_button_list.size()] = btn_reset_prefs;
 
-    StateColor btn_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                      std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Normal));
+    // MD3 outlined buttons: transparent interior + 1px Outline ring with an
+    // OnSurface label, pill radius (height/2) and a SurfaceContainerHigh hover
+    // wash — geometry, font and colours are all resolved through semantic roles
+    // by Button::applyMD3Style(), replacing the Grey300/Grey400/BrandGreen r6 look.
     for (Button *b : {btn_reset_warnings, btn_reset_prefs}) {
-        b->SetBackgroundColor(btn_bg);
-        b->SetFont(Label::Body_13);
-        b->SetCornerRadius(FromDIP(6));
+        b->SetVariant(Button::Variant::Outlined);
+        b->SetButtonSize(Button::Size::Small);
     }
 
     btn_reset_warnings->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_reset_all_warnings(); });

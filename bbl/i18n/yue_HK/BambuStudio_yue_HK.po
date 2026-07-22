@@ -1168,3 +1168,7 @@ msgstr "下"
 #. reviewed-category: connection-offline
 msgid "LIVE"
 msgstr "直播中"
+
+#. reviewed-category: slicing-printing
+msgid "Sliced · %1% layers"
+msgstr "切好片喇 · 共 %1% 層"

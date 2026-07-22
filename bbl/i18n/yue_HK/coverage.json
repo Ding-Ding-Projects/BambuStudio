@@ -4,7 +4,7 @@
   "language": "Hong Kong Cantonese (Traditional Chinese)",
   "source_catalog": "../en/BambuStudio_en.po",
   "compiled_artifact": "../../../resources/i18n/yue_HK/BambuStudio.mo",
-  "translated_messages": 288,
+  "translated_messages": 289,
   "review_status": "curated-in-repository",
   "reviewed_on": "2026-07-21",
   "categories": {
@@ -13,7 +13,7 @@
     "file-actions": 70,
     "navigation": 43,
     "preferences": 31,
-    "slicing-printing": 50
+    "slicing-printing": 51
   },
   "required_flows": [
     "primary navigation",

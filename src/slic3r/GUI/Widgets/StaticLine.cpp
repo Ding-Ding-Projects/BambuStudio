@@ -17,7 +17,10 @@ StaticLine::StaticLine(wxWindow *parent, bool vertical, const wxString &label, c
     , vertical(vertical)
 {
     wxWindow::SetBackgroundColour(parent->GetBackgroundColour());
-    this->lineColor = ThemeColor::Grey300;
+    // Divider tone follows the kit's 1px OutlineVariant. Store the light value;
+    // render() runs it through darkModeColorFor(), which remaps #c5c6d0 -> the
+    // dark OutlineVariant so the line stays theme-adaptive.
+    this->lineColor = MD3::resolve(MD3::Role::OutlineVariant, false);
     DisableFocusFromKeyboard();
     SetFont(Label::Body_14);
     wxWindow::SetLabel(label);

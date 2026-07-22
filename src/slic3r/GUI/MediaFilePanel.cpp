@@ -44,10 +44,10 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
     // File type (left side of row 1)
     StateColor background(
         std::make_pair(ThemeColor::Grey250, (int) StateColor::Checked),
-        std::make_pair(*wxLIGHT_GREY, (int) StateColor::Hovered),
-        std::make_pair(*wxWHITE, (int) StateColor::Normal));
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered),
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Normal));
     m_type_panel = new ::StaticBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
-    m_type_panel->SetBackgroundColor(*wxWHITE);
+    m_type_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_type_panel->SetCornerRadius(FromDIP(5));
     m_type_panel->SetMinSize({-1, 48 * em_unit(this) / 10});
     m_button_timelapse = new ::Button(m_type_panel, _L("Timelapse"), "", wxBORDER_NONE);
