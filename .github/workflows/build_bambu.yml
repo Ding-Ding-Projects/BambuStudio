@@ -308,7 +308,7 @@ jobs:
             -PayloadDir '${{ github.workspace }}\install-dir' `
             -OutputPath $uninstallInclude
 
-          & $makensis /V3 `
+          & $makensis /V3 /INPUTCHARSET UTF8 `
             "/DPRODUCT_VERSION=$productVersion" `
             "/DFILE_VERSION=$fileVersion" `
             "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
@@ -325,6 +325,129 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
               throw "Installer archive validation failed with exit code $LASTEXITCODE."
           }
+
+      - name: Validate MD3 installer pages and from-source helpers
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-StrictMode -Version Latest
+
+          # Static, no-execution validation of the MD3 restyle + build-from-source
+          # additions to the installer. The heavy "Create Windows installer" step
+          # already proved the real .nsi (and its new custom pages) compile with
+          # makensis; from-source itself is interactive-only and never runs in CI
+          # (see docs/features/releases/windows-build-from-source.md), so here it
+          # degrades to compile-and-static-check only.
+          $packagingDir = Join-Path $env:GITHUB_WORKSPACE 'packaging\windows'
+          $nsiPath = Join-Path $packagingDir 'BambuStudioMD3.nsi'
+          $bfsDir = Join-Path $packagingDir 'build-from-source'
+
+          # 1. The .nsi must keep its UTF-8 BOM (makensis /INPUTCHARSET UTF8 relies on
+          #    it to decode the inline Cantonese strings).
+          $nsiBytes = [System.IO.File]::ReadAllBytes($nsiPath)
+          if ($nsiBytes.Length -lt 3 -or $nsiBytes[0] -ne 0xEF -or $nsiBytes[1] -ne 0xBB -or $nsiBytes[2] -ne 0xBF) {
+              throw 'BambuStudioMD3.nsi lost its UTF-8 BOM.'
+          }
+
+          # 2. Every makensis invocation in this workflow keeps /INPUTCHARSET UTF8.
+          $workflowPath = Join-Path $env:GITHUB_WORKSPACE '.github\workflows\build_bambu.yml'
+          $workflowLines = @(Get-Content -LiteralPath $workflowPath)
+          $makensisLines = @($workflowLines | Where-Object { $_ -match '&\s+\$makensis\b' })
+          $charsetLines = @($makensisLines | Where-Object { $_ -match '/INPUTCHARSET\s+UTF8' })
+          if ($makensisLines.Count -lt 5 -or $charsetLines.Count -ne $makensisLines.Count) {
+              throw "Every makensis call must keep /INPUTCHARSET UTF8; found $($makensisLines.Count) call(s), $($charsetLines.Count) carrying the flag."
+          }
+
+          # 3. The three from-source PowerShell helpers exist and parse.
+          foreach ($helper in @('Build-FromSource.ps1', 'Toolchain.ps1', 'Opencode.ps1')) {
+              $helperPath = Join-Path $bfsDir $helper
+              if (-not (Test-Path -LiteralPath $helperPath -PathType Leaf)) {
+                  throw "Missing from-source helper: $helperPath"
+              }
+              $null = [scriptblock]::Create((Get-Content -LiteralPath $helperPath -Raw))
+          }
+
+          # 4. Structural tokens the new pages / flows must contain.
+          $nsi = Get-Content -LiteralPath $nsiPath -Raw -Encoding UTF8
+          $mustContain = @(
+              'Function WelcomePageCreate',
+              'Function InstallModePageCreate',
+              'Function BuildProgressPageCreate',
+              'Function FinishPageCreate',
+              '"InstallSource"',
+              '.md3-owned-manifest.txt',
+              'GetSystemMenu',
+              'DeleteMenu',
+              'SC_CLOSE'
+          )
+          foreach ($needle in $mustContain) {
+              if (-not $nsi.Contains($needle)) {
+                  throw "BambuStudioMD3.nsi is missing expected token: $needle"
+              }
+          }
+
+          # 5. Silent mode must force the prebuilt path and skip the mode chooser.
+          $imStart = $nsi.IndexOf('Function InstallModePageCreate')
+          $imEnd = $nsi.IndexOf('FunctionEnd', [Math]::Max($imStart, 0))
+          if ($imStart -lt 0 -or $imEnd -lt 0) { throw 'InstallModePageCreate is malformed.' }
+          $imBody = $nsi.Substring($imStart, $imEnd - $imStart)
+          foreach ($needle in @('${Silent}', 'StrCpy $InstallMode "prebuilt"', 'Abort')) {
+              if (-not $imBody.Contains($needle)) {
+                  throw "InstallModePageCreate silent-mode prebuilt guard is missing '$needle'."
+              }
+          }
+
+          # 6. Each new page string is bilingual: an EN label with a Cantonese (CJK)
+          #    counterpart within the same MD3BiText block. Checked without embedding
+          #    CJK literals in this workflow (encoding-robust).
+          $enStrings = @(
+              'How would you like to install?',
+              'Install prebuilt (recommended)',
+              'Build from source (advanced',
+              'Building Bambu Studio MD3 from source',
+              'This can take a long time'
+          )
+          foreach ($en in $enStrings) {
+              $idx = $nsi.IndexOf($en)
+              if ($idx -lt 0) { throw "Missing EN installer string: $en" }
+              $window = $nsi.Substring($idx, [Math]::Min(600, $nsi.Length - $idx))
+              $hasCjk = $false
+              foreach ($ch in $window.ToCharArray()) {
+                  $code = [int][char]$ch
+                  if ($code -ge 0x4E00 -and $code -le 0x9FFF) { $hasCjk = $true; break }
+              }
+              if (-not $hasCjk) {
+                  throw "No Cantonese counterpart found near EN string: $en"
+              }
+          }
+
+          # 7. The opencode blanket-allow emitter keeps its security posture:
+          #    question=deny and external_directory=deny (grant scoped to the clone),
+          #    while action classes stay allow.
+          . (Join-Path $bfsDir 'Opencode.ps1')
+          $emitterDir = Join-Path $env:RUNNER_TEMP ('bfs-opencode-check-' + [guid]::NewGuid().ToString('N'))
+          try {
+              $configPath = New-OpencodeAllowConfig -CloneDir $emitterDir
+              $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+              if ($config.permission.question -ne 'deny') {
+                  throw "opencode config: question must be 'deny', got '$($config.permission.question)'."
+              }
+              if ($config.permission.external_directory -ne 'deny') {
+                  throw "opencode config: external_directory must be 'deny', got '$($config.permission.external_directory)'."
+              }
+              if ($config.permission.edit -ne 'allow' -or $config.permission.bash -ne 'allow') {
+                  throw 'opencode config: action classes edit/bash must be allow.'
+              }
+          }
+          finally {
+              if (Test-Path -LiteralPath $emitterDir) {
+                  Remove-Item -LiteralPath $emitterDir -Recurse -Force
+              }
+          }
+
+          Write-Host 'MD3 installer page and from-source helper validation passed.'
 
       - name: Test Windows install, upgrade, and uninstall behavior
         if: inputs.os == 'windows-latest'
@@ -370,7 +493,7 @@ jobs:
                 -PayloadDir '${{ github.workspace }}\install-dir' `
                 -OutputPath $previousUninstallInclude
 
-              & $makensis /V2 `
+              & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
                 "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
@@ -392,7 +515,7 @@ jobs:
                 -PayloadDir $guardPayload `
                 -OutputPath $guardUninstallInclude
 
-              & $makensis /V2 `
+              & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
                 "/DPAYLOAD_DIR=$guardPayload" `
@@ -408,7 +531,7 @@ jobs:
                   throw "Creating the ancestor-guard installer fixture failed with exit code $LASTEXITCODE."
               }
 
-              & $makensis /V2 `
+              & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
                 "/DPAYLOAD_DIR=$guardPayload" `
@@ -422,7 +545,7 @@ jobs:
                   throw "Creating the bootstrap-failure installer fixture failed with exit code $LASTEXITCODE."
               }
 
-              & $makensis /V2 `
+              & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
                 "/DPAYLOAD_DIR=$guardPayload" `

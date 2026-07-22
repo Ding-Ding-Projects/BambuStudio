@@ -1,4 +1,4 @@
-Unicode true
+﻿Unicode true
 RequestExecutionLevel user
 
 !include "MUI2.nsh"
@@ -48,11 +48,143 @@ RequestExecutionLevel user
   !define PRODUCT_SHORTCUT_DIR "${PRODUCT_SHORTCUT_ROOT}\Bambu Studio MD3"
 !endif
 
+; ---- From-source build defines (safe defaults; CI may override but need not) ----
+!ifndef PRODUCT_SOURCE_REPO_URL
+  !define PRODUCT_SOURCE_REPO_URL "https://github.com/codingmachineedge/BambuStudio.git"
+!endif
+!ifndef PRODUCT_SOURCE_TAG
+  !define PRODUCT_SOURCE_TAG "v${PRODUCT_VERSION}"
+!endif
+
+; ---- MD3 light-scheme tokens (hex mirrors MD3Tokens.hpp / ui-md3 colors.css) ----
+!define MD3_SURFACE "faf8fd"
+!define MD3_ON_SURFACE "1a1b1f"
+!define MD3_ON_SURFACE_VARIANT "44464e"
+!define MD3_OUTLINE_VARIANT "c5c6d0"
+!define MD3_PRIMARY "146c2e"
+!define MD3_ON_PRIMARY "ffffff"
+!define MD3_SC_LOW "f4f2f9"
+!define MD3_ERROR "ba1a1a"
+!define MD3_ON_PRIMARY_CONTAINER "00210c"
+; COLORREF (0x00BBGGRR) variants for common-control messages.
+!define MD3_PRIMARY_COLORREF 0x002E6C14
+!define MD3_SURFACE_COLORREF 0x00FDF8FA
+!define MD3_SC_LOW_COLORREF 0x00F9F2F4
+
+; ---- Win32 message / style constants for MD3 theming + the build UI ----
+; Guarded: several are already provided by WinMessages.nsh (pulled in via MUI2).
+!ifndef WM_SETFONT
+  !define WM_SETFONT 0x0030
+!endif
+!ifndef WM_COMMAND
+  !define WM_COMMAND 0x0111
+!endif
+!ifndef SW_HIDE
+  !define SW_HIDE 0
+!endif
+!ifndef SW_SHOW
+  !define SW_SHOW 5
+!endif
+!ifndef SC_CLOSE
+  !define SC_CLOSE 0xF060
+!endif
+!ifndef SS_CENTERIMAGE
+  !define SS_CENTERIMAGE 0x00000200
+!endif
+!ifndef PBM_SETMARQUEE
+  !define PBM_SETMARQUEE 0x040A
+!endif
+!ifndef PBM_SETBARCOLOR
+  !define PBM_SETBARCOLOR 0x0409
+!endif
+!ifndef PBM_SETBKCOLOR
+  !define PBM_SETBKCOLOR 0x2001
+!endif
+!ifndef EM_SETSEL
+  !define EM_SETSEL 0x00B1
+!endif
+!ifndef EM_SCROLLCARET
+  !define EM_SCROLLCARET 0x00B7
+!endif
+!ifndef EM_SETBKGNDCOLOR
+  !define EM_SETBKGNDCOLOR 0x0443
+!endif
+!ifndef STILL_ACTIVE
+  !define STILL_ACTIVE 259
+!endif
+; Read-only, multiline log-tail edit style bundle + client-edge exstyle.
+!define MD3_LOGEDIT_STYLE 0x50210844
+!define MD3_LOGEDIT_EXSTYLE 0x00000200
+; Marquee progress bar style bundle (WS_CHILD|WS_VISIBLE|PBS_MARQUEE).
+!define MD3_MARQUEE_STYLE 0x50000008
+
 Var LanguageMode
 Var LanguageModeDialog
 Var LanguageModeEnglish
 Var LanguageModeCantonese
 Var LanguageModeBilingual
+
+Var InstallMode
+Var MD3Dialog
+Var LogPixelsY
+Var BiText
+Var FontHero
+Var FontSection
+Var FontCard
+Var FontBody
+Var FontCaption
+Var FontMono
+Var InstallModePrebuilt
+Var InstallModeFromSource
+Var FinishLaunchCheck
+Var BuildSessionDir
+Var BuildPayloadDir
+Var BuildProcHandle
+Var BuildExitCode
+Var BuildActive
+Var BuildPolling
+Var BuildStepLabel
+Var BuildRepairLabel
+Var BuildLogEdit
+Var BuildBar
+Var BuildStep
+Var BuildAttempt
+Var BuildMaxAttempts
+
+; Create one GDI font. Height is DPI-aware: -MulDiv(pt, LOGPIXELSY, 72).
+!macro MD3MakeFont OUTVAR PT WEIGHT FACE
+  System::Call 'kernel32::MulDiv(i ${PT}, i $LogPixelsY, i 72) i .r0'
+  IntOp $0 0 - $0
+  System::Call 'gdi32::CreateFontW(i $0, i 0, i 0, i 0, i ${WEIGHT}, i 0, i 0, i 0, i 1, i 0, i 0, i 5, i 0, w "${FACE}") p .r0'
+  StrCpy ${OUTVAR} $0
+!macroend
+
+; Apply a created font to a control (WM_SETFONT, redraw).
+!macro MD3Font HWND FONTVAR
+  SendMessage ${HWND} ${WM_SETFONT} ${FONTVAR} 1
+!macroend
+
+; Full-width MD3 hero band drawn at the top of every custom page (solid primary
+; band, on-primary wordmark, Segoe UI Semibold 15pt, vertically centered).
+!macro MD3HeroBand
+  ${NSD_CreateLabel} 0 0 100% 40u "${PRODUCT_NAME}"
+  Pop $0
+  ${NSD_AddStyle} $0 ${SS_CENTERIMAGE}
+  SetCtlColors $0 ${MD3_ON_PRIMARY} ${MD3_PRIMARY}
+  !insertmacro MD3Font $0 $FontHero
+!macroend
+
+; Compose bilingual text into VAR following the ShowLanguageStop precedent:
+; yue-only, EN + blank line + yue for bilingual, otherwise EN.
+!macro MD3BiText VAR EN YUE
+  ${If} $LanguageMode == "yue_HK"
+    StrCpy ${VAR} "${YUE}"
+  ${ElseIf} $LanguageMode == "bilingual_en_yue_HK"
+    StrCpy ${VAR} "${EN}$\r$\n$\r$\n${YUE}"
+  ${Else}
+    StrCpy ${VAR} "${EN}"
+  ${EndIf}
+!macroend
 
 !macro ShowLanguageStop ENGLISH CANTONESE
   ${If} $LanguageMode == "yue_HK"
@@ -100,7 +232,10 @@ VIAddVersionKey /LANG=1033 "FileVersion" "${PRODUCT_VERSION}"
 VIAddVersionKey /LANG=1033 "ProductVersion" "${PRODUCT_VERSION}"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "GNU AGPL v3"
 
-!define MUI_ABORTWARNING
+; MUI_ABORTWARNING is intentionally NOT defined so its English-only warning does
+; not fire; MUI still generates .onUserAbort, which delegates to our
+; MUI_CUSTOMFUNCTION_ABORT hook (bilingual quit confirm + non-closable build lock).
+!define MUI_CUSTOMFUNCTION_ABORT MD3OnUserAbort
 !define MUI_ICON "${INSTALLER_ICON}"
 !define MUI_UNICON "${INSTALLER_ICON}"
 !define MUI_FINISHPAGE_NOAUTOCLOSE
@@ -131,6 +266,25 @@ Function .onInit
       Abort
     ${EndIf}
   ${EndIf}
+
+  ; Default install source; the interactive install-mode page may change it.
+  ; Silent (/S) never reaches that page, so it stays "prebuilt" (see spec 2.1/4.1).
+  StrCpy $InstallMode "prebuilt"
+
+  ; DPI-aware font metrics: read LOGPIXELSY once, then build the MD3 face set.
+  System::Call 'user32::GetDC(p 0) p .r0'
+  System::Call 'gdi32::GetDeviceCaps(p r0, i 90) i .r1'
+  System::Call 'user32::ReleaseDC(p 0, p r0)'
+  StrCpy $LogPixelsY $1
+  ${If} $LogPixelsY <= 0
+    StrCpy $LogPixelsY 96
+  ${EndIf}
+  !insertmacro MD3MakeFont $FontHero 15 700 "Segoe UI"
+  !insertmacro MD3MakeFont $FontSection 12 700 "Segoe UI"
+  !insertmacro MD3MakeFont $FontCard 11 600 "Segoe UI Semibold"
+  !insertmacro MD3MakeFont $FontBody 9 400 "Segoe UI"
+  !insertmacro MD3MakeFont $FontCaption 8 400 "Segoe UI"
+  !insertmacro MD3MakeFont $FontMono 8 400 "Consolas"
 FunctionEnd
 
 Function un.onInit
@@ -151,17 +305,36 @@ Function LanguageModePageCreate
   ${If} $LanguageModeDialog == error
     Abort
   ${EndIf}
+  SetCtlColors $LanguageModeDialog ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3HeroBand
 
-  ${NSD_CreateLabel} 0 0 100% 28u "Choose the Bambu Studio UI language.$\r$\n揀選 Bambu Studio 介面語言。"
+  ${NSD_CreateLabel} 12u 48u 88% 26u "Choose the Bambu Studio UI language.$\r$\n揀選 Bambu Studio 介面語言。"
   Pop $0
-  ${NSD_CreateRadioButton} 8u 38u 92% 14u "English"
+  SetCtlColors $0 ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontSection
+
+  ${NSD_CreateRadioButton} 12u 80u 88% 14u "English"
   Pop $LanguageModeEnglish
-  ${NSD_CreateRadioButton} 8u 60u 92% 14u "廣東話（香港，預覽版）"
+  SetCtlColors $LanguageModeEnglish ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $LanguageModeEnglish $FontCard
+  ${NSD_CreateRadioButton} 12u 100u 88% 14u "廣東話（香港，預覽版）"
   Pop $LanguageModeCantonese
-  ${NSD_CreateRadioButton} 8u 82u 92% 14u "English + 廣東話（香港，預覽版）"
+  SetCtlColors $LanguageModeCantonese ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $LanguageModeCantonese $FontCard
+  ${NSD_CreateRadioButton} 12u 120u 88% 14u "English + 廣東話（香港，預覽版）"
   Pop $LanguageModeBilingual
-  ${NSD_CreateLabel} 8u 108u 92% 30u "You can change this later in Preferences. Existing Bambu Studio locales remain available there.$\r$\n之後可以喺偏好設定更改；其他現有語言亦會保留。"
+  SetCtlColors $LanguageModeBilingual ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $LanguageModeBilingual $FontCard
+
+  ; MD3 divider hairline (outline-variant).
+  ${NSD_CreateLabel} 12u 142u 88% 1u ""
   Pop $0
+  SetCtlColors $0 ${MD3_OUTLINE_VARIANT} ${MD3_OUTLINE_VARIANT}
+
+  ${NSD_CreateLabel} 12u 150u 88% 30u "You can change this later in Preferences. Existing Bambu Studio locales remain available there.$\r$\n之後可以喺偏好設定更改；其他現有語言亦會保留。"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE_VARIANT} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontCaption
 
   ${If} $LanguageMode == "yue_HK"
     ${NSD_Check} $LanguageModeCantonese
@@ -187,11 +360,578 @@ Function LanguageModePageLeave
   StrCpy $LanguageMode "en"
 FunctionEnd
 
-!insertmacro MUI_PAGE_WELCOME
+; ===========================================================================
+;  MD3 custom pages: Welcome, Install-mode chooser, non-closable Build progress,
+;  Finish. License + INSTFILES stay MUI with a themed SHOW callback.
+; ===========================================================================
+
+Function WelcomePageCreate
+  ${If} ${Silent}
+    Abort
+  ${EndIf}
+  nsDialogs::Create 1018
+  Pop $MD3Dialog
+  ${If} $MD3Dialog == error
+    Abort
+  ${EndIf}
+  SetCtlColors $MD3Dialog ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3HeroBand
+
+  !insertmacro MD3BiText $BiText \
+    "Welcome to Bambu Studio MD3" \
+    "歡迎使用 Bambu Studio MD3"
+  ${NSD_CreateLabel} 12u 52u 88% 20u "$BiText"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontSection
+
+  !insertmacro MD3BiText $BiText \
+    "This installer sets up Bambu Studio MD3 for your account only, in your local application folder. It does not need administrator rights. Choose Next to continue." \
+    "呢個安裝程式只會為你嘅帳戶，喺你本機嘅應用程式資料夾設定 Bambu Studio MD3，唔需要管理員權限。㩒「下一步」繼續。"
+  ${NSD_CreateLabel} 12u 82u 88% 70u "$BiText"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE_VARIANT} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontBody
+
+  nsDialogs::Show
+FunctionEnd
+
+Function LicensePageShow
+  ; RichEdit honours bg only (partial MD3, deviation D). Control 1000 on the
+  ; inner license dialog.
+  FindWindow $0 "#32770" "" $HWNDPARENT
+  GetDlgItem $1 $0 1000
+  SetCtlColors $1 ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  SendMessage $1 ${EM_SETBKGNDCOLOR} 0 ${MD3_SURFACE_COLORREF}
+FunctionEnd
+
+Function InstallModePageCreate
+  ; Silent guard: from-source is never reachable under /S (spec 2.1 / 4.1).
+  ${If} ${Silent}
+    StrCpy $InstallMode "prebuilt"
+    Abort
+  ${EndIf}
+  nsDialogs::Create 1018
+  Pop $MD3Dialog
+  ${If} $MD3Dialog == error
+    Abort
+  ${EndIf}
+  SetCtlColors $MD3Dialog ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3HeroBand
+
+  !insertmacro MD3BiText $BiText \
+    "How would you like to install?" \
+    "你想點樣安裝？"
+  ${NSD_CreateLabel} 12u 52u 88% 20u "$BiText"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontSection
+
+  !insertmacro MD3BiText $BiText \
+    "Install prebuilt (recommended)" \
+    "安裝預先建置版本（建議）"
+  ${NSD_CreateRadioButton} 12u 80u 88% 14u "$BiText"
+  Pop $InstallModePrebuilt
+  SetCtlColors $InstallModePrebuilt ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $InstallModePrebuilt $FontCard
+
+  !insertmacro MD3BiText $BiText \
+    "Build from source (advanced — can take hours)" \
+    "由原始碼建置（進階 — 可能需時數個鐘）"
+  ${NSD_CreateRadioButton} 12u 100u 88% 14u "$BiText"
+  Pop $InstallModeFromSource
+  SetCtlColors $InstallModeFromSource ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $InstallModeFromSource $FontCard
+
+  ${NSD_CreateLabel} 12u 122u 88% 1u ""
+  Pop $0
+  SetCtlColors $0 ${MD3_OUTLINE_VARIANT} ${MD3_OUTLINE_VARIANT}
+
+  !insertmacro MD3BiText $BiText \
+    "Building from source downloads and installs developer tools, then compiles the app on this computer. It needs internet access and a lot of time and disk space." \
+    "由原始碼建置會下載並安裝開發者工具，然後喺呢部電腦編譯應用程式。需要網絡連線、大量時間同磁碟空間。"
+  ${NSD_CreateLabel} 12u 130u 88% 44u "$BiText"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE_VARIANT} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontCaption
+
+  ${If} $InstallMode == "from-source"
+    ${NSD_Check} $InstallModeFromSource
+  ${Else}
+    ${NSD_Check} $InstallModePrebuilt
+  ${EndIf}
+  nsDialogs::Show
+FunctionEnd
+
+Function InstallModePageLeave
+  ${NSD_GetState} $InstallModeFromSource $0
+  ${If} $0 == ${BST_CHECKED}
+    StrCpy $InstallMode "from-source"
+    Return
+  ${EndIf}
+  StrCpy $InstallMode "prebuilt"
+FunctionEnd
+
+; ---- Build progress page (from-source only; non-closable while building) ----
+
+Function BuildProgressPageCreate
+  ${If} ${Silent}
+    Abort
+  ${EndIf}
+  ${If} $InstallMode != "from-source"
+    Abort
+  ${EndIf}
+
+  nsDialogs::Create 1018
+  Pop $MD3Dialog
+  ${If} $MD3Dialog == error
+    Abort
+  ${EndIf}
+  SetCtlColors $MD3Dialog ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3HeroBand
+
+  !insertmacro MD3BiText $BiText \
+    "Building Bambu Studio MD3 from source" \
+    "正在由原始碼建置 Bambu Studio MD3"
+  ${NSD_CreateLabel} 12u 52u 88% 20u "$BiText"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontSection
+
+  !insertmacro MD3BiText $BiText \
+    "This can take a long time — often one to several hours — and installs developer tools on this computer. Keep this window open. It cannot be closed until the build finishes or stops." \
+    "呢個過程可能需要好長時間，通常一至數個鐘，並會喺呢部電腦安裝開發者工具。請保持呢個視窗開啟。喺建置完成或停止之前，唔可以關閉。"
+  ${NSD_CreateLabel} 12u 80u 88% 44u "$BiText"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE_VARIANT} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontBody
+
+  ; Marquee progress bar (shape/marquee OS-drawn; color settable, deviation D7).
+  nsDialogs::CreateControl /NOUNLOAD "msctls_progress32" ${MD3_MARQUEE_STYLE} 0 12u 128u 76% 10u ""
+  Pop $BuildBar
+  SendMessage $BuildBar ${PBM_SETMARQUEE} 1 30
+  SendMessage $BuildBar ${PBM_SETBARCOLOR} 0 ${MD3_PRIMARY_COLORREF}
+  SendMessage $BuildBar ${PBM_SETBKCOLOR} 0 ${MD3_SURFACE_COLORREF}
+
+  !insertmacro MD3BiText $BiText "Preparing…" "準備緊…"
+  ${NSD_CreateLabel} 12u 144u 60% 12u "$BiText"
+  Pop $BuildStepLabel
+  SetCtlColors $BuildStepLabel ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $BuildStepLabel $FontCard
+
+  ${NSD_CreateLabel} 72% 144u 26% 12u ""
+  Pop $BuildRepairLabel
+  SetCtlColors $BuildRepairLabel ${MD3_PRIMARY} ${MD3_SURFACE}
+  !insertmacro MD3Font $BuildRepairLabel $FontCaption
+
+  nsDialogs::CreateControl /NOUNLOAD "EDIT" ${MD3_LOGEDIT_STYLE} ${MD3_LOGEDIT_EXSTYLE} 12u 160u 88% 40u ""
+  Pop $BuildLogEdit
+  SetCtlColors $BuildLogEdit ${MD3_ON_SURFACE} ${MD3_SC_LOW}
+  !insertmacro MD3Font $BuildLogEdit $FontMono
+
+  StrCpy $BuildStep ""
+  StrCpy $BuildAttempt 0
+  StrCpy $BuildMaxAttempts 5
+  StrCpy $BuildExitCode 0
+
+  Call BuildStartSession
+  Call BuildLockClose
+  StrCpy $BuildActive 1
+  StrCpy $BuildPolling 0
+  ${NSD_CreateTimer} BuildPoll 500
+
+  nsDialogs::Show
+FunctionEnd
+
+Function BuildProgressPageLeave
+  ${If} $BuildActive == 1
+    ; Do not allow leaving while the build is still running.
+    Abort
+  ${EndIf}
+  ; Only two terminal states may enter INSTFILES: a successful source build, or
+  ; the explicit prebuilt fallback chosen after a bounded failure. After a
+  ; declined fallback (bfb_stay) $InstallMode is still "from-source" with a
+  ; nonzero exit code; advancing would copy a partial payload with no owned
+  ; manifest and strand a state the fail-closed uninstaller cannot clean.
+  ${If} $InstallMode == "from-source"
+  ${AndIfNot} $BuildExitCode == 0
+    Abort
+  ${EndIf}
+FunctionEnd
+
+Function BuildStartSession
+  ; Session dir: user-writable and OUTSIDE the fixed install dir, so it never
+  ; trips the ownership / reparse guards.
+  ${GetTime} "" "L" $2 $3 $4 $5 $6 $7 $8
+  StrCpy $BuildSessionDir "$LOCALAPPDATA\codingmachineedge\BambuStudioMD3-FromSource\$4$3$2-$6$7$8"
+  StrCpy $BuildPayloadDir "$BuildSessionDir\install-dir"
+  CreateDirectory "$BuildSessionDir"
+
+  ; Extract the PS helpers to a private temp dir; they never enter the payload.
+  InitPluginsDir
+  CreateDirectory "$PLUGINSDIR\bfs"
+  SetOutPath "$PLUGINSDIR\bfs"
+  File "${__FILEDIR__}\build-from-source\Build-FromSource.ps1"
+  File "${__FILEDIR__}\build-from-source\Toolchain.ps1"
+  File "${__FILEDIR__}\build-from-source\Opencode.ps1"
+
+  StrCpy $9 'powershell.exe -NoProfile -ExecutionPolicy Bypass -NonInteractive -WindowStyle Hidden -File "$PLUGINSDIR\bfs\Build-FromSource.ps1" -SessionDir "$BuildSessionDir" -CloneUrl "${PRODUCT_SOURCE_REPO_URL}" -Tag "${PRODUCT_SOURCE_TAG}" -LanguageMode "$LanguageMode" -PayloadOut "$BuildPayloadDir"'
+
+  ; STARTUPINFOW (68 bytes, cb set) + PROCESS_INFORMATION (16 bytes), async launch.
+  System::Alloc 68
+  Pop $1
+  System::Call "*$1(i 68)"
+  System::Alloc 16
+  Pop $2
+  ; CREATE_NO_WINDOW (0x08000000): no console flashes up.
+  System::Call 'kernel32::CreateProcessW(w 0, w r9, i 0, i 0, i 0, i 0x08000000, i 0, w 0, p r1, p r2) i .r3'
+  ${If} $3 == 0
+    System::Free $1
+    System::Free $2
+    StrCpy $BuildProcHandle 0
+    Return
+  ${EndIf}
+  System::Call "*$2(p .r4, p .r5, i .r6, i .r7)"
+  StrCpy $BuildProcHandle $4
+  System::Call 'kernel32::CloseHandle(p r5)'
+  System::Free $1
+  System::Free $2
+FunctionEnd
+
+Function BuildLockClose
+  ; Hide + disable Cancel; disable Back/Next; strip SC_CLOSE from the system menu
+  ; (greys the titlebar X and blocks Alt+F4).
+  GetDlgItem $0 $HWNDPARENT 2
+  EnableWindow $0 0
+  ShowWindow $0 ${SW_HIDE}
+  GetDlgItem $0 $HWNDPARENT 3
+  EnableWindow $0 0
+  GetDlgItem $0 $HWNDPARENT 1
+  EnableWindow $0 0
+  System::Call 'user32::GetSystemMenu(p $HWNDPARENT, i 0) p .r0'
+  System::Call 'user32::DeleteMenu(p r0, i ${SC_CLOSE}, i 0)'
+  System::Call 'user32::DrawMenuBar(p $HWNDPARENT)'
+FunctionEnd
+
+Function BuildUnlockClose
+  ; Restore the default system menu (GetSystemMenu revert=1) and re-enable buttons.
+  System::Call 'user32::GetSystemMenu(p $HWNDPARENT, i 1)'
+  System::Call 'user32::DrawMenuBar(p $HWNDPARENT)'
+  GetDlgItem $0 $HWNDPARENT 2
+  EnableWindow $0 1
+  ShowWindow $0 ${SW_SHOW}
+  GetDlgItem $0 $HWNDPARENT 3
+  EnableWindow $0 1
+  GetDlgItem $0 $HWNDPARENT 1
+  EnableWindow $0 1
+FunctionEnd
+
+Function BuildPoll
+  ${If} $BuildPolling == 1
+    Return
+  ${EndIf}
+  StrCpy $BuildPolling 1
+
+  ${If} $BuildProcHandle == 0
+    ${NSD_KillTimer} BuildPoll
+    StrCpy $BuildExitCode 40
+    Call BuildFinishBranch
+    StrCpy $BuildPolling 0
+    Return
+  ${EndIf}
+
+  Call BuildReadStatus
+  Call BuildReadLogTail
+
+  System::Call 'kernel32::GetExitCodeProcess(p $BuildProcHandle, *i .r1)'
+  ${If} $1 == ${STILL_ACTIVE}
+    StrCpy $BuildPolling 0
+    Return
+  ${EndIf}
+
+  ${NSD_KillTimer} BuildPoll
+  StrCpy $BuildExitCode $1
+  System::Call 'kernel32::CloseHandle(p $BuildProcHandle)'
+  StrCpy $BuildProcHandle 0
+  Call BuildFinishBranch
+  StrCpy $BuildPolling 0
+FunctionEnd
+
+Function BuildReadStatus
+  ClearErrors
+  FileOpen $4 "$BuildSessionDir\status.json" r
+  IfErrors brs_done
+  brs_loop:
+    ClearErrors
+    FileReadUTF16LE $4 $5
+    IfErrors brs_close
+    Push $5
+    Call TrimLine
+    Pop $5
+    StrCpy $6 $5 7
+    StrCmp $6 '"step":' 0 brs_notstep
+      StrCpy $7 $5 "" 7
+      Push $7
+      Call StripJsonVal
+      Pop $7
+      StrCpy $BuildStep $7
+      Goto brs_loop
+    brs_notstep:
+    StrCpy $6 $5 10
+    StrCmp $6 '"attempt":' 0 brs_notattempt
+      StrCpy $7 $5 "" 10
+      Push $7
+      Call StripJsonVal
+      Pop $7
+      StrCpy $BuildAttempt $7
+      Goto brs_loop
+    brs_notattempt:
+    StrCpy $6 $5 14
+    StrCmp $6 '"maxAttempts":' 0 brs_loop
+      StrCpy $7 $5 "" 14
+      Push $7
+      Call StripJsonVal
+      Pop $7
+      StrCpy $BuildMaxAttempts $7
+      Goto brs_loop
+  brs_close:
+    FileClose $4
+  brs_done:
+    ${If} $BuildStep != ""
+      ${NSD_SetText} $BuildStepLabel "$BuildStep"
+    ${EndIf}
+    ${If} $BuildAttempt > 0
+      ${If} $LanguageMode == "yue_HK"
+        StrCpy $9 "修復 $BuildAttempt/$BuildMaxAttempts"
+      ${ElseIf} $LanguageMode == "bilingual_en_yue_HK"
+        StrCpy $9 "Repair $BuildAttempt/$BuildMaxAttempts · 修復 $BuildAttempt/$BuildMaxAttempts"
+      ${Else}
+        StrCpy $9 "Repair $BuildAttempt/$BuildMaxAttempts"
+      ${EndIf}
+      ${NSD_SetText} $BuildRepairLabel "$9"
+    ${EndIf}
+FunctionEnd
+
+Function BuildReadLogTail
+  ClearErrors
+  FileOpen $4 "$BuildSessionDir\build.log" r
+  IfErrors brl_done
+  FileSeek $4 0 END $R0
+  IntOp $R1 $R0 - 2000
+  IntCmp $R1 2 brl_seek brl_setmin brl_seek
+  brl_setmin:
+    StrCpy $R1 2
+  brl_seek:
+  ; Keep an even byte offset for UTF-16LE.
+  IntOp $R2 $R1 % 2
+  IntOp $R1 $R1 - $R2
+  FileSeek $4 $R1 SET
+  StrCpy $9 ""
+  brl_loop:
+    ClearErrors
+    FileReadUTF16LE $4 $R3
+    IfErrors brl_close
+    StrCpy $9 "$9$R3"
+    StrLen $R4 $9
+    ${If} $R4 > 950
+      IntOp $R5 $R4 - 900
+      StrCpy $9 $9 "" $R5
+    ${EndIf}
+    Goto brl_loop
+  brl_close:
+    FileClose $4
+    ${NSD_SetText} $BuildLogEdit "$9"
+    SendMessage $BuildLogEdit ${EM_SETSEL} -1 -1
+    SendMessage $BuildLogEdit ${EM_SCROLLCARET} 0 0
+  brl_done:
+FunctionEnd
+
+Function BuildFinishBranch
+  ; All three terminal transitions re-enable close before the next/terminal page.
+  StrCpy $BuildActive 0
+  Call BuildUnlockClose
+
+  ${If} $BuildExitCode == 0
+    ; Success: advance into the shared ownership CopyFiles install (INSTFILES).
+    GetDlgItem $0 $HWNDPARENT 1
+    EnableWindow $0 1
+    SendMessage $HWNDPARENT ${WM_COMMAND} 1 0
+    Return
+  ${EndIf}
+
+  ${If} $BuildExitCode == 20
+    ; Bounded failure: offer the prebuilt fallback (restrained, explicit copy).
+    ${If} $LanguageMode == "yue_HK"
+      MessageBox MB_ICONEXCLAMATION|MB_YESNO "由原始碼建置經過多次修復嘗試後仍然失敗。建置紀錄喺：$\r$\n$BuildSessionDir\build.log$\r$\n$\r$\n要改為安裝預先建置版本嗎？" /SD IDYES IDYES bfb_fallback IDNO bfb_stay
+    ${ElseIf} $LanguageMode == "bilingual_en_yue_HK"
+      MessageBox MB_ICONEXCLAMATION|MB_YESNO "Building from source failed after the maximum repair attempts. The build log is at:$\r$\n$BuildSessionDir\build.log$\r$\n$\r$\n由原始碼建置經過多次修復嘗試後仍然失敗。建置紀錄喺：$\r$\n$BuildSessionDir\build.log$\r$\n$\r$\nInstall the prebuilt version instead? / 要改為安裝預先建置版本嗎？" /SD IDYES IDYES bfb_fallback IDNO bfb_stay
+    ${Else}
+      MessageBox MB_ICONEXCLAMATION|MB_YESNO "Building from source failed after the maximum repair attempts. The build log is at:$\r$\n$BuildSessionDir\build.log$\r$\n$\r$\nInstall the prebuilt version instead?" /SD IDYES IDYES bfb_fallback IDNO bfb_stay
+    ${EndIf}
+    bfb_fallback:
+      StrCpy $InstallMode "prebuilt"
+      GetDlgItem $0 $HWNDPARENT 1
+      EnableWindow $0 1
+      SendMessage $HWNDPARENT ${WM_COMMAND} 1 0
+      Return
+    bfb_stay:
+      ; Window is now closable; the user may cancel/quit.
+      Return
+  ${EndIf}
+
+  ; Fatal (10/11/12/30/40): show code + log path, then quit. No payload written.
+  ${If} $LanguageMode == "yue_HK"
+    StrCpy $2 "由原始碼建置失敗（代碼 $BuildExitCode）。建置紀錄喺：$\r$\n$BuildSessionDir\build.log$\r$\n$\r$\n未有安裝任何檔案。"
+  ${ElseIf} $LanguageMode == "bilingual_en_yue_HK"
+    StrCpy $2 "Building from source failed (code $BuildExitCode). The build log is at:$\r$\n$BuildSessionDir\build.log$\r$\n$\r$\n由原始碼建置失敗（代碼 $BuildExitCode）。建置紀錄喺：$\r$\n$BuildSessionDir\build.log$\r$\n$\r$\nNo files were installed. / 未有安裝任何檔案。"
+  ${Else}
+    StrCpy $2 "Building from source failed (code $BuildExitCode). The build log is at:$\r$\n$BuildSessionDir\build.log$\r$\n$\r$\nNo files were installed."
+  ${EndIf}
+  SetErrorLevel 2
+  MessageBox MB_ICONSTOP|MB_OK "$2" /SD IDOK
+  Quit
+FunctionEnd
+
+; Strip trailing CR/LF/space/tab and leading space/tab from a stack string.
+Function TrimLine
+  Exch $R5
+  Push $R6
+  tl_trail:
+    StrCpy $R6 $R5 1 -1
+    StrCmp $R6 "$\r" tl_chop
+    StrCmp $R6 "$\n" tl_chop
+    StrCmp $R6 " " tl_chop
+    StrCmp $R6 "$\t" tl_chop
+    Goto tl_lead
+  tl_chop:
+    StrCpy $R5 $R5 -1
+    Goto tl_trail
+  tl_lead:
+    StrCpy $R6 $R5 1
+    StrCmp $R6 " " tl_choplead
+    StrCmp $R6 "$\t" tl_choplead
+    Goto tl_end
+  tl_choplead:
+    StrCpy $R5 $R5 "" 1
+    Goto tl_lead
+  tl_end:
+  Pop $R6
+  Exch $R5
+FunctionEnd
+
+; Strip trailing comma/space and surrounding double quotes from a JSON value.
+Function StripJsonVal
+  Exch $R5
+  Push $R6
+  sjv_trail:
+    StrCpy $R6 $R5 1 -1
+    StrCmp $R6 "," sjv_chop
+    StrCmp $R6 " " sjv_chop
+    StrCmp $R6 "$\r" sjv_chop
+    StrCmp $R6 "$\n" sjv_chop
+    Goto sjv_q
+  sjv_chop:
+    StrCpy $R5 $R5 -1
+    Goto sjv_trail
+  sjv_q:
+    StrCpy $R6 $R5 1
+    StrCmp $R6 '"' 0 sjv_end
+    StrCpy $R5 $R5 "" 1
+    StrCpy $R6 $R5 1 -1
+    StrCmp $R6 '"' 0 sjv_end
+    StrCpy $R5 $R5 -1
+  sjv_end:
+  Pop $R6
+  Exch $R5
+FunctionEnd
+
+Function InstFilesPageShow
+  ; Prebuilt path: recolor the progress bar (1004) + log list (1016).
+  FindWindow $0 "#32770" "" $HWNDPARENT
+  GetDlgItem $1 $0 1004
+  SendMessage $1 ${PBM_SETBARCOLOR} 0 ${MD3_PRIMARY_COLORREF}
+  SendMessage $1 ${PBM_SETBKCOLOR} 0 ${MD3_SURFACE_COLORREF}
+  GetDlgItem $2 $0 1016
+  SetCtlColors $2 ${MD3_ON_SURFACE} ${MD3_SURFACE}
+FunctionEnd
+
+Function FinishPageCreate
+  ${If} ${Silent}
+    Abort
+  ${EndIf}
+  nsDialogs::Create 1018
+  Pop $MD3Dialog
+  ${If} $MD3Dialog == error
+    Abort
+  ${EndIf}
+  SetCtlColors $MD3Dialog ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3HeroBand
+
+  !insertmacro MD3BiText $BiText \
+    "Bambu Studio MD3 is installed" \
+    "Bambu Studio MD3 已安裝完成"
+  ${NSD_CreateLabel} 12u 52u 88% 20u "$BiText"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontSection
+
+  !insertmacro MD3BiText $BiText \
+    "Setup is complete. You can start Bambu Studio MD3 from the Start menu at any time." \
+    "安裝已完成。你隨時可以喺開始功能表啟動 Bambu Studio MD3。"
+  ${NSD_CreateLabel} 12u 82u 88% 40u "$BiText"
+  Pop $0
+  SetCtlColors $0 ${MD3_ON_SURFACE_VARIANT} ${MD3_SURFACE}
+  !insertmacro MD3Font $0 $FontBody
+
+  !insertmacro MD3BiText $BiText \
+    "Launch Bambu Studio MD3 now" \
+    "立即啟動 Bambu Studio MD3"
+  ${NSD_CreateCheckBox} 12u 128u 88% 14u "$BiText"
+  Pop $FinishLaunchCheck
+  SetCtlColors $FinishLaunchCheck ${MD3_ON_SURFACE} ${MD3_SURFACE}
+  !insertmacro MD3Font $FinishLaunchCheck $FontCard
+  ${NSD_Check} $FinishLaunchCheck
+
+  nsDialogs::Show
+FunctionEnd
+
+Function FinishPageLeave
+  ${NSD_GetState} $FinishLaunchCheck $0
+  ${If} $0 == ${BST_CHECKED}
+    ${If} ${FileExists} "${PRODUCT_INSTALL_DIR}\${PRODUCT_EXE}"
+      SetOutPath "${PRODUCT_INSTALL_DIR}"
+      Exec '"${PRODUCT_INSTALL_DIR}\${PRODUCT_EXE}"'
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
+
+Function MD3OnUserAbort
+  ${If} $BuildActive == 1
+    ; Belt-and-braces: refuse to quit while the build is running.
+    Abort
+  ${EndIf}
+  ; Otherwise confirm the quit (bilingual, restrained), replacing MUI_ABORTWARNING.
+  ${If} $LanguageMode == "yue_HK"
+    MessageBox MB_ICONQUESTION|MB_YESNO "確定要結束 Bambu Studio MD3 安裝程式嗎？" /SD IDYES IDYES +2
+    Abort
+  ${ElseIf} $LanguageMode == "bilingual_en_yue_HK"
+    MessageBox MB_ICONQUESTION|MB_YESNO "Quit the Bambu Studio MD3 setup? / 確定要結束 Bambu Studio MD3 安裝程式嗎？" /SD IDYES IDYES +2
+    Abort
+  ${Else}
+    MessageBox MB_ICONQUESTION|MB_YESNO "Quit the Bambu Studio MD3 setup?" /SD IDYES IDYES +2
+    Abort
+  ${EndIf}
+FunctionEnd
+
+Page custom WelcomePageCreate
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW LicensePageShow
 !insertmacro MUI_PAGE_LICENSE "${PAYLOAD_DIR}\LICENSE.txt"
 Page custom LanguageModePageCreate LanguageModePageLeave
+Page custom InstallModePageCreate InstallModePageLeave
+Page custom BuildProgressPageCreate BuildProgressPageLeave
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW InstFilesPageShow
 !insertmacro MUI_PAGE_INSTFILES
-!insertmacro MUI_PAGE_FINISH
+Page custom FinishPageCreate FinishPageLeave
 
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
@@ -329,6 +1069,7 @@ Section "Bambu Studio MD3" SEC_MAIN
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallDir" "${PRODUCT_INSTALL_DIR}"
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "LanguageMode" "$LanguageMode"
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallSource" "$InstallMode"
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "RecoveryState" "bootstrap_cleanup"
   IfErrors install_bootstrap_metadata_failed
 
@@ -355,6 +1096,7 @@ Section "Bambu Studio MD3" SEC_MAIN
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallerId" "${PRODUCT_INSTALLER_ID}"
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallDir" "${PRODUCT_INSTALL_DIR}"
   WriteRegStr HKCU "${PRODUCT_REG_KEY}" "LanguageMode" "$LanguageMode"
+  WriteRegStr HKCU "${PRODUCT_REG_KEY}" "InstallSource" "$InstallMode"
   ; This user preference intentionally survives uninstall, just like app
   ; profiles/projects, and keeps the selected mode across failed upgrades.
   WriteRegStr HKCU "${PRODUCT_PREF_KEY}" "LanguageMode" "$LanguageMode"
@@ -369,8 +1111,27 @@ Section "Bambu Studio MD3" SEC_MAIN
   IfErrors install_bootstrap_failed
 
   ClearErrors
-  File /r "${PAYLOAD_DIR}\*.*"
-  IfErrors install_payload_failed
+  ${If} $InstallMode == "from-source"
+    ; The built payload was staged by the non-closable build page, outside the
+    ; fixed install dir. Copy it into the same ownership-managed target and record
+    ; an owned manifest for the source-build uninstall branch. No prebuilt files
+    ; are extracted on this path.
+    ; Defense in depth behind the BuildProgressPageLeave gate: never copy unless
+    ; the staged payload is complete (main exe + owned manifest both present).
+    ${IfNot} ${FileExists} "$BuildPayloadDir\${PRODUCT_EXE}"
+      SetErrors
+    ${ElseIfNot} ${FileExists} "$BuildSessionDir\owned-manifest.txt"
+      SetErrors
+    ${EndIf}
+    IfErrors install_payload_failed
+    CopyFiles /SILENT "$BuildPayloadDir\*.*" "${PRODUCT_INSTALL_DIR}"
+    IfErrors install_payload_failed
+    CopyFiles /SILENT "$BuildSessionDir\owned-manifest.txt" "${PRODUCT_INSTALL_DIR}\.md3-owned-manifest.txt"
+    IfErrors install_payload_failed
+  ${Else}
+    File /r "${PAYLOAD_DIR}\*.*"
+    IfErrors install_payload_failed
+  ${EndIf}
 
   ClearErrors
   CreateDirectory "${PRODUCT_SHORTCUT_DIR}"
@@ -451,6 +1212,127 @@ install_registration_failed:
 install_done:
 SectionEnd
 
+; ---- From-source uninstall helpers (manifest-driven, fail-closed) ----
+
+Function un.TrimLine
+  Exch $R5
+  Push $R6
+  utl_trail:
+    StrCpy $R6 $R5 1 -1
+    StrCmp $R6 "$\r" utl_chop
+    StrCmp $R6 "$\n" utl_chop
+    StrCmp $R6 " " utl_chop
+    StrCmp $R6 "$\t" utl_chop
+    Goto utl_lead
+  utl_chop:
+    StrCpy $R5 $R5 -1
+    Goto utl_trail
+  utl_lead:
+    StrCpy $R6 $R5 1
+    StrCmp $R6 " " utl_choplead
+    StrCmp $R6 "$\t" utl_choplead
+    Goto utl_end
+  utl_choplead:
+    StrCpy $R5 $R5 "" 1
+    Goto utl_lead
+  utl_end:
+  Pop $R6
+  Exch $R5
+FunctionEnd
+
+; $R7 holds a relative manifest path. Abort fail-closed on drive/absolute/traversal.
+Function un.AssertSafeRel
+  Push $R5
+  Push $R6
+  StrCpy $R5 $R7 1
+  StrCmp $R5 "\" un.asr_bad
+  StrCmp $R5 "/" un.asr_bad
+  StrCpy $R6 0
+  un.asr_loop:
+    StrCpy $R5 $R7 2 $R6
+    StrCmp $R5 "" un.asr_ok
+    StrCmp $R5 ".." un.asr_bad
+    StrCpy $R5 $R7 1 $R6
+    StrCmp $R5 ":" un.asr_bad
+    IntOp $R6 $R6 + 1
+    Goto un.asr_loop
+  un.asr_bad:
+    Pop $R6
+    Pop $R5
+    SetErrorLevel 2
+    !insertmacro ShowLanguageStop \
+      "The Bambu Studio MD3 ownership manifest contains an unsafe path and was rejected. No files were removed." \
+      "Bambu Studio MD3 擁有權清單載有不安全路徑，已拒絕處理。未有移除任何檔案。"
+    Abort
+  un.asr_ok:
+    Pop $R6
+    Pop $R5
+FunctionEnd
+
+; Delete each F| file entry with the same reparse guard as the prebuilt path.
+; Sets the error flag (fail-closed) on a locked file so the caller preserves the
+; ownership marker and registration.
+Function un.DeleteManifestFiles
+  ClearErrors
+  FileOpen $4 "${PRODUCT_INSTALL_DIR}\.md3-owned-manifest.txt" r
+  ${If} ${Errors}
+    SetErrorLevel 2
+    !insertmacro ShowLanguageStop \
+      "The Bambu Studio MD3 ownership manifest is missing. No files were removed." \
+      "Bambu Studio MD3 擁有權清單遺失。未有移除任何檔案。"
+    Abort
+  ${EndIf}
+  un.dmf_loop:
+    ClearErrors
+    FileReadUTF16LE $4 $5
+    IfErrors un.dmf_done
+    Push $5
+    Call un.TrimLine
+    Pop $5
+    StrCmp $5 "" un.dmf_loop
+    StrCpy $6 $5 2
+    StrCmp $6 "F|" 0 un.dmf_loop
+    StrCpy $R7 $5 "" 2
+    Call un.AssertSafeRel
+    !insertmacro AssertNotReparse "${PRODUCT_INSTALL_DIR}\$R7"
+    ClearErrors
+    Delete "${PRODUCT_INSTALL_DIR}\$R7"
+    ${If} ${Errors}
+      FileClose $4
+      SetErrors
+      Return
+    ${EndIf}
+    Goto un.dmf_loop
+  un.dmf_done:
+    FileClose $4
+FunctionEnd
+
+; RMDir each D| directory entry (manifest lists them deepest-first). Best-effort:
+; unknown paths keep their non-empty parents, mirroring the prebuilt behavior.
+Function un.RemoveManifestDirs
+  ClearErrors
+  FileOpen $4 "${PRODUCT_INSTALL_DIR}\.md3-owned-manifest.txt" r
+  IfErrors un.rmd_done
+  un.rmd_loop:
+    ClearErrors
+    FileReadUTF16LE $4 $5
+    IfErrors un.rmd_close
+    Push $5
+    Call un.TrimLine
+    Pop $5
+    StrCmp $5 "" un.rmd_loop
+    StrCpy $6 $5 2
+    StrCmp $6 "D|" 0 un.rmd_loop
+    StrCpy $R7 $5 "" 2
+    Call un.AssertSafeRel
+    !insertmacro AssertNotReparse "${PRODUCT_INSTALL_DIR}\$R7"
+    RMDir "${PRODUCT_INSTALL_DIR}\$R7"
+    Goto un.rmd_loop
+  un.rmd_close:
+    FileClose $4
+  un.rmd_done:
+FunctionEnd
+
 Section "Uninstall"
   SetShellVarContext current
 
@@ -472,12 +1354,21 @@ Section "Uninstall"
     Abort
   ${EndIf}
 
+  ; The install source decides how owned files are enumerated. A source build's
+  ; file set can drift from the compiled prebuilt list, so it is driven by the
+  ; owned manifest instead. Fixed-ancestor reparse asserts run first either way.
+  ReadRegStr $3 HKCU "${PRODUCT_REG_KEY}" "InstallSource"
+
   !insertmacro BambuMD3AssertDestinationPaths
 
   ; Stop on a locked payload file and retain the uninstaller registration so
   ; the user can close the application and retry.
   ClearErrors
-  !insertmacro BambuMD3DeletePayloadFiles
+  ${If} $3 == "from-source"
+    Call un.DeleteManifestFiles
+  ${Else}
+    !insertmacro BambuMD3DeletePayloadFiles
+  ${EndIf}
   IfErrors uninstall_owned_files_failed
 
   ClearErrors
@@ -486,7 +1377,14 @@ Section "Uninstall"
 
   ; Directory removal is intentionally best-effort. Unknown paths keep their
   ; non-empty parent directories, while owned empty directories are removed.
-  !insertmacro BambuMD3RemovePayloadDirectories
+  ${If} $3 == "from-source"
+    Call un.RemoveManifestDirs
+    ; The manifest is itself owned and removed last, before the shortcut cleanup.
+    !insertmacro AssertNotReparse "${PRODUCT_INSTALL_DIR}\.md3-owned-manifest.txt"
+    Delete "${PRODUCT_INSTALL_DIR}\.md3-owned-manifest.txt"
+  ${Else}
+    !insertmacro BambuMD3RemovePayloadDirectories
+  ${EndIf}
 
   Delete "${PRODUCT_SHORTCUT_DIR}\Bambu Studio MD3.lnk"
   Delete "${PRODUCT_SHORTCUT_DIR}\Uninstall Bambu Studio MD3.lnk"

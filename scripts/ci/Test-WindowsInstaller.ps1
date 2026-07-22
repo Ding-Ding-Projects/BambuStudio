@@ -140,9 +140,13 @@ function Assert-Installed {
     $productMode = (Get-ItemProperty -LiteralPath $productRegistry -Name LanguageMode -ErrorAction Stop).LanguageMode
     $preferenceMode = (Get-ItemProperty -LiteralPath $preferenceRegistry -Name LanguageMode -ErrorAction Stop).LanguageMode
     $recoveryState = (Get-ItemProperty -LiteralPath $productRegistry -Name RecoveryState -ErrorAction Stop).RecoveryState
+    $installSource = (Get-ItemProperty -LiteralPath $productRegistry -Name InstallSource -ErrorAction Stop).InstallSource
     Assert-True ($productMode -eq $ExpectedLanguageMode) "Product language hand-off is '$productMode', expected '$ExpectedLanguageMode'."
     Assert-True ($preferenceMode -eq $ExpectedLanguageMode) "Persistent language preference is '$preferenceMode', expected '$ExpectedLanguageMode'."
     Assert-True ($recoveryState -eq 'ready') "Installed recovery state is '$recoveryState', expected 'ready'."
+    # Silent installs never reach the install-mode chooser, so from-source must stay
+    # off: the recorded source is always the prebuilt payload path.
+    Assert-True ($installSource -eq 'prebuilt') "Installed source is '$installSource', expected 'prebuilt' (from-source must stay off under silent mode)."
 }
 
 function Assert-InstalledPayloadMatchesSbom {
