@@ -1172,3 +1172,23 @@ msgstr "直播中"
 #. reviewed-category: slicing-printing
 msgid "Sliced · %1% layers"
 msgstr "切好片喇 · 共 %1% 層"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Project history could not save some recent edits. Their recovery snapshots were kept on this device."
+msgstr "專案歷史未能儲存部分最近嘅修改。復原快照已經保留咗喺呢部裝置。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Some versions could not be saved"
+msgstr "有啲版本未能儲存"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Retry saving"
+msgstr "重試儲存"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "These recovery snapshots were kept on this device. Retry to save them to version history."
+msgstr "呢啲復原快照已經保留喺呢部裝置。重試就可以將佢哋儲存到版本歷史。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "and %d more"
+msgstr "仲有 %d 個"

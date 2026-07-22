@@ -18213,6 +18213,21 @@ msgstr ""
 msgid "Sliced · %1% layers"
 msgstr ""
 
+msgid "Project history could not save some recent edits. Their recovery snapshots were kept on this device."
+msgstr ""
+
+msgid "Some versions could not be saved"
+msgstr ""
+
+msgid "Retry saving"
+msgstr ""
+
+msgid "These recovery snapshots were kept on this device. Retry to save them to version history."
+msgstr ""
+
+msgid "and %d more"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

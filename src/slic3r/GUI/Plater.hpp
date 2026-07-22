@@ -310,6 +310,20 @@ private:
     bool            m_need_auto_sync_after_connect_printer{false};
 };
 
+// A project-history snapshot whose commit failed terminally (a blocked Save-As
+// destination or a non-retryable error) and whose immutable recovery .3mf is
+// quarantined on disk until the user retries it. Surfaced by the durable
+// failure notification and the Version history dialog.
+struct RetainedProjectHistoryFailure
+{
+    // User-facing project filename (UTF-8). Empty when the snapshot belonged to
+    // an untitled session; use the localized "Untitled project" instead.
+    std::string display_name;
+    // The edit / autosave reason recorded for the snapshot (UTF-8).
+    std::string reason;
+    bool        untitled{false};
+};
+
 class Plater: public wxPanel
 {
     bool m_force_ban_check_volume_bbox_state_with_extruder_area{false};
@@ -661,6 +675,12 @@ public:
                                                                  bool stop_active_jobs = false,
                                                                  bool wait_for_commits = true);
     bool                           restore_project_history_snapshot(const std::filesystem::path &restored_snapshot);
+    // Terminal / quarantined project-history commits kept on disk for recovery.
+    bool                                        has_project_history_retained_failures() const;
+    std::vector<RetainedProjectHistoryFailure>  project_history_retained_failures() const;
+    // Re-drives every quarantined commit through the normal history machinery.
+    // Safe to call from the failure notification's Retry action or the dialog.
+    void                                        retry_project_history_failures();
     void update_print_error_info(int code, std::string msg, std::string extra);
 
     bool is_export_gcode_scheduled() const;

@@ -7199,6 +7199,17 @@ private:
     void collect_project_history_commits(bool wait_for_all);
     void update_project_history_poll_timer();
     void notify_project_history_failure(const std::string &detail, bool retrying);
+    // Durable, retry-offering variant used when a snapshot is quarantined and
+    // nothing will drain it without the user's help.
+    void notify_project_history_retained_failure(const std::string &log_detail);
+    // Moves every quarantined snapshot back onto the active FIFO and re-drives it.
+    void retry_project_history_failures();
+    // Sidecar manifest so a restart can rebuild a quarantined commit's identity.
+    stdfs::path project_history_failure_manifest_path(const stdfs::path &staging_path) const;
+    void        write_project_history_failure_manifest(const PendingProjectHistoryCommit &entry);
+    void        remove_project_history_failure_manifest(const stdfs::path &staging_path);
+    // Rebuilds quarantined commits left in prior sessions' staging directories.
+    std::size_t adopt_orphaned_project_history_failures();
     // path to project folder stored with no extension
     boost::filesystem::path     m_project_folder;
 
@@ -7346,6 +7357,11 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
             throw std::runtime_error("could not initialize the untitled project-history session");
         q->Bind(wxEVT_TIMER, &priv::on_project_history_debounce, this, m_project_history_debounce_timer.GetId());
         q->Bind(wxEVT_TIMER, &priv::on_project_history_poll, this, m_project_history_poll_timer.GetId());
+        // A prior session may have left immutable recovery snapshots that were
+        // quarantined or never drained. Rebuild them from their sidecar
+        // manifests and re-surface a durable Retry notification.
+        if (adopt_orphaned_project_history_failures() > 0)
+            notify_project_history_retained_failure("Project-history recovery snapshots from a previous session were not saved");
     } catch (const std::exception &ex) {
         BOOST_LOG_TRIVIAL(error) << "Could not initialize project history: " << ex.what();
         m_project_history_manager.reset();
@@ -8153,6 +8169,223 @@ void Plater::priv::notify_project_history_failure(const std::string &detail, boo
     m_project_history_failure_notified = true;
 }
 
+void Plater::priv::notify_project_history_retained_failure(const std::string &log_detail)
+{
+    BOOST_LOG_TRIVIAL(error) << log_detail;
+
+    // Text is intentionally count-aware but generic: the Version history dialog
+    // enumerates the individual quarantined snapshots.
+    const std::size_t count = m_project_history_retained_failures.size();
+    const std::string message = count > 1
+        ? _u8L("Project history could not save some recent edits. Their recovery snapshots were kept on this device.")
+        : _u8L("Project history could not save the latest edit. Its recovery snapshot was kept on this device.");
+
+    // Capturing the plater lets the callback run on the UI thread when the user
+    // clicks Retry. Returning true dismisses this snackbar; a fresh one is
+    // pushed automatically if any snapshot fails again.
+    Plater *plater = q;
+    notification_manager->push_project_history_failure_notification(message, [plater](wxEvtHandler *) -> bool {
+        plater->retry_project_history_failures();
+        return true;
+    });
+    m_project_history_failure_notified = true;
+}
+
+void Plater::priv::retry_project_history_failures()
+{
+    if (!m_project_history_manager || m_project_history_shutting_down)
+        return;
+    if (m_project_history_retained_failures.empty())
+        return;
+
+    std::vector<PendingProjectHistoryCommit> retry_batch;
+    retry_batch.swap(m_project_history_retained_failures);
+
+    for (PendingProjectHistoryCommit &entry : retry_batch) {
+        // A deliberate user retry clears the process-local Save-As block so a
+        // destination collision that has since been resolved can migrate again.
+        // The commit still runs migrate_then_commit (previous_identity is
+        // preserved), so it never degrades into an ordinary append to an
+        // unrelated destination repository.
+        if (!entry.identity.empty())
+            m_project_history_blocked_identities.erase(entry.identity.lexically_normal());
+        entry.retry_enabled       = true;
+        entry.in_flight           = false;
+        entry.submission_attempts = 0;
+        entry.retry_after         = std::chrono::steady_clock::now();
+        entry.future              = std::future<ProjectHistoryCommitResult>();
+        m_project_history_pending_commits.emplace_back(std::move(entry));
+    }
+
+    m_project_history_failure_notified = false;
+    notification_manager->close_notification_of_type(NotificationType::ProjectHistoryFailure);
+
+    // Kick the oldest queued commit immediately (force_retry bypasses the
+    // backoff window), preserving the single-in-flight FIFO invariant, then let
+    // the shared machinery own the remaining snapshots.
+    if (!m_project_history_pending_commits.empty()) {
+        PendingProjectHistoryCommit &front = m_project_history_pending_commits.front();
+        if (!front.in_flight && front.retry_enabled)
+            submit_project_history_commit(front, true);
+    }
+    collect_project_history_commits(false);
+    update_project_history_poll_timer();
+}
+
+stdfs::path Plater::priv::project_history_failure_manifest_path(const stdfs::path &staging_path) const
+{
+    if (staging_path.empty())
+        return {};
+    // Sidecar next to the immutable snapshot: "snapshot-N.3mf" -> "snapshot-N.3mf.json".
+    stdfs::path manifest = staging_path;
+    manifest += ".json";
+    return manifest;
+}
+
+void Plater::priv::write_project_history_failure_manifest(const PendingProjectHistoryCommit &entry)
+{
+    // Best-effort recovery metadata. A failure here must never disturb the
+    // commit path, so every error is swallowed after logging.
+    const stdfs::path manifest_path = project_history_failure_manifest_path(entry.staging_path);
+    if (manifest_path.empty())
+        return;
+    try {
+        json manifest;
+        manifest["version"]           = 1;
+        manifest["identity"]          = entry.identity.u8string();
+        manifest["previous_identity"] = entry.previous_identity.u8string();
+        manifest["message"]           = entry.options.message;
+
+        stdfs::path temp_path = manifest_path;
+        temp_path += ".tmp";
+        {
+            std::ofstream stream(temp_path, std::ios::binary | std::ios::trunc);
+            if (!stream) {
+                BOOST_LOG_TRIVIAL(warning) << "Could not open project-history recovery manifest for writing";
+                return;
+            }
+            const std::string serialized = manifest.dump();
+            stream.write(serialized.data(), static_cast<std::streamsize>(serialized.size()));
+            stream.flush();
+            if (!stream) {
+                BOOST_LOG_TRIVIAL(warning) << "Could not write project-history recovery manifest";
+                std::error_code cleanup_ec;
+                stdfs::remove(temp_path, cleanup_ec);
+                return;
+            }
+        }
+        std::error_code rename_ec;
+        stdfs::rename(temp_path, manifest_path, rename_ec);
+        if (rename_ec) {
+            BOOST_LOG_TRIVIAL(warning) << "Could not finalize project-history recovery manifest: " << rename_ec.message();
+            std::error_code cleanup_ec;
+            stdfs::remove(temp_path, cleanup_ec);
+        }
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not persist project-history recovery manifest: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not persist project-history recovery manifest";
+    }
+}
+
+void Plater::priv::remove_project_history_failure_manifest(const stdfs::path &staging_path)
+{
+    const stdfs::path manifest_path = project_history_failure_manifest_path(staging_path);
+    if (manifest_path.empty())
+        return;
+    std::error_code ec;
+    stdfs::remove(manifest_path, ec);
+}
+
+std::size_t Plater::priv::adopt_orphaned_project_history_failures()
+{
+    if (!m_project_history_manager || m_project_history_staging_dir.empty())
+        return 0;
+
+    const stdfs::path staging_root = m_project_history_staging_dir.parent_path();
+    std::error_code   ec;
+    if (staging_root.empty() || !stdfs::is_directory(staging_root, ec) || ec)
+        return 0;
+
+    // New snapshots for this process go under a fresh instance directory, so a
+    // prior session's quarantined artifacts always live in a sibling directory.
+    const stdfs::path current_instance = m_project_history_staging_dir.lexically_normal();
+    static const std::string manifest_suffix = ".3mf.json";
+    std::size_t adopted = 0;
+
+    ec.clear();
+    for (stdfs::directory_iterator dir_it(staging_root, ec), dir_end; !ec && dir_it != dir_end; dir_it.increment(ec)) {
+        const stdfs::path instance_dir = dir_it->path();
+        std::error_code   entry_ec;
+        if (!stdfs::is_directory(instance_dir, entry_ec) || entry_ec)
+            continue;
+        if (instance_dir.lexically_normal() == current_instance)
+            continue;
+
+        bool            saw_any_snapshot = false;
+        std::error_code scan_ec;
+        for (stdfs::directory_iterator file_it(instance_dir, scan_ec), file_end; !scan_ec && file_it != file_end;
+             file_it.increment(scan_ec)) {
+            const stdfs::path file_path = file_it->path();
+            std::error_code   file_ec;
+            if (!stdfs::is_regular_file(file_path, file_ec) || file_ec)
+                continue;
+
+            const std::string name = file_path.filename().u8string();
+            if (boost::iends_with(name, std::string(".3mf")))
+                saw_any_snapshot = true;
+            if (!boost::iends_with(name, manifest_suffix))
+                continue;
+
+            // The snapshot is the manifest path minus the trailing ".json".
+            std::string staging_text = file_path.u8string();
+            staging_text.resize(staging_text.size() - std::string(".json").size());
+            const stdfs::path staging_path = stdfs::u8path(staging_text);
+
+            std::error_code exists_ec;
+            if (!stdfs::is_regular_file(staging_path, exists_ec) || exists_ec) {
+                // The immutable snapshot is gone; the manifest is useless.
+                std::error_code rm_ec;
+                stdfs::remove(file_path, rm_ec);
+                continue;
+            }
+
+            try {
+                std::ifstream stream(file_path, std::ios::binary);
+                if (!stream)
+                    continue;
+                json manifest;
+                stream >> manifest;
+
+                PendingProjectHistoryCommit retained;
+                retained.identity          = stdfs::u8path(manifest.value("identity", std::string()));
+                retained.previous_identity = stdfs::u8path(manifest.value("previous_identity", std::string()));
+                retained.options.message   = manifest.value("message", std::string());
+                retained.staging_path      = staging_path;
+                retained.retry_enabled     = false;
+                retained.in_flight         = false;
+                if (retained.identity.empty())
+                    continue; // cannot target a commit without an identity
+
+                m_project_history_retained_failures.emplace_back(std::move(retained));
+                ++adopted;
+            } catch (const std::exception &ex) {
+                BOOST_LOG_TRIVIAL(warning) << "Could not read a project-history recovery manifest: " << ex.what();
+            } catch (...) {
+                BOOST_LOG_TRIVIAL(warning) << "Could not read a project-history recovery manifest";
+            }
+        }
+
+        // A prior instance directory that no longer holds any snapshot is stale.
+        if (!saw_any_snapshot) {
+            std::error_code rm_ec;
+            stdfs::remove_all(instance_dir, rm_ec);
+        }
+    }
+
+    return adopted;
+}
+
 void Plater::priv::materialize_project_history_event()
 {
     if (!m_project_history_event_scheduled)
@@ -8220,6 +8453,9 @@ bool Plater::priv::enqueue_project_history_snapshot(const stdfs::path &previous_
             retained.staging_path      = completed_snapshot;
             retained.options.message   = std::move(reason);
             retained.retry_enabled     = false;
+            // Persist recovery metadata so a restart can re-surface and retry
+            // this immutable snapshot even though nothing drains it automatically.
+            write_project_history_failure_manifest(retained);
             m_project_history_retained_failures.emplace_back(std::move(retained));
         } catch (const std::exception &ex) {
             notify_project_history_failure(std::string("Could not retain a snapshot for a blocked project-history identity: ") + ex.what(), true);
@@ -8230,7 +8466,7 @@ bool Plater::priv::enqueue_project_history_snapshot(const stdfs::path &previous_
         }
         // The immutable file is intentionally retained, but it must never be
         // submitted to the repository that caused the Save-As collision.
-        notify_project_history_failure("Project-history destination is blocked; recovery snapshot retained locally", false);
+        notify_project_history_retained_failure("Project-history destination is blocked; recovery snapshot retained locally");
         return true;
     }
 
@@ -8243,6 +8479,10 @@ bool Plater::priv::enqueue_project_history_snapshot(const stdfs::path &previous_
         pending.identity          = identity;
         pending.staging_path      = completed_snapshot;
         pending.options.message   = std::move(reason);
+        // Every enqueued snapshot gets a recovery manifest so an interrupted
+        // drain (crash, forced quit, or terminal quarantine) can be rebuilt and
+        // retried on the next launch. It is removed once the commit succeeds.
+        write_project_history_failure_manifest(pending);
         // Keep strict edit order. Only the oldest staged snapshot may be in
         // flight; otherwise retrying an older failed blob after a newer commit
         // would make Git HEAD regress to the older project state.
@@ -8459,7 +8699,10 @@ void Plater::priv::collect_project_history_commits(bool wait_for_all)
             }
             iterator->retry_enabled = project_history_error_is_retryable(result.error.code);
             iterator->retry_after   = std::chrono::steady_clock::now() + project_history_retry_delay(iterator->submission_attempts);
-            notify_project_history_failure("Project-history commit failed: " + result.error.message, iterator->retry_enabled);
+            // Retryable failures stay informational (they auto-retry). Terminal
+            // ones are surfaced with a durable Retry action once quarantined below.
+            if (iterator->retry_enabled)
+                notify_project_history_failure("Project-history commit failed: " + result.error.message, true);
             if (!wait_for_all || !iterator->retry_enabled)
                 break;
         }
@@ -8469,7 +8712,13 @@ void Plater::priv::collect_project_history_commits(bool wait_for_all)
             stdfs::remove(iterator->staging_path, cleanup_error);
             if (cleanup_error)
                 BOOST_LOG_TRIVIAL(warning) << "Could not remove completed project-history staging file: " << cleanup_error.message();
+            // The recovery manifest tracks its snapshot's lifetime one-to-one.
+            remove_project_history_failure_manifest(iterator->staging_path);
             iterator = m_project_history_pending_commits.erase(iterator);
+            // The durable Retry snackbar is only meaningful while a quarantined
+            // snapshot is still waiting; drop it once the last one has drained.
+            if (m_project_history_retained_failures.empty())
+                notification_manager->close_notification_of_type(NotificationType::ProjectHistoryFailure);
         } else if (!iterator->in_flight && !iterator->retry_enabled) {
             // A permanent error (notably a Save-As destination collision) may
             // not wedge every later edit. Quarantine the immutable recovery
@@ -8478,6 +8727,10 @@ void Plater::priv::collect_project_history_commits(bool wait_for_all)
                                      << PathSanitizer::sanitize(iterator->staging_path.u8string());
             m_project_history_retained_failures.emplace_back(std::move(*iterator));
             iterator = m_project_history_pending_commits.erase(iterator);
+            // Nothing drains a quarantined snapshot automatically. Its recovery
+            // manifest was written when it was enqueued, so surface a durable,
+            // retry-offering notification instead of a transient toast.
+            notify_project_history_retained_failure("Project-history commit failed permanently; recovery snapshot retained");
         } else {
             // Later snapshots remain staged until this oldest one succeeds.
             // This preserves the user's edit order even across retries.
@@ -25022,6 +25275,35 @@ Slic3r::ProjectHistoryManager *Plater::project_history_manager()
 stdfs::path Plater::project_history_identity() const
 {
     return p->project_history_identity();
+}
+
+bool Plater::has_project_history_retained_failures() const
+{
+    return !p->m_project_history_retained_failures.empty();
+}
+
+std::vector<RetainedProjectHistoryFailure> Plater::project_history_retained_failures() const
+{
+    std::vector<RetainedProjectHistoryFailure> failures;
+    failures.reserve(p->m_project_history_retained_failures.size());
+    for (const auto &entry : p->m_project_history_retained_failures) {
+        RetainedProjectHistoryFailure info;
+        // An untitled session's identity is a synthetic path below the managed
+        // identity root; its filename is a UUID, not something to show the user.
+        const bool untitled = !p->m_project_history_identity_root.empty() &&
+            entry.identity.parent_path().lexically_normal() == p->m_project_history_identity_root.lexically_normal() &&
+            boost::istarts_with(entry.identity.filename().u8string(), std::string("untitled-"));
+        info.untitled     = untitled;
+        info.display_name = untitled ? std::string() : entry.identity.filename().u8string();
+        info.reason       = entry.options.message;
+        failures.emplace_back(std::move(info));
+    }
+    return failures;
+}
+
+void Plater::retry_project_history_failures()
+{
+    p->retry_project_history_failures();
 }
 
 void Plater::capture_project_history_now(const std::string &reason)

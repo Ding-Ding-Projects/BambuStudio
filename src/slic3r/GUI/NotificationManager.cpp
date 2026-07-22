@@ -1693,6 +1693,17 @@ void NotificationManager::push_notification(NotificationType type,
     push_notification_data({ type, level, duration, text, hypertext, callback }, timestamp);
 }
 
+void NotificationManager::push_project_history_failure_notification(const std::string& text, std::function<bool(wxEvtHandler*)> retry_callback)
+{
+	// WarningNotificationLevel resolves to a zero fade-out duration, so this
+	// snackbar stays pinned until the user acts. NotificationType::ProjectHistoryFailure
+	// is not registered in m_multiple_types, so activate_existing() collapses
+	// repeated failures onto a single snackbar (refreshing its text/callback)
+	// instead of stacking one per failed commit.
+	push_notification(NotificationType::ProjectHistoryFailure, NotificationLevel::WarningNotificationLevel,
+	                  text, _u8L("Retry"), std::move(retry_callback));
+}
+
 void NotificationManager::push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval)
 {
 	auto it = std::find_if(std::begin(basic_notifications), std::end(basic_notifications),

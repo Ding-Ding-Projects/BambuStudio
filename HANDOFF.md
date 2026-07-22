@@ -146,10 +146,26 @@ retention/pruning policy.
   catalogued (en + yue_HK 切好片喇 · 共 %1% 層, coverage 289, `.mo` rebuilt, `--check` green).
   Wave 1 is pushed (`70bd80309`). **Delivery policy per user 2026-07-22: ship-first — waves push
   right after implement+review; hosted CI is the build verification and failures are fixed forward;
-  local builds run only as informational checks.** In flight concurrently: Wave 2 design
-  (MaterialIcon glyph-enum expansion + ImGui font/glyph atlas, read-only designers) and Sprint A
-  (all Wave 5/6 register gaps independent of the Wave 2 enablers, plus the project-history
-  durable-retry slice), each following implement → 2–3-lens review → fix → push.
+  local builds run only as informational checks.**
+  **Progress through the register (59 done / ~5 partial / 67 open):** Wave 2 shipped (`bd1788b48`
+  glyph enum ~126 verified codepoints, `67d3079b5` ImGui Roboto/Mono/Material-Symbols atlas);
+  Wave 3 subset shipped (`d8960fa96`, raster→glyph on eight surfaces; review fixed three HiDPI
+  dpiRef threads and a glyph-semantics swap); Wave 4 shipped (`4341bc4f1`, Preview overlay + slider
+  on the atlas, both former partial rows closed); Sprint A shipped (`6a2f3e346` shared-widget
+  library rebuild incl. new SearchField/Slider widgets, `7bbff238f` Slice/Print + tab controls +
+  preset search, `0a061e984` HMS/MediaPlay/pause-stop, plus the project-history durable-retry
+  commit) — all 10 Sprint A groups delivered every assigned gap; reviews across these waves found
+  only isolated defects, all fixed (one false-positive exclusion alarm was my own atlas edit).
+  The recurring infra annoyance is StructuredOutput retry-cap failures on some final agent reports;
+  work always landed and was recovered from journals — later reviews use plain-text output.
+  Project-history retry semantics shipped: durable failure notification with Retry, retained
+  failures surfaced in the history dialog with per-item and bulk retry, orphaned-manifest adoption
+  on restart; new error-flow strings catalogued (en + yue_HK, coverage 294, `.mo` `--check` green).
+  **Remaining open fronts:** the three Wave 3 icon slices freed by Sprint A (MainFrame/Plater/
+  StatusPanel), SideTools signal draw, FilamentGroupPopup surface anatomy, Slice/Print leading
+  glyphs (SideButton glyph path), the notification-snackbar recolor, Wave 7 large restructures
+  (title-bar/dialog shells/GL toolbar bridge), fresh screenshots, and the aggregate-test repair
+  re-scope.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.

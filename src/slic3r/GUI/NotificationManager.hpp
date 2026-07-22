@@ -173,6 +173,10 @@ enum class NotificationType
     BBLIntersectsVolumeInfo,
 	BBLArcFittingInfo,
     BBLCalibExtruderMismatch,
+    // Project history could not commit a recovery snapshot. Sticky (never fades)
+    // and de-duplicated so repeated failures refresh one snackbar; carries a
+    // Retry hyperlink that re-drives the retained commits.
+    ProjectHistoryFailure,
     NotificationTypeCount
 
 };
@@ -218,6 +222,11 @@ public:
 	// ErrorNotificationLevel are never faded out.
     void push_notification(NotificationType type, NotificationLevel level, const std::string& text, const std::string& hypertext = "",
                            std::function<bool(wxEvtHandler*)> callback = std::function<bool(wxEvtHandler*)>(), int timestamp = 0);
+	// Durable project-history failure snackbar: never fades, de-duplicates by
+	// type (one snackbar even across repeated failures) and offers a Retry
+	// hyperlink wired to the caller's callback (which should return true to
+	// dismiss the snackbar once the retry is under way).
+	void push_project_history_failure_notification(const std::string& text, std::function<bool(wxEvtHandler*)> retry_callback);
 	// Pushes basic_notification with delay. See push_delayed_notification_data.
 	void push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval);
 	// Removes all notifications of type from m_waiting_notifications
