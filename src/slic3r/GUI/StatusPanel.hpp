@@ -25,6 +25,7 @@
 #include "ReleaseNote.hpp"
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/AxisCtrlButton.hpp"
+#include "Widgets/CameraHUD.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/TempInput.hpp"
 #include "Widgets/StaticLine.hpp"
@@ -428,8 +429,9 @@ protected:
     CameraRecordingStatus m_state_recording{CameraRecordingStatus::RECORDING_NONE};
     CameraTimelapseStatus m_state_timelapse{CameraTimelapseStatus::TIMELAPSE_NONE};
 
-    CameraItem *m_setting_button;
-    CameraItem *m_camera_fullscreen_button{ nullptr };
+    CameraHUD::CameraHUDChip *m_setting_button{ nullptr };
+    CameraHUD::CameraHUDChip *m_camera_fullscreen_button{ nullptr };
+    CameraHUD *m_camera_hud{ nullptr };
     wxBoxSizer *m_camera_media_sizer{ nullptr };
     CameraFullscreenFrame *m_camera_fullscreen_frame{ nullptr };
     wxPanel *m_camera_placeholder{ nullptr };
@@ -447,13 +449,13 @@ protected:
 
     /* title panel */
     wxPanel *       media_ctrl_panel;
-    wxPanel *       m_panel_monitoring_title;
+    wxPanel *       m_panel_monitoring_title{ nullptr };
     wxPanel *       m_panel_printing_title;
     wxPanel *       m_panel_control_title;
 
     wxStaticText*   m_staticText_consumption_of_time;
     wxStaticText *  m_staticText_consumption_of_weight;
-    Label *         m_staticText_monitoring;
+    Label *         m_staticText_monitoring{ nullptr };
     wxStaticText *  m_staticText_timelapse;
     SwitchButton *  m_bmToggleBtn_timelapse;
 

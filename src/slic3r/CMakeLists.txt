@@ -38,6 +38,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/Label.hpp
     GUI/Widgets/MaterialIcon.cpp
     GUI/Widgets/MaterialIcon.hpp
+    GUI/Widgets/CameraHUD.cpp
+    GUI/Widgets/CameraHUD.hpp
     GUI/Widgets/LinkLabel.cpp
     GUI/Widgets/LinkLabel.hpp
     GUI/Widgets/Scrollbar.cpp

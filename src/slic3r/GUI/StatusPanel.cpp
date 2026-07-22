@@ -2100,77 +2100,72 @@ void StatusBasePanel::init_bitmaps()
     m_bitmap_extruder_empty_unload  = *cache.load_png("monitor_extruder_empty_unload", FromDIP(28), FromDIP(70), false, false);
     m_bitmap_extruder_filled_unload = *cache.load_png("monitor_extruder_filled_unload", FromDIP(28), FromDIP(70), false, false);
 
-    m_bitmap_sdcard_state_abnormal = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_abnormal_dark" : "sdcard_state_abnormal", 20);
-    m_bitmap_sdcard_state_normal   = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_normal_dark" : "sdcard_state_normal", 20);
-    m_bitmap_sdcard_state_no       = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_no_dark" : "sdcard_state_no", 20);
-    m_bitmap_recording_on          = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_recording_on_dark" : "monitor_recording_on", 20);
-    m_bitmap_recording_off         = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_recording_off_dark" : "monitor_recording_off", 20);
-    m_bitmap_timelapse_on          = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_timelapse_on_dark" : "monitor_timelapse_on", 20);
-    m_bitmap_timelapse_off         = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_timelapse_off_dark" : "monitor_timelapse_off", 20);
-    m_bitmap_vcamera_on            = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_vcamera_on_dark" : "monitor_vcamera_on", 20);
-    m_bitmap_vcamera_off           = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_vcamera_off_dark" : "monitor_vcamera_off", 20);
+    // The camera HUD interior is ALWAYS dark (kCardBg), in both app themes, so
+    // the status-indicator glyphs always use the on-dark ("_dark") PNG variants.
+    m_bitmap_sdcard_state_abnormal = ScalableBitmap(this, "sdcard_state_abnormal_dark", 20);
+    m_bitmap_sdcard_state_normal   = ScalableBitmap(this, "sdcard_state_normal_dark", 20);
+    m_bitmap_sdcard_state_no       = ScalableBitmap(this, "sdcard_state_no_dark", 20);
+    m_bitmap_recording_on          = ScalableBitmap(this, "monitor_recording_on_dark", 20);
+    m_bitmap_recording_off         = ScalableBitmap(this, "monitor_recording_off_dark", 20);
+    m_bitmap_timelapse_on          = ScalableBitmap(this, "monitor_timelapse_on_dark", 20);
+    m_bitmap_timelapse_off         = ScalableBitmap(this, "monitor_timelapse_off_dark", 20);
+    m_bitmap_vcamera_on            = ScalableBitmap(this, "monitor_vcamera_on_dark", 20);
+    m_bitmap_vcamera_off           = ScalableBitmap(this, "monitor_vcamera_off_dark", 20);
 }
 
 wxBoxSizer *StatusBasePanel::create_monitoring_page()
 {
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-    m_panel_monitoring_title = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
-    m_panel_monitoring_title->SetBackgroundColour(device_title_color());
+    // Always-dark camera HUD strip. Replaces the legacy device-title strip; it
+    // is stacked ABOVE the video by this sizer (index 0), so it never overlays
+    // the native wxMediaCtrl HWND (no MSW flicker/clip). Fixed-dark in both app
+    // themes and excluded from on_sys_color_changed re-tinting.
+    m_camera_hud = new CameraHUD(this);
 
-    wxBoxSizer *bSizer_monitoring_title;
-    bSizer_monitoring_title = new wxBoxSizer(wxHORIZONTAL);
-
-    m_staticText_monitoring = new Label(m_panel_monitoring_title, _L("Camera"));
-    m_staticText_monitoring->Wrap(-1);
-    // m_staticText_monitoring->SetFont(PAGE_TITLE_FONT);
-    m_staticText_monitoring->SetForegroundColour(device_secondary_text_color());
-    bSizer_monitoring_title->Add(m_staticText_monitoring, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, PAGE_TITLE_LEFT_MARGIN);
-
-    bSizer_monitoring_title->Add(FromDIP(13), 0, 0, 0);
-    bSizer_monitoring_title->AddStretchSpacer();
-
-    m_staticText_timelapse = new wxStaticText(m_panel_monitoring_title, wxID_ANY, _L("Timelapse"), wxDefaultPosition, wxDefaultSize, 0);
+    // Legacy debug-only widgets: referenced under !BBL_RELEASE_TO_PUBLIC in
+    // update(). Kept allocated + hidden (parented to the HUD, never added to its
+    // layout) so those references stay valid without cluttering the strip.
+    m_staticText_timelapse = new wxStaticText(m_camera_hud, wxID_ANY, _L("Timelapse"), wxDefaultPosition, wxDefaultSize, 0);
     m_staticText_timelapse->Wrap(-1);
     m_staticText_timelapse->Hide();
-    bSizer_monitoring_title->Add(m_staticText_timelapse, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_mqtt_source = new wxStaticText(m_panel_monitoring_title, wxID_ANY, "MqttSource", wxDefaultPosition, wxDefaultSize, 0);
+    m_mqtt_source = new wxStaticText(m_camera_hud, wxID_ANY, "MqttSource", wxDefaultPosition, wxDefaultSize, 0);
     m_mqtt_source->Wrap(-1);
     m_mqtt_source->Hide();
-    bSizer_monitoring_title->Add(m_mqtt_source, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_bmToggleBtn_timelapse = new SwitchButton(m_panel_monitoring_title);
+    m_bmToggleBtn_timelapse = new SwitchButton(m_camera_hud);
     m_bmToggleBtn_timelapse->SetMinSize(SWITCH_BUTTON_SIZE);
     m_bmToggleBtn_timelapse->Hide();
-    bSizer_monitoring_title->Add(m_bmToggleBtn_timelapse, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    //m_bitmap_camera_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, m_bitmap_camera , wxDefaultPosition, wxSize(FromDIP(32), FromDIP(18)), 0);
-    //m_bitmap_camera_img->SetMinSize(wxSize(FromDIP(32), FromDIP(18)));
-    //bSizer_monitoring_title->Add(m_bitmap_camera_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
+    // Camera status indicators, hosted in the HUD's status slot. Their window
+    // backgrounds are the fixed-dark card colour so the on-dark glyph PNGs read
+    // correctly regardless of the app theme.
+    const wxColour hud_bg = CameraHUD::CardBg();
+    const wxSize   ind_size(FromDIP(28), FromDIP(24));
 
-    m_bitmap_sdcard_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(38), FromDIP(24)), 0);
-    m_bitmap_sdcard_img->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
+    m_bitmap_sdcard_img = new wxStaticBitmap(m_camera_hud, wxID_ANY, wxNullBitmap, wxDefaultPosition, ind_size, 0);
+    m_bitmap_sdcard_img->SetMinSize(ind_size);
+    m_bitmap_sdcard_img->SetBackgroundColour(hud_bg);
 
-    m_bitmap_timelapse_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(38), FromDIP(24)), 0);
-    m_bitmap_timelapse_img->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
+    m_bitmap_timelapse_img = new wxStaticBitmap(m_camera_hud, wxID_ANY, wxNullBitmap, wxDefaultPosition, ind_size, 0);
+    m_bitmap_timelapse_img->SetMinSize(ind_size);
+    m_bitmap_timelapse_img->SetBackgroundColour(hud_bg);
     m_bitmap_timelapse_img->Hide();
 
-    m_bitmap_recording_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(38), FromDIP(24)), 0);
-    m_bitmap_recording_img->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
-    m_bitmap_timelapse_img->Hide();
+    m_bitmap_recording_img = new wxStaticBitmap(m_camera_hud, wxID_ANY, wxNullBitmap, wxDefaultPosition, ind_size, 0);
+    m_bitmap_recording_img->SetMinSize(ind_size);
+    m_bitmap_recording_img->SetBackgroundColour(hud_bg);
 
-    m_bitmap_vcamera_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(38), FromDIP(24)), 0);
-    m_bitmap_vcamera_img->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
+    m_bitmap_vcamera_img = new wxStaticBitmap(m_camera_hud, wxID_ANY, wxNullBitmap, wxDefaultPosition, ind_size, 0);
+    m_bitmap_vcamera_img->SetMinSize(ind_size);
+    m_bitmap_vcamera_img->SetBackgroundColour(hud_bg);
     m_bitmap_vcamera_img->Hide();
 
-    m_camera_fullscreen_button = new CameraItem(m_panel_monitoring_title, "camera_fullscreen", "camera_fullscreen_hover");
-    m_camera_fullscreen_button->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
-    m_camera_fullscreen_button->SetBackgroundColour(device_title_color());
-
-    m_setting_button = new CameraItem(m_panel_monitoring_title, "camera_setting", "camera_setting_hover");
-    m_setting_button->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
-    m_setting_button->SetBackgroundColour(device_title_color());
+    // The two control chips are owned by the HUD; StatusPanel keeps pointers so
+    // its existing Connect/Enable/reset_hover/msw_rescale sites are unchanged.
+    m_setting_button           = m_camera_hud->setting_chip();
+    m_camera_fullscreen_button = m_camera_hud->fullscreen_chip();
 
     m_bitmap_sdcard_img->SetToolTip(_L("Storage"));
     m_bitmap_timelapse_img->SetToolTip(_L("Timelapse"));
@@ -2179,23 +2174,15 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
     m_camera_fullscreen_button->SetToolTip(_L("Enter Camera Full Screen"));
     m_setting_button->SetToolTip(_L("Camera Setting"));
 
-    bSizer_monitoring_title->Add(m_bitmap_sdcard_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_bitmap_timelapse_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_bitmap_recording_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_bitmap_vcamera_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_camera_fullscreen_button, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_setting_button, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
+    wxSizer *status_slot = m_camera_hud->status_slot();
+    status_slot->Add(m_bitmap_sdcard_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+    status_slot->Add(m_bitmap_timelapse_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+    status_slot->Add(m_bitmap_recording_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+    status_slot->Add(m_bitmap_vcamera_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
 
-    bSizer_monitoring_title->Add(FromDIP(13), 0, 0);
+    m_camera_hud->Layout();
+    sizer->Add(m_camera_hud, 0, wxEXPAND | wxALL, 0);
 
-    m_panel_monitoring_title->SetSizer(bSizer_monitoring_title);
-    m_panel_monitoring_title->Layout();
-    bSizer_monitoring_title->Fit(m_panel_monitoring_title);
-    sizer->Add(m_panel_monitoring_title, 0, wxEXPAND | wxALL, 0);
-
-    //    media_ctrl_panel              = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    //    media_ctrl_panel->SetBackgroundColour(*wxBLACK);
-    //    wxBoxSizer *bSizer_monitoring = new wxBoxSizer(wxVERTICAL);
     m_media_ctrl = new wxMediaCtrl3(this);
     m_media_ctrl->SetMinSize(wxSize(PAGE_MIN_WIDTH, FromDIP(288)));
 
@@ -3008,7 +2995,7 @@ void StatusPanel::update_camera_state(MachineObject *obj)
             m_bitmap_sdcard_img->SetToolTip(_L("Storage"));
         }
         m_last_sdcard = sdcard_state;
-        m_panel_monitoring_title->Layout();
+        m_camera_hud->Layout();
     }
 
     // recording
@@ -3023,7 +3010,7 @@ void StatusPanel::update_camera_state(MachineObject *obj)
 
     if (!m_bitmap_recording_img->IsShown()) {
         m_bitmap_recording_img->Show();
-        m_panel_monitoring_title->Layout();
+        m_camera_hud->Layout();
     }
 
     /*if (m_bitmap_recording_img->IsShown())
@@ -3042,12 +3029,12 @@ void StatusPanel::update_camera_state(MachineObject *obj)
 
         if (!m_bitmap_timelapse_img->IsShown()) {
             m_bitmap_timelapse_img->Show();
-            m_panel_monitoring_title->Layout();
+            m_camera_hud->Layout();
         }
     } else {
         if (m_bitmap_timelapse_img->IsShown()) {
             m_bitmap_timelapse_img->Hide();
-            m_panel_monitoring_title->Layout();
+            m_camera_hud->Layout();
         }
     }
 
@@ -3064,12 +3051,12 @@ void StatusPanel::update_camera_state(MachineObject *obj)
 
         if (!m_bitmap_vcamera_img->IsShown()) {
             m_bitmap_vcamera_img->Show();
-            m_panel_monitoring_title->Layout();
+            m_camera_hud->Layout();
         }
     } else {
         if (m_bitmap_vcamera_img->IsShown()) {
             m_bitmap_vcamera_img->Hide();
-            m_panel_monitoring_title->Layout();
+            m_camera_hud->Layout();
         }
     }
 
@@ -3086,6 +3073,10 @@ void StatusPanel::update_camera_state(MachineObject *obj)
             m_camera_fullscreen_button->Enable(playing);
             m_camera_fullscreen_button->Refresh();
         }
+
+        // LIVE badge: pulse while the stream is actually playing or recording.
+        if (m_camera_hud)
+            m_camera_hud->SetLiveActive(playing || obj->is_recording());
     }
 }
 
@@ -5879,14 +5870,17 @@ void StatusPanel::show_status(int status)
         m_options_btn->Disable();
         m_safety_btn->Disable();
         m_parts_btn->Disable();
-        m_panel_monitoring_title->Disable();
+        if (m_camera_hud) {
+            m_camera_hud->Enable(false);
+            m_camera_hud->SetLiveActive(false);
+        }
     } else if ((status & (int) MonitorStatus::MONITOR_NORMAL) != 0) {
         show_printing_status(true, true);
         m_calibration_btn->Disable();
         m_options_btn->Enable();
         m_safety_btn->Enable();
         m_parts_btn->Enable();
-        m_panel_monitoring_title->Enable();
+        if (m_camera_hud) m_camera_hud->Enable(true);
     }
 }
 
@@ -5897,18 +5891,18 @@ void StatusPanel::rescale_camera_icons()
     if (!GetParent() || IsBeingDeleted()) return;
     if (!m_setting_button || !m_media_play_ctrl || !m_bitmap_vcamera_img || !m_bitmap_sdcard_img || !m_bitmap_recording_img || !m_bitmap_timelapse_img) return;
 
-    m_setting_button->msw_rescale();
-    if (m_camera_fullscreen_button) m_camera_fullscreen_button->msw_rescale();
+    if (m_camera_hud) m_camera_hud->msw_rescale();
 
-    m_bitmap_sdcard_state_abnormal = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_abnormal_dark" : "sdcard_state_abnormal", 20);
-    m_bitmap_sdcard_state_normal   = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_normal_dark" : "sdcard_state_normal", 20);
-    m_bitmap_sdcard_state_no       = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_no_dark" : "sdcard_state_no", 20);
-    m_bitmap_recording_on          = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_recording_on_dark" : "monitor_recording_on", 20);
-    m_bitmap_recording_off         = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_recording_off_dark" : "monitor_recording_off", 20);
-    m_bitmap_timelapse_on          = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_timelapse_on_dark" : "monitor_timelapse_on", 20);
-    m_bitmap_timelapse_off         = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_timelapse_off_dark" : "monitor_timelapse_off", 20);
-    m_bitmap_vcamera_on            = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_vcamera_on_dark" : "monitor_vcamera_on", 20);
-    m_bitmap_vcamera_off           = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_vcamera_off_dark" : "monitor_vcamera_off", 20);
+    // Always-dark variants: the HUD interior is fixed-dark in both app themes.
+    m_bitmap_sdcard_state_abnormal = ScalableBitmap(this, "sdcard_state_abnormal_dark", 20);
+    m_bitmap_sdcard_state_normal   = ScalableBitmap(this, "sdcard_state_normal_dark", 20);
+    m_bitmap_sdcard_state_no       = ScalableBitmap(this, "sdcard_state_no_dark", 20);
+    m_bitmap_recording_on          = ScalableBitmap(this, "monitor_recording_on_dark", 20);
+    m_bitmap_recording_off         = ScalableBitmap(this, "monitor_recording_off_dark", 20);
+    m_bitmap_timelapse_on          = ScalableBitmap(this, "monitor_timelapse_on_dark", 20);
+    m_bitmap_timelapse_off         = ScalableBitmap(this, "monitor_timelapse_off_dark", 20);
+    m_bitmap_vcamera_on            = ScalableBitmap(this, "monitor_vcamera_on_dark", 20);
+    m_bitmap_vcamera_off           = ScalableBitmap(this, "monitor_vcamera_off_dark", 20);
 
     if (m_media_play_ctrl->IsStreaming()) {
         m_bitmap_vcamera_img->SetBitmap(m_bitmap_vcamera_on.bmp());
@@ -5949,11 +5943,10 @@ void StatusPanel::on_sys_color_changed()
     recolor_device_surface_tree(this);
     SetBackgroundColour(device_page_color());
     m_machine_ctrl_panel->SetBackgroundColour(device_page_color());
-    m_panel_monitoring_title->SetBackgroundColour(device_title_color());
     m_panel_control_title->SetBackgroundColour(device_title_color());
-    m_camera_fullscreen_button->SetBackgroundColour(device_title_color());
-    m_setting_button->SetBackgroundColour(device_title_color());
-    m_staticText_monitoring->SetForegroundColour(device_secondary_text_color());
+    // The camera HUD is fixed-dark in both themes: it is NOT re-tinted to the
+    // Device title colour; just repaint it so the badge/chips redraw crisply.
+    if (m_camera_hud) m_camera_hud->Refresh();
     m_staticText_control->SetForegroundColour(device_secondary_text_color());
     StateColor card_background(device_card_color());
     StateColor card_border(device_divider_color());
@@ -6066,8 +6059,7 @@ void StatusPanel::msw_rescale()
     init_bitmaps();
     m_project_task_panel->init_bitmaps();
     m_project_task_panel->msw_rescale();
-    m_panel_monitoring_title->SetSize(wxSize(-1, FromDIP(PAGE_TITLE_HEIGHT)));
-    // m_staticText_monitoring->SetMinSize(wxSize(PAGE_TITLE_TEXT_WIDTH, PAGE_TITLE_HEIGHT));
+    // The camera HUD (and its chips) are rescaled by rescale_camera_icons() below.
     m_bmToggleBtn_timelapse->Rescale();
     m_panel_control_title->SetSize(wxSize(-1, FromDIP(PAGE_TITLE_HEIGHT)));
     // m_staticText_control->SetMinSize(wxSize(-1, PAGE_TITLE_HEIGHT));
