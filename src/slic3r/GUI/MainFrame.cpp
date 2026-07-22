@@ -2312,9 +2312,12 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     auto print_panel = new wxPanel(parent,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxTRANSPARENT_WINDOW);
 
     m_slice_btn = new SideButton(slice_panel, _L("Slice plate"), "");
-    m_slice_option_btn = new SideButton(slice_panel, "", "sidebutton_dropdown", 0, FromDIP(14));
+    // The kit has no dropdown carets, so the legacy raster 'sidebutton_dropdown'
+    // glyph is dropped; the options segment survives as a functional pill (its
+    // Material Symbol 'arrow_drop_down' is deferred to the icon wave).
+    m_slice_option_btn = new SideButton(slice_panel, "", "");
     m_print_btn = new SideButton(print_panel, _L("Print plate"), "");
-    m_print_option_btn = new SideButton(print_panel, "", "sidebutton_dropdown", 0, FromDIP(14));
+    m_print_option_btn = new SideButton(print_panel, "", "");
 
     auto slice_sizer = new wxBoxSizer(wxHORIZONTAL);
     slice_sizer->Add(m_slice_option_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
@@ -2886,36 +2889,98 @@ bool MainFrame::get_enable_print_status()
 
 void MainFrame::update_side_button_style()
 {
-    // BBS
-    int em = em_unit();
+    using R = MD3::Role;
 
-    StateColor m_btn_bg_enable = StateColor(
-        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
-    );
+    // MD3 pill geometry: the Slice/Print action buttons are 44px tall with a
+    // corner radius of height/2. Both are derived here (never cached) from the
+    // current DPI so the on_dpi_changed -> update_side_button_style path
+    // re-computes them after a monitor/DPI change instead of reusing a stale
+    // radius.
+    const int      btn_height = FromDIP(44);
+    const double   pill       = MD3::Metrics::pill_radius(btn_height);
+    const wxColour bar_bg     = StateColor::semantic(R::SurfaceContainerLow); // action-bar fill behind the pill corners
 
-    m_slice_btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Left, FromDIP(15));
-    m_slice_btn->SetCornerRadius(FromDIP(12));
-    m_slice_btn->SetExtraSize(wxSize(FromDIP(38), FromDIP(10)));
-    m_slice_btn->SetMinSize(wxSize(-1, FromDIP(24)));
+    const wxColour disabled_bg  = StateColor::semantic(R::SurfaceContainerHigh);
+    const wxColour disabled_txt = ThemeColor::TextDisabled;
 
-    m_slice_option_btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Center);
-    m_slice_option_btn->SetCornerRadius(FromDIP(12));
-    m_slice_option_btn->SetExtraSize(wxSize(FromDIP(10), FromDIP(10)));
-    m_slice_option_btn->SetIconOffset(FromDIP(2));
-    m_slice_option_btn->SetMinSize(wxSize(FromDIP(24), FromDIP(24)));
+    // Filled hover state layer: a subtle brighten of the Primary fill, matching
+    // Widgets/Button.cpp applyMD3Style() (filled x1.06). Kept local so this file
+    // does not depend on Button.cpp's internal linkage.
+    auto brighten = [](const wxColour &c, double factor) -> wxColour {
+        auto ch = [factor](unsigned char v) -> unsigned char {
+            int r = (int) (v * factor + 0.5);
+            if (r > 255) r = 255;
+            if (r < 0)   r = 0;
+            return (unsigned char) r;
+        };
+        return wxColour(ch(c.Red()), ch(c.Green()), ch(c.Blue()), c.Alpha());
+    };
 
-    m_print_btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Left, FromDIP(15));
-    m_print_btn->SetCornerRadius(FromDIP(12));
-    m_print_btn->SetExtraSize(wxSize(FromDIP(38), FromDIP(10)));
-    m_print_btn->SetMinSize(wxSize(-1, FromDIP(24)));
+    // Slice -> MD3 outlined: SurfaceContainerHigh fill, 1px Outline ring,
+    // OnSurface label (per ui-md3 Prepare.jsx: an outlined Button whose rest
+    // background is sc-high). Hover lifts the fill to SurfaceContainerHighest.
+    auto style_outlined = [&](SideButton *btn) {
+        btn->SetBackgroundColor(StateColor(
+            std::make_pair(StateColor::semantic(R::SurfaceContainerHigh),    (int) StateColor::Disabled),
+            std::make_pair(StateColor::semantic(R::SurfaceContainerHighest), (int) StateColor::Hovered),
+            std::make_pair(StateColor::semantic(R::SurfaceContainerHigh),    (int) StateColor::Normal)));
+        btn->SetBorderColor(StateColor(
+            std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Disabled),
+            std::make_pair(StateColor::semantic(R::Outline),        (int) StateColor::Normal)));
+        btn->SetForegroundColor(StateColor(
+            std::make_pair(disabled_txt,                       (int) StateColor::Disabled),
+            std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Normal)));
+        btn->SetBottomColour(bar_bg);
+    };
 
-    m_print_option_btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Center);
-    m_print_option_btn->SetCornerRadius(FromDIP(12));
-    m_print_option_btn->SetExtraSize(wxSize(FromDIP(10), FromDIP(10)));
-    m_print_option_btn->SetIconOffset(FromDIP(2));
-    m_print_option_btn->SetMinSize(wxSize(FromDIP(24), FromDIP(24)));
+    // Print -> MD3 filled: Primary fill, OnPrimary label; the border tracks the
+    // fill so no contrasting ring shows. The kit marks this button "elevated"
+    // (elev-2); SideButton cannot draw the drop-shadow, tracked as a follow-up.
+    auto style_filled = [&](SideButton *btn) {
+        const wxColour fill  = StateColor::semantic(R::Primary);
+        const wxColour hover = brighten(fill, 1.06);
+        btn->SetBackgroundColor(StateColor(
+            std::make_pair(disabled_bg, (int) StateColor::Disabled),
+            std::make_pair(hover,       (int) StateColor::Hovered),
+            std::make_pair(fill,        (int) StateColor::Normal)));
+        btn->SetBorderColor(StateColor(
+            std::make_pair(disabled_bg, (int) StateColor::Disabled),
+            std::make_pair(hover,       (int) StateColor::Hovered),
+            std::make_pair(fill,        (int) StateColor::Normal)));
+        btn->SetForegroundColor(StateColor(
+            std::make_pair(disabled_txt,                       (int) StateColor::Disabled),
+            std::make_pair(StateColor::semantic(R::OnPrimary), (int) StateColor::Normal)));
+        btn->SetBottomColour(bar_bg);
+    };
+
+    // The main action button and its options segment share one scheme so the
+    // pair reads as a single split control. Both are fully-rounded pills
+    // (layout_style 1) rather than the legacy flat-seam split; the former
+    // 'sidebutton_dropdown' caret is gone (see the constructor above).
+    auto layout_main = [&](SideButton *btn) {
+        btn->SetLayoutStyle(1);
+        btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Left, FromDIP(15));
+        btn->SetCornerRadius(pill);
+        btn->SetExtraSize(wxSize(FromDIP(38), FromDIP(10)));
+        btn->SetMinSize(wxSize(-1, btn_height));
+    };
+    auto layout_option = [&](SideButton *btn) {
+        btn->SetLayoutStyle(1);
+        btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Center);
+        btn->SetCornerRadius(pill);
+        btn->SetExtraSize(wxSize(FromDIP(10), FromDIP(10)));
+        btn->SetMinSize(wxSize(FromDIP(24), btn_height));
+    };
+
+    style_outlined(m_slice_btn);
+    style_outlined(m_slice_option_btn);
+    layout_main(m_slice_btn);
+    layout_option(m_slice_option_btn);
+
+    style_filled(m_print_btn);
+    style_filled(m_print_option_btn);
+    layout_main(m_print_btn);
+    layout_option(m_print_option_btn);
 }
 
 void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_slice, bool can_print)
@@ -3064,6 +3129,11 @@ void MainFrame::on_sys_color_changed()
         m_topbar->Rescale();
     m_tabpanel->Rescale();
     update_prepare_action_bar_style();
+    // Re-resolve the Slice/Print MD3 tokens for the new light/dark scheme; they
+    // are captured by value, so without this they would keep the old-theme
+    // colours until the next DPI change.
+    if (m_slice_btn)
+        update_side_button_style();
     m_param_panel->msw_rescale();
 
     // update Plater

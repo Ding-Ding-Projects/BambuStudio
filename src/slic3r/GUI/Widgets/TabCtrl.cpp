@@ -102,9 +102,7 @@ int TabCtrl::AppendItem(const wxString &item,
     Button * btn = new Button();
     btn->Create(this, item, "", wxBORDER_NONE);
     btn->SetFont(GetFont());
-    btn->SetTextColor(StateColor(
-        std::make_pair(ThemeColor::TextMuted, (int) StateColor::NotChecked),
-        std::make_pair(*wxLIGHT_GREY, (int) StateColor::Normal)));
+    btn->SetTextColor(tabTextColor());
     btn->SetBackgroundColor(StateColor());
     btn->SetCornerRadius(0);
     btn->SetPaddingSize({TAB_BUTTON_PADDING});
@@ -188,6 +186,29 @@ void TabCtrl::SetItemTextColour(unsigned int item, const StateColor &col)
 {
     if (item >= btns.size()) return;
     btns[item]->SetTextColor(col);
+}
+
+StateColor TabCtrl::tabTextColor() const
+{
+    // Kit secondary-tab labels (navigation/TabBar): the active tab (the one
+    // carrying the Checked state, toggled in SelectItem) is Primary in the
+    // current scheme; every other state falls through to the OnSurfaceVariant
+    // Normal entry. This replaces the legacy TextMuted / raw wxLIGHT_GREY pair.
+    return StateColor(
+        std::make_pair(StateColor::semantic(MD3::Role::Primary, m_scheme), (int) StateColor::Checked),
+        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal));
+}
+
+void TabCtrl::SetColorScheme(MD3::ColorScheme scheme)
+{
+    if (m_scheme == scheme)
+        return;
+    m_scheme = scheme;
+    // Re-resolve the scheme-aware active-label accent for every tab; the active
+    // indicator reads m_scheme live in doRender(), so a repaint recolours it.
+    for (auto &b : btns)
+        b->SetTextColor(tabTextColor());
+    Refresh();
 }
 
 int TabCtrl::GetFirstVisibleItem() const
@@ -312,10 +333,20 @@ void TabCtrl::doRender(wxDC& dc)
 #else
     dc.SetPen(wxPen(border_color.colorForStates(states), border_width));
     dc.DrawLine(0, size.y - BS2, size.x, size.y - BS2);
-    wxColour c(ThemeColor::BrandGreen);
-    dc.SetPen(wxPen(c, 1));
-    dc.SetBrush(c);
-    dc.DrawRoundedRectangle(x1 - radius, size.y - BS2 - border_width * 3, x2 + radius * 2 - x1, border_width * 3, radius);
+    // Kit active indicator (navigation/TabBar): a 3px bar in the current scheme's
+    // Primary, inset 12px from the selected tab's edges, with only the TOP corners
+    // rounded (radius 3px 3px 0 0). wxDC has no per-corner radius, so the pill is
+    // drawn at double height and the bitmap's bottom edge clips its lower (rounded)
+    // half, leaving square bottom corners flush with the bar baseline. FromDIP is
+    // read every paint, so the geometry stays crisp across DPI/density changes with
+    // no cached radius.
+    const int indicator_inset  = FromDIP(12);
+    const int indicator_height = FromDIP(MD3::Metrics::tab_active_indicator);
+    const int indicator_width  = std::max(1, (x2 - x1) - 2 * indicator_inset);
+    wxRect indicator(x1 + indicator_inset, size.y - indicator_height, indicator_width, indicator_height * 2);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, m_scheme)));
+    dc.DrawRoundedRectangle(indicator, indicator_height);
 #endif
 }
 

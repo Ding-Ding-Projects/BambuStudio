@@ -15,6 +15,11 @@ class TabCtrl : public StaticBox
     int sel = -1;
     wxFont bold;
 
+    // Current workspace accent scheme. The active-tab label and the active
+    // indicator resolve Primary through this scheme so a sub-tab strip hosted in
+    // a Preview/Device workspace recolours to that context (defaults to Brand).
+    MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
+
 public:
     TabCtrl(wxWindow *      parent,
              wxWindowID      id,
@@ -59,6 +64,11 @@ public:
 
     void SetItemTextColour(unsigned int item, const StateColor &col);
 
+    // Recolour the active-label accent and active indicator for the current
+    // workspace scheme (Brand / Preview / Device). Re-applies the scheme-aware
+    // default label colour to every tab and repaints the indicator.
+    void SetColorScheme(MD3::ColorScheme scheme);
+
     /* fakes */
     int GetFirstVisibleItem() const;
     int GetNextVisible(int item) const;
@@ -72,6 +82,11 @@ private:
 #endif
 
     void relayout();
+
+    // Scheme-aware default tab label colour: active (Checked) -> Primary in the
+    // current scheme, inactive -> OnSurfaceVariant. Weight (600/400) is carried
+    // separately by the bold-font mechanism.
+    StateColor tabTextColor() const;
 
     void buttonClicked(wxCommandEvent & event);
     void keyDown(wxKeyEvent &event);
