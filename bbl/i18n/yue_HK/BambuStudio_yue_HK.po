@@ -1364,3 +1364,7 @@ msgstr "搜尋設備"
 #. reviewed-category: connection-offline
 msgid "No devices match your search."
 msgstr "搵唔到符合搜尋嘅設備。"
+
+#. reviewed-category: preferences
+msgid "No settings match your search."
+msgstr "搵唔到符合搜尋嘅設定。"
