@@ -29,6 +29,7 @@
 #include "slic3r/GUI/Gizmos/GLGizmoSVG.hpp"
 #include "slic3r/GUI/Gizmos/GLGizmoMeshBoolean.hpp"
 #include "slic3r/GUI/Gizmos/GLGizmoAssembly.hpp"
+#include "slic3r/GUI/Gizmos/GLIconGlyphBridge.hpp"
 
 #include "libslic3r/format.hpp"
 #include "libslic3r/Model.hpp"
@@ -127,6 +128,65 @@ bool GLGizmosManager::init()
     return true;
 }
 
+namespace {
+
+// The reset / reset-to-zero action buttons (object-manipulation panel) migrate
+// from the legacy orange toolbar_reset*.svg sprites to Material Symbols glyphs
+// tinted by MD3 role. State is expressed through colour (idle OnSurfaceVariant,
+// hover OnSurface), and the light/dark split is baked into separate texture keys
+// because the shared icon_list is built once and is not rebuilt on a runtime
+// theme switch -- the render site selects the matching key by theme, exactly as
+// the fit-camera / text / align icons already do.
+//
+// The glyph is supersampled (kResetGlyphPx) and scaled down by ImGui::Image at
+// paint time, so it stays crisp across DPI/density without the map needing a
+// per-DPI variant (48px stays 1:1 up to ~340% before any upscaling). Returns
+// false (caller keeps its raster sprite) when the icon font is unavailable or the
+// glyph cannot be rendered, so the panel never regresses to a blank button.
+constexpr int kResetGlyphPx = 48;
+
+struct ResetGlyphSpec
+{
+    uint32_t  glyph;
+    MD3::Role role;
+    bool      dark;
+    bool      valid;
+};
+
+ResetGlyphSpec reset_glyph_spec(int icon)
+{
+    using G = MaterialIcon::Glyph;
+    switch (icon) {
+    case GLGizmosManager::IC_TOOLBAR_RESET:            return {G::Refresh, MD3::Role::OnSurfaceVariant, false, true};
+    case GLGizmosManager::IC_TOOLBAR_RESET_HOVER:      return {G::Refresh, MD3::Role::OnSurface,        false, true};
+    case GLGizmosManager::IC_TOOLBAR_RESET_DARK:       return {G::Refresh, MD3::Role::OnSurfaceVariant, true,  true};
+    case GLGizmosManager::IC_TOOLBAR_RESET_HOVER_DARK: return {G::Refresh, MD3::Role::OnSurface,        true,  true};
+    // reset-to-zero uses the 'restore' mark to read as "return to the baseline",
+    // distinct from the plain 'refresh' reset above.
+    case GLGizmosManager::IC_TOOLBAR_RESET_ZERO:            return {G::SettingsBackupRestore, MD3::Role::OnSurfaceVariant, false, true};
+    case GLGizmosManager::IC_TOOLBAR_RESET_ZERO_HOVER:      return {G::SettingsBackupRestore, MD3::Role::OnSurface,        false, true};
+    case GLGizmosManager::IC_TOOLBAR_RESET_ZERO_DARK:       return {G::SettingsBackupRestore, MD3::Role::OnSurfaceVariant, true,  true};
+    case GLGizmosManager::IC_TOOLBAR_RESET_ZERO_HOVER_DARK: return {G::SettingsBackupRestore, MD3::Role::OnSurface,        true,  true};
+    default: return {0u, MD3::Role::OnSurfaceVariant, false, false};
+    }
+}
+
+// True (and fills out) when the icon has an MD3 glyph mapping and the glyph
+// bridge produced a texture; false means the caller should fall back to raster.
+bool try_make_reset_glyph(int icon, ImTextureID& out)
+{
+    const ResetGlyphSpec spec = reset_glyph_spec(icon);
+    if (!spec.valid || !GLIconGlyphBridge::available())
+        return false;
+    const unsigned int tex = GLIconGlyphBridge::make_glyph_texture(spec.glyph, kResetGlyphPx, MD3::resolve(spec.role, spec.dark));
+    if (tex == 0)
+        return false;
+    out = (ImTextureID)(intptr_t) tex;
+    return true;
+}
+
+} // namespace
+
 std::map<int, void *> GLGizmosManager::icon_list = {};
 bool GLGizmosManager::init_icon_textures()
 {
@@ -136,25 +196,32 @@ bool GLGizmosManager::init_icon_textures()
     ImTextureID texture_id;
 
     icon_list.clear();
-    if (IMTexture::load_from_svg_file(Slic3r::resources_dir() + "/images/toolbar_reset.svg", 14, 14, texture_id))
-        icon_list.insert(std::make_pair((int)IC_TOOLBAR_RESET, texture_id));
-    else
-        return false;
 
-    if (IMTexture::load_from_svg_file(Slic3r::resources_dir() + "/images/toolbar_reset_hover.svg", 14, 14, texture_id))
-        icon_list.insert(std::make_pair((int)IC_TOOLBAR_RESET_HOVER, texture_id));
-    else
+    // Reset / reset-to-zero action buttons: try an MD3 glyph first (theme-tinted,
+    // both light+dark keys), fall back to the legacy raster sprite when the icon
+    // font is unavailable. The raster fallback reuses the single theme-agnostic
+    // asset for both light and dark keys (its only pre-MD3 form).
+    auto add_reset_icon = [&](int key, const char* raster_svg) -> bool {
+        ImTextureID id;
+        if (try_make_reset_glyph(key, id)) {
+            icon_list[key] = id;
+            return true;
+        }
+        if (IMTexture::load_from_svg_file(Slic3r::resources_dir() + raster_svg, 14, 14, id)) {
+            icon_list[key] = id;
+            return true;
+        }
         return false;
+    };
 
-    if (IMTexture::load_from_svg_file(Slic3r::resources_dir() + "/images/toolbar_reset_zero.svg", 14, 14, texture_id))
-        icon_list.insert(std::make_pair((int) IC_TOOLBAR_RESET_ZERO, texture_id));
-    else
-        return false;
-
-    if (IMTexture::load_from_svg_file(Slic3r::resources_dir() + "/images/toolbar_reset_zero_hover.svg", 14, 14, texture_id))
-        icon_list.insert(std::make_pair((int) IC_TOOLBAR_RESET_ZERO_HOVER, texture_id));
-    else
-        return false;
+    if (!add_reset_icon(IC_TOOLBAR_RESET,                 "/images/toolbar_reset.svg"))            return false;
+    if (!add_reset_icon(IC_TOOLBAR_RESET_HOVER,           "/images/toolbar_reset_hover.svg"))      return false;
+    if (!add_reset_icon(IC_TOOLBAR_RESET_DARK,            "/images/toolbar_reset.svg"))            return false;
+    if (!add_reset_icon(IC_TOOLBAR_RESET_HOVER_DARK,      "/images/toolbar_reset_hover.svg"))      return false;
+    if (!add_reset_icon(IC_TOOLBAR_RESET_ZERO,            "/images/toolbar_reset_zero.svg"))       return false;
+    if (!add_reset_icon(IC_TOOLBAR_RESET_ZERO_HOVER,      "/images/toolbar_reset_zero_hover.svg")) return false;
+    if (!add_reset_icon(IC_TOOLBAR_RESET_ZERO_DARK,       "/images/toolbar_reset_zero.svg"))       return false;
+    if (!add_reset_icon(IC_TOOLBAR_RESET_ZERO_HOVER_DARK, "/images/toolbar_reset_zero_hover.svg")) return false;
 
     if (IMTexture::load_from_svg_file(Slic3r::resources_dir() + "/images/toolbar_tooltip.svg", 30, 22, texture_id))
         icon_list.insert(std::make_pair((int)IC_TOOLBAR_TOOLTIP, texture_id));
@@ -1503,6 +1570,42 @@ std::string GLGizmosManager::convert_gizmo_type_to_string(Slic3r::GUI::GLGizmosM
     }
 }
 
+const std::vector<std::vector<GLGizmosManager::EType>>& GLGizmosManager::get_gizmo_rail_groups()
+{
+    // Canonical visual grouping of the vertical MD3 gizmo rail, in rail order
+    // (matching the m_gizmos insertion order in init()). The rail draws a group
+    // divider between consecutive groups. Kept here as the single source of truth
+    // so divider placement can be driven by tool identity, instead of GLCanvas3D
+    // anchoring on the literal names "Scale" / "Color Painting". SlaSupports and
+    // Hollow are intentionally omitted: they are not instantiated on the rail.
+    static const std::vector<std::vector<EType>> groups = {
+        // Transform tools.
+        {Move, Rotate, Scale},
+        // Object / boolean / assembly operations, ending at the paint entry point.
+        {Flatten, Cut, MeshBoolean, Assembly, MmuSegmentation},
+        // Paint / edit / finalise tools.
+        {Text, Svg, FdmSupports, Seam, BrimEars, FuzzySkin, Measure, Simplify},
+    };
+    return groups;
+}
+
+std::vector<GLGizmosManager::EType> GLGizmosManager::get_gizmo_rail_group_dividers()
+{
+    // The tool that ends each non-final group: a rail divider follows it. Derived
+    // from get_gizmo_rail_groups() so the grouping and the divider anchors cannot
+    // drift. Resolves to { Scale, MmuSegmentation } for the current layout.
+    const auto&        groups = get_gizmo_rail_groups();
+    std::vector<EType> dividers;
+    if (groups.size() > 1) {
+        dividers.reserve(groups.size() - 1);
+        for (size_t i = 0; i + 1 < groups.size(); ++i) {
+            if (!groups[i].empty())
+                dividers.push_back(groups[i].back());
+        }
+    }
+    return dividers;
+}
+
 GLGizmoBase* GLGizmosManager::get_current() const
 {
     return ((m_current == Undefined) || m_gizmos.empty()) ? nullptr : m_gizmos[m_current].get();
@@ -1692,14 +1795,31 @@ void* GLGizmosManager::ensure_icon_loaded(MENU_ICON_NAME icon)
     if (it != icon_list.end())
         return it->second;
 
+    // Reset / reset-to-zero action buttons prefer an MD3 glyph (theme-tinted);
+    // mirror init_icon_textures so a lazily-loaded reset icon is not stuck on the
+    // legacy raster sprite when the icon font is present.
+    {
+        ImTextureID glyph_id;
+        if (try_make_reset_glyph((int) icon, glyph_id)) {
+            icon_list[(int) icon] = glyph_id;
+            return glyph_id;
+        }
+    }
+
     std::string path;
     int w = 20, h = 20; // default size for most icons
 
     switch (icon) {
-        case IC_TOOLBAR_RESET:              path = "/images/toolbar_reset.svg"; w = h = 14; break;
-        case IC_TOOLBAR_RESET_HOVER:        path = "/images/toolbar_reset_hover.svg"; w = h = 14; break;
-        case IC_TOOLBAR_RESET_ZERO:         path = "/images/toolbar_reset_zero.svg"; w = h = 14; break;
-        case IC_TOOLBAR_RESET_ZERO_HOVER:   path = "/images/toolbar_reset_zero_hover.svg"; w = h = 14; break;
+        // Dark reset keys have no dedicated raster asset (the legacy sprite is
+        // theme-agnostic), so they fall back to the same light SVG.
+        case IC_TOOLBAR_RESET:
+        case IC_TOOLBAR_RESET_DARK:         path = "/images/toolbar_reset.svg"; w = h = 14; break;
+        case IC_TOOLBAR_RESET_HOVER:
+        case IC_TOOLBAR_RESET_HOVER_DARK:   path = "/images/toolbar_reset_hover.svg"; w = h = 14; break;
+        case IC_TOOLBAR_RESET_ZERO:
+        case IC_TOOLBAR_RESET_ZERO_DARK:    path = "/images/toolbar_reset_zero.svg"; w = h = 14; break;
+        case IC_TOOLBAR_RESET_ZERO_HOVER:
+        case IC_TOOLBAR_RESET_ZERO_HOVER_DARK: path = "/images/toolbar_reset_zero_hover.svg"; w = h = 14; break;
         case IC_TOOLBAR_TOOLTIP:            path = "/images/toolbar_tooltip.svg"; w = 30; h = 22; break;
         case IC_TOOLBAR_TOOLTIP_HOVER:      path = "/images/toolbar_tooltip_hover.svg"; w = 30; h = 22; break;
         case IC_FIT_CAMERA:                 path = "/images/fit_camera.svg"; w = h = 64; break;

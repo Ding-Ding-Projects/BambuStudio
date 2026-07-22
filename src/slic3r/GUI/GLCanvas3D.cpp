@@ -3,6 +3,8 @@
 #include "Overview/AssemblyStepsUtils.hpp"
 
 #include <chrono>
+#include <type_traits>
+#include <utility>
 #include <igl/unproject.h>
 
 #include "libslic3r/BuildVolume.hpp"
@@ -36,6 +38,8 @@
 #include "GLToolbar.hpp"
 #include "GUI_App.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
+#include "slic3r/GUI/Gizmos/GLIconGlyphBridge.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_Colors.hpp"
 #include "Mouse3DController.hpp"
@@ -1566,6 +1570,10 @@ GLCanvas3D::GLCanvas3D(wxGLCanvas* canvas, Bed3D &bed)
 GLCanvas3D::~GLCanvas3D()
 {
     reset_volumes(false);
+
+    // Release the cached MD3 overlay glyph textures while the GL context is current
+    // (as with the other GL resources torn down here).
+    _release_md3_overlay_glyphs();
 
     m_sel_plate_toolbar.del_all_item();
     m_sel_plate_toolbar.del_stats_item();
@@ -7818,6 +7826,47 @@ bool GLCanvas3D::_init_toolbars()
     return true;
 }
 
+namespace {
+// item 3: defensive consumption of the GLGizmosManager rail-grouping accessor.
+//
+// The gizmo rail's 28px group dividers were placed with the Scale / "Color
+// Painting" name anchors. GLGizmosManager now owns the grouping as the single
+// source of truth and exposes get_gizmo_rail_group_dividers(), returning the
+// EType that ends each non-final rail group (presently { Scale, MmuSegmentation };
+// the latter is "Color Painting"). This detection idiom consumes that accessor
+// when it is present at compile time and otherwise falls back to the exact
+// name-anchored placement, so GLCanvas3D compiles unchanged either way and never
+// hard-depends on the manager's grouping API.
+template <class, class = void>
+struct has_rail_group_accessor : std::false_type {};
+template <class T>
+struct has_rail_group_accessor<
+    T, std::void_t<decltype(std::declval<const T&>().get_gizmo_rail_group_dividers())>>
+    : std::true_type {};
+
+template <class Mgr>
+void md3_insert_rail_group_dividers(const std::shared_ptr<GLToolbar>& rail, const Mgr& gizmos)
+{
+    if (!rail)
+        return;
+    if constexpr (has_rail_group_accessor<Mgr>::value) {
+        // Preferred path: one divider after the last tool of each grouped set,
+        // driven by tool identity. insert_separator_after skips anchors filtered
+        // out of the current rail, so a reduced gizmo set never mis-places one.
+        for (const auto& t : gizmos.get_gizmo_rail_group_dividers())
+            rail->insert_separator_after(Mgr::convert_gizmo_type_to_string(t));
+    }
+    else {
+        // Fallback (accessor absent): the equivalent name-anchored dividers after
+        // the transform tools (…/Scale) and the paint/edit tools (…/"Color
+        // Painting"). Absent anchors are skipped, same as above.
+        (void) gizmos;
+        rail->insert_separator_after("Color Painting");
+        rail->insert_separator_after("Scale");
+    }
+}
+} // namespace
+
 //BBS: GUI refactor: GLToolbar
 bool GLCanvas3D::_init_main_toolbar()
 {
@@ -8084,11 +8133,10 @@ bool GLCanvas3D::_init_main_toolbar()
             m_gizmos.add_toolbar_items(p_gizmo_toolbar, gizmo_sprite_id, [](uint8_t&) {});
             // MD3 kit rail: group the tools with 28px OutlineVariant dividers.
             // GLGizmosManager populates a dynamic, filtered gizmo set with no
-            // separators, so the dividers are inserted here after the transform
-            // tools (…/Scale) and the paint/edit tools (…/Color Painting). Absent
-            // anchors are simply skipped, so a filtered set never mis-places one.
-            p_gizmo_toolbar->insert_separator_after("Color Painting");
-            p_gizmo_toolbar->insert_separator_after("Scale");
+            // separators of its own; md3_insert_rail_group_dividers consumes a
+            // grouping accessor if the manager grows one and otherwise falls back to
+            // the transform (…/Scale) and paint/edit (…/"Color Painting") anchors.
+            md3_insert_rail_group_dividers(p_gizmo_toolbar, m_gizmos);
         }
     }
     else if (m_gizmos.is_enabled()) {
@@ -9317,6 +9365,48 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
         wxGetApp().set_auto_toolbar_icon_scale(new_scale);
 }
 
+unsigned int GLCanvas3D::_md3_overlay_glyph_texture(uint32_t codepoint, int px, int& out_w, int& out_h)
+{
+    out_w = 0;
+    out_h = 0;
+    if (codepoint == 0 || px <= 0 || !GLIconGlyphBridge::available())
+        return 0;
+
+    for (const MD3OverlayGlyph& g : m_md3_overlay_glyphs) {
+        if (g.cp == codepoint && g.px == px) {
+            if (g.failed)
+                return 0;
+            out_w = g.w;
+            out_h = g.h;
+            return g.tex;
+        }
+    }
+
+    // Bake the glyph white; the draw path tints it to the current theme role, so a
+    // light/dark swap reuses the same texture.
+    int w = 0, h = 0;
+    const unsigned int tex = GLIconGlyphBridge::make_glyph_texture(codepoint, px, wxColour(255, 255, 255), &w, &h);
+    MD3OverlayGlyph entry{ codepoint, px, tex, w, h, tex == 0 };
+    m_md3_overlay_glyphs.push_back(entry);
+    if (tex == 0)
+        return 0;
+    out_w = w;
+    out_h = h;
+    return tex;
+}
+
+void GLCanvas3D::_release_md3_overlay_glyphs()
+{
+    for (MD3OverlayGlyph& g : m_md3_overlay_glyphs) {
+        if (g.tex != 0) {
+            GLuint id = static_cast<GLuint>(g.tex);
+            glsafe(::glDeleteTextures(1, &id));
+            g.tex = 0;
+        }
+    }
+    m_md3_overlay_glyphs.clear();
+}
+
 void GLCanvas3D::_render_overlays()
 {
      glsafe(::glDisable(GL_DEPTH_TEST));
@@ -9356,14 +9446,24 @@ void GLCanvas3D::_render_overlays()
     // MD3 viewport chrome (Prepare 3D editor only): a bottom-right zoom cluster
     // wired to the existing camera zoom commands and a bottom-centre object stat
     // pill. Additive overlays, drawn above the scene and the GL toolbars; they
-    // never remove or reroute existing viewport interaction. Icons are drawn as
-    // vector primitives so the chrome carries no glyph-font dependency.
+    // never remove or reroute existing viewport interaction. Icons resolve to
+    // pixel-exact Material Symbols when the icon font is present (cached per
+    // codepoint/size, see _md3_overlay_glyph_texture) and fall back to vector
+    // primitives otherwise, so the chrome carries no hard glyph-font dependency.
     if (m_canvas_type == ECanvasType::CanvasView3D) {
         const Size  cnv_size = get_canvas_size();
         const float cnv_w    = static_cast<float>(cnv_size.get_width());
         const float cnv_h    = static_cast<float>(cnv_size.get_height());
         const float sc       = std::max(0.5f, get_scale());
         if (cnv_w > 1.0f && cnv_h > 1.0f) {
+            // A rare DPI change re-keys the overlay glyph entries (px shifts); drop the
+            // whole cache once it grows past the handful of marks so stale-size textures
+            // cannot accumulate. Swept here, before any draw_mark/AddImage this frame, so
+            // a size-driven flush can never free a texture id already recorded into this
+            // frame's ImGui draw list (which renders only at frame end).
+            if (m_md3_overlay_glyphs.size() >= 16)
+                _release_md3_overlay_glyphs();
+
             ImGuiWrapper&   imgui = *wxGetApp().imgui();
             const wxColour& sh    = MD3::shadowTint(wxGetApp().dark_mode());
 
@@ -9417,6 +9517,33 @@ void GLCanvas3D::_render_overlays()
                 }
             };
 
+            // MD3: the vector marks map to Material Symbols (0 add, 1 remove,
+            // 2 filter_center_focus, 3 deployed_code).
+            auto glyph_for_mark = [](int type) -> uint32_t {
+                switch (type) {
+                case 0:  return MaterialIcon::Add;
+                case 1:  return MaterialIcon::Remove;
+                case 2:  return MaterialIcon::FilterCenterFocus;
+                case 3:  return MaterialIcon::DeployedCode;
+                default: return 0;
+                }
+            };
+            // Draw a mark as a pixel-exact Material Symbol when the icon font is
+            // available (baked white, tinted to col), else the vector primitive.
+            auto draw_mark = [&](ImDrawList* dl, float cx, float cy, float s, int type, ImU32 col) {
+                int              gw  = 0, gh = 0;
+                const int        px  = std::max(1, static_cast<int>(std::lround(s)));
+                const unsigned int tex = _md3_overlay_glyph_texture(glyph_for_mark(type), px, gw, gh);
+                if (tex != 0 && gw > 0 && gh > 0) {
+                    const float hw = 0.5f * static_cast<float>(gw);
+                    const float hh = 0.5f * static_cast<float>(gh);
+                    dl->AddImage((ImTextureID)(intptr_t) tex, ImVec2(cx - hw, cy - hh), ImVec2(cx + hw, cy + hh),
+                                 ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), col);
+                    return;
+                }
+                draw_icon(dl, cx, cy, s, type, col);
+            };
+
             const int overlay_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
                 | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings
                 | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
@@ -9453,7 +9580,7 @@ void GLCanvas3D::_render_overlays()
                     ImGui::PopID();
                     if (hovered)
                         dl->AddRectFilled(ImVec2(bx, by), ImVec2(bx + btn, by + btn), md3_imu32(MD3::Role::SurfaceContainerHigh), 10.0f * sc);
-                    draw_icon(dl, bx + btn * 0.5f, by + btn * 0.5f, 22.0f * sc, marks[i], md3_imu32(MD3::Role::OnSurfaceVariant));
+                    draw_mark(dl, bx + btn * 0.5f, by + btn * 0.5f, 22.0f * sc, marks[i], md3_imu32(MD3::Role::OnSurfaceVariant));
                     if (clicked) {
                         if (i == 0)      _update_camera_zoom(1.0);
                         else if (i == 1) _update_camera_zoom(-1.0);
@@ -9515,7 +9642,7 @@ void GLCanvas3D::_render_overlays()
                 dl->AddRect(wp, we, md3_imu32(MD3::Role::OutlineVariant), rounding, 0, std::max(1.0f, sc));
                 const ImU32 fg  = md3_imu32(MD3::Role::OnSurfaceVariant);
                 const float cy  = wp.y + pill_h * 0.5f;
-                draw_icon(dl, wp.x + pad_x + icon_sz * 0.5f, cy, icon_sz, 3, fg);
+                draw_mark(dl, wp.x + pad_x + icon_sz * 0.5f, cy, icon_sz, 3, fg);
                 float tx = wp.x + pad_x + icon_sz + gap;
                 dl->AddText(ImVec2(tx, wp.y + (pill_h - s1.y) * 0.5f), fg, seg1.c_str());
                 tx += s1.x + gap;

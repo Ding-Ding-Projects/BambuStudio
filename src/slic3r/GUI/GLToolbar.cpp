@@ -18,6 +18,11 @@
 #include <wx/settings.h>
 #include <wx/glcanvas.h>
 
+#include <algorithm>
+#include <memory>
+#include <utility>
+#include <vector>
+
 namespace Slic3r {
 namespace GUI {
 
@@ -414,6 +419,94 @@ ToolbarLayout::ToolbarLayout()
 {
 }
 
+// --- MD3 viewport-chrome geometry cache ----------------------------------------
+// The two migrated OpenGL viewport toolbars (the left gizmo rail and the top scene
+// toolbar) paint their kit chrome — the SurfaceContainer backdrop, group dividers,
+// hover/selected state layers: the md3_fill_rounded_world path — as token-coloured
+// GLModels. The geometry was rebuilt and re-uploaded to the GPU on every frame.
+//
+// This cache stores each rounded-rect GLModel keyed on its world-space rect and
+// corner radius so a static toolbar reuses its GPU buffers instead of rebuilding
+// them. The colour is applied per frame through GLModel::set_color, so a theme
+// swap reuses the cached geometry while a size/zoom/DPI/layout change (all of which
+// move the rect in billboard space) naturally re-keys and rebuilds it. Entries not
+// touched for a few frames are swept, so a continuous camera zoom (which shifts the
+// rects every frame) can never grow the cache without bound. Every GL buffer is
+// released in the destructor and via release() — context-safe, mirroring the other
+// GLModels torn down at shutdown.
+class MD3ChromeCache
+{
+public:
+    ~MD3ChromeCache() { release(); }
+
+    // Advance one frame and evict entries idle beyond the retention window.
+    void begin_frame()
+    {
+        ++m_frame;
+        m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
+                            [this](const Entry& e) { return m_frame - e.last_frame > kMaxIdleFrames; }),
+                        m_entries.end());
+    }
+
+    // Draw a cached rounded rect through the currently-bound flat shader. `build`
+    // fills the geometry the first time this exact rect is seen; the caller owns the
+    // shader/blend state. No-op for a degenerate rect.
+    template<class BuildFn>
+    void draw(float x0, float y0, float x1, float y1, float r, const ColorRGBA& color, BuildFn&& build)
+    {
+        if (x1 - x0 <= 0.0f || y1 - y0 <= 0.0f)
+            return;
+        GLModel* model = acquire(x0, y0, x1, y1, r, std::forward<BuildFn>(build));
+        if (model == nullptr)
+            return;
+        model->set_color(color);
+        model->render_geometry();
+    }
+
+    // Release every GL buffer (context-safe teardown).
+    void release() { m_entries.clear(); }
+
+private:
+    struct Entry
+    {
+        float                    x0, y0, x1, y1, r;
+        std::unique_ptr<GLModel> model;
+        uint64_t                 last_frame;
+    };
+
+    template<class BuildFn>
+    GLModel* acquire(float x0, float y0, float x1, float y1, float r, BuildFn&& build)
+    {
+        for (Entry& e : m_entries) {
+            if (e.x0 == x0 && e.y0 == y0 && e.x1 == x1 && e.y1 == y1 && e.r == r) {
+                e.last_frame = m_frame;
+                return e.model.get();
+            }
+        }
+        GLModel::Geometry g;
+        g.format.type          = GLModel::PrimitiveType::Triangles;
+        g.format.vertex_layout = GLModel::Geometry::EVertexLayout::P3;
+        build(g);
+        if (g.vertices_count() == 0)
+            return nullptr;
+        Entry entry;
+        entry.x0 = x0; entry.y0 = y0; entry.x1 = x1; entry.y1 = y1; entry.r = r;
+        entry.model = std::make_unique<GLModel>();
+        entry.model->init_from(std::move(g));
+        entry.last_frame = m_frame;
+        m_entries.push_back(std::move(entry));
+        return m_entries.back().model.get();
+    }
+
+    std::vector<Entry>            m_entries;
+    uint64_t                      m_frame{ 0 };
+    // Generous enough to survive several begin_frame calls per displayed frame (a
+    // redrawn rect keeps its slot) yet small enough that a camera zoom's transient
+    // rects are reclaimed quickly. Too low only forgoes the reuse — never a visual
+    // change, since every rect is still drawn explicitly each frame.
+    static constexpr uint64_t     kMaxIdleFrames = 8;
+};
+
 GLToolbar::GLToolbar(GLToolbar::EType type, const std::string& name)
     : m_type(type)
     , m_name(name)
@@ -428,6 +521,17 @@ GLToolbar::~GLToolbar()
         glsafe(::glDeleteTextures(1, &id));
         m_sel_glyph_tex = 0;
     }
+    // Release the cached MD3 chrome GLModels before the toolbar goes away (the GL
+    // context is still current here, as with the glyph texture above).
+    if (m_md3_chrome_cache)
+        m_md3_chrome_cache->release();
+}
+
+MD3ChromeCache& GLToolbar::md3_chrome_cache() const
+{
+    if (!m_md3_chrome_cache)
+        m_md3_chrome_cache = std::make_unique<MD3ChromeCache>();
+    return *m_md3_chrome_cache;
 }
 
 unsigned int GLToolbar::ensure_selected_glyph_texture(uint32_t codepoint, int px, int* out_w, int* out_h) const
@@ -1124,6 +1228,11 @@ void GLToolbar::render(const Camera& t_camera)
     if (!p_renderer) {
         return;
     }
+    // Advance the MD3 chrome cache one frame so idle geometry (e.g. a rect left
+    // behind by a camera zoom) is swept. Only touched once the cache exists, so
+    // non-MD3 toolbars pay nothing.
+    if (m_md3_chrome_cache)
+        m_md3_chrome_cache->begin_frame();
     p_renderer->render(*this, t_camera);
 }
 
@@ -1603,14 +1712,15 @@ constexpr float kMD3DividerRatio = 28.0f / 44.0f;
 MD3ToolbarKind md3_toolbar_kind(const ToolbarLayout& layout);
 float          md3_glyph_ratio(MD3ToolbarKind kind);
 // Fills a token-coloured (rounded) rect in the toolbar's billboard space via the
-// flat shader. r <= 0 yields a plain rect (dividers/state layers). No-op when the
-// flat shader is unavailable, so any non-flat context keeps its texture path.
-void md3_fill_rounded_world(float x0, float y0, float x1, float y1, float r, MD3::Role role, float alpha = 1.0f);
+// flat shader, reusing the toolbar's cached GLModel for this rect. r <= 0 yields a
+// plain rect (dividers/state layers). No-op when the flat shader is unavailable, so
+// any non-flat context keeps its texture path.
+void md3_fill_rounded_world(const GLToolbar& tb, float x0, float y0, float x1, float y1, float r, MD3::Role role, float alpha = 1.0f);
 // Draws the pill's per-item chrome from item.render_rect (set by the caller): a
 // SurfaceContainerHigh r10 hover state layer, or a token OutlineVariant divider in
 // place of a SeparatorLine's SVG. Returns true when the sprite must be suppressed
 // (a divider replaced it). one_px is one device pixel in world units.
-bool md3_decorate_pill_item(const GLToolbarItem& item, float tile_world, float one_px);
+bool md3_decorate_pill_item(const GLToolbar& tb, const GLToolbarItem& item, float tile_world, float one_px);
 // Draws the rail's selected-tile chrome: a Primary r12 fill plus the OnPrimary
 // mark (kit selected = Primary fill + OnPrimary glyph). Returns true when it drew
 // the OnPrimary mark and the atlas sprite must be suppressed; false leaves the
@@ -1702,7 +1812,7 @@ void ToolbarAutoSizeRenderer::render_horizontal(const GLToolbar& t_toolbar, cons
                 item->render_rect[3] = top;
                 bool md3_suppress = false;
                 if (md3_on)
-                    md3_suppress = md3_decorate_pill_item(*item, scaled_icons_size, inv_zoom * t_layout.scale);
+                    md3_suppress = md3_decorate_pill_item(t_toolbar, *item, scaled_icons_size, inv_zoom * t_layout.scale);
                 item->render(tex_id, (unsigned int)tex_width, (unsigned int)tex_height, (unsigned int)(t_layout.icons_size * t_layout.scale), t_toolbar.get_height(), false, md3_gr, !md3_suppress);
             }
             //BBS: GUI refactor: GLToolbar
@@ -1776,7 +1886,7 @@ void ToolbarAutoSizeRenderer::render_vertical(const GLToolbar& t_toolbar, const 
                 const float cy = top - 0.5f * separator_stride;
                 const float half_w = 0.5f * kMD3DividerRatio * scaled_icons_size;
                 const float half_h = 0.5f * std::max(md3_one_px, (1.5f / 44.0f) * scaled_icons_size);
-                md3_fill_rounded_world(cx - half_w, cy - half_h, cx + half_w, cy + half_h, 0.0f, MD3::Role::OutlineVariant);
+                md3_fill_rounded_world(t_toolbar, cx - half_w, cy - half_h, cx + half_w, cy + half_h, 0.0f, MD3::Role::OutlineVariant);
             }
             top -= separator_stride;
         }
@@ -1933,7 +2043,7 @@ float md3_glyph_ratio(MD3ToolbarKind kind)
     }
 }
 
-void md3_fill_rounded_world(float x0, float y0, float x1, float y1, float r, MD3::Role role, float alpha)
+void md3_fill_rounded_world(const GLToolbar& tb, float x0, float y0, float x1, float y1, float r, MD3::Role role, float alpha)
 {
     const auto& shader = wxGetApp().get_shader("flat");
     if (!shader)
@@ -1942,27 +2052,19 @@ void md3_fill_rounded_world(float x0, float y0, float x1, float y1, float r, MD3
     const float lo_y = std::min(y0, y1), hi_y = std::max(y0, y1);
     if (hi_x - lo_x <= 0.0f || hi_y - lo_y <= 0.0f)
         return;
-    GLModel::Geometry g;
-    g.format.type = GLModel::PrimitiveType::Triangles;
-    g.format.vertex_layout = GLModel::Geometry::EVertexLayout::P3;
-    md3_append_rounded_rect(g, lo_x, lo_y, hi_x, hi_y, r);
-    if (g.vertices_count() == 0)
-        return;
     const Camera& camera = wxGetApp().plater()->get_camera();
     glsafe(::glEnable(GL_BLEND));
     glsafe(::glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
     wxGetApp().bind_shader(shader);
     shader->set_uniform("view_model_matrix", camera.get_view_matrix_for_billboard());
     shader->set_uniform("projection_matrix", camera.get_projection_matrix());
-    GLModel model;
-    model.init_from(std::move(g));
-    model.set_color(md3_toolbar_color(role, alpha));
-    model.render_geometry();
+    tb.md3_chrome_cache().draw(lo_x, lo_y, hi_x, hi_y, r, md3_toolbar_color(role, alpha),
+        [&](GLModel::Geometry& g) { md3_append_rounded_rect(g, lo_x, lo_y, hi_x, hi_y, r); });
     wxGetApp().unbind_shader();
     glsafe(::glDisable(GL_BLEND));
 }
 
-bool md3_decorate_pill_item(const GLToolbarItem& item, float tile_world, float one_px)
+bool md3_decorate_pill_item(const GLToolbar& tb, const GLToolbarItem& item, float tile_world, float one_px)
 {
     if (item.get_type() == GLToolbarItem::EType::SeparatorLine) {
         // Vertical group divider (kit 1px OutlineVariant rule) instead of the SVG.
@@ -1970,13 +2072,13 @@ bool md3_decorate_pill_item(const GLToolbarItem& item, float tile_world, float o
         const float cy = 0.5f * (item.render_rect[2] + item.render_rect[3]);
         const float half_h = 0.5f * kMD3DividerRatio * tile_world;
         const float half_w = 0.5f * std::max(one_px, (1.5f / 44.0f) * tile_world);
-        md3_fill_rounded_world(cx - half_w, cy - half_h, cx + half_w, cy + half_h, 0.0f, MD3::Role::OutlineVariant);
+        md3_fill_rounded_world(tb, cx - half_w, cy - half_h, cx + half_w, cy + half_h, 0.0f, MD3::Role::OutlineVariant);
         return true;
     }
     if (item.is_hovered() && !item.is_disabled()) {
         // SurfaceContainerHigh hover state layer (kit IconButton hover), r10.
         const float r = kMD3PillCornerRatio * tile_world;
-        md3_fill_rounded_world(item.render_rect[0], item.render_rect[2], item.render_rect[1], item.render_rect[3], r, MD3::Role::SurfaceContainerHigh);
+        md3_fill_rounded_world(tb, item.render_rect[0], item.render_rect[2], item.render_rect[1], item.render_rect[3], r, MD3::Role::SurfaceContainerHigh);
     }
     return false;
 }
@@ -1996,7 +2098,7 @@ bool md3_decorate_rail_item(const GLToolbar& tb, const GLToolbarItem& item, floa
     // Primary r12 fill, then the OnPrimary mark at the same footprint as the atlas
     // idle glyphs (the sprite renders at glyph_ratio of its native pixels).
     const float r = kMD3RailCornerRatio * tile_world;
-    md3_fill_rounded_world(item.render_rect[0], item.render_rect[2], item.render_rect[1], item.render_rect[3], r, MD3::Role::Primary);
+    md3_fill_rounded_world(tb, item.render_rect[0], item.render_rect[2], item.render_rect[1], item.render_rect[3], r, MD3::Role::Primary);
     const float cx = 0.5f * (item.render_rect[0] + item.render_rect[1]);
     const float cy = 0.5f * (item.render_rect[2] + item.render_rect[3]);
     const float half_w = 0.5f * static_cast<float>(gw) * glyph_ratio * inv_zoom;
@@ -2040,29 +2142,17 @@ bool render_md3_toolbar_backdrop(const GLToolbar& t_toolbar, float left, float t
     shader->set_uniform("view_model_matrix", camera.get_view_matrix_for_billboard());
     shader->set_uniform("projection_matrix", camera.get_projection_matrix());
 
-    auto draw = [](GLModel::Geometry&& g, const ColorRGBA& col) {
-        if (g.vertices_count() == 0)
-            return;
-        GLModel model;
-        model.init_from(std::move(g));
-        model.set_color(col);
-        model.render_geometry();
-    };
-    auto new_geo = []() {
-        GLModel::Geometry g;
-        g.format.type = GLModel::PrimitiveType::Triangles;
-        g.format.vertex_layout = GLModel::Geometry::EVertexLayout::P3;
-        return g;
+    // Each layer reuses its cached GLModel (keyed on the rect); the colour is set
+    // per frame so the theme is always current without a rebuild.
+    MD3ChromeCache& cache = t_toolbar.md3_chrome_cache();
+    auto fill = [&cache](float ax0, float ay0, float ax1, float ay1, float ar, const ColorRGBA& col) {
+        cache.draw(ax0, ay0, ax1, ay1, ar, col,
+            [=](GLModel::Geometry& g) { md3_append_rounded_rect(g, ax0, ay0, ax1, ay1, ar); });
     };
 
     if (is_rail) {
-        GLModel::Geometry fill = new_geo();
-        md3_append_rect(fill, x0, y0, x1, y1);
-        draw(std::move(fill), md3_toolbar_color(MD3::Role::SurfaceContainerLow));
-
-        GLModel::Geometry edge = new_geo();
-        md3_append_rect(edge, x1 - px, y0, x1, y1);
-        draw(std::move(edge), md3_toolbar_color(MD3::Role::OutlineVariant));
+        fill(x0, y0, x1, y1, 0.0f, md3_toolbar_color(MD3::Role::SurfaceContainerLow));
+        fill(x1 - px, y0, x1, y1, 0.0f, md3_toolbar_color(MD3::Role::OutlineVariant));
     }
     else {
         const float r = 16.0f * px; // r16 pill
@@ -2073,18 +2163,12 @@ bool render_md3_toolbar_backdrop(const GLToolbar& t_toolbar, float left, float t
         const float base_a = (sh.Alpha() / 255.0f) * 0.5f;
         for (int i = 3; i >= 1; --i) {
             const float grow = static_cast<float>(i) * px;
-            GLModel::Geometry s = new_geo();
-            md3_append_rounded_rect(s, x0 - grow, y0 - sh_dy - grow, x1 + grow, y1 - sh_dy + grow, r + grow);
-            draw(std::move(s), ColorRGBA(sh.Red() / 255.0f, sh.Green() / 255.0f, sh.Blue() / 255.0f, base_a / static_cast<float>(i)));
+            fill(x0 - grow, y0 - sh_dy - grow, x1 + grow, y1 - sh_dy + grow, r + grow,
+                 ColorRGBA(sh.Red() / 255.0f, sh.Green() / 255.0f, sh.Blue() / 255.0f, base_a / static_cast<float>(i)));
         }
 
-        GLModel::Geometry border = new_geo();
-        md3_append_rounded_rect(border, x0, y0, x1, y1, r);
-        draw(std::move(border), md3_toolbar_color(MD3::Role::OutlineVariant));
-
-        GLModel::Geometry fill = new_geo();
-        md3_append_rounded_rect(fill, x0 + px, y0 + px, x1 - px, y1 - px, r - px);
-        draw(std::move(fill), md3_toolbar_color(MD3::Role::SurfaceContainer));
+        fill(x0, y0, x1, y1, r, md3_toolbar_color(MD3::Role::OutlineVariant));
+        fill(x0 + px, y0 + px, x1 - px, y1 - px, r - px, md3_toolbar_color(MD3::Role::SurfaceContainer));
     }
 
     wxGetApp().unbind_shader();
@@ -2389,7 +2473,7 @@ void ToolbarKeepSizeRenderer::render(const GLToolbar& t_toolbar, const Camera& t
             const bool b_filp_v = !t_toolbar.is_collapsed() && current_item->is_collapse_button();
             bool md3_suppress = false;
             if (md3_on && !current_item->is_collapsed())
-                md3_suppress = md3_decorate_pill_item(*current_item, md3_tile_world, md3_one_px);
+                md3_suppress = md3_decorate_pill_item(t_toolbar, *current_item, md3_tile_world, md3_one_px);
             current_item->render(tex_id, (unsigned int)tex_width, (unsigned int)tex_height, (unsigned int)(t_layout.icons_size * t_layout.scale), t_toolbar.get_height(), b_filp_v, md3_gr, !md3_suppress);
         }
         //BBS: GUI refactor: GLToolbar

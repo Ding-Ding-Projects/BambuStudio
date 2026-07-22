@@ -629,6 +629,11 @@ private:
     mutable IMToolbar m_sel_plate_toolbar;
     mutable IMToolbar m_assembly_view_thumbnail;
     mutable IMReturnToolbar m_return_toolbar;
+
+    // MD3 viewport-chrome glyph texture cache (see _md3_overlay_glyph_texture). Owned
+    // raw GL textures, released in _release_md3_overlay_glyphs / the canvas dtor.
+    struct MD3OverlayGlyph { uint32_t cp; int px; unsigned int tex; int w; int h; bool failed; };
+    std::vector<MD3OverlayGlyph> m_md3_overlay_glyphs;
     mutable Vec2i              m_fit_camrea_button_pos = {128, 5};
     mutable float              m_sc{1};
     mutable float m_paint_toolbar_width;
@@ -1372,6 +1377,15 @@ private:
 #endif // ENABLE_RENDER_SELECTION_CENTER
     void _check_and_update_toolbar_icon_scale();
     void _render_overlays();
+    // MD3 viewport-chrome glyph cache (bottom-right zoom cluster + bottom-centre
+    // stat pill). A Material Symbol is rasterised to a GL texture once per
+    // (codepoint, pixel size) and reused; the glyph is baked white and tinted at
+    // draw time, so a theme swap needs no rebuild. Returns 0 (and leaves out_w/out_h
+    // at 0) when the icon font is absent or the raster fails, so the caller keeps its
+    // vector-primitive fallback. _release_md3_overlay_glyphs() frees the textures on
+    // canvas teardown (context-safe).
+    unsigned int _md3_overlay_glyph_texture(uint32_t codepoint, int px, int& out_w, int& out_h);
+    void         _release_md3_overlay_glyphs();
     void _render_style_editor();
     void _render_volumes_for_picking() const;
     void _render_current_gizmo() const;

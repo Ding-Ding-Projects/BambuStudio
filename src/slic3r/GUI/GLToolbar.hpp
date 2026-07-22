@@ -2,6 +2,7 @@
 #define slic3r_GLToolbar_hpp_
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 #include <chrono>
@@ -17,6 +18,9 @@ namespace GUI {
 
 class GLCanvas3D;
 struct Camera;
+// MD3 viewport-chrome geometry cache; defined in GLToolbar.cpp. Holds the kit
+// backdrop / divider / state-layer GLModels so they are not rebuilt each frame.
+class MD3ChromeCache;
 
 //BBS: GUI refactor: GLToolbar
 wxDECLARE_EVENT(EVT_GLTOOLBAR_OPEN_PROJECT, SimpleEvent);
@@ -440,6 +444,12 @@ public:
     // dimensions so the caller can preserve the glyph's aspect ratio.
     unsigned int ensure_selected_glyph_texture(uint32_t codepoint, int px, int* out_w, int* out_h) const;
 
+    // MD3 viewport-chrome geometry cache for this toolbar (see MD3ChromeCache in
+    // GLToolbar.cpp). Lazily created and reused by the renderer so the kit backdrop,
+    // dividers and hover/selected state layers are not re-uploaded to the GPU every
+    // frame; released with the toolbar (context-safe).
+    MD3ChromeCache& md3_chrome_cache() const;
+
     // returns true if any item changed its state
     bool update_items_state();
 
@@ -533,6 +543,10 @@ private:
     mutable int          m_sel_glyph_h{ 0 };
     mutable bool         m_sel_glyph_dark{ false };
     mutable bool         m_sel_glyph_failed{ false };
+
+    // MD3 viewport-chrome GLModel cache (see md3_chrome_cache / MD3ChromeCache).
+    // PIMPL so GLModel.hpp stays out of this header; released in ~GLToolbar.
+    mutable std::unique_ptr<MD3ChromeCache> m_md3_chrome_cache;
     struct MouseCapture
     {
         bool left;
