@@ -1,8 +1,19 @@
 #include "StaticBox.hpp"
 #include "StateColor.hpp"
 #include "../GUI.hpp"
+#include <algorithm>
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
+
+// Interactive-card hover animation: step the resting -> hover border promotion
+// toward its target every HOVER_TICK_MS so the OutlineVariant -> Primary swap
+// eases over HOVER_ANIM_MS (~0.15s, matching the kit Card transition). Once the
+// promotion is fully in, the timer drops to a cheap HOVER_WATCH_MS poll that
+// notices the pointer leaving via a child window (which does not re-fire
+// LEAVE on the parent card) so the border can never stick promoted.
+static const int HOVER_TICK_MS  = 15;
+static const int HOVER_ANIM_MS  = 150;
+static const int HOVER_WATCH_MS = 100;
 
 BEGIN_EVENT_TABLE(StaticBox, wxWindow)
 
@@ -71,6 +82,107 @@ void StaticBox::RescaleDefaultCornerRadius()
 {
     if (m_uses_default_radius)
         radius = FromDIP(m_default_radius_dip);
+}
+
+void StaticBox::SetDensity(Density density)
+{
+    SetDefaultCornerRadius(density == Density::Comfortable ? MD3::Metrics::comfortable.radius
+                                                           : MD3::Metrics::compact.radius);
+    RescaleDefaultCornerRadius();
+    Refresh();
+}
+
+void StaticBox::SetSchemeAccent(MD3::ColorScheme scheme)
+{
+    if (m_scheme == scheme)
+        return;
+    m_scheme = scheme;
+    if (m_interactive)
+        Refresh();
+}
+
+void StaticBox::SetInteractive(bool interactive)
+{
+    if (m_interactive == interactive)
+        return;
+    m_interactive = interactive;
+
+    if (interactive) {
+        // A visible border is required for the hover promotion to read; seed the
+        // resting OutlineVariant so the non-hovered card matches the kit Card.
+        if (border_width == 0)
+            border_width = 1;
+        border_color = StateColor(StateColor::semantic(m_rest_border_role, m_scheme));
+        state_handler.update_binds();
+
+        m_hover_timer.SetOwner(this);
+        Bind(wxEVT_ENTER_WINDOW, &StaticBox::onHoverEnter, this);
+        Bind(wxEVT_LEAVE_WINDOW, &StaticBox::onHoverLeave, this);
+        Bind(wxEVT_TIMER, &StaticBox::onHoverTick, this);
+        SetCursor(wxCursor(wxCURSOR_HAND));
+    } else {
+        m_hover_timer.Stop();
+        Unbind(wxEVT_ENTER_WINDOW, &StaticBox::onHoverEnter, this);
+        Unbind(wxEVT_LEAVE_WINDOW, &StaticBox::onHoverLeave, this);
+        Unbind(wxEVT_TIMER, &StaticBox::onHoverTick, this);
+        m_hover_active = false;
+        m_hover_anim   = 0.0;
+        SetCursor(wxCursor(wxCURSOR_ARROW));
+    }
+    Refresh();
+}
+
+void StaticBox::onHoverEnter(wxMouseEvent &evt)
+{
+    evt.Skip();
+    if (!m_interactive || !IsEnabled())
+        return;
+    m_hover_active = true;
+    if (!m_hover_timer.IsRunning() || m_hover_timer.GetInterval() != HOVER_TICK_MS)
+        m_hover_timer.Start(HOVER_TICK_MS);
+}
+
+void StaticBox::onHoverLeave(wxMouseEvent &evt)
+{
+    evt.Skip();
+    if (!m_interactive)
+        return;
+    // Moving onto a child window still counts as hovering the card (CSS :hover
+    // semantics); only a pointer that has left the card's bounds demotes it.
+    if (GetScreenRect().Contains(wxGetMousePosition()))
+        return;
+    m_hover_active = false;
+    if (!m_hover_timer.IsRunning() || m_hover_timer.GetInterval() != HOVER_TICK_MS)
+        m_hover_timer.Start(HOVER_TICK_MS);
+}
+
+void StaticBox::onHoverTick(wxTimerEvent &)
+{
+    // While fully promoted, poll containment so a pointer that left via a child
+    // (no parent LEAVE) still demotes the border.
+    if (m_hover_active && m_hover_anim >= 1.0 && !GetScreenRect().Contains(wxGetMousePosition()))
+        m_hover_active = false;
+
+    const double target = m_hover_active ? 1.0 : 0.0;
+    const double step   = static_cast<double>(HOVER_TICK_MS) / static_cast<double>(HOVER_ANIM_MS);
+    if (m_hover_anim < target)
+        m_hover_anim = std::min(target, m_hover_anim + step);
+    else if (m_hover_anim > target)
+        m_hover_anim = std::max(target, m_hover_anim - step);
+    Refresh(false);
+
+    if (m_hover_anim == target) {
+        if (m_hover_active) {
+            // Settled at full promotion: drop to the cheap containment watchdog.
+            if (m_hover_timer.GetInterval() != HOVER_WATCH_MS)
+                m_hover_timer.Start(HOVER_WATCH_MS);
+        } else {
+            m_hover_timer.Stop();
+        }
+    } else if (m_hover_timer.GetInterval() != HOVER_TICK_MS) {
+        // Mid-animation: run at the smooth cadence.
+        m_hover_timer.Start(HOVER_TICK_MS);
+    }
 }
 
 void StaticBox::SetBorderStyle(wxPenStyle style)
@@ -228,7 +340,20 @@ void StaticBox::doRender(wxDC& dc)
                     rc.y += d;
                     rc.height -= d;
                 }
-                dc.SetPen(wxPen(border_color.colorForStates(states), border_width, border_style));
+                wxColour border_draw = border_color.colorForStates(states);
+                if (m_interactive) {
+                    // Ease the resting OutlineVariant toward the hover Primary by
+                    // the animation factor. Both endpoints are resolved live so
+                    // the promotion tracks the current theme + scheme.
+                    const wxColour rest = StateColor::semantic(m_rest_border_role, m_scheme);
+                    const wxColour hov  = StateColor::semantic(m_hover_border_role, m_scheme);
+                    const double   t    = m_hover_anim;
+                    border_draw = wxColour(
+                        rest.Red()   + static_cast<int>((hov.Red()   - rest.Red())   * t + 0.5),
+                        rest.Green() + static_cast<int>((hov.Green() - rest.Green()) * t + 0.5),
+                        rest.Blue()  + static_cast<int>((hov.Blue()  - rest.Blue())  * t + 0.5));
+                }
+                dc.SetPen(wxPen(border_draw, border_width, border_style));
             } else {
                 dc.SetPen(wxPen(background_color.colorForStates(states)));
             }

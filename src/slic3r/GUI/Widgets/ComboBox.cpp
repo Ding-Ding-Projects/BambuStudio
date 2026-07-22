@@ -1,6 +1,7 @@
 #include "ComboBox.hpp"
 #include "Label.hpp"
 #include "StateColor.hpp"
+#include "MaterialIcon.hpp"
 
 #include <wx/dcgraph.h>
 
@@ -45,29 +46,33 @@ ComboBox::ComboBox(wxWindow *parent,
     if ((style & wxALIGN_MASK) == 0 && (style & wxCB_READONLY))
         style |= wxALIGN_RIGHT;
     text_off = style & CB_NO_TEXT;
-    TextInput::Create(parent, "", value, (style & CB_NO_DROP_ICON) ? "" : "drop_down", pos, size,
+    m_no_drop_icon = style & CB_NO_DROP_ICON;
+    // The trailing dropdown affordance is applied as a Material Symbols glyph via
+    // applyDropChevron() below (not the legacy raster passed to Create).
+    TextInput::Create(parent, "", value, "", pos, size,
                       style | wxTE_PROCESS_ENTER);
     drop.Create(this, style & DD_STYLE_MASK);
+    applyDropChevron();
 
     if (style & wxCB_READONLY) {
         GetTextCtrl()->Hide();
         TextInput::SetFont(Label::Body_14);
-        // MD3 outlined SelectField rest border is Outline (#75777f), not the
-        // lighter OutlineVariant. Grey500 carries the Outline light value and is
-        // a gDarkColors key (-> #94959f = Outline dark), so it live-remaps on a
-        // runtime dark-mode toggle -- unlike a semantic() snapshot. Hover keeps
-        // Primary (BrandGreen) and disabled keeps the muted OutlineVariant tone.
-        TextInput::SetBorderColor(StateColor(std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled),
-            std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
-            std::make_pair(ThemeColor::Grey500, (int) StateColor::Normal)));
-        // Focus tint: keep the raw 0xEDFAF2 tint. It is a key in the gDarkColors
-        // map (StateColor.cpp -> #095228), so colorForStates() re-adapts it live
-        // on every runtime dark-mode toggle. A pre-resolved
-        // semantic(SecondaryContainer) snapshot stores a concrete hex that is NOT
-        // a gDarkColors key and would stay stuck at the pre-toggle theme.
-        TextInput::SetBackgroundColor(StateColor(std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
-            std::make_pair(0xEDFAF2, (int) StateColor::Focused),
-            std::make_pair(ThemeColor::White, (int) StateColor::Normal)));
+        // SelectField rest border is Outline (#75777f), not the lighter
+        // OutlineVariant; hover promotes to Primary and disabled falls to
+        // OutlineVariant. Stored as MD3 light role values (all keys in
+        // StateColor.cpp's gDarkColors table), so colorForStates() live-remaps
+        // them on a runtime dark-mode toggle -- unlike a semantic() snapshot.
+        TextInput::SetBorderColor(StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
+            std::make_pair(MD3::Light::primary, (int) StateColor::Hovered),
+            std::make_pair(MD3::Light::outline, (int) StateColor::Normal)));
+        // Filled SelectField fill: SurfaceContainerHighest at rest,
+        // SecondaryContainer for the read-only focus tint (the MD3 selected/active
+        // tonal, replacing the raw 0xEDFAF2), SurfaceContainerHigh for disabled.
+        // Each light role value is a gDarkColors key, so colorForStates()
+        // re-adapts it live on a dark-mode toggle.
+        TextInput::SetBackgroundColor(StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
+            std::make_pair(MD3::Light::secondaryContainer, (int) StateColor::Focused),
+            std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal)));
         TextInput::SetLabelColor(StateColor(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
             std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal)));
     }
@@ -99,13 +104,14 @@ void ComboBox::SetSelection(int n)
     SetLabel(drop.GetValue());
     if (drop.selection >= 0 && drop.iconSize.y > 0 && items[drop.selection].icon_textctrl.IsOk()) {
         if (m_keep_drop_arrow) {
-            SetIcon("drop_down");
+            applyDropChevron();
             SetIcon_1(items[drop.selection].icon_textctrl);
         } else {
+            m_chevron_shown = false;
             SetIcon(items[drop.selection].icon_textctrl);
         }
     } else {
-        SetIcon("drop_down");
+        applyDropChevron();
         if (m_keep_drop_arrow)
             SetIcon_1(wxNullBitmap);
     }
@@ -126,6 +132,36 @@ void ComboBox::Rescale()
 {
     TextInput::Rescale();
     drop.Rescale();
+    // Regenerate the glyph chevron for the new DPI / theme. The m_applying_chevron
+    // guard breaks the SetIcon() -> Rescale() re-entry so this cannot recurse.
+    if (m_chevron_shown)
+        applyDropChevron();
+}
+
+// Build the trailing dropdown affordance as a Material Symbols ExpandMore glyph
+// (16px, OnSurfaceVariant) rendered to a DPI-correct bitmap, replacing the legacy
+// raster 'drop_down' PNG. Returns an invalid bitmap when the Material Symbols face
+// is unavailable so applyDropChevron() can fall back to the raster.
+wxBitmap ComboBox::makeDropChevron()
+{
+    if (!MaterialIcon::available())
+        return wxBitmap();
+    return MaterialIcon::bitmap(this, MaterialIcon::ExpandMore, 16,
+                                StateColor::semantic(MD3::Role::OnSurfaceVariant));
+}
+
+void ComboBox::applyDropChevron()
+{
+    if (m_no_drop_icon || m_applying_chevron)
+        return;
+    m_applying_chevron = true;
+    wxBitmap bmp = makeDropChevron();
+    if (bmp.IsOk())
+        TextInput::SetIcon(bmp);                    // Material glyph chevron
+    else
+        TextInput::SetIcon(wxString("drop_down"));  // graceful raster fallback
+    m_chevron_shown    = true;
+    m_applying_chevron = false;
 }
 
 wxString ComboBox::GetValue() const
@@ -139,13 +175,14 @@ void ComboBox::SetValue(const wxString &value)
     SetLabel(value);
     if (drop.selection >= 0 && drop.iconSize.y > 0 && items[drop.selection].icon_textctrl.IsOk()) {
         if (m_keep_drop_arrow) {
-            SetIcon("drop_down");
+            applyDropChevron();
             SetIcon_1(items[drop.selection].icon_textctrl);
         } else {
+            m_chevron_shown = false;
             SetIcon(items[drop.selection].icon_textctrl);
         }
     } else {
-        SetIcon("drop_down");
+        applyDropChevron();
         if (m_keep_drop_arrow)
             SetIcon_1(wxNullBitmap);
     }
@@ -254,7 +291,7 @@ int ComboBox::SetItems(const std::vector<DropDown::Item>& the_items)
 
 void ComboBox::DoClear()
 {
-    SetIcon("drop_down");
+    applyDropChevron();
     items.clear();
     drop.Invalidate(true);
 }

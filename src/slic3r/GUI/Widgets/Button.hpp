@@ -4,6 +4,8 @@
 #include "../wxExtensions.hpp"
 #include "StaticBox.hpp"
 
+#include <cstdint>
+
 class wxTipWindow;
 class Button : public StaticBox
 {
@@ -11,12 +13,19 @@ public:
     // MD3 action-button variants. The default-constructed Button keeps its
     // legacy white/green toggle appearance untouched (so the ~hundreds of
     // existing call sites are unaffected); a variant is applied only when a
-    // caller opts in via SetVariant(). See applyMD3Style().
-    enum class Variant { Filled, Tonal, Outlined, Text, Danger };
+    // caller opts in via SetVariant() / SetIconButton(). See applyMD3Style().
+    //
+    // IconButton is a borderless ghost touch target (circle 50% / square r8)
+    // that draws a single centered Material Symbols glyph; it is opted into via
+    // SetIconButton() and its glyph is supplied through SetGlyph().
+    enum class Variant { Filled, Tonal, Outlined, Text, Danger, IconButton };
 
     // MD3 size tiers. Map to fixed heights 36/42/44, per-side h-padding
     // 16/18/22, label sizes 12.5/13.5/14 and icon glyphs 18/20/20.
     enum class Size { Small, Medium, Large };
+
+    // IconButton shape: circle (radius = half the container) or square (r8).
+    enum class IconShape { Circle, Square };
 
 private:
     wxRect textSize;
@@ -33,6 +42,21 @@ private:
     Size              m_button_size   = Size::Medium;
     MD3::ColorScheme  m_scheme        = MD3::ColorScheme::Brand;
     bool              m_md3_variant   = false;
+
+    // Optional Material Symbols glyph content (part b). When m_has_glyph is set
+    // and the icon font resolves, render() draws this codepoint through the
+    // MaterialIcon font path (coloured by text_color) instead of a raster
+    // ScalableBitmap; a raster icon set alongside it is the graceful fallback
+    // when the Material Symbols face is unavailable.
+    bool     m_has_glyph = false;
+    uint32_t m_glyph_cp  = 0;
+    int      m_glyph_px  = 0; // 0 => derive from the size tier / IconButton size
+
+    // IconButton geometry (only meaningful when m_variant == Variant::IconButton).
+    IconShape m_icon_shape        = IconShape::Circle;
+    bool      m_icon_filled       = false;
+    bool      m_icon_danger       = false;
+    int       m_icon_container_px = 36; // square touch-target edge (design px)
 
     bool pressedDown = false;
     bool m_selected  = true;
@@ -89,6 +113,22 @@ public:
     void SetButtonSize(Size size);
     void SetColorScheme(MD3::ColorScheme scheme);
 
+    // Draw a Material Symbols glyph (via the shared MaterialIcon helper) as the
+    // button's icon instead of a raster ScalableBitmap. px<=0 derives the glyph
+    // size from the active size tier / IconButton size; codepoint 0 clears the
+    // glyph and reverts to the raster-icon path. Works on any Button — a legacy
+    // default button opts in without otherwise changing its appearance.
+    void SetGlyph(uint32_t codepoint, int px = 0);
+
+    // Switch the Button into borderless IconButton mode: a circle (radius =
+    // half the container) or square (r8) ghost target that is transparent +
+    // OnSurfaceVariant at rest, SurfaceContainerHigh on hover, optionally a
+    // resting SurfaceContainerHighest disc (filled), and Error / OnError on
+    // hover when danger. Supply the glyph via SetGlyph(); container_px <= 0
+    // keeps the current/default 36px edge (square adds 4px of width).
+    void SetIconButton(IconShape shape = IconShape::Circle, int container_px = 0,
+                       bool filled = false, bool danger = false);
+
     void SetSelected(bool selected = true) { m_selected = selected; }
 
     bool Enable(bool enable = true) override;
@@ -133,6 +173,10 @@ private:
     void applyMD3Style();
     // Rebuild the active/inactive icon bitmaps at a new glyph size (px).
     void rebuildIcons(int px);
+    // The design-px glyph size for the current glyph/variant: respects an
+    // explicit SetGlyph() px, else derives from the IconButton container
+    // (17/19/22) or the pill size tier (18/20/20).
+    int effectiveGlyphPx() const;
 
     void messureSize();
 

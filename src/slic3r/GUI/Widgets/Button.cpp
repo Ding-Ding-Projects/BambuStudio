@@ -1,5 +1,6 @@
 #include "Button.hpp"
 #include "Label.hpp"
+#include "MaterialIcon.hpp"
 #include "StateColor.hpp"
 
 #include <wx/dcclient.h>
@@ -188,6 +189,46 @@ void Button::SetColorScheme(MD3::ColorScheme scheme)
         applyMD3Style();
 }
 
+void Button::SetGlyph(uint32_t codepoint, int px)
+{
+    m_glyph_cp  = codepoint;
+    m_has_glyph = codepoint != 0;
+    m_glyph_px  = px > 0 ? px : 0;
+    if (m_md3_variant) {
+        // Re-derive geometry (an IconButton's glyph size feeds its fallback
+        // raster rebuild) and repaint.
+        applyMD3Style();
+    } else {
+        messureSize();
+        Refresh();
+    }
+}
+
+void Button::SetIconButton(IconShape shape, int container_px, bool filled, bool danger)
+{
+    m_variant     = Variant::IconButton;
+    m_md3_variant = true;
+    m_icon_shape  = shape;
+    if (container_px > 0)
+        m_icon_container_px = container_px;
+    m_icon_filled = filled;
+    m_icon_danger = danger;
+    applyMD3Style();
+}
+
+int Button::effectiveGlyphPx() const
+{
+    if (m_glyph_px > 0)
+        return m_glyph_px;
+    if (m_md3_variant && m_variant == Variant::IconButton) {
+        // Kit derivation: 22 (>=40) / 19 (>=34) / 17 by container edge.
+        const int c = m_icon_container_px > 0 ? m_icon_container_px : 36;
+        return c >= 40 ? 22 : (c >= 34 ? 19 : 17);
+    }
+    // Pill variant / legacy: match the size-tier icon glyph (18/20/20).
+    return m_button_size == Size::Small ? 18 : 20;
+}
+
 void Button::rebuildIcons(int px)
 {
     if (active_icon.bmp().IsOk() && !active_icon.name().empty() && active_icon.px_cnt() != px)
@@ -203,6 +244,57 @@ void Button::applyMD3Style()
 
     using R = MD3::Role;
     const MD3::ColorScheme s = m_scheme;
+
+    // Borderless IconButton mode: a circle (radius = half the container) or
+    // square (r8) ghost touch target that draws a single centered glyph. Its
+    // geometry and neutral surface colours differ from the pill variants, so it
+    // is configured here and returns before the pill layout runs.
+    if (m_variant == Variant::IconButton) {
+        const wxColour disabledFg = ThemeColor::TextDisabled;
+        const wxColour parentBg   = StaticBox::GetParentBackgroundColor(GetParent());
+        const int      container  = m_icon_container_px > 0 ? m_icon_container_px : 36;
+        const wxColour rest       = m_icon_filled ? StateColor::semantic(R::SurfaceContainerHighest)
+                                                  : parentBg;
+
+        StateColor bg, fg;
+        if (m_icon_danger) {
+            // Window-close idiom: hover fills Error and flips the glyph to OnError.
+            bg = StateColor(std::make_pair(StateColor::semantic(R::Error), (int) StateColor::Hovered),
+                            std::make_pair(rest, (int) StateColor::Normal));
+            fg = StateColor(std::make_pair(disabledFg, (int) StateColor::Disabled),
+                            std::make_pair(StateColor::semantic(R::OnError), (int) StateColor::Hovered),
+                            std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int) StateColor::Normal));
+        } else {
+            bg = StateColor(std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+                            std::make_pair(rest, (int) StateColor::Normal));
+            fg = StateColor(std::make_pair(disabledFg, (int) StateColor::Disabled),
+                            std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int) StateColor::Normal));
+        }
+
+        background_color = bg;
+        text_color       = fg;
+        SetBorderWidth(0);
+        // Circle => pill radius (half the DPI-scaled edge); square => r8.
+        if (m_icon_shape == IconShape::Circle)
+            SetCornerRadius(FromDIP(container) / 2.0);
+        else
+            SetCornerRadius(FromDIP(MD3::Metrics::radius_tiny));
+
+        // Square adds 4px of width (matches the kit window-control shape); the
+        // glyph stays centered via render()'s isCenter path.
+        const int wpx = container + (m_icon_shape == IconShape::Square ? 4 : 0);
+        paddingSize    = wxSize(0, 0);
+        minSize        = wxSize(FromDIP(wpx), FromDIP(container));
+
+        // Keep any fallback raster icon sized to the glyph so it lines up when
+        // the Material Symbols face is unavailable.
+        rebuildIcons(effectiveGlyphPx());
+
+        state_handler.update_binds();
+        messureSize();
+        Refresh();
+        return;
+    }
 
     // Size tier geometry + label size + icon glyph size.
     int   height = 42, hpad = 18, icon_px = 20;
@@ -233,6 +325,7 @@ void Button::applyMD3Style()
     int        bw = 0;
 
     switch (m_variant) {
+    case Variant::IconButton: break; // configured and returned above; unreachable here
     case Variant::Filled: {
         const wxColour fill = StateColor::semantic(R::Primary, s);
         bg = StateColor(std::make_pair(disabledBg, (int) StateColor::Disabled),
@@ -404,16 +497,27 @@ void Button::render(wxDC& dc)
             textSize = dc.GetMultiLineTextExtent(text);
         }
     }
+    // Glyph content (part b): when a Material Symbols glyph is set and the icon
+    // face resolves, it stands in for the raster icon and is drawn live in the
+    // state-resolved text colour. A raster icon set alongside it is the fallback
+    // used when the Material Symbols face is unavailable.
+    const bool drawGlyph = m_has_glyph && MaterialIcon::available();
+    const int  glyph_px  = drawGlyph ? effectiveGlyphPx() : 0;
+    const bool hasIcon   = drawGlyph || icon.bmp().IsOk();
+    // Don't reserve the icon->label gap when there is no label, so a glyph-only
+    // IconButton stays exactly centered; legacy raster call sites keep their gap.
+    const bool tightCenter = drawGlyph || (m_md3_variant && m_variant == Variant::IconButton);
+
     auto szContent = textSize;
-    if (icon.bmp().IsOk()) {
-        if (szContent.y > 0) {
+    if (hasIcon) {
+        if (szContent.y > 0 && !(tightCenter && text.IsEmpty())) {
             //BBS norrow size between text and icon
             if (vertical)
                 szContent.y += spacing;
             else
                 szContent.x += spacing;
         }
-        szIcon = icon.GetBmpSize();
+        szIcon = drawGlyph ? MaterialIcon::measure(dc, m_glyph_cp, glyph_px) : icon.GetBmpSize();
         if (vertical) {
             szContent.y += szIcon.y;
             if (szIcon.x > szContent.x) szContent.x = szIcon.x;
@@ -436,12 +540,15 @@ void Button::render(wxDC& dc)
     }
     // start draw
     wxPoint pt = rcContent.GetLeftTop();
-    if (icon.bmp().IsOk()) {
+    if (hasIcon) {
         if (vertical)
             pt.x += (rcContent.width - szIcon.x) / 2;
         else
             pt.y += (rcContent.height - szIcon.y) / 2;
-        dc.DrawBitmap(icon.bmp(), pt);
+        if (drawGlyph)
+            MaterialIcon::draw(dc, m_glyph_cp, glyph_px, text_color.colorForStates(states), pt);
+        else
+            dc.DrawBitmap(icon.bmp(), pt);
         //BBS norrow size between text and icon
         if (vertical) {
             pt.y += szIcon.y + spacing;
@@ -539,15 +646,27 @@ void Button::messureSize()
     wxClientDC dc(this);
     dc.GetTextExtent(GetLabel(), &textSize.width, &textSize.height, &textSize.x, &textSize.y);
     wxSize szContent = textSize.GetSize();
-    if (this->active_icon.bmp().IsOk()) {
-        if (szContent.y > 0) {
+    // Mirror render(): a Material Symbols glyph stands in for the raster icon
+    // for sizing when the icon face resolves, else the raster icon is measured.
+    const bool drawGlyph   = m_has_glyph && MaterialIcon::available();
+    const bool tightCenter = drawGlyph || (m_md3_variant && m_variant == Variant::IconButton);
+    wxSize     szIcon;
+    bool       hasIcon = false;
+    if (drawGlyph) {
+        szIcon  = MaterialIcon::measure(dc, m_glyph_cp, effectiveGlyphPx());
+        hasIcon = true;
+    } else if (this->active_icon.bmp().IsOk()) {
+        szIcon  = this->active_icon.GetBmpSize();
+        hasIcon = true;
+    }
+    if (hasIcon) {
+        if (szContent.y > 0 && !(tightCenter && GetLabel().IsEmpty())) {
             // MD3 icon->label gap is 8px; keep in sync with render()'s spacing.
             if (vertical)
                 szContent.y += FromDIP(8);
             else
                 szContent.x += FromDIP(8);
         }
-        wxSize szIcon = this->active_icon.GetBmpSize();
         if (vertical) {
             szContent.y += szIcon.y;
             if (szIcon.x > szContent.x) szContent.x = szIcon.x;

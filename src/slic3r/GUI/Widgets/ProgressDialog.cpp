@@ -13,6 +13,7 @@
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
 #include "ProgressDialog.hpp"
+#include "ProgressBar.hpp"
 #include "StateColor.hpp"
 #include "wx/evtloop.h"
 #include "Label.hpp"
@@ -37,7 +38,8 @@ void ProgressDialog::Init()
     m_pdStyle   = 0;
     m_parentTop = NULL;
 
-    m_gauge   = NULL;
+    m_progress_bar   = NULL;
+    m_progress_value = 0;
     m_msg     = NULL;
     m_elapsed = m_estimated = m_remaining = NULL;
 
@@ -151,14 +153,13 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
 
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
-    m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0);
-    m_top_line->SetBackgroundColour(ThemeColor::Grey450);
-
-    m_sizer_main->Add(m_top_line, 0, wxEXPAND, 0);
+    // The legacy Grey450 top-accent line is dropped (kit Dialog has no top
+    // divider); keep the top breathing room only.
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(24));
 
     if (!m_adaptive) {
         m_simplebook = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, PROGRESSDIALOG_SIMPLEBOOK_SIZE, 0);
+        m_simplebook->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
 
         m_panel_1line = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, PROGRESSDIALOG_SIMPLEBOOK_SIZE, 0);
         m_panel_1line->SetMaxSize(PROGRESSDIALOG_SIMPLEBOOK_SIZE);
@@ -194,6 +195,7 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
         m_sizer_main->Add(m_simplebook, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(28));
     } else {
         m_msg_scrolledWindow = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL );
+        m_msg_scrolledWindow->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
         m_msg_scrolledWindow->SetScrollRate(0,5);
         wxBoxSizer* m_msg_sizer= new wxBoxSizer(wxVERTICAL);
 
@@ -212,18 +214,19 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
 
     m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, 0);
 
-    int gauge_style = wxGA_HORIZONTAL;
-    if (style & wxPD_SMOOTH) gauge_style |= wxGA_SMOOTH;
-    gauge_style |= wxGA_PROGRESS;
-
 #ifdef __WXMSW__
     maximum /= m_factor;
 #endif
 
     if (!HasPDFlag(wxPD_NO_PROGRESS)) {
-        m_gauge = new wxGauge(this, wxID_ANY, maximum, wxDefaultPosition, PROGRESSDIALOG_GAUGE_SIZE, gauge_style);
-        m_gauge->SetValue(0);
-        m_sizer_main->Add(m_gauge, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(28));
+        // Migrated MD3 ProgressBar: Primary fill on a SurfaceContainerHighest
+        // track (its defaults), 8px/r6 geometry, replacing the raw wxGauge.
+        m_progress_bar = new ProgressBar(this, wxID_ANY, maximum, wxDefaultPosition, PROGRESSDIALOG_GAUGE_SIZE);
+        // The bar paints its own rounded track; match its window fill to the
+        // dialog so the rounded corners don't reveal a stale white backing.
+        m_progress_bar->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
+        m_progress_bar->SetProgress(0);
+        m_sizer_main->Add(m_progress_bar, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(28));
     }
 
 #ifdef __WXMSW__
@@ -509,15 +512,17 @@ bool ProgressDialog::Update(int value, const wxString &newmsg, bool *skip)
 {
     if (!DoBeforeUpdate(skip)) return false;
 
-    wxCHECK_MSG(m_msg || m_gauge, false, "dialog should be fully created");
+    wxCHECK_MSG(m_msg || m_progress_bar, false, "dialog should be fully created");
 
 #ifdef __WXMSW__
     value /= m_factor;
 #endif // __WXMSW__
 
     wxASSERT_MSG(value <= m_maximum, wxT("invalid progress value"));
-    if (m_gauge)
-        m_gauge->SetValue(value);
+    if (m_progress_bar) {
+        m_progress_bar->SetProgress(value);
+        m_progress_value = value;
+    }
 
     UpdateMessage(newmsg);
 
@@ -589,10 +594,11 @@ bool ProgressDialog::Pulse(const wxString &newmsg, bool *skip)
 {
     if (!DoBeforeUpdate(skip)) return false;
 
-    wxCHECK_MSG(m_msg || m_gauge, false, "dialog should be fully created");
+    wxCHECK_MSG(m_msg || m_progress_bar, false, "dialog should be fully created");
 
-    // show a bit of progress
-    if (m_gauge) m_gauge->Pulse();
+    // The kit ProgressBar is determinate only; there is no indeterminate pulse
+    // to render. Callers that pulse before a real value (e.g. app restart) are
+    // unaffected — the next Update() sets a concrete value.
 
     UpdateMessage(newmsg);
 
@@ -661,9 +667,9 @@ bool ProgressDialog::Show(bool show)
 
 int ProgressDialog::GetValue() const
 {
-    wxCHECK_MSG(m_gauge, -1, "dialog should be fully created");
+    wxCHECK_MSG(m_progress_bar, -1, "dialog should be fully created");
 
-    return m_gauge->GetValue();
+    return m_progress_value;
 }
 
 int ProgressDialog::GetRange() const { return m_maximum; }
@@ -672,13 +678,16 @@ wxString ProgressDialog::GetMessage() const { return m_msg->GetLabel(); }
 
 void ProgressDialog::SetRange(int maximum)
 {
-    wxCHECK_RET(m_gauge, "dialog should be fully created");
+    wxCHECK_RET(m_progress_bar, "dialog should be fully created");
 
     wxCHECK_RET(maximum > 0, "Invalid range");
 
-    m_gauge->SetRange(maximum);
-
     SetMaximum(maximum);
+
+    // Mirror the (MSW-scaled) maximum onto the bar so the fill proportion stays
+    // correct; the bar exposes m_max directly (no SetRange getter/setter).
+    m_progress_bar->m_max = m_maximum;
+    m_progress_bar->Refresh();
 }
 
 void ProgressDialog::set_panel_height(int height) {

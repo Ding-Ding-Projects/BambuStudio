@@ -27,11 +27,23 @@ TextInput::TextInput()
     , text_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
                  std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
 {
-    radius = 0;
+    // MD3 filled-field geometry. Radius 10 flows through the StaticBox
+    // default-radius path so it is FromDIP-scaled at Create and recomputed on
+    // every monitor/DPI change (no stale cached radius). Fill is
+    // SurfaceContainerHighest; the resting border is Outline (not the lighter
+    // OutlineVariant), hover promotes to Primary, disabled falls to
+    // OutlineVariant. Every colour is stored as its MD3 *light* role value, and
+    // each of those hexes is a key in StateColor.cpp's gDarkColors table, so
+    // colorForStates() live-remaps them on a runtime dark-mode toggle -- this is
+    // why the old Grey400 / BrandGreen / White / Grey300 literals are dropped in
+    // favour of the role tones rather than semantic() snapshots.
+    SetDefaultCornerRadius(10);
     border_width = 1;
-    border_color = StateColor(std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled), std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
-                              std::make_pair(ThemeColor::Grey400, (int) StateColor::Normal));
-    background_color = StateColor(std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled), std::make_pair(ThemeColor::White, (int) StateColor::Normal));
+    border_color = StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
+                              std::make_pair(MD3::Light::primary, (int) StateColor::Hovered),
+                              std::make_pair(MD3::Light::outline, (int) StateColor::Normal));
+    background_color = StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
+                                  std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal));
     SetFont(Label::Body_12);
 }
 
@@ -371,7 +383,7 @@ void TextInput::render(wxDC& dc)
 
         wxFont prefix_font = text_ctrl->GetFont();
         dc.SetFont(prefix_font);
-        dc.SetTextForeground(ThemeColor::TextDisabled);
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         dc.DrawText(m_prefix, wxPoint(x, y));
     }
     if (!m_unit.IsEmpty() && text_ctrl) {
@@ -384,7 +396,7 @@ void TextInput::render(wxDC& dc)
         wxFont unit_font = text_ctrl->GetFont();
         unit_font.SetPointSize(unit_font.GetPointSize() - 1);
         dc.SetFont(unit_font);
-        dc.SetTextForeground(ThemeColor::TextDisabled);
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         dc.DrawText(m_unit, wxPoint(x, y));
     }
 }
@@ -440,7 +452,10 @@ bool TextInput::CheckValid(bool pop_dlg) const
         }
     }
 
-    text_ctrl->SetBackgroundColour(ThemeColor::White);
+    // Reset-on-valid restores the field's fill ROLE (SurfaceContainerHighest),
+    // not a raw White literal, so the interior matches the MD3 filled field in
+    // both light and dark themes.
+    text_ctrl->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     text_ctrl->SetToolTip(wxEmptyString);
     text_ctrl->Refresh();
     return true;

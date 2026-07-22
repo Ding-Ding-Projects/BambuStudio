@@ -2,6 +2,7 @@
 #include "Label.hpp"
 #include "Button.hpp"
 #include "StateColor.hpp"
+#include "MaterialIcon.hpp"
 #include "TextCtrl.h"
 
 #include <wx/dcgraph.h>
@@ -28,11 +29,19 @@ SpinInput::SpinInput()
     , text_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled), std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
     , text_updating(false)
 {
-    radius = 0;
+    // MD3 ValueField geometry: r10 (FromDIP-scaled via the StaticBox
+    // default-radius path so it recomputes on DPI change), SurfaceContainerHighest
+    // fill, resting Outline border (hover Primary, disabled OutlineVariant). Every
+    // colour is stored as its MD3 light role value -- all keys in StateColor.cpp's
+    // gDarkColors table -- so colorForStates() live-remaps them on a dark-mode
+    // toggle, dropping the White / Grey300 / Grey400 / BrandGreen literals.
+    SetDefaultCornerRadius(10);
     border_width     = 1;
-    border_color     = StateColor(std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled), std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
-                              std::make_pair(ThemeColor::Grey400, (int) StateColor::Normal));
-    background_color = StateColor(std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled), std::make_pair(ThemeColor::White, (int) StateColor::Normal));
+    border_color     = StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
+                              std::make_pair(MD3::Light::primary, (int) StateColor::Hovered),
+                              std::make_pair(MD3::Light::outline, (int) StateColor::Normal));
+    background_color = StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
+                              std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal));
 }
 
 
@@ -62,7 +71,11 @@ void SpinInput::Create(wxWindow *parent,
     state_handler.attach({&label_color, &text_color});
     state_handler.update_binds();
     text_ctrl = new TextCtrl(this, wxID_ANY, text, {20, 4}, wxDefaultSize, style | wxBORDER_NONE | wxTE_PROCESS_ENTER, wxTextValidator(wxFILTER_DIGITS));
-    text_ctrl->SetFont(Label::Body_14);
+    // ValueField value in the native wxDC Roboto Mono face at 12.5/500 (Label::Mono_12
+    // is 12.5/400; bump to Medium for the 500 weight) -- not the ImGui atlas mono.
+    wxFont mono_value = Label::Mono_12;
+    mono_value.SetWeight(wxFONTWEIGHT_MEDIUM);
+    text_ctrl->SetFont(mono_value);
     text_ctrl->SetBackgroundColour(background_color.colorForStates(state_handler.states()));
     text_ctrl->SetForegroundColour(text_color.colorForStates(state_handler.states()));
     text_ctrl->SetInitialSize(text_ctrl->GetBestSize());
@@ -197,14 +210,10 @@ void SpinInput::render(wxDC& dc)
     StaticBox::render(dc);
     int    states = state_handler.states();
     wxSize size = GetSize();
-    // draw seperator of buttons
-    wxPoint pt = button_inc->GetPosition();
-    pt.y = size.y / 2;
-    dc.SetPen(wxPen(border_color.defaultColor()));
-    dc.DrawLine(pt, pt + wxSize{button_inc->GetSize().x - 2, 0});
-    // draw label
+    // draw label (the legacy Grey400 line between the steppers is dropped in MD3)
     auto label = GetLabel();
     if (!label.IsEmpty()) {
+        wxPoint pt;
         pt.x = size.x - labelSize.x - 5;
         pt.y = (size.y - labelSize.y) / 2;
         dc.SetFont(GetFont());
@@ -240,7 +249,12 @@ void SpinInput::messureSize()
 
 Button *SpinInput::createButton(bool inc)
 {
+    // MD3 stepper: a borderless glyph icon-button. The raster spin_inc / spin_dec
+    // PNG stays as the graceful fallback; SetGlyph promotes it to a Material Symbols
+    // chevron (ExpandLess to increment, ExpandMore to decrement) in OnSurfaceVariant.
     auto btn = new Button(this, "", inc ? "spin_inc" : "spin_dec", wxBORDER_NONE, 6);
+    btn->SetTextColor(StateColor(std::make_pair(MD3::Light::onSurfaceVariant, (int) StateColor::Normal)));
+    btn->SetGlyph(inc ? MaterialIcon::ExpandLess : MaterialIcon::ExpandMore, 12);
     btn->SetCornerRadius(0);
     btn->DisableFocusFromKeyboard();
     btn->Bind(wxEVT_LEFT_DOWN, [=](auto &e) {

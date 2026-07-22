@@ -17,6 +17,9 @@ class ComboBox : public wxWindowWithItems<TextInput, wxItemContainer>
     bool     text_off = false;
     bool     is_replace_text_to_image = false;
     bool     m_keep_drop_arrow = false;  // When true, item icon goes to icon_1, keeping drop_down arrow
+    bool     m_no_drop_icon = false;     // CB_NO_DROP_ICON: suppress the trailing chevron
+    bool     m_chevron_shown = false;    // true when the trailing chevron glyph is the current icon
+    bool     m_applying_chevron = false; // re-entry guard around applyDropChevron()'s SetIcon()->Rescale()
     wxString replace_text;
     wxString image_for_text;
 
@@ -103,6 +106,12 @@ protected:
 #endif
 
 private:
+    // Trailing dropdown affordance: a Material Symbols ExpandMore glyph rendered
+    // to a bitmap and fed through TextInput's existing icon slot, replacing the
+    // legacy raster 'drop_down' PNG (falls back to the raster when the Material
+    // Symbols face is unavailable).
+    wxBitmap makeDropChevron();
+    void     applyDropChevron();
 
     // some useful events
     void mouseDown(wxMouseEvent &event);

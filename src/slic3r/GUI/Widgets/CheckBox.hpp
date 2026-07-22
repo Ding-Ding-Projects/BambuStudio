@@ -2,9 +2,16 @@
 #define slic3r_GUI_CheckBox_hpp_
 
 #include "../wxExtensions.hpp"
+#include "MD3Tokens.hpp"
 
 #include <wx/tglbtn.h>
 
+// MD3 checkbox. The nine baked 18px PNGs (check_on/half/off x normal/disabled/
+// focused) are gone: the glyph is drawn live at 20px through a wxGraphicsContext
+// so it recolors with the theme and the active ColorScheme (Preview-purple /
+// Device-teal). Unchecked = a rounded square outline (OnSurfaceVariant); checked
+// = a filled square (Primary) + the Material Symbols Check glyph (OnPrimary);
+// indeterminate = the filled square + a horizontal bar.
 class CheckBox : public wxBitmapToggleButton
 {
 public:
@@ -14,6 +21,10 @@ public:
 	void SetValue(bool value) override;
 
 	void SetHalfChecked(bool value = true);
+
+	// Recolor the checked/indeterminate fill to a workspace accent (Preview /
+	// Device). Neutral roles (the unchecked outline) never carry a scheme.
+	void SetColorScheme(MD3::ColorScheme scheme);
 
 	void Rescale();
 
@@ -25,30 +36,29 @@ protected:
 #ifdef __WXMSW__
     virtual State GetNormalState() const wxOVERRIDE;
 #endif
-    
+
 #ifdef __WXOSX__
     virtual wxBitmap DoGetBitmap(State which) const wxOVERRIDE;
-    
+
     void updateBitmap(wxEvent & evt);
-    
+
     bool m_disable = false;
     bool m_hover = false;
     bool m_focus = false;
 #endif
-    
+
 private:
 	void update();
 
+	// Draw a single state to a DPI-correct, antialiased, transparent bitmap.
+	wxBitmap renderBitmap(bool checked, bool half, bool disabled) const;
+
+	// Device-pixel side of the 20px logical control at the current DPI. Kept in
+	// sync with renderBitmap() so the button reserves exactly the drawn size.
+	int deviceSide() const;
+
 private:
-    ScalableBitmap m_on;
-    ScalableBitmap m_half;
-    ScalableBitmap m_off;
-    ScalableBitmap m_on_disabled;
-    ScalableBitmap m_half_disabled;
-    ScalableBitmap m_off_disabled;
-    ScalableBitmap m_on_focused;
-    ScalableBitmap m_half_focused;
-    ScalableBitmap m_off_focused;
+    MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
     bool m_half_checked = false;
 };
 

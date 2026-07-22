@@ -66,6 +66,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/TabCtrl.hpp
     GUI/Widgets/TextInput.cpp
     GUI/Widgets/TextInput.hpp
+    GUI/Widgets/SearchField.cpp
+    GUI/Widgets/SearchField.hpp
+    GUI/Widgets/Slider.cpp
+    GUI/Widgets/Slider.hpp
     GUI/Widgets/TempInput.cpp
     GUI/Widgets/TempInput.hpp
     GUI/Widgets/AMSControl.cpp

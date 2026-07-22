@@ -1,7 +1,10 @@
 #ifndef slic3r_GUI_Label_hpp_
 #define slic3r_GUI_Label_hpp_
 
+#include <cstdint>
+
 #include <wx/stattext.h>
+#include <wx/window.h>
 
 #define LB_HYPERLINK 0x0020
 #define LB_PROPAGATE_MOUSE_EVENT 0x0040
@@ -69,6 +72,37 @@ public:
     static wxFont sysFont(int size, bool bold = false, std::string lang_code = "");
 
     static wxSize split_lines(wxDC &dc, int width, const wxString &text, wxString &multiline_text, int max_count = 0);
+};
+
+// Shared MD3 section-label header (ui-md3 containment/SectionHeader): the uppercase
+// micro-header that opens a sidebar / panel section. Renders 11px / weight 600,
+// UPPERCASE, +0.6px letter-spacing, in OnSurfaceVariant, with an OPTIONAL 16px
+// leading Material Symbol slot. The caller supplies the glyph codepoint (one of
+// the MaterialIcon glyphs); this widget hardcodes none. Custom-drawn because a
+// native wxStaticText cannot mix the icon font with the text run nor apply the
+// letter-spacing the label style calls for. DPI-safe: gap / tracking are derived
+// from the live DPI at paint, and the icon font scales with the DC — nothing is
+// cached in device pixels.
+class SectionHeader : public wxWindow
+{
+public:
+    // leading_icon is a Material Symbols codepoint (e.g. MaterialIcon::Palette);
+    // pass 0 for no leading glyph.
+    SectionHeader(wxWindow *parent, wxString const &text = {}, uint32_t leading_icon = 0, long style = 0);
+
+    void SetLabel(const wxString &label) override;
+
+    // 0 clears the leading glyph.
+    void SetLeadingIcon(uint32_t codepoint);
+
+protected:
+    wxSize DoGetBestClientSize() const override;
+
+private:
+    void OnPaint(wxPaintEvent &evt);
+
+    wxString m_text;
+    uint32_t m_icon{0};
 };
 
 #endif // !slic3r_GUI_Label_hpp_

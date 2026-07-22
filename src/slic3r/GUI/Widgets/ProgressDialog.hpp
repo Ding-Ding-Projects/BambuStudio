@@ -6,18 +6,21 @@
 #include "wx/weakref.h"
 #include "wx/simplebook.h"
 #include "Button.hpp"
+#include "StateColor.hpp"
 #include "../wxExtensions.hpp"
 
 class WXDLLIMPEXP_FWD_CORE wxButton;
 class WXDLLIMPEXP_FWD_CORE wxEventLoop;
-class WXDLLIMPEXP_FWD_CORE wxGauge;
 class WXDLLIMPEXP_FWD_CORE wxStaticText;
 class WXDLLIMPEXP_FWD_CORE wxWindowDisabler;
+class ProgressBar;
 
 #define PROGRESSDIALOG_SIMPLEBOOK_SIZE wxSize(FromDIP(320),FromDIP(38))
 #define PROGRESSDIALOG_GAUGE_SIZE wxSize(FromDIP(320), FromDIP(6))
 #define PROGRESSDIALOG_CANCEL_BUTTON_SIZE wxSize(FromDIP(60), FromDIP(24))
-#define PROGRESSDIALOG_DEF_BK ThemeColor::White
+// Dialog + inner-panel fill: SurfaceContainer resolves per-theme (so it no
+// longer stays white in dark mode). Was raw ThemeColor::White.
+#define PROGRESSDIALOG_DEF_BK StateColor::semantic(MD3::Role::SurfaceContainer)
 #define PROGRESSDIALOG_GREY_700 ThemeColor::TextMuted
 
 #define wxPD_NO_PROGRESS 0x0100
@@ -187,8 +190,12 @@ private:
 
     void Yield();
 
-    // the widget displaying current status (may be NULL)
-    wxGauge *m_gauge;
+    // the widget displaying current status (may be NULL) — the migrated MD3
+    // ProgressBar (Primary fill / sc-highest track) replaces the raw wxGauge.
+    ProgressBar *m_progress_bar;
+    // last value pushed to the bar; the bar has no getter, so GetValue() reads
+    // this back.
+    int m_progress_value{0};
     // the message displayed
     wxStaticText *m_msg;
     wxStaticText *m_msg_2line;

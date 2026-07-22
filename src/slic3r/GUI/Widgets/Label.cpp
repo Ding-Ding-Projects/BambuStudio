@@ -1,12 +1,16 @@
 #include "libslic3r/Utils.hpp"
 #include "Label.hpp"
+#include "MaterialIcon.hpp"
 #include "StateColor.hpp"
 #include "StaticBox.hpp"
 
 #include "../GUI_App.hpp"
 #include "libslic3r/AppConfig.hpp"
 
+#include <algorithm>
+
 #include <wx/dcclient.h>
+#include <wx/dcgraph.h>
 #include <wx/settings.h>
 
 namespace {
@@ -483,4 +487,138 @@ void Label::OnSize(wxSizeEvent &evt)
     evt.Skip();
     if (m_skip_size_evt) return;
     Wrap(evt.GetSize().x);
+}
+
+// ---------------------------------------------------------------------------
+// SectionHeader
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// Width of a run drawn with per-glyph letter-spacing: the natural extent plus
+// one tracking step between each pair of glyphs.
+double trackedTextWidth(wxDC &dc, const wxString &text, double tracking)
+{
+    if (text.empty()) return 0.0;
+    wxCoord w = 0, h = 0;
+    dc.GetTextExtent(text, &w, &h);
+    return static_cast<double>(w) + tracking * (text.length() - 1);
+}
+
+// Draw text one glyph at a time so the +tracking letter-spacing lands between
+// characters (native STATIC / DrawText cannot apply tracking).
+void drawTrackedText(wxDC &dc, const wxString &text, double x, int y, double tracking)
+{
+    for (size_t i = 0; i < text.length(); ++i) {
+        const wxString ch = text.SubString(i, i);
+        dc.DrawText(ch, wxPoint(static_cast<int>(x + 0.5), y));
+        wxCoord w = 0, h = 0;
+        dc.GetTextExtent(ch, &w, &h);
+        x += static_cast<double>(w) + tracking;
+    }
+}
+
+} // namespace
+
+SectionHeader::SectionHeader(wxWindow *parent, wxString const &text, uint32_t leading_icon, long style)
+    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, style)
+    , m_text(text)
+    , m_icon(leading_icon)
+{
+    SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
+    wxWindow::SetLabel(text); // keep the base label in sync for accessibility
+    Bind(wxEVT_PAINT, &SectionHeader::OnPaint, this);
+    InvalidateBestSize();
+}
+
+void SectionHeader::SetLabel(const wxString &label)
+{
+    if (m_text == label) return;
+    m_text = label;
+    wxWindow::SetLabel(label); // keep the base label in sync for accessibility
+    InvalidateBestSize();
+    Refresh();
+}
+
+void SectionHeader::SetLeadingIcon(uint32_t codepoint)
+{
+    if (m_icon == codepoint) return;
+    m_icon = codepoint;
+    InvalidateBestSize();
+    Refresh();
+}
+
+wxSize SectionHeader::DoGetBestClientSize() const
+{
+    wxClientDC dc(const_cast<SectionHeader *>(this));
+    dc.SetFont(Label::Head_11);
+
+    const double scale    = static_cast<double>(FromDIP(1000)) / 1000.0; // fractional DPI factor
+    const double tracking = MD3::Type::label_tracking * scale;
+    const int    gap      = FromDIP(6);
+    const int    icon_px  = 16; // logical px; the icon font scales with the DC
+
+    const wxString up = m_text.Upper();
+
+    wxCoord th = 0, tmp = 0;
+    dc.GetTextExtent(up.empty() ? wxString("X") : up, &tmp, &th);
+
+    double width  = trackedTextWidth(dc, up, tracking);
+    int    height = th;
+
+    if (m_icon) {
+        const wxSize is = MaterialIcon::measure(dc, m_icon, icon_px);
+        width += (up.empty() ? 0 : gap) + is.x;
+        height = std::max(height, is.y);
+    }
+
+    return wxSize(static_cast<int>(width + 0.5), height);
+}
+
+void SectionHeader::OnPaint(wxPaintEvent &)
+{
+    wxPaintDC pdc(this);
+    const wxSize sz = GetSize();
+    pdc.SetBackground(wxBrush(GetBackgroundColour()));
+    pdc.Clear();
+
+#ifdef __WXMSW__
+    wxGCDC dc(pdc);
+#else
+    wxDC &dc = pdc;
+#endif
+
+    dc.SetFont(Label::Head_11);
+    const wxColour fg = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    dc.SetTextForeground(fg);
+
+    const double scale    = static_cast<double>(FromDIP(1000)) / 1000.0;
+    const double tracking = MD3::Type::label_tracking * scale;
+    const int    gap      = FromDIP(6);
+    const int    icon_px  = 16;
+
+    const wxString up = m_text.Upper();
+
+    wxCoord th = 0, tmp = 0;
+    dc.GetTextExtent(up.empty() ? wxString("X") : up, &tmp, &th);
+
+    int content_h = th;
+    wxSize is(0, 0);
+    if (m_icon) {
+        is       = MaterialIcon::measure(dc, m_icon, icon_px);
+        content_h = std::max(content_h, is.y);
+    }
+
+    const int y0 = (sz.y - content_h) / 2;
+    double    x  = 0;
+
+    if (m_icon) {
+        const int iy = y0 + (content_h - is.y) / 2;
+        MaterialIcon::draw(dc, m_icon, icon_px, fg, wxPoint(static_cast<int>(x + 0.5), iy));
+        x += is.x + (up.empty() ? 0 : gap);
+    }
+
+    const int ty = y0 + (content_h - th) / 2;
+    drawTrackedText(dc, up, x, ty, tracking);
 }

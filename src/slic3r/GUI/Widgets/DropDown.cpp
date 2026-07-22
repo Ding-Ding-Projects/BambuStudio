@@ -1,6 +1,7 @@
 #include "DropDown.hpp"
 #include "Label.hpp"
 #include "StateColor.hpp"
+#include "MaterialIcon.hpp"
 
 #include <cstdio>
 #include <wx/display.h>
@@ -37,18 +38,19 @@ END_EVENT_TABLE()
 DropDown::DropDown(std::vector<Item> &items)
     : items(items)
     , state_handler(this)
-    , border_color(ThemeColor::Grey400)
+    // 1px popup border in OutlineVariant (its light value #c5c6d0 is a gDarkColors
+    // key -> #4a4c54, so it live-remaps on a dark-mode toggle).
+    , border_color(MD3::Light::outlineVariant)
     , text_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
         std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
     , selector_border_color(std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
         std::make_pair(ThemeColor::White, (int) StateColor::Normal))
-    // Selected-row highlight: keep the raw 0xEDFAF2 tint. It is a key in the
-    // gDarkColors map (StateColor.cpp -> #095228), so colorForStates() re-adapts
-    // it live on every runtime dark-mode toggle. A pre-resolved
-    // semantic(SecondaryContainer) snapshot stores a concrete hex that is NOT a
-    // gDarkColors key and would stay stuck at the pre-toggle theme.
-    , selector_background_color(std::make_pair(0xEDFAF2, (int) StateColor::Checked),
-        std::make_pair(ThemeColor::White, (int) StateColor::Normal))
+    // Selected-row highlight: SecondaryContainer, the MD3 selected/active tonal
+    // (replacing the raw 0xEDFAF2). Its light value #d7e8d9 is a gDarkColors key
+    // (-> #2b3a2f), so colorForStates() re-adapts it live on a dark-mode toggle,
+    // unlike a semantic() snapshot that would freeze at the construction theme.
+    , selector_background_color(std::make_pair(MD3::Light::secondaryContainer, (int) StateColor::Checked),
+        std::make_pair(MD3::Light::secondaryContainer, (int) StateColor::Normal))
 {
 }
 
@@ -62,7 +64,13 @@ void DropDown::Create(wxWindow *parent, long style)
 {
     PopupWindow::Create(parent, wxPU_CONTAINS_CONTROLS);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(StateColor::darkModeColorFor(ThemeColor::White));
+    // Floating surface fill: SurfaceContainer. Stored as the raw light role value
+    // (#eeedf3, a gDarkColors key), so render()'s darkModeColorFor() maps it to the
+    // dark tone (#25262b) every paint and it follows a runtime dark-mode toggle.
+    SetBackgroundColour(MD3::Light::sc);
+    // Rounded floating card. FromDIP so the radius tracks the monitor DPI; kept in
+    // sync on DPI change via Rescale().
+    radius = FromDIP(18);
     state_handler.attach({&border_color, &text_color, &selector_border_color, &selector_background_color});
     state_handler.update_binds();
     if ((style & DD_NO_CHECK_ICON) == 0)
@@ -163,6 +171,7 @@ void DropDown::SetAlignIcon(bool align) { align_icon = align; }
 
 void DropDown::Rescale()
 {
+    radius    = FromDIP(18);
     need_sync = true;
 }
 
@@ -259,6 +268,10 @@ static void _DrawSplitItem(const wxWindow* w, wxDC& dc, wxString split_text, wxP
 void DropDown::render(wxDC &dc)
 {
     if (items.size() == 0) return;
+    // Clear the buffer to the themed surface colour first so the rounded-corner
+    // triangles left outside DrawRoundedRectangle are clean, not uninitialised.
+    dc.SetBackground(wxBrush(StateColor::darkModeColorFor(GetBackgroundColour())));
+    dc.Clear();
     int states = state_handler.states();
     if (subDropDown)
         states |= subDropDown->state_handler.states();
@@ -277,31 +290,36 @@ void DropDown::render(wxDC &dc)
     int selected_item = selectedItem();
     int hover_index   = hoverIndex();
 
-    // draw hover rectangle
+    // Row highlights are rounded fills inset from the row edges: a
+    // SurfaceContainerHigh hover pane and a SecondaryContainer selected pane (the
+    // MD3 selected/active tonal), replacing the legacy hard 1px border rects.
+    const int row_radius = FromDIP(8);
+    const int inset_x    = FromDIP(4);
+    const int inset_y    = FromDIP(1);
     wxRect rcContent = {{0, offset.y}, rowSize};
-    if (hover_item >= 0 && (states & StateColor::Hovered) && (hover_index < 0 || !(items[hover_index].style & (DD_ITEM_STYLE_SPLIT_ITEM | DD_ITEM_STYLE_DISABLED)))) {
-        rcContent.y += rowSize.y * hover_item;
-        if (rcContent.GetBottom() > 0 && rcContent.y < size.y) {
-            if (selected_item == hover_item)
-                dc.SetBrush(wxBrush(selector_background_color.colorForStates(states | StateColor::Checked)));
-            dc.SetPen(wxPen(selector_border_color.colorForStates(states)));
-            rcContent.Deflate(4, 1);
-            dc.DrawRectangle(rcContent);
-            rcContent.Inflate(4, 1);
+
+    // hover pane (skip the selected row -- its own fill takes over below)
+    if (hover_item >= 0 && hover_item != selected_item && (states & StateColor::Hovered) &&
+        (hover_index < 0 || !(items[hover_index].style & (DD_ITEM_STYLE_SPLIT_ITEM | DD_ITEM_STYLE_DISABLED)))) {
+        wxRect rc = rcContent;
+        rc.y += rowSize.y * hover_item;
+        if (rc.GetBottom() > 0 && rc.y < size.y) {
+            rc.Deflate(inset_x, inset_y);
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHigh)));
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.DrawRoundedRectangle(rc, row_radius);
         }
-        rcContent.y = offset.y;
     }
-    // draw checked rectangle
-    if (selected_item >= 0 && (selected_item != hover_item || (states & StateColor::Hovered) == 0)) {
-        rcContent.y += rowSize.y * selected_item;
-        if (rcContent.GetBottom() > 0 && rcContent.y < size.y) {
+    // selected pane
+    if (selected_item >= 0) {
+        wxRect rc = rcContent;
+        rc.y += rowSize.y * selected_item;
+        if (rc.GetBottom() > 0 && rc.y < size.y) {
+            rc.Deflate(inset_x, inset_y);
             dc.SetBrush(wxBrush(selector_background_color.colorForStates(states | StateColor::Checked)));
-            dc.SetPen(wxPen(selector_background_color.colorForStates(states)));
-            rcContent.Deflate(4, 1);
-            dc.DrawRectangle(rcContent);
-            rcContent.Inflate(4, 1);
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.DrawRoundedRectangle(rc, row_radius);
         }
-        rcContent.y = offset.y;
     }
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     {
@@ -309,18 +327,20 @@ void DropDown::render(wxDC &dc)
         rcContent.Deflate(0, offset.y);
     }
 
-    // draw position bar
+    // draw position bar -- rounded OutlineVariant thumb (drops the Grey300 fill)
     if (rowSize.y * count > size.y) {
         int    height = rowSize.y * count;
         wxRect rect = {size.x - 6, -offset.y * size.y / height, 4,
                        size.y * size.y / height};
-        dc.SetPen(wxPen(border_color.defaultColor()));
-        dc.SetBrush(wxBrush(ThemeColor::Grey300));
+        wxColour thumb = StateColor::semantic(MD3::Role::OutlineVariant);
+        dc.SetPen(wxPen(thumb));
+        dc.SetBrush(wxBrush(thumb));
         dc.DrawRoundedRectangle(rect, 2);
         rcContent.width -= 6;
     }
 
-    // draw check icon
+    // draw check icon -- Material Symbols Check glyph on the selected row (the
+    // raster stays as the graceful fallback when the icon font is unavailable)
     rcContent.x += 5;
     rcContent.width -= 5;
     if (check_bitmap.bmp().IsOk()) {
@@ -329,8 +349,13 @@ void DropDown::render(wxDC &dc)
             wxPoint pt = rcContent.GetLeftTop();
             pt.y += (rcContent.height - szBmp.y) / 2;
             pt.y += rowSize.y * selected_item;
-            if (pt.y + szBmp.y > 0 && pt.y < size.y)
-                dc.DrawBitmap(check_bitmap.bmp(), pt);
+            if (pt.y + szBmp.y > 0 && pt.y < size.y) {
+                if (MaterialIcon::available())
+                    MaterialIcon::drawCentered(dc, MaterialIcon::Check, 16,
+                        StateColor::semantic(MD3::Role::OnSecondaryContainer), wxRect(pt, szBmp));
+                else
+                    dc.DrawBitmap(check_bitmap.bmp(), pt);
+            }
         }
         rcContent.x += szBmp.x + 5;
         rcContent.width -= szBmp.x + 5;
@@ -413,7 +438,12 @@ void DropDown::render(wxDC &dc)
                 auto szBmp = arrow_bitmap.GetBmpSize();
                 pt.x = rcContent.GetRight() - szBmp.x - 5;
                 pt.y = rcContent.y + (rcContent.height - szBmp.y) / 2;
-                dc.DrawBitmap(arrow_bitmap.bmp(), pt);
+                // submenu affordance -- Material Symbols ChevronRight glyph
+                if (MaterialIcon::available())
+                    MaterialIcon::drawCentered(dc, MaterialIcon::ChevronRight, 16,
+                        StateColor::semantic(MD3::Role::OnSurfaceVariant), wxRect(pt, szBmp));
+                else
+                    dc.DrawBitmap(arrow_bitmap.bmp(), pt);
             }
         }
         rcContent.y += rowSize.y;
