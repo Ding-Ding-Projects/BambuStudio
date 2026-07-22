@@ -547,6 +547,7 @@ protected:
 
     AMSControl*     m_ams_control;
     StaticBox*      m_ams_control_box;
+    Label *         m_ams_humidity_label{ nullptr }; // teal AMS-header trailing (Device.jsx:69)
     wxStaticBitmap *m_ams_extruder_img;
     wxStaticBitmap* m_bitmap_extruder_img;
 

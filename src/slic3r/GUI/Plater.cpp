@@ -2399,6 +2399,23 @@ void Sidebar::update_sync_ams_btn_enable(wxUpdateUIEvent &e)
      }
  }
 
+// MD3 section-header / toolbar glyphs. Paint a Material Symbols codepoint onto an
+// existing ScalableButton's bitmap (tinted to an MD3 role colour) WITHOUT
+// disturbing the button's event bindings, tooltip, id or sizer slot -- the whole
+// point of a restructure that must preserve behaviour. When the Material Symbols
+// face is unavailable the button keeps its raster resource icon (graceful
+// fallback). ScalableButton::msw_rescale() reloads the raster icon by name, so
+// callers re-invoke this after every rescale / theme change to keep the glyph
+// DPI- and theme-correct (see Sidebar::msw_rescale / sys_color_changed).
+static void apply_scalable_glyph(ScalableButton *btn, uint32_t glyph, int px, const wxColour &colour)
+{
+    if (!btn)
+        return;
+    if (!MaterialIcon::available())
+        return; // keep the button's raster bitmap
+    btn->SetBitmap(MaterialIcon::bitmap(btn, glyph, px, colour));
+}
+
 Sidebar::Sidebar(Plater *parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition,
               wxSize(parent->FromDIP(MD3::Metrics::comfortable.sidebar_width), -1))
@@ -2479,6 +2496,13 @@ Sidebar::Sidebar(Plater *parent)
             m_soft_first_start = false;
             wxGetApp().run_wizard(ConfigWizard::RR_USER, ConfigWizard::SP_PRINTERS);
             });
+
+        // MD3 SectionHeader anatomy: leading 'print' glyph + trailing 'settings'
+        // glyph from the Material Symbols face (OnSurfaceVariant), retiring the
+        // raster 'printer'/'settings' bitmaps. The label already carries the
+        // 11px/600 OnSurfaceVariant section-label type set above.
+        apply_scalable_glyph(p->m_printer_icon, MaterialIcon::Print, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
         wxBoxSizer* h_sizer_title = new wxBoxSizer(wxHORIZONTAL);
         h_sizer_title->Add(p->m_printer_icon, 0, wxALIGN_CENTRE | wxLEFT | wxRIGHT, em);
@@ -2580,6 +2604,9 @@ Sidebar::Sidebar(Plater *parent)
 
         ScalableButton *wiki_bed = new ScalableButton(p->panel_printer_bed, wxID_ANY, "help");
         wiki_bed->SetToolTip(_L("Click to view the wiki of the current plate type"));
+        // MD3: fold the help affordance into a Material Symbols 'help' glyph
+        // (OnSurfaceVariant) instead of the raster 'help' bitmap.
+        apply_scalable_glyph(wiki_bed, MaterialIcon::Help, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         wiki_bed->Bind(wxEVT_BUTTON, [this](wxCommandEvent) {
             bool is_zh  = wxGetApp().app_config->get("language") == "zh_CN";
             if (is_zh) {
@@ -2663,6 +2690,10 @@ Sidebar::Sidebar(Plater *parent)
         //btn_sync->SetFont(Label::Body_8);
         btn_sync->SetToolTip(_L("Synchronize nozzle information and the number of AMS"));
         btn_sync->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.row_height / 2));
+        // MD3 kit button anatomy: draw the leading icon as a Material Symbols
+        // 'sync' glyph (Button::SetGlyph is live-recoloured by the text colour and
+        // falls back to the raster 'printer_sync' bitmap when the face is absent).
+        btn_sync->SetGlyph(MaterialIcon::Sync);
         StateColor btn_sync_bg_col(
                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
                 std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
@@ -2772,10 +2803,15 @@ Sidebar::Sidebar(Plater *parent)
     wxBoxSizer* bSizer39;
     bSizer39 = new wxBoxSizer( wxHORIZONTAL );
     p->m_filament_icon = new ScalableButton(p->m_panel_filament_title, wxID_ANY, "filament");
-    p->m_staticText_filament_settings = new Label(p->m_panel_filament_title, _L("Project Filaments").Upper(), LB_PROPAGATE_MOUSE_EVENT);
+    // Kit label is 'Filament' (not 'Project Filaments'); _L("Filament") already
+    // exists in the catalog (used by the subtitle row below).
+    p->m_staticText_filament_settings = new Label(p->m_panel_filament_title, _L("Filament").Upper(), LB_PROPAGATE_MOUSE_EVENT);
     // MD3 section-header typography: 11px/600 uppercase, OnSurfaceVariant.
     p->m_staticText_filament_settings->SetFont(Label::Head_11);
     p->m_staticText_filament_settings->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    // MD3 SectionHeader leading glyph: 'palette' from the Material Symbols face
+    // (OnSurfaceVariant), retiring the raster 'filament' bitmap.
+    apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
     bSizer39->Add(p->m_filament_icon, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));
     bSizer39->Add( p->m_staticText_filament_settings, 0, wxALIGN_CENTER );
     bSizer39->Add(FromDIP(10), 0, 0, 0, 0);
@@ -2794,9 +2830,11 @@ Sidebar::Sidebar(Plater *parent)
     bSizer39->AddStretchSpacer(1);
 
     p->m_purge_mode_btn = new Button(p->m_panel_filament_title, _L("Purge mode"));
-    p->m_purge_mode_btn->SetFont(Label::Body_10);
+    // MD3 kit button anatomy: on-scale label (11px vs the off-scale Body_10) and
+    // the kit small radius (10) in place of the ad-hoc r8.
+    p->m_purge_mode_btn->SetFont(Label::Body_11);
     p->m_purge_mode_btn->SetPaddingSize(wxSize(FromDIP(6), FromDIP(3)));
-    p->m_purge_mode_btn->SetCornerRadius(FromDIP(8));
+    p->m_purge_mode_btn->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
 
     StateColor purge_bg_col(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
@@ -2839,9 +2877,10 @@ Sidebar::Sidebar(Plater *parent)
     // add wiping dialog
     //wiping_dialog_button->SetFont(wxGetApp().normal_font());
     p->m_flushing_volume_btn = new Button(p->m_panel_filament_title, _L("Flushing volumes"));
-    p->m_flushing_volume_btn->SetFont(Label::Body_10);
+    // MD3 kit button anatomy: on-scale label + kit small radius (see Purge mode).
+    p->m_flushing_volume_btn->SetFont(Label::Body_11);
     p->m_flushing_volume_btn->SetPaddingSize(wxSize(FromDIP(6),FromDIP(3)));
-    p->m_flushing_volume_btn->SetCornerRadius(FromDIP(8));
+    p->m_flushing_volume_btn->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
 
     StateColor flush_bg_col(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
@@ -2906,6 +2945,7 @@ Sidebar::Sidebar(Plater *parent)
         // + button
         ScalableButton* add_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "add_filament");
         add_btn->SetToolTip(_L("Add one filament"));
+        apply_scalable_glyph(add_btn, MaterialIcon::Add, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         add_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
             add_filament();
         });
@@ -2916,6 +2956,7 @@ Sidebar::Sidebar(Plater *parent)
         // - button
         ScalableButton* del_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "delete_filament");
         del_btn->SetToolTip(_L("Remove last filament"));
+        apply_scalable_glyph(del_btn, MaterialIcon::Remove, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         del_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
             delete_filament();
         });
@@ -2926,6 +2967,7 @@ Sidebar::Sidebar(Plater *parent)
         ams_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "ams_fila_sync", wxEmptyString, wxDefaultSize, wxDefaultPosition,
                                      wxBU_EXACTFIT | wxNO_BORDER, false, 18);
         ams_btn->SetToolTip(_L("Synchronize filament list from AMS"));
+        apply_scalable_glyph(ams_btn, MaterialIcon::Sync, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         ams_btn->Bind(wxEVT_BUTTON, [this, scrolled_sizer](wxCommandEvent& e) {
             sync_ams_list();
         });
@@ -2936,6 +2978,7 @@ Sidebar::Sidebar(Plater *parent)
         // Settings button
         ScalableButton* set_btn = new ScalableButton(p->m_panel_filament_subtitle, wxID_ANY, "settings");
         set_btn->SetToolTip(_L("Set filaments to use"));
+        apply_scalable_glyph(set_btn, MaterialIcon::Settings, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         set_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e) {
             p->editing_filament = -1;
             wxGetApp().run_wizard(ConfigWizard::RR_USER, ConfigWizard::SP_FILAMENTS);
@@ -3867,6 +3910,19 @@ void Sidebar::msw_rescale()
     p->m_bpButton_del_filament->msw_rescale();
     p->m_bpButton_ams_filament->msw_rescale();
     p->m_bpButton_set_filament->msw_rescale();
+    // ScalableButton::msw_rescale reloaded the raster icons above; re-paint the
+    // MD3 Material Symbols glyphs at the new DPI so the section headers / subtitle
+    // stay glyph-based (no-op when the icon face is unavailable).
+    {
+        const wxColour glyph_col = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        apply_scalable_glyph(p->m_printer_icon, MaterialIcon::Print, 16, glyph_col);
+        apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, glyph_col);
+        apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, glyph_col);
+        apply_scalable_glyph(p->m_bpButton_add_filament, MaterialIcon::Add, 16, glyph_col);
+        apply_scalable_glyph(p->m_bpButton_del_filament, MaterialIcon::Remove, 16, glyph_col);
+        apply_scalable_glyph(p->m_bpButton_ams_filament, MaterialIcon::Sync, 18, glyph_col);
+        apply_scalable_glyph(p->m_bpButton_set_filament, MaterialIcon::Settings, 16, glyph_col);
+    }
     p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::compact.row_height / 2));
     p->btn_add_filament_row->SetPaddingSize({FromDIP(10), FromDIP(6)});
     p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::compact.row_height)});
@@ -4001,6 +4057,15 @@ void Sidebar::sys_color_changed()
     p->m_bpButton_del_filament->msw_rescale();
     p->m_bpButton_ams_filament->msw_rescale();
     p->m_bpButton_set_filament->msw_rescale();
+    // Re-tint the MD3 Material Symbols glyphs to the new theme's OnSurfaceVariant
+    // (the raster reloads above would otherwise revert them; no-op without the face).
+    apply_scalable_glyph(p->m_printer_icon, MaterialIcon::Print, 16, on_variant);
+    apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, on_variant);
+    apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, on_variant);
+    apply_scalable_glyph(p->m_bpButton_add_filament, MaterialIcon::Add, 16, on_variant);
+    apply_scalable_glyph(p->m_bpButton_del_filament, MaterialIcon::Remove, 16, on_variant);
+    apply_scalable_glyph(p->m_bpButton_ams_filament, MaterialIcon::Sync, 18, on_variant);
+    apply_scalable_glyph(p->m_bpButton_set_filament, MaterialIcon::Settings, 16, on_variant);
     p->m_flushing_volume_btn->Rescale();
     p->m_purge_mode_btn->Rescale();
 

@@ -13,12 +13,19 @@
 #include "ReleaseNote.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/Label.hpp"
+
+#include <wx/dcmemory.h>
+#include <wx/graphics.h>
 
 #include <algorithm>
+#include <cmath>
 #include <boost/log/trivial.hpp>
 
 #define TOPBAR_ICON_SIZE  18
 #define TOPBAR_TITLE_WIDTH  300
+// §3.6 project chip: the ellipsized project name is capped at 150 logical px.
+#define TOPBAR_PROJECT_CHIP_MAX_W  150
 
 // Reconciled window-control glyph sizes (titlebar-window-controls-raster +
 // topbar-chrome-raster-to-glyph overlap): minimize/close read at the standard
@@ -42,6 +49,8 @@ enum CUSTOM_ID
     ID_MODEL_STORE,
     ID_PUBLISH,
     ID_CALIB,
+    ID_HISTORY,
+    ID_APPEARANCE,
     ID_TOOL_BAR = 3200,
     ID_AMS_NOTEBOOK,
 };
@@ -64,6 +73,148 @@ static wxBitmap topbar_glyph_bitmap(wxWindow *ref, uint32_t glyph, int glyph_px,
     return create_scaled_bitmap(fallback_png, ref, fallback_px);
 }
 
+// Content-scale factor for the DPI-correct composite bitmaps below. Mirrors the
+// idiom in MaterialIcon::bitmap so the chips lay out at logical px on HiDPI.
+static double topbar_scale(wxWindow *ref)
+{
+    return (ref && ref->GetDPIScaleFactor() > 0.0) ? ref->GetDPIScaleFactor() : 1.0;
+}
+
+// Allocate a transparent, antialiased, DPI-correct canvas of `logical` size and
+// invoke `paint(gc)` in LOGICAL coordinates (the graphics context is pre-scaled).
+template <typename Paint>
+static wxBitmap topbar_make_canvas(wxWindow *ref, const wxSize &logical, Paint paint)
+{
+    const double scale = topbar_scale(ref);
+    const int    dev_w = std::max(1, static_cast<int>(std::ceil(logical.x * scale)));
+    const int    dev_h = std::max(1, static_cast<int>(std::ceil(logical.y * scale)));
+
+    wxBitmap bmp(dev_w, dev_h);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+    bmp.UseAlpha();
+#endif
+    {
+        wxMemoryDC dc(bmp);
+        dc.SetBackground(*wxTRANSPARENT_BRUSH);
+        dc.Clear();
+        wxGraphicsContext *gc = wxGraphicsContext::Create(dc);
+        if (gc) {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            gc->Scale(scale, scale);
+            paint(gc);
+            delete gc; // flush before the bitmap is read
+        }
+        dc.SelectObject(wxNullBitmap);
+    }
+#if wxCHECK_VERSION(3, 1, 6)
+    bmp.SetScaleFactor(scale);
+#endif
+    return bmp;
+}
+
+// §3.1 brand tile: a 26x26 r8 Primary rounded square carrying the on-primary
+// 'deployed_code' glyph, replacing the legacy 22px BambuStudio PNG. Falls back
+// to that raster when the Material Symbols face is unavailable.
+static wxBitmap topbar_brand_tile_bitmap(wxWindow *ref)
+{
+    if (!MaterialIcon::available())
+        return create_scaled_bitmap("BambuStudio", ref, 22);
+
+    const int   side  = 26;
+    const int   glyph = 18;
+    wxSize      gsz;
+    {
+        wxBitmap   probe(1, 1);
+        wxMemoryDC mdc(probe);
+        gsz = MaterialIcon::measure(mdc, MaterialIcon::DeployedCode, glyph);
+        mdc.SelectObject(wxNullBitmap);
+    }
+    return topbar_make_canvas(ref, wxSize(side, side), [&](wxGraphicsContext *gc) {
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+        gc->DrawRoundedRectangle(0, 0, side, side, MD3::Metrics::radius_tiny);
+        gc->SetFont(MaterialIcon::font(glyph), StateColor::semantic(MD3::Role::OnPrimary));
+        gc->DrawText(MaterialIcon::text(MaterialIcon::DeployedCode),
+                     (side - gsz.x) / 2.0, (side - gsz.y) / 2.0);
+    });
+}
+
+// §3.5 history chip: rounded SurfaceContainer pill (SurfaceContainerHigh on
+// hover) with an account_tree glyph, the branch name + short head in Roboto
+// Mono, and a Primary status dot. The whole chip is baked into one bitmap so it
+// reserves exactly its content width in the AUI toolbar.
+static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch,
+                                           const wxString &head, bool hover)
+{
+    const int  H       = 30;
+    const int  padx    = 12;
+    const int  gap     = 7;
+    const int  glyph   = 16;
+    const int  dot     = 5;
+    const bool icons_ok = MaterialIcon::available();
+    const bool has_head = !head.empty();
+    const wxString head_str = has_head ? (wxString("#") + head) : wxString();
+
+    wxFont mono = Label::Mono_12;
+    if (!mono.IsOk())
+        mono = *wxNORMAL_FONT;
+
+    int  glyph_w = 0, glyph_h = 0, branch_w = 0, branch_h = 0, head_w = 0, head_h = 0;
+    {
+        wxBitmap   probe(1, 1);
+        wxMemoryDC mdc(probe);
+        if (icons_ok) {
+            const wxSize gs = MaterialIcon::measure(mdc, MaterialIcon::AccountTree, glyph);
+            glyph_w = gs.x;
+            glyph_h = gs.y;
+        }
+        mdc.SetFont(mono);
+        mdc.GetTextExtent(branch, &branch_w, &branch_h);
+        if (has_head)
+            mdc.GetTextExtent(head_str, &head_w, &head_h);
+        mdc.SelectObject(wxNullBitmap);
+    }
+
+    int W = padx;
+    if (icons_ok)
+        W += glyph_w + gap;
+    W += branch_w + gap + dot;
+    if (has_head)
+        W += gap + head_w;
+    W += padx;
+
+    return topbar_make_canvas(ref, wxSize(W, H), [&](wxGraphicsContext *gc) {
+        const wxColour primary = StateColor::semantic(MD3::Role::Primary);
+        const wxColour on_sv   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(wxBrush(StateColor::semantic(hover ? MD3::Role::SurfaceContainerHigh
+                                                        : MD3::Role::SurfaceContainer)));
+        gc->DrawRoundedRectangle(0, 0, W, H, H / 2.0);
+
+        double x = padx;
+        if (icons_ok) {
+            gc->SetFont(MaterialIcon::font(glyph), primary);
+            gc->DrawText(MaterialIcon::text(MaterialIcon::AccountTree), x, (H - glyph_h) / 2.0);
+            x += glyph_w + gap;
+        }
+        gc->SetFont(mono, on_sv);
+        gc->DrawText(branch, x, (H - branch_h) / 2.0);
+        x += branch_w + gap;
+
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(wxBrush(primary));
+        gc->DrawEllipse(x, (H - dot) / 2.0, dot, dot);
+        x += dot;
+
+        if (has_head) {
+            x += gap;
+            gc->SetFont(mono, on_sv);
+            gc->DrawText(head_str, x, (H - head_h) / 2.0);
+        }
+    });
+}
+
 class BBLTopbarArt : public wxAuiDefaultToolBarArt
 {
 public:
@@ -75,10 +226,44 @@ public:
 
 void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect)
 {
-    wxFont font = m_font;
-    if (item.GetId() == ID_TITLE)
-        font.SetWeight(wxFONTWEIGHT_SEMIBOLD);
-    dc.SetFont(font);
+    if (item.GetId() == ID_TITLE) {
+        // §3.6 project chip: a rounded SurfaceContainer pill with a leading
+        // 'description'-family glyph and the ellipsized project name. It stays a
+        // non-interactive label so the caption drag path (OnMouseLeftDown /
+        // OnMouseLeftDClock special-case m_title_item) keeps working.
+        const int    H      = std::min(rect.height, wnd->FromDIP(30));
+        const int    radius = H / 2;
+        const wxRect chip(rect.x, rect.y + (rect.height - H) / 2, std::max(0, rect.width), H);
+
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainer)));
+        dc.DrawRoundedRectangle(chip, radius);
+
+        const wxColour fg   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        const int      padx = wnd->FromDIP(8);
+        const int      gap  = wnd->FromDIP(6);
+        int            x    = chip.x + padx;
+
+        // 'description' is absent from the vendored face; 'folder_open' is the
+        // nearest verified project/file glyph (reported as a followup).
+        if (MaterialIcon::available()) {
+            const wxSize gs = MaterialIcon::measure(dc, MaterialIcon::FolderOpen, 16);
+            MaterialIcon::draw(dc, MaterialIcon::FolderOpen, 16, fg,
+                               wxPoint(x, chip.y + (H - gs.y) / 2));
+            x += gs.x + gap;
+        }
+
+        dc.SetFont(m_font);
+        dc.SetTextForeground(fg);
+        int tw = 0, th = 0;
+        dc.GetTextExtent(item.GetLabel(), &tw, &th);
+        dc.SetClippingRegion(chip);
+        dc.DrawText(item.GetLabel(), x, chip.y + (H - th) / 2);
+        dc.DestroyClippingRegion();
+        return;
+    }
+
+    dc.SetFont(m_font);
     dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
 
     int textWidth = 0, textHeight = 0;
@@ -136,11 +321,13 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
 
     wxFont font = m_font;
     // §3.2 wordmark rides at Roboto Medium (500), not SemiBold; the menu buttons
-    // (§3.3) are also Medium. Everything else keeps the inherited weight.
+    // (§3.3) are also Medium. The Calibration dropdown is now presented as a text
+    // menu button, so it shares the same weight. Everything else keeps the
+    // inherited weight.
     if (item.GetId() == ID_LOGO ||
         item.GetId() == ID_TOP_FILE_MENU || item.GetId() == ID_TOP_EDIT_MENU ||
         item.GetId() == ID_TOP_VIEW_MENU || item.GetId() == ID_TOP_OBJECTS_MENU ||
-        item.GetId() == ID_TOP_HELP_MENU)
+        item.GetId() == ID_TOP_HELP_MENU || item.GetId() == ID_CALIB)
         font.SetWeight(wxFONTWEIGHT_MEDIUM);
     dc.SetFont(font);
 
@@ -156,9 +343,14 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     int bmpX = 0, bmpY = 0;
     int textX = 0, textY = 0;
 
-    const wxBitmap& bmp = item.GetState() & wxAUI_BUTTON_STATE_DISABLED
+    // §3.5 the history chip bakes its own hover state into a second bitmap
+    // (SurfaceContainerHigh background) rather than the generic state layer.
+    const bool hist_hover = item.GetId() == ID_HISTORY
+        && ((item.GetState() & wxAUI_BUTTON_STATE_HOVER) || item.IsSticky())
+        && item.GetHoverBitmap().IsOk();
+    const wxBitmap& bmp = (item.GetState() & wxAUI_BUTTON_STATE_DISABLED)
         ? item.GetDisabledBitmap()
-        : item.GetBitmap();
+        : (hist_hover ? item.GetHoverBitmap() : item.GetBitmap());
 
     const wxSize bmpSize = bmp.IsOk() ? bmp.GetScaledSize() : wxSize(0, 0);
 
@@ -190,12 +382,16 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     }
 
 
-    if (item.GetId() != ID_LOGO && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
+    // The brand tile (§3.1) and history chip (§3.5) bake their own background, so
+    // they opt out of the shared state layer.
+    const int  item_id       = item.GetId();
+    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_HISTORY;
+    if (!bakes_own_bg && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
         wxColour state_layer;
         // §3.9: the window Close control carries a destructive hover -- its state
         // layer fills Role::Error instead of the neutral surface-container tint
         // used by every other title-bar control.
-        const bool is_close = item.GetId() == wxID_CLOSE_FRAME;
+        const bool is_close = item_id == wxID_CLOSE_FRAME;
         if (item.GetState() & wxAUI_BUTTON_STATE_PRESSED)
             state_layer = StateColor::semantic(is_close ? MD3::Role::Error : MD3::Role::SurfaceContainerHighest);
         else if ((item.GetState() & wxAUI_BUTTON_STATE_HOVER) || item.IsSticky())
@@ -205,10 +401,19 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
 
         if (state_layer.IsOk()) {
             wxRect state_rect = rect;
-            state_rect.Deflate(wnd->FromDIP(2), wnd->FromDIP(4));
+            int    radius;
+            if (item_id == ID_APPEARANCE) {
+                // §3.7 appearance button: a circular ghost hover disc.
+                const int d = std::max(1, std::min(state_rect.width, state_rect.height) - wnd->FromDIP(4));
+                state_rect  = wxRect(rect.x + (rect.width - d) / 2, rect.y + (rect.height - d) / 2, d, d);
+                radius      = d / 2;
+            } else {
+                state_rect.Deflate(wnd->FromDIP(2), wnd->FromDIP(4));
+                radius = wnd->FromDIP(MD3::Metrics::compact.small_radius);
+            }
             dc.SetPen(*wxTRANSPARENT_PEN);
             dc.SetBrush(wxBrush(state_layer));
-            dc.DrawRoundedRectangle(state_rect, wnd->FromDIP(MD3::Metrics::compact.small_radius));
+            dc.DrawRoundedRectangle(state_rect, radius);
         }
     }
 
@@ -223,7 +428,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
         label_role = MD3::Role::Outline;
     else if (item.GetId() == ID_TOP_FILE_MENU || item.GetId() == ID_TOP_EDIT_MENU ||
              item.GetId() == ID_TOP_VIEW_MENU || item.GetId() == ID_TOP_OBJECTS_MENU ||
-             item.GetId() == ID_TOP_HELP_MENU)
+             item.GetId() == ID_TOP_HELP_MENU || item.GetId() == ID_CALIB)
         label_role = MD3::Role::OnSurfaceVariant;
     else
         label_role = MD3::Role::OnSurface;
@@ -267,11 +472,21 @@ void BBLTopbar::Init(wxFrame* parent)
 
     wxInitAllImageHandlers();
 
+    // titlebar-remove-nonkit-controls: Save/Undo/Redo/Publish leave the caption
+    // (Save = File>Save, Undo/Redo = Edit menu; Publish is otherwise unused). The
+    // members stay null and their public enable/show API becomes a no-op so every
+    // external caller keeps compiling and behaving.
+    m_save_item = m_undo_item = m_redo_item = m_publish_item = nullptr;
+    if (m_history_branch.IsEmpty())
+        m_history_branch = "main";
+
     this->AddSpacer(FromDIP(MD3::Metrics::compact.gap));
 
-    wxBitmap logo_bitmap = create_scaled_bitmap("BambuStudio", this, 22);
-    m_brand_item = this->AddTool(ID_LOGO, _L("Bambu Studio"), logo_bitmap, wxEmptyString, wxITEM_NORMAL);
-    m_brand_item->SetHoverBitmap(logo_bitmap);
+    // §3.1 brand tile: r8 Primary square + on-primary 'deployed_code' glyph,
+    // followed by the 'Bambu Studio' wordmark (drawn as this tool's label).
+    wxBitmap brand_bitmap = topbar_brand_tile_bitmap(this);
+    m_brand_item = this->AddTool(ID_LOGO, _L("Bambu Studio"), brand_bitmap, wxEmptyString, wxITEM_NORMAL);
+    m_brand_item->SetHoverBitmap(brand_bitmap);
     m_brand_item->SetActive(false);
 
     this->AddSpacer(FromDIP(MD3::Metrics::compact.gap));
@@ -283,81 +498,48 @@ void BBLTopbar::Init(wxFrame* parent)
     m_edit_menu_item = this->AddTool(ID_TOP_EDIT_MENU, _L("Edit"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
     m_view_menu_item = this->AddTool(ID_TOP_VIEW_MENU, _L("View"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
     m_objects_menu_item = this->AddTool(ID_TOP_OBJECTS_MENU, _L("Objects"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
+    // titlebar-remove-nonkit-controls: the Calibration dropdown is the only entry
+    // point to the calibration tests on Windows (the File/Edit menus don't carry
+    // them), so instead of orphaning the feature it is re-homed here as a kit text
+    // menu button beside the other menus -- its legacy Tune/raster icon is dropped.
+    // It still pops m_calib_menu via OnCalibToolItem and honours ShowCalibrationButton.
+    m_calib_item = this->AddTool(ID_CALIB, _L("Calibration"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
     m_help_menu_item = this->AddTool(ID_TOP_HELP_MENU, _L("Help"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
 
     this->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
-    this->AddSpacer(FromDIP(MD3::Metrics::compact.gap));
-    this->AddSeparator();
-    this->AddSpacer(FromDIP(MD3::Metrics::compact.gap));
-
-    //wxBitmap open_bitmap = create_scaled_bitmap("topbar_open", nullptr, TOPBAR_ICON_SIZE);
-    //wxAuiToolBarItem* tool_item = this->AddTool(wxID_OPEN, "", open_bitmap);
-
-    this->AddSpacer(FromDIP(10));
-
-    // Cross-platform modifier prefix ("Ctrl+" / "⌘") for the tooltip shortcuts.
-    const wxString ctrl = wxString::FromUTF8(Slic3r::GUI::shortkey_ctrl_prefix().c_str());
-
-    wxBitmap save_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Save, TOPBAR_ICON_SIZE,
-                                               MD3::Role::OnSurface, "topbar_save", TOPBAR_ICON_SIZE);
-    m_save_item          = this->AddTool(wxID_SAVE, "", save_bitmap);
-    wxBitmap save_inactive_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Save, TOPBAR_ICON_SIZE,
-                                               MD3::Role::Outline, "topbar_save_inactive", TOPBAR_ICON_SIZE);
-    m_save_item->SetDisabledBitmap(save_inactive_bitmap);
-    m_save_item->SetShortHelp(_L("Save Project") + " (" + ctrl + "S)");
-    this->AddSpacer(FromDIP(10));
-
-    wxBitmap undo_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Undo, TOPBAR_ICON_SIZE,
-                                               MD3::Role::OnSurface, "topbar_undo", TOPBAR_ICON_SIZE);
-    m_undo_item = this->AddTool(wxID_UNDO, "", undo_bitmap);
-    wxBitmap undo_inactive_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Undo, TOPBAR_ICON_SIZE,
-                                               MD3::Role::Outline, "topbar_undo_inactive", TOPBAR_ICON_SIZE);
-    m_undo_item->SetDisabledBitmap(undo_inactive_bitmap);
-    m_undo_item->SetShortHelp(_L("Undo") + " (" + ctrl + "Z)");
-
-    this->AddSpacer(FromDIP(10));
-
-    wxBitmap redo_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Redo, TOPBAR_ICON_SIZE,
-                                               MD3::Role::OnSurface, "topbar_redo", TOPBAR_ICON_SIZE);
-    m_redo_item = this->AddTool(wxID_REDO, "", redo_bitmap);
-    wxBitmap redo_inactive_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Redo, TOPBAR_ICON_SIZE,
-                                               MD3::Role::Outline, "topbar_redo_inactive", TOPBAR_ICON_SIZE);
-    m_redo_item->SetDisabledBitmap(redo_inactive_bitmap);
-    m_redo_item->SetShortHelp(_L("Redo") + " (" + ctrl + "Y)");
-
-    this->AddSpacer(FromDIP(10));
-
-    wxBitmap calib_bitmap          = topbar_glyph_bitmap(this, MaterialIcon::Tune, TOPBAR_ICON_SIZE,
-                                               MD3::Role::OnSurface, "calib_sf", TOPBAR_ICON_SIZE);
-    wxBitmap calib_bitmap_inactive = topbar_glyph_bitmap(this, MaterialIcon::Tune, TOPBAR_ICON_SIZE,
-                                               MD3::Role::Outline, "calib_sf_inactive", TOPBAR_ICON_SIZE);
-    m_calib_item                   = this->AddTool(ID_CALIB, _L("Calibration"), calib_bitmap);
-    m_calib_item->SetDisabledBitmap(calib_bitmap_inactive);
-
-    this->AddSpacer(FromDIP(10));
+    // §3.6 a single right-aligned drag spacer replaces the old dual centering
+    // spacers. Dragging over this region (or the project chip) moves the window.
     this->AddStretchSpacer(1);
 
-    m_title_item = this->AddLabel(ID_TITLE, "", FromDIP(TOPBAR_TITLE_WIDTH));
+    // §3.5 history chip -> the real version-history backend (MainFrame::show_project_history,
+    // the same handler behind the File>Version history item). The chip bakes its
+    // own idle/hover background bitmaps.
+    m_history_item = this->AddTool(ID_HISTORY, "",
+                                   topbar_history_chip_bitmap(this, m_history_branch, m_history_head, false),
+                                   wxEmptyString, wxITEM_NORMAL);
+    m_history_item->SetHoverBitmap(topbar_history_chip_bitmap(this, m_history_branch, m_history_head, true));
+    m_history_item->SetShortHelp(_L("Version history"));
+    this->AddSpacer(FromDIP(6));
+
+    // §3.6 project chip: kept as the ID_TITLE label so the caption drag path
+    // (OnMouseLeftDown / OnMouseLeftDClock) and update_responsive_title ellipsize
+    // continue to work; the chip anatomy is painted in BBLTopbarArt::DrawLabel.
+    m_title_item = this->AddLabel(ID_TITLE, "", FromDIP(TOPBAR_PROJECT_CHIP_MAX_W));
     m_title_item->SetAlignment(wxALIGN_CENTRE);
+    this->AddSpacer(FromDIP(6));
 
-    this->AddSpacer(FromDIP(10));
-    this->AddStretchSpacer(1);
-
-    m_publish_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Publish, TOPBAR_ICON_SIZE,
-                                           MD3::Role::OnSurface, "topbar_publish", TOPBAR_ICON_SIZE);
-    m_publish_item = this->AddTool(ID_PUBLISH, "", m_publish_bitmap);
-    m_publish_disable_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Publish, TOPBAR_ICON_SIZE,
-                                           MD3::Role::Outline, "topbar_publish_disable", TOPBAR_ICON_SIZE);
-    m_publish_item->SetDisabledBitmap(m_publish_disable_bitmap);
-    this->EnableTool(m_publish_item->GetId(), false);
-    this->AddSpacer(FromDIP(4));
-
-    /*wxBitmap model_store_bitmap = create_scaled_bitmap("topbar_store", nullptr, TOPBAR_ICON_SIZE);
-    m_model_store_item = this->AddTool(ID_MODEL_STORE, "", model_store_bitmap);
-    this->AddSpacer(12);
-    */
+    // §3.7 appearance / palette button (circular ghost). Guarded on the Material
+    // Symbols face; when it is unavailable the button is simply omitted (there is
+    // no legacy palette raster to fall back to -- reported as a followup).
+    if (MaterialIcon::available()) {
+        m_appearance_item = this->AddTool(ID_APPEARANCE, "",
+            MaterialIcon::bitmap(this, MaterialIcon::Palette, 20, StateColor::semantic(MD3::Role::OnSurfaceVariant)),
+            wxEmptyString, wxITEM_NORMAL);
+        m_appearance_item->SetShortHelp(_L("Appearance"));
+        this->AddSpacer(FromDIP(6));
+    }
 
     // §3.8: a 1px x 22px outline-variant separator sits immediately before the
     // window-control cluster (drawn by BBLTopbarArt::DrawSeparator).
@@ -405,6 +587,8 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnTopMenuToolItem, this, ID_TOP_OBJECTS_MENU);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnTopMenuToolItem, this, ID_TOP_HELP_MENU);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnCalibToolItem, this, ID_CALIB);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnHistoryChip, this, ID_HISTORY);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnAppearanceButton, this, ID_APPEARANCE);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnIconize, this, wxID_ICONIZE_FRAME);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnFullScreen, this, wxID_MAXIMIZE_FRAME);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnCloseFrame, this, wxID_CLOSE_FRAME);
@@ -425,10 +609,14 @@ void BBLTopbar::Init(wxFrame* parent)
         SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
         if (m_brand_item) {
-            wxBitmap logo = create_scaled_bitmap("BambuStudio", this, 22);
-            m_brand_item->SetBitmap(logo);
-            m_brand_item->SetHoverBitmap(logo);
+            wxBitmap brand = topbar_brand_tile_bitmap(this);
+            m_brand_item->SetBitmap(brand);
+            m_brand_item->SetHoverBitmap(brand);
         }
+        rebuild_history_chip();
+        if (m_appearance_item)
+            m_appearance_item->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Palette, 20,
+                                                              StateColor::semantic(MD3::Role::OnSurfaceVariant)));
         Realize();
         Refresh(false);
         event.Skip();
@@ -459,6 +647,10 @@ void BBLTopbar::OnOpenProject(wxAuiToolBarEvent& event)
 
 void BBLTopbar::show_publish_button(bool show)
 {
+    // titlebar-remove-nonkit-controls: the Publish control no longer lives in the
+    // caption. Retained as a null-safe no-op so external callers keep compiling.
+    if (!m_publish_item)
+        return;
     this->EnableTool(m_publish_item->GetId(), show);
     Refresh();
 }
@@ -511,17 +703,25 @@ void BBLTopbar::EnableRedoItem(bool enable)
 
 void BBLTopbar::EnableUndoRedoItems()
 {
-    this->EnableTool(m_undo_item->GetId(), true);
-    this->EnableTool(m_redo_item->GetId(), true);
-    this->EnableTool(m_calib_item->GetId(), true);
+    // Undo/Redo left the caption (reachable via the Edit menu); guard their now
+    // null members. Calibration remains as a menu button and still toggles.
+    if (m_undo_item)
+        this->EnableTool(m_undo_item->GetId(), true);
+    if (m_redo_item)
+        this->EnableTool(m_redo_item->GetId(), true);
+    if (m_calib_item)
+        this->EnableTool(m_calib_item->GetId(), true);
     Refresh();
 }
 
 void BBLTopbar::DisableUndoRedoItems()
 {
-    this->EnableTool(m_undo_item->GetId(), false);
-    this->EnableTool(m_redo_item->GetId(), false);
-    this->EnableTool(m_calib_item->GetId(), false);
+    if (m_undo_item)
+        this->EnableTool(m_undo_item->GetId(), false);
+    if (m_redo_item)
+        this->EnableTool(m_redo_item->GetId(), false);
+    if (m_calib_item)
+        this->EnableTool(m_calib_item->GetId(), false);
     Refresh();
 }
 
@@ -564,6 +764,40 @@ void BBLTopbar::OnPublishClicked(wxAuiToolBarEvent& event)
     wxGetApp().plater()->show_publish_dialog();
 #endif
     wxGetApp().open_publish_page_dialog();
+}
+
+void BBLTopbar::OnHistoryChip(wxAuiToolBarEvent& event)
+{
+    // §3.5: the chip opens the same project version-history dialog as the
+    // File>Version history menu item.
+    MainFrame* main_frame = dynamic_cast<MainFrame*>(m_frame);
+    if (main_frame)
+        main_frame->show_project_history();
+}
+
+void BBLTopbar::OnAppearanceButton(wxAuiToolBarEvent& event)
+{
+    // §3.7: entry point to appearance settings. A dedicated MD3 Appearance
+    // popover is a followup; for now this opens the Preferences dialog whose
+    // Appearance section carries theme/density/accent.
+    wxGetApp().open_preferences();
+}
+
+void BBLTopbar::rebuild_history_chip()
+{
+    if (!m_history_item)
+        return;
+    m_history_item->SetBitmap(topbar_history_chip_bitmap(this, m_history_branch, m_history_head, false));
+    m_history_item->SetHoverBitmap(topbar_history_chip_bitmap(this, m_history_branch, m_history_head, true));
+}
+
+void BBLTopbar::SetHistoryInfo(const wxString& branch, const wxString& head)
+{
+    m_history_branch = branch.IsEmpty() ? wxString("main") : branch;
+    m_history_head   = head;
+    rebuild_history_chip();
+    Realize();
+    Refresh(false);
 }
 
 void BBLTopbar::SetTopMenus(wxMenu* file_menu, wxMenu* edit_menu, wxMenu* view_menu,
@@ -624,19 +858,37 @@ void BBLTopbar::update_responsive_title(int width)
     if (width < 0)
         width = GetClientSize().GetWidth();
 
-    const int title_width = std::min(
-        FromDIP(TOPBAR_TITLE_WIDTH),
-        std::max(0, width - measure_fixed_content_width()));
+    wxGCDC dc(this);
+    dc.SetFont(GetFont());
 
-    if (m_title_item->GetMinSize().GetWidth() != title_width) {
-        m_title_item->SetMinSize({title_width, -1});
+    // §3.6 project chip geometry (logical px): leading glyph + gap + name, with
+    // symmetric horizontal padding. Mirror the values painted in DrawLabel.
+    const int padx = FromDIP(8);
+    const int gap  = FromDIP(6);
+    int glyph_w = 0;
+    if (MaterialIcon::available())
+        glyph_w = MaterialIcon::measure(dc, MaterialIcon::FolderOpen, 16).x + gap;
+
+    // Cap the name to 150 logical px, but never let the chip crowd out the rest
+    // of the fixed chrome on a very narrow window.
+    int max_text = FromDIP(TOPBAR_PROJECT_CHIP_MAX_W);
+    if (width > 0) {
+        const int budget = width - measure_fixed_content_width() - padx * 2 - glyph_w;
+        if (budget > 0)
+            max_text = std::min(max_text, std::max(FromDIP(40), budget));
+    }
+
+    const wxString title = wxControl::Ellipsize(m_full_title, dc, wxELLIPSIZE_END, max_text);
+
+    int text_w = 0, text_h = 0;
+    dc.GetTextExtent(title.IsEmpty() ? wxString(" ") : title, &text_w, &text_h);
+
+    const int chip_w = padx * 2 + glyph_w + text_w;
+    if (m_title_item->GetMinSize().GetWidth() != chip_w) {
+        m_title_item->SetMinSize({chip_w, -1});
         Realize();
     }
 
-    wxGCDC dc(this);
-    dc.SetFont(GetFont());
-    const wxString title = title_width > 0 ?
-        wxControl::Ellipsize(m_full_title, dc, wxELLIPSIZE_END, title_width) : wxString();
     m_title_item->SetLabel(title);
     m_title_item->SetAlignment(wxALIGN_CENTRE);
     Refresh(false);
@@ -661,47 +913,22 @@ void BBLTopbar::UpdateToolbarWidth(int width)
 void BBLTopbar::Rescale() {
     wxAuiToolBarItem* item;
 
+    // §3.1 brand tile (falls back to the raster logo when the face is missing).
     item = this->FindTool(ID_LOGO);
     if (item) {
-        wxBitmap logo = create_scaled_bitmap("BambuStudio", this, 22);
-        item->SetBitmap(logo);
-        item->SetHoverBitmap(logo);
+        wxBitmap brand = topbar_brand_tile_bitmap(this);
+        item->SetBitmap(brand);
+        item->SetHoverBitmap(brand);
     }
 
-    //item = this->FindTool(wxID_OPEN);
-    //item->SetBitmap(create_scaled_bitmap("topbar_open", nullptr, TOPBAR_ICON_SIZE));
+    // §3.5 history chip + §3.7 appearance button re-rasterize at the new DPI.
+    rebuild_history_chip();
+    if (m_appearance_item)
+        m_appearance_item->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Palette, 20,
+                                                          StateColor::semantic(MD3::Role::OnSurfaceVariant)));
 
-    item = this->FindTool(wxID_SAVE);
-    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Save, TOPBAR_ICON_SIZE,
-                                        MD3::Role::OnSurface, "topbar_save", TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(topbar_glyph_bitmap(this, MaterialIcon::Save, TOPBAR_ICON_SIZE,
-                                        MD3::Role::Outline, "topbar_save_inactive", TOPBAR_ICON_SIZE));
-
-    item = this->FindTool(wxID_UNDO);
-    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Undo, TOPBAR_ICON_SIZE,
-                                        MD3::Role::OnSurface, "topbar_undo", TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(topbar_glyph_bitmap(this, MaterialIcon::Undo, TOPBAR_ICON_SIZE,
-                                        MD3::Role::Outline, "topbar_undo_inactive", TOPBAR_ICON_SIZE));
-
-    item = this->FindTool(wxID_REDO);
-    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Redo, TOPBAR_ICON_SIZE,
-                                        MD3::Role::OnSurface, "topbar_redo", TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(topbar_glyph_bitmap(this, MaterialIcon::Redo, TOPBAR_ICON_SIZE,
-                                        MD3::Role::Outline, "topbar_redo_inactive", TOPBAR_ICON_SIZE));
-
-    item = this->FindTool(ID_CALIB);
-    item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Tune, TOPBAR_ICON_SIZE,
-                                        MD3::Role::OnSurface, "calib_sf", TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(topbar_glyph_bitmap(this, MaterialIcon::Tune, TOPBAR_ICON_SIZE,
-                                        MD3::Role::Outline, "calib_sf_inactive", TOPBAR_ICON_SIZE));
-
-    /*item = this->FindTool(ID_PUBLISH);
-    item->SetBitmap(create_scaled_bitmap("topbar_publish", this, TOPBAR_ICON_SIZE));
-    item->SetDisabledBitmap(create_scaled_bitmap("topbar_publish_disable", nullptr, TOPBAR_ICON_SIZE));*/
-
-    /*item = this->FindTool(ID_MODEL_STORE);
-    item->SetBitmap(create_scaled_bitmap("topbar_store", this, TOPBAR_ICON_SIZE));
-    */
+    // Save/Undo/Redo/Publish and the Calibration icon left the caption; the
+    // Calibration menu button is text-only, so there is no bitmap to rescale.
 
     item = this->FindTool(wxID_ICONIZE_FRAME);
     item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Minimize, TOPBAR_WINDOW_ICON_SIZE,

@@ -36,6 +36,9 @@ public:
     void OnRedo(wxAuiToolBarEvent& event);
     void OnModelStoreClicked(wxAuiToolBarEvent& event);
     void OnPublishClicked(wxAuiToolBarEvent &event);
+    // §3.5 / §3.7 kit title-bar chips added this wave.
+    void OnHistoryChip(wxAuiToolBarEvent& event);
+    void OnAppearanceButton(wxAuiToolBarEvent& event);
 
     wxAuiToolBarItem* FindToolByCurrentPosition();
 
@@ -43,6 +46,9 @@ public:
                      wxMenu* objects_menu, wxMenu* help_menu);
     wxMenu *GetCalibMenu();
     void SetTitle(wxString title);
+    // §3.5 history chip label content (branch + short head). Decorative; the
+    // click always opens the real version-history backend.
+    void SetHistoryInfo(const wxString& branch, const wxString& head);
     void SetMaximizedSize();
     void SetWindowSize();
 
@@ -60,6 +66,9 @@ private:
     wxMenu* top_menu_for_tool(int tool_id) const;
     int measure_fixed_content_width() const;
     void update_responsive_title(int width = -1);
+    // Rebuild the baked history-chip bitmaps (idle + hover) from the current
+    // branch/head + theme; safe to call before the item exists.
+    void rebuild_history_chip();
 
     wxFrame* m_frame;
     wxAuiToolBarItem* m_brand_item;
@@ -79,6 +88,10 @@ private:
     wxAuiToolBarItem* m_title_item;
     wxAuiToolBarItem* m_account_item;
     wxAuiToolBarItem* m_model_store_item;
+    wxAuiToolBarItem* m_history_item{nullptr};
+    wxAuiToolBarItem* m_appearance_item{nullptr};
+    wxString          m_history_branch;
+    wxString          m_history_head;
 
     wxAuiToolBarItem *m_publish_item;
     wxAuiToolBarItem *m_save_item;

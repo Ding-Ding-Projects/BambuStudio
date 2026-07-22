@@ -482,11 +482,169 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
     const ImRect draw_region(pos, pos + size);
     ImGui::ItemSize(draw_region);
 
-    const float  handle_dummy_width  = 10.0f * m_scale;
-    const float  text_right_dummy    = 50.0f * scale * m_scale;
+    ImGuiWrapper &imgui = *wxGetApp().imgui();
 
     const float  handle_radius       = 12.0f * m_scale;
     const float  handle_border       = 2.0f * m_scale;
+    const ImU32  handle_clr          = preview_color(MD3::Role::Primary, m_is_dark);
+    const ImU32  handle_border_clr   = preview_color(MD3::Role::Surface, m_is_dark);
+
+    // MD3 transport timeline bar (kit Preview.jsx move timeline). The skip / play
+    // glyphs come from the merged Material Symbols atlas; when that face is
+    // unavailable we fall back below to the legacy transparent groove + handle +
+    // value chip, which shares the exact same value model and drag semantics.
+    if (imgui.material_icons_available()) {
+        const float pad_x         = 20.0f * m_scale;
+        const float gap           = 14.0f * m_scale;
+        const float skip_d        = 38.0f * m_scale;
+        const float play_d        = 44.0f * m_scale;
+        const float skip_icon_px  = 22.0f * m_scale;
+        const float play_icon_px  = 24.0f * m_scale;
+        const float counter_min_w = 120.0f * m_scale;
+        const float center_y      = pos.y + size.y * 0.5f;
+
+        const ImU32 bar_bg      = preview_color(MD3::Role::SurfaceContainerLow, m_is_dark);
+        const ImU32 border_clr  = preview_color(MD3::Role::OutlineVariant, m_is_dark);
+        const ImU32 ghost_hover = preview_color(MD3::Role::SurfaceContainerHigh, m_is_dark);
+        const ImU32 icon_idle   = preview_color(MD3::Role::OnSurfaceVariant, m_is_dark);
+        const ImU32 play_bg     = preview_color(MD3::Role::Primary, m_is_dark);
+        const ImU32 play_fg     = preview_color(MD3::Role::OnPrimary, m_is_dark);
+        const ImU32 play_hover  = preview_color(MD3::Role::OnPrimary, m_is_dark, 24);
+        const ImU32 counter_clr = preview_color(MD3::Role::OnSurfaceVariant, m_is_dark);
+
+        // opaque bar surface + 1px top divider
+        window->DrawList->AddRectFilled(draw_region.Min, draw_region.Max, bar_bg);
+        window->DrawList->AddRectFilled(draw_region.Min, ImVec2(draw_region.Max.x, draw_region.Min.y + 1.0f * m_scale), border_clr);
+
+        ImFont *icon_font = imgui.get_icon_font();
+        auto draw_glyph = [&](const ImVec2 &center, unsigned int cp, float px, ImU32 clr) {
+            const std::string glyph = ImGuiWrapper::material_icon(cp);
+            const ImVec2 gsz = icon_font->CalcTextSizeA(px, FLT_MAX, 0.0f, glyph.c_str());
+            window->DrawList->AddText(icon_font, px, center - gsz * 0.5f, clr, glyph.c_str());
+        };
+        auto ghost_button = [&](const ImVec2 &center, float d, unsigned int cp, float px) -> bool {
+            const ImRect r(center - ImVec2(d, d) * 0.5f, center + ImVec2(d, d) * 0.5f);
+            const bool hov = ImGui::IsMouseHoveringRect(r.Min, r.Max);
+            if (hov) window->DrawList->AddCircleFilled(center, d * 0.5f, ghost_hover);
+            draw_glyph(center, cp, px, icon_idle);
+            return hov && context.IO.MouseClicked[0];
+        };
+
+        bool value_changed = false;
+
+        // left transport cluster: skip_previous | play | skip_next
+        float cx = pos.x + pad_x;
+        const ImVec2 prev_c = ImVec2(cx + skip_d * 0.5f, center_y); cx += skip_d + gap;
+        const ImVec2 play_c = ImVec2(cx + play_d * 0.5f, center_y); cx += play_d + gap;
+        const ImVec2 next_c = ImVec2(cx + skip_d * 0.5f, center_y); cx += skip_d + gap;
+
+        // reserve the right-aligned mono counter slot before laying out the flex slider
+        const bool  mono_m     = imgui.push_mono_font();
+        const std::string counter_probe = _u8L("Move") + " " + std::to_string(*value) + " / " + std::to_string(v_max);
+        const float counter_probe_w = ImGui::CalcTextSize(counter_probe.c_str()).x;
+        if (mono_m) imgui.pop_mono_font();
+        const float counter_w     = std::max(counter_min_w, counter_probe_w);
+        const float counter_right = pos.x + size.x - pad_x;
+        const float counter_left  = counter_right - counter_w;
+
+        // flex slider region between the cluster and the counter
+        float slider_x0 = cx;
+        float slider_x1 = counter_left - gap;
+        if (slider_x1 < slider_x0 + 40.0f * m_scale)
+            slider_x1 = slider_x0 + 40.0f * m_scale;
+
+        const ImRect groove(ImVec2(slider_x0 + handle_radius, center_y - GROOVE_WIDTH * m_scale * 0.5f),
+                            ImVec2(slider_x1 - handle_radius, center_y + GROOVE_WIDTH * m_scale * 0.5f));
+        const ImRect bg_rect(groove.Min - ImVec2(6.0f, 6.0f) * m_scale, groove.Max + ImVec2(6.0f, 6.0f) * m_scale);
+        const ImRect slideable_region(bg_rect.Min + ImVec2(handle_radius, 0.0f), bg_rect.Max - ImVec2(handle_radius, 0.0f));
+
+        // Activation spans the full-height flex column (click anywhere on the track
+        // to seek, as before) but excludes the transport cluster and counter so
+        // their clicks never drag the handle.
+        const ImRect slider_hit(ImVec2(slider_x0, pos.y), ImVec2(slider_x1, pos.y + size.y));
+        const bool slider_hovered = ImGui::ItemHoverable(slider_hit, id);
+        if (slider_hovered && context.IO.MouseDown[0]) {
+            ImGui::SetActiveID(id, window);
+            ImGui::SetFocusID(id, window);
+            ImGui::FocusWindow(window);
+        }
+
+        // groove + filled progress + handle (identical drag semantics to legacy)
+        draw_background_and_groove(bg_rect, groove);
+        float  handle_pos = get_pos_from_value(v_min, v_max, *value, groove);
+        ImRect handle(handle_pos - handle_radius, center_y - handle_radius, handle_pos + handle_radius, center_y + handle_radius);
+        if (slider_behavior(id, slideable_region, (const ImS32) v_min, (const ImS32) v_max, (ImS32 *) value, &handle))
+            value_changed = true;
+        const ImVec2 handle_center = handle.GetCenter();
+        window->DrawList->AddRectFilled(groove.Min, ImVec2(handle_center.x, groove.Max.y), handle_clr, 0.5f * GROOVE_WIDTH * m_scale);
+        window->DrawList->AddCircleFilled(handle_center, handle_radius, handle_border_clr);
+        window->DrawList->AddCircleFilled(handle_center, handle_radius - handle_border, handle_clr);
+
+        // transport actions (skip = jump to start / end)
+        if (ghost_button(prev_c, skip_d, MaterialIcon::SkipPrevious, skip_icon_px)) {
+            if (*value != v_min) { *value = v_min; value_changed = true; }
+            m_playing = false;
+        }
+        {
+            // circular play / pause
+            const ImRect pr(play_c - ImVec2(play_d, play_d) * 0.5f, play_c + ImVec2(play_d, play_d) * 0.5f);
+            const bool hov = ImGui::IsMouseHoveringRect(pr.Min, pr.Max);
+            window->DrawList->AddCircleFilled(play_c, play_d * 0.5f, play_bg);
+            if (hov) window->DrawList->AddCircleFilled(play_c, play_d * 0.5f, play_hover);
+            draw_glyph(play_c, m_playing ? (unsigned) MaterialIcon::Pause : (unsigned) MaterialIcon::PlayArrow, play_icon_px, play_fg);
+            if (hov && context.IO.MouseClicked[0]) {
+                if (!m_playing) {
+                    if (*value >= v_max) { *value = v_min; value_changed = true; }
+                    m_playing    = true;
+                    m_play_accum = 0.0f;
+                } else {
+                    m_playing = false;
+                }
+            }
+        }
+        if (ghost_button(next_c, skip_d, MaterialIcon::SkipNext, skip_icon_px)) {
+            if (*value != v_max) { *value = v_max; value_changed = true; }
+            m_playing = false;
+        }
+
+        // playback advance — frame-paced, pauses if the user grabs the handle
+        if (m_playing) {
+            if (v_max <= v_min || context.ActiveId == id) {
+                if (v_max <= v_min) m_playing = false;
+            } else {
+                float dt = context.IO.DeltaTime;
+                if (dt > 0.1f) dt = 0.1f;
+                if (dt < 0.0f) dt = 0.0f;
+                const float duration = 6.0f; // seconds for a full sweep
+                float rate = (float) (v_max - v_min) / duration;
+                if (rate < 1.0f) rate = 1.0f;
+                m_play_accum += dt * rate;
+                const int adv = (int) m_play_accum;
+                if (adv > 0) {
+                    m_play_accum -= (float) adv;
+                    int nv = *value + adv;
+                    if (nv >= v_max) { nv = v_max; m_playing = false; }
+                    if (nv != *value) { *value = nv; value_changed = true; }
+                }
+            }
+            // keep the frame loop alive so playback animates even between whole steps
+            if (m_playing) set_as_dirty();
+        }
+
+        // right-aligned mono counter 'Move cur / max'
+        const bool  mono_r  = imgui.push_mono_font();
+        const std::string counter = _u8L("Move") + " " + std::to_string(*value) + " / " + std::to_string(v_max);
+        const ImVec2 counter_sz = ImGui::CalcTextSize(counter.c_str());
+        window->DrawList->AddText(ImVec2(counter_right - counter_sz.x, center_y - counter_sz.y * 0.5f), counter_clr, counter.c_str());
+        if (mono_r) imgui.pop_mono_font();
+
+        return value_changed;
+    }
+
+    // ---- capability fallback: merged Material Symbols atlas unavailable ----
+    // Legacy transparent groove + circular handle + floating value chip.
+    const float  handle_dummy_width  = 10.0f * m_scale;
+    const float  text_right_dummy    = 50.0f * scale * m_scale;
 
     const float  text_frame_rounding = 2.0f * scale * m_scale;
     const float  text_start_offset   = 8.0f * m_scale;
@@ -494,8 +652,6 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
     const float  triangle_offsets[3] = {-3.5f * m_scale, 3.5f * m_scale, -6.06f * m_scale};
 
     const ImU32 white_bg = preview_color(MD3::Role::SurfaceContainerLow, m_is_dark);
-    const ImU32 handle_clr = preview_color(MD3::Role::Primary, m_is_dark);
-    const ImU32 handle_border_clr = preview_color(MD3::Role::Surface, m_is_dark);
 
     // calculate groove size
     const ImVec2 groove_start = ImVec2(pos.x + handle_dummy_width, pos.y + size.y - ONE_LAYER_MARGIN.y * m_scale - ONE_LAYER_BUTTON_SIZE.y * m_scale * 0.5f - GROOVE_WIDTH * m_scale * 0.5f);

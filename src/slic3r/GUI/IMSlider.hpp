@@ -192,6 +192,12 @@ private:
     bool m_is_wipe_tower      = false; // This flag indicates that there is multiple extruder print with wipe tower
     bool m_is_spiral_vase     = false;
 
+    // MD3 transport-bar playback (horizontal moves timeline). m_playing drives a
+    // frame-paced advance of the move position; m_play_accum carries the
+    // fractional step between frames so playback speed is DPI/framerate stable.
+    bool  m_playing     = false;
+    float m_play_accum  = 0.0f;
+
     /* BBS slider images */
     void *m_one_layer_on_id;
     void *m_one_layer_on_hover_id;

@@ -7,13 +7,18 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 
-StateColor blank_bg(StateColor(std::make_pair(ThemeColor::White, (int)StateColor::Normal)));
-static const wxColour BUTTON_BG_COL = ThemeColor::Grey300;
-static const wxColour BUTTON_IN_BG_COL = ThemeColor::Grey400;
-
-static const wxColour bd = ThemeColor::BrandGreen;
-static const wxColour text_num_color   = ThemeColor::TextMuted;
-static const wxColour BUTTON_PRESS_COL = ThemeColor::Grey450;
+// MD3 Device-scheme tokens for the XY jog dial (Device.jsx Move control). The
+// dial is used only in the Device/Monitor control column, so its rings, accent
+// and numerals resolve against the Device teal scheme + neutral surfaces at
+// paint time (live theme-correct in light and dark). Geometry, hit-testing and
+// the SetInt(current_pos) event contract are unchanged: this migration retires
+// the legacy Grey300/Grey400/BrandGreen/TextMuted/White literals for MD3 roles
+// without altering any jog semantics.
+static wxColour axis_ring_outer_col() { return StateColor::semantic(MD3::Role::SurfaceContainerHighest); }
+static wxColour axis_ring_inner_col() { return StateColor::semantic(MD3::Role::SurfaceContainerHigh); }
+static wxColour axis_accent_col()     { return StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device); }
+static wxColour axis_container_col()  { return StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device); }
+static wxColour axis_num_col()        { return StateColor::semantic(MD3::Role::OnSurfaceVariant); }
 static const double sqrt2 = std::sqrt(2);
 
 BEGIN_EVENT_TABLE(AxisCtrlButton, wxPanel)
@@ -38,25 +43,25 @@ AxisCtrlButton::AxisCtrlButton(wxWindow *parent, ScalableBitmap &icon, long stly
     , gap(GAP_SIZE)
     , last_pos(UNDEFINED)
     , current_pos(UNDEFINED) // don't change init value
-    , text_color(std::make_pair(ThemeColor::TextMuted, (int) StateColor::Disabled), std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
+    , text_color(std::make_pair(StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled), std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Normal))
 	, state_handler(this)
 {
     m_icon = icon;
 	wxWindow::SetBackgroundColour(parent->GetBackgroundColour());
 
-    border_color.append(bd, StateColor::Hovered);
+    border_color.append(axis_accent_col(), StateColor::Hovered);
 
-    background_color.append(BUTTON_BG_COL, StateColor::Disabled);
-    background_color.append(BUTTON_PRESS_COL, StateColor::Pressed);
-    background_color.append(BUTTON_BG_COL, StateColor::Hovered);
-    background_color.append(BUTTON_BG_COL, StateColor::Normal);
-    background_color.append(BUTTON_BG_COL, StateColor::Enabled);
+    background_color.append(axis_ring_outer_col(), StateColor::Disabled);
+    background_color.append(axis_container_col(), StateColor::Pressed);
+    background_color.append(axis_ring_outer_col(), StateColor::Hovered);
+    background_color.append(axis_ring_outer_col(), StateColor::Normal);
+    background_color.append(axis_ring_outer_col(), StateColor::Enabled);
 
-    inner_background_color.append(BUTTON_IN_BG_COL, StateColor::Disabled);
-    inner_background_color.append(BUTTON_PRESS_COL, StateColor::Pressed);
-    inner_background_color.append(BUTTON_IN_BG_COL, StateColor::Hovered);
-    inner_background_color.append(BUTTON_IN_BG_COL, StateColor::Normal);
-    inner_background_color.append(BUTTON_IN_BG_COL, StateColor::Enabled);
+    inner_background_color.append(axis_ring_inner_col(), StateColor::Disabled);
+    inner_background_color.append(axis_container_col(), StateColor::Pressed);
+    inner_background_color.append(axis_ring_inner_col(), StateColor::Hovered);
+    inner_background_color.append(axis_ring_inner_col(), StateColor::Normal);
+    inner_background_color.append(axis_ring_inner_col(), StateColor::Enabled);
 
     state_handler.attach({ &border_color, &background_color });
     state_handler.update_binds();
@@ -162,16 +167,16 @@ void AxisCtrlButton::render(wxDC& dc)
     wxGraphicsPath outer_path = gc->CreatePath();
     outer_path.AddCircle(0, 0, r_outer);
     outer_path.AddCircle(0, 0, r_inner);
-    gc->SetPen(StateColor::darkModeColorFor(BUTTON_BG_COL));
-    gc->SetBrush(StateColor::darkModeColorFor(BUTTON_BG_COL));
+    gc->SetPen(axis_ring_outer_col());
+    gc->SetBrush(axis_ring_outer_col());
     gc->DrawPath(outer_path);
 
 	//draw the inner ring
     wxGraphicsPath inner_path = gc->CreatePath();
     inner_path.AddCircle(0, 0, r_inner);
     inner_path.AddCircle(0, 0, r_blank);
-    gc->SetPen(StateColor::darkModeColorFor(BUTTON_IN_BG_COL));
-    gc->SetBrush(StateColor::darkModeColorFor(BUTTON_IN_BG_COL));
+    gc->SetPen(axis_ring_inner_col());
+    gc->SetBrush(axis_ring_inner_col());
 	gc->DrawPath(inner_path);
 
 	//draw an arc in corresponding position
@@ -193,9 +198,9 @@ void AxisCtrlButton::render(wxDC& dc)
 		gc->DrawPath(path);
 	}
 
-	//draw rectangle gap
-	gc->SetPen(blank_bg.colorForStates(StateColor::Normal));
-	gc->SetBrush(blank_bg.colorForStates(StateColor::Normal));
+	//draw rectangle gap (the cross-shaped cut-outs read as the card surface behind)
+	gc->SetPen(GetBackgroundColour());
+	gc->SetBrush(GetBackgroundColour());
 	gc->PushState();
 	gc->Rotate(-PI / 4);
 	gc->DrawRectangle(-sqrt2 * size.x / 2, -sqrt2 * gap / 2, sqrt2 * size.x, sqrt2 * gap);
@@ -212,8 +217,8 @@ void AxisCtrlButton::render(wxDC& dc)
         gc->SetPen(wxPen(border_color.colorForStates(states), 2));
         gc->SetBrush(wxBrush(background_color.colorForStates(states)));
     } else {
-        gc->SetPen(StateColor::darkModeColorFor(BUTTON_BG_COL));
-        gc->SetBrush(StateColor::darkModeColorFor(BUTTON_BG_COL));
+        gc->SetPen(axis_ring_outer_col());
+        gc->SetBrush(axis_ring_outer_col());
     }
     gc->DrawPath(home_path);
 
@@ -285,7 +290,7 @@ void AxisCtrlButton::render(wxDC& dc)
 	gc->GetTextExtent("X", &w, &h);
 	gc->DrawText(wxT("X"), r_outer - (r_outer - r_inner) / 2 - w / 2, -h / 2);
 
-	gc->SetFont(Label::Body_12, text_num_color);
+	gc->SetFont(Label::Body_12, axis_num_col());
 
 	gc->PushState();
 	gc->Rotate(PI / 4);

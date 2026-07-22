@@ -2439,37 +2439,6 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     return bSizer_right;
 }
 
-// Create a device card section header with leading MaterialIcon glyph + label (MD3 SectionHeader spec)
-// trailing_label: optional teal text appended to the title row (e.g. "Humidity: Dry")
-wxBoxSizer* StatusBasePanel::create_section_header(wxWindow *parent, const wxString &label, MaterialIcon::Glyph icon,
-                                                    const wxString &trailing_label)
-{
-    auto *sizer = new wxBoxSizer(wxHORIZONTAL);
-
-    // Leading 16px Material Symbol glyph (device_secondary_text_color for non-active cards)
-    const wxColour title_fg = device_secondary_text_color();
-    wxBitmap icon_bmp = MaterialIcon::bitmap(parent, icon, FromDIP(16), title_fg);
-    if (!icon_bmp.IsOk()) icon_bmp = wxNullBitmap; // fallback if font unavailable
-    auto *icon_static = new wxStaticBitmap(wx_NULL_WINDOW, wxID_ANY, icon_bmp);
-    icon_static->SetMinSize(wxSize(FromDIP(20), FromDIP(20)));
-    sizer->Add(icon_static, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
-
-    // Title label (MD3 SectionHeader: 11/600 type)
-    auto *title_label = new Label(parent, label.Upper());
-    title_label->SetFont(Label::Head_11);
-    title_label->SetForegroundColour(title_fg);
-    sizer->Add(title_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
-
-    // Trailing teal label (e.g. "Humidity: Dry") for AMS card
-    if (!trailing_label.IsEmpty()) {
-        auto *trail = new Label(parent, trailing_label);
-        trail->SetFont(Label::Body_11);
-        trail->SetForegroundColour(device_control_color()); // teal accent
-        sizer->Add(trail, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
-    }
-
-    return sizer;
-}
 wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
 {
     auto sizer                = new wxBoxSizer(wxVERTICAL);
@@ -2484,11 +2453,13 @@ wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
     box->SetBackgroundColour(device_card_color());
     box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    // Section header: Temperature with thermostat icon
-    auto *title_row = create_section_header(box, _L("Temperature"), MaterialIcon::Thermostat);
+    // MD3 SectionHeader: 11/600 uppercase + .6px tracking OnSurfaceVariant, with a
+    // 16px leading Material Symbol (Device.jsx:50). Guarded so a stripped icon face
+    // degrades to the text-only header instead of tofu.
+    auto *title = new SectionHeader(box, _L("Temperature"), MaterialIcon::available() ? MaterialIcon::Thermostat : 0);
 
     wxBoxSizer *content_sizer = new wxBoxSizer(wxVERTICAL);
-    content_sizer->Add(title_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    content_sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     content_sizer->Add(create_temp_control(box), 0, wxEXPAND | wxALL, FromDIP(12));
 
     box->SetSizer(content_sizer);
@@ -2504,11 +2475,10 @@ StaticBox *StatusBasePanel::create_print_options_group(wxWindow *parent)
     m_print_options_box->SetBackgroundColour(device_card_color());
     m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    // Section header: Print Options with tune icon (MD3 SectionHeader style)
-    auto *title_row = create_section_header(m_print_options_box, _L("Print Options"), MaterialIcon::Tune);
+    auto *title = new SectionHeader(m_print_options_box, _L("Print Options"), MaterialIcon::available() ? MaterialIcon::Speed : 0);
 
     auto *sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(title_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     m_misc_ctrl_sizer = create_misc_control(m_print_options_box);
     sizer->Add(m_misc_ctrl_sizer, 0, wxEXPAND | wxALL, FromDIP(12));
     m_print_options_box->SetSizer(sizer);
@@ -2523,8 +2493,7 @@ StaticBox *StatusBasePanel::create_move_group(wxWindow *parent)
     m_move_control_box->SetBackgroundColour(device_card_color());
     m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    // Section header: Move with build icon (MD3 SectionHeader style)
-    auto *title_row = create_section_header(m_move_control_box, _L("Move"), MaterialIcon::Build);
+    auto *title = new SectionHeader(m_move_control_box, _L("Move"), MaterialIcon::available() ? MaterialIcon::ControlCamera : 0);
 
     auto *axis_sizer = create_axis_control(m_move_control_box);
     auto *bed_panel  = create_bed_control(m_move_control_box);
@@ -2544,7 +2513,7 @@ StaticBox *StatusBasePanel::create_move_group(wxWindow *parent)
     content_sizer->Add(extruder_sizer, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(4));
 
     auto *card_sizer = new wxBoxSizer(wxVERTICAL);
-    card_sizer->Add(title_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    card_sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     card_sizer->Add(content_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     m_move_control_box->SetSizer(card_sizer);
     return m_move_control_box;
@@ -2819,6 +2788,16 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
                                                   std::make_pair(device_text_color(), (int) StateColor::Normal)));
     m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
 
+    // Retire the raster monitor_bed_up/down PNGs for Material Symbols directional
+    // glyphs (Device.jsx:90-93). Guarded so a missing icon face keeps the legacy
+    // raster; the +10/+1 labels, jog handlers and geometry are unchanged.
+    if (MaterialIcon::available()) {
+        m_bpButton_z_10->SetGlyph(MaterialIcon::ArrowUp, 16);
+        m_bpButton_z_1->SetGlyph(MaterialIcon::ArrowUp, 16);
+        m_bpButton_z_down_1->SetGlyph(MaterialIcon::ArrowDown, 16);
+        m_bpButton_z_down_10->SetGlyph(MaterialIcon::ArrowDown, 16);
+    }
+
     bSizer_z_ctrl->Add(m_bpButton_z_10, 0, wxEXPAND | wxLEFT | wxRIGHT, 0);
     bSizer_z_ctrl->Add(m_bpButton_z_1, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(2));
     bSizer_z_ctrl->Add(m_staticText_z_tip, 0, wxALIGN_CENTRE, FromDIP(5));
@@ -2875,6 +2854,14 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     m_bpButton_e_down_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
     m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
+    // Retire the raster monitor_extruder_up/down PNGs for Material Symbols glyphs
+    // (Device.jsx:90-93). Guarded to keep the raster fallback; the extrude/retract
+    // handlers and 40x40 geometry are unchanged.
+    if (MaterialIcon::available()) {
+        m_bpButton_e_10->SetGlyph(MaterialIcon::ArrowUp, 22);
+        m_bpButton_e_down_10->SetGlyph(MaterialIcon::ArrowDown, 22);
+    }
+
     m_extruder_switching_status = new ExtruderSwithingStatus(panel);
     m_extruder_switching_status->SetForegroundColour(device_secondary_text_color());
 
@@ -2915,11 +2902,19 @@ StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
     m_ams_control = new AMSControl(m_ams_control_box, wxID_ANY);
     m_ams_control->SetDoubleBuffered(true);
 
-    // Section header: AMS with inventory_2 icon + trailing humidity state (teal accent)
-    auto *title_row = create_section_header(m_ams_control_box, _L("AMS"), MaterialIcon::Inventory2, _L("Humidity") + ": N/A");
-
     auto sizer_box = new wxBoxSizer(wxVERTICAL);
-    sizer_box->Add(title_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    // MD3 SectionHeader (inventory_2) with the kit's teal trailing indicator
+    // (Device.jsx:69). The trailing label lands the anatomy + Device accent; binding
+    // it to live humidity state (Dry / level) is a reported follow-up.
+    auto *ams_header = new SectionHeader(m_ams_control_box, _L("AMS"), MaterialIcon::available() ? MaterialIcon::Inventory2 : 0);
+    m_ams_humidity_label = new Label(m_ams_control_box, _L("Humidity"));
+    m_ams_humidity_label->SetFont(::Label::Body_11);
+    m_ams_humidity_label->SetForegroundColour(device_primary_color());
+    auto *ams_header_sizer = new wxBoxSizer(wxHORIZONTAL);
+    ams_header_sizer->Add(ams_header, 0, wxALIGN_CENTER_VERTICAL);
+    ams_header_sizer->AddStretchSpacer();
+    ams_header_sizer->Add(m_ams_humidity_label, 0, wxALIGN_CENTER_VERTICAL);
+    sizer_box->Add(ams_header_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     sizer_box->Add(m_ams_control, 0, wxEXPAND | wxALL, FromDIP(3));
 
     m_ams_control_box->SetBackgroundColour(device_card_color());

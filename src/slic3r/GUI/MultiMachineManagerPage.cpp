@@ -1,8 +1,11 @@
 #include "MultiMachineManagerPage.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include "DeviceCore/DevManager.h"
+
+#include <wx/wrapsizer.h>
 
 namespace Slic3r {
 namespace GUI {
@@ -10,9 +13,11 @@ namespace GUI {
 MultiMachineItem::MultiMachineItem(wxWindow* parent, MachineObject* obj)
     : DeviceItem(parent, obj)
 {
+    // Background matches the farm scroll surface so the rounded-card gutters blend;
+    // the card fill (SurfaceContainerLow) is painted inside doRender().
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
-    SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
+    SetMinSize(wxSize(FromDIP(DEVICE_CARD_WIDTH), FromDIP(DEVICE_CARD_HEIGHT)));
+    SetMaxSize(wxSize(FromDIP(DEVICE_CARD_WIDTH), FromDIP(DEVICE_CARD_HEIGHT)));
 
     Bind(wxEVT_PAINT, &MultiMachineItem::paintEvent, this);
     Bind(wxEVT_ENTER_WINDOW, &MultiMachineItem::OnEnterWindow, this);
@@ -42,40 +47,18 @@ void MultiMachineItem::OnLeaveWindow(wxMouseEvent& evt)
 
 void MultiMachineItem::OnLeftDown(wxMouseEvent& evt)
 {
-    int left = FromDIP(DEVICE_LEFT_PADDING_LEFT +
-        DEVICE_LEFT_DEV_NAME +
-        DEVICE_LEFT_PRO_NAME +
-        DEVICE_LEFT_PRO_INFO);
-    auto mouse_pos = ClientToScreen(evt.GetPosition());
-    auto item = this->ClientToScreen(wxPoint(0, 0));
-
-    if (mouse_pos.x > (item.x + left) &&
-        mouse_pos.x < (item.x + left + FromDIP(90)) &&
-        mouse_pos.y > item.y &&
-        mouse_pos.y < (item.y + DEVICE_ITEM_MAX_HEIGHT)) {
-        post_event(wxCommandEvent(EVT_MULTI_DEVICE_VIEW));
-    }
+    // The whole card is the click-through affordance to the device monitor (the
+    // legacy anatomy hit-tested a far-right "View" button region that no longer
+    // exists in the card layout). Still posts the same EVT_MULTI_DEVICE_VIEW so
+    // the monitor jump / media playback wiring is preserved.
+    post_event(wxCommandEvent(EVT_MULTI_DEVICE_VIEW));
+    evt.Skip();
 }
 
 void MultiMachineItem::OnMove(wxMouseEvent& evt)
 {
-    int left = FromDIP(DEVICE_LEFT_PADDING_LEFT +
-        DEVICE_LEFT_DEV_NAME +
-        DEVICE_LEFT_PRO_NAME +
-        DEVICE_LEFT_PRO_INFO);
-
-    auto mouse_pos = ClientToScreen(evt.GetPosition());
-    auto item = this->ClientToScreen(wxPoint(0, 0));
-
-    if (mouse_pos.x > (item.x + left) &&
-        mouse_pos.x < (item.x + left + FromDIP(90)) &&
-        mouse_pos.y > item.y &&
-        mouse_pos.y < (item.y + DEVICE_ITEM_MAX_HEIGHT)) {
-        SetCursor(wxCURSOR_HAND);
-    }
-    else {
-        SetCursor(wxCURSOR_ARROW);
-    }
+    SetCursor(wxCURSOR_HAND);
+    evt.Skip();
 }
 
 void MultiMachineItem::paintEvent(wxPaintEvent& evt)
@@ -147,90 +130,138 @@ void MultiMachineItem::DrawTextWithEllipsis(wxDC& dc, const wxString& text, int 
 
 void MultiMachineItem::doRender(wxDC& dc)
 {
-    wxSize size = GetSize();
-    dc.SetPen(wxPen(*wxBLACK));
+    // MD3 device-farm card (ui-md3 Multi.jsx): a single Card per device with a
+    // printer-icon tile + name/model, a status dot, a camera-thumbnail
+    // placeholder, and a progress bar. All geometry is DPI-scaled via FromDIP.
+    const wxSize size = GetSize();
 
-    int left = FromDIP(DEVICE_LEFT_PADDING_LEFT);
+    const int pad     = FromDIP(16);
+    const int innerW  = size.x - 2 * pad;
+    const int glyphOk = MaterialIcon::available();
 
-    if (obj_) {
-        //dev name
-        wxString dev_name = wxString::FromUTF8(obj_->get_dev_name());
-        if (!obj_->is_online()) {
-            dev_name = dev_name + "(" + _L("Offline") + ")";
-        }
-        dc.SetFont(Label::Body_13);
-        DrawTextWithEllipsis(dc, dev_name, FromDIP(DEVICE_LEFT_DEV_NAME), left);
-        left += FromDIP(DEVICE_LEFT_DEV_NAME);
+    // ---- Card surface + interactive hover border (Card.jsx: sc-low fill,
+    // 1px outline-variant, primary on hover, r16) ----
+    dc.SetPen(wxPen(StateColor::semantic(m_hover ? MD3::Role::Primary : MD3::Role::OutlineVariant)));
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+    dc.DrawRoundedRectangle(0, 0, size.x - 1, size.y - 1, FromDIP(16));
 
-        //project name
-        wxString project_name = _L("No task");
-        if (obj_->is_in_printing()) {
-            project_name = wxString::Format("%s", GUI::from_u8(obj_->subtask_name));
-        }
-        dc.SetFont(Label::Body_13);
-        DrawTextWithEllipsis(dc, project_name, FromDIP(DEVICE_LEFT_PRO_NAME), left);
-        left += FromDIP(DEVICE_LEFT_PRO_NAME);
+    if (!obj_)
+        return;
 
-        //state
-        dc.SetFont(Label::Body_13);
-        if (state_device == 0) {
-            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
-            DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
-        }
-        else if (state_device == 1) {
-            dc.SetTextForeground(StateColor::semantic(MD3::Role::Primary));
-            DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
-        }
-        else if (state_device == 2)
-        {
-            dc.SetTextForeground(StateColor::semantic(MD3::Role::Error));
-            DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
-        }
-        else if (state_device > 2 && state_device < 7) {
-            dc.SetFont(Label::Mono_12);
-            dc.SetTextForeground(StateColor::semantic(MD3::Role::Primary));
-            if (obj_->get_curr_stage() == _L("Printing") && obj_->subtask_) {
-                //wxString layer_info = wxString::Format(_L("Layer: %d/%d"), obj_->curr_layer, obj_->total_layers);
-                wxString progress_info = wxString::Format("%d", obj_->subtask_->task_progress);
-                wxString left_time = wxString::Format("%s", get_left_time(obj_->mc_left_time));
-
-                DrawTextWithEllipsis(dc, progress_info + "%  |  " + left_time, FromDIP(DEVICE_LEFT_PRO_INFO), left, FromDIP(10));
-
-
-                dc.SetPen(wxPen(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
-                dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
-                dc.DrawRoundedRectangle(left, FromDIP(30), FromDIP(DEVICE_LEFT_PRO_INFO), FromDIP(10), 2);
-
-                dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary)));
-                dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
-                dc.DrawRoundedRectangle(left, FromDIP(30), FromDIP(DEVICE_LEFT_PRO_INFO) * (static_cast<float>(obj_->subtask_->task_progress) / 100.0f), FromDIP(10), 2);
+    // Local ellipsizing text draw (top-left anchored, unlike the vertically
+    // centered DrawTextWithEllipsis used by the legacy row).
+    auto draw_elided = [&](const wxString& text, const wxColour& colour, int x, int y, int maxWidth) {
+        dc.SetTextForeground(colour);
+        wxString out = text;
+        if (dc.GetTextExtent(out).GetWidth() > maxWidth) {
+            const int ellipsisW = dc.GetTextExtent("...").GetWidth();
+            for (int i = (int) text.length() - 1; i >= 0; --i) {
+                out = text.substr(0, i) + "...";
+                if (dc.GetTextExtent(out).GetWidth() <= maxWidth - ellipsisW)
+                    break;
             }
-            else {
-                DrawTextWithEllipsis(dc, obj_->get_curr_stage(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
-            }
-
         }
-        else {
-            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
-            DrawTextWithEllipsis(dc, get_state_device(), FromDIP(DEVICE_LEFT_PRO_INFO), left);
-        }
+        dc.DrawText(out, x, y);
+        return dc.GetTextExtent(out).GetWidth();
+    };
 
-        left += FromDIP(DEVICE_LEFT_PRO_INFO);
-
-        //button
-        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline)));
-        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
-        dc.DrawRoundedRectangle(left, (size.y - FromDIP(38)) / 2, FromDIP(90), FromDIP(38), 6);
-        dc.SetFont(Label::Body_14);
-        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
-        dc.DrawText(_L("View"),left + FromDIP(90) / 2 - dc.GetTextExtent(_L("View")).x / 2, (size.y -dc.GetTextExtent(_L("View")).y) / 2);
-
+    // ---- Header: icon tile + name/model + status dot ----
+    const int tile = FromDIP(44);
+    const int headTop = pad;
+    // icon tile (r12 sc-highest + print glyph 26 on-surface-variant)
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
+    dc.DrawRoundedRectangle(pad, headTop, tile, tile, FromDIP(12));
+    if (glyphOk) {
+        MaterialIcon::drawCentered(dc, MaterialIcon::Print, FromDIP(26),
+            StateColor::semantic(MD3::Role::OnSurfaceVariant), wxRect(pad, headTop, tile, tile));
     }
 
-    if (m_hover) {
-        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary)));
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.DrawRoundedRectangle(0, 0, size.x, size.y, 3);
+    // status dot + text (right-aligned within the header row)
+    wxString statusText = get_state_device();
+    MD3::Role dotRole = MD3::Role::Primary;
+    if (!obj_->is_online()) {
+        statusText = _L("Offline");
+        dotRole    = MD3::Role::Error;
+    } else if (state_device == 2) {
+        dotRole = MD3::Role::Error;
+    } else if (state_device == 0 || state_device == 7) {
+        dotRole = MD3::Role::Outline;
+    }
+    dc.SetFont(Label::Body_12);
+    const int dotSize  = FromDIP(8);
+    const int statusTW = dc.GetTextExtent(statusText).GetWidth();
+    const int statusRight = size.x - pad;
+    const int statusTextX = statusRight - statusTW;
+    const int dotX = statusTextX - FromDIP(6) - dotSize;
+    const int headCenterY = headTop + tile / 2;
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(dotRole)));
+    dc.DrawEllipse(dotX, headCenterY - dotSize / 2, dotSize, dotSize);
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    dc.DrawText(statusText, statusTextX, headCenterY - dc.GetTextExtent(statusText).GetHeight() / 2);
+
+    // name (14/600) + model/task sub-line (11.5 on-surface-variant), ellipsized
+    const int textX    = pad + tile + FromDIP(12);
+    const int textMaxW = (dotX - FromDIP(8)) - textX;
+    wxString dev_name = wxString::FromUTF8(obj_->get_dev_name());
+    // Sub-line surfaces the running job when printing (as the legacy row did),
+    // otherwise the printer model per the kit.
+    wxString sub_line = wxString::FromUTF8(obj_->printer_type);
+    if (obj_->is_in_printing() && !obj_->subtask_name.empty())
+        sub_line = GUI::from_u8(obj_->subtask_name);
+    dc.SetFont(Label::Head_14);
+    const int nameH = dc.GetTextExtent(dev_name).GetHeight();
+    dc.SetFont(Label::Body_12);
+    const int subH = dc.GetTextExtent(sub_line).GetHeight();
+    const int blockH = nameH + FromDIP(2) + subH;
+    int ty = headTop + (tile - blockH) / 2;
+    if (ty < headTop) ty = headTop;
+    dc.SetFont(Label::Head_14);
+    draw_elided(dev_name, StateColor::semantic(MD3::Role::OnSurface), textX, ty, textMaxW > 0 ? textMaxW : innerW);
+    dc.SetFont(Label::Body_12);
+    draw_elided(sub_line, StateColor::semantic(MD3::Role::OnSurfaceVariant), textX, ty + nameH + FromDIP(2), textMaxW > 0 ? textMaxW : innerW);
+
+    // ---- Camera-thumbnail placeholder (r12 sc-highest + videocam glyph).
+    // Real device thumbnails are DATA; this is the idle placeholder. ----
+    const int camTop = headTop + tile + FromDIP(12);
+    const int camH   = FromDIP(84);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
+    dc.DrawRoundedRectangle(pad, camTop, innerW, camH, FromDIP(12));
+    if (glyphOk) {
+        MaterialIcon::drawCentered(dc, MaterialIcon::Videocam, FromDIP(30),
+            StateColor::semantic(MD3::Role::Outline), wxRect(pad, camTop, innerW, camH));
+    }
+
+    // ---- Progress caption + bar (preserve the legacy progress binding) ----
+    const int barH   = FromDIP(8);
+    const int barY   = size.y - pad - barH;
+    const int capY   = barY - FromDIP(4) - FromDIP(15);
+    float progress   = 0.0f;
+    wxString caption;
+    wxColour captionColour = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    if (state_device > 2 && state_device < 7) {
+        if (obj_->get_curr_stage() == _L("Printing") && obj_->subtask_) {
+            progress = static_cast<float>(obj_->subtask_->task_progress) / 100.0f;
+            caption  = wxString::Format("%d", obj_->subtask_->task_progress) + "%  |  " + get_left_time(obj_->mc_left_time);
+            captionColour = StateColor::semantic(MD3::Role::Primary);
+        } else {
+            caption = obj_->get_curr_stage();
+        }
+    }
+    if (!caption.IsEmpty()) {
+        dc.SetFont(Label::Mono_12);
+        draw_elided(caption, captionColour, pad, capY, innerW);
+    }
+    // track
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
+    dc.DrawRoundedRectangle(pad, barY, innerW, barH, FromDIP(4));
+    if (progress > 0.0f) {
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+        int fillW = std::max(barH, static_cast<int>(innerW * progress));
+        dc.DrawRoundedRectangle(pad, barY, fillW, barH, FromDIP(4));
     }
 }
 
@@ -394,6 +425,12 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     m_table_head_sizer->Add(m_action, 0, wxLEFT, 0);
 
     m_table_head_panel->SetSizer(m_table_head_sizer);
+    // Card grid has no columns: keep the two functional sort toggles (Device
+    // Name / Device Status drive m_sort) but hide the non-interactive column
+    // labels so the strip reads as a sort bar rather than a table header. The
+    // widgets stay allocated (msw_rescale references them).
+    m_task_name->Hide();
+    m_action->Hide();
     m_table_head_panel->Layout();
 
     m_tip_text = new wxStaticText(m_main_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
@@ -426,7 +463,10 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     m_machine_list->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), 10 * FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
     m_machine_list->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), 10 * FromDIP(DEVICE_ITEM_MAX_HEIGHT)));
 
-    m_sizer_machine_list = new wxBoxSizer(wxVERTICAL);
+    // Responsive card grid: a wrap sizer reflows the device cards across the
+    // available width (list -> grid anatomy per ui-md3 Multi.jsx). Held here as
+    // the base wxBoxSizer* member; wxWrapSizer derives from wxBoxSizer.
+    m_sizer_machine_list = new wxWrapSizer(wxHORIZONTAL);
     m_machine_list->SetSizer(m_sizer_machine_list);
     m_machine_list->Layout();
 
@@ -584,7 +624,9 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
 
         MultiMachineItem* di = new MultiMachineItem(m_machine_list, machine);
         m_device_items.push_back(di);
-        m_sizer_machine_list->Add(m_device_items[i], 0, wxALL | wxEXPAND, 0);
+        // Fixed-size cards separated by a uniform gutter (the wxALL border is the
+        // half-gutter); no wxEXPAND so cards keep their card width and wrap.
+        m_sizer_machine_list->Add(m_device_items[i], 0, wxALL, FromDIP(DEVICE_CARD_GAP));
 
         subscribe_list.push_back(dev_id);
     }
@@ -597,6 +639,7 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
     update_page_number();
     m_flipping_panel->Show(m_total_page > 1);
     m_sizer_machine_list->Layout();
+    m_machine_list->FitInside();
     Layout();
 }
 

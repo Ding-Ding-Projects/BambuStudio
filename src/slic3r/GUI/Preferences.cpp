@@ -17,7 +17,12 @@
 #include "OG_CustomCtrl.hpp"
 #include "fila_manager/wgtFilaManagerFeature.h"
 #include "slic3r/GUI/Widgets/Label.hpp"
+#include "Widgets/SwitchButton.hpp"
+#include "Widgets/SearchField.hpp"
+#include "Widgets/StaticBox.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "wx/graphics.h"
+#include <wx/dcgraph.h>
 
 #include <wx/listimpl.cpp>
 #include <map>
@@ -115,9 +120,11 @@ wxBoxSizer *PreferencesDialog::create_item_title(wxString title, wxWindow *paren
 {
     wxBoxSizer *m_sizer_title = new wxBoxSizer(wxHORIZONTAL);
 
+    // MD3 content section title: 16px / 700 in OnSurface (kit Settings section
+    // header), replacing the legacy Head_13 in TextSecondary.
     auto m_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
-    m_title->SetForegroundColour(ThemeColor::TextSecondary);
-    m_title->SetFont(::Label::Head_13);
+    m_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_title->SetFont(::Label::Head_16);
 
     // The Preferences dialog has no native default push button (every visible button
     // is a custom-drawn ::Button, i.e. a plain wxWindow, not a Win32 BUTTON control).
@@ -166,7 +173,7 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *pa
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
     auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, title_width == 0 ? wxSize(FromDIP(TITLE_WIDTH), -1) : wxSize(title_width, -1), 0);
-    combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
     combo_title->Wrap(-1);
@@ -177,6 +184,7 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *pa
     m_combobox_list[m_combobox_list.size()] = combobox;
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
 
     std::vector<wxString>::iterator iter;
     for (auto label : label_list)
@@ -212,7 +220,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
     auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
-    combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
     combo_title->Wrap(-1);
@@ -222,6 +230,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
     m_combobox_list[m_combobox_list.size()] = combobox;
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
     auto language = app_config->get(param);
     m_current_language_selected = -1;
     std::vector<wxString>::iterator iter;
@@ -380,7 +389,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_mode_combobox(
 
     auto *combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition,
                                           wxSize(FromDIP(TITLE_WIDTH), -1), 0);
-    combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
     combo_title->Wrap(-1);
@@ -392,6 +401,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_mode_combobox(
     m_combobox_list[m_combobox_list.size()] = combobox;
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
 
     const std::string configured = I18N::normalize_language_mode_id(app_config->get(param));
     m_current_language_selected = -1;
@@ -489,7 +499,7 @@ wxBoxSizer *PreferencesDialog::create_item_region_combobox(wxString title, wxWin
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
     auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
-    combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
     combo_title->Wrap(-1);
@@ -499,6 +509,7 @@ wxBoxSizer *PreferencesDialog::create_item_region_combobox(wxString title, wxWin
     m_combobox_list[m_combobox_list.size()] = combobox;
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
     m_sizer_combox->Add(combobox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
 
     std::vector<wxString>::iterator iter;
@@ -558,7 +569,7 @@ wxBoxSizer *PreferencesDialog::create_item_loglevel_combobox(wxString title, wxW
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
     auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
-    combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
     combo_title->Wrap(-1);
@@ -568,6 +579,7 @@ wxBoxSizer *PreferencesDialog::create_item_loglevel_combobox(wxString title, wxW
     m_combobox_list[m_combobox_list.size()] = combobox;
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
+    combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
 
     std::vector<wxString>::iterator iter;
     for (iter = vlist.begin(); iter != vlist.end(); iter++) { combobox->Append(*iter); }
@@ -604,7 +616,7 @@ wxBoxSizer *PreferencesDialog::create_item_multiple_combobox(
    auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
    combo_title->SetToolTip(tooltip);
    combo_title->Wrap(-1);
-   combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+   combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
    combo_title->SetFont(::Label::Body_13);
    m_sizer_tcombox->Add(combo_title, 0, wxALIGN_CENTER | wxALL, 3);
 
@@ -619,7 +631,7 @@ wxBoxSizer *PreferencesDialog::create_item_multiple_combobox(
    m_sizer_tcombox->Add(combobox_left, 0, wxALIGN_CENTER, 0);
 
    auto combo_title_add = new wxStaticText(parent, wxID_ANY, wxT("+"), wxDefaultPosition, wxDefaultSize, 0);
-   combo_title->SetForegroundColour(ThemeColor::TextPrimary);
+   combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
    combo_title->SetFont(::Label::Body_13);
    combo_title_add->Wrap(-1);
    m_sizer_tcombox->Add(combo_title_add, 0, wxALIGN_CENTER | wxALL, 3);
@@ -656,14 +668,18 @@ wxBoxSizer *PreferencesDialog::create_item_input(wxString title, wxString title2
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
     auto        input_title   = new wxStaticText(parent, wxID_ANY, title);
-    input_title->SetForegroundColour(ThemeColor::TextPrimary);
+    input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     input_title->SetFont(::Label::Body_13);
     input_title->SetToolTip(tooltip);
     input_title->Wrap(-1);
 
     auto       input = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), -1), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
+    // MD3 ValueField fill: SurfaceContainerHighest (enabled) / -High (disabled),
+    // resolved by role so it re-themes in dark — replaces the Grey250/White literal.
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Enabled));
     input->SetBackgroundColor(input_bg);
+    input->SetCornerRadius(FromDIP(10));
+    input->GetTextCtrl()->SetFont(::Label::Mono_13);
     input->GetTextCtrl()->SetValue(app_config->get(param));
     wxTextValidator validator(wxFILTER_DIGITS);
     input->GetTextCtrl()->SetValidator(validator);
@@ -671,7 +687,7 @@ wxBoxSizer *PreferencesDialog::create_item_input(wxString title, wxString title2
     wxStaticText *second_title = nullptr;
     if (!title2.empty()) {
         second_title = new wxStaticText(parent, wxID_ANY, title2, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
-        second_title->SetForegroundColour(ThemeColor::TextPrimary);
+        second_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         second_title->SetFont(::Label::Body_13);
         second_title->SetToolTip(tooltip);
         second_title->Wrap(-1);
@@ -707,7 +723,7 @@ wxBoxSizer *PreferencesDialog::create_item_range_input(
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
     auto        input_title = new wxStaticText(parent, wxID_ANY, title);
-    input_title->SetForegroundColour(ThemeColor::TextPrimary);
+    input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     input_title->SetFont(::Label::Body_13);
     input_title->SetToolTip(tooltip);
     input_title->Wrap(-1);
@@ -719,8 +735,12 @@ wxBoxSizer *PreferencesDialog::create_item_range_input(
         app_config->save();
     }
     auto       input = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), -1), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
+    // MD3 ValueField fill: SurfaceContainerHighest (enabled) / -High (disabled),
+    // resolved by role so it re-themes in dark — replaces the Grey250/White literal.
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Enabled));
     input->SetBackgroundColor(input_bg);
+    input->SetCornerRadius(FromDIP(10));
+    input->GetTextCtrl()->SetFont(::Label::Mono_13);
     input->GetTextCtrl()->SetValue(app_config->get(param));
     wxTextValidator validator(wxFILTER_NUMERIC);
     input->GetTextCtrl()->SetValidator(validator);
@@ -773,7 +793,7 @@ wxBoxSizer *PreferencesDialog::create_item_range_two_input(wxString             
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
     auto        input_title = new wxStaticText(parent, wxID_ANY, title);
-    input_title->SetForegroundColour(ThemeColor::TextPrimary);
+    input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     input_title->SetFont(::Label::Body_13);
     input_title->SetToolTip(tooltip);
     input_title->Wrap(-1);
@@ -791,14 +811,20 @@ wxBoxSizer *PreferencesDialog::create_item_range_two_input(wxString             
         app_config->save();
     }
     auto       input = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), -1), wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
+    // MD3 ValueField fill: SurfaceContainerHighest (enabled) / -High (disabled),
+    // resolved by role so it re-themes in dark — replaces the Grey250/White literal.
+    StateColor input_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Disabled), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Enabled));
     input->SetBackgroundColor(input_bg);
+    input->SetCornerRadius(FromDIP(10));
+    input->GetTextCtrl()->SetFont(::Label::Mono_13);
     input->GetTextCtrl()->SetValue(app_config->get(param));
     wxTextValidator validator(wxFILTER_NUMERIC);
     input->GetTextCtrl()->SetValidator(validator);
 
     auto input1 = new ::TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(INPUT_WIDTH), -1), wxTE_PROCESS_ENTER);
     input1->SetBackgroundColor(input_bg);
+    input1->SetCornerRadius(FromDIP(10));
+    input1->GetTextCtrl()->SetFont(::Label::Mono_13);
     input1->GetTextCtrl()->SetValue(app_config->get(param1));
     input1->GetTextCtrl()->SetValidator(validator);
 
@@ -863,14 +889,12 @@ wxBoxSizer *PreferencesDialog::create_item_switch(wxString title, wxWindow *pare
     wxBoxSizer *m_sizer_switch = new wxBoxSizer(wxHORIZONTAL);
     m_sizer_switch->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
     auto        switch_title   = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
-    switch_title->SetForegroundColour(ThemeColor::TextPrimary);
+    switch_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     switch_title->SetFont(::Label::Body_13);
     switch_title->SetToolTip(tooltip);
     switch_title->Wrap(-1);
     auto switchbox = new ::SwitchButton(parent, wxID_ANY);
-
-    /*auto index = app_config->get(param);
-    if (!index.empty()) { combobox->SetSelection(atoi(index.c_str())); }*/
+    switchbox->SetValue(app_config->get(param) == "true");
 
     m_sizer_switch->Add(0, 0, 0, wxEXPAND | wxLEFT, 23);
     m_sizer_switch->Add(switch_title, 0, wxALIGN_CENTER | wxALL, 3);
@@ -878,56 +902,32 @@ wxBoxSizer *PreferencesDialog::create_item_switch(wxString title, wxWindow *pare
     m_sizer_switch->Add(switchbox, 0, wxALIGN_CENTER, 0);
     m_sizer_switch->Add( 0, 0, 0, wxEXPAND|wxLEFT, 40 );
 
-    //// save config
-    switchbox->Bind(wxEVT_TOGGLEBUTTON, [this, param](wxCommandEvent &e) {
-        /* app_config->set(param, std::to_string(e.GetSelection()));
-         app_config->save();*/
-         e.Skip();
+    //// save config — the handler was previously a no-op stub; wire it to the
+    //// backing AppConfig key so the MD3 Switch actually persists its value.
+    switchbox->Bind(wxEVT_TOGGLEBUTTON, [this, switchbox, param](wxCommandEvent &e) {
+        app_config->set_bool(param, switchbox->GetValue());
+        app_config->save();
+        e.Skip();
     });
     return m_sizer_switch;
 }
 
-wxBoxSizer* PreferencesDialog::create_item_darkmode_checkbox(wxString title, wxWindow* parent, wxString tooltip, int padding_left, std::string param)
+// Apply a dark/light theme switch and fan out the same side effects the legacy
+// "Enable dark mode" checkbox performed (dark-mode flag, native repaint on MSW,
+// and the GL canvas colour-mode event). Driven by the Appearance Theme
+// SegmentedControl; cross-platform (the MSW-only repaint stays behind its guard).
+void PreferencesDialog::apply_dark_mode(bool dark)
 {
-    wxBoxSizer* m_sizer_checkbox = new wxBoxSizer(wxHORIZONTAL);
-    m_sizer_checkbox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
+    wxGetApp().Update_dark_mode_flag();
 
-    auto checkbox = new ::CheckBox(parent);
-    m_checkbox_list[m_checkbox_list.size()] = checkbox;
-    checkbox->SetValue((app_config->get(param) == "1") ? true : false);
-    m_dark_mode_ckeckbox = checkbox;
-
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
-    checkbox_title->SetForegroundColour(ThemeColor::TextPrimary);
-    checkbox_title->SetFont(::Label::Body_13);
-
-    auto size = checkbox_title->GetTextExtent(title);
-    checkbox_title->SetMinSize(wxSize(size.x + FromDIP(40), -1));
-    checkbox_title->Wrap(-1);
-
-    m_sizer_checkbox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    m_sizer_checkbox->Add(checkbox_title, wxSizerFlags().CenterVertical().Proportion(1));
-    m_sizer_checkbox->Add(checkbox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
-
-    //// save config
-    checkbox->Bind(wxEVT_TOGGLEBUTTON, [this, checkbox, param](wxCommandEvent& e) {
-        app_config->set(param, checkbox->GetValue() ? "1" : "0");
-        app_config->save();
-        wxGetApp().Update_dark_mode_flag();
-
-        //dark mode
+    //dark mode
 #ifdef _MSW_DARK_MODE
-        wxGetApp().force_colors_update();
-        wxGetApp().update_ui_from_settings();
-        set_dark_mode();
+    wxGetApp().force_colors_update();
+    wxGetApp().update_ui_from_settings();
+    set_dark_mode();
 #endif
-        SimpleEvent evt = SimpleEvent(EVT_GLCANVAS_COLOR_MODE_CHANGED);
-        wxPostEvent(wxGetApp().plater(), evt);
-        e.Skip();
-        });
-
-    checkbox->SetToolTip(tooltip);
-    return m_sizer_checkbox;
+    SimpleEvent evt = SimpleEvent(EVT_GLCANVAS_COLOR_MODE_CHANGED);
+    wxPostEvent(wxGetApp().plater(), evt);
 }
 
 void PreferencesDialog::set_dark_mode()
@@ -948,7 +948,11 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
     wxBoxSizer *m_sizer_checkbox  = new wxBoxSizer(wxHORIZONTAL);
     m_sizer_checkbox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto checkbox = new ::CheckBox(parent);
+    // MD3 general-settings row: the boolean preference is a right-aligned MD3
+    // Switch (44x24 icon-mode SwitchButton) instead of the legacy leading
+    // CheckBox. The AppConfig read/write bindings below are unchanged — only the
+    // control class and the row anatomy change.
+    auto checkbox = new ::SwitchButton(parent, wxID_ANY);
     m_checkbox_list[m_checkbox_list.size()] = checkbox;
     if (param == "privacyuse") {
         checkbox->SetValue((app_config->get("firstguide", param) == "true") ? true : false);
@@ -958,16 +962,25 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
         checkbox->SetValue((app_config->get(param) == "true") ? true : false);
     }
 
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
-    checkbox_title->SetForegroundColour(ThemeColor::TextPrimary);
+    // Two-line label column: primary 13.5/OnSurface over an optional secondary
+    // description (12/OnSurfaceVariant) sourced from the tooltip when it adds
+    // information beyond the primary label.
+    auto *text_col = new wxBoxSizer(wxVERTICAL);
+    auto  checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     checkbox_title->SetFont(::Label::Body_13);
-
-    auto size = checkbox_title->GetTextExtent(title);
-    checkbox_title->SetMinSize(wxSize(size.x + FromDIP(5), -1));
-    checkbox_title->Wrap(-1);
+    checkbox_title->Wrap(FromDIP(320));
+    text_col->Add(checkbox_title, 0);
+    if (!tooltip.empty() && tooltip != title) {
+        auto *checkbox_desc = new wxStaticText(parent, wxID_ANY, tooltip, wxDefaultPosition, wxDefaultSize, 0);
+        checkbox_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        checkbox_desc->SetFont(::Label::Body_12);
+        checkbox_desc->Wrap(FromDIP(320));
+        text_col->Add(checkbox_desc, 0, wxTOP, FromDIP(2));
+    }
 
     m_sizer_checkbox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    m_sizer_checkbox->Add(checkbox_title, wxSizerFlags().CenterVertical().Proportion(1));
+    m_sizer_checkbox->Add(text_col, wxSizerFlags().CenterVertical().Proportion(1));
     m_sizer_checkbox->Add(checkbox, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
 
     //// save config
@@ -1146,14 +1159,14 @@ wxWindow* PreferencesDialog::create_item_downloads(wxWindow* parent, int padding
 {
     wxString download_path = wxString::FromUTF8(app_config->get("download_path"));
     auto item_panel = new wxWindow(parent, wxID_ANY);
-    item_panel->SetBackgroundColour(ThemeColor::White);
+    item_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     sizer->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
     auto m_staticTextTitle = new wxStaticText(item_panel, wxID_ANY, _L("Download path"), wxDefaultPosition, wxDefaultSize, 0);
-    m_staticTextTitle->SetForegroundColour(ThemeColor::TextPrimary);
+    m_staticTextTitle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_staticTextTitle->SetFont(::Label::Body_13);
     m_staticTextTitle->Wrap(-1);
 
@@ -1163,20 +1176,14 @@ wxWindow* PreferencesDialog::create_item_downloads(wxWindow* parent, int padding
     m_staticTextPath->SetCornerRadius(FromDIP(4));
     m_staticTextPath->GetTextCtrl()->SetFont(::Label::Body_13);
 
+    // MD3 outlined button (kit actions/Button): transparent interior + 1px
+    // Outline ring with OnSurface text and a pill radius, resolved through
+    // semantic roles by Button::applyMD3Style() — replaces the White/BrandGreen
+    // StateColor literals.
     auto m_button_download = new Button(item_panel, _L("Browse"));
     m_button_list[m_button_list.size()] = m_button_download;
-    StateColor abort_bg(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-                        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
-                        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-    m_button_download->SetBackgroundColor(abort_bg);
-    StateColor abort_bd(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
-    m_button_download->SetBorderColor(abort_bd);
-    StateColor abort_text(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
-    m_button_download->SetTextColor(abort_text);
-    m_button_download->SetFont(Label::Body_10);
-    m_button_download->SetMinSize(wxSize(FromDIP(BTN_WIDTH), FromDIP(BTN_HEIGHT)));
-    m_button_download->SetSize(wxSize(FromDIP(58), FromDIP(22)));
-    m_button_download->SetCornerRadius(FromDIP(4));
+    m_button_download->SetVariant(Button::Variant::Outlined);
+    m_button_download->SetButtonSize(Button::Size::Small);
 
     m_button_download->Bind(wxEVT_BUTTON, [this, m_staticTextPath, item_panel](auto& e) {
         wxString defaultPath = wxT("/");
@@ -1232,7 +1239,7 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
 {
     // Root dialog surface (kit Settings root = Surface); resolves by role in dark.
     SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
-    SetSize(wxSize(620, 580));
+    SetSize(wxSize(780, 580));
     m_original_use_12h_time_format = wxGetApp().app_config->get("use_12h_time_format");
     create();
     wxGetApp().UpdateDlgDarkUI(this);
@@ -1256,102 +1263,158 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
         });
 }
 
-//  PreferenceTabbar — plain-text top tabs matching the Preferences Figma:
-//  a horizontal row of labels (active = bold dark, inactive = regular grey) with
-//  a green underline under the selected tab, over a 1px divider line. Emits the
-//  standard wxEVT_CHOICE (int = selected index) when the user clicks a tab.
-class PreferenceTabbar : public wxControl
+//  PrefNavItem — one MD3 NavItem pill (kit navigation/NavItem): a 44px-tall
+//  stadium (r = h/2) with a 20px leading Material Symbol and a label. Selected =
+//  SecondaryContainer fill + OnSecondaryContainer 600; hover = SurfaceContainerHigh;
+//  idle = transparent + OnSurfaceVariant 400. Fully custom-drawn so the glyph and
+//  label share one role colour and the pill re-themes/re-DPIs live. Capability-
+//  gated: with no Material Symbols face the label still renders (no leading glyph).
+class PrefNavItem : public wxWindow
+{
+public:
+    PrefNavItem(wxWindow *parent, uint32_t glyph, const wxString &label, std::function<void()> on_click)
+        : wxWindow(parent, wxID_ANY), m_glyph(glyph), m_label(label), m_on_click(std::move(on_click))
+    {
+        SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetMinSize(wxSize(-1, FromDIP(44)));
+        Bind(wxEVT_PAINT, &PrefNavItem::OnPaint, this);
+        Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { if (m_on_click) m_on_click(); });
+        Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent &e) { m_hover = true; SetCursor(wxCURSOR_HAND); Refresh(); e.Skip(); });
+        Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent &e) { m_hover = false; Refresh(); e.Skip(); });
+    }
+
+    void SetSelected(bool s) { if (m_selected == s) return; m_selected = s; Refresh(); }
+
+private:
+    void OnPaint(wxPaintEvent &)
+    {
+        wxPaintDC pdc(this);
+        const wxSize sz = GetSize();
+        pdc.SetBackground(wxBrush(GetBackgroundColour()));
+        pdc.Clear();
+#ifdef __WXMSW__
+        wxGCDC dc(pdc);
+#else
+        wxDC &dc = pdc;
+#endif
+        // Pill background: selected -> SecondaryContainer, hover -> SurfaceContainerHigh.
+        wxColour pill;
+        bool     draw_pill = false;
+        if (m_selected) { pill = StateColor::semantic(MD3::Role::SecondaryContainer); draw_pill = true; }
+        else if (m_hover) { pill = StateColor::semantic(MD3::Role::SurfaceContainerHigh); draw_pill = true; }
+        if (draw_pill) {
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(pill));
+            dc.DrawRoundedRectangle(0, 0, sz.x, sz.y, sz.y / 2.0); // pill r = height/2
+        }
+
+        const wxColour fg = m_selected ? StateColor::semantic(MD3::Role::OnSecondaryContainer)
+                                       : StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        const int pad_l   = FromDIP(14);
+        const int gap     = FromDIP(10);
+        const int icon_px = 20; // logical px; the icon font scales with the DC
+
+        dc.SetFont(m_selected ? ::Label::Head_13 : ::Label::Body_13);
+        dc.SetTextForeground(fg);
+        wxCoord tw = 0, th = 0;
+        dc.GetTextExtent(m_label, &tw, &th);
+
+        wxSize is(0, 0);
+        const bool has_icon = m_glyph && MaterialIcon::available();
+        if (has_icon) is = MaterialIcon::measure(dc, m_glyph, icon_px);
+
+        const int content_h = std::max<int>(th, is.y);
+        const int y0        = (sz.y - content_h) / 2;
+        int       x         = pad_l;
+        if (has_icon) {
+            const int iy = y0 + (content_h - is.y) / 2;
+            MaterialIcon::draw(dc, m_glyph, icon_px, fg, wxPoint(x, iy));
+            x += is.x + gap;
+        }
+        const int ty = y0 + (content_h - th) / 2;
+        dc.DrawText(m_label, x, ty);
+    }
+
+    uint32_t              m_glyph;
+    wxString              m_label;
+    std::function<void()> m_on_click;
+    bool                  m_selected = false;
+    bool                  m_hover    = false;
+};
+
+//  PreferenceTabbar — the fixed 230px vertical NavRail (kit Settings.jsx): a
+//  SurfaceContainerLow strip with a 1px OutlineVariant right edge, 16/10 padding
+//  and a 2px gap between NavItem pills. Emits the standard wxEVT_CHOICE
+//  (int = selected index) when the user picks a section — the same contract the
+//  legacy horizontal tab-bar exposed, so create()'s wiring is unchanged.
+class PreferenceTabbar : public wxWindow
 {
 public:
     PreferenceTabbar(wxWindow *parent);
-    void AddTab(const wxString &label);
+    void AddTab(const wxString &label, uint32_t glyph);
     void SetSelection(int sel);
     int  GetSelection() const { return m_selection; }
     void Rescale();
 
 private:
-    void                        render();
-    std::vector<wxStaticText *> m_labels;
-    std::vector<wxWindow *>     m_underlines; // green indicator under each tab
-    wxBoxSizer                 *m_row       = nullptr;
-    int                         m_selection = -1;
+    std::vector<PrefNavItem *> m_items;
+    wxBoxSizer                *m_itemsV   = nullptr;
+    int                        m_selection = -1;
 };
 
-PreferenceTabbar::PreferenceTabbar(wxWindow *parent) : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
+PreferenceTabbar::PreferenceTabbar(wxWindow *parent) : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
 {
-    // Nav-rail strip surface (kit Settings nav = SurfaceContainerLow), layering it
-    // one container step off the Surface content pane; resolves by role in dark.
+    // Nav-rail surface (kit Settings nav = SurfaceContainerLow), one container
+    // step off the Surface content pane; resolves by role in dark.
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
-    auto *outer = new wxBoxSizer(wxVERTICAL);
-    m_row       = new wxBoxSizer(wxHORIZONTAL);
-    outer->Add(m_row, 0, wxLEFT, FromDIP(8));
-    auto *line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    line->SetBackgroundColour(ThemeColor::Grey300);
+
+    auto *outer = new wxBoxSizer(wxHORIZONTAL);
+    m_itemsV    = new wxBoxSizer(wxVERTICAL);
+    // 16px top/bottom, 10px left/right padding around the pill stack.
+    outer->Add(m_itemsV, 1, wxEXPAND | wxTOP | wxBOTTOM | wxLEFT | wxRIGHT, FromDIP(10));
+    // 1px OutlineVariant right edge separating the rail from the content pane.
+    auto *line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(1), -1));
+    line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     outer->Add(line, 0, wxEXPAND);
     SetSizer(outer);
+    SetMinSize(wxSize(FromDIP(MD3::Metrics::settings_nav_width), -1));
 }
 
-void PreferenceTabbar::AddTab(const wxString &label)
+void PreferenceTabbar::AddTab(const wxString &label, uint32_t glyph)
 {
-    const int index = (int) m_labels.size();
-
-    // Each tab is a column: the label on top and a 2px underline below it that
-    // turns the MD3 Primary accent (StateColor::semantic(Role::Primary)) when the
-    // tab is selected.
-    auto *col  = new wxBoxSizer(wxVERTICAL);
-    auto *text = new wxStaticText(this, wxID_ANY, label);
-    text->SetFont(::Label::Body_14);
-
-    auto *underline = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(2)));
-    underline->SetBackgroundColour(this->GetBackgroundColour());
-
-    auto on_click = [this, index](wxMouseEvent &) {
+    const int index = (int) m_items.size();
+    auto     *item  = new PrefNavItem(this, glyph, label, [this, index]() {
         SetSelection(index);
         wxCommandEvent evt(wxEVT_CHOICE, GetId());
         evt.SetEventObject(this);
         evt.SetInt(index);
         wxPostEvent(this, evt);
-    };
-    text->Bind(wxEVT_LEFT_DOWN, on_click);
-    underline->Bind(wxEVT_LEFT_DOWN, on_click);
-    text->Bind(wxEVT_ENTER_WINDOW, [text](wxMouseEvent &e) {
-        text->SetCursor(wxCURSOR_HAND);
-        e.Skip();
     });
-
-    col->AddStretchSpacer();
-    col->Add(text);
-    col->AddStretchSpacer();
-    col->Add(underline, 0, wxEXPAND);
-
-    m_labels.push_back(text);
-    m_underlines.push_back(underline);
-    m_row->AddSpacer(FromDIP(32));
-    m_row->Add(col, wxSizerFlags().Border(wxRIGHT, FromDIP(48)));
+    m_items.push_back(item);
+    m_itemsV->Add(item, 0, wxEXPAND | wxBOTTOM, FromDIP(2)); // 2px inter-item gap
     if (m_selection < 0) SetSelection(0);
+    Layout();
 }
 
 void PreferenceTabbar::SetSelection(int sel)
 {
-    if (sel < 0 || sel >= (int) m_labels.size()) return;
-
+    if (sel < 0 || sel >= (int) m_items.size()) return;
     m_selection = sel;
-    render();
+    for (int i = 0; i < (int) m_items.size(); ++i)
+        m_items[i]->SetSelected(i == m_selection);
 }
 
-void PreferenceTabbar::render()
+void PreferenceTabbar::Rescale()
 {
-    for (int i = 0; i < (int) m_labels.size(); ++i) {
-        const bool active = (i == m_selection);
-        m_labels[i]->SetFont(active ? Label::Head_14 : Label::Body_14);
-        m_underlines[i]->SetBackgroundColour(active ? StateColor::semantic(MD3::Role::Primary) : GetBackgroundColour());
-        m_underlines[i]->Refresh();
+    for (auto *item : m_items) {
+        item->SetMinSize(wxSize(-1, FromDIP(44)));
+        item->Refresh();
     }
+    SetMinSize(wxSize(FromDIP(MD3::Metrics::settings_nav_width), -1));
     Layout();
     Refresh();
 }
-
-void PreferenceTabbar::Rescale() { render(); }
 
 void PreferencesDialog::create()
 {
@@ -1374,36 +1437,49 @@ void PreferencesDialog::create()
     m_tabbar = new PreferenceTabbar(this);
     m_book   = new wxSimplebook(this, wxID_ANY);
 
-    auto add_tab = [this](const wxString &label, wxWindow *page) {
-        m_tabbar->AddTab(label);
+    // Right-hand content pane: a top MD3 SearchField pill over the section book.
+    auto *content_pane = new wxBoxSizer(wxVERTICAL);
+    m_search = new SearchField(this, _L("Search settings"));
+    content_pane->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    content_pane->Add(m_book, 1, wxEXPAND | wxTOP, FromDIP(12));
+
+    // Section rail (left) + content pane (right).
+    auto *body_row = new wxBoxSizer(wxHORIZONTAL);
+    body_row->Add(m_tabbar, 0, wxEXPAND);
+    body_row->Add(content_pane, 1, wxEXPAND);
+
+    auto add_tab = [this](const wxString &label, uint32_t glyph, wxWindow *page) {
+        m_tabbar->AddTab(label, glyph);
         m_book->AddPage(page, label);
     };
-    add_tab(_CTX(L_CONTEXT("General", "Preference"), "Preference"), create_general_tab());
-    add_tab(_CTX(L_CONTEXT("User", "Preference"), "Preference"), create_user_tab());
-    add_tab(_CTX(L_CONTEXT("3D", "Preference"), "Preference"), create_3d_tab());
-    add_tab(_CTX(L_CONTEXT("Other", "Preference"), "Preference"), create_other_tab());
+    // Sections map to MD3 NavItem glyphs (kit Settings.jsx). "Appearance" is the
+    // new theme/density/accent section; a person glyph for "User" is not yet in
+    // the MaterialIcon set (falls back to Sync — see followups).
+    add_tab(_L("Appearance"), MaterialIcon::Palette, create_appearance_tab());
+    add_tab(_CTX(L_CONTEXT("General", "Preference"), "Preference"), MaterialIcon::Settings, create_general_tab());
+    add_tab(_CTX(L_CONTEXT("User", "Preference"), "Preference"), MaterialIcon::Sync, create_user_tab());
+    add_tab(_CTX(L_CONTEXT("3D", "Preference"), "Preference"), MaterialIcon::ViewInAr, create_3d_tab());
+    add_tab(_CTX(L_CONTEXT("Other", "Preference"), "Preference"), MaterialIcon::Tune, create_other_tab());
 
 #if !BBL_RELEASE_TO_PUBLIC
-    add_tab(_L("Developer Tools"), create_developer_tab());
+    add_tab(_L("Developer Tools"), MaterialIcon::Build, create_developer_tab());
 #endif
 
     m_tabbar->SetSelection(0);
     m_book->SetSelection(0);
     m_tabbar->Bind(wxEVT_CHOICE, [this](wxCommandEvent &e) { m_book->SetSelection(e.GetInt()); });
 
-    main_sizer->Add(m_tabbar, 0, wxEXPAND | wxTOP, FromDIP(4));
-    main_sizer->Add(m_book, 1, wxEXPAND);
+    main_sizer->Add(body_row, 1, wxEXPAND);
     main_sizer->Add(create_bottom_buttons(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
 
     SetSizer(main_sizer);
     Layout();
     Fit();
 
-    // Fixed dialog size matching the Figma panel (~640x640). The multi-tab layout
-    // makes each page short, so we no longer stretch the dialog to a fraction of
-    // the screen (the old single-scroll-page behavior). Tabs are scrollable, so a
-    // tab taller than this simply scrolls. Cap the height to the screen so it
-    // still fits on small displays.
+    // Fixed dialog size (~780x640). The nav-rail + content-pane layout widens the
+    // dialog vs. the old horizontal tab bar so the 230px rail leaves a comfortable
+    // content column. Tabs are scrollable, so a tab taller than this simply
+    // scrolls; cap the height to the screen so it still fits on small displays.
     int screen_height = std::numeric_limits<int>::max();
     int count = wxDisplay::GetCount();
     for (int i = 0; i < count; ++i) {
@@ -1414,7 +1490,7 @@ void PreferencesDialog::create()
     if (screen_height == std::numeric_limits<int>::max()) screen_height = wxGetDisplaySize().GetY();
 
     const int max_height = int(screen_height * 0.7); // never exceed most of the screen
-    this->SetSize(FromDIP(640), std::min(FromDIP(640), max_height));
+    this->SetSize(FromDIP(780), std::min(FromDIP(640), max_height));
 
     CenterOnParent();
     wxPoint start_pos = this->GetPosition();
@@ -1442,6 +1518,10 @@ void PreferencesDialog::on_dpi_changed(const wxRect &suggested_rect) {
     for (auto item : m_combobox_list) {
         item.second->Rescale();
     }
+    for (auto *seg : m_segmented_list) {
+        if (seg) seg->Rescale();
+    }
+    if (m_search) m_search->Rescale();
     if (m_tabbar) m_tabbar->Rescale();
     this->Refresh();
     Layout();
@@ -1452,9 +1532,9 @@ void PreferencesDialog::on_dpi_changed(const wxRect &suggested_rect) {
         wxRect    screenRect = display.GetGeometry();
         if (m_screen_height != screenRect.GetHeight()) {
             m_screen_height = screenRect.GetHeight();
-            // Keep the fixed Figma-matched size (capped to the screen) on a
-            // DPI/monitor switch instead of stretching to a fraction of the screen.
-            this->SetSize(FromDIP(640), std::min(FromDIP(640), int(m_screen_height * 0.7)));
+            // Keep the fixed size (capped to the screen) on a DPI/monitor switch
+            // instead of stretching to a fraction of the screen.
+            this->SetSize(FromDIP(780), std::min(FromDIP(640), int(m_screen_height * 0.7)));
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " The display screen has switched";
         }
     }
@@ -1479,6 +1559,151 @@ void PreferencesDialog::Split(const std::string &src, const std::string &separat
 
     substring = str.substr(start);
     dest.push_back(substring);
+}
+
+//  AccentSwatch — a 32px filled circle (kit Settings.jsx accent row). Selected =
+//  a 2px OnSurface ring + a white check glyph. The fill is a user-chosen accent
+//  seed (data colour, exempt), custom-drawn so the ring/check re-theme by role.
+class AccentSwatch : public wxWindow
+{
+public:
+    AccentSwatch(wxWindow *parent, const wxColour &color, bool selected, std::function<void()> on_click)
+        : wxWindow(parent, wxID_ANY), m_color(color), m_selected(selected), m_on_click(std::move(on_click))
+    {
+        SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetMinSize(wxSize(FromDIP(32), FromDIP(32)));
+        SetCursor(wxCURSOR_HAND);
+        Bind(wxEVT_PAINT, &AccentSwatch::OnPaint, this);
+        Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { if (m_on_click) m_on_click(); });
+    }
+
+    void SetSelected(bool s) { if (m_selected == s) return; m_selected = s; Refresh(); }
+
+private:
+    void OnPaint(wxPaintEvent &)
+    {
+        wxPaintDC pdc(this);
+        pdc.SetBackground(wxBrush(GetBackgroundColour()));
+        pdc.Clear();
+#ifdef __WXMSW__
+        wxGCDC dc(pdc);
+#else
+        wxDC &dc = pdc;
+#endif
+        const wxSize sz = GetSize();
+        const int    cx = sz.x / 2, cy = sz.y / 2;
+        const int    r  = std::min(sz.x, sz.y) / 2 - FromDIP(2);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(m_color)); // accent seed = data colour
+        dc.DrawCircle(cx, cy, r);
+        if (m_selected) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OnSurface), FromDIP(2)));
+            dc.DrawCircle(cx, cy, r);
+            if (MaterialIcon::available())
+                MaterialIcon::drawCentered(dc, MaterialIcon::Check, 16, wxColour(255, 255, 255), wxRect(0, 0, sz.x, sz.y));
+        }
+    }
+
+    wxColour              m_color;
+    bool                  m_selected;
+    std::function<void()> m_on_click;
+};
+
+wxWindow *PreferencesDialog::create_appearance_tab()
+{
+    auto        scrolled = new ScrollPanel(m_book);
+    wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
+
+    auto title = create_item_title(_L("Appearance"), scrolled, _L("Appearance"));
+
+    // Fixed-label + control row (kit Settings.jsx: 150px label + segmented).
+    auto make_row = [this, scrolled](const wxString &label, wxWindow *control) -> wxBoxSizer * {
+        auto *row = new wxBoxSizer(wxHORIZONTAL);
+        row->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+        auto *lbl = new wxStaticText(scrolled, wxID_ANY, label, wxDefaultPosition, wxSize(FromDIP(150), -1), 0);
+        lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        lbl->SetFont(::Label::Body_13);
+        row->Add(lbl, wxSizerFlags().CenterVertical());
+        row->Add(control, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+        return row;
+    };
+
+    // Theme: light / dark SegmentedControl bound to dark_color_mode (cross-platform).
+    auto *theme = new MultiSwitchButton(scrolled);
+    m_segmented_list.push_back(theme);
+    theme->SetOptions({_L("Light"), _L("Dark")});
+    theme->SetMinSize(wxSize(FromDIP(200), FromDIP(30)));
+    const bool is_dark = app_config->get("dark_color_mode") == "1";
+    theme->SetSelection(is_dark ? 1 : 0); // set before Bind so init does not re-fire the handler
+    theme->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
+        const bool dark = e.GetInt() == 1;
+        app_config->set("dark_color_mode", dark ? "1" : "0");
+        app_config->save();
+        apply_dark_mode(dark);
+        e.Skip();
+    });
+
+    // Density: comfortable / compact SegmentedControl. Persistence only — the
+    // runtime Metrics selector lives in shared foundation (see followups).
+    auto *density = new MultiSwitchButton(scrolled);
+    m_segmented_list.push_back(density);
+    density->SetOptions({_L("Comfortable"), _L("Compact")});
+    density->SetMinSize(wxSize(FromDIP(220), FromDIP(30)));
+    const std::string density_val = app_config->get("ui_density");
+    density->SetSelection(density_val == "compact" ? 1 : 0);
+    density->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
+        app_config->set("ui_density", e.GetInt() == 1 ? "compact" : "comfortable");
+        app_config->save();
+        e.Skip();
+    });
+
+    // Accent: swatch row. Persistence only — the accent-seed regen infra lives in
+    // shared foundation (MD3Tokens accentFromSeed / scheme wiring; see followups).
+    const std::vector<std::pair<wxString, wxString>> seeds = {
+        {"#146c2e", _L("Green")}, {"#7c5cff", _L("Purple")}, {"#14b8a6", _L("Teal")},
+        {"#2563eb", _L("Blue")},  {"#d81b60", _L("Pink")},   {"#ea580c", _L("Orange")},
+    };
+    std::string cur_seed = app_config->get("ui_accent_seed");
+    if (cur_seed.empty()) cur_seed = "#146c2e";
+
+    auto *accent_row = new wxBoxSizer(wxHORIZONTAL);
+    auto  swatches   = std::make_shared<std::vector<AccentSwatch *>>();
+    for (size_t i = 0; i < seeds.size(); ++i) {
+        const std::string hex = seeds[i].first.ToStdString();
+        const bool        sel = seeds[i].first.IsSameAs(wxString::FromUTF8(cur_seed), false);
+        auto             *sw  = new AccentSwatch(scrolled, wxColour(seeds[i].first), sel, [this, hex, swatches, i]() {
+            app_config->set("ui_accent_seed", hex);
+            app_config->save();
+            for (size_t j = 0; j < swatches->size(); ++j)
+                (*swatches)[j]->SetSelected(j == i);
+        });
+        sw->SetToolTip(seeds[i].second);
+        swatches->push_back(sw);
+        accent_row->Add(sw, 0, wxRIGHT, FromDIP(10));
+    }
+
+    sizer->Add(title, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
+    sizer->AddSpacer(FromDIP(8));
+    auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
+    sizer->Add(make_row(_L("Theme"), theme), flags);
+    sizer->Add(make_row(_L("Density"), density), flags);
+
+    // Accent row (label + swatches).
+    auto *accent_line = new wxBoxSizer(wxHORIZONTAL);
+    accent_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    auto *accent_lbl = new wxStaticText(scrolled, wxID_ANY, _L("Accent color"), wxDefaultPosition, wxSize(FromDIP(150), -1), 0);
+    accent_lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    accent_lbl->SetFont(::Label::Body_13);
+    accent_line->Add(accent_lbl, wxSizerFlags().CenterVertical());
+    accent_line->Add(accent_row, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+    sizer->Add(accent_line, flags);
+
+    sizer->AddSpacer(FromDIP(20));
+    scrolled->SetSizer(sizer);
+    scrolled->FitInside();
+    return scrolled;
 }
 
 wxWindow *PreferencesDialog::create_general_tab()
@@ -1527,9 +1752,9 @@ wxWindow *PreferencesDialog::create_general_tab()
     std::vector<wxString> Units         = {_L("Metric") + " (mm, g)", _L("Imperial") + " (in, oz)"};
     auto                  item_currency = create_item_combobox(_L("Units"), scrolled, _L("Units"), "use_inches", Units, {"0", "1"});
 
-#ifdef _WIN32
-    auto item_darkmode = create_item_darkmode_checkbox(_L("Enable dark mode"), scrolled, _L("Enable dark mode"), 50, "dark_color_mode");
-#endif
+    // Theme (dark mode) now lives in the Appearance section's Theme
+    // SegmentedControl (bound to dark_color_mode), so the legacy Windows-only
+    // "Enable dark mode" checkbox is no longer created here.
 
     std::vector<wxString>    FlushOptionLabels = {_L("All"), _L("Color change"), _L("Disabled")};
     std::vector<std::string> FlushOptionValues = {"all", "color change", "disabled"};
@@ -1598,9 +1823,6 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->Add(item_currency, flags);
     sizer->Add(item_auto_flush, flags);
     sizer->Add(item_sidebar_dock, flags);
-#ifdef _WIN32
-    sizer->Add(item_darkmode, flags);
-#endif
     sizer->Add(item_single_instance, flags);
     sizer->Add(item_fila_manager, flags);
     sizer->Add(item_multi_machine, flags);
@@ -2046,7 +2268,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     auto *msg = new wxStaticText(this, wxID_ANY,
                                  _L("All warning dialogs that you have disabled by checking \"Don't show again\" "
                                     "are now re-enabled and will show next time they apply."));
-    msg->SetForegroundColour(ThemeColor::TextPrimary);
+    msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     msg->SetFont(::Label::Body_14);
     msg->Wrap(content_width);
     msg->SetMinSize(wxSize(content_width, -1));
@@ -2156,6 +2378,8 @@ void PreferencesDialog::on_reset_preferences()
         // "region", keep this intensinaly to avoid re-login
         "use_inches",
         "dark_color_mode",
+        "ui_density",
+        "ui_accent_seed",
         "auto_calculate_flush",
         "single_instance",
         FilaManagerEnabledConfigKey,

@@ -17,6 +17,14 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/LinkLabel.hpp"
+
+// Global-namespace shared widgets used by the Preferences dialog. Forward-declared
+// (members are pointers) so the header stays light; the .cpp includes the full
+// definitions (SwitchButton.hpp / SearchField.hpp).
+class SwitchButton;
+class MultiSwitchButton;
+class SearchField;
+
 namespace Slic3r { namespace GUI {
 
 class Selector
@@ -51,6 +59,8 @@ private:
 protected:
     PreferenceTabbar *m_tabbar = nullptr;
     wxSimplebook *    m_book   = nullptr;
+    SearchField *     m_search = nullptr;
+    std::vector<MultiSwitchButton *> m_segmented_list; // Appearance segmented controls (rescale)
 
     bool m_seq_top_layer_only_changed{false};
     bool m_recreate_GUI{false};
@@ -77,10 +87,9 @@ public:
 
     void      create();
 
-    // debug mode
-    ::CheckBox * m_developer_mode_ckeckbox   = {nullptr};
-    ::CheckBox * m_internal_developer_mode_ckeckbox = {nullptr};
-    ::CheckBox * m_dark_mode_ckeckbox        = {nullptr};
+    // debug mode — the boolean preference rows are now MD3 SwitchButtons.
+    ::SwitchButton * m_developer_mode_ckeckbox   = {nullptr};
+    ::SwitchButton * m_internal_developer_mode_ckeckbox = {nullptr};
 
     wxString m_developer_mode_def;
     wxString m_internal_developer_mode_def;
@@ -98,8 +107,9 @@ public:
                                                    const std::vector<std::pair<std::string, wxString>> &choices);
     wxBoxSizer *create_item_loglevel_combobox(wxString title, wxWindow *parent, wxString tooltip, std::vector<wxString> vlist);
     wxBoxSizer *create_item_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param);
-    wxBoxSizer *create_item_darkmode_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param);
     void        set_dark_mode();
+    // Apply a theme switch + fan out the dark-mode side effects (Appearance Theme control).
+    void        apply_dark_mode(bool dark);
     wxWindow* create_item_downloads(wxWindow* parent, int padding_left, std::string param);
     wxBoxSizer *create_item_input(wxString title, wxString title2, wxWindow *parent, wxString tooltip, std::string param, std::function<void(wxString)> onchange = {});
     wxBoxSizer *create_item_range_input(
@@ -119,6 +129,7 @@ public:
     wxBoxSizer *create_item_switch(wxString title, wxWindow *parent, wxString tooltip, std::string param);
     wxSizer    *create_item_radiobox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, int groupid, std::string param);
 
+    wxWindow* create_appearance_tab();
     wxWindow* create_general_tab();
     wxWindow* create_user_tab();
     wxWindow* create_3d_tab();
@@ -137,7 +148,8 @@ public:
     int m_current_language_selected = {0};
 
     std::unordered_map<int, Button *> m_button_list;
-    std::unordered_map<int, ::CheckBox *> m_checkbox_list;
+    // The boolean preference rows are MD3 SwitchButtons (icon-mode) rescaled on DPI change.
+    std::unordered_map<int, ::SwitchButton *> m_checkbox_list;
     std::unordered_map<int, RadioBox *>   m_radiobox_list;
     std::unordered_map<int, ::ComboBox *> m_combobox_list;
     int                                   m_screen_height;

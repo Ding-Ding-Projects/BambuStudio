@@ -547,7 +547,11 @@ void Tab::create_preset_tab()
     m_tabctrl = new TabCtrl(panel, wxID_ANY, wxDefaultPosition, wxSize(20 * m_em_unit, -1),
         wxTR_NO_BUTTONS | wxTR_HIDE_ROOT | wxTR_SINGLE | wxTR_NO_LINES | wxBORDER_NONE | wxWANTS_CHARS | wxTR_FULL_ROW_HIGHLIGHT);
     m_tabctrl->Bind(wxEVT_RIGHT_DOWN, [this](auto &e) {}); // disable right select
-    m_tabctrl->SetFont(Label::Body_14);
+    // Category NavItem label uses the kit NavItem body scale (13.5 -> Body_13)
+    // rather than the legacy Body_14. The full NavItem-pill reskin (h44 r22
+    // SecondaryContainer pill + 20px leading Material Symbol glyph) lives in the
+    // shared TabCtrl widget, whose AppendItem currently ignores the image slot.
+    m_tabctrl->SetFont(Label::Body_13);
     //m_left_sizer->Add(m_tabctrl, 1, wxEXPAND);
     const int img_sz = int(32 * scale_factor + 0.5f);
     m_icons = new wxImageList(img_sz, img_sz, false, 1);

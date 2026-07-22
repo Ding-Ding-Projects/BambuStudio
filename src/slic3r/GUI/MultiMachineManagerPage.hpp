@@ -12,6 +12,15 @@ namespace GUI {
 #define DEVICE_LEFT_PRO_NAME 180
 #define DEVICE_LEFT_PRO_INFO 320
 
+// MD3 device-farm card grid (ui-md3 Multi.jsx): each MultiMachineItem is a
+// responsive Card, not a full-width list row. Cards are laid out in a wxWrapSizer
+// so the grid reflows/wraps to the available width. Width is sized so ~3 cards
+// fit the fixed DEVICE_ITEM_MAX_WIDTH farm viewport; DEVICE_CARD_GAP is the
+// half-gutter (applied as a wxALL border, so the visible gutter is 2x this).
+#define DEVICE_CARD_WIDTH  268
+#define DEVICE_CARD_HEIGHT 208
+#define DEVICE_CARD_GAP    8
+
 class MultiMachineItem : public DeviceItem
 {
 
