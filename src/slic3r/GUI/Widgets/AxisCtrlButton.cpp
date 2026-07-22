@@ -1,5 +1,6 @@
 #include "AxisCtrlButton.hpp"
 #include "Label.hpp"
+#include "MaterialIcon.hpp"
 #include "StateColor.hpp"
 #include "libslic3r/libslic3r.h"
 
@@ -216,7 +217,24 @@ void AxisCtrlButton::render(wxDC& dc)
     }
     gc->DrawPath(home_path);
 
-    if (m_icon.bmp().IsOk()) {
+    // Center home glyph. Prefer the MD3 Material Symbols icon font (the gc maps
+    // the PUA codepoint through the font cmap, like the axis labels below); fall
+    // back to the legacy ScalableBitmap when the icon face is unavailable so a
+    // missing TTF degrades to the old look instead of tofu. r_home is device px
+    // (FromDIP(23)); convert back to logical px for the font size so the glyph is
+    // sized correctly on HiDPI.
+    if (MaterialIcon::available()) {
+        int          home_px = 23;
+        const double dpi     = GetDPIScaleFactor();
+        if (dpi > 0.0) {
+            home_px = (int) (r_home / dpi + 0.5);
+            if (home_px < 1) home_px = 1;
+        }
+        gc->SetFont(MaterialIcon::font(home_px), text_color.colorForStates(states));
+        wxDouble gw = 0, gh = 0;
+        gc->GetTextExtent(MaterialIcon::text(MaterialIcon::Home), &gw, &gh);
+        gc->DrawText(MaterialIcon::text(MaterialIcon::Home), -gw / 2, -gh / 2);
+    } else if (m_icon.bmp().IsOk()) {
         gc->DrawBitmap(m_icon.bmp(), -1 * m_icon.GetBmpWidth() / 2, -1 * m_icon.GetBmpHeight() / 2, m_icon.GetBmpWidth(), m_icon.GetBmpHeight());
     }
     gc->PopState();

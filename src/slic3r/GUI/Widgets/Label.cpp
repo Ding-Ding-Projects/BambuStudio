@@ -181,6 +181,13 @@ void Label::initSysFont(std::string lang_code, bool load_font_resource)
         font_path = wxString::FromUTF8(resource_path+"/fonts/RobotoMono-Bold.ttf");
         result = wxFont::AddPrivateFont(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of RobotoMono-Bold returns %1%")%result;
+        // Material Symbols Outlined is the MD3 icon face (see MD3::Type::font_icon
+        // and Widgets/MaterialIcon). Registered here alongside Roboto so icon
+        // glyphs resolve from the first paint. MaterialIcon::font() re-registers
+        // defensively via std::call_once for the initSysFont(false) paths.
+        font_path = wxString::FromUTF8(resource_path+"/fonts/MaterialSymbolsOutlined.ttf");
+        result = wxFont::AddPrivateFont(font_path);
+        BOOST_LOG_TRIVIAL(info) << boost::format("add font of MaterialSymbolsOutlined returns %1%")%result;
     }
 #ifdef __linux__
     if (load_font_resource) {

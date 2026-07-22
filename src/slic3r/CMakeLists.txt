@@ -36,6 +36,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/PopupWindow.hpp
     GUI/Widgets/Label.cpp
     GUI/Widgets/Label.hpp
+    GUI/Widgets/MaterialIcon.cpp
+    GUI/Widgets/MaterialIcon.hpp
     GUI/Widgets/LinkLabel.cpp
     GUI/Widgets/LinkLabel.hpp
     GUI/Widgets/Scrollbar.cpp
