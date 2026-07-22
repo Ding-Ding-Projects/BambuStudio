@@ -139,6 +139,8 @@ enum Glyph : uint32_t {
     NetworkWifi2Bar         = 0xEBD6,
     SignalWifiStatusbarNull = 0xF067,
     // --- Preview overlay (ImGui atlas consumers) ---
+    SkipPrevious            = 0xE045,
+    SkipNext                = 0xE044,
     Route                   = 0xEACD,
     LineStartCircle         = 0xF816,
     UTurnLeft               = 0xEBA1,

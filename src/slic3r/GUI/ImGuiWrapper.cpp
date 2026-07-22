@@ -36,6 +36,7 @@
 #include "BitmapCache.hpp"
 #include "FilamentBitmapUtils.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include "../Utils/MacDarkMode.hpp"
 #ifdef __APPLE__
@@ -146,6 +147,21 @@ static const std::map<const wchar_t, std::string> font_icons_large = {
 static const std::map<const wchar_t, std::string> font_icons_extra_large = {
     //BBS do not use notification_clippy
     //{ImGui::ClippyMarker            , "notification_clippy"             },
+};
+
+// Curated Material Symbols coverage for the ImGui overlay atlas. Single source of
+// truth = the MaterialIcon::Glyph enum (Widgets/MaterialIcon.hpp); every value is
+// cmap-verified against the vendored resources/fonts/MaterialSymbolsOutlined.ttf.
+// The range is restricted to this set (NOT the whole PUA) for atlas-memory realism.
+static const unsigned int s_overlay_glyphs[] = {
+    MaterialIcon::SkipPrevious, MaterialIcon::SkipNext,
+    MaterialIcon::Settings,   MaterialIcon::Print,       MaterialIcon::Close,
+    MaterialIcon::Search,     MaterialIcon::Palette,     MaterialIcon::Insights,
+    MaterialIcon::Tune,       MaterialIcon::Layers,      MaterialIcon::Route,
+    MaterialIcon::Timeline,   MaterialIcon::UTurnLeft,   MaterialIcon::WaterDrop,
+    MaterialIcon::PlayArrow,  MaterialIcon::Pause,       MaterialIcon::Stop,
+    MaterialIcon::ChevronLeft, MaterialIcon::ChevronRight, MaterialIcon::ExpandMore,
+    MaterialIcon::Home,
 };
 
 const ImVec4 ImGuiWrapper::COL_GREY_DARK         = { 0.333f, 0.333f, 0.333f, 1.0f };
@@ -2026,6 +2042,55 @@ bool ImGuiWrapper::pop_bold_font() {
         return false;
     }
 }
+bool ImGuiWrapper::push_mono_font() {
+    if (mono_font) {
+        ImGui::PushFont(mono_font);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+bool ImGuiWrapper::pop_mono_font() {
+    if (mono_font) {
+        ImGui::PopFont();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+std::string ImGuiWrapper::material_icon(unsigned int codepoint)
+{
+    // Encode the PUA scalar as UTF-8 (mirrors the existing marker-render idiom
+    // into_u8(ICON_SEARCH)); the glyph resolves through the merged Material
+    // Symbols face in the default/bold atlas.
+    return into_u8(wxString(wxUniChar(codepoint)));
+}
+void ImGuiWrapper::icon_text(unsigned int codepoint, const ImVec4 &color)
+{
+    ImGui::PushStyleColor(ImGuiCol_Text, color);
+    ImGui::TextUnformatted(material_icon(codepoint).c_str());
+    ImGui::PopStyleColor();
+}
+bool ImGuiWrapper::push_icon_font() {
+    if (m_icon_font) {
+        ImGui::PushFont(m_icon_font);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+bool ImGuiWrapper::pop_icon_font() {
+    if (m_icon_font) {
+        ImGui::PopFont();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 bool ImGuiWrapper::push_font_by_name(std::string font_name)
 {
     auto sys_font = im_fonts_map.find(font_name);
@@ -2738,42 +2803,107 @@ void ImGuiWrapper::init_font(bool compress)
     cfg.OversampleH = cfg.OversampleV = 1;
     //FIXME replace with io.Fonts->AddFontFromMemoryTTF(buf_decompressed_data, (int)buf_decompressed_size, m_font_size, nullptr, ranges.Data);
     //https://github.com/ocornut/imgui/issues/220
-    if (m_is_korean)
-        default_font = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/" + "NanumGothic-Regular.ttf").c_str(), m_font_size, &cfg, ranges.Data);
-    else
-        default_font = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/" + "HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &cfg, ranges.Data);
+    const std::string fdir = Slic3r::resources_dir() + "/fonts/";
+
+    // Build the curated Material Symbols coverage range once (shared source of
+    // truth = s_overlay_glyphs[]; each entry is a MaterialIcon::Glyph value).
+    ImVector<ImWchar> icon_ranges;
+    {
+        ImFontGlyphRangesBuilder gb;
+        for (unsigned int cp : s_overlay_glyphs)
+            gb.AddChar((ImWchar)cp);
+        gb.BuildRanges(&icon_ranges);
+    }
+
+    // CJK fallback merge config: MergeMode skips codepoints the base face already
+    // claimed (imgui_draw.cpp "Don't overwrite existing glyphs"), so Latin stays
+    // Roboto and only CJK glyphs are filled from Harmony/Nanum.
+    ImFontConfig cfg_cjk = ImFontConfig();
+    cfg_cjk.OversampleH = cfg_cjk.OversampleV = 1;
+    cfg_cjk.MergeMode   = true;
+    // Material Symbols inline merge config: baseline-align the 24px-em wide-advance
+    // glyphs with Roboto (GlyphOffset.y / GlyphMinAdvanceX are heuristics).
+    ImFontConfig cfg_icon = ImFontConfig();
+    cfg_icon.OversampleH = cfg_icon.OversampleV = 1;
+    cfg_icon.MergeMode        = true;
+    cfg_icon.PixelSnapH       = true;
+    cfg_icon.GlyphMinAdvanceX = m_font_size;
+    cfg_icon.GlyphOffset      = ImVec2(0.0f, IM_ROUND(0.10f * m_font_size));
+
+    // CRITICAL ORDERING: ImGui MergeMode merges into the LAST-added base font
+    // (io.Fonts->Fonts.back()). Every merge below is therefore emitted IMMEDIATELY
+    // after the base face it must extend. Do NOT reorder into "all bases first,
+    // then merges" - the CJK/Material-Symbols glyphs would land on mono/icon faces
+    // and inline icons + CJK fallback would silently break.
+
+    // (A) Prose default face = Roboto-Regular (MD3 body), legacy default fallback.
+    default_font = io.Fonts->AddFontFromFileTTF((fdir + "Roboto-Regular.ttf").c_str(), m_font_size, &cfg, ranges.Data);
     if (default_font == nullptr) {
         default_font = io.Fonts->AddFontDefault();
         if (default_font == nullptr) {
             throw Slic3r::RuntimeError("ImGui: Could not load deafult font");
         }
     }
-
+    // (B) CJK fallback merged into default_font.
     if (m_is_korean)
-        bold_font = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/" + "NanumGothic-Bold.ttf").c_str(), m_font_size, &cfg, ranges.Data);
-    else
-        bold_font = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/" + "HarmonyOS_Sans_SC_Bold.ttf").c_str(), m_font_size, &cfg, ranges.Data);
+        io.Fonts->AddFontFromFileTTF((fdir + "NanumGothic-Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+    else if (m_font_cjk)
+        io.Fonts->AddFontFromFileTTF((fdir + "HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+    // (C) Material Symbols merged inline into default_font (imgui.text glyph flow).
+    io.Fonts->AddFontFromFileTTF((fdir + "MaterialSymbolsOutlined.ttf").c_str(), m_font_size, &cfg_icon, icon_ranges.Data);
+    // (D) Apple keyboard-shortcut glyphs: also merged into default_font. MUST run
+    //     here (before bold_font is added) so it targets default_font.
+#ifdef __APPLE__
+    if (! m_font_cjk) {
+        // Apple keyboard shortcuts are only contained in the CJK fonts.
+        [[maybe_unused]] ImFont *font_cjk = io.Fonts->AddFontFromFileTTF((fdir + "HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges_keyboard_shortcuts);
+        assert(font_cjk != nullptr);
+    }
+#endif
+
+    // (E) Bold face = Roboto-Medium (MD3 emphasis 500; Roboto-Bold.ttf is the
+    //     documented heavier fallback), legacy default fallback.
+    bold_font = io.Fonts->AddFontFromFileTTF((fdir + "Roboto-Medium.ttf").c_str(), m_font_size, &cfg, ranges.Data);
     if (bold_font == nullptr) {
         bold_font = io.Fonts->AddFontDefault();
         if (bold_font == nullptr) { throw Slic3r::RuntimeError("ImGui: Could not load deafult font"); }
     }
+    // (F) CJK fallback merged into bold_font (bold CJK faces).
+    if (m_is_korean)
+        io.Fonts->AddFontFromFileTTF((fdir + "NanumGothic-Bold.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+    else if (m_font_cjk)
+        io.Fonts->AddFontFromFileTTF((fdir + "HarmonyOS_Sans_SC_Bold.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+    // (G) Material Symbols merged inline into bold_font.
+    io.Fonts->AddFontFromFileTTF((fdir + "MaterialSymbolsOutlined.ttf").c_str(), m_font_size, &cfg_icon, icon_ranges.Data);
+
+    // (H) Standalone monospace faces (RobotoMono) for numeric/technical text.
+    //     Ranges restricted to ASCII+Latin-1 for atlas realism; null on failure
+    //     (push_mono_font/get_mono_font degrade gracefully).
+    mono_font      = io.Fonts->AddFontFromFileTTF((fdir + "RobotoMono-Medium.ttf").c_str(), m_font_size, &cfg, io.Fonts->GetGlyphRangesDefault());
+    mono_bold_font = io.Fonts->AddFontFromFileTTF((fdir + "RobotoMono-Bold.ttf").c_str(),   m_font_size, &cfg, io.Fonts->GetGlyphRangesDefault());
+
+    // (I) Standalone large Material Symbols face for independently-sized glyphs
+    //     (timeline transport, one-layer button). Fetched fresh each frame via
+    //     get_icon_font()/push_icon_font(); null on failure (material_icons_available()).
+    {
+        ImFontConfig cfg_icon_large = ImFontConfig();
+        cfg_icon_large.OversampleH = cfg_icon_large.OversampleV = 1;
+        const float icon_native = std::max(32.0f, IM_ROUND(2.5f * m_font_size));
+        m_icon_font = io.Fonts->AddFontFromFileTTF((fdir + "MaterialSymbolsOutlined.ttf").c_str(), icon_native, &cfg_icon_large, icon_ranges.Data);
+    }
 
 #ifdef _WIN32
     // Render the text a bit larger (see GLCanvas3D::_resize() and issue #3401), but only if the scale factor
-    // for the Display is greater than 300%.
+    // for the Display is greater than 300%. Runs once all faces exist so the new
+    // mono/icon faces stay proportional to prose at high DPI. (get_icon_font()
+    // consumers that AddText with an explicit px pass their own DPI-aware size;
+    // ->Scale is not applied on that path.)
     if (wxGetApp().em_unit() > 30) {
         default_font->Scale = 1.5f;
         bold_font->Scale    = 1.5f;
-    }
-#endif
-
-#ifdef __APPLE__
-    ImFontConfig config;
-    config.MergeMode = true;
-    if (! m_font_cjk) {
-        // Apple keyboard shortcuts are only contained in the CJK fonts.
-        [[maybe_unused]]ImFont *font_cjk = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &config, ranges_keyboard_shortcuts);
-        assert(font_cjk != nullptr);
+        if (mono_font)      mono_font->Scale      = 1.5f;
+        if (mono_bold_font) mono_bold_font->Scale = 1.5f;
+        if (m_icon_font)    m_icon_font->Scale    = 1.5f;
     }
 #endif
 
