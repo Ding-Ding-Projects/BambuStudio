@@ -2439,6 +2439,37 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     return bSizer_right;
 }
 
+// Create a device card section header with leading MaterialIcon glyph + label (MD3 SectionHeader spec)
+// trailing_label: optional teal text appended to the title row (e.g. "Humidity: Dry")
+wxBoxSizer* StatusBasePanel::create_section_header(wxWindow *parent, const wxString &label, MaterialIcon::Glyph icon,
+                                                    const wxString &trailing_label)
+{
+    auto *sizer = new wxBoxSizer(wxHORIZONTAL);
+
+    // Leading 16px Material Symbol glyph (device_secondary_text_color for non-active cards)
+    const wxColour title_fg = device_secondary_text_color();
+    wxBitmap icon_bmp = MaterialIcon::bitmap(parent, icon, FromDIP(16), title_fg);
+    if (!icon_bmp.IsOk()) icon_bmp = wxNullBitmap; // fallback if font unavailable
+    auto *icon_static = new wxStaticBitmap(wx_NULL_WINDOW, wxID_ANY, icon_bmp);
+    icon_static->SetMinSize(wxSize(FromDIP(20), FromDIP(20)));
+    sizer->Add(icon_static, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
+
+    // Title label (MD3 SectionHeader: 11/600 type)
+    auto *title_label = new Label(parent, label.Upper());
+    title_label->SetFont(Label::Head_11);
+    title_label->SetForegroundColour(title_fg);
+    sizer->Add(title_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
+
+    // Trailing teal label (e.g. "Humidity: Dry") for AMS card
+    if (!trailing_label.IsEmpty()) {
+        auto *trail = new Label(parent, trailing_label);
+        trail->SetFont(Label::Body_11);
+        trail->SetForegroundColour(device_control_color()); // teal accent
+        sizer->Add(trail, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
+    }
+
+    return sizer;
+}
 wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
 {
     auto sizer                = new wxBoxSizer(wxVERTICAL);
@@ -2453,12 +2484,11 @@ wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
     box->SetBackgroundColour(device_card_color());
     box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    auto *title = new Label(box, _L("Temperature").Upper());
-    title->SetFont(Label::Head_11);
-    title->SetForegroundColour(device_secondary_text_color());
+    // Section header: Temperature with thermostat icon
+    auto *title_row = create_section_header(box, _L("Temperature"), MaterialIcon::Thermostat);
 
     wxBoxSizer *content_sizer = new wxBoxSizer(wxVERTICAL);
-    content_sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    content_sizer->Add(title_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     content_sizer->Add(create_temp_control(box), 0, wxEXPAND | wxALL, FromDIP(12));
 
     box->SetSizer(content_sizer);
@@ -2474,12 +2504,11 @@ StaticBox *StatusBasePanel::create_print_options_group(wxWindow *parent)
     m_print_options_box->SetBackgroundColour(device_card_color());
     m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    auto *title = new Label(m_print_options_box, _L("Print Options").Upper());
-    title->SetFont(Label::Head_11);
-    title->SetForegroundColour(device_secondary_text_color());
+    // Section header: Print Options with tune icon (MD3 SectionHeader style)
+    auto *title_row = create_section_header(m_print_options_box, _L("Print Options"), MaterialIcon::Tune);
 
     auto *sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    sizer->Add(title_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     m_misc_ctrl_sizer = create_misc_control(m_print_options_box);
     sizer->Add(m_misc_ctrl_sizer, 0, wxEXPAND | wxALL, FromDIP(12));
     m_print_options_box->SetSizer(sizer);
@@ -2494,9 +2523,8 @@ StaticBox *StatusBasePanel::create_move_group(wxWindow *parent)
     m_move_control_box->SetBackgroundColour(device_card_color());
     m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
 
-    auto *title = new Label(m_move_control_box, _L("Move").Upper());
-    title->SetFont(Label::Head_11);
-    title->SetForegroundColour(device_secondary_text_color());
+    // Section header: Move with build icon (MD3 SectionHeader style)
+    auto *title_row = create_section_header(m_move_control_box, _L("Move"), MaterialIcon::Build);
 
     auto *axis_sizer = create_axis_control(m_move_control_box);
     auto *bed_panel  = create_bed_control(m_move_control_box);
@@ -2516,7 +2544,7 @@ StaticBox *StatusBasePanel::create_move_group(wxWindow *parent)
     content_sizer->Add(extruder_sizer, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(4));
 
     auto *card_sizer = new wxBoxSizer(wxVERTICAL);
-    card_sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    card_sizer->Add(title_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     card_sizer->Add(content_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     m_move_control_box->SetSizer(card_sizer);
     return m_move_control_box;
@@ -2887,11 +2915,11 @@ StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
     m_ams_control = new AMSControl(m_ams_control_box, wxID_ANY);
     m_ams_control->SetDoubleBuffered(true);
 
+    // Section header: AMS with inventory_2 icon + trailing humidity state (teal accent)
+    auto *title_row = create_section_header(m_ams_control_box, _L("AMS"), MaterialIcon::Inventory2, _L("Humidity") + ": N/A");
+
     auto sizer_box = new wxBoxSizer(wxVERTICAL);
-    auto *title = new Label(m_ams_control_box, _L("AMS").Upper());
-    title->SetFont(Label::Head_11);
-    title->SetForegroundColour(device_secondary_text_color());
-    sizer_box->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    sizer_box->Add(title_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     sizer_box->Add(m_ams_control, 0, wxEXPAND | wxALL, FromDIP(3));
 
     m_ams_control_box->SetBackgroundColour(device_card_color());

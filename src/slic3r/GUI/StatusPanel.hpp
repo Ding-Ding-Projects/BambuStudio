@@ -632,6 +632,10 @@ public:
     wxBoxSizer* create_settings_group(wxWindow *parent);
     wxBoxSizer* create_filament_group(wxWindow* parent);
 
+    // Section header with leading MaterialIcon glyph + optional trailing label (e.g. humidity)
+    wxBoxSizer* create_section_header(wxWindow *parent, const wxString &label, MaterialIcon::Glyph icon,
+                                       const wxString &trailing_label = wxEmptyString);
+
 	void           expand_filament_loading(wxMouseEvent &e);
     void           show_ams_group(bool show = true);
     void show_filament_load_group(bool show = true);
