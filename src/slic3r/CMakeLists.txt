@@ -38,6 +38,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/Label.hpp
     GUI/Widgets/MaterialIcon.cpp
     GUI/Widgets/MaterialIcon.hpp
+    GUI/Widgets/MD3Dialog.cpp
+    GUI/Widgets/MD3Dialog.hpp
     GUI/Widgets/CameraHUD.cpp
     GUI/Widgets/CameraHUD.hpp
     GUI/Widgets/LinkLabel.cpp
@@ -144,6 +146,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/SlicingProgressNotification.hpp
     GUI/Gizmos/GLGizmosManager.cpp
     GUI/Gizmos/GLGizmosManager.hpp
+    GUI/Gizmos/GLIconGlyphBridge.cpp
+    GUI/Gizmos/GLIconGlyphBridge.hpp
     GUI/Gizmos/GLGizmosCommon.cpp
     GUI/Gizmos/GLGizmosCommon.hpp
     GUI/Gizmos/GLGizmoBase.cpp

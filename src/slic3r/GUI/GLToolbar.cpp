@@ -7,6 +7,7 @@
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/Camera.hpp"
 #include "slic3r/GUI/Plater.hpp"
+#include "slic3r/GUI/Gizmos/GLIconGlyphBridge.hpp"
 
 #include <wx/event.h>
 #include <wx/bitmap.h>
@@ -925,6 +926,35 @@ bool GLToolbar::generate_icons_texture() const
     bool res = m_icons_texture.load_from_svg_files_as_sprites_array(filenames, states, sprite_size_px, false);
     if (res)
         m_icons_texture_dirty = false;
+
+    // MD3 glyph bridge: overpaint the rows whose item maps to a Material Symbols
+    // glyph so the main toolbar and the gizmo rail resolve to MD3 icons (idle
+    // OnSurfaceVariant / selected Primary), retiring the toolbar_*.svg light/dark
+    // pairs. This is an in-place glTexSubImage2D over the atlas that was just
+    // built, so the sprite layout, dimensions and every render/hit-test path stay
+    // identical. Unmapped items (e.g. "orient" -> screen_rotation, still absent
+    // from the vendored font, and the separator sprites) keep their SVG sprite,
+    // and when the icon font is unavailable the whole texture is left as SVG.
+    if (res && GLIconGlyphBridge::available()) {
+        std::vector<GLIconGlyphBridge::AtlasGlyphRow> glyph_rows;
+        int row = 0;
+        for (const auto& item : m_items) {
+            // Mirror the exact filter used to build `filenames` above so the row
+            // index matches the atlas row the item renders from.
+            if (item->get_icon_filename(m_b_dark_mode_enabled).empty())
+                continue;
+            const uint32_t glyph = GLIconGlyphBridge::glyph_for_toolbar_item(item->get_name());
+            if (glyph != 0)
+                glyph_rows.push_back({ row, glyph });
+            ++row;
+        }
+        if (!glyph_rows.empty()) {
+            GLIconGlyphBridge::overpaint_toolbar_atlas(
+                m_icons_texture.get_id(), m_icons_texture.get_width(), m_icons_texture.get_height(),
+                (int)sprite_size_px, (int)states.size(), glyph_rows,
+                m_b_dark_mode_enabled, MD3::ColorScheme::Brand);
+        }
+    }
 
     return res;
 }
