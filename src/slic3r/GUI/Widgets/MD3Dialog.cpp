@@ -55,6 +55,17 @@ public:
         m_forced_dark = dark;
         Refresh();
     }
+    // Re-derive the FromDIP-based 44x44 edge for the current monitor DPI (live
+    // monitor-DPI change). The paint path already recomputes its own FromDIP
+    // metrics (tile radius, 24px glyph) on every repaint, so only the pinned
+    // min/max size needs refreshing here.
+    void Rescale()
+    {
+        const wxSize edge(FromDIP(44), FromDIP(44));
+        SetMinSize(edge);
+        SetMaxSize(edge);
+        Refresh();
+    }
 
 private:
     // Resolve a role honouring m_forced_dark; mirrors StateColor::semantic's
@@ -360,7 +371,17 @@ void MD3Dialog::UpdateShape()
         SetShape(region);
 }
 
-void MD3Dialog::on_dpi_changed(const wxRect & /*suggested_rect*/) { UpdateShape(); }
+void MD3Dialog::on_dpi_changed(const wxRect & /*suggested_rect*/)
+{
+    // Re-derive the header icon tile's FromDIP-pinned edge for the new monitor
+    // DPI (every shell variant shares the tile), re-flow the shell, and re-apply
+    // the rounded silhouette (UpdateShape is a no-op for the resizable variant,
+    // which keeps a rectangular native window).
+    if (m_tile)
+        m_tile->Rescale();
+    Layout();
+    UpdateShape();
+}
 
 void MD3Dialog::bind_drag(wxWindow *w)
 {

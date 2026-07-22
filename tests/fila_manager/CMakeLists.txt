@@ -37,4 +37,4 @@ if (WIN32)
     # bambustudio_copy_dlls(${_TEST_NAME}_tests <config> <postfix> <out>)
 endif()
 
-add_test(${_TEST_NAME}_tests ${_TEST_NAME}_tests "${CATCH_EXTRA_ARGS} exclude:[NotWorking]")
+add_test(${_TEST_NAME}_tests ${_TEST_NAME}_tests ${CATCH_EXTRA_ARGS} "~[NotWorking]")

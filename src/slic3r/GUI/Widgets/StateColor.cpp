@@ -55,7 +55,20 @@ static std::map<wxColour, wxColour> gDarkColors{
     {MD3::Light::primaryContainer,     MD3::Dark::primaryContainer},     /*#a6f4b8 -> #095228*/
     {MD3::Light::secondaryContainer,   MD3::Dark::secondaryContainer},   /*#d7e8d9 -> #2b3a2f*/
     {MD3::Light::onPrimaryContainer,   MD3::Dark::onPrimaryContainer},   /*#00210c -> #a6f4b8*/
-    {MD3::Light::onSecondaryContainer, MD3::Dark::onSecondaryContainer}  /*#0e1f13 -> #cfe9d3*/
+    {MD3::Light::onSecondaryContainer, MD3::Dark::onSecondaryContainer}, /*#0e1f13 -> #cfe9d3*/
+    // Device-scheme teal accent tokens. Construction-time
+    // semantic(role, ColorScheme::Device) snapshots (AMS Load/Unload buttons,
+    // ConnectPrinter, UpgradePanel, StatusPanel, ...) capture the light tones;
+    // these light->dark pairs live-remap them when the app toggles to dark mode,
+    // mirroring the 3-arg resolve() Device dark tones exactly. OnPrimary is
+    // intentionally omitted (its light tone is #ffffff == ThemeColor::White,
+    // already mapped above), as is the SecondaryContainer pair
+    // (Device::secondaryContainerLight shares #cce8e3 with
+    // Device::onSecondaryContainerDark, so mapping it would corrupt snapshots
+    // taken while dark mode is active).
+    {MD3::Device::primaryLight,            MD3::Device::primaryDark},            /*#0f766e -> #5eead4*/
+    {MD3::Device::primaryContainerLight,   MD3::Device::primaryContainerDark},   /*#9cf2e7 -> #005047*/
+    {MD3::Device::onPrimaryContainerLight, MD3::Device::onPrimaryContainerDark}  /*#00201d -> #83f5e3*/
     //{"#F0F0F0", "#4C4C54"},
 };
 

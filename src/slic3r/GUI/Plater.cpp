@@ -166,6 +166,9 @@
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/ComboBox.hpp"
+#include "Widgets/SearchField.hpp"
+#include "Widgets/SwitchButton.hpp"
+#include "Widgets/TextInput.hpp"
 #include "Widgets/StaticGroup.hpp"
 #include "Widgets/MultiNozzleSync.hpp"
 
@@ -279,9 +282,14 @@ wxDEFINE_EVENT(EVT_HELIO_INPUT_DLG, SimpleEvent);
 // end helio
 
 #define PRINTER_THUMBNAIL_SIZE (wxSize(FromDIP(48), FromDIP(48)))
-#define PRINTER_PANEL_SIZE (wxSize(-1, FromDIP(68)))
-#define BED_PANEL_SIZE (wxSize(-1, FromDIP(84)))
-#define BTN_SYNC_SIZE (wxSize(-1, FromDIP(MD3::Metrics::comfortable.row_height)))
+// MD3 kit printer identity card (Prepare.jsx:78-85): content-sized, pad 10 —
+// the legacy fixed 68px PRINTER_PANEL_SIZE / 84px BED_PANEL_SIZE cards are gone.
+#define BTN_SYNC_SIZE (wxSize(-1, FromDIP(MD3::Metrics::active().row_height)))
+// Kit filament info-row (Prepare.jsx:91-100): h44 + 4px gap between rows.
+#define FILAMENT_ROW_HEIGHT 44
+#define FILAMENT_ROW_PITCH  48
+// Kit SelectField (fields/SelectField.jsx): outlined h38 r10.
+#define SELECT_FIELD_HEIGHT 38
 
 static string get_diameter_string(float diameter)
 {
@@ -663,15 +671,19 @@ struct Sidebar::priv
     // Printer
     wxSizer *             vsizer_printer      = nullptr;
     wxSizer *             sizer_dual_extruder = nullptr;
-    // Printer - preset
+    // Printer - preset (MD3 kit identity card: static name + status row over a
+    // hidden live PlaterPresetComboBox, trailing edit IconButton)
     StaticBox * panel_printer_preset = nullptr;
     wxStaticBitmap *      image_printer       = nullptr;
     PlaterPresetComboBox *combo_printer       = nullptr;
-    ScalableButton *      btn_edit_printer    = nullptr;
+    Label *               text_printer_name   = nullptr;
+    wxWindow *            printer_status_dot  = nullptr;
+    Label *               text_printer_status = nullptr;
+    Button *              btn_edit_printer    = nullptr;
     ScalableButton *      btn_connect_printer = nullptr;
-    // Printer - bed
+    // Printer - bed (MD3 kit SelectField: caption + outlined h38 combo; the
+    // 84px thumbnail card is gone, the big-image popup hovers off the combo)
     StaticBox *     panel_printer_bed = nullptr;
-    wxStaticBitmap *image_printer_bed = nullptr;
     ComboBox *      combo_printer_bed = nullptr;
     wxStaticText *  text_printer_bed  = nullptr;
 
@@ -693,6 +705,11 @@ struct Sidebar::priv
 
     PlaterPresetComboBox *combo_print = nullptr;
     std::vector<PlaterPresetComboBox*> combos_filament;
+    // MD3 kit filament info-rows (Prepare.jsx:91-100): one h44 r12
+    // SurfaceContainerHighest StaticBox per combo, with a trailing material
+    // Badge. Kept in lockstep with combos_filament (same indices).
+    std::vector<StaticBox*> filament_rows;
+    std::vector<Label*>     filament_badges;
     int editing_filament = -1;
     wxBoxSizer *sizer_filaments = nullptr;
     Button *    btn_add_filament_row = nullptr;
@@ -725,8 +742,25 @@ struct Sidebar::priv
     ScalableButton* m_filament_icon = nullptr;
     Button * m_purge_mode_btn = nullptr;
     Button * m_flushing_volume_btn = nullptr;
-    wxSearchCtrl* m_search_bar = nullptr;
+    // MD3 Objects card (Prepare.jsx:116-126): SectionHeader account_tree + the
+    // kit SearchField pill in place of the raw native wxSearchCtrl.
+    SectionHeader* m_objects_header = nullptr;
+    SearchField* m_search_bar = nullptr;
     Search::SearchObjectDialog* dia = nullptr;
+
+    // MD3 compact Process card (Prepare.jsx:105-112): curated rows bound to the
+    // Print config, with an 'Advanced settings' flip to the FULL reparented
+    // ParamsPanel so no setting is orphaned.
+    ParamsPanel  *params_panel_ref = nullptr;
+    wxPanel      *m_process_card = nullptr;
+    TextInput    *process_layer_height = nullptr;
+    TextInput    *process_infill_density = nullptr;
+    ComboBox     *process_infill_pattern = nullptr;
+    SwitchButton *process_support = nullptr;
+    std::vector<int> process_pattern_values; // combo index -> InfillPattern enum value
+    wxPanel      *m_process_simple_bar = nullptr; // 'Simple mode' bar shown above the full tree
+    bool          process_advanced = false;
+    bool          process_card_refreshing = false;
 
     // BBS printer config
     StaticBox* m_panel_printer_title = nullptr;
@@ -778,6 +812,15 @@ struct Sidebar::priv
     void on_search_update();
     void jump_to_object(ObjectDataViewModelNode* item);
     void can_search();
+    // MD3 identity card: mirror the live combo selection / printer preset /
+    // MachineObject connectivity into the static name + status labels.
+    void update_printer_identity();
+    // MD3 filament rows: mirror each combo's selected preset filament_type
+    // into the trailing material Badge.
+    void update_filament_row_badges();
+    // MD3 compact Process card: pull the curated Print-config values into the
+    // card widgets (no-op while hidden or while the user edits a field).
+    void refresh_process_card();
 
     bool sync_extruder_list(bool &only_external_material, bool is_manual = false);
     std::optional<NozzleOption> get_nozzle_options(MachineObject *obj, int extruder_count, bool support_multi_nozzle, bool is_manual);
@@ -799,16 +842,23 @@ struct Sidebar::priv
 void Sidebar::priv::layout_printer(bool isBBL, bool isDual)
 {
     isDual = isDual && isBBL;  // It indicates a multi-extruder layout.
-    // Keep the selected printer as a single full-width identity row. The old
-    // BBL layout stacked the thumbnail above the selector, which made this
-    // card compete horizontally with Bed type and Sync as three mini-cards.
+    // MD3 kit printer identity card (Prepare.jsx:78-85): thumbnail, then a
+    // static name label (13.5/600, ellipsized) over a status row (7px Primary
+    // dot + '0.4 nozzle / Connected' 11.5 Primary), trailing edit IconButton.
+    // The live PlaterPresetComboBox stays behind the card (hidden, geometry
+    // synced to the card) so every selection/update path is preserved.
     if (panel_printer_preset->GetSizer() == nullptr) {
         auto *identity_row = new wxBoxSizer(wxHORIZONTAL);
-        identity_row->Add(image_printer, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
-        identity_row->Add(combo_printer, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
-        identity_row->Add(btn_edit_printer, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
+        identity_row->Add(image_printer, 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM | wxLEFT, FromDIP(10));
+        auto *identity_col = new wxBoxSizer(wxVERTICAL);
+        identity_col->Add(text_printer_name, 0, wxEXPAND);
+        auto *status_row = new wxBoxSizer(wxHORIZONTAL);
+        status_row->Add(printer_status_dot, 0, wxALIGN_CENTER_VERTICAL);
+        status_row->Add(text_printer_status, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+        identity_col->Add(status_row, 0, wxEXPAND | wxTOP, FromDIP(2));
+        identity_row->Add(identity_col, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+        identity_row->Add(btn_edit_printer, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(6));
         identity_row->Add(btn_connect_printer, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
-        combo_printer->SetWindowStyle(combo_printer->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_LEFT);
         panel_printer_preset->SetSizer(identity_row);
     }
 
@@ -1086,8 +1136,108 @@ void Sidebar::priv::jump_to_object(ObjectDataViewModelNode* item)
 void Sidebar::priv::can_search()
 {
     if (m_search_bar->IsShown()) {
-        m_search_bar->SetFocus();
+        m_search_bar->GetTextCtrl()->SetFocus();
     }
+}
+
+void Sidebar::priv::update_printer_identity()
+{
+    if (!text_printer_name || !combo_printer) return;
+    PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (!bundle) return;
+
+    // Name mirrors exactly what the live (hidden) combo shows, dirty marker
+    // and all, so the static label can never drift from the selection model.
+    wxString name = combo_printer->GetValue();
+    if (text_printer_name->GetLabel() != name)
+        text_printer_name->SetLabel(name);
+
+    const Preset &printer = bundle->printers.get_edited_preset();
+    wxString status;
+    if (auto *nd = printer.config.option<ConfigOptionFloats>("nozzle_diameter"); nd && !nd->values.empty()) {
+        wxString diam = wxString::FromDouble(nd->values[0], 1);
+        for (size_t i = 1; i < nd->values.size(); ++i) {
+            wxString d2 = wxString::FromDouble(nd->values[i], 1);
+            if (d2 != diam) { diam += "/" + d2; break; }
+        }
+        status = wxString::Format(_L("%s nozzle"), diam);
+    }
+    if (printer.is_bbl_vendor_preset(bundle)) {
+        MachineObject *obj = wxGetApp().getDeviceManager() ? wxGetApp().getDeviceManager()->get_selected_machine() : nullptr;
+        const wxString conn = (obj && obj->is_connected()) ? _L("Connected") : _L("Idle");
+        status = status.IsEmpty() ? conn : status + wxString::FromUTF8(" \xC2\xB7 ") + conn;
+    }
+    if (text_printer_status->GetLabel() != status)
+        text_printer_status->SetLabel(status);
+    const bool show_status = !status.IsEmpty();
+    if (printer_status_dot->IsShown() != show_status) {
+        printer_status_dot->Show(show_status);
+        text_printer_status->Show(show_status);
+    }
+    panel_printer_preset->Layout();
+}
+
+void Sidebar::priv::update_filament_row_badges()
+{
+    PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (!bundle) return;
+    for (size_t i = 0; i < combos_filament.size() && i < filament_badges.size(); ++i) {
+        if (!combos_filament[i] || !filament_badges[i]) continue;
+        wxString type;
+        const std::string preset_name = Preset::remove_suffix_modified(combos_filament[i]->GetValue().ToUTF8().data());
+        if (const Preset *preset = bundle->filaments.find_preset(preset_name, false)) {
+            if (auto *opt = preset->config.option<ConfigOptionStrings>("filament_type"); opt && !opt->values.empty())
+                type = wxString::FromUTF8(opt->values.front());
+        }
+        Label *badge = filament_badges[i];
+        if (badge->GetLabel() != type) {
+            badge->SetLabel(type);
+            wxWindow *box = badge->GetParent();
+            box->Show(!type.IsEmpty());
+            if (box->GetParent()) box->GetParent()->Layout();
+        }
+    }
+}
+
+void Sidebar::priv::refresh_process_card()
+{
+    if (!m_process_card || !m_process_card->IsShown()) return;
+    PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (!bundle) return;
+    const DynamicPrintConfig &cfg = bundle->prints.get_edited_preset().config;
+    process_card_refreshing = true;
+
+    if (process_layer_height && !process_layer_height->GetTextCtrl()->HasFocus()) {
+        if (auto *opt = cfg.option<ConfigOptionFloat>("layer_height")) {
+            wxString s = wxString::FromDouble(opt->value, 2);
+            if (process_layer_height->GetTextCtrl()->GetValue() != s)
+                process_layer_height->GetTextCtrl()->SetValue(s);
+        }
+    }
+    if (process_infill_density && !process_infill_density->GetTextCtrl()->HasFocus()) {
+        if (auto *opt = cfg.option<ConfigOptionPercent>("sparse_infill_density")) {
+            wxString s = wxString::FromDouble(opt->value, 0);
+            if (process_infill_density->GetTextCtrl()->GetValue() != s)
+                process_infill_density->GetTextCtrl()->SetValue(s);
+        }
+    }
+    if (process_infill_pattern) {
+        if (auto *opt = cfg.option<ConfigOptionEnum<InfillPattern>>("sparse_infill_pattern")) {
+            int sel = -1;
+            for (size_t i = 0; i < process_pattern_values.size(); ++i)
+                if (process_pattern_values[i] == int(opt->value)) { sel = int(i); break; }
+            if (sel >= 0 && process_infill_pattern->GetSelection() != sel)
+                process_infill_pattern->SetSelection(sel);
+        }
+    }
+    if (process_support) {
+        if (auto *opt = cfg.option<ConfigOptionBool>("enable_support")) {
+            if (process_support->GetValue() != opt->value)
+                process_support->SetValue(opt->value);
+        }
+    }
+
+    process_card_refreshing = false;
 }
 
 #ifdef _WIN32
@@ -2118,6 +2268,10 @@ bool Sidebar::priv::sync_extruder_list(bool &only_external_material, bool is_man
 
 void Sidebar::priv::update_sync_status(const MachineObject *obj)
 {
+    // Keep the MD3 identity card's Connected/Idle status in step with the
+    // machine state (cheap: labels only change when the text differs).
+    update_printer_identity();
+
     StateColor not_synced_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
     auto clear_all_sync_status = [this, &not_synced_colour]() {
         panel_printer_preset->ShowBadge(false);
@@ -2434,7 +2588,7 @@ static void apply_scalable_glyph(ScalableButton *btn, uint32_t glyph, int px, co
 
 Sidebar::Sidebar(Plater *parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition,
-              wxSize(parent->FromDIP(MD3::Metrics::comfortable.sidebar_width), -1))
+              wxSize(parent->FromDIP(MD3::Metrics::active().sidebar_width), -1))
     , p(new priv(parent))
 {
     Choice::register_dynamic_list("support_filament", &dynamic_filament_list);
@@ -2561,17 +2715,68 @@ Sidebar::Sidebar(Plater *parent)
             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
 
+        // MD3 kit printer identity card (Prepare.jsx:78-85): the card itself is
+        // the affordance for the live combo's dropdown; the trailing 34px edit
+        // IconButton opens the preset editor.
         p->panel_printer_preset = new StaticBox(p->m_panel_printer_content);
-        p->panel_printer_preset->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+        p->panel_printer_preset->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
         p->panel_printer_preset->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
         p->panel_printer_preset->SetBorderColor(panel_bd_col);
-        p->panel_printer_preset->SetMinSize(PRINTER_PANEL_SIZE);
         p->panel_printer_preset->Bind(wxEVT_LEFT_DOWN, [this](auto & evt) {
             p->combo_printer->wxEvtHandler::ProcessEvent(evt);
         });
 
-        ScalableButton *edit_btn = new ScalableButton(p->panel_printer_preset, wxID_ANY, "dot");
+        // Live preset combo, created FIRST so it stays the card's first child.
+        // It is hidden — the static identity labels replace its chrome — but
+        // remains fully wired: card clicks are forwarded to it, its DropDown
+        // pops from its geometry (kept in sync with the card below), and every
+        // update()/selection path is untouched.
+        PlaterPresetComboBox *combo_printer = new PlaterPresetComboBox(p->panel_printer_preset, Preset::TYPE_PRINTER);
+        combo_printer->SetWindowStyle(combo_printer->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_LEFT);
+        combo_printer->SetBorderWidth(0);
+        combo_printer->Hide();
+        p->combo_printer = combo_printer;
+        p->panel_printer_preset->Bind(wxEVT_SIZE, [this](wxSizeEvent &evt) {
+            // Keep the hidden combo's geometry equal to the card so its
+            // DropDown aligns with (and spans) the identity card.
+            if (p->combo_printer)
+                p->combo_printer->SetSize(0, 0, evt.GetSize().GetWidth(), evt.GetSize().GetHeight());
+            evt.Skip();
+        });
+
+        p->image_printer    = new wxStaticBitmap(p->panel_printer_preset, wxID_ANY, wxNullBitmap, wxDefaultPosition, PRINTER_THUMBNAIL_SIZE, 0);
+        update_printer_thumbnail();
+        p->image_printer->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
+            p->combo_printer->wxEvtHandler::ProcessEvent(evt);
+        });
+
+        // Static identity: name 13.5/600 ellipsized + status row (7px Primary
+        // dot + '0.4 nozzle · Connected' 11.5 Primary).
+        p->text_printer_name = new Label(p->panel_printer_preset, wxString(), LB_PROPAGATE_MOUSE_EVENT | wxST_ELLIPSIZE_END);
+        p->text_printer_name->SetFont(::Label::Head_13);
+        p->text_printer_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        p->text_printer_name->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+
+        p->printer_status_dot = new wxPanel(p->panel_printer_preset, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(7), FromDIP(7)));
+        p->printer_status_dot->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+        p->printer_status_dot->Bind(wxEVT_PAINT, [this](wxPaintEvent &) {
+            wxPaintDC dc(p->printer_status_dot);
+            const wxSize sz = p->printer_status_dot->GetClientSize();
+            dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.DrawEllipse(0, 0, sz.GetWidth(), sz.GetHeight());
+        });
+
+        p->text_printer_status = new Label(p->panel_printer_preset, wxString(), LB_PROPAGATE_MOUSE_EVENT | wxST_ELLIPSIZE_END);
+        p->text_printer_status->SetFont(::Label::Body_11);
+        p->text_printer_status->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
+        p->text_printer_status->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+
+        Button *edit_btn = new Button(p->panel_printer_preset, wxEmptyString);
+        edit_btn->SetIconButton(Button::IconShape::Circle, 34);
+        edit_btn->SetGlyph(MaterialIcon::Edit);
         edit_btn->SetToolTip(_L("Click to edit preset"));
+        edit_btn->SetCanFocus(false);
         edit_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent)
             {
                 m_soft_first_start  = false;
@@ -2580,49 +2785,38 @@ Sidebar::Sidebar(Plater *parent)
                     p->editing_filament = 0;
             });
         p->btn_edit_printer = edit_btn;
-        p->image_printer    = new wxStaticBitmap(p->panel_printer_preset, wxID_ANY, wxNullBitmap, wxDefaultPosition, PRINTER_THUMBNAIL_SIZE, 0);
-        update_printer_thumbnail();
-        p->image_printer->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
-            p->combo_printer->wxEvtHandler::ProcessEvent(evt);
-        });
-
-        PlaterPresetComboBox *combo_printer = new PlaterPresetComboBox(p->panel_printer_preset, Preset::TYPE_PRINTER);
-        combo_printer->SetWindowStyle(combo_printer->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_CENTER_HORIZONTAL);
-        combo_printer->SetBorderWidth(0);
-        p->combo_printer = combo_printer;
 
         p->btn_connect_printer = new ScalableButton(p->panel_printer_preset, wxID_ANY, "monitor_signal_strong");
-        p->btn_connect_printer->SetBackgroundColour(surface_high);
+        p->btn_connect_printer->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
         p->btn_connect_printer->SetToolTip(_L("Connection"));
+        // MD3: draw the connection affordance as a Material Symbols 'lan'
+        // glyph (OnSurfaceVariant); the raster stays the graceful fallback.
+        apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         p->btn_connect_printer->Bind(wxEVT_BUTTON, [this, combo_printer](wxCommandEvent)
             {
                 PhysicalPrinterDialog dlg(this->GetParent());
                 dlg.ShowModal();
             });
 
-        {
-        auto hovered = std::make_shared<wxWindow *>();
-        for (wxWindow *w : std::initializer_list<wxWindow *>{p->panel_printer_preset, edit_btn, p->image_printer, combo_printer}) {
-            w->Bind(wxEVT_ENTER_WINDOW, [w, hovered, edit_btn](wxMouseEvent &evt) { *hovered = w; edit_btn->SetBitmap_("edit"); });
-            w->Bind(wxEVT_LEAVE_WINDOW, [w, hovered, edit_btn](wxMouseEvent &evt) { if (*hovered == w) { edit_btn->SetBitmap_("dot"); *hovered = nullptr; } });
-        }
-        }
-
-        // Bed type selection
+        // Bed type — MD3 kit SelectField (Prepare.jsx:86, fields/SelectField.jsx):
+        // caption 'Bed type' over a single outlined h38 r10 combo. The 84px card,
+        // 48px bed thumbnail and standalone help card-slot are gone; help folds
+        // into the caption row and the enlarged bed image hover-popup now hangs
+        // off the combo row itself.
         p->panel_printer_bed = new StaticBox(p->m_panel_printer_content);
-        p->panel_printer_bed->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
-        p->panel_printer_bed->SetBackgroundColor(surface_high);
-        p->panel_printer_bed->SetBorderColor(panel_bd_col);
-        p->panel_printer_bed->SetMinSize(BED_PANEL_SIZE);
+        p->panel_printer_bed->SetCornerRadius(0);
+        p->panel_printer_bed->SetBorderWidth(0);
+        p->panel_printer_bed->SetBackgroundColor(surface_lowest);
         p->panel_printer_bed->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
             p->combo_printer_bed->wxEvtHandler::ProcessEvent(evt);
         });
 
-        ScalableButton *wiki_bed = new ScalableButton(p->panel_printer_bed, wxID_ANY, "help");
+        // MD3: help affordance as a borderless IconButton in the caption row.
+        Button *wiki_bed = new Button(p->panel_printer_bed, wxEmptyString);
+        wiki_bed->SetIconButton(Button::IconShape::Circle, 22);
+        wiki_bed->SetGlyph(MaterialIcon::Help, 16);
+        wiki_bed->SetCanFocus(false);
         wiki_bed->SetToolTip(_L("Click to view the wiki of the current plate type"));
-        // MD3: fold the help affordance into a Material Symbols 'help' glyph
-        // (OnSurfaceVariant) instead of the raster 'help' bitmap.
-        apply_scalable_glyph(wiki_bed, MaterialIcon::Help, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
         wiki_bed->Bind(wxEVT_BUTTON, [this](wxCommandEvent) {
             bool is_zh  = wxGetApp().app_config->get("language") == "zh_CN";
             if (is_zh) {
@@ -2632,18 +2826,15 @@ Sidebar::Sidebar(Plater *parent)
             }
         });
 
-        p->image_printer_bed = new wxStaticBitmap(p->panel_printer_bed, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0);
-        update_bed_thumbnail({});
-        p->image_printer_bed->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
-            p->image_printer_bed->Unbind(wxEVT_LEAVE_WINDOW, &Sidebar::on_leave_image_printer_bed, this);
-            if (p->big_bed_image_popup) {
-                p->big_bed_image_popup->on_hide();
-            }
-            p->combo_printer_bed->wxEvtHandler::ProcessEvent(evt);
-        });
-
         p->combo_printer_bed = new ComboBox(p->panel_printer_bed, wxID_ANY, wxString(""), wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY | wxALIGN_LEFT);
         p->combo_printer_bed->SetBorderWidth(1);
+        p->combo_printer_bed->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->combo_printer_bed->SetBorderColor(StateColor(
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+        p->combo_printer_bed->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_lowest, StateColor::Normal)));
+        p->combo_printer_bed->SetMinSize({-1, FromDIP(SELECT_FIELD_HEIGHT)});
         p->combo_printer_bed->GetDropDown().SetUseContentWidth(true);
         reset_bed_type_combox_choices(true);
 
@@ -2652,30 +2843,30 @@ Sidebar::Sidebar(Plater *parent)
             auto image_path = get_cur_select_bed_image(exist);
             if (exist) {
                 update_bed_thumbnail(image_path);
-                if (p->big_bed_image_popup) {
-                    p->big_bed_image_popup->set_bitmap(create_scaled_bitmap("big_" + image_path, p->big_bed_image_popup, p->big_bed_image_popup->get_image_px()));
-                }
             }
             e.Skip(); // fix bug:Event spreads to sidebar
         });
-        p->combo_printer_bed->Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent &evt) {
+        // Dismiss the enlarged bed image before the dropdown opens.
+        p->combo_printer_bed->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &evt) {
             if (p->big_bed_image_popup) {
                 p->big_bed_image_popup->on_hide();
             }
+            evt.Skip();
         });
-        p->image_printer_bed->Bind(wxEVT_ENTER_WINDOW, &Sidebar::on_enter_image_printer_bed, this);
+        p->combo_printer_bed->Bind(wxEVT_ENTER_WINDOW, &Sidebar::on_enter_image_printer_bed, this);
+        p->combo_printer_bed->Bind(wxEVT_LEAVE_WINDOW, &Sidebar::on_leave_image_printer_bed, this);
 
         wxBoxSizer *bed_type_vsizer = new wxBoxSizer(wxVERTICAL);
         p->text_printer_bed = new wxStaticText(p->panel_printer_bed, wxID_ANY, _L("Bed type"));
         p->text_printer_bed->SetFont(::Label::Body_11);
         p->text_printer_bed->SetForegroundColour(inactive_text);
-        bed_type_vsizer->Add(p->text_printer_bed, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
 
-        auto *bed_type_hsizer = new wxBoxSizer(wxHORIZONTAL);
-        bed_type_hsizer->Add(p->image_printer_bed, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
-        bed_type_hsizer->Add(p->combo_printer_bed, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
-        bed_type_hsizer->Add(wiki_bed, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
-        bed_type_vsizer->Add(bed_type_hsizer, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
+        auto *bed_caption_hsizer = new wxBoxSizer(wxHORIZONTAL);
+        bed_caption_hsizer->Add(p->text_printer_bed, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+        bed_caption_hsizer->AddStretchSpacer(1);
+        bed_caption_hsizer->Add(wiki_bed, 0, wxALIGN_CENTER_VERTICAL);
+        bed_type_vsizer->Add(bed_caption_hsizer, 0, wxEXPAND);
+        bed_type_vsizer->Add(p->combo_printer_bed, 0, wxEXPAND | wxTOP, FromDIP(3));
 
         p->panel_printer_bed->SetSizer(bed_type_vsizer);
 
@@ -2705,7 +2896,7 @@ Sidebar::Sidebar(Plater *parent)
         btn_sync = new Button(p->m_panel_printer_content, _L("Sync info"), "printer_sync", 0, 32);
         //btn_sync->SetFont(Label::Body_8);
         btn_sync->SetToolTip(_L("Synchronize nozzle information and the number of AMS"));
-        btn_sync->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.row_height / 2));
+        btn_sync->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
         // MD3 kit button anatomy: draw the leading icon as a Material Symbols
         // 'sync' glyph (Button::SetGlyph is live-recoloured by the text colour and
         // falls back to the raster 'printer_sync' bitmap when the face is absent).
@@ -2728,7 +2919,7 @@ Sidebar::Sidebar(Plater *parent)
         btn_sync->SetCanFocus(false);
         btn_sync->SetPaddingSize({FromDIP(12), FromDIP(8)});
         btn_sync->SetMinSize(BTN_SYNC_SIZE);
-        btn_sync->SetMaxSize({-1, FromDIP(MD3::Metrics::comfortable.row_height)});
+        btn_sync->SetMaxSize({-1, FromDIP(MD3::Metrics::active().row_height)});
         btn_sync->Bind(wxEVT_UPDATE_UI, &Sidebar::update_sync_ams_btn_enable, this);
         btn_sync->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) {
             deal_btn_sync();
@@ -2783,6 +2974,7 @@ Sidebar::Sidebar(Plater *parent)
 
         p->vsizer_printer = new wxBoxSizer(wxVERTICAL);
         p->layout_printer(true, true);
+        p->update_printer_identity();
         p->m_panel_printer_content->SetSizer(p->vsizer_printer);
         p->m_panel_printer_content->Layout();
         scrolled_sizer->Add(p->m_panel_printer_content, 0, wxEXPAND, 0);
@@ -2848,7 +3040,7 @@ Sidebar::Sidebar(Plater *parent)
     // the kit small radius (10) in place of the ad-hoc r8.
     p->m_purge_mode_btn->SetFont(Label::Body_11);
     p->m_purge_mode_btn->SetPaddingSize(wxSize(FromDIP(6), FromDIP(3)));
-    p->m_purge_mode_btn->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    p->m_purge_mode_btn->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
     StateColor purge_bg_col(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
@@ -2894,7 +3086,7 @@ Sidebar::Sidebar(Plater *parent)
     // MD3 kit button anatomy: on-scale label + kit small radius (see Purge mode).
     p->m_flushing_volume_btn->SetFont(Label::Body_11);
     p->m_flushing_volume_btn->SetPaddingSize(wxSize(FromDIP(6),FromDIP(3)));
-    p->m_flushing_volume_btn->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    p->m_flushing_volume_btn->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
     StateColor flush_bg_col(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
@@ -2944,7 +3136,7 @@ Sidebar::Sidebar(Plater *parent)
     p->m_btn_sync_ams_header->SetGlyph(MaterialIcon::Sync, 16);
     p->m_btn_sync_ams_header->SetFont(Label::Body_11);
     p->m_btn_sync_ams_header->SetPaddingSize(wxSize(FromDIP(10), FromDIP(3)));
-    p->m_btn_sync_ams_header->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    p->m_btn_sync_ams_header->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     p->m_btn_sync_ams_header->SetMinSize({-1, FromDIP(30)});
     p->m_btn_sync_ams_header->SetMaxSize({-1, FromDIP(30)});
     p->m_btn_sync_ams_header->SetToolTip(_L("Synchronize filament list from AMS"));
@@ -3035,10 +3227,10 @@ Sidebar::Sidebar(Plater *parent)
         add_filament_font.SetNumericWeight(500);
         p->btn_add_filament_row->SetFont(add_filament_font);
     }
-    p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.row_height / 2));
+    p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
     p->btn_add_filament_row->SetPaddingSize({FromDIP(12), FromDIP(8)});
-    p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::comfortable.row_height)});
-    p->btn_add_filament_row->SetMaxSize({-1, FromDIP(MD3::Metrics::comfortable.row_height)});
+    p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});
+    p->btn_add_filament_row->SetMaxSize({-1, FromDIP(MD3::Metrics::active().row_height)});
     p->btn_add_filament_row->SetBackgroundColor(StateColor(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
@@ -3066,7 +3258,7 @@ Sidebar::Sidebar(Plater *parent)
             wxSize sz = p->m_btn_add_mixed_filament->GetClientSize();
             dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
             dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1));
-            dc.DrawRoundedRectangle(0, 0, sz.GetWidth(), sz.GetHeight(), FromDIP(MD3::Metrics::comfortable.small_radius));
+            dc.DrawRoundedRectangle(0, 0, sz.GetWidth(), sz.GetHeight(), FromDIP(MD3::Metrics::active().small_radius));
         });
 
         auto* btn_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -3198,6 +3390,7 @@ Sidebar::Sidebar(Plater *parent)
     {
     //add project title
     auto params_panel = ((MainFrame*)parent->GetParent())->m_param_panel;
+    p->params_panel_ref = params_panel;
     if (params_panel) {
         params_panel->get_top_panel()->Reparent(p->scrolled);
         auto spliter_1 = new ::StaticLine(p->scrolled);
@@ -3209,36 +3402,166 @@ Sidebar::Sidebar(Plater *parent)
         scrolled_sizer->Add(spliter_2, 0, wxEXPAND);
     }
 
+    // ---- MD3 compact Process card (Prepare.jsx:105-112) ----
+    // Curated ValueField / SelectField / Switch rows live-bound to the Print
+    // config, plus an 'Advanced settings' text button that flips to the FULL
+    // reparented ParamsPanel below — so every setting stays reachable.
+    if (params_panel) {
+        const int pad = FromDIP(MD3::Metrics::active().padding);
+        const wxColour surface_highest = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+
+        p->m_process_card = new wxPanel(p->scrolled, wxID_ANY);
+        p->m_process_card->SetBackgroundColour(surface_lowest);
+        auto *card_sizer = new wxBoxSizer(wxVERTICAL);
+
+        auto add_process_row = [&](const wxString &label, wxWindow *field) {
+            auto *row = new wxBoxSizer(wxHORIZONTAL);
+            auto *lbl = new ::Label(p->m_process_card, label);
+            lbl->SetFont(::Label::Body_12);
+            lbl->SetForegroundColour(active_text);
+            row->Add(lbl, 1, wxALIGN_CENTER_VERTICAL);
+            row->Add(field, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+            row->SetMinSize(-1, FromDIP(36));
+            card_sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+        };
+        auto style_value_field = [&](TextInput *field) {
+            field->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+            field->SetBorderWidth(0);
+            field->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+            field->SetMinSize({FromDIP(96), FromDIP(34)});
+            field->SetMaxSize({-1, FromDIP(34)});
+        };
+        // Kit ValueField numbers are Roboto Mono 12.5/500.
+        auto commit_on_edit = [this](TextInput *field, std::function<void(double)> apply) {
+            auto commit = [this, field, apply]() {
+                if (p->process_card_refreshing) return;
+                double v = 0.0;
+                if (field->GetTextCtrl()->GetValue().ToDouble(&v))
+                    apply(v);
+                else
+                    p->refresh_process_card();
+            };
+            field->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [commit](wxCommandEvent &) { commit(); });
+            field->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [commit](wxFocusEvent &e) { commit(); e.Skip(); });
+        };
+
+        // Layer height (ValueField, mm)
+        p->process_layer_height = new TextInput(p->m_process_card, wxString(), wxString(), wxString(),
+                                                wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER, _L("mm"));
+        style_value_field(p->process_layer_height);
+        commit_on_edit(p->process_layer_height, [](double v) {
+            if (v <= 0.0) return;
+            DynamicPrintConfig conf;
+            conf.set_key_value("layer_height", new ConfigOptionFloat(v));
+            if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
+        });
+        add_process_row(_L("Layer height"), p->process_layer_height);
+
+        // Sparse infill density (ValueField, %)
+        p->process_infill_density = new TextInput(p->m_process_card, wxString(), wxString(), wxString(),
+                                                  wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER, "%");
+        style_value_field(p->process_infill_density);
+        commit_on_edit(p->process_infill_density, [](double v) {
+            if (v < 0.0 || v > 100.0) return;
+            DynamicPrintConfig conf;
+            conf.set_key_value("sparse_infill_density", new ConfigOptionPercent(v));
+            if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
+        });
+        add_process_row(_L("Sparse infill density"), p->process_infill_density);
+
+        // Infill pattern (filled SelectField)
+        p->process_infill_pattern = new ComboBox(p->m_process_card, wxID_ANY, wxString(), wxDefaultPosition,
+                                                 wxDefaultSize, 0, nullptr, wxCB_READONLY | wxALIGN_LEFT);
+        p->process_infill_pattern->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->process_infill_pattern->SetBorderWidth(0);
+        p->process_infill_pattern->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        p->process_infill_pattern->SetMinSize({FromDIP(130), FromDIP(34)});
+        p->process_infill_pattern->GetDropDown().SetUseContentWidth(true);
+        if (const ConfigOptionDef *def = print_config_def.get("sparse_infill_pattern"); def && def->enum_keys_map) {
+            const auto &keys_map = *def->enum_keys_map;
+            for (size_t i = 0; i < def->enum_values.size(); ++i) {
+                wxString label = i < def->enum_labels.size() ? _(def->enum_labels[i])
+                                                            : wxString::FromUTF8(def->enum_values[i]);
+                p->process_infill_pattern->Append(label);
+                auto it = keys_map.find(def->enum_values[i]);
+                p->process_pattern_values.push_back(it != keys_map.end() ? it->second : int(i));
+            }
+        }
+        p->process_infill_pattern->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
+            if (p->process_card_refreshing) return;
+            int sel = p->process_infill_pattern->GetSelection();
+            if (sel >= 0 && sel < (int)p->process_pattern_values.size()) {
+                DynamicPrintConfig conf;
+                conf.set_key_value("sparse_infill_pattern",
+                                   new ConfigOptionEnum<InfillPattern>((InfillPattern)p->process_pattern_values[sel]));
+                if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
+            }
+            e.StopPropagation();
+        });
+        add_process_row(_L("Sparse infill pattern"), p->process_infill_pattern);
+
+        // Enable support (MD3 Switch)
+        p->process_support = new SwitchButton(p->m_process_card);
+        p->process_support->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &e) {
+            if (!p->process_card_refreshing) {
+                DynamicPrintConfig conf;
+                conf.set_key_value("enable_support", new ConfigOptionBool(e.IsChecked()));
+                if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
+            }
+            e.Skip();
+        });
+        add_process_row(_L("Enable support"), p->process_support);
+
+        // 'Advanced settings' text button (kit: tune glyph, Primary, h30).
+        auto *btn_advanced = new Button(p->m_process_card, _L("Advanced settings"));
+        btn_advanced->SetVariant(Button::Variant::Text);
+        btn_advanced->SetButtonSize(Button::Size::Small);
+        btn_advanced->SetGlyph(MaterialIcon::Tune, 17);
+        btn_advanced->SetCanFocus(false);
+        btn_advanced->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_process_advanced(true); });
+        card_sizer->Add(btn_advanced, 0, wxALIGN_LEFT | wxALL, pad / 2);
+
+        p->m_process_card->SetSizer(card_sizer);
+        scrolled_sizer->Add(p->m_process_card, 0, wxEXPAND);
+    }
+
     //add project content
     p->sizer_params = new wxBoxSizer(wxVERTICAL);
 
-    p->m_search_bar = new wxSearchCtrl(p->scrolled, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-    p->m_search_bar->ShowSearchButton(true);
-    p->m_search_bar->ShowCancelButton(true);
-    p->m_search_bar->SetDescriptiveText(_L("Search plate, object and part."));
+    // ---- MD3 Objects card (Prepare.jsx:116-126) ----
+    // SectionHeader 'account_tree' + the shared kit SearchField pill wrapping
+    // the live ObjectList below. All search/popup/jump behaviour is preserved.
+    p->m_objects_header = new SectionHeader(p->scrolled, _L("Objects"), MaterialIcon::AccountTree);
 
-    p->m_search_bar->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent&) {
+    p->m_search_bar = new SearchField(p->scrolled, _L("Search plate, object and part."));
+    p->m_search_bar->SetOnQuery([this](const wxString &) {
+        this->p->on_search_update();
+    });
+    p->m_search_bar->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
         this->p->on_search_update();
         wxPoint pos = this->p->m_search_bar->ClientToScreen(wxPoint(0, 0));
         pos.y += this->p->m_search_bar->GetRect().height;
         p->dia->SetPosition(pos);
         p->dia->Popup();
+        e.Skip();
         });
-    p->m_search_bar->Bind(wxEVT_COMMAND_TEXT_UPDATED, [this](wxCommandEvent&) {
-        this->p->on_search_update();
-        });
-    p->m_search_bar->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent& e) {
+    p->m_search_bar->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent& e) {
         p->dia->Dismiss();
         e.Skip();
         });
 
     p->m_object_list = new ObjectList(p->scrolled);
 
-    p->sizer_params->Add(p->m_search_bar, 0, wxALL | wxEXPAND, 0);
+    {
+        const int pad = FromDIP(MD3::Metrics::active().padding);
+        p->sizer_params->Add(p->m_objects_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+        p->sizer_params->Add(p->m_search_bar, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, pad / 2);
+    }
     p->sizer_params->Add(p->m_object_list, 1, wxEXPAND | wxTOP, 0);
     scrolled_sizer->Add(p->sizer_params, 2, wxEXPAND | wxLEFT, 0);
     p->m_object_list->Hide();
     p->m_search_bar->Hide();
+    p->m_objects_header->Hide();
     // Frequently Object Settings
     p->object_settings = new ObjectSettings(p->scrolled);
 
@@ -3248,8 +3571,31 @@ Sidebar::Sidebar(Plater *parent)
     p->sizer_params->Add(p->object_settings->get_sizer(), 0, wxEXPAND | wxTOP, 5 * em / 10);
 #else
     if (params_panel) {
+        // Slim flip-back bar above the full tree ('Simple mode', Text button).
+        p->m_process_simple_bar = new wxPanel(p->scrolled, wxID_ANY);
+        p->m_process_simple_bar->SetBackgroundColour(surface_lowest);
+        auto *simple_sizer = new wxBoxSizer(wxHORIZONTAL);
+        auto *btn_simple = new Button(p->m_process_simple_bar, _L("Simple settings"));
+        btn_simple->SetVariant(Button::Variant::Text);
+        btn_simple->SetButtonSize(Button::Size::Small);
+        btn_simple->SetGlyph(MaterialIcon::Tune, 17);
+        btn_simple->SetCanFocus(false);
+        btn_simple->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_process_advanced(false); });
+        simple_sizer->Add(btn_simple, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+        p->m_process_simple_bar->SetSizer(simple_sizer);
+        scrolled_sizer->Add(p->m_process_simple_bar, 0, wxEXPAND);
+
         params_panel->Reparent(p->scrolled);
         scrolled_sizer->Add(params_panel, 3, wxEXPAND);
+
+        // Apply the persisted compact/advanced choice (compact is the kit
+        // default; 'true' restores the full legacy tree).
+        p->process_advanced = wxGetApp().app_config && wxGetApp().app_config->get("sidebar_process_advanced") == "true";
+        p->m_process_card->Show(!p->process_advanced);
+        p->m_process_simple_bar->Show(p->process_advanced);
+        params_panel->set_host_visibility_gate(p->process_advanced);
+        params_panel->Show(p->process_advanced);
+        p->refresh_process_card();
     }
 #endif
     }
@@ -3333,7 +3679,13 @@ Sidebar::Sidebar(Plater *parent)
         scrolled_sizer->Add(p->m_manip_panel, 0, wxEXPAND);
 
         p->m_manip_timer = new wxTimer();
-        p->m_manip_timer->Bind(wxEVT_TIMER, [this](wxTimerEvent &) { p->refresh_manip_card(); });
+        p->m_manip_timer->Bind(wxEVT_TIMER, [this](wxTimerEvent &) {
+            p->refresh_manip_card();
+            // Keep the compact Process card live against edits made through
+            // the full tree / plate settings (no-op while hidden; focused
+            // fields are never stomped — see refresh_process_card()).
+            p->refresh_process_card();
+        });
         p->m_manip_timer->Start(250);
     }
 
@@ -3410,7 +3762,8 @@ void Sidebar::priv::refresh_manip_card()
 }
 
 void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {
-    p->image_printer_bed->Bind(wxEVT_LEAVE_WINDOW, &Sidebar::on_leave_image_printer_bed, this);
+    // MD3: the enlarged bed image popup now hangs off the bed SelectField row
+    // (the 48px thumbnail is gone with the 84px card).
     auto    pos  = p->panel_printer_bed->GetScreenPosition();
     auto    rect = p->panel_printer_bed->GetRect();
     if (p->big_bed_image_popup == nullptr) {
@@ -3445,7 +3798,7 @@ void Sidebar::on_enter_image_printer_bed(wxMouseEvent &evt) {
 void Sidebar::on_leave_image_printer_bed(wxMouseEvent &evt) {
     auto pos_x = evt.GetX();
     auto pos_y = evt.GetY();
-    auto rect  = p->image_printer_bed->GetRect();
+    auto rect  = p->combo_printer_bed->GetRect();
     if ((pos_x <= 0 || pos_y <= 0 || pos_x >= rect.GetWidth()) && p->big_bed_image_popup) {
         p->big_bed_image_popup->on_hide();
     }
@@ -3478,33 +3831,54 @@ void Sidebar::create_printer_preset()
 
 void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filament_idx)
 {
-    *combo = new PlaterPresetComboBox(p->m_panel_filament_content, Slic3r::Preset::TYPE_FILAMENT);
+    // MD3 kit filament info-row (Prepare.jsx:91-100): an h44 r12
+    // SurfaceContainerHighest StaticBox wrapping the LIVE PlaterPresetComboBox
+    // (borderless, blended into the row), the data colour swatch, a trailing
+    // material Badge and the per-row menu affordance.
+    StaticBox *row = new StaticBox(p->m_panel_filament_content);
+    row->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    row->SetBorderWidth(0);
+    row->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    row->SetMinSize({-1, FromDIP(FILAMENT_ROW_HEIGHT)});
+
+    // The combo MUST be the row's first child: its destructor destroys the
+    // sibling clr_picker/edit_btn, so DestroyChildren() has to reach it first.
+    *combo = new PlaterPresetComboBox(row, Slic3r::Preset::TYPE_FILAMENT);
     (*combo)->set_filament_idx(filament_idx);
+    (*combo)->SetBorderWidth(0);
+    (*combo)->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Normal)));
 
     auto combo_and_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    combo_and_btn_sizer->Add(FromDIP(12), 0, 0, 0, 0 );
+    combo_and_btn_sizer->Add(FromDIP(8), 0, 0, 0, 0 );
     (*combo)->clr_picker->SetLabel(wxString::Format("%d", filament_idx + 1));
-    combo_and_btn_sizer->Add((*combo)->clr_picker, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
-    combo_and_btn_sizer->Add(*combo, 1, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, FromDIP(4))
-        ->SetMinSize({-1, FromDIP(MD3::Metrics::comfortable.row_height)});
+    combo_and_btn_sizer->Add((*combo)->clr_picker, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    combo_and_btn_sizer->Add(*combo, 1, wxALIGN_CENTER_VERTICAL, 0)
+        ->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});
 
-    /* BBS hide del_btn
-    ScalableButton* del_btn = new ScalableButton(p->m_panel_filament_content, wxID_ANY, "delete_filament");
-    del_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e){
-        int extruder_count = std::max(1, (int)p->combos_filament.size() - 1);
+    // Material-type Badge (containment/Badge.jsx: 11/600, SecondaryContainer, r7).
+    StaticBox *badge_box = new StaticBox(row);
+    badge_box->SetCornerRadius(FromDIP(7));
+    badge_box->SetBorderWidth(0);
+    badge_box->SetBackgroundColor(StateColor::semantic(MD3::Role::SecondaryContainer));
+    Label *badge_label = new Label(badge_box, wxString(), LB_PROPAGATE_MOUSE_EVENT);
+    badge_label->SetFont(::Label::Head_11);
+    badge_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSecondaryContainer));
+    badge_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SecondaryContainer));
+    auto *badge_sizer = new wxBoxSizer(wxHORIZONTAL);
+    badge_sizer->Add(badge_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(8));
+    badge_sizer->SetMinSize(-1, FromDIP(20));
+    badge_box->SetSizer(badge_sizer);
+    badge_box->Hide(); // shown once a material type is known
+    combo_and_btn_sizer->Add(badge_box, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
-        update_objects_list_filament_column(std::max(1, extruder_count - 1));
-        on_filament_count_change(extruder_count);
-        wxGetApp().preset_bundle->printers.get_edited_preset().set_num_extruders(extruder_count);
-        wxGetApp().preset_bundle->update_multi_material_filament_presets();
-    });
-
-    combo_and_btn_sizer->Add(32 * em / 10, 0, 0, 0, 0);
-    combo_and_btn_sizer->Add(del_btn, 0, wxALIGN_CENTER_VERTICAL, 5 * em / 10);
-    */
-    ScalableButton* edit_btn = new ScalableButton(p->m_panel_filament_content, wxID_ANY, "menu_filament");
+    ScalableButton* edit_btn = new ScalableButton(row, wxID_ANY, "menu_filament");
     edit_btn->SetToolTip(_L("Click to edit preset"));
+    // MD3: per-row menu as a Material Symbols 'more_vert' glyph
+    // (OnSurfaceVariant); the raster stays the graceful fallback.
+    apply_scalable_glyph(edit_btn, MaterialIcon::MoreVert, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    edit_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     PlaterPresetComboBox* combobox = (*combo);
     edit_btn->Bind(wxEVT_BUTTON, [this, edit_btn, filament_idx](wxCommandEvent) {
@@ -3517,11 +3891,14 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
     });
     combobox->edit_btn = edit_btn;
 
-    combo_and_btn_sizer->Add(edit_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    combo_and_btn_sizer->Add(edit_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
 
-    combo_and_btn_sizer->Add(FromDIP(12), 0, 0, 0, 0);
+    combo_and_btn_sizer->Add(FromDIP(8), 0, 0, 0, 0);
 
-    p->sizer_filaments->Add(combo_and_btn_sizer, 0, wxEXPAND);
+    row->SetSizer(combo_and_btn_sizer);
+    p->filament_rows.push_back(row);
+    p->filament_badges.push_back(badge_label);
+    p->sizer_filaments->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(4));
 }
 
 void Sidebar::remove_unused_filament_combos(const size_t current_extruder_count)
@@ -3531,7 +3908,15 @@ void Sidebar::remove_unused_filament_combos(const size_t current_extruder_count)
     while (p->combos_filament.size() > current_extruder_count) {
         const int last = p->combos_filament.size() - 1;
         p->sizer_filaments->Remove(last);
-        (*p->combos_filament[last]).Destroy();
+        // Destroying the row destroys the combo first (first child), whose
+        // destructor takes the sibling clr_picker/edit_btn with it.
+        if (last < (int) p->filament_rows.size()) {
+            p->filament_rows[last]->Destroy();
+            p->filament_rows.pop_back();
+            p->filament_badges.pop_back();
+        } else {
+            (*p->combos_filament[last]).Destroy();
+        }
         p->combos_filament.pop_back();
     }
 }
@@ -3654,7 +4039,10 @@ void Sidebar::update_all_preset_comboboxes()
     if (p->combo_printer) {
         p->combo_printer->update();
         update_printer_thumbnail();
+        p->update_printer_identity();
     }
+    p->update_filament_row_badges();
+    p->refresh_process_card();
 }
 
 void Sidebar::update_presets(Preset::Type preset_type)
@@ -3688,6 +4076,7 @@ void Sidebar::update_presets(Preset::Type preset_type)
 
         for (size_t i = 0; i < filament_cnt; i++)
             p->combos_filament[i]->update();
+        p->update_filament_row_badges();
 
         dynamic_filament_list.update();
         break;
@@ -3701,6 +4090,7 @@ void Sidebar::update_presets(Preset::Type preset_type)
         if (print_tab) {
             print_tab->get_combo_box()->update();
         }
+        p->refresh_process_card();
         break;
         }
     case Preset::TYPE_SLA_PRINT:
@@ -3855,6 +4245,7 @@ void Sidebar::update_presets_from_to(Slic3r::Preset::Type preset_type, std::stri
         }
         for (size_t i = 0; i < filament_cnt; i++)
             p->combos_filament[i]->update();
+        p->update_filament_row_badges();
         break;
     }
 
@@ -4013,7 +4404,8 @@ void Sidebar::msw_rescale()
         ->SetMinSize(-1, 3 * wxGetApp().em_unit());
     p->m_printer_icon->msw_rescale();
     p->m_printer_setting->msw_rescale();
-    p->btn_edit_printer->msw_rescale();
+    p->btn_connect_printer->msw_rescale();
+    p->btn_edit_printer->Rescale();
     p->image_printer->SetSize(PRINTER_THUMBNAIL_SIZE);
     bool exist;
     auto image_path = get_cur_select_bed_image(exist);
@@ -4030,6 +4422,7 @@ void Sidebar::msw_rescale()
         const wxColour glyph_col = StateColor::semantic(MD3::Role::OnSurfaceVariant);
         apply_scalable_glyph(p->m_printer_icon, MaterialIcon::Print, 16, glyph_col);
         apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, glyph_col);
+        apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, glyph_col);
         apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, glyph_col);
     }
     p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::compact.row_height / 2));
@@ -4041,15 +4434,43 @@ void Sidebar::msw_rescale()
     p->m_purge_mode_btn->Rescale();
     //BBS
     p->combo_printer_bed->Rescale();
-    p->combo_printer_bed->SetMinSize({-1, 3 * wxGetApp().em_unit()});
+    p->combo_printer_bed->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+    p->combo_printer_bed->SetMinSize({-1, FromDIP(SELECT_FIELD_HEIGHT)});
     p->left_extruder->Rescale();
     p->right_extruder->Rescale();
     p->single_extruder->Rescale();
 
     p->btn_sync_printer->SetPaddingSize({FromDIP(6), FromDIP(12)});
     p->btn_sync_printer->SetMinSize(BTN_SYNC_SIZE);
-    p->panel_printer_bed->SetMinSize(BED_PANEL_SIZE);
     p->btn_sync_printer->Rescale();
+
+    // MD3 filament info-rows: re-derive radius / heights at the new DPI.
+    for (StaticBox *row : p->filament_rows) {
+        row->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+        row->SetMinSize({-1, FromDIP(FILAMENT_ROW_HEIGHT)});
+    }
+    for (Label *badge : p->filament_badges)
+        if (auto *box = dynamic_cast<StaticBox *>(badge->GetParent()))
+            box->SetCornerRadius(FromDIP(7));
+
+    // MD3 Objects card + compact Process card widgets.
+    if (p->m_search_bar) p->m_search_bar->Rescale();
+    if (p->process_layer_height) {
+        p->process_layer_height->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->process_layer_height->SetMinSize({FromDIP(96), FromDIP(34)});
+        p->process_layer_height->Rescale();
+    }
+    if (p->process_infill_density) {
+        p->process_infill_density->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->process_infill_density->SetMinSize({FromDIP(96), FromDIP(34)});
+        p->process_infill_density->Rescale();
+    }
+    if (p->process_infill_pattern) {
+        p->process_infill_pattern->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->process_infill_pattern->SetMinSize({FromDIP(130), FromDIP(34)});
+        p->process_infill_pattern->Rescale();
+    }
+    if (p->process_support) p->process_support->Rescale();
 #if 0
     if (p->mode_sizer)
         p->mode_sizer->msw_rescale();
@@ -4062,8 +4483,13 @@ void Sidebar::msw_rescale()
     //                                                            } )
     //    combo->msw_rescale();
     p->combo_printer->msw_rescale();
-    for (PlaterPresetComboBox* combo : p->combos_filament)
+    for (PlaterPresetComboBox* combo : p->combos_filament) {
         combo->msw_rescale();
+        // Re-paint the MD3 'more_vert' glyph at the new DPI (the rescale above
+        // reloads the raster fallback).
+        if (combo->edit_btn)
+            apply_scalable_glyph(combo->edit_btn, MaterialIcon::MoreVert, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    }
 
     // BBS
     //p->frequently_changed_parameters->msw_rescale();
@@ -4109,16 +4535,30 @@ void Sidebar::sys_color_changed()
     p->m_panel_printer_title->SetBackgroundColor(surface_low);
     p->m_panel_printer_title->SetBackgroundColor2(surface_low);
     p->m_panel_printer_content->SetBackgroundColour(surface_lowest);
-    p->panel_printer_preset->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
-    p->panel_printer_bed->SetBackgroundColor(surface_high);
+    const wxColour surface_highest = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    p->panel_printer_preset->SetBackgroundColor(surface_highest);
     StateColor card_border(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal));
     p->panel_printer_preset->SetBorderColor(card_border);
-    p->panel_printer_bed->SetBorderColor(card_border);
+    // MD3 identity card labels re-tint with the theme.
+    p->text_printer_name->SetForegroundColour(on_surface);
+    p->text_printer_name->SetBackgroundColour(surface_highest);
+    p->text_printer_status->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
+    p->text_printer_status->SetBackgroundColour(surface_highest);
+    p->printer_status_dot->SetBackgroundColour(surface_highest);
+    p->btn_edit_printer->Rescale();
+    // MD3 bed SelectField: transparent container, outlined combo.
+    p->panel_printer_bed->SetBackgroundColor(surface_lowest);
+    p->combo_printer_bed->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+    p->combo_printer_bed->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_lowest, StateColor::Normal)));
     p->text_printer_bed->SetForegroundColour(on_variant);
-    p->btn_connect_printer->SetBackgroundColour(surface_high);
+    p->btn_connect_printer->SetBackgroundColour(surface_highest);
+    apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, on_variant);
     p->m_panel_filament_title->SetBackgroundColor(surface_low);
     p->m_panel_filament_title->SetBackgroundColor2(surface_low);
     p->m_filament_area_wrapper->SetBackgroundColour(surface_lowest);
@@ -4187,8 +4627,37 @@ void Sidebar::sys_color_changed()
                                                                 p->combo_printer })
         combo->sys_color_changed();
 #endif
-    for (PlaterPresetComboBox* combo : p->combos_filament)
+    for (PlaterPresetComboBox* combo : p->combos_filament) {
         combo->sys_color_changed();
+        if (combo->edit_btn) {
+            apply_scalable_glyph(combo->edit_btn, MaterialIcon::MoreVert, 16, on_variant);
+            combo->edit_btn->SetBackgroundColour(surface_highest);
+        }
+        combo->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+    }
+    // MD3 filament info-rows + material badges re-tint with the theme.
+    for (StaticBox *row : p->filament_rows)
+        row->SetBackgroundColor(surface_highest);
+    for (Label *badge : p->filament_badges) {
+        badge->SetForegroundColour(StateColor::semantic(MD3::Role::OnSecondaryContainer));
+        badge->SetBackgroundColour(StateColor::semantic(MD3::Role::SecondaryContainer));
+        if (auto *box = dynamic_cast<StaticBox *>(badge->GetParent()))
+            box->SetBackgroundColor(StateColor::semantic(MD3::Role::SecondaryContainer));
+    }
+
+    // MD3 compact Process card fields.
+    if (p->m_process_card) {
+        p->m_process_card->SetBackgroundColour(surface_lowest);
+        for (TextInput *field : {p->process_layer_height, p->process_infill_density})
+            if (field)
+                field->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        if (p->process_infill_pattern)
+            p->process_infill_pattern->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        for (wxWindow *child : p->m_process_card->GetChildren())
+            if (auto *lbl = dynamic_cast<::Label *>(child))
+                lbl->SetForegroundColour(on_surface);
+    }
+    if (p->m_process_simple_bar) p->m_process_simple_bar->SetBackgroundColour(surface_lowest);
 
     // BBS
     obj_list()->sys_color_changed();
@@ -4230,6 +4699,10 @@ void Sidebar::jump_to_option(const std::string& opt_key, Preset::Type type, cons
 {
     //const Search::Option& opt = p->searcher.get_option(opt_key, type);
     if (type == Preset::TYPE_PRINT) {
+        // The jump target lives in the full ParamsPanel tree; make sure the
+        // MD3 compact Process card is flipped out of the way first. The flip
+        // is transient — do not overwrite the user's stored sidebar mode.
+        show_process_advanced(true, /*persist=*/false);
         auto tab = dynamic_cast<TabPrintModel*>(wxGetApp().params_panel()->get_current_tab());
         if (tab && tab->has_key(opt_key)) {
             tab->activate_option(opt_key, category);
@@ -4238,6 +4711,23 @@ void Sidebar::jump_to_option(const std::string& opt_key, Preset::Type type, cons
         wxGetApp().params_panel()->switch_to_global();
     }
     wxGetApp().get_tab(type)->activate_option(opt_key, category);
+}
+
+void Sidebar::show_process_advanced(bool advanced, bool persist)
+{
+    if (!p->m_process_card || !p->params_panel_ref) return;
+    if (p->process_advanced == advanced && p->params_panel_ref->IsShown() == advanced)
+        return; // already in the requested state
+    p->process_advanced = advanced;
+    p->m_process_card->Show(!advanced);
+    if (p->m_process_simple_bar) p->m_process_simple_bar->Show(advanced);
+    p->params_panel_ref->set_host_visibility_gate(advanced);
+    p->params_panel_ref->Show(advanced);
+    if (!advanced) p->refresh_process_card();
+    if (persist && wxGetApp().app_config)
+        wxGetApp().app_config->set("sidebar_process_advanced", advanced ? "true" : "false");
+    m_scrolled_sizer->Layout();
+    p->scrolled->Refresh();
 }
 
 void Sidebar::jump_to_option(size_t selected)
@@ -4306,6 +4796,7 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
     });
 
     recalc_filament_scroll_sizes();
+    p->update_filament_row_badges();
 
     Layout();
     p->m_panel_filament_title->Refresh();
@@ -4324,13 +4815,9 @@ void Sidebar::on_filaments_delete(size_t filament_id)
 
         wxWindowUpdateLocker noUpdates_scrolled_panel(this);
 
-        // delete UI item
+        // delete UI item (the trailing MD3 info-row owns the combo)
         if (filament_id < p->combos_filament.size()) {
-            const int last            = p->combos_filament.size() - 1;
-            p->sizer_filaments->Remove(last);
-
-            (*p->combos_filament[last]).Destroy();
-            p->combos_filament.pop_back();
+            remove_unused_filament_combos(p->combos_filament.size() - 1);
         }
 
         auto sizer = p->m_panel_filament_title->GetSizer();
@@ -4350,6 +4837,7 @@ void Sidebar::on_filaments_delete(size_t filament_id)
     }
 
     recalc_filament_scroll_sizes();
+    p->update_filament_row_badges();
 
     Layout();
     p->m_panel_filament_title->Refresh();
@@ -4754,8 +5242,10 @@ void Sidebar::load_ams_list(MachineObject* obj)
             c->ShowBadge(false);//change printer,then clear badge
         }
     }
+    p->update_filament_row_badges();
 
     p->combo_printer->update();
+    p->update_printer_identity();
 }
 
 void Sidebar::sync_ams_list(bool is_from_big_sync_btn)
@@ -5246,6 +5736,7 @@ void Sidebar::update_ui_from_settings()
 
 bool Sidebar::show_object_list(bool show) const
 {
+    if (p->m_objects_header) p->m_objects_header->Show(show);
     p->m_search_bar->Show(show);
     if (!p->m_object_list->Show(show))
         return false;
@@ -5295,11 +5786,16 @@ void Sidebar::recalc_filament_scroll_sizes()
     size_t num_mixed = plater ? plater->mixed_filament_config_indices().size() : 0;
     size_t total = num_physical + num_mixed;
 
-    int max_h = (total > kScrollCapThreshold)
+    // Physical rows follow the MD3 info-row pitch (h44 + 4 gap); mixed rows
+    // keep their legacy 34px pitch.
+    int max_h_physical = (total > kScrollCapThreshold)
+        ? FromDIP(kMaxFilamentScrollRows * FILAMENT_ROW_PITCH)
+        : -1;
+    int max_h_mixed = (total > kScrollCapThreshold)
         ? FromDIP(kMaxFilamentScrollRows * 34)
         : -1;
 
-    auto recalc = [max_h](wxScrolledWindow* sw) {
+    auto recalc = [](wxScrolledWindow* sw, int max_h) {
         if (!sw || !sw->GetSizer()) return;
         auto content_size = sw->GetSizer()->GetMinSize();
         if (max_h > 0 && content_size.y > max_h) {
@@ -5311,8 +5807,8 @@ void Sidebar::recalc_filament_scroll_sizes()
         sw->SetMinSize({0, content_size.y});
     };
 
-    recalc(p->m_physical_scroll_area);
-    recalc(p->m_mixed_scroll_area);
+    recalc(p->m_physical_scroll_area, max_h_physical);
+    recalc(p->m_mixed_scroll_area, max_h_mixed);
 }
 
 static std::string blend_mixed_color(const std::vector<unsigned int> &comp_ids,
@@ -6399,14 +6895,13 @@ void Sidebar::set_is_gcode_file(bool flag)
 
 void Sidebar::update_bed_thumbnail(std::string path)
 {
-    if (path.empty()) path = "printer_placeholder";
-
-    // workaround for updating icons too many times, which may casue ui flicking
-    static std::string cur_path;
-    if (cur_path == path && p->image_printer_bed->GetBitmap().IsOk()) return;
-
-    cur_path = path;
-    p->image_printer_bed->SetBitmap(create_scaled_bitmap(cur_path, this, 48));
+    // MD3: the 48px in-card bed thumbnail is gone (bed type is a SelectField);
+    // this now refreshes the enlarged hover popup's bitmap so it tracks bed
+    // selection, preset switches and DPI changes.
+    if (path.empty() || path == "printer_placeholder") return;
+    if (p->big_bed_image_popup) {
+        p->big_bed_image_popup->set_bitmap(create_scaled_bitmap("big_" + path, p->big_bed_image_popup, p->big_bed_image_popup->get_image_px()));
+    }
 }
 
 void Sidebar::update_printer_thumbnail()
@@ -7665,7 +8160,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
                                    .Floatable(wxGetApp().app_config->get_bool("enable_sidebar_floatable"))
                                    .Resizable(true)
                                    .MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), 90 * wxGetApp().em_unit()))
-                                   .BestSize(wxSize(q->FromDIP(MD3::Metrics::comfortable.sidebar_width), 90 * wxGetApp().em_unit())));
+                                   .BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * wxGetApp().em_unit())));
 
     auto *panel_sizer = new wxBoxSizer(wxHORIZONTAL);
     panel_sizer->Add(view3D, 1, wxEXPAND | wxALL, 0);
@@ -9302,7 +9797,7 @@ void Plater::priv::reset_window_layout(int width)
         m_aui_mgr.LoadPerspective(m_default_window_layout, false);
     } else {
         auto copy = m_default_window_layout;
-        wxString old_num  = wxString::Format("%d", q->FromDIP(MD3::Metrics::comfortable.sidebar_width));
+        wxString old_num  = wxString::Format("%d", q->FromDIP(MD3::Metrics::active().sidebar_width));
         wxString new_num  = wxString::Format("%d", width);
         wxString str0("bestw="), str1("bestw=");
         str0 += old_num;
@@ -9359,7 +9854,7 @@ void Plater::priv::apply_sidebar_dock(bool force_dock, bool reset_size, bool upd
         const int cap_h   = avail_h > 0 ? std::max(min_h, (avail_h * 2) / 5) : min_h;
         pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), min_h));
         if (set_best_size)
-            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::comfortable.sidebar_width), cap_h));
+            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), cap_h));
         if (position == "top")
             pane.Top();
         else
@@ -9369,7 +9864,7 @@ void Plater::priv::apply_sidebar_dock(bool force_dock, bool reset_size, bool upd
         // chosen side.
         pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), 90 * em));
         if (set_best_size)
-            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::comfortable.sidebar_width), 90 * em));
+            pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * em));
         if (position == "right")
             pane.Right();
         else

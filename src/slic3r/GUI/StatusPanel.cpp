@@ -759,7 +759,7 @@ static wxImage fail_image;
 #define GROUP_TITLE_RIGHT_MARGIN FromDIP(15)
 
 #define NORMAL_SPACING FromDIP(5)
-#define PAGE_SPACING FromDIP(MD3::Metrics::comfortable.padding)
+#define PAGE_SPACING FromDIP(MD3::Metrics::active().padding)
 #define PAGE_MIN_WIDTH FromDIP(574)
 #define PROGRESSBAR_HEIGHT FromDIP(8)
 
@@ -2482,7 +2482,7 @@ wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
     box->SetBackgroundColor(box_colour);
     box->SetBorderColor(box_border_colour);
     box->SetBackgroundColour(device_card_color());
-    box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
     // MD3 SectionHeader: 11/600 uppercase + .6px tracking OnSurfaceVariant, with a
     // 16px leading Material Symbol (Device.jsx:50). Guarded so a stripped icon face
@@ -2504,7 +2504,7 @@ StaticBox *StatusBasePanel::create_print_options_group(wxWindow *parent)
     m_print_options_box->SetBackgroundColor(StateColor(device_card_color()));
     m_print_options_box->SetBorderColor(StateColor(device_divider_color()));
     m_print_options_box->SetBackgroundColour(device_card_color());
-    m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
     auto *title = new SectionHeader(m_print_options_box, _L("Print Options"), MaterialIcon::available() ? MaterialIcon::Speed : 0);
 
@@ -2522,7 +2522,7 @@ StaticBox *StatusBasePanel::create_move_group(wxWindow *parent)
     m_move_control_box->SetBackgroundColor(StateColor(device_card_color()));
     m_move_control_box->SetBorderColor(StateColor(device_divider_color()));
     m_move_control_box->SetBackgroundColour(device_card_color());
-    m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
     auto *title = new SectionHeader(m_move_control_box, _L("Move"), MaterialIcon::available() ? MaterialIcon::ControlCamera : 0);
 
@@ -2839,7 +2839,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
                                              std::make_pair(device_text_color(), (int) StateColor::Normal)));
     m_bpButton_z_10->SetMinSize(Z_BUTTON_SIZE);
     m_bpButton_z_10->SetSize(Z_BUTTON_SIZE);
-    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_z_1 = new Button(panel, wxString(" 1"), "monitor_bed_up", 0, FromDIP(15));
     m_bpButton_z_1->SetFont(::Label::Body_12);
     m_bpButton_z_1->SetBorderWidth(0);
@@ -2849,7 +2849,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_1->SetSize(Z_BUTTON_SIZE);
     m_bpButton_z_1->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
                                             std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
     // bSizer_z_ctrl->Add(0, FromDIP(6), 0, wxEXPAND, 0);
 
@@ -2867,7 +2867,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_down_1->SetSize(Z_BUTTON_SIZE);
     m_bpButton_z_down_1->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
                                                  std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
     m_bpButton_z_down_10 = new Button(panel, wxString("10"), "monitor_bed_down", 0, FromDIP(15));
     m_bpButton_z_down_10->SetFont(::Label::Body_12);
@@ -2878,7 +2878,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_down_10->SetSize(Z_BUTTON_SIZE);
     m_bpButton_z_down_10->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
                                                   std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
     // Retire the raster monitor_bed_up/down PNGs for Material Symbols directional
     // glyphs (Device.jsx:90-93). Guarded so a missing icon face keeps the legacy
@@ -2927,7 +2927,7 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     m_bpButton_e_10->SetBackgroundColor(e_ctrl_bg);
     m_bpButton_e_10->SetBorderColor(e_ctrl_bd);
     m_bpButton_e_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
     m_extruder_book = new wxSimplebook(panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(45), FromDIP(112)), 0);
 
@@ -2944,7 +2944,7 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     m_bpButton_e_down_10->SetBackgroundColor(e_ctrl_bg);
     m_bpButton_e_down_10->SetBorderColor(e_ctrl_bd);
     m_bpButton_e_down_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
     // Retire the raster monitor_extruder_up/down PNGs for Material Symbols glyphs
     // (Device.jsx:90-93). Guarded to keep the raster fallback; the extrude/retract
@@ -2987,7 +2987,7 @@ StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
     m_ams_control_box = new StaticBox(parent);
     m_ams_control_box->SetBackgroundColor(box_colour);
     m_ams_control_box->SetBorderColor(box_border_colour);
-    m_ams_control_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_ams_control_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
     m_ams_control_box->SetBackgroundColour(device_card_color());
 
@@ -3052,7 +3052,7 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     m_filament_load_box = new StaticBox(parent);
     m_filament_load_box->SetBackgroundColor(box_colour);
     m_filament_load_box->SetBorderColor(box_border_colour);
-    m_filament_load_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_filament_load_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     m_filament_load_box->SetBackgroundColour(device_card_color());
     m_filament_load_box->SetSizer(sizer_box);
 
@@ -3503,17 +3503,17 @@ void StatusPanel::init_scaled_buttons()
 {
     m_project_task_panel->init_scaled_buttons();
     m_bpButton_z_10->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_z_1->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_z_down_1->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_z_down_10->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_e_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     m_bpButton_e_down_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 }
 
 void StatusPanel::on_market_scoring(wxCommandEvent &event)
@@ -6256,7 +6256,7 @@ void StatusPanel::on_sys_color_changed()
         card->SetBackgroundColor(card_background);
         card->SetBackgroundColour(device_card_color());
         card->SetBorderColor(card_border);
-        card->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+        card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
         card->Refresh();
     }
     if (m_fan_panel) {

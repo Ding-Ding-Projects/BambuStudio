@@ -643,7 +643,7 @@ void ParamsPanel::set_active_tab(wxPanel* tab)
         } else if (m_tab_print_plate && ((TabPrintPlate*)m_tab_print_plate)->has_model_config()) {
             cur_tab = (Tab*)m_tab_print_plate;
         }
-        Show(cur_tab != nullptr);
+        Show(cur_tab != nullptr && m_host_visibility_gate);
         wxGetApp().sidebar().show_object_list(m_mode_region->GetValue());
         if (m_current_tab == cur_tab)
             return;
@@ -732,6 +732,13 @@ void ParamsPanel::msw_rescale()
     }
     //((Button*)m_export_to_file)->Rescale();
     //((Button*)m_import_from_file)->Rescale();
+}
+
+void ParamsPanel::set_host_visibility_gate(bool allow)
+{
+    m_host_visibility_gate = allow;
+    if (!allow && IsShown())
+        Hide();
 }
 
 void ParamsPanel::switch_to_global()

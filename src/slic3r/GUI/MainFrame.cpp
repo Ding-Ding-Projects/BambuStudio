@@ -1444,7 +1444,7 @@ void MainFrame::update_prepare_action_bar_style()
     if (wxSizer* sizer = m_prepare_action_bar->GetSizer()) {
         if (wxSizerItem* content = sizer->GetItem(static_cast<size_t>(1)); content && content->GetSizer()) {
             if (wxSizerItem *actions = content->GetSizer()->GetItem(static_cast<size_t>(1)))
-                actions->SetBorder(FromDIP(MD3::Metrics::comfortable.padding));
+                actions->SetBorder(FromDIP(MD3::Metrics::active().padding));
         }
         sizer->Layout();
     }
@@ -1467,7 +1467,7 @@ void MainFrame::init_tabpanel()
     auto* action_row_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_prepare_left_sidebar_spacer = action_row_sizer->Add(0, 0, 0);
     action_row_sizer->Add(m_side_tools, 1, wxEXPAND | wxLEFT | wxRIGHT,
-                          FromDIP(MD3::Metrics::comfortable.padding));
+                          FromDIP(MD3::Metrics::active().padding));
     m_prepare_right_sidebar_spacer = action_row_sizer->Add(0, 0, 0);
     action_bar_sizer->Add(m_prepare_action_bar_divider, 0, wxEXPAND);
     action_bar_sizer->Add(action_row_sizer, 1, wxEXPAND);

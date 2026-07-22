@@ -154,7 +154,11 @@ struct HelioInputDialogTheme {
 
 class HelioCheckBadgePanel;
 
-class HelioInputDialog : public DPIDialog
+// Rides the shared MD3 Dialog shell in its forced-dark variant, like
+// HelioStatementDialog: the shell chrome is pinned dark and the body keeps the
+// always-dark HELIO_* brand surface (EXEMPT palette). The old in-content
+// "HELIO ADDITIVE" header row is replaced by the shell header.
+class HelioInputDialog : public MD3Dialog
 {
 private:
     bool use_advanced_settings{false};
@@ -271,7 +275,9 @@ public:
     void set_initial_action(int action) { update_action(action); }
 };
 
-class HelioPatNotEnoughDialog : public DPIDialog
+// Forced-dark MD3 shell (see HelioInputDialog note); the Confirm action moves
+// to the kit footer.
+class HelioPatNotEnoughDialog : public MD3Dialog
 {
 public:
     HelioPatNotEnoughDialog(wxWindow* parent = nullptr);
@@ -280,7 +286,10 @@ public:
 };
 
 
-class HelioRatingDialog : public DPIDialog
+// Forced-dark MD3 shell (see HelioInputDialog note); the shell header replaces
+// the old brand banner and the Print Plate / View Details actions move to the
+// kit footer (the rating stars + save icon stay in the body).
+class HelioRatingDialog : public MD3Dialog
 {
 public:
     HelioRatingDialog(wxWindow *parent = nullptr, int original = 0, int optimized = 0, std::string mean_impro = "", std::string std_impro = "");
@@ -298,7 +307,9 @@ public:
     wxString quality_std_improvement;   
 };
 
-class HelioSimulationResultsDialog : public DPIDialog
+// Forced-dark MD3 shell (see HelioInputDialog note); the shell header replaces
+// the old brand banner and the Enhance CTA moves to the kit footer.
+class HelioSimulationResultsDialog : public MD3Dialog
 {
 public:
     HelioSimulationResultsDialog(wxWindow *parent = nullptr, 

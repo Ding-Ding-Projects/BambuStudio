@@ -128,6 +128,12 @@ class ParamsPanel : public wxPanel
 
         bool m_has_object_config { false };
 
+        // MD3 compact Process card: when the sidebar hosts this panel behind a
+        // compact card, the gate suppresses the self-Show() in set_active_tab()
+        // so the full tree only appears in 'Advanced settings' mode. Defaults
+        // to true, so the ParamsDialog instance and legacy hosts are unaffected.
+        bool m_host_visibility_gate { true };
+
         struct Highlighter
         {
             void set_timer_owner(wxEvtHandler *owner, int timerid = wxID_ANY);
@@ -163,6 +169,9 @@ class ParamsPanel : public wxPanel
 
         void notify_object_config_changed();
         void switch_to_object_if_has_object_configs();
+
+        // MD3 compact Process card visibility gate (see m_host_visibility_gate).
+        void set_host_visibility_gate(bool allow);
 
         StaticBox* get_top_panel() { return m_top_panel; }
 

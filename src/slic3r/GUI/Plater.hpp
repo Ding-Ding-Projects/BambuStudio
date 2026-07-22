@@ -188,6 +188,10 @@ public:
     void search();
     void jump_to_option(size_t selected);
     void jump_to_option(const std::string& opt_key, Preset::Type type, const std::wstring& category);
+    // MD3 compact Process card <-> full ParamsPanel flip (persisted in
+    // app_config "sidebar_process_advanced" unless persist is false, e.g.
+    // for transient flips such as search-result jumps).
+    void show_process_advanced(bool advanced, bool persist = true);
     // BBS. Add filament_added() method.
     void on_filament_count_change(size_t num_filaments);
     void on_filaments_delete(size_t filament_id);

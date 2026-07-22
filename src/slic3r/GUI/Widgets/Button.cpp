@@ -50,7 +50,11 @@ END_EVENT_TABLE()
 Button::Button()
     : paddingSize(10, 8)
 {
-    SetDefaultCornerRadius(MD3::Metrics::comfortable.row_height / 2);
+    // Legacy (non-variant) pill default: half the active-density row height, so
+    // buttons sized to Metrics::active().row_height read as pills at either
+    // density. Variant buttons re-derive their radius in applyMD3Style(), and
+    // any explicit SetCornerRadius() still overrides this default.
+    SetDefaultCornerRadius(MD3::Metrics::active().row_height / 2);
     background_color = StateColor(
         std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
         std::make_pair(ThemeColor::BrandGreenHovered, (int) StateColor::Hovered | StateColor::Checked),
