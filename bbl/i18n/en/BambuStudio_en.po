@@ -18282,6 +18282,24 @@ msgstr ""
 msgid "faces"
 msgstr ""
 
+msgid "Scale %"
+msgstr ""
+
+msgid "More options"
+msgstr ""
+
+msgid "Move distance (mm)"
+msgstr ""
+
+msgid "Part cooling"
+msgstr ""
+
+msgid "Aux fan"
+msgstr ""
+
+msgid "Chamber light"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

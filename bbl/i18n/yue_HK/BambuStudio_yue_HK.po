@@ -1304,3 +1304,39 @@ msgstr "物件"
 #. reviewed-category: slicing-printing
 msgid "faces"
 msgstr "面"
+
+#. reviewed-category: slicing-printing
+msgid "Object manipulation"
+msgstr "物件操作"
+
+#. reviewed-category: slicing-printing
+msgid "Scale %"
+msgstr "縮放 %"
+
+#. reviewed-category: slicing-printing
+msgid "Position"
+msgstr "位置"
+
+#. reviewed-category: slicing-printing
+msgid "Rotation"
+msgstr "旋轉"
+
+#. reviewed-category: connection-offline
+msgid "More options"
+msgstr "更多選項"
+
+#. reviewed-category: connection-offline
+msgid "Move distance (mm)"
+msgstr "移動距離（mm）"
+
+#. reviewed-category: connection-offline
+msgid "Part cooling"
+msgstr "部件冷卻"
+
+#. reviewed-category: connection-offline
+msgid "Aux fan"
+msgstr "輔助風扇"
+
+#. reviewed-category: connection-offline
+msgid "Chamber light"
+msgstr "機箱燈"

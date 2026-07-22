@@ -220,16 +220,26 @@ retention/pruning policy.
   and runtime Density/Accent application (`MD3::Metrics::active()` + accent-seed override;
   density is restart-scoped until ~40 call sites adopt `active()`). Catalogs at 322 (`--check`
   green).
-  **Remaining open fronts (16 register rows, all excluded-with-reason):** six Prepare-sidebar
-  rebuilds wrapping live-bound widgets (ParamsPanel tree, preset combo rows, ObjectList, printer
-  identity, bed SelectField, manipulation card), device XY dial→grid (dual-step jog semantics
-  conflict — deviation candidate), device AMS card rebuild, device print-options (blocked only on
-  StatusPanel.hpp ownership next wave) and the control-strip remainder, the two GL toolbar
-  anatomy relocations (chrome landed; geometry/hit-testing relocation deferred), three dialog
-  shells with structural blockers (TextureImport needs resize+GL which the shaped shell cannot
-  host, SyncAms simplebook, Helio always-dark vs theme-following shell), and the project-webview
-  page (recorded-deviation candidate). Plus fresh screenshots, the test repair plan above, and
-  first-run verification of the from-source installer.
+  **Wave 9 shipped (completion wave): register 120 done / 4 recorded deviations / 5 open.**
+  Ten Opus agents, both reviews CLEAN, fixer applied one density nit. Done: the sidebar
+  object-manipulation card (read-only live mirror of the gizmo cache, 250ms timer), device
+  print-options (4-way speed SegmentedControl, teal fan Sliders, chamber-light Switch), the
+  Control-strip removal into an overflow menu, the AMS card reskin to Device-teal tokens (every
+  load/unload/RFID/tray signal preserved), the gizmo-rail kit anatomy (44px r12 tiles,
+  Primary-fill selected, group dividers), and TextureImport + Helio onto new additive MD3Dialog
+  resizable / forced-dark variants. Recorded deviations, each with concrete evidence in the
+  register commit: XY dial→3x3 grid + 10/1 step selector (dial encoded magnitude in hit radius —
+  one-gesture jog becomes two-step), scene-toolbar pill reskinned but not re-centred (collides
+  with the collapse toolbar), SyncAms partial shell (simplebook footer gating), and the
+  project-webview (host-injected read-only page restyled to kit tokens/CSS; true file-manager
+  anatomy needs C++ host APIs). Test repair: config keys ported to BambuStudio names, the invalid
+  Catch2 exclusion fixed; the isolated suite build did not finish in-window — CI wiring deferred.
+  New strings catalogued (coverage 331, .mo --check green).
+  **Remaining open (5 register rows, all 'build-in-the-loop' Plater sidebar):** printer identity
+  card, bed SelectField collapse, filament info-rows, Process card, Objects card — each needs an
+  implement-build-verify loop against the live combos; plus finishing the test-suite build/CI
+  wiring, the density call-site adoption, fresh screenshots, and first-run verification of the
+  from-source installer.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.
