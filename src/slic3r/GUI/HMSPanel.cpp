@@ -2,6 +2,7 @@
 #include "HMSPanel.hpp"
 #include <slic3r/GUI/Widgets/SideTools.hpp>
 #include <slic3r/GUI/Widgets/Label.hpp>
+#include <slic3r/GUI/Widgets/StateColor.hpp>
 #include <slic3r/GUI/I18N.hpp>
 #include "GUI.hpp"
 #include "GUI_App.hpp"
@@ -25,11 +26,15 @@ HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMS
 {
     init_bitmaps();
 
-    this->SetBackgroundColour(*wxWHITE);
+    // MD3: each HMS notification is a card on the surface — SurfaceContainerLow.
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     auto main_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_panel_hms = new wxPanel(this, wxID_ANY, wxDefaultPosition, HMS_NOTIFY_ITEM_SIZE, wxTAB_TRAVERSAL);
+    // Keep the inner panel on the same card role so the card reads uniformly in
+    // both light and dark (an unset child would otherwise leak a system colour).
+    m_panel_hms->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     auto m_panel_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto m_panel_sizer_inner = new wxBoxSizer(wxHORIZONTAL);
@@ -38,7 +43,7 @@ HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMS
     m_bitmap_notify->SetBitmap(get_notify_bitmap());
 
     m_hms_content = new wxStaticText(m_panel_hms, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    m_hms_content->SetForegroundColour(*wxBLACK);
+    m_hms_content->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_hms_content->SetSize(HMS_NOTIFY_ITEM_TEXT_SIZE);
     m_hms_content->SetMinSize(HMS_NOTIFY_ITEM_TEXT_SIZE);
     m_hms_content->SetLabelText(wxGetApp().get_hms_query()->query_hms_msg(dev_id, m_hms_item.get_long_error_code()));
@@ -57,7 +62,7 @@ HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMS
     m_panel_sizer->Add(m_panel_sizer_inner, 1, wxEXPAND | wxALL, FromDIP(20));
 
     m_staticline = new wxPanel(m_panel_hms, wxID_DELETE, wxDefaultPosition, wxSize(-1, FromDIP(1)));
-    m_staticline->SetBackgroundColour(wxColour(238, 238, 238));
+    m_staticline->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_panel_sizer->Add(m_staticline, 0, wxLEFT | wxRIGHT | wxEXPAND, FromDIP(20));
 
@@ -161,12 +166,15 @@ wxBitmap & HMSNotifyItem::get_notify_bitmap()
 HMSPanel::HMSPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style)
     :wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(wxColour(238, 238, 238));
+    // MD3: the notification list sits on the workspace page surface so the
+    // SurfaceContainerLow cards stand off it in both light and dark.
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
 
     auto m_main_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_scrolledWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_scrolledWindow->SetScrollRate(5, 5);
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
 

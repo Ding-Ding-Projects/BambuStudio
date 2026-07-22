@@ -1,5 +1,6 @@
 #include "MediaPlayCtrl.h"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Label.hpp"
 #include "GUI_App.hpp"
@@ -132,7 +133,10 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     });
     m_media_ctrl->SetIdleImage(from_u8(resources_dir() + "/images/live_stream_default.png"));
 
-    m_button_play = new Button(this, "", "media_play", wxBORDER_NONE);
+    m_button_play = new Button(this, "", "", wxBORDER_NONE);
+    // MD3: draw the play/stop affordance as a Material Symbols glyph (coloured by
+    // the button's text role) instead of the legacy media_play/media_stop PNGs.
+    m_button_play->SetGlyph(MaterialIcon::PlayArrow);
     m_button_play->SetCanFocus(false);
 
     m_label_status = new Label(this, "");
@@ -458,7 +462,7 @@ void MediaPlayCtrl::Play()
 
         m_url = url;
         load();
-        m_button_play->SetIcon("media_stop");
+        m_button_play->SetGlyph(MaterialIcon::Stop);
         return;
     }
 
@@ -480,7 +484,7 @@ void MediaPlayCtrl::Play()
     m_disable_lan = false;
     m_failed_code = 0;
     m_last_state  = MEDIASTATE_INITIALIZING;
-    m_button_play->SetIcon("media_stop");
+    m_button_play->SetGlyph(MaterialIcon::Stop);
 
     if (!m_remote_proto) { // not support tutk
         m_failed_code = -1;
@@ -552,7 +556,7 @@ void MediaPlayCtrl::Stop(wxString const &msg, wxString const &msg2)
     if (m_last_state != MEDIASTATE_IDLE) {
         m_pending_start_liveview_json.clear();
         m_media_ctrl->InvalidateBestSize();
-        m_button_play->SetIcon("media_play");
+        m_button_play->SetGlyph(MaterialIcon::PlayArrow);
         boost::unique_lock lock(m_mutex);
         m_tasks.push_back("<stop>");
         m_cond.notify_all();

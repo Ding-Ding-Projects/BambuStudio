@@ -2,6 +2,7 @@
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StepCtrl.hpp"
 #include "Widgets/SideTools.hpp"
 
@@ -1147,28 +1148,25 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_button_partskip->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { m_button_partskip->SetIcon("print_control_partskip_hover"); });
     m_button_partskip->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { m_button_partskip->SetIcon("print_control_partskip"); });
 
-    m_button_pause_resume = new ScalableButton(progress_lr_panel, wxID_ANY, "print_control_pause", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER,
-                                               true);
+    // MD3 pause/resume: a tonal (Device secondary-container) pill carrying a
+    // live Material Symbols glyph. The glyph toggles Pause <-> PlayArrow with the
+    // print state; hover/disabled are resolved by the variant, so the legacy
+    // raster hover binds are gone.
+    m_button_pause_resume = new Button(progress_lr_panel, wxEmptyString, "", wxBORDER_NONE, 0, wxID_ANY);
+    m_button_pause_resume->SetVariant(Button::Variant::Tonal);
+    m_button_pause_resume->SetButtonSize(Button::Size::Large);
+    m_button_pause_resume->SetColorScheme(MD3::ColorScheme::Device);
+    m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
+    m_button_pause_resume->SetCanFocus(false);
+    m_button_pause_resume->SetToolTip(_L("Pause"));
 
-    m_button_pause_resume->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) {
-        if (m_button_pause_resume->GetToolTipText() == _L("Pause")) { m_button_pause_resume->SetBitmap_("print_control_pause_hover"); }
-
-        if (m_button_pause_resume->GetToolTipText() == _L("Resume")) { m_button_pause_resume->SetBitmap_("print_control_resume_hover"); }
-    });
-
-    m_button_pause_resume->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) {
-        auto buf = m_button_pause_resume->GetClientData();
-        if (m_button_pause_resume->GetToolTipText() == _L("Pause")) { m_button_pause_resume->SetBitmap_("print_control_pause"); }
-
-        if (m_button_pause_resume->GetToolTipText() == _L("Resume")) { m_button_pause_resume->SetBitmap_("print_control_resume"); }
-    });
-
-    m_button_abort = new ScalableButton(progress_lr_panel, wxID_ANY, "print_control_stop", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    // MD3 stop: a danger pill (transparent fill, 1px Error border, Error glyph).
+    m_button_abort = new Button(progress_lr_panel, wxEmptyString, "", wxBORDER_NONE, 0, wxID_ANY);
+    m_button_abort->SetVariant(Button::Variant::Danger);
+    m_button_abort->SetButtonSize(Button::Size::Large);
+    m_button_abort->SetGlyph(MaterialIcon::Stop);
+    m_button_abort->SetCanFocus(false);
     m_button_abort->SetToolTip(_L("Stop"));
-
-    m_button_abort->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { m_button_abort->SetBitmap_("print_control_stop_hover"); });
-
-    m_button_abort->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { m_button_abort->SetBitmap_("print_control_stop"); });
 
     wxBoxSizer *bSizer_buttons     = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *bSizer_text        = new wxBoxSizer(wxHORIZONTAL);
@@ -1338,10 +1336,10 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     progress_right_sizer->Add(m_button_partskip, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0)); // 5
     progress_right_sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(18));
     progress_right_sizer->Add(m_pausing_icon, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
-    progress_right_sizer->Add(m_button_pause_resume, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
+    progress_right_sizer->Add(m_button_pause_resume, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
     progress_right_sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(18));
     progress_right_sizer->Add(m_stopping_icon, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
-    progress_right_sizer->Add(m_button_abort, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
+    progress_right_sizer->Add(m_button_abort, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
     progress_right_sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(18));
 
     progress_lr_sizer->Add(progress_left_sizer, 1, wxEXPAND | wxALL, 0);
@@ -1587,8 +1585,10 @@ void PrintingTaskPanel::msw_rescale()
     m_gauge_progress->SetProgressForedColour(device_control_emphasis_color());
     m_gauge_progress->SetBackgroundColour(device_card_color());
     m_staticText_finish_day->Rescale();
-    m_button_pause_resume->msw_rescale();
-    m_button_abort->msw_rescale();
+    // Button::Rescale() re-derives the DPI-scaled pill radius / height / glyph so
+    // the MD3 variant survives a monitor-DPI or live theme change.
+    m_button_pause_resume->Rescale();
+    m_button_abort->Rescale();
     m_bitmap_thumbnail->SetSize(TASK_THUMBNAIL_SIZE);
 
     {
@@ -1698,21 +1698,24 @@ void PrintingTaskPanel::update_stopping_state(bool enter)
 
 void PrintingTaskPanel::enable_pause_resume_button(bool enable, std::string type)
 {
+    // Preserve the Pause/Resume toggle: the tonal button carries the Pause glyph
+    // while printing and the PlayArrow glyph while paused. The MD3 variant renders
+    // the disabled state, so the "_disable" glyph merely mirrors the active state.
     if (!enable) {
         m_button_pause_resume->Enable(false);
 
         if (type == "pause_disable") {
-            m_button_pause_resume->SetBitmap_("print_control_pause_disable");
+            m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
         } else if (type == "resume_disable") {
-            m_button_pause_resume->SetBitmap_("print_control_resume_disable");
+            m_button_pause_resume->SetGlyph(MaterialIcon::PlayArrow);
         }
     } else {
         m_button_pause_resume->Enable(true);
         if (type == "resume") {
-            m_button_pause_resume->SetBitmap_("print_control_resume");
+            m_button_pause_resume->SetGlyph(MaterialIcon::PlayArrow);
             if (m_button_pause_resume->GetToolTipText() != _L("Resume")) { m_button_pause_resume->SetToolTip(_L("Resume")); }
         } else if (type == "pause") {
-            m_button_pause_resume->SetBitmap_("print_control_pause");
+            m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
             if (m_button_pause_resume->GetToolTipText() != _L("Pause")) { m_button_pause_resume->SetToolTip(_L("Pause")); }
         }
     }
@@ -1720,13 +1723,8 @@ void PrintingTaskPanel::enable_pause_resume_button(bool enable, std::string type
 
 void PrintingTaskPanel::enable_abort_button(bool enable)
 {
-    if (!enable) {
-        m_button_abort->Enable(false);
-        m_button_abort->SetBitmap_("print_control_stop_disable");
-    } else {
-        m_button_abort->Enable(true);
-        m_button_abort->SetBitmap_("print_control_stop");
-    }
+    // The Stop glyph is fixed; the Danger variant renders enabled vs disabled.
+    m_button_abort->Enable(enable);
 }
 
 void PrintingTaskPanel::update_subtask_name(wxString name)

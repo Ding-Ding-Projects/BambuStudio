@@ -317,8 +317,8 @@ private:
     wxStaticBitmap* m_bitmap_static_use_weight;
     AnimaIcon*      m_pausing_icon;
     AnimaIcon*      m_stopping_icon;
-    ScalableButton* m_button_pause_resume;
-    ScalableButton* m_button_abort;
+    Button*         m_button_pause_resume;
+    Button*         m_button_abort;
     Button*         m_button_partskip;
     Button*         m_button_market_scoring;
     Button*         m_button_clean;
@@ -378,8 +378,8 @@ public:
     bool is_market_scoring_show();
 
 public:
-    ScalableButton* get_abort_button() {return m_button_abort;};
-    ScalableButton* get_pause_resume_button() {return m_button_pause_resume;};
+    Button* get_abort_button() {return m_button_abort;};
+    Button* get_pause_resume_button() {return m_button_pause_resume;};
     Button* get_partskip_button() { return m_button_partskip; };
     Button* get_market_scoring_button() {return m_button_market_scoring;};
     Button * get_market_retry_buttom() { return m_button_market_retry; };
