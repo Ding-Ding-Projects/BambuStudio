@@ -154,7 +154,7 @@ static const std::map<const wchar_t, std::string> font_icons_extra_large = {
 // cmap-verified against the vendored resources/fonts/MaterialSymbolsOutlined.ttf.
 // The range is restricted to this set (NOT the whole PUA) for atlas-memory realism.
 static const unsigned int s_overlay_glyphs[] = {
-    MaterialIcon::SkipPrevious, MaterialIcon::SkipNext,
+    MaterialIcon::SkipPrevious, MaterialIcon::SkipNext, MaterialIcon::LineStartCircle,
     MaterialIcon::Settings,   MaterialIcon::Print,       MaterialIcon::Close,
     MaterialIcon::Search,     MaterialIcon::Palette,     MaterialIcon::Insights,
     MaterialIcon::Tune,       MaterialIcon::Layers,      MaterialIcon::Route,

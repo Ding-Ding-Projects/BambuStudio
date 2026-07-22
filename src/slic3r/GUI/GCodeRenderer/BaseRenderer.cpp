@@ -6,6 +6,7 @@
 #include "slic3r/GUI/FilamentGroupPopup.hpp"
 #include "slic3r/GUI/GLToolbar.hpp"
 #include "slic3r/GUI/Widgets/MD3Tokens.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 #include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/GUI/DeviceCore/DevUtilBackend.h"
 #include "../DeviceCore/DevConfigUtil.h"
@@ -49,6 +50,28 @@ namespace
     {
         const wxColour &color = MD3::scrim(dark);
         return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, color.Alpha() / 255.0f);
+    }
+
+    // Render an MD3 SectionHeader line into the current ImGui overlay: an optional
+    // leading Material Symbol glyph followed by the label, uppercased, in the
+    // semibold face tinted OnSurfaceVariant. Mirrors containment/SectionHeader.jsx
+    // (11px / 600 / +.6px / UPPERCASE). The ImGui atlas is a single fixed-size
+    // face, so the 11px size and letter-spacing are not expressible here; the
+    // weight, colour, uppercase transform and leading glyph carry the identity.
+    // The glyph resolves through the merged Material Symbols overlay in the bold
+    // face and is only emitted when the atlas actually registered it.
+    void imgui_section_header(Slic3r::GUI::ImGuiWrapper &imgui, bool dark, const std::string &text, unsigned int glyph = 0)
+    {
+        std::string label;
+        label.reserve(text.size());
+        for (char ch : text)
+            label.push_back((ch >= 'a' && ch <= 'z') ? static_cast<char>(ch - 'a' + 'A') : ch);
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, dark));
+        if (glyph != 0 && imgui.material_icons_available())
+            imgui.bold_text(Slic3r::GUI::ImGuiWrapper::material_icon(glyph) + "  " + label);
+        else
+            imgui.bold_text(label);
+        ImGui::PopStyleColor();
     }
 
     std::string get_view_type_string(Slic3r::GUI::gcode::EViewType view_type)
@@ -1472,9 +1495,10 @@ namespace Slic3r
                 ImGuiWrapper& imgui = *wxGetApp().imgui();
                 // Kit Preview parity: a top-left viewport status pill ("Sliced ·
                 // N layers"). Additive chrome only - bg SurfaceContainer, r20, a 1px
-                // OutlineVariant border and OnSurfaceVariant text. (The kit's leading
-                // 'layers' Material Symbol and elev-2 blur are omitted: the ImGui
-                // atlas has no Material Symbols font and ImGui has no blur primitive.)
+                // OutlineVariant border and OnSurfaceVariant text, now with the kit's
+                // leading 'layers' Material Symbol (merged into the default atlas
+                // face). (The kit's elev-2 blur is still omitted: ImGui has no blur
+                // primitive.)
                 const int status_layer_count = static_cast<int>(get_layers_zs().size());
                 if (status_layer_count > 0) {
                     const std::string status_text =
@@ -1493,7 +1517,10 @@ namespace Slic3r
                                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize |
                                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav |
                                 ImGuiWindowFlags_NoInputs);
-                    imgui.text(status_text);
+                    if (imgui.material_icons_available())
+                        imgui.text(ImGuiWrapper::material_icon(MaterialIcon::Layers) + "  " + status_text);
+                    else
+                        imgui.text(status_text);
                     imgui.end();
                     ImGui::PopStyleColor(3);
                     ImGui::PopStyleVar(3);
@@ -1553,7 +1580,9 @@ namespace Slic3r
                 //BBS
                 /*bool show_estimated_time = time_mode.time > 0.0f && (m_view_type == EViewType::FeatureType ||
                     (m_view_type == EViewType::ColorPrint && !time_mode.custom_gcode_times.empty()));*/
-                bool show_estimated = time_mode.time > 0.0f && (m_view_type == EViewType::FeatureType || m_view_type == EViewType::ColorPrint);
+                // Kit Preview shows the Statistics card whenever a slice exists,
+                // not only in the FeatureType / ColorPrint views.
+                bool show_estimated = time_mode.time > 0.0f;
                 const float icon_size = ImGui::GetTextLineHeight() * 0.7;
                 //BBS GUI refactor
                 //const float percent_bar_size = 2.0f * ImGui::GetTextLineHeight();
@@ -1670,11 +1699,19 @@ namespace Slic3r
                         }
                     }
                     };
-                auto append_headers = [&imgui, &window_padding](const std::vector<std::pair<std::string, float>>& title_offsets) {
+                auto append_headers = [this, &imgui, &window_padding](const std::vector<std::pair<std::string, float>>& title_offsets) {
+                    // Kit SectionHeader styling for legend column titles: uppercase,
+                    // semibold, OnSurfaceVariant (containment/SectionHeader.jsx).
+                    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark));
                     for (size_t i = 0; i < title_offsets.size(); i++) {
                         ImGui::SameLine(title_offsets[i].second);
-                        imgui.bold_text(title_offsets[i].first);
+                        std::string header_label = title_offsets[i].first;
+                        for (char &header_ch : header_label)
+                            if (header_ch >= 'a' && header_ch <= 'z')
+                                header_ch = static_cast<char>(header_ch - 'a' + 'A');
+                        imgui.bold_text(header_label);
                     }
+                    ImGui::PopStyleColor();
                     ImGui::SameLine();
                     ImGui::Dummy({ window_padding, 0 });
                     ImGui::Separator();
@@ -1851,16 +1888,11 @@ namespace Slic3r
                 ImGui::Dummy({ window_padding, window_padding });
                 ImGui::SameLine();
                 // Kit SectionHeader treatment for the "Color scheme" label:
-                // uppercase, OnSurfaceVariant, semibold weight. (The kit's 11px
-                // size, +.6px tracking and leading 'palette' Material Symbol await a
-                // Material Symbols ImGui font, which is not yet registered.)
-                std::string color_scheme_label = _u8L("Color Scheme");
-                for (char &scheme_ch : color_scheme_label)
-                    if (scheme_ch >= 'a' && scheme_ch <= 'z')
-                        scheme_ch = static_cast<char>(scheme_ch - 'a' + 'A');
-                ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark));
-                imgui.bold_text(color_scheme_label);
-                ImGui::PopStyleColor();
+                // uppercase, OnSurfaceVariant, semibold, with the leading 'palette'
+                // Material Symbol now that the merged atlas covers it. (The kit's
+                // exact 11px size and +.6px tracking are not expressible in the
+                // fixed-size ImGui atlas.)
+                imgui_section_header(imgui, m_is_dark, _u8L("Color Scheme"), MaterialIcon::Palette);
                 auto curr_plate_index = wxGetApp().plater()->get_partplate_list().get_curr_plate_index();
                 if (wxGetApp().plater()->get_helio_process_status() != m_last_helio_process_status || m_gcode_result->update_imgui_flag) {
                     auto load_only_gcode = wxGetApp().plater()->only_gcode_mode();
@@ -1915,20 +1947,6 @@ namespace Slic3r
                 const auto is_primary_view = [&primary_view_types](EViewType type) {
                     return std::find(primary_view_types.begin(), primary_view_types.end(), type) != primary_view_types.end();
                 };
-                float widest_chip_label = 0.0f;
-                int primary_view_count = 0;
-                for (const EViewType type : primary_view_types) {
-                    const auto item = std::find(view_type_items.begin(), view_type_items.end(), type);
-                    if (item == view_type_items.end())
-                        continue;
-                    const int index = static_cast<int>(std::distance(view_type_items.begin(), item));
-                    widest_chip_label = std::max(widest_chip_label,
-                        ImGui::CalcTextSize(view_type_image_names[index].option_name.c_str()).x);
-                    ++primary_view_count;
-                }
-                const float minimum_chip_width = std::max(112.0f * m_scale, widest_chip_label + 24.0f * m_scale);
-                const float chip_region_width = ImGui::GetContentRegionAvail().x;
-                const int chip_columns = chip_region_width >= minimum_chip_width * 2.0f + ImGui::GetStyle().ItemSpacing.x ? 2 : 1;
                 // Material Chip palette: selected = solid Primary fill with
                 // OnPrimary text; unselected = transparent with the outline
                 // border and on-surface-variant text.  Pill radius = height / 2.
@@ -1937,36 +1955,109 @@ namespace Slic3r
                 const ImVec4 chip_on_surface_variant = md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark);
                 const ImVec4 chip_outline = md3_imgui_color(MD3::Role::Outline, m_is_dark);
                 const float chip_height = 30.0f * m_scale;
-                if (primary_view_count > 0 && ImGui::BeginTable("##preview_primary_views", chip_columns,
-                                       ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_NoSavedSettings)) {
-                    for (std::size_t chip = 0; chip < primary_view_types.size(); ++chip) {
-                        ImGui::TableNextColumn();
-                        const EViewType type = primary_view_types[chip];
-                        const auto item = std::find(view_type_items.begin(), view_type_items.end(), type);
-                        if (item == view_type_items.end())
-                            continue;
-                        const int index = static_cast<int>(std::distance(view_type_items.begin(), item));
-                        const bool selected = m_view_type_sel == index;
-                        ImGui::PushID(index);
-                        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.5f * chip_height);
-                        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * m_scale);
-                        ImGui::PushStyleColor(ImGuiCol_Button, selected ? primary : chip_transparent);
-                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, selected ? primary : surface_container_high);
-                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, selected ? primary : primary_container);
-                        ImGui::PushStyleColor(ImGuiCol_Border, selected ? primary : chip_outline);
-                        ImGui::PushStyleColor(ImGuiCol_Text, selected ? chip_on_primary : chip_on_surface_variant);
-                        const std::string &chip_label = view_type_image_names[index].option_name;
-                        if (ImGui::Button(chip_label.c_str(), ImVec2(-FLT_MIN, chip_height))) {
-                            m_fold = false;
-                            apply_view_type_selection(index, type);
-                        }
+                const float chip_pad_x = 13.0f * m_scale;   // kit Chip padding: 0 13px
+                const float chip_border = 1.0f * m_scale;
+                // Kit Chip (selection/Chip.jsx): a pill that hugs its label with an
+                // optional leading Material Symbol, laid out inline and wrapped
+                // (flex-wrap) rather than stretched into equal table columns.
+                struct PreviewChip { std::string label; unsigned int glyph; bool selected; };
+                auto chip_content = [&imgui](const PreviewChip &c) -> std::string {
+                    if (c.glyph != 0 && imgui.material_icons_available())
+                        return ImGuiWrapper::material_icon(c.glyph) + "  " + c.label;
+                    return c.label;
+                };
+                auto chip_width = [chip_pad_x, chip_border](const std::string &content) -> float {
+                    return ImGui::CalcTextSize(content.c_str()).x + chip_pad_x * 2.0f + chip_border * 2.0f;
+                };
+                auto draw_chip = [&](const std::string &content, bool selected) -> bool {
+                    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.5f * chip_height);
+                    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, chip_border);
+                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(chip_pad_x, ImGui::GetStyle().FramePadding.y));
+                    ImGui::PushStyleColor(ImGuiCol_Button, selected ? primary : chip_transparent);
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, selected ? primary : surface_container_high);
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, selected ? primary : primary_container);
+                    ImGui::PushStyleColor(ImGuiCol_Border, selected ? primary : chip_outline);
+                    ImGui::PushStyleColor(ImGuiCol_Text, selected ? chip_on_primary : chip_on_surface_variant);
+                    const bool clicked = ImGui::Button(content.c_str(), ImVec2(0.0f, chip_height));
+                    ImGui::PopStyleColor(5);
+                    ImGui::PopStyleVar(3);
+                    return clicked;
+                };
+                // Render chips inline, hugging content, wrapping within the dock
+                // width (kit flex-wrap). Returns the index clicked this frame, or -1.
+                auto render_chip_row = [&](const std::vector<PreviewChip> &chips) -> int {
+                    int clicked = -1;
+                    const float spacing = ImGui::GetStyle().ItemSpacing.x;
+                    const float row_max_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+                    for (std::size_t i = 0; i < chips.size(); ++i) {
+                        const std::string content = chip_content(chips[i]);
+                        ImGui::PushID(static_cast<int>(i));
+                        if (draw_chip(content, chips[i].selected))
+                            clicked = static_cast<int>(i);
                         if (ImGui::IsItemHovered())
-                            ImGui::SetTooltip("%s", chip_label.c_str());
-                        ImGui::PopStyleColor(5);
-                        ImGui::PopStyleVar(2);
+                            ImGui::SetTooltip("%s", chips[i].label.c_str());
                         ImGui::PopID();
+                        if (i + 1 < chips.size()) {
+                            const float next_w = chip_width(chip_content(chips[i + 1]));
+                            if (ImGui::GetItemRectMax().x + spacing + next_w < row_max_x)
+                                ImGui::SameLine();
+                        }
                     }
-                    ImGui::EndTable();
+                    return clicked;
+                };
+                // Options as MD3 icon chips (kit Preview.jsx:60-64): a 'tune'
+                // SectionHeader followed by wrapped selectable chips, replacing the
+                // dense swatch + Display-checkbox legend rows. Icons map 1:1 to the
+                // kit optIcons set (route / line_start_circle / u_turn_left /
+                // water_drop), all covered by the merged Material Symbols atlas.
+                auto render_options_chips = [&]() {
+                    std::vector<PreviewChip> option_chips;
+                    std::vector<EMoveType> option_targets;
+                    for (const EMoveType type : options_items) {
+                        std::string label;
+                        unsigned int glyph = 0;
+                        switch (type) {
+                        case EMoveType::Travel:      label = _u8L("Travel");           glyph = MaterialIcon::Route;     break;
+                        case EMoveType::Seam:        label = _u8L("Seams");            glyph = MaterialIcon::LineStartCircle; break;
+                        case EMoveType::Retract:     label = _u8L("Retract");          glyph = MaterialIcon::UTurnLeft; break;
+                        case EMoveType::Unretract:   label = _u8L("Unretract");        glyph = 0;                      break;
+                        case EMoveType::Wipe:        label = _u8L("Wipe");             glyph = MaterialIcon::WaterDrop; break;
+                        case EMoveType::Tool_change: label = _u8L("Filament Changes"); glyph = 0;                      break;
+                        default: continue;
+                        }
+                        option_chips.push_back({ label, glyph, is_move_type_visible(type) });
+                        option_targets.push_back(type);
+                    }
+                    if (option_chips.empty())
+                        return;
+                    ImGui::Dummy({ window_padding, window_padding });
+                    ImGui::SameLine();
+                    imgui_section_header(imgui, m_is_dark, _u8L("Options"), MaterialIcon::Tune);
+                    const int clicked = render_chip_row(option_chips);
+                    if (clicked >= 0) {
+                        const EMoveType type = option_targets[clicked];
+                        set_move_type_visible(type, !is_move_type_visible(type));
+                        on_visibility_changed();
+                    }
+                };
+                // View-mode filter chips (kit Preview.jsx:47-49): content-hugging,
+                // wrapped, no leading glyph.
+                std::vector<PreviewChip> view_chips;
+                std::vector<std::pair<int, EViewType>> view_chip_targets;
+                for (const EViewType type : primary_view_types) {
+                    const auto item = std::find(view_type_items.begin(), view_type_items.end(), type);
+                    if (item == view_type_items.end())
+                        continue;
+                    const int index = static_cast<int>(std::distance(view_type_items.begin(), item));
+                    view_chips.push_back({ view_type_image_names[index].option_name, 0u, m_view_type_sel == index });
+                    view_chip_targets.push_back({ index, type });
+                }
+                if (!view_chips.empty()) {
+                    const int clicked = render_chip_row(view_chips);
+                    if (clicked >= 0) {
+                        m_fold = false;
+                        apply_view_type_selection(view_chip_targets[clicked].first, view_chip_targets[clicked].second);
+                    }
                 }
 
                 ImGuiComboFlags flags = 0;
@@ -2133,6 +2224,9 @@ namespace Slic3r
                             percent > 0.001 ? ::sprintf(buffer, "%.1f%%", percent * 100) : ::sprintf(buffer, "<0.1%%");
                         travel_percent = buffer;
                     }
+                    // Kit scheme-name SectionHeader above the legend list
+                    // (Preview.jsx:52) — names the active colour scheme.
+                    imgui_section_header(imgui, m_is_dark, get_view_type_string(m_view_type));
                     offsets = calculate_offsets({ {_u8L("Line Type"), labels}, {_u8L("Time"), times}, {_u8L("Percent"), percents}, {_u8L("Used filament"), used_filaments_m}, {"", used_filaments_g}, {_u8L("Display"), {""}} }, icon_size);
                     append_headers({ {_u8L("Line Type"), offsets[0]}, {_u8L("Time"), offsets[1]}, {_u8L("Percent"), offsets[2]}, {_u8L("Used filament"), offsets[3]}, {"", offsets[4]}, {_u8L("Display"), offsets[5]} });
                     break;
@@ -2202,29 +2296,9 @@ namespace Slic3r
                 // end helio
                 default: { break; }
                 }
-                auto append_option_item = [this, append_item](EMoveType type, std::vector<float> offsets) {
-                    auto append_option_item_with_type = [this, offsets, append_item](EMoveType type, const Color& color, const std::string& label, bool visible) {
-                        append_item(EItemType::Rect, color, { { label , offsets[0] } }, true, visible, [this, type, visible]() {
-                            set_move_type_visible(type, !is_move_type_visible(type));
-                            on_visibility_changed();
-                            });
-                        };
-                    const bool visible = is_move_type_visible(type);
-                    if (type == EMoveType::Travel) {
-                        //BBS: only display travel time in FeatureType view
-                        append_option_item_with_type(type, Travel_Colors[0], _u8L("Travel"), visible);
-                    }
-                    else if (type == EMoveType::Seam)
-                        append_option_item_with_type(type, Options_Colors[(int)EOptionsColors::Seams], _u8L("Seams"), visible);
-                    else if (type == EMoveType::Retract)
-                        append_option_item_with_type(type, Options_Colors[(int)EOptionsColors::Retractions], _u8L("Retract"), visible);
-                    else if (type == EMoveType::Unretract)
-                        append_option_item_with_type(type, Options_Colors[(int)EOptionsColors::Unretractions], _u8L("Unretract"), visible);
-                    else if (type == EMoveType::Tool_change)
-                        append_option_item_with_type(type, Options_Colors[(int)EOptionsColors::ToolChanges], _u8L("Filament Changes"), visible);
-                    else if (type == EMoveType::Wipe)
-                        append_option_item_with_type(type, Wipe_Color, _u8L("Wipe"), visible);
-                    };
+                // The Travel/Seams/Retract/Unretract/Wipe/Filament-change options no
+                // longer render as swatch + Display-checkbox legend rows; they are
+                // drawn as MD3 icon chips by render_options_chips() after this switch.
                 // extrusion paths section -> items
                 switch (m_view_type)
                 {
@@ -2247,23 +2321,8 @@ namespace Slic3r
                                 on_visibility_changed();
                             });
                     }
-                    for (auto item : options_items) {
-                        if (item != EMoveType::Travel) {
-                            append_option_item(item, offsets);
-                        }
-                        else {
-                            //BBS: show travel time in FeatureType view
-                            const bool visible = is_move_type_visible(item);
-                            std::vector<std::pair<std::string, float>> columns_offsets;
-                            columns_offsets.push_back({ _u8L("Travel"), offsets[0] });
-                            columns_offsets.push_back({ travel_time, offsets[1] });
-                            columns_offsets.push_back({ travel_percent, offsets[2] });
-                            append_item(EItemType::Rect, Travel_Colors[0], columns_offsets, true, visible, [this, item, visible]() {
-                                set_move_type_visible(item, !visible);
-                                on_visibility_changed();
-                                });
-                        }
-                    }
+                    // Options (Travel/Seams/Retract/…) render as MD3 icon chips
+                    // via render_options_chips() after this switch.
                     break;
                 }
                 case EViewType::Height: { append_range(m_p_extrusions->ranges.height, 2); break; }
@@ -2485,6 +2544,10 @@ namespace Slic3r
                 // end helio
                 default: { break; }
                 }
+                // Options as MD3 icon chips, for the views that previously listed
+                // them as legend rows (kit Preview.jsx Options section).
+                if (m_view_type == EViewType::FeatureType || m_view_type == EViewType::ColorPrint)
+                    render_options_chips();
                 // partial estimated printing time section
                 if (m_view_type == EViewType::ColorPrint) {
                     using Times = std::pair<float, float>;
@@ -2800,10 +2863,18 @@ namespace Slic3r
                     if (auto timelapse_time_iter = m_gcode_result->skippable_part_time.find(SkipType::stTimelapse); timelapse_time_iter != m_gcode_result->skippable_part_time.end()) {
                         timelapse_time = timelapse_time_iter->second;
                     }
+                    // Statistics numeric values render in Roboto Mono 500 (kit
+                    // Preview statistics values); labels stay in the prose face.
+                    auto mono_value = [&imgui](const std::string &value) {
+                        imgui.push_mono_font();
+                        imgui.text(value);
+                        imgui.pop_mono_font();
+                    };
                     ImGui::Dummy(ImVec2(0.0f, ImGui::GetFontSize() * 0.1));
                     ImGui::Dummy({ window_padding, window_padding });
                     ImGui::SameLine();
-                    imgui.title(time_title);
+                    // Card title as an MD3 SectionHeader with the kit 'insights' glyph.
+                    imgui_section_header(imgui, m_is_dark, time_title, MaterialIcon::Insights);
                     std::string total_filament_str = _u8L("Total Filament");
                     std::string model_filament_str = _u8L("Model Filament");
                     std::string cost_str = _u8L("Cost");
@@ -2837,10 +2908,10 @@ namespace Slic3r
                         bool imperial_units = wxGetApp().app_config->get("use_inches") == "1";
                         char buf[64];
                         ::sprintf(buf, imperial_units ? "%.2f in" : "%.2f m", ps.total_used_filament / koef);
-                        imgui.text(buf);
+                        mono_value(buf);
                         ImGui::SameLine();
                         ::sprintf(buf, imperial_units ? "  %.2f oz" : "  %.2f g", ps.total_weight / unit_conver);
-                        imgui.text(buf);
+                        mono_value(buf);
                         ImGui::Dummy({ window_padding, window_padding });
                         ImGui::SameLine();
                         imgui.text(model_filament_str + ":");
@@ -2848,17 +2919,17 @@ namespace Slic3r
                         auto exlude_m = total_support_used_filament_m + total_flushed_filament_m + total_wipe_tower_used_filament_m;
                         auto exlude_g = total_support_used_filament_g + total_flushed_filament_g + total_wipe_tower_used_filament_g;
                         ::sprintf(buf, imperial_units ? "%.2f in" : "%.2f m", ps.total_used_filament / koef - exlude_m);
-                        imgui.text(buf);
+                        mono_value(buf);
                         ImGui::SameLine();
                         ::sprintf(buf, imperial_units ? "  %.2f oz" : "  %.2f g", (ps.total_weight - exlude_g) / unit_conver);
-                        imgui.text(buf);
+                        mono_value(buf);
                         //BBS: display cost of filaments
                         ImGui::Dummy({ window_padding, window_padding });
                         ImGui::SameLine();
                         imgui.text(cost_str + ":");
                         ImGui::SameLine(max_len);
                         ::sprintf(buf, "%.2f", ps.total_cost);
-                        imgui.text(buf);
+                        mono_value(buf);
                     }
                     auto role_time = [time_mode](ExtrusionRole role) {
                         auto it = std::find_if(time_mode.roles_times.begin(), time_mode.roles_times.end(), [role](const std::pair<ExtrusionRole, float>& item) { return role == item.first; });
@@ -2871,20 +2942,20 @@ namespace Slic3r
                         imgui.text(prepare_str + ":");
                         ImGui::SameLine(max_len);
                         if (timelapse_time != 0.0f)
-                            imgui.text(short_time(get_time_dhms(time_mode.prepare_time)) + " + " + short_time(get_time_dhms(timelapse_time)));
+                            mono_value(short_time(get_time_dhms(time_mode.prepare_time)) + " + " + short_time(get_time_dhms(timelapse_time)));
                         else
-                            imgui.text(short_time(get_time_dhms(time_mode.prepare_time)));
+                            mono_value(short_time(get_time_dhms(time_mode.prepare_time)));
                     }
                     ImGui::Dummy({ window_padding, window_padding });
                     ImGui::SameLine();
                     imgui.text(print_str + ":");
                     ImGui::SameLine(max_len);
-                    imgui.text(short_time(get_time_dhms(time_mode.time - time_mode.prepare_time - timelapse_time)));
+                    mono_value(short_time(get_time_dhms(time_mode.time - time_mode.prepare_time - timelapse_time)));
                     ImGui::Dummy({ window_padding, window_padding });
                     ImGui::SameLine();
                     imgui.text(total_str + ":");
                     ImGui::SameLine(max_len);
-                    imgui.text(short_time(get_time_dhms(time_mode.time)));
+                    mono_value(short_time(get_time_dhms(time_mode.time)));
                     auto show_mode_button = [this, &imgui, can_show_mode_button](const wxString& label, PrintEstimatedStatistics::ETimeMode mode) {
                         if (can_show_mode_button(mode)) {
                             if (imgui.button(label)) {
@@ -2922,15 +2993,8 @@ namespace Slic3r
                     draw_list->AddRect(stats_min, stats_max, ImGui::GetColorU32(outline), stats_radius, 0, 1.0f * m_scale);
                     draw_list->ChannelsMerge();
                 }
-                if (m_view_type == EViewType::ColorPrint) {
-                    ImGui::Spacing();
-                    ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::SameLine();
-                    offsets = calculate_offsets({ { _u8L("Options"), { ""}}, { _u8L("Display"), {""}} }, icon_size);
-                    append_headers({ {_u8L("Options"), offsets[0] }, { _u8L("Display"), offsets[1]} });
-                    for (auto item : options_items)
-                        append_option_item(item, offsets);
-                }
+                // ColorPrint options render as MD3 icon chips via
+                // render_options_chips() above (kit Preview.jsx Options section).
                 ImGui::Dummy({ window_padding, window_padding });
                 if (m_nozzle_nums > 1)
                     render_legend_color_arr_recommen(window_padding, is_show_left_right_result);

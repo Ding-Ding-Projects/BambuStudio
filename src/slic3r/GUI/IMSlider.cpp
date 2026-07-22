@@ -1,8 +1,10 @@
 #include "IMSlider.hpp"
 #include "libslic3r/GCode.hpp"
 #include "GUI_App.hpp"
+#include "ImGuiWrapper.hpp"
 #include "NotificationManager.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StateColor.hpp"
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -856,13 +858,17 @@ bool IMSlider::vertical_slider(const char* str_id, int* higher_value, int* lower
     const float  one_handle_offset   = 26.0f * m_scale;
     const float  bar_width           = 28.0f * m_scale;
 
-    const float  text_frame_rounding = 10.0f * scale * m_scale;
+    // Value chip per the MD3 kit 'Z' chip: r8 rounding, SurfaceContainer fill, mono value.
+    const float  text_frame_rounding = 8.0f * m_scale;
     const ImVec2 text_padding        = ImVec2(5.0f, 2.0f) * m_scale;
     const ImVec2 triangle_offsets[3] = {ImVec2(2.0f, 0.0f) * m_scale, ImVec2(0.0f, 8.0f) * m_scale, ImVec2(9.0f, 0.0f) * m_scale};
     ImVec2 text_content_size;
     ImVec2 text_size;
 
+    ImGuiWrapper &imgui = *wxGetApp().imgui();
     const ImU32 white_bg = preview_color(MD3::Role::SurfaceContainerLow, m_is_dark);
+    // Value-chip fill = SurfaceContainer (the handle crosshair keeps white_bg below).
+    const ImU32 chip_bg = preview_color(MD3::Role::SurfaceContainer, m_is_dark);
     const ImU32 handle_clr = preview_color(MD3::Role::Primary, m_is_dark);
     const ImU32 handle_border_clr = preview_color(MD3::Role::Surface, m_is_dark);
     // calculate slider groove size
@@ -978,30 +984,34 @@ bool IMSlider::vertical_slider(const char* str_id, int* higher_value, int* lower
             window->DrawList->AddLine(lower_handle_center + ImVec2(0.0f, -0.5f * line_length), lower_handle_center + ImVec2(0.0f, 0.5f * line_length), white_bg, line_width);
         }
 
-        // draw higher label
+        // draw higher label (value in Roboto Mono per the kit Z chip)
+        const bool higher_mono = imgui.push_mono_font();
         auto text_utf8 = into_u8(higher_label);
         text_content_size = ImGui::CalcTextSize(text_utf8.c_str());
         text_size = text_content_size + text_padding * 2;
         ImVec2 text_start = ImVec2(higher_handle.Min.x - text_size.x - triangle_offsets[2].x, higher_handle_center.y - text_size.y);
         ImRect text_rect(text_start, text_start + text_size);
-        ImGui::RenderFrame(text_rect.Min, text_rect.Max, white_bg, false, text_frame_rounding);
+        ImGui::RenderFrame(text_rect.Min, text_rect.Max, chip_bg, false, text_frame_rounding);
         ImVec2 pos_1 = text_rect.Max - triangle_offsets[0];
         ImVec2 pos_2 = pos_1 - triangle_offsets[1];
         ImVec2 pos_3 = pos_1 + triangle_offsets[2];
-        window->DrawList->AddTriangleFilled(pos_1, pos_2, pos_3, white_bg);
+        window->DrawList->AddTriangleFilled(pos_1, pos_2, pos_3, chip_bg);
         ImGui::RenderText(text_start + text_padding, higher_label.c_str());
-        // draw lower label
+        if (higher_mono) imgui.pop_mono_font();
+        // draw lower label (value in Roboto Mono per the kit Z chip)
+        const bool lower_mono = imgui.push_mono_font();
         text_utf8 = into_u8(lower_label);
         text_content_size = ImGui::CalcTextSize(text_utf8.c_str());
         text_size = text_content_size + text_padding * 2;
         text_start        = ImVec2(lower_handle.Min.x - text_size.x - triangle_offsets[2].x, lower_handle_center.y);
         text_rect = ImRect(text_start, text_start + text_size);
-        ImGui::RenderFrame(text_rect.Min, text_rect.Max, white_bg, false, text_frame_rounding);
+        ImGui::RenderFrame(text_rect.Min, text_rect.Max, chip_bg, false, text_frame_rounding);
         pos_1 = ImVec2(text_rect.Max.x, text_rect.Min.y) - triangle_offsets[0];
         pos_2 = pos_1 + triangle_offsets[1];
         pos_3 = pos_1 + triangle_offsets[2];
-        window->DrawList->AddTriangleFilled(pos_1, pos_2, pos_3, white_bg);
+        window->DrawList->AddTriangleFilled(pos_1, pos_2, pos_3, chip_bg);
         ImGui::RenderText(text_start + text_padding, lower_label.c_str());
+        if (lower_mono) imgui.pop_mono_font();
 
         if (hovered) {
             draw_tick_on_mouse_position(h_selected ? higher_slideable_region : lower_slideable_region);
@@ -1037,14 +1047,16 @@ bool IMSlider::vertical_slider(const char* str_id, int* higher_value, int* lower
         window->DrawList->AddLine(handle_center + ImVec2(-0.5f * line_length, 0.0f), handle_center + ImVec2(0.5f * line_length, 0.0f), white_bg, line_width);
         window->DrawList->AddLine(handle_center + ImVec2(0.0f, -0.5f * line_length), handle_center + ImVec2(0.0f, 0.5f * line_length), white_bg, line_width);
 
-        // draw label
+        // draw label (value in Roboto Mono per the kit Z chip)
+        const bool one_mono = imgui.push_mono_font();
         auto text_utf8 = into_u8(higher_label);
         text_content_size = ImGui::CalcTextSize(text_utf8.c_str());
         text_size = text_content_size + text_padding * 2;
         ImVec2 text_start = ImVec2(one_handle.Min.x - text_size.x, handle_center.y - 0.5 * text_size.y);
         ImRect text_rect = ImRect(text_start, text_start + text_size);
-        ImGui::RenderFrame(text_rect.Min, text_rect.Max, white_bg, false, text_frame_rounding);
+        ImGui::RenderFrame(text_rect.Min, text_rect.Max, chip_bg, false, text_frame_rounding);
         ImGui::RenderText(text_start + text_padding, higher_label.c_str());
+        if (one_mono) imgui.pop_mono_font();
 
         if (hovered) {
             draw_tick_on_mouse_position(one_slideable_region);
@@ -1110,17 +1122,49 @@ bool IMSlider::render(int canvas_width, int canvas_height)
         imgui.set_next_window_pos(canvas_width, canvas_height, ImGuiCond_Always, 1.0f, 1.0f);
         ImGui::SetNextWindowSize((ONE_LAYER_BUTTON_SIZE + ONE_LAYER_MARGIN) * m_scale, 0);
         imgui.begin(std::string("one_layer_button"), windows_flag);
-        ImTextureID normal_id = m_is_dark ?
-            is_one_layer() ? m_one_layer_on_dark_id : m_one_layer_off_dark_id :
-            is_one_layer() ? m_one_layer_on_id : m_one_layer_off_id;
-        ImTextureID hover_id  = m_is_dark ?
-            is_one_layer() ? m_one_layer_on_hover_dark_id : m_one_layer_off_hover_dark_id :
-            is_one_layer() ? m_one_layer_on_hover_id : m_one_layer_off_hover_id;
-        if (ImGui::ImageButton3(normal_id, hover_id, ONE_LAYER_BUTTON_SIZE * m_scale)) {
-            switch_one_layer_mode();
-        }
-        if (ImGui::IsItemHovered()) {
-            show_tooltip(_u8L("Toggle path view to current layer/all layers"));
+        if (imgui.material_icons_available()) {
+            // MD3 ghost icon button: a 'layers' Material Symbol glyph replaces the
+            // one_layer_on/off raster SVGs. Active (single-layer) state is expressed
+            // as Primary tint, idle as OnSurfaceVariant, with a circular
+            // SurfaceContainerHigh hover state layer — never the icon FILL axis.
+            ImGuiWindow *btn_window = ImGui::GetCurrentWindow();
+            const ImVec2 btn_size   = ONE_LAYER_BUTTON_SIZE * m_scale;
+            const ImVec2 btn_pos    = btn_window->DC.CursorPos;
+            const ImVec2 btn_center = btn_pos + btn_size * 0.5f;
+            const float  btn_radius = btn_size.x * 0.5f;
+
+            const bool pressed = ImGui::InvisibleButton("##one_layer_toggle", btn_size);
+            const bool hovered = ImGui::IsItemHovered();
+            if (hovered)
+                btn_window->DrawList->AddCircleFilled(btn_center, btn_radius, preview_color(MD3::Role::SurfaceContainerHigh, m_is_dark));
+
+            const ImU32 glyph_clr = is_one_layer() ? preview_color(MD3::Role::Primary, m_is_dark)
+                                                   : preview_color(MD3::Role::OnSurfaceVariant, m_is_dark);
+            ImFont           *icon_font  = imgui.get_icon_font();
+            const std::string glyph      = ImGuiWrapper::material_icon(MaterialIcon::Layers);
+            const float       glyph_px   = 20.0f * m_scale;
+            const ImVec2      glyph_size = icon_font->CalcTextSizeA(glyph_px, FLT_MAX, 0.0f, glyph.c_str());
+            btn_window->DrawList->AddText(icon_font, glyph_px, btn_center - glyph_size * 0.5f, glyph_clr, glyph.c_str());
+
+            if (pressed)
+                switch_one_layer_mode();
+            if (hovered)
+                show_tooltip(_u8L("Toggle path view to current layer/all layers"));
+        } else {
+            // Capability fallback: legacy raster SVG toggle when the merged Material
+            // Symbols atlas face is unavailable.
+            ImTextureID normal_id = m_is_dark ?
+                is_one_layer() ? m_one_layer_on_dark_id : m_one_layer_off_dark_id :
+                is_one_layer() ? m_one_layer_on_id : m_one_layer_off_id;
+            ImTextureID hover_id  = m_is_dark ?
+                is_one_layer() ? m_one_layer_on_hover_dark_id : m_one_layer_off_hover_dark_id :
+                is_one_layer() ? m_one_layer_on_hover_id : m_one_layer_off_hover_id;
+            if (ImGui::ImageButton3(normal_id, hover_id, ONE_LAYER_BUTTON_SIZE * m_scale)) {
+                switch_one_layer_mode();
+            }
+            if (ImGui::IsItemHovered()) {
+                show_tooltip(_u8L("Toggle path view to current layer/all layers"));
+            }
         }
         imgui.end();
     }
