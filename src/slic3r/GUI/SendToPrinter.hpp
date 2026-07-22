@@ -36,6 +36,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/ScrolledWindow.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include <wx/simplebook.h>
 #include <wx/hashmap.h>
 #include "Widgets/AnimaController.hpp"
@@ -47,7 +48,7 @@ class FileTransferJob;
 
 namespace GUI {
 
-class SendToPrinterDialog : public DPIDialog
+class SendToPrinterDialog : public MD3Dialog
 {
 private:
     void init_bind();
@@ -197,6 +198,10 @@ public:
     void update_print_status_msg(wxString msg, bool is_warning = false, bool is_printer = true);
     void update_printer_combobox(wxCommandEvent& event);
     void on_cancel(wxCloseEvent& event);
+    // The circular header [x] must run the same teardown as the legacy native
+    // title-bar close (wxEVT_CLOSE_WINDOW -> on_cancel); the base shell would
+    // otherwise EndModal directly and leak a running send job/timer.
+    void OnHeaderClose() override;
     void on_ok(wxCommandEvent& event);
     void clear_ip_address_config(wxCommandEvent& e);
     void on_refresh(wxCommandEvent& event);

@@ -2038,7 +2038,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
             std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurface), StateColor::Normal));
 
         for (auto* btn : {m_btn_color_4, m_btn_color_8, m_btn_color_16}) {
-            btn->SetCornerRadius(FromDIP(12));
+            btn->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
             btn->SetMinSize(wxSize(FromDIP(28), FromDIP(28)));
             btn->SetBackgroundColor(preset_bg);
             btn->SetBorderColor(preset_bd);
@@ -2101,13 +2101,13 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
         StateColor btn_text_green(
             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-        m_btn_color_auto->SetCornerRadius(FromDIP(12));
+        m_btn_color_auto->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
         m_btn_color_auto->SetMinSize(wxSize(FromDIP(60), FromDIP(28)));
         m_btn_color_auto->SetBackgroundColor(btn_bg_white);
         m_btn_color_auto->SetBorderColor(btn_bd_green);
         m_btn_color_auto->SetTextColor(btn_text_green);
 
-        m_btn_apply->SetCornerRadius(FromDIP(12));
+        m_btn_apply->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
         m_btn_apply->SetMinSize(wxSize(FromDIP(60), FromDIP(28)));
         m_btn_apply->SetBackgroundColor(btn_bg_white);
         m_btn_apply->SetBorderColor(btn_bd_green);
@@ -2140,7 +2140,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
 
     m_hint_label = new wxStaticText(parent, wxID_ANY,
         _L("Reminder: parameters changed, click Apply to take effect"));
-    m_hint_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
+    m_hint_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_hint_label->SetFont(texture_import_section_title_font(parent));
     m_hint_label->Hide();
     sizer->Add(m_hint_label, 0, wxBOTTOM, FromDIP(4));
@@ -2245,7 +2245,7 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
         wxString::Format(
             _L("The project supports up to %d filaments. Extra filaments will be discarded."),
             (int)max_filament_count()));
-    m_drop_warning_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
+    m_drop_warning_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_drop_warning_label->SetFont(texture_import_section_title_font(this));
     m_drop_warning_label->Hide();
     sizer->Add(m_drop_warning_label, 0, wxALIGN_LEFT | wxBOTTOM, FromDIP(4));
@@ -2275,14 +2275,14 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     m_btn_ok->SetCornerRadius(FromDIP(20));
     m_btn_ok->SetMinSize(wxSize(FromDIP(156), FromDIP(40)));
     {
+        // Filled primary pill: Primary fill + OnPrimary text (theme-correct in
+        // both light/dark).
         StateColor ok_bg(
-            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
         StateColor ok_bd(
-            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
         StateColor ok_text(
-            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal));
         m_btn_ok->SetBackgroundColor(ok_bg);
         m_btn_ok->SetBorderColor(ok_bd);
         m_btn_ok->SetTextColor(ok_text);
@@ -2347,14 +2347,14 @@ void TextureImportDialog::update_ui_for_state()
         m_btn_ok->SetToolTip(_L("Reminder: parameters changed, click Apply to take effect"));
         if (m_hint_label) m_hint_label->Show();
     } else if (ready && valid) {
+        // Filled primary pill: Primary fill + OnPrimary text (theme-correct in
+        // both light/dark).
         StateColor ok_bg(
-            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
         StateColor ok_bd(
-            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
         StateColor ok_text(
-            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal));
         m_btn_ok->SetBackgroundColor(ok_bg);
         m_btn_ok->SetBorderColor(ok_bd);
         m_btn_ok->SetTextColor(ok_text);
@@ -4188,14 +4188,14 @@ void TextureImportDialog::update_confirm_button_state()
         m_btn_ok->SetToolTip(_L("Reminder: parameters changed, click Apply to take effect"));
         if (m_hint_label) m_hint_label->Show();
     } else {
+        // Filled primary pill: Primary fill + OnPrimary text (theme-correct in
+        // both light/dark).
         StateColor ok_bg(
-            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
         StateColor ok_bd(
-            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
         StateColor ok_text(
-            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal));
         m_btn_ok->SetBackgroundColor(ok_bg);
         m_btn_ok->SetBorderColor(ok_bd);
         m_btn_ok->SetTextColor(ok_text);
@@ -4254,17 +4254,17 @@ void TextureImportDialog::on_dpi_changed(const wxRect&)
 
     for (Button* btn : {m_btn_color_4, m_btn_color_8, m_btn_color_16}) {
         if (btn) {
-            btn->SetCornerRadius(FromDIP(12));
+            btn->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
             btn->SetMinSize(wxSize(FromDIP(28), FromDIP(28)));
         }
     }
 
     if (m_btn_color_auto) {
-        m_btn_color_auto->SetCornerRadius(FromDIP(12));
+        m_btn_color_auto->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
         m_btn_color_auto->SetMinSize(wxSize(FromDIP(60), FromDIP(28)));
     }
     if (m_btn_apply) {
-        m_btn_apply->SetCornerRadius(FromDIP(12));
+        m_btn_apply->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
         m_btn_apply->SetMinSize(wxSize(FromDIP(60), FromDIP(28)));
     }
     if (m_btn_auto_mix) {

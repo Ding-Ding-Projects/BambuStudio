@@ -95,87 +95,37 @@ bool MsgUpdateSlic3r::disable_version_check() const
 // MsgUpdateConfig
 
 MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_before_wizard /* = false*/)
-    : DPIDialog(wxGetApp().mainframe, wxID_ANY, _L("Configuration update"), wxDefaultPosition, wxDefaultSize, wxCAPTION)
+    : MD3Dialog(wxGetApp().mainframe, _L("Configuration update"), wxEmptyString, MaterialIcon::Sync)
 {
-	auto  title = force_before_wizard ? _L("Configuration update") : _L("Configuration update");
-	SetTitle(title);
-
-	std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(*wxWHITE);
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(ThemeColor::Grey400);
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(30));
-
-    wxBoxSizer *m_sizer_body = new wxBoxSizer(wxHORIZONTAL);
-
-    m_sizer_body->Add(0, 0, 0, wxLEFT, FromDIP(38));
-
-    auto sm    = create_scaled_bitmap("BambuStudio", nullptr, 70);
-    auto brand = new wxStaticBitmap(this, wxID_ANY, sm, wxDefaultPosition, wxSize(FromDIP(70), FromDIP(70)));
-
-    m_sizer_body->Add(brand, 0, wxALL, 0);
-
-    m_sizer_body->Add(0, 0, 0, wxRIGHT, FromDIP(25));
-
-    wxBoxSizer *m_sizer_right = new wxBoxSizer(wxVERTICAL);
-
+    wxBoxSizer *m_sizer_right = GetContentSizer();
 
     auto m_text_up_info = new wxStaticText(this, wxID_ANY, _L("A new configuration package available, Do you want to install it?"), wxDefaultPosition, wxDefaultSize, 0);
     m_text_up_info->SetFont(::Label::Head_14);
-    m_text_up_info->SetForegroundColour(ThemeColor::TextPrimary);
+    m_text_up_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_text_up_info->Wrap(-1);
-    m_sizer_right->Add(m_text_up_info, 0, 0, 0);
+    m_sizer_right->Add(m_text_up_info, 0, wxEXPAND, 0);
 
-    m_sizer_right->Add(0, 0, 1, wxTOP, FromDIP(15));
+    m_sizer_right->AddSpacer(FromDIP(15));
 
     auto m_scrollwindw_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)),wxVSCROLL);
     m_scrollwindw_release_note->SetScrollRate(0, 5);
-    m_scrollwindw_release_note->SetBackgroundColour(ThemeColor::Grey200);
+    m_scrollwindw_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_scrollwindw_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
     m_scrollwindw_release_note->SetWindowStyle(wxVSCROLL);
 
-	auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
-    sizer_button->Add(0, 0, 1, wxEXPAND, 5);
-
-
-	StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
-                            std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
-  
+    // Footer: kit filled OK pill + text Cancel pill; return codes preserved below.
 	auto m_butto_ok = new Button(this, _L("OK"));
-    m_butto_ok->SetBackgroundColor(btn_bg_green);
-    m_butto_ok->SetBorderColor(*wxWHITE);
-    m_butto_ok->SetTextColor(*wxWHITE);
-    m_butto_ok->SetFont(Label::Body_12);
-    m_butto_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_butto_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-
+    m_butto_ok->SetVariant(Button::Variant::Filled);
+    m_butto_ok->SetButtonSize(Button::Size::Medium);
 
     auto m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(*wxWHITE);
-    m_button_cancel->SetBorderColor(ThemeColor::TextPrimary);
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
+    m_button_cancel->SetVariant(Button::Variant::Text);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
 
+	m_sizer_right->Add(m_scrollwindw_release_note, 0, wxEXPAND, 0);
 
-    sizer_button->Add(m_butto_ok, 0, wxALL, 5);
-    sizer_button->Add(m_button_cancel, 0, wxALL, 5);
-
-	m_sizer_right->Add(m_scrollwindw_release_note, 0, wxEXPAND | wxRIGHT, FromDIP(20));
-    m_sizer_right->Add(sizer_button, 0, wxEXPAND | wxRIGHT, FromDIP(20));
-
-    
-    m_sizer_body->Add(m_sizer_right, 1, wxBOTTOM | wxEXPAND, FromDIP(30));
-    m_sizer_main->Add(m_sizer_body, 0, wxEXPAND, 0);
+    AddFooterButton(m_button_cancel);
+    AddFooterButton(m_butto_ok);
 
 	wxBoxSizer *content_sizer             = new wxBoxSizer(wxVERTICAL);
 
@@ -240,15 +190,16 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
     m_scrollwindw_release_note->Layout();
 
 
-    SetSizer(m_sizer_main);
     Layout();
-    m_sizer_main->Fit(this);
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
 
     Centre(wxBOTH);
 	wxGetApp().UpdateDlgDarkUI(this);
 }
 
-void MsgUpdateConfig::on_dpi_changed(const wxRect &suggested_rect) {}
+void MsgUpdateConfig::on_dpi_changed(const wxRect &suggested_rect) { UpdateShape(); }
 
 
 MsgUpdateConfig::~MsgUpdateConfig() {}

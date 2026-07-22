@@ -7,9 +7,10 @@
 #include "GUI_Utils.hpp"
 #include "libslic3r/Format/STEP.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3Dialog.hpp"
 class Button;
 
-class StepMeshDialog : public Slic3r::GUI::DPIDialog
+class StepMeshDialog : public Slic3r::GUI::MD3Dialog
 {
 public:
     StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double linear_init, double angle_init);

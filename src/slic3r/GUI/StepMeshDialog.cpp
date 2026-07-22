@@ -50,6 +50,7 @@ public:
 };
 
 void StepMeshDialog::on_dpi_changed(const wxRect& suggested_rect) {
+    MD3Dialog::on_dpi_changed(suggested_rect); // reshape the rounded frame
 };
 
 bool StepMeshDialog:: validate_number_range(const wxString& value, double min, double max) {
@@ -69,24 +70,18 @@ bool StepMeshDialog:: validate_number_range(const wxString& value, double min, d
 }
 
 StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double linear_init, double angle_init)
-    : DPIDialog(parent ? parent : static_cast<wxWindow *>(wxGetApp().mainframe),
-                wxID_ANY,
+    : MD3Dialog(parent ? parent : static_cast<wxWindow *>(wxGetApp().mainframe),
                 _(L("Step file import parameters")),
-                wxDefaultPosition,
-                wxDefaultSize,
-                wxDEFAULT_DIALOG_STYLE /* | wxRESIZE_BORDER*/), m_file(file)
+                wxEmptyString,
+                MaterialIcon::ViewInAr), m_file(file)
 {
     m_linear_last = wxString::Format("%.3f", linear_init);
     m_angle_last = wxString::Format("%.2f", angle_init);
 
     Bind(wxEVT_THREAD_DONE, &StepMeshDialog::on_task_done, this);
 
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico")
-                             % Slic3r::resources_dir()).str();
-    SetIcon(wxIcon(Slic3r::encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-
+    // Kit body sizer (hosted in GetContentSizer(), pad 0/24). The step_mesh_info
+    // illustration remains explanatory content.
     wxBoxSizer* bSizer = new wxBoxSizer(wxVERTICAL);
     bSizer->SetMinSize(wxSize(MIN_DIALOG_WIDTH, -1));
 
@@ -258,23 +253,14 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     mesh_face_number_sizer->Add(mesh_face_number_text, 0, wxALIGN_LEFT);
     bSizer->Add(mesh_face_number_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
 
-    wxBoxSizer* bSizer_button = new wxBoxSizer(wxHORIZONTAL);
-    bSizer_button->SetMinSize(wxSize(FromDIP(100), -1));
+    // "Don't show again" lives at the footer's leading edge; OK/Cancel become
+    // kit pill footer Buttons (filled OK, text Cancel).
     m_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
     m_checkbox->SetForegroundColour(FONT_COLOR);
-    bSizer_button->Add(m_checkbox, 0, wxALIGN_LEFT);
-    bSizer_button->AddStretchSpacer(1);
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+
     m_button_ok = new Button(this, _L("OK"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_button_ok->SetTextColor(ThemeColor::White);
-    m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetSize(BUTTON_SIZE);
-    m_button_ok->SetMinSize(BUTTON_SIZE);
-    m_button_ok->SetCornerRadius(FromDIP(12));
-    bSizer_button->Add(m_button_ok, 0, wxALIGN_RIGHT, BUTTON_BORDER);
+    m_button_ok->SetVariant(Button::Variant::Filled);
+    m_button_ok->SetButtonSize(Button::Size::Medium);
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this, angle_input, linear_input](wxMouseEvent& e) {
         stop_task();
@@ -293,32 +279,27 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
         SetFocusIgnoringChildren();
     });
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
-                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(BUTTON_SIZE);
-    m_button_cancel->SetMinSize(BUTTON_SIZE);
-    m_button_cancel->SetCornerRadius(FromDIP(12));
-    bSizer_button->Add(m_button_cancel, 0, wxALIGN_RIGHT | wxLEFT, BUTTON_BORDER);
+    m_button_cancel->SetVariant(Button::Variant::Text);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
 
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         stop_task();
         EndModal(wxID_CANCEL);
     });
 
-    bSizer->Add(bSizer_button, 1, wxEXPAND | wxALL, LEFT_RIGHT_PADING);
+    GetContentSizer()->Add(bSizer, 1, wxEXPAND);
 
-    this->SetSizer(bSizer);
+    // Footer: leading "Don't show again", trailing Cancel (text) + OK (filled).
+    GetFooterSizer()->Insert(0, m_checkbox, 0, wxALIGN_CENTER_VERTICAL);
+    AddFooterButton(m_button_cancel);
+    AddFooterButton(m_button_ok);
+
     update_mesh_number_text();
-    this->Layout();
-    bSizer->Fit(this);
 
-    this->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
+    this->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         SetFocusIgnoringChildren();
+        e.Skip(); // keep the shell's borderless drag handler reachable
     });
     mesh_face_number_text->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
         SetFocusIgnoringChildren();
@@ -329,6 +310,10 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
         EndModal(wxID_CANCEL);
     });
 
+    Layout();
+    Fit();
+    CenterOnParent();
+    UpdateShape();
     wxGetApp().UpdateDlgDarkUI(this);
 }
 

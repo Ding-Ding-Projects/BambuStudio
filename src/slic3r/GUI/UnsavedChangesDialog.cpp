@@ -801,14 +801,12 @@ static std::string none{"none"};
 
 
 UnsavedChangesDialog::UnsavedChangesDialog(const wxString &caption, const wxString &header, const std::string &app_config_key, int act_buttons)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe),
-                wxID_ANY,
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe),
                 caption + ": " + (caption == _L("Creating a new project") ? _L("Discard or Use Modified Value") :
                               caption == _L("Load project")           ? _L("Save or Discard Modified Value") :
                                                                         _L("Unsaved Changes")),
-                wxDefaultPosition,
-                wxDefaultSize,
-                wxCAPTION | wxCLOSE_BOX)
+                wxEmptyString,
+                MaterialIcon::Save)
     , m_app_config_key(app_config_key)
     , m_buttons(act_buttons)
 {
@@ -820,12 +818,10 @@ UnsavedChangesDialog::UnsavedChangesDialog(const wxString &caption, const wxStri
 }
 
 UnsavedChangesDialog::UnsavedChangesDialog(const wxString &caption, const wxString &header, DynamicConfig *config, int from, int to, bool left_to_right, NozzleVolumeType nozzle)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe),
-                wxID_ANY,
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe),
                 caption,
-                wxDefaultPosition,
-                wxDefaultSize,
-                wxCAPTION | wxCLOSE_BOX)
+                wxEmptyString,
+                MaterialIcon::Save)
     , m_buttons(ActionButtons::SAVE | ActionButtons::DONT_SAVE)
 {
     SyncExtruderParams params { config, from, to, left_to_right, nozzle };
@@ -835,18 +831,16 @@ UnsavedChangesDialog::UnsavedChangesDialog(const wxString &caption, const wxStri
 }
 
 UnsavedChangesDialog::UnsavedChangesDialog(Preset::Type type, PresetCollection *dependent_presets, const std::string &new_selected_preset, bool no_transfer)
-    : m_new_selected_preset_name(new_selected_preset)
-    , DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe),
-                wxID_ANY,
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe),
                 (!no_transfer && !new_selected_preset.empty() && dependent_presets) ?
                     dependent_presets->type() == Preset::Type::TYPE_PRINT    ? _L("Use Modified Value of Process Preset") :
                     dependent_presets->type() == Preset::Type::TYPE_FILAMENT ? _L("Use Modified Value of Filament Preset") :
                     dependent_presets->type() == Preset::Type::TYPE_PRINTER  ? _L("Use Modified Value of Printer Preset") :
                                                                                _L("Save or Discard Modified Value") :
                     _L("Save or Discard Modified Value"),
-                wxDefaultPosition,
-                wxDefaultSize,
-                wxCAPTION | wxCLOSE_BOX)
+                wxEmptyString,
+                MaterialIcon::Save)
+    , m_new_selected_preset_name(new_selected_preset)
 {
     if (new_selected_preset.empty() || no_transfer)
         m_buttons &= ~ActionButtons::TRANSFER;
@@ -876,25 +870,17 @@ inline int UnsavedChangesDialog::ShowModal()
 
 void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_presets, const std::string &new_selected_preset, const wxString &header)
 {
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    // icon
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
+    // Migrated onto the MD3Dialog shell: its borderless rounded surface, header
+    // icon tile/title and footer replace the old top divider + native caption.
+    m_top_line = nullptr;
 
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-
-    m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_top_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
-
-    m_sizer_main->Add(m_top_line, 0, wxEXPAND, 0);
-
-    m_sizer_main->Add(0, 0, 0, wxTOP, 20);
+    wxBoxSizer *m_sizer_main = GetContentSizer();
 
     m_action_line = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, UNSAVE_CHANGE_DIALOG_ACTION_LINE_SIZE, 0);
     m_action_line->SetFont(::Label::Body_13);
     m_action_line->SetForegroundColour(GREY900);
     m_action_line->Wrap(UNSAVE_CHANGE_DIALOG_ACTION_LINE_SIZE.GetWidth());
-    m_sizer_main->Add(m_action_line, 0, wxLEFT | wxRIGHT, 20);
+    m_sizer_main->Add(m_action_line, 0, wxEXPAND);
 
     m_sizer_main->Add(0, 0, 0, wxTOP, 12);
 
@@ -988,7 +974,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         m_panel_tab->SetSizer(m_sizer_tab);
         m_panel_tab->Layout();
         m_sizer_tab->Fit(m_panel_tab);
-        m_sizer_main->Add(m_panel_tab, 0, wxEXPAND | wxLEFT | wxRIGHT, 20);
+        m_sizer_main->Add(m_panel_tab, 0, wxEXPAND);
 
         m_sizer_main->Add(0, 0, 0, wxTOP, 9);
     }
@@ -998,8 +984,6 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
      m_info_line->SetForegroundColour(wxColour(255, 111, 0));
      m_sizer_main->Add(m_info_line, 0, wxLEFT | wxRIGHT, 20);*/
 
-    wxBoxSizer *m_sizer_button = new wxBoxSizer(wxHORIZONTAL);
-
     auto checkbox_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto checkbox       = new ::CheckBox(this, wxID_APPLY);
     checkbox_sizer->Add(checkbox, 0, wxALL | wxALIGN_CENTER, FromDIP(2));
@@ -1008,29 +992,17 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
     checkbox_sizer->Add(checkbox_text, 0, wxALL | wxALIGN_CENTER, FromDIP(2));
     checkbox_text->SetFont(::Label::Body_13);
     checkbox_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    m_sizer_button->Add(checkbox_sizer, 0, wxLEFT, FromDIP(22));
+    // "Remember my choice" sits at the far left of the kit footer, before the
+    // right-clustered action buttons (Insert(0) precedes the leading stretch).
+    GetFooterSizer()->Insert(0, checkbox_sizer, 0, wxALIGN_CENTER_VERTICAL);
     checkbox_sizer->Show(bool(m_buttons & REMEMBER_CHOISE));
-    m_sizer_button->Add(0, 0, 1, 0, 0);
 
-     // Add Buttons
-    wxFont      btn_font = this->GetFont().Scaled(1.4f);
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-
-    auto add_btn = [this, m_sizer_button, btn_font, dependent_presets, btn_bg_green](Button **btn, int &btn_id, Action close_act, const wxString &label,
-                                                                              bool focus, bool process_enable = true) {
+     // Add Buttons — kit variants routed into the MD3Dialog footer (flex-end).
+    auto add_btn = [this, dependent_presets](Button **btn, int &btn_id, Action close_act, const wxString &label,
+                                             bool focus, bool process_enable = true) {
         *btn = new Button(this, _L(label));
-
-        if (focus) {
-            (*btn)->SetBackgroundColor(btn_bg_green);
-            (*btn)->SetBorderColor(ThemeColor::BrandGreen);
-            (*btn)->SetTextColor(ThemeColor::White);
-        } else {
-            (*btn)->SetTextColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        }
-
-        (*btn)->SetMinSize(UNSAVE_CHANGE_DIALOG_BUTTON_SIZE);
-        (*btn)->SetCornerRadius(FromDIP(12));
+        (*btn)->SetVariant(focus ? Button::Variant::Filled : Button::Variant::Text);
+        (*btn)->SetButtonSize(Button::Size::Medium);
 
         (*btn)->Bind(wxEVT_BUTTON, [this, close_act, dependent_presets](wxEvent &) {
             bool save_names_and_types = close_act == Action::Save || (close_act == Action::Transfer && ActionButtons::KEEP & m_buttons);
@@ -1044,7 +1016,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
             e.Skip();
         });
 
-        m_sizer_button->Add(*btn, 0, wxLEFT, 5);
+        AddFooterButton(*btn);
     };
 
     bool is_copy = new_selected_preset == "SyncExtruderParams";
@@ -1081,13 +1053,10 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
 
     if (!m_app_config_key.empty()) {}
 
-    m_sizer_button->Add(0, 0, 0, wxRIGHT, 20);
-    m_sizer_main->Add(m_sizer_button, 0, wxEXPAND | wxTOP, 6);
-    m_sizer_main->Add(0, 0, 1, wxTOP, 18);
-
-    SetSizer(m_sizer_main);
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
     Centre(wxBOTH);
 
     if (params) {
@@ -1849,6 +1818,7 @@ void UnsavedChangesDialog::on_dpi_changed(const wxRect& suggested_rect)
     //m_tree->Rescale(em);
 
     Fit();
+    UpdateShape();
     Refresh();
 }
 

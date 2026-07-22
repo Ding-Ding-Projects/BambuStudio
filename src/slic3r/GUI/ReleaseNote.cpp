@@ -65,49 +65,29 @@ wxDEFINE_EVENT(EVT_UPDATE_TEXT_MSG, wxCommandEvent);
 wxDEFINE_EVENT(EVT_ERROR_DIALOG_BTN_CLICKED, wxCommandEvent);
 
 ReleaseNoteDialog::ReleaseNoteDialog(Plater *plater /*= nullptr*/)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Release Note"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), _L("Release Note"), wxEmptyString, MaterialIcon::History)
 {
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(*wxWHITE);
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(ThemeColor::Grey400);
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(30));
-
-    wxBoxSizer *m_sizer_body = new wxBoxSizer(wxHORIZONTAL);
-
-    m_sizer_body->Add(0, 0, 0, wxLEFT, FromDIP(38));
-
-    auto sm = create_scaled_bitmap("BambuStudio", nullptr,  70);
-    auto brand = new wxStaticBitmap(this, wxID_ANY, sm, wxDefaultPosition, wxSize(FromDIP(70), FromDIP(70)));
-
-    m_sizer_body->Add(brand, 0, wxALL, 0);
-
-    m_sizer_body->Add(0, 0, 0, wxRIGHT, FromDIP(25));
-
-    wxBoxSizer *m_sizer_right = new wxBoxSizer(wxVERTICAL);
+    // Migrated onto the MD3Dialog shell: header icon tile replaces the left
+    // BambuStudio logo; the surface + roles replace the *wxWHITE / grey literals.
+    wxBoxSizer *m_sizer_right = GetContentSizer();
 
     m_text_up_info = new Label(this, Label::Head_14, wxEmptyString, LB_AUTO_WRAP);
-    m_text_up_info->SetForegroundColour(ThemeColor::TextPrimary);
+    m_text_up_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_sizer_right->Add(m_text_up_info, 0, wxEXPAND, 0);
 
-    m_sizer_right->Add(0, 0, 1, wxTOP, FromDIP(15));
+    m_sizer_right->AddSpacer(FromDIP(15));
 
     m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)), wxVSCROLL);
     m_vebview_release_note->SetScrollRate(5, 5);
-    m_vebview_release_note->SetBackgroundColour(ThemeColor::Grey200);
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
 
-    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND | wxRIGHT, FromDIP(20));
-    m_sizer_body->Add(m_sizer_right, 1, wxBOTTOM | wxEXPAND, FromDIP(30));
-    m_sizer_main->Add(m_sizer_body, 0, wxEXPAND, 0);
+    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND, 0);
 
-    SetSizer(m_sizer_main);
     Layout();
-    m_sizer_main->Fit(this);
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
 
     Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
@@ -118,6 +98,7 @@ ReleaseNoteDialog::~ReleaseNoteDialog() {}
 
 void ReleaseNoteDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
+    UpdateShape();
 }
 
 void ReleaseNoteDialog::update_release_note(wxString release_note, std::string version)
@@ -135,30 +116,15 @@ void ReleaseNoteDialog::update_release_note(wxString release_note, std::string v
 }
 
 UpdatePluginDialog::UpdatePluginDialog(wxWindow* parent /*= nullptr*/)
-    : DPIDialog(static_cast<wxWindow*>(wxGetApp().mainframe), wxID_ANY, _L("Network plug-in update"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    : MD3Dialog(static_cast<wxWindow*>(wxGetApp().mainframe), _L("Network plug-in update"), wxEmptyString, MaterialIcon::Download)
 {
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(*wxWHITE);
-    wxBoxSizer* m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(ThemeColor::Grey400);
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(30));
-
-    wxBoxSizer* m_sizer_body = new wxBoxSizer(wxHORIZONTAL);
-
-
-
-    auto sm = create_scaled_bitmap("BambuStudio", nullptr, 55);
-    auto brand = new wxStaticBitmap(this, wxID_ANY, sm, wxDefaultPosition, wxSize(FromDIP(55), FromDIP(55)));
-
-    wxBoxSizer* m_sizer_right = new wxBoxSizer(wxVERTICAL);
+    // Migrated onto the MD3Dialog shell; header icon tile replaces the left logo,
+    // Surface roles replace the *wxWHITE / grey literals, OK/Cancel move to footer.
+    wxBoxSizer* m_sizer_right = GetContentSizer();
 
     m_text_up_info = new Label(this, Label::Head_13, wxEmptyString, LB_AUTO_WRAP);
     m_text_up_info->SetMaxSize(wxSize(FromDIP(260), -1));
-    m_text_up_info->SetForegroundColour(ThemeColor::TextPrimary);
+    m_text_up_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
 
     operation_tips = new ::Label(this, Label::Body_12, _L("Click OK to update the Network plug-in when Bambu Studio launches next time."), LB_AUTO_WRAP);
@@ -167,64 +133,39 @@ UpdatePluginDialog::UpdatePluginDialog(wxWindow* parent /*= nullptr*/)
 
     m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(5, 5);
-    m_vebview_release_note->SetBackgroundColour(ThemeColor::Grey200);
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(260), FromDIP(150)));
     m_vebview_release_note->SetMaxSize(wxSize(FromDIP(260), FromDIP(150)));
 
-    auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
-
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
+    // Footer: kit filled OK pill + text Cancel pill. Preserve the exact
+    // wxEVT_LEFT_DOWN bindings and wxID_OK / wxID_NO return codes.
     auto m_button_ok = new Button(this, _L("OK"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(ThemeColor::White);
-    m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetCornerRadius(FromDIP(12));
-
+    m_button_ok->SetVariant(Button::Variant::Filled);
+    m_button_ok->SetButtonSize(Button::Size::Medium);
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_OK);
         });
 
     auto m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(ThemeColor::TextPrimary);
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetCornerRadius(FromDIP(12));
-
+    m_button_cancel->SetVariant(Button::Variant::Text);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_NO);
         });
 
-    sizer_button->AddStretchSpacer();
-    sizer_button->Add(m_button_ok, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_cancel, 0, wxALL, FromDIP(5));
-
     m_sizer_right->Add(m_text_up_info, 0, wxEXPAND, 0);
     m_sizer_right->Add(0, 0, 0, wxTOP, FromDIP(5));
-    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND | wxRIGHT, FromDIP(20));
+    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND, 0);
     m_sizer_right->Add(0, 0, 0, wxTOP, FromDIP(5));
-    m_sizer_right->Add(operation_tips, 1, wxEXPAND | wxRIGHT, FromDIP(20));
-    m_sizer_right->Add(0, 0, 0, wxTOP, FromDIP(5));
-    m_sizer_right->Add(sizer_button, 0, wxEXPAND | wxRIGHT, FromDIP(20));
+    m_sizer_right->Add(operation_tips, 0, wxEXPAND, 0);
 
-    m_sizer_body->Add(0, 0, 0, wxLEFT, FromDIP(24));
-    m_sizer_body->Add(brand, 0, wxALL, 0);
-    m_sizer_body->Add(0, 0, 0, wxRIGHT, FromDIP(20));
-    m_sizer_body->Add(m_sizer_right, 1, wxBOTTOM | wxEXPAND, FromDIP(18));
-    m_sizer_main->Add(m_sizer_body, 0, wxEXPAND, 0);
+    AddFooterButton(m_button_cancel);
+    AddFooterButton(m_button_ok);
 
-    SetSizer(m_sizer_main);
     Layout();
-    m_sizer_main->Fit(this);
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
 
     Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
@@ -235,6 +176,7 @@ UpdatePluginDialog::~UpdatePluginDialog() {}
 
 void UpdatePluginDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
+    UpdateShape();
 }
 
 void UpdatePluginDialog::update_info(std::string json_path)
@@ -277,28 +219,17 @@ void UpdatePluginDialog::update_info(std::string json_path)
 }
 
 UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
-    : DPIDialog(parent, wxID_ANY, _L("New version of Bambu Studio"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER)
+    : MD3Dialog(parent, _L("New version of Bambu Studio"), wxEmptyString, MaterialIcon::Download)
 {
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(*wxWHITE);
-
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(ThemeColor::Grey400);
-
-
-    wxBoxSizer *m_sizer_body = new wxBoxSizer(wxHORIZONTAL);
-
-
-
+    // Migrated onto the MD3Dialog shell; header icon tile replaces the left logo,
+    // Surface roles replace *wxWHITE / grey literals, actions move to the footer.
+    // m_brand is kept (hidden, no longer placed in a sizer) because the web-link
+    // path in update_version_info() still calls m_brand->Hide().
     auto sm    = create_scaled_bitmap("BambuStudio", nullptr, 70);
     m_brand = new wxStaticBitmap(this, wxID_ANY, sm, wxDefaultPosition, wxSize(FromDIP(70), FromDIP(70)));
+    m_brand->Hide();
 
-
-
-    wxBoxSizer *m_sizer_right = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer *m_sizer_right = GetContentSizer();
 
     m_text_up_info = new Label(this, Label::Head_14, wxEmptyString, LB_AUTO_WRAP);
     m_text_up_info->SetForegroundColour(ThemeColor::TextPrimary);
@@ -306,15 +237,15 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
     m_simplebook_release_note = new wxSimplebook(this);
     m_simplebook_release_note->SetSize(wxSize(FromDIP(560), FromDIP(430)));
     m_simplebook_release_note->SetMinSize(wxSize(FromDIP(560), FromDIP(430)));
-    m_simplebook_release_note->SetBackgroundColour(ThemeColor::Grey200);
+    m_simplebook_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     m_scrollwindows_release_note = new wxScrolledWindow(m_simplebook_release_note, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)), wxVSCROLL);
     m_scrollwindows_release_note->SetScrollRate(5, 5);
-    m_scrollwindows_release_note->SetBackgroundColour(ThemeColor::Grey200);
+    m_scrollwindows_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     //webview
     m_vebview_release_note = CreateTipView(m_simplebook_release_note);
-    m_vebview_release_note->SetBackgroundColour(ThemeColor::Grey200);
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetSize(wxSize(FromDIP(560), FromDIP(430)));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(560), FromDIP(430)));
     //m_vebview_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
@@ -340,36 +271,19 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
     m_link_open_in_browser->SetFont(Label::Body_12);
 
 
-    auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
-
-
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                            std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
+    // Footer: kit Download (filled) / Skip (text) / Cancel (text) pills; the
+    // "open in browser" link sits at the footer's left edge. Preserve the exact
+    // wxEVT_LEFT_DOWN bindings and return codes (wxID_YES / wxID_NO).
     m_button_download = new Button(this, _L("Download"));
-    m_button_download->SetBackgroundColor(btn_bg_green);
-    m_button_download->SetBorderColor(*wxWHITE);
-    m_button_download->SetTextColor(ThemeColor::White);
-    m_button_download->SetFont(Label::Body_12);
-    m_button_download->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_download->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_download->SetCornerRadius(FromDIP(12));
-
+    m_button_download->SetVariant(Button::Variant::Filled);
+    m_button_download->SetButtonSize(Button::Size::Medium);
     m_button_download->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         EndModal(wxID_YES);
     });
 
     m_button_skip_version = new Button(this, _L("Skip this Version"));
-    m_button_skip_version->SetBackgroundColor(btn_bg_white);
-    m_button_skip_version->SetBorderColor(ThemeColor::TextPrimary);
-    m_button_skip_version->SetFont(Label::Body_12);
-    m_button_skip_version->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_skip_version->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_skip_version->SetCornerRadius(FromDIP(12));
-
+    m_button_skip_version->SetVariant(Button::Variant::Text);
+    m_button_skip_version->SetButtonSize(Button::Size::Medium);
     m_button_skip_version->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         wxGetApp().set_skip_version(true);
         EndModal(wxID_NO);
@@ -377,40 +291,28 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
 
 
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(ThemeColor::TextPrimary);
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetCornerRadius(FromDIP(12));
-
+    m_button_cancel->SetVariant(Button::Variant::Text);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         EndModal(wxID_NO);
     });
 
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND | wxBOTTOM, 0);
-
-    sizer_button->Add(m_bitmap_open_in_browser, 0, wxALIGN_CENTER | wxLEFT, FromDIP(7));
-    sizer_button->Add(m_link_open_in_browser, 0, wxALIGN_CENTER| wxLEFT, FromDIP(3));
-    //sizer_button->Add(m_remind_choice, 0, wxALL | wxEXPAND, FromDIP(5));
-    sizer_button->AddStretchSpacer();
-    sizer_button->Add(m_button_download, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_skip_version, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_cancel, 0, wxALL, FromDIP(5));
-
     m_sizer_right->Add(m_text_up_info, 0, wxEXPAND | wxBOTTOM | wxTOP, FromDIP(15));
-    m_sizer_right->Add(m_simplebook_release_note, 1, wxEXPAND | wxRIGHT, 0);
-    m_sizer_right->Add(sizer_button, 0, wxEXPAND | wxRIGHT, FromDIP(20));
+    m_sizer_right->Add(m_simplebook_release_note, 1, wxEXPAND, 0);
 
-    m_sizer_body->Add(m_brand, 0, wxTOP|wxRIGHT|wxLEFT, FromDIP(15));
-    m_sizer_body->Add(0, 0, 0, wxRIGHT, 0);
-    m_sizer_body->Add(m_sizer_right, 1, wxBOTTOM | wxEXPAND, FromDIP(8));
-    m_sizer_main->Add(m_sizer_body, 1, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxBOTTOM, 10);
+    auto browser_link_sizer = new wxBoxSizer(wxHORIZONTAL);
+    browser_link_sizer->Add(m_bitmap_open_in_browser, 0, wxALIGN_CENTER | wxLEFT, FromDIP(7));
+    browser_link_sizer->Add(m_link_open_in_browser, 0, wxALIGN_CENTER | wxLEFT, FromDIP(3));
+    GetFooterSizer()->Insert(0, browser_link_sizer, 0, wxALIGN_CENTER_VERTICAL);
 
-    SetSizer(m_sizer_main);
+    AddFooterButton(m_button_download);
+    AddFooterButton(m_button_skip_version);
+    AddFooterButton(m_button_cancel);
+
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
 
     SetMinSize(GetSize());
 
@@ -483,6 +385,7 @@ void UpdateVersionDialog::on_dpi_changed(const wxRect &suggested_rect) {
     m_button_download->Rescale();
     m_button_skip_version->Rescale();
     m_button_cancel->Rescale();
+    UpdateShape();
 }
 
 std::vector<std::string> UpdateVersionDialog::splitWithStl(std::string str,std::string pattern)

@@ -115,7 +115,7 @@ namespace {
      m_button_cancel->SetFont(Label::Body_14);
      m_button_cancel->SetSize(wxSize(FromDIP(100), FromDIP(36)));
      m_button_cancel->SetMinSize(wxSize(FromDIP(100), FromDIP(36)));
-     m_button_cancel->SetCornerRadius(FromDIP(4));
+     m_button_cancel->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
      m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) { EndModal(wxID_NO); });
 
      // Button sizer for PAT page (centered)
@@ -575,7 +575,7 @@ void HelioStatementDialog::create_legal_page()
     m_button_confirm->SetFont(Label::Body_14);
     m_button_confirm->SetSize(wxSize(FromDIP(160), FromDIP(36)));
     m_button_confirm->SetMinSize(wxSize(FromDIP(160), FromDIP(36)));
-    m_button_confirm->SetCornerRadius(FromDIP(4));
+    m_button_confirm->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
     m_button_confirm->Bind(wxEVT_LEFT_DOWN, &HelioStatementDialog::on_confirm, this);
     m_button_confirm->Disable(); // Disabled until checkbox is checked
     
@@ -640,7 +640,7 @@ void HelioStatementDialog::create_pat_page()
     run_optimization_button->SetFont(Label::Body_14);
     run_optimization_button->SetSize(wxSize(FromDIP(220), FromDIP(36)));
     run_optimization_button->SetMinSize(wxSize(FromDIP(220), FromDIP(36)));
-    run_optimization_button->SetCornerRadius(FromDIP(4));
+    run_optimization_button->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
     run_optimization_button->SetToolTip(_L("You're nearly there! Now that Helio is activated, your first optimization run for faster, more reliable printing takes only minutes! (Now referred to as 'Enhance' or 'Enhancement')"));
     run_optimization_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         // Set tutorial flag for first-time users
@@ -691,7 +691,7 @@ void HelioStatementDialog::create_pat_page()
     copy_pat_button->SetFont(Label::Body_13);
     copy_pat_button->SetSize(wxSize(FromDIP(120), FromDIP(32)));
     copy_pat_button->SetMinSize(wxSize(FromDIP(120), FromDIP(32)));
-    copy_pat_button->SetCornerRadius(FromDIP(4));
+    copy_pat_button->SetCornerRadius(FromDIP(16)); // kit pill (height/2); Helio dark palette preserved
     copy_pat_button->SetToolTip(_L("Personal Access Token (PAT)\n\nA secure credential that verifies your identity with Helio services. "
         "It's automatically used by BambuStudio for optimizations and simulations.\n\n"
         "You may need to copy this to:\n"
@@ -732,7 +732,7 @@ void HelioStatementDialog::create_pat_page()
     history_button->SetFont(Label::Body_13);
     history_button->SetSize(wxSize(FromDIP(120), FromDIP(32)));
     history_button->SetMinSize(wxSize(FromDIP(120), FromDIP(32)));
-    history_button->SetCornerRadius(FromDIP(4));
+    history_button->SetCornerRadius(FromDIP(16)); // kit pill (height/2); Helio dark palette preserved
     history_button->SetToolTip(_L("View and download recent optimizations and simulations"));
     history_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         // Use CallAfter to defer modal dialog creation until after mouse event processing

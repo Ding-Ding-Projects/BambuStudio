@@ -12,8 +12,6 @@
 #include "GUI_App.hpp"
 
 
-static const wxColour TEXT_LIGHT_GRAY = wxColour(107, 107, 107);
-
 namespace Slic3r {
 namespace GUI {
 
@@ -27,105 +25,62 @@ static wxString PUBLISH_STEP_STRING[STEP_COUNT] = {
 static wxString NOTE_STRING = _L("Note: The preparation may take several minutes. Please be patient.");
 
 PublishDialog::PublishDialog(Plater *plater)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Publish"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), _L("Publish"), wxEmptyString, MaterialIcon::Publish)
     , m_plater(plater)
 {
-
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    this->SetSize(wxSize(FromDIP(540),FromDIP(400)));
-
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
-
-    wxBoxSizer *top_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-    wxBoxSizer *m_main_sizer = new wxBoxSizer(wxVERTICAL);
-
-    m_main_sizer->Add(0, FromDIP(30), 0, wxEXPAND, 0);
+    wxBoxSizer *content = GetContentSizer();
 
     m_step_panel = new wxPanel(this, wxID_ANY);
     wxBoxSizer *step_sizer = create_publish_step_sizer();
     m_step_panel->SetSizer(step_sizer);
-    m_step_panel->SetBackgroundColour(wxColour(248, 248, 248));
+    m_step_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
-    m_main_sizer->Add(m_step_panel, 1, wxEXPAND, 0);
+    content->Add(m_step_panel, 1, wxEXPAND, 0);
 
-    m_main_sizer->Add(0, FromDIP(20), 0, wxEXPAND, 0);
+    content->Add(0, FromDIP(20), 0, wxEXPAND, 0);
 
     m_text_note = new wxStaticText(this, wxID_ANY, NOTE_STRING, wxDefaultPosition, wxDefaultSize, 0);
     m_text_note->SetFont(Label::Body_14);
-    m_text_note->SetForegroundColour(TEXT_LIGHT_GRAY);
+    m_text_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_text_note->Wrap(-1);
-    m_main_sizer->Add(m_text_note, 0, wxALL | wxEXPAND, 0);
-    m_main_sizer->Add(0, FromDIP(10), 0, wxEXPAND, 0);
+    content->Add(m_text_note, 0, wxEXPAND, 0);
+    content->Add(0, FromDIP(10), 0, wxEXPAND, 0);
 
-    wxStaticLine *m_staticline = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_main_sizer->Add(m_staticline, 0, wxALL | wxEXPAND, FromDIP(0));
-    m_main_sizer->Add(0, FromDIP(10), 0, wxEXPAND, 0);
+    wxWindow *m_staticline = new wxWindow(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(1)));
+    m_staticline->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    content->Add(m_staticline, 0, wxEXPAND, FromDIP(0));
+    content->Add(0, FromDIP(10), 0, wxEXPAND, 0);
 
-    wxBoxSizer *m_progress_text_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_text_progress = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
     m_text_progress->Wrap(-1);
     m_text_progress->SetFont(Label::Body_12);
-    m_text_progress->SetForegroundColour(TEXT_LIGHT_GRAY);
-    
-    m_progress_text_sizer->Add(FromDIP(20), 0, 0, wxEXPAND | wxALL, 0);
-    m_progress_text_sizer->Add(m_text_progress, 1, wxALL | wxEXPAND, 0);
-    m_main_sizer->Add(m_progress_text_sizer, 0, wxALL | wxEXPAND, 0);
-
-    wxBoxSizer *m_progress_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-    m_progress_sizer->Add(FromDIP(20), 0, 0, wxEXPAND | wxALL, 0);
+    m_text_progress->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    content->Add(m_text_progress, 0, wxEXPAND, 0);
+    content->Add(0, FromDIP(6), 0, wxEXPAND, 0);
 
     m_progress = new ProgressBar(this, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize);
     m_progress->SetHeight(FromDIP(8));
     m_progress->SetFont(Label::Head_10);
-    m_progress_sizer->Add(m_progress, 1, wxALIGN_CENTER_VERTICAL | wxALL, 0);
-    
-    m_progress_sizer->Add(FromDIP(20), 0, 0, wxEXPAND, 0);
-
-    m_btn_cancel = new Button(this, _L("Cancel"));
-    m_progress_sizer->Add(m_btn_cancel, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
-    StateColor text_color(std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Pressed),
-                          std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Hovered),
-                          std::pair<wxColour, int>(TEXT_LIGHT_GRAY, StateColor::Normal));
-    m_btn_cancel->SetFont(Label::Body_12);
-    m_btn_cancel->SetBackgroundColor(btn_bg_green);
-    m_btn_cancel->SetBorderColor(wxColour(0, 174, 66));
-    m_btn_cancel->SetTextColor(text_color);
-    m_btn_cancel->SetSize(wxSize(FromDIP(60), FromDIP(20)));
-    m_btn_cancel->SetMinSize(wxSize(FromDIP(60), FromDIP(20)));
-    m_btn_cancel->SetCornerRadius(FromDIP(10));
-
-    m_progress_sizer->Add(FromDIP(20), 0, 0, wxEXPAND | wxALL, 0);
-
-    m_main_sizer->Add(m_progress_sizer, 0, wxEXPAND, FromDIP(0));
-
-    wxBoxSizer *m_bottom_sizer;
-    m_bottom_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-    m_bottom_sizer->Add(FromDIP(20), 0, 0, wxEXPAND, 0);
+    content->Add(m_progress, 0, wxEXPAND, 0);
+    content->Add(0, FromDIP(8), 0, wxEXPAND, 0);
 
     m_text_errors = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
     m_text_errors->Wrap(-1);
     m_text_errors->SetFont(Label::Body_12);
-    m_text_errors->SetForegroundColour(wxColour(255, 111, 0));
-    m_bottom_sizer->Add(m_text_errors, 1, wxALL, 0);
+    m_text_errors->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
+    content->Add(m_text_errors, 0, wxEXPAND, 0);
 
-    m_main_sizer->Add(m_bottom_sizer, 0, wxEXPAND, 0);
-    m_main_sizer->Add(0, FromDIP(10), 0, wxEXPAND, 0);
+    // Footer: kit outlined pill Cancel button.
+    m_btn_cancel = new Button(this, _L("Cancel"));
+    m_btn_cancel->SetVariant(Button::Variant::Outlined);
+    m_btn_cancel->SetButtonSize(Button::Size::Medium);
+    AddFooterButton(m_btn_cancel);
 
-    top_sizer->Add(FromDIP(30), 0, 0, wxEXPAND, 0);
-    top_sizer->Add(m_main_sizer, 1, wxALL | wxEXPAND, 0);
-    top_sizer->Add(FromDIP(30), 0, 0, wxEXPAND, 0);
-
-    this->SetSizer(top_sizer);
     this->Layout();
-
+    GetSizer()->SetSizeHints(this);
+    SetMinSize(wxSize(FromDIP(540), -1));
+    SetSize(wxSize(FromDIP(540), FromDIP(400)));
+    UpdateShape();
     this->Centre(wxBOTH);
 
     m_btn_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
@@ -214,7 +169,7 @@ wxBoxSizer *PublishDialog::create_publish_step_sizer()
     auto middle_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_publish_steps = new StepIndicator(m_step_panel, wxID_ANY);
-    StateColor bg_color(std::pair<wxColour, int>(wxColour(248, 248, 248), StateColor::Normal));
+    StateColor bg_color(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Normal));
     m_publish_steps->SetBackgroundColor(bg_color);
     m_publish_steps->SetFont(Label::Body_14);
 
@@ -236,6 +191,7 @@ wxBoxSizer *PublishDialog::create_publish_step_sizer()
 void PublishDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     Fit();
+    UpdateShape(); // keep the borderless rounded silhouette in sync after re-fit
     Refresh();
 }
 
@@ -244,6 +200,18 @@ void PublishDialog::on_close(wxCloseEvent &event)
     wxCommandEvent *evt = new wxCommandEvent(EVT_PUBLISH);
     evt->SetInt(EVT_PUBLISHING_STOP);
     wxQueueEvent(m_plater, evt);
+}
+
+void PublishDialog::OnHeaderClose()
+{
+    // Route the MD3Dialog circular header [x] through the same path the legacy
+    // native title-bar close used (wxEVT_CLOSE_WINDOW -> on_close): post
+    // EVT_PUBLISHING_STOP so the plater stops publishing and ends the modal via
+    // show_publish_dlg(false). The base OnHeaderClose() would EndModal directly
+    // and leave publishing running in the plater (this dialog is a retained
+    // member, so its destructor does not run on close either).
+    wxCloseEvent e;
+    on_close(e);
 }
 
 void PublishDialog::reset()

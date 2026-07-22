@@ -18,6 +18,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/CheckBox.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "CapsuleButton.hpp"
 #include "PrePrintChecker.hpp"
 
@@ -48,7 +49,7 @@ bool SyncAmsInfoDialog::Show(bool show)
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " SyncAmsInfoDialog begin show";
     if (show) {
         if (m_two_image_panel) {
-            m_two_image_panel->SetBackgroundColor(wxGetApp().dark_mode() ? wxColour(48, 48, 48, 100) : wxColour(246, 246, 246, 100));
+            m_two_image_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
             m_left_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
             m_right_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
             init_bitmaps();
@@ -411,13 +412,17 @@ void SyncAmsInfoDialog::show_color_panel(bool flag, bool update_layout)
 void SyncAmsInfoDialog::update_more_setting(bool layout, bool from_more_seting_text)
 {
     if (!m_expand_more_settings) {
-        m_advanced_options_icon->SetBitmap(create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18));
+        m_advanced_options_icon->SetBitmap(MaterialIcon::available()
+            ? MaterialIcon::bitmap(m_scrolledWindow, MaterialIcon::ExpandMore, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+            : create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18));
         if (from_more_seting_text) {
             m_scrolledWindow->SetMinSize(wxSize(-1, SyncAmsInfoDialogHeightMIDDLE));
             m_scrolledWindow->SetMaxSize(wxSize(-1, SyncAmsInfoDialogHeightMIDDLE));
         }
     } else {
-        m_advanced_options_icon->SetBitmap(create_scaled_bitmap("advanced_option4", m_scrolledWindow, 18));
+        m_advanced_options_icon->SetBitmap(MaterialIcon::available()
+            ? MaterialIcon::bitmap(m_scrolledWindow, MaterialIcon::ExpandLess, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+            : create_scaled_bitmap("advanced_option4", m_scrolledWindow, 18));
         if (from_more_seting_text) {
             m_scrolledWindow->SetMinSize(wxSize(-1, SyncAmsInfoDialogHeightMAX));
             m_scrolledWindow->SetMaxSize(wxSize(-1, SyncAmsInfoDialogHeightMAX));
@@ -918,7 +923,11 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         });
 
         m_advace_setting_sizer->Add(m_more_setting_tips, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
-        m_advanced_options_icon = new wxStaticBitmap(m_scrolledWindow, wxID_ANY, create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18), wxDefaultPosition,
+        m_advanced_options_icon = new wxStaticBitmap(m_scrolledWindow, wxID_ANY,
+                                                     MaterialIcon::available()
+                                                         ? MaterialIcon::bitmap(m_scrolledWindow, MaterialIcon::ExpandMore, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+                                                         : create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18),
+                                                     wxDefaultPosition,
                                                      wxSize(FromDIP(18), FromDIP(18)));
         m_advace_setting_sizer->Add(m_advanced_options_icon, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
         more_setting_sizer->Add(m_advace_setting_sizer, 0, wxALIGN_LEFT, FromDIP(0));
@@ -997,12 +1006,13 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         /* m_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
          bSizer_button->Add(m_checkbox, 0, wxALIGN_LEFT);*/
         bSizer_button->AddStretchSpacer(1);
-        StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                                std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        // Filled primary pill: Primary fill + OnPrimary text (theme-correct in
+        // both light/dark); r12 on the 24px height is already a pill.
         m_button_ok = new Button(m_show_page,  _L("Synchronize now"));
-        m_button_ok->SetBackgroundColor(btn_bg_green);
-        m_button_ok->SetBorderColor(ThemeColor::White);
-        m_button_ok->SetTextColor(ThemeColor::White);
+        m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::Primary));
+        m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
+        m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+        m_button_ok->SetTextColorNormal(StateColor::semantic(MD3::Role::OnPrimary));
         m_button_ok->SetFont(Label::Body_12);
         m_button_ok->SetSize(OK_BUTTON_SIZE);
         m_button_ok->SetMinSize(OK_BUTTON_SIZE);
@@ -1015,12 +1025,12 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
             SetFocusIgnoringChildren();
         });
 
-        StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
-                                std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-
+        // Secondary outlined pill: transparent-on-surface fill, Outline border,
+        // OnSurface text.
         m_button_cancel = new Button(m_show_page, m_input_info.cancel_text_to_later ? _L("Later") : _L("Cancel"));
-        m_button_cancel->SetBackgroundColor(btn_bg_white);
-        m_button_cancel->SetBorderColor(ThemeColor::TextPrimary);
+        m_button_cancel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+        m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+        m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
         m_button_cancel->SetFont(Label::Body_12);
         m_button_cancel->SetSize(CANCEL_BUTTON_SIZE);
         m_button_cancel->SetMinSize(CANCEL_BUTTON_SIZE);

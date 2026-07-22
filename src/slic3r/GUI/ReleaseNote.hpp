@@ -37,6 +37,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/ScrolledWindow.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include <wx/hashmap.h>
 #include <wx/webview.h>
 
@@ -52,7 +53,7 @@ wxDECLARE_EVENT(EVT_UPDATE_NOZZLE, wxCommandEvent);
 wxDECLARE_EVENT(EVT_UPDATE_TEXT_MSG, wxCommandEvent);
 wxDECLARE_EVENT(EVT_ERROR_DIALOG_BTN_CLICKED, wxCommandEvent);
 
-class ReleaseNoteDialog : public DPIDialog
+class ReleaseNoteDialog : public MD3Dialog
 {
 public:
     ReleaseNoteDialog(Plater *plater = nullptr);
@@ -65,7 +66,7 @@ public:
     wxScrolledWindow *m_vebview_release_note {nullptr};
 };
 
-class UpdatePluginDialog : public DPIDialog
+class UpdatePluginDialog : public MD3Dialog
 {
 public:
     UpdatePluginDialog(wxWindow* parent = nullptr);
@@ -79,7 +80,7 @@ public:
     wxScrolledWindow* m_vebview_release_note{ nullptr };
 };
 
-class UpdateVersionDialog : public DPIDialog
+class UpdateVersionDialog : public MD3Dialog
 {
 public:
     UpdateVersionDialog(wxWindow *parent = nullptr);

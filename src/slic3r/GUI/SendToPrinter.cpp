@@ -211,12 +211,17 @@ void SendToPrinterDialog::on_rename_enter()
 }
 
 SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Send to Printer storage"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), _L("Send to Printer storage"), wxEmptyString, MaterialIcon::Send)
     , m_plater(plater), m_export_3mf_cancel(false)
 {
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
+
+    // Surface roles instead of the legacy white/dark literals so the sub-panels
+    // adapt to light/dark; the MD3Dialog shell owns the rounded surface + header.
+    m_colour_def_color  = StateColor::semantic(MD3::Role::SurfaceContainer);
+    m_colour_bold_color = StateColor::semantic(MD3::Role::OnSurface);
 
     // bind
     Bind(wxEVT_CLOSE_WINDOW, &SendToPrinterDialog::on_cancel, this);
@@ -224,18 +229,14 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     // font
     SetFont(wxGetApp().normal_font());
 
-    // icon
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
     Freeze();
-    SetBackgroundColour(m_colour_def_color);
 
-    m_sizer_main = new wxBoxSizer(wxVERTICAL);
+    m_sizer_main = GetContentSizer();
 
     m_sizer_main->SetMinSize(wxSize(0, -1));
     m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(ThemeColor::Grey500);
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_line_top->Hide();
 
     m_scrollable_region       = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_sizer_scrollable_region = new wxBoxSizer(wxVERTICAL);
@@ -270,8 +271,8 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_sizer_basic->Add(m_sizer_basic_time, 0, wxALIGN_CENTER, 0);
 
     m_line_materia = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_materia->SetForegroundColour(ThemeColor::Grey250);
-    m_line_materia->SetBackgroundColour(ThemeColor::Grey250);
+    m_line_materia->SetForegroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_line_materia->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     wxBoxSizer *m_sizer_printer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -292,19 +293,15 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
                                std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_button_refresh = new Button(this, _L("Refresh"));
-    m_button_refresh->SetBackgroundColor(btn_bg_enable);
-    m_button_refresh->SetBorderColor(btn_bg_enable);
-    m_button_refresh->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
-    m_button_refresh->SetSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
-    m_button_refresh->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
-    m_button_refresh->SetCornerRadius(FromDIP(10));
+    m_button_refresh->SetVariant(Button::Variant::Filled);
+    m_button_refresh->SetButtonSize(Button::Size::Medium);
     m_button_refresh->Bind(wxEVT_BUTTON, &SendToPrinterDialog::on_refresh, this);
 
     m_sizer_printer->Add(m_button_refresh, 0, wxALL | wxLEFT, FromDIP(5));
 
     /*select storage*/
     m_storage_panel = new wxPanel(this);
-    m_storage_panel->SetBackgroundColour(ThemeColor::White);
+    m_storage_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_storage_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_storage_panel->SetSizer(m_storage_sizer);
     m_storage_panel->Layout();
@@ -337,7 +334,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     // line schedule
     m_line_schedule = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_schedule->SetBackgroundColour(ThemeColor::Grey250);
+    m_line_schedule->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_simplebook   = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_DIALOG_SIMBOOK_SIZE, 0);
 
     // perpare mode
@@ -350,12 +347,10 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_sizer_prepare->Add(0, 0, 1, wxTOP, FromDIP(22));
     m_sizer_pcont->Add(0, 0, 1, wxEXPAND, 0);
     m_button_ensure = new Button(m_panel_prepare, _L("Send"));
-    m_button_ensure->SetBackgroundColor(btn_bg_enable);
-    m_button_ensure->SetBorderColor(btn_bg_enable);
-    m_button_ensure->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
-    m_button_ensure->SetSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
-    m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
-    m_button_ensure->SetCornerRadius(6);
+    m_button_ensure->SetVariant(Button::Variant::Filled);
+    m_button_ensure->SetButtonSize(Button::Size::Large);
+    if (MaterialIcon::available())
+        m_button_ensure->SetGlyph(MaterialIcon::Send);
 
     m_button_ensure->Bind(wxEVT_BUTTON, &SendToPrinterDialog::on_ok, this);
     m_sizer_pcont->Add(m_button_ensure, 0, wxEXPAND | wxBOTTOM, FromDIP(10));
@@ -371,7 +366,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     // finish mode
     m_panel_finish = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_panel_finish->SetBackgroundColour(ThemeColor::White);
+    m_panel_finish->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     wxBoxSizer *m_sizer_finish   = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *m_sizer_finish_v = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_finish_h = new wxBoxSizer(wxHORIZONTAL);
@@ -396,7 +391,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     //show bind failed info
     m_sw_print_failed_info = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(380), FromDIP(125)), wxVSCROLL);
-    m_sw_print_failed_info->SetBackgroundColour(ThemeColor::White);
+    m_sw_print_failed_info->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_sw_print_failed_info->SetScrollRate(0, 5);
     m_sw_print_failed_info->SetMinSize(wxSize(FromDIP(380), FromDIP(125)));
     m_sw_print_failed_info->SetMaxSize(wxSize(FromDIP(380), FromDIP(125)));
@@ -496,7 +491,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_rename_switch_panel->SetMaxSize(wxSize(FromDIP(420), FromDIP(25)));
 
     m_rename_normal_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_normal_panel->SetBackgroundColour(ThemeColor::White);
+    m_rename_normal_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     rename_sizer_v = new wxBoxSizer(wxVERTICAL);
     rename_sizer_h = new wxBoxSizer(wxHORIZONTAL);
 
@@ -505,8 +500,8 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_rename_text->SetFont(::Label::Body_13);
     m_rename_text->SetMaxSize(wxSize(FromDIP(390), -1));
     m_rename_button = new Button(m_rename_normal_panel, "", "ams_editable", wxBORDER_NONE, FromDIP(10));
-    m_rename_button->SetBackgroundColor(ThemeColor::White);
-    m_rename_button->SetBackgroundColour(ThemeColor::White);
+    m_rename_button->SetBackgroundColor(StateColor(StateColor::semantic(MD3::Role::SurfaceContainer)));
+    m_rename_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
     rename_sizer_h->Add(m_rename_text, 0, wxALIGN_CENTER, 0);
     rename_sizer_h->Add(m_rename_button, 0, wxALIGN_CENTER, 0);
@@ -517,7 +512,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     //rename edit
     auto m_rename_edit_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_edit_panel->SetBackgroundColour(ThemeColor::White);
+    m_rename_edit_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     auto rename_edit_sizer_v = new wxBoxSizer(wxVERTICAL);
 
     m_rename_input = new ::TextInput(m_rename_edit_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
@@ -594,9 +589,12 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
      m_last_refresh_time = wxDateTime::Now();
     show_print_failed_info(false);
-    SetSizer(m_sizer_main);
+    // m_sizer_main is the MD3Dialog content sizer (already installed by the shell);
+    // do not call SetSizer here or the header/footer chrome would be detached.
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
     Thaw();
 
     init_bind();
@@ -826,6 +824,18 @@ void SendToPrinterDialog::on_cancel(wxCloseEvent &event)
 
     Reset();
     this->EndModal(wxID_CANCEL);
+}
+
+void SendToPrinterDialog::OnHeaderClose()
+{
+    // Route the MD3Dialog circular header [x] through the same teardown the
+    // legacy native title-bar close used (wxEVT_CLOSE_WINDOW -> on_cancel):
+    // cancel an in-flight send job, stop the task timer, Reset(), and EndModal.
+    // The base OnHeaderClose() would EndModal(wxID_CANCEL) directly and leave a
+    // running send job + timer alive (this dialog is a retained heap member, so
+    // its destructor does not run on close either).
+    wxCloseEvent e;
+    on_cancel(e);
 }
 
 void SendToPrinterDialog::on_ok(wxCommandEvent &event)
@@ -1543,12 +1553,13 @@ void SendToPrinterDialog::Enable_Send_Button(bool en)
 
 void SendToPrinterDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
-    m_button_refresh->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
-    m_button_refresh->SetCornerRadius(FromDIP(12));
-    m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE);
-    m_button_ensure->SetCornerRadius(FromDIP(12));
+    // Buttons are kit variants now; their pill radius + height are re-derived by
+    // the Button's own Rescale(), so no manual size/radius override here.
+    m_button_refresh->Rescale();
+    m_button_ensure->Rescale();
     m_status_bar->msw_rescale();
     Fit();
+    UpdateShape();
     Refresh();
 }
 

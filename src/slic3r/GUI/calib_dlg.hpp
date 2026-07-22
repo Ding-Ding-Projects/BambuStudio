@@ -10,6 +10,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/TextInput.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include "GUI_App.hpp"
 #include "wx/hyperlink.h"
 #include <wx/radiobox.h>
@@ -17,7 +18,7 @@
 
 namespace Slic3r { namespace GUI {
 
-class PA_Calibration_Dlg : public DPIDialog
+class PA_Calibration_Dlg : public MD3Dialog
 {
 public:
     PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* plater);
@@ -46,7 +47,7 @@ protected:
 	Plater* m_plater;
 };
 
-class Temp_Calibration_Dlg : public DPIDialog
+class Temp_Calibration_Dlg : public MD3Dialog
 {
 public:
     Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* plater);
@@ -67,7 +68,7 @@ protected:
     Plater* m_plater;
 };
 
-class MaxVolumetricSpeed_Test_Dlg : public DPIDialog
+class MaxVolumetricSpeed_Test_Dlg : public MD3Dialog
 {
 public:
     MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater);
@@ -86,7 +87,7 @@ protected:
     Plater* m_plater;
 };
 
-class VFA_Test_Dlg : public DPIDialog {
+class VFA_Test_Dlg : public MD3Dialog {
 public:
     VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater);
     ~VFA_Test_Dlg();
@@ -104,7 +105,7 @@ protected:
 };
 
 
-class Retraction_Test_Dlg : public DPIDialog
+class Retraction_Test_Dlg : public MD3Dialog
 {
 public:
     Retraction_Test_Dlg (wxWindow* parent, wxWindowID id, Plater* plater);
