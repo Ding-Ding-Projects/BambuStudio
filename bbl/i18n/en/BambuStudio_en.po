@@ -18411,6 +18411,9 @@ msgstr ""
 msgid "Reset appearance to defaults"
 msgstr ""
 
+msgid "Custom color"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

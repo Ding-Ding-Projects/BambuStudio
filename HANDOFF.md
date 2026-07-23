@@ -73,8 +73,15 @@ while the native bar overlaps the canvas bottom ~66px — new NOTIFICATION_DEFAU
 final value 80 for a 14px breathing gap; 80 is geometry-derived from the measured 64-flush capture,
 compile-gated but not yet re-captured); presets-up-to-date modal→toast PASS (no modal in a 39-frame
 watch); External-editor rows present in General (VS Code auto-detected) PASS; appearance
-Custom…/reset/MD3-preview present PASS; Other-tab toggle spacing PASS. Known cosmetic followups
-(chips filed): Preview legend column alignment; Custom accent button clips at the dialog right edge.
+Custom…/reset/MD3-preview present PASS; Other-tab toggle spacing PASS. Known cosmetic followups:
+Preview legend column alignment (chip filed — needs a sliced-state repro; investigated to the
+calculate_offsets/append_item pair in GCodeRenderer/BaseRenderer.cpp without a conclusive root
+cause). The Custom-accent-button edge clip was FIXED in-session (replaced with a 32px "+" tile
+matching the swatch geometry; headlessly re-verified, screenshots refreshed). The CI failure on
+9f450f86d/94f72d916 was root-caused to the Cantonese catalog gate: entries were added to the
+.po/.mo without updating bbl/i18n/yue_HK/coverage.json — fixed via the official
+compile_translation.py (381 validated translations, deterministic .mo, Test-LanguageModes.ps1
+passing locally). NOTIFICATION_DEFAULT_BOTTOM_MARGIN finalized at 80px (14px gap above the bar).
 The captured File menu now truthfully shows "Open in External Editor" (disabled on an unsaved
 project — its enable-condition at work).
 

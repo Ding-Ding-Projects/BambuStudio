@@ -1536,3 +1536,7 @@ msgstr "樣本"
 #. reviewed-category: preferences
 msgid "Reset appearance to defaults"
 msgstr "將外觀重設返預設值"
+
+#. reviewed-category: preferences
+msgid "Custom color"
+msgstr "自訂顏色"

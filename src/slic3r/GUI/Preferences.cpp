@@ -2190,10 +2190,14 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     // is a valid seed (the six swatches are just shortcuts into the same
     // MD3::setAccentSeed pipeline), so a pick persists + applies exactly like a
     // preset; the preset rings deselect since none of them is the active seed.
-    auto *accent_custom = new Button(scrolled, _L("Custom") + dots);
+    // A 32px "+" tile matching the swatch geometry (a full-width labeled button
+    // overflows the row at the default dialog size and clipped at the edge).
+    auto *accent_custom = new Button(scrolled, "+");
     m_button_list[m_button_list.size()] = accent_custom;
     accent_custom->SetVariant(Button::Variant::Outlined);
     accent_custom->SetButtonSize(Button::Size::Small);
+    accent_custom->SetMinSize(wxSize(FromDIP(32), FromDIP(32)));
+    accent_custom->SetToolTip(_L("Custom color"));
     accent_custom->Bind(wxEVT_BUTTON, [this, swatches](wxCommandEvent &) {
         std::string seed = app_config->get("ui_accent_seed");
         if (seed.empty()) seed = "#146c2e";

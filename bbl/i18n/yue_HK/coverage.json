@@ -4,15 +4,15 @@
   "language": "Hong Kong Cantonese (Traditional Chinese)",
   "source_catalog": "../en/BambuStudio_en.po",
   "compiled_artifact": "../../../resources/i18n/yue_HK/BambuStudio.mo",
-  "translated_messages": 368,
+  "translated_messages": 381,
   "review_status": "curated-in-repository",
-  "reviewed_on": "2026-07-22",
+  "reviewed_on": "2026-07-23",
   "categories": {
     "connection-offline": 55,
-    "destructive-dirty-error-security": 70,
-    "file-actions": 74,
+    "destructive-dirty-error-security": 71,
+    "file-actions": 76,
     "navigation": 43,
-    "preferences": 59,
+    "preferences": 69,
     "slicing-printing": 67
   },
   "required_flows": [
