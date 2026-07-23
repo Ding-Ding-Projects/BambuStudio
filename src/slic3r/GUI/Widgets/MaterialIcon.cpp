@@ -14,6 +14,10 @@
 
 #include "libslic3r/Utils.hpp" // Slic3r::resources_dir()
 
+#ifdef __WXMSW__
+#include <windows.h>
+#endif
+
 namespace MaterialIcon {
 
 namespace {
@@ -42,7 +46,16 @@ void ensureRegistered()
             return;
         }
 
+#ifdef __WXMSW__
+        // Session-visible registration (no FR_PRIVATE): GDI+ cannot see private
+        // faces and poisons its font-family cache when one reaches a graphics
+        // context — the PageHeap-verified startup heap corruption. Mirrors the
+        // SessionFontRegistrar in Label.cpp; this fallback face is removed with
+        // the process (single face, registered at most once via call_once).
+        const bool added = ::AddFontResourceExW(font_path.ToStdWstring().c_str(), 0, nullptr) > 0;
+#else
         const bool added = wxFont::AddPrivateFont(font_path);
+#endif
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of MaterialSymbolsOutlined returns %1%") % added;
 
         // AddPrivateFont returns false when the face is already registered (e.g.

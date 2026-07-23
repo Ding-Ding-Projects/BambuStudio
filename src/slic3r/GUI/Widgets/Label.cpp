@@ -8,6 +8,8 @@
 #include "libslic3r/AppConfig.hpp"
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
@@ -161,36 +163,70 @@ wxFont Label::Mono_13;
 wxFont Label::Mono_12;
 wxFont Label::Mono_11;
 
+#ifdef __WXMSW__
+#include <windows.h>
+namespace {
+// GDI+ builds its font-family table from the session font list. Faces added
+// with FR_PRIVATE (wxFont::AddPrivateFont) are invisible to that table, and
+// handing such an HFONT to any wxGraphicsContext/wxGCDC poisons GDI+'s
+// family cache — a use-after-free inside GdipCloneFontFamily that surfaced
+// as the deterministic startup heap-corruption crash (PageHeap-verified).
+// Register the bundled faces session-visible instead, and remove them again
+// when the process exits so the session font table stays clean.
+struct SessionFontRegistrar {
+    std::vector<std::wstring> paths;
+    bool add(const wxString &path)
+    {
+        const std::wstring w = path.ToStdWstring();
+        if (::AddFontResourceExW(w.c_str(), 0, nullptr) > 0) {
+            paths.push_back(w);
+            return true;
+        }
+        return false;
+    }
+    ~SessionFontRegistrar()
+    {
+        for (const auto &w : paths)
+            ::RemoveFontResourceExW(w.c_str(), 0, nullptr);
+    }
+};
+SessionFontRegistrar g_session_fonts;
+bool add_app_font(const wxString &path) { return g_session_fonts.add(path); }
+} // namespace
+#else
+static bool add_app_font(const wxString &path) { return wxFont::AddPrivateFont(path); }
+#endif
+
 void Label::initSysFont(std::string lang_code, bool load_font_resource)
 {
     if (load_font_resource) {
         const std::string& resource_path = Slic3r::resources_dir();
         wxString font_path = wxString::FromUTF8(resource_path+"/fonts/Roboto-Regular.ttf");
-        bool result = wxFont::AddPrivateFont(font_path);
+        bool result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of Roboto-Regular returns %1%")%result;
         font_path = wxString::FromUTF8(resource_path+"/fonts/Roboto-Medium.ttf");
-        result = wxFont::AddPrivateFont(font_path);
+        result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of Roboto-Medium returns %1%")%result;
         font_path = wxString::FromUTF8(resource_path+"/fonts/Roboto-Bold.ttf");
-        result = wxFont::AddPrivateFont(font_path);
+        result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of Roboto-Bold returns %1%")%result;
         // Roboto Mono renders every numeric/technical value in the MD3 design
         // system (temperatures, times, dimensions, commit hashes).
         font_path = wxString::FromUTF8(resource_path+"/fonts/RobotoMono-Regular.ttf");
-        result = wxFont::AddPrivateFont(font_path);
+        result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of RobotoMono-Regular returns %1%")%result;
         font_path = wxString::FromUTF8(resource_path+"/fonts/RobotoMono-Medium.ttf");
-        result = wxFont::AddPrivateFont(font_path);
+        result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of RobotoMono-Medium returns %1%")%result;
         font_path = wxString::FromUTF8(resource_path+"/fonts/RobotoMono-Bold.ttf");
-        result = wxFont::AddPrivateFont(font_path);
+        result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of RobotoMono-Bold returns %1%")%result;
         // Material Symbols Outlined is the MD3 icon face (see MD3::Type::font_icon
         // and Widgets/MaterialIcon). Registered here alongside Roboto so icon
         // glyphs resolve from the first paint. MaterialIcon::font() re-registers
         // defensively via std::call_once for the initSysFont(false) paths.
         font_path = wxString::FromUTF8(resource_path+"/fonts/MaterialSymbolsOutlined.ttf");
-        result = wxFont::AddPrivateFont(font_path);
+        result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of MaterialSymbolsOutlined returns %1%")%result;
     }
 #ifdef __linux__
@@ -198,10 +234,10 @@ void Label::initSysFont(std::string lang_code, bool load_font_resource)
         const std::string& resource_path = Slic3r::resources_dir();
         // TODO: Bundle Roboto TTFs in resources/fonts; HarmonyOS remains the fallback.
         wxString font_path = wxString::FromUTF8(resource_path+"/fonts/HarmonyOS_Sans_SC_Bold.ttf");
-        bool result = wxFont::AddPrivateFont(font_path);
+        bool result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of HarmonyOS_Sans_SC_Bold returns %1%")%result;
         font_path = wxString::FromUTF8(resource_path+"/fonts/HarmonyOS_Sans_SC_Regular.ttf");
-        result = wxFont::AddPrivateFont(font_path);
+        result = add_app_font(font_path);
         BOOST_LOG_TRIVIAL(info) << boost::format("add font of HarmonyOS_Sans_SC_Regular returns %1%")%result;
     }
 #endif
