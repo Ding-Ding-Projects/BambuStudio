@@ -1,3 +1,44 @@
+# Post-conformance feature + polish program (2026-07-23)
+
+With the parity register closed (127 done / 4 recorded deviations / 0 open), this session delivered
+the user's feature/quality backlog on top. Each wave: parallel disjoint-owner edits, then ONE serial
+build (to avoid concurrent-build MSBuild-tracker corruption), then adversarial review; visual waves
+verified by rendering the real app.
+
+**Verification harness (new).** This VM has no GPU, so BambuStudio gated at OpenGL<2.0 and never
+reached its UI. Fix: Mesa llvmpipe `opengl32.dll` beside the exe + `GALLIUM_DRIVER=llvmpipe`. The app
+is now driven/captured fully HEADLESS via the `lowlevel-computer-use-mcp` cheap CLI (off-screen
+CreateDesktop + PrintWindow) — see the `lowlevel-mcp-headless-driving` memory + `scratchpad/ll-drive.sh`.
+This uncovered + fixed the real startup crash: the Material Symbols variable TTF through GDI+
+(wxGCDC/wxGraphicsContext) corrupted the heap (PageHeap-verified at `GdipCloneFontFamily`); MaterialIcon
+now renders exclusively via plain GDI and the bundled faces register session-visible (not FR_PRIVATE).
+CI-verified (`7b6ea27f9`). A portable-ZIP preview (`portable-preview-1`) was published from a
+launch-verified local build. The CI publish HTTP 403 (org-side, flapping) is worked around by the
+`TOKEN_GITHUB` PAT in `build_all.yml`; releases auto-publish again (r94..r101+).
+
+**Features shipped (all pushed to master):**
+- Clipping + accessibility (`bca31b40b`): left-edge bleed-through root-caused to the docked AUI sidebar
+  pane border; app-wide keyboard focus/activation + accessible names + focus rings, contrast, unit
+  suffix + HMS width clipping. (The checkbox/radio 44px hit-target was reverted — it regressed layout
+  app-wide; row-level hit targets are the followup.)
+- MD3 first-run Setup Wizard + Home hero (`50dee281e`): guide webview restyled to MD3 tokens (region
+  list an outlined card, not a flat green bar), GuideFrame on the MD3Dialog shell, Home hero given a
+  leading brand title instead of an empty green band.
+- Regex builder on every search bar (`66c807f54`): SearchField `.*` toggle + tune builder popover
+  (token chips, case/whole-word) + shared `textMatches()`, wired into Preferences, preset editor,
+  user-presets, device farm, global option search, and the ImGui in-canvas search; guarded against
+  catastrophic-backtracking throws at every site.
+- Full UI font customization (`f4ed83643`): Appearance Font family + Text size, runtime-applied via the
+  Label factory (`rebuild_fonts`) with CJK-safe fallback and a live preview.
+- Browser-like project tabs + grouping (`04a02a676`): new MD3 `ProjectTabBar` (one tab per project,
+  drag-reorder, colored groups, per-tab dirty dot, custom-font labels) as session file-tabs over the
+  single Plater (switch = save-outgoing-if-dirty + load-selected, reusing the Backup/Restore round-trip).
+  A spike confirmed true multi-live-project is a ~1200-call-site rewrite (out of scope). Known: a switch
+  costs a file-open (full deserialize) + resets transient undo/camera; followups — orphan temp-snapshot
+  sweep on restart, never-saved-tab Save-As identity, command-line-opened file getting its own tab.
+
+Catalogs at 368 yue_HK translations (.mo --check green).
+
 # Handoff
 
 ## Delivered evidence — 2026-07-21
