@@ -309,22 +309,27 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	// top y of window
 	m_top_y = initial_y + m_window_height;
 
-	// MD3 snackbar geometry: a bottom-centered column of cards, each
-	// min(560px, 92vw) wide. Override the content width so the surface matches
-	// the kit; text was wrapped at the (narrower) base width, which still fits.
+	// MD3 snackbar geometry: a bottom-right-corner column of cards, each
+	// min(560px, 92vw) wide. Corner (not center) anchoring is a deliberate
+	// deviation from the kit's centered snackbar: non-blocking notifications
+	// are required to stack in a bottom screen corner so they never sit over
+	// the model/plate center-of-attention. Override the content width so the
+	// surface matches the kit; text was wrapped at the (narrower) base width,
+	// which still fits.
 	ensure_ui_inited();
 	const float scale   = canvas.get_scale();
+	const float corner_margin = 16.0f * scale;
 	const float toast_w = std::min(560.0f * scale, 0.92f * (float) cnv_size.get_width());
 	m_window_width = toast_w;
 
-	// Horizontally centered (top-center pivot), stacked upward from the bottom.
-	ImVec2 win_pos(0.5f * (float) cnv_size.get_width(), 1.0f * (float) cnv_size.get_height() - m_top_y);
-	imgui.set_next_window_pos(win_pos.x, win_pos.y, ImGuiCond_Always, 0.5f, 0.0f);
+	// Right-corner anchored (top-right pivot), stacked upward from the bottom.
+	ImVec2 win_pos((float) cnv_size.get_width() - corner_margin, 1.0f * (float) cnv_size.get_height() - m_top_y);
+	imgui.set_next_window_pos(win_pos.x, win_pos.y, ImGuiCond_Always, 1.0f, 0.0f);
 	imgui.set_next_window_size(m_window_width, m_window_height, ImGuiCond_Always);
 
-	// Cache the screen-space rect (window is anchored by its top-center point).
-	m_rendered_win_min   = ImVec2(win_pos.x - m_window_width * 0.5f, win_pos.y);
-	m_rendered_win_max   = ImVec2(win_pos.x + m_window_width * 0.5f, win_pos.y + m_window_height);
+	// Cache the screen-space rect (window is anchored by its top-right point).
+	m_rendered_win_min   = ImVec2(win_pos.x - m_window_width, win_pos.y);
+	m_rendered_win_max   = ImVec2(win_pos.x, win_pos.y + m_window_height);
 	m_rendered_this_frame = true;
 
 	// MD3 elevation-4 drop shadow (kit: 0 8px 24px), drawn behind the toast.

@@ -39,6 +39,37 @@ launch-verified local build. The CI publish HTTP 403 (org-side, flapping) is wor
 
 Catalogs at 368 yue_HK translations (.mo --check green).
 
+**Non-blocking notifications wave (2026-07-23, `ab007cda2`):** the three central OK-only funnels
+(`show_info` / `warning_catcher` / `show_error` in GUI.cpp) now route to NotificationManager corner
+toasts (Regular/Warning/Error), covering ~120 informational call sites; modal fallback when a modal
+dialog is on top or the Plater isn't up yet. Decision dialogs untouched. Full-build gate 0 errors;
+mirrored into the user's global agent instructions (agent-global-memory `e71ece3`) alongside
+appearance-editor, external-editor, and local-version-control mandates.
+
+**External editor + appearance completion wave (2026-07-23, in tree, GUI-lib compile green):**
+- `Utils/ExternalEditor.{hpp,cpp}` (registry+PATH detection, table transcribed from the
+  desktop-material reference), `open_in_external_editor` launcher, Preferences ▸ General editor
+  combobox + Custom path row, File ▸ "Open in External Editor" with warning-toast fallback.
+- Appearance: free accent color picker (wxColourDialog into the same `setAccentSeed` pipeline),
+  "Reset appearance to defaults" (under a reentrancy guard — `MultiSwitchButton::SetSelection`
+  EMITS its event), live MD3 token preview panel; `AccentSwatch::colour()` keeps preset rings
+  truthful on matching custom picks.
+- Hardening: CheckBox.hpp docstrings corrected (20/18px reality), Label.cpp SectionHeader GC-font
+  guard made effective (strict `IsValidFacename`, cached — `faceIsInstalled`'s probe fallback echoes
+  any name on MSW and never fails).
+- Adversarial review (3 agents): 2 FAIL verdicts → all MEDIUM findings fixed in-tree (reset
+  reentrancy, dead GC guard); LOWs fixed (custom-editor silent fallback, swatch rings).
+- Feature docs: new `docs/features/workspace/` category (notifications, version history, project
+  tabs, external editor) + `windows/appearance-customization.md` + `windows/regex-builder.md`.
+
+**Screenshot matrix (in progress):** `docs/screenshots/<feature>/` — one shot per button per page
+per feature. Webview surfaces (Home, Wizard) captured via headless Edge against
+`resources/web` HTML (WebView2 never composes on a headless desktop); native surfaces via
+PrintWindow, which — with Mesa llvmpipe — DOES capture the GL viewport + ImGui toasts (memory
+`lowlevel-mcp-headless-driving` updated). Native per-button pass driven by a subagent; final exe
+relink + capture pass 2 (new Preferences rows, appearance controls) pending the capture session
+releasing the exe lock.
+
 # Handoff
 
 ## Delivered evidence — 2026-07-21

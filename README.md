@@ -84,6 +84,40 @@ including the Process card's Quality / Strength / Support / Others segmented con
 axis-colored X/Y/Z manipulation grid. The Setup Wizard is now hosted on the Material dialog shell
 (rounded surface, header icon tile) in place of the legacy native caption.
 
+#### Feature gallery — every page, every button
+
+The full screenshot matrix lives under [`docs/screenshots/`](docs/screenshots/): **one capture per
+page and one per button** for every feature, taken headlessly from the real running app (Mesa
+llvmpipe + PrintWindow for the native surfaces, rendered page HTML for the webview surfaces).
+
+**Non-blocking notifications** — informational messages are corner toasts, not modal dialogs. The
+proof shot: loading a model raises the dark inverse-surface snackbar over the live scene while the
+UI stays fully interactive.
+
+![Non-blocking info toast over the Prepare scene](docs/screenshots/notifications/toast-info.png)
+
+| Version history (local Git snapshots) | Regex builder (on every search bar) |
+| :---: | :---: |
+| ![Version history dialog](docs/screenshots/version-history/history-dialog.png) | ![Regex builder popover](docs/screenshots/regex-builder/builder-popover.png) |
+
+| Appearance settings (theme / density / accent / font) | Project tabs (one tab per project) |
+| :---: | :---: |
+| ![Appearance tab](docs/screenshots/appearance/appearance-tab.png) | ![Two project tabs](docs/screenshots/project-tabs/tab-bar-two-tabs.png) |
+
+| Preferences · General | Preferences · Other |
+| :---: | :---: |
+| ![General tab](docs/screenshots/preferences/general-tab.png) | ![Other tab](docs/screenshots/preferences/other-tab.png) |
+
+| File menu (Version history · Open in External Editor) | Setup Wizard · Filament Selection |
+| :---: | :---: |
+| ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard filament page](docs/screenshots/wizard/wizard-step-22.png) |
+
+Per-feature folders with every button close-up: [notifications](docs/screenshots/notifications/) ·
+[version-history](docs/screenshots/version-history/) · [regex-builder](docs/screenshots/regex-builder/) ·
+[appearance](docs/screenshots/appearance/) · [preferences](docs/screenshots/preferences/) ·
+[project-tabs](docs/screenshots/project-tabs/) · [main-window](docs/screenshots/main-window/) ·
+[home](docs/screenshots/home/) · [wizard](docs/screenshots/wizard/)
+
 #### Earlier installed-app captures
 
 Reviewed on 2026-07-20; these predate the full token sweep and are kept for continuity.

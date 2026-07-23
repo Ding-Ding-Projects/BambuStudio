@@ -8,12 +8,15 @@
 #include "UxProgramTermsDialog.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
+#include "../Utils/ExternalEditor.hpp"
 #include <cassert>
 #include <string>
 #include <vector>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/simplebook.h>
+#include <wx/filedlg.h>
+#include <wx/colordlg.h>
 #include "OG_CustomCtrl.hpp"
 #include "fila_manager/wgtFilaManagerFeature.h"
 #include "slic3r/GUI/Widgets/Label.hpp"
@@ -52,7 +55,10 @@ static constexpr int BTN_HEIGHT           = 22;
 static constexpr int TITLE_PADDING        = 48;
 static constexpr int ITEM_LEFT_PADDING    = 48 + 16;
 static constexpr int ITEM_RIGHT_PADDING   = 24;
-static constexpr int ITEM_MIN_HEIGHT      = 24;
+// Minimum settings-row height. Must exceed the 24px MD3 switch pill so
+// adjacent single-line toggle rows keep a visible gap (24 made the pills
+// touch — see the Other-tab Online Models pair in the screenshot matrix).
+static constexpr int ITEM_MIN_HEIGHT      = 32;
 
 static wxString language_display_name(const wxLanguageInfo *info)
 {
@@ -1261,6 +1267,62 @@ wxWindow* PreferencesDialog::create_item_downloads(wxWindow* parent, int padding
     return item_panel;
 }
 
+// External-editor executable row (General > "External editor" set to Custom…):
+// a read-only path field + an outlined Browse button opening a wxFileDialog
+// whose selection persists to AppConfig key `param` ("external_editor_path").
+// Same row anatomy as create_item_downloads above.
+wxWindow* PreferencesDialog::create_item_external_editor(wxWindow* parent, int padding_left, std::string param)
+{
+    wxString editor_path = wxString::FromUTF8(app_config->get(param));
+    auto item_panel = new wxWindow(parent, wxID_ANY);
+    item_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+
+    wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
+    sizer->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    sizer->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
+
+    auto m_staticTextTitle = new wxStaticText(item_panel, wxID_ANY, _L("External editor path"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticTextTitle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_staticTextTitle->SetFont(::Label::Body_13);
+    m_staticTextTitle->Wrap(-1);
+
+    auto m_staticTextPath = new ::TextInput(item_panel, editor_path, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+    m_staticTextPath->SetCornerRadius(FromDIP(4));
+    m_staticTextPath->GetTextCtrl()->SetFont(::Label::Body_13);
+
+    // MD3 outlined button, matching the Download-path Browse button above.
+    auto m_button_browse = new Button(item_panel, _L("Browse"));
+    m_button_list[m_button_list.size()] = m_button_browse;
+    m_button_browse->SetVariant(Button::Variant::Outlined);
+    m_button_browse->SetButtonSize(Button::Size::Small);
+
+    m_button_browse->Bind(wxEVT_BUTTON, [this, m_staticTextPath, item_panel, param](auto& e) {
+#ifdef __WXMSW__
+        const wxString wildcard = _L("Executable files") + " (*.exe)|*.exe";
+#else
+        const wxString wildcard = _L("All files") + " (*.*)|*.*";
+#endif
+        wxFileDialog dialog(this, _L("Choose the external editor executable"), wxEmptyString, wxEmptyString, wildcard, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+        if (dialog.ShowModal() == wxID_OK) {
+            wxString editor_path = dialog.GetPath();
+            app_config->set(param, std::string(editor_path.ToUTF8().data()));
+            app_config->save();
+            m_staticTextPath->GetTextCtrl()->SetValue(editor_path);
+            item_panel->Layout();
+        }
+        });
+
+    sizer->Add(m_staticTextTitle, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(8)));
+    sizer->Add(m_staticTextPath, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(8)));
+    sizer->Add(m_button_browse, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+
+    item_panel->SetSizer(sizer);
+    item_panel->Layout();
+
+    return item_panel;
+}
+
 wxSizer *PreferencesDialog::create_item_radiobox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, int groupid, std::string param)
 {
     RadioBox *radiobox                      = new RadioBox(parent);
@@ -1924,6 +1986,8 @@ public:
 
     void SetSelected(bool s) { if (m_selected == s) return; m_selected = s; Refresh(); }
 
+    const wxColour &colour() const { return m_color; }
+
 private:
     void OnPaint(wxPaintEvent &)
     {
@@ -1953,6 +2017,76 @@ private:
     wxColour              m_color;
     bool                  m_selected;
     std::function<void()> m_on_click;
+};
+
+//  MD3AppearancePreview — a small always-live sample of the active MD3 tokens:
+//  a Surface card with an Outline hairline ring, a Primary pill with an
+//  OnPrimary "Sample" label, and a SecondaryContainer chip. Every paint
+//  re-resolves its colours through StateColor::semantic() and re-reads the
+//  active density metrics, so the accent/density handlers' fan-out (which
+//  Refresh()es the whole dialog via refresh_md3_appearance) repaints it with
+//  the freshly-recomputed roles — no per-change hook needed.
+class MD3AppearancePreview : public wxPanel
+{
+public:
+    explicit MD3AppearancePreview(wxWindow *parent) : wxPanel(parent, wxID_ANY)
+    {
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetMinSize(wxSize(-1, FromDIP(72)));
+        Bind(wxEVT_PAINT, &MD3AppearancePreview::OnPaint, this);
+    }
+
+private:
+    void OnPaint(wxPaintEvent &)
+    {
+        wxPaintDC pdc(this);
+        pdc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::Surface)));
+        pdc.Clear();
+#ifdef __WXMSW__
+        wxGCDC dc(pdc);
+#else
+        wxDC &dc = pdc;
+#endif
+        const MD3::DensityMetrics &metrics      = MD3::Metrics::active();
+        const int                  radius       = FromDIP(metrics.radius);
+        const int                  small_radius = FromDIP(metrics.small_radius);
+        const int                  padding      = FromDIP(metrics.padding);
+
+        // Surface card + Outline hairline ring (the density radius shows live).
+        wxRect card(GetClientSize());
+        card.Deflate(FromDIP(1), FromDIP(1));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline), FromDIP(1)));
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Surface)));
+        dc.DrawRoundedRectangle(card, radius);
+
+        dc.SetFont(::Label::Body_13); // rebuilt by the font controls; read fresh
+
+        // Primary pill with an OnPrimary sample label.
+        const wxString pill_text   = _L("Sample");
+        const wxSize   pill_extent = dc.GetTextExtent(pill_text);
+        const int      pill_h      = pill_extent.y + FromDIP(12);
+        const int      pill_w      = pill_extent.x + FromDIP(28);
+        const int      pill_x      = card.x + padding;
+        const int      pill_y      = card.y + (card.height - pill_h) / 2;
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
+        dc.DrawRoundedRectangle(pill_x, pill_y, pill_w, pill_h, MD3::Metrics::pill_radius(pill_h));
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnPrimary));
+        dc.DrawText(pill_text, pill_x + (pill_w - pill_extent.x) / 2, pill_y + (pill_h - pill_extent.y) / 2);
+
+        // SecondaryContainer chip (small radius follows density too).
+        const wxString chip_text   = wxString::FromUTF8("Aa");
+        const wxSize   chip_extent = dc.GetTextExtent(chip_text);
+        const int      chip_h      = chip_extent.y + FromDIP(10);
+        const int      chip_w      = chip_extent.x + FromDIP(24);
+        const int      chip_x      = pill_x + pill_w + FromDIP(12);
+        const int      chip_y      = card.y + (card.height - chip_h) / 2;
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SecondaryContainer)));
+        dc.DrawRoundedRectangle(chip_x, chip_y, chip_w, chip_h, small_radius);
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSecondaryContainer));
+        dc.DrawText(chip_text, chip_x + (chip_w - chip_extent.x) / 2, chip_y + (chip_h - chip_extent.y) / 2);
+    }
 };
 
 wxWindow *PreferencesDialog::create_appearance_tab()
@@ -1998,6 +2132,13 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         e.Skip();
     });
 
+    // Reentrancy guard shared by the appearance controls: MultiSwitchButton::
+    // SetSelection DOES emit wxCUSTOMEVT_MULTISWITCH_SELECTION (SwitchButton.cpp
+    // send_selection_event), so the reset button's programmatic re-selection
+    // would re-fire these handlers mid-reset. The guard makes reset the single
+    // writer: handlers only persist/apply on genuine user interaction.
+    auto resetting = std::make_shared<bool>(false);
+
     // Density: comfortable / compact SegmentedControl. Persists ui_density and
     // drives the MD3 runtime density state (MD3::Metrics::setDensity) so later-
     // built surfaces reflect the choice; a live re-theme refresh follows.
@@ -2007,7 +2148,8 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     density->SetMinSize(wxSize(FromDIP(220), FromDIP(30)));
     const std::string density_val = app_config->get("ui_density");
     density->SetSelection(density_val == "compact" ? 1 : 0);
-    density->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
+    density->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this, resetting](wxCommandEvent &e) {
+        if (*resetting) { e.Skip(); return; }
         const bool compact = e.GetInt() == 1;
         app_config->set("ui_density", compact ? "compact" : "comfortable");
         app_config->save();
@@ -2043,6 +2185,39 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         swatches->push_back(sw);
         accent_row->Add(sw, 0, wxRIGHT, FromDIP(10));
     }
+
+    // Custom accent: a wxColourDialog seeded from the persisted seed. Any colour
+    // is a valid seed (the six swatches are just shortcuts into the same
+    // MD3::setAccentSeed pipeline), so a pick persists + applies exactly like a
+    // preset; the preset rings deselect since none of them is the active seed.
+    auto *accent_custom = new Button(scrolled, _L("Custom") + dots);
+    m_button_list[m_button_list.size()] = accent_custom;
+    accent_custom->SetVariant(Button::Variant::Outlined);
+    accent_custom->SetButtonSize(Button::Size::Small);
+    accent_custom->Bind(wxEVT_BUTTON, [this, swatches](wxCommandEvent &) {
+        std::string seed = app_config->get("ui_accent_seed");
+        if (seed.empty()) seed = "#146c2e";
+        wxColour initial(wxString::FromUTF8(seed));
+        if (!initial.IsOk()) initial = wxColour(wxString::FromUTF8("#146c2e"));
+        wxColourData data;
+        data.SetChooseFull(true);
+        data.SetColour(initial);
+        wxColourDialog dlg(this, &data);
+        if (dlg.ShowModal() != wxID_OK) return;
+        const wxColour picked = dlg.GetColourData().GetColour();
+        if (!picked.IsOk()) return;
+        const wxString picked_hex = picked.GetAsString(wxC2S_HTML_SYNTAX);
+        app_config->set("ui_accent_seed", into_u8(picked_hex));
+        app_config->save();
+        MD3::setAccentSeed(picked);
+        // Keep the preset rings truthful: light up the matching swatch when the
+        // picked colour IS one of the six seeds (matches the reopen behaviour,
+        // which re-derives the selection case-insensitively), else clear all.
+        for (size_t j = 0; j < swatches->size(); ++j)
+            (*swatches)[j]->SetSelected((*swatches)[j]->colour().GetAsString(wxC2S_HTML_SYNTAX).IsSameAs(picked_hex, false));
+        refresh_md3_appearance(this);
+    });
+    accent_row->Add(accent_custom, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
 
     // ---- UI font (family + size) --------------------------------------------
     // Live preview label. Its font is re-fetched from the freshly rebuilt static
@@ -2132,7 +2307,8 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         if (d < scale_best) { scale_best = d; scale_idx = (int) i; }
     }
     text_size->SetSelection(scale_idx); // set before Bind so init does not re-fire
-    text_size->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this, apply_fonts](wxCommandEvent &e) {
+    text_size->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this, apply_fonts, resetting](wxCommandEvent &e) {
+        if (*resetting) { e.Skip(); return; }
         const int idx = e.GetInt();
         if (idx >= 0 && idx < (int) kScaleStrs.size()) {
             app_config->set("ui_font_scale", kScaleStrs[idx]);
@@ -2140,6 +2316,40 @@ wxWindow *PreferencesDialog::create_appearance_tab()
             apply_fonts();
         }
         e.Skip();
+    });
+
+    // Live MD3 token preview: repainted by the same refresh_md3_appearance walk
+    // the controls above trigger (its paint handler re-resolves roles/metrics).
+    auto *md3_preview = new MD3AppearancePreview(scrolled);
+
+    // Reset appearance to defaults. Theme is intentionally excluded — a light/
+    // dark flip mid-reset is disruptive; the reset covers the customized look:
+    // density, accent seed, font family and text size. Writes the defaults,
+    // re-syncs the MD3 runtime state, then re-selects the controls
+    // programmatically under the `resetting` guard: MultiSwitchButton::
+    // SetSelection emits its selection event, and the guard keeps those
+    // re-fired handlers from re-persisting/re-applying mid-reset, so this
+    // handler stays the single writer.
+    auto *reset_btn = new Button(scrolled, _L("Reset appearance to defaults"));
+    m_button_list[m_button_list.size()] = reset_btn;
+    reset_btn->SetVariant(Button::Variant::Outlined);
+    reset_btn->SetButtonSize(Button::Size::Small);
+    reset_btn->Bind(wxEVT_BUTTON, [this, density, font_combo, text_size, swatches, apply_fonts, resetting](wxCommandEvent &) {
+        app_config->set("ui_density", "comfortable");
+        app_config->set("ui_accent_seed", "#146c2e");
+        app_config->set("ui_font_family", "");
+        app_config->set("ui_font_scale", "1.0");
+        app_config->save();
+        MD3::Metrics::setDensity(MD3::Metrics::Density::Comfortable);
+        MD3::setAccentSeed(wxColour(wxString::FromUTF8("#146c2e"))); // Brand seed clears the accent override
+        *resetting = true;
+        density->SetSelection(0);   // Comfortable
+        font_combo->SetSelection(0); // Default family ("")
+        text_size->SetSelection(1); // Default scale (1.0)
+        *resetting = false;
+        for (size_t j = 0; j < swatches->size(); ++j)
+            (*swatches)[j]->SetSelected(j == 0); // Green = the Brand seed
+        apply_fonts(); // rebuild_fonts + preview re-font + refresh_md3_appearance + relayout
     });
 
     sizer->Add(title, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
@@ -2158,10 +2368,22 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     accent_line->Add(accent_row, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
     sizer->Add(accent_line, flags);
 
+    // Live token preview row (label-column indented, stretches to the row edge).
+    auto *md3_preview_line = new wxBoxSizer(wxHORIZONTAL);
+    md3_preview_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    md3_preview_line->Add(md3_preview, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    sizer->Add(md3_preview_line, flags);
+
     // UI font rows (family + size + live preview), consistent with the rows above.
     sizer->Add(make_row(_L("Font"), font_combo), flags);
     sizer->Add(make_row(_L("Text size"), text_size), flags);
     sizer->Add(make_row(_L("Preview"), font_preview), flags);
+
+    // Reset row (indent-aligned with the rows above, no leading label).
+    auto *reset_line = new wxBoxSizer(wxHORIZONTAL);
+    reset_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    reset_line->Add(reset_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    sizer->Add(reset_line, flags);
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);
@@ -2277,6 +2499,23 @@ wxWindow *PreferencesDialog::create_general_tab()
     // "下载地址" as a plain row, no separate "Downloads" section title).
     auto item_downloads = create_item_downloads(scrolled, 50, "download_path");
 
+    // External editor: the editors detected on this machine by friendly name,
+    // plus a trailing "Custom…" entry that uses the executable picked in the
+    // row below. Consumed by File > Open in External Editor.
+    std::vector<wxString>    EditorLabels;
+    std::vector<std::string> EditorValues;
+    for (const FoundEditor &editor : get_available_editors()) {
+        EditorLabels.push_back(wxString::FromUTF8(editor.name));
+        EditorValues.push_back(editor.name);
+    }
+    EditorLabels.push_back(_L("Custom") + dots);
+    EditorValues.push_back("custom");
+    auto item_external_editor = create_item_combobox(
+        _L("External editor"), scrolled,
+        _L("Editor used by File > Open in External Editor; \"Custom\" uses the executable chosen below."),
+        "external_editor", EditorLabels, EditorValues);
+    auto item_external_editor_path = create_item_external_editor(scrolled, 50, "external_editor_path");
+
     sizer->Add(title_basic, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
@@ -2292,6 +2531,8 @@ wxWindow *PreferencesDialog::create_general_tab()
     sizer->Add(item_beta_version_update, flags);
     sizer->Add(item_priv_policy, flags);
     sizer->Add(item_downloads, flags);
+    sizer->Add(item_external_editor, flags);
+    sizer->Add(item_external_editor_path, flags);
     scrolled->SetSizer(sizer);
     scrolled->FitInside();
     return scrolled;

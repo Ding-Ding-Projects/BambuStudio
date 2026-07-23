@@ -61,13 +61,14 @@ private:
 	void update();
 
 	// Draw a single state to a DPI-correct, antialiased, transparent bitmap: the
-	// 20px glyph centered inside the 44px hit-target canvas, with an optional
-	// distinct keyboard-focus ring (used only for the MSW SetBitmapFocus bitmap).
+	// bare 20px (kCheckBoxPx) glyph, with an optional separate keyboard-focus
+	// variant that adds a 1.5px Primary ring inset at the box edge — same 20px
+	// footprint — used only for the MSW SetBitmapFocus bitmap.
 	wxBitmap renderBitmap(bool checked, bool half, bool disabled, bool focus = false) const;
 
-	// Device-pixel side of the 44px logical hit-target window at the current DPI.
-	// Kept in sync with renderBitmap() so the button reserves exactly the drawn
-	// (hit-target) size; the visible glyph stays 20px, centered inside it.
+	// Device-pixel side of the 20px (kCheckBoxPx) logical glyph at the current
+	// DPI. Kept in sync with renderBitmap() so the button reserves exactly the
+	// drawn glyph size; the focus ring stays inside that same window.
 	int deviceSide() const;
 
 private:

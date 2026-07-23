@@ -1488,3 +1488,51 @@ msgstr "新增專案分頁"
 #. reviewed-category: destructive-dirty-error-security
 msgid "This project tab has unsaved changes that will be lost. Close it anyway?"
 msgstr "呢個專案分頁有未儲存嘅修改，關閉就會失去。確定要關閉？"
+
+#. reviewed-category: preferences
+msgid "Custom"
+msgstr "自訂"
+
+#. reviewed-category: preferences
+msgid "Browse"
+msgstr "瀏覽"
+
+#. reviewed-category: preferences
+msgid "External editor"
+msgstr "外部編輯器"
+
+#. reviewed-category: preferences
+msgid "Editor used by File > Open in External Editor; \"Custom\" uses the executable chosen below."
+msgstr "「檔案 > 用外部編輯器開啟」用嘅編輯器；揀「自訂」就用下面揀嘅執行檔。"
+
+#. reviewed-category: preferences
+msgid "External editor path"
+msgstr "外部編輯器路徑"
+
+#. reviewed-category: preferences
+msgid "Executable files"
+msgstr "可執行檔案"
+
+#. reviewed-category: preferences
+msgid "Choose the external editor executable"
+msgstr "揀外部編輯器嘅執行檔"
+
+#. reviewed-category: file-actions
+msgid "Open in External Editor"
+msgstr "用外部編輯器開啟"
+
+#. reviewed-category: file-actions
+msgid "Open the current project's folder in the configured external editor"
+msgstr "用設定咗嘅外部編輯器開啟目前專案嘅資料夾"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "No external editor is configured. Choose one in Preferences > General > External editor."
+msgstr "仲未設定外部編輯器。請去「偏好設定 > 一般 > 外部編輯器」揀一個。"
+
+#. reviewed-category: preferences
+msgid "Sample"
+msgstr "樣本"
+
+#. reviewed-category: preferences
+msgid "Reset appearance to defaults"
+msgstr "將外觀重設返預設值"

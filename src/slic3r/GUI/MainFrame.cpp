@@ -42,6 +42,7 @@
 #include "ProjectHistoryDialog.hpp"
 #include "WebViewDialog.hpp"
 #include "../Utils/Process.hpp"
+#include "../Utils/ExternalEditor.hpp"
 #include "format.hpp"
 // BBS
 #include "PartPlate.hpp"
@@ -3774,6 +3775,39 @@ void MainFrame::init_menubar_as_editor()
             _L("Browse and restore local Git-backed project versions"),
             [this](wxCommandEvent&) { show_project_history(); }, "", nullptr,
             [this](){return m_plater != nullptr; }, this);
+
+        // Open the current project's folder in the configured external editor
+        // (Preferences > General > External editor). "custom" routes to the
+        // user-picked executable; any other value resolves through the
+        // detected-editor table with a sensible default fallback.
+        append_menu_item(fileMenu, wxID_ANY, _L("Open in External Editor"),
+            _L("Open the current project's folder in the configured external editor"),
+            [this](wxCommandEvent&) {
+                if (!m_plater) return;
+                wxString proj = m_plater->get_project_filename(".3mf");
+                if (proj.IsEmpty()) return;
+                boost::filesystem::path folder = boost::filesystem::path(into_u8(proj)).parent_path();
+                AppConfig *cfg = wxGetApp().app_config;
+                wxString editor_exe;
+                if (cfg->get("external_editor") == "custom") {
+                    // An explicit Custom choice must never silently fall back to
+                    // an auto-detected editor: honor the picked path or warn.
+                    editor_exe = from_u8(cfg->get("external_editor_path"));
+                } else {
+                    FoundEditor editor = find_editor_or_default(cfg->get("external_editor"));
+                    editor_exe = from_u8(editor.exe_path);
+                }
+                if (editor_exe.IsEmpty()) {
+                    if (m_plater->get_notification_manager())
+                        m_plater->get_notification_manager()->push_notification(
+                            NotificationType::CustomNotification,
+                            NotificationManager::NotificationLevel::WarningNotificationLevel,
+                            _u8L("No external editor is configured. Choose one in Preferences > General > External editor."));
+                    return;
+                }
+                open_in_external_editor(editor_exe, from_u8(folder.string()));
+            }, "", nullptr,
+            [this](){return m_plater != nullptr && !m_plater->get_project_filename(".3mf").IsEmpty(); }, this);
 
 
         fileMenu->AppendSeparator();

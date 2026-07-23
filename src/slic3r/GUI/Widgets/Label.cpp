@@ -776,11 +776,29 @@ void SectionHeader::OnPaint(wxPaintEvent &)
 
 #ifdef __WXMSW__
     wxGCDC dc(pdc);
+    // Guard: GDI+ heap-corrupts when handed a font whose face is missing from
+    // the session font table (see the MaterialIcon.cpp plain-GDI rewrite), so
+    // verify the Label-table face before it reaches this wxGCDC. Deliberately
+    // NOT faceIsInstalled(): its construct-and-compare fallback echoes the
+    // requested name on wxMSW and so never fails; a strict enumerator check is
+    // required for the heap-safety property. Cached per face — it can only
+    // change on Label::rebuild_fonts.
+    const wxFont header_font = [] {
+        static wxString s_face;
+        static bool     s_ok = false;
+        const wxString  face = Label::Head_11.GetFaceName();
+        if (face != s_face) {
+            s_face = face;
+            s_ok   = !face.empty() && wxFontEnumerator::IsValidFacename(face);
+        }
+        return s_ok ? Label::Head_11 : wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    }();
 #else
     wxDC &dc = pdc;
+    const wxFont &header_font = Label::Head_11;
 #endif
 
-    dc.SetFont(Label::Head_11);
+    dc.SetFont(header_font);
     const wxColour fg = StateColor::semantic(MD3::Role::OnSurfaceVariant);
     dc.SetTextForeground(fg);
 

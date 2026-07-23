@@ -8263,8 +8263,17 @@ void GUI_App::check_updates(const bool verbose)
             m_app_conf_exists = true;
         }
         else if (verbose && updater_result == PresetUpdater::R_NOOP) {
-            MsgNoUpdates dlg;
-            dlg.ShowModal();
+            // OK-only informational acknowledgement: surface as a corner toast,
+            // not a modal (fall back to the dialog before the Plater exists).
+            if (plater() != nullptr && plater()->get_notification_manager() != nullptr) {
+                plater()->get_notification_manager()->push_notification(
+                    NotificationType::CustomNotification,
+                    NotificationManager::NotificationLevel::RegularNotificationLevel,
+                    _u8L("The configuration is up to date."));
+            } else {
+                MsgNoUpdates dlg;
+                dlg.ShowModal();
+            }
         }
     }
     catch (const std::exception & ex) {
