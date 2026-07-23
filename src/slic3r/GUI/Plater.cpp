@@ -1152,7 +1152,7 @@ void Sidebar::priv::update_printer_identity()
     if (text_printer_name->GetLabel() != name)
         text_printer_name->SetLabel(name);
 
-    const Preset &printer = bundle->printers.get_edited_preset();
+    Preset &printer = bundle->printers.get_edited_preset();
     wxString status;
     if (auto *nd = printer.config.option<ConfigOptionFloats>("nozzle_diameter"); nd && !nd->values.empty()) {
         wxString diam = wxString::FromDouble(nd->values[0], 1);
