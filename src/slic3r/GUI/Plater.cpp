@@ -21053,6 +21053,79 @@ int Plater::load_project(wxString const &filename2,
     return wx_dlg_id;
 }
 
+// BBS: session file-tabs — serialize ONLY the outgoing project so a tab switch
+// can round-trip it later. Reuses the shipped Backup autosave archive
+// (SaveStrategy::Backup == WithGcode|Silence|SkipStatic|SplitModel, the same
+// silent full-project format MainFrame's periodic backup writes). The caller
+// (MainFrame) invokes this only when is_project_dirty(), so switch latency is
+// paid only for tabs with unsaved edits. Never touches project dirty/title
+// state — the outgoing tab stays dirty in the tab model until re-activated.
+// Returns true only when the archive was written.
+bool Plater::save_snapshot_to(const std::string& path)
+{
+    if (path.empty())
+        return false;
+    // Do not serialize a half-loaded document if a project load is in flight.
+    if (m_loading_project) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": skipped, a project load is in progress";
+        return false;
+    }
+    const boost::filesystem::path output_path = into_path(from_u8(path));
+    int ret = -1;
+    // export_3mf already contains its own serialization exceptions (Silence
+    // suppresses any dialog and it returns -1 on failure), but mirror the
+    // crash-recovery autosave call sites and stay exception-safe here too.
+    try {
+        ret = export_3mf(output_path, SaveStrategy::Backup);
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": snapshot export threw: " << ex.what();
+        return false;
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": snapshot export threw";
+        return false;
+    }
+    return ret >= 0;
+}
+
+// BBS: session file-tabs — load a tab's snapshot .3mf (or its real project
+// file) as the live document when switching tabs. Reuses the crash-recovery
+// Restore round-trip: load_project() runs p->reset() internally (which also
+// stops any in-flight background slicing process) and, because a non-"-"
+// originfile selects LoadStrategy::Restore, imports model + config from the
+// archive without the interactive close/save prompt (skip_close_confirmation).
+// The originfile arg is used by load_files() only for its display filename, so
+// passing the path twice never re-parses geometry. MainFrame owns the tab
+// label/title (via SetActiveTitle and is_project_dirty()/get_project_filename()).
+// Undo history and camera reset on switch — acceptable per design. Returns true
+// only when the project actually loaded.
+bool Plater::load_snapshot_from(const std::string& path)
+{
+    if (path.empty())
+        return false;
+    // Serialize switches: block re-entrancy while another project load runs
+    // (mirrors the m_loading_project guard inside load_project()).
+    if (m_loading_project) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": skipped, a project load is already in progress";
+        return false;
+    }
+    const wxString file = from_u8(path);
+    bool load_succeeded = false;
+    try {
+        load_project(file, file, &load_succeeded, /*skip_close_confirmation=*/true);
+    } catch (const std::exception &ex) {
+        // load_project() throwing leaves the loading flag latched; clear it so
+        // the next switch is not permanently blocked (matches the restore path).
+        m_loading_project = false;
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": snapshot load threw: " << ex.what();
+        return false;
+    } catch (...) {
+        m_loading_project = false;
+        BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": snapshot load threw";
+        return false;
+    }
+    return load_succeeded;
+}
+
 // BBS: save logic
 int Plater::save_project(bool saveAs)
 {

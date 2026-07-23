@@ -380,6 +380,13 @@ public:
     // BBS: save & backup
     int load_project(wxString const & filename = "", wxString const & originfile = "-",
                      bool *load_succeeded = nullptr, bool skip_close_confirmation = false);
+    // BBS: session file-tabs — silent snapshot round-trip for tab switching.
+    // save_snapshot_to() writes the whole live project to a temp .3mf using the
+    // shipped Backup autosave archive; load_snapshot_from() restores it (or a
+    // real project file) through the crash-recovery Restore path. Both reuse
+    // existing serialization only and never prompt. Return true on success.
+    bool save_snapshot_to(const std::string& path);
+    bool load_snapshot_from(const std::string& path);
     int save_project(bool saveAs = false);
     //BBS download project by project id
     void import_model_id(wxString download_info);

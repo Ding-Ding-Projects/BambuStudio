@@ -18366,6 +18366,21 @@ msgstr ""
 msgid "The quick brown fox"
 msgstr ""
 
+msgid "Close project tab"
+msgstr ""
+
+msgid "Close tab"
+msgstr ""
+
+msgid "Closing a project tab while some presets are modified."
+msgstr ""
+
+msgid "New project tab"
+msgstr ""
+
+msgid "This project tab has unsaved changes that will be lost. Close it anyway?"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

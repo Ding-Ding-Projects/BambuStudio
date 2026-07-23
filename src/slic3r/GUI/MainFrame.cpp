@@ -62,6 +62,11 @@
 #include "UnsavedChangesDialog.hpp"
 #include "MsgDialog.hpp"
 #include "Notebook.hpp"
+// BBS: session file-tabs
+#include "ProjectTabBar.hpp"
+#include "libslic3r/Utils.hpp"
+#include <boost/filesystem.hpp>
+#include <atomic>
 #include "GUI_Factories.hpp"
 #include "GUI_ObjectList.hpp"
 #include "NotificationManager.hpp"
@@ -456,6 +461,30 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
      sizer->Add(panel_topbar, 0, wxEXPAND);
 #endif // __WINDOWS__
 
+    // BBS: session file-tabs. The project bar lives in the top-level frame sizer,
+    // BETWEEN the title bar and the workspace tabs, so the layout reads
+    // title-bar -> project-tabs -> workspace-tabs -> canvas.
+    m_project_tabbar = new ProjectTabBar(this);
+    Bind(EVT_PROJECT_TAB_SWITCH, [this](wxCommandEvent& e) { switch_project_tab(e.GetInt()); });
+    Bind(EVT_PROJECT_TAB_CLOSE,  [this](wxCommandEvent& e) { close_project_tab(e.GetInt()); });
+    Bind(EVT_PROJECT_TAB_NEW,    [this](wxCommandEvent&)   { new_project_tab(); });
+    sizer->Add(m_project_tabbar, 0, wxEXPAND);
+
+    // Restore persisted tab entries; seed a single tab for the current (Untitled)
+    // project when none were restored so single-tab use behaves exactly like today.
+    m_project_tabbar->LoadFromConfig();
+    if (m_project_tabbar->Count() == 0) {
+        const wxString cur_file  = m_plater ? m_plater->get_project_filename() : wxString();
+        wxString       cur_title = m_plater ? m_plater->get_project_name() : wxString();
+        if (cur_title.IsEmpty())
+            cur_title = _L("Untitled");
+        m_project_tabbar->AddTab(into_u8(cur_file), cur_title, /*activate=*/true);
+    } else if (m_project_tabbar->GetActive() < 0) {
+        m_project_tabbar->SetActive(0);
+    }
+    // Defer the first activation (loading the active tab's document) until the frame
+    // and canvases are realized and the app finished its own startup file loading.
+    CallAfter([this]() { reconcile_initial_project_tab(); });
 
     sizer->Add(m_main_sizer, 1, wxEXPAND);
     SetSizerAndFit(sizer);
@@ -736,8 +765,8 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
         }
         else if (evt.CmdDown() && evt.GetKeyCode() == 'G') { if (can_export_gcode()) { wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_EXPORT_SLICED_FILE)); } evt.Skip(); return; }
         if (evt.CmdDown() && evt.GetKeyCode() == 'J') { m_printhost_queue_dlg->Show(); return; }
-        if (evt.CmdDown() && evt.GetKeyCode() == 'N') { m_plater->new_project(); return;}
-        if (evt.CmdDown() && evt.GetKeyCode() == 'O') { m_plater->load_project(); return;}
+        if (evt.CmdDown() && evt.GetKeyCode() == 'N') { new_project_tab(); return;}
+        if (evt.CmdDown() && evt.GetKeyCode() == 'O') { open_project_tab(); return;}
         if (evt.CmdDown() && evt.ShiftDown() && evt.GetKeyCode() == 'S') { if (can_save_as()) m_plater->save_project(true); return;}
         else if (evt.CmdDown() && evt.GetKeyCode() == 'S') { if (can_save()) m_plater->save_project(); return;}
         if (evt.CmdDown() && evt.GetKeyCode() == 'F') {
@@ -1089,6 +1118,9 @@ void MainFrame::update_layout()
 void MainFrame::shutdown()
 {
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "MainFrame::shutdown enter";
+    // BBS: session file-tabs — persist tab entries and groups before teardown.
+    if (m_project_tabbar)
+        m_project_tabbar->SaveToConfig();
     // BBS: backup
     Slic3r::set_backup_callback(nullptr);
 #ifdef _WIN32
@@ -1175,7 +1207,20 @@ void MainFrame::update_title()
     // that is already shown: in the custom topbar on Windows, and in the native window title
     // on macOS/Linux (both set by Plater::priv::set_project_name).
     const wxString name  = m_plater->get_project_name();
-    const wxString title = (m_plater->is_project_dirty() && !name.IsEmpty()) ? ("* " + name) : name;
+    const bool     dirty = m_plater->is_project_dirty();
+    // BBS: keep the active project tab's label + dirty dot in lock-step with the live
+    // Plater document. Runs before the title-cache short-circuit so the dot always
+    // tracks; gated until the startup reconcile so it never clobbers restored labels.
+    // Suppressed during a tab switch: load_snapshot_from fires update_title() internally
+    // while the OUTGOING tab is still active, which would otherwise rewrite that tab's
+    // label to the incoming project and clear its dirty dot. switch_project_tab does an
+    // explicit sync after SetActive() instead.
+    if (m_project_tabs_ready && !m_project_tab_switching && m_project_tabbar &&
+        m_project_tabbar->GetActive() >= 0) {
+        m_project_tabbar->SetActiveTitle(name.IsEmpty() ? _L("Untitled") : name);
+        m_project_tabbar->SetActiveDirty(dirty);
+    }
+    const wxString title = (dirty && !name.IsEmpty()) ? ("* " + name) : name;
     if (title == m_title_cache)
         return;
     m_title_cache = title;
@@ -1240,6 +1285,286 @@ void MainFrame::update_title_colour_after_set_title()
 #ifdef __APPLE__
     set_title_colour_after_set_title(GetHandle());
 #endif
+}
+
+// ----------------------------------------------------------------------------
+// BBS: session file-tabs orchestration (see ProjectTabBar.hpp / SHARED CONTRACT).
+// The app keeps ONE live Plater document. Switching tabs snapshots the outgoing
+// tab (only when dirty) to a per-tab temp .3mf and loads the target, reusing the
+// shipped Backup/Restore round-trip (Plater::save_snapshot_to / load_snapshot_from).
+// Switch latency is inherent (full deserialize + GL rebuild); undo history and the
+// camera reset on switch — that is acceptable for this design.
+// ----------------------------------------------------------------------------
+namespace {
+// RAII guard that serializes tab operations so a click landing mid-switch is ignored
+// (mirrors Plater's m_loading_project re-entrancy guard).
+struct TabOpGuard {
+    bool& m_flag;
+    explicit TabOpGuard(bool& f) : m_flag(f) { m_flag = true; }
+    ~TabOpGuard() { m_flag = false; }
+    TabOpGuard(const TabOpGuard&) = delete;
+    TabOpGuard& operator=(const TabOpGuard&) = delete;
+};
+
+// A fresh, unique temp path under data_dir()/cache/project_tabs for one tab's snapshot.
+std::string make_project_tab_snapshot_path()
+{
+    namespace fs = boost::filesystem;
+    static std::atomic<uint64_t> s_counter{0};
+    fs::path dir = fs::path(data_dir()) / "cache" / "project_tabs";
+    boost::system::error_code ec;
+    fs::create_directories(dir, ec);
+    const std::string stamp = wxDateTime::UNow().GetValue().ToString().ToStdString();
+    const uint64_t    seq   = s_counter.fetch_add(1);
+    fs::path file = dir / (std::string("tab_") + stamp + "_" + std::to_string(seq) + ".3mf");
+    return file.string();
+}
+} // namespace
+
+bool MainFrame::save_active_tab_snapshot_if_dirty()
+{
+    if (!m_plater || !m_project_tabbar)
+        return true;
+    const int active = m_project_tabbar->GetActive();
+    if (active < 0 || active >= m_project_tabbar->Count())
+        return true;
+    // Serialize ONLY the outgoing tab, and only when it actually has unsaved changes:
+    // a clean tab is reproduced by reloading its file_path, so no snapshot is needed.
+    if (!m_plater->is_project_dirty())
+        return true;
+    ProjectTab& t = m_project_tabbar->TabAt(active);
+    if (t.snapshot_path.empty())
+        t.snapshot_path = make_project_tab_snapshot_path();
+    const bool ok = m_plater->save_snapshot_to(t.snapshot_path);
+    if (ok)
+        t.dirty = true;
+    else
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": failed to snapshot outgoing project tab " << active;
+    return ok;
+}
+
+void MainFrame::switch_project_tab(int target)
+{
+    if (!m_plater || !m_project_tabbar)
+        return;
+    if (m_project_tab_switching) // ignore a click that lands mid-switch
+        return;
+    if (target < 0 || target >= m_project_tabbar->Count())
+        return;
+    if (target == m_project_tabbar->GetActive())
+        return;
+
+    TabOpGuard guard(m_project_tab_switching);
+
+    // p->reset() inside the load path already settles/stops any background slicing.
+    save_active_tab_snapshot_if_dirty();
+
+    ProjectTab&       tgt                  = m_project_tabbar->TabAt(target);
+    const bool        loaded_from_snapshot = !tgt.snapshot_path.empty();
+    const std::string load_path            = loaded_from_snapshot ? tgt.snapshot_path : tgt.file_path;
+    if (!load_path.empty())
+        m_plater->load_snapshot_from(load_path);
+    else
+        m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true); // never-saved tab
+
+    // Restore the tab's real on-disk identity. Loading from a temp snapshot leaves the
+    // project filename pointing at the snapshot, which would misdirect Ctrl+S and the
+    // window title and pollute Recent Projects; re-point it at the tab's real file.
+    // (A never-saved dirty tab has no real file — its title stays the tab label; Save
+    // then correctly behaves as Save As. Tracked as a followup.)
+    if (loaded_from_snapshot && !tgt.file_path.empty())
+        m_plater->set_project_filename(wxString::FromUTF8(tgt.file_path));
+
+    m_project_tabbar->SetActive(target);
+    // Explicit tab-bar sync: update_title()'s own sync is suppressed while
+    // m_project_tab_switching is set (see update_title), so set the incoming tab's
+    // label + dirty dot here from the tab model.
+    m_project_tabbar->SetActiveTitle(tgt.title.IsEmpty() ? _L("Untitled") : tgt.title);
+    m_project_tabbar->SetActiveDirty(tgt.dirty);
+    update_title();
+    m_project_tabbar->SaveToConfig();
+}
+
+void MainFrame::close_project_tab(int index)
+{
+    if (!m_plater || !m_project_tabbar)
+        return;
+    if (m_project_tab_switching)
+        return;
+    const int count = m_project_tabbar->Count();
+    if (index < 0 || index >= count)
+        return;
+
+    const int active = m_project_tabbar->GetActive();
+
+    TabOpGuard guard(m_project_tab_switching);
+
+    if (index == active) {
+        // Active tab: reuse the plater's unsaved-changes confirmation (same second-check
+        // as the app-close path). Cancel aborts the close.
+        auto check = [](bool yes_or_no) {
+            if (yes_or_no)
+                return true;
+            return wxGetApp().check_and_save_current_preset_changes(
+                _L("Close project tab"), _L("Closing a project tab while some presets are modified."));
+        };
+        if (m_plater->close_with_confirm(check) == wxID_CANCEL)
+            return;
+    } else {
+        // Background tab with unsaved changes (its edits live only in the temp snapshot):
+        // confirm before discarding them, since the live plater can't run its own
+        // save-confirm on a project it doesn't currently hold.
+        ProjectTab& t = m_project_tabbar->TabAt(index);
+        if (t.dirty || !t.snapshot_path.empty()) {
+            MessageDialog dlg(this, _L("This project tab has unsaved changes that will be lost. Close it anyway?"),
+                              _L("Close project tab"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
+            if (dlg.ShowModal() != wxID_YES)
+                return;
+        }
+    }
+
+    // Best-effort cleanup of this tab's temp snapshot.
+    {
+        ProjectTab& t = m_project_tabbar->TabAt(index);
+        if (!t.snapshot_path.empty()) {
+            boost::system::error_code ec;
+            boost::filesystem::remove(boost::filesystem::path(t.snapshot_path), ec);
+        }
+    }
+
+    m_project_tabbar->CloseTab(index);
+    const int remaining = m_project_tabbar->Count();
+
+    if (remaining == 0) {
+        // Never leave the app tab-less: start a fresh Untitled tab.
+        m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true);
+        wxString t = m_plater->get_project_name();
+        if (t.IsEmpty())
+            t = _L("Untitled");
+        m_project_tabbar->AddTab(std::string(), t, /*activate=*/true);
+        update_title();
+    } else if (index == active) {
+        // Closed the visible tab: activate a neighbour and load its document.
+        int neighbour = index;
+        if (neighbour >= remaining)
+            neighbour = remaining - 1;
+        ProjectTab&       n         = m_project_tabbar->TabAt(neighbour);
+        const std::string load_path = n.snapshot_path.empty() ? n.file_path : n.snapshot_path;
+        if (!load_path.empty())
+            m_plater->load_snapshot_from(load_path);
+        else
+            m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true);
+        m_project_tabbar->SetActive(neighbour);
+        update_title();
+    } else {
+        // Closed a background tab: keep the live document; fix the active index.
+        const int new_active = (active > index) ? active - 1 : active;
+        m_project_tabbar->SetActive(new_active);
+    }
+    m_project_tabbar->SaveToConfig();
+}
+
+void MainFrame::new_project_tab()
+{
+    if (!m_plater || !m_project_tabbar)
+        return;
+    if (m_project_tab_switching)
+        return;
+    if (!can_start_new_project())
+        return;
+
+    TabOpGuard guard(m_project_tab_switching);
+
+    // Preserve the current tab, then open a fresh Untitled tab alongside it. The
+    // outgoing document is already handled, so skip new_project's own confirm.
+    save_active_tab_snapshot_if_dirty();
+    if (m_plater->new_project(/*skip_confirm=*/true) == wxID_CANCEL)
+        return;
+
+    wxString t = m_plater->get_project_name();
+    if (t.IsEmpty())
+        t = _L("Untitled");
+    m_project_tabbar->AddTab(std::string(), t, /*activate=*/true);
+    update_title();
+    m_project_tabbar->SaveToConfig();
+}
+
+void MainFrame::open_project_tab()
+{
+    if (!m_plater || !m_project_tabbar)
+        return;
+    if (m_project_tab_switching)
+        return;
+    if (!can_open_project())
+        return;
+
+    // Ask for the file first (app-modal dialog blocks the tab bar), then load it into
+    // a new tab. Delegating to open_project_in_tab keeps the re-entrancy guard scoped
+    // to the load rather than the dialog.
+    wxString input_file;
+    wxGetApp().load_project(this, input_file);
+    if (input_file.IsEmpty())
+        return;
+    open_project_in_tab(input_file);
+}
+
+void MainFrame::open_project_in_tab(const wxString& filename)
+{
+    if (!m_plater || !m_project_tabbar)
+        return;
+    if (m_project_tab_switching)
+        return;
+    if (filename.IsEmpty())
+        return;
+
+    TabOpGuard guard(m_project_tab_switching);
+
+    // Preserve the current tab, then load the file into the single live plater. We
+    // already handled the outgoing document, so skip load_project's close confirmation.
+    save_active_tab_snapshot_if_dirty();
+    m_plater->load_project(filename, "-", nullptr, /*skip_close_confirmation=*/true);
+
+    wxString t = m_plater->get_project_name();
+    if (t.IsEmpty())
+        t = _L("Untitled");
+    m_project_tabbar->AddTab(into_u8(filename), t, /*activate=*/true);
+    update_title();
+    m_project_tabbar->SaveToConfig();
+}
+
+void MainFrame::reconcile_initial_project_tab()
+{
+    if (!m_plater || !m_project_tabbar)
+        return;
+    // From here on the active-tab label/dirty sync in update_title() is live.
+    m_project_tabs_ready = true;
+
+    int active = m_project_tabbar->GetActive();
+    if (active < 0) {
+        if (m_project_tabbar->Count() == 0) {
+            update_title();
+            return;
+        }
+        active = 0;
+        m_project_tabbar->SetActive(0);
+    }
+
+    // If the app already established a real document at startup (command-line open,
+    // recovery, etc.), keep it — update_title() below relabels the active tab to match.
+    const bool live_has_file = !m_plater->get_project_filename().IsEmpty();
+    if (!live_has_file) {
+        // Fresh Untitled document: lazily restore the tab the user left on last session.
+        ProjectTab&       t         = m_project_tabbar->TabAt(active);
+        const std::string load_path = t.snapshot_path.empty() ? t.file_path : t.snapshot_path;
+        if (!load_path.empty()) {
+            boost::system::error_code ec;
+            if (boost::filesystem::exists(boost::filesystem::path(load_path), ec)) {
+                TabOpGuard guard(m_project_tab_switching);
+                m_plater->load_snapshot_from(load_path);
+            }
+        }
+    }
+    update_title();
 }
 
 void MainFrame::show_option(bool show)
@@ -3106,6 +3431,10 @@ void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
     m_topbar->Rescale();
 #endif
 
+    // BBS: session file-tabs — re-fetch fonts + re-layout for the new DPI.
+    if (m_project_tabbar)
+        m_project_tabbar->Rescale();
+
     m_tabpanel->Rescale();
 
     update_side_button_style();
@@ -3382,18 +3711,19 @@ void MainFrame::init_menubar_as_editor()
             [this] { return m_plater != nullptr && wxGetApp().app_config->get("app", "single_instance") == "false"; }, this);
 #endif
         // New Project
+        // BBS: session file-tabs — open in a NEW tab instead of replacing in place.
         append_menu_item(fileMenu, wxID_ANY, _L("New Project") + "\t" + ctrl + "N", _L("Start a new project"),
-            [this](wxCommandEvent&) { if (m_plater) m_plater->new_project(); }, "", nullptr,
+            [this](wxCommandEvent&) { new_project_tab(); }, "", nullptr,
             [this](){return can_start_new_project(); }, this);
         // Open Project
 
 #ifndef __APPLE__
         append_menu_item(fileMenu, wxID_ANY, _L("Open Project") + dots + "\t" + ctrl + "O", _L("Open a project file"),
-            [this](wxCommandEvent&) { if (m_plater) m_plater->load_project(); }, "menu_open", nullptr,
+            [this](wxCommandEvent&) { open_project_tab(); }, "menu_open", nullptr,
             [this](){return can_open_project(); }, this);
 #else
         append_menu_item(fileMenu, wxID_ANY, _L("Open Project") + dots + "\t" + ctrl + "O", _L("Open a project file"),
-            [this](wxCommandEvent&) { if (m_plater) m_plater->load_project(); }, "", nullptr,
+            [this](wxCommandEvent&) { open_project_tab(); }, "", nullptr,
             [this](){return can_open_project(); }, this);
 #endif
 
@@ -4918,7 +5248,8 @@ void MainFrame::open_recent_project(size_t file_id, wxString const & filename)
     if (wxFileExists(filename)) {
         CallAfter([this, filename] {
             if (wxGetApp().can_load_project()) {
-                m_plater->load_project(filename);
+                // BBS: session file-tabs — open the recent project in a new tab.
+                open_project_in_tab(filename);
             }
         });
     }

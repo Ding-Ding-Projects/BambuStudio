@@ -488,6 +488,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/IMSlider_Utils.hpp
     GUI/Notebook.cpp
     GUI/Notebook.hpp
+    GUI/ProjectTabBar.cpp
+    GUI/ProjectTabBar.hpp
     GUI/TabButton.cpp
     GUI/TabButton.hpp
     GUI/Tabbook.cpp

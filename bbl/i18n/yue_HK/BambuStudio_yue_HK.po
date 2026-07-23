@@ -1468,3 +1468,23 @@ msgstr "大"
 #. reviewed-category: preferences
 msgid "The quick brown fox"
 msgstr "敏捷嘅棕色狐狸"
+
+#. reviewed-category: file-actions
+msgid "Close project tab"
+msgstr "關閉專案分頁"
+
+#. reviewed-category: file-actions
+msgid "Close tab"
+msgstr "關閉分頁"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Closing a project tab while some presets are modified."
+msgstr "關閉專案分頁時，有部分預設仍未儲存。"
+
+#. reviewed-category: file-actions
+msgid "New project tab"
+msgstr "新增專案分頁"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This project tab has unsaved changes that will be lost. Close it anyway?"
+msgstr "呢個專案分頁有未儲存嘅修改，關閉就會失去。確定要關閉？"
