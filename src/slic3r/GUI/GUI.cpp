@@ -24,7 +24,11 @@
 
 #include "AboutDialog.hpp"
 #include "MsgDialog.hpp"
+#include "NotificationManager.hpp"
+#include "Plater.hpp"
 #include "format.hpp"
+
+#include <wx/toplevel.h>
 
 #include "WebUserLoginDialog.hpp"
 
@@ -234,9 +238,46 @@ void change_opt_value(DynamicPrintConfig& config, const t_config_option_key& opt
 	}
 }
 
+// --- Non-blocking informational messages -----------------------------------
+// Pure informational, OK-only messages (info / warning / error acknowledgements
+// that carry no decision) are presented as non-blocking corner notifications
+// instead of modal dialogs. They fall back to the original modal dialog when a
+// corner toast could not be seen — i.e. before the Plater/NotificationManager
+// exist, or while another modal dialog is on top (the notification renders on
+// the main GL canvas, which such a dialog would cover). Dialogs that ask the
+// user to decide (Yes/No/Cancel, confirmations, destructive gates) never route
+// here and stay modal by design.
+static bool any_modal_dialog_active()
+{
+    for (wxWindowList::const_iterator it = wxTopLevelWindows.begin(); it != wxTopLevelWindows.end(); ++it) {
+        if (auto* dlg = dynamic_cast<wxDialog*>(*it))
+            if (dlg->IsModal())
+                return true;
+    }
+    return false;
+}
+
+static bool try_push_corner_notification(NotificationManager::NotificationLevel level,
+                                         const wxString& title, const wxString& message)
+{
+    if (any_modal_dialog_active())
+        return false;
+    Plater* plater = wxGetApp().plater();
+    if (plater == nullptr)
+        return false;
+    NotificationManager* nm = plater->get_notification_manager();
+    if (nm == nullptr)
+        return false;
+    wxString text = (title.empty() || title == _L("Notice")) ? message : (title + ": " + message);
+    nm->push_notification(NotificationType::CustomNotification, level, into_u8(text));
+    return true;
+}
+
 void show_error(wxWindow* parent, const wxString& message, bool monospaced_font)
 {
     wxGetApp().CallAfter([=] {
+        if (try_push_corner_notification(NotificationManager::NotificationLevel::ErrorNotificationLevel, wxString(), message))
+            return;
         ErrorDialog msg(parent, message, monospaced_font);
         msg.ShowModal();
     });
@@ -256,6 +297,8 @@ void show_error_id(int id, const std::string& message)
 
 void show_info(wxWindow* parent, const wxString& message, const wxString& title)
 {
+	if (try_push_corner_notification(NotificationManager::NotificationLevel::RegularNotificationLevel, title, message))
+		return;
 	//wxMessageDialog msg_wingow(parent, message, wxString(SLIC3R_APP_NAME " - ") + (title.empty() ? _L("Notice") : title), wxOK | wxICON_INFORMATION);
 	MessageDialog msg_wingow(parent, message, wxString(SLIC3R_APP_FULL_NAME " - ") + (title.empty() ? _L("Notice") : title), wxOK | wxICON_INFORMATION);
 	msg_wingow.ShowModal();
@@ -269,6 +312,8 @@ void show_info(wxWindow* parent, const char* message, const char* title)
 
 void warning_catcher(wxWindow* parent, const wxString& message)
 {
+	if (try_push_corner_notification(NotificationManager::NotificationLevel::WarningNotificationLevel, wxString(), message))
+		return;
 	MessageDialog msg(parent, message, _L("Warning"), wxOK | wxICON_WARNING);
 	msg.ShowModal();
 }
