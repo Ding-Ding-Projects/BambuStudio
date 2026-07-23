@@ -62,13 +62,21 @@ appearance-editor, external-editor, and local-version-control mandates.
 - Feature docs: new `docs/features/workspace/` category (notifications, version history, project
   tabs, external editor) + `windows/appearance-customization.md` + `windows/regex-builder.md`.
 
-**Screenshot matrix (in progress):** `docs/screenshots/<feature>/` — one shot per button per page
-per feature. Webview surfaces (Home, Wizard) captured via headless Edge against
-`resources/web` HTML (WebView2 never composes on a headless desktop); native surfaces via
-PrintWindow, which — with Mesa llvmpipe — DOES capture the GL viewport + ImGui toasts (memory
-`lowlevel-mcp-headless-driving` updated). Native per-button pass driven by a subagent; final exe
-relink + capture pass 2 (new Preferences rows, appearance controls) pending the capture session
-releasing the exe lock.
+**Screenshot matrix (complete, `9f450f86d` + follow-up):** `docs/screenshots/<feature>/` — 202
+captures, one per page and one per button per feature. Webview surfaces (Home, Wizard) captured via
+headless Edge against `resources/web` HTML (WebView2 never composes on a headless desktop); native
+surfaces via PrintWindow, which — with Mesa llvmpipe — DOES capture the GL viewport + ImGui toasts
+(memory `lowlevel-mcp-headless-driving` updated). Pass-2 verification against the rebuilt exe, all
+headlessly measured: toast bottom-RIGHT anchoring PASS (17px right margin), toast fully visible
+above the plate/slice bar PASS (root cause: notification base was SLIDER_DEFAULT_BOTTOM_MARGIN=10
+while the native bar overlaps the canvas bottom ~66px — new NOTIFICATION_DEFAULT_BOTTOM_MARGIN,
+final value 80 for a 14px breathing gap; 80 is geometry-derived from the measured 64-flush capture,
+compile-gated but not yet re-captured); presets-up-to-date modal→toast PASS (no modal in a 39-frame
+watch); External-editor rows present in General (VS Code auto-detected) PASS; appearance
+Custom…/reset/MD3-preview present PASS; Other-tab toggle spacing PASS. Known cosmetic followups
+(chips filed): Preview legend column alignment; Custom accent button clips at the dialog right edge.
+The captured File menu now truthfully shows "Open in External Editor" (disabled on an unsaved
+project — its enable-condition at work).
 
 # Handoff
 

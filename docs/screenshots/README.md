@@ -4,7 +4,7 @@ One capture per page and one per button, per feature — taken from the real run
 (native surfaces: headless Mesa llvmpipe + PrintWindow; webview surfaces: rendered page HTML).
 Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or dedicated crops).
 
-## appearance (16 captures)
+## appearance (20 captures)
 
 - [`appearance-tab--accent-1.png`](appearance/appearance-tab--accent-1.png)
 - [`appearance-tab--accent-2.png`](appearance/appearance-tab--accent-2.png)
@@ -12,16 +12,20 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`appearance-tab--accent-4.png`](appearance/appearance-tab--accent-4.png)
 - [`appearance-tab--accent-5.png`](appearance/appearance-tab--accent-5.png)
 - [`appearance-tab--accent-6.png`](appearance/appearance-tab--accent-6.png)
+- [`appearance-tab--accent-custom-btn.png`](appearance/appearance-tab--accent-custom-btn.png)
 - [`appearance-tab--density-comfortable.png`](appearance/appearance-tab--density-comfortable.png)
 - [`appearance-tab--density-compact.png`](appearance/appearance-tab--density-compact.png)
 - [`appearance-tab--font-combo.png`](appearance/appearance-tab--font-combo.png)
+- [`appearance-tab--md3-preview-panel.png`](appearance/appearance-tab--md3-preview-panel.png)
 - [`appearance-tab--preview-text.png`](appearance/appearance-tab--preview-text.png)
+- [`appearance-tab--reset-defaults-btn.png`](appearance/appearance-tab--reset-defaults-btn.png)
 - [`appearance-tab--text-size-default.png`](appearance/appearance-tab--text-size-default.png)
 - [`appearance-tab--text-size-large.png`](appearance/appearance-tab--text-size-large.png)
 - [`appearance-tab--text-size-small.png`](appearance/appearance-tab--text-size-small.png)
 - [`appearance-tab--theme-dark.png`](appearance/appearance-tab--theme-dark.png)
 - [`appearance-tab--theme-light.png`](appearance/appearance-tab--theme-light.png)
 - [`appearance-tab.png`](appearance/appearance-tab.png)
+- [`custom-color-dialog.png`](appearance/custom-color-dialog.png)
 
 ## home (5 captures)
 
@@ -108,14 +112,14 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 
 ## notifications (6 captures)
 
-- [`modal-configuration-updates.png`](notifications/modal-configuration-updates.png)
 - [`toast-info--accent-bar.png`](notifications/toast-info--accent-bar.png)
 - [`toast-info--close-x.png`](notifications/toast-info--close-x.png)
 - [`toast-info--toast.png`](notifications/toast-info--toast.png)
 - [`toast-info.png`](notifications/toast-info.png)
+- [`toast-presets-up-to-date.png`](notifications/toast-presets-up-to-date.png)
 - [`toast-try-slice.png`](notifications/toast-try-slice.png)
 
-## preferences (27 captures)
+## preferences (31 captures)
 
 - [`3d-tab.png`](preferences/3d-tab.png)
 - [`appearance-tab--reset-all-warning-dialogs.png`](preferences/appearance-tab--reset-all-warning-dialogs.png)
@@ -134,6 +138,10 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`general-tab--toggle-single-instance.png`](preferences/general-tab--toggle-single-instance.png)
 - [`general-tab--toggle-uxip.png`](preferences/general-tab--toggle-uxip.png)
 - [`general-tab--units-combo.png`](preferences/general-tab--units-combo.png)
+- [`general-tab-external-editor--browse-button.png`](preferences/general-tab-external-editor--browse-button.png)
+- [`general-tab-external-editor--combobox.png`](preferences/general-tab-external-editor--combobox.png)
+- [`general-tab-external-editor--editor-path-field.png`](preferences/general-tab-external-editor--editor-path-field.png)
+- [`general-tab-external-editor.png`](preferences/general-tab-external-editor.png)
 - [`general-tab-scrolled.png`](preferences/general-tab-scrolled.png)
 - [`general-tab.png`](preferences/general-tab.png)
 - [`other-tab.png`](preferences/other-tab.png)

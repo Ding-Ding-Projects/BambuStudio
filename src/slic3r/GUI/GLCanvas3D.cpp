@@ -115,6 +115,12 @@ static const float SLIDER_DEFAULT_RIGHT_MARGIN  = 10.0f;
 static const float SLIDER_DEFAULT_BOTTOM_MARGIN = 10.0f;
 static const float SLIDER_RIGHT_MARGIN          = 124.0f;
 static const float SLIDER_BOTTOM_MARGIN         = 58.0f;
+// Bottom base for the corner notification stack on the 3D (Prepare) canvas:
+// the native plate/slice action bar overlaps the canvas's bottom ~66px, so a
+// 10px base parks settled toasts underneath it. 80 = bar overlap (66) + a
+// 14px breathing gap above the bar (headlessly measured: at 64 the card's
+// bottom edge sat flush against the bar's top edge).
+static const float NOTIFICATION_DEFAULT_BOTTOM_MARGIN = 80.0f;
 
 float GLCanvas3D::DEFAULT_BG_LIGHT_COLOR[3] = { 0.957f, 0.949f, 0.976f };
 float GLCanvas3D::DEFAULT_BG_LIGHT_COLOR_DARK[3] = { 0.106f, 0.110f, 0.129f };
@@ -3145,8 +3151,11 @@ void GLCanvas3D::render(bool only_init)
 
     wxGetApp().plater()->get_mouse3d_controller().render_settings_dialog(*this);
 
+    // These margins feed only render_notifications below (not the sliders):
+    // the 3D canvas needs the taller notification base so settled toasts clear
+    // the native bottom action bar; Preview keeps the slider-clearing values.
     float right_margin = SLIDER_DEFAULT_RIGHT_MARGIN;
-    float bottom_margin = SLIDER_DEFAULT_BOTTOM_MARGIN;
+    float bottom_margin = NOTIFICATION_DEFAULT_BOTTOM_MARGIN;
     if (m_canvas_type == ECanvasType::CanvasPreview) {
         right_margin = SLIDER_RIGHT_MARGIN;
         bottom_margin = SLIDER_BOTTOM_MARGIN;
