@@ -1,8 +1,10 @@
 #include "ImGuiWrapper.hpp"
 
 #include <cstdio>
+#include <cstring>
 #include <vector>
 #include <cmath>
+#include <regex>
 #include <stdexcept>
 
 #include <boost/format.hpp>
@@ -1921,16 +1923,39 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
         const ImGuiID id = ImGui::GetID(search_str);
         ImVec2 search_size = ImVec2(size.x, ImGui::GetTextLineHeightWithSpacing() + style.ItemSpacing.y);
 
+        // Reserve room on the search row for the ".*" regex toggle. The input
+        // gives up just enough width for a compact square-ish button.
+        const ImVec2 regex_label_size = ImGui::CalcTextSize(".*");
+        const float  regex_btn_w      = regex_label_size.x + style.FramePadding.x * 2.0f;
+        const ImVec2 input_size(std::max(1.0f, search_size.x - regex_btn_w - style.ItemSpacing.x), search_size.y);
+
         if (!ImGui::IsAnyItemFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
             ImGui::SetKeyboardFocusHere(0);
 
         // The press on Esc key invokes editing of InputText (removes last changes)
         // So we should save previous value...
         std::string str = search_str;
-        ImGui::InputTextEx("", NULL, search_str, 40, search_size, ImGuiInputTextFlags_AutoSelectAll, NULL, NULL);
+        ImGui::InputTextEx("", NULL, search_str, 40, input_size, ImGuiInputTextFlags_AutoSelectAll, NULL, NULL);
         edited = ImGui::IsItemEdited();
         if (edited)
             hovered_id = 0;
+
+        // ".*" regex toggle: keeping ImGui conventions, tint the button when the
+        // mode is active so the affordance reads as a stateful toggle. Toggling
+        // only flips the flag; the row loop below applies/removes the std::regex
+        // post-filter live on the next frame (no re-search needed).
+        ImGui::SameLine(0.0f, style.ItemSpacing.x);
+        if (m_search_regex_enabled) {
+            const ImVec4 on = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+            ImGui::PushStyleColor(ImGuiCol_Button, on);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
+        }
+        if (ImGui::Button(".*", ImVec2(regex_btn_w, search_size.y)))
+            m_search_regex_enabled = !m_search_regex_enabled;
+        if (m_search_regex_enabled)
+            ImGui::PopStyleColor(2);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", into_u8(_L("Regular expression")).c_str());
 
         process_key_down(ImGuiKey_Escape, [&selected, search_str, str]() {
             // use 9999 to mark selection as a Esc key
@@ -1947,18 +1972,55 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
     const char* tooltip;
     int mouse_hovered = -1;
 
+    // ".*" regex post-filter over the getter's already-searched rows. Only active
+    // when the toggle is on and a pattern is present; an invalid/half-typed
+    // pattern leaves regex_valid=false so nothing is hidden (never filter all).
+    const bool use_regex = m_search_regex_enabled && search_str[0] != '\0';
+    bool       regex_valid = false;
+    std::regex re;
+    if (use_regex) {
+        try {
+            re = std::regex(search_str, std::regex::icase);
+            regex_valid = true;
+        } catch (const std::exception&) {
+            regex_valid = false;
+        }
+    }
+
     while (items_getter(i, &item_text, &tooltip))
     {
-        selectable(item_text, i == hovered_id);
-
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", /*item_text*/tooltip);
-                hovered_id = -1;
-            mouse_hovered = i;
+        bool show = true;
+        if (use_regex && regex_valid) {
+            // Strip highlight/icon markup (all bytes < 0x20) before matching so
+            // patterns test the plain label, not the ImGui marker control chars.
+            std::string plain;
+            plain.reserve(std::strlen(item_text));
+            for (const char* p = item_text; *p; ++p)
+                if ((unsigned char)*p >= 0x20)
+                    plain.push_back(*p);
+            // A compile-valid pattern can still throw at match time (catastrophic
+            // backtracking); keep the row on throw rather than crash the canvas.
+            try {
+                show = std::regex_search(plain, re);
+            } catch (const std::regex_error &) {
+                show = true;
+            }
         }
 
-        if (ImGui::IsItemClicked())
-            selected = i;
+        // Keep the getter index i stable across hidden rows so a clicked row still
+        // maps back to the correct option; only advance the render for shown rows.
+        if (show) {
+            selectable(item_text, i == hovered_id);
+
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s", /*item_text*/tooltip);
+                    hovered_id = -1;
+                mouse_hovered = i;
+            }
+
+            if (ImGui::IsItemClicked())
+                selected = i;
+        }
         i++;
     }
 

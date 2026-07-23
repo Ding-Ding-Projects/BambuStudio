@@ -3,13 +3,21 @@
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
+#include "CheckBox.hpp"
+#include "PopupWindow.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
 
 #include <algorithm>
+#include <cwctype>
+#include <regex>
+#include <string>
+#include <vector>
 
+#include <wx/dcbuffer.h>
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
+#include <wx/dcmemory.h>
 
 // Logical (DIP) anatomy — mirrors design-source/SearchField.dc.html. Every
 // value is passed through FromDIP() at use so the field stays crisp on HiDPI
@@ -21,9 +29,216 @@ constexpr int kPadRight  = 5;  // trailing padding
 constexpr int kGap       = 4;  // glyph <-> input, input <-> clear
 constexpr int kSearchPx  = 20; // leading search glyph
 constexpr int kClosePx   = 18; // clear glyph
-constexpr int kClearDiam = 30; // circular clear button
+constexpr int kClearDiam = 30; // circular clear / tune / regex button
+constexpr int kTunePx    = 20; // tune glyph
 constexpr int kRadius    = 22; // stadium corner radius
-constexpr int kMinWidth  = 200;
+constexpr int kMinWidth  = 220;
+
+// --- Regex builder popover -------------------------------------------------
+// A transient, custom-painted panel opened under the `tune` button. Everything
+// is drawn (no child controls) so it stays a single self-contained window that
+// re-themes and re-DPIs on each open; the checkbox anatomy is borrowed from the
+// kit CheckBox via its static glyph-bitmap renderer.
+const wxString kTokens[] = {".", "*", "+", "?", "[]", "()", "|", "^", "$", "\\d", "\\w", "\\s"};
+
+class SearchBuilderPopup : public PopupWindow
+{
+public:
+    explicit SearchBuilderPopup(wxWindow *parent) : PopupWindow(parent, wxBORDER_NONE)
+    {
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        Bind(wxEVT_PAINT, &SearchBuilderPopup::onPaint, this);
+        Bind(wxEVT_MOTION, &SearchBuilderPopup::onMotion, this);
+        Bind(wxEVT_LEFT_DOWN, &SearchBuilderPopup::onLeftDown, this);
+        Bind(wxEVT_LEAVE_WINDOW, &SearchBuilderPopup::onLeave, this);
+#ifdef __WXMSW__
+        BindUnfocusEvent();
+#endif
+    }
+
+    void Configure(MD3::ColorScheme scheme, bool caseOn, bool wordOn,
+                   std::function<void(const wxString &)> onInsert,
+                   std::function<void(bool)> onCase, std::function<void(bool)> onWord)
+    {
+        m_scheme   = scheme;
+        m_case     = caseOn;
+        m_word     = wordOn;
+        m_on_insert = std::move(onInsert);
+        m_on_case  = std::move(onCase);
+        m_on_word  = std::move(onWord);
+        relayout();
+        Refresh();
+    }
+
+private:
+    struct Chip { wxString token; wxRect rect; };
+
+    void relayout()
+    {
+        m_chips.clear();
+        const int pad  = FromDIP(12);
+        const int W    = FromDIP(248);
+        const int chipH = FromDIP(26);
+        const int gap  = FromDIP(6);
+        const int padX = FromDIP(10);
+
+        wxBitmap   probe(1, 1);
+        wxMemoryDC mdc(probe);
+        mdc.SetFont(Label::Mono_12);
+
+        int cx  = pad;
+        int top = pad + FromDIP(20) + FromDIP(8); // header band
+        for (const wxString &tok : kTokens) {
+            const wxSize te = mdc.GetTextExtent(tok);
+            int          cw = te.x + 2 * padX;
+            if (cx + cw > W - pad) {
+                cx = pad;
+                top += chipH + gap;
+            }
+            m_chips.push_back({tok, wxRect(cx, top, cw, chipH)});
+            cx += cw + gap;
+        }
+        int y = top + chipH + FromDIP(12);
+        m_divider_y = y;
+        y += FromDIP(12);
+
+        const int rowH = FromDIP(30);
+        m_case_row = wxRect(pad, y, W - 2 * pad, rowH);
+        y += rowH + FromDIP(4);
+        m_word_row = wxRect(pad, y, W - 2 * pad, rowH);
+        y += rowH + pad;
+
+        SetClientSize(W, y);
+    }
+
+    void drawCheckRow(wxDC &dc, const wxRect &row, bool checked, bool hover, const wxString &label, bool dark)
+    {
+        if (hover) {
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(MD3::resolve(MD3::Role::SurfaceContainerHigh, dark)));
+            dc.DrawRoundedRectangle(row, FromDIP(6));
+        }
+        const int    box   = FromDIP(20);
+        const double scale = GetDPIScaleFactor() > 0.0 ? GetDPIScaleFactor() : 1.0;
+        wxBitmap     glyph = CheckBox::RenderGlyphBitmap(20, scale, checked, false, false, m_scheme);
+        const int    gx    = row.x + FromDIP(8);
+        dc.DrawBitmap(glyph, gx, row.y + (row.height - box) / 2, true);
+
+        dc.SetFont(Label::Body_13);
+        dc.SetTextForeground(MD3::resolve(MD3::Role::OnSurface, dark));
+        const wxSize te = dc.GetTextExtent(label);
+        dc.DrawText(label, gx + box + FromDIP(10), row.y + (row.height - te.y) / 2);
+    }
+
+    void onPaint(wxPaintEvent &)
+    {
+        wxAutoBufferedPaintDC dc(this);
+        const bool  dark = StateColor::isDarkMode();
+        const wxSize sz  = GetClientSize();
+
+        dc.SetBrush(wxBrush(MD3::resolve(MD3::Role::SurfaceContainerHigh, dark)));
+        dc.SetPen(wxPen(MD3::resolve(MD3::Role::OutlineVariant, dark), std::max(1, FromDIP(1))));
+        dc.DrawRoundedRectangle(0, 0, sz.x, sz.y, FromDIP(12));
+
+        // Header.
+        dc.SetFont(Label::Body_13);
+        dc.SetTextForeground(MD3::resolve(MD3::Role::OnSurfaceVariant, dark));
+        dc.DrawText(_L("Insert"), FromDIP(12), FromDIP(11));
+
+        // Token chips.
+        for (size_t i = 0; i < m_chips.size(); ++i) {
+            const Chip &c   = m_chips[i];
+            const bool  hov = (static_cast<int>(i) == m_hover_chip);
+            dc.SetBrush(wxBrush(MD3::resolve(hov ? MD3::Role::SurfaceContainerHigh
+                                                 : MD3::Role::SurfaceContainerHighest,
+                                             dark)));
+            dc.SetPen(wxPen(MD3::resolve(MD3::Role::OutlineVariant, dark), std::max(1, FromDIP(1))));
+            dc.DrawRoundedRectangle(c.rect, FromDIP(8));
+            dc.SetFont(Label::Mono_12);
+            dc.SetTextForeground(MD3::resolve(MD3::Role::OnSurface, dark));
+            const wxSize te = dc.GetTextExtent(c.token);
+            dc.DrawText(c.token, c.rect.x + (c.rect.width - te.x) / 2,
+                        c.rect.y + (c.rect.height - te.y) / 2);
+        }
+
+        // Divider.
+        dc.SetPen(wxPen(MD3::resolve(MD3::Role::OutlineVariant, dark), std::max(1, FromDIP(1))));
+        dc.DrawLine(FromDIP(12), m_divider_y, sz.x - FromDIP(12), m_divider_y);
+
+        drawCheckRow(dc, m_case_row, m_case, m_hover_case, _L("Case sensitive"), dark);
+        drawCheckRow(dc, m_word_row, m_word, m_hover_word, _L("Whole word"), dark);
+    }
+
+    void onMotion(wxMouseEvent &e)
+    {
+        const wxPoint p = e.GetPosition();
+        int           hc = -1;
+        for (size_t i = 0; i < m_chips.size(); ++i)
+            if (m_chips[i].rect.Contains(p)) {
+                hc = static_cast<int>(i);
+                break;
+            }
+        const bool hcase = m_case_row.Contains(p);
+        const bool hword = m_word_row.Contains(p);
+        if (hc != m_hover_chip || hcase != m_hover_case || hword != m_hover_word) {
+            m_hover_chip = hc;
+            m_hover_case = hcase;
+            m_hover_word = hword;
+            Refresh();
+        }
+        SetCursor((hc >= 0 || hcase || hword) ? wxCursor(wxCURSOR_HAND) : *wxSTANDARD_CURSOR);
+        e.Skip();
+    }
+
+    void onLeave(wxMouseEvent &e)
+    {
+        if (m_hover_chip != -1 || m_hover_case || m_hover_word) {
+            m_hover_chip = -1;
+            m_hover_case = false;
+            m_hover_word = false;
+            Refresh();
+        }
+        e.Skip();
+    }
+
+    void onLeftDown(wxMouseEvent &e)
+    {
+        const wxPoint p = e.GetPosition();
+        for (const Chip &c : m_chips) {
+            if (c.rect.Contains(p)) {
+                if (m_on_insert)
+                    m_on_insert(c.token); // keep the popover open for further inserts
+                return;
+            }
+        }
+        if (m_case_row.Contains(p)) {
+            m_case = !m_case;
+            if (m_on_case)
+                m_on_case(m_case);
+            Refresh();
+            return;
+        }
+        if (m_word_row.Contains(p)) {
+            m_word = !m_word;
+            if (m_on_word)
+                m_on_word(m_word);
+            Refresh();
+            return;
+        }
+        e.Skip();
+    }
+
+    std::vector<Chip> m_chips;
+    wxRect            m_case_row, m_word_row;
+    int               m_divider_y = 0;
+    int               m_hover_chip = -1;
+    bool              m_hover_case = false, m_hover_word = false;
+    bool              m_case = false, m_word = false;
+    MD3::ColorScheme  m_scheme = MD3::ColorScheme::Brand;
+
+    std::function<void(const wxString &)> m_on_insert;
+    std::function<void(bool)>             m_on_case, m_on_word;
+};
 } // namespace
 
 SearchField::SearchField() {}
@@ -76,23 +291,34 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
         e.Skip();
     });
     Bind(wxEVT_MOTION, [this](wxMouseEvent &e) {
-        bool over = !GetValue().IsEmpty() && clearHitRect().Contains(e.GetPosition());
-        if (over != m_clear_hover) {
-            m_clear_hover = over;
+        const wxPoint p        = e.GetPosition();
+        const bool    overTune = tuneButtonRect().Contains(p);
+        const bool    overRegex = regexButtonRect().Contains(p);
+        const bool    overClear = !overTune && !overRegex && !GetValue().IsEmpty() &&
+                                  clearHitRect().Contains(p);
+        bool changed = false;
+        if (overClear != m_clear_hover) { m_clear_hover = overClear; changed = true; }
+        if (overTune != m_tune_hover)   { m_tune_hover  = overTune;  changed = true; }
+        if (overRegex != m_regex_hover) { m_regex_hover = overRegex; changed = true; }
+        if (changed)
             Refresh();
-        }
-        SetCursor(over ? wxCursor(wxCURSOR_HAND) : *wxSTANDARD_CURSOR);
+        SetCursor((overClear || overTune || overRegex) ? wxCursor(wxCURSOR_HAND) : *wxSTANDARD_CURSOR);
         e.Skip();
     });
     Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent &e) {
-        if (m_clear_hover) {
-            m_clear_hover = false;
+        if (m_clear_hover || m_tune_hover || m_regex_hover) {
+            m_clear_hover = m_tune_hover = m_regex_hover = false;
             Refresh();
         }
         e.Skip();
     });
     Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-        if (!GetValue().IsEmpty() && clearHitRect().Contains(e.GetPosition()))
+        const wxPoint p = e.GetPosition();
+        if (tuneButtonRect().Contains(p))
+            openBuilder();
+        else if (regexButtonRect().Contains(p))
+            SetRegexEnabled(!m_regex);
+        else if (!GetValue().IsEmpty() && clearHitRect().Contains(p))
             Clear();
         else if (m_text)
             m_text->SetFocus();
@@ -177,6 +403,105 @@ void SearchField::SetRegexEnabled(bool on)
     Refresh();
 }
 
+void SearchField::SetCaseSensitive(bool on)
+{
+    if (m_case_sensitive == on)
+        return;
+    m_case_sensitive = on;
+    // Consumers re-run their current filter through the shared regex-toggle hook.
+    if (m_on_regex_toggle)
+        m_on_regex_toggle(m_regex);
+}
+
+void SearchField::SetWholeWord(bool on)
+{
+    if (m_whole_word == on)
+        return;
+    m_whole_word = on;
+    if (m_on_regex_toggle)
+        m_on_regex_toggle(m_regex);
+}
+
+void SearchField::openBuilder()
+{
+    if (m_on_builder)
+        m_on_builder(); // host hook, in addition to the built-in popover
+
+    auto *popup = static_cast<SearchBuilderPopup *>(m_builder_popup);
+    if (!popup) {
+        popup           = new SearchBuilderPopup(this);
+        m_builder_popup = popup;
+    }
+    popup->Configure(
+        m_scheme, m_case_sensitive, m_whole_word,
+        [this](const wxString &tok) { insertToken(tok); },
+        [this](bool on) {
+            m_case_sensitive = on;
+            if (m_on_regex_toggle)
+                m_on_regex_toggle(m_regex);
+        },
+        [this](bool on) {
+            m_whole_word = on;
+            if (m_on_regex_toggle)
+                m_on_regex_toggle(m_regex);
+        });
+
+    const wxRect  tr  = tuneButtonRect();
+    const wxPoint pos = ClientToScreen(wxPoint(tr.GetLeft(), tr.GetBottom() + FromDIP(4)));
+    popup->Position(pos, wxSize(0, 0));
+    popup->Popup();
+}
+
+void SearchField::insertToken(const wxString &token)
+{
+    if (!m_text)
+        return;
+    // Writes at the current insertion point (replacing any selection) and emits
+    // wxEVT_TEXT, so onText() fires the query. Focus stays with the popover so a
+    // sequence of chips can be inserted without dismissing it.
+    m_text->WriteText(token);
+}
+
+bool SearchField::textMatches(const wxString &query, const wxString &candidate, bool regex,
+                              bool caseSensitive, bool wholeWord)
+{
+    if (query.IsEmpty())
+        return true; // an empty query never filters anything out
+
+    if (regex) {
+        try {
+            std::wregex::flag_type flags = std::regex_constants::ECMAScript;
+            if (!caseSensitive)
+                flags |= std::regex_constants::icase;
+            const std::wstring pattern = query.ToStdWstring();
+            const std::wstring hay     = candidate.ToStdWstring();
+            const std::wregex  re(pattern, flags);
+            return std::regex_search(hay, re);
+        } catch (const std::regex_error &) {
+            // A half-typed / invalid pattern must never hide every row.
+            return true;
+        }
+    }
+
+    if (!wholeWord)
+        return caseSensitive ? candidate.Contains(query) : candidate.Lower().Contains(query.Lower());
+
+    // Whole-word substring: scan for occurrences bounded by non-word characters
+    // (\b semantics) without exposing the query to regex metacharacter parsing.
+    const std::wstring hay = (caseSensitive ? candidate : candidate.Lower()).ToStdWstring();
+    const std::wstring ndl = (caseSensitive ? query : query.Lower()).ToStdWstring();
+    if (ndl.empty())
+        return true;
+    auto is_word = [](wchar_t c) { return std::iswalnum(static_cast<wint_t>(c)) != 0 || c == L'_'; };
+    for (std::size_t pos = hay.find(ndl); pos != std::wstring::npos; pos = hay.find(ndl, pos + 1)) {
+        const bool left_ok  = (pos == 0) || !is_word(hay[pos - 1]);
+        const bool right_ok = (pos + ndl.size() >= hay.size()) || !is_word(hay[pos + ndl.size()]);
+        if (left_ok && right_ok)
+            return true;
+    }
+    return false;
+}
+
 void SearchField::Rescale()
 {
     applyTextCtrlTheme();
@@ -223,15 +548,34 @@ wxRect SearchField::clearHitRect() const
     return wxRect(cx - hit / 2, cy - hit / 2, hit, hit);
 }
 
+wxRect SearchField::tuneButtonRect() const
+{
+    // One slot left of the (always-reserved) clear slot.
+    const wxRect cr  = clearButtonRect();
+    const int    d   = FromDIP(kClearDiam);
+    const int    gap = FromDIP(kGap);
+    return wxRect(cr.x - gap - d, cr.y, d, d);
+}
+
+wxRect SearchField::regexButtonRect() const
+{
+    const wxRect tr  = tuneButtonRect();
+    const int    d   = FromDIP(kClearDiam);
+    const int    gap = FromDIP(kGap);
+    return wxRect(tr.x - gap - d, tr.y, d, d);
+}
+
 void SearchField::layoutText()
 {
     if (!m_text)
         return;
-    const wxSize sz       = GetSize();
-    const bool   hasText  = !GetValue().IsEmpty();
-    const int    lead     = leadingWidth();
-    const int    reserve  = FromDIP(kPadRight) + (hasText ? (FromDIP(kClearDiam) + FromDIP(kGap)) : 0);
-    int          w        = sz.x - lead - reserve;
+    const wxSize sz   = GetSize();
+    const int    lead = leadingWidth();
+    // The regex toggle and tune button are persistent and the clear slot is
+    // always reserved, so the trailing width is constant — the entry never
+    // reflows when the query gains or loses its first character.
+    const int    reserve = FromDIP(kPadRight) + 3 * FromDIP(kClearDiam) + 3 * FromDIP(kGap);
+    int          w       = sz.x - lead - reserve;
     if (w < 0)
         w = 0;
     int th = m_text->GetBestSize().y;
@@ -298,6 +642,43 @@ void SearchField::doRender(wxDC &dc)
         const wxRect gr(FromDIP(kPadLeft), 0, FromDIP(kSearchPx), sz.y);
         MaterialIcon::drawCentered(dc, MaterialIcon::Search, kSearchPx,
                                    MD3::resolve(MD3::Role::OnSurfaceVariant, dark), gr);
+    }
+
+    // Trailing ".*" regex toggle — persistent. Active carries a SecondaryContainer
+    // pill (scheme-aware) with an OnSecondaryContainer glyph; idle sits in
+    // OnSurfaceVariant with a SurfaceContainerLow hover disc.
+    {
+        const wxRect rr = regexButtonRect();
+        if (m_regex) {
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(MD3::resolve(MD3::Role::SecondaryContainer, dark, m_scheme)));
+            dc.DrawRoundedRectangle(rr, rr.height / 2);
+        } else if (m_regex_hover) {
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(MD3::resolve(MD3::Role::SurfaceContainerLow, dark)));
+            dc.DrawCircle(rr.x + rr.width / 2, rr.y + rr.height / 2, rr.width / 2);
+        }
+        const wxColour fg = m_regex ? MD3::resolve(MD3::Role::OnSecondaryContainer, dark, m_scheme)
+                                    : MD3::resolve(MD3::Role::OnSurfaceVariant, dark);
+        // Plain (non-icon) mono text, safe on either a wxPaintDC or a wxGCDC.
+        dc.SetFont(Label::Mono_13);
+        dc.SetTextForeground(fg);
+        const wxString lbl = ".*";
+        const wxSize   te  = dc.GetTextExtent(lbl);
+        dc.DrawText(lbl, rr.x + (rr.width - te.x) / 2, rr.y + (rr.height - te.y) / 2);
+    }
+
+    // Trailing `tune` builder button — persistent.
+    {
+        const wxRect br = tuneButtonRect();
+        if (m_tune_hover) {
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(MD3::resolve(MD3::Role::SurfaceContainerLow, dark)));
+            dc.DrawCircle(br.x + br.width / 2, br.y + br.height / 2, br.width / 2);
+        }
+        if (MaterialIcon::available())
+            MaterialIcon::drawCentered(dc, MaterialIcon::Tune, kTunePx,
+                                       MD3::resolve(MD3::Role::OnSurfaceVariant, dark), br);
     }
 
     // Trailing clear button — only while the field carries a query.

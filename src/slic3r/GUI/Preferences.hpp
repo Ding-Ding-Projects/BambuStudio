@@ -66,16 +66,17 @@ protected:
 
     // --- Live settings search (SearchField -> row filtering) ----------------
     // One entry per direct row (sizer or window) of every settings page,
-    // indexed once after the pages are built. `haystack` is the lowercased
-    // concatenation of the row's wxStaticText labels; `baseline_shown`
-    // snapshots the row's construction-time visibility (e.g. the model-mall
-    // rows) so a search reset never reveals rows another gate hid.
+    // indexed once after the pages are built. `haystack` is the original-case
+    // concatenation of the row's wxStaticText labels (the shared SearchField
+    // matcher folds case itself, and needs the true text for regex);
+    // `baseline_shown` snapshots the row's construction-time visibility (e.g.
+    // the model-mall rows) so a search reset never reveals rows another gate hid.
     struct SearchRow
     {
         int                          page = 0;         // m_book page (nav section)
         wxSizerItem                 *item = nullptr;   // row item in the page sizer
         std::vector<wxStaticText *>  labels;           // label windows inside the row
-        wxString                     haystack;         // lowercased label text
+        wxString                     haystack;         // original-case label text
         bool                         is_title = false; // Head_16 section header row
         bool                         baseline_shown = true;
     };

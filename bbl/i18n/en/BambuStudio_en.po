@@ -18333,6 +18333,27 @@ msgstr ""
 msgid "Switch printer"
 msgstr ""
 
+msgid "Case sensitive"
+msgstr ""
+
+msgid "Insert"
+msgstr ""
+
+msgid "Match the search term as a regular expression"
+msgstr ""
+
+msgid "Match with a regular expression"
+msgstr ""
+
+msgid "Regex"
+msgstr ""
+
+msgid "Regular expression"
+msgstr ""
+
+msgid "Whole word"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

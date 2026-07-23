@@ -24,6 +24,9 @@
 #include "Widgets/PopupWindow.hpp"
 #include "GUI_ObjectList.hpp"
 
+// MD3 checkbox used for the SearchDialog regex toggle (defined at global scope).
+class CheckBox;
+
 namespace Slic3r {
 
 wxDECLARE_EVENT(wxCUSTOMEVT_JUMP_TO_OPTION, wxCommandEvent);
@@ -96,6 +99,11 @@ class OptionsSearcher
     std::map<std::string, GroupAndCategory> groups_and_categories;
     PrinterTechnology                       printer_technology;
 
+    // When true, the search term is treated as a std::wregex (case-insensitive)
+    // instead of the default fuzzy/substring match. An invalid pattern never
+    // filters anything out (a half-typed regex keeps the full list visible).
+    bool                                    regex_enabled{false};
+
     std::vector<Option>      options{};
     std::vector<FoundOption> found{};
 
@@ -138,6 +146,11 @@ public:
     std::string &                   search_string() { return search_line; }
 
     void set_printer_technology(PrinterTechnology pt) { printer_technology = pt; }
+
+    // Regex-mode toggle. Off by default so the fuzzy/substring behaviour is
+    // unchanged unless the user opts in via the SearchDialog toggle.
+    void set_regex_enabled(bool on) { regex_enabled = on; }
+    bool is_regex_enabled() const { return regex_enabled; }
 
     void sort_options_by_key()
     {
@@ -221,6 +234,8 @@ public:
     ScrolledWindow * m_scrolledWindow{nullptr};
     SearchListModel *search_list_model{nullptr};
     wxCheckBox *     check_category{nullptr};
+    // Optional ".*" regex toggle for the option search (see OptionsSearcher).
+    CheckBox *       m_regex_toggle{nullptr};
 
     OptionsSearcher *searcher{nullptr};
 
@@ -232,6 +247,7 @@ public:
     void OnSelect(wxDataViewEvent &event);
 
     void OnCheck(wxCommandEvent &event);
+    void OnRegexToggle(wxCommandEvent &event);
     void OnMotion(wxMouseEvent &event);
     void OnLeftDown(wxMouseEvent &event);
 

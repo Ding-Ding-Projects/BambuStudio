@@ -1566,6 +1566,10 @@ void PreferencesDialog::create()
     // model-mall visibility toggle) have settled.
     build_search_index();
     m_search->SetOnQuery([this](const wxString &query) { apply_search_filter(query); });
+    // Re-run the live filter when the regex / case / whole-word toggle changes so
+    // the visible rows reflect the new matching mode without a fresh keystroke.
+    // Passing the raw field value keeps the empty-query reset path intact.
+    m_search->SetOnRegexToggle([this](bool) { apply_search_filter(m_search->GetValue()); });
 
     main_sizer->Add(body_row, 1, wxEXPAND);
     main_sizer->Add(create_bottom_buttons(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
@@ -1652,7 +1656,7 @@ void PreferencesDialog::build_search_index()
                 if (!haystack.empty()) haystack << ' ';
                 haystack << search_label_text(label);
             }
-            row.haystack = haystack.Lower();
+            row.haystack = haystack; // original case; the matcher folds case itself
             // Section headers are the Head_16 titles from create_item_title().
             row.is_title = !row.labels.empty() && row.labels.front()->GetFont() == ::Label::Head_16;
             m_search_rows.push_back(std::move(row));
@@ -1711,17 +1715,23 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
     m_search_last_query = query;
     clear_search_highlights();
 
-    const wxString needle    = query.Lower();
+    const bool     regex     = m_search && m_search->IsRegexEnabled();
+    const bool     case_sens = m_search && m_search->IsCaseSensitive();
+    const bool     whole     = m_search && m_search->IsWholeWord();
     const wxColour highlight = StateColor::semantic(MD3::Role::Primary);
     const size_t   count     = m_search_rows.size();
 
     // Pass 1: per-row match against the label haystack. Baseline-hidden rows
-    // (e.g. model-mall entries without a mall) never participate.
+    // (e.g. model-mall entries without a mall) never participate. Matching runs
+    // through the shared SearchField matcher so the regex / case / whole-word
+    // toggles apply here exactly as on every other search surface; with regex
+    // off and case-sensitivity off this is the same case-insensitive substring
+    // test as before.
     std::vector<bool> matched(count, false);
     for (size_t i = 0; i < count; ++i) {
         const SearchRow &row = m_search_rows[i];
         if (!row.baseline_shown || row.haystack.empty()) continue;
-        matched[i] = row.haystack.Find(needle) != wxNOT_FOUND;
+        matched[i] = SearchField::textMatches(query, row.haystack, regex, case_sens, whole);
     }
 
     // Pass 2: group visibility. A group is a Head_16 title row plus the rows
@@ -1764,7 +1774,7 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
         const SearchRow &row      = m_search_rows[k];
         bool             any_tint = false;
         for (auto *label : row.labels) {
-            if (search_label_text(label).Lower().Find(needle) != wxNOT_FOUND) {
+            if (SearchField::textMatches(query, search_label_text(label), regex, case_sens, whole)) {
                 tint(label);
                 any_tint = true;
             }

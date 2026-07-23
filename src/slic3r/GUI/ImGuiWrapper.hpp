@@ -58,6 +58,9 @@ class ImGuiWrapper
     unsigned m_mouse_buttons{ 0 };
     bool m_disabled{ false };
     bool m_new_frame_open{ false };
+    // In-canvas search_list() regex affordance: when on, the ".*" toggle next to
+    // the ImGui search input post-filters the getter's results with std::regex.
+    bool m_search_regex_enabled{ false };
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
     bool m_requires_extra_frame{ false };
 #endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT

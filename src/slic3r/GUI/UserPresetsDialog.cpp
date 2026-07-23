@@ -34,6 +34,8 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     m_search = new SearchField(this, _L("Search"));
     m_search->SetMinSize({FromDIP(568), FromDIP(40)});
     m_search->SetOnQuery([this](const wxString &kw) { on_search(kw); });
+    // Re-run the active filter when the regex / case / whole-word chrome toggles.
+    m_search->SetOnRegexToggle([this](bool) { on_search(m_search->GetValue()); });
 
     m_empty_panel = new wxPanel(this);
     m_empty_panel->SetMinSize({-1, FromDIP(360)});
@@ -323,10 +325,15 @@ void UserPresetsDialog::on_search(wxString const &keyword)
         }
     };
     m_scrolled->Freeze();
-    std::string key = into_u8(keyword);
-    auto match = [&key](std::string & preset) {
-        return std::search(preset.begin(), preset.end(), key.begin(), key.end(),
-            [](char a, char b) { return std::tolower(a) == std::tolower(b); }) != preset.end();
+    // Route the preset filter through the shared MD3 matcher so the field's
+    // regex / case / whole-word chrome drives it (was a hard-coded
+    // case-insensitive substring search). Invalid half-typed regex matches
+    // everything, so a partial pattern never blanks the list.
+    const bool regex         = m_search->IsRegexEnabled();
+    const bool caseSensitive = m_search->IsCaseSensitive();
+    const bool wholeWord     = m_search->IsWholeWord();
+    auto match = [&](std::string & preset) {
+        return SearchField::textMatches(keyword, from_u8(preset), regex, caseSensitive, wholeWord);
     };
     if (is_filament_list()) {
         for (auto &filament : m_filament_presets) {

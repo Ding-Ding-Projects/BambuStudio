@@ -21,14 +21,19 @@
 //     while the field is non-empty and tinted OnSurfaceVariant (hover fills
 //     SurfaceContainerLow).
 //
-// The kit additionally specifies an optional ".*" regex toggle and a `tune`
-// regex-builder popover. Those are DEFERRED: the `tune` glyph is not yet part
-// of the MaterialIcon set, so the toggle chrome is intentionally not drawn.
-// The behavioural hooks (SetRegexEnabled / SetOnRegexToggle /
-// SetOnBuilderRequested) are exposed now so a later wave can wire the builder
-// without changing this widget's ABI. All colours and radii are resolved live
-// per paint from MD3 tokens, so the field re-themes and re-DPIs with no stale
-// cached geometry.
+// The kit additionally specifies a ".*" regex toggle and a `tune`
+// regex-builder popover, both painted into the trailing area left of the clear
+// button:
+//   * a ".*" toggle pill — SecondaryContainer fill / OnSecondaryContainer glyph
+//     when regex mode is active, OnSurfaceVariant when idle. Clicking it flips
+//     regex mode (fires SetOnRegexToggle) and swaps the entry to Roboto Mono;
+//   * a `tune` IconButton that opens a small transient BUILDER POPOVER carrying
+//     quick-insert token chips (. * + ? [] () | ^ $ \d \w \s) plus "case
+//     sensitive" and "whole word" checkboxes. Inserting a chip writes the token
+//     at the entry caret and fires the query; the checkboxes drive the shared
+//     textMatches() matcher and re-fire SetOnRegexToggle so consumers re-run.
+// All colours and radii are resolved live per paint from MD3 tokens, so the
+// field re-themes and re-DPIs with no stale cached geometry.
 class SearchField : public wxNavigationEnabled<StaticBox>
 {
 public:
@@ -64,13 +69,34 @@ public:
     // Accent scheme for the focus border (Brand / Preview / Device).
     void SetColorScheme(MD3::ColorScheme scheme);
 
-    // --- Deferred regex / builder hooks (kit ".*" + tune toggles). ---------
-    // No chrome is drawn today (the `tune` glyph is unavailable); these keep
-    // the regex state and callbacks addressable for a future wave.
+    // --- Regex / builder controls (kit ".*" toggle + tune popover). --------
     void SetRegexEnabled(bool on);
     bool IsRegexEnabled() const { return m_regex; }
     void SetOnRegexToggle(std::function<void(bool)> cb) { m_on_regex_toggle = std::move(cb); }
+    // Fired (in addition to opening the built-in popover) when the tune button
+    // is clicked, so a host may layer its own behaviour.
     void SetOnBuilderRequested(std::function<void()> cb) { m_on_builder = std::move(cb); }
+
+    // Matcher modifiers driven by the builder popover (both default false).
+    // Consumers read these to configure textMatches() and re-run their filter
+    // from the SetOnRegexToggle callback, which is re-fired whenever regex,
+    // case-sensitivity, or whole-word changes.
+    bool IsCaseSensitive() const { return m_case_sensitive; }
+    bool IsWholeWord() const { return m_whole_word; }
+    void SetCaseSensitive(bool on);
+    void SetWholeWord(bool on);
+
+    // Shared query matcher for every SearchField consumer. Replaces the ad-hoc
+    // `candidate.Lower().Contains(query.Lower())` filters.
+    //   * empty query           -> matches everything (true);
+    //   * regex == false         -> substring test (respecting caseSensitive);
+    //                               wholeWord constrains hits to word boundaries;
+    //   * regex == true          -> std::wregex search over candidate (icase
+    //                               when !caseSensitive); wholeWord is ignored
+    //                               (author your own \b). An invalid / half-typed
+    //                               pattern returns true so nothing is hidden.
+    static bool textMatches(const wxString &query, const wxString &candidate,
+                            bool regex, bool caseSensitive, bool wholeWord = false);
 
     virtual void Rescale();
 
@@ -88,6 +114,10 @@ private:
     // the clear affordance meets the a11y minimum touch target without growing
     // the visible circle.
     wxRect clearHitRect() const;
+    // Trailing ".*" regex toggle and `tune` builder button, both persistent and
+    // anchored to the right of the entry, left of the (conditional) clear slot.
+    wxRect tuneButtonRect() const;
+    wxRect regexButtonRect() const;
     // Reserved leading width (pad + search glyph + gap), device px.
     int    leadingWidth() const;
     void   layoutText();
@@ -96,6 +126,10 @@ private:
     void   applyAccessibleName();
     void   emit(const wxString &value);
     void   onText();
+    // Open (or reuse) the transient builder popover under the tune button.
+    void   openBuilder();
+    // Write a builder token at the entry caret and fire the query.
+    void   insertToken(const wxString &token);
 
     wxTextCtrl *m_text = nullptr;
 
@@ -104,8 +138,17 @@ private:
 
     bool m_focused     = false; // text entry holds focus -> Primary border
     bool m_clear_hover = false; // pointer over the clear button
+    bool m_tune_hover  = false; // pointer over the tune button
+    bool m_regex_hover = false; // pointer over the ".*" toggle
     bool m_had_text    = false; // last known non-empty state (for relayout)
-    bool m_regex       = false; // deferred regex mode flag
+    bool m_regex       = false; // regex mode flag (".*" toggle)
+    bool m_case_sensitive = false; // matcher: case-sensitive substring / regex
+    bool m_whole_word     = false; // matcher: whole-word substring constraint
+
+    // Transient builder popover (a SearchBuilderPopup, owned as a child of this
+    // field and reused across opens). Kept as wxWindow* so the concrete type
+    // stays private to the .cpp.
+    wxWindow *m_builder_popup = nullptr;
 
     std::function<void(const wxString &)> m_on_query;
     std::function<void(bool)>             m_on_regex_toggle;

@@ -338,8 +338,15 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     // Live name/type filter of the card grid: reset to the first page and rebuild
     // so paging tracks the filtered set (see refresh_user_device).
     m_search->SetOnQuery([this](const wxString& kw) {
-        m_search_filter = kw.Lower();
+        // Store the raw query; case handling is delegated to the shared matcher.
+        m_search_filter = kw;
         m_search_filter.Trim(true).Trim(false);
+        m_current_page = 0;
+        refresh_user_device();
+    });
+    // Re-run the name/type filter (from page 0) when the regex / case /
+    // whole-word chrome toggles.
+    m_search->SetOnRegexToggle([this](bool) {
         m_current_page = 0;
         refresh_user_device();
     });
@@ -643,14 +650,20 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
     if (m_search_filter.IsEmpty()) {
         filtered = m_state_objs;
     } else {
+        // Route both the name and type match through the shared MD3 matcher so
+        // the field's regex / case / whole-word chrome drives filtering. Invalid
+        // half-typed regex matches everything (never blanks the grid).
+        const bool regex         = m_search && m_search->IsRegexEnabled();
+        const bool caseSensitive = m_search && m_search->IsCaseSensitive();
+        const bool wholeWord     = m_search && m_search->IsWholeWord();
         for (const auto& st : m_state_objs) {
-            wxString name = wxString::FromUTF8(st.state_dev_name).Lower();
+            wxString name = wxString::FromUTF8(st.state_dev_name);
             wxString type;
             auto mit = user_machine.find(st.dev_id);
             if (mit != user_machine.end() && mit->second)
-                type = wxString::FromUTF8(mit->second->printer_type).Lower();
-            if (name.Find(m_search_filter) != wxNOT_FOUND ||
-                (!type.IsEmpty() && type.Find(m_search_filter) != wxNOT_FOUND))
+                type = wxString::FromUTF8(mit->second->printer_type);
+            if (SearchField::textMatches(m_search_filter, name, regex, caseSensitive, wholeWord) ||
+                (!type.IsEmpty() && SearchField::textMatches(m_search_filter, type, regex, caseSensitive, wholeWord)))
                 filtered.push_back(st);
         }
     }

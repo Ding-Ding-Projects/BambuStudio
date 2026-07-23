@@ -24,6 +24,7 @@
 #include <wx/mstream.h>
 #include <miniz.h>
 #include <algorithm>
+#include <regex>
 #include "Plater.hpp"
 #include "Notebook.hpp"
 #include "BitmapCache.hpp"
@@ -386,12 +387,24 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
     m_sizxer_scrolledWindow->Fit(m_scrolledWindow);
 
 #if defined(__WINDOWS__)
-	m_sizer_search_bar = new wxBoxSizer(wxVERTICAL);
+	m_sizer_search_bar = new wxBoxSizer(wxHORIZONTAL);
 	m_search_bar = new wxSearchCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	m_search_bar->SetDescriptiveText(_L("Search"));
 	m_search_bar->ShowSearchButton( true );
 	m_search_bar->ShowCancelButton( false );
-	m_sizer_search_bar->Add( m_search_bar, 1, wxALL| wxEXPAND, 1 );
+	// This popup search is a raw wxSearchCtrl (not the MD3 SearchField), so it
+	// carries its own minimal ".*" toggle that routes matching through std::wregex
+	// in search_for_printer. Toggling it re-runs the current filter.
+	m_search_regex_toggle = new wxCheckBox(this, wxID_ANY, ".*");
+	m_search_regex_toggle->SetToolTip(_L("Match with a regular expression"));
+	m_search_regex_toggle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+	m_search_regex_toggle->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e) {
+		m_search_regex = e.IsChecked();
+		update_user_devices();
+		update_other_devices();
+	});
+	m_sizer_search_bar->Add( m_search_bar, 1, wxALIGN_CENTER_VERTICAL | wxALL, 1 );
+	m_sizer_search_bar->Add( m_search_regex_toggle, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4) );
 	m_sizer_main->Add(m_sizer_search_bar, 0, wxALL | wxEXPAND, FromDIP(2));
 	m_search_bar->Bind( wxEVT_COMMAND_TEXT_UPDATED, &SelectMachinePopup::update_machine_list, this );
 #endif
@@ -828,25 +841,44 @@ void SelectMachinePopup::update_user_devices()
 
 bool SelectMachinePopup::search_for_printer(MachineObject* obj)
 {
-	const std::string& search_text = m_search_bar->GetValue().ToStdString();
+	// The search bar is Windows-only; without it every printer is visible.
+	if (!m_search_bar)
+		return true;
+	const wxString search_text = m_search_bar->GetValue();
 	if (search_text.empty()) {
 		return true;
 	}
 
-	const auto& name = wxString::FromUTF8(obj->get_dev_name()).ToStdString();
-    const auto& name_it = name.find(search_text);
-    if (name_it != std::string::npos) {
-        return true;
-    }
-
+	const wxString name = wxString::FromUTF8(obj->get_dev_name());
 #if !BBL_RELEASE_TO_PUBLIC
-    const auto& ip_it = obj->get_dev_ip().find(search_text);
-    if (ip_it != std::string::npos) {
-        return true;
-    }
+	const wxString ip = wxString::FromUTF8(obj->get_dev_ip());
 #endif
 
-    return false;
+	if (m_search_regex) {
+		// Invalid / half-typed pattern must not hide everything (shared-matcher
+		// convention): treat a regex_error as a match.
+		try {
+			std::wregex re(search_text.ToStdWstring());
+			if (std::regex_search(name.ToStdWstring(), re))
+				return true;
+#if !BBL_RELEASE_TO_PUBLIC
+			if (std::regex_search(ip.ToStdWstring(), re))
+				return true;
+#endif
+			return false;
+		} catch (const std::regex_error&) {
+			return true;
+		}
+	}
+
+	// Legacy case-sensitive substring match.
+	if (name.Find(search_text) != wxNOT_FOUND)
+		return true;
+#if !BBL_RELEASE_TO_PUBLIC
+	if (ip.Find(search_text) != wxNOT_FOUND)
+		return true;
+#endif
+	return false;
 }
 
 void SelectMachinePopup::on_dissmiss_win(wxCommandEvent &event)

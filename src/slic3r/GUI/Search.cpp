@@ -3,13 +3,18 @@
 #include <vector>
 #include <cstddef>
 #include <string>
+#include <regex>
+#include <limits>
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
 #include <boost/nowide/convert.hpp>
 
 #include "wx/dataview.h"
 #include "wx/numformatter.h"
+#include "wx/stattext.h"
+#include "I18N.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/CheckBox.hpp"
 
 #include "libslic3r/PrintConfig.hpp"
 #include "libslic3r/PresetBundle.hpp"
@@ -165,6 +170,45 @@ static std::wstring mark_string(const std::wstring &str, const std::vector<uint1
 
 bool OptionsSearcher::search() { return search(search_line, true); }
 
+// Flat score handed to every regex hit: comfortably above the >90 acceptance
+// gate used for fuzzy matches, so regex results are always kept and then ranked
+// alphabetically by sort_found().
+static const int REGEX_MATCH_SCORE = 1000;
+
+// Regex counterpart of fuzzy_match(): returns true when `re` hits `label`, and
+// (like fuzzy_match) fills out_matches with the matched character indices so the
+// existing mark_string() highlighter underlines the same span. `regex_valid`
+// false means the user is mid-typing an invalid pattern: keep the row (return
+// true) with no highlight rather than hiding everything.
+static bool regex_match_label(const std::wregex &re, bool regex_valid, const std::wstring &label,
+                              int &out_score, std::vector<uint16_t> &out_matches)
+{
+    out_matches.clear();
+    if (!regex_valid) {
+        out_score = REGEX_MATCH_SCORE;
+        return true;
+    }
+    // A pattern can compile yet throw at match time (MSVC error_complexity /
+    // error_stack on catastrophic backtracking, e.g. "(a+)+$"). Keep the row on
+    // any throw — matching the shared textMatches() convention — so a runaway
+    // pattern degrades to "no filtering" instead of terminating the app.
+    try {
+        std::wsmatch m;
+        if (std::regex_search(label, m, re)) {
+            const auto pos = m.position(0);
+            const auto len = m.length(0);
+            for (long k = 0; k < len; ++k)
+                out_matches.push_back(static_cast<uint16_t>(pos + k));
+            out_score = REGEX_MATCH_SCORE;
+            return true;
+        }
+    } catch (const std::regex_error &) {
+        out_score = REGEX_MATCH_SCORE;
+        return true;
+    }
+    return false;
+}
+
 static bool fuzzy_match(const std::wstring &search_pattern, const std::wstring &label, int &out_score, std::vector<uint16_t> &out_matches)
 {
     uint16_t matches[fts::max_matches + 1]; // +1 for the stopper
@@ -219,6 +263,22 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
         return marker_by_type(opt.type, printer_technology) + opt.category_local + sep + opt.group_local + sep + opt.label_local;
     };
 
+    // Regex mode: compile the term once. On failure keep regex_valid=false so a
+    // half-typed pattern shows the full list instead of filtering it all away.
+    const bool use_regex = regex_enabled && !full_list;
+    std::wregex regex_term;
+    bool        regex_valid = false;
+    if (use_regex) {
+        try {
+            std::wstring wpattern = boost::nowide::widen(search);
+            boost::trim_left(wpattern);
+            regex_term  = std::wregex(wpattern, std::regex_constants::icase | std::regex_constants::ECMAScript);
+            regex_valid = true;
+        } catch (const std::regex_error &) {
+            regex_valid = false;
+        }
+    }
+
     std::vector<uint16_t> matches, matches2;
     for (size_t i = 0; i < options.size(); i++) {
         const Option &opt = options[i];
@@ -241,18 +301,32 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
         int          score         = std::numeric_limits<int>::min();
         int          score2;
         matches.clear();
-        fuzzy_match(wsearch, label, score, matches);
-        // bbs hide the contents in parentheses
-        /* if (fuzzy_match(wsearch, opt.key, score2, matches2) && score2 > score) {
-             for (fts::pos_type &pos : matches2) pos += label.size() + 1;
-             label += L"(" + opt.key + L")";
-             append(matches, matches2);
-             score = score2;
-         }*/
-        if (view_params.english && fuzzy_match(wsearch, label_english, score2, matches2) && score2 > score) {
-            label   = std::move(label_english);
-            matches = std::move(matches2);
-            score   = score2;
+        if (use_regex) {
+            // Regex path: same downstream shape as fuzzy_match (score + matched
+            // indices), so scoring/marking/threshold below are untouched.
+            regex_match_label(regex_term, regex_valid, label, score, matches);
+            if (view_params.english) {
+                matches2.clear();
+                if (regex_match_label(regex_term, regex_valid, label_english, score2, matches2) && score2 > score) {
+                    label   = std::move(label_english);
+                    matches = std::move(matches2);
+                    score   = score2;
+                }
+            }
+        } else {
+            fuzzy_match(wsearch, label, score, matches);
+            // bbs hide the contents in parentheses
+            /* if (fuzzy_match(wsearch, opt.key, score2, matches2) && score2 > score) {
+                 for (fts::pos_type &pos : matches2) pos += label.size() + 1;
+                 label += L"(" + opt.key + L")";
+                 append(matches, matches2);
+                 score = score2;
+             }*/
+            if (view_params.english && fuzzy_match(wsearch, label_english, score2, matches2) && score2 > score) {
+                label   = std::move(label_english);
+                matches = std::move(matches2);
+                score   = score2;
+            }
         }
         if (score > 90 /*std::numeric_limits<int>::min()*/) {
             label = mark_string(label, matches, opt.type, printer_technology);
@@ -709,6 +783,27 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     m_sizer_body->Add(search_line, 0, wxEXPAND | wxALL, em / 2);
     search_line = input;
 #endif
+
+    // Regex toggle: opts the option search into std::wregex matching. It reflects
+    // and drives the persistent flag on the shared OptionsSearcher, so the choice
+    // survives dialog re-opens.
+    {
+        auto *regex_row = new wxBoxSizer(wxHORIZONTAL);
+        m_regex_toggle  = new CheckBox(m_client_panel);
+        m_regex_toggle->SetValue(searcher && searcher->is_regex_enabled());
+        m_regex_toggle->SetToolTip(_L("Match the search term as a regular expression"));
+        m_regex_toggle->SetName(_L("Regular expression"));
+        m_regex_toggle->Bind(wxEVT_TOGGLEBUTTON, &SearchDialog::OnRegexToggle, this);
+
+        auto *regex_label = new wxStaticText(m_client_panel, wxID_ANY, _L("Regex"));
+        regex_label->SetForegroundColour(m_text_color);
+        regex_label->SetBackgroundColour(m_bg_colour);
+
+        regex_row->Add(m_regex_toggle, 0, wxALIGN_CENTER_VERTICAL);
+        regex_row->Add(regex_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, em / 2);
+        m_sizer_body->Add(regex_row, 0, wxLEFT | wxRIGHT | wxTOP, em);
+    }
+
     m_sizer_body->Add(m_scrolledWindow, 0, wxEXPAND | wxALL, em);
 
     m_client_panel->SetSizer(m_sizer_body);
@@ -910,6 +1005,20 @@ void SearchDialog::OnCheck(wxCommandEvent &event)
 
     searcher->search();
     update_list();
+}
+
+void SearchDialog::OnRegexToggle(wxCommandEvent &event)
+{
+    if (searcher && m_regex_toggle)
+        searcher->set_regex_enabled(m_regex_toggle->GetValue());
+
+    // Re-run the current query under the new matching mode.
+    wxString input_string = search_line2 ? search_line2->GetValue() : wxString();
+    if (input_string == default_string) input_string.Clear();
+    if (searcher)
+        searcher->search(into_u8(input_string), true, search_type);
+    update_list();
+    event.Skip();
 }
 
 void SearchDialog::OnMotion(wxMouseEvent &event)

@@ -83,9 +83,10 @@ private:
 
 
     Button*                 m_button_edit{nullptr};
-    // Farm toolbar live search (ui-md3 Multi.jsx). m_search_filter holds the
-    // lowercased query; it is applied to the card grid BEFORE paging so the page
-    // count / flipping stay consistent with what is shown.
+    // Farm toolbar live search (ui-md3 Multi.jsx). m_search_filter holds the raw
+    // query (case handled by SearchField::textMatches); it is applied to the card
+    // grid BEFORE paging so the page count / flipping stay consistent with what is
+    // shown.
     SearchField*            m_search{ nullptr };
     wxString                m_search_filter;
     wxBoxSizer*             page_sizer{ nullptr };

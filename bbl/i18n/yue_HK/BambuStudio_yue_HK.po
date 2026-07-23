@@ -1424,3 +1424,31 @@ msgstr "播放或停止鏡頭直播"
 #. reviewed-category: connection-offline
 msgid "Switch printer"
 msgstr "切換打印機"
+
+#. reviewed-category: preferences
+msgid "Case sensitive"
+msgstr "區分大小寫"
+
+#. reviewed-category: preferences
+msgid "Insert"
+msgstr "插入"
+
+#. reviewed-category: preferences
+msgid "Match the search term as a regular expression"
+msgstr "以正則表達式比對搜尋字詞"
+
+#. reviewed-category: preferences
+msgid "Match with a regular expression"
+msgstr "以正則表達式比對"
+
+#. reviewed-category: preferences
+msgid "Regex"
+msgstr "正則"
+
+#. reviewed-category: preferences
+msgid "Regular expression"
+msgstr "正則表達式"
+
+#. reviewed-category: preferences
+msgid "Whole word"
+msgstr "全字詞"
