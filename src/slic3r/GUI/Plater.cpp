@@ -2626,9 +2626,10 @@ static wxBitmap build_printer_thumbnail_cell(wxWindow *ref, const wxBitmap &sour
             gc->SetBrush(wxBrush(cell_bg));
             gc->DrawRoundedRectangle(0, 0, logical_px, logical_px, radius);
 
-            wxGraphicsPath clip = gc->CreatePath();
-            clip.AddRoundedRectangle(0, 0, logical_px, logical_px, radius);
-            gc->Clip(clip);
+            // wx 3.1.5 has no path-clip overload; a rectangular clip suffices —
+            // the rounded silhouette comes from the background fill and the
+            // border ring stroked on top.
+            gc->Clip(wxDouble(0), wxDouble(0), wxDouble(logical_px), wxDouble(logical_px));
 
             if (is_placeholder && MaterialIcon::available()) {
                 const int      glyph_px  = 30;
