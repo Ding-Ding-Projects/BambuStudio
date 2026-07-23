@@ -26,6 +26,9 @@
 #define TOPBAR_TITLE_WIDTH  300
 // §3.6 project chip: the ellipsized project name is capped at 150 logical px.
 #define TOPBAR_PROJECT_CHIP_MAX_W  150
+// §3.5 history chip: cap the branch label so a long branch name cannot crowd the
+// window controls off the caption; the branch is ellipsized past this logical width.
+#define TOPBAR_HISTORY_BRANCH_MAX_W  130
 
 // Reconciled window-control glyph sizes (titlebar-window-controls-raster +
 // topbar-chrome-raster-to-glyph overlap): minimize/close read at the standard
@@ -217,6 +220,9 @@ static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch
     if (!mono.IsOk())
         mono = *wxNORMAL_FONT;
 
+    // Ellipsized to keep the baked chip from growing without bound; a long branch
+    // name would otherwise push the window controls off the right of the caption.
+    wxString branch_lbl = branch;
     int  glyph_w = 0, glyph_h = 0, branch_w = 0, branch_h = 0, head_w = 0, head_h = 0;
     {
         wxBitmap   probe(1, 1);
@@ -227,7 +233,12 @@ static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch
             glyph_h = gs.y;
         }
         mdc.SetFont(mono);
-        mdc.GetTextExtent(branch, &branch_w, &branch_h);
+        mdc.GetTextExtent(branch_lbl, &branch_w, &branch_h);
+        if (branch_w > TOPBAR_HISTORY_BRANCH_MAX_W) {
+            branch_lbl = wxControl::Ellipsize(branch_lbl, mdc, wxELLIPSIZE_END,
+                                              TOPBAR_HISTORY_BRANCH_MAX_W);
+            mdc.GetTextExtent(branch_lbl, &branch_w, &branch_h);
+        }
         if (has_head)
             mdc.GetTextExtent(head_str, &head_w, &head_h);
         mdc.SelectObject(wxNullBitmap);
@@ -260,7 +271,7 @@ static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch
             gc->DrawBitmap(abmp, x, (H - glyph_h) / 2.0, glyph_w, glyph_h);
             x += glyph_w + gap;
         }
-        gc->DrawBitmap(topbar_text_alpha(mono, chip_scale, branch, on_sv),
+        gc->DrawBitmap(topbar_text_alpha(mono, chip_scale, branch_lbl, on_sv),
                        x, (H - branch_h) / 2.0, branch_w, branch_h);
         x += branch_w + gap;
 

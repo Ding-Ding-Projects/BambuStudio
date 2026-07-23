@@ -173,6 +173,10 @@ public:
     void   on_mouse_leave(wxMouseEvent &evt);
     void   on_mouse_left_down(wxMouseEvent &evt);
     void   on_mouse_left_up(wxMouseEvent &evt);
+    // Keyboard a11y: Up/Down move focus between rows, Enter/Space activate.
+    void   on_key_down(wxKeyEvent &evt);
+    // Shared jump-to-result action (mouse-up and keyboard both route here).
+    void   activate();
 };
 
 //------------------------------------------

@@ -1412,3 +1412,15 @@ msgstr "啟用支撐"
 #. reviewed-category: connection-offline
 msgid "Load"
 msgstr "入料"
+
+#. reviewed-category: connection-offline
+msgid "Filament switch status"
+msgstr "換料狀態"
+
+#. reviewed-category: connection-offline
+msgid "Play or stop the camera live view"
+msgstr "播放或停止鏡頭直播"
+
+#. reviewed-category: connection-offline
+msgid "Switch printer"
+msgstr "切換打印機"

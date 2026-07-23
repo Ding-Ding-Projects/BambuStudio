@@ -106,6 +106,15 @@ void ComboBox::SetColorScheme(MD3::ColorScheme scheme)
         TextInput::SetBackgroundColor(StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
             std::make_pair(focus_fill, (int) StateColor::Focused),
             std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal)));
+        // Re-tint the hover/focus border accent to the scheme so a keyboard-
+        // focused SelectField shows the workspace accent (Preview/Device) instead
+        // of always Brand-green. Focus resolves to the Hovered entry because
+        // StateColor treats Focused as Hovered (takeFocusedAsHovered).
+        const wxColour accent = scheme == MD3::ColorScheme::Brand ? MD3::Light::primary
+                                                                  : StateColor::semantic(MD3::Role::Primary, scheme);
+        TextInput::SetBorderColor(StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
+            std::make_pair(accent, (int) StateColor::Hovered),
+            std::make_pair(MD3::Light::outline, (int) StateColor::Normal)));
     }
 }
 

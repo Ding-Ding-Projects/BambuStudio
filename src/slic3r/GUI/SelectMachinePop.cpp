@@ -75,6 +75,9 @@ MachineObjectPanel::MachineObjectPanel(wxWindow *parent, wxWindowID id, const wx
     this->Bind(wxEVT_ENTER_WINDOW, &MachineObjectPanel::on_mouse_enter, this);
     this->Bind(wxEVT_LEAVE_WINDOW, &MachineObjectPanel::on_mouse_leave, this);
     this->Bind(wxEVT_LEFT_UP, &MachineObjectPanel::on_mouse_left_up, this);
+    this->Bind(wxEVT_SET_FOCUS, &MachineObjectPanel::on_set_focus, this);
+    this->Bind(wxEVT_KILL_FOCUS, &MachineObjectPanel::on_kill_focus, this);
+    this->Bind(wxEVT_KEY_DOWN, &MachineObjectPanel::on_key_down, this);
 
 #ifdef __APPLE__
     wxPlatformInfo platformInfo;
@@ -202,6 +205,14 @@ void MachineObjectPanel::doRender(wxDC &dc)
 
     dc.DrawText(finally_name, wxPoint(left, (size.y - sizet.y) / 2));
 
+    // a11y-focus: distinct 2px keyboard focus ring, drawn inset so it reads apart
+    // from the 1px hover outline below.
+    if (m_focused) {
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        const int inset = FromDIP(2);
+        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+    }
 
     if (m_hover || m_is_macos_special_version) {
 
@@ -230,6 +241,9 @@ void MachineObjectPanel::update_machine_info(MachineObject *info, bool is_my_dev
 {
     m_info = info;
     m_is_my_devices = is_my_devices;
+    // a11y-label: expose the device name as the row's accessible name.
+    if (m_info)
+        SetName(from_u8(m_info->get_dev_name()));
     Refresh();
 }
 
@@ -305,6 +319,43 @@ void MachineObjectPanel::on_mouse_left_up(wxMouseEvent &evt)
         }
     }
 
+}
+
+void MachineObjectPanel::on_set_focus(wxFocusEvent &evt)
+{
+    m_focused = true;
+    Refresh();
+    evt.Skip();
+}
+
+void MachineObjectPanel::on_kill_focus(wxFocusEvent &evt)
+{
+    m_focused = false;
+    Refresh();
+    evt.Skip();
+}
+
+void MachineObjectPanel::on_key_down(wxKeyEvent &evt)
+{
+    const int key = evt.GetKeyCode();
+    if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        trigger_primary_action();
+    } else {
+        evt.Skip();
+    }
+}
+
+void MachineObjectPanel::trigger_primary_action()
+{
+    // Synthesise a left-up at the row origin (0,0): that point is outside the
+    // edit-name and unbind glyph hit rects (which sit at the right edge), so
+    // on_mouse_left_up() takes the "select this printer" branch -- the correct
+    // keyboard default for the row.
+    wxMouseEvent e(wxEVT_LEFT_UP);
+    e.SetEventObject(this);
+    e.m_x = 0;
+    e.m_y = 0;
+    GetEventHandler()->ProcessEvent(e);
 }
 
 SelectMachinePopup::SelectMachinePopup(wxWindow *parent)

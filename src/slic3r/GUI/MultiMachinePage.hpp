@@ -61,6 +61,9 @@ public:
     void OnSelectedDevice(wxCommandEvent& evt);
     void OnLeftDown(wxMouseEvent& evt);
     void OnMove(wxMouseEvent& evt);
+    void OnKeyDown(wxKeyEvent& evt);
+    void OnSetFocus(wxFocusEvent& evt);
+    void OnKillFocus(wxFocusEvent& evt);
 
     void         paintEvent(wxPaintEvent& evt);
     void         render(wxDC& dc);
@@ -68,8 +71,16 @@ public:
     void         post_event(wxCommandEvent&& event);
     virtual void DoSetSize(int x, int y, int width, int height, int sizeFlags = wxSIZE_AUTO);
 
+    // a11y: the checklist row is a custom-painted DeviceItem (wxWindow); make it a
+    // tab stop and toggle its selection with Enter/Space. No child controls, so
+    // the focus predicates alone place it in the tab order; a focus ring is drawn
+    // in doRender() when m_focused.
+    virtual bool AcceptsFocus() const wxOVERRIDE { return true; }
+    virtual bool AcceptsFocusFromKeyboard() const wxOVERRIDE { return true; }
+
 public:
     bool m_hover{ false };
+    bool m_focused{ false };
     // Selection checkbox glyph (Widgets/CheckBox.hpp): drawn live per-paint via
     // CheckBox::RenderGlyphBitmap, sharing the same MD3 anatomy as the CheckBox
     // widget instead of the legacy check_off_disabled/check_off_focused/check_on

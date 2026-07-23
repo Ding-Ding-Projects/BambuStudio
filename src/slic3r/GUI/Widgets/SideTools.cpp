@@ -60,6 +60,15 @@ static ScalableBitmap side_tools_glyph_bitmap(wxWindow *ref, uint32_t glyph, int
     this->Bind(wxEVT_LEAVE_WINDOW, &SideToolsPanel::on_mouse_leave, this);
     this->Bind(wxEVT_LEFT_DOWN, &SideToolsPanel::on_mouse_left_down, this);
     this->Bind(wxEVT_LEFT_UP, &SideToolsPanel::on_mouse_left_up, this);
+    this->Bind(wxEVT_SET_FOCUS, &SideToolsPanel::on_set_focus, this);
+    this->Bind(wxEVT_KILL_FOCUS, &SideToolsPanel::on_kill_focus, this);
+    this->Bind(wxEVT_KEY_DOWN, &SideToolsPanel::on_key_down, this);
+
+    // a11y-label: give the icon-only switcher strip an accessible name/tooltip so
+    // assistive tech announces its purpose (set_current_printer_name() keeps the
+    // name in sync with the live device).
+    SetName(_L("Switch printer"));
+    SetToolTip(_L("Switch printer"));
 }
 
 SideToolsPanel::~SideToolsPanel() { delete m_intetval_timer; }
@@ -80,6 +89,9 @@ void SideToolsPanel::set_current_printer_name(std::string dev_name)
 
      m_none_printer = false;
      m_dev_name     = from_u8(dev_name);
+     // Keep the accessible name in step with the visible device label.
+     if (!m_dev_name.IsEmpty())
+         SetName(m_dev_name);
      Refresh();
 }
 
@@ -272,12 +284,60 @@ void SideToolsPanel::doRender(wxDC &dc)
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRectangle(0, 0, size.x, size.y);
     }
+
+    // a11y-focus: keyboard focus indicator -- a distinct inset 2px Primary ring so
+    // the focused strip is visually separable from the 1px hover outline.
+    if (m_focused) {
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), FromDIP(2)));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        const int inset = FromDIP(2);
+        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+    }
 }
 
 void SideToolsPanel::on_mouse_left_down(wxMouseEvent &evt)
 {
     m_click = true;
+    // Move keyboard focus here on click so the focus ring and Enter/Space
+    // activation follow a pointer interaction too.
+    if (!HasFocus())
+        SetFocus();
     Refresh();
+}
+
+void SideToolsPanel::on_set_focus(wxFocusEvent &evt)
+{
+    m_focused = true;
+    Refresh();
+    evt.Skip();
+}
+
+void SideToolsPanel::on_kill_focus(wxFocusEvent &evt)
+{
+    m_focused = false;
+    Refresh();
+    evt.Skip();
+}
+
+void SideToolsPanel::on_key_down(wxKeyEvent &evt)
+{
+    const int key = evt.GetKeyCode();
+    if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        trigger_primary_action();
+    } else {
+        evt.Skip();
+    }
+}
+
+void SideToolsPanel::trigger_primary_action()
+{
+    // The host (MonitorPanel/CalibrationPanel) connects the printer-switch popup
+    // to this panel's wxEVT_LEFT_DOWN; on_printer_clicked ignores the pointer
+    // coordinate, so a synthetic left-down replays the exact same action for the
+    // keyboard.
+    wxMouseEvent e(wxEVT_LEFT_DOWN);
+    e.SetEventObject(this);
+    GetEventHandler()->ProcessEvent(e);
 }
 
 void SideToolsPanel::on_mouse_left_up(wxMouseEvent &evt)
@@ -396,9 +456,12 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     auto st_title_error_code = new wxStaticText(m_side_error_panel, wxID_ANY, _L("code"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     auto st_title_error_code_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
     m_st_txt_error_code = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_error_code->SetForegroundColour(ThemeColor::TextDisabled);
-    st_title_error_code_doc->SetForegroundColour(ThemeColor::TextDisabled);
-    m_st_txt_error_code->SetForegroundColour(ThemeColor::TextDisabled);
+    // a11y-contrast: this text sits on the ErrorContainer fill (see
+    // m_side_error_panel above), so it must use the OnErrorContainer role to meet
+    // WCAG AA -- the flat legacy TextDisabled grey failed contrast on that surface.
+    st_title_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    st_title_error_code_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    m_st_txt_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
     st_title_error_code->SetFont(::Label::Body_12);
     st_title_error_code_doc->SetFont(::Label::Body_12);
     m_st_txt_error_code->SetFont(::Label::Body_12);
@@ -414,9 +477,9 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     auto st_title_error_desc = new wxStaticText(m_side_error_panel, wxID_ANY, wxT("desc"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     auto st_title_error_desc_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
     m_st_txt_error_desc = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_error_desc->SetForegroundColour(ThemeColor::TextDisabled);
-    st_title_error_desc_doc->SetForegroundColour(ThemeColor::TextDisabled);
-    m_st_txt_error_desc->SetForegroundColour(ThemeColor::TextDisabled);
+    st_title_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    st_title_error_desc_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    m_st_txt_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
     st_title_error_desc->SetFont(::Label::Body_12);
     st_title_error_desc_doc->SetFont(::Label::Body_12);
     m_st_txt_error_desc->SetFont(::Label::Body_12);
@@ -431,9 +494,9 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     auto st_title_extra_info = new wxStaticText(m_side_error_panel, wxID_ANY, wxT("info"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     auto st_title_extra_info_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
     m_st_txt_extra_info = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
-    st_title_extra_info->SetForegroundColour(ThemeColor::TextDisabled);
-    st_title_extra_info_doc->SetForegroundColour(ThemeColor::TextDisabled);
-    m_st_txt_extra_info->SetForegroundColour(ThemeColor::TextDisabled);
+    st_title_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    st_title_extra_info_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
+    m_st_txt_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
     st_title_extra_info->SetFont(::Label::Body_12);
     st_title_extra_info_doc->SetFont(::Label::Body_12);
     m_st_txt_extra_info->SetFont(::Label::Body_12);

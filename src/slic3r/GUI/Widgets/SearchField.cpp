@@ -4,6 +4,8 @@
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
 
+#include "slic3r/GUI/I18N.hpp"
+
 #include <algorithm>
 
 #include <wx/dcclient.h>
@@ -59,13 +61,22 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
         e.Skip();
     });
     m_text->Bind(wxEVT_RIGHT_DOWN, [](wxMouseEvent &) {}); // suppress native context menu
+    m_text->Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
+        // Escape is the keyboard equivalent of the clear 'x' affordance (which is
+        // painted, not a focusable child): it empties a non-empty query. When the
+        // field is already empty the key propagates (e.g. to close a dialog).
+        if (e.GetKeyCode() == WXK_ESCAPE && !GetValue().IsEmpty())
+            Clear();
+        else
+            e.Skip();
+    });
 
     Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
         layoutText();
         e.Skip();
     });
     Bind(wxEVT_MOTION, [this](wxMouseEvent &e) {
-        bool over = !GetValue().IsEmpty() && clearButtonRect().Contains(e.GetPosition());
+        bool over = !GetValue().IsEmpty() && clearHitRect().Contains(e.GetPosition());
         if (over != m_clear_hover) {
             m_clear_hover = over;
             Refresh();
@@ -81,7 +92,7 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
         e.Skip();
     });
     Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-        if (!GetValue().IsEmpty() && clearButtonRect().Contains(e.GetPosition()))
+        if (!GetValue().IsEmpty() && clearHitRect().Contains(e.GetPosition()))
             Clear();
         else if (m_text)
             m_text->SetFocus();
@@ -102,6 +113,7 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
     SetMinSize(wxSize(FromDIP(kMinWidth), FromDIP(kHeight)));
     SetSize(best);
     layoutText();
+    applyAccessibleName();
 }
 
 wxString SearchField::GetValue() const { return m_text ? m_text->GetValue() : wxString(); }
@@ -134,6 +146,17 @@ void SearchField::SetPlaceholder(const wxString &placeholder)
     m_placeholder = placeholder;
     if (m_text)
         m_text->SetHint(placeholder);
+    applyAccessibleName();
+}
+
+void SearchField::applyAccessibleName()
+{
+    // The field and its entry carry an accessible name (the placeholder, or a
+    // generic fallback) so assistive tech announces the search control.
+    const wxString name = m_placeholder.IsEmpty() ? _L("Search") : m_placeholder;
+    SetName(name);
+    if (m_text)
+        m_text->SetName(name);
 }
 
 void SearchField::SetColorScheme(MD3::ColorScheme scheme)
@@ -187,6 +210,17 @@ wxRect SearchField::clearButtonRect() const
     const int    x  = sz.x - FromDIP(kPadRight) - d;
     const int    y  = (sz.y - d) / 2;
     return wxRect(x, y, d, d);
+}
+
+wxRect SearchField::clearHitRect() const
+{
+    // >=44x44 logical hit/hover region centered on the 30px visual circle: the
+    // glyph and circle keep their size, only the clickable area grows for a11y.
+    const wxRect vis = clearButtonRect();
+    const int    hit = std::max(FromDIP(44), vis.width);
+    const int    cx  = vis.x + vis.width / 2;
+    const int    cy  = vis.y + vis.height / 2;
+    return wxRect(cx - hit / 2, cy - hit / 2, hit, hit);
 }
 
 void SearchField::layoutText()

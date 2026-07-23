@@ -271,9 +271,13 @@ void TextInput::DoSetSize(int x, int y, int width, int height, int sizeFlags)
     if (text_ctrl) {
         wxClientDC dc(this);
         wxSize unitSize = dc.GetTextExtent(m_unit);
-        int unit_space = (m_unit.IsEmpty() ? 0 : unitSize.x + 5) + 10;
+        // Reserve room for the trailing unit suffix (gap + glyph + right pad) so
+        // render()'s unit draw (at the entry's right edge + 4) stays inside the
+        // field instead of clipping. 0 when there is no unit, so unit-less fields
+        // keep their previous width exactly.
+        int unit_space = m_unit.IsEmpty() ? 0 : (unitSize.x + 5 + 10);
         wxSize textSize = text_ctrl->GetSize();
-        textSize.x = size.x - textPos.x - labelSize.x - 10 - prefix_space;
+        textSize.x = size.x - textPos.x - labelSize.x - 10 - prefix_space - unit_space;
         if(textSize.x < -1) textSize.x = -1;
         text_ctrl->SetSize(textSize);
         text_ctrl->SetPosition({textPos.x + prefix_space, (size.y - textSize.y) / 2});
@@ -402,15 +406,25 @@ void TextInput::render(wxDC& dc)
     if (!m_unit.IsEmpty() && text_ctrl) {
         wxPoint ctrl_pos  = text_ctrl->GetPosition();
         wxSize  ctrl_size = text_ctrl->GetSize();
-        wxSize  unit_size = dc.GetTextExtent(m_unit);
 
-        int x = ctrl_pos.x + ctrl_size.x + 4;
-        int y = ctrl_pos.y + (ctrl_size.y - unit_size.y) / 2;
+        // Measure with the actual (smaller) unit font, then clamp+ellipsize the
+        // draw against the field's right edge so a too-narrow field never paints
+        // the unit past the border.
         wxFont unit_font = text_ctrl->GetFont();
         unit_font.SetPointSize(unit_font.GetPointSize() - 1);
         dc.SetFont(unit_font);
-        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        dc.DrawText(m_unit, wxPoint(x, y));
+        wxSize unit_size = dc.GetTextExtent(m_unit);
+
+        int x = ctrl_pos.x + ctrl_size.x + 4;
+        int y = ctrl_pos.y + (ctrl_size.y - unit_size.y) / 2;
+        int avail = size.x - x - 5; // room to the field's right edge
+        if (avail > 0) {
+            wxString unit = unit_size.x > avail
+                                ? wxControl::Ellipsize(m_unit, dc, wxELLIPSIZE_END, avail)
+                                : m_unit;
+            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+            dc.DrawText(unit, wxPoint(x, y));
+        }
     }
 }
 

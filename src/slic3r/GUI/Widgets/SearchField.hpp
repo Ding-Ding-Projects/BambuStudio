@@ -81,12 +81,19 @@ protected:
     void doRender(wxDC &dc) override;
 
 private:
-    // Device-pixel rect of the circular clear button for the current size.
+    // Device-pixel rect of the circular clear button for the current size (the
+    // 30px visual circle used for painting the glyph + hover disc).
     wxRect clearButtonRect() const;
+    // Enlarged (>=44px logical) hit/hover region centered on clearButtonRect, so
+    // the clear affordance meets the a11y minimum touch target without growing
+    // the visible circle.
+    wxRect clearHitRect() const;
     // Reserved leading width (pad + search glyph + gap), device px.
     int    leadingWidth() const;
     void   layoutText();
     void   applyTextCtrlTheme();
+    // Set the field's (and entry's) accessible name from the placeholder.
+    void   applyAccessibleName();
     void   emit(const wxString &value);
     void   onText();
 

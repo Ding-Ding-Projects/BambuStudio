@@ -33,9 +33,13 @@ StaticBox::StaticBox()
     : state_handler(this)
     , radius(MD3::Metrics::compact.radius)
 {
+    // MD3 default card border: Outline at rest, the dimmer OutlineVariant when
+    // disabled (replacing the legacy Grey400/Grey300 literals). Both are stored
+    // as their light role values -- keys in StateColor.cpp's gDarkColors table --
+    // so colorForStates() live-remaps them on a runtime dark-mode toggle.
     border_color = StateColor(
-        std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
-        std::make_pair(ThemeColor::Grey400, (int) StateColor::Normal));
+        std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
+        std::make_pair(MD3::Light::outline, (int) StateColor::Normal));
 }
 
 StaticBox::StaticBox(wxWindow* parent,

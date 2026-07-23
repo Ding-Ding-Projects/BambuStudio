@@ -1329,18 +1329,35 @@ class PrefNavItem : public wxWindow
 {
 public:
     PrefNavItem(wxWindow *parent, uint32_t glyph, const wxString &label, std::function<void()> on_click)
-        : wxWindow(parent, wxID_ANY), m_glyph(glyph), m_label(label), m_on_click(std::move(on_click))
+        : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS),
+          m_glyph(glyph), m_label(label), m_on_click(std::move(on_click))
     {
         SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
         SetBackgroundStyle(wxBG_STYLE_PAINT);
         SetMinSize(wxSize(-1, FromDIP(44)));
+        // Accessible name so screen readers announce the nav pill by its section label.
+        SetName(label);
         Bind(wxEVT_PAINT, &PrefNavItem::OnPaint, this);
-        Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { if (m_on_click) m_on_click(); });
+        Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { SetFocus(); if (m_on_click) m_on_click(); });
         Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent &e) { m_hover = true; SetCursor(wxCURSOR_HAND); Refresh(); e.Skip(); });
         Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent &e) { m_hover = false; Refresh(); e.Skip(); });
+        // Keyboard: focusable pill activates on Enter/Space (MD3 nav-item contract).
+        Bind(wxEVT_SET_FOCUS,  [this](wxFocusEvent &e) { m_focused = true;  Refresh(); e.Skip(); });
+        Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &e) { m_focused = false; Refresh(); e.Skip(); });
+        Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &e) {
+            const int k = e.GetKeyCode();
+            if (k == WXK_RETURN || k == WXK_NUMPAD_ENTER || k == WXK_SPACE) {
+                if (m_on_click) m_on_click();
+            } else {
+                e.Skip();
+            }
+        });
     }
 
     void SetSelected(bool s) { if (m_selected == s) return; m_selected = s; Refresh(); }
+
+    bool AcceptsFocus() const override { return true; }
+    bool AcceptsFocusFromKeyboard() const override { return IsShown() && IsThisEnabled(); }
 
 private:
     void OnPaint(wxPaintEvent &)
@@ -1390,6 +1407,17 @@ private:
         }
         const int ty = y0 + (content_h - th) / 2;
         dc.DrawText(m_label, x, ty);
+
+        // Keyboard focus ring: a Primary stadium outline inset inside the pill so
+        // it stays visible over both the selected fill and the idle background.
+        if (m_focused) {
+            const int inset = FromDIP(2);
+            const int pw    = std::max(1, FromDIP(2));
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), pw));
+            dc.DrawRoundedRectangle(inset, inset, sz.x - 2 * inset, sz.y - 2 * inset,
+                                    (sz.y - 2 * inset) / 2.0);
+        }
     }
 
     uint32_t              m_glyph;
@@ -1397,6 +1425,7 @@ private:
     std::function<void()> m_on_click;
     bool                  m_selected = false;
     bool                  m_hover    = false;
+    bool                  m_focused  = false;
 };
 
 //  PreferenceTabbar — the fixed 230px vertical NavRail (kit Settings.jsx): a

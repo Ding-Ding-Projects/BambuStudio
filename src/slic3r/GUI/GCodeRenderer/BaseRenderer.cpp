@@ -3595,12 +3595,15 @@ namespace Slic3r
             void GCodeWindow::render_thermal_index_windows(
                 std::vector<GCodeProcessor::ThermalIndex> thermal_indexes, float top, float right, float wnd_height, float f_lines_count, uint64_t start_id, uint64_t end_id) const
             {
-                const float         text_height = ImGui::CalcTextSize("0").y;
-                static const ImVec4 LINE_NUMBER_COLOR = ImGuiWrapper::COL_ORANGE_LIGHT;
+                const float  text_height = ImGui::CalcTextSize("0").y;
+                // Numeric thermal values: legacy COL_ORANGE_LIGHT failed WCAG AA on
+                // the SurfaceContainer panel; use the Primary role (theme-aware,
+                // matches the sibling G-code window's LINE_NUMBER_COLOR).
+                const ImVec4 LINE_NUMBER_COLOR = md3_imgui_color(MD3::Role::Primary, m_is_dark);
 
                 float previousWindowWidth = right;
 
-                auto place_window = [this, text_height, thermal_indexes, top, wnd_height, f_lines_count, start_id, end_id](std::string heading, std::string label, size_t index_id, float right) {
+                auto place_window = [this, text_height, thermal_indexes, top, wnd_height, f_lines_count, start_id, end_id, LINE_NUMBER_COLOR](std::string heading, std::string label, size_t index_id, float right) {
                     ImGuiWrapper& imgui = *wxGetApp().imgui();
                     const ImGuiStyle& style = ImGui::GetStyle();
                     imgui.set_next_window_pos(right - 0.4f, top, ImGuiCond_Always, 1.0f, 0.0f);

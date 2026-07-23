@@ -326,6 +326,10 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
         auto* rb  = new RadioBox(this);
         m_filamentRadios.push_back(rb);
 
+        // The dot itself carries no text; expose the chip name so assistive tech
+        // announces the focused radio.
+        rb->SetName(filamentLabels[i]);
+
         auto* lbl = new wxStaticText(this, wxID_ANY, filamentLabels[i]);
         lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         lbl->SetFont(::Label::Body_13);
@@ -339,6 +343,10 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
         auto select = [this, i](wxMouseEvent&) { on_filament_type_changed(i); };
         rb->Bind(wxEVT_LEFT_DOWN, select);
         lbl->Bind(wxEVT_LEFT_DOWN, select);
+        // Keyboard a11y: the RadioBox is a native wxBitmapToggleButton, so Space/
+        // Enter fires wxEVT_TOGGLEBUTTON. Route it through the same single-select
+        // handler so keyboard activation drives selection, not just mouse-down.
+        rb->Bind(wxEVT_TOGGLEBUTTON, [this, i](wxCommandEvent&) { on_filament_type_changed(i); });
 
         fil_wrap->Add(row, 0, wxRIGHT | wxBOTTOM, FromDIP(12));
     }

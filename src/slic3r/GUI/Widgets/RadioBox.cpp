@@ -14,7 +14,10 @@ namespace Slic3r {
 namespace GUI {
 
 namespace {
-// 18px logical control, matching the legacy radio footprint.
+// 18px logical glyph and window, matching the legacy radio footprint. The window
+// stays 18px: growing it to a 44px a11y hit target regressed layout app-wide
+// (worst in the 9-chip Temp calibration group) since a wxWindow's footprint IS
+// its hit region. Row-level hit targets are the correct a11y path (followup).
 constexpr int kRadioPx = 18;
 
 inline wxColour withAlpha(const wxColour &c, int a)
@@ -80,8 +83,7 @@ wxBitmap RadioBox::renderBitmap(bool selected, bool disabled) const
     const wxColour colour = disabled ? withAlpha(onSurfVar, 97)
                                      : (selected ? primary : onSurfVar);
 
-    // Draw into a square canvas so the control keeps its 18px footprint and the
-    // glyph stays centered regardless of the font's own metrics.
+    // 18px glyph filling an 18px window (legacy footprint, no layout regression).
     wxBitmap bmp(dev, dev);
 #if defined(__WXMSW__) || defined(__WXOSX__)
     bmp.UseAlpha();
@@ -109,7 +111,7 @@ wxBitmap RadioBox::renderBitmap(bool selected, bool disabled) const
             if (!drawn) {
                 // Font missing: hand-draw the ring (+ inner dot when selected).
                 const double c = kRadioPx / 2.0;
-                const double rOuter = c - 2.0;
+                const double rOuter = kRadioPx / 2.0 - 2.0;
                 gc->SetBrush(*wxTRANSPARENT_BRUSH);
                 gc->SetPen(wxPen(colour, 2));
                 gc->DrawEllipse(c - rOuter, c - rOuter, rOuter * 2, rOuter * 2);

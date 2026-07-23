@@ -309,6 +309,8 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         m_compare_btn->SetIconButton(Button::IconShape::Circle, 32);
         m_compare_btn->SetGlyph(MaterialIcon::SwapHoriz);
         m_compare_btn->SetToolTip(_L("Compare presets"));
+        // a11y: icon-only control needs an accessible name for assistive tech.
+        m_compare_btn->SetName(_L("Compare presets"));
         m_compare_btn->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { wxGetApp().mainframe->diff_dialog.show(); }));
 
         // MD3: object-settings table IconButton. 'table' is absent from the frozen
@@ -318,6 +320,8 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         m_setting_btn->SetIconButton(Button::IconShape::Circle, 32);
         m_setting_btn->SetGlyph(MaterialIcon::GridView);
         m_setting_btn->SetToolTip(_L("View all object's settings"));
+        // a11y: icon-only control needs an accessible name for assistive tech.
+        m_setting_btn->SetName(_L("View all object's settings"));
         m_setting_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { wxGetApp().plater()->PopupObjectTable(-1, -1, {0, 0}); });
 
         m_highlighter.set_timer_owner(this, 0);

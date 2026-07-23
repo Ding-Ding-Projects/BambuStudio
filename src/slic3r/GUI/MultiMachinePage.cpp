@@ -127,7 +127,15 @@ DevicePickItem::DevicePickItem(wxWindow* parent, MachineObject* obj)
     Bind(wxEVT_LEAVE_WINDOW, &DevicePickItem::OnLeaveWindow, this);
     Bind(wxEVT_LEFT_DOWN, &DevicePickItem::OnLeftDown, this);
     Bind(wxEVT_MOTION, &DevicePickItem::OnMove, this);
+    Bind(wxEVT_KEY_DOWN, &DevicePickItem::OnKeyDown, this);
+    Bind(wxEVT_SET_FOCUS, &DevicePickItem::OnSetFocus, this);
+    Bind(wxEVT_KILL_FOCUS, &DevicePickItem::OnKillFocus, this);
     Bind(EVT_MULTI_DEVICE_SELECTED, &DevicePickItem::OnSelectedDevice, this);
+
+    // a11y-label: expose the device name so assistive tech announces the row.
+    if (obj)
+        SetName(wxString::FromUTF8(obj->get_dev_name()));
+
     wxGetApp().UpdateDarkUIWin(this);
 }
 
@@ -202,34 +210,41 @@ void DevicePickItem::OnSelectedDevice(wxCommandEvent& evt)
 
 void DevicePickItem::OnLeftDown(wxMouseEvent& evt)
 {
-    int left = FromDIP(15);
-    auto mouse_pos = ClientToScreen(evt.GetPosition());
-    auto item = this->ClientToScreen(wxPoint(0, 0));
-
-    if (mouse_pos.x > (item.x + left) &&
-        mouse_pos.x < (item.x + left + FromDIP(kCheckboxPx)) &&
-        mouse_pos.y > item.y &&
-        mouse_pos.y < (item.y + DEVICE_ITEM_MAX_HEIGHT)) {
-
-        post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
-    }
+    // a11y-hittarget: the whole row toggles selection (its only action), instead
+    // of only the ~18px checkbox glyph, so the pointer target spans the full row.
+    if (!HasFocus())
+        SetFocus();
+    post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
 }
 
 void DevicePickItem::OnMove(wxMouseEvent& evt)
 {
-    int left = FromDIP(15);
-    auto mouse_pos = ClientToScreen(evt.GetPosition());
-    auto item = this->ClientToScreen(wxPoint(0, 0));
+    // Hand cursor across the whole (now fully clickable) row.
+    SetCursor(wxCURSOR_HAND);
+}
 
-    if (mouse_pos.x > (item.x + left) &&
-        mouse_pos.x < (item.x + left + FromDIP(kCheckboxPx)) &&
-        mouse_pos.y > item.y &&
-        mouse_pos.y < (item.y + DEVICE_ITEM_MAX_HEIGHT)) {
-        SetCursor(wxCURSOR_HAND);
+void DevicePickItem::OnKeyDown(wxKeyEvent& evt)
+{
+    const int key = evt.GetKeyCode();
+    if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
+    } else {
+        evt.Skip();
     }
-    else {
-        SetCursor(wxCURSOR_ARROW);
-    }
+}
+
+void DevicePickItem::OnSetFocus(wxFocusEvent& evt)
+{
+    m_focused = true;
+    Refresh(false);
+    evt.Skip();
+}
+
+void DevicePickItem::OnKillFocus(wxFocusEvent& evt)
+{
+    m_focused = false;
+    Refresh(false);
+    evt.Skip();
 }
 
 void DevicePickItem::paintEvent(wxPaintEvent& evt)
@@ -278,6 +293,14 @@ void DevicePickItem::doRender(wxDC& dc)
     //dev names
     DrawTextWithEllipsis(dc, wxString::FromUTF8(get_obj()->get_dev_name()), FromDIP(PICK_LEFT_DEV_NAME), left);
     left += FromDIP(PICK_LEFT_DEV_NAME);
+
+    // a11y-focus: 2px Primary keyboard focus ring around the row.
+    if (m_focused) {
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        const int inset = FromDIP(1);
+        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+    }
 }
 void DevicePickItem::post_event(wxCommandEvent&& event)
 {

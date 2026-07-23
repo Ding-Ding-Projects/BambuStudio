@@ -431,7 +431,9 @@ void OptionsSearcher::add_key(const std::string &opt_key, Preset::Type type, con
 //------------------------------------------
 
 SearchItem::SearchItem(wxWindow *parent, wxString text, int index, SearchDialog* sdialog, SearchObjectDialog* search_dialog, wxString tooltip)
-    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(parent->GetSize().GetWidth(), 3 * GUI::wxGetApp().em_unit()))
+    // wxWANTS_CHARS so this custom row is keyboard-focusable and receives arrow/
+    // Enter keys itself (rather than them being eaten for tab traversal).
+    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(parent->GetSize().GetWidth(), 3 * GUI::wxGetApp().em_unit()), wxWANTS_CHARS)
 {
     m_sdialog = sdialog;
     m_search_object_dialog = search_dialog;
@@ -440,12 +442,32 @@ SearchItem::SearchItem(wxWindow *parent, wxString text, int index, SearchDialog*
 
     this->SetToolTip(tooltip);
 
+    // Accessible name: the row is custom-painted (no child text control), so
+    // expose the option text (minus the bold markup) for assistive tech.
+    wxString accessible_name = text;
+    accessible_name.Replace("<b>", "");
+    accessible_name.Replace("</b>", "");
+    if (!accessible_name.empty())
+        SetName(accessible_name);
+
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     Bind(wxEVT_ENTER_WINDOW, &SearchItem::on_mouse_enter, this);
     Bind(wxEVT_LEAVE_WINDOW, &SearchItem::on_mouse_leave, this);
     Bind(wxEVT_LEFT_DOWN, &SearchItem::on_mouse_left_down, this);
     Bind(wxEVT_LEFT_UP, &SearchItem::on_mouse_left_up, this);
+    Bind(wxEVT_KEY_DOWN, &SearchItem::on_key_down, this);
     Bind(wxEVT_PAINT, &SearchItem::OnPaint, this);
+    // Keyboard focus highlight, mirroring the hover visual.
+    Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+        Refresh();
+        e.Skip();
+    });
+    Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &e) {
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+        Refresh();
+        e.Skip();
+    });
 }
 
 wxSize SearchItem::DrawTextString(wxDC &dc, const wxString &text, const wxPoint &pt, bool bold)
@@ -547,9 +569,13 @@ void SearchItem::on_mouse_left_down(wxMouseEvent &evt)
 
 void SearchItem::on_mouse_left_up(wxMouseEvent &evt)
 {
-
     //if (m_sdialog->prevent_list_events) return;
     // if (wxGetMouseState().LeftIsDown())
+    activate();
+}
+
+void SearchItem::activate()
+{
     if (m_sdialog) {
         m_sdialog->Die();
         wxCommandEvent event(wxCUSTOMEVT_JUMP_TO_OPTION);
@@ -563,6 +589,42 @@ void SearchItem::on_mouse_left_up(wxMouseEvent &evt)
         event.SetClientData(m_item);
         wxPostEvent(GUI::wxGetApp().plater(), event);
     }
+}
+
+void SearchItem::on_key_down(wxKeyEvent &evt)
+{
+    const int key = evt.GetKeyCode();
+
+    if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        activate();
+        return;
+    }
+
+    if (key == WXK_DOWN || key == WXK_UP) {
+        wxWindow *parent = GetParent();
+        if (!parent) { evt.Skip(); return; }
+
+        // Sibling rows are the SearchItem children of the shared list panel, in
+        // creation (display) order.
+        std::vector<SearchItem *> items;
+        for (wxWindow *child : parent->GetChildren())
+            if (auto *it = dynamic_cast<SearchItem *>(child)) items.push_back(it);
+
+        int self = -1;
+        for (int i = 0; i < (int) items.size(); ++i)
+            if (items[i] == this) { self = i; break; }
+        if (self < 0) { evt.Skip(); return; }
+
+        const int next = self + (key == WXK_DOWN ? 1 : -1);
+        if (next >= 0 && next < (int) items.size())
+            items[next]->SetFocus();
+        else if (next < 0 && m_sdialog && m_sdialog->search_line2)
+            // Up from the first row returns focus to the search field.
+            m_sdialog->search_line2->SetFocus();
+        return;
+    }
+
+    evt.Skip();
 }
 
 //------------------------------------------
@@ -623,6 +685,10 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     search_line->Bind(wxEVT_LEFT_UP, &SearchDialog::OnLeftUpInTextCtrl, this);
     search_line->Bind(wxEVT_KEY_DOWN, &SearchDialog::OnKeyDown, this);
     search_line2 = search_line->GetTextCtrl();
+    // Key events fire on the inner text control (they do not bubble up to the
+    // TextInput wrapper), so bind there too for Up/Down/Enter result navigation.
+    if (search_line2)
+        search_line2->Bind(wxEVT_KEY_DOWN, &SearchDialog::OnKeyDown, this);
 
     // scroll window
     m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em), wxVSCROLL, 6, 6);
@@ -749,33 +815,28 @@ void SearchDialog::OnLeftUpInTextCtrl(wxEvent &event)
 
 void SearchDialog::OnKeyDown(wxKeyEvent &event)
 {
+    const int key = event.GetKeyCode();
+
+    // Adapted from the legacy wxDataViewCtrl navigation to the current
+    // SearchItem-row list: move keyboard focus from the search field into the
+    // results (Down = first row, Up = last row); Enter activates the top result.
+    std::vector<SearchItem *> items;
+    if (m_listPanel) {
+        for (wxWindow *child : m_listPanel->GetChildren())
+            if (auto *it = dynamic_cast<SearchItem *>(child)) items.push_back(it);
+    }
+
+    if ((key == WXK_DOWN || key == WXK_UP) && !items.empty()) {
+        (key == WXK_DOWN ? items.front() : items.back())->SetFocus();
+        return; // consumed
+    }
+
+    if ((key == WXK_NUMPAD_ENTER || key == WXK_RETURN) && !items.empty()) {
+        items.front()->activate();
+        return;
+    }
+
     event.Skip();
-    /* int key = event.GetKeyCode();
-
-     if (key == WXK_UP || key == WXK_DOWN)
-     {
-         search_list->SetFocus();
-
-         auto item = search_list->GetSelection();
-
-         if (item.IsOk()) {
-             unsigned selection = search_list_model->GetRow(item);
-
-             if (key == WXK_UP && selection > 0)
-                 selection--;
-             if (key == WXK_DOWN && selection < unsigned(search_list_model->GetCount() - 1))
-                 selection++;
-
-             prevent_list_events = true;
-             search_list->Select(search_list_model->GetItem(selection));
-             prevent_list_events = false;
-         }
-     }
-
-     else if (key == WXK_NUMPAD_ENTER || key == WXK_RETURN)
-         ProcessSelection(search_list->GetSelection());
-     else
-         event.Skip();*/
 }
 
 void SearchDialog::OnActivate(wxDataViewEvent &event) { ProcessSelection(event.GetItem()); }
@@ -800,7 +861,9 @@ void SearchDialog::update_list()
     m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
-    auto m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
+    // Assign the member (not a shadowing local) so keyboard nav in OnKeyDown can
+    // reach the freshly-built SearchItem rows.
+    m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
     m_listPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
 

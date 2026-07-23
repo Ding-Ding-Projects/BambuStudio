@@ -60,11 +60,14 @@ protected:
 private:
 	void update();
 
-	// Draw a single state to a DPI-correct, antialiased, transparent bitmap.
-	wxBitmap renderBitmap(bool checked, bool half, bool disabled) const;
+	// Draw a single state to a DPI-correct, antialiased, transparent bitmap: the
+	// 20px glyph centered inside the 44px hit-target canvas, with an optional
+	// distinct keyboard-focus ring (used only for the MSW SetBitmapFocus bitmap).
+	wxBitmap renderBitmap(bool checked, bool half, bool disabled, bool focus = false) const;
 
-	// Device-pixel side of the 20px logical control at the current DPI. Kept in
-	// sync with renderBitmap() so the button reserves exactly the drawn size.
+	// Device-pixel side of the 44px logical hit-target window at the current DPI.
+	// Kept in sync with renderBitmap() so the button reserves exactly the drawn
+	// (hit-target) size; the visible glyph stays 20px, centered inside it.
 	int deviceSide() const;
 
 private:

@@ -363,8 +363,11 @@ void HelioStatementDialog::create_legal_page()
     terms_section_panel->SetBackgroundColour(wxColour(55, 55, 59));
     wxBoxSizer* terms_section_sizer = new wxBoxSizer(wxVERTICAL);
     
-    // Create header panel FIRST so labels have correct parent
-    wxPanel* terms_header_panel = new wxPanel(terms_section_panel);
+    // Create header panel FIRST so labels have correct parent. A plain wxWindow
+    // (with wxWANTS_CHARS) rather than a wxPanel so the accordion header is itself
+    // keyboard-focusable and a tab stop (a tab-traversal wxPanel would delegate
+    // focus to children instead of taking it).
+    wxWindow* terms_header_panel = new wxWindow(terms_section_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
     terms_header_panel->SetBackgroundColour(wxColour(55, 55, 59));
     wxBoxSizer* terms_header_sizer = new wxBoxSizer(wxHORIZONTAL);
     
@@ -386,6 +389,29 @@ void HelioStatementDialog::create_legal_page()
     terms_header_panel->SetCursor(wxCURSOR_HAND);
     terms_title->SetCursor(wxCURSOR_HAND);
     terms_arrow->SetCursor(wxCURSOR_HAND);
+    // Keyboard a11y: the header row is a focusable accordion toggle. Space/Enter
+    // expands/collapses it; focus is made visible by lightening the row and
+    // tinting the arrow with the Helio accent.
+    terms_header_panel->SetName(terms_title->GetLabelText());
+    terms_header_panel->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& e) {
+        const int k = e.GetKeyCode();
+        if (k == WXK_SPACE || k == WXK_RETURN || k == WXK_NUMPAD_ENTER)
+            toggle_terms_section();
+        else
+            e.Skip();
+    });
+    terms_header_panel->Bind(wxEVT_SET_FOCUS, [terms_header_panel, terms_arrow](wxFocusEvent& e) {
+        terms_header_panel->SetBackgroundColour(wxColour(72, 72, 78));
+        terms_arrow->SetForegroundColour(wxColour("#00AE42"));
+        terms_header_panel->Refresh();
+        e.Skip();
+    });
+    terms_header_panel->Bind(wxEVT_KILL_FOCUS, [terms_header_panel, terms_arrow](wxFocusEvent& e) {
+        terms_header_panel->SetBackgroundColour(wxColour(55, 55, 59));
+        terms_arrow->SetForegroundColour(wxColour("#FFFFFF"));
+        terms_header_panel->Refresh();
+        e.Skip();
+    });
     
     // Terms content - use HTML for proper text flow with embedded links
     terms_content_panel = new wxPanel(terms_section_panel);
@@ -496,8 +522,10 @@ void HelioStatementDialog::create_legal_page()
     privacy_section_panel->SetBackgroundColour(wxColour(55, 55, 59));
     wxBoxSizer* privacy_section_sizer = new wxBoxSizer(wxVERTICAL);
     
-    // Create header panel FIRST so labels have correct parent
-    wxPanel* privacy_header_panel = new wxPanel(privacy_section_panel);
+    // Create header panel FIRST so labels have correct parent. Plain wxWindow
+    // (wxWANTS_CHARS) so this accordion header is itself keyboard-focusable, like
+    // the Terms header above.
+    wxWindow* privacy_header_panel = new wxWindow(privacy_section_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
     privacy_header_panel->SetBackgroundColour(wxColour(55, 55, 59));
     wxBoxSizer* privacy_header_sizer = new wxBoxSizer(wxHORIZONTAL);
     
@@ -517,6 +545,28 @@ void HelioStatementDialog::create_legal_page()
     privacy_header_panel->SetCursor(wxCURSOR_HAND);
     privacy_title->SetCursor(wxCURSOR_HAND);
     privacy_arrow->SetCursor(wxCURSOR_HAND);
+    // Keyboard a11y: focusable accordion toggle (Space/Enter), with a visible
+    // focus highlight, mirroring the Terms header.
+    privacy_header_panel->SetName(privacy_title->GetLabelText());
+    privacy_header_panel->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& e) {
+        const int k = e.GetKeyCode();
+        if (k == WXK_SPACE || k == WXK_RETURN || k == WXK_NUMPAD_ENTER)
+            toggle_privacy_section();
+        else
+            e.Skip();
+    });
+    privacy_header_panel->Bind(wxEVT_SET_FOCUS, [privacy_header_panel, privacy_arrow](wxFocusEvent& e) {
+        privacy_header_panel->SetBackgroundColour(wxColour(72, 72, 78));
+        privacy_arrow->SetForegroundColour(wxColour("#00AE42"));
+        privacy_header_panel->Refresh();
+        e.Skip();
+    });
+    privacy_header_panel->Bind(wxEVT_KILL_FOCUS, [privacy_header_panel, privacy_arrow](wxFocusEvent& e) {
+        privacy_header_panel->SetBackgroundColour(wxColour(55, 55, 59));
+        privacy_arrow->SetForegroundColour(wxColour("#FFFFFF"));
+        privacy_header_panel->Refresh();
+        e.Skip();
+    });
     
     // Privacy content - FULL original text
     privacy_content_panel = new wxPanel(privacy_section_panel);

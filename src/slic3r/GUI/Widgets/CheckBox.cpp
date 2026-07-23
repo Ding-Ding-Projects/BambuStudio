@@ -11,7 +11,11 @@
 #include <cmath>
 
 namespace {
-// 20px logical box per selection/Checkbox.prompt.md.
+// 20px logical glyph per selection/Checkbox.prompt.md. The window stays 20px:
+// growing it to a 44px a11y hit target regressed layout app-wide (taller rows,
+// glyph-to-label gaps) since a wxWindow's footprint IS its hit region. Row-level
+// hit targets (clickable label rows) are the correct a11y path and are tracked
+// as a followup rather than inflating every checkbox/radio box.
 constexpr int kCheckBoxPx = 20;
 
 inline wxColour withAlpha(const wxColour &c, int a)
@@ -156,22 +160,55 @@ wxBitmap CheckBox::RenderGlyphBitmap(int px, double scale, bool checked, bool ha
     return bmp;
 }
 
-wxBitmap CheckBox::renderBitmap(bool checked, bool half, bool disabled) const
+wxBitmap CheckBox::renderBitmap(bool checked, bool half, bool disabled, bool focus) const
 {
     double scale = GetDPIScaleFactor();
-    return RenderGlyphBitmap(kCheckBoxPx, scale, checked, half, disabled, m_scheme);
+    if (scale <= 0.0)
+        scale = 1.0;
+    const wxBitmap glyph = RenderGlyphBitmap(kCheckBoxPx, scale, checked, half, disabled, m_scheme);
+    if (!focus)
+        return glyph;
+
+    // Keyboard-focus variant (distinct from the resting bitmap): the 20px glyph
+    // with a 1.5px Primary ring drawn INSET at the box edge so it stays within
+    // the 20px window (no footprint growth).
+    const int devBox = std::max(1, static_cast<int>(std::ceil(kCheckBoxPx * scale)));
+    wxBitmap bmp(devBox, devBox);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+    bmp.UseAlpha();
+#endif
+    {
+        wxMemoryDC mdc(bmp);
+        mdc.SetBackground(*wxTRANSPARENT_BRUSH);
+        mdc.Clear();
+        wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+        if (gc) {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            gc->DrawBitmap(glyph, 0, 0, glyph.GetWidth(), glyph.GetHeight());
+            const double inset = std::max(0.5, 0.75 * scale);
+            const double penW  = std::max(1.0, 1.5 * scale);
+            const wxColour ring = StateColor::semantic(MD3::Role::Primary, m_scheme);
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->SetPen(wxPen(ring, penW));
+            gc->DrawRoundedRectangle(inset, inset, devBox - 2 * inset, devBox - 2 * inset, 5.0 * scale);
+            delete gc; // flush before the bitmap is read
+        }
+        mdc.SelectObject(wxNullBitmap);
+    }
+    return bmp;
 }
 
 void CheckBox::update()
 {
 	const bool v = GetValue();
 	const bool h = m_half_checked;
-	SetBitmapLabel(renderBitmap(v, h, false));
-    SetBitmapDisabled(renderBitmap(v, h, true));
+	SetBitmapLabel(renderBitmap(v, h, false, false));
+    SetBitmapDisabled(renderBitmap(v, h, true, false));
 #ifdef __WXMSW__
-    SetBitmapFocus(renderBitmap(v, h, false));
+    // Keyboard focus gets a distinct ring variant, not the resting bitmap.
+    SetBitmapFocus(renderBitmap(v, h, false, true));
 #endif
-    SetBitmapCurrent(renderBitmap(v, h, false));
+    SetBitmapCurrent(renderBitmap(v, h, false, false));
 #ifdef __WXOSX__
     wxCommandEvent e(wxEVT_UPDATE_UI);
     updateBitmap(e);

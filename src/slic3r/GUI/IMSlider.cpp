@@ -809,17 +809,40 @@ void IMSlider::draw_custom_label_block(const ImVec2 anchor, Type type)
     }
     const ImVec2 text_size = ImGui::CalcTextSize(into_u8(label).c_str());
     const ImVec2 padding = ImVec2(4, 2) * m_scale;
-    // Custom-gcode marker badge — the semantic Warning accent (saturated in both
-    // themes so the white label text below stays legible).
-    const wxColour &warn = ThemeColor::Warning;
-    const ImU32  clr = IM_COL32(warn.Red(), warn.Green(), warn.Blue(), 255);
-    const float  rounding = 2.0f * m_scale;
+    // Custom-gcode marker chip — MD3 ErrorContainer / OnErrorContainer pair.
+    // The former hardcoded Warning fill (#FF6F00) + white label failed WCAG AA
+    // in the light theme; the container / on-container roles guarantee AA in both.
+    const ImU32 chip_bg   = preview_color(MD3::Role::ErrorContainer, m_is_dark);
+    const ImU32 chip_text = preview_color(MD3::Role::OnErrorContainer, m_is_dark);
     ImVec2 block_pos = { anchor.x - text_size.x - padding.x * 2, anchor.y - text_size.y / 2 - padding.y };
     ImVec2 block_size = { text_size.x + padding.x * 2, text_size.y + padding.y * 2 };
-    ImGui::RenderFrame(block_pos, block_pos + block_size, clr, false, rounding);
-    ImGui::PushStyleColor(ImGuiCol_Text, { 1,1,1,1 });
+    // Chip corner = MD3 pill radius (height / 2 token) instead of the magic 2px.
+    const float  rounding = (float) MD3::Metrics::pill_radius((int) block_size.y);
+    ImGui::RenderFrame(block_pos, block_pos + block_size, chip_bg, false, rounding);
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(chip_text));
     ImGui::RenderText(block_pos + padding, into_u8(label).c_str());
     ImGui::PopStyleColor();
+}
+
+// Draw a timeline tick-action icon at its normal glyph size but with an
+// enlarged, glyph-centred pointer hit rectangle. The preview-timeline a11y
+// brief sets a 24px logical floor for these dense overlay icons (a full 44px
+// target would overlap the neighbouring handle and risk accidental deletes).
+// Optionally reports the expanded hit rect so callers can gate their own click
+// handling on the same enlarged area. Returns button_with_pos()'s pressed flag.
+bool IMSlider::draw_tick_action_icon(ImTextureID texture_id, const ImVec2 &icon_pos, const ImVec2 &icon_size, ImRect *out_hit)
+{
+    const float  min_hit = 24.0f * m_scale;
+    const ImVec2 fp      = ImGui::GetStyle().FramePadding;
+    const ImVec2 img_tl  = icon_pos + fp; // where a default button_with_pos would place the glyph
+    const ImVec2 margin  = ImVec2(std::max(0.0f, (min_hit - icon_size.x) * 0.5f),
+                                  std::max(0.0f, (min_hit - icon_size.y) * 0.5f));
+    const ImVec2 pos     = img_tl - margin; // recentre so the visible glyph does not shift
+    const bool pressed = button_with_pos(texture_id, icon_size, pos, ImVec2(0, 0), ImVec2(1, 1), 0,
+                                         ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, 1), margin);
+    if (out_hit)
+        *out_hit = ImRect(pos, pos + icon_size + margin * 2.0f);
+    return pressed;
 }
 
 void IMSlider::draw_ticks(const ImRect& slideable_region) {
@@ -901,14 +924,12 @@ void IMSlider::draw_ticks(const ImRect& slideable_region) {
             } else {
                 // Capability fallback: legacy raster SVG when the merged Material
                 // Symbols atlas face is unavailable.
-                ImTextureID pause_icon_id = m_pause_icon_id;
-                button_with_pos(pause_icon_id, icon_size, icon_pos);
+                draw_tick_action_icon((ImTextureID) m_pause_icon_id, icon_pos, icon_size);
             }
         }
         if (tick_it->type == Custom || tick_it->type == Template) {
-            ImTextureID custom_icon_id = m_custom_icon_id;
-            ImVec2      icon_pos = ImVec2(slideable_region.GetCenter().x + icon_offset.x, tick_pos - icon_offset.y);
-            button_with_pos(custom_icon_id, icon_size, icon_pos);
+            ImVec2 icon_pos = ImVec2(slideable_region.GetCenter().x + icon_offset.x, tick_pos - icon_offset.y);
+            draw_tick_action_icon((ImTextureID) m_custom_icon_id, icon_pos, icon_size);
         }
 
         //draw label block
@@ -926,10 +947,11 @@ void IMSlider::draw_ticks(const ImRect& slideable_region) {
         ImVec2 label_block_anchor = ImVec2(slideable_region.GetCenter().x - tick_offset.y, get_tick_pos(tick_it->tick));
         draw_custom_label_block(label_block_anchor, tick_it->type);
 
-        // draw delete icon
-        ImVec2      icon_pos       = ImVec2(slideable_region.GetCenter().x + icon_offset.x, get_tick_pos(tick_it->tick) - icon_offset.y);
-        button_with_pos(m_delete_icon_id, icon_size, icon_pos);
-        if (ImGui::IsMouseHoveringRect(icon_pos, icon_pos + icon_size)) {
+        // draw delete icon (enlarged, glyph-centred hit rect for pointer targeting)
+        ImVec2 icon_pos = ImVec2(slideable_region.GetCenter().x + icon_offset.x, get_tick_pos(tick_it->tick) - icon_offset.y);
+        ImRect del_hit;
+        draw_tick_action_icon((ImTextureID) m_delete_icon_id, icon_pos, icon_size, &del_hit);
+        if (ImGui::IsMouseHoveringRect(del_hit.Min, del_hit.Max)) {
             if (context.IO.MouseClicked[0]) {
                 // delete tick
                 delete_tick(*tick_it);

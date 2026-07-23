@@ -47,6 +47,7 @@ private:
     wxString        m_dev_name;
     bool            m_hover{false};
     bool            m_click{false};
+    bool            m_focused{false};
     bool            m_none_printer{true};
     int             last_printer_signal = 0;
 
@@ -86,6 +87,13 @@ public:
     bool is_in_interval();
     void msw_rescale();
 
+    // a11y: this custom-painted strip is the printer switcher, so it must join the
+    // keyboard tab order and expose Enter/Space activation. It owns no child
+    // controls, so overriding the focus predicates to true is enough to make it a
+    // tab stop; a focus ring is painted in doRender() when m_focused.
+    virtual bool AcceptsFocus() const wxOVERRIDE { return true; }
+    virtual bool AcceptsFocusFromKeyboard() const wxOVERRIDE { return true; }
+
 protected:
     void OnPaint(wxPaintEvent &event);
     void render(wxDC &dc);
@@ -95,6 +103,12 @@ protected:
     void on_mouse_leave(wxMouseEvent &evt);
     void on_mouse_left_down(wxMouseEvent &evt);
     void on_mouse_left_up(wxMouseEvent &evt);
+    void on_set_focus(wxFocusEvent &evt);
+    void on_kill_focus(wxFocusEvent &evt);
+    void on_key_down(wxKeyEvent &evt);
+    // Replay the primary click path (the printer-switch popup is wired to this
+    // panel's wxEVT_LEFT_DOWN by its host) so keyboard activation is identical.
+    void trigger_primary_action();
 };
 
 class SideTools : public wxPanel

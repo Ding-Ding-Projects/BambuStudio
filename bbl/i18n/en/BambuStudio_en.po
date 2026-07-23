@@ -18324,6 +18324,15 @@ msgstr ""
 msgid "Simple settings"
 msgstr ""
 
+msgid "Filament switch status"
+msgstr ""
+
+msgid "Play or stop the camera live view"
+msgstr ""
+
+msgid "Switch printer"
+msgstr ""
+
 #~ msgid "Second"
 #~ msgstr "Second"
 

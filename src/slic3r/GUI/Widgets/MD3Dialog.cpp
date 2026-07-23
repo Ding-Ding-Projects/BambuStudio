@@ -9,6 +9,7 @@
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "../GUI_App.hpp"
+#include "slic3r/GUI/I18N.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -298,6 +299,10 @@ void MD3Dialog::build_shell(const wxString &title, const wxString &subtitle, Mat
         m_close_btn->SetMinSize(wxSize(FromDIP(36), FromDIP(36)));
         m_close_btn->SetCornerRadius(FromDIP(18));
     }
+    // Accessible name + tooltip so assistive tech announces the icon-only close
+    // control (it is built with empty labels).
+    m_close_btn->SetToolTip(_L("Close"));
+    m_close_btn->SetName(_L("Close"));
     m_close_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { OnHeaderClose(); });
     // Forced-dark shells re-tint the close glyph/hover to the dark scheme; the
     // resizable variant hides it (the native title bar owns the close control).

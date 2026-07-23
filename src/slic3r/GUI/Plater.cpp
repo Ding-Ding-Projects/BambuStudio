@@ -724,7 +724,10 @@ struct Sidebar::priv
     wxPanel* m_panel_print_content;
     wxBoxSizer *sizer_params;
 
-    wxStaticBitmap *extruder_separator_icon = nullptr;
+    // Filament-switch status affordance between the dual-extruder columns.
+    // MD3/a11y: a focusable IconButton (>=24px hit target) instead of a tiny
+    // ~10px non-focusable wxStaticBitmap; the glyph raster stays small.
+    Button *extruder_separator_icon = nullptr;
 
     //wxComboBox *                m_comboBox_print_preset;
     wxStaticLine *              m_staticline1;
@@ -775,6 +778,13 @@ struct Sidebar::priv
     SwitchButton *process_support = nullptr;
     std::vector<int> process_pattern_values; // combo index -> InfillPattern enum value
     wxPanel      *m_process_simple_bar = nullptr; // 'Simple mode' bar shown above the full tree
+    // The reparented ParamsPanel mode-switch toolbar (params_panel->get_top_panel())
+    // was built for a wide standalone settings panel and clips in the narrow
+    // sidebar; it is shown only alongside the full advanced tree, gated by
+    // process_advanced. These are its two divider lines (StaticLine, stored as
+    // wxWindow* to avoid an extra include) so their space collapses when hidden.
+    wxWindow     *m_params_top_line_1 = nullptr;
+    wxWindow     *m_params_top_line_2 = nullptr;
     bool          process_advanced = false;
     bool          process_card_refreshing = false;
     void          apply_process_segment(int seg);
@@ -894,10 +904,17 @@ void Sidebar::priv::layout_printer(bool isBBL, bool isDual)
         sizer_dual_extruder = hsizer_extruder;
 
         if (!extruder_separator_icon) {
-            auto bitmap = ScalableBitmap(m_panel_printer_content, "fila_switch", 10);
-            extruder_separator_icon = new wxStaticBitmap(m_panel_printer_content, wxID_ANY, bitmap.bmp(), wxDefaultPosition, bitmap.GetBmpSize());
+            // a11y-hittarget: a borderless IconButton gives a >=24px focusable,
+            // keyboard-operable (Space/Enter) touch target while the fila_switch
+            // raster stays a small centered glyph. Absolutely positioned + raised
+            // between the two extruder columns (see update_extruder_separator_icon).
+            extruder_separator_icon = new Button(m_panel_printer_content, wxEmptyString, "fila_switch");
+            extruder_separator_icon->SetIconButton(Button::IconShape::Circle, 24);
+            extruder_separator_icon->SetToolTip(_L("Filament switch status"));
+            extruder_separator_icon->SetName(_L("Filament switch status"));
+            extruder_separator_icon->SetSize(wxSize(FromDIP(24), FromDIP(24)));
             extruder_separator_icon->Hide();
-            extruder_separator_icon->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& evt) {
+            extruder_separator_icon->Bind(wxEVT_BUTTON, [this](wxCommandEvent& evt) {
                 bool ready = is_fila_switch_ready();
                 show_fila_switch_msg(ready);
                 evt.Skip();
@@ -1061,14 +1078,10 @@ void Sidebar::priv::update_extruder_separator_icon(bool show, bool ready)
         center_y -= icon_size.GetHeight() / 2;
         extruder_separator_icon->SetPosition(wxPoint(center_x, center_y));
 
-        auto normal_bitmap = ScalableBitmap(m_panel_printer_content, "fila_switch", 10);
-        auto error_bitmap  = ScalableBitmap(m_panel_printer_content, "fila_switch_error", 10);
-
-        if (ready) {
-            extruder_separator_icon->SetBitmap(normal_bitmap.bmp());
-        } else {
-            extruder_separator_icon->SetBitmap(error_bitmap.bmp());
-        }
+        // Button carries the fila_switch raster as its (fallback) icon; swap the
+        // named icon for the ready/error state. Button::SetIcon reloads it at the
+        // IconButton's current glyph size.
+        extruder_separator_icon->SetIcon(ready ? "fila_switch" : "fila_switch_error");
 
         extruder_separator_icon->Show();
         extruder_separator_icon->Raise();
@@ -2757,6 +2770,9 @@ Sidebar::Sidebar(Plater *parent)
         p->m_printer_header = new SectionHeader(p->m_panel_printer_title, _L("Printer"), MaterialIcon::Print);
 
         p->m_printer_setting = new ScalableButton(p->m_panel_printer_title, wxID_ANY, "settings");
+        // a11y: icon-only gear needs an accessible name + tooltip for assistive tech.
+        p->m_printer_setting->SetToolTip(_L("Printer settings"));
+        p->m_printer_setting->SetName(_L("Printer settings"));
         p->m_printer_setting->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) {
             // p->editing_filament = -1;
             // wxGetApp().params_dialog()->Popup();
@@ -2874,6 +2890,8 @@ Sidebar::Sidebar(Plater *parent)
         edit_btn->SetIconButton(Button::IconShape::Circle, 34);
         edit_btn->SetGlyph(MaterialIcon::Edit);
         edit_btn->SetToolTip(_L("Click to edit preset"));
+        // a11y: icon-only pencil needs an accessible name for assistive tech.
+        edit_btn->SetName(_L("Click to edit preset"));
         edit_btn->SetCanFocus(false);
         edit_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent)
             {
@@ -2887,6 +2905,8 @@ Sidebar::Sidebar(Plater *parent)
         p->btn_connect_printer = new ScalableButton(p->panel_printer_preset, wxID_ANY, "monitor_signal_strong");
         p->btn_connect_printer->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
         p->btn_connect_printer->SetToolTip(_L("Connection"));
+        // a11y: icon-only connect control needs an accessible name for assistive tech.
+        p->btn_connect_printer->SetName(_L("Connection"));
         // MD3: draw the connection affordance as a Material Symbols 'lan'
         // glyph (OnSurfaceVariant); the raster stays the graceful fallback.
         apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -2915,6 +2935,8 @@ Sidebar::Sidebar(Plater *parent)
         wiki_bed->SetGlyph(MaterialIcon::Help, 16);
         wiki_bed->SetCanFocus(false);
         wiki_bed->SetToolTip(_L("Click to view the wiki of the current plate type"));
+        // a11y: icon-only help control needs an accessible name for assistive tech.
+        wiki_bed->SetName(_L("Click to view the wiki of the current plate type"));
         wiki_bed->Bind(wxEVT_BUTTON, [this](wxCommandEvent) {
             bool is_zh  = wxGetApp().app_config->get("language") == "zh_CN";
             if (is_zh) {
@@ -3426,6 +3448,8 @@ Sidebar::Sidebar(Plater *parent)
 
         p->m_btn_mixed_add = new ScalableButton(p->m_panel_mixed_title, wxID_ANY, "add_filament");
         p->m_btn_mixed_add->SetToolTip(_L("Add mixed filament"));
+        // a11y: icon-only control needs an accessible name for assistive tech.
+        p->m_btn_mixed_add->SetName(_L("Add mixed filament"));
         p->m_btn_mixed_add->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { add_mixed_filament(); });
         // MD3: Material Symbols 'add'/'delete' glyphs, matching the raster->glyph
         // swap already applied to every sibling icon button in this file.
@@ -3434,6 +3458,8 @@ Sidebar::Sidebar(Plater *parent)
 
         p->m_btn_mixed_del = new ScalableButton(p->m_panel_mixed_title, wxID_ANY, "delete_filament");
         p->m_btn_mixed_del->SetToolTip(_L("Remove last mixed filament"));
+        // a11y: icon-only control needs an accessible name for assistive tech.
+        p->m_btn_mixed_del->SetName(_L("Remove last mixed filament"));
         p->m_btn_mixed_del->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
             auto* plater = dynamic_cast<Plater*>(GetParent());
             if (!plater) return;
@@ -3520,6 +3546,14 @@ Sidebar::Sidebar(Plater *parent)
         auto spliter_2 = new ::StaticLine(p->scrolled);
         spliter_2->SetLineColour(outline);
         scrolled_sizer->Add(spliter_2, 0, wxEXPAND);
+        // Gate the clip-prone mode-switch toolbar (+ its dividers) on
+        // process_advanced: hidden by default (compact card), shown with the
+        // full tree. Applied here and in show_process_advanced().
+        p->m_params_top_line_1 = spliter_1;
+        p->m_params_top_line_2 = spliter_2;
+        params_panel->get_top_panel()->Hide();
+        spliter_1->Hide();
+        spliter_2->Hide();
     }
 
     // ---- MD3 compact Process card (Prepare.jsx:105-112) ----
@@ -3767,6 +3801,10 @@ Sidebar::Sidebar(Plater *parent)
         p->m_process_simple_bar->Show(p->process_advanced);
         params_panel->set_host_visibility_gate(p->process_advanced);
         params_panel->Show(p->process_advanced);
+        // Show the reparented mode-switch toolbar only alongside the full tree.
+        if (auto *top = params_panel->get_top_panel()) top->Show(p->process_advanced);
+        if (p->m_params_top_line_1) p->m_params_top_line_1->Show(p->process_advanced);
+        if (p->m_params_top_line_2) p->m_params_top_line_2->Show(p->process_advanced);
         p->refresh_process_card();
     }
 #endif
@@ -3861,13 +3899,16 @@ Sidebar::Sidebar(Plater *parent)
         p->m_manip_timer->Start(250);
     }
 
-    // Explicit 1px OutlineVariant left border separating the sidebar from the
-    // adjacent 3D scene (previously relied on the neighbouring panel edge).
+    // Explicit 1px OutlineVariant divider between the sidebar and the adjacent
+    // 3D scene. The scrolled body is added FIRST so its opaque surface starts at
+    // x=0 (covering the frame edge for the default left dock — no bleed-through);
+    // the divider sits on the canvas-facing (right) side where the separation is
+    // actually needed.
     auto *sidebar_border = new ::StaticLine(this, true);
     sidebar_border->SetLineColour(outline);
     auto *sizer = new wxBoxSizer(wxHORIZONTAL);
-    sizer->Add(sidebar_border, 0, wxEXPAND);
     sizer->Add(p->scrolled, 1, wxEXPAND);
+    sizer->Add(sidebar_border, 0, wxEXPAND);
     SetSizer(sizer);
 
     //wxGetApp().CallAfter([this]() {
@@ -4047,6 +4088,8 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
 
     ScalableButton* edit_btn = new ScalableButton(row, wxID_ANY, "menu_filament");
     edit_btn->SetToolTip(_L("Click to edit preset"));
+    // a11y: icon-only per-row filament menu needs an accessible name for assistive tech.
+    edit_btn->SetName(_L("Click to edit preset"));
     // MD3: per-row menu as a Material Symbols 'more_vert' glyph
     // (OnSurfaceVariant); the raster stays the graceful fallback.
     apply_scalable_glyph(edit_btn, MaterialIcon::MoreVert, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -4911,6 +4954,11 @@ void Sidebar::show_process_advanced(bool advanced, bool persist)
     if (p->m_process_simple_bar) p->m_process_simple_bar->Show(advanced);
     p->params_panel_ref->set_host_visibility_gate(advanced);
     p->params_panel_ref->Show(advanced);
+    // Keep the clip-prone reparented mode-switch toolbar (+ dividers) in lockstep
+    // with the full tree so it never shows over the narrow compact card.
+    if (auto *top = p->params_panel_ref->get_top_panel()) top->Show(advanced);
+    if (p->m_params_top_line_1) p->m_params_top_line_1->Show(advanced);
+    if (p->m_params_top_line_2) p->m_params_top_line_2->Show(advanced);
     if (!advanced) p->refresh_process_card();
     if (persist && wxGetApp().app_config)
         wxGetApp().app_config->set("sidebar_process_advanced", advanced ? "true" : "false");
@@ -8255,7 +8303,12 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
     m_is_dark = wxGetApp().app_config->get_bool("dark_color_mode");
     m_aui_mgr.SetManagedWindow(q);
     m_aui_mgr.SetDockSizeConstraint(1, 1);
-    // m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, 0);
+    // Zero the AUI pane border so a docked pane fills its dock rect flush to the
+    // frame edge. Without this the docked sidebar's border inset left a ~15px
+    // strip at x=0 that AUI never repainted, bleeding stale page content behind
+    // the sidebar (the confirmed left-edge Home bleed-through). The sidebar draws
+    // its own 1px OutlineVariant divider on the canvas side instead.
+    m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, 0);
     // m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_SASH_SIZE, 2);
     m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, wxGetApp().app_config->get_bool("enable_sidebar_floatable") ? 8 : 0);
     m_aui_mgr.GetArtProvider()->SetMetric(wxAUI_DOCKART_GRADIENT_TYPE, wxAUI_GRADIENT_NONE);
@@ -8349,6 +8402,10 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
     // apply_sidebar_dock() below (default: left).
     m_aui_mgr.AddPane(sidebar, wxAuiPaneInfo()
                                    .Name("sidebar")
+                                   // No AUI pane border: the sidebar fills its dock
+                                   // rect flush to x=0 (matches the center pane) so
+                                   // no stale strip bleeds through at the frame edge.
+                                   .PaneBorder(false)
                                    .Left()
                                    .CloseButton(false)
                                    .LeftDockable(true)

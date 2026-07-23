@@ -90,6 +90,17 @@ PrivacyUpdateDialog::PrivacyUpdateDialog(wxWindow* parent, wxWindowID id, const 
 
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& e) {e.Veto(); });
 
+    // Keyboard a11y: the window-close is vetoed to force an explicit choice, which
+    // also swallows the usual Escape-to-cancel. Route Escape through the same
+    // guarded decline path as the header [x] (OnHeaderClose): it declines + hides
+    // only when a "Log Out" affordance is shown, otherwise stays inert.
+    Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent& e) {
+        if (e.GetKeyCode() == WXK_ESCAPE)
+            OnHeaderClose();
+        else
+            e.Skip();
+    });
+
     if (btn_style != CONFIRM_AND_CANCEL)
         m_button_cancel->Hide();
     else
