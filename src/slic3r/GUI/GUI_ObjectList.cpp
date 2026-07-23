@@ -22,6 +22,8 @@
 #include "NotificationManager.hpp"
 #include "MsgDialog.hpp"
 #include "Widgets/ProgressDialog.hpp"
+#include "Widgets/StateColor.hpp"
+#include "Widgets/MD3Tokens.hpp"
 #include "SingleChoiceDialog.hpp"
 
 #include <boost/algorithm/string.hpp>
@@ -87,11 +89,31 @@ class wxRenderer : public wxDelegateRendererNative
 {
 public:
     wxRenderer() : wxDelegateRendererNative(wxRendererNative::Get()) {}
+    // MD3 Objects card row anatomy (register objects-legacy-searchctrl-dataviewctrl):
+    // the selected row reads as a SecondaryContainer chip (kit selection role)
+    // instead of the OS highlight blue. Drawn as a rounded fill inset a hair from
+    // the row edges so the whole row (all columns) picks up the kit selection
+    // colour while the cell renderers (name glyph/text, filament, toggles) keep
+    // painting their content on top — selection, editing, DnD and context menus
+    // are untouched (this is purely the row's selection background). A row that is
+    // current/hovered but not selected still falls through to the generic path.
     virtual void DrawItemSelectionRect(wxWindow *win,
                                        wxDC& dc,
                                        const wxRect& rect,
                                        int flags = 0) wxOVERRIDE
-        { GetGeneric().DrawItemSelectionRect(win, dc, rect, flags); }
+    {
+        if (flags & wxCONTROL_SELECTED) {
+            const wxColour fill = StateColor::semantic(MD3::Role::SecondaryContainer);
+            wxRect r = rect;
+            r.Deflate(win ? win->FromDIP(2) : 2, win ? win->FromDIP(1) : 1);
+            const int radius = win ? win->FromDIP(8) : 8;
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(fill));
+            dc.DrawRoundedRectangle(r, radius);
+            return;
+        }
+        GetGeneric().DrawItemSelectionRect(win, dc, rect, flags);
+    }
 };
 
 ObjectList::ObjectList(wxWindow* parent) :

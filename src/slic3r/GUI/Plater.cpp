@@ -729,7 +729,11 @@ struct Sidebar::priv
     //wxComboBox *                m_comboBox_print_preset;
     wxStaticLine *              m_staticline1;
     StaticBox* m_panel_filament_title;
-    wxStaticText* m_staticText_filament_settings;
+    // Filament section header: the literal shared MD3 SectionHeader (Label.hpp)
+    // replaces the former ScalableButton 'filament' icon + wxStaticText label
+    // pair; trailing Sync AMS / purge / flush buttons stay in the same title
+    // sizer, driven by adjust_filament_title_layout() (row 3).
+    SectionHeader* m_filament_header = nullptr;
     // MD3: the legacy 'Filament' subtitle row (Body_14 label + hand-painted divider + four
     // raster ScalableButtons add/delete/ams-sync/settings) was retired. AMS sync moved to the
     // Filament SectionHeader trailing slot as an outlined MD3 button; add is the full-width
@@ -742,7 +746,6 @@ struct Sidebar::priv
     wxPanel*          m_panel_filament_content{nullptr};
     wxStaticLine* m_staticline2;
     wxPanel* m_panel_project_title;
-    ScalableButton* m_filament_icon = nullptr;
     Button * m_purge_mode_btn = nullptr;
     Button * m_flushing_volume_btn = nullptr;
     // MD3 Objects card (Prepare.jsx:116-126): SectionHeader account_tree + the
@@ -756,6 +759,16 @@ struct Sidebar::priv
     // ParamsPanel so no setting is orphaned.
     ParamsPanel  *params_panel_ref = nullptr;
     wxPanel      *m_process_card = nullptr;
+    // Kit Process card chrome (row 1): a shared SectionHeader 'tune', the live
+    // process-preset combo wrapped as a SelectField, and a
+    // [Quality/Strength/Support/Others] SegmentedControl (MultiSwitchButton)
+    // that filters which curated rows are shown.
+    SectionHeader      *m_process_header  = nullptr;
+    MultiSwitchButton  *m_process_segment = nullptr;
+    // Curated rows tagged by segment index (0=Quality, 1=Strength, 2=Support,
+    // 3=Others; -1 = always shown). apply_process_segment() shows only the
+    // rows matching the active segment.
+    std::vector<std::pair<wxWindow*, int>> process_seg_rows;
     TextInput    *process_layer_height = nullptr;
     TextInput    *process_infill_density = nullptr;
     ComboBox     *process_infill_pattern = nullptr;
@@ -764,6 +777,7 @@ struct Sidebar::priv
     wxPanel      *m_process_simple_bar = nullptr; // 'Simple mode' bar shown above the full tree
     bool          process_advanced = false;
     bool          process_card_refreshing = false;
+    void          apply_process_segment(int seg);
 
     // BBS printer config
     StaticBox* m_panel_printer_title = nullptr;
@@ -1243,6 +1257,27 @@ void Sidebar::priv::refresh_process_card()
     }
 
     process_card_refreshing = false;
+}
+
+// Show only the curated rows whose segment tag matches the active
+// [Quality/Strength/Support/Others] SegmentedControl choice (tag -1 = always).
+// Purely a visibility filter over the compact Process card; the full ParamsPanel
+// tree behind 'Advanced settings' remains the reachability path for every other
+// setting, so nothing is orphaned.
+void Sidebar::priv::apply_process_segment(int seg)
+{
+    for (auto &pr : process_seg_rows) {
+        const bool show = pr.second < 0 || pr.second == seg;
+        if (pr.first && pr.first->IsShown() != show)
+            pr.first->Show(show);
+    }
+    if (m_process_card && m_process_card->IsShown()) {
+        m_process_card->Layout();
+        if (scrolled) {
+            scrolled->Layout();
+            scrolled->FitInside();
+        }
+    }
 }
 
 #ifdef _WIN32
@@ -3071,20 +3106,30 @@ Sidebar::Sidebar(Plater *parent)
 
     wxBoxSizer* bSizer39;
     bSizer39 = new wxBoxSizer( wxHORIZONTAL );
-    p->m_filament_icon = new ScalableButton(p->m_panel_filament_title, wxID_ANY, "filament");
-    // Kit label is 'Filament' (not 'Project Filaments'); _L("Filament") already
-    // exists in the catalog (used by the subtitle row below).
-    p->m_staticText_filament_settings = new Label(p->m_panel_filament_title, _L("Filament").Upper(), LB_PROPAGATE_MOUSE_EVENT);
-    // MD3 section-header typography: 11px/600 uppercase, OnSurfaceVariant.
-    p->m_staticText_filament_settings->SetFont(Label::Head_11);
-    p->m_staticText_filament_settings->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    // MD3 SectionHeader leading glyph: 'palette' from the Material Symbols face
-    // (OnSurfaceVariant), retiring the raster 'filament' bitmap.
-    apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    bSizer39->Add(p->m_filament_icon, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));
-    bSizer39->Add( p->m_staticText_filament_settings, 0, wxALIGN_CENTER );
+    // Filament section header on the literal shared MD3 SectionHeader (row 3):
+    // 16px leading 'palette' Material Symbol + 11px/600 uppercase OnSurfaceVariant
+    // 'Filament' label, self-maintaining across theme/DPI (no rescale/reapply
+    // calls needed). Replaces the retired ScalableButton 'filament' raster icon +
+    // wxStaticText pair; the kit label is 'Filament' (not 'Project Filaments').
+    p->m_filament_header = new SectionHeader(p->m_panel_filament_title, _L("Filament"), MaterialIcon::Palette);
+    // A plain wxWindow does not forward mouse clicks to its parent (unlike the old
+    // Label's LB_PROPAGATE_MOUSE_EVENT), so bind the same collapse toggle directly
+    // to keep clicking the header expanding/collapsing the filament area. The
+    // header sits left of the purge/flush trailing buttons, so no button-zone
+    // guard (as on the panel handler) is needed here.
+    p->m_filament_header->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
+        if (!p->m_filament_area_wrapper->IsShown()) {
+            p->m_filament_area_wrapper->Show();
+            recalc_filament_scroll_sizes();
+        } else {
+            p->m_filament_area_wrapper->Hide();
+        }
+        m_scrolled_sizer->Layout();
+        e.Skip();
+    });
+    bSizer39->Add(p->m_filament_header, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));
     bSizer39->Add(FromDIP(10), 0, 0, 0, 0);
-    // No fixed-height bar: the row sizes to its content (label + any trailing
+    // No fixed-height bar: the row sizes to its content (header + any trailing
     // buttons adjust_filament_title_layout() manages), matching the Printer
     // section's content-sized SectionHeader.
 
@@ -3489,15 +3534,57 @@ Sidebar::Sidebar(Plater *parent)
         p->m_process_card->SetBackgroundColour(surface_lowest);
         auto *card_sizer = new wxBoxSizer(wxVERTICAL);
 
-        auto add_process_row = [&](const wxString &label, wxWindow *field) {
-            auto *row = new wxBoxSizer(wxHORIZONTAL);
-            auto *lbl = new ::Label(p->m_process_card, label);
+        // Kit Process card header: the shared MD3 SectionHeader with a 'tune'
+        // leading glyph (self-maintaining across theme/DPI), opening the card.
+        p->m_process_header = new SectionHeader(p->m_process_card, _L("Process"), MaterialIcon::Tune);
+        card_sizer->Add(p->m_process_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+
+        // Process-preset SelectField: the live PlaterPresetComboBox (TYPE_PRINT)
+        // dressed with kit SelectField chrome (r10 small-radius, SurfaceContainer-
+        // Highest fill, borderless, the migrated ComboBox's expand_more chevron).
+        // Selection tracking and every update()/preset-switch path stay in the
+        // base combo; it is populated through update_all_preset_comboboxes() /
+        // update_presets(TYPE_PRINT).
+        p->combo_print = new PlaterPresetComboBox(p->m_process_card, Preset::TYPE_PRINT);
+        p->combo_print->SetWindowStyle(p->combo_print->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_LEFT);
+        p->combo_print->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+        p->combo_print->SetBorderWidth(0);
+        p->combo_print->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        p->combo_print->SetMinSize({-1, FromDIP(34)});
+        p->combo_print->GetDropDown().SetUseContentWidth(true);
+        // The base PlaterPresetComboBox creates a floating 'cog' edit ScalableButton
+        // parented to the card; the kit Process SelectField carries no inline edit
+        // affordance (editing is via 'Advanced settings' / the preset menu items),
+        // so keep that stray button out of the card.
+        if (p->combo_print->edit_btn)
+            p->combo_print->edit_btn->Hide();
+        card_sizer->Add(p->combo_print, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+
+        // [Quality/Strength/Support/Others] SegmentedControl (MultiSwitchButton)
+        // choosing which curated rows are visible; the categories mirror the
+        // Print-config tab pages. Wired after the rows are built (below).
+        p->m_process_segment = new MultiSwitchButton(p->m_process_card);
+        p->m_process_segment->SetOptions({_L("Quality"), _L("Strength"), _L("Support"), _L("Others")});
+        p->m_process_segment->SetMinSize(wxSize(-1, FromDIP(30)));
+        card_sizer->Add(p->m_process_segment, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+
+        // Each curated row is its own wxPanel tagged with a segment index so the
+        // SegmentedControl can show/hide it (apply_process_segment); -1 = always.
+        auto add_process_row = [&](const wxString &label, wxWindow *field, int seg) {
+            auto *row = new wxPanel(p->m_process_card, wxID_ANY);
+            row->SetBackgroundColour(surface_lowest);
+            auto *rs  = new wxBoxSizer(wxHORIZONTAL);
+            auto *lbl = new ::Label(row, label);
             lbl->SetFont(::Label::Body_12);
             lbl->SetForegroundColour(active_text);
-            row->Add(lbl, 1, wxALIGN_CENTER_VERTICAL);
-            row->Add(field, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
-            row->SetMinSize(-1, FromDIP(36));
+            lbl->SetBackgroundColour(surface_lowest);
+            rs->Add(lbl, 1, wxALIGN_CENTER_VERTICAL);
+            field->Reparent(row);
+            rs->Add(field, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+            row->SetSizer(rs);
+            row->SetMinSize({-1, FromDIP(36)});
             card_sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+            p->process_seg_rows.push_back({row, seg});
         };
         auto style_value_field = [&](TextInput *field) {
             field->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
@@ -3530,7 +3617,7 @@ Sidebar::Sidebar(Plater *parent)
             conf.set_key_value("layer_height", new ConfigOptionFloat(v));
             if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
         });
-        add_process_row(_L("Layer height"), p->process_layer_height);
+        add_process_row(_L("Layer height"), p->process_layer_height, 0 /*Quality*/);
 
         // Sparse infill density (ValueField, %)
         p->process_infill_density = new TextInput(p->m_process_card, wxString(), wxString(), wxString(),
@@ -3542,7 +3629,7 @@ Sidebar::Sidebar(Plater *parent)
             conf.set_key_value("sparse_infill_density", new ConfigOptionPercent(v));
             if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) tab->load_config(conf);
         });
-        add_process_row(_L("Sparse infill density"), p->process_infill_density);
+        add_process_row(_L("Sparse infill density"), p->process_infill_density, 1 /*Strength*/);
 
         // Infill pattern (filled SelectField)
         p->process_infill_pattern = new ComboBox(p->m_process_card, wxID_ANY, wxString(), wxDefaultPosition,
@@ -3573,7 +3660,7 @@ Sidebar::Sidebar(Plater *parent)
             }
             e.StopPropagation();
         });
-        add_process_row(_L("Sparse infill pattern"), p->process_infill_pattern);
+        add_process_row(_L("Sparse infill pattern"), p->process_infill_pattern, 1 /*Strength*/);
 
         // Enable support (MD3 Switch)
         p->process_support = new SwitchButton(p->m_process_card);
@@ -3585,7 +3672,7 @@ Sidebar::Sidebar(Plater *parent)
             }
             e.Skip();
         });
-        add_process_row(_L("Enable support"), p->process_support);
+        add_process_row(_L("Enable support"), p->process_support, 2 /*Support*/);
 
         // 'Advanced settings' text button (kit: tune glyph, Primary, h30).
         auto *btn_advanced = new Button(p->m_process_card, _L("Advanced settings"));
@@ -3597,6 +3684,16 @@ Sidebar::Sidebar(Plater *parent)
         card_sizer->Add(btn_advanced, 0, wxALIGN_LEFT | wxALL, pad / 2);
 
         p->m_process_card->SetSizer(card_sizer);
+
+        // Default segment = Quality; set before Bind so the init call does not
+        // re-fire into the handler, then apply the initial row visibility.
+        p->m_process_segment->SetSelection(0);
+        p->m_process_segment->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
+            p->apply_process_segment(e.GetInt());
+            e.Skip();
+        });
+        p->apply_process_segment(0);
+
         scrolled_sizer->Add(p->m_process_card, 0, wxEXPAND);
     }
 
@@ -4116,6 +4213,10 @@ void Sidebar::update_all_preset_comboboxes()
         update_printer_thumbnail();
         p->update_printer_identity();
     }
+    // MD3 Process card preset SelectField: keep the process-preset combo's list
+    // and selection in step with the active printer's compatible presets.
+    if (p->combo_print)
+        p->combo_print->update();
     p->update_filament_row_badges();
     p->refresh_process_card();
 }
@@ -4159,12 +4260,14 @@ void Sidebar::update_presets(Preset::Type preset_type)
 
     case Preset::TYPE_PRINT:
         //wxGetApp().mainframe->m_param_panel;
-        //p->combo_print->update();
         {
         Tab* print_tab = wxGetApp().get_tab(Preset::TYPE_PRINT);
         if (print_tab) {
             print_tab->get_combo_box()->update();
         }
+        // MD3 Process card preset SelectField mirrors the process-preset list.
+        if (p->combo_print)
+            p->combo_print->update();
         p->refresh_process_card();
         break;
         }
@@ -4488,7 +4591,6 @@ void Sidebar::msw_rescale()
     if (exist) { update_bed_thumbnail(image_path); }
 
     p->adjust_filament_title_layout();
-    p->m_filament_icon->msw_rescale();
     // MD3: the AMS-sync affordance is now a shared Button; its SetGlyph icon survives Rescale().
     if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Rescale();
     // ScalableButton::msw_rescale reloaded the raster icons above; re-paint the
@@ -4496,11 +4598,10 @@ void Sidebar::msw_rescale()
     // glyph-based (no-op when the icon face is unavailable).
     {
         const wxColour glyph_col = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-        // m_printer_header (SectionHeader) resolves its own leading-glyph colour
-        // live at paint time -- no rescale/reapply call needed.
+        // m_printer_header / m_filament_header (SectionHeader) resolve their own
+        // leading-glyph colour live at paint time -- no rescale/reapply call needed.
         apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, glyph_col);
         apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, glyph_col);
-        apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, glyph_col);
     }
     p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::compact.row_height / 2));
     p->btn_add_filament_row->SetPaddingSize({FromDIP(10), FromDIP(6)});
@@ -4680,15 +4781,13 @@ void Sidebar::sys_color_changed()
     // for (wxWindow* btn : std::vector<wxWindow*>{ p->btn_reslice, p->btn_export_gcode })
     //    wxGetApp().UpdateDarkUI(btn, true);
     p->m_printer_setting->msw_rescale();
-    p->m_filament_icon->msw_rescale();
     // MD3: the AMS-sync affordance is now a shared Button; semantic StateColors re-resolve
     // to the new theme automatically and its SetGlyph icon survives Rescale().
     if (p->m_btn_sync_ams_header) p->m_btn_sync_ams_header->Rescale();
     // Re-tint the MD3 Material Symbols glyphs to the new theme's OnSurfaceVariant
     // (the raster reloads above would otherwise revert them; no-op without the face).
-    // m_printer_header (SectionHeader) resolves its own colour live at paint.
+    // m_printer_header / m_filament_header (SectionHeader) resolve their own colour live at paint.
     apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, on_variant);
-    apply_scalable_glyph(p->m_filament_icon, MaterialIcon::Palette, 16, on_variant);
     p->m_flushing_volume_btn->Rescale();
     p->m_purge_mode_btn->Rescale();
 
@@ -4734,9 +4833,17 @@ void Sidebar::sys_color_changed()
                 field->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
         if (p->process_infill_pattern)
             p->process_infill_pattern->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
-        for (wxWindow *child : p->m_process_card->GetChildren())
-            if (auto *lbl = dynamic_cast<::Label *>(child))
-                lbl->SetForegroundColour(on_surface);
+        if (p->combo_print)
+            p->combo_print->SetBackgroundColor(StateColor(std::pair<wxColour, int>(surface_highest, StateColor::Normal)));
+        // Curated rows are now wxPanels (segment-tagged); re-tint each row panel
+        // and its label. The header / segmented control resolve their own tokens.
+        for (auto &pr : p->process_seg_rows) {
+            if (!pr.first) continue;
+            pr.first->SetBackgroundColour(surface_lowest);
+            for (wxWindow *child : pr.first->GetChildren())
+                if (auto *lbl = dynamic_cast<::Label *>(child))
+                    lbl->SetForegroundColour(on_surface);
+        }
     }
     if (p->m_process_simple_bar) p->m_process_simple_bar->SetBackgroundColour(surface_lowest);
 

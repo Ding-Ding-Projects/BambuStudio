@@ -94,6 +94,29 @@ existing timeout rather than being silently cancelled. History stays local to th
 pushed to the source repository, not synced, and not a backup, and there is not yet a
 retention/pruning policy.
 
+## Register closed — final structural wave (2026-07-23)
+
+The parity register is **127 done / 4 recorded deviations / 0 open**. The final build-in-the-loop
+wave closed the five audit-reopened rows: the Process card gained a SectionHeader(tune) + a
+process-preset SelectField wrapping the live PlaterPresetComboBox + a Quality/Strength/Support/Others
+SegmentedControl that filters curated rows (this fixes the cramped/overlapping Process header the
+visual QA caught); the Filament title moved onto the literal SectionHeader class; ReleaseNote's five
+stock-chrome siblings and ProgressDialog reparented onto the MD3Dialog shell (which gained an
+additive two-phase CreateShell path — the 32 other subclasses are untouched). The objects-searchctrl
+row is a recorded deviation: the selected-row SecondaryContainer chip landed, but the per-cell type
+glyphs + visibility/checkbox anatomy need a change in ObjectDataViewModel (outside the wave's owned
+files). Review verified behavior preservation and no GDI+ font regressions; all TUs compiled and
+libslic3r_gui.lib re-archived. Reused existing catalog strings only.
+
+**Verification harness this session:** the startup crash (variable-font-through-GDI+ heap corruption)
+is fixed and pushed; a Mesa llvmpipe software-GL DLL beside the exe lets the GPU-less VM render the
+real UI, and the lowlevel-computer-use-mcp cheap CLI drives + PrintWindow-captures it fully headless
+(see the ci-is-free and lowlevel-mcp memories). Live visual QA found: the fixed Process header (now
+addressed), a left-edge ~15px bleed-through clip, the legacy Setup Wizard/GuideFrame, and the Home
+hero — plus a 71-item clipping+a11y audit (25 high). Those, the regex-builder-on-every-search-bar,
+full font customization, and browser-like project tabs are the queued follow-on waves.
+
+
 ## Deferred work
 
 - ~~Push local `master` (`8d727d49d`) and obtain a hosted CI run~~ — done; verified by green run

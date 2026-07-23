@@ -175,6 +175,78 @@ MD3Dialog::MD3Dialog(wxWindow *          parent,
     bind_drag(this);
 }
 
+// ADDITIVE two-phase default ctor: create the bare classic borderless shaped
+// window (same style as the single-shot classic shell) but build no chrome —
+// background, header, body and footer are all deferred to CreateShell(). Members
+// keep their in-class defaults (m_resizable=false matches the classic style
+// chosen here). Used only by subclasses whose Create() finishes construction.
+MD3Dialog::MD3Dialog()
+    : DPIDialog(nullptr,
+                wxID_ANY,
+                wxEmptyString,
+                wxDefaultPosition,
+                wxDefaultSize,
+                md3dialog_shell_style(MD3Dialog::Options{}))
+{}
+
+bool MD3Dialog::CreateShell(wxWindow *          parent,
+                            const wxString &    title,
+                            const wxString &    subtitle,
+                            MaterialIcon::Glyph header_glyph,
+                            const Options &     opts)
+{
+    if (m_shell_built)
+        return true;
+
+    // The default ctor already created the classic borderless shaped window, so
+    // only forced_dark (a colour concern) is honoured here; resizable (a window
+    // style) is fixed at creation and is not applied in the two-phase path.
+    m_forced_dark = opts.forced_dark;
+
+    // Associate the owner as the logical wx parent so CenterOnParent() (called by
+    // the subclass after Fit) centers on it, WITHOUT a native TLW reparent — on
+    // MSW ::SetParent would turn the shaped popup into a clipped child window.
+    // Two-phase subclasses (ProgressDialog) enforce modality via a window
+    // disabler, independent of the OS owner. Mirrors ProgressDialog's historical
+    // SetTopParent(): a bare m_parent assignment, no AddChild.
+    if (parent && GetParent() != parent)
+        m_parent = parent;
+
+    SetTitle(title);
+    SetBackgroundColour(chrome_color(MD3::Role::SurfaceContainer));
+    SetFont(wxGetApp().normal_font());
+
+    build_shell(title, subtitle, header_glyph); // sets m_shell_built
+
+    // Mirror the single-shot classic ctor: keep the shaped silhouette in sync
+    // with size and make the shell draggable (no native title bar to move it).
+    Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
+        UpdateShape();
+        e.Skip();
+    });
+    bind_drag(this);
+
+    return true;
+}
+
+void MD3Dialog::ShowHeaderClose(bool show)
+{
+    if (!m_close_btn)
+        return;
+    m_close_btn->Show(show);
+    Layout();
+}
+
+void MD3Dialog::ShowFooter(bool show)
+{
+    if (m_footer_line)
+        m_footer_line->Show(show);
+    if (wxSizer *root = GetSizer())
+        if (m_footer_wrap)
+            root->Show(m_footer_wrap, show, true);
+    Layout();
+}
+
 MD3Dialog::~MD3Dialog() {}
 
 wxColour MD3Dialog::chrome_color(MD3::Role role) const
@@ -184,6 +256,7 @@ wxColour MD3Dialog::chrome_color(MD3::Role role) const
 
 void MD3Dialog::build_shell(const wxString &title, const wxString &subtitle, MaterialIcon::Glyph glyph)
 {
+    m_shell_built = true;
     auto *main = new wxBoxSizer(wxVERTICAL);
 
     // --- Header: tile + title/subtitle + circular close (pad 22/24/14) --------
@@ -249,9 +322,9 @@ void MD3Dialog::build_shell(const wxString &title, const wxString &subtitle, Mat
 
     m_footer_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_footer_sizer->AddStretchSpacer(); // leading stretch => AddFooterButton right-aligns
-    auto *footer_wrap = new wxBoxSizer(wxHORIZONTAL);
-    footer_wrap->Add(m_footer_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(24));
-    main->Add(footer_wrap, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(14));
+    m_footer_wrap = new wxBoxSizer(wxHORIZONTAL);
+    m_footer_wrap->Add(m_footer_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(24));
+    main->Add(m_footer_wrap, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(14));
 
     SetSizer(main);
 

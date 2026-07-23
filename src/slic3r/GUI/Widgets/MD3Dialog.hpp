@@ -83,6 +83,18 @@ public:
               const Options &     opts);
     ~MD3Dialog() override;
 
+    // ADDITIVE two-phase construction path.
+    //
+    // A subclass whose own construction is itself two-phase — default-construct,
+    // then a later Create() that historically owned the wxDialog window creation
+    // (ProgressDialog) — cannot delegate to the single-shot ctors above (those
+    // build the window and shell in one step, before the subclass ctor body runs
+    // its Create()). Such a subclass instead delegates to the protected default
+    // ctor (which creates a bare classic borderless shaped window with no chrome)
+    // and later calls CreateShell() from its own Create() to lay out the MD3
+    // header/body/footer. Every existing subclass uses the single-shot ctors and
+    // is unaffected. See the protected members below.
+
     // Body sizer. Parent body children to the dialog (`this`) and add them here;
     // padded 24px on each side. Overflow is handled by the caller / auto-fit.
     wxBoxSizer *GetContentSizer() const { return m_content_sizer; }
@@ -113,6 +125,31 @@ public:
     void on_dpi_changed(const wxRect &suggested_rect) override;
 
 protected:
+    // Two-phase: default-construct a bare classic borderless shaped window with
+    // NO chrome (background, header, body, footer are all deferred). Only a
+    // subclass whose Create() finishes construction via CreateShell() uses this.
+    MD3Dialog();
+
+    // Build the MD3 shell chrome onto a default-constructed shell: record the
+    // owner (for centering), set the title + surface background, and lay out the
+    // header (tile + title/subtitle + close) / body / footer — mirroring the
+    // single-shot ctor. Call exactly once; a no-op (returns true) if already
+    // built. In the two-phase path the window itself was created classic
+    // (borderless shaped) by the default ctor, so opts.resizable is not applied
+    // (the window style is fixed at creation); opts.forced_dark is honoured.
+    bool CreateShell(wxWindow *          parent,
+                     const wxString &    title,
+                     const wxString &    subtitle,
+                     MaterialIcon::Glyph header_glyph,
+                     const Options &     opts = Options{});
+
+    // Show/hide the header circular close affordance (e.g. an uncancelable
+    // progress shell hides it). No-op before the shell is built.
+    void ShowHeaderClose(bool show);
+    // Show/hide the footer divider + button row as a unit (a shell with no footer
+    // actions hides it so no empty divider is left). No-op before build.
+    void ShowFooter(bool show);
+
     // Circular-close action; default EndModal(wxID_CANCEL) to mirror the native
     // window [x]. Override to customise the close semantics.
     virtual void OnHeaderClose();
@@ -142,6 +179,12 @@ private:
     wxStaticText * m_subtitle_txt = nullptr;
     Button *       m_close_btn   = nullptr;
     wxWindow *     m_footer_line = nullptr;
+    // Footer button-row wrapper (divider is m_footer_line); stored so ShowFooter()
+    // can hide the whole footer as a unit.
+    wxSizer *      m_footer_wrap = nullptr;
+
+    // True once build_shell() has run (guards the two-phase CreateShell()).
+    bool m_shell_built = false;
 
     int              m_corner_radius = MD3::Metrics::radius_dialog; // 28
     MD3::ColorScheme m_scheme        = MD3::ColorScheme::Brand;
