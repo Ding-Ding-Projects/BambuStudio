@@ -58,14 +58,35 @@ Two native features were added in the same effort:
 Full documentation of the token layer, migration, failure modes, and audit result is in
 [Vendored Material Design 3 design system](docs/features/design-system/md3-design-system.md).
 
-### Installed-app captures
+### Live application captures
 
-These are captures of the locally installed native executable, not `ui-md3` reference images. They
-were reviewed on 2026-07-20 and predate the full token sweep, so they demonstrate native
-modernization only, not full component-anatomy conformance. Fresh captures of the fully migrated
-Home, Prepare, Preview, and Device surfaces are an open item tracked in the
-[roadmap](ROADMAP.md), which records the canonical target filenames; this gallery switches to
-those captures once they are produced and reviewed.
+These are captures of the running native executable at the current tip. They were produced on
+2026-07-23 by launching the built binary on an isolated off-screen desktop (via the headless
+computer-use harness) over a software OpenGL renderer, and capturing individual windows with
+`PrintWindow`. That method renders wxWidgets chrome and panels but not the OpenGL 3D viewport or the
+webview-backed panes (the Home body and Filament library are web content), so those regions appear
+empty in whole-window shots; the Prepare capture is a direct sidebar-panel grab to show real
+migrated content.
+
+**Home — with the browser-like project tab bar**
+
+The new project tab strip (one tab per open project, a close button, and a "+" new-tab button) sits
+between the Material title bar and the workspace tabs.
+
+![Home with the project tab bar](docs/readme-assets/shot-home.png)
+
+| Prepare sidebar (Material cards) | First-run Setup Wizard (Material dialog shell) |
+| :---: | :---: |
+| ![Prepare sidebar](docs/readme-assets/shot-prepare-sidebar.png) | ![Setup Wizard](docs/readme-assets/shot-wizard.png) |
+
+The Prepare sidebar shows the migrated Printer, Filament, Process, and Object-manipulation cards —
+including the Process card's Quality / Strength / Support / Others segmented control and the
+axis-colored X/Y/Z manipulation grid. The Setup Wizard is now hosted on the Material dialog shell
+(rounded surface, header icon tile) in place of the legacy native caption.
+
+#### Earlier installed-app captures
+
+Reviewed on 2026-07-20; these predate the full token sweep and are kept for continuity.
 
 | Home | Filament Manager |
 | :---: | :---: |
