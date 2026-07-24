@@ -2136,3 +2136,71 @@ msgstr "提示複製咗。OpenCode 啟動緊 — 貼過去嗰邊啦。"
 #. reviewed-category: preferences
 msgid "Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."
 msgstr "提示複製咗。PATH 搵唔到 OpenCode — 將提示貼去你嘅助手度啦。"
+
+#. reviewed-category: preferences
+msgid "Material color picker"
+msgstr "Material 揀色器"
+
+#. reviewed-category: preferences
+msgid "Material tones"
+msgstr "Material 色調"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Stop print - safety interlock"
+msgstr "停止打印 — 安全連鎖"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Stopping discards the print in progress."
+msgstr "停止會作廢打印緊嘅嘢。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Arm %d (2)"
+msgstr "武裝 %d（撳多 2 下）"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Arm %d (1)"
+msgstr "武裝 %d（撳多 1 下）"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Armed %d"
+msgstr "武裝好 %d"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Slide to open the safety cover"
+msgstr "滑動嚟打開安全蓋"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Cover unlocked"
+msgstr "個蓋解咗鎖"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Lift cover"
+msgstr "揭開個蓋"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "STOP PRINT"
+msgstr "停止打印"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Keep printing"
+msgstr "繼續打印"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Step 1 of 4: turn both key switches."
+msgstr "第 1 步（共 4 步）：扭開兩個鎖匙掣。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Step 2 of 4: press each arming button twice."
+msgstr "第 2 步（共 4 步）：每個武裝掣撳兩下。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Step 3 of 4: slide to unlock the safety cover."
+msgstr "第 3 步（共 4 步）：滑動解鎖安全蓋。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Step 4 of 4: lift the cover and press STOP PRINT."
+msgstr "第 4 步（共 4 步）：揭開個蓋，撳「停止打印」。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Interlock complete. STOP PRINT is live."
+msgstr "連鎖完成。「停止打印」已經生效。"

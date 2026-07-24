@@ -22,6 +22,7 @@
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "wx/graphics.h"
@@ -2203,12 +2204,11 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         if (seed.empty()) seed = "#146c2e";
         wxColour initial(wxString::FromUTF8(seed));
         if (!initial.IsOk()) initial = wxColour(wxString::FromUTF8("#146c2e"));
-        wxColourData data;
-        data.SetChooseFull(true);
-        data.SetColour(initial);
-        wxColourDialog dlg(this, &data);
+        // MD3 continuous picker (hue strip + S/V field + Material tonal
+        // ladder + colour translator) instead of the native common dialog.
+        MD3ColorPickerDialog dlg(this, initial);
         if (dlg.ShowModal() != wxID_OK) return;
-        const wxColour picked = dlg.GetColourData().GetColour();
+        const wxColour picked = dlg.GetColour();
         if (!picked.IsOk()) return;
         const wxString picked_hex = picked.GetAsString(wxC2S_HTML_SYNTAX);
         app_config->set("ui_accent_seed", into_u8(picked_hex));

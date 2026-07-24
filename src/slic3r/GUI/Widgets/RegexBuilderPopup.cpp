@@ -584,12 +584,14 @@ void RegexBuilderPopup::buildReference()
         auto *t = new Label(m_ref_scroll, Label::Mono_11, term);
         t->SetBackgroundColour(surface);
         t->SetForegroundColour(on);
-        t->SetMinSize(wxSize(FromDIP(64), -1));
+        // Wide enough for the longest documented term ("(red|blue)\b") so the
+        // mono column never clips.
+        t->SetMinSize(wxSize(FromDIP(92), -1));
         row->Add(t, 0, wxALIGN_TOP);
         auto *m = new Label(m_ref_scroll, Label::Body_12, meaning);
         m->SetBackgroundColour(surface);
         m->SetForegroundColour(on_var);
-        m->Wrap(contentW - FromDIP(72));
+        m->Wrap(contentW - FromDIP(104));
         row->Add(m, 1, wxLEFT, FromDIP(8));
         sizer->Add(row, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
     };
@@ -639,7 +641,11 @@ void RegexBuilderPopup::switchTab(int tab)
 {
     m_active_tab = tab;
     if (m_scroll)     m_scroll->Show(tab == 0);
-    if (m_ref_scroll) m_ref_scroll->Show(tab == 1);
+    if (m_ref_scroll) {
+        m_ref_scroll->Show(tab == 1);
+        if (tab == 1)
+            m_ref_scroll->Scroll(0, 0); // always open the docs at the top
+    }
     if (m_tab_build)  m_tab_build->SetVariant(tab == 0 ? Button::Variant::Tonal : Button::Variant::Text);
     if (m_tab_ref)    m_tab_ref->SetVariant(tab == 1 ? Button::Variant::Tonal : Button::Variant::Text);
     fitPopup();

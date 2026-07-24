@@ -33,6 +33,8 @@
 #include <wx/sstream.h>
 #include <wx/zstream.h>
 
+#include "StopPrintGate.hpp"
+
 #include "DeviceCore/DevAxis.h"
 #include "DeviceCore/DevBed.h"
 #include "DeviceCore/DevChamber.h"
@@ -3628,28 +3630,18 @@ void StatusPanel::on_subtask_pause_resume(wxCommandEvent &event)
 
 void StatusPanel::on_subtask_abort(wxCommandEvent &event)
 {
-    if (abort_dlg == nullptr) {
-        abort_dlg = new SecondaryCheckDialog(this->GetParent(), wxID_ANY, _L("Cancel print"));
-        abort_dlg->Bind(EVT_SECONDARY_CHECK_CONFIRM, [this](wxCommandEvent &e) {
-            if (obj) {
-                BOOST_LOG_TRIVIAL(info) << "monitor: stop current print task dev_id =" << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id());
-                obj->command_task_abort();
-            }
-        });
-    }
-    abort_dlg->update_text(_L("Are you sure you want to stop this print?"));
-    abort_dlg->m_button_cancel->SetBackgroundColor(abort_dlg->btn_bg_green);
-    abort_dlg->m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::OnPrimary));
-    abort_dlg->m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
-    abort_dlg->m_button_cancel->SetLabel(_L("No"));
-
-    abort_dlg->m_button_ok->SetBackgroundColor(abort_dlg->btn_bg_white);
-    abort_dlg->m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::OnSurface));
-    abort_dlg->m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
-    abort_dlg->m_button_ok->SetLabel(_L("Yes"));
-
-    abort_dlg->on_show();
-    abort_dlg->Raise();
+    // Launch-console interlock: two key switches, three double-press arming
+    // buttons, a slide-to-confirm, then a lift-away cover over the actual
+    // STOP button. Every stage is labelled so the flow stays unambiguous;
+    // only the final revealed button aborts the task.
+    StopPrintGateDialog gate(this->GetParent());
+    gate.SetOnStopConfirmed([this]() {
+        if (obj) {
+            BOOST_LOG_TRIVIAL(info) << "monitor: stop current print task dev_id =" << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id());
+            obj->command_task_abort();
+        }
+    });
+    gate.ShowModal();
 }
 
 void StatusPanel::error_info_reset() { m_project_task_panel->error_info_reset(); }

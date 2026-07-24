@@ -72,6 +72,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/SearchField.hpp
     GUI/Widgets/SlideToConfirm.cpp
     GUI/Widgets/SlideToConfirm.hpp
+    GUI/Widgets/MD3ColorPicker.cpp
+    GUI/Widgets/MD3ColorPicker.hpp
     GUI/Widgets/RegexBuilderPopup.cpp
     GUI/Widgets/RegexBuilderPopup.hpp
     GUI/Widgets/Slider.cpp
@@ -256,6 +258,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/ConfigProfilesDialog.hpp
     GUI/CommandPalette.cpp
     GUI/CommandPalette.hpp
+    GUI/StopPrintGate.cpp
+    GUI/StopPrintGate.hpp
     GUI/BBLTopbar.cpp
     GUI/BBLTopbar.hpp
     GUI/BedShapeDialog.cpp

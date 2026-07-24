@@ -23,7 +23,47 @@
   targets, and rich inline quick-settings rows (theme / density / accent) behind one shared
   SearchField query. The regex builder gained a tabbed **Reference** mini-documentation
   (per-token descriptions from the live chip tables, engine details, examples) plus an
-  OpenCode search helper (clipboard prompt + local launch). Catalogs at 530.
+  OpenCode search helper (clipboard prompt + local launch).
+- **Material color picker + color translator** (`Widgets/MD3ColorPicker`): continuous S/V +
+  hue picker with a per-hue Material tonal ladder and a live rgb/hsv/nearest-name translator,
+  replacing the native colour dialog on the accent "+" tile. **Stop-print safety interlock**
+  (`StopPrintGate`): two key switches → three double-press arming buttons → slide-to-confirm →
+  lift-away hazard cover revealing the real STOP button, with a plain-language stage caption
+  at every step. Catalogs at 547.
+
+## Next: continue matching `ui-md3/design-system` (user mandate 2026-07-24)
+
+The parity register (`docs/features/design-system/md3-parity-register.md`) is 126 done /
+5 recorded deviations / 0 open. The standing mandate is to keep grinding the deviations down:
+
+1. `top-scene-toolbar-opengl-not-md3` — the pill is reskinned but not re-centred; finish the
+   kit placement (top-center floating pill) and resolve the documented collapse-toolbar
+   collision that blocked it.
+2. `objects-legacy-searchctrl-dataviewctrl` — finish the kit Objects-card anatomy
+   (SecondaryContainer chip rows, trailing visibility + checkbox) on top of the already-landed
+   SearchField/SectionHeader work.
+3. `notification-snackbar-inverse-roles-placement`, `project-webview-legacy-anatomy`,
+   `syncams-shell-image-panel-greys` — each needs its blocking constraint re-evaluated
+   (host APIs / simplebook gating) before promotion.
+
+## Next: MD3 dialog chrome — retire native captions (user mandate 2026-07-24)
+
+The native Windows title bar + X on dialogs reads cheap next to the MD3 shell. Build a shared
+`MD3DialogChrome` (borderless dialog + custom 40px caption: Head_14 title, drag region,
+44px-target close IconButton, focus ring, snap/Esc/Alt+F4 behavior preserved, dark-aware) and
+adopt it across the owned dialogs first (Config profiles, Material color picker, Stop-print
+interlock, Version history, Command palette already borderless), then sweep the remaining
+#32770 dialogs. Keep accessibility: title announced, close reachable by keyboard, DWM
+rounded corners via DWMWCP_ROUND.
+
+## Next: Material Design motion & transitions (user mandate 2026-07-24)
+
+Bring the M3 motion system to the whole app: a shared easing/timer helper
+(emphasized/standard curves, duration tokens), then apply it to dialog open/close
+(fade+scale), toast enter/exit (slide+fade — NotificationManager already animates, align its
+curves), tab/page switches (fade-through), SlideToConfirm snap-back, palette open, popover
+open, and hover/press state layers on the custom widgets. Respect OS reduced-motion
+(SPI_GETCLIENTAREAANIMATION) and keep every animation interruptible.
 
 ### Dark-mode legibility, advanced regex builder, software-GL self-heal (2026-07-24, `e2ed70365`)
 

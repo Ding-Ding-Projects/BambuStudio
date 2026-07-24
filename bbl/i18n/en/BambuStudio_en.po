@@ -21842,3 +21842,54 @@ msgstr "Prompt copied. OpenCode is starting - paste the prompt there."
 
 msgid "Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."
 msgstr "Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."
+
+msgid "Material color picker"
+msgstr "Material color picker"
+
+msgid "Material tones"
+msgstr "Material tones"
+
+msgid "Stop print - safety interlock"
+msgstr "Stop print - safety interlock"
+
+msgid "Stopping discards the print in progress."
+msgstr "Stopping discards the print in progress."
+
+msgid "Arm %d (2)"
+msgstr "Arm %d (2)"
+
+msgid "Arm %d (1)"
+msgstr "Arm %d (1)"
+
+msgid "Armed %d"
+msgstr "Armed %d"
+
+msgid "Slide to open the safety cover"
+msgstr "Slide to open the safety cover"
+
+msgid "Cover unlocked"
+msgstr "Cover unlocked"
+
+msgid "Lift cover"
+msgstr "Lift cover"
+
+msgid "STOP PRINT"
+msgstr "STOP PRINT"
+
+msgid "Keep printing"
+msgstr "Keep printing"
+
+msgid "Step 1 of 4: turn both key switches."
+msgstr "Step 1 of 4: turn both key switches."
+
+msgid "Step 2 of 4: press each arming button twice."
+msgstr "Step 2 of 4: press each arming button twice."
+
+msgid "Step 3 of 4: slide to unlock the safety cover."
+msgstr "Step 3 of 4: slide to unlock the safety cover."
+
+msgid "Step 4 of 4: lift the cover and press STOP PRINT."
+msgstr "Step 4 of 4: lift the cover and press STOP PRINT."
+
+msgid "Interlock complete. STOP PRINT is live."
+msgstr "Interlock complete. STOP PRINT is live."

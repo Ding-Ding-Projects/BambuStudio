@@ -27,6 +27,10 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`appearance-tab.png`](appearance/appearance-tab.png)
 - [`custom-color-dialog.png`](appearance/custom-color-dialog.png)
 
+## command-palette (1 captures)
+
+- [`palette.png`](command-palette/palette.png)
+
 ## config-profiles (11 captures)
 
 - [`dialog--armed.png`](config-profiles/dialog--armed.png)

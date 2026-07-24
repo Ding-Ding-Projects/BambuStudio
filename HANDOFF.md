@@ -16,6 +16,18 @@ findings (not yet fixed): "Slice plate" truncates to "Slice pl" at 846px window 
 themes (plate-bar right cluster needs responsive shrink); PrintHostQueueDialog find-bar and
 ProjectHistoryDialog dark-mode label bands unaudited pixel-by-pixel.
 
+**Wave 3 (same session):** `Widgets/MD3ColorPicker` — continuous MD3 picker (S/V field + hue
+strip + per-hue Material tonal ladder + rgb/hsv/nearest-name **color translator**) replacing
+wxColourDialog on the accent "+" tile; `StopPrintGate` — the requested launch-console stop
+interlock (2 painted key switches → 3 double-press arming buttons → SlideToConfirm → hazard
+cover → real STOP button), wired into `StatusPanel::on_subtask_abort` with plain-language
+stage captions (destructive copy stays unambiguous). Reference-tab nits fixed (term column
+width, scroll-to-top). Catalogs at 547, gate green. **Pending verification:** wave-3 build was
+in flight at handoff time; the stop interlock needs a connected printer for end-to-end
+verification (dialog itself is modal-testable); popover Reference-tab captures need a retake
+after the nit fixes; Preferences scrolled/external-editor crops still need a WM_VSCROLL-driven
+capture (keyboard PageDown does not scroll the wx panel).
+
 User-directed mid-wave: replace ALL screenshots, test light and dark mode for visibility and
 clipping, answer "where is the search bar in print process settings" (it is the magnifier icon
 in the settings tab's top row — collapsed until clicked / Ctrl+F), add many more search bars
