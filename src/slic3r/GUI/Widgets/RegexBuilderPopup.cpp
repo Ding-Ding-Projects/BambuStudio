@@ -596,7 +596,9 @@ void RegexBuilderPopup::buildReference()
         sizer->Add(row, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
     };
 
-    auto *title = new Label(m_ref_scroll, Label::Head_14, _L("Reference & help"));
+    auto *title = new Label(m_ref_scroll, Label::Head_14, wxEmptyString);
+    // SetLabelText: the '&' must render literally, not become a mnemonic.
+    title->SetLabelText(_L("Reference & help"));
     title->SetBackgroundColour(surface);
     title->SetForegroundColour(on);
     sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, pad);

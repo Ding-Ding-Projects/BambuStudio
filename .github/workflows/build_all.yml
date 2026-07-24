@@ -69,7 +69,10 @@ jobs:
   build_windows:
     name: Build Windows
     needs: classify_changes
-    if: ${{ needs.classify_changes.outputs.code_changed == 'true' }}
+    # User mandate 2026-07-24: CI runs are never skipped — every push builds
+    # and releases, Markdown-only or not. The classifier still runs (its
+    # output is informational in the logs) but no longer gates the build.
+    if: ${{ always() }}
     # Job-level (not workflow-level) supersede group: only runs that actually
     # BUILD enter it, so a Markdown-only push can never cancel an in-flight
     # code build while contributing no release of its own.

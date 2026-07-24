@@ -56,6 +56,40 @@ interlock, Version history, Command palette already borderless), then sweep the 
 #32770 dialogs. Keep accessibility: title announced, close reachable by keyboard, DWM
 rounded corners via DWMWCP_ROUND.
 
+## Next: preferences auto-history — per-change Git commits (user mandate 2026-07-24)
+
+Every preferences change commits automatically into an isolated local Git repo with its own
+history manager. Build on the config-profiles engine: a shared `ProjectHistoryManager`
+instance (root beside the data dir) with identity `preferences.history`; hook the settings
+save path (the `app_config->save()` calls in `Preferences.cpp` and the palette's rich rows)
+to enqueue a snapshot of `BambuStudio.conf` — the engine already dedupes identical snapshots
+and serializes writes. History UI: a "Preferences history…" entry (in Preferences and the
+Config profiles dialog) listing timestamped changes with the changed keys in the commit
+message; restore materializes a conf beside the live one and applies after an explicit
+restart prompt (never overwrite the live conf under a running app). Catalog + docs + tests
+per the standing rules.
+
+## Next: AI printer watch — live-view summaries via local models (user mandate 2026-07-24)
+
+Background watcher that periodically grabs a frame from the printer's live camera view (the
+user does not need to be actively watching the app), sends it to a **local** model, and posts
+a short status summary as a non-blocking notification; when the frame suggests a failure
+(spaghetti, detachment, nozzle blob) it should describe what likely happened and how to fix
+it, escalating to a persistent warning toast.
+
+- **Backend order:** Ollama HTTP API on localhost first (user's stated model preference:
+  gpt-oss, Qwen, Gemma — vision frames go to a vision-capable tag such as `qwen2.5-vl` or
+  `gemma3`, with `gpt-oss` usable only for text-side summarization since it has no vision);
+  OpenCode as the agent fallback when Ollama is absent. Never a cloud call; frames stay on
+  the machine, feature strictly opt-in and OFF by default with a clear privacy note.
+- **Implementation sketch:** reuse the camera pipeline that feeds the Device live view to
+  save a JPEG frame on a configurable timer (default 5 min); POST to
+  `/api/generate` with the image and a bounded prompt; parse status/error; route through
+  NotificationManager (info toast for OK, persistent warning + fix suggestions on error);
+  Preferences section (enable, interval, model tag, backend probe with graceful "not
+  installed" state); catalog entries for every string; document failure modes (Ollama down,
+  model missing, camera off).
+
 ## Next: Material Design motion & transitions (user mandate 2026-07-24)
 
 Bring the M3 motion system to the whole app: a shared easing/timer helper

@@ -190,12 +190,13 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`tab-bar-two-tabs.png`](project-tabs/tab-bar-two-tabs.png)
 - [`tab-bar.png`](project-tabs/tab-bar.png)
 
-## regex-builder (28 captures)
+## regex-builder (29 captures)
 
 - [`builder-popover--case-sensitive.png`](regex-builder/builder-popover--case-sensitive.png)
 - [`builder-popover--insert-header.png`](regex-builder/builder-popover--insert-header.png)
 - [`builder-popover--pattern-editor.png`](regex-builder/builder-popover--pattern-editor.png)
 - [`builder-popover--quantifiers.png`](regex-builder/builder-popover--quantifiers.png)
+- [`builder-popover--reference-tab.png`](regex-builder/builder-popover--reference-tab.png)
 - [`builder-popover--regex-mode.png`](regex-builder/builder-popover--regex-mode.png)
 - [`builder-popover--test-pattern.png`](regex-builder/builder-popover--test-pattern.png)
 - [`builder-popover--token-alternation.png`](regex-builder/builder-popover--token-alternation.png)
