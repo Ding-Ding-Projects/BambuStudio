@@ -2,6 +2,24 @@
 
 ## Landed
 
+### Dark-mode legibility, advanced regex builder, software-GL self-heal (2026-07-24, `e2ed70365`)
+
+- Root-caused and fixed the systemic dark-mode text corruption (non-idempotent
+  `darkModeColorFor` double-remap via hex-aliased tokens), plus the action-bar white squares,
+  the malformed pill radii, the Process-header switch overlap, orange category glyphs, dim
+  field values, and the grey caption band.
+- Replaced the minimal search "tune" popover with a full guided regex builder
+  (`Widgets/RegexBuilderPopup`): literals/classes/anchors/groups/quantifiers sections, raw
+  pattern editor, live syntax feedback, sample-text testing with capture groups, copy, engine
+  identification; bounded and backtracking-guarded. Wired working regex into every search
+  surface, including the previously-inert object-list search and both ImGui filters.
+- Releases now self-heal on machines without OpenGL 2.0: hash-pinned Mesa llvmpipe 26.1.3
+  ships in the installer's `mesa\` folder and the app relaunches itself once onto software
+  rendering instead of dying at the GL gate.
+- Release pipeline repaired: the tag-triggered release loop is dead (branches-only trigger +
+  ref guard + echo purge), old releases cleared, and the Windows CI build moved to
+  Ninja + sccache with `SLIC3R_MSVC_PDB=OFF` (CI ships no PDBs) for warm-cache speed.
+
 All items below are committed and pushed on `master`. Commit `8d727d49d` (native model preview,
 dockable Prepare sidebar, and the last migration-coverage changes) is pushed, built, and shipped:
 hosted run `29877040307` (head `ec631dfb2`) completed fully green — including the previously failing

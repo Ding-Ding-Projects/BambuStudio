@@ -325,6 +325,12 @@ void Tab::create_preset_tab()
     // update_undo_buttons(). The neutral "no change" state is a dot glyph.
     add_md3_icon_button(m_top_panel, &m_undo_btn,        MaterialIcon::FiberManualRecord, m_bmp_white_bullet.name());
     add_md3_icon_button(m_top_panel, &m_undo_to_sys_btn, MaterialIcon::FiberManualRecord, m_bmp_white_bullet.name());
+#ifdef DISABLE_UNDO_SYS
+    // Kept alive for update_undo_buttons(), but with DISABLE_UNDO_SYS it is
+    // never sizer-placed — hidden so it doesn't float at the panel origin
+    // half-over the undo button (the "clipped glyph" in the preset row).
+    m_undo_to_sys_btn->Hide();
+#endif
     add_md3_icon_button(m_top_panel, &m_btn_search,      MaterialIcon::Search, "search");
     m_btn_search->SetToolTip(_L("Search in preset"));
 
