@@ -129,7 +129,7 @@ void CommandPalette::collect_entries()
                          [this]() { wxGetApp().open_preferences(); }});
     m_entries.push_back({MaterialIcon::Search, _L("Search in settings"),
                          _L("Find any print / filament / printer parameter"),
-                         [this]() { if (auto *p = wxGetApp().plater()) p->search(); }});
+                         [this]() { wxGetApp().sidebar().search(); }});
 
     // --- Every enabled menubar command ---------------------------------------
     wxMenuBar *bar = m_frame->GetMenuBar();
