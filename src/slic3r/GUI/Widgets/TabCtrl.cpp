@@ -84,6 +84,10 @@ void TabCtrl::Rescale()
 {
     for (auto & b : btns) {
         b->Rescale();
+        // Re-resolve the semantic glyph pin for the current theme/scheme (the
+        // per-item TEXT colour override is deliberately left alone — it encodes
+        // the preset editor's modified/sys decoration).
+        b->SetGlyphColor(tabTextColor());
         // Re-bake the pill radius/height/fill for the new DPI (and theme). Gated
         // on pill mode so the flat-strip consumers' per-item padding overrides
         // (SetItemPaddingSize) are never reset here.
@@ -196,10 +200,17 @@ void TabCtrl::SetItemGlyph(unsigned int item, uint32_t glyph)
 {
     if (item >= btns.size()) return;
     // Leading Material Symbol at 20 design-px. Button::SetGlyph resolves the
-    // codepoint through the shared MaterialIcon font path (coloured by the item's
-    // text colour) when the face is available, else keeps its raster-icon
-    // fallback; the assigned wxImageList is untouched either way.
+    // codepoint through the shared MaterialIcon font path when the face is
+    // available, else keeps its raster-icon fallback; the assigned wxImageList
+    // is untouched either way.
     btns[item]->SetGlyph(glyph, 20);
+    // Pin the glyph to the semantic tab palette (OnSurfaceVariant at rest,
+    // Primary / OnSecondaryContainer when selected). Without this the glyph
+    // follows the item's TEXT colour, and the preset editor's per-item
+    // modified-value decoration (Warning orange — #ffb77c in dark mode) tinted
+    // every category glyph orange. The label keeps its decoration; the glyph
+    // stays neutral per the kit's TabBar/NavItem anatomy.
+    btns[item]->SetGlyphColor(tabTextColor());
 }
 
 StateColor TabCtrl::tabTextColor() const
@@ -268,6 +279,7 @@ void TabCtrl::SetColorScheme(MD3::ColorScheme scheme)
     // pill mode the selected SecondaryContainer fill is scheme-aware too.
     for (auto &b : btns) {
         b->SetTextColor(tabTextColor());
+        b->SetGlyphColor(tabTextColor());
         if (m_pill_style)
             b->SetBackgroundColor(navPillBg());
     }
@@ -282,6 +294,7 @@ void TabCtrl::SetNavItemStyle(bool pill)
     for (auto &b : btns) {
         applyItemStyle(b);
         b->SetTextColor(tabTextColor());
+        b->SetGlyphColor(tabTextColor());
     }
     relayout();
     Refresh();

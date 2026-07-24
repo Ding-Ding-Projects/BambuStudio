@@ -25,6 +25,17 @@
 #include "../Utils/MacDarkMode.hpp"
 #endif // __APPLE__
 
+#ifdef _WIN32
+// For the software-GL (Mesa llvmpipe) self-heal fallback below.
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
+#endif // _WIN32
+
 #define BBS_GL_EXTENSION_FUNC(_func) (OpenGLManager::get_framebuffers_type() == OpenGLManager::EFramebufferType::Ext ? _func ## EXT : _func)
 #define BBS_GL_EXTENSION_PARAMETER(_param) OpenGLManager::get_framebuffers_type() == OpenGLManager::EFramebufferType::Ext ? _param ## _EXT : _param
 
@@ -356,6 +367,157 @@ bool OpenGLManager::init()
     return s_b_initialized;
 }
 
+#ifdef _WIN32
+// ---- Software OpenGL (Mesa llvmpipe) self-heal fallback -------------------
+//
+// On machines whose display driver offers no OpenGL >= 2.0 (e.g. VMs running
+// on the "Microsoft Basic Display Adapter"), the app used to show the
+// "Unsupported OpenGL version" error and exit, which users report as "the app
+// does not launch". The installer ships the Mesa llvmpipe software rasterizer
+// (opengl32.dll + libgallium_wgl.dll) in the inert "mesa" subfolder of the
+// installation directory. Windows resolves the statically linked opengl32.dll
+// through the standard DLL search order, which begins with the executable's
+// own directory — so copying those two DLLs BESIDE bambu-studio.exe overrides
+// the system OpenGL implementation for this application only. That is why the
+// copy-beside-exe step below is required; loading the DLLs from the mesa
+// subfolder directly is not possible for a static opengl32 import.
+//
+// Relaunch-loop guard: the relaunched process inherits BBS_SOFTGL_RETRIED=1,
+// which makes bbs_try_softgl_relaunch() bail out immediately, so at most one
+// extra process generation can ever be spawned. A process-local flag
+// additionally limits the attempt to once per process.
+
+namespace {
+
+const wchar_t* const BBS_SOFTGL_RETRY_ENV = L"BBS_SOFTGL_RETRIED";
+
+bool bbs_softgl_retry_marker_set()
+{
+    wchar_t buffer[8] = { 0 };
+    return ::GetEnvironmentVariableW(BBS_SOFTGL_RETRY_ENV, buffer, 8) > 0;
+}
+
+std::wstring bbs_executable_path()
+{
+    wchar_t buffer[MAX_PATH] = { 0 };
+    const DWORD len = ::GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+    if (len == 0 || len >= MAX_PATH)
+        return std::wstring();
+    return std::wstring(buffer, len);
+}
+
+bool bbs_directory_is_writable(const std::wstring& dir)
+{
+    const std::wstring probe = dir + L"\\.bbs-softgl-write-probe";
+    HANDLE handle = ::CreateFileW(probe.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                                  FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr);
+    if (handle == INVALID_HANDLE_VALUE)
+        return false;
+    // FILE_FLAG_DELETE_ON_CLOSE removes the probe file here.
+    ::CloseHandle(handle);
+    return true;
+}
+
+// Copy mesa\opengl32.dll + mesa\libgallium_wgl.dll beside the exe and start a
+// replacement process (same executable, byte-identical command line) with the
+// llvmpipe environment. Returns true only when the replacement process is
+// running; the caller must then terminate the current process without showing
+// any error UI.
+bool bbs_try_softgl_relaunch()
+{
+    // Loop guard 1: a relaunched process inherits the retry marker and can
+    // never spawn another generation.
+    if (bbs_softgl_retry_marker_set()) {
+        BOOST_LOG_TRIVIAL(warning) << "Software-GL fallback: already retried (BBS_SOFTGL_RETRIED set), not relaunching again.";
+        return false;
+    }
+    // Loop guard 2: never attempt more than once inside one process, even if
+    // init_gl() is re-entered by another canvas.
+    static bool s_relaunch_attempted = false;
+    if (s_relaunch_attempted)
+        return false;
+    s_relaunch_attempted = true;
+
+    const std::wstring exe_path = bbs_executable_path();
+    if (exe_path.empty())
+        return false;
+    const size_t last_sep = exe_path.find_last_of(L'\\');
+    if (last_sep == std::wstring::npos)
+        return false;
+    const std::wstring exe_dir = exe_path.substr(0, last_sep);
+
+    const std::wstring mesa_dir      = exe_dir + L"\\mesa";
+    const std::wstring src_gallium   = mesa_dir + L"\\libgallium_wgl.dll";
+    const std::wstring src_opengl32  = mesa_dir + L"\\opengl32.dll";
+    const std::wstring dst_gallium   = exe_dir + L"\\libgallium_wgl.dll";
+    const std::wstring dst_opengl32  = exe_dir + L"\\opengl32.dll";
+
+    const auto file_exists = [](const std::wstring& path) {
+        const DWORD attributes = ::GetFileAttributesW(path.c_str());
+        return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+    };
+    if (!file_exists(src_opengl32) || !file_exists(src_gallium)) {
+        BOOST_LOG_TRIVIAL(warning) << "Software-GL fallback unavailable: mesa\\opengl32.dll / mesa\\libgallium_wgl.dll not found beside the executable.";
+        return false;
+    }
+    if (!bbs_directory_is_writable(exe_dir)) {
+        BOOST_LOG_TRIVIAL(warning) << "Software-GL fallback unavailable: the executable directory is not writable.";
+        return false;
+    }
+
+    // Copy the backend first: a lone Mesa opengl32.dll without its
+    // libgallium_wgl.dll would break every subsequent launch.
+    if (::CopyFileW(src_gallium.c_str(), dst_gallium.c_str(), FALSE) == 0) {
+        BOOST_LOG_TRIVIAL(warning) << "Software-GL fallback: copying libgallium_wgl.dll beside the executable failed (error " << ::GetLastError() << ").";
+        return false;
+    }
+    if (::CopyFileW(src_opengl32.c_str(), dst_opengl32.c_str(), FALSE) == 0) {
+        BOOST_LOG_TRIVIAL(warning) << "Software-GL fallback: copying opengl32.dll beside the executable failed (error " << ::GetLastError() << ").";
+        // Do not leave a half-copied pair behind.
+        ::DeleteFileW(dst_gallium.c_str());
+        return false;
+    }
+
+    // Environment for the replacement process (inherited from this one):
+    // the loop-guard marker plus the llvmpipe tuning proven on Microsoft
+    // Basic Display Adapter VMs.
+    ::SetEnvironmentVariableW(BBS_SOFTGL_RETRY_ENV, L"1");
+    ::SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
+    ::SetEnvironmentVariableW(L"MESA_GL_VERSION_OVERRIDE", L"3.3");
+    ::SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"1");
+
+    // Same executable, byte-identical command line. CreateProcessW may modify
+    // the command-line buffer, so pass a mutable copy.
+    const std::wstring original_cmdline = ::GetCommandLineW();
+    std::vector<wchar_t> cmdline(original_cmdline.begin(), original_cmdline.end());
+    cmdline.push_back(L'\0');
+
+    STARTUPINFOW startup_info = {};
+    startup_info.cb = sizeof(startup_info);
+    PROCESS_INFORMATION process_info = {};
+    const BOOL started = ::CreateProcessW(exe_path.c_str(), cmdline.data(), nullptr, nullptr, FALSE,
+                                          0, nullptr /* inherit this environment */, nullptr,
+                                          &startup_info, &process_info);
+    if (started == 0) {
+        BOOST_LOG_TRIVIAL(error) << "Software-GL fallback: relaunch failed (error " << ::GetLastError() << ").";
+        // Restore the environment so the error dialog reports "unavailable"
+        // rather than "already retried". The copied DLLs are kept: they are
+        // functional and the next manual start will pick them up.
+        ::SetEnvironmentVariableW(BBS_SOFTGL_RETRY_ENV, nullptr);
+        ::SetEnvironmentVariableW(L"GALLIUM_DRIVER", nullptr);
+        ::SetEnvironmentVariableW(L"MESA_GL_VERSION_OVERRIDE", nullptr);
+        ::SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", nullptr);
+        return false;
+    }
+    ::CloseHandle(process_info.hThread);
+    ::CloseHandle(process_info.hProcess);
+    BOOST_LOG_TRIVIAL(info) << "Software-GL fallback: Mesa llvmpipe DLLs copied beside the executable, replacement process started.";
+    return true;
+}
+
+} // anonymous namespace
+#endif // _WIN32
+
 bool OpenGLManager::init_gl(bool popup_error)
 {
     if (!m_gl_initialized) {
@@ -373,6 +535,16 @@ bool OpenGLManager::init_gl(bool popup_error)
             s_compressed_textures_supported = false;
 
         const auto& gl_info = OpenGLManager::get_gl_info();
+        // When the UI runs on Mesa llvmpipe (either via the automatic
+        // software-GL fallback below or a manual Mesa install), record it in
+        // the log for diagnostics. Intentionally no UI nag.
+        if (gl_info.get_renderer().find("llvmpipe") != std::string::npos) {
+            BOOST_LOG_TRIVIAL(info) << "OpenGL renderer is Mesa llvmpipe (software rasterizer); the UI renders without GPU acceleration."
+#ifdef _WIN32
+                << (bbs_softgl_retry_marker_set() ? " Reached via the automatic software-GL fallback relaunch." : "")
+#endif // _WIN32
+                ;
+        }
         const uint32_t gl_formated_version = gl_info.get_formated_gl_version();
         if (gl_formated_version >= 30) {
             s_framebuffers_type = EFramebufferType::Supported;
@@ -405,12 +577,32 @@ bool OpenGLManager::init_gl(bool popup_error)
         bool valid_version = s_gl_info.is_version_greater_or_equal_to(2, 0);
         if (!valid_version) {
             BOOST_LOG_TRIVIAL(error) << "Found opengl version <= 2.0"<< std::endl;
+#ifdef _WIN32
+            // Before complaining, try the self-heal path: copy the shipped
+            // Mesa llvmpipe DLLs beside the exe and relaunch once (see the
+            // fallback helpers above for the loop guards and rationale).
+            if (bbs_try_softgl_relaunch()) {
+                // The replacement process is already running with the
+                // software-GL environment. Leave immediately instead of
+                // unwinding through the half-initialized GL canvas stack —
+                // ExitProcess is the reliable way out at this depth and shows
+                // no error UI.
+                ::ExitProcess(0);
+            }
+#endif // _WIN32
             // Complain about the OpenGL version.
             if (popup_error) {
                 wxString message = from_u8((boost::format(
                     _utf8(L("The application cannot run normally because OpenGL version is lower than 2.0.\n")))).str());
                 message += "\n";
                 message += _L("Please upgrade your graphics card driver.");
+#ifdef _WIN32
+                message += "\n";
+                if (bbs_softgl_retry_marker_set())
+                    message += _L("The application already tried its built-in software rendering fallback (Mesa llvmpipe), but the OpenGL version is still lower than 2.0.");
+                else
+                    message += _L("The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable.");
+#endif // _WIN32
                 // MD3 MessageDialog: init_gl runs from a live, shown GL canvas
                 // (GLCanvas3D/GCodeViewer render paths), so the mainframe window
                 // hierarchy and GUI_App fonts/dark-mode state provably exist;

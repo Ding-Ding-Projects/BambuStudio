@@ -272,6 +272,13 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     // Fonts were created by the DPIFrame constructor for the monitor, on which the window opened.
     wxGetApp().update_fonts(this);
 
+    // Paint the frame's own client area with the caption surface. Any region a
+    // child does not cover (e.g. the caption row while the topbar catches up
+    // with an external resize) otherwise shows the stock wxFrame APPWORKSPACE
+    // grey — which the dark remap turns into a light #94959f band to the right
+    // of the window controls in dark mode.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+
 #ifndef __APPLE__
     m_topbar         = new BBLTopbar(this);
 #else
@@ -406,6 +413,15 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
                 m_topbar->SetWindowSize();
             } else {
                 m_topbar->SetMaximizedSize();
+            }
+            // Keep the caption row spanning the full client width even when the
+            // early-outs below skip the frame Layout() (assembly view block /
+            // interactive-resize throttle). A stale-width topbar left a light
+            // unpainted band right of the window controls in dark captures.
+            if (m_topbar) {
+                const int client_w = GetClientSize().GetWidth();
+                if (client_w > 0 && m_topbar->GetSize().GetWidth() != client_w)
+                    m_topbar->UpdateToolbarWidth(client_w);
             }
 #endif
         if (should_block_window_resize_for_assembly(m_plater))
@@ -1706,7 +1722,22 @@ void MainFrame::update_prepare_action_bar_style()
 
     m_prepare_action_bar->SetMinSize(wxSize(-1, bar_height));
     m_prepare_action_bar->SetMaxSize(wxSize(-1, bar_height));
-    m_prepare_action_bar->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    const wxColour bar_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    m_prepare_action_bar->SetBackgroundColour(bar_bg);
+
+    // Re-seed every direct child's window background with the bar surface. The
+    // children were created BEFORE the bar's themed background landed, so their
+    // Create-time snapshots kept the stock light panel grey — in dark mode that
+    // showed as white squares behind the rounded controls (expand button, the
+    // dashed add-plate pill corners) and as light slabs behind the transparent
+    // slice/print sub-panels. The divider and the vertical split rule are the
+    // two children whose backgrounds ARE their visible content, so they keep
+    // their OutlineVariant fills (re-applied just below).
+    for (wxWindow *child : m_prepare_action_bar->GetChildren()) {
+        if (child == m_prepare_action_bar_divider || child == m_prepare_split_line)
+            continue;
+        child->SetBackgroundColour(bar_bg);
+    }
 
     m_prepare_action_bar_divider->SetMinSize(wxSize(-1, divider_height));
     m_prepare_action_bar_divider->SetMaxSize(wxSize(-1, divider_height));
@@ -3286,7 +3317,19 @@ void MainFrame::update_side_button_style()
     const wxColour bar_bg     = StateColor::semantic(R::SurfaceContainerLow); // action-bar fill behind the pill corners
 
     const wxColour disabled_bg  = StateColor::semantic(R::SurfaceContainerHigh);
-    const wxColour disabled_txt = ThemeColor::TextDisabled;
+    // Disabled label tone: OnSurface blended ~45% over the ACTUAL disabled fill
+    // (SurfaceContainerHigh), theme-aware. The previous ThemeColor::TextDisabled
+    // pair rendered #6a6b73 on #2f3036 in dark mode (~1.7:1) — the "Slice plate"
+    // / "Print plate" labels were unreadable when the plate was empty.
+    auto blend = [](const wxColour &fg_c, const wxColour &bg_c, double t) -> wxColour {
+        auto mix = [t](int f, int b) {
+            int v = (int) (f * t + b * (1.0 - t) + 0.5);
+            return (unsigned char) std::max(0, std::min(255, v));
+        };
+        return wxColour(mix(fg_c.Red(), bg_c.Red()), mix(fg_c.Green(), bg_c.Green()),
+                        mix(fg_c.Blue(), bg_c.Blue()));
+    };
+    const wxColour disabled_txt = blend(StateColor::semantic(R::OnSurface), disabled_bg, 0.45);
 
     // Filled hover state layer: a subtle brighten of the Primary fill, matching
     // Widgets/Button.cpp applyMD3Style() (filled x1.06). Kept local so this file
@@ -3514,6 +3557,11 @@ void MainFrame::on_sys_color_changed()
         dynamic_cast<Notebook*>(m_tabpanel)->Rescale();
 #endif
 #endif
+
+    // Keep the frame's own client fill on the caption surface for the new
+    // theme (see the ctor note: uncovered client regions must never fall back
+    // to the light APPWORKSPACE grey).
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     // BBS
     if (m_topbar)

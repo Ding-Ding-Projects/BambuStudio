@@ -35,6 +35,11 @@ private:
     ScalableBitmap inactive_icon;
 
     StateColor   text_color;
+    // Optional dedicated glyph colour. Empty (count()==0) means the glyph
+    // follows text_color, the historical behaviour. TabCtrl pins this to its
+    // semantic tab palette so per-item label decorations (e.g. the preset
+    // editor's modified-orange) never tint the leading Material Symbols glyph.
+    StateColor   glyph_color;
 
     // MD3 variant state (inert until SetVariant() opts a Button into the
     // Material action-button styling).
@@ -119,6 +124,10 @@ public:
     // glyph and reverts to the raster-icon path. Works on any Button — a legacy
     // default button opts in without otherwise changing its appearance.
     void SetGlyph(uint32_t codepoint, int px = 0);
+
+    // Pin the glyph to its own StateColor instead of following text_color.
+    // Pass a default-empty StateColor() to revert to the follow-text behaviour.
+    void SetGlyphColor(StateColor const &color);
 
     // Switch the Button into borderless IconButton mode: a circle (radius =
     // half the container) or square (r8) ghost target that is transparent +

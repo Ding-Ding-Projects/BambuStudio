@@ -5,6 +5,7 @@
 - [Appearance customization](appearance-customization.md)
 - [Regex builder](regex-builder.md)
 - [Native visual smoke test](native-visual-smoke.md)
+- [Software OpenGL fallback (Mesa llvmpipe)](software-gl-fallback.md)
 
 Windows is the active release target for this fork. macOS and Linux source support remains upstream,
 but those platforms are not part of the fork's release acceptance gate.

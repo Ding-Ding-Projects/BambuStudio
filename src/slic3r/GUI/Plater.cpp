@@ -1156,6 +1156,12 @@ void Sidebar::priv::on_search_update()
     m_object_list->assembly_plate_object_name();
 
     wxString search_text = m_search_bar->GetValue();
+    // Route the SearchField's live matcher state (".*" regex toggle plus the
+    // tune-popover case-sensitive / whole-word checkboxes) into the model so
+    // search_object() filters through SearchField::textMatches.
+    m_object_list->GetModel()->set_search_flags(m_search_bar->IsRegexEnabled(),
+                                                m_search_bar->IsCaseSensitive(),
+                                                m_search_bar->IsWholeWord());
     m_object_list->GetModel()->search_object(search_text);
     dia->update_list();
 }
@@ -3741,6 +3747,12 @@ Sidebar::Sidebar(Plater *parent)
 
     p->m_search_bar = new SearchField(p->scrolled, _L("Search plate, object and part."));
     p->m_search_bar->SetOnQuery([this](const wxString &) {
+        this->p->on_search_update();
+    });
+    // Re-run the filter live whenever the ".*" regex mode or the builder's
+    // case-sensitive / whole-word checkboxes change (the popover re-fires this
+    // callback for all three), so the result list tracks the matcher state.
+    p->m_search_bar->SetOnRegexToggle([this](bool) {
         this->p->on_search_update();
     });
     p->m_search_bar->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {

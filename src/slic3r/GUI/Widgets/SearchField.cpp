@@ -3,8 +3,7 @@
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
-#include "CheckBox.hpp"
-#include "PopupWindow.hpp"
+#include "RegexBuilderPopup.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
 
@@ -33,212 +32,6 @@ constexpr int kClearDiam = 30; // circular clear / tune / regex button
 constexpr int kTunePx    = 20; // tune glyph
 constexpr int kRadius    = 22; // stadium corner radius
 constexpr int kMinWidth  = 220;
-
-// --- Regex builder popover -------------------------------------------------
-// A transient, custom-painted panel opened under the `tune` button. Everything
-// is drawn (no child controls) so it stays a single self-contained window that
-// re-themes and re-DPIs on each open; the checkbox anatomy is borrowed from the
-// kit CheckBox via its static glyph-bitmap renderer.
-const wxString kTokens[] = {".", "*", "+", "?", "[]", "()", "|", "^", "$", "\\d", "\\w", "\\s"};
-
-class SearchBuilderPopup : public PopupWindow
-{
-public:
-    explicit SearchBuilderPopup(wxWindow *parent) : PopupWindow(parent, wxBORDER_NONE)
-    {
-        SetBackgroundStyle(wxBG_STYLE_PAINT);
-        Bind(wxEVT_PAINT, &SearchBuilderPopup::onPaint, this);
-        Bind(wxEVT_MOTION, &SearchBuilderPopup::onMotion, this);
-        Bind(wxEVT_LEFT_DOWN, &SearchBuilderPopup::onLeftDown, this);
-        Bind(wxEVT_LEAVE_WINDOW, &SearchBuilderPopup::onLeave, this);
-#ifdef __WXMSW__
-        BindUnfocusEvent();
-#endif
-    }
-
-    void Configure(MD3::ColorScheme scheme, bool caseOn, bool wordOn,
-                   std::function<void(const wxString &)> onInsert,
-                   std::function<void(bool)> onCase, std::function<void(bool)> onWord)
-    {
-        m_scheme   = scheme;
-        m_case     = caseOn;
-        m_word     = wordOn;
-        m_on_insert = std::move(onInsert);
-        m_on_case  = std::move(onCase);
-        m_on_word  = std::move(onWord);
-        relayout();
-        Refresh();
-    }
-
-private:
-    struct Chip { wxString token; wxRect rect; };
-
-    void relayout()
-    {
-        m_chips.clear();
-        const int pad  = FromDIP(12);
-        const int W    = FromDIP(248);
-        const int chipH = FromDIP(26);
-        const int gap  = FromDIP(6);
-        const int padX = FromDIP(10);
-
-        wxBitmap   probe(1, 1);
-        wxMemoryDC mdc(probe);
-        mdc.SetFont(Label::Mono_12);
-
-        int cx  = pad;
-        int top = pad + FromDIP(20) + FromDIP(8); // header band
-        for (const wxString &tok : kTokens) {
-            const wxSize te = mdc.GetTextExtent(tok);
-            int          cw = te.x + 2 * padX;
-            if (cx + cw > W - pad) {
-                cx = pad;
-                top += chipH + gap;
-            }
-            m_chips.push_back({tok, wxRect(cx, top, cw, chipH)});
-            cx += cw + gap;
-        }
-        int y = top + chipH + FromDIP(12);
-        m_divider_y = y;
-        y += FromDIP(12);
-
-        const int rowH = FromDIP(30);
-        m_case_row = wxRect(pad, y, W - 2 * pad, rowH);
-        y += rowH + FromDIP(4);
-        m_word_row = wxRect(pad, y, W - 2 * pad, rowH);
-        y += rowH + pad;
-
-        SetClientSize(W, y);
-    }
-
-    void drawCheckRow(wxDC &dc, const wxRect &row, bool checked, bool hover, const wxString &label, bool dark)
-    {
-        if (hover) {
-            dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.SetBrush(wxBrush(MD3::resolve(MD3::Role::SurfaceContainerHigh, dark)));
-            dc.DrawRoundedRectangle(row, FromDIP(6));
-        }
-        const int    box   = FromDIP(20);
-        const double scale = GetDPIScaleFactor() > 0.0 ? GetDPIScaleFactor() : 1.0;
-        wxBitmap     glyph = CheckBox::RenderGlyphBitmap(20, scale, checked, false, false, m_scheme);
-        const int    gx    = row.x + FromDIP(8);
-        dc.DrawBitmap(glyph, gx, row.y + (row.height - box) / 2, true);
-
-        dc.SetFont(Label::Body_13);
-        dc.SetTextForeground(MD3::resolve(MD3::Role::OnSurface, dark));
-        const wxSize te = dc.GetTextExtent(label);
-        dc.DrawText(label, gx + box + FromDIP(10), row.y + (row.height - te.y) / 2);
-    }
-
-    void onPaint(wxPaintEvent &)
-    {
-        wxAutoBufferedPaintDC dc(this);
-        const bool  dark = StateColor::isDarkMode();
-        const wxSize sz  = GetClientSize();
-
-        dc.SetBrush(wxBrush(MD3::resolve(MD3::Role::SurfaceContainerHigh, dark)));
-        dc.SetPen(wxPen(MD3::resolve(MD3::Role::OutlineVariant, dark), std::max(1, FromDIP(1))));
-        dc.DrawRoundedRectangle(0, 0, sz.x, sz.y, FromDIP(12));
-
-        // Header.
-        dc.SetFont(Label::Body_13);
-        dc.SetTextForeground(MD3::resolve(MD3::Role::OnSurfaceVariant, dark));
-        dc.DrawText(_L("Insert"), FromDIP(12), FromDIP(11));
-
-        // Token chips.
-        for (size_t i = 0; i < m_chips.size(); ++i) {
-            const Chip &c   = m_chips[i];
-            const bool  hov = (static_cast<int>(i) == m_hover_chip);
-            dc.SetBrush(wxBrush(MD3::resolve(hov ? MD3::Role::SurfaceContainerHigh
-                                                 : MD3::Role::SurfaceContainerHighest,
-                                             dark)));
-            dc.SetPen(wxPen(MD3::resolve(MD3::Role::OutlineVariant, dark), std::max(1, FromDIP(1))));
-            dc.DrawRoundedRectangle(c.rect, FromDIP(8));
-            dc.SetFont(Label::Mono_12);
-            dc.SetTextForeground(MD3::resolve(MD3::Role::OnSurface, dark));
-            const wxSize te = dc.GetTextExtent(c.token);
-            dc.DrawText(c.token, c.rect.x + (c.rect.width - te.x) / 2,
-                        c.rect.y + (c.rect.height - te.y) / 2);
-        }
-
-        // Divider.
-        dc.SetPen(wxPen(MD3::resolve(MD3::Role::OutlineVariant, dark), std::max(1, FromDIP(1))));
-        dc.DrawLine(FromDIP(12), m_divider_y, sz.x - FromDIP(12), m_divider_y);
-
-        drawCheckRow(dc, m_case_row, m_case, m_hover_case, _L("Case sensitive"), dark);
-        drawCheckRow(dc, m_word_row, m_word, m_hover_word, _L("Whole word"), dark);
-    }
-
-    void onMotion(wxMouseEvent &e)
-    {
-        const wxPoint p = e.GetPosition();
-        int           hc = -1;
-        for (size_t i = 0; i < m_chips.size(); ++i)
-            if (m_chips[i].rect.Contains(p)) {
-                hc = static_cast<int>(i);
-                break;
-            }
-        const bool hcase = m_case_row.Contains(p);
-        const bool hword = m_word_row.Contains(p);
-        if (hc != m_hover_chip || hcase != m_hover_case || hword != m_hover_word) {
-            m_hover_chip = hc;
-            m_hover_case = hcase;
-            m_hover_word = hword;
-            Refresh();
-        }
-        SetCursor((hc >= 0 || hcase || hword) ? wxCursor(wxCURSOR_HAND) : *wxSTANDARD_CURSOR);
-        e.Skip();
-    }
-
-    void onLeave(wxMouseEvent &e)
-    {
-        if (m_hover_chip != -1 || m_hover_case || m_hover_word) {
-            m_hover_chip = -1;
-            m_hover_case = false;
-            m_hover_word = false;
-            Refresh();
-        }
-        e.Skip();
-    }
-
-    void onLeftDown(wxMouseEvent &e)
-    {
-        const wxPoint p = e.GetPosition();
-        for (const Chip &c : m_chips) {
-            if (c.rect.Contains(p)) {
-                if (m_on_insert)
-                    m_on_insert(c.token); // keep the popover open for further inserts
-                return;
-            }
-        }
-        if (m_case_row.Contains(p)) {
-            m_case = !m_case;
-            if (m_on_case)
-                m_on_case(m_case);
-            Refresh();
-            return;
-        }
-        if (m_word_row.Contains(p)) {
-            m_word = !m_word;
-            if (m_on_word)
-                m_on_word(m_word);
-            Refresh();
-            return;
-        }
-        e.Skip();
-    }
-
-    std::vector<Chip> m_chips;
-    wxRect            m_case_row, m_word_row;
-    int               m_divider_y = 0;
-    int               m_hover_chip = -1;
-    bool              m_hover_case = false, m_hover_word = false;
-    bool              m_case = false, m_word = false;
-    MD3::ColorScheme  m_scheme = MD3::ColorScheme::Brand;
-
-    std::function<void(const wxString &)> m_on_insert;
-    std::function<void(bool)>             m_on_case, m_on_word;
-};
 } // namespace
 
 SearchField::SearchField() {}
@@ -427,39 +220,47 @@ void SearchField::openBuilder()
     if (m_on_builder)
         m_on_builder(); // host hook, in addition to the built-in popover
 
-    auto *popup = static_cast<SearchBuilderPopup *>(m_builder_popup);
-    if (!popup) {
-        popup           = new SearchBuilderPopup(this);
-        m_builder_popup = popup;
+    // Rebuilt on every open so the popover re-derives its fonts, colours and
+    // FromDIP metrics (theme / DPI / density safe). Destroy() is deferred by
+    // wx, so allocating the replacement immediately is safe.
+    if (m_builder_popup) {
+        m_builder_popup->Destroy();
+        m_builder_popup = nullptr;
     }
-    popup->Configure(
-        m_scheme, m_case_sensitive, m_whole_word,
-        [this](const wxString &tok) { insertToken(tok); },
-        [this](bool on) {
-            m_case_sensitive = on;
-            if (m_on_regex_toggle)
-                m_on_regex_toggle(m_regex);
-        },
-        [this](bool on) {
-            m_whole_word = on;
-            if (m_on_regex_toggle)
-                m_on_regex_toggle(m_regex);
-        });
+    auto *popup     = new RegexBuilderPopup(this);
+    m_builder_popup = popup;
+
+    RegexBuilderPopup::Callbacks cbs;
+    cbs.onPattern = [this](const wxString &pattern) {
+        if (!m_text)
+            return;
+        m_text->ChangeValue(pattern); // no wxEVT_TEXT -> no echo back into the popover
+        const bool hasText = !pattern.IsEmpty();
+        if (hasText != m_had_text) {
+            m_had_text = hasText;
+            layoutText();
+        }
+        Refresh();
+        emit(pattern);
+    };
+    cbs.onRegexMode = [this](bool on) { SetRegexEnabled(on); };
+    cbs.onCase      = [this](bool on) {
+        m_case_sensitive = on;
+        if (m_on_regex_toggle)
+            m_on_regex_toggle(m_regex);
+    };
+    cbs.onWord = [this](bool on) {
+        m_whole_word = on;
+        if (m_on_regex_toggle)
+            m_on_regex_toggle(m_regex);
+    };
+    popup->Configure(m_scheme, GetValue(), m_regex, m_case_sensitive, m_whole_word, std::move(cbs));
 
     const wxRect  tr  = tuneButtonRect();
     const wxPoint pos = ClientToScreen(wxPoint(tr.GetLeft(), tr.GetBottom() + FromDIP(4)));
     popup->Position(pos, wxSize(0, 0));
     popup->Popup();
-}
-
-void SearchField::insertToken(const wxString &token)
-{
-    if (!m_text)
-        return;
-    // Writes at the current insertion point (replacing any selection) and emits
-    // wxEVT_TEXT, so onText() fires the query. Focus stays with the popover so a
-    // sequence of chips can be inserted without dismissing it.
-    m_text->WriteText(token);
+    popup->FocusPattern();
 }
 
 bool SearchField::textMatches(const wxString &query, const wxString &candidate, bool regex,
@@ -611,6 +412,10 @@ void SearchField::onText()
     }
     Refresh();
     emit(GetValue());
+    // Field -> builder pattern sync while the popover is open (the popover's
+    // own edits arrive via ChangeValue, which never re-enters here).
+    if (m_builder_popup && m_builder_popup->IsShown())
+        static_cast<RegexBuilderPopup *>(m_builder_popup)->SyncPattern(GetValue());
 }
 
 void SearchField::doRender(wxDC &dc)

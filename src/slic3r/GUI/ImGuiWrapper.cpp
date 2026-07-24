@@ -712,6 +712,11 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
         return false;
 
     static char pattern_buffer[256] = { 0 };
+    // ".*" regex mode for the popup filter (persists across opens, like the
+    // in-canvas search_list toggle). Matching is guarded: an invalid or
+    // half-typed pattern filters nothing out (match-all), and matching is
+    // case-insensitive by default — mirroring search_list's regex support.
+    static bool regex_mode = false;
     auto   simple_match    = [](const char *pattern, const char *str) {
         wxString sub_str  = wxString::FromUTF8(pattern).Lower();
         wxString main_str = wxString::FromUTF8(str).Lower();
@@ -754,9 +759,15 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f * m_style_scaling, item_rect_height - g.FontSize) * 0.5f);
+        // Reserve room at the right of the search row for the ".*" regex toggle
+        // (same affordance as the in-canvas search_list toggle); the input and
+        // its search/clear icon shift left by that amount.
+        const ImVec2 regex_label_size = ImGui::CalcTextSize(".*");
+        const float  regex_btn_w      = regex_label_size.x + g.Style.FramePadding.x * 2.0f;
+        const float  regex_gap        = 4.0f * m_style_scaling;
         wchar_t ICON_SEARCH = *pattern_buffer != '\0' ? ImGui::TextSearchCloseIcon : ImGui::TextSearchIcon;
         const ImVec2 label_size = ImGui::CalcTextSize(into_u8(ICON_SEARCH).c_str(), nullptr, true);
-        const ImVec2 search_icon_pos(ImGui::GetItemRectMax().x - label_size.x, popup_window->DC.CursorPos.y + style.FramePadding.y);
+        const ImVec2 search_icon_pos(ImGui::GetItemRectMax().x - label_size.x - (regex_btn_w + regex_gap), popup_window->DC.CursorPos.y + style.FramePadding.y);
         ImGui::RenderText(search_icon_pos, into_u8(ICON_SEARCH).c_str());
 
         auto temp = popup_window->DC.CursorPos;
@@ -775,22 +786,65 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
         popup_window->DC.CursorPos = temp;
 
 
-        ImGui::PushItemWidth(item_rect_width);
+        ImGui::PushItemWidth(item_rect_width - regex_btn_w - regex_gap);
         if (is_new_open)
             ImGui::SetKeyboardFocusHere();
         ImGui::InputText("##bbl_combo_with_filter_inputText", pattern_buffer, sizeof(pattern_buffer));
         ImGui::PopItemWidth();
+
+        // ".*" regex toggle, tinted while active so it reads as stateful
+        // (mirrors the in-canvas search_list toggle). Flipping it re-filters on
+        // the next frame; no other state is touched.
+        ImGui::SameLine(0.0f, regex_gap);
+        if (regex_mode) {
+            const ImVec4 on = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+            ImGui::PushStyleColor(ImGuiCol_Button, on);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
+        }
+        if (ImGui::Button(".*##bbl_combo_with_filter_regex", ImVec2(regex_btn_w, 0.0f)))
+            regex_mode = !regex_mode;
+        if (regex_mode)
+            ImGui::PopStyleColor(2);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", into_u8(_L("Regular expression")).c_str());
+
         ImGui::PopStyleVar();
 
         if (*pattern_buffer != '\0')
             is_filtering = true;
 
+        // Regex mode: compile once, guarded. An invalid / half-typed pattern
+        // disables filtering entirely (match-all) rather than hiding every row.
+        bool       use_regex   = false;
+        std::regex regex_term;
+        if (is_filtering && regex_mode) {
+            try {
+                regex_term = std::regex(pattern_buffer, std::regex::icase);
+                use_regex  = true;
+            } catch (const std::exception &) {
+                is_filtering = false;
+            }
+        }
+
         if (is_filtering) {
             std::vector<std::pair<int, int>> filtered_items_with_priority; // std::pair<index, priority>
             for (int i = 0; i < all_items.size(); i++) {
-                int priority = simple_match(pattern_buffer, all_items[i].c_str());
-                if (priority != wxNOT_FOUND)
-                    filtered_items_with_priority.push_back({i, priority});
+                if (use_regex) {
+                    // A compile-valid pattern can still throw at match time
+                    // (catastrophic backtracking): keep the row on throw, per
+                    // the shared matcher convention.
+                    try {
+                        std::smatch m;
+                        if (std::regex_search(all_items[i], m, regex_term))
+                            filtered_items_with_priority.push_back({i, (int) m.position(0)});
+                    } catch (const std::regex_error &) {
+                        filtered_items_with_priority.push_back({i, 0});
+                    }
+                } else {
+                    int priority = simple_match(pattern_buffer, all_items[i].c_str());
+                    if (priority != wxNOT_FOUND)
+                        filtered_items_with_priority.push_back({i, priority});
+                }
             }
             std::sort(filtered_items_with_priority.begin(), filtered_items_with_priority.end(),
                       [](const std::pair<int, int> &a, const std::pair<int, int> &b) { return (b.second > a.second); });

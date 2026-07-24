@@ -1540,3 +1540,283 @@ msgstr "將外觀重設返預設值"
 #. reviewed-category: preferences
 msgid "Custom color"
 msgstr "自訂顏色"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unbalanced [ ] character set"
+msgstr "[ ] 字元集未成對"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unbalanced ( ) group"
+msgstr "( ) 群組未成對"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unbalanced { } quantifier"
+msgstr "{ } 數量詞未成對"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid counts inside { }"
+msgstr "{ } 入面嘅次數無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid character range"
+msgstr "字元範圍無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid escape sequence"
+msgstr "逸出序列無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid backreference"
+msgstr "反向參照無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Quantifier has nothing to repeat"
+msgstr "數量詞前面冇嘢可以重複"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unknown character class name"
+msgstr "字元類別名稱無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Pattern too complex to evaluate safely"
+msgstr "樣式太複雜，唔可以安全咁執行"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid regular expression"
+msgstr "正則表達式無效"
+
+#. reviewed-category: preferences
+msgid "Regex builder"
+msgstr "正則表達式建構器"
+
+#. reviewed-category: preferences
+msgid "Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."
+msgstr "引擎：std::regex / std::wregex，ECMAScript 語法。唔分大小寫係用 std::regex::icase。特殊字元請用反斜線逸出。"
+
+#. reviewed-category: preferences
+msgid "Pattern"
+msgstr "樣式"
+
+#. reviewed-category: preferences
+msgid "Regex pattern"
+msgstr "正則表達式樣式"
+
+#. reviewed-category: preferences
+msgid "Copy pattern"
+msgstr "複製樣式"
+
+#. reviewed-category: preferences
+msgid "Empty pattern matches everything"
+msgstr "空樣式會乜都匹配晒"
+
+#. reviewed-category: preferences
+msgid "Flags"
+msgstr "旗標"
+
+#. reviewed-category: preferences
+msgid "Regex mode"
+msgstr "正則表達式模式"
+
+#. reviewed-category: preferences
+msgid "Whole word applies to plain-text search only; in regex mode use \\b"
+msgstr "「全字匹配」淨係喺純文字搜尋先有效；正則表達式模式請用 \b"
+
+#. reviewed-category: preferences
+msgid "Literals"
+msgstr "字面文字"
+
+#. reviewed-category: preferences
+msgid "Text to match literally"
+msgstr "想逐隻字咁匹配嘅文字"
+
+#. reviewed-category: preferences
+msgid "Insert the text with regex metacharacters escaped"
+msgstr "插入文字，特殊字元會自動幫你逸出"
+
+#. reviewed-category: preferences
+msgid "Character classes"
+msgstr "字元類別"
+
+#. reviewed-category: preferences
+msgid "Any single character except newline"
+msgstr "任何一個字元（換行除外）"
+
+#. reviewed-category: preferences
+msgid "Character set — matches any one character listed inside"
+msgstr "字元集合 — 匹配入面列咗嘅其中一個字元"
+
+#. reviewed-category: preferences
+msgid "Negated set — matches any character not listed inside"
+msgstr "反向集合 — 匹配唔喺入面嘅任何字元"
+
+#. reviewed-category: preferences
+msgid "Character range — use inside [ ], e.g. [a-z0-9]"
+msgstr "字元範圍 — 喺 [ ] 入面用，例如 [a-z0-9]"
+
+#. reviewed-category: preferences
+msgid "Digit 0-9"
+msgstr "數字 0-9"
+
+#. reviewed-category: preferences
+msgid "Any character that is not a digit"
+msgstr "任何唔係數字嘅字元"
+
+#. reviewed-category: preferences
+msgid "Word character: letter, digit, or underscore"
+msgstr "單詞字元：字母、數字或者底線"
+
+#. reviewed-category: preferences
+msgid "Any character that is not a word character"
+msgstr "任何唔係單詞字元嘅字元"
+
+#. reviewed-category: preferences
+msgid "Whitespace character"
+msgstr "空白字元"
+
+#. reviewed-category: preferences
+msgid "Any character that is not whitespace"
+msgstr "任何唔係空白嘅字元"
+
+#. reviewed-category: preferences
+msgid "Anchors"
+msgstr "錨點"
+
+#. reviewed-category: preferences
+msgid "Start of the text"
+msgstr "文字開頭"
+
+#. reviewed-category: preferences
+msgid "End of the text"
+msgstr "文字結尾"
+
+#. reviewed-category: preferences
+msgid "Word boundary"
+msgstr "字詞邊界"
+
+#. reviewed-category: preferences
+msgid "Not a word boundary"
+msgstr "唔係字詞邊界"
+
+#. reviewed-category: preferences
+msgid "Groups & alternation"
+msgstr "群組同交替"
+
+#. reviewed-category: preferences
+msgid "Capturing group — remembers the matched text"
+msgstr "捕捉群組 — 會記住匹配到嘅文字"
+
+#. reviewed-category: preferences
+msgid "Non-capturing group — groups without remembering"
+msgstr "非捕捉群組 — 淨係分組，唔記住內容"
+
+#. reviewed-category: preferences
+msgid "Alternation — matches either side"
+msgstr "交替 — 兩邊有一邊匹配到就得"
+
+#. reviewed-category: preferences
+msgid "Backreference — matches what group 1 captured"
+msgstr "反向參照 — 匹配群組 1 捕捉到嘅內容"
+
+#. reviewed-category: preferences
+msgid "Quantifiers"
+msgstr "數量詞"
+
+#. reviewed-category: preferences
+msgid "Zero or more of the previous item (greedy)"
+msgstr "前面嗰項出現零次或以上（貪婪）"
+
+#. reviewed-category: preferences
+msgid "One or more of the previous item (greedy)"
+msgstr "前面嗰項出現一次或以上（貪婪）"
+
+#. reviewed-category: preferences
+msgid "Zero or one of the previous item (greedy)"
+msgstr "前面嗰項出現零次或一次（貪婪）"
+
+#. reviewed-category: preferences
+msgid "Exactly n repetitions — replace n with a number"
+msgstr "啱啱好重複 n 次 — 記得將 n 換做數字"
+
+#. reviewed-category: preferences
+msgid "At least n repetitions — replace n with a number"
+msgstr "至少重複 n 次 — 記得將 n 換做數字"
+
+#. reviewed-category: preferences
+msgid "Between n and m repetitions — replace n and m with numbers"
+msgstr "重複 n 至 m 次 — 記得將 n 同 m 換做數字"
+
+#. reviewed-category: preferences
+msgid "Zero or more (lazy — matches as little as possible)"
+msgstr "零次或以上（懶惰 — 匹配得愈少愈好）"
+
+#. reviewed-category: preferences
+msgid "One or more (lazy — matches as little as possible)"
+msgstr "一次或以上（懶惰 — 匹配得愈少愈好）"
+
+#. reviewed-category: preferences
+msgid "Zero or one (lazy — matches as little as possible)"
+msgstr "零次或一次（懶惰 — 匹配得愈少愈好）"
+
+#. reviewed-category: preferences
+msgid "Test pattern"
+msgstr "測試樣式"
+
+#. reviewed-category: preferences
+msgid "Sample text"
+msgstr "樣本文字"
+
+#. reviewed-category: preferences
+msgid "Matches"
+msgstr "匹配結果"
+
+#. reviewed-category: preferences
+msgid "Match results"
+msgstr "匹配結果清單"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Pattern too long (max %d characters)"
+msgstr "樣式太長（最多 %d 隻字）"
+
+#. reviewed-category: preferences
+msgid "Valid pattern"
+msgstr "樣式有效"
+
+#. reviewed-category: preferences
+msgid "Match %d at %d-%d: %s"
+msgstr "第 %d 個匹配，位置 %d-%d：%s"
+
+#. reviewed-category: preferences
+msgid "group %d: %s"
+msgstr "群組 %d：%s"
+
+#. reviewed-category: preferences
+msgid "group %d: (no match)"
+msgstr "群組 %d：（冇匹配）"
+
+#. reviewed-category: preferences
+msgid "No matches."
+msgstr "一個匹配都冇。"
+
+#. reviewed-category: preferences
+msgid "Showing first %d matches only."
+msgstr "淨係顯示頭 %d 個匹配。"
+
+#. reviewed-category: preferences
+msgid "Sample truncated to %d characters."
+msgstr "樣本截咗做 %d 隻字。"
+
+#. reviewed-category: preferences
+msgid "Valid pattern — 1 match"
+msgstr "樣式有效 — 有 1 個匹配"
+
+#. reviewed-category: preferences
+msgid "Valid pattern — %d matches"
+msgstr "樣式有效 — 有 %d 個匹配"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The application already tried its built-in software rendering fallback (Mesa llvmpipe), but the OpenGL version is still lower than 2.0."
+msgstr "應用程式已經試過內置嘅軟件渲染後備方案（Mesa llvmpipe），但係 OpenGL 版本仍然低過 2.0。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable."
+msgstr "應用程式用唔到內置嘅軟件渲染後備方案：喺應用程式旁邊搵唔到 Mesa 驅動檔案（mesa\\opengl32.dll 同 mesa\\libgallium_wgl.dll），或者安裝資料夾冇寫入權限。"

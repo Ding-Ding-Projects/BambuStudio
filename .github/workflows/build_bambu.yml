@@ -162,6 +162,7 @@ jobs:
             -G Ninja `
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            -DSLIC3R_MSVC_PDB=OFF `
             -DBBL_RELEASE_TO_PUBLIC=1 `
             -DBBL_INTERNAL_TESTING=0 `
             -DSLIC3R_BUILD_TESTS=OFF `

@@ -208,6 +208,13 @@ void Button::SetGlyph(uint32_t codepoint, int px)
     }
 }
 
+void Button::SetGlyphColor(StateColor const &color)
+{
+    glyph_color = color;
+    state_handler.update_binds();
+    Refresh();
+}
+
 void Button::SetIconButton(IconShape shape, int container_px, bool filled, bool danger)
 {
     m_variant     = Variant::IconButton;
@@ -259,6 +266,13 @@ void Button::applyMD3Style()
         const int      container  = m_icon_container_px > 0 ? m_icon_container_px : 36;
         const wxColour rest       = m_icon_filled ? StateColor::semantic(R::SurfaceContainerHighest)
                                                   : parentBg;
+
+        // Refresh the StaticBox window background (used to clear the area behind
+        // the rounded shape in StaticBox::render). The Create-time snapshot goes
+        // stale when the parent is themed AFTER the button is constructed — in
+        // dark mode that left a light system-#F0F0F0 square behind the circular
+        // icon button (Prepare action bar). Rescale()/theme rebuild re-runs this.
+        SetBackgroundColour(parentBg);
 
         StateColor bg, fg;
         if (m_icon_danger) {
@@ -324,6 +338,10 @@ void Button::applyMD3Style()
     const wxColour disabledBg  = StateColor::semantic(R::SurfaceContainerHigh);
     const wxColour disabledTxt = ThemeColor::TextDisabled;
     const wxColour parentBg    = StaticBox::GetParentBackgroundColor(GetParent());
+
+    // Same stale-snapshot fix as the IconButton branch above: keep the pill's
+    // rounded-corner backing in sync with the parent's CURRENT background.
+    SetBackgroundColour(parentBg);
 
     StateColor bg, fg, bd;
     int        bw = 0;
@@ -550,7 +568,8 @@ void Button::render(wxDC& dc)
         else
             pt.y += (rcContent.height - szIcon.y) / 2;
         if (drawGlyph)
-            MaterialIcon::draw(dc, m_glyph_cp, glyph_px, text_color.colorForStates(states), pt);
+            MaterialIcon::draw(dc, m_glyph_cp, glyph_px,
+                               (glyph_color.count() > 0 ? glyph_color : text_color).colorForStates(states), pt);
         else
             dc.DrawBitmap(icon.bmp(), pt);
         //BBS norrow size between text and icon

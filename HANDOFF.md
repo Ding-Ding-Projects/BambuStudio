@@ -1,3 +1,53 @@
+# Dark-mode/clipping wave + advanced regex builder + release-pipeline repair (2026-07-24)
+
+User-reported: "hardly visible text everywhere" (dark mode), Process-card overlap, "latest
+release app not launching", release list flooded/mis-ordered, "not all search bars have regex
+builder", and a mandate for a fully advanced regex builder with documentation. Four parallel
+Fable agents (disjoint owners) + orchestrator; one serial build gate; headless dark-mode
+verification via the DarkQA recipe (see lowlevel-mcp-headless-driving memory — cross-desktop
+hwnd access now requires launching the cheap CLI ON the headless desktop).
+
+- **Release loop root-caused/killed (`0d4091229`, `6be213882`):** `on: push: {}` also matched
+  the tags the release job itself created → every release re-built the same commit under a
+  stale title (142 releases, newest not on top). Push trigger is branches-only now, release
+  job refuses tag refs, in-flight tag-echo runs cancelled, 140 old releases deleted (tags
+  kept; keepers: r192, r174, portable-preview-1).
+- **"App not launching" root-caused:** r192's payload launches fine (extracted + verified
+  headlessly with Mesa). Fresh installs die at the OpenGL<2.0 gate on GPU-less machines.
+  Fix shipped in-tree: hash-pinned Mesa llvmpipe 26.1.3 (pal1000 mesa-dist-win, byte-identical
+  to the locally proven DLLs) staged into the installer's mesa\ subfolder + OpenGLManager
+  one-shot self-relaunch (copy-beside-exe, BBS_SOFTGL_RETRIED triple loop-guard), uninstaller
+  handles the runtime copies, docs/features/windows/software-gl-fallback.md.
+- **Dark-mode systemic fix:** StateColor::darkModeColorFor was applied twice on many paths and
+  the map was not idempotent — MD3::Dark::onSurface was hex-identical to a light key, so
+  correct dark text got remapped to near-black (#2f3036 on dark surfaces; pixel-verified).
+  Fixed by 1-step hex nudges severing the aliases (+ invariant comments), TextDisabled dark
+  legibility bump, StaticBox stale-parent-bg refresh (white squares behind rounded controls),
+  SideButton radius clamp (the green "eggplant" blob), action-bar disabled-text derivation,
+  SwitchButton min-size (Process "bal Obj" overlap), TabCtrl glyph pinning + Tab.cpp fallback
+  fix (orange segment glyphs), Label dark seeding, frame bg + topbar width sync (grey band).
+- **Advanced regex builder (user mandate):** new Widgets/RegexBuilderPopup.{hpp,cpp} — guided
+  sections (literals auto-escape, classes, anchors, groups/alternation, quantifiers + lazy),
+  raw pattern editor (bidir sync), flags, live validity with friendly std::regex_error text,
+  collapsible Test area (sample text, highlighted matches, capture groups), copy, engine
+  caption (std::regex ECMAScript); bounded (2000-char pattern / 20000-char sample / 200
+  matches, all guarded). docs/features/windows/regex-builder.md rewritten.
+- **Regex on every search surface:** object-list search's builder was inert (search_object
+  ignored flags — now routed through textMatches + live re-filter, highlight index bug fixed);
+  Tab preset pill and Ctrl+F SearchDialog now host real SearchFields; device picker on the
+  shared matcher; ImGui font picker + assembly tree gained guarded `.*` toggles.
+- **CI speed:** per-ref cancel-in-progress; Windows app build moved to Ninja + sccache (GHA
+  cache). First canary failed on C1041 (parallel cl racing the shared /Zi PDB) — root fix:
+  the one live /Zi (root CMakeLists add_compile_options) is now /Z7, which also makes objs
+  sccache-cacheable. Re-validated by the wave push's CI run.
+- **Catalogs:** 451 yue_HK translations (+68 regex builder, +2 softgl), .mo --check green,
+  coverage.json updated. PO escape gotcha recorded: the parser is ast.literal_eval, so \b and
+  mesa\opengl32.dll must be double-backslashed in msgid/msgstr.
+
+Verification state at handoff-write time: serial Release build in progress; headless dark-mode
+recapture of the exact reported defects pending build completion; light-mode regression pass
+pending. This section will not claim those green until they are.
+
 # Post-conformance feature + polish program (2026-07-23)
 
 With the parity register closed (127 done / 4 recorded deviations / 0 open), this session delivered

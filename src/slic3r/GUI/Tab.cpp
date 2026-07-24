@@ -47,6 +47,7 @@
 
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/SearchField.hpp"
 #include "Widgets/TabCtrl.hpp"
 #include "MarkdownTip.hpp"
 #include "Search.hpp"
@@ -328,75 +329,25 @@ void Tab::create_preset_tab()
     m_btn_search->SetToolTip(_L("Search in preset"));
 
     //search input
-    m_search_item = new StaticBox(m_top_panel);
-    // MD3 SearchField: sc-highest pill fill with an outline border.
-    StateColor box_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Normal));
-    StateColor box_border_colour(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
+    // The shared MD3 SearchField pill replaces the legacy hand-built
+    // StaticBox + TextInput combo: same 40px stadium anatomy (sc-highest fill,
+    // Outline border promoted to Primary on focus, leading 'search' glyph) plus
+    // the kit ".*" regex toggle and `tune` builder popover. The SearchDialog
+    // binds to the pill's inner wxTextCtrl and wires the toggle straight into
+    // the shared OptionsSearcher, so regex / case / whole-word reach the global
+    // option search.
+    m_search_field = new SearchField(m_top_panel, _L("Search in preset"));
 
-    m_search_item->SetBackgroundColor(box_colour);
-    m_search_item->SetBorderColor(box_border_colour);
-    // MD3 SearchField is a 40px stadium pill; its height is pinned below and the
-    // corner radius derived from that (DPI-scaled) height so it stays a true pill
-    // at any DPI/density instead of the legacy fixed 5px corner. The already-
-    // migrated sc-highest fill and Outline (Primary-on-focus) border are kept.
-
-
-    //StateColor::darkModeColorFor(wxColour(238, 238, 238)), wxDefaultPosition, wxSize(m_top_panel->GetSize().GetWidth(), 3 * wxGetApp().em_unit()), 8);
-    auto search_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_search_input = new TextInput(m_search_item, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 | wxBORDER_NONE);
-    m_search_input->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
-    m_search_input->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    // MD3 SearchField input text: body 13.5 / 400 (kit spec), replacing the
-    // legacy bold font. sysFont resolves the Roboto face (+ CJK fallback); the
-    // fractional size mirrors the Label font layer's design-px -> point-size
-    // scaling so 13.5 design px lands exactly (no integer Body_13/Body_14 rounding).
-    wxFont search_font = Label::sysFont(14);
-    double search_font_pt = 13.5;
-#ifndef __APPLE__
-    search_font_pt = search_font_pt * 4.0 / 5.0;
-#endif
-    search_font.SetFractionalPointSize(search_font_pt);
-    search_font.SetNumericWeight(400);
-    m_search_input->SetFont(search_font);
-
-    // MD3 SearchField anatomy: 14px leading pad, a 20px 'search' glyph
-    // (OnSurfaceVariant), a 4px gap, the flexible input, then a 5px trailing pad
-    // (kit padding 0 5 0 14, gap 4). The glyph is a DPI-correct MaterialIcon
-    // bitmap (regenerated on rescale in Tab::msw_rescale) and replaces the old
-    // 6px leading spacer.
-    wxBitmap search_glyph_bmp = MaterialIcon::available()
-        ? MaterialIcon::bitmap(m_search_item, MaterialIcon::Search, 20,
-                               StateColor::semantic(MD3::Role::OnSurfaceVariant))
-        : wxBitmap();
-    wxStaticBitmap *search_glyph = new wxStaticBitmap(m_search_item, wxID_ANY, search_glyph_bmp);
-    search_glyph->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
-    // Clicking the leading glyph focuses the field, like the rest of the pill body.
-    search_glyph->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { m_search_input->SetFocus(); });
-
-    search_sizer->AddSpacer(FromDIP(14));
-    search_sizer->Add(search_glyph, 0, wxALIGN_CENTER_VERTICAL);
-    search_sizer->AddSpacer(FromDIP(4));
-    search_sizer->Add(m_search_input, 1, wxALIGN_CENTER_VERTICAL);
-    search_sizer->AddSpacer(FromDIP(5));
-    //bbl for linux
-    //search_sizer->Add(new wxWindow(m_search_input, wxID_ANY, wxDefaultPosition, wxSize(0, 0)), 0, wxEXPAND | wxLEFT, 16);
-
-
-     m_search_item->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-        m_search_input->SetFocus();
-    });
-
-    m_search_input->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
+    m_search_field->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
          Freeze();
         if (m_presets_choice) m_presets_choice->Show();
 
         m_btn_save_preset->Show();
         m_btn_search->Show();
-        m_search_item->Hide();
+        m_search_field->Hide();
 
-        m_search_item->Refresh();
-        m_search_item->Update();
-        m_search_item->Layout();
+        m_search_field->Refresh();
+        m_search_field->Update();
 
         this->GetParent()->Refresh();
         this->GetParent()->Update();
@@ -404,19 +355,7 @@ void Tab::create_preset_tab()
         Thaw();
     });
 
-    m_search_item->SetSizer(search_sizer);
-    // MD3 SearchField is a 40px stadium pill. Pin the height (DPI-scaled) so the
-    // pill, glyph and input share the kit geometry at any DPI/density, and derive
-    // the corner radius from that same height so it stays a true stadium (the
-    // kit's literal border-radius:22 clamps to this height/2 = 20 stadium).
-    const int search_pill_h = FromDIP(40);
-    search_sizer->SetMinSize(wxSize(-1, search_pill_h));
-    m_search_item->SetMinSize(wxSize(-1, search_pill_h));
-    m_search_item->Layout();
-    search_sizer->Fit(m_search_item);
-    m_search_item->SetCornerRadius(MD3::Metrics::pill_radius(search_pill_h));
-
-    m_search_item->Hide();
+    m_search_field->Hide();
     //m_btn_search->SetId(wxID_FIND_PROCESS);
 
     m_btn_search->Bind(
@@ -428,13 +367,16 @@ void Tab::create_preset_tab()
 
          m_btn_save_preset->Hide();
          m_btn_search->Hide();
-         m_search_item->Show();
+         m_search_field->Show();
 
          this->GetParent()->Refresh();
          this->GetParent()->Update();
          this->GetParent()->Layout();
 
-         wxGetApp().plater()->search(false, m_type, m_top_panel->GetParent(), m_search_input, m_btn_search);
+         // Direct route to the shared OptionsSearcher (what Plater::search's
+         // non-plater branch forwarded to): the SearchField overload wires the
+         // pill's ".*" toggle + tune popover into the searcher's flags.
+         wxGetApp().sidebar().get_searcher().show_dialog(m_type, m_top_panel->GetParent(), m_search_field, m_btn_search);
          Thaw();
 
         });
@@ -469,7 +411,7 @@ void Tab::create_preset_tab()
     m_top_sizer->Add( m_btn_save_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
     m_top_sizer->Add( m_btn_delete_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12) );
     m_top_sizer->Add( m_btn_search, 0, wxALIGN_CENTER_VERTICAL | wxLEFT , FromDIP(12) );
-    m_top_sizer->Add(m_search_item, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, FromDIP(12));
+    m_top_sizer->Add(m_search_field, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, FromDIP(12));
 
     if (dynamic_cast<TabPrint*>(this) == nullptr) {
         m_static_title = new Label(m_top_panel, Label::Body_12, _L("Advance"));
@@ -1027,9 +969,12 @@ void Tab::update_label_colours()
             if (translate_category(page->title(), m_type) != title)
                 continue;
 
+            // Unmodified pages must not fall back to the modified (warning)
+            // colour on model/plate tabs — it painted every category glyph
+            // orange in dark mode.
             const wxColor *clr = !page->m_is_nonsys_values ? &m_sys_label_clr :
                 page->m_is_modified_values ? &m_modified_label_clr :
-                (m_type < Preset::TYPE_COUNT ? &m_default_text_clr : &m_modified_label_clr);
+                &m_default_text_clr;
 
             m_tabctrl->SetItemTextColour(cur_item, clr == &m_modified_label_clr ? *clr : StateColor(
                         std::make_pair(StateColor::semantic(MD3::Role::OnSecondaryContainer), (int) StateColor::Checked),
@@ -1802,24 +1747,11 @@ void Tab::msw_rescale()
 
     m_tabctrl->Rescale();
 
-    // MD3: keep the search field a true 40px stadium pill after a DPI/density
-    // change by re-pinning the (rescaled) height, re-deriving the radius from it,
-    // and regenerating the leading 'search' glyph so nothing is cached in stale
-    // device pixels.
-    if (m_search_item) {
-        const int search_pill_h = FromDIP(40);
-        m_search_item->SetMinSize(wxSize(-1, search_pill_h));
-        m_search_item->SetCornerRadius(MD3::Metrics::pill_radius(search_pill_h));
-        if (MaterialIcon::available()) {
-            for (wxWindow *child : m_search_item->GetChildren()) {
-                if (wxStaticBitmap *glyph = wxDynamicCast(child, wxStaticBitmap)) {
-                    glyph->SetBitmap(MaterialIcon::bitmap(m_search_item, MaterialIcon::Search, 20,
-                                                          StateColor::semantic(MD3::Role::OnSurfaceVariant)));
-                    break;
-                }
-            }
-        }
-    }
+    // MD3: the SearchField pill re-derives all of its geometry and glyphs live
+    // from MD3 tokens; a single Rescale() refreshes fonts/layout after a
+    // DPI/density change (nothing is cached in stale device pixels).
+    if (m_search_field)
+        m_search_field->Rescale();
 
     //BBS: GUI refactor
     //Layout();

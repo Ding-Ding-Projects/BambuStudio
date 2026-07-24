@@ -596,9 +596,13 @@ Label::Label(wxWindow *parent, wxFont const &font, wxString const &text, long st
     this->m_font = font;
     this->m_text = text;
     SetFont(font);
-    SetForegroundColour(*wxBLACK);
     SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
-    SetForegroundColour(ThemeColor::TextPrimary);
+    // Resolve the default text tone for the CURRENT theme at construction
+    // (darkModeColorFor is an identity in light mode). The old raw
+    // ThemeColor::TextPrimary seed was a light-only value that stayed
+    // near-black on dark surfaces until some later UpdateDarkUI pass happened
+    // to revisit the control.
+    SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
     if (style & LB_PROPAGATE_MOUSE_EVENT) {
         for (auto evt : { wxEVT_LEFT_UP, wxEVT_LEFT_DOWN })
             Bind(evt, [this] (auto & e) { GetParent()->GetEventHandler()->ProcessEventLocally(e); });

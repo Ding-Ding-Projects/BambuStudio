@@ -27,11 +27,14 @@
 //   * a ".*" toggle pill — SecondaryContainer fill / OnSecondaryContainer glyph
 //     when regex mode is active, OnSurfaceVariant when idle. Clicking it flips
 //     regex mode (fires SetOnRegexToggle) and swaps the entry to Roboto Mono;
-//   * a `tune` IconButton that opens a small transient BUILDER POPOVER carrying
-//     quick-insert token chips (. * + ? [] () | ^ $ \d \w \s) plus "case
-//     sensitive" and "whole word" checkboxes. Inserting a chip writes the token
-//     at the entry caret and fires the query; the checkboxes drive the shared
-//     textMatches() matcher and re-fire SetOnRegexToggle so consumers re-run.
+//   * a `tune` IconButton that opens the full guided REGEX BUILDER POPOVER
+//     (RegexBuilderPopup): raw pattern editor bidirectionally synced with the
+//     query, guided token sections (literals / character classes / anchors /
+//     groups / quantifiers) with per-token tooltips, live syntax feedback,
+//     regex / case / whole-word flag rows, a bounded sample-text tester with
+//     match + capture-group listing, and copy-to-clipboard. Flag changes drive
+//     the shared textMatches() matcher and re-fire SetOnRegexToggle so
+//     consumers re-run their filter.
 // All colours and radii are resolved live per paint from MD3 tokens, so the
 // field re-themes and re-DPIs with no stale cached geometry.
 class SearchField : public wxNavigationEnabled<StaticBox>
@@ -72,6 +75,10 @@ public:
     // --- Regex / builder controls (kit ".*" toggle + tune popover). --------
     void SetRegexEnabled(bool on);
     bool IsRegexEnabled() const { return m_regex; }
+    // The current pattern: the query string, which the builder popover's raw
+    // pattern editor mirrors bidirectionally (meaningful as a regex only while
+    // IsRegexEnabled()).
+    wxString GetPattern() const { return GetValue(); }
     void SetOnRegexToggle(std::function<void(bool)> cb) { m_on_regex_toggle = std::move(cb); }
     // Fired (in addition to opening the built-in popover) when the tune button
     // is clicked, so a host may layer its own behaviour.
@@ -126,10 +133,9 @@ private:
     void   applyAccessibleName();
     void   emit(const wxString &value);
     void   onText();
-    // Open (or reuse) the transient builder popover under the tune button.
+    // Open the transient builder popover under the tune button (rebuilt per
+    // open so it re-derives theme / DPI / density state).
     void   openBuilder();
-    // Write a builder token at the entry caret and fire the query.
-    void   insertToken(const wxString &token);
 
     wxTextCtrl *m_text = nullptr;
 
@@ -145,9 +151,9 @@ private:
     bool m_case_sensitive = false; // matcher: case-sensitive substring / regex
     bool m_whole_word     = false; // matcher: whole-word substring constraint
 
-    // Transient builder popover (a SearchBuilderPopup, owned as a child of this
-    // field and reused across opens). Kept as wxWindow* so the concrete type
-    // stays private to the .cpp.
+    // Transient builder popover (a RegexBuilderPopup, owned as a child of this
+    // field and rebuilt on each open). Kept as wxWindow* so the concrete type
+    // stays out of this header.
     wxWindow *m_builder_popup = nullptr;
 
     std::function<void(const wxString &)> m_on_query;

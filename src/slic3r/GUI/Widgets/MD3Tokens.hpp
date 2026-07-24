@@ -85,6 +85,18 @@ inline const wxColour shadow{0, 0, 0, 41}; // rgba(0,0,0,.16)
 
 namespace Dark {
 
+// HEX-ALIAS INVARIANT (dark-mode double-remap fix): no Dark:: tone below may
+// reuse a hex that is a light-side KEY in StateColor.cpp's gDarkColors table.
+// StateColor::darkModeColorFor() (applied by StateColor::colorForStates at
+// every paint AND by GUI_App::UpdateDarkUI on window fg/bg it revisits) maps
+// light keys to dark values; when a dark tone aliases a light key, a second
+// pass corrupts already-correct dark colours. That is exactly how OnSurface
+// text (#e8e7ee, aliasing light Grey300) collapsed to #2f3036 — near-invisible
+// dark-on-dark labels/fields all over dark mode. Three tones are therefore
+// nudged by one RGB step off the kit values (imperceptible, but hex-distinct):
+//   onSurface          #e8e7ee -> #e9e8ef (aliased ThemeColor::Grey300)
+//   onPrimaryContainer #a6f4b8 -> #a7f5b9 (aliased Light::primaryContainer)
+//   inversePrimary     #146c2e -> #156d2f (aliased ThemeColor::BrandGreen)
 inline const wxColour surface{"#1b1c21"};
 inline const wxColour surfaceDim{"#161619"};
 inline const wxColour surfaceBright{"#3b3c43"};
@@ -93,14 +105,14 @@ inline const wxColour scLow{"#202127"};
 inline const wxColour sc{"#25262b"};
 inline const wxColour scHigh{"#2f3036"};
 inline const wxColour scHighest{"#393a41"};
-inline const wxColour onSurface{"#e8e7ee"};
+inline const wxColour onSurface{"#e9e8ef"};
 inline const wxColour onSurfaceVariant{"#cdced8"};
 inline const wxColour outline{"#94959f"};
 inline const wxColour outlineVariant{"#4a4c54"};
 inline const wxColour primary{"#8bd89b"};
 inline const wxColour onPrimary{"#00391a"};
 inline const wxColour primaryContainer{"#095228"};
-inline const wxColour onPrimaryContainer{"#a6f4b8"};
+inline const wxColour onPrimaryContainer{"#a7f5b9"};
 inline const wxColour secondaryContainer{"#2b3a2f"};
 inline const wxColour onSecondaryContainer{"#cfe9d3"};
 inline const wxColour error{"#ffb4ab"};
@@ -109,7 +121,7 @@ inline const wxColour inverseSurface{"#e3e2e9"};
 inline const wxColour inverseOn{"#2f3036"};
 inline const wxColour onError{"#690005"};
 inline const wxColour onErrorContainer{"#ffdad6"};
-inline const wxColour inversePrimary{"#146c2e"};
+inline const wxColour inversePrimary{"#156d2f"};
 
 // Overlay tints carry alpha over black. Dark theme deepens both tints.
 inline const wxColour scrim{0, 0, 0, 153}; // rgba(0,0,0,.6)

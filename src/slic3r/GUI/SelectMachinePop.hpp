@@ -37,6 +37,7 @@
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/ScrolledWindow.hpp"
 #include "Widgets/PopupWindow.hpp"
+#include "Widgets/SearchField.hpp"
 #include <wx/simplebook.h>
 #include <wx/hashmap.h>
 
@@ -202,11 +203,9 @@ private:
     wxBoxSizer *                      m_sizer_my_devices{nullptr};
     wxBoxSizer *                      m_sizer_other_devices{nullptr};
     wxBoxSizer *                      m_sizer_search_bar{nullptr};
-    wxSearchCtrl*                     m_search_bar{nullptr};
-    // Minimal ".*" regex switch for this raw-wxSearchCtrl surface (no MD3
-    // SearchField here); drives std::wregex matching in search_for_printer.
-    wxCheckBox*                       m_search_regex_toggle{nullptr};
-    bool                              m_search_regex{false};
+    // Shared MD3 SearchField pill: its ".*" toggle + tune builder popover drive
+    // SearchField::textMatches in search_for_printer.
+    SearchField*                      m_search_bar{nullptr};
     wxScrolledWindow *                m_scrolledWindow{nullptr};
     wxWindow *                        m_panel_body{nullptr};
     wxTimer *                         m_refresh_timer{nullptr};

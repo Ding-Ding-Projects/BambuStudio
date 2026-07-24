@@ -1,6 +1,7 @@
 #include "ObjectDataViewModel.hpp"
 #include "wxExtensions.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/SearchField.hpp"
 #include "Widgets/StateColor.hpp"
 #include "BitmapCache.hpp"
 #include "GUI_App.hpp"
@@ -13,6 +14,9 @@
 
 #include <wx/bmpcbox.h>
 #include <wx/dc.h>
+
+#include <cwctype>
+#include <regex>
 
 namespace Slic3r {
 namespace GUI {
@@ -1641,6 +1645,81 @@ void ObjectDataViewModel::assembly_name(ObjectDataViewModelNode* item, wxString 
     }
 }
 
+void ObjectDataViewModel::set_search_flags(bool regex, bool case_sensitive, bool whole_word)
+{
+    m_search_regex          = regex;
+    m_search_case_sensitive = case_sensitive;
+    m_search_whole_word     = whole_word;
+}
+
+// Wrap every span of `name` matched by the current query in <b>...</b> markup
+// (consumed by Search::SearchItem's painter). Spans are computed per mode:
+//   * regex        — std::wregex hit ranges (guarded; a throwing / zero-width
+//                    pattern yields no highlight rather than an infinite loop);
+//   * substring    — every case-folded occurrence; with whole-word only the
+//                    occurrences bounded by non-word characters are wrapped.
+// Inclusion itself is already decided by SearchField::textMatches, so a name
+// that matched but produced no concrete span (e.g. an invalid regex) is
+// returned unhighlighted instead of being dropped.
+static wxString mark_search_matches(const wxString &name, const wxString &query,
+                                    bool regex, bool case_sensitive, bool whole_word)
+{
+    std::vector<std::pair<size_t, size_t>> spans; // [begin, end)
+    const std::wstring hay = name.ToStdWstring();
+
+    if (regex) {
+        // Bound the pattern so a pathological paste cannot stall regex
+        // compilation; matching itself is guarded below.
+        if (query.length() <= 2000) {
+            try {
+                std::wregex::flag_type flags = std::regex_constants::ECMAScript;
+                if (!case_sensitive)
+                    flags |= std::regex_constants::icase;
+                const std::wregex re(query.ToStdWstring(), flags);
+                for (auto it = std::wsregex_iterator(hay.begin(), hay.end(), re), end = std::wsregex_iterator(); it != end; ++it) {
+                    if (it->length(0) <= 0)
+                        break; // zero-width hit: stop rather than loop / emit empty tags
+                    spans.emplace_back(static_cast<size_t>(it->position(0)),
+                                       static_cast<size_t>(it->position(0) + it->length(0)));
+                }
+            } catch (const std::regex_error &) {
+                // Invalid / runaway pattern: keep the row visible, unhighlighted.
+            }
+        }
+    } else {
+        const std::wstring hay_folded = case_sensitive ? hay : wxString(name).MakeLower().ToStdWstring();
+        const std::wstring ndl        = (case_sensitive ? query : wxString(query).Lower()).ToStdWstring();
+        if (!ndl.empty()) {
+            auto is_word = [](wchar_t c) { return std::iswalnum(static_cast<wint_t>(c)) != 0 || c == L'_'; };
+            for (size_t pos = hay_folded.find(ndl); pos != std::wstring::npos; pos = hay_folded.find(ndl, pos + ndl.size())) {
+                if (whole_word) {
+                    const bool left_ok  = (pos == 0) || !is_word(hay_folded[pos - 1]);
+                    const bool right_ok = (pos + ndl.size() >= hay_folded.size()) || !is_word(hay_folded[pos + ndl.size()]);
+                    if (!left_ok || !right_ok)
+                        continue;
+                }
+                spans.emplace_back(pos, pos + ndl.size());
+            }
+        }
+    }
+
+    if (spans.empty())
+        return name;
+
+    wxString marked;
+    size_t   cursor = 0;
+    for (const auto &[b, e] : spans) {
+        if (b < cursor || e > hay.size())
+            continue; // overlapping / out-of-range span (defensive)
+        marked += wxString(hay.substr(cursor, b - cursor));
+        marked += "<b>" + wxString(hay.substr(b, e - b)) + "</b>";
+        cursor = e;
+    }
+    if (cursor < hay.size())
+        marked += wxString(hay.substr(cursor));
+    return marked;
+}
+
 void ObjectDataViewModel::search_object(wxString search_text)
 {
     if (search_text.empty()) {
@@ -1648,29 +1727,15 @@ void ObjectDataViewModel::search_object(wxString search_text)
     }
     else {
         search_found_list.clear();
-        search_text = search_text.MakeLower();
-
         for (const auto& [model_node, name, tip] : assembly_name_list) {
-            wxString sub_str = name;
-            sub_str = sub_str.MakeLower();
-
-            wxString new_str = "";
-            size_t search_text_len = search_text.length();
-            size_t curr_str_len = 0;
-            size_t pos = sub_str.find(search_text);
-            while (pos != wxString::npos) {
-                wxString new_search_str = "<b>" + name.Mid(curr_str_len + pos, search_text_len) + "</b>";
-                new_str += name.Mid(curr_str_len, pos) + new_search_str;
-                curr_str_len += search_text_len + pos;
-                sub_str = sub_str.substr(pos + search_text_len);
-                pos = sub_str.find(search_text);
-            }
-
-            if (curr_str_len > 0 && curr_str_len < name.length()) {
-                new_str += name.substr(curr_str_len);
-            }
-            if (!new_str.empty())
-                search_found_list.push_back(std::tuple(model_node, new_str, tip));
+            // Shared SearchField matcher: honours the sidebar pill's ".*" regex
+            // toggle plus its case-sensitive / whole-word builder checkboxes. An
+            // invalid or half-typed regex matches everything (never hides rows).
+            if (!SearchField::textMatches(search_text, name, m_search_regex, m_search_case_sensitive, m_search_whole_word))
+                continue;
+            search_found_list.push_back(std::tuple(model_node,
+                                                   mark_search_matches(name, search_text, m_search_regex, m_search_case_sensitive, m_search_whole_word),
+                                                   tip));
         }
     }
 }

@@ -48,6 +48,9 @@
 
 class TabCtrl;
 class ComboBox;
+// Shared MD3 search pill (Widgets/SearchField.hpp): ".*" regex toggle + tune
+// builder popover; hosts the preset-search entry in the Tab top bar.
+class SearchField;
 
 namespace Slic3r {
 
@@ -199,8 +202,9 @@ protected:
 	Button*					m_undo_to_sys_btn;
 	//ScalableButton*			m_question_btn;
 	Button*					m_btn_search;
-    StaticBox *				m_search_item;
-    TextInput *				m_search_input;
+    // MD3 SearchField pill: replaces the legacy hand-built StaticBox + TextInput
+    // combo, adding the shared ".*" regex toggle and tune builder popover.
+    SearchField *			m_search_field { nullptr };
 
 	// Cached bitmaps.
 	// A "flag" icon to be displayned next to the preset name in the Tab's combo box.

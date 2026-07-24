@@ -367,9 +367,16 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 #endif //__WINDOWS__
 
 
-    SetSize(SELECT_MACHINE_POPUP_SIZE);
-    SetMinSize(SELECT_MACHINE_POPUP_SIZE);
-    SetMaxSize(SELECT_MACHINE_POPUP_SIZE);
+    wxSize popup_size = SELECT_MACHINE_POPUP_SIZE;
+#if defined(__WINDOWS__)
+    // The Windows-only search bar is now the shared 40dip MD3 SearchField pill
+    // (taller than the wxSearchCtrl it replaces): grow the popup by the pill row
+    // so the device list is not clipped at the bottom.
+    popup_size.y += FromDIP(48);
+#endif
+    SetSize(popup_size);
+    SetMinSize(popup_size);
+    SetMaxSize(popup_size);
 
     Freeze();
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
@@ -388,25 +395,24 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 
 #if defined(__WINDOWS__)
 	m_sizer_search_bar = new wxBoxSizer(wxHORIZONTAL);
-	m_search_bar = new wxSearchCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_search_bar->SetDescriptiveText(_L("Search"));
-	m_search_bar->ShowSearchButton( true );
-	m_search_bar->ShowCancelButton( false );
-	// This popup search is a raw wxSearchCtrl (not the MD3 SearchField), so it
-	// carries its own minimal ".*" toggle that routes matching through std::wregex
-	// in search_for_printer. Toggling it re-runs the current filter.
-	m_search_regex_toggle = new wxCheckBox(this, wxID_ANY, ".*");
-	m_search_regex_toggle->SetToolTip(_L("Match with a regular expression"));
-	m_search_regex_toggle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-	m_search_regex_toggle->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& e) {
-		m_search_regex = e.IsChecked();
+	// Shared MD3 SearchField pill (Device accent): brings the kit ".*" regex
+	// toggle and tune builder popover to the printer filter. Queries and every
+	// matcher-flag change re-run the filter live through search_for_printer.
+	m_search_bar = new SearchField(this, _L("Search"));
+	m_search_bar->SetColorScheme(MD3::ColorScheme::Device);
+	// The pill's default 220dip minimum exceeds this 216dip popup; relax it so
+	// the sizer can fit the field flush inside the popup body.
+	m_search_bar->SetMinSize(wxSize(FromDIP(120), -1));
+	m_search_bar->SetOnQuery([this](const wxString &) {
+		update_user_devices();
+		update_other_devices();
+	});
+	m_search_bar->SetOnRegexToggle([this](bool) {
 		update_user_devices();
 		update_other_devices();
 	});
 	m_sizer_search_bar->Add( m_search_bar, 1, wxALIGN_CENTER_VERTICAL | wxALL, 1 );
-	m_sizer_search_bar->Add( m_search_regex_toggle, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4) );
 	m_sizer_main->Add(m_sizer_search_bar, 0, wxALL | wxEXPAND, FromDIP(2));
-	m_search_bar->Bind( wxEVT_COMMAND_TEXT_UPDATED, &SelectMachinePopup::update_machine_list, this );
 #endif
     auto own_title        = create_title_panel(_L("My Device"));
     m_sizer_my_devices    = new wxBoxSizer(wxVERTICAL);
@@ -849,33 +855,19 @@ bool SelectMachinePopup::search_for_printer(MachineObject* obj)
 		return true;
 	}
 
+	// Shared SearchField matcher: honours the pill's ".*" regex toggle and its
+	// tune-popover case-sensitive / whole-word checkboxes. An invalid or
+	// half-typed regex matches everything (never hides every printer).
+	const bool regex     = m_search_bar->IsRegexEnabled();
+	const bool case_sens = m_search_bar->IsCaseSensitive();
+	const bool word      = m_search_bar->IsWholeWord();
+
 	const wxString name = wxString::FromUTF8(obj->get_dev_name());
-#if !BBL_RELEASE_TO_PUBLIC
-	const wxString ip = wxString::FromUTF8(obj->get_dev_ip());
-#endif
-
-	if (m_search_regex) {
-		// Invalid / half-typed pattern must not hide everything (shared-matcher
-		// convention): treat a regex_error as a match.
-		try {
-			std::wregex re(search_text.ToStdWstring());
-			if (std::regex_search(name.ToStdWstring(), re))
-				return true;
-#if !BBL_RELEASE_TO_PUBLIC
-			if (std::regex_search(ip.ToStdWstring(), re))
-				return true;
-#endif
-			return false;
-		} catch (const std::regex_error&) {
-			return true;
-		}
-	}
-
-	// Legacy case-sensitive substring match.
-	if (name.Find(search_text) != wxNOT_FOUND)
+	if (SearchField::textMatches(search_text, name, regex, case_sens, word))
 		return true;
 #if !BBL_RELEASE_TO_PUBLIC
-	if (ip.Find(search_text) != wxNOT_FOUND)
+	const wxString ip = wxString::FromUTF8(obj->get_dev_ip());
+	if (SearchField::textMatches(search_text, ip, regex, case_sens, word))
 		return true;
 #endif
 	return false;

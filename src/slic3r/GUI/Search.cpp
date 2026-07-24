@@ -15,6 +15,7 @@
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/CheckBox.hpp"
+#include "Widgets/SearchField.hpp"
 
 #include "libslic3r/PrintConfig.hpp"
 #include "libslic3r/PresetBundle.hpp"
@@ -265,6 +266,10 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
 
     // Regex mode: compile the term once. On failure keep regex_valid=false so a
     // half-typed pattern shows the full list instead of filtering it all away.
+    // The case-sensitive flag (SearchField tune popover) drops the icase flag;
+    // whole-word is ignored in regex mode (author your own \b — the shared
+    // SearchField::textMatches convention). The pattern length is bounded so a
+    // pathological paste cannot stall compilation.
     const bool use_regex = regex_enabled && !full_list;
     std::wregex regex_term;
     bool        regex_valid = false;
@@ -272,12 +277,22 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
         try {
             std::wstring wpattern = boost::nowide::widen(search);
             boost::trim_left(wpattern);
-            regex_term  = std::wregex(wpattern, std::regex_constants::icase | std::regex_constants::ECMAScript);
+            if (wpattern.size() > 2000)
+                throw std::regex_error(std::regex_constants::error_space);
+            std::regex_constants::syntax_option_type flags = std::regex_constants::ECMAScript;
+            if (!case_sensitive)
+                flags |= std::regex_constants::icase;
+            regex_term  = std::wregex(wpattern, flags);
             regex_valid = true;
         } catch (const std::regex_error &) {
             regex_valid = false;
         }
     }
+
+    // Fuzzy path with case-sensitive / whole-word engaged: constrain the fuzzy
+    // hits to labels that also pass the shared substring matcher under those
+    // flags. Both flags default off, leaving the historical behaviour intact.
+    const bool constrain_fuzzy = !use_regex && !full_list && (case_sensitive || whole_word);
 
     std::vector<uint16_t> matches, matches2;
     for (size_t i = 0; i < options.size(); i++) {
@@ -301,6 +316,14 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
         int          score         = std::numeric_limits<int>::min();
         int          score2;
         matches.clear();
+        if (constrain_fuzzy) {
+            const wxString wquery(wsearch);
+            bool ok = SearchField::textMatches(wquery, wxString(label), false, case_sensitive, whole_word);
+            if (!ok && view_params.english)
+                ok = SearchField::textMatches(wquery, wxString(label_english), false, case_sensitive, whole_word);
+            if (!ok)
+                continue;
+        }
         if (use_regex) {
             // Regex path: same downstream shape as fuzzy_match (score + matched
             // indices), so scoring/marking/threshold below are untouched.
@@ -471,10 +494,26 @@ Option OptionsSearcher::get_option(const std::string &opt_key, const wxString &l
     return create_option(opt_key, label, type, gc);
 }
 
+void OptionsSearcher::show_dialog(Preset::Type type, wxWindow *parent, SearchField *input, wxWindow* ssearch_btn)
+{
+    if (parent == nullptr || input == nullptr) return;
+    auto    search_dialog = new SearchDialog(this, type, parent, input, input->GetTextCtrl(), ssearch_btn, input);
+    // The SearchField IS the pill, so anchor the results directly under it —
+    // the same geometry the legacy path derived from the TextInput's pill parent.
+    wxPoint pos = input->ClientToScreen(wxPoint(0, 0));
+#ifndef __WXGTK__
+    pos.y += input->GetRect().height;
+#else
+    input->Hide();
+#endif
+    search_dialog->SetPosition(pos);
+    search_dialog->Popup();
+}
+
 void OptionsSearcher::show_dialog(Preset::Type type, wxWindow *parent, TextInput *input, wxWindow* ssearch_btn)
 {
     if (parent == nullptr || input == nullptr) return;
-    auto    search_dialog = new SearchDialog(this, type, parent, input, ssearch_btn);
+    auto    search_dialog = new SearchDialog(this, type, parent, input, input->GetTextCtrl(), ssearch_btn, nullptr);
     wxPoint pos = input->GetParent()->ClientToScreen(wxPoint(0, 0));
 #ifndef __WXGTK__
     pos.y += input->GetParent()->GetRect().height;
@@ -709,11 +748,12 @@ static const std::map<const char, int> icon_idxs = {
     {ImGui::PrintIconMarker, 0}, {ImGui::PrinterIconMarker, 1}, {ImGui::PrinterSlaIconMarker, 2}, {ImGui::FilamentIconMarker, 3}, {ImGui::MaterialIconMarker, 4},
 };
 
-SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindow *parent, TextInput *input, wxWindow *search_btn)
+SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindow *parent, wxWindow *input_host, wxTextCtrl *entry, wxWindow *search_btn, SearchField *field)
     : PopupWindow(parent, wxBORDER_NONE | wxPU_CONTAINS_CONTROLS), searcher(searcher)
 {
     m_event_tag       = parent;
-    search_line       = input;
+    search_line       = input_host;
+    search_field      = field;
     search_type       = type;
 
     m_search_item_tag = search_btn;
@@ -748,21 +788,25 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     // search line
     //search_line = new wxTextCtrl(m_client_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 #ifdef __WXGTK__
-    search_line = new TextInput(m_client_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-    search_line->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
-    search_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    search_line->SetFont(GUI::wxGetApp().bold_font());
+    // On GTK the dialog hosts its own embedded entry (the external host is
+    // hidden by show_dialog); typing happens in this TextInput.
+    TextInput *gtk_line = new TextInput(m_client_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    gtk_line->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    gtk_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    gtk_line->SetFont(GUI::wxGetApp().bold_font());
+    entry = gtk_line->GetTextCtrl();
 #endif
 
     // default_string = _L("Enter a search term");
-    search_line->Bind(wxEVT_TEXT, &SearchDialog::OnInputText, this);
-    search_line->Bind(wxEVT_LEFT_UP, &SearchDialog::OnLeftUpInTextCtrl, this);
-    search_line->Bind(wxEVT_KEY_DOWN, &SearchDialog::OnKeyDown, this);
-    search_line2 = search_line->GetTextCtrl();
-    // Key events fire on the inner text control (they do not bubble up to the
-    // TextInput wrapper), so bind there too for Up/Down/Enter result navigation.
-    if (search_line2)
+    // Bind straight to the inner wxTextCtrl: wxEVT_TEXT is caught at the source
+    // for either host type (the SearchField's own handler Skip()s, so both run),
+    // and key events never bubble up to the host wrapper anyway.
+    search_line2 = entry;
+    if (search_line2) {
+        search_line2->Bind(wxEVT_TEXT, &SearchDialog::OnInputText, this);
+        search_line2->Bind(wxEVT_LEFT_UP, &SearchDialog::OnLeftUpInTextCtrl, this);
         search_line2->Bind(wxEVT_KEY_DOWN, &SearchDialog::OnKeyDown, this);
+    }
 
     // scroll window
     m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em), wxVSCROLL, 6, 6);
@@ -780,14 +824,43 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     m_scrolledWindow->SetScrollbars(1, 1, 0, m_listPanel->GetSize().GetHeight());
 
 #ifdef __WXGTK__
-    m_sizer_body->Add(search_line, 0, wxEXPAND | wxALL, em / 2);
-    search_line = input;
+    m_sizer_body->Add(gtk_line, 0, wxEXPAND | wxALL, em / 2);
 #endif
 
-    // Regex toggle: opts the option search into std::wregex matching. It reflects
-    // and drives the persistent flag on the shared OptionsSearcher, so the choice
-    // survives dialog re-opens.
-    {
+    if (search_field) {
+        // The SearchField pill carries its own ".*" toggle and tune builder
+        // popover, so no separate CheckBox row is built. Seed the pill from the
+        // persisted searcher flags — clearing any stale callback from an earlier
+        // dialog first, so seeding cannot re-enter a dead dialog — then let every
+        // toggle push the flags back and re-run the current query live.
+        search_field->SetOnRegexToggle(nullptr);
+        search_field->SetRegexEnabled(searcher && searcher->is_regex_enabled());
+        search_field->SetCaseSensitive(searcher && searcher->is_case_sensitive());
+        search_field->SetWholeWord(searcher && searcher->is_whole_word());
+        search_field->SetOnRegexToggle([this](bool on) {
+            if (this->searcher && this->search_field) {
+                this->searcher->set_regex_enabled(on);
+                this->searcher->set_case_sensitive(this->search_field->IsCaseSensitive());
+                this->searcher->set_whole_word(this->search_field->IsWholeWord());
+            }
+            wxString input_string = this->search_line2 ? this->search_line2->GetValue() : wxString();
+            if (input_string == this->default_string) input_string.Clear();
+            if (this->searcher)
+                this->searcher->search(into_u8(input_string), true, this->search_type);
+            this->update_list();
+        });
+    }
+
+    // Legacy TextInput host — or GTK, where show_dialog hides the external pill
+    // (typing happens in the embedded gtk_line), so its ".*" toggle is out of
+    // reach: keep the MD3 CheckBox regex toggle. It reflects and drives the
+    // persistent flag on the shared OptionsSearcher, so the choice survives
+    // dialog re-opens.
+    bool need_checkbox_row = search_field == nullptr;
+#ifdef __WXGTK__
+    need_checkbox_row = true;
+#endif
+    if (need_checkbox_row) {
         auto *regex_row = new wxBoxSizer(wxHORIZONTAL);
         m_regex_toggle  = new CheckBox(m_client_panel);
         m_regex_toggle->SetValue(searcher && searcher->is_regex_enabled());
@@ -893,13 +966,17 @@ void SearchDialog::ProcessSelection(wxDataViewItem selection)
     wxPostEvent(GUI::wxGetApp().plater(), event);
 }
 
-void SearchDialog::OnInputText(wxCommandEvent &)
+void SearchDialog::OnInputText(wxCommandEvent &event)
 {
     search_line2->SetInsertionPointEnd();
     wxString input_string = search_line2->GetValue();
     if (input_string == default_string) input_string.Clear();
     searcher->search(into_u8(input_string), true, search_type);
     update_list();
+    // Now bound directly on the inner wxTextCtrl: let the event continue so the
+    // host wrapper's own wxEVT_TEXT handling (SearchField / TextInput internal
+    // state, clear-button reflow, ...) still runs.
+    event.Skip();
 }
 
 void SearchDialog::OnLeftUpInTextCtrl(wxEvent &event)

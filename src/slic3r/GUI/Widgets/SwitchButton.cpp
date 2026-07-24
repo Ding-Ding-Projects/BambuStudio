@@ -233,6 +233,12 @@ void SwitchButton::Rescale()
 		}
 	}
 	SetSize(ScalableBitmap::GetBmpSize(m_on));
+	// Report the rendered track as the minimum size so sizers reserve the full
+	// width of the longest label pair. Without this the toggle could be laid
+	// out narrower than its baked bitmap and the native control clipped it from
+	// both sides (the "bal Obj" artefact in the Params panel header). The track
+	// is already capped by SetMaxSize (the font auto-shrinks), so min <= max.
+	SetMinSize(ScalableBitmap::GetBmpSize(m_on));
 	update();
 }
 

@@ -21394,3 +21394,214 @@ msgstr ""
 
 #~ msgid "⌥+Left mouse button"
 #~ msgstr "⌥+Left mouse button"
+
+msgid "Unbalanced [ ] character set"
+msgstr "Unbalanced [ ] character set"
+
+msgid "Unbalanced ( ) group"
+msgstr "Unbalanced ( ) group"
+
+msgid "Unbalanced { } quantifier"
+msgstr "Unbalanced { } quantifier"
+
+msgid "Invalid counts inside { }"
+msgstr "Invalid counts inside { }"
+
+msgid "Invalid character range"
+msgstr "Invalid character range"
+
+msgid "Invalid escape sequence"
+msgstr "Invalid escape sequence"
+
+msgid "Invalid backreference"
+msgstr "Invalid backreference"
+
+msgid "Quantifier has nothing to repeat"
+msgstr "Quantifier has nothing to repeat"
+
+msgid "Unknown character class name"
+msgstr "Unknown character class name"
+
+msgid "Pattern too complex to evaluate safely"
+msgstr "Pattern too complex to evaluate safely"
+
+msgid "Invalid regular expression"
+msgstr "Invalid regular expression"
+
+msgid "Regex builder"
+msgstr "Regex builder"
+
+msgid "Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."
+msgstr "Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."
+
+msgid "Pattern"
+msgstr "Pattern"
+
+msgid "Regex pattern"
+msgstr "Regex pattern"
+
+msgid "Copy pattern"
+msgstr "Copy pattern"
+
+msgid "Empty pattern matches everything"
+msgstr "Empty pattern matches everything"
+
+msgid "Flags"
+msgstr "Flags"
+
+msgid "Regex mode"
+msgstr "Regex mode"
+
+msgid "Whole word applies to plain-text search only; in regex mode use \\b"
+msgstr "Whole word applies to plain-text search only; in regex mode use \\b"
+
+msgid "Literals"
+msgstr "Literals"
+
+msgid "Text to match literally"
+msgstr "Text to match literally"
+
+msgid "Insert the text with regex metacharacters escaped"
+msgstr "Insert the text with regex metacharacters escaped"
+
+msgid "Character classes"
+msgstr "Character classes"
+
+msgid "Any single character except newline"
+msgstr "Any single character except newline"
+
+msgid "Character set — matches any one character listed inside"
+msgstr "Character set — matches any one character listed inside"
+
+msgid "Negated set — matches any character not listed inside"
+msgstr "Negated set — matches any character not listed inside"
+
+msgid "Character range — use inside [ ], e.g. [a-z0-9]"
+msgstr "Character range — use inside [ ], e.g. [a-z0-9]"
+
+msgid "Digit 0-9"
+msgstr "Digit 0-9"
+
+msgid "Any character that is not a digit"
+msgstr "Any character that is not a digit"
+
+msgid "Word character: letter, digit, or underscore"
+msgstr "Word character: letter, digit, or underscore"
+
+msgid "Any character that is not a word character"
+msgstr "Any character that is not a word character"
+
+msgid "Whitespace character"
+msgstr "Whitespace character"
+
+msgid "Any character that is not whitespace"
+msgstr "Any character that is not whitespace"
+
+msgid "Anchors"
+msgstr "Anchors"
+
+msgid "Start of the text"
+msgstr "Start of the text"
+
+msgid "End of the text"
+msgstr "End of the text"
+
+msgid "Word boundary"
+msgstr "Word boundary"
+
+msgid "Not a word boundary"
+msgstr "Not a word boundary"
+
+msgid "Groups & alternation"
+msgstr "Groups & alternation"
+
+msgid "Capturing group — remembers the matched text"
+msgstr "Capturing group — remembers the matched text"
+
+msgid "Non-capturing group — groups without remembering"
+msgstr "Non-capturing group — groups without remembering"
+
+msgid "Alternation — matches either side"
+msgstr "Alternation — matches either side"
+
+msgid "Backreference — matches what group 1 captured"
+msgstr "Backreference — matches what group 1 captured"
+
+msgid "Quantifiers"
+msgstr "Quantifiers"
+
+msgid "Zero or more of the previous item (greedy)"
+msgstr "Zero or more of the previous item (greedy)"
+
+msgid "One or more of the previous item (greedy)"
+msgstr "One or more of the previous item (greedy)"
+
+msgid "Zero or one of the previous item (greedy)"
+msgstr "Zero or one of the previous item (greedy)"
+
+msgid "Exactly n repetitions — replace n with a number"
+msgstr "Exactly n repetitions — replace n with a number"
+
+msgid "At least n repetitions — replace n with a number"
+msgstr "At least n repetitions — replace n with a number"
+
+msgid "Between n and m repetitions — replace n and m with numbers"
+msgstr "Between n and m repetitions — replace n and m with numbers"
+
+msgid "Zero or more (lazy — matches as little as possible)"
+msgstr "Zero or more (lazy — matches as little as possible)"
+
+msgid "One or more (lazy — matches as little as possible)"
+msgstr "One or more (lazy — matches as little as possible)"
+
+msgid "Zero or one (lazy — matches as little as possible)"
+msgstr "Zero or one (lazy — matches as little as possible)"
+
+msgid "Test pattern"
+msgstr "Test pattern"
+
+msgid "Sample text"
+msgstr "Sample text"
+
+msgid "Matches"
+msgstr "Matches"
+
+msgid "Match results"
+msgstr "Match results"
+
+msgid "Pattern too long (max %d characters)"
+msgstr "Pattern too long (max %d characters)"
+
+msgid "Valid pattern"
+msgstr "Valid pattern"
+
+msgid "Match %d at %d-%d: %s"
+msgstr "Match %d at %d-%d: %s"
+
+msgid "group %d: %s"
+msgstr "group %d: %s"
+
+msgid "group %d: (no match)"
+msgstr "group %d: (no match)"
+
+msgid "No matches."
+msgstr "No matches."
+
+msgid "Showing first %d matches only."
+msgstr "Showing first %d matches only."
+
+msgid "Sample truncated to %d characters."
+msgstr "Sample truncated to %d characters."
+
+msgid "Valid pattern — 1 match"
+msgstr "Valid pattern — 1 match"
+
+msgid "Valid pattern — %d matches"
+msgstr "Valid pattern — %d matches"
+
+
+msgid "The application already tried its built-in software rendering fallback (Mesa llvmpipe), but the OpenGL version is still lower than 2.0."
+msgstr "The application already tried its built-in software rendering fallback (Mesa llvmpipe), but the OpenGL version is still lower than 2.0."
+
+msgid "The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable."
+msgstr "The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable."

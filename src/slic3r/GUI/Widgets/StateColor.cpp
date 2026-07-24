@@ -5,6 +5,14 @@ static bool gDarkMode = false;
 
 static bool operator<(wxColour const &l, wxColour const &r) { return l.GetRGBA() < r.GetRGBA(); }
 
+// IDEMPOTENCY INVARIANT: no VALUE on the dark side of this table may equal any
+// KEY on the light side. darkModeColorFor() is applied both at paint time
+// (StateColor::colorForStates) and by GUI_App::UpdateDarkUI over window fg/bg
+// colours it may visit repeatedly, so the mapping must be a fixed point on its
+// own output — otherwise a second pass corrupts an already-dark colour (the
+// old "#e8e7ee -> #2f3036" collapse that made dark-mode text near-invisible).
+// The MD3::Dark tones referenced below are hex-nudged in MD3Tokens.hpp to keep
+// this invariant (see the HEX-ALIAS INVARIANT note there).
 static std::map<wxColour, wxColour> gDarkColors{
     {ThemeColor::BrandGreen,  "#8bd89b"},/*green*/
     {ThemeColor::BrandGreenPressed, "#7ac98a"},
@@ -13,10 +21,13 @@ static std::map<wxColour, wxColour> gDarkColors{
     {ThemeColor::Warning,     "#ffb77c"},
     {ThemeColor::Danger,      "#ffb4ab"},/*red*/
     {ThemeColor::Link,        "#479EF5"},/*blue*/
-    {ThemeColor::TextPrimary, "#e8e7ee"},/*black*/
+    {ThemeColor::TextPrimary, MD3::Dark::onSurface},/*black -> #e9e8ef*/
     {ThemeColor::TextSecondary, "#cdced8"},
     {ThemeColor::TextMuted,     "#a8a9b3"},
-    {ThemeColor::TextDisabled,  "#6a6b73"},
+    // Disabled text: ~OnSurface @ 50% over the dark containers (#2f3036/#202127).
+    // The previous #6a6b73 sat at ~1.7:1 on SurfaceContainerHigh — unreadable
+    // disabled labels on the dark Slice/Print pills and input fields.
+    {ThemeColor::TextDisabled,  "#8a8b94"},
     {ThemeColor::White,       "#202127"},
     {ThemeColor::Grey200,     "#202127"},
     {ThemeColor::Grey250,     "#25262b"},
@@ -24,23 +35,23 @@ static std::map<wxColour, wxColour> gDarkColors{
     {ThemeColor::Grey350,     "#393a41"},
     {ThemeColor::Grey400,     "#4a4c54"},
     {ThemeColor::Grey450,     "#94959f"},
-    {"#2C2C2E", "#e8e7ee"},/*black*/
+    {"#2C2C2E", MD3::Dark::onSurface},/*black*/
     {"#E5E7EB", "#393a41"},/*gray200 -> gray800*/
     {"#6B6B6B", "#a8a9b3"},/*gray -> */
     {"#ACACAC", "#94959f"},/*gray -> */
     {"#3B4446", "#2f3036"},
     {"#CECECE", "#4a4c54"},
     {"#DBFDD5", "#095228"},
-    {"#000000", "#e8e7ee"},
+    {"#000000", MD3::Dark::onSurface},
     {"#F4F4F4", "#202127"},
     {"#F7F7F7", "#202127"},
     {"#DBDBDB", "#4a4c54"},
     {"#EDFAF2", "#095228"},
-    {"#323A3C", "#e8e7ee"},
+    {"#323A3C", MD3::Dark::onSurface},
     {"#6B6B6A", "#a8a9b3"},
-    {"#303A3C", "#e8e7ee"},
+    {"#303A3C", MD3::Dark::onSurface},
     {"#FEFFFF", "#1b1c21"},
-    {"#363636", "#e8e7ee"},
+    {"#363636", MD3::Dark::onSurface},
     {"#F0F0F1", "#25262b"},
     {"#9E9E9E", "#94959f"},
     {"#D7E8DE", "#2b3a2f"},
@@ -54,7 +65,7 @@ static std::map<wxColour, wxColour> gDarkColors{
     // the app toggles to dark mode (mirrors the resolve() dark tones exactly).
     {MD3::Light::primaryContainer,     MD3::Dark::primaryContainer},     /*#a6f4b8 -> #095228*/
     {MD3::Light::secondaryContainer,   MD3::Dark::secondaryContainer},   /*#d7e8d9 -> #2b3a2f*/
-    {MD3::Light::onPrimaryContainer,   MD3::Dark::onPrimaryContainer},   /*#00210c -> #a6f4b8*/
+    {MD3::Light::onPrimaryContainer,   MD3::Dark::onPrimaryContainer},   /*#00210c -> #a7f5b9*/
     {MD3::Light::onSecondaryContainer, MD3::Dark::onSecondaryContainer}, /*#0e1f13 -> #cfe9d3*/
     // Device-scheme teal accent tokens. Construction-time
     // semantic(role, ColorScheme::Device) snapshots (AMS Load/Unload buttons,

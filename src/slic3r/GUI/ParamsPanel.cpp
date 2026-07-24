@@ -283,12 +283,20 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         m_process_icon->SetIconButton(Button::IconShape::Circle, 32);
         m_process_icon->SetGlyph(MaterialIcon::Tune);
 
-        m_title_label = new Label(m_top_panel, _L("Process"));
+        // Ellipsizable title: at narrow panel widths the header must shed width
+        // from the title (Proc…) instead of letting the Global/Objects switch
+        // land on top of it. The sizer item carries proportion 1 (see
+        // create_layout) so the deficit is taken here, bounded by this min.
+        m_title_label = new Label(m_top_panel, _L("Process"), wxST_ELLIPSIZE_END);
+        m_title_label->SetMinSize(wxSize(FromDIP(56), -1));
 
         //int width, height;
         // BBS: new layout
         m_mode_region = new SwitchButton(m_top_panel);
         m_mode_region->SetMaxSize({em_unit(this) * 12, -1});
+        // SetLabels -> SwitchButton::Rescale also installs the rendered track as
+        // the control's MIN size, so the header sizer always reserves room for
+        // the longest localized label pair (no more mid-clipped "bal Obj").
         m_mode_region->SetLabels(_L("Global"), _L("Objects"));
         //m_mode_region->GetSize(&width, &height);
         m_tips_arrow = new ScalableButton(m_top_panel, wxID_ANY, "tips_arrow");
@@ -444,7 +452,10 @@ void ParamsPanel::create_layout()
         m_mode_sizer->AddSpacer(FromDIP(10));
         m_mode_sizer->Add(m_process_icon, 0, wxALIGN_CENTER);
         m_mode_sizer->AddSpacer(FromDIP(10));
-        m_mode_sizer->Add( m_title_label, 0, wxALIGN_CENTER );
+        // Proportion 1 + the label's wxST_ELLIPSIZE_END style: when the header
+        // runs out of width the title compresses (down to its FromDIP(56) min)
+        // and ellipsizes instead of being overlapped by the mode switch.
+        m_mode_sizer->Add( m_title_label, 1, wxALIGN_CENTER );
         m_mode_sizer->AddStretchSpacer(2);
         m_mode_sizer->Add(m_mode_region, 0, wxALIGN_CENTER);
         m_mode_sizer->AddStretchSpacer(1);

@@ -6,6 +6,8 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 
+#include <algorithm>
+
 BEGIN_EVENT_TABLE(SideButton, wxPanel)
 EVT_LEFT_DOWN(SideButton::mouseDown)
 EVT_LEFT_UP(SideButton::mouseReleased)
@@ -225,6 +227,15 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
 
     dc.SetPen(wxPen(border_color.colorForStates(states)));
     int pen_width = dc.GetPen().GetWidth();
+
+    // wxDC::DrawRoundedRectangle is only well-defined for radius <= half the
+    // SMALLER edge. The Slice/Print options segments are 24px wide but carry the
+    // shared pill radius (button height / 2 = 22px); un-clamped, GDI+ renders
+    // the overlapping corner arcs as a malformed egg/oval blob (seen in the dark
+    // Prepare action bar). Clamp per-paint so a narrow segment degrades to a
+    // proper capsule instead.
+    const double radius = std::min(this->radius,
+                                   std::min(size.x, size.y) / 2.0);
 
 
     // draw icon style
