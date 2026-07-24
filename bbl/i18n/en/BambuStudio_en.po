@@ -21605,3 +21605,240 @@ msgstr "The application already tried its built-in software rendering fallback (
 
 msgid "The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable."
 msgstr "The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable."
+
+msgid "Search versions"
+msgstr "Search versions"
+
+msgid "%d of %d versions match the search"
+msgstr "%d of %d versions match the search"
+
+msgid "Search uploads"
+msgstr "Search uploads"
+
+msgid "%d of %d match"
+msgstr "%d of %d match"
+
+msgid "Search profiles"
+msgstr "Search profiles"
+
+msgid "Config profiles & backup"
+msgstr "Config profiles & backup"
+
+msgid "Profile history"
+msgstr "Profile history"
+
+msgid "Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"
+msgstr "Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"
+
+msgid "Export everything in your data folder, import it on another PC, and keep unlimited profiles - each with its own local Git-backed snapshot history."
+msgstr "Export everything in your data folder, import it on another PC, and keep unlimited profiles - each with its own local Git-backed snapshot history."
+
+msgid "Profile"
+msgstr "Profile"
+
+msgid "Data folder"
+msgstr "Data folder"
+
+msgid "Launch profile"
+msgstr "Launch profile"
+
+msgid "Snapshot now"
+msgstr "Snapshot now"
+
+msgid "History..."
+msgstr "History..."
+
+msgid "Export everything..."
+msgstr "Export everything..."
+
+msgid "Import backup..."
+msgstr "Import backup..."
+
+msgid "Export the complete data folder"
+msgstr "Export the complete data folder"
+
+msgid "Backup archive (*.zip)|*.zip"
+msgstr "Backup archive (*.zip)|*.zip"
+
+msgid "Exporting the data folder... this can take a while."
+msgstr "Exporting the data folder... this can take a while."
+
+msgid "Import a data folder backup"
+msgstr "Import a data folder backup"
+
+msgid "Importing the backup into a new profile..."
+msgstr "Importing the backup into a new profile..."
+
+msgid "Imported as profile \"%s\". Select it and press Launch profile to run Bambu Studio on it."
+msgstr "Imported as profile \"%s\". Select it and press Launch profile to run Bambu Studio on it."
+
+msgid "Launching Bambu Studio on profile \"%s\"..."
+msgstr "Launching Bambu Studio on profile \"%s\"..."
+
+msgid "Recording a complete profile snapshot..."
+msgstr "Recording a complete profile snapshot..."
+
+msgid "Snapshot of \"%s\" recorded in its local history."
+msgstr "Snapshot of \"%s\" recorded in its local history."
+
+msgid "This profile has no snapshots yet. Use Snapshot now to record one."
+msgstr "This profile has no snapshots yet. Use Snapshot now to record one."
+
+msgid "Snapshots of \"%s\". Restoring creates a NEW profile; nothing is overwritten."
+msgstr "Snapshots of \"%s\". Restoring creates a NEW profile; nothing is overwritten."
+
+msgid "Restoring the selected snapshot into a new profile..."
+msgstr "Restoring the selected snapshot into a new profile..."
+
+msgid "Snapshot restored as profile \"%s\"."
+msgstr "Snapshot restored as profile \"%s\"."
+
+msgid "A full backup includes secrets: printer access codes, network-plugin login state, API tokens and physical-printer passwords. Anyone with the file can use them. Slide to confirm before exporting or importing."
+msgstr "A full backup includes secrets: printer access codes, network-plugin login state, API tokens and physical-printer passwords. Anyone with the file can use them. Slide to confirm before exporting or importing."
+
+msgid "Slide to allow export / import"
+msgstr "Slide to allow export / import"
+
+msgid "Confirmed - transfers unlocked"
+msgstr "Confirmed - transfers unlocked"
+
+msgid "Backup written to %s. It contains secrets - store and transfer it safely."
+msgstr "Backup written to %s. It contains secrets - store and transfer it safely."
+
+msgid "The profile could not be launched."
+msgstr "The profile could not be launched."
+
+msgid "The snapshot could not be recorded: %s"
+msgstr "The snapshot could not be recorded: %s"
+
+msgid "Profile history could not be read: %s"
+msgstr "Profile history could not be read: %s"
+
+msgid "The snapshot could not be restored: %s"
+msgstr "The snapshot could not be restored: %s"
+
+msgid "The backup file could not be created at the selected location."
+msgstr "The backup file could not be created at the selected location."
+
+msgid "Writing the backup archive failed. The destination may be full or unwritable."
+msgstr "Writing the backup archive failed. The destination may be full or unwritable."
+
+msgid "The selected backup file could not be opened."
+msgstr "The selected backup file could not be opened."
+
+msgid "The new profile folder could not be created."
+msgstr "The new profile folder could not be created."
+
+msgid "The backup contains an unsafe path and was rejected."
+msgstr "The backup contains an unsafe path and was rejected."
+
+msgid "A file inside the backup could not be written."
+msgstr "A file inside the backup could not be written."
+
+msgid "Command palette"
+msgstr "Command palette"
+
+msgid "Search commands, settings and pages"
+msgstr "Search commands, settings and pages"
+
+msgid "Switch between the light and dark appearance"
+msgstr "Switch between the light and dark appearance"
+
+msgid "Comfortable or compact control spacing"
+msgstr "Comfortable or compact control spacing"
+
+msgid "Pick the accent seed the interface is tinted with"
+msgstr "Pick the accent seed the interface is tinted with"
+
+msgid "Go to Home"
+msgstr "Go to Home"
+
+msgid "Start page with recent projects"
+msgstr "Start page with recent projects"
+
+msgid "Go to Prepare"
+msgstr "Go to Prepare"
+
+msgid "Arrange models and set up the print"
+msgstr "Arrange models and set up the print"
+
+msgid "Go to Preview"
+msgstr "Go to Preview"
+
+msgid "Sliced result, layers and toolpaths"
+msgstr "Sliced result, layers and toolpaths"
+
+msgid "Go to Device"
+msgstr "Go to Device"
+
+msgid "Printer status and control"
+msgstr "Printer status and control"
+
+msgid "Go to Project"
+msgstr "Go to Project"
+
+msgid "Project files and metadata"
+msgstr "Project files and metadata"
+
+msgid "Open Preferences"
+msgstr "Open Preferences"
+
+msgid "General, appearance, 3D and developer settings — with live search"
+msgstr "General, appearance, 3D and developer settings — with live search"
+
+msgid "Search in settings"
+msgstr "Search in settings"
+
+msgid "Find any print / filament / printer parameter"
+msgstr "Find any print / filament / printer parameter"
+
+msgid "Build"
+msgstr "Build"
+
+msgid "Reference"
+msgstr "Reference"
+
+msgid "Reference & help"
+msgstr "Reference & help"
+
+msgid "How search works"
+msgstr "How search works"
+
+msgid "Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."
+msgstr "Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."
+
+msgid "Case sensitive and Whole word refine plain-text search; in regex mode author  yourself for word boundaries."
+msgstr "Case sensitive and Whole word refine plain-text search; in regex mode author  yourself for word boundaries."
+
+msgid "An invalid or half-typed pattern never hides rows: it matches everything until it compiles."
+msgstr "An invalid or half-typed pattern never hides rows: it matches everything until it compiles."
+
+msgid "Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."
+msgstr "Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."
+
+msgid "Examples"
+msgstr "Examples"
+
+msgid "Rows that start with PLA"
+msgstr "Rows that start with PLA"
+
+msgid "A number followed by mm, with an optional space"
+msgstr "A number followed by mm, with an optional space"
+
+msgid "Rows containing the whole word red or blue"
+msgstr "Rows containing the whole word red or blue"
+
+msgid "OpenCode helper"
+msgstr "OpenCode helper"
+
+msgid "Let the OpenCode assistant draft the pattern: the button copies a prompt describing this engine, your current pattern and sample text to the clipboard, then opens OpenCode if it is installed."
+msgstr "Let the OpenCode assistant draft the pattern: the button copies a prompt describing this engine, your current pattern and sample text to the clipboard, then opens OpenCode if it is installed."
+
+msgid "Copy prompt & open OpenCode"
+msgstr "Copy prompt & open OpenCode"
+
+msgid "Prompt copied. OpenCode is starting - paste the prompt there."
+msgstr "Prompt copied. OpenCode is starting - paste the prompt there."
+
+msgid "Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."
+msgstr "Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."

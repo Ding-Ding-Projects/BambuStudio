@@ -27,6 +27,27 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`appearance-tab.png`](appearance/appearance-tab.png)
 - [`custom-color-dialog.png`](appearance/custom-color-dialog.png)
 
+## config-profiles (11 captures)
+
+- [`dialog--armed.png`](config-profiles/dialog--armed.png)
+- [`dialog--export-btn-armed.png`](config-profiles/dialog--export-btn-armed.png)
+- [`dialog--export-btn.png`](config-profiles/dialog--export-btn.png)
+- [`dialog--import-btn.png`](config-profiles/dialog--import-btn.png)
+- [`dialog--profile-actions.png`](config-profiles/dialog--profile-actions.png)
+- [`dialog--profile-list.png`](config-profiles/dialog--profile-list.png)
+- [`dialog--search-field.png`](config-profiles/dialog--search-field.png)
+- [`dialog--secrets-card.png`](config-profiles/dialog--secrets-card.png)
+- [`dialog--slide-to-confirm-confirmed.png`](config-profiles/dialog--slide-to-confirm-confirmed.png)
+- [`dialog--slide-to-confirm.png`](config-profiles/dialog--slide-to-confirm.png)
+- [`dialog.png`](config-profiles/dialog.png)
+
+## dark (4 captures)
+
+- [`config-profiles.png`](dark/config-profiles.png)
+- [`menu-file.png`](dark/menu-file.png)
+- [`preferences-appearance.png`](dark/preferences-appearance.png)
+- [`prepare.png`](dark/prepare.png)
+
 ## home (5 captures)
 
 - [`home--create-new-project-btn.png`](home/home--create-new-project-btn.png)
@@ -35,7 +56,7 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`home--recently-opened-header.png`](home/home--recently-opened-header.png)
 - [`home.png`](home/home.png)
 
-## main-window (72 captures)
+## main-window (73 captures)
 
 - [`menu-calibration.png`](main-window/menu-calibration.png)
 - [`menu-edit.png`](main-window/menu-edit.png)
@@ -43,6 +64,7 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`menu-help.png`](main-window/menu-help.png)
 - [`menu-objects.png`](main-window/menu-objects.png)
 - [`menu-view.png`](main-window/menu-view.png)
+- [`nav-rail--calibration.png`](main-window/nav-rail--calibration.png)
 - [`nav-rail--device.png`](main-window/nav-rail--device.png)
 - [`nav-rail--filament.png`](main-window/nav-rail--filament.png)
 - [`nav-rail--home.png`](main-window/nav-rail--home.png)
@@ -164,11 +186,16 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`tab-bar-two-tabs.png`](project-tabs/tab-bar-two-tabs.png)
 - [`tab-bar.png`](project-tabs/tab-bar.png)
 
-## regex-builder (22 captures)
+## regex-builder (28 captures)
 
 - [`builder-popover--case-sensitive.png`](regex-builder/builder-popover--case-sensitive.png)
 - [`builder-popover--insert-header.png`](regex-builder/builder-popover--insert-header.png)
+- [`builder-popover--pattern-editor.png`](regex-builder/builder-popover--pattern-editor.png)
+- [`builder-popover--quantifiers.png`](regex-builder/builder-popover--quantifiers.png)
+- [`builder-popover--regex-mode.png`](regex-builder/builder-popover--regex-mode.png)
+- [`builder-popover--test-pattern.png`](regex-builder/builder-popover--test-pattern.png)
 - [`builder-popover--token-alternation.png`](regex-builder/builder-popover--token-alternation.png)
+- [`builder-popover--token-backref.png`](regex-builder/builder-popover--token-backref.png)
 - [`builder-popover--token-caret.png`](regex-builder/builder-popover--token-caret.png)
 - [`builder-popover--token-charclass.png`](regex-builder/builder-popover--token-charclass.png)
 - [`builder-popover--token-digit.png`](regex-builder/builder-popover--token-digit.png)
@@ -176,6 +203,7 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`builder-popover--token-dot.png`](regex-builder/builder-popover--token-dot.png)
 - [`builder-popover--token-grid.png`](regex-builder/builder-popover--token-grid.png)
 - [`builder-popover--token-group.png`](regex-builder/builder-popover--token-group.png)
+- [`builder-popover--token-noncapture.png`](regex-builder/builder-popover--token-noncapture.png)
 - [`builder-popover--token-plus.png`](regex-builder/builder-popover--token-plus.png)
 - [`builder-popover--token-question.png`](regex-builder/builder-popover--token-question.png)
 - [`builder-popover--token-space.png`](regex-builder/builder-popover--token-space.png)
@@ -189,12 +217,13 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`search-field--text-entry.png`](regex-builder/search-field--text-entry.png)
 - [`search-field.png`](regex-builder/search-field.png)
 
-## version-history (8 captures)
+## version-history (9 captures)
 
 - [`history-dialog--close.png`](version-history/history-dialog--close.png)
 - [`history-dialog--project-banner.png`](version-history/history-dialog--project-banner.png)
 - [`history-dialog--refresh.png`](version-history/history-dialog--refresh.png)
 - [`history-dialog--restore-selected.png`](version-history/history-dialog--restore-selected.png)
+- [`history-dialog--search-field.png`](version-history/history-dialog--search-field.png)
 - [`history-dialog--version-list.png`](version-history/history-dialog--version-list.png)
 - [`history-dialog.png`](version-history/history-dialog.png)
 - [`menu-entry.png`](version-history/menu-entry.png)

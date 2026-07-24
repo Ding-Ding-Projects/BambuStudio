@@ -70,6 +70,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/TextInput.hpp
     GUI/Widgets/SearchField.cpp
     GUI/Widgets/SearchField.hpp
+    GUI/Widgets/SlideToConfirm.cpp
+    GUI/Widgets/SlideToConfirm.hpp
     GUI/Widgets/RegexBuilderPopup.cpp
     GUI/Widgets/RegexBuilderPopup.hpp
     GUI/Widgets/Slider.cpp
@@ -250,6 +252,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/MainFrame.hpp
     GUI/ProjectHistoryDialog.cpp
     GUI/ProjectHistoryDialog.hpp
+    GUI/ConfigProfilesDialog.cpp
+    GUI/ConfigProfilesDialog.hpp
+    GUI/CommandPalette.cpp
+    GUI/CommandPalette.hpp
     GUI/BBLTopbar.cpp
     GUI/BBLTopbar.hpp
     GUI/BedShapeDialog.cpp

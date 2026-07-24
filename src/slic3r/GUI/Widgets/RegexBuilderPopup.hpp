@@ -2,6 +2,7 @@
 #define slic3r_GUI_RegexBuilderPopup_hpp_
 
 #include <functional>
+#include <utility>
 #include <vector>
 
 #include <wx/panel.h>
@@ -79,6 +80,11 @@ private:
     class ChipGroup;
 
     void build();
+    // Reference tab: per-token descriptions, engine mini-documentation,
+    // worked examples, and the OpenCode search helper.
+    void buildReference();
+    void switchTab(int tab);
+    void openCodeHelp();
     void addSection(wxSizer *sizer, const wxString &title, const std::vector<ChipDef> &defs);
     void insertChip(const ChipDef &def);
     void addLiteral();
@@ -94,6 +100,14 @@ private:
     static wxString escapeLiteral(const wxString &raw);
 
     wxScrolledWindow *m_scroll  = nullptr;
+    wxScrolledWindow *m_ref_scroll = nullptr;
+    Button           *m_tab_build  = nullptr;
+    Button           *m_tab_ref    = nullptr;
+    Label            *m_ref_status = nullptr;
+    int               m_active_tab = 0;
+    // Guided sections recorded while building the chips, reused verbatim by
+    // the Reference tab so docs can never drift from the palette.
+    std::vector<std::pair<wxString, std::vector<ChipDef>>> m_sections;
     wxTextCtrl       *m_pattern = nullptr;
     Button           *m_copy    = nullptr;
     Label            *m_status  = nullptr;

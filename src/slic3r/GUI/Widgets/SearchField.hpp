@@ -105,6 +105,12 @@ public:
     static bool textMatches(const wxString &query, const wxString &candidate,
                             bool regex, bool caseSensitive, bool wholeWord = false);
 
+    // Colour-aware search: canonical searchable text for a colour swatch —
+    // "#RRGGBB <nearest-common-name>" (e.g. "#1CA752 green"). Consumers whose
+    // rows carry a colour append this to their haystack so queries can match
+    // by hex value or by everyday colour name.
+    static wxString colorSearchText(const wxColour &colour);
+
     virtual void Rescale();
 
     bool Enable(bool enable = true) override;

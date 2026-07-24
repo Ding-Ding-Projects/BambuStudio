@@ -19,7 +19,11 @@ user's own folders.
   sessions get a per-session identity that migrates on Save As.
 - **Browse/restore**: **File ▸ Version history…** and the topbar `main •`
   history chip open the MD3 `ProjectHistoryDialog` (commit list with message,
-  time, size). Restoring materializes the chosen version to a temporary `.3mf`
+  time, size). A `SearchField` above the list filters versions by commit id,
+  message, or timestamp — plain text by default, with the shared `.*` regex
+  toggle and tune builder; the status row reports "N of M versions match the
+  search", and selection/restore always map through the filtered view so the
+  restored commit is exactly the highlighted row. Restoring materializes the chosen version to a temporary `.3mf`
   and swaps the live document (`Plater::restore_project_history_snapshot`)
   with a rollback archive kept until the swap succeeds; the original file on
   disk is never overwritten by the restore primitive.

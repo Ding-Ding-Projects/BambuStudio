@@ -40,6 +40,8 @@
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 #include "ProjectHistoryDialog.hpp"
+#include "ConfigProfilesDialog.hpp"
+#include "CommandPalette.hpp"
 #include "WebViewDialog.hpp"
 #include "../Utils/Process.hpp"
 #include "../Utils/ExternalEditor.hpp"
@@ -358,6 +360,17 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     wxAcceleratorTable accel(6, entries);
     SetAcceleratorTable(accel);
 #endif // _WIN32
+
+    // Ctrl+F opens the command palette from anywhere in the frame: one
+    // searchable surface over every menu command, navigation target and the
+    // quick-settings rows (theme / density / accent).
+    {
+        const int palette_id = wxID_HIGHEST + 90;
+        wxAcceleratorEntry palette_entries[1];
+        palette_entries[0].Set(wxACCEL_CTRL, 'F', palette_id);
+        SetAcceleratorTable(wxAcceleratorTable(1, palette_entries));
+        Bind(wxEVT_MENU, [this](wxCommandEvent &) { CommandPalette::ShowPalette(this); }, palette_id);
+    }
 
     // BBS
     //wxAcceleratorEntry entries[13];
@@ -3823,6 +3836,11 @@ void MainFrame::init_menubar_as_editor()
             _L("Browse and restore local Git-backed project versions"),
             [this](wxCommandEvent&) { show_project_history(); }, "", nullptr,
             [this](){return m_plater != nullptr; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Config profiles & backup") + dots,
+            _L("Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"),
+            [this](wxCommandEvent&) { ConfigProfilesDialog(this).ShowModal(); }, "", nullptr,
+            []() { return true; }, this);
 
         // Open the current project's folder in the configured external editor
         // (Preferences > General > External editor). "custom" routes to the

@@ -4,6 +4,7 @@
 - [English, Hong Kong Cantonese, and bilingual modes](language-modes.md)
 - [Appearance customization](appearance-customization.md)
 - [Regex builder](regex-builder.md)
+- [Command palette (Ctrl+F)](command-palette.md)
 - [Native visual smoke test](native-visual-smoke.md)
 - [Software OpenGL fallback (Mesa llvmpipe)](software-gl-fallback.md)
 

@@ -27,6 +27,7 @@
 #include "libslic3r/AppConfig.hpp"
 #include "NotificationManager.hpp"
 #include "ExtraRenderers.hpp"
+#include "Widgets/SearchField.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -262,6 +263,19 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
     btnsizer->AddStretchSpacer();
     btnsizer->Add(btn_close);
 
+    // Find-in-queue bar. Upload job ids are row indices, so rows are never
+    // hidden: the search selects the first matching row and reports the match
+    // count, and the regex builder rides along via the shared SearchField.
+    auto *searchsizer = new wxBoxSizer(wxHORIZONTAL);
+    // TRN: Placeholder of the search field in the print host upload queue.
+    search_field = new SearchField(this, _L("Search uploads"));
+    search_status = new wxStaticText(this, wxID_ANY, wxEmptyString);
+    search_field->SetOnQuery([this](const wxString &) { run_queue_search(); });
+    search_field->SetOnRegexToggle([this](bool) { run_queue_search(); });
+    searchsizer->Add(search_field, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, SPACING);
+    searchsizer->Add(search_status, 0, wxALIGN_CENTER_VERTICAL);
+    topsizer->Add(searchsizer, 0, wxEXPAND | wxBOTTOM, SPACING);
+
     topsizer->Add(job_list, 1, wxEXPAND | wxBOTTOM, SPACING);
     topsizer->Add(btnsizer, 0, wxEXPAND);
     SetSizer(topsizer);
@@ -377,6 +391,46 @@ void PrintHostQueueDialog::set_state(int idx, JobState state)
     }
     // This might be ambigous call, but user data needs to be saved time to time
     save_user_data(UDT_SIZE | UDT_POSITION | UDT_COLS);
+}
+
+void PrintHostQueueDialog::run_queue_search()
+{
+    if (search_field == nullptr || search_status == nullptr)
+        return;
+    const wxString query = search_field->GetValue();
+    if (query.IsEmpty()) {
+        search_status->SetLabel(wxEmptyString);
+        Layout();
+        return;
+    }
+    const bool regex      = search_field->IsRegexEnabled();
+    const bool case_sense = search_field->IsCaseSensitive();
+    const bool whole_word = search_field->IsWholeWord();
+    int matches = 0;
+    int first_match = wxNOT_FOUND;
+    const int rows = job_list->GetItemCount();
+    for (int row = 0; row < rows; ++row) {
+        wxVariant id, status, host, filename;
+        job_list->GetValue(id, row, COL_ID);
+        job_list->GetValue(status, row, COL_STATUS);
+        job_list->GetValue(host, row, COL_HOST);
+        job_list->GetValue(filename, row, COL_FILENAME);
+        const wxString haystack = id.GetString() + " " + status.GetString() + " " +
+                                  host.GetString() + " " + filename.GetString();
+        if (SearchField::textMatches(query, haystack, regex, case_sense, whole_word)) {
+            ++matches;
+            if (first_match == wxNOT_FOUND)
+                first_match = row;
+        }
+    }
+    if (first_match != wxNOT_FOUND) {
+        job_list->SelectRow(first_match);
+        job_list->EnsureVisible(job_list->RowToItem(first_match));
+        on_list_select();
+    }
+    // TRN: %1$d is how many upload jobs match the search; %2$d is the total.
+    search_status->SetLabel(wxString::Format(_L("%d of %d match"), matches, rows));
+    Layout();
 }
 
 void PrintHostQueueDialog::on_list_select()

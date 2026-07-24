@@ -2,6 +2,29 @@
 
 ## Landed
 
+### Screenshot refresh, light/dark legibility fixes, search everywhere, config profiles & backup (2026-07-24)
+
+- Replaced the complete `docs/screenshots` matrix from the current build (headless Mesa
+  llvmpipe + PrintWindow for native surfaces, headless Edge for the Home/Wizard webviews),
+  including the rewritten advanced regex-builder popover and the new Calibration nav tab.
+- Light-mode Preview legibility fixed: the gcode legend dock now pushes a themed
+  `ImGuiCol_Text` (OnSurface), so per-filament values, filament-change/cost and time
+  estimation are no longer white-on-light. The Preview move bar sheds its skip buttons and
+  then its counter on narrow widths instead of sliding the handle over the readout.
+- Search bars everywhere: version history and the print-host upload queue gained the shared
+  MD3 `SearchField` (regex builder included); the Plater object search became colour-aware
+  (`SearchField::colorSearchText` — match by `#RRGGBB` or nearest common colour name).
+- New **File ▸ Config profiles & backup…**: export the entire data directory (secrets
+  included) into one archive, import it on another PC as a new profile, unlimited profiles
+  with one-click launch (`--datadir`), and per-profile local Git snapshot history driven by
+  the project-history engine — all gated behind a keyboard-operable slide-to-confirm control
+  with an explicit secrets warning. 43 new curated Cantonese catalog entries (494 total).
+- Ctrl+F **command palette**: every enabled menu command (icon + description), navigation
+  targets, and rich inline quick-settings rows (theme / density / accent) behind one shared
+  SearchField query. The regex builder gained a tabbed **Reference** mini-documentation
+  (per-token descriptions from the live chip tables, engine details, examples) plus an
+  OpenCode search helper (clipboard prompt + local launch). Catalogs at 530.
+
 ### Dark-mode legibility, advanced regex builder, software-GL self-heal (2026-07-24, `e2ed70365`)
 
 - Root-caused and fixed the systemic dark-mode text corruption (non-idempotent

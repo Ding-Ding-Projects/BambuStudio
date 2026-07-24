@@ -14,6 +14,10 @@ work is in progress.
   snapshot-based switching, plus the new-tab and close affordances.
 - [External editor](external-editor.md) — configurable "Open in External
   Editor" for the current project folder, with editor auto-detection.
+- [Config profiles & full-data backup](config-profiles-backup.md) — export the
+  entire data directory (secrets included, behind a slide-to-confirm gate),
+  import it on another PC as a new profile, keep unlimited profiles, and give
+  each one local Git-backed snapshot history.
 
 ## Postman collections
 

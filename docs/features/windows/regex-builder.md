@@ -30,12 +30,32 @@ copy/export — all evaluated against the app's real regex engine.
 - Search surfaces hosting the shared field include: parameter search
   (`Tab.cpp` / `Search.cpp`), the Plater object search (`Plater.cpp`),
   Preferences (`Preferences.cpp`), user presets (`UserPresetsDialog.cpp`),
-  device selection (`SelectMachinePop.cpp`), and the multi-machine manager
-  (`MultiMachineManagerPage.cpp`). Every one of them gets the identical
-  builder from the widget — no surface carries a reduced variant.
+  device selection (`SelectMachinePop.cpp`), the multi-machine manager
+  (`MultiMachineManagerPage.cpp`), project version history
+  (`ProjectHistoryDialog.cpp` — filters the snapshot list), the print host
+  upload queue (`PrintHostDialogs.cpp` — find-in-queue: counts and selects
+  matches; rows never hide because upload job ids are row indices), and the
+  config profiles manager (`ConfigProfilesDialog.cpp`). Every one of them
+  gets the identical builder from the widget — no surface carries a reduced
+  variant.
+- **Colour-aware search:** rows that carry a colour also match by it. The
+  shared helper `SearchField::colorSearchText(wxColour)` contributes
+  `#RRGGBB <nearest-common-name>` (e.g. `#00AE42 green`) to the row's
+  haystack; the Plater object search uses it so typing `green`, `grey`/`gray`
+  or a hex value finds the objects printed with that filament. Regex mode
+  composes naturally (`^#00` matches all dark-blue-channel hexes).
 - Query, pattern, flags, and mode stay synchronized bidirectionally: typing in
   the field updates the popover's raw editor live, and edits in the popover
   re-fire the field's query callback so the host list re-filters immediately.
+- The popover is **tabbed**: **Build** hosts the guided sections, and
+  **Reference** is the built-in mini-documentation — how search works (plain
+  text default, flags, fail-safe invalid patterns, bounded evaluation),
+  every token with its full description (rendered from the same tables the
+  chips use, so docs can never drift), worked examples, and the **OpenCode
+  helper**: one button copies a prompt describing the engine, current
+  pattern and sample text to the clipboard and launches OpenCode when it is
+  on PATH (the prompt never goes onto a command line; nothing is sent
+  anywhere by the app itself).
 
 ## Popover anatomy (`src/slic3r/GUI/Widgets/RegexBuilderPopup.{hpp,cpp}`)
 

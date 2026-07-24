@@ -532,24 +532,39 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
 
         bool value_changed = false;
 
-        // left transport cluster: skip_previous | play | skip_next
-        float cx = pos.x + pad_x;
-        const ImVec2 prev_c = ImVec2(cx + skip_d * 0.5f, center_y); cx += skip_d + gap;
-        const ImVec2 play_c = ImVec2(cx + play_d * 0.5f, center_y); cx += play_d + gap;
-        const ImVec2 next_c = ImVec2(cx + skip_d * 0.5f, center_y); cx += skip_d + gap;
-
-        // reserve the right-aligned mono counter slot before laying out the flex slider
+        // measure the right-aligned mono counter before laying out the bar
         const bool  mono_m     = imgui.push_mono_font();
         const std::string counter_probe = _u8L("Move") + " " + std::to_string(*value) + " / " + std::to_string(v_max);
         const float counter_probe_w = ImGui::CalcTextSize(counter_probe.c_str()).x;
         if (mono_m) imgui.pop_mono_font();
-        const float counter_w     = std::max(counter_min_w, counter_probe_w);
+        float counter_w = std::max(counter_min_w, counter_probe_w);
+
+        // Narrow bars can't fit transport + groove + counter side by side; the
+        // old fixed layout let the clamped groove ride over the counter text.
+        // Shed chrome progressively instead: first the skip buttons, then the
+        // counter, so the groove and handle never overlap what remains.
+        const float min_groove_w = 56.0f * m_scale;
+        const float avail = size.x - 2.0f * pad_x;
+        const float transport_full = skip_d + gap + play_d + gap + skip_d + gap;
+        const float transport_min  = play_d + gap;
+        bool show_skips = avail - transport_full - (counter_w + gap) >= min_groove_w;
+        const float transport_w = show_skips ? transport_full : transport_min;
+        bool show_counter = avail - transport_w - (counter_w + gap) >= min_groove_w;
+        if (!show_counter) counter_w = 0.0f;
+
+        // left transport cluster: [skip_previous] | play | [skip_next]
+        float cx = pos.x + pad_x;
+        ImVec2 prev_c, next_c;
+        if (show_skips) { prev_c = ImVec2(cx + skip_d * 0.5f, center_y); cx += skip_d + gap; }
+        const ImVec2 play_c = ImVec2(cx + play_d * 0.5f, center_y); cx += play_d + gap;
+        if (show_skips) { next_c = ImVec2(cx + skip_d * 0.5f, center_y); cx += skip_d + gap; }
+
         const float counter_right = pos.x + size.x - pad_x;
         const float counter_left  = counter_right - counter_w;
 
         // flex slider region between the cluster and the counter
         float slider_x0 = cx;
-        float slider_x1 = counter_left - gap;
+        float slider_x1 = show_counter ? counter_left - gap : counter_right;
         if (slider_x1 < slider_x0 + 40.0f * m_scale)
             slider_x1 = slider_x0 + 40.0f * m_scale;
 
@@ -581,7 +596,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
         window->DrawList->AddCircleFilled(handle_center, handle_radius - handle_border, handle_clr);
 
         // transport actions (skip = jump to start / end)
-        if (ghost_button(prev_c, skip_d, MaterialIcon::SkipPrevious, skip_icon_px)) {
+        if (show_skips && ghost_button(prev_c, skip_d, MaterialIcon::SkipPrevious, skip_icon_px)) {
             if (*value != v_min) { *value = v_min; value_changed = true; }
             m_playing = false;
         }
@@ -602,7 +617,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
                 }
             }
         }
-        if (ghost_button(next_c, skip_d, MaterialIcon::SkipNext, skip_icon_px)) {
+        if (show_skips && ghost_button(next_c, skip_d, MaterialIcon::SkipNext, skip_icon_px)) {
             if (*value != v_max) { *value = v_max; value_changed = true; }
             m_playing = false;
         }
@@ -632,11 +647,13 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
         }
 
         // right-aligned mono counter 'Move cur / max'
-        const bool  mono_r  = imgui.push_mono_font();
-        const std::string counter = _u8L("Move") + " " + std::to_string(*value) + " / " + std::to_string(v_max);
-        const ImVec2 counter_sz = ImGui::CalcTextSize(counter.c_str());
-        window->DrawList->AddText(ImVec2(counter_right - counter_sz.x, center_y - counter_sz.y * 0.5f), counter_clr, counter.c_str());
-        if (mono_r) imgui.pop_mono_font();
+        if (show_counter) {
+            const bool  mono_r  = imgui.push_mono_font();
+            const std::string counter = _u8L("Move") + " " + std::to_string(*value) + " / " + std::to_string(v_max);
+            const ImVec2 counter_sz = ImGui::CalcTextSize(counter.c_str());
+            window->DrawList->AddText(ImVec2(counter_right - counter_sz.x, center_y - counter_sz.y * 0.5f), counter_clr, counter.c_str());
+            if (mono_r) imgui.pop_mono_font();
+        }
 
         return value_changed;
     }

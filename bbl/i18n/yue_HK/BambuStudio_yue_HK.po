@@ -1820,3 +1820,319 @@ msgstr "應用程式已經試過內置嘅軟件渲染後備方案（Mesa llvmpip
 #. reviewed-category: destructive-dirty-error-security
 msgid "The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable."
 msgstr "應用程式用唔到內置嘅軟件渲染後備方案：喺應用程式旁邊搵唔到 Mesa 驅動檔案（mesa\\opengl32.dll 同 mesa\\libgallium_wgl.dll），或者安裝資料夾冇寫入權限。"
+
+#. reviewed-category: preferences
+msgid "Search versions"
+msgstr "搵版本"
+
+#. reviewed-category: preferences
+msgid "%d of %d versions match the search"
+msgstr "搜尋匹配 %d 個（總共 %d 個版本）"
+
+#. reviewed-category: preferences
+msgid "Search uploads"
+msgstr "搵上載"
+
+#. reviewed-category: preferences
+msgid "%d of %d match"
+msgstr "匹配 %d 個（共 %d 個）"
+
+#. reviewed-category: preferences
+msgid "Search profiles"
+msgstr "搵設定檔"
+
+#. reviewed-category: navigation
+msgid "Config profiles & backup"
+msgstr "設定檔同備份"
+
+#. reviewed-category: navigation
+msgid "Profile history"
+msgstr "設定檔歷史"
+
+#. reviewed-category: navigation
+msgid "Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"
+msgstr "匯出或者匯入成個資料資料夾（連機密資料，要滑動確認），仲可以管理無限個有本地 Git 快照歷史嘅設定檔"
+
+#. reviewed-category: file-actions
+msgid "Export everything in your data folder, import it on another PC, and keep unlimited profiles - each with its own local Git-backed snapshot history."
+msgstr "成個資料資料夾都可以匯出，攞去第二部電腦匯入，仲可以有無限個設定檔 — 每個都有自己本地嘅 Git 快照歷史。"
+
+#. reviewed-category: file-actions
+msgid "Profile"
+msgstr "設定檔"
+
+#. reviewed-category: file-actions
+msgid "Data folder"
+msgstr "資料資料夾"
+
+#. reviewed-category: file-actions
+msgid "Launch profile"
+msgstr "啟動設定檔"
+
+#. reviewed-category: file-actions
+msgid "Snapshot now"
+msgstr "而家影快照"
+
+#. reviewed-category: file-actions
+msgid "History..."
+msgstr "歷史..."
+
+#. reviewed-category: file-actions
+msgid "Export everything..."
+msgstr "匯出全部..."
+
+#. reviewed-category: file-actions
+msgid "Import backup..."
+msgstr "匯入備份..."
+
+#. reviewed-category: file-actions
+msgid "Export the complete data folder"
+msgstr "匯出成個資料資料夾"
+
+#. reviewed-category: file-actions
+msgid "Backup archive (*.zip)|*.zip"
+msgstr "備份壓縮檔 (*.zip)|*.zip"
+
+#. reviewed-category: file-actions
+msgid "Exporting the data folder... this can take a while."
+msgstr "匯緊出資料資料夾... 可能要等一陣。"
+
+#. reviewed-category: file-actions
+msgid "Import a data folder backup"
+msgstr "匯入資料資料夾備份"
+
+#. reviewed-category: file-actions
+msgid "Importing the backup into a new profile..."
+msgstr "匯緊入備份去一個新設定檔..."
+
+#. reviewed-category: file-actions
+msgid "Imported as profile \"%s\". Select it and press Launch profile to run Bambu Studio on it."
+msgstr "已經匯入做設定檔「%s」。揀佢再撳「啟動設定檔」，就可以用佢開 Bambu Studio。"
+
+#. reviewed-category: file-actions
+msgid "Launching Bambu Studio on profile \"%s\"..."
+msgstr "用緊設定檔「%s」啟動 Bambu Studio..."
+
+#. reviewed-category: file-actions
+msgid "Recording a complete profile snapshot..."
+msgstr "記錄緊完整設定檔快照..."
+
+#. reviewed-category: file-actions
+msgid "Snapshot of \"%s\" recorded in its local history."
+msgstr "「%s」嘅快照已經記錄咗入佢本地歷史。"
+
+#. reviewed-category: file-actions
+msgid "This profile has no snapshots yet. Use Snapshot now to record one."
+msgstr "呢個設定檔仲未有快照。用「而家影快照」記錄一個先啦。"
+
+#. reviewed-category: file-actions
+msgid "Snapshots of \"%s\". Restoring creates a NEW profile; nothing is overwritten."
+msgstr "「%s」嘅快照。還原會開一個全新設定檔；乜嘢都唔會被覆寫。"
+
+#. reviewed-category: file-actions
+msgid "Restoring the selected snapshot into a new profile..."
+msgstr "還原緊揀咗嘅快照去一個新設定檔..."
+
+#. reviewed-category: file-actions
+msgid "Snapshot restored as profile \"%s\"."
+msgstr "快照已經還原做設定檔「%s」。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A full backup includes secrets: printer access codes, network-plugin login state, API tokens and physical-printer passwords. Anyone with the file can use them. Slide to confirm before exporting or importing."
+msgstr "完整備份會包埋機密資料：打印機存取碼、網絡插件登入狀態、API 權杖同實體打印機密碼。任何人攞到呢個檔案都用得呢啲資料。匯出或者匯入之前，請先滑動確認。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Slide to allow export / import"
+msgstr "滑動嚟允許匯出／匯入"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Confirmed - transfers unlocked"
+msgstr "確認咗 — 已解鎖匯出入"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Backup written to %s. It contains secrets - store and transfer it safely."
+msgstr "備份已經寫入 %s。入面有機密資料 — 請安全噉儲存同傳送。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The profile could not be launched."
+msgstr "啟動唔到呢個設定檔。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The snapshot could not be recorded: %s"
+msgstr "記錄唔到快照：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Profile history could not be read: %s"
+msgstr "讀取唔到設定檔歷史：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The snapshot could not be restored: %s"
+msgstr "還原唔到快照：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The backup file could not be created at the selected location."
+msgstr "喺揀咗嘅位置建立唔到備份檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Writing the backup archive failed. The destination may be full or unwritable."
+msgstr "寫入備份壓縮檔失敗。目的地可能滿咗或者冇寫入權限。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The selected backup file could not be opened."
+msgstr "開唔到揀咗嘅備份檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The new profile folder could not be created."
+msgstr "建立唔到新設定檔資料夾。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The backup contains an unsafe path and was rejected."
+msgstr "備份入面有唔安全嘅路徑，已經拒絕匯入。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A file inside the backup could not be written."
+msgstr "備份入面有檔案寫入唔到。"
+
+#. reviewed-category: navigation
+msgid "Command palette"
+msgstr "指令面板"
+
+#. reviewed-category: navigation
+msgid "Search commands, settings and pages"
+msgstr "搵指令、設定同頁面"
+
+#. reviewed-category: preferences
+msgid "Switch between the light and dark appearance"
+msgstr "喺淺色同深色外觀之間切換"
+
+#. reviewed-category: preferences
+msgid "Comfortable or compact control spacing"
+msgstr "舒適或者緊湊嘅控件間距"
+
+#. reviewed-category: preferences
+msgid "Pick the accent seed the interface is tinted with"
+msgstr "揀返個介面用嚟調色嘅種子顏色"
+
+#. reviewed-category: navigation
+msgid "Go to Home"
+msgstr "去主頁"
+
+#. reviewed-category: navigation
+msgid "Start page with recent projects"
+msgstr "有最近項目嘅開始頁"
+
+#. reviewed-category: navigation
+msgid "Go to Prepare"
+msgstr "去準備"
+
+#. reviewed-category: navigation
+msgid "Arrange models and set up the print"
+msgstr "排列模型同設定打印"
+
+#. reviewed-category: navigation
+msgid "Go to Preview"
+msgstr "去預覽"
+
+#. reviewed-category: navigation
+msgid "Sliced result, layers and toolpaths"
+msgstr "切片結果、層數同刀路"
+
+#. reviewed-category: navigation
+msgid "Go to Device"
+msgstr "去設備"
+
+#. reviewed-category: navigation
+msgid "Printer status and control"
+msgstr "打印機狀態同控制"
+
+#. reviewed-category: navigation
+msgid "Go to Project"
+msgstr "去項目"
+
+#. reviewed-category: navigation
+msgid "Project files and metadata"
+msgstr "項目檔案同中繼資料"
+
+#. reviewed-category: navigation
+msgid "Open Preferences"
+msgstr "打開偏好設定"
+
+#. reviewed-category: navigation
+msgid "General, appearance, 3D and developer settings — with live search"
+msgstr "一般、外觀、3D 同開發者設定 — 仲有即時搜尋"
+
+#. reviewed-category: navigation
+msgid "Search in settings"
+msgstr "喺設定入面搜尋"
+
+#. reviewed-category: navigation
+msgid "Find any print / filament / printer parameter"
+msgstr "搵任何打印／耗材／打印機參數"
+
+#. reviewed-category: preferences
+msgid "Build"
+msgstr "砌樣式"
+
+#. reviewed-category: preferences
+msgid "Reference"
+msgstr "參考"
+
+#. reviewed-category: preferences
+msgid "Reference & help"
+msgstr "參考同幫手"
+
+#. reviewed-category: preferences
+msgid "How search works"
+msgstr "搜尋點樣運作"
+
+#. reviewed-category: preferences
+msgid "Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."
+msgstr "每個搜尋欄預設都係純文字；要撳 .* 掣先至會開正則模式。"
+
+#. reviewed-category: preferences
+msgid "Case sensitive and Whole word refine plain-text search; in regex mode author  yourself for word boundaries."
+msgstr "「區分大小寫」同「整個詞」係用嚟微調純文字搜尋；正則模式要自己寫  做詞界。"
+
+#. reviewed-category: preferences
+msgid "An invalid or half-typed pattern never hides rows: it matches everything until it compiles."
+msgstr "無效或者打咗一半嘅樣式唔會收埋任何行：喺佢編譯成功之前一律當全部匹配。"
+
+#. reviewed-category: preferences
+msgid "Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."
+msgstr "評估係本地而且有上限 — 太長嘅樣式同樣本會截斷，失控嘅匹配會安全停低。"
+
+#. reviewed-category: preferences
+msgid "Examples"
+msgstr "例子"
+
+#. reviewed-category: preferences
+msgid "Rows that start with PLA"
+msgstr "以 PLA 開頭嘅行"
+
+#. reviewed-category: preferences
+msgid "A number followed by mm, with an optional space"
+msgstr "一個數字後面跟 mm，中間可以有個空格"
+
+#. reviewed-category: preferences
+msgid "Rows containing the whole word red or blue"
+msgstr "包含整個詞 red 或者 blue 嘅行"
+
+#. reviewed-category: preferences
+msgid "OpenCode helper"
+msgstr "OpenCode 幫手"
+
+#. reviewed-category: preferences
+msgid "Let the OpenCode assistant draft the pattern: the button copies a prompt describing this engine, your current pattern and sample text to the clipboard, then opens OpenCode if it is installed."
+msgstr "俾 OpenCode 助手幫你起草樣式：個掣會將描述呢個引擎、你而家嘅樣式同樣本文字嘅提示複製去剪貼簿，裝咗 OpenCode 嘅話仲會幫你打開佢。"
+
+#. reviewed-category: preferences
+msgid "Copy prompt & open OpenCode"
+msgstr "複製提示並打開 OpenCode"
+
+#. reviewed-category: preferences
+msgid "Prompt copied. OpenCode is starting - paste the prompt there."
+msgstr "提示複製咗。OpenCode 啟動緊 — 貼過去嗰邊啦。"
+
+#. reviewed-category: preferences
+msgid "Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."
+msgstr "提示複製咗。PATH 搵唔到 OpenCode — 將提示貼去你嘅助手度啦。"

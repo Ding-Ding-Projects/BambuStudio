@@ -14,6 +14,7 @@
 
 class Button;
 class Label;
+class SearchField;
 class StaticBox;
 class wxCloseEvent;
 class wxCommandEvent;
@@ -106,7 +107,10 @@ private:
     StaticBox              *m_info_card{nullptr};
     StaticBox              *m_failure_card{nullptr};
     StaticBox              *m_list_card{nullptr};
+    SearchField            *m_search_field{nullptr};
     wxDataViewListCtrl     *m_version_list{nullptr};
+    // View-row -> m_versions index for the current (possibly filtered) list.
+    std::vector<std::size_t> m_filtered_rows;
     Button                 *m_refresh_button{nullptr};
     Button                 *m_load_all_button{nullptr};
     Button                 *m_retry_failures_button{nullptr};

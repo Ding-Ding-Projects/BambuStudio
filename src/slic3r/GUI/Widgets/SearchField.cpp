@@ -303,6 +303,34 @@ bool SearchField::textMatches(const wxString &query, const wxString &candidate, 
     return false;
 }
 
+wxString SearchField::colorSearchText(const wxColour &colour)
+{
+    if (!colour.IsOk())
+        return wxEmptyString;
+    // Nearest common colour name by RGB distance. The table deliberately keeps
+    // to everyday names (both grey spellings) so "green" or "#00FF00" both hit
+    // a green filament row; precision work stays with the hex form.
+    struct Named { const wchar_t *name; unsigned char r, g, b; };
+    static const Named names[] = {
+        {L"black", 0, 0, 0},       {L"white", 255, 255, 255}, {L"gray grey", 128, 128, 128},
+        {L"silver", 192, 192, 192},{L"red", 220, 40, 40},     {L"dark red maroon", 128, 0, 0},
+        {L"orange", 255, 140, 0},  {L"brown", 139, 90, 43},   {L"yellow", 250, 220, 40},
+        {L"gold", 212, 175, 55},   {L"lime", 160, 230, 50},   {L"green", 40, 160, 60},
+        {L"dark green", 0, 100, 0},{L"teal", 0, 150, 136},    {L"cyan", 60, 200, 220},
+        {L"sky blue", 120, 190, 240}, {L"blue", 40, 90, 220}, {L"navy", 0, 0, 128},
+        {L"indigo", 75, 60, 180},  {L"purple violet", 140, 70, 190}, {L"magenta", 220, 60, 180},
+        {L"pink", 240, 140, 180},  {L"beige natural", 235, 220, 190},
+    };
+    const int r = colour.Red(), g = colour.Green(), b = colour.Blue();
+    const Named *best = &names[0];
+    long best_d = LONG_MAX;
+    for (const Named &n : names) {
+        const long d = long(r - n.r) * (r - n.r) + long(g - n.g) * (g - n.g) + long(b - n.b) * (b - n.b);
+        if (d < best_d) { best_d = d; best = &n; }
+    }
+    return wxString::Format("#%02X%02X%02X ", r, g, b) + wxString(best->name);
+}
+
 void SearchField::Rescale()
 {
     applyTextCtrlTheme();

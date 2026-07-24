@@ -1544,12 +1544,17 @@ namespace Slic3r
                 // Preview sidebar), with the outline-variant border already pushed.
                 ImGui::PushStyleColor(ImGuiCol_WindowBg, surface_low);
                 ImGui::PushStyleColor(ImGuiCol_Border, outline);
+                // The global ImGui style never themes ImGuiCol_Text, so plain
+                // imgui.text() in this dock (per-filament values, change times,
+                // cost, time estimation) would fall back to ImGui's white and
+                // wash out on the light surface.
+                ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface, m_is_dark));
                 ImGui::SetNextWindowBgAlpha(1.0f);
                 const float max_height = std::max(1.0f, static_cast<float>(cnv_size.get_height()) - float(MD3::Metrics::preview_timeline_height) * m_scale);
                 const float child_height = 0.3333f * max_height;
                 const float available_width = std::max(1.0f, static_cast<float>(canvas_width) - right_margin * m_scale);
                 if (available_width < 112.0f * m_scale) {
-                    ImGui::PopStyleColor(8);
+                    ImGui::PopStyleColor(9);
                     ImGui::PopStyleVar(2);
                     return;
                 }
@@ -1879,7 +1884,7 @@ namespace Slic3r
                 if (dock_collapsed) {
                     legend_height = header_height;
                     imgui.end();
-                    ImGui::PopStyleColor(8);
+                    ImGui::PopStyleColor(9);
                     ImGui::PopStyleVar(2);
                     return;
                 }
@@ -3010,7 +3015,7 @@ namespace Slic3r
                 // G-code text. Collapsed docks instead reserve just their header.
                 legend_height = 0.0f;
                 imgui.end();
-                ImGui::PopStyleColor(8);
+                ImGui::PopStyleColor(9);
                 ImGui::PopStyleVar(2);
             }
 

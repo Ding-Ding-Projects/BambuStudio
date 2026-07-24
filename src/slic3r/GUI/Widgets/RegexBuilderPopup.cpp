@@ -18,6 +18,7 @@
 #include <wx/display.h>
 #include <wx/settings.h>
 #include <wx/sizer.h>
+#include <wx/utils.h>
 
 namespace {
 
@@ -538,11 +539,144 @@ void RegexBuilderPopup::build()
 
     sizer->AddSpacer(pad);
     m_scroll->SetSizer(sizer);
+
+    // --- Build | Reference tab header (popup children, laid out in fitPopup)
+    m_tab_build = new Button(this, _L("Build"));
+    m_tab_ref   = new Button(this, _L("Reference"));
+    for (Button *b : {m_tab_build, m_tab_ref}) {
+        b->SetButtonSize(Button::Size::Small);
+        b->SetColorScheme(m_scheme);
+    }
+    m_tab_build->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { switchTab(0); });
+    m_tab_ref->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { switchTab(1); });
+    buildReference();
+    switchTab(0);
+}
+
+void RegexBuilderPopup::buildReference()
+{
+    const wxColour surface  = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    const wxColour on       = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour on_var   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    const int pad      = FromDIP(kPad);
+    const int contentW = FromDIP(kContentW);
+
+    m_ref_scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                        wxTAB_TRAVERSAL | wxVSCROLL | wxBORDER_NONE);
+    m_ref_scroll->SetBackgroundColour(surface);
+    wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
+
+    auto heading = [&](const wxString &text) {
+        auto *lbl = new Label(m_ref_scroll, Label::Head_12, text);
+        lbl->SetBackgroundColour(surface);
+        lbl->SetForegroundColour(on_var);
+        sizer->Add(lbl, 0, wxLEFT | wxRIGHT | wxTOP, pad);
+    };
+    auto paragraph = [&](const wxString &text) {
+        auto *lbl = new Label(m_ref_scroll, Label::Body_12, text);
+        lbl->SetBackgroundColour(surface);
+        lbl->SetForegroundColour(on);
+        lbl->Wrap(contentW);
+        sizer->Add(lbl, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(6));
+    };
+    auto term_row = [&](const wxString &term, const wxString &meaning) {
+        auto *row = new wxBoxSizer(wxHORIZONTAL);
+        auto *t = new Label(m_ref_scroll, Label::Mono_11, term);
+        t->SetBackgroundColour(surface);
+        t->SetForegroundColour(on);
+        t->SetMinSize(wxSize(FromDIP(64), -1));
+        row->Add(t, 0, wxALIGN_TOP);
+        auto *m = new Label(m_ref_scroll, Label::Body_12, meaning);
+        m->SetBackgroundColour(surface);
+        m->SetForegroundColour(on_var);
+        m->Wrap(contentW - FromDIP(72));
+        row->Add(m, 1, wxLEFT, FromDIP(8));
+        sizer->Add(row, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
+    };
+
+    auto *title = new Label(m_ref_scroll, Label::Head_14, _L("Reference & help"));
+    title->SetBackgroundColour(surface);
+    title->SetForegroundColour(on);
+    sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, pad);
+
+    heading(_L("How search works"));
+    paragraph(_L("Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."));
+    paragraph(_L("Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."));
+    paragraph(_L("Case sensitive and Whole word refine plain-text search; in regex mode author \\b yourself for word boundaries."));
+    paragraph(_L("An invalid or half-typed pattern never hides rows: it matches everything until it compiles."));
+    paragraph(_L("Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."));
+
+    // Full per-token documentation, straight from the Build tab's tables.
+    for (const auto &[section_title, defs] : m_sections) {
+        heading(section_title);
+        for (const ChipDef &def : defs)
+            term_row(def.label, def.tip);
+    }
+
+    heading(_L("Examples"));
+    term_row("^PLA",          _L("Rows that start with PLA"));
+    term_row("\\d+ ?mm",      _L("A number followed by mm, with an optional space"));
+    term_row("(red|blue)\\b", _L("Rows containing the whole word red or blue"));
+
+    heading(_L("OpenCode helper"));
+    paragraph(_L("Let the OpenCode assistant draft the pattern: the button copies a prompt describing this engine, your current pattern and sample text to the clipboard, then opens OpenCode if it is installed."));
+    auto *oc_btn = new Button(m_ref_scroll, _L("Copy prompt & open OpenCode"));
+    oc_btn->SetButtonSize(Button::Size::Small);
+    oc_btn->SetColorScheme(m_scheme);
+    oc_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { openCodeHelp(); });
+    sizer->Add(oc_btn, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(4));
+    m_ref_status = new Label(m_ref_scroll, Label::Body_11, wxEmptyString);
+    m_ref_status->SetBackgroundColour(surface);
+    m_ref_status->SetForegroundColour(on_var);
+    sizer->Add(m_ref_status, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
+
+    sizer->AddSpacer(pad);
+    m_ref_scroll->SetSizer(sizer);
+    m_ref_scroll->Hide();
+}
+
+void RegexBuilderPopup::switchTab(int tab)
+{
+    m_active_tab = tab;
+    if (m_scroll)     m_scroll->Show(tab == 0);
+    if (m_ref_scroll) m_ref_scroll->Show(tab == 1);
+    if (m_tab_build)  m_tab_build->SetVariant(tab == 0 ? Button::Variant::Tonal : Button::Variant::Text);
+    if (m_tab_ref)    m_tab_ref->SetVariant(tab == 1 ? Button::Variant::Tonal : Button::Variant::Text);
+    fitPopup();
+    Refresh();
+}
+
+void RegexBuilderPopup::openCodeHelp()
+{
+    // Everything stays local: the prompt goes to the clipboard (never onto a
+    // command line, which other processes could read) and OpenCode is only
+    // launched, not fed data.
+    wxString sample = m_sample ? m_sample->GetValue().Left(400) : wxString{};
+    wxString prompt = "Help me build a regular expression. Engine: C++ std::regex/std::wregex, "
+                      "ECMAScript grammar, icase when case-insensitive; invalid patterns must fail safe. ";
+    prompt += "Current pattern: \"" + GetPattern() + "\". ";
+    if (!sample.IsEmpty())
+        prompt += "It should be tested against this sample text: \"" + sample + "\". ";
+    prompt += "Explain the final pattern token by token.";
+    if (wxTheClipboard->Open()) {
+        wxTheClipboard->SetData(new wxTextDataObject(prompt));
+        wxTheClipboard->Close();
+    }
+    wxArrayString out, err;
+    const bool found = wxExecute("where opencode", out, err, wxEXEC_SYNC | wxEXEC_HIDE_CONSOLE) == 0 && !out.IsEmpty();
+    if (found) {
+        wxExecute("cmd /c start \"\" opencode", wxEXEC_ASYNC);
+        m_ref_status->SetLabel(_L("Prompt copied. OpenCode is starting - paste the prompt there."));
+    } else {
+        m_ref_status->SetLabel(_L("Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."));
+    }
+    m_ref_scroll->Layout();
 }
 
 void RegexBuilderPopup::addSection(wxSizer *sizer, const wxString &title,
                                    const std::vector<ChipDef> &defs)
 {
+    m_sections.emplace_back(title, defs); // the Reference tab reuses these
     const wxColour surface = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
     const int      pad     = FromDIP(kPad);
 
@@ -806,7 +940,8 @@ void RegexBuilderPopup::evaluate()
 
 void RegexBuilderPopup::fitPopup()
 {
-    wxSizer *sizer = m_scroll ? m_scroll->GetSizer() : nullptr;
+    wxScrolledWindow *active = (m_active_tab == 1 && m_ref_scroll) ? m_ref_scroll : m_scroll;
+    wxSizer *sizer = active ? active->GetSizer() : nullptr;
     if (!sizer)
         return;
 
@@ -822,12 +957,22 @@ void RegexBuilderPopup::fitPopup()
     const int    max_h = std::min(FromDIP(600), area.height - FromDIP(96));
 
     const int inset  = FromDIP(4); // keeps square children inside the r12 border arc
-    const int view_h = std::min(content.y, max_h);
-    const int sb_w   = content.y > view_h ? wxSystemSettings::GetMetric(wxSYS_VSCROLL_X, m_scroll) : 0;
+    const int tab_h  = FromDIP(34); // Build | Reference header strip
+    const int view_h = std::min(content.y, max_h - tab_h);
+    const int sb_w   = content.y > view_h ? wxSystemSettings::GetMetric(wxSYS_VSCROLL_X, active) : 0;
 
-    SetClientSize(content.x + sb_w + 2 * inset, view_h + 2 * inset);
-    m_scroll->SetSize(inset, inset, content.x + sb_w, view_h);
-    m_scroll->SetScrollRate(0, FromDIP(16));
-    m_scroll->FitInside();
-    m_scroll->Layout();
+    SetClientSize(content.x + sb_w + 2 * inset, tab_h + view_h + 2 * inset);
+    if (m_tab_build && m_tab_ref) {
+        const int tab_w = FromDIP(96);
+        m_tab_build->SetSize(inset + FromDIP(8), inset + FromDIP(3), tab_w, tab_h - FromDIP(6));
+        m_tab_ref->SetSize(inset + FromDIP(12) + tab_w, inset + FromDIP(3), tab_w, tab_h - FromDIP(6));
+    }
+    for (wxScrolledWindow *scroll : {m_scroll, m_ref_scroll}) {
+        if (!scroll)
+            continue;
+        scroll->SetSize(inset, inset + tab_h, content.x + sb_w, view_h);
+        scroll->SetScrollRate(0, FromDIP(16));
+    }
+    active->FitInside();
+    active->Layout();
 }

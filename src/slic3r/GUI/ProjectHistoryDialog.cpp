@@ -1,11 +1,13 @@
 #include "ProjectHistoryDialog.hpp"
 
+#include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MsgDialog.hpp"
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "Widgets/SearchField.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
 
@@ -146,6 +148,19 @@ void ProjectHistoryDialog::create_ui()
 
     m_list_card = new StaticBox(this);
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);
+    // TRN: Placeholder of the search field filtering the version list.
+    m_search_field = new SearchField(m_list_card, _L("Search versions"));
+    m_search_field->SetOnQuery([this](const wxString &) {
+        populate_versions();
+        update_history_status();
+        update_selection();
+    });
+    m_search_field->SetOnRegexToggle([this](bool) {
+        populate_versions();
+        update_history_status();
+        update_selection();
+    });
+    list_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     m_version_list = new wxDataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxDV_SINGLE | wxBORDER_NONE);
     m_version_list->AppendTextColumn(_L("Commit"), wxDATAVIEW_CELL_INERT, FromDIP(104), wxALIGN_LEFT,
@@ -158,6 +173,7 @@ void ProjectHistoryDialog::create_ui()
                                      wxDATAVIEW_COL_RESIZABLE);
     m_version_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, &ProjectHistoryDialog::on_selection_changed, this);
     m_version_list->Bind(wxEVT_DATAVIEW_ITEM_ACTIVATED, &ProjectHistoryDialog::on_item_activated, this);
+    wxGetApp().UpdateDVCDarkUI(m_version_list); // native header follows the theme
     list_sizer->Add(m_version_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
     m_status_label = new Label(m_list_card, Label::Body_13);
@@ -345,8 +361,9 @@ void ProjectHistoryDialog::begin_restore()
         return;
 
     const int selected_row = m_version_list->GetSelectedRow();
-    if (selected_row == wxNOT_FOUND || static_cast<std::size_t>(selected_row) >= m_versions.size())
+    if (selected_row == wxNOT_FOUND || static_cast<std::size_t>(selected_row) >= m_filtered_rows.size())
         return;
+    const std::size_t selected_version = m_filtered_rows[selected_row];
 
     MessageDialog confirmation(
         this,
@@ -364,7 +381,7 @@ void ProjectHistoryDialog::begin_restore()
     set_busy(PendingOperation::Restore, _L("Preparing selected version..."));
     m_close_button->Enable(false);
     try {
-        m_restore_future = m_manager->restore_version(m_project_identity, m_versions[selected_row].commit_id, destination);
+        m_restore_future = m_manager->restore_version(m_project_identity, m_versions[selected_version].commit_id, destination);
         m_poll_timer.Start(HISTORY_POLL_INTERVAL_MS);
     } catch (const std::exception &exception) {
         m_pending = PendingOperation::None;
@@ -465,14 +482,29 @@ void ProjectHistoryDialog::finish_restore(ProjectHistoryRestoreResult result)
 void ProjectHistoryDialog::populate_versions()
 {
     m_version_list->DeleteAllItems();
-    for (const ProjectHistoryVersion &version : m_versions) {
-        wxVector<wxVariant> row;
+    m_filtered_rows.clear();
+    const wxString query = m_search_field != nullptr ? m_search_field->GetValue() : wxString{};
+    const bool regex      = m_search_field != nullptr && m_search_field->IsRegexEnabled();
+    const bool case_sense = m_search_field != nullptr && m_search_field->IsCaseSensitive();
+    const bool whole_word = m_search_field != nullptr && m_search_field->IsWholeWord();
+    for (std::size_t i = 0; i < m_versions.size(); ++i) {
+        const ProjectHistoryVersion &version = m_versions[i];
         const std::string short_id = version.commit_id.substr(0, std::min<std::size_t>(12, version.commit_id.size()));
-        row.push_back(wxVariant(wxString::FromUTF8(short_id)));
-        row.push_back(wxVariant(display_message(version.message)));
-        row.push_back(wxVariant(format_timestamp(version.committed_at)));
+        const wxString commit    = wxString::FromUTF8(short_id);
+        const wxString message   = display_message(version.message);
+        const wxString timestamp = format_timestamp(version.committed_at);
+        if (!query.IsEmpty()) {
+            const wxString haystack = commit + " " + message + " " + timestamp;
+            if (!SearchField::textMatches(query, haystack, regex, case_sense, whole_word))
+                continue;
+        }
+        wxVector<wxVariant> row;
+        row.push_back(wxVariant(commit));
+        row.push_back(wxVariant(message));
+        row.push_back(wxVariant(timestamp));
         row.push_back(wxVariant(format_size(version.snapshot_size)));
         m_version_list->AppendItem(row);
+        m_filtered_rows.push_back(i);
     }
 }
 
@@ -480,6 +512,12 @@ void ProjectHistoryDialog::update_history_status()
 {
     m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_status_label->SetFont(Label::Body_13);
+    if (m_search_field != nullptr && !m_search_field->GetValue().IsEmpty()) {
+        // TRN: %1$d is how many project versions match the search; %2$d is the total.
+        m_status_label->SetLabel(wxString::Format(_L("%d of %d versions match the search"),
+            static_cast<int>(m_filtered_rows.size()), static_cast<int>(m_versions.size())));
+        return;
+    }
     if (m_list_truncated) {
         // TRN: %d is the number of newest local project versions currently displayed.
         m_status_label->SetLabel(wxString::Format(
@@ -589,7 +627,7 @@ void ProjectHistoryDialog::show_error(const wxString &message)
 void ProjectHistoryDialog::update_selection()
 {
     const int selected_row = m_version_list->GetSelectedRow();
-    const bool has_selection = selected_row != wxNOT_FOUND && static_cast<std::size_t>(selected_row) < m_versions.size();
+    const bool has_selection = selected_row != wxNOT_FOUND && static_cast<std::size_t>(selected_row) < m_filtered_rows.size();
     m_restore_button->Enable(m_pending == PendingOperation::None && has_selection);
     if (has_selection) {
         // Showing the complete object name here makes the abbreviated table id
@@ -597,7 +635,7 @@ void ProjectHistoryDialog::update_selection()
         // ids are technical values, so render them in the MD3 mono face.
         m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_status_label->SetFont(Label::Mono_13);
-        m_status_label->SetLabel(_L("Selected commit: ") + wxString::FromUTF8(m_versions[selected_row].commit_id));
+        m_status_label->SetLabel(_L("Selected commit: ") + wxString::FromUTF8(m_versions[m_filtered_rows[selected_row]].commit_id));
     } else if (!m_versions.empty())
         update_history_status();
 }

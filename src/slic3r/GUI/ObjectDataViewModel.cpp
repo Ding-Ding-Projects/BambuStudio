@@ -1726,12 +1726,25 @@ void ObjectDataViewModel::search_object(wxString search_text)
         search_found_list = assembly_name_list;
     }
     else {
+        // Colour-aware search: each row's haystack also carries its filament
+        // colour as "#RRGGBB name", so "green" or "#00AE42" finds the objects
+        // printed with that filament.
+        std::vector<std::string> filament_colors;
+        if (auto *plater = wxGetApp().plater())
+            filament_colors = plater->get_extruder_colors_from_plater_config();
         search_found_list.clear();
         for (const auto& [model_node, name, tip] : assembly_name_list) {
+            wxString haystack = name;
+            if (model_node != nullptr && !filament_colors.empty()) {
+                long extruder_1based = 0;
+                if (model_node->GetExtruder().ToLong(&extruder_1based) &&
+                    extruder_1based >= 1 && static_cast<std::size_t>(extruder_1based) <= filament_colors.size())
+                    haystack += " " + SearchField::colorSearchText(wxColour(filament_colors[extruder_1based - 1]));
+            }
             // Shared SearchField matcher: honours the sidebar pill's ".*" regex
             // toggle plus its case-sensitive / whole-word builder checkboxes. An
             // invalid or half-typed regex matches everything (never hides rows).
-            if (!SearchField::textMatches(search_text, name, m_search_regex, m_search_case_sensitive, m_search_whole_word))
+            if (!SearchField::textMatches(search_text, haystack, m_search_regex, m_search_case_sensitive, m_search_whole_word))
                 continue;
             search_found_list.push_back(std::tuple(model_node,
                                                    mark_search_matches(name, search_text, m_search_regex, m_search_case_sensitive, m_search_whole_word),

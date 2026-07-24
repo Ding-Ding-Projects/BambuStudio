@@ -1,3 +1,56 @@
+# Screenshot replacement + light/dark fixes + search everywhere + config profiles (2026-07-24, later)
+
+**Wave 2 (same session):** Ctrl+F **command palette** (`CommandPalette` — every enabled menu
+command with icon+description, nav targets, rich inline theme/density/accent rows, SearchField
+query with the regex builder, 120-row cap); the regex-builder popover became **tabbed**
+(Build | Reference) with full per-token documentation rendered from the chip tables, engine
+mini-docs, examples, and an **OpenCode helper** (prompt → clipboard, launches OpenCode when on
+PATH; nothing leaves the machine). Dark-mode pass on the new ConfigProfilesDialog caught and
+fixed: unwrapped/truncated subtitle+secrets labels, '&'-mnemonic title ("_backup"), light label
+bands, dark-on-dark secrets text (UpdateDlgDarkUI before apply_theme), and light native list
+headers in both new dialogs (UpdateDVCDarkUI). Light+dark evidence set committed under
+`docs/screenshots/dark/`. Verified fixed on rebuild: Preview legend legibility (dark OnSurface
+values in light mode) and the narrow move-bar overlap (progressive shed of skips → counter).
+Catalogs at 530 (`compile_translation.py --check` green, language gate 13/13). Known recorded
+findings (not yet fixed): "Slice plate" truncates to "Slice pl" at 846px window width in both
+themes (plate-bar right cluster needs responsive shrink); PrintHostQueueDialog find-bar and
+ProjectHistoryDialog dark-mode label bands unaudited pixel-by-pixel.
+
+User-directed mid-wave: replace ALL screenshots, test light and dark mode for visibility and
+clipping, answer "where is the search bar in print process settings" (it is the magnifier icon
+in the settings tab's top row — collapsed until clicked / Ctrl+F), add many more search bars
+(regex builder always included), colour-aware search, and a full AppData export/import with
+slide-to-confirm, unlimited profiles, and per-profile Git history.
+
+- **Git consolidation:** the last unmerged agent branch `codex/native-material-validation` was
+  proven file-identical/superseded, ours-merged (`7c27f9626`) for ancestry, then deleted from
+  the remote; local `claude/recursing-kepler-58a6c3` + its worktree removed after ancestry
+  proof against pushed `origin/master`. Upstream `v1.x`/`release/*`/contributor branches
+  retained (unmerged, not agent work).
+- **Screenshot matrix replaced** from the current build: native surfaces via headless Mesa
+  llvmpipe + PrintWindow (menus via the WinEvent menucap machinery, popovers via bldcap on the
+  headless desktop — transient popups dismiss if any helper process spawns, so click+capture
+  must run in ONE process), webviews via headless Edge, old crop framing recovered by
+  FFT template-matching each old crop against the fresh page shots (score 1.0 = same box).
+  New captures added for the Calibration nav tab and the advanced builder's new sections.
+- **Light-mode Preview bugs found by this pass, fixed in-tree:** legend dock text was
+  ImGui-default white on the light surface (now pushes OnSurface with the window's other
+  style colors — pops bumped 8→9 at all three sites); the move bar's clamped groove slid the
+  handle over the "Move N / N" counter at narrow widths (now sheds skip buttons, then the
+  counter, before ever overlapping).
+- **Search everywhere:** ProjectHistoryDialog gained a filtering SearchField (selection and
+  restore map through `m_filtered_rows`); PrintHostQueueDialog gained find-in-queue (count +
+  select — rows can't hide because job ids are row indices); the Plater object search is now
+  colour-aware via `SearchField::colorSearchText` (hex + nearest-name haystack).
+- **Config profiles & backup (File menu):** `ConfigProfilesDialog` + `Widgets/SlideToConfirm`.
+  Whole-datadir zip export (secrets included — explicit ErrorContainer warning, slide gate,
+  keyboard-operable), import→new-profile only (zip-slip guarded), unlimited profiles under
+  `<datadir-parent>/BambuStudio-profiles/`, one-click launch via `--datadir`, per-profile
+  snapshots/restore through ProjectHistoryManager (identity = `<name>.profile`, content =
+  fresh zip). 43 new curated yue_HK entries; catalog 494, `compile_translation.py --check`
+  green. Docs: `docs/features/workspace/config-profiles-backup.md` + index/regex-builder/
+  version-history updates.
+
 # Dark-mode/clipping wave + advanced regex builder + release-pipeline repair (2026-07-24)
 
 User-reported: "hardly visible text everywhere" (dark mode), Process-card overlap, "latest

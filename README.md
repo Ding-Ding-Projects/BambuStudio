@@ -112,11 +112,16 @@ UI stays fully interactive.
 | :---: | :---: |
 | ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard filament page](docs/screenshots/wizard/wizard-step-22.png) |
 
+| Config profiles & backup (slide-to-confirm export) | |
+| :---: | :---: |
+| ![Config profiles & backup dialog](docs/screenshots/config-profiles/dialog.png) | |
+
 Per-feature folders with every button close-up: [notifications](docs/screenshots/notifications/) ·
 [version-history](docs/screenshots/version-history/) · [regex-builder](docs/screenshots/regex-builder/) ·
 [appearance](docs/screenshots/appearance/) · [preferences](docs/screenshots/preferences/) ·
 [project-tabs](docs/screenshots/project-tabs/) · [main-window](docs/screenshots/main-window/) ·
-[home](docs/screenshots/home/) · [wizard](docs/screenshots/wizard/)
+[home](docs/screenshots/home/) · [wizard](docs/screenshots/wizard/) ·
+[config-profiles](docs/screenshots/config-profiles/)
 
 #### Earlier installed-app captures
 
