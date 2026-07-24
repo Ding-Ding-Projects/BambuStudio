@@ -44,9 +44,27 @@ hwnd access now requires launching the cheap CLI ON the headless desktop).
   coverage.json updated. PO escape gotcha recorded: the parser is ast.literal_eval, so \b and
   mesa\opengl32.dll must be double-backslashed in msgid/msgstr.
 
-Verification state at handoff-write time: serial Release build in progress; headless dark-mode
-recapture of the exact reported defects pending build completion; light-mode regression pass
-pending. This section will not claim those green until they are.
+**Verification (completed):** serial local Release build green (1h11m, 0 errors, DLL relink
+proven against object timestamps). Headless dark-mode recapture PASS on every reported defect:
+"Not sliced" + both action pills legible, white square gone, option segments proper capsules,
+Layer-height/manipulation values legible, Global/Objects header with zero overlap, neutral
+segment glyphs, dark caption full-width. The residual half-clipped preset-row glyph was
+root-caused to the sizer-less DISABLE_UNDO_SYS undo-to-sys button floating at the panel origin —
+hidden (`f8461434e`), re-verified by crop. Light-mode regression pass clean on the same surfaces.
+Wave pushed as `e2ed70365` (38 files) + `f8461434e`; summary in Discussion #2; wiki Releases page
+updated.
+
+**Release-loop postscript:** the loop RESURRECTED after the trigger fix — tag-triggered runs
+execute the OLD workflow snapshot at the tag's commit, so surviving echoes kept re-seeding
+(~25 more releases). Contained by cancelling every tag-ref run and arming a session reaper
+(cancels new tag-ref runs within 2 min); echoes starve because none reaches publish. 165 echo
+releases deleted in total; keepers r192/r174/portable-preview-1. Any future session that sees
+`md3-windows-*`-ref runs should cancel them on sight until the old tags age out.
+
+**CI state at handoff-write:** final wave run 30081955084 (head `f8461434e`, Ninja+sccache path
+with SLIC3R_MSVC_PDB=OFF) in progress — NOT yet claimed green; its release will be the first
+containing this wave. First sccache run only populates the cache; warm timing evidence needs the
+run after it. e2ed70365's run was cancelled by design (per-ref cancel-in-progress supersede).
 
 # Post-conformance feature + polish program (2026-07-23)
 
