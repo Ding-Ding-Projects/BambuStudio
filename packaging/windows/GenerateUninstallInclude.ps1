@@ -42,6 +42,33 @@ if ($reparsePoints.Count -ne 0) {
     throw "Payload contains unsupported reparse point '$($reparsePoints[0].FullName)'."
 }
 
+# The application's software-GL fallback copies mesa\opengl32.dll and
+# mesa\libgallium_wgl.dll beside bambu-studio.exe at runtime (see
+# docs/features/windows/software-gl-fallback.md). Those runtime copies are
+# owned byproducts of the shipped payload, so when the payload carries the
+# mesa fallback pair, the uninstaller must also guard and delete the root
+# copies — otherwise an uninstall after the fallback fired would fail closed
+# on "unknown paths". NSIS Delete on a never-created file is a no-op.
+$softGlRuntimeCopies = @()
+$payloadRelativeFiles = @(
+    $entries |
+        Where-Object { -not $_.PSIsContainer } |
+        ForEach-Object { [System.IO.Path]::GetRelativePath($payloadRoot, $_.FullName).Replace('/', '\') }
+)
+$mesaFallbackPair = @('mesa\opengl32.dll', 'mesa\libgallium_wgl.dll')
+$payloadHasMesaFallback = @(
+    $mesaFallbackPair | Where-Object {
+        $needle = $_
+        $payloadRelativeFiles | Where-Object { $_.Equals($needle, [System.StringComparison]::OrdinalIgnoreCase) }
+    }
+).Count -eq $mesaFallbackPair.Count
+if ($payloadHasMesaFallback) {
+    $softGlRuntimeCopies = @('opengl32.dll', 'libgallium_wgl.dll') | Where-Object {
+        $candidate = $_
+        -not ($payloadRelativeFiles | Where-Object { $_.Equals($candidate, [System.StringComparison]::OrdinalIgnoreCase) })
+    }
+}
+
 $reservedUninstallerPaths = @(
     $entries | Where-Object {
         [System.IO.Path]::GetRelativePath($payloadRoot, $_.FullName).Equals(
@@ -86,6 +113,10 @@ foreach ($file in @($entries | Where-Object { -not $_.PSIsContainer } | Sort-Obj
     $literalPath = ConvertTo-NsisLiteral -RelativePath $relativePath
     $lines.Add(('  !insertmacro AssertNotReparse "${{PRODUCT_INSTALL_DIR}}\{0}"' -f $literalPath))
 }
+foreach ($runtimeCopy in $softGlRuntimeCopies) {
+    $literalPath = ConvertTo-NsisLiteral -RelativePath $runtimeCopy
+    $lines.Add(('  !insertmacro AssertNotReparse "${{PRODUCT_INSTALL_DIR}}\{0}"' -f $literalPath))
+}
 $lines.Add('  !insertmacro AssertNotReparse "${PRODUCT_INSTALL_DIR}\Uninstall.exe"')
 $lines.Add('!macroend')
 $lines.Add('')
@@ -94,6 +125,10 @@ $lines.Add('!macro BambuMD3DeletePayloadFiles')
 foreach ($file in @($entries | Where-Object { -not $_.PSIsContainer } | Sort-Object FullName)) {
     $relativePath = [System.IO.Path]::GetRelativePath($payloadRoot, $file.FullName).Replace('/', '\')
     $literalPath = ConvertTo-NsisLiteral -RelativePath $relativePath
+    $lines.Add(('  Delete "${{PRODUCT_INSTALL_DIR}}\{0}"' -f $literalPath))
+}
+foreach ($runtimeCopy in $softGlRuntimeCopies) {
+    $literalPath = ConvertTo-NsisLiteral -RelativePath $runtimeCopy
     $lines.Add(('  Delete "${{PRODUCT_INSTALL_DIR}}\{0}"' -f $literalPath))
 }
 $lines.Add('!macroend')

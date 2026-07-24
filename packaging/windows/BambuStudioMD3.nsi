@@ -1129,6 +1129,13 @@ Section "Bambu Studio MD3" SEC_MAIN
     CopyFiles /SILENT "$BuildSessionDir\owned-manifest.txt" "${PRODUCT_INSTALL_DIR}\.md3-owned-manifest.txt"
     IfErrors install_payload_failed
   ${Else}
+    ; The payload includes the "mesa" subfolder (Mesa llvmpipe opengl32.dll +
+    ; libgallium_wgl.dll, staged by CI from the hash-pinned pal1000
+    ; mesa-dist-win release). It installs inert into <app>\mesa; the app copies
+    ; the DLLs beside bambu-studio.exe only when the host lacks OpenGL 2.0
+    ; (see docs/features/windows/software-gl-fallback.md). Like every other
+    ; payload path it is enumerated by GenerateUninstallInclude.ps1, so the
+    ; uninstaller removes it through the generated owned-file macros.
     File /r "${PAYLOAD_DIR}\*.*"
     IfErrors install_payload_failed
   ${EndIf}

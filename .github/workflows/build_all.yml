@@ -223,6 +223,7 @@ jobs:
               '- Signing: unsigned; verify the accompanying SHA-256 checksum before running'
               "- Provenance: verify with ``gh attestation verify BambuStudioMD3-Setup.exe --repo $env:GITHUB_REPOSITORY``"
               '- SBOM: CycloneDX 1.6 payload inventory is attached and attested'
+              '- Software OpenGL fallback: ships hash-pinned Mesa llvmpipe 26.1.3 in the mesa\ subfolder; self-heals on machines without OpenGL 2.0 (VMs / Microsoft Basic Display Adapter)'
               '- Release integrity: published as a GitHub immutable release after all assets are validated in draft state'
           )
           $notes | Set-Content release-notes.md -Encoding utf8
