@@ -11,6 +11,8 @@ surfaces. Upstream Bambu Studio material remains in [`../doc/`](../doc/).
 - [Prepare](features/prepare/README.md) — Prepare-workspace features, including the dockable sidebar.
 - [Model preview](features/model-preview/README.md) — the MakerWorld OpenGL preview shown before
   import.
+- [G-code preview](features/gcode-preview/README.md) — the sliced Preview page: toolpath viewport,
+  the color-scheme legend, and the layer/transport controls.
 - [Releases](features/releases/README.md) — installer behavior, CI gates, SBOMs, attestations, and
   immutable-release policy.
 
