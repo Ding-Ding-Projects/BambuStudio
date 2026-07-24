@@ -2487,7 +2487,14 @@ namespace Slic3r
                         }
                         append_item(EItemType::None, m_tools.m_tool_colors[0], columns_offsets);
                     }
-                    //BBS display filament change times
+                    //BBS display filament change times / cost
+                    // These summary lines sit below the FILAMENT | MODEL table.
+                    // Give them a clear break from the table plus the same
+                    // vertical row advance as the table rows (append_item uses
+                    // ItemSpacing.y == 6*scale) so they no longer crowd the
+                    // per-filament value rows above them.
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, 6.0f * m_scale));
+                    ImGui::Dummy({ window_padding, window_padding });
                     ImGui::Dummy({ window_padding, window_padding });
                     ImGui::SameLine();
                     imgui.text(_u8L("Filament change times") + ":");
@@ -2501,6 +2508,7 @@ namespace Slic3r
                     ImGui::SameLine();
                     ::sprintf(buf, "%.2f", ps.total_cost);
                     imgui.text(buf);
+                    ImGui::PopStyleVar(1);
                     break;
                 }
                 // helio
