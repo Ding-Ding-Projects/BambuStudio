@@ -1,7 +1,12 @@
 name: Windows build and release
 
 on:
-  push: {}
+  push:
+    # Branch pushes only. A bare `push: {}` also matches the tag that the
+    # release job itself creates, so every release re-triggered a build of the
+    # same commit and published another (mis-titled) release — an unbounded
+    # release loop (r94..r192 were all echoes of a handful of commits).
+    branches: ['**']
 
   pull_request:
     branches: [master]
@@ -72,7 +77,9 @@ jobs:
 
   release_windows:
     name: Publish Windows release
-    if: ${{ github.event_name != 'pull_request' }}
+    # ref_type guard is redundant with the branches-only push trigger above but
+    # keeps the release loop impossible even if the trigger is later widened.
+    if: ${{ github.event_name != 'pull_request' && github.ref_type != 'tag' }}
     needs: build_windows
     runs-on: windows-latest
     concurrency:
