@@ -312,10 +312,39 @@ jobs:
           }
 
           $env:PATH = '${{ github.workspace }}\install-dir;' + $env:PATH
-          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests|deterministic_bbs_3mf_tests)$'
+          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests)$'
           if ($LASTEXITCODE -ne 0) {
               throw "Windows C++ tests failed with exit code $LASTEXITCODE."
           }
+
+          # deterministic_bbs_3mf_tests hangs only on hosted runners (locally
+          # 10/10 green in seconds; on CI it has never completed). Run it
+          # directly with a watchdog: on hang, capture a full procdump so the
+          # stacks can be analyzed offline, then fail the step.
+          $exe = 'build-tests\tests\libslic3r\Release\deterministic_bbs_3mf_tests.exe'
+          $proc = Start-Process -FilePath $exe -ArgumentList '-s','--durations','yes' -NoNewWindow -PassThru `
+              -RedirectStandardOutput det-test-out.log -RedirectStandardError det-test-err.log
+          if (-not $proc.WaitForExit(300000)) {
+              Write-Host '=== deterministic_bbs_3mf_tests hung for 300 s; capturing dump ==='
+              Invoke-WebRequest -Uri 'https://download.sysinternals.com/files/Procdump.zip' -OutFile procdump.zip
+              Expand-Archive procdump.zip -DestinationPath procdump-bin -Force
+              & procdump-bin\procdump64.exe -accepteula -ma $proc.Id "$env:RUNNER_TEMP\deterministic-hang.dmp"
+              Stop-Process -Id $proc.Id -Force
+              Get-Content det-test-out.log -ErrorAction SilentlyContinue
+              throw 'deterministic_bbs_3mf_tests hung; dump uploaded as artifact.'
+          }
+          Get-Content det-test-out.log -ErrorAction SilentlyContinue
+          if ($proc.ExitCode -ne 0) {
+              throw "deterministic_bbs_3mf_tests failed with exit code $($proc.ExitCode)."
+          }
+
+      - name: Upload hang dump (only when the deterministic test hung)
+        if: inputs.os == 'windows-latest' && failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: deterministic-hang-dump
+          path: ${{ runner.temp }}\deterministic-hang.dmp
+          if-no-files-found: ignore
 
       - name: Exercise native Windows light, dark, and language visuals
         if: inputs.os == 'windows-latest'
