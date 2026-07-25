@@ -15,6 +15,7 @@
 #include "FileHelp.hpp"
 #include "Tab.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #define NAME_OPTION_COMBOBOX_SIZE wxSize(FromDIP(200), FromDIP(24))
 #define FILAMENT_PRESET_COMBOBOX_SIZE wxSize(FromDIP(300), FromDIP(24))
@@ -664,6 +665,7 @@ CreateFilamentPresetDialog::CreateFilamentPresetDialog(wxWindow *parent)
     });
 
 	wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 CreateFilamentPresetDialog::~CreateFilamentPresetDialog()
@@ -1531,12 +1533,13 @@ CreatePrinterPresetDialog::CreatePrinterPresetDialog(wxWindow *parent)
     Layout();
     Fit();
 
+    wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
     wxSize screen_size = wxGetDisplaySize();
     int    dialogX     = (screen_size.GetWidth() - GetSize().GetWidth()) / 2;
     int    dialogY     = (screen_size.GetHeight() - GetSize().GetHeight()) / 2;
     SetPosition(wxPoint(dialogX, dialogY));
-
-    wxGetApp().UpdateDlgDarkUI(this);
 }
 
 CreatePrinterPresetDialog::~CreatePrinterPresetDialog()
@@ -3556,6 +3559,7 @@ CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, con
     Layout();
     Fit();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 CreatePresetSuccessfulDialog::~CreatePresetSuccessfulDialog() {}
@@ -3604,6 +3608,7 @@ ExportConfigsDialog::ExportConfigsDialog(wxWindow *parent)
     this->Fit();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 
 }
 
@@ -4636,8 +4641,9 @@ EditFilamentPresetDialog::EditFilamentPresetDialog(wxWindow *parent, FilamentInf
     this->SetSizer(m_main_sizer);
     this->Layout();
     this->Fit();
-    this->CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    this->CenterOnParent();
 }
 EditFilamentPresetDialog::~EditFilamentPresetDialog() {}
 
@@ -5048,6 +5054,7 @@ CreatePresetForPrinterDialog::CreatePresetForPrinterDialog(wxWindow *parent, std
     this->Layout();
     this->Fit();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 CreatePresetForPrinterDialog::~CreatePresetForPrinterDialog() {}

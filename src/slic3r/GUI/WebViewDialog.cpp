@@ -26,6 +26,7 @@
 #include <slic3r/GUI/Widgets/WebView.hpp>
 #include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/GUI/Widgets/MaterialIcon.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 namespace pt = boost::property_tree;
 
@@ -1956,6 +1957,7 @@ void WebViewPanel::OnRunScriptCustom(wxCommandEvent& WXUNUSED(evt))
         m_javascript,
         wxOK | wxCANCEL | wxCENTRE | wxTE_MULTILINE
     );
+    MD3DialogCaption::Adopt(&dialog);
     if (dialog.ShowModal() != wxID_OK)
         return;
 
@@ -1973,6 +1975,7 @@ void WebViewPanel::OnAddUserScript(wxCommandEvent& WXUNUSED(evt))
         userScript,
         wxOK | wxCANCEL | wxCENTRE | wxTE_MULTILINE
     );
+    MD3DialogCaption::Adopt(&dialog);
     if (dialog.ShowModal() != wxID_OK)
         return;
 
@@ -1991,6 +1994,7 @@ void WebViewPanel::OnSetCustomUserAgent(wxCommandEvent& WXUNUSED(evt))
         customUserAgent,
         wxOK | wxCANCEL | wxCENTRE
     );
+    MD3DialogCaption::Adopt(&dialog);
     if (dialog.ShowModal() != wxID_OK)
         return;
 

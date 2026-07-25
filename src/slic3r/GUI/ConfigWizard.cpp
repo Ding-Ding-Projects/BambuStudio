@@ -48,6 +48,7 @@
 #include "MsgDialog.hpp"
 #include "UnsavedChangesDialog.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #if defined(__linux__) && defined(__WXGTK3__)
 #define wxLinux_gtk3 true
@@ -2776,6 +2777,7 @@ ConfigWizard::ConfigWizard(wxWindow *parent)
         });
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 ConfigWizard::~ConfigWizard() {}
