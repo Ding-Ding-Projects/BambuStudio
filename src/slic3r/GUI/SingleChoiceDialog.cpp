@@ -2,6 +2,7 @@
 
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -60,6 +61,7 @@ SingleChoiceDialog::SingleChoiceDialog(const wxString &message, const wxString &
     this->SetSizer(bSizer);
     this->Layout();
     bSizer->Fit(this);
+    MD3DialogCaption::Adopt(this);
     wxGetApp().UpdateDlgDarkUI(this);
 }
 SingleChoiceDialog::~SingleChoiceDialog() {}

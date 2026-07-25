@@ -16207,17 +16207,15 @@ int Plater::priv::update_helio_background_process_v2(std::string& printer_id, st
 
             // Reuse the same PrinterSelectionDialog class defined above in the V3 function scope
             // For V2, show a simple choice dialog
-            wxSingleChoiceDialog dialog(static_cast<wxWindow*>(wxGetApp().mainframe),
+            SingleChoiceDialog dialog(
                 wxString::Format(_L("Your printer '%s' is not officially supported by Helio.\nSelect a reference printer:"), printer_target_name),
-                _L("Unsupported Printer"), printer_choices);
+                _L("Unsupported Printer"), printer_choices, 0, static_cast<wxWindow*>(wxGetApp().mainframe));
 
-            if (dialog.ShowModal() == wxID_OK) {
-                int selection = dialog.GetSelection();
-                if (selection >= 0 && selection < (int)printer_ids.size()) {
-                    printer_id = printer_ids[selection];
-                    helio_support = true;
-                    helio_using_reference_printer = true;
-                }
+            int selection = dialog.GetSingleChoiceIndex();
+            if (selection >= 0 && selection < (int)printer_ids.size()) {
+                printer_id = printer_ids[selection];
+                helio_support = true;
+                helio_using_reference_printer = true;
             }
 
             if (!helio_support) return -1;

@@ -12,6 +12,7 @@
 #include "libslic3r/Config.hpp"
 #include "BitmapComboBox.hpp"
 #include "Widgets/ComboBox.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include <wx/sizer.h>
 
 #include "libslic3r/ObjColorUtils.hpp"
@@ -266,6 +267,7 @@ ObjColorDialog::ObjColorDialog(wxWindow *parent, Slic3r::ObjDialogInOut &in_out,
     });
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
 }
 

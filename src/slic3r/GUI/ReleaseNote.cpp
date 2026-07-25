@@ -16,6 +16,7 @@
 #include "Widgets/WebView.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/regex.h>
 #include <wx/progdlg.h>
@@ -2175,8 +2176,9 @@ void InputIpAddressDialog::OnHeaderClose()
      Layout();
      Fit();
 
-     CentreOnParent();
      wxGetApp().UpdateDlgDarkUI(this);
+     MD3DialogCaption::Adopt(this);
+     CentreOnParent();
  }
 
 void SendFailedConfirm::on_dpi_changed(const wxRect &suggested_rect) {}

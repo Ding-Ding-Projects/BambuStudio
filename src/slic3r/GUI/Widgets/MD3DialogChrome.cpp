@@ -102,6 +102,34 @@ void MD3DialogCaption::OnPaintClose(wxPaintEvent &)
     }
 }
 
+void MD3DialogCaption::Adopt(wxDialog *dialog, const wxString &title)
+{
+    if (dialog == nullptr)
+        return;
+    // Content height before the frame changes: restored below so the body
+    // keeps exactly the space the ctor laid out for it.
+    const wxSize client = dialog->GetClientSize();
+
+    long style = dialog->GetWindowStyleFlag();
+    style &= ~(wxCAPTION | wxCLOSE_BOX | wxSYSTEM_MENU | wxMAXIMIZE_BOX | wxMINIMIZE_BOX);
+    style |= wxBORDER_NONE;
+    dialog->SetWindowStyleFlag(style); // wxMSW applies SWP_FRAMECHANGED itself
+
+    const wxString caption_title = title.empty() ? dialog->GetTitle() : title;
+    auto *caption = new MD3DialogCaption(dialog, caption_title);
+    wxSizer *old = dialog->GetSizer();
+    auto *outer = new wxBoxSizer(wxVERTICAL);
+    outer->Add(caption, 0, wxEXPAND);
+    if (old != nullptr) {
+        dialog->SetSizer(nullptr, false); // detach without deleting
+        outer->Add(old, 1, wxEXPAND);
+    }
+    dialog->SetSizer(outer);
+    dialog->SetClientSize(client.x, client.y + caption->GetMinSize().y);
+    dialog->Layout();
+    FinishChrome(dialog);
+}
+
 void MD3DialogCaption::FinishChrome(wxDialog *dialog)
 {
     if (dialog == nullptr)

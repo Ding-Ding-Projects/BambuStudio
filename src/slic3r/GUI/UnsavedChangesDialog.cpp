@@ -29,6 +29,7 @@
 #include "PresetComboBoxes.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/CheckBox.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 using boost::optional;
 
@@ -1919,6 +1920,7 @@ FullCompareDialog::FullCompareDialog(const wxString& option_name, const wxString
     topSizer->SetSizeHints(this);
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 
@@ -2041,6 +2043,7 @@ DiffPresetDialog::DiffPresetDialog(MainFrame* mainframe)
     this->SetSizer(topSizer);
     topSizer->SetSizeHints(this);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this, _L("Compare presets"));
 }
 
 void DiffPresetDialog::update_controls_visibility(Preset::Type type /* = Preset::TYPE_INVALID*/)

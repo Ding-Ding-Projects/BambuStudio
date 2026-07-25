@@ -29,6 +29,15 @@ public:
     // Call after the dialog's sizer is set (typically right before Show).
     static void FinishChrome(wxDialog *dialog);
 
+    // Full one-call adoption for dialogs that cannot change base class:
+    // strips the native caption styles in place, wraps the dialog's existing
+    // root sizer under a caption strip, restores the content's client height,
+    // and finishes the chrome. Call as the LAST layout act of the ctor (after
+    // Fit/SetSizeHints; move CenterOnParent after it when present). An empty
+    // title falls back to the dialog's window title. wxRESIZE_BORDER, when
+    // present, is preserved so edge-resizing keeps working.
+    static void Adopt(wxDialog *dialog, const wxString &title = wxString());
+
 private:
     void OnPaintClose(wxPaintEvent &event);
 

@@ -22,6 +22,7 @@
 #include "fila_manager/wgtFilaManagerStore.h"
 #include "fila_manager/wgtFilaManagerCloudDispatcher.h"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/dcmemory.h>
 #include <wx/graphics.h>
@@ -116,6 +117,7 @@ AMSMaterialsSetting::AMSMaterialsSetting(wxWindow *parent, wxWindowID id)
 {
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 void AMSMaterialsSetting::create()
@@ -2973,6 +2975,8 @@ AMSNewOfficialFilamentDlg::AMSNewOfficialFilamentDlg(wxWindow* parent)
 {
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this, _L("Filament Manager"));
+    Centre();
 }
 
 void AMSNewOfficialFilamentDlg::create()
@@ -3063,7 +3067,6 @@ void AMSNewOfficialFilamentDlg::create()
 
     SetSizer(sizer);
     Fit();
-    Centre();
 }
 
 void AMSNewOfficialFilamentDlg::on_confirm(wxCommandEvent&)

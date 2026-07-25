@@ -24,10 +24,12 @@
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "SingleChoiceDialog.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <wx/progdlg.h>
+#include <wx/textdlg.h>
 #include <libslic3r/Orient.hpp>
 #include <unordered_set>
 #include <wx/listbook.h>
@@ -6392,8 +6394,12 @@ void ObjectList::rename_item()
     if (!item || !(m_objects_model->GetItemType(item) & (itVolume | itObject)))
         return ;
 
-    const wxString new_name = wxGetTextFromUser(_(L("Enter new name"))+":", _(L("Renaming")),
-                                                m_objects_model->GetName(item), this);
+    wxTextEntryDialog dlg(this, _(L("Enter new name"))+":", _(L("Renaming")));
+    dlg.SetValue(m_objects_model->GetName(item));
+    MD3DialogCaption::Adopt(&dlg);
+    if (dlg.ShowModal() != wxID_OK)
+        return;
+    const wxString new_name = dlg.GetValue();
 
     if (new_name.IsEmpty())
         return;

@@ -15,6 +15,7 @@
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "BackgroundSlicingProcess.hpp"
 #include "ConnectPrinter.hpp"
 
@@ -962,8 +963,9 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     init_bind();
     init_timer();
-    Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 void SelectMachineDialog::init_bind()
@@ -2564,6 +2566,7 @@ void SelectMachineDialog::timelapse_button_click()
 
     dlg.SetSizer(main_sizer);
     dlg.Fit();
+    MD3DialogCaption::Adopt(&dlg, _L("Timelapse"));
     dlg.CenterOnParent();
     dlg.ShowModal();
 }
@@ -2829,6 +2832,7 @@ void SelectMachineDialog::show_timelapse_storage_dialog(MachineObject* obj)
     main_sizer->Add(btn_sizer, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, FromDIP(20));
     dlg.SetSizer(main_sizer);
     dlg.Fit();
+    MD3DialogCaption::Adopt(&dlg, _L("Storage Space Not Enough"));
     dlg.CenterOnParent();
 
     // ShowModal returns after dialog closes �� handle action outside modal stack

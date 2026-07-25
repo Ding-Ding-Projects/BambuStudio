@@ -9,6 +9,7 @@
 #include "GUI_App.hpp"
 #include "wxExtensions.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include <wx/notebook.h>
 
 namespace Slic3r {
@@ -78,6 +79,7 @@ KBShortcutsDialog::KBShortcutsDialog()
     SetSizer(m_sizer_top);
     Layout();
     Fit();
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
 
     // select first

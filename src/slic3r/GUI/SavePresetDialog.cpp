@@ -18,6 +18,7 @@
 #include "GUI_App.hpp"
 #include "format.hpp"
 #include "Tab.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 using Slic3r::GUI::format_wxstr;
 
@@ -311,6 +312,8 @@ SavePresetDialog::SavePresetDialog(wxWindow *parent, Preset::Type type, std::str
 {
     build(std::vector<Preset::Type>{type}, suffix);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    this->Centre(wxBOTH);
 }
 
 SavePresetDialog::SavePresetDialog(wxWindow *parent, std::vector<Preset::Type> types, std::string suffix)
@@ -318,6 +321,8 @@ SavePresetDialog::SavePresetDialog(wxWindow *parent, std::vector<Preset::Type> t
 {
     build(types, suffix);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    this->Centre(wxBOTH);
 }
 
 SavePresetDialog::~SavePresetDialog()
@@ -386,8 +391,6 @@ void SavePresetDialog::build(std::vector<Preset::Type> types, std::string suffix
 
     SetSizer(m_Sizer_main);
     m_Sizer_main->SetSizeHints(this);
-
-    this->Centre(wxBOTH);
 }
 
 void SavePresetDialog::on_select_cancel(wxCommandEvent &event)

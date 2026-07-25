@@ -116,6 +116,7 @@
 #include "SendSystemInfoDialog.hpp"
 #include "ParamsDialog.hpp"
 #include "KBShortcutsDialog.hpp"
+#include "SingleChoiceDialog.hpp"
 #include "DownloadProgressDialog.hpp"
 #include "HttpServer.hpp"
 
@@ -6588,12 +6589,8 @@ int GUI_App::GetSingleChoiceIndex(const wxString& message,
                                 int initialSelection)
 {
 #ifdef _WIN32
-    wxSingleChoiceDialog dialog(nullptr, message, caption, choices);
-    dialog.SetBackgroundColour(ThemeColor::White);
-    wxGetApp().UpdateDlgDarkUI(&dialog);
-
-    dialog.SetSelection(initialSelection);
-    return dialog.ShowModal() == wxID_OK ? dialog.GetSelection() : -1;
+    SingleChoiceDialog dialog(message, caption, choices, initialSelection);
+    return dialog.GetSingleChoiceIndex();
 #else
     return wxGetSingleChoiceIndex(message, caption, choices, initialSelection);
 #endif

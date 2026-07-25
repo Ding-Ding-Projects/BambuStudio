@@ -13,6 +13,7 @@
 #include "slic3r/GUI/Widgets/AnimaController.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "slic3r/GUI/Widgets/ComboBox.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "slic3r/GUI/Widgets/ProgressBar.hpp"
 #include "DeviceCore/DevUtilBackend.h"
 
@@ -264,6 +265,7 @@ AMSDryCtrWin::AMSDryCtrWin(wxWindow *parent)
     :DPIDialog(parent, wxID_ANY, _L("AMS Dryness Control"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
     create();
+    MD3DialogCaption::Adopt(this);
 }
 
 AMSDryCtrWin::~AMSDryCtrWin()

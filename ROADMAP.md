@@ -2,6 +2,26 @@
 
 ## Landed
 
+### Chrome-sweep tranche: stock dialogs adopted (2026-07-25)
+
+- **`MD3DialogCaption::Adopt()`** — one-call adoption for dialogs that cannot change base
+  class: strips the native caption styles in place, wraps the existing root sizer under the
+  44px caption strip (title falls back to the window title), restores the content client
+  height, preserves `wxRESIZE_BORDER`, and finishes rounded corners + fade.
+- **17 dialog classes de-natived** with it: AMS dryness control, AMS materials setting (+
+  official-filament dialog), Print options + printer parts, Send print job (+ its two inline
+  timelapse/storage dialogs), Save preset, Flushing volumes, Object color import, Full
+  compare + Compare presets, sending-failed confirm, Keyboard shortcuts, About + Copyrights,
+  System info, and Slic3r's own SingleChoiceDialog.
+- **Stock wx prompts routed to chromed dialogs**: the four raw `wxSingleChoiceDialog` sites
+  (choice index helper, Helio printer pick, both Config-profiles snapshot pickers) now use
+  the chromed SingleChoiceDialog; the object rename `wxGetTextFromUser` became an adopted
+  `wxTextEntryDialog`; two raw `wxMessageDialog`s (snapshot confirm, mixed-color sublayer)
+  became Slic3r `MessageDialog`. Startup-error `wxMessageBox`es stay native deliberately —
+  they fire where the MD3 shell may not be constructible.
+- Headlessly verified on the fresh build: Keyboard shortcuts and About render the MD3
+  caption with no native bar and intact content (`docs/screenshots/dialog-chrome/`).
+
 ### Smart-home & scanner wave (2026-07-24, late night)
 
 - **AI filament scanner** (File menu): QR-code phone upload (token-guarded LAN server,
@@ -75,9 +95,10 @@
 
 ## Next: follow-ups
 
-- Chrome sweep continues: Preferences and the upload queue are done this wave (headlessly
-  verified — native caption gone from both); the long tail of stock #32770 dialogs (AMS
-  dryness, message dialogs, wx choice dialogs) remains.
+- Chrome sweep continues: the 2026-07-25 tranche adopted the 17 highest-visibility stock
+  dialogs (see Landed). Remaining long tail: ConfigWizard + the CreatePresetsDialog family,
+  the three webview JS-prompt `wxTextEntryDialog`s, and a scan pass over the ~50 lower-traffic
+  `DPIDialog` subclasses not yet adopted.
 - Motion: dialogs, palette, popovers and SlideToConfirm animate now; toast enter/exit is
   ImGui-native already — remaining candidate is tab/page fade-through (needs compositing).
 - The ObjColor compare-panel greys are tokenized (SurfaceContainer roles); SyncAms itself was

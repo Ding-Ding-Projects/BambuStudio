@@ -3,6 +3,7 @@
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MsgDialog.hpp"
+#include "SingleChoiceDialog.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "PreferencesHistory.hpp"
@@ -529,11 +530,12 @@ void ConfigProfilesDialog::on_history(wxCommandEvent &)
                                      wxString::FromUTF8(v.commit_id.substr(0, 12))));
     }
     // TRN: %s is a profile name; the dialog lists its recorded snapshots.
-    wxSingleChoiceDialog picker(this, wxString::Format(_L("Snapshots of \"%s\". Restoring creates a NEW profile; nothing is overwritten."), row.name),
-                                _L("Profile history"), choices);
-    if (picker.ShowModal() != wxID_OK)
+    SingleChoiceDialog picker(wxString::Format(_L("Snapshots of \"%s\". Restoring creates a NEW profile; nothing is overwritten."), row.name),
+                              _L("Profile history"), choices, 0, this);
+    const int picked = picker.GetSingleChoiceIndex();
+    if (picked < 0)
         return;
-    const auto &version = versions.versions[picker.GetSelection()];
+    const auto &version = versions.versions[picked];
     std::string base = row.name.ToStdString() + "-restored";
     std::filesystem::path target = profiles_root() / base;
     std::error_code ec;
@@ -596,12 +598,13 @@ void ConfigProfilesDialog::on_prefs_history(wxCommandEvent &)
                                      wxString::FromUTF8(v.message),
                                      wxString::FromUTF8(v.commit_id.substr(0, 12))));
     }
-    wxSingleChoiceDialog picker(this,
+    SingleChoiceDialog picker(
         _L("Automatic snapshots of your preferences. Restoring writes a copy next to the live file; nothing is overwritten."),
-        _L("Preferences history"), choices);
-    if (picker.ShowModal() != wxID_OK)
+        _L("Preferences history"), choices, 0, this);
+    const int picked = picker.GetSingleChoiceIndex();
+    if (picked < 0)
         return;
-    const auto &version = versions.versions[picker.GetSelection()];
+    const auto &version = versions.versions[picked];
     const std::filesystem::path destination =
         std::filesystem::path(data_dir()) /
         ("BambuStudio.conf.restored-" + version.commit_id.substr(0, 8));

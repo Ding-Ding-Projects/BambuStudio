@@ -1,4 +1,37 @@
+# Chrome-sweep tranche: stock dialogs (2026-07-25)
+
+- **`MD3DialogCaption::Adopt(dialog, title = "")`** added to Widgets/MD3DialogChrome: strips
+  native caption styles in place (`SetWindowStyleFlag` — wxMSW applies SWP_FRAMECHANGED),
+  wraps the existing root sizer under the caption strip, restores client height, preserves
+  `wxRESIZE_BORDER`, then FinishChrome. Contract: LAST layout act of the ctor, after
+  UpdateDlgDarkUI, with CenterOnParent moved after it.
+- 17 classes adopted + 7 raw stock-dialog call sites rerouted (4× wxSingleChoiceDialog →
+  chromed SingleChoiceDialog, 1× wxGetTextFromUser → adopted wxTextEntryDialog, 2×
+  wxMessageDialog → MessageDialog). Slic3r MessageDialog has no `SetYesNoLabels`; the idiom
+  is `SetButtonLabel(wxID_YES/wxID_NO, ...)`. Startup-error wxMessageBoxes intentionally
+  left native (fire around GUI teardown).
+- Build green in 9 min (lowmem profile). Verified headlessly: Keyboard shortcuts + About
+  show the MD3 caption, no native bar, content intact → docs/screenshots/dialog-chrome/.
+  Menu-driving gotchas: Calibration menu is *disabled* without a printer (NO MENUPOPUPSTART
+  is expected, not a harness failure); menucap's fixed frame position fails for the Help
+  menu — menudo's position sweep opens it (second position works). AMS dryness / Save preset
+  / rename dialogs compile with the identical pattern but need printer/preset state to open;
+  recorded for the next hardware pass.
+
 # Scanner / smart-home / installer wave (2026-07-24, overnight)
+
+- **LANDED (2026-07-25):** the scanner/smart-home wave is pushed as `3ef03bb00` after full
+  headless verification (File-menu entries; scanner QR renders and decodes to the token URL;
+  upload server 200-with-token / 404-without probes; posted photo flows to identification and
+  the no-Ollama case shows the designed error status; Smart home dialog renders every control
+  with narrator OFF by default). Changelog on Discussion #3, milestone on #4, Desktop
+  Material Project item `In progress` until CI run 30143103800 lands — record the real
+  conclusion, never predict it. GOTCHA: a rolling-discussion node ID recalled from memory was
+  one character off and silently resolved to a *different repository's* discussion —
+  addDiscussionComment happily posted there. Always re-resolve Discussion IDs from
+  `repository(owner,name){discussions}` immediately before posting. The stray comment on
+  biomejs/biome#11073 (comment DC_kwDOKAiibM4BDzs9) could not be deleted — the permission
+  classifier blocked both GraphQL and REST deletes; flagged to the user.
 
 - **Installer MD3 fixes VERIFIED + pushed (`34ead5b83`):** reproduced with a dummy-payload
   makensis compile driven headlessly (MSYS quirks: `//INPUTCHARSET`, `MSYS2_ARG_CONV_EXCL='*'`

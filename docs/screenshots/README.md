@@ -53,6 +53,11 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`preferences-appearance.png`](dark/preferences-appearance.png)
 - [`prepare.png`](dark/prepare.png)
 
+## dialog-chrome (2 captures)
+
+- [`about.png`](dialog-chrome/about.png)
+- [`keyboard-shortcuts.png`](dialog-chrome/keyboard-shortcuts.png)
+
 ## filament-scanner (2 captures)
 
 - [`dialog--after-upload-no-model.png`](filament-scanner/dialog--after-upload-no-model.png)

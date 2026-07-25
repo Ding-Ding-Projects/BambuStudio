@@ -22,6 +22,7 @@
 #include "GUI_App.hpp"
 #include "GradientCurveEditor.hpp"
 #include "wxExtensions.hpp"
+#include "MsgDialog.hpp"
 #include "Tab.hpp"
 #include "libslic3r/Preset.hpp"
 #include "Widgets/Button.hpp"
@@ -1460,7 +1461,7 @@ void MixedFilamentDialog::on_gradient_toggled()
     if (checked) {
         auto& print_config = wxGetApp().preset_bundle->prints.get_edited_preset().config;
         if (!print_config.opt_bool("enable_mixed_color_sublayer")) {
-            wxMessageDialog dlg(this,
+            MessageDialog dlg(this,
                 _L("Gradient effect requires 'Mixed color sublayer' to be enabled. Enable it now?"),
                 _L("Mixed Color Sublayer"),
                 wxYES_NO | wxICON_QUESTION);
