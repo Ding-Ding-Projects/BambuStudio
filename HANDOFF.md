@@ -1,3 +1,24 @@
+# Chrome-sweep continuation (2026-07-24, night)
+
+- **Preferences + upload queue chromed** (MD3DialogCaption; borderless styles): headlessly
+  verified — the Preferences dialog renders the MD3 caption with zero clipping across all six
+  tabs; the full Preferences/appearance screenshot set re-captured and re-matched (nearly all
+  1.000 — the caption shift is absorbed by template matching).
+- **FadeIn rewritten to layered-window alpha** (WS_EX_LAYERED + SetLayeredWindowAttributes):
+  wxPopupTransientWindow is not a wxTopLevelWindow, so SetTransparent could not compile for
+  popovers; the layered path works for dialogs, the palette AND the regex-builder popover
+  (fade added on open), and drops the layered style once opaque.
+- **ObjColor compare-panel greys tokenized** (SurfaceContainer/SurfaceContainerHigh replace
+  the hand-picked dark/light pairs); SyncAms was already on the MD3Dialog shell — the register
+  deviation's grey item is addressed, the shell item was stale.
+- **Capture-harness lessons:** generic small crops (a bare Browse button, a bare combobox)
+  template-match the WRONG row at 1.000 — never trust matches for widget-generic crops;
+  verify against the page. AHK ControlSetText/ControlSend can HANG cross-desktop (kill it,
+  use ControlClick only). WM_VSCROLL SB_PAGEDOWN works on ScrollPanel children but state can
+  reset between captures — capture immediately after scrolling.
+- Old external-editor row crops and toast-try-slice deliberately retained (still accurate at
+  row level / needs a sliceable state) — recorded in ROADMAP follow-ups.
+
 # Roadmap execution wave (2026-07-24, evening)
 
 User: "Please finish roadmap." Executed the recorded mandates in one build cycle:

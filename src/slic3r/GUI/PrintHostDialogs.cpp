@@ -28,6 +28,7 @@
 #include "NotificationManager.hpp"
 #include "ExtraRenderers.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -213,7 +214,8 @@ wxEvent *PrintHostQueueDialog::Event::Clone() const
 }
 
 PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
-    : DPIDialog(parent, wxID_ANY, _L("Print host upload queue"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+    // MD3 caption strip instead of the native title bar (see MD3DialogChrome).
+    : DPIDialog(parent, wxID_ANY, _L("Print host upload queue"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER | wxBORDER_NONE)
     , on_progress_evt(this, EVT_PRINTHOST_PROGRESS, &PrintHostQueueDialog::on_progress, this)
     , on_error_evt(this, EVT_PRINTHOST_ERROR, &PrintHostQueueDialog::on_error, this)
     , on_cancel_evt(this, EVT_PRINTHOST_CANCEL, &PrintHostQueueDialog::on_cancel, this)
@@ -221,6 +223,7 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
     const auto em = GetTextExtent("m").x;
 
     auto *topsizer = new wxBoxSizer(wxVERTICAL);
+    topsizer->Add(new MD3DialogCaption(this, _L("Print host upload queue")), 0, wxEXPAND);
 
     std::vector<int> widths;
     widths.reserve(6);
@@ -300,6 +303,7 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
     });
 
     job_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent&) { on_list_select(); });
+    MD3DialogCaption::FinishChrome(this);
 
     btn_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
         int selected = job_list->GetSelectedRow();

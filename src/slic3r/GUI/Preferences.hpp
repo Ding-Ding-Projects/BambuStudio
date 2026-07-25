@@ -109,7 +109,9 @@ public:
                       const wxString &title = wxT(""),
                       const wxPoint & pos   = wxDefaultPosition,
                       const wxSize &  size  = wxDefaultSize,
-                      long            style = wxSYSTEM_MENU | wxCAPTION | wxCLOSE_BOX);
+                      // MD3 caption strip instead of the native title bar
+                      // (see MD3DialogChrome).
+                      long            style = wxBORDER_NONE);
 
     ~PreferencesDialog();
 

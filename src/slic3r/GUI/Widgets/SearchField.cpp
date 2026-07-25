@@ -3,6 +3,7 @@
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
+#include "MD3Motion.hpp"
 #include "RegexBuilderPopup.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
@@ -260,6 +261,8 @@ void SearchField::openBuilder()
     const wxPoint pos = ClientToScreen(wxPoint(tr.GetLeft(), tr.GetBottom() + FromDIP(4)));
     popup->Position(pos, wxSize(0, 0));
     popup->Popup();
+    // M3 entrance: quick fade (jumps to opaque under OS reduced motion).
+    MD3::Motion::FadeIn(popup, MD3::Motion::short2);
     popup->FocusPattern();
 }
 

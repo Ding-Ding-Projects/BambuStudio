@@ -4,7 +4,7 @@
 #include <cmath>
 
 #include <wx/app.h>
-#include <wx/toplevel.h>
+#include <wx/window.h>
 #include <wx/weakref.h>
 
 #ifdef _WIN32
@@ -72,26 +72,40 @@ void Anim::Notify()
     if (m_tick) m_tick(m_curve(t));
 }
 
-void FadeIn(wxTopLevelWindow *window, int duration_ms)
+void FadeIn(wxWindow *window, int duration_ms)
 {
     if (window == nullptr)
         return;
-    if (reduced() || !window->CanSetTransparent()) {
-        window->SetTransparent(255);
+#ifdef _WIN32
+    HWND hwnd = (HWND) window->GetHWND();
+    if (hwnd == nullptr)
+        return;
+    if (reduced()) {
+        // Ensure fully opaque and untouched.
+        ::SetWindowLongW(hwnd, GWL_EXSTYLE, ::GetWindowLongW(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
         return;
     }
-    window->SetTransparent(0);
+    ::SetWindowLongW(hwnd, GWL_EXSTYLE, ::GetWindowLongW(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+    ::SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
     auto *anim = new Anim();
-    // wxWeakRef guards against the dialog closing mid-fade.
-    wxWeakRef<wxTopLevelWindow> ref(window);
+    wxWeakRef<wxWindow> ref(window);
     anim->Play(duration_ms,
         [ref](double t) {
-            if (ref)
-                ref->SetTransparent(static_cast<wxByte>(std::lround(255.0 * t)));
+            if (!ref)
+                return;
+            HWND h = (HWND) ref->GetHWND();
+            if (h == nullptr)
+                return;
+            ::SetLayeredWindowAttributes(h, 0, (BYTE) std::lround(255.0 * t), LWA_ALPHA);
+            if (t >= 1.0) // drop the layered style once opaque (avoids DWM cost)
+                ::SetWindowLongW(h, GWL_EXSTYLE, ::GetWindowLongW(h, GWL_EXSTYLE) & ~WS_EX_LAYERED);
         },
         // Deferred delete: done() can fire synchronously from inside Play()
         // (reduced motion), so the Anim must never delete itself re-entrantly.
         [anim]() { wxTheApp->CallAfter([anim]() { delete anim; }); });
+#else
+    (void) duration_ms;
+#endif
 }
 
 } } // namespace MD3::Motion

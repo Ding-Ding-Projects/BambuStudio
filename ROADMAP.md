@@ -61,12 +61,17 @@
 
 ## Next: follow-ups
 
-- Sweep the remaining native-caption (#32770) dialogs onto `MD3DialogChrome`, and extend
-  `MD3Motion` to toast enter/exit and tab/page fade-through.
-- Design-folder residuals: `project-webview-legacy-anatomy` (needs C++ host APIs) and
-  `syncams-shell-image-panel-greys` (chrome sweep + tokenized compare-panel greys).
+- Chrome sweep continues: Preferences and the upload queue are done this wave (headlessly
+  verified — native caption gone from both); the long tail of stock #32770 dialogs (AMS
+  dryness, message dialogs, wx choice dialogs) remains.
+- Motion: dialogs, palette, popovers and SlideToConfirm animate now; toast enter/exit is
+  ImGui-native already — remaining candidate is tab/page fade-through (needs compositing).
+- The ObjColor compare-panel greys are tokenized (SurfaceContainer roles); SyncAms itself was
+  already on the MD3Dialog shell.
 - Hardware verification passes: stop-print interlock and AI printer watch end-to-end with a
-  connected printer (+ local Ollama vision model).
+  connected printer (+ local Ollama vision model). Two matrix stragglers stay documented:
+  toast-try-slice (needs a sliceable state) and the external-editor row close-ups (old
+  captures remain accurate at row level).
 
 ## Next: continue matching `ui-md3/design-system` (standing mandate)
 

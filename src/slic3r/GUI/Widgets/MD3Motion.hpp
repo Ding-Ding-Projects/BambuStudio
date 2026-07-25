@@ -7,7 +7,6 @@
 #include <wx/timer.h>
 
 class wxWindow;
-class wxTopLevelWindow;
 
 // Material Design 3 motion system for the wx tree: duration tokens, the two
 // canonical easing curves, and a small timer-driven animator.
@@ -55,9 +54,10 @@ private:
     int m_duration { 0 };
 };
 
-// Fade a top-level window in from transparent over `duration_ms` (no-op jump
-// under reduced motion). The Anim is self-owned and destroys itself when done.
-void FadeIn(wxTopLevelWindow *window, int duration_ms = medium1);
+// Fade a window with its own HWND (dialogs, frames, transient popups) in
+// from transparent over `duration_ms` via MSW layered-window alpha (no-op
+// jump under reduced motion / non-MSW). The Anim is self-owned.
+void FadeIn(wxWindow *window, int duration_ms = medium1);
 
 } } // namespace MD3::Motion
 

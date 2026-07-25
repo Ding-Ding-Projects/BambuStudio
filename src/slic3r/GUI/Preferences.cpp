@@ -23,6 +23,7 @@
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/MD3ColorPicker.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "wx/graphics.h"
@@ -1363,6 +1364,7 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
     apply_persisted_md3_appearance();
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::FinishChrome(this);
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
         try {
             NetworkAgent* agent = GUI::wxGetApp().getAgent();
@@ -1582,6 +1584,7 @@ void PreferencesDialog::create()
     SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     auto main_sizer = new wxBoxSizer(wxVERTICAL);
+    main_sizer->Add(new MD3DialogCaption(this, _L("Preferences")), 0, wxEXPAND);
 
     m_tabbar = new PreferenceTabbar(this);
     m_book   = new wxSimplebook(this, wxID_ANY);
