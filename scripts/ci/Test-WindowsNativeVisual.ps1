@@ -321,6 +321,8 @@ try {
         $startInfo.FileName = $resolvedApplication
         $startInfo.WorkingDirectory = [System.IO.Path]::GetDirectoryName($resolvedApplication)
         $startInfo.UseShellExecute = $false
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
         $startInfo.ArgumentList.Add('--datadir')
         $startInfo.ArgumentList.Add($dataDir)
         $startInfo.Environment['BAMBU_STUDIO_CI_NATIVE_VISUAL_SMOKE'] = "v1/$($scenario.Name)"
@@ -360,6 +362,10 @@ try {
                     Write-Host "--- $rejectLog ---"
                     Get-Content $rejectLog
                 }
+                Write-Host '--- app stdout ---'
+                Write-Host ($process.StandardOutput.ReadToEnd())
+                Write-Host '--- app stderr ---'
+                Write-Host ($process.StandardError.ReadToEnd())
                 throw ("Native application exited before presenting '{0}' (exit code {1})." -f $scenario.Name, $exitCode)
             }
             Assert-True ($handle -ne [IntPtr]::Zero) "Native application did not present a window for '$($scenario.Name)'."
