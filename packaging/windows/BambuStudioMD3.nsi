@@ -300,6 +300,7 @@ Function un.onInit
 FunctionEnd
 
 Function LanguageModePageCreate
+  !insertmacro MUI_HEADER_TEXT "UI language / 介面語言" "Pick English, Cantonese, or both. 揀英文、廣東話或者兩樣都得。"
   nsDialogs::Create 1018
   Pop $LanguageModeDialog
   ${If} $LanguageModeDialog == error
@@ -308,30 +309,30 @@ Function LanguageModePageCreate
   SetCtlColors $LanguageModeDialog ${MD3_ON_SURFACE} ${MD3_SURFACE}
   !insertmacro MD3HeroBand
 
-  ${NSD_CreateLabel} 12u 48u 88% 26u "Choose the Bambu Studio UI language.$\r$\n揀選 Bambu Studio 介面語言。"
+  ${NSD_CreateLabel} 12u 46u 88% 24u "Choose the Bambu Studio UI language.$\r$\n揀選 Bambu Studio 介面語言。"
   Pop $0
   SetCtlColors $0 ${MD3_ON_SURFACE} ${MD3_SURFACE}
   !insertmacro MD3Font $0 $FontSection
 
-  ${NSD_CreateRadioButton} 12u 80u 88% 14u "English"
+  ${NSD_CreateRadioButton} 12u 72u 88% 14u "English"
   Pop $LanguageModeEnglish
   SetCtlColors $LanguageModeEnglish ${MD3_ON_SURFACE} ${MD3_SURFACE}
   !insertmacro MD3Font $LanguageModeEnglish $FontCard
-  ${NSD_CreateRadioButton} 12u 100u 88% 14u "廣東話（香港，預覽版）"
+  ${NSD_CreateRadioButton} 12u 87u 88% 14u "廣東話（香港，預覽版）"
   Pop $LanguageModeCantonese
   SetCtlColors $LanguageModeCantonese ${MD3_ON_SURFACE} ${MD3_SURFACE}
   !insertmacro MD3Font $LanguageModeCantonese $FontCard
-  ${NSD_CreateRadioButton} 12u 120u 88% 14u "English + 廣東話（香港，預覽版）"
+  ${NSD_CreateRadioButton} 12u 102u 88% 14u "English + 廣東話（香港，預覽版）"
   Pop $LanguageModeBilingual
   SetCtlColors $LanguageModeBilingual ${MD3_ON_SURFACE} ${MD3_SURFACE}
   !insertmacro MD3Font $LanguageModeBilingual $FontCard
 
   ; MD3 divider hairline (outline-variant).
-  ${NSD_CreateLabel} 12u 142u 88% 1u ""
+  ${NSD_CreateLabel} 12u 114u 88% 1u ""
   Pop $0
   SetCtlColors $0 ${MD3_OUTLINE_VARIANT} ${MD3_OUTLINE_VARIANT}
 
-  ${NSD_CreateLabel} 12u 150u 88% 30u "You can change this later in Preferences. Existing Bambu Studio locales remain available there.$\r$\n之後可以喺偏好設定更改；其他現有語言亦會保留。"
+  ${NSD_CreateLabel} 12u 119u 88% 20u "You can change this later in Preferences.$\r$\n之後可以喺偏好設定更改；其他現有語言亦會保留。"
   Pop $0
   SetCtlColors $0 ${MD3_ON_SURFACE_VARIANT} ${MD3_SURFACE}
   !insertmacro MD3Font $0 $FontCaption
@@ -366,6 +367,7 @@ FunctionEnd
 ; ===========================================================================
 
 Function WelcomePageCreate
+  !insertmacro MUI_HEADER_TEXT "Welcome / 歡迎" "Installs Bambu Studio MD3 for this user account. 安裝到呢個用戶帳戶。"
   ${If} ${Silent}
     Abort
   ${EndIf}
@@ -406,6 +408,7 @@ Function LicensePageShow
 FunctionEnd
 
 Function InstallModePageCreate
+  !insertmacro MUI_HEADER_TEXT "Install mode / 安裝模式" "Prebuilt payload or build from source. 現成安裝或者原始碼建置。"
   ; Silent guard: from-source is never reachable under /S (spec 2.1 / 4.1).
   ${If} ${Silent}
     StrCpy $InstallMode "prebuilt"
@@ -443,14 +446,14 @@ Function InstallModePageCreate
   SetCtlColors $InstallModeFromSource ${MD3_ON_SURFACE} ${MD3_SURFACE}
   !insertmacro MD3Font $InstallModeFromSource $FontCard
 
-  ${NSD_CreateLabel} 12u 122u 88% 1u ""
+  ${NSD_CreateLabel} 12u 116u 88% 1u ""
   Pop $0
   SetCtlColors $0 ${MD3_OUTLINE_VARIANT} ${MD3_OUTLINE_VARIANT}
 
   !insertmacro MD3BiText $BiText \
-    "Building from source downloads and installs developer tools, then compiles the app on this computer. It needs internet access and a lot of time and disk space." \
+    "Building from source compiles the app on this computer. It needs internet, time and disk space." \
     "由原始碼建置會下載並安裝開發者工具，然後喺呢部電腦編譯應用程式。需要網絡連線、大量時間同磁碟空間。"
-  ${NSD_CreateLabel} 12u 130u 88% 44u "$BiText"
+  ${NSD_CreateLabel} 12u 119u 88% 19u "$BiText"
   Pop $0
   SetCtlColors $0 ${MD3_ON_SURFACE_VARIANT} ${MD3_SURFACE}
   !insertmacro MD3Font $0 $FontCaption
@@ -475,6 +478,7 @@ FunctionEnd
 ; ---- Build progress page (from-source only; non-closable while building) ----
 
 Function BuildProgressPageCreate
+  !insertmacro MUI_HEADER_TEXT "Building from source / 原始碼建置緊" "This can take a long time. 可能要好長時間。"
   ${If} ${Silent}
     Abort
   ${EndIf}
@@ -856,6 +860,7 @@ Function InstFilesPageShow
 FunctionEnd
 
 Function FinishPageCreate
+  !insertmacro MUI_HEADER_TEXT "Finished / 完成" "Bambu Studio MD3 is ready. 搞掼曬！"
   ${If} ${Silent}
     Abort
   ${EndIf}
