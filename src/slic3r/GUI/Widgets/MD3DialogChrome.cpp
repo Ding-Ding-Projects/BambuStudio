@@ -130,6 +130,11 @@ void MD3DialogCaption::Adopt(wxDialog *dialog, const wxString &title)
     FinishChrome(dialog);
 }
 
+int MD3DialogCaption::Height(wxWindow *ref)
+{
+    return ref != nullptr ? ref->FromDIP(kHeight) : kHeight;
+}
+
 void MD3DialogCaption::FinishChrome(wxDialog *dialog)
 {
     if (dialog == nullptr)

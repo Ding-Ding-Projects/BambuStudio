@@ -2512,6 +2512,7 @@ SourceViewDialog::SourceViewDialog(wxWindow* parent, wxString source) :
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(text, 1, wxEXPAND);
     SetSizer(sizer);
+    MD3DialogCaption::Adopt(this);
 }
 
 

@@ -1,3 +1,21 @@
+# Chrome-sweep tranche 3: completion scan + 46 more ctors (2026-07-25)
+
+- Completion scan enumerated every remaining DPIDialog/wxDialog subclass: 48 plain-Adopt
+  candidates (all adopted; 46 ctors edited this tranche), 10 flagged complex/popover
+  (NOT adopted — FilamentPickerDialog is shaped, FanControlPopupNew and
+  uiAmsPercentHumidityDryPopup are position-anchored popovers, CommandPalette is a
+  deliberate chrome-less overlay, SettingsDialog is a frame, ParamsDialog/BedShapeDialog/
+  ObjectTableDialog/ZUserLogin need designed treatment), 7 dead classes skipped.
+- `MD3DialogCaption::Height(ref)` added for owner-drawn dialogs; RecenterDialog's painted
+  hint offset by it (its render() draws at absolute client coords which the caption now
+  overlaps). Same trap exists for any future owner-drawn adopter.
+- Known cosmetic follow-ups: FeedDirectionDialog's caption is static (`_L("Confirm")`)
+  while the dialog re-titles itself dynamically via SetTitle; ManualNozzleCountDialog's
+  window title is an unlocalized upstream literal. NewCalibrationHistoryDialog has
+  pre-existing early-return paths that skip layout entirely (native caption remains there).
+- Verified headlessly: Network Test dialog (Help menu) fully chromed →
+  docs/screenshots/dialog-chrome/network-test.png. Build green 7 min.
+
 # Chrome-sweep tranche: stock dialogs (2026-07-25)
 
 - **`MD3DialogCaption::Adopt(dialog, title = "")`** added to Widgets/MD3DialogChrome: strips

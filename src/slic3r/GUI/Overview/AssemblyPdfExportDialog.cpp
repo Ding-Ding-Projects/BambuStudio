@@ -4,6 +4,7 @@
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
+#include "../Widgets/MD3DialogChrome.hpp"
 #include "../Widgets/StateColor.hpp"
 
 #include <wx/filedlg.h>
@@ -113,8 +114,9 @@ AssemblyPdfExportDialog::AssemblyPdfExportDialog(wxWindow *parent, const Assembl
 
     SetSizer(top_sizer);
     top_sizer->SetSizeHints(this);
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 
     // Initial state: when the caller passes empty params (no remembered
     update_ok_button_state();

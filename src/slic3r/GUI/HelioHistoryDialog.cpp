@@ -10,6 +10,7 @@
 #include "MainFrame.hpp"
 #include "format.hpp"
 #include "BitmapCache.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticLine.hpp"
 #include "Plater.hpp"
@@ -111,6 +112,8 @@ HelioHistoryDialog::HelioHistoryDialog(wxWindow* parent)
     // Set size after UI is created (FromDIP is now safe to call)
     SetMinSize(wxSize(FromDIP(700), FromDIP(600)));
     SetSize(wxSize(FromDIP(700), FromDIP(600)));
+
+    MD3DialogCaption::Adopt(this);
 
     // Load recent runs after UI is created
     load_recent_runs();

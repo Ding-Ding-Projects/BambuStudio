@@ -10,6 +10,7 @@
 #include "format.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include "DeviceCore/DevConfig.h"
 
@@ -182,6 +183,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     SetSizer(m_sizer_main);
     Layout();
     Fit();
+    MD3DialogCaption::Adopt(this);
 
     m_calibration_btn->Bind(wxEVT_LEFT_DOWN, &CalibrationDialog::on_start_calibration, this);
 }

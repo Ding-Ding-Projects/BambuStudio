@@ -11,6 +11,7 @@
 #include "slic3r/GUI/MsgDialog.hpp"
 
 #include "slic3r/GUI/Widgets/AMSItem.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "slic3r/GUI/Widgets/AnimaController.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "slic3r/GUI/Widgets/ComboBox.hpp"
@@ -22,6 +23,8 @@ AMSSetting::AMSSetting(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
 {
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this, _L("AMS Settings"));
+    Centre(wxBOTH);
 }
 AMSSetting::~AMSSetting() {}
 
@@ -282,7 +285,6 @@ void AMSSetting::create()
     this->Layout();
     m_sizer_main->Fit(this);
 
-    this->Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
 }
 

@@ -95,10 +95,14 @@
 
 ## Next: follow-ups
 
-- Chrome sweep continues: the 2026-07-25 tranche adopted the 17 highest-visibility stock
-  dialogs (see Landed). Remaining long tail: ConfigWizard + the CreatePresetsDialog family,
-  the three webview JS-prompt `wxTextEntryDialog`s, and a scan pass over the ~50 lower-traffic
-  `DPIDialog` subclasses not yet adopted.
+- Chrome sweep is COMPLETE for plain dialogs: three 2026-07-25 tranches adopted all 70
+  adoptable stock dialogs (completion scan verified — see Landed). Deliberately excluded:
+  10 popover-style/complex windows flagged for designed treatment (FilamentPicker shaped
+  popover, fan/humidity popups, CommandPalette overlay, SettingsDialog frame, ParamsDialog,
+  BedShapeDialog build_dialog, ObjectTableDialog positioning, ZUserLogin webview,
+  RecenterDialog done with paint offset) and 7 dead classes. Follow-ups: FeedDirectionDialog
+  caption doesn't track its dynamic `SetTitle` (shows static "Confirm");
+  ManualNozzleCountDialog title literal "Set nozzle count" was never localized upstream.
 - Motion: dialogs, palette, popovers and SlideToConfirm animate now; toast enter/exit is
   ImGui-native already — remaining candidate is tab/page fade-through (needs compositing).
 - The ObjColor compare-panel greys are tokenized (SurfaceContainer roles); SyncAms itself was

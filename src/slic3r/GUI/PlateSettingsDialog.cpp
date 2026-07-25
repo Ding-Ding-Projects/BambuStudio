@@ -1,5 +1,6 @@
 #include "PlateSettingsDialog.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/FilamentMixer.hpp"
 
 namespace Slic3r { namespace GUI {
@@ -546,8 +547,6 @@ PlateSettingsDialog::PlateSettingsDialog(wxWindow* parent, const wxString& title
     Layout();
     m_sizer_main->Fit(this);
 
-    CenterOnParent();
-
     wxGetApp().UpdateDlgDarkUI(this);
 
 
@@ -563,6 +562,9 @@ PlateSettingsDialog::PlateSettingsDialog(wxWindow* parent, const wxString& title
         Layout();
         Fit();
     }
+
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 PlateSettingsDialog::~PlateSettingsDialog()
@@ -767,9 +769,10 @@ PlateNameEditDialog::PlateNameEditDialog(wxWindow *parent, wxWindowID id, const 
     Layout();
     m_sizer_main->Fit(this);
 
-    CenterOnParent();
-
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
+    CenterOnParent();
 }
 
 PlateNameEditDialog::~PlateNameEditDialog() {}

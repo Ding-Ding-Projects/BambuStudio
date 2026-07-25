@@ -10,6 +10,7 @@
 #include "GUI_App.hpp"
 #include "wxExtensions.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "wx/graphics.h"
 
 namespace Slic3r { namespace GUI {
@@ -145,9 +146,10 @@ PurgeModeDialog::PurgeModeDialog(wxWindow *parent, PurgeModeDialogType dialog_ty
 
     SetSizer(main_sizer);
     Fit();
-    CenterOnParent();
-
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
+    CenterOnParent();
 }
 
 void PurgeModeDialog::select_option(PrimeVolumeMode mode)

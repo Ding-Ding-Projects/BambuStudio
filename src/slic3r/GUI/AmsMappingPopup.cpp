@@ -14,6 +14,7 @@
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/progdlg.h>
 #include <wx/clipbrd.h>
@@ -2064,6 +2065,8 @@ AmsReplaceMaterialDialog::AmsReplaceMaterialDialog(wxWindow* parent)
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void AmsReplaceMaterialDialog::create()
@@ -2139,7 +2142,6 @@ void AmsReplaceMaterialDialog::create()
     m_main_sizer->Add(0,0,0, wxTOP, FromDIP(20));
 
 
-    CenterOnParent();
     SetSizer(m_main_sizer);
     Layout();
     Fit();

@@ -7,6 +7,7 @@
 #include <wx/dcgraph.h>
 #include "CalibUtils.hpp"
 #include "DeviceCore/DevFilaSystem.h"
+#include "Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -17,6 +18,7 @@ ExtrusionCalibration::ExtrusionCalibration(wxWindow *parent, wxWindowID id)
 {
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 void ExtrusionCalibration::init_bitmaps()

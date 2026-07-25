@@ -11,6 +11,7 @@
 #include "I18N.hpp"
 #include "slic3r/Utils/Http.hpp"
 #include "libslic3r/AppConfig.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include <boost/asio/ip/address.hpp>
 #include <boost/log/trivial.hpp>
 
@@ -236,8 +237,9 @@ NetworkTestDialog::NetworkTestDialog(wxWindow* parent, wxWindowID id, const wxSt
 	this->SetSizer(main_sizer);
 	this->Layout();
 
-	this->Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+	this->Centre(wxBOTH);
 }
 
 wxBoxSizer* NetworkTestDialog::create_top_sizer(wxWindow* parent)

@@ -11,6 +11,7 @@
 #include "GUI_Preview.hpp"
 #include "MainFrame.hpp"
 #include "format.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticBox.hpp"
@@ -982,8 +983,9 @@ EditDevNameDialog::EditDevNameDialog(Plater *plater /*= nullptr*/)
     SetSizer(m_sizer_main);
     Layout();
     Fit();
-    Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 EditDevNameDialog::~EditDevNameDialog() {}

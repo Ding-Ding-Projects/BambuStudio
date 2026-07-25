@@ -17,6 +17,7 @@
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/Utils/Bonjour.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r {
 
@@ -126,6 +127,7 @@ BonjourDialog::BonjourDialog(wxWindow *parent, Slic3r::PrinterTechnology tech)
 
 	Bind(wxEVT_TIMER, &BonjourDialog::on_timer, this);
 	GUI::wxGetApp().UpdateDlgDarkUI(this);
+	MD3DialogCaption::Adopt(this);
 }
 
 BonjourDialog::~BonjourDialog()

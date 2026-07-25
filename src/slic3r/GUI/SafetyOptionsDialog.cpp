@@ -3,6 +3,7 @@
 #include "GUI_App.hpp"
 #include "libslic3r/Utils.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "MsgDialog.hpp"
 
 #include "DeviceCore/DevConfig.h"
@@ -102,6 +103,7 @@ SafetyOptionsDialog::SafetyOptionsDialog(wxWindow* parent)
              }}, m_idel_heating_toast_timer.GetId());
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 SafetyOptionsDialog::~SafetyOptionsDialog()

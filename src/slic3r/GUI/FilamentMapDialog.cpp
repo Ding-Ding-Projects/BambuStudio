@@ -2,6 +2,7 @@
 #include "FilamentMapPanel.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/LinkLabel.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
@@ -307,8 +308,9 @@ FilamentMapDialog::FilamentMapDialog(wxWindow                           *parent,
     SetMinClientSize({width, -1});
 
     Fit();
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void FilamentMapDialog::make_header(wxBoxSizer *main_sizer, bool only_saving_mode)

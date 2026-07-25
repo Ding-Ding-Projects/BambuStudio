@@ -21,6 +21,7 @@
 
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include "MsgDialog.hpp"
 #include "Printer/PrinterFileSystem.h"
@@ -308,6 +309,7 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
 
     Layout();
     Fit();
+    MD3DialogCaption::Adopt(this);
     CentreOnParent();
 }
 
@@ -1030,6 +1032,7 @@ PartSkipConfirmDialog::PartSkipConfirmDialog(wxWindow *parent) : DPIDialog(paren
     SetSizer(m_sizer);
     Layout();
     Fit();
+    MD3DialogCaption::Adopt(this);
 }
 
 PartSkipConfirmDialog::~PartSkipConfirmDialog() {}

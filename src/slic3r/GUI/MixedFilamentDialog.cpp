@@ -24,6 +24,7 @@
 #include "wxExtensions.hpp"
 #include "MsgDialog.hpp"
 #include "Tab.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/Preset.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/CheckBox.hpp"
@@ -147,6 +148,8 @@ MixedFilamentDialog::MixedFilamentDialog(wxWindow* parent,
     m_result.ratios     = {50, 50};
     build_ui();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 
     wxImage img;
     if (img.LoadFile(from_u8(Slic3r::var("mixed_filament_preview_twocolor.png")), wxBITMAP_TYPE_PNG))
@@ -183,6 +186,8 @@ MixedFilamentDialog::MixedFilamentDialog(wxWindow* parent,
     }
     build_ui();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 
     wxImage img;
     if (img.LoadFile(from_u8(Slic3r::var("mixed_filament_preview_twocolor.png")), wxBITMAP_TYPE_PNG))
@@ -607,7 +612,6 @@ void MixedFilamentDialog::build_ui()
     update_ok_button_state();
 
     Layout();
-    CentreOnParent();
 }
 
 wxBoxSizer* MixedFilamentDialog::create_preview_panel()

@@ -3063,8 +3063,9 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     SetSizer(main_sizer);
     Layout();
     Fit();
-    CentreOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 void ResetWarningsDialog::toggle_details()

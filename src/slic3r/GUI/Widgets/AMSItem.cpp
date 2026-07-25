@@ -1,6 +1,7 @@
 #include "AMSItem.hpp"
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
+#include "MD3DialogChrome.hpp"
 #include "StateColor.hpp"
 #include "../BitmapCache.hpp"
 #include "../I18N.hpp"
@@ -4326,6 +4327,7 @@ FeedDirectionDialog::FeedDirectionDialog(wxWindow* parent,
 
     SetSizer(mainSizer);
     Layout();
+    MD3DialogCaption::Adopt(this, _L("Confirm"));
     Centre(wxBOTH);
 
     m_lastChecked = m_radioHelper;

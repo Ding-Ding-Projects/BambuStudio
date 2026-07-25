@@ -6,6 +6,7 @@
 #include "GUI_App.hpp"
 #include "format.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "slic3r/Utils/CalibUtils.hpp"
 #include "DeviceCore/DevConfigUtil.h"
 
@@ -192,9 +193,10 @@ HistoryWindow::HistoryWindow(wxWindow* parent, const std::vector<PACalibResult>&
     SetSizer(main_sizer);
     Layout();
     main_sizer->Fit(this);
-    CenterOnParent();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 
     m_comboBox_nozzle_dia->Bind(wxEVT_COMBOBOX, &HistoryWindow::on_select_nozzle, this);
 
@@ -688,9 +690,10 @@ EditCalibrationHistoryDialog::EditCalibrationHistoryDialog(wxWindow             
     SetSizer(main_sizer);
     Layout();
     Fit();
-    CenterOnParent();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 EditCalibrationHistoryDialog::~EditCalibrationHistoryDialog() {
@@ -981,9 +984,10 @@ NewCalibrationHistoryDialog::NewCalibrationHistoryDialog(wxWindow *parent, const
     SetSizer(main_sizer);
     Layout();
     Fit();
-    CenterOnParent();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 int NewCalibrationHistoryDialog::get_nozzle_combo_id_code() const{

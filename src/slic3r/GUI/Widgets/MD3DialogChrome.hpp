@@ -38,6 +38,10 @@ public:
     // present, is preserved so edge-resizing keeps working.
     static void Adopt(wxDialog *dialog, const wxString &title = wxString());
 
+    // Caption strip height in device pixels, for owner-drawn dialogs that
+    // paint content at absolute client coordinates.
+    static int Height(wxWindow *ref);
+
 private:
     void OnPaintClose(wxPaintEvent &event);
 

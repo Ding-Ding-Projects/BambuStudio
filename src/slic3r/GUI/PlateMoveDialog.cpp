@@ -1,5 +1,6 @@
 #include "PlateMoveDialog.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -182,9 +183,10 @@ PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString
     Fit();
     //m_sizer_main->Fit(this);
 
-    CenterOnParent();
-
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
+    CenterOnParent();
 }
 
 PlateMoveDialog::~PlateMoveDialog() {

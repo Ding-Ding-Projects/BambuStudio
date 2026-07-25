@@ -19,6 +19,7 @@
 #include "wxExtensions.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #define DESIGN_INPUT_SIZE wxSize(FromDIP(100), -1)
 
@@ -111,10 +112,11 @@ DownloadProgressDialog::DownloadProgressDialog(wxString title, bool post_login)
     SetSizer(m_sizer_main);
     Layout();
     Fit();
-    CentreOnParent();
 
     Bind(wxEVT_CLOSE_WINDOW, &DownloadProgressDialog::on_close, this);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 wxString DownloadProgressDialog::format_text(wxStaticText* st, wxString str, int warp)

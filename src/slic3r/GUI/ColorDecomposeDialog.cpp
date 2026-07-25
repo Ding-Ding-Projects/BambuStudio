@@ -19,6 +19,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "wxExtensions.hpp"
 #include "ColorDecomposeSupport.hpp"
 #include "libslic3r/ColorDecomposeRecipe.hpp"
@@ -206,6 +207,8 @@ ColorDecomposeDialog::ColorDecomposeDialog(wxWindow* parent,
     compute_decomposition();
     update_matched_color_display();
     update_ok_button_state();
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void ColorDecomposeDialog::on_dpi_changed(const wxRect& suggested_rect)
@@ -240,7 +243,6 @@ void ColorDecomposeDialog::build_ui()
     SetSizer(main_sizer);
     SetMinSize(wxSize(FromDIP(477), FromDIP(380)));
     Fit();
-    CenterOnParent();
 }
 
 wxBoxSizer* ColorDecomposeDialog::create_filament_selector()

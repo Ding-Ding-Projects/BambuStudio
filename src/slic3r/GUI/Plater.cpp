@@ -164,6 +164,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/ComboBox.hpp"
@@ -15728,6 +15729,8 @@ public:
         main_sizer->Add(option2_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         SetSizerAndFit(main_sizer);
+        wxGetApp().UpdateDlgDarkUI(this);
+        MD3DialogCaption::Adopt(this);
         {
             wxWindow* parent = GetParent();
             if (parent) {
@@ -15739,7 +15742,6 @@ public:
                 SetPosition(wxPoint(x, y));
             }
         }
-        wxGetApp().UpdateDlgDarkUI(this);
     }
 
     void on_dpi_changed(const wxRect& suggested_rect) override {}
@@ -16034,6 +16036,8 @@ public:
         main_sizer->Add(option3_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
 
         SetSizerAndFit(main_sizer);
+        wxGetApp().UpdateDlgDarkUI(this);
+        MD3DialogCaption::Adopt(this);
         {
             wxWindow* parent = GetParent();
             if (parent) {
@@ -16045,7 +16049,6 @@ public:
                 SetPosition(wxPoint(x, y));
             }
         }
-        wxGetApp().UpdateDlgDarkUI(this);
     }
 
     void on_dpi_changed(const wxRect& suggested_rect) override {}
@@ -16085,8 +16088,9 @@ public:
         sizer->AddSpacer(wxWindowBase::FromDIP(20, this));
 
         SetSizerAndFit(sizer);
-        CentreOnParent();
         wxGetApp().UpdateDlgDarkUI(this);
+        MD3DialogCaption::Adopt(this);
+        CentreOnParent();
 
         m_timer = new wxTimer(this);
         Bind(wxEVT_TIMER, &HelioSyncProgressDialog::OnTimer, this);
@@ -16817,6 +16821,7 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     Layout();
                     main_sizer->Fit(this);
                     main_sizer->SetSizeHints(this);
+                    MD3DialogCaption::Adopt(this);
                 }
 
                 void on_dpi_changed(const wxRect &suggested_rect) override {}
@@ -22675,7 +22680,6 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     SetSizer(m_sizer_main);
     Layout();
     Fit();
-    Centre(wxBOTH);
 
 
     auto limit_width   = m_fname_f->GetSize().GetWidth() - 2;
@@ -22701,6 +22705,8 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_fname_s->SetLabel(bstring);
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 wxBoxSizer *ProjectDropDialog ::create_item_radiobox(wxString title, wxWindow *parent, int select_id, int groupid)
