@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <fstream>
 #include <utility>
 
 #include <wx/app.h>
@@ -183,16 +184,35 @@ WindowsNativeVisualSmokeResult try_start_windows_native_visual_smoke()
     wxString request;
     if (!wxGetEnv(SMOKE_ENVIRONMENT, &request)) return WindowsNativeVisualSmokeResult::NotRequested;
 
+    // A rejection exits the process before any logging is initialized, which
+    // is undebuggable from CI. Explain the verdict to a well-known temp file
+    // the CI script prints on failure.
+    const auto reject = [&request](const char *why) {
+        wxString dir;
+        if (wxGetEnv("TEMP", &dir) && !dir.empty()) {
+            std::ofstream out((dir + "\\bbs-native-visual-smoke-reject.log").ToStdString(), std::ios::app);
+            wxString ci, gha, runner_env;
+            wxGetEnv("CI", &ci); wxGetEnv("GITHUB_ACTIONS", &gha); wxGetEnv("RUNNER_ENVIRONMENT", &runner_env);
+            out << "rejected: " << why
+                << " request=" << request.utf8_string()
+                << " CI=" << ci.utf8_string()
+                << " GITHUB_ACTIONS=" << gha.utf8_string()
+                << " RUNNER_ENVIRONMENT=" << runner_env.utf8_string() << "\n";
+        }
+        return WindowsNativeVisualSmokeResult::Rejected;
+    };
+
     // The benign smoke surface is still double-guarded so it cannot be reached
     // accidentally during an ordinary desktop launch.
-    if (!environment_equals("CI", "true") || !environment_equals("GITHUB_ACTIONS", "true") || !environment_equals("RUNNER_ENVIRONMENT", "github-hosted") ||
-        !request.StartsWith(SMOKE_PROTOCOL))
-        return WindowsNativeVisualSmokeResult::Rejected;
+    if (!environment_equals("CI", "true")) return reject("CI!=true");
+    if (!environment_equals("GITHUB_ACTIONS", "true")) return reject("GITHUB_ACTIONS!=true");
+    if (!environment_equals("RUNNER_ENVIRONMENT", "github-hosted")) return reject("RUNNER_ENVIRONMENT!=github-hosted");
+    if (!request.StartsWith(SMOKE_PROTOCOL)) return reject("bad protocol");
 
     const wxString requested_id = request.Mid(SMOKE_PROTOCOL_LENGTH);
     const auto     scenario     = std::find_if(VISUAL_SCENARIOS.begin(), VISUAL_SCENARIOS.end(),
                                                [&requested_id](const VisualScenario &candidate) { return requested_id == wxString::FromUTF8(candidate.id); });
-    if (scenario == VISUAL_SCENARIOS.end()) return WindowsNativeVisualSmokeResult::Rejected;
+    if (scenario == VISUAL_SCENARIOS.end()) return reject("unknown scenario id");
 
     wxFrame *frame = create_visual_window(*scenario);
     wxTheApp->SetTopWindow(frame);

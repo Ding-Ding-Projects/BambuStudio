@@ -355,6 +355,11 @@ try {
                     Write-Host "--- $($_.FullName) (last 80 lines) ---"
                     Get-Content $_.FullName -Tail 80 -ErrorAction SilentlyContinue
                 }
+                $rejectLog = Join-Path $env:TEMP 'bbs-native-visual-smoke-reject.log'
+                if (Test-Path $rejectLog) {
+                    Write-Host "--- $rejectLog ---"
+                    Get-Content $rejectLog
+                }
                 throw ("Native application exited before presenting '{0}' (exit code {1})." -f $scenario.Name, $exitCode)
             }
             Assert-True ($handle -ne [IntPtr]::Zero) "Native application did not present a window for '$($scenario.Name)'."
