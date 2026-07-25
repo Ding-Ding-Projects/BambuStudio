@@ -357,10 +357,12 @@ try {
                     Write-Host "--- $($_.FullName) (last 80 lines) ---"
                     Get-Content $_.FullName -Tail 80 -ErrorAction SilentlyContinue
                 }
-                $rejectLog = Join-Path $env:TEMP 'bbs-native-visual-smoke-reject.log'
-                if (Test-Path $rejectLog) {
-                    Write-Host "--- $rejectLog ---"
-                    Get-Content $rejectLog
+                foreach ($diag in @('bbs-native-visual-smoke-reject.log', 'bbs-launcher-trace.log')) {
+                    $diagPath = Join-Path $env:TEMP $diag
+                    if (Test-Path $diagPath) {
+                        Write-Host "--- $diagPath ---"
+                        Get-Content $diagPath
+                    }
                 }
                 Write-Host '--- app stdout ---'
                 Write-Host ($process.StandardOutput.ReadToEnd())
