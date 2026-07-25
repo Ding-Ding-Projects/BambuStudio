@@ -1,5 +1,13 @@
 # Chrome-sweep continuation (2026-07-24, night)
 
+- **MD3Dialog resizable variant de-natived** (one-line style change +
+  bind_drag un-gated): every MsgDialog/SecondaryCheck/SyncAms/TextureImport/
+  Helio/ReleaseNote-family dialog now drops the native title bar — the
+  shell's own header (glyph + title + circular close) and drag handles are
+  the chrome for BOTH variants. Startup smoke green; the resizable adopters
+  (TextureImport, Helio) were not re-opened headlessly this session —
+  first-open visual check recorded as a follow-up.
+
 - **Preferences + upload queue chromed** (MD3DialogCaption; borderless styles): headlessly
   verified — the Preferences dialog renders the MD3 caption with zero clipping across all six
   tabs; the full Preferences/appearance screenshot set re-captured and re-matched (nearly all

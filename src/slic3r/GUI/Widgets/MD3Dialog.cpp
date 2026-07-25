@@ -121,13 +121,15 @@ private:
 // MD3Dialog
 // ----------------------------------------------------------------------------
 
-// Window style for the requested variant: native resizable chrome (a title bar
-// + resize grip, no minimise/maximise) for the resizable variant, otherwise the
-// borderless shaped silhouette.
+// Window style for the requested variant. Both variants are borderless now —
+// the shell's own header (glyph + title + circular close) and drag handling
+// are the chrome, so the resizable flavour keeps only the thin resize frame
+// instead of the native title bar (which read as legacy next to the MD3
+// shell).
 static long md3dialog_shell_style(const MD3Dialog::Options &opts)
 {
     return opts.resizable
-               ? ((wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) & ~(wxMINIMIZE_BOX | wxMAXIMIZE_BOX))
+               ? (wxRESIZE_BORDER | wxBORDER_NONE)
                : (wxBORDER_NONE | wxFRAME_SHAPED);
 }
 
@@ -463,9 +465,9 @@ void MD3Dialog::on_dpi_changed(const wxRect & /*suggested_rect*/)
 
 void MD3Dialog::bind_drag(wxWindow *w)
 {
-    // The resizable variant keeps its native title bar, which already moves the
-    // window; borderless-drag handles are only for the shaped shell.
-    if (!w || m_resizable)
+    // Both variants are borderless now (the native title bar is gone), so the
+    // header drag handles must work for the resizable shell too.
+    if (!w)
         return;
     w->Bind(wxEVT_LEFT_DOWN, [this, w](wxMouseEvent &e) {
         m_dragging    = true;
