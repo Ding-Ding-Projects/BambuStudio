@@ -53,6 +53,11 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`preferences-appearance.png`](dark/preferences-appearance.png)
 - [`prepare.png`](dark/prepare.png)
 
+## filament-scanner (2 captures)
+
+- [`dialog--after-upload-no-model.png`](filament-scanner/dialog--after-upload-no-model.png)
+- [`dialog.png`](filament-scanner/dialog.png)
+
 ## home (5 captures)
 
 - [`home--create-new-project-btn.png`](home/home--create-new-project-btn.png)
@@ -222,6 +227,10 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`search-field--search-icon.png`](regex-builder/search-field--search-icon.png)
 - [`search-field--text-entry.png`](regex-builder/search-field--text-entry.png)
 - [`search-field.png`](regex-builder/search-field.png)
+
+## smart-home (1 captures)
+
+- [`dialog.png`](smart-home/dialog.png)
 
 ## version-history (9 captures)
 

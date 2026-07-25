@@ -2,6 +2,20 @@
 
 ## Landed
 
+### Smart-home & scanner wave (2026-07-24, late night)
+
+- **AI filament scanner** (File menu): QR-code phone upload (token-guarded LAN server,
+  vendored MIT qrcodegen), local Ollama vision identification, automatic AMS-slot
+  configuration + best-preset auto-selection (brand-mapped onto the shipped vendor profile
+  families), HUGE flashing on-screen announcement + optional TTS.
+- **TTS narrator** (off by default, serialized, cooldown-limited, errors never suppressed):
+  printer state changes and error codes, local SAPI voice + Home Assistant speakers.
+- **Home Assistant integration** (Smart home dialog): entity browser with search bar +
+  listbox, media-player rich controls (prev/play-pause/next/volume), announcement-speaker
+  selection, alert lights with red-on-error / green-on-finish flashes protected by a
+  scene-snapshot restore so real room lights never stay stuck on the alert colour.
+
+
 ### Roadmap execution wave (2026-07-24, evening)
 
 - **MD3 dialog chrome** (`Widgets/MD3DialogChrome`): borderless owned dialogs (Config

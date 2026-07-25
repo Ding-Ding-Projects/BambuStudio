@@ -42,6 +42,8 @@
 #include "ProjectHistoryDialog.hpp"
 #include "ConfigProfilesDialog.hpp"
 #include "CommandPalette.hpp"
+#include "FilamentScanner.hpp"
+#include "SmartHomeDialog.hpp"
 #include "WebViewDialog.hpp"
 #include "../Utils/Process.hpp"
 #include "../Utils/ExternalEditor.hpp"
@@ -3836,6 +3838,16 @@ void MainFrame::init_menubar_as_editor()
             _L("Browse and restore local Git-backed project versions"),
             [this](wxCommandEvent&) { show_project_history(); }, "", nullptr,
             [this](){return m_plater != nullptr; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("AI filament scanner") + dots,
+            _L("Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"),
+            [this](wxCommandEvent&) { FilamentScanDialog(this).ShowModal(); }, "", nullptr,
+            []() { return true; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Smart home") + dots,
+            _L("Home Assistant speakers, media controls, TTS narrator and alert lights"),
+            [this](wxCommandEvent&) { SmartHomeDialog(this).ShowModal(); }, "", nullptr,
+            []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Config profiles & backup") + dots,
             _L("Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"),

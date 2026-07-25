@@ -8,6 +8,8 @@
 - [Material color picker & color translator](md3-color-picker.md)
 - [Stop-print safety interlock](stop-print-interlock.md)
 - [AI printer watch (local models)](ai-printer-watch.md)
+- [AI filament scanner (QR phone upload → AMS slot)](ai-filament-scanner.md)
+- [Smart home: TTS narrator, Home Assistant, alert lights](smart-home.md)
 - [Native visual smoke test](native-visual-smoke.md)
 - [Software OpenGL fallback (Mesa llvmpipe)](software-gl-fallback.md)
 

@@ -2264,3 +2264,163 @@ msgstr "檢查間隔（分鐘）"
 #. reviewed-category: preferences
 msgid "Minutes between live-view checks (minimum 1)."
 msgstr "每次檢查直播畫面相隔幾多分鐘（最少 1）。"
+
+#. reviewed-category: slicing-printing
+msgid "AI filament scanner"
+msgstr "AI 唥材掃描器"
+
+#. reviewed-category: slicing-printing
+msgid "Scan a spool with your phone; the result lands in an AMS slot."
+msgstr "用手機影吓卷唥材，結果會自動落入 AMS 槽。"
+
+#. reviewed-category: slicing-printing
+msgid "Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"
+msgstr "用手機影張唥材相，本地模型認出佢並設定好一個 AMS 槽"
+
+#. reviewed-category: slicing-printing
+msgid "Scan the QR code with your phone, then photograph the spool."
+msgstr "用手機掃個 QR code，然後影張唥材卷嘅相。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The upload server could not start. Check that no firewall rule blocks local listeners."
+msgstr "上載伺服器起唔到。檢查吓防火牆有冇封鎖本機監聽。"
+
+#. reviewed-category: slicing-printing
+msgid "Announce the slot out loud (TTS)"
+msgstr "出聲讀出係邊個槽（TTS）"
+
+#. reviewed-category: slicing-printing
+msgid "Photo received - identifying the filament with the local model..."
+msgstr "收到相喇 — 本地模型認緊隻唥材..."
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Identification failed: %s. Is a vision-capable Ollama model available?"
+msgstr "認唔出：%s。有冇裝識睇圖嘅 Ollama 模型？"
+
+#. reviewed-category: slicing-printing
+msgid "external spool"
+msgstr "外掛唥材架"
+
+#. reviewed-category: slicing-printing
+msgid "AMS %s slot %d"
+msgstr "AMS %s 第 %d 槽"
+
+#. reviewed-category: slicing-printing
+msgid "Identified %s (%s). Load it into %s."
+msgstr "認到係 %s（%s）。放入 %s 啦。"
+
+#. reviewed-category: slicing-printing
+msgid " Print settings set to \"%s\"."
+msgstr " 打印設定已經轉做「%s」。"
+
+#. reviewed-category: slicing-printing
+msgid "Filament identified: %s. Load it into %s."
+msgstr "認到唥材：%s。放入 %s。"
+
+#. reviewed-category: slicing-printing
+msgid "Printing started."
+msgstr "開始打印喇。"
+
+#. reviewed-category: slicing-printing
+msgid "Print finished."
+msgstr "打印完成喇。"
+
+#. reviewed-category: slicing-printing
+msgid "Print paused."
+msgstr "打印暫停咗。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Print failed."
+msgstr "打印失敗咗。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Printer error %06X. Check the device screen for details."
+msgstr "打印機錯誤 %06X。詳情請睇機身螢幕。"
+
+#. reviewed-category: navigation
+msgid "Smart home"
+msgstr "智能家居"
+
+#. reviewed-category: navigation
+msgid "Home Assistant speakers, media controls, TTS narrator and alert lights"
+msgstr "Home Assistant 喇叭、媒體控制、TTS 旁白同警示燈"
+
+#. reviewed-category: navigation
+msgid "Home Assistant speakers, media controls and alert lights."
+msgstr "Home Assistant 喇叭、媒體控制同警示燈。"
+
+#. reviewed-category: preferences
+msgid "Home Assistant URL"
+msgstr "Home Assistant 網址"
+
+#. reviewed-category: preferences
+msgid "Token"
+msgstr "權杖"
+
+#. reviewed-category: preferences
+msgid "Connect"
+msgstr "連接"
+
+#. reviewed-category: preferences
+msgid "Not connected yet. Enter the URL and a long-lived access token, then press Connect."
+msgstr "仲未連接。輸入網址同長期存取權杖，再撳「連接」。"
+
+#. reviewed-category: preferences
+msgid "Search speakers and lights"
+msgstr "搵喇叭同燈"
+
+#. reviewed-category: preferences
+msgid "Previous"
+msgstr "上一首"
+
+#. reviewed-category: preferences
+msgid "Play / Pause"
+msgstr "播放／暫停"
+
+#. reviewed-category: preferences
+msgid "Volume"
+msgstr "音量"
+
+#. reviewed-category: preferences
+msgid "Use as announcement speaker"
+msgstr "用嚟做通告喇叭"
+
+#. reviewed-category: preferences
+msgid "Use as alert light"
+msgstr "用嚟做警示燈"
+
+#. reviewed-category: preferences
+msgid "Announcement speakers:"
+msgstr "通告喇叭："
+
+#. reviewed-category: preferences
+msgid "Alert lights:"
+msgstr "警示燈："
+
+#. reviewed-category: preferences
+msgid "none"
+msgstr "無"
+
+#. reviewed-category: preferences
+msgid "Speak printer state changes and errors (TTS narrator)"
+msgstr "打印機狀態變化同錯誤都出聲講（TTS 旁白）"
+
+#. reviewed-category: preferences
+msgid "Flash alert lights red on printer errors (auto-restores)"
+msgstr "打印機出錯時警示燈閃紅（會自動還原）"
+
+#. reviewed-category: preferences
+msgid "Pulse alert lights green when a print finishes (auto-restores)"
+msgstr "打印完成時警示燈閃綠（會自動還原）"
+
+#. reviewed-category: preferences
+msgid "Connecting to Home Assistant..."
+msgstr "連接緊 Home Assistant..."
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Home Assistant is unreachable: %s"
+msgstr "連唔到 Home Assistant：%s"
+
+#. reviewed-category: preferences
+msgid "Connected. %d speakers and lights found."
+msgstr "連接咗。搵到 %d 個喇叭同燈。"

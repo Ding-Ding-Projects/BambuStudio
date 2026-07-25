@@ -21938,3 +21938,117 @@ msgstr "Check interval (minutes)"
 
 msgid "Minutes between live-view checks (minimum 1)."
 msgstr "Minutes between live-view checks (minimum 1)."
+
+msgid "AI filament scanner"
+msgstr "AI filament scanner"
+
+msgid "Scan a spool with your phone; the result lands in an AMS slot."
+msgstr "Scan a spool with your phone; the result lands in an AMS slot."
+
+msgid "Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"
+msgstr "Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"
+
+msgid "Scan the QR code with your phone, then photograph the spool."
+msgstr "Scan the QR code with your phone, then photograph the spool."
+
+msgid "The upload server could not start. Check that no firewall rule blocks local listeners."
+msgstr "The upload server could not start. Check that no firewall rule blocks local listeners."
+
+msgid "Announce the slot out loud (TTS)"
+msgstr "Announce the slot out loud (TTS)"
+
+msgid "Photo received - identifying the filament with the local model..."
+msgstr "Photo received - identifying the filament with the local model..."
+
+msgid "Identification failed: %s. Is a vision-capable Ollama model available?"
+msgstr "Identification failed: %s. Is a vision-capable Ollama model available?"
+
+msgid "external spool"
+msgstr "external spool"
+
+msgid "AMS %s slot %d"
+msgstr "AMS %s slot %d"
+
+msgid "Identified %s (%s). Load it into %s."
+msgstr "Identified %s (%s). Load it into %s."
+
+msgid " Print settings set to \"%s\"."
+msgstr " Print settings set to \"%s\"."
+
+msgid "Filament identified: %s. Load it into %s."
+msgstr "Filament identified: %s. Load it into %s."
+
+msgid "Printing started."
+msgstr "Printing started."
+
+msgid "Print finished."
+msgstr "Print finished."
+
+msgid "Print paused."
+msgstr "Print paused."
+
+msgid "Print failed."
+msgstr "Print failed."
+
+msgid "Printer error %06X. Check the device screen for details."
+msgstr "Printer error %06X. Check the device screen for details."
+
+msgid "Smart home"
+msgstr "Smart home"
+
+msgid "Home Assistant speakers, media controls, TTS narrator and alert lights"
+msgstr "Home Assistant speakers, media controls, TTS narrator and alert lights"
+
+msgid "Home Assistant speakers, media controls and alert lights."
+msgstr "Home Assistant speakers, media controls and alert lights."
+
+msgid "Home Assistant URL"
+msgstr "Home Assistant URL"
+
+msgid "Token"
+msgstr "Token"
+
+msgid "Not connected yet. Enter the URL and a long-lived access token, then press Connect."
+msgstr "Not connected yet. Enter the URL and a long-lived access token, then press Connect."
+
+msgid "Search speakers and lights"
+msgstr "Search speakers and lights"
+
+msgid "Previous"
+msgstr "Previous"
+
+msgid "Play / Pause"
+msgstr "Play / Pause"
+
+msgid "Use as announcement speaker"
+msgstr "Use as announcement speaker"
+
+msgid "Use as alert light"
+msgstr "Use as alert light"
+
+msgid "Announcement speakers:"
+msgstr "Announcement speakers:"
+
+msgid "Alert lights:"
+msgstr "Alert lights:"
+
+msgid "none"
+msgstr "none"
+
+msgid "Speak printer state changes and errors (TTS narrator)"
+msgstr "Speak printer state changes and errors (TTS narrator)"
+
+msgid "Flash alert lights red on printer errors (auto-restores)"
+msgstr "Flash alert lights red on printer errors (auto-restores)"
+
+msgid "Pulse alert lights green when a print finishes (auto-restores)"
+msgstr "Pulse alert lights green when a print finishes (auto-restores)"
+
+msgid "Connecting to Home Assistant..."
+msgstr "Connecting to Home Assistant..."
+
+msgid "Home Assistant is unreachable: %s"
+msgstr "Home Assistant is unreachable: %s"
+
+msgid "Connected. %d speakers and lights found."
+msgstr "Connected. %d speakers and lights found."

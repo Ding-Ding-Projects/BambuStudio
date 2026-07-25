@@ -1,3 +1,31 @@
+# Scanner / smart-home / installer wave (2026-07-24, overnight)
+
+- **Installer MD3 fixes VERIFIED + pushed (`34ead5b83`):** reproduced with a dummy-payload
+  makensis compile driven headlessly (MSYS quirks: `//INPUTCHARSET`, `MSYS2_ARG_CONV_EXCL='*'`
+  + full Windows paths incl. the script itself, else `__FILEDIR__` breaks File globs). Found:
+  stale "License Agreement" MUI header bleeding over every custom page (fixed with per-page
+  bilingual `MUI_HEADER_TEXT`), and REAL invisible text — controls authored past the
+  140-dialog-unit MUI page height (language caption/divider, install-mode explanation).
+  Re-laid out + captions shortened; before/after captures in scratchpad out/inst*.png.
+- **CI release-based build cache** (same push): post-build 7z split volumes (1.5 GB) of
+  `build/` + deps output published as `ci-cache-windows-<run>` prereleases (pruned, keep
+  newest); best-effort restore before the next build. Both steps continue-on-error.
+  GOTCHA while editing: a literal `\b` written through python became a BACKSPACE byte in the
+  YAML and persisted through several fix attempts — full-line sed rewrite with forward
+  slashes (7z accepts them) resolved it.
+- **AI filament scanner + TTS narrator + Home Assistant** (uncommitted, build in flight):
+  new FilamentScanner (QR/token LAN upload server via boost::beast, vendored Nayuki
+  qrcodegen under GUI/third_party, Ollama vision identify, AMS auto-slot, preset
+  auto-selection mapped to the BBL.json vendor families, flashing AnnounceOverlay + TTS),
+  TtsNarrator (SAPI via **IDispatch late binding** — <sapi.h> is unusable under the PCH:
+  its unqualified `byte` is ambiguous vs std::byte), HomeAssistant client (entities, media
+  controls, tts.speak speakers, alert lights with **scene-snapshot restore** so real room
+  lights never stick on the alert colour — user-raised risk), SmartHomeDialog (search bar +
+  entity listbox + rich media controls + toggles). Catalogs at 602 (--check green).
+- **Build-machine incident:** an OOM'd parallel build left 10 zombie cl.exe processes and a
+  corrupted FileTracker (MSB6003 in SaveTlog). Recovery: kill cl/Tracker/MSBuild strays,
+  delete `libslic3r_gui.tlog/`, rebuild at `/m:2 /p:CL_MPCount=6`.
+
 # Chrome-sweep continuation (2026-07-24, night)
 
 - **MD3Dialog resizable variant de-natived** (one-line style change +

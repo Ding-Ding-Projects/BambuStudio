@@ -87,6 +87,7 @@
 #include "Plater.hpp"
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
+#include "TtsNarrator.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
 
@@ -1142,6 +1143,10 @@ void GUI_App::post_init()
 
     // AI printer watch (opt-in, local Ollama): periodic live-view summaries.
     PrinterWatch::install();
+
+    // TTS narrator (opt-in, off by default): printer state changes + errors,
+    // with optional Home Assistant speakers and alert lights.
+    TtsNarrator::install();
 
     if (app_config->get("sync_user_preset") == "true") {
         if (m_agent) { start_sync_user_preset(); }

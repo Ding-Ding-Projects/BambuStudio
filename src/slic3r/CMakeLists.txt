@@ -268,6 +268,16 @@ set(SLIC3R_GUI_SOURCES
     GUI/PreferencesHistory.hpp
     GUI/PrinterWatch.cpp
     GUI/PrinterWatch.hpp
+    GUI/FilamentScanner.cpp
+    GUI/FilamentScanner.hpp
+    GUI/TtsNarrator.cpp
+    GUI/TtsNarrator.hpp
+    GUI/HomeAssistant.cpp
+    GUI/HomeAssistant.hpp
+    GUI/SmartHomeDialog.cpp
+    GUI/SmartHomeDialog.hpp
+    GUI/third_party/qrcodegen.cpp
+    GUI/third_party/qrcodegen.hpp
     GUI/BBLTopbar.cpp
     GUI/BBLTopbar.hpp
     GUI/BedShapeDialog.cpp
