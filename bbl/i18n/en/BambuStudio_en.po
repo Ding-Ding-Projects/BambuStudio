@@ -22052,3 +22052,6 @@ msgstr "Home Assistant is unreachable: %s"
 
 msgid "Connected. %d speakers and lights found."
 msgstr "Connected. %d speakers and lights found."
+
+msgid "Set nozzle count"
+msgstr ""

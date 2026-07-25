@@ -2,6 +2,7 @@
 #include "GUI_App.hpp"
 #include "OptionsGroup.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/wx.h>
 #include <wx/numformatter.h>
@@ -149,6 +150,8 @@ void BedShapeDialog::build_dialog(const ConfigOptionPoints &default_pt, const Co
     SetSizer(main_sizer);
     SetMinSize(GetSize());
     main_sizer->SetSizeHints(this);
+
+    MD3DialogCaption::Adopt(this);
 
     this->Bind(wxEVT_CLOSE_WINDOW, ([this](wxCloseEvent& evt) {
         EndModal(wxID_CANCEL);

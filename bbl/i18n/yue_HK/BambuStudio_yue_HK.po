@@ -2424,3 +2424,7 @@ msgstr "連唔到 Home Assistant：%s"
 #. reviewed-category: preferences
 msgid "Connected. %d speakers and lights found."
 msgstr "連接咗。搵到 %d 個喇叭同燈。"
+
+#. reviewed-category: slicing-printing
+msgid "Set nozzle count"
+msgstr "設定噴嘴數目"
