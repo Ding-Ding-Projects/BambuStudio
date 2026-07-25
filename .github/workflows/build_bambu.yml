@@ -311,7 +311,13 @@ jobs:
               throw "Building Windows C++ tests failed with exit code $LASTEXITCODE."
           }
 
-          $env:PATH = '${{ github.workspace }}\install-dir;' + $env:PATH
+          # The test exes import OCCT DLLs (TKernel/TKBRep/TKLCAF) that live in
+          # the deps output, not all of which ship in install-dir — without
+          # these on PATH the exe dies with STATUS_DLL_NOT_FOUND (0xC0000135),
+          # which under ctest manifested as an infinite hard-error hang.
+          $env:PATH = '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin;' +
+              '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin\occt;' +
+              '${{ github.workspace }}\install-dir;' + $env:PATH
           ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests)$'
           if ($LASTEXITCODE -ne 0) {
               throw "Windows C++ tests failed with exit code $LASTEXITCODE."
