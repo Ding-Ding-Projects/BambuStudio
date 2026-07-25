@@ -1,3 +1,23 @@
+# CI "6-hour test hang" root cause (2026-07-25) — READ BEFORE TOUCHING CI TESTS
+
+- The deterministic_bbs_3mf_tests "hang" that ate two 6-hour jobs was **STATUS_DLL_NOT_FOUND
+  (0xC0000135)**: the test exe imports OCCT DLLs (TKernel/TKBRep/TKLCAF) that live in
+  `deps\...\usr\local\bin{,\occt}` and are not all shipped in install-dir — the only PATH
+  entry the test step set. Under ctest the loader failure surfaced as the Windows hard-error
+  path and blocked forever with zero output; under Start-Process with redirected stdio it
+  dies instantly with the real code. Diagnosis chain that worked: ctest --timeout 900 (fail
+  fast) → direct Start-Process watchdog + procdump artifact (exposed the exit code).
+  Fixed in 54d239b46 by prepending the deps bin dirs to the step's PATH; the watchdog stays.
+- Local test-tree recipe for this machine (build-tests): configure INSIDE
+  `VsDevCmd.bat -arch=amd64 -winsdk=10.0.26100.0` (C:\Program\Common7\Tools) or the
+  VCTargetsPath probe hard-fails on the half-installed 28000 SDK (MSB8037); plus
+  `-D CMAKE_GENERATOR_INSTANCE=C:\Program -DCMAKE_SYSTEM_VERSION=10.0.26100.0`. Tests need
+  `build/src/Release` on PATH to run. `build-tests/` is gitignored (an early commit nearly
+  pushed 2 GB of .obj/.lib — GitHub's 100 MB limit rejected it; amend-stripped before push).
+- Earlier in the chain, ~_BBS_Backup_Manager's unbounded static-dtor join was ALSO hardened
+  (try_join_for(10s) + detach, bbs_3mf.cpp) — kept: correct defensive fix, just not the CI
+  culprit. Local exit path verified: File ▸ Quit terminates in ~1 s.
+
 # Chrome-sweep tranche 3: completion scan + 46 more ctors (2026-07-25)
 
 - Completion scan enumerated every remaining DPIDialog/wxDialog subclass: 48 plain-Adopt

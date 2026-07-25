@@ -345,7 +345,18 @@ try {
                     if ($title -eq $scenario.Title) { break }
                 }
             }
-            Assert-True (-not $process.HasExited) "Native application exited before presenting '$($scenario.Name)'."
+            if ($process.HasExited) {
+                # Surface everything the dead process left behind before failing:
+                # its exact exit code distinguishes a clean OnInit rejection (-1)
+                # from a loader failure (0xC0000135) or a crash code.
+                $exitCode = $process.ExitCode
+                Write-Host ("Native application exited early for '{0}' with exit code {1} (0x{2:X8})." -f $scenario.Name, $exitCode, $exitCode)
+                Get-ChildItem -Path (Join-Path $dataDir 'log') -Filter '*.log' -ErrorAction SilentlyContinue | ForEach-Object {
+                    Write-Host "--- $($_.FullName) (last 80 lines) ---"
+                    Get-Content $_.FullName -Tail 80 -ErrorAction SilentlyContinue
+                }
+                throw ("Native application exited before presenting '{0}' (exit code {1})." -f $scenario.Name, $exitCode)
+            }
             Assert-True ($handle -ne [IntPtr]::Zero) "Native application did not present a window for '$($scenario.Name)'."
             Assert-True ($title -eq $scenario.Title) "Captured an unexpected native window for '$($scenario.Name)': '$title'."
 
