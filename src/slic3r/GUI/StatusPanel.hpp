@@ -629,6 +629,9 @@ protected:
     virtual void on_nozzle_selected(wxCommandEvent &event) { event.Skip(); }
 
 public:
+    // Live-view window, for the AI printer-watch frame capture (PrinterWatch).
+    wxMediaCtrl3 *get_media_ctrl() { return m_media_ctrl; }
+
     StatusBasePanel(wxWindow *      parent,
                     wxWindowID      id    = wxID_ANY,
                     const wxPoint & pos   = wxDefaultPosition,

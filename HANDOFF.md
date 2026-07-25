@@ -1,3 +1,36 @@
+# Roadmap execution wave (2026-07-24, evening)
+
+User: "Please finish roadmap." Executed the recorded mandates in one build cycle:
+
+- **CI root-caused + unblocked first:** the 5b7acac48 failure was the DeviceWeb pnpm audit
+  gate hitting the fresh brace-expansion advisory (GHSA-mh99-v99m-4gvg) — NOT the new code
+  (0 compiles, sccache untouched; the "Extracting Node.js" tail was a red herring — the real
+  line was "high-severity advisory or audit failure"). Fixed by the known override pattern
+  (`brace-expansion: 5.0.8`), lock regenerated, audit + DeviceWeb build verified locally,
+  pushed as `3a718f5f6`. NOTE: rerunning a FAILED run of an older commit cancels the newer
+  commit's in-flight build via the shared concurrency group — prefer rerunning the newest.
+- **MD3DialogChrome** (new): borderless caption for owned dialogs (ConfigProfiles, Version
+  history, MD3ColorPicker, StopPrintGate) — HTCAPTION drag, mnemonic-safe title, 44px close
+  target, DWMWCP_ROUND. **MD3Motion** (new): duration tokens + standard/emphasized easing +
+  interruptible Anim honouring SPI_GETCLIENTAREAANIMATION; adopted for dialog fade-ins,
+  palette fade, SlideToConfirm animated snap-back.
+- **PreferencesHistory** (new): `AppConfig::set_save_observer` (new libslic3r hook, fired on
+  the main thread after both save() variants) → 2s-debounced commit of BambuStudio.conf via
+  the profiles-root ProjectHistoryManager (identity `preferences.history`); browser/restore in
+  ConfigProfilesDialog ("Preferences history…", restore writes BESIDE the live conf).
+- **PrinterWatch** (new, opt-in OFF): timer → PrintWindow the Device live-view media window
+  (uniform-frame skip = no stream) → 768px JPEG → base64 → local Ollama /api/generate
+  (default model qwen2.5vl; gemma3 fine; gpt-oss text-only) → two-line OK/PROBLEM verdict →
+  info toast or persistent warning with a fix hint. Ollama-down is log-only. Preferences ▸
+  Other section (enable / model tag / interval). Needs printer+Ollama for end-to-end.
+- **Register truth-restored:** scene-toolbar centering (get_main_toolbar_offset) and the
+  Objects card (Plater.cpp:3744 SectionHeader+SearchField; GUI_ObjectList.cpp:93
+  SecondaryContainer chip rows) had ALREADY landed — flipped deviation→done with evidence:
+  128 done / 3 justified deviations / 0 open.
+- Catalogs at 562 (--check green). Docs: preferences-history.md, ai-printer-watch.md +
+  indexes; ROADMAP mandates moved to Landed. Pending: wave build verification + captures of
+  the chrome'd dialogs, then push.
+
 # Screenshot replacement + light/dark fixes + search everywhere + config profiles (2026-07-24, later)
 
 **Wave 2 (same session):** Ctrl+F **command palette** (`CommandPalette` — every enabled menu

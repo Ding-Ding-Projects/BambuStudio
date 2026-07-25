@@ -18,6 +18,9 @@ work is in progress.
   entire data directory (secrets included, behind a slide-to-confirm gate),
   import it on another PC as a new profile, keep unlimited profiles, and give
   each one local Git-backed snapshot history.
+- [Preferences auto-history](preferences-history.md) — every settings change
+  commits BambuStudio.conf into an isolated local Git repo (debounced,
+  deduped), with a browser and restore-beside-the-live-file semantics.
 
 ## Postman collections
 

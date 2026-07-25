@@ -2204,3 +2204,63 @@ msgstr "第 4 步（共 4 步）：揭開個蓋，撳「停止打印」。"
 #. reviewed-category: destructive-dirty-error-security
 msgid "Interlock complete. STOP PRINT is live."
 msgstr "連鎖完成。「停止打印」已經生效。"
+
+#. reviewed-category: preferences
+msgid "Preferences history..."
+msgstr "偏好設定歷史..."
+
+#. reviewed-category: preferences
+msgid "Preferences history"
+msgstr "偏好設定歷史"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Preferences history could not be read: %s"
+msgstr "讀取唔到偏好設定歷史：%s"
+
+#. reviewed-category: preferences
+msgid "No preferences snapshots yet. Change any setting and one is recorded automatically."
+msgstr "仲未有偏好設定快照。改任何一項設定就會自動記錄一個。"
+
+#. reviewed-category: preferences
+msgid "Automatic snapshots of your preferences. Restoring writes a copy next to the live file; nothing is overwritten."
+msgstr "你嘅偏好設定自動快照。還原會喺現用檔案旁邊寫一個副本；乜嘢都唔會被覆寫。"
+
+#. reviewed-category: preferences
+msgid "Preferences snapshot written to %s. Replace BambuStudio.conf with it while the app is closed to apply."
+msgstr "偏好設定快照已經寫入 %s。喺應用程式閂咗嘅時候用佢換走 BambuStudio.conf 就會生效。"
+
+#. reviewed-category: slicing-printing
+msgid "Printer watch: %s"
+msgstr "打印機看更：%s"
+
+#. reviewed-category: preferences
+msgid "AI printer watch"
+msgstr "AI 打印機看更"
+
+#. reviewed-category: preferences
+msgid "Summarize the printer's live camera view with a local model. Frames never leave this computer."
+msgstr "用本地模型幫你總結打印機鏡頭直播。畫面唔會離開呢部電腦。"
+
+#. reviewed-category: preferences
+msgid "Watch the live view and notify about progress and failures"
+msgstr "睇住直播畫面，有進度同出事都通知你"
+
+#. reviewed-category: preferences
+msgid "Every few minutes a frame of the live view is described by a local Ollama model; suspected failures raise a persistent warning with fix suggestions."
+msgstr "每隔幾分鐘，一格直播畫面會交俾本地 Ollama 模型描述；懷疑出事就會彈一個唔會自己消失嘅警告，仲附埋修復建議。"
+
+#. reviewed-category: preferences
+msgid "Local model tag"
+msgstr "本地模型標籤"
+
+#. reviewed-category: preferences
+msgid "Vision-capable Ollama tag, e.g. qwen2.5vl or gemma3. Text-only tags such as gpt-oss cannot read frames."
+msgstr "識睇圖嘅 Ollama 標籤，例如 qwen2.5vl 或者 gemma3。淨係識文字嘅（例如 gpt-oss）睇唔到畫面。"
+
+#. reviewed-category: preferences
+msgid "Check interval (minutes)"
+msgstr "檢查間隔（分鐘）"
+
+#. reviewed-category: preferences
+msgid "Minutes between live-view checks (minimum 1)."
+msgstr "每次檢查直播畫面相隔幾多分鐘（最少 1）。"

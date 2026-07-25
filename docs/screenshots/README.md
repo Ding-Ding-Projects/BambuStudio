@@ -31,12 +31,13 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 
 - [`palette.png`](command-palette/palette.png)
 
-## config-profiles (11 captures)
+## config-profiles (12 captures)
 
 - [`dialog--armed.png`](config-profiles/dialog--armed.png)
 - [`dialog--export-btn-armed.png`](config-profiles/dialog--export-btn-armed.png)
 - [`dialog--export-btn.png`](config-profiles/dialog--export-btn.png)
 - [`dialog--import-btn.png`](config-profiles/dialog--import-btn.png)
+- [`dialog--md3-caption.png`](config-profiles/dialog--md3-caption.png)
 - [`dialog--profile-actions.png`](config-profiles/dialog--profile-actions.png)
 - [`dialog--profile-list.png`](config-profiles/dialog--profile-list.png)
 - [`dialog--search-field.png`](config-profiles/dialog--search-field.png)

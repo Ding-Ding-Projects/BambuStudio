@@ -2755,6 +2755,24 @@ wxWindow *PreferencesDialog::create_other_tab()
     wxCommandEvent dummy(wxEVT_COMBOBOX);
     update_modelmall(dummy);
 
+    // ---- AI printer watch (opt-in, strictly local: Ollama on localhost) ----
+    auto title_watch = create_item_title(_L("AI printer watch"), scrolled,
+        _L("Summarize the printer's live camera view with a local model. Frames never leave this computer."));
+    auto item_watch_enable = create_item_checkbox(
+        _L("Watch the live view and notify about progress and failures"), scrolled,
+        _L("Every few minutes a frame of the live view is described by a local Ollama model; suspected failures raise a persistent warning with fix suggestions."),
+        50, "printer_watch_enabled");
+    auto item_watch_model = create_item_input(_L("Local model tag"), "", scrolled,
+        _L("Vision-capable Ollama tag, e.g. qwen2.5vl or gemma3. Text-only tags such as gpt-oss cannot read frames."),
+        "printer_watch_model", [](wxString) {});
+    auto item_watch_interval = create_item_input(_L("Check interval (minutes)"), "", scrolled,
+        _L("Minutes between live-view checks (minimum 1)."),
+        "printer_watch_interval", [](wxString) {});
+    sizer->Add(title_watch, wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
+    sizer->Add(item_watch_enable, flags);
+    sizer->Add(item_watch_model, flags);
+    sizer->Add(item_watch_interval, flags);
+
     // ---- Developer Mode (Figma keeps these two here, in the Other tab) ----
     auto title_dev           = create_item_title(_L("Developer Mode"), scrolled, _L("Developer Mode"));
     auto item_dev_mode       = create_item_checkbox(_L("Develop mode"), scrolled, _L("Develop mode"), 50, "developer_mode");

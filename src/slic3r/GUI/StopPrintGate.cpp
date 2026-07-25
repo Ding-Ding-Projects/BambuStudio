@@ -3,6 +3,7 @@
 #include "I18N.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/SlideToConfirm.hpp"
 #include "Widgets/StateColor.hpp"
@@ -15,11 +16,12 @@ namespace Slic3r::GUI {
 
 StopPrintGateDialog::StopPrintGateDialog(wxWindow *parent)
     : wxDialog(parent, wxID_ANY, _L("Stop print - safety interlock"), wxDefaultPosition, wxDefaultSize,
-               wxDEFAULT_DIALOG_STYLE)
+               wxBORDER_NONE)
 {
     const wxColour surface = StateColor::semantic(MD3::Role::Surface);
     SetBackgroundColour(surface);
     auto *root = new wxBoxSizer(wxVERTICAL);
+    root->Add(new MD3DialogCaption(this, _L("Stop print - safety interlock")), 0, wxEXPAND);
 
     auto *title = new Label(this, Label::Head_16, _L("Stopping discards the print in progress."));
     title->SetBackgroundColour(surface);
@@ -147,6 +149,7 @@ StopPrintGateDialog::StopPrintGateDialog(wxWindow *parent)
     SetSizerAndFit(root);
     update_stage();
     CenterOnParent();
+    MD3DialogCaption::FinishChrome(this);
 }
 
 void StopPrintGateDialog::update_stage()

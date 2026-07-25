@@ -85,6 +85,8 @@
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Plater.hpp"
+#include "PreferencesHistory.hpp"
+#include "PrinterWatch.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
 
@@ -1133,6 +1135,13 @@ void GUI_App::post_init()
     assert(initialized());
     if (! this->initialized())
         throw Slic3r::RuntimeError("Calling post_init() while not yet initialized");
+
+    // Automatic preferences history: every settings save records a debounced
+    // Git snapshot of BambuStudio.conf (local only, beside the data dir).
+    PreferencesHistory::install();
+
+    // AI printer watch (opt-in, local Ollama): periodic live-view summaries.
+    PrinterWatch::install();
 
     if (app_config->get("sync_user_preset") == "true") {
         if (m_agent) { start_sync_user_preset(); }

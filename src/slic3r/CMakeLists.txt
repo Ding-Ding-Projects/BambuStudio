@@ -74,6 +74,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/SlideToConfirm.hpp
     GUI/Widgets/MD3ColorPicker.cpp
     GUI/Widgets/MD3ColorPicker.hpp
+    GUI/Widgets/MD3Motion.cpp
+    GUI/Widgets/MD3Motion.hpp
+    GUI/Widgets/MD3DialogChrome.cpp
+    GUI/Widgets/MD3DialogChrome.hpp
     GUI/Widgets/RegexBuilderPopup.cpp
     GUI/Widgets/RegexBuilderPopup.hpp
     GUI/Widgets/Slider.cpp
@@ -260,6 +264,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/CommandPalette.hpp
     GUI/StopPrintGate.cpp
     GUI/StopPrintGate.hpp
+    GUI/PreferencesHistory.cpp
+    GUI/PreferencesHistory.hpp
+    GUI/PrinterWatch.cpp
+    GUI/PrinterWatch.hpp
     GUI/BBLTopbar.cpp
     GUI/BBLTopbar.hpp
     GUI/BedShapeDialog.cpp

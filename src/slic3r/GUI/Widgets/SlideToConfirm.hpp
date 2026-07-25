@@ -5,6 +5,7 @@
 
 #include <wx/window.h>
 
+#include "MD3Motion.hpp"
 #include "MD3Tokens.hpp"
 
 // Material Design 3 "slide to confirm" gate for destructive or
@@ -60,6 +61,7 @@ private:
     std::function<void()> m_on_confirm;
 
     int  m_pos { 0 };          // knob travel in px from the left dock
+    MD3::Motion::Anim m_snap_back;
     bool m_dragging { false };
     int  m_drag_grab_dx { 0 };
     bool m_confirmed { false };

@@ -6,6 +6,7 @@
 #include "Plater.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3Motion.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/SwitchButton.hpp"
@@ -90,6 +91,7 @@ void CommandPalette::ShowPalette(MainFrame *frame)
 {
     CommandPalette palette(frame);
     palette.CenterOnParent();
+    MD3::Motion::FadeIn(&palette, MD3::Motion::short2);
     palette.ShowModal();
 }
 

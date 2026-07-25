@@ -67,6 +67,7 @@ private:
     void on_launch(wxCommandEvent &event);
     void on_snapshot(wxCommandEvent &event);
     void on_history(wxCommandEvent &event);
+    void on_prefs_history(wxCommandEvent &event);
 
     const ProfileRow *selected_profile() const;
     std::filesystem::path profiles_root() const;
@@ -97,6 +98,7 @@ private:
     Button             *m_launch_button { nullptr };
     Button             *m_snapshot_button { nullptr };
     Button             *m_history_button { nullptr };
+    Button             *m_prefs_history_button { nullptr };
     Button             *m_close_button { nullptr };
 };
 

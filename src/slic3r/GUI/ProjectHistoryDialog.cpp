@@ -6,6 +6,7 @@
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/StateColor.hpp"
@@ -69,7 +70,8 @@ StateColor outlined_button_background()
 
 ProjectHistoryDialog::ProjectHistoryDialog(wxWindow *parent, Plater *plater)
     : DPIDialog(parent, wxID_ANY, _L("Version history"), wxDefaultPosition, wxDefaultSize,
-                wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER)
+                // MD3 caption strip instead of the native title bar.
+                wxRESIZE_BORDER | wxBORDER_NONE)
     , m_plater(plater)
     , m_manager(plater != nullptr ? plater->project_history_manager() : nullptr)
     , m_project_identity(plater != nullptr ? plater->project_history_identity() : std::filesystem::path{})
@@ -90,6 +92,7 @@ ProjectHistoryDialog::ProjectHistoryDialog(wxWindow *parent, Plater *plater)
 
     refresh_versions();
     refresh_retained_failures();
+    MD3DialogCaption::FinishChrome(this);
 }
 
 ProjectHistoryDialog::~ProjectHistoryDialog()
@@ -109,6 +112,7 @@ std::filesystem::path ProjectHistoryDialog::release_restored_snapshot()
 void ProjectHistoryDialog::create_ui()
 {
     auto *root = new wxBoxSizer(wxVERTICAL);
+    root->Add(new MD3DialogCaption(this, _L("Version history")), 0, wxEXPAND);
 
     m_title_label = new Label(this, Label::Head_24, _L("Version history"));
     root->Add(m_title_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));

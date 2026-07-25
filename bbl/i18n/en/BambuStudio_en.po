@@ -21893,3 +21893,48 @@ msgstr "Step 4 of 4: lift the cover and press STOP PRINT."
 
 msgid "Interlock complete. STOP PRINT is live."
 msgstr "Interlock complete. STOP PRINT is live."
+
+msgid "Preferences history..."
+msgstr "Preferences history..."
+
+msgid "Preferences history"
+msgstr "Preferences history"
+
+msgid "Preferences history could not be read: %s"
+msgstr "Preferences history could not be read: %s"
+
+msgid "No preferences snapshots yet. Change any setting and one is recorded automatically."
+msgstr "No preferences snapshots yet. Change any setting and one is recorded automatically."
+
+msgid "Automatic snapshots of your preferences. Restoring writes a copy next to the live file; nothing is overwritten."
+msgstr "Automatic snapshots of your preferences. Restoring writes a copy next to the live file; nothing is overwritten."
+
+msgid "Preferences snapshot written to %s. Replace BambuStudio.conf with it while the app is closed to apply."
+msgstr "Preferences snapshot written to %s. Replace BambuStudio.conf with it while the app is closed to apply."
+
+msgid "Printer watch: %s"
+msgstr "Printer watch: %s"
+
+msgid "AI printer watch"
+msgstr "AI printer watch"
+
+msgid "Summarize the printer's live camera view with a local model. Frames never leave this computer."
+msgstr "Summarize the printer's live camera view with a local model. Frames never leave this computer."
+
+msgid "Watch the live view and notify about progress and failures"
+msgstr "Watch the live view and notify about progress and failures"
+
+msgid "Every few minutes a frame of the live view is described by a local Ollama model; suspected failures raise a persistent warning with fix suggestions."
+msgstr "Every few minutes a frame of the live view is described by a local Ollama model; suspected failures raise a persistent warning with fix suggestions."
+
+msgid "Local model tag"
+msgstr "Local model tag"
+
+msgid "Vision-capable Ollama tag, e.g. qwen2.5vl or gemma3. Text-only tags such as gpt-oss cannot read frames."
+msgstr "Vision-capable Ollama tag, e.g. qwen2.5vl or gemma3. Text-only tags such as gpt-oss cannot read frames."
+
+msgid "Check interval (minutes)"
+msgstr "Check interval (minutes)"
+
+msgid "Minutes between live-view checks (minimum 1)."
+msgstr "Minutes between live-view checks (minimum 1)."

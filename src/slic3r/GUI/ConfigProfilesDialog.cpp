@@ -5,6 +5,8 @@
 #include "MsgDialog.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "PreferencesHistory.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/SlideToConfirm.hpp"
@@ -125,7 +127,9 @@ wxString unzip_to_directory(const std::filesystem::path &archive, const std::fil
 
 ConfigProfilesDialog::ConfigProfilesDialog(wxWindow *parent)
     : DPIDialog(parent, wxID_ANY, _L("Config profiles & backup"), wxDefaultPosition, wxDefaultSize,
-                wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+                // Borderless + thin resize frame: the MD3 caption strip
+                // replaces the native title bar (see MD3DialogChrome).
+                wxRESIZE_BORDER | wxBORDER_NONE)
     , m_poll_timer(this)
 {
     try {
@@ -145,6 +149,7 @@ ConfigProfilesDialog::ConfigProfilesDialog(wxWindow *parent)
     SetMinSize(FromDIP(wxSize(680, 640)));
     SetSize(FromDIP(wxSize(720, 700)));
     CenterOnParent();
+    MD3DialogCaption::FinishChrome(this);
 }
 
 ConfigProfilesDialog::~ConfigProfilesDialog() = default;
@@ -158,12 +163,14 @@ std::filesystem::path ConfigProfilesDialog::profile_archive_path(const ProfileRo
 {
     // Virtual identity file for the history engine; the actual snapshot
     // content is a freshly zipped archive committed against this identity.
-    return profiles_root() / (row.name.ToStdString() + ".profile");
+    // .3mf suffix: the history engine validates identity extensions.
+    return profiles_root() / (row.name.ToStdString() + ".profile.3mf");
 }
 
 void ConfigProfilesDialog::create_ui()
 {
     auto *root = new wxBoxSizer(wxVERTICAL);
+    root->Add(new MD3DialogCaption(this, _L("Config profiles & backup")), 0, wxEXPAND);
 
     m_title_label = new Label(this, Label::Head_24, wxEmptyString);
     // SetLabelText: the '&' must render literally, not become a mnemonic.
@@ -193,14 +200,17 @@ void ConfigProfilesDialog::create_ui()
     m_launch_button   = new Button(m_list_card, _L("Launch profile"));
     m_snapshot_button = new Button(m_list_card, _L("Snapshot now"));
     m_history_button  = new Button(m_list_card, _L("History..."));
-    for (Button *b : {m_launch_button, m_snapshot_button, m_history_button})
+    m_prefs_history_button = new Button(m_list_card, _L("Preferences history..."));
+    for (Button *b : {m_launch_button, m_snapshot_button, m_history_button, m_prefs_history_button})
         b->SetMinSize(FromDIP(wxSize(140, 36)));
     m_launch_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_launch, this);
     m_snapshot_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_snapshot, this);
     m_history_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_history, this);
+    m_prefs_history_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_prefs_history, this);
     profile_actions->Add(m_launch_button, 0, wxRIGHT, FromDIP(8));
     profile_actions->Add(m_snapshot_button, 0, wxRIGHT, FromDIP(8));
-    profile_actions->Add(m_history_button, 0);
+    profile_actions->Add(m_history_button, 0, wxRIGHT, FromDIP(8));
+    profile_actions->Add(m_prefs_history_button, 0);
     list_sizer->Add(profile_actions, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(8));
     m_list_card->SetSizer(list_sizer);
     root->Add(m_list_card, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
@@ -280,7 +290,7 @@ void ConfigProfilesDialog::apply_theme()
     const StateColor outlined_bg = outlined_button_background();
     const StateColor outlined_border(outline);
     const StateColor outlined_text(text);
-    for (Button *button : {m_launch_button, m_snapshot_button, m_history_button, m_import_button, m_close_button}) {
+    for (Button *button : {m_launch_button, m_snapshot_button, m_history_button, m_prefs_history_button, m_import_button, m_close_button}) {
         button->SetBackgroundColor(outlined_bg);
         button->SetBorderColor(outlined_border);
         button->SetTextColor(outlined_text);
@@ -462,8 +472,10 @@ void ConfigProfilesDialog::on_snapshot(wxCommandEvent &)
         return;
     const ProfileRow row = *sel;
     const std::filesystem::path identity = profile_archive_path(row);
+    // .3mf: the engine validates the snapshot extension (the content is the
+    // profile zip regardless).
     const std::filesystem::path staging  = profiles_root() / ".staging" /
-        (identity.filename().string() + ".zip");
+        (row.name.ToStdString() + ".snapshot.3mf");
     m_busy = true;
     m_status_label->SetLabel(_L("Recording a complete profile snapshot..."));
     ProjectHistoryManager *history = m_history.get();
@@ -527,7 +539,7 @@ void ConfigProfilesDialog::on_history(wxCommandEvent &)
     std::error_code ec;
     for (int n = 2; std::filesystem::exists(target, ec); ++n)
         target = profiles_root() / (base + "-" + std::to_string(n));
-    const std::filesystem::path staging = profiles_root() / ".staging" / (base + "-restore.zip");
+    const std::filesystem::path staging = profiles_root() / ".staging" / (base + "-restore.3mf");
     const std::filesystem::path identity = profile_archive_path(row);
     m_busy = true;
     m_status_label->SetLabel(_L("Restoring the selected snapshot into a new profile..."));
@@ -556,6 +568,71 @@ void ConfigProfilesDialog::on_history(wxCommandEvent &)
     };
     m_poll_timer.Start(POLL_INTERVAL_MS);
     update_buttons();
+}
+
+void ConfigProfilesDialog::on_prefs_history(wxCommandEvent &)
+{
+    // Automatic per-change snapshots of BambuStudio.conf (see
+    // PreferencesHistory). Restoring writes a copy BESIDE the live conf;
+    // the live file is never replaced under a running app.
+    ProjectHistoryManager *history = PreferencesHistory::manager();
+    if (m_busy || history == nullptr)
+        return;
+    auto versions = history->list_versions(PreferencesHistory::identity()).get();
+    if (!versions.ok()) {
+        m_status_label->SetLabel(wxString::Format(_L("Preferences history could not be read: %s"),
+                                                  wxString::FromUTF8(versions.error.message)));
+        return;
+    }
+    if (versions.versions.empty()) {
+        m_status_label->SetLabel(_L("No preferences snapshots yet. Change any setting and one is recorded automatically."));
+        return;
+    }
+    wxArrayString choices;
+    for (const auto &v : versions.versions) {
+        const wxDateTime when(std::chrono::system_clock::to_time_t(v.committed_at));
+        choices.Add(wxString::Format("%s  |  %s  |  %s",
+                                     when.Format("%Y-%m-%d %H:%M"),
+                                     wxString::FromUTF8(v.message),
+                                     wxString::FromUTF8(v.commit_id.substr(0, 12))));
+    }
+    wxSingleChoiceDialog picker(this,
+        _L("Automatic snapshots of your preferences. Restoring writes a copy next to the live file; nothing is overwritten."),
+        _L("Preferences history"), choices);
+    if (picker.ShowModal() != wxID_OK)
+        return;
+    const auto &version = versions.versions[picker.GetSelection()];
+    const std::filesystem::path destination =
+        std::filesystem::path(data_dir()) /
+        ("BambuStudio.conf.restored-" + version.commit_id.substr(0, 8));
+    // The engine restores only to fresh .3mf paths; materialize there, then
+    // move onto the conf-style name the user actually wants.
+    const std::filesystem::path staging_conf =
+        profiles_root() / ".staging" / ("prefs-" + version.commit_id.substr(0, 8) + ".3mf");
+    std::error_code ec;
+    std::filesystem::create_directories(staging_conf.parent_path(), ec);
+    std::filesystem::remove(staging_conf, ec);
+    std::filesystem::remove(destination, ec);
+    auto restored = history->restore_version(PreferencesHistory::identity(), version.commit_id, staging_conf).get();
+    if (!restored.ok()) {
+        m_status_label->SetLabel(wxString::Format(_L("The snapshot could not be restored: %s"),
+                                                  wxString::FromUTF8(restored.error.message)));
+        return;
+    }
+    std::filesystem::rename(staging_conf, destination, ec);
+    if (ec) {
+        std::filesystem::copy_file(staging_conf, destination, std::filesystem::copy_options::overwrite_existing, ec);
+        std::error_code cleanup_ec;
+        std::filesystem::remove(staging_conf, cleanup_ec);
+        if (ec) {
+            m_status_label->SetLabel(wxString::Format(_L("The snapshot could not be restored: %s"),
+                                                      wxString::FromUTF8(ec.message())));
+            return;
+        }
+    }
+    m_status_label->SetLabel(wxString::Format(
+        _L("Preferences snapshot written to %s. Replace BambuStudio.conf with it while the app is closed to apply."),
+        wxString::FromUTF8(destination.string())));
 }
 
 void ConfigProfilesDialog::on_dpi_changed(const wxRect &)

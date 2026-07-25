@@ -2,6 +2,7 @@
 
 #include "Button.hpp"
 #include "Label.hpp"
+#include "MD3DialogChrome.hpp"
 #include "MD3Tokens.hpp"
 #include "SearchField.hpp"
 #include "StateColor.hpp"
@@ -61,13 +62,14 @@ void rgb_to_hsv(const wxColour &col, double &h, double &s, double &v)
 
 MD3ColorPickerDialog::MD3ColorPickerDialog(wxWindow *parent, const wxColour &initial)
     : wxDialog(parent, wxID_ANY, _L("Material color picker"), wxDefaultPosition, wxDefaultSize,
-               wxDEFAULT_DIALOG_STYLE)
+               wxBORDER_NONE)
 {
     SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_colour = initial.IsOk() ? initial : wxColour(20, 108, 46);
     rgb_to_hsv(m_colour, m_h, m_s, m_v);
 
     auto *root = new wxBoxSizer(wxVERTICAL);
+    root->Add(new MD3DialogCaption(this, _L("Material color picker")), 0, wxEXPAND);
 
     m_sv_field = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(kFieldW), FromDIP(kFieldH)));
     m_sv_field->SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -201,6 +203,7 @@ MD3ColorPickerDialog::MD3ColorPickerDialog(wxWindow *parent, const wxColour &ini
     SetSizerAndFit(root);
     sync_hex();
     CenterOnParent();
+    MD3DialogCaption::FinishChrome(this);
 }
 
 void MD3ColorPickerDialog::set_from_hsv(double h, double s, double v, bool update_hex)

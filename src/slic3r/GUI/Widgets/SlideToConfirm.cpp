@@ -1,6 +1,7 @@
 #include "SlideToConfirm.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #include <wx/dcbuffer.h>
 
@@ -82,6 +83,7 @@ void SlideToConfirm::OnMouse(wxMouseEvent &event)
         if (m_confirmed)
             return;
         if (knob.Contains(event.GetPosition())) {
+            m_snap_back.Stop(); // grabbing the knob interrupts a snap-back
             m_dragging     = true;
             m_drag_grab_dx = event.GetX() - knob.x;
             CaptureMouse();
@@ -96,8 +98,13 @@ void SlideToConfirm::OnMouse(wxMouseEvent &event)
         if (m_pos >= maxTravel() * 88 / 100)
             complete();
         else {
-            m_pos = 0; // an incomplete slide snaps back: no partial arming
-            Refresh();
+            // An incomplete slide snaps back (no partial arming) — animated
+            // with the MD3 standard curve, jumping under reduced motion.
+            const int from = m_pos;
+            m_snap_back.Play(MD3::Motion::medium1, [this, from](double t) {
+                m_pos = static_cast<int>(std::lround(from * (1.0 - t)));
+                Refresh();
+            });
         }
     }
 }

@@ -7,6 +7,7 @@
 - [Command palette (Ctrl+F)](command-palette.md)
 - [Material color picker & color translator](md3-color-picker.md)
 - [Stop-print safety interlock](stop-print-interlock.md)
+- [AI printer watch (local models)](ai-printer-watch.md)
 - [Native visual smoke test](native-visual-smoke.md)
 - [Software OpenGL fallback (Mesa llvmpipe)](software-gl-fallback.md)
 
