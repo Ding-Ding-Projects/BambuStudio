@@ -1,6 +1,22 @@
 <svg width="94" height="122" viewBox="0 0 94 122" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M50.3856 45.5508V122H94V62.6627L50.3856 45.5508Z" fill="#00AE42"/>
-<path d="M50.3856 0V38.2419L94 55.3884V0H50.3856Z" fill="#00AE42"/>
-<path d="M0 76.4838V0H43.6143V59.3373L0 76.4838Z" fill="#00AE42"/>
-<path d="M0 122V83.7927L43.6143 66.6462V122H0Z" fill="#00AE42"/>
+  <!-- Dim sum steamer splash mark: bamboo basket, three dumplings, steam. -->
+  <path d="M30 22 C26 17 30 12 27 7" stroke="#B9C0BA" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M47 19 C43 14 47 9 44 3" stroke="#B9C0BA" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M64 22 C60 17 64 12 61 7" stroke="#B9C0BA" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <ellipse cx="29" cy="52" rx="16" ry="12" fill="#F6E7DC"/>
+  <path d="M15 50 Q29 38 43 50" stroke="#E8CDBC" stroke-width="2.5" fill="none"/>
+  <path d="M21 46 L23 52 M27 43.5 L28 51 M33 43.5 L34 51 M39 46 L38 52" stroke="#E8CDBC" stroke-width="2" stroke-linecap="round"/>
+  <path d="M50 47 h26 l-2.5 14 h-21 z" fill="#F3D06A"/>
+  <path d="M53 47 v13 M58 47 v14 M63 47 v14 M68 47 v14 M73 47 v13" stroke="#DDB04E" stroke-width="2"/>
+  <ellipse cx="63" cy="46" rx="13" ry="5.5" fill="#E58F3C"/>
+  <circle cx="63" cy="44.5" r="2.6" fill="#D96A28"/>
+  <ellipse cx="47" cy="66" rx="15" ry="11.5" fill="#FBF3E4"/>
+  <path d="M47 57 L43 63 M47 57 L47 64 M47 57 L51 63 M47 57 L40 61 M47 57 L54 61" stroke="#EAD9BC" stroke-width="2" stroke-linecap="round"/>
+  <path d="M8 74 h78 v14 q0 5 -5 5 H13 q-5 0 -5 -5 z" fill="#C8A468"/>
+  <path d="M8 74 h78 v5 H8 z" fill="#B08D50"/>
+  <path d="M14 79 v14 M22 79 v14 M30 79 v14 M38 79 v14 M46 79 v14 M54 79 v14 M62 79 v14 M70 79 v14 M78 79 v14" stroke="#A17E44" stroke-width="2"/>
+  <path d="M12 97 h70 v9 q0 4 -4 4 H16 q-4 0 -4 -4 z" fill="#8A6D3B"/>
+  <path d="M12 97 h70 v4 H12 z" fill="#7A5E30"/>
+  <path d="M6 116 L88 108" stroke="#D96A28" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M6 121 L88 114" stroke="#E58F3C" stroke-width="3.4" stroke-linecap="round"/>
 </svg>
