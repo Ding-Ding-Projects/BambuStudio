@@ -282,6 +282,13 @@ public:
     void delete_mixed_filament_at(size_t idx);
     void decompose_filament_color(int filament_idx);
     void recalc_filament_scroll_sizes();
+    // Sidebar body scroll maintenance: pins the scrolled body's virtual width
+    // to its client width (vertical-only scrolling, rows always reflow to the
+    // sidebar) and grows the virtual height to the content's min height so
+    // every section below the fold stays reachable by scrolling. Call after
+    // any change that alters the stacked content's height (collapse/expand,
+    // row add/remove, compact<->advanced flips).
+    void update_scroll_body() const;
     void update_mixed_filament_list();
     bool has_broken_mixed_filament() const;
     bool has_broken_mixed_filament(const PartPlate* plate) const;
