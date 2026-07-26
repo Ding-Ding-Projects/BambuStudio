@@ -2982,7 +2982,7 @@ var LangText={
 var LANG_COOKIE_NAME="BambuWebLang";
 var LANG_COOKIE_EXPIRESECOND= 365*86400;
 
-function TranslatePage()
+function GetCurrentWebLang()
 {
 	let strLang=GetQueryString("lang");
 	if(strLang!=null)
@@ -2995,27 +2995,110 @@ function TranslatePage()
 		//strLang=getCookie(LANG_COOKIE_NAME);
 		strLang=localStorage.getItem(LANG_COOKIE_NAME);
 	}
-	
-	//alert(strLang);
-	
+
 	if( strLang!="bilingual_en_yue_HK" && !LangText.hasOwnProperty(strLang) )
 		strLang="en";
 
+	return strLang;
+}
+
+function TranslatePage()
+{
+	let strLang=GetCurrentWebLang();
+
 	document.documentElement.lang = strLang==="yue_HK" ? "yue-Hant-HK" : "en";
+
+	let bBilingual=(strLang==="bilingual_en_yue_HK");
 
     let AllNode=$(".trans");
 	let nTotal=AllNode.length;
 	for(let n=0;n<nTotal;n++)
 	{
 		let OneNode=AllNode[n];
-		
+
 		let tid=$(OneNode).attr("tid");
+
+		// A ".bi-group" container marks a sentence composed from several
+		// ".trans" fragments (e.g. "Please " + "install" + " the plugin...").
+		// Never annotate the individual fragments in bilingual mode — that
+		// interleaves the two languages word by word. Render the fragments in
+		// English and let AnnotateBilingualGroups() append one whole-sentence
+		// Cantonese line to the container.
+		if(bBilingual && $(OneNode).closest(".bi-group").length>0)
+		{
+			if(LangText['en'].hasOwnProperty(tid))
+				$(OneNode).html(LangText['en'][tid]);
+			continue;
+		}
+
 		let strText=GetLocalizedTextByKey(tid, strLang);
 		if(strText!==null)
 		{
 			$(OneNode).html(strText);
 		}
 	}
+
+	AnnotateBilingualGroups(bBilingual);
+}
+
+// Compact one-line secondary label: never taller than one small line, clipped
+// with an ellipsis inside fixed-height slots (full text stays reachable via
+// the title tooltip). Inherits the surrounding text color for theme safety.
+var BILINGUAL_SECONDARY_STYLE='display:block;font-size:0.85em;line-height:1.35;font-weight:400;opacity:0.85;overflow:hidden;text-overflow:ellipsis;';
+
+function StripBilingualMarkup(str)
+{
+	return String(str).replace(/<[^>]*>/g,'');
+}
+
+function EscapeBilingualAttribute(str)
+{
+	return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function BuildBilingualSecondarySpan(cantonese, extraClass)
+{
+	let strPlain='粵語：'+StripBilingualMarkup(cantonese);
+	return '<span class="BilingualSecondary'+(extraClass?' '+extraClass:'')+'" lang="yue-Hant-HK"'
+		+' title="'+EscapeBilingualAttribute(strPlain)+'"'
+		+' style="'+BILINGUAL_SECONDARY_STYLE+'">粵語：'+cantonese+'</span>';
+}
+
+// Appends (or removes, outside bilingual mode) one composed Cantonese line per
+// ".bi-group" sentence container. Fallback rule: if any fragment of the
+// composed whole lacks a real Cantonese translation, show English only.
+function AnnotateBilingualGroups(bBilingual)
+{
+	$(".bi-group").each(function(){
+		let Group=$(this);
+		Group.children(".BilingualGroupSecondary").remove();
+		if(!bBilingual)
+			return;
+
+		let strEnglish="";
+		let strCantonese="";
+		let bComplete=true;
+		Group.find(".trans").each(function(){
+			let tid=$(this).attr("tid");
+			if(!LangText['en'].hasOwnProperty(tid))
+			{
+				bComplete=false;
+				return false;
+			}
+			strEnglish+=LangText['en'][tid];
+			if(!LangText['yue_HK'].hasOwnProperty(tid) || LangText['yue_HK'][tid]==="")
+			{
+				bComplete=false;
+				return false;
+			}
+			strCantonese+=LangText['yue_HK'][tid];
+		});
+
+		if(!bComplete || strCantonese==="" || strCantonese===strEnglish)
+			return;
+
+		Group.append(BuildBilingualSecondarySpan(strCantonese,'BilingualGroupSecondary'));
+	});
 }
 
 function GetLocalizedTextByKey(key, strLang)
@@ -3026,10 +3109,14 @@ function GetLocalizedTextByKey(key, strLang)
 	let english=LangText['en'][key];
 	if(strLang==="bilingual_en_yue_HK")
 	{
-		let cantonese=LangText['yue_HK'].hasOwnProperty(key) ? LangText['yue_HK'][key] : english;
-		if(english==="" && cantonese==="")
-			return "";
-		return '<span lang="en">'+english+'</span><br/><span lang="yue-Hant-HK">粵語：'+cantonese+'</span>';
+		let cantonese=LangText['yue_HK'].hasOwnProperty(key) ? LangText['yue_HK'][key] : "";
+		// Fallback rule: without a real whole-string Cantonese translation,
+		// show English only instead of annotating with a copy of the English.
+		if(cantonese==="" || cantonese===english)
+			return english;
+		if(english==="")
+			return cantonese;
+		return '<span lang="en">'+english+'</span>'+BuildBilingualSecondarySpan(cantonese,'');
 	}
 
 	if(LangText.hasOwnProperty(strLang) && LangText[strLang].hasOwnProperty(key))
@@ -3040,22 +3127,27 @@ function GetLocalizedTextByKey(key, strLang)
 
 function GetCurrentTextByKey( key )
 {
-	let strLang=GetQueryString("lang");
-	if(strLang!=null)
-	{
-		//setCookie(LANG_COOKIE_NAME,strLang,LANG_COOKIE_EXPIRESECOND,'/');
-		localStorage.setItem(LANG_COOKIE_NAME,strLang);
-	}
-	else
-	{
-		//strLang=getCookie(LANG_COOKIE_NAME);
-		strLang=localStorage.getItem(LANG_COOKIE_NAME);
-	}
-	
-	//alert(strLang);
-	
-	if( strLang!="bilingual_en_yue_HK" && !LangText.hasOwnProperty(strLang) )
-		strLang="en";
+	return GetLocalizedTextByKey(key, GetCurrentWebLang()) || '';
+}
 
-	return GetLocalizedTextByKey(key, strLang) || '';
+// Plain-text variant for attribute contexts (title tooltips, placeholders,
+// innerText dialogs/toasts) where the bilingual HTML markup must not leak.
+function GetCurrentPlainTextByKey( key )
+{
+	let strLang=GetCurrentWebLang();
+	if(!LangText['en'].hasOwnProperty(key))
+		return '';
+
+	let english=StripBilingualMarkup(LangText['en'][key]);
+	if(strLang==="bilingual_en_yue_HK")
+	{
+		let cantonese=LangText['yue_HK'].hasOwnProperty(key) ? StripBilingualMarkup(LangText['yue_HK'][key]) : "";
+		if(cantonese==="" || cantonese===english)
+			return english;
+		if(english==="")
+			return cantonese;
+		return english+' ／ 粵語：'+cantonese;
+	}
+
+	return StripBilingualMarkup(GetLocalizedTextByKey(key, strLang) || '');
 }

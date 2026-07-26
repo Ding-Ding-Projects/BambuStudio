@@ -24,7 +24,7 @@ function OnHomeInit()
 		event.defaultPrevented();
     };
 	
-	let ModelSearchTip=GetCurrentTextByKey('t122');
+	let ModelSearchTip=GetCurrentPlainTextByKey('t122');
 	$('#HotModel_Search_Input').prop('placeholder', ModelSearchTip);
 	
 	//Test
@@ -483,10 +483,10 @@ function OnDeleteRecentFile( )
 function OnDeleteAllRecentFiles()
 {
 	showConfirmDialog({
-		title: GetCurrentTextByKey("t39"),
-		message: GetCurrentTextByKey("t149"),
-		okText: GetCurrentTextByKey("t21"),
-		cancelText: GetCurrentTextByKey("t22"),
+		title: GetCurrentPlainTextByKey("t39"),
+		message: GetCurrentPlainTextByKey("t149"),
+		okText: GetCurrentPlainTextByKey("t21"),
+		cancelText: GetCurrentPlainTextByKey("t22"),
 		onOk: function() {
 			$('#FileList').html('');
 			UpdateRecentClearBtnDisplay();
