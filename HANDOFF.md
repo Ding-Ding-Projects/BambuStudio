@@ -19,6 +19,19 @@ kill bambu-studio.exe first if LNK1104), then verify headlessly, then fix forwar
    `cap.py key <hwnd> 27`, re-post WM_COMMAND for the toggle case, and click-away.
 2. **Sidebar clipping/scroll fix** in Plater.cpp/hpp (previous handoff item) — same
    unverified status, verify at 900 and 700 window heights with scroll/collapse/expand.
+3. **Regex builder does not pop up** (user report, 2026-07-26 — NOT yet investigated).
+   Every SearchField carries the builder behind its trailing tune/`.*` affordance (standing
+   mandate: every search bar ships the full builder). The pills render — the sidebar INK and
+   PROCESS captures show both the `.*` toggle and the tune glyph — but the popover reportedly
+   never appears when clicked. Start at the tune-button click handler in
+   src/slic3r/GUI/Widgets/SearchField.cpp and the builder popover's Show path; suspects:
+   the popover is a wxPopupTransientWindow (documented gotcha: transient popups die if a
+   helper process spawns, and they are NOT wxTopLevelWindow so MD3::Motion::FadeIn takes the
+   layered-window path), a parent/anchor that is now the sidebar scrolled window (clipped or
+   positioned offscreen), or the recent sidebar-search adopters changing focus/EXIT_SEARCH
+   flow. Check ALL adopters (settings-tab magnifier, Objects search, version history, upload
+   queue, palette, new sidebar pills) to see whether it is broken everywhere or only in the
+   new sidebar hosts — that distinction points straight at the cause.
 
 # Session handoff (2026-07-26): release drought ended, identity rebrand, five features
 
