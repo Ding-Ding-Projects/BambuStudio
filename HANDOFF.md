@@ -1,3 +1,38 @@
+# TOP OF QUEUE for the next session (2026-07-26, second handoff)
+
+Two fixes are committed but **NOT compile-verified or runtime-verified** — the session ended
+before their build finished. Build first (`scratchpad/build-gui-lowmem.cmd`, BUILDEXIT 0;
+kill bambu-studio.exe first if LNK1104), then verify headlessly, then fix forward:
+
+1. **Ctrl+F palette "cannot be closed"** (user report) — CommandPalette.{cpp,hpp}.
+   Diagnosis by code reading, not yet reproduced: `ShowPalette()` had no re-entry guard, so
+   pressing Ctrl+F while the palette was open stacked a SECOND modal dialog; each Esc closed
+   only the topmost, so the palette looked unclosable. Fixed with a `static bool s_open`
+   guard + a `dismiss()` helper (EndModal while modal, else Close()).
+   **Second suspect NOT yet addressed:** `MD3::Motion::FadeIn()` is called BEFORE
+   `ShowModal()` and immediately sets the window to `LWA_ALPHA 0`; if the Anim timer never
+   completes, the palette stays fully transparent while still modal — an invisible window
+   eating all input, which also reads as "cannot be closed". Verify the fade completes; if
+   in doubt, force opacity when the modal loop starts (or fade after Show).
+   Verification recipe (cross-desktop accelerators do NOT work): PostMessage WM_COMMAND
+   (0x0111) wParam=6089 (wxID_HIGHEST+90) to the frame hwnd to open it, then test Esc via
+   `cap.py key <hwnd> 27`, re-post WM_COMMAND for the toggle case, and click-away.
+2. **Sidebar clipping/scroll fix** in Plater.cpp/hpp (previous handoff item) — same
+   unverified status, verify at 900 and 700 window heights with scroll/collapse/expand.
+3. **Regex builder does not pop up** (user report, 2026-07-26 — NOT yet investigated).
+   Every SearchField carries the builder behind its trailing tune/`.*` affordance (standing
+   mandate: every search bar ships the full builder). The pills render — the sidebar INK and
+   PROCESS captures show both the `.*` toggle and the tune glyph — but the popover reportedly
+   never appears when clicked. Start at the tune-button click handler in
+   src/slic3r/GUI/Widgets/SearchField.cpp and the builder popover's Show path; suspects:
+   the popover is a wxPopupTransientWindow (documented gotcha: transient popups die if a
+   helper process spawns, and they are NOT wxTopLevelWindow so MD3::Motion::FadeIn takes the
+   layered-window path), a parent/anchor that is now the sidebar scrolled window (clipped or
+   positioned offscreen), or the recent sidebar-search adopters changing focus/EXIT_SEARCH
+   flow. Check ALL adopters (settings-tab magnifier, Objects search, version history, upload
+   queue, palette, new sidebar pills) to see whether it is broken everywhere or only in the
+   new sidebar hosts — that distinction points straight at the cause.
+
 # Session handoff (2026-07-26): release drought ended, identity rebrand, five features
 
 - **Releases flow again.** Root causes fixed in order: deterministic-test "hang" was

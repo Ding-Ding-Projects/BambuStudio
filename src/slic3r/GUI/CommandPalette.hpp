@@ -42,6 +42,9 @@ public:
     static void ShowPalette(MainFrame *frame);
 
 private:
+    // Esc/close routing: EndModal() is only valid while the modal loop runs.
+    void dismiss() { if (IsModal()) EndModal(wxID_CANCEL); else Close(); }
+
     enum class Rich : std::uint8_t { None, Theme, Density, Accent };
 
     struct Entry
