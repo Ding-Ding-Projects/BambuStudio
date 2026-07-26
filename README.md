@@ -157,7 +157,8 @@ build-progress, and Finish pages, with the unavoidable Win32 dialog deviations r
 installer documentation, and a root-cause fix for the previously garbled Cantonese language page
 (UTF-8 sources compiled with `/INPUTCHARSET UTF8`). Alongside the default prebuilt install, an
 optional interactive **Build from source** mode bootstraps Git, Node.js LTS, the Visual Studio 2022
-C++ Build Tools, and CMake, clones this repository at the release tag, compiles it locally with a
+C++ Build Tools, and CMake, clones this repository at the exact commit that produced the installer,
+verifies that detached checkout, compiles it locally with a
 bounded five-cycle automated repair loop, and hands the built payload to the same ownership,
 recovery, and uninstall flow as the prebuilt path. Build from source is never reachable in silent
 mode and never runs in CI; its first end-to-end run on a real machine is still an open verification

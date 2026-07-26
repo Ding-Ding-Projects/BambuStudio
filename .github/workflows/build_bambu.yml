@@ -144,30 +144,6 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Restore CI build cache from release (best effort)
-        if: inputs.os == 'windows-latest'
-        continue-on-error: true
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Durable warm-start: the newest ci-cache-windows-* prerelease holds
-          # 7z split volumes of the previous run's build/ tree (runner paths
-          # are stable, so MSBuild/CMake state stays valid). Failure of any
-          # kind just means a cold build - never fail the job here.
-          if (Test-Path 'build') { Write-Host 'build/ already present; skipping restore'; exit 0 }
-          $release = gh release list --limit 30 --json tagName,isPrerelease |
-              ConvertFrom-Json | Where-Object { $_.tagName -like 'ci-cache-windows-*' } |
-              Select-Object -First 1
-          if (-not $release) { Write-Host 'no CI cache release found'; exit 0 }
-          Write-Host "restoring from $($release.tagName)"
-          New-Item -ItemType Directory -Force ci-cache-dl | Out-Null
-          gh release download $release.tagName --dir ci-cache-dl --pattern 'ci-build-cache.7z.*'
-          if ($LASTEXITCODE -ne 0) { Write-Host 'download failed'; exit 0 }
-          7z x ci-cache-dl\ci-build-cache.7z.001 -o. -y | Select-Object -Last 3
-          Remove-Item -Recurse -Force ci-cache-dl
-          Write-Host 'CI build cache restored'
-
       - name: Test Windows release inputs
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
@@ -461,6 +437,8 @@ jobs:
           & $makensis /V3 /INPUTCHARSET UTF8 `
             "/DPRODUCT_VERSION=$productVersion" `
             "/DFILE_VERSION=$fileVersion" `
+            "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
+            "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
             "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
             "/DOUT_FILE=${{ github.workspace }}\BambuStudioMD3-Setup.exe" `
             "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
@@ -493,6 +471,15 @@ jobs:
           $packagingDir = Join-Path $env:GITHUB_WORKSPACE 'packaging\windows'
           $nsiPath = Join-Path $packagingDir 'BambuStudioMD3.nsi'
           $bfsDir = Join-Path $packagingDir 'build-from-source'
+
+          # The installer launches its helper with Windows PowerShell 5.1, not
+          # this step's pwsh host. Exercise decoding and compatibility there.
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
+              (Join-Path $env:GITHUB_WORKSPACE 'scripts\ci\Test-BuildFromSourceHelpers.ps1') `
+              -RepositoryRoot $env:GITHUB_WORKSPACE
+          if ($LASTEXITCODE -ne 0) {
+              throw "Windows PowerShell 5.1 build-from-source checks failed with exit code $LASTEXITCODE."
+          }
 
           # 1. The .nsi must keep its UTF-8 BOM (makensis /INPUTCHARSET UTF8 relies on
           #    it to decode the inline Cantonese strings).
@@ -646,6 +633,8 @@ jobs:
               & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
+                "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
+                "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
                 "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
                 "/DOUT_FILE=$previousInstaller" `
                 "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
@@ -668,6 +657,8 @@ jobs:
               & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
+                "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
+                "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
                 "/DPAYLOAD_DIR=$guardPayload" `
                 "/DOUT_FILE=$ancestorGuardInstaller" `
                 "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
@@ -684,6 +675,8 @@ jobs:
               & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
+                "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
+                "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
                 "/DPAYLOAD_DIR=$guardPayload" `
                 "/DOUT_FILE=$bootstrapFailureInstaller" `
                 "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
@@ -698,6 +691,8 @@ jobs:
               & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
+                "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
+                "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
                 "/DPAYLOAD_DIR=$guardPayload" `
                 "/DOUT_FILE=$shortcutGuardInstaller" `
                 "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
@@ -731,35 +726,6 @@ jobs:
       #   working-directory: ${{ github.workspace }}/build/src/Release
       #   shell: cmd
       #   run: '"C:/Program Files/7-Zip/7z.exe" a -m0=lzma2 -mx9 Debug_PDB_${{ env.ver }}_for_developers_only.7z  *.pdb'
-
-      - name: Publish CI build cache release (best effort)
-        # Fire whenever the BUILD succeeded, even if later steps (tests,
-        # visual smoke) failed — otherwise a red tail step forever prevents
-        # the cache from ever priming and every run compiles cold.
-        if: inputs.os == 'windows-latest' && !cancelled() && steps.build_win.outcome == 'success'
-        continue-on-error: true
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || github.token }}
-        run: |
-          # Zip the build tree (deps output is inside via out_deps when built
-          # here) into 1.5 GB split volumes and publish them as a uniquely
-          # tagged prerelease. Old cache prereleases are pruned (keep 1) so
-          # real releases stay immutable and the cache stays bounded.
-          $tag = "ci-cache-windows-${{ github.run_number }}"
-          7z a -t7z -mx=1 -v1500m ci-build-cache.7z build "deps/build/out_deps" | Select-Object -Last 2
-          if ($LASTEXITCODE -ne 0) { Write-Host 'cache pack failed'; exit 0 }
-          gh release create $tag (Get-ChildItem 'ci-build-cache.7z.*').FullName `
-              --prerelease --title "CI build cache (run ${{ github.run_number }})" `
-              --notes 'Rolling CI warm-start cache: 7z split volumes of build/ + deps output. Safe to delete; the newest one is reused by the next build.'
-          if ($LASTEXITCODE -ne 0) { Write-Host 'cache release create failed'; exit 0 }
-          # prune older cache prereleases, keep the newest (this one + previous)
-          $old = gh release list --limit 50 --json tagName |
-              ConvertFrom-Json | Where-Object { $_.tagName -like 'ci-cache-windows-*' -and $_.tagName -ne $tag } |
-              Select-Object -Skip 1
-          foreach ($release in $old) {
-              gh release delete $release.tagName --yes --cleanup-tag
-          }
 
       - name: Upload artifacts Win zip
         if: inputs.os == 'windows-latest'

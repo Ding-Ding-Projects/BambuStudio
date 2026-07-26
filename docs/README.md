@@ -1,6 +1,6 @@
 # BambuStudio feature documentation
 
-This directory documents the `codingmachineedge/BambuStudio` fork's maintained features and release
+This directory documents the `Ding-Ding-Projects/BambuStudio` fork's maintained features and release
 surfaces. Upstream Bambu Studio material remains in [`../doc/`](../doc/).
 
 ## Categories

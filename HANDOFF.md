@@ -39,7 +39,8 @@ kill bambu-studio.exe first if LNK1104), then verify headlessly, then fix forwar
   STATUS_DLL_NOT_FOUND (OCCT DLLs missing from test PATH); visual-smoke silent -1 was the
   Ninja install shipping ONE dll (bambustudio_copy_dlls only ran in the multi-config CMake
   branch — fixed in src/CMakeLists.txt); smoke scenario-2 blank was a PrintWindow paint race
-  (retry loop added). Supersede-cancel removed: every push builds+releases to completion.
+  (retry loop added). Supersede-cancel removed: every push runs its build to completion, and
+  only a successful gated build publishes its single product release.
   Published: r265/r267/r268, then **md3-v1 "Char Siu Bao 叉燒包" (Latest)** under the new
   scheme: sequential vN + unique dish codename (100 real dishes then style×dish combos,
   build_all.yml publish step), CI-generated unique dim-sum splash per release
@@ -142,9 +143,10 @@ kill bambu-studio.exe first if LNK1104), then verify headlessly, then fix forwar
   bilingual `MUI_HEADER_TEXT`), and REAL invisible text — controls authored past the
   140-dialog-unit MUI page height (language caption/divider, install-mode explanation).
   Re-laid out + captions shortened; before/after captures in scratchpad out/inst*.png.
-- **CI release-based build cache** (same push): post-build 7z split volumes (1.5 GB) of
-  `build/` + deps output published as `ci-cache-windows-<run>` prereleases (pruned, keep
-  newest); best-effort restore before the next build. Both steps continue-on-error.
+- **CI release-based build cache** (historical, superseded 2026-07-26): that push added
+  post-build `ci-cache-windows-<run>` prereleases, but the current release hardening removes
+  them because a successful workflow must create exactly one GitHub Release. Dependency and
+  object reuse remain in GitHub Actions caches, not release records.
   GOTCHA while editing: a literal `\b` written through python became a BACKSPACE byte in the
   YAML and persisted through several fix attempts — full-line sed rewrite with forward
   slashes (7z accepts them) resolved it.
@@ -678,8 +680,8 @@ full font customization, and browser-like project tabs are the queued follow-on 
   nothing), and a declined prebuilt fallback can no longer advance into INSTFILES with a partial
   payload. Compiles at makensis 3.12 EXIT=0 locally; silent-mode CI fixtures unchanged.
   From-source is interactive-only and never runs in CI; its first end-to-end run on a real
-  machine is still an open verification item, and `PRODUCT_SOURCE_REPO_URL` defaults to a
-  placeholder the owner should confirm.
+  machine is still an open verification item. The later provenance hardening binds release
+  installers to the current repository and exact workflow commit, with no mutable tag fallback.
   **Wave 8 shipped: register 113 done / 16 open.** Eleven Opus agents (marshal + 8 groups + 2
   reviewers + fixer; both reviews CLEAN, fixer verified with zero edits). Landed: the
   `raw-wxmessagebox` sweep (22 live sites across 8 files onto the MD3 MessageDialog with exact

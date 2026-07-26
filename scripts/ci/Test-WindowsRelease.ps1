@@ -96,14 +96,74 @@ if ($LASTEXITCODE -ne 0) {
     throw 'Could not enumerate GitHub workflow files with git.'
 }
 $releaseWorkflowText = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\build_all.yml') -Raw
+$buildWorkflowText = Get-Content -LiteralPath (Join-Path $repoRoot '.github\workflows\build_bambu.yml') -Raw
 Assert-True ($releaseWorkflowText.Contains('name: Classify code changes')) `
     'Windows release workflow must classify every push before its build/release jobs.'
+Assert-True ($releaseWorkflowText.Contains("branches: ['**']")) `
+    'Windows release workflow must trigger on every branch push without also matching release tags.'
+Assert-True ($releaseWorkflowText.Contains('workflow_dispatch: {}')) `
+    'Windows release workflow must support manual dispatch.'
 Assert-True ($releaseWorkflowText.Contains('\.md$')) `
-    'Windows release workflow lacks its Markdown-only evidence handoff guard.'
+    'Windows release workflow lacks its Markdown-only classification rule.'
 Assert-True ($releaseWorkflowText.Contains('$_.previous_filename')) `
     'Markdown-only classification does not inspect the old side of renamed paths.'
 Assert-True ($releaseWorkflowText.Contains('@($comparison.files).Count -ge 300')) `
     'Markdown-only classification does not fail toward a build at the compare API file cap.'
+
+$buildJobStart = $releaseWorkflowText.IndexOf("`n  build_windows:")
+$releaseJobStart = $releaseWorkflowText.IndexOf("`n  release_windows:")
+Assert-True ($buildJobStart -ge 0 -and $releaseJobStart -gt $buildJobStart) `
+    'Windows build/release job boundaries are missing or out of order.'
+$buildJobText = $releaseWorkflowText.Substring($buildJobStart, $releaseJobStart - $buildJobStart)
+$releaseJobText = $releaseWorkflowText.Substring($releaseJobStart)
+Assert-True ($buildJobText.Contains('if: ${{ always() }}')) `
+    'Every push must run the Windows build/test job, including documentation-only pushes.'
+Assert-True ($releaseJobText.Contains('needs: build_windows')) `
+    'The release job must depend on the complete Windows build/test job.'
+Assert-True (-not $releaseJobText.Contains('always()') -and -not $releaseJobText.Contains('failure()')) `
+    'The release job must remain skipped when the Windows build/test job fails.'
+
+$allWorkflowText = ($workflowPaths | ForEach-Object {
+    Get-Content -LiteralPath (Join-Path $repoRoot $_) -Raw
+}) -join "`n"
+$directReleaseCreates = @([regex]::Matches(
+    $allWorkflowText,
+    '(?m)^\s*(?:&\s+)?gh\s+release\s+create\b'
+))
+$argumentArrayReleaseCreates = @([regex]::Matches(
+    $allWorkflowText,
+    "(?m)^\s*'release',\s*'create',"
+))
+$releaseCreateCount = $directReleaseCreates.Count + $argumentArrayReleaseCreates.Count
+Assert-True ($releaseCreateCount -eq 1) `
+    "Exactly one GitHub Release creation path is permitted; found $releaseCreateCount."
+Assert-True (-not $allWorkflowText.Contains('--prerelease')) `
+    'CI caches and intermediate artifacts must not be published as extra non-draft GitHub Releases.'
+Assert-True ($releaseWorkflowText.Contains("'--draft'")) `
+    'The single release path must validate assets in draft state before publication.'
+Assert-True ($releaseWorkflowText.Contains('--draft=false')) `
+    'The validated draft must have one explicit publication transition.'
+
+$installerSource = Get-Content -LiteralPath (Join-Path $repoRoot 'packaging\windows\BambuStudioMD3.nsi') -Raw
+Assert-True ($installerSource.Contains(
+        '!define PRODUCT_SOURCE_REPO_URL "https://github.com/Ding-Ding-Projects/BambuStudio.git"')) `
+    'The installer source-build repository default does not match the current origin.'
+Assert-True ($installerSource.Contains(
+        '!error "PRODUCT_SOURCE_TAG must be the exact 40-character source commit used to build this installer"')) `
+    'The installer must fail compilation when its exact source commit is not supplied.'
+Assert-True (-not $installerSource.Contains('!define PRODUCT_SOURCE_TAG "v${PRODUCT_VERSION}"')) `
+    'The installer must not silently rebuild from a mutable/shared product-version tag.'
+$makensisCalls = @([regex]::Matches($buildWorkflowText, '(?m)^\s*&\s+\$makensis\b'))
+$sourceRepoDefines = @([regex]::Matches(
+    $buildWorkflowText,
+    '(?m)^\s*"/DPRODUCT_SOURCE_REPO_URL=https://github\.com/\$\{\{ github\.repository \}\}\.git"'))
+$sourceCommitDefines = @([regex]::Matches(
+    $buildWorkflowText,
+    '(?m)^\s*"/DPRODUCT_SOURCE_TAG=\$\{\{ github\.sha \}\}"'))
+Assert-True ($makensisCalls.Count -gt 0 -and
+    $sourceRepoDefines.Count -eq $makensisCalls.Count -and
+    $sourceCommitDefines.Count -eq $makensisCalls.Count) `
+    "Every makensis path must bind the source repository and exact workflow commit; found $($makensisCalls.Count) call(s), $($sourceRepoDefines.Count) repository define(s), and $($sourceCommitDefines.Count) commit define(s)."
 foreach ($relativePath in $workflowPaths) {
     $workflowText = Get-Content -LiteralPath (Join-Path $repoRoot $relativePath) -Raw
     foreach ($match in [regex]::Matches($workflowText, '(?m)^\s*(?:-\s*)?uses:\s+([^\s#]+)')) {
@@ -161,7 +221,6 @@ try {
     Assert-True ($firstContent.Contains('!macro BambuMD3RemovePayloadDirectories')) 'Empty-directory removal macro is missing.'
     Assert-True (-not $firstContent.Contains('RMDir /r')) 'Recursive directory removal is forbidden.'
 
-    $installerSource = Get-Content -LiteralPath (Join-Path $repoRoot 'packaging\windows\BambuStudioMD3.nsi') -Raw
     Assert-True ($installerSource.Contains('GetFileAttributesW(w "${PATH}") i.R8')) `
         'NSIS reparse detection must write GetFileAttributesW output to $R8.'
     Assert-True (-not $installerSource.Contains('GetFileAttributesW(w "${PATH}") i.r8')) `
