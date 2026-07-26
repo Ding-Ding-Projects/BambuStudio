@@ -407,7 +407,22 @@ try {
             Assert-True ($containsCjk -eq $scenario.RequiresCjk) "Native '$($scenario.Name)' CJK text presence did not match the scenario contract."
 
             $capturePath = Join-Path $resolvedOutputDir ($scenario.Name + '.png')
-            $metrics = Save-WindowCapture -Handle $handle -Path $capturePath
+            # PrintWindow can race the first paint of a freshly presented
+            # window (observed: scenario 2 captured blank/uniform while
+            # scenario 1 verified fine). Retry the capture until it contains
+            # real content or a 15 s budget elapses; the inner asserts throw
+            # only on the final attempt.
+            $metrics = $null
+            $captureDeadline = [DateTime]::UtcNow.AddSeconds(15)
+            while ($true) {
+                try {
+                    $metrics = Save-WindowCapture -Handle $handle -Path $capturePath
+                    break
+                } catch {
+                    if ([DateTime]::UtcNow -ge $captureDeadline) { throw }
+                    Start-Sleep -Milliseconds 500
+                }
+            }
             if ($scenario.Theme -eq 'dark') {
                 Assert-True ($metrics.MeanLuminance -lt 115) "Dark scenario mean luminance $($metrics.MeanLuminance) is too bright."
             } else {
