@@ -83,6 +83,7 @@
 #include "libslic3r/FilamentMixer.hpp"
 #include "libslic3r/LocalesUtils.hpp"
 #include "libslic3r/SLAPrint.hpp"
+#include "BulkFilamentDialog.hpp"
 #include "MixedFilamentDialog.hpp"
 #include "ColorDecomposeDialog.hpp"
 #include "ColorDecomposeSupport.hpp"
@@ -743,6 +744,9 @@ struct Sidebar::priv
     // Filament SectionHeader trailing slot as an outlined MD3 button; add is the full-width
     // 'Add filament' button; delete/settings fold into the per-row filament menu.
     Button *          m_btn_sync_ams_header{nullptr};
+    // Bulk filament actions entry: trailing MD3 outlined header button opening
+    // BulkFilamentDialog (set preset / set colour / delete / add N in one batch).
+    Button *          m_bulk_filament_btn{nullptr};
     int m_menu_filament_id = -1;
     wxPanel*          m_filament_area_wrapper{nullptr};   // Wrapper panel for collapse/expand
     wxScrolledWindow* m_physical_scroll_area{nullptr};    // Scroll area for physical filaments (max 3 rows when total > 12)
@@ -979,26 +983,33 @@ void Sidebar::priv::adjust_filament_title_layout()
     wxSize panel_size      = m_panel_filament_title->GetSize();
     int    available_width = panel_size.GetWidth() - FromDIP(220);
 
+    bool bulk_shown = m_bulk_filament_btn && m_bulk_filament_btn->IsShown();
+
     int button_count = 0;
     if (m_purge_mode_btn->IsShown()) button_count++;
     if (m_flushing_volume_btn->IsShown()) button_count++;
+    if (bulk_shown) button_count++;
 
     if (button_count == 0) {
         m_panel_filament_title->Layout();
         return;
     }
 
-    int purge_ideal_width = 0, flush_ideal_width = 0;
+    int purge_ideal_width = 0, flush_ideal_width = 0, bulk_ideal_width = 0;
     if (m_purge_mode_btn->IsShown()) {
         purge_ideal_width = m_purge_mode_btn->GetTextRect().width + 10;
     }
     if (m_flushing_volume_btn->IsShown()) {
         flush_ideal_width = m_flushing_volume_btn->GetTextRect().width + 10;
     }
+    if (bulk_shown) {
+        // Leading glyph + label; keep the h30 pill height fixed while width flexes.
+        bulk_ideal_width = m_bulk_filament_btn->GetTextRect().width + FromDIP(16) + 10;
+    }
 
     int button_spacing    = FromDIP(4);
     int total_spacing     = button_spacing * (button_count - 1);
-    int ideal_total_width = purge_ideal_width + flush_ideal_width + total_spacing;
+    int ideal_total_width = purge_ideal_width + flush_ideal_width + bulk_ideal_width + total_spacing;
 
     if (available_width >= ideal_total_width) {
         if (m_purge_mode_btn->IsShown()) {
@@ -1009,6 +1020,11 @@ void Sidebar::priv::adjust_filament_title_layout()
         if (m_flushing_volume_btn->IsShown()) {
             m_flushing_volume_btn->SetMinSize(wxSize(flush_ideal_width, -1));
             m_flushing_volume_btn->SetMaxSize(wxSize(flush_ideal_width, -1));
+        }
+
+        if (bulk_shown) {
+            m_bulk_filament_btn->SetMinSize(wxSize(-1, FromDIP(30)));
+            m_bulk_filament_btn->SetMaxSize(wxSize(-1, FromDIP(30)));
         }
 
         m_panel_filament_title->Layout();
@@ -1027,6 +1043,11 @@ void Sidebar::priv::adjust_filament_title_layout()
     if (m_flushing_volume_btn->IsShown()) {
         m_flushing_volume_btn->SetMinSize(wxSize(button_width, -1));
         m_flushing_volume_btn->SetMaxSize(wxSize(button_width, -1));
+    }
+
+    if (bulk_shown) {
+        m_bulk_filament_btn->SetMinSize(wxSize(button_width, FromDIP(30)));
+        m_bulk_filament_btn->SetMaxSize(wxSize(button_width, FromDIP(30)));
     }
 
     m_panel_filament_title->Layout();
@@ -3295,6 +3316,40 @@ Sidebar::Sidebar(Plater *parent)
     p->m_btn_sync_ams_header->Bind(wxEVT_UPDATE_UI, &Sidebar::update_sync_ams_btn_enable, this);
     p->m_btn_sync_ams_header->Rescale();
     bSizer39->Add(p->m_btn_sync_ams_header, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+
+    // ---- Bulk filament actions: kit SectionHeader trailing outlined MD3 button ----
+    // Same recipe as the Sync AMS header button above (outlined, h30, Body_11,
+    // Primary, leading Material glyph). Opens BulkFilamentDialog to stage set
+    // preset / set colour / delete across checked slots plus add-N, applied as
+    // one batch by Sidebar::bulk_filament_actions().
+    // Icon-only: the header row is already crowded at the default sidebar
+    // width (Purge mode + Flushing volumes + Sync AMS) and a labelled fourth
+    // button clips. The tooltip carries the name.
+    p->m_bulk_filament_btn = new Button(p->m_panel_filament_title, wxString());
+    // 'Stack' is the closest cmap-verified Material Symbols glyph for a
+    // multi-slot batch action (no Checklist/LibraryAddCheck in the vendored TTF).
+    p->m_bulk_filament_btn->SetGlyph(MaterialIcon::Stack, 16);
+    p->m_bulk_filament_btn->SetFont(Label::Body_11);
+    p->m_bulk_filament_btn->SetPaddingSize(wxSize(FromDIP(6), FromDIP(3)));
+    p->m_bulk_filament_btn->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+    p->m_bulk_filament_btn->SetMinSize({-1, FromDIP(30)});
+    p->m_bulk_filament_btn->SetMaxSize({-1, FromDIP(30)});
+    p->m_bulk_filament_btn->SetToolTip(_L("Bulk filament actions"));
+    p->m_bulk_filament_btn->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)));
+    p->m_bulk_filament_btn->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+    p->m_bulk_filament_btn->SetTextColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
+    p->m_bulk_filament_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { bulk_filament_actions(); });
+    p->m_bulk_filament_btn->Rescale();
+    bSizer39->Add(p->m_bulk_filament_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
     bSizer39->Add(FromDIP(16), 0, 0, 0, 0);
 
@@ -7123,6 +7178,105 @@ void Sidebar::decompose_filament_color(int filament_idx)
 }
 
 // ---- End Mixed Filament sidebar methods ----
+
+void Sidebar::bulk_filament_actions()
+{
+    if (is_new_project_in_gcode3mf()) return;
+
+    std::vector<std::string> color_strs, names, types;
+    std::vector<size_t> config_indices;
+    collect_physical_filament_info(color_strs, names, types, &config_indices);
+    if (names.empty()) return;
+
+    BulkFilamentDialog dlg(this, color_strs, names,
+                           wxGetApp().preset_bundle->filament_presets.size(),
+                           size_t(EnforcerBlockerType::ExtruderMax));
+    if (dlg.ShowModal() != wxID_OK)
+        return;
+    BulkFilamentResult res = dlg.get_result();
+
+    wxWindowUpdateLocker noUpdates(this);
+
+    bool preset_or_color_applied = false;
+
+    // (1) Set preset on every checked slot (by full preset name).
+    if (res.do_preset && !res.preset_name.empty()) {
+        auto& preset_bundle = *wxGetApp().preset_bundle;
+        for (size_t phys : res.selected_physical) {
+            if (phys >= config_indices.size()) continue;
+            preset_bundle.set_filament_preset(config_indices[phys], res.preset_name);
+        }
+        preset_or_color_applied = true;
+    }
+
+    // (2) Set colour on every checked slot: one cloned project-config patch,
+    // applied once (solid colour => filament_colour_type "1").
+    if (res.do_color && !res.color_hex.empty()) {
+        DynamicPrintConfig* cfg = &wxGetApp().preset_bundle->project_config;
+        auto multi_colour_opt = static_cast<ConfigOptionStrings*>(cfg->option("filament_multi_colour")->clone());
+        auto colour_type_opt  = static_cast<ConfigOptionStrings*>(cfg->option("filament_colour_type")->clone());
+        auto colour_opt       = static_cast<ConfigOptionStrings*>(cfg->option("filament_colour")->clone());
+        for (size_t phys : res.selected_physical) {
+            if (phys >= config_indices.size()) continue;
+            const size_t i = config_indices[phys];
+            if (i >= multi_colour_opt->values.size()) multi_colour_opt->values.resize(i + 1);
+            if (i >= colour_type_opt->values.size())  colour_type_opt->values.resize(i + 1);
+            if (i >= colour_opt->values.size())       colour_opt->values.resize(i + 1);
+            multi_colour_opt->values[i] = res.color_hex;
+            colour_opt->values[i]       = res.color_hex;
+            colour_type_opt->values[i]  = "1";
+        }
+        DynamicPrintConfig cfg_new = *cfg;
+        cfg_new.set_key_value("filament_multi_colour", multi_colour_opt);
+        cfg_new.set_key_value("filament_colour", colour_opt);
+        cfg_new.set_key_value("filament_colour_type", colour_type_opt);
+        cfg->apply(cfg_new);
+        preset_or_color_applied = true;
+    }
+
+    // Single shared refresh tail for the preset/colour batch (mirrors
+    // on_select_preset + sync_colour_config, run once for the whole batch).
+    if (preset_or_color_applied) {
+        wxGetApp().plater()->update_project_dirty_from_presets();
+        wxGetApp().preset_bundle->export_selections(*wxGetApp().app_config);
+        for (auto* combo : combos_filament())
+            combo->update();
+        wxGetApp().plater()->on_config_change(wxGetApp().preset_bundle->full_config());
+        dynamic_filament_list.update();
+        // BBS: log the modification for the backup manager.
+        Slic3r::put_other_changes();
+        // Invalidate every plate's slice state (same as the preset-change path).
+        auto plate_list = wxGetApp().plater()->get_partplate_list().get_plate_list();
+        for (auto plate : plate_list)
+            plate->update_slice_result_valid_state(false);
+        if (res.do_color)
+            auto_calc_flushing_volumes(-1);
+    }
+
+    // (3) Delete the checked slots, descending config-index order so earlier
+    // deletes never shift the indices of later ones. delete_filament() runs its
+    // own refresh per slot and enforces its own guards; stop at the min-1 rule.
+    if (res.do_delete) {
+        std::vector<size_t> cfg_ids;
+        cfg_ids.reserve(res.selected_physical.size());
+        for (size_t phys : res.selected_physical)
+            if (phys < config_indices.size())
+                cfg_ids.push_back(config_indices[phys]);
+        std::sort(cfg_ids.begin(), cfg_ids.end(), [](size_t a, size_t b) { return a > b; });
+        for (size_t id : cfg_ids) {
+            if (combos_filament().size() <= 1) break; // min-1 rule
+            delete_filament(id);
+        }
+    }
+
+    // (4) Add N filaments; stop as soon as the combo count stops growing
+    // (capacity guard inside add_custom_filament, ExtruderMax = 32 total).
+    for (int n = 0; n < res.add_count; ++n) {
+        size_t before_count = p->combos_filament.size();
+        add_custom_filament(Plater::get_next_color_for_filament());
+        if (p->combos_filament.size() <= before_count) break;
+    }
+}
 
 Search::OptionsSearcher& Sidebar::get_searcher()
 {

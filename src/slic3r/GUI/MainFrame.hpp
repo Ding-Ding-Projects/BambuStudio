@@ -462,6 +462,10 @@ public:
     mutable bool          m_print_enable{ true };
     bool get_enable_slice_status();
     bool get_enable_print_status();
+    // Overload with a human-readable explanation: when the result is false,
+    // `reason` is filled with a translated string describing why printing is
+    // unavailable (surfaced as the disabled Print button's tooltip).
+    bool get_enable_print_status(wxString &reason);
     //BBS
     void update_side_button_style();
     void update_slice_print_status(SlicePrintEventType event, bool can_slice = true, bool can_print = true);

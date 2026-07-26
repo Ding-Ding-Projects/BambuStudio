@@ -162,6 +162,7 @@ static const unsigned int s_overlay_glyphs[] = {
     MaterialIcon::Tune,       MaterialIcon::Layers,      MaterialIcon::Route,
     MaterialIcon::Timeline,   MaterialIcon::UTurnLeft,   MaterialIcon::WaterDrop,
     MaterialIcon::PlayArrow,  MaterialIcon::Pause,       MaterialIcon::Stop,
+    MaterialIcon::Speed,
     MaterialIcon::ChevronLeft, MaterialIcon::ChevronRight, MaterialIcon::ExpandMore,
     MaterialIcon::Home,
 };

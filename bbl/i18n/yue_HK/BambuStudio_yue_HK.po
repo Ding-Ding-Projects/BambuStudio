@@ -2428,3 +2428,67 @@ msgstr "連接咗。搵到 %d 個喇叭同燈。"
 #. reviewed-category: slicing-printing
 msgid "Set nozzle count"
 msgstr "設定噴嘴數目"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please slice the plate first."
+msgstr "請先切片目前列印板。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please slice all plates first."
+msgstr "請先切片所有列印板。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please select a single plate."
+msgstr "請選擇單一列印板。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please configure the printer host first."
+msgstr "請先設定打印機主機。"
+
+#. reviewed-category: slicing-printing
+msgid "Bulk"
+msgstr "批量"
+
+#. reviewed-category: slicing-printing
+msgid "Bulk filament actions"
+msgstr "批量耗材操作"
+
+#. reviewed-category: slicing-printing
+msgid "Actions apply to the checked filament slots."
+msgstr "操作會套用喺已剔選嘅耗材欄位。"
+
+#. reviewed-category: slicing-printing
+msgid "Set preset..."
+msgstr "設定預設..."
+
+#. reviewed-category: slicing-printing
+msgid "Set color..."
+msgstr "設定顏色..."
+
+#. reviewed-category: slicing-printing
+msgid "Delete selected filaments"
+msgstr "刪除已選耗材"
+
+#. reviewed-category: slicing-printing
+msgid "At least one filament always remains."
+msgstr "最少會保留一個耗材。"
+
+#. reviewed-category: slicing-printing
+msgid "Add filaments"
+msgstr "新增耗材"
+
+#. reviewed-category: slicing-printing
+msgid "Choose a filament preset"
+msgstr "揀一個耗材預設"
+
+#. reviewed-category: slicing-printing
+msgid "Play print simulation"
+msgstr "播放打印模擬（照真實速度行）"
+
+#. reviewed-category: slicing-printing
+msgid "Pause print simulation"
+msgstr "暫停打印模擬"
+
+#. reviewed-category: slicing-printing
+msgid "Simulation speed"
+msgstr "模擬速度（撳一下轉檔）"

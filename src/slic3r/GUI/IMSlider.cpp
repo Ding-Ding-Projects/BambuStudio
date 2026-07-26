@@ -10,6 +10,10 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include <imgui/imgui_internal.h>
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 namespace Slic3r {
 
@@ -206,6 +210,21 @@ void IMSlider::SetSliderValues(const std::vector<double> &values)
 {
     m_values = values;
     m_layers_values.clear();
+}
+
+void IMSlider::SetMoveTimes(const std::vector<float> *times, float total_s)
+{
+    m_move_times = (times != nullptr && !times->empty()) ? times : nullptr;
+    if (m_move_times == nullptr) {
+        m_move_times_total = 0.0f;
+        // no timeline left to simulate against
+        m_play_state  = Play::Stopped;
+        m_play_time_s = 0.0;
+        return;
+    }
+    m_move_times_total = std::max(total_s, m_move_times->back());
+    if (m_play_time_s > (double) m_move_times_total)
+        m_play_time_s = (double) m_move_times_total;
 }
 
 Info IMSlider::GetTicksValues() const
@@ -532,16 +551,52 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
 
         bool value_changed = false;
 
-        // measure the right-aligned mono counter before laying out the bar
+        // Feedrate-true playback timeline: cumulative print seconds per slider
+        // tick (forward-filled), provided by the renderer via SetMoveTimes.
+        // Without a time table we fall back to a plain 6-second index sweep so
+        // the transport stays usable (speed chip / readout are hidden then).
+        const bool  has_times = m_move_times != nullptr && (int) m_move_times->size() > v_max && v_max > v_min;
+        const float t_end     = has_times ? std::max(m_move_times_total, (*m_move_times)[v_max]) : 6.0f;
+        auto time_for_index = [&](int idx) -> double {
+            idx = std::clamp(idx, v_min, v_max);
+            if (has_times) return (double) (*m_move_times)[idx];
+            if (v_max <= v_min) return 0.0;
+            return (double) t_end * (double) (idx - v_min) / (double) (v_max - v_min);
+        };
+        auto index_for_time = [&](double t) -> int {
+            if (has_times) {
+                const std::vector<float> &times = *m_move_times;
+                const auto it  = std::upper_bound(times.begin(), times.begin() + (v_max + 1), (float) t);
+                const int  idx = (int) std::distance(times.begin(), it);
+                return std::clamp(idx, v_min, v_max);
+            }
+            const double frac = t_end > 0.0f ? std::min(std::max(t / (double) t_end, 0.0), 1.0) : 1.0;
+            return v_min + (int) std::lround(frac * (double) (v_max - v_min));
+        };
+
+        // measure the right-aligned mono counter, the speed chip label and the
+        // fixed-width elapsed/total readout probe before laying out the bar
         const bool  mono_m     = imgui.push_mono_font();
         const std::string counter_probe = _u8L("Move") + " " + std::to_string(*value) + " / " + std::to_string(v_max);
         const float counter_probe_w = ImGui::CalcTextSize(counter_probe.c_str()).x;
+        char speed_label[16];
+        ::snprintf(speed_label, sizeof(speed_label), "%dx", (int) std::lround(m_play_speed));
+        const float speed_label_w = ImGui::CalcTextSize(speed_label).x;
+        const std::string total_str = short_time(get_time_dhms(t_end));
+        const std::string readout_probe = total_str + " / " + total_str;
+        const float readout_w = ImGui::CalcTextSize(readout_probe.c_str()).x;
         if (mono_m) imgui.pop_mono_font();
         float counter_w = std::max(counter_min_w, counter_probe_w);
+        const float chip_pad     = 10.0f * m_scale;
+        const float chip_gap     = 6.0f * m_scale;
+        const float chip_icon_px = 18.0f * m_scale;
+        const float chip_h       = 28.0f * m_scale;
+        const float chip_w       = chip_pad + chip_icon_px + chip_gap + speed_label_w + chip_pad;
 
-        // Narrow bars can't fit transport + groove + counter side by side; the
-        // old fixed layout let the clamped groove ride over the counter text.
-        // Shed chrome progressively instead: first the skip buttons, then the
+        // Narrow bars can't fit transport + groove + readout + chip + counter
+        // side by side; the old fixed layout let the clamped groove ride over
+        // the counter text. Shed chrome progressively instead: the elapsed/total
+        // readout goes first, then the speed chip, then the skip buttons and the
         // counter, so the groove and handle never overlap what remains.
         const float min_groove_w = 56.0f * m_scale;
         const float avail = size.x - 2.0f * pad_x;
@@ -551,6 +606,10 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
         const float transport_w = show_skips ? transport_full : transport_min;
         bool show_counter = avail - transport_w - (counter_w + gap) >= min_groove_w;
         if (!show_counter) counter_w = 0.0f;
+        float right_w = show_counter ? counter_w + gap : 0.0f;
+        const bool show_chip = has_times && avail - transport_w - right_w - (chip_w + gap) >= min_groove_w;
+        if (show_chip) right_w += chip_w + gap;
+        const bool show_readout = has_times && show_chip && avail - transport_w - right_w - (readout_w + gap) >= min_groove_w;
 
         // left transport cluster: [skip_previous] | play | [skip_next]
         float cx = pos.x + pad_x;
@@ -559,12 +618,20 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
         const ImVec2 play_c = ImVec2(cx + play_d * 0.5f, center_y); cx += play_d + gap;
         if (show_skips) { next_c = ImVec2(cx + skip_d * 0.5f, center_y); cx += skip_d + gap; }
 
+        // right cluster laid out right-to-left: counter | speed chip | readout
         const float counter_right = pos.x + size.x - pad_x;
         const float counter_left  = counter_right - counter_w;
+        const float chip_right    = show_counter ? counter_left - gap : counter_right;
+        const float chip_left     = chip_right - chip_w;
+        const float readout_right = show_chip ? chip_left - gap : chip_right;
+        const float readout_left  = readout_right - readout_w;
 
-        // flex slider region between the cluster and the counter
+        // flex slider region between the transport and the right cluster
         float slider_x0 = cx;
-        float slider_x1 = show_counter ? counter_left - gap : counter_right;
+        float slider_x1 = counter_right;
+        if (show_counter) slider_x1 = counter_left - gap;
+        if (show_chip)    slider_x1 = chip_left - gap;
+        if (show_readout) slider_x1 = readout_left - gap;
         if (slider_x1 < slider_x0 + 40.0f * m_scale)
             slider_x1 = slider_x0 + 40.0f * m_scale;
 
@@ -590,6 +657,10 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
         ImRect handle(handle_pos - handle_radius, center_y - handle_radius, handle_pos + handle_radius, center_y + handle_radius);
         if (slider_behavior(id, slideable_region, (const ImS32) v_min, (const ImS32) v_max, (ImS32 *) value, &handle))
             value_changed = true;
+        // Scrub-vs-play: while the user drags the handle (or clicks the track /
+        // transport skips below) the slider index is authoritative this frame;
+        // the simulated clock is re-anchored to it and the tick is suspended.
+        bool scrubbed = value_changed || context.ActiveId == id;
         const ImVec2 handle_center = handle.GetCenter();
         window->DrawList->AddRectFilled(groove.Min, ImVec2(handle_center.x, groove.Max.y), handle_clr, 0.5f * GROOVE_WIDTH * m_scale);
         window->DrawList->AddCircleFilled(handle_center, handle_radius, handle_border_clr);
@@ -598,7 +669,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
         // transport actions (skip = jump to start / end)
         if (show_skips && ghost_button(prev_c, skip_d, MaterialIcon::SkipPrevious, skip_icon_px)) {
             if (*value != v_min) { *value = v_min; value_changed = true; }
-            m_playing = false;
+            scrubbed = true; // re-anchors the clock to the timeline start below
         }
         {
             // circular play / pause
@@ -606,44 +677,79 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
             const bool hov = ImGui::IsMouseHoveringRect(pr.Min, pr.Max);
             window->DrawList->AddCircleFilled(play_c, play_d * 0.5f, play_bg);
             if (hov) window->DrawList->AddCircleFilled(play_c, play_d * 0.5f, play_hover);
-            draw_glyph(play_c, m_playing ? (unsigned) MaterialIcon::Pause : (unsigned) MaterialIcon::PlayArrow, play_icon_px, play_fg);
+            const bool playing = m_play_state == Play::Playing;
+            draw_glyph(play_c, playing ? (unsigned) MaterialIcon::Pause : (unsigned) MaterialIcon::PlayArrow, play_icon_px, play_fg);
+            if (hov) show_tooltip(playing ? _u8L("Pause print simulation") : _u8L("Play print simulation"));
             if (hov && context.IO.MouseClicked[0]) {
-                if (!m_playing) {
-                    if (*value >= v_max) { *value = v_min; value_changed = true; }
-                    m_playing    = true;
-                    m_play_accum = 0.0f;
+                if (playing) {
+                    m_play_state = Play::Paused;
                 } else {
-                    m_playing = false;
+                    // start / resume; restart from the beginning when at the end
+                    if (*value >= v_max && *value != v_min) { *value = v_min; value_changed = true; }
+                    m_play_time_s = time_for_index(*value);
+                    m_play_state  = Play::Playing;
+                    m_play_frame  = 0;
+                    set_as_dirty();
                 }
             }
         }
         if (show_skips && ghost_button(next_c, skip_d, MaterialIcon::SkipNext, skip_icon_px)) {
             if (*value != v_max) { *value = v_max; value_changed = true; }
-            m_playing = false;
+            scrubbed = true; // clock lands on t_end below; a running sim pauses there
         }
 
-        // playback advance — frame-paced, pauses if the user grabs the handle
-        if (m_playing) {
-            if (v_max <= v_min || context.ActiveId == id) {
-                if (v_max <= v_min) m_playing = false;
-            } else {
-                float dt = context.IO.DeltaTime;
-                if (dt > 0.1f) dt = 0.1f;
-                if (dt < 0.0f) dt = 0.0f;
-                const float duration = 6.0f; // seconds for a full sweep
-                float rate = (float) (v_max - v_min) / duration;
-                if (rate < 1.0f) rate = 1.0f;
-                m_play_accum += dt * rate;
-                const int adv = (int) m_play_accum;
-                if (adv > 0) {
-                    m_play_accum -= (float) adv;
-                    int nv = *value + adv;
-                    if (nv >= v_max) { nv = v_max; m_playing = false; }
-                    if (nv != *value) { *value = nv; value_changed = true; }
-                }
+        // speed chip: cycles the real-time multiplier 1x -> 10x -> 100x -> 1000x
+        if (show_chip) {
+            const ImRect cr(ImVec2(chip_left, center_y - chip_h * 0.5f), ImVec2(chip_right, center_y + chip_h * 0.5f));
+            const bool hov = ImGui::IsMouseHoveringRect(cr.Min, cr.Max);
+            if (hov) window->DrawList->AddRectFilled(cr.Min, cr.Max, ghost_hover, chip_h * 0.5f);
+            window->DrawList->AddRect(cr.Min, cr.Max, border_clr, chip_h * 0.5f);
+            draw_glyph(ImVec2(chip_left + chip_pad + chip_icon_px * 0.5f, center_y), MaterialIcon::Speed, chip_icon_px, icon_idle);
+            const bool mono_c = imgui.push_mono_font();
+            const ImVec2 lbl_sz = ImGui::CalcTextSize(speed_label);
+            window->DrawList->AddText(ImVec2(chip_left + chip_pad + chip_icon_px + chip_gap, center_y - lbl_sz.y * 0.5f), counter_clr, speed_label);
+            if (mono_c) imgui.pop_mono_font();
+            if (hov) show_tooltip(_u8L("Simulation speed"));
+            if (hov && context.IO.MouseClicked[0]) {
+                m_play_speed = m_play_speed >= 1000.0f ? 1.0f : m_play_speed * 10.0f;
+                set_as_dirty();
             }
-            // keep the frame loop alive so playback animates even between whole steps
-            if (m_playing) set_as_dirty();
+        }
+
+        // playback advance — the simulated print clock m_play_time_s is
+        // authoritative; the slider index is derived from it via upper_bound.
+        if (v_max <= v_min && m_play_state != Play::Stopped)
+            m_play_state = Play::Stopped;
+        bool play_defer_push = false;
+        if (scrubbed) {
+            // user owns the position this frame: re-anchor the clock, skip the tick
+            m_play_time_s = time_for_index(*value);
+        } else if (m_play_state == Play::Playing) {
+            float dt = context.IO.DeltaTime;
+            dt = std::clamp(dt, 0.0f, 0.1f);
+            m_play_time_s += (double) dt * (double) m_play_speed;
+            if (m_play_time_s >= (double) t_end) {
+                m_play_time_s = (double) t_end;
+                m_play_state  = Play::Paused;
+            }
+            const int idx = index_for_time(m_play_time_s);
+            ++m_play_frame;
+            // Legacy renderer rebuilds its render paths on every seek: when a
+            // fast-forward frame jumps more than ~5000 ticks, push the
+            // sequential-view update only every other frame (the final frame
+            // that pauses at the end is always pushed).
+            play_defer_push = m_play_seek_throttle && m_play_state == Play::Playing &&
+                              std::abs(idx - *value) > 5000 && (m_play_frame & 1u) != 0u;
+            if (idx != *value && !play_defer_push) { *value = idx; value_changed = true; }
+        }
+        // keep the frame loop alive so the clock keeps running between moves; on
+        // deferred frames repaint the canvas WITHOUT marking the slider dirty so
+        // no sequential-view rebuild is pushed for the skipped frame
+        if (m_play_state == Play::Playing) {
+            if (play_defer_push)
+                wxGetApp().plater()->get_current_canvas3D()->set_as_dirty();
+            else
+                set_as_dirty();
         }
 
         // right-aligned mono counter 'Move cur / max'
@@ -653,6 +759,16 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
             const ImVec2 counter_sz = ImGui::CalcTextSize(counter.c_str());
             window->DrawList->AddText(ImVec2(counter_right - counter_sz.x, center_y - counter_sz.y * 0.5f), counter_clr, counter.c_str());
             if (mono_r) imgui.pop_mono_font();
+        }
+
+        // elapsed / total simulated print clock (mono, right-aligned)
+        if (show_readout) {
+            const bool mono_t = imgui.push_mono_font();
+            const double elapsed_s = m_play_state == Play::Stopped ? time_for_index(*value) : m_play_time_s;
+            const std::string readout = short_time(get_time_dhms((float) elapsed_s)) + " / " + total_str;
+            const ImVec2 readout_sz = ImGui::CalcTextSize(readout.c_str());
+            window->DrawList->AddText(ImVec2(readout_right - readout_sz.x, center_y - readout_sz.y * 0.5f), counter_clr, readout.c_str());
+            if (mono_t) imgui.pop_mono_font();
         }
 
         return value_changed;

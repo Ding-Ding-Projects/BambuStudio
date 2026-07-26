@@ -104,6 +104,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/ErrorMsgStaticText.hpp
     GUI/Widgets/MultiNozzleSync.hpp
     GUI/Widgets/MultiNozzleSync.cpp
+    GUI/BulkFilamentDialog.cpp
+    GUI/BulkFilamentDialog.hpp
     GUI/MixedFilamentDialog.cpp
     GUI/MixedFilamentDialog.hpp
     GUI/ColorDecomposeDialog.cpp

@@ -22055,3 +22055,51 @@ msgstr "Connected. %d speakers and lights found."
 
 msgid "Set nozzle count"
 msgstr ""
+
+msgid "Please slice the plate first."
+msgstr ""
+
+msgid "Please slice all plates first."
+msgstr ""
+
+msgid "Please select a single plate."
+msgstr ""
+
+msgid "Please configure the printer host first."
+msgstr ""
+
+msgid "Bulk"
+msgstr ""
+
+msgid "Bulk filament actions"
+msgstr ""
+
+msgid "Actions apply to the checked filament slots."
+msgstr ""
+
+msgid "Set preset..."
+msgstr ""
+
+msgid "Set color..."
+msgstr ""
+
+msgid "Delete selected filaments"
+msgstr ""
+
+msgid "At least one filament always remains."
+msgstr ""
+
+msgid "Add filaments"
+msgstr ""
+
+msgid "Choose a filament preset"
+msgstr ""
+
+msgid "Play print simulation"
+msgstr "Play print simulation"
+
+msgid "Pause print simulation"
+msgstr "Pause print simulation"
+
+msgid "Simulation speed"
+msgstr "Simulation speed"

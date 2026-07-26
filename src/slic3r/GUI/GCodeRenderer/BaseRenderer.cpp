@@ -596,15 +596,14 @@ namespace Slic3r
                 if (!p_sequential_view) {
                     return;
                 }
-                if ((int)m_last_result_id != -1) {
-                    auto it = std::find_if(m_gcode_result->moves.begin(), m_gcode_result->moves.end(), [this, &p_sequential_view](auto move) {
-                        if (p_sequential_view->current.last < p_sequential_view->gcode_ids.size() && p_sequential_view->current.last >= 0) {
-                            return move.gcode_id == static_cast<uint64_t>(p_sequential_view->gcode_ids[p_sequential_view->current.last]);
-                        }
-                        return false;
-                        });
-                    if (it != m_gcode_result->moves.end())
-                        p_sequential_view->marker.update_curr_move(*it);
+                if ((int)m_last_result_id != -1 && m_gcode_result != nullptr) {
+                    // ssid -> move id is precomputed; O(1) instead of the old O(n) find_if
+                    const size_t ssid = p_sequential_view->current.last;
+                    if (ssid < m_ssid_to_moveid_map.size()) {
+                        const size_t move_id = m_ssid_to_moveid_map[ssid];
+                        if (move_id < m_gcode_result->moves.size())
+                            p_sequential_view->marker.update_curr_move(m_gcode_result->moves[move_id]);
+                    }
                 }
             }
 
@@ -1284,6 +1283,10 @@ namespace Slic3r
                 m_print_statistics.reset();
                 m_ssid_to_moveid_map.clear();
                 m_ssid_to_moveid_map.shrink_to_fit();
+                m_move_times_by_ssid.clear();
+                m_move_times_by_ssid.shrink_to_fit();
+                if (m_moves_slider != nullptr)
+                    m_moves_slider->SetMoveTimes(nullptr, 0.0f);
                 m_plater_extruder.clear();
                 m_contained_in_bed = true;
                 m_config = nullptr;
@@ -1424,7 +1427,9 @@ namespace Slic3r
                 }
                 //BBS fixed bottom_margin for space to render horiz slider
                 int bottom_margin = 64;
-                if (show_sequential_view()) {
+                // during print-simulation playback the nozzle marker stays
+                // visible through layer boundaries (slider at max included)
+                if (show_sequential_view() || is_simulation_active()) {
                     p_sequential_view->marker.set_world_position(p_sequential_view->current_position);
                     p_sequential_view->marker.set_world_offset(p_sequential_view->current_offset);
                     //BBS fixed buttom margin. m_moves_slider.pos_y
@@ -3319,11 +3324,45 @@ namespace Slic3r
                 m_moves_slider->SetSelectionSpan(p_sequential_view->current.first - p_sequential_view->endpoints.first, p_sequential_view->current.last - p_sequential_view->endpoints.first);
                 if (set_to_max)
                     m_moves_slider->SetHigherValue(m_moves_slider->GetMaxValue());
+
+                // feedrate-true playback: cumulative print seconds per slider tick.
+                // MoveVertex::time is a prefix sum but only TimeBlock-owning moves
+                // carry a value (others are 0), so forward-fill while mapping the
+                // sequential-view ssid range through m_ssid_to_moveid_map.
+                m_move_times_by_ssid.clear();
+                if (m_gcode_result != nullptr) {
+                    m_move_times_by_ssid.reserve(values.size());
+                    const size_t mode = static_cast<size_t>(m_time_estimate_mode);
+                    float prev = 0.0f;
+                    for (unsigned int i = p_sequential_view->endpoints.first; i <= p_sequential_view->endpoints.last; ++i) {
+                        float raw = 0.0f;
+                        if (i < m_ssid_to_moveid_map.size()) {
+                            const size_t move_id = m_ssid_to_moveid_map[i];
+                            if (move_id < m_gcode_result->moves.size()) {
+                                const auto& move = m_gcode_result->moves[move_id];
+                                raw = mode < move.time.size() ? move.time[mode] : 0.0f;
+                                if (raw <= 0.0f)
+                                    raw = move.time[0];
+                            }
+                        }
+                        prev = std::max(prev, raw);
+                        m_move_times_by_ssid.push_back(prev);
+                    }
+                }
+                m_moves_slider->SetMoveTimes(m_move_times_by_ssid.empty() ? nullptr : &m_move_times_by_ssid,
+                                             m_move_times_by_ssid.empty() ? 0.0f : m_move_times_by_ssid.back());
+                // Legacy renderer rebuilds render paths per seek -> throttle huge jumps
+                m_moves_slider->SetPlaySeekThrottle(true);
             }
 
             bool BaseRenderer::show_sequential_view() const
             {
                 return false;
+            }
+
+            bool BaseRenderer::is_simulation_active() const
+            {
+                return m_moves_slider != nullptr && m_moves_slider->is_simulating();
             }
 
             void BaseRenderer::on_visibility_changed()

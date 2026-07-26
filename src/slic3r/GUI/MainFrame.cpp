@@ -1087,7 +1087,7 @@ void MainFrame::update_layout()
         m_tabpanel->InsertPage(tpPreview, m_plater, _L("Preview"), std::string("tab_preview_active"), std::string("tab_preview_active"), false);
         m_main_sizer->Add(m_tabpanel, 1, wxEXPAND | wxTOP, 0);
         m_main_sizer->Add(m_prepare_action_bar, 0, wxEXPAND);
-        show_option(m_tabpanel->GetSelection() == tp3DEditor);
+        show_option(m_tabpanel->GetSelection() == tp3DEditor || m_tabpanel->GetSelection() == tpPreview);
 
         m_tabpanel->Bind(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, [this](wxCommandEvent& evt)
         {
@@ -1687,8 +1687,15 @@ void MainFrame::update_prepare_action_bar_content()
             m_prepare_plate_button->Enable(false);
         }
     }
-    if (m_prepare_add_plate_button)
+    // Per-tab differentiation: the bar now shows on both plater tabs (Prepare
+    // and Preview). Adding a plate is a Prepare-only affordance, so its button
+    // hides on Preview; the plate picker, estimate, Slice pill (re-slicing from
+    // Preview is legitimate) and Print button stay on both tabs.
+    const bool on_preview = m_tabpanel != nullptr && m_tabpanel->GetSelection() == tpPreview;
+    if (m_prepare_add_plate_button) {
+        m_prepare_add_plate_button->Show(!on_preview);
         m_prepare_add_plate_button->Enable(m_plater->can_add_plate());
+    }
 
     if (m_prepare_estimate_label) {
         // Two-tier estimate (MD3 Prepare kit §67-70): line 1 is the print time,
@@ -2009,10 +2016,13 @@ void MainFrame::init_tabpanel()
 #endif
         }
 
-        // The primary Slice/Print actions belong to the Prepare workflow. Keep
-        // the entire bar in sync with the selected page so programmatic tab
-        // changes and layout rebuilds cannot leave individual controls behind.
-        show_option(sel == tp3DEditor);
+        // The Slice/Print actions serve both plater workflows: users slice on
+        // Prepare and print (or re-slice) from Preview. Keep the entire bar in
+        // sync with the selected page so programmatic tab changes and layout
+        // rebuilds cannot leave individual controls behind; Prepare-only
+        // affordances (add plate) are toggled per-tab inside
+        // update_prepare_action_bar_content(), which show_option() runs.
+        show_option(sel == tp3DEditor || sel == tpPreview);
 #if defined(__WXOSX__)
         // macOS root cause fix: suspend the Filament Manager WKWebView whenever it
         // is not the visible tab. Its live React SPA, if left mounted in a hidden
@@ -3225,7 +3235,26 @@ bool MainFrame::get_enable_slice_status()
 
 bool MainFrame::get_enable_print_status()
 {
+    wxString reason;
+    return get_enable_print_status(reason);
+}
+
+bool MainFrame::get_enable_print_status(wxString &reason)
+{
     bool enable = true;
+    reason.clear();
+
+    // Shared disabled-with-reason strings. Set only on the FIRST disabling
+    // condition so the tooltip explains the primary blocker.
+    auto disable = [&enable, &reason](const wxString &why) {
+        if (enable)
+            reason = why;
+        enable = false;
+    };
+    const wxString reason_slice_plate  = _L("Please slice the plate first.");
+    const wxString reason_slice_all    = _L("Please slice all plates first.");
+    const wxString reason_single_plate = _L("Please select a single plate.");
+    const wxString reason_print_host   = _L("Please configure the printer host first.");
 
     PartPlateList &part_plate_list = m_plater->get_partplate_list();
     PartPlate *current_plate = part_plate_list.get_curr_plate();
@@ -3234,83 +3263,91 @@ bool MainFrame::get_enable_print_status()
     {
         if (!part_plate_list.is_all_slice_results_ready_for_print())
         {
-            enable = false;
+            disable(reason_slice_all);
         }
     }
     else if (m_print_select == ePrintPlate)
     {
         if (!current_plate->is_slice_result_ready_for_print())
         {
-            enable = false;
+            disable(reason_slice_plate);
         }
-        enable = enable && !is_all_plates;
+        if (is_all_plates)
+            disable(reason_single_plate);
     }
     else if (m_print_select == eExportGcode)
     {
         if (!current_plate->is_slice_result_valid())
         {
-            enable = false;
+            disable(reason_slice_plate);
         }
-        enable = enable && !is_all_plates;
+        if (is_all_plates)
+            disable(reason_single_plate);
     }
     else if (m_print_select == eSendGcode)
     {
         if (!current_plate->is_slice_result_valid())
-            enable = false;
+            disable(reason_slice_plate);
         if (!can_send_gcode())
-            enable = false;
-        enable = enable && !is_all_plates;
+            disable(reason_print_host);
+        if (is_all_plates)
+            disable(reason_single_plate);
     }
     else if (m_print_select == eUploadGcode)
     {
         if (!current_plate->is_slice_result_valid())
-            enable = false;
+            disable(reason_slice_plate);
         if (!can_send_gcode())
-            enable = false;
-        enable = enable && !is_all_plates;
+            disable(reason_print_host);
+        if (is_all_plates)
+            disable(reason_single_plate);
     }
     else if (m_print_select == eExportSlicedFile)
     {
         if (!current_plate->is_slice_result_ready_for_export())
         {
-            enable = false;
+            disable(reason_slice_plate);
         }
-        enable = enable && !is_all_plates;
+        if (is_all_plates)
+            disable(reason_single_plate);
 	}
 	else if (m_print_select == eSendToPrinter)
 	{
 		if (!current_plate->is_slice_result_ready_for_print())
 		{
-			enable = false;
+			disable(reason_slice_plate);
 		}
-        enable = enable && !is_all_plates;
+        if (is_all_plates)
+            disable(reason_single_plate);
 	}
     else if (m_print_select == eSendToPrinterAll)
     {
         if (!part_plate_list.is_all_slice_results_ready_for_print())
         {
-            enable = false;
+            disable(reason_slice_all);
         }
     }
     else if (m_print_select == eExportAllSlicedFile)
     {
         if (!part_plate_list.is_all_slice_result_ready_for_export())
         {
-            enable = false;
+            disable(reason_slice_all);
         }
     }
     else if (m_print_select == ePrintMultiMachine)
     {
         if (!current_plate->is_slice_result_ready_for_print())
         {
-            enable = false;
+            disable(reason_slice_plate);
         }
-        enable = enable && !is_all_plates;
+        if (is_all_plates)
+            disable(reason_single_plate);
     }else if (m_print_select == eSendMultiApp) {
         if (!current_plate->is_slice_result_ready_for_print()) {
-            enable = false;
+            disable(reason_slice_plate);
         }
-        enable = enable && !is_all_plates;
+        if (is_all_plates)
+            disable(reason_single_plate);
     }
 
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": m_print_select %1%, enable= %2% ")%m_print_select %enable;
@@ -3440,9 +3477,10 @@ void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_sl
 
 
     //process print logic
+    wxString print_disabled_reason;
     if (enable_print)
     {
-        enable_print = get_enable_print_status();
+        enable_print = get_enable_print_status(print_disabled_reason);
     }
 
     //process slice logic
@@ -3455,6 +3493,9 @@ void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_sl
 
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(" m_slice_select %1%: can_slice= %2%, can_print %3%, enable_slice %4%, enable_print %5% ")%m_slice_select % can_slice %can_print %enable_slice %enable_print;
     m_print_btn->Enable(enable_print);
+    // Disabled-with-reason: a disabled Print button explains itself via its
+    // tooltip; the tooltip is cleared as soon as printing becomes possible.
+    m_print_btn->SetToolTip(enable_print ? wxString() : print_disabled_reason);
     m_slice_btn->Enable(enable_slice);
     m_slice_enable = enable_slice;
     m_print_enable = enable_print;

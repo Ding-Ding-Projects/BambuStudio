@@ -73,7 +73,7 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`home--recently-opened-header.png`](home/home--recently-opened-header.png)
 - [`home.png`](home/home.png)
 
-## main-window (73 captures)
+## main-window (75 captures)
 
 - [`menu-calibration.png`](main-window/menu-calibration.png)
 - [`menu-edit.png`](main-window/menu-edit.png)
@@ -92,6 +92,8 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`nav-rail.png`](main-window/nav-rail.png)
 - [`page-device.png`](main-window/page-device.png)
 - [`page-preview.png`](main-window/page-preview.png)
+- [`prepare-action-bar.png`](main-window/prepare-action-bar.png)
+- [`preview-action-bar-print-button.png`](main-window/preview-action-bar-print-button.png)
 - [`sidebar-prepare--add-filament.png`](main-window/sidebar-prepare--add-filament.png)
 - [`sidebar-prepare--advanced-settings.png`](main-window/sidebar-prepare--advanced-settings.png)
 - [`sidebar-prepare--filament-menu.png`](main-window/sidebar-prepare--filament-menu.png)

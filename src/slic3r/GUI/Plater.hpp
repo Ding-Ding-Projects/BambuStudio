@@ -201,6 +201,9 @@ public:
     void change_filament(size_t from_id, size_t to_id);  // 0 base
     void edit_filament();
     void add_custom_filament(wxColour new_col, const std::string& preset_name = std::string(), bool skip_preset_validation = false);
+    // Bulk filament actions dialog: set preset / set colour / delete across the
+    // checked physical slots, plus append N filaments, applied in one batch.
+    void bulk_filament_actions();
     bool is_new_project_in_gcode3mf();
     // BBS
     void on_bed_type_change(BedType bed_type);
