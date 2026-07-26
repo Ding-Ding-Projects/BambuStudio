@@ -747,6 +747,11 @@ struct Sidebar::priv
     // Bulk filament actions entry: trailing MD3 outlined header button opening
     // BulkFilamentDialog (set preset / set colour / delete / add N in one batch).
     Button *          m_bulk_filament_btn{nullptr};
+    // Filament slot search: a compact shared MD3 SearchField (regex toggle +
+    // tune builder popover included) filtering the visible filament rows by
+    // preset name and by colour ("#RRGGBB" / nearest colour name, via
+    // SearchField::colorSearchText — same semantics as the Objects search).
+    SearchField *     m_filament_search{nullptr};
     int m_menu_filament_id = -1;
     wxPanel*          m_filament_area_wrapper{nullptr};   // Wrapper panel for collapse/expand
     wxScrolledWindow* m_physical_scroll_area{nullptr};    // Scroll area for physical filaments (max 3 rows when total > 12)
@@ -793,6 +798,14 @@ struct Sidebar::priv
     bool          process_advanced = false;
     bool          process_card_refreshing = false;
     void          apply_process_segment(int seg);
+    // Sidebar settings search: a shared MD3 SearchField at the top of the
+    // Process card delegating to the global Search::OptionsSearcher popup
+    // (SearchDialog), which lists matching options across every indexed preset
+    // type — process/print, printer and filament — and jumps to the owning Tab
+    // option on activation. The guard flag keeps the focus-driven popup from
+    // being re-opened by the popup's own focus bounce.
+    SearchField  *m_process_search = nullptr;
+    bool          m_process_search_open = false;
 
     // BBS printer config
     StaticBox* m_panel_printer_title = nullptr;
@@ -852,6 +865,11 @@ struct Sidebar::priv
     // MD3 filament rows: mirror each combo's selected preset filament_type
     // into the trailing material Badge.
     void update_filament_row_badges();
+    // Filament slot search: show only the rows whose preset name or colour
+    // ("#RRGGBB" / nearest colour name) matches the m_filament_search query
+    // (empty query shows all). Returns true when any row's visibility flipped
+    // so callers know a relayout is needed.
+    bool apply_filament_search_filter();
     // MD3 compact Process card: pull the curated Print-config values into the
     // card widgets (no-op while hidden or while the user edits a field).
     void refresh_process_card();
@@ -1239,6 +1257,56 @@ void Sidebar::priv::update_filament_row_badges()
             if (box->GetParent()) box->GetParent()->Layout();
         }
     }
+
+    // Keep the filament search filter live across preset renames / colour
+    // edits: a row's haystack (preset name + colour) may have changed under a
+    // non-empty query, so re-evaluate and relayout only when visibility flips.
+    if (apply_filament_search_filter() && plater) {
+        plater->sidebar().recalc_filament_scroll_sizes();
+        m_panel_filament_content->Layout();
+        m_filament_area_wrapper->Layout();
+        scrolled->Layout();
+    }
+}
+
+bool Sidebar::priv::apply_filament_search_filter()
+{
+    if (!m_filament_search) return false;
+    const wxString query = m_filament_search->GetValue();
+    const bool     regex = m_filament_search->IsRegexEnabled();
+    const bool     csens = m_filament_search->IsCaseSensitive();
+    const bool     wword = m_filament_search->IsWholeWord();
+
+    // Per-slot colours, resolved once per pass (same source the Objects search
+    // uses for its colour-aware haystack).
+    std::vector<std::string> filament_colors;
+    if (!query.IsEmpty() && plater)
+        filament_colors = plater->get_extruder_colors_from_plater_config();
+
+    bool changed = false;
+    for (size_t i = 0; i < filament_rows.size(); ++i) {
+        StaticBox *row = filament_rows[i];
+        if (!row) continue;
+        bool match = true;
+        if (!query.IsEmpty()) {
+            // Haystack: "<slot #> <preset name> #RRGGBB <colour name>", so a
+            // query can hit the slot number, the preset name (substring or
+            // regex per the pill's ".*" toggle) or the slot colour by hex value
+            // or everyday colour name — exactly the shared
+            // SearchField::colorSearchText / textMatches semantics.
+            wxString haystack = wxString::Format("%d", int(i) + 1);
+            if (i < combos_filament.size() && combos_filament[i])
+                haystack += " " + combos_filament[i]->GetValue();
+            if (i < filament_colors.size())
+                haystack += " " + SearchField::colorSearchText(wxColour(filament_colors[i]));
+            match = SearchField::textMatches(query, haystack, regex, csens, wword);
+        }
+        if (row->IsShown() != match) {
+            row->Show(match);
+            changed = true;
+        }
+    }
+    return changed;
 }
 
 void Sidebar::priv::refresh_process_card()
@@ -3317,6 +3385,31 @@ Sidebar::Sidebar(Plater *parent)
     p->m_filament_area_wrapper->SetBackgroundColour(surface_lowest);
     auto* wrapper_sizer = new wxBoxSizer(wxVERTICAL);
 
+    // ---- Filament slot search (shared MD3 SearchField pill) ----
+    // Compact row under the section header, above the slot rows. Lives inside
+    // the collapse wrapper so collapsing the Filament section hides it too.
+    // Filters the visible slot rows live as the user types: preset-name
+    // substring by default, regex via the pill's ".*" toggle / tune builder
+    // popover, and colour-aware matching ("#RRGGBB" or a colour name) through
+    // SearchField::colorSearchText — the same recipe as the Objects search.
+    p->m_filament_search = new SearchField(p->m_filament_area_wrapper, _L("Search filaments"));
+    auto refilter_filament_rows = [this]() {
+        // recalc re-applies the filter itself (it is the shared authority so
+        // add/remove/rescale paths stay filtered), then resizes the scroll
+        // areas around the surviving rows.
+        recalc_filament_scroll_sizes();
+        p->m_panel_filament_content->Layout();
+        p->m_filament_area_wrapper->Layout();
+        m_scrolled_sizer->Layout();
+        p->scrolled->Refresh();
+    };
+    p->m_filament_search->SetOnQuery([refilter_filament_rows](const wxString &) { refilter_filament_rows(); });
+    // Re-run the filter live whenever regex mode or the builder's
+    // case-sensitive / whole-word checkboxes change (the popover re-fires this
+    // callback for all three).
+    p->m_filament_search->SetOnRegexToggle([refilter_filament_rows](bool) { refilter_filament_rows(); });
+    wrapper_sizer->Add(p->m_filament_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+
     // ---- Physical filament scroll area (independent scrollbar) ----
     p->m_physical_scroll_area = new wxScrolledWindow(p->m_filament_area_wrapper, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     p->m_physical_scroll_area->SetScrollbars(0, 100, 1, 2);
@@ -3618,6 +3711,34 @@ Sidebar::Sidebar(Plater *parent)
         // leading glyph (self-maintaining across theme/DPI), opening the card.
         p->m_process_header = new SectionHeader(p->m_process_card, _L("Process"), MaterialIcon::Tune);
         card_sizer->Add(p->m_process_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+
+        // ---- Sidebar settings search (shared MD3 SearchField pill) ----
+        // Top row of the Process card. Focusing the field opens the global
+        // OptionsSearcher results popup (the same SearchDialog the settings-tab
+        // magnifier uses) anchored under the pill; typing filters live and
+        // activating a result jumps to the owning option (wxCUSTOMEVT_JUMP_TO_
+        // OPTION -> Sidebar::jump_to_option, flipping to Advanced settings for
+        // print options or activating the Printer / Filament tab otherwise).
+        // Preset::TYPE_INVALID scopes the query across every preset type the
+        // searcher indexes for the current mode — process/print, PRINTER and
+        // filament options — so the Printer section needs no third search bar.
+        // The pill's ".*" toggle and tune builder popover are wired into the
+        // searcher's regex / case / whole-word flags by the SearchDialog.
+        p->m_process_search = new SearchField(p->m_process_card, _L("Search settings"));
+        p->m_process_search->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
+            if (!p->m_process_search_open) {
+                p->m_process_search_open = true;
+                p->searcher.show_dialog(Preset::TYPE_INVALID, p->m_process_card,
+                                        p->m_process_search, p->m_process_search);
+            }
+            e.Skip();
+        });
+        // The SearchDialog posts wxCUSTOMEVT_EXIT_SEARCH to its host field when
+        // it dies; re-arm the focus-open guard so the next focus reopens it.
+        p->m_process_search->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
+            p->m_process_search_open = false;
+        });
+        card_sizer->Add(p->m_process_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
 
         // Process-preset SelectField: the live PlaterPresetComboBox (TYPE_PRINT)
         // dressed with kit SelectField chrome (r10 small-radius, SurfaceContainer-
@@ -4728,6 +4849,10 @@ void Sidebar::msw_rescale()
 
     // MD3 Objects card + compact Process card widgets.
     if (p->m_search_bar) p->m_search_bar->Rescale();
+    // Sidebar settings search + filament slot search pills re-derive their
+    // geometry and glyph rasters at the new DPI the same way.
+    if (p->m_process_search) p->m_process_search->Rescale();
+    if (p->m_filament_search) p->m_filament_search->Rescale();
     if (p->process_layer_height) {
         p->process_layer_height->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
         p->process_layer_height->SetMinSize({FromDIP(96), FromDIP(34)});
@@ -6069,6 +6194,11 @@ static constexpr int kScrollCapThreshold     = 12;
 
 void Sidebar::recalc_filament_scroll_sizes()
 {
+    // Re-apply the filament search filter before measuring: rows are added,
+    // removed or renamed by many call sites that all funnel through here, so
+    // the filter stays authoritative over row visibility without each site
+    // knowing about it (hidden rows are excluded from the sizer min sizes).
+    p->apply_filament_search_filter();
     size_t num_physical = p->combos_filament.size();
     auto* plater = dynamic_cast<Plater*>(GetParent());
     size_t num_mixed = plater ? plater->mixed_filament_config_indices().size() : 0;

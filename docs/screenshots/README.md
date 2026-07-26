@@ -78,7 +78,7 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`home--recently-opened-header.png`](home/home--recently-opened-header.png)
 - [`home.png`](home/home.png)
 
-## main-window (75 captures)
+## main-window (76 captures)
 
 - [`menu-calibration.png`](main-window/menu-calibration.png)
 - [`menu-edit.png`](main-window/menu-edit.png)
@@ -141,6 +141,7 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`sidebar-prepare--slice-plate.png`](main-window/sidebar-prepare--slice-plate.png)
 - [`sidebar-prepare--zoom-controls.png`](main-window/sidebar-prepare--zoom-controls.png)
 - [`sidebar-prepare.png`](main-window/sidebar-prepare.png)
+- [`sidebar-search-pills.png`](main-window/sidebar-search-pills.png)
 - [`topbar--history-chip-main.png`](main-window/topbar--history-chip-main.png)
 - [`topbar--logo-bambu-studio.png`](main-window/topbar--logo-bambu-studio.png)
 - [`topbar--menu-calibration.png`](main-window/topbar--menu-calibration.png)

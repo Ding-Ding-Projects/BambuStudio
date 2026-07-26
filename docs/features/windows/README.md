@@ -5,6 +5,7 @@
 - [Appearance customization](appearance-customization.md)
 - [Regex builder](regex-builder.md)
 - [Command palette (Ctrl+F)](command-palette.md)
+- [Prepare sidebar search (settings + filament slots)](sidebar-search.md)
 - [Material color picker & color translator](md3-color-picker.md)
 - [Bulk filament actions](bulk-filament-actions.md)
 - [Stop-print safety interlock](stop-print-interlock.md)

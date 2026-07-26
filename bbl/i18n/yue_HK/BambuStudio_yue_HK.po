@@ -2492,3 +2492,7 @@ msgstr "暫停打印模擬"
 #. reviewed-category: slicing-printing
 msgid "Simulation speed"
 msgstr "模擬速度（撳一下轉檔）"
+
+#. reviewed-category: navigation
+msgid "Search filaments"
+msgstr "搵耗材"
