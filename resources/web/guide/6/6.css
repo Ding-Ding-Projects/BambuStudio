@@ -1,9 +1,25 @@
+/* Standalone plugin-download page. It does not load common.css, so the MD3
+   role tokens are declared locally (light values); css/dark.css is injected
+   by globalapi.js on a dark Studio theme and overrides these :root values. */
+:root
+{
+	--md-surface:#faf8fd;
+	--md-surface-dim:#dad9e0;
+	--md-sc:#eeedf3;
+	--md-on-surface:#1a1b1f;
+	--md-on-surface-variant:#44464e;
+	--md-outline-variant:#c5c6d0;
+	--md-primary:#146c2e;
+	--md-on-primary:#ffffff;
+	--md-font:'Roboto','system-ui','Segoe UI',Oxygen,Ubuntu,'Helvetica Neue',sans-serif;
+}
+
 *
 {
 	padding: 0;
 	border: 0;
-	margin: 0;		
-    font-family: "system-ui", "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-sans;	
+	margin: 0;
+    font-family: var(--md-font);
 }
 
 html,body
@@ -12,9 +28,15 @@ html,body
 	height:100%;
 }
 
+body
+{
+	background-color: var(--md-surface);
+	color: var(--md-on-surface);
+}
+
 .LinkBtn
 {
-	color: #1200FF;	
+	color: var(--md-primary);
 	cursor: pointer;
 }
 
@@ -28,17 +50,17 @@ html,body
 	padding: 1.5mm 6mm;
 	font-size: 14px;
 	text-align: center;
-	background-color: #00AE42;
-	border-radius: 6px;
-	color: #fff;
+	background-color: var(--md-primary);
+	border-radius: 8px;
+	color: var(--md-on-primary);
 	cursor: pointer;
-	display: inline-block;	
-	border: 1px solid #009A3A;
+	display: inline-block;
+	border: 1px solid var(--md-primary);
 }
 
 .Btn_Green:hover
 {
-	background-color: #009A3A;
+	filter: brightness(0.93);
 }
 
 
@@ -84,8 +106,8 @@ html,body
 #PercentBkg
 {
 	height:20px;
-	background-color:#CFCFCF;
-	border-radius: 20px;	
+	background-color:var(--md-surface-dim);
+	border-radius: 20px;
 }
 
 #PercentTip
@@ -93,8 +115,8 @@ html,body
 	float: left;
 	height:20px;
 	width: 0%;
-	background-color:#00AE42;
-	border-radius: 20px;		
+	background-color:var(--md-primary);
+	border-radius: 20px;
 }
 
 #DownSuccessTip

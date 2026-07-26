@@ -114,10 +114,16 @@ static wxString update_custom_filaments()
 }
 
 GuideFrame::GuideFrame(GUI_App *pGUI, long style)
-    : DPIDialog((wxWindow *) (pGUI->mainframe), wxID_ANY, "BambuStudio", wxDefaultPosition, wxDefaultSize, style),
+    : MD3Dialog((wxWindow *) (pGUI->mainframe), _L("Setup Wizard"), wxEmptyString, MaterialIcon::Tune),
 	m_appconfig_new()
 {
-    SetBackgroundColour(*wxWHITE);
+    // The MD3 shell owns the kit Surface background (no more legacy white/gray
+    // caption). The web wizard supplies its own step navigation, so drop the kit
+    // footer; and when the caller omits wxCLOSE_BOX (the first-run flow, which the
+    // user must complete/refuse in-page) hide the header close to match.
+    ShowFooter(false);
+    if (!(style & wxCLOSE_BOX))
+        ShowHeaderClose(false);
     // INI
     m_SectionName = "firstguide";
     m_PrivacyUse    = "";
@@ -127,9 +133,6 @@ GuideFrame::GuideFrame(GUI_App *pGUI, long style)
     InstallNetplugin = false;
 
     m_MainPtr = pGUI;
-
-    // set the frame icon
-    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
 
     wxString TargetUrl = SetStartPage(BBL_WELCOME, false);
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(",  set start page to welcome ");
@@ -143,9 +146,9 @@ GuideFrame::GuideFrame(GUI_App *pGUI, long style)
     m_browser->Hide();
     m_browser->SetSize(0, 0);
 
-    SetSizer(topsizer);
-
-    topsizer->Add(m_browser, wxSizerFlags().Expand().Proportion(1));
+    // Embed the guide web view in the MD3 shell body (kit-padded content area);
+    // it expands to fill the space below the kit header.
+    GetContentSizer()->Add(m_browser, 1, wxEXPAND);
 
     // Log backend information
     // wxLogMessage(wxWebView::GetBackendVersionInfo().ToString());
@@ -162,6 +165,10 @@ GuideFrame::GuideFrame(GUI_App *pGUI, long style)
     int MaxY         = (screenheight - pSize.y) > 0 ? (screenheight - pSize.y) / 2 : 0;
     wxPoint tmpPT((screenwidth - pSize.x) / 2, MaxY);
     Move(tmpPT);
+    // Borderless shaped shell: flush the body layout and (re)apply the rounded
+    // window region for the explicit size set above.
+    Layout();
+    UpdateShape();
 #ifdef __WXMSW__
     this->Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent& e) {
         if ((m_page == BBL_FILAMENT_ONLY || m_page == BBL_MODELS_ONLY) && e.GetKeyCode() == WXK_ESCAPE) {

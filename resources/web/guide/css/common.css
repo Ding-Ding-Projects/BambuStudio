@@ -1,16 +1,68 @@
+/* ==========================================================================
+   Bambu Studio first-run Setup Wizard — MD3 shared styles.
+   Color roles mirror src/slic3r/GUI/Widgets/MD3Tokens.hpp (Brand scheme,
+   seed #146c2e) and ui-md3/design-system/tokens/colors.css. Light values
+   live here; dark values are supplied by css/dark.css, which the app injects
+   on top of this sheet when the Studio theme is dark (see globalapi.js
+   SwitchDarkMode). Keeping dark on the app-driven sheet — rather than a
+   prefers-color-scheme block — avoids the webview disagreeing with the
+   Studio theme toggle.
+   ========================================================================== */
+:root
+{
+	/* --- Surfaces / neutrals --- */
+	--md-surface:#faf8fd;
+	--md-surface-dim:#dad9e0;
+	--md-sc-lowest:#ffffff;
+	--md-sc-low:#f4f2f9;
+	--md-sc:#eeedf3;
+	--md-sc-high:#e8e7ee;
+	--md-sc-highest:#e2e1e9;
+	--md-on-surface:#1a1b1f;
+	--md-on-surface-variant:#44464e;
+	--md-outline:#75777f;
+	--md-outline-variant:#c5c6d0;
+	/* --- Accent (Brand green) --- */
+	--md-primary:#146c2e;
+	--md-on-primary:#ffffff;
+	--md-primary-container:#a6f4b8;
+	--md-on-primary-container:#00210c;
+	--md-secondary-container:#d7e8d9;
+	--md-on-secondary-container:#0e1f13;
+	/* --- Error --- */
+	--md-error:#ba1a1a;
+	--md-error-container:#ffdad6;
+	--md-on-error:#ffffff;
+
+	/* --- Type (Roboto, kit type scale) --- */
+	--md-font:'Roboto','system-ui','Segoe UI',Oxygen,Ubuntu,'Helvetica Neue',sans-serif;
+	--md-type-headline:23px;
+	--md-type-page-title:20px;
+	--md-type-section-title:16px;
+	--md-type-card-title:15px;
+	--md-type-body:14px;
+	--md-type-body-s:13.5px;
+	--md-type-label:11px;
+
+	/* --- Shape --- */
+	--md-radius-pill:999px;
+	--md-radius-list:12px;
+	--md-radius-tiny:8px;
+}
+
 *
 {
 	padding: 0;
 	border: 0;
-	margin: 0;		
-    font-family: "system-ui", "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-sans;
+	margin: 0;
+	font-family: var(--md-font);
 	user-select: none;
 }
 
 html
 {
 	height:100%;
-	background-color: #626262;
+	background-color: var(--md-surface-dim);
 }
 
 body
@@ -20,10 +72,11 @@ body
 	max-width: 820px;
 	padding: 0;
 	border: 0;
-	margin: 0;	
+	margin: 0;
 	overflow: hidden;
-	background-color: #fff;
-	font-size: 14px;
+	background-color: var(--md-surface);
+	color: var(--md-on-surface);
+	font-size: var(--md-type-body);
 	line-height: 22px;
 }
 
@@ -40,16 +93,16 @@ body
 
 .ZScrol::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
     border-radius: 6px;
-    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-	box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-    background-color: #AAAAAA;
+    background-color: var(--md-outline-variant);
+}
+
+.ZScrol::-webkit-scrollbar-thumb:hover {
+    background-color: var(--md-outline);
 }
 
 .ZScrol::-webkit-scrollbar-track {/*滚动条里面轨道*/
-        -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
-	    box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
         border-radius: 10px;
-        background: #EDEDED;
+        background: transparent;
 }
 
 /*----Three Part----*/
@@ -71,9 +124,10 @@ body
 
 #Title div
 {
-	font-size:28px;
-	line-height: 28px;
-	color: #00AE42;
+	font-size: var(--md-type-headline);
+	line-height: 30px;
+	font-weight: 700;
+	color: var(--md-on-surface);
 	padding: 0px 10mm;
 }
 
@@ -85,12 +139,12 @@ body
 	overflow-x: hidden;
 	overflow-y: auto;
 	text-align: left;
-	font-size: 14px;
+	font-size: var(--md-type-body);
 	line-height: 22px;
-	color: #464646;
+	color: var(--md-on-surface-variant);
 	position: relative;
 	display:flex;
-	flex-direction: column;		
+	flex-direction: column;
 }
 
 #Content div
@@ -106,94 +160,106 @@ body
 	text-align: left;
 	display: flex;
 	justify-content:flex-end;
-	align-items: center;	
+	align-items: center;
 }
 
 
-/*--Btn--*/
+/*--Btn-- filled pill (Primary / OnPrimary), radius = height/2 (stadium) */
 .NormalBtn
 {
-	padding: 3mm 9mm;
-	font-size: 14px;
+	padding: 10px 24px;
+	min-height: 20px;
+	font-size: var(--md-type-body);
+	font-weight: 500;
+	line-height: 20px;
 	text-align: center;
-	background-color: #00AE42;
-	border-radius: 16px;
-	color: #fff;
+	background-color: var(--md-primary);
+	border-radius: var(--md-radius-pill);
+	color: var(--md-on-primary);
 	cursor: pointer;
 	margin-left: 10px;
+	transition: filter .15s ease, box-shadow .15s ease;
 }
 
 .NormalBtn:hover
 {
-	background-color:#009638;
+	filter: brightness(0.93);
+	box-shadow: 0 1px 3px var(--md-scrim, rgba(0,0,0,.16));
 }
 
+.NormalBtn:active
+{
+	filter: brightness(0.88);
+	box-shadow: none;
+}
+
+/* Outlined pill (Outline border, Primary label) */
 .GrayBtn
 {
-	padding: 3mm 9mm;
-	font-size: 14px;
+	padding: 10px 24px;
+	min-height: 20px;
+	font-size: var(--md-type-body);
+	font-weight: 500;
+	line-height: 20px;
 	text-align: center;
-	border: 1px solid #575757;
-	border-radius: 18px;
-	color: #575757;
+	background-color: transparent;
+	border: 1px solid var(--md-outline);
+	border-radius: var(--md-radius-pill);
+	color: var(--md-primary);
 	cursor: pointer;
-	margin-left: 10px;	
+	margin-left: 10px;
+	transition: background-color .15s ease;
 }
 
 .GrayBtn:hover
 {
-	background-color:#E8E8E8;
+	background-color: var(--md-sc-high);
 }
 
+/* Small tonal button (SecondaryContainer / OnSecondaryContainer) */
 .SmallBtn
 {
-	padding: 2px 4mm;
-	font-size: 14px;
+	padding: 4px 14px;
+	font-size: var(--md-type-body-s);
+	font-weight: 500;
 	text-align: center;
-	background-color: #D9D9D9;
-	border-radius: 6px;
-	color: #000;
+	background-color: var(--md-secondary-container);
+	border-radius: var(--md-radius-tiny);
+	color: var(--md-on-secondary-container);
 	cursor: pointer;
 	display: inline-block;
 }
 
 .SmallBtn:hover
 {
-	background-color: #CCCCCC;
+	filter: brightness(0.96);
 }
 
 
+/* Small filled button (Primary / OnPrimary) */
 .SmallBtn_Green
 {
-	padding: 2px 4mm;
-	font-size: 14px;
+	padding: 4px 14px;
+	font-size: var(--md-type-body-s);
+	font-weight: 500;
 	text-align: center;
-	background-color: #00AE42;
-	border-radius: 6px;
-	color: #fff;
+	background-color: var(--md-primary);
+	border-radius: var(--md-radius-tiny);
+	color: var(--md-on-primary);
 	cursor: pointer;
 	display: inline-block;
 }
 
 .SmallBtn_Green:hover
 {
-	background-color: #009638;
+	filter: brightness(0.93);
 }
 
 /*---HyperLink---*/
 .HyperLink
 {
-	color: #00AE42;
+	color: var(--md-primary);
 	text-decoration: underline;
-    font-weight: 700;
+    font-weight: 600;
 	cursor: pointer;
 }
-
-
-
-/*----------------Light Mode-------------------*/
-
-
-
-
-

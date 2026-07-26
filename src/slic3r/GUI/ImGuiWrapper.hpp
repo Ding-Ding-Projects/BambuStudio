@@ -58,6 +58,9 @@ class ImGuiWrapper
     unsigned m_mouse_buttons{ 0 };
     bool m_disabled{ false };
     bool m_new_frame_open{ false };
+    // In-canvas search_list() regex affordance: when on, the ".*" toggle next to
+    // the ImGui search input post-filters the getter's results with std::regex.
+    bool m_search_regex_enabled{ false };
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
     bool m_requires_extra_frame{ false };
 #endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
@@ -210,6 +213,23 @@ public:
     const std::vector<std::string> get_fonts_names() const { return m_fonts_names; }
     bool push_bold_font();
     bool pop_bold_font();
+    // MD3 monospace face (RobotoMono) for numeric/technical text. Mirrors the
+    // bold-font helpers. All pointers are fetched fresh every frame; NEVER cache.
+    bool push_mono_font();
+    bool pop_mono_font();
+    ImFont* get_mono_font() const { return mono_font; }
+    ImFont* get_mono_bold_font() const { return mono_bold_font; }
+    // Material Symbols overlay glyphs. material_icon() returns the UTF-8 for a
+    // Material Symbols PUA codepoint (pass a MaterialIcon::Glyph value) for INLINE
+    // emission in imgui.text via the merged default/bold face. icon_text() renders
+    // one glyph inline in a colour at base size. get_icon_font()/push_icon_font()
+    // expose the standalone large face for independently-sized rendering.
+    static std::string material_icon(unsigned int codepoint);
+    void icon_text(unsigned int codepoint, const ImVec4 &color);
+    ImFont* get_icon_font() const { return m_icon_font; }
+    bool push_icon_font();
+    bool pop_icon_font();
+    bool material_icons_available() const { return m_icon_font != nullptr; }
     bool push_font_by_name(std::string font_name);
     bool pop_font_by_name(std::string font_name);
     void load_fonts_texture();
@@ -403,6 +423,12 @@ private:
     LastSliderStatus m_last_slider_status;
     ImFont* default_font = nullptr;
     ImFont* bold_font = nullptr;
+    // (Re)assigned on every init_font() call, so they survive DPI/scale/language
+    // rebuilds automatically (destroy_font clears the GL texture; init_font
+    // rebuilds all faces). Never cache these across frames in consumers.
+    ImFont* mono_font = nullptr;
+    ImFont* mono_bold_font = nullptr;
+    ImFont* m_icon_font = nullptr;
     std::map<std::string, ImFont*> im_fonts_map;
     std::vector<std::string> m_fonts_names;
 };

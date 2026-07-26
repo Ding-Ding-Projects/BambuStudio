@@ -369,16 +369,16 @@ function addPictureUploadListener(inputId, showPictrueId, picturesList, allowTyp
     if (!file) return;
     // Validate file type
     if (allowTypes && !allowTypes.includes(file.type)) {
-      showToast(GetCurrentTextByKey("t144"));
+      showToast(GetCurrentPlainTextByKey("t144"));
       return;
     }
     // Validate file size
     if (maxSize && file.size > maxSize) {
-      showToast(GetCurrentTextByKey("t145"));
+      showToast(GetCurrentPlainTextByKey("t145"));
       return;
     }
     if (picturesList.length >= maxCount) {
-      showToast(GetCurrentTextByKey("t146"));
+      showToast(GetCurrentPlainTextByKey("t146"));
       return;
     }
     uploadFileToCpp(file).then(result => {
@@ -396,7 +396,7 @@ function addPictureUploadListener(inputId, showPictrueId, picturesList, allowTyp
         
       }
     }).catch(error => {
-      showToast(GetCurrentTextByKey("t147"));
+      showToast(GetCurrentPlainTextByKey("t147"));
     });
   });
 }
@@ -508,16 +508,16 @@ function addAccessoryUploadListener(inputId, showAccessoryId, accessoriesList, a
     const lowerName = file.name.toLowerCase();
     const matchedExt = Object.keys(allowTypes).find(ext => lowerName.endsWith(ext));
     if (!matchedExt) {
-      showToast(GetCurrentTextByKey("t144"));
+      showToast(GetCurrentPlainTextByKey("t144"));
       return;
     }
     const maxSize = allowTypes[matchedExt];
     if (maxSize && file.size > maxSize) {
-      showToast(GetCurrentTextByKey("t145"));
+      showToast(GetCurrentPlainTextByKey("t145"));
       return;
     }
     if (accessoriesList.length >= maxCount) {
-      showToast(GetCurrentTextByKey("t146"));
+      showToast(GetCurrentPlainTextByKey("t146"));
       return;
     }
     uploadFileToCpp(file).then(result => {
@@ -531,7 +531,7 @@ function addAccessoryUploadListener(inputId, showAccessoryId, accessoriesList, a
         setAccessories(showAccessoryId, accessoriesList);
       }
     }).catch(error => {
-      showToast(GetCurrentTextByKey("t147"));
+      showToast(GetCurrentPlainTextByKey("t147"));
     });
   });
 }

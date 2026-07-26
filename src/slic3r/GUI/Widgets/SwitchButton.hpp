@@ -6,6 +6,7 @@
 
 #include <wx/tglbtn.h>
 #include <wx/popupwin.h>
+#include <wx/timer.h>
 #include "Label.hpp"
 #include "Button.hpp"
 
@@ -13,6 +14,15 @@ wxDECLARE_EVENT(wxCUSTOMEVT_SWITCH_POS, wxCommandEvent);
 wxDECLARE_EVENT(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEvent);
 wxDECLARE_EVENT(wxEXPAND_LEFT_DOWN, wxCommandEvent);
 
+// Two personalities in one control:
+//  - Icon mode (no labels): the MD3 Switch drawn live to spec — a 44x24 track,
+//    2px border (Primary checked / Outline unchecked), Primary fill on / a
+//    transparent track off, and a knob that slides 4->22 and grows 12->16px over
+//    150ms. The legacy toggle_on/off PNGs are gone.
+//  - Labelled mode (SetLabels): a two-position segmented toggle whose selected
+//    half is the Primary thumb (OnPrimary text) and whose other half reads as the
+//    SurfaceContainerHighest track (OnSurfaceVariant text). The raw Grey350 /
+//    BrandGreen / White literals are replaced with theme + scheme tokens.
 class SwitchButton : public wxBitmapToggleButton
 {
 public:
@@ -29,6 +39,9 @@ public:
 
 	void SetThumbColor(StateColor const &color);
 
+	// Recolor the accent (thumb / track fill) to a workspace scheme.
+	void SetColorScheme(MD3::ColorScheme scheme);
+
 	void SetValue(bool value) override;
 
 	void Rescale();
@@ -36,15 +49,33 @@ public:
 private:
 	void update();
 
+	bool isIconMode() const { return labels[0].IsEmpty(); }
+
+	// Draw the icon-mode Switch at animation phase t in [0,1] (0 = off, 1 = on).
+	wxBitmap renderSwitch(double t, bool enabled) const;
+
+	void startAnim();
+	void onAnimTick(wxTimerEvent &evt);
+
 private:
-	ScalableBitmap m_on;
-	ScalableBitmap m_off;
+	// Icon mode draws directly; labelled mode caches its two rendered halves here.
+	wxBitmap m_on;
+	wxBitmap m_off;
 
 	wxString labels[2];
     StateColor   text_color;
     StateColor   text_color2;
 	StateColor   track_color;
 	StateColor   thumb_color;
+
+    MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
+    bool m_text_overridden  = false;
+    bool m_track_overridden = false;
+    bool m_thumb_overridden = false;
+
+    wxTimer m_anim_timer;
+    double  m_anim        = 0.0; // current knob phase
+    double  m_anim_target = 0.0; // 0 = off, 1 = on
 };
 
 class SwitchBoard : public wxWindow
@@ -73,6 +104,9 @@ public:
 
     void SetAutoDisableWhenSwitch() { auto_disable_when_switch = true; };
 
+    // Recolor the selected segment to a workspace scheme (Preview / Device).
+    void SetColorScheme(MD3::ColorScheme scheme) { m_scheme = scheme; Refresh(); }
+
 protected:
     void paintEvent(wxPaintEvent& evt);
     void render(wxDC& dc);
@@ -81,6 +115,7 @@ protected:
 
 private:
     bool auto_disable_when_switch = false;
+    MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
 };
 
 class CustomToggleButton : public wxWindow {

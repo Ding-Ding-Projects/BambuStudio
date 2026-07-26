@@ -33,12 +33,19 @@ class HMSNotifyItem : public wxPanel
     wxBitmap m_img_notify_lv3;
     wxBitmap m_img_arrow;
 
+    wxString m_content_text;      // unwrapped message; Wrap() is destructive, so re-apply from this
+    int      m_content_width = 0; // last applied text width (logical px), avoids redundant re-wrap
+
     void          init_bitmaps();
     wxBitmap &    get_notify_bitmap();
 
 public:
      HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMSItem& item);
     ~HMSNotifyItem();
+
+     // Re-wrap the message text to fit the card width the panel gives us
+     // (card_width is the scrolled-window client width in logical px).
+     void set_content_width(int card_width);
 
      void msw_rescale() {}
 };
@@ -55,6 +62,11 @@ protected:
     void append_hms_panel(const std::string& dev_id, DevHMSItem &item);
     void delete_hms_panels();
 
+    // Re-flow every card's text to the current client width (called on EVT_SIZE
+    // and after update() rebuilds the list) so cards track the container, not a
+    // fixed 730px constant.
+    void relayout_items();
+    void OnSize(wxSizeEvent &evt);
 
 public:
     HMSPanel(wxWindow *parent, wxWindowID id = wxID_ANY, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize, long style = wxTAB_TRAVERSAL);

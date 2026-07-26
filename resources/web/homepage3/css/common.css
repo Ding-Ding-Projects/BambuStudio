@@ -200,20 +200,42 @@ html, body {
 {
 	display:flex;
 	margin-bottom: 26px;
-	flex-direction:row-reverse;
+	flex-direction:row;
 	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
 	min-height: 72px;
-	padding: 14px 18px;
+	padding: 14px 22px;
 	box-sizing: border-box;
 	border-radius: 28px;
 	background: linear-gradient(120deg, var(--md-primary-container), var(--md-secondary-container));
 	color: var(--md-on-primary-container);
 }
 
+/* Leading brand title so the hero band reads as a header, not an empty band. */
+#HeroBrand
+{
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: 0.2px;
+	color: var(--md-on-primary-container);
+	white-space: nowrap;
+	flex: 0 0 auto;
+}
+
+/* Right-aligned action cluster (search + project buttons). */
+#HeroActions
+{
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
 #MenuBtnBlock
 {
 	display:flex;
-	margin-left: 24px;
 }
 
 .Menu_Btn

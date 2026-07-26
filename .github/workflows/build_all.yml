@@ -1,7 +1,12 @@
 name: Windows build and release
 
 on:
-  push: {}
+  push:
+    # Branch pushes only. A bare `push: {}` also matches the tag that the
+    # release job itself creates, so every release re-triggered a build of the
+    # same commit and published another (mis-titled) release — an unbounded
+    # release loop (r94..r192 were all echoes of a handful of commits).
+    branches: ['**']
 
   pull_request:
     branches: [master]
@@ -64,7 +69,14 @@ jobs:
   build_windows:
     name: Build Windows
     needs: classify_changes
-    if: ${{ needs.classify_changes.outputs.code_changed == 'true' }}
+    # User mandate 2026-07-24: CI runs are never skipped — every push builds
+    # and releases, Markdown-only or not. The classifier still runs (its
+    # output is informational in the logs) but no longer gates the build.
+    if: ${{ always() }}
+    # No supersede group: every push's build runs to completion. Superseding
+    # used to cancel in-flight builds, which repeatedly threw away 90-minute
+    # compiles (and their would-be releases and caches) during push trains.
+    # Release tags are unique per run, so parallel runs cannot collide.
     uses: ./.github/workflows/build_check_cache.yml
     with:
       os: windows-latest
@@ -72,7 +84,9 @@ jobs:
 
   release_windows:
     name: Publish Windows release
-    if: ${{ github.event_name != 'pull_request' }}
+    # ref_type guard is redundant with the branches-only push trigger above but
+    # keeps the release loop impossible even if the trigger is later widened.
+    if: ${{ github.event_name != 'pull_request' && github.ref_type != 'tag' }}
     needs: build_windows
     runs-on: windows-latest
     concurrency:
@@ -190,14 +204,96 @@ jobs:
       - name: Publish uniquely tagged Windows release
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
+          # The github-actions integration started receiving HTTP 403 on release
+          # creation (org-side restriction, 2026-07-22) even with contents: write;
+          # TOKEN_GITHUB is an owner PAT that publishes on its behalf. Falls back
+          # to the workflow token where the secret is absent (e.g. forks).
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
+
+          # Sequential single-number releases with a unique codename each.
+          # The release job is serialized by its non-cancelling concurrency
+          # group, so counting existing md3-v<N> tags here is race-safe.
+          $maxN = 0
+          $page = & gh api --paginate "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
+          foreach ($r in $page) {
+              if ($r.tag_name -match '^md3-v(\d+)$') {
+                  $n = [int]$Matches[1]
+                  if ($n -gt $maxN) { $maxN = $n }
+              }
+          }
+          $releaseNumber = $maxN + 1
+          # Combinatorial codename kitchen: bare dishes first (v1..v40), then
+          # style x dish combos ("Golden Har Gow 黃金蝦餃") - deterministic and
+          # unique for 40 + 40x40 = 1,640 releases; beyond that a serving
+          # counter ("2nd serving 第二籠") keeps names unique forever.
+          $dishes = @(
+              'Char Siu Bao 叉燒包', 'Har Gow 蝦餃', 'Siu Mai 燒賣', 'Milk Tea 港式奶茶',
+              'Pineapple Bun 菠蘿包', 'Egg Tart 蛋撻', 'Cheung Fun 腸粉', 'Lo Mai Gai 糯米雞',
+              'Turnip Cake 蘿蔔糕', 'Egg Waffle 雞蛋仔', 'Yuenyeung 鴛鴦', 'French Toast 西多士',
+              'Curry Fish Ball 咖喱魚蛋', 'Siu Yuk 燒肉', 'Wonton Mein 雲吞麵', 'Claypot Rice 煲仔飯',
+              'Pineapple Oil 菠蘿油', 'Sesame Ball 煎堆', 'Mango Pomelo 楊枝甘露', 'Red Bean Ice 紅豆冰',
+              'Lemon Tea 凍檸茶', 'Beef Brisket Noodles 牛腩麵', 'Sampan Congee 艇仔粥', 'Char Siu Rice 叉燒飯',
+              'Tofu Fa 豆腐花', 'Peanut Mochi 糯米糍', 'Water Chestnut Cake 馬蹄糕', 'Spring Roll 春卷',
+              'Salt Baked Chicken 鹽焗雞', 'Steamed Milk Pudding 雙皮奶', 'Chicken Feet 鳳爪',
+              'Beef Ball 山竹牛肉球', 'Taro Dumpling 芋角', 'Malay Cake 馬拉糕', 'Custard Bun 奶黃包',
+              'Rice Noodle Roll 豬腸粉', 'Pork Knuckle Noodles 豬手麵', 'Instant Noodles 出前一丁',
+              'Toast with Condensed Milk 奶油多', 'Coconut Tart 椰撻',
+              'Char Siu Sou 叉燒酥', 'Shrimp Cheung Fun 蝦腸', 'Beef Cheung Fun 牛腸',
+              'Pan-Fried Bun 生煎包', 'Xiao Long Bao 小籠包', 'Chiu Chow Dumpling 潮州粉粿',
+              'Quail Egg Siu Mai 鵪鶉蛋燒賣', 'Fish Maw 魚肚', 'Tripe 金錢肚', 'Beef Omasum 牛柏葉',
+              'Spare Ribs 豉汁排骨', 'Stuffed Pepper 釀青椒', 'Stuffed Eggplant 釀茄子',
+              'Stuffed Tofu 釀豆腐', 'Fried Wonton 炸雲吞', 'Salted Egg Bun 流沙包',
+              'Lotus Leaf Rice 荷葉飯', 'Glutinous Rice Ball 湯圓', 'Osmanthus Cake 桂花糕',
+              'Red Bean Cake 紅豆糕', 'Coconut Snow Cake 椰汁糕', 'Thousand Layer Cake 千層糕',
+              'White Sugar Cake 白糖糕', 'Grass Jelly 涼粉', 'Sago Pudding 西米露',
+              'Black Sesame Roll 芝麻卷', 'Walnut Soup 合桃露', 'Almond Tea 杏仁茶',
+              'Egg Custard 燉蛋', 'Ginger Milk Curd 薑撞奶', 'Boba Milk Tea 珍珠奶茶',
+              'Ovaltine 阿華田', 'Horlicks 好立克', 'Cream Soda 忌廉梳打', 'Iced Coffee 凍咖啡',
+              'Macaroni Soup 火腿通粉', 'Satay Beef Noodles 沙嗲牛麵', 'Corned Beef Egg 鹹牛肉蛋',
+              'Chicken Wing 雞翼', 'Swiss Wing 瑞士雞翼', 'Baked Pork Chop Rice 焗豬扒飯',
+              'Fried Rice 揚州炒飯', 'Singapore Noodles 星洲炒米', 'Ho Fun 乾炒牛河',
+              'Temple Street Squid 廟街魷魚', 'Stinky Tofu 臭豆腐', 'Three Treasures 煎釀三寶',
+              'Bowl Pudding 砵仔糕', 'Dragon Beard Candy 龍鬚糖', 'Maltose Cracker 麥芽糖夾餅',
+              'Cart Noodles 車仔麵', 'Fish Siu Mai 魚肉燒賣', 'Offal Skewer 生腸串',
+              'Roast Goose 燒鵝', 'Roast Duck 燒鴨', 'Soy Chicken 豉油雞', 'Century Egg Congee 皮蛋瘦肉粥'
+          )
+          $styles = @(
+              'Golden 黃金', 'Crispy 香脆', 'Jade 翡翠', 'Supreme 至尊', 'XO XO醬',
+              'Double-Steamed 燉', 'Honey-Glazed 蜜汁', 'Iron-Plate 鐵板', 'Silky 幼滑', 'Fiery 惹味',
+              'Imperial 御品', 'Snowy 飄雪', 'Crystal 水晶', 'Fragrant 飄香', 'Deluxe 豪華',
+              'Midnight 深夜', 'Sunrise 朝早', 'Typhoon-Shelter 避風塘', 'Old-School 懷舊', 'Neon 霓虹',
+              'Velvet 絲絨', 'Thunder 雷霆', 'Lucky 好彩', 'Jumbo 巨無霸', 'Mini 迷你',
+              'Twin 孖寶', 'Emerald 碧綠', 'Ruby 紅寶', 'Smoky 煙韌', 'Springy 彈牙',
+              'Sizzling 滋滋', 'Frosty 冰鎮', 'Garden 田園', 'Harbour 維港', 'Peak 山頂',
+              'Ferry 天星', 'Tram 叮叮', 'Bamboo 竹昇', 'Wok-Hei 鑊氣', 'Dai-Pai-Dong 大牌檔'
+          )
+          $idx = $releaseNumber - 1
+          if ($idx -lt $dishes.Count) {
+              $codename = $dishes[$idx]
+          } else {
+              $combo = $idx - $dishes.Count
+              $perServing = $styles.Count * $dishes.Count
+              $serving = [Math]::Floor($combo / $perServing)
+              $within = $combo % $perServing
+              $style = ($styles[[Math]::Floor($within / $dishes.Count)] -split ' ')
+              $dish  = ($dishes[$within % $dishes.Count] -split ' ')
+              # "Golden Har Gow 黃金蝦餃": English style + English dish, then CJK style+dish glued.
+              $styleEn = ($style[0..($style.Count-2)] -join ' '); $styleZh = $style[-1]
+              $dishEn  = ($dish[0..($dish.Count-2)]  -join ' '); $dishZh  = $dish[-1]
+              $codename = "$styleEn $dishEn $styleZh$dishZh"
+              if ($serving -gt 0) { $codename = "$codename $($serving + 1)th serving 第$($serving + 1)籠" }
+          }
+          $env:release_tag = "md3-v$releaseNumber"
+          "release_tag=$($env:release_tag)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          "release_codename=$codename" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          Write-Host "Release v$releaseNumber '$codename' (tag $env:release_tag)"
 
           $notes = @(
               'Native Windows build of Bambu Studio with the Material Design 3 rewrite.'
               ''
-              "- Version: $env:release_version"
+              "- Version: v$releaseNumber `"$codename`" (app build $env:release_version)"
               "- Commit: $env:GITHUB_SHA"
               "- Source ref: $env:GITHUB_REF"
               "- Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
@@ -205,11 +301,12 @@ jobs:
               '- Signing: unsigned; verify the accompanying SHA-256 checksum before running'
               "- Provenance: verify with ``gh attestation verify BambuStudioMD3-Setup.exe --repo $env:GITHUB_REPOSITORY``"
               '- SBOM: CycloneDX 1.6 payload inventory is attached and attested'
+              '- Software OpenGL fallback: ships hash-pinned Mesa llvmpipe 26.1.3 in the mesa\ subfolder; self-heals on machines without OpenGL 2.0 (VMs / Microsoft Basic Display Adapter)'
               '- Release integrity: published as a GitHub immutable release after all assets are validated in draft state'
           )
           $notes | Set-Content release-notes.md -Encoding utf8
 
-          $releaseTitle = "Bambu Studio MD3 Windows $env:release_version"
+          $releaseTitle = "Bambu Studio MD3 v$releaseNumber $([char]0x2014) $codename"
           if ($env:GITHUB_REF -ne 'refs/heads/master') {
               $releaseTitle += " ($env:GITHUB_REF_NAME)"
           }

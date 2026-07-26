@@ -7,16 +7,26 @@
 #include <wx/simplebook.h>
 #include <wx/dialog.h>
 #include <wx/sizer.h>
+#include <wx/stattext.h>
 #include <wx/timer.h>
 #include <vector>
 #include <list>
 #include <map>
+#include <unordered_map>
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/LinkLabel.hpp"
+
+// Global-namespace shared widgets used by the Preferences dialog. Forward-declared
+// (members are pointers) so the header stays light; the .cpp includes the full
+// definitions (SwitchButton.hpp / SearchField.hpp).
+class SwitchButton;
+class MultiSwitchButton;
+class SearchField;
+
 namespace Slic3r { namespace GUI {
 
 class Selector
@@ -51,6 +61,36 @@ private:
 protected:
     PreferenceTabbar *m_tabbar = nullptr;
     wxSimplebook *    m_book   = nullptr;
+    SearchField *     m_search = nullptr;
+    std::vector<MultiSwitchButton *> m_segmented_list; // Appearance segmented controls (rescale)
+
+    // --- Live settings search (SearchField -> row filtering) ----------------
+    // One entry per direct row (sizer or window) of every settings page,
+    // indexed once after the pages are built. `haystack` is the original-case
+    // concatenation of the row's wxStaticText labels (the shared SearchField
+    // matcher folds case itself, and needs the true text for regex);
+    // `baseline_shown` snapshots the row's construction-time visibility (e.g.
+    // the model-mall rows) so a search reset never reveals rows another gate hid.
+    struct SearchRow
+    {
+        int                          page = 0;         // m_book page (nav section)
+        wxSizerItem                 *item = nullptr;   // row item in the page sizer
+        std::vector<wxStaticText *>  labels;           // label windows inside the row
+        wxString                     haystack;         // original-case label text
+        bool                         is_title = false; // Head_16 section header row
+        bool                         baseline_shown = true;
+    };
+    std::vector<SearchRow>                       m_search_rows;
+    std::unordered_map<wxStaticText *, wxColour> m_search_saved_colours; // pre-highlight foregrounds
+    wxStaticText                                *m_search_empty_hint = nullptr;
+    bool                                         m_search_active     = false;
+    wxString                                     m_search_last_query; // trimmed active query ("" when inactive)
+
+    void build_search_index();
+    void apply_search_filter(const wxString &query);
+    void reset_search_filter();
+    void clear_search_highlights();
+    void scroll_search_row_into_view(const SearchRow &row);
 
     bool m_seq_top_layer_only_changed{false};
     bool m_recreate_GUI{false};
@@ -69,7 +109,9 @@ public:
                       const wxString &title = wxT(""),
                       const wxPoint & pos   = wxDefaultPosition,
                       const wxSize &  size  = wxDefaultSize,
-                      long            style = wxSYSTEM_MENU | wxCAPTION | wxCLOSE_BOX);
+                      // MD3 caption strip instead of the native title bar
+                      // (see MD3DialogChrome).
+                      long            style = wxBORDER_NONE);
 
     ~PreferencesDialog();
 
@@ -77,10 +119,9 @@ public:
 
     void      create();
 
-    // debug mode
-    ::CheckBox * m_developer_mode_ckeckbox   = {nullptr};
-    ::CheckBox * m_internal_developer_mode_ckeckbox = {nullptr};
-    ::CheckBox * m_dark_mode_ckeckbox        = {nullptr};
+    // debug mode — the boolean preference rows are now MD3 SwitchButtons.
+    ::SwitchButton * m_developer_mode_ckeckbox   = {nullptr};
+    ::SwitchButton * m_internal_developer_mode_ckeckbox = {nullptr};
 
     wxString m_developer_mode_def;
     wxString m_internal_developer_mode_def;
@@ -98,9 +139,11 @@ public:
                                                    const std::vector<std::pair<std::string, wxString>> &choices);
     wxBoxSizer *create_item_loglevel_combobox(wxString title, wxWindow *parent, wxString tooltip, std::vector<wxString> vlist);
     wxBoxSizer *create_item_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param);
-    wxBoxSizer *create_item_darkmode_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param);
     void        set_dark_mode();
+    // Apply a theme switch + fan out the dark-mode side effects (Appearance Theme control).
+    void        apply_dark_mode(bool dark);
     wxWindow* create_item_downloads(wxWindow* parent, int padding_left, std::string param);
+    wxWindow* create_item_external_editor(wxWindow* parent, int padding_left, std::string param);
     wxBoxSizer *create_item_input(wxString title, wxString title2, wxWindow *parent, wxString tooltip, std::string param, std::function<void(wxString)> onchange = {});
     wxBoxSizer *create_item_range_input(
         wxString title, wxWindow *parent, wxString tooltip, std::string param, float range_min, float range_max, int keep_digital,std::function<void(wxString)> onchange = {});
@@ -119,6 +162,7 @@ public:
     wxBoxSizer *create_item_switch(wxString title, wxWindow *parent, wxString tooltip, std::string param);
     wxSizer    *create_item_radiobox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, int groupid, std::string param);
 
+    wxWindow* create_appearance_tab();
     wxWindow* create_general_tab();
     wxWindow* create_user_tab();
     wxWindow* create_3d_tab();
@@ -137,7 +181,8 @@ public:
     int m_current_language_selected = {0};
 
     std::unordered_map<int, Button *> m_button_list;
-    std::unordered_map<int, ::CheckBox *> m_checkbox_list;
+    // The boolean preference rows are MD3 SwitchButtons (icon-mode) rescaled on DPI change.
+    std::unordered_map<int, ::SwitchButton *> m_checkbox_list;
     std::unordered_map<int, RadioBox *>   m_radiobox_list;
     std::unordered_map<int, ::ComboBox *> m_combobox_list;
     int                                   m_screen_height;

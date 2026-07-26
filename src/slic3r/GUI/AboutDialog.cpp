@@ -7,6 +7,7 @@
 #include "MainFrame.hpp"
 #include "format.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/clipbrd.h>
 
@@ -77,6 +78,7 @@ CopyrightsDialog::CopyrightsDialog()
 
     SetSizer(sizer);
     sizer->SetSizeHints(this);
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
 }
@@ -420,6 +422,7 @@ AboutDialog::AboutDialog()
 	SetSizer(main_sizer);
     Layout();
     Fit();
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
 }
 

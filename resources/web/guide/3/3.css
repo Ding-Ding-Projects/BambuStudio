@@ -1,6 +1,6 @@
 .PolicyArea
 {
-	background-color: #4A4A51;	
+	background-color: var(--md-sc-low);
 }
 
 #PolicyTxt
@@ -12,7 +12,8 @@
 	text-indent: 2em;
 	border-style: solid;
 	border-width: 1px;
-	border-color: #D7D7D7;
+	border-color: var(--md-outline-variant);
+	border-radius: 8px;
 }
 
 #PolicyTxt::-webkit-scrollbar {/*滚动条整体样式*/

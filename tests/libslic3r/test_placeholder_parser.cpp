@@ -11,28 +11,21 @@ SCENARIO("Placeholder parser scripting", "[PlaceholderParser]") {
 
 	config.set_deserialize_strict( {
 		{ "printer_notes", "  PRINTER_VENDOR_PRUSA3D  PRINTER_MODEL_MK2  " },
-	    { "nozzle_diameter", "0.6;0.6;0.6;0.6" },
-	    { "temperature", "357;359;363;378" }
+	    { "nozzle_diameter", "0.6,0.6,0.6,0.6" },
+	    { "nozzle_temperature", "357,359,363,378" }
 	});
-    // To test the "first_layer_extrusion_width" over "first_layer_heigth".
-    // "first_layer_heigth" over "layer_height" is no more supported after first_layer_height was moved from PrintObjectConfig to PrintConfig.
-//  config.option<ConfigOptionFloatOrPercent>("first_layer_height")->value = 150.;
-//  config.option<ConfigOptionFloatOrPercent>("first_layer_height")->percent = true;
-    config.option<ConfigOptionFloatOrPercent>("first_layer_height")->value = 1.5 * config.opt_float("layer_height");
-    config.option<ConfigOptionFloatOrPercent>("first_layer_height")->percent = false;
-    // To let the PlaceholderParser throw when referencing first_layer_speed if it is set to percent, as the PlaceholderParser does not know
-    // a percent to what.
-    config.option<ConfigOptionFloatOrPercent>("first_layer_speed")->value = 50.;
-    config.option<ConfigOptionFloatOrPercent>("first_layer_speed")->percent = true;
+    // BambuStudio: the legacy coFloatOrPercent setup for first_layer_height and first_layer_speed
+    // is gone. Line-width / layer-height options are plain coFloat and speeds are coFloats (mm/s),
+    // so there is no ratio_over chain nor a "percent over unknown" case for the parser to resolve.
 
     parser.apply_config(config);
 	parser.set("foo", 0);
 	parser.set("bar", 2);
 	parser.set("num_extruders", 4);
 
-    SECTION("nested config options (legacy syntax)") { REQUIRE(parser.process("[temperature_[foo]]") == "357"); }
-    SECTION("array reference") { REQUIRE(parser.process("{temperature[foo]}") == "357"); }
-    SECTION("whitespaces and newlines are maintained") { REQUIRE(parser.process("test [ temperature_ [foo] ] \n hu") == "test 357 \n hu"); }
+    SECTION("nested config options (legacy syntax)") { REQUIRE(parser.process("[nozzle_temperature_[foo]]") == "357"); }
+    SECTION("array reference") { REQUIRE(parser.process("{nozzle_temperature[foo]}") == "357"); }
+    SECTION("whitespaces and newlines are maintained") { REQUIRE(parser.process("test [ nozzle_temperature_ [foo] ] \n hu") == "test 357 \n hu"); }
 
     // Test the math expressions.
     SECTION("math: 2*3") { REQUIRE(parser.process("{2*3}") == "6"); }
@@ -66,18 +59,17 @@ SCENARIO("Placeholder parser scripting", "[PlaceholderParser]") {
     SECTION("math: digits(13.84375892476, 15, 8)") { REQUIRE(parser.process("{digits(13.84375892476, 15, 8)}") == "    13.84375892"); }
     SECTION("math: zdigits(13.84375892476, 15, 8)") { REQUIRE(parser.process("{zdigits(13.84375892476, 15, 8)}") == "000013.84375892"); }
 
-    // Test the "coFloatOrPercent" and "xxx_extrusion_width" substitutions.
-    // first_layer_extrusion_width ratio_over first_layer_heigth.
-    SECTION("perimeter_extrusion_width") { REQUIRE(std::stod(parser.process("{perimeter_extrusion_width}")) == Approx(0.67500001192092896)); }
-    SECTION("first_layer_extrusion_width") { REQUIRE(std::stod(parser.process("{first_layer_extrusion_width}")) == Approx(0.9)); }
-    SECTION("support_material_xy_spacing") { REQUIRE(std::stod(parser.process("{support_material_xy_spacing}")) == Approx(0.3375)); }
-    // external_perimeter_speed over perimeter_speed
-    SECTION("external_perimeter_speed") { REQUIRE(std::stod(parser.process("{external_perimeter_speed}")) == Approx(30.)); }
-    // infill_overlap over perimeter_extrusion_width
-    SECTION("infill_overlap") { REQUIRE(std::stod(parser.process("{infill_overlap}")) == Approx(0.16875)); }
-    // If first_layer_speed is set to percent, then it is applied over respective extrusion types by overriding their respective speeds.
-    // The PlaceholderParser has no way to know which extrusion type the caller has in mind, therefore it throws.
-    SECTION("first_layer_speed") { REQUIRE_THROWS(parser.process("{first_layer_speed}")); }
+    // BambuStudio: these are plain coFloat / coFloats / coPercent options (no coFloatOrPercent
+    // ratio_over chain), so the parser emits their stored values directly.
+    SECTION("inner_wall_line_width") { REQUIRE(std::stod(parser.process("{inner_wall_line_width}")) == Approx(0.4)); }
+    SECTION("initial_layer_line_width") { REQUIRE(std::stod(parser.process("{initial_layer_line_width}")) == Approx(0.4)); }
+    SECTION("support_object_xy_distance") { REQUIRE(std::stod(parser.process("{support_object_xy_distance}")) == Approx(0.35)); }
+    // outer_wall_speed is coFloats (per-extruder); index it explicitly.
+    SECTION("outer_wall_speed") { REQUIRE(std::stod(parser.process("{outer_wall_speed[0]}")) == Approx(60.)); }
+    // infill_wall_overlap is coPercent; the parser emits the raw percent value.
+    SECTION("infill_wall_overlap") { REQUIRE(std::stod(parser.process("{infill_wall_overlap}")) == Approx(15.)); }
+    // initial_layer_speed is coFloats (mm/s); index it explicitly. No percent-over-unknown throw.
+    SECTION("initial_layer_speed") { REQUIRE(std::stod(parser.process("{initial_layer_speed[0]}")) == Approx(30.)); }
 
     // Test the boolean expression parser.
     auto boolean_expression = [&parser](const std::string& templ) { return parser.evaluate_boolean_expression(templ, parser.config()); };

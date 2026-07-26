@@ -5,6 +5,7 @@
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/RadioBox.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include <wx/listimpl.cpp>
 
 #include "DeviceCore/DevManager.h"
@@ -296,7 +297,6 @@ SendMultiMachinePage::SendMultiMachinePage(Plater* plater)
     SetSizer(main_sizer);
     Layout();
     Fit();
-    Centre(wxBOTH);
 
     m_mapping_popup = new AmsMapingPopup(m_main_page);
     Bind(EVT_SET_FINISH_MAPPING, &SendMultiMachinePage::on_set_finish_mapping, this);
@@ -307,6 +307,8 @@ SendMultiMachinePage::SendMultiMachinePage(Plater* plater)
     init_timer();
     Bind(wxEVT_TIMER, &SendMultiMachinePage::on_timer, this);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 SendMultiMachinePage::~SendMultiMachinePage()

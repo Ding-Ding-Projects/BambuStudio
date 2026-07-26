@@ -2,6 +2,7 @@
 #include "HMS.hpp"
 
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "ReleaseNote.hpp"
@@ -80,8 +81,9 @@ DeviceErrorDialog::DeviceErrorDialog(MachineObject* obj, wxWindow* parent, wxWin
 
     init_button_list();
 
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 
     Bind(wxEVT_WEBREQUEST_STATE, &DeviceErrorDialog::on_webrequest_state, this);
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &e){

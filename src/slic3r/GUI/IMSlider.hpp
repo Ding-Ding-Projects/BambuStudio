@@ -55,6 +55,9 @@ enum LabelType
 class IMSlider
 {
 public:
+    // Playback state of the feedrate-true print simulation (moves timeline).
+    enum class Play { Stopped, Playing, Paused };
+
     IMSlider(int lowerValue, int higherValue, int minValue, int maxValue, long style = wxSL_VERTICAL);
 
     bool init_texture();
@@ -130,6 +133,17 @@ public:
     void on_change_color_mode(bool is_dark);
     void set_menu_enable(bool enable = true) { m_menu_enable = enable; }
 
+    // Feedrate-true print simulation (horizontal moves timeline).
+    // The renderer hands over the cumulative print seconds per slider tick
+    // (forward-filled); the pointer must stay valid until replaced or cleared
+    // with nullptr. total_s is the simulated clock value at the last tick.
+    void SetMoveTimes(const std::vector<float> *times, float total_s);
+    // Legacy renderer pays a full render-path rebuild per seek; when enabled,
+    // playback frames that jump more than ~5000 ticks only push the
+    // sequential-view update every other frame.
+    void SetPlaySeekThrottle(bool throttle) { m_play_seek_throttle = throttle; }
+    bool is_simulating() const { return m_play_state != Play::Stopped; }
+
 protected:
     void add_custom_gcode(std::string custom_gcode);
     void add_code_as_tick(Type type, int selected_extruder = -1);
@@ -146,6 +160,7 @@ protected:
     void draw_background_and_groove(const ImRect& bg_rect, const ImRect& groove);
     void draw_colored_band(const ImRect& groove, const ImRect& slideable_region);
     void draw_custom_label_block(const ImVec2 anchor, Type type);
+    bool draw_tick_action_icon(ImTextureID texture_id, const ImVec2 &icon_pos, const ImVec2 &icon_size, ImRect *out_hit = nullptr);
     void draw_ticks(const ImRect& slideable_region);
     void draw_tick_on_mouse_position(const ImRect& slideable_region);
     void show_tooltip(const TickCode& tick); //menu
@@ -191,6 +206,20 @@ private:
     bool m_force_mode_apply   = true;
     bool m_is_wipe_tower      = false; // This flag indicates that there is multiple extruder print with wipe tower
     bool m_is_spiral_vase     = false;
+
+    // MD3 transport-bar playback (horizontal moves timeline), feedrate-true.
+    // m_play_time_s is the simulated print clock and is AUTHORITATIVE while
+    // playing: each frame it advances by wall dt * m_play_speed and the slider
+    // index is derived from it via upper_bound over m_move_times (cumulative
+    // seconds per slider tick, forward-filled, owned by the renderer).
+    Play   m_play_state  = Play::Stopped;
+    float  m_play_speed  = 1.0f; // real-time multiplier: 1 / 10 / 100 / 1000
+    double m_play_time_s = 0.0;
+    const std::vector<float> *m_move_times = nullptr;
+    float  m_move_times_total = 0.0f;
+    // Legacy renderer seek throttle (see SetPlaySeekThrottle) + frame parity.
+    bool     m_play_seek_throttle = false;
+    unsigned m_play_frame         = 0;
 
     /* BBS slider images */
     void *m_one_layer_on_id;

@@ -1,6 +1,8 @@
 #include "BedShapeDialog.hpp"
 #include "GUI_App.hpp"
 #include "OptionsGroup.hpp"
+#include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/wx.h>
 #include <wx/numformatter.h>
@@ -148,6 +150,8 @@ void BedShapeDialog::build_dialog(const ConfigOptionPoints &default_pt, const Co
     SetSizer(main_sizer);
     SetMinSize(GetSize());
     main_sizer->SetSizeHints(this);
+
+    MD3DialogCaption::Adopt(this);
 
     this->Bind(wxEVT_CLOSE_WINDOW, ([this](wxCloseEvent& evt) {
         EndModal(wxID_CANCEL);
@@ -607,9 +611,11 @@ void BedShapePanel::load_texture()
     bool try_ok;
     if (Utils::is_file_too_large(file_name, try_ok)) {
         if (try_ok) {
-            wxMessageBox(wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            MessageDialog dlg(this, wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            dlg.ShowModal();
         } else {
-            wxMessageBox(_L("Exception in obtaining file size, please import again."));
+            MessageDialog dlg(this, _L("Exception in obtaining file size, please import again."));
+            dlg.ShowModal();
         }
         return;
     }
@@ -638,9 +644,11 @@ void BedShapePanel::load_model()
     bool try_ok;
     if (Utils::is_file_too_large(file_name, try_ok)) {
         if (try_ok) {
-            wxMessageBox(wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            MessageDialog dlg(this, wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            dlg.ShowModal();
         } else {
-            wxMessageBox(_L("Exception in obtaining file size, please import again."));
+            MessageDialog dlg(this, _L("Exception in obtaining file size, please import again."));
+            dlg.ShowModal();
         }
         return;
     }

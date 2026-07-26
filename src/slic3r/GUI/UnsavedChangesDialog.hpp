@@ -10,6 +10,7 @@
 #include "libslic3r/PresetBundle.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/ScrolledWindow.hpp"
+#include "Widgets/MD3Dialog.hpp"
 
 class ScalableButton;
 class wxStaticText;
@@ -252,7 +253,7 @@ enum ForceOption {
     fopNone
 };
 
-class UnsavedChangesDialog : public DPIDialog
+class UnsavedChangesDialog : public MD3Dialog
 {
 protected:
     wxPanel *     m_top_line;

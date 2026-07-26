@@ -69,6 +69,12 @@ private:
     wxPoint                  offset; // x not used
     wxPoint                  dragStart;
 
+    // Contextual accent scheme (Brand/Preview/Device) for the selected-row fill
+    // and hover border. Brand (the default) is unaffected: it keeps resolving
+    // through the existing gDarkColors-mapped StateColor fields below, so every
+    // pre-existing caller is byte-for-byte unchanged.
+    MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
+
 public:
     DropDown(std::vector<Item> &items);
 
@@ -96,6 +102,11 @@ public:
     void SetTextColor(StateColor const &color);
 
     void SetSelectorBackgroundColor(StateColor const &color);
+
+    // Non-Brand schemes (Preview/Device) re-tint the selected-row fill and hover
+    // border live at paint time via StateColor::semantic(role, dark, scheme);
+    // Brand keeps the existing gDarkColors-mapped fields untouched.
+    void SetColorScheme(MD3::ColorScheme scheme);
 
     void SetUseContentWidth(bool use, bool limit_max_content_width = false);
 

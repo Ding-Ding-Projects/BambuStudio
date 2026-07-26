@@ -1,5 +1,7 @@
 #include "AMSItem.hpp"
 #include "Label.hpp"
+#include "MaterialIcon.hpp"
+#include "MD3DialogChrome.hpp"
 #include "StateColor.hpp"
 #include "../BitmapCache.hpp"
 #include "../I18N.hpp"
@@ -24,6 +26,23 @@
 
 
 namespace Slic3r { namespace GUI {
+
+    // Draw a monochrome AMS-lib corner badge (editable/read-only) as a Material
+    // Symbols glyph, falling back to the legacy raster when the icon font is
+    // unavailable. The colour is a fixed light/dark contrast value (not a theme
+    // role) because the badge overlays the filament data swatch and must stay
+    // legible against that colour, mirroring the ams_editable / ams_editable_light
+    // asset pair. Rendered to a DPI-correct bitmap so placement matches DrawBitmap.
+    static void draw_ams_lib_badge(wxWindow *win, wxDC &dc, uint32_t glyph, bool light_contrast,
+                                   const ScalableBitmap &fallback, int x, int y)
+    {
+        if (win && MaterialIcon::available()) {
+            const wxColour col = light_contrast ? wxColour(255, 255, 255) : wxColour(26, 27, 31);
+            dc.DrawBitmap(MaterialIcon::bitmap(win, glyph, 14, col), x, y);
+        } else {
+            dc.DrawBitmap(fallback.bmp(), x, y);
+        }
+    }
 
     static const wxColour AMS_TRAY_DEFAULT_COL = wxColour(255, 255, 255);
     wxDEFINE_EVENT(EVT_AMS_EXTRUSION_CALI, wxCommandEvent);
@@ -114,7 +133,6 @@ bool AMSinfo::parse_ams_info(MachineObject *obj, DevAms *ams, bool remain_flag, 
                 info.ctype = 0;
                 info.material_colour = AMS_TRAY_DEFAULT_COL;
                 info.material_state = AMSCanType::AMS_CAN_TYPE_THIRDBRAND;
-                wxColour(255, 255, 255);
             }
 
             if (it->second->is_tray_info_ready() && obj->GetCalib()->IsVersionInited()) {
@@ -169,7 +187,6 @@ void AMSinfo::parse_ext_info(MachineObject* obj, DevAmsTray tray) {
         info.filament_id = "";
         info.ctype = 0;
         info.material_colour = AMS_TRAY_DEFAULT_COL;
-        wxColour(255, 255, 255);
     }
     info.material_state = AMSCanType::AMS_CAN_TYPE_VIRTUAL;
     if (tray.is_tray_info_ready() && obj->GetCalib()->IsVersionInited()) {
@@ -475,7 +492,20 @@ void AMSrefresh::paintEvent(wxPaintEvent &evt)
 
     if (!m_disable_mode) {
         if (!m_play_loading) {
-            dc.DrawBitmap(m_selected ? m_bitmap_selected.bmp() : m_bitmap_normal.bmp(), pot);
+            // Refresh affordance: prefer the MD3 Material Symbols 'refresh' glyph,
+            // expressing hover (Device accent) and disabled state through colour;
+            // fall back to the legacy ams_refresh_* rasters when the icon font is
+            // missing. The tray-id text is painted on top afterwards.
+            if (MaterialIcon::available()) {
+                wxColour glyph_col = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+                if (!wxWindow::IsEnabled())
+                    glyph_col = StateColor::semantic(MD3::Role::Outline);
+                else if (m_selected)
+                    glyph_col = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device);
+                MaterialIcon::drawCentered(dc, MaterialIcon::Refresh, 24, glyph_col, wxRect(0, 0, size.x, size.y));
+            } else {
+                dc.DrawBitmap(m_selected ? m_bitmap_selected.bmp() : m_bitmap_normal.bmp(), pot);
+            }
         }
         else {
             /* m_bitmap_rotation    = ScalableBitmap(this, "ams_refresh_normal", 30);
@@ -950,7 +980,7 @@ Description:AMSLib
 **************************************************/
 AMSLib::AMSLib(wxWindow *parent, std::string ams_idx, Caninfo info, AMSModelOriginType ext_type)
 {
-    m_border_color   = (wxColour(130, 130, 128));
+    m_border_color   = StateColor::semantic(MD3::Role::Outline);
     m_road_def_color = AMS_CONTROL_GRAY500;
     m_ext_type = ext_type;
     wxWindow::SetBackgroundColour(StateColor::darkModeColorFor(AMS_CONTROL_DEF_LIB_BK_COLOUR));
@@ -1240,7 +1270,7 @@ void AMSLib::render_generic_text(wxDC &dc)
     dc.SetTextForeground(temp_text_colour);
     auto alpha = m_info.material_colour.Alpha();
     if (alpha != 0 && alpha != 255 && alpha != 254) {
-        dc.SetTextForeground(*wxBLACK);
+        dc.SetTextForeground(AMS_CONTROL_GRAY800);
     }
 
     auto libsize = GetSize();
@@ -1456,13 +1486,18 @@ void AMSLib::render_lite_lib(wxDC& dc)
     dc.SetPen(wxPen(*wxTRANSPARENT_PEN));
     dc.SetBrush(wxBrush(tmp_lib_colour));
     if (!m_disable_mode) {
-        // edit icon
+        // edit / read-only badge -> Material Symbols glyph over the filament swatch
+        // (edit for third-party/virtual, lock for brand or view-only). The contrast
+        // colour mirrors the legacy _light/_dark asset selection above.
         if (m_info.material_state != AMSCanType::AMS_CAN_TYPE_EMPTY && m_info.material_state != AMSCanType::AMS_CAN_TYPE_NONE)
         {
+            const bool badge_light = (tmp_lib_colour.GetLuminance() < 0.6) && (m_info.material_remain >= 50) && (tmp_lib_colour.Alpha() != 0);
             if (m_info.material_state == AMSCanType::AMS_CAN_TYPE_THIRDBRAND || m_info.material_state == AMSCanType::AMS_CAN_TYPE_VIRTUAL)
-                dc.DrawBitmap(temp_bitmap_third.bmp(), (size.x - temp_bitmap_third.GetBmpSize().x) / 2 + FromDIP(2), (size.y - FromDIP(18) - temp_bitmap_third.GetBmpSize().y));
+                draw_ams_lib_badge(this, dc, m_view_only ? MaterialIcon::Lock : MaterialIcon::Edit, badge_light, temp_bitmap_third,
+                                   (size.x - temp_bitmap_third.GetBmpSize().x) / 2 + FromDIP(2), (size.y - FromDIP(18) - temp_bitmap_third.GetBmpSize().y));
             if (m_info.material_state == AMSCanType::AMS_CAN_TYPE_BRAND)
-                dc.DrawBitmap(temp_bitmap_brand.bmp(), (size.x - temp_bitmap_brand.GetBmpSize().x) / 2 + FromDIP(2), (size.y - FromDIP(18) - temp_bitmap_brand.GetBmpSize().y));
+                draw_ams_lib_badge(this, dc, MaterialIcon::Lock, badge_light, temp_bitmap_brand,
+                                   (size.x - temp_bitmap_brand.GetBmpSize().x) / 2 + FromDIP(2), (size.y - FromDIP(18) - temp_bitmap_brand.GetBmpSize().y));
         }
     }
 
@@ -1611,12 +1646,17 @@ void AMSLib::render_generic_lib(wxDC &dc)
         }
 
         if (!m_disable_mode) {
-            // edit icon
+            // edit / read-only badge -> Material Symbols glyph over the filament swatch
+            // (edit for third-party/virtual, lock for brand or view-only). The contrast
+            // colour mirrors the legacy _light/_dark asset selection above.
             if (m_info.material_state != AMSCanType::AMS_CAN_TYPE_EMPTY && m_info.material_state != AMSCanType::AMS_CAN_TYPE_NONE) {
+                const bool badge_light = (tmp_lib_colour.GetLuminance() < 0.6) && (m_info.material_remain >= 50) && (tmp_lib_colour.Alpha() != 0);
                 if (m_info.material_state == AMSCanType::AMS_CAN_TYPE_THIRDBRAND || m_info.material_state == AMSCanType::AMS_CAN_TYPE_VIRTUAL)
-                    dc.DrawBitmap(temp_bitmap_third.bmp(), (size.x - temp_bitmap_third.GetBmpSize().x) / 2, (size.y - FromDIP(10) - temp_bitmap_third.GetBmpSize().y));
+                    draw_ams_lib_badge(this, dc, m_view_only ? MaterialIcon::Lock : MaterialIcon::Edit, badge_light, temp_bitmap_third,
+                                       (size.x - temp_bitmap_third.GetBmpSize().x) / 2, (size.y - FromDIP(10) - temp_bitmap_third.GetBmpSize().y));
                 if (m_info.material_state == AMSCanType::AMS_CAN_TYPE_BRAND)
-                    dc.DrawBitmap(temp_bitmap_brand.bmp(), (size.x - temp_bitmap_brand.GetBmpSize().x) / 2, (size.y - FromDIP(10) - temp_bitmap_brand.GetBmpSize().y));
+                    draw_ams_lib_badge(this, dc, MaterialIcon::Lock, badge_light, temp_bitmap_brand,
+                                       (size.x - temp_bitmap_brand.GetBmpSize().x) / 2, (size.y - FromDIP(10) - temp_bitmap_brand.GetBmpSize().y));
             }
         }
 
@@ -1628,7 +1668,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
         dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(2), size.y - FromDIP(1), m_radius);
 #endif
         if (m_selected) {
-            dc.SetPen(wxPen(AMS_CONTROL_BRAND_COLOUR, 3, wxPENSTYLE_SOLID));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), 3, wxPENSTYLE_SOLID));
             //dc.SetPen(wxPen(tmp_lib_colour, 2, wxPENSTYLE_SOLID));
             if (tmp_lib_colour.Alpha() == 0) {
                 dc.SetPen(wxPen(wxColour(tmp_lib_colour.Red(), tmp_lib_colour.Green(), tmp_lib_colour.Blue(), 128), 3, wxPENSTYLE_SOLID));
@@ -1645,7 +1685,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
         }
 
         if (!m_selected && m_hover) {
-            dc.SetPen(wxPen(AMS_CONTROL_BRAND_COLOUR, 3, wxPENSTYLE_SOLID));
+            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), 3, wxPENSTYLE_SOLID));
             dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
 #ifdef __APPLE__
             dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(2), size.y - FromDIP(2), 0);
@@ -1793,7 +1833,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
 #endif
 
     if (m_selected) {
-        dc.SetPen(wxPen(AMS_CONTROL_BRAND_COLOUR, 3, wxPENSTYLE_SOLID));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), 3, wxPENSTYLE_SOLID));
         //dc.SetPen(wxPen(tmp_lib_colour, 3, wxPENSTYLE_SOLID));
         if (tmp_lib_colour.Alpha() == 0) {
             dc.SetPen(wxPen(wxColour(tmp_lib_colour.Red(), tmp_lib_colour.Green(), tmp_lib_colour.Blue(), 128), 3, wxPENSTYLE_SOLID));
@@ -1809,7 +1849,7 @@ void AMSLib::render_generic_lib(wxDC &dc)
     }
 
     if (!m_selected && m_hover) {
-        dc.SetPen(wxPen(AMS_CONTROL_BRAND_COLOUR, 3, wxPENSTYLE_SOLID));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), 3, wxPENSTYLE_SOLID));
         dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
 #ifdef __APPLE__
             dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(2), size.y - FromDIP(2), 0);
@@ -1821,21 +1861,31 @@ void AMSLib::render_generic_lib(wxDC &dc)
     }
 
     if (!m_disable_mode) {
-        // edit icon
+        // edit / read-only badge -> Material Symbols glyph over the filament swatch
+        // (edit for third-party/virtual, lock for brand or view-only). The contrast
+        // colour mirrors the legacy _light/_dark asset selection above.
         if (m_info.material_state != AMSCanType::AMS_CAN_TYPE_EMPTY && m_info.material_state != AMSCanType::AMS_CAN_TYPE_NONE)
         {
+            const bool badge_light = (tmp_lib_colour.GetLuminance() < 0.6) && (m_info.material_remain >= 50) && (tmp_lib_colour.Alpha() != 0);
             if (m_info.material_state == AMSCanType::AMS_CAN_TYPE_THIRDBRAND || m_info.material_state == AMSCanType::AMS_CAN_TYPE_VIRTUAL)
-                dc.DrawBitmap(temp_bitmap_third.bmp(), (size.x - temp_bitmap_third.GetBmpSize().x) / 2, (size.y - FromDIP(10) - temp_bitmap_third.GetBmpSize().y));
+                draw_ams_lib_badge(this, dc, m_view_only ? MaterialIcon::Lock : MaterialIcon::Edit, badge_light, temp_bitmap_third,
+                                   (size.x - temp_bitmap_third.GetBmpSize().x) / 2, (size.y - FromDIP(10) - temp_bitmap_third.GetBmpSize().y));
             if (m_info.material_state == AMSCanType::AMS_CAN_TYPE_BRAND)
-                dc.DrawBitmap(temp_bitmap_brand.bmp(), (size.x - temp_bitmap_brand.GetBmpSize().x) / 2, (size.y - FromDIP(10) - temp_bitmap_brand.GetBmpSize().y));
+                draw_ams_lib_badge(this, dc, MaterialIcon::Lock, badge_light, temp_bitmap_brand,
+                                   (size.x - temp_bitmap_brand.GetBmpSize().x) / 2, (size.y - FromDIP(10) - temp_bitmap_brand.GetBmpSize().y));
         }
     }
 
-    // new official filament hint icon (top-right corner)
+    // new official filament hint icon (top-right corner) -> Material Symbols 'info'
+    // glyph (Device accent) when available, else the legacy ams_filament_hint raster.
     if (m_show_new_filament_hint) {
-        auto hint_bmp = m_bitmap_new_filament_hint.bmp();
         auto hint_sz  = m_bitmap_new_filament_hint.GetBmpSize();
-        dc.DrawBitmap(hint_bmp, size.x - hint_sz.x, 0);
+        if (MaterialIcon::available()) {
+            wxBitmap hint_glyph = MaterialIcon::bitmap(this, MaterialIcon::Info, 14, StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+            dc.DrawBitmap(hint_glyph, size.x - hint_sz.x, 0);
+        } else {
+            dc.DrawBitmap(m_bitmap_new_filament_hint.bmp(), size.x - hint_sz.x, 0);
+        }
     }
 }
 
@@ -3032,7 +3082,7 @@ void AMSPreview::doRender(wxDC &dc)
                 else {
                     wxRect rect(left, (size.y - AMS_ITEM_CUBE_SIZE.y) / 2, AMS_ITEM_CUBE_SIZE.x, AMS_ITEM_CUBE_SIZE.y);
                     if (iter->material_state == AMSCanType::AMS_CAN_TYPE_EMPTY) {
-                        dc.SetPen(wxPen(wxColor(0, 0, 0)));
+                        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OnSurfaceVariant)));
                         dc.DrawLine(rect.GetRight() - FromDIP(1), rect.GetTop() + FromDIP(1), rect.GetLeft() + FromDIP(1), rect.GetBottom() - FromDIP(1));
                     }
                     else {
@@ -3136,7 +3186,7 @@ void AMSPreview::doRender(wxDC &dc)
         BOOST_LOG_TRIVIAL(info) << "AMSPreview::doRender - No cans data available for AMS: " << m_amsinfo.ams_id;
     }
 
-    auto border_colour = AMS_CONTROL_BRAND_COLOUR;
+    auto border_colour = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device);
     if (!wxWindow::IsEnabled()) { border_colour = AMS_CONTROL_DISABLE_COLOUR; }
 
     if (m_hover) {
@@ -3355,8 +3405,19 @@ void AMSHumidity::doRender(wxDC& dc)
                 pot.y = (size.y - ams_drying_img.GetBmpHeight()) / 2;
                 dc.DrawBitmap(ams_drying_img.bmp(), pot);
             } else {
-                pot.y = (size.y - ams_sun_img.GetBmpHeight()) / 2;
-                dc.DrawBitmap(ams_sun_img.bmp(), pot);
+                // 'Ready to dry' affordance -> Material Symbols 'mode_heat' glyph
+                // (AMS drying is heat-based; a heat glyph reads correctly and pairs
+                // with the adjacent heating-icon active state, unlike the garment-care
+                // 'dry_cleaning' symbol). Falls back to the legacy ams_drying (sun)
+                // raster when the icon face is unavailable.
+                if (MaterialIcon::available()) {
+                    const wxColour col = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+                    const wxSize   gs  = MaterialIcon::measure(dc, MaterialIcon::ModeHeat, 20);
+                    MaterialIcon::draw(dc, MaterialIcon::ModeHeat, 20, col, wxPoint(pot.x, (size.y - gs.y) / 2));
+                } else {
+                    pot.y = (size.y - ams_sun_img.GetBmpHeight()) / 2;
+                    dc.DrawBitmap(ams_sun_img.bmp(), pot);
+                }
             }
         }
     }
@@ -4266,6 +4327,7 @@ FeedDirectionDialog::FeedDirectionDialog(wxWindow* parent,
 
     SetSizer(mainSizer);
     Layout();
+    MD3DialogCaption::Adopt(this, _L("Confirm"));
     Centre(wxBOTH);
 
     m_lastChecked = m_radioHelper;

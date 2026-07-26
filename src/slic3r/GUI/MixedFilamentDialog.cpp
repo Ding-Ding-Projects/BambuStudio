@@ -22,7 +22,9 @@
 #include "GUI_App.hpp"
 #include "GradientCurveEditor.hpp"
 #include "wxExtensions.hpp"
+#include "MsgDialog.hpp"
 #include "Tab.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/Preset.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/CheckBox.hpp"
@@ -146,6 +148,8 @@ MixedFilamentDialog::MixedFilamentDialog(wxWindow* parent,
     m_result.ratios     = {50, 50};
     build_ui();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 
     wxImage img;
     if (img.LoadFile(from_u8(Slic3r::var("mixed_filament_preview_twocolor.png")), wxBITMAP_TYPE_PNG))
@@ -182,6 +186,8 @@ MixedFilamentDialog::MixedFilamentDialog(wxWindow* parent,
     }
     build_ui();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 
     wxImage img;
     if (img.LoadFile(from_u8(Slic3r::var("mixed_filament_preview_twocolor.png")), wxBITMAP_TYPE_PNG))
@@ -606,7 +612,6 @@ void MixedFilamentDialog::build_ui()
     update_ok_button_state();
 
     Layout();
-    CentreOnParent();
 }
 
 wxBoxSizer* MixedFilamentDialog::create_preview_panel()
@@ -1460,7 +1465,7 @@ void MixedFilamentDialog::on_gradient_toggled()
     if (checked) {
         auto& print_config = wxGetApp().preset_bundle->prints.get_edited_preset().config;
         if (!print_config.opt_bool("enable_mixed_color_sublayer")) {
-            wxMessageDialog dlg(this,
+            MessageDialog dlg(this,
                 _L("Gradient effect requires 'Mixed color sublayer' to be enabled. Enable it now?"),
                 _L("Mixed Color Sublayer"),
                 wxYES_NO | wxICON_QUESTION);

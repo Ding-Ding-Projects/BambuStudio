@@ -1,6 +1,8 @@
 #ifndef slic3r_GUI_SideButton_hpp_
 #define slic3r_GUI_SideButton_hpp_
 
+#include <cstdint>
+
 #include <wx/stattext.h>
 #include <wx/vlbox.h>
 #include <wx/combo.h>
@@ -55,6 +57,13 @@ public:
 
     void SetIconOffset(const int offset);
 
+    // Optional leading Material Symbols glyph, drawn before the label through the
+    // shared MaterialIcon helper. Additive: the existing raster-icon and
+    // text-only paths are unchanged, and the glyph is suppressed (a graceful
+    // fallback to the label alone) whenever MaterialIcon::available() is false.
+    // px<=0 derives a default size; codepoint 0 clears the glyph.
+    void SetLeadingGlyph(uint32_t codepoint, int px = 0);
+
 private:
     wxSize textSize;
     wxSize minSize;
@@ -62,6 +71,8 @@ private:
     double radius;
     wxSize extra_size;
     int icon_offset;
+    uint32_t leading_glyph_cp = 0;
+    int      leading_glyph_px = 0;
     std::vector<bool> radius_enable;
 
     StateHandler    state_handler;
@@ -80,6 +91,10 @@ private:
     void paintEvent(wxPaintEvent& evt);
 
     void dorender(wxDC& dc, wxDC& text_dc);
+
+    // Design-px size of the leading glyph (explicit SetLeadingGlyph px, else a
+    // default that balances the Body_14 label).
+    int leadingGlyphPx() const;
 
     void messureSize();
 

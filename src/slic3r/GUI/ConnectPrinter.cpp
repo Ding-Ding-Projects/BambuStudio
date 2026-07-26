@@ -2,6 +2,7 @@
 #include "GUI_App.hpp"
 #include <slic3r/GUI/I18N.hpp>
 #include <slic3r/GUI/Widgets/Label.hpp>
+#include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/AppConfig.hpp"
 
 #include "DeviceCore/DevManager.h"
@@ -104,11 +105,12 @@ ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, cons
     this->SetSizer(main_sizer);
     this->Layout();
     this->Fit();
-    CentreOnParent();
 
     m_textCtrl_code->Bind(wxEVT_TEXT, &ConnectPrinterDialog::on_input_enter, this);
     m_button_confirm->Bind(wxEVT_BUTTON, &ConnectPrinterDialog::on_button_confirm, this);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 ConnectPrinterDialog::~ConnectPrinterDialog() {}

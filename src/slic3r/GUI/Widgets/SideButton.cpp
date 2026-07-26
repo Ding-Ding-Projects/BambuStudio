@@ -1,9 +1,12 @@
 #include "SideButton.hpp"
 #include "Label.hpp"
 #include "StateColor.hpp"
+#include "MaterialIcon.hpp"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
+
+#include <algorithm>
 
 BEGIN_EVENT_TABLE(SideButton, wxPanel)
 EVT_LEFT_DOWN(SideButton::mouseDown)
@@ -175,6 +178,22 @@ void SideButton::SetIconOffset(const int offset)
     messureSize();
 }
 
+void SideButton::SetLeadingGlyph(uint32_t codepoint, int px)
+{
+    leading_glyph_cp = codepoint;
+    leading_glyph_px = px > 0 ? px : 0;
+    messureSize();
+    Refresh();
+}
+
+int SideButton::leadingGlyphPx() const
+{
+    // Design-px value; MaterialIcon converts it to a point size internally, so it
+    // stays DPI-correct without a FromDIP here. The default (20) matches the MD3
+    // large-button (h44) icon tier that the Slice/Print pills use.
+    return leading_glyph_px > 0 ? leading_glyph_px : 20;
+}
+
 void SideButton::paintEvent(wxPaintEvent& evt)
 {
     // depending on your system you may need to look at double-buffered dcs
@@ -209,6 +228,15 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
     dc.SetPen(wxPen(border_color.colorForStates(states)));
     int pen_width = dc.GetPen().GetWidth();
 
+    // wxDC::DrawRoundedRectangle is only well-defined for radius <= half the
+    // SMALLER edge. The Slice/Print options segments are 24px wide but carry the
+    // shared pill radius (button height / 2 = 22px); un-clamped, GDI+ renders
+    // the overlapping corner arcs as a malformed egg/oval blob (seen in the dark
+    // Prepare action bar). Clamp per-paint so a narrow segment degrades to a
+    // proper capsule instead.
+    const double radius = std::min(this->radius,
+                                   std::min(size.x, size.y) / 2.0);
+
 
     // draw icon style
     if (icon.bmp().IsOk()) {
@@ -240,9 +268,28 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
     }
 
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
+
+    // A leading Material Symbols glyph (SetLeadingGlyph) is drawn before the
+    // label. It is additive and self-gated: when the icon face is unavailable it
+    // contributes nothing and the button falls back to its label alone. It is
+    // measured/drawn through the plain paint DC (text_dc), matching how the label
+    // and the shared Button widget render glyphs.
+    const bool draw_glyph = leading_glyph_cp != 0 && MaterialIcon::available();
+    const int  glyph_gap  = FromDIP(6);
+    wxSize     szGlyph;
+    if (draw_glyph)
+        szGlyph = MaterialIcon::measure(text_dc, leading_glyph_cp, leadingGlyphPx());
+
     // calc content size
     wxSize szIcon;
     wxSize szContent = textSize;
+    if (draw_glyph) {
+        if (szContent.x > 0)
+            szContent.x += glyph_gap;
+        szContent.x += szGlyph.x;
+        if (szGlyph.y > szContent.y)
+            szContent.y = szGlyph.y;
+    }
     if (icon.bmp().IsOk()) {
         if (szContent.y > 0) {
             //BBS norrow size between text and icon
@@ -268,6 +315,12 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
 
     // start draw
     wxPoint pt = rcContent.GetLeftTop();
+    if (draw_glyph) {
+        const int gy = pt.y + (rcContent.height - szGlyph.y) / 2;
+        MaterialIcon::draw(text_dc, leading_glyph_cp, leadingGlyphPx(),
+                           text_color.colorForStates(states), wxPoint(pt.x, gy));
+        pt.x += szGlyph.x + glyph_gap;
+    }
     if (icon.bmp().IsOk()) {
         //BBS extra pixels for icon
         pt.x += icon_offset;
@@ -299,6 +352,17 @@ void SideButton::messureSize()
     }
 
     wxSize szContent = textSize;
+    // Mirror dorender(): reserve room for a leading glyph so the label is not
+    // clipped. Suppressed when the icon face is unavailable (label-only fallback).
+    if (leading_glyph_cp != 0 && MaterialIcon::available()) {
+        wxClientDC dc(this);
+        wxSize szGlyph = MaterialIcon::measure(dc, leading_glyph_cp, leadingGlyphPx());
+        if (szContent.x > 0)
+            szContent.x += FromDIP(6);
+        szContent.x += szGlyph.x;
+        if (szGlyph.y > szContent.y)
+            szContent.y = szGlyph.y;
+    }
     if (this->icon.bmp().IsOk()) {
         if (szContent.y > 0) {
             szContent.x += 5;

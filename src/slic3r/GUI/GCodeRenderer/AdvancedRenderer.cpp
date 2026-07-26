@@ -725,7 +725,14 @@ namespace Slic3r
                 if (m_p_sequential_view) {
                     m_p_sequential_view->current_position = Vec3f::Zero();
                     m_p_sequential_view->current.last = 0;
-                    if (show_sequential_view()) {
+                    // during print-simulation playback the nozzle marker stays
+                    // visible through layer boundaries (slider at max included)
+                    bool b_force_marker = false;
+                    if (!show_sequential_view() && is_simulation_active()) {
+                        const auto& t_top_layer = m_p_layer_manager->get_layer(m_p_layer_manager->get_current_layer_end());
+                        b_force_marker = t_top_layer.is_valid() && !t_top_layer.get_visible_segment_list().empty();
+                    }
+                    if (show_sequential_view() || b_force_marker) {
                         const auto t_current_mid = m_p_layer_manager->get_current_move_id();
                         if (m_gcode_result) {
                             const auto& t_move_vertex = m_gcode_result->moves[t_current_mid];
@@ -802,6 +809,19 @@ namespace Slic3r
 
             void AdvancedRenderer::update_marker_curr_move()
             {
+                const auto& p_sequential_view = get_sequential_view();
+                const auto& p_layer_manager = get_layer_manager();
+                if (!p_sequential_view || !p_layer_manager || m_gcode_result == nullptr) {
+                    return;
+                }
+                const auto& t_top_layer = p_layer_manager->get_layer(p_layer_manager->get_current_layer_end());
+                if (!t_top_layer.is_valid() || t_top_layer.get_visible_segment_list().empty()) {
+                    return;
+                }
+                const auto t_move_id = p_layer_manager->get_current_move_id();
+                if (t_move_id < m_gcode_result->moves.size()) {
+                    p_sequential_view->marker.update_curr_move(m_gcode_result->moves[t_move_id]);
+                }
             }
 
             bool AdvancedRenderer::load_toolpaths(const GCodeProcessorResult& gcode_result, const BuildVolume& build_volume, const std::vector<BoundingBoxf3>& exclude_bounding_box)
@@ -868,6 +888,33 @@ namespace Slic3r
                     m_moves_slider->SetHigherValue(m_moves_slider->GetMaxValue());
                 m_p_layer_manager->set_current_move_start(0);
                 m_p_layer_manager->set_current_move_end(t_seg_count);
+
+                // feedrate-true playback: cumulative print seconds per slider tick.
+                // Advanced slider ticks are per-layer segment indices of the current
+                // top layer; map them to move ids via Layer::get_current_move_id and
+                // forward-fill (only TimeBlock-owning moves carry a prefix sum).
+                m_move_times_by_ssid.clear();
+                if (m_gcode_result != nullptr && !t_current_top_layer.get_visible_segment_list().empty()) {
+                    m_move_times_by_ssid.reserve(t_seg_count + 1);
+                    const size_t mode = static_cast<size_t>(m_time_estimate_mode);
+                    float prev = 0.0f;
+                    for (size_t s = 0; s <= t_seg_count; ++s) {
+                        float raw = 0.0f;
+                        const uint32_t move_id = t_current_top_layer.get_current_move_id(static_cast<uint32_t>(s));
+                        if (move_id < m_gcode_result->moves.size()) {
+                            const auto& move = m_gcode_result->moves[move_id];
+                            raw = mode < move.time.size() ? move.time[mode] : 0.0f;
+                            if (raw <= 0.0f)
+                                raw = move.time[0];
+                        }
+                        prev = std::max(prev, raw);
+                        m_move_times_by_ssid.push_back(prev);
+                    }
+                }
+                m_moves_slider->SetMoveTimes(m_move_times_by_ssid.empty() ? nullptr : &m_move_times_by_ssid,
+                                             m_move_times_by_ssid.empty() ? 0.0f : m_move_times_by_ssid.back());
+                // per-layer segment updates are cheap -> no seek throttle needed
+                m_moves_slider->SetPlaySeekThrottle(false);
             }
 
             bool AdvancedRenderer::show_sequential_view() const

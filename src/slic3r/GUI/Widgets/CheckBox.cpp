@@ -1,18 +1,31 @@
 #include "CheckBox.hpp"
 
 #include "../wxExtensions.hpp"
+#include "MaterialIcon.hpp"
+#include "StateColor.hpp"
+
+#include <wx/dcmemory.h>
+#include <wx/graphics.h>
+
+#include <algorithm>
+#include <cmath>
+
+namespace {
+// 20px logical glyph per selection/Checkbox.prompt.md. The window stays 20px:
+// growing it to a 44px a11y hit target regressed layout app-wide (taller rows,
+// glyph-to-label gaps) since a wxWindow's footprint IS its hit region. Row-level
+// hit targets (clickable label rows) are the correct a11y path and are tracked
+// as a followup rather than inflating every checkbox/radio box.
+constexpr int kCheckBoxPx = 20;
+
+inline wxColour withAlpha(const wxColour &c, int a)
+{
+    return wxColour(c.Red(), c.Green(), c.Blue(), a);
+}
+} // namespace
 
 CheckBox::CheckBox(wxWindow *parent, int id)
     : wxBitmapToggleButton(parent, id, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
-    , m_on(this, "check_on", 18)
-    , m_half(this, "check_half", 18)
-    , m_off(this, "check_off", 18)
-    , m_on_disabled(this, "check_on_disabled", 18)
-    , m_half_disabled(this, "check_half_disabled", 18)
-    , m_off_disabled(this, "check_off_disabled", 18)
-    , m_on_focused(this, "check_on_focused", 18)
-    , m_half_focused(this, "check_half_focused", 18)
-    , m_off_focused(this, "check_off_focused", 18)
 {
 	//SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
 	if (parent)
@@ -24,8 +37,8 @@ CheckBox::CheckBox(wxWindow *parent, int id)
     Bind(wxEVT_ENTER_WINDOW, &CheckBox::updateBitmap, this);
     Bind(wxEVT_LEAVE_WINDOW, &CheckBox::updateBitmap, this);
 #endif
-	SetSize(m_on.GetBmpSize());
-	SetMinSize(m_on.GetBmpSize());
+	SetSize(wxSize(deviceSide(), deviceSide()));
+	SetMinSize(wxSize(deviceSide(), deviceSide()));
 	update();
 }
 
@@ -43,29 +56,159 @@ void CheckBox::SetHalfChecked(bool value)
 	update();
 }
 
+void CheckBox::SetColorScheme(MD3::ColorScheme scheme)
+{
+    if (m_scheme == scheme)
+        return;
+    m_scheme = scheme;
+    update();
+}
+
 void CheckBox::Rescale()
 {
-    m_on.msw_rescale();
-    m_half.msw_rescale();
-    m_off.msw_rescale();
-    m_on_disabled.msw_rescale();
-    m_half_disabled.msw_rescale();
-    m_off_disabled.msw_rescale();
-    m_on_focused.msw_rescale();
-    m_half_focused.msw_rescale();
-    m_off_focused.msw_rescale();
-    SetSize(m_on.GetBmpSize());
+    SetSize(wxSize(deviceSide(), deviceSide()));
+    SetMinSize(wxSize(deviceSide(), deviceSide()));
 	update();
+}
+
+int CheckBox::deviceSide() const
+{
+    double scale = GetDPIScaleFactor();
+    if (scale <= 0.0)
+        scale = 1.0;
+    return std::max(1, static_cast<int>(std::ceil(kCheckBoxPx * scale)));
+}
+
+wxBitmap CheckBox::RenderGlyphBitmap(int px, double scale, bool checked, bool half, bool disabled, MD3::ColorScheme scheme)
+{
+    if (scale <= 0.0)
+        scale = 1.0;
+    const int dev = std::max(1, static_cast<int>(std::ceil(px * scale)));
+
+    wxBitmap bmp(dev, dev);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+    bmp.UseAlpha();
+#endif
+    {
+        wxMemoryDC mdc(bmp);
+        mdc.SetBackground(*wxTRANSPARENT_BRUSH);
+        mdc.Clear();
+
+        wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+        if (gc) {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            gc->Scale(scale, scale); // draw in logical 0..px coordinates
+
+            const wxColour primary    = StateColor::semantic(MD3::Role::Primary, scheme);
+            const wxColour onPrimary   = StateColor::semantic(MD3::Role::OnPrimary, scheme);
+            const wxColour onSurfVar    = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+            const wxColour onSurface    = StateColor::semantic(MD3::Role::OnSurface);
+            const wxColour surface      = StateColor::semantic(MD3::Role::Surface);
+
+            const double inset = 1.0;
+            const double side  = px - 2 * inset; // logical box, 1px breathing room
+            const double radius = 2.5;
+
+            if (!checked && !half) {
+                // Unchecked: 2px rounded-square outline in OnSurfaceVariant.
+                const wxColour border = disabled ? withAlpha(onSurfVar, 97) : onSurfVar;
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->SetPen(wxPen(border, 2));
+                gc->DrawRoundedRectangle(inset + 1, inset + 1, side - 2, side - 2, radius);
+            } else {
+                // Checked / indeterminate: filled Primary square.
+                const wxColour fill = disabled ? withAlpha(onSurface, 97) : primary;
+                gc->SetPen(wxPen(fill));
+                gc->SetBrush(wxBrush(fill));
+                gc->DrawRoundedRectangle(inset, inset, side, side, radius);
+
+                const wxColour fg = disabled ? surface : onPrimary;
+                if (half) {
+                    // Indeterminate: a centered horizontal bar.
+                    const double bw = 10.0, bh = 2.0;
+                    gc->SetPen(wxPen(fg));
+                    gc->SetBrush(wxBrush(fg));
+                    gc->DrawRoundedRectangle((px - bw) / 2, (px - bh) / 2, bw, bh, bh / 2);
+                } else {
+                    bool drawn = false;
+                    if (MaterialIcon::available()) {
+                        // The variable icon face must not reach GDI+ as a font
+                        // (heap corruption); composite a plain-GDI raster.
+                        const wxBitmap gb = MaterialIcon::bitmapPx(MaterialIcon::Check, px, fg, scale);
+                        const double   tw = gb.GetWidth() / scale, th = gb.GetHeight() / scale;
+                        gc->DrawBitmap(gb, (px - tw) / 2, (px - th) / 2, tw, th);
+                        drawn = true;
+                    }
+                    if (!drawn) {
+                        // Font missing: stroke a checkmark polyline as a fallback,
+                        // scaled from the 20px reference geometry to `px`.
+                        const double k = px / 20.0;
+                        gc->SetPen(wxPen(fg, 2));
+                        wxGraphicsPath path = gc->CreatePath();
+                        path.MoveToPoint(5.5 * k, 10.5 * k);
+                        path.AddLineToPoint(8.5 * k, 13.5 * k);
+                        path.AddLineToPoint(14.5 * k, 6.5 * k);
+                        gc->StrokePath(path);
+                    }
+                }
+            }
+
+            delete gc; // flush before the bitmap is read
+        }
+        mdc.SelectObject(wxNullBitmap);
+    }
+    return bmp;
+}
+
+wxBitmap CheckBox::renderBitmap(bool checked, bool half, bool disabled, bool focus) const
+{
+    double scale = GetDPIScaleFactor();
+    if (scale <= 0.0)
+        scale = 1.0;
+    const wxBitmap glyph = RenderGlyphBitmap(kCheckBoxPx, scale, checked, half, disabled, m_scheme);
+    if (!focus)
+        return glyph;
+
+    // Keyboard-focus variant (distinct from the resting bitmap): the 20px glyph
+    // with a 1.5px Primary ring drawn INSET at the box edge so it stays within
+    // the 20px window (no footprint growth).
+    const int devBox = std::max(1, static_cast<int>(std::ceil(kCheckBoxPx * scale)));
+    wxBitmap bmp(devBox, devBox);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+    bmp.UseAlpha();
+#endif
+    {
+        wxMemoryDC mdc(bmp);
+        mdc.SetBackground(*wxTRANSPARENT_BRUSH);
+        mdc.Clear();
+        wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+        if (gc) {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            gc->DrawBitmap(glyph, 0, 0, glyph.GetWidth(), glyph.GetHeight());
+            const double inset = std::max(0.5, 0.75 * scale);
+            const double penW  = std::max(1.0, 1.5 * scale);
+            const wxColour ring = StateColor::semantic(MD3::Role::Primary, m_scheme);
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->SetPen(wxPen(ring, penW));
+            gc->DrawRoundedRectangle(inset, inset, devBox - 2 * inset, devBox - 2 * inset, 5.0 * scale);
+            delete gc; // flush before the bitmap is read
+        }
+        mdc.SelectObject(wxNullBitmap);
+    }
+    return bmp;
 }
 
 void CheckBox::update()
 {
-	SetBitmapLabel((m_half_checked ? m_half : GetValue() ? m_on : m_off).bmp());
-    SetBitmapDisabled((m_half_checked ? m_half_disabled : GetValue() ? m_on_disabled : m_off_disabled).bmp());
+	const bool v = GetValue();
+	const bool h = m_half_checked;
+	SetBitmapLabel(renderBitmap(v, h, false, false));
+    SetBitmapDisabled(renderBitmap(v, h, true, false));
 #ifdef __WXMSW__
-    SetBitmapFocus((m_half_checked ? m_half_focused : GetValue() ? m_on_focused : m_off_focused).bmp());
+    // Keyboard focus gets a distinct ring variant, not the resting bitmap.
+    SetBitmapFocus(renderBitmap(v, h, false, true));
 #endif
-    SetBitmapCurrent((m_half_checked ? m_half_focused : GetValue() ? m_on_focused : m_off_focused).bmp());
+    SetBitmapCurrent(renderBitmap(v, h, false, false));
 #ifdef __WXOSX__
     wxCommandEvent e(wxEVT_UPDATE_UI);
     updateBitmap(e);
@@ -117,11 +260,11 @@ void CheckBox::updateBitmap(wxEvent & evt)
             m_focus = false;
         }
         wxMouseEvent e;
-        if (m_hover)	
+        if (m_hover)
             OnEnterWindow(e);
         else
             OnLeaveWindow(e);
     }
 }
-	
+
 #endif

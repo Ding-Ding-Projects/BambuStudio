@@ -5,6 +5,7 @@
 #include "GUI_App.hpp"
 #include "wxExtensions.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StateColor.hpp"
 
 //BBS set font size
@@ -21,8 +22,51 @@ constexpr int btn_width_label_min = 48;
 constexpr int btn_width_label_max = 136;
 constexpr int selection_line_inset  = 12;
 constexpr int tab_bottom_space      = 4;
+// Kit per-tab horizontal padding (TabBar.jsx padding '0 16px'); the compact
+// density padding (10) reads too tight against the kit's 16px cells.
+constexpr int tab_horizontal_padding = 16;
 // Active-indicator thickness comes from the shared chrome metric so the tab bar
 // stays in lock-step with the kit (MD3::Metrics::tab_active_indicator == 3).
+
+// Kit workspace-tab glyph size (navigation/TabBar.jsx: Material Symbols at 20px).
+// This is a logical/design px value; MaterialIcon handles the DPI conversion.
+constexpr int tab_glyph_px = 20;
+
+// Map a legacy workspace-tab raster key to its kit Material Symbols glyph.
+//
+// MainFrame passes the SAME 'tab_*_active' key for both the active and inactive
+// slots, so the icon never toggled its FILL/outline state. The vendored Material
+// Symbols Outlined face is static (no FILL axis), so we keep a single glyph per
+// tab and express active vs inactive purely by colour + label weight in
+// StyleButton (Primary/600 active, OnSurfaceVariant/400 inactive) -- never a
+// FILL 0->1 swap. Settings sub-tabs (Tab.cpp uses 'cog'/'spool') and the trailing
+// 'settings' navigation action are included so the whole chrome tab bar is glyph
+// driven. Returns 0 for any key without a mapping, leaving that button on its
+// raster ScalableBitmap icon (the same fallback used when the font is missing).
+uint32_t tab_glyph_for(const std::string &bmp_name)
+{
+    struct Entry { const char *key; uint32_t glyph; };
+    static const Entry table[] = {
+        {"tab_home_active",         MaterialIcon::Home},
+        {"tab_3d_active",           MaterialIcon::ViewInAr},
+        {"tab_preview_active",      MaterialIcon::Layers},
+        {"tab_monitor_active",      MaterialIcon::Cast},
+        {"tab_multi_active",        MaterialIcon::Devices},
+        {"tab_auxiliary_avtice",    MaterialIcon::FolderOpen}, // legacy key spelling in MainFrame
+        {"tab_auxiliary_active",    MaterialIcon::FolderOpen}, // corrected spelling, forward-compat
+        {"tab_calibration_active",  MaterialIcon::Build},
+        {"tab_filament_active",     MaterialIcon::Palette},
+        // Settings / parameters sub-tabs + the trailing Settings nav action.
+        {"settings",                MaterialIcon::Settings},
+        {"cog",                     MaterialIcon::Settings},
+        {"notebook_presets_active", MaterialIcon::Settings},
+        {"spool",                   MaterialIcon::Palette},    // filament-settings sub-tab
+    };
+    for (const auto &e : table)
+        if (bmp_name == e.key)
+            return e.glyph;
+    return 0;
+}
 }; // namespace
 
 wxDEFINE_EVENT(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, wxCommandEvent);
@@ -150,11 +194,27 @@ void ButtonsListCtrl::StyleButton(Button* button, bool selected)
     button->SetBackgroundColor(background);
     button->SetTextColor(text);
     button->SetSelected(selected);
-    button->SetCornerRadius(FromDIP(MD3::Metrics::compact.small_radius));
-    button->SetPaddingSize({FromDIP(MD3::Metrics::compact.padding), FromDIP(MD3::Metrics::compact.gap)});
+    // §4.3: the tab hover/selection fill is a flat, full-cell rectangle that
+    // spans the tab cell edge-to-edge -- NOT a rounded pill inset in the cell.
+    // wxDC draws a radius-0 rounded rect as a plain rectangle, so pinning the
+    // tab Button corner radius to 0 yields the kit's flat hover layer.
+    button->SetCornerRadius(0);
+    // Kit tab metrics (TabBar.jsx): 16px per-side horizontal padding. The
+    // icon-label gap is a separate 8px handled inside Button::messureSize and
+    // is already correct, so only the horizontal padding moves off the compact
+    // density value (10). Vertical padding stays at the compact gap since the
+    // tab height is pinned by SetMinSize.
+    button->SetPaddingSize({FromDIP(tab_horizontal_padding), FromDIP(MD3::Metrics::compact.gap)});
 
-    wxFont font = Slic3r::GUI::wxGetApp().normal_font();
-    font.SetWeight(selected ? wxFONTWEIGHT_SEMIBOLD : wxFONTWEIGHT_NORMAL);
+    // Kit tab label is body-s 13.5px: active SemiBold/600, inactive Normal/400.
+    // Head_13 already carries the 13.5px/600 face (px-pinned), so clone it and
+    // drop to weight 400 for inactive tabs -- this preserves the design px size
+    // in both states, unlike the previous em-driven normal_font().
+    wxFont font = Label::Head_13;
+    if (!selected) {
+        font.SetWeight(wxFONTWEIGHT_NORMAL);
+        font.SetNumericWeight(400);
+    }
     button->SetFont(font);
 }
 
@@ -264,6 +324,15 @@ bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /*
 
     StyleButton(btn, bSelect);
     btn->SetInactiveIcon(inactive_bmp_name);
+    // Kit tab bar draws a Material Symbols glyph (20px) instead of the legacy
+    // 'tab_*_active' raster. The Button glyph path recolours the static face via
+    // text_color (Primary when active / OnSurfaceVariant when inactive, set in
+    // StyleButton) rather than a FILL swap. The raster active/inactive icons the
+    // Button was constructed with remain as the capability-gated fallback: when
+    // MaterialIcon::available() is false, render()/messureSize() ignore the glyph
+    // and use those bitmaps instead.
+    if (const uint32_t glyph = tab_glyph_for(bmp_name))
+        btn->SetGlyph(glyph, tab_glyph_px);
     btn->Bind(wxEVT_BUTTON, [this, btn](wxCommandEvent& event) {
         if (auto it = std::find(m_pageButtons.begin(), m_pageButtons.end(), btn); it != m_pageButtons.end()) {
             auto sel = it - m_pageButtons.begin();
@@ -295,6 +364,10 @@ void ButtonsListCtrl::AddAction(const wxString &text, const std::string &bmp_nam
     button->SetMinSize({btn_width_label_min * em / 10, tab_height});
     button->SetMaxSize({btn_width_label_max * em / 10, tab_height});
     StyleButton(button, false);
+    // Trailing nav actions (e.g. the Settings gear) share the tab-bar glyph
+    // treatment; the raster icon stays as the capability-gated fallback.
+    if (const uint32_t glyph = tab_glyph_for(bmp_name))
+        button->SetGlyph(glyph, tab_glyph_px);
     button->Bind(wxEVT_BUTTON, [action = std::move(action)](wxCommandEvent &) {
         if (action)
             action();

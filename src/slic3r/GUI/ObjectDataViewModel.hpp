@@ -360,6 +360,12 @@ class ObjectDataViewModel :public wxDataViewModel
     wxDataViewCtrl*                             m_ctrl { nullptr };
     std::vector<std::tuple<ObjectDataViewModelNode*, wxString, wxString>> assembly_name_list;
     std::vector<std::tuple<ObjectDataViewModelNode*, wxString, wxString>> search_found_list;
+    // Matcher modifiers for search_object(), mirroring the sidebar SearchField
+    // state (".*" toggle + tune-popover checkboxes). All default off, keeping the
+    // plain substring behaviour until the user opts in.
+    bool                                        m_search_regex { false };
+    bool                                        m_search_case_sensitive { false };
+    bool                                        m_search_whole_word { false };
     std::map<int,std::map<int, int>>                                      m_ui_and_3d_volume_maps;
 
 public:
@@ -546,6 +552,10 @@ public:
     void        assembly_name(ObjectDataViewModelNode* item, wxString name);
     void        assembly_name();
     std::vector<std::tuple<ObjectDataViewModelNode*, wxString, wxString>> get_assembly_name_list() const { return assembly_name_list; }
+    // Configure how search_object() matches: regex mode (SearchField ".*"
+    // toggle), case sensitivity and whole-word (its tune-popover checkboxes).
+    // The sidebar pushes the field's current flags here before every filter run.
+    void        set_search_flags(bool regex, bool case_sensitive, bool whole_word);
     void        search_object(wxString search_text);
     std::vector<std::tuple<ObjectDataViewModelNode*, wxString, wxString>> get_found_list() const { return search_found_list; }
 

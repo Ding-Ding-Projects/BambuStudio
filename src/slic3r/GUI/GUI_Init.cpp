@@ -66,14 +66,21 @@ int GUI_Run(GUI_InitParams &params)
         }
     } catch (const Slic3r::Exception &ex) {
         if (is_log_trivival_valid()) {
-            BOOST_LOG_TRIVIAL(error) << ex.what() << std::endl; // boost log not initialized yet 
+            BOOST_LOG_TRIVIAL(error) << ex.what() << std::endl; // boost log not initialized yet
         }
+        // Intentionally NOT the MD3 MessageDialog: control only reaches these
+        // handlers after wxEntry() has unwound — the wx main loop is gone and
+        // the wxApp/window hierarchy either never finished initializing or has
+        // already been torn down, so the styled dialog shell (mainframe parent,
+        // GUI_App fonts/dark-mode state) cannot be constructed safely. The
+        // native message box is the only reliable reporter at this point.
         wxMessageBox(boost::nowide::widen(ex.what()), _L("Bambu Studio GUI initialization failed"), wxICON_STOP);
 
     } catch (const std::exception &ex) {
         if (is_log_trivival_valid()) {
-            BOOST_LOG_TRIVIAL(error) << ex.what() << std::endl; // boost log not initialized yet 
+            BOOST_LOG_TRIVIAL(error) << ex.what() << std::endl; // boost log not initialized yet
         }
+        // Intentionally NOT the MD3 MessageDialog — see the rationale above.
         wxMessageBox(format_wxstr(_L("Fatal error, exception caught: %1%"), ex.what()), _L("Bambu Studio GUI initialization failed"), wxICON_STOP);
     }
     // error

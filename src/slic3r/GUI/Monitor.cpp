@@ -23,6 +23,7 @@
 #include "Plater.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "format.hpp"
 #include "MediaPlayCtrl.h"
 #include "MediaFilePanel.h"
@@ -148,12 +149,29 @@ MonitorPanel::~MonitorPanel()
 
 void MonitorPanel::init_bitmap()
 {
-    m_signal_strong_img = create_scaled_bitmap("monitor_signal_strong", nullptr, 24);
-    m_signal_middle_img = create_scaled_bitmap("monitor_signal_middle", nullptr, 24);
-    m_signal_weak_img = create_scaled_bitmap("monitor_signal_weak", nullptr, 24);
-    m_signal_no_img   = create_scaled_bitmap("monitor_signal_no", nullptr, 24);
+    // MD3: render the connectivity indicators from the Material Symbols icon
+    // font instead of the legacy monitor_signal_*/monitor_arrow rasters. The
+    // Wi-Fi signal level is carried by the glyph shape (4-bar / 3-bar / 2-bar /
+    // null); state is expressed through colour, never the FILL axis. Fall back
+    // to the bundled bitmaps when the icon face is unavailable so a missing TTF
+    // degrades to the legacy look instead of tofu.
+    if (MaterialIcon::available()) {
+        const wxColour signal_on  = StateColor::semantic(MD3::Role::Primary);
+        const wxColour signal_off = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        m_signal_strong_img = MaterialIcon::bitmap(this, MaterialIcon::SignalWifi4Bar,          24, signal_on);
+        m_signal_middle_img = MaterialIcon::bitmap(this, MaterialIcon::NetworkWifi3Bar,         24, signal_on);
+        m_signal_weak_img   = MaterialIcon::bitmap(this, MaterialIcon::NetworkWifi2Bar,         24, signal_off);
+        m_signal_no_img     = MaterialIcon::bitmap(this, MaterialIcon::SignalWifiStatusbarNull, 24, signal_off);
+        m_arrow_img         = MaterialIcon::bitmap(this, MaterialIcon::ChevronRight,            14, signal_off);
+    } else {
+        m_signal_strong_img = create_scaled_bitmap("monitor_signal_strong", nullptr, 24);
+        m_signal_middle_img = create_scaled_bitmap("monitor_signal_middle", nullptr, 24);
+        m_signal_weak_img   = create_scaled_bitmap("monitor_signal_weak", nullptr, 24);
+        m_signal_no_img     = create_scaled_bitmap("monitor_signal_no", nullptr, 24);
+        m_arrow_img         = create_scaled_bitmap("monitor_arrow", nullptr, 14);
+    }
+    // The printer graphic is product imagery, not a monochrome UI glyph -> asset.
     m_printer_img = create_scaled_bitmap("monitor_printer", nullptr, 26);
-    m_arrow_img = create_scaled_bitmap("monitor_arrow",nullptr, 14);
 }
 
 void MonitorPanel::init_timer()

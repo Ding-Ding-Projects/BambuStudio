@@ -37,6 +37,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/ScrolledWindow.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include <wx/hashmap.h>
 #include <wx/webview.h>
 
@@ -52,7 +53,7 @@ wxDECLARE_EVENT(EVT_UPDATE_NOZZLE, wxCommandEvent);
 wxDECLARE_EVENT(EVT_UPDATE_TEXT_MSG, wxCommandEvent);
 wxDECLARE_EVENT(EVT_ERROR_DIALOG_BTN_CLICKED, wxCommandEvent);
 
-class ReleaseNoteDialog : public DPIDialog
+class ReleaseNoteDialog : public MD3Dialog
 {
 public:
     ReleaseNoteDialog(Plater *plater = nullptr);
@@ -65,7 +66,7 @@ public:
     wxScrolledWindow *m_vebview_release_note {nullptr};
 };
 
-class UpdatePluginDialog : public DPIDialog
+class UpdatePluginDialog : public MD3Dialog
 {
 public:
     UpdatePluginDialog(wxWindow* parent = nullptr);
@@ -79,7 +80,7 @@ public:
     wxScrolledWindow* m_vebview_release_note{ nullptr };
 };
 
-class UpdateVersionDialog : public DPIDialog
+class UpdateVersionDialog : public MD3Dialog
 {
 public:
     UpdateVersionDialog(wxWindow *parent = nullptr);
@@ -110,7 +111,7 @@ public:
     std::string       url_line;
 };
 
-class SecondaryCheckDialog : public DPIFrame
+class SecondaryCheckDialog : public MD3Dialog
 {
 private:
     wxWindow* event_parent { nullptr };
@@ -145,11 +146,15 @@ public:
     void on_dpi_changed(const wxRect& suggested_rect);
     void msw_rescale();
 
+protected:
+    // Modeless dialog: the MD3 header close mirrors the native [x] (on_hide()),
+    // never EndModal (which would assert on a non-modal dialog).
+    void OnHeaderClose() override;
 
+public:
     StateColor btn_bg_green;
     StateColor btn_bg_white;
     Label* m_staticText_release_note {nullptr};
-    wxBoxSizer* m_sizer_main;
     wxScrolledWindow *m_vebview_release_note {nullptr};
     Button* m_button_ok { nullptr };
     Button* m_button_retry { nullptr };
@@ -162,7 +167,7 @@ public:
     std::string show_again_config_text = "";
 };
 
-class PrintErrorDialog : public DPIFrame
+class PrintErrorDialog : public MD3Dialog
 {
 private:
     wxWindow* event_parent{ nullptr };
@@ -216,12 +221,16 @@ public:
     void init_button_list();
     void on_webrequest_state(wxWebRequestEvent& evt);
 
+protected:
+    // Modeless dialog: header close mirrors the native [x] (on_hide()).
+    void OnHeaderClose() override;
+
+public:
     StateColor btn_bg_white;
     wxWebRequest web_request;
     wxStaticBitmap* m_error_prompt_pic_static;
     Label* m_staticText_release_note{ nullptr };
     Label* m_staticText_error_code{ nullptr };
-    wxBoxSizer* m_sizer_main;
     wxBoxSizer* m_sizer_button;
     wxScrolledWindow* m_vebview_release_note{ nullptr };
     std::map<int, Button*> m_button_list;
@@ -241,7 +250,7 @@ public:
     ConfirmBeforeSendInfo(const wxString& txt, const wxString& url = wxEmptyString, InfoLevel lev = Normal) : text(txt), wiki_url(url), level(lev){}
 };
 
-class ConfirmBeforeSendDialog : public DPIDialog
+class ConfirmBeforeSendDialog : public MD3Dialog
 {
 public:
     enum ButtonStyle {
@@ -276,7 +285,9 @@ public:
     ~ConfirmBeforeSendDialog();
 
 protected:
-    wxBoxSizer* m_sizer_main;
+    // Modal dialog: header close mirrors the native [x] (on_hide() -> EndModal).
+    void OnHeaderClose() override;
+
     wxScrolledWindow* m_vebview_release_note{ nullptr };
     Label* m_staticText_release_note{ nullptr };
     Button* m_button_ok;
@@ -287,7 +298,7 @@ protected:
     std::string show_again_config_text = "";
 };
 
-class InputIpAddressDialog : public DPIDialog
+class InputIpAddressDialog : public MD3Dialog
 {
 public:
     wxString comfirm_before_check_text;
@@ -353,6 +364,11 @@ public:
     void OnTimer(wxTimerEvent& event);
     void on_text(wxCommandEvent& evt);
     void on_dpi_changed(const wxRect& suggested_rect) override;
+
+protected:
+    // The MD3 header close runs the same teardown as the native [x]: interrupt
+    // the worker thread, stop the close timer, EndModal(wxID_CANCEL).
+    void OnHeaderClose() override;
 };
 
 class SendFailedConfirm : public DPIDialog
@@ -365,7 +381,7 @@ public:
     void on_dpi_changed(const wxRect &suggested_rect) override;
 };
 
-class ExpandCenterDialog : public DPIDialog
+class ExpandCenterDialog : public MD3Dialog
 {
 public:
     ExpandCenterDialog(wxWindow* parent = nullptr);

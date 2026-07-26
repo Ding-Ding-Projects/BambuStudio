@@ -1,5 +1,6 @@
 #include "MediaPlayCtrl.h"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Label.hpp"
 #include "GUI_App.hpp"
@@ -132,8 +133,16 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     });
     m_media_ctrl->SetIdleImage(from_u8(resources_dir() + "/images/live_stream_default.png"));
 
-    m_button_play = new Button(this, "", "media_play", wxBORDER_NONE);
-    m_button_play->SetCanFocus(false);
+    m_button_play = new Button(this, "", "", wxBORDER_NONE);
+    // MD3: draw the play/stop affordance as a Material Symbols glyph (coloured by
+    // the button's text role) instead of the legacy media_play/media_stop PNGs.
+    m_button_play->SetGlyph(MaterialIcon::PlayArrow);
+    // a11y: the play/stop toggle is the camera strip's only actionable control.
+    // Keep it in the keyboard tab order (Button already maps Space/Enter to a
+    // synthetic click via keyDownUp) and give the icon-only control an accessible
+    // name so assistive tech announces it instead of an empty label.
+    m_button_play->SetToolTip(_L("Play or stop the camera live view"));
+    m_button_play->SetName(_L("Play or stop the camera live view"));
 
     m_label_status = new Label(this, "");
     m_label_status->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -458,7 +467,7 @@ void MediaPlayCtrl::Play()
 
         m_url = url;
         load();
-        m_button_play->SetIcon("media_stop");
+        m_button_play->SetGlyph(MaterialIcon::Stop);
         return;
     }
 
@@ -480,7 +489,7 @@ void MediaPlayCtrl::Play()
     m_disable_lan = false;
     m_failed_code = 0;
     m_last_state  = MEDIASTATE_INITIALIZING;
-    m_button_play->SetIcon("media_stop");
+    m_button_play->SetGlyph(MaterialIcon::Stop);
 
     if (!m_remote_proto) { // not support tutk
         m_failed_code = -1;
@@ -552,7 +561,7 @@ void MediaPlayCtrl::Stop(wxString const &msg, wxString const &msg2)
     if (m_last_state != MEDIASTATE_IDLE) {
         m_pending_start_liveview_json.clear();
         m_media_ctrl->InvalidateBestSize();
-        m_button_play->SetIcon("media_play");
+        m_button_play->SetGlyph(MaterialIcon::PlayArrow);
         boost::unique_lock lock(m_mutex);
         m_tasks.push_back("<stop>");
         m_cond.notify_all();
@@ -1112,7 +1121,12 @@ void MediaPlayCtrl::SetStatus(wxString const &msg2, bool hyperlink)
 
     wxGCDC dc;
     wxSize msg_size = dc.GetTextExtent(msg);
-    int blank_width = FromDIP(GetSize().GetWidth() - 120 - m_label_stat->GetSize().GetWidth() - m_button_play->GetSize().GetWidth());
+    // GetSize() on the strip and its children already returns physical (DPI-scaled)
+    // pixels, so only the bare 120px margin constant is a logical value that needs
+    // FromDIP(). Wrapping the whole expression in FromDIP() double-scaled the
+    // available width on HiDPI displays, letting the status text overrun the strip
+    // instead of ellipsizing. Compared against msg_size.x (also physical px).
+    int blank_width = GetSize().GetWidth() - FromDIP(120) - m_label_stat->GetSize().GetWidth() - m_button_play->GetSize().GetWidth();
     int max_status_width = std::min(blank_width, FromDIP(600));
 
     wxString display_text = msg;

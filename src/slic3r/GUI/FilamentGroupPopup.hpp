@@ -41,6 +41,10 @@ private:
     void Dismiss();
 
     void CreateBmps();
+    // Render an MD3 radio indicator (checked/unchecked/disabled, optional hover
+    // state-layer) from the Material Symbols icon font. Used by CreateBmps() when
+    // MaterialIcon::available(); otherwise the legacy map_mode_* rasters are used.
+    wxBitmap MakeRadioGlyphBitmap(bool checked, bool hover, bool disabled);
     void RecreateUIElements();
     void UpdateNozzleLabels();
     void Init(const std::vector<FilamentMapMode>& available_modes);

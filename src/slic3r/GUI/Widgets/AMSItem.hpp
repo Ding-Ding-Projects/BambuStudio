@@ -532,7 +532,7 @@ protected:
     bool            m_support_cali    = {false};
 
 
-    double   m_radius = {4};
+    double   m_radius = {MD3::Metrics::radius_tiny}; // MD3 swatch-tile corner (kit r8)
     wxColour m_border_color;
     wxColour m_road_def_color;
     wxColour m_lib_color;

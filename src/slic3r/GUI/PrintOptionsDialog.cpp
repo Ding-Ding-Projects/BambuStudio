@@ -3,6 +3,7 @@
 #include "GUI_App.hpp"
 #include "libslic3r/Utils.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "MsgDialog.hpp"
 
 #include "DeviceCore/DevConfig.h"
@@ -290,8 +291,9 @@ PrintOptionsDialog::PrintOptionsDialog(wxWindow* parent)
             wxString message = _L("When enabled, the printer will automatically capture photos of printed parts and upload them to the cloud. Would you like to enable this option?");
             wxString caption = _L("Confirm Enable Print Status Snapshot");
 
-            wxMessageDialog dialog(this, message, caption, wxYES_NO | wxICON_QUESTION);
-            dialog.SetYesNoLabels(_L("Confirm"), _L("Cancel"));
+            MessageDialog dialog(this, message, caption, wxYES_NO | wxICON_QUESTION);
+            dialog.SetButtonLabel(wxID_YES, _L("Confirm"));
+            dialog.SetButtonLabel(wxID_NO, _L("Cancel"));
 
             int result = dialog.ShowModal();
 
@@ -319,6 +321,7 @@ PrintOptionsDialog::PrintOptionsDialog(wxWindow* parent)
             }},m_print_option_timer->GetId());
     purify_air_bind_toast();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 PrintOptionsDialog::~PrintOptionsDialog()
@@ -1907,6 +1910,7 @@ PrinterPartsDialog::PrinterPartsDialog(wxWindow* parent)
     single_panel->Hide();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 PrinterPartsDialog::~PrinterPartsDialog() {}
@@ -2038,7 +2042,8 @@ void PrinterPartsDialog::OnWikiClicked(wxMouseEvent& e)
     if (!url.IsEmpty()) {
         wxLaunchDefaultBrowser(url);
     } else {
-        wxMessageBox(_L("No wiki link available for this printer."), _L("Error"), wxOK | wxICON_ERROR, this);
+        MessageDialog dlg(this, _L("No wiki link available for this printer."), _L("Error"), wxOK | wxICON_ERROR);
+        dlg.ShowModal();
     }
 }// PrinterPartsDialog::OnWikiClicked
 

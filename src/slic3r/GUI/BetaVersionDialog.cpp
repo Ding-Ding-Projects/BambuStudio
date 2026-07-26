@@ -8,6 +8,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/AMSItem.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/sizer.h>
 #include <wx/dcgraph.h>
@@ -134,8 +135,9 @@ BetaVersionDialog::BetaVersionDialog(wxWindow *parent)
     Fit();
 
     SetMinSize(GetSize());
-    Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 
     // The window close box (X) must not be conflated with the explicit
     // "Don't show me Beta updates again" button: that button intentionally

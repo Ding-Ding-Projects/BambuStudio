@@ -14,6 +14,7 @@
 
 class Button;
 class Label;
+class SearchField;
 class StaticBox;
 class wxCloseEvent;
 class wxCommandEvent;
@@ -48,6 +49,9 @@ private:
     void create_ui();
     void apply_theme();
     void refresh_versions();
+    // Surfaces terminally-failed / quarantined project-history snapshots kept on
+    // disk, with a Retry action that re-drives them through the Plater.
+    void refresh_retained_failures();
     void begin_restore();
     void poll_operation(wxTimerEvent &event);
     void finish_list(ProjectHistoryListResult result);
@@ -63,6 +67,7 @@ private:
     void cleanup_restore_temp();
 
     void on_refresh(wxCommandEvent &event);
+    void on_retry_failures(wxCommandEvent &event);
     void on_restore(wxCommandEvent &event);
     void on_close_button(wxCommandEvent &event);
     void on_close_window(wxCloseEvent &event);
@@ -97,11 +102,18 @@ private:
     Label                  *m_project_label{nullptr};
     Label                  *m_status_label{nullptr};
     Label                  *m_safety_label{nullptr};
+    Label                  *m_failure_title_label{nullptr};
+    Label                  *m_failure_detail_label{nullptr};
     StaticBox              *m_info_card{nullptr};
+    StaticBox              *m_failure_card{nullptr};
     StaticBox              *m_list_card{nullptr};
+    SearchField            *m_search_field{nullptr};
     wxDataViewListCtrl     *m_version_list{nullptr};
+    // View-row -> m_versions index for the current (possibly filtered) list.
+    std::vector<std::size_t> m_filtered_rows;
     Button                 *m_refresh_button{nullptr};
     Button                 *m_load_all_button{nullptr};
+    Button                 *m_retry_failures_button{nullptr};
     Button                 *m_restore_button{nullptr};
     Button                 *m_close_button{nullptr};
 };

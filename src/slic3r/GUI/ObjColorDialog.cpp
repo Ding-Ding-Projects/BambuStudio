@@ -12,6 +12,7 @@
 #include "libslic3r/Config.hpp"
 #include "BitmapComboBox.hpp"
 #include "Widgets/ComboBox.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include <wx/sizer.h>
 
 #include "libslic3r/ObjColorUtils.hpp"
@@ -266,6 +267,7 @@ ObjColorDialog::ObjColorDialog(wxWindow *parent, Slic3r::ObjDialogInOut &in_out,
     });
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
 }
 
@@ -405,9 +407,11 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
 
                 m_sizer_simple->Add(m_two_image_panel, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(0));//wxALIGN_LEFT | wxEXPAND | wxTOP, FromDIP(2));
 
-                m_two_image_panel->SetBackgroundColor(wxGetApp().dark_mode() ? wxColour(48, 48, 48, 100) : wxColour(246, 246, 246, 100));
-                m_left_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
-                m_right_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
+                // MD3 tokens instead of the hand-picked grey pair: the semantic
+                // roles resolve per theme, so the dark_mode() branch collapses.
+                m_two_image_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+                m_left_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+                m_right_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
             }
             { // add  ComboBox cur_combox
                 auto combox_title = new Label(m_two_image_panel, _L("view"));

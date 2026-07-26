@@ -3,8 +3,10 @@
 #include "MsgDialog.hpp"
 #include "I18N.hpp"
 #include <wx/dcgraph.h>
+#include <wx/wrapsizer.h>
 #include "MainFrame.hpp"
 #include <string>
+#include <vector>
 #include "libslic3r/Config.hpp"
 #include "libslic3r/PrintConfig.hpp"
 
@@ -36,11 +38,56 @@ wxBoxSizer* create_item_checkbox(wxString title, wxWindow* parent, bool* value, 
     return m_sizer_checkbox;
 }
 
-PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
-    : DPIDialog(parent, id, _L("PA Calibration"), wxDefaultPosition, parent->FromDIP(wxSize(-1, 280)), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER), m_plater(plater)
+// Shared helper: convert the migrated calibration Start button into a kit filled
+// pill Button in the MD3Dialog footer. Only the visual variant/placement changes;
+// the caller keeps its own wxEVT_BUTTON binding + calib command + EndModal.
+static Button* make_calib_start_button(MD3Dialog* dlg)
 {
-    wxBoxSizer* v_sizer = new wxBoxSizer(wxVERTICAL);
-    SetSizer(v_sizer);
+    auto* btn = new Button(dlg, _L("OK"));
+    btn->SetVariant(Button::Variant::Filled);
+    btn->SetButtonSize(Button::Size::Medium);
+    return btn;
+}
+
+// Apply MD3 ValueField chrome to a bare calibration TextInput: SurfaceContainerHighest
+// fill (SurfaceContainerHigh when disabled), 10px corner radius and mono digits, matching
+// the kit ValueField geometry used across the settings surfaces.
+static void apply_valuefield_style(TextInput* ti)
+{
+    StateColor input_bg(
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHigh),    (int) StateColor::Disabled),
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::Enabled));
+    ti->SetBackgroundColor(input_bg);
+    ti->SetCornerRadius(ti->FromDIP(10));
+    ti->GetTextCtrl()->SetFont(::Label::Mono_13);
+}
+
+// Build a captioned MD3 SegmentedControl (MultiSwitchButton) column. The caption
+// replaces the wxRadioBox frame title; the segmented control keeps GetSelection()
+// index semantics and fires wxCUSTOMEVT_MULTISWITCH_SELECTION on change.
+static wxBoxSizer* make_labeled_segment(wxWindow* parent, const wxString& caption,
+                                        MultiSwitchButton*& out_ctrl,
+                                        const std::vector<wxString>& options)
+{
+    auto* col = new wxBoxSizer(wxVERTICAL);
+
+    auto* cap = new wxStaticText(parent, wxID_ANY, caption);
+    cap->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    cap->SetFont(::Label::Body_13);
+    col->Add(cap, 0, wxBOTTOM, parent->FromDIP(4));
+
+    out_ctrl = new MultiSwitchButton(parent);
+    out_ctrl->SetOptions(options);
+    out_ctrl->SetMinSize(wxSize(-1, parent->FromDIP(32)));
+    col->Add(out_ctrl, 0, wxEXPAND);
+
+    return col;
+}
+
+PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
+    : MD3Dialog(parent, _L("PA Calibration"), wxEmptyString, MaterialIcon::Tune), m_plater(plater)
+{
+    wxBoxSizer* v_sizer = GetContentSizer();
 
     Preset &printer_preset = wxGetApp().preset_bundle->printers.get_edited_preset();
     auto *extruder_types = printer_preset.config.option<ConfigOptionEnumsGeneric>("extruder_type");
@@ -54,19 +101,20 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
         }
     }
 
+    // Extruder type: 2-option MD3 SegmentedControl (was a wxRadioBox). Selected-index
+    // semantics are preserved so reset_params()/on_start() keep reading GetSelection().
     if (m_hasBowdenExtruder) {
-        wxString rbExtruderTypeChoices[] = { _L("Direct Drive"), _L("Bowden") };
-        int rbExtruderTypeNChoices = sizeof(rbExtruderTypeChoices) / sizeof(wxString);
-        m_rbExtruderType = new wxRadioBox(this, wxID_ANY, _L("Extruder type"), wxDefaultPosition, wxDefaultSize, rbExtruderTypeNChoices, rbExtruderTypeChoices, 2, wxRA_SPECIFY_COLS);
+        auto* extruder_seg = make_labeled_segment(this, _L("Extruder type"), m_rbExtruderType,
+                                                  {_L("Direct Drive"), _L("Bowden")});
         m_rbExtruderType->SetSelection(0);
-        v_sizer->Add(m_rbExtruderType, 0, wxLEFT | wxRIGHT | wxTOP, 5);
+        v_sizer->Add(extruder_seg, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(5));
     }
 
-	wxString m_rbMethodChoices[] = { _L("PA Tower"), _L("PA Line"), _L("PA Pattern") };
-	int m_rbMethodNChoices = sizeof(m_rbMethodChoices) / sizeof(wxString);
-	m_rbMethod = new wxRadioBox(this, wxID_ANY, _L("Method"), wxDefaultPosition, wxDefaultSize, m_rbMethodNChoices, m_rbMethodChoices, 3, wxRA_SPECIFY_COLS);
-	m_rbMethod->SetSelection(0);
-	v_sizer->Add(m_rbMethod, 0, wxLEFT | wxRIGHT | wxTOP, 5);
+    // Method: 3-option MD3 SegmentedControl (was a wxRadioBox).
+    auto* method_seg = make_labeled_segment(this, _L("Method"), m_rbMethod,
+                                            {_L("PA Tower"), _L("PA Line"), _L("PA Pattern")});
+    m_rbMethod->SetSelection(0);
+    v_sizer->Add(method_seg, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(5));
 
     // Settings
     //
@@ -77,7 +125,8 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
 	text_size.IncTo(wxWindow::GetTextExtent(end_pa_str));
 	text_size.IncTo(wxWindow::GetTextExtent(PA_step_str));
 	text_size.x = text_size.x * 1.5;
-	wxStaticBoxSizer* settings_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _L("Settings"));
+	auto* settings_header = new ::SectionHeader(this, _L("Settings"), MaterialIcon::Tune);
+	wxBoxSizer* settings_sizer = new wxBoxSizer(wxVERTICAL);
 
 	auto st_size = FromDIP(wxSize(text_size.x, -1));
 	auto ti_size = FromDIP(wxSize(90, -1));
@@ -86,6 +135,7 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
     auto start_pa_text = new wxStaticText(this, wxID_ANY, start_pa_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStartPA = new TextInput(this, "", "", "", wxDefaultPosition, ti_size, wxTE_CENTRE | wxTE_PROCESS_ENTER);
     m_tiStartPA->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStartPA);
 
 	start_PA_sizer->Add(start_pa_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     start_PA_sizer->Add(m_tiStartPA, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
@@ -96,6 +146,7 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
     auto end_pa_text = new wxStaticText(this, wxID_ANY, end_pa_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiEndPA = new TextInput(this, "", "", "", wxDefaultPosition, ti_size, wxTE_CENTRE | wxTE_PROCESS_ENTER);
     m_tiEndPA->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiEndPA);
     end_PA_sizer->Add(end_pa_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     end_PA_sizer->Add(m_tiEndPA, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(end_PA_sizer);
@@ -105,6 +156,7 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
     auto PA_step_text = new wxStaticText(this, wxID_ANY, PA_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiPAStep = new TextInput(this, "", "", "", wxDefaultPosition, ti_size, wxTE_CENTRE | wxTE_PROCESS_ENTER);
     m_tiPAStep->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiPAStep);
     PA_step_sizer->Add(PA_step_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     PA_step_sizer->Add(m_tiPAStep, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(PA_step_sizer);
@@ -112,41 +164,34 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
 	settings_sizer->Add(create_item_checkbox(_L("Print numbers"), this, &m_params.print_numbers, m_cbPrintNum));
     m_cbPrintNum->SetValue(false);
 
-    v_sizer->Add(settings_sizer);
-	v_sizer->Add(0, FromDIP(10), 0, wxEXPAND, 5);
-    m_btnStart = new Button(this, _L("OK"));
+    v_sizer->Add(settings_header, 0, wxEXPAND | wxTOP, FromDIP(4));
+    v_sizer->Add(settings_sizer, 0, wxEXPAND);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-		std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-		std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-
-	m_btnStart->SetBackgroundColor(btn_bg_green);
-	m_btnStart->SetBorderColor(ThemeColor::BrandGreen);
-	m_btnStart->SetTextColor(ThemeColor::White);
-	m_btnStart->SetSize(wxSize(FromDIP(48), FromDIP(24)));
-	m_btnStart->SetMinSize(wxSize(FromDIP(48), FromDIP(24)));
-	m_btnStart->SetCornerRadius(FromDIP(3));
+    // Footer: kit filled pill Start button (return code + calib command preserved).
+    m_btnStart = make_calib_start_button(this);
 	m_btnStart->Bind(wxEVT_BUTTON, &PA_Calibration_Dlg::on_start, this);
-	v_sizer->Add(m_btnStart, 0, wxALL | wxALIGN_RIGHT, FromDIP(5));
+	AddFooterButton(m_btnStart);
 
     PA_Calibration_Dlg::reset_params();
 
-    // Connect Events
+    // Connect Events (SegmentedControl selection contract).
     if (m_rbExtruderType)
-        m_rbExtruderType->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(PA_Calibration_Dlg::on_extruder_type_changed), NULL, this);
-    m_rbMethod->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(PA_Calibration_Dlg::on_method_changed), NULL, this);
+        m_rbExtruderType->Connect(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEventHandler(PA_Calibration_Dlg::on_extruder_type_changed), NULL, this);
+    m_rbMethod->Connect(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEventHandler(PA_Calibration_Dlg::on_method_changed), NULL, this);
     this->Connect(wxEVT_SHOW, wxShowEventHandler(PA_Calibration_Dlg::on_show));
     //wxGetApp().UpdateDlgDarkUI(this);
 
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
 }
 
 PA_Calibration_Dlg::~PA_Calibration_Dlg() {
     // Disconnect Events
     if (m_rbExtruderType)
-        m_rbExtruderType->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(PA_Calibration_Dlg::on_extruder_type_changed), NULL, this);
-    m_rbMethod->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(PA_Calibration_Dlg::on_method_changed), NULL, this);
+        m_rbExtruderType->Disconnect(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEventHandler(PA_Calibration_Dlg::on_extruder_type_changed), NULL, this);
+    m_rbMethod->Disconnect(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEventHandler(PA_Calibration_Dlg::on_method_changed), NULL, this);
     m_btnStart->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(PA_Calibration_Dlg::on_start), NULL, this);
 }
 
@@ -237,6 +282,7 @@ void PA_Calibration_Dlg::on_method_changed(wxCommandEvent& event) {
 void PA_Calibration_Dlg::on_dpi_changed(const wxRect& suggested_rect) {
     this->Refresh();
     Fit();
+    UpdateShape();
 }
 
 void PA_Calibration_Dlg::on_show(wxShowEvent& event) {
@@ -259,22 +305,55 @@ enum FILAMENT_TYPE : int
 };
 
 Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
-    : DPIDialog(parent, id, _L("Temperature calibration"), wxDefaultPosition, parent->FromDIP(wxSize(-1, 280)), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER), m_plater(plater)
+    : MD3Dialog(parent, _L("Temperature calibration"), wxEmptyString, MaterialIcon::Thermostat), m_plater(plater)
 {
-    wxBoxSizer* v_sizer = new wxBoxSizer(wxVERTICAL);
-    SetSizer(v_sizer);
-    wxBoxSizer* choice_sizer = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* v_sizer = GetContentSizer();
 
-    wxString m_rbFilamentTypeChoices[] = {"PLA", "ABS/ASA", "PETG", "PCTG", "TPU", "TPU-AMS", "PA-CF", "PET-CF", _L("Custom")};
-    int m_rbFilamentTypeNChoices = sizeof(m_rbFilamentTypeChoices) / sizeof(wxString);
-    m_rbFilamentType = new wxRadioBox(this, wxID_ANY, _L("Filament type"), wxDefaultPosition, wxDefaultSize, m_rbFilamentTypeNChoices, m_rbFilamentTypeChoices, 2, wxRA_SPECIFY_COLS);
-    m_rbFilamentType->SetSelection(0);
-    m_rbFilamentType->Select(0);
-    choice_sizer->Add(m_rbFilamentType, 0, wxALL, 5);
-    choice_sizer->Add(FromDIP(5), 0, 0, wxEXPAND, 5);
-    wxString m_rbMethodChoices[] = { _L("PA Tower"), _L("PA Line") };
+    // Filament type: 9 options rendered as an MD3 RadioBox chip group in a wrap
+    // sizer (was a 2-column wxRadioBox). A 9-wide SegmentedControl would not fit,
+    // so each option is a live-drawn RadioBox + label chip; single-selection is
+    // managed here, preserving the original selected-index -> temperature mapping.
+    wxString filamentLabels[] = {"PLA", "ABS/ASA", "PETG", "PCTG", "TPU", "TPU-AMS", "PA-CF", "PET-CF", _L("Custom")};
+    const int nFilament = sizeof(filamentLabels) / sizeof(wxString);
 
-    v_sizer->Add(choice_sizer);
+    auto* fil_caption = new wxStaticText(this, wxID_ANY, _L("Filament type"));
+    fil_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    fil_caption->SetFont(::Label::Body_13);
+
+    auto* fil_wrap = new wxWrapSizer(wxHORIZONTAL);
+    for (int i = 0; i < nFilament; ++i) {
+        auto* row = new wxBoxSizer(wxHORIZONTAL);
+        auto* rb  = new RadioBox(this);
+        m_filamentRadios.push_back(rb);
+
+        // The dot itself carries no text; expose the chip name so assistive tech
+        // announces the focused radio.
+        rb->SetName(filamentLabels[i]);
+
+        auto* lbl = new wxStaticText(this, wxID_ANY, filamentLabels[i]);
+        lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        lbl->SetFont(::Label::Body_13);
+
+        row->Add(rb, 0, wxALIGN_CENTER_VERTICAL);
+        row->AddSpacer(FromDIP(6));
+        row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL);
+
+        // Clicking the dot or its label selects that chip. Do not Skip(): the
+        // toggle's default flip is suppressed so state is driven solely here.
+        auto select = [this, i](wxMouseEvent&) { on_filament_type_changed(i); };
+        rb->Bind(wxEVT_LEFT_DOWN, select);
+        lbl->Bind(wxEVT_LEFT_DOWN, select);
+        // Keyboard a11y: the RadioBox is a native wxBitmapToggleButton, so Space/
+        // Enter fires wxEVT_TOGGLEBUTTON. Route it through the same single-select
+        // handler so keyboard activation drives selection, not just mouse-down.
+        rb->Bind(wxEVT_TOGGLEBUTTON, [this, i](wxCommandEvent&) { on_filament_type_changed(i); });
+
+        fil_wrap->Add(row, 0, wxRIGHT | wxBOTTOM, FromDIP(12));
+    }
+    m_filamentRadios[0]->SetValue(true);
+
+    v_sizer->Add(fil_caption, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(5));
+    v_sizer->Add(fil_wrap, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(5));
 
     // Settings
     //
@@ -285,7 +364,8 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     text_size.IncTo(wxWindow::GetTextExtent(end_temp_str));
     text_size.IncTo(wxWindow::GetTextExtent(temp_step_str));
     text_size.x = text_size.x * 1.5;
-    wxStaticBoxSizer* settings_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _L("Settings"));
+    auto* settings_header = new ::SectionHeader(this, _L("Settings"), MaterialIcon::Thermostat);
+    wxBoxSizer* settings_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto st_size = FromDIP(wxSize(text_size.x, -1));
     auto ti_size = FromDIP(wxSize(90, -1));
@@ -294,6 +374,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     auto start_temp_text = new wxStaticText(this, wxID_ANY, start_temp_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStart = new TextInput(this, std::to_string(230), "°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStart);
 
     start_temp_sizer->Add(start_temp_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     start_temp_sizer->Add(m_tiStart, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
@@ -304,6 +385,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     auto end_temp_text = new wxStaticText(this, wxID_ANY, end_temp_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiEnd = new TextInput(this, std::to_string(190), "°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiEnd);
     end_temp_sizer->Add(end_temp_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     end_temp_sizer->Add(m_tiEnd, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(end_temp_sizer);
@@ -313,34 +395,30 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     auto temp_step_text = new wxStaticText(this, wxID_ANY, temp_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStep = new TextInput(this, wxString::FromDouble(5),"°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStep);
     m_tiStep->Enable(false);
     temp_step_sizer->Add(temp_step_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     temp_step_sizer->Add(m_tiStep, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(temp_step_sizer);
 
-    v_sizer->Add(settings_sizer);
-    v_sizer->Add(0, FromDIP(10), 0, wxEXPAND, 5);
-    m_btnStart = new Button(this, _L("OK"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-		std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-		std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    v_sizer->Add(settings_header, 0, wxEXPAND | wxTOP, FromDIP(4));
+    v_sizer->Add(settings_sizer, 0, wxEXPAND);
 
-    m_btnStart->SetBackgroundColor(btn_bg_green);
-    m_btnStart->SetBorderColor(ThemeColor::BrandGreen);
-    m_btnStart->SetTextColor(ThemeColor::White);
-    m_btnStart->SetSize(wxSize(FromDIP(48), FromDIP(24)));
-    m_btnStart->SetMinSize(wxSize(FromDIP(48), FromDIP(24)));
-    m_btnStart->SetCornerRadius(FromDIP(3));
+    // Footer: kit filled pill Start button (return code + calib command preserved).
+    m_btnStart = make_calib_start_button(this);
     m_btnStart->Bind(wxEVT_BUTTON, &Temp_Calibration_Dlg::on_start, this);
-    v_sizer->Add(m_btnStart, 0, wxALL | wxALIGN_RIGHT, FromDIP(5));
+    AddFooterButton(m_btnStart);
 
-    m_rbFilamentType->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(Temp_Calibration_Dlg::on_filament_type_changed), NULL, this);
+    // Filament selection is wired per-chip above (wxEVT_LEFT_DOWN on each RadioBox
+    // and its label); only the Start button needs a class-level Connect here.
     m_btnStart->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(Temp_Calibration_Dlg::on_start), NULL, this);
 
     //wxGetApp().UpdateDlgDarkUI(this);
 
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
 
     auto validate_text = [this](TextInput* ti){
         unsigned long t = 0;
@@ -372,8 +450,8 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
 }
 
 Temp_Calibration_Dlg::~Temp_Calibration_Dlg() {
-    // Disconnect Events
-    m_rbFilamentType->Disconnect(wxEVT_COMMAND_RADIOBOX_SELECTED, wxCommandEventHandler(Temp_Calibration_Dlg::on_filament_type_changed), NULL, this);
+    // Disconnect Events (per-chip filament bindings live on child controls that are
+    // destroyed with the dialog, so only the Start button needs an explicit Disconnect).
     m_btnStart->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(Temp_Calibration_Dlg::on_start), NULL, this);
 }
 
@@ -396,9 +474,17 @@ void Temp_Calibration_Dlg::on_start(wxCommandEvent& event) {
 
 }
 
-void Temp_Calibration_Dlg::on_filament_type_changed(wxCommandEvent& event) {
-    int selection = event.GetSelection();
-    unsigned long start,end;
+void Temp_Calibration_Dlg::on_filament_type_changed(int selection) {
+    if (selection < 0 || selection >= (int) m_filamentRadios.size())
+        return;
+
+    // Drive single-selection across the RadioBox chip group, keeping the same
+    // selected-index semantics the old wxRadioBox handler relied on.
+    m_filamentSel = selection;
+    for (int i = 0; i < (int) m_filamentRadios.size(); ++i)
+        m_filamentRadios[i]->SetValue(i == selection);
+
+    unsigned long start = 230, end = 190;
     switch(selection)
     {
         case tABS_ASA:
@@ -435,12 +521,12 @@ void Temp_Calibration_Dlg::on_filament_type_changed(wxCommandEvent& event) {
 
     m_tiEnd->GetTextCtrl()->SetValue(std::to_string(end));
     m_tiStart->GetTextCtrl()->SetValue(std::to_string(start));
-    event.Skip();
 }
 
 void Temp_Calibration_Dlg::on_dpi_changed(const wxRect& suggested_rect) {
     this->Refresh();
     Fit();
+    UpdateShape();
 
 }
 
@@ -449,10 +535,9 @@ void Temp_Calibration_Dlg::on_dpi_changed(const wxRect& suggested_rect) {
 //
 
 MaxVolumetricSpeed_Test_Dlg::MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
-    : DPIDialog(parent, id, _L("Max volumetric speed test"), wxDefaultPosition, parent->FromDIP(wxSize(-1, 280)), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER), m_plater(plater)
+    : MD3Dialog(parent, _L("Max volumetric speed test"), wxEmptyString, MaterialIcon::Speed), m_plater(plater)
 {
-    wxBoxSizer* v_sizer = new wxBoxSizer(wxVERTICAL);
-    SetSizer(v_sizer);
+    wxBoxSizer* v_sizer = GetContentSizer();
 
     // Settings
     //
@@ -463,7 +548,8 @@ MaxVolumetricSpeed_Test_Dlg::MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWin
     text_size.IncTo(wxWindow::GetTextExtent(end_vol_str));
     text_size.IncTo(wxWindow::GetTextExtent(vol_step_str));
     text_size.x = text_size.x * 1.5;
-    wxStaticBoxSizer* settings_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _L("Settings"));
+    auto* settings_header = new ::SectionHeader(this, _L("Settings"), MaterialIcon::Speed);
+    wxBoxSizer* settings_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto st_size = FromDIP(wxSize(text_size.x, -1));
     auto ti_size = FromDIP(wxSize(90, -1));
@@ -472,6 +558,7 @@ MaxVolumetricSpeed_Test_Dlg::MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWin
     auto start_vol_text = new wxStaticText(this, wxID_ANY, start_vol_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStart = new TextInput(this, std::to_string(5), _L("mm³/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStart);
 
     start_vol_sizer->Add(start_vol_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     start_vol_sizer->Add(m_tiStart, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
@@ -482,6 +569,7 @@ MaxVolumetricSpeed_Test_Dlg::MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWin
     auto end_vol_text = new wxStaticText(this, wxID_ANY, end_vol_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiEnd = new TextInput(this, std::to_string(20), _L("mm³/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiEnd);
     end_vol_sizer->Add(end_vol_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     end_vol_sizer->Add(m_tiEnd, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(end_vol_sizer);
@@ -491,32 +579,27 @@ MaxVolumetricSpeed_Test_Dlg::MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWin
     auto vol_step_text = new wxStaticText(this, wxID_ANY, vol_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStep = new TextInput(this, wxString::FromDouble(0.5), _L("mm³/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStep);
     vol_step_sizer->Add(vol_step_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     vol_step_sizer->Add(m_tiStep, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(vol_step_sizer);
 
-    v_sizer->Add(settings_sizer);
-    v_sizer->Add(0, FromDIP(10), 0, wxEXPAND, 5);
-    m_btnStart = new Button(this, _L("OK"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-		std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-		std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    v_sizer->Add(settings_header, 0, wxEXPAND | wxTOP, FromDIP(4));
+    v_sizer->Add(settings_sizer, 0, wxEXPAND);
 
-    m_btnStart->SetBackgroundColor(btn_bg_green);
-    m_btnStart->SetBorderColor(ThemeColor::BrandGreen);
-    m_btnStart->SetTextColor(ThemeColor::White);
-    m_btnStart->SetSize(wxSize(FromDIP(48), FromDIP(24)));
-    m_btnStart->SetMinSize(wxSize(FromDIP(48), FromDIP(24)));
-    m_btnStart->SetCornerRadius(FromDIP(3));
+    // Footer: kit filled pill Start button (return code + calib command preserved).
+    m_btnStart = make_calib_start_button(this);
     m_btnStart->Bind(wxEVT_BUTTON, &MaxVolumetricSpeed_Test_Dlg::on_start, this);
-    v_sizer->Add(m_btnStart, 0, wxALL | wxALIGN_RIGHT, FromDIP(5));
+    AddFooterButton(m_btnStart);
 
     m_btnStart->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MaxVolumetricSpeed_Test_Dlg::on_start), NULL, this);
 
     //wxGetApp().UpdateDlgDarkUI(this);
 
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
 }
 
 MaxVolumetricSpeed_Test_Dlg::~MaxVolumetricSpeed_Test_Dlg() {
@@ -545,6 +628,7 @@ void MaxVolumetricSpeed_Test_Dlg::on_start(wxCommandEvent& event) {
 void MaxVolumetricSpeed_Test_Dlg::on_dpi_changed(const wxRect& suggested_rect) {
     this->Refresh();
     Fit();
+    UpdateShape();
 
 }
 
@@ -553,11 +637,10 @@ void MaxVolumetricSpeed_Test_Dlg::on_dpi_changed(const wxRect& suggested_rect) {
 //
 
 VFA_Test_Dlg::VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
-    : DPIDialog(parent, id, _L("VFA test"), wxDefaultPosition, parent->FromDIP(wxSize(-1, 280)), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+    : MD3Dialog(parent, _L("VFA test"), wxEmptyString, MaterialIcon::Straighten)
     , m_plater(plater)
 {
-    wxBoxSizer* v_sizer = new wxBoxSizer(wxVERTICAL);
-    SetSizer(v_sizer);
+    wxBoxSizer* v_sizer = GetContentSizer();
 
     // Settings
     //
@@ -568,7 +651,8 @@ VFA_Test_Dlg::VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
     text_size.IncTo(wxWindow::GetTextExtent(end_vol_str));
     text_size.IncTo(wxWindow::GetTextExtent(vol_step_str));
     text_size.x = text_size.x * 1.5;
-    wxStaticBoxSizer* settings_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _L("Settings"));
+    auto* settings_header = new ::SectionHeader(this, _L("Settings"), MaterialIcon::Straighten);
+    wxBoxSizer* settings_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto st_size = FromDIP(wxSize(text_size.x, -1));
     auto ti_size = FromDIP(wxSize(90, -1));
@@ -577,6 +661,7 @@ VFA_Test_Dlg::VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
     auto start_vol_text = new wxStaticText(this, wxID_ANY, start_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStart = new TextInput(this, std::to_string(40), _L("mm/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStart);
 
     start_vol_sizer->Add(start_vol_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     start_vol_sizer->Add(m_tiStart, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
@@ -587,6 +672,7 @@ VFA_Test_Dlg::VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
     auto end_vol_text = new wxStaticText(this, wxID_ANY, end_vol_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiEnd = new TextInput(this, std::to_string(200), _L("mm/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiEnd);
     end_vol_sizer->Add(end_vol_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     end_vol_sizer->Add(m_tiEnd, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(end_vol_sizer);
@@ -596,32 +682,27 @@ VFA_Test_Dlg::VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
     auto vol_step_text = new wxStaticText(this, wxID_ANY, vol_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStep = new TextInput(this, wxString::FromDouble(10), _L("mm/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStep);
     vol_step_sizer->Add(vol_step_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     vol_step_sizer->Add(m_tiStep, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(vol_step_sizer);
 
-    v_sizer->Add(settings_sizer);
-    v_sizer->Add(0, FromDIP(10), 0, wxEXPAND, 5);
-    m_btnStart = new Button(this, _L("OK"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-		std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-		std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    v_sizer->Add(settings_header, 0, wxEXPAND | wxTOP, FromDIP(4));
+    v_sizer->Add(settings_sizer, 0, wxEXPAND);
 
-    m_btnStart->SetBackgroundColor(btn_bg_green);
-    m_btnStart->SetBorderColor(ThemeColor::BrandGreen);
-    m_btnStart->SetTextColor(ThemeColor::White);
-    m_btnStart->SetSize(wxSize(FromDIP(48), FromDIP(24)));
-    m_btnStart->SetMinSize(wxSize(FromDIP(48), FromDIP(24)));
-    m_btnStart->SetCornerRadius(FromDIP(3));
+    // Footer: kit filled pill Start button (return code + calib command preserved).
+    m_btnStart = make_calib_start_button(this);
     m_btnStart->Bind(wxEVT_BUTTON, &VFA_Test_Dlg::on_start, this);
-    v_sizer->Add(m_btnStart, 0, wxALL | wxALIGN_RIGHT, FromDIP(5));
+    AddFooterButton(m_btnStart);
 
     m_btnStart->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(VFA_Test_Dlg::on_start), NULL, this);
 
     // wxGetApp().UpdateDlgDarkUI(this);
 
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
 }
 
 VFA_Test_Dlg::~VFA_Test_Dlg()
@@ -652,6 +733,7 @@ void VFA_Test_Dlg::on_dpi_changed(const wxRect& suggested_rect)
 {
     this->Refresh();
     Fit();
+    UpdateShape();
 }
 
 
@@ -660,10 +742,9 @@ void VFA_Test_Dlg::on_dpi_changed(const wxRect& suggested_rect)
 //
 
 Retraction_Test_Dlg::Retraction_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
-    : DPIDialog(parent, id, _L("Retraction test"), wxDefaultPosition, parent->FromDIP(wxSize(-1, 280)), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER), m_plater(plater)
+    : MD3Dialog(parent, _L("Retraction test"), wxEmptyString, MaterialIcon::SwapHoriz), m_plater(plater)
 {
-    wxBoxSizer* v_sizer = new wxBoxSizer(wxVERTICAL);
-    SetSizer(v_sizer);
+    wxBoxSizer* v_sizer = GetContentSizer();
 
     // Settings
     //
@@ -674,7 +755,8 @@ Retraction_Test_Dlg::Retraction_Test_Dlg(wxWindow* parent, wxWindowID id, Plater
     text_size.IncTo(wxWindow::GetTextExtent(end_length_str));
     text_size.IncTo(wxWindow::GetTextExtent(length_step_str));
     text_size.x = text_size.x * 1.5;
-    wxStaticBoxSizer* settings_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _L("Settings"));
+    auto* settings_header = new ::SectionHeader(this, _L("Settings"), MaterialIcon::SwapHoriz);
+    wxBoxSizer* settings_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto st_size = FromDIP(wxSize(text_size.x, -1));
     auto ti_size = FromDIP(wxSize(90, -1));
@@ -683,6 +765,7 @@ Retraction_Test_Dlg::Retraction_Test_Dlg(wxWindow* parent, wxWindowID id, Plater
     auto start_length_text = new wxStaticText(this, wxID_ANY, start_length_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStart = new TextInput(this, std::to_string(0), "mm", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStart);
 
     start_length_sizer->Add(start_length_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     start_length_sizer->Add(m_tiStart, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
@@ -693,6 +776,7 @@ Retraction_Test_Dlg::Retraction_Test_Dlg(wxWindow* parent, wxWindowID id, Plater
     auto end_length_text = new wxStaticText(this, wxID_ANY, end_length_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiEnd = new TextInput(this, std::to_string(2), "mm", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiEnd);
     end_length_sizer->Add(end_length_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     end_length_sizer->Add(m_tiEnd, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(end_length_sizer);
@@ -702,32 +786,27 @@ Retraction_Test_Dlg::Retraction_Test_Dlg(wxWindow* parent, wxWindowID id, Plater
     auto length_step_text = new wxStaticText(this, wxID_ANY, length_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
     m_tiStep = new TextInput(this, wxString::FromDouble(0.1), "mm/mm", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+    apply_valuefield_style(m_tiStep);
     length_step_sizer->Add(length_step_text, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     length_step_sizer->Add(m_tiStep, 0, wxALL | wxALIGN_CENTER_VERTICAL, 2);
     settings_sizer->Add(length_step_sizer);
 
-    v_sizer->Add(settings_sizer);
-    v_sizer->Add(0, FromDIP(10), 0, wxEXPAND, 5);
-    m_btnStart = new Button(this, _L("OK"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-		std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-		std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    v_sizer->Add(settings_header, 0, wxEXPAND | wxTOP, FromDIP(4));
+    v_sizer->Add(settings_sizer, 0, wxEXPAND);
 
-    m_btnStart->SetBackgroundColor(btn_bg_green);
-    m_btnStart->SetBorderColor(ThemeColor::BrandGreen);
-    m_btnStart->SetTextColor(ThemeColor::White);
-    m_btnStart->SetSize(wxSize(FromDIP(48), FromDIP(24)));
-    m_btnStart->SetMinSize(wxSize(FromDIP(48), FromDIP(24)));
-    m_btnStart->SetCornerRadius(FromDIP(3));
+    // Footer: kit filled pill Start button (return code + calib command preserved).
+    m_btnStart = make_calib_start_button(this);
     m_btnStart->Bind(wxEVT_BUTTON, &Retraction_Test_Dlg::on_start, this);
-    v_sizer->Add(m_btnStart, 0, wxALL | wxALIGN_RIGHT, FromDIP(5));
+    AddFooterButton(m_btnStart);
 
     m_btnStart->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(Retraction_Test_Dlg::on_start), NULL, this);
 
     //wxGetApp().UpdateDlgDarkUI(this);
 
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
 }
 
 Retraction_Test_Dlg::~Retraction_Test_Dlg() {
@@ -756,6 +835,7 @@ void Retraction_Test_Dlg::on_start(wxCommandEvent& event) {
 void Retraction_Test_Dlg::on_dpi_changed(const wxRect& suggested_rect) {
     this->Refresh();
     Fit();
+    UpdateShape();
 
 }
 

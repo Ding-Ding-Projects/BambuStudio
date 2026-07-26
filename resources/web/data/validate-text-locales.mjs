@@ -35,6 +35,22 @@ for (const key of Object.keys(english)) {
 sandbox.GetQueryString = () => 'bilingual_en_yue_HK';
 const bilingual = sandbox.GetCurrentTextByKey('t40');
 assert.match(bilingual, /^<span lang="en">Network disconnect/);
-assert.match(bilingual, /<span lang="yue-Hant-HK">粵語：網絡已中斷/);
+assert.match(bilingual, /<span class="BilingualSecondary"[^>]*lang="yue-Hant-HK"[^>]*>粵語：網絡已中斷/);
+// Compact secondary line: single block, ellipsized, never a bare <br/> break.
+assert.doesNotMatch(bilingual, /<br\s*\/?>/);
+assert.match(bilingual, /text-overflow:ellipsis/);
+
+// Untranslated (or identical) strings degrade to English-only, no annotation.
+const identical = Object.keys(english).find(
+  (key) => english[key] !== '' && cantonese[key] === english[key],
+);
+if (identical) {
+  assert.equal(sandbox.GetCurrentTextByKey(identical), english[identical]);
+}
+
+// Plain-text variant for title/placeholder/innerText contexts: no markup.
+const plain = sandbox.GetCurrentPlainTextByKey('t40');
+assert.doesNotMatch(plain, /[<>]/);
+assert.match(plain, /粵語：/);
 
 console.log(`Validated yue_HK and bilingual_en_yue_HK for ${Object.keys(english).length} English web keys.`);

@@ -2,6 +2,7 @@
 #include "Label.hpp"
 #include "StateColor.hpp"
 #include "TextCtrl.h"
+#include "MaterialIcon.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
 
@@ -27,11 +28,23 @@ TextInput::TextInput()
     , text_color(std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
                  std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
 {
-    radius = 0;
+    // MD3 filled-field geometry. Radius 10 flows through the StaticBox
+    // default-radius path so it is FromDIP-scaled at Create and recomputed on
+    // every monitor/DPI change (no stale cached radius). Fill is
+    // SurfaceContainerHighest; the resting border is Outline (not the lighter
+    // OutlineVariant), hover promotes to Primary, disabled falls to
+    // OutlineVariant. Every colour is stored as its MD3 *light* role value, and
+    // each of those hexes is a key in StateColor.cpp's gDarkColors table, so
+    // colorForStates() live-remaps them on a runtime dark-mode toggle -- this is
+    // why the old Grey400 / BrandGreen / White / Grey300 literals are dropped in
+    // favour of the role tones rather than semantic() snapshots.
+    SetDefaultCornerRadius(10);
     border_width = 1;
-    border_color = StateColor(std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled), std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Hovered),
-                              std::make_pair(ThemeColor::Grey400, (int) StateColor::Normal));
-    background_color = StateColor(std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled), std::make_pair(ThemeColor::White, (int) StateColor::Normal));
+    border_color = StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
+                              std::make_pair(MD3::Light::primary, (int) StateColor::Hovered),
+                              std::make_pair(MD3::Light::outline, (int) StateColor::Normal));
+    background_color = StateColor(std::make_pair(MD3::Light::scHigh, (int) StateColor::Disabled),
+                                  std::make_pair(MD3::Light::scHighest, (int) StateColor::Normal));
     SetFont(Label::Body_12);
 }
 
@@ -148,6 +161,18 @@ void TextInput::SetIcon(const wxString &icon)
 {
     if (this->icon.name() == icon.ToStdString())
         return;
+    // MD3 leading icon as a Material Symbols glyph (kit ValueField/SelectField
+    // anatomy) for the handful of well-known raster names still routed through
+    // this string-keyed setter (e.g. ComboBox's trailing 'drop_down' chevron,
+    // inherited from TextInput -- see AMSMaterialsSetting.cpp). Falls back to
+    // the legacy raster for any name not in this table, or when the icon face
+    // is unavailable.
+    if (MaterialIcon::available() && icon == "drop_down") {
+        this->icon = ScalableBitmap();
+        this->icon.bmp() = MaterialIcon::bitmap(this, MaterialIcon::ExpandMore, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        Rescale();
+        return;
+    }
     this->icon = ScalableBitmap(this, icon.ToStdString(), 16);
     Rescale();
 }
@@ -246,9 +271,13 @@ void TextInput::DoSetSize(int x, int y, int width, int height, int sizeFlags)
     if (text_ctrl) {
         wxClientDC dc(this);
         wxSize unitSize = dc.GetTextExtent(m_unit);
-        int unit_space = (m_unit.IsEmpty() ? 0 : unitSize.x + 5) + 10;
+        // Reserve room for the trailing unit suffix (gap + glyph + right pad) so
+        // render()'s unit draw (at the entry's right edge + 4) stays inside the
+        // field instead of clipping. 0 when there is no unit, so unit-less fields
+        // keep their previous width exactly.
+        int unit_space = m_unit.IsEmpty() ? 0 : (unitSize.x + 5 + 10);
         wxSize textSize = text_ctrl->GetSize();
-        textSize.x = size.x - textPos.x - labelSize.x - 10 - prefix_space;
+        textSize.x = size.x - textPos.x - labelSize.x - 10 - prefix_space - unit_space;
         if(textSize.x < -1) textSize.x = -1;
         text_ctrl->SetSize(textSize);
         text_ctrl->SetPosition({textPos.x + prefix_space, (size.y - textSize.y) / 2});
@@ -371,21 +400,31 @@ void TextInput::render(wxDC& dc)
 
         wxFont prefix_font = text_ctrl->GetFont();
         dc.SetFont(prefix_font);
-        dc.SetTextForeground(ThemeColor::TextDisabled);
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         dc.DrawText(m_prefix, wxPoint(x, y));
     }
     if (!m_unit.IsEmpty() && text_ctrl) {
         wxPoint ctrl_pos  = text_ctrl->GetPosition();
         wxSize  ctrl_size = text_ctrl->GetSize();
-        wxSize  unit_size = dc.GetTextExtent(m_unit);
 
-        int x = ctrl_pos.x + ctrl_size.x + 4;
-        int y = ctrl_pos.y + (ctrl_size.y - unit_size.y) / 2;
+        // Measure with the actual (smaller) unit font, then clamp+ellipsize the
+        // draw against the field's right edge so a too-narrow field never paints
+        // the unit past the border.
         wxFont unit_font = text_ctrl->GetFont();
         unit_font.SetPointSize(unit_font.GetPointSize() - 1);
         dc.SetFont(unit_font);
-        dc.SetTextForeground(ThemeColor::TextDisabled);
-        dc.DrawText(m_unit, wxPoint(x, y));
+        wxSize unit_size = dc.GetTextExtent(m_unit);
+
+        int x = ctrl_pos.x + ctrl_size.x + 4;
+        int y = ctrl_pos.y + (ctrl_size.y - unit_size.y) / 2;
+        int avail = size.x - x - 5; // room to the field's right edge
+        if (avail > 0) {
+            wxString unit = unit_size.x > avail
+                                ? wxControl::Ellipsize(m_unit, dc, wxELLIPSIZE_END, avail)
+                                : m_unit;
+            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+            dc.DrawText(unit, wxPoint(x, y));
+        }
     }
 }
 
@@ -440,7 +479,10 @@ bool TextInput::CheckValid(bool pop_dlg) const
         }
     }
 
-    text_ctrl->SetBackgroundColour(ThemeColor::White);
+    // Reset-on-valid restores the field's fill ROLE (SurfaceContainerHighest),
+    // not a raw White literal, so the interior matches the MD3 filled field in
+    // both light and dark themes.
+    text_ctrl->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     text_ctrl->SetToolTip(wxEmptyString);
     text_ctrl->Refresh();
     return true;

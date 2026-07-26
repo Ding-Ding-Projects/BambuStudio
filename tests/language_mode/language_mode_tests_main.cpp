@@ -83,6 +83,9 @@ TEST_CASE("Checked-in Cantonese catalog loads and supplies bilingual fallback", 
     const LocalizedText cantonese_left = service.translate(wxString::FromUTF8("Left"));
     REQUIRE(cantonese_left.primary == wxString::FromUTF8("左"));
     REQUIRE_FALSE(cantonese_left.has_secondary());
+    const LocalizedText cantonese_live = service.translate(wxString::FromUTF8("LIVE"));
+    REQUIRE(cantonese_live.primary == wxString::FromUTF8("直播中"));
+    REQUIRE_FALSE(cantonese_live.has_secondary());
 
     REQUIRE(service.configure(LANGUAGE_MODE_ENGLISH_CANTONESE_HK, catalog_root));
     const LocalizedText bilingual = service.translate(wxString::FromUTF8("Language"));
@@ -96,6 +99,9 @@ TEST_CASE("Checked-in Cantonese catalog loads and supplies bilingual fallback", 
     const LocalizedText bilingual_left = service.translate(wxString::FromUTF8("Left"));
     REQUIRE(bilingual_left.primary == wxString::FromUTF8("Left"));
     REQUIRE(bilingual_left.secondary == wxString::FromUTF8("左"));
+    const LocalizedText bilingual_live = service.translate(wxString::FromUTF8("LIVE"));
+    REQUIRE(bilingual_live.primary == wxString::FromUTF8("LIVE"));
+    REQUIRE(bilingual_live.secondary == wxString::FromUTF8("直播中"));
 
     const LocalizedText fallback = service.translate(wxString::FromUTF8("__missing_catalog_message__"));
     REQUIRE(fallback.primary == wxString::FromUTF8("__missing_catalog_message__"));

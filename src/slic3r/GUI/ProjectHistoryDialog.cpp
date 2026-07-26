@@ -1,11 +1,14 @@
 #include "ProjectHistoryDialog.hpp"
 
+#include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MsgDialog.hpp"
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "Widgets/SearchField.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
 
@@ -67,7 +70,8 @@ StateColor outlined_button_background()
 
 ProjectHistoryDialog::ProjectHistoryDialog(wxWindow *parent, Plater *plater)
     : DPIDialog(parent, wxID_ANY, _L("Version history"), wxDefaultPosition, wxDefaultSize,
-                wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER)
+                // MD3 caption strip instead of the native title bar.
+                wxRESIZE_BORDER | wxBORDER_NONE)
     , m_plater(plater)
     , m_manager(plater != nullptr ? plater->project_history_manager() : nullptr)
     , m_project_identity(plater != nullptr ? plater->project_history_identity() : std::filesystem::path{})
@@ -87,6 +91,8 @@ ProjectHistoryDialog::ProjectHistoryDialog(wxWindow *parent, Plater *plater)
     update_responsive_layout();
 
     refresh_versions();
+    refresh_retained_failures();
+    MD3DialogCaption::FinishChrome(this);
 }
 
 ProjectHistoryDialog::~ProjectHistoryDialog()
@@ -106,6 +112,7 @@ std::filesystem::path ProjectHistoryDialog::release_restored_snapshot()
 void ProjectHistoryDialog::create_ui()
 {
     auto *root = new wxBoxSizer(wxVERTICAL);
+    root->Add(new MD3DialogCaption(this, _L("Version history")), 0, wxEXPAND);
 
     m_title_label = new Label(this, Label::Head_24, _L("Version history"));
     root->Add(m_title_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
@@ -126,8 +133,38 @@ void ProjectHistoryDialog::create_ui()
     m_info_card->SetSizer(info_sizer);
     root->Add(m_info_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
+    // Recovery banner for snapshots whose commit failed terminally. Hidden until
+    // refresh_retained_failures() finds quarantined snapshots to surface.
+    m_failure_card = new StaticBox(this);
+    auto *failure_sizer = new wxBoxSizer(wxVERTICAL);
+    // TRN: Heading of the recovery banner in the Version history dialog.
+    m_failure_title_label = new Label(m_failure_card, Label::Head_14, _L("Some versions could not be saved"));
+    failure_sizer->Add(m_failure_title_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(14));
+    m_failure_detail_label = new Label(m_failure_card, Label::Body_13);
+    failure_sizer->Add(m_failure_detail_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(6));
+    m_retry_failures_button = new Button(m_failure_card, _L("Retry saving"));
+    m_retry_failures_button->SetMinSize(FromDIP(wxSize(140, 36)));
+    m_retry_failures_button->Bind(wxEVT_BUTTON, &ProjectHistoryDialog::on_retry_failures, this);
+    failure_sizer->Add(m_retry_failures_button, 0, wxALIGN_RIGHT | wxALL, FromDIP(14));
+    m_failure_card->SetSizer(failure_sizer);
+    root->Add(m_failure_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    m_failure_card->Hide();
+
     m_list_card = new StaticBox(this);
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);
+    // TRN: Placeholder of the search field filtering the version list.
+    m_search_field = new SearchField(m_list_card, _L("Search versions"));
+    m_search_field->SetOnQuery([this](const wxString &) {
+        populate_versions();
+        update_history_status();
+        update_selection();
+    });
+    m_search_field->SetOnRegexToggle([this](bool) {
+        populate_versions();
+        update_history_status();
+        update_selection();
+    });
+    list_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     m_version_list = new wxDataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxDV_SINGLE | wxBORDER_NONE);
     m_version_list->AppendTextColumn(_L("Commit"), wxDATAVIEW_CELL_INERT, FromDIP(104), wxALIGN_LEFT,
@@ -140,6 +177,7 @@ void ProjectHistoryDialog::create_ui()
                                      wxDATAVIEW_COL_RESIZABLE);
     m_version_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, &ProjectHistoryDialog::on_selection_changed, this);
     m_version_list->Bind(wxEVT_DATAVIEW_ITEM_ACTIVATED, &ProjectHistoryDialog::on_item_activated, this);
+    wxGetApp().UpdateDVCDarkUI(m_version_list); // native header follows the theme
     list_sizer->Add(m_version_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
     m_status_label = new Label(m_list_card, Label::Body_13);
@@ -205,6 +243,23 @@ void ProjectHistoryDialog::apply_theme()
         box->SetBorderWidth(1);
     }
 
+    // The recovery banner uses the MD3 error-container roles to read as a
+    // problem that needs attention without shouting like a hard error.
+    const wxColour error_container    = StateColor::semantic(MD3::Role::ErrorContainer);
+    const wxColour on_error_container  = StateColor::semantic(MD3::Role::OnErrorContainer);
+    const wxColour error_accent        = StateColor::semantic(MD3::Role::Error);
+    m_failure_card->SetBackgroundColorNormal(error_container);
+    m_failure_card->SetBorderColorNormal(error_accent);
+    m_failure_card->SetBorderWidth(1);
+    m_failure_title_label->SetForegroundColour(on_error_container);
+    m_failure_detail_label->SetForegroundColour(on_error_container);
+    m_retry_failures_button->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Error), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Error), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Error), StateColor::Normal)));
+    m_retry_failures_button->SetBorderColor(StateColor(error_accent));
+    m_retry_failures_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnError)));
+
     m_version_list->SetBackgroundColour(list_surface);
     m_version_list->SetForegroundColour(text);
     m_version_list->SetAlternateRowColour(alternate);
@@ -255,14 +310,64 @@ void ProjectHistoryDialog::refresh_versions()
     }
 }
 
+void ProjectHistoryDialog::refresh_retained_failures()
+{
+    if (m_failure_card == nullptr)
+        return;
+
+    const bool available = m_plater != nullptr && m_plater->has_project_history_retained_failures();
+    if (!available) {
+        if (m_failure_card->IsShown()) {
+            m_failure_card->Hide();
+            Layout();
+        }
+        return;
+    }
+
+    const std::vector<RetainedProjectHistoryFailure> failures = m_plater->project_history_retained_failures();
+    // TRN: Body text of the recovery banner in the Version history dialog.
+    wxString detail = _L("These recovery snapshots were kept on this device. Retry to save them to version history.");
+
+    // Enumerate a bounded number of snapshots so a large backlog cannot force the
+    // banner to grow without limit; the rest are summarized on a final line.
+    constexpr std::size_t max_listed = 6;
+    const std::size_t     listed     = std::min(max_listed, failures.size());
+    for (std::size_t index = 0; index < listed; ++index) {
+        const RetainedProjectHistoryFailure &failure = failures[index];
+        wxString name = failure.untitled ? _L("Untitled project") : wxString::FromUTF8(failure.display_name);
+        if (name.empty())
+            name = _L("Untitled project");
+        wxString reason = wxString::FromUTF8(failure.reason);
+        reason.Replace("\r", " ");
+        reason.Replace("\n", " ");
+        reason.Trim(true).Trim(false);
+        if (reason.length() > 72)
+            reason = reason.Left(69) + "...";
+        detail += "\n- " + name;
+        if (!reason.empty())
+            detail += ": " + reason;
+    }
+    if (failures.size() > listed) {
+        // TRN: %d is the number of additional unsaved snapshots not listed above.
+        detail += "\n" + wxString::Format(_L("and %d more"), static_cast<int>(failures.size() - listed));
+    }
+    m_failure_detail_label->SetLabel(detail);
+
+    m_retry_failures_button->Enable(m_pending == PendingOperation::None);
+    if (!m_failure_card->IsShown())
+        m_failure_card->Show();
+    Layout();
+}
+
 void ProjectHistoryDialog::begin_restore()
 {
     if (m_pending != PendingOperation::None || m_manager == nullptr)
         return;
 
     const int selected_row = m_version_list->GetSelectedRow();
-    if (selected_row == wxNOT_FOUND || static_cast<std::size_t>(selected_row) >= m_versions.size())
+    if (selected_row == wxNOT_FOUND || static_cast<std::size_t>(selected_row) >= m_filtered_rows.size())
         return;
+    const std::size_t selected_version = m_filtered_rows[selected_row];
 
     MessageDialog confirmation(
         this,
@@ -280,7 +385,7 @@ void ProjectHistoryDialog::begin_restore()
     set_busy(PendingOperation::Restore, _L("Preparing selected version..."));
     m_close_button->Enable(false);
     try {
-        m_restore_future = m_manager->restore_version(m_project_identity, m_versions[selected_row].commit_id, destination);
+        m_restore_future = m_manager->restore_version(m_project_identity, m_versions[selected_version].commit_id, destination);
         m_poll_timer.Start(HISTORY_POLL_INTERVAL_MS);
     } catch (const std::exception &exception) {
         m_pending = PendingOperation::None;
@@ -334,6 +439,7 @@ void ProjectHistoryDialog::finish_list(ProjectHistoryListResult result)
     m_pending = PendingOperation::None;
     m_refresh_button->Enable(true);
     m_close_button->Enable(true);
+    refresh_retained_failures();
 
     if (!result.ok()) {
         if (result.error.code == ProjectHistoryErrorCode::NotFound) {
@@ -365,6 +471,7 @@ void ProjectHistoryDialog::finish_restore(ProjectHistoryRestoreResult result)
 {
     m_pending = PendingOperation::None;
     m_close_button->Enable(true);
+    refresh_retained_failures();
 
     if (!result.ok()) {
         cleanup_restore_temp();
@@ -379,14 +486,29 @@ void ProjectHistoryDialog::finish_restore(ProjectHistoryRestoreResult result)
 void ProjectHistoryDialog::populate_versions()
 {
     m_version_list->DeleteAllItems();
-    for (const ProjectHistoryVersion &version : m_versions) {
-        wxVector<wxVariant> row;
+    m_filtered_rows.clear();
+    const wxString query = m_search_field != nullptr ? m_search_field->GetValue() : wxString{};
+    const bool regex      = m_search_field != nullptr && m_search_field->IsRegexEnabled();
+    const bool case_sense = m_search_field != nullptr && m_search_field->IsCaseSensitive();
+    const bool whole_word = m_search_field != nullptr && m_search_field->IsWholeWord();
+    for (std::size_t i = 0; i < m_versions.size(); ++i) {
+        const ProjectHistoryVersion &version = m_versions[i];
         const std::string short_id = version.commit_id.substr(0, std::min<std::size_t>(12, version.commit_id.size()));
-        row.push_back(wxVariant(wxString::FromUTF8(short_id)));
-        row.push_back(wxVariant(display_message(version.message)));
-        row.push_back(wxVariant(format_timestamp(version.committed_at)));
+        const wxString commit    = wxString::FromUTF8(short_id);
+        const wxString message   = display_message(version.message);
+        const wxString timestamp = format_timestamp(version.committed_at);
+        if (!query.IsEmpty()) {
+            const wxString haystack = commit + " " + message + " " + timestamp;
+            if (!SearchField::textMatches(query, haystack, regex, case_sense, whole_word))
+                continue;
+        }
+        wxVector<wxVariant> row;
+        row.push_back(wxVariant(commit));
+        row.push_back(wxVariant(message));
+        row.push_back(wxVariant(timestamp));
         row.push_back(wxVariant(format_size(version.snapshot_size)));
         m_version_list->AppendItem(row);
+        m_filtered_rows.push_back(i);
     }
 }
 
@@ -394,6 +516,12 @@ void ProjectHistoryDialog::update_history_status()
 {
     m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_status_label->SetFont(Label::Body_13);
+    if (m_search_field != nullptr && !m_search_field->GetValue().IsEmpty()) {
+        // TRN: %1$d is how many project versions match the search; %2$d is the total.
+        m_status_label->SetLabel(wxString::Format(_L("%d of %d versions match the search"),
+            static_cast<int>(m_filtered_rows.size()), static_cast<int>(m_versions.size())));
+        return;
+    }
     if (m_list_truncated) {
         // TRN: %d is the number of newest local project versions currently displayed.
         m_status_label->SetLabel(wxString::Format(
@@ -469,6 +597,8 @@ void ProjectHistoryDialog::set_busy(PendingOperation operation, const wxString &
     m_load_all_button->Enable(false);
     m_restore_button->Enable(false);
     m_close_button->Enable(false);
+    if (m_retry_failures_button != nullptr)
+        m_retry_failures_button->Enable(false);
     Layout();
 }
 
@@ -501,7 +631,7 @@ void ProjectHistoryDialog::show_error(const wxString &message)
 void ProjectHistoryDialog::update_selection()
 {
     const int selected_row = m_version_list->GetSelectedRow();
-    const bool has_selection = selected_row != wxNOT_FOUND && static_cast<std::size_t>(selected_row) < m_versions.size();
+    const bool has_selection = selected_row != wxNOT_FOUND && static_cast<std::size_t>(selected_row) < m_filtered_rows.size();
     m_restore_button->Enable(m_pending == PendingOperation::None && has_selection);
     if (has_selection) {
         // Showing the complete object name here makes the abbreviated table id
@@ -509,7 +639,7 @@ void ProjectHistoryDialog::update_selection()
         // ids are technical values, so render them in the MD3 mono face.
         m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_status_label->SetFont(Label::Mono_13);
-        m_status_label->SetLabel(_L("Selected commit: ") + wxString::FromUTF8(m_versions[selected_row].commit_id));
+        m_status_label->SetLabel(_L("Selected commit: ") + wxString::FromUTF8(m_versions[m_filtered_rows[selected_row]].commit_id));
     } else if (!m_versions.empty())
         update_history_status();
 }
@@ -528,6 +658,18 @@ void ProjectHistoryDialog::cleanup_restore_temp()
 }
 
 void ProjectHistoryDialog::on_refresh(wxCommandEvent &) { refresh_versions(); }
+
+void ProjectHistoryDialog::on_retry_failures(wxCommandEvent &)
+{
+    if (m_plater == nullptr || m_pending != PendingOperation::None)
+        return;
+    // The retry re-queues every quarantined snapshot onto the shared history
+    // FIFO (draining asynchronously), so the banner clears optimistically here.
+    // Any snapshot that fails again re-surfaces its own durable notification.
+    m_plater->retry_project_history_failures();
+    refresh_retained_failures();
+    refresh_versions();
+}
 
 void ProjectHistoryDialog::on_load_all(wxCommandEvent &)
 {
@@ -664,10 +806,12 @@ void ProjectHistoryDialog::on_dpi_changed(const wxRect &suggested_rect)
     (void) suggested_rect;
     m_refresh_button->Rescale();
     m_load_all_button->Rescale();
+    m_retry_failures_button->Rescale();
     m_restore_button->Rescale();
     m_close_button->Rescale();
     m_refresh_button->SetMinSize(FromDIP(wxSize(104, 40)));
     m_load_all_button->SetMinSize(FromDIP(wxSize(144, 36)));
+    m_retry_failures_button->SetMinSize(FromDIP(wxSize(140, 36)));
     m_restore_button->SetMinSize(FromDIP(wxSize(154, 40)));
     m_close_button->SetMinSize(FromDIP(wxSize(104, 40)));
     update_window_constraints(false);

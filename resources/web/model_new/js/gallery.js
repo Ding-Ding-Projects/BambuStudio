@@ -40,9 +40,9 @@
     // 应用主图宽度与缩略栏宽度
     if (settings.mainWidth != null) {
       var mw = typeof settings.mainWidth === 'number' ? (settings.mainWidth + 'px') : settings.mainWidth;
-      $main.css({ width: mw });
-      // 固定主图宽度，避免被 flex 拉伸
-      $main.css({ flex: '0 0 ' + mw });
+      // mainWidth is the basis; allow shrink (0 1) + max-width:100% so the
+      // gallery stays inside the responsive content column on narrow webviews.
+      $main.css({ width: mw, maxWidth: '100%', flex: '0 1 ' + mw });
     }
     if (settings.thumbsWidth != null) {
       var tw = typeof settings.thumbsWidth === 'number' ? (settings.thumbsWidth + 'px') : settings.thumbsWidth;

@@ -4,6 +4,7 @@
 #include <wx/dcgraph.h>
 #include <wx/dcmemory.h>
 #include <slic3r/GUI/Widgets/Label.hpp>
+#include <slic3r/GUI/Widgets/MD3DialogChrome.hpp>
 
 #define BORDER FromDIP(25)
 #define DRAW_PANEL_SIZE wxSize(FromDIP(475), FromDIP(100))
@@ -61,8 +62,6 @@ RecenterDialog::RecenterDialog(wxWindow* parent, wxWindowID id, const wxString& 
 
     SetSizer(main_sizer);
 
-    CenterOnParent();
-
     this->SetSize(wxSize(DRAW_PANEL_SIZE.x, -1));
     this->SetMinSize(wxSize(DRAW_PANEL_SIZE.x, -1));
     Layout();
@@ -72,6 +71,8 @@ RecenterDialog::RecenterDialog(wxWindow* parent, wxWindowID id, const wxString& 
     m_button_close->Bind(wxEVT_BUTTON, &RecenterDialog::on_button_close, this);
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 RecenterDialog::~RecenterDialog() {}
@@ -90,7 +91,7 @@ void RecenterDialog::render(wxDC& dc) {
 
     dc.SetFont(Label::Body_14);
     dc.SetTextForeground(text_color);
-    wxPoint pos_start = wxPoint(BORDER, BORDER);
+    wxPoint pos_start = wxPoint(BORDER, MD3DialogCaption::Height(this) + BORDER);
 
     wxSize hint1_size = dc.GetTextExtent(hint1);
     wxPoint pos_hint1 = pos_start;

@@ -129,11 +129,11 @@ msgstr "最近使用的項目"
 
 #. reviewed-category: navigation
 msgid "Project Filaments"
-msgstr "項目耗材"
+msgstr "項目墨水"
 
 #. reviewed-category: navigation
 msgid "Filament Settings"
-msgstr "耗材設定"
+msgstr "墨水設定"
 
 #. reviewed-category: navigation
 msgid "Printer settings"
@@ -177,7 +177,7 @@ msgstr "溫度校準"
 
 #. reviewed-category: navigation
 msgid "AMS Settings"
-msgstr "AMS 設定"
+msgstr "墨水機設定"
 
 #. reviewed-category: navigation
 msgid "Camera Setting"
@@ -685,11 +685,11 @@ msgstr "打印機正在下載。請待下載完成後再試。"
 
 #. reviewed-category: slicing-printing
 msgid "The printer is busy and cannot switch AMS type."
-msgstr "打印機正在忙碌，無法切換 AMS 類型。"
+msgstr "打印機正在忙碌，無法切換墨水機類型。"
 
 #. reviewed-category: slicing-printing
 msgid "Setting AMS slot information while printing is not supported"
-msgstr "打印期間不支援設定 AMS 槽位資料"
+msgstr "打印期間不支援設定墨水機槽位資料"
 
 #. reviewed-category: slicing-printing
 msgid "Setting Virtual slot information while printing is not supported"
@@ -697,19 +697,19 @@ msgstr "打印期間不支援設定虛擬槽位資料"
 
 #. reviewed-category: slicing-printing
 msgid "Print with filaments in the AMS"
-msgstr "使用 AMS 內的耗材打印"
+msgstr "使用墨水機內的墨水打印"
 
 #. reviewed-category: slicing-printing
 msgid "Print with the filament mounted on the back of chassis"
-msgstr "使用機身背面安裝的耗材打印"
+msgstr "使用機身背面安裝的墨水打印"
 
 #. reviewed-category: slicing-printing
 msgid "Filament used in this print job"
-msgstr "此打印工作使用的耗材"
+msgstr "此打印工作使用的墨水"
 
 #. reviewed-category: slicing-printing
 msgid "When the current material runs out, the printer would use identical filament to continue printing."
-msgstr "目前物料用完後，打印機會使用相同耗材繼續打印。"
+msgstr "目前物料用完後，打印機會使用相同墨水繼續打印。"
 
 #. reviewed-category: slicing-printing
 msgid "The printer does not currently support auto refill."
@@ -721,7 +721,7 @@ msgstr "空打偵測"
 
 #. reviewed-category: slicing-printing
 msgid "Detects clogging and filament grinding, halting printing immediately to conserve time and filament."
-msgstr "偵測堵塞及磨料，發現問題時立即停止打印，以節省時間及耗材。"
+msgstr "偵測堵塞及磨料，發現問題時立即停止打印，以節省時間及墨水。"
 
 #. reviewed-category: slicing-printing
 msgid "Current printer preset (Prepare page): %s"
@@ -933,7 +933,7 @@ msgstr "移除所選列印板"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete this filament"
-msgstr "刪除此耗材"
+msgstr "刪除此墨水"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete selected files from printer."
@@ -1164,3 +1164,1335 @@ msgstr "上"
 #. reviewed-category: preferences
 msgid "Bottom"
 msgstr "下"
+
+#. reviewed-category: connection-offline
+msgid "LIVE"
+msgstr "直播中"
+
+#. reviewed-category: slicing-printing
+msgid "Sliced · %1% layers"
+msgstr "切好片喇 · 共 %1% 層"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Project history could not save some recent edits. Their recovery snapshots were kept on this device."
+msgstr "專案歷史未能儲存部分最近嘅修改。復原快照已經保留咗喺呢部裝置。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Some versions could not be saved"
+msgstr "有啲版本未能儲存"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Retry saving"
+msgstr "重試儲存"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "These recovery snapshots were kept on this device. Retry to save them to version history."
+msgstr "呢啲復原快照已經保留喺呢部裝置。重試就可以將佢哋儲存到版本歷史。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "and %d more"
+msgstr "仲有 %d 個"
+
+#. reviewed-category: preferences
+msgid "Appearance"
+msgstr "外觀"
+
+#. reviewed-category: preferences
+msgid "Theme"
+msgstr "主題"
+
+#. reviewed-category: preferences
+msgid "Light"
+msgstr "淺色"
+
+#. reviewed-category: preferences
+msgid "Dark"
+msgstr "深色"
+
+#. reviewed-category: preferences
+msgid "Density"
+msgstr "密度"
+
+#. reviewed-category: preferences
+msgid "Comfortable"
+msgstr "舒適"
+
+#. reviewed-category: preferences
+msgid "Compact"
+msgstr "緊湊"
+
+#. reviewed-category: preferences
+msgid "Accent color"
+msgstr "強調色"
+
+#. reviewed-category: preferences
+msgid "Green"
+msgstr "綠色"
+
+#. reviewed-category: preferences
+msgid "Purple"
+msgstr "紫色"
+
+#. reviewed-category: preferences
+msgid "Teal"
+msgstr "藍綠色"
+
+#. reviewed-category: preferences
+msgid "Blue"
+msgstr "藍色"
+
+#. reviewed-category: preferences
+msgid "Pink"
+msgstr "粉紅色"
+
+#. reviewed-category: preferences
+msgid "Orange"
+msgstr "橙色"
+
+#. reviewed-category: preferences
+msgid "Search settings"
+msgstr "搜尋設定"
+
+#. reviewed-category: preferences
+msgid "Developer Tools"
+msgstr "開發者工具"
+
+#. reviewed-category: file-actions
+msgid "Management user presets"
+msgstr "管理用戶預設"
+
+#. reviewed-category: connection-offline
+msgid "Humidity"
+msgstr "濕度"
+
+#. reviewed-category: connection-offline
+msgid "Temperature"
+msgstr "溫度"
+
+#. reviewed-category: connection-offline
+msgid "Print Options"
+msgstr "打印選項"
+
+#. reviewed-category: slicing-printing
+msgid "Move"
+msgstr "移動"
+
+#. reviewed-category: connection-offline
+msgid "Dry"
+msgstr "乾燥"
+
+#. reviewed-category: connection-offline
+msgid "Normal"
+msgstr "正常"
+
+#. reviewed-category: connection-offline
+msgid "Humid"
+msgstr "潮濕"
+
+#. reviewed-category: connection-offline
+msgid "Sync AMS"
+msgstr "同步墨水機"
+
+#. reviewed-category: slicing-printing
+msgid "object"
+msgstr "物件"
+
+#. reviewed-category: slicing-printing
+msgid "objects"
+msgstr "物件"
+
+#. reviewed-category: slicing-printing
+msgid "faces"
+msgstr "面"
+
+#. reviewed-category: slicing-printing
+msgid "Object manipulation"
+msgstr "物件操作"
+
+#. reviewed-category: slicing-printing
+msgid "Scale %"
+msgstr "縮放 %"
+
+#. reviewed-category: slicing-printing
+msgid "Position"
+msgstr "位置"
+
+#. reviewed-category: slicing-printing
+msgid "Rotation"
+msgstr "旋轉"
+
+#. reviewed-category: connection-offline
+msgid "More options"
+msgstr "更多選項"
+
+#. reviewed-category: connection-offline
+msgid "Move distance (mm)"
+msgstr "移動距離（mm）"
+
+#. reviewed-category: connection-offline
+msgid "Part cooling"
+msgstr "部件冷卻"
+
+#. reviewed-category: connection-offline
+msgid "Aux fan"
+msgstr "輔助風扇"
+
+#. reviewed-category: connection-offline
+msgid "Chamber light"
+msgstr "機箱燈"
+
+#. reviewed-category: connection-offline
+msgid "Connected"
+msgstr "已連接"
+
+#. reviewed-category: connection-offline
+msgid "Connecting"
+msgstr "連接緊"
+
+#. reviewed-category: connection-offline
+msgid "Sending"
+msgstr "傳送緊"
+
+#. reviewed-category: connection-offline
+msgid "Device farm"
+msgstr "打印機農場"
+
+#. reviewed-category: connection-offline
+msgid "Search devices"
+msgstr "搜尋設備"
+
+#. reviewed-category: connection-offline
+msgid "No devices match your search."
+msgstr "搵唔到符合搜尋嘅設備。"
+
+#. reviewed-category: preferences
+msgid "No settings match your search."
+msgstr "搵唔到符合搜尋嘅設定。"
+
+#. reviewed-category: connection-offline
+msgid "%s nozzle"
+msgstr "%s 噴嘴"
+
+#. reviewed-category: connection-offline
+msgid "Idle"
+msgstr "閒置"
+
+#. reviewed-category: slicing-printing
+msgid "Advanced settings"
+msgstr "進階設定"
+
+#. reviewed-category: slicing-printing
+msgid "Simple settings"
+msgstr "簡易設定"
+
+#. reviewed-category: slicing-printing
+msgid "Objects"
+msgstr "物件"
+
+#. reviewed-category: slicing-printing
+msgid "Bed type"
+msgstr "打印板類型"
+
+#. reviewed-category: slicing-printing
+msgid "Layer height"
+msgstr "層高"
+
+#. reviewed-category: slicing-printing
+msgid "Sparse infill density"
+msgstr "稀疏填充密度"
+
+#. reviewed-category: slicing-printing
+msgid "Sparse infill pattern"
+msgstr "稀疏填充圖案"
+
+#. reviewed-category: slicing-printing
+msgid "Enable support"
+msgstr "啟用支撐"
+
+#. reviewed-category: connection-offline
+msgid "Load"
+msgstr "入料"
+
+#. reviewed-category: connection-offline
+msgid "Filament switch status"
+msgstr "換料狀態"
+
+#. reviewed-category: connection-offline
+msgid "Play or stop the camera live view"
+msgstr "播放或停止鏡頭直播"
+
+#. reviewed-category: connection-offline
+msgid "Switch printer"
+msgstr "切換打印機"
+
+#. reviewed-category: preferences
+msgid "Case sensitive"
+msgstr "區分大小寫"
+
+#. reviewed-category: preferences
+msgid "Insert"
+msgstr "插入"
+
+#. reviewed-category: preferences
+msgid "Match the search term as a regular expression"
+msgstr "以正則表達式比對搜尋字詞"
+
+#. reviewed-category: preferences
+msgid "Match with a regular expression"
+msgstr "以正則表達式比對"
+
+#. reviewed-category: preferences
+msgid "Regex"
+msgstr "正則"
+
+#. reviewed-category: preferences
+msgid "Regular expression"
+msgstr "正則表達式"
+
+#. reviewed-category: preferences
+msgid "Whole word"
+msgstr "全字詞"
+
+#. reviewed-category: preferences
+msgid "Text size"
+msgstr "文字大小"
+
+#. reviewed-category: preferences
+msgid "Small"
+msgstr "小"
+
+#. reviewed-category: preferences
+msgid "Large"
+msgstr "大"
+
+#. reviewed-category: preferences
+msgid "The quick brown fox"
+msgstr "敏捷嘅棕色狐狸"
+
+#. reviewed-category: file-actions
+msgid "Close project tab"
+msgstr "關閉專案分頁"
+
+#. reviewed-category: file-actions
+msgid "Close tab"
+msgstr "關閉分頁"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Closing a project tab while some presets are modified."
+msgstr "關閉專案分頁時，有部分預設仍未儲存。"
+
+#. reviewed-category: file-actions
+msgid "New project tab"
+msgstr "新增專案分頁"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This project tab has unsaved changes that will be lost. Close it anyway?"
+msgstr "呢個專案分頁有未儲存嘅修改，關閉就會失去。確定要關閉？"
+
+#. reviewed-category: preferences
+msgid "Custom"
+msgstr "自訂"
+
+#. reviewed-category: preferences
+msgid "Browse"
+msgstr "瀏覽"
+
+#. reviewed-category: preferences
+msgid "External editor"
+msgstr "外部編輯器"
+
+#. reviewed-category: preferences
+msgid "Editor used by File > Open in External Editor; \"Custom\" uses the executable chosen below."
+msgstr "「檔案 > 用外部編輯器開啟」用嘅編輯器；揀「自訂」就用下面揀嘅執行檔。"
+
+#. reviewed-category: preferences
+msgid "External editor path"
+msgstr "外部編輯器路徑"
+
+#. reviewed-category: preferences
+msgid "Executable files"
+msgstr "可執行檔案"
+
+#. reviewed-category: preferences
+msgid "Choose the external editor executable"
+msgstr "揀外部編輯器嘅執行檔"
+
+#. reviewed-category: file-actions
+msgid "Open in External Editor"
+msgstr "用外部編輯器開啟"
+
+#. reviewed-category: file-actions
+msgid "Open the current project's folder in the configured external editor"
+msgstr "用設定咗嘅外部編輯器開啟目前專案嘅資料夾"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "No external editor is configured. Choose one in Preferences > General > External editor."
+msgstr "仲未設定外部編輯器。請去「偏好設定 > 一般 > 外部編輯器」揀一個。"
+
+#. reviewed-category: preferences
+msgid "Sample"
+msgstr "樣本"
+
+#. reviewed-category: preferences
+msgid "Reset appearance to defaults"
+msgstr "將外觀重設返預設值"
+
+#. reviewed-category: preferences
+msgid "Custom color"
+msgstr "自訂顏色"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unbalanced [ ] character set"
+msgstr "[ ] 字元集未成對"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unbalanced ( ) group"
+msgstr "( ) 群組未成對"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unbalanced { } quantifier"
+msgstr "{ } 數量詞未成對"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid counts inside { }"
+msgstr "{ } 入面嘅次數無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid character range"
+msgstr "字元範圍無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid escape sequence"
+msgstr "逸出序列無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid backreference"
+msgstr "反向參照無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Quantifier has nothing to repeat"
+msgstr "數量詞前面冇嘢可以重複"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unknown character class name"
+msgstr "字元類別名稱無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Pattern too complex to evaluate safely"
+msgstr "樣式太複雜，唔可以安全咁執行"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid regular expression"
+msgstr "正則表達式無效"
+
+#. reviewed-category: preferences
+msgid "Regex builder"
+msgstr "正則表達式建構器"
+
+#. reviewed-category: preferences
+msgid "Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."
+msgstr "引擎：std::regex / std::wregex，ECMAScript 語法。唔分大小寫係用 std::regex::icase。特殊字元請用反斜線逸出。"
+
+#. reviewed-category: preferences
+msgid "Pattern"
+msgstr "樣式"
+
+#. reviewed-category: preferences
+msgid "Regex pattern"
+msgstr "正則表達式樣式"
+
+#. reviewed-category: preferences
+msgid "Copy pattern"
+msgstr "複製樣式"
+
+#. reviewed-category: preferences
+msgid "Empty pattern matches everything"
+msgstr "空樣式會乜都匹配晒"
+
+#. reviewed-category: preferences
+msgid "Flags"
+msgstr "旗標"
+
+#. reviewed-category: preferences
+msgid "Regex mode"
+msgstr "正則表達式模式"
+
+#. reviewed-category: preferences
+msgid "Whole word applies to plain-text search only; in regex mode use \\b"
+msgstr "「全字匹配」淨係喺純文字搜尋先有效；正則表達式模式請用 \b"
+
+#. reviewed-category: preferences
+msgid "Literals"
+msgstr "字面文字"
+
+#. reviewed-category: preferences
+msgid "Text to match literally"
+msgstr "想逐隻字咁匹配嘅文字"
+
+#. reviewed-category: preferences
+msgid "Insert the text with regex metacharacters escaped"
+msgstr "插入文字，特殊字元會自動幫你逸出"
+
+#. reviewed-category: preferences
+msgid "Character classes"
+msgstr "字元類別"
+
+#. reviewed-category: preferences
+msgid "Any single character except newline"
+msgstr "任何一個字元（換行除外）"
+
+#. reviewed-category: preferences
+msgid "Character set — matches any one character listed inside"
+msgstr "字元集合 — 匹配入面列咗嘅其中一個字元"
+
+#. reviewed-category: preferences
+msgid "Negated set — matches any character not listed inside"
+msgstr "反向集合 — 匹配唔喺入面嘅任何字元"
+
+#. reviewed-category: preferences
+msgid "Character range — use inside [ ], e.g. [a-z0-9]"
+msgstr "字元範圍 — 喺 [ ] 入面用，例如 [a-z0-9]"
+
+#. reviewed-category: preferences
+msgid "Digit 0-9"
+msgstr "數字 0-9"
+
+#. reviewed-category: preferences
+msgid "Any character that is not a digit"
+msgstr "任何唔係數字嘅字元"
+
+#. reviewed-category: preferences
+msgid "Word character: letter, digit, or underscore"
+msgstr "單詞字元：字母、數字或者底線"
+
+#. reviewed-category: preferences
+msgid "Any character that is not a word character"
+msgstr "任何唔係單詞字元嘅字元"
+
+#. reviewed-category: preferences
+msgid "Whitespace character"
+msgstr "空白字元"
+
+#. reviewed-category: preferences
+msgid "Any character that is not whitespace"
+msgstr "任何唔係空白嘅字元"
+
+#. reviewed-category: preferences
+msgid "Anchors"
+msgstr "錨點"
+
+#. reviewed-category: preferences
+msgid "Start of the text"
+msgstr "文字開頭"
+
+#. reviewed-category: preferences
+msgid "End of the text"
+msgstr "文字結尾"
+
+#. reviewed-category: preferences
+msgid "Word boundary"
+msgstr "字詞邊界"
+
+#. reviewed-category: preferences
+msgid "Not a word boundary"
+msgstr "唔係字詞邊界"
+
+#. reviewed-category: preferences
+msgid "Groups & alternation"
+msgstr "群組同交替"
+
+#. reviewed-category: preferences
+msgid "Capturing group — remembers the matched text"
+msgstr "捕捉群組 — 會記住匹配到嘅文字"
+
+#. reviewed-category: preferences
+msgid "Non-capturing group — groups without remembering"
+msgstr "非捕捉群組 — 淨係分組，唔記住內容"
+
+#. reviewed-category: preferences
+msgid "Alternation — matches either side"
+msgstr "交替 — 兩邊有一邊匹配到就得"
+
+#. reviewed-category: preferences
+msgid "Backreference — matches what group 1 captured"
+msgstr "反向參照 — 匹配群組 1 捕捉到嘅內容"
+
+#. reviewed-category: preferences
+msgid "Quantifiers"
+msgstr "數量詞"
+
+#. reviewed-category: preferences
+msgid "Zero or more of the previous item (greedy)"
+msgstr "前面嗰項出現零次或以上（貪婪）"
+
+#. reviewed-category: preferences
+msgid "One or more of the previous item (greedy)"
+msgstr "前面嗰項出現一次或以上（貪婪）"
+
+#. reviewed-category: preferences
+msgid "Zero or one of the previous item (greedy)"
+msgstr "前面嗰項出現零次或一次（貪婪）"
+
+#. reviewed-category: preferences
+msgid "Exactly n repetitions — replace n with a number"
+msgstr "啱啱好重複 n 次 — 記得將 n 換做數字"
+
+#. reviewed-category: preferences
+msgid "At least n repetitions — replace n with a number"
+msgstr "至少重複 n 次 — 記得將 n 換做數字"
+
+#. reviewed-category: preferences
+msgid "Between n and m repetitions — replace n and m with numbers"
+msgstr "重複 n 至 m 次 — 記得將 n 同 m 換做數字"
+
+#. reviewed-category: preferences
+msgid "Zero or more (lazy — matches as little as possible)"
+msgstr "零次或以上（懶惰 — 匹配得愈少愈好）"
+
+#. reviewed-category: preferences
+msgid "One or more (lazy — matches as little as possible)"
+msgstr "一次或以上（懶惰 — 匹配得愈少愈好）"
+
+#. reviewed-category: preferences
+msgid "Zero or one (lazy — matches as little as possible)"
+msgstr "零次或一次（懶惰 — 匹配得愈少愈好）"
+
+#. reviewed-category: preferences
+msgid "Test pattern"
+msgstr "測試樣式"
+
+#. reviewed-category: preferences
+msgid "Sample text"
+msgstr "樣本文字"
+
+#. reviewed-category: preferences
+msgid "Matches"
+msgstr "匹配結果"
+
+#. reviewed-category: preferences
+msgid "Match results"
+msgstr "匹配結果清單"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Pattern too long (max %d characters)"
+msgstr "樣式太長（最多 %d 隻字）"
+
+#. reviewed-category: preferences
+msgid "Valid pattern"
+msgstr "樣式有效"
+
+#. reviewed-category: preferences
+msgid "Match %d at %d-%d: %s"
+msgstr "第 %d 個匹配，位置 %d-%d：%s"
+
+#. reviewed-category: preferences
+msgid "group %d: %s"
+msgstr "群組 %d：%s"
+
+#. reviewed-category: preferences
+msgid "group %d: (no match)"
+msgstr "群組 %d：（冇匹配）"
+
+#. reviewed-category: preferences
+msgid "No matches."
+msgstr "一個匹配都冇。"
+
+#. reviewed-category: preferences
+msgid "Showing first %d matches only."
+msgstr "淨係顯示頭 %d 個匹配。"
+
+#. reviewed-category: preferences
+msgid "Sample truncated to %d characters."
+msgstr "樣本截咗做 %d 隻字。"
+
+#. reviewed-category: preferences
+msgid "Valid pattern — 1 match"
+msgstr "樣式有效 — 有 1 個匹配"
+
+#. reviewed-category: preferences
+msgid "Valid pattern — %d matches"
+msgstr "樣式有效 — 有 %d 個匹配"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The application already tried its built-in software rendering fallback (Mesa llvmpipe), but the OpenGL version is still lower than 2.0."
+msgstr "應用程式已經試過內置嘅軟件渲染後備方案（Mesa llvmpipe），但係 OpenGL 版本仍然低過 2.0。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The application could not use its built-in software rendering fallback: the Mesa driver files (mesa\\opengl32.dll and mesa\\libgallium_wgl.dll) were not found beside the application, or the installation folder is not writable."
+msgstr "應用程式用唔到內置嘅軟件渲染後備方案：喺應用程式旁邊搵唔到 Mesa 驅動檔案（mesa\\opengl32.dll 同 mesa\\libgallium_wgl.dll），或者安裝資料夾冇寫入權限。"
+
+#. reviewed-category: preferences
+msgid "Search versions"
+msgstr "搵版本"
+
+#. reviewed-category: preferences
+msgid "%d of %d versions match the search"
+msgstr "搜尋匹配 %d 個（總共 %d 個版本）"
+
+#. reviewed-category: preferences
+msgid "Search uploads"
+msgstr "搵上載"
+
+#. reviewed-category: preferences
+msgid "%d of %d match"
+msgstr "匹配 %d 個（共 %d 個）"
+
+#. reviewed-category: preferences
+msgid "Search profiles"
+msgstr "搵設定檔"
+
+#. reviewed-category: navigation
+msgid "Config profiles & backup"
+msgstr "設定檔同備份"
+
+#. reviewed-category: navigation
+msgid "Profile history"
+msgstr "設定檔歷史"
+
+#. reviewed-category: navigation
+msgid "Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"
+msgstr "匯出或者匯入成個資料資料夾（連機密資料，要滑動確認），仲可以管理無限個有本地 Git 快照歷史嘅設定檔"
+
+#. reviewed-category: file-actions
+msgid "Export everything in your data folder, import it on another PC, and keep unlimited profiles - each with its own local Git-backed snapshot history."
+msgstr "成個資料資料夾都可以匯出，攞去第二部電腦匯入，仲可以有無限個設定檔 — 每個都有自己本地嘅 Git 快照歷史。"
+
+#. reviewed-category: file-actions
+msgid "Profile"
+msgstr "設定檔"
+
+#. reviewed-category: file-actions
+msgid "Data folder"
+msgstr "資料資料夾"
+
+#. reviewed-category: file-actions
+msgid "Launch profile"
+msgstr "啟動設定檔"
+
+#. reviewed-category: file-actions
+msgid "Snapshot now"
+msgstr "而家影快照"
+
+#. reviewed-category: file-actions
+msgid "History..."
+msgstr "歷史..."
+
+#. reviewed-category: file-actions
+msgid "Export everything..."
+msgstr "匯出全部..."
+
+#. reviewed-category: file-actions
+msgid "Import backup..."
+msgstr "匯入備份..."
+
+#. reviewed-category: file-actions
+msgid "Export the complete data folder"
+msgstr "匯出成個資料資料夾"
+
+#. reviewed-category: file-actions
+msgid "Backup archive (*.zip)|*.zip"
+msgstr "備份壓縮檔 (*.zip)|*.zip"
+
+#. reviewed-category: file-actions
+msgid "Exporting the data folder... this can take a while."
+msgstr "匯緊出資料資料夾... 可能要等一陣。"
+
+#. reviewed-category: file-actions
+msgid "Import a data folder backup"
+msgstr "匯入資料資料夾備份"
+
+#. reviewed-category: file-actions
+msgid "Importing the backup into a new profile..."
+msgstr "匯緊入備份去一個新設定檔..."
+
+#. reviewed-category: file-actions
+msgid "Imported as profile \"%s\". Select it and press Launch profile to run Bambu Studio on it."
+msgstr "已經匯入做設定檔「%s」。揀佢再撳「啟動設定檔」，就可以用佢開 Bambu Studio。"
+
+#. reviewed-category: file-actions
+msgid "Launching Bambu Studio on profile \"%s\"..."
+msgstr "用緊設定檔「%s」啟動 Bambu Studio..."
+
+#. reviewed-category: file-actions
+msgid "Recording a complete profile snapshot..."
+msgstr "記錄緊完整設定檔快照..."
+
+#. reviewed-category: file-actions
+msgid "Snapshot of \"%s\" recorded in its local history."
+msgstr "「%s」嘅快照已經記錄咗入佢本地歷史。"
+
+#. reviewed-category: file-actions
+msgid "This profile has no snapshots yet. Use Snapshot now to record one."
+msgstr "呢個設定檔仲未有快照。用「而家影快照」記錄一個先啦。"
+
+#. reviewed-category: file-actions
+msgid "Snapshots of \"%s\". Restoring creates a NEW profile; nothing is overwritten."
+msgstr "「%s」嘅快照。還原會開一個全新設定檔；乜嘢都唔會被覆寫。"
+
+#. reviewed-category: file-actions
+msgid "Restoring the selected snapshot into a new profile..."
+msgstr "還原緊揀咗嘅快照去一個新設定檔..."
+
+#. reviewed-category: file-actions
+msgid "Snapshot restored as profile \"%s\"."
+msgstr "快照已經還原做設定檔「%s」。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A full backup includes secrets: printer access codes, network-plugin login state, API tokens and physical-printer passwords. Anyone with the file can use them. Slide to confirm before exporting or importing."
+msgstr "完整備份會包埋機密資料：打印機存取碼、網絡插件登入狀態、API 權杖同實體打印機密碼。任何人攞到呢個檔案都用得呢啲資料。匯出或者匯入之前，請先滑動確認。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Slide to allow export / import"
+msgstr "滑動嚟允許匯出／匯入"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Confirmed - transfers unlocked"
+msgstr "確認咗 — 已解鎖匯出入"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Backup written to %s. It contains secrets - store and transfer it safely."
+msgstr "備份已經寫入 %s。入面有機密資料 — 請安全噉儲存同傳送。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The profile could not be launched."
+msgstr "啟動唔到呢個設定檔。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The snapshot could not be recorded: %s"
+msgstr "記錄唔到快照：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Profile history could not be read: %s"
+msgstr "讀取唔到設定檔歷史：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The snapshot could not be restored: %s"
+msgstr "還原唔到快照：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The backup file could not be created at the selected location."
+msgstr "喺揀咗嘅位置建立唔到備份檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Writing the backup archive failed. The destination may be full or unwritable."
+msgstr "寫入備份壓縮檔失敗。目的地可能滿咗或者冇寫入權限。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The selected backup file could not be opened."
+msgstr "開唔到揀咗嘅備份檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The new profile folder could not be created."
+msgstr "建立唔到新設定檔資料夾。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The backup contains an unsafe path and was rejected."
+msgstr "備份入面有唔安全嘅路徑，已經拒絕匯入。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A file inside the backup could not be written."
+msgstr "備份入面有檔案寫入唔到。"
+
+#. reviewed-category: navigation
+msgid "Command palette"
+msgstr "指令面板"
+
+#. reviewed-category: navigation
+msgid "Search commands, settings and pages"
+msgstr "搵指令、設定同頁面"
+
+#. reviewed-category: preferences
+msgid "Switch between the light and dark appearance"
+msgstr "喺淺色同深色外觀之間切換"
+
+#. reviewed-category: preferences
+msgid "Comfortable or compact control spacing"
+msgstr "舒適或者緊湊嘅控件間距"
+
+#. reviewed-category: preferences
+msgid "Pick the accent seed the interface is tinted with"
+msgstr "揀返個介面用嚟調色嘅種子顏色"
+
+#. reviewed-category: navigation
+msgid "Go to Home"
+msgstr "去主頁"
+
+#. reviewed-category: navigation
+msgid "Start page with recent projects"
+msgstr "有最近項目嘅開始頁"
+
+#. reviewed-category: navigation
+msgid "Go to Prepare"
+msgstr "去準備"
+
+#. reviewed-category: navigation
+msgid "Arrange models and set up the print"
+msgstr "排列模型同設定打印"
+
+#. reviewed-category: navigation
+msgid "Go to Preview"
+msgstr "去預覽"
+
+#. reviewed-category: navigation
+msgid "Sliced result, layers and toolpaths"
+msgstr "切片結果、層數同刀路"
+
+#. reviewed-category: navigation
+msgid "Go to Device"
+msgstr "去設備"
+
+#. reviewed-category: navigation
+msgid "Printer status and control"
+msgstr "打印機狀態同控制"
+
+#. reviewed-category: navigation
+msgid "Go to Project"
+msgstr "去項目"
+
+#. reviewed-category: navigation
+msgid "Project files and metadata"
+msgstr "項目檔案同中繼資料"
+
+#. reviewed-category: navigation
+msgid "Open Preferences"
+msgstr "打開偏好設定"
+
+#. reviewed-category: navigation
+msgid "General, appearance, 3D and developer settings — with live search"
+msgstr "一般、外觀、3D 同開發者設定 — 仲有即時搜尋"
+
+#. reviewed-category: navigation
+msgid "Search in settings"
+msgstr "喺設定入面搜尋"
+
+#. reviewed-category: navigation
+msgid "Find any print / filament / printer parameter"
+msgstr "搵任何打印／墨水／打印機參數"
+
+#. reviewed-category: preferences
+msgid "Build"
+msgstr "砌樣式"
+
+#. reviewed-category: preferences
+msgid "Reference"
+msgstr "參考"
+
+#. reviewed-category: preferences
+msgid "Reference & help"
+msgstr "參考同幫手"
+
+#. reviewed-category: preferences
+msgid "How search works"
+msgstr "搜尋點樣運作"
+
+#. reviewed-category: preferences
+msgid "Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."
+msgstr "每個搜尋欄預設都係純文字；要撳 .* 掣先至會開正則模式。"
+
+#. reviewed-category: preferences
+msgid "Case sensitive and Whole word refine plain-text search; in regex mode author  yourself for word boundaries."
+msgstr "「區分大小寫」同「整個詞」係用嚟微調純文字搜尋；正則模式要自己寫  做詞界。"
+
+#. reviewed-category: preferences
+msgid "An invalid or half-typed pattern never hides rows: it matches everything until it compiles."
+msgstr "無效或者打咗一半嘅樣式唔會收埋任何行：喺佢編譯成功之前一律當全部匹配。"
+
+#. reviewed-category: preferences
+msgid "Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."
+msgstr "評估係本地而且有上限 — 太長嘅樣式同樣本會截斷，失控嘅匹配會安全停低。"
+
+#. reviewed-category: preferences
+msgid "Examples"
+msgstr "例子"
+
+#. reviewed-category: preferences
+msgid "Rows that start with PLA"
+msgstr "以 PLA 開頭嘅行"
+
+#. reviewed-category: preferences
+msgid "A number followed by mm, with an optional space"
+msgstr "一個數字後面跟 mm，中間可以有個空格"
+
+#. reviewed-category: preferences
+msgid "Rows containing the whole word red or blue"
+msgstr "包含整個詞 red 或者 blue 嘅行"
+
+#. reviewed-category: preferences
+msgid "OpenCode helper"
+msgstr "OpenCode 幫手"
+
+#. reviewed-category: preferences
+msgid "Let the OpenCode assistant draft the pattern: the button copies a prompt describing this engine, your current pattern and sample text to the clipboard, then opens OpenCode if it is installed."
+msgstr "俾 OpenCode 助手幫你起草樣式：個掣會將描述呢個引擎、你而家嘅樣式同樣本文字嘅提示複製去剪貼簿，裝咗 OpenCode 嘅話仲會幫你打開佢。"
+
+#. reviewed-category: preferences
+msgid "Copy prompt & open OpenCode"
+msgstr "複製提示並打開 OpenCode"
+
+#. reviewed-category: preferences
+msgid "Prompt copied. OpenCode is starting - paste the prompt there."
+msgstr "提示複製咗。OpenCode 啟動緊 — 貼過去嗰邊啦。"
+
+#. reviewed-category: preferences
+msgid "Prompt copied. OpenCode was not found on PATH - paste the prompt into your assistant."
+msgstr "提示複製咗。PATH 搵唔到 OpenCode — 將提示貼去你嘅助手度啦。"
+
+#. reviewed-category: preferences
+msgid "Material color picker"
+msgstr "Material 揀色器"
+
+#. reviewed-category: preferences
+msgid "Material tones"
+msgstr "Material 色調"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Stop print - safety interlock"
+msgstr "停止打印 — 安全連鎖"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Stopping discards the print in progress."
+msgstr "停止會作廢打印緊嘅嘢。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Arm %d (2)"
+msgstr "武裝 %d（撳多 2 下）"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Arm %d (1)"
+msgstr "武裝 %d（撳多 1 下）"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Armed %d"
+msgstr "武裝好 %d"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Slide to open the safety cover"
+msgstr "滑動嚟打開安全蓋"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Cover unlocked"
+msgstr "個蓋解咗鎖"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Lift cover"
+msgstr "揭開個蓋"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "STOP PRINT"
+msgstr "停止打印"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Keep printing"
+msgstr "繼續打印"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Step 1 of 4: turn both key switches."
+msgstr "第 1 步（共 4 步）：扭開兩個鎖匙掣。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Step 2 of 4: press each arming button twice."
+msgstr "第 2 步（共 4 步）：每個武裝掣撳兩下。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Step 3 of 4: slide to unlock the safety cover."
+msgstr "第 3 步（共 4 步）：滑動解鎖安全蓋。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Step 4 of 4: lift the cover and press STOP PRINT."
+msgstr "第 4 步（共 4 步）：揭開個蓋，撳「停止打印」。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Interlock complete. STOP PRINT is live."
+msgstr "連鎖完成。「停止打印」已經生效。"
+
+#. reviewed-category: preferences
+msgid "Preferences history..."
+msgstr "偏好設定歷史..."
+
+#. reviewed-category: preferences
+msgid "Preferences history"
+msgstr "偏好設定歷史"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Preferences history could not be read: %s"
+msgstr "讀取唔到偏好設定歷史：%s"
+
+#. reviewed-category: preferences
+msgid "No preferences snapshots yet. Change any setting and one is recorded automatically."
+msgstr "仲未有偏好設定快照。改任何一項設定就會自動記錄一個。"
+
+#. reviewed-category: preferences
+msgid "Automatic snapshots of your preferences. Restoring writes a copy next to the live file; nothing is overwritten."
+msgstr "你嘅偏好設定自動快照。還原會喺現用檔案旁邊寫一個副本；乜嘢都唔會被覆寫。"
+
+#. reviewed-category: preferences
+msgid "Preferences snapshot written to %s. Replace BambuStudio.conf with it while the app is closed to apply."
+msgstr "偏好設定快照已經寫入 %s。喺應用程式閂咗嘅時候用佢換走 BambuStudio.conf 就會生效。"
+
+#. reviewed-category: slicing-printing
+msgid "Printer watch: %s"
+msgstr "打印機看更：%s"
+
+#. reviewed-category: preferences
+msgid "AI printer watch"
+msgstr "AI 打印機看更"
+
+#. reviewed-category: preferences
+msgid "Summarize the printer's live camera view with a local model. Frames never leave this computer."
+msgstr "用本地模型幫你總結打印機鏡頭直播。畫面唔會離開呢部電腦。"
+
+#. reviewed-category: preferences
+msgid "Watch the live view and notify about progress and failures"
+msgstr "睇住直播畫面，有進度同出事都通知你"
+
+#. reviewed-category: preferences
+msgid "Every few minutes a frame of the live view is described by a local Ollama model; suspected failures raise a persistent warning with fix suggestions."
+msgstr "每隔幾分鐘，一格直播畫面會交俾本地 Ollama 模型描述；懷疑出事就會彈一個唔會自己消失嘅警告，仲附埋修復建議。"
+
+#. reviewed-category: preferences
+msgid "Local model tag"
+msgstr "本地模型標籤"
+
+#. reviewed-category: preferences
+msgid "Vision-capable Ollama tag, e.g. qwen2.5vl or gemma3. Text-only tags such as gpt-oss cannot read frames."
+msgstr "識睇圖嘅 Ollama 標籤，例如 qwen2.5vl 或者 gemma3。淨係識文字嘅（例如 gpt-oss）睇唔到畫面。"
+
+#. reviewed-category: preferences
+msgid "Check interval (minutes)"
+msgstr "檢查間隔（分鐘）"
+
+#. reviewed-category: preferences
+msgid "Minutes between live-view checks (minimum 1)."
+msgstr "每次檢查直播畫面相隔幾多分鐘（最少 1）。"
+
+#. reviewed-category: slicing-printing
+msgid "AI filament scanner"
+msgstr "AI 墨水掃描器"
+
+#. reviewed-category: slicing-printing
+msgid "Scan a spool with your phone; the result lands in an AMS slot."
+msgstr "用手機影吓卷墨水，結果會自動落入墨水機槽。"
+
+#. reviewed-category: slicing-printing
+msgid "Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"
+msgstr "用手機影張墨水相，本地模型認出佢並設定好一個墨水機槽"
+
+#. reviewed-category: slicing-printing
+msgid "Scan the QR code with your phone, then photograph the spool."
+msgstr "用手機掃個 QR code，然後影張墨水卷嘅相。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The upload server could not start. Check that no firewall rule blocks local listeners."
+msgstr "上載伺服器起唔到。檢查吓防火牆有冇封鎖本機監聽。"
+
+#. reviewed-category: slicing-printing
+msgid "Announce the slot out loud (TTS)"
+msgstr "出聲讀出係邊個槽（TTS）"
+
+#. reviewed-category: slicing-printing
+msgid "Photo received - identifying the filament with the local model..."
+msgstr "收到相喇 — 本地模型認緊隻墨水..."
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Identification failed: %s. Is a vision-capable Ollama model available?"
+msgstr "認唔出：%s。有冇裝識睇圖嘅 Ollama 模型？"
+
+#. reviewed-category: slicing-printing
+msgid "external spool"
+msgstr "外掛墨水架"
+
+#. reviewed-category: slicing-printing
+msgid "AMS %s slot %d"
+msgstr "墨水機 %s 第 %d 槽"
+
+#. reviewed-category: slicing-printing
+msgid "Identified %s (%s). Load it into %s."
+msgstr "認到係 %s（%s）。放入 %s 啦。"
+
+#. reviewed-category: slicing-printing
+msgid " Print settings set to \"%s\"."
+msgstr " 打印設定已經轉做「%s」。"
+
+#. reviewed-category: slicing-printing
+msgid "Filament identified: %s. Load it into %s."
+msgstr "認到墨水：%s。放入 %s。"
+
+#. reviewed-category: slicing-printing
+msgid "Printing started."
+msgstr "開始打印喇。"
+
+#. reviewed-category: slicing-printing
+msgid "Print finished."
+msgstr "打印完成喇。"
+
+#. reviewed-category: slicing-printing
+msgid "Print paused."
+msgstr "打印暫停咗。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Print failed."
+msgstr "打印失敗咗。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Printer error %06X. Check the device screen for details."
+msgstr "打印機錯誤 %06X。詳情請睇機身螢幕。"
+
+#. reviewed-category: navigation
+msgid "Smart home"
+msgstr "智能家居"
+
+#. reviewed-category: navigation
+msgid "Home Assistant speakers, media controls, TTS narrator and alert lights"
+msgstr "Home Assistant 喇叭、媒體控制、TTS 旁白同警示燈"
+
+#. reviewed-category: navigation
+msgid "Home Assistant speakers, media controls and alert lights."
+msgstr "Home Assistant 喇叭、媒體控制同警示燈。"
+
+#. reviewed-category: preferences
+msgid "Home Assistant URL"
+msgstr "Home Assistant 網址"
+
+#. reviewed-category: preferences
+msgid "Token"
+msgstr "權杖"
+
+#. reviewed-category: preferences
+msgid "Connect"
+msgstr "連接"
+
+#. reviewed-category: preferences
+msgid "Not connected yet. Enter the URL and a long-lived access token, then press Connect."
+msgstr "仲未連接。輸入網址同長期存取權杖，再撳「連接」。"
+
+#. reviewed-category: preferences
+msgid "Search speakers and lights"
+msgstr "搵喇叭同燈"
+
+#. reviewed-category: preferences
+msgid "Previous"
+msgstr "上一首"
+
+#. reviewed-category: preferences
+msgid "Play / Pause"
+msgstr "播放／暫停"
+
+#. reviewed-category: preferences
+msgid "Volume"
+msgstr "音量"
+
+#. reviewed-category: preferences
+msgid "Use as announcement speaker"
+msgstr "用嚟做通告喇叭"
+
+#. reviewed-category: preferences
+msgid "Use as alert light"
+msgstr "用嚟做警示燈"
+
+#. reviewed-category: preferences
+msgid "Announcement speakers:"
+msgstr "通告喇叭："
+
+#. reviewed-category: preferences
+msgid "Alert lights:"
+msgstr "警示燈："
+
+#. reviewed-category: preferences
+msgid "none"
+msgstr "無"
+
+#. reviewed-category: preferences
+msgid "Speak printer state changes and errors (TTS narrator)"
+msgstr "打印機狀態變化同錯誤都出聲講（TTS 旁白）"
+
+#. reviewed-category: preferences
+msgid "Flash alert lights red on printer errors (auto-restores)"
+msgstr "打印機出錯時警示燈閃紅（會自動還原）"
+
+#. reviewed-category: preferences
+msgid "Pulse alert lights green when a print finishes (auto-restores)"
+msgstr "打印完成時警示燈閃綠（會自動還原）"
+
+#. reviewed-category: preferences
+msgid "Connecting to Home Assistant..."
+msgstr "連接緊 Home Assistant..."
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Home Assistant is unreachable: %s"
+msgstr "連唔到 Home Assistant：%s"
+
+#. reviewed-category: preferences
+msgid "Connected. %d speakers and lights found."
+msgstr "連接咗。搵到 %d 個喇叭同燈。"
+
+#. reviewed-category: slicing-printing
+msgid "Set nozzle count"
+msgstr "設定噴嘴數目"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please slice the plate first."
+msgstr "請先切片目前列印板。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please slice all plates first."
+msgstr "請先切片所有列印板。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please select a single plate."
+msgstr "請選擇單一列印板。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Please configure the printer host first."
+msgstr "請先設定打印機主機。"
+
+#. reviewed-category: slicing-printing
+msgid "Bulk"
+msgstr "批量"
+
+#. reviewed-category: slicing-printing
+msgid "Bulk filament actions"
+msgstr "批量墨水操作"
+
+#. reviewed-category: slicing-printing
+msgid "Actions apply to the checked filament slots."
+msgstr "操作會套用喺已剔選嘅墨水欄位。"
+
+#. reviewed-category: slicing-printing
+msgid "Set preset..."
+msgstr "設定預設..."
+
+#. reviewed-category: slicing-printing
+msgid "Set color..."
+msgstr "設定顏色..."
+
+#. reviewed-category: slicing-printing
+msgid "Delete selected filaments"
+msgstr "刪除已選墨水"
+
+#. reviewed-category: slicing-printing
+msgid "At least one filament always remains."
+msgstr "最少會保留一個墨水。"
+
+#. reviewed-category: slicing-printing
+msgid "Add filaments"
+msgstr "新增墨水"
+
+#. reviewed-category: slicing-printing
+msgid "Choose a filament preset"
+msgstr "揀一個墨水預設"
+
+#. reviewed-category: slicing-printing
+msgid "Play print simulation"
+msgstr "播放打印模擬（照真實速度行）"
+
+#. reviewed-category: slicing-printing
+msgid "Pause print simulation"
+msgstr "暫停打印模擬"
+
+#. reviewed-category: slicing-printing
+msgid "Simulation speed"
+msgstr "模擬速度（撳一下轉檔）"
+
+#. reviewed-category: navigation
+msgid "Search filaments"
+msgstr "搵墨水"

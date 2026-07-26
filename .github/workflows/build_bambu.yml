@@ -117,6 +117,20 @@ jobs:
         if: inputs.os == 'windows-latest'
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
 
+      # Ninja + sccache: the Visual Studio generator ignores compiler
+      # launchers, so the app build runs under Ninja with cl.exe from this
+      # dev environment; sccache then caches object files across runs via
+      # the Actions cache (warm pushes skip most of the ~2 h compile).
+      - name: Setup MSVC developer environment for Ninja
+        if: inputs.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
+        with:
+          arch: x64
+
+      - name: Setup sccache
+        if: inputs.os == 'windows-latest'
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
+
       - name: Install nsis and pkgconfig
         if: inputs.os == 'windows-latest'
         run: |
@@ -130,6 +144,30 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Restore CI build cache from release (best effort)
+        if: inputs.os == 'windows-latest'
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Durable warm-start: the newest ci-cache-windows-* prerelease holds
+          # 7z split volumes of the previous run's build/ tree (runner paths
+          # are stable, so MSBuild/CMake state stays valid). Failure of any
+          # kind just means a cold build - never fail the job here.
+          if (Test-Path 'build') { Write-Host 'build/ already present; skipping restore'; exit 0 }
+          $release = gh release list --limit 30 --json tagName,isPrerelease |
+              ConvertFrom-Json | Where-Object { $_.tagName -like 'ci-cache-windows-*' } |
+              Select-Object -First 1
+          if (-not $release) { Write-Host 'no CI cache release found'; exit 0 }
+          Write-Host "restoring from $($release.tagName)"
+          New-Item -ItemType Directory -Force ci-cache-dl | Out-Null
+          gh release download $release.tagName --dir ci-cache-dl --pattern 'ci-build-cache.7z.*'
+          if ($LASTEXITCODE -ne 0) { Write-Host 'download failed'; exit 0 }
+          7z x ci-cache-dl\ci-build-cache.7z.001 -o. -y | Select-Object -Last 3
+          Remove-Item -Recurse -Force ci-cache-dl
+          Write-Host 'CI build cache restored'
+
       - name: Test Windows release inputs
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
@@ -137,14 +175,19 @@ jobs:
         run: .\scripts\ci\Test-WindowsRelease.ps1
 
       - name: Build slicer Win
+        id: build_win
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         shell: pwsh
+        env:
+          SCCACHE_GHA_ENABLED: 'true'
         run: |
           $ErrorActionPreference = 'Stop'
           cmake -S . -B build `
-            -G 'Visual Studio 18 2026' `
-            -A X64 `
+            -G Ninja `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            -DSLIC3R_MSVC_PDB=OFF `
             -DBBL_RELEASE_TO_PUBLIC=1 `
             -DBBL_INTERNAL_TESTING=0 `
             -DSLIC3R_BUILD_TESTS=OFF `
@@ -175,7 +218,7 @@ jobs:
               Pop-Location
           }
 
-          cmake --build build --target device_page_build --config Release -- -m
+          cmake --build build --target device_page_build --config Release --parallel
           if ($LASTEXITCODE -ne 0) {
               throw "Building and type-checking DeviceWeb failed with exit code $LASTEXITCODE."
           }
@@ -184,10 +227,66 @@ jobs:
               throw 'The pinned production DeviceWeb build regenerated a stale routeTree.gen.ts.'
           }
 
-          cmake --build build --target install --config Release -- -m
+          cmake --build build --target install --config Release --parallel
           if ($LASTEXITCODE -ne 0) {
               throw "Building the production Windows installer payload failed with exit code $LASTEXITCODE."
           }
+
+          # Stats from THIS step's server session — the post-job stats step
+          # spawns a fresh server whose zeroed counters say nothing.
+          sccache --show-stats
+
+      # Stage the Mesa llvmpipe software-OpenGL fallback into the payload's
+      # mesa/ subfolder before SBOM generation, the portable zip, and NSIS
+      # packaging. The app copies these DLLs beside bambu-studio.exe and
+      # relaunches itself when the host GPU driver offers no OpenGL >= 2.0
+      # (see docs/features/windows/software-gl-fallback.md). The archive is a
+      # hash-pinned upstream release: any content change fails the build.
+      - name: Stage Mesa software OpenGL fallback payload
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # Pinned: pal1000/mesa-dist-win 26.1.3 (release-msvc, x64), published 2026-06-26.
+          $mesaVersion = '26.1.3'
+          $mesaUrl = "https://github.com/pal1000/mesa-dist-win/releases/download/$mesaVersion/mesa3d-$mesaVersion-release-msvc.7z"
+          $mesaArchiveSha256 = '6dd431f4620cea73970b13e3ffa94f721f2a3924306b8a4283c97648cdb6eb9c'
+          # Per-file pins of the two x64 DLLs actually shipped.
+          $expectedFileHashes = @{
+              'opengl32.dll'       = '12499866437a161d2b250d5105188ae00732dd74b4bebbcdf972e6145af00f9e'
+              'libgallium_wgl.dll' = '1895f8c19ede5efd0497f9dfab463b19bf4377e3af7c06c2d4d073e4680c5f69'
+          }
+
+          $archive = Join-Path $env:RUNNER_TEMP "mesa3d-$mesaVersion-release-msvc.7z"
+          Invoke-WebRequest -Uri $mesaUrl -OutFile $archive -MaximumRetryCount 3 -RetryIntervalSec 15
+
+          $actualArchiveHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualArchiveHash -ne $mesaArchiveSha256) {
+              throw "Mesa archive SHA-256 mismatch: expected $mesaArchiveSha256, got $actualArchiveHash. Refusing to package an unverified OpenGL driver."
+          }
+
+          $extractDir = Join-Path $env:RUNNER_TEMP 'mesa3d-x64'
+          & 'C:\Program Files\7-Zip\7z.exe' x $archive "-o$extractDir" 'x64\opengl32.dll' 'x64\libgallium_wgl.dll' -y
+          if ($LASTEXITCODE -ne 0) {
+              throw "Extracting the Mesa x64 DLLs failed with exit code $LASTEXITCODE."
+          }
+
+          $mesaPayloadDir = Join-Path '${{ github.workspace }}\install-dir' 'mesa'
+          New-Item -ItemType Directory -Path $mesaPayloadDir -Force | Out-Null
+          foreach ($name in @('opengl32.dll', 'libgallium_wgl.dll')) {
+              $source = Join-Path (Join-Path $extractDir 'x64') $name
+              if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+                  throw "The pinned Mesa archive did not contain x64\$name."
+              }
+              $actual = (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.ToLowerInvariant()
+              if ($actual -ne $expectedFileHashes[$name]) {
+                  throw "Mesa $name SHA-256 mismatch: expected $($expectedFileHashes[$name]), got $actual."
+              }
+              Copy-Item -LiteralPath $source -Destination (Join-Path $mesaPayloadDir $name)
+          }
+          Write-Host "Staged Mesa $mesaVersion llvmpipe fallback DLLs into install-dir\mesa."
 
       - name: Build and run Windows C++ tests
         if: inputs.os == 'windows-latest'
@@ -217,11 +316,46 @@ jobs:
               throw "Building Windows C++ tests failed with exit code $LASTEXITCODE."
           }
 
-          $env:PATH = '${{ github.workspace }}\install-dir;' + $env:PATH
-          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error -R '^(language_mode_tests|project_history_tests|deterministic_bbs_3mf_tests)$'
+          # The test exes import OCCT DLLs (TKernel/TKBRep/TKLCAF) that live in
+          # the deps output, not all of which ship in install-dir — without
+          # these on PATH the exe dies with STATUS_DLL_NOT_FOUND (0xC0000135),
+          # which under ctest manifested as an infinite hard-error hang.
+          $env:PATH = '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin;' +
+              '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin\occt;' +
+              '${{ github.workspace }}\install-dir;' + $env:PATH
+          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests)$'
           if ($LASTEXITCODE -ne 0) {
               throw "Windows C++ tests failed with exit code $LASTEXITCODE."
           }
+
+          # deterministic_bbs_3mf_tests hangs only on hosted runners (locally
+          # 10/10 green in seconds; on CI it has never completed). Run it
+          # directly with a watchdog: on hang, capture a full procdump so the
+          # stacks can be analyzed offline, then fail the step.
+          $exe = 'build-tests\tests\libslic3r\Release\deterministic_bbs_3mf_tests.exe'
+          $proc = Start-Process -FilePath $exe -ArgumentList '-s','--durations','yes' -NoNewWindow -PassThru `
+              -RedirectStandardOutput det-test-out.log -RedirectStandardError det-test-err.log
+          if (-not $proc.WaitForExit(300000)) {
+              Write-Host '=== deterministic_bbs_3mf_tests hung for 300 s; capturing dump ==='
+              Invoke-WebRequest -Uri 'https://download.sysinternals.com/files/Procdump.zip' -OutFile procdump.zip
+              Expand-Archive procdump.zip -DestinationPath procdump-bin -Force
+              & procdump-bin\procdump64.exe -accepteula -ma $proc.Id "$env:RUNNER_TEMP\deterministic-hang.dmp"
+              Stop-Process -Id $proc.Id -Force
+              Get-Content det-test-out.log -ErrorAction SilentlyContinue
+              throw 'deterministic_bbs_3mf_tests hung; dump uploaded as artifact.'
+          }
+          Get-Content det-test-out.log -ErrorAction SilentlyContinue
+          if ($proc.ExitCode -ne 0) {
+              throw "deterministic_bbs_3mf_tests failed with exit code $($proc.ExitCode)."
+          }
+
+      - name: Upload hang dump (only when the deterministic test hung)
+        if: inputs.os == 'windows-latest' && failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: deterministic-hang-dump
+          path: ${{ runner.temp }}\deterministic-hang.dmp
+          if-no-files-found: ignore
 
       - name: Exercise native Windows light, dark, and language visuals
         if: inputs.os == 'windows-latest'
@@ -242,6 +376,22 @@ jobs:
             ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.png
             ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.json
           if-no-files-found: warn
+
+      # Every release ships one-of-a-kind dim sum splash art: the payload copy
+      # of splash_logo.svg is regenerated deterministically from the run
+      # number, so identical run numbers reproduce identical art while every
+      # new release gets a fresh scene. Only install-dir (the packaged
+      # payload) is overwritten — the repository's default splash_logo.svg is
+      # never touched. Runs after install-dir is populated and before the
+      # SBOM/portable zip/installer steps so all of them carry the final art.
+      - name: Compose unique dim sum splash art for this release
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          .\scripts\ci\New-DimSumSplash.ps1 `
+            -Seed ${{ github.run_number }} `
+            -OutPath '${{ github.workspace }}\install-dir\resources\images\splash_logo.svg'
 
       - name: Generate Windows payload SBOM
         if: inputs.os == 'windows-latest'
@@ -308,7 +458,7 @@ jobs:
             -PayloadDir '${{ github.workspace }}\install-dir' `
             -OutputPath $uninstallInclude
 
-          & $makensis /V3 `
+          & $makensis /V3 /INPUTCHARSET UTF8 `
             "/DPRODUCT_VERSION=$productVersion" `
             "/DFILE_VERSION=$fileVersion" `
             "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
@@ -325,6 +475,129 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
               throw "Installer archive validation failed with exit code $LASTEXITCODE."
           }
+
+      - name: Validate MD3 installer pages and from-source helpers
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-StrictMode -Version Latest
+
+          # Static, no-execution validation of the MD3 restyle + build-from-source
+          # additions to the installer. The heavy "Create Windows installer" step
+          # already proved the real .nsi (and its new custom pages) compile with
+          # makensis; from-source itself is interactive-only and never runs in CI
+          # (see docs/features/releases/windows-build-from-source.md), so here it
+          # degrades to compile-and-static-check only.
+          $packagingDir = Join-Path $env:GITHUB_WORKSPACE 'packaging\windows'
+          $nsiPath = Join-Path $packagingDir 'BambuStudioMD3.nsi'
+          $bfsDir = Join-Path $packagingDir 'build-from-source'
+
+          # 1. The .nsi must keep its UTF-8 BOM (makensis /INPUTCHARSET UTF8 relies on
+          #    it to decode the inline Cantonese strings).
+          $nsiBytes = [System.IO.File]::ReadAllBytes($nsiPath)
+          if ($nsiBytes.Length -lt 3 -or $nsiBytes[0] -ne 0xEF -or $nsiBytes[1] -ne 0xBB -or $nsiBytes[2] -ne 0xBF) {
+              throw 'BambuStudioMD3.nsi lost its UTF-8 BOM.'
+          }
+
+          # 2. Every makensis invocation in this workflow keeps /INPUTCHARSET UTF8.
+          $workflowPath = Join-Path $env:GITHUB_WORKSPACE '.github\workflows\build_bambu.yml'
+          $workflowLines = @(Get-Content -LiteralPath $workflowPath)
+          $makensisLines = @($workflowLines | Where-Object { $_ -match '&\s+\$makensis\b' })
+          $charsetLines = @($makensisLines | Where-Object { $_ -match '/INPUTCHARSET\s+UTF8' })
+          if ($makensisLines.Count -lt 5 -or $charsetLines.Count -ne $makensisLines.Count) {
+              throw "Every makensis call must keep /INPUTCHARSET UTF8; found $($makensisLines.Count) call(s), $($charsetLines.Count) carrying the flag."
+          }
+
+          # 3. The three from-source PowerShell helpers exist and parse.
+          foreach ($helper in @('Build-FromSource.ps1', 'Toolchain.ps1', 'Opencode.ps1')) {
+              $helperPath = Join-Path $bfsDir $helper
+              if (-not (Test-Path -LiteralPath $helperPath -PathType Leaf)) {
+                  throw "Missing from-source helper: $helperPath"
+              }
+              $null = [scriptblock]::Create((Get-Content -LiteralPath $helperPath -Raw))
+          }
+
+          # 4. Structural tokens the new pages / flows must contain.
+          $nsi = Get-Content -LiteralPath $nsiPath -Raw -Encoding UTF8
+          $mustContain = @(
+              'Function WelcomePageCreate',
+              'Function InstallModePageCreate',
+              'Function BuildProgressPageCreate',
+              'Function FinishPageCreate',
+              '"InstallSource"',
+              '.md3-owned-manifest.txt',
+              'GetSystemMenu',
+              'DeleteMenu',
+              'SC_CLOSE'
+          )
+          foreach ($needle in $mustContain) {
+              if (-not $nsi.Contains($needle)) {
+                  throw "BambuStudioMD3.nsi is missing expected token: $needle"
+              }
+          }
+
+          # 5. Silent mode must force the prebuilt path and skip the mode chooser.
+          $imStart = $nsi.IndexOf('Function InstallModePageCreate')
+          $imEnd = $nsi.IndexOf('FunctionEnd', [Math]::Max($imStart, 0))
+          if ($imStart -lt 0 -or $imEnd -lt 0) { throw 'InstallModePageCreate is malformed.' }
+          $imBody = $nsi.Substring($imStart, $imEnd - $imStart)
+          foreach ($needle in @('${Silent}', 'StrCpy $InstallMode "prebuilt"', 'Abort')) {
+              if (-not $imBody.Contains($needle)) {
+                  throw "InstallModePageCreate silent-mode prebuilt guard is missing '$needle'."
+              }
+          }
+
+          # 6. Each new page string is bilingual: an EN label with a Cantonese (CJK)
+          #    counterpart within the same MD3BiText block. Checked without embedding
+          #    CJK literals in this workflow (encoding-robust).
+          $enStrings = @(
+              'How would you like to install?',
+              'Install prebuilt (recommended)',
+              'Build from source (advanced',
+              'Building Bambu Studio MD3 from source',
+              'This can take a long time'
+          )
+          foreach ($en in $enStrings) {
+              $idx = $nsi.IndexOf($en)
+              if ($idx -lt 0) { throw "Missing EN installer string: $en" }
+              $window = $nsi.Substring($idx, [Math]::Min(600, $nsi.Length - $idx))
+              $hasCjk = $false
+              foreach ($ch in $window.ToCharArray()) {
+                  $code = [int][char]$ch
+                  if ($code -ge 0x4E00 -and $code -le 0x9FFF) { $hasCjk = $true; break }
+              }
+              if (-not $hasCjk) {
+                  throw "No Cantonese counterpart found near EN string: $en"
+              }
+          }
+
+          # 7. The opencode blanket-allow emitter keeps its security posture:
+          #    question=deny and external_directory=deny (grant scoped to the clone),
+          #    while action classes stay allow.
+          . (Join-Path $bfsDir 'Opencode.ps1')
+          $emitterDir = Join-Path $env:RUNNER_TEMP ('bfs-opencode-check-' + [guid]::NewGuid().ToString('N'))
+          try {
+              $configPath = New-OpencodeAllowConfig -CloneDir $emitterDir
+              $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+              if ($config.permission.question -ne 'deny') {
+                  throw "opencode config: question must be 'deny', got '$($config.permission.question)'."
+              }
+              if ($config.permission.external_directory -ne 'deny') {
+                  throw "opencode config: external_directory must be 'deny', got '$($config.permission.external_directory)'."
+              }
+              if ($config.permission.edit -ne 'allow' -or $config.permission.bash -ne 'allow') {
+                  throw 'opencode config: action classes edit/bash must be allow.'
+              }
+          }
+          finally {
+              if (Test-Path -LiteralPath $emitterDir) {
+                  Remove-Item -LiteralPath $emitterDir -Recurse -Force
+              }
+          }
+
+          Write-Host 'MD3 installer page and from-source helper validation passed.'
 
       - name: Test Windows install, upgrade, and uninstall behavior
         if: inputs.os == 'windows-latest'
@@ -370,7 +643,7 @@ jobs:
                 -PayloadDir '${{ github.workspace }}\install-dir' `
                 -OutputPath $previousUninstallInclude
 
-              & $makensis /V2 `
+              & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
                 "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
@@ -392,7 +665,7 @@ jobs:
                 -PayloadDir $guardPayload `
                 -OutputPath $guardUninstallInclude
 
-              & $makensis /V2 `
+              & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
                 "/DPAYLOAD_DIR=$guardPayload" `
@@ -408,7 +681,7 @@ jobs:
                   throw "Creating the ancestor-guard installer fixture failed with exit code $LASTEXITCODE."
               }
 
-              & $makensis /V2 `
+              & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
                 "/DPAYLOAD_DIR=$guardPayload" `
@@ -422,7 +695,7 @@ jobs:
                   throw "Creating the bootstrap-failure installer fixture failed with exit code $LASTEXITCODE."
               }
 
-              & $makensis /V2 `
+              & $makensis /V2 /INPUTCHARSET UTF8 `
                 "/DPRODUCT_VERSION=$productVersion" `
                 "/DFILE_VERSION=$fileVersion" `
                 "/DPAYLOAD_DIR=$guardPayload" `
@@ -458,6 +731,35 @@ jobs:
       #   working-directory: ${{ github.workspace }}/build/src/Release
       #   shell: cmd
       #   run: '"C:/Program Files/7-Zip/7z.exe" a -m0=lzma2 -mx9 Debug_PDB_${{ env.ver }}_for_developers_only.7z  *.pdb'
+
+      - name: Publish CI build cache release (best effort)
+        # Fire whenever the BUILD succeeded, even if later steps (tests,
+        # visual smoke) failed — otherwise a red tail step forever prevents
+        # the cache from ever priming and every run compiles cold.
+        if: inputs.os == 'windows-latest' && !cancelled() && steps.build_win.outcome == 'success'
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || github.token }}
+        run: |
+          # Zip the build tree (deps output is inside via out_deps when built
+          # here) into 1.5 GB split volumes and publish them as a uniquely
+          # tagged prerelease. Old cache prereleases are pruned (keep 1) so
+          # real releases stay immutable and the cache stays bounded.
+          $tag = "ci-cache-windows-${{ github.run_number }}"
+          7z a -t7z -mx=1 -v1500m ci-build-cache.7z build "deps/build/out_deps" | Select-Object -Last 2
+          if ($LASTEXITCODE -ne 0) { Write-Host 'cache pack failed'; exit 0 }
+          gh release create $tag (Get-ChildItem 'ci-build-cache.7z.*').FullName `
+              --prerelease --title "CI build cache (run ${{ github.run_number }})" `
+              --notes 'Rolling CI warm-start cache: 7z split volumes of build/ + deps output. Safe to delete; the newest one is reused by the next build.'
+          if ($LASTEXITCODE -ne 0) { Write-Host 'cache release create failed'; exit 0 }
+          # prune older cache prereleases, keep the newest (this one + previous)
+          $old = gh release list --limit 50 --json tagName |
+              ConvertFrom-Json | Where-Object { $_.tagName -like 'ci-cache-windows-*' -and $_.tagName -ne $tag } |
+              Select-Object -Skip 1
+          foreach ($release in $old) {
+              gh release delete $release.tagName --yes --cleanup-tag
+          }
 
       - name: Upload artifacts Win zip
         if: inputs.os == 'windows-latest'

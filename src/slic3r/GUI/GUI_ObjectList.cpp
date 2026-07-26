@@ -22,10 +22,14 @@
 #include "NotificationManager.hpp"
 #include "MsgDialog.hpp"
 #include "Widgets/ProgressDialog.hpp"
+#include "Widgets/StateColor.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "SingleChoiceDialog.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <wx/progdlg.h>
+#include <wx/textdlg.h>
 #include <libslic3r/Orient.hpp>
 #include <unordered_set>
 #include <wx/listbook.h>
@@ -87,11 +91,31 @@ class wxRenderer : public wxDelegateRendererNative
 {
 public:
     wxRenderer() : wxDelegateRendererNative(wxRendererNative::Get()) {}
+    // MD3 Objects card row anatomy (register objects-legacy-searchctrl-dataviewctrl):
+    // the selected row reads as a SecondaryContainer chip (kit selection role)
+    // instead of the OS highlight blue. Drawn as a rounded fill inset a hair from
+    // the row edges so the whole row (all columns) picks up the kit selection
+    // colour while the cell renderers (name glyph/text, filament, toggles) keep
+    // painting their content on top — selection, editing, DnD and context menus
+    // are untouched (this is purely the row's selection background). A row that is
+    // current/hovered but not selected still falls through to the generic path.
     virtual void DrawItemSelectionRect(wxWindow *win,
                                        wxDC& dc,
                                        const wxRect& rect,
                                        int flags = 0) wxOVERRIDE
-        { GetGeneric().DrawItemSelectionRect(win, dc, rect, flags); }
+    {
+        if (flags & wxCONTROL_SELECTED) {
+            const wxColour fill = StateColor::semantic(MD3::Role::SecondaryContainer);
+            wxRect r = rect;
+            r.Deflate(win ? win->FromDIP(2) : 2, win ? win->FromDIP(1) : 1);
+            const int radius = win ? win->FromDIP(8) : 8;
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(fill));
+            dc.DrawRoundedRectangle(r, radius);
+            return;
+        }
+        GetGeneric().DrawItemSelectionRect(win, dc, rect, flags);
+    }
 };
 
 ObjectList::ObjectList(wxWindow* parent) :
@@ -3048,7 +3072,8 @@ void ObjectList::split(bool ignore_warning)
     const auto filament_cnt = (filament_colors == nullptr) ? size_t(1) : filament_colors->size();
     if (!volume->is_splittable()) {
         if (!ignore_warning) {
-            wxMessageBox(_(L("The target object contains only one part and can not be split.")));
+            MessageDialog dlg(this, _(L("The target object contains only one part and can not be split.")));
+            dlg.ShowModal();
         }
         return;
     }
@@ -6369,8 +6394,12 @@ void ObjectList::rename_item()
     if (!item || !(m_objects_model->GetItemType(item) & (itVolume | itObject)))
         return ;
 
-    const wxString new_name = wxGetTextFromUser(_(L("Enter new name"))+":", _(L("Renaming")),
-                                                m_objects_model->GetName(item), this);
+    wxTextEntryDialog dlg(this, _(L("Enter new name"))+":", _(L("Renaming")));
+    dlg.SetValue(m_objects_model->GetName(item));
+    MD3DialogCaption::Adopt(&dlg);
+    if (dlg.ShowModal() != wxID_OK)
+        return;
+    const wxString new_name = dlg.GetValue();
 
     if (new_name.IsEmpty())
         return;

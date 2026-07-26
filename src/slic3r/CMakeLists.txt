@@ -36,6 +36,12 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/PopupWindow.hpp
     GUI/Widgets/Label.cpp
     GUI/Widgets/Label.hpp
+    GUI/Widgets/MaterialIcon.cpp
+    GUI/Widgets/MaterialIcon.hpp
+    GUI/Widgets/MD3Dialog.cpp
+    GUI/Widgets/MD3Dialog.hpp
+    GUI/Widgets/CameraHUD.cpp
+    GUI/Widgets/CameraHUD.hpp
     GUI/Widgets/LinkLabel.cpp
     GUI/Widgets/LinkLabel.hpp
     GUI/Widgets/Scrollbar.cpp
@@ -62,6 +68,20 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/TabCtrl.hpp
     GUI/Widgets/TextInput.cpp
     GUI/Widgets/TextInput.hpp
+    GUI/Widgets/SearchField.cpp
+    GUI/Widgets/SearchField.hpp
+    GUI/Widgets/SlideToConfirm.cpp
+    GUI/Widgets/SlideToConfirm.hpp
+    GUI/Widgets/MD3ColorPicker.cpp
+    GUI/Widgets/MD3ColorPicker.hpp
+    GUI/Widgets/MD3Motion.cpp
+    GUI/Widgets/MD3Motion.hpp
+    GUI/Widgets/MD3DialogChrome.cpp
+    GUI/Widgets/MD3DialogChrome.hpp
+    GUI/Widgets/RegexBuilderPopup.cpp
+    GUI/Widgets/RegexBuilderPopup.hpp
+    GUI/Widgets/Slider.cpp
+    GUI/Widgets/Slider.hpp
     GUI/Widgets/TempInput.cpp
     GUI/Widgets/TempInput.hpp
     GUI/Widgets/AMSControl.cpp
@@ -84,6 +104,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/ErrorMsgStaticText.hpp
     GUI/Widgets/MultiNozzleSync.hpp
     GUI/Widgets/MultiNozzleSync.cpp
+    GUI/BulkFilamentDialog.cpp
+    GUI/BulkFilamentDialog.hpp
     GUI/MixedFilamentDialog.cpp
     GUI/MixedFilamentDialog.hpp
     GUI/ColorDecomposeDialog.cpp
@@ -136,6 +158,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/SlicingProgressNotification.hpp
     GUI/Gizmos/GLGizmosManager.cpp
     GUI/Gizmos/GLGizmosManager.hpp
+    GUI/Gizmos/GLIconGlyphBridge.cpp
+    GUI/Gizmos/GLIconGlyphBridge.hpp
     GUI/Gizmos/GLGizmosCommon.cpp
     GUI/Gizmos/GLGizmosCommon.hpp
     GUI/Gizmos/GLGizmoBase.cpp
@@ -236,6 +260,26 @@ set(SLIC3R_GUI_SOURCES
     GUI/MainFrame.hpp
     GUI/ProjectHistoryDialog.cpp
     GUI/ProjectHistoryDialog.hpp
+    GUI/ConfigProfilesDialog.cpp
+    GUI/ConfigProfilesDialog.hpp
+    GUI/CommandPalette.cpp
+    GUI/CommandPalette.hpp
+    GUI/StopPrintGate.cpp
+    GUI/StopPrintGate.hpp
+    GUI/PreferencesHistory.cpp
+    GUI/PreferencesHistory.hpp
+    GUI/PrinterWatch.cpp
+    GUI/PrinterWatch.hpp
+    GUI/FilamentScanner.cpp
+    GUI/FilamentScanner.hpp
+    GUI/TtsNarrator.cpp
+    GUI/TtsNarrator.hpp
+    GUI/HomeAssistant.cpp
+    GUI/HomeAssistant.hpp
+    GUI/SmartHomeDialog.cpp
+    GUI/SmartHomeDialog.hpp
+    GUI/third_party/qrcodegen.cpp
+    GUI/third_party/qrcodegen.hpp
     GUI/BBLTopbar.cpp
     GUI/BBLTopbar.hpp
     GUI/BedShapeDialog.cpp
@@ -476,6 +520,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/IMSlider_Utils.hpp
     GUI/Notebook.cpp
     GUI/Notebook.hpp
+    GUI/ProjectTabBar.cpp
+    GUI/ProjectTabBar.hpp
     GUI/TabButton.cpp
     GUI/TabButton.hpp
     GUI/Tabbook.cpp
@@ -607,6 +653,8 @@ set(SLIC3R_GUI_SOURCES
     Utils/FixModelByWin10.hpp
     Utils/Bonjour.cpp
     Utils/Bonjour.hpp
+    Utils/ExternalEditor.cpp
+    Utils/ExternalEditor.hpp
     Utils/FileHelp.cpp
     Utils/FileHelp.hpp
     Utils/PresetUpdater.cpp

@@ -14,6 +14,7 @@
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "wxExtensions.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "../libslic3r/BlacklistedLibraryCheck.hpp"
 #include "format.hpp"
 
@@ -182,6 +183,7 @@ SysInfoDialog::SysInfoDialog()
 
 	SetSizer(main_sizer);
 	main_sizer->SetSizeHints(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 void SysInfoDialog::on_dpi_changed(const wxRect &suggested_rect)

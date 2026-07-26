@@ -32,6 +32,7 @@
 #include "BitmapCache.hpp"
 #include "BonjourDialog.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -134,8 +135,9 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
 
     SetSizer(topSizer);
     topSizer->SetSizeHints(this);
-    this->CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    this->CenterOnParent();
 }
 
 PhysicalPrinterDialog::~PhysicalPrinterDialog()

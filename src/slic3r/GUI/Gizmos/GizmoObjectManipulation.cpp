@@ -694,8 +694,12 @@ static const char* label_scale_values[2][3] = {
 bool GizmoObjectManipulation::reset_button(ImGuiWrapper *imgui_wrapper, float caption_max, float unit_size, float space_size, float end_text_size)
 {
     bool        pressed   = false;
-    ImTextureID normal_id = m_glcanvas.get_gizmos_manager().get_icon_texture_id(GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET);
-    ImTextureID hover_id  = m_glcanvas.get_gizmos_manager().get_icon_texture_id(GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_HOVER);
+    // MD3 reset glyph is colour-driven, so pick the theme-matched texture key
+    // (the light/dark split is baked into icon_list, not rebuilt on theme switch).
+    ImTextureID normal_id = m_glcanvas.get_gizmos_manager().get_icon_texture_id(
+        m_is_dark_mode ? GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_DARK : GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET);
+    ImTextureID hover_id  = m_glcanvas.get_gizmos_manager().get_icon_texture_id(
+        m_is_dark_mode ? GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_HOVER_DARK : GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_HOVER);
 
     float font_size = ImGui::GetFontSize();
     ImVec2 button_size = ImVec2(font_size, font_size);
@@ -711,8 +715,11 @@ bool GizmoObjectManipulation::reset_button(ImGuiWrapper *imgui_wrapper, float ca
 bool GizmoObjectManipulation::reset_zero_button(ImGuiWrapper *imgui_wrapper, float caption_max, float unit_size, float space_size, float end_text_size)
 {
     bool        pressed   = false;
-    ImTextureID normal_id = m_glcanvas.get_gizmos_manager().get_icon_texture_id(GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_ZERO);
-    ImTextureID hover_id  = m_glcanvas.get_gizmos_manager().get_icon_texture_id(GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_ZERO_HOVER);
+    // MD3 reset-to-zero glyph is colour-driven; pick the theme-matched key.
+    ImTextureID normal_id = m_glcanvas.get_gizmos_manager().get_icon_texture_id(
+        m_is_dark_mode ? GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_ZERO_DARK : GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_ZERO);
+    ImTextureID hover_id  = m_glcanvas.get_gizmos_manager().get_icon_texture_id(
+        m_is_dark_mode ? GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_ZERO_HOVER_DARK : GLGizmosManager::MENU_ICON_NAME::IC_TOOLBAR_RESET_ZERO_HOVER);
 
     float  font_size   = ImGui::GetFontSize() * 1.1;
     ImVec2 button_size = ImVec2(font_size, font_size);

@@ -1,3 +1,387 @@
+# CI "6-hour test hang" root cause (2026-07-25) — READ BEFORE TOUCHING CI TESTS
+
+- The deterministic_bbs_3mf_tests "hang" that ate two 6-hour jobs was **STATUS_DLL_NOT_FOUND
+  (0xC0000135)**: the test exe imports OCCT DLLs (TKernel/TKBRep/TKLCAF) that live in
+  `deps\...\usr\local\bin{,\occt}` and are not all shipped in install-dir — the only PATH
+  entry the test step set. Under ctest the loader failure surfaced as the Windows hard-error
+  path and blocked forever with zero output; under Start-Process with redirected stdio it
+  dies instantly with the real code. Diagnosis chain that worked: ctest --timeout 900 (fail
+  fast) → direct Start-Process watchdog + procdump artifact (exposed the exit code).
+  Fixed in 54d239b46 by prepending the deps bin dirs to the step's PATH; the watchdog stays.
+- Local test-tree recipe for this machine (build-tests): configure INSIDE
+  `VsDevCmd.bat -arch=amd64 -winsdk=10.0.26100.0` (C:\Program\Common7\Tools) or the
+  VCTargetsPath probe hard-fails on the half-installed 28000 SDK (MSB8037); plus
+  `-D CMAKE_GENERATOR_INSTANCE=C:\Program -DCMAKE_SYSTEM_VERSION=10.0.26100.0`. Tests need
+  `build/src/Release` on PATH to run. `build-tests/` is gitignored (an early commit nearly
+  pushed 2 GB of .obj/.lib — GitHub's 100 MB limit rejected it; amend-stripped before push).
+- Earlier in the chain, ~_BBS_Backup_Manager's unbounded static-dtor join was ALSO hardened
+  (try_join_for(10s) + detach, bbs_3mf.cpp) — kept: correct defensive fix, just not the CI
+  culprit. Local exit path verified: File ▸ Quit terminates in ~1 s.
+
+# Chrome-sweep tranche 3: completion scan + 46 more ctors (2026-07-25)
+
+- Completion scan enumerated every remaining DPIDialog/wxDialog subclass: 48 plain-Adopt
+  candidates (all adopted; 46 ctors edited this tranche), 10 flagged complex/popover
+  (NOT adopted — FilamentPickerDialog is shaped, FanControlPopupNew and
+  uiAmsPercentHumidityDryPopup are position-anchored popovers, CommandPalette is a
+  deliberate chrome-less overlay, SettingsDialog is a frame, ParamsDialog/BedShapeDialog/
+  ObjectTableDialog/ZUserLogin need designed treatment), 7 dead classes skipped.
+- `MD3DialogCaption::Height(ref)` added for owner-drawn dialogs; RecenterDialog's painted
+  hint offset by it (its render() draws at absolute client coords which the caption now
+  overlaps). Same trap exists for any future owner-drawn adopter.
+- Known cosmetic follow-ups: FeedDirectionDialog's caption is static (`_L("Confirm")`)
+  while the dialog re-titles itself dynamically via SetTitle; ManualNozzleCountDialog's
+  window title is an unlocalized upstream literal. NewCalibrationHistoryDialog has
+  pre-existing early-return paths that skip layout entirely (native caption remains there).
+- Verified headlessly: Network Test dialog (Help menu) fully chromed →
+  docs/screenshots/dialog-chrome/network-test.png. Build green 7 min.
+
+# Chrome-sweep tranche: stock dialogs (2026-07-25)
+
+- **`MD3DialogCaption::Adopt(dialog, title = "")`** added to Widgets/MD3DialogChrome: strips
+  native caption styles in place (`SetWindowStyleFlag` — wxMSW applies SWP_FRAMECHANGED),
+  wraps the existing root sizer under the caption strip, restores client height, preserves
+  `wxRESIZE_BORDER`, then FinishChrome. Contract: LAST layout act of the ctor, after
+  UpdateDlgDarkUI, with CenterOnParent moved after it.
+- 17 classes adopted + 7 raw stock-dialog call sites rerouted (4× wxSingleChoiceDialog →
+  chromed SingleChoiceDialog, 1× wxGetTextFromUser → adopted wxTextEntryDialog, 2×
+  wxMessageDialog → MessageDialog). Slic3r MessageDialog has no `SetYesNoLabels`; the idiom
+  is `SetButtonLabel(wxID_YES/wxID_NO, ...)`. Startup-error wxMessageBoxes intentionally
+  left native (fire around GUI teardown).
+- Build green in 9 min (lowmem profile). Verified headlessly: Keyboard shortcuts + About
+  show the MD3 caption, no native bar, content intact → docs/screenshots/dialog-chrome/.
+  Menu-driving gotchas: Calibration menu is *disabled* without a printer (NO MENUPOPUPSTART
+  is expected, not a harness failure); menucap's fixed frame position fails for the Help
+  menu — menudo's position sweep opens it (second position works). AMS dryness / Save preset
+  / rename dialogs compile with the identical pattern but need printer/preset state to open;
+  recorded for the next hardware pass.
+
+# Scanner / smart-home / installer wave (2026-07-24, overnight)
+
+- **LANDED (2026-07-25):** the scanner/smart-home wave is pushed as `3ef03bb00` after full
+  headless verification (File-menu entries; scanner QR renders and decodes to the token URL;
+  upload server 200-with-token / 404-without probes; posted photo flows to identification and
+  the no-Ollama case shows the designed error status; Smart home dialog renders every control
+  with narrator OFF by default). Changelog on Discussion #3, milestone on #4, Desktop
+  Material Project item `In progress` until CI run 30143103800 lands — record the real
+  conclusion, never predict it. GOTCHA: a rolling-discussion node ID recalled from memory was
+  one character off and silently resolved to a *different repository's* discussion —
+  addDiscussionComment happily posted there. Always re-resolve Discussion IDs from
+  `repository(owner,name){discussions}` immediately before posting. The stray comment on
+  biomejs/biome#11073 (comment DC_kwDOKAiibM4BDzs9) could not be deleted — the permission
+  classifier blocked both GraphQL and REST deletes; flagged to the user.
+
+- **Installer MD3 fixes VERIFIED + pushed (`34ead5b83`):** reproduced with a dummy-payload
+  makensis compile driven headlessly (MSYS quirks: `//INPUTCHARSET`, `MSYS2_ARG_CONV_EXCL='*'`
+  + full Windows paths incl. the script itself, else `__FILEDIR__` breaks File globs). Found:
+  stale "License Agreement" MUI header bleeding over every custom page (fixed with per-page
+  bilingual `MUI_HEADER_TEXT`), and REAL invisible text — controls authored past the
+  140-dialog-unit MUI page height (language caption/divider, install-mode explanation).
+  Re-laid out + captions shortened; before/after captures in scratchpad out/inst*.png.
+- **CI release-based build cache** (same push): post-build 7z split volumes (1.5 GB) of
+  `build/` + deps output published as `ci-cache-windows-<run>` prereleases (pruned, keep
+  newest); best-effort restore before the next build. Both steps continue-on-error.
+  GOTCHA while editing: a literal `\b` written through python became a BACKSPACE byte in the
+  YAML and persisted through several fix attempts — full-line sed rewrite with forward
+  slashes (7z accepts them) resolved it.
+- **AI filament scanner + TTS narrator + Home Assistant** (uncommitted, build in flight):
+  new FilamentScanner (QR/token LAN upload server via boost::beast, vendored Nayuki
+  qrcodegen under GUI/third_party, Ollama vision identify, AMS auto-slot, preset
+  auto-selection mapped to the BBL.json vendor families, flashing AnnounceOverlay + TTS),
+  TtsNarrator (SAPI via **IDispatch late binding** — <sapi.h> is unusable under the PCH:
+  its unqualified `byte` is ambiguous vs std::byte), HomeAssistant client (entities, media
+  controls, tts.speak speakers, alert lights with **scene-snapshot restore** so real room
+  lights never stick on the alert colour — user-raised risk), SmartHomeDialog (search bar +
+  entity listbox + rich media controls + toggles). Catalogs at 602 (--check green).
+- **Build-machine incident:** an OOM'd parallel build left 10 zombie cl.exe processes and a
+  corrupted FileTracker (MSB6003 in SaveTlog). Recovery: kill cl/Tracker/MSBuild strays,
+  delete `libslic3r_gui.tlog/`, rebuild at `/m:2 /p:CL_MPCount=6`.
+
+# Chrome-sweep continuation (2026-07-24, night)
+
+- **MD3Dialog resizable variant de-natived** (one-line style change +
+  bind_drag un-gated): every MsgDialog/SecondaryCheck/SyncAms/TextureImport/
+  Helio/ReleaseNote-family dialog now drops the native title bar — the
+  shell's own header (glyph + title + circular close) and drag handles are
+  the chrome for BOTH variants. Startup smoke green; the resizable adopters
+  (TextureImport, Helio) were not re-opened headlessly this session —
+  first-open visual check recorded as a follow-up.
+
+- **Preferences + upload queue chromed** (MD3DialogCaption; borderless styles): headlessly
+  verified — the Preferences dialog renders the MD3 caption with zero clipping across all six
+  tabs; the full Preferences/appearance screenshot set re-captured and re-matched (nearly all
+  1.000 — the caption shift is absorbed by template matching).
+- **FadeIn rewritten to layered-window alpha** (WS_EX_LAYERED + SetLayeredWindowAttributes):
+  wxPopupTransientWindow is not a wxTopLevelWindow, so SetTransparent could not compile for
+  popovers; the layered path works for dialogs, the palette AND the regex-builder popover
+  (fade added on open), and drops the layered style once opaque.
+- **ObjColor compare-panel greys tokenized** (SurfaceContainer/SurfaceContainerHigh replace
+  the hand-picked dark/light pairs); SyncAms was already on the MD3Dialog shell — the register
+  deviation's grey item is addressed, the shell item was stale.
+- **Capture-harness lessons:** generic small crops (a bare Browse button, a bare combobox)
+  template-match the WRONG row at 1.000 — never trust matches for widget-generic crops;
+  verify against the page. AHK ControlSetText/ControlSend can HANG cross-desktop (kill it,
+  use ControlClick only). WM_VSCROLL SB_PAGEDOWN works on ScrollPanel children but state can
+  reset between captures — capture immediately after scrolling.
+- Old external-editor row crops and toast-try-slice deliberately retained (still accurate at
+  row level / needs a sliceable state) — recorded in ROADMAP follow-ups.
+
+# Roadmap execution wave (2026-07-24, evening)
+
+User: "Please finish roadmap." Executed the recorded mandates in one build cycle:
+
+- **CI root-caused + unblocked first:** the 5b7acac48 failure was the DeviceWeb pnpm audit
+  gate hitting the fresh brace-expansion advisory (GHSA-mh99-v99m-4gvg) — NOT the new code
+  (0 compiles, sccache untouched; the "Extracting Node.js" tail was a red herring — the real
+  line was "high-severity advisory or audit failure"). Fixed by the known override pattern
+  (`brace-expansion: 5.0.8`), lock regenerated, audit + DeviceWeb build verified locally,
+  pushed as `3a718f5f6`. NOTE: rerunning a FAILED run of an older commit cancels the newer
+  commit's in-flight build via the shared concurrency group — prefer rerunning the newest.
+- **MD3DialogChrome** (new): borderless caption for owned dialogs (ConfigProfiles, Version
+  history, MD3ColorPicker, StopPrintGate) — HTCAPTION drag, mnemonic-safe title, 44px close
+  target, DWMWCP_ROUND. **MD3Motion** (new): duration tokens + standard/emphasized easing +
+  interruptible Anim honouring SPI_GETCLIENTAREAANIMATION; adopted for dialog fade-ins,
+  palette fade, SlideToConfirm animated snap-back.
+- **PreferencesHistory** (new): `AppConfig::set_save_observer` (new libslic3r hook, fired on
+  the main thread after both save() variants) → 2s-debounced commit of BambuStudio.conf via
+  the profiles-root ProjectHistoryManager (identity `preferences.history`); browser/restore in
+  ConfigProfilesDialog ("Preferences history…", restore writes BESIDE the live conf).
+- **PrinterWatch** (new, opt-in OFF): timer → PrintWindow the Device live-view media window
+  (uniform-frame skip = no stream) → 768px JPEG → base64 → local Ollama /api/generate
+  (default model qwen2.5vl; gemma3 fine; gpt-oss text-only) → two-line OK/PROBLEM verdict →
+  info toast or persistent warning with a fix hint. Ollama-down is log-only. Preferences ▸
+  Other section (enable / model tag / interval). Needs printer+Ollama for end-to-end.
+- **Register truth-restored:** scene-toolbar centering (get_main_toolbar_offset) and the
+  Objects card (Plater.cpp:3744 SectionHeader+SearchField; GUI_ObjectList.cpp:93
+  SecondaryContainer chip rows) had ALREADY landed — flipped deviation→done with evidence:
+  128 done / 3 justified deviations / 0 open.
+- Catalogs at 562 (--check green). Docs: preferences-history.md, ai-printer-watch.md +
+  indexes; ROADMAP mandates moved to Landed. Pending: wave build verification + captures of
+  the chrome'd dialogs, then push.
+
+# Screenshot replacement + light/dark fixes + search everywhere + config profiles (2026-07-24, later)
+
+**Wave 2 (same session):** Ctrl+F **command palette** (`CommandPalette` — every enabled menu
+command with icon+description, nav targets, rich inline theme/density/accent rows, SearchField
+query with the regex builder, 120-row cap); the regex-builder popover became **tabbed**
+(Build | Reference) with full per-token documentation rendered from the chip tables, engine
+mini-docs, examples, and an **OpenCode helper** (prompt → clipboard, launches OpenCode when on
+PATH; nothing leaves the machine). Dark-mode pass on the new ConfigProfilesDialog caught and
+fixed: unwrapped/truncated subtitle+secrets labels, '&'-mnemonic title ("_backup"), light label
+bands, dark-on-dark secrets text (UpdateDlgDarkUI before apply_theme), and light native list
+headers in both new dialogs (UpdateDVCDarkUI). Light+dark evidence set committed under
+`docs/screenshots/dark/`. Verified fixed on rebuild: Preview legend legibility (dark OnSurface
+values in light mode) and the narrow move-bar overlap (progressive shed of skips → counter).
+Catalogs at 530 (`compile_translation.py --check` green, language gate 13/13). Known recorded
+findings (not yet fixed): "Slice plate" truncates to "Slice pl" at 846px window width in both
+themes (plate-bar right cluster needs responsive shrink); PrintHostQueueDialog find-bar and
+ProjectHistoryDialog dark-mode label bands unaudited pixel-by-pixel.
+
+**Wave 3 (same session):** `Widgets/MD3ColorPicker` — continuous MD3 picker (S/V field + hue
+strip + per-hue Material tonal ladder + rgb/hsv/nearest-name **color translator**) replacing
+wxColourDialog on the accent "+" tile; `StopPrintGate` — the requested launch-console stop
+interlock (2 painted key switches → 3 double-press arming buttons → SlideToConfirm → hazard
+cover → real STOP button), wired into `StatusPanel::on_subtask_abort` with plain-language
+stage captions (destructive copy stays unambiguous). Reference-tab nits fixed (term column
+width, scroll-to-top). Catalogs at 547, gate green. **Pending verification:** wave-3 build was
+in flight at handoff time; the stop interlock needs a connected printer for end-to-end
+verification (dialog itself is modal-testable); popover Reference-tab captures need a retake
+after the nit fixes; Preferences scrolled/external-editor crops still need a WM_VSCROLL-driven
+capture (keyboard PageDown does not scroll the wx panel).
+
+User-directed mid-wave: replace ALL screenshots, test light and dark mode for visibility and
+clipping, answer "where is the search bar in print process settings" (it is the magnifier icon
+in the settings tab's top row — collapsed until clicked / Ctrl+F), add many more search bars
+(regex builder always included), colour-aware search, and a full AppData export/import with
+slide-to-confirm, unlimited profiles, and per-profile Git history.
+
+- **Git consolidation:** the last unmerged agent branch `codex/native-material-validation` was
+  proven file-identical/superseded, ours-merged (`7c27f9626`) for ancestry, then deleted from
+  the remote; local `claude/recursing-kepler-58a6c3` + its worktree removed after ancestry
+  proof against pushed `origin/master`. Upstream `v1.x`/`release/*`/contributor branches
+  retained (unmerged, not agent work).
+- **Screenshot matrix replaced** from the current build: native surfaces via headless Mesa
+  llvmpipe + PrintWindow (menus via the WinEvent menucap machinery, popovers via bldcap on the
+  headless desktop — transient popups dismiss if any helper process spawns, so click+capture
+  must run in ONE process), webviews via headless Edge, old crop framing recovered by
+  FFT template-matching each old crop against the fresh page shots (score 1.0 = same box).
+  New captures added for the Calibration nav tab and the advanced builder's new sections.
+- **Light-mode Preview bugs found by this pass, fixed in-tree:** legend dock text was
+  ImGui-default white on the light surface (now pushes OnSurface with the window's other
+  style colors — pops bumped 8→9 at all three sites); the move bar's clamped groove slid the
+  handle over the "Move N / N" counter at narrow widths (now sheds skip buttons, then the
+  counter, before ever overlapping).
+- **Search everywhere:** ProjectHistoryDialog gained a filtering SearchField (selection and
+  restore map through `m_filtered_rows`); PrintHostQueueDialog gained find-in-queue (count +
+  select — rows can't hide because job ids are row indices); the Plater object search is now
+  colour-aware via `SearchField::colorSearchText` (hex + nearest-name haystack).
+- **Config profiles & backup (File menu):** `ConfigProfilesDialog` + `Widgets/SlideToConfirm`.
+  Whole-datadir zip export (secrets included — explicit ErrorContainer warning, slide gate,
+  keyboard-operable), import→new-profile only (zip-slip guarded), unlimited profiles under
+  `<datadir-parent>/BambuStudio-profiles/`, one-click launch via `--datadir`, per-profile
+  snapshots/restore through ProjectHistoryManager (identity = `<name>.profile`, content =
+  fresh zip). 43 new curated yue_HK entries; catalog 494, `compile_translation.py --check`
+  green. Docs: `docs/features/workspace/config-profiles-backup.md` + index/regex-builder/
+  version-history updates.
+
+# Dark-mode/clipping wave + advanced regex builder + release-pipeline repair (2026-07-24)
+
+User-reported: "hardly visible text everywhere" (dark mode), Process-card overlap, "latest
+release app not launching", release list flooded/mis-ordered, "not all search bars have regex
+builder", and a mandate for a fully advanced regex builder with documentation. Four parallel
+Fable agents (disjoint owners) + orchestrator; one serial build gate; headless dark-mode
+verification via the DarkQA recipe (see lowlevel-mcp-headless-driving memory — cross-desktop
+hwnd access now requires launching the cheap CLI ON the headless desktop).
+
+- **Release loop root-caused/killed (`0d4091229`, `6be213882`):** `on: push: {}` also matched
+  the tags the release job itself created → every release re-built the same commit under a
+  stale title (142 releases, newest not on top). Push trigger is branches-only now, release
+  job refuses tag refs, in-flight tag-echo runs cancelled, 140 old releases deleted (tags
+  kept; keepers: r192, r174, portable-preview-1).
+- **"App not launching" root-caused:** r192's payload launches fine (extracted + verified
+  headlessly with Mesa). Fresh installs die at the OpenGL<2.0 gate on GPU-less machines.
+  Fix shipped in-tree: hash-pinned Mesa llvmpipe 26.1.3 (pal1000 mesa-dist-win, byte-identical
+  to the locally proven DLLs) staged into the installer's mesa\ subfolder + OpenGLManager
+  one-shot self-relaunch (copy-beside-exe, BBS_SOFTGL_RETRIED triple loop-guard), uninstaller
+  handles the runtime copies, docs/features/windows/software-gl-fallback.md.
+- **Dark-mode systemic fix:** StateColor::darkModeColorFor was applied twice on many paths and
+  the map was not idempotent — MD3::Dark::onSurface was hex-identical to a light key, so
+  correct dark text got remapped to near-black (#2f3036 on dark surfaces; pixel-verified).
+  Fixed by 1-step hex nudges severing the aliases (+ invariant comments), TextDisabled dark
+  legibility bump, StaticBox stale-parent-bg refresh (white squares behind rounded controls),
+  SideButton radius clamp (the green "eggplant" blob), action-bar disabled-text derivation,
+  SwitchButton min-size (Process "bal Obj" overlap), TabCtrl glyph pinning + Tab.cpp fallback
+  fix (orange segment glyphs), Label dark seeding, frame bg + topbar width sync (grey band).
+- **Advanced regex builder (user mandate):** new Widgets/RegexBuilderPopup.{hpp,cpp} — guided
+  sections (literals auto-escape, classes, anchors, groups/alternation, quantifiers + lazy),
+  raw pattern editor (bidir sync), flags, live validity with friendly std::regex_error text,
+  collapsible Test area (sample text, highlighted matches, capture groups), copy, engine
+  caption (std::regex ECMAScript); bounded (2000-char pattern / 20000-char sample / 200
+  matches, all guarded). docs/features/windows/regex-builder.md rewritten.
+- **Regex on every search surface:** object-list search's builder was inert (search_object
+  ignored flags — now routed through textMatches + live re-filter, highlight index bug fixed);
+  Tab preset pill and Ctrl+F SearchDialog now host real SearchFields; device picker on the
+  shared matcher; ImGui font picker + assembly tree gained guarded `.*` toggles.
+- **CI speed:** per-ref cancel-in-progress; Windows app build moved to Ninja + sccache (GHA
+  cache). First canary failed on C1041 (parallel cl racing the shared /Zi PDB) — root fix:
+  the one live /Zi (root CMakeLists add_compile_options) is now /Z7, which also makes objs
+  sccache-cacheable. Re-validated by the wave push's CI run.
+- **Catalogs:** 451 yue_HK translations (+68 regex builder, +2 softgl), .mo --check green,
+  coverage.json updated. PO escape gotcha recorded: the parser is ast.literal_eval, so \b and
+  mesa\opengl32.dll must be double-backslashed in msgid/msgstr.
+
+**Verification (completed):** serial local Release build green (1h11m, 0 errors, DLL relink
+proven against object timestamps). Headless dark-mode recapture PASS on every reported defect:
+"Not sliced" + both action pills legible, white square gone, option segments proper capsules,
+Layer-height/manipulation values legible, Global/Objects header with zero overlap, neutral
+segment glyphs, dark caption full-width. The residual half-clipped preset-row glyph was
+root-caused to the sizer-less DISABLE_UNDO_SYS undo-to-sys button floating at the panel origin —
+hidden (`f8461434e`), re-verified by crop. Light-mode regression pass clean on the same surfaces.
+Wave pushed as `e2ed70365` (38 files) + `f8461434e`; summary in Discussion #2; wiki Releases page
+updated.
+
+**Release-loop postscript:** the loop RESURRECTED after the trigger fix — tag-triggered runs
+execute the OLD workflow snapshot at the tag's commit, so surviving echoes kept re-seeding
+(~25 more releases). Contained by cancelling every tag-ref run and arming a session reaper
+(cancels new tag-ref runs within 2 min); echoes starve because none reaches publish. 165 echo
+releases deleted in total; keepers r192/r174/portable-preview-1. Any future session that sees
+`md3-windows-*`-ref runs should cancel them on sight until the old tags age out.
+
+**CI state at handoff-write:** final wave run 30081955084 (head `f8461434e`, Ninja+sccache path
+with SLIC3R_MSVC_PDB=OFF) in progress — NOT yet claimed green; its release will be the first
+containing this wave. First sccache run only populates the cache; warm timing evidence needs the
+run after it. e2ed70365's run was cancelled by design (per-ref cancel-in-progress supersede).
+
+# Post-conformance feature + polish program (2026-07-23)
+
+With the parity register closed (127 done / 4 recorded deviations / 0 open), this session delivered
+the user's feature/quality backlog on top. Each wave: parallel disjoint-owner edits, then ONE serial
+build (to avoid concurrent-build MSBuild-tracker corruption), then adversarial review; visual waves
+verified by rendering the real app.
+
+**Verification harness (new).** This VM has no GPU, so BambuStudio gated at OpenGL<2.0 and never
+reached its UI. Fix: Mesa llvmpipe `opengl32.dll` beside the exe + `GALLIUM_DRIVER=llvmpipe`. The app
+is now driven/captured fully HEADLESS via the `lowlevel-computer-use-mcp` cheap CLI (off-screen
+CreateDesktop + PrintWindow) — see the `lowlevel-mcp-headless-driving` memory + `scratchpad/ll-drive.sh`.
+This uncovered + fixed the real startup crash: the Material Symbols variable TTF through GDI+
+(wxGCDC/wxGraphicsContext) corrupted the heap (PageHeap-verified at `GdipCloneFontFamily`); MaterialIcon
+now renders exclusively via plain GDI and the bundled faces register session-visible (not FR_PRIVATE).
+CI-verified (`7b6ea27f9`). A portable-ZIP preview (`portable-preview-1`) was published from a
+launch-verified local build. The CI publish HTTP 403 (org-side, flapping) is worked around by the
+`TOKEN_GITHUB` PAT in `build_all.yml`; releases auto-publish again (r94..r101+).
+
+**Features shipped (all pushed to master):**
+- Clipping + accessibility (`bca31b40b`): left-edge bleed-through root-caused to the docked AUI sidebar
+  pane border; app-wide keyboard focus/activation + accessible names + focus rings, contrast, unit
+  suffix + HMS width clipping. (The checkbox/radio 44px hit-target was reverted — it regressed layout
+  app-wide; row-level hit targets are the followup.)
+- MD3 first-run Setup Wizard + Home hero (`50dee281e`): guide webview restyled to MD3 tokens (region
+  list an outlined card, not a flat green bar), GuideFrame on the MD3Dialog shell, Home hero given a
+  leading brand title instead of an empty green band.
+- Regex builder on every search bar (`66c807f54`): SearchField `.*` toggle + tune builder popover
+  (token chips, case/whole-word) + shared `textMatches()`, wired into Preferences, preset editor,
+  user-presets, device farm, global option search, and the ImGui in-canvas search; guarded against
+  catastrophic-backtracking throws at every site.
+- Full UI font customization (`f4ed83643`): Appearance Font family + Text size, runtime-applied via the
+  Label factory (`rebuild_fonts`) with CJK-safe fallback and a live preview.
+- Browser-like project tabs + grouping (`04a02a676`): new MD3 `ProjectTabBar` (one tab per project,
+  drag-reorder, colored groups, per-tab dirty dot, custom-font labels) as session file-tabs over the
+  single Plater (switch = save-outgoing-if-dirty + load-selected, reusing the Backup/Restore round-trip).
+  A spike confirmed true multi-live-project is a ~1200-call-site rewrite (out of scope). Known: a switch
+  costs a file-open (full deserialize) + resets transient undo/camera; followups — orphan temp-snapshot
+  sweep on restart, never-saved-tab Save-As identity, command-line-opened file getting its own tab.
+
+Catalogs at 368 yue_HK translations (.mo --check green).
+
+**Non-blocking notifications wave (2026-07-23, `ab007cda2`):** the three central OK-only funnels
+(`show_info` / `warning_catcher` / `show_error` in GUI.cpp) now route to NotificationManager corner
+toasts (Regular/Warning/Error), covering ~120 informational call sites; modal fallback when a modal
+dialog is on top or the Plater isn't up yet. Decision dialogs untouched. Full-build gate 0 errors;
+mirrored into the user's global agent instructions (agent-global-memory `e71ece3`) alongside
+appearance-editor, external-editor, and local-version-control mandates.
+
+**External editor + appearance completion wave (2026-07-23, in tree, GUI-lib compile green):**
+- `Utils/ExternalEditor.{hpp,cpp}` (registry+PATH detection, table transcribed from the
+  desktop-material reference), `open_in_external_editor` launcher, Preferences ▸ General editor
+  combobox + Custom path row, File ▸ "Open in External Editor" with warning-toast fallback.
+- Appearance: free accent color picker (wxColourDialog into the same `setAccentSeed` pipeline),
+  "Reset appearance to defaults" (under a reentrancy guard — `MultiSwitchButton::SetSelection`
+  EMITS its event), live MD3 token preview panel; `AccentSwatch::colour()` keeps preset rings
+  truthful on matching custom picks.
+- Hardening: CheckBox.hpp docstrings corrected (20/18px reality), Label.cpp SectionHeader GC-font
+  guard made effective (strict `IsValidFacename`, cached — `faceIsInstalled`'s probe fallback echoes
+  any name on MSW and never fails).
+- Adversarial review (3 agents): 2 FAIL verdicts → all MEDIUM findings fixed in-tree (reset
+  reentrancy, dead GC guard); LOWs fixed (custom-editor silent fallback, swatch rings).
+- Feature docs: new `docs/features/workspace/` category (notifications, version history, project
+  tabs, external editor) + `windows/appearance-customization.md` + `windows/regex-builder.md`.
+
+**Screenshot matrix (complete, `9f450f86d` + follow-up):** `docs/screenshots/<feature>/` — 202
+captures, one per page and one per button per feature. Webview surfaces (Home, Wizard) captured via
+headless Edge against `resources/web` HTML (WebView2 never composes on a headless desktop); native
+surfaces via PrintWindow, which — with Mesa llvmpipe — DOES capture the GL viewport + ImGui toasts
+(memory `lowlevel-mcp-headless-driving` updated). Pass-2 verification against the rebuilt exe, all
+headlessly measured: toast bottom-RIGHT anchoring PASS (17px right margin), toast fully visible
+above the plate/slice bar PASS (root cause: notification base was SLIDER_DEFAULT_BOTTOM_MARGIN=10
+while the native bar overlaps the canvas bottom ~66px — new NOTIFICATION_DEFAULT_BOTTOM_MARGIN,
+final value 80 for a 14px breathing gap; 80 is geometry-derived from the measured 64-flush capture,
+compile-gated but not yet re-captured); presets-up-to-date modal→toast PASS (no modal in a 39-frame
+watch); External-editor rows present in General (VS Code auto-detected) PASS; appearance
+Custom…/reset/MD3-preview present PASS; Other-tab toggle spacing PASS. Known cosmetic followups:
+Preview legend column alignment — RESOLVED (`809a230d6`): reproduced the sliced-cube Preview
+headlessly and found the FILAMENT|MODEL value columns were already aligned (header + value share
+`offsets_`); the real defect was the grey "Filament change times" / "Cost" summary rows crammed
+directly under the table. Fixed by wrapping them in the table's own ItemSpacing.y (6*m_scale) plus
+a spacer row so they get the same row advance; before/after headless crops confirm the summary
+rows now clear the value row. The Custom-accent-button edge clip was FIXED in-session (replaced with a 32px "+" tile
+matching the swatch geometry; headlessly re-verified, screenshots refreshed). The CI failure on
+9f450f86d/94f72d916 was root-caused to the Cantonese catalog gate: entries were added to the
+.po/.mo without updating bbl/i18n/yue_HK/coverage.json — fixed via the official
+compile_translation.py (381 validated translations, deterministic .mo, Test-LanguageModes.ps1
+passing locally). NOTIFICATION_DEFAULT_BOTTOM_MARGIN finalized at 80px (14px gap above the bar).
+The captured File menu now truthfully shows "Open in External Editor" (disabled on an unsaved
+project — its enable-condition at work).
+
 # Handoff
 
 ## Delivered evidence — 2026-07-21
@@ -94,21 +478,209 @@ existing timeout rather than being silently cancelled. History stays local to th
 pushed to the source repository, not synced, and not a backup, and there is not yet a
 retention/pruning policy.
 
+## Register closed — final structural wave (2026-07-23)
+
+The parity register is **127 done / 4 recorded deviations / 0 open**. The final build-in-the-loop
+wave closed the five audit-reopened rows: the Process card gained a SectionHeader(tune) + a
+process-preset SelectField wrapping the live PlaterPresetComboBox + a Quality/Strength/Support/Others
+SegmentedControl that filters curated rows (this fixes the cramped/overlapping Process header the
+visual QA caught); the Filament title moved onto the literal SectionHeader class; ReleaseNote's five
+stock-chrome siblings and ProgressDialog reparented onto the MD3Dialog shell (which gained an
+additive two-phase CreateShell path — the 32 other subclasses are untouched). The objects-searchctrl
+row is a recorded deviation: the selected-row SecondaryContainer chip landed, but the per-cell type
+glyphs + visibility/checkbox anatomy need a change in ObjectDataViewModel (outside the wave's owned
+files). Review verified behavior preservation and no GDI+ font regressions; all TUs compiled and
+libslic3r_gui.lib re-archived. Reused existing catalog strings only.
+
+**Verification harness this session:** the startup crash (variable-font-through-GDI+ heap corruption)
+is fixed and pushed; a Mesa llvmpipe software-GL DLL beside the exe lets the GPU-less VM render the
+real UI, and the lowlevel-computer-use-mcp cheap CLI drives + PrintWindow-captures it fully headless
+(see the ci-is-free and lowlevel-mcp memories). Live visual QA found: the fixed Process header (now
+addressed), a left-edge ~15px bleed-through clip, the legacy Setup Wizard/GuideFrame, and the Home
+hero — plus a 71-item clipping+a11y audit (25 high). Those, the regex-builder-on-every-search-bar,
+full font customization, and browser-like project tabs are the queued follow-on waves.
+
+
 ## Deferred work
 
 - ~~Push local `master` (`8d727d49d`) and obtain a hosted CI run~~ — done; verified by green run
   `29877040307` and published release `md3-windows-v02.08.01.55-r37`.
 - ~~Achieve a fully green publish run~~ — done; same run and release as above.
-- **In progress (multi-agent waves, 2026-07-21/22):** the structural component anatomy from the
-  audit — camera-HUD overlay for the Device camera card, Material Symbols icon-font infrastructure
-  (font asset already pushed in `a29f629c0`), remaining feature-level pill-geometry variants, the
-  three retained bitmap-bound theme literals, and Cantonese strings for the new surfaces. Each wave
-  is committed and pushed to `master` as it completes. Scope detail: the shared Widgets pills are
-  already done and DPI-safe via `MD3::Metrics::pill_radius(height)`; the remaining pill variants are
-  feature-level (chips, search-field, settings nav-item). The three retained theme literals are
-  anchored in `docs/features/design-system/md3-design-system.md` (assembly-tree delete badge over
-  `cross_dark.svg`; Helio header banner over `helio_icon`) and become resolvable once the icon-font
-  infrastructure can tint glyphs from tokens.
+- **Structural-anatomy waves implemented (multi-agent session, 2026-07-21/22).** All four waves are
+  written and committed on the build worktree branch:
+  - `ae690fa85` (pushed) — Cantonese strings for the model-preview and Prepare-dock surfaces:
+    yue_HK + English catalogs, rebuilt `.mo`, refreshed `coverage.json`, and new
+    `language_mode_tests` assertions for standalone-Cantonese and bilingual modes.
+  - `c4417d883` — Material Symbols icon-font infrastructure: private registration of the bundled
+    TTF in `Label::initSysFont`, the `MaterialIcon` helper (28 cmap-verified PUA glyphs,
+    availability probe, font factory, wxDC draw/measure, antialiased bitmap producer), CMake
+    wiring, and an AxisCtrlButton proving site with bitmap fallback. Only the default
+    Outlined/wght400/FILL0 instance renders through wxFont; active state is expressed via colour.
+  - `be90ec1f0` — Device camera-HUD strip per the kit camera-card anatomy: always-dark `CameraHUD`
+    band with a visibility-aware pulsing LIVE badge (`MD3::Viewport::live`), migrated status
+    indicators pinned to on-dark bitmaps, and icon-font settings/fullscreen chips preserving the
+    old CameraItem event wiring. Sizer sibling above the video — nothing overlays the native
+    `wxMediaCtrl` HWND.
+  - `f9005d609` — pill/literals closure: `MD3::Metrics::pill_radius(height)`; verified the shared
+    Widgets pills are already DPI-safe (`applyMD3Style`/`Rescale`); each residual bitmap-bound
+    theme literal is anchored and justified in `docs/features/design-system/md3-design-system.md`
+    rather than unsafely tokenized.
+  **All four waves are pushed** (`origin/master` = `a924a9f1f`). The three C++ commits passed the
+  local incremental Release build gate first: 0 errors, "All steps completed successfully",
+  41 minutes, MaterialIcon/CameraHUD/StatusPanel compiled and linked (only the pre-existing
+  LNK4098 warning). Twelve Opus agents (plan → implement → 3-lens adversarial review → fix)
+  produced them; the review's one blocker (wxBitmapBundle absent from the vendored wx 3.1.5) was
+  fixed before commit. Hosted CI runs for these pushes were in progress at the time of writing; the
+  local gate did not build the test binaries, so `language_mode_tests` for the new Cantonese
+  assertions is proven by CI, not locally. The LIVE-badge follow-up is closed: "LIVE" is in the
+  en catalog, yue_HK renders it 直播中 (connection-offline category), coverage.json counts 288,
+  the shipped `.mo` was rebuilt with `bbl/i18n/yue_HK/compile_translation.py` and its `--check`
+  reproducibility gate passes locally, and `language_mode_tests` asserts the key in standalone
+  and bilingual modes. A scoped audit confirmed no other string from the wave commits is missing
+  catalog entries.
+  **Next program (in flight): full MD3 conformance.** The user has mandated that the entire UI
+  match `ui-md3/design-system/` with zero original design elements (functional data colors
+  exempt). A 10-surface Opus audit is generating
+  `docs/features/design-system/md3-parity-register.md` — the canonical open-gap register and
+  wave plan; implementation proceeds register-wave by register-wave (each build-gated and pushed),
+  folding in the already-scoped feature-pill (CapsuleButton 5px→pill, Tab search field 5px→pill),
+  camera-HUD temp-chip, and project-history durable-retry slices.
+  **Register Wave 1 is implemented** (17 Opus implement groups, zero unfinished assignments; 3-lens
+  review found 4 findings — 3 fixed, 1 verified false positive): 22 register rows done and 2 partial
+  (the Preview section-header `palette` and status-pill `layers` glyphs wait on the Wave 2 ImGui
+  Material-Symbols atlas), plus the scoped extras — CapsuleButton chip pill, Tab search-field pill,
+  and CameraHUD nozzle/bed temp chips. The new Preview status string "Sliced · %1% layers" is
+  catalogued (en + yue_HK 切好片喇 · 共 %1% 層, coverage 289, `.mo` rebuilt, `--check` green).
+  Wave 1 is pushed (`70bd80309`). **Delivery policy per user 2026-07-22: ship-first — waves push
+  right after implement+review; hosted CI is the build verification and failures are fixed forward;
+  local builds run only as informational checks.**
+  **Progress through the register (59 done / ~5 partial / 67 open):** Wave 2 shipped (`bd1788b48`
+  glyph enum ~126 verified codepoints, `67d3079b5` ImGui Roboto/Mono/Material-Symbols atlas);
+  Wave 3 subset shipped (`d8960fa96`, raster→glyph on eight surfaces; review fixed three HiDPI
+  dpiRef threads and a glyph-semantics swap); Wave 4 shipped (`4341bc4f1`, Preview overlay + slider
+  on the atlas, both former partial rows closed); Sprint A shipped (`6a2f3e346` shared-widget
+  library rebuild incl. new SearchField/Slider widgets, `7bbff238f` Slice/Print + tab controls +
+  preset search, `0a061e984` HMS/MediaPlay/pause-stop, plus the project-history durable-retry
+  commit) — all 10 Sprint A groups delivered every assigned gap; reviews across these waves found
+  only isolated defects, all fixed (one false-positive exclusion alarm was my own atlas edit).
+  The recurring infra annoyance is StructuredOutput retry-cap failures on some final agent reports;
+  work always landed and was recovered from journals — later reviews use plain-text output.
+  Project-history retry semantics shipped: durable failure notification with Retry, retained
+  failures surfaced in the history dialog with per-item and bulk retry, orphaned-manifest adoption
+  on restart; new error-flow strings catalogued (en + yue_HK, coverage 294, `.mo` `--check` green).
+  **Sprint B shipped** (`3aa4bb972`, release `md3-windows-v02.08.01.55-r53`): the ten-group glyph
+  and anatomy sweep — MainFrame/Plater/StatusPanel icon slices, SideTools signal draw,
+  FilamentGroupPopup anatomy, Slice/Print leading glyphs, snackbar recolor, and every formerly
+  glyph-blocked row; 16 gaps, review traced every symbol clean, two verified defects fixed.
+  Register stood at 73 done / 56 open. CI green down the entire train (r37–r53 releases published).
+  **Wave 7 shipped (this push, 2026-07-22): register now 108 done / 21 open.** The prior session
+  hit its usage limit mid-Wave-7; this session salvaged the marshal partition from the session
+  export and relaunched — 14 Opus agents (10 disjoint-owner groups + read-only test-repair scout +
+  2 adversarial reviewers + fixer). Landed: the `MD3Dialog` borderless shell primitive and the
+  whole MsgDialog family + 10 leaf dialogs reparented onto it; the `GLIconGlyphBridge`
+  glyph→GL-texture bridge routing the 3D-editor toolbar and gizmo rail to Material Symbols
+  (capability-gated, SVG fallback intact); title bar to kit anatomy (brand tile, history chip,
+  project chip, appearance button; Save/Undo/Redo/Publish removed from the caption, Calibration
+  re-homed as a text menu button); Preferences rebuilt (230px NavRail, new Appearance section with
+  Theme/Density/Accent controls — density/accent persist but await runtime wiring); Preview
+  timeline transport bar; device farm list→card grid; StatusPanel section headers + Z/extruder
+  glyphs; Prepare-sidebar safe subset. Reviewers found 3 real defects, all fixed: SendToPrinter
+  and PublishDialog header-X paths bypassed job teardown (both now route the original close
+  handlers), plus a `-Wreorder` cleanup. Three agents' final reports died on the recurring
+  StructuredOutput retry-cap; their edits landed and were recovered from transcripts. New strings
+  catalogued: 12 en entries, 21 yue_HK entries (coverage 315, `.mo` rebuilt, `--check` green).
+  Local informational Release build gate passed (0 errors, exe + dll relinked).
+  During the ship a parallel push by codingmachineedge (`ef6fd59f2`/`156f9dd2d`) landed a
+  hand-rolled variant of the same device-section-headers row; the wave was rebased onto it and
+  the reviewed kit-SectionHeader version supersedes it at the tip (the parallel commits remain
+  ancestors; their register edit had introduced a corrupted duplicate row, repaired here).
+  **Test-repair re-scope (scout, read-only) — premise correction:** the CI waiver is pure omission
+  (only 3 targets built/run); `libslic3r_tests` has NO statically-provable compile blocker — the
+  provable drift is RUNTIME: PrusaSlicer config keys removed in BambuStudio (`perimeters`→
+  `wall_loops`, `first_layer_height`→`initial_layer_print_height`, etc.) throw or null-deref in
+  `test_config.cpp`/`test_placeholder_parser.cpp`; `libnest2d_tests` compiles, and its
+  `exclude:[NotWorking]` quarantine is invalid Catch2 syntax (would not apply). Executable repair
+  plan recorded: port the config keys, fix the Catch2 exclusion to `~[NotWorking]`, optionally
+  split a runtime-passing `libslic3r` subset into CI.
+  **Installer overhaul shipped (`3c12a1771`):** the NSIS installer is restyled to MD3 (custom
+  Welcome/language/install-mode/build-progress/Finish pages, documented D1–D7 Win32 deviation
+  list) and the mojibake language page is fixed at the root (UTF-8 BOM + `/INPUTCHARSET UTF8` on
+  all five makensis calls — the Cantonese strings were being read as CP-1252). A new
+  build-from-source mode bootstraps Git/Node.js/VS Build Tools, installs opencode, and builds the
+  release source with a bounded five-cycle fully non-interactive opencode auto-repair loop
+  (blanket-allow config scoped to the clone, question stays deny); the build page is non-closable
+  while the build runs. Review hardening before ship: `FileReadUTF16LE` for manifest/status reads
+  (plain `FileRead` truncated UTF-16LE, which would have made from-source uninstalls delete
+  nothing), and a declined prebuilt fallback can no longer advance into INSTFILES with a partial
+  payload. Compiles at makensis 3.12 EXIT=0 locally; silent-mode CI fixtures unchanged.
+  From-source is interactive-only and never runs in CI; its first end-to-end run on a real
+  machine is still an open verification item, and `PRODUCT_SOURCE_REPO_URL` defaults to a
+  placeholder the owner should confirm.
+  **Wave 8 shipped: register 113 done / 16 open.** Eleven Opus agents (marshal + 8 groups + 2
+  reviewers + fixer; both reviews CLEAN, fixer verified with zero edits). Landed: the
+  `raw-wxmessagebox` sweep (22 live sites across 8 files onto the MD3 MessageDialog with exact
+  return-code preservation; early-boot/fatal-handler sites deliberately left native with reasons
+  recorded), preset-editor NavItem pills via a new TabCtrl leading-glyph API, device temperature
+  rows (teal glyphs + mono values + trailing edit IconButton, live AMS humidity wired), GL
+  gizmo-rail/scene-toolbar background chrome plus the viewport zoom cluster and object stat pill,
+  filament subtitle row folded into its SectionHeader, four new cmap-verified MaterialIcon glyphs,
+  and runtime Density/Accent application (`MD3::Metrics::active()` + accent-seed override;
+  density is restart-scoped until ~40 call sites adopt `active()`). Catalogs at 322 (`--check`
+  green).
+  **Wave 9 shipped (completion wave): register 120 done / 4 recorded deviations / 5 open.**
+  Ten Opus agents, both reviews CLEAN, fixer applied one density nit. Done: the sidebar
+  object-manipulation card (read-only live mirror of the gizmo cache, 250ms timer), device
+  print-options (4-way speed SegmentedControl, teal fan Sliders, chamber-light Switch), the
+  Control-strip removal into an overflow menu, the AMS card reskin to Device-teal tokens (every
+  load/unload/RFID/tray signal preserved), the gizmo-rail kit anatomy (44px r12 tiles,
+  Primary-fill selected, group dividers), and TextureImport + Helio onto new additive MD3Dialog
+  resizable / forced-dark variants. Recorded deviations, each with concrete evidence in the
+  register commit: XY dial→3x3 grid + 10/1 step selector (dial encoded magnitude in hit radius —
+  one-gesture jog becomes two-step), scene-toolbar pill reskinned but not re-centred (collides
+  with the collapse toolbar), SyncAms partial shell (simplebook footer gating), and the
+  project-webview (host-injected read-only page restyled to kit tokens/CSS; true file-manager
+  anatomy needs C++ host APIs). Test repair: config keys ported to BambuStudio names, the invalid
+  Catch2 exclusion fixed; the isolated suite build did not finish in-window — CI wiring deferred.
+  New strings catalogued (coverage 331, .mo --check green).
+  **Waves 10-14 shipped (2026-07-22, parallel worktrees): THE REGISTER IS CLOSED — 125 done /
+  4 recorded deviations / 0 open.** The combined Fable wave landed the five build-in-the-loop
+  Plater rows (printer identity card, bed SelectField with relocated hover popup, filament
+  info-rows with lockstep teardown, Process card with an Advanced/Simple flip keeping the full
+  ParamsPanel reachable, kit Objects card), finished the aggregate-test repair (both suites
+  compile and RUN: libslic3r_tests 87/95 pass, libnest2d 3 failures — the 11 residual runtime
+  failures are algorithm drift, recorded and deliberately NOT wired into CI), migrated 21 density
+  call sites to Metrics::active(), and polished MD3Dialog DPI / StateColor Device dark pairs /
+  Helio siblings. Opus waves 12-13 delivered GL viewport polish (glyph sub-chrome with per-icon
+  kept-raster reasons, identity-driven rail dividers, cached chrome with a review-caught
+  texture use-after-free fixed) and SendToPrinter/calibration/device-farm completion. Fable wave
+  14 wired startup density/accent, added Preferences live search, refreshed README/ROADMAP/docs
+  indexes and the GitHub wiki (6b0747d). Catalogs at 348, .mo --check green throughout.
+  **CRITICAL open verification — startup crash:** the Wave 14 screenshot pass found the
+  Wave 8/9-era binary crashes with heap corruption before any window (6/6 launches, WER evidence
+  recorded). That binary was built while agents were mid-edit, so the evidence is tainted; a
+  clean incremental build of the final tree was launched and a runtime smoke on it is the
+  mandatory next gate (the staged capture scripts make the screenshot retry fast). Until that
+  smoke passes, no runtime-health claim is made for the shipped tree.
+  **Startup crash root-caused and fixed (2026-07-22/23, user-reported 'App not launching'):**
+  deterministic heap corruption (0xc0000374) during MainFrame construction, WinDbg-dumped to
+  MaterialIcon::bitmap -> wxGDIPlusContext: the Material Symbols face is a VARIABLE TTF
+  (fvar/gvar) and rendering it through GDI+ corrupts the heap (GDI is fine). Fix: MaterialIcon
+  glyphs are now rasterized exclusively with plain GDI (shared glyph_image core; draw/measure/
+  bitmap/bitmapPx all GDI+-free) and every gc->SetFont(MaterialIcon::font(...)) site
+  (CheckBox/RadioBox/CameraHUD/AxisCtrlButton/StatusPanel/BBLTopbar) composites pre-rendered
+  bitmaps. Debug-heap masking (_NO_DEBUG_HEAP=1) and a poisoned MSBuild tracker (stale objs/libs
+  silently skipping compile+link, which also hid a get_extruder_color_icons signature drift)
+  prolonged the hunt; local builds in this worktree now force-link before trusting results.
+  **Sonnet conformance double-check (15 agents): 114 done-rows re-verified, 51 findings
+  adversarially confirmed, 24 fixed + 2 partial in-tree** (ScoreDialog/MultiMachinePickPage onto
+  the shell, SideTools/TempInput/ProgressBar de-legacied, star-rating + picker-checkbox glyphs,
+  preview polish, swatch ring geometry, i18n literals). Register truth-reconciled to
+  **123 done / 3 deviations / 5 open**: the stale XY-grid deviation flipped to done (the grid IS
+  implemented), three over-claimed rows reopened (Process card completion, ObjectList row
+  anatomy, section-header literal-class swap), and two audit-discovered rows added (ReleaseNote
+  sibling shells, ProgressDialog shell). Those five need one build-in-the-loop follow-up wave.
+  A locally built portable-ZIP preview release ships once the fixed binary passes the launch
+  stress test; CI releases continue per push via the TOKEN_GITHUB path.
 - Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
   and replace the pre-sweep captures above.
 - Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.

@@ -11,9 +11,11 @@
 #include "GUI_Preview.hpp"
 #include "MainFrame.hpp"
 #include "format.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/StateColor.hpp"
 #include "ConnectPrinter.hpp"
 
 
@@ -23,6 +25,7 @@
 #include <wx/mstream.h>
 #include <miniz.h>
 #include <algorithm>
+#include <regex>
 #include "Plater.hpp"
 #include "Notebook.hpp"
 #include "BitmapCache.hpp"
@@ -74,6 +77,9 @@ MachineObjectPanel::MachineObjectPanel(wxWindow *parent, wxWindowID id, const wx
     this->Bind(wxEVT_ENTER_WINDOW, &MachineObjectPanel::on_mouse_enter, this);
     this->Bind(wxEVT_LEAVE_WINDOW, &MachineObjectPanel::on_mouse_leave, this);
     this->Bind(wxEVT_LEFT_UP, &MachineObjectPanel::on_mouse_left_up, this);
+    this->Bind(wxEVT_SET_FOCUS, &MachineObjectPanel::on_set_focus, this);
+    this->Bind(wxEVT_KILL_FOCUS, &MachineObjectPanel::on_kill_focus, this);
+    this->Bind(wxEVT_KEY_DOWN, &MachineObjectPanel::on_key_down, this);
 
 #ifdef __APPLE__
     wxPlatformInfo platformInfo;
@@ -201,6 +207,14 @@ void MachineObjectPanel::doRender(wxDC &dc)
 
     dc.DrawText(finally_name, wxPoint(left, (size.y - sizet.y) / 2));
 
+    // a11y-focus: distinct 2px keyboard focus ring, drawn inset so it reads apart
+    // from the 1px hover outline below.
+    if (m_focused) {
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        const int inset = FromDIP(2);
+        dc.DrawRectangle(inset, inset, size.x - 2 * inset, size.y - 2 * inset);
+    }
 
     if (m_hover || m_is_macos_special_version) {
 
@@ -229,6 +243,9 @@ void MachineObjectPanel::update_machine_info(MachineObject *info, bool is_my_dev
 {
     m_info = info;
     m_is_my_devices = is_my_devices;
+    // a11y-label: expose the device name as the row's accessible name.
+    if (m_info)
+        SetName(from_u8(m_info->get_dev_name()));
     Refresh();
 }
 
@@ -306,6 +323,43 @@ void MachineObjectPanel::on_mouse_left_up(wxMouseEvent &evt)
 
 }
 
+void MachineObjectPanel::on_set_focus(wxFocusEvent &evt)
+{
+    m_focused = true;
+    Refresh();
+    evt.Skip();
+}
+
+void MachineObjectPanel::on_kill_focus(wxFocusEvent &evt)
+{
+    m_focused = false;
+    Refresh();
+    evt.Skip();
+}
+
+void MachineObjectPanel::on_key_down(wxKeyEvent &evt)
+{
+    const int key = evt.GetKeyCode();
+    if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        trigger_primary_action();
+    } else {
+        evt.Skip();
+    }
+}
+
+void MachineObjectPanel::trigger_primary_action()
+{
+    // Synthesise a left-up at the row origin (0,0): that point is outside the
+    // edit-name and unbind glyph hit rects (which sit at the right edge), so
+    // on_mouse_left_up() takes the "select this printer" branch -- the correct
+    // keyboard default for the row.
+    wxMouseEvent e(wxEVT_LEFT_UP);
+    e.SetEventObject(this);
+    e.m_x = 0;
+    e.m_y = 0;
+    GetEventHandler()->ProcessEvent(e);
+}
+
 SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
     : PopupWindow(parent, wxBORDER_NONE | wxPU_CONTAINS_CONTROLS), m_dismiss(false)
 {
@@ -314,9 +368,16 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 #endif //__WINDOWS__
 
 
-    SetSize(SELECT_MACHINE_POPUP_SIZE);
-    SetMinSize(SELECT_MACHINE_POPUP_SIZE);
-    SetMaxSize(SELECT_MACHINE_POPUP_SIZE);
+    wxSize popup_size = SELECT_MACHINE_POPUP_SIZE;
+#if defined(__WINDOWS__)
+    // The Windows-only search bar is now the shared 40dip MD3 SearchField pill
+    // (taller than the wxSearchCtrl it replaces): grow the popup by the pill row
+    // so the device list is not clipped at the bottom.
+    popup_size.y += FromDIP(48);
+#endif
+    SetSize(popup_size);
+    SetMinSize(popup_size);
+    SetMaxSize(popup_size);
 
     Freeze();
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
@@ -325,7 +386,7 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 
 
     m_scrolledWindow = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_LIST_SIZE, wxHSCROLL | wxVSCROLL);
-    m_scrolledWindow->SetBackgroundColour(*wxWHITE);
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrolledWindow->SetMinSize(SELECT_MACHINE_LIST_SIZE);
     m_scrolledWindow->SetScrollRate(0, 5);
     auto m_sizxer_scrolledWindow = new wxBoxSizer(wxVERTICAL);
@@ -334,14 +395,25 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
     m_sizxer_scrolledWindow->Fit(m_scrolledWindow);
 
 #if defined(__WINDOWS__)
-	m_sizer_search_bar = new wxBoxSizer(wxVERTICAL);
-	m_search_bar = new wxSearchCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	m_search_bar->SetDescriptiveText(_L("Search"));
-	m_search_bar->ShowSearchButton( true );
-	m_search_bar->ShowCancelButton( false );
-	m_sizer_search_bar->Add( m_search_bar, 1, wxALL| wxEXPAND, 1 );
+	m_sizer_search_bar = new wxBoxSizer(wxHORIZONTAL);
+	// Shared MD3 SearchField pill (Device accent): brings the kit ".*" regex
+	// toggle and tune builder popover to the printer filter. Queries and every
+	// matcher-flag change re-run the filter live through search_for_printer.
+	m_search_bar = new SearchField(this, _L("Search"));
+	m_search_bar->SetColorScheme(MD3::ColorScheme::Device);
+	// The pill's default 220dip minimum exceeds this 216dip popup; relax it so
+	// the sizer can fit the field flush inside the popup body.
+	m_search_bar->SetMinSize(wxSize(FromDIP(120), -1));
+	m_search_bar->SetOnQuery([this](const wxString &) {
+		update_user_devices();
+		update_other_devices();
+	});
+	m_search_bar->SetOnRegexToggle([this](bool) {
+		update_user_devices();
+		update_other_devices();
+	});
+	m_sizer_search_bar->Add( m_search_bar, 1, wxALIGN_CENTER_VERTICAL | wxALL, 1 );
 	m_sizer_main->Add(m_sizer_search_bar, 0, wxALL | wxEXPAND, FromDIP(2));
-	m_search_bar->Bind( wxEVT_COMMAND_TEXT_UPDATED, &SelectMachinePopup::update_machine_list, this );
 #endif
     auto own_title        = create_title_panel(_L("My Device"));
     m_sizer_my_devices    = new wxBoxSizer(wxVERTICAL);
@@ -464,12 +536,12 @@ bool SelectMachinePopup::Show(bool show) {
 wxWindow *SelectMachinePopup::create_title_panel(wxString text)
 {
     auto m_panel_title_own = new wxWindow(m_scrolledWindow, wxID_ANY, wxDefaultPosition, SELECT_MACHINE_ITEM_SIZE, wxTAB_TRAVERSAL);
-    m_panel_title_own->SetBackgroundColour(*wxWHITE);
+    m_panel_title_own->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer *m_sizer_title_own = new wxBoxSizer(wxHORIZONTAL);
 
     auto m_title_own = new wxStaticText(m_panel_title_own, wxID_ANY, text, wxDefaultPosition, wxDefaultSize, 0);
-    m_title_own->SetForegroundColour(wxColour(147,147,147));
+    m_title_own->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_title_own->Wrap(-1);
     m_sizer_title_own->Add(m_title_own, 0, wxALIGN_CENTER, 0);
 
@@ -776,25 +848,30 @@ void SelectMachinePopup::update_user_devices()
 
 bool SelectMachinePopup::search_for_printer(MachineObject* obj)
 {
-	const std::string& search_text = m_search_bar->GetValue().ToStdString();
+	// The search bar is Windows-only; without it every printer is visible.
+	if (!m_search_bar)
+		return true;
+	const wxString search_text = m_search_bar->GetValue();
 	if (search_text.empty()) {
 		return true;
 	}
 
-	const auto& name = wxString::FromUTF8(obj->get_dev_name()).ToStdString();
-    const auto& name_it = name.find(search_text);
-    if (name_it != std::string::npos) {
-        return true;
-    }
+	// Shared SearchField matcher: honours the pill's ".*" regex toggle and its
+	// tune-popover case-sensitive / whole-word checkboxes. An invalid or
+	// half-typed regex matches everything (never hides every printer).
+	const bool regex     = m_search_bar->IsRegexEnabled();
+	const bool case_sens = m_search_bar->IsCaseSensitive();
+	const bool word      = m_search_bar->IsWholeWord();
 
+	const wxString name = wxString::FromUTF8(obj->get_dev_name());
+	if (SearchField::textMatches(search_text, name, regex, case_sens, word))
+		return true;
 #if !BBL_RELEASE_TO_PUBLIC
-    const auto& ip_it = obj->get_dev_ip().find(search_text);
-    if (ip_it != std::string::npos) {
-        return true;
-    }
+	const wxString ip = wxString::FromUTF8(obj->get_dev_ip());
+	if (SearchField::textMatches(search_text, ip, regex, case_sens, word))
+		return true;
 #endif
-
-    return false;
+	return false;
 }
 
 void SelectMachinePopup::on_dissmiss_win(wxCommandEvent &event)
@@ -872,10 +949,10 @@ EditDevNameDialog::EditDevNameDialog(Plater *plater /*= nullptr*/)
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(38));
     m_textCtr = new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(260), FromDIP(40)), wxTE_PROCESS_ENTER);
@@ -886,15 +963,15 @@ EditDevNameDialog::EditDevNameDialog(Plater *plater /*= nullptr*/)
     m_static_valid = new wxStaticText(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDefaultSize, 0);
     m_static_valid->Wrap(-1);
     m_static_valid->SetFont(::Label::Body_13);
-    m_static_valid->SetForegroundColour(wxColour(255, 111, 0));
+    m_static_valid->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
     m_sizer_main->Add(m_static_valid, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxLEFT | wxRIGHT, FromDIP(10));
 
 
     m_button_confirm = new Button(this, _L("Confirm"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_confirm->SetBackgroundColor(btn_bg_green);
-    m_button_confirm->SetBorderColor(wxColour(0, 174, 66));
-    m_button_confirm->SetTextColor(wxColour(255, 255, 255));
+    m_button_confirm->SetBorderColor(ThemeColor::BrandGreen);
+    m_button_confirm->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_confirm->SetSize(wxSize(FromDIP(72), FromDIP(24)));
     m_button_confirm->SetMinSize(wxSize(FromDIP(72), FromDIP(24)));
     m_button_confirm->SetCornerRadius(FromDIP(12));
@@ -906,8 +983,9 @@ EditDevNameDialog::EditDevNameDialog(Plater *plater /*= nullptr*/)
     SetSizer(m_sizer_main);
     Layout();
     Fit();
-    Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 EditDevNameDialog::~EditDevNameDialog() {}

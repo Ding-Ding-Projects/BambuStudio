@@ -6,34 +6,44 @@
 #include "wx/weakref.h"
 #include "wx/simplebook.h"
 #include "Button.hpp"
+#include "StateColor.hpp"
+#include "MD3Dialog.hpp"
 #include "../wxExtensions.hpp"
 
 class WXDLLIMPEXP_FWD_CORE wxButton;
 class WXDLLIMPEXP_FWD_CORE wxEventLoop;
-class WXDLLIMPEXP_FWD_CORE wxGauge;
 class WXDLLIMPEXP_FWD_CORE wxStaticText;
 class WXDLLIMPEXP_FWD_CORE wxWindowDisabler;
+class ProgressBar;
 
 #define PROGRESSDIALOG_SIMPLEBOOK_SIZE wxSize(FromDIP(320),FromDIP(38))
 #define PROGRESSDIALOG_GAUGE_SIZE wxSize(FromDIP(320), FromDIP(6))
-#define PROGRESSDIALOG_CANCEL_BUTTON_SIZE wxSize(FromDIP(60), FromDIP(24))
-#define PROGRESSDIALOG_DEF_BK ThemeColor::White
-#define PROGRESSDIALOG_GREY_700 ThemeColor::TextMuted
+// Dialog + inner-panel fill: SurfaceContainer resolves per-theme (so it no
+// longer stays white in dark mode). Was raw ThemeColor::White.
+#define PROGRESSDIALOG_DEF_BK StateColor::semantic(MD3::Role::SurfaceContainer)
+// Body message text: OnSurfaceVariant (the MD3 body-text role) so it recolours
+// per-theme. Was ThemeColor::TextMuted.
+#define PROGRESSDIALOG_GREY_700 StateColor::semantic(MD3::Role::OnSurfaceVariant)
 
 #define wxPD_NO_PROGRESS 0x0100
 
 namespace Slic3r { namespace GUI {
 
-class WXDLLIMPEXP_CORE ProgressDialog : public wxDialog
+// Slicing / export / model-repair progress dialog, now built on the shared MD3
+// Dialog shell (MD3Dialog): kit header (icon tile + title + circular close),
+// body (status message + MD3 ProgressBar) and footer (pill Cancel). The window
+// itself is created by MD3Dialog's protected two-phase default ctor and the
+// shell chrome is laid out from Create() via CreateShell(), preserving this
+// dialog's own default-construct-then-Create() flow, its Pulse/Update semantics,
+// the wxWindowDisabler + yield event-loop logic, and the cancel behaviour.
+class ProgressDialog : public MD3Dialog
 {
 public:
     ProgressDialog();
     ProgressDialog(const wxString &title, const wxString &message, int maximum = 100, wxWindow *parent = NULL, int style = wxPD_APP_MODAL | wxPD_AUTO_HIDE, bool adaptive = false);
 
-	void OnPaint(wxPaintEvent &evt);
     virtual ~ProgressDialog();
 
-    virtual void DoSetSize(int x, int y, int width, int height, int sizeFlags = wxSIZE_AUTO)override;
     bool Create(const wxString &title, const wxString &message, int maximum = 100, wxWindow *parent = NULL, int style = wxPD_APP_MODAL | wxPD_AUTO_HIDE);
 
     virtual bool Update(int value, const wxString &newmsg = wxEmptyString, bool *skip = NULL);
@@ -124,6 +134,11 @@ protected:
     // callback to disable "hard" window closing
     void OnClose(wxCloseEvent &);
 
+    // Header circular-close action: route it through the same cancel/close
+    // semantics as OnClose() (veto while uncancelable, dismiss when finished,
+    // request-cancel otherwise) instead of the base EndModal(wxID_CANCEL).
+    void OnHeaderClose() override;
+
     // called to disable the other windows while this dialog is shown
     void DisableOtherWindows();
 
@@ -187,8 +202,12 @@ private:
 
     void Yield();
 
-    // the widget displaying current status (may be NULL)
-    wxGauge *m_gauge;
+    // the widget displaying current status (may be NULL) — the migrated MD3
+    // ProgressBar (Primary fill / sc-highest track) replaces the raw wxGauge.
+    ProgressBar *m_progress_bar;
+    // last value pushed to the bar; the bar has no getter, so GetValue() reads
+    // this back.
+    int m_progress_value{0};
     // the message displayed
     wxStaticText *m_msg;
     wxStaticText *m_msg_2line;

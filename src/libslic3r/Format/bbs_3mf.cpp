@@ -22,6 +22,7 @@
 
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
+#include <boost/chrono/duration.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -9366,7 +9367,13 @@ private:
 
     ~_BBS_Backup_Manager() {
         push_task({Exit});
-        m_thread.join();
+        // Joining at static-destruction time can deadlock on Windows when the
+        // worker never re-acquires the CRT/loader machinery it needs to exit
+        // (observed as a ctest hang after all assertions passed). Bound the
+        // wait and detach as a last resort: the process is exiting anyway and
+        // every pending task beyond Exit is best-effort backup work.
+        if (!m_thread.try_join_for(boost::chrono::seconds(10)))
+            m_thread.detach();
     }
 
     void push_task(Task const & t) {

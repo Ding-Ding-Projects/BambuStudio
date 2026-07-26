@@ -83,7 +83,11 @@
 #include "MainFrame.hpp"
 #include "slic3r/GUI/Widgets/WebView.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/MD3Tokens.hpp"
 #include "Plater.hpp"
+#include "PreferencesHistory.hpp"
+#include "PrinterWatch.hpp"
+#include "TtsNarrator.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
 
@@ -112,6 +116,7 @@
 #include "SendSystemInfoDialog.hpp"
 #include "ParamsDialog.hpp"
 #include "KBShortcutsDialog.hpp"
+#include "SingleChoiceDialog.hpp"
 #include "DownloadProgressDialog.hpp"
 #include "HttpServer.hpp"
 
@@ -1077,6 +1082,10 @@ static void generic_exception_handle()
         flush_logs();
         wxString errmsg = wxString::Format(_L("BambuStudio will terminate because of running out of memory."
                                               "It may be a bug. It will be appreciated if you report the issue to our team."));
+        // Intentionally NOT the MD3 MessageDialog: the process is out of memory,
+        // so constructing a styled dialog (widget tree, fonts, icon rasters)
+        // would likely throw bad_alloc again and lose the message entirely. The
+        // native message box is the most allocation-frugal reporter available.
         wxMessageBox(errmsg + "\n\n" + wxString(ex.what()), _L("Fatal error"), wxOK | wxICON_ERROR);
 
         std::terminate();
@@ -1086,6 +1095,11 @@ static void generic_exception_handle()
         flush_logs();
         wxString errmsg = _L("BambuStudio will terminate because of a localization error. "
                              "It will be appreciated if you report the specific scenario this issue happened.");
+        // Intentionally NOT the MD3 MessageDialog: this crash handler runs mid
+        // stack-unwind in an unknown app state (possibly before/after the window
+        // hierarchy exists) and terminates immediately after; the MD3 shell also
+        // formats localized strings — the very machinery that just failed. The
+        // native message box is the robust last-words channel.
         wxMessageBox(errmsg + "\n\n" + wxString(ex.what()), _L("Critical error"), wxOK | wxICON_ERROR);
         std::terminate();
         //throw;
@@ -1123,6 +1137,17 @@ void GUI_App::post_init()
     assert(initialized());
     if (! this->initialized())
         throw Slic3r::RuntimeError("Calling post_init() while not yet initialized");
+
+    // Automatic preferences history: every settings save records a debounced
+    // Git snapshot of BambuStudio.conf (local only, beside the data dir).
+    PreferencesHistory::install();
+
+    // AI printer watch (opt-in, local Ollama): periodic live-view summaries.
+    PrinterWatch::install();
+
+    // TTS narrator (opt-in, off by default): printer state changes + errors,
+    // with optional Home Assistant speakers and alert lights.
+    TtsNarrator::install();
 
     if (app_config->get("sync_user_preset") == "true") {
         if (m_agent) { start_sync_user_preset(); }
@@ -3093,6 +3118,30 @@ bool GUI_App::on_init_inner()
     BOOST_LOG_TRIVIAL(info) << get_system_info();
 
     init_live_view_track_context(app_config);
+
+    // Apply the persisted Appearance choices (Preferences > Appearance) to the
+    // MD3 runtime token state before any window or dialog is constructed, so a
+    // saved density/accent takes effect on a fresh launch without opening
+    // Preferences. Mirrors apply_persisted_md3_appearance() in Preferences.cpp:
+    // "ui_density" selects the compact/comfortable metrics preset consulted via
+    // MD3::Metrics::active(); "ui_accent_seed" recolours the six accent roles
+    // (an empty/absent key or the Brand seed leaves the pristine Brand tones,
+    // which is already the fresh-process state, so only a real override needs
+    // applying here).
+    if (app_config) {
+        MD3::Metrics::setDensity(app_config->get("ui_density") == "compact"
+                                     ? MD3::Metrics::Density::Compact
+                                     : MD3::Metrics::Density::Comfortable);
+        const std::string accent_seed = app_config->get("ui_accent_seed");
+        if (!accent_seed.empty()) {
+            // Ignore a hand-corrupted value: an invalid wxColour's RGB reads as
+            // black and would seed a near-black accent. The fresh-process state
+            // is already the pristine Brand tones, so skipping is the clear.
+            const wxColour seed_colour(wxString::FromUTF8(accent_seed));
+            if (seed_colour.IsOk())
+                MD3::setAccentSeed(seed_colour);
+        }
+    }
 
 // initialize label colors and fonts
     init_label_colours();
@@ -6540,12 +6589,8 @@ int GUI_App::GetSingleChoiceIndex(const wxString& message,
                                 int initialSelection)
 {
 #ifdef _WIN32
-    wxSingleChoiceDialog dialog(nullptr, message, caption, choices);
-    dialog.SetBackgroundColour(ThemeColor::White);
-    wxGetApp().UpdateDlgDarkUI(&dialog);
-
-    dialog.SetSelection(initialSelection);
-    return dialog.ShowModal() == wxID_OK ? dialog.GetSelection() : -1;
+    SingleChoiceDialog dialog(message, caption, choices, initialSelection);
+    return dialog.GetSingleChoiceIndex();
 #else
     return wxGetSingleChoiceIndex(message, caption, choices, initialSelection);
 #endif
@@ -6821,7 +6866,20 @@ bool GUI_App::load_language(wxString language, bool initial)
 #endif
         if (initial)
         	message + "\n\nApplication will close.";
-        wxMessageBox(message, "Bambu Studio - Switching language failed", wxOK | wxICON_ERROR);
+        if (!initial && mainframe != nullptr) {
+            // Runtime language switch (Preferences / switch_language): the
+            // mainframe and full GUI_App state are alive, so the MD3-styled
+            // MessageDialog can be used. Deliberately untranslated text: the
+            // language catalog just failed to load.
+            MessageDialog msg_dlg(mainframe, message, "Bambu Studio - Switching language failed", wxOK | wxICON_ERROR);
+            msg_dlg.ShowModal();
+        } else {
+            // Initial load_language() runs in on_init_inner() before any window
+            // exists (and exits the process right after); the styled dialog
+            // shell (fonts, dark-mode state, mainframe parent) is not available
+            // yet, so the native message box is the correct choice here.
+            wxMessageBox(message, "Bambu Studio - Switching language failed", wxOK | wxICON_ERROR);
+        }
         if (initial)
 			std::exit(EXIT_FAILURE);
         else {
@@ -8216,8 +8274,17 @@ void GUI_App::check_updates(const bool verbose)
             m_app_conf_exists = true;
         }
         else if (verbose && updater_result == PresetUpdater::R_NOOP) {
-            MsgNoUpdates dlg;
-            dlg.ShowModal();
+            // OK-only informational acknowledgement: surface as a corner toast,
+            // not a modal (fall back to the dialog before the Plater exists).
+            if (plater() != nullptr && plater()->get_notification_manager() != nullptr) {
+                plater()->get_notification_manager()->push_notification(
+                    NotificationType::CustomNotification,
+                    NotificationManager::NotificationLevel::RegularNotificationLevel,
+                    _u8L("The configuration is up to date."));
+            } else {
+                MsgNoUpdates dlg;
+                dlg.ShowModal();
+            }
         }
     }
     catch (const std::exception & ex) {

@@ -2,6 +2,7 @@
 #define slic3r_GLToolbar_hpp_
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 #include <chrono>
@@ -17,6 +18,9 @@ namespace GUI {
 
 class GLCanvas3D;
 struct Camera;
+// MD3 viewport-chrome geometry cache; defined in GLToolbar.cpp. Holds the kit
+// backdrop / divider / state-layer GLModels so they are not rebuilt each frame.
+class MD3ChromeCache;
 
 //BBS: GUI refactor: GLToolbar
 wxDECLARE_EVENT(EVT_GLTOOLBAR_OPEN_PROJECT, SimpleEvent);
@@ -256,7 +260,13 @@ public:
     int generate_texture(wxFont& font);
     int generate_image_texture();
 
-    void render(unsigned int tex_id, unsigned int tex_width, unsigned int tex_height, unsigned int icon_size, float toolbar_height, bool b_flip_v = false) const;
+    // MD3: glyph_ratio (< 1) draws the atlas sprite inset inside its tile so the
+    // visible mark matches the kit (rail 21px in a 44px tile, pill 22px in 40px)
+    // while render_rect — and therefore picking/tooltips — stay the full tile.
+    // draw_icon=false suppresses the atlas sprite (the rail's selected item is
+    // redrawn OnPrimary over its Primary fill) yet still runs the pressed
+    // render callback, so the gizmo input window keeps anchoring to the tile.
+    void render(unsigned int tex_id, unsigned int tex_width, unsigned int tex_height, unsigned int icon_size, float toolbar_height, bool b_flip_v = false, float glyph_ratio = 1.0f, bool draw_icon = true) const;
     void render_image(unsigned int tex_id, float left, float right, float bottom, float top, unsigned int tex_width, unsigned int tex_height, unsigned int icon_size) const;
 
     const GLToolbarItem::Data& get_data() const;
@@ -394,7 +404,14 @@ public:
     //BBS: GUI refactor: GLToolbar
     bool add_item(const GLToolbarItem::Data& data, GLToolbarItem::EType type = GLToolbarItem::Action);
     bool add_separator();
+    // MD3: insert a group divider directly after the named item. Used to give the
+    // OpenGL gizmo rail the kit's grouped dividers, since its items are populated
+    // by GLGizmosManager and carry no separators of their own. No-op (false) when
+    // the anchor is absent so a filtered gizmo set never mis-places a divider.
+    bool insert_separator_after(const std::string& name);
     bool del_all_item();
+
+    const std::string& get_name() const { return m_name; }
 
     void select_item(const std::string& name);
 
@@ -418,6 +435,20 @@ public:
     const std::shared_ptr<GLToolbarItem>& get_item(const std::string& item_name) const;
 
     void render(const Camera& t_camera);
+
+    // MD3: OnPrimary glyph texture for the rail's currently-selected item. The
+    // shared atlas only carries the Primary-tinted pressed column, so the light
+    // mark that sits on the Primary fill is rasterised once here and cached until
+    // the codepoint, pixel size or theme changes. Returns 0 on failure (the
+    // caller then falls back to the atlas sprite). out_w/out_h receive the raster
+    // dimensions so the caller can preserve the glyph's aspect ratio.
+    unsigned int ensure_selected_glyph_texture(uint32_t codepoint, int px, int* out_w, int* out_h) const;
+
+    // MD3 viewport-chrome geometry cache for this toolbar (see MD3ChromeCache in
+    // GLToolbar.cpp). Lazily created and reused by the renderer so the kit backdrop,
+    // dividers and hover/selected state layers are not re-uploaded to the GPU every
+    // frame; released with the toolbar (context-safe).
+    MD3ChromeCache& md3_chrome_cache() const;
 
     // returns true if any item changed its state
     bool update_items_state();
@@ -502,6 +533,20 @@ private:
 
     mutable GLTexture m_images_texture;
     mutable bool m_images_texture_dirty;
+
+    // MD3 rail selected-glyph cache (see ensure_selected_glyph_texture). Owned raw
+    // GL texture, released on regeneration and in the destructor.
+    mutable unsigned int m_sel_glyph_tex{ 0 };
+    mutable uint32_t     m_sel_glyph_cp{ 0 };
+    mutable int          m_sel_glyph_px{ 0 };
+    mutable int          m_sel_glyph_w{ 0 };
+    mutable int          m_sel_glyph_h{ 0 };
+    mutable bool         m_sel_glyph_dark{ false };
+    mutable bool         m_sel_glyph_failed{ false };
+
+    // MD3 viewport-chrome GLModel cache (see md3_chrome_cache / MD3ChromeCache).
+    // PIMPL so GLModel.hpp stays out of this header; released in ~GLToolbar.
+    mutable std::unique_ptr<MD3ChromeCache> m_md3_chrome_cache;
     struct MouseCapture
     {
         bool left;

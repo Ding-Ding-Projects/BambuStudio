@@ -15,6 +15,7 @@
 #include "GUI_App.hpp"
 #include "Plater.hpp"
 #include "Widgets/WebView.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include "DeviceCore/DevManager.h"
 
@@ -234,6 +235,7 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
     m_button_close->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(PingCodeBindDialog::on_cancel), NULL, this);
 
     m_simplebook->SetSelection(0);
+    MD3DialogCaption::Adopt(this);
 }
 
 void PingCodeBindDialog::on_key_input(wxKeyEvent& evt)
@@ -728,7 +730,6 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      SetSizer(m_sizer_main);
      Layout();
      Fit();
-     Centre(wxBOTH);
 
      Bind(wxEVT_SHOW, &BindMachineDialog::on_show, this);
      Bind(wxEVT_CLOSE_WINDOW, &BindMachineDialog::on_close, this);
@@ -741,6 +742,8 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      m_simplebook->SetSelection(1);
 
      wxGetApp().UpdateDlgDarkUI(this);
+     MD3DialogCaption::Adopt(this);
+     Centre(wxBOTH);
  }
 
  BindMachineDialog::~BindMachineDialog()
@@ -1071,7 +1074,6 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
      SetSizer(m_sizer_main);
      Layout();
      Fit();
-     Centre(wxBOTH);
 
      Bind(wxEVT_SHOW, &UnBindMachineDialog::on_show, this);
      m_button_unbind->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(UnBindMachineDialog::on_unbind_printer), NULL, this);
@@ -1079,6 +1081,8 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
 
 
      wxGetApp().UpdateDlgDarkUI(this);
+     MD3DialogCaption::Adopt(this);
+     Centre(wxBOTH);
  }
 
  UnBindMachineDialog::~UnBindMachineDialog()

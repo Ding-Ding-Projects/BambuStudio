@@ -7,7 +7,7 @@
   flex: 1;
   padding-left: 9px;
   padding-right: 9px;
-  border-right: 1px solid #EEEEEE;
+  border-right: 1px solid var(--md-outline-variant);
 }
 
 #rightBlock {
@@ -50,7 +50,7 @@
 
 .CValues {
   padding: 8px;
-  background-color: #F8F8F8;
+  background-color: var(--md-sc-low);
 }
 
 input {
@@ -116,10 +116,10 @@ input {
 
 #NoticeBar
 {
-	background-color:#00B35C;
+	background-color:var(--md-primary);
 	height: 40px;
 	line-height: 40px;
-	color: #fff;
+	color: var(--md-on-primary);
 	text-align: center;
 }
 

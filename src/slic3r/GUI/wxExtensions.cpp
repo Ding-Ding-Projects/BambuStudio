@@ -2,8 +2,10 @@
 
 #include <stdexcept>
 #include <cmath>
+#include <memory>
 
 #include <wx/sizer.h>
+#include <wx/graphics.h>
 #include <boost/algorithm/string/replace.hpp>
 
 /* mac need the macro while including <boost/stacktrace.hpp>*/
@@ -549,7 +551,7 @@ wxBitmap* get_default_extruder_color_icon(bool thin_icon/* = false*/)
     return bitmap;
 }
 
-std::vector<wxBitmap*> get_extruder_color_icons(bool thin_icon/* = false*/)
+std::vector<wxBitmap*> get_extruder_color_icons(bool thin_icon/* = false*/, bool rounded_ring/* = false*/)
 {
     // Create the bitmap with color bars.
     std::vector<wxBitmap*> bmps;
@@ -565,15 +567,17 @@ std::vector<wxBitmap*> get_extruder_color_icons(bool thin_icon/* = false*/)
          * and scale them in respect to em_unit value
          */
         const double em          = Slic3r::GUI::wxGetApp().em_unit();
-        const int    icon_width  = lround((thin_icon ? 2 : 4.4) * em);
-        const int    icon_height = lround(2 * em);
+        // MD3 swatch: the kit's 28x28 reference size overrides the legacy
+        // 2*em thin-icon sizing when rounded_ring is requested.
+        const int    icon_width  = rounded_ring ? lround(2.8 * em) : lround((thin_icon ? 2 : 4.4) * em);
+        const int    icon_height = rounded_ring ? lround(2.8 * em) : lround(2 * em);
 
         int index = 0;
         for (const auto &colors : readable_color_info) {
             auto label = std::to_string(++index);
             bool is_gradient = ctype[index-1] == "0";
             if (colors.size() == 1) {
-                bmps.push_back(get_extruder_color_icon(colors[0], label, icon_width, icon_height));
+                bmps.push_back(get_extruder_color_icon(colors[0], label, icon_width, icon_height, rounded_ring));
             } else {
                 bmps.push_back(get_extruder_color_icon(colors, is_gradient, label, icon_width, icon_height));
             }
@@ -583,12 +587,12 @@ std::vector<wxBitmap*> get_extruder_color_icons(bool thin_icon/* = false*/)
         if (colors.empty()) return bmps;
 
         const double em          = Slic3r::GUI::wxGetApp().em_unit();
-        const int    icon_width  = lround((thin_icon ? 2 : 4.4) * em);
-        const int    icon_height = lround(2 * em);
+        const int    icon_width  = rounded_ring ? lround(2.8 * em) : lround((thin_icon ? 2 : 4.4) * em);
+        const int    icon_height = rounded_ring ? lround(2.8 * em) : lround(2 * em);
         int index = 0;
         for (const auto &color : colors) {
             auto label = std::to_string(++index);
-            bmps.push_back(get_extruder_color_icon(color, label, icon_width, icon_height));
+            bmps.push_back(get_extruder_color_icon(color, label, icon_width, icon_height, rounded_ring));
         }
     }
     return bmps;
@@ -719,11 +723,11 @@ wxBitmap *get_extruder_color_icon(std::vector<std::string> colors, bool is_gradi
     return bitmap;
 }
 
-wxBitmap *get_extruder_color_icon(std::string color, std::string label, int icon_width, int icon_height)
+wxBitmap *get_extruder_color_icon(std::string color, std::string label, int icon_width, int icon_height, bool rounded_ring /* = false */)
 {
     static Slic3r::GUI::BitmapCache bmp_cache;
 
-    std::string bitmap_key = color + "-h" + std::to_string(icon_height) + "-w" + std::to_string(icon_width) + "-i" + label;
+    std::string bitmap_key = color + "-h" + std::to_string(icon_height) + "-w" + std::to_string(icon_width) + "-i" + label + (rounded_ring ? "-ring" : "");
 
     wxBitmap *bitmap = bmp_cache.find(bitmap_key);
     if (bitmap == nullptr) {
@@ -745,6 +749,41 @@ wxBitmap *get_extruder_color_icon(std::string color, std::string label, int icon
 #endif
         dc.SetFont(::Label::Body_12);
         Slic3r::GUI::WxFontUtils::get_suitable_font_size(icon_height - 2, dc);
+
+        if (rounded_ring) {
+            // MD3 filament-row swatch (prepare/filament-rows-preset-combobox-not-
+            // inforow): r8 rounded corners + a 1px inset OutlineVariant ring,
+            // geometry only -- the colour data itself is unchanged. Radius is
+            // proportional to MD3::Metrics::radius_tiny (8) at the kit's 28px
+            // reference size, so callers passing a different DPI-scaled size
+            // still get a correctly-scaled corner. Corners outside the rounded
+            // rect are filled with the row's own SurfaceContainerHighest token
+            // (rather than relying on per-pixel alpha, which the wxMemoryDC path
+            // selected above does not reliably round-trip on every platform).
+            const wxColour row_bg = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+            dc.SetBackground(wxBrush(row_bg));
+            dc.Clear();
+            const double radius = icon_height * static_cast<double>(MD3::Metrics::radius_tiny) / 28.0;
+            std::unique_ptr<wxGraphicsContext> gc(wxGraphicsContext::Create(dc));
+            if (gc) {
+                gc->SetPen(*wxTRANSPARENT_PEN);
+                gc->SetBrush(wxBrush(clr.Alpha() == 0 ? *wxWHITE : clr));
+                gc->DrawRoundedRectangle(0.5, 0.5, icon_width - 1.0, icon_height - 1.0, radius);
+                const bool     dark = Slic3r::GUI::wxGetApp().dark_mode();
+                const wxColour ring = MD3::resolve(MD3::Role::OutlineVariant, dark);
+                gc->SetPen(wxPen(ring, 1));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRoundedRectangle(0.5, 0.5, icon_width - 1.0, icon_height - 1.0, radius);
+            }
+            if (!label.empty()) {
+                auto size = dc.GetTextExtent(wxString(label));
+                dc.SetTextForeground(clr.Alpha() != 0 && clr.GetLuminance() < 0.51 ? *wxWHITE : *wxBLACK);
+                dc.DrawText(label, (icon_width - size.x) / 2, (icon_height - size.y) / 2);
+            }
+            dc.SelectObject(wxNullBitmap);
+            return bitmap;
+        }
+
         if (clr.Alpha() == 0) {
             int             size        = icon_height * 2;
             static wxBitmap transparent = *Slic3r::GUI::BitmapCache().load_svg("transparent", size, size);

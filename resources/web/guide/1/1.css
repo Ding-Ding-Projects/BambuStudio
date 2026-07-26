@@ -1,40 +1,48 @@
 html
 {
-	background-color: #fff;
+	background-color: var(--md-surface);
 }
 
 body
 {
 	text-align:center;
-	padding-top: 10%;
+	padding-top: 9%;
 }
 
 #SlicerIcon
 {
-
+	margin-bottom: 8px;
 }
 
 #Title
 {
-	height:20mm;
-	line-height: 20mm;
-	font-size: 6mm;
-	color: #00AE42;
+	height:18mm;
+	line-height: 18mm;
+	font-size: var(--md-type-headline);
+	font-weight: 700;
+	color: var(--md-on-surface);
 }
 
 #STip
 {
 	padding:0mm 20mm;
 	height: 15%;
+	font-size: var(--md-type-body);
+	color: var(--md-on-surface-variant);
 }
 
 #BtnArea
 {
+	margin-top: 8px;
 	align-items: center;
 }
 
+/* Hero "Get Started" CTA — kit filled pill, centered (no left offset) */
 #StartBtn
 {
 	display: inline-block;
-    text-decoration:none;	
+    text-decoration:none;
+	margin-left: 0;
+	padding: 12px 40px;
+	font-size: var(--md-type-card-title);
 }

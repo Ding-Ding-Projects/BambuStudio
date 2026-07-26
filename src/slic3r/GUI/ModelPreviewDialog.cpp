@@ -6,6 +6,7 @@
 #include "GUI_App.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StateColor.hpp"
 
 #include "libslic3r/Model.hpp"
@@ -383,8 +384,9 @@ ModelPreviewDialog::ModelPreviewDialog(
     build_ui(model_name);
 
     SetMinSize(wxSize(FromDIP(480), FromDIP(420)));
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 
     if (m_canvas)
         m_canvas->set_mesh_data(vertices, indices);

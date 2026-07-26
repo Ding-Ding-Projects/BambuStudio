@@ -1,4 +1,5 @@
 #include "MultiNozzleSync.hpp"
+#include "MD3DialogChrome.hpp"
 #include "StateColor.hpp"
 #include "../GUI_App.hpp"
 #include "../DeviceCore/DevConfigUtil.h"
@@ -15,7 +16,7 @@ static const int LeftExtruderIdx = 0;
 static const int RightExtruderIdx = 1;
 
 ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeType volume_type, int standard_count, int highflow_count, int max_nozzle_count, bool force_no_zero)
-    : GUI::DPIDialog(parent, wxID_ANY, "Set nozzle count", wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX), m_volume_type(volume_type)
+    : GUI::DPIDialog(parent, wxID_ANY, _L("Set nozzle count"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX), m_volume_type(volume_type)
 {
     this->SetBackgroundColour(ThemeColor::White);
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
@@ -133,8 +134,9 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
     mainSizer->Add(m_confirm_btn, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, FromDIP(20));
 
     SetSizerAndFit(mainSizer);
-    CentreOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 int ManualNozzleCountDialog::GetNozzleCount(NozzleVolumeType volume_type) const
@@ -778,8 +780,9 @@ Slic3r::GUI::MultiNozzleSyncDialog::MultiNozzleSyncDialog(wxWindow* parent,std::
 
     m_refresh_timer = new wxTimer(this);
     Bind(wxEVT_TIMER, &MultiNozzleSyncDialog::OnRefreshTimer, this);
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 

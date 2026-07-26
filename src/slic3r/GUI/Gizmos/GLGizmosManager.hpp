@@ -177,6 +177,18 @@ public:
         IC_DISTRIBUTE_X_DARK,
         IC_DISTRIBUTE_Y_DARK,
         IC_DISTRIBUTE_Z_DARK,
+        // Dark-theme companions for the reset / reset-to-zero action buttons.
+        // The legacy toolbar_reset*.svg assets were a single theme-agnostic
+        // orange sprite; the MD3 path renders a Material glyph (Refresh /
+        // SettingsBackupRestore) coloured per theme, so a dark variant is needed
+        // for the object-manipulation panel to stay legible in dark mode. These
+        // are appended (not interleaved) so the pre-existing key values are left
+        // untouched; MENU_ICON_NAME values are texture-map keys only and are
+        // never serialised or range-iterated.
+        IC_TOOLBAR_RESET_DARK,
+        IC_TOOLBAR_RESET_HOVER_DARK,
+        IC_TOOLBAR_RESET_ZERO_DARK,
+        IC_TOOLBAR_RESET_ZERO_HOVER_DARK,
     };
 
     explicit GLGizmosManager(GLCanvas3D& parent);
@@ -328,6 +340,22 @@ public:
     void add_toolbar_items(const std::shared_ptr<GLToolbar>& p_toolbar, uint8_t& sprite_id, const std::function<void(uint8_t& sprite_id)>& p_callback);
 
     static std::string convert_gizmo_type_to_string(Slic3r::GUI::GLGizmosManager::EType t_type);
+
+    // --- Vertical gizmo-rail visual grouping (MD3 rail dividers) ---
+    // Canonical grouping of the rail tools, in rail order (matching the m_gizmos
+    // insertion order). The MD3 rail draws a group divider between consecutive
+    // groups. This is the single source of truth for the grouping, so the divider
+    // placement can be driven by tool identity instead of GLCanvas3D anchoring on
+    // literal tool names ("Scale" / "Color Painting"). Tools filtered out of the
+    // current rail are simply absent when the caller resolves anchors.
+    static const std::vector<std::vector<EType>>& get_gizmo_rail_groups();
+
+    // The tool that ends each non-final rail group: the anchor after which a rail
+    // divider is inserted (typically via convert_gizmo_type_to_string +
+    // GLToolbar::insert_separator_after, which skips anchors absent from the
+    // current rail). Derived from get_gizmo_rail_groups() so the two never drift;
+    // presently resolves to { Scale, MmuSegmentation }.
+    static std::vector<EType> get_gizmo_rail_group_dividers();
 private:
 
     void update_on_off_state(size_t idx);

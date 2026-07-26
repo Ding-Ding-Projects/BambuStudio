@@ -41,12 +41,16 @@
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Widgets/Button.hpp"
 #include "UnsavedChangesDialog.hpp"
 #include "DeviceCore/DevDefs.h"
 #include "DeviceCore/DevNozzleSystem.h"
 
 class TabCtrl;
 class ComboBox;
+// Shared MD3 search pill (Widgets/SearchField.hpp): ".*" regex toggle + tune
+// builder popover; hosts the preset-search entry in the Tab top bar.
+class SearchField;
 
 namespace Slic3r {
 
@@ -155,8 +159,10 @@ protected:
 	wxBoxSizer* m_tree_sizer;
 
 	ScalableButton*		m_btn_compare_preset;
-	ScalableButton*		m_btn_save_preset;
-	ScalableButton*		m_btn_delete_preset;
+	// MD3: preset-editor toolbar controls are borderless IconButtons rendering
+	// Material Symbols glyphs (Save / Close) instead of legacy raster ScalableButtons.
+	Button*				m_btn_save_preset;
+	Button*				m_btn_delete_preset;
 	//ScalableButton*		m_btn_edit_ph_printer {nullptr};
 	//ScalableButton*		m_btn_hide_incompatible_presets;
 	//wxBoxSizer*			m_hsizer;
@@ -190,12 +196,15 @@ protected:
 	// just be used for edit filament dialog
     bool m_just_edit{false};
 
-	ScalableButton*			m_undo_btn;
-	ScalableButton*			m_undo_to_sys_btn;
+	// MD3: revert-state + search toolbar controls are borderless IconButtons whose
+	// Material Symbol (and its capability-gated raster fallback) reflect preset state.
+	Button*					m_undo_btn;
+	Button*					m_undo_to_sys_btn;
 	//ScalableButton*			m_question_btn;
-	ScalableButton*			m_btn_search;
-    StaticBox *				m_search_item;
-    TextInput *				m_search_input;
+	Button*					m_btn_search;
+    // MD3 SearchField pill: replaces the legacy hand-built StaticBox + TextInput
+    // combo, adding the shared ".*" regex toggle and tune builder popover.
+    SearchField *			m_search_field { nullptr };
 
 	// Cached bitmaps.
 	// A "flag" icon to be displayned next to the preset name in the Tab's combo box.
@@ -211,6 +220,9 @@ protected:
 	ScalableBitmap 			m_bmp_value_revert;
 
     std::vector<ScalableButton*>	m_scaled_buttons = {};
+    // MD3 IconButtons (glyph-drawn toolbar controls) that need DPI rescale but are
+    // not ScalableButtons, so they are tracked separately from m_scaled_buttons.
+    std::vector<Button*>			m_md3_icon_buttons = {};
     std::vector<ScalableBitmap*>	m_scaled_bitmaps = {};
     std::vector<ScalableBitmap>     m_scaled_icons_list = {};
 
@@ -336,6 +348,12 @@ public:
     void        add_scaled_button(wxWindow* parent, ScalableButton** btn, const std::string& icon_name,
                                   const wxString& label = wxEmptyString,
                                   long style = wxBU_EXACTFIT | wxNO_BORDER);
+    // MD3: build a borderless circular IconButton (hover SurfaceContainerHigh,
+    // OnSurfaceVariant) that draws a Material Symbols glyph, keeping the legacy
+    // raster (loaded by icon name) as a capability-gated fallback when the icon
+    // face is unavailable. Registered in m_md3_icon_buttons for DPI rescale.
+    void        add_md3_icon_button(wxWindow* parent, Button** btn, uint32_t glyph,
+                                    const std::string& fallback_icon);
     void        add_scaled_bitmap(wxWindow* parent, ScalableBitmap& btn, const std::string& icon_name);
 	void		update_ui_items_related_on_parent_preset(const Preset* selected_preset_parent);
     void		load_current_preset();

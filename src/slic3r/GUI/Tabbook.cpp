@@ -56,30 +56,12 @@ TabButtonsListCtrl::TabButtonsListCtrl(wxWindow *parent, wxBoxSizer *side_tools)
 void TabButtonsListCtrl::OnPaint(wxPaintEvent &)
 {
     Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
-    const wxSize sz = GetSize();
     wxPaintDC dc(this);
-
-    if (m_selection < 0 || m_selection >= (int)m_pageButtons.size())
-        return;
-
-    const wxColour& btn_marker_color = Slic3r::GUI::wxGetApp().get_color_hovered_btn_label();
-
-    // highlight selected notebook button
-
-    for (int idx = 0; idx < int(m_pageButtons.size()); idx++) {
-        TabButton *btn = m_pageButtons[idx];
-        btn->SetBackgroundColor(idx == m_selection ? StateColor::semantic(MD3::Role::SecondaryContainer) : StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-
-        wxPoint pos = btn->GetPosition();
-        wxSize size = btn->GetSize();
-        const wxColour &clr  = StateColor::darkModeColorFor(idx == m_selection ? btn_marker_color : StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-        dc.SetPen(clr);
-        dc.SetBrush(clr);
-        dc.DrawRectangle(pos.x, pos.y + size.y, size.x, sz.y - size.y);
-    }
-    dc.SetPen(btn_marker_color);
-    dc.SetBrush(btn_marker_color);
-    dc.DrawRectangle(1, sz.y - m_line_margin, sz.x, m_line_margin);
+    // Kit selection model (navigation/TabBar): the tab surface is transparent and
+    // the selected state is carried by the Primary label + the 3px rounded Primary
+    // indicator that the selected TabButton paints on its inner edge. The legacy
+    // filled SecondaryContainer pill and the neutral TextPrimary under-tab / bottom
+    // marker are gone; this control just holds the SurfaceContainerLowest surround.
 }
 
 void TabButtonsListCtrl::Rescale()
@@ -100,13 +82,36 @@ void TabButtonsListCtrl::SetSelection(int sel)
 {
     if (m_selection == sel)
         return;
+    // Kit selection model: tabs stay transparent (SurfaceContainerLowest, the bar
+    // surround) in both states; selection is carried by the Primary/600 label and
+    // the TabButton's 3px Primary indicator. Inactive labels drop to
+    // OnSurfaceVariant/400.
     if (m_selection >= 0) {
-        m_pageButtons[m_selection]->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-        m_pageButtons[m_selection]->SetFont(TAB_BUTTON_FONT);
+        TabButton *old = m_pageButtons[m_selection];
+        old->SetSelected(false);
+        old->SetTextColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        old->SetFont(TAB_BUTTON_FONT);
     }
     m_selection = sel;
-    m_pageButtons[m_selection]->SetBackgroundColor(StateColor::semantic(MD3::Role::SecondaryContainer));
-    m_pageButtons[m_selection]->SetFont(TAB_BUTTON_FONT_SEL);
+    TabButton *cur = m_pageButtons[m_selection];
+    cur->SetColorScheme(m_color_scheme);
+    cur->SetSelected(true);
+    cur->SetTextColor(StateColor::semantic(MD3::Role::Primary, m_color_scheme));
+    cur->SetFont(TAB_BUTTON_FONT_SEL);
+    Refresh();
+}
+
+void TabButtonsListCtrl::SetColorScheme(MD3::ColorScheme scheme)
+{
+    if (m_color_scheme == scheme)
+        return;
+    m_color_scheme = scheme;
+    for (int idx = 0; idx < int(m_pageButtons.size()); ++idx) {
+        TabButton *btn = m_pageButtons[idx];
+        btn->SetColorScheme(scheme);
+        if (idx == m_selection)
+            btn->SetTextColor(StateColor::semantic(MD3::Role::Primary, scheme));
+    }
     Refresh();
 }
 
@@ -129,8 +134,12 @@ bool TabButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect
     int em = em_unit(this);
     btn->SetMinSize({BUTTON_DEF_WIDTH * em / 10, BUTTON_DEF_HEIGHT * em / 10});
 
+    // Transparent tab (bar surround) + inactive OnSurfaceVariant label per the
+    // kit selection model; the scheme feeds the active indicator once selected.
     btn->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    btn->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
+    btn->SetTextColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    btn->SetColorScheme(m_color_scheme);
+    btn->SetSelected(false);
     btn->Bind(wxEVT_BUTTON, [this, btn](wxCommandEvent& event) {
         if (auto it = std::find(m_pageButtons.begin(), m_pageButtons.end(), btn); it != m_pageButtons.end()) {
             auto sel = it - m_pageButtons.begin();

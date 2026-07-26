@@ -10,7 +10,7 @@ StaticGroup::StaticGroup(wxWindow *parent, wxWindowID id)
     : wxStaticBox(parent, id, "")
 #endif
 {
-    SetBackgroundColour(ThemeColor::White);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     SetForegroundColour(ThemeColor::Grey400);
     borderColor_ = ThemeColor::Grey400;
 #ifdef __WXMSW__

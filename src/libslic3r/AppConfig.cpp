@@ -39,6 +39,8 @@ using namespace nlohmann;
 
 namespace Slic3r {
 
+std::function<void()> AppConfig::s_save_observer;
+
 static const std::string VERSION_CHECK_URL = "";
 static const std::string MODELS_STR = "models";
 
@@ -985,6 +987,8 @@ void AppConfig::save()
     // To cope with that, we already made a backup of the config on Windows.
     rename_file(path_pid, path);
     m_dirty = false;
+    if (s_save_observer)
+        s_save_observer(); // GUI hook: e.g. schedule a preferences-history snapshot
 }
 
 #else
@@ -1190,6 +1194,8 @@ void AppConfig::save()
     // To cope with that, we already made a backup of the config on Windows.
     rename_file(path_pid, path);
     m_dirty = false;
+    if (s_save_observer)
+        s_save_observer(); // GUI hook: e.g. schedule a preferences-history snapshot
 }
 #endif
 

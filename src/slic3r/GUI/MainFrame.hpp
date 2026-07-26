@@ -55,6 +55,9 @@ class MainFrame;
 class ParamsDialog;
 class FilamentGroupPopup;
 class DeviceWebPage;
+// BBS: session file-tabs (see ProjectTabBar.hpp). One project bar sits between the
+// title bar and the workspace tabs; MainFrame orchestrates the switch/close/new flow.
+class ProjectTabBar;
 
 enum QuickSlice
 {
@@ -150,6 +153,19 @@ class MainFrame : public DPIFrame
     // BBS
     wxBoxSizer* create_side_tools(wxWindow* parent);
     void        update_prepare_action_bar_style();
+
+    // BBS: session file-tabs orchestration (ProjectTabBar). The app keeps ONE live
+    // Plater document; a tab switch snapshots the outgoing tab (when dirty) to a temp
+    // .3mf and loads the target, reusing the shipped Backup/Restore round-trip.
+    bool        m_project_tab_switching{ false }; // re-entrancy guard: ignore mid-switch clicks
+    bool        m_project_tabs_ready{ false };    // gate active-tab label/dirty sync until startup reconcile
+    void        switch_project_tab(int target);                 // EVT_PROJECT_TAB_SWITCH
+    void        close_project_tab(int index);                   // EVT_PROJECT_TAB_CLOSE
+    void        new_project_tab();                              // EVT_PROJECT_TAB_NEW / File>New
+    void        open_project_tab();                             // File>Open (file dialog)
+    void        open_project_in_tab(const wxString& filename);  // load a file into a fresh tab
+    bool        save_active_tab_snapshot_if_dirty();            // preserve outgoing tab
+    void        reconcile_initial_project_tab();                // one-shot post-startup activation
 
     // MenuBar items changeable in respect to printer technology
     enum MenuItems
@@ -383,6 +399,9 @@ public:
 
     // BBS. Replace title bar and menu bar with top bar.
     BBLTopbar*            m_topbar{ nullptr };
+    // BBS: session file-tabs bar, inserted between the title bar and the workspace tabs.
+    ProjectTabBar*        m_project_tabbar{ nullptr };
+    ProjectTabBar*        project_tabbar() { return m_project_tabbar; }
     PrintHostQueueDialog* printhost_queue_dlg() { return m_printhost_queue_dlg; }
     Plater*               m_plater { nullptr };
     //BBS: GUI refactor
@@ -427,7 +446,13 @@ public:
     wxWindowID expand_program_id = wxNewId();
     wxWindowID expand_helio_id = wxNewId();
 
-    wxStaticBitmap* split_line_icon{nullptr};
+    // MD3 action-bar chrome: a 1px OutlineVariant vertical divider (replaces the
+    // legacy raster 'topbar_line' bitmap) and, when the Material Symbols face is
+    // available, a borderless glyph IconButton for the expand affordance (the
+    // raster ExpandButton in expand_program_holder is the capability fallback).
+    // The Helio brand mark stays a raster brand asset inside expand_program_holder.
+    wxPanel* m_prepare_split_line{nullptr};
+    Button* m_prepare_expand_btn{nullptr};
     ExpandButtonHolder* expand_program_holder{nullptr};
 
     SidePopup*  m_slice_option_pop_up{ nullptr };
@@ -437,6 +462,10 @@ public:
     mutable bool          m_print_enable{ true };
     bool get_enable_slice_status();
     bool get_enable_print_status();
+    // Overload with a human-readable explanation: when the result is false,
+    // `reason` is filled with a translated string describing why printing is
+    // unavailable (surfaced as the disabled Print button's tooltip).
+    bool get_enable_print_status(wxString &reason);
     //BBS
     void update_side_button_style();
     void update_slice_print_status(SlicePrintEventType event, bool can_slice = true, bool can_print = true);

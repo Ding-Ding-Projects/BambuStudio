@@ -175,6 +175,29 @@ try {
 
     $deleteCount = ([regex]::Matches($firstContent, '(?m)^\s*Delete\s+')).Count
     Assert-True ($deleteCount -eq 2) "Expected two fixture payload deletes, found $deleteCount."
+    Assert-True (-not $firstContent.Contains('"${PRODUCT_INSTALL_DIR}\opengl32.dll"')) `
+        'A payload without the mesa fallback pair must not emit root opengl32.dll ownership.'
+
+    # A payload carrying the software-GL fallback pair (mesa\opengl32.dll +
+    # mesa\libgallium_wgl.dll) must also own the runtime copies the app places
+    # beside bambu-studio.exe, so an uninstall after the fallback fired stays
+    # clean (see docs/features/windows/software-gl-fallback.md).
+    $mesaDir = Join-Path $payload 'mesa'
+    New-Item -ItemType Directory -Path $mesaDir | Out-Null
+    Set-Content -LiteralPath (Join-Path $mesaDir 'opengl32.dll') -Value 'fixture' -Encoding ascii
+    Set-Content -LiteralPath (Join-Path $mesaDir 'libgallium_wgl.dll') -Value 'fixture' -Encoding ascii
+    $mesaInclude = Join-Path $tempRoot 'mesa.nsh'
+    & $generator -PayloadDir $payload -OutputPath $mesaInclude
+    $mesaContent = Get-Content -LiteralPath $mesaInclude -Raw
+    foreach ($runtimeCopy in @('opengl32.dll', 'libgallium_wgl.dll')) {
+        Assert-True ($mesaContent.Contains('  Delete "${PRODUCT_INSTALL_DIR}\' + $runtimeCopy + '"')) `
+            "Mesa fallback payload does not delete the root runtime copy '$runtimeCopy'."
+        Assert-True ($mesaContent.Contains('  !insertmacro AssertNotReparse "${PRODUCT_INSTALL_DIR}\' + $runtimeCopy + '"')) `
+            "Mesa fallback payload does not reparse-guard the root runtime copy '$runtimeCopy'."
+    }
+    $mesaDeleteCount = ([regex]::Matches($mesaContent, '(?m)^\s*Delete\s+')).Count
+    Assert-True ($mesaDeleteCount -eq 6) "Expected six mesa fixture deletes (4 payload + 2 runtime copies), found $mesaDeleteCount."
+    Remove-Item -LiteralPath $mesaDir -Recurse -Force
 
     $insidePayload = Join-Path $payload 'forbidden.nsh'
     $insidePayloadRejected = $false

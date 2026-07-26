@@ -192,6 +192,10 @@ namespace Slic3r {
                 void pop_combo_style();
                 virtual void update_moves_slider(bool set_to_max = false);
                 virtual bool show_sequential_view() const;
+                // true while the moves slider runs (or is paused in) the
+                // feedrate-true print simulation; forces the sequential-view
+                // nozzle marker to stay visible through layer boundaries.
+                bool is_simulation_active() const;
                 virtual void on_visibility_changed();
                 virtual void do_set_view_type(EViewType type);
                 // helio
@@ -245,6 +249,10 @@ namespace Slic3r {
                 size_t m_nozzle_nums{ 0 };
                 bool m_fold{ false };
                 std::vector<size_t> m_ssid_to_moveid_map;
+                // feedrate-true playback: cumulative print seconds per moves-slider
+                // tick, forward-filled (only TimeBlock-owning moves carry a prefix
+                // sum in MoveVertex::time). Handed to the slider via SetMoveTimes.
+                std::vector<float> m_move_times_by_ssid;
                 std::vector<int> m_plater_extruder;
                 //BBS: save m_gcode_result as well
                 const GCodeProcessorResult* m_gcode_result{ nullptr };

@@ -22,6 +22,7 @@
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/ProgressBar.hpp"
+#include "Widgets/MD3Dialog.hpp"
 
 
 namespace Slic3r {
@@ -35,7 +36,9 @@ enum PublishStep {
     STEP_PUBLISH_COUNT,
 };
 
-class PublishDialog : public DPIDialog
+// Migrated onto the shared MD3Dialog shell (borderless rounded surface, header
+// icon tile + title, footer flex-end); the Cancel action moves to the kit footer.
+class PublishDialog : public MD3Dialog
 {
 public:
     PublishDialog(Plater* plater = nullptr);
@@ -61,6 +64,11 @@ protected:
 
     wxBoxSizer* create_publish_step_sizer();
     void on_close(wxCloseEvent &event);
+    // The circular header [x] mirrors the legacy native title-bar close
+    // (wxEVT_CLOSE_WINDOW -> on_close): it posts EVT_PUBLISHING_STOP so the
+    // plater halts publishing and ends the modal, instead of the base shell's
+    // bare EndModal that would leave publishing running.
+    void OnHeaderClose() override;
     void on_dpi_changed(const wxRect &suggested_rect) override;
 };
 

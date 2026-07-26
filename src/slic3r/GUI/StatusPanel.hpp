@@ -25,14 +25,17 @@
 #include "ReleaseNote.hpp"
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/AxisCtrlButton.hpp"
+#include "Widgets/CameraHUD.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/TempInput.hpp"
 #include "Widgets/StaticLine.hpp"
 #include "Widgets/ProgressBar.hpp"
 #include "Widgets/ImageSwitchButton.hpp"
+#include "Widgets/Slider.hpp"
 #include "Widgets/AMSControl.hpp"
 #include "Widgets/FilamentLoad.hpp"
 #include "Widgets/FanControl.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include "HMS.hpp"
 #include "PartSkipDialog.hpp"
 #include "DeviceErrorDialog.hpp"
@@ -182,7 +185,7 @@ private:
     time_t m_last_ctrl_time = 0;
 };
 
-class ScoreDialog : public GUI::DPIDialog
+class ScoreDialog : public GUI::MD3Dialog
 {
 public:
     ScoreDialog(wxWindow *parent, int design_id, std::string model_id, int profile_id, int rating_id, bool success_printed, int star_count = 0);
@@ -312,12 +315,12 @@ private:
     wxStaticText *  m_request_failed_info;
     wxStaticBitmap* m_bitmap_thumbnail;
     int             m_plate_index { -1 };
-    wxStaticBitmap* m_bitmap_static_use_time;
-    wxStaticBitmap* m_bitmap_static_use_weight;
+    wxStaticBitmap* m_bitmap_static_use_time{ nullptr };
+    wxStaticBitmap* m_bitmap_static_use_weight{ nullptr };
     AnimaIcon*      m_pausing_icon;
     AnimaIcon*      m_stopping_icon;
-    ScalableButton* m_button_pause_resume;
-    ScalableButton* m_button_abort;
+    Button*         m_button_pause_resume;
+    Button*         m_button_abort;
     Button*         m_button_partskip;
     Button*         m_button_market_scoring;
     Button*         m_button_clean;
@@ -377,8 +380,8 @@ public:
     bool is_market_scoring_show();
 
 public:
-    ScalableButton* get_abort_button() {return m_button_abort;};
-    ScalableButton* get_pause_resume_button() {return m_button_pause_resume;};
+    Button* get_abort_button() {return m_button_abort;};
+    Button* get_pause_resume_button() {return m_button_pause_resume;};
     Button* get_partskip_button() { return m_button_partskip; };
     Button* get_market_scoring_button() {return m_button_market_scoring;};
     Button * get_market_retry_buttom() { return m_button_market_retry; };
@@ -428,8 +431,9 @@ protected:
     CameraRecordingStatus m_state_recording{CameraRecordingStatus::RECORDING_NONE};
     CameraTimelapseStatus m_state_timelapse{CameraTimelapseStatus::TIMELAPSE_NONE};
 
-    CameraItem *m_setting_button;
-    CameraItem *m_camera_fullscreen_button{ nullptr };
+    CameraHUD::CameraHUDChip *m_setting_button{ nullptr };
+    CameraHUD::CameraHUDChip *m_camera_fullscreen_button{ nullptr };
+    CameraHUD *m_camera_hud{ nullptr };
     wxBoxSizer *m_camera_media_sizer{ nullptr };
     CameraFullscreenFrame *m_camera_fullscreen_frame{ nullptr };
     wxPanel *m_camera_placeholder{ nullptr };
@@ -447,13 +451,13 @@ protected:
 
     /* title panel */
     wxPanel *       media_ctrl_panel;
-    wxPanel *       m_panel_monitoring_title;
+    wxPanel *       m_panel_monitoring_title{ nullptr };
     wxPanel *       m_panel_printing_title;
     wxPanel *       m_panel_control_title;
 
     wxStaticText*   m_staticText_consumption_of_time;
     wxStaticText *  m_staticText_consumption_of_weight;
-    Label *         m_staticText_monitoring;
+    Label *         m_staticText_monitoring{ nullptr };
     wxStaticText *  m_staticText_timelapse;
     SwitchButton *  m_bmToggleBtn_timelapse;
 
@@ -494,9 +498,14 @@ protected:
     wxStaticText *  m_text_tasklist_caption;
 
     Label *  m_staticText_control;
-    ImageSwitchButton *m_switch_lamp;
+    // Kit Device.jsx:66 — chamber light is an MD3 Switch (SwitchButton icon mode,
+    // Device teal), not the legacy monitor_lamp_on/off ImageSwitchButton.
+    SwitchButton *m_switch_lamp;
     int               m_switch_lamp_timeout{0};
-    ImageSwitchButton *m_switch_speed;
+    // Kit Device.jsx:63 — print speed is a 4-way MD3 SegmentedControl
+    // (MultiSwitchButton, Device teal), not the legacy monitor_speed ImageSwitchButton.
+    MultiSwitchButton *m_switch_speed;
+    bool               m_speed_sync_guard{false}; // suppress the command path while syncing selection from the device
 
     /* TempInput */
     wxBoxSizer *    m_misc_ctrl_sizer{ nullptr };
@@ -518,7 +527,14 @@ protected:
     FanSwitchButton *m_switch_printing_fan;
     int             m_switch_printing_fan_timeout{0};
     FanSwitchButton *m_switch_cham_fan;
-    FanSwitchButton *m_switch_fan;
+    // Kit Device.jsx:64-65 — part-cooling + aux fans are teal MD3 range sliders.
+    // They preview the live PWM and open the authoritative FanControlPopupNew (the
+    // full PWM/mode/gating command path) on interaction; the legacy single fan
+    // ImageSwitchButton (m_switch_fan) is gone. m_fan_ctrl_anchor is the popup anchor.
+    Slider *        m_slider_part_fan{nullptr};
+    Slider *        m_slider_aux_fan{nullptr};
+    wxWindow *      m_fan_ctrl_anchor{nullptr};
+    bool            m_fan_popup_pending{false}; // debounce: one FanControlPopupNew per slider gesture
     int             m_switch_cham_fan_timeout{0};
     wxPanel*        m_switch_block_fan;
     int             m_nozzle_num{ 0 };
@@ -527,6 +543,9 @@ protected:
     float           m_fixed_aspect_ratio{1.8};
 
     AxisCtrlButton *m_bpButton_xy;
+    // Kit Device.jsx:82 — a compact 10/1 mm step SegmentedControl above the XY grid
+    // so BOTH legacy jog magnitudes (outer +10 / inner +1 rings) stay reachable.
+    MultiSwitchButton *m_axis_step_switch{nullptr};
     Button *        m_bpButton_z_10;
     Button *        m_bpButton_z_1;
     Button *        m_bpButton_z_down_1;
@@ -545,6 +564,7 @@ protected:
 
     AMSControl*     m_ams_control;
     StaticBox*      m_ams_control_box;
+    Label *         m_ams_humidity_label{ nullptr }; // teal AMS-header trailing (Device.jsx:69)
     wxStaticBitmap *m_ams_extruder_img;
     wxStaticBitmap* m_bitmap_extruder_img;
 
@@ -562,6 +582,15 @@ protected:
     wxStaticText*   m_staticText_calibration_caption;
     wxStaticText*   m_staticText_calibration_caption_top;
     wxStaticText*   m_calibration_text;
+    // Kit Device.jsx:48 — the right column is a plain stack of cards with no
+    // 'Control' title strip and no Parts/Options/Safety/Calibration pill row. Those
+    // four entry points now live behind a single trailing overflow menu (m_more_btn,
+    // MaterialIcon MoreHoriz IconButton -> wxMenu). The four Button objects are kept
+    // as invisible state-holders parented to m_action_holder (an unmanaged, always
+    // hidden panel) so every existing Show/Hide/Enable/SetLabel/SetToolTip site keeps
+    // driving their state unchanged; the menu is rebuilt from that state on open.
+    wxPanel*        m_action_holder{nullptr};
+    Button*         m_more_btn{nullptr};
     Button*         m_parts_btn;
     Button*         m_options_btn;
     Button*         m_safety_btn;
@@ -600,6 +629,9 @@ protected:
     virtual void on_nozzle_selected(wxCommandEvent &event) { event.Skip(); }
 
 public:
+    // Live-view window, for the AI printer-watch frame capture (PrinterWatch).
+    wxMediaCtrl3 *get_media_ctrl() { return m_media_ctrl; }
+
     StatusBasePanel(wxWindow *      parent,
                     wxWindowID      id    = wxID_ANY,
                     const wxPoint & pos   = wxDefaultPosition,
@@ -629,6 +661,10 @@ public:
     StaticBox*  create_ams_group(wxWindow *parent);
     wxBoxSizer* create_settings_group(wxWindow *parent);
     wxBoxSizer* create_filament_group(wxWindow* parent);
+
+    // Section header with leading MaterialIcon glyph + optional trailing label (e.g. humidity)
+    wxBoxSizer* create_section_header(wxWindow *parent, const wxString &label, MaterialIcon::Glyph icon,
+                                       const wxString &trailing_label = wxEmptyString);
 
 	void           expand_filament_loading(wxMouseEvent &e);
     void           show_ams_group(bool show = true);
@@ -779,6 +815,8 @@ protected:
     void on_camera_leave(wxMouseEvent& event);
 
     void on_show_parts_options(wxCommandEvent& event);
+    /* trailing overflow menu hosting Parts / Print Options / Safety / Calibration */
+    void on_show_more_options(wxCommandEvent& event);
     /* print options */
     void on_show_print_options(wxCommandEvent &event);
     /* safety options */

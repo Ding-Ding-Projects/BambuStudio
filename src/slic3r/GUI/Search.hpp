@@ -24,6 +24,12 @@
 #include "Widgets/PopupWindow.hpp"
 #include "GUI_ObjectList.hpp"
 
+// MD3 checkbox used for the SearchDialog regex toggle (defined at global scope).
+class CheckBox;
+// Shared MD3 search pill (".*" regex toggle + tune builder popover), defined at
+// global scope in Widgets/SearchField.hpp.
+class SearchField;
+
 namespace Slic3r {
 
 wxDECLARE_EVENT(wxCUSTOMEVT_JUMP_TO_OPTION, wxCommandEvent);
@@ -96,6 +102,18 @@ class OptionsSearcher
     std::map<std::string, GroupAndCategory> groups_and_categories;
     PrinterTechnology                       printer_technology;
 
+    // When true, the search term is treated as a std::wregex instead of the
+    // default fuzzy/substring match. An invalid pattern never filters anything
+    // out (a half-typed regex keeps the full list visible).
+    bool                                    regex_enabled{false};
+    // Matcher modifiers mirroring the SearchField tune-popover checkboxes.
+    // Case sensitivity drops the icase flag in regex mode and constrains the
+    // fuzzy path to case-exact substring hits; whole-word constrains the fuzzy
+    // path to word-bounded hits (in regex mode it is ignored — author \b, per
+    // the shared SearchField::textMatches convention).
+    bool                                    case_sensitive{false};
+    bool                                    whole_word{false};
+
     std::vector<Option>      options{};
     std::vector<FoundOption> found{};
 
@@ -139,12 +157,28 @@ public:
 
     void set_printer_technology(PrinterTechnology pt) { printer_technology = pt; }
 
+    // Regex-mode toggle. Off by default so the fuzzy/substring behaviour is
+    // unchanged unless the user opts in via the SearchDialog toggle.
+    void set_regex_enabled(bool on) { regex_enabled = on; }
+    bool is_regex_enabled() const { return regex_enabled; }
+    // Case-sensitive / whole-word modifiers (SearchField tune popover). Both
+    // default off, which reproduces the historical matching exactly.
+    void set_case_sensitive(bool on) { case_sensitive = on; }
+    bool is_case_sensitive() const { return case_sensitive; }
+    void set_whole_word(bool on) { whole_word = on; }
+    bool is_whole_word() const { return whole_word; }
+
     void sort_options_by_key()
     {
         std::sort(options.begin(), options.end(), [](const Option &o1, const Option &o2) { return o1.key < o2.key; });
     }
     void sort_options_by_label() { sort_options(); }
 
+    // Preferred entry point: the input is the shared MD3 SearchField pill, whose
+    // ".*" toggle and tune popover drive the regex / case / whole-word flags.
+    void show_dialog(Preset::Type type, wxWindow *parent, SearchField *input, wxWindow *ssearch_btn);
+    // Legacy TextInput entry point (kept for Plater::search's fixed signature):
+    // hosts the dialog's own MD3 CheckBox regex row instead of the pill toggle.
     void show_dialog(Preset::Type type, wxWindow *parent, TextInput *input, wxWindow *ssearch_btn);
     void dlg_sys_color_changed();
     void dlg_msw_rescale();
@@ -173,6 +207,10 @@ public:
     void   on_mouse_leave(wxMouseEvent &evt);
     void   on_mouse_left_down(wxMouseEvent &evt);
     void   on_mouse_left_up(wxMouseEvent &evt);
+    // Keyboard a11y: Up/Down move focus between rows, Enter/Space activate.
+    void   on_key_down(wxKeyEvent &evt);
+    // Shared jump-to-result action (mouse-up and keyboard both route here).
+    void   activate();
 };
 
 //------------------------------------------
@@ -209,14 +247,25 @@ public:
     const int POPUP_WIDTH  = 38;
     const int POPUP_HEIGHT = 40;
     int       m_pop_width  = 400;
-    TextInput *  search_line{nullptr};
+    // Host window of the external search entry (an MD3 SearchField pill, or a
+    // TextInput on the legacy path). It anchors the popup width and receives
+    // wxCUSTOMEVT_EXIT_SEARCH when the dialog dies.
+    wxWindow *   search_line{nullptr};
     wxTextCtrl *  search_line2{nullptr};
+    // Non-null when the host is the shared SearchField: its ".*" toggle and
+    // tune popover then drive the searcher's regex / case / whole-word flags
+    // (and the dialog hosts no separate CheckBox regex row).
+    SearchField *search_field{nullptr};
     Preset::Type     search_type = Preset::TYPE_INVALID;
 
     wxDataViewCtrl * search_list{nullptr};
     ScrolledWindow * m_scrolledWindow{nullptr};
     SearchListModel *search_list_model{nullptr};
     wxCheckBox *     check_category{nullptr};
+    // Optional ".*" regex toggle for the option search (see OptionsSearcher).
+    // Built only on the legacy TextInput path — the SearchField pill carries
+    // its own toggle.
+    CheckBox *       m_regex_toggle{nullptr};
 
     OptionsSearcher *searcher{nullptr};
 
@@ -228,13 +277,17 @@ public:
     void OnSelect(wxDataViewEvent &event);
 
     void OnCheck(wxCommandEvent &event);
+    void OnRegexToggle(wxCommandEvent &event);
     void OnMotion(wxMouseEvent &event);
     void OnLeftDown(wxMouseEvent &event);
 
     void update_list();
 
 public:
-    SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindow *parent, TextInput *input, wxWindow *search_btn);
+    // `input_host` is the external entry's host window (SearchField pill or
+    // legacy TextInput), `entry` its inner wxTextCtrl; `field` is non-null when
+    // the host is a SearchField (regex/case/whole-word wiring, no CheckBox row).
+    SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindow *parent, wxWindow *input_host, wxTextCtrl *entry, wxWindow *search_btn, SearchField *field = nullptr);
     ~SearchDialog();
 
     void MSWDismissUnfocusedPopup();

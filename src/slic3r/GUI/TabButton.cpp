@@ -101,6 +101,23 @@ void TabButton::SetBitmap(ScalableBitmap &bitmap)
     this->icon = bitmap;
 }
 
+void TabButton::SetSelected(bool selected)
+{
+    if (m_selected == selected)
+        return;
+    m_selected = selected;
+    Refresh();
+}
+
+void TabButton::SetColorScheme(MD3::ColorScheme scheme)
+{
+    if (m_scheme == scheme)
+        return;
+    m_scheme = scheme;
+    if (m_selected)
+        Refresh();
+}
+
 bool TabButton::Enable(bool enable)
 {
     bool result = wxWindow::Enable(enable);
@@ -178,6 +195,24 @@ void TabButton::render(wxDC &dc)
         pt.x = size.x - showimg.GetWidth() - paddingSize.y - offset_left;
         pt.y = (size.y - showimg.GetHeight()) / 2;
         dc.DrawBitmap(showimg, pt);
+    }
+
+    // Kit active indicator (navigation/TabBar) for this vertical tab list: a 3px
+    // bar in the current scheme's Primary on the inner (content-facing) right
+    // edge, inset 12px top and bottom, with only the LEFT corners rounded. wxDC
+    // has no per-corner radius, so the pill is drawn at double width and the
+    // client edge clips its right (rounded) half, leaving square corners flush to
+    // the tab's right edge. FromDIP is read every paint (no cached radius).
+    if (m_selected) {
+        const int inset = FromDIP(12);
+        const int thick = FromDIP(MD3::Metrics::tab_active_indicator);
+        int       bar_h = size.y - 2 * inset;
+        if (bar_h < 1)
+            bar_h = 1;
+        wxRect indicator(size.x - thick, inset, thick * 2, bar_h);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, m_scheme)));
+        dc.DrawRoundedRectangle(indicator, thick);
     }
 }
 

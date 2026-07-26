@@ -6,6 +6,9 @@ Design 3 design system.
 - [Vendored Material Design 3 design system](md3-design-system.md) — token source of truth, the
   ground-up color/type/metric migration, contextual schemes, fonts, failure modes, and the parity
   audit result.
+- [MD3 parity register](md3-parity-register.md) — the canonical element-by-element conformance
+  register and wave plan driving the structural-anatomy migration. The register itself carries the
+  live done / deviation / open counts; consult it rather than any snapshot elsewhere.
 
 ## Design source
 

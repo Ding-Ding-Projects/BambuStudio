@@ -1,5 +1,8 @@
 #include "ObjectDataViewModel.hpp"
 #include "wxExtensions.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/SearchField.hpp"
+#include "Widgets/StateColor.hpp"
 #include "BitmapCache.hpp"
 #include "GUI_App.hpp"
 #include "GUI_Factories.hpp"
@@ -11,6 +14,9 @@
 
 #include <wx/bmpcbox.h>
 #include <wx/dc.h>
+
+#include <cwctype>
+#include <regex>
 
 namespace Slic3r {
 namespace GUI {
@@ -38,6 +44,59 @@ static constexpr char LayerIcon[]       = "blank";
 static constexpr char WarningIcon[]     = "obj_warning";
 static constexpr char WarningManifoldIcon[] = "obj_warning";
 static constexpr char LockIcon[]            = "cut_";
+
+// ---------------------------------------------------------------------------
+// Wave 3 (object-outliner-tree-icons): the object tree renders its feature
+// badges and the printable toggle through the wxDataViewCtrl model, which hands
+// the control a wxBitmap per cell (a glyph cannot be drawn in-place here — the
+// model interface is bitmap-only). These helpers rasterize the MD3 Material
+// Symbols glyph the kit specifies for each badge, coloured from a semantic role
+// so the badge follows the active light/dark theme, and fall back to the legacy
+// raster icon when the icon face is unavailable so a missing TTF degrades to the
+// old look instead of tofu.
+// The DPI reference for tree badges: the app's top window is the MainFrame that
+// hosts the object tree, so its content-scale factor is what the badge must be
+// rasterized at. MaterialIcon::bitmap pins the scale to 1.0 when handed a null
+// window and the toolkit then upsamples the glyph (soft/undersized on HiDPI);
+// create_scaled_bitmap likewise reads the window's DPI. Returns null before
+// SetTopWindow() runs (early construction), which both paths degrade safely to
+// the primary-display scale, and the icons are rebuilt crisply on the first
+// Rescale()/msw_rescale() once the frame exists.
+static wxWindow *tree_icon_dpi_ref() { return wxGetApp().GetTopWindow(); }
+
+static wxBitmap tree_feature_bitmap(const std::string &legacy_name, int px)
+{
+    wxWindow *dpiRef = tree_icon_dpi_ref();
+    if (MaterialIcon::available()) {
+        struct GlyphSpec { uint32_t cp; MD3::Role role; };
+        static const std::map<std::string, GlyphSpec> glyphs = {
+            { "toolbar_variable_layer_height", { MaterialIcon::Layers,              MD3::Role::OnSurfaceVariant } },
+            { "mmu_segmentation",              { MaterialIcon::Palette,             MD3::Role::OnSurfaceVariant } },
+            { "toolbar_support",               { MaterialIcon::Hardware,            MD3::Role::OnSurfaceVariant } },
+            { "toolbar_fuzzyskin",             { MaterialIcon::Grain,               MD3::Role::OnSurfaceVariant } },
+            { "objlist_sinking",               { MaterialIcon::VerticalAlignBottom, MD3::Role::OnSurfaceVariant } },
+            { "dot",                           { MaterialIcon::FiberManualRecord,   MD3::Role::OnSurfaceVariant } },
+        };
+        const auto it = glyphs.find(legacy_name);
+        if (it != glyphs.end())
+            return MaterialIcon::bitmap(dpiRef, it->second.cp, px, StateColor::semantic(it->second.role));
+    }
+    return create_scaled_bitmap(legacy_name, dpiRef, px);
+}
+
+// Printable toggle badge: a filled Primary check_box when printable, an
+// OnSurfaceVariant check_box_outline_blank when not. Falls back to the legacy
+// check_on / check_off_focused rasters when the icon face is unavailable.
+static wxBitmap tree_printable_bitmap(bool printable, int px)
+{
+    wxWindow *dpiRef = tree_icon_dpi_ref();
+    if (MaterialIcon::available())
+        return MaterialIcon::bitmap(dpiRef,
+                                    printable ? MaterialIcon::CheckBox : MaterialIcon::CheckBoxOutlineBlank,
+                                    px,
+                                    StateColor::semantic(printable ? MD3::Role::Primary : MD3::Role::OnSurfaceVariant));
+    return create_scaled_bitmap(printable ? "check_on" : "check_off_focused", dpiRef, px);
+}
 
 ObjectDataViewModelNode::ObjectDataViewModelNode(PartPlate* part_plate, wxString name) :
     m_parent(nullptr),
@@ -174,7 +233,7 @@ bool ObjectDataViewModelNode::valid()
 
 void ObjectDataViewModelNode::sys_color_changed()
 {
-    m_printable_icon = m_printable == piUndef ? m_empty_bmp : create_scaled_bitmap(m_printable == piPrintable ? "check_on" : "check_off_focused");
+    m_printable_icon = m_printable == piUndef ? m_empty_bmp : tree_printable_bitmap(m_printable == piPrintable, 16);
 }
 
 void ObjectDataViewModelNode::set_icons()
@@ -203,14 +262,14 @@ void ObjectDataViewModelNode::set_printable_icon(PrintIndicator printable)
         return;
     m_printable = printable;
     m_printable_icon = m_printable == piUndef ? m_empty_bmp :
-                       create_scaled_bitmap(m_printable == piPrintable ? "check_on" : "check_off_focused");
+                       tree_printable_bitmap(m_printable == piPrintable, 16);
 }
 
 void ObjectDataViewModelNode::set_variable_height_icon(VaryHeightIndicator vari_height) {
     if (m_variable_height == vari_height)
         return;
     m_variable_height = vari_height;
-    m_variable_height_icon = m_variable_height == hiUnVariable ? m_empty_bmp : create_scaled_bitmap("toolbar_variable_layer_height", nullptr, 20);
+    m_variable_height_icon = m_variable_height == hiUnVariable ? m_empty_bmp : tree_feature_bitmap("toolbar_variable_layer_height", 20);
 }
 
 void ObjectDataViewModelNode::set_action_icon(bool enable)
@@ -232,9 +291,9 @@ void ObjectDataViewModelNode::set_color_icon(bool enable, bool force)
         return;
     m_color_enable = enable;
     if ((m_type & itObject) && enable)
-        m_color_icon = create_scaled_bitmap("mmu_segmentation");
+        m_color_icon = tree_feature_bitmap("mmu_segmentation", 16);
     else
-        m_color_icon = create_scaled_bitmap("dot");
+        m_color_icon = tree_feature_bitmap("dot", 16);
 }
 
 void ObjectDataViewModelNode::set_support_icon(bool enable, bool force)
@@ -243,9 +302,9 @@ void ObjectDataViewModelNode::set_support_icon(bool enable, bool force)
         return;
     m_support_enable = enable;
     if ((m_type & itObject) && enable)
-        m_support_icon = create_scaled_bitmap("toolbar_support");
+        m_support_icon = tree_feature_bitmap("toolbar_support", 16);
     else
-        m_support_icon = create_scaled_bitmap("dot");
+        m_support_icon = tree_feature_bitmap("dot", 16);
 }
 
 void ObjectDataViewModelNode::set_fuzzyskin_icon(bool enable, bool force)
@@ -253,9 +312,9 @@ void ObjectDataViewModelNode::set_fuzzyskin_icon(bool enable, bool force)
     if (!force && m_fuzzyskin_enable == enable) return;
     m_fuzzyskin_enable = enable;
     if ((m_type & itObject) && enable)
-        m_fuzzyskin_icon = create_scaled_bitmap("toolbar_fuzzyskin");
+        m_fuzzyskin_icon = tree_feature_bitmap("toolbar_fuzzyskin", 16);
     else
-        m_fuzzyskin_icon = create_scaled_bitmap("dot");
+        m_fuzzyskin_icon = tree_feature_bitmap("dot", 16);
 }
 
 void ObjectDataViewModelNode::set_sinking_icon(bool enable, bool force)
@@ -264,9 +323,9 @@ void ObjectDataViewModelNode::set_sinking_icon(bool enable, bool force)
         return;
     m_sink_enable = enable;
     if ((m_type & itObject) && enable)
-        m_sinking_icon = create_scaled_bitmap("objlist_sinking");
+        m_sinking_icon = tree_feature_bitmap("objlist_sinking", 16);
     else
-        m_sinking_icon = create_scaled_bitmap("dot");
+        m_sinking_icon = tree_feature_bitmap("dot", 16);
 }
 
 void ObjectDataViewModelNode::set_warning_icon(const std::string& warning_icon_name)
@@ -318,9 +377,9 @@ void ObjectDataViewModelNode::msw_rescale()
         m_action_icon = create_scaled_bitmap(m_action_icon_name);
 
     if (m_printable != piUndef)
-        m_printable_icon = create_scaled_bitmap(m_printable == piPrintable ? "obj_printable" : "obj_unprintable");
+        m_printable_icon = tree_printable_bitmap(m_printable == piPrintable, 16);
 
-    m_variable_height_icon = m_variable_height == hiUnVariable ? m_empty_bmp : create_scaled_bitmap("toolbar_variable_layer_height", nullptr, 20);
+    m_variable_height_icon = m_variable_height == hiUnVariable ? m_empty_bmp : tree_feature_bitmap("toolbar_variable_layer_height", 20);
 
     if (!m_opt_categories.empty())
         update_settings_digest_bitmaps();
@@ -473,7 +532,7 @@ ObjectDataViewModel::ObjectDataViewModel()
     m_lock_bmp = create_scaled_bitmap(LockIcon);
 
     for (auto item : INFO_ITEMS)
-        m_info_bmps[item.first] = create_scaled_bitmap(item.second.bmp_name);
+        m_info_bmps[item.first] = tree_feature_bitmap(item.second.bmp_name, 16);
 
 
     m_plate_outside = nullptr;
@@ -584,7 +643,7 @@ void ObjectDataViewModel::UpdateBitmapForNode(ObjectDataViewModelNode *node)
             bmps.emplace_back(m_lock_bmp);
         if (is_volume_node) {
             if (!bmps.empty()) // ORCA: Add spacing between icons if there are multiple
-                bmps.emplace_back(create_scaled_bitmap("dot", nullptr, int(wxGetApp().em_unit() / 10) * 4));
+                bmps.emplace_back(tree_feature_bitmap("dot", int(wxGetApp().em_unit() / 10) * 4));
             bmps.emplace_back(node->is_text_volume() ? m_text_volume_bmps[vol_type] :
                 node->is_svg_volume() ? m_svg_volume_bmps[vol_type] :
                 m_volume_bmps[vol_type]);
@@ -1586,36 +1645,110 @@ void ObjectDataViewModel::assembly_name(ObjectDataViewModelNode* item, wxString 
     }
 }
 
+void ObjectDataViewModel::set_search_flags(bool regex, bool case_sensitive, bool whole_word)
+{
+    m_search_regex          = regex;
+    m_search_case_sensitive = case_sensitive;
+    m_search_whole_word     = whole_word;
+}
+
+// Wrap every span of `name` matched by the current query in <b>...</b> markup
+// (consumed by Search::SearchItem's painter). Spans are computed per mode:
+//   * regex        — std::wregex hit ranges (guarded; a throwing / zero-width
+//                    pattern yields no highlight rather than an infinite loop);
+//   * substring    — every case-folded occurrence; with whole-word only the
+//                    occurrences bounded by non-word characters are wrapped.
+// Inclusion itself is already decided by SearchField::textMatches, so a name
+// that matched but produced no concrete span (e.g. an invalid regex) is
+// returned unhighlighted instead of being dropped.
+static wxString mark_search_matches(const wxString &name, const wxString &query,
+                                    bool regex, bool case_sensitive, bool whole_word)
+{
+    std::vector<std::pair<size_t, size_t>> spans; // [begin, end)
+    const std::wstring hay = name.ToStdWstring();
+
+    if (regex) {
+        // Bound the pattern so a pathological paste cannot stall regex
+        // compilation; matching itself is guarded below.
+        if (query.length() <= 2000) {
+            try {
+                std::wregex::flag_type flags = std::regex_constants::ECMAScript;
+                if (!case_sensitive)
+                    flags |= std::regex_constants::icase;
+                const std::wregex re(query.ToStdWstring(), flags);
+                for (auto it = std::wsregex_iterator(hay.begin(), hay.end(), re), end = std::wsregex_iterator(); it != end; ++it) {
+                    if (it->length(0) <= 0)
+                        break; // zero-width hit: stop rather than loop / emit empty tags
+                    spans.emplace_back(static_cast<size_t>(it->position(0)),
+                                       static_cast<size_t>(it->position(0) + it->length(0)));
+                }
+            } catch (const std::regex_error &) {
+                // Invalid / runaway pattern: keep the row visible, unhighlighted.
+            }
+        }
+    } else {
+        const std::wstring hay_folded = case_sensitive ? hay : wxString(name).MakeLower().ToStdWstring();
+        const std::wstring ndl        = (case_sensitive ? query : wxString(query).Lower()).ToStdWstring();
+        if (!ndl.empty()) {
+            auto is_word = [](wchar_t c) { return std::iswalnum(static_cast<wint_t>(c)) != 0 || c == L'_'; };
+            for (size_t pos = hay_folded.find(ndl); pos != std::wstring::npos; pos = hay_folded.find(ndl, pos + ndl.size())) {
+                if (whole_word) {
+                    const bool left_ok  = (pos == 0) || !is_word(hay_folded[pos - 1]);
+                    const bool right_ok = (pos + ndl.size() >= hay_folded.size()) || !is_word(hay_folded[pos + ndl.size()]);
+                    if (!left_ok || !right_ok)
+                        continue;
+                }
+                spans.emplace_back(pos, pos + ndl.size());
+            }
+        }
+    }
+
+    if (spans.empty())
+        return name;
+
+    wxString marked;
+    size_t   cursor = 0;
+    for (const auto &[b, e] : spans) {
+        if (b < cursor || e > hay.size())
+            continue; // overlapping / out-of-range span (defensive)
+        marked += wxString(hay.substr(cursor, b - cursor));
+        marked += "<b>" + wxString(hay.substr(b, e - b)) + "</b>";
+        cursor = e;
+    }
+    if (cursor < hay.size())
+        marked += wxString(hay.substr(cursor));
+    return marked;
+}
+
 void ObjectDataViewModel::search_object(wxString search_text)
 {
     if (search_text.empty()) {
         search_found_list = assembly_name_list;
     }
     else {
+        // Colour-aware search: each row's haystack also carries its filament
+        // colour as "#RRGGBB name", so "green" or "#00AE42" finds the objects
+        // printed with that filament.
+        std::vector<std::string> filament_colors;
+        if (auto *plater = wxGetApp().plater())
+            filament_colors = plater->get_extruder_colors_from_plater_config();
         search_found_list.clear();
-        search_text = search_text.MakeLower();
-
         for (const auto& [model_node, name, tip] : assembly_name_list) {
-            wxString sub_str = name;
-            sub_str = sub_str.MakeLower();
-
-            wxString new_str = "";
-            size_t search_text_len = search_text.length();
-            size_t curr_str_len = 0;
-            size_t pos = sub_str.find(search_text);
-            while (pos != wxString::npos) {
-                wxString new_search_str = "<b>" + name.Mid(curr_str_len + pos, search_text_len) + "</b>";
-                new_str += name.Mid(curr_str_len, pos) + new_search_str;
-                curr_str_len += search_text_len + pos;
-                sub_str = sub_str.substr(pos + search_text_len);
-                pos = sub_str.find(search_text);
+            wxString haystack = name;
+            if (model_node != nullptr && !filament_colors.empty()) {
+                long extruder_1based = 0;
+                if (model_node->GetExtruder().ToLong(&extruder_1based) &&
+                    extruder_1based >= 1 && static_cast<std::size_t>(extruder_1based) <= filament_colors.size())
+                    haystack += " " + SearchField::colorSearchText(wxColour(filament_colors[extruder_1based - 1]));
             }
-
-            if (curr_str_len > 0 && curr_str_len < name.length()) {
-                new_str += name.substr(curr_str_len);
-            }
-            if (!new_str.empty())
-                search_found_list.push_back(std::tuple(model_node, new_str, tip));
+            // Shared SearchField matcher: honours the sidebar pill's ".*" regex
+            // toggle plus its case-sensitive / whole-word builder checkboxes. An
+            // invalid or half-typed regex matches everything (never hides rows).
+            if (!SearchField::textMatches(search_text, haystack, m_search_regex, m_search_case_sensitive, m_search_whole_word))
+                continue;
+            search_found_list.push_back(std::tuple(model_node,
+                                                   mark_search_matches(name, search_text, m_search_regex, m_search_case_sensitive, m_search_whole_word),
+                                                   tip));
         }
     }
 }
@@ -2418,7 +2551,7 @@ void ObjectDataViewModel::Rescale()
     m_lock_bmp = create_scaled_bitmap(LockIcon);
 
     for (auto item : INFO_ITEMS)
-        m_info_bmps[item.first] = create_scaled_bitmap(item.second.bmp_name);
+        m_info_bmps[item.first] = tree_feature_bitmap(item.second.bmp_name, 16);
 
     wxDataViewItemArray all_items;
     GetAllChildren(wxDataViewItem(0), all_items);

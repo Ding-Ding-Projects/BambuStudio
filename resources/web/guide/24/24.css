@@ -6,7 +6,7 @@
 .BlockBanner
 {
 	padding: 0px;
-	border-bottom:#00AE42 1px solid;
+	border-bottom:1px solid var(--md-outline-variant);
 	width: 100%;
 	display: flex;
 	justify-content:space-between;
@@ -27,11 +27,12 @@
 .BlockBanner  a
 {
 	display: inline-block;
-	background-color:#00AE42;
+	background-color:var(--md-secondary-container);
 	line-height: 40px;
 	height: 40px;
 	padding: 0px 24px;
-	color: #fff;
+	color: var(--md-on-secondary-container);
+	font-weight: 600;
 }
 
 .PrinterArea
@@ -51,9 +52,9 @@
 .PImg
 {
 	position:relative;
-	background-color: #EEEEEE;
+	background-color: var(--md-sc);
 	width:160px;
-	height: 160px;	
+	height: 160px;
 }
 
 .ModelCheckBox
@@ -90,7 +91,7 @@ img.ModelThumbnail
 	display: none;
 	align-items: center;
 	justify-content:flex-start;
-	color: #5A5A5A;	
+	color: var(--md-on-surface-variant);
 	padding-left: 10px;
 }
 
@@ -130,10 +131,10 @@ img.ModelThumbnail
 
 #NoticeBar
 {
-	background-color:#00B35C;
+	background-color:var(--md-primary);
 	height: 40px;
 	line-height: 40px;
-	color: #fff;
+	color: var(--md-on-primary);
 	text-align: center;
 }
 

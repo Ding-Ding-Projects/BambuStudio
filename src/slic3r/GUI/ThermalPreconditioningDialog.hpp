@@ -7,13 +7,19 @@
 #include <wx/sizer.h>
 #include <wx/statbmp.h>
 
+#include "Widgets/MD3Dialog.hpp"
+
+class Button;
 
 namespace Slic3r {
 
 class MachineObject;
 namespace GUI {
 
-class ThermalPreconditioningDialog : public wxDialog
+// Migrated onto the shared MD3Dialog shell (borderless rounded surface, header
+// icon tile + title, footer flex-end). Uses the Device (teal) color scheme
+// because this is a live device-monitoring flow.
+class ThermalPreconditioningDialog : public MD3Dialog
 {
 public:
     ThermalPreconditioningDialog(wxWindow *parent, std::string dev_id, bool is_show_remain_time);
@@ -30,7 +36,7 @@ private:
     wxTimer        *m_refresh_timer;
     wxStaticText   *m_remaining_time_label;
     wxStaticText   *m_explanation_label;
-    wxButton       *m_ok_button;
+    Button         *m_ok_button;
     wxStaticBitmap *m_title_bitmap;
 
     DECLARE_EVENT_TABLE()

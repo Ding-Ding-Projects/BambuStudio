@@ -8,6 +8,7 @@
 
 #include "libslic3r/Semver.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3Dialog.hpp"
 
 class wxBoxSizer;
 class wxCheckBox;
@@ -38,7 +39,8 @@ private:
 
 
 // Confirmation dialog informing about configuration update. Lists updated bundles & their versions.
-class MsgUpdateConfig : public DPIDialog
+// Migrated onto the shared MD3Dialog shell (header icon tile + title, footer flex-end).
+class MsgUpdateConfig : public MD3Dialog
 {
 public:
 	struct Update

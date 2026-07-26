@@ -10,6 +10,7 @@
 #include "slic3r/GUI/MsgDialog.hpp"
 #include "slic3r/GUI/format.hpp"
 #include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 #include "libslic3r/Geometry/ConvexHull.hpp"
 #include "libslic3r/Model.hpp"
@@ -4024,9 +4025,10 @@ StyleNameEditDialog::StyleNameEditDialog(
     Layout();
     m_sizer_main->Fit(this);
 
-    CenterOnParent();
-
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
+    CenterOnParent();
 }
 
 StyleNameEditDialog::~StyleNameEditDialog() {}

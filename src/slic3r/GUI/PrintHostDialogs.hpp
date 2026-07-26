@@ -18,6 +18,8 @@ class wxTextCtrl;
 class wxChoice;
 class wxComboBox;
 class wxDataViewListCtrl;
+class wxStaticText;
+class SearchField;
 
 namespace Slic3r {
 
@@ -103,7 +105,12 @@ private:
 
     wxButton *btn_cancel;
     wxButton *btn_error;
+    SearchField *search_field { nullptr };
+    wxStaticText *search_status { nullptr };
     wxDataViewListCtrl *job_list;
+    // Find-in-queue: rows stay in place (job ids are row indices), the search
+    // selects and counts matches instead of filtering.
+    void run_queue_search();
     // Note: EventGuard prevents delivery of progress evts to a freed PrintHostQueueDialog
     EventGuard on_progress_evt;
     EventGuard on_error_evt;

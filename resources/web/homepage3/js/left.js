@@ -319,13 +319,13 @@ function ShowLeftMenuTip( bShow )
 {
 	if(bShow==true)
 	{
-		$("div[menu='home'] div.BtnIcon").prop('title',GetCurrentTextByKey('t114'));
-		$("div[menu='recent'] div.BtnIcon").prop('title',GetCurrentTextByKey('t35'));
-		$("div[menu='online'] div.BtnIcon").prop('title',GetCurrentTextByKey('t107'));
+		$("div[menu='home'] div.BtnIcon").prop('title',GetCurrentPlainTextByKey('t114'));
+		$("div[menu='recent'] div.BtnIcon").prop('title',GetCurrentPlainTextByKey('t35'));
+		$("div[menu='online'] div.BtnIcon").prop('title',GetCurrentPlainTextByKey('t107'));
 		$("div[menu='makerlab'] div.BtnIcon").prop('title','MakerLab');
-		$("div[menu='makersupply'] div.BtnIcon").prop('title',GetCurrentTextByKey('t125'));
-		$("div[menu='printhistory'] div.BtnIcon").prop('title',GetCurrentTextByKey('t117'));
-		$("div[menu='manual'] div.BtnIcon").prop('title',GetCurrentTextByKey('t87'));
+		$("div[menu='makersupply'] div.BtnIcon").prop('title',GetCurrentPlainTextByKey('t125'));
+		$("div[menu='printhistory'] div.BtnIcon").prop('title',GetCurrentPlainTextByKey('t117'));
+		$("div[menu='manual'] div.BtnIcon").prop('title',GetCurrentPlainTextByKey('t87'));
 	}
 	else
 	{

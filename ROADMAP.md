@@ -2,88 +2,142 @@
 
 ## Landed
 
-All items below are committed and pushed on `master`. Commit `8d727d49d` (native model preview,
-dockable Prepare sidebar, and the last migration-coverage changes) is pushed, built, and shipped:
-hosted run `29877040307` (head `ec631dfb2`) completed fully green — including the previously failing
-`Publish Windows release` job — and published the non-draft release
-`md3-windows-v02.08.01.55-r37` (installer, SHA-256, CycloneDX SBOM).
+### Chrome-sweep tranche: stock dialogs adopted (2026-07-25)
 
-### Material Design 3 token and typography layer
+- **`MD3DialogCaption::Adopt()`** — one-call adoption for dialogs that cannot change base
+  class: strips the native caption styles in place, wraps the existing root sizer under the
+  44px caption strip (title falls back to the window title), restores the content client
+  height, preserves `wxRESIZE_BORDER`, and finishes rounded corners + fade.
+- **17 dialog classes de-natived** with it: AMS dryness control, AMS materials setting (+
+  official-filament dialog), Print options + printer parts, Send print job (+ its two inline
+  timelapse/storage dialogs), Save preset, Flushing volumes, Object color import, Full
+  compare + Compare presets, sending-failed confirm, Keyboard shortcuts, About + Copyrights,
+  System info, and Slic3r's own SingleChoiceDialog.
+- **Stock wx prompts routed to chromed dialogs**: the four raw `wxSingleChoiceDialog` sites
+  (choice index helper, Helio printer pick, both Config-profiles snapshot pickers) now use
+  the chromed SingleChoiceDialog; the object rename `wxGetTextFromUser` became an adopted
+  `wxTextEntryDialog`; two raw `wxMessageDialog`s (snapshot confirm, mixed-color sublayer)
+  became Slic3r `MessageDialog`. Startup-error `wxMessageBox`es stay native deliberately —
+  they fire where the MD3 shell may not be constructible.
+- Headlessly verified on the fresh build: Keyboard shortcuts and About render the MD3
+  caption with no native bar and intact content (`docs/screenshots/dialog-chrome/`).
 
-- Extend `src/slic3r/GUI/Widgets/MD3Tokens.hpp` to full parity with the vendored
-  `ui-md3/design-system/` kit: the `OnError`/`OnErrorContainer`/`InversePrimary` roles, scrim and
-  shadow tints, the `elev1`–`elev5` elevation ladder, `MD3::Viewport` axis and live colors, fixed
-  panel/dialog/content metrics and shape radii, the full 11-step `MD3::Type` scale with font
-  constants, and the `accentFromSeed()` seed-ramp port (commit `23688c23d`).
-- Convert hardcoded theme colors and fonts across essentially the whole GUI tree in six waves
-  (roughly 120 files): the shared Widgets library and the ImGui theme; chrome and status bars;
-  Prepare/Plater; the preview renderer and timeline; gizmos and viewport overlays; Device,
-  StatusPanel, AMS, DeviceTab, and multi-machine surfaces; Settings, parameters, and Search; the leaf
-  dialogs including calibration; residual files; the Project webview CSS; and the Home webview
-  (verified). Conversions use `StateColor::semantic` / `ThemeColor` / `MD3::resolve`.
-- Ship Roboto and Roboto Mono under `resources/fonts`, registered privately at startup by
-  `Label::initSysFont`, and expose the `Label::Mono_*` faces for numeric and technical values.
-- Resolve contextual schemes per workspace: brand green (Prepare and general UI), Preview purple, and
-  Device teal.
-- Preserve functional data colors (filament swatches, G-code feature colors, 3D paint palettes),
-  which carry meaning and were intentionally left untouched.
+### Smart-home & scanner wave (2026-07-24, late night)
 
-### Native features
+- **AI filament scanner** (File menu): QR-code phone upload (token-guarded LAN server,
+  vendored MIT qrcodegen), local Ollama vision identification, automatic AMS-slot
+  configuration + best-preset auto-selection (brand-mapped onto the shipped vendor profile
+  families), HUGE flashing on-screen announcement + optional TTS.
+- **TTS narrator** (off by default, serialized, cooldown-limited, errors never suppressed):
+  printer state changes and error codes, local SAPI voice + Home Assistant speakers.
+- **Home Assistant integration** (Smart home dialog): entity browser with search bar +
+  listbox, media-player rich controls (prev/play-pause/next/volume), announcement-speaker
+  selection, alert lights with red-on-error / green-on-finish flashes protected by a
+  scene-snapshot restore so real room lights never stay stuck on the alert colour.
 
-- Add a native OpenGL model preview for the MakerWorld "Download and Open" flow
-  (`src/slic3r/GUI/ModelPreviewDialog.hpp`/`.cpp`): an orbit/zoom/fit GL canvas in an MD3 dialog,
-  hooked pre-import in `Plater::import_model_id`, with **Open in Prepare** / **Close** actions and a
-  failure-safe fallback to the normal import.
-- Add a dockable Prepare sidebar driven by `wxAuiManager`: app-config key `prepare_sidebar_dock`
-  (`left`|`right`|`top`|`bottom`, default `left`), live re-dock from a Preferences "Prepare panel
-  position" control, DPI-correct, preserving collapse and float behavior.
 
-### Build and release tooling
+### Roadmap execution wave (2026-07-24, evening)
 
-- Support pinning the Windows SDK via `PS_WINSDK` in `build_win.bat` and `deps-windows.cmake` as a
-  partial-SDK MSB8037 workaround.
-- Bind the SBOM generator to `pkg:github/$GITHUB_REPOSITORY` so the release identity is correct.
-- Make the immutable-release settings probe tolerate HTTP 403 and rely on post-publish
-  immutability verification instead of failing.
+- **MD3 dialog chrome** (`Widgets/MD3DialogChrome`): borderless owned dialogs (Config
+  profiles, Version history, Material color picker, Stop-print interlock) carry a 44px MD3
+  caption — mnemonic-safe title, draggable strip (HTCAPTION), keyboard-reachable close with a
+  44px target, DWM rounded corners — instead of the native Windows title bar. Remaining
+  #32770 dialogs sweep continues as follow-up.
+- **M3 motion** (`Widgets/MD3Motion`): duration tokens, standard/emphasized easing, an
+  interruptible timer Anim that honours OS reduced motion. First adoptions: dialog entrance
+  fades (all chrome'd dialogs + the command palette) and the SlideToConfirm animated
+  snap-back (grab interrupts it).
+- **Preferences auto-history** (`PreferencesHistory` + `AppConfig::set_save_observer`):
+  every settings save schedules a debounced, deduped Git snapshot of BambuStudio.conf into
+  the profiles-root engine; browse/restore via Config profiles ▸ Preferences history…
+  (restore writes beside the live file, never over it).
+- **AI printer watch** (`PrinterWatch`, opt-in, OFF by default): periodic live-view frame →
+  local Ollama (`qwen2.5vl` default; Gemma 3 works; gpt-oss is text-only) → OK info toast or
+  persistent PROBLEM warning with a fix suggestion. Localhost only, one request in flight,
+  silent when Ollama or the stream is absent. Preferences ▸ Other section.
+- **Design-folder register**: 128 done / 3 justified deviations — the scene-toolbar
+  centering and Objects-card rows were stale (already landed in code) and were flipped with
+  evidence; the remaining three deviations are deliberate (corner toasts per the standing
+  notification rules) or blocked (webview host APIs, SyncAms shell — covered by the chrome
+  sweep).
+- **CI unblocked**: brace-expansion 5.0.8 override cleared the new GHSA-mh99-v99m-4gvg
+  audit failure. Catalogs at 562, gate green.
 
-### Earlier landed work (retained)
 
-- Establish semantic Material light/dark roles in the production native workspaces, including
-  contextual brand, Preview, and Device schemes; move the primary Prepare actions into a Material
-  bottom bar with live sidebar spacing.
-- Add the isolated libgit2-backed project-history core and focused tests for complete `.3mf`
-  snapshots, ordered commits, safe restore, Save As identity migration, collision handling, and
-  shutdown draining.
-- Close the Windows Release NanoSVG/static-library dependency boundary needed by standalone native
-  tests.
-- Retain English, Hong Kong Cantonese preview (`yue_HK`), and compact bilingual-preview language
-  modes, with English fallback and existing Bambu Studio locales.
-- Retain the Windows installer, CycloneDX, checksum, attestation, immutable-release, and disposable
-  runner validation gates already encoded in the workflows.
+### Screenshot refresh, light/dark legibility fixes, search everywhere, config profiles & backup (2026-07-24)
 
+- Replaced the complete `docs/screenshots` matrix from the current build (headless Mesa
+  llvmpipe + PrintWindow for native surfaces, headless Edge for the Home/Wizard webviews),
+  including the rewritten advanced regex-builder popover and the new Calibration nav tab.
+- Light-mode Preview legibility fixed: the gcode legend dock now pushes a themed
+  `ImGuiCol_Text` (OnSurface), so per-filament values, filament-change/cost and time
+  estimation are no longer white-on-light. The Preview move bar sheds its skip buttons and
+  then its counter on narrow widths instead of sliding the handle over the readout.
+- Search bars everywhere: version history and the print-host upload queue gained the shared
+  MD3 `SearchField` (regex builder included); the Plater object search became colour-aware
+  (`SearchField::colorSearchText` — match by `#RRGGBB` or nearest common colour name).
+- New **File ▸ Config profiles & backup…**: export the entire data directory (secrets
+  included) into one archive, import it on another PC as a new profile, unlimited profiles
+  with one-click launch (`--datadir`), and per-profile local Git snapshot history driven by
+  the project-history engine — all gated behind a keyboard-operable slide-to-confirm control
+  with an explicit secrets warning. 43 new curated Cantonese catalog entries (494 total).
+- Ctrl+F **command palette**: every enabled menu command (icon + description), navigation
+  targets, and rich inline quick-settings rows (theme / density / accent) behind one shared
+  SearchField query. The regex builder gained a tabbed **Reference** mini-documentation
+  (per-token descriptions from the live chip tables, engine details, examples) plus an
+  OpenCode search helper (clipboard prompt + local launch).
+- **Material color picker + color translator** (`Widgets/MD3ColorPicker`): continuous S/V +
+  hue picker with a per-hue Material tonal ladder and a live rgb/hsv/nearest-name translator,
+  replacing the native colour dialog on the accent "+" tile. **Stop-print safety interlock**
+  (`StopPrintGate`): two key switches → three double-press arming buttons → slide-to-confirm →
+  lift-away hazard cover revealing the real STOP button, with a plain-language stage caption
+  at every step. Catalogs at 547.
+
+## Next: follow-ups
+
+- Chrome sweep is COMPLETE for plain dialogs: three 2026-07-25 tranches adopted all 70
+  adoptable stock dialogs (completion scan verified — see Landed). Deliberately excluded:
+  10 popover-style/complex windows flagged for designed treatment (FilamentPicker shaped
+  popover, fan/humidity popups, CommandPalette overlay, SettingsDialog frame, ParamsDialog,
+  BedShapeDialog build_dialog, ObjectTableDialog positioning, ZUserLogin webview,
+  RecenterDialog done with paint offset) and 7 dead classes. Follow-ups: FeedDirectionDialog
+  caption doesn't track its dynamic `SetTitle` (shows static "Confirm");
+  ManualNozzleCountDialog title literal "Set nozzle count" was never localized upstream.
+- Motion: dialogs, palette, popovers and SlideToConfirm animate now; toast enter/exit is
+  ImGui-native already — remaining candidate is tab/page fade-through (needs compositing).
+- The ObjColor compare-panel greys are tokenized (SurfaceContainer roles); SyncAms itself was
+  already on the MD3Dialog shell.
+- Hardware verification passes: stop-print interlock and AI printer watch end-to-end with a
+  connected printer (+ local Ollama vision model). Two matrix stragglers stay documented:
+  toast-try-slice (needs a sliceable state) and the external-editor row close-ups (old
+  captures remain accurate at row level).
+
+## Next: continue matching `ui-md3/design-system` (standing mandate)
+
+The parity register is **128 done / 3 justified deviations / 0 open** (2026-07-24). The three
+deviations are held deliberately: corner-anchored toasts (the standing notification rules
+override the kit's bottom-center), the project webview (needs C++ host APIs), and the SyncAms
+shell (picked up by the MD3DialogChrome sweep). Re-evaluate each when its constraint moves.
 ## Remaining
 
-### Structural component anatomy (from the parity audit)
+### Structural component anatomy (from the parity register)
 
-The color, token, and typography layer is reported complete; the remaining deltas are component
-anatomy, not mis-colorings.
+The canonical tracker is `docs/features/design-system/md3-parity-register.md` — **120 done / 4
+recorded deviations / 5 open** after Wave 9 (2026-07-22). The register is the live source of
+truth; the counts here are a snapshot.
 
-- Build the camera-HUD overlay system for the viewport.
-- Add the Material Symbols icon-font infrastructure so the `Material Symbols Outlined` token can back
-  real icon glyphs instead of the existing bitmap assets.
-- Finish the remaining pill-geometry variants. The shared Widgets library is done — every kit "pill"
-  (Button, SwitchButton, SideButton call sites) derives its radius from height / 2 at paint/layout,
-  DPI-safe, now named as `MD3::Metrics::pill_radius(height)`; segmented controls are deliberately not
-  pills. What remains is feature-level chrome/settings controls with no dedicated widget class:
-  filter/choice chips, the search-field pill, and the settings nav-item pill.
-- The three theme literals retained over fixed bitmap assets are now anchored and justified in
-  `docs/features/design-system/md3-design-system.md` ("Retained theme literals"): the assembly-tree
-  delete badge (`AssemblyStepsUtilsImgui.cpp:4646-4647`, bound to the light-baked `cross_dark.svg`)
-  and the Helio header banner (`HelioReleaseNote.cpp:3168-3169`, bound to the `helio_icon` brand
-  bitmap). They are intentional until the icon-font / brand-asset infrastructure lets baked glyph
-  colors be tinted from tokens. Two further intentional retentions — the coupled preview-timeline
-  step marker (`AssemblyStepsUtilsImgui.cpp:823`/`:835`) and the amber "unsaved view" dot
-  (`:4606`, which needs an amber/warning role) — are tracked as token-parity follow-ups.
+- The 5 open rows are the deep Prepare-sidebar rebuilds that wrap live-bound widgets — printer
+  identity card, bed SelectField collapse, filament info-rows, Process card, Objects card. Each
+  needs an implement-build-verify loop against the live preset/printer combos; a concurrent
+  implementation wave is finishing them.
+- The 4 recorded deviations each carry concrete evidence in the register: the Device XY dial kept
+  as a 3x3 grid with a 10/1 step selector (the dial encoded jog magnitude in hit radius), the
+  scene-toolbar pill reskinned but not re-centred (collides with the collapse toolbar), the SyncAms
+  partial shell (simplebook footer gating), and the project-webview page (host-injected read-only
+  page restyled to kit tokens/CSS; true file-manager anatomy needs C++ host APIs).
+- A small set of bitmap-bound theme literals remains anchored and justified in
+  `docs/features/design-system/md3-design-system.md` ("Retained theme literals") pending tintable
+  brand-asset infrastructure and an amber/warning role.
 
 ### Verification and delivery
 
@@ -91,20 +145,35 @@ anatomy, not mis-colorings.
 - ~~Complete a fully green hosted run that also publishes the immutable release~~ — done: the same
   run published non-draft release `md3-windows-v02.08.01.55-r37` with installer, SHA-256 checksum,
   and CycloneDX SBOM; the draft-visibility failure was cleared by the lookup fix in `ec631dfb2`.
-- Capture fresh full-compositor screenshots of the fully token-migrated native Prepare, Preview, and
-  Device surfaces, visually review them, and replace the README's pre-sweep captures.
+- Capture and review fresh screenshots of the fully migrated native Home, Prepare, Preview, and
+  Device surfaces under the canonical filenames
+  `docs/readme-assets/native-md3-{home,prepare,preview,device}-light-en.png`. Until those captures
+  are produced and reviewed, the README gallery keeps the reviewed pre-sweep `native-material-*`
+  captures rather than referencing images that do not exist; the gallery switches to the canonical
+  filenames only when the files actually land.
+- Verify the installer's build-from-source mode end-to-end on a real machine. It compiles and is
+  reviewed, but its first complete interactive run (toolchain bootstrap through installed payload)
+  has not happened yet, and `PRODUCT_SOURCE_REPO_URL` defaults to a placeholder the owner should
+  confirm.
+- Wire the repaired test suites back into hosted CI. Wave 9 ported the drifted PrusaSlicer config
+  keys to BambuStudio names and fixed the invalid Catch2 `[NotWorking]` exclusion, but the isolated
+  suite build did not finish in-window; `libslic3r_tests` and `libnest2d_tests` remain waived from
+  the hosted gate until that wiring lands.
+- Adopt `MD3::Metrics::active()` at the remaining (~40) metric call sites so a density change
+  applies live instead of being restart-scoped.
 - Preserve the unrelated generated `routeTree.gen.ts` change when splitting the remaining work into
   reviewable commits and pushing `master`.
 
 ### Project history and localization
 
-- Finish the project-history lifecycle integration so each discrete edit boundary is staged before
-  the next edit can replace its state, manual saves are captured exactly, shutdown drains pending
-  work, and recoverable failures remain visible and retryable.
-- Finish native Cantonese strings for the new Material, history, model-preview, and sidebar surfaces
-  and rerun placeholder, resource, and fallback checks.
-- Repair the upstream aggregate and `libnest2d_tests` baselines, then restore their coverage to the
-  hosted gate rather than retaining the focused waiver.
+- Project-history retry semantics shipped during the register waves: durable failure notification
+  with Retry, retained failures surfaced in the history dialog with per-item and bulk retry, and
+  orphaned-manifest adoption on restart. Remaining lifecycle work is confirming each discrete edit
+  boundary is staged before the next edit can replace its state under real editing load.
+- Cantonese catalogs were kept current through the waves (model-preview, sidebar, Material,
+  history, and error-flow strings catalogued; the `.mo` reproducibility `--check` gate is green).
+  Remaining: strings from the in-flight sidebar wave, rerunning placeholder/resource/fallback
+  checks after it, and the independent human review of Cantonese copy tracked below.
 
 ## Needed before calling Material/history complete
 

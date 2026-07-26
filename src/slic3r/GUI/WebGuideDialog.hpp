@@ -30,12 +30,19 @@
 #include "GUI_App.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "slic3r/Utils/PresetUpdater.hpp"
+#include "Widgets/MD3Dialog.hpp"
 
 #include <nlohmann/json.hpp>
 
 namespace Slic3r { namespace GUI {
 
-class GuideFrame : public DPIDialog
+// Reparented onto the shared MD3 Dialog shell (borderless, rounded, theme-
+// adaptive): the legacy native gray "Setup Wizard" caption strip is replaced by
+// the kit header (icon tile + title + circular close) over a kit Surface
+// background, while the embedded guide wxWebView fills the kit body unchanged.
+// The web pages own their own navigation, so the footer is hidden; the first-run
+// style (no wxCLOSE_BOX) hides the header close to keep the wizard non-dismissable.
+class GuideFrame : public MD3Dialog
 {
 public:
     GuideFrame(GUI_App *pGUI, long style = wxCAPTION | wxCLOSE_BOX | wxSYSTEM_MENU);
@@ -94,7 +101,7 @@ public:
     int InstallPlugin();
     int ShowPluginStatus(int status, int percent, bool &cancel);
 
-    void on_dpi_changed(const wxRect &suggested_rect) {}
+    void on_dpi_changed(const wxRect &suggested_rect) override { MD3Dialog::on_dpi_changed(suggested_rect); }
 
 private:
     GUI_App *m_MainPtr;

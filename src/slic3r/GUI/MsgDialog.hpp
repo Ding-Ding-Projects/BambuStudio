@@ -14,6 +14,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include "BBLStatusBar.hpp"
 #include "BBLStatusBarSend.hpp"
 #include "libslic3r/Semver.hpp"
@@ -51,9 +52,12 @@ public:
 
 WX_DECLARE_HASH_MAP(wxString, MsgButton *, wxStringHash, wxStringEqual, MsgButtonsHash);
 
-// A message / query dialog with a bitmap on the left and any content on the right
-// with buttons underneath.
-struct MsgDialog : DPIDialog
+// A message / query dialog built on the shared MD3 Dialog shell (Slic3r::GUI::
+// MD3Dialog): a borderless 28px rounded frame with a header icon tile +
+// title/subtitle + circular close, a scrollable body and a bordered footer.
+// The former left-hand raster logo is replaced by the header icon tile; the
+// status glyph (error/warning/info/...) is derived from the message style.
+struct MsgDialog : MD3Dialog
 {
 	MsgDialog(MsgDialog &&) = delete;
 	MsgDialog(const MsgDialog &) = delete;
@@ -88,10 +92,9 @@ protected:
 	void finalize();
 
 	wxFont boldfont;
-	wxBoxSizer *content_sizer;
-	wxBoxSizer *btn_sizer;
+	wxBoxSizer *content_sizer; // == GetContentSizer() (shell body)
+	wxBoxSizer *btn_sizer;     // == GetFooterSizer()  (shell footer)
 	wxBoxSizer *m_dsa_sizer;
-	wxStaticBitmap *logo;
     MsgButtonsHash  m_buttons;
 	CheckBox* m_checkbox_dsa{nullptr};
     wxString  m_forward_str;
@@ -403,7 +406,7 @@ private:
     wxString msg;
 };
 
-class DeleteConfirmDialog : public DPIDialog
+class DeleteConfirmDialog : public MD3Dialog
 {
 public:
     DeleteConfirmDialog(wxWindow *parent, const wxString &title, const wxString &msg);
@@ -417,7 +420,7 @@ private:
     wxStaticText *m_msg_text   = nullptr;
 };
 
-class Newer3mfVersionDialog : public DPIDialog
+class Newer3mfVersionDialog : public MD3Dialog
 {
 public:
     Newer3mfVersionDialog(wxWindow *parent, const Semver* file_version, const Semver* cloud_version, wxString new_keys);
@@ -439,7 +442,7 @@ private:
 };
 
 
-class NetworkErrorDialog : public DPIDialog
+class NetworkErrorDialog : public MD3Dialog
 {
 public:
     NetworkErrorDialog(wxWindow* parent);

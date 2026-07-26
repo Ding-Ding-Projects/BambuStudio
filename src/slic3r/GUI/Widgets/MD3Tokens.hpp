@@ -85,6 +85,18 @@ inline const wxColour shadow{0, 0, 0, 41}; // rgba(0,0,0,.16)
 
 namespace Dark {
 
+// HEX-ALIAS INVARIANT (dark-mode double-remap fix): no Dark:: tone below may
+// reuse a hex that is a light-side KEY in StateColor.cpp's gDarkColors table.
+// StateColor::darkModeColorFor() (applied by StateColor::colorForStates at
+// every paint AND by GUI_App::UpdateDarkUI on window fg/bg it revisits) maps
+// light keys to dark values; when a dark tone aliases a light key, a second
+// pass corrupts already-correct dark colours. That is exactly how OnSurface
+// text (#e8e7ee, aliasing light Grey300) collapsed to #2f3036 — near-invisible
+// dark-on-dark labels/fields all over dark mode. Three tones are therefore
+// nudged by one RGB step off the kit values (imperceptible, but hex-distinct):
+//   onSurface          #e8e7ee -> #e9e8ef (aliased ThemeColor::Grey300)
+//   onPrimaryContainer #a6f4b8 -> #a7f5b9 (aliased Light::primaryContainer)
+//   inversePrimary     #146c2e -> #156d2f (aliased ThemeColor::BrandGreen)
 inline const wxColour surface{"#1b1c21"};
 inline const wxColour surfaceDim{"#161619"};
 inline const wxColour surfaceBright{"#3b3c43"};
@@ -93,14 +105,14 @@ inline const wxColour scLow{"#202127"};
 inline const wxColour sc{"#25262b"};
 inline const wxColour scHigh{"#2f3036"};
 inline const wxColour scHighest{"#393a41"};
-inline const wxColour onSurface{"#e8e7ee"};
+inline const wxColour onSurface{"#e9e8ef"};
 inline const wxColour onSurfaceVariant{"#cdced8"};
 inline const wxColour outline{"#94959f"};
 inline const wxColour outlineVariant{"#4a4c54"};
 inline const wxColour primary{"#8bd89b"};
 inline const wxColour onPrimary{"#00391a"};
 inline const wxColour primaryContainer{"#095228"};
-inline const wxColour onPrimaryContainer{"#a6f4b8"};
+inline const wxColour onPrimaryContainer{"#a7f5b9"};
 inline const wxColour secondaryContainer{"#2b3a2f"};
 inline const wxColour onSecondaryContainer{"#cfe9d3"};
 inline const wxColour error{"#ffb4ab"};
@@ -109,7 +121,7 @@ inline const wxColour inverseSurface{"#e3e2e9"};
 inline const wxColour inverseOn{"#2f3036"};
 inline const wxColour onError{"#690005"};
 inline const wxColour onErrorContainer{"#ffdad6"};
-inline const wxColour inversePrimary{"#146c2e"};
+inline const wxColour inversePrimary{"#156d2f"};
 
 // Overlay tints carry alpha over black. Dark theme deepens both tints.
 inline const wxColour scrim{0, 0, 0, 153}; // rgba(0,0,0,.6)
@@ -166,12 +178,71 @@ inline const wxColour onSecondaryContainerDark{"#cce8e3"};
 
 } // namespace Device
 
+namespace detail {
+
+// Runtime accent override. setAccentSeed() (bottom of this header) fills these
+// six accent-role tones for light and dark from a user-chosen Appearance seed;
+// while active, resolve(role, dark) returns them in place of the built-in Brand
+// accent, so every StateColor::semantic() consumer re-themes on its next
+// repaint/rebuild. The Preview/Device contextual schemes resolve their own
+// accents (in the 3-arg resolve below) and are intentionally left untouched.
+// Passing the Brand seed clears the override, restoring the hand-tuned tones.
+struct AccentSlots
+{
+    wxColour primary;
+    wxColour onPrimary;
+    wxColour primaryContainer;
+    wxColour onPrimaryContainer;
+    wxColour secondaryContainer;
+    wxColour onSecondaryContainer;
+};
+
+struct AccentOverrideState
+{
+    bool        active = false;
+    AccentSlots light;
+    AccentSlots dark;
+};
+
+inline AccentOverrideState &accentState()
+{
+    static AccentOverrideState state;
+    return state;
+}
+
+// Non-null only for the six accent roles while an override is active; returns a
+// pointer into the process-lifetime accentState() storage (semantic() copies the
+// value immediately, mirroring how resolve() hands back the static role tones).
+inline const wxColour *accentOverrideColour(Role role, bool dark)
+{
+    const AccentOverrideState &s = accentState();
+    if (!s.active)
+        return nullptr;
+    const AccentSlots &a = dark ? s.dark : s.light;
+    switch (role) {
+    case Role::Primary: return &a.primary;
+    case Role::OnPrimary: return &a.onPrimary;
+    case Role::PrimaryContainer: return &a.primaryContainer;
+    case Role::OnPrimaryContainer: return &a.onPrimaryContainer;
+    case Role::SecondaryContainer: return &a.secondaryContainer;
+    case Role::OnSecondaryContainer: return &a.onSecondaryContainer;
+    default: return nullptr;
+    }
+}
+
+} // namespace detail
+
 // Resolve by semantic role instead of by light-mode RGB value. Several MD3
 // roles deliberately share a light value but diverge in dark mode (for
 // example surface and surfaceBright), so a colour-to-colour lookup cannot
 // preserve their meaning.
 inline const wxColour &resolve(Role role, bool dark)
 {
+    // A user-chosen Appearance accent (setAccentSeed) recolours the six accent
+    // roles for the default (Brand) scheme; non-accent roles fall through.
+    if (const wxColour *accent = detail::accentOverrideColour(role, dark))
+        return *accent;
+
     if (dark) {
         switch (role) {
         case Role::Surface: return Dark::surface;
@@ -314,6 +385,34 @@ namespace Metrics {
 inline constexpr DensityMetrics comfortable{12, 16, 40, 14, 60, 344, 16, 10};
 inline constexpr DensityMetrics compact{7, 10, 32, 13, 50, 312, 12, 8};
 
+// Runtime density selection (Appearance > Density). The comfortable/compact
+// presets above are unchanged and remain valid to read directly at any time;
+// these accessors add a process-wide "which preset is active" state that
+// consumers can consult (via active()) so radii/heights/paddings track the
+// user's choice instead of being hardcoded. Set from Preferences on change and
+// at construction (see setDensity in Preferences.cpp). Fixed panel widths such
+// as settings_nav_width stay density-independent by design.
+enum class Density
+{
+    Comfortable,
+    Compact,
+};
+
+inline Density &density_state()
+{
+    static Density d = Density::Comfortable;
+    return d;
+}
+
+inline void    setDensity(Density d) { density_state() = d; }
+inline Density density()             { return density_state(); }
+inline bool    isCompact()           { return density_state() == Density::Compact; }
+
+// The density preset currently selected at runtime. Consumers that want to
+// follow the Appearance > Density choice read active().<field> in place of a
+// hardcoded comfortable/compact reference.
+inline const DensityMetrics &active() { return isCompact() ? compact : comfortable; }
+
 inline constexpr int top_bar_height         = 46;
 inline constexpr int navigation_bar_height  = 52;
 inline constexpr int prepare_actions_height = 66;
@@ -348,6 +447,16 @@ inline constexpr int radius_home      = 20; // home cards
 inline constexpr int radius_icon_tile = 14; // icon tiles
 inline constexpr int radius_rail      = 12; // rail buttons, snackbars
 inline constexpr int radius_tiny      = 8;  // tiny controls
+
+// Pill (stadium) radius for the fully-rounded controls the kit calls pills:
+// standalone buttons, chips, switches, the search field, and nav items. Their
+// corner radius is always half the control's height, not a fixed token, so it
+// is computed at the call site. Pass the CURRENT, DPI-scaled height at
+// paint/layout time (e.g. FromDIP(height)); a value cached at construction goes
+// stale on a monitor-DPI or density change. Button::applyMD3Style() re-derives
+// this on Rescale(), and the switch/thumb paths recompute it every paint.
+// Segmented controls are NOT pills — they keep the fixed radius_rail / radius_tiny.
+inline constexpr int pill_radius(int height) { return height / 2; }
 
 } // namespace Metrics
 
@@ -391,6 +500,28 @@ inline constexpr float label_tracking = 0.6f; // px letter-spacing on the upperc
 inline constexpr const char *font_family = "Roboto";
 inline constexpr const char *font_mono   = "Roboto Mono";               // numeric / technical values
 inline constexpr const char *font_icon   = "Material Symbols Outlined"; // weight 400, FILL 1 when active
+
+// Runtime UI font scale (Appearance > Font size) — the type analogue of the
+// Metrics density state. Preferences reads the "ui_font_scale" AppConfig key and
+// installs the multiplier here via setUiFontScale(); the font factory multiplies
+// every computed point size by uiFontScale() when it (re)builds the
+// Head_/Body_/Mono_ fonts (see Label::rebuild_fonts / Label::sysFont). Clamped to
+// a legible 0.8..1.4 band. Like density, fonts are rebuilt once on change rather
+// than rescaled per paint, so this is only read at font-build time.
+inline double &ui_font_scale_state()
+{
+    static double s = 1.0;
+    return s;
+}
+
+inline void setUiFontScale(double scale)
+{
+    if (scale < 0.8) scale = 0.8;
+    if (scale > 1.4) scale = 1.4;
+    ui_font_scale_state() = scale;
+}
+
+inline double uiFontScale() { return ui_font_scale_state(); }
 
 } // namespace Type
 
@@ -508,6 +639,37 @@ inline AccentRoles accentFromSeed(const wxColour &seed, bool dark)
     }
     return roles;
 }
+
+// Apply an Appearance accent swatch (seed colour) to the default (Brand) colour
+// scheme. Recomputes the six accent roles for both light and dark via
+// accentFromSeed and installs them as the runtime override consulted by
+// resolve(role, dark), so every StateColor::semantic() consumer picks up the new
+// accent on its next repaint/rebuild. Passing the Brand seed (#146c2e) clears
+// the override, restoring the hand-tuned Brand tones exactly. The Preview/Device
+// contextual schemes resolve their own accents and are unaffected.
+inline void setAccentSeed(const wxColour &seed)
+{
+    detail::AccentOverrideState &s = detail::accentState();
+
+    const bool is_brand = seed.Red() == Brand::seed.Red() &&
+                          seed.Green() == Brand::seed.Green() &&
+                          seed.Blue() == Brand::seed.Blue();
+    if (is_brand) {
+        s.active = false;
+        return;
+    }
+
+    const AccentRoles light = accentFromSeed(seed, false);
+    const AccentRoles dark  = accentFromSeed(seed, true);
+    s.light = {light.primary, light.onPrimary, light.primaryContainer,
+               light.onPrimaryContainer, light.secondaryContainer, light.onSecondaryContainer};
+    s.dark  = {dark.primary, dark.onPrimary, dark.primaryContainer,
+               dark.onPrimaryContainer, dark.secondaryContainer, dark.onSecondaryContainer};
+    s.active = true;
+}
+
+inline void clearAccentSeed() { detail::accentState().active = false; }
+inline bool hasAccentSeed()   { return detail::accentState().active; }
 
 } // namespace MD3
 

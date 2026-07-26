@@ -36,6 +36,32 @@ Embedded surfaces have dedicated resources:
 - The Pages/browser MD3 prototype persists exactly the three modes, supports a non-persisting `lang`
   query override, and progressively discloses longer Cantonese copy to protect narrow layouts.
 
+### Home webview bilingual layout
+
+The Home webview (`resources/web/homepage3` plus the shared `resources/web/data/text.js` catalog)
+renders bilingual mode with two rules that protect both sentence integrity and layout:
+
+- **Whole-string annotation only.** `GetLocalizedTextByKey` annotates a `.trans` element once, at the
+  element level. Sentences that the legacy markup composes from several `.trans` fragments (for
+  example the network-plugin banner: "Please " + "install" + " the network plugin before logging in")
+  are wrapped in a `.bi-group` container: in bilingual mode the fragments render English-only and
+  `AnnotateBilingualGroups` appends a single composed Cantonese line for the whole sentence. If any
+  fragment of the composed whole lacks a real Cantonese translation — or the Cantonese equals the
+  English — the surface shows English only (fallback rule) instead of interleaving fragment-wise
+  Cantonese.
+- **Compact, non-overlapping secondary line.** The Cantonese annotation is a single smaller block
+  span (`0.85em`, ellipsized when its container is single-line, full text preserved in a `title`
+  tooltip). Sidebar rows (`.BtnItem`) and the login area use `min-height` with a flex-column
+  `#LeftBoard`, so two-line items and the network-plugin banner grow downward and push the menu
+  instead of overlaying it. Inside the error banner the secondary line keeps full
+  `--md-on-error-container` contrast and may wrap.
+
+Attribute and `innerText` contexts (icon `title` tooltips, the model search placeholder, confirm
+dialogs) use `GetCurrentPlainTextByKey`, which yields `English ／ 粵語：Cantonese` plain text so no
+markup leaks into tooltips or dialogs. Pure English and pure Cantonese modes are byte-identical to
+the catalog strings; `node resources/web/data/validate-text-locales.mjs` asserts the bilingual
+markup shape, the English-only fallback for untranslated strings, and the plain-text variant.
+
 For Traditional CJK modes, native Windows labels prefer Microsoft JhengHei UI because the bundled
 Roboto files do not contain Cantonese glyphs. ImGui receives the Traditional Chinese glyph range.
 English and other Latin-script modes continue to use the privately registered Roboto resources.

@@ -46,4 +46,6 @@ resources/web/device_page/index.html
 
 # ──── Desktop Material: Build artifacts ────  (dm-template:build-artifacts)
 build/
+build-tests/
+build-ninja/
 # ──── end Desktop Material: Build artifacts ────  (dm-template:build-artifacts)

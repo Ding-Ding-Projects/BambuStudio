@@ -373,6 +373,10 @@ SCENARIO("Line distances", "[Geometry]"){
     }
 }
 
+// BambuStudio's convex_points/concave_points take a turn-angle threshold
+// (deviation from straight, strict comparison) instead of the legacy interior
+// angle: new_threshold = PI - old_threshold, minus EPSILON so vertices sitting
+// exactly on the boundary (see the 4/3pi polygon below) stay included.
 SCENARIO("Polygon convex/concave detection", "[Geometry]"){
     GIVEN(("A Square with dimension 100")){
         auto square = Slic3r::Polygon /*new_scale*/(std::vector<Point>({
@@ -381,13 +385,13 @@ SCENARIO("Polygon convex/concave detection", "[Geometry]"){
             Point(200,200),
             Point(100,200)}));
         THEN("It has 4 convex points counterclockwise"){
-            REQUIRE(square.concave_points(PI*4/3).size() == 0);
-            REQUIRE(square.convex_points(PI*2/3).size() == 4);
+            REQUIRE(square.concave_points(PI/3. - EPSILON).size() == 0);
+            REQUIRE(square.convex_points(PI/3. - EPSILON).size() == 4);
         }
         THEN("It has 4 concave points clockwise"){
             square.make_clockwise();
-            REQUIRE(square.concave_points(PI*4/3).size() == 4);
-            REQUIRE(square.convex_points(PI*2/3).size() == 0);
+            REQUIRE(square.concave_points(PI/3. - EPSILON).size() == 4);
+            REQUIRE(square.convex_points(PI/3. - EPSILON).size() == 0);
         }
     }
     GIVEN("A Square with an extra colinearvertex"){
@@ -398,8 +402,8 @@ SCENARIO("Polygon convex/concave detection", "[Geometry]"){
             Point(100,200),
             Point(100,100)}));
         THEN("It has 4 convex points counterclockwise"){
-            REQUIRE(square.concave_points(PI*4/3).size() == 0);
-            REQUIRE(square.convex_points(PI*2/3).size() == 4);
+            REQUIRE(square.concave_points(PI/3. - EPSILON).size() == 0);
+            REQUIRE(square.convex_points(PI/3. - EPSILON).size() == 4);
         }
     }
     GIVEN("A Square with an extra collinear vertex in different order"){
@@ -410,8 +414,8 @@ SCENARIO("Polygon convex/concave detection", "[Geometry]"){
             Point(150,100),
             Point(200,100)}));
         THEN("It has 4 convex points counterclockwise"){
-            REQUIRE(square.concave_points(PI*4/3).size() == 0);
-            REQUIRE(square.convex_points(PI*2/3).size() == 4);
+            REQUIRE(square.concave_points(PI/3. - EPSILON).size() == 0);
+            REQUIRE(square.convex_points(PI/3. - EPSILON).size() == 4);
         }
     }
 
@@ -422,8 +426,8 @@ SCENARIO("Polygon convex/concave detection", "[Geometry]"){
             Point(31286371,461008)
         }));
         THEN("it has three convex vertices"){
-            REQUIRE(triangle.concave_points(PI*4/3).size() == 0);
-            REQUIRE(triangle.convex_points(PI*2/3).size() == 3);
+            REQUIRE(triangle.concave_points(PI/3. - EPSILON).size() == 0);
+            REQUIRE(triangle.convex_points(PI/3. - EPSILON).size() == 3);
         }
     }
 
@@ -435,8 +439,8 @@ SCENARIO("Polygon convex/concave detection", "[Geometry]"){
             Point(31286371,461012)
         }));
         THEN("it has three convex vertices"){
-            REQUIRE(triangle.concave_points(PI*4/3).size() == 0);
-            REQUIRE(triangle.convex_points(PI*2/3).size() == 3);
+            REQUIRE(triangle.concave_points(PI/3. - EPSILON).size() == 0);
+            REQUIRE(triangle.convex_points(PI/3. - EPSILON).size() == 3);
         }
     }
     GIVEN("A polygon with concave vertices with angles of specifically 4/3pi"){
@@ -453,8 +457,8 @@ SCENARIO("Polygon convex/concave detection", "[Geometry]"){
             Point(38092663,692699),Point(52100125,692699)
         }));
         THEN("the correct number of points are detected"){
-            REQUIRE(polygon.concave_points(PI*4/3).size() == 6);
-            REQUIRE(polygon.convex_points(PI*2/3).size() == 10);
+            REQUIRE(polygon.concave_points(PI/3. - EPSILON).size() == 6);
+            REQUIRE(polygon.convex_points(PI/3. - EPSILON).size() == 10);
         }
     }
 }

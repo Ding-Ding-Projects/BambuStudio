@@ -18,6 +18,7 @@
 
 #include "slic3r/GUI/Widgets/Button.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 #define WX_DIP_SIZE(x, y) wxSize(FromDIP(x), FromDIP(y))
 
@@ -45,6 +46,7 @@ wgtDeviceNozzleRackUpgradeDlg::wgtDeviceNozzleRackUpgradeDlg(wxWindow* parent, c
     Fit();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this, _L("Hotends Info"));
 }
 
 void wgtDeviceNozzleRackUpgradeDlg::UpdateRackInfo(const std::shared_ptr<DevNozzleRack> rack)

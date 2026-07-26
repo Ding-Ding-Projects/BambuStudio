@@ -74,8 +74,15 @@ wxBitmap create_scaled_bitmap(const std::string& bmp_name, wxWindow *win = nullp
 #endif
 
 wxBitmap* get_default_extruder_color_icon(bool thin_icon = false);
-std::vector<wxBitmap *> get_extruder_color_icons(bool thin_icon = false);
-wxBitmap * get_extruder_color_icon(std::string color, std::string label, int icon_width, int icon_height);
+// rounded_ring: see the single-color get_extruder_color_icon() overload below;
+// forwarded only to the single-color-per-slot render path. Defaults to false.
+std::vector<wxBitmap *> get_extruder_color_icons(bool thin_icon = false, bool rounded_ring = false);
+// rounded_ring: MD3 filament-row swatch geometry (r8 rounded corners + a 1px
+// inset OutlineVariant ring, kit ref prepare/filament-rows-preset-combobox-not-
+// inforow) instead of the plain square fill. Defaults to false so every
+// existing caller (dropdown list icons, calibration/object-color swatches,
+// etc.) keeps its original unrounded rendering byte-for-byte.
+wxBitmap * get_extruder_color_icon(std::string color, std::string label, int icon_width, int icon_height, bool rounded_ring = false);
 wxBitmap * get_extruder_color_icon(std::vector<std::string> colors, bool is_gradient, std::string label, int icon_width, int icon_height);
 std::vector<std::vector<std::string>> read_color_pack(std::vector<std::string> color_pack);
 wxColourData show_sys_picker_dialog(wxWindow *parent, const wxColourData &clr_data);

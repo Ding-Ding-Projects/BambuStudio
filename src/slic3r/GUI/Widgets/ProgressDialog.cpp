@@ -13,6 +13,7 @@
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
 #include "ProgressDialog.hpp"
+#include "ProgressBar.hpp"
 #include "StateColor.hpp"
 #include "wx/evtloop.h"
 #include "Label.hpp"
@@ -37,7 +38,8 @@ void ProgressDialog::Init()
     m_pdStyle   = 0;
     m_parentTop = NULL;
 
-    m_gauge   = NULL;
+    m_progress_bar   = NULL;
+    m_progress_value = 0;
     m_msg     = NULL;
     m_elapsed = m_estimated = m_remaining = NULL;
 
@@ -59,22 +61,22 @@ void ProgressDialog::Init()
 
     m_winDisabler   = NULL;
     m_tempEventLoop = NULL;
-
-    SetWindowStyle(wxDEFAULT_DIALOG_STYLE);
+    // Window style is owned by the MD3Dialog shell (borderless, shaped); the
+    // legacy SetWindowStyle(wxDEFAULT_DIALOG_STYLE) is intentionally gone.
 }
 
-ProgressDialog::ProgressDialog() : wxDialog() { Init(); }
+// Both ctors delegate to MD3Dialog's protected two-phase default ctor, which
+// creates the bare classic shaped window; the shell chrome + content are laid
+// out later from Create() via MD3Dialog::CreateShell().
+ProgressDialog::ProgressDialog() : MD3Dialog() { Init(); }
 
-ProgressDialog::ProgressDialog(const wxString &title, const wxString &message, int maximum, wxWindow *parent, int style, bool adaptive) : wxDialog()
+ProgressDialog::ProgressDialog(const wxString &title, const wxString &message, int maximum, wxWindow *parent, int style, bool adaptive) : MD3Dialog()
 {
     m_adaptive = adaptive;
     Init();
     Create(title, message, maximum, parent, style);
-    Bind(wxEVT_PAINT, &ProgressDialog::OnPaint, this);
     Bind(wxEVT_CLOSE_WINDOW, &ProgressDialog::OnClose, this);
 }
-
-void ProgressDialog::OnPaint(wxPaintEvent &evt) {}
 
 void ProgressDialog::SetTopParent(wxWindow *parent)
 {
@@ -128,37 +130,29 @@ wxString ProgressDialog::FormatString(wxString title)
 
 bool ProgressDialog::Create(const wxString &title, const wxString &message, int maximum, wxWindow *parent, int style)
 {
-    SetFont(wxGetApp().normal_font());
     SetTopParent(parent);
-
     m_pdStyle = style;
 
-    if (!wxDialog::Create(m_parentTop, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, GetWindowStyle())) return false;
-    SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
-
-    /* SetSize(DESIGN_RESOUTION_PROGRESS_SIZE);
-     SetMinSize(DESIGN_RESOUTION_PROGRESS_SIZE);
-     SetMaxSize(DESIGN_RESOUTION_PROGRESS_SIZE);*/
+    // Build the MD3 shell chrome onto the two-phase window created by the default
+    // ctor: header icon tile + the operation title + circular close, a footer
+    // divider + Cancel row, and the SurfaceContainer background. Replaces the
+    // legacy wxDialog::Create() native-window creation (and the former Grey450
+    // top line — the kit header stands in for it).
+    if (!CreateShell(m_parentTop, title, wxEmptyString, MaterialIcon::Sync)) return false;
 
     SetMaximum(maximum);
     EnsureActiveEventLoopExists();
 
-#if defined(__WXMSW__) && !defined(__WXUNIVERSAL__)
-    if (!HasPDFlag(wxPD_CAN_ABORT)) { EnableCloseButton(false); }
-#endif // wxMSW
-
     m_state = HasPDFlag(wxPD_CAN_ABORT) ? Continue : Uncancelable;
 
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-
-    m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0);
-    m_top_line->SetBackgroundColour(ThemeColor::Grey450);
-
-    m_sizer_main->Add(m_top_line, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(24));
+    // Body: the status message (simplebook 1-line / 2-line, or a scrolled area in
+    // the adaptive mode) and the MD3 ProgressBar, added to the shell body sizer
+    // (already padded 0/24 by the shell).
+    wxBoxSizer *body = GetContentSizer();
 
     if (!m_adaptive) {
         m_simplebook = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, PROGRESSDIALOG_SIMPLEBOOK_SIZE, 0);
+        m_simplebook->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
 
         m_panel_1line = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, PROGRESSDIALOG_SIMPLEBOOK_SIZE, 0);
         m_panel_1line->SetMaxSize(PROGRESSDIALOG_SIMPLEBOOK_SIZE);
@@ -191,9 +185,10 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
         m_panel_2line->Layout();
         sizer_2line->Fit(m_panel_2line);
 
-        m_sizer_main->Add(m_simplebook, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(28));
+        body->Add(m_simplebook, 0, wxEXPAND);
     } else {
         m_msg_scrolledWindow = new wxScrolledWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL );
+        m_msg_scrolledWindow->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
         m_msg_scrolledWindow->SetScrollRate(0,5);
         wxBoxSizer* m_msg_sizer= new wxBoxSizer(wxVERTICAL);
 
@@ -206,41 +201,33 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
         m_msg_scrolledWindow->SetSizer(m_msg_sizer);
         m_msg_scrolledWindow->Layout();
         m_msg_sizer->Fit(m_msg_scrolledWindow);
-        m_sizer_main->Add(m_msg_scrolledWindow, 0, wxEXPAND | wxALL, FromDIP(28));
+        body->Add(m_msg_scrolledWindow, 0, wxEXPAND);
     }
-
-
-    m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, 0);
-
-    int gauge_style = wxGA_HORIZONTAL;
-    if (style & wxPD_SMOOTH) gauge_style |= wxGA_SMOOTH;
-    gauge_style |= wxGA_PROGRESS;
 
 #ifdef __WXMSW__
     maximum /= m_factor;
 #endif
 
     if (!HasPDFlag(wxPD_NO_PROGRESS)) {
-        m_gauge = new wxGauge(this, wxID_ANY, maximum, wxDefaultPosition, PROGRESSDIALOG_GAUGE_SIZE, gauge_style);
-        m_gauge->SetValue(0);
-        m_sizer_main->Add(m_gauge, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(28));
+        // Migrated MD3 ProgressBar: Primary fill on a SurfaceContainerHighest
+        // track (its defaults), 8px/r6 geometry, replacing the raw wxGauge.
+        m_progress_bar = new ProgressBar(this, wxID_ANY, maximum, wxDefaultPosition, PROGRESSDIALOG_GAUGE_SIZE);
+        // The bar paints its own rounded track; match its window fill to the
+        // dialog so the rounded corners don't reveal a stale white backing.
+        m_progress_bar->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
+        m_progress_bar->SetProgress(0);
+        body->AddSpacer(FromDIP(12));
+        body->Add(m_progress_bar, 0, wxEXPAND);
     }
 
-#ifdef __WXMSW__
-    //m_block_left = new wxWindow(m_gauge, wxID_ANY, wxPoint(0, 0), wxSize(FromDIP(2), PROGRESSDIALOG_GAUGE_SIZE.y * 2));
-    //m_block_left->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
-    //m_block_right = new wxWindow(m_gauge, wxID_ANY, wxPoint(PROGRESSDIALOG_GAUGE_SIZE.x - 2, 0), wxSize(FromDIP(2), PROGRESSDIALOG_GAUGE_SIZE.y * 2));
-    //m_block_right->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);
-#endif
-    wxBoxSizer *m_sizer_bottom = new wxBoxSizer(wxHORIZONTAL);
-
-    m_sizer_bottom->Add(0, 0, 1, wxEXPAND, 0);
-
+    // Footer: pill Cancel (kit Text variant) added to the shell footer row; the
+    // existing wxEVT_LEFT_DOWN cancel handler (state + timers) is unchanged. When
+    // the operation can't be aborted, hide the whole footer (no empty divider)
+    // and the header close so it can't be dismissed from the chrome.
     if (HasPDFlag(wxPD_CAN_ABORT)) {
         m_button_cancel = new Button(this, _L("Cancel"));
-        m_button_cancel->SetTextColor(PROGRESSDIALOG_GREY_700);
-        m_button_cancel->SetMinSize(PROGRESSDIALOG_CANCEL_BUTTON_SIZE);
-        m_button_cancel->SetCornerRadius(PROGRESSDIALOG_CANCEL_BUTTON_SIZE.y / 2);
+        m_button_cancel->SetVariant(Button::Variant::Text);
+        m_button_cancel->SetButtonSize(Button::Size::Medium);
         m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &event) {
             if (m_state == Finished) {
                 event.Skip();
@@ -253,16 +240,14 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
                 m_timeStop = wxGetCurrentTime();
             }
         });
-        m_sizer_bottom->Add(m_button_cancel, 0, wxALL, 0);
+        AddFooterButton(m_button_cancel);
+    } else {
+        ShowHeaderClose(false);
+        ShowFooter(false);
     }
-
-    m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(16));
-    m_sizer_main->Add(m_sizer_bottom, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(28));
-    m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(10));
 
     wxGetApp().UpdateDlgDarkUI(this);
 
-    SetSizer(m_sizer_main);
     Layout();
     Fit();
     Centre(wxCENTER_FRAME | wxBOTH);
@@ -275,151 +260,6 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
 
     Update();
     return true;
-
-    //
-    //    sizerTop = new wxBoxSizer(wxVERTICAL);
-    //    auto def_size_width = wxMin(wxGetClientDisplayRect().width / 3, 305);
-    //
-    //    wxStaticLine *m_staticline2 = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxSize(def_size_width, 1), wxLI_HORIZONTAL);
-    //    sizerTop->Add(m_staticline2, 0, wxEXPAND, 0);
-    //    auto m_block_top = new wxWindow(this, wxID_ANY, wxDefaultPosition, wxSize(def_size_width, 20));
-    //    m_block_top->SetBackgroundColour(wxColor(DESIGN_RESOUTION_DEF_BK_COLOR));
-    //    sizerTop->Add(m_block_top, 0, wxEXPAND);
-    //
-    //    m_message_area = new wxWindow(this, wxID_ANY, wxDefaultPosition, wxSize(def_size_width, 38));
-    //    m_message_area->SetBackgroundColour(DESIGN_RESOUTION_DEF_BK_COLOR);
-    //    sizerTop->Add(m_message_area, 0, wxLEFT | wxRIGHT | wxBottom | wxEXPAND, 2 * LAYOUT_MARGIN);
-    //
-    //    m_msg = new wxStaticText(m_message_area, wxID_ANY, wxString(""), wxPoint(0, 10), wxSize(def_size_width, 20), wxST_ELLIPSIZE_END);
-    //    m_msg->SetForegroundColour(ThemeColor::TextMuted);
-    //    m_msg->SetBackgroundColour(DESIGN_RESOUTION_DEF_BK_COLOR);
-    //    m_msg->SetMinSize(wxSize(def_size_width, 20));
-    //    m_msg->SetMaxSize(wxSize(def_size_width, 20));
-    //
-    //    m_msg_2line = new wxStaticText(m_message_area, wxID_ANY, wxString(""), wxPoint(0, 0), wxSize(def_size_width, 40), wxST_ELLIPSIZE_END);
-    //    m_msg_2line->SetForegroundColour(ThemeColor::TextMuted);
-    //    m_msg_2line->SetBackgroundColour(DESIGN_RESOUTION_DEF_BK_COLOR);
-    //    m_msg_2line->SetMinSize(wxSize(def_size_width, 40));
-    //    m_msg_2line->SetMaxSize(wxSize(def_size_width, 40));
-    //
-    //    auto block_left = new wxWindow(m_gauge, -1, wxPoint(0, 0), wxSize(2, m_gauge->GetSize().GetHeight()));
-    //    block_left->SetBackgroundColour(ThemeColor::White);
-    //
-    //    auto block_right = new wxWindow(m_gauge, -1, wxPoint(m_gauge->GetSize().GetWidth() - 2, 0), wxSize(2, m_gauge->GetSize().GetHeight()));
-    //    block_right->SetBackgroundColour(ThemeColor::White);
-    //
-    //    sizerTop->Add(m_gauge, 0, wxLEFT | wxRIGHT | wxBottom, 2 * LAYOUT_MARGIN);
-    //    m_gauge->SetValue(0);
-    //
-    //    m_elapsed = m_estimated = m_remaining = NULL;
-    //    size_t nTimeLabels                    = 0;
-    //
-    //    wxSizer *const sizerLabels = new wxFlexGridSizer(2);
-    //
-    //    if (style & wxPD_ELAPSED_TIME) {
-    //        nTimeLabels++;
-    //
-    //        m_elapsed = CreateLabel(GetElapsedLabel(), sizerLabels);
-    //    }
-    //
-    //    if (style & wxPD_ESTIMATED_TIME) {
-    //        nTimeLabels++;
-    //
-    //        m_estimated = CreateLabel(GetEstimatedLabel(), sizerLabels);
-    //    }
-    //
-    //    if (style & wxPD_REMAINING_TIME) {
-    //        nTimeLabels++;
-    //
-    //        m_remaining = CreateLabel(GetRemainingLabel(), sizerLabels);
-    //    }
-    //    sizerTop->Add(sizerLabels, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBottom, LAYOUT_MARGIN);
-    //
-    //    wxStdDialogButtonSizer *buttonSizer = wxDialog::CreateStdDialogButtonSizer(0);
-    //
-    //    const int borderFlags = wxALL;
-    //
-    //    std::string icon_path = (boost::format("%1%/images/common_dialog_confirm.png") % resources_dir()).str();
-    //    /*m_btnAbort            = new wxBitmapButton(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(52, 24), wxBU_AUTODRAW | wxBORDER_NONE);
-    //    m_btnAbort->SetBitmap(wxBitmap(icon_path, wxBITMAP_TYPE_ANY));
-    //    m_btnAbort->SetBitmapDisabled(wxBitmap(icon_path, wxBITMAP_TYPE_ANY));
-    //    m_btnAbort->SetBitmapPressed(wxBitmap(icon_path, wxBITMAP_TYPE_ANY));
-    //    m_btnAbort->SetBitmapFocus(wxBitmap(icon_path, wxBITMAP_TYPE_ANY));
-    //    m_btnAbort->SetBitmapCurrent(wxBitmap(icon_path, wxBITMAP_TYPE_ANY));*/
-    //
-    //     m_btnAbort = new wxButton(this, wxID_CANCEL, wxString(""), wxDefaultPosition, wxSize(52,24));
-    //
-    //     wxStaticBitmap *m_bitmatAbort = new wxStaticBitmap(m_btnAbort, wxID_ANY, wxBitmap(icon_path, wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(52, 24), 0);
-    //     wxStaticText *textAbort = new wxStaticText(m_btnAbort, wxID_ANY, _T("Cancel"), wxPoint(5, 3), wxSize(42, 19));
-    //     textAbort->SetBa
-    //     ckgroundColour(ThemeColor::BrandGreen);
-    //     textAbort->SetForegroundColour(DESIGN_RESOUTION_DEF_BK_COLOR);
-    //
-    //     textAbort->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &event) {
-    //        if (m_state == Finished) {
-    //            event.Skip();
-    //        } else {
-    //            m_state = Canceled;
-    //            //DisableAbort();
-    //            DisableSkip();
-    //            m_timeStop = wxGetCurrentTime();
-    //        }
-    //    });
-    //
-    //     wxSizerFlags sizerFlags = wxSizerFlags().Border(borderFlags, LAYOUT_MARGIN);
-    //    wxWindow *m_button_sizer = new wxWindow(this, wxID_ANY, wxDefaultPosition, wxSize(def_size_width, 26));
-    //    m_button_sizer->SetBackgroundColour(DESIGN_RESOUTION_DEF_BK_COLOR);
-    //
-    //    if (HasPDFlag(wxPD_CAN_SKIP)) {
-    //        m_btnSkip = new wxButton(this, wxID_SKIP, wxGetTranslation("&Skip"));
-    //        m_btnSkip->Bind(wxEVT_COMMAND_BUTTON_CLICKED, &ProgressDialog::OnSkip, this);
-    //        buttonSizer->SetNegativeButton(m_btnSkip);
-    //    }
-    //
-    //    if (HasPDFlag(wxPD_CAN_ABORT)) {
-    //        /*m_btnAbort = new wxButton(this, wxID_CANCEL);
-    //        buttonSizer->SetCancelButton(m_btnAbort);
-    //        m_btnAbort->Bind(wxEVT_COMMAND_BUTTON_CLICKED, &ProgressDialog::OnCancel, this);*/
-    //
-    //        m_button_calcel = new Button(m_button_sizer, _T("Cancel"));
-    //        m_button_calcel->SetTextColor(ThemeColor::TextMuted);
-    //        m_button_calcel->SetSize(60, 24);
-    //        m_button_calcel->SetPosition(wxPoint(m_button_sizer->GetSize().GetWidth() - m_button_calcel->GetSize().GetWidth(), 0));
-    //
-    //        m_button_calcel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &event) {
-    //            if (m_state == Finished) {
-    //                event.Skip();
-    //            } else {
-    //                m_state = Canceled;
-    //                 DisableAbort();
-    //                m_button_calcel->Enable(false);
-    //                DisableSkip();
-    //                m_timeStop = wxGetCurrentTime();
-    //            }
-    //        });
-    //    }
-    //
-    //    if (!HasPDFlag(wxPD_CAN_SKIP | wxPD_CAN_ABORT)) buttonSizer->AddSpacer(LAYOUT_MARGIN);
-    //
-    //    sizerTop->Add(m_button_sizer, 1, wxEXPAND, 0);
-    //
-    //    auto m_block_bottom = new wxWindow(this, wxID_ANY, wxDefaultPosition, wxSize(def_size_width, 15));
-    //    m_block_bottom->SetBackgroundColour(DESIGN_RESOUTION_DEF_BK_COLOR);
-    //    sizerTop->Add(m_block_bottom, 0, wxEXPAND);
-    //
-    //    SetSizerAndFit(sizerTop);
-    //    FormatString(message);
-    //
-    //    Centre(wxCENTER_FRAME | wxBOTH);
-    //
-    //    DisableOtherWindows();
-    //
-    //    Show();
-    //    Enable();
-    //    if (m_elapsed) { SetTimeLabel(0, m_elapsed); }
-    //
-    //    Update();
-    //    return true;
 }
 
 void ProgressDialog::UpdateTimeEstimates(int value, unsigned long &elapsedTime, unsigned long &estimatedTime, unsigned long &remainingTime)
@@ -509,15 +349,17 @@ bool ProgressDialog::Update(int value, const wxString &newmsg, bool *skip)
 {
     if (!DoBeforeUpdate(skip)) return false;
 
-    wxCHECK_MSG(m_msg || m_gauge, false, "dialog should be fully created");
+    wxCHECK_MSG(m_msg || m_progress_bar, false, "dialog should be fully created");
 
 #ifdef __WXMSW__
     value /= m_factor;
 #endif // __WXMSW__
 
     wxASSERT_MSG(value <= m_maximum, wxT("invalid progress value"));
-    if (m_gauge)
-        m_gauge->SetValue(value);
+    if (m_progress_bar) {
+        m_progress_bar->SetProgress(value);
+        m_progress_value = value;
+    }
 
     UpdateMessage(newmsg);
 
@@ -547,9 +389,11 @@ bool ProgressDialog::Update(int value, const wxString &newmsg, bool *skip)
         if (!HasPDFlag(wxPD_AUTO_HIDE)) {
             EnableClose();
             DisableSkip();
-#if defined(__WXMSW__) && !defined(__WXUNIVERSAL__)
-            EnableCloseButton();
-#endif // __WXMSW__
+            // The count-down is finished and we're about to show modally: make
+            // the header circular close available again so the user can dismiss
+            // it (the MD3 stand-in for the native EnableCloseButton()); it was
+            // hidden earlier for an uncancelable dialog.
+            ShowHeaderClose(true);
 
             if (newmsg.empty()) {
                 // also provide the finishing message if the application didn't
@@ -589,10 +433,11 @@ bool ProgressDialog::Pulse(const wxString &newmsg, bool *skip)
 {
     if (!DoBeforeUpdate(skip)) return false;
 
-    wxCHECK_MSG(m_msg || m_gauge, false, "dialog should be fully created");
+    wxCHECK_MSG(m_msg || m_progress_bar, false, "dialog should be fully created");
 
-    // show a bit of progress
-    if (m_gauge) m_gauge->Pulse();
+    // The kit ProgressBar is determinate only; there is no indeterminate pulse
+    // to render. Callers that pulse before a real value (e.g. app restart) are
+    // unaffected — the next Update() sets a concrete value.
 
     UpdateMessage(newmsg);
 
@@ -661,9 +506,9 @@ bool ProgressDialog::Show(bool show)
 
 int ProgressDialog::GetValue() const
 {
-    wxCHECK_MSG(m_gauge, -1, "dialog should be fully created");
+    wxCHECK_MSG(m_progress_bar, -1, "dialog should be fully created");
 
-    return m_gauge->GetValue();
+    return m_progress_value;
 }
 
 int ProgressDialog::GetRange() const { return m_maximum; }
@@ -672,13 +517,16 @@ wxString ProgressDialog::GetMessage() const { return m_msg->GetLabel(); }
 
 void ProgressDialog::SetRange(int maximum)
 {
-    wxCHECK_RET(m_gauge, "dialog should be fully created");
+    wxCHECK_RET(m_progress_bar, "dialog should be fully created");
 
     wxCHECK_RET(maximum > 0, "Invalid range");
 
-    m_gauge->SetRange(maximum);
-
     SetMaximum(maximum);
+
+    // Mirror the (MSW-scaled) maximum onto the bar so the fill proportion stays
+    // correct; the bar exposes m_max directly (no SetRange getter/setter).
+    m_progress_bar->m_max = m_maximum;
+    m_progress_bar->Refresh();
 }
 
 void ProgressDialog::set_panel_height(int height) {
@@ -774,6 +622,32 @@ void ProgressDialog::OnClose(wxCloseEvent &event)
     }
 }
 
+void ProgressDialog::OnHeaderClose()
+{
+    // The MD3 header circular close replaces the native window [x]; mirror
+    // OnClose()'s semantics rather than the base EndModal(wxID_CANCEL).
+    if (m_state == Uncancelable) {
+        // can't close this dialog (the affordance is normally hidden in this state)
+        return;
+    } else if (m_state == Finished) {
+        // count-down finished; dismiss the (possibly modal) finished dialog like
+        // the native [x] would.
+        if (IsModal())
+            EndModal(wxID_OK);
+        else
+            Hide();
+    } else {
+        // request to cancel; the next Update() notices m_state == Canceled.
+        m_state = Canceled;
+        DisableAbort();
+        if (m_button_cancel)
+            m_button_cancel->Enable(false);
+        DisableSkip();
+        OnCancel();
+        m_timeStop = wxGetCurrentTime();
+    }
+}
+
 // ----------------------------------------------------------------------------
 // destruction
 // ----------------------------------------------------------------------------
@@ -798,19 +672,6 @@ ProgressDialog::~ProgressDialog()
         wxEventLoopBase::SetActive(NULL);
         delete m_tempEventLoop;
     }
-}
-
-void ProgressDialog::DoSetSize(int x, int y, int width, int height, int sizeFlags /*= wxSIZE_AUTO*/)
-{
-    if (m_button_cancel != nullptr) { m_button_cancel->SetMinSize(PROGRESSDIALOG_CANCEL_BUTTON_SIZE); }
-
-#ifdef __WXMSW__
-    //if (m_block_left != nullptr && m_block_right != nullptr) {
-    //    m_block_left->SetPosition(wxPoint(0, 0));
-    //    m_block_right->SetPosition(wxPoint(PROGRESSDIALOG_GAUGE_SIZE.x - 2, 0));
-    //}
-#endif
-    wxWindow::DoSetSize(x, y, width, height, sizeFlags);
 }
 
 void ProgressDialog::DisableOtherWindows()

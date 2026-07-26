@@ -321,6 +321,8 @@ try {
         $startInfo.FileName = $resolvedApplication
         $startInfo.WorkingDirectory = [System.IO.Path]::GetDirectoryName($resolvedApplication)
         $startInfo.UseShellExecute = $false
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
         $startInfo.ArgumentList.Add('--datadir')
         $startInfo.ArgumentList.Add($dataDir)
         $startInfo.Environment['BAMBU_STUDIO_CI_NATIVE_VISUAL_SMOKE'] = "v1/$($scenario.Name)"
@@ -345,7 +347,29 @@ try {
                     if ($title -eq $scenario.Title) { break }
                 }
             }
-            Assert-True (-not $process.HasExited) "Native application exited before presenting '$($scenario.Name)'."
+            if ($process.HasExited) {
+                # Surface everything the dead process left behind before failing:
+                # its exact exit code distinguishes a clean OnInit rejection (-1)
+                # from a loader failure (0xC0000135) or a crash code.
+                $exitCode = $process.ExitCode
+                Write-Host ("Native application exited early for '{0}' with exit code {1} (0x{2:X8})." -f $scenario.Name, $exitCode, $exitCode)
+                Get-ChildItem -Path (Join-Path $dataDir 'log') -Filter '*.log' -ErrorAction SilentlyContinue | ForEach-Object {
+                    Write-Host "--- $($_.FullName) (last 80 lines) ---"
+                    Get-Content $_.FullName -Tail 80 -ErrorAction SilentlyContinue
+                }
+                foreach ($diag in @('bbs-native-visual-smoke-reject.log', 'bbs-launcher-trace.log')) {
+                    $diagPath = Join-Path $env:TEMP $diag
+                    if (Test-Path $diagPath) {
+                        Write-Host "--- $diagPath ---"
+                        Get-Content $diagPath
+                    }
+                }
+                Write-Host '--- app stdout ---'
+                Write-Host ($process.StandardOutput.ReadToEnd())
+                Write-Host '--- app stderr ---'
+                Write-Host ($process.StandardError.ReadToEnd())
+                throw ("Native application exited before presenting '{0}' (exit code {1})." -f $scenario.Name, $exitCode)
+            }
             Assert-True ($handle -ne [IntPtr]::Zero) "Native application did not present a window for '$($scenario.Name)'."
             Assert-True ($title -eq $scenario.Title) "Captured an unexpected native window for '$($scenario.Name)': '$title'."
 
@@ -383,7 +407,22 @@ try {
             Assert-True ($containsCjk -eq $scenario.RequiresCjk) "Native '$($scenario.Name)' CJK text presence did not match the scenario contract."
 
             $capturePath = Join-Path $resolvedOutputDir ($scenario.Name + '.png')
-            $metrics = Save-WindowCapture -Handle $handle -Path $capturePath
+            # PrintWindow can race the first paint of a freshly presented
+            # window (observed: scenario 2 captured blank/uniform while
+            # scenario 1 verified fine). Retry the capture until it contains
+            # real content or a 15 s budget elapses; the inner asserts throw
+            # only on the final attempt.
+            $metrics = $null
+            $captureDeadline = [DateTime]::UtcNow.AddSeconds(15)
+            while ($true) {
+                try {
+                    $metrics = Save-WindowCapture -Handle $handle -Path $capturePath
+                    break
+                } catch {
+                    if ([DateTime]::UtcNow -ge $captureDeadline) { throw }
+                    Start-Sleep -Milliseconds 500
+                }
+            }
             if ($scenario.Theme -eq 'dark') {
                 Assert-True ($metrics.MeanLuminance -lt 115) "Dark scenario mean luminance $($metrics.MeanLuminance) is too bright."
             } else {

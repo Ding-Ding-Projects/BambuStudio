@@ -2,6 +2,7 @@
 #include "HMS.hpp"
 
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 
@@ -83,8 +84,9 @@ ImageMessageDialog::ImageMessageDialog(wxWindow *parent, wxWindowID id, const wx
     m_sizer_main->Fit(this);
     m_sizer_main->SetSizeHints(this);
 
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 ImageMessageDialog::~ImageMessageDialog()

@@ -2,6 +2,7 @@
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StepCtrl.hpp"
 #include "Widgets/SideTools.hpp"
 
@@ -26,10 +27,13 @@
 #include <wx/display.h>
 #include <wx/dcbuffer.h>
 #include <wx/dcgraph.h>
+#include <wx/graphics.h>
 #include <wx/frame.h>
 #include <wx/mstream.h>
 #include <wx/sstream.h>
 #include <wx/zstream.h>
+
+#include "StopPrintGate.hpp"
 
 #include "DeviceCore/DevAxis.h"
 #include "DeviceCore/DevBed.h"
@@ -61,6 +65,7 @@
 #include "ThermalPreconditioningDialog.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 
 namespace Slic3r { namespace GUI {
@@ -92,6 +97,20 @@ static wxColour device_primary_text_color() { return StateColor::semantic(MD3::R
 static wxColour device_primary_container_color() { return StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Device); }
 static wxColour device_control_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHigh); }
 static wxColour device_control_emphasis_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHighest); }
+
+// Kit icons-assets shared-dialog-action-icons (star->star): the 5-star rating
+// row (PrintingTaskPanel::m_score_star, ScoreDialog::m_score_star) expresses
+// lit/idle state through colour on the single 'star' Material Symbol glyph
+// (Primary vs OnSurfaceVariant, Device scheme) instead of two raster PNGs.
+// Falls back to the legacy score_star_light/score_star_dark bitmaps when the
+// merged Material Symbols face is unavailable.
+static wxBitmap score_star_bitmap(wxWindow *ref, bool lit)
+{
+    if (MaterialIcon::available())
+        return MaterialIcon::bitmap(ref, MaterialIcon::Star, 26, lit ? device_primary_color() : device_secondary_text_color());
+    ScalableBitmap star(nullptr, lit ? "score_star_light" : "score_star_dark", 26);
+    return star.bmp();
+}
 
 // Roboto Mono at an explicit design px + numeric weight, for the numeric
 // values the design renders in mono at a size outside the Label::Mono_*
@@ -142,6 +161,131 @@ static StateColor device_primary_button_text()
                       std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Pressed),
                       std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimaryContainer, MD3::ColorScheme::Device), StateColor::Hovered),
                       std::pair<wxColour, int>(device_primary_text_color(), StateColor::Normal));
+}
+
+// Coarse humidity state word for the AMS card header's teal trailing label
+// (kit Device.jsx:69). Keyed on AMSinfo::get_humidity_display_idx(), where 5 is
+// driest and 1 is wettest (per the AMS percent->index mapping in AMSItem). Used
+// only when a unit reports a level but no percentage.
+static wxString device_humidity_state_word(int display_idx)
+{
+    if (display_idx >= 4) return _L("Dry");
+    if (display_idx == 3) return _L("Normal");
+    return _L("Humid");
+}
+
+// Build a monochrome control/status icon as a Material Symbols glyph rendered at
+// a logical px in colour, degrading to the legacy raster (fallback_name) when the
+// icon face is unavailable. The consumers (ImageSwitchButton / FanSwitchButton /
+// wxStaticBitmap) hold copies and never re-rasterize from the name, so the glyph
+// survives their Rescale(); no ScalableBitmap::msw_rescale() is ever called on
+// the glyph-backed members.
+static ScalableBitmap device_glyph_scalable(wxWindow *ref, uint32_t glyph, int px, const wxColour &colour, const std::string &fallback_name)
+{
+    if (MaterialIcon::available()) {
+        ScalableBitmap sb;
+        sb.bmp() = MaterialIcon::bitmap(ref, glyph, px, colour);
+        return sb;
+    }
+    return ScalableBitmap(ref, fallback_name, px);
+}
+
+// Idle print-thumbnail placeholder: a rounded-12 SurfaceContainerHighest tile
+// carrying a centered 'deployed_code' Material Symbol (OnSurfaceVariant), per the
+// kit's idle camera-card thumbnail (Device.jsx:34). Mirrors MaterialIcon::bitmap's
+// DPI compositing (logical->device via gc->Scale + SetScaleFactor) so it lays out
+// at logical_px like the legacy raster. Callers fall back to the raster when the
+// icon face is unavailable.
+static wxBitmap device_idle_thumbnail_tile(wxWindow *ref, int logical_px)
+{
+    const double scale = (ref && ref->GetDPIScaleFactor() > 0.0) ? ref->GetDPIScaleFactor() : 1.0;
+    const int    dev   = std::max(1, static_cast<int>(std::ceil(logical_px * scale)));
+    wxBitmap     bmp(dev, dev);
+#if defined(__WXMSW__) || defined(__WXOSX__)
+    bmp.UseAlpha();
+#endif
+    {
+        wxMemoryDC mdc(bmp);
+        mdc.SetBackground(*wxTRANSPARENT_BRUSH);
+        mdc.Clear();
+        wxGraphicsContext *gc = wxGraphicsContext::Create(mdc);
+        if (gc) {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            gc->Scale(scale, scale);
+            gc->SetPen(*wxTRANSPARENT_PEN);
+            gc->SetBrush(wxBrush(device_control_emphasis_color()));
+            // Logical coordinate space (gc is already DPI-scaled), so the radius is
+            // the raw kit metric (comfortable.radius == 16) — no FromDIP here.
+            gc->DrawRoundedRectangle(0, 0, logical_px, logical_px, MD3::Metrics::comfortable.radius);
+            const int glyph_px = std::max(1, static_cast<int>(logical_px * 0.4 + 0.5));
+            // The variable icon face must not reach GDI+ as a font (heap
+            // corruption); composite a plain-GDI raster at device resolution
+            // and draw it in this scaled context's logical units.
+            const wxBitmap gb = MaterialIcon::bitmapPx(MaterialIcon::DeployedCode, glyph_px,
+                                                       device_secondary_text_color(), scale);
+            const double   gw = gb.GetWidth() / scale, gh = gb.GetHeight() / scale;
+            gc->DrawBitmap(gb, (logical_px - gw) / 2.0, (logical_px - gh) / 2.0, gw, gh);
+            delete gc; // flush before the bitmap is read
+        }
+        mdc.SelectObject(wxNullBitmap);
+    }
+#if wxCHECK_VERSION(3, 1, 6)
+    bmp.SetScaleFactor(scale);
+#endif
+    return bmp;
+}
+
+// Camera-HUD status indicators as Material Symbols on the fixed-dark strip
+// (on-dark colours, never theme-swapped): active states use the kit 'live'
+// accent, absent/off use the muted on-dark grey, storage-abnormal keeps its
+// warning hue. Rebuilt identically by init_bitmaps() and rescale_camera_icons().
+static void build_hud_status_glyphs(wxWindow *ref,
+                                    ScalableBitmap &sd_normal, ScalableBitmap &sd_abnormal, ScalableBitmap &sd_no,
+                                    ScalableBitmap &rec_on, ScalableBitmap &rec_off,
+                                    ScalableBitmap &tl_on, ScalableBitmap &tl_off,
+                                    ScalableBitmap &vc_on, ScalableBitmap &vc_off)
+{
+    const wxColour on   = CameraHUD::Glyph();
+    const wxColour off  = CameraHUD::GlyphMuted();
+    const wxColour live = MD3::Viewport::live;
+    // Storage-abnormal keeps a warning read via the semantic Error role, resolved
+    // dark since the HUD is fixed-dark (no theme swap, no raw literal).
+    const wxColour warn = MD3::resolve(MD3::Role::Error, true, MD3::ColorScheme::Device);
+    sd_normal   = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, on, "sdcard_state_normal_dark");
+    sd_abnormal = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, warn, "sdcard_state_abnormal_dark");
+    sd_no       = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, off, "sdcard_state_no_dark");
+    rec_on  = device_glyph_scalable(ref, MaterialIcon::RadioButtonChecked, 20, live, "monitor_recording_on_dark");
+    rec_off = device_glyph_scalable(ref, MaterialIcon::RadioButtonChecked, 20, off, "monitor_recording_off_dark");
+    tl_on   = device_glyph_scalable(ref, MaterialIcon::Timelapse, 20, live, "monitor_timelapse_on_dark");
+    tl_off  = device_glyph_scalable(ref, MaterialIcon::Timelapse, 20, off, "monitor_timelapse_off_dark");
+    vc_on   = device_glyph_scalable(ref, MaterialIcon::Videocam, 20, live, "monitor_vcamera_on_dark");
+    vc_off  = device_glyph_scalable(ref, MaterialIcon::Videocam, 20, off, "monitor_vcamera_off_dark");
+}
+
+// Filament-loading disclosure chevron in the Device accent: expanded (box shown)
+// -> expand_more, collapsed (fold) -> expand_less, degrading to the legacy
+// filament_load_expand/fold rasters when the icon face is unavailable.
+static wxBitmap filament_loading_chevron(wxWindow *ref, bool expanded)
+{
+    if (MaterialIcon::available())
+        return MaterialIcon::bitmap(ref, expanded ? MaterialIcon::ExpandMore : MaterialIcon::ExpandLess, 24, device_primary_color());
+    return create_scaled_bitmap(expanded ? "filament_load_expand" : "filament_load_fold", ref, 24);
+}
+
+// Control-bar switch icons (lamp / fan / speed) as Material Symbols in the Device
+// accent (on) / OnSurfaceVariant (off), degrading to the legacy monitor_* rasters.
+// Rebuilt by init_bitmaps() and on a live theme flip so the teal follows the theme.
+static void build_control_switch_glyphs(wxWindow *ref,
+                                        ScalableBitmap &lamp_on, ScalableBitmap &lamp_off,
+                                        ScalableBitmap &fan_on, ScalableBitmap &fan_off,
+                                        ScalableBitmap &speed, ScalableBitmap &speed_active)
+{
+    lamp_on      = device_glyph_scalable(ref, MaterialIcon::Lightbulb, 24, device_primary_color(), "monitor_lamp_on");
+    lamp_off     = device_glyph_scalable(ref, MaterialIcon::Lightbulb, 24, device_secondary_text_color(), "monitor_lamp_off");
+    fan_on       = device_glyph_scalable(ref, MaterialIcon::ModeFan, 22, device_primary_color(), "monitor_fan_on");
+    fan_off      = device_glyph_scalable(ref, MaterialIcon::ModeFan, 22, device_secondary_text_color(), "monitor_fan_off");
+    speed        = device_glyph_scalable(ref, MaterialIcon::Speed, 24, device_secondary_text_color(), "monitor_speed");
+    speed_active = device_glyph_scalable(ref, MaterialIcon::Speed, 24, device_primary_color(), "monitor_speed_active");
 }
 
 static bool is_semantic_color(const wxColour &color, MD3::Role role, MD3::ColorScheme scheme = MD3::ColorScheme::Brand)
@@ -634,7 +778,7 @@ static wxImage fail_image;
 #define GROUP_TITLE_RIGHT_MARGIN FromDIP(15)
 
 #define NORMAL_SPACING FromDIP(5)
-#define PAGE_SPACING FromDIP(MD3::Metrics::comfortable.padding)
+#define PAGE_SPACING FromDIP(MD3::Metrics::active().padding)
 #define PAGE_MIN_WIDTH FromDIP(574)
 #define PROGRESSBAR_HEIGHT FromDIP(8)
 
@@ -649,7 +793,10 @@ static wxImage fail_image;
 #define MISC_BUTTON_3FAN_SIZE (wxSize(FromDIP(44), FromDIP(51)))
 #define TEMP_CTRL_MIN_SIZE_ALIGN_ONE_ICON (wxSize(FromDIP(125), FromDIP(52)))
 #define TEMP_CTRL_MIN_SIZE_ALIGN_TWO_ICON (wxSize(FromDIP(145), FromDIP(48)))
-#define AXIS_MIN_SIZE (wxSize(FromDIP(258), FromDIP(258)))
+// Kit Device.jsx:82 — the XY control is now a compact 3x3 arrow grid, not the
+// 258px circular dial; size the widget to the grid (3 tiles + 2 gaps) so it centers
+// cleanly in the Move card next to the Z-axis column.
+#define AXIS_MIN_SIZE (wxSize(FromDIP(168), FromDIP(168)))
 #define EXTRUDER_IMAGE_SIZE (wxSize(FromDIP(48), FromDIP(76)))
 
 static void market_model_scoring_page(int design_id)
@@ -1147,28 +1294,25 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_button_partskip->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { m_button_partskip->SetIcon("print_control_partskip_hover"); });
     m_button_partskip->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { m_button_partskip->SetIcon("print_control_partskip"); });
 
-    m_button_pause_resume = new ScalableButton(progress_lr_panel, wxID_ANY, "print_control_pause", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER,
-                                               true);
+    // MD3 pause/resume: a tonal (Device secondary-container) pill carrying a
+    // live Material Symbols glyph. The glyph toggles Pause <-> PlayArrow with the
+    // print state; hover/disabled are resolved by the variant, so the legacy
+    // raster hover binds are gone.
+    m_button_pause_resume = new Button(progress_lr_panel, wxEmptyString, "", wxBORDER_NONE, 0, wxID_ANY);
+    m_button_pause_resume->SetVariant(Button::Variant::Tonal);
+    m_button_pause_resume->SetButtonSize(Button::Size::Large);
+    m_button_pause_resume->SetColorScheme(MD3::ColorScheme::Device);
+    m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
+    m_button_pause_resume->SetCanFocus(false);
+    m_button_pause_resume->SetToolTip(_L("Pause"));
 
-    m_button_pause_resume->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) {
-        if (m_button_pause_resume->GetToolTipText() == _L("Pause")) { m_button_pause_resume->SetBitmap_("print_control_pause_hover"); }
-
-        if (m_button_pause_resume->GetToolTipText() == _L("Resume")) { m_button_pause_resume->SetBitmap_("print_control_resume_hover"); }
-    });
-
-    m_button_pause_resume->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) {
-        auto buf = m_button_pause_resume->GetClientData();
-        if (m_button_pause_resume->GetToolTipText() == _L("Pause")) { m_button_pause_resume->SetBitmap_("print_control_pause"); }
-
-        if (m_button_pause_resume->GetToolTipText() == _L("Resume")) { m_button_pause_resume->SetBitmap_("print_control_resume"); }
-    });
-
-    m_button_abort = new ScalableButton(progress_lr_panel, wxID_ANY, "print_control_stop", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    // MD3 stop: a danger pill (transparent fill, 1px Error border, Error glyph).
+    m_button_abort = new Button(progress_lr_panel, wxEmptyString, "", wxBORDER_NONE, 0, wxID_ANY);
+    m_button_abort->SetVariant(Button::Variant::Danger);
+    m_button_abort->SetButtonSize(Button::Size::Large);
+    m_button_abort->SetGlyph(MaterialIcon::Stop);
+    m_button_abort->SetCanFocus(false);
     m_button_abort->SetToolTip(_L("Stop"));
-
-    m_button_abort->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { m_button_abort->SetBitmap_("print_control_stop_hover"); });
-
-    m_button_abort->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { m_button_abort->SetBitmap_("print_control_stop"); });
 
     wxBoxSizer *bSizer_buttons     = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *bSizer_text        = new wxBoxSizer(wxHORIZONTAL);
@@ -1338,10 +1482,10 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     progress_right_sizer->Add(m_button_partskip, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0)); // 5
     progress_right_sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(18));
     progress_right_sizer->Add(m_pausing_icon, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
-    progress_right_sizer->Add(m_button_pause_resume, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
+    progress_right_sizer->Add(m_button_pause_resume, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
     progress_right_sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(18));
     progress_right_sizer->Add(m_stopping_icon, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
-    progress_right_sizer->Add(m_button_abort, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
+    progress_right_sizer->Add(m_button_abort, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(0));
     progress_right_sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(18));
 
     progress_lr_sizer->Add(progress_left_sizer, 1, wxEXPAND | wxALL, 0);
@@ -1397,7 +1541,13 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_panel_error_txt->SetSizer(static_text_sizer);
     m_panel_error_txt->Hide();
 
-    sizer->Add(m_panel_printing_title, 0, wxEXPAND | wxALL, 0);
+    // device-progress-title-strip: the kit progress Card has no full-width
+    // "Printing Progress" title strip (Device.jsx:32-46). Drop the strip from
+    // the card layout and fold the thumbnail + name/sub + percent rows directly
+    // into the card body. The strip widget is kept allocated but hidden (never
+    // added to a sizer) so the existing calibration/msw_rescale references to it
+    // stay valid without any legacy chrome being rendered.
+    m_panel_printing_title->Hide();
     sizer->Add(0, FromDIP(12), 0);
     sizer->Add(m_printing_sizer, 0, wxEXPAND | wxALL, 0);
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
@@ -1456,20 +1606,19 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     for (int i = 0; i < m_score_star.size(); ++i) {
         m_score_star[i] = new ScalableButton(m_score_subtask_info, wxID_ANY, "score_star_dark", wxEmptyString, wxSize(FromDIP(26), FromDIP(26)), wxDefaultPosition,
                                              wxBU_EXACTFIT | wxNO_BORDER, true, 26);
+        m_score_star[i]->SetBitmap(score_star_bitmap(m_score_star[i], false));
         m_score_star[i]->SetMinSize(wxSize(FromDIP(26), FromDIP(26)));
         m_score_star[i]->SetMaxSize(wxSize(FromDIP(26), FromDIP(26)));
         m_score_star[i]->Bind(wxEVT_LEFT_DOWN, [this, i](auto &e) {
             for (int j = 0; j < m_score_star.size(); ++j) {
-                ScalableBitmap light_star = ScalableBitmap(nullptr, "score_star_light", 26);
-                m_score_star[j]->SetBitmap(light_star.bmp());
+                m_score_star[j]->SetBitmap(score_star_bitmap(m_score_star[j], true));
                 if (m_score_star[j] == m_score_star[i]) {
                     m_star_count = j + 1;
                     break;
                 }
             }
             for (int k = m_star_count; k < m_score_star.size(); ++k) {
-                ScalableBitmap dark_star = ScalableBitmap(nullptr, "score_star_dark", 26);
-                m_score_star[k]->SetBitmap(dark_star.bmp());
+                m_score_star[k]->SetBitmap(score_star_bitmap(m_score_star[k], false));
             }
             m_star_count_dirty = true;
             m_button_market_scoring->Enable(true);
@@ -1581,19 +1730,22 @@ void PrintingTaskPanel::msw_rescale()
     m_gauge_progress->SetProgressForedColour(device_control_emphasis_color());
     m_gauge_progress->SetBackgroundColour(device_card_color());
     m_staticText_finish_day->Rescale();
-    m_button_pause_resume->msw_rescale();
-    m_button_abort->msw_rescale();
+    // Button::Rescale() re-derives the DPI-scaled pill radius / height / glyph so
+    // the MD3 variant survives a monitor-DPI or live theme change.
+    m_button_pause_resume->Rescale();
+    m_button_abort->Rescale();
     m_bitmap_thumbnail->SetSize(TASK_THUMBNAIL_SIZE);
+    // If the idle placeholder is on screen, re-blit the freshly rebuilt tile
+    // (init_bitmaps runs just before this in both the DPI and theme paths) so a
+    // DPI / theme change re-renders it; the paint handler draws m_thumbnail_bmp_display.
+    if (m_bitmap_thumbnail && m_thumbnail_bmp_display_name == m_thumbnail_placeholder.name()) {
+        m_thumbnail_bmp_display = m_thumbnail_placeholder.bmp();
+        m_bitmap_thumbnail->Refresh();
+    }
 
     {
         for (int i = 0; i < m_score_star.size(); ++i) {
-            if (i < m_star_count) {
-                ScalableBitmap light_star = ScalableBitmap(nullptr, "score_star_light", 26);
-                m_score_star[i]->SetBitmap(light_star.bmp());
-            } else {
-                ScalableBitmap dark_star = ScalableBitmap(nullptr, "score_star_dark", 26);
-                m_score_star[i]->SetBitmap(dark_star.bmp());
-            }
+            m_score_star[i]->SetBitmap(score_star_bitmap(m_score_star[i], i < m_star_count));
         }
 
         m_button_market_scoring->Rescale();
@@ -1604,9 +1756,22 @@ void PrintingTaskPanel::msw_rescale()
 
 void PrintingTaskPanel::init_bitmaps()
 {
+    // Idle thumbnail placeholder -> rounded-12 SurfaceContainerHighest tile with a
+    // centered 'deployed_code' glyph (kit idle camera-card thumbnail). The legacy
+    // raster stays the fallback and preserves the placeholder name so the
+    // set_thumbnail_img de-dup still keys off it.
     m_thumbnail_placeholder = ScalableBitmap(this, "monitor_placeholder", 120);
-    m_bitmap_use_time       = ScalableBitmap(this, "print_info_time", 16);
-    m_bitmap_use_weight     = ScalableBitmap(this, "print_info_weight", 16);
+    if (MaterialIcon::available())
+        m_thumbnail_placeholder.bmp() = device_idle_thumbnail_tile(this, 120);
+    // Time / weight metadata glyphs -> schedule / scale (OnSurfaceVariant),
+    // degrading to the print_info_time/weight rasters when unavailable.
+    m_bitmap_use_time   = device_glyph_scalable(this, MaterialIcon::Schedule, 16, device_secondary_text_color(), "print_info_time");
+    m_bitmap_use_weight = device_glyph_scalable(this, MaterialIcon::Scale, 16, device_secondary_text_color(), "print_info_weight");
+    // Apply the metadata glyphs to the (already-wired) static bitmaps so they show
+    // and re-track DPI / theme changes; create_panel builds those before the first
+    // init_bitmaps() call, so guard against a pre-wiring invocation.
+    if (m_bitmap_static_use_time)   m_bitmap_static_use_time->SetBitmap(m_bitmap_use_time.bmp());
+    if (m_bitmap_static_use_weight) m_bitmap_static_use_weight->SetBitmap(m_bitmap_use_weight.bmp());
 }
 
 void PrintingTaskPanel::init_scaled_buttons()
@@ -1692,21 +1857,24 @@ void PrintingTaskPanel::update_stopping_state(bool enter)
 
 void PrintingTaskPanel::enable_pause_resume_button(bool enable, std::string type)
 {
+    // Preserve the Pause/Resume toggle: the tonal button carries the Pause glyph
+    // while printing and the PlayArrow glyph while paused. The MD3 variant renders
+    // the disabled state, so the "_disable" glyph merely mirrors the active state.
     if (!enable) {
         m_button_pause_resume->Enable(false);
 
         if (type == "pause_disable") {
-            m_button_pause_resume->SetBitmap_("print_control_pause_disable");
+            m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
         } else if (type == "resume_disable") {
-            m_button_pause_resume->SetBitmap_("print_control_resume_disable");
+            m_button_pause_resume->SetGlyph(MaterialIcon::PlayArrow);
         }
     } else {
         m_button_pause_resume->Enable(true);
         if (type == "resume") {
-            m_button_pause_resume->SetBitmap_("print_control_resume");
+            m_button_pause_resume->SetGlyph(MaterialIcon::PlayArrow);
             if (m_button_pause_resume->GetToolTipText() != _L("Resume")) { m_button_pause_resume->SetToolTip(_L("Resume")); }
         } else if (type == "pause") {
-            m_button_pause_resume->SetBitmap_("print_control_pause");
+            m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
             if (m_button_pause_resume->GetToolTipText() != _L("Pause")) { m_button_pause_resume->SetToolTip(_L("Pause")); }
         }
     }
@@ -1714,13 +1882,8 @@ void PrintingTaskPanel::enable_pause_resume_button(bool enable, std::string type
 
 void PrintingTaskPanel::enable_abort_button(bool enable)
 {
-    if (!enable) {
-        m_button_abort->Enable(false);
-        m_button_abort->SetBitmap_("print_control_stop_disable");
-    } else {
-        m_button_abort->Enable(true);
-        m_button_abort->SetBitmap_("print_control_stop");
-    }
+    // The Stop glyph is fixed; the Danger variant renders enabled vs disabled.
+    m_button_abort->Enable(enable);
 }
 
 void PrintingTaskPanel::update_subtask_name(wxString name)
@@ -1915,13 +2078,7 @@ void PrintingTaskPanel::set_star_count(int star_count)
     m_star_count = star_count;
 
     for (int i = 0; i < m_score_star.size(); ++i) {
-        if (i < star_count) {
-            ScalableBitmap light_star = ScalableBitmap(nullptr, "score_star_light", 26);
-            m_score_star[i]->SetBitmap(light_star.bmp());
-        } else {
-            ScalableBitmap dark_star = ScalableBitmap(nullptr, "score_star_dark", 26);
-            m_score_star[i]->SetBitmap(dark_star.bmp());
-        }
+        m_score_star[i]->SetBitmap(score_star_bitmap(m_score_star[i], i < star_count));
     }
 }
 
@@ -2081,16 +2238,24 @@ void StatusBasePanel::on_camera_fullscreen(wxMouseEvent &event)
 void StatusBasePanel::init_bitmaps()
 {
     static Slic3r::GUI::BitmapCache cache;
-    m_bitmap_item_prediction = create_scaled_bitmap("monitor_item_prediction", nullptr, 16);
-    m_bitmap_item_cost       = create_scaled_bitmap("monitor_item_cost", nullptr, 16);
-    m_bitmap_item_print      = create_scaled_bitmap("monitor_item_print", nullptr, 18);
+    // Monochrome control/status glyphs -> Material Symbols (Device teal where
+    // accented; OnSurfaceVariant otherwise). Each degrades to its legacy raster
+    // when the icon face is missing so a stripped TTF shows the old look, not tofu.
+    m_bitmap_item_prediction = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::Schedule, 16, device_secondary_text_color())
+        : create_scaled_bitmap("monitor_item_prediction", nullptr, 16);
+    m_bitmap_item_cost = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::Payments, 16, device_secondary_text_color())
+        : create_scaled_bitmap("monitor_item_cost", nullptr, 16);
+    m_bitmap_item_print = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::Print, 18, device_secondary_text_color())
+        : create_scaled_bitmap("monitor_item_print", nullptr, 18);
+    // Home stays raster: AxisCtrlButton already draws the center 'home' Material
+    // Symbol itself (MaterialIcon::Home) and only falls back to this bitmap when
+    // the icon face is unavailable, so this must remain the legacy raster.
     m_bitmap_axis_home       = ScalableBitmap(this, "monitor_axis_home", 32);
-    m_bitmap_lamp_on         = ScalableBitmap(this, "monitor_lamp_on", 24);
-    m_bitmap_lamp_off        = ScalableBitmap(this, "monitor_lamp_off", 24);
-    m_bitmap_fan_on          = ScalableBitmap(this, "monitor_fan_on", 22);
-    m_bitmap_fan_off         = ScalableBitmap(this, "monitor_fan_off", 22);
-    m_bitmap_speed           = ScalableBitmap(this, "monitor_speed", 24);
-    m_bitmap_speed_active    = ScalableBitmap(this, "monitor_speed_active", 24);
+    build_control_switch_glyphs(this, m_bitmap_lamp_on, m_bitmap_lamp_off, m_bitmap_fan_on, m_bitmap_fan_off,
+                                m_bitmap_speed, m_bitmap_speed_active);
 
     m_thumbnail_brokenimg = ScalableBitmap(this, "monitor_brokenimg", 120);
     m_thumbnail_sdcard    = ScalableBitmap(this, "monitor_sdcard_thumbnail", 120);
@@ -2100,77 +2265,67 @@ void StatusBasePanel::init_bitmaps()
     m_bitmap_extruder_empty_unload  = *cache.load_png("monitor_extruder_empty_unload", FromDIP(28), FromDIP(70), false, false);
     m_bitmap_extruder_filled_unload = *cache.load_png("monitor_extruder_filled_unload", FromDIP(28), FromDIP(70), false, false);
 
-    m_bitmap_sdcard_state_abnormal = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_abnormal_dark" : "sdcard_state_abnormal", 20);
-    m_bitmap_sdcard_state_normal   = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_normal_dark" : "sdcard_state_normal", 20);
-    m_bitmap_sdcard_state_no       = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_no_dark" : "sdcard_state_no", 20);
-    m_bitmap_recording_on          = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_recording_on_dark" : "monitor_recording_on", 20);
-    m_bitmap_recording_off         = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_recording_off_dark" : "monitor_recording_off", 20);
-    m_bitmap_timelapse_on          = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_timelapse_on_dark" : "monitor_timelapse_on", 20);
-    m_bitmap_timelapse_off         = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_timelapse_off_dark" : "monitor_timelapse_off", 20);
-    m_bitmap_vcamera_on            = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_vcamera_on_dark" : "monitor_vcamera_on", 20);
-    m_bitmap_vcamera_off           = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_vcamera_off_dark" : "monitor_vcamera_off", 20);
+    // The camera HUD interior is ALWAYS dark (kCardBg), in both app themes, so
+    // the status-indicator glyphs use fixed on-dark colours and are never
+    // theme-swapped (the legacy "_dark" rasters remain the graceful fallback).
+    build_hud_status_glyphs(this, m_bitmap_sdcard_state_normal, m_bitmap_sdcard_state_abnormal, m_bitmap_sdcard_state_no,
+                            m_bitmap_recording_on, m_bitmap_recording_off, m_bitmap_timelapse_on, m_bitmap_timelapse_off,
+                            m_bitmap_vcamera_on, m_bitmap_vcamera_off);
 }
 
 wxBoxSizer *StatusBasePanel::create_monitoring_page()
 {
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-    m_panel_monitoring_title = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
-    m_panel_monitoring_title->SetBackgroundColour(device_title_color());
+    // Always-dark camera HUD strip. Replaces the legacy device-title strip; it
+    // is stacked ABOVE the video by this sizer (index 0), so it never overlays
+    // the native wxMediaCtrl HWND (no MSW flicker/clip). Fixed-dark in both app
+    // themes and excluded from on_sys_color_changed re-tinting.
+    m_camera_hud = new CameraHUD(this);
 
-    wxBoxSizer *bSizer_monitoring_title;
-    bSizer_monitoring_title = new wxBoxSizer(wxHORIZONTAL);
-
-    m_staticText_monitoring = new Label(m_panel_monitoring_title, _L("Camera"));
-    m_staticText_monitoring->Wrap(-1);
-    // m_staticText_monitoring->SetFont(PAGE_TITLE_FONT);
-    m_staticText_monitoring->SetForegroundColour(device_secondary_text_color());
-    bSizer_monitoring_title->Add(m_staticText_monitoring, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, PAGE_TITLE_LEFT_MARGIN);
-
-    bSizer_monitoring_title->Add(FromDIP(13), 0, 0, 0);
-    bSizer_monitoring_title->AddStretchSpacer();
-
-    m_staticText_timelapse = new wxStaticText(m_panel_monitoring_title, wxID_ANY, _L("Timelapse"), wxDefaultPosition, wxDefaultSize, 0);
+    // Legacy debug-only widgets: referenced under !BBL_RELEASE_TO_PUBLIC in
+    // update(). Kept allocated + hidden (parented to the HUD, never added to its
+    // layout) so those references stay valid without cluttering the strip.
+    m_staticText_timelapse = new wxStaticText(m_camera_hud, wxID_ANY, _L("Timelapse"), wxDefaultPosition, wxDefaultSize, 0);
     m_staticText_timelapse->Wrap(-1);
     m_staticText_timelapse->Hide();
-    bSizer_monitoring_title->Add(m_staticText_timelapse, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_mqtt_source = new wxStaticText(m_panel_monitoring_title, wxID_ANY, "MqttSource", wxDefaultPosition, wxDefaultSize, 0);
+    m_mqtt_source = new wxStaticText(m_camera_hud, wxID_ANY, "MqttSource", wxDefaultPosition, wxDefaultSize, 0);
     m_mqtt_source->Wrap(-1);
     m_mqtt_source->Hide();
-    bSizer_monitoring_title->Add(m_mqtt_source, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_bmToggleBtn_timelapse = new SwitchButton(m_panel_monitoring_title);
+    m_bmToggleBtn_timelapse = new SwitchButton(m_camera_hud);
     m_bmToggleBtn_timelapse->SetMinSize(SWITCH_BUTTON_SIZE);
     m_bmToggleBtn_timelapse->Hide();
-    bSizer_monitoring_title->Add(m_bmToggleBtn_timelapse, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    //m_bitmap_camera_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, m_bitmap_camera , wxDefaultPosition, wxSize(FromDIP(32), FromDIP(18)), 0);
-    //m_bitmap_camera_img->SetMinSize(wxSize(FromDIP(32), FromDIP(18)));
-    //bSizer_monitoring_title->Add(m_bitmap_camera_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
+    // Camera status indicators, hosted in the HUD's status slot. Their window
+    // backgrounds are the fixed-dark card colour so the on-dark glyph PNGs read
+    // correctly regardless of the app theme.
+    const wxColour hud_bg = CameraHUD::CardBg();
+    const wxSize   ind_size(FromDIP(28), FromDIP(24));
 
-    m_bitmap_sdcard_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(38), FromDIP(24)), 0);
-    m_bitmap_sdcard_img->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
+    m_bitmap_sdcard_img = new wxStaticBitmap(m_camera_hud, wxID_ANY, wxNullBitmap, wxDefaultPosition, ind_size, 0);
+    m_bitmap_sdcard_img->SetMinSize(ind_size);
+    m_bitmap_sdcard_img->SetBackgroundColour(hud_bg);
 
-    m_bitmap_timelapse_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(38), FromDIP(24)), 0);
-    m_bitmap_timelapse_img->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
+    m_bitmap_timelapse_img = new wxStaticBitmap(m_camera_hud, wxID_ANY, wxNullBitmap, wxDefaultPosition, ind_size, 0);
+    m_bitmap_timelapse_img->SetMinSize(ind_size);
+    m_bitmap_timelapse_img->SetBackgroundColour(hud_bg);
     m_bitmap_timelapse_img->Hide();
 
-    m_bitmap_recording_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(38), FromDIP(24)), 0);
-    m_bitmap_recording_img->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
-    m_bitmap_timelapse_img->Hide();
+    m_bitmap_recording_img = new wxStaticBitmap(m_camera_hud, wxID_ANY, wxNullBitmap, wxDefaultPosition, ind_size, 0);
+    m_bitmap_recording_img->SetMinSize(ind_size);
+    m_bitmap_recording_img->SetBackgroundColour(hud_bg);
 
-    m_bitmap_vcamera_img = new wxStaticBitmap(m_panel_monitoring_title, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(38), FromDIP(24)), 0);
-    m_bitmap_vcamera_img->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
+    m_bitmap_vcamera_img = new wxStaticBitmap(m_camera_hud, wxID_ANY, wxNullBitmap, wxDefaultPosition, ind_size, 0);
+    m_bitmap_vcamera_img->SetMinSize(ind_size);
+    m_bitmap_vcamera_img->SetBackgroundColour(hud_bg);
     m_bitmap_vcamera_img->Hide();
 
-    m_camera_fullscreen_button = new CameraItem(m_panel_monitoring_title, "camera_fullscreen", "camera_fullscreen_hover");
-    m_camera_fullscreen_button->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
-    m_camera_fullscreen_button->SetBackgroundColour(device_title_color());
-
-    m_setting_button = new CameraItem(m_panel_monitoring_title, "camera_setting", "camera_setting_hover");
-    m_setting_button->SetMinSize(wxSize(FromDIP(38), FromDIP(24)));
-    m_setting_button->SetBackgroundColour(device_title_color());
+    // The two control chips are owned by the HUD; StatusPanel keeps pointers so
+    // its existing Connect/Enable/reset_hover/msw_rescale sites are unchanged.
+    m_setting_button           = m_camera_hud->setting_chip();
+    m_camera_fullscreen_button = m_camera_hud->fullscreen_chip();
 
     m_bitmap_sdcard_img->SetToolTip(_L("Storage"));
     m_bitmap_timelapse_img->SetToolTip(_L("Timelapse"));
@@ -2179,23 +2334,15 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
     m_camera_fullscreen_button->SetToolTip(_L("Enter Camera Full Screen"));
     m_setting_button->SetToolTip(_L("Camera Setting"));
 
-    bSizer_monitoring_title->Add(m_bitmap_sdcard_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_bitmap_timelapse_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_bitmap_recording_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_bitmap_vcamera_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_camera_fullscreen_button, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    bSizer_monitoring_title->Add(m_setting_button, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
+    wxSizer *status_slot = m_camera_hud->status_slot();
+    status_slot->Add(m_bitmap_sdcard_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+    status_slot->Add(m_bitmap_timelapse_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+    status_slot->Add(m_bitmap_recording_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+    status_slot->Add(m_bitmap_vcamera_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
 
-    bSizer_monitoring_title->Add(FromDIP(13), 0, 0);
+    m_camera_hud->Layout();
+    sizer->Add(m_camera_hud, 0, wxEXPAND | wxALL, 0);
 
-    m_panel_monitoring_title->SetSizer(bSizer_monitoring_title);
-    m_panel_monitoring_title->Layout();
-    bSizer_monitoring_title->Fit(m_panel_monitoring_title);
-    sizer->Add(m_panel_monitoring_title, 0, wxEXPAND | wxALL, 0);
-
-    //    media_ctrl_panel              = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    //    media_ctrl_panel->SetBackgroundColour(*wxBLACK);
-    //    wxBoxSizer *bSizer_monitoring = new wxBoxSizer(wxVERTICAL);
     m_media_ctrl = new wxMediaCtrl3(this);
     m_media_ctrl->SetMinSize(wxSize(PAGE_MIN_WIDTH, FromDIP(288)));
 
@@ -2216,18 +2363,31 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     wxBoxSizer *bSizer_right = new wxBoxSizer(wxVERTICAL);
 
     m_panel_control_title = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
-    m_panel_control_title->SetBackgroundColour(device_title_color());
+    // Kit Device.jsx:48: the right column is a plain stack of cards with no
+    // 'Control' title strip and no Parts/Options/Safety/Calibration pill row. Blend
+    // the former device_title_color band into the SurfaceDim column; the strip now
+    // carries only a single trailing overflow menu (MoreHoriz IconButton).
+    m_panel_control_title->SetBackgroundColour(device_page_color());
 
     wxBoxSizer *bSizer_control_title = new wxBoxSizer(wxHORIZONTAL);
     m_staticText_control             = new Label(m_panel_control_title, _L("Control"));
     m_staticText_control->Wrap(-1);
     // m_staticText_control->SetFont(PAGE_TITLE_FONT);
     m_staticText_control->SetForegroundColour(device_secondary_text_color());
+    m_staticText_control->Hide();
+
+    // Invisible state-holder for the four action entry points. It is never added to
+    // a sizer and stays Hidden, so its children never paint on screen; because a
+    // child's own Show()/Enable()/SetLabel()/SetToolTip() flags are independent of
+    // the parent's visibility, every existing update site keeps mutating their
+    // state, and the overflow menu is rebuilt from that state each time it opens.
+    m_action_holder = new wxPanel(parent, wxID_ANY);
+    m_action_holder->Hide();
 
     StateColor btn_bg_green = device_primary_button_background();
     StateColor btn_bd_green = device_primary_button_border();
 
-    m_parts_btn = new Button(m_panel_control_title, _L("Printer Parts"));
+    m_parts_btn = new Button(m_action_holder, _L("Printer Parts"));
     m_parts_btn->SetBackgroundColor(btn_bg_green);
     m_parts_btn->SetBorderColor(btn_bd_green);
     m_parts_btn->SetTextColor(device_primary_button_text());
@@ -2235,7 +2395,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_parts_btn->SetMinSize(wxSize(-1, FromDIP(26)));
     m_parts_btn->SetCornerRadius(FromDIP(13));
 
-    m_options_btn = new Button(m_panel_control_title, _L("Print Options"));
+    m_options_btn = new Button(m_action_holder, _L("Print Options"));
     m_options_btn->SetBackgroundColor(btn_bg_green);
     m_options_btn->SetBorderColor(btn_bd_green);
     m_options_btn->SetTextColor(device_primary_button_text());
@@ -2243,7 +2403,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_options_btn->SetMinSize(wxSize(-1, FromDIP(26)));
     m_options_btn->SetCornerRadius(FromDIP(13));
 
-    m_safety_btn = new Button(m_panel_control_title, _L("Safety Options"));
+    m_safety_btn = new Button(m_action_holder, _L("Safety Options"));
     m_safety_btn->SetBackgroundColor(btn_bg_green);
     m_safety_btn->SetBorderColor(btn_bd_green);
     m_safety_btn->SetTextColor(device_primary_button_text());
@@ -2251,7 +2411,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_safety_btn->SetMinSize(wxSize(-1, FromDIP(26)));
     m_safety_btn->SetCornerRadius(FromDIP(13));
 
-    m_calibration_btn = new Button(m_panel_control_title, _L("Calibration"));
+    m_calibration_btn = new Button(m_action_holder, _L("Calibration"));
     m_calibration_btn->SetBackgroundColor(btn_bg_green);
     m_calibration_btn->SetBorderColor(btn_bd_green);
     m_calibration_btn->SetTextColor(device_primary_button_text());
@@ -2263,12 +2423,16 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_options_btn->Hide();
     m_safety_btn->Hide();
 
-    bSizer_control_title->Add(m_staticText_control, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, PAGE_TITLE_LEFT_MARGIN);
-    bSizer_control_title->Add(0, 0, 1, wxEXPAND, 0);
-    bSizer_control_title->Add(m_parts_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
-    bSizer_control_title->Add(m_options_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
-    bSizer_control_title->Add(m_safety_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
-    bSizer_control_title->Add(m_calibration_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    // Trailing overflow menu button (kit: an MD3 IconButton). MoreHoriz glyph,
+    // borderless circular ghost target; degrades to a bordered '...' label button
+    // when the icon face is unavailable.
+    m_more_btn = new Button(m_panel_control_title, MaterialIcon::available() ? wxString() : wxString("..."));
+    m_more_btn->SetIconButton(Button::IconShape::Circle, FromDIP(32));
+    if (MaterialIcon::available()) m_more_btn->SetGlyph(MaterialIcon::MoreHoriz, 20);
+    m_more_btn->SetToolTip(_L("More options"));
+
+    bSizer_control_title->AddStretchSpacer(1);
+    bSizer_control_title->Add(m_more_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
 
     m_panel_control_title->SetSizer(bSizer_control_title);
     m_panel_control_title->Layout();
@@ -2324,11 +2488,12 @@ wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
     box->SetBackgroundColor(box_colour);
     box->SetBorderColor(box_border_colour);
     box->SetBackgroundColour(device_card_color());
-    box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
-    auto *title = new Label(box, _L("Temperature").Upper());
-    title->SetFont(Label::Head_11);
-    title->SetForegroundColour(device_secondary_text_color());
+    // MD3 SectionHeader: 11/600 uppercase + .6px tracking OnSurfaceVariant, with a
+    // 16px leading Material Symbol (Device.jsx:50). Guarded so a stripped icon face
+    // degrades to the text-only header instead of tofu.
+    auto *title = new SectionHeader(box, _L("Temperature"), MaterialIcon::available() ? MaterialIcon::Thermostat : 0);
 
     wxBoxSizer *content_sizer = new wxBoxSizer(wxVERTICAL);
     content_sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
@@ -2345,11 +2510,9 @@ StaticBox *StatusBasePanel::create_print_options_group(wxWindow *parent)
     m_print_options_box->SetBackgroundColor(StateColor(device_card_color()));
     m_print_options_box->SetBorderColor(StateColor(device_divider_color()));
     m_print_options_box->SetBackgroundColour(device_card_color());
-    m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
-    auto *title = new Label(m_print_options_box, _L("Print Options").Upper());
-    title->SetFont(Label::Head_11);
-    title->SetForegroundColour(device_secondary_text_color());
+    auto *title = new SectionHeader(m_print_options_box, _L("Print Options"), MaterialIcon::available() ? MaterialIcon::Speed : 0);
 
     auto *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
@@ -2365,11 +2528,9 @@ StaticBox *StatusBasePanel::create_move_group(wxWindow *parent)
     m_move_control_box->SetBackgroundColor(StateColor(device_card_color()));
     m_move_control_box->SetBorderColor(StateColor(device_divider_color()));
     m_move_control_box->SetBackgroundColour(device_card_color());
-    m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
-    auto *title = new Label(m_move_control_box, _L("Move").Upper());
-    title->SetFont(Label::Head_11);
-    title->SetForegroundColour(device_secondary_text_color());
+    auto *title = new SectionHeader(m_move_control_box, _L("Move"), MaterialIcon::available() ? MaterialIcon::ControlCamera : 0);
 
     auto *axis_sizer = create_axis_control(m_move_control_box);
     auto *bed_panel  = create_bed_control(m_move_control_box);
@@ -2417,6 +2578,12 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
 
     m_tempCtrl_nozzle->SetTextColor(tempinput_text_colour);
     m_tempCtrl_nozzle->SetBorderColor(tempinput_border_colour);
+    // Kit Device.jsx:51-53: the monitor_*_temp rasters become 22px teal Material
+    // Symbols (nozzle mode_heat / bed radio_button_checked / chamber home_work).
+    // Capability-gated in TempInput's paint path, so a stripped icon face keeps
+    // the raster icons; teal (heating) / OnSurfaceVariant (idle) via glyph colours.
+    m_tempCtrl_nozzle->SetGlyphIcon(MaterialIcon::ModeHeat, 22);
+    m_tempCtrl_nozzle->SetGlyphColors(device_primary_color(), device_secondary_text_color());
 
     m_tempCtrl_nozzle_deputy = new TempInput(parent, nozzle_id, TEMP_BLANK_STR, TempInputType::TEMP_OF_NORMAL_TYPE, TEMP_BLANK_STR, wxString("monitor_nozzle_temp"),
                                              wxString("monitor_nozzle_temp_active"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
@@ -2428,6 +2595,8 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
 
     m_tempCtrl_nozzle_deputy->SetTextColor(tempinput_text_colour);
     m_tempCtrl_nozzle_deputy->SetBorderColor(tempinput_border_colour);
+    m_tempCtrl_nozzle_deputy->SetGlyphIcon(MaterialIcon::ModeHeat, 22);
+    m_tempCtrl_nozzle_deputy->SetGlyphColors(device_primary_color(), device_secondary_text_color());
 
     sizer->Add(m_tempCtrl_nozzle_deputy, 0, wxEXPAND | wxALL, 1);
     sizer->Add(m_tempCtrl_nozzle, 0, wxEXPAND | wxALL, 1);
@@ -2448,6 +2617,8 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     m_tempCtrl_bed->SetBorderWidth(FromDIP(2));
     m_tempCtrl_bed->SetTextColor(tempinput_text_colour);
     m_tempCtrl_bed->SetBorderColor(tempinput_border_colour);
+    m_tempCtrl_bed->SetGlyphIcon(MaterialIcon::RadioButtonChecked, 22);
+    m_tempCtrl_bed->SetGlyphColors(device_primary_color(), device_secondary_text_color());
     sizer->Add(m_tempCtrl_bed, 0, wxEXPAND | wxALL, 1);
 
     auto line = new StaticLine(parent);
@@ -2465,87 +2636,115 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     m_tempCtrl_chamber->SetBorderWidth(FromDIP(2));
     m_tempCtrl_chamber->SetTextColor(tempinput_text_colour);
     m_tempCtrl_chamber->SetBorderColor(tempinput_border_colour);
+    m_tempCtrl_chamber->SetGlyphIcon(MaterialIcon::HomeWork, 22);
+    m_tempCtrl_chamber->SetGlyphColors(device_primary_color(), device_secondary_text_color());
     sizer->Add(m_tempCtrl_chamber, 0, wxEXPAND | wxALL, 1);
 
     return sizer;
 }
 
+// Leading Material Symbols glyph for a print-options row (icon + label + control),
+// OnSurfaceVariant at 20px per Device.jsx:64-66. Returns nullptr when the icon face
+// is unavailable so the caller can omit it and keep the row text-driven.
+static wxStaticBitmap *make_option_glyph(wxWindow *parent, uint32_t glyph, const wxColour &colour)
+{
+    if (!MaterialIcon::available()) return nullptr;
+    auto *bmp = new wxStaticBitmap(parent, wxID_ANY, MaterialIcon::bitmap(parent, glyph, 20, colour));
+    return bmp;
+}
+
 wxBoxSizer *StatusBasePanel::create_misc_control(wxWindow *parent)
 {
+    // Kit Device.jsx:62-67 — the Print Options card body is a 4-way SegmentedControl
+    // (speed) + two teal range sliders (part cooling / aux fan) + a teal Switch
+    // (chamber light). The legacy monitor_speed / monitor_lamp / monitor_fan
+    // ImageSwitchButtons and their PNGs are gone; every command path is preserved.
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-    wxBoxSizer *line_sizer = new wxBoxSizer(wxHORIZONTAL);
+    const wxColour icon_col  = device_secondary_text_color();
+    const int      label_w   = FromDIP(96);
 
-    /* create speed control */
-    m_switch_speed = new ImageSwitchButton(parent, m_bitmap_speed_active, m_bitmap_speed);
-    m_switch_speed->SetLabels(_L("100%"), _L("100%"));
-    m_switch_speed->SetMinSize(MISC_BUTTON_2FAN_SIZE);
-    m_switch_speed->SetMaxSize(MISC_BUTTON_2FAN_SIZE);
-    m_switch_speed->SetPadding(FromDIP(3));
-    m_switch_speed->SetBorderWidth(FromDIP(2));
-    m_switch_speed->SetFont(Label::Head_13);
-    m_switch_speed->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
-                                            std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    m_switch_speed->SetValue(false);
+    /* speed: 4-way segmented control (Silent / Standard / Sport / Ludicrous) */
+    m_switch_speed = new MultiSwitchButton(parent);
+    m_switch_speed->SetOptions({_L("Silent"), _L("Standard"), _L("Sport"), _L("Ludicrous")});
+    // Selected segment fills with the Device teal (Primary in the Device scheme);
+    // the recessed track and unselected text follow the neutral surface roles.
+    m_switch_speed->SetBackgroundColor(StateColor(
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), (int) StateColor::Normal)));
+    m_switch_speed->SetMinSize(wxSize(-1, FromDIP(32)));
+    m_switch_speed->SetToolTip(_L("This only takes effect during printing"));
+    // Default to Standard; harmless here (the command handler is not yet connected).
+    m_speed_sync_guard = true;
+    m_switch_speed->SetSelection(1);
+    m_speed_sync_guard = false;
+    sizer->Add(m_switch_speed, 0, wxEXPAND | wxTOP, FromDIP(2));
 
-    line_sizer->Add(m_switch_speed, 1, wxALIGN_CENTER | wxALL, 0);
-
-    auto line = new StaticLine(parent, true);
-    line->SetLineColour(device_divider_color());
-    line_sizer->Add(line, 0, wxEXPAND | wxTOP | wxBOTTOM, 4);
-
-    /* create lamp control */
-    m_switch_lamp = new ImageSwitchButton(parent, m_bitmap_lamp_on, m_bitmap_lamp_off);
-    m_switch_lamp->SetLabels(_L("Lamp"), _L("Lamp"));
-    m_switch_lamp->SetMinSize(MISC_BUTTON_2FAN_SIZE);
-    m_switch_lamp->SetMaxSize(MISC_BUTTON_2FAN_SIZE);
-    m_switch_lamp->SetPadding(FromDIP(3));
-    m_switch_lamp->SetBorderWidth(FromDIP(2));
-    m_switch_lamp->SetFont(Label::Head_13);
-    m_switch_lamp->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
-                                           std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    line_sizer->Add(m_switch_lamp, 1, wxALIGN_CENTER | wxALL, 0);
-
-    // sizer->Add(line_sizer, 0, wxEXPAND, FromDIP(5));
-    line = new StaticLine(parent);
-    line->SetLineColour(device_divider_color());
-    sizer->Add(line, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
-
+    /* part cooling + aux fan: teal sliders, hosted in m_fan_panel so the existing
+       FDM-mode Show/Hide and theme sites keep driving the fan block */
     m_fan_panel = new StaticBox(parent);
-    m_fan_panel->SetMinSize(MISC_BUTTON_PANEL_SIZE);
-    m_fan_panel->SetMaxSize(MISC_BUTTON_PANEL_SIZE);
     m_fan_panel->SetBackgroundColor(device_card_color());
+    m_fan_panel->SetBackgroundColour(device_card_color());
     m_fan_panel->SetBorderWidth(0);
     m_fan_panel->SetCornerRadius(0);
+    auto *fan_sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto fan_line_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_switch_fan        = new FanSwitchButton(m_fan_panel, m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_fan->SetValue(false);
-    m_switch_fan->SetMinSize(MISC_BUTTON_1FAN_SIZE);
-    m_switch_fan->SetMaxSize(MISC_BUTTON_1FAN_SIZE);
-    m_switch_fan->SetPadding(FromDIP(1));
-    m_switch_fan->SetBorderWidth(0);
-    m_switch_fan->SetCornerRadius(0);
-    m_switch_fan->SetFont(::Label::Body_10);
-    m_switch_fan->UseTextFan();
-    m_switch_fan->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
-                                          std::make_pair(device_secondary_text_color(), (int) StateColor::Normal)));
+    auto add_fan_row = [&](uint32_t glyph, const wxString &label, Slider *&slider, int def_val) {
+        auto *row = new wxBoxSizer(wxHORIZONTAL);
+        if (auto *g = make_option_glyph(m_fan_panel, glyph, icon_col))
+            row->Add(g, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+        auto *lbl = new Label(m_fan_panel, label);
+        lbl->SetFont(::Label::Body_13);
+        lbl->SetForegroundColour(device_text_color());
+        lbl->SetMinSize(wxSize(label_w, -1));
+        row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL);
+        slider = new Slider(m_fan_panel, def_val, 0, 100);
+        slider->SetColorScheme(MD3::ColorScheme::Device);
+        slider->SetMinSize(wxSize(FromDIP(90), FromDIP(24)));
+        row->Add(slider, 1, wxALIGN_CENTER_VERTICAL);
+        fan_sizer->Add(row, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(4));
+    };
+    add_fan_row(MaterialIcon::ModeFan, _L("Part cooling"), m_slider_part_fan, 0);
+    add_fan_row(MaterialIcon::Air, _L("Aux fan"), m_slider_aux_fan, 0);
 
-    m_switch_fan->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { m_fan_panel->SetBackgroundColor(device_primary_container_color()); });
+    // The sliders preview the live PWM and act as the entry point to the full fan
+    // control: any interaction snaps the thumb back to the device value and opens
+    // the authoritative FanControlPopupNew (which owns the PWM / air-duct mode /
+    // ctrl-off gating and the change-during-printing warning). See the deviation
+    // note in the report: direct per-fan drag-to-commit is intentionally not wired
+    // because that command path lives in FanControl.cpp / DevFan (off-limits here).
+    auto open_fan_popup = [this](int) {
+        if (m_fan_popup_pending) return; // one popup per drag gesture; motion events coalesce
+        m_fan_popup_pending = true;
+        this->CallAfter([this]() {
+            wxCommandEvent ev;
+            on_nozzle_fan_switch(ev); // modal; blocks until the fan control closes
+            m_fan_popup_pending = false;
+        });
+    };
+    m_slider_part_fan->SetOnChange(open_fan_popup);
+    m_slider_aux_fan->SetOnChange(open_fan_popup);
+    m_fan_ctrl_anchor = m_slider_part_fan;
 
-    m_switch_fan->Bind(wxEVT_LEAVE_WINDOW, [this, parent](auto &e) { m_fan_panel->SetBackgroundColor(parent->GetBackgroundColour()); });
-
-    fan_line_sizer->Add(m_switch_fan, 1, wxEXPAND | wxALL, FromDIP(2));
-
-    m_fan_panel->SetSizer(fan_line_sizer);
+    m_fan_panel->SetSizer(fan_sizer);
     m_fan_panel->Layout();
-    m_fan_panel->Fit();
-    sizer->Add(m_fan_panel, 0, wxEXPAND, FromDIP(5));
-    line = new StaticLine(parent);
-    line->SetLineColour(device_divider_color());
-    sizer->Add(line, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
+    sizer->Add(m_fan_panel, 0, wxEXPAND | wxTOP, FromDIP(6));
 
-    sizer->Add(line_sizer, 0, wxEXPAND, FromDIP(5));
+    /* chamber light: MD3 Switch (Device teal) */
+    auto *lamp_row = new wxBoxSizer(wxHORIZONTAL);
+    if (auto *g = make_option_glyph(parent, MaterialIcon::Lightbulb, icon_col))
+        lamp_row->Add(g, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    auto *lamp_lbl = new Label(parent, _L("Chamber light"));
+    lamp_lbl->SetFont(::Label::Body_13);
+    lamp_lbl->SetForegroundColour(device_text_color());
+    lamp_row->Add(lamp_lbl, 1, wxALIGN_CENTER_VERTICAL);
+    m_switch_lamp = new SwitchButton(parent);
+    m_switch_lamp->SetColorScheme(MD3::ColorScheme::Device);
+    m_switch_lamp->SetMinSize(wxSize(FromDIP(44), FromDIP(24)));
+    m_switch_lamp->SetValue(false);
+    lamp_row->Add(m_switch_lamp, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    sizer->Add(lamp_row, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(6));
+
     return sizer;
 }
 
@@ -2573,10 +2772,13 @@ void StatusBasePanel::reset_temp_misc_control()
     m_tempCtrl_chamber->Enable(true);
     m_tempCtrl_bed->Enable(true);
 
-    // reset misc control
-    m_switch_speed->SetLabels(_L("100%"), _L("100%"));
-    m_switch_speed->SetValue(false);
-    m_switch_lamp->SetLabels(_L("Lamp"), _L("Lamp"));
+    // reset misc control: default the speed segmented control to Standard (guarded
+    // so the reset does not issue a speed command), zero the fan sliders, lamp off.
+    m_speed_sync_guard = true;
+    m_switch_speed->SetSelection(1);
+    m_speed_sync_guard = false;
+    if (m_slider_part_fan) m_slider_part_fan->SetValue(0);
+    if (m_slider_aux_fan) m_slider_aux_fan->SetValue(0);
     m_switch_lamp->SetValue(false);
     /*m_switch_nozzle_fan->SetValue(false);
     m_switch_printing_fan->SetValue(false);
@@ -2585,14 +2787,34 @@ void StatusBasePanel::reset_temp_misc_control()
 
 wxBoxSizer *StatusBasePanel::create_axis_control(wxWindow *parent)
 {
+    // Kit Device.jsx:79-89 — a 3x3 arrow grid (AxisCtrlButton, rebuilt to the grid
+    // anatomy) with a compact 10/1 mm step SegmentedControl above it so BOTH legacy
+    // jog magnitudes stay reachable. The step selector drives AxisCtrlButton::SetStep;
+    // the grid still fires the same SetInt(position) contract on_axis_ctrl_xy decodes.
     auto sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->AddStretchSpacer();
+
+    m_axis_step_switch = new MultiSwitchButton(parent);
+    m_axis_step_switch->SetOptions({wxString("10"), wxString("1")});
+    m_axis_step_switch->SetBackgroundColor(StateColor(
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+        std::make_pair(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), (int) StateColor::Normal)));
+    m_axis_step_switch->SetMinSize(wxSize(FromDIP(120), FromDIP(28)));
+    m_axis_step_switch->SetSelection(0); // 10 mm — the legacy default (outer ring)
+    m_axis_step_switch->SetToolTip(_L("Move distance (mm)"));
+
     m_bpButton_xy = new AxisCtrlButton(parent, m_bitmap_axis_home);
     m_bpButton_xy->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
                                            std::make_pair(device_text_color(), (int) StateColor::Normal)));
     m_bpButton_xy->SetMinSize(AXIS_MIN_SIZE);
     m_bpButton_xy->SetSize(AXIS_MIN_SIZE);
+    m_bpButton_xy->SetStep(10);
+
+    m_axis_step_switch->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
+        if (m_bpButton_xy) m_bpButton_xy->SetStep(e.GetInt() == 0 ? 10 : 1);
+    });
+
     sizer->AddStretchSpacer();
+    sizer->Add(m_axis_step_switch, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(8));
     sizer->Add(m_bpButton_xy, 0, wxALIGN_CENTER | wxALL, 0);
     sizer->AddStretchSpacer();
     return sizer;
@@ -2623,7 +2845,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
                                              std::make_pair(device_text_color(), (int) StateColor::Normal)));
     m_bpButton_z_10->SetMinSize(Z_BUTTON_SIZE);
     m_bpButton_z_10->SetSize(Z_BUTTON_SIZE);
-    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_z_1 = new Button(panel, wxString(" 1"), "monitor_bed_up", 0, FromDIP(15));
     m_bpButton_z_1->SetFont(::Label::Body_12);
     m_bpButton_z_1->SetBorderWidth(0);
@@ -2633,7 +2855,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_1->SetSize(Z_BUTTON_SIZE);
     m_bpButton_z_1->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
                                             std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
     // bSizer_z_ctrl->Add(0, FromDIP(6), 0, wxEXPAND, 0);
 
@@ -2651,7 +2873,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_down_1->SetSize(Z_BUTTON_SIZE);
     m_bpButton_z_down_1->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
                                                  std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
 
     m_bpButton_z_down_10 = new Button(panel, wxString("10"), "monitor_bed_down", 0, FromDIP(15));
     m_bpButton_z_down_10->SetFont(::Label::Body_12);
@@ -2662,7 +2884,17 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
     m_bpButton_z_down_10->SetSize(Z_BUTTON_SIZE);
     m_bpButton_z_down_10->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
                                                   std::make_pair(device_text_color(), (int) StateColor::Normal)));
-    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+
+    // Retire the raster monitor_bed_up/down PNGs for Material Symbols directional
+    // glyphs (Device.jsx:90-93). Guarded so a missing icon face keeps the legacy
+    // raster; the +10/+1 labels, jog handlers and geometry are unchanged.
+    if (MaterialIcon::available()) {
+        m_bpButton_z_10->SetGlyph(MaterialIcon::ArrowUp, 16);
+        m_bpButton_z_1->SetGlyph(MaterialIcon::ArrowUp, 16);
+        m_bpButton_z_down_1->SetGlyph(MaterialIcon::ArrowDown, 16);
+        m_bpButton_z_down_10->SetGlyph(MaterialIcon::ArrowDown, 16);
+    }
 
     bSizer_z_ctrl->Add(m_bpButton_z_10, 0, wxEXPAND | wxLEFT | wxRIGHT, 0);
     bSizer_z_ctrl->Add(m_bpButton_z_1, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(2));
@@ -2701,7 +2933,7 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     m_bpButton_e_10->SetBackgroundColor(e_ctrl_bg);
     m_bpButton_e_10->SetBorderColor(e_ctrl_bd);
     m_bpButton_e_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
     m_extruder_book = new wxSimplebook(panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(45), FromDIP(112)), 0);
 
@@ -2718,7 +2950,15 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     m_bpButton_e_down_10->SetBackgroundColor(e_ctrl_bg);
     m_bpButton_e_down_10->SetBorderColor(e_ctrl_bd);
     m_bpButton_e_down_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+
+    // Retire the raster monitor_extruder_up/down PNGs for Material Symbols glyphs
+    // (Device.jsx:90-93). Guarded to keep the raster fallback; the extrude/retract
+    // handlers and 40x40 geometry are unchanged.
+    if (MaterialIcon::available()) {
+        m_bpButton_e_10->SetGlyph(MaterialIcon::ArrowUp, 22);
+        m_bpButton_e_down_10->SetGlyph(MaterialIcon::ArrowDown, 22);
+    }
 
     m_extruder_switching_status = new ExtruderSwithingStatus(panel);
     m_extruder_switching_status->SetForegroundColour(device_secondary_text_color());
@@ -2753,7 +2993,7 @@ StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
     m_ams_control_box = new StaticBox(parent);
     m_ams_control_box->SetBackgroundColor(box_colour);
     m_ams_control_box->SetBorderColor(box_border_colour);
-    m_ams_control_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_ams_control_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 
     m_ams_control_box->SetBackgroundColour(device_card_color());
 
@@ -2761,10 +3001,18 @@ StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
     m_ams_control->SetDoubleBuffered(true);
 
     auto sizer_box = new wxBoxSizer(wxVERTICAL);
-    auto *title = new Label(m_ams_control_box, _L("AMS").Upper());
-    title->SetFont(Label::Head_11);
-    title->SetForegroundColour(device_secondary_text_color());
-    sizer_box->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    // MD3 SectionHeader (inventory_2) with the kit's teal trailing indicator
+    // (Device.jsx:69). The trailing label lands the anatomy + Device accent; binding
+    // it to live humidity state (Dry / level) is a reported follow-up.
+    auto *ams_header = new SectionHeader(m_ams_control_box, _L("AMS"), MaterialIcon::available() ? MaterialIcon::Inventory2 : 0);
+    m_ams_humidity_label = new Label(m_ams_control_box, _L("Humidity"));
+    m_ams_humidity_label->SetFont(::Label::Body_11);
+    m_ams_humidity_label->SetForegroundColour(device_primary_color());
+    auto *ams_header_sizer = new wxBoxSizer(wxHORIZONTAL);
+    ams_header_sizer->Add(ams_header, 0, wxALIGN_CENTER_VERTICAL);
+    ams_header_sizer->AddStretchSpacer();
+    ams_header_sizer->Add(m_ams_humidity_label, 0, wxALIGN_CENTER_VERTICAL);
+    sizer_box->Add(ams_header_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     sizer_box->Add(m_ams_control, 0, wxEXPAND | wxALL, FromDIP(3));
 
     m_ams_control_box->SetBackgroundColour(device_card_color());
@@ -2788,7 +3036,7 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     m_title_filament_loading->SetForegroundColour(device_primary_color());
     m_title_filament_loading->SetFont(::Label::Body_14);
 
-    m_img_filament_loading = new wxStaticBitmap(m_scale_panel, wxID_ANY, create_scaled_bitmap("filament_load_fold", this, 24), wxDefaultPosition,
+    m_img_filament_loading = new wxStaticBitmap(m_scale_panel, wxID_ANY, filament_loading_chevron(this, false), wxDefaultPosition,
                                                 wxSize(FromDIP(24), FromDIP(24)), 0);
 
     sizer_scale_panel->Add(0, 0, 0, wxLEFT, FromDIP(20));
@@ -2810,7 +3058,7 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     m_filament_load_box = new StaticBox(parent);
     m_filament_load_box->SetBackgroundColor(box_colour);
     m_filament_load_box->SetBorderColor(box_border_colour);
-    m_filament_load_box->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_filament_load_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     m_filament_load_box->SetBackgroundColour(device_card_color());
     m_filament_load_box->SetSizer(sizer_box);
 
@@ -2882,10 +3130,10 @@ void StatusBasePanel::expand_filament_loading(wxMouseEvent &e)
     auto tag_show = false;
     if (m_filament_load_box->IsShown()) {
         tag_show = false;
-        m_img_filament_loading->SetBitmap(create_scaled_bitmap("filament_load_fold", this, 24));
+        m_img_filament_loading->SetBitmap(filament_loading_chevron(this, false));
     } else {
         tag_show = true;
-        m_img_filament_loading->SetBitmap(create_scaled_bitmap("filament_load_expand", this, 24));
+        m_img_filament_loading->SetBitmap(filament_loading_chevron(this, true));
     }
 
     if (obj) {
@@ -2944,7 +3192,7 @@ void StatusBasePanel::show_filament_load_group(bool show)
     if (m_scale_panel->IsShown() != show) {
         m_scale_panel->Show(show);
         if (!show) {
-            m_img_filament_loading->SetBitmap(create_scaled_bitmap("filament_load_fold", this, 24));
+            m_img_filament_loading->SetBitmap(filament_loading_chevron(this, false));
             m_img_filament_loading->Refresh();
         }
 
@@ -3008,7 +3256,7 @@ void StatusPanel::update_camera_state(MachineObject *obj)
             m_bitmap_sdcard_img->SetToolTip(_L("Storage"));
         }
         m_last_sdcard = sdcard_state;
-        m_panel_monitoring_title->Layout();
+        m_camera_hud->Layout();
     }
 
     // recording
@@ -3023,7 +3271,7 @@ void StatusPanel::update_camera_state(MachineObject *obj)
 
     if (!m_bitmap_recording_img->IsShown()) {
         m_bitmap_recording_img->Show();
-        m_panel_monitoring_title->Layout();
+        m_camera_hud->Layout();
     }
 
     /*if (m_bitmap_recording_img->IsShown())
@@ -3042,12 +3290,12 @@ void StatusPanel::update_camera_state(MachineObject *obj)
 
         if (!m_bitmap_timelapse_img->IsShown()) {
             m_bitmap_timelapse_img->Show();
-            m_panel_monitoring_title->Layout();
+            m_camera_hud->Layout();
         }
     } else {
         if (m_bitmap_timelapse_img->IsShown()) {
             m_bitmap_timelapse_img->Hide();
-            m_panel_monitoring_title->Layout();
+            m_camera_hud->Layout();
         }
     }
 
@@ -3064,12 +3312,12 @@ void StatusPanel::update_camera_state(MachineObject *obj)
 
         if (!m_bitmap_vcamera_img->IsShown()) {
             m_bitmap_vcamera_img->Show();
-            m_panel_monitoring_title->Layout();
+            m_camera_hud->Layout();
         }
     } else {
         if (m_bitmap_vcamera_img->IsShown()) {
             m_bitmap_vcamera_img->Hide();
-            m_panel_monitoring_title->Layout();
+            m_camera_hud->Layout();
         }
     }
 
@@ -3086,6 +3334,10 @@ void StatusPanel::update_camera_state(MachineObject *obj)
             m_camera_fullscreen_button->Enable(playing);
             m_camera_fullscreen_button->Refresh();
         }
+
+        // LIVE badge: pulse while the stream is actually playing or recording.
+        if (m_camera_hud)
+            m_camera_hud->SetLiveActive(playing || obj->is_recording());
     }
 }
 
@@ -3159,14 +3411,12 @@ StatusPanel::StatusPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
     m_tempCtrl_nozzle_deputy->Connect(wxEVT_SET_FOCUS, wxFocusEventHandler(StatusPanel::on_nozzle_temp_set_focus), NULL, this);
     m_tempCtrl_chamber->Connect(wxEVT_KILL_FOCUS, wxFocusEventHandler(StatusPanel::on_cham_temp_kill_focus), NULL, this);
     m_tempCtrl_chamber->Connect(wxEVT_SET_FOCUS, wxFocusEventHandler(StatusPanel::on_cham_temp_set_focus), NULL, this);
-    m_switch_lamp->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_lamp_switch), NULL, this);
-    // m_switch_nozzle_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this); // TODO
-    // m_switch_printing_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-    // m_switch_cham_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-
-    m_switch_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this); // TODO
-    // m_switch_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-    // m_switch_fan->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
+    // Chamber-light MD3 Switch: wxBitmapToggleButton fires wxEVT_TOGGLEBUTTON (not
+    // the ImageSwitchButton's synthetic wxEVT_COMMAND_BUTTON_CLICKED). GetValue()
+    // reflects the post-toggle state, so on_lamp_switch is unchanged.
+    m_switch_lamp->Connect(wxEVT_TOGGLEBUTTON, wxCommandEventHandler(StatusPanel::on_lamp_switch), NULL, this);
+    // Part-cooling / aux fan sliders open FanControlPopupNew via their SetOnChange
+    // callback (wired in create_misc_control); no separate fan button to bind.
 
     m_bpButton_xy->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_xy), NULL, this); // TODO
     m_bpButton_z_10->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_up_10), NULL, this);
@@ -3197,11 +3447,11 @@ StatusPanel::StatusPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
         if (m_ams_control) { m_ams_control->on_retry(); }
     });
 
-    m_switch_speed->Connect(wxEVT_LEFT_DOWN, wxCommandEventHandler(StatusPanel::on_switch_speed), NULL, this);
-    m_calibration_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_start_calibration), NULL, this);
-    m_options_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_print_options), NULL, this);
-    m_safety_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_safety_options), NULL, this);
-    m_parts_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_parts_options), NULL, this);
+    // Speed segmented control: a segment selection is the speed-level command path.
+    m_switch_speed->Connect(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEventHandler(StatusPanel::on_switch_speed), NULL, this);
+    // The four action entry points now live in the trailing overflow menu; the
+    // MoreHoriz button opens it and the menu items route straight to these handlers.
+    m_more_btn->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_more_options), NULL, this);
 }
 
 StatusPanel::~StatusPanel()
@@ -3229,14 +3479,10 @@ StatusPanel::~StatusPanel()
     m_tempCtrl_nozzle_deputy->Disconnect(wxEVT_KILL_FOCUS, wxFocusEventHandler(StatusPanel::on_nozzle_temp_kill_focus), NULL, this);
     m_tempCtrl_nozzle_deputy->Disconnect(wxEVT_SET_FOCUS, wxFocusEventHandler(StatusPanel::on_nozzle_temp_set_focus), NULL, this);
 
-    m_switch_lamp->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_lamp_switch), NULL, this);
+    m_switch_lamp->Disconnect(wxEVT_TOGGLEBUTTON, wxCommandEventHandler(StatusPanel::on_lamp_switch), NULL, this);
     /*m_switch_nozzle_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
     m_switch_printing_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
     m_switch_cham_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);*/
-
-    // m_switch_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-    // m_switch_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
-    m_switch_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);
 
     m_bpButton_xy->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_xy), NULL, this);
     m_bpButton_z_10->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_up_10), NULL, this);
@@ -3246,11 +3492,8 @@ StatusPanel::~StatusPanel()
     m_bpButton_e_10->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_e_up_10), NULL, this);
     m_bpButton_e_down_10->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_e_down_10), NULL, this);
     m_nozzle_btn_panel->Disconnect(wxCUSTOMEVT_SWITCH_POS, wxCommandEventHandler(StatusPanel::on_nozzle_selected), NULL, this);
-    m_switch_speed->Disconnect(wxEVT_LEFT_DOWN, wxCommandEventHandler(StatusPanel::on_switch_speed), NULL, this);
-    m_calibration_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_start_calibration), NULL, this);
-    m_options_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_print_options), NULL, this);
-    m_safety_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_safety_options), NULL, this);
-    m_parts_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_parts_options), NULL, this);
+    m_switch_speed->Disconnect(wxCUSTOMEVT_MULTISWITCH_SELECTION, wxCommandEventHandler(StatusPanel::on_switch_speed), NULL, this);
+    m_more_btn->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_show_more_options), NULL, this);
 
     // remove warning dialogs
     if (abort_dlg != nullptr) delete abort_dlg;
@@ -3266,17 +3509,17 @@ void StatusPanel::init_scaled_buttons()
 {
     m_project_task_panel->init_scaled_buttons();
     m_bpButton_z_10->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_10->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_z_1->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_1->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_z_down_1->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_down_1->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_z_down_10->SetMinSize(Z_BUTTON_SIZE);
-    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.small_radius));
+    m_bpButton_z_down_10->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
     m_bpButton_e_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_bpButton_e_10->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     m_bpButton_e_down_10->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
-    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+    m_bpButton_e_down_10->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
 }
 
 void StatusPanel::on_market_scoring(wxCommandEvent &event)
@@ -3387,28 +3630,18 @@ void StatusPanel::on_subtask_pause_resume(wxCommandEvent &event)
 
 void StatusPanel::on_subtask_abort(wxCommandEvent &event)
 {
-    if (abort_dlg == nullptr) {
-        abort_dlg = new SecondaryCheckDialog(this->GetParent(), wxID_ANY, _L("Cancel print"));
-        abort_dlg->Bind(EVT_SECONDARY_CHECK_CONFIRM, [this](wxCommandEvent &e) {
-            if (obj) {
-                BOOST_LOG_TRIVIAL(info) << "monitor: stop current print task dev_id =" << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id());
-                obj->command_task_abort();
-            }
-        });
-    }
-    abort_dlg->update_text(_L("Are you sure you want to stop this print?"));
-    abort_dlg->m_button_cancel->SetBackgroundColor(abort_dlg->btn_bg_green);
-    abort_dlg->m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::OnPrimary));
-    abort_dlg->m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
-    abort_dlg->m_button_cancel->SetLabel(_L("No"));
-
-    abort_dlg->m_button_ok->SetBackgroundColor(abort_dlg->btn_bg_white);
-    abort_dlg->m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::OnSurface));
-    abort_dlg->m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
-    abort_dlg->m_button_ok->SetLabel(_L("Yes"));
-
-    abort_dlg->on_show();
-    abort_dlg->Raise();
+    // Launch-console interlock: two key switches, three double-press arming
+    // buttons, a slide-to-confirm, then a lift-away cover over the actual
+    // STOP button. Every stage is labelled so the flow stays unambiguous;
+    // only the final revealed button aborts the task.
+    StopPrintGateDialog gate(this->GetParent());
+    gate.SetOnStopConfirmed([this]() {
+        if (obj) {
+            BOOST_LOG_TRIVIAL(info) << "monitor: stop current print task dev_id =" << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id());
+            obj->command_task_abort();
+        }
+    });
+    gate.ShowModal();
 }
 
 void StatusPanel::error_info_reset() { m_project_task_panel->error_info_reset(); }
@@ -3691,24 +3924,24 @@ void StatusPanel::show_printing_status(bool ctrl_area, bool temp_area)
         m_tempCtrl_bed->Enable(false);
         m_tempCtrl_chamber->Enable(false);
         m_switch_speed->Enable(false);
-        m_switch_speed->SetValue(false);
         m_switch_lamp->Enable(false);
         /*m_switch_nozzle_fan->Enable(false);
         m_switch_printing_fan->Enable(false);
         m_switch_cham_fan->Enable(false);*/
-        m_switch_fan->Enable(false);
+        if (m_slider_part_fan) m_slider_part_fan->Enable(false);
+        if (m_slider_aux_fan) m_slider_aux_fan->Enable(false);
     } else {
         m_tempCtrl_nozzle->Enable();
         m_tempCtrl_nozzle_deputy->Enable();
         m_tempCtrl_bed->Enable();
         m_tempCtrl_chamber->Enable();
         m_switch_speed->Enable();
-        m_switch_speed->SetValue(true);
         m_switch_lamp->Enable();
         /*m_switch_nozzle_fan->Enable();
         m_switch_printing_fan->Enable();
         m_switch_cham_fan->Enable();*/
-        m_switch_fan->Enable();
+        if (m_slider_part_fan) m_slider_part_fan->Enable(true);
+        if (m_slider_aux_fan) m_slider_aux_fan->Enable(true);
     }
 }
 
@@ -3720,6 +3953,11 @@ void StatusPanel::update_temp_ctrl(MachineObject *obj)
     int     bed_cur_temp    = bed->GetBedTemp();
     int     bed_target_temp = bed->GetBedTempTarget();
     m_tempCtrl_bed->SetCurrTemp((int) bed_cur_temp);
+
+    // Feed the always-dark camera-HUD temperature chips once per refresh (kit
+    // camera-card readouts). Main-extruder nozzle current + bed current.
+    if (m_camera_hud)
+        m_camera_hud->SetTemperatures(obj->GetExtderSystem()->GetNozzleTempCurrent(MAIN_EXTRUDER_ID), (int) bed_cur_temp);
 
     auto limit = obj->get_bed_temperature_limit();
     if (obj->bed_temp_range.size() > 1) { limit = obj->bed_temp_range[1]; }
@@ -3933,12 +4171,17 @@ void StatusPanel::update_misc_ctrl(MachineObject *obj)
         bool is_suppt_aux_fun  = obj->GetFan()->GetSupportAuxFanData();
         bool is_suppt_cham_fun = obj->GetFan()->GetSupportChamberFan();
         if (m_fan_control_popup) { m_fan_control_popup->update_fan_data(obj); }
+        // Preview live PWM on the teal sliders (0-255 -> 0-100). SetValue does not
+        // fire the change callback, so this never opens the fan popup. Both rows stay
+        // visible per the kit; the authoritative FanControlPopupNew still governs
+        // which fans are actually controllable for this printer.
+        (void) is_suppt_aux_fun;
+        if (m_slider_part_fan) m_slider_part_fan->SetValue((obj->GetFan()->GetCoolingFanSpeed() * 100 + 127) / 255);
+        if (m_slider_aux_fan) m_slider_aux_fan->SetValue((obj->GetFan()->GetBigFan1Speed() * 100 + 127) / 255);
     } else {
         if (m_fan_panel->IsShown()) { m_fan_panel->Hide(); }
         if (m_fan_control_popup && m_fan_control_popup->IsShown()) m_fan_control_popup->Hide();
     }
-
-    obj->is_series_o() ? m_switch_fan->UseTextAirCondition() : m_switch_fan->UseTextFan();
 
     // update cham fan
 
@@ -3956,10 +4199,14 @@ void StatusPanel::update_misc_ctrl(MachineObject *obj)
     if (speed_lvl_timeout > 0)
         speed_lvl_timeout--;
     else {
-        // update speed
-        this->speed_lvl     = obj->GetPrintingSpeedLevel();
-        wxString text_speed = wxString::Format("%d%%", obj->printing_speed_mag);
-        m_switch_speed->SetLabels(text_speed, text_speed);
+        // update speed: reflect the device speed level (1-4) on the segmented
+        // control. Guarded so syncing the selection does not re-issue the command.
+        this->speed_lvl = obj->GetPrintingSpeedLevel();
+        int seg = this->speed_lvl - 1;
+        if (seg < 0 || seg > 3) seg = 1;
+        m_speed_sync_guard = true;
+        m_switch_speed->SetSelection(seg);
+        m_speed_sync_guard = false;
     }
 }
 
@@ -4037,6 +4284,36 @@ void StatusPanel::update_ams(MachineObject *obj)
         info.ams_id = ams->first;
         if (ams->second->IsExist() && info.parse_ams_info(obj, ams->second, obj->GetFilaSystem()->IsDetectRemainEnabled(), obj->is_support_ams_humidity)) {
             ams_info.push_back(info);
+        }
+    }
+
+    // Wave-7 debt: bind the AMS-header teal 'Humidity' trailing label to live
+    // humidity from the first unit that reports real data (percentage when the
+    // unit sends one, else a coarse Dry/Normal/Humid word from the 1-5 level).
+    // Gated on the device flag + raw fields because get_humidity_display_idx()
+    // defaults to 1, so support_humidity() alone would read as spurious humidity.
+    if (m_ams_humidity_label) {
+        const AMSinfo *hum = nullptr;
+        if (obj->is_support_ams_humidity) {
+            for (const auto &info : ams_info) {
+                if (info.ams_humidity_percent >= 0 || (info.ams_humidity >= 1 && info.ams_humidity <= 5)) {
+                    hum = &info;
+                    break;
+                }
+            }
+        }
+        wxString hum_text;
+        if (hum) {
+            if (hum->ams_humidity_percent >= 0)
+                hum_text = _L("Humidity") + wxString::Format(": %d%%", hum->ams_humidity_percent);
+            else
+                hum_text = _L("Humidity") + ": " + device_humidity_state_word(hum->get_humidity_display_idx());
+        }
+        const bool want_show = (hum != nullptr);
+        if (m_ams_humidity_label->IsShown() != want_show) m_ams_humidity_label->Show(want_show);
+        if (want_show && m_ams_humidity_label->GetLabel() != hum_text) {
+            m_ams_humidity_label->SetLabel(hum_text);
+            if (m_ams_control_box) m_ams_control_box->Layout();
         }
     }
 
@@ -5534,62 +5811,31 @@ void StatusPanel::on_nozzle_temp_set_focus(wxFocusEvent &event)
 
 void StatusPanel::on_switch_speed(wxCommandEvent &event)
 {
-    auto now = boost::posix_time::microsec_clock::universal_time();
-    if ((now - speed_dismiss_time).total_milliseconds() < 200) {
-        speed_dismiss_time = now - boost::posix_time::seconds(1);
-        return;
-    }
-#if __WXOSX__
-    // MacOS has focus problem
-    PopupWindow *popUp = new PopupWindow(nullptr);
-#else
-    PopupWindow *popUp = new PopupWindow(m_switch_speed);
-#endif
-#ifdef __WXMSW__
-    popUp->BindUnfocusEvent();
-#endif
-    popUp->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
-    StepCtrl *step  = new StepCtrl(popUp, wxID_ANY);
-    wxSizer  *sizer = new wxBoxSizer(wxHORIZONTAL);
-    sizer->Add(step, 1, wxEXPAND, 0);
-    popUp->SetSizer(sizer);
-    auto em = em_unit(this);
-    popUp->SetSize(em * 36, em * 8);
-    step->SetHint(_L("This only takes effect during printing"));
-    step->AppendItem(_L("Silent"), "");
-    step->AppendItem(_L("Standard"), "");
-    step->AppendItem(_L("Sport"), "");
-    step->AppendItem(_L("Ludicrous"), "");
+    // Kit Device.jsx:63 — the 4-way SegmentedControl replaces the legacy StepCtrl
+    // popup: each segment IS a speed level, so a selection issues the same
+    // command_set_printing_speed path directly. Ignore selections driven by the
+    // device-state sync, and preserve the legacy rule that speed can only change
+    // while printing (the segment reverts to the live level otherwise).
+    if (m_speed_sync_guard) return;
+    if (!obj) return;
 
-    // default speed lvl
-    int selected_item = 1;
-    if (obj) {
-        int speed_lvl_idx = obj->GetPrintingSpeedLevel() - 1;
-        if (speed_lvl_idx >= 0 && speed_lvl_idx < 4) { selected_item = speed_lvl_idx; }
-    }
-    step->SelectItem(selected_item);
+    int seg = m_switch_speed->GetSelection();
+    if (seg < 0 || seg > 3) return;
 
     if (!obj->is_in_printing()) {
-        step->Bind(wxEVT_LEFT_DOWN, [](auto &e) { return; });
+        int cur = obj->GetPrintingSpeedLevel() - 1;
+        if (cur < 0 || cur > 3) cur = 1;
+        if (cur != seg) {
+            m_speed_sync_guard = true;
+            m_switch_speed->SetSelection(cur);
+            m_speed_sync_guard = false;
+        }
+        return;
     }
 
-    step->Bind(EVT_STEP_CHANGED, [this](auto &e) {
-        this->speed_lvl = e.GetInt() + 1;
-        if (obj) {
-            set_hold_count(this->speed_lvl_timeout);
-            obj->command_set_printing_speed((DevPrintingSpeedLevel) this->speed_lvl);
-        }
-    });
-    popUp->Bind(wxEVT_SHOW, [this, popUp](auto &e) {
-        if (!e.IsShown()) {
-            popUp->Destroy();
-            speed_dismiss_time = boost::posix_time::microsec_clock::universal_time();
-        }
-    });
-
-    wxPoint pos = m_switch_speed->ClientToScreen(wxPoint(0, -6));
-    popUp->Position(pos, {0, m_switch_speed->GetSize().y + 12});
-    popUp->Popup();
+    this->speed_lvl = seg + 1;
+    set_hold_count(this->speed_lvl_timeout);
+    obj->command_set_printing_speed((DevPrintingSpeedLevel) this->speed_lvl);
 }
 
 void StatusPanel::on_printing_fan_switch(wxCommandEvent &event)
@@ -5621,8 +5867,11 @@ void StatusPanel::on_nozzle_fan_switch(wxCommandEvent &event)
 
     m_fan_control_popup = new FanControlPopupNew(this, obj, obj->GetFan()->GetAirDuctData());
 
-    auto pos = m_switch_fan->GetScreenPosition();
-    pos.y    = pos.y + m_switch_fan->GetSize().y;
+    // Anchor below the fan slider block (the former m_switch_fan anchor); fall back
+    // to the panel if the anchor is somehow unset.
+    wxWindow *anchor = m_fan_ctrl_anchor ? m_fan_ctrl_anchor : static_cast<wxWindow *>(this);
+    auto pos = anchor->GetScreenPosition();
+    pos.y    = pos.y + anchor->GetSize().y;
 
     int  display_idx = wxDisplay::GetFromWindow(this);
     auto display     = wxDisplay(display_idx).GetClientArea();
@@ -5804,6 +6053,48 @@ void StatusPanel::on_start_calibration(wxCommandEvent &event)
     }
 }
 
+void StatusPanel::on_show_more_options(wxCommandEvent &event)
+{
+    // Kit Device.jsx:48 — the Parts / Print Options / Safety / Calibration entry
+    // points live behind this trailing overflow menu. It is rebuilt each time it
+    // opens from the (hidden) action buttons' live shown/enabled/label state, so all
+    // the existing update sites keep governing availability. Each item routes to its
+    // original handler (deferred via CallAfter so the menu closes before the modal).
+    if (!m_more_btn) return;
+
+    enum { ID_PARTS = wxID_HIGHEST + 2200, ID_OPTIONS, ID_SAFETY, ID_CALI };
+    wxMenu menu;
+    if (m_parts_btn && m_parts_btn->IsShown()) {
+        menu.Append(ID_PARTS, m_parts_btn->GetLabel());
+        menu.Enable(ID_PARTS, m_parts_btn->IsEnabled());
+    }
+    if (m_options_btn && m_options_btn->IsShown()) {
+        menu.Append(ID_OPTIONS, m_options_btn->GetLabel());
+        menu.Enable(ID_OPTIONS, m_options_btn->IsEnabled());
+    }
+    if (m_safety_btn && m_safety_btn->IsShown()) {
+        menu.Append(ID_SAFETY, m_safety_btn->GetLabel());
+        menu.Enable(ID_SAFETY, m_safety_btn->IsEnabled());
+    }
+    if (m_calibration_btn) {
+        menu.Append(ID_CALI, m_calibration_btn->GetLabel());
+        menu.Enable(ID_CALI, m_calibration_btn->IsEnabled());
+    }
+
+    // Synchronous selection: the menu has already closed when this returns, so the
+    // handler's modal dialog opens cleanly. wxID_NONE means the user dismissed it.
+    int sel = m_more_btn->GetPopupMenuSelectionFromUser(menu);
+    wxCommandEvent ev;
+    if (sel == ID_PARTS)
+        on_show_parts_options(ev);
+    else if (sel == ID_OPTIONS)
+        on_show_print_options(ev);
+    else if (sel == ID_SAFETY)
+        on_show_safety_options(ev);
+    else if (sel == ID_CALI)
+        on_start_calibration(ev);
+}
+
 bool StatusPanel::is_stage_list_info_changed(MachineObject *obj)
 {
     if (!obj) return true;
@@ -5879,14 +6170,18 @@ void StatusPanel::show_status(int status)
         m_options_btn->Disable();
         m_safety_btn->Disable();
         m_parts_btn->Disable();
-        m_panel_monitoring_title->Disable();
+        if (m_camera_hud) {
+            m_camera_hud->Enable(false);
+            m_camera_hud->SetLiveActive(false);
+            m_camera_hud->HideTemperatures();
+        }
     } else if ((status & (int) MonitorStatus::MONITOR_NORMAL) != 0) {
         show_printing_status(true, true);
         m_calibration_btn->Disable();
         m_options_btn->Enable();
         m_safety_btn->Enable();
         m_parts_btn->Enable();
-        m_panel_monitoring_title->Enable();
+        if (m_camera_hud) m_camera_hud->Enable(true);
     }
 }
 
@@ -5897,18 +6192,12 @@ void StatusPanel::rescale_camera_icons()
     if (!GetParent() || IsBeingDeleted()) return;
     if (!m_setting_button || !m_media_play_ctrl || !m_bitmap_vcamera_img || !m_bitmap_sdcard_img || !m_bitmap_recording_img || !m_bitmap_timelapse_img) return;
 
-    m_setting_button->msw_rescale();
-    if (m_camera_fullscreen_button) m_camera_fullscreen_button->msw_rescale();
+    if (m_camera_hud) m_camera_hud->msw_rescale();
 
-    m_bitmap_sdcard_state_abnormal = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_abnormal_dark" : "sdcard_state_abnormal", 20);
-    m_bitmap_sdcard_state_normal   = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_normal_dark" : "sdcard_state_normal", 20);
-    m_bitmap_sdcard_state_no       = ScalableBitmap(this, wxGetApp().dark_mode() ? "sdcard_state_no_dark" : "sdcard_state_no", 20);
-    m_bitmap_recording_on          = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_recording_on_dark" : "monitor_recording_on", 20);
-    m_bitmap_recording_off         = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_recording_off_dark" : "monitor_recording_off", 20);
-    m_bitmap_timelapse_on          = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_timelapse_on_dark" : "monitor_timelapse_on", 20);
-    m_bitmap_timelapse_off         = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_timelapse_off_dark" : "monitor_timelapse_off", 20);
-    m_bitmap_vcamera_on            = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_vcamera_on_dark" : "monitor_vcamera_on", 20);
-    m_bitmap_vcamera_off           = ScalableBitmap(this, wxGetApp().dark_mode() ? "monitor_vcamera_off_dark" : "monitor_vcamera_off", 20);
+    // Always-dark variants: the HUD interior is fixed-dark in both app themes.
+    build_hud_status_glyphs(this, m_bitmap_sdcard_state_normal, m_bitmap_sdcard_state_abnormal, m_bitmap_sdcard_state_no,
+                            m_bitmap_recording_on, m_bitmap_recording_off, m_bitmap_timelapse_on, m_bitmap_timelapse_off,
+                            m_bitmap_vcamera_on, m_bitmap_vcamera_off);
 
     if (m_media_play_ctrl->IsStreaming()) {
         m_bitmap_vcamera_img->SetBitmap(m_bitmap_vcamera_on.bmp());
@@ -5949,12 +6238,13 @@ void StatusPanel::on_sys_color_changed()
     recolor_device_surface_tree(this);
     SetBackgroundColour(device_page_color());
     m_machine_ctrl_panel->SetBackgroundColour(device_page_color());
-    m_panel_monitoring_title->SetBackgroundColour(device_title_color());
     m_panel_control_title->SetBackgroundColour(device_title_color());
-    m_camera_fullscreen_button->SetBackgroundColour(device_title_color());
-    m_setting_button->SetBackgroundColour(device_title_color());
-    m_staticText_monitoring->SetForegroundColour(device_secondary_text_color());
+    // The camera HUD is fixed-dark in both themes: it is NOT re-tinted to the
+    // Device title colour; just repaint it so the badge/chips redraw crisply.
+    if (m_camera_hud) m_camera_hud->Refresh();
     m_staticText_control->SetForegroundColour(device_secondary_text_color());
+    // Keep the (title-strip-free) action row blended into the SurfaceDim column.
+    if (m_panel_control_title) m_panel_control_title->SetBackgroundColour(device_page_color());
     StateColor card_background(device_card_color());
     StateColor card_border(device_divider_color());
     for (StaticBox *card : {m_temperature_control_box, m_print_options_box, m_ams_control_box, m_move_control_box, m_filament_load_box}) {
@@ -5962,7 +6252,7 @@ void StatusPanel::on_sys_color_changed()
         card->SetBackgroundColor(card_background);
         card->SetBackgroundColour(device_card_color());
         card->SetBorderColor(card_border);
-        card->SetCornerRadius(FromDIP(MD3::Metrics::comfortable.radius));
+        card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
         card->Refresh();
     }
     if (m_fan_panel) {
@@ -5999,6 +6289,8 @@ void StatusPanel::on_sys_color_changed()
     for (TempInput *input : {m_tempCtrl_nozzle, m_tempCtrl_nozzle_deputy, m_tempCtrl_bed, m_tempCtrl_chamber}) {
         input->SetTextColor(temp_text);
         input->SetBorderColor(temp_border);
+        // Re-resolve the teal/idle glyph colours for the new theme.
+        input->SetGlyphColors(device_primary_color(), device_secondary_text_color());
         input->Refresh();
     }
 
@@ -6043,18 +6335,25 @@ void StatusPanel::on_sys_color_changed()
         button->Refresh();
     }
     m_bpButton_xy->SetTextColor(control_text);
-    m_switch_speed->SetTextColor(control_text);
-    m_switch_lamp->SetTextColor(control_text);
-    m_switch_fan->SetTextColor(StateColor(std::make_pair(device_disabled_text_color(), (int) StateColor::Disabled),
-                                          std::make_pair(device_secondary_text_color(), (int) StateColor::Normal)));
+    // Re-resolve the Device-teal segmented fills for the new theme (MultiSwitchButton
+    // stores its StateColors at construction, so a theme flip needs a re-apply). The
+    // Slider / SwitchButton controls resolve their colours per paint but cache a
+    // bitmap, so refresh/rescale them here.
+    StateColor seg_bg(std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int) StateColor::NotChecked),
+                      std::make_pair(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device), (int) StateColor::Normal));
+    m_switch_speed->SetBackgroundColor(seg_bg);
+    if (m_axis_step_switch) m_axis_step_switch->SetBackgroundColor(seg_bg);
+    m_switch_lamp->Rescale();
+    if (m_slider_part_fan) m_slider_part_fan->Refresh();
+    if (m_slider_aux_fan) m_slider_aux_fan->Refresh();
     const wxColour control_label_color = m_bpButton_z_10->IsEnabled() ? device_secondary_text_color() : device_disabled_text_color();
     m_staticText_z_tip->SetForegroundColour(control_label_color);
     m_extruder_label->SetForegroundColour(control_label_color);
 
+    // Rebuild the task-panel glyphs (idle thumbnail tile + time/weight metadata)
+    // for the new theme before it rescales, mirroring the DPI path.
+    m_project_task_panel->init_bitmaps();
     m_project_task_panel->msw_rescale();
-    m_bitmap_speed.msw_rescale();
-    m_bitmap_speed_active.msw_rescale();
-    m_switch_speed->SetImages(m_bitmap_speed, m_bitmap_speed);
     m_ams_control->msw_rescale();
     rescale_camera_icons();
     Layout();
@@ -6066,8 +6365,7 @@ void StatusPanel::msw_rescale()
     init_bitmaps();
     m_project_task_panel->init_bitmaps();
     m_project_task_panel->msw_rescale();
-    m_panel_monitoring_title->SetSize(wxSize(-1, FromDIP(PAGE_TITLE_HEIGHT)));
-    // m_staticText_monitoring->SetMinSize(wxSize(PAGE_TITLE_TEXT_WIDTH, PAGE_TITLE_HEIGHT));
+    // The camera HUD (and its chips) are rescaled by rescale_camera_icons() below.
     m_bmToggleBtn_timelapse->Rescale();
     m_panel_control_title->SetSize(wxSize(-1, FromDIP(PAGE_TITLE_HEIGHT)));
     // m_staticText_control->SetMinSize(wxSize(-1, PAGE_TITLE_HEIGHT));
@@ -6100,28 +6398,20 @@ void StatusPanel::msw_rescale()
         if (ext_img) { ext_img->msw_rescale(); }
     }
 
-    m_bitmap_speed.msw_rescale();
-    m_bitmap_speed_active.msw_rescale();
-
-    m_switch_speed->SetImages(m_bitmap_speed, m_bitmap_speed);
-    m_switch_speed->SetMinSize(MISC_BUTTON_2FAN_SIZE);
+    // Print-options controls rescale themselves from live tokens/DPI: the segmented
+    // control and step selector rebuild their button metrics, the switch re-renders
+    // its bitmap at the new scale, and the sliders resolve geometry per paint.
+    m_switch_speed->SetMinSize(wxSize(-1, FromDIP(32)));
     m_switch_speed->Rescale();
-    m_switch_lamp->SetImages(m_bitmap_lamp_on, m_bitmap_lamp_off);
-    m_switch_lamp->SetMinSize(MISC_BUTTON_2FAN_SIZE);
+    if (m_axis_step_switch) {
+        m_axis_step_switch->SetMinSize(wxSize(FromDIP(120), FromDIP(28)));
+        m_axis_step_switch->Rescale();
+    }
+    m_switch_lamp->SetMinSize(wxSize(FromDIP(44), FromDIP(24)));
     m_switch_lamp->Rescale();
-    /*m_switch_nozzle_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_nozzle_fan->Rescale();
-    m_switch_printing_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_printing_fan->Rescale();
-    m_switch_cham_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_cham_fan->Rescale();*/
-
-    m_switch_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    m_switch_fan->Rescale();
+    if (m_slider_part_fan) { m_slider_part_fan->SetMinSize(wxSize(FromDIP(90), FromDIP(24))); m_slider_part_fan->Rescale(); }
+    if (m_slider_aux_fan) { m_slider_aux_fan->SetMinSize(wxSize(FromDIP(90), FromDIP(24))); m_slider_aux_fan->Rescale(); }
     if (m_fan_control_popup) { m_fan_control_popup->msw_rescale(); }
-
-    // m_switch_fan->SetImages(m_bitmap_fan_on, m_bitmap_fan_off);
-    // m_switch_fan->Rescale();
 
     m_bpButton_z_10->Rescale();
     m_bpButton_z_1->Rescale();
@@ -6280,7 +6570,7 @@ void StatusPanel::update_filament_loading_panel(MachineObject *obj)
 }
 
 ScoreDialog::ScoreDialog(wxWindow *parent, int design_id, std::string model_id, int profile_id, int rating_id, bool success_printed, int star_count)
-    : DPIDialog(parent, wxID_ANY, _L("Rate the Print Profile"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER)
+    : MD3Dialog(parent, _L("Rate the Print Profile"), wxEmptyString, MaterialIcon::Star)
     , m_design_id(design_id)
     , m_model_id(model_id)
     , m_profile_id(profile_id)
@@ -6289,18 +6579,23 @@ ScoreDialog::ScoreDialog(wxWindow *parent, int design_id, std::string model_id, 
     , m_success_printed(success_printed)
     , m_upload_status_code(StatusCode::CODE_NUMBER)
 {
+    // Migrated onto the MD3Dialog shell (containment/Dialog.prompt.md): the
+    // borderless 28px shell + header icon tile replace the native wxCAPTION
+    // title bar.
     m_tocken.reset(new int(0));
 
     wxBoxSizer *m_main_sizer = get_main_sizer();
 
-    this->SetSizer(m_main_sizer);
-    Fit();
+    GetContentSizer()->Add(m_main_sizer, 1, wxEXPAND);
     Layout();
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
     wxGetApp().UpdateDlgDarkUI(this);
 }
 
 ScoreDialog::ScoreDialog(wxWindow *parent, ScoreData *score_data)
-    : DPIDialog(parent, wxID_ANY, _L("Rate the Print Profile"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER)
+    : MD3Dialog(parent, _L("Rate the Print Profile"), wxEmptyString, MaterialIcon::Star)
     , m_design_id(score_data->design_id)
     , m_rating_id(score_data->rating_id)
     , m_model_id(score_data->model_id)
@@ -6315,15 +6610,17 @@ ScoreDialog::ScoreDialog(wxWindow *parent, ScoreData *score_data)
 
     m_image_url_paths = score_data->image_url_paths;
 
-    this->SetSizer(m_main_sizer);
-    Fit();
+    GetContentSizer()->Add(m_main_sizer, 1, wxEXPAND);
     Layout();
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
     wxGetApp().UpdateDlgDarkUI(this);
 }
 
 ScoreDialog::~ScoreDialog() {}
 
-void ScoreDialog::on_dpi_changed(const wxRect &suggested_rect) {}
+void ScoreDialog::on_dpi_changed(const wxRect &suggested_rect) { UpdateShape(); }
 
 void ScoreDialog::OnBitmapClicked(wxMouseEvent &event)
 {
@@ -6510,6 +6807,7 @@ wxBoxSizer *ScoreDialog::get_star_sizer()
         } else
             m_score_star[i] = new ScalableButton(this, wxID_ANY, "score_star_dark", wxEmptyString, wxSize(FromDIP(26), FromDIP(26)), wxDefaultPosition,
                                                  wxBU_EXACTFIT | wxNO_BORDER, true, 26);
+        m_score_star[i]->SetBitmap(score_star_bitmap(m_score_star[i], i < m_star_count));
 
         m_score_star[i]->SetMinSize(wxSize(FromDIP(26), FromDIP(26)));
         m_score_star[i]->SetMaxSize(wxSize(FromDIP(26), FromDIP(26)));
@@ -6525,16 +6823,14 @@ wxBoxSizer *ScoreDialog::get_star_sizer()
                 Fit();
             }
             for (int j = 0; j < m_score_star.size(); ++j) {
-                ScalableBitmap light_star = ScalableBitmap(nullptr, "score_star_light", 26);
-                m_score_star[j]->SetBitmap(light_star.bmp());
+                m_score_star[j]->SetBitmap(score_star_bitmap(m_score_star[j], true));
                 if (m_score_star[j] == m_score_star[i]) {
                     m_star_count = j + 1;
                     break;
                 }
             }
             for (int k = m_star_count; k < m_score_star.size(); ++k) {
-                ScalableBitmap dark_star = ScalableBitmap(nullptr, "score_star_dark", 26);
-                m_score_star[k]->SetBitmap(dark_star.bmp());
+                m_score_star[k]->SetBitmap(score_star_bitmap(m_score_star[k], false));
             }
         });
         static_score_star_sizer->Add(m_score_star[i], 1, wxEXPAND | wxLEFT, FromDIP(5));
@@ -6565,10 +6861,9 @@ void ScoreDialog::create_comment_text(const wxString &comment)
     m_comment_text->SetMinSize(wxSize(FromDIP(492), FromDIP(104)));
 
     m_comment_text->Bind(wxEVT_SET_FOCUS, [this](auto &event) {
-        if (wxGetApp().dark_mode()) {
-            m_comment_text->SetForegroundColour(wxColor(*wxWHITE));
-        } else
-            m_comment_text->SetForegroundColour(wxColor(*wxBLACK));
+        // Theme-adaptive OnSurface role instead of hand-branched *wxWHITE/*wxBLACK
+        // on dark_mode(), matching this file's StateColor::semantic pattern.
+        m_comment_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         m_comment_text->Refresh();
         event.Skip();
     });
@@ -6847,11 +7142,9 @@ wxBoxSizer *ScoreDialog::get_main_sizer(const std::vector<std::pair<wxString, st
 {
     init();
     wxBoxSizer *m_main_sizer = new wxBoxSizer(wxVERTICAL);
-    // top line
-    auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::Outline));
-    m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
-    m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(32));
+    // The MD3Dialog shell's own header already separates title from body, so
+    // the legacy Outline top divider line is dropped here (was redundant).
+    m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(8));
 
     warning_text = new wxStaticText(this, wxID_ANY, _L("At least one successful print record of this print profile is required \nto give a positive rating(4 or 5stars)."));
     warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));

@@ -141,7 +141,6 @@ class Sidebar : public wxPanel
 {
     ConfigOptionMode    m_mode;
     Button *         btn_sync{nullptr};
-    ScalableButton *  ams_btn{nullptr};
     bool                                    m_last_slice_state = false;
     SyncNozzleAndAmsDialog*                 m_sna_dialog{nullptr};
     FinishSyncAmsDialog*                    m_fna_dialog{nullptr};
@@ -189,6 +188,10 @@ public:
     void search();
     void jump_to_option(size_t selected);
     void jump_to_option(const std::string& opt_key, Preset::Type type, const std::wstring& category);
+    // MD3 compact Process card <-> full ParamsPanel flip (persisted in
+    // app_config "sidebar_process_advanced" unless persist is false, e.g.
+    // for transient flips such as search-result jumps).
+    void show_process_advanced(bool advanced, bool persist = true);
     // BBS. Add filament_added() method.
     void on_filament_count_change(size_t num_filaments);
     void on_filaments_delete(size_t filament_id);
@@ -198,6 +201,9 @@ public:
     void change_filament(size_t from_id, size_t to_id);  // 0 base
     void edit_filament();
     void add_custom_filament(wxColour new_col, const std::string& preset_name = std::string(), bool skip_preset_validation = false);
+    // Bulk filament actions dialog: set preset / set colour / delete across the
+    // checked physical slots, plus append N filaments, applied in one batch.
+    void bulk_filament_actions();
     bool is_new_project_in_gcode3mf();
     // BBS
     void on_bed_type_change(BedType bed_type);
@@ -310,6 +316,20 @@ private:
     bool            m_need_auto_sync_after_connect_printer{false};
 };
 
+// A project-history snapshot whose commit failed terminally (a blocked Save-As
+// destination or a non-retryable error) and whose immutable recovery .3mf is
+// quarantined on disk until the user retries it. Surfaced by the durable
+// failure notification and the Version history dialog.
+struct RetainedProjectHistoryFailure
+{
+    // User-facing project filename (UTF-8). Empty when the snapshot belonged to
+    // an untitled session; use the localized "Untitled project" instead.
+    std::string display_name;
+    // The edit / autosave reason recorded for the snapshot (UTF-8).
+    std::string reason;
+    bool        untitled{false};
+};
+
 class Plater: public wxPanel
 {
     bool m_force_ban_check_volume_bbox_state_with_extruder_area{false};
@@ -363,6 +383,13 @@ public:
     // BBS: save & backup
     int load_project(wxString const & filename = "", wxString const & originfile = "-",
                      bool *load_succeeded = nullptr, bool skip_close_confirmation = false);
+    // BBS: session file-tabs — silent snapshot round-trip for tab switching.
+    // save_snapshot_to() writes the whole live project to a temp .3mf using the
+    // shipped Backup autosave archive; load_snapshot_from() restores it (or a
+    // real project file) through the crash-recovery Restore path. Both reuse
+    // existing serialization only and never prompt. Return true on success.
+    bool save_snapshot_to(const std::string& path);
+    bool load_snapshot_from(const std::string& path);
     int save_project(bool saveAs = false);
     //BBS download project by project id
     void import_model_id(wxString download_info);
@@ -661,6 +688,12 @@ public:
                                                                  bool stop_active_jobs = false,
                                                                  bool wait_for_commits = true);
     bool                           restore_project_history_snapshot(const std::filesystem::path &restored_snapshot);
+    // Terminal / quarantined project-history commits kept on disk for recovery.
+    bool                                        has_project_history_retained_failures() const;
+    std::vector<RetainedProjectHistoryFailure>  project_history_retained_failures() const;
+    // Re-drives every quarantined commit through the normal history machinery.
+    // Safe to call from the failure notification's Retry action or the dialog.
+    void                                        retry_project_history_failures();
     void update_print_error_info(int code, std::string msg, std::string extra);
 
     bool is_export_gcode_scheduled() const;
