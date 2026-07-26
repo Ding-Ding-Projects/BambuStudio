@@ -669,7 +669,7 @@ struct Sidebar::priv
 {
     Plater *plater;
 
-    wxPanel *scrolled = nullptr;
+    wxScrolledWindow *scrolled = nullptr;
     PlaterPresetComboBox *combo_sla_print = nullptr;
     PlaterPresetComboBox *combo_sla_material = nullptr;
 
@@ -1152,6 +1152,21 @@ Sidebar::priv::~priv()
 #endif
 }
 
+// Sidebar body scroll maintenance (shared by Sidebar::update_scroll_body and
+// the priv:: paths that run before/without the public wrapper): virtual width
+// always tracks the client width so rows reflow to the sidebar instead of
+// keeping a stale (wider) content-min width, and virtual height grows past the
+// client so sections below the fold scroll into reach instead of clipping.
+static void update_sidebar_scroll_body(wxScrolledWindow *sw)
+{
+    if (!sw || !sw->GetSizer()) return;
+    const wxSize client = sw->GetClientSize();
+    if (client.x <= 0 || client.y <= 0) return;
+    const int min_h = sw->GetSizer()->GetMinSize().y;
+    sw->SetVirtualSize(client.x, std::max(min_h, client.y));
+    sw->Layout();
+}
+
 void Sidebar::priv::show_preset_comboboxes()
 {
     const bool showSLA = wxGetApp().preset_bundle->printers.get_edited_preset().printer_technology() == ptSLA;
@@ -1265,7 +1280,7 @@ void Sidebar::priv::update_filament_row_badges()
         plater->sidebar().recalc_filament_scroll_sizes();
         m_panel_filament_content->Layout();
         m_filament_area_wrapper->Layout();
-        scrolled->Layout();
+        update_sidebar_scroll_body(scrolled);
     }
 }
 
@@ -1364,10 +1379,11 @@ void Sidebar::priv::apply_process_segment(int seg)
     }
     if (m_process_card && m_process_card->IsShown()) {
         m_process_card->Layout();
-        if (scrolled) {
-            scrolled->Layout();
-            scrolled->FitInside();
-        }
+        // NOTE: never FitInside() here — on the former plain-panel body that
+        // permanently pinned the virtual width to the content min width and
+        // right-clipped every sidebar row. The shared helper keeps the width
+        // at the client width and only grows the scrollable height.
+        update_sidebar_scroll_body(scrolled);
     }
 }
 
@@ -2793,12 +2809,22 @@ Sidebar::Sidebar(Plater *parent)
     Choice::register_dynamic_list("sparse_infill_filament", &dynamic_filament_list);
     Choice::register_dynamic_list("solid_infill_filament", &dynamic_filament_list);
 
-    p->scrolled = new wxPanel(this);
-    //    p->scrolled->SetScrollbars(0, 100, 1, 2); // ys_DELETE_after_testing. pixelsPerUnitY = 100
-    // but this cause the bad layout of the sidebar, when all infoboxes appear.
-    // As a result we can see the empty block at the bottom of the sidebar
-    // But if we set this value to 5, layout will be better
-    //p->scrolled->SetScrollRate(0, 5);
+    // The sidebar body is a real vertical scroller. The former plain wxPanel
+    // clipped everything below the fold (no scrollbar), and its content-min
+    // size (including the stray FitInside() virtual-width pin) propagated up
+    // the sizer chain into the frame minimum size, so short windows could not
+    // even be created. Scrolling is vertical-only: update_sidebar_scroll_body()
+    // keeps the virtual width equal to the client width so rows always reflow
+    // to the sidebar, and grows only the virtual height past the client.
+    p->scrolled = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                       wxTAB_TRAVERSAL | wxVSCROLL);
+    p->scrolled->SetScrollRate(0, FromDIP(8));
+    p->scrolled->EnableScrolling(false, true);
+    p->scrolled->ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_DEFAULT);
+    // Explicit small minimum: the body must never dictate the sidebar/frame
+    // minimum size again — content taller than the window becomes scrollable
+    // instead of a hard window-size floor.
+    p->scrolled->SetMinSize(wxSize(FromDIP(MD3::Metrics::compact.sidebar_width), FromDIP(240)));
     const wxColour surface_low    = StateColor::semantic(MD3::Role::SurfaceContainerLow);
     const wxColour surface_lowest = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     const wxColour surface_high   = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
@@ -2824,6 +2850,14 @@ Sidebar::Sidebar(Plater *parent)
     // Sizer in the scrolled area
     auto* scrolled_sizer = m_scrolled_sizer = new wxBoxSizer(wxVERTICAL);
     p->scrolled->SetSizer(scrolled_sizer);
+    // Manage the virtual size ourselves (SetSizer turned auto-layout on, whose
+    // size handler would pin the virtual width to the content min width — the
+    // exact clipping bug this scroller replaces).
+    p->scrolled->SetAutoLayout(false);
+    p->scrolled->Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
+        update_scroll_body();
+        e.Skip();
+    });
 
     const wxColour title_bg        = surface_low;
     const wxColour inactive_text   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
@@ -2884,7 +2918,7 @@ Sidebar::Sidebar(Plater *parent)
                 p->m_panel_printer_content->SetMaxSize({-1, -1});
             else
                 p->m_panel_printer_content->SetMaxSize({-1, 0});
-            m_scrolled_sizer->Layout();
+            update_scroll_body();
         };
         p->m_panel_printer_title->Bind(wxEVT_LEFT_DOWN, toggle_printer_content);
         // m_printer_header is a separate child wxWindow (unlike the old Label's
@@ -3194,7 +3228,7 @@ Sidebar::Sidebar(Plater *parent)
         } else {
             p->m_filament_area_wrapper->Hide();
         }
-        m_scrolled_sizer->Layout();
+        update_scroll_body();
         e.Skip();
     });
     p->m_panel_filament_title->Bind(wxEVT_SIZE, [this](wxSizeEvent &event) {
@@ -3224,7 +3258,7 @@ Sidebar::Sidebar(Plater *parent)
         } else {
             p->m_filament_area_wrapper->Hide();
         }
-        m_scrolled_sizer->Layout();
+        update_scroll_body();
         e.Skip();
     });
     bSizer39->Add(p->m_filament_header, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(10));
@@ -3400,7 +3434,7 @@ Sidebar::Sidebar(Plater *parent)
         recalc_filament_scroll_sizes();
         p->m_panel_filament_content->Layout();
         p->m_filament_area_wrapper->Layout();
-        m_scrolled_sizer->Layout();
+        update_scroll_body();
         p->scrolled->Refresh();
     };
     p->m_filament_search->SetOnQuery([refilter_filament_rows](const wxString &) { refilter_filament_rows(); });
@@ -3930,6 +3964,10 @@ Sidebar::Sidebar(Plater *parent)
         });
 
     p->m_object_list = new ObjectList(p->scrolled);
+    // In the scrollable sidebar body the object list keeps a usable floor
+    // height (it still stretches with its proportion when space allows);
+    // without a min it collapses to a sliver before the scrollbar engages.
+    p->m_object_list->SetMinSize(wxSize(-1, FromDIP(180)));
 
     {
         const int pad = FromDIP(MD3::Metrics::active().padding);
@@ -3965,6 +4003,10 @@ Sidebar::Sidebar(Plater *parent)
         scrolled_sizer->Add(p->m_process_simple_bar, 0, wxEXPAND);
 
         params_panel->Reparent(p->scrolled);
+        // Advanced-tree floor height: inside the scrollable body the full tree
+        // keeps a usable minimum (its own internal scroller handles the rest)
+        // instead of being crushed to nothing at short window heights.
+        params_panel->SetMinSize(wxSize(-1, FromDIP(240)));
         scrolled_sizer->Add(params_panel, 3, wxEXPAND);
 
         // Apply the persisted compact/advanced choice (compact is the kit
@@ -4913,7 +4955,7 @@ void Sidebar::msw_rescale()
     p->btn_reslice     ->SetMinSize(wxSize(-1, scaled_height));
 #endif
     recalc_filament_scroll_sizes();
-    p->scrolled->Layout();
+    update_scroll_body();
 
     p->searcher.dlg_msw_rescale();
 }
@@ -5091,7 +5133,7 @@ void Sidebar::sys_color_changed()
     }
     update_mixed_filament_list();
 
-    p->scrolled->Layout();
+    update_scroll_body();
     p->scrolled->Refresh();
     Refresh();
 
@@ -5139,7 +5181,7 @@ void Sidebar::show_process_advanced(bool advanced, bool persist)
     if (!advanced) p->refresh_process_card();
     if (persist && wxGetApp().app_config)
         wxGetApp().app_config->set("sidebar_process_advanced", advanced ? "true" : "false");
-    m_scrolled_sizer->Layout();
+    update_scroll_body();
     p->scrolled->Refresh();
 }
 
@@ -6157,7 +6199,7 @@ bool Sidebar::show_object_list(bool show) const
         p->object_layers->Show(false);
     else
         p->m_object_list->part_selection_changed();
-    p->scrolled->Layout();
+    update_scroll_body();
     return true;
 }
 
@@ -6227,6 +6269,15 @@ void Sidebar::recalc_filament_scroll_sizes()
 
     recalc(p->m_physical_scroll_area, max_h_physical);
     recalc(p->m_mixed_scroll_area, max_h_mixed);
+
+    // Every add/remove/filter path funnels through here, so this is the shared
+    // point to refresh the sidebar body's scrollable extent as well.
+    update_scroll_body();
+}
+
+void Sidebar::update_scroll_body() const
+{
+    update_sidebar_scroll_body(p->scrolled);
 }
 
 static std::string blend_mixed_color(const std::vector<unsigned int> &comp_ids,
@@ -6699,8 +6750,7 @@ void Sidebar::update_mixed_filament_list()
     p->m_physical_scroll_area->FitInside();
     p->m_mixed_scroll_area->FitInside();
     p->m_filament_area_wrapper->Layout();
-    m_scrolled_sizer->Layout();
-    p->scrolled->Layout();
+    update_scroll_body();
 
     size_t total = wxGetApp().preset_bundle->filament_presets.size();
     obj_list()->update_objects_list_filament_column(total);

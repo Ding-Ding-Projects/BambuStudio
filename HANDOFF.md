@@ -1,3 +1,32 @@
+# Session handoff (2026-07-26): release drought ended, identity rebrand, five features
+
+- **Releases flow again.** Root causes fixed in order: deterministic-test "hang" was
+  STATUS_DLL_NOT_FOUND (OCCT DLLs missing from test PATH); visual-smoke silent -1 was the
+  Ninja install shipping ONE dll (bambustudio_copy_dlls only ran in the multi-config CMake
+  branch — fixed in src/CMakeLists.txt); smoke scenario-2 blank was a PrintWindow paint race
+  (retry loop added). Supersede-cancel removed: every push builds+releases to completion.
+  Published: r265/r267/r268, then **md3-v1 "Char Siu Bao 叉燒包" (Latest)** under the new
+  scheme: sequential vN + unique dish codename (100 real dishes then style×dish combos,
+  build_all.yml publish step), CI-generated unique dim-sum splash per release
+  (scripts/ci/New-DimSumSplash.ps1, seeded by run number), dim-sum default splash SVG.
+- **Features shipped** (all headlessly verified): bulk ink actions dialog (icon button beside
+  Add ink), Preview print button restored (bar shown on tpPreview, Add-plate Prepare-only,
+  disabled-Print tooltips), feedrate-true print simulation (IMSlider transport, time-
+  authoritative clock), sidebar search pills (process→settings-search popup incl. printer;
+  ink rows filtered by name+color), bilingual Home webview fixed (whole-sentence composition,
+  no overlap). Terminology: filament→ink, AMS→Ink Dispenser via **en catalog msgstr
+  overrides** (resources/i18n/en/BambuStudio.mo IS loaded at runtime; empty msgstr entries
+  must be OMITTED from .mo or labels vanish — wxGetTranslation returns "" without fallback).
+  "Sync AMS" displays as compact "Sync"/同步 (longer forms clip at the panel edge).
+- **UNVERIFIED at handoff:** the last commit's Plater.cpp/hpp sidebar-clipping fix (user
+  report: hidden/unexpandable/unscrollable left-panel settings) was implemented by an agent
+  whose verification rebuild did not finish before handoff — compile state unknown; the next
+  session must build (scratchpad build-gui-lowmem.cmd), verify headlessly at 900/700 window
+  heights (scroll+collapse+expand every section), and fix forward if needed. CI runs for the
+  splash-generator/bilingual/ink/sync pushes were still concluding; check
+  `gh run list` + promote the newest green release to Latest (v2 Har Gow onward).
+- Project item move to Done blocked: gh token lacks `project` scope (external blocker).
+
 # CI "6-hour test hang" root cause (2026-07-25) — READ BEFORE TOUCHING CI TESTS
 
 - The deterministic_bbs_3mf_tests "hang" that ate two 6-hour jobs was **STATUS_DLL_NOT_FOUND
