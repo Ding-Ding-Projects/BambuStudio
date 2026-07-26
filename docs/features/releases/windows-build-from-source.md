@@ -3,8 +3,9 @@
 ## Overview
 
 The Windows installer offers an optional, interactive **Build from source** install source alongside
-the default prebuilt install. When chosen, the installer bootstraps a developer toolchain, clones this
-repository, compiles the application on the user's machine, stages the built payload, and then feeds
+the default prebuilt install. When chosen, the installer bootstraps a developer toolchain, clones the
+same repository and exact 40-character commit that produced the installer, compiles the application
+on the user's machine, stages the built payload, and then feeds
 that payload into the **same** ownership, recovery, and uninstall flow the prebuilt path uses. The only
 thing that differs between the two sources is how the payload is produced and how owned files are later
 enumerated for uninstall.
@@ -44,7 +45,8 @@ When the user selects Build from source, the build progress page:
 2. Extracts the three helpers to `$PLUGINSDIR\bfs`.
 3. Launches `Build-FromSource.ps1` **asynchronously** via `kernel32::CreateProcessW` with
    `CREATE_NO_WINDOW`, passing `-SessionDir`, `-CloneUrl` (`PRODUCT_SOURCE_REPO_URL`), `-Tag`
-   (`PRODUCT_SOURCE_TAG`), `-LanguageMode`, and `-PayloadOut` (`<session>\install-dir`). It stores the
+   (`PRODUCT_SOURCE_TAG`, despite the legacy name this must be a full commit), `-LanguageMode`, and
+   `-PayloadOut` (`<session>\install-dir`). It stores the
    process handle for polling. If `CreateProcessW` fails, the page treats it as exit code 40 (fatal).
 4. Locks the window (see "Non-closable window") and starts a ~500 ms poll timer.
 
@@ -55,8 +57,9 @@ helpers:
    reach test to `github.com:443` (8 s timeout). Any failure exits **30**.
 2. **Toolchain bootstrap** — install Git, Node.js LTS, the Visual Studio 2022 C++ Build Tools, and
    CMake if missing (see "Toolchain bootstrap"). Failure exits **10**.
-3. **Clone + checkout** — `git clone <CloneUrl> <session>\src` then `git checkout <Tag>`. Failure exits
-   **11**.
+3. **Clone + checkout** — `git clone <CloneUrl> <session>\src`, `git checkout --detach <commit>`, then
+   compare `git rev-parse HEAD` to the requested commit. A branch, shared version tag, abbreviated
+   object ID, or mismatched checkout is rejected; failure exits **11**.
 4. **opencode install + config** — global `npm install -g opencode-ai`, then write the project-local
    `opencode.json` into the clone (see "opencode bootstrap and repair loop"). Install failure exits
    **12**.
@@ -66,30 +69,45 @@ helpers:
 6. **Stage verification + manifest** — confirm `<session>\install-dir\bambu-studio.exe` exists (else
    exit **20**), then write `<session>\owned-manifest.txt`. Success exits **0**.
 
-The build steps are the documented Windows build path: `build_win.bat -d <session>\deps -s deps`, then
-`build_win.bat -s app`, then `cmake --build build --target install --config Release
--DCMAKE_INSTALL_PREFIX=<session>\install-dir`. Running the install target mirrors the CI install step so
-the staged layout matches the prebuilt payload layout.
+The build steps are the documented Windows build path, pinned to the validated installed Visual
+Studio 2022 product and one configuration: `build_win.bat -v 17 -p <detected-product> -c Release -d
+<session>\deps -s deps`, then `build_win.bat -v 17 -p <detected-product> -c Release -s app`, then
+`cmake --install build --config Release --prefix <session>\install-dir`. Detecting and pinning the
+existing Community, Professional, Enterprise, or Build Tools product avoids both selecting an
+unrelated newer Visual Studio installation and installing a redundant SKU. The install command's
+`--prefix` override keeps the
+non-elevated source build out of the default `Program Files` prefix while producing the same staged
+layout as CI.
 
 ## Toolchain bootstrap
 
 The user's consent is the install-source choice itself; individual tool installs run silently with no
-per-tool prompt. For each tool the helper probes first and installs only if missing, preferring
-`winget` and falling back to a pinned official vendor installer:
+per-tool prompt. For each tool the helper validates the usable version and required components first,
+then installs or upgrades only when that validation fails, preferring `winget` and falling back to a
+pinned official vendor installer:
 
 | Tool | Probe | winget id | Vendor fallback (silent) |
 |---|---|---|---|
-| Git | `git --version` | `Git.Git` | Git for Windows `Git-64-bit.exe /VERYSILENT /NORESTART /NOCANCEL /SP-` |
-| Node.js LTS | `node --version` | `OpenJS.NodeJS.LTS` | `nodejs.org` MSI `msiexec /i /qn /norestart` |
-| VS 2022 Build Tools (C++) | `vswhere` for the VC toolset, else `cl` | `Microsoft.VisualStudio.2022.BuildTools` with the VCTools workload, Windows 11 SDK `10.0.22000`, and the VC CMake component | `https://aka.ms/vs/17/release/vs_BuildTools.exe` with the same `--add` set, `--quiet --wait --norestart` |
-| CMake | `cmake --version` | `Kitware.CMake` | `cmake.org` MSI `/qn /norestart ADD_CMAKE_TO_PATH=System` |
+| Git | `git` command present | `Git.Git` | Git for Windows 2.54.0, `/VERYSILENT /NORESTART /NOCANCEL /SP-` |
+| Node.js LTS | LTS metadata, Node major `22` or newer, `x64` architecture, and `npm.cmd` all present | `OpenJS.NodeJS.LTS` | Node.js 22.22.2 LTS MSI, `msiexec /i /qn /norestart` |
+| VS 2022 C++ toolchain | `vswhere` 17.x Community, Professional, Enterprise, or Build Tools product with the VC x64 toolset, `VsDevCmd.bat`, MSBuild, and a complete Desktop Windows SDK >= `10.0.22000.0` (UM/shared/UCRT headers plus x64 UM/UCRT libraries) | `Microsoft.VisualStudio.2022.BuildTools` with the VCTools workload, Windows 11 SDK `10.0.26100`, and the VC CMake component only when no suitable product exists | `https://aka.ms/vs/17/release/vs_BuildTools.exe` with the same `--add` set, `--quiet --wait --norestart` |
+| CMake | parsed version >= `3.21.0` and < `5.0.0` (the supported 4.x line includes the 4.4 fallback) | `Kitware.CMake` | CMake 4.4.0 MSI, `/qn /norestart ADD_CMAKE_TO_PATH=System` |
 
 winget invocations use `-e --silent --accept-package-agreements --accept-source-agreements`. The
-Windows 10/11 SDK is pinned to `10.0.22000` to match the `WIN10SDK_PATH` used by the CI build. CMake may
-already be provided by the Visual Studio VC CMake component, in which case its own install is skipped.
-After each vendor install, `PATH` is refreshed from the machine and user registry so a freshly installed
-tool is visible without relaunching. Any tool that cannot be made present throws, which the orchestrator
-maps to exit **10**.
+bootstrap requests SDK `10.0.26100`, but accepts any complete SDK from `10.0.22000.0` onward so a newer
+installed SDK does not trigger a redundant Visual Studio modification. CMake may already be provided by
+the Visual Studio VC CMake component, but is skipped only when its parsed version meets the minimum.
+Before any downloaded fallback installer executes, the helper requires a valid Authenticode signature
+whose publisher identity exactly matches the allowlist for that tool: Johannes Schindelin for Git for
+Windows, OpenJS Foundation for Node.js, Kitware, Inc. for CMake, and Microsoft Corporation for Visual
+Studio. The fixed Git, Node, and CMake releases must also match their pinned SHA-256 digests. The mutable
+Visual Studio `aka.ms` bootstrapper has no stable digest, so it is guarded by Authenticode and its exact
+publisher identity.
+
+After every winget or vendor attempt, registry `PATH` entries are appended to the existing process
+entries. The merge preserves portable and caller-provided precedence while de-duplicating all entries.
+Any tool that remains absent, out of range, or incomplete throws, which the orchestrator maps to exit
+**10**.
 
 ## opencode bootstrap and repair loop
 
@@ -247,15 +265,23 @@ product shortcut directory) run first in both branches, exactly as on the prebui
 ## Security considerations
 
 - **Machine-wide installs.** From-source installs developer tools that are visible system-wide: Git,
-  Node.js LTS, the Visual Studio 2022 C++ Build Tools with the Windows 11 SDK `10.0.22000`, and CMake.
+  Node.js LTS, the Visual Studio 2022 C++ Build Tools with a compatible Windows 11 SDK (the fallback
+  requests `10.0.26100`), and CMake.
   These are not confined to the session directory and are not removed on failure or on uninstall of the
   app. The whole path runs at user level (no elevation is requested by the installer), though individual
   vendor installers may prompt for elevation of their own.
-- **Network fetches from vendor URLs.** Bootstrap downloads come from pinned official sources —
-  `github.com/git-for-windows`, `nodejs.org`, `aka.ms/vs`, `github.com/Kitware/CMake` — plus the npm
+- **Network fetches from vendor URLs.** Bootstrap downloads come from official sources —
+  `github.com/git-for-windows`, `nodejs.org`, `aka.ms/vs`, and `github.com/Kitware/CMake` — plus the npm
   registry for `opencode-ai`, the git clone from `PRODUCT_SOURCE_REPO_URL`, and a best-effort schema
-  fetch from `opencode.ai/config.json`. Downloads are not independently checksum-pinned by the helper
-  beyond the vendors' own transport security.
+  fetch from `opencode.ai/config.json`. Every fallback installer requires valid Authenticode and an
+  exact per-vendor publisher identity before execution. The fixed Git, Node, and CMake artifacts are
+  additionally SHA-256 pinned to publisher release metadata. The mutable Visual Studio bootstrapper is
+  not digest-pinned; its Authenticode chain and exact Microsoft publisher identity are the trust gate.
+- **Exact source identity.** Release packaging passes the live GitHub repository clone URL and exact
+  workflow commit to every real and fixture NSIS compile. The installer refuses to compile without
+  that full source commit, and the orchestrator rejects anything other than a 40-character commit and
+  verifies the detached checkout before any repair or build step. There is no mutable branch or shared
+  product-version-tag fallback.
 - **Why opencode runs with the repository's `opencode.json` permissions.** For the build repair to be
   fully headless, opencode must not block on approval prompts. The emitter therefore grants every action
   permission class (`edit`, `bash`, `webfetch`, and any future action class the live schema lists)
@@ -284,11 +310,19 @@ compile-and-static-check only** in CI, which is intended, not a gap:
 
 - The existing "Create Windows installer" step compiles the real `.nsi`, which proves the new
   install-source, build-progress, and error pages and their functions compile.
-- The intended additional validation is a non-executing check step: parse-check each PowerShell helper
-  (`[ScriptBlock]::Create` over the file contents), static greps on the `.nsi` for the install-source
-  page, the build-progress functions, the silent -> prebuilt guard, the `InstallSource` write, each new
-  bilingual string pair, and the `SC_CLOSE` handling, and a tiny unit invocation of the allow-config
-  emitter asserting it emits `question=deny` and `external_directory=deny`.
+- `scripts/ci/Test-BuildFromSourceHelpers.ps1` runs explicitly under Windows PowerShell 5.1. It parses
+  every helper with the host's default decoder, requires the native visual script to stay ASCII-safe,
+  rejects the invalid `cmake --build ... -DCMAKE_INSTALL_PREFIX` form, exercises the safe relative-path
+  fallback, validates the Node >=22 LTS/x64 and CMake version probes (including old-LTS, newer-LTS,
+  and future-CMake rejection), exercises valid, missing, invalid, and untrusted Authenticode metadata,
+  proves PATH merging keeps portable entries ahead of registry additions, and validates reuse of a VS
+  2022 Community product plus complete Windows SDK detection (including missing-UCRT rejection) against
+  fixtures without installing or depending on those components on the runner. It also requires a full
+  commit, detached checkout, and post-checkout identity comparison.
+- The surrounding check also performs static greps on the `.nsi` for the install-source page, the
+  build-progress functions, the silent -> prebuilt guard, the `InstallSource` write, each new bilingual
+  string pair, and the `SC_CLOSE` handling, plus a tiny unit invocation of the allow-config emitter
+  asserting it emits `question=deny` and `external_directory=deny`.
 - Because every automated installer run uses `/S`, a silent install records `InstallSource=prebuilt`,
   which confirms from-source stays off in silent mode.
 

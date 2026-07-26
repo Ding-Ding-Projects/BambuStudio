@@ -26,7 +26,9 @@
 param(
     [Parameter(Mandatory = $true)][string] $SessionDir,
     [Parameter(Mandatory = $true)][string] $CloneUrl,
-    [Parameter(Mandatory = $true)][string] $Tag,
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern('^[0-9a-fA-F]{40}$')]
+    [string] $Tag,
     [string] $LanguageMode = 'en',
     [Parameter(Mandatory = $true)][string] $PayloadOut
 )
@@ -114,11 +116,11 @@ function Write-Manifest {
     # pipe character is invalid in Windows path names, so it is a safe delimiter.
     $root = (Get-Item -LiteralPath $PayloadDir).FullName.TrimEnd('\')
     $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Force | ForEach-Object {
-        'F|' + [System.IO.Path]::GetRelativePath($root, $_.FullName)
+        'F|' + (Get-SafeRelativePath -Root $root -Path $_.FullName)
     })
     $dirs = @(Get-ChildItem -LiteralPath $root -Recurse -Directory -Force |
         Sort-Object { ($_.FullName -split '\\').Count } -Descending | ForEach-Object {
-            'D|' + [System.IO.Path]::GetRelativePath($root, $_.FullName)
+            'D|' + (Get-SafeRelativePath -Root $root -Path $_.FullName)
         })
     $lines = $files + $dirs
     [System.IO.File]::WriteAllLines($OutFile, [string[]]$lines, $script:Utf16Bom)
@@ -232,6 +234,11 @@ try {
     Set-Status -State 'running' -Phase 'toolchain' -Step 'Installing developer tools' -PctHint 6
     try {
         Initialize-Toolchain -WorkDir $toolsDir
+        $vsProduct = Get-VisualStudio2022Product
+        if ([string]::IsNullOrWhiteSpace($vsProduct)) {
+            throw 'The installed Visual Studio 2022 product could not be identified.'
+        }
+        Write-BuildLog "Using Visual Studio 2022 product '$vsProduct'."
     } catch {
         Write-BuildLog "Toolchain bootstrap failed: $($_.Exception.Message)"
         Exit-Build -Code 10 -Phase 'toolchain' -Step 'Toolchain bootstrap failed'
@@ -247,8 +254,15 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "git clone exited $LASTEXITCODE." }
         Push-Location $srcDir
         try {
-            & git checkout $Tag 2>&1 | ForEach-Object { Write-BuildLog $_ }
+            & git checkout --detach $Tag 2>&1 | ForEach-Object { Write-BuildLog $_ }
             if ($LASTEXITCODE -ne 0) { throw "git checkout $Tag exited $LASTEXITCODE." }
+            $checkedOutCommit = (& git rev-parse HEAD 2>$null).Trim()
+            if ($LASTEXITCODE -ne 0 -or
+                -not [string]::Equals($checkedOutCommit, $Tag,
+                    [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "Checked-out commit '$checkedOutCommit' does not match requested source commit '$Tag'."
+            }
+            Write-BuildLog "Verified exact source commit $checkedOutCommit."
         } finally {
             Pop-Location
         }
@@ -271,10 +285,10 @@ try {
     # 5. Build with a bounded opencode repair loop.
     $installDir = $PayloadOut
     $phases = @(
-        @{ Phase = 'deps';           Label = 'Compiling dependencies';   Pct = 40; Action = { & cmd /c "build_win.bat -d `"$depsDir`" -s deps" } },
-        @{ Phase = 'app';            Label = 'Compiling the application'; Pct = 70; Action = { & cmd /c "build_win.bat -s app" } },
+        @{ Phase = 'deps';           Label = 'Compiling dependencies';   Pct = 40; Action = { & cmd /c "build_win.bat -v 17 -p $vsProduct -c Release -d `"$depsDir`" -s deps" } },
+        @{ Phase = 'app';            Label = 'Compiling the application'; Pct = 70; Action = { & cmd /c "build_win.bat -v 17 -p $vsProduct -c Release -s app" } },
         @{ Phase = 'install-target'; Label = 'Staging the payload';       Pct = 88; Action = {
-                & cmake --build build --target install --config Release "-DCMAKE_INSTALL_PREFIX=$installDir"
+                & cmake --install build --config Release --prefix $installDir
             } }
     )
 

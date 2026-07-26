@@ -59,7 +59,7 @@ jobs:
                   # contain code.
                   $codeChanged = $nonMarkdownPaths.Count -gt 0 -or @($comparison.files).Count -ge 300
                   if (-not $codeChanged) {
-                      Write-Host 'Only Markdown evidence/documentation changed; Windows build and release jobs will be skipped.'
+                      Write-Host 'Only Markdown evidence/documentation changed; classification is informational and the required build/release policy still runs.'
                   }
               }
           }

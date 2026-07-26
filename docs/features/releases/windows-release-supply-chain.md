@@ -2,19 +2,22 @@
 
 ## Trigger and publication policy
 
-`.github/workflows/build_all.yml` is the fork's Windows acceptance and publication workflow. A
-code-bearing push or manual dispatch builds the Windows candidate; a pull request targeting
-`master` runs the same Windows build without the release job. Every push still triggers the workflow,
-but a lightweight Windows path-classification job skips build and release for deleted refs and when
-every changed path is Markdown. That allows the final run/checksum documentation handoff without
-recursively minting another release.
+`.github/workflows/build_all.yml` is the fork's Windows acceptance and publication workflow. Every
+branch push and manual dispatch builds and tests the Windows candidate; a pull request targeting
+`master` runs the same Windows build without the release job. A lightweight path-classification job
+still records whether code changed, but it is intentionally informational: documentation-only pushes
+are not exempt from the required acceptance run. Branch-only push filters and an explicit tag guard
+prevent release tags from recursively starting another build.
 
-Every successful code-bearing non-pull-request run is designed to publish one uniquely tagged
+Every successful non-pull-request branch-push or manual-dispatch run is designed to publish one uniquely tagged
 release. Tags include the application version and workflow run number. All attempts of a rerun
 therefore converge on the same tag instead of creating duplicate releases. A matching published
 release is accepted only when it is non-draft and immutable, targets the same commit, has exactly the
 expected three assets, and its downloaded checksum, GitHub asset digests, installer archive, and
 commit-bound SBOM validate.
+The build job never creates a cache prerelease or any other secondary GitHub Release. Dependency and
+object reuse remain within GitHub Actions cache mechanisms, so a successful run has exactly one
+non-draft release creation path and a failed build or test has none.
 Release jobs are serialized. Immediately before first publication, the job resolves the current
 `master` tip: only an artifact built from that exact tip may become latest, while superseded master
 and non-default-ref builds stay non-latest.
@@ -71,7 +74,7 @@ CycloneDX document. A candidate published by this workflow must contain exactly:
 After downloading the installer, provenance can be checked with:
 
 ```powershell
-gh attestation verify BambuStudioMD3-Setup.exe --repo codingmachineedge/BambuStudio
+gh attestation verify BambuStudioMD3-Setup.exe --repo Ding-Ding-Projects/BambuStudio
 ```
 
 The SHA-256 sidecar verifies download integrity, while the GitHub attestations bind the installer

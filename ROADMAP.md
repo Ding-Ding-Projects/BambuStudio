@@ -153,8 +153,8 @@ truth; the counts here are a snapshot.
   filenames only when the files actually land.
 - Verify the installer's build-from-source mode end-to-end on a real machine. It compiles and is
   reviewed, but its first complete interactive run (toolchain bootstrap through installed payload)
-  has not happened yet, and `PRODUCT_SOURCE_REPO_URL` defaults to a placeholder the owner should
-  confirm.
+  has not happened yet. Release packaging now binds the current repository and exact workflow commit;
+  the installer has no mutable branch or shared-version-tag fallback.
 - Wire the repaired test suites back into hosted CI. Wave 9 ported the drifted PrusaSlicer config
   keys to BambuStudio names and fixed the invalid Catch2 `[NotWorking]` exclusion, but the isolated
   suite build did not finish in-window; `libslic3r_tests` and `libnest2d_tests` remain waived from

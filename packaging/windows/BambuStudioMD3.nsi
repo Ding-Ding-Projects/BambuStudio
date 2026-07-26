@@ -48,12 +48,12 @@ RequestExecutionLevel user
   !define PRODUCT_SHORTCUT_DIR "${PRODUCT_SHORTCUT_ROOT}\Bambu Studio MD3"
 !endif
 
-; ---- From-source build defines (safe defaults; CI may override but need not) ----
+; ---- From-source build identity (repository default; exact commit is mandatory) ----
 !ifndef PRODUCT_SOURCE_REPO_URL
-  !define PRODUCT_SOURCE_REPO_URL "https://github.com/codingmachineedge/BambuStudio.git"
+  !define PRODUCT_SOURCE_REPO_URL "https://github.com/Ding-Ding-Projects/BambuStudio.git"
 !endif
 !ifndef PRODUCT_SOURCE_TAG
-  !define PRODUCT_SOURCE_TAG "v${PRODUCT_VERSION}"
+  !error "PRODUCT_SOURCE_TAG must be the exact 40-character source commit used to build this installer"
 !endif
 
 ; ---- MD3 light-scheme tokens (hex mirrors MD3Tokens.hpp / ui-md3 colors.css) ----
