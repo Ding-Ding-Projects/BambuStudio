@@ -27,6 +27,11 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`appearance-tab.png`](appearance/appearance-tab.png)
 - [`custom-color-dialog.png`](appearance/custom-color-dialog.png)
 
+## bulk-filament (2 captures)
+
+- [`dialog.png`](bulk-filament/dialog.png)
+- [`entry-button.png`](bulk-filament/entry-button.png)
+
 ## command-palette (1 captures)
 
 - [`palette.png`](command-palette/palette.png)

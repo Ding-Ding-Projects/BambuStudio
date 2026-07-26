@@ -983,33 +983,25 @@ void Sidebar::priv::adjust_filament_title_layout()
     wxSize panel_size      = m_panel_filament_title->GetSize();
     int    available_width = panel_size.GetWidth() - FromDIP(220);
 
-    bool bulk_shown = m_bulk_filament_btn && m_bulk_filament_btn->IsShown();
-
     int button_count = 0;
     if (m_purge_mode_btn->IsShown()) button_count++;
     if (m_flushing_volume_btn->IsShown()) button_count++;
-    if (bulk_shown) button_count++;
 
     if (button_count == 0) {
         m_panel_filament_title->Layout();
         return;
     }
 
-    int purge_ideal_width = 0, flush_ideal_width = 0, bulk_ideal_width = 0;
+    int purge_ideal_width = 0, flush_ideal_width = 0;
     if (m_purge_mode_btn->IsShown()) {
         purge_ideal_width = m_purge_mode_btn->GetTextRect().width + 10;
     }
     if (m_flushing_volume_btn->IsShown()) {
         flush_ideal_width = m_flushing_volume_btn->GetTextRect().width + 10;
     }
-    if (bulk_shown) {
-        // Leading glyph + label; keep the h30 pill height fixed while width flexes.
-        bulk_ideal_width = m_bulk_filament_btn->GetTextRect().width + FromDIP(16) + 10;
-    }
-
     int button_spacing    = FromDIP(4);
     int total_spacing     = button_spacing * (button_count - 1);
-    int ideal_total_width = purge_ideal_width + flush_ideal_width + bulk_ideal_width + total_spacing;
+    int ideal_total_width = purge_ideal_width + flush_ideal_width + total_spacing;
 
     if (available_width >= ideal_total_width) {
         if (m_purge_mode_btn->IsShown()) {
@@ -1020,11 +1012,6 @@ void Sidebar::priv::adjust_filament_title_layout()
         if (m_flushing_volume_btn->IsShown()) {
             m_flushing_volume_btn->SetMinSize(wxSize(flush_ideal_width, -1));
             m_flushing_volume_btn->SetMaxSize(wxSize(flush_ideal_width, -1));
-        }
-
-        if (bulk_shown) {
-            m_bulk_filament_btn->SetMinSize(wxSize(-1, FromDIP(30)));
-            m_bulk_filament_btn->SetMaxSize(wxSize(-1, FromDIP(30)));
         }
 
         m_panel_filament_title->Layout();
@@ -1043,11 +1030,6 @@ void Sidebar::priv::adjust_filament_title_layout()
     if (m_flushing_volume_btn->IsShown()) {
         m_flushing_volume_btn->SetMinSize(wxSize(button_width, -1));
         m_flushing_volume_btn->SetMaxSize(wxSize(button_width, -1));
-    }
-
-    if (bulk_shown) {
-        m_bulk_filament_btn->SetMinSize(wxSize(button_width, FromDIP(30)));
-        m_bulk_filament_btn->SetMaxSize(wxSize(button_width, FromDIP(30)));
     }
 
     m_panel_filament_title->Layout();
@@ -3317,40 +3299,6 @@ Sidebar::Sidebar(Plater *parent)
     p->m_btn_sync_ams_header->Rescale();
     bSizer39->Add(p->m_btn_sync_ams_header, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
-    // ---- Bulk filament actions: kit SectionHeader trailing outlined MD3 button ----
-    // Same recipe as the Sync AMS header button above (outlined, h30, Body_11,
-    // Primary, leading Material glyph). Opens BulkFilamentDialog to stage set
-    // preset / set colour / delete across checked slots plus add-N, applied as
-    // one batch by Sidebar::bulk_filament_actions().
-    // Icon-only: the header row is already crowded at the default sidebar
-    // width (Purge mode + Flushing volumes + Sync AMS) and a labelled fourth
-    // button clips. The tooltip carries the name.
-    p->m_bulk_filament_btn = new Button(p->m_panel_filament_title, wxString());
-    // 'Stack' is the closest cmap-verified Material Symbols glyph for a
-    // multi-slot batch action (no Checklist/LibraryAddCheck in the vendored TTF).
-    p->m_bulk_filament_btn->SetGlyph(MaterialIcon::Stack, 16);
-    p->m_bulk_filament_btn->SetFont(Label::Body_11);
-    p->m_bulk_filament_btn->SetPaddingSize(wxSize(FromDIP(6), FromDIP(3)));
-    p->m_bulk_filament_btn->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
-    p->m_bulk_filament_btn->SetMinSize({-1, FromDIP(30)});
-    p->m_bulk_filament_btn->SetMaxSize({-1, FromDIP(30)});
-    p->m_bulk_filament_btn->SetToolTip(_L("Bulk filament actions"));
-    p->m_bulk_filament_btn->SetBackgroundColor(StateColor(
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)));
-    p->m_bulk_filament_btn->SetBorderColor(StateColor(
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
-    p->m_bulk_filament_btn->SetTextColor(StateColor(
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
-        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
-    p->m_bulk_filament_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { bulk_filament_actions(); });
-    p->m_bulk_filament_btn->Rescale();
-    bSizer39->Add(p->m_bulk_filament_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
-
     bSizer39->Add(FromDIP(16), 0, 0, 0, 0);
 
     // ---- (removed) legacy 'Filament' subtitle row ----
@@ -3438,7 +3386,43 @@ Sidebar::Sidebar(Plater *parent)
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
     p->btn_add_filament_row->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { add_filament(); });
-    wrapper_sizer->Add(p->btn_add_filament_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
+    // ---- Bulk filament actions: kit SectionHeader trailing outlined MD3 button ----
+    // Same recipe as the Sync AMS header button above (outlined, h30, Body_11,
+    // Primary, leading Material glyph). Opens BulkFilamentDialog to stage set
+    // preset / set colour / delete across checked slots plus add-N, applied as
+    // one batch by Sidebar::bulk_filament_actions().
+    // Icon-only: the header row is already crowded at the default sidebar
+    // width (Purge mode + Flushing volumes + Sync AMS) and a labelled fourth
+    // button clips. The tooltip carries the name.
+    p->m_bulk_filament_btn = new Button(p->m_filament_area_wrapper, wxString());
+    // 'Stack' is the closest cmap-verified Material Symbols glyph for a
+    // multi-slot batch action (no Checklist/LibraryAddCheck in the vendored TTF).
+    p->m_bulk_filament_btn->SetGlyph(MaterialIcon::Stack, 16);
+    p->m_bulk_filament_btn->SetFont(Label::Body_11);
+    p->m_bulk_filament_btn->SetPaddingSize(wxSize(FromDIP(6), FromDIP(3)));
+    p->m_bulk_filament_btn->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+    p->m_bulk_filament_btn->SetMinSize({-1, FromDIP(30)});
+    p->m_bulk_filament_btn->SetMaxSize({-1, FromDIP(30)});
+    p->m_bulk_filament_btn->SetToolTip(_L("Bulk filament actions"));
+    p->m_bulk_filament_btn->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)));
+    p->m_bulk_filament_btn->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)));
+    p->m_bulk_filament_btn->SetTextColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSecondaryContainer), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
+    p->m_bulk_filament_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { bulk_filament_actions(); });
+    p->m_bulk_filament_btn->Rescale();
+
+    auto* add_row_sizer = new wxBoxSizer(wxHORIZONTAL);
+    add_row_sizer->Add(p->btn_add_filament_row, 1, wxEXPAND);
+    add_row_sizer->Add(p->m_bulk_filament_btn, 0, wxEXPAND | wxLEFT, FromDIP(8));
+    wrapper_sizer->Add(add_row_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
 
     // ---- Mixed Filament section (inside wrapper, outside scroll areas) ----
     // 1) "+ 添加混色" button (shown when no mixed filaments exist)
