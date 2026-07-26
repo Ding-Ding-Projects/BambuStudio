@@ -27,6 +27,7 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+add_subdirectory(deviceweb)
 add_subdirectory(libnest2d)
 add_subdirectory(language_mode)
 add_subdirectory(project_history)

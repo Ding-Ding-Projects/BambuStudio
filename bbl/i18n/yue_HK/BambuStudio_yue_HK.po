@@ -2090,8 +2090,8 @@ msgid "Plain text is the default in every search bar; regex mode is a deliberate
 msgstr "每個搜尋欄預設都係純文字；要撳 .* 掣先至會開正則模式。"
 
 #. reviewed-category: preferences
-msgid "Case sensitive and Whole word refine plain-text search; in regex mode author  yourself for word boundaries."
-msgstr "「區分大小寫」同「整個詞」係用嚟微調純文字搜尋；正則模式要自己寫  做詞界。"
+msgid "Case sensitive and Whole word refine plain-text search; in regex mode author \\b yourself for word boundaries."
+msgstr "「區分大小寫」同「整個詞」係用嚟微調純文字搜尋；正則模式要自己寫 \\b 做詞界。"
 
 #. reviewed-category: preferences
 msgid "An invalid or half-typed pattern never hides rows: it matches everything until it compiles."
@@ -2152,6 +2152,14 @@ msgstr "停止打印 — 安全連鎖"
 #. reviewed-category: destructive-dirty-error-security
 msgid "Stopping discards the print in progress."
 msgstr "停止會作廢打印緊嘅嘢。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Safety key switch %d"
+msgstr "安全鎖匙掣 %d"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Safety cover"
+msgstr "安全蓋"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Arm %d (2)"
@@ -2496,3 +2504,147 @@ msgstr "模擬速度（撳一下轉檔）"
 #. reviewed-category: navigation
 msgid "Search filaments"
 msgstr "搵墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Bambu Studio could not complete the project shutdown boundary, so the application remains open."
+msgstr "Bambu Studio 無法完成專案關閉前嘅安全保存，所以應用程式會保持開啟。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The active project tab could not be identified, so Bambu Studio remains open to protect its unsaved changes."
+msgstr "無法識別使用中嘅專案分頁，所以 Bambu Studio 會保持開啟，以保護未儲存嘅變更。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The open project-tab session could not be saved. The requested tab operation was cancelled."
+msgstr "無法儲存已開啟專案分頁嘅工作階段。要求嘅分頁操作已取消。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The project was saved, but its project-tab identity could not be recorded. Keep the app open and retry before switching tabs."
+msgstr "專案已儲存，但無法記錄專案分頁嘅檔案位置。請保持應用程式開啟，並喺切換分頁前重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The project was saved, but its active project tab could not be identified. Keep the app open and retry before switching tabs."
+msgstr "專案已儲存，但無法識別使用中嘅專案分頁。切換分頁前請保持應用程式開啟並重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unsaved Changes"
+msgstr "未儲存嘅變更"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Bambu Studio could not preserve every open project tab. Retry saving the session? Choose No to keep the application open."
+msgstr "Bambu Studio 無法安全保存所有已開啟嘅專案分頁。要重試儲存工作階段嗎？選擇「否」會保持應用程式開啟。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Open projects were not saved"
+msgstr "已開啟專案未能儲存"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The discard decision could not be recorded, so the previous recovery data was retained while Bambu Studio closes."
+msgstr "無法記錄捨棄決定，所以 Bambu Studio 關閉時保留咗之前嘅復原資料。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This project could not be preserved for tab switching. The current project remains open."
+msgstr "無法安全保存呢個專案供分頁切換。現時專案會保持開啟。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This project was snapshotted, but its tab session could not be saved. The current project remains open."
+msgstr "呢個專案已建立快照，但無法儲存分頁工作階段。現時專案會保持開啟。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A project-tab load failed, and the previous project could not be restored automatically. Its recovery data was retained; the live workspace may be incomplete."
+msgstr "專案分頁載入失敗，而且無法自動還原上一個專案。復原資料已保留；現時工作區可能唔完整。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The selected project tab could not be loaded. The previous project remains open."
+msgstr "無法載入所選專案分頁。上一個專案會保持開啟。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The project tab could not be closed because a new workspace could not be created."
+msgstr "無法建立新工作區，所以未能關閉專案分頁。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The neighbouring project tab could not be loaded, so the current tab was not closed."
+msgstr "無法載入相鄰嘅專案分頁，所以現時分頁未有關閉。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A new project tab could not be created. The previous project remains open."
+msgstr "無法建立新專案分頁。上一個專案會保持開啟。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The selected project could not be opened in a new tab. The previous project remains open."
+msgstr "無法喺新分頁開啟所選專案。上一個專案會保持開啟。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The previously active project tab could not be recovered. Its session entry was retained."
+msgstr "無法復原上次使用嘅專案分頁。佢嘅工作階段記錄已保留。"
+
+#. reviewed-category: preferences
+msgid "Case sensitive refines plain-text and regex search. Multiline makes ^ and $ match line boundaries; Whole word is plain-text only, so use \\b in regex mode."
+msgstr "「區分大小寫」會調整純文字同正則表達式搜尋；「多行」會令 ^ 同 $ 配對每行邊界；「完整字詞」只適用於純文字模式，所以正則表達式模式請用 \\b。"
+
+#. reviewed-category: navigation
+msgid "Clear"
+msgstr "清除"
+
+#. reviewed-category: navigation
+msgid "Complete"
+msgstr "完成"
+
+#. reviewed-category: preferences
+msgid "Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
+msgstr "引擎：隔離 50 毫秒 worker 入面嘅 Boost.Regex 1.84 寬字元 ECMAScript。唔分大小寫配對使用 boost::regex_constants::icase；特殊字元要用反斜線跳脫。"
+
+#. reviewed-category: preferences
+msgid "Multiline anchors (^ and $ match line boundaries)"
+msgstr "多行錨點（^ 同 $ 配對每行邊界）"
+
+#. reviewed-category: navigation
+msgid "Press"
+msgstr "撳"
+
+#. reviewed-category: navigation
+msgid "Project tabs"
+msgstr "專案分頁"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Regex evaluation is temporarily unavailable"
+msgstr "正則表達式評估暫時用唔到"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Sample too long (max %d characters)"
+msgstr "範例太長（最多 %d 個字元）"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Stop"
+msgstr "停止"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The stop request was cancelled because the selected printer or print job changed."
+msgstr "所選打印機或打印工作已變更，所以停止要求已取消。"
+
+#. reviewed-category: preferences
+msgid "Turn on or off"
+msgstr "開啟或關閉"
+
+#. reviewed-category: file-actions
+msgid "Untitled"
+msgstr "未命名"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Network unavailable. The current page remains open."
+msgstr "網絡暫時用唔到；而家個頁面會繼續保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Cloud sign-in could not be completed. The current page remains open."
+msgstr "雲端登入未能完成；而家個頁面會繼續保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The requested cloud page was not found. The current page remains open."
+msgstr "搵唔到你要求嘅雲端頁面；而家個頁面會繼續保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The cloud page could not be opened securely. The current page remains open."
+msgstr "未能安全噉開啟雲端頁面；而家個頁面會繼續保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The cloud page is temporarily unavailable. The current page remains open."
+msgstr "雲端頁面暫時用唔到；而家個頁面會繼續保留。"
