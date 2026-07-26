@@ -2,17 +2,21 @@
 #define slic3r_GUI_SearchField_hpp_
 
 #include <functional>
+#include <memory>
 
 #include <wx/textctrl.h>
 
 #include "StaticBox.hpp"
 #include "MD3Tokens.hpp"
+#include "BoundedRegex.hpp"
+
+class Button;
 
 // Shared Material Design 3 search field (kit: fields/SearchField.prompt.md,
 // design-source/SearchField.dc.html).
 //
 // Anatomy — the core pill only:
-//   * 40px tall stadium pill, SurfaceContainerHighest fill, corner radius 22;
+//   * 44px tall stadium pill, SurfaceContainerHighest fill, corner radius 22;
 //   * 1px border in Outline at rest, promoted to Primary (scheme-aware) while
 //     the input is focused;
 //   * a leading 20px `search` Material Symbol in OnSurfaceVariant;
@@ -22,8 +26,8 @@
 //     SurfaceContainerLow).
 //
 // The kit additionally specifies a ".*" regex toggle and a `tune`
-// regex-builder popover, both painted into the trailing area left of the clear
-// button:
+// regex-builder popover, both implemented as real, focusable 44-DIP child
+// buttons in the trailing area left of the clear button:
 //   * a ".*" toggle pill — SecondaryContainer fill / OnSecondaryContainer glyph
 //     when regex mode is active, OnSurfaceVariant when idle. Clicking it flips
 //     regex mode (fires SetOnRegexToggle) and swaps the entry to Roboto Mono;
@@ -90,20 +94,47 @@ public:
     // case-sensitivity, or whole-word changes.
     bool IsCaseSensitive() const { return m_case_sensitive; }
     bool IsWholeWord() const { return m_whole_word; }
+    bool IsMultiline() const { return m_multiline; }
     void SetCaseSensitive(bool on);
     void SetWholeWord(bool on);
+    void SetMultiline(bool on);
+
+    // Reuse one MatchPass while filtering a collection. Regex evaluation then
+    // shares one aggregate deadline/circuit breaker across every candidate.
+    class MatchPass
+    {
+    public:
+        MatchPass(const wxString &query, bool regex, bool caseSensitive,
+                  bool wholeWord = false, bool multiline = false);
+        ~MatchPass();
+        MatchPass(MatchPass &&) noexcept;
+        MatchPass &operator=(MatchPass &&) noexcept;
+        MatchPass(const MatchPass &) = delete;
+        MatchPass &operator=(const MatchPass &) = delete;
+
+        bool matches(const wxString &candidate);
+
+    private:
+        wxString m_query;
+        bool m_regex = false;
+        bool m_case_sensitive = false;
+        bool m_whole_word = false;
+        bool m_multiline = false;
+        std::unique_ptr<Slic3r::GUI::BoundedRegex::SearchPass> m_regex_pass;
+    };
 
     // Shared query matcher for every SearchField consumer. Replaces the ad-hoc
     // `candidate.Lower().Contains(query.Lower())` filters.
     //   * empty query           -> matches everything (true);
     //   * regex == false         -> substring test (respecting caseSensitive);
     //                               wholeWord constrains hits to word boundaries;
-    //   * regex == true          -> std::wregex search over candidate (icase
-    //                               when !caseSensitive); wholeWord is ignored
-    //                               (author your own \b). An invalid / half-typed
-    //                               pattern returns true so nothing is hidden.
+    //   * regex == true          -> deadline-enforced Boost.Regex search in the
+    //                               isolated worker (icase when !caseSensitive);
+    //                               wholeWord is ignored (author your own \b).
+    //                               Invalid / rejected evaluation returns true.
     static bool textMatches(const wxString &query, const wxString &candidate,
-                            bool regex, bool caseSensitive, bool wholeWord = false);
+                            bool regex, bool caseSensitive, bool wholeWord = false,
+                            bool multiline = false);
 
     // Colour-aware search: canonical searchable text for a colour swatch —
     // "#RRGGBB <nearest-common-name>" (e.g. "#1CA752 green"). Consumers whose
@@ -120,17 +151,6 @@ protected:
     void doRender(wxDC &dc) override;
 
 private:
-    // Device-pixel rect of the circular clear button for the current size (the
-    // 30px visual circle used for painting the glyph + hover disc).
-    wxRect clearButtonRect() const;
-    // Enlarged (>=44px logical) hit/hover region centered on clearButtonRect, so
-    // the clear affordance meets the a11y minimum touch target without growing
-    // the visible circle.
-    wxRect clearHitRect() const;
-    // Trailing ".*" regex toggle and `tune` builder button, both persistent and
-    // anchored to the right of the entry, left of the (conditional) clear slot.
-    wxRect tuneButtonRect() const;
-    wxRect regexButtonRect() const;
     // Reserved leading width (pad + search glyph + gap), device px.
     int    leadingWidth() const;
     void   layoutText();
@@ -143,19 +163,20 @@ private:
     // open so it re-derives theme / DPI / density state).
     void   openBuilder();
 
-    wxTextCtrl *m_text = nullptr;
+    wxTextCtrl *m_text         = nullptr;
+    Button     *m_regex_button = nullptr;
+    Button     *m_tune_button  = nullptr;
+    Button     *m_clear_button = nullptr;
 
     wxString         m_placeholder;
     MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
 
-    bool m_focused     = false; // text entry holds focus -> Primary border
-    bool m_clear_hover = false; // pointer over the clear button
-    bool m_tune_hover  = false; // pointer over the tune button
-    bool m_regex_hover = false; // pointer over the ".*" toggle
-    bool m_had_text    = false; // last known non-empty state (for relayout)
+    bool m_focused  = false; // text entry holds focus -> Primary border
+    bool m_had_text = false; // last known non-empty state (for clear visibility)
     bool m_regex       = false; // regex mode flag (".*" toggle)
     bool m_case_sensitive = false; // matcher: case-sensitive substring / regex
     bool m_whole_word     = false; // matcher: whole-word substring constraint
+    bool m_multiline      = false; // regex: ^/$ also match line boundaries
 
     // Transient builder popover (a RegexBuilderPopup, owned as a child of this
     // field and rebuilt on each open). Kept as wxWindow* so the concrete type

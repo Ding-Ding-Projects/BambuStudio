@@ -332,8 +332,10 @@ void UserPresetsDialog::on_search(wxString const &keyword)
     const bool regex         = m_search->IsRegexEnabled();
     const bool caseSensitive = m_search->IsCaseSensitive();
     const bool wholeWord     = m_search->IsWholeWord();
+    const bool multiline     = m_search->IsMultiline();
+    SearchField::MatchPass match_pass(keyword, regex, caseSensitive, wholeWord, multiline);
     auto match = [&](std::string & preset) {
-        return SearchField::textMatches(keyword, from_u8(preset), regex, caseSensitive, wholeWord);
+        return match_pass.matches(from_u8(preset));
     };
     if (is_filament_list()) {
         for (auto &filament : m_filament_presets) {

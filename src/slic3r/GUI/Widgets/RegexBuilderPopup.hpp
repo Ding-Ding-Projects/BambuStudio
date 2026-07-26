@@ -2,6 +2,7 @@
 #define slic3r_GUI_RegexBuilderPopup_hpp_
 
 #include <functional>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -22,21 +23,23 @@ class Label;
 // Anatomy — a rounded SurfaceContainerHigh card hosting real child controls
 // (wxPU_CONTAINS_CONTROLS, the same transient-popup-with-inputs pattern as
 // Search.cpp's SearchDialog) inside a vertical wxScrolledWindow:
-//   * an engine caption naming the real matcher: std::regex / std::wregex,
-//     ECMAScript grammar, icase flag, backslash escaping;
+//   * an engine caption naming the real matcher: Boost.Regex 1.84
+//     wide-character ECMAScript in the isolated bounded worker, icase flag,
+//     backslash escaping;
 //   * a raw pattern editor (Roboto Mono), bidirectionally synced with the
 //     owning SearchField's query, with a copy-to-clipboard IconButton;
-//   * a live validity line — Primary "valid" / Error with the std::regex_error
-//     code mapped to a friendly message;
-//   * flag rows: regex mode (the ".*" toggle), case sensitive, whole word;
+//   * a live validity line — Primary "valid" / Error with the worker's stable
+//     regex error code mapped to a friendly message;
+//   * flag rows: regex mode (the ".*" toggle), case sensitive, multiline,
+//     whole word;
 //   * guided sections of insertable token chips with per-token tooltips:
 //     literals (auto-escaped input), character classes, anchors, groups /
 //     alternation, quantifiers (greedy + lazy);
 //   * a collapsible "Test pattern" section: bounded multiline sample text with
 //     match highlighting plus a match / capture-group listing.
-// Evaluation is local and bounded (pattern <= 2000 chars, sample <= 20000
-// chars, first 200 matches) and every std::regex call is wrapped in try/catch
-// so an invalid or pathological pattern can never throw out of the popover.
+// Evaluation is local and bounded (pattern <= 512 code units, sample <= 8192,
+// first 200 matches, 50 ms worker deadline). A pathological evaluator process
+// is terminated; no user regex executes on the UI thread.
 //
 // The popover is rebuilt by SearchField on every open, so colours, fonts and
 // FromDIP metrics re-derive per open (theme / DPI / density safe).
@@ -48,6 +51,7 @@ public:
         std::function<void(const wxString &)> onPattern;   // raw editor edit -> field query
         std::function<void(bool)>             onRegexMode; // regex-mode flag toggled
         std::function<void(bool)>             onCase;      // case-sensitive flag toggled
+        std::function<void(bool)>             onMultiline; // ^/$ match line boundaries
         std::function<void(bool)>             onWord;      // whole-word flag toggled
     };
 
@@ -55,7 +59,7 @@ public:
 
     // (Re)load state from the owning field. Call before Popup().
     void Configure(MD3::ColorScheme scheme, const wxString &pattern, bool regexOn,
-                   bool caseOn, bool wordOn, Callbacks callbacks);
+                   bool caseOn, bool multilineOn, bool wordOn, Callbacks callbacks);
 
     // Field -> popover pattern sync while the popover is open (no echo back
     // through onPattern).
@@ -63,8 +67,11 @@ public:
 
     wxString GetPattern() const;
 
-    // Move keyboard focus into the raw pattern editor (call after Popup()).
-    void FocusPattern();
+    // Show the transient popup and move keyboard focus into the raw pattern
+    // editor as one operation. wxPopupTransientWindow must install its focus
+    // tracking around the actual child control; calling Popup() and SetFocus()
+    // separately makes the owner-deactivation path dismiss the popup again.
+    void PopupAndFocusPattern();
 
 private:
     // One insertable token: chip label, inserted text, caret step-back after
@@ -97,7 +104,10 @@ private:
     // Size the popup to its content, capped to the display (scrolls beyond).
     void fitPopup();
 
-    static wxString escapeLiteral(const wxString &raw);
+    // Escape one complete literal only when its encoded form fits the caller's
+    // remaining protocol budget. This prevents the usual 2x metacharacter
+    // expansion from allocating or inserting past the worker's hard cap.
+    static wxString escapeLiteral(const wxString &raw, std::size_t maxOutput, bool *complete);
 
     wxScrolledWindow *m_scroll  = nullptr;
     wxScrolledWindow *m_ref_scroll = nullptr;
@@ -114,6 +124,7 @@ private:
     wxTextCtrl       *m_literal = nullptr;
     CheckBox         *m_regex_cb = nullptr;
     CheckBox         *m_case_cb  = nullptr;
+    CheckBox         *m_multiline_cb = nullptr;
     CheckBox         *m_word_cb  = nullptr;
     Button           *m_test_toggle = nullptr;
     wxPanel          *m_test_panel  = nullptr;
@@ -123,6 +134,7 @@ private:
     MD3::ColorScheme m_scheme    = MD3::ColorScheme::Brand;
     bool             m_regex_on  = false;
     bool             m_case_on   = false;
+    bool             m_multiline_on = false;
     bool             m_word_on   = false;
     bool             m_test_open = false;
     bool             m_syncing   = false; // guards field->popover sync against echo

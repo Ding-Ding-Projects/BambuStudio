@@ -1,6 +1,7 @@
 #include "RegexBuilderPopup.hpp"
 
 #include "Button.hpp"
+#include "BoundedRegex.hpp"
 #include "CheckBox.hpp"
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
@@ -9,7 +10,6 @@
 #include "slic3r/GUI/I18N.hpp"
 
 #include <algorithm>
-#include <regex>
 #include <string>
 
 #include <wx/clipbrd.h>
@@ -22,34 +22,43 @@
 
 namespace {
 
-// Logical (DIP) metrics + safety bounds. The bounds keep evaluation local and
-// cheap: std::regex has no timeout, so the guard is small inputs + a match cap
-// + try/catch around every compile / search (error_complexity / error_stack).
+// Logical (DIP) metrics + safety bounds. User patterns are evaluated by the
+// bounded worker; these UI limits are the same values the worker revalidates.
 constexpr int kContentW      = 344;  // inner content width
 constexpr int kPad           = 12;   // card padding
 constexpr int kGapY          = 8;    // vertical rhythm between rows
-constexpr int kChipH         = 26;   // chip height (matches the old popover)
-constexpr int kMaxPatternLen = 2000;
-constexpr int kMaxSampleLen  = 20000;
-constexpr int kMaxMatches    = 200;
+constexpr int kTargetH       = 44;   // minimum pointer/keyboard target
+constexpr int kMaxPatternLen = static_cast<int>(Slic3r::GUI::BoundedRegex::kMaxPatternCodeUnits);
+constexpr int kMaxSampleLen  = static_cast<int>(Slic3r::GUI::BoundedRegex::kMaxSubjectCodeUnits);
+constexpr int kMaxMatches    = static_cast<int>(Slic3r::GUI::BoundedRegex::kMaxMatches);
 constexpr int kMaxShownLen   = 60;   // clip match/group text in the results list
 
-wxString friendlyRegexError(const std::regex_error &err)
+wxString friendlyRegexError(const Slic3r::GUI::BoundedRegex::Result &result)
 {
-    switch (err.code()) {
-    case std::regex_constants::error_brack: return _L("Unbalanced [ ] character set");
-    case std::regex_constants::error_paren: return _L("Unbalanced ( ) group");
-    case std::regex_constants::error_brace: return _L("Unbalanced { } quantifier");
-    case std::regex_constants::error_badbrace: return _L("Invalid counts inside { }");
-    case std::regex_constants::error_range: return _L("Invalid character range");
-    case std::regex_constants::error_escape: return _L("Invalid escape sequence");
-    case std::regex_constants::error_backref: return _L("Invalid backreference");
-    case std::regex_constants::error_badrepeat: return _L("Quantifier has nothing to repeat");
-    case std::regex_constants::error_collate:
-    case std::regex_constants::error_ctype: return _L("Unknown character class name");
-    case std::regex_constants::error_complexity:
-    case std::regex_constants::error_space:
-    case std::regex_constants::error_stack: return _L("Pattern too complex to evaluate safely");
+    using Slic3r::GUI::BoundedRegex::ErrorDetail;
+    using Slic3r::GUI::BoundedRegex::Status;
+    if (result.status == Status::PatternTooLong)
+        return wxString::Format(_L("Pattern too long (max %d characters)"), kMaxPatternLen);
+    if (result.status == Status::SubjectTooLong)
+        return wxString::Format(_L("Sample too long (max %d characters)"), kMaxSampleLen);
+    if (result.status == Status::PatternTooComplex || result.status == Status::TimedOut)
+        return _L("Pattern too complex to evaluate safely");
+    if (result.status == Status::WorkerUnavailable || result.status == Status::ProtocolError)
+        return _L("Regex evaluation is temporarily unavailable");
+    switch (result.detail) {
+    case ErrorDetail::Bracket: return _L("Unbalanced [ ] character set");
+    case ErrorDetail::Parenthesis: return _L("Unbalanced ( ) group");
+    case ErrorDetail::Brace: return _L("Unbalanced { } quantifier");
+    case ErrorDetail::BadBrace: return _L("Invalid counts inside { }");
+    case ErrorDetail::Range: return _L("Invalid character range");
+    case ErrorDetail::Escape: return _L("Invalid escape sequence");
+    case ErrorDetail::BackReference: return _L("Invalid backreference");
+    case ErrorDetail::BadRepeat: return _L("Quantifier has nothing to repeat");
+    case ErrorDetail::Collate:
+    case ErrorDetail::CharacterClass: return _L("Unknown character class name");
+    case ErrorDetail::Complexity:
+    case ErrorDetail::Space:
+    case ErrorDetail::Stack: return _L("Pattern too complex to evaluate safely");
     default: return _L("Invalid regular expression");
     }
 }
@@ -69,203 +78,66 @@ wxString clipForList(const wxString &text)
 } // namespace
 
 // --- ChipGroup ---------------------------------------------------------------
-// A single keyboard-reachable token palette: wrapped rows of custom-painted MD3
-// chips. One tab stop per group; Left/Right/Up/Down move the active chip,
-// Enter/Space insert it, hover shows the per-token tooltip.
-class RegexBuilderPopup::ChipGroup : public wxWindow
+// A wrapped palette of real Button children. Each token is its own tab stop and
+// exposes a push-button role/name/state to platform accessibility APIs.
+class RegexBuilderPopup::ChipGroup : public wxPanel
 {
 public:
     ChipGroup(wxWindow *parent, const wxString &name, MD3::ColorScheme scheme,
               std::vector<ChipDef> defs, std::function<void(const ChipDef &)> onInsert)
-        : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                   wxWANTS_CHARS | wxFULL_REPAINT_ON_RESIZE)
-        , m_scheme(scheme)
-        , m_defs(std::move(defs))
-        , m_on_insert(std::move(onInsert))
+        : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                  wxTAB_TRAVERSAL | wxBORDER_NONE)
     {
-        SetBackgroundStyle(wxBG_STYLE_PAINT);
         SetName(name);
-        SetLabel(name); // accessible name for assistive tech
-        Bind(wxEVT_PAINT, &ChipGroup::onPaint, this);
-        Bind(wxEVT_MOTION, &ChipGroup::onMotion, this);
-        Bind(wxEVT_LEAVE_WINDOW, &ChipGroup::onLeave, this);
-        Bind(wxEVT_LEFT_DOWN, &ChipGroup::onLeftDown, this);
-        Bind(wxEVT_KEY_DOWN, &ChipGroup::onKeyDown, this);
-        Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) { Refresh(); e.Skip(); });
-        Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &e) { Refresh(); e.Skip(); });
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+        m_defs = std::move(defs);
+        for (size_t i = 0; i < m_defs.size(); ++i) {
+            const ChipDef &def = m_defs[i];
+            auto *button = new Button(this, def.label);
+            button->SetVariant(Button::Variant::Outlined);
+            button->SetButtonSize(Button::Size::Large);
+            button->SetColorScheme(scheme);
+            button->SetName(def.label);
+            button->SetToolTip(def.tip);
+            button->Bind(wxEVT_BUTTON, [this, i, onInsert](wxCommandEvent &) {
+                if (onInsert)
+                    onInsert(m_defs[i]);
+            });
+            m_buttons.push_back(button);
+        }
     }
 
     // Wrap the chips into rows for the given content width and freeze the
     // resulting min size for the hosting sizer.
     void Reflow(int width)
     {
-        m_rects.clear();
-        const int gap  = FromDIP(6);
-        const int padX = FromDIP(10);
-        const int h    = FromDIP(kChipH);
-
-        wxBitmap   probe(1, 1);
-        wxMemoryDC mdc(probe);
-        mdc.SetFont(Label::Mono_12);
-
-        int x = 0, y = 0;
-        for (const ChipDef &d : m_defs) {
-            const int w = mdc.GetTextExtent(d.label).x + 2 * padX;
-            if (x > 0 && x + w > width) {
-                x = 0;
-                y += h + gap;
+        auto *outer = new wxBoxSizer(wxVERTICAL);
+        auto *row   = new wxBoxSizer(wxHORIZONTAL);
+        const int gap = FromDIP(6);
+        int used = 0;
+        for (Button *button : m_buttons) {
+            const int button_w = button->GetBestSize().x;
+            if (used > 0 && used + gap + button_w > width) {
+                outer->Add(row, 0, wxBOTTOM, gap);
+                row = new wxBoxSizer(wxHORIZONTAL);
+                used = 0;
             }
-            m_rects.push_back(wxRect(x, y, w, h));
-            x += w + gap;
+            if (used > 0) {
+                row->AddSpacer(gap);
+                used += gap;
+            }
+            row->Add(button, 0);
+            used += button_w;
         }
-        SetMinSize(wxSize(width, y + h));
+        outer->Add(row, 0);
+        SetSizer(outer);
+        SetMinSize(wxSize(width, outer->GetMinSize().y));
+        Layout();
     }
 
 private:
-    void onPaint(wxPaintEvent &)
-    {
-        wxAutoBufferedPaintDC dc(this);
-        dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHigh)));
-        dc.Clear();
-
-        const bool focused = HasFocus();
-        for (size_t i = 0; i < m_rects.size(); ++i) {
-            const wxRect &rc  = m_rects[i];
-            const bool    hov = (static_cast<int>(i) == m_hover);
-            const bool    act = focused && (static_cast<int>(i) == m_focus_idx);
-            dc.SetBrush(wxBrush(StateColor::semantic(hov ? MD3::Role::SurfaceContainerHigh
-                                                         : MD3::Role::SurfaceContainerHighest)));
-            // The keyboard-active chip carries a 2px Primary focus ring.
-            dc.SetPen(act ? wxPen(StateColor::semantic(MD3::Role::Primary, m_scheme), std::max(2, FromDIP(2)))
-                          : wxPen(StateColor::semantic(MD3::Role::OutlineVariant), std::max(1, FromDIP(1))));
-            dc.DrawRoundedRectangle(rc, FromDIP(8));
-            dc.SetFont(Label::Mono_12);
-            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
-            const wxSize te = dc.GetTextExtent(m_defs[i].label);
-            dc.DrawText(m_defs[i].label, rc.x + (rc.width - te.x) / 2, rc.y + (rc.height - te.y) / 2);
-        }
-    }
-
-    int hitTest(const wxPoint &p) const
-    {
-        for (size_t i = 0; i < m_rects.size(); ++i)
-            if (m_rects[i].Contains(p))
-                return static_cast<int>(i);
-        return -1;
-    }
-
-    void onMotion(wxMouseEvent &e)
-    {
-        const int h = hitTest(e.GetPosition());
-        if (h != m_hover) {
-            m_hover = h;
-            if (h >= 0)
-                SetToolTip(m_defs[h].tip);
-            else
-                UnsetToolTip();
-            Refresh();
-        }
-        SetCursor(h >= 0 ? wxCursor(wxCURSOR_HAND) : *wxSTANDARD_CURSOR);
-        e.Skip();
-    }
-
-    void onLeave(wxMouseEvent &e)
-    {
-        if (m_hover != -1) {
-            m_hover = -1;
-            UnsetToolTip();
-            Refresh();
-        }
-        e.Skip();
-    }
-
-    void onLeftDown(wxMouseEvent &e)
-    {
-        const int h = hitTest(e.GetPosition());
-        if (h >= 0) {
-            m_focus_idx = h;
-            if (m_on_insert)
-                m_on_insert(m_defs[h]); // popover stays open for further inserts
-            Refresh();
-            return;
-        }
-        e.Skip();
-    }
-
-    // Up/Down (dir -1/+1) land on the chip in the nearest row above/below
-    // whose horizontal centre is closest to the current one.
-    void moveRow(int dir)
-    {
-        if (m_rects.empty())
-            return;
-        const wxRect cur      = m_rects[m_focus_idx];
-        int          best     = -1;
-        long         best_key = 0;
-        for (size_t i = 0; i < m_rects.size(); ++i) {
-            const wxRect &rc = m_rects[i];
-            if (dir > 0 ? rc.y <= cur.y : rc.y >= cur.y)
-                continue;
-            const long row_dist = std::abs((long) rc.y - (long) cur.y);
-            const long dx  = std::abs((long) (rc.x + rc.width / 2) - (long) (cur.x + cur.width / 2));
-            const long key = row_dist * 100000 + dx; // nearest row first, then nearest column
-            if (best < 0 || key < best_key) {
-                best     = static_cast<int>(i);
-                best_key = key;
-            }
-        }
-        if (best >= 0) {
-            m_focus_idx = best;
-            Refresh();
-        }
-    }
-
-    void onKeyDown(wxKeyEvent &e)
-    {
-        const int n = static_cast<int>(m_defs.size());
-        switch (e.GetKeyCode()) {
-        case WXK_LEFT:
-            m_focus_idx = std::max(0, m_focus_idx - 1);
-            Refresh();
-            return;
-        case WXK_RIGHT:
-            m_focus_idx = std::min(n - 1, m_focus_idx + 1);
-            Refresh();
-            return;
-        case WXK_HOME:
-            m_focus_idx = 0;
-            Refresh();
-            return;
-        case WXK_END:
-            m_focus_idx = n - 1;
-            Refresh();
-            return;
-        case WXK_UP:
-            moveRow(-1);
-            return;
-        case WXK_DOWN:
-            moveRow(+1);
-            return;
-        case WXK_RETURN:
-        case WXK_NUMPAD_ENTER:
-        case WXK_SPACE:
-            if (m_focus_idx >= 0 && m_focus_idx < n && m_on_insert)
-                m_on_insert(m_defs[m_focus_idx]);
-            return;
-        case WXK_TAB:
-            Navigate(e.ShiftDown() ? wxNavigationKeyEvent::IsBackward : wxNavigationKeyEvent::IsForward);
-            return;
-        default:
-            e.Skip();
-        }
-    }
-
-    MD3::ColorScheme     m_scheme;
     std::vector<ChipDef> m_defs;
-    std::vector<wxRect>  m_rects;
-    int                  m_hover     = -1;
-    int                  m_focus_idx = 0;
-
-    std::function<void(const ChipDef &)> m_on_insert;
+    std::vector<Button *> m_buttons;
 };
 
 // --- RegexBuilderPopup --------------------------------------------------------
@@ -293,9 +165,9 @@ RegexBuilderPopup::RegexBuilderPopup(wxWindow *parent)
         }
         e.Skip();
     });
-#ifdef __WXMSW__
-    BindUnfocusEvent();
-#endif
+    // wxPopupTransientWindow already handles WM_ACTIVATE for
+    // wxPU_CONTAINS_CONTROLS. Binding the owner's deactivate event as well
+    // dismisses us at the exact moment focus enters m_pattern.
     // build() is deferred to the first Configure() so every child control is
     // created with the owning field's accent scheme already installed.
 }
@@ -325,7 +197,7 @@ void RegexBuilderPopup::build()
     sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, pad);
 
     auto *engine = new Label(m_scroll, Label::Body_11,
-                             _L("Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."));
+                              _L("Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."));
     engine->SetBackgroundColour(surface);
     engine->SetForegroundColour(on_var);
     engine->Wrap(contentW);
@@ -343,7 +215,8 @@ void RegexBuilderPopup::build()
     sectionLabel(_L("Pattern"));
     wxBoxSizer *pat_row = new wxBoxSizer(wxHORIZONTAL);
     m_pattern = new wxTextCtrl(m_scroll, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                               wxSize(contentW - FromDIP(36), -1), wxBORDER_NONE | wxTE_PROCESS_ENTER);
+                               wxSize(contentW - FromDIP(50), FromDIP(kTargetH)),
+                               wxBORDER_NONE | wxTE_PROCESS_ENTER);
     m_pattern->SetFont(Label::Mono_13);
     m_pattern->SetBackgroundColour(field_bg);
     m_pattern->SetForegroundColour(on);
@@ -356,7 +229,7 @@ void RegexBuilderPopup::build()
     pat_row->Add(m_pattern, 1, wxALIGN_CENTER_VERTICAL);
 
     m_copy = new Button(m_scroll, wxEmptyString);
-    m_copy->SetIconButton(Button::IconShape::Circle, 30);
+    m_copy->SetIconButton(Button::IconShape::Circle, kTargetH);
     m_copy->SetGlyph(MaterialIcon::ContentCopy, 18);
     m_copy->SetToolTip(_L("Copy pattern"));
     m_copy->SetName(_L("Copy pattern"));
@@ -382,6 +255,7 @@ void RegexBuilderPopup::build()
         box->SetValue(value);
         box->SetName(text);
         box->SetLabel(text);
+        box->SetMinSize(wxSize(FromDIP(kTargetH), FromDIP(kTargetH)));
         auto *lbl = new Label(m_scroll, Label::Body_13, text);
         lbl->SetBackgroundColour(surface);
         lbl->SetForegroundColour(on);
@@ -399,7 +273,8 @@ void RegexBuilderPopup::build()
             fire(box->GetValue());
         });
         row->Add(box, 0, wxALIGN_CENTER_VERTICAL);
-        row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        lbl->Wrap(contentW - FromDIP(kTargetH + 8));
+        row->Add(lbl, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
         sizer->Add(row, 0, wxLEFT | wxRIGHT | wxTOP, pad);
         return box;
     };
@@ -413,6 +288,13 @@ void RegexBuilderPopup::build()
         if (m_cb.onCase)
             m_cb.onCase(on);
         evaluate(); // icase flag changes the preview matches
+    });
+    m_multiline_cb = addFlag(_L("Multiline anchors (^ and $ match line boundaries)"),
+                             m_multiline_on, [this](bool on) {
+        m_multiline_on = on;
+        if (m_cb.onMultiline)
+            m_cb.onMultiline(on);
+        evaluate();
     });
     m_word_cb = addFlag(_L("Whole word"), m_word_on, [this](bool on) {
         m_word_on = on;
@@ -430,18 +312,20 @@ void RegexBuilderPopup::build()
     sectionLabel(_L("Literals"));
     wxBoxSizer *lit_row = new wxBoxSizer(wxHORIZONTAL);
     m_literal = new wxTextCtrl(m_scroll, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                               wxSize(contentW - FromDIP(76), -1), wxBORDER_NONE | wxTE_PROCESS_ENTER);
+                               wxSize(contentW - FromDIP(92), FromDIP(kTargetH)),
+                               wxBORDER_NONE | wxTE_PROCESS_ENTER);
     m_literal->SetFont(Label::Body_13);
     m_literal->SetBackgroundColour(field_bg);
     m_literal->SetForegroundColour(on);
     m_literal->SetHint(_L("Text to match literally"));
     m_literal->SetName(_L("Text to match literally"));
+    m_literal->SetMaxLength(kMaxPatternLen);
     m_literal->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { addLiteral(); });
     lit_row->Add(m_literal, 1, wxALIGN_CENTER_VERTICAL);
 
     auto *add_btn = new Button(m_scroll, _L("Add"));
     add_btn->SetVariant(Button::Variant::Tonal);
-    add_btn->SetButtonSize(Button::Size::Small);
+    add_btn->SetButtonSize(Button::Size::Large);
     add_btn->SetColorScheme(m_scheme);
     add_btn->SetToolTip(_L("Insert the text with regex metacharacters escaped"));
     add_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { addLiteral(); });
@@ -487,7 +371,7 @@ void RegexBuilderPopup::build()
     // --- Collapsible test section (progressive disclosure) --------------------
     m_test_toggle = new Button(m_scroll, _L("Test pattern"));
     m_test_toggle->SetVariant(Button::Variant::Text);
-    m_test_toggle->SetButtonSize(Button::Size::Small);
+    m_test_toggle->SetButtonSize(Button::Size::Large);
     m_test_toggle->SetColorScheme(m_scheme);
     m_test_toggle->SetGlyph(MaterialIcon::ExpandMore, 18);
     m_test_toggle->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { toggleTest(); });
@@ -544,7 +428,7 @@ void RegexBuilderPopup::build()
     m_tab_build = new Button(this, _L("Build"));
     m_tab_ref   = new Button(this, _L("Reference"));
     for (Button *b : {m_tab_build, m_tab_ref}) {
-        b->SetButtonSize(Button::Size::Small);
+        b->SetButtonSize(Button::Size::Large);
         b->SetColorScheme(m_scheme);
     }
     m_tab_build->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { switchTab(0); });
@@ -605,8 +489,8 @@ void RegexBuilderPopup::buildReference()
 
     heading(_L("How search works"));
     paragraph(_L("Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."));
-    paragraph(_L("Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."));
-    paragraph(_L("Case sensitive and Whole word refine plain-text search; in regex mode author \\b yourself for word boundaries."));
+    paragraph(_L("Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."));
+    paragraph(_L("Case sensitive refines plain-text and regex search. Multiline makes ^ and $ match line boundaries; Whole word is plain-text only, so use \\b in regex mode."));
     paragraph(_L("An invalid or half-typed pattern never hides rows: it matches everything until it compiles."));
     paragraph(_L("Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."));
 
@@ -625,7 +509,7 @@ void RegexBuilderPopup::buildReference()
     heading(_L("OpenCode helper"));
     paragraph(_L("Let the OpenCode assistant draft the pattern: the button copies a prompt describing this engine, your current pattern and sample text to the clipboard, then opens OpenCode if it is installed."));
     auto *oc_btn = new Button(m_ref_scroll, _L("Copy prompt & open OpenCode"));
-    oc_btn->SetButtonSize(Button::Size::Small);
+    oc_btn->SetButtonSize(Button::Size::Large);
     oc_btn->SetColorScheme(m_scheme);
     oc_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { openCodeHelp(); });
     sizer->Add(oc_btn, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(4));
@@ -660,8 +544,9 @@ void RegexBuilderPopup::openCodeHelp()
     // command line, which other processes could read) and OpenCode is only
     // launched, not fed data.
     wxString sample = m_sample ? m_sample->GetValue().Left(400) : wxString{};
-    wxString prompt = "Help me build a regular expression. Engine: C++ std::regex/std::wregex, "
-                      "ECMAScript grammar, icase when case-insensitive; invalid patterns must fail safe. ";
+    wxString prompt = "Help me build a regular expression. Engine: Boost.Regex 1.84 wide-character ECMAScript "
+                       "in an isolated bounded worker (512-code-unit pattern, 8192-code-unit "
+                       "sample, 50 ms deadline), icase when case-insensitive, explicit multiline anchors; invalid patterns must fail safe. ";
     prompt += "Current pattern: \"" + GetPattern() + "\". ";
     if (!sample.IsEmpty())
         prompt += "It should be tested against this sample text: \"" + sample + "\". ";
@@ -701,25 +586,32 @@ void RegexBuilderPopup::addSection(wxSizer *sizer, const wxString &title,
 }
 
 void RegexBuilderPopup::Configure(MD3::ColorScheme scheme, const wxString &pattern,
-                                  bool regexOn, bool caseOn, bool wordOn, Callbacks callbacks)
+                                  bool regexOn, bool caseOn, bool multilineOn,
+                                  bool wordOn, Callbacks callbacks)
 {
     m_scheme   = scheme;
     m_regex_on = regexOn;
     m_case_on  = caseOn;
+    m_multiline_on = multilineOn;
     m_word_on  = wordOn;
     m_cb       = std::move(callbacks);
 
     if (!m_scroll)
         build();
 
+    const wxString bounded_pattern = pattern.Left(kMaxPatternLen);
     m_syncing = true;
-    m_pattern->ChangeValue(pattern);
+    m_pattern->ChangeValue(bounded_pattern);
     m_syncing = false;
+    if (bounded_pattern != pattern && m_cb.onPattern)
+        m_cb.onPattern(bounded_pattern);
     m_regex_cb->SetValue(regexOn);
     m_case_cb->SetValue(caseOn);
+    m_multiline_cb->SetValue(multilineOn);
     m_word_cb->SetValue(wordOn);
     m_regex_cb->SetColorScheme(scheme);
     m_case_cb->SetColorScheme(scheme);
+    m_multiline_cb->SetColorScheme(scheme);
     m_word_cb->SetColorScheme(scheme);
 
     evaluate();
@@ -731,25 +623,38 @@ void RegexBuilderPopup::SyncPattern(const wxString &pattern)
     if (!m_pattern || m_pattern->GetValue() == pattern)
         return;
     m_syncing = true;
-    m_pattern->ChangeValue(pattern); // no wxEVT_TEXT -> no echo through onPattern
+    m_pattern->ChangeValue(pattern.Left(kMaxPatternLen)); // no wxEVT_TEXT -> no echo through onPattern
     m_syncing = false;
     evaluate();
 }
 
 wxString RegexBuilderPopup::GetPattern() const { return m_pattern ? m_pattern->GetValue() : wxString(); }
 
-void RegexBuilderPopup::FocusPattern()
+void RegexBuilderPopup::PopupAndFocusPattern()
 {
-    if (!m_pattern)
+    if (!m_pattern) {
+        Popup();
         return;
-    m_pattern->SetFocus();
+    }
     m_pattern->SetInsertionPointEnd();
+    Popup(m_pattern);
 }
 
 void RegexBuilderPopup::insertChip(const ChipDef &def)
 {
     if (!m_pattern)
         return;
+    long selection_start = 0;
+    long selection_end   = 0;
+    m_pattern->GetSelection(&selection_start, &selection_end);
+    const size_t selected = selection_end > selection_start
+                                ? static_cast<size_t>(selection_end - selection_start)
+                                : 0;
+    if (m_pattern->GetValue().length() - selected + def.insert.length() >
+        static_cast<size_t>(kMaxPatternLen)) {
+        wxBell();
+        return;
+    }
     // Writes at the pattern editor's stored insertion point (works without
     // focus), fires wxEVT_TEXT -> onPatternEdited -> field sync + evaluate.
     m_pattern->WriteText(def.insert);
@@ -764,22 +669,46 @@ void RegexBuilderPopup::addLiteral()
     const wxString raw = m_literal->GetValue();
     if (raw.IsEmpty())
         return;
-    m_pattern->WriteText(escapeLiteral(raw));
+
+    long selection_start = 0;
+    long selection_end   = 0;
+    m_pattern->GetSelection(&selection_start, &selection_end);
+    const size_t selected = selection_end > selection_start
+                                ? static_cast<size_t>(selection_end - selection_start)
+                                : 0;
+    const size_t base_len = m_pattern->GetValue().length() - selected;
+    const size_t available = base_len < static_cast<size_t>(kMaxPatternLen)
+                                 ? static_cast<size_t>(kMaxPatternLen) - base_len
+                                 : 0;
+    bool complete = false;
+    const wxString escaped = escapeLiteral(raw, available, &complete);
+    if (!complete) {
+        wxBell();
+        return;
+    }
+    m_pattern->WriteText(escaped);
     m_literal->Clear();
 }
 
-wxString RegexBuilderPopup::escapeLiteral(const wxString &raw)
+wxString RegexBuilderPopup::escapeLiteral(const wxString &raw, std::size_t maxOutput, bool *complete)
 {
     // ECMAScript metacharacters that must be escaped to match literally.
     const wxString meta = "\\^$.|?*+()[]{}";
     wxString       out;
-    out.reserve(raw.length() * 2);
+    out.reserve(std::min(raw.length(), maxOutput));
+    if (complete)
+        *complete = false;
     for (size_t i = 0; i < raw.length(); ++i) {
         const wxUniChar c = raw[i];
-        if (meta.Find(c) != wxNOT_FOUND)
+        const size_t needed = meta.Find(c) != wxNOT_FOUND ? 2 : 1;
+        if (out.length() + needed > maxOutput)
+            return out;
+        if (needed == 2)
             out << '\\';
         out << c;
     }
+    if (complete)
+        *complete = true;
     return out;
 }
 
@@ -853,30 +782,17 @@ void RegexBuilderPopup::evaluate()
         return;
     }
 
-    std::wregex re;
-    try {
-        auto flags = std::regex_constants::ECMAScript;
-        if (!m_case_on)
-            flags |= std::regex_constants::icase;
-        re.assign(pattern.ToStdWstring(), flags);
-    } catch (const std::regex_error &err) {
-        setStatus(friendlyRegexError(err), err_colour);
-        resetHighlights();
-        if (m_results)
-            m_results->ChangeValue(wxEmptyString);
-        return;
-    } catch (const std::exception &) {
-        setStatus(_L("Invalid regular expression"), err_colour);
-        resetHighlights();
-        if (m_results)
-            m_results->ChangeValue(wxEmptyString);
-        return;
-    }
-
     // --- Bounded sample evaluation --------------------------------------------
     const wxString sample_full = m_sample ? m_sample->GetValue() : wxString();
+    Slic3r::GUI::BoundedRegex::Options options;
+    options.case_sensitive = m_case_on;
+    options.multiline = m_multiline_on;
     if (sample_full.IsEmpty()) {
-        setStatus(_L("Valid pattern"), ok_colour);
+        const auto result = Slic3r::GUI::BoundedRegex::validate(pattern.ToStdWstring(), options);
+        const bool valid = result.status == Slic3r::GUI::BoundedRegex::Status::Valid;
+        setStatus(valid ? _L("Valid pattern") : friendlyRegexError(result),
+                  valid ? ok_colour : err_colour);
+        resetHighlights();
         if (m_results)
             m_results->ChangeValue(wxEmptyString);
         return;
@@ -884,45 +800,47 @@ void RegexBuilderPopup::evaluate()
 
     const bool     truncated = sample_full.length() > (size_t) kMaxSampleLen;
     const wxString sample    = truncated ? sample_full.Left(kMaxSampleLen) : sample_full;
-    const std::wstring hay   = sample.ToStdWstring();
-
-    wxString out;
-    int      count = 0;
-    std::vector<std::pair<long, long>> spans;
-    try {
-        // std::wsregex_iterator handles zero-width advancement; the loop is
-        // bounded by kMaxMatches, and error_complexity/error_stack land in the
-        // catch below — the popover never propagates a regex exception.
-        std::wsregex_iterator it(hay.begin(), hay.end(), re), end;
-        for (; it != end && count < kMaxMatches; ++it) {
-            const std::wsmatch &m = *it;
-            ++count;
-            const long s = static_cast<long>(m.position(0));
-            const long e = s + static_cast<long>(m.length(0));
-            spans.emplace_back(s, e);
-            out << wxString::Format(_L("Match %d at %d-%d: %s"), count, (int) s, (int) e,
-                                    clipForList(wxString(m.str(0))))
-                << "\n";
-            for (size_t g = 1; g < m.size(); ++g) {
-                out << "    ";
-                if (m[g].matched)
-                    out << wxString::Format(_L("group %d: %s"), (int) g, clipForList(wxString(m.str(g))));
-                else
-                    out << wxString::Format(_L("group %d: (no match)"), (int) g);
-                out << "\n";
-            }
-        }
-    } catch (const std::exception &) {
-        setStatus(_L("Pattern too complex to evaluate safely"), err_colour);
+    const auto result = Slic3r::GUI::BoundedRegex::find_all(
+        pattern.ToStdWstring(), sample.ToStdWstring(), kMaxMatches, options);
+    if (result.status != Slic3r::GUI::BoundedRegex::Status::Match &&
+        result.status != Slic3r::GUI::BoundedRegex::Status::NoMatch) {
+        setStatus(friendlyRegexError(result), err_colour);
         resetHighlights();
         if (m_results)
             m_results->ChangeValue(wxEmptyString);
         return;
     }
 
+    wxString out;
+    const int count = static_cast<int>(result.matches.size());
+    std::vector<std::pair<long, long>> spans;
+    for (std::size_t match_index = 0; match_index < result.matches.size(); ++match_index) {
+        const auto &match = result.matches[match_index];
+        if (match.groups.empty())
+            continue;
+        const auto &whole = match.groups.front();
+        const long s = static_cast<long>(whole.begin);
+        const long e = s + static_cast<long>(whole.length);
+        spans.emplace_back(s, e);
+        out << wxString::Format(_L("Match %d at %d-%d: %s"), static_cast<int>(match_index + 1),
+                                static_cast<int>(s), static_cast<int>(e),
+                                clipForList(sample.Mid(whole.begin, whole.length)))
+            << "\n";
+        for (std::size_t group_index = 1; group_index < match.groups.size(); ++group_index) {
+            const auto &group = match.groups[group_index];
+            out << "    ";
+            if (group.matched)
+                out << wxString::Format(_L("group %d: %s"), static_cast<int>(group_index),
+                                        clipForList(sample.Mid(group.begin, group.length)));
+            else
+                out << wxString::Format(_L("group %d: (no match)"), static_cast<int>(group_index));
+            out << "\n";
+        }
+    }
+
     if (count == 0)
         out = _L("No matches.");
-    else if (count >= kMaxMatches)
+    else if (result.match_limit_reached)
         out << wxString::Format(_L("Showing first %d matches only."), kMaxMatches) << "\n";
     if (truncated)
         out << wxString::Format(_L("Sample truncated to %d characters."), kMaxSampleLen) << "\n";
@@ -965,15 +883,15 @@ void RegexBuilderPopup::fitPopup()
     const int    max_h = std::min(FromDIP(600), area.height - FromDIP(96));
 
     const int inset  = FromDIP(4); // keeps square children inside the r12 border arc
-    const int tab_h  = FromDIP(34); // Build | Reference header strip
+    const int tab_h  = FromDIP(52); // 44-DIP Build | Reference targets + insets
     const int view_h = std::min(content.y, max_h - tab_h);
     const int sb_w   = content.y > view_h ? wxSystemSettings::GetMetric(wxSYS_VSCROLL_X, active) : 0;
 
     SetClientSize(content.x + sb_w + 2 * inset, tab_h + view_h + 2 * inset);
     if (m_tab_build && m_tab_ref) {
         const int tab_w = FromDIP(96);
-        m_tab_build->SetSize(inset + FromDIP(8), inset + FromDIP(3), tab_w, tab_h - FromDIP(6));
-        m_tab_ref->SetSize(inset + FromDIP(12) + tab_w, inset + FromDIP(3), tab_w, tab_h - FromDIP(6));
+        m_tab_build->SetSize(inset + FromDIP(8), inset + FromDIP(4), tab_w, FromDIP(kTargetH));
+        m_tab_ref->SetSize(inset + FromDIP(12) + tab_w, inset + FromDIP(4), tab_w, FromDIP(kTargetH));
     }
     for (wxScrolledWindow *scroll : {m_scroll, m_ref_scroll}) {
         if (!scroll)

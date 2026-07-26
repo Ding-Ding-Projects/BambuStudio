@@ -142,10 +142,33 @@ else ()
     target_link_libraries(BambuStudio ${CMAKE_DL_LIBS} -lstdc++ Threads::Threads pangoft2-1.0)
 endif ()
 
+# Keep the bounded-regex worker available to headless test configurations as
+# well as GUI builds so evaluator safety can be tested without compiling or
+# launching Studio's UI. Boost.Regex supplies portable ECMAScript multiline
+# anchors; MSVC's std::regex omits the C++17 multiline flag.
+if (SLIC3R_GUI OR SLIC3R_BUILD_TESTS)
+    add_executable(BambuStudio_regex_worker
+        slic3r/GUI/Widgets/BoundedRegexWorkerMain.cpp
+        slic3r/GUI/Widgets/BoundedRegex.hpp
+        slic3r/GUI/Widgets/BoundedRegexProtocol.hpp
+    )
+    target_include_directories(BambuStudio_regex_worker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_compile_features(BambuStudio_regex_worker PRIVATE cxx_std_17)
+    target_compile_definitions(BambuStudio_regex_worker PRIVATE BOOST_REGEX_MAX_STATE_COUNT=1000000)
+    target_link_libraries(BambuStudio_regex_worker PRIVATE Boost::regex)
+    set_target_properties(BambuStudio_regex_worker PROPERTIES OUTPUT_NAME "bambu-regex-worker")
+endif ()
+
 # Add the Slic3r GUI library, libcurl, OpenGL and GLU libraries.
 if (SLIC3R_GUI)
 #    target_link_libraries(BambuStudio ws2_32 uxtheme setupapi libslic3r_gui ${wxWidgets_LIBRARIES})
 target_link_libraries(BambuStudio libslic3r_gui)
+
+    # User-authored regular expressions execute in the helper above. The GUI
+    # client can terminate/restart it without leaving an unbounded regex thread
+    # in the application.
+    add_dependencies(BambuStudio BambuStudio_regex_worker)
+
     if (MSVC)
         # Generate debug symbols even in release mode.
         target_link_options(BambuStudio PUBLIC "$<$<CONFIG:RELEASE>:/DEBUG>")
@@ -275,6 +298,15 @@ else ()
         set(MACOSX_BUNDLE_BUNDLE_NAME "Bambu Studio")
         set(MACOSX_BUNDLE_SHORT_VERSION_STRING ${SLIC3R_VERSION})
         set(MACOSX_BUNDLE_COPYRIGHT "Copyright(C) 2021-2025 Lunkuo All Rights Reserved")
+        # Keep the helper inside the bundle and beside BambuStudio, which is the
+        # only production location accepted by the client. Final distribution
+        # signing must cover the completed bundle, including this helper.
+        add_custom_command(TARGET BambuStudio POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:BambuStudio_regex_worker>"
+                "$<TARGET_BUNDLE_DIR:BambuStudio>/Contents/MacOS/bambu-regex-worker"
+            COMMENT "Bundling the bounded-regex worker"
+            VERBATIM)
     endif()
     add_custom_command(TARGET BambuStudio POST_BUILD
         COMMAND ln -sfn "${SLIC3R_RESOURCES_DIR}" "${BIN_RESOURCES_DIR}"
@@ -310,6 +342,9 @@ if (WIN32)
     if (MSVC)
         install(TARGETS BambuStudio_app_gui RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
     endif ()
+    if (TARGET BambuStudio_regex_worker)
+        install(TARGETS BambuStudio_regex_worker RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}")
+    endif ()
     install(FILES ${output_dlls_${build_type}} DESTINATION "${CMAKE_INSTALL_PREFIX}")
 else ()
     if (APPLE)
@@ -317,4 +352,7 @@ else ()
         install(FILES ${output_sos_${build_type}} DESTINATION "${CMAKE_INSTALL_PREFIX}")
     endif()
     install(TARGETS BambuStudio RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR})
+    if (TARGET BambuStudio_regex_worker AND NOT (APPLE AND CMAKE_MACOSX_BUNDLE))
+        install(TARGETS BambuStudio_regex_worker RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+    endif ()
 endif ()

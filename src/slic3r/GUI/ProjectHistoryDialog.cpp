@@ -491,6 +491,8 @@ void ProjectHistoryDialog::populate_versions()
     const bool regex      = m_search_field != nullptr && m_search_field->IsRegexEnabled();
     const bool case_sense = m_search_field != nullptr && m_search_field->IsCaseSensitive();
     const bool whole_word = m_search_field != nullptr && m_search_field->IsWholeWord();
+    const bool multiline  = m_search_field != nullptr && m_search_field->IsMultiline();
+    SearchField::MatchPass match_pass(query, regex, case_sense, whole_word, multiline);
     for (std::size_t i = 0; i < m_versions.size(); ++i) {
         const ProjectHistoryVersion &version = m_versions[i];
         const std::string short_id = version.commit_id.substr(0, std::min<std::size_t>(12, version.commit_id.size()));
@@ -499,7 +501,7 @@ void ProjectHistoryDialog::populate_versions()
         const wxString timestamp = format_timestamp(version.committed_at);
         if (!query.IsEmpty()) {
             const wxString haystack = commit + " " + message + " " + timestamp;
-            if (!SearchField::textMatches(query, haystack, regex, case_sense, whole_word))
+            if (!match_pass.matches(haystack))
                 continue;
         }
         wxVector<wxVariant> row;

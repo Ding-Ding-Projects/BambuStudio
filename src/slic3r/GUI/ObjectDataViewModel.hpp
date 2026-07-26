@@ -366,6 +366,7 @@ class ObjectDataViewModel :public wxDataViewModel
     bool                                        m_search_regex { false };
     bool                                        m_search_case_sensitive { false };
     bool                                        m_search_whole_word { false };
+    bool                                        m_search_multiline { false };
     std::map<int,std::map<int, int>>                                      m_ui_and_3d_volume_maps;
 
 public:
@@ -555,7 +556,8 @@ public:
     // Configure how search_object() matches: regex mode (SearchField ".*"
     // toggle), case sensitivity and whole-word (its tune-popover checkboxes).
     // The sidebar pushes the field's current flags here before every filter run.
-    void        set_search_flags(bool regex, bool case_sensitive, bool whole_word);
+    void        set_search_flags(bool regex, bool case_sensitive, bool whole_word,
+                                 bool multiline);
     void        search_object(wxString search_text);
     std::vector<std::tuple<ObjectDataViewModelNode*, wxString, wxString>> get_found_list() const { return search_found_list; }
 

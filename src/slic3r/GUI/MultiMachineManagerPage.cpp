@@ -656,14 +656,15 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
         const bool regex         = m_search && m_search->IsRegexEnabled();
         const bool caseSensitive = m_search && m_search->IsCaseSensitive();
         const bool wholeWord     = m_search && m_search->IsWholeWord();
+        const bool multiline     = m_search && m_search->IsMultiline();
+        SearchField::MatchPass match_pass(m_search_filter, regex, caseSensitive, wholeWord, multiline);
         for (const auto& st : m_state_objs) {
             wxString name = wxString::FromUTF8(st.state_dev_name);
             wxString type;
             auto mit = user_machine.find(st.dev_id);
             if (mit != user_machine.end() && mit->second)
                 type = wxString::FromUTF8(mit->second->printer_type);
-            if (SearchField::textMatches(m_search_filter, name, regex, caseSensitive, wholeWord) ||
-                (!type.IsEmpty() && SearchField::textMatches(m_search_filter, type, regex, caseSensitive, wholeWord)))
+            if (match_pass.matches(name) || (!type.IsEmpty() && match_pass.matches(type)))
                 filtered.push_back(st);
         }
     }

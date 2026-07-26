@@ -1785,8 +1785,10 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
     const bool     regex     = m_search && m_search->IsRegexEnabled();
     const bool     case_sens = m_search && m_search->IsCaseSensitive();
     const bool     whole     = m_search && m_search->IsWholeWord();
+    const bool     multiline = m_search && m_search->IsMultiline();
     const wxColour highlight = StateColor::semantic(MD3::Role::Primary);
     const size_t   count     = m_search_rows.size();
+    SearchField::MatchPass match_pass(query, regex, case_sens, whole, multiline);
 
     // Pass 1: per-row match against the label haystack. Baseline-hidden rows
     // (e.g. model-mall entries without a mall) never participate. Matching runs
@@ -1798,7 +1800,7 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
     for (size_t i = 0; i < count; ++i) {
         const SearchRow &row = m_search_rows[i];
         if (!row.baseline_shown || row.haystack.empty()) continue;
-        matched[i] = SearchField::textMatches(query, row.haystack, regex, case_sens, whole);
+        matched[i] = match_pass.matches(row.haystack);
     }
 
     // Pass 2: group visibility. A group is a Head_16 title row plus the rows
@@ -1841,7 +1843,7 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
         const SearchRow &row      = m_search_rows[k];
         bool             any_tint = false;
         for (auto *label : row.labels) {
-            if (SearchField::textMatches(query, search_label_text(label), regex, case_sens, whole)) {
+            if (match_pass.matches(search_label_text(label))) {
                 tint(label);
                 any_tint = true;
             }

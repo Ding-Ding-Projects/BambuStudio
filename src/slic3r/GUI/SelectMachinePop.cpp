@@ -370,9 +370,12 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 
     wxSize popup_size = SELECT_MACHINE_POPUP_SIZE;
 #if defined(__WINDOWS__)
-    // The Windows-only search bar is now the shared 40dip MD3 SearchField pill
-    // (taller than the wxSearchCtrl it replaces): grow the popup by the pill row
-    // so the device list is not clipped at the bottom.
+    // The Windows-only search bar carries three independent 44-DIP actions.
+    // Give it a real text-entry region instead of compressing those controls
+    // inside the legacy 216-DIP popup width.
+    popup_size.x = FromDIP(360);
+    // The 44-DIP MD3 pill is taller than the wxSearchCtrl it replaces: grow the
+    // popup by the pill row so the device list is not clipped at the bottom.
     popup_size.y += FromDIP(48);
 #endif
     SetSize(popup_size);
@@ -401,9 +404,8 @@ SelectMachinePopup::SelectMachinePopup(wxWindow *parent)
 	// matcher-flag change re-run the filter live through search_for_printer.
 	m_search_bar = new SearchField(this, _L("Search"));
 	m_search_bar->SetColorScheme(MD3::ColorScheme::Device);
-	// The pill's default 220dip minimum exceeds this 216dip popup; relax it so
-	// the sizer can fit the field flush inside the popup body.
-	m_search_bar->SetMinSize(wxSize(FromDIP(120), -1));
+	// Preserve enough width for a useful query after the three 44-DIP actions.
+	m_search_bar->SetMinSize(wxSize(FromDIP(320), FromDIP(44)));
 	m_search_bar->SetOnQuery([this](const wxString &) {
 		update_user_devices();
 		update_other_devices();
@@ -578,6 +580,14 @@ void SelectMachinePopup::update_other_devices()
     this->Freeze();
     m_scrolledWindow->Freeze();
     int i = 0;
+#if defined(__WINDOWS__)
+    std::unique_ptr<SearchField::MatchPass> search_pass;
+    if (m_search_bar)
+        search_pass = std::make_unique<SearchField::MatchPass>(
+            m_search_bar->GetValue(), m_search_bar->IsRegexEnabled(),
+            m_search_bar->IsCaseSensitive(), m_search_bar->IsWholeWord(),
+            m_search_bar->IsMultiline());
+#endif
 
     for (auto &elem : m_free_machine_list) {
         MachineObject *     mobj = elem.second;
@@ -604,7 +614,7 @@ void SelectMachinePopup::update_other_devices()
             m_sizer_other_devices->Add(op, 0, wxEXPAND, 0);
         }
 #if defined(__WINDOWS__)
-        if (!search_for_printer(mobj)) {
+        if (!search_for_printer(mobj, search_pass.get())) {
             op->Hide();
         }
         else {
@@ -724,13 +734,21 @@ void SelectMachinePopup::update_user_devices()
     m_scrolledWindow->Freeze();
     int i = 0;
 
+#if defined(__WINDOWS__)
+    std::unique_ptr<SearchField::MatchPass> search_pass;
+    if (m_search_bar)
+        search_pass = std::make_unique<SearchField::MatchPass>(
+            m_search_bar->GetValue(), m_search_bar->IsRegexEnabled(),
+            m_search_bar->IsCaseSensitive(), m_search_bar->IsWholeWord(),
+            m_search_bar->IsMultiline());
+#endif
     for (auto& elem : user_machine_list) {
         MachineObject* mobj = elem.second;
         MachineObjectPanel* op = nullptr;
         if (i < m_user_list_machine_panel.size()) {
             op = m_user_list_machine_panel[i]->mPanel;
 #if defined(__WINDOWS__)
-			if (!search_for_printer(mobj)) {
+			if (!search_for_printer(mobj, search_pass.get())) {
 				op->Hide();
 			} else {
                 op->Show();
@@ -846,7 +864,7 @@ void SelectMachinePopup::update_user_devices()
     m_my_devices_count = i;
 }
 
-bool SelectMachinePopup::search_for_printer(MachineObject* obj)
+bool SelectMachinePopup::search_for_printer(MachineObject* obj, SearchField::MatchPass *match_pass)
 {
 	// The search bar is Windows-only; without it every printer is visible.
 	if (!m_search_bar)
@@ -859,16 +877,12 @@ bool SelectMachinePopup::search_for_printer(MachineObject* obj)
 	// Shared SearchField matcher: honours the pill's ".*" regex toggle and its
 	// tune-popover case-sensitive / whole-word checkboxes. An invalid or
 	// half-typed regex matches everything (never hides every printer).
-	const bool regex     = m_search_bar->IsRegexEnabled();
-	const bool case_sens = m_search_bar->IsCaseSensitive();
-	const bool word      = m_search_bar->IsWholeWord();
-
 	const wxString name = wxString::FromUTF8(obj->get_dev_name());
-	if (SearchField::textMatches(search_text, name, regex, case_sens, word))
+	if (match_pass && match_pass->matches(name))
 		return true;
 #if !BBL_RELEASE_TO_PUBLIC
 	const wxString ip = wxString::FromUTF8(obj->get_dev_ip());
-	if (SearchField::textMatches(search_text, ip, regex, case_sens, word))
+	if (match_pass && match_pass->matches(ip))
 		return true;
 #endif
 	return false;

@@ -14,7 +14,8 @@ option index in `src/slic3r/GUI/Search.{hpp,cpp}`.
   section header (placeholder: *Search settings*).
 - Focusing the field opens the global `Search::OptionsSearcher` results popup — the same
   `SearchDialog` the settings-tab magnifier uses — anchored directly under the pill.
-  Typing filters live (fuzzy/substring by default, `std::wregex` when regex mode is on;
+  Typing filters live (fuzzy/substring by default, bounded Boost.Regex 1.84
+  wide-character ECMAScript when regex mode is on;
   an invalid or half-typed pattern never hides results).
 - Scope is `Preset::TYPE_INVALID`, i.e. **every preset type the searcher indexes for the
   current mode**: process/print, **printer** and filament options. This is why the

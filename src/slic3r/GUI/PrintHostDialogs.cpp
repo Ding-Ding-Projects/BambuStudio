@@ -410,9 +410,11 @@ void PrintHostQueueDialog::run_queue_search()
     const bool regex      = search_field->IsRegexEnabled();
     const bool case_sense = search_field->IsCaseSensitive();
     const bool whole_word = search_field->IsWholeWord();
+    const bool multiline  = search_field->IsMultiline();
     int matches = 0;
     int first_match = wxNOT_FOUND;
     const int rows = job_list->GetItemCount();
+    SearchField::MatchPass match_pass(query, regex, case_sense, whole_word, multiline);
     for (int row = 0; row < rows; ++row) {
         wxVariant id, status, host, filename;
         job_list->GetValue(id, row, COL_ID);
@@ -421,7 +423,7 @@ void PrintHostQueueDialog::run_queue_search()
         job_list->GetValue(filename, row, COL_FILENAME);
         const wxString haystack = id.GetString() + " " + status.GetString() + " " +
                                   host.GetString() + " " + filename.GetString();
-        if (SearchField::textMatches(query, haystack, regex, case_sense, whole_word)) {
+        if (match_pass.matches(haystack)) {
             ++matches;
             if (first_match == wxNOT_FOUND)
                 first_match = row;

@@ -223,12 +223,14 @@ void SmartHomeDialog::rebuild_list()
     const bool regex      = m_search->IsRegexEnabled();
     const bool case_sense = m_search->IsCaseSensitive();
     const bool whole_word = m_search->IsWholeWord();
+    const bool multiline  = m_search->IsMultiline();
     m_list->Clear();
     m_visible.clear();
+    SearchField::MatchPass match_pass(query, regex, case_sense, whole_word, multiline);
     for (int i = 0; i < (int) m_entities.size(); ++i) {
         const auto &entity = m_entities[i];
         const wxString hay = wxString::FromUTF8(entity.friendly_name + " " + entity.entity_id);
-        if (!query.IsEmpty() && !SearchField::textMatches(query, hay, regex, case_sense, whole_word))
+        if (!query.IsEmpty() && !match_pass.matches(hay))
             continue;
         m_list->Append(wxString::Format("%s  (%s, %s)",
                                         wxString::FromUTF8(entity.friendly_name),

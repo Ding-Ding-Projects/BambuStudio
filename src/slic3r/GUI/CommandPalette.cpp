@@ -287,6 +287,7 @@ void CommandPalette::rebuild_rows()
     const bool regex      = m_search->IsRegexEnabled();
     const bool case_sense = m_search->IsCaseSensitive();
     const bool whole_word = m_search->IsWholeWord();
+    const bool multiline  = m_search->IsMultiline();
 
     m_list->Freeze();
     m_list->GetSizer()->Clear(true);
@@ -295,10 +296,11 @@ void CommandPalette::rebuild_rows()
     m_selected = -1;
 
     const wxColour outline = StateColor::semantic(MD3::Role::OutlineVariant);
+    SearchField::MatchPass match_pass(query, regex, case_sense, whole_word, multiline);
     for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
         const Entry &entry = m_entries[i];
         if (!query.IsEmpty() &&
-            !SearchField::textMatches(query, entry.title + " " + entry.desc, regex, case_sense, whole_word))
+            !match_pass.matches(entry.title + " " + entry.desc))
             continue;
         wxPanel *row = make_row(entry, static_cast<int>(m_visible.size()));
         m_visible.push_back(i);

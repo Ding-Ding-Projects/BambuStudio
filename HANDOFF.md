@@ -19,19 +19,17 @@ kill bambu-studio.exe first if LNK1104), then verify headlessly, then fix forwar
    `cap.py key <hwnd> 27`, re-post WM_COMMAND for the toggle case, and click-away.
 2. **Sidebar clipping/scroll fix** in Plater.cpp/hpp (previous handoff item) — same
    unverified status, verify at 900 and 700 window heights with scroll/collapse/expand.
-3. **Regex builder does not pop up** (user report, 2026-07-26 — NOT yet investigated).
-   Every SearchField carries the builder behind its trailing tune/`.*` affordance (standing
-   mandate: every search bar ships the full builder). The pills render — the sidebar INK and
-   PROCESS captures show both the `.*` toggle and the tune glyph — but the popover reportedly
-   never appears when clicked. Start at the tune-button click handler in
-   src/slic3r/GUI/Widgets/SearchField.cpp and the builder popover's Show path; suspects:
-   the popover is a wxPopupTransientWindow (documented gotcha: transient popups die if a
-   helper process spawns, and they are NOT wxTopLevelWindow so MD3::Motion::FadeIn takes the
-   layered-window path), a parent/anchor that is now the sidebar scrolled window (clipped or
-   positioned offscreen), or the recent sidebar-search adopters changing focus/EXIT_SEARCH
-   flow. Check ALL adopters (settings-tab magnifier, Objects search, version history, upload
-   queue, palette, new sidebar pills) to see whether it is broken everywhere or only in the
-   new sidebar hosts — that distinction points straight at the cause.
+3. **Regex builder and evaluator hardening** (2026-07-26).
+   Every native search surface now routes through one persistent, out-of-process
+   Boost.Regex 1.84 ECMAScript evaluator. The shared SearchField and compact ImGui bridge
+   expose the same guided builder, raw editor, flags (including multiline anchors), syntax
+   feedback, matches, capture groups, and copy/export behavior; process startup is moved out
+   of input handlers so opening the tune affordance cannot kill a transient popover.
+   Worker startup, timeout/restart, stale-response rejection, protocol framing, caching,
+   invalid patterns, zero-width matches, Unicode, multiline, and concurrent callers are
+   covered by `tests/bounded_regex/`. Focused MSVC Release build and CTest passed locally
+   (1/1, 4.12 s). A genuine live-app popup capture is still required before the earlier
+   visual report can be called runtime-verified.
 
 # Session handoff (2026-07-26): release drought ended, identity rebrand, five features
 

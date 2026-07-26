@@ -102,7 +102,7 @@ class OptionsSearcher
     std::map<std::string, GroupAndCategory> groups_and_categories;
     PrinterTechnology                       printer_technology;
 
-    // When true, the search term is treated as a std::wregex instead of the
+    // When true, the search term is treated as a bounded Boost.Regex pattern instead of the
     // default fuzzy/substring match. An invalid pattern never filters anything
     // out (a half-typed regex keeps the full list visible).
     bool                                    regex_enabled{false};
@@ -113,6 +113,7 @@ class OptionsSearcher
     // the shared SearchField::textMatches convention).
     bool                                    case_sensitive{false};
     bool                                    whole_word{false};
+    bool                                    multiline{false};
 
     std::vector<Option>      options{};
     std::vector<FoundOption> found{};
@@ -167,6 +168,8 @@ public:
     bool is_case_sensitive() const { return case_sensitive; }
     void set_whole_word(bool on) { whole_word = on; }
     bool is_whole_word() const { return whole_word; }
+    void set_multiline(bool on) { multiline = on; }
+    bool is_multiline() const { return multiline; }
 
     void sort_options_by_key()
     {
@@ -252,9 +255,9 @@ public:
     // wxCUSTOMEVT_EXIT_SEARCH when the dialog dies.
     wxWindow *   search_line{nullptr};
     wxTextCtrl *  search_line2{nullptr};
-    // Non-null when the host is the shared SearchField: its ".*" toggle and
-    // tune popover then drive the searcher's regex / case / whole-word flags
-    // (and the dialog hosts no separate CheckBox regex row).
+    // Non-null when the host is the shared SearchField (including the embedded
+    // GTK field): its ".*" toggle and tune popover drive the searcher's regex,
+    // case, whole-word, and multiline flags.
     SearchField *search_field{nullptr};
     Preset::Type     search_type = Preset::TYPE_INVALID;
 
