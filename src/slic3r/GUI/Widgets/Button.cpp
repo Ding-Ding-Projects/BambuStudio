@@ -1,4 +1,5 @@
 #include "Button.hpp"
+#include "../I18N.hpp"
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
@@ -6,6 +7,9 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include <wx/tipwin.h>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
 #include <algorithm>
 #ifdef __APPLE__
 #include "libslic3r/MacUtils.hpp"
@@ -26,6 +30,81 @@ wxColour brightenColor(const wxColour &c, double factor)
     };
     return wxColour(ch(c.Red()), ch(c.Green()), ch(c.Blue()), c.Alpha());
 }
+
+#if wxUSE_ACCESSIBILITY
+class ButtonAccessible final : public wxWindowAccessible
+{
+public:
+    explicit ButtonAccessible(Button *button)
+        : wxWindowAccessible(button), m_button(button)
+    {
+    }
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (child_id != wxACC_SELF || !name)
+            return wxACC_NOT_IMPLEMENTED;
+        const wxString configured_name = m_button->GetName();
+        // StaticBox creates its underlying wxWindow with wxPanelNameStr. That
+        // implementation detail is not a useful accessible name, so prefer the
+        // visible label unless a caller supplied a real SetName() override.
+        if (!configured_name.IsEmpty() && configured_name != wxASCII_STR(wxPanelNameStr))
+            *name = configured_name;
+        else
+            *name = m_button->GetLabel();
+        if (name->IsEmpty())
+            *name = m_button->GetToolTipText();
+        if (name->IsEmpty())
+            *name = configured_name;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (child_id != wxACC_SELF || !role)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_PUSHBUTTON;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (child_id != wxACC_SELF || !state)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = 0;
+        if (m_button->IsKeyboardFocusable())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_button->HasFocus())
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (m_button->GetValue())
+            *state |= wxACC_STATE_SYSTEM_PRESSED;
+        if (!m_button->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_button->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetDefaultAction(int child_id, wxString *action_name) override
+    {
+        if (child_id != wxACC_SELF || !action_name)
+            return wxACC_NOT_IMPLEMENTED;
+        *action_name = _L("Press");
+        return wxACC_OK;
+    }
+
+    wxAccStatus DoDefaultAction(int child_id) override
+    {
+        if (child_id != wxACC_SELF)
+            return wxACC_NOT_IMPLEMENTED;
+        m_button->AccessibilityActivate();
+        return wxACC_OK;
+    }
+
+private:
+    Button *m_button;
+};
+#endif
 
 } // namespace
 BEGIN_EVENT_TABLE(Button, StaticBox)
@@ -75,6 +154,20 @@ Button::Button(wxWindow* parent, wxString text, wxString icon, long style, int i
 bool Button::Create(wxWindow* parent, wxString text, wxString icon, long style, int iconSize, wxWindowID btn_id)
 {
     StaticBox::Create(parent, btn_id, wxDefaultPosition, wxDefaultSize, style);
+#if wxUSE_ACCESSIBILITY
+    new ButtonAccessible(this); // wxWindow owns the accessible object.
+#endif
+    Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &event) {
+        Refresh(false);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+        event.Skip();
+    });
+    Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &event) {
+        Refresh(false);
+        event.Skip();
+    });
     state_handler.attach({&text_color});
     state_handler.update_binds();
     //BBS set default font
@@ -94,7 +187,20 @@ void Button::SetLabel(const wxString& label)
         wxWindow::SetLabel(label);
         messureSize();
         Refresh();
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     }
+}
+
+void Button::SetName(const wxString& name)
+{
+    if (name == wxWindow::GetName())
+        return;
+    wxWindow::SetName(name);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 bool Button::SetFont(const wxFont& font)
@@ -283,9 +389,21 @@ void Button::applyMD3Style()
                             std::make_pair(StateColor::semantic(R::OnError), (int) StateColor::Hovered),
                             std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int) StateColor::Normal));
         } else {
-            bg = StateColor(std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+            // Checked icon buttons are exposed to assistive technology as
+            // pressed toggles and use the MD3 secondary container as their
+            // persistent visual state. Ordinary icon buttons never set Checked
+            // and retain the historical ghost treatment.
+            bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s),
+                                           (int) StateColor::Hovered | StateColor::Checked),
+                            std::make_pair(StateColor::semantic(R::SecondaryContainer, s),
+                                           (int) StateColor::Checked),
+                            std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
                             std::make_pair(rest, (int) StateColor::Normal));
             fg = StateColor(std::make_pair(disabledFg, (int) StateColor::Disabled),
+                            std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s),
+                                           (int) StateColor::Hovered | StateColor::Checked),
+                            std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s),
+                                           (int) StateColor::Checked),
                             std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int) StateColor::Normal));
         }
 
@@ -430,16 +548,28 @@ bool Button::Enable(bool enable)
         wxCommandEvent e(EVT_ENABLE_CHANGED);
         e.SetEventObject(this);
         GetEventHandler()->ProcessEvent(e);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     }
     return result;
 }
 
-void Button::SetCanFocus(bool canFocus) { this->canFocus = canFocus; }
+void Button::SetCanFocus(bool canFocus)
+{
+    this->canFocus = canFocus;
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+}
 
 void Button::SetValue(bool state)
 {
     if (GetValue() == state) return;
     state_handler.set_state(state ? StateHandler::Checked : 0, StateHandler::Checked);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 bool Button::GetValue() const { return state_handler.states() & StateHandler::Checked; }
@@ -604,6 +734,17 @@ void Button::render(wxDC& dc)
     }
 #endif
         dc.DrawText(text, pt);
+    }
+
+    if (canFocus && HasFocus()) {
+        const int inset = std::max(FromDIP(2), 1);
+        wxRect focus_rect(inset, inset,
+                          std::max(0, size.x - inset * 2),
+                          std::max(0, size.y - inset * 2));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, m_scheme),
+                        std::max(FromDIP(2), 1)));
+        dc.DrawRoundedRectangle(focus_rect, std::max(0.0, radius - inset));
     }
 }
 
@@ -780,6 +921,12 @@ void Button::sendButtonEvent()
     wxCommandEvent event(wxEVT_COMMAND_BUTTON_CLICKED, GetId());
     event.SetEventObject(this);
     GetEventHandler()->ProcessEvent(event);
+}
+
+void Button::AccessibilityActivate()
+{
+    if (IsEnabled() && IsShown())
+        sendButtonEvent();
 }
 
 #ifdef __WIN32__

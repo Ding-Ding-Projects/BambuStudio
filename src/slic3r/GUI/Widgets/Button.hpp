@@ -89,6 +89,7 @@ public:
     bool Create(wxWindow* parent, wxString text, wxString icon = "", long style = 0, int iconSize = 0, wxWindowID btn_id = wxID_ANY);
 
     void SetLabel(const wxString& label) override;
+    void SetName(const wxString& name);
 
     bool SetFont(const wxFont& font) override;
 
@@ -160,6 +161,11 @@ public:
 
     bool IsGrayed() { return grayed; }
     void SetGrayed(bool gray) { grayed = gray; }
+
+    // Accessibility bridge for this custom-drawn control. wxWidgets cannot
+    // infer push-button semantics from the wxWindow base class.
+    bool IsKeyboardFocusable() const { return canFocus; }
+    void AccessibilityActivate();
 
     wxRect GetTextRect() const { return textSize; }
 

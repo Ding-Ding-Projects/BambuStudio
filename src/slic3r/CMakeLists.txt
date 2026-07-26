@@ -68,6 +68,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/TabCtrl.hpp
     GUI/Widgets/TextInput.cpp
     GUI/Widgets/TextInput.hpp
+    GUI/Widgets/BoundedRegex.cpp
+    GUI/Widgets/BoundedRegex.hpp
+    GUI/Widgets/BoundedRegexProtocol.hpp
+    GUI/Widgets/RegexBuilderBridgeState.hpp
     GUI/Widgets/SearchField.cpp
     GUI/Widgets/SearchField.hpp
     GUI/Widgets/SlideToConfirm.cpp

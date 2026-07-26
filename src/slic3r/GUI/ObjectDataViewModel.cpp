@@ -1,6 +1,7 @@
 #include "ObjectDataViewModel.hpp"
 #include "wxExtensions.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/BoundedRegex.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/StateColor.hpp"
 #include "BitmapCache.hpp"
@@ -16,7 +17,7 @@
 #include <wx/dc.h>
 
 #include <cwctype>
-#include <regex>
+#include <memory>
 
 namespace Slic3r {
 namespace GUI {
@@ -1645,45 +1646,40 @@ void ObjectDataViewModel::assembly_name(ObjectDataViewModelNode* item, wxString 
     }
 }
 
-void ObjectDataViewModel::set_search_flags(bool regex, bool case_sensitive, bool whole_word)
+void ObjectDataViewModel::set_search_flags(bool regex, bool case_sensitive, bool whole_word,
+                                           bool multiline)
 {
     m_search_regex          = regex;
     m_search_case_sensitive = case_sensitive;
     m_search_whole_word     = whole_word;
+    m_search_multiline      = multiline;
 }
 
 // Wrap every span of `name` matched by the current query in <b>...</b> markup
 // (consumed by Search::SearchItem's painter). Spans are computed per mode:
-//   * regex        — std::wregex hit ranges (guarded; a throwing / zero-width
-//                    pattern yields no highlight rather than an infinite loop);
+//   * regex        — bounded-worker hit ranges (a rejected / zero-width pattern
+//                    yields no highlight rather than empty markup);
 //   * substring    — every case-folded occurrence; with whole-word only the
 //                    occurrences bounded by non-word characters are wrapped.
 // Inclusion itself is already decided by SearchField::textMatches, so a name
 // that matched but produced no concrete span (e.g. an invalid regex) is
 // returned unhighlighted instead of being dropped.
 static wxString mark_search_matches(const wxString &name, const wxString &query,
-                                    bool regex, bool case_sensitive, bool whole_word)
+                                    bool regex, bool case_sensitive, bool whole_word,
+                                    BoundedRegex::SearchPass *regex_pass)
 {
     std::vector<std::pair<size_t, size_t>> spans; // [begin, end)
     const std::wstring hay = name.ToStdWstring();
 
     if (regex) {
-        // Bound the pattern so a pathological paste cannot stall regex
-        // compilation; matching itself is guarded below.
-        if (query.length() <= 2000) {
-            try {
-                std::wregex::flag_type flags = std::regex_constants::ECMAScript;
-                if (!case_sensitive)
-                    flags |= std::regex_constants::icase;
-                const std::wregex re(query.ToStdWstring(), flags);
-                for (auto it = std::wsregex_iterator(hay.begin(), hay.end(), re), end = std::wsregex_iterator(); it != end; ++it) {
-                    if (it->length(0) <= 0)
-                        break; // zero-width hit: stop rather than loop / emit empty tags
-                    spans.emplace_back(static_cast<size_t>(it->position(0)),
-                                       static_cast<size_t>(it->position(0) + it->length(0)));
-                }
-            } catch (const std::regex_error &) {
-                // Invalid / runaway pattern: keep the row visible, unhighlighted.
+        const auto result = regex_pass->find_all(hay, BoundedRegex::kMaxMatches);
+        if (result.status == BoundedRegex::Status::Match) {
+            for (const auto &match : result.matches) {
+                if (match.groups.empty() || !match.groups.front().matched ||
+                    match.groups.front().length == 0)
+                    continue;
+                const auto &whole = match.groups.front();
+                spans.emplace_back(whole.begin, whole.begin + whole.length);
             }
         }
     } else {
@@ -1733,6 +1729,16 @@ void ObjectDataViewModel::search_object(wxString search_text)
         if (auto *plater = wxGetApp().plater())
             filament_colors = plater->get_extruder_colors_from_plater_config();
         search_found_list.clear();
+        SearchField::MatchPass match_pass(search_text, m_search_regex,
+                                          m_search_case_sensitive, m_search_whole_word,
+                                          m_search_multiline);
+        BoundedRegex::Options highlight_options;
+        highlight_options.case_sensitive = m_search_case_sensitive;
+        highlight_options.multiline = m_search_multiline;
+        std::unique_ptr<BoundedRegex::SearchPass> highlight_pass;
+        if (m_search_regex)
+            highlight_pass = std::make_unique<BoundedRegex::SearchPass>(
+                search_text.ToStdWstring(), highlight_options);
         for (const auto& [model_node, name, tip] : assembly_name_list) {
             wxString haystack = name;
             if (model_node != nullptr && !filament_colors.empty()) {
@@ -1744,10 +1750,12 @@ void ObjectDataViewModel::search_object(wxString search_text)
             // Shared SearchField matcher: honours the sidebar pill's ".*" regex
             // toggle plus its case-sensitive / whole-word builder checkboxes. An
             // invalid or half-typed regex matches everything (never hides rows).
-            if (!SearchField::textMatches(search_text, haystack, m_search_regex, m_search_case_sensitive, m_search_whole_word))
+            if (!match_pass.matches(haystack))
                 continue;
             search_found_list.push_back(std::tuple(model_node,
-                                                   mark_search_matches(name, search_text, m_search_regex, m_search_case_sensitive, m_search_whole_word),
+                                                   mark_search_matches(name, search_text, m_search_regex,
+                                                                       m_search_case_sensitive, m_search_whole_word,
+                                                                       highlight_pass.get()),
                                                    tip));
         }
     }

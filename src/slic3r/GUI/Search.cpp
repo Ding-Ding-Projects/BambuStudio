@@ -3,8 +3,8 @@
 #include <vector>
 #include <cstddef>
 #include <string>
-#include <regex>
 #include <limits>
+#include <memory>
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
 #include <boost/nowide/convert.hpp>
@@ -15,6 +15,7 @@
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/CheckBox.hpp"
+#include "Widgets/BoundedRegex.hpp"
 #include "Widgets/SearchField.hpp"
 
 #include "libslic3r/PrintConfig.hpp"
@@ -181,7 +182,8 @@ static const int REGEX_MATCH_SCORE = 1000;
 // existing mark_string() highlighter underlines the same span. `regex_valid`
 // false means the user is mid-typing an invalid pattern: keep the row (return
 // true) with no highlight rather than hiding everything.
-static bool regex_match_label(const std::wregex &re, bool regex_valid, const std::wstring &label,
+static bool regex_match_label(GUI::BoundedRegex::SearchPass *pass, bool regex_valid,
+                              const std::wstring &label,
                               int &out_score, std::vector<uint16_t> &out_matches)
 {
     out_matches.clear();
@@ -189,21 +191,16 @@ static bool regex_match_label(const std::wregex &re, bool regex_valid, const std
         out_score = REGEX_MATCH_SCORE;
         return true;
     }
-    // A pattern can compile yet throw at match time (MSVC error_complexity /
-    // error_stack on catastrophic backtracking, e.g. "(a+)+$"). Keep the row on
-    // any throw — matching the shared textMatches() convention — so a runaway
-    // pattern degrades to "no filtering" instead of terminating the app.
-    try {
-        std::wsmatch m;
-        if (std::regex_search(label, m, re)) {
-            const auto pos = m.position(0);
-            const auto len = m.length(0);
-            for (long k = 0; k < len; ++k)
-                out_matches.push_back(static_cast<uint16_t>(pos + k));
-            out_score = REGEX_MATCH_SCORE;
-            return true;
-        }
-    } catch (const std::regex_error &) {
+    const auto result = pass->evaluate(label);
+    if (!result.definitive()) {
+        out_score = REGEX_MATCH_SCORE;
+        return true;
+    }
+    if (result.status == GUI::BoundedRegex::Status::Match && !result.matches.empty() &&
+        !result.matches.front().groups.empty()) {
+        const auto &whole = result.matches.front().groups.front();
+        for (std::size_t offset = 0; offset < whole.length; ++offset)
+            out_matches.push_back(static_cast<uint16_t>(whole.begin + offset));
         out_score = REGEX_MATCH_SCORE;
         return true;
     }
@@ -264,29 +261,24 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
         return marker_by_type(opt.type, printer_technology) + opt.category_local + sep + opt.group_local + sep + opt.label_local;
     };
 
-    // Regex mode: compile the term once. On failure keep regex_valid=false so a
+    // Regex mode: validate the term once. On failure keep regex_valid=false so a
     // half-typed pattern shows the full list instead of filtering it all away.
     // The case-sensitive flag (SearchField tune popover) drops the icase flag;
     // whole-word is ignored in regex mode (author your own \b — the shared
-    // SearchField::textMatches convention). The pattern length is bounded so a
-    // pathological paste cannot stall compilation.
+    // SearchField::textMatches convention). Actual matching runs in the shared
+    // deadline-enforced worker process.
     const bool use_regex = regex_enabled && !full_list;
-    std::wregex regex_term;
-    bool        regex_valid = false;
+    std::wstring regex_pattern;
+    bool         regex_valid = false;
+    std::unique_ptr<GUI::BoundedRegex::SearchPass> regex_pass;
     if (use_regex) {
-        try {
-            std::wstring wpattern = boost::nowide::widen(search);
-            boost::trim_left(wpattern);
-            if (wpattern.size() > 2000)
-                throw std::regex_error(std::regex_constants::error_space);
-            std::regex_constants::syntax_option_type flags = std::regex_constants::ECMAScript;
-            if (!case_sensitive)
-                flags |= std::regex_constants::icase;
-            regex_term  = std::wregex(wpattern, flags);
-            regex_valid = true;
-        } catch (const std::regex_error &) {
-            regex_valid = false;
-        }
+        regex_pattern = boost::nowide::widen(search);
+        boost::trim_left(regex_pattern);
+        GUI::BoundedRegex::Options options;
+        options.case_sensitive = case_sensitive;
+        options.multiline = multiline;
+        regex_pass = std::make_unique<GUI::BoundedRegex::SearchPass>(regex_pattern, options);
+        regex_valid = !regex_pass->circuit_open();
     }
 
     // Fuzzy path with case-sensitive / whole-word engaged: constrain the fuzzy
@@ -327,10 +319,11 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
         if (use_regex) {
             // Regex path: same downstream shape as fuzzy_match (score + matched
             // indices), so scoring/marking/threshold below are untouched.
-            regex_match_label(regex_term, regex_valid, label, score, matches);
+            regex_match_label(regex_pass.get(), regex_valid, label, score, matches);
             if (view_params.english) {
                 matches2.clear();
-                if (regex_match_label(regex_term, regex_valid, label_english, score2, matches2) && score2 > score) {
+                if (regex_match_label(regex_pass.get(), regex_valid,
+                                      label_english, score2, matches2) && score2 > score) {
                     label   = std::move(label_english);
                     matches = std::move(matches2);
                     score   = score2;
@@ -788,13 +781,13 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     // search line
     //search_line = new wxTextCtrl(m_client_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 #ifdef __WXGTK__
-    // On GTK the dialog hosts its own embedded entry (the external host is
-    // hidden by show_dialog); typing happens in this TextInput.
-    TextInput *gtk_line = new TextInput(m_client_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-    gtk_line->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
-    gtk_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-    gtk_line->SetFont(GUI::wxGetApp().bold_font());
-    entry = gtk_line->GetTextCtrl();
+    // GTK hides the external host while this popup is active. Embed the same
+    // complete SearchField here (query, ".*" mode, and tune builder) instead
+    // of reducing the surface to a text box plus regex checkbox.
+    SearchField *gtk_field = new SearchField(m_client_panel, _L("Search settings"));
+    gtk_field->SetValue(entry ? entry->GetValue() : wxString());
+    entry = gtk_field->GetTextCtrl();
+    search_field = gtk_field;
 #endif
 
     // default_string = _L("Enter a search term");
@@ -803,7 +796,19 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     // and key events never bubble up to the host wrapper anyway.
     search_line2 = entry;
     if (search_line2) {
+#ifndef __WXGTK__
         search_line2->Bind(wxEVT_TEXT, &SearchDialog::OnInputText, this);
+#else
+        // SearchField::SetOnQuery also receives builder-authored ChangeValue
+        // updates, which do not synthesize wxEVT_TEXT.
+        search_field->SetOnQuery([this](const wxString &query) {
+            wxString input_string = query;
+            if (input_string == this->default_string) input_string.Clear();
+            if (this->searcher)
+                this->searcher->search(into_u8(input_string), true, this->search_type);
+            this->update_list();
+        });
+#endif
         search_line2->Bind(wxEVT_LEFT_UP, &SearchDialog::OnLeftUpInTextCtrl, this);
         search_line2->Bind(wxEVT_KEY_DOWN, &SearchDialog::OnKeyDown, this);
     }
@@ -824,7 +829,7 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     m_scrolledWindow->SetScrollbars(1, 1, 0, m_listPanel->GetSize().GetHeight());
 
 #ifdef __WXGTK__
-    m_sizer_body->Add(gtk_line, 0, wxEXPAND | wxALL, em / 2);
+    m_sizer_body->Add(search_field, 0, wxEXPAND | wxALL, em / 2);
 #endif
 
     if (search_field) {
@@ -837,11 +842,13 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
         search_field->SetRegexEnabled(searcher && searcher->is_regex_enabled());
         search_field->SetCaseSensitive(searcher && searcher->is_case_sensitive());
         search_field->SetWholeWord(searcher && searcher->is_whole_word());
+        search_field->SetMultiline(searcher && searcher->is_multiline());
         search_field->SetOnRegexToggle([this](bool on) {
             if (this->searcher && this->search_field) {
                 this->searcher->set_regex_enabled(on);
                 this->searcher->set_case_sensitive(this->search_field->IsCaseSensitive());
                 this->searcher->set_whole_word(this->search_field->IsWholeWord());
+                this->searcher->set_multiline(this->search_field->IsMultiline());
             }
             wxString input_string = this->search_line2 ? this->search_line2->GetValue() : wxString();
             if (input_string == this->default_string) input_string.Clear();
@@ -851,15 +858,10 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
         });
     }
 
-    // Legacy TextInput host — or GTK, where show_dialog hides the external pill
-    // (typing happens in the embedded gtk_line), so its ".*" toggle is out of
-    // reach: keep the MD3 CheckBox regex toggle. It reflects and drives the
-    // persistent flag on the shared OptionsSearcher, so the choice survives
-    // dialog re-opens.
+    // A legacy non-GTK TextInput host has no trailing action area, so retain a
+    // compact regex toggle there. SearchField hosts — including GTK's embedded
+    // field — expose both the quick toggle and the complete tune builder.
     bool need_checkbox_row = search_field == nullptr;
-#ifdef __WXGTK__
-    need_checkbox_row = true;
-#endif
     if (need_checkbox_row) {
         auto *regex_row = new wxBoxSizer(wxHORIZONTAL);
         m_regex_toggle  = new CheckBox(m_client_panel);

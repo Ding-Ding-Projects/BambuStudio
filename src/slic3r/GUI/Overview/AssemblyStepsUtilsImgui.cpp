@@ -12,6 +12,9 @@
 #include "../I18N.hpp"
 #include "../ImGuiWrapper.hpp"
 #include "../Widgets/MD3Tokens.hpp"
+#include "../Widgets/MaterialIcon.hpp"
+#include "../Widgets/BoundedRegex.hpp"
+#include "../Widgets/RegexBuilderBridgeState.hpp"
 #include "../GUI_App.hpp"
 #include "../GUI.hpp"
 #include "../GLCanvas3D.hpp"
@@ -31,11 +34,11 @@
 #include <boost/nowide/fstream.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <memory>
+
 #include <wx/filedlg.h>
 #include <wx/glcanvas.h>
 #include <imgui/imgui_internal.h>
-
-#include <regex>
 
 #define _steps_nodes m_model->get_assembly_steps_tree_data().nodes
 #define _steps_roots m_model->get_assembly_steps_tree_data().roots
@@ -75,17 +78,41 @@ inline ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
 // it). Kept as translation-unit state like s_assembly_tree_open_nodes' usage —
 // no header change needed.
 bool s_assembly_tree_search_regex = false;
+bool s_assembly_tree_search_case = false;
+bool s_assembly_tree_search_whole_word = false;
+bool s_assembly_tree_search_multiline = false;
+auto s_assembly_tree_builder_state = std::make_shared<RegexBuilderBridgeState>();
 
-// Per-frame compiled matcher for the assembly-tree search, in the style of the
-// in-canvas search_list regex support (ImGuiWrapper::search_list): guarded
-// try/catch, case-insensitive, and an invalid / half-typed / oversized pattern
-// filters nothing out (match-all).
+bool synchronize_assembly_tree_builder(std::string &pattern)
+{
+    RegexBuilderValues values{pattern, s_assembly_tree_search_regex,
+                              s_assembly_tree_search_case, s_assembly_tree_search_whole_word,
+                              s_assembly_tree_search_multiline};
+    const bool changed = s_assembly_tree_builder_state->apply_pending_to_host(values);
+    pattern                           = std::move(values.pattern);
+    s_assembly_tree_search_regex      = values.regex_enabled;
+    s_assembly_tree_search_case       = values.case_sensitive;
+    s_assembly_tree_search_whole_word = values.whole_word;
+    s_assembly_tree_search_multiline  = values.multiline;
+    s_assembly_tree_builder_state->synchronize_from_host(
+        {pattern, s_assembly_tree_search_regex, s_assembly_tree_search_case,
+         s_assembly_tree_search_whole_word, s_assembly_tree_search_multiline});
+    return changed;
+}
+
+// Per-frame bounded matcher for the assembly-tree search, in the style of the
+// in-canvas search_list regex support (ImGuiWrapper::search_list):
+// case-insensitive, and an invalid / half-typed / oversized pattern filters
+// nothing out (match-all).
 struct AssemblyTreeSearchMatcher
 {
     bool        regex_mode  = false;
     bool        regex_valid = false;
-    std::regex  re;
-    std::string needle_lc;
+    bool        case_sensitive = false;
+    bool        whole_word = false;
+    bool        multiline = false;
+    std::wstring regex_pattern;
+    mutable std::unique_ptr<BoundedRegex::SearchPass> regex_pass;
 
     static std::string to_lower_ascii(std::string v)
     {
@@ -97,18 +124,16 @@ struct AssemblyTreeSearchMatcher
     explicit AssemblyTreeSearchMatcher(const std::string &query)
     {
         regex_mode = s_assembly_tree_search_regex;
+        case_sensitive = s_assembly_tree_search_case;
+        whole_word = s_assembly_tree_search_whole_word;
+        multiline = s_assembly_tree_search_multiline;
+        regex_pattern = from_u8(query).ToStdWstring();
         if (regex_mode) {
-            // Bound the pattern so a pathological paste cannot stall compilation.
-            if (!query.empty() && query.size() <= 2000) {
-                try {
-                    re          = std::regex(query, std::regex::icase);
-                    regex_valid = true;
-                } catch (const std::regex_error &) {
-                    regex_valid = false;
-                }
-            }
-        } else {
-            needle_lc = to_lower_ascii(query);
+            BoundedRegex::Options options;
+            options.case_sensitive = case_sensitive;
+            options.multiline = multiline;
+            regex_pass = std::make_unique<BoundedRegex::SearchPass>(regex_pattern, options);
+            regex_valid = !regex_pass->circuit_open();
         }
     }
 
@@ -118,17 +143,12 @@ struct AssemblyTreeSearchMatcher
         if (regex_mode) {
             if (!regex_valid)
                 return true; // invalid pattern: never hide every row
-            // A compile-valid pattern can still throw at match time
-            // (catastrophic backtracking): keep the row on throw.
-            try {
-                return std::regex_search(label, re);
-            } catch (const std::regex_error &) {
-                return true;
-            }
+            return regex_pass->allows_candidate(from_u8(label).ToStdWstring());
         }
-        if (needle_lc.empty())
+        if (regex_pattern.empty())
             return true;
-        return to_lower_ascii(label).find(needle_lc) != std::string::npos;
+        return BoundedRegex::plain_search(regex_pattern, from_u8(label).ToStdWstring(),
+                                          case_sensitive, whole_word);
     }
 };
 
@@ -4019,6 +4039,7 @@ AssemblyTreeRenderResult AssemblyStepsUtils::render_assembly_tree_selector(
     if (tree.nodes.empty())
         return result;
 
+    synchronize_assembly_tree_builder(m_assembly_tree_search_text);
     load_assembly_tree_icons(sc);
 
     const ImU32 text_col      = md3_u32(MD3::Role::OnSurface, m_is_dark);
@@ -6744,6 +6765,7 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
     }
 
     ImGuiWrapper& imgui = *m_imgui;
+    synchronize_assembly_tree_builder(m_assembly_tree_search_text);
 
     // Auto-fit the panel height to the number of visible rows, capped at 800*sc
     // (then the row list scrolls). panel_h is the on-screen upper clamp.
@@ -6858,8 +6880,11 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
                 m_assembly_tree_search_text.clear();
             }
 
-            // Reserve the pill's right edge for the ".*" regex toggle.
+            // Reserve the pill's right edge for both the quick ".*" toggle and
+            // a keyboard-reachable tune button that opens the full builder.
             const float regex_toggle_w = 26.0f * sc;
+            const float builder_toggle_w = 26.0f * sc;
+            const float action_gap = 4.0f * sc;
             ImGui::SetCursorScreenPos(ImVec2(search_min.x + 34.0f * sc, search_min.y + 2.0f * sc));
             ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
             ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0, 0, 0, 0));
@@ -6867,26 +6892,43 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 4.0f * sc));
-            ImGui::SetNextItemWidth(std::max(0.0f, search_max.x - search_min.x - 44.0f * sc - regex_toggle_w - 6.0f * sc));
+            ImGui::SetNextItemWidth(std::max(0.0f, search_max.x - search_min.x - 44.0f * sc -
+                                                   regex_toggle_w - builder_toggle_w -
+                                                   action_gap - 6.0f * sc));
             if (m_assembly_tree_search_focus_pending) {
                 ImGui::SetKeyboardFocusHere();
                 m_assembly_tree_search_focus_pending = false;
             }
-            ImGui::InputTextWithHint("##assembly_tree_search", _u8L("Search").c_str(), &m_assembly_tree_search_text);
+            if (ImGui::InputTextWithHint("##assembly_tree_search", _u8L("Search").c_str(),
+                                         &m_assembly_tree_search_text)) {
+                m_assembly_tree_search_text = into_u8(
+                    from_u8(m_assembly_tree_search_text).Left(BoundedRegex::kMaxPatternCodeUnits));
+                s_assembly_tree_builder_state->synchronize_from_host(
+                    {m_assembly_tree_search_text, s_assembly_tree_search_regex,
+                     s_assembly_tree_search_case, s_assembly_tree_search_whole_word,
+                     s_assembly_tree_search_multiline});
+            }
             ImGui::PopStyleVar(2);
             ImGui::PopStyleColor(4);
 
             // ".*" regex toggle inside the pill's right edge: flips the guarded
-            // std::regex matcher shared by both tree filters (invalid pattern =
+            // bounded worker matcher shared by both tree filters (invalid pattern =
             // match-all, case-insensitive — same contract as the in-canvas
             // search_list toggle). Painted like the other custom header glyphs.
             {
-                const ImVec2 toggle_min(search_max.x - regex_toggle_w - 6.0f * sc, search_min.y + 2.0f * sc);
+                const ImVec2 toggle_min(search_max.x - regex_toggle_w - builder_toggle_w -
+                                            action_gap - 6.0f * sc,
+                                        search_min.y + 2.0f * sc);
                 const ImVec2 toggle_max(toggle_min.x + regex_toggle_w, search_max.y - 2.0f * sc);
                 ImGui::SetCursorScreenPos(toggle_min);
                 ImGui::InvisibleButton("##assembly_tree_search_regex", ImVec2(regex_toggle_w, toggle_max.y - toggle_min.y));
-                if (ImGui::IsItemClicked(0))
+                if (ImGui::IsItemClicked(0)) {
                     s_assembly_tree_search_regex = !s_assembly_tree_search_regex;
+                    s_assembly_tree_builder_state->synchronize_from_host(
+                        {m_assembly_tree_search_text, s_assembly_tree_search_regex,
+                         s_assembly_tree_search_case, s_assembly_tree_search_whole_word,
+                         s_assembly_tree_search_multiline});
+                }
                 if (ImGui::IsItemHovered()) {
                     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f * sc, 6.0f * sc));
                     m_imgui->tooltip(_u8L("Regular expression"), 20.0f * m_imgui->scaled(1.0f));
@@ -6903,6 +6945,38 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
                     s_assembly_tree_search_regex ? md3_u32(MD3::Role::OnSecondaryContainer, m_is_dark)
                                                  : md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark),
                     ".*");
+            }
+
+            {
+                const ImVec2 tune_min(search_max.x - builder_toggle_w - 6.0f * sc,
+                                      search_min.y + 2.0f * sc);
+                const ImVec2 tune_max(tune_min.x + builder_toggle_w, search_max.y - 2.0f * sc);
+                ImGui::SetCursorScreenPos(tune_min);
+                ImGui::InvisibleButton("##assembly_tree_search_builder",
+                                       ImVec2(builder_toggle_w, tune_max.y - tune_min.y));
+                const bool tune_hovered = ImGui::IsItemHovered();
+                const bool tune_focused = ImGui::IsItemFocused();
+                if (ImGui::IsItemClicked(0)) {
+                    s_assembly_tree_builder_state->synchronize_from_host(
+                        {m_assembly_tree_search_text, s_assembly_tree_search_regex,
+                         s_assembly_tree_search_case, s_assembly_tree_search_whole_word,
+                         s_assembly_tree_search_multiline});
+                    open_imgui_regex_builder(s_assembly_tree_builder_state);
+                }
+                if (tune_hovered || tune_focused) {
+                    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f * sc, 6.0f * sc));
+                    m_imgui->tooltip(_u8L("Regex builder"), 20.0f * m_imgui->scaled(1.0f));
+                    ImGui::PopStyleVar();
+                }
+                if (tune_hovered)
+                    draw_list->AddRectFilled(tune_min, tune_max,
+                        md3_u32(MD3::Role::SurfaceContainerHighest, m_is_dark),
+                        (tune_max.y - tune_min.y) * 0.5f);
+                const std::string tune = into_u8(static_cast<wchar_t>(MaterialIcon::Tune));
+                const ImVec2 tune_size = ImGui::CalcTextSize(tune.c_str());
+                draw_list->AddText(ImVec2(tune_min.x + (builder_toggle_w - tune_size.x) * 0.5f,
+                                          tune_min.y + (tune_max.y - tune_min.y - tune_size.y) * 0.5f),
+                                   md3_u32(MD3::Role::OnSurfaceVariant, m_is_dark), tune.c_str());
             }
         } else {
             const std::string title      = show_checkbox ? _u8L("List") : _u8L("Assembly list");

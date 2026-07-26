@@ -4,7 +4,6 @@
 #include <cstring>
 #include <vector>
 #include <cmath>
-#include <regex>
 #include <stdexcept>
 
 #include <boost/format.hpp>
@@ -19,6 +18,8 @@
 #include <wx/event.h>
 #include <wx/clipbrd.h>
 #include <wx/debug.h>
+#include <wx/weakref.h>
+#include <wx/utils.h>
 
 #include <GL/glew.h>
 
@@ -26,6 +27,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include <imgui/imgui_internal.h>
+#include "imgui/imgui_stdlib.h"
 
 #include "libslic3r/libslic3r.h"
 #include <libslic3r/ClipperUtils.hpp>
@@ -39,6 +41,9 @@
 #include "FilamentBitmapUtils.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/BoundedRegex.hpp"
+#include "Widgets/RegexBuilderBridgeState.hpp"
+#include "Widgets/RegexBuilderPopup.hpp"
 
 #include "../Utils/MacDarkMode.hpp"
 #ifdef __APPLE__
@@ -51,6 +56,40 @@
 
 namespace Slic3r {
 namespace GUI {
+
+void open_imgui_regex_builder(const std::shared_ptr<RegexBuilderBridgeState> &state)
+{
+    if (!state || !wxTheApp)
+        return;
+    wxWindow *parent = wxTheApp->GetTopWindow();
+    if (!parent)
+        return;
+
+    // Only one transient builder is useful at a time. wxWeakRef follows parent
+    // teardown and avoids retaining a dangling popup during application exit.
+    static wxWeakRef<RegexBuilderPopup> active_popup;
+    if (active_popup)
+        active_popup->Destroy();
+
+    const RegexBuilderValues initial = state->values();
+    auto *popup = new RegexBuilderPopup(parent);
+    active_popup = popup;
+
+    RegexBuilderPopup::Callbacks callbacks;
+    callbacks.onPattern = [state](const wxString &pattern) {
+        state->set_pattern_from_builder(into_u8(pattern));
+    };
+    callbacks.onRegexMode = [state](bool on) { state->set_regex_from_builder(on); };
+    callbacks.onCase      = [state](bool on) { state->set_case_from_builder(on); };
+    callbacks.onMultiline = [state](bool on) { state->set_multiline_from_builder(on); };
+    callbacks.onWord      = [state](bool on) { state->set_word_from_builder(on); };
+    popup->Configure(MD3::ColorScheme::Brand, from_u8(initial.pattern),
+                     initial.regex_enabled, initial.case_sensitive,
+                     initial.multiline, initial.whole_word, std::move(callbacks));
+
+    popup->Position(wxGetMousePosition() + wxPoint(0, parent->FromDIP(8)), wxSize(0, 0));
+    popup->PopupAndFocusPattern();
+}
 
 static const std::map<const wchar_t, std::string> font_icons = {
     {ImGui::PrintIconMarker       , "cog"                           },
@@ -712,17 +751,26 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
     if (window->SkipItems)
         return false;
 
-    static char pattern_buffer[256] = { 0 };
+    static std::string pattern;
     // ".*" regex mode for the popup filter (persists across opens, like the
     // in-canvas search_list toggle). Matching is guarded: an invalid or
     // half-typed pattern filters nothing out (match-all), and matching is
     // case-insensitive by default — mirroring search_list's regex support.
     static bool regex_mode = false;
-    auto   simple_match    = [](const char *pattern, const char *str) {
-        wxString sub_str  = wxString::FromUTF8(pattern).Lower();
-        wxString main_str = wxString::FromUTF8(str).Lower();
-        return main_str.Find(sub_str);
-    };
+    static bool case_sensitive = false;
+    static bool whole_word = false;
+    static bool multiline = false;
+    static auto builder_state = std::make_shared<RegexBuilderBridgeState>();
+
+    RegexBuilderValues builder_values{pattern, regex_mode, case_sensitive, whole_word, multiline};
+    if (builder_state->apply_pending_to_host(builder_values)) {
+        pattern        = std::move(builder_values.pattern);
+        regex_mode     = builder_values.regex_enabled;
+        case_sensitive = builder_values.case_sensitive;
+        whole_word     = builder_values.whole_word;
+        multiline      = builder_values.multiline;
+    }
+    builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
 
     bool is_filtering = false;
     bool is_new_open = false;
@@ -746,9 +794,6 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
     ImGui::PopStyleColor();
     ImGui::BBLRenderArrow(window->DrawList, arrow_bb.Min + ImVec2(ImMax(0.0f, (arrow_size.x - g.FontSize) * 0.5f), ImMax(0.0f, (arrow_size.y - g.FontSize) * 0.5f)), ImGui::GetColorU32(ImGuiCol_Text), ImGuiDir_Down);
 
-    if (is_new_open)
-        memset(pattern_buffer, 0, IM_ARRAYSIZE(pattern_buffer));
-
     float item_rect_width = ImGui::GetItemRectSize().x;
     float item_rect_height = item_height ? item_height : ImGui::GetItemRectSize().y;
     ImGui::SetNextWindowPos({ CursorPos.x, ImGui::GetItemRectMax().y + 4 * m_style_scaling });
@@ -765,10 +810,15 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
         // its search/clear icon shift left by that amount.
         const ImVec2 regex_label_size = ImGui::CalcTextSize(".*");
         const float  regex_btn_w      = regex_label_size.x + g.Style.FramePadding.x * 2.0f;
+        const std::string builder_label = into_u8(static_cast<wchar_t>(MaterialIcon::Tune)) +
+                                          "##bbl_combo_with_filter_builder";
+        const float builder_btn_w = ImGui::GetFrameHeight();
         const float  regex_gap        = 4.0f * m_style_scaling;
-        wchar_t ICON_SEARCH = *pattern_buffer != '\0' ? ImGui::TextSearchCloseIcon : ImGui::TextSearchIcon;
+        const float action_width = regex_btn_w + builder_btn_w + regex_gap * 2.0f;
+        wchar_t ICON_SEARCH = !pattern.empty() ? ImGui::TextSearchCloseIcon : ImGui::TextSearchIcon;
         const ImVec2 label_size = ImGui::CalcTextSize(into_u8(ICON_SEARCH).c_str(), nullptr, true);
-        const ImVec2 search_icon_pos(ImGui::GetItemRectMax().x - label_size.x - (regex_btn_w + regex_gap), popup_window->DC.CursorPos.y + style.FramePadding.y);
+        const ImVec2 search_icon_pos(ImGui::GetItemRectMax().x - label_size.x - action_width,
+                                     popup_window->DC.CursorPos.y + style.FramePadding.y);
         ImGui::RenderText(search_icon_pos, into_u8(ICON_SEARCH).c_str());
 
         auto temp = popup_window->DC.CursorPos;
@@ -780,17 +830,22 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
         ImGui::PushStyleColor(ImGuiCol_Border, { 0, 0, 0, 0 });
         if (button("##invisible_clear_button", label_size.x, label_size.y))
         {
-            if (*pattern_buffer != '\0')
-                memset(pattern_buffer, 0, IM_ARRAYSIZE(pattern_buffer));
+            if (!pattern.empty()) {
+                pattern.clear();
+                builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
+            }
         }
         ImGui::PopStyleColor(5);
         popup_window->DC.CursorPos = temp;
 
 
-        ImGui::PushItemWidth(item_rect_width - regex_btn_w - regex_gap);
+        ImGui::PushItemWidth(std::max(1.0f, item_rect_width - action_width));
         if (is_new_open)
             ImGui::SetKeyboardFocusHere();
-        ImGui::InputText("##bbl_combo_with_filter_inputText", pattern_buffer, sizeof(pattern_buffer));
+        if (ImGui::InputText("##bbl_combo_with_filter_inputText", &pattern)) {
+            pattern = into_u8(from_u8(pattern).Left(BoundedRegex::kMaxPatternCodeUnits));
+            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
+        }
         ImGui::PopItemWidth();
 
         // ".*" regex toggle, tinted while active so it reads as stateful
@@ -802,49 +857,68 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
             ImGui::PushStyleColor(ImGuiCol_Button, on);
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
         }
-        if (ImGui::Button(".*##bbl_combo_with_filter_regex", ImVec2(regex_btn_w, 0.0f)))
+        if (ImGui::Button(".*##bbl_combo_with_filter_regex", ImVec2(regex_btn_w, 0.0f))) {
             regex_mode = !regex_mode;
+            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
+        }
         if (regex_mode)
             ImGui::PopStyleColor(2);
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("%s", into_u8(_L("Regular expression")).c_str());
 
+        ImGui::SameLine(0.0f, regex_gap);
+        if (ImGui::Button(builder_label.c_str(), ImVec2(builder_btn_w, 0.0f))) {
+            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
+            open_imgui_regex_builder(builder_state);
+        }
+        if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
+            ImGui::SetTooltip("%s", into_u8(_L("Regex builder")).c_str());
+
         ImGui::PopStyleVar();
 
-        if (*pattern_buffer != '\0')
+        if (!pattern.empty())
             is_filtering = true;
 
-        // Regex mode: compile once, guarded. An invalid / half-typed pattern
+        // Regex mode: validate once in the bounded worker. An invalid / half-typed pattern
         // disables filtering entirely (match-all) rather than hiding every row.
         bool       use_regex   = false;
-        std::regex regex_term;
+        std::wstring regex_pattern;
+        std::unique_ptr<BoundedRegex::SearchPass> regex_pass;
         if (is_filtering && regex_mode) {
-            try {
-                regex_term = std::regex(pattern_buffer, std::regex::icase);
-                use_regex  = true;
-            } catch (const std::exception &) {
+            regex_pattern = from_u8(pattern).ToStdWstring();
+            BoundedRegex::Options options;
+            options.case_sensitive = case_sensitive;
+            options.multiline = multiline;
+            regex_pass = std::make_unique<BoundedRegex::SearchPass>(regex_pattern, options);
+            use_regex = !regex_pass->circuit_open();
+            if (!use_regex)
                 is_filtering = false;
-            }
         }
 
         if (is_filtering) {
             std::vector<std::pair<int, int>> filtered_items_with_priority; // std::pair<index, priority>
             for (int i = 0; i < all_items.size(); i++) {
                 if (use_regex) {
-                    // A compile-valid pattern can still throw at match time
-                    // (catastrophic backtracking): keep the row on throw, per
-                    // the shared matcher convention.
-                    try {
-                        std::smatch m;
-                        if (std::regex_search(all_items[i], m, regex_term))
-                            filtered_items_with_priority.push_back({i, (int) m.position(0)});
-                    } catch (const std::regex_error &) {
+                    const auto result = regex_pass->evaluate(from_u8(all_items[i]).ToStdWstring());
+                    if (!result.definitive()) {
                         filtered_items_with_priority.push_back({i, 0});
-                    }
+                    } else if (result.matched() && !result.matches.empty() &&
+                               !result.matches.front().groups.empty())
+                        filtered_items_with_priority.push_back(
+                            {i, static_cast<int>(result.matches.front().groups.front().begin)});
                 } else {
-                    int priority = simple_match(pattern_buffer, all_items[i].c_str());
-                    if (priority != wxNOT_FOUND)
-                        filtered_items_with_priority.push_back({i, priority});
+                    const std::wstring needle = from_u8(pattern).ToStdWstring();
+                    const std::wstring subject = from_u8(all_items[i]).ToStdWstring();
+                    if (BoundedRegex::plain_search(needle, subject, case_sensitive, whole_word)) {
+                        wxString subject_wx = from_u8(all_items[i]);
+                        wxString needle_wx  = from_u8(pattern);
+                        if (!case_sensitive) {
+                            subject_wx.MakeLower();
+                            needle_wx.MakeLower();
+                        }
+                        const int priority = subject_wx.Find(needle_wx);
+                        filtered_items_with_priority.push_back({i, std::max(0, priority)});
+                    }
                 }
             }
             std::sort(filtered_items_with_priority.begin(), filtered_items_with_priority.end(),
@@ -1948,6 +2022,54 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
                                Search::OptionViewParameters& view_params, int& selected, bool& edited, int& mouse_wheel, bool is_localized)
 {
     int& hovered_id = view_params.hovered_id;
+    if (!m_search_builder_state)
+        m_search_builder_state = std::make_shared<RegexBuilderBridgeState>();
+
+    const std::string external_pattern = search_str ? std::string(search_str) : std::string();
+    if (!m_search_state_initialized) {
+        m_search_pattern = external_pattern;
+        m_search_exported_pattern = external_pattern;
+        m_search_state_initialized = true;
+    } else if (!m_search_builder_state->has_pending_changes() &&
+               external_pattern != m_search_exported_pattern) {
+        // Preserve intentional changes made by the legacy caller while keeping
+        // a builder-authored pattern longer than its 40-byte compatibility
+        // buffer authoritative.
+        m_search_pattern = external_pattern;
+    }
+
+    RegexBuilderValues bridge_values{m_search_pattern, m_search_regex_enabled,
+                                     m_search_case_sensitive, m_search_whole_word,
+                                     m_search_multiline};
+    const bool builder_edited = m_search_builder_state->apply_pending_to_host(bridge_values);
+    m_search_pattern          = std::move(bridge_values.pattern);
+    m_search_regex_enabled    = bridge_values.regex_enabled;
+    m_search_case_sensitive   = bridge_values.case_sensitive;
+    m_search_whole_word       = bridge_values.whole_word;
+    m_search_multiline        = bridge_values.multiline;
+    m_search_builder_state->synchronize_from_host(
+        {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+         m_search_whole_word, m_search_multiline});
+
+    auto export_legacy_pattern = [&]() {
+        if (!search_str)
+            return;
+        // search_list's historical ABI guarantees a 40-byte buffer. Keep that
+        // output valid UTF-8, while live builder/evaluator state remains full
+        // length in m_search_pattern.
+        wxString decoded = from_u8(m_search_pattern);
+        std::string value = into_u8(decoded);
+        while (value.size() > 39 && !decoded.empty()) {
+            decoded.RemoveLast();
+            value = into_u8(decoded);
+        }
+        std::memset(search_str, 0, 40);
+        std::memcpy(search_str, value.data(), value.size());
+        m_search_exported_pattern = value;
+    };
+    if (builder_edited)
+        export_legacy_pattern();
+
     // ImGui::ListBoxHeader("", size);
     {
         // rewrote part of function to add a TextInput instead of label Text
@@ -1978,26 +2100,40 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
         const ImGuiID id = ImGui::GetID(search_str);
         ImVec2 search_size = ImVec2(size.x, ImGui::GetTextLineHeightWithSpacing() + style.ItemSpacing.y);
 
-        // Reserve room on the search row for the ".*" regex toggle. The input
-        // gives up just enough width for a compact square-ish button.
+        // Reserve room for the quick ".*" toggle and the full builder button.
         const ImVec2 regex_label_size = ImGui::CalcTextSize(".*");
         const float  regex_btn_w      = regex_label_size.x + style.FramePadding.x * 2.0f;
-        const ImVec2 input_size(std::max(1.0f, search_size.x - regex_btn_w - style.ItemSpacing.x), search_size.y);
+        const float  builder_btn_w    = search_size.y;
+        const std::string builder_label = into_u8(static_cast<wchar_t>(MaterialIcon::Tune)) +
+                                          "##search_list_builder";
+        const ImVec2 input_size(
+            std::max(1.0f, search_size.x - regex_btn_w - builder_btn_w - style.ItemSpacing.x * 2.0f),
+            search_size.y);
 
         if (!ImGui::IsAnyItemFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
             ImGui::SetKeyboardFocusHere(0);
 
         // The press on Esc key invokes editing of InputText (removes last changes)
         // So we should save previous value...
-        std::string str = search_str;
-        ImGui::InputTextEx("", NULL, search_str, 40, input_size, ImGuiInputTextFlags_AutoSelectAll, NULL, NULL);
-        edited = ImGui::IsItemEdited();
+        std::string str = m_search_pattern;
+        ImGui::PushItemWidth(input_size.x);
+        ImGui::InputText("##search_list_input", &m_search_pattern, ImGuiInputTextFlags_AutoSelectAll);
+        ImGui::PopItemWidth();
+        const bool input_edited = ImGui::IsItemEdited();
+        if (input_edited) {
+            m_search_pattern = into_u8(from_u8(m_search_pattern).Left(BoundedRegex::kMaxPatternCodeUnits));
+            m_search_builder_state->synchronize_from_host(
+                {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+                 m_search_whole_word, m_search_multiline});
+            export_legacy_pattern();
+        }
+        edited = builder_edited || input_edited;
         if (edited)
             hovered_id = 0;
 
         // ".*" regex toggle: keeping ImGui conventions, tint the button when the
         // mode is active so the affordance reads as a stateful toggle. Toggling
-        // only flips the flag; the row loop below applies/removes the std::regex
+        // only flips the flag; the row loop below applies/removes the bounded regex
         // post-filter live on the next frame (no re-search needed).
         ImGui::SameLine(0.0f, style.ItemSpacing.x);
         if (m_search_regex_enabled) {
@@ -2005,18 +2141,37 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
             ImGui::PushStyleColor(ImGuiCol_Button, on);
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
         }
-        if (ImGui::Button(".*", ImVec2(regex_btn_w, search_size.y)))
+        if (ImGui::Button(".*##search_list_regex", ImVec2(regex_btn_w, search_size.y))) {
             m_search_regex_enabled = !m_search_regex_enabled;
+            edited = true;
+            m_search_builder_state->synchronize_from_host(
+                {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+                 m_search_whole_word, m_search_multiline});
+        }
         if (m_search_regex_enabled)
             ImGui::PopStyleColor(2);
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("%s", into_u8(_L("Regular expression")).c_str());
 
-        process_key_down(ImGuiKey_Escape, [&selected, search_str, str]() {
+        ImGui::SameLine(0.0f, style.ItemSpacing.x);
+        if (ImGui::Button(builder_label.c_str(), ImVec2(builder_btn_w, search_size.y))) {
+            m_search_builder_state->synchronize_from_host(
+                {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+                 m_search_whole_word, m_search_multiline});
+            open_imgui_regex_builder(m_search_builder_state);
+        }
+        if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
+            ImGui::SetTooltip("%s", into_u8(_L("Regex builder")).c_str());
+
+        process_key_down(ImGuiKey_Escape, [this, &selected, &export_legacy_pattern, str]() {
             // use 9999 to mark selection as a Esc key
             selected = 9999;
             // ... and when Esc key was pressed, than revert search_str value
-            strcpy(search_str, str.c_str());
+            m_search_pattern = str;
+            m_search_builder_state->synchronize_from_host(
+                {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+                 m_search_whole_word, m_search_multiline});
+            export_legacy_pattern();
         });
 
         ImGui::BeginChildFrame(id, frame_bb.GetSize());
@@ -2030,16 +2185,19 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
     // ".*" regex post-filter over the getter's already-searched rows. Only active
     // when the toggle is on and a pattern is present; an invalid/half-typed
     // pattern leaves regex_valid=false so nothing is hidden (never filter all).
-    const bool use_regex = m_search_regex_enabled && search_str[0] != '\0';
+    const bool use_regex = m_search_regex_enabled && !m_search_pattern.empty();
+    const bool use_plain_flag_filter = !m_search_regex_enabled && !m_search_pattern.empty() &&
+                                       (m_search_case_sensitive || m_search_whole_word);
     bool       regex_valid = false;
-    std::regex re;
+    std::wstring regex_pattern;
+    std::unique_ptr<BoundedRegex::SearchPass> regex_pass;
     if (use_regex) {
-        try {
-            re = std::regex(search_str, std::regex::icase);
-            regex_valid = true;
-        } catch (const std::exception&) {
-            regex_valid = false;
-        }
+        regex_pattern = from_u8(m_search_pattern).ToStdWstring();
+        BoundedRegex::Options options;
+        options.case_sensitive = m_search_case_sensitive;
+        options.multiline = m_search_multiline;
+        regex_pass = std::make_unique<BoundedRegex::SearchPass>(regex_pattern, options);
+        regex_valid = !regex_pass->circuit_open();
     }
 
     while (items_getter(i, &item_text, &tooltip))
@@ -2053,13 +2211,16 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
             for (const char* p = item_text; *p; ++p)
                 if ((unsigned char)*p >= 0x20)
                     plain.push_back(*p);
-            // A compile-valid pattern can still throw at match time (catastrophic
-            // backtracking); keep the row on throw rather than crash the canvas.
-            try {
-                show = std::regex_search(plain, re);
-            } catch (const std::regex_error &) {
-                show = true;
-            }
+            show = regex_pass->allows_candidate(from_u8(plain).ToStdWstring());
+        } else if (use_plain_flag_filter) {
+            std::string plain;
+            plain.reserve(std::strlen(item_text));
+            for (const char* p = item_text; *p; ++p)
+                if ((unsigned char)*p >= 0x20)
+                    plain.push_back(*p);
+            show = BoundedRegex::plain_search(from_u8(m_search_pattern).ToStdWstring(),
+                                              from_u8(plain).ToStdWstring(),
+                                              m_search_case_sensitive, m_search_whole_word);
         }
 
         // Keep the getter index i stable across hidden rows so a clicked row still

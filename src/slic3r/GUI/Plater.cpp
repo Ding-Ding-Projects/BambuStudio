@@ -1198,7 +1198,8 @@ void Sidebar::priv::on_search_update()
     // search_object() filters through SearchField::textMatches.
     m_object_list->GetModel()->set_search_flags(m_search_bar->IsRegexEnabled(),
                                                 m_search_bar->IsCaseSensitive(),
-                                                m_search_bar->IsWholeWord());
+                                                m_search_bar->IsWholeWord(),
+                                                m_search_bar->IsMultiline());
     m_object_list->GetModel()->search_object(search_text);
     dia->update_list();
 }
@@ -1290,6 +1291,7 @@ bool Sidebar::priv::apply_filament_search_filter()
     const wxString query = m_filament_search->GetValue();
     const bool     regex = m_filament_search->IsRegexEnabled();
     const bool     csens = m_filament_search->IsCaseSensitive();
+    const bool     multiline = m_filament_search->IsMultiline();
     const bool     wword = m_filament_search->IsWholeWord();
 
     // Per-slot colours, resolved once per pass (same source the Objects search
@@ -1298,6 +1300,7 @@ bool Sidebar::priv::apply_filament_search_filter()
     if (!query.IsEmpty() && plater)
         filament_colors = plater->get_extruder_colors_from_plater_config();
 
+    SearchField::MatchPass match_pass(query, regex, csens, wword, multiline);
     bool changed = false;
     for (size_t i = 0; i < filament_rows.size(); ++i) {
         StaticBox *row = filament_rows[i];
@@ -1314,7 +1317,7 @@ bool Sidebar::priv::apply_filament_search_filter()
                 haystack += " " + combos_filament[i]->GetValue();
             if (i < filament_colors.size())
                 haystack += " " + SearchField::colorSearchText(wxColour(filament_colors[i]));
-            match = SearchField::textMatches(query, haystack, regex, csens, wword);
+            match = match_pass.matches(haystack);
         }
         if (row->IsShown() != match) {
             row->Show(match);

@@ -84,6 +84,7 @@
 #include "slic3r/GUI/Widgets/WebView.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "Widgets/BoundedRegex.hpp"
 #include "Plater.hpp"
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
@@ -3101,6 +3102,11 @@ bool GUI_App::on_init_inner()
     const wxString resources_dir = from_u8(Slic3r::resources_dir());
     wxCHECK_MSG(wxDirExists(resources_dir), false,
         wxString::Format("Resources path does not exist or is not a directory: %s", resources_dir));
+
+    // Process creation and containment never belong on a filtering/input
+    // handler. Start the persistent bounded-regex worker in the background as
+    // soon as the installation resources have been verified.
+    BoundedRegex::prewarm();
 
 #ifdef __linux__
     if (! check_old_linux_datadir(GetAppName())) {

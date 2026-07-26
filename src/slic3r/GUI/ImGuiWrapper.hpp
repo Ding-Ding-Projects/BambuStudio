@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <memory>
 
 #include <imgui/imgui.h>
 
@@ -25,6 +26,13 @@ struct ImRect;
 
 namespace Slic3r {
 namespace GUI {
+
+class RegexBuilderBridgeState;
+
+// Opens the full wx regex builder for an ImGui-owned search field. The shared
+// bridge state keeps callbacks lifetime-safe and carries edits back on the next
+// ImGui frame.
+void open_imgui_regex_builder(const std::shared_ptr<RegexBuilderBridgeState> &state);
 
 
 bool get_data_from_svg(const std::string &filename, unsigned int max_size_px, ThumbnailData &thumbnail_data);
@@ -58,9 +66,17 @@ class ImGuiWrapper
     unsigned m_mouse_buttons{ 0 };
     bool m_disabled{ false };
     bool m_new_frame_open{ false };
-    // In-canvas search_list() regex affordance: when on, the ".*" toggle next to
-    // the ImGui search input post-filters the getter's results with std::regex.
+    // In-canvas search_list() state. The string is owned here (rather than by
+    // the legacy 40-byte compatibility buffer) so the full 512-code-unit regex
+    // builder limit round-trips without truncating its live evaluation.
     bool m_search_regex_enabled{ false };
+    bool m_search_case_sensitive{ false };
+    bool m_search_whole_word{ false };
+    bool m_search_multiline{ false };
+    bool m_search_state_initialized{ false };
+    std::string m_search_pattern;
+    std::string m_search_exported_pattern;
+    std::shared_ptr<RegexBuilderBridgeState> m_search_builder_state;
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
     bool m_requires_extra_frame{ false };
 #endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT

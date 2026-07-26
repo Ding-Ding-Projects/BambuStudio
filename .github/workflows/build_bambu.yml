@@ -100,6 +100,25 @@ jobs:
           brew pin cmake@3.31.0
           ./BuildMac.sh -s -x -a universal -t 10.15 -1
 
+      - name: Build and run macOS bounded-regex tests
+        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26'
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          runner_arch="$(uname -m)"
+          cmake -S . -B build-regex-macos -G Ninja \
+            -DBBL_RELEASE_TO_PUBLIC=1 \
+            -DBBL_INTERNAL_TESTING=0 \
+            -DSLIC3R_GUI=OFF \
+            -DSLIC3R_BUILD_TESTS=ON \
+            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/deps/build/$runner_arch/BambuStudio_deps/usr/local" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="$runner_arch" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
+          cmake --build build-regex-macos --target bounded_regex_tests
+          ctest --test-dir build-regex-macos --output-on-failure --no-tests=error \
+            -R '^bounded_regex_tests$'
+
       - name: pack mac app
         if: github.ref != 'refs/heads/main' && (inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26')
         working-directory: ${{ github.workspace }}
@@ -270,6 +289,24 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          # Configure-only regression: the Boost.Regex worker/tests must remain
+          # available when the GUI is disabled (the safety suite is intentionally
+          # runnable without building or launching Studio's UI).
+          cmake -S . -B build-regex-headless `
+            -G 'Visual Studio 18 2026' `
+            -A X64 `
+            -DBBL_RELEASE_TO_PUBLIC=1 `
+            -DBBL_INTERNAL_TESTING=0 `
+            -DSLIC3R_GUI=OFF `
+            -DSLIC3R_BUILD_TESTS=ON `
+            '-DCMAKE_PREFIX_PATH=${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local' `
+            '-DCMAKE_INSTALL_PREFIX=${{ runner.temp }}\BambuStudioMD3-regex-headless' `
+            -DCMAKE_BUILD_TYPE=Release `
+            '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
+          if ($LASTEXITCODE -ne 0) {
+              throw "Configuring the headless bounded-regex test tree failed with exit code $LASTEXITCODE."
+          }
+
           cmake -S . -B build-tests `
             -G 'Visual Studio 18 2026' `
             -A X64 `
@@ -287,7 +324,7 @@ jobs:
           # The aggregate legacy suite and libnest2d_tests are currently
           # upstream-baseline failures; keep this gate focused on maintained,
           # independently buildable regression coverage. See HANDOFF.md.
-          cmake --build build-tests --target language_mode_tests project_history_tests deviceweb_home_webview_failure_policy_tests deterministic_bbs_3mf_tests --config Release -- -m
+          cmake --build build-tests --target language_mode_tests project_history_tests bounded_regex_tests deviceweb_home_webview_failure_policy_tests deterministic_bbs_3mf_tests --config Release -- -m
           if ($LASTEXITCODE -ne 0) {
               throw "Building Windows C++ tests failed with exit code $LASTEXITCODE."
           }
@@ -299,7 +336,7 @@ jobs:
           $env:PATH = '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin;' +
               '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin\occt;' +
               '${{ github.workspace }}\install-dir;' + $env:PATH
-          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests|deviceweb_home_webview_failure_policy_tests|deviceweb_home_webview_failure_contract)$'
+          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests|bounded_regex_tests|deviceweb_home_webview_failure_policy_tests|deviceweb_home_webview_failure_contract)$'
           if ($LASTEXITCODE -ne 0) {
               throw "Windows C++ tests failed with exit code $LASTEXITCODE."
           }

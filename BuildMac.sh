@@ -206,14 +206,21 @@ function build_universal() {
     rm -rf "$UNIVERSAL_APP"
     cp -R "$PROJECT_DIR/build/arm64/BambuStudio/BambuStudio.app" "$UNIVERSAL_APP"
     
-    # Get the binary path inside the .app bundle
+    # Get the executable paths inside the .app bundle. The bounded-regex
+    # worker must be universal as well; leaving the arm64 copy from the source
+    # bundle would make regex unavailable on Intel hosts.
     BINARY_PATH="Contents/MacOS/BambuStudio"
+    REGEX_WORKER_PATH="Contents/MacOS/bambu-regex-worker"
     
     # Create universal binary using lipo
     lipo -create \
         "$PROJECT_DIR/build/x86_64/BambuStudio/BambuStudio.app/$BINARY_PATH" \
         "$PROJECT_DIR/build/arm64/BambuStudio/BambuStudio.app/$BINARY_PATH" \
         -output "$UNIVERSAL_APP/$BINARY_PATH"
+    lipo -create \
+        "$PROJECT_DIR/build/x86_64/BambuStudio/BambuStudio.app/$REGEX_WORKER_PATH" \
+        "$PROJECT_DIR/build/arm64/BambuStudio/BambuStudio.app/$REGEX_WORKER_PATH" \
+        -output "$UNIVERSAL_APP/$REGEX_WORKER_PATH"
         
     echo "Universal binary created at $UNIVERSAL_APP"
 }

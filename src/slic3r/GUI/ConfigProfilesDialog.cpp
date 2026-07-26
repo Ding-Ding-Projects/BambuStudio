@@ -337,11 +337,13 @@ void ConfigProfilesDialog::populate_profiles()
     const bool regex      = m_search_field != nullptr && m_search_field->IsRegexEnabled();
     const bool case_sense = m_search_field != nullptr && m_search_field->IsCaseSensitive();
     const bool whole_word = m_search_field != nullptr && m_search_field->IsWholeWord();
+    const bool multiline  = m_search_field != nullptr && m_search_field->IsMultiline();
+    SearchField::MatchPass match_pass(query, regex, case_sense, whole_word, multiline);
     for (std::size_t i = 0; i < m_profiles.size(); ++i) {
         const ProfileRow &row = m_profiles[i];
         const wxString path_text = wxString::FromUTF8(row.data_dir.string());
         if (!query.IsEmpty() &&
-            !SearchField::textMatches(query, row.name + " " + path_text, regex, case_sense, whole_word))
+            !match_pass.matches(row.name + " " + path_text))
             continue;
         wxVector<wxVariant> cells;
         cells.push_back(wxVariant(row.name));
