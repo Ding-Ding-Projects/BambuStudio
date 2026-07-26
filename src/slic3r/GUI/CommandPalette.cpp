@@ -76,23 +76,33 @@ CommandPalette::CommandPalette(MainFrame *frame)
         case WXK_DOWN:   select_row(m_selected + 1); return;
         case WXK_UP:     select_row(m_selected - 1); return;
         case WXK_RETURN: run_selected(); return;
-        case WXK_ESCAPE: EndModal(wxID_CANCEL); return;
+        case WXK_ESCAPE: dismiss(); return;
         default: e.Skip();
         }
     };
     m_search->GetTextCtrl()->Bind(wxEVT_KEY_DOWN, on_key);
     Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
-        if (e.GetKeyCode() == WXK_ESCAPE) { EndModal(wxID_CANCEL); return; }
+        if (e.GetKeyCode() == WXK_ESCAPE) { dismiss(); return; }
         e.Skip();
     });
 }
 
 void CommandPalette::ShowPalette(MainFrame *frame)
 {
-    CommandPalette palette(frame);
-    palette.CenterOnParent();
-    MD3::Motion::FadeIn(&palette, MD3::Motion::short2);
-    palette.ShowModal();
+    // Ctrl+F while the palette is already open used to stack a second modal
+    // dialog on top of the first: every Esc dismissed only the topmost one,
+    // so the palette read as impossible to close. One at a time.
+    static bool s_open = false;
+    if (s_open)
+        return;
+    s_open = true;
+    {
+        CommandPalette palette(frame);
+        palette.CenterOnParent();
+        MD3::Motion::FadeIn(&palette, MD3::Motion::short2);
+        palette.ShowModal();
+    }
+    s_open = false;
 }
 
 void CommandPalette::collect_entries()
