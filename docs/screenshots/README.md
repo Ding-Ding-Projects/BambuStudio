@@ -78,8 +78,9 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`home--recently-opened-header.png`](home/home--recently-opened-header.png)
 - [`home.png`](home/home.png)
 
-## main-window (76 captures)
+## main-window (77 captures)
 
+- [`ink-terminology-sidebar.png`](main-window/ink-terminology-sidebar.png)
 - [`menu-calibration.png`](main-window/menu-calibration.png)
 - [`menu-edit.png`](main-window/menu-edit.png)
 - [`menu-file.png`](main-window/menu-file.png)

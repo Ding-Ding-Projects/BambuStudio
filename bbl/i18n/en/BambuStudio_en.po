@@ -11,19 +11,19 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n==1) ? 0 : 1;\n"
 
 msgid "The filament may not be compatible with the current machine settings. Generic filament presets will be used."
-msgstr ""
+msgstr "The ink may not be compatible with the current machine settings. Generic ink presets will be used."
 
 msgid "The filament model is unknown. Still using the previous filament preset."
-msgstr ""
+msgstr "The ink model is unknown. Still using the previous ink preset."
 
 msgid "The filament model is unknown. Generic filament presets will be used."
-msgstr ""
+msgstr "The ink model is unknown. Generic ink presets will be used."
 
 msgid "The filament may not be compatible with the current machine settings. A random filament preset will be used."
-msgstr ""
+msgstr "The ink may not be compatible with the current machine settings. A random ink preset will be used."
 
 msgid "The filament model is unknown. A random filament preset will be used."
-msgstr ""
+msgstr "The ink model is unknown. A random ink preset will be used."
 
 msgid "Main Extruder"
 msgstr ""
@@ -161,23 +161,23 @@ msgid "extruder"
 msgstr ""
 
 msgid "TPU is not supported by AMS."
-msgstr "TPU is not supported by AMS."
+msgstr "TPU is not supported by Ink Dispenser."
 
 msgid "AMS does not support 'Bambu Lab PET-CF'."
-msgstr ""
+msgstr "Ink Dispenser does not support 'Bambu Lab PET-CF'."
 
 msgid "The current filament doesn't support the E3D high-flow nozzle and can't be used."
-msgstr ""
+msgstr "The current ink doesn't support the E3D high-flow nozzle and can't be used."
 
 #, c-format, boost-format
 msgid "When using %s on the right extruder, it can only be used as support material."
 msgstr ""
 
 msgid "The current filament doesn't support the TPU high-flow nozzle and can't be used."
-msgstr ""
+msgstr "The current ink doesn't support the TPU high-flow nozzle and can't be used."
 
 msgid "Auto dynamic flow calibration is not supported for TPU filament."
-msgstr ""
+msgstr "Auto dynamic flow calibration is not supported for TPU ink."
 
 msgid "Bambu TPU 85A is not supported for printing with 0.4 mm Standard or High Flow nozzles."
 msgstr ""
@@ -186,19 +186,19 @@ msgid "When using ABS/ASA/PETG HF on the right extruder, it can only be used as 
 msgstr ""
 
 msgid "How to feed TPU filament."
-msgstr ""
+msgstr "How to feed TPU ink."
 
 msgid "How to feed TPU filament on X2D."
-msgstr ""
+msgstr "How to feed TPU ink on X2D."
 
 msgid "Using non-bambu filament may have printing quality issues."
-msgstr ""
+msgstr "Using non-bambu ink may have printing quality issues."
 
 msgid "Please cold pull before printing TPU to avoid clogging. You may use cold pull maintenance on the printer."
 msgstr ""
 
 msgid "Damp PVA will become flexible and get stuck inside AMS,please take care to dry it before use."
-msgstr "Damp PVA will become flexible and get stuck inside the AMS; please take care to dry it well before use."
+msgstr "Damp PVA will become flexible and get stuck inside the Ink Dispenser; please take care to dry it well before use."
 
 msgid "Damp PVA is flexible and may get stuck in extruder. Dry it before use."
 msgstr "Damp PVA is flexible and may get stuck in the extruder. Please dry it before use."
@@ -210,7 +210,7 @@ msgid "PPA-CF is brittle and could break in bended PTFE tube above Toolhead."
 msgstr "PPA-CF is brittle and could break in a bent PTFE tube above the Toolhead."
 
 msgid "PLA Glow may wear the AMS first stage feeder. Use an external spool instead."
-msgstr ""
+msgstr "PLA Glow may wear the Ink Dispenser first stage feeder. Use an external spool instead."
 
 msgid "Default settings may affect print quality. Adjust as needed for best results."
 msgstr ""
@@ -221,7 +221,7 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "%s filaments are hard and brittle and could break in AMS, and there is also a risk of nozzle clogging when using 0.4mm high-flow nozzles. Use with caution."
-msgstr ""
+msgstr "%s inks are hard and brittle and could break in Ink Dispenser, and there is also a risk of nozzle clogging when using 0.4mm high-flow nozzles. Use with caution."
 
 #, c-format, boost-format
 msgid "%s has a risk of nozzle clogging when using 0.4, 0.6, 0.8mm high-flow nozzles. Use with caution."
@@ -229,7 +229,7 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "%s may fail to load or unload due to the Filament Track Switch. If you wish to continue."
-msgstr ""
+msgstr "%s may fail to load or unload due to the Ink Track Switch. If you wish to continue."
 
 #, c-format, boost-format
 msgid "%s is not supported by %s extruder."
@@ -315,7 +315,7 @@ msgid "Update failed."
 msgstr "Update failed."
 
 msgid "Current AMS humidity"
-msgstr ""
+msgstr "Current Ink Dispenser humidity"
 
 msgid "Humidity"
 msgstr ""
@@ -337,13 +337,13 @@ msgid "%d ℃"
 msgstr ""
 
 msgid "Filament Inlet A"
-msgstr ""
+msgstr "Ink Inlet A"
 
 msgid "Filament Inlet B"
-msgstr ""
+msgstr "Ink Inlet B"
 
 msgid "Filament Track Switch"
-msgstr ""
+msgstr "Ink Track Switch"
 
 msgid "Suggested rearrangement"
 msgstr ""
@@ -352,7 +352,7 @@ msgid "How to save time?→"
 msgstr ""
 
 msgid "Filament Status:"
-msgstr ""
+msgstr "Ink Status:"
 
 msgid "Position adjustment required"
 msgstr ""
@@ -372,23 +372,23 @@ msgstr "Close"
 
 #, c-format, boost-format
 msgid "Based on the diagram below, rearrange the filaments on the printer for optimal results to save approximately %s."
-msgstr ""
+msgstr "Based on the diagram below, rearrange the inks on the printer for optimal results to save approximately %s."
 
 msgid "Summary:"
 msgstr ""
 
 msgid "AMS on Filament Inlet A"
-msgstr ""
+msgstr "Ink Dispenser on Ink Inlet A"
 
 msgid "AMS on Filament Inlet B"
-msgstr ""
+msgstr "Ink Dispenser on Ink Inlet B"
 
 #, c-format, boost-format
 msgid "The No.%d slicing filament is matched to '%s'. Assigning it to '%s' can save printing time."
-msgstr ""
+msgstr "The No.%d slicing ink is matched to '%s'. Assigning it to '%s' can save printing time."
 
 msgid "*Tips: If you have moved the spool position on the machine, please close this page and re‑match the filament."
-msgstr ""
+msgstr "*Tips: If you have moved the spool position on the machine, please close this page and re‑match the ink."
 
 msgid "Summary: This is currently the most suitable position for placement."
 msgstr ""
@@ -604,7 +604,7 @@ msgstr "Lay on Face"
 
 #, boost-format
 msgid "Filament count exceeds the maximum number that painting tool supports. only the first %1% filaments will be available in painting tool."
-msgstr "Filament count exceeds the maximum number that painting tool supports. Only the first %1% filaments will be available in painting tool."
+msgstr "Ink count exceeds the maximum number that painting tool supports. Only the first %1% inks will be available in painting tool."
 
 msgid "Color Painting"
 msgstr "Color Painting"
@@ -619,7 +619,7 @@ msgid "Key 1~9"
 msgstr "Key 1~9"
 
 msgid "Choose filament"
-msgstr "Choose filament"
+msgstr "Choose ink"
 
 msgid "Connected same color"
 msgstr ""
@@ -631,7 +631,7 @@ msgid "Triangles"
 msgstr "Triangles"
 
 msgid "Filaments"
-msgstr "Filaments"
+msgstr "Inks"
 
 msgid "Brush"
 msgstr "Brush"
@@ -689,7 +689,7 @@ msgstr "Remove painted color"
 
 #, boost-format
 msgid "Painted using: Filament %1%"
-msgstr "Painted using: Filament %1%"
+msgstr "Painted using: Ink %1%"
 
 msgid "Fuzzy skin Painting"
 msgstr ""
@@ -1416,9 +1416,6 @@ msgstr ""
 msgid "Name has to be unique."
 msgstr ""
 
-msgid "OK"
-msgstr "OK"
-
 msgid "Save as new style"
 msgstr ""
 
@@ -1466,10 +1463,6 @@ msgid "Click to change text into object part."
 msgstr ""
 
 msgid "You can't change a type of the last solid part of the object."
-msgstr ""
-
-msgctxt "EmbossOperation"
-msgid "Cut"
 msgstr ""
 
 msgid "Click to change part type into negative volume."
@@ -1876,7 +1869,7 @@ msgid "Process"
 msgstr "Process"
 
 msgid "Filament"
-msgstr "Filament"
+msgstr "Ink"
 
 msgid "Machine"
 msgstr "Machine"
@@ -2304,17 +2297,17 @@ msgid "Replace the selected part with new STL"
 msgstr "Replace the selected part with new STL"
 
 msgid "Change filament"
-msgstr "Change filament"
+msgstr "Change ink"
 
 msgid "Set filament for selected items"
-msgstr "Set filament for selected items"
+msgstr "Set ink for selected items"
 
 msgid "Default"
 msgstr "Default"
 
 #, c-format, boost-format
 msgid "Filament %d"
-msgstr "Filament %d"
+msgstr "Ink %d"
 
 msgid "current"
 msgstr "current"
@@ -2434,7 +2427,7 @@ msgid "Edit"
 msgstr "Edit"
 
 msgid "Delete this filament"
-msgstr ""
+msgstr "Delete this ink"
 
 msgid "Decompose Color"
 msgstr ""
@@ -2530,10 +2523,10 @@ msgid "Edit print parameters for a single object"
 msgstr "Edit print parameters for a single object"
 
 msgid "Change Filament"
-msgstr "Change Filament"
+msgstr "Change Ink"
 
 msgid "Set Filament for selected items"
-msgstr "Set Filament for selected items"
+msgstr "Set Ink for selected items"
 
 msgid "Unlock"
 msgstr "Unlock"
@@ -2893,10 +2886,10 @@ msgid "Insert template custom G-code at the beginning of this layer."
 msgstr "Insert template custom G-code at the beginning of this layer."
 
 msgid "Filament "
-msgstr "Filament "
+msgstr "Ink "
 
 msgid "Change filament at the beginning of this layer."
-msgstr "Change filament at the beginning of this layer."
+msgstr "Change ink at the beginning of this layer."
 
 msgid "Delete Pause"
 msgstr "Delete Pause"
@@ -2911,7 +2904,7 @@ msgid "Delete Custom G-code"
 msgstr "Delete Custom G-code"
 
 msgid "Delete Filament Change"
-msgstr "Delete Filament Change"
+msgstr "Delete Ink Change"
 
 msgid "No printer"
 msgstr "No printer"
@@ -2956,13 +2949,13 @@ msgid "Unload"
 msgstr "Unload"
 
 msgid "AMS has not been initialized. Please initialize it before use."
-msgstr ""
+msgstr "Ink Dispenser has not been initialized. Please initialize it before use."
 
 msgid "Choose an AMS slot then press \"Load\" or \"Unload\" button to automatically load or unload filaments."
-msgstr "Choose an AMS slot then press \"Load\" or \"Unload\" button to automatically load or unload filament."
+msgstr "Choose an Ink Dispenser slot then press \"Load\" or \"Unload\" button to automatically load or unload ink."
 
 msgid "Filament type is unknown which is required to perform this action. Please set target filament's information."
-msgstr ""
+msgstr "Ink type is unknown which is required to perform this action. Please set target ink's information."
 
 msgid "/"
 msgstr "/"
@@ -3062,10 +3055,6 @@ msgctxt "air_duct"
 msgid "Left(Heating)"
 msgstr ""
 
-msgctxt "air_duct"
-msgid "Chamber"
-msgstr ""
-
 msgid "Hotend"
 msgstr ""
 
@@ -3091,19 +3080,19 @@ msgid "Heat the nozzle"
 msgstr "Heat the nozzle"
 
 msgid "Cut filament"
-msgstr "Cut filament"
+msgstr "Cut ink"
 
 msgid "Pull back current filament"
-msgstr "Pull back the current filament"
+msgstr "Pull back the current ink"
 
 msgid "Push new filament into extruder"
-msgstr "Push new filament into extruder"
+msgstr "Push new ink into extruder"
 
 msgid "Grab new filament"
-msgstr "Grab new filament"
+msgstr "Grab new ink"
 
 msgid "Purge old filament"
-msgstr "Purge old filament"
+msgstr "Purge old ink"
 
 msgid "Switch"
 msgstr ""
@@ -3112,22 +3101,22 @@ msgid "hotend"
 msgstr ""
 
 msgid "Wait for AMS cooling"
-msgstr ""
+msgstr "Wait for Ink Dispenser cooling"
 
 msgid "Switch current filament at Filament Track Switch"
-msgstr ""
+msgstr "Switch current ink at Ink Track Switch"
 
 msgid "Pull back current filament at Filament Track Switch"
-msgstr ""
+msgstr "Pull back current ink at Ink Track Switch"
 
 msgid "Switch track at Filament Track Switch"
-msgstr ""
+msgstr "Switch track at Ink Track Switch"
 
 msgid "Confirm extruded"
 msgstr "Confirm extruded"
 
 msgid "Check filament location"
-msgstr "Check filament location"
+msgstr "Check ink location"
 
 msgid "The maximum temperature cannot exceed "
 msgstr ""
@@ -3226,10 +3215,6 @@ msgid "Assembly Structure"
 msgstr ""
 
 msgid "Start your assembly journey from Add Step"
-msgstr ""
-
-msgctxt "AssemblyStructure"
-msgid "Default"
 msgstr ""
 
 msgid "Contain"
@@ -3776,23 +3761,23 @@ msgid "One-click RYBW auto-mix"
 msgstr ""
 
 msgid "Project Physical Filaments"
-msgstr ""
+msgstr "Project Physical Inks"
 
 msgid "Project Mixed Filaments"
-msgstr ""
+msgstr "Project Mixed Inks"
 
 msgid "New Physical Filaments"
-msgstr ""
+msgstr "New Physical Inks"
 
 msgid "New Mixed Filaments"
-msgstr ""
+msgstr "New Mixed Inks"
 
 msgid "+ Add Material"
 msgstr ""
 
 #, c-format, boost-format
 msgid "The project supports up to %d filaments. Extra filaments will be discarded."
-msgstr ""
+msgstr "The project supports up to %d inks. Extra inks will be discarded."
 
 msgid "Import Model"
 msgstr ""
@@ -3816,7 +3801,7 @@ msgid "Smooth Level"
 msgstr ""
 
 msgid "Automatically determine the optimal color count only and recompute filament mapping"
-msgstr ""
+msgstr "Automatically determine the optimal color count only and recompute ink mapping"
 
 msgid "Convert texture to painting using the specified color count and smooth level"
 msgstr ""
@@ -3825,25 +3810,25 @@ msgid "Reminder: parameters changed, click Apply to take effect"
 msgstr ""
 
 msgid "Filament Mapping"
-msgstr ""
+msgstr "Ink Mapping"
 
 msgid "Reset filament mapping to the state before one-click mixing"
-msgstr ""
+msgstr "Reset ink mapping to the state before one-click mixing"
 
 msgid "Choose the one-click auto-mix mode for texture color import"
 msgstr ""
 
 msgid "Auto-merge same filament"
-msgstr ""
+msgstr "Auto-merge same ink"
 
 msgid "Automatically merge identical filaments into existing filaments in the project"
-msgstr ""
+msgstr "Automatically merge identical inks into existing inks in the project"
 
 msgid "Skip Matching"
 msgstr ""
 
 msgid "Skip filament mapping and import as a single-color model"
-msgstr ""
+msgstr "Skip ink mapping and import as a single-color model"
 
 msgid "Processing"
 msgstr ""
@@ -4023,13 +4008,13 @@ msgid "Factor N"
 msgstr "Factor N"
 
 msgid "Setting AMS slot information while printing is not supported"
-msgstr "Setting AMS slot information while printing is not supported"
+msgstr "Setting Ink Dispenser slot information while printing is not supported"
 
 msgid "Setting Virtual slot information while printing is not supported"
 msgstr "Setting Virtual slot information while printing is not supported"
 
 msgid "Are you sure you want to clear the filament information?"
-msgstr "Are you sure you want to clear the filament information?"
+msgstr "Are you sure you want to clear the ink information?"
 
 msgid "TPU needs a different feeding path and loading procedure. Otherwise clogging or jam may happen. Please read the tutorial before using TPU."
 msgstr ""
@@ -4055,7 +4040,7 @@ msgid "Other"
 msgstr "Other"
 
 msgid "Filament Manager"
-msgstr ""
+msgstr "Ink Manager"
 
 msgid "In printer"
 msgstr ""
@@ -4064,22 +4049,14 @@ msgstr ""
 msgid "In printer: %s"
 msgstr ""
 
-msgctxt "Filament Manager"
-msgid "Note"
-msgstr ""
-
 msgid "Unsupported Filaments"
-msgstr ""
-
-msgctxt "Unsupported Filaments"
-msgid "Note"
-msgstr ""
+msgstr "Unsupported Inks"
 
 msgid "No unsupported filaments"
-msgstr "No unsupported filaments"
+msgstr "No unsupported inks"
 
 msgid "No filaments"
-msgstr "No filaments"
+msgstr "No inks"
 
 msgid "System presets"
 msgstr "System presets"
@@ -4091,10 +4068,10 @@ msgstr ""
 msgid ""
 "The nozzle flow is not set. Please set the nozzle flow rate before editing the filament.\n"
 "'Device -> Print parts'"
-msgstr ""
+msgstr "The nozzle flow is not set. Please set the nozzle flow rate before editing the ink.\n'Device -> Print parts'"
 
 msgid "AMS"
-msgstr "AMS"
+msgstr "Ink Dispenser"
 
 msgid "Other Color"
 msgstr "Other Color"
@@ -4103,13 +4080,13 @@ msgid "Custom Color"
 msgstr "Custom Color"
 
 msgid "AMS detected a new official filament. Add it to Filament Manager?"
-msgstr "AMS detected a new Bambu Filament. Add it to Filament Manager?"
+msgstr "Ink Dispenser detected a new Bambu Ink. Add it to Ink Manager?"
 
 msgid "Add as new filament"
-msgstr "Add as new filament"
+msgstr "Add as new ink"
 
 msgid "Link to existing filament"
-msgstr "Link to existing filament"
+msgstr "Link to existing ink"
 
 msgid "Not now"
 msgstr ""
@@ -4118,13 +4095,13 @@ msgid "Please select"
 msgstr ""
 
 msgid "No matching filament"
-msgstr ""
+msgstr "No matching ink"
 
 msgid "Dynamic flow calibration"
 msgstr "Dynamic flow calibration"
 
 msgid "The nozzle temp and max volumetric speed will affect the calibration results. Please fill in the same values as the actual printing. They can be auto-filled by selecting a filament preset."
-msgstr "The nozzle temp and max volumetric speed will affect the calibration results. Please fill in the same values as the actual printing. They can be auto-filled by selecting a filament preset."
+msgstr "The nozzle temp and max volumetric speed will affect the calibration results. Please fill in the same values as the actual printing. They can be auto-filled by selecting an ink preset."
 
 msgid "Nozzle Diameter"
 msgstr "Nozzle Diameter"
@@ -4183,41 +4160,41 @@ msgid ""
 "Upper half area:  Original\n"
 "Lower half area: The filament from original project will be used when unmapped.\n"
 "And you can click it to modify"
-msgstr ""
+msgstr "Upper half area:  Original\nLower half area: The ink from original project will be used when unmapped.\nAnd you can click it to modify"
 
 msgid ""
 "Upper half area:  Original\n"
 "Lower half area:  Filament in AMS\n"
 "And you can click it to modify"
-msgstr ""
+msgstr "Upper half area:  Original\nLower half area:  Ink in Ink Dispenser\nAnd you can click it to modify"
 
 msgid ""
 "Upper half area:  Original\n"
 "Lower half area:  Filament in AMS\n"
 "And you cannot click it to modify"
-msgstr ""
+msgstr "Upper half area:  Original\nLower half area:  Ink in Ink Dispenser\nAnd you cannot click it to modify"
 
 msgid "AMS Slots"
-msgstr "AMS Slots"
+msgstr "Ink Dispenser Slots"
 
 msgid "Please select from the following filaments"
-msgstr ""
+msgstr "Please select from the following inks"
 
 #, c-format, boost-format
 msgid "Select filament that installed to the %s"
-msgstr ""
+msgstr "Select ink that installed to the %s"
 
 msgid "Left AMS"
-msgstr ""
+msgstr "Left Ink Dispenser"
 
 msgid "External"
 msgstr ""
 
 msgid "Reset current filament mapping"
-msgstr ""
+msgstr "Reset current ink mapping"
 
 msgid "Right AMS"
-msgstr ""
+msgstr "Right Ink Dispenser"
 
 #, c-format, boost-format
 msgid "Printing with the current nozzle may produce an extra %0.2f g of waste."
@@ -4225,57 +4202,57 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "Tips: the filament type(%s) does not match with the filament type(%s) in the slicing file. If you want to use this slot, you can install %s instead of %s and change slot information on the 'Device' page."
-msgstr ""
+msgstr "Tips: the ink type(%s) does not match with the ink type(%s) in the slicing file. If you want to use this slot, you can install %s instead of %s and change slot information on the 'Device' page."
 
 #, c-format, boost-format
 msgid "Cannot select: the filament type(%s) does not match with the filament type(%s) in the slicing file. If you want to use this slot, you can install %s instead of %s and change slot information on the 'Device' page."
-msgstr ""
+msgstr "Cannot select: the ink type(%s) does not match with the ink type(%s) in the slicing file. If you want to use this slot, you can install %s instead of %s and change slot information on the 'Device' page."
 
 #, c-format, boost-format
 msgid "Cannot select: the slot is empty or undefined. If you want to use this slot, you can install %s and change slot information on the 'Device' page."
 msgstr ""
 
 msgid "Cannot select: No filament loaded in current slot."
-msgstr ""
+msgstr "Cannot select: No ink loaded in current slot."
 
 msgid "Enable AMS"
-msgstr "Enable AMS"
+msgstr "Enable Ink Dispenser"
 
 msgid "Print with filaments in the AMS"
-msgstr "Print with filaments in the AMS"
+msgstr "Print with inks in the Ink Dispenser"
 
 msgid "Disable AMS"
-msgstr "Disable AMS"
+msgstr "Disable Ink Dispenser"
 
 msgid "Print with the filament mounted on the back of chassis"
-msgstr "Print with the filament mounted on the back of chassis"
+msgstr "Print with the ink mounted on the back of chassis"
 
 msgid "Please change the desiccant when it is too wet. The indicator may not represent accurately in following cases : when the lid is open or the desiccant pack is changed. it take hours to absorb the moisture, low temperatures also slow down the process."
 msgstr "*Please change the desiccant when it is too wet. The indicator may not represent accurately in following cases：when the lid is open or the desiccant pack is changed, it take hours to absorb the moisture; low temperatures also slow down the process. "
 
 msgid "Config which AMS slot should be used for a filament used in the print job"
-msgstr "Configure which AMS slot should be used for a filament used in the print job."
+msgstr "Configure which Ink Dispenser slot should be used for an ink used in the print job."
 
 msgid "Filament used in this print job"
-msgstr "Filament used in this print job"
+msgstr "Ink used in this print job"
 
 msgid "AMS slot used for this filament"
-msgstr "AMS slot used for this filament"
+msgstr "Ink Dispenser slot used for this ink"
 
 msgid "Click to select AMS slot manually"
-msgstr "Click to select AMS slot manually"
+msgstr "Click to select Ink Dispenser slot manually"
 
 msgid "Do not Enable AMS"
-msgstr "Do not Enable AMS"
+msgstr "Do not Enable Ink Dispenser"
 
 msgid "Print using materials mounted on the back of the case"
 msgstr "Print using materials mounted on the back of the case"
 
 msgid "Print with filaments in AMS"
-msgstr ""
+msgstr "Print with inks in Ink Dispenser"
 
 msgid "Print with filaments mounted on the back of the chassis"
-msgstr "Print with filaments mounted on the back of the chassis"
+msgstr "Print with inks mounted on the back of the chassis"
 
 msgid "Auto Refill"
 msgstr "Auto Refill"
@@ -4284,24 +4261,24 @@ msgid "When the current material run out, the printer will continue to print in 
 msgstr "When the current material runs out, the printer will continue to print materials in the following order."
 
 msgid "Identical filament: same brand, type and color"
-msgstr ""
+msgstr "Identical ink: same brand, type and color"
 
 msgid "Group"
 msgstr "Group"
 
 msgid "When the current material runs out, the printer would use identical filament to continue printing."
-msgstr ""
+msgstr "When the current material runs out, the printer would use identical ink to continue printing."
 
 msgid "The printer does not currently support auto refill."
 msgstr "The printer does not currently support auto refill."
 
 msgid "AMS filament backup is not enabled, please enable it in the AMS settings."
-msgstr ""
+msgstr "Ink Dispenser ink backup is not enabled, please enable it in the Ink Dispenser settings."
 
 msgid ""
 "When the current filament runs out, the printer will use identical filament to continue printing.\n"
 "*Identical filament: same brand, type and color."
-msgstr ""
+msgstr "When the current ink runs out, the printer will use identical ink to continue printing.\n*Identical ink: same brand, type and color."
 
 msgid "DRY"
 msgstr "DRY"
@@ -4311,96 +4288,96 @@ msgstr "WET"
 
 #, c-format, boost-format
 msgid "Please select the filament installed on the %s."
-msgstr ""
+msgstr "Please select the ink installed on the %s."
 
 msgid "Please select the filament."
-msgstr ""
+msgstr "Please select the ink."
 
 msgid "Nozzle"
 msgstr "Nozzle"
 
 msgid "To learn about the filaments matching rules."
-msgstr ""
+msgstr "To learn about the inks matching rules."
 
 msgid "External spools is not supported since Filament Track Switch has been installed. If you want to use external spool, please uninstall it."
-msgstr ""
+msgstr "External spools is not supported since Ink Track Switch has been installed. If you want to use external spool, please uninstall it."
 
 msgid "Select Filament && Hotends"
-msgstr ""
+msgstr "Select Ink && Hotends"
 
 msgid "Select Filament"
-msgstr ""
+msgstr "Select Ink"
 
 msgid "AMS Settings"
-msgstr "AMS Settings"
+msgstr "Ink Dispenser Settings"
 
 msgid "Insertion update"
 msgstr "Insertion update"
 
 msgid "The AMS will automatically read the filament information when inserting a new Bambu Lab filament. This takes about 20 seconds."
-msgstr "The AMS will automatically read the filament information when inserting a new Bambu Lab filament spool. This takes about 20 seconds."
+msgstr "The Ink Dispenser will automatically read the ink information when inserting a new Bambu Lab ink spool. This takes about 20 seconds."
 
 msgid "Note: if a new filament is inserted during  printing, the AMS will not automatically read any information until printing is completed."
-msgstr "Note: if a new filament is inserted during  printing, the AMS will not automatically read any information until printing is completed."
+msgstr "Note: if a new ink is inserted during  printing, the Ink Dispenser will not automatically read any information until printing is completed."
 
 msgid "When inserting a new filament, the AMS will not automatically read its information, leaving it blank for you to enter manually."
-msgstr "When inserting a new filament, the AMS will not automatically read its information, leaving it blank for you to enter manually."
+msgstr "When inserting a new ink, the Ink Dispenser will not automatically read its information, leaving it blank for you to enter manually."
 
 msgid "Power on update"
 msgstr "Update on startup"
 
 msgid "The AMS will automatically read the information of inserted filament on start-up. It will take about 1 minute. The reading process will roll filament spools."
-msgstr "The AMS will automatically read the information of inserted filament on start-up. It will take about 1 minute.The reading process will rotate the filament spools."
+msgstr "The Ink Dispenser will automatically read the information of inserted ink on start-up. It will take about 1 minute.The reading process will rotate the ink spools."
 
 msgid "The AMS will not automatically read information from inserted filament during startup and will continue to use the information recorded before the last shutdown."
-msgstr "The AMS will not automatically read information from inserted filament during startup and will continue to use the information recorded before the last shutdown."
+msgstr "The Ink Dispenser will not automatically read information from inserted ink during startup and will continue to use the information recorded before the last shutdown."
 
 msgid "Update remaining capacity"
 msgstr "Update remaining capacity"
 
 msgid "AMS will attempt to estimate the remaining capacity of the Bambu Lab filaments."
-msgstr ""
+msgstr "Ink Dispenser will attempt to estimate the remaining capacity of the Bambu Lab inks."
 
 msgid "AMS filament backup"
-msgstr "AMS filament backup"
+msgstr "Ink Dispenser ink backup"
 
 msgid "AMS will continue to another spool with the same properties of filament automatically when current filament runs out"
-msgstr "AMS will continue to another spool with the same filament properties automatically when current filament runs out."
+msgstr "Ink Dispenser will continue to another spool with the same ink properties automatically when current ink runs out."
 
 msgid "Air Printing Detection"
 msgstr "Air Printing Detection"
 
 msgid "Detects clogging and filament grinding, halting printing immediately to conserve time and filament."
-msgstr "Detects clogging and filament grinding, halting printing immediately to conserve time and filament."
+msgstr "Detects clogging and ink grinding, halting printing immediately to conserve time and ink."
 
 msgid "AMS Type"
-msgstr ""
+msgstr "Ink Dispenser Type"
 
 msgid "Switching"
 msgstr ""
 
 msgid "The printer is busy and cannot switch AMS type."
-msgstr ""
+msgstr "The printer is busy and cannot switch Ink Dispenser type."
 
 msgid "Please unload all filament before switching."
-msgstr ""
+msgstr "Please unload all ink before switching."
 
 msgid "AMS type switching needs firmware update, taking about 30s. Switch now ?"
-msgstr ""
+msgstr "Ink Dispenser type switching needs firmware update, taking about 30s. Switch now ?"
 
 msgid "Arrange AMS Order"
-msgstr ""
+msgstr "Arrange Ink Dispenser Order"
 
 msgid ""
 "After clicking 'Reconnect', all AMS units will be automatically disconnected.\n"
 "Please reconnect them in the desired order to set a specific AMS ID sequence."
-msgstr ""
+msgstr "After clicking 'Reconnect', all Ink Dispenser units will be automatically disconnected.\nPlease reconnect them in the desired order to set a specific Ink Dispenser ID sequence."
 
 msgid "Are you sure to reset the ID sequence of the connected AMS?"
-msgstr ""
+msgstr "Are you sure to reset the ID sequence of the connected Ink Dispenser?"
 
 msgid "Reset AMS Sequence"
-msgstr ""
+msgstr "Reset Ink Dispenser Sequence"
 
 msgid "File"
 msgstr "File"
@@ -4578,7 +4555,7 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "Recommended nozzle temperature of this filament type is [%d, %d] degree centigrade"
-msgstr "The recommended nozzle temperature for this filament type is [%d, %d] degrees centigrade"
+msgstr "The recommended nozzle temperature for this ink type is [%d, %d] degrees centigrade"
 
 msgid ""
 "Too small max volumetric speed.\n"
@@ -4805,13 +4782,13 @@ msgid "Vibration compensation"
 msgstr "Vibration compensation"
 
 msgid "Changing filament"
-msgstr "Changing filament"
+msgstr "Changing ink"
 
 msgid "M400 pause"
 msgstr "M400 pause"
 
 msgid "Paused (filament ran out)"
-msgstr ""
+msgstr "Paused (ink ran out)"
 
 msgid "Heating nozzle"
 msgstr ""
@@ -4859,19 +4836,19 @@ msgid "Pause (heatbed temperature malfunction)"
 msgstr ""
 
 msgid "Filament unloading"
-msgstr "Filament unloading"
+msgstr "Ink unloading"
 
 msgid "Pause (step loss)"
 msgstr ""
 
 msgid "Filament loading"
-msgstr "Filament loading"
+msgstr "Ink loading"
 
 msgid "Motor noise cancellation"
 msgstr "Motor noise cancellation"
 
 msgid "Pause (AMS offline)"
-msgstr ""
+msgstr "Pause (Ink Dispenser offline)"
 
 msgid "Pause (low speed of the heatbreak fan)"
 msgstr ""
@@ -5021,7 +4998,7 @@ msgid "Pre-extrusion before printing"
 msgstr ""
 
 msgid "Preparing AMS"
-msgstr ""
+msgstr "Preparing Ink Dispenser"
 
 msgid "Timelapse is not supported on this printer."
 msgstr ""
@@ -5040,17 +5017,17 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "The chamber temperature is too high, which may cause the filament to soften. Please wait until the chamber temperature drops below %d℃. You may open the front door or enable fans to cool down."
-msgstr ""
+msgstr "The chamber temperature is too high, which may cause the ink to soften. Please wait until the chamber temperature drops below %d℃. You may open the front door or enable fans to cool down."
 
 #, c-format, boost-format
 msgid "AMS temperature is too high, which may cause the filament to soften. Please wait until the AMS temperature drops below %d℃."
-msgstr ""
+msgstr "Ink Dispenser temperature is too high, which may cause the ink to soften. Please wait until the Ink Dispenser temperature drops below %d℃."
 
 msgid "The current chamber temperature or the target chamber temperature exceeds 45℃.In order to avoid extruder clogging,low temperature filament(PLA/PETG/TPU) is not allowed to be loaded."
-msgstr "The current chamber temperature or the target chamber temperature exceeds 45℃. In order to avoid extruder clogging, low temperature filament (PLA/PETG/TPU) is not allowed to be loaded."
+msgstr "The current chamber temperature or the target chamber temperature exceeds 45℃. In order to avoid extruder clogging, low temperature ink (PLA/PETG/TPU) is not allowed to be loaded."
 
 msgid "Low temperature filament (PLA/PETG/TPU) is loaded in the extruder. In order to avoid extruder clogging, it is not allowed to set the chamber temperature."
-msgstr ""
+msgstr "Low temperature ink (PLA/PETG/TPU) is loaded in the extruder. In order to avoid extruder clogging, it is not allowed to set the chamber temperature."
 
 msgid "When you set the chamber temperature below 40℃, the chamber temperature control will not be activated. And the target chamber temperature will automatically be set to 0℃."
 msgstr "When you set the chamber temperature below 40℃, the chamber temperature control will not be activated, and the target chamber temperature will automatically be set to 0℃."
@@ -5074,7 +5051,7 @@ msgid "Check Assistant"
 msgstr "Check Assistant"
 
 msgid "Filament Extruded, Continue"
-msgstr "Filament Extruded, Continue"
+msgstr "Ink Extruded, Continue"
 
 msgid "Not Extruded Yet, Retry"
 msgstr "Not Extruded Yet, Retry"
@@ -5083,10 +5060,10 @@ msgid "Finished, Continue"
 msgstr "Finished, Continue"
 
 msgid "Load Filament"
-msgstr "Load Filament"
+msgstr "Load Ink"
 
 msgid "Filament Loaded, Resume"
-msgstr "Filament Loaded, Resume"
+msgstr "Ink Loaded, Resume"
 
 msgid "View Liveview"
 msgstr "View Liveview"
@@ -5299,7 +5276,7 @@ msgid "Percent"
 msgstr "Percent"
 
 msgid "Used filament"
-msgstr "Used filament"
+msgstr "Used ink"
 
 msgid "Layer Height (mm)"
 msgstr "Layer Height (mm)"
@@ -5338,7 +5315,7 @@ msgid "Unretract"
 msgstr "Unretract"
 
 msgid "Filament Changes"
-msgstr "Filament Changes"
+msgstr "Ink Changes"
 
 msgid "Wipe"
 msgstr "Wipe"
@@ -5356,7 +5333,7 @@ msgid "Total time"
 msgstr "Total time"
 
 msgid "Filament change times"
-msgstr "Filament change times"
+msgstr "Ink change times"
 
 msgid "View Summary"
 msgstr ""
@@ -5380,10 +5357,10 @@ msgid "Normal mode"
 msgstr "Normal mode"
 
 msgid "Total Filament"
-msgstr "Total Filament"
+msgstr "Total Ink"
 
 msgid "Model Filament"
-msgstr "Model Filament"
+msgstr "Model Ink"
 
 msgid "Prepare and timelapse time"
 msgstr ""
@@ -5401,16 +5378,16 @@ msgid "Switch to normal mode"
 msgstr "Switch to normal mode"
 
 msgid "Automatically re-slice according to the optimal filament grouping, and the grouping results will be displayed after slicing."
-msgstr ""
+msgstr "Automatically re-slice according to the optimal ink grouping, and the grouping results will be displayed after slicing."
 
 msgid "Filament Grouping"
-msgstr ""
+msgstr "Ink Grouping"
 
 msgid "Why this grouping"
 msgstr ""
 
 msgid "Please place filaments on the printer based on grouping result."
-msgstr ""
+msgstr "Please place inks on the printer based on grouping result."
 
 msgid "Tips:"
 msgstr "Tips:"
@@ -5420,33 +5397,33 @@ msgstr ""
 
 #, boost-format
 msgid "Increase %1%g filament and %2% nozzle purges compared to optimal grouping."
-msgstr ""
+msgstr "Increase %1%g ink and %2% nozzle purges compared to optimal grouping."
 
 #, boost-format
 msgid "Increase %1%g filament and save %2% nozzle purges compared to optimal grouping."
-msgstr ""
+msgstr "Increase %1%g ink and save %2% nozzle purges compared to optimal grouping."
 
 #, boost-format
 msgid "Save %1%g filament and increase %2% nozzle purges compared to optimal grouping."
-msgstr ""
+msgstr "Save %1%g ink and increase %2% nozzle purges compared to optimal grouping."
 
 #, boost-format
 msgid "Save %1%g filament and %2% nozzle purges compared to a printer with one nozzle."
-msgstr ""
+msgstr "Save %1%g ink and %2% nozzle purges compared to a printer with one nozzle."
 
 #, boost-format
 msgid "Save %1%g filament and increase %2% nozzle purges compared to a printer with one nozzle."
-msgstr ""
+msgstr "Save %1%g ink and increase %2% nozzle purges compared to a printer with one nozzle."
 
 #, boost-format
 msgid "Increase %1%g filament and save %2% nozzle purges compared to a printer with one nozzle."
-msgstr ""
+msgstr "Increase %1%g ink and save %2% nozzle purges compared to a printer with one nozzle."
 
 msgid "Set to Optimal"
 msgstr ""
 
 msgid "Regroup filament"
-msgstr ""
+msgstr "Regroup ink"
 
 msgid "Height: "
 msgstr "Height: "
@@ -5493,7 +5470,7 @@ msgstr "Generating geometry index data"
 msgid ""
 "An object is placed in the left/right nozzle-only area or exceeds the printable height of the left nozzle.\n"
 "Please ensure the filaments used by this object are not arranged to other nozzles."
-msgstr ""
+msgstr "An object is placed in the left/right nozzle-only area or exceeds the printable height of the left nozzle.\nPlease ensure the inks used by this object are not arranged to other nozzles."
 
 msgid ""
 "An object is laid over the boundary of plate or exceeds the height limit.\n"
@@ -5652,14 +5629,6 @@ msgstr "Avoid extrusion calibration region"
 msgid "Align to Y axis"
 msgstr "Align to Y axis"
 
-msgctxt "Camera"
-msgid "Left"
-msgstr ""
-
-msgctxt "Camera"
-msgid "Right"
-msgstr ""
-
 msgid "Add"
 msgstr "Add"
 
@@ -5701,10 +5670,6 @@ msgstr ""
 
 #, boost-format
 msgid "Current assembly rate: %1%%%, volume rate: %2%%%"
-msgstr ""
-
-msgctxt "Camera"
-msgid "Top"
 msgstr ""
 
 msgctxt "Camera"
@@ -5797,26 +5762,26 @@ msgid "A G-code path goes beyond the boundary of plate."
 msgstr "A G-code path goes beyond plate boundaries."
 
 msgid "Not support printing 2 or more TPU filaments."
-msgstr ""
+msgstr "Not support printing 2 or more TPU inks."
 
 msgid "The total printed weight exceeds this printer's recommended capacity and may cause slower printing or print defects."
 msgstr ""
 
 #, c-format, boost-format
 msgid "Filament %s is placed in the %s, but the generated G-code path exceeds the printable range of the %s."
-msgstr ""
+msgstr "Ink %s is placed in the %s, but the generated G-code path exceeds the printable range of the %s."
 
 #, c-format, boost-format
 msgid "Filaments %s is placed in the %s, but the generated G-code path exceeds the printable range of the %s."
-msgstr ""
+msgstr "Inks %s is placed in the %s, but the generated G-code path exceeds the printable range of the %s."
 
 #, c-format, boost-format
 msgid "Filament %s is placed in the %s, but the generated G-code path exceeds the printable height of the %s."
-msgstr ""
+msgstr "Ink %s is placed in the %s, but the generated G-code path exceeds the printable height of the %s."
 
 #, c-format, boost-format
 msgid "Filaments %s is placed in the %s, but the generated G-code path exceeds the printable height of the %s."
-msgstr ""
+msgstr "Inks %s is placed in the %s, but the generated G-code path exceeds the printable height of the %s."
 
 msgid "Open wiki for more information."
 msgstr ""
@@ -5826,10 +5791,10 @@ msgstr "Only the object being edited is visible."
 
 #, c-format, boost-format
 msgid "filaments %s cannot be printed directly on the surface of this plate."
-msgstr ""
+msgstr "inks %s cannot be printed directly on the surface of this plate."
 
 msgid "PLA and PETG filaments detected in the mixture. Adjust parameters according to the Wiki to ensure print quality."
-msgstr ""
+msgstr "PLA and PETG inks detected in the mixture. Adjust parameters according to the Wiki to ensure print quality."
 
 msgid "The prime tower improves multi-color print quality and is recommended."
 msgstr ""
@@ -6003,7 +5968,7 @@ msgstr ""
 msgid ""
 "This is your first time printing tpu filaments with the dual extruder machine.\n"
 "Would you like to watch a quick tutorial video?"
-msgstr ""
+msgstr "This is your first time printing tpu inks with the dual extruder machine.\nWould you like to watch a quick tutorial video?"
 
 msgid "PPS-CF/PPA-CF is brittle and could break in bended PTFE tube above Toolhead. Please refer to Wiki before use. "
 msgstr ""
@@ -6084,15 +6049,8 @@ msgstr "Default View"
 msgid "Top View"
 msgstr "Top View"
 
-#. TRN To be shown in the main menu View->Bottom
-msgid "Bottom"
-msgstr "Bottom"
-
 msgid "Bottom View"
 msgstr "Bottom View"
-
-msgid "Front"
-msgstr "Front"
 
 msgid "Front View"
 msgstr "Front View"
@@ -6461,7 +6419,7 @@ msgid "The project is no longer available."
 msgstr "The project is no longer available."
 
 msgid "Filament Settings"
-msgstr "Filament Settings"
+msgstr "Ink Settings"
 
 msgid ""
 "Do you want to synchronize your personal data from Bambu Cloud? \n"
@@ -6469,12 +6427,7 @@ msgid ""
 "1. The Process presets\n"
 "2. The Filament presets\n"
 "3. The Printer presets"
-msgstr ""
-"Do you want to synchronize your personal data from Bambu Cloud? \n"
-"It contains the following information:\n"
-"1. Process presets\n"
-"2. Filament presets\n"
-"3. Printer presets"
+msgstr "Do you want to synchronize your personal data from Bambu Cloud? \nIt contains the following information:\n1. Process presets\n2. Ink presets\n3. Printer presets"
 
 msgid "Synchronization"
 msgstr "Synchronization"
@@ -6854,10 +6807,6 @@ msgstr ""
 msgid "Camera Full Screen"
 msgstr ""
 
-msgctxt "Quit_Switching"
-msgid "Quit"
-msgstr ""
-
 msgid "Switching..."
 msgstr ""
 
@@ -6965,7 +6914,7 @@ msgid "Bed"
 msgstr "Bed"
 
 msgid "Filament loading..."
-msgstr ""
+msgstr "Ink loading..."
 
 msgid "No Storage"
 msgstr ""
@@ -6983,16 +6932,16 @@ msgid "The printer is busy on other print job"
 msgstr "The printer is busy with another print job."
 
 msgid "When printing is paused, filament loading and unloading are only supported for external slots."
-msgstr ""
+msgstr "When printing is paused, ink loading and unloading are only supported for external slots."
 
 msgid "Current extruder is busy changing filament"
-msgstr ""
+msgstr "Current extruder is busy changing ink"
 
 msgid "\"Load\" or \"Unload\" is not supported for external spool while using Filament Track Switch."
-msgstr ""
+msgstr "\"Load\" or \"Unload\" is not supported for external spool while using Ink Track Switch."
 
 msgid "The Filament Track Switch has not been setup. Please setup on printer."
-msgstr ""
+msgstr "The Ink Track Switch has not been setup. Please setup on printer."
 
 msgid "Current slot has alread been loaded"
 msgstr ""
@@ -7041,7 +6990,7 @@ msgid "Homing"
 msgstr ""
 
 msgid "Please heat the nozzle to above 170 degree before loading or unloading filament."
-msgstr "Please heat the nozzle to above 170 degree before loading or unloading filament."
+msgstr "Please heat the nozzle to above 170 degree before loading or unloading ink."
 
 msgid "Right extruder hotend not detected. Cannot set nozzle temperature."
 msgstr "The extruder hotend not detected. Cannot set nozzle temperature."
@@ -7053,10 +7002,10 @@ msgid "If the chamber temperature exceeds 40℃, the system will automatically s
 msgstr ""
 
 msgid "Please select an AMS slot before calibration"
-msgstr "Please select an AMS slot before calibration"
+msgstr "Please select an Ink Dispenser slot before calibration"
 
 msgid "Cannot read filament info: the filament is loaded to the toolhead, please unload the filament and try again."
-msgstr ""
+msgstr "Cannot read ink info: the ink is loaded to the toolhead, please unload the ink and try again."
 
 msgid "This only takes effect during printing"
 msgstr "This only takes effect during printing"
@@ -7222,10 +7171,6 @@ msgstr ""
 msgid "Status"
 msgstr "Status"
 
-msgctxt "Firmware"
-msgid "Update"
-msgstr ""
-
 msgid "Assistant(HMS)"
 msgstr ""
 
@@ -7294,10 +7239,6 @@ msgstr "Current Version: "
 
 msgid "Latest Version: "
 msgstr "Latest Version: "
-
-msgctxt "Software"
-msgid "Update"
-msgstr "Update now"
 
 msgid "Not for now"
 msgstr "Not for now"
@@ -7478,16 +7419,8 @@ msgstr ""
 msgid "Error loading shaders"
 msgstr "Error loading shaders"
 
-msgctxt "Layers"
-msgid "Top"
-msgstr "Top"
-
-msgctxt "Layers"
-msgid "Bottom"
-msgstr "Bottom"
-
 msgid "There is stringing-prone filament in the current print job. Enabling nozzle clumping detection now may degrade print quality. Are you sure you want to enable it?"
-msgstr ""
+msgstr "There is stringing-prone ink in the current print job. Enabling nozzle clumping detection now may degrade print quality. Are you sure you want to enable it?"
 
 msgid "Enable Nozzle Clumping Detection"
 msgstr ""
@@ -7535,7 +7468,7 @@ msgid "Spaghetti Detection"
 msgstr "Spaghetti Detection"
 
 msgid "Detects spaghetti failure(scattered lose filament)."
-msgstr ""
+msgstr "Detects spaghetti failure(scattered lose ink)."
 
 msgid "Purge Chute Pile-Up Detection"
 msgstr ""
@@ -7547,10 +7480,10 @@ msgid "Nozzle Clumping Detection"
 msgstr "Nozzle Clumping Detection"
 
 msgid "Checks if the nozzle is clumping by filaments or other foreign objects."
-msgstr ""
+msgstr "Checks if the nozzle is clumping by inks or other foreign objects."
 
 msgid "Detects air printing caused by nozzle clogging or filament grinding."
-msgstr ""
+msgstr "Detects air printing caused by nozzle clogging or ink grinding."
 
 msgid "Foreign Object Detection"
 msgstr ""
@@ -7598,10 +7531,10 @@ msgid "Enable notification sounds"
 msgstr ""
 
 msgid "Filament Tangle Detect"
-msgstr "Filament Tangle Detection"
+msgstr "Ink Tangle Detection"
 
 msgid "Checks if the nozzle is clumping by filament or other foreign objects."
-msgstr ""
+msgstr "Checks if the nozzle is clumping by ink or other foreign objects."
 
 msgid "On"
 msgstr ""
@@ -7625,24 +7558,12 @@ msgid "Automatically capture and upload print photos, showing defects during pri
 msgstr ""
 
 msgid "Automatically match the corresponding switch strategy for leak-prone filaments (disable blob detection) and regular filaments (enable blob detection)."
-msgstr ""
+msgstr "Automatically match the corresponding switch strategy for leak-prone inks (disable blob detection) and regular inks (enable blob detection)."
 
 msgid "Detect whether the nozzle is wrapped by filament or other foreign matter."
-msgstr ""
+msgstr "Detect whether the nozzle is wrapped by ink or other foreign matter."
 
 msgid "After disabling, nozzle wrapping cannot be detected, which may lead to print failure or nozzle damage."
-msgstr ""
-
-msgctxt "Nozzle Type"
-msgid "Type"
-msgstr ""
-
-msgctxt "Nozzle Diameter"
-msgid "Diameter"
-msgstr ""
-
-msgctxt "Nozzle Flow"
-msgid "Flow"
 msgstr ""
 
 msgid "Please change the nozzle settings on the printer."
@@ -7688,7 +7609,7 @@ msgid "View all object's settings"
 msgstr "View all object's settings"
 
 msgid "Filament settings"
-msgstr "Filament settings"
+msgstr "Ink settings"
 
 msgid "Printer settings"
 msgstr "Printer settings"
@@ -7712,7 +7633,7 @@ msgid "Lock current plate"
 msgstr ""
 
 msgid "Edit filament grouping"
-msgstr ""
+msgstr "Edit ink grouping"
 
 msgid "Edit current plate name"
 msgstr ""
@@ -7737,10 +7658,10 @@ msgstr ""
 
 #, boost-format
 msgid "It is not recommended to print the following filament(s) with %1%: %2%\n"
-msgstr ""
+msgstr "It is not recommended to print the following ink(s) with %1%: %2%\n"
 
 msgid "It is not recommended to use the following nozzle and filament combinations:\n"
-msgstr ""
+msgstr "It is not recommended to use the following nozzle and ink combinations:\n"
 
 #, boost-format
 msgid "%1% with %2%\n"
@@ -7748,17 +7669,17 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "The %s nozzle does not support automatic filament switching.\n"
-msgstr ""
+msgstr "The %s nozzle does not support automatic ink switching.\n"
 
 msgid "Please change the nozzle type or reassign the filaments and try again."
-msgstr ""
+msgstr "Please change the nozzle type or reassign the inks and try again."
 
 #, c-format, boost-format
 msgid "Risk of nozzle clumping detected with the current high-temperature filament (%s). We recommend enabling clumping detection (via probing). This feature uses a quick probing sequence to check for nozzle buildup during the print and utilizes the prime tower to absorb oozing before resuming."
-msgstr ""
+msgstr "Risk of nozzle clumping detected with the current high-temperature ink (%s). We recommend enabling clumping detection (via probing). This feature uses a quick probing sequence to check for nozzle buildup during the print and utilizes the prime tower to absorb oozing before resuming."
 
 msgid "Printing mixed-color filament on a single-extruder printer requires frequent filament changes and flushing, which may significantly increase waste and the risk of nozzle / waste-chute clogging."
-msgstr ""
+msgstr "Printing mixed-color ink on a single-extruder printer requires frequent ink changes and flushing, which may significantly increase waste and the risk of nozzle / waste-chute clogging."
 
 #, boost-format
 msgid " plate %1%: "
@@ -7774,13 +7695,13 @@ msgid "Sliced Info"
 msgstr "Sliced Info"
 
 msgid "Used Filament (m)"
-msgstr "Used Filament (m)"
+msgstr "Used Ink (m)"
 
 msgid "Used Filament (mm³)"
-msgstr "Used Filament (mm³)"
+msgstr "Used Ink (mm³)"
 
 msgid "Used Filament (g)"
-msgstr "Used Filament (g)"
+msgstr "Used Ink (g)"
 
 msgid "Used Materials"
 msgstr "Used Materials"
@@ -7789,25 +7710,25 @@ msgid "Estimated time"
 msgstr "Estimated time"
 
 msgid "Filament changes"
-msgstr "Filament changes"
+msgstr "Ink changes"
 
 msgid "Filament switcher detected. All AMS filaments are now available for both extruders. The slicer will auto-assign for optimal printing. "
-msgstr ""
+msgstr "Ink switcher detected. All Ink Dispenser inks are now available for both extruders. The slicer will auto-assign for optimal printing. "
 
 msgid "A filament switcher is detected but not calibrated and thus currently unavailable. Please calibrate it on the printer and synchronize before use. "
-msgstr ""
+msgstr "An ink switcher is detected but not calibrated and thus currently unavailable. Please calibrate it on the printer and synchronize before use. "
 
 msgid "Learn more"
 msgstr ""
 
 msgid "Set the number of AMS installed on the nozzle."
-msgstr ""
+msgstr "Set the number of Ink Dispenser installed on the nozzle."
 
 msgid "AMS(4 slots)"
-msgstr ""
+msgstr "Ink Dispenser(4 slots)"
 
 msgid "AMS(1 slot)"
-msgstr ""
+msgstr "Ink Dispenser(1 slot)"
 
 msgid "Not installed"
 msgstr ""
@@ -7862,10 +7783,10 @@ msgid "Sync info"
 msgstr ""
 
 msgid "Synchronize nozzle information and the number of AMS"
-msgstr ""
+msgstr "Synchronize nozzle information and the number of Ink Dispenser"
 
 msgid "Project Filaments"
-msgstr ""
+msgstr "Project Inks"
 
 msgid "Purge mode"
 msgstr ""
@@ -7874,58 +7795,58 @@ msgid "Flushing volumes"
 msgstr "Purging volumes"
 
 msgid "Add one filament"
-msgstr "Add one filament"
+msgstr "Add one ink"
 
 msgid "Remove last filament"
-msgstr "Remove last filament"
+msgstr "Remove last ink"
 
 msgid "Synchronize filament list from AMS"
-msgstr "Synchronize filament list from AMS"
+msgstr "Synchronize ink list from Ink Dispenser"
 
 msgid "Set filaments to use"
-msgstr "Set filaments to use"
+msgstr "Set inks to use"
 
 msgid "Add Mixed Filament"
-msgstr ""
+msgstr "Add Mixed Ink"
 
 msgid "Mixed Filament"
-msgstr ""
+msgstr "Mixed Ink"
 
 msgid "Add mixed filament"
-msgstr ""
+msgstr "Add mixed ink"
 
 msgid "Remove last mixed filament"
-msgstr ""
+msgstr "Remove last mixed ink"
 
 msgid "Mixed filament has invalid or mismatched components. Please re-edit affected entries."
-msgstr ""
+msgstr "Mixed ink has invalid or mismatched components. Please re-edit affected entries."
 
 msgid "Search plate, object and part."
 msgstr "Search plate, object and part."
 
 msgid "The target mixed filament uses this physical filament as a component. Merging will remove this physical filament and may invalidate the mixed filament. Continue?"
-msgstr ""
+msgstr "The target mixed ink uses this physical ink as a component. Merging will remove this physical ink and may invalidate the mixed ink. Continue?"
 
 #, c-format, boost-format
 msgid "After completing your operation, %s project will be closed and create a new project."
 msgstr ""
 
 msgid "There are no compatible filaments, and sync is not performed."
-msgstr "There are no compatible filaments, and sync is not performed."
+msgstr "There are no compatible inks, and sync is not performed."
 
 msgid "Sync filaments with AMS"
-msgstr "Sync filaments with AMS"
+msgstr "Sync inks with Ink Dispenser"
 
 msgid ""
 "There are some unknown or uncompatible filaments mapped to generic preset.\n"
 "Please update Bambu Studio or restart Bambu Studio to check if there is an update to system presets."
-msgstr ""
+msgstr "There are some unknown or uncompatible inks mapped to generic preset.\nPlease update Bambu Studio or restart Bambu Studio to check if there is an update to system presets."
 
 msgid "Filament type and color information have been synchronized, but slot information is not included."
-msgstr ""
+msgstr "Ink type and color information have been synchronized, but slot information is not included."
 
 msgid "Mixed filament has broken component references"
-msgstr ""
+msgstr "Mixed ink has broken component references"
 
 msgid "Edit / Delete / Merge"
 msgstr ""
@@ -7951,10 +7872,10 @@ msgid "Restore"
 msgstr "Restore"
 
 msgid "The current hot bed temperature is relatively high. The nozzle may be clogged when printing this filament in a closed enclosure. Please open the front door and/or remove the upper glass."
-msgstr "The current heatbed temperature is relatively high. The nozzle may clog when printing this filament in a closed environment. Please open the front door and/or remove the upper glass."
+msgstr "The current heatbed temperature is relatively high. The nozzle may clog when printing this ink in a closed environment. Please open the front door and/or remove the upper glass."
 
 msgid "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be attrited or damaged."
-msgstr "The nozzle hardness required by the filament is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or filament, otherwise, the nozzle will be worn down or damaged."
+msgstr "The nozzle hardness required by the ink is higher than the default nozzle hardness of the printer. Please replace the hardened nozzle or ink, otherwise, the nozzle will be worn down or damaged."
 
 msgid "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
 msgstr "Enabling traditional timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
@@ -8006,7 +7927,7 @@ msgid "Please correct them in the param tabs"
 msgstr "Please correct them in the Param tabs"
 
 msgid "The 3mf has following modified G-codes in filament or printer presets:"
-msgstr "The 3mf has following modified G-code in filament or printer presets:"
+msgstr "The 3mf has following modified G-code in ink or printer presets:"
 
 msgid "Please confirm that these modified G-codes are safe to prevent any damage to the machine!"
 msgstr "Please confirm that these modified G-codes are safe to prevent any damage to the machine!"
@@ -8015,7 +7936,7 @@ msgid "Modified G-codes"
 msgstr "Modified G-code"
 
 msgid "The 3mf has following customized filament or printer presets:"
-msgstr "The 3mf has following customized filament or printer presets:"
+msgstr "The 3mf has following customized ink or printer presets:"
 
 msgid "Please confirm that the G-codes within these presets are safe to prevent any damage to the machine!"
 msgstr "Please confirm that the G-codes within these presets are safe to prevent any damage to the machine!"
@@ -8217,16 +8138,16 @@ msgid "Slicing Plate %d"
 msgstr "Slicing Plate %d"
 
 msgid "Multiple Filament Materials Detected"
-msgstr ""
+msgstr "Multiple Ink Materials Detected"
 
 msgid "⚠ Multiple Filament Materials Detected"
-msgstr ""
+msgstr "⚠ Multiple Ink Materials Detected"
 
 msgid " (unsupported)"
 msgstr ""
 
 msgid "Multicolour simulation currently supports only a single filament material."
-msgstr ""
+msgstr "Multicolour simulation currently supports only a single ink material."
 
 #, c-format, boost-format
 msgid "You have selected multiple materials: %s"
@@ -8239,25 +8160,25 @@ msgid "True multi-material support will be added in a future update."
 msgstr ""
 
 msgid "Option 1: Proceed using a single filament type"
-msgstr ""
+msgstr "Option 1: Proceed using a single ink type"
 
 msgid "Select which filament to use for simulation:"
-msgstr ""
+msgstr "Select which ink to use for simulation:"
 
 msgid "⚠ This is not recommended. Filament formulations vary significantly between manufacturers and materials. Helio cannot guarantee reliable results in this configuration."
-msgstr ""
+msgstr "⚠ This is not recommended. Ink formulations vary significantly between manufacturers and materials. Helio cannot guarantee reliable results in this configuration."
 
 msgid "Proceed Anyway"
 msgstr ""
 
 msgid "Option 2: Go back and change filament selection"
-msgstr ""
+msgstr "Option 2: Go back and change ink selection"
 
 msgid "✓ Recommended"
 msgstr ""
 
 msgid "Change your filament selection to use the same type for all colours, then try again."
-msgstr ""
+msgstr "Change your ink selection to use the same type for all colours, then try again."
 
 msgid "See supported materials"
 msgstr ""
@@ -8284,7 +8205,7 @@ msgid "Note: Using a reference material may result in approximate or erroneous r
 msgstr ""
 
 msgid "Change your filament selection to use a supported material, then try again."
-msgstr ""
+msgstr "Change your ink selection to use a supported material, then try again."
 
 msgid "Option 3: Refresh supported materials list"
 msgstr ""
@@ -8447,7 +8368,7 @@ msgid ""
 "The nozzle type and AMS quantity information has not been synced from the connected printer.\n"
 "After syncing, software can optimize printing time and filament usage when slicing.\n"
 "Would you like to sync now ?"
-msgstr ""
+msgstr "The nozzle type and Ink Dispenser quantity information has not been synced from the connected printer.\nAfter syncing, software can optimize printing time and ink usage when slicing.\nWould you like to sync now ?"
 
 msgid "You can keep the modified presets to the new project or discard them"
 msgstr "You can keep the modified presets to the new project or discard them"
@@ -8632,10 +8553,10 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "The calibration filament is currently assigned to a different extruder than the one selected in the PA Calibration dialog (%s). This may lead to incorrect calibration results. You can change the assignment in the filament grouping settings."
-msgstr ""
+msgstr "The calibration ink is currently assigned to a different extruder than the one selected in the PA Calibration dialog (%s). This may lead to incorrect calibration results. You can change the assignment in the ink grouping settings."
 
 msgid "It is not recommended to use PVA filaments with 0.2mm nozzles."
-msgstr ""
+msgstr "It is not recommended to use PVA inks with 0.2mm nozzles."
 
 msgid "Are you sure to use them? \n"
 msgstr ""
@@ -8674,16 +8595,16 @@ msgid "The currently connected printer on the device page is not %s. Please swit
 msgstr ""
 
 msgid "There are no filaments on the printer. Please load the filaments on the printer first."
-msgstr ""
+msgstr "There are no inks on the printer. Please load the inks on the printer first."
 
 msgid "The filaments on the printer are all unknown types. Please go to the printer screen or software device page to set the filament type."
-msgstr ""
+msgstr "The inks on the printer are all unknown types. Please go to the printer screen or software device page to set the ink type."
 
 msgid "Device Page"
 msgstr ""
 
 msgid "Synchronize AMS Filament Information"
-msgstr ""
+msgstr "Synchronize Ink Dispenser Ink Information"
 
 msgid "Invalid number"
 msgstr "Invalid number"
@@ -8700,7 +8621,7 @@ msgid "Prime Tower:"
 msgstr ""
 
 msgid "A cube printed during a filament change to purge old color and ensure smooth color transition."
-msgstr ""
+msgstr "A cube printed during an ink change to purge old color and ensure smooth color transition."
 
 #, boost-format
 msgid "Number of currently selected parts: %1%\n"
@@ -8746,7 +8667,7 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "Plate% d: %s is not suggested to be used to print filament %s(%s). If you still want to do this printing, please set this filament's bed temperature to non zero."
-msgstr "Plate% d: %s is not suggested for use printing filament %s(%s). If you still want to do this print job, please set this filament's bed temperature to a number that is not zero."
+msgstr "Plate% d: %s is not suggested for use printing ink %s(%s). If you still want to do this print job, please set this ink's bed temperature to a number that is not zero."
 
 msgid "Parameter recommendation"
 msgstr ""
@@ -8807,7 +8728,7 @@ msgid ""
 "• Layer adhesion issues\n"
 "\n"
 "Continue with enabling this feature?"
-msgstr ""
+msgstr "Using inks with significantly different temperatures may cause:\n• Extruder clogging\n• Nozzle damage\n• Layer adhesion issues\n\nContinue with enabling this feature?"
 
 msgid "Download path"
 msgstr ""
@@ -8825,10 +8746,6 @@ msgstr ""
 
 msgctxt "Preference"
 msgid "3D"
-msgstr ""
-
-msgctxt "Preference"
-msgid "Other"
 msgstr ""
 
 msgid "Developer Tools"
@@ -8892,7 +8809,7 @@ msgid "Take effect after restarting Studio"
 msgstr "Takes effect after restarting Studio"
 
 msgid "The Filament Manager is turned off by default on macOS because compatibility issues on some systems may cause the application to become unresponsive."
-msgstr ""
+msgstr "The Ink Manager is turned off by default on macOS because compatibility issues on some systems may cause the application to become unresponsive."
 
 msgid "Multi-device Management(Take effect after restarting Studio)."
 msgstr "Multi-device Management (Takes effect after restarting Studio)."
@@ -8907,10 +8824,6 @@ msgid "With this option enabled, you can receive beta version updates."
 msgstr ""
 
 msgid "Join the User Experience Improvement Program."
-msgstr ""
-
-msgctxt "Preferences"
-msgid "Learn more"
 msgstr ""
 
 msgid "User Settings"
@@ -8941,19 +8854,19 @@ msgid "By default, Liveview will pause after 15 minutes of inactivity on the com
 msgstr ""
 
 msgid "Automatically transfer modified value when switching process and filament presets"
-msgstr ""
+msgstr "Automatically transfer modified value when switching process and ink presets"
 
 msgid "After closing, a popup will appear to ask each time"
 msgstr ""
 
 msgid "Remove the restriction on mixed printing of high and low temperature filaments."
-msgstr ""
+msgstr "Remove the restriction on mixed printing of high and low temperature inks."
 
 msgid "With this option enabled, you can print materials with a large temperature difference together."
 msgstr ""
 
 msgid "Auto sync user presets(Printer/Filament/Process)"
-msgstr "Auto sync user presets (Printer/Filament/Process)"
+msgstr "Auto sync user presets (Printer/Ink/Process)"
 
 msgid "If enabled, auto sync user presets with cloud after Bambu Studio startup or presets modified."
 msgstr ""
@@ -9115,7 +9028,7 @@ msgid "Develop mode"
 msgstr "Develop mode"
 
 msgid "Skip AMS blacklist check"
-msgstr "Skip AMS blacklist check"
+msgstr "Skip Ink Dispenser blacklist check"
 
 msgid "Associate Files To Bambu Studio"
 msgstr "Associate Files To Bambu Studio"
@@ -9229,16 +9142,16 @@ msgid "My Printer"
 msgstr ""
 
 msgid "AMS filaments"
-msgstr "AMS filament"
+msgstr "Ink Dispenser ink"
 
 msgid "Left filaments"
-msgstr ""
+msgstr "Left inks"
 
 msgid "Right filaments"
-msgstr ""
+msgstr "Right inks"
 
 msgid "Click to pick filament color"
-msgstr "Click to select filament color"
+msgstr "Click to select ink color"
 
 msgid "Add/Remove presets"
 msgstr "Add/Remove presets"
@@ -9259,7 +9172,7 @@ msgid "Unsupported"
 msgstr ""
 
 msgid "Add/Remove filaments"
-msgstr "Add/Remove filaments"
+msgstr "Add/Remove inks"
 
 msgid "Add/Remove materials"
 msgstr "Add/Remove materials"
@@ -9283,7 +9196,7 @@ msgid "Customize"
 msgstr "Customize"
 
 msgid "Other layer filament sequence"
-msgstr "Other layer filament sequence"
+msgstr "Other layer ink sequence"
 
 msgid "Please input layer value (>= 2)."
 msgstr "Please input layer value (>= 2)."
@@ -9313,10 +9226,10 @@ msgid "Spiral vase"
 msgstr "Spiral vase"
 
 msgid "First layer filament sequence"
-msgstr "First layer filament sequence"
+msgstr "First layer ink sequence"
 
 msgid "The filament list contains mixed filaments. Custom filament sequence will not take effect."
-msgstr ""
+msgstr "The ink list contains mixed inks. Custom ink sequence will not take effect."
 
 msgid "Same as Global Bed Type"
 msgstr "Same as Global Plate Type"
@@ -9352,7 +9265,7 @@ msgid "Log Out"
 msgstr "Log Out"
 
 msgid "Slice all plate to obtain time and filament estimation"
-msgstr "Slice all plates to obtain time and filament estimation"
+msgstr "Slice all plates to obtain time and ink estimation"
 
 msgid "Packing project data into 3mf file"
 msgstr "Packing project data into 3mf file"
@@ -9414,10 +9327,6 @@ msgstr "The name cannot be the same as a preset alias name."
 msgid "Save preset"
 msgstr "Save preset"
 
-msgctxt "PresetName"
-msgid "Copy"
-msgstr "Copy"
-
 #, boost-format
 msgid "Printer \"%1%\" is selected with preset \"%2%\""
 msgstr "Printer \"%1%\" is selected with preset \"%2%\""
@@ -9464,7 +9373,7 @@ msgid "Please re-slice."
 msgstr ""
 
 msgid "Please re-slice to avoid filament waste."
-msgstr ""
+msgstr "Please re-slice to avoid ink waste."
 
 msgid "Task canceled"
 msgstr "Task canceled"
@@ -9491,7 +9400,7 @@ msgid "Send print job"
 msgstr ""
 
 msgid "Not satisfied with the grouping of filaments? Regroup and slice ->"
-msgstr ""
+msgstr "Not satisfied with the grouping of inks? Regroup and slice ->"
 
 msgid "Manually change external spool during printing for multi-color printing"
 msgstr ""
@@ -9500,7 +9409,7 @@ msgid "Multi-color with external"
 msgstr ""
 
 msgid "Your filament grouping method in the sliced file is not optimal."
-msgstr ""
+msgstr "Your ink grouping method in the sliced file is not optimal."
 
 msgid "To ensure print quality, the drying temperature will be lowered during printing."
 msgstr ""
@@ -9519,7 +9428,7 @@ msgstr "Flow Dynamics Calibration"
 msgid ""
 "This process determines the dynamic flow values to improve overall print quality.\n"
 "*Automatic mode: Skip if the filament was calibrated recently."
-msgstr ""
+msgstr "This process determines the dynamic flow values to improve overall print quality.\n*Automatic mode: Skip if the ink was calibrated recently."
 
 msgid ""
 "Calibrate nozzle offsets to enhance print quality.\n"
@@ -9527,10 +9436,10 @@ msgid ""
 msgstr ""
 
 msgid "Nozzles and filaments of the same type share the same PA profile"
-msgstr ""
+msgstr "Nozzles and inks of the same type share the same PA profile"
 
 msgid "If the filament/nozzle of the main extruder hasn't changed, the last calibration value will be reused. The auxiliary extruder will use the system default value."
-msgstr ""
+msgstr "If the ink/nozzle of the main extruder hasn't changed, the last calibration value will be reused. The auxiliary extruder will use the system default value."
 
 msgid "send completed"
 msgstr "send completed"
@@ -9540,7 +9449,7 @@ msgstr "Error code"
 
 #, c-format, boost-format
 msgid "Recommended filament arrangement saves %s->"
-msgstr ""
+msgstr "Recommended ink arrangement saves %s->"
 
 #, c-format, boost-format
 msgid "The current firmware supports a maximum of %s materials. You can either reduce the number of materials to %s or fewer on the Preparation Page, or try updating the firmware. If you are still restricted after the update, please wait for subsequent firmware support."
@@ -9548,10 +9457,10 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "Filament %s does not match the filament in AMS slot %s. Please update the printer firmware to support AMS slot assignment."
-msgstr "Filament %s does not match the filament in AMS slot %s. Please update the printer firmware to support AMS slot assignment."
+msgstr "Ink %s does not match the ink in Ink Dispenser slot %s. Please update the printer firmware to support Ink Dispenser slot assignment."
 
 msgid "Filament does not match the filament in AMS slot. Please update the printer firmware to support AMS slot assignment."
-msgstr "Filament does not match the filament in AMS slot. Please update the printer firmware to support AMS slot assignment."
+msgstr "Ink does not match the ink in Ink Dispenser slot. Please update the printer firmware to support Ink Dispenser slot assignment."
 
 #, c-format, boost-format
 msgid "The selected printer (%s) is incompatible with the print file configuration (%s). Please adjust the printer preset in the prepare page or choose a compatible printer on this page."
@@ -9567,18 +9476,16 @@ msgid "Errors"
 msgstr "Errors"
 
 msgid "More than one filament types have been mapped to the same external spool, which may cause printing issues. The printer won't pause during printing."
-msgstr ""
+msgstr "More than one ink types have been mapped to the same external spool, which may cause printing issues. The printer won't pause during printing."
 
 msgid "The filament type setting of external spool is different from the filament in the slicing file."
-msgstr ""
-"The filament type setting of external spool is different from the filament in the slicing file, \n"
-" which may cause printing issues. "
+msgstr "The ink type setting of external spool is different from the ink in the slicing file, \n which may cause printing issues. "
 
 msgid "The printer type selected when generating G-Code is not consistent with the currently selected printer. It is recommended that you use the same printer type for slicing."
 msgstr "The printer type selected when generating G-Code is not consistent with the currently selected printer. It is recommended that you use the same printer type for slicing."
 
 msgid "There are some unknown filaments in the AMS mappings. Please check whether they are the required filaments. If they are okay, press \"Confirm\" to start printing."
-msgstr "There are some unknown filaments in the AMS mappings. Please check whether they are the required filaments. If they are okay, click \"Confirm\" to start printing."
+msgstr "There are some unknown inks in the Ink Dispenser mappings. Please check whether they are the required inks. If they are okay, click \"Confirm\" to start printing."
 
 msgid "Please check the following:"
 msgstr "Please check the following:"
@@ -9633,7 +9540,7 @@ msgid "Clean Up"
 msgstr ""
 
 msgid "Auto: If the filament/nozzle of the main extruder hasn't changed, the last calibration value will be reused. The auxiliary extruder will use the system default value."
-msgstr ""
+msgstr "Auto: If the ink/nozzle of the main extruder hasn't changed, the last calibration value will be reused. The auxiliary extruder will use the system default value."
 
 msgid "On: Before each print starts, calibration will be performed for the main extruder. The auxiliary extruder will use the system default value."
 msgstr ""
@@ -9658,7 +9565,7 @@ msgstr "The name length exceeds the limit."
 
 #, c-format, boost-format
 msgid "Cost %dg filament and %d changes more than optimal grouping."
-msgstr ""
+msgstr "Cost %dg ink and %d changes more than optimal grouping."
 
 msgid "nozzle"
 msgstr ""
@@ -9676,24 +9583,24 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "The filament on %s may soften. Please unload."
-msgstr ""
+msgstr "The ink on %s may soften. Please unload."
 
 #, c-format, boost-format
 msgid "The filament on %s is unknown and may soften. Please set filament."
-msgstr ""
+msgstr "The ink on %s is unknown and may soften. Please set ink."
 
 msgid ""
 "Upper half area:  Original\n"
 "Middle  area:  Filament in AMS\n"
 "Lower half area:  Selected nozzle\n"
 "And you can click it to modify"
-msgstr ""
+msgstr "Upper half area:  Original\nMiddle  area:  Ink in Ink Dispenser\nLower half area:  Selected nozzle\nAnd you can click it to modify"
 
 msgid "Unable to automatically match to suitable filament. Please click to manually match."
-msgstr ""
+msgstr "Unable to automatically match to suitable ink. Please click to manually match."
 
 msgid "Install toolhead enhanced cooling fan to prevent filament softening."
-msgstr ""
+msgstr "Install toolhead enhanced cooling fan to prevent ink softening."
 
 #, c-format, boost-format
 msgid "Refreshing information of hotends(%d/%d)."
@@ -9721,13 +9628,13 @@ msgid "The current nozzle diameter (%.1fmm) doesn't match with the slicing file 
 msgstr ""
 
 msgid "The Filament Track Switch installed on the printer does not match the slicing file. Please re-slice to avoid print quality issues."
-msgstr ""
+msgstr "The Ink Track Switch installed on the printer does not match the slicing file. Please re-slice to avoid print quality issues."
 
 msgid "This print requires a Filament Track Switch. Please install it first."
-msgstr ""
+msgstr "This print requires an Ink Track Switch. Please install it first."
 
 msgid "The Filament Track Switch has not been setup. Please setup it first."
-msgstr ""
+msgstr "The Ink Track Switch has not been setup. Please setup it first."
 
 #, c-format, boost-format
 msgid "Failed to send nozzle auto-mapping request to printer { code: %d }. Please try to refresh the printer information. If it still does not recover, you can try to rebind the printer and check the network connection."
@@ -9756,16 +9663,16 @@ msgid "The hardness of current material (%s) exceeds the hardness of %s (%s). It
 msgstr ""
 
 msgid "If 'Dynamic Flow Calibration' is set to Auto/On, the system will use the manual calibration value or the default value and skip the flow calibration process. You can perform a manual flow calibration for TPU filament on the 'Calibration' page."
-msgstr ""
+msgstr "If 'Dynamic Flow Calibration' is set to Auto/On, the system will use the manual calibration value or the default value and skip the flow calibration process. You can perform a manual flow calibration for TPU ink on the 'Calibration' page."
 
 msgid "The filament in the AMS may be insufficient for this print. Please refill or replace it."
-msgstr ""
+msgstr "The ink in the Ink Dispenser may be insufficient for this print. Please refill or replace it."
 
 msgid "Some filaments may switch between extruders during printing. Manual K-value calibration cannot be applied throughout the entire print, which may affect print quality. Enabling Flow Dynamics Calibration is recommended."
-msgstr ""
+msgstr "Some inks may switch between extruders during printing. Manual K-value calibration cannot be applied throughout the entire print, which may affect print quality. Enabling Flow Dynamics Calibration is recommended."
 
 msgid "There is stringing-prone filament in this file. For best print quality, we recommend switching nozzle clumping detection to Auto mode."
-msgstr ""
+msgstr "There is stringing-prone ink in this file. For best print quality, we recommend switching nozzle clumping detection to Auto mode."
 
 msgid "Cool"
 msgstr ""
@@ -9807,13 +9714,13 @@ msgid "The printer is executing instructions. Please restart printing after it e
 msgstr "The printer is executing instructions. Please restart printing after it ends"
 
 msgid "AMS is setting up. Please try again later."
-msgstr ""
+msgstr "Ink Dispenser is setting up. Please try again later."
 
 msgid "Not all filaments used in slicing are mapped to the printer. Please check the mapping of filaments."
-msgstr ""
+msgstr "Not all inks used in slicing are mapped to the printer. Please check the mapping of inks."
 
 msgid "Please do not mix-use the Ext with AMS"
-msgstr "Please avoid using AMS filaments and external spool filament simultaneously."
+msgstr "Please avoid using Ink Dispenser inks and external spool ink simultaneously."
 
 msgid "Invalid nozzle information, please refresh or manually set nozzle information."
 msgstr ""
@@ -9837,7 +9744,7 @@ msgid "Storage needs to be inserted to record timelapse."
 msgstr ""
 
 msgid "You have selected both external and AMS filaments for an extruder. You will need to manually switch the external filament during printing."
-msgstr ""
+msgstr "You have selected both external and Ink Dispenser inks for an extruder. You will need to manually switch the external ink during printing."
 
 msgid "TPU 90A/TPU 85A are too soft. It is recommended to perform manual flow calibration on the 'Calibration' page. If 'Dynamic Flow Calibration' is set to auto/on, the system will use the previous calibration value and skip the flow calibration process."
 msgstr ""
@@ -9868,10 +9775,6 @@ msgstr ""
 
 msgctxt "sendtoprint"
 msgid "Cache"
-msgstr ""
-
-msgctxt "sendtoprint"
-msgid "External"
 msgstr ""
 
 msgid "Upload file timeout, please check if the firmware version supports it."
@@ -10136,10 +10039,10 @@ msgid "Ignore"
 msgstr "Ignore"
 
 msgid "Experimental feature: Retracting and cutting off the filament at a greater distance during filament changes to minimize flush.Although it can notably reduce flush,  it may also elevate the risk of nozzle clogs or other printing complications."
-msgstr "Experimental feature: Retracting and cutting off the filament at a greater distance during filament changes to minimize purge. Although it can notably reduce purge,  it may also elevate the risk of nozzle clogs or other printing complications."
+msgstr "Experimental feature: Retracting and cutting off the ink at a greater distance during ink changes to minimize purge. Although it can notably reduce purge,  it may also elevate the risk of nozzle clogs or other printing complications."
 
 msgid "Experimental feature: Retracting and cutting off the filament at a greater distance during filament changes to minimize flush.Although it can notably reduce flush, it may also elevate the risk of nozzle clogs or other printing complications.Please use with the latest printer firmware."
-msgstr "Experimental feature: Retracting and cutting off the filament at a greater distance during filament changes to minimize purge. Although it can notably reduce purge, it may also elevate the risk of nozzle clogs or other printing complications. Please use with the latest printer firmware."
+msgstr "Experimental feature: Retracting and cutting off the ink at a greater distance during ink changes to minimize purge. Although it can notably reduce purge, it may also elevate the risk of nozzle clogs or other printing complications. Please use with the latest printer firmware."
 
 msgid ""
 "When recording timelapse without toolhead, it is recommended to add a \"Timelapse Wipe Tower\" \n"
@@ -10200,7 +10103,7 @@ msgid "Raft"
 msgstr "Raft"
 
 msgid "Support filament"
-msgstr "Filament for Supports"
+msgstr "Ink for Supports"
 
 msgid "Support ironing"
 msgstr ""
@@ -10256,16 +10159,16 @@ msgid "Basic information"
 msgstr "Basic information"
 
 msgid "Filament prime volume"
-msgstr ""
+msgstr "Ink prime volume"
 
 msgid "The volume of material to prime extruder on tower."
 msgstr "This is the volume of material to prime the extruder with on the tower."
 
 msgid "Filament ramming length"
-msgstr ""
+msgstr "Ink ramming length"
 
 msgid "Filament length used in ramming."
-msgstr ""
+msgstr "Ink length used in ramming."
 
 msgid "Travel time after ramming"
 msgstr ""
@@ -10283,37 +10186,37 @@ msgid "Recommended nozzle temperature"
 msgstr "Recommended nozzle temperature"
 
 msgid "Recommended nozzle temperature range of this filament. 0 means no set"
-msgstr "Recommended nozzle temperature range of this filament. 0 means not set"
+msgstr "Recommended nozzle temperature range of this ink. 0 means not set"
 
 msgid "Print temperature"
 msgstr "Print temperature"
 
 msgid "Bed temperature when cool plate is installed. Value 0 means the filament does not support to print on the Bambu Cool Plate SuperTack"
-msgstr ""
+msgstr "Bed temperature when cool plate is installed. Value 0 means the ink does not support to print on the Bambu Cool Plate SuperTack"
 
 msgid "Cool Plate"
 msgstr "Cool Plate"
 
 msgid "Bed temperature when cool plate is installed. Value 0 means the filament does not support to print on the Cool Plate"
-msgstr "This is the bed temperature when the cool plate is installed. A value of 0 means the filament does not support printing on the Cool Plate."
+msgstr "This is the bed temperature when the cool plate is installed. A value of 0 means the ink does not support printing on the Cool Plate."
 
 msgid "Engineering Plate"
 msgstr "Engineering Plate"
 
 msgid "Bed temperature when engineering plate is installed. Value 0 means the filament does not support to print on the Engineering Plate"
-msgstr "This is the bed temperature when the engineering plate is installed. A value of 0 means the filament does not support printing on the Engineering Plate."
+msgstr "This is the bed temperature when the engineering plate is installed. A value of 0 means the ink does not support printing on the Engineering Plate."
 
 msgid "Smooth PEI Plate / High Temp Plate"
 msgstr "Smooth PEI Plate / High Temp Plate"
 
 msgid "Bed temperature when Smooth PEI Plate/High temperature plate is installed. Value 0 means the filament does not support to print on the Smooth PEI Plate/High Temp Plate"
-msgstr "Bed temperature when Smooth PEI Plate/High temperature plate is installed. Value 0 means the filament does not support to print on the Smooth PEI Plate/High Temp Plate"
+msgstr "Bed temperature when Smooth PEI Plate/High temperature plate is installed. Value 0 means the ink does not support to print on the Smooth PEI Plate/High Temp Plate"
 
 msgid "Textured PEI Plate"
 msgstr "Textured PEI Plate"
 
 msgid "Bed temperature when Textured PEI Plate is installed. Value 0 means the filament does not support to print on the Textured PEI Plate"
-msgstr "Bed temperature when Textured PEI Plate is installed. 0 means the filament is not supported on the Textured PEI Plate"
+msgstr "Bed temperature when Textured PEI Plate is installed. 0 means the ink is not supported on the Textured PEI Plate"
 
 msgid "Nozzle temperature when printing"
 msgstr "Nozzle temperature when printing"
@@ -10328,7 +10231,7 @@ msgid "The maximum volumetric speed for ramming, where -1 means using the maximu
 msgstr ""
 
 msgid "Filament scarf seam settings"
-msgstr ""
+msgstr "Ink scarf seam settings"
 
 msgid "Part cooling fan"
 msgstr "Part cooling fan"
@@ -10391,13 +10294,13 @@ msgid "Complete print"
 msgstr "Complete print"
 
 msgid "Filament start G-code"
-msgstr "Filament start G-code"
+msgstr "Ink start G-code"
 
 msgid "Filament end G-code"
-msgstr "Filament end G-code"
+msgstr "Ink end G-code"
 
 msgid "Multi Filament"
-msgstr ""
+msgstr "Multi Ink"
 
 msgid "Purge Mode: Standard"
 msgstr ""
@@ -10439,7 +10342,7 @@ msgid "Clumping Detection G-code"
 msgstr "G-code of clumping detection by probing"
 
 msgid "Change filament G-code"
-msgstr "Change filament G-code"
+msgstr "Change ink G-code"
 
 msgid "Pause G-code"
 msgstr "Pause G-code"
@@ -10497,7 +10400,7 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "%d Filament Preset and %d Process Preset is attached to this printer. Those presets would be deleted if the printer is deleted."
-msgstr "%d Filament Preset and %d Process Preset is attached to this printer. Those presets would be deleted if the printer is deleted."
+msgstr "%d Ink Preset and %d Process Preset is attached to this printer. Those presets would be deleted if the printer is deleted."
 
 msgid "Presets inherited by other presets can not be deleted!"
 msgstr "Presets inherited by other presets can not be deleted!"
@@ -10520,9 +10423,7 @@ msgstr[1] "The following presets will be deleted too:"
 msgid ""
 "Are you sure to delete the selected preset? \n"
 "If the preset corresponds to a filament currently in use on your printer, please reset the filament information for that slot."
-msgstr ""
-"Are you sure to delete the selected preset? \n"
-"If the preset corresponds to a filament currently in use on your printer, please reset the filament information for that slot."
+msgstr "Are you sure to delete the selected preset? \nIf the preset corresponds to an ink currently in use on your printer, please reset the ink information for that slot."
 
 #, boost-format
 msgid "Are you sure to %1% the selected preset?"
@@ -10580,7 +10481,7 @@ msgid "Use Modified Value of Process Preset"
 msgstr "Use Modified Value of Process Preset"
 
 msgid "Use Modified Value of Filament Preset"
-msgstr "Use Modified Value of Filament Preset"
+msgstr "Use Modified Value of Ink Preset"
 
 msgid "Use Modified Value of Printer Preset"
 msgstr "Use Modified Value of Printer Preset"
@@ -10665,9 +10566,6 @@ msgstr ""
 
 msgid "Extruders count"
 msgstr "Extruder count"
-
-msgid "General"
-msgstr "General"
 
 msgid "Capabilities"
 msgstr "Capabilities"
@@ -10789,7 +10687,7 @@ msgid "view"
 msgstr ""
 
 msgid "Current filament colors"
-msgstr ""
+msgstr "Current ink colors"
 
 msgid "Matching"
 msgstr ""
@@ -10809,10 +10707,6 @@ msgstr ""
 msgid "The color has been selected, you can choose OK to continue or manually adjust it."
 msgstr ""
 
-msgctxt "ObjImport"
-msgid "Original"
-msgstr ""
-
 msgid "After mapping"
 msgstr ""
 
@@ -10826,7 +10720,7 @@ msgid "Append"
 msgstr "Append"
 
 msgid "Append to existing filaments"
-msgstr ""
+msgstr "Append to existing inks"
 
 msgid "Reset mapped extruders."
 msgstr "Reset mapped extruders."
@@ -10837,17 +10731,9 @@ msgstr ""
 msgid ""
 "Synchronizing AMS filaments will discard your modified but unsaved filament presets.\n"
 "Are you sure you want to continue?"
-msgstr ""
-
-msgctxt "Sync_AMS"
-msgid "Original"
-msgstr ""
+msgstr "Synchronizing Ink Dispenser inks will discard your modified but unsaved ink presets.\nAre you sure you want to continue?"
 
 msgid "After overwriting"
-msgstr ""
-
-msgctxt "Sync_AMS"
-msgid "Plate"
 msgstr ""
 
 msgid "The connected printer does not match the currently selected printer. Please change the selected printer."
@@ -10860,10 +10746,10 @@ msgid "Overwriting"
 msgstr ""
 
 msgid "Reset all filament mapping"
-msgstr ""
+msgstr "Reset all ink mapping"
 
 msgid "(Recommended filament)"
-msgstr ""
+msgstr "(Recommended ink)"
 
 msgid "Advanced Options"
 msgstr ""
@@ -10879,19 +10765,19 @@ msgid ""
 msgstr ""
 
 msgid "Use AMS"
-msgstr "Use AMS"
+msgstr "Use Ink Dispenser"
 
 msgid "Only synchronize filament type and color, not including AMS slot information."
-msgstr ""
+msgstr "Only synchronize ink type and color, not including Ink Dispenser slot information."
 
 msgid "Replace the project filaments list sequentially based on printer filaments. And unused printer filaments will be automatically added to the end of the list."
-msgstr ""
+msgstr "Replace the project inks list sequentially based on printer inks. And unused printer inks will be automatically added to the end of the list."
 
 msgid "Advanced settings"
 msgstr ""
 
 msgid "Add unused AMS filaments to filaments list."
-msgstr ""
+msgstr "Add unused Ink Dispenser inks to inks list."
 
 msgid "Automatically merge the same colors in the model after mapping."
 msgstr ""
@@ -10900,22 +10786,22 @@ msgid "After being synced, this action cannot be undone."
 msgstr ""
 
 msgid "After being synced, the project's filament presets and colors will be replaced with the mapped filament types and colors. This action cannot be undone."
-msgstr ""
+msgstr "After being synced, the project's ink presets and colors will be replaced with the mapped ink types and colors. This action cannot be undone."
 
 msgid "Are you sure to synchronize the filaments?"
-msgstr ""
+msgstr "Are you sure to synchronize the inks?"
 
 msgid "Synchronize now"
 msgstr ""
 
 msgid "Synchronize Filament Information"
-msgstr ""
+msgstr "Synchronize Ink Information"
 
 msgid "Add unused filaments to filaments list."
-msgstr ""
+msgstr "Add unused inks to inks list."
 
 msgid "Only synchronize filament type and color, not including slot information."
-msgstr ""
+msgstr "Only synchronize ink type and color, not including slot information."
 
 msgid "Ext spool"
 msgstr ""
@@ -10931,36 +10817,28 @@ msgid "Timelapse is not supported because Print sequence is set to \"By object\"
 msgstr "Timelapse is not supported because Print sequence is set to \"By object\"."
 
 msgid "You selected external and AMS filament at the same time in an extruder, you will need manually change external filament."
-msgstr ""
+msgstr "You selected external and Ink Dispenser ink at the same time in an extruder, you will need manually change external ink."
 
 msgid "Successfully synchronized nozzle information."
 msgstr ""
 
 msgid "Successfully synchronized nozzle and AMS number information."
-msgstr ""
+msgstr "Successfully synchronized nozzle and Ink Dispenser number information."
 
 msgid "Continue to sync filaments"
-msgstr ""
-
-msgctxt "Sync_Nozzle_AMS"
-msgid "Cancel"
-msgstr ""
+msgstr "Continue to sync inks"
 
 msgid "Successfully synchronized color and type of filament from printer."
-msgstr ""
-
-msgctxt "FinishSyncAms"
-msgid "OK"
-msgstr ""
+msgstr "Successfully synchronized color and type of ink from printer."
 
 msgid "Extruder of Bowden type does not support 0.2 diameter nozzle. We can only proceed with single-head printing."
 msgstr ""
 
 msgid "Studio would re-calculate your flushing volumes everytime the filaments color changed or filaments changed. You could disable the auto-calculate in Bambu Studio > Preferences"
-msgstr "Studio would re-calculate your purging volumes everytime the filaments color changed or filaments changed. You could disable the auto-calculate in Bambu Studio > Preferences"
+msgstr "Studio would re-calculate your purging volumes everytime the inks color changed or inks changed. You could disable the auto-calculate in Bambu Studio > Preferences"
 
 msgid "Flushing volume (mm³) for each filament pair."
-msgstr "Purging volume (mm³) for each filament pair."
+msgstr "Purging volume (mm³) for each ink pair."
 
 #, c-format, boost-format
 msgid "Suggestion: Flushing Volume in range [%d, %d]"
@@ -10977,10 +10855,10 @@ msgid "Multiplier"
 msgstr "Multiplier"
 
 msgid "Flushing volumes for filament change"
-msgstr "Purging volumes for filament change"
+msgstr "Purging volumes for ink change"
 
 msgid "Please choose the filament colour"
-msgstr "Please choose the filament colour"
+msgstr "Please choose the ink colour"
 
 msgid "Bambu Network plug-in not detected."
 msgstr "Bambu Network plug-in not detected."
@@ -10996,10 +10874,6 @@ msgstr "The configuration package is changed to the previous Config Guide"
 
 msgid "Configuration package changed"
 msgstr "Configuration package changed"
-
-msgctxt "WebView"
-msgid "Back"
-msgstr ""
 
 msgid "Open in browser"
 msgstr ""
@@ -11140,7 +11014,7 @@ msgid "Movement step set to 1 mm"
 msgstr "Movement step set to 1mm"
 
 msgid "keyboard 1-9: set filament for object/part"
-msgstr "Keyboard 1-9: set filament for object/part"
+msgstr "Keyboard 1-9: set ink for object/part"
 
 msgid "Camera view - Default"
 msgstr "Camera view - Default"
@@ -11593,10 +11467,10 @@ msgid "Environment Settings"
 msgstr ""
 
 msgid "Optional. Uses the chamber temperature from Filament settings when available; you can override it here."
-msgstr ""
+msgstr "Optional. Uses the chamber temperature from Ink settings when available; you can override it here."
 
 msgid "Uses the chamber temperature from Filament settings when available; otherwise estimates it from the build plate temperature."
-msgstr ""
+msgstr "Uses the chamber temperature from Ink settings when available; otherwise estimates it from the build plate temperature."
 
 msgid "Optimization Settings"
 msgstr ""
@@ -12057,13 +11931,13 @@ msgid "Please check the custom G-code or use the default custom G-code.\n"
 msgstr ""
 
 msgid "You can find them from 'Printer settings' -> 'Machine G-code' and 'Filament settings' -> 'Advanced'."
-msgstr ""
+msgstr "You can find them from 'Printer settings' -> 'Machine G-code' and 'Ink settings' -> 'Advanced'."
 
 msgid "You can find it from 'Printer settings' -> 'Machine G-code'."
 msgstr ""
 
 msgid "You can find it from 'Filament settings' -> 'Advanced'."
-msgstr ""
+msgstr "You can find it from 'Ink settings' -> 'Advanced'."
 
 #, boost-format
 msgid "Generating G-code: layer %1%"
@@ -12076,13 +11950,13 @@ msgid "Exporting G-code"
 msgstr "Exporting G-code"
 
 msgid "Grouping error: filament"
-msgstr ""
+msgstr "Grouping error: ink"
 
 msgid " can not be placed in the "
 msgstr ""
 
 msgid "Filament Grouping Error: Filament "
-msgstr ""
+msgstr "Ink Grouping Error: Ink "
 
 msgid " is not supported by the "
 msgstr ""
@@ -12091,7 +11965,7 @@ msgid " nozzle. "
 msgstr ""
 
 msgid "Please change the nozzle type or reassign the filament and try again."
-msgstr ""
+msgstr "Please change the nozzle type or reassign the ink and try again."
 
 msgid "No valid nozzle found. Please check nozzle count."
 msgstr ""
@@ -12272,19 +12146,19 @@ msgid " is too close to clumping detection area, and collisions will be caused.\
 msgstr " is too close to probing area of clumping detection, and collisions will be caused.\n"
 
 msgid "Printing high-temp and low-temp filaments together may cause nozzle clogging or printer damage."
-msgstr ""
+msgstr "Printing high-temp and low-temp inks together may cause nozzle clogging or printer damage."
 
 msgid "Printing high-temp and low-temp filaments together may cause nozzle clogging or printer damage. If you still want to print, you can enable the option in Preferences."
-msgstr ""
+msgstr "Printing high-temp and low-temp inks together may cause nozzle clogging or printer damage. If you still want to print, you can enable the option in Preferences."
 
 msgid "Printing different-temp filaments together may cause nozzle clogging or printer damage."
-msgstr ""
+msgstr "Printing different-temp inks together may cause nozzle clogging or printer damage."
 
 msgid "Printing high-temp and mid-temp filaments together may cause nozzle clogging or printer damage."
-msgstr ""
+msgstr "Printing high-temp and mid-temp inks together may cause nozzle clogging or printer damage."
 
 msgid "Printing mid-temp and low-temp filaments together may cause nozzle clogging or printer damage."
-msgstr ""
+msgstr "Printing mid-temp and low-temp inks together may cause nozzle clogging or printer damage."
 
 msgid "No extrusions under current settings."
 msgstr "No extrusions under current settings."
@@ -12311,7 +12185,7 @@ msgid "Variable layer height is not supported with Organic supports."
 msgstr "Variable layer height is not supported with Organic supports."
 
 msgid "Different nozzle diameters and different filament diameters is not allowed when prime tower is enabled."
-msgstr "Different nozzle diameters and different filament diameters is not allowed when prime tower is enabled."
+msgstr "Different nozzle diameters and different ink diameters is not allowed when prime tower is enabled."
 
 msgid "The Wipe Tower is currently only supported with the relative extruder addressing (use_relative_e_distances=1)."
 msgstr "The Wipe Tower is currently only supported with the relative extruder addressing (use_relative_e_distances=1)."
@@ -12360,7 +12234,7 @@ msgstr "Layer height cannot exceed nozzle diameter"
 
 #, c-format, boost-format
 msgid "Plate %d: %s does not support filament %s"
-msgstr "Plate %d: %s does not support filament %s"
+msgstr "Plate %d: %s does not support ink %s"
 
 msgid "Precise outer wall will be ignored unless the order of walls is set to inner/outer"
 msgstr ""
@@ -12384,7 +12258,7 @@ msgid "Bed exclude area"
 msgstr "Bed exclude area"
 
 msgid "Unprintable area in XY plane. For example, X1 Series printers use the front left corner to cut filament during filament change. The area is expressed as polygon by points in following format: \"XxY, XxY, ...\""
-msgstr "Unprintable area in XY plane. For example, X1 Series printers use the front left corner to cut filament during filament change. The area is expressed as polygon by points in following format: \"XxY, XxY, ...\""
+msgstr "Unprintable area in XY plane. For example, X1 Series printers use the front left corner to cut ink during ink change. The area is expressed as polygon by points in following format: \"XxY, XxY, ...\""
 
 msgid "Bed custom texture"
 msgstr "Bed custom texture"
@@ -12443,9 +12317,6 @@ msgstr "HTTPS CA File"
 msgid "Custom CA certificate file can be specified for HTTPS OctoPrint connections, in crt/pem format. If left blank, the default OS CA certificate repository is used."
 msgstr "Custom CA certificate file can be specified for HTTPS OctoPrint connections, in crt/pem format. If left blank, the default OS CA certificate repository is used."
 
-msgid "User"
-msgstr "User"
-
 msgid "Password"
 msgstr "Password"
 
@@ -12498,16 +12369,16 @@ msgid "Other layers"
 msgstr "Other layers"
 
 msgid "Bed temperature for layers except the initial one. Value 0 means the filament does not support to print on the Cool Plate"
-msgstr "This is the bed temperature for layers except for the first one. A value of 0 means the filament does not support printing on the Cool Plate."
+msgstr "This is the bed temperature for layers except for the first one. A value of 0 means the ink does not support printing on the Cool Plate."
 
 msgid "Bed temperature for layers except the initial one. Value 0 means the filament does not support to print on the Engineering Plate"
-msgstr "This is the bed temperature for layers except for the first one. A value of 0 means the filament does not support printing on the Engineering Plate."
+msgstr "This is the bed temperature for layers except for the first one. A value of 0 means the ink does not support printing on the Engineering Plate."
 
 msgid "Bed temperature for layers except the initial one. Value 0 means the filament does not support to print on the High Temp Plate"
-msgstr "This is the bed temperature for layers except for the first one. A value of 0 means the filament does not support printing on the High Temp Plate."
+msgstr "This is the bed temperature for layers except for the first one. A value of 0 means the ink does not support printing on the High Temp Plate."
 
 msgid "Bed temperature for layers except the initial one. Value 0 means the filament does not support to print on the Textured PEI Plate"
-msgstr "Bed temperature after the first layer. 0 means the filament is not supported on the Textured PEI Plate."
+msgstr "Bed temperature after the first layer. 0 means the ink is not supported on the Textured PEI Plate."
 
 msgid "Initial layer"
 msgstr "Initial layer"
@@ -12516,19 +12387,19 @@ msgid "Initial layer bed temperature"
 msgstr "Initial layer bed temperature"
 
 msgid "Bed temperature of the initial layer. Value 0 means the filament does not support to print on the Bambu Cool Plate SuperTack"
-msgstr ""
+msgstr "Bed temperature of the initial layer. Value 0 means the ink does not support to print on the Bambu Cool Plate SuperTack"
 
 msgid "Bed temperature of the initial layer. Value 0 means the filament does not support to print on the Cool Plate"
-msgstr "This is the bed temperature of the first layer. A value of 0 means the filament does not support printing on the Cool Plate."
+msgstr "This is the bed temperature of the first layer. A value of 0 means the ink does not support printing on the Cool Plate."
 
 msgid "Bed temperature of the initial layer. Value 0 means the filament does not support to print on the Engineering Plate"
-msgstr "This is the bed temperature of the first layer. A value of 0 means the filament does not support printing on the Engineering Plate."
+msgstr "This is the bed temperature of the first layer. A value of 0 means the ink does not support printing on the Engineering Plate."
 
 msgid "Bed temperature of the initial layer. Value 0 means the filament does not support to print on the High Temp Plate"
-msgstr "This is the bed temperature of the first layer. A value of 0 means the filament does not support printing on the High Temp Plate."
+msgstr "This is the bed temperature of the first layer. A value of 0 means the ink does not support printing on the High Temp Plate."
 
 msgid "Bed temperature of the initial layer. Value 0 means the filament does not support to print on the Textured PEI Plate"
-msgstr "Bed temperature of the first layer 0 means the filament is not supported on the Textured PEI Plate."
+msgstr "Bed temperature of the first layer 0 means the ink is not supported on the Textured PEI Plate."
 
 msgid "Bed types supported by the printer"
 msgstr "Plate types supported by the printer"
@@ -12543,7 +12414,7 @@ msgid "The number of other layers print sequence"
 msgstr "The number of other layers print sequence"
 
 msgid "Other layers filament sequence"
-msgstr "Other layers filament sequence"
+msgstr "Other layers ink sequence"
 
 msgid "This G-code is inserted at every layer change before lifting z"
 msgstr "This G-code is inserted at every layer change before lifting z"
@@ -12773,7 +12644,7 @@ msgid ""
 "1. To avoid changes in shine when printing glossy filaments\n"
 "2. To avoid changes in external wall speed which may create slight wall artifacts that appear like Z banding\n"
 "3. To avoid printing at speeds which cause VFAs (fine artifacts) on the external walls"
-msgstr ""
+msgstr "If enabled, this setting will ensure external perimeters are not slowed down to meet the minimum layer time. This is particularly helpful in the below scenarios:\n1. To avoid changes in shine when printing glossy inks\n2. To avoid changes in external wall speed which may create slight wall artifacts that appear like Z banding\n3. To avoid printing at speeds which cause VFAs (fine artifacts) on the external walls"
 
 msgid "Cooling slowdown logic"
 msgstr ""
@@ -12784,7 +12655,7 @@ msgid ""
 "'Uniform cooling' slows down all print features equally (current default behavior).\n"
 "\n"
 "'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy filaments. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
-msgstr ""
+msgstr "Determines how the printer slows down when minimum layer time isn't reached.\n\n'Uniform cooling' slows down all print features equally (current default behavior).\n\n'Consistent surface' prioritizes slowing infill and internal perimeters first, preserving external perimeter speed for better surface finish on glossy inks. This helps reduce VFA (Vertical Fine Artifacts) and maintains consistent surface shine."
 
 msgid "Uniform cooling"
 msgstr ""
@@ -12829,10 +12700,10 @@ msgid "The acceleration of travel of initial layer"
 msgstr ""
 
 msgid "Default filament profile"
-msgstr "Default filament profile"
+msgstr "Default ink profile"
 
 msgid "Default filament profile when switch to this machine profile"
-msgstr "Default filament profile when switch to this machine profile"
+msgstr "Default ink profile when switch to this machine profile"
 
 msgid "Default process profile"
 msgstr "Default process profile"
@@ -12850,7 +12721,7 @@ msgid "Fan speed"
 msgstr "Fan speed"
 
 msgid "Speed of exhaust fan during printing.This speed will overwrite the speed in filament custom gcode"
-msgstr "Speed of exhaust fan during printing.This speed will override the speed in filament custom g-code"
+msgstr "Speed of exhaust fan during printing.This speed will override the speed in ink custom g-code"
 
 msgid "Speed of exhuast fan after printing completes"
 msgstr "Speed of exhuast fan after printing completes"
@@ -12907,7 +12778,7 @@ msgid "Insert Gcode between objects. This parameter will only come into effect w
 msgstr "Insert G-code between objects. This parameter will only come into effect when you print your models object by object."
 
 msgid "End G-code when finish the printing of this filament"
-msgstr "End G-code when finish the printing of this filament"
+msgstr "End G-code when finish the printing of this ink"
 
 msgid "Ensure vertical shell thickness"
 msgstr "Ensure vertical shell thickness"
@@ -13088,7 +12959,7 @@ msgid "Flow ratio"
 msgstr "Flow ratio"
 
 msgid "The material may have volumetric change after switching between molten state and crystalline state. This setting changes all extrusion flow of this filament in gcode proportionally. Recommended value range is between 0.95 and 1.05. Maybe you can tune this value to get nice flat surface when there has slight overflow or underflow"
-msgstr "The material may have volumetric change after switching between molten and crystalline states. This setting changes all extrusion flow of this filament in G-code proportionally. The recommended value range is between 0.95 and 1.05. You may be able to tune this value to get a nice flat surface if there is slight overflow or underflow."
+msgstr "The material may have volumetric change after switching between molten and crystalline states. This setting changes all extrusion flow of this ink in G-code proportionally. The recommended value range is between 0.95 and 1.05. You may be able to tune this value to get a nice flat surface if there is slight overflow or underflow."
 
 msgid "Object flow ratio"
 msgstr "Object flow ratio"
@@ -13106,10 +12977,10 @@ msgid "Pressure advance(Klipper) AKA Linear advance factor(Marlin). Useless for 
 msgstr "Pressure advance(Klipper) AKA Linear advance factor(Marlin). Useless for Bambu Printers"
 
 msgid "Filament notes"
-msgstr "Filament notes"
+msgstr "Ink notes"
 
 msgid "You can put your notes regarding the filament here."
-msgstr "You can put your notes regarding the filament here."
+msgstr "You can put your notes regarding the ink here."
 
 msgid "Process notes"
 msgstr "Process notes"
@@ -13142,19 +13013,19 @@ msgid "Default color"
 msgstr "Default color"
 
 msgid "Default filament color"
-msgstr "Default filament color"
+msgstr "Default ink color"
 
 msgid "Required nozzle HRC"
 msgstr "Required nozzle HRC"
 
 msgid "Minimum HRC of nozzle required to print the filament. Zero means no checking of nozzle's HRC."
-msgstr "Minimum HRC of nozzle required to print the filament. A value of 0 means no checking of the nozzle's HRC."
+msgstr "Minimum HRC of nozzle required to print the ink. A value of 0 means no checking of the nozzle's HRC."
 
 msgid "Filament map to extruder"
-msgstr ""
+msgstr "Ink map to extruder"
 
 msgid "filament mapping mode"
-msgstr ""
+msgstr "ink mapping mode"
 
 msgid "Auto For Flush"
 msgstr "Auto For Purge"
@@ -13172,7 +13043,7 @@ msgid "Flush temperature"
 msgstr "Purge temperature"
 
 msgid "temperature when flushing filament. 0 indicates the upper bound of the recommended nozzle temperature range"
-msgstr "temperature when purging filament. 0 indicates the upper bound of the recommended nozzle temperature range"
+msgstr "temperature when purging ink. 0 indicates the upper bound of the recommended nozzle temperature range"
 
 msgid "Flush temperature used in fast purge mode."
 msgstr ""
@@ -13181,13 +13052,13 @@ msgid "Flush volumetric speed"
 msgstr "Purge volumetric speed"
 
 msgid "Volumetric speed when flushing filament. 0 indicates the max volumetric speed"
-msgstr "Volumetric speed when purging filament. 0 indicates the max volumetric speed"
+msgstr "Volumetric speed when purging ink. 0 indicates the max volumetric speed"
 
 msgid "mm³/s"
 msgstr "mm³/s"
 
 msgid "This setting stands for how much volume of filament can be melted and extruded per second. Printing speed is limited by max volumetric speed, in case of too high and unreasonable speed setting. Can't be zero"
-msgstr "This setting is the volume of filament that can be melted and extruded per second. Printing speed is limited by max volumetric speed, in case of too high and unreasonable speed setting. This value cannot be zero."
+msgstr "This setting is the volume of ink that can be melted and extruded per second. Printing speed is limited by max volumetric speed, in case of too high and unreasonable speed setting. This value cannot be zero."
 
 msgid "Extruder change"
 msgstr ""
@@ -13208,16 +13079,16 @@ msgid "mm³"
 msgstr "mm³"
 
 msgid "Filament load time"
-msgstr "Filament load time"
+msgstr "Ink load time"
 
 msgid "Time to load new filament when switch filament. For statistics only"
-msgstr "Time to load new filament when switching filament, for statistical purposes only."
+msgstr "Time to load new ink when switching ink, for statistical purposes only."
 
 msgid "Filament unload time"
-msgstr "Filament unload time"
+msgstr "Ink unload time"
 
 msgid "Time to unload old filament when switch filament. For statistics only"
-msgstr "Time to unload old filament when switching filament, for statistical purposes only."
+msgstr "Time to unload old ink when switching ink, for statistical purposes only."
 
 msgid "Extruder switch time"
 msgstr ""
@@ -13235,16 +13106,16 @@ msgid "Bed temperature type"
 msgstr ""
 
 msgid "This option determines how the bed temperature is set during slicing: based on the temperature of the first filament or the highest temperature of the printed filaments."
-msgstr ""
+msgstr "This option determines how the bed temperature is set during slicing: based on the temperature of the first ink or the highest temperature of the printed inks."
 
 msgid "By First filament"
-msgstr ""
+msgstr "By First ink"
 
 msgid "By Highest Temp"
 msgstr ""
 
 msgid "Filament diameter is used to calculate extrusion in gcode, so it's important and should be accurate"
-msgstr "Filament diameter is used to calculate extrusion variables in G-code, so it is important that this is accurate and precise."
+msgstr "Ink diameter is used to calculate extrusion variables in G-code, so it is important that this is accurate and precise."
 
 msgid "Adaptive volumetric speed"
 msgstr ""
@@ -13262,7 +13133,7 @@ msgstr ""
 msgid ""
 "Enter the shrinkage percentage that the filament will get after cooling (94% if you measure 94mm instead of 100mm). The part will be scaled in xy to compensate. Only the filament used for the perimeter is taken into account.\n"
 "Be sure to allow enough space between objects, as this compensation is done after the checks."
-msgstr ""
+msgstr "Enter the shrinkage percentage that the ink will get after cooling (94% if you measure 94mm instead of 100mm). The part will be scaled in xy to compensate. Only the ink used for the perimeter is taken into account.\nBe sure to allow enough space between objects, as this compensation is done after the checks."
 
 msgid "Velocity Adaptation Factor"
 msgstr ""
@@ -13274,25 +13145,25 @@ msgid "Adhesiveness Category"
 msgstr ""
 
 msgid "Filament category"
-msgstr ""
+msgstr "Ink category"
 
 msgid "Metal stickiness"
 msgstr ""
 
 msgid "Indicates how strongly the filament tends to stick to the metal nozzle and leave residue. \"None\" means untested or custom filament, behaves the same as Low. Low: e.g. PLA - retraction can be safely skipped in infill areas. Medium: moderate stickiness - use with caution. High: e.g. PETG - retraction should not be skipped to avoid oozing artifacts on outer walls."
-msgstr ""
+msgstr "Indicates how strongly the ink tends to stick to the metal nozzle and leave residue. \"None\" means untested or custom ink, behaves the same as Low. Low: e.g. PLA - retraction can be safely skipped in infill areas. Medium: moderate stickiness - use with caution. High: e.g. PETG - retraction should not be skipped to avoid oozing artifacts on outer walls."
 
 msgid "Density"
 msgstr "Density"
 
 msgid "Filament density. For statistics only"
-msgstr "Filament density. For statistics only"
+msgstr "Ink density. For statistics only"
 
 msgid "g/cm³"
 msgstr "g/cm³"
 
 msgid "The material type of filament"
-msgstr "The material type of filament"
+msgstr "The material type of ink"
 
 msgid "Soluble material"
 msgstr "Soluble material"
@@ -13304,7 +13175,7 @@ msgid "Scarf seam type"
 msgstr ""
 
 msgid "Set scarf seam type for this filament. This setting could minimize seam visibiliy."
-msgstr ""
+msgstr "Set scarf seam type for this ink. This setting could minimize seam visibiliy."
 
 msgid "Contour"
 msgstr "Contour"
@@ -13334,10 +13205,10 @@ msgid "Length of the scarf. Setting this parameter to zero effectively disables 
 msgstr "Length of the scarf. Setting this parameter to zero effectively disables the scarf."
 
 msgid "When changing the extruder, it is recommended to extrude a certain length of filament from the original extruder. This helps minimize nozzle oozing."
-msgstr ""
+msgstr "When changing the extruder, it is recommended to extrude a certain length of ink from the original extruder. This helps minimize nozzle oozing."
 
 msgid "When changing the hotend, it is recommended to extrude a certain length of filament from the original nozzle. This helps minimize nozzle oozing."
-msgstr ""
+msgstr "When changing the hotend, it is recommended to extrude a certain length of ink from the original nozzle. This helps minimize nozzle oozing."
 
 msgid "Support material"
 msgstr "Support material"
@@ -13346,61 +13217,61 @@ msgid "Support material is commonly used to print support and support interface"
 msgstr "Support material is commonly used to print support and support interfaces."
 
 msgid "Is mixed filament"
-msgstr ""
+msgstr "Is mixed ink"
 
 msgid "Whether this filament slot is a mixed filament composed of multiple physical filaments"
-msgstr ""
+msgstr "Whether this ink slot is a mixed ink composed of multiple physical inks"
 
 msgid "Mixed filament components"
-msgstr ""
+msgstr "Mixed ink components"
 
 msgid "Comma-separated 1-based indices of component filaments, e.g. \"1,3\""
-msgstr ""
+msgstr "Comma-separated 1-based indices of component inks, e.g. \"1,3\""
 
 msgid "Mixed filament sublayer ratios"
-msgstr ""
+msgstr "Mixed ink sublayer ratios"
 
 msgid "Comma-separated ratio values summing to 1.0, e.g. \"0.7,0.3\""
 msgstr ""
 
 msgid "Mixed filament gradient"
-msgstr ""
+msgstr "Mixed ink gradient"
 
 msgid "Enable Z-direction gradient mode for mixed filament sub-layers. When enabled, the sub-layer ratios vary linearly across layers."
-msgstr ""
+msgstr "Enable Z-direction gradient mode for mixed ink sub-layers. When enabled, the sub-layer ratios vary linearly across layers."
 
 msgid "Mixed filament gradient range"
-msgstr ""
+msgstr "Mixed ink gradient range"
 
 msgid "Start and end ratios for the first component in gradient mode. Comma-separated pair, e.g. \"0.10,0.90\" means 10% to 90%."
 msgstr ""
 
 msgid "Mixed filament gradient curve"
-msgstr ""
+msgstr "Mixed ink gradient curve"
 
 msgid "Optional Photoshop-style custom curve mapping Z progress to the first component ratio. Encoded as pipe-separated control points, either \"x,y\" (legacy) or \"x,y,m_in,m_out\" when a tangent override is needed (empty token or \"nan\" means use PCHIP default). x in [0,1]; y is clamped to the configured ratio range, e.g. \"0,0.15|0.5,0.50|1,0.85\". When empty, the linear gradient_range is used instead."
 msgstr ""
 
 msgid "Mixed filament per-part gradient"
-msgstr ""
+msgstr "Mixed ink per-part gradient"
 
 msgid "When gradient mode is enabled, apply the gradient to each part of an assembly independently rather than treating the whole assembly as one Z range."
 msgstr ""
 
 msgid "Filament printable"
-msgstr ""
+msgstr "Ink printable"
 
 msgid "The filament is printable in extruder"
-msgstr ""
+msgstr "The ink is printable in extruder"
 
 msgid "Filament-extruder compatibility"
-msgstr ""
+msgstr "Ink-extruder compatibility"
 
 msgid "A single 32-bit int encoding the compatibility level of a filament across all extruders (up to 10). Every 3 bits represent one extruder (bits [3*i, 3*i+2] for extruder i). 0: printable, 1: error, 2: critical warning, 3: warning, 4-7: reserved"
-msgstr ""
+msgstr "A single 32-bit int encoding the compatibility level of an ink across all extruders (up to 10). Every 3 bits represent one extruder (bits [3*i, 3*i+2] for extruder i). 0: printable, 1: error, 2: critical warning, 3: warning, 4-7: reserved"
 
 msgid "Filament change"
-msgstr ""
+msgstr "Ink change"
 
 msgid "The volume of material required to prime the extruder on the tower, excluding a hotend change."
 msgstr ""
@@ -13418,7 +13289,7 @@ msgid "Wipe tower cooling"
 msgstr ""
 
 msgid "Temperature drop before entering filament tower"
-msgstr ""
+msgstr "Temperature drop before entering ink tower"
 
 msgid "Interface layer pre-extrusion distance"
 msgstr ""
@@ -13481,7 +13352,7 @@ msgid "Price"
 msgstr "Price"
 
 msgid "Filament price. For statistics only"
-msgstr "Filament price. For statistics only"
+msgstr "Ink price. For statistics only"
 
 msgid "money/kg"
 msgstr "money/kg"
@@ -13490,7 +13361,7 @@ msgid "Vendor"
 msgstr "Vendor"
 
 msgid "Vendor of filament. For show only"
-msgstr "Vendor of filament. For show only"
+msgstr "Vendor of ink. For show only"
 
 msgid "(Undefined)"
 msgstr "(Undefined)"
@@ -13653,7 +13524,7 @@ msgid "Initial layer nozzle temperature"
 msgstr "Initial layer nozzle temperature"
 
 msgid "Nozzle temperature to print initial layer when using this filament"
-msgstr "Nozzle temperature to print initial layer when using this filament"
+msgstr "Nozzle temperature to print initial layer when using this ink"
 
 msgid "Randomly jitter while printing the wall, so that the surface has a rough look. This setting controls the fuzzy position"
 msgstr "This setting makes the toolhead randomly jitter while printing walls so that the surface has a rough textured look. This setting controls the fuzzy position."
@@ -13810,7 +13681,7 @@ msgid "Nozzle type"
 msgstr "Nozzle type"
 
 msgid "The metallic material of nozzle. This determines the abrasive resistance of nozzle, and what kind of filament can be printed"
-msgstr "The metallic material of the nozzle: This determines the abrasive resistance of the nozzle and what kind of filament can be printed."
+msgstr "The metallic material of the nozzle: This determines the abrasive resistance of the nozzle and what kind of ink can be printed."
 
 msgid "Undefine"
 msgstr "Undefined"
@@ -13972,10 +13843,10 @@ msgid "0 (not anchored)"
 msgstr "0 (not anchored)"
 
 msgid "Sparse infill filament"
-msgstr ""
+msgstr "Sparse infill ink"
 
 msgid "Filament to print internal sparse infill."
-msgstr "Filament to print internal sparse infill."
+msgstr "Ink to print internal sparse infill."
 
 msgid "Line width of internal sparse infill"
 msgstr "Line width of internal sparse infill"
@@ -14011,7 +13882,7 @@ msgid "Use beam interlocking"
 msgstr ""
 
 msgid "Generate interlocking beam structure at the locations where different filaments touch. This improves the adhesion between filaments, especially models printed in different materials."
-msgstr ""
+msgstr "Generate interlocking beam structure at the locations where different inks touch. This improves the adhesion between inks, especially models printed in different materials."
 
 msgid "Interlocking beam width"
 msgstr ""
@@ -14035,7 +13906,7 @@ msgid "Interlocking depth"
 msgstr ""
 
 msgid "The distance from the boundary between filaments to generate interlocking structure, measured in cells. Too few cells will result in poor adhesion."
-msgstr ""
+msgstr "The distance from the boundary between inks to generate interlocking structure, measured in cells. Too few cells will result in poor adhesion."
 
 msgid "Interlocking boundary avoidance"
 msgstr ""
@@ -14284,7 +14155,7 @@ msgid "Nozzle volume"
 msgstr "Nozzle volume"
 
 msgid "Volume of nozzle between the cutter and the end of nozzle"
-msgstr "Volume of nozzle between the filament cutter and the end of the nozzle"
+msgstr "Volume of nozzle between the ink cutter and the end of the nozzle"
 
 msgid "Start end points"
 msgstr "Start end points"
@@ -14296,7 +14167,7 @@ msgid "Reduce infill retraction"
 msgstr "Reduce infill retraction"
 
 msgid "Controls whether retraction is skipped when traveling within the infill area. \"Auto\" enables this optimization for filaments with low metal stickiness (e.g. PLA) and disables it for medium/high metal stickiness filaments (e.g. PETG) to avoid oozing artifacts. \"Enabled\" always skips retraction in infill areas regardless of filament type. \"Disabled\" always retracts normally."
-msgstr ""
+msgstr "Controls whether retraction is skipped when traveling within the infill area. \"Auto\" enables this optimization for inks with low metal stickiness (e.g. PLA) and disables it for medium/high metal stickiness inks (e.g. PETG) to avoid oozing artifacts. \"Enabled\" always skips retraction in infill areas regardless of ink type. \"Disabled\" always retracts normally."
 
 msgid "Filename format"
 msgstr "Filename format"
@@ -14323,10 +14194,10 @@ msgid "The smaller the number, the longer the speed transition path. 0 means not
 msgstr ""
 
 msgid "Walls filament"
-msgstr ""
+msgstr "Walls ink"
 
 msgid "Filament to print walls"
-msgstr ""
+msgstr "Ink to print walls"
 
 msgid "Line width of inner wall"
 msgstr "Line width of inner walls"
@@ -14410,19 +14281,19 @@ msgid "Retraction Length"
 msgstr "Retraction Length"
 
 msgid "Some amount of material in extruder is pulled back to avoid ooze during long travel. Set zero to disable retraction"
-msgstr "This is the amount of filament in the extruder that is pulled back to avoid oozing during long travel distances. Set to 0 to disable retraction."
+msgstr "This is the amount of ink in the extruder that is pulled back to avoid oozing during long travel distances. Set to 0 to disable retraction."
 
 msgid "Long retraction when cut(experimental)"
 msgstr "Long retraction when cut (experimental)"
 
 msgid "Experimental feature.Retracting and cutting off the filament at a longer distance during changes to minimize purge.While this reduces flush significantly, it may also raise the risk of nozzle clogs or other printing problems."
-msgstr "Experimental feature: Retracting and cutting off the filament at a longer distance during changes to minimize purge.While this reduces purge significantly, it may also raise the risk of nozzle clogs or other printing problems."
+msgstr "Experimental feature: Retracting and cutting off the ink at a longer distance during changes to minimize purge.While this reduces purge significantly, it may also raise the risk of nozzle clogs or other printing problems."
 
 msgid "Retraction distance when cut"
 msgstr "Retraction distance when cut"
 
 msgid "Experimental feature.Retraction length before cutting off during filament change"
-msgstr "Experimental feature. Retraction length before cutting off during filament change"
+msgstr "Experimental feature. Retraction length before cutting off during ink change"
 
 msgid "Long retraction when extruder change"
 msgstr "Long retraction when changing extruders"
@@ -14479,16 +14350,16 @@ msgid "length when change hotend"
 msgstr ""
 
 msgid "When this retraction value is modified, it will be used as the amount of filament retracted inside the hotend before changing hotends."
-msgstr ""
+msgstr "When this retraction value is modified, it will be used as the amount of ink retracted inside the hotend before changing hotends."
 
 msgid "Extra length on restart"
 msgstr "Extra length on restart"
 
 msgid "When the retraction is compensated after the travel move, the extruder will push this additional amount of filament. This setting is rarely needed."
-msgstr ""
+msgstr "When the retraction is compensated after the travel move, the extruder will push this additional amount of ink. This setting is rarely needed."
 
 msgid "When the retraction is compensated after changing tool, the extruder will push this additional amount of filament."
-msgstr ""
+msgstr "When the retraction is compensated after changing tool, the extruder will push this additional amount of ink."
 
 msgid "Retraction Speed"
 msgstr "Retraction Speed"
@@ -14500,7 +14371,7 @@ msgid "Deretraction Speed"
 msgstr "Deretraction Speed"
 
 msgid "Speed for reloading filament into extruder. Zero means the same speed as retraction"
-msgstr "Speed for reloading filament into extruder: 0 means the same speed as retraction"
+msgstr "Speed for reloading ink into extruder: 0 means the same speed as retraction"
 
 msgid "Seam position"
 msgstr "Seam position"
@@ -14513,9 +14384,6 @@ msgstr "Nearest"
 
 msgid "Aligned"
 msgstr "Aligned"
-
-msgid "Back"
-msgstr "Back"
 
 msgid "Random"
 msgstr "Random"
@@ -14571,10 +14439,10 @@ msgid "Use scarf joint for inner walls as well."
 msgstr "Use scarf joint for inner walls as well."
 
 msgid "Override filament scarf seam setting"
-msgstr ""
+msgstr "Override ink scarf seam setting"
 
 msgid "Overrider filament scarf seam setting and could control settings by modifier."
-msgstr "Override filament scarf seam setting and could control settings by modifier."
+msgstr "Override ink scarf seam setting and could control settings by modifier."
 
 msgid "Wipe speed"
 msgstr "Wipe speed"
@@ -14622,10 +14490,10 @@ msgid "Sparse infill area which is smaller than threshold value is replaced by i
 msgstr "Sparse infill areas which are smaller than this threshold value are replaced by internal solid infill."
 
 msgid "Solid infill filament"
-msgstr ""
+msgstr "Solid infill ink"
 
 msgid "Filament to print solid infill"
-msgstr ""
+msgstr "Ink to print solid infill"
 
 msgid "Line width of internal solid infill"
 msgstr "Line width of internal solid infill"
@@ -14649,7 +14517,7 @@ msgid "Maximum distance to move points in XY to try to achieve a smooth spiralIf
 msgstr "Maximum distance to move points in XY to try to achieve a smooth spiral. If expressed as a %, it will be computed over nozzle diameter"
 
 msgid "If smooth or traditional mode is selected, a timelapse video will be generated for each print. After each layer is printed, a snapshot is taken with the chamber camera. All of these snapshots are composed into a timelapse video when printing completes. If smooth mode is selected, the toolhead will move to the excess chute after each layer is printed and then take a snapshot. Since the melt filament may leak from the nozzle during the process of taking a snapshot, prime tower is required for smooth mode to wipe nozzle."
-msgstr "If smooth or traditional mode is selected, a timelapse video will be generated for each print. After each layer is printed, a snapshot is taken with the chamber camera. All of these snapshots are composed into a timelapse video when printing completes. If smooth mode is selected, the toolhead will move to the excess chute after each layer is printed and then take a snapshot. Since the melt filament may leak from the nozzle during the process of taking a snapshot, a prime tower is required for smooth mode to wipe the nozzle."
+msgstr "If smooth or traditional mode is selected, a timelapse video will be generated for each print. After each layer is printed, a snapshot is taken with the chamber camera. All of these snapshots are composed into a timelapse video when printing completes. If smooth mode is selected, the toolhead will move to the excess chute after each layer is printed and then take a snapshot. Since the melt ink may leak from the nozzle during the process of taking a snapshot, a prime tower is required for smooth mode to wipe the nozzle."
 
 msgid "Traditional"
 msgstr "Traditional"
@@ -14670,7 +14538,7 @@ msgid "Start G-code when start the whole printing"
 msgstr "Start G-code when start the whole printing"
 
 msgid "Start G-code when start the printing of this filament"
-msgstr "Start G-code when start the printing of this filament"
+msgstr "Start G-code when start the printing of this ink"
 
 msgid "Slice gap closing radius"
 msgstr "Slice gap closing radius"
@@ -14766,13 +14634,13 @@ msgid "Support/raft base"
 msgstr "Support/raft base"
 
 msgid "Filament to print support base and raft. \"Default\" means no specific filament for support and current filament is used"
-msgstr "Filament to print support bases and rafts. \"Default\" means no specific filament for support, and current filament is used"
+msgstr "Ink to print support bases and rafts. \"Default\" means no specific ink for support, and current ink is used"
 
 msgid "Avoid interface filament for base"
-msgstr "Avoid interface filament for base"
+msgstr "Avoid interface ink for base"
 
 msgid "Avoid using support interface filament to print support base if possible."
-msgstr "Avoid using support interface filament to print support base if possible."
+msgstr "Avoid using support interface ink to print support base if possible."
 
 msgid "Line width of support"
 msgstr "Line width of support"
@@ -14787,7 +14655,7 @@ msgid "Support/raft interface"
 msgstr "Support/raft interface"
 
 msgid "Filament to print support interface. \"Default\" means no specific filament for support interface and current filament is used"
-msgstr "Filament to print support interfaces. \"Default\" means no specific filament for support interface, and current filament is used"
+msgstr "Ink to print support interfaces. \"Default\" means no specific ink for support interface, and current ink is used"
 
 msgid "Top interface layers"
 msgstr "Top interface layers"
@@ -14966,7 +14834,7 @@ msgid "Detect thin wall which can't contain two line width. And use single line 
 msgstr "This detects thin walls which can’t contain two lines and uses a single line to print. It may not print as well because it’s not a closed loop."
 
 msgid "This gcode is inserted when change filament, including T command to trigger tool change"
-msgstr "This G-code is inserted when filament is changed, including T commands to trigger tool change."
+msgstr "This G-code is inserted when ink is changed, including T commands to trigger tool change."
 
 msgid "Line width for top surfaces"
 msgstr "Line width for top surfaces"
@@ -15038,7 +14906,7 @@ msgid "Mixed color sublayer"
 msgstr ""
 
 msgid "Enable mixed color sublayer splitting. When enabled, layers containing mixed color filaments will be split into sub-layers to achieve color mixing effects."
-msgstr ""
+msgstr "Enable mixed color sublayer splitting. When enabled, layers containing mixed color inks will be split into sub-layers to achieve color mixing effects."
 
 msgid "The wiping tower can be used to clean up the residue on the nozzle and stabilize the chamber pressure inside the nozzle, in order to avoid appearance defects when printing objects."
 msgstr "The wiping tower can be used to clean up residue on the nozzle and stabilize the chamber pressure inside the nozzle in order to avoid appearance defects when printing objects."
@@ -15200,13 +15068,13 @@ msgid "Infill gap"
 msgstr ""
 
 msgid "Purging after filament change will be done inside objects' infills. This may lower the amount of waste and decrease the print time. If the walls are printed with transparent filament, the mixed color infill will be seen outside. It will not take effect, unless the prime tower is enabled."
-msgstr "Purging after filament change will be done inside objects' infills. This may lower the amount of waste and decrease the print time. If the walls are printed with transparent filament, the mixed color infill will be visible. It will not take effect unless the prime tower is enabled."
+msgstr "Purging after ink change will be done inside objects' infills. This may lower the amount of waste and decrease the print time. If the walls are printed with transparent ink, the mixed color infill will be visible. It will not take effect unless the prime tower is enabled."
 
 msgid "Purging after filament change will be done inside objects' support. This may lower the amount of waste and decrease the print time. It will not take effect, unless the prime tower is enabled."
-msgstr "Purging after filament change will be done inside objects' support. This may lower the amount of waste and decrease the print time. It will not take effect unless a prime tower is enabled."
+msgstr "Purging after ink change will be done inside objects' support. This may lower the amount of waste and decrease the print time. It will not take effect unless a prime tower is enabled."
 
 msgid "This object will be used to purge the nozzle after a filament change to save filament and decrease the print time. Colours of the objects will be mixed as a result. It will not take effect, unless the prime tower is enabled."
-msgstr "This object will be used to purge the nozzle after a filament change to save filament and decrease the print time. Colors of the objects will be mixed as a result. It will not take effect unless the prime tower is enabled."
+msgstr "This object will be used to purge the nozzle after an ink change to save ink and decrease the print time. Colors of the objects will be mixed as a result. It will not take effect unless the prime tower is enabled."
 
 msgid "X-Y hole compensation"
 msgstr "X-Y hole compensation"
@@ -15493,7 +15361,7 @@ msgid "Printer is not connected yet."
 msgstr "Printer is not connected yet."
 
 msgid "Please select filament to calibrate."
-msgstr "Please select filament to calibrate."
+msgstr "Please select ink to calibrate."
 
 msgid "The input value size must be 3."
 msgstr "The input value size must be 3."
@@ -15517,7 +15385,7 @@ msgstr "There is already a previous calibration result with the same name: %s. O
 msgid ""
 "Within the same extruder, the name(%s) must be unique when the filament type, nozzle diameter, and nozzle flow are the same.\n"
 "Are you sure you want to override the historical result?"
-msgstr ""
+msgstr "Within the same extruder, the name(%s) must be unique when the ink type, nozzle diameter, and nozzle flow are the same.\nAre you sure you want to override the historical result?"
 
 #, c-format, boost-format
 msgid "This machine type can only hold %d history results per nozzle. This result will not be saved."
@@ -15536,7 +15404,7 @@ msgid "Internal Error"
 msgstr "Internal Error"
 
 msgid "Please select at least one filament for calibration"
-msgstr "Please select at least one filament for calibration"
+msgstr "Please select at least one ink for calibration"
 
 msgid "Flow rate calibration result has been saved to preset"
 msgstr "Flow rate calibration result has been saved to preset"
@@ -15552,11 +15420,7 @@ msgid ""
 "1. If you introduce a new filament of different brands/models or the filament is damp;\n"
 "2. if the nozzle is worn out or replaced with a new one;\n"
 "3. If the max volumetric speed or print temperature is changed in the filament setting."
-msgstr ""
-"We now have added auto-calibration for different filaments, which is fully automated and the result will be saved to the printer for future use. You only need to do the calibration in the following limited cases:\n"
-"1. If you introduce a new filament of different brands/models or the filament is damp\n"
-"2. If the nozzle is worn out or replaced with a new one;\n"
-"3. If the max volumetric speed or print temperature is changed in the filament setting."
+msgstr "We now have added auto-calibration for different inks, which is fully automated and the result will be saved to the printer for future use. You only need to do the calibration in the following limited cases:\n1. If you introduce a new ink of different brands/models or the ink is damp\n2. If the nozzle is worn out or replaced with a new one;\n3. If the max volumetric speed or print temperature is changed in the ink setting."
 
 msgid "About this calibration"
 msgstr "About this calibration"
@@ -15569,7 +15433,7 @@ msgid ""
 "Please note that there are a few cases that can make the calibration results unreliable, such as insufficient adhesion on the build plate. Improving adhesion can be achieved by washing the build plate or applying glue. For more information on this topic, please refer to our Wiki.\n"
 "\n"
 "The calibration results have about 10 percent jitter in our test, which may cause the result not exactly the same in each calibration. We are still investigating the root cause to do improvements with new updates."
-msgstr ""
+msgstr "Please find the details of Flow Dynamics Calibration from our wiki.\n\nUsually the calibration is unnecessary. When you start a single color/material print, with the \"flow dynamics calibration\" option checked in the print start menu, the printer will follow the old way, calibrate the ink before the print; When you start a multi color/material print, the printer will use the default compensation parameter for the ink during every ink switch which will have a good result in most cases.\n\nPlease note that there are a few cases that can make the calibration results unreliable, such as insufficient adhesion on the build plate. Improving adhesion can be achieved by washing the build plate or applying glue. For more information on this topic, please refer to our Wiki.\n\nThe calibration results have about 10 percent jitter in our test, which may cause the result not exactly the same in each calibration. We are still investigating the root cause to do improvements with new updates."
 
 msgid "When to use Flow Rate Calibration"
 msgstr "When to use Flow Rate Calibration"
@@ -15591,7 +15455,7 @@ msgid "In addition, Flow Rate Calibration is crucial for foaming materials like 
 msgstr "In addition, Flow Rate Calibration is crucial for foaming materials like LW-PLA used in RC planes. These materials expand greatly when heated, and calibration provides a useful reference flow rate."
 
 msgid "Flow Rate Calibration measures the ratio of expected to actual extrusion volumes. The default setting works well in Bambu Lab printers and official filaments as they were pre-calibrated and fine-tuned. For a regular filament, you usually won't need to perform a Flow Rate Calibration unless you still see the listed defects after you have done other calibrations. For more details, please check out the wiki article."
-msgstr "Flow Rate Calibration measures the ratio of expected to actual extrusion volumes. The default setting works well with Bambu Lab printers and official filaments as they were pre-calibrated and fine-tuned. For a regular filament, you usually won't need to perform a Flow Rate Calibration unless you still see the listed defects after you have done other calibrations. For more details, please check out our wiki article."
+msgstr "Flow Rate Calibration measures the ratio of expected to actual extrusion volumes. The default setting works well with Bambu Lab printers and official inks as they were pre-calibrated and fine-tuned. For a regular ink, you usually won't need to perform a Flow Rate Calibration unless you still see the listed defects after you have done other calibrations. For more details, please check out our wiki article."
 
 msgid ""
 "Auto Flow Rate Calibration utilizes Bambu Lab's Micro-Lidar technology, directly measuring the calibration patterns. However, please be advised that the efficacy and accuracy of this method may be compromised with specific types of materials. Particularly, filaments that are transparent or semi-transparent, sparkling-particled, or have a high-reflective finish may not be suitable for this calibration and can produce less-than-desirable results.\n"
@@ -15599,12 +15463,7 @@ msgid ""
 "The calibration results may vary between each calibration or filament. We are still improving the accuracy and compatibility of this calibration through firmware updates over time.\n"
 "\n"
 "Caution: Flow Rate Calibration is an advanced process, to be attempted only by those who fully understand its purpose and implications. Incorrect usage can lead to sub-par prints or printer damage. Please make sure to carefully read and understand the process before doing it."
-msgstr ""
-"Auto Flow Rate Calibration utilizes Bambu Lab's Micro-Lidar technology, directly measuring the calibration patterns. However, please be advised that the efficacy and accuracy of this method may be compromised with specific types of materials. Particularly, filaments that are transparent or semi-transparent, have sparkles, or have a highly-reflective finish may not be suitable for this calibration and can produce less-than-desirable results.\n"
-"\n"
-"The calibration results may vary between each calibration or filament. We are still improving the accuracy and compatibility of this calibration through firmware updates over time.\n"
-"\n"
-"Caution: Flow Rate Calibration is an advanced process, to be attempted only by those who fully understand its purpose and implications. Incorrect usage can lead to sub-par prints or printer damage. Please make sure to carefully read and understand the process before doing it."
+msgstr "Auto Flow Rate Calibration utilizes Bambu Lab's Micro-Lidar technology, directly measuring the calibration patterns. However, please be advised that the efficacy and accuracy of this method may be compromised with specific types of materials. Particularly, inks that are transparent or semi-transparent, have sparkles, or have a highly-reflective finish may not be suitable for this calibration and can produce less-than-desirable results.\n\nThe calibration results may vary between each calibration or ink. We are still improving the accuracy and compatibility of this calibration through firmware updates over time.\n\nCaution: Flow Rate Calibration is an advanced process, to be attempted only by those who fully understand its purpose and implications. Incorrect usage can lead to sub-par prints or printer damage. Please make sure to carefully read and understand the process before doing it."
 
 msgid "When you need Max Volumetric Speed Calibration"
 msgstr "When you need Max Volumetric Speed Calibration"
@@ -15619,7 +15478,7 @@ msgid "material with significant thermal shrinkage/expansion, such as..."
 msgstr "material with significant thermal shrinkage/expansion, such as..."
 
 msgid "materials with inaccurate filament diameter"
-msgstr "materials with inaccurate filament diameter"
+msgstr "materials with inaccurate ink diameter"
 
 msgid "We found the best Flow Dynamics Calibration Factor"
 msgstr "We found the best Flow Dynamics Calibration Factor"
@@ -15655,7 +15514,7 @@ msgid "Input Value"
 msgstr "Input Value"
 
 msgid "Save to Filament Preset"
-msgstr "Save to Filament Preset"
+msgstr "Save to Ink Preset"
 
 msgid "Preset"
 msgstr "Preset"
@@ -15722,7 +15581,7 @@ msgid "Printing Parameters"
 msgstr "Printing Parameters"
 
 msgid "Synchronize nozzle and AMS information"
-msgstr ""
+msgstr "Synchronize nozzle and Ink Dispenser information"
 
 msgid "Please connect the printer first before synchronizing."
 msgstr ""
@@ -15732,7 +15591,7 @@ msgid "Printer %s nozzle information has not been set. Please configure it befor
 msgstr ""
 
 msgid "AMS and nozzle information are synced"
-msgstr ""
+msgstr "Ink Dispenser and nozzle information are synced"
 
 msgid "Nozzle Flow"
 msgstr ""
@@ -15744,16 +15603,16 @@ msgid "Plate Type"
 msgstr "Plate Type"
 
 msgid "filament position"
-msgstr "filament position"
+msgstr "ink position"
 
 msgid "Filament For Calibration"
-msgstr "Filament For Calibration"
+msgstr "Ink For Calibration"
 
 msgid ""
 "Tips for calibration material: \n"
 "- Materials that can share same hot bed temperature\n"
 "- Different filament brand and family(Brand = Bambu, Family = Basic, Matte)\n"
-msgstr ""
+msgstr "Tips for calibration material: \n- Materials that can share same hot bed temperature\n- Different ink brand and family(Brand = Bambu, Family = Basic, Matte)\n"
 
 msgid "(Aux) does not support automatic flow calibration."
 msgstr ""
@@ -15765,10 +15624,7 @@ msgid ""
 "Tips for calibration material: \n"
 "- Materials that can share same hot bed temperature\n"
 "- Different filament brand and family(Brand = Bambu, Family = Basic, Matte)"
-msgstr ""
-"Tips for calibration material: \n"
-"- Materials that can share same hot bed temperature\n"
-"- Different filament brand and family (Brand = Bambu, Family = Basic, Matte, etc.)"
+msgstr "Tips for calibration material: \n- Materials that can share same hot bed temperature\n- Different ink brand and family (Brand = Bambu, Family = Basic, Matte, etc.)"
 
 msgid "Pattern"
 msgstr "Pattern"
@@ -15796,22 +15652,22 @@ msgid "TPU is not supported for Flow Dynamics Auto-Calibration."
 msgstr "TPU is not supported for Flow Dynamics Auto-Calibration."
 
 msgid "Can not print multiple filaments which have large difference of temperature together. Otherwise, the extruder and nozzle may be blocked or damaged during printing"
-msgstr "Unable to print multiple filaments which have large temperature differences together. Otherwise, the extruder and nozzle may be blocked or damaged during printing."
+msgstr "Unable to print multiple inks which have large temperature differences together. Otherwise, the extruder and nozzle may be blocked or damaged during printing."
 
 #, c-format, boost-format
 msgid ""
 "Tip: Calibrating foam filaments(%s) in X series printers may not get accurate results\n"
 "because their dynamic response is much different from that of ordinary filaments, and there is a high risk of oozing when printing calibration lines."
-msgstr ""
+msgstr "Tip: Calibrating foam inks(%s) in X series printers may not get accurate results\nbecause their dynamic response is much different from that of ordinary inks, and there is a high risk of oozing when printing calibration lines."
 
 #, c-format, boost-format
 msgid ""
 "Tip: When using the A1/A1 mini printer, we do not recommend calibrating foam filaments(%s),\n"
 "as the results may be unstable and affect print quality."
-msgstr ""
+msgstr "Tip: When using the A1/A1 mini printer, we do not recommend calibrating foam inks(%s),\nas the results may be unstable and affect print quality."
 
 msgid "Sync AMS and nozzle information"
-msgstr ""
+msgstr "Sync Ink Dispenser and nozzle information"
 
 msgid "Connecting to printer"
 msgstr "Connecting to printer"
@@ -15871,7 +15727,7 @@ msgstr "Edit Flow Dynamics Calibration"
 
 #, c-format, boost-format
 msgid "Within the same extruder, the name '%s' must be unique when the filament type, nozzle diameter, and nozzle flow are identical. Please choose a different name."
-msgstr ""
+msgstr "Within the same extruder, the name '%s' must be unique when the ink type, nozzle diameter, and nozzle flow are identical. Please choose a different name."
 
 msgid "New Flow Dynamic Calibration"
 msgstr "New Flow Dynamic Calibration"
@@ -15880,7 +15736,7 @@ msgid "Ok"
 msgstr "Ok"
 
 msgid "The filament must be selected."
-msgstr "The filament must be selected."
+msgstr "The ink must be selected."
 
 msgid "The extruder must be selected."
 msgstr ""
@@ -15919,7 +15775,7 @@ msgid "Temperature calibration"
 msgstr "Temperature calibration"
 
 msgid "Filament type"
-msgstr "Filament type"
+msgstr "Ink type"
 
 msgid "Start temp: "
 msgstr "Start temp: "
@@ -16024,10 +15880,6 @@ msgstr "Progress"
 
 msgid "Host"
 msgstr "Host"
-
-msgctxt "OfFile"
-msgid "Size"
-msgstr "Size"
 
 msgid "Filename"
 msgstr "Filename"
@@ -16204,25 +16056,25 @@ msgid "Log Info"
 msgstr "Log Info"
 
 msgid "Select filament preset"
-msgstr "Select filament preset"
+msgstr "Select ink preset"
 
 msgid "Create Filament"
-msgstr "Create Filament"
+msgstr "Create Ink"
 
 msgid "Create Based on Current Filament"
-msgstr "Create Based on Current Filament"
+msgstr "Create Based on Current Ink"
 
 msgid "Copy Current Filament Preset "
-msgstr "Copy Current Filament Preset "
+msgstr "Copy Current Ink Preset "
 
 msgid "Basic Information"
 msgstr "Basic Information"
 
 msgid "Add Filament Preset under this filament"
-msgstr "Add Filament Preset under this filament"
+msgstr "Add Ink Preset under this ink"
 
 msgid "We could create the filament presets for your following printer:"
-msgstr "We could create the filament presets for your following printer:"
+msgstr "We could create the ink presets for your following printer:"
 
 msgid "Select Vendor"
 msgstr "Select Vendor"
@@ -16237,7 +16089,7 @@ msgid "Select Type"
 msgstr "Select Type"
 
 msgid "Select Filament Preset"
-msgstr "Select Filament Preset"
+msgstr "Select Ink Preset"
 
 msgid "Serial"
 msgstr "Serial"
@@ -16246,7 +16098,7 @@ msgid "e.g. Basic, Matte, Silk, Marble"
 msgstr "e.g. Basic, Matte, Silk, Marble"
 
 msgid "Filament Preset"
-msgstr "Filament Preset"
+msgstr "Ink Preset"
 
 msgid "Create"
 msgstr "Create"
@@ -16258,16 +16110,16 @@ msgid "Custom vendor is not input, please input custom vendor."
 msgstr "Custom vendor missing; please input custom vendor."
 
 msgid "\"Bambu\" or \"Generic\" can not be used as a Vendor for custom filaments."
-msgstr "\"Bambu\" or \"Generic\" can not be used as a Vendor for custom filaments."
+msgstr "\"Bambu\" or \"Generic\" can not be used as a Vendor for custom inks."
 
 msgid "Filament type is not selected, please reselect type."
-msgstr "Filament type is not selected, please reselect type."
+msgstr "Ink type is not selected, please reselect type."
 
 msgid "Filament serial is not inputed, please input serial."
-msgstr "Filament serial missing; please input serial."
+msgstr "Ink serial missing; please input serial."
 
 msgid "There may be escape characters in the vendor or serial input of filament. Please delete and re-enter."
-msgstr "There may be disallowed characters in the vendor or serial input of the filament. Please delete and re-enter."
+msgstr "There may be disallowed characters in the vendor or serial input of the ink. Please delete and re-enter."
 
 msgid "All inputs in the custom vendor or serial are spaces. Please re-enter."
 msgstr "All inputs in the custom vendor or serial are spaces. Please re-enter."
@@ -16282,9 +16134,7 @@ msgstr "You have not selected a printer or preset yet. Please select at least on
 msgid ""
 "The Filament name %s you created already exists. \n"
 "If you continue creating, the preset created will be displayed with its full name. Do you want to continue?"
-msgstr ""
-"The Filament name %s you created already exists. \n"
-"If you continue, the preset created will be displayed with its full name. Do you want to continue?"
+msgstr "The Ink name %s you created already exists. \nIf you continue, the preset created will be displayed with its full name. Do you want to continue?"
 
 msgid "Some existing presets have failed to be created, as follows:\n"
 msgstr "Some existing presets have failed to be created, as follows:\n"
@@ -16388,7 +16238,7 @@ msgid "Presets"
 msgstr "Presets"
 
 msgid "Filament Preset Template"
-msgstr "Filament Preset Template"
+msgstr "Ink Preset Template"
 
 msgid "Deselect All"
 msgstr "Deselect All"
@@ -16410,20 +16260,16 @@ msgid ""
 "\tYes: Overwrite the printer preset with the same name, and filament and process presets with the same preset name will be recreated \n"
 "and filament and process presets without the same preset name will be reserve.\n"
 "\tCancel: Do not create a preset, return to the creation interface."
-msgstr ""
-"The printer preset you created already has a preset with the same name. Do you want to overwrite it?\n"
-"\tYes: Overwrite the printer preset with the same name, and filament and process presets with the same preset name will be recreated \n"
-"and filament and process presets without the same preset name will be reserved.\n"
-"\tCancel: Do not create a preset; return to the creation interface."
+msgstr "The printer preset you created already has a preset with the same name. Do you want to overwrite it?\n\tYes: Overwrite the printer preset with the same name, and ink and process presets with the same preset name will be recreated \nand ink and process presets without the same preset name will be reserved.\n\tCancel: Do not create a preset; return to the creation interface."
 
 msgid "You need to select at least one filament preset."
-msgstr "You need to select at least one filament preset."
+msgstr "You need to select at least one ink preset."
 
 msgid "You need to select at least one process preset."
 msgstr "You need to select at least one process preset."
 
 msgid "Create filament presets failed. As follows:\n"
-msgstr "Create filament presets failed. As follows:\n"
+msgstr "Create ink presets failed. As follows:\n"
 
 msgid "Create process presets failed. As follows:\n"
 msgstr "Create process presets failed. As follows:\n"
@@ -16461,7 +16307,7 @@ msgid "Create Printer Successful"
 msgstr "Create Printer Successful"
 
 msgid "Create Filament Successful"
-msgstr "Filament Created Successfully"
+msgstr "Ink Created Successfully"
 
 msgid "Printer Created"
 msgstr "Printer Created"
@@ -16470,21 +16316,17 @@ msgid "Please go to printer settings to edit your presets"
 msgstr "Please go to printer settings to edit your presets"
 
 msgid "Filament Created"
-msgstr "Filament Created"
+msgstr "Ink Created"
 
 msgid ""
 "Please go to filament setting to edit your presets if you need.\n"
 "Please note that nozzle temperature, hot bed temperature, and maximum volumetric speed has a significant impact on printing quality. Please set them carefully."
-msgstr ""
-"Please go to filament settings to edit your presets if you need to.\n"
-"Please note that nozzle temperature, hot bed temperature, and maximum volumetric speed each have a significant impact on printing quality. Please set them carefully."
+msgstr "Please go to ink settings to edit your presets if you need to.\nPlease note that nozzle temperature, hot bed temperature, and maximum volumetric speed each have a significant impact on printing quality. Please set them carefully."
 
 msgid ""
 "Studio has detected that your user presets synchronization function is not enabled, which may result in unsuccessful Filament settings on the Device page. \n"
 "Click \"Sync user presets\" to enable the synchronization function."
-msgstr ""
-"Studio has detected that your user presets synchronization function is not enabled, which may result in unsuccessful Filament settings on the Device page. \n"
-"Click \"Sync user presets\" to enable the synchronization function."
+msgstr "Studio has detected that your user presets synchronization function is not enabled, which may result in unsuccessful Ink settings on the Device page. \nClick \"Sync user presets\" to enable the synchronization function."
 
 msgid "Printer Setting"
 msgstr "Printer Setting"
@@ -16493,13 +16335,13 @@ msgid "Printer preset bundle(.bbscfg)"
 msgstr ""
 
 msgid "Filament preset bundle(.bbsflmt)"
-msgstr ""
+msgstr "Ink preset bundle(.bbsflmt)"
 
 msgid "Printer presets(.zip)"
 msgstr "Printer presets(.zip)"
 
 msgid "Filament presets(.zip)"
-msgstr "Filament presets(.zip)"
+msgstr "Ink presets(.zip)"
 
 msgid "Process presets(.zip)"
 msgstr "Process presets(.zip)"
@@ -16533,9 +16375,7 @@ msgstr ""
 msgid ""
 "Printer and all the filament&process presets that belong to the printer. \n"
 "Can be shared with others."
-msgstr ""
-"Printer and all the filament & process presets that belong to the printer,\n"
-"Can be shared with others"
+msgstr "Printer and all the ink & process presets that belong to the printer,\nCan be shared with others"
 
 msgid ""
 "User's fillment preset set. \n"
@@ -16545,10 +16385,10 @@ msgstr ""
 "Can be shared with others."
 
 msgid "Only display printer names with changes to printer, filament, and process presets."
-msgstr "Only display printers with changes to printer, filament, and process presets are displayed."
+msgstr "Only display printers with changes to printer, ink, and process presets are displayed."
 
 msgid "Only display the filament names with changes to filament presets."
-msgstr "Only display the filament names with changes to filament presets."
+msgstr "Only display the ink names with changes to ink presets."
 
 msgid "Only printer names with user printer presets will be displayed, and each preset you choose will be exported as a zip."
 msgstr "Only printer names with user printer presets will be displayed, and each preset you choose will be exported as a zip."
@@ -16556,9 +16396,7 @@ msgstr "Only printer names with user printer presets will be displayed, and each
 msgid ""
 "Only the filament names with user filament presets will be displayed, \n"
 "and all user filament presets in each filament name you select will be exported as a zip."
-msgstr ""
-"Only the filament names with user filament presets will be displayed, \n"
-"and all user filament presets in each filament name you select will be exported as a zip."
+msgstr "Only the ink names with user ink presets will be displayed, \nand all user ink presets in each ink name you select will be exported as a zip."
 
 msgid ""
 "Only printer names with changed process presets will be displayed, \n"
@@ -16568,7 +16406,7 @@ msgstr ""
 "and all user process presets in each printer name you select will be exported as a zip."
 
 msgid "Please select at least one printer or filament."
-msgstr "Please select at least one printer or filament."
+msgstr "Please select at least one printer or ink."
 
 msgid "Please select a type you want to export"
 msgstr "Please select a preset type you want to export"
@@ -16577,13 +16415,13 @@ msgid "Failed to create temporary folder, please try Export Configs again."
 msgstr "Failed to create temporary folder, please try Export Configs again."
 
 msgid "Edit Filament"
-msgstr "Edit Filament"
+msgstr "Edit Ink"
 
 msgid "Filament presets under this filament"
-msgstr "Filament presets under this filament"
+msgstr "Ink presets under this ink"
 
 msgid "Note: If the only preset under this filament is deleted, the filament will be deleted after exiting the dialog."
-msgstr "Note: If the only preset under this filament is deleted, the filament will be deleted after exiting the dialog."
+msgstr "Note: If the only preset under this ink is deleted, the ink will be deleted after exiting the dialog."
 
 msgid "Presets inherited by other presets can not be deleted"
 msgstr "Presets inherited by other presets can not be deleted"
@@ -16606,17 +16444,15 @@ msgid "+ Add Preset"
 msgstr "+ Add Preset"
 
 msgid "Delete Filament"
-msgstr "Delete Filament"
+msgstr "Delete Ink"
 
 msgid ""
 "All the filament presets belong to this filament would be deleted. \n"
 "If you are using this filament on your printer, please reset the filament information for that slot."
-msgstr ""
-"All the filament presets belong to this filament would be deleted. \n"
-"If you are using this filament on your printer, please reset the filament information for that slot."
+msgstr "All the ink presets belong to this ink would be deleted. \nIf you are using this ink on your printer, please reset the ink information for that slot."
 
 msgid "Delete filament"
-msgstr "Delete filament"
+msgstr "Delete ink"
 
 msgid "Add Preset"
 msgstr "Add Preset"
@@ -16625,10 +16461,10 @@ msgid "Add preset for new printer"
 msgstr "Add preset for new printer"
 
 msgid "Copy preset from filament"
-msgstr "Copy preset from filament"
+msgstr "Copy preset from ink"
 
 msgid "The filament choice not find filament preset, please reselect it"
-msgstr "The filament choice not find filament preset, please reselect it"
+msgstr "The ink choice not find ink preset, please reselect it"
 
 msgid "[Delete Required]"
 msgstr "[Delete Required]"
@@ -16733,7 +16569,7 @@ msgid ""
 msgstr ""
 
 msgid "Flow calibration does not support multiple nozzle diameters at the same time. Please ensure that the nozzle diameter used by the filament being calibrated is consistent before starting the calibration again."
-msgstr ""
+msgstr "Flow calibration does not support multiple nozzle diameters at the same time. Please ensure that the nozzle diameter used by the ink being calibrated is consistent before starting the calibration again."
 
 msgid "Unable to calibrate: maybe because the set calibration value range is too large, or the step is too small"
 msgstr "Unable to calibrate: maybe because the set calibration value range is too large, or the step is too small"
@@ -16907,7 +16743,7 @@ msgid "It has a general layer height, and results in general layer lines and pri
 msgstr "It has a normal layer height, and results in average layer lines and print quality. It is suitable for most printing cases."
 
 msgid "Compared with the default profile of a 0.4 mm nozzle, it has more wall loops and a higher sparse infill density. So, it results in higher strength of the prints, but more filament consumption and longer printing time."
-msgstr "Compared with the default profile of a 0.4 mm nozzle, it has more wall loops and a higher sparse infill density. This results in higher print strength but more filament consumption and longer print time."
+msgstr "Compared with the default profile of a 0.4 mm nozzle, it has more wall loops and a higher sparse infill density. This results in higher print strength but more ink consumption and longer print time."
 
 msgid "Compared with the default profile of a 0.4 mm nozzle, it has a bigger layer height, and results in more apparent layer lines and lower printing quality, but slightly shorter printing time."
 msgstr "Compared with the default profile of a 0.4 mm nozzle, it has a bigger layer height. This results in more apparent layer lines and lower print quality but slightly shorter print time."
@@ -16934,7 +16770,7 @@ msgid "It has a big layer height, and results in apparent layer lines and ordina
 msgstr "It has a big layer height, and results in apparent layer lines and ordinary printing quality and printing time."
 
 msgid "Compared with the default profile of a 0.6 mm nozzle, it has more wall loops and a higher sparse infill density. So, it results in higher strength of the prints, but more filament consumption and longer printing time."
-msgstr "Compared with the default profile of a 0.6 mm nozzle, it has more wall loops and a higher sparse infill density. This results in higher print strength but more filament consumption and longer print time."
+msgstr "Compared with the default profile of a 0.6 mm nozzle, it has more wall loops and a higher sparse infill density. This results in higher print strength but more ink consumption and longer print time."
 
 msgid "Compared with the default profile of a 0.6 mm nozzle, it has a bigger layer height, and results in more apparent layer lines and lower printing quality, but shorter printing time in some printing cases."
 msgstr "Compared with the default profile of a 0.6 mm nozzle, it has a bigger layer height. This results in more apparent layer lines and lower print quality but shorter print time in some cases."
@@ -16964,43 +16800,43 @@ msgid "Compared with the default profile of a 0.8 mm nozzle, it has a smaller la
 msgstr "Compared with the default profile of a 0.8 mm nozzle, it has a smaller layer height. This results in less but still apparent layer lines and slightly higher print quality, but longer print time in some cases."
 
 msgid "This is neither a commonly used filament, nor one of Bambu filaments, and it varies a lot from brand to brand. So, it's highly recommended to ask its vendor for suitable profile before printing and adjust some parameters according to its performances."
-msgstr "This is neither a commonly used filament, nor a Bambu filament, and it varies a lot from brand to brand, so it's highly recommended to ask the vendor for a suitable profile before printing and adjust some parameters according to its performance."
+msgstr "This is neither a commonly used ink, nor a Bambu ink, and it varies a lot from brand to brand, so it's highly recommended to ask the vendor for a suitable profile before printing and adjust some parameters according to its performance."
 
 msgid "When printing this filament, there's a risk of warping and low layer adhesion strength. To get better results, please refer to this wiki: Printing Tips for High Temp / Engineering materials."
-msgstr ""
+msgstr "When printing this ink, there's a risk of warping and low layer adhesion strength. To get better results, please refer to this wiki: Printing Tips for High Temp / Engineering materials."
 
 msgid "When printing this filament, there's a risk of nozzle clogging, oozing, warping and low layer adhesion strength. To get better results, please refer to this wiki: Printing Tips for High Temp / Engineering materials."
-msgstr ""
+msgstr "When printing this ink, there's a risk of nozzle clogging, oozing, warping and low layer adhesion strength. To get better results, please refer to this wiki: Printing Tips for High Temp / Engineering materials."
 
 msgid "To get better transparent or translucent results with the corresponding filament, please refer to this wiki: Printing tips for transparent PETG."
-msgstr ""
+msgstr "To get better transparent or translucent results with the corresponding ink, please refer to this wiki: Printing tips for transparent PETG."
 
 msgid "To make the prints get higher gloss, please dry the filament before use, and set the outer wall speed to be 40 to 60 mm/s when slicing."
-msgstr ""
+msgstr "To make the prints get higher gloss, please dry the ink before use, and set the outer wall speed to be 40 to 60 mm/s when slicing."
 
 msgid "This filament is only used to print models with a low density usually, and some special parameters are required. To get better printing quality, please refer to this wiki: Instructions for printing RC model with foaming PLA (PLA Aero)."
-msgstr ""
+msgstr "This ink is only used to print models with a low density usually, and some special parameters are required. To get better printing quality, please refer to this wiki: Instructions for printing RC model with foaming PLA (PLA Aero)."
 
 msgid "This filament is only used to print models with a low density usually, and some special parameters are required. To get better printing quality, please refer to this wiki: ASA Aero Printing Guide."
-msgstr ""
+msgstr "This ink is only used to print models with a low density usually, and some special parameters are required. To get better printing quality, please refer to this wiki: ASA Aero Printing Guide."
 
 msgid "This filament is too soft and not compatible with the AMS. Printing it is of many requirements, and to get better printing quality, please refer to this wiki: TPU printing guide."
-msgstr ""
+msgstr "This ink is too soft and not compatible with the Ink Dispenser. Printing it is of many requirements, and to get better printing quality, please refer to this wiki: TPU printing guide."
 
 msgid "This filament has high enough hardness (about 67D)  and is compatible with the AMS. Printing it is of many requirements, and to get better printing quality, please refer to this wiki: TPU printing guide."
-msgstr ""
+msgstr "This ink has high enough hardness (about 67D)  and is compatible with the Ink Dispenser. Printing it is of many requirements, and to get better printing quality, please refer to this wiki: TPU printing guide."
 
 msgid "If you are to print a kind of soft TPU, please don't slice with this profile, and it is only for TPU that has high enough hardness (not less than 55D) and is compatible with the AMS. To get better printing quality, please refer to this wiki: TPU printing guide."
-msgstr ""
+msgstr "If you are to print a kind of soft TPU, please don't slice with this profile, and it is only for TPU that has high enough hardness (not less than 55D) and is compatible with the Ink Dispenser. To get better printing quality, please refer to this wiki: TPU printing guide."
 
 msgid "This is a water-soluble support filament, and usually it is only for the support structure and not for the model body. Printing this filament is of many requirements, and to get better printing quality, please refer to this wiki: PVA Printing Guide."
-msgstr ""
+msgstr "This is a water-soluble support ink, and usually it is only for the support structure and not for the model body. Printing this ink is of many requirements, and to get better printing quality, please refer to this wiki: PVA Printing Guide."
 
 msgid "This is a non-water-soluble support filament, and usually it is only for the support structure and not for the model body. To get better printing quality, please refer to this wiki: Printing Tips for Support Filament and Support Function."
-msgstr ""
+msgstr "This is a non-water-soluble support ink, and usually it is only for the support structure and not for the model body. To get better printing quality, please refer to this wiki: Printing Tips for Support Ink and Support Function."
 
 msgid "The generic presets are conservatively tuned for compatibility with a wider range of filaments. For higher printing quality and speeds, please use Bambu filaments with Bambu presets."
-msgstr ""
+msgstr "The generic presets are conservatively tuned for compatibility with a wider range of inks. For higher printing quality and speeds, please use Bambu inks with Bambu presets."
 
 msgid "High quality profile for 0.2mm nozzle, prioritizing print quality."
 msgstr ""
@@ -17111,7 +16947,7 @@ msgid "Helio: GCode download failed"
 msgstr ""
 
 msgid "No AMS"
-msgstr "No AMS"
+msgstr "No Ink Dispenser"
 
 msgid "There is no device available to send printing."
 msgstr ""
@@ -17132,7 +16968,7 @@ msgid "Device Status"
 msgstr "Device Status"
 
 msgid "Ams Status"
-msgstr "AMS Status"
+msgstr "Ink Dispenser Status"
 
 msgid "Please select the devices you would like to manage here (up to 6 devices)"
 msgstr ""
@@ -17250,7 +17086,7 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "Filament presets (%d)"
-msgstr ""
+msgstr "Ink presets (%d)"
 
 #, c-format, boost-format
 msgid "Process presets (%d)"
@@ -17268,16 +17104,16 @@ msgid "%d %s Preset will be deleted."
 msgstr ""
 
 msgid "Enable smart filament assign: Assign one filament to multiple nozzles to maximize savings"
-msgstr ""
+msgstr "Enable smart ink assign: Assign one ink to multiple nozzles to maximize savings"
 
 msgid "Filament grouping"
-msgstr ""
+msgstr "Ink grouping"
 
 msgid "Fila Saving"
 msgstr ""
 
 msgid "Filament-Saving Mode"
-msgstr ""
+msgstr "Ink-Saving Mode"
 
 msgid "Convenience Mode"
 msgstr ""
@@ -17290,19 +17126,19 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"
-msgstr ""
+msgstr "Generates ink grouping for the %s and %s based on the most ink-saving principles to minimize waste"
 
 #, c-format, boost-format
 msgid "Generates filament grouping for the %s and %s based on the printer's actual filament status, reducing the need for manual filament adjustment"
-msgstr ""
+msgstr "Generates ink grouping for the %s and %s based on the printer's actual ink status, reducing the need for manual ink adjustment"
 
 #, c-format, boost-format
 msgid "Generates filament grouping for the %s and %s based on quality optimization principles"
-msgstr ""
+msgstr "Generates ink grouping for the %s and %s based on quality optimization principles"
 
 #, c-format, boost-format
 msgid "Manually assign filament to the %s or %s"
-msgstr ""
+msgstr "Manually assign ink to the %s or %s"
 
 msgid "Global settings"
 msgstr ""
@@ -17321,7 +17157,7 @@ msgid "We will slice according to this grouping method:"
 msgstr ""
 
 msgid "Tips: You can drag the filaments to reassign them to different nozzles."
-msgstr ""
+msgstr "Tips: You can drag the inks to reassign them to different nozzles."
 
 msgid "Please adjust your grouping or click "
 msgstr ""
@@ -17331,7 +17167,7 @@ msgstr ""
 
 #, c-format, boost-format
 msgid "Generates filament grouping for the %s and %s based on the quality of prints, prioritizing print quality over filament saving"
-msgstr ""
+msgstr "Generates ink grouping for the %s and %s based on the quality of prints, prioritizing print quality over ink saving"
 
 msgid "Skip Objects"
 msgstr "Skip Objects"
@@ -17392,7 +17228,7 @@ msgid "Multiple Color"
 msgstr ""
 
 msgid "Official Filament"
-msgstr "Official Filaments"
+msgstr "Official Inks"
 
 msgid "More Colors"
 msgstr ""
@@ -17454,10 +17290,10 @@ msgid "Learn more about prime mode"
 msgstr ""
 
 msgid "AMS Dryness Control"
-msgstr ""
+msgstr "Ink Dispenser Dryness Control"
 
 msgid "Filament Drying Settings"
-msgstr ""
+msgstr "Ink Drying Settings"
 
 msgid "Start"
 msgstr "Start"
@@ -17472,16 +17308,12 @@ msgid "Please check the Assistant for troubleshooting"
 msgstr ""
 
 msgid "Please remove and store the filament (as shown)."
-msgstr ""
+msgstr "Please remove and store the ink (as shown)."
 
 msgid "The AMS can rotate the filament which is properly stored, providing better drying results."
-msgstr ""
+msgstr "The Ink Dispenser can rotate the ink which is properly stored, providing better drying results."
 
 msgid "Rotate spool when drying"
-msgstr ""
-
-msgctxt "amsdrying"
-msgid "Back"
 msgstr ""
 
 msgid "Drying-Heating"
@@ -17497,13 +17329,13 @@ msgid " minimum drying temperature is "
 msgstr ""
 
 msgid "This filament may not be completely dried."
-msgstr ""
+msgstr "This ink may not be completely dried."
 
 msgid "This AMS is currently printing. To ensure print quality, the drying temperature cannot exceed the recommended drying temperature."
-msgstr ""
+msgstr "This Ink Dispenser is currently printing. To ensure print quality, the drying temperature cannot exceed the recommended drying temperature."
 
 msgid "The temperature shall not exceed the filament's heat distortion temperature"
-msgstr ""
+msgstr "The temperature shall not exceed the ink's heat distortion temperature"
 
 msgid "Minimum time value cannot be less than 1."
 msgstr ""
@@ -17515,22 +17347,22 @@ msgid "Insufficient power"
 msgstr ""
 
 msgid "  Too many AMS drying simultaneously. Please plug in the power or stop other drying processes before starting."
-msgstr ""
+msgstr "  Too many Ink Dispenser drying simultaneously. Please plug in the power or stop other drying processes before starting."
 
 msgid "AMS is busy"
-msgstr ""
+msgstr "Ink Dispenser is busy"
 
 msgid "  AMS is calibrating | reading RFID | loading/unloading material, please wait."
-msgstr ""
+msgstr "  Ink Dispenser is calibrating | reading RFID | loading/unloading material, please wait."
 
 msgid "Filament in AMS outlet"
-msgstr ""
+msgstr "Ink in Ink Dispenser outlet"
 
 msgid "  The high drying temperature may cause AMS blockage, please unload first."
-msgstr ""
+msgstr "  The high drying temperature may cause Ink Dispenser blockage, please unload first."
 
 msgid "Initiating AMS drying"
-msgstr ""
+msgstr "Initiating Ink Dispenser drying"
 
 msgid "Not supported in 2D mode"
 msgstr ""
@@ -17539,7 +17371,7 @@ msgid "Task in progress"
 msgstr ""
 
 msgid "  The AMS might be in use during Task."
-msgstr ""
+msgstr "  The Ink Dispenser might be in use during Task."
 
 msgid "  Firmware update in progress, please wait..."
 msgstr ""
@@ -17548,7 +17380,7 @@ msgid "  Please plug in the power and then use the drying function."
 msgstr ""
 
 msgid "  The high drying temperature may cause AMS blockage. Please unload the filament manually before proceeding."
-msgstr ""
+msgstr "  The high drying temperature may cause Ink Dispenser blockage. Please unload the ink manually before proceeding."
 
 msgid "System is busy"
 msgstr ""
@@ -17557,34 +17389,34 @@ msgid "  Initiating other drying processes, please wait a few seconds..."
 msgstr ""
 
 msgid "For better drying results, remove the filament and allow it to rotate."
-msgstr ""
+msgstr "For better drying results, remove the ink and allow it to rotate."
 
 msgid "The AMS will automatically rotate the stored filament slots to enhance the drying performance."
-msgstr ""
+msgstr "The Ink Dispenser will automatically rotate the stored ink slots to enhance the drying performance."
 
 msgid "Alternatively, you can dry the filament without removing it."
-msgstr ""
+msgstr "Alternatively, you can dry the ink without removing it."
 
 msgid "Unknown filaments will be treated as PLA."
-msgstr ""
+msgstr "Unknown inks will be treated as PLA."
 
 msgid "Please store the filament marked with an exclamation mark."
-msgstr ""
+msgstr "Please store the ink marked with an exclamation mark."
 
 msgid "Filament left in the feeder during drying may soften because the drying temperature exceeds the softening point of materials like PLA and TPU."
-msgstr ""
+msgstr "Ink left in the feeder during drying may soften because the drying temperature exceeds the softening point of materials like PLA and TPU."
 
 msgid "Starting: Checking adapter connection"
 msgstr ""
 
 msgid "Starting: Checking filament status"
-msgstr ""
+msgstr "Starting: Checking ink status"
 
 msgid "Starting: Checking drying presets"
 msgstr ""
 
 msgid "Starting: Checking filament location"
-msgstr ""
+msgstr "Starting: Checking ink location"
 
 msgid "Starting: Checking air intake"
 msgstr ""
@@ -17706,7 +17538,7 @@ msgid "Click to edit ratio"
 msgstr ""
 
 msgid "Edit Mixed Filament"
-msgstr ""
+msgstr "Edit Mixed Ink"
 
 msgid "Effect Preview"
 msgstr ""
@@ -17743,13 +17575,13 @@ msgid "Slot %s (%s)"
 msgstr ""
 
 msgid "cannot be mixed. Please select the same filament type."
-msgstr ""
+msgstr "cannot be mixed. Please select the same ink type."
 
 msgid "Please select a filament for all components"
-msgstr ""
+msgstr "Please select an ink for all components"
 
 msgid "Cannot mix different filament types"
-msgstr ""
+msgstr "Cannot mix different ink types"
 
 msgid "Maximum 3 materials for mixing"
 msgstr ""
@@ -17761,7 +17593,7 @@ msgid "Remove the third material"
 msgstr ""
 
 msgid "Project Filament List"
-msgstr ""
+msgstr "Project Ink List"
 
 msgid "Standard Mode Recommendations"
 msgstr ""
@@ -17782,11 +17614,11 @@ msgid "Standard Mode"
 msgstr "Standard"
 
 msgid "At least two filaments of the same material type are required for decomposition"
-msgstr ""
+msgstr "At least two inks of the same material type are required for decomposition"
 
 #, boost-format
 msgid "The material list supports at most %1% colors. After %2% decomposition, the material count would exceed %1%. Please delete unused filaments on the main screen before decomposing."
-msgstr ""
+msgstr "The material list supports at most %1% colors. After %2% decomposition, the material count would exceed %1%. Please delete unused inks on the main screen before decomposing."
 
 msgid "Cyan"
 msgstr ""
@@ -17801,10 +17633,10 @@ msgid ", "
 msgstr ""
 
 msgid "The current filament list does not contain "
-msgstr ""
+msgstr "The current ink list does not contain "
 
 msgid ". A project filament required by the mixed filament will be created automatically after decomposition."
-msgstr ""
+msgstr ". A project ink required by the mixed ink will be created automatically after decomposition."
 
 msgid "Material Ratio"
 msgstr ""
@@ -17963,17 +17795,13 @@ msgstr ""
 msgid ""
 "Different types of supports\n"
 "Did you know that you can choose from multiple types of supports? Tree supports work great for organic models, while saving filament and improving print speed. Check them out!"
-msgstr ""
-"Different types of supports\n"
-"Did you know that you can choose from multiple types of supports? Tree supports work great for organic models while saving filament and improving print speed. Check them out!"
+msgstr "Different types of supports\nDid you know that you can choose from multiple types of supports? Tree supports work great for organic models while saving ink and improving print speed. Check them out!"
 
 #: resources/data/hints.ini: [hint:Printing Silk Filament]
 msgid ""
 "Printing Silk Filament\n"
 "Did you know that Silk filament needs special consideration to print it successfully? Higher temperature and lower speed are always recommended for the best results."
-msgstr ""
-"Printing Silk Filament\n"
-"Did you know that Silk filament needs special consideration to print successfully? A higher temperature and lower speed are always recommended for the best results."
+msgstr "Printing Silk Ink\nDid you know that Silk ink needs special consideration to print successfully? A higher temperature and lower speed are always recommended for the best results."
 
 #: resources/data/hints.ini: [hint:Brim for better adhesion]
 msgid ""
@@ -18003,9 +17831,7 @@ msgstr ""
 msgid ""
 "Flush into support/objects/infill\n"
 "Did you know that you can save the wasted filament by flushing them into support/objects/infill during filament change?"
-msgstr ""
-"Purge into support/objects/infill\n"
-"Did you know that you can reduce wasted filament by purging it into support/objects/infill during filament changes?"
+msgstr "Purge into support/objects/infill\nDid you know that you can reduce wasted ink by purging it into support/objects/infill during ink changes?"
 
 #: resources/data/hints.ini: [hint:Improve strength]
 msgid ""
@@ -18020,9 +17846,7 @@ msgstr ""
 msgid ""
 "When need to print with the printer door opened\n"
 "Did you know that opening the printer door can reduce the probability of extruder/hotend clogging when printing lower temperature filament with a higher enclosure temperature. More info about this in the Wiki."
-msgstr ""
-"When do you need to print with the printer door opened?\n"
-"Did you know that opening the printer door can reduce the probability of extruder/hotend clogging when printing lower temperature filament with a higher enclosure temperature? There is more info about this in the Wiki."
+msgstr "When do you need to print with the printer door opened?\nDid you know that opening the printer door can reduce the probability of extruder/hotend clogging when printing lower temperature ink with a higher enclosure temperature? There is more info about this in the Wiki."
 
 #: resources/data/hints.ini: [hint:Avoid warping]
 msgid ""
@@ -18036,7 +17860,7 @@ msgstr ""
 msgid ""
 "Filament Shrinkage\n"
 "Filaments such as %s have higher shrinkage rates, which may cause slight dimensional deviations after cooling and affect assembly fit. It is recommended to refer to the Wiki for shrinkage calibration to achieve more accurate print results."
-msgstr ""
+msgstr "Ink Shrinkage\nInks such as %s have higher shrinkage rates, which may cause slight dimensional deviations after cooling and affect assembly fit. It is recommended to refer to the Wiki for shrinkage calibration to achieve more accurate print results."
 
 #: resources/data/helio_hints.ini: [hint: Run Nylon & PC (and other advanced
 #: materials) Like a Pro]
@@ -18259,7 +18083,7 @@ msgid "Search settings"
 msgstr ""
 
 msgid "Search filaments"
-msgstr ""
+msgstr "Search inks"
 
 msgid "Teal"
 msgstr ""
@@ -18274,7 +18098,7 @@ msgid "Humid"
 msgstr ""
 
 msgid "Sync AMS"
-msgstr ""
+msgstr "Sync dispenser"
 
 msgid "object"
 msgstr ""
@@ -18328,7 +18152,7 @@ msgid "Simple settings"
 msgstr ""
 
 msgid "Filament switch status"
-msgstr ""
+msgstr "Ink switch status"
 
 msgid "Play or stop the camera live view"
 msgstr ""
@@ -21437,9 +21261,6 @@ msgstr "Regex builder"
 msgid "Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."
 msgstr "Engine: std::regex / std::wregex, ECMAScript grammar. Case-insensitive matching uses std::regex::icase. Escape metacharacters with a backslash."
 
-msgid "Pattern"
-msgstr "Pattern"
-
 msgid "Regex pattern"
 msgstr "Regex pattern"
 
@@ -21793,7 +21614,7 @@ msgid "Search in settings"
 msgstr "Search in settings"
 
 msgid "Find any print / filament / printer parameter"
-msgstr "Find any print / filament / printer parameter"
+msgstr "Find any print / ink / printer parameter"
 
 msgid "Build"
 msgstr "Build"
@@ -21943,13 +21764,13 @@ msgid "Minutes between live-view checks (minimum 1)."
 msgstr "Minutes between live-view checks (minimum 1)."
 
 msgid "AI filament scanner"
-msgstr "AI filament scanner"
+msgstr "AI ink scanner"
 
 msgid "Scan a spool with your phone; the result lands in an AMS slot."
-msgstr "Scan a spool with your phone; the result lands in an AMS slot."
+msgstr "Scan a spool with your phone; the result lands in an Ink Dispenser slot."
 
 msgid "Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"
-msgstr "Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"
+msgstr "Snap a spool photo on your phone; a local model identifies it and loads an Ink Dispenser slot"
 
 msgid "Scan the QR code with your phone, then photograph the spool."
 msgstr "Scan the QR code with your phone, then photograph the spool."
@@ -21961,7 +21782,7 @@ msgid "Announce the slot out loud (TTS)"
 msgstr "Announce the slot out loud (TTS)"
 
 msgid "Photo received - identifying the filament with the local model..."
-msgstr "Photo received - identifying the filament with the local model..."
+msgstr "Photo received - identifying the ink with the local model..."
 
 msgid "Identification failed: %s. Is a vision-capable Ollama model available?"
 msgstr "Identification failed: %s. Is a vision-capable Ollama model available?"
@@ -21970,7 +21791,7 @@ msgid "external spool"
 msgstr "external spool"
 
 msgid "AMS %s slot %d"
-msgstr "AMS %s slot %d"
+msgstr "Ink Dispenser %s slot %d"
 
 msgid "Identified %s (%s). Load it into %s."
 msgstr "Identified %s (%s). Load it into %s."
@@ -21979,7 +21800,7 @@ msgid " Print settings set to \"%s\"."
 msgstr " Print settings set to \"%s\"."
 
 msgid "Filament identified: %s. Load it into %s."
-msgstr "Filament identified: %s. Load it into %s."
+msgstr "Ink identified: %s. Load it into %s."
 
 msgid "Printing started."
 msgstr "Printing started."
@@ -22075,10 +21896,10 @@ msgid "Bulk"
 msgstr ""
 
 msgid "Bulk filament actions"
-msgstr ""
+msgstr "Bulk ink actions"
 
 msgid "Actions apply to the checked filament slots."
-msgstr ""
+msgstr "Actions apply to the checked ink slots."
 
 msgid "Set preset..."
 msgstr ""
@@ -22087,16 +21908,16 @@ msgid "Set color..."
 msgstr ""
 
 msgid "Delete selected filaments"
-msgstr ""
+msgstr "Delete selected inks"
 
 msgid "At least one filament always remains."
-msgstr ""
+msgstr "At least one ink always remains."
 
 msgid "Add filaments"
-msgstr ""
+msgstr "Add inks"
 
 msgid "Choose a filament preset"
-msgstr ""
+msgstr "Choose an ink preset"
 
 msgid "Play print simulation"
 msgstr "Play print simulation"
@@ -22106,3 +21927,209 @@ msgstr "Pause print simulation"
 
 msgid "Simulation speed"
 msgstr "Simulation speed"
+
+msgid "%3.2f mm³/s at filament speed %3.2f mm/s."
+msgstr "%3.2f mm³/s at ink speed %3.2f mm/s."
+
+msgid "A new filament was installed and it will be activated."
+msgstr "A new ink was installed and it will be activated."
+
+msgid "Add filament"
+msgstr "Add ink"
+
+msgid "After a tool change, the exact position of the newly loaded filament inside "
+msgstr "After a tool change, the exact position of the newly loaded ink inside "
+
+msgid "Before calibration, please make sure a filament is loaded and its nozzle temperature and bed temperature is set in Feeding lab."
+msgstr "Before calibration, please make sure an ink is loaded and its nozzle temperature and bed temperature is set in Feeding lab."
+
+msgid "Before loading, please make sure the filament is pushed into toolhead."
+msgstr "Before loading, please make sure the ink is pushed into toolhead."
+
+msgid "Do you want to select default filaments for these FFF printer models?"
+msgstr "Do you want to select default inks for these FFF printer models?"
+
+msgid "Enter the bed temperature needed for getting your filament to stick to your heated bed."
+msgstr "Enter the bed temperature needed for getting your ink to stick to your heated bed."
+
+msgid "Enter the diameter of your filament."
+msgstr "Enter the diameter of your ink."
+
+msgid "Enter the nozzle_temperature needed for extruding your filament."
+msgstr "Enter the nozzle_temperature needed for extruding your ink."
+
+msgid "Feed Filament"
+msgstr "Feed Ink"
+
+msgid "Filament Diameter:"
+msgstr "Ink Diameter:"
+
+msgid "Filament Profiles Selection"
+msgstr "Ink Profiles Selection"
+
+msgid "Filament and Nozzle Diameters"
+msgstr "Ink and Nozzle Diameters"
+
+msgid "Filament circle compensation setting"
+msgstr "Ink circle compensation setting"
+
+msgid "Following printer profiles has no default filament: %1%Please select one manually."
+msgstr "Following printer profiles has no default ink: %1%Please select one manually."
+
+msgid "Good precision is required, so use a caliper and do multiple measurements along the filament, then compute the average."
+msgstr "Good precision is required, so use a caliper and do multiple measurements along the ink, then compute the average."
+
+msgid "Only the following installed printers are compatible with the selected filaments"
+msgstr "Only the following installed printers are compatible with the selected inks"
+
+msgid "Reset to Filament Color"
+msgstr "Reset to Ink Color"
+
+msgid "Some filaments were uninstalled."
+msgstr "Some inks were uninstalled."
+
+msgid "The following FFF printer models have no filament selected:"
+msgstr "The following FFF printer models have no ink selected:"
+
+msgid "Use single nozzle to print multi filament"
+msgstr "Use single nozzle to print multi ink"
+
+msgid "When retraction is triggered before changing tool, filament is pulled back "
+msgstr "When retraction is triggered before changing tool, ink is pulled back "
+
+msgid "default filament profile"
+msgstr "default ink profile"
+
+msgid "filament"
+msgstr "ink"
+
+msgctxt "EmbossOperation"
+msgid "Cut"
+msgstr ""
+
+msgctxt "air_duct"
+msgid "Chamber"
+msgstr ""
+
+msgctxt "AssemblyStructure"
+msgid "Default"
+msgstr ""
+
+msgctxt "Filament Manager"
+msgid "Note"
+msgstr ""
+
+msgctxt "Unsupported Filaments"
+msgid "Note"
+msgstr ""
+
+msgctxt "Camera"
+msgid "Left"
+msgstr ""
+
+msgctxt "Camera"
+msgid "Right"
+msgstr ""
+
+msgctxt "Camera"
+msgid "Top"
+msgstr ""
+
+msgctxt "Quit_Switching"
+msgid "Quit"
+msgstr ""
+
+msgctxt "Firmware"
+msgid "Update"
+msgstr ""
+
+msgctxt "Software"
+msgid "Update"
+msgstr "Update now"
+
+msgctxt "Layers"
+msgid "Top"
+msgstr "Top"
+
+msgctxt "Layers"
+msgid "Bottom"
+msgstr "Bottom"
+
+msgctxt "Nozzle Type"
+msgid "Type"
+msgstr ""
+
+msgctxt "Nozzle Diameter"
+msgid "Diameter"
+msgstr ""
+
+msgctxt "Nozzle Flow"
+msgid "Flow"
+msgstr ""
+
+msgctxt "Preference"
+msgid "Other"
+msgstr ""
+
+msgctxt "Preferences"
+msgid "Learn more"
+msgstr ""
+
+msgctxt "PresetName"
+msgid "Copy"
+msgstr "Copy"
+
+msgctxt "sendtoprint"
+msgid "External"
+msgstr ""
+
+msgctxt "ObjImport"
+msgid "Original"
+msgstr ""
+
+msgctxt "Sync_AMS"
+msgid "Original"
+msgstr ""
+
+msgctxt "Sync_AMS"
+msgid "Plate"
+msgstr ""
+
+msgctxt "Sync_Nozzle_AMS"
+msgid "Cancel"
+msgstr ""
+
+msgctxt "FinishSyncAms"
+msgid "OK"
+msgstr ""
+
+msgctxt "WebView"
+msgid "Back"
+msgstr ""
+
+msgctxt "OfFile"
+msgid "Size"
+msgstr "Size"
+
+msgctxt "amsdrying"
+msgid "Back"
+msgstr ""
+
+msgid "OK"
+msgstr "OK"
+
+#. TRN To be shown in the main menu View->Bottom
+msgid "Bottom"
+msgstr "Bottom"
+
+msgid "Front"
+msgstr "Front"
+
+msgid "General"
+msgstr "General"
+
+msgid "User"
+msgstr "User"
+
+msgid "Back"
+msgstr "Back"

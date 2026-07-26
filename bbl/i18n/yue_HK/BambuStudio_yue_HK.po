@@ -129,11 +129,11 @@ msgstr "最近使用的項目"
 
 #. reviewed-category: navigation
 msgid "Project Filaments"
-msgstr "項目耗材"
+msgstr "項目墨水"
 
 #. reviewed-category: navigation
 msgid "Filament Settings"
-msgstr "耗材設定"
+msgstr "墨水設定"
 
 #. reviewed-category: navigation
 msgid "Printer settings"
@@ -177,7 +177,7 @@ msgstr "溫度校準"
 
 #. reviewed-category: navigation
 msgid "AMS Settings"
-msgstr "AMS 設定"
+msgstr "墨水機設定"
 
 #. reviewed-category: navigation
 msgid "Camera Setting"
@@ -685,11 +685,11 @@ msgstr "打印機正在下載。請待下載完成後再試。"
 
 #. reviewed-category: slicing-printing
 msgid "The printer is busy and cannot switch AMS type."
-msgstr "打印機正在忙碌，無法切換 AMS 類型。"
+msgstr "打印機正在忙碌，無法切換墨水機類型。"
 
 #. reviewed-category: slicing-printing
 msgid "Setting AMS slot information while printing is not supported"
-msgstr "打印期間不支援設定 AMS 槽位資料"
+msgstr "打印期間不支援設定墨水機槽位資料"
 
 #. reviewed-category: slicing-printing
 msgid "Setting Virtual slot information while printing is not supported"
@@ -697,19 +697,19 @@ msgstr "打印期間不支援設定虛擬槽位資料"
 
 #. reviewed-category: slicing-printing
 msgid "Print with filaments in the AMS"
-msgstr "使用 AMS 內的耗材打印"
+msgstr "使用墨水機內的墨水打印"
 
 #. reviewed-category: slicing-printing
 msgid "Print with the filament mounted on the back of chassis"
-msgstr "使用機身背面安裝的耗材打印"
+msgstr "使用機身背面安裝的墨水打印"
 
 #. reviewed-category: slicing-printing
 msgid "Filament used in this print job"
-msgstr "此打印工作使用的耗材"
+msgstr "此打印工作使用的墨水"
 
 #. reviewed-category: slicing-printing
 msgid "When the current material runs out, the printer would use identical filament to continue printing."
-msgstr "目前物料用完後，打印機會使用相同耗材繼續打印。"
+msgstr "目前物料用完後，打印機會使用相同墨水繼續打印。"
 
 #. reviewed-category: slicing-printing
 msgid "The printer does not currently support auto refill."
@@ -721,7 +721,7 @@ msgstr "空打偵測"
 
 #. reviewed-category: slicing-printing
 msgid "Detects clogging and filament grinding, halting printing immediately to conserve time and filament."
-msgstr "偵測堵塞及磨料，發現問題時立即停止打印，以節省時間及耗材。"
+msgstr "偵測堵塞及磨料，發現問題時立即停止打印，以節省時間及墨水。"
 
 #. reviewed-category: slicing-printing
 msgid "Current printer preset (Prepare page): %s"
@@ -933,7 +933,7 @@ msgstr "移除所選列印板"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete this filament"
-msgstr "刪除此耗材"
+msgstr "刪除此墨水"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete selected files from printer."
@@ -1291,7 +1291,7 @@ msgstr "潮濕"
 
 #. reviewed-category: connection-offline
 msgid "Sync AMS"
-msgstr "同步 AMS"
+msgstr "同步墨水機"
 
 #. reviewed-category: slicing-printing
 msgid "object"
@@ -2067,7 +2067,7 @@ msgstr "喺設定入面搜尋"
 
 #. reviewed-category: navigation
 msgid "Find any print / filament / printer parameter"
-msgstr "搵任何打印／耗材／打印機參數"
+msgstr "搵任何打印／墨水／打印機參數"
 
 #. reviewed-category: preferences
 msgid "Build"
@@ -2267,19 +2267,19 @@ msgstr "每次檢查直播畫面相隔幾多分鐘（最少 1）。"
 
 #. reviewed-category: slicing-printing
 msgid "AI filament scanner"
-msgstr "AI 唥材掃描器"
+msgstr "AI 墨水掃描器"
 
 #. reviewed-category: slicing-printing
 msgid "Scan a spool with your phone; the result lands in an AMS slot."
-msgstr "用手機影吓卷唥材，結果會自動落入 AMS 槽。"
+msgstr "用手機影吓卷墨水，結果會自動落入墨水機槽。"
 
 #. reviewed-category: slicing-printing
 msgid "Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"
-msgstr "用手機影張唥材相，本地模型認出佢並設定好一個 AMS 槽"
+msgstr "用手機影張墨水相，本地模型認出佢並設定好一個墨水機槽"
 
 #. reviewed-category: slicing-printing
 msgid "Scan the QR code with your phone, then photograph the spool."
-msgstr "用手機掃個 QR code，然後影張唥材卷嘅相。"
+msgstr "用手機掃個 QR code，然後影張墨水卷嘅相。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The upload server could not start. Check that no firewall rule blocks local listeners."
@@ -2291,7 +2291,7 @@ msgstr "出聲讀出係邊個槽（TTS）"
 
 #. reviewed-category: slicing-printing
 msgid "Photo received - identifying the filament with the local model..."
-msgstr "收到相喇 — 本地模型認緊隻唥材..."
+msgstr "收到相喇 — 本地模型認緊隻墨水..."
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Identification failed: %s. Is a vision-capable Ollama model available?"
@@ -2299,11 +2299,11 @@ msgstr "認唔出：%s。有冇裝識睇圖嘅 Ollama 模型？"
 
 #. reviewed-category: slicing-printing
 msgid "external spool"
-msgstr "外掛唥材架"
+msgstr "外掛墨水架"
 
 #. reviewed-category: slicing-printing
 msgid "AMS %s slot %d"
-msgstr "AMS %s 第 %d 槽"
+msgstr "墨水機 %s 第 %d 槽"
 
 #. reviewed-category: slicing-printing
 msgid "Identified %s (%s). Load it into %s."
@@ -2315,7 +2315,7 @@ msgstr " 打印設定已經轉做「%s」。"
 
 #. reviewed-category: slicing-printing
 msgid "Filament identified: %s. Load it into %s."
-msgstr "認到唥材：%s。放入 %s。"
+msgstr "認到墨水：%s。放入 %s。"
 
 #. reviewed-category: slicing-printing
 msgid "Printing started."
@@ -2451,11 +2451,11 @@ msgstr "批量"
 
 #. reviewed-category: slicing-printing
 msgid "Bulk filament actions"
-msgstr "批量耗材操作"
+msgstr "批量墨水操作"
 
 #. reviewed-category: slicing-printing
 msgid "Actions apply to the checked filament slots."
-msgstr "操作會套用喺已剔選嘅耗材欄位。"
+msgstr "操作會套用喺已剔選嘅墨水欄位。"
 
 #. reviewed-category: slicing-printing
 msgid "Set preset..."
@@ -2467,19 +2467,19 @@ msgstr "設定顏色..."
 
 #. reviewed-category: slicing-printing
 msgid "Delete selected filaments"
-msgstr "刪除已選耗材"
+msgstr "刪除已選墨水"
 
 #. reviewed-category: slicing-printing
 msgid "At least one filament always remains."
-msgstr "最少會保留一個耗材。"
+msgstr "最少會保留一個墨水。"
 
 #. reviewed-category: slicing-printing
 msgid "Add filaments"
-msgstr "新增耗材"
+msgstr "新增墨水"
 
 #. reviewed-category: slicing-printing
 msgid "Choose a filament preset"
-msgstr "揀一個耗材預設"
+msgstr "揀一個墨水預設"
 
 #. reviewed-category: slicing-printing
 msgid "Play print simulation"
@@ -2495,4 +2495,4 @@ msgstr "模擬速度（撳一下轉檔）"
 
 #. reviewed-category: navigation
 msgid "Search filaments"
-msgstr "搵耗材"
+msgstr "搵墨水"

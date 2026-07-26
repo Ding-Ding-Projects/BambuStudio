@@ -2,6 +2,7 @@
 
 - [Native Material Design 3 UI](md3-native-ui.md)
 - [English, Hong Kong Cantonese, and bilingual modes](language-modes.md)
+- [Ink terminology (filament → ink, AMS → Ink Dispenser)](ink-terminology.md)
 - [Appearance customization](appearance-customization.md)
 - [Regex builder](regex-builder.md)
 - [Command palette (Ctrl+F)](command-palette.md)
