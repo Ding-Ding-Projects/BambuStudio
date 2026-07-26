@@ -212,10 +212,40 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
 
+          # Sequential single-number releases with a unique codename each.
+          # The release job is serialized by its non-cancelling concurrency
+          # group, so counting existing md3-v<N> tags here is race-safe.
+          $maxN = 0
+          $page = & gh api --paginate "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
+          foreach ($r in $page) {
+              if ($r.tag_name -match '^md3-v(\d+)$') {
+                  $n = [int]$Matches[1]
+                  if ($n -gt $maxN) { $maxN = $n }
+              }
+          }
+          $releaseNumber = $maxN + 1
+          $codenames = @(
+              'Char Siu Bao 叉燒包', 'Har Gow 蝦餃', 'Siu Mai 燒賣', 'Milk Tea 港式奶茶',
+              'Pineapple Bun 菠蘿包', 'Egg Tart 蛋撻', 'Cheung Fun 腸粉', 'Lo Mai Gai 糯米雞',
+              'Turnip Cake 蘿蔔糕', 'Egg Waffle 雞蛋仔', 'Yuenyeung 鴛鴦', 'French Toast 西多士',
+              'Curry Fish Ball 咖喱魚蛋', 'Siu Yuk 燒肉', 'Wonton Mein 雲吞麵', 'Claypot Rice 煲仔飯',
+              'Pineapple Oil 菠蘿油', 'Sesame Ball 煎堆', 'Mango Pomelo 楊枝甘露', 'Red Bean Ice 紅豆冰',
+              'Lemon Tea 凍檸茶', 'Beef Brisket Noodles 牛腩麵', 'Sampan Congee 艇仔粥', 'Char Siu Rice 叉燒飯',
+              'Tofu Fa 豆腐花', 'Peanut Mochi 糯米糍', 'Water Chestnut Cake 馬蹄糕', 'Spring Roll 春卷',
+              'Salt Baked Chicken 鹽焗雞', 'Steamed Milk Pudding 雙皮奶'
+          )
+          $cycle = [Math]::Floor(($releaseNumber - 1) / $codenames.Count)
+          $codename = $codenames[($releaseNumber - 1) % $codenames.Count]
+          if ($cycle -gt 0) { $codename = "$codename $('★' * $cycle)" }
+          $env:release_tag = "md3-v$releaseNumber"
+          "release_tag=$($env:release_tag)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          "release_codename=$codename" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          Write-Host "Release v$releaseNumber '$codename' (tag $env:release_tag)"
+
           $notes = @(
               'Native Windows build of Bambu Studio with the Material Design 3 rewrite.'
               ''
-              "- Version: $env:release_version"
+              "- Version: v$releaseNumber `"$codename`" (app build $env:release_version)"
               "- Commit: $env:GITHUB_SHA"
               "- Source ref: $env:GITHUB_REF"
               "- Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
@@ -228,7 +258,7 @@ jobs:
           )
           $notes | Set-Content release-notes.md -Encoding utf8
 
-          $releaseTitle = "Bambu Studio MD3 Windows $env:release_version"
+          $releaseTitle = "Bambu Studio MD3 v$releaseNumber $([char]0x2014) $codename"
           if ($env:GITHUB_REF -ne 'refs/heads/master') {
               $releaseTitle += " ($env:GITHUB_REF_NAME)"
           }
