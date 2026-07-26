@@ -377,6 +377,22 @@ jobs:
             ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.json
           if-no-files-found: warn
 
+      # Every release ships one-of-a-kind dim sum splash art: the payload copy
+      # of splash_logo.svg is regenerated deterministically from the run
+      # number, so identical run numbers reproduce identical art while every
+      # new release gets a fresh scene. Only install-dir (the packaged
+      # payload) is overwritten — the repository's default splash_logo.svg is
+      # never touched. Runs after install-dir is populated and before the
+      # SBOM/portable zip/installer steps so all of them carry the final art.
+      - name: Compose unique dim sum splash art for this release
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          .\scripts\ci\New-DimSumSplash.ps1 `
+            -Seed ${{ github.run_number }} `
+            -OutPath '${{ github.workspace }}\install-dir\resources\images\splash_logo.svg'
+
       - name: Generate Windows payload SBOM
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
