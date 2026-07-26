@@ -51,4 +51,13 @@ body
 {
 	margin-top: 16px;
 	padding: 8px 24px;
+	min-width: 44px;
+	min-height: 44px;
+	font: inherit;
+}
+
+#WarnBtn:focus-visible
+{
+	outline: 3px solid var(--md-primary);
+	outline-offset: 3px;
 }

@@ -21631,8 +21631,8 @@ msgstr "How search works"
 msgid "Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."
 msgstr "Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."
 
-msgid "Case sensitive and Whole word refine plain-text search; in regex mode author  yourself for word boundaries."
-msgstr "Case sensitive and Whole word refine plain-text search; in regex mode author  yourself for word boundaries."
+msgid "Case sensitive and Whole word refine plain-text search; in regex mode author \\b yourself for word boundaries."
+msgstr "Case sensitive and Whole word refine plain-text search; in regex mode author \\b yourself for word boundaries."
 
 msgid "An invalid or half-typed pattern never hides rows: it matches everything until it compiles."
 msgstr "An invalid or half-typed pattern never hides rows: it matches everything until it compiles."
@@ -21678,6 +21678,12 @@ msgstr "Stop print - safety interlock"
 
 msgid "Stopping discards the print in progress."
 msgstr "Stopping discards the print in progress."
+
+msgid "Safety key switch %d"
+msgstr "Safety key switch %d"
+
+msgid "Safety cover"
+msgstr "Safety cover"
 
 msgid "Arm %d (2)"
 msgstr "Arm %d (2)"
@@ -22133,3 +22139,99 @@ msgstr "User"
 
 msgid "Back"
 msgstr "Back"
+
+msgid "Bambu Studio could not complete the project shutdown boundary, so the application remains open."
+msgstr "Bambu Studio could not complete the project shutdown boundary, so the application remains open."
+
+msgid "The active project tab could not be identified, so Bambu Studio remains open to protect its unsaved changes."
+msgstr "The active project tab could not be identified, so Bambu Studio remains open to protect its unsaved changes."
+
+msgid "The open project-tab session could not be saved. The requested tab operation was cancelled."
+msgstr "The open project-tab session could not be saved. The requested tab operation was cancelled."
+
+msgid "The project was saved, but its project-tab identity could not be recorded. Keep the app open and retry before switching tabs."
+msgstr "The project was saved, but its project-tab identity could not be recorded. Keep the app open and retry before switching tabs."
+
+msgid "The project was saved, but its active project tab could not be identified. Keep the app open and retry before switching tabs."
+msgstr "The project was saved, but its active project tab could not be identified. Keep the app open and retry before switching tabs."
+
+msgid "Bambu Studio could not preserve every open project tab. Retry saving the session? Choose No to keep the application open."
+msgstr "Bambu Studio could not preserve every open project tab. Retry saving the session? Choose No to keep the application open."
+
+msgid "Open projects were not saved"
+msgstr "Open projects were not saved"
+
+msgid "The discard decision could not be recorded, so the previous recovery data was retained while Bambu Studio closes."
+msgstr "The discard decision could not be recorded, so the previous recovery data was retained while Bambu Studio closes."
+
+msgid "This project could not be preserved for tab switching. The current project remains open."
+msgstr "This project could not be preserved for tab switching. The current project remains open."
+
+msgid "This project was snapshotted, but its tab session could not be saved. The current project remains open."
+msgstr "This project was snapshotted, but its tab session could not be saved. The current project remains open."
+
+msgid "A project-tab load failed, and the previous project could not be restored automatically. Its recovery data was retained; the live workspace may be incomplete."
+msgstr "A project-tab load failed, and the previous project could not be restored automatically. Its recovery data was retained; the live workspace may be incomplete."
+
+msgid "The selected project tab could not be loaded. The previous project remains open."
+msgstr "The selected project tab could not be loaded. The previous project remains open."
+
+msgid "The project tab could not be closed because a new workspace could not be created."
+msgstr "The project tab could not be closed because a new workspace could not be created."
+
+msgid "The neighbouring project tab could not be loaded, so the current tab was not closed."
+msgstr "The neighbouring project tab could not be loaded, so the current tab was not closed."
+
+msgid "A new project tab could not be created. The previous project remains open."
+msgstr "A new project tab could not be created. The previous project remains open."
+
+msgid "The selected project could not be opened in a new tab. The previous project remains open."
+msgstr "The selected project could not be opened in a new tab. The previous project remains open."
+
+msgid "The previously active project tab could not be recovered. Its session entry was retained."
+msgstr "The previously active project tab could not be recovered. Its session entry was retained."
+
+msgid "Case sensitive refines plain-text and regex search. Multiline makes ^ and $ match line boundaries; Whole word is plain-text only, so use \\b in regex mode."
+msgstr "Case sensitive refines plain-text and regex search. Multiline makes ^ and $ match line boundaries; Whole word is plain-text only, so use \\b in regex mode."
+
+msgid "Complete"
+msgstr "Complete"
+
+msgid "Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
+msgstr "Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
+
+msgid "Multiline anchors (^ and $ match line boundaries)"
+msgstr "Multiline anchors (^ and $ match line boundaries)"
+
+msgid "Press"
+msgstr "Press"
+
+msgid "Project tabs"
+msgstr "Project tabs"
+
+msgid "Regex evaluation is temporarily unavailable"
+msgstr "Regex evaluation is temporarily unavailable"
+
+msgid "Sample too long (max %d characters)"
+msgstr "Sample too long (max %d characters)"
+
+msgid "The stop request was cancelled because the selected printer or print job changed."
+msgstr "The stop request was cancelled because the selected printer or print job changed."
+
+msgid "Turn on or off"
+msgstr "Turn on or off"
+
+msgid "Network unavailable. The current page remains open."
+msgstr "Network unavailable. The current page remains open."
+
+msgid "Cloud sign-in could not be completed. The current page remains open."
+msgstr "Cloud sign-in could not be completed. The current page remains open."
+
+msgid "The requested cloud page was not found. The current page remains open."
+msgstr "The requested cloud page was not found. The current page remains open."
+
+msgid "The cloud page could not be opened securely. The current page remains open."
+msgstr "The cloud page could not be opened securely. The current page remains open."
+
+msgid "The cloud page is temporarily unavailable. The current page remains open."
+msgstr "The cloud page is temporarily unavailable. The current page remains open."

@@ -287,7 +287,7 @@ jobs:
           # The aggregate legacy suite and libnest2d_tests are currently
           # upstream-baseline failures; keep this gate focused on maintained,
           # independently buildable regression coverage. See HANDOFF.md.
-          cmake --build build-tests --target language_mode_tests project_history_tests deterministic_bbs_3mf_tests --config Release -- -m
+          cmake --build build-tests --target language_mode_tests project_history_tests deviceweb_home_webview_failure_policy_tests deterministic_bbs_3mf_tests --config Release -- -m
           if ($LASTEXITCODE -ne 0) {
               throw "Building Windows C++ tests failed with exit code $LASTEXITCODE."
           }
@@ -299,7 +299,7 @@ jobs:
           $env:PATH = '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin;' +
               '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin\occt;' +
               '${{ github.workspace }}\install-dir;' + $env:PATH
-          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests)$'
+          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests|deviceweb_home_webview_failure_policy_tests|deviceweb_home_webview_failure_contract)$'
           if ($LASTEXITCODE -ne 0) {
               throw "Windows C++ tests failed with exit code $LASTEXITCODE."
           }
