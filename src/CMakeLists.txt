@@ -225,6 +225,17 @@ if (WIN32)
             COMMENT "Symlinking the resources directory into the build tree"
             VERBATIM
         )
+        # Single-config generators (Ninja on CI) skipped the runtime DLL copy
+        # entirely: output_dlls_<config> stayed empty, install() shipped a
+        # payload whose BambuStudio.dll could never load (OCCT/ffmpeg/gmp
+        # missing, LoadLibrary error 126). Mirror the multi-config branch.
+        if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+            bambustudio_copy_dlls(BambuStudioDllsCopy "Debug" "d" output_dlls_Debug)
+        elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+            bambustudio_copy_dlls(BambuStudioDllsCopy "RelWithDebInfo" "" output_dlls_RelWithDebInfo)
+        else ()
+            bambustudio_copy_dlls(BambuStudioDllsCopy "Release" "" output_dlls_Release)
+        endif ()
     endif ()
 
 
