@@ -1291,7 +1291,7 @@ msgstr "潮濕"
 
 #. reviewed-category: connection-offline
 msgid "Sync AMS"
-msgstr "同步墨水機"
+msgstr "同步"
 
 #. reviewed-category: slicing-printing
 msgid "object"
