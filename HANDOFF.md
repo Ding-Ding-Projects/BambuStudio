@@ -434,3 +434,14 @@ its "never run against a real broadcast" caveat.
 - `docs/screenshots/README.md` — the screenshot matrix index.
 - `.claude/skills/run-bambustudio/SKILL.md` — how to run and drive the app. **Read this before
   trying to test anything in the UI.**
+
+---
+
+## 10. One-click local Windows installer build
+
+`OneClickBuildInstaller.cmd` now provides the local bootstrap → dependencies → Release app →
+payload → verified Mesa fallback → SBOM → NSIS → SHA-256 path. Its implementation is
+`scripts/windows/Invoke-OneClickBuild.ps1`, its static contract test is
+`scripts/ci/Test-OneClickBuild.ps1`, and its operator guide is
+`docs/features/releases/windows-one-click-build.md`. The installer remains unsigned and is launched
+only when the caller explicitly supplies `-Install`.

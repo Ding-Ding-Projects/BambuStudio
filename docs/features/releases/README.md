@@ -2,6 +2,7 @@
 
 - [Native Windows installer](windows-native-installer.md)
 - [Build from source (Windows installer)](windows-build-from-source.md)
+- [One-click local Windows build and installer](windows-one-click-build.md)
 - [Windows CI and release supply chain](windows-release-supply-chain.md)
 
 This fork intentionally publishes a Windows installer only. Automatic upstream WinGet and Homebrew

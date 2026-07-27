@@ -204,6 +204,10 @@ truth; the counts here are a snapshot.
 
 ## Later or externally blocked
 
+- Keep the one-click Windows build aligned with the hosted release pipeline whenever dependency,
+  Mesa, SBOM, or NSIS packaging policy changes; add a disposable-runner end-to-end invocation once
+  its several-hour cost is acceptable for scheduled CI.
+
 - Add an explicit history quota, retention/pruning controls, repository maintenance, export/import,
   and optional user-controlled backup or synchronization. None of these are part of the current
   local-history implementation.

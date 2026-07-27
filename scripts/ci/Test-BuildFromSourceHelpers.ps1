@@ -73,6 +73,17 @@ Assert-True ($null -ne $writeManifestAst) 'Write-Manifest was not found in Build
 
 . $toolchainScript
 
+$hashFixture = [System.IO.Path]::GetTempFileName()
+try {
+    [System.IO.File]::WriteAllText($hashFixture, 'abc', (New-Object System.Text.UTF8Encoding($false)))
+    Assert-True ((Get-FileSha256 -Path $hashFixture) -eq
+        'BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD') `
+        'The .NET SHA-256 helper returned the wrong digest.'
+}
+finally {
+    Remove-Item -LiteralPath $hashFixture -Force -ErrorAction SilentlyContinue
+}
+
 Assert-True ((Get-SafeRelativePath -Root 'C:\bfs root' -Path 'C:\bfs root\nested\file.txt') -eq 'nested\file.txt') `
     'The Windows PowerShell 5.1 relative-path helper returned the wrong path.'
 $outsideRejected = $false

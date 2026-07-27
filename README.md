@@ -246,6 +246,13 @@ Other major features are:
 
 # How to compile on Windows
 
+For a local Release installer, double-click [`OneClickBuildInstaller.cmd`](OneClickBuildInstaller.cmd).
+It detects and installs missing ordinary prerequisites, builds dependencies and Bambu Studio,
+stages the payload, and produces the NSIS installer, CycloneDX SBOM, SHA-256 checksum, and a detailed
+log under `artifacts/windows/`. See the
+[one-click Windows build guide](docs/features/releases/windows-one-click-build.md) for clean,
+bootstrap-only, plan, and explicit post-build install modes.
+
 Use the upstream
 [Windows compile guide](https://github.com/bambulab/BambuStudio/wiki/Windows-Compile-Guide) for a
 developer build. Non-developers who want a locally compiled build can instead use the installer's

@@ -234,6 +234,22 @@ function Test-InstallerSignatureMetadata {
     return $false
 }
 
+function Get-FileSha256 {
+    param([Parameter(Mandatory = $true)][string] $Path)
+
+    $stream = [System.IO.File]::OpenRead($Path)
+    try {
+        $sha256 = [System.Security.Cryptography.SHA256]::Create()
+        try {
+            return ([System.BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '')
+        } finally {
+            $sha256.Dispose()
+        }
+    } finally {
+        $stream.Dispose()
+    }
+}
+
 function Assert-TrustedInstaller {
     param(
         [Parameter(Mandatory = $true)][string] $Path,
@@ -249,14 +265,19 @@ function Assert-TrustedInstaller {
         if ($ExpectedSha256 -notmatch '^[0-9A-Fa-f]{64}$') {
             throw "The expected SHA-256 policy for '$Path' is malformed."
         }
-        $actualSha256 = (Get-FileHash -LiteralPath $Path -Algorithm SHA256 -ErrorAction Stop).Hash
+        $actualSha256 = Get-FileSha256 -Path $Path
         if (-not [string]::Equals($actualSha256, $ExpectedSha256,
                 [System.StringComparison]::OrdinalIgnoreCase)) {
             throw "Downloaded installer '$Path' failed its pinned SHA-256 check."
         }
     }
 
-    $signature = Get-AuthenticodeSignature -LiteralPath $Path -ErrorAction Stop
+    $securityModule = Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Security\Microsoft.PowerShell.Security.psd1'
+    if (-not (Get-Command Get-AuthenticodeSignature -ErrorAction SilentlyContinue)) {
+        Import-Module -Name $securityModule -ErrorAction Stop
+    }
+    $signature = Microsoft.PowerShell.Security\Get-AuthenticodeSignature `
+        -LiteralPath $Path -ErrorAction Stop
     $status = [string]$signature.Status
     $publisher = ''
     if ($null -ne $signature.SignerCertificate) {
