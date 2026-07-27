@@ -260,12 +260,15 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`menu-entry.png`](version-history/menu-entry.png)
 - [`topbar-chip.png`](version-history/topbar-chip.png)
 
-## wizard (30 captures)
+## wizard (26 captures)
+
+Steps 0 (loading), 1 (welcome), and 6 (downloading) have no corner
+navigation buttons — their former `--nav-buttons` crops were empty by
+construction and have been removed; each page's real controls appear in
+its full-page capture.
 
 - [`wizard-index.png`](wizard/wizard-index.png)
-- [`wizard-step-0--nav-buttons.png`](wizard/wizard-step-0--nav-buttons.png)
 - [`wizard-step-0.png`](wizard/wizard-step-0.png)
-- [`wizard-step-1--nav-buttons.png`](wizard/wizard-step-1--nav-buttons.png)
 - [`wizard-step-1.png`](wizard/wizard-step-1.png)
 - [`wizard-step-11--nav-buttons.png`](wizard/wizard-step-11--nav-buttons.png)
 - [`wizard-step-11.png`](wizard/wizard-step-11.png)
@@ -289,7 +292,5 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`wizard-step-31.png`](wizard/wizard-step-31.png)
 - [`wizard-step-5--nav-buttons.png`](wizard/wizard-step-5--nav-buttons.png)
 - [`wizard-step-5.png`](wizard/wizard-step-5.png)
-- [`wizard-step-6--nav-buttons.png`](wizard/wizard-step-6--nav-buttons.png)
 - [`wizard-step-6.png`](wizard/wizard-step-6.png)
-- [`wizard-step1.png`](wizard/wizard-step1.png)
 

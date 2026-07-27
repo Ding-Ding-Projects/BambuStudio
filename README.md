@@ -73,11 +73,17 @@ migrated content.
 The new project tab strip (one tab per open project, a close button, and a "+" new-tab button) sits
 between the Material title bar and the workspace tabs.
 
-![Home with the project tab bar](docs/readme-assets/shot-home.png)
+![Sliced preview with the project tab bar](docs/readme-assets/shot-prepare-frame.png)
 
-| Prepare sidebar (Material cards) | First-run Setup Wizard (Material dialog shell) |
+The Home tab and the Setup Wizard body are WebView2 surfaces, shown below as rendered from the
+app's own bundled page assets (a native-window capture cannot include WebView2 compositor
+content, which is why earlier captures of them were blank):
+
+![Home page](docs/readme-assets/shot-home.png)
+
+| Prepare sidebar (Material cards) | First-run Setup Wizard (welcome page) |
 | :---: | :---: |
-| ![Prepare sidebar](docs/readme-assets/shot-prepare-sidebar.png) | ![Setup Wizard](docs/readme-assets/shot-wizard.png) |
+| ![Prepare sidebar](docs/readme-assets/shot-prepare-sidebar.png) | ![Setup Wizard welcome page](docs/readme-assets/shot-wizard.png) |
 
 The Prepare sidebar shows the migrated Printer, Filament, Process, and Object-manipulation cards —
 including the Process card's Quality / Strength / Support / Others segmented control and the
