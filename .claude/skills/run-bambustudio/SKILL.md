@@ -150,8 +150,50 @@ headless desktop (`SwitchDesktop` is denied). The agent path is the only path.
 | App started but a cold `launch` with a model crashed 0xC0000005 | Never pass a model on first launch; `launch` empty, then `open --model`. |
 | Slice click does nothing | Raw `click` doesn't press custom wx buttons; use `ahkclick` (client coords). |
 
+## Press buttons and menu items BY NAME — `press.py`
+
+`driver.py` clicks a pixel. `press.py` presses a **label**, which is what you
+usually want: pixel coordinates drift every build, and this app's topbar menus
+are owner-drawn (AutoHotkey `MenuSelect` answers "unsupported menu", and
+`ControlClick` on the menu labels does nothing).
+
+```bash
+"$PY" "$DRV_DIR/press.py" menus                    # every menu item + its live command id
+"$PY" "$DRV_DIR/press.py" press "Version history"  # opens File ▸ Version history…
+"$PY" "$DRV_DIR/press.py" controls --filter ink    # labelled child controls
+"$PY" "$DRV_DIR/press.py" press "Slice plate"      # falls back to a child-control click
+"$PY" "$DRV_DIR/press.py" id 888                   # raw WM_COMMAND escape hatch
+```
+
+Verified: `press "Version history"` opens the dialog with no coordinates
+anywhere. Menu ids are `wxID_ANY` allocations — they shift between builds
+(`Version history…` was 849 in one build and 888 in the next), so **never
+hardcode one**; `press.py` enumerates live and caches per frame hwnd
+(`--refresh` re-scans).
+
+How it works, and the two things that make it work at all:
+
+- Menu ids can only be learned by opening each menu for real, catching
+  `EVENT_SYSTEM_MENUPOPUPSTART`, and asking the popup for its `HMENU` via
+  `MN_GETHMENU`. Pressing then needs no menu at all — it posts `WM_COMMAND`
+  straight to the frame.
+- **The frame must be parked at (-183, -6) during discovery.** At its normal
+  position the owner-drawn strip accepts the posted clicks and opens nothing.
+  This constant is empirical, is restored afterwards, and is the difference
+  between "menus enumerate" and "menus never open".
+- Everything runs on the headless desktop: `press.py` relays a worker copy of
+  itself through `launch_on_headless_desktop`, because hwnd calls fail
+  cross-desktop and because a separate process spawned while a menu is open
+  kills that menu.
+
+Gotcha worth knowing if you extend it: **ctypes swallows exceptions raised
+inside an `EnumChildWindows` callback** — they reach stderr, which nobody sees
+on an off-screen desktop, and the enumeration silently returns an empty list.
+Collect handles in the callback and read their properties outside it.
+
 ## Files
 
+- `press.py` — press buttons/menu items by name (above). Start here for UI work.
 - `driver.py` — the harness (this directory). Env overrides: `LLCU_VENV`, `BS_DESKTOP`.
 - `cube.stl` — 684-byte binary cube (20 mm), the standard test model for `open`/slice.
 - `popovercap.py` — one-process click+catch+paint+capture for TRANSIENT popovers
