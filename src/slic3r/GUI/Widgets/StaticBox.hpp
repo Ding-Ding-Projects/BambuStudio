@@ -46,6 +46,10 @@ public:
 
     void SetBackgroundColor2(StateColor const &color);
 
+    // Re-seed the plain wxWindow background from the themed normal-state colour
+    // (see the definition for why the constructor-time seed goes stale).
+    void SyncWindowBackground();
+
     static wxColor GetParentBackgroundColor(wxWindow * parent);
 
     void ShowBadge(bool show);

@@ -253,8 +253,14 @@ void RegexBuilderPopup::build()
         auto *box = new CheckBox(m_scroll);
         box->SetColorScheme(m_scheme);
         box->SetValue(value);
+        // Name + tooltip carry the text for assistive tech and hover; the
+        // VISIBLE text is the sibling Label below. SetLabel() must not be used
+        // here: CheckBox is a wxBitmapToggleButton, i.e. a native BUTTON, and
+        // MSW paints its window text inside the 44px glyph rect -- which came
+        // out as clipped ghost text ("cx m", "sens") sitting underneath the
+        // real label on every flag row.
         box->SetName(text);
-        box->SetLabel(text);
+        box->SetToolTip(text);
         box->SetMinSize(wxSize(FromDIP(kTargetH), FromDIP(kTargetH)));
         auto *lbl = new Label(m_scroll, Label::Body_13, text);
         lbl->SetBackgroundColour(surface);

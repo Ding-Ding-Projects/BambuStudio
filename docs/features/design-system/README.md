@@ -10,6 +10,10 @@ Design 3 design system.
   register and wave plan driving the structural-anatomy migration. The register itself carries the
   live done / deviation / open counts; consult it rather than any snapshot elsewhere.
 
+- [Themed surface colors on StaticBox cards](themed-surface-colors.md) — how a card gets its fill,
+  why `SetBackgroundColorNormal()` could silently do nothing, and the stale constructor-time window
+  background behind light plates in dark mode.
+
 ## Design source
 
 The canonical in-repo design source is [`ui-md3/design-system/`](../../../ui-md3/design-system/).

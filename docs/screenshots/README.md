@@ -212,9 +212,11 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`tab-bar-two-tabs.png`](project-tabs/tab-bar-two-tabs.png)
 - [`tab-bar.png`](project-tabs/tab-bar.png)
 
-## regex-builder (29 captures)
+## regex-builder (31 captures)
 
 - [`builder-popover--case-sensitive.png`](regex-builder/builder-popover--case-sensitive.png)
+- [`builder-popover--flags-before-fix.png`](regex-builder/builder-popover--flags-before-fix.png)
+- [`builder-popover--flags.png`](regex-builder/builder-popover--flags.png)
 - [`builder-popover--insert-header.png`](regex-builder/builder-popover--insert-header.png)
 - [`builder-popover--pattern-editor.png`](regex-builder/builder-popover--pattern-editor.png)
 - [`builder-popover--quantifiers.png`](regex-builder/builder-popover--quantifiers.png)
@@ -248,9 +250,11 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 
 - [`dialog.png`](smart-home/dialog.png)
 
-## version-history (9 captures)
+## version-history (11 captures)
 
 - [`history-dialog--close.png`](version-history/history-dialog--close.png)
+- [`history-dialog-dark--before-card-fix.png`](version-history/history-dialog-dark--before-card-fix.png)
+- [`history-dialog-dark.png`](version-history/history-dialog-dark.png)
 - [`history-dialog--project-banner.png`](version-history/history-dialog--project-banner.png)
 - [`history-dialog--refresh.png`](version-history/history-dialog--refresh.png)
 - [`history-dialog--restore-selected.png`](version-history/history-dialog--restore-selected.png)
