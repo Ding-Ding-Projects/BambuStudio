@@ -67,6 +67,30 @@ the app's own data directory (see above), never inside user project folders.
 
 ## Verification
 
+- **Crash-backup preservation, verified live end-to-end** (2026-07-27) on the real built binary
+  through `.claude/skills/run-bambustudio/`:
+  1. Loaded `cube.stl`, waited for the backup `.3mf` to be written (8662 bytes), then hard-killed
+     the process — a genuine crash remnant, not a synthetic directory.
+  2. Removed the now-stale `lock.txt`. `has_restore_data()` calls `get_process_name()` on the pid
+     it contains and returns **false from its `catch (...)`** when that pid is gone, so a dead-pid
+     lock file suppresses recovery entirely on this box.
+  3. Pointed `app/last_backup_path` at that directory and relaunched. The
+     [restore prompt](../../screenshots/version-history/crash-restore-prompt.png) appeared.
+  4. Clicked **Cancel** — the branch that runs `remove_all` on the backup directory.
+  - **Result:** the backup directory is gone, and commit `82f6cd1 "Recovered unsaved project"`
+    survives in the project-history repo carrying `project.3mf` at **exactly 8662 bytes** — the
+    backup that Cancel destroyed. This is the whole point of the feature and it holds.
+- The restore path logs a `restore check: last_backup_dir=... has_restore_data=...` line, because
+  recovery is silent when it declines and "the prompt never appeared" is otherwise undiagnosable
+  after the fact.
+
+> [!WARNING]
+> Editing `BambuStudio.conf` by hand to stage this test is a trap. The file ends with a
+> `# MD5 checksum` line, and while a stale checksum only logs a warning, **malformed JSON makes the
+> app silently fall back to `BambuStudio.conf.bak`** — so the edit appears to be ignored. Write the
+> body with a real JSON serializer and recompute the checksum over everything up to and including
+> the last `}`.
+
 - Unit tests: `tests/project_history/project_history_tests.cpp`
   (commit/list/restore/migrate).
 - Built and linked via `deps/libgit2/libgit2.cmake` +

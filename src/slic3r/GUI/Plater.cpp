@@ -9144,7 +9144,15 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         this->q->Bind(EVT_RESTORE_PROJECT, [this, last = last_backup](wxCommandEvent& e) {
             std::string last_backup = last;
             std::string originfile;
-            if (Slic3r::has_restore_data(last_backup, originfile)) {
+            const bool  has_restore = Slic3r::has_restore_data(last_backup, originfile);
+            // Crash recovery is all-or-nothing and silent when it declines, which
+            // makes "the prompt never appeared" impossible to diagnose after the
+            // fact. Record what was actually considered.
+            BOOST_LOG_TRIVIAL(info) << "restore check: last_backup_dir="
+                                    << PathSanitizer::sanitize(last)
+                                    << " has_restore_data=" << has_restore
+                                    << " originfile=" << originfile;
+            if (has_restore) {
                 BOOST_LOG_TRIVIAL(info) << "test101: Restoring project from: " << PathSanitizer::sanitize(last_backup);
                 // Commit the unsaved work to the local history repository
                 // BEFORE the prompt: declining below deletes the backup dir,

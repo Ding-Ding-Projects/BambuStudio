@@ -13,8 +13,9 @@ below was verified on **2026-07-27** unless it says otherwise.
 - CI **works and publishes releases again**. Latest release is `md3-v14` ("Siu Yuk 燒肉").
 - There is a **skill that launches and drives the app headlessly** on this machine:
   `.claude/skills/run-bambustudio/`. Use it for every "does it actually work" check.
-- Open PR: **#13** (`windows-only-and-recovery-hardening`) — CI-green, ready to merge.
-- One open GitHub issue: **#5** (blank README screenshots) — mostly fixed, 2 crops left.
+- No open PRs and **no open issues** — #13 is merged, #5 is closed with evidence.
+- The whole of the previous §7 to-do list is **finished** (see §5.3). Two of its five items were
+  diagnosed wrongly by the previous session; §5.3 records what was actually true.
 
 ---
 
@@ -30,7 +31,7 @@ These cost previous sessions hours. Do not re-derive them.
 | Windows SDK | **Must pin `PS_WINSDK=10.0.26100.0`** — SDK 10.0.28000.0 is half-installed and breaks builds with MSB8037 |
 | Prebuilt deps | `deps\build\out_deps` (already built; rebuilding takes ~30 min) |
 | App logs | `%APPDATA%\BambuStudioInternal\log\studio_*.log*` |
-| App config | `%APPDATA%\BambuStudioInternal\BambuStudio.conf` (e.g. `"dark_color_mode": "1"`) |
+| App config | `%APPDATA%\BambuStudioInternal\BambuStudio.conf` (e.g. `"dark_color_mode": "1"`). **Ends with a `# MD5 checksum` line.** A stale checksum only logs a warning, but **malformed JSON makes the app silently fall back to `BambuStudio.conf.bak`** — so a botched hand-edit looks exactly like "the app ignored my setting". Edit with a real JSON serializer and recompute the checksum over everything up to and including the last `}`. |
 | GPU | **None.** "Microsoft Basic Display Adapter". The app needs Mesa llvmpipe software GL to start at all. |
 | Python | No system Python. Use `C:\Users\Administrator\Documents\GitHub\lowlevel-computer-use-mcp\.venv\Scripts\python.exe` |
 
@@ -142,6 +143,12 @@ Traps the driver already handles, listed so you do not "fix" them back:
   on the headless desktop. Scripts must try/catch to a result file.
 - `ahkclick` uses **client** coords; plain `click` uses **desktop-screen** coords (the frame sits
   at about (136, 95)). Custom wx buttons ignore plain clicks — use `ahkclick`.
+- **Transient popovers die if you spawn another process on the desktop while one is open** (it
+  steals focus). "Click, then list windows from another process" therefore always reports nothing,
+  which reads as "the popover never opened". The click, the WinEvent catch, the repaint and the
+  `PrintWindow` must happen in **one** on-desktop process — that is what `popovercap.py` is for.
+  Point it at the **control's own hwnd**, not the containing panel: a raw `WM_LBUTTON*` posted to a
+  panel does not fire these custom wx controls.
 - **WebView2 panes never render** in captures (Home tab, Setup Wizard body come out blank). To
   see those, render the bundled page with headless Edge instead:
   `msedge --headless=new --disable-gpu --screenshot=out.png --window-size=1200,766 file:///.../resources/web/homepage3/home.html`
@@ -203,78 +210,122 @@ the link between the last two. When it was accidentally removed, the run showed 
 build at all* and Publish failed on an installer that had never been built. **If you ever edit
 these workflows, re-check that `Build BambuStudio` still appears in the job list.**
 
-### 5.3 Uncommitted or partially verified
+### 5.3 Session of 2026-07-27 (overnight) — §7's list is now finished
+
+Everything the previous §7 listed is done. What it said was wrong in two places; both are
+corrected below, because acting on the old text would waste hours.
+
+| Item | Outcome |
+| --- | --- |
+| 1. Merge PR #13 | Already merged (`29902b4aa`) before this session. |
+| 2. Dark-mode Version-history labels | **Fixed — but the diagnosis was wrong.** See below. |
+| 3. Crash-backup preservation | **Verified live end-to-end**, including the Cancel branch. |
+| 4. FadeIn hypothesis | **Refuted.** Both surfaces open fully opaque. |
+| 5. Issue #5 blank crops | **All 14 gizmo crops were blank**, not 2. Recaptured; issue closed. |
+
+**Item 2 — the labels were never the problem.** Pixel-sampling a live capture showed the two
+"black-on-white" labels painting correctly dark (`#202127`) while the **`StaticBox` card underneath
+them** painted `#F0F0F0`. Two stacked causes, both now fixed in the widget so every themed card in
+the app benefits:
+
+- `StateColor::setColorForStates()` only **updates** a state entry that already exists and returns
+  `false` otherwise. `StaticBox`'s constructor seeds only `border_color`, so
+  `SetBackgroundColorNormal()` was a **silent no-op on every card without an explicit
+  `SetBackgroundColor()`**, and `doRender()` fell through to its `count()==0` fallback.
+- That fallback fills with the plain `wxWindow` background, which `Create()` seeds once from the
+  parent — the light surface for any card built before a theme is applied. `SyncWindowBackground()`
+  now keeps it in step.
+
+See `docs/features/design-system/themed-surface-colors.md`. Before/after captures are committed.
+
+**Item 4 — refuted, and two harness traps explain the reports.** The Ctrl+F palette (642x502) and
+the regex-builder popover (393x608) both open opaque and fully populated. What made them *look*
+absent: a raw `WM_LBUTTON*` posted to a panel does **not** fire these custom wx controls (post to
+the control's own hwnd, or use `ahkclick`), and **any process spawned on the headless desktop while
+a popover is open focus-kills it** — so "click, then list windows from another process" always
+reports nothing. That is exactly why `popovercap.py` exists.
+
+The capture also caught a real defect, now fixed: every regex-builder flag row drew its text twice
+(clipped ghost text inside the 44 px checkbox plus the real label), because `CheckBox` is a
+`wxBitmapToggleButton` — a native MSW `BUTTON` — and `addFlag()` called `SetLabel()` on it.
+
+**Item 5 — the scope was bigger than recorded.** All 14 gizmo crops were bare rail background
+(min luminance 178, zero dark pixels), not just two. Also, two crop names are **aliases of one
+gizmo each**: `color-paint` == `mmu-segment` and `support-paint` == `fdm-support`, which is why
+those two looked like the only casualties. Recaptured in **light mode** (matching the rest of that
+matrix) with a model loaded, since the rail only renders with an object in the scene. A sweep of
+all 241 committed captures now reports zero blank images. Issue #5 closed.
+
+**Item 3 — verified, and the fixture recipe is worth keeping.** Load a model, wait for the backup
+`.3mf`, hard-kill the process, delete the stale `lock.txt`, point `app/last_backup_path` at that
+directory, relaunch, click **Cancel**. Result: the backup directory is deleted and the
+`Recovered unsaved project` commit survives carrying the identical 8662-byte `.3mf`. Two traps cost
+real time here and are documented in `docs/features/workspace/project-version-history.md`: a
+dead-pid `lock.txt` makes `has_restore_data()` return false from its `catch (...)`, and a
+**hand-edited `BambuStudio.conf` with malformed JSON is silently ignored in favour of
+`BambuStudio.conf.bak`** — the file ends with an MD5 checksum line, so edit it with a real JSON
+serializer and recompute the checksum.
+
+### 5.4 Earlier session — how the two features above were built
 
 - **Crash-backup preservation** (`Plater::priv::preserve_unsaved_backup_in_history`, in
-  `src/slic3r/GUI/Plater.cpp`, committed as part of the branch work): when the app starts and
-  finds an unsaved crash backup, it now commits that backup to the local Git-backed project
-  history **before** showing the "restore your last unsaved project?" prompt. This matters
-  because declining the prompt runs `boost::filesystem::remove_all` on the backup directory —
-  previously, Cancel was the moment the only copy of unsaved work disappeared. **Compiles;
-  not yet verified live** (needs a simulated crash backup + a driven run).
+  `src/slic3r/GUI/Plater.cpp`): when the app starts and finds an unsaved crash backup, it commits
+  that backup to the local Git-backed project history **before** showing the "restore your last
+  unsaved project?" prompt, because declining the prompt runs
+  `boost::filesystem::remove_all` on the backup directory. **Now verified live — see 5.3 item 3.**
   - The snapshot is staged under a real `.3mf` filename because the backup file is literally
     named `.3mf`, which has *no extension* by path rules, and the engine validates extensions on
     both the identity path and the snapshot path.
   - The commit future is `.get()`-ed because **that future carries the only error report** —
     dropping it hides failures completely.
-- **ProjectHistoryDialog dark-mode fix** (`src/slic3r/GUI/ProjectHistoryDialog.cpp`): labels sat
-  on light plates in dark mode. Cause: `Label`'s constructor caches its parent's background
-  colour (`Label::Label` → `StaticBox::GetParentBackgroundColor`), but the dialog builds its
-  layout *before* applying a theme, and `apply_theme()` only recoloured foregrounds.
-  `apply_theme()` now re-seeds label backgrounds too.
-  **PARTIALLY VERIFIED — captured live** via `press.py press "Version history"`; the capture is
-  committed at `docs/screenshots/version-history/history-dialog-dark.png`.
-  - **Fixed** (3 labels parented to the *dialog*): title, subtitle, and the safety note now sit
-    on the dark surface with no plate.
-  - **STILL BROKEN** (2 labels parented to a *`StaticBox` card*): `m_project_label`
-    ("Project: …") and `m_status_label` ("No versions yet…") still render **black text on a
-    white plate**. Note *both* their foreground and background are wrong, while the same
-    `apply_theme()` call fixed the dialog-parented labels — so this is **not** the
-    construction-order cache; something in the `StaticBox`-parent path (most likely MSW's
-    `WM_CTLCOLORSTATIC`, which the parent answers on the child's behalf) overrides both colours.
-    Do not guess-patch it: reproduce with the capture above, then find where the card's parent
-    supplies the child colour.
-  - The same construction-order trap probably still affects other dialogs that build layout
-    before applying a theme — a sweep is worthwhile, but fix the `StaticBox` path first.
+- **ProjectHistoryDialog dark mode** (`src/slic3r/GUI/ProjectHistoryDialog.cpp`): `apply_theme()`
+  re-seeds label backgrounds as well as foregrounds, because `Label`'s constructor caches its
+  parent's background colour and the dialog builds its layout before any theme is applied. That
+  fix is correct and still needed — but it was **not** what caused the remaining light plates.
+  Those were the `StaticBox` bugs in 5.3 item 2. The previously suspected `WM_CTLCOLORSTATIC`
+  explanation was wrong; do not go looking for it.
 
 ---
 
 ## 6. Current state of the world
 
 ```
-branch:          windows-only-and-recovery-hardening (3 commits ahead of master)
-origin/master:   2bc2131dc
-PR:              #13  https://github.com/Ding-Ding-Projects/BambuStudio/pull/13   (CI green)
-latest release:  md3-v14 "Siu Yuk 燒肉"
-CI proof:        run 30231810171 built the PR branch tip end-to-end and published md3-v15
-local build:     full Windows Release rebuild, 0 errors, BambuStudio.dll relinked 2026-07-27 00:56
-open issues:     #5 only
+branch:          master (no task branches, no worktrees, no stashes)
+origin/master:   see `git log -1` -- this session pushed three commits
+latest release:  md3-v14 "Siu Yuk 燒肉" was Latest at session start; CI runs for this
+                 session's pushes were still in flight when it ended -- CHECK, do not assume
+local build:     Windows Release, 0 errors, BambuStudio.dll relinked 2026-07-27 03:0x
+open issues:     none
+open PRs:        none
 ```
 
-**PR #13 is CI-verified and ready to merge into `master`.** The repo's convention is that work
-lands on `master` and every push builds and publishes a release.
+**Everything is on `master` and pushed.** The repo's convention is that work lands on `master` and
+every push builds and publishes a release.
 
 ---
 
-## 7. What to do next (ordered, with the reason)
+## 7. What to do next
 
-1. **Merge PR #13 into `master` and push.** It is green; the standing rule for this repo is that
-   work does not stay on a task branch.
-2. **Finish the dark-mode Version-history fix.** Three of five labels are fixed and captured;
-   the two on `StaticBox` cards still render black-on-white (§5.3 has the exact symptom and the
-   committed evidence capture). Reproduce in one command:
-   `press.py press "Version history"`, then `driver.py ss --hwnd <dialog>`.
-3. **Verify crash-backup preservation live** (§5.3): create a backup directory containing a
-   `.3mf`, point `app_config`'s last-backup-dir at it, launch, and confirm (a) the toast appears
-   and (b) a new commit exists in the project-history repo **even if you click Cancel**.
-   `press.py` can now reach the dialogs you need for this.
-4. **Confirm or refute the FadeIn hypothesis** for the Ctrl+F palette and the regex builder.
-   Open each (`press.py menus` lists their menu entries), screenshot, and check whether the
-   window is present-but-transparent.
-5. **Finish issue #5**: two crops in the screenshot matrix are still blank —
-   `docs/screenshots/main-window/sidebar-prepare--gizmo-color-paint.png` and
-   `--gizmo-support-paint.png`. They need a live-app recapture (the gizmo rail only renders with
-   an object in the scene). Then close the issue with the evidence.
+The previous to-do list is finished. Nothing is blocking. In rough priority order:
+
+1. **Confirm this session's CI runs went green and published releases.** They were still running
+   when the session ended; the three commits are the `StaticBox`/regex-builder widget fixes, the
+   gizmo recaptures, and the restore-check diagnostic. Never report a run as green without
+   looking at it.
+2. **Sweep other dialogs for the same `StaticBox` symptom.** The two bugs in §5.3 item 2 were in
+   the widget, so most surfaces are fixed for free — but any surface that sets its card colour
+   through some *other* path may still be stale. The cheap check is the one that found it:
+   screenshot in dark mode and **sample the pixels**, because a light plate under a correct label
+   is invisible in a thumbnail.
+3. **Consider whether a dead-pid `lock.txt` should really suppress crash recovery.** Today
+   `has_restore_data()` returns false from its `catch (...)` when `get_process_name()` fails on the
+   pid in the lock file — which is exactly the state a real crash leaves behind. This session had
+   to delete the lock file to exercise recovery at all. That looks like a genuine bug in the
+   recovery path, but it was **not** investigated further and is **not** confirmed; treat it as a
+   lead, not a finding.
+4. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
+   does not appear in the rail in this build. Neither is a defect on its own; both are worth a
+   deliberate decision rather than being left implicit.
 
 ---
 

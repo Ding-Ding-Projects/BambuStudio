@@ -250,8 +250,9 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 
 - [`dialog.png`](smart-home/dialog.png)
 
-## version-history (11 captures)
+## version-history (12 captures)
 
+- [`crash-restore-prompt.png`](version-history/crash-restore-prompt.png)
 - [`history-dialog--close.png`](version-history/history-dialog--close.png)
 - [`history-dialog-dark--before-card-fix.png`](version-history/history-dialog-dark--before-card-fix.png)
 - [`history-dialog-dark.png`](version-history/history-dialog-dark.png)
