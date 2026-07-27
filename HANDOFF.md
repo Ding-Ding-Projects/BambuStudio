@@ -323,7 +323,16 @@ The previous to-do list is finished. Nothing is blocking. In rough priority orde
    to delete the lock file to exercise recovery at all. That looks like a genuine bug in the
    recovery path, but it was **not** investigated further and is **not** confirmed; treat it as a
    lead, not a finding.
-3. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
+3. **Wire up "Add my printers to Home Assistant"** (issue #16). The blocker is solved: HA does not
+   allow config-entry creation over REST, but a *service* can start a config flow and services
+   **are** REST-callable. The fork
+   [`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) adds
+   `bambu_lab.add_printer` for exactly this, verified against a real HA 2025.1.4 (live REST checks
+   plus 10 unit tests). The app side needs no new transport — it already stores the HA base URL and
+   long-lived token for `File ▸ Smart home…`; it just POSTs each printer to
+   `/api/services/bambu_lab/add_printer`. Note this moves **printer access codes** into HA: HTTPS
+   off-loopback, never in a log line, and say so in the UI at the moment it happens.
+4. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
    does not appear in the rail in this build. Neither is a defect on its own; both are worth a
    deliberate decision rather than being left implicit.
 
