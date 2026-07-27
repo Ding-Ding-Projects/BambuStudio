@@ -43,6 +43,32 @@ void media_volume(const std::string &entity_id, double level_0_1);
 // translate_say fallback. No-op when unconfigured.
 void speak_on_speakers(const wxString &line);
 
+// A printer this app knows about, in the shape the Home Assistant `bambu_lab`
+// integration needs to add it in LAN mode.
+struct PrinterHandover
+{
+    std::string serial;
+    std::string host;        // LAN address of the printer
+    std::string access_code; // LAN access code — a credential; never log it
+    std::string name;        // optional friendly name
+};
+
+// Hand `printers` to Home Assistant's bambu_lab integration, one
+// `bambu_lab.add_printer` service call each, so the user never retypes a serial
+// or an access code. Requires the fork that provides that service:
+// https://github.com/Ding-Ding-Projects/ha-bambulab
+//
+// Unlike the fire-and-forget calls above this reports back, because it is a
+// user-initiated action: silently doing nothing is indistinguishable from
+// success and worse than an honest failure. `done` fires on the UI thread with
+// the number added and a per-printer error list (empty on full success).
+//
+// NOTE: this path needs a long-lived Home Assistant token. The token-free
+// alternative is discovery — see SlicerShare, where Home Assistant finds this
+// app instead of this app authenticating into Home Assistant.
+void add_printers(const std::vector<PrinterHandover> &printers,
+                  std::function<void(int /*added*/, std::vector<std::string> /*errors*/)> done);
+
 // Light actions ("Philips Hue and friends" — any HA light entity).
 // Flash the configured lights (`ha_lights`) in a colour; used by the
 // narrator hooks (error -> red flash, finish -> green pulse) when the

@@ -323,18 +323,83 @@ The previous to-do list is finished. Nothing is blocking. In rough priority orde
    to delete the lock file to exercise recovery at all. That looks like a genuine bug in the
    recovery path, but it was **not** investigated further and is **not** confirmed; treat it as a
    lead, not a finding.
-3. **Wire up "Add my printers to Home Assistant"** (issue #16). The blocker is solved: HA does not
-   allow config-entry creation over REST, but a *service* can start a config flow and services
-   **are** REST-callable. The fork
-   [`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) adds
-   `bambu_lab.add_printer` for exactly this, verified against a real HA 2025.1.4 (live REST checks
-   plus 10 unit tests). The app side needs no new transport — it already stores the HA base URL and
-   long-lived token for `File ▸ Smart home…`; it just POSTs each printer to
-   `/api/services/bambu_lab/add_printer`. Note this moves **printer access codes** into HA: HTTPS
-   off-loopback, never in a log line, and say so in the UI at the moment it happens.
+3. **Finish "Add my printers to Home Assistant"** (issue #16). This is the item mid-flight —
+   read §7.1 below before touching it; it records exactly what is done, what is half-done in the
+   tree, and every API you would otherwise have to rediscover.
 4. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
    does not appear in the rail in this build. Neither is a defect on its own; both are worth a
    deliberate decision rather than being left implicit.
+5. **Issue #15 (app-data git history) is waiting on the user**, not on you: whether secrets are
+   redacted, committed with enable-time disclosure, or encrypted. The trade-offs are laid out in
+   the issue comment. Do not start it by guessing.
+
+### 7.1 Item 3 in detail — Home Assistant printer handover (MID-FLIGHT, read all of this)
+
+**The HA side is DONE and CI-green.** The fork
+[`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) (tip
+`97933ad`, 25 tests passing) provides **two** ways in, both ending at the same config-flow import
+step, both verified against a real HA 2025.1.4 in a throwaway WSL instance:
+
+- **Path B — service call (needs an HA long-lived token):**
+  `POST /api/services/bambu_lab/add_printer` with `{serial, host, access_code[, name]}`.
+  Works today; the service exists with zero printers configured (registered in `async_setup`,
+  cold start needs `bambu_lab:` in HA's `configuration.yaml`).
+- **Path A — zeroconf discovery (NO token anywhere):** the app advertises
+  `_bambu-slicer._tcp.local.` with TXT keys `pairing` (random per sharing window) and `name`,
+  and serves `GET /bambustudio/printers` (`Authorization: Bearer <pairing>`) returning
+  `{"printers":[{serial, host, access_code[, name]}]}`. HA raises a discovery card; the user's
+  confirmation in the HA UI is the authorisation. Payload is treated as untrusted by HA
+  (32 printers / 256 chars per field max). Full contract:
+  `ha-bambulab/docs/unattended-printer-add.md`.
+
+**The app side is where work stopped, mid-implementation.** State of the tree:
+
+- **DONE, uncommitted-then-committed in this push:** `HomeAssistant::add_printers()` in
+  `src/slic3r/GUI/HomeAssistant.{hpp,cpp}` — takes `std::vector<PrinterHandover>`
+  (`{serial, host, access_code, name}`), POSTs each to `bambu_lab.add_printer`, reports
+  `(added, per-printer errors)` back on the UI thread. Deliberately NOT fire-and-forget like the
+  rest of that file: a user-initiated action must not fail silently. **Compiles-unverified — no
+  build has been run since this edit. Build first, before writing more.**
+- **NOT started — the UI hook for path B:** a "Add my printers to Home Assistant" action in
+  `SmartHomeDialog` (`src/slic3r/GUI/SmartHomeDialog.{hpp,cpp}` — small file, reads in one pass)
+  that collects printers, calls `add_printers`, and toasts the result. Non-blocking notification,
+  bilingual, funny-level rules apply. It MUST tell the user plainly that printer **access codes**
+  are being copied into Home Assistant at the moment it happens.
+- **NOT started — path A (advertise + serve).** Two building blocks exist and were scouted:
+  - `DeviceHttpServer` (`src/slic3r/GUI/DeviceWeb/DeviceHttpServer.{hpp,cpp}`, ~244 lines,
+    boost::asio, binds `tcp::v4()` port 13628 on ALL interfaces) — pattern to copy or extend for
+    `GET /bambustudio/printers`. Bearer-check the pairing token; never log the payload.
+  - `Slic3r::Utils::Bonjour` (`src/slic3r/Utils/Bonjour.{hpp,cpp}`) is **browse-only** — it can
+    look up services but CANNOT advertise one. An mDNS responder must be written (answer
+    PTR/SRV/TXT/A queries for `_bambu-slicer._tcp.local.` on 224.0.0.251:5353) or vendored.
+    This is the only genuinely new machinery path A needs.
+  - Sharing must be OFF by default, ON only while the user has it on, fresh `pairing` token per
+    window, stop advertising AND serving when the window closes.
+
+**Where printers come from (scouted, use these, do not re-derive):**
+
+- `DeviceManager` definition is in `src/slic3r/GUI/DeviceCore/DevManager.h` (NOT DeviceManager.hpp):
+  `get_local_machinelist()` / `get_user_machinelist()` → `std::map<std::string, MachineObject*>`
+  keyed by dev_id (= serial).
+- Per machine (`src/slic3r/GUI/DeviceManager.hpp`): `get_dev_ip()` (:187), `get_dev_name()` (:184),
+  `get_access_code()` (:213), `has_access_right()` (:212). dev_id is the serial.
+- Reach it via `wxGetApp().getDeviceManager()` (verify exact accessor name in GUI_App.hpp).
+
+**Traps already hit on the HA side (do not re-hit):**
+
+- HA test envs miss packages a real HA fetches at runtime. The full set for the fork's tests:
+  `ha-ffmpeg home-assistant-frontend paho-mqtt zeroconf aiofiles async_upnp_client beautifulsoup4`.
+  Three CI runs went red on this before the recipe was rebuilt in a clean WSL container.
+- The permission classifier blocked one large Edit into `config_flow.py`; splitting the code into
+  its own module (`slicer_pairing.py`) went through fine and was better anyway.
+- Verify in a throwaway WSL Ubuntu 24.04 (`wsl_create_temp` with the ubuntu-base rootfs URL —
+  Alpine ships Python 3.14, which HA rejects). Destroy it after.
+
+**Definition of done for issue #16:** path B button working end-to-end against a real HA (the
+throwaway-WSL recipe in `ha-bambulab/docs/verification.md` reproduces one in ~10 min), path A
+advertising + serving verified with the fork's discovery card actually appearing, screenshots of
+the new UI surface posted to the issue, and the fork's `docs/verification.md` updated to retire
+its "never run against a real broadcast" caveat.
 
 ---
 

@@ -144,6 +144,58 @@ void speak_on_speakers(const wxString &line)
     }
 }
 
+void add_printers(const std::vector<PrinterHandover> &printers,
+                  std::function<void(int, std::vector<std::string>)> done)
+{
+    if (!configured()) {
+        wxTheApp->CallAfter([done]() {
+            done(0, {std::string("Home Assistant is not configured")});
+        });
+        return;
+    }
+    if (printers.empty()) {
+        wxTheApp->CallAfter([done]() { done(0, {}); });
+        return;
+    }
+
+    const std::string url  = base_url() + "/api/services/bambu_lab/add_printer";
+    const std::string auth = "Bearer " + token();
+
+    std::thread([url, auth, printers, done]() {
+        int                      added = 0;
+        std::vector<std::string> errors;
+
+        for (const PrinterHandover &printer : printers) {
+            nlohmann::json body = {
+                {"serial", printer.serial},
+                {"host", printer.host},
+                {"access_code", printer.access_code},
+            };
+            if (!printer.name.empty())
+                body["name"] = printer.name;
+
+            bool ok = false;
+            auto http = Http::post(url);
+            http.header("Authorization", auth)
+                .header("Content-Type", "application/json")
+                .set_post_body(body.dump())
+                .timeout_max(30) // the integration verifies the printer before answering
+                .on_complete([&ok](std::string, unsigned) { ok = true; })
+                .on_error([&errors, &printer](std::string body, std::string error, unsigned status) {
+                    // The serial identifies which printer failed; the body may
+                    // echo request data, so it is deliberately not included.
+                    errors.push_back(printer.serial + ": " +
+                                     (status ? "HTTP " + std::to_string(status) : error));
+                })
+                .perform_sync();
+            if (ok)
+                ++added;
+        }
+
+        wxTheApp->CallAfter([done, added, errors = std::move(errors)]() { done(added, errors); });
+    }).detach();
+}
+
 void flash_lights(int r, int g, int b, int flashes)
 {
     const auto lights = configured_list("ha_lights");
