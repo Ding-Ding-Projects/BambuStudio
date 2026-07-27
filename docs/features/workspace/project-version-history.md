@@ -28,6 +28,20 @@ user's own folders.
   with a rollback archive kept until the swap succeeds; the original file on
   disk is never overwritten by the restore primitive.
 
+- **Crash-backup preservation**: when the app starts and finds an unsaved
+  crash backup, that backup is committed to history **before** the
+  "restore your last unsaved project?" prompt appears
+  (`Plater::priv::preserve_unsaved_backup_in_history`). Declining the prompt
+  deletes the backup directory, so the commit has to happen first — otherwise
+  Cancel is the moment the only copy of unsaved work disappears. A toast
+  confirms the work is preserved and stays restorable from Version history.
+  The snapshot is staged under a real `.3mf` filename (the backup file is
+  literally named `.3mf`, which has no extension by path rules, and the engine
+  validates extensions on both the identity and the snapshot). Identity is the
+  saved project path when the backup has one, otherwise the untitled identity
+  encoded in the backup's session-token marker, so recovered work rejoins the
+  crashed session's history instead of starting an orphan one.
+
 ## Configuration
 
 None required; history is always on for saved projects. Storage lives beside
