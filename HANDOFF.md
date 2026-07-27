@@ -14,7 +14,11 @@ below was verified on **2026-07-27** unless it says otherwise.
   ("Beef Brisket Noodles 牛腩麵"), built from `366917016` with a real installer attached.
 - There is a **skill that launches and drives the app headlessly** on this machine:
   `.claude/skills/run-bambustudio/`. Use it for every "does it actually work" check.
-- No open PRs and **no open issues** — #13 is merged, #5 is closed with evidence.
+- The interactive app and GitHub Pages landing now share an eleven-image WebP showcase under
+  `ui-md3/assets/showcase/`; its behavior and deployment contract are documented in
+  `docs/features/design-system/generated-visual-showcase.md`.
+- No open PRs. Two open issues remain: #15 is waiting for the requested secret-history policy
+  choice, while #16 is deliberately paused at the documented Home Assistant handoff in §7.1.
 - The whole of the previous §7 to-do list is **finished** (see §5.3). Two of its five items were
   diagnosed wrongly by the previous session; §5.3 records what was actually true.
 

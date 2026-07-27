@@ -149,6 +149,13 @@ reference, not screenshots of the native application. Select an image to open th
 screen, theme, density, accent, and language state. The installed-app captures are the separate
 gallery above.
 
+[![Bambu Studio reimagined in Material You, with a desktop 3D printer and luminous toolpaths](ui-md3/assets/showcase/og-social.webp)](https://ding-ding-projects.github.io/BambuStudio/)
+
+The Pages landing and interactive Home screen now share a purpose-built, web-optimized visual
+showcase for model preparation, G-code preview, device monitoring, filament management, and
+calibration. [Open the landing page](https://ding-ding-projects.github.io/BambuStudio/) or read the
+[visual showcase documentation](docs/features/design-system/generated-visual-showcase.md).
+
 **Prepare · light theme · English**
 
 [![Bambu Studio Material Design 3 Prepare design reference in the light theme and English](docs/readme-assets/material-prepare-light-en.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=prepare&theme=light&density=comfortable&accent=%2322c55e&lang=en)

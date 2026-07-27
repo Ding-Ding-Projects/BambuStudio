@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bambu Studio — Material Design 3 concept</title>
 <meta name="description" content="An independent Material Design 3 (Material You) concept redesign of the Bambu Studio slicer UI. Self-contained web app — light/dark, density, and a customizable accent seed color.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Bambu Studio, reimagined in Material You.">
+<meta property="og:description" content="Explore an image-rich Material Design 3 concept for Bambu Studio, then launch the interactive slicer prototype.">
+<meta property="og:url" content="https://ding-ding-projects.github.io/BambuStudio/">
+<meta property="og:image" content="https://ding-ding-projects.github.io/BambuStudio/assets/showcase/og-social.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bambu Studio, reimagined in Material You.">
+<meta name="twitter:description" content="A polished, interactive Material Design 3 concept for Bambu Studio.">
+<meta name="twitter:image" content="https://ding-ding-projects.github.io/BambuStudio/assets/showcase/og-social.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -31,6 +40,7 @@ html{ scroll-behavior:smooth; }
 body{ margin:0; font-family:'Roboto',system-ui,sans-serif; color:var(--md-on-surface); background:var(--md-surface);
   -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:hidden; }
 a{ color:inherit; text-decoration:none; }
+:where(a,button,select):focus-visible{ outline:3px solid var(--md-primary); outline-offset:3px; }
 [data-icon]{ font-family:'Material Symbols Outlined'; font-weight:400; line-height:1; -webkit-font-smoothing:antialiased; user-select:none; }
 .mono{ font-family:'Roboto Mono',monospace; }
 .wrap{ max-width:1120px; margin:0 auto; padding:0 24px; }
@@ -83,25 +93,20 @@ h1 .accent{ color:var(--md-primary); }
 .hint [data-icon]{ font-size:16px; }
 .hint a{ color:var(--md-primary); font-weight:600; }
 
-/* hero art — isometric plate + model, reusing the app's own motif */
-.stage{ position:relative; height:420px; display:flex; align-items:center; justify-content:center; perspective:1400px; }
-.plate{ width:340px; height:236px; transform:rotateX(58deg) rotateZ(-38deg); transform-style:preserve-3d;
-  background:linear-gradient(var(--md-sc-high),var(--md-sc)); border:1px solid var(--md-outline); border-radius:6px;
-  background-image:repeating-linear-gradient(0deg,transparent 0 24px, color-mix(in srgb, var(--md-outline) 34%, transparent) 24px 25px),
-                   repeating-linear-gradient(90deg,transparent 0 24px, color-mix(in srgb, var(--md-outline) 34%, transparent) 24px 25px);
-  box-shadow:0 40px 60px rgba(0,0,0,.30); animation:floaty 7s ease-in-out infinite; }
-.model{ position:absolute; left:50%; top:42%; transform:translate(-50%,-50%); width:150px; height:164px;
-  filter:drop-shadow(0 22px 18px rgba(0,0,0,.4)); animation:floaty 7s ease-in-out infinite; }
-.model i{ position:absolute; inset:0; display:block; }
-.model .t{ background:color-mix(in srgb, var(--md-primary) 84%, #fff); clip-path:polygon(50% 2%, 98% 27%, 50% 52%, 2% 27%); }
-.model .l{ background:color-mix(in srgb, var(--md-primary) 60%, #000 8%); clip-path:polygon(2% 27%, 50% 52%, 50% 98%, 2% 73%); }
-.model .r{ background:color-mix(in srgb, var(--md-primary) 42%, #000 22%); clip-path:polygon(98% 27%, 98% 73%, 50% 98%, 50% 52%); }
+/* hero art — generated specifically for the slicer concept */
+.stage{ position:relative; min-height:448px; display:flex; align-items:center; justify-content:center; }
+.hero-art{ width:100%; aspect-ratio:1.12; object-fit:cover; object-position:66% center; border-radius:32px;
+  border:1px solid var(--md-outline-variant); box-shadow:0 28px 70px rgba(0,0,0,.34);
+  animation:floaty 8s ease-in-out infinite; }
+.stage::before{ content:""; position:absolute; inset:9% -8% -4% 12%; z-index:-1; border-radius:44px;
+  background:color-mix(in srgb, var(--md-primary) 22%, transparent); filter:blur(42px); opacity:.72; }
 .chip{ position:absolute; display:flex; align-items:center; gap:7px; padding:8px 13px; font-size:12.5px; font-weight:500;
-  background:var(--md-sc); border:1px solid var(--md-outline-variant); border-radius:16px; box-shadow:0 6px 18px var(--md-shadow); }
+  background:color-mix(in srgb, var(--md-sc) 88%, transparent); backdrop-filter:blur(12px);
+  border:1px solid var(--md-outline-variant); border-radius:16px; box-shadow:0 6px 18px var(--md-shadow); }
 .chip [data-icon]{ font-size:17px; color:var(--md-primary); }
-.chip.c1{ top:26px; right:6px; animation:floaty 6s ease-in-out infinite; }
-.chip.c2{ bottom:54px; left:-8px; animation:floaty 8s ease-in-out .4s infinite; }
-.chip.c3{ bottom:8px; right:36px; animation:floaty 6.6s ease-in-out .2s infinite; }
+.chip.c1{ top:34px; right:-8px; animation:floaty 6s ease-in-out infinite; }
+.chip.c2{ bottom:58px; left:-18px; animation:floaty 8s ease-in-out .4s infinite; }
+.chip.c3{ bottom:8px; right:28px; animation:floaty 6.6s ease-in-out .2s infinite; }
 
 /* ---------- sections ---------- */
 section{ padding:56px 0; }
@@ -111,9 +116,15 @@ section{ padding:56px 0; }
 .divider{ height:1px; background:var(--md-outline-variant); }
 
 .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-.card{ padding:22px; border-radius:20px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant);
+.card{ position:relative; overflow:hidden; min-height:174px; padding:22px; border-radius:20px; background:var(--md-sc-low); border:1px solid var(--md-outline-variant);
   transition:border-color .15s, transform .15s, background .15s; }
 .card:hover{ border-color:var(--md-primary); transform:translateY(-3px); }
+.card.has-art{ min-height:330px; display:flex; flex-direction:column; justify-content:flex-end; padding:0; background:var(--md-sc-lowest); }
+.card-art{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .45s cubic-bezier(.2,.7,.2,1); }
+.card:hover .card-art{ transform:scale(1.035); }
+.card-copy{ position:relative; z-index:1; padding:72px 20px 20px;
+  background:linear-gradient(transparent, color-mix(in srgb, var(--md-sc-lowest) 92%, transparent) 43%, var(--md-sc-lowest) 72%); }
+.card-copy .ico{ margin-bottom:10px; box-shadow:0 5px 16px var(--md-shadow); }
 .card .ico{ width:46px; height:46px; border-radius:14px; background:var(--md-secondary-container);
   color:var(--md-on-secondary-container); display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
 .card .ico [data-icon]{ font-size:25px; }
@@ -151,12 +162,17 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
 .disclaimer{ margin-top:18px; font-size:12px; color:var(--md-on-surface-variant); max-width:760px; line-height:1.6; }
 
 @media (max-width:860px){
-  .hero-grid{ grid-template-columns:1fr; } .stage{ height:320px; order:-1; }
+  .hero-grid{ grid-template-columns:1fr; } .stage{ min-height:0; order:-1; max-width:680px; margin:0 auto; }
   h1{ font-size:40px; } .grid{ grid-template-columns:1fr 1fr; } .steps{ grid-template-columns:1fr; }
   .you{ grid-template-columns:1fr; padding:28px; }
 }
 @media (max-width:560px){ .grid{ grid-template-columns:1fr; } .nav .navlink{ display:none; }
-  .language-select{ max-width:112px; } .nav{ gap:7px; } }
+  .language-select{ max-width:112px; } .nav{ gap:7px; } .hero{ padding-top:28px; }
+  .hero-art{ border-radius:24px; } .chip.c1{ right:8px; } .chip.c2{ left:8px; } }
+@media (prefers-reduced-motion:reduce){
+  html{ scroll-behavior:auto; } .reveal,.hero-art,.chip{ animation:none !important; }
+  .card,.card-art{ transition:none; } .card:hover{ transform:none; }
+}
 </style>
 </head>
 <body>
@@ -172,7 +188,7 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
     <a class="navlink" href="#features">Screens</a>
     <a class="navlink" href="#materialyou">Material You</a>
     <a class="navlink" href="#build">How it's built</a>
-    <a class="navlink" href="https://github.com/codingmachineedge/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener">GitHub</a>
+    <a class="navlink" href="https://github.com/Ding-Ding-Projects/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener">GitHub</a>
     <select class="language-select" id="languageMode" aria-label="Language mode">
       <option value="en">English</option>
       <option value="yue_HK">廣東話（香港）</option>
@@ -194,14 +210,15 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
           and a customizable accent seed color that regenerates the whole tonal palette.</p>
         <div class="cta-row">
           <a class="btn btn-filled" id="launchMain" href="index.html"><span data-icon style="font-size:20px;">rocket_launch</span> Launch the app</a>
-          <a class="btn btn-filled" id="downloadWin" href="https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe" style="background:var(--md-secondary-container); color:var(--md-on-secondary-container); box-shadow:none;"><span data-icon style="font-size:20px;">download</span> Download native Windows app</a>
-          <a class="btn btn-outline" href="https://github.com/codingmachineedge/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener"><span data-icon style="font-size:20px;">code</span> View source</a>
+          <a class="btn btn-filled" id="downloadWin" href="https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe" style="background:var(--md-secondary-container); color:var(--md-on-secondary-container); box-shadow:none;"><span data-icon style="font-size:20px;">download</span> Download native Windows app</a>
+          <a class="btn btn-outline" href="https://github.com/Ding-Ding-Projects/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener"><span data-icon style="font-size:20px;">code</span> View source</a>
         </div>
-        <div class="hint" style="margin-top:16px;"><span data-icon>warning</span> Unsigned native C++ Windows build · per-user installer · <a href="https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256">SHA-256 file</a> · <a href="https://github.com/codingmachineedge/BambuStudio/releases/latest">release details</a>. The checksum confirms file integrity, not publisher identity.</div>
+        <div class="hint" style="margin-top:16px;"><span data-icon>warning</span> Unsigned native C++ Windows build · per-user installer · <a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256">SHA-256 file</a> · <a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest">release details</a>. The checksum confirms file integrity, not publisher identity.</div>
       </div>
       <div class="stage reveal" style="animation-delay:.1s">
-        <div class="plate"></div>
-        <div class="model"><i class="t"></i><i class="l"></i><i class="r"></i></div>
+        <img class="hero-art" src="./assets/showcase/hero-studio.webp"
+          alt="A desktop 3D printer creating a faceted model while luminous sliced toolpaths surround the build plate."
+          width="1536" height="1024" fetchpriority="high">
         <div class="chip c1"><span data-icon>layers</span> Sliced · 180 layers</div>
         <div class="chip c2"><span data-icon>palette</span> Accent → tonal ramp</div>
         <div class="chip c3 mono"><span data-icon>schedule</span> 1h 24m · 23.4 g</div>
@@ -269,8 +286,8 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
       <div class="brand"><span class="logo"><span data-icon>deployed_code</span></span> Bambu Studio · MD3 concept</div>
       <span class="spacer"></span>
       <a href="index.html">Launch app</a>
-      <a href="https://github.com/codingmachineedge/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener">Source</a>
-      <a href="https://github.com/codingmachineedge/BambuStudio/releases/latest" target="_blank" rel="noopener">Downloads</a>
+      <a href="https://github.com/Ding-Ding-Projects/BambuStudio/tree/master/ui-md3" target="_blank" rel="noopener">Source</a>
+      <a href="https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest" target="_blank" rel="noopener">Downloads</a>
       <a href="https://github.com/bambulab/BambuStudio" target="_blank" rel="noopener">Upstream project</a>
     </div>
     <p class="disclaimer">An independent, open-source Material Design 3 <em>concept</em> redesign built on a fork of the
@@ -352,20 +369,23 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
 
   // Feature grid — the real Bambu Studio tab set
   var SCREENS = [
-    ['home','Home','Start a project, reopen recents, browse the model library.'],
-    ['view_in_ar','Prepare','The 3D editor — gizmo rail, scene tools, printer &amp; process sidebar.'],
-    ['layers','Preview','G-code viewer with color schemes, legend, layer &amp; move sliders.'],
-    ['cast','Device','Live camera, temperatures, fans, axis control, AMS &amp; calibration.'],
-    ['devices','Multi-device','Monitor every printer at a glance with progress and status.'],
-    ['folder','Project','Project files — pictures, BOM, assembly guides and notes.'],
-    ['tune','Calibration','Flow dynamics, flow rate, max volumetric speed, temp tower &amp; more.'],
-    ['palette','Filament','Manage presets; filter, select and bulk-export filaments.'],
-    ['settings','Settings','Appearance, presets, network, version control and about.']
+    ['home','Home','Start a project, reopen recents, browse the model library.','home.webp','Finished geometric prints and a project folder arranged on a creative build plate.'],
+    ['view_in_ar','Prepare','The 3D editor — gizmo rail, scene tools, printer &amp; process sidebar.','prepare.webp','Geometric models arranged on a virtual build plate with transform guides.'],
+    ['layers','Preview','G-code viewer with color schemes, legend, layer &amp; move sliders.','preview.webp','A detailed model formed from colorful sliced toolpath layers.'],
+    ['cast','Device','Live camera, temperatures, fans, axis control, AMS &amp; calibration.','device.webp','An enclosed printer monitored by abstract status indicators.'],
+    ['devices','Multi-device','Monitor every printer at a glance with progress and status.','multi-device.webp','Four enclosed printers producing different colorful geometric forms.'],
+    ['folder','Project','Project files — pictures, BOM, assembly guides and notes.','project.webp','A 3D model surrounded by organized project pictures, parts, and assembly cards.'],
+    ['tune','Calibration','Flow dynamics, flow rate, max volumetric speed, temp tower &amp; more.','calibration.webp','Calibration parts and a digital caliper arranged on a build plate.'],
+    ['palette','Filament','Manage presets; filter, select and bulk-export filaments.','filament.webp','Colorful filament spools and material samples in a modular tray.'],
+    ['settings','Settings','Appearance, presets, network, version control and about.','settings.webp','Layered light and dark appearance surfaces with a generated tonal color palette.']
   ];
   var grid = document.getElementById('featureGrid');
   grid.innerHTML = SCREENS.map(function(s){
-    return '<div class="card"><div class="ico"><span data-icon>'+s[0]+'</span></div>'+
-           '<h3>'+s[1]+'</h3><p>'+s[2]+'</p></div>';
+    var copy='<div class="'+(s[3]?'card-copy':'')+'"><div class="ico"><span data-icon>'+s[0]+'</span></div>'+
+      '<h3>'+s[1]+'</h3><p>'+s[2]+'</p></div>';
+    return '<article class="card '+(s[3]?'has-art':'')+'">'+
+      (s[3]?'<img class="card-art" src="./assets/showcase/'+s[3]+'" alt="'+s[4]+'" loading="lazy" decoding="async" width="900" height="900">':'')+
+      copy+'</article>';
   }).join('');
 
   // Material You interactive demo (mirrors the app's accent seed -> tonal ramp)

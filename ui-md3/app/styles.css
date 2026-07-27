@@ -25,6 +25,7 @@ html,body{ margin:0; padding:0; height:100%; background:var(--md-surface); }
 button{ font-family:inherit; }
 a{ color:var(--md-primary); text-decoration:none; }
 a:hover{ text-decoration:underline; }
+:where(a,button,input,select,[tabindex]):focus-visible{ outline:3px solid var(--md-primary); outline-offset:2px; }
 [data-icon]{ font-family:'Material Symbols Outlined'; font-weight:400; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; white-space:nowrap; word-wrap:normal; direction:ltr; -webkit-font-feature-settings:'liga'; -webkit-font-smoothing:antialiased; user-select:none; }
 ::-webkit-scrollbar{ width:10px; height:10px; }
 ::-webkit-scrollbar-thumb{ background:var(--md-outline-variant); border-radius:8px; border:2px solid transparent; background-clip:content-box; }
@@ -67,4 +68,39 @@ a:hover{ text-decoration:underline; }
 button .i18n-secondary{ color:inherit; }
 @media (max-width:760px){
   .i18n-secondary--inline{ font-size:.68em; margin-inline-start:.28em; }
+}
+
+/* Image-led Home surface. The artwork is decorative and softly masked so
+   localized copy and actions keep strong contrast in every theme. */
+.home-welcome{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  min-height:150px;
+}
+.home-welcome::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--md-primary-container) 94%, transparent) 0 38%, transparent 76%);
+}
+.home-welcome-art{
+  position:absolute;
+  inset:0 0 0 auto;
+  z-index:-1;
+  width:62%;
+  height:100%;
+  object-fit:cover;
+  object-position:70% center;
+  opacity:.48;
+  filter:saturate(.9) contrast(1.04);
+}
+@media (max-width:920px){
+  .home-welcome-art{ opacity:.24; width:100%; }
+  .home-welcome::after{ background:color-mix(in srgb, var(--md-primary-container) 72%, transparent); }
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
 }

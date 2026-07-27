@@ -2,6 +2,17 @@
 
 ## Landed
 
+### Image-led app and GitHub Pages showcase (2026-07-27)
+
+- Added eleven original, web-optimized visuals covering the landing hero, every app screen card,
+  and social sharing.
+- Upgraded the GitHub Pages landing page from CSS-only motifs to responsive editorial artwork with
+  lazy feature cards, accessible descriptions, reduced-motion behavior, and Open Graph metadata.
+- Reused the visual language inside the interactive app's Home welcome panel and recent-project
+  cards, while keeping every action and localized label as live HTML.
+- Extended the Pages composition and layout assertion so root-level landing assets cannot silently
+  disappear during deployment.
+
 ### Chrome-sweep tranche: stock dialogs adopted (2026-07-25)
 
 - **`MD3DialogCaption::Adopt()`** — one-call adoption for dialogs that cannot change base

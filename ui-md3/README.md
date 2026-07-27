@@ -1,6 +1,6 @@
 # Bambu Studio — Material Design 3
 
-**Live:** https://codingmachineedge.github.io/BambuStudio/ · **App:** https://codingmachineedge.github.io/BambuStudio/app/
+**Live:** https://ding-ding-projects.github.io/BambuStudio/ · **App:** https://ding-ding-projects.github.io/BambuStudio/app/
 
 A self-contained web implementation of a **Material Design 3 (Material You) concept redesign** of the
 Bambu Studio slicer UI. Every screen of the real app's information architecture, re-skinned in pure
@@ -15,11 +15,11 @@ MD3 — no invented features. Runs in any browser with **zero dependencies and n
 - **Static server:** serve this folder and open `/index.html`.
 - **Landing page:** [`landing.html`](landing.html) — the marketing/entry page (Pages site root).
 - **Native Windows app:** use the
-  [latest installer](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe).
+  [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe).
   It is built from the C++ application by the
   [`Windows build and release`](../.github/workflows/build_all.yml) workflow. The installer is
   unsigned; verify the accompanying
-  [SHA-256 file](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256),
+  [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256),
   which confirms integrity but not publisher identity.
 - **Legacy concept wrapper:** [`desktop/`](desktop/) retains the earlier Electron prototype for
   reference; it is not the published installer.
@@ -75,6 +75,7 @@ ui-md3/
       <id>.template.html  one <template data-screen> per screen (verbatim MD3 markup)
       <id>.logic.js       that screen's render helpers + vals slice
       CONTRACT.md         the foundation↔screen contract
+  assets/showcase/        optimized original artwork shared by Home, landing, and social previews
   scripts/
     assemble-index.mjs  deterministic modular-template → index.html synchronization/check
   tests/
@@ -105,3 +106,6 @@ Run the dependency-free Node tests and the template assembly check from the repo
 node --test ui-md3/tests/i18n.test.mjs
 node ui-md3/scripts/assemble-index.mjs --check
 ```
+
+The GitHub Pages workflow additionally composes the root landing page and verifies every local
+script and showcase image with `ui-md3/tests/assert-pages-layout.mjs`.

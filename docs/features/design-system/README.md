@@ -13,6 +13,9 @@ Design 3 design system.
 - [Themed surface colors on StaticBox cards](themed-surface-colors.md) — how a card gets its fill,
   why `SetBackgroundColorNormal()` could silently do nothing, and the stale constructor-time window
   background behind light plates in dark mode.
+- [Generated visual showcase](generated-visual-showcase.md) — the image suite shared by the
+  interactive app, GitHub Pages landing page, and social preview, including loading, accessibility,
+  deployment, and verification behavior.
 
 ## Design source
 
