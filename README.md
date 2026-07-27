@@ -8,9 +8,10 @@ This fork's maintained delivery target is native Windows UI modernization inform
 is a per-user install and does not require administrator elevation. It is currently unsigned; verify
 the accompanying
 [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256)
-before running it. Upstream cross-platform releases remain available from
-[Bambu Lab](https://github.com/bambulab/BambuStudio/releases/), but macOS and Linux are outside this
-fork's release acceptance gate.
+before running it. **This fork is Windows-only.** macOS and Linux support has been removed from the tree: the
+platform sources, build scripts, packaging and CI jobs are gone, and CMake fails fast when
+configured on any other system. Cross-platform builds remain available upstream from
+[Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 
 The Windows UI provides three canonical fork modes: English (`en`), playful Hong Kong Cantonese
 preview (`yue_HK`), and compact English + Cantonese preview (`bilingual_en_yue_HK`). Existing Bambu Studio

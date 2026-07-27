@@ -1,4 +1,41 @@
-# TOP OF QUEUE for the next session (2026-07-26, second handoff)
+# TOP OF QUEUE (2026-07-26, third handoff)
+
+**Use the new `/run-bambustudio` skill** (`.claude/skills/run-bambustudio/`, commit `2bc2131dc`)
+for every "does it actually work" check — it launches the app on a headless desktop with Mesa
+llvmpipe and exposes launch/open/ss/click/ahkclick/ahk/children/tool/log/stop. Verified
+end-to-end (cold launch → load cube.stl → ControlClick "Slice plate" → sliced-preview capture).
+Rebuild one GUI file with the heredoc `msb.cmd` recipe in that SKILL.md (~2 min for one file
++ relink; `driver.py stop` first or LNK1104 on the locked DLL).
+
+Landed and pushed this session:
+- `e2d2f4566` + `42f7c097b` — **master CI unbroken.** Every run since md3-v10 failed on
+  (a) `Test-WindowsNativeVisual.ps1` holding raw CJK in a file the helper gate parses under
+  PS 5.1 ANSI decoding *and* asserts is ASCII (strings now assembled from code points,
+  byte-identical, gate green locally), and (b) `fa0f0d6ce` referencing an uncommitted
+  `src/slic3r/GUI/DeviceWeb/LatestRequestGate.hpp` (reconstructed from the tests' contract;
+  both scenarios pass standalone under MSVC). That is why md3-v11 shipped an old commit —
+  an older queued run simply finished last; the workflow's supersession labeling was correct.
+- `e429048f2` — blank README/wizard screenshots replaced with genuine captures (Refs #5).
+- `2bc2131dc` — the run skill itself.
+
+Still to verify at handoff (code compiles unless noted):
+1. **ProjectHistoryDialog dark-mode label plates** — labels cached the parent background at
+   construction (`Label::Label` → `StaticBox::GetParentBackgroundColor`) while `apply_theme()`
+   only recolored foregrounds, so every label sat on a light plate in dark mode (user
+   screenshot). Fixed by re-seeding label backgrounds in `apply_theme()`; **built, not yet
+   captured live.** The same construction-order trap applies to any dialog that builds its
+   layout before applying a theme — worth a sweep.
+2. **Crash-backup preservation** — `Plater::priv::preserve_unsaved_backup_in_history()` now
+   commits the unsaved backup to the local history repo *before* the restore prompt, so the
+   Cancel branch's `remove_all` can no longer destroy the only copy (user request). Identity
+   is the saved project path, else the marker token's untitled identity; the snapshot is
+   staged under a real `.3mf` name because the engine validates both extensions, and the
+   commit future is waited on because it carries the only error report. Compile state: see
+   the build running at handoff; **no live verification yet.**
+3. The Ctrl+F palette and sidebar-clipping items below remain unverified — the app now builds
+   green, so they can finally be driven with the skill.
+
+# Previous queue (2026-07-26, second handoff)
 
 Two fixes are committed but **NOT compile-verified or runtime-verified** — the session ended
 before their build finished. Build first (`scratchpad/build-gui-lowmem.cmd`, BUILDEXIT 0;

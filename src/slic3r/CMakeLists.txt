@@ -731,47 +731,16 @@ if (WIN32)
         )
 endif ()
 
-if (APPLE)
-    list(APPEND SLIC3R_GUI_SOURCES
-            Utils/RetinaHelperImpl.mm
-            Utils/MacDarkMode.mm
-            GUI/RemovableDriveManagerMM.mm
-            GUI/RemovableDriveManagerMM.h
-            GUI/Mouse3DHandlerMac.mm
-            GUI/InstanceCheckMac.mm
-            GUI/InstanceCheckMac.h
-            GUI/CameraFullscreenMac.mm
-            GUI/CameraFullscreenMac.hpp
-            GUI/MacIME.mm
-            GUI/MacIME.hpp
-            GUI/wxMediaCtrl2.mm
-            GUI/wxMediaCtrl2.h
-            GUI/wxMediaCtrl3.h
-        )
-    FIND_LIBRARY(DISKARBITRATION_LIBRARY DiskArbitration)
-else ()
-    list(APPEND SLIC3R_GUI_SOURCES
-            GUI/AVVideoDecoder.cpp
-            GUI/AVVideoDecoder.hpp
-            GUI/wxMediaCtrl2.cpp
-            GUI/wxMediaCtrl2.h
-            GUI/wxMediaCtrl3.cpp
-            GUI/wxMediaCtrl3.h
-        )
-endif ()
-
-if (UNIX AND NOT APPLE)
-    list(APPEND SLIC3R_GUI_SOURCES
-        GUI/Printer/gstbambusrc.c
-    )
-endif ()
-
-if (WIN32)
-    list(APPEND SLIC3R_GUI_SOURCES
+list(APPEND SLIC3R_GUI_SOURCES
+        GUI/AVVideoDecoder.cpp
+        GUI/AVVideoDecoder.hpp
+        GUI/wxMediaCtrl2.cpp
+        GUI/wxMediaCtrl2.h
+        GUI/wxMediaCtrl3.cpp
+        GUI/wxMediaCtrl3.h
         GUI/WindowsNativeVisualSmoke.cpp
         GUI/WindowsNativeVisualSmoke.hpp
     )
-endif ()
 
 add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
 
@@ -800,39 +769,18 @@ encoding_check(libslic3r_gui)
 # on Linux/macOS. Use find_library so every CMAKE_PREFIX_PATH entry is searched
 # and the platform-specific library name is resolved automatically, instead of
 # hardcoding ${CMAKE_PREFIX_PATH}/lib (which breaks when it is a multi-path list).
-if (WIN32)
-    find_library(HPDF_LIBRARY_RELEASE NAMES hpdf)
-    find_library(HPDF_LIBRARY_DEBUG NAMES hpdf PATH_SUFFIXES Debug)
-    set(HPDF_LIBRARY
-        $<$<CONFIG:Debug>:${HPDF_LIBRARY_DEBUG}>
-        $<$<NOT:$<CONFIG:Debug>>:${HPDF_LIBRARY_RELEASE}>)
-else ()
-    find_library(HPDF_LIBRARY NAMES hpdf)
-endif ()
+find_library(HPDF_LIBRARY_RELEASE NAMES hpdf)
+find_library(HPDF_LIBRARY_DEBUG NAMES hpdf PATH_SUFFIXES Debug)
+set(HPDF_LIBRARY
+    $<$<CONFIG:Debug>:${HPDF_LIBRARY_DEBUG}>
+    $<$<NOT:$<CONFIG:Debug>>:${HPDF_LIBRARY_RELEASE}>)
 
 target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi
     ${HPDF_LIBRARY}
     ${wxWidgets_LIBRARIES} glfw libcurl OpenSSL::SSL OpenSSL::Crypto)
 #target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi libcurl OpenSSL::SSL OpenSSL::Crypto ${wxWidgets_LIBRARIES} glfw)
 
-if (MSVC)
-    target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib)
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    FIND_LIBRARY(WAYLAND_SERVER_LIBRARIES NAMES wayland-server)
-    FIND_LIBRARY(WAYLAND_EGL_LIBRARIES    NAMES wayland-egl)
-    FIND_LIBRARY(WAYLAND_CLIENT_LIBRARIES NAMES wayland-client)
-    find_package(CURL REQUIRED)
-    target_link_libraries(libslic3r_gui ${DBUS_LIBRARIES} OSMesa)
-    target_link_libraries(libslic3r_gui
-        OpenGL::EGL
-        ${WAYLAND_SERVER_LIBRARIES}
-        ${WAYLAND_EGL_LIBRARIES}
-        ${WAYLAND_CLIENT_LIBRARIES}
-        ${CURL_LIBRARIES}
-    )
-elseif (APPLE)
-    target_link_libraries(libslic3r_gui ${DISKARBITRATION_LIBRARY})
-endif()
+target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib)
 
 if (SLIC3R_STATIC)
     # FIXME: This was previously exported by wx-config but the wxWidgets
@@ -844,41 +792,14 @@ if (SLIC3R_PCH AND NOT SLIC3R_SYNTAXONLY)
     add_precompiled_header(libslic3r_gui pchheader.hpp FORCEINCLUDE)
 endif ()
 
-if (NOT APPLE)
-    pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
-        libavcodec
-        libswscale
-        libavutil
-    )
-    target_link_libraries(libslic3r_gui PkgConfig::LIBAV)
-endif()
+pkg_check_modules(LIBAV REQUIRED IMPORTED_TARGET
+    libavcodec
+    libswscale
+    libavutil
+)
+target_link_libraries(libslic3r_gui PkgConfig::LIBAV)
 
-# We need to implement some hacks for wxWidgets and touch the underlying GTK
-# layer and sub-libraries. This forces us to use the include locations and
-# link these libraries.
-if (UNIX AND NOT APPLE)
-    find_package(GTK${SLIC3R_GTK} REQUIRED)
-    target_include_directories(libslic3r_gui PRIVATE ${GTK${SLIC3R_GTK}_INCLUDE_DIRS})
-    target_link_libraries(libslic3r_gui ${GTK${SLIC3R_GTK}_LIBRARIES})
 
-    pkg_check_modules(WEBKIT2GTK_4_1 QUIET webkit2gtk-4.1)
-    if (WEBKIT2GTK_4_1_FOUND)
-        target_compile_definitions(libslic3r_gui PRIVATE BBL_WEBKITGTK_4_1)
-    else ()
-        pkg_check_modules(WEBKIT2GTK_4_0 QUIET webkit2gtk-4.0)
-        if (WEBKIT2GTK_4_0_FOUND)
-            target_compile_definitions(libslic3r_gui PRIVATE BBL_WEBKITGTK_4_0)
-        else ()
-            message(FATAL_ERROR "Neither webkit2gtk-4.1 nor webkit2gtk-4.0 was found.")
-        endif ()
-    endif ()
-
-    # We add GStreamer for bambu:/// support.
-    pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
-    pkg_check_modules(GST_BASE REQUIRED gstreamer-base-1.0)
-    target_link_libraries(libslic3r_gui ${GSTREAMER_LIBRARIES} ${GST_BASE_LIBRARIES})
-    target_include_directories(libslic3r_gui PRIVATE ${GSTREAMER_INCLUDE_DIRS} ${GST_BASE_INCLUDE_DIRS})
-endif ()
 
 # Add a definition so that we can tell we are compiling slic3r.
 target_compile_definitions(libslic3r_gui PRIVATE SLIC3R_CURRENTLY_COMPILING_GUI_MODULE)

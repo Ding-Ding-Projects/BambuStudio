@@ -8184,6 +8184,7 @@ public:
     bool set_project_history_session_token(const std::string &token);
     bool persist_project_history_session_marker();
     bool restore_project_history_session_marker(const stdfs::path &backup_dir);
+    bool preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile);
     void shutdown_project_history();
     Slic3r::ProjectHistoryManager *project_history_manager() { return m_project_history_manager.get(); }
     stdfs::path project_history_identity() const;
@@ -9145,6 +9146,10 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
             std::string originfile;
             if (Slic3r::has_restore_data(last_backup, originfile)) {
                 BOOST_LOG_TRIVIAL(info) << "test101: Restoring project from: " << PathSanitizer::sanitize(last_backup);
+                // Commit the unsaved work to the local history repository
+                // BEFORE the prompt: declining below deletes the backup dir,
+                // and that must never be the moment the only copy disappears.
+                preserve_unsaved_backup_in_history(stdfs::u8path(last), originfile);
                 auto log_string = _L("It seems that you have projects that were not closed properly. Would you like to restore your last unsaved project?\nIf you have a currently opened project and click \"Restore\", the current project will be closed.");
                 MessageDialog dlg(this->q, log_string, wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Restore"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
                 dlg.SetButtonLabel(wxID_YES, _L("Restore"));
@@ -9364,6 +9369,105 @@ bool Plater::priv::restore_project_history_session_marker(const stdfs::path &bac
         BOOST_LOG_TRIVIAL(warning) << "Could not read the untitled project-history recovery marker: " << ex.what();
     } catch (...) {
         BOOST_LOG_TRIVIAL(warning) << "Could not read the untitled project-history recovery marker";
+    }
+    return false;
+}
+
+bool Plater::priv::preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile)
+{
+    // A crash backup is the only copy of work the user never saved, and the
+    // recovery prompt's Cancel branch deletes it outright. Commit it to the
+    // local history repository FIRST, so declining the restore (or losing the
+    // prompt to another crash) can never destroy the only copy.
+    if (!m_project_history_manager || m_project_history_shutting_down)
+        return false;
+    if (m_project_history_staging_dir.empty() || m_project_history_identity_root.empty())
+        return false;
+
+    try {
+        const stdfs::path backup_snapshot = backup_dir.lexically_normal() / ".3mf";
+        std::error_code   probe_error;
+        if (!stdfs::is_regular_file(backup_snapshot, probe_error) || probe_error)
+            return false;
+
+        // Identity must be a .3mf path: a saved project keeps its own history,
+        // an untitled backup uses the identity its marker token encodes so the
+        // recovered work rejoins the crashed session's history instead of
+        // starting an orphan one.
+        stdfs::path identity;
+        if (!originfile.empty() && originfile != "<lock>") {
+            const stdfs::path origin_path = stdfs::u8path(originfile).lexically_normal();
+            if (origin_path.extension() == ".3mf")
+                identity = origin_path;
+        }
+        if (identity.empty()) {
+            std::string token;
+            const stdfs::path marker_path = backup_dir.lexically_normal() / PROJECT_HISTORY_SESSION_MARKER;
+            std::error_code   marker_error;
+            if (stdfs::is_regular_file(marker_path, marker_error) && !marker_error &&
+                stdfs::file_size(marker_path, marker_error) == PROJECT_HISTORY_SESSION_TOKEN_LENGTH && !marker_error) {
+                token.assign(PROJECT_HISTORY_SESSION_TOKEN_LENGTH, '\0');
+                std::ifstream marker_stream(marker_path, std::ios::binary);
+                marker_stream.read(token.data(), static_cast<std::streamsize>(token.size()));
+                if (marker_stream.gcount() != static_cast<std::streamsize>(token.size()) ||
+                    !project_history_session_token_is_valid(token))
+                    token.clear();
+            }
+            if (token.empty())
+                token = boost::uuids::to_string(boost::uuids::random_generator()());
+            if (!project_history_session_token_is_valid(token))
+                return false;
+            identity = (m_project_history_identity_root / ("untitled-" + token + ".3mf")).lexically_normal();
+            if (identity.parent_path() != m_project_history_identity_root)
+                return false;
+        }
+
+        // The engine validates the snapshot's extension too, and the backup
+        // file is literally named ".3mf" (no extension by path rules), so it
+        // is staged under a proper name before being committed.
+        std::error_code       staging_error;
+        stdfs::create_directories(m_project_history_staging_dir, staging_error);
+        const stdfs::path staged = m_project_history_staging_dir /
+            ("recovered-" + boost::uuids::to_string(boost::uuids::random_generator()()) + ".3mf");
+        stdfs::copy_file(backup_snapshot, staged, stdfs::copy_options::overwrite_existing, staging_error);
+        if (staging_error) {
+            BOOST_LOG_TRIVIAL(error) << "Could not stage the unsaved crash backup for project history: "
+                                     << staging_error.message();
+            return false;
+        }
+
+        ProjectHistoryCommitOptions options;
+        options.message = "Recovered unsaved project";
+        // The future carries the only error report; dropping it hides failures
+        // completely, so this waits and logs the outcome.
+        ProjectHistoryCommitResult result = m_project_history_manager
+                                                ->commit_snapshot(identity, staged, options)
+                                                .get();
+        std::error_code cleanup_error;
+        stdfs::remove(staged, cleanup_error);
+        if (!result.ok()) {
+            BOOST_LOG_TRIVIAL(error) << "Unsaved crash backup could not be preserved in project history: "
+                                     << result.error.message;
+            return false;
+        }
+        if (!result.committed) {
+            BOOST_LOG_TRIVIAL(info) << "Unsaved crash backup already matches the newest stored version";
+            return true;
+        }
+
+        const std::string commit_id = result.version ? result.version->commit_id : std::string();
+        BOOST_LOG_TRIVIAL(info) << "Unsaved crash backup preserved in project history as "
+                                << commit_id.substr(0, std::min<std::size_t>(commit_id.size(), 10));
+        if (notification_manager != nullptr)
+            notification_manager->push_notification(NotificationType::CustomNotification,
+                NotificationManager::NotificationLevel::RegularNotificationLevel,
+                into_u8(_L("Your unsaved project was saved to version history before this prompt. "
+                           "It stays restorable from Version history even if you decline to restore it now.")));
+        return true;
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << "Could not preserve the unsaved crash backup in project history: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << "Could not preserve the unsaved crash backup in project history";
     }
     return false;
 }

@@ -237,6 +237,16 @@ void ProjectHistoryDialog::apply_theme()
     m_status_label->SetForegroundColour(secondary);
     m_safety_label->SetForegroundColour(secondary);
 
+    // Label caches its parent's background at CONSTRUCTION (see
+    // Label::Label -> StaticBox::GetParentBackgroundColor), and the layout is
+    // built before any theme is applied. Recoloring only the foreground left
+    // every label sitting on a stale light plate in dark mode. Re-seed each
+    // label with the surface it actually sits on, every time the theme changes.
+    for (Label *label : {m_title_label, m_subtitle_label, m_safety_label})
+        label->SetBackgroundColour(surface);
+    for (Label *label : {m_project_label, m_status_label})
+        label->SetBackgroundColour(card);
+
     for (StaticBox *box : {m_info_card, m_list_card}) {
         box->SetBackgroundColorNormal(card);
         box->SetBorderColorNormal(outline);
@@ -253,6 +263,8 @@ void ProjectHistoryDialog::apply_theme()
     m_failure_card->SetBorderWidth(1);
     m_failure_title_label->SetForegroundColour(on_error_container);
     m_failure_detail_label->SetForegroundColour(on_error_container);
+    for (Label *label : {m_failure_title_label, m_failure_detail_label})
+        label->SetBackgroundColour(error_container);
     m_retry_failures_button->SetBackgroundColor(StateColor(
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Error), StateColor::Hovered),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Error), StateColor::Pressed),

@@ -36,20 +36,6 @@ jobs:
           key: ${{ inputs.cache-key }}
           fail-on-cache-miss: true
 
-      - name: Get the version and date on Ubuntu and macOS
-        if: inputs.os != 'windows-latest'
-        run: |
-          ver_pure=$(grep 'set(SLIC3R_VERSION' version.inc | cut -d '"' -f2)
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            ver="PR-${{ github.event.number }}"
-          else
-            ver=V$ver_pure
-          fi
-          echo "ver=$ver" >> $GITHUB_ENV
-          echo "ver_pure=$ver_pure" >> $GITHUB_ENV
-          echo "date=$(date +'%Y%m%d')" >> $GITHUB_ENV
-        shell: bash
-
       - name: Get the version and date on Windows
         if: inputs.os == 'windows-latest'
         run: |
@@ -74,64 +60,6 @@ jobs:
         shell: pwsh
 
   #   Mac
-      - name: Build slicer mac
-        if: inputs.os == 'macos-15-intel'
-        working-directory: ${{ github.workspace }}
-        run: |
-          brew install automake texinfo
-          brew unlink cmake || true
-          brew tap-new $USER/old-cmake
-          brew extract --version=3.31.0 cmake $USER/old-cmake
-          brew install $USER/old-cmake/cmake@3.31.0
-          brew link --overwrite cmake@3.31.0
-          brew pin cmake@3.31.0
-          ./BuildMac.sh -s -x -a x86_64 -t 10.15 -1
-
-      - name: Build slicer mac
-        if: inputs.os == 'macos-15' || inputs.os == 'macos-26'
-        working-directory: ${{ github.workspace }}
-        run: |
-          brew install automake texinfo
-          brew unlink cmake || true
-          brew tap-new $USER/old-cmake
-          brew extract --version=3.31.0 cmake $USER/old-cmake
-          brew install $USER/old-cmake/cmake@3.31.0
-          brew link --overwrite cmake@3.31.0
-          brew pin cmake@3.31.0
-          ./BuildMac.sh -s -x -a universal -t 10.15 -1
-
-      - name: Build and run macOS bounded-regex tests
-        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26'
-        working-directory: ${{ github.workspace }}
-        shell: bash
-        run: |
-          runner_arch="$(uname -m)"
-          cmake -S . -B build-regex-macos -G Ninja \
-            -DBBL_RELEASE_TO_PUBLIC=1 \
-            -DBBL_INTERNAL_TESTING=0 \
-            -DSLIC3R_GUI=OFF \
-            -DSLIC3R_BUILD_TESTS=ON \
-            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/deps/build/$runner_arch/BambuStudio_deps/usr/local" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES="$runner_arch" \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
-          cmake --build build-regex-macos --target bounded_regex_tests
-          ctest --test-dir build-regex-macos --output-on-failure --no-tests=error \
-            -R '^bounded_regex_tests$'
-
-      - name: pack mac app
-        if: github.ref != 'refs/heads/main' && (inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26')
-        working-directory: ${{ github.workspace }}
-        run: zip -r BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}.zip ${{ github.workspace }}/build
-
-      - name: Upload artifacts mac
-        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}
-          path: ${{ github.workspace }}/BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}.zip
-
-  # Windows
       - name: setup MSVC
         if: inputs.os == 'windows-latest'
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
@@ -781,59 +709,3 @@ jobs:
             ${{ github.workspace }}/BambuStudioMD3.cdx.json
           if-no-files-found: error
 
-
-  # Ubuntu
-      - name: Install dependencies from BuildLinux.sh
-        if: inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04'
-        shell: bash
-        run: sudo ./BuildLinux.sh -ur
-
-      - name: Fix permissions
-        if: inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04'
-        shell: bash
-        run: sudo chown $USER -R ./
-
-      - name: Build slicer
-        if: inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04'
-        shell: bash
-        run: |
-          ./BuildLinux.sh -isfr
-          mv -n ./build/BambuStudio_ubu64.AppImage ./build/Bambu_Studio_${{inputs.os}}_${{ env.ver }}.AppImage
-
-      # - name: Build orca_custom_preset_tests
-      #   if: github.ref == 'refs/heads/main' && inputs.os == 'ubuntu-22.04'
-      #   working-directory: ${{ github.workspace }}/build/src
-      #   shell: bash
-      #   run: |
-      #     ./OrcaSlicer_profile_validator -p ${{ github.workspace }}/resources/profiles -g 1
-      #     cd ${{ github.workspace }}/resources/profiles
-      #     zip -r orca_custom_preset_tests.zip user/
-
-      - name: Upload artifacts Ubuntu
-        if: ${{ ! env.ACT && (inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04') }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: BambuStudio_${{inputs.os}}_${{ env.ver }}
-          path: './build/Bambu_Studio_${{inputs.os}}_${{ env.ver }}.AppImage'
-
-      # - name: Deploy Ubuntu release
-      #   if: ${{ ! env.ACT && github.ref == 'refs/heads/main' && inputs.os == 'ubuntu-22.04' }}
-      #   uses: WebFreak001/deploy-nightly@v3.2.0
-      #   with:
-      #     upload_url: https://uploads.github.com/repos/SoftFever/OrcaSlicer/releases/137995723/assets{?name,label}
-      #     release_id: 137995723
-      #     asset_path: ./build/OrcaSlicer_Linux_${{ env.ver }}.AppImage
-      #     asset_name: OrcaSlicer_Linux_${{ env.ver }}.AppImage
-      #     asset_content_type: application/octet-stream
-      #     max_releases: 1 # optional, if there are more releases than this matching the asset_name, the oldest ones are going to be deleted
-
-      # - name: Deploy orca_custom_preset_tests
-      #   if: ${{ ! env.ACT && github.ref == 'refs/heads/main' && inputs.os == 'ubuntu-22.04' }}
-      #   uses: WebFreak001/deploy-nightly@v3.2.0
-      #   with:
-      #     upload_url: https://uploads.github.com/repos/SoftFever/OrcaSlicer/releases/137995723/assets{?name,label}
-      #     release_id: 137995723
-      #     asset_path: ${{ github.workspace }}/resources/profiles/orca_custom_preset_tests.zip
-      #     asset_name: orca_custom_preset_tests.zip
-      #     asset_content_type: application/octet-stream
-      #     max_releases: 1
