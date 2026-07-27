@@ -10,7 +10,8 @@ below was verified on **2026-07-27** unless it says otherwise.
 ## 1. The 60-second summary
 
 - The fork is **Windows-only**. macOS and Linux support was deleted from the tree.
-- CI **works and publishes releases again**. Latest release is `md3-v14` ("Siu Yuk 燒肉").
+- CI **works and publishes releases again**. Latest release is `md3-v22`
+  ("Beef Brisket Noodles 牛腩麵"), built from `366917016` with a real installer attached.
 - There is a **skill that launches and drives the app headlessly** on this machine:
   `.claude/skills/run-bambustudio/`. Use it for every "does it actually work" check.
 - No open PRs and **no open issues** — #13 is merged, #5 is closed with evidence.
@@ -291,9 +292,12 @@ serializer and recompute the checksum.
 
 ```
 branch:          master (no task branches, no worktrees, no stashes)
-origin/master:   see `git log -1` -- this session pushed three commits
-latest release:  md3-v14 "Siu Yuk 燒肉" was Latest at session start; CI runs for this
-                 session's pushes were still in flight when it ended -- CHECK, do not assume
+origin/master:   366917016
+latest release:  md3-v22 "Beef Brisket Noodles 牛腩麵" -- built from 366917016, non-draft,
+                 carries BambuStudioMD3-Setup.exe + .sha256 + CycloneDX SBOM
+CI proof:        runs 30243618401 / 30244124170 / 30245103054 all GREEN, one release each
+                 (md3-v20 / v21 / v22). NOTE md3-v16..v19 are NOT from this session --
+                 md3-v19 targets fcc9cb6b9. A tag number is not provenance.
 local build:     Windows Release, 0 errors, BambuStudio.dll relinked 2026-07-27 03:0x
 open issues:     none
 open PRs:        none
@@ -308,22 +312,18 @@ every push builds and publishes a release.
 
 The previous to-do list is finished. Nothing is blocking. In rough priority order:
 
-1. **Confirm this session's CI runs went green and published releases.** They were still running
-   when the session ended; the three commits are the `StaticBox`/regex-builder widget fixes, the
-   gizmo recaptures, and the restore-check diagnostic. Never report a run as green without
-   looking at it.
-2. **Sweep other dialogs for the same `StaticBox` symptom.** The two bugs in §5.3 item 2 were in
+1. **Sweep other dialogs for the same `StaticBox` symptom.** The two bugs in §5.3 item 2 were in
    the widget, so most surfaces are fixed for free — but any surface that sets its card colour
    through some *other* path may still be stale. The cheap check is the one that found it:
    screenshot in dark mode and **sample the pixels**, because a light plate under a correct label
    is invisible in a thumbnail.
-3. **Consider whether a dead-pid `lock.txt` should really suppress crash recovery.** Today
+2. **Consider whether a dead-pid `lock.txt` should really suppress crash recovery.** Today
    `has_restore_data()` returns false from its `catch (...)` when `get_process_name()` fails on the
    pid in the lock file — which is exactly the state a real crash leaves behind. This session had
    to delete the lock file to exercise recovery at all. That looks like a genuine bug in the
    recovery path, but it was **not** investigated further and is **not** confirmed; treat it as a
    lead, not a finding.
-4. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
+3. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
    does not appear in the rail in this build. Neither is a defect on its own; both are worth a
    deliberate decision rather than being left implicit.
 
