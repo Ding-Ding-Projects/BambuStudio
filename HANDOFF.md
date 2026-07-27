@@ -98,6 +98,23 @@ Use the committed skill.
   popovercap.py   ← for transient popovers only
 ```
 
+**To press a button or menu item, use `press.py` — press by NAME, not by pixel:**
+
+```bash
+"$PY" "$D/press.py" menus                    # every menu item + its live command id
+"$PY" "$D/press.py" press "Version history"  # opens File > Version history...  (verified)
+"$PY" "$D/press.py" controls --filter ink    # labelled child controls
+```
+
+This solves what the previous handoff listed as the top blocker ("no known way to open a
+topbar menu item programmatically"). Menu ids are `wxID_ANY` allocations that **shift between
+builds** — `Version history...` was 849 in one build and 888 in the next — so `press.py`
+enumerates them live and caches per frame hwnd. Never hardcode one. Two details make it work
+and are easy to break: the frame must be parked at **(-183, -6)** while discovering menus (at
+its normal position the owner-drawn strip opens nothing), and **ctypes silently swallows
+exceptions raised inside an `EnumChildWindows` callback**, yielding an empty list instead of
+an error. Both are documented in `SKILL.md`.
+
 Quick start:
 
 ```bash
@@ -204,9 +221,21 @@ these workflows, re-check that `Build BambuStudio` still appears in the job list
   on light plates in dark mode. Cause: `Label`'s constructor caches its parent's background
   colour (`Label::Label` → `StaticBox::GetParentBackgroundColor`), but the dialog builds its
   layout *before* applying a theme, and `apply_theme()` only recoloured foregrounds.
-  `apply_theme()` now re-seeds label backgrounds too. **Compiles; not yet captured live.**
-  **The same construction-order trap applies to any dialog that builds its layout before
-  applying a theme — a sweep for this pattern is probably worthwhile.**
+  `apply_theme()` now re-seeds label backgrounds too.
+  **PARTIALLY VERIFIED — captured live** via `press.py press "Version history"`; the capture is
+  committed at `docs/screenshots/version-history/history-dialog-dark.png`.
+  - **Fixed** (3 labels parented to the *dialog*): title, subtitle, and the safety note now sit
+    on the dark surface with no plate.
+  - **STILL BROKEN** (2 labels parented to a *`StaticBox` card*): `m_project_label`
+    ("Project: …") and `m_status_label` ("No versions yet…") still render **black text on a
+    white plate**. Note *both* their foreground and background are wrong, while the same
+    `apply_theme()` call fixed the dialog-parented labels — so this is **not** the
+    construction-order cache; something in the `StaticBox`-parent path (most likely MSW's
+    `WM_CTLCOLORSTATIC`, which the parent answers on the child's behalf) overrides both colours.
+    Do not guess-patch it: reproduce with the capture above, then find where the card's parent
+    supplies the child colour.
+  - The same construction-order trap probably still affects other dialogs that build layout
+    before applying a theme — a sweep is worthwhile, but fix the `StaticBox` path first.
 
 ---
 
@@ -231,20 +260,18 @@ lands on `master` and every push builds and publishes a release.
 
 1. **Merge PR #13 into `master` and push.** It is green; the standing rule for this repo is that
    work does not stay on a task branch.
-2. **Verify the two unverified UI fixes live** (§5.3), using the skill in §4:
-   - Dark-mode Version-history dialog: set `"dark_color_mode": "1"` in the config, launch, open
-     **File ▸ Version history…**, screenshot, and confirm no light plates behind label text.
-   - Crash-backup preservation: create a fake backup directory containing a `.3mf`, point
-     `app_config`'s last-backup-dir at it, launch, and confirm (a) the toast appears and (b) a
-     new commit exists in the project-history repo **even if you click Cancel**.
-   - **Blocker you will hit:** there is currently **no known way to open a topbar menu item
-     programmatically** on this app (see §4). Solve that first, or find another entry point.
-     A promising untried approach: find the menu item's runtime wxWindowID and `PostMessage`
-     `WM_COMMAND` to the frame — this worked in an earlier session for the command palette
-     (`WM_COMMAND` = 0x0111, wParam 6089 = `wxID_HIGHEST+90`).
-3. **Confirm or refute the FadeIn hypothesis** for the Ctrl+F palette and the regex builder.
-   Open each, screenshot, and check whether the window is present-but-transparent.
-4. **Finish issue #5**: two crops in the screenshot matrix are still blank —
+2. **Finish the dark-mode Version-history fix.** Three of five labels are fixed and captured;
+   the two on `StaticBox` cards still render black-on-white (§5.3 has the exact symptom and the
+   committed evidence capture). Reproduce in one command:
+   `press.py press "Version history"`, then `driver.py ss --hwnd <dialog>`.
+3. **Verify crash-backup preservation live** (§5.3): create a backup directory containing a
+   `.3mf`, point `app_config`'s last-backup-dir at it, launch, and confirm (a) the toast appears
+   and (b) a new commit exists in the project-history repo **even if you click Cancel**.
+   `press.py` can now reach the dialogs you need for this.
+4. **Confirm or refute the FadeIn hypothesis** for the Ctrl+F palette and the regex builder.
+   Open each (`press.py menus` lists their menu entries), screenshot, and check whether the
+   window is present-but-transparent.
+5. **Finish issue #5**: two crops in the screenshot matrix are still blank —
    `docs/screenshots/main-window/sidebar-prepare--gizmo-color-paint.png` and
    `--gizmo-support-paint.png`. They need a live-app recapture (the gizmo rail only renders with
    an object in the scene). Then close the issue with the evidence.
