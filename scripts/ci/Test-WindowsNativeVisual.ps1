@@ -14,6 +14,18 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Non-ASCII UI strings are assembled from code points: Test-BuildFromSourceHelpers.ps1
+# requires this file to stay byte-level ASCII so Windows PowerShell 5.1's default
+# ANSI decoding can never mis-parse it.
+$cjk = [pscustomobject]@{
+    YueHK             = -join [char[]]@(0x5EE3, 0x6771, 0x8A71, 0xFF08, 0x9999, 0x6E2F, 0xFF09)
+    PrepareSlicePrint = -join [char[]]@(0x6E96, 0x5099, 0x3001, 0x5207, 0x7247, 0x3001, 0x5217, 0x5370)
+    UiMode            = -join [char[]]@(0x4ECB, 0x9762, 0x6A21, 0x5F0F)
+    StartNewProject   = -join [char[]]@(0x958B, 0x59CB, 0x65B0, 0x5C08, 0x6848)
+    NewProject        = -join [char[]]@(0x65B0, 0x5C08, 0x6848)
+    MidDot            = [string][char]0x00B7
+}
+
 if (-not $CiExecutionApproved -or $env:CI -ne 'true' -or $env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted') {
     throw 'This script executes the unsigned native application and is restricted to an explicitly approved disposable GitHub-hosted runner.'
 }
@@ -289,20 +301,20 @@ $scenarios = @(
         Name = 'dark-yue_HK'
         Mode = 'yue_HK'
         Theme = 'dark'
-        Title = 'Bambu Studio MD3 Native Visual Smoke [dark-yue_HK] | 廣東話（香港）'
-        Headline = '準備、切片、列印'
-        SupportingText = '廣東話（香港）介面模式'
-        Action = '開始新專案'
+        Title = ('Bambu Studio MD3 Native Visual Smoke [dark-yue_HK] | ' + $cjk.YueHK)
+        Headline = $cjk.PrepareSlicePrint
+        SupportingText = ($cjk.YueHK + $cjk.UiMode)
+        Action = $cjk.StartNewProject
         RequiresCjk = $true
     },
     [pscustomobject]@{
         Name = 'light-bilingual'
         Mode = 'bilingual_en_yue_HK'
         Theme = 'light'
-        Title = 'Bambu Studio MD3 Native Visual Smoke [light-bilingual] | English + 廣東話（香港）'
-        Headline = 'Prepare, Slice, Print · 準備、切片、列印'
-        SupportingText = 'English + 廣東話（香港） compact bilingual mode'
-        Action = 'New project · 新專案'
+        Title = ('Bambu Studio MD3 Native Visual Smoke [light-bilingual] | English + ' + $cjk.YueHK)
+        Headline = ('Prepare, Slice, Print ' + $cjk.MidDot + ' ' + $cjk.PrepareSlicePrint)
+        SupportingText = ('English + ' + $cjk.YueHK + ' compact bilingual mode')
+        Action = ('New project ' + $cjk.MidDot + ' ' + $cjk.NewProject)
         RequiresCjk = $true
     }
 )
