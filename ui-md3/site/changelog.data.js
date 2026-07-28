@@ -5,10 +5,198 @@
  */
 window.BAMBU_CHANGELOG = {
   "repository": "Ding-Ding-Projects/BambuStudio",
-  "latestTag": "md3-v27",
-  "releaseCount": 34,
+  "latestTag": "md3-v31",
+  "releaseCount": 38,
   "categoryDerivation": "leading-verb of the commit subject",
   "releases": [
+    {
+      "tag": "md3-v31",
+      "name": "Bambu Studio MD3 v31 — Chicken Feet 鳳爪 (superseded master build)",
+      "version": "v31",
+      "ordinal": 31,
+      "dish": {
+        "en": "Chicken Feet",
+        "yue": "鳳爪"
+      },
+      "qualifier": "superseded master build",
+      "published": "2026-07-28T15:07:46Z",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v31",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "11f4c6f35e42a71a2d321a29626f4812fc4de65e",
+      "build": "v31 \"Chicken Feet 鳳爪\" (app build 02.08.01.55)",
+      "workflow": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/30363737304",
+      "installScope": "current user (`%LOCALAPPDATA%\\Programs\\Bambu Studio MD3`)",
+      "signing": "unsigned; verify the accompanying SHA-256 checksum before running",
+      "sbom": "CycloneDX 1.6 payload inventory is attached and attested",
+      "assets": [
+        {
+          "name": "BambuStudioMD3-Setup.exe",
+          "bytes": 229491566,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v31/BambuStudioMD3-Setup.exe"
+        },
+        {
+          "name": "BambuStudioMD3-Setup.exe.sha256",
+          "bytes": 92,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v31/BambuStudioMD3-Setup.exe.sha256"
+        },
+        {
+          "name": "BambuStudioMD3.cdx.json",
+          "bytes": 3314117,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v31/BambuStudioMD3.cdx.json"
+        }
+      ],
+      "changes": [
+        {
+          "sha": "11f4c6f35e42a71a2d321a29626f4812fc4de65e",
+          "short": "11f4c6f35",
+          "subject": "Stop crash recovery from losing the work it exists to save",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v30",
+      "name": "Bambu Studio MD3 v30 — Steamed Milk Pudding 雙皮奶 (superseded master build)",
+      "version": "v30",
+      "ordinal": 30,
+      "dish": {
+        "en": "Steamed Milk Pudding",
+        "yue": "雙皮奶"
+      },
+      "qualifier": "superseded master build",
+      "published": "2026-07-28T15:04:39Z",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v30",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "332eb8ac7834f8397369d29167bc61e355d0d2ee",
+      "build": "v30 \"Steamed Milk Pudding 雙皮奶\" (app build 02.08.01.55)",
+      "workflow": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/30360075842",
+      "installScope": "current user (`%LOCALAPPDATA%\\Programs\\Bambu Studio MD3`)",
+      "signing": "unsigned; verify the accompanying SHA-256 checksum before running",
+      "sbom": "CycloneDX 1.6 payload inventory is attached and attested",
+      "assets": [
+        {
+          "name": "BambuStudioMD3-Setup.exe",
+          "bytes": 229507632,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v30/BambuStudioMD3-Setup.exe"
+        },
+        {
+          "name": "BambuStudioMD3-Setup.exe.sha256",
+          "bytes": 92,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v30/BambuStudioMD3-Setup.exe.sha256"
+        },
+        {
+          "name": "BambuStudioMD3.cdx.json",
+          "bytes": 3314117,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v30/BambuStudioMD3.cdx.json"
+        }
+      ],
+      "changes": [
+        {
+          "sha": "332eb8ac7834f8397369d29167bc61e355d0d2ee",
+          "short": "332eb8ac7",
+          "subject": "Record pushed clipping and companion evidence",
+          "category": "documented"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v29",
+      "name": "Bambu Studio MD3 v29 — Salt Baked Chicken 鹽焗雞 (superseded master build)",
+      "version": "v29",
+      "ordinal": 29,
+      "dish": {
+        "en": "Salt Baked Chicken",
+        "yue": "鹽焗雞"
+      },
+      "qualifier": "superseded master build",
+      "published": "2026-07-28T14:54:35Z",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v29",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "32a5cc6d79e40a46d3c1758052fbdeac5c01f1a3",
+      "build": "v29 \"Salt Baked Chicken 鹽焗雞\" (app build 02.08.01.55)",
+      "workflow": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/30359505947",
+      "installScope": "current user (`%LOCALAPPDATA%\\Programs\\Bambu Studio MD3`)",
+      "signing": "unsigned; verify the accompanying SHA-256 checksum before running",
+      "sbom": "CycloneDX 1.6 payload inventory is attached and attested",
+      "assets": [
+        {
+          "name": "BambuStudioMD3-Setup.exe",
+          "bytes": 229472604,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v29/BambuStudioMD3-Setup.exe"
+        },
+        {
+          "name": "BambuStudioMD3-Setup.exe.sha256",
+          "bytes": 92,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v29/BambuStudioMD3-Setup.exe.sha256"
+        },
+        {
+          "name": "BambuStudioMD3.cdx.json",
+          "bytes": 3314117,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v29/BambuStudioMD3.cdx.json"
+        }
+      ],
+      "changes": [
+        {
+          "sha": "32a5cc6d79e40a46d3c1758052fbdeac5c01f1a3",
+          "short": "32a5cc6d7",
+          "subject": "Enforce 44-pixel landing navigation targets",
+          "category": "changed"
+        }
+      ]
+    },
+    {
+      "tag": "md3-v28",
+      "name": "Bambu Studio MD3 v28 — Spring Roll 春卷 (superseded master build)",
+      "version": "v28",
+      "ordinal": 28,
+      "dish": {
+        "en": "Spring Roll",
+        "yue": "春卷"
+      },
+      "qualifier": "superseded master build",
+      "published": "2026-07-28T14:50:46Z",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v28",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "6591d89682dc5dd95506c261b30a453a43d4a2a5",
+      "build": "v28 \"Spring Roll 春卷\" (app build 02.08.01.55)",
+      "workflow": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/30359135134",
+      "installScope": "current user (`%LOCALAPPDATA%\\Programs\\Bambu Studio MD3`)",
+      "signing": "unsigned; verify the accompanying SHA-256 checksum before running",
+      "sbom": "CycloneDX 1.6 payload inventory is attached and attested",
+      "assets": [
+        {
+          "name": "BambuStudioMD3-Setup.exe",
+          "bytes": 229495870,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v28/BambuStudioMD3-Setup.exe"
+        },
+        {
+          "name": "BambuStudioMD3-Setup.exe.sha256",
+          "bytes": 92,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v28/BambuStudioMD3-Setup.exe.sha256"
+        },
+        {
+          "name": "BambuStudioMD3.cdx.json",
+          "bytes": 3314117,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v28/BambuStudioMD3.cdx.json"
+        }
+      ],
+      "changes": [
+        {
+          "sha": "6591d89682dc5dd95506c261b30a453a43d4a2a5",
+          "short": "6591d8968",
+          "subject": "Add bounded Smart Home handover and fix clipping",
+          "category": "added"
+        }
+      ]
+    },
     {
       "tag": "md3-v27",
       "name": "Bambu Studio MD3 v27 — Water Chestnut Cake 馬蹄糕",

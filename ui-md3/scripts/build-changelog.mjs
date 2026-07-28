@@ -68,9 +68,17 @@ function categorize(subject) {
   return 'changed';
 }
 
+/*
+ * A tag this checkout has not fetched is normal, not an error: the release
+ * body's own `Commit:` line is the fallback. git's complaint is silenced so a
+ * routine miss does not read like a failure in the log.
+ */
 function tagCommit(tag) {
   try {
-    return run('git', ['rev-list', '-n', '1', tag]);
+    return execFileSync('git', ['rev-list', '-n', '1', tag], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
   } catch {
     return '';
   }
