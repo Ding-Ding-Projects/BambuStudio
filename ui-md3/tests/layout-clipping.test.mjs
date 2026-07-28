@@ -185,6 +185,29 @@ test('the prototype title bar cannot push its window controls off-screen', () =>
   for (const width of [1000, 860, 700, 560]) {
     assert.match(appStyles, new RegExp(`@media \\(max-width:${width}px\\)\\{ \\.titlebar`));
   }
+  // Every element in the prototype carries an inline style="display:flex", and
+  // an inline style beats a stylesheet rule without !important — so a collapse
+  // rule that omits it looks perfect in the diff and does absolutely nothing.
+  const collapseRules = appStyles.match(/@media \(max-width:\d+px\)\{ \.titlebar [^}]*\{[^}]*\}/g) || [];
+  assert.equal(collapseRules.length, 4, 'four collapse breakpoints are expected');
+  for (const rule of collapseRules) {
+    assert.match(rule, /display:none !important/, `a collapse rule without !important is inert: ${rule}`);
+  }
+});
+
+test('the title bar block closes every element it opens', () => {
+  /*
+   * The .tb-controls wrapper once shipped unclosed, swallowing the tab bar,
+   * because its closing tag lived in a two-line replacement that never matched
+   * a CRLF file. The diff looked right; the artifact did not.
+   */
+  const start = prototype.indexOf('<div class="titlebar"');
+  const end = prototype.indexOf('<!-- ===== TAB BAR ===== -->');
+  assert.ok(start !== -1 && end > start, 'the title bar block must be findable');
+  const block = prototype.slice(start, end);
+  const opened = (block.match(/<div\b/g) || []).length;
+  const closed = (block.match(/<\/div>/g) || []).length;
+  assert.equal(opened, closed, `title bar opens ${opened} divs and closes ${closed}`);
 });
 
 test('every prototype search field is wired, and plain text is the default', () => {

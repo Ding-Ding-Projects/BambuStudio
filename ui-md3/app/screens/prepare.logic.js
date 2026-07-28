@@ -59,7 +59,7 @@ registerScreen({
       {isValue:true, label:'Top shell layers', value:'5', unit:''},
       {isValue:true, label:'Sparse infill density', value:'15', unit:'%'},
       {isSelect:true, label:'Infill pattern', value:'Grid'},
-      {isSwitch:true, label:'Enable support', onClick:()=>{ this.commit((sw?'Disable':'Enable')+' support','account_tree'); this.setState({supportOn:!sw}); },
+      {isSwitch:true, label:'Enable support', on:String(!!sw), onClick:()=>{ this.commit((sw?'Disable':'Enable')+' support','account_tree'); this.setState({supportOn:!sw}); },
         track: sw?'var(--md-primary)':'transparent', trackBorder: sw?'var(--md-primary)':'var(--md-outline)',
         knob: sw?'var(--md-on-primary)':'var(--md-outline)', knobX: sw?'22px':'4px', knobSize: sw?'16px':'12px'},
       {isSelect:true, label:'Brim type', value:'Auto'},

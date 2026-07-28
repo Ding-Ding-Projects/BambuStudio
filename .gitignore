@@ -50,3 +50,6 @@ build-tests/
 build-ninja/
 /artifacts/
 # ──── end Desktop Material: Build artifacts ────  (dm-template:build-artifacts)
+
+# Composed GitHub Pages tree (scripts/compose-site.mjs); the docs use this path.
+_site/

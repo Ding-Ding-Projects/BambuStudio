@@ -5,10 +5,75 @@
  */
 window.BAMBU_CHANGELOG = {
   "repository": "Ding-Ding-Projects/BambuStudio",
-  "latestTag": "md3-v31",
-  "releaseCount": 38,
+  "latestTag": "md3-v32",
+  "releaseCount": 39,
   "categoryDerivation": "leading-verb of the commit subject",
   "releases": [
+    {
+      "tag": "md3-v32",
+      "name": "Bambu Studio MD3 v32 — Beef Ball 山竹牛肉球 (superseded master build)",
+      "version": "v32",
+      "ordinal": 32,
+      "dish": {
+        "en": "Beef Ball",
+        "yue": "山竹牛肉球"
+      },
+      "qualifier": "superseded master build",
+      "published": "2026-07-28T15:53:50Z",
+      "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v32",
+      "prerelease": false,
+      "baseline": false,
+      "sameCommit": false,
+      "commit": "655a22141c18e48f8d9ad571cd68a8cd9c3a6812",
+      "build": "v32 \"Beef Ball 山竹牛肉球\" (app build 02.08.01.55)",
+      "workflow": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/30366532416",
+      "installScope": "current user (`%LOCALAPPDATA%\\Programs\\Bambu Studio MD3`)",
+      "signing": "unsigned; verify the accompanying SHA-256 checksum before running",
+      "sbom": "CycloneDX 1.6 payload inventory is attached and attested",
+      "assets": [
+        {
+          "name": "BambuStudioMD3-Setup.exe",
+          "bytes": 229500431,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v32/BambuStudioMD3-Setup.exe"
+        },
+        {
+          "name": "BambuStudioMD3-Setup.exe.sha256",
+          "bytes": 92,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v32/BambuStudioMD3-Setup.exe.sha256"
+        },
+        {
+          "name": "BambuStudioMD3.cdx.json",
+          "bytes": 3314117,
+          "url": "https://github.com/Ding-Ding-Projects/BambuStudio/releases/download/md3-v32/BambuStudioMD3.cdx.json"
+        }
+      ],
+      "changes": [
+        {
+          "sha": "655a22141c18e48f8d9ad571cd68a8cd9c3a6812",
+          "short": "655a22141",
+          "subject": "Fix seven audited defects: two use-after-frees, invisible focus, square pills",
+          "category": "fixed"
+        },
+        {
+          "sha": "a1a30b44b6596bbd0df0b6c484310d48a2040aab",
+          "short": "a1a30b44b",
+          "subject": "Withdraw a crash-recovery test that could not fail",
+          "category": "changed"
+        },
+        {
+          "sha": "aea1327cd7b3803a472d1bf88e1436a9f61e1017",
+          "short": "aea1327cd",
+          "subject": "Gate the Pages deploy on 444 measured layout cases",
+          "category": "changed"
+        },
+        {
+          "sha": "f3ff110448cf678f3a4a4302007688e5989e7bed",
+          "short": "f3ff11044",
+          "subject": "Rebuild the GitHub Pages site as a tabbed Material 3 app",
+          "category": "changed"
+        }
+      ]
+    },
     {
       "tag": "md3-v31",
       "name": "Bambu Studio MD3 v31 — Chicken Feet 鳳爪 (superseded master build)",

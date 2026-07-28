@@ -204,7 +204,7 @@ are untouched and remain the concurrent session's.
   `<meta name="bambu-app-base">` to `app/` for the published tree. A `github.io` hostname test got
   the local preview wrong — which is exactly the copy the layout gate serves.
 - **`ui-md3/index.html` is generated.** Edit `app/screens/*.template.html`, then run
-  `node ui-md3/scripts/assemble-index.mjs --write`. `--check` runs in CI.
+  `node ui-md3/scripts/assemble-index.mjs --write`. `--check` runs in the Pages workflow.
 - **`site/changelog.data.js` is generated**, and deliberately **not** gated on freshness. CI
   regenerates it at deploy time from the Releases API with the committed file as the fallback.
   Gating on staleness looked tidy and was a trap: every release CI publishes makes the committed

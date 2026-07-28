@@ -18,7 +18,7 @@ registerScreen({
   vals: function(){ const s = this.state; return {
     isDevice:this.state.view === 'device',
     temps:this.render_temps(), speedModes:this.render_speedModes(),
-    lamp:s.lamp, toggleLamp:()=>this.setState({lamp:!s.lamp}),
+    lamp:s.lamp, lampOn:String(!!s.lamp), toggleLamp:()=>this.setState({lamp:!s.lamp}),
     lampTrack:s.lamp?'var(--md-primary)':'transparent', lampTrackBorder:s.lamp?'var(--md-primary)':'var(--md-outline)',
     lampKnob:s.lamp?'var(--md-on-primary)':'var(--md-outline)', lampKnobX:s.lamp?'22px':'4px',
   }; }

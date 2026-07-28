@@ -1,8 +1,9 @@
 name: Deploy ui-md3 (MD3 redesign) to GitHub Pages
 
-# Publishes the self-contained Material Design 3 web app in ui-md3/ to GitHub Pages,
-# so the redesign has a live, always-current preview URL. The app is static (no build
-# step): the ui-md3/ directory is uploaded verbatim and served at the site root.
+# Publishes the Material Design 3 site to GitHub Pages. It is static — no build step —
+# but it is not uploaded verbatim: scripts/compose-site.mjs assembles the published tree
+# (landing site at the root, the interactive prototype under /app/, shared assets at both),
+# and the same script runs locally, so what CI publishes is reproducible on a laptop.
 #
 # One-time setup on the fork: Settings -> Pages -> Build and deployment -> Source:
 # "GitHub Actions". Then this workflow deploys on every push that touches ui-md3/.
@@ -16,6 +17,10 @@ on:
       # The static clipping contracts also assert against the native dialogs.
       - 'src/slic3r/GUI/SmartHomeDialog.*'
       - 'src/slic3r/GUI/MsgDialog.*'
+  # A published release changes what the changelog should say, and the changelog is
+  # regenerated at deploy time — so a release redeploys the site.
+  release:
+    types: [published]
   workflow_dispatch: {}
 
 # Least-privilege token scoped to what deploy-pages needs.
@@ -70,6 +75,9 @@ jobs:
         run: |
           # One composer, used identically here and on a development machine, so
           # a layout failure reproduces locally instead of only in CI.
+          # index.html is generated from app/screens/*.template.html; a tree where the
+          # two disagree ships a prototype nobody reviewed.
+          node ui-md3/scripts/assemble-index.mjs --check
           node ui-md3/scripts/compose-site.mjs _site
           node ui-md3/tests/assert-pages-layout.mjs _site
           echo "Composed _site:"; find _site -maxdepth 2 -type f | sort

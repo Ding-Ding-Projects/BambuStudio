@@ -184,6 +184,31 @@ const banner = `/* GENERATED FILE — do not edit by hand.
  */\n`;
 const serialized = `${banner}window.BAMBU_CHANGELOG = ${JSON.stringify(payload, null, 2)};\n`;
 
+/*
+ * A regenerated file that is emptier than the one already committed is a
+ * symptom, not an update: a partial API page, a checkout with no tags, a token
+ * without release scope. Publishing it would quietly replace a good changelog
+ * with a worse one, and `continue-on-error` in CI would hide that.
+ */
+if (!checkOnly) {
+  const existing = await readFile(outputPath, 'utf8').catch(() => '');
+  const previousCount = Number(/"releaseCount":\s*(\d+)/.exec(existing)?.[1] || 0);
+  const previousChangeLines = (existing.match(/"sha":/g) || []).length;
+  const changeLines = entries.reduce((sum, entry) => sum + entry.changes.length, 0);
+  if (entries.length < previousCount) {
+    throw new Error(
+      `Refusing to write a shorter changelog: ${entries.length} releases now, ` +
+      `${previousCount} in the committed file. Check the API response and the token.`
+    );
+  }
+  if (previousChangeLines > 0 && changeLines === 0) {
+    throw new Error(
+      'Refusing to write a changelog with no change lines when the committed file has ' +
+      `${previousChangeLines}. The release tags are probably not fetched — this needs full history.`
+    );
+  }
+}
+
 if (checkOnly) {
   const current = await readFile(outputPath, 'utf8').catch(() => '');
   if (current !== serialized) {

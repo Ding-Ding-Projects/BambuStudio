@@ -334,13 +334,20 @@ test('the site states its real layout-case count, computed from the harness', as
   // like any other, and it went stale the moment the per-tab matrix was added:
   // the Overview stat and the "How it is built" step both still said 156.
   const harness = await readFile(path.join(testDir, 'runtime-layout-clipping.mjs'), 'utf8');
-  const landing = Number(/assert\.equal\(cases, (\d+)\)/.exec(harness)?.[1]);
-  const perTabExpression = /assert\.equal\(cases, ([\d *]+)\)/g;
-  const totals = [...harness.matchAll(perTabExpression)].map((match) =>
-    match[1].split('*').map(Number).reduce((product, value) => product * value, 1));
-  assert.ok(totals.length >= 2, 'the harness must state each suite’s case count');
-  const total = totals.reduce((sum, value) => sum + value, 0);
+  // Only the two suites that measure the SITE count toward the site's own
+  // claim; the prototype at /app/ is a different surface with its own gate.
+  const countFor = (title) => {
+    const start = harness.indexOf(`test('${title}`);
+    assert.notEqual(start, -1, `harness must contain the "${title}" suite`);
+    const expression = /assert\.equal\(cases, ([\d *]+)\)/.exec(harness.slice(start));
+    assert.ok(expression, `"${title}" must assert its own case count`);
+    return expression[1].split('*').map(Number).reduce((product, value) => product * value, 1);
+  };
+  const landing = countFor('landing page stays inside every supported width');
+  const perTab = countFor('every tab renders inside the viewport');
+  const total = landing + perTab;
   assert.equal(landing, 156);
+  assert.equal(perTab, 288);
   assert.equal(total, 444);
 
   const views = await readFile(path.join(siteDir, 'views.js'), 'utf8');

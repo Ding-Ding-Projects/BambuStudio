@@ -415,6 +415,87 @@ test('every tab renders inside the viewport at each supported width, zoom and la
   assert.deepEqual(failures, []);
 });
 
+/*
+ * The prototype published at /app/ is part of the deploy, so it is measured
+ * too. It was not, which is exactly how a title bar that pushed its own close
+ * button 217px past a 640px viewport reached production: the gate only ever
+ * loaded the landing page.
+ */
+test('the published prototype keeps its window controls reachable', {
+  timeout: 120_000,
+  skip: !PAGE_URL && 'Set BAMBU_PAGES_TEST_URL to the locally served landing page',
+}, async () => {
+  const appUrl = new URL('app/index.html', new URL('./', PAGE_URL)).href;
+  const chrome = await startChrome();
+  const failures = [];
+  let cases = 0;
+  try {
+    for (const physicalWidth of [640, 900, 1280]) {
+      for (const zoom of [1, 2]) {
+        const cssWidth = Math.max(320, Math.floor(physicalWidth / zoom));
+        await chrome.session.send('Emulation.setDeviceMetricsOverride', {
+          width: cssWidth,
+          height: 800,
+          deviceScaleFactor: zoom,
+          mobile: false,
+          screenWidth: physicalWidth,
+          screenHeight: Math.round(800 * zoom),
+        });
+        await navigate(chrome.session, appUrl);
+        const evaluated = await chrome.session.send('Runtime.evaluate', {
+          expression: `JSON.stringify((() => {
+            const bar = document.querySelector('.titlebar');
+            if (!bar) return { missing: true };
+            const controls = [...document.querySelectorAll('.tb-controls button')];
+            const clientWidth = document.documentElement.clientWidth;
+            const outside = controls
+              .filter(button => {
+                const rect = button.getBoundingClientRect();
+                return rect.width > 0 && (rect.right > clientWidth + 1 || rect.left < -1);
+              })
+              .map(button => button.getAttribute('aria-label') || button.textContent.trim());
+            return {
+              clientWidth,
+              controlCount: controls.length,
+              outside,
+              barOverflow: bar.scrollWidth > Math.ceil(bar.getBoundingClientRect().width) + 1,
+              documentOverflow: document.documentElement.scrollWidth > clientWidth,
+              unnamedButtons: [...document.querySelectorAll('button')].filter(button => {
+                const rect = button.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) return false;
+                return !button.textContent.trim() && !button.getAttribute('aria-label') &&
+                  !button.getAttribute('title');
+              }).length,
+            };
+          })())`,
+          returnByValue: true,
+        });
+        const result = JSON.parse(evaluated.result.value);
+        cases++;
+        const context = `${physicalWidth}px @ ${zoom * 100}% (${cssWidth} CSS px)`;
+        if (result.missing) {
+          failures.push(`${context}: the prototype has no .titlebar`);
+          continue;
+        }
+        if (result.controlCount < 4)
+          failures.push(`${context}: expected the window controls, found ${result.controlCount}`);
+        if (result.outside.length)
+          failures.push(`${context}: unreachable controls ${JSON.stringify(result.outside)}`);
+        if (result.barOverflow)
+          failures.push(`${context}: the title bar's content is wider than the title bar`);
+        if (result.documentOverflow)
+          failures.push(`${context}: the prototype overflows the document horizontally`);
+        if (result.unnamedButtons)
+          failures.push(`${context}: ${result.unnamedButtons} button(s) with no accessible name`);
+      }
+    }
+  } finally {
+    await stopChrome(chrome);
+  }
+  assert.equal(cases, 6);
+  assert.deepEqual(failures, []);
+});
+
 test('landing page stays inside every supported width, zoom and language viewport', {
   timeout: 300_000,
   skip: !PAGE_URL && 'Set BAMBU_PAGES_TEST_URL to the locally served landing page',

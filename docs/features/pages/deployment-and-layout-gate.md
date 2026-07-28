@@ -35,7 +35,8 @@ Before anything is uploaded, the workflow runs:
 | `ui-md3/tests/i18n.test.mjs` | the shared localisation runtime and the landing's use of it |
 | `ui-md3/tests/site.test.mjs` | copy ladders, placeholder parity, facts-per-level, key coverage, regex bounds, date parsing, changelog data integrity, dim sum catalogue |
 | `ui-md3/tests/layout-clipping.test.mjs` | static contracts: no ellipsis, no horizontal scroller, 44px floors, the strip's overflow stages, tablist semantics |
-| `ui-md3/tests/runtime-layout-clipping.mjs` | **444 measured cases in a real headless browser** |
+| `ui-md3/tests/site-behaviour.test.mjs` | storage round-trips, element-appearance apply/reset, notification recording and persistence |
+| `ui-md3/tests/runtime-layout-clipping.mjs` | **444 measured site cases plus 6 that load the published prototype**, in a real headless browser |
 
 The runtime harness is the one that matters. It drives Chrome through the DevTools protocol against
 a locally served copy of the composed tree:
@@ -49,6 +50,11 @@ a locally served copy of the composed tree:
   outside the viewport or has content wider than itself, that every control is at least 44×44
   (a checkbox inside a 44px label counts, an inline link inside prose is text and is not a target),
   and that the tab strip stayed on one row rather than wrapping.
+
+The prototype published at `/app/` is measured too — three widths at two display scales — asserting
+that its window controls stay inside the viewport, that its title bar does not overflow itself, and
+that no visible button lacks an accessible name. It was previously unmeasured, which is how a title
+bar that pushed its own close button 217px past a 640px viewport reached production.
 
 Because the harness fails on `scrollWidth > width`, the site may not use `text-overflow: ellipsis`
 or a horizontally scrolling container anywhere: those hide a clip rather than fix it. Long strings

@@ -144,7 +144,7 @@
             <sc-if value="{{ p.isSwitch }}">
               <div style="display:flex; align-items:center; gap:10px; min-height:36px;">
                 <div style="flex:1; font-size:12.5px;">{{ p.label }}</div>
-                <button onClick="{{ p.onClick }}" style="width:44px; height:24px; border-radius:14px; border:2px solid {{ p.trackBorder }}; background:{{ p.track }}; position:relative; cursor:pointer; padding:0; transition:.15s;">
+                <button onClick="{{ p.onClick }}" role="switch" aria-checked="{{ p.on }}" aria-label="{{ p.label }}" title="{{ p.label }}" style="width:44px; height:24px; border-radius:14px; border:2px solid {{ p.trackBorder }}; background:{{ p.track }}; position:relative; cursor:pointer; padding:0; transition:.15s;">
                   <span style="position:absolute; top:50%; left:{{ p.knobX }}; transform:translateY(-50%); width:{{ p.knobSize }}; height:{{ p.knobSize }}; border-radius:50%; background:{{ p.knob }}; transition:.15s;"></span>
                 </button>
               </div>
