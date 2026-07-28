@@ -41,7 +41,7 @@
     { key: 'screen.multidevice', icon: 'devices', art: 'multi-device.webp', alt: 'Four enclosed printers producing different colorful geometric forms.' },
     { key: 'screen.project', icon: 'folder', art: 'project.webp', alt: 'A 3D model surrounded by organized project pictures, parts, and assembly cards.' },
     { key: 'screen.calibration', icon: 'tune', art: 'calibration.webp', alt: 'Calibration parts and a digital caliper arranged on a build plate.' },
-    { key: 'screen.filament', icon: 'palette', art: 'filament.webp', alt: 'Colorful filament spools and material samples in a modular tray.' },
+    { key: 'screen.filament', icon: 'palette', art: 'filament.webp', alt: 'Colorful ink spools and material samples in a modular tray.' },
     { key: 'screen.settings', icon: 'settings', art: 'settings.webp', alt: 'Layered light and dark appearance surfaces with a generated tonal color palette.' },
     { key: 'screen.smarthome', icon: 'home_iot_device', art: '', alt: '' }
   ];

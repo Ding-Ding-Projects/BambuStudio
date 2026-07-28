@@ -31,7 +31,7 @@
     'Multi-device': '多裝置',
     'Project': '項目',
     'Calibration': '校準',
-    'Filament': '耗材',
+    'Ink': '墨水',
     'Settings': '設定',
     'Appearance': '外觀',
     'General': '一般',
@@ -115,11 +115,11 @@
     'Start a project, reopen recents, browse the model library.': '開新項目、重開最近檔案、去模型庫睇吓。',
     'The 3D editor — gizmo rail, scene tools, printer & process sidebar.': '立體編輯器—操作工具列、場景工具、列印機同工藝側邊欄。',
     'G-code viewer with color schemes, legend, layer & move sliders.': 'G-code 檢視器，包含顏色配置、圖例、層數同移動滑桿。',
-    'Live camera, temperatures, fans, axis control, AMS & calibration.': '實時鏡頭、溫度、風扇、軸控制、AMS 同校準。',
+    'Live camera, temperatures, fans, axis control, Ink Dispenser & calibration.': '實時鏡頭、溫度、風扇、軸控制、墨水機同校準。',
     'Monitor every printer at a glance with progress and status.': '一眼睇晒每部列印機嘅進度同狀態。',
     'Project files — pictures, BOM, assembly guides and notes.': '項目檔案—圖片、物料清單、組裝指南同備註。',
     'Flow dynamics, flow rate, max volumetric speed, temp tower & more.': '流量動態、流量比、最大體積速度、溫度塔等等。',
-    'Manage presets; filter, select and bulk-export filaments.': '管理預設；篩選、選擇同批量匯出耗材。',
+    'Manage presets; filter, select and bulk-export inks.': '管理預設；篩選、選擇同批量匯出墨水。',
     'Appearance, presets, network, version control and about.': '外觀、預設、網絡、版本控制同關於。',
     'Home Assistant': 'Home Assistant',
     'Choose an explicit long-lived-token handover or a five-minute local discovery window; both disclose access-code transfer.': {
@@ -182,8 +182,8 @@
     'literal .': '字面 .',
     'Search settings': '搜尋設定',
     'Search objects': '搜尋物件',
-    'Search filaments': '搜尋耗材',
-    'Search filament presets': '搜尋耗材預設',
+    'Search inks': '搜尋墨水',
+    'Search ink presets': '搜尋墨水預設',
     'Search calibrations': '搜尋校準項目',
     'Search commits': '搜尋提交記錄',
     'Search devices': '搜尋裝置',
@@ -320,7 +320,7 @@
     'Options': '選項',
     'Statistics': '統計',
     'Estimated time': '預計時間',
-    'Filament used': '耗材用量',
+    'Ink used': '墨水用量',
     'Est. cost': '預計成本',
     'Print options': '列印選項',
     'Print Plate 1': '列印第 1 塊板',
@@ -343,9 +343,16 @@
     'Part cooling': '部件散熱',
     'Aux fan': '輔助風扇',
     'Extrude': '擠出',
-    'AMS mapping': 'AMS 映射',
-    'Sync AMS': '同步 AMS',
-    'Sync with AMS': '同 AMS 同步',
+    // "AMS" needed no Cantonese; the renamed "Ink Dispenser" is ordinary
+    // English, so the device section header now needs a counterpart.
+    'Ink Dispenser': '墨水機',
+    'Ink Dispenser mapping': '墨水機映射',
+    // The sidebar squeezes this trailing button, so the screen renders the
+    // compact "Sync dispenser" label rather than the full name. Bilingual mode
+    // collapses the Cantonese behind the 廣 badge — which keeps the complete
+    // aria-label — instead of widening the row and clipping the INK title.
+    'Sync dispenser': { text: '同步墨水機', display: 'detail' },
+    'Sync with Ink Dispenser': '同墨水機同步',
     'Humidity: Dry': '濕度：乾燥',
     'Bed leveling': '底板調平',
     'Timelapse': '延時攝影',
@@ -364,8 +371,8 @@
     'Others': '其他',
     'Add file': '新增檔案',
     'Add to project': '加入項目',
-    'Fine-tune your printer and filament for the best possible print quality.': {
-      text: '幫部機同耗材校到啱啱好，印出嚟靚仔啲。',
+    'Fine-tune your printer and ink for the best possible print quality.': {
+      text: '幫部機同墨水校到啱啱好，印出嚟靚仔啲。',
       display: 'detail'
     },
     'Flow dynamics calibration': '流量動態校準',
@@ -374,30 +381,30 @@
     'Flow Rate': '流量比',
     'Tune extrusion multiplier for accurate walls': '調整擠出倍率，使牽寬更準確',
     'Max Volumetric Speed': '最大體積速度',
-    'Find the fastest reliable flow for a filament': '找出此耗材穩定的最高流量',
+    'Find the fastest reliable flow for an ink': '找出此墨水穩定的最高流量',
     'Temperature Tower': '溫度塔',
     'Find the ideal nozzle temperature': '找出理想噴嘴溫度',
     'Retraction Test': '回抽測試',
     'Reduce stringing and oozing': '減少拉絲同滲料',
     'Vertical Fine Tuning': 'Z 軸精細調整',
     'Correct Z-offset and first layer': '修正 Z 偏移及首層',
-    'Filament Manager': '耗材管理器',
+    'Ink Manager': '墨水管理器',
     'Filter, select and bulk-export presets': '篩選、選擇同批量匯出預設',
     'Export all': '全部匯出',
     'Import': '匯入',
-    'New filament': '新耗材',
+    'New ink': '新墨水',
     'Vendor': '供應商',
     'Type': '類型',
     'Nozzle °C': '噴嘴 °C',
     'Bed °C': '底板 °C',
-    'Export filament': '匯出耗材',
-    'Add filament': '新增耗材',
+    'Export ink': '匯出墨水',
+    'Add ink': '新增墨水',
     'Pick a preset to add to this project': '選個預設加入項目',
-    'Export filaments': '匯出耗材',
+    'Export inks': '匯出墨水',
     'Format': '格式',
     'Select all': '全選',
-    'No filaments match your filter.': {
-      text: '沒有耗材符合篩選條件。',
+    'No inks match your filter.': {
+      text: '沒有墨水符合篩選條件。',
       display: 'inline', tone: 'literal'
     },
     'All': '全部',
@@ -457,7 +464,7 @@
     'Arrange plate': '排列列印板',
     'Edit variable layer height': '編輯可變層高',
     'Slice Plate 1': '切片列印板 1',
-    'Add filament: Bambu PLA Basic': '新增耗材：Bambu PLA Basic',
+    'Add ink: Bambu PLA Basic': '新增墨水：Bambu PLA Basic',
     'Plate 1 · snapshot': '列印板 1 · 快照',
     'by you · 3 objects': '由你製作 · 3 個物件',
     '1 object · 15,842 faces': '1 個物件 · 15,842 個面',
@@ -472,7 +479,7 @@
     { source: '^Sliced · (\\d+) layers$', yue: '已切片 · $1 層' },
     { source: '^(\\d+) commits · auto-saved\\. Bundled into the \\.3mf on save\\.$', yue: '$1 個提交 · 已自動儲存，儲存時會包含在 .3mf 內。', display: 'detail', tone: 'literal' },
     { source: '^(.+) · (\\d+) commits$', yue: '$1 · $2 個提交' },
-    { source: '^AMS · Slot (\\d+)$', yue: 'AMS · 槽位 $1' },
+    { source: '^Ink Dispenser · Slot (\\d+)$', yue: '墨水機 · 槽位 $1' },
     { source: '^Today · (.+)$', yue: '今日 · $1' },
     { source: '^Yesterday · (.+)$', yue: '尋日 · $1' },
     { source: '^(\\d+) days ago · (.+)$', yue: '$1 日前 · $2' },
@@ -487,7 +494,7 @@
     { source: '^Restored project to #(.+)$', yue: '項目已還原到 #$1', tone: 'literal' },
     { source: '^Starting (.+) calibration…$', yue: '正在開始 $1 校準…' },
     { source: '^Auto-saved: (.+)$', yue: '已自動儲存：$1', tone: 'literal' },
-    { source: '^Exported (\\d+) filament presets? → (.+)$', yue: '已匯出 $1 個耗材預設 → $2', tone: 'literal' }
+    { source: '^Exported (\\d+) ink presets? → (.+)$', yue: '已匯出 $1 個墨水預設 → $2', tone: 'literal' }
   ];
 
   var messages = {
@@ -496,7 +503,7 @@
     slicingPlate: { en: 'Slicing Plate {plate}…', yue: '正在切片列印板 {plate}…' },
     plateSliced: { en: 'Plate {plate} sliced · {time} · {weight}', yue: '列印板 {plate} 已切片 · {time} · {weight}' },
     projectSaved: { en: 'Project saved — version history bundled into .3mf', yue: '項目已儲存—版本記錄已包含在 .3mf 內' },
-    exportedPresets: { en: 'Exported {count} filament preset{suffix} → {format}', yue: '已匯出 {count} 個耗材預設 → {format}' },
+    exportedPresets: { en: 'Exported {count} ink preset{suffix} → {format}', yue: '已匯出 {count} 個墨水預設 → {format}' },
     restoredProject: { en: 'Restored project to #{hash}', yue: '項目已還原到 #{hash}' },
     printSent: { en: 'Sent to {printer} · print starting', yue: '已傳送到 {printer} · 即將開始列印' },
     openingLibrary: { en: 'Opening online model library…', yue: '正在打開網上模型庫…' }

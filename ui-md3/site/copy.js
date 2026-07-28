@@ -278,14 +278,14 @@
     'screen.device': { en: ['Device'], yue: ['裝置'] },
     'screen.device.body': {
       en: [
-        'Live camera, temperatures, fans, axis control, AMS and calibration.',
-        'Live camera, temperatures, fans, axis control, AMS and calibration.',
-        'Live camera, temperatures, fans, axis control, AMS and calibration — printer television, basically.'
+        'Live camera, temperatures, fans, axis control, Ink Dispenser and calibration.',
+        'Live camera, temperatures, fans, axis control, Ink Dispenser and calibration.',
+        'Live camera, temperatures, fans, axis control, Ink Dispenser and calibration — printer television, basically.'
       ],
       yue: [
-        '即時鏡頭、溫度、風扇、軸控制、AMS 同校準。',
-        '即時鏡頭、溫度、風扇、軸控制、AMS 同校準。',
-        '即時鏡頭、溫度、風扇、軸控制、AMS 同校準 — 即係打印機台電視。'
+        '即時鏡頭、溫度、風扇、軸控制、墨水機同校準。',
+        '即時鏡頭、溫度、風扇、軸控制、墨水機同校準。',
+        '即時鏡頭、溫度、風扇、軸控制、墨水機同校準 — 即係打印機台電視。'
       ]
     },
     'screen.multidevice': { en: ['Multi-device'], yue: ['多裝置'] },
@@ -327,17 +327,17 @@
         '流量動態、流量、最大體積速度、溫度塔 — 即係打細嘢，等大嘢聽話嗰個部分。'
       ]
     },
-    'screen.filament': { en: ['Filament'], yue: ['線材'] },
+    'screen.filament': { en: ['Ink'], yue: ['墨水'] },
     'screen.filament.body': {
       en: [
-        'Manage presets: filter, select and bulk-export filaments.',
-        'Manage presets — filter, select and bulk-export filaments.',
-        'Filter, select and bulk-export filaments, so the spool graveyard finally has a filing system.'
+        'Manage presets: filter, select and bulk-export inks.',
+        'Manage presets — filter, select and bulk-export inks.',
+        'Filter, select and bulk-export inks, so the spool graveyard finally has a filing system.'
       ],
       yue: [
-        '管理預設：篩選、選取同批量匯出線材。',
-        '管理預設 — 篩選、選取同批量匯出線材。',
-        '篩選、選取、批量匯出線材，你個線軸墳場終於有個檔案系統。'
+        '管理預設：篩選、選取同批量匯出墨水。',
+        '管理預設 — 篩選、選取同批量匯出墨水。',
+        '篩選、選取、批量匯出墨水，你個線軸墳場終於有個檔案系統。'
       ]
     },
     'screen.settings': { en: ['Settings'], yue: ['設定'] },

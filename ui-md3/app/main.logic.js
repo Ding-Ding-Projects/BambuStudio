@@ -109,7 +109,7 @@ class Main extends DCLogic {
       {id:'multi', label:'Multi-device', icon:'devices'},
       {id:'project', label:'Project', icon:'folder'},
       {id:'calibration', label:'Calibration', icon:'tune'},
-      {id:'filament', label:'Filament', icon:'palette'},
+      {id:'filament', label:'Ink', icon:'palette'},
       {id:'settings', label:'Settings', icon:'settings'},
     ];
     return defs.map(d=>{ const on = cur===d.id; return {
@@ -121,10 +121,10 @@ class Main extends DCLogic {
   }
   render_filaments(){
     return [
-      {color:'#111418', name:'Bambu PLA Basic', type:'PLA', slot:'AMS · Slot 1'},
-      {color:'#e11d2e', name:'Bambu PLA Matte', type:'PLA', slot:'AMS · Slot 2'},
-      {color:'#1560d4', name:'Bambu PETG HF', type:'PETG', slot:'AMS · Slot 3'},
-      {color:'#f5c518', name:'Bambu Support', type:'SUP', slot:'AMS · Slot 4'},
+      {color:'#111418', name:'Bambu PLA Basic', type:'PLA', slot:'Ink Dispenser · Slot 1'},
+      {color:'#e11d2e', name:'Bambu PLA Matte', type:'PLA', slot:'Ink Dispenser · Slot 2'},
+      {color:'#1560d4', name:'Bambu PETG HF', type:'PETG', slot:'Ink Dispenser · Slot 3'},
+      {color:'#f5c518', name:'Bambu Support', type:'SUP', slot:'Ink Dispenser · Slot 4'},
     ];
   }
   render_accents(){
@@ -250,10 +250,10 @@ class Main extends DCLogic {
       showHistory: s.showHistory, toggleHistory:()=>this.setState({showHistory:!s.showHistory}),
       autoCommitNote: 'Every edit is auto-committed to this project\u2019s local Git repo',
       history: s.history.filter(h=>this.shellMatch('history', h.hash+' '+h.message+' '+(h.author||'')+' '+(h.files||''))).map((h,i)=>{ const on=s.selectedCommit===h.hash; return { ...h, isHead:i===0, expanded:on, chevron:on?'expand_less':'expand_more', dotBg:on?'var(--md-primary)':'var(--md-sc-highest)', dotFg:on?'var(--md-on-primary)':'var(--md-on-surface-variant)', onSelect:()=>this.setState({selectedCommit: on?null:h.hash}), restore:()=>this.notify(this.msg('restoredProject',{hash:h.hash}), {icon:'history'}) }; }),
-      addFilamentConfirm:()=>{ this.setState({dialog:null}); this.commit('Add filament: Bambu PLA Basic','palette'); },
+      addFilamentConfirm:()=>{ this.setState({dialog:null}); this.commit('Add ink: Bambu PLA Basic','palette'); },
       sendPrint:()=>{ this.setState({dialog:null}); this.notify(this.msg('printSent',{printer:'Bambu Lab X1 Carbon'}), {icon:'send', actionLabel:'Device', action:this.go('device'), duration:4200}); },
-      exportFilament:()=>this.notify('Exported \u201CBambu PLA Basic\u201D \u2192 filament preset (.bbsflmt)', {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}),
-      exportAllFilaments:()=>this.notify('Exported 6 filament presets \u2192 bundle (.bbsflmt.zip)', {icon:'folder_zip', duration:4000}),
+      exportFilament:()=>this.notify('Exported \u201CBambu PLA Basic\u201D \u2192 ink preset (.bbsflmt)', {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}),
+      exportAllFilaments:()=>this.notify('Exported 6 ink presets \u2192 bundle (.bbsflmt.zip)', {icon:'folder_zip', duration:4000}),
       openExport:()=>{ const all={}; this.render_filRows().forEach(f=>all[f.name]=true); this.setState({ dialog:'export', export:{...this.state.export, selected:all, contains:'', type:'All', vendor:'All'} }); },
       isDlgExport: s.dialog==='export',
       setExQuery:(v,mode)=>this.setState({export:{...this.state.export, contains:v,
