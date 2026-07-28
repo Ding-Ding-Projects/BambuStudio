@@ -758,3 +758,8 @@ footer { border-top: 1px solid var(--md-outline-variant); padding: 28px 0 44px; 
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
+
+/* The Material You panel's own search bar and its filterable control rows. */
+.you-search { margin-bottom: 12px; }
+.you-row { display: block; margin-bottom: 12px; }
+.you-empty { margin: 8px 0 0; font-size: calc(13px * var(--site-font-scale)); }

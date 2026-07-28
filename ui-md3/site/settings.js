@@ -61,6 +61,58 @@
     });
   }
 
+  /*
+   * The Material You panel is an appearance editor, so it carries its own
+   * search bar rather than relying on the Settings tab's. Same component, same
+   * plain-text default, same regex opt-in; the items are its three control
+   * rows, matched on their labels and their current values in both languages.
+   */
+  function mountAppearanceSearch(panel) {
+    var host = panel.querySelector('.you-search');
+    if (!host) return;
+    var rows = [].slice.call(panel.querySelectorAll('.you-row'));
+    var empty = panel.querySelector('.you-empty');
+    var LABELS = {
+      theme: ['you.theme', 'you.light', 'you.dark', 'settings.theme'],
+      density: ['you.density', 'you.comfortable', 'you.compact', 'settings.density'],
+      accent: ['you.accent', 'settings.accent', 'settings.accent.custom']
+    };
+
+    function textFor(control) {
+      var parts = (LABELS[control] || []).reduce(function (all, key) {
+        var both = site.pair(key);
+        return all.concat([both.en, both.yue, key]);
+      }, []);
+      // The current value is searchable too, so "dark" or "#22c55e" finds it.
+      if (control === 'theme') parts.push(site.get('theme'));
+      if (control === 'density') parts.push(site.get('density'));
+      if (control === 'accent') parts.push(site.get('accent'));
+      return parts.join(' ');
+    }
+
+    var field = global.BambuRegex.createSearchField({
+      labelKey: 'settings.search',
+      sampleProvider: function () {
+        return rows.map(function (row) { return textFor(row.dataset.control); }).join('\n');
+      },
+      items: function () {
+        return rows.map(function (row) {
+          return { id: row.dataset.control, text: textFor(row.dataset.control) };
+        });
+      },
+      onResults: function (ids) {
+        var shown = 0;
+        rows.forEach(function (row) {
+          var hit = ids === null || ids.indexOf(row.dataset.control) !== -1;
+          row.hidden = !hit;
+          if (hit) shown++;
+        });
+        empty.hidden = shown !== 0;
+      }
+    });
+    host.appendChild(field.element);
+  }
+
   /* --------------------------------------------------- font detection */
 
   function availableFonts() {
@@ -646,6 +698,7 @@
   global.BambuControls = {
     ACCENTS: ACCENTS,
     mountThemeControls: mountThemeControls,
+    mountAppearanceSearch: mountAppearanceSearch,
     availableFonts: availableFonts,
     renderSettings: renderSettings
   };

@@ -78,6 +78,27 @@ test('the tab strip degrades through overflow instead of clipping', () => {
   assert.match(tabsJs, /doc\.fonts\.load\("400 20px 'Material Symbols Outlined'"\)/);
 });
 
+test('every adjustment surface carries its own regex-capable search', async () => {
+  const views = await readFile(path.join(uiDir, 'site', 'views.js'), 'utf8');
+  const settingsModule = await readFile(path.join(uiDir, 'site', 'settings.js'), 'utf8');
+  const changelogModule = await readFile(path.join(uiDir, 'site', 'changelog.js'), 'utf8');
+  const tabsModule = await readFile(path.join(uiDir, 'site', 'tabs.js'), 'utf8');
+  // Four surfaces let the user adjust or find something, and each owns a search
+  // bar built from the same component — not one shared bar on the Settings tab.
+  assert.match(settingsModule, /labelKey: 'settings\.search'[\s\S]*?items: searchableItems/);
+  assert.match(settingsModule, /function mountAppearanceSearch[\s\S]*?createSearchField/);
+  assert.match(views, /class="you-search"/);
+  assert.match(views, /mountAppearanceSearch\(panel\)/);
+  assert.match(changelogModule, /labelKey: 'changelog\.search'/);
+  assert.match(tabsModule, /labelKey: 'shell\.tabsearch'/);
+  // All of them go through createSearchField, so plain text stays the default
+  // and the builder is one button away from each.
+  for (const [name, source] of [['settings', settingsModule], ['changelog', changelogModule],
+    ['tabs', tabsModule]]) {
+    assert.match(source, /BambuRegex\.createSearchField\(/, `${name} must use the shared field`);
+  }
+});
+
 test('focus is never dropped on the floor by the chrome', () => {
   // The first tab stop on the page has to become a visible 44px target.
   assert.match(siteCss, /\.sr-only:focus,\s*\.sr-only:focus-visible\s*\{[\s\S]*?min-height:\s*44px;/);

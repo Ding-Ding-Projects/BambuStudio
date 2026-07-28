@@ -157,23 +157,35 @@
             '<span data-icon aria-hidden="true">tune</span><span data-copy="you.try"></span></a>' +
         '</div>' +
         '<div class="you-demo">' +
-          '<p class="rowlbl" data-copy="you.theme"></p>' +
-          '<div class="seg" data-group="theme">' +
-            '<button type="button" data-val="light"><span data-icon aria-hidden="true">light_mode</span>' +
-              '<span data-copy="you.light"></span></button>' +
-            '<button type="button" data-val="dark"><span data-icon aria-hidden="true">dark_mode</span>' +
-              '<span data-copy="you.dark"></span></button>' +
+          // This panel is an appearance editor, so it carries its own search
+          // bar wired to the shared regex builder, like every other adjustment
+          // surface on the site.
+          '<div class="you-search"></div>' +
+          '<div class="you-row" data-control="theme">' +
+            '<p class="rowlbl" data-copy="you.theme"></p>' +
+            '<div class="seg" data-group="theme">' +
+              '<button type="button" data-val="light"><span data-icon aria-hidden="true">light_mode</span>' +
+                '<span data-copy="you.light"></span></button>' +
+              '<button type="button" data-val="dark"><span data-icon aria-hidden="true">dark_mode</span>' +
+                '<span data-copy="you.dark"></span></button>' +
+            '</div>' +
           '</div>' +
-          '<p class="rowlbl" data-copy="you.density"></p>' +
-          '<div class="seg" data-group="density">' +
-            '<button type="button" data-val="comfortable"><span data-copy="you.comfortable"></span></button>' +
-            '<button type="button" data-val="compact"><span data-copy="you.compact"></span></button>' +
+          '<div class="you-row" data-control="density">' +
+            '<p class="rowlbl" data-copy="you.density"></p>' +
+            '<div class="seg" data-group="density">' +
+              '<button type="button" data-val="comfortable"><span data-copy="you.comfortable"></span></button>' +
+              '<button type="button" data-val="compact"><span data-copy="you.compact"></span></button>' +
+            '</div>' +
           '</div>' +
-          '<p class="rowlbl" data-copy="you.accent"></p>' +
-          '<div class="swatches"></div>' +
+          '<div class="you-row" data-control="accent">' +
+            '<p class="rowlbl" data-copy="you.accent"></p>' +
+            '<div class="swatches"></div>' +
+          '</div>' +
+          '<p class="empty you-empty" data-copy="settings.search.empty" hidden></p>' +
         '</div>' +
       '</div>';
     global.BambuControls.mountThemeControls(panel);
+    global.BambuControls.mountAppearanceSearch(panel);
   }
 
   /* ------------------------------------------------------------ download */
