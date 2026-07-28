@@ -32,7 +32,8 @@
   content behind a fixed footer, wraps dynamic/bilingual copy and rigid action rows, and exposes
   44-DIP controls. The shared confirmation dialog wraps its separate “don't show again” footer and
   stacks actions when width is constrained. The Pages landing header and Material You band reflow
-  through 200% zoom without an intrinsic-width floor.
+  through 200% zoom; translated header links have explicit 44-pixel width and height floors so
+  Linux CJK glyph metrics cannot shrink a target below the accessibility minimum.
 - **Documentation and verification harness:** the categorized API contract, focused and master
   Postman collections, focused C++ tests, a production-service cross-host probe, and hosted
   workflow targets are present.
@@ -49,8 +50,9 @@
   layout-identical `EBF646…` build.
 - **Still required before moving this item to Landed:** native bilingual Smart home capture, Path B
   against a real Home Assistant, a real Home Assistant Path A confirmation card, physical-printer
-  success, and issue #16 closure with exact evidence. Hosted CI/release and remote-publication state
-  is maintained separately in issue #16 so this local roadmap never predicts it. The full Release
+  success, and issue #16 closure with exact evidence. The implementation and follow-up target fix
+  are pushed and remotely proven; hosted Pages run `30359493216` passes 156/156, while the Windows
+  release verdict remains maintained separately in issue #16. The full Release
   GUI build, native English 720×760 and 520×480 review, focused Release targets,
   30-case/267-assertion native suite, 5/5 focused CTest entries, 718-entry localization check, 21/21
   static Pages/i18n/clipping checks, synchronized template assembly, 156/156 browser

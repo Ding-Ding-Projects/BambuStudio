@@ -301,17 +301,17 @@ serializer and recompute the checksum.
 ## 6. Current state of the world
 
 ```
-branch:          master; exact remote publication state is tracked in issue #16
-remote baseline: pre-issue-#16 origin/master efb1689d (tag md3-v27)
-hosted baseline: md3-v27 -- run 30313911327 is GREEN; issue #16 verdict is tracked separately
+branch:          master; feature 6591d8968 and 44-pixel correction 32a5cc6d7 are pushed/remote-proven
+remote baseline: origin/master contains both code commits; the current documentation tip follows them
+hosted state:    Pages run 30359493216 is GREEN at 156/156; Windows release runs remain tracked in #16
 local build:     full Release BambuStudio_app_gui exit 0 in 3,387 s; final incremental link 214.808 s;
                  no-change 8.544 s; DLL 151,299,584 bytes, 2026-07-28 08:15:46 -04:00,
                  SHA-256 41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972
 local tests:     30 cases / 267 assertions; 5/5 focused CTest; 21/21 static; 156/156 browser matrix
 native capture:  English 720x760 and declared-minimum 520x480 corrected captures use final 41BB1B…;
                  media-actions close-up uses preceding layout-identical EBF646… DLL
-open issues:     #15 (waiting for user policy choice), #16 (implementation complete locally;
-                 bilingual/live-HA/hardware/remote evidence pending)
+open issues:     #15 (waiting for user policy choice), #16 (implementation pushed;
+                 bilingual/live-HA/hardware/Windows-release evidence pending)
 open PRs:        none
 ```
 
@@ -327,7 +327,8 @@ to make the branch list look tidy.
 
 ## 7. What to do next
 
-The previous to-do list is finished. Nothing is blocking. In rough priority order:
+The previous implementation to-do list is finished. Runtime acceptance and one companion metadata
+decision remain. In rough priority order:
 
 1. **Sweep other dialogs for the same `StaticBox` symptom.** The two bugs in §5.3 item 2 were in
    the widget, so most surfaces are fixed for free — but any surface that sets its card colour
@@ -342,8 +343,8 @@ The previous to-do list is finished. Nothing is blocking. In rough priority orde
    lead, not a finding.
 3. **Verify and deliver "Add my printers to Home Assistant"** (issue #16). Its implementation,
    focused Release build/tests, full GUI build, English native clipping review, cross-host probe,
-   documentation, and CI wiring are complete locally. Read §7.1 for the remaining bilingual
-   capture, live Home Assistant, hardware, and separately tracked hosted/remote evidence.
+   documentation, and CI wiring are pushed. Read §7.1 for the remaining bilingual capture,
+   live Home Assistant, hardware, and separately tracked Windows-release evidence.
 4. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
    does not appear in the rail in this build. Neither is a defect on its own; both are worth a
    deliberate decision rather than being left implicit.
@@ -357,17 +358,20 @@ The previous to-do list is finished. Nothing is blocking. In rough priority orde
 and Windows workflow wiring are complete. The focused Release targets are built and green; the full
 Release GUI build and English native 720×760/520×480 clipping review are also complete. Native
 bilingual capture, live Home Assistant paths, and physical-printer success remain acceptance
-conditions. Hosted CI/release and remote-publication evidence are tracked separately in issue #16
-because this local record must not predict their state. Do not call the feature fully
+conditions. Remote publication and hosted Pages are verified; Windows CI/release evidence is tracked
+separately in issue #16 because this record must not predict a running job. Do not call the feature fully
 runtime-verified, shipped, or issue-complete until every applicable boundary has observed evidence.
 
 The companion
-[`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) baseline
-`97933ad` was CI-green with 25 tests before this pass. Its current local tree passes **89/89** tests
-both in the official Home Assistant 2025.1.4 image and in a clean Python 3.12 runner. Snapshot
-SHA-256 `10e2a876d0d7123f5c52450b12963b226ff1054f791db0d157fbe3321d0b2809` includes
-rejected-record accounting plus the real flow-manager and nested fake-MQTT regressions. Exact
-companion remote-publication and hosted-verdict evidence is tracked separately; live Home
+[`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) now pins
+Home Assistant 2025.1.4 plus its matching fixture package. Its canonical Ubuntu workflow passes
+**93/93** in 3.36 seconds at
+[run 30359258358](https://github.com/Ding-Ding-Projects/ha-bambulab/actions/runs/30359258358),
+and published the tested root-content
+[`v3.0.7` HACS package](https://github.com/Ding-Ding-Projects/ha-bambulab/releases/tag/v3.0.7).
+Hassfest is green. The separate HACS repository validator remains red because neither fork nor
+upstream declares a license; choosing terms requires owner authority and is tracked in
+[companion issue #1](https://github.com/Ding-Ding-Projects/ha-bambulab/issues/1). Live Home
 Assistant/physical-printer verification remains pending.
 
 **Implemented Path B — explicit service call with a Home Assistant long-lived token:**

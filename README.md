@@ -183,7 +183,12 @@ Cantonese, and bilingual content instead of clipping it.
 The focused Windows Release targets build successfully: `home_assistant_tests` passes 30 test cases
 and 267 assertions, all five focused CTest entries pass, the Cantonese catalog contains 718 checked
 translations, the static Pages/i18n/clipping suite passes 21/21, and the browser Pages matrix passes
-all 156 width/zoom/language combinations. The production sharing probe also completed cross-host
+all 156 width/zoom/language combinations. Ubuntu's CJK font metrics then exposed the translated
+**Screens / 畫面** header target shrinking to 31.984×44 pixels at two desktop widths; commit
+[`32a5cc6d7`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/32a5cc6d79e40a46d3c1758052fbdeac5c01f1a3)
+adds a 44-pixel width floor, and hosted Pages
+[run 30359493216](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/30359493216)
+passes the full matrix. The production sharing probe also completed cross-host
 PTR/SRV/TXT/A discovery, one authenticated bounded fetch, and the zero-TTL goodbye. The full
 `BambuStudio_app_gui` Release build exited successfully after 3,387 seconds, followed by an
 8.3-second no-change build. Native headless review at 720×760 and the declared 520×480 minimum found
@@ -196,10 +201,11 @@ The primary corrected English captures were recaptured from that exact final DLL
 [`docs/screenshots/smart-home/`](docs/screenshots/smart-home/). The media-action close-up remains
 from the preceding `EBF646…` DLL; the later source fixes changed only nonvisual printer scheduling
 and alert-light cleanup, not `SmartHomeDialog` or `MsgDialog` layout. Native bilingual capture, live Home
-Assistant confirmation and service paths, physical-printer success, hosted CI/release verdict,
-and remote-publication evidence are tracked separately in
-[issue #16](https://github.com/Ding-Ding-Projects/BambuStudio/issues/16); the local verification
-summary here does not substitute for those live or hosted results. See
+Assistant confirmation and service paths, physical-printer success, and the still-running Windows
+release verdict are tracked separately in
+[issue #16](https://github.com/Ding-Ding-Projects/BambuStudio/issues/16). The implementation and
+44-pixel correction are pushed and remotely proven; this summary still does not substitute for
+the remaining live-runtime evidence. See
 [Smart home](docs/features/windows/smart-home.md) for behavior, security, failure modes, and the
 honest verification boundary, and
 [Home Assistant printer-discovery API](docs/features/api/home-assistant-printer-discovery.md) for
