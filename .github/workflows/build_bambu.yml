@@ -80,10 +80,40 @@ jobs:
 
       - name: Install nsis and pkgconfig
         if: inputs.os == 'windows-latest'
+        shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           dir "C:/Program Files (x86)/Windows Kits/10/Include"
-          choco install nsis --version=3.12.0 --yes --no-progress
-          choco install pkgconfiglite --version=0.28.0 --yes --no-progress
+
+          # Both packages fetch their payload from third-party hosts at install
+          # time - pkgconfiglite from SourceForge, which returned a 404/timeout on
+          # 2026-07-28 and failed the whole Windows build, blocking the release.
+          # A transient outage on someone else's CDN must not be indistinguishable
+          # from a broken commit, so each install gets bounded retries with a
+          # backoff before the step is allowed to fail.
+          function Install-ChocoPackage {
+              param(
+                  [Parameter(Mandatory)] [string] $Name,
+                  [Parameter(Mandatory)] [string] $Version,
+                  [int] $Attempts = 4
+              )
+              for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+                  choco install $Name --version=$Version --yes --no-progress
+                  if ($LASTEXITCODE -eq 0) {
+                      Write-Host "::notice::$Name $Version installed on attempt $attempt."
+                      return
+                  }
+                  if ($attempt -lt $Attempts) {
+                      $delay = 15 * $attempt
+                      Write-Host "::warning::$Name install attempt $attempt failed (exit $LASTEXITCODE); retrying in ${delay}s."
+                      Start-Sleep -Seconds $delay
+                  }
+              }
+              throw "$Name $Version could not be installed after $Attempts attempts."
+          }
+
+          Install-ChocoPackage -Name 'nsis' -Version '3.12.0'
+          Install-ChocoPackage -Name 'pkgconfiglite' -Version '0.28.0'
 
       - name: Setup Node.js for Windows checks
         if: inputs.os == 'windows-latest'
