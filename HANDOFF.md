@@ -217,12 +217,48 @@ Full documentation: [`docs/features/pages/`](docs/features/pages/README.md).
 | `bfd87cafa` | Removed the changelog freshness gate — every release CI publishes made the committed file stale and would have blocked the next Pages deploy. It is regenerated at deploy time now, with the committed file as the fallback. |
 | `b6718eac0` | Renamed the site and prototype's material vocabulary to **ink** / **Ink Dispenser** (display text only), and repaired the Cantonese the English-side rename had silently broken. |
 | `65fcd2bc0` | Retook all 23 captures; `capture-app.mjs` was still querying `input[placeholder="Search filaments"]`. |
-| `5340bd466` | Fixed the `release` Pages trigger, which had failed **12 times out of 12** and never once done what it claimed. Added the first test that reads the workflow. |
+| `5340bd466` | Reworked the `release` Pages trigger, which had failed **12 times out of 12** and never once done what it claimed. Added the first test that reads the workflow. **Still unverified** — see §5.0.1. |
 | `d61e4e47f` | Gave the release dispatcher its own concurrency group so it cannot cancel a deploy and then replace it with nothing. |
+| `0b900b73b` | Renamed the **published MD3 UI kit** at `/app/design-system/` — 61 matching lines across eight files that three earlier terminology passes had all walked past. |
+| `d9159322e` | Widened the sweep from the kit to the whole design system; the typography specimen page used real product strings as its samples. |
+| `da17ee1a7` | Fixed everything a twelve-agent adversarial review found: a GitHub behaviour I had documented backwards, a guard that exempted whole lines, a sweep reading two of five published extensions, and workflow assertions that were comment-satisfiable and vacuous on CRLF. |
 
 **Issues closed this session:** #25 (the `i18n.test.mjs` assertion that broke master — fixed before it
 was filed) and #24 (the prototype's eight defects, each closed with measured evidence). #16 and #15
 are untouched and remain the concurrent session's.
+
+#### 5.0.1 What is verified, and the one thing that is not
+
+Do not read "fixed" as "proven" here. The three event paths into the Pages workflow have different
+evidence behind them:
+
+| Path | Evidence |
+| --- | --- |
+| `push` → deploy | **Verified.** Many green runs, most recently `da17ee1a7`. |
+| `workflow_dispatch` → deploy | **Verified.** Run `30404583829` shows `deploy` running and `redeploy-on-release` **skipped**, which is the intended job selection. |
+| `release` → dispatch → deploy | **NOT VERIFIED.** It has never executed once. |
+
+The release path cannot be proven on demand, and this is the trap: **a `release` event runs the
+workflow file as it existed at the tag's commit.** Releases tagged at commits older than `5340bd466`
+run the *old* workflow and fail the old way — zero steps, ~2 seconds, no log — no matter what
+`master` says. `md3-v58` (`6d1ad69de`), `md3-v59` (`2dd74cfef`) and `md3-v60` (`a00319851`) all did
+exactly that *after* the fix landed, and `a90d72989`, `b6718eac0` and `65fcd2bc0` were still queued
+to do the same.
+
+So: **red release runs in the Actions tab are expected until the pre-fix queue drains.** The first
+release whose tag carries the fix is the real test. Success looks like `redeploy-on-release`
+**running** (not skipped) with a `workflow_dispatch` run appearing behind it at `master`. Until you
+see that, the correct word is "unverified".
+
+**Three claims in this file were wrong earlier and are worth knowing as a pattern**, because the
+same mistake recurred four times: a check that was sound about what it read, wrapped in a claim
+written wider than what it read. "No user-facing filament remains" came from grepping one file;
+"72/72 published files clean" came from an audit filtered to three of the seven published
+extensions (it never opened the `.jsx` that was shipping the label `Filament`); the file counts in
+the correction to that were estimates rather than counts. The guards now strip identifiers and
+re-test the residue instead of exempting whole lines, pin real tree sizes instead of floors, and
+every number is counted. The full record, including the corrections, is
+[discussion #22](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/22).
 
 **Things that will bite you if you do not know them:**
 
@@ -513,6 +549,24 @@ to make the branch list look tidy.
 ---
 
 ## 7. What to do next
+
+**Pages/site work owed (see §5.0 and §5.0.1):**
+
+0. **Confirm the `release` → dispatch path actually runs**, once a release tagged at a commit
+   containing `5340bd466` publishes. Nothing else in the Pages workflow is unproven. Success is
+   `redeploy-on-release` **running** rather than skipped, plus a `workflow_dispatch` run at
+   `master` behind it. Red release runs before that point are the pre-fix queue draining and are
+   expected — check the tag's commit before treating one as a regression:
+   `gh release view <tag> --json targetCommitish` then
+   `git merge-base --is-ancestor 5340bd466 <sha>`.
+0b. **`README.md` and `ROADMAP.md` still describe the renamed native screens by their old labels**
+   (`Filament` cards, `AMS` dialogs, the wizard's filament page). The native UI, DeviceWeb, the
+   prototype, the site and the design system have all moved to ink / Ink Dispenser; those two files
+   have not, so they document a UI that no longer exists. Judge each line — `FilamentPicker` is a
+   class name and stays, and completed ROADMAP history should not be retroactively rewritten.
+0c. The published UI kit loads React and Babel from **unpkg.com**, so it makes third-party requests
+   and renders nothing if that CDN is blocked — unlike every other page on the site. A separate
+   session was started for this.
 
 Items 1 and 2 of the previous list are **done** (see §5.4). What remains, in priority order:
 
