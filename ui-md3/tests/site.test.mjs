@@ -382,3 +382,51 @@ test('every dim sum dish is bundled, named in both languages, and drawn locally'
     assert.doesNotMatch(dish.art, /https?:|url\(|<script|<image/i, `${dish.id} must be self-contained artwork`);
   }
 });
+
+/*
+ * The deploy job is gated on the github-pages environment, which this repository
+ * restricts to master. A run at any other ref is rejected before its first step,
+ * with no steps and no log to explain it — so the failure is silent unless
+ * something asserts the shape. The release event fires at the tag ref, which is
+ * exactly that case, and it failed 12 times for 12 releases before this test.
+ */
+test('no release-ref run is sent to the environment-gated deploy job', async () => {
+  const workflow = await readFile(
+    path.resolve(uiDir, '..', '.github', 'workflows', 'ui-md3-pages.yml'), 'utf8');
+
+  // The workflow still listens for releases; it just must not deploy from one.
+  assert.match(workflow, /^ {2}release:\n {4}types: \[published\]$/m);
+
+  const jobs = workflow.slice(workflow.indexOf('\njobs:'));
+  const jobOf = (name) => {
+    const start = jobs.indexOf(`\n  ${name}:\n`);
+    assert.notEqual(start, -1, `the ${name} job is missing`);
+    const rest = jobs.slice(start + 1);
+    const next = rest.slice(1).search(/\n {2}[a-z][\w-]*:\n/);
+    return next === -1 ? rest : rest.slice(0, next + 1);
+  };
+
+  const deploy = jobOf('deploy');
+  assert.match(deploy, /environment:\n\s+name: github-pages/,
+    'deploy is the environment-gated job');
+  assert.match(deploy, /if: github\.event_name != 'release'/,
+    'deploy must refuse the release event, whose ref is a tag the environment rejects');
+
+  // The redeploy path has to reach master some other way, and cannot use
+  // GITHUB_TOKEN: GitHub refuses to let a token-triggered run trigger another.
+  const redeploy = jobOf('redeploy-on-release');
+  assert.match(redeploy, /if: github\.event_name == 'release'/);
+  assert.doesNotMatch(redeploy, /environment:/,
+    'the redeploy job must not be environment-gated, or it is rejected too');
+  assert.match(redeploy, /--ref master/);
+  assert.match(redeploy, /permissions:\n\s+actions: write/,
+    'dispatching a workflow needs actions: write');
+  assert.doesNotMatch(redeploy, /secrets\.GITHUB_TOKEN/,
+    'GITHUB_TOKEN cannot dispatch a workflow; the step must fall back loudly instead');
+
+  // Both jobs are conditioned on the same event, and between them they must
+  // cover every event the workflow listens for.
+  for (const event of ['push', 'workflow_dispatch']) {
+    assert.doesNotMatch(deploy, new RegExp(`!= '${event}'`), `${event} must still deploy`);
+  }
+});

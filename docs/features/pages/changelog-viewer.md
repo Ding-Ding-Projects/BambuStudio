@@ -27,6 +27,16 @@ time** from the Releases API under `continue-on-error`, with the committed file 
 fallback — so the published site lists every release, including ones published after the file was
 last committed.
 
+A published release also redeploys the site, so it appears without waiting for the next push —
+but not directly. The `github-pages` environment on this fork accepts deployments only from
+`master`, and a `release` event runs at the **tag** ref, so the deploy job was rejected before its
+first step: a three-second failure with no steps and no log. It failed that way 12 times out of 12
+before anyone noticed, and the refresh it promised never happened once. The release event now goes
+to a `redeploy-on-release` job that holds no environment and simply dispatches this workflow on
+`master`; that run lands as `workflow_dispatch` and deploys normally. It needs a real PAT —
+`GITHUB_TOKEN` cannot trigger another run — and says so in the log rather than failing if none is
+configured. [`ui-md3/tests/site.test.mjs`](../../../ui-md3/tests/site.test.mjs) asserts the shape.
+
 There is deliberately **no freshness gate**. Requiring the committed file to be current looked
 tidy and was a trap: every release CI publishes makes it stale by definition, so the next Pages
 deploy would fail until a human regenerated it by hand. `--check` still exists as a local

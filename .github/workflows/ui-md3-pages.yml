@@ -18,7 +18,8 @@ on:
       - 'src/slic3r/GUI/SmartHomeDialog.*'
       - 'src/slic3r/GUI/MsgDialog.*'
   # A published release changes what the changelog should say, and the changelog is
-  # regenerated at deploy time — so a release redeploys the site.
+  # regenerated at deploy time — so a release redeploys the site. It cannot deploy
+  # from here directly: see the redeploy-on-release job for why.
   release:
     types: [published]
   workflow_dispatch: {}
@@ -35,7 +36,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A release fires this workflow at the tag ref (md3-v57), not at master. The
+  # github-pages environment accepts deployments only from master, so it rejects a
+  # tag-ref run before its first step runs — a three-second failure with no steps and
+  # no log, which is why this went unnoticed: 12 release runs, 12 red X's, and the
+  # changelog refresh they were supposed to perform never once happened.
+  #
+  # So re-enter through the front door: dispatch this same workflow on master, which
+  # then deploys normally and regenerates the changelog with the new release in it.
+  # This cannot loop — the dispatched run arrives as workflow_dispatch, and nothing
+  # in this workflow publishes a release.
+  redeploy-on-release:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Redeploy from master so the changelog picks up this release
+        env:
+          # GITHUB_TOKEN is deliberately absent: GitHub blocks runs triggered by it
+          # from triggering further runs, so a dispatch signed with it would return
+          # 204 and silently do nothing. This needs a real PAT or it needs to say so.
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || secrets.RELEASE_TOKEN || secrets.ORG_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::warning::No PAT configured (TOKEN_GITHUB/RELEASE_TOKEN/ORG_TOKEN)." \
+                 "The site will list this release after the next push instead."
+            exit 0
+          fi
+          gh workflow run ui-md3-pages.yml --repo "${GITHUB_REPOSITORY}" --ref master
+          echo "Dispatched a master-ref Pages deploy for ${GITHUB_REF_NAME}."
+
   deploy:
+    # Never on a release: the environment would refuse it. redeploy-on-release
+    # dispatches a master-ref run, and that run lands here as workflow_dispatch.
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -68,7 +103,9 @@ jobs:
         # not the deploy.
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+          # TOKEN_GITHUB is the owner PAT this repository actually has; the others
+          # are the org-standard names, kept so the chain still resolves elsewhere.
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
         run: node ui-md3/scripts/build-changelog.mjs
 
       - name: Compose site (landing page at root, app under /app)
