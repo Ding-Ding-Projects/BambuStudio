@@ -75,6 +75,20 @@ await access(path.join(siteRoot, 'app', 'index.html'));
 await access(path.join(siteRoot, 'app', 'i18n.js'));
 await access(path.join(siteRoot, 'app', 'i18n.resources.js'));
 
+// Prose does not belong in a deployed site, at any depth. The design system
+// keeps a .prompt.md beside most components, and the previous rsync-based
+// compose step excluded them; a composer that ships them is a regression.
+const prose = [];
+async function findProse(directory, prefix) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const next = path.join(directory, entry.name);
+    if (entry.isDirectory()) await findProse(next, `${prefix}${entry.name}/`);
+    else if (entry.name.toLowerCase().endsWith('.md')) prose.push(`${prefix}${entry.name}`);
+  }
+}
+await findProse(siteRoot, '');
+assert.deepEqual(prose, [], 'The composed Pages site must not publish markdown.');
+
 const expectedModules = [
   'boot.js', 'changelog.data.js', 'changelog.js', 'copy.js', 'core.js',
   'dimsum.data.js', 'regex.js', 'settings.js', 'tabs.js', 'views.js'

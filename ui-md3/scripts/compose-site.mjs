@@ -29,10 +29,18 @@ const APP_EXCLUDES = new Set(['design-source', 'desktop', 'tests', 'scripts', 'l
 await rm(outDir, { recursive: true, force: true });
 await mkdir(path.join(outDir, 'app'), { recursive: true });
 
+// Prose is excluded at every depth, not just the top level: the design system
+// ships a .prompt.md beside most components, and none of it belongs in a
+// deployed site.
+const isProse = (source) => source.toLowerCase().endsWith('.md');
+
 for (const entry of await readdir(uiDir, { withFileTypes: true })) {
   if (APP_EXCLUDES.has(entry.name)) continue;
-  if (entry.isFile() && entry.name.endsWith('.md')) continue;
-  await cp(path.join(uiDir, entry.name), path.join(outDir, 'app', entry.name), { recursive: true });
+  if (entry.isFile() && isProse(entry.name)) continue;
+  await cp(path.join(uiDir, entry.name), path.join(outDir, 'app', entry.name), {
+    recursive: true,
+    filter: (source) => !isProse(source),
+  });
 }
 
 // In the composed tree the landing page is the root and the prototype moves to
