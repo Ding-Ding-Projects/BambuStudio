@@ -16,8 +16,11 @@ optional action, and a 44px dismiss target.
 | `warning` | never — dismissed by the user | `alert` |
 | `error` | never — dismissed by the user | `alert` |
 
-The toast host is an `aria-live="polite"` region, so an informational message is announced without
-interrupting; warnings and errors additionally carry `role="alert"`.
+**The host carries no live region.** Each toast carries its own role — `status` for info and
+success, `alert` for warnings and errors — and `applyCopy` populates it *before* it is attached, so
+an alert enters the accessibility tree already carrying its text. An `aria-live` host wrapping
+per-toast live regions is a nested live region: assistive technology announces twice, and the
+polite host softens the urgency of the error inside it.
 
 ## What is never a toast
 

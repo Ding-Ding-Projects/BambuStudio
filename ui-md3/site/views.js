@@ -112,7 +112,7 @@
       '<div class="stats">' +
         stat('overview.stat.releases', String(changelog.releaseCount || 0)) +
         stat('overview.stat.screens', String(SCREENS.length)) +
-        stat('overview.stat.cases', '156') +
+        stat('overview.stat.cases', '444') +
         stat('overview.stat.requests', '0') +
       '</div>' +
       '<div class="prose-card">' +

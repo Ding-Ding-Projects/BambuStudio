@@ -88,7 +88,8 @@ ui-md3/
     i18n.test.mjs       browser-free language, persistence, coverage + assembly checks
   design-source/        read-only original Claude Design (the source of truth) + SPEC.md, ARCH-PARALLEL.md
   desktop/              legacy Electron concept shell (not the native release)
-  landing.html          marketing / entry page
+  landing.html          the tabbed Pages root (its modules live in site/)
+  site/                 the Pages site: copy, core, regex, tabs, views, settings, changelog, CSS
 ```
 
 **`mini-dc.js`** reimplements the design's template dialect (`{{ }}` interpolation, `<sc-for>`,
@@ -109,12 +110,12 @@ assembled and QA'd in the browser.
 Run the dependency-free Node tests and the template assembly check from the repository root:
 
 ```powershell
-node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/layout-clipping.test.mjs
+node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs ui-md3/tests/layout-clipping.test.mjs
 node ui-md3/scripts/assemble-index.mjs --check
 ```
 
 The GitHub Pages workflow additionally composes the root landing page, verifies every local script
 and showcase image with `ui-md3/tests/assert-pages-layout.mjs`, and drives headless Chrome through
-156 width/zoom/language combinations with `ui-md3/tests/runtime-layout-clipping.mjs`. To repeat the
+444 layout cases with `ui-md3/tests/runtime-layout-clipping.mjs` — 156 on the landing page and 288 that activate every tab. To repeat the
 runtime matrix locally, serve `ui-md3/` over HTTP and set `BAMBU_PAGES_TEST_URL` to its
 `landing.html` URL before running that test.

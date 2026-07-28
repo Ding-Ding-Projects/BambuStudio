@@ -22,9 +22,15 @@ Nothing in the viewer is written by hand.
   actually been checked. The oldest release says it has no earlier release to compare against. None
   of the three is padded with filler.
 
-Regenerate with `node ui-md3/scripts/build-changelog.mjs`; CI runs it with `--check` and fails if
-the committed file is stale. If the GitHub API is unavailable, `--check` reports that and stands
-down rather than failing a deploy that never touched the changelog.
+Regenerate locally with `node ui-md3/scripts/build-changelog.mjs`. **CI regenerates it at deploy
+time** from the Releases API under `continue-on-error`, with the committed file as the outage
+fallback — so the published site lists every release, including ones published after the file was
+last committed.
+
+There is deliberately **no freshness gate**. Requiring the committed file to be current looked
+tidy and was a trap: every release CI publishes makes it stale by definition, so the next Pages
+deploy would fail until a human regenerated it by hand. `--check` still exists as a local
+convenience and stands down (exit 0) when the GitHub API is unavailable.
 
 ## One calendar: UTC
 

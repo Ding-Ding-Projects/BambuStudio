@@ -974,10 +974,10 @@
       en: ['Screens built in parallel across git worktrees, orchestrated agent by agent, then assembled and QA’d.'],
       yue: ['多個畫面喺 git worktree 並行開發，逐個代理指揮，之後合併同做 QA。']
     },
-    'build.step4.title': { en: ['Checked at 156 layout cases'], yue: ['156 格版面測試'] },
+    'build.step4.title': { en: ['Checked at 444 layout cases'], yue: ['444 格版面測試'] },
     'build.step4.body': {
-      en: ['Thirteen widths, four display scales and three language modes are driven in a real browser; a single clipped or overflowing element fails the deploy.'],
-      yue: ['十三種闊度、四種顯示比例、三種語言模式，喺真實瀏覽器行一次；只要有一個元件切字或者爆出視窗就當部署失敗。']
+      en: ['156 landing cases — thirteen widths by four display scales by three language modes — plus 288 more that activate every tab, all driven in a real browser. One clipped element, one undersized control or one empty panel fails the deploy.'],
+      yue: ['156 格首頁測試 — 十三種闊度 × 四種顯示比例 × 三種語言模式 — 再加 288 格逐個分頁㩒一次，全部喺真實瀏覽器行。一個元件切字、一個掣細過標準、一版空白，就當部署失敗。']
     },
 
     /* -------------------------------------------------------------- footer */

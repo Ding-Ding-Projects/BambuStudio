@@ -307,6 +307,39 @@ test('the generated changelog carries only sourced facts', () => {
   assert.deepEqual(dates, [...dates].sort().reverse());
 });
 
+/* ------------------------------------------------- the site's own claims */
+
+test('the site states its real layout-case count, computed from the harness', async () => {
+  // The site advertises how thoroughly it is checked. That number is a claim
+  // like any other, and it went stale the moment the per-tab matrix was added:
+  // the Overview stat and the "How it is built" step both still said 156.
+  const harness = await readFile(path.join(testDir, 'runtime-layout-clipping.mjs'), 'utf8');
+  const landing = Number(/assert\.equal\(cases, (\d+)\)/.exec(harness)?.[1]);
+  const perTabExpression = /assert\.equal\(cases, ([\d *]+)\)/g;
+  const totals = [...harness.matchAll(perTabExpression)].map((match) =>
+    match[1].split('*').map(Number).reduce((product, value) => product * value, 1));
+  assert.ok(totals.length >= 2, 'the harness must state each suite’s case count');
+  const total = totals.reduce((sum, value) => sum + value, 0);
+  assert.equal(landing, 156);
+  assert.equal(total, 444);
+
+  const views = await readFile(path.join(siteDir, 'views.js'), 'utf8');
+  assert.match(views, new RegExp(`stat\\('overview\\.stat\\.cases', '${total}'\\)`),
+    `the Overview stat must say ${total}`);
+  for (const language of ['en', 'yue']) {
+    const title = copy.entries['build.step4.title'][language].join(' ');
+    assert.ok(title.includes(String(total)),
+      `build.step4.title (${language}) must say ${total}, not something older`);
+  }
+  const body = copy.entries['build.step4.body'];
+  for (const language of ['en', 'yue']) {
+    assert.ok(body[language].join(' ').includes('156'),
+      `build.step4.body (${language}) must still break the total down`);
+    assert.ok(body[language].join(' ').includes('288'),
+      `build.step4.body (${language}) must name the per-tab half`);
+  }
+});
+
 /* ---------------------------------------------------------------- dimsum */
 
 test('every dim sum dish is bundled, named in both languages, and drawn locally', () => {

@@ -351,11 +351,11 @@ serializer and recompute the checksum.
 ```
 branch:          master; feature 6591d8968 and 44-pixel correction 32a5cc6d7 are pushed/remote-proven
 remote baseline: origin/master contains both code commits; the current documentation tip follows them
-hosted state:    Pages run 30359493216 is GREEN at 156/156; Windows release runs remain tracked in #16
+hosted state:    Pages run 30375248289 is GREEN at 444/444 layout cases; Windows release runs remain tracked in #16
 local build:     full Release BambuStudio_app_gui exit 0 in 3,387 s; final incremental link 214.808 s;
                  no-change 8.544 s; DLL 151,299,584 bytes, 2026-07-28 08:15:46 -04:00,
                  SHA-256 41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972
-local tests:     30 cases / 267 assertions; 5/5 focused CTest; 21/21 static; 156/156 browser matrix
+local tests:     30 cases / 267 assertions; 5/5 focused CTest; 50/50 static; 444/444 browser matrix
 native capture:  English 720x760 and declared-minimum 520x480 corrected captures use final 41BB1B…;
                  media-actions close-up uses preceding layout-identical EBF646… DLL
 open issues:     #15 (waiting for user policy choice), #16 (implementation pushed;

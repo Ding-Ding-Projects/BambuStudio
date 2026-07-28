@@ -187,8 +187,8 @@ Cantonese, and bilingual content instead of clipping it.
 
 The focused Windows Release targets build successfully: `home_assistant_tests` passes 30 test cases
 and 267 assertions, all five focused CTest entries pass, the Cantonese catalog contains 718 checked
-translations, the static Pages/i18n/clipping suite passes 21/21, and the browser Pages matrix passes
-all 156 width/zoom/language combinations. Ubuntu's CJK font metrics then exposed the translated
+translations, the static Pages/i18n/clipping suite passes 50/50, and the browser Pages matrix passes all 444
+cases — 156 on the landing page plus 288 that activate every tab. Ubuntu's CJK font metrics then exposed the translated
 **Screens / 畫面** header target shrinking to 31.984×44 pixels at two desktop widths; commit
 [`32a5cc6d7`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/32a5cc6d79e40a46d3c1758052fbdeac5c01f1a3)
 adds a 44-pixel width floor, and hosted Pages
