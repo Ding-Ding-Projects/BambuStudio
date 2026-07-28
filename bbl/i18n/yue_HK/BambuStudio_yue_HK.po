@@ -2888,3 +2888,11 @@ msgstr "請收窄搜尋，以查看其餘符合項目。"
 #. reviewed-category: preferences
 msgid "Home Assistant returned additional speakers and lights beyond the %d-entity safety limit. Those additional entities are not shown."
 msgstr "Home Assistant 傳回咗超出 %d 個實體安全上限嘅其他喇叭同燈光。呢啲額外實體唔會顯示。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Your unsaved project was saved to version history before this prompt. It stays restorable from Version history even if you decline to restore it now."
+msgstr "喺彈呢個窗之前，你未儲存嘅專案已經幫你擺咗入版本紀錄。就算你而家撳「取消」唔還原，都仲可以喺「版本紀錄」度攞返。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."
+msgstr "你未儲存嘅專案複製唔入版本紀錄。個備份仍然會留喺硬碟，下次開機會再問你一次，所以而家撳「取消」唔會刪咗佢。"

@@ -42,6 +42,14 @@ add_executable(deterministic_bbs_3mf_tests
 target_link_libraries(deterministic_bbs_3mf_tests test_common libslic3r)
 set_property(TARGET deterministic_bbs_3mf_tests PROPERTY FOLDER "tests")
 
+# Crash-recovery lock regressions, kept independently runnable for the same reason as the
+# target above: the aggregate legacy suite does not build.
+add_executable(crash_restore_tests
+    test_crash_restore.cpp
+)
+target_link_libraries(crash_restore_tests test_common libslic3r)
+set_property(TARGET crash_restore_tests PROPERTY FOLDER "tests")
+
 if (WIN32)
     # bambustudio_copy_dlls now requires 4 args (target, config, postfix,
     # output_dlls); legacy 1-arg call sites in tests/* predate that signature
@@ -54,3 +62,4 @@ endif()
 # catch_discover_tests(${_TEST_NAME}_tests TEST_PREFIX "${_TEST_NAME}: ")
 add_test(${_TEST_NAME}_tests ${_TEST_NAME}_tests ${CATCH_EXTRA_ARGS})
 add_test(deterministic_bbs_3mf_tests deterministic_bbs_3mf_tests "[deterministic]" ${CATCH_EXTRA_ARGS})
+add_test(crash_restore_tests crash_restore_tests "[crash_restore]" ${CATCH_EXTRA_ARGS})

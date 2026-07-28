@@ -22415,3 +22415,9 @@ msgstr "Refine the search to see the remaining matches."
 
 msgid "Home Assistant returned additional speakers and lights beyond the %d-entity safety limit. Those additional entities are not shown."
 msgstr "Home Assistant returned additional speakers and lights beyond the %d-entity safety limit. Those additional entities are not shown."
+
+msgid "Your unsaved project was saved to version history before this prompt. It stays restorable from Version history even if you decline to restore it now."
+msgstr "Your unsaved project was saved to version history before this prompt. It stays restorable from Version history even if you decline to restore it now."
+
+msgid "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."
+msgstr "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."

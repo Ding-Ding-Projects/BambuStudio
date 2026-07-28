@@ -9152,12 +9152,34 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
                                     << PathSanitizer::sanitize(last)
                                     << " has_restore_data=" << has_restore
                                     << " originfile=" << originfile;
+            // Deleting the backup directory below is only ever safe once a second copy
+            // exists in version history. With no restore data there is nothing to lose,
+            // so the cleanup stays enabled; the moment we do have work to lose, this is
+            // driven by whether preserving it actually succeeded.
+            bool backup_preserved = true;
             if (has_restore) {
                 BOOST_LOG_TRIVIAL(info) << "test101: Restoring project from: " << PathSanitizer::sanitize(last_backup);
                 // Commit the unsaved work to the local history repository
                 // BEFORE the prompt: declining below deletes the backup dir,
                 // and that must never be the moment the only copy disappears.
-                preserve_unsaved_backup_in_history(stdfs::u8path(last), originfile);
+                backup_preserved = preserve_unsaved_backup_in_history(stdfs::u8path(last), originfile);
+                if (!backup_preserved) {
+                    // Every failure inside preserve_unsaved_backup_in_history() reports
+                    // itself to the log and nowhere else, and its success snackbar - the
+                    // one that promises the work "stays restorable ... even if you decline"
+                    // - never fires. Without this the user reads the ordinary prompt,
+                    // declines it on the strength of a promise that was never made, and
+                    // the only copy of their unsaved work is deleted.
+                    BOOST_LOG_TRIVIAL(error)
+                        << "Unsaved crash backup was NOT preserved; keeping "
+                        << PathSanitizer::sanitize(last) << " instead of deleting it";
+                    if (notification_manager != nullptr)
+                        notification_manager->push_notification(NotificationType::CustomNotification,
+                            NotificationManager::NotificationLevel::WarningNotificationLevel,
+                            into_u8(_L("Your unsaved project could not be copied into version history. "
+                                       "It is being kept on disk and offered again next time, so declining "
+                                       "now will not delete it.")));
+                }
                 auto log_string = _L("It seems that you have projects that were not closed properly. Would you like to restore your last unsaved project?\nIf you have a currently opened project and click \"Restore\", the current project will be closed.");
                 MessageDialog dlg(this->q, log_string, wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Restore"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
                 dlg.SetButtonLabel(wxID_YES, _L("Restore"));
@@ -9182,7 +9204,10 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
                 }
             }
             try {
-                if (originfile != "<lock>") // see bbs_3mf.cpp for lock detail
+                // "<lock>" means another instance may own this backup, and
+                // !backup_preserved means this is still the only copy of the user's
+                // unsaved work. Neither is ours to delete.
+                if (originfile != "<lock>" && backup_preserved) // see bbs_3mf.cpp for lock detail
                     boost::filesystem::remove_all(last);
             }
             catch (...) {}
