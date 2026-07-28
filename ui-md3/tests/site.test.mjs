@@ -158,7 +158,7 @@ test('every copy key the site assembles at runtime exists too', () => {
     ...['changelog.baseline', 'changelog.nochanges', 'changelog.samecommit',
       'settings.search.empty', 'settings.search.elsewhere'],
     ...['regex.unsafe', 'regex.enginefailed', 'regex.unsupported', 'regex.invalid',
-      'regex.timeout', 'regex.nomatch', 'shell.notifications.dismiss']
+      'regex.timeout', 'regex.nomatch', 'regex.needsunicode', 'shell.notifications.dismiss']
   ];
   const missing = families.filter((key) => !site.known(key));
   assert.deepEqual(missing, [], 'runtime-assembled copy keys missing from the catalog');

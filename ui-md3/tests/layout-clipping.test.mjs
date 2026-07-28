@@ -120,6 +120,55 @@ test('landing chrome keeps accessible names and one shared language selector', (
   assert.match(landing, /<noscript>/, 'the site must still hand out its links without scripting');
 });
 
+const prototype = await readFile(path.join(uiDir, 'index.html'), 'utf8');
+const searchFieldLogic = await readFile(path.join(uiDir, 'app', 'searchfield.logic.js'), 'utf8');
+const dialogsModule = await readFile(path.join(uiDir, 'app', 'dialogs.js'), 'utf8');
+const appStyles = await readFile(path.join(uiDir, 'app', 'styles.css'), 'utf8');
+
+test('prototype icons are decorative and never become a button’s accessible name', () => {
+  // An icon-font ligature is read as literal text, and on an icon-only button
+  // that text wins over the title that was meant to name it.
+  const icons = prototype.match(/<span[^>]*\bdata-icon\b[^>]*>/g) || [];
+  assert.ok(icons.length > 100, `expected the full icon set, found ${icons.length}`);
+  const exposed = icons.filter((tag) => !/aria-hidden/.test(tag));
+  assert.deepEqual(exposed, [], 'every decorative icon span must be aria-hidden');
+});
+
+test('prototype preference switches carry role, state and a name', () => {
+  assert.match(prototype, /role="switch" aria-checked="\{\{ p\.on \}\}" aria-label="\{\{ p\.label \}\}"/);
+});
+
+test('prototype dialogs are real modals with a close control the runtime can find', () => {
+  assert.equal((prototype.match(/role="dialog"/g) || []).length, 4);
+  assert.equal((prototype.match(/aria-modal="true"/g) || []).length, 4);
+  assert.ok((prototype.match(/data-dialog-close/g) || []).length >= 5);
+  assert.match(prototype, /<script src="\.\/app\/dialogs\.js"><\/script>/);
+  assert.match(dialogsModule, /event\.key === 'Escape'/);
+  assert.match(dialogsModule, /sibling\.inert = true/);
+  assert.match(dialogsModule, /opener\.focus\(\)/);
+});
+
+test('the prototype title bar cannot push its window controls off-screen', () => {
+  assert.match(prototype, /<div class="titlebar"/);
+  assert.match(prototype, /<div class="tb-controls">/);
+  assert.match(prototype, /<div class="tb-menus">/);
+  assert.match(appStyles, /\.titlebar \.tb-controls\{[^}]*flex:0 0 auto;[^}]*\}/);
+  assert.match(appStyles, /\.titlebar \.tb-menus\{[^}]*flex:0 1 auto;/);
+  for (const width of [1000, 860, 700, 560]) {
+    assert.match(appStyles, new RegExp(`@media \\(max-width:${width}px\\)\\{ \\.titlebar`));
+  }
+});
+
+test('every prototype search field is wired, and plain text is the default', () => {
+  const fields = prototype.match(/<dc-import name="SearchField"[^>]*>/g) || [];
+  assert.equal(fields.length, 10, 'the prototype has ten search fields');
+  const inert = fields.filter((tag) => !/on-query=/.test(tag));
+  assert.deepEqual(inert, [], 'a search field that filters nothing must not ship');
+  // The mode travels with the query, so a consumer can tell opt-in regex from
+  // plain text instead of compiling everything it is handed.
+  assert.match(searchFieldLogic, /onQuery\(v, \{ regex:this\.state\.regex, flags:this\.compileFlags\(\) \}\)/);
+});
+
 test('Smart Home keeps a fixed footer around a work-area-capped scrolling body', () => {
   assert.match(smartHome, /MD3Dialog::Options\{true, false\}/);
   assert.match(smartHome, /new wxScrolledWindow\([\s\S]*?wxVSCROLL \| wxTAB_TRAVERSAL/);

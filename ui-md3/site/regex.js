@@ -513,7 +513,20 @@
     literalGroup.appendChild(literalNote);
 
     partGroup('regex.part.class', CLASS_PRESETS.map(function (preset) {
-      return chip(preset.insert, function () { insert(preset.insert); });
+      return chip(preset.insert, function () {
+        /*
+         * `\p{…}` only has Unicode-property meaning under the `u` flag. Without
+         * it the engine compiles it as the literal characters p{…} under Annex
+         * B, which reports a clean "no matches" — the worst possible answer,
+         * because nothing looks wrong. Inserting the chip turns `u` on.
+         */
+        if (/\\p\{/i.test(preset.insert) && stateValue.flags.indexOf('u') === -1) {
+          stateValue.flags += 'u';
+          var box = flagHost.querySelector('input[value="u"]');
+          if (box) box.checked = true;
+        }
+        insert(preset.insert);
+      });
     }));
     partGroup('regex.part.anchor', ANCHORS.map(function (anchor) {
       return chip(anchor.insert, function () { insert(anchor.insert); });
@@ -597,11 +610,15 @@
 
     function render(result) {
       statusLine.className = 'rb-status status-' + result.status;
+      // A `\p{…}` pattern without `u` is not an error and not a match — it is a
+      // silent literal, so the no-match line says which flag is missing.
+      var needsUnicodeFlag = /\\[pP]\{/.test(stateValue.pattern) &&
+        stateValue.flags.indexOf('u') === -1;
       var simple = {
         invalid: ['regex.invalid', function () { return { message: result.message }; }],
         timeout: ['regex.timeout', function () { return { ms: result.timeout }; }],
         unsafe: ['regex.unsafe', null],
-        nomatch: ['regex.nomatch', null],
+        nomatch: [needsUnicodeFlag ? 'regex.needsunicode' : 'regex.nomatch', null],
         empty: [null, null]
       }[result.status];
       if (simple) {

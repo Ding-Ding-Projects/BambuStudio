@@ -72,14 +72,51 @@ registerScreen({
       {label:'Scale', x:'100%', y:'100%', z:'100%'},
       {label:'Size', x:'60.0', y:'31.0', z:'48.0'},
     ];
+  },
+  // Plain text is the default. A regular expression is compiled only when the
+  // search field reports that the user turned its .* toggle on, so a typed "."
+  // matches literal full stops until they ask for more.
+  objMatch(text){
+    const s = this.state.objSearch || {};
+    const q = s.query || '';
+    if(!q) return true;
+    const hay = String(text);
+    const plain = hay.toLowerCase().indexOf(q.toLowerCase()) !== -1;
+    if(!s.regex) return plain;
+    // An empty flag string is a real answer — it means the user switched
+    // "Ignore case" off — so it must not be coerced back to 'i'.
+    const flags = typeof s.flags==='string' ? s.flags : 'i';
+    try{ return new RegExp(q, flags).test(hay); }
+    catch(e){ return plain; }
+  },
+  render_objects(){
+    const defs = [
+      {id:'obj-benchy', isObject:true, icon:'deployed_code', name:'3DBenchy.stl'},
+      {id:'obj-benchy-layers', isChild:true, icon:'layers', name:'Layers & height range'},
+    ];
+    return defs.filter(o=>this.objMatch(o.name));
   }
   },
-  vals: function(){ return {
+  vals: function(){
+    const os = this.state.objSearch || {};
+    const objectRows = this.render_objects();
+    return {
     isPrepare: this.state.view === 'prepare',
     gizmos:this.render_gizmos(),
     sceneTools:this.render_scene(),
     processTabs:this.render_process_tabs(),
     params:this.render_params(),
     manipRows:this.render_manip(),
+    objectRows:objectRows,
+    objEmpty: objectRows.length===0,
+    // The empty state repeats what was actually searched, and in which mode,
+    // so a no-match never looks like a broken panel.
+    objQueryEcho: '“'+(os.query||'')+'” · '+(os.regex?'regex':'plain text'),
+    // The mode travels with the query; 'g' is stripped because a global RegExp
+    // keeps lastIndex between .test() calls and would alternate hit and miss.
+    setObjQuery:(v,mode)=>this.setState({objSearch:{
+      query:v, regex:!!(mode&&mode.regex),
+      flags:((mode&&mode.flags)||'i').replace(/g/g,'')
+    }}),
   }; }
 });

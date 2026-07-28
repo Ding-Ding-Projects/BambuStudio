@@ -19,8 +19,16 @@ class SearchField extends DCLogic {
     }
   }
 
+  /*
+   * The mode travels with the query. Without it a consumer cannot tell an
+   * opt-in regular expression from plain text, and every one of them defaulted
+   * to compiling the query — so a typed "." matched everything in a field whose
+   * .* toggle was off.
+   */
   emit(v){
-    if(typeof this.props.onQuery==='function') this.props.onQuery(v);
+    if(typeof this.props.onQuery==='function'){
+      this.props.onQuery(v, { regex:this.state.regex, flags:this.compileFlags() });
+    }
   }
 
   ins(t){

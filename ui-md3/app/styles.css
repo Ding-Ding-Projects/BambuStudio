@@ -104,3 +104,24 @@ button .i18n-secondary{ color:inherit; }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{ scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
 }
+
+/* ---------------------------------------------------------------- title bar
+ * The title bar is a single non-wrapping row inside a shell with
+ * overflow:hidden and no scroll region, so anything that does not fit is
+ * unreachable rather than merely ugly. Measured at 1280 physical px @ 200%
+ * (640 CSS px) the close button used to sit 217px past the viewport edge.
+ *
+ * The contract: the window controls are pinned and never shrink; everything
+ * to their left gives way in order of how much a user needs it.
+ */
+.titlebar{ min-width:0; }
+.titlebar .tb-menus{ display:flex; align-items:center; gap:2px; min-width:0; flex:0 1 auto; overflow:hidden; }
+.titlebar .tb-spacer{ flex:1 1 0; min-width:0; }
+.titlebar .tb-controls{ display:flex; align-items:center; flex:0 0 auto; }
+.titlebar .tb-branch,
+.titlebar .tb-project,
+.titlebar .tb-appearance{ flex:0 0 auto; }
+@media (max-width:1000px){ .titlebar .tb-project{ display:none; } }
+@media (max-width:860px){ .titlebar .tb-menus{ display:none; } }
+@media (max-width:700px){ .titlebar .tb-branch{ display:none; } }
+@media (max-width:560px){ .titlebar .tb-title{ display:none; } }

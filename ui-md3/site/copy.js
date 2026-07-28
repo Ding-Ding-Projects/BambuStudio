@@ -635,6 +635,22 @@
         '{ms} 毫秒之後我哋直接拔咗插頭，所以冇結果。你嘅模式同文字原封不動 — 個模式回溯到捐晒入死角，仲要拉埋你部 CPU 落水。'
       ]
     },
+    'regex.needsunicode': {
+      en: [
+        'No matches. This pattern uses \\p{…}, which needs the u flag to mean a Unicode property; without it the engine reads it as literal characters.',
+        'No matches. This pattern uses \\p{…}, which needs the u flag to mean a Unicode property — without it the engine reads it as literal characters.',
+        'No matches, and here is why: \\p{…} only means a Unicode property with the u flag on. Without it the engine is hunting for a literal “p{”.',
+        'No matches, and it is not your fault: \\p{…} only means a Unicode property with the u flag on. Without it the engine is politely hunting for a literal “p{”.',
+        'No matches, and it is not your fault: \\p{…} only means a Unicode property when u is ticked. Without it the engine is out there hunting for a literal “p{” like it is 1999.'
+      ],
+      yue: [
+        '冇命中。呢個模式用咗 \\p{…}，要開 u 旗標先會當佢係 Unicode 屬性；唔開嘅話引擎會當佢係普通字元。',
+        '冇命中。呢個模式用咗 \\p{…}，要開 u 旗標先會當佢係 Unicode 屬性 — 唔開就當普通字元。',
+        '冇命中，原因喺度：\\p{…} 一定要開 u 旗標先當 Unicode 屬性。唔開嘅話引擎係喺度搵緊個「p{」字面。',
+        '冇命中，唔關你事：\\p{…} 一定要剔咗 u 先當 Unicode 屬性。唔剔嘅話引擎好禮貌咁去搵個「p{」字面。',
+        '冇命中，唔關你事：\\p{…} 一定要剔咗 u 先當 Unicode 屬性。唔剔嘅話引擎就會好認真咁去搵個「p{」字面，搵到天光。'
+      ]
+    },
     'regex.unsafe': {
       en: [
         'This pattern nests one quantifier inside another, which can take exponential time, so it was not run. The pattern and sample were left unchanged.',

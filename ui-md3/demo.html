@@ -15,17 +15,17 @@
   <template data-component="SearchField">
     <div style="position:relative; width:100%; font-family:'Roboto',system-ui,sans-serif;">
       <div style="display:flex; align-items:center; gap:4px; height:40px; padding:0 5px 0 14px; background:var(--md-sc-highest); border:1px solid {{ borderColor }}; border-radius:22px;">
-        <span data-icon style="font-size:20px; color:var(--md-on-surface-variant);">search</span>
+        <span data-icon style="font-size:20px; color:var(--md-on-surface-variant);" aria-hidden="true">search</span>
         <input value="{{ value }}" onInput="{{ onInput }}" placeholder="{{ placeholder }}" style="flex:1; min-width:0; border:none; background:transparent; outline:none; color:var(--md-on-surface); font-size:13.5px; font-family:{{ inputFont }};">
-        <sc-if value="{{ hasValue }}"><button onClick="{{ clear }}" title="Clear" style="width:30px; height:30px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-low);"><span data-icon style="font-size:18px;">close</span></button></sc-if>
+        <sc-if value="{{ hasValue }}"><button onClick="{{ clear }}" title="Clear" style="width:30px; height:30px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:50%; cursor:pointer;" style-hover="background:var(--md-sc-low);"><span data-icon style="font-size:18px;" aria-hidden="true">close</span></button></sc-if>
         <button onClick="{{ toggleRegex }}" title="Use regular expression" style="min-width:32px; height:30px; padding:0 4px; border:none; border-radius:8px; cursor:pointer; font-family:'Roboto Mono',monospace; font-size:12.5px; font-weight:700; background:{{ regexBg }}; color:{{ regexFg }};">.*</button>
-        <button onClick="{{ toggleBuilder }}" title="Regex builder" style="width:32px; height:30px; border:none; border-radius:8px; cursor:pointer; background:{{ builderBg }}; color:{{ builderFg }}; display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:18px;">tune</span></button>
+        <button onClick="{{ toggleBuilder }}" title="Regex builder" style="width:32px; height:30px; border:none; border-radius:8px; cursor:pointer; background:{{ builderBg }}; color:{{ builderFg }}; display:flex; align-items:center; justify-content:center;"><span data-icon style="font-size:18px;" aria-hidden="true">tune</span></button>
       </div>
 
       <sc-if value="{{ open }}">
       <div style="position:absolute; top:47px; right:0; left:0; z-index:80; background:var(--md-sc); border:1px solid var(--md-outline-variant); border-radius:18px; box-shadow:0 12px 34px var(--md-shadow); padding:14px; display:flex; flex-direction:column; gap:12px; animation:mdfade .16s ease;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <span data-icon style="font-size:18px; color:var(--md-primary);">regular_expression</span>
+          <span data-icon style="font-size:18px; color:var(--md-primary);" aria-hidden="true">regular_expression</span>
           <span style="font-weight:600; font-size:13px;">Regex builder</span>
           <span style="flex:1;"></span>
           <span style="font-size:11px; font-weight:600; color:{{ validColor }};">{{ validText }}</span>
@@ -63,7 +63,7 @@
       <div style="max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:18px;">
         <header style="display:flex; align-items:center; gap:18px; padding:22px 24px; border:1px solid var(--md-outline-variant); border-radius:24px; background:color-mix(in srgb,var(--md-sc) 94%,transparent); box-shadow:0 12px 34px var(--md-shadow);">
           <div style="width:54px; height:54px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; border-radius:17px; background:var(--md-primary); color:var(--md-on-primary);">
-            <span data-icon style="font-size:30px; font-variation-settings:'FILL' 1;">deployed_code</span>
+            <span data-icon style="font-size:30px; font-variation-settings:'FILL' 1;" aria-hidden="true">deployed_code</span>
           </div>
           <div style="flex:1; min-width:0;">
             <div style="font-size:11px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; color:var(--md-primary);">Run 1 · framework proof</div>

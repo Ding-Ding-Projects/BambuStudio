@@ -13,7 +13,13 @@ MD3 — no invented features. Runs in any browser with **zero dependencies and n
 
 - **Simplest:** open [`index.html`](index.html) directly in a browser (`file://`).
 - **Static server:** serve this folder and open `/index.html`.
-- **Landing page:** [`landing.html`](landing.html) — the marketing/entry page (Pages site root).
+- **The site:** [`landing.html`](landing.html) + [`site/`](site/) — the Pages root. It is a
+  browser-style **tabbed application**, not a landing page: eight tabs with a pinnable, draggable,
+  groupable, searchable strip; English and Hong Kong Cantonese copy at five funny levels per
+  language; the shared regex builder behind every search bar; a changelog viewer over every
+  published release; non-blocking notifications; and a 1% dim sum surprise. Compose it exactly as
+  CI does with `node scripts/compose-site.mjs _site`. Documented in
+  [`../docs/features/pages/`](../docs/features/pages/README.md).
 - **Native Windows app:** use the
   [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe).
   It is built from the C++ application by the
