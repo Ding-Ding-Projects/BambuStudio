@@ -62,6 +62,14 @@ public:
 
     virtual void Rescale();
 
+    // A custom-drawn wxWindow is not focusable from the keyboard by default, so
+    // without this the slider is operable only by mouse: its arrow / Page / Home /
+    // End handling can never receive a key because nothing can give it focus. A
+    // reskin that costs keyboard reachability is a regression, not a redesign -
+    // this is why a native wxSlider must never be replaced by this control until
+    // both this and the wxAccessible below are in place.
+    bool AcceptsFocusFromKeyboard() const override { return IsEnabled() && IsShown(); }
+
 protected:
     wxSize DoGetBestSize() const override;
 
