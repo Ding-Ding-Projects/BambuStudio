@@ -48,6 +48,11 @@ private:
     void announce(const wxString &slot_label, const wxString &fila_type,
                   const wxString &brand, const wxString &color_hex);
 
+    // The dialog is opened as a stack temporary (MainFrame's menu handler), so
+    // the upload server's accept thread and the detached analysis thread can
+    // both outlive it. They hold this flag rather than the dialog, and the
+    // lambdas they queue on wxTheApp bail out once the destructor clears it.
+    std::shared_ptr<std::atomic<bool>> m_alive { std::make_shared<std::atomic<bool>>(true) };
     std::unique_ptr<ScanUploadServer> m_server;
     wxStaticBitmap *m_qr_bitmap { nullptr };
     Label          *m_url_label { nullptr };

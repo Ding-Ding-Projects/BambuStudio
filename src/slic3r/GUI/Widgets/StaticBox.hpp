@@ -46,8 +46,9 @@ public:
 
     void SetBackgroundColor2(StateColor const &color);
 
-    // Re-seed the plain wxWindow background from the themed normal-state colour
-    // (see the definition for why the constructor-time seed goes stale).
+    // Re-seed the plain wxWindow background from the CURRENT parent surface --
+    // it is what shows outside the rounded rect (see the definition for why the
+    // constructor-time seed goes stale).
     void SyncWindowBackground();
 
     static wxColor GetParentBackgroundColor(wxWindow * parent);

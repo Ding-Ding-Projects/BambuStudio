@@ -28,9 +28,18 @@ CheckBox::CheckBox(wxWindow *parent, int id)
     : wxBitmapToggleButton(parent, id, wxNullBitmap, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
 {
 	//SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
-	if (parent)
-		SetBackgroundColour(parent->GetBackgroundColour());
+	if (parent) {
+		m_seeded_background = parent->GetBackgroundColour();
+		SetBackgroundColour(m_seeded_background);
+	}
 	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { m_half_checked = false; update(); e.Skip(); });
+	// The glyph is rasterised into the button's bitmaps, so no repaint can recolor
+	// it: GUI_App::UpdateDarkUI only remaps a window's fg/bg colours (and only for
+	// the wxButton subclasses it special-cases, and this is a wxBitmapToggleButton
+	// i.e. wxAnyButton), and the in-app light/dark toggle never emits
+	// wxEVT_SYS_COLOUR_CHANGED. Re-check the live tones on idle instead; Retheme()
+	// is two colour compares while nothing has moved.
+	Bind(wxEVT_UPDATE_UI, [this](wxUpdateUIEvent &e) { Retheme(); e.Skip(); });
 #ifdef __WXOSX__ // State not fully implement on MacOS
     Bind(wxEVT_SET_FOCUS, &CheckBox::updateBitmap, this);
     Bind(wxEVT_KILL_FOCUS, &CheckBox::updateBitmap, this);
@@ -69,6 +78,26 @@ void CheckBox::Rescale()
     SetSize(wxSize(deviceSide(), deviceSide()));
     SetMinSize(wxSize(deviceSide(), deviceSide()));
 	update();
+}
+
+void CheckBox::Retheme()
+{
+    const wxColour fill    = StateColor::semantic(MD3::Role::Primary, m_scheme);
+    const wxColour outline = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    if (fill == m_baked_fill && outline == m_baked_outline)
+        return;
+
+    // The 20px glyph is transparent outside the rounded square, so the window
+    // fill is what shows through an unchecked box. Follow the parent again, but
+    // only while we still hold the colour the ctor copied in: callers that set
+    // their own plate (SelectMachine, CalibrationWizardPresetPage, PartSkipDialog)
+    // must keep it.
+    if (wxWindow *parent = GetParent(); parent && GetBackgroundColour() == m_seeded_background) {
+        m_seeded_background = parent->GetBackgroundColour();
+        SetBackgroundColour(m_seeded_background);
+    }
+    update();
+    Refresh();
 }
 
 int CheckBox::deviceSide() const
@@ -202,6 +231,10 @@ void CheckBox::update()
 {
 	const bool v = GetValue();
 	const bool h = m_half_checked;
+	// Snapshot the two roles the glyph is keyed on, so Retheme() can tell a stale
+	// raster from a current one without being told a theme switch happened.
+	m_baked_fill    = StateColor::semantic(MD3::Role::Primary, m_scheme);
+	m_baked_outline = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 	SetBitmapLabel(renderBitmap(v, h, false, false));
     SetBitmapDisabled(renderBitmap(v, h, true, false));
 #ifdef __WXMSW__

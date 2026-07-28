@@ -216,20 +216,23 @@ void StaticBox::SetBorderColorNormal(wxColor const &color)
     Refresh();
 }
 
-// Keep the plain wxWindow background in step with the themed one. Create()
+// Keep the plain wxWindow background in step with the parent surface. Create()
 // seeds it once from the parent, which is the LIGHT surface for any card built
 // before a theme is applied -- and that stale colour is what actually reaches
 // the screen, because the MSW render() path clears its back buffer with
 // GetBackgroundColour() before doRender() draws, and the erase handler uses it
 // too. Without this sync a themed card shows a light plate in dark mode even
 // though its rounded fill is correct.
+//
+// Re-seed from the PARENT, never from background_color: this colour is what
+// survives OUTSIDE the rounded rect that doRender() then paints, so seeding it
+// with our own interior fill floods the corner arcs and squares off every card
+// and pill button. Button re-seeds the same way by hand in applyMD3Style().
 void StaticBox::SyncWindowBackground()
 {
-    if (background_color.count() == 0)
-        return;
-    const wxColour normal = background_color.defaultColor();
-    if (normal.IsOk() && normal != wxWindow::GetBackgroundColour())
-        wxWindow::SetBackgroundColour(normal);
+    const wxColour behind = GetParentBackgroundColor(GetParent());
+    if (behind.IsOk() && behind != wxWindow::GetBackgroundColour())
+        wxWindow::SetBackgroundColour(behind);
 }
 
 void StaticBox::SetBackgroundColor(StateColor const &color)

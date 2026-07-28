@@ -11,6 +11,7 @@
 #include <wx/access.h>
 #endif
 #include <algorithm>
+#include <cmath>
 #ifdef __APPLE__
 #include "libslic3r/MacUtils.hpp"
 #endif
@@ -29,6 +30,43 @@ wxColour brightenColor(const wxColour &c, double factor)
         return static_cast<unsigned char>(n + 0.5);
     };
     return wxColour(ch(c.Red()), ch(c.Green()), ch(c.Blue()), c.Alpha());
+}
+
+// WCAG 2.1 relative luminance / contrast ratio. Only used to compare two
+// candidate focus-ring colours against the surface the ring is stroked on.
+double relativeLuminance(const wxColour &c)
+{
+    auto lin = [](unsigned char v) -> double {
+        const double s = v / 255.0;
+        return s <= 0.03928 ? s / 12.92 : std::pow((s + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * lin(c.Red()) + 0.7152 * lin(c.Green()) + 0.0722 * lin(c.Blue());
+}
+
+double contrastRatio(const wxColour &a, const wxColour &b)
+{
+    const double la = relativeLuminance(a);
+    const double lb = relativeLuminance(b);
+    return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
+}
+
+// The keyboard focus ring is stroked INSIDE the button's own painted surface,
+// so the shared MD3 Primary ring vanishes whenever that surface is itself an
+// accent fill: Variant::Filled paints exactly semantic(Primary) -- and that is
+// the button MsgDialog::add_button gives focus to as a dialog opens -- while a
+// danger IconButton paints Error under the pointer. When `preferred` misses the
+// WCAG 1.4.11 3:1 non-text minimum against the interior, fall back to the tone
+// the button already draws its own label in, which the kit pairs with that same
+// interior (OnPrimary on Primary, OnError on Error). Handing back the
+// better-contrasting of the two leaves every variant whose interior is the
+// parent surface or a pale container -- and every legacy non-variant caller --
+// on the Primary ring they have today, and can only make a ring more visible.
+wxColour focusRingColor(const wxColour &preferred, const wxColour &fallback, const wxColour &interior)
+{
+    const double preferred_ratio = contrastRatio(preferred, interior);
+    if (preferred_ratio >= 3.0 || !fallback.IsOk() || fallback.Alpha() == 0)
+        return preferred;
+    return contrastRatio(fallback, interior) > preferred_ratio ? fallback : preferred;
 }
 
 #if wxUSE_ACCESSIBILITY
@@ -741,8 +779,18 @@ void Button::render(wxDC& dc)
         wxRect focus_rect(inset, inset,
                           std::max(0, size.x - inset * 2),
                           std::max(0, size.y - inset * 2));
+        // Resolve the ring against the interior StaticBox::doRender() actually
+        // fills for the current states -- not against the variant -- so the
+        // hover and disabled fills are covered by the same rule. An empty or
+        // fully transparent background_color means the plain window background
+        // is what shows through under the ring.
+        wxColour interior = background_color.count() > 0 ? background_color.colorForStates(states)
+                                                         : GetBackgroundColour();
+        if (!interior.IsOk() || interior.Alpha() == 0)
+            interior = GetBackgroundColour();
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, m_scheme),
+        dc.SetPen(wxPen(focusRingColor(StateColor::semantic(MD3::Role::Primary, m_scheme),
+                                       text_color.colorForStates(states), interior),
                         std::max(FromDIP(2), 1)));
         dc.DrawRoundedRectangle(focus_rect, std::max(0.0, radius - inset));
     }

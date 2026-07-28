@@ -28,6 +28,15 @@ public:
 
 	void Rescale();
 
+	// Re-rasterise the cached state bitmaps against the live theme, and follow the
+	// parent's plate again. Nothing else can reach them: the glyph is baked into a
+	// wxBitmap, and GUI_App::UpdateDarkUI only remaps a window's fg/bg colours (for
+	// the wxButton subclasses it special-cases at that — this is a
+	// wxBitmapToggleButton). Cheap and idempotent: a no-op while the tones the
+	// bitmaps were baked with are still current, so it is safe to call from a
+	// theme fan-out or on idle.
+	void Retheme();
+
 	// Draw a single checkbox glyph state to a DPI-correct, antialiased,
 	// transparent bitmap at logical size `px` (device size = px * scale), so any
 	// custom-painted row can reuse the exact CheckBox anatomy (unchecked =
@@ -74,6 +83,16 @@ private:
 private:
     MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
     bool m_half_checked = false;
+    // The Primary / OnSurfaceVariant tones the cached bitmaps were rasterised
+    // with, refreshed by update(). A light/dark switch (or an Appearance accent
+    // change) moves them behind the widget's back, so Retheme() compares rather
+    // than trusting a notification that never arrives.
+    wxColour m_baked_fill;
+    wxColour m_baked_outline;
+    // The parent background copied in at construction. Retheme() re-seeds from
+    // the parent only while this is still the window's colour, so a caller that
+    // deliberately set another plate keeps it.
+    wxColour m_seeded_background;
 };
 
 #endif // !slic3r_GUI_CheckBox_hpp_
