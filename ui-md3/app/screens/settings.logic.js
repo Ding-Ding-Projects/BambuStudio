@@ -9,7 +9,7 @@ registerScreen({
     const q=this.state.settingsQuery; if(!q) return true;
     const hay=String(text==null?'':text);
     if(!this.state.settingsRegex) return hay.toLowerCase().includes(q.toLowerCase());
-    try{ return new RegExp(q, this.state.settingsFlags||'i').test(hay); }
+    try{ return new RegExp(q, (typeof this.state.settingsFlags==='string'?this.state.settingsFlags:'i')).test(hay); }
     catch(e){ return hay.toLowerCase().includes(q.toLowerCase()); }
   },
   // Each field is tested on its own so an anchored pattern such as ^Theme$
@@ -21,7 +21,7 @@ registerScreen({
   setEmptyText(){
     const q=this.state.settingsQuery||'';
     if(this.state.settingsRegex){
-      try{ new RegExp(q, this.state.settingsFlags||'i'); }
+      try{ new RegExp(q, (typeof this.state.settingsFlags==='string'?this.state.settingsFlags:'i')); }
       catch(e){ return 'No settings match “'+q+'” — that pattern is not valid, so it was searched as plain text.'; }
       return 'No settings match regular expression “'+q+'”.';
     }
@@ -61,7 +61,7 @@ registerScreen({
       // The mode travels with the query; without it the field cannot say
       // whether its .* toggle was on, and plain text stops being the default.
       setSettingsQuery:(v,mode)=>this.setState({ settingsQuery:v,
-        settingsRegex:!!(mode&&mode.regex), settingsFlags:(mode&&mode.flags||'i').replace('g','')||'i' }),
+        settingsRegex:!!(mode&&mode.regex), settingsFlags:(mode&&typeof mode.flags==='string'?mode.flags:'i') }),
       setShowAppearance: showAppearance,
       setShowTheme: showTheme,
       setShowDensity: showDensity,

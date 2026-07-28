@@ -16,7 +16,7 @@ registerScreen({
     const q=this.state.homeQuery; if(!q) return true;
     const hay=project.name+' '+project.meta;
     if(!this.state.homeRegex) return hay.toLowerCase().includes(q.toLowerCase());
-    try{ return new RegExp(q, this.state.homeFlags||'i').test(hay); }
+    try{ return new RegExp(q, (typeof this.state.homeFlags==='string'?this.state.homeFlags:'i')).test(hay); }
     catch(e){ return hay.toLowerCase().includes(q.toLowerCase()); }
   }
   },
@@ -29,6 +29,6 @@ registerScreen({
     homeQuery:q,
     homeEmpty: q!=='' && recent.length===0,
     setHomeQuery:(v,mode)=>this.setState({ homeQuery:v,
-      homeRegex:!!(mode&&mode.regex), homeFlags:(mode&&mode.flags||'i').replace('g','')||'i' })
+      homeRegex:!!(mode&&mode.regex), homeFlags:(mode&&typeof mode.flags==='string'?mode.flags:'i') })
   }; }
 });

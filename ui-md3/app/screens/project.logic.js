@@ -20,7 +20,7 @@ registerScreen({
   // thing that turns a typed string into a pattern.
   setProjectQuery(v, mode){
     this.setState({projectSearch:{ query:v,
-      regex:!!(mode&&mode.regex), flags:(mode&&mode.flags||'i').replace('g','')||'i' }});
+      regex:!!(mode&&mode.regex), flags:(mode&&typeof mode.flags==='string'?mode.flags:'i') }});
   },
   // Plain text is the default; a regular expression is compiled only when the
   // search field says the user turned its .* toggle on.

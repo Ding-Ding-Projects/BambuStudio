@@ -122,6 +122,13 @@ test('landing chrome keeps accessible names and one shared language selector', (
 
 const prototype = await readFile(path.join(uiDir, 'index.html'), 'utf8');
 const searchFieldLogic = await readFile(path.join(uiDir, 'app', 'searchfield.logic.js'), 'utf8');
+const consumers = Object.fromEntries(await Promise.all(
+  ['app/main.logic.js', 'app/screens/home.logic.js', 'app/screens/prepare.logic.js',
+    'app/screens/project.logic.js', 'app/screens/calibration.logic.js',
+    'app/screens/filament.logic.js', 'app/screens/multi.logic.js',
+    'app/screens/settings.logic.js']
+    .map(async (name) => [name, await readFile(path.join(uiDir, name), 'utf8')])
+));
 const dialogsModule = await readFile(path.join(uiDir, 'app', 'dialogs.js'), 'utf8');
 const appStyles = await readFile(path.join(uiDir, 'app', 'styles.css'), 'utf8');
 
@@ -166,7 +173,17 @@ test('every prototype search field is wired, and plain text is the default', () 
   assert.deepEqual(inert, [], 'a search field that filters nothing must not ship');
   // The mode travels with the query, so a consumer can tell opt-in regex from
   // plain text instead of compiling everything it is handed.
-  assert.match(searchFieldLogic, /onQuery\(v, \{ regex:this\.state\.regex, flags:this\.compileFlags\(\) \}\)/);
+  assert.match(searchFieldLogic, /onQuery\(v, \{ regex:this\.state\.regex, flags:this\.searchFlags\(\) \}\)/);
+  // searchFlags() drops `g` — a global regex carries lastIndex between calls
+  // and starts skipping rows — and returns '' verbatim when every chip is off,
+  // which is what "case-sensitive" looks like.
+  assert.match(searchFieldLogic, /searchFlags\(\)\{[\s\S]*?return \(f\.i\?'i':''\)/);
+  assert.doesNotMatch(searchFieldLogic, /searchFlags\(\)\{[\s\S]*?'g'/);
+  // No consumer may substitute 'i' for an explicitly empty flag string.
+  for (const [name, source] of Object.entries(consumers)) {
+    assert.doesNotMatch(source, /Flags\|\|'i'/, `${name} makes case-sensitive search impossible`);
+    assert.doesNotMatch(source, /replace\('g',''\)\|\|'i'/, `${name} makes case-sensitive search impossible`);
+  }
 });
 
 test('Smart Home keeps a fixed footer around a work-area-capped scrolling body', () => {

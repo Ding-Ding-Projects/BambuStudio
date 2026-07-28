@@ -162,14 +162,14 @@ class Main extends DCLogic {
     this.setState(st=>({ shellSearch:{...(st.shellSearch||{}),
       [key]:value,
       [key+'Regex']:!!(mode&&mode.regex),
-      [key+'Flags']:((mode&&mode.flags)||'i').replace('g','')||'i' } }));
+      [key+'Flags']:(mode&&typeof mode.flags==='string'?mode.flags:'i') } }));
   }
   shellMatch(key, text){
     const search=this.state.shellSearch||{};
     const q=search[key];
     if(!q) return true;
     if(!search[key+'Regex']) return String(text).toLowerCase().includes(q.toLowerCase());
-    try{ return new RegExp(q, search[key+'Flags']||'i').test(String(text)); }
+    try{ return new RegExp(q, (typeof search[key+'Flags']==='string'?search[key+'Flags']:'i')).test(String(text)); }
     catch(e){ return String(text).toLowerCase().includes(q.toLowerCase()); }
   }
 
@@ -257,7 +257,7 @@ class Main extends DCLogic {
       openExport:()=>{ const all={}; this.render_filRows().forEach(f=>all[f.name]=true); this.setState({ dialog:'export', export:{...this.state.export, selected:all, contains:'', type:'All', vendor:'All'} }); },
       isDlgExport: s.dialog==='export',
       setExQuery:(v,mode)=>this.setState({export:{...this.state.export, contains:v,
-        regex:!!(mode&&mode.regex), flags:(mode&&mode.flags||'i').replace('g','')||'i'}}),
+        regex:!!(mode&&mode.regex), flags:(mode&&typeof mode.flags==='string'?mode.flags:'i')}}),
       exRows, exSelCount, exTotal: exFiltered.length, exAllIcon, exFormat: s.export.format,
       exEmpty: exFiltered.length===0, exploreModels:()=>this.notify(this.msg('openingLibrary'), {icon:'public'}),
       toggleSelectAllExport:()=>this.toggleSelectAllExport(), doExport:()=>this.doExport(),

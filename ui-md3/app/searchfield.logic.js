@@ -10,6 +10,21 @@ class SearchField extends DCLogic {
     return 'g'+(f.i?'i':'')+(f.m?'m':'')+(f.s?'s':'');
   }
 
+  /*
+   * The flags a consumer should filter with: the builder's preview needs `g` to
+   * walk a sample, but a consumer calling `.test()` per row must not have it —
+   * a global regex carries lastIndex between calls and starts skipping rows.
+   *
+   * Returned verbatim, including the empty string when the user turned every
+   * chip off. That case is exactly "case-sensitive search", and a consumer that
+   * treats an empty string as "no flags given" and substitutes 'i' makes a
+   * case-sensitive search impossible.
+   */
+  searchFlags(){
+    const f=this.state.flags;
+    return (f.i?'i':'')+(f.m?'m':'')+(f.s?'s':'');
+  }
+
   valid(){
     try{
       new RegExp(this.state.pattern, this.compileFlags());
@@ -27,7 +42,7 @@ class SearchField extends DCLogic {
    */
   emit(v){
     if(typeof this.props.onQuery==='function'){
-      this.props.onQuery(v, { regex:this.state.regex, flags:this.compileFlags() });
+      this.props.onQuery(v, { regex:this.state.regex, flags:this.searchFlags() });
     }
   }
 

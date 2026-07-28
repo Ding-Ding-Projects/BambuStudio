@@ -22,7 +22,7 @@ registerScreen({
       filEmpty: q !== '' && rows.length === 0,
       filEmptyNote: 'Searched “' + q + '” · ' + (re ? 'regular expression' : 'plain text'),
       setFilQuery:(v,mode)=>this.setState({filamentSearch:{ q:v,
-        regex:!!(mode&&mode.regex), flags:(mode&&mode.flags||'i').replace('g','')||'i' }})
+        regex:!!(mode&&mode.regex), flags:(mode&&typeof mode.flags==='string'?mode.flags:'i') }})
     };
   }
 });

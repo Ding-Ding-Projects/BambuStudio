@@ -18,13 +18,13 @@ registerScreen({
       const plain=()=>fields.some(f=>String(f).toLowerCase().includes(q.toLowerCase()));
       if(!this.state.multiRegex) return plain();
       try{
-        const re=new RegExp(q, this.state.multiFlags||'i');
+        const re=new RegExp(q, (typeof this.state.multiFlags==='string'?this.state.multiFlags:'i'));
         return fields.some(f=>re.test(String(f)));
       }catch(e){ return plain(); }
     },
     setMultiQuery(v, mode){
       this.setState({ multiQuery:v||'',
-        multiRegex:!!(mode&&mode.regex), multiFlags:(mode&&mode.flags||'i').replace('g','')||'i' });
+        multiRegex:!!(mode&&mode.regex), multiFlags:(mode&&typeof mode.flags==='string'?mode.flags:'i') });
     }
   },
   vals: function(){

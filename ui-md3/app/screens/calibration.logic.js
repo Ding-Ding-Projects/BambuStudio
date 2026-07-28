@@ -10,7 +10,7 @@ registerScreen({
         if(!q) return true;
         const s = String(hay);
         if(!this.state.caliRegex) return s.toLowerCase().includes(q.toLowerCase());
-        try{ return new RegExp(q, this.state.caliFlags||'i').test(s); }
+        try{ return new RegExp(q, (typeof this.state.caliFlags==='string'?this.state.caliFlags:'i')).test(s); }
         catch(e){ return s.toLowerCase().includes(q.toLowerCase()); }
       };
       return [
@@ -32,6 +32,6 @@ registerScreen({
     caliQuery:this.state.caliQuery || '',
     caliEmpty:caliCards.length === 0,
     setCaliQuery:(v,mode)=>this.setState({ caliQuery:v,
-      caliRegex:!!(mode&&mode.regex), caliFlags:(mode&&mode.flags||'i').replace('g','')||'i' })
+      caliRegex:!!(mode&&mode.regex), caliFlags:(mode&&typeof mode.flags==='string'?mode.flags:'i') })
   }; }
 });
