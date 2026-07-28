@@ -1,0 +1,72 @@
+{
+  "titleBarAt640": {
+    "viewportWidth": 640,
+    "titleBarScrollWidth": 640,
+    "closeButtonRight": 634,
+    "closeButtonReachable": true,
+    "documentScrollWidth": 640
+  },
+  "search": {
+    "rowsUnfiltered": 4,
+    "plainPetg": {
+      "count": 1,
+      "keepsPetg": true,
+      "dropsAbs": true
+    },
+    "literalDot": {
+      "count": 0,
+      "empty": true
+    },
+    "restoredAfterClear": true
+  },
+  "switches": [
+    {
+      "name": "Auto-arrange on import",
+      "checked": "true"
+    },
+    {
+      "name": "Auto-commit every edit to Git",
+      "checked": "true"
+    },
+    {
+      "name": "Show “auto-saved” notifications",
+      "checked": "false"
+    },
+    {
+      "name": "Bundle version history into .3mf",
+      "checked": "true"
+    },
+    {
+      "name": "Show daily tips",
+      "checked": "false"
+    },
+    {
+      "name": "Share anonymous usage data",
+      "checked": "false"
+    }
+  ],
+  "unnamedButtons": 0,
+  "gizmoNames": [
+    "Move (M)",
+    "Rotate (R)",
+    "Scale (S)",
+    "Place on face",
+    "Cut (C)",
+    "Support painting",
+    "Seam painting",
+    "Support"
+  ],
+  "ligatureNames": 0,
+  "dialog": {
+    "role": "dialog",
+    "ariaModal": "true",
+    "focusInsideDialog": true,
+    "inertAncestorSiblings": 4,
+    "focusRefusedBehindScrim": true
+  },
+  "dialogAfterEscape": {
+    "dialogGone": true,
+    "focusBackOnOpener": true,
+    "inertCleared": true
+  }
+}

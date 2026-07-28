@@ -121,7 +121,9 @@ button .i18n-secondary{ color:inherit; }
 .titlebar .tb-branch,
 .titlebar .tb-project,
 .titlebar .tb-appearance{ flex:0 0 auto; }
-@media (max-width:1000px){ .titlebar .tb-project{ display:none; } }
-@media (max-width:860px){ .titlebar .tb-menus{ display:none; } }
-@media (max-width:700px){ .titlebar .tb-branch{ display:none; } }
-@media (max-width:560px){ .titlebar .tb-title{ display:none; } }
+/* The prototype carries inline styles, so a collapse rule needs !important to
+ * beat an element style="display:flex". */
+@media (max-width:1000px){ .titlebar .tb-project{ display:none !important; } }
+@media (max-width:860px){ .titlebar .tb-menus{ display:none !important; } }
+@media (max-width:700px){ .titlebar .tb-branch{ display:none !important; } }
+@media (max-width:560px){ .titlebar .tb-title{ display:none !important; } }
