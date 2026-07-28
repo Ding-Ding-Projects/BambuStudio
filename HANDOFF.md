@@ -40,6 +40,7 @@ These cost previous sessions hours. Do not re-derive them.
 | App logs | `%APPDATA%\BambuStudioInternal\log\studio_*.log*` |
 | App config | `%APPDATA%\BambuStudioInternal\BambuStudio.conf` (e.g. `"dark_color_mode": "1"`). **Ends with a `# MD5 checksum` line.** A stale checksum only logs a warning, but **malformed JSON makes the app silently fall back to `BambuStudio.conf.bak`** — so a botched hand-edit looks exactly like "the app ignored my setting". Edit with a real JSON serializer and recompute the checksum over everything up to and including the last `}`. |
 | GPU | **None.** "Microsoft Basic Display Adapter". The app needs Mesa llvmpipe software GL to start at all. |
+| Display | **832 x 1573 — narrower than the app's own minimum.** `GUI_App::get_min_size()` returns 1000x600, and `create_headless_desktop` inherits the primary display's resolution with no way to override it. So the main frame always runs at ~846 wide here, **below its supported minimum**, and its bottom action bar clips ("Slice pl…"). That clip is an artefact of this host, not a defect — and it means **main-frame clipping cannot be verified at a supported width on this machine at all.** Dialog-level clipping review still works, because dialogs are smaller than the frame. |
 | Python | No system Python. Use `C:\Users\Administrator\Documents\GitHub\lowlevel-computer-use-mcp\.venv\Scripts\python.exe` |
 
 **Shell gotchas on this box** (these silently produce wrong results):
