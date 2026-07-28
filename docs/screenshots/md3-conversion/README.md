@@ -30,16 +30,16 @@ Symbols, the preset combo, the save and search affordances, and the `Advanced` s
 
 ## What it does NOT show, and why
 
-> [!IMPORTANT]
-> The bottom action bar clips — the slice button reads **"Slice pl…"**. **That is an artefact of
-> this host, not a defect.** `GUI_App::get_min_size()` declares a 1000x600 minimum, this machine's
-> primary display is **832 x 1573**, and `create_headless_desktop` inherits that resolution with no
-> override. The frame is therefore forced to ~846 wide — below the app's own supported minimum —
-> and any layout measured there is measuring an unsupported size.
+> [!NOTE]
+> These two Prepare captures predate the action-bar fix, so their bottom bar still reads
+> **"Slice pl"** with no Print button. That was **not** a host artefact, though it was twice
+> recorded here as one — see "The action-bar clip" below for the real cause and the after shot.
 >
-> **Main-frame clipping cannot be verified at a supported width on this machine.** Dialog-level
-> review still works, because dialogs are smaller than the frame; that is how the Smart Home
-> 720x760 and 520x480 reviews were done.
+> The host limit that *is* real: `GUI_App::get_min_size()` declares a 1000x600 minimum, this
+> machine's primary display is **832 x 1573**, and `create_headless_desktop` inherits that
+> resolution with no override, so the frame is pinned at ~846 wide. **Main-frame layout at a
+> supported width cannot be verified here.** Dialog-level review still works, because dialogs are
+> smaller than the frame; that is how the Smart Home 720x760 and 520x480 reviews were done.
 
 ## Still owed, and exactly what blocks each
 
@@ -54,42 +54,42 @@ effort. Each needs the stated unblock before it can be captured honestly.
 | **2D bed preview, dark** | Carries an explicit open question at `src/slic3r/GUI/2DBed.cpp:88-100`: the slab sits at **1.05:1** against its backdrop by arithmetic, and every role pairing that raises it costs grid contrast. Only a capture settles the trade | `BedShapeDialog` is the only `Bed_2D` call site, and **bed shape is not exposed for Bambu printer profiles** — the profile fixes it. Needs a custom/third-party printer profile |
 | **Settings search popover** | A required surface (every settings page must route search through the shared regex builder) | It is a **transient popover**: any process spawned on the headless desktop while it is open focus-kills it. Must be driven with `popovercap.py` in a single on-desktop process |
 
-## The main-frame clip is a real defect, root-caused — just not fixable blind
+## The action-bar clip: found, root-caused, fixed, proven
 
-The `"Slice pl…"` clip in `prepare-workspace-dark-D06044.png` was chased to its cause rather than
-dismissed as a host artefact. It is **both**: this host triggers it, and the mechanism is in the app.
+| | |
+| --- | --- |
+| `action-bar-before-starved-row.png` | **"Slice pl"** clipped, and **no Print button at all** |
+| `action-bar-after-starved-row.png` | **"Slice plate"** and **"Print plate"** both whole, at the same 846 px |
 
-`GUI_App::get_min_size()` (GUI_App.cpp:4258) declares a **1000 x 600** minimum. But
-`GUI_App::window_pos_sanitize()` (GUI_App.cpp:8241) runs
-`WindowMetrics::sanitize_for_display()`, whose first act is
-`rect = rect.Intersect(screen_rect)` (GUI_Utils.cpp:373). The intersect wins: on a display narrower
-than the declared minimum, **the app clamps itself below its own minimum** and the bottom action bar
-overflows, with nothing on screen indicating it.
+This was twice dismissed as an artefact of the 832 px display. It was a real defect.
 
-Measured on this host via `WM_GETMINMAXINFO` on the live frame:
+`update_prepare_action_bar_content()` sized the canvas-alignment spacers to the **full** sidebar
+width (344 px). Those spacers are **proportion-0** sizer items and the tool row is **proportion-1**.
+When a row cannot fit every minimum, `wxBoxSizer` takes its degenerate branch (`sizer.cpp:2253`):
+it pays the **fixed** items first (`:2257-2269`) and gives the proportional ones only the remainder
+(`:2274-2286`). The spacer took its 344 px; the tool row was left 214 px short, and that cascaded
+through three nested sizers into a **92 px** Slice pill and a **0 px** Print pill.
 
-```
-minTrackSize  832 x 1279      <- the app's own reported minimum, i.e. the screen width
-maxTrackSize  846 x 1539
-```
+> [!IMPORTANT]
+> **It never looks like overflow, and that is what made it hard.** wx truncates the straddling item
+> and allocates **zero** to everything after it (`GetMinOrRemainingSize`, `sizer.cpp:2162-2190`), so
+> every child still reports a rect comfortably *inside* the frame. Measuring the children and
+> concluding "nothing overhangs, so nothing is clipped" is precisely the wrong inference — the
+> starved control has not spilled, it has been erased. A whole primary action was missing from every
+> capture for hours and read as "a slightly narrow button".
 
-So the frame is pinned between 832 and 846 px wide **by the app**, not by the window manager.
-`SetWindowPos` and `MoveWindow` to 1200 are both refused, restoring from maximized first changes
-nothing, and the app never was maximized.
+The fix lets the spacers claim only what the row does not need — cosmetic alignment with the 3D
+canvas never outranks a primary action — and logs a warning when the row is still over-subscribed,
+so the next starved control announces itself instead of disappearing.
 
-> [!WARNING]
-> **This was deliberately NOT blind-fixed.** The action bar is a high-traffic surface, and this host
-> can only render it at 832-846 px — an atypical width. Changing a prominent layout when the only
-> available verification is one unusual width is how a rare bug gets traded for a common one, which
-> already happened twice in this work (a contrast fix that painted a magenta hover underline, and an
-> MD3 conversion that introduced `overflow: hidden` clipping). The fix needs a >= 1000 px display to
-> validate the normal case.
->
-> Two escapes from the display limit were tried and both are closed here: `create_virtual_display`
-> requires **Xvfb** and is Linux-only, and `create_headless_desktop` takes no resolution argument —
-> it inherits the session's. Changing the host's display mode would disturb the user's own session,
-> so it was not done. (`Win32_VideoController` reports the adapter at 1280x800, but the session and
-> every headless desktop created from it report 832x1573.)
+Two earlier attempts were **inert and were reverted**: forcing the frame past its minimum (Windows
+caps a top-level window at the work area, `maxTrackSize` 846), and zeroing the estimate column
+minimum (the bar was not overflowing in the way that would have helped).
+
+> Escapes from the display limit, both closed here: `create_virtual_display` requires **Xvfb** and is
+> Linux-only, and `create_headless_desktop` inherits the session resolution. Changing the host
+> display mode would disturb the user's own session, so it was not done. Main-frame layout at a
+> *supported* width still cannot be verified on this machine.
 
 ## One blocker that turned out not to be real
 

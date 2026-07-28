@@ -40,7 +40,7 @@ These cost previous sessions hours. Do not re-derive them.
 | App logs | `%APPDATA%\BambuStudioInternal\log\studio_*.log*` |
 | App config | `%APPDATA%\BambuStudioInternal\BambuStudio.conf` (e.g. `"dark_color_mode": "1"`). **Ends with a `# MD5 checksum` line.** A stale checksum only logs a warning, but **malformed JSON makes the app silently fall back to `BambuStudio.conf.bak`** — so a botched hand-edit looks exactly like "the app ignored my setting". Edit with a real JSON serializer and recompute the checksum over everything up to and including the last `}`. |
 | GPU | **None.** "Microsoft Basic Display Adapter". The app needs Mesa llvmpipe software GL to start at all. |
-| Display | **832 x 1573 — narrower than the app's own minimum.** `GUI_App::get_min_size()` returns 1000x600, and `create_headless_desktop` inherits the primary display's resolution with no way to override it. So the main frame always runs at ~846 wide here, **below its supported minimum**, and its bottom action bar clips ("Slice pl…"). That clip is an artefact of this host, not a defect — and it means **main-frame clipping cannot be verified at a supported width on this machine at all.** Dialog-level clipping review still works, because dialogs are smaller than the frame. |
+| Display | **832 x 1573 — narrower than the app's own minimum.** `GUI_App::get_min_size()` returns 1000x600, and `create_headless_desktop` inherits the primary display's resolution with no override, so the main frame always runs at ~846 wide here, **below its supported minimum**. Useful as a permanent narrow-width test bed; see §3.3 for the real defect it exposed. Main-frame layout at a *supported* width still cannot be checked here. |
 | Python | No system Python. Use `C:\Users\Administrator\Documents\GitHub\lowlevel-computer-use-mcp\.venv\Scripts\python.exe` |
 
 **Shell gotchas on this box** (these silently produce wrong results):
@@ -95,6 +95,33 @@ grep -E "[0-9]+ Error\(s\)|Time Elapsed" /c/Users/ADMINI~1/AppData/Local/Temp/ms
    moved.
 3. After a build, verify `BambuStudio.dll`'s timestamp advanced. MSBuild can leave the thin
    `bambu-studio.exe` stale at exit 0; the **DLL** is what matters.
+
+### 3.3 The narrow display found a real bug — read this before dismissing a layout as "just this host"
+
+The bottom action bar rendered **"Slice pl"** and *no Print button at all*. That was written off
+twice as an artefact of the 832 px screen. It was not.
+
+`update_prepare_action_bar_content()` sized the canvas-alignment spacers to the **full** sidebar
+width (344 px). Those spacers are **proportion-0** sizer items; the tool row is **proportion-1**.
+When a row cannot fit every minimum, `wxBoxSizer` takes its degenerate branch
+(`sizer.cpp:2253`): it pays the **fixed** items in full first (`:2257-2269`) and gives the
+proportional ones only what is left (`:2274-2286`). So the spacer took its 344 px and the tool row
+was truncated to the remainder — short by 214 px, which cascaded down three nested sizers and
+reached the Slice pill as a **92 px** window and the Print pill as a **0 px** one.
+
+Two things make this hard to see, and both misled this session:
+
+- **It never looks like overflow.** wx truncates the straddling item and allocates **zero** to
+  everything after it (`GetMinOrRemainingSize`, `sizer.cpp:2162-2190`), so every child still
+  reports a rect *inside* the frame. Measuring the children and concluding "nothing overhangs, so
+  nothing is clipped" is exactly the wrong inference — the starved control is simply gone.
+- **A zero-width control leaves no trace.** The Print action was absent from every capture for
+  hours without anyone noticing a button was missing rather than merely narrow.
+
+Fixed in `MainFrame.cpp`: the spacers may claim only what the row does not need — cosmetic
+alignment with the 3D canvas never outranks a primary action — plus a `BOOST_LOG_TRIVIAL(warning)`
+when the row is still over-subscribed, so the next starved control says so instead of vanishing.
+Before/after at 846 px: `docs/screenshots/md3-conversion/action-bar-{before,after}-starved-row.png`.
 
 ---
 

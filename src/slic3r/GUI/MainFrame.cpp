@@ -1666,10 +1666,9 @@ void MainFrame::update_prepare_action_bar_content()
         else if (m_plater->get_sidebar_docking_state() == Sidebar::Right)
             right_sidebar_width = sidebar_width;
     }
-    if (m_prepare_left_sidebar_spacer)
-        m_prepare_left_sidebar_spacer->SetMinSize(wxSize(left_sidebar_width, 0));
-    if (m_prepare_right_sidebar_spacer)
-        m_prepare_right_sidebar_spacer->SetMinSize(wxSize(right_sidebar_width, 0));
+    // The spacers are applied at the end of this function, once the estimate
+    // labels below have their final text: their width is clamped against what
+    // the tool row needs, and the row's minimum depends on that text.
 
     PartPlateList &plates = m_plater->get_partplate_list();
     PartPlate *plate = plates.get_plate_count() > 0 ? plates.get_curr_plate() : nullptr;
@@ -1728,10 +1727,57 @@ void MainFrame::update_prepare_action_bar_content()
             static_cast<wxStaticText *>(detail)->SetLabel(detail_text);
     }
 
+    // The canvas-alignment spacers are proportion-0 sizer items and the tool row
+    // is proportion 1. Once a row cannot fit every minimum, wxBoxSizer stops
+    // distributing and pays the fixed items first, giving the proportional ones
+    // only the remainder (wxBoxSizer::RepositionChildren, degenerate case): it
+    // truncates the first item that no longer fits and allocates zero to every
+    // item after it. At a sidebar-width spacer plus a 344px sidebar on an 832px
+    // frame the row was short by 214px, which reached the Slice pill as a 92px
+    // window rendering "Slice pl" and the Print pill as a 0px window rendering
+    // nothing. Cosmetic alignment with the 3D canvas never outranks a primary
+    // action, so the spacers may claim only what the row does not need.
+    // The spacers are the row's siblings, not its children, so its minimum is
+    // independent of them and reading it here cannot feed back into itself.
+    if (m_side_tools) {
+        const int bar_width = m_prepare_action_bar->GetClientSize().GetWidth();
+        if (bar_width > 0) {
+            const int row_min = m_side_tools->CalcMin().GetWidth()
+                              + 2 * FromDIP(MD3::Metrics::active().padding);
+            const int spare = std::max(0, bar_width - row_min);
+            left_sidebar_width  = std::min(left_sidebar_width, spare);
+            right_sidebar_width = std::min(right_sidebar_width, spare);
+        }
+    }
+    if (m_prepare_left_sidebar_spacer)
+        m_prepare_left_sidebar_spacer->SetMinSize(wxSize(left_sidebar_width, 0));
+    if (m_prepare_right_sidebar_spacer)
+        m_prepare_right_sidebar_spacer->SetMinSize(wxSize(right_sidebar_width, 0));
+
     if (wxSizer *sizer = m_prepare_action_bar->GetSizer())
         sizer->Layout();
     m_prepare_action_bar->Layout();
     m_prepare_action_bar->Refresh(false);
+
+    // wx zero-sizes a starved child in silence, so a lost primary action leaves
+    // no trace but the screenshot. Record the shortfall when the row is still
+    // over-subscribed after the clamp (a frame narrower than the row's own
+    // minimum, where there is nothing left to reclaim). Only a changed shortfall
+    // is reported, so dragging a too-narrow frame cannot flood the log.
+    if (m_side_tools) {
+        const int row_min = m_side_tools->CalcMin().GetWidth();
+        const int row_got = m_side_tools->GetSize().GetWidth();
+        static int reported_deficit = 0;
+        const int  deficit = row_got > 0 && row_got < row_min ? row_min - row_got : 0;
+        if (deficit != reported_deficit) {
+            reported_deficit = deficit;
+            if (deficit > 0)
+                BOOST_LOG_TRIVIAL(warning)
+                    << "prepare action bar: tool row allocated " << row_got << "px against a "
+                    << row_min << "px minimum; wx truncates the first control that no longer fits"
+                       " and allocates 0px to every control after it";
+        }
+    }
 }
 
 void MainFrame::update_prepare_action_bar_style()
@@ -1851,6 +1897,23 @@ void MainFrame::init_tabpanel()
     action_bar_sizer->Add(m_prepare_action_bar_divider, 0, wxEXPAND);
     action_bar_sizer->Add(action_row_sizer, 1, wxEXPAND);
     m_prepare_action_bar->SetSizer(action_bar_sizer);
+    // The spacer clamp in update_prepare_action_bar_content() is a function of
+    // the bar's own width, and no other path re-runs it when only the frame
+    // width changes: the sidebar hooks below fire on sidebar events, and a
+    // fixed-width sidebar does not resize when the frame is merely made
+    // narrower. Re-running the content pass here cannot re-enter, because it
+    // only lays the bar's children out - the bar's height is pinned by
+    // Set{Min,Max}Size in update_prepare_action_bar_style() and its width comes
+    // from m_main_sizer. The width guard keeps an interactive drag from
+    // re-running it for events that carry no new width.
+    m_prepare_action_bar->Bind(wxEVT_SIZE, [this, last_width = -1](wxSizeEvent &event) mutable {
+        event.Skip();
+        const int width = event.GetSize().GetWidth();
+        if (width == last_width)
+            return;
+        last_width = width;
+        CallAfter([this]() { update_prepare_action_bar_content(); });
+    });
     update_prepare_action_bar_style();
     m_prepare_action_bar->Hide();
 

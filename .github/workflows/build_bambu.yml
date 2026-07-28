@@ -132,6 +132,10 @@ jobs:
           # append-only. Codenames are assigned by index, so inserting a dish renames
           # every later release and contradicts already-published immutable ones.
           .\scripts\ci\Test-ReleaseCodenames.ps1
+          # Guards the fork's vocabulary (filament -> ink, AMS -> Ink Dispenser).
+          # The rename is display-only by design, so this checks translated VALUES
+          # and never the keys/msgids that code and 3MF compatibility match on.
+          .\scripts\ci\Test-InkTerminology.ps1
 
       - name: Build slicer Win
         id: build_win
