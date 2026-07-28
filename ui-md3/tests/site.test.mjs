@@ -436,3 +436,44 @@ test('no release-ref run is sent to the environment-gated deploy job', async () 
   assert.match(workflow, /group: ui-md3-pages-\$\{\{ github\.event_name == 'release'/,
     'the release dispatcher needs its own concurrency group');
 });
+
+/*
+ * The MD3 UI kit under design-system/ is published at /app/design-system/ and is
+ * as public as any other page. Nothing was checking its copy: the terminology
+ * script walks the templates and screen logic, these suites covered the
+ * prototype and the site modules, and the kit sat outside all of them — so it
+ * kept saying "Filament Manager" and "AMS mapping" through three passes that
+ * each reported the rename finished.
+ */
+test('the published UI kit says ink, not filament, in everything it renders', async () => {
+  const kit = path.join(uiDir, 'design-system', 'ui_kits', 'bambu-studio');
+  const files = (await readdir(kit)).filter((f) => /\.(jsx|html)$/.test(f));
+  assert.ok(files.length >= 8, 'the kit should still be assembled from its screens');
+
+  // Bindings, not copy: components, globals, dialog keys and the route id.
+  const IDENTIFIER = new RegExp([
+    'window\\.Screens\\.Filament', 'AddFilamentDialog', 'KIT_FILAMENTS', 'FILAMENTS',
+    "id: 'filament'", "'addfil'", 'Filament\\.jsx',
+    'const filaments', '\\{filaments\\.map', // local binding off KIT_FILAMENTS
+  ].join('|'));
+
+  const offenders = [];
+  for (const name of files) {
+    const text = await readFile(path.join(kit, name), 'utf8');
+    text.split('\n').forEach((line, index) => {
+      if (!/\b(filaments?|AMS)\b/i.test(line)) return;
+      if (IDENTIFIER.test(line)) return;
+      offenders.push(`${name}:${index + 1} ${line.trim().slice(0, 80)}`);
+    });
+  }
+  assert.deepEqual(offenders, []);
+
+  // The kit's header claims an assembler inlines the .jsx, and no such assembler
+  // exists here — so the source and the assembled page are kept in step by hand,
+  // and drifting apart is the failure this catches.
+  const assembled = await readFile(path.join(kit, 'index.html'), 'utf8');
+  for (const phrase of ['Ink Manager', 'Search inks', 'New ink', 'Ink Dispenser mapping',
+    'Sync Ink Dispenser', 'No inks match your filter.']) {
+    assert.ok(assembled.includes(phrase), `assembled kit is missing "${phrase}"`);
+  }
+});
