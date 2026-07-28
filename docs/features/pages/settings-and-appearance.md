@@ -41,7 +41,22 @@ The font list contains the bundled Roboto and Roboto Mono plus faces confirmed p
 would render Cantonese copy as fallback soup. The size control scales every text style through one
 `--site-font-scale` multiplier rather than restyling each rule.
 
-## Search
+## Search — on every adjustment surface, not just this one
+
+Four surfaces let you adjust or find something, and **each owns a search bar** built from the same
+component rather than deferring to one shared bar:
+
+| Surface | Its search covers |
+|:---|:---|
+| Settings | every group, plus the controls that live on other tabs |
+| Material You | its three control rows, by label **and current value** — `dark` finds Theme, `#22c55e` finds Accent |
+| Changelog | every release, composing with the date filter |
+| Tab strip | every tab, by English label, Cantonese label and id |
+
+Plain text is the default on all four; regex is an explicit opt-in; the full builder is one button
+away from each.
+
+## The settings search in detail
 
 The settings search is the shared regex-capable component. It filters every group by label,
 description and current value in both languages, and it also indexes the controls that live on

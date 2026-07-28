@@ -53,8 +53,10 @@ Filtering is id-based rather than predicate-based: the caller supplies `items() 
 and receives the ids that matched. That indirection exists so an opt-in regex can be evaluated
 inside the worker instead of on the thread that draws the page.
 
-The search bars wired to it: the tab list, settings, and the changelog. Each supplies its own
-surface as the builder's sample text, so the builder is testing against real content.
+The search bars wired to it: the tab list, settings, the Material You appearance editor, and the
+changelog. Each supplies its own surface as the builder's sample text, so the builder is testing
+against real content. Every adjustment surface owns one — a single shared search box on the
+Settings tab would be a pointer to a control, not a way to find it where it lives.
 
 ## Bounds and denial-of-service posture
 
