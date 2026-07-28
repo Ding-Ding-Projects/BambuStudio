@@ -188,6 +188,10 @@ Full documentation: [`docs/features/pages/`](docs/features/pages/README.md).
 | `beeb8703a` | Restored case-sensitive regex search: `SearchField.searchFlags()` returns filter-ready flags and an empty string verbatim, so a consumer can no longer substitute `'i'` for "no flags". |
 | `30d3f884e` | Title-bar collapse rules given `!important` (the prototype's inline styles beat them otherwise) and `capture-app.mjs` added. |
 | `bfd87cafa` | Removed the changelog freshness gate — every release CI publishes made the committed file stale and would have blocked the next Pages deploy. It is regenerated at deploy time now, with the committed file as the fallback. |
+| `b6718eac0` | Renamed the site and prototype's material vocabulary to **ink** / **Ink Dispenser** (display text only), and repaired the Cantonese the English-side rename had silently broken. |
+| `65fcd2bc0` | Retook all 23 captures; `capture-app.mjs` was still querying `input[placeholder="Search filaments"]`. |
+| `5340bd466` | Fixed the `release` Pages trigger, which had failed **12 times out of 12** and never once done what it claimed. Added the first test that reads the workflow. |
+| `d61e4e47f` | Gave the release dispatcher its own concurrency group so it cannot cancel a deploy and then replace it with nothing. |
 
 **Issues closed this session:** #25 (the `i18n.test.mjs` assertion that broke master — fixed before it
 was filed) and #24 (the prototype's eight defects, each closed with measured evidence). #16 and #15
@@ -215,6 +219,22 @@ are untouched and remain the concurrent session's.
   A responsive rule that looks correct in the diff can do absolutely nothing.
 - **`ui-md3/index.html` is stored with CRLF.** A search-and-replace whose pattern spans two lines
   will silently never match. Prefer single-line edits, and verify the result rather than the diff.
+- **The `github-pages` environment on this fork accepts deployments only from `master`**, and a job
+  gated on that environment at any other ref is rejected *before its first step* — three seconds,
+  zero steps, no log, conclusion `failure`. That is what made the `release` trigger fail 12 for 12
+  without anyone noticing: a `release` event runs at the **tag** ref. Anything that must deploy off
+  a non-`master` ref has to dispatch a `master` run instead, which is what `redeploy-on-release`
+  does. `ui-md3/tests/site.test.mjs` now asserts that shape.
+- **`GITHUB_TOKEN` cannot dispatch a workflow.** GitHub blocks a token-triggered run from
+  triggering another, so `gh workflow run` signed with it returns `204` and does nothing at all.
+  The PAT this repository actually has is **`TOKEN_GITHUB`** — not `RELEASE_TOKEN` or `ORG_TOKEN`,
+  which the org convention names but this fork does not define.
+- **The material vocabulary is display-only.** `ink` and `Ink Dispenser` are what a user reads;
+  `filamentRows`, `?view=filament`, `.bbsflmt` and the native `.po` msgids keep upstream spelling
+  because bindings and file formats match on them. But `ui-md3/app/i18n.resources.js` is the
+  exception that will catch you: it is keyed on the **rendered English string**, not on a msgid, so
+  renaming display text without renaming its keys makes every lookup miss and fall back to English
+  — silently, with nothing anywhere reporting a problem.
 
 **How to verify the site locally** — see
 [`docs/features/pages/deployment-and-layout-gate.md`](docs/features/pages/deployment-and-layout-gate.md).
