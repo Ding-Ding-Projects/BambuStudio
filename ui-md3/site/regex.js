@@ -26,7 +26,8 @@
   var FLAGS = ['g', 'i', 'm', 's', 'u', 'y'];
   var MAX_PATTERN = 512;
   var MAX_SAMPLE = 20000;
-  var MAX_SAMPLE_INLINE = 4000;
+  // The inline path cannot be interrupted mid-exec, so it works on much less.
+  var MAX_SAMPLE_INLINE = 2000;
   var MAX_MATCHES = 500;
   var TIMEOUT_MS = 400;
 
@@ -42,22 +43,53 @@
 
   /* ------------------------------------------------------------- worker */
 
+  /*
+   * The worker answers two jobs. `evaluate` runs the lab's match list; `filter`
+   * runs a search bar's opt-in regex over that surface's items. Both live here
+   * because a terminable worker is the only way to bound a pattern that
+   * backtracks: no in-page deadline can interrupt a single exec() call.
+   *
+   * Capture groups keep the engine's own numbering. A non-participating group
+   * is reported with value null rather than dropped, so group 2 is never
+   * relabelled as group 1 and a named group never lands on its neighbour.
+   */
   var WORKER_SOURCE = [
+    'function describe(match) {',
+    '  var names = match.groups ? Object.keys(match.groups) : [];',
+    '  var groups = [];',
+    '  for (var index = 1; index < match.length; index++) {',
+    '    var name = null;',
+    '    for (var n = 0; n < names.length; n++) {',
+    '      if (match.groups[names[n]] === match[index] && match[index] !== undefined) {',
+    '        name = names[n];',
+    '        names.splice(n, 1);',
+    '        break;',
+    '      }',
+    '    }',
+    '    groups.push({ n: index, name: name, value: match[index] === undefined ? null : match[index] });',
+    '  }',
+    '  return { index: match.index, text: match[0], groups: groups };',
+    '}',
     'self.onmessage = function (event) {',
     '  var data = event.data;',
     '  try {',
+    '    if (data.job === "filter") {',
+    '      var test = new RegExp(data.pattern, data.flags.replace("g", ""));',
+    '      var kept = [];',
+    '      for (var i = 0; i < data.items.length; i++) {',
+    '        test.lastIndex = 0;',
+    '        if (test.test(data.items[i].text)) kept.push(data.items[i].id);',
+    '      }',
+    '      self.postMessage({ ok: true, job: "filter", ids: kept });',
+    '      return;',
+    '    }',
     '    var flags = data.flags.indexOf("g") === -1 ? data.flags + "g" : data.flags;',
     '    var regex = new RegExp(data.pattern, flags);',
     '    var matches = [];',
     '    var match;',
     '    var guard = 0;',
     '    while ((match = regex.exec(data.sample)) !== null) {',
-    '      matches.push({',
-    '        index: match.index,',
-    '        text: match[0],',
-    '        groups: Array.prototype.slice.call(match, 1),',
-    '        named: match.groups ? Object.assign({}, match.groups) : null',
-    '      });',
+    '      matches.push(describe(match));',
     '      if (match[0] === "") regex.lastIndex++;',
     '      if (++guard >= ' + MAX_MATCHES + ') break;',
     '    }',
@@ -128,6 +160,8 @@
             elapsed: Math.round((global.performance || Date).now() - started),
             sampleTruncated: sampleTruncated, patternTruncated: patternTruncated, limit: limit
           } : {
+            // Only the worker's own structured reply is a verdict on the
+            // pattern. Anything else is an engine failure, not a syntax error.
             status: 'invalid', message: data.message, matches: [], engine: 'worker',
             sampleTruncated: sampleTruncated, patternTruncated: patternTruncated, limit: limit
           });
@@ -137,58 +171,101 @@
           settled = true;
           clearTimeout(timer);
           worker.terminate();
-          resolve({
-            status: 'invalid', message: String(error && error.message || 'worker error'),
-            matches: [], engine: 'worker', sampleTruncated: sampleTruncated,
-            patternTruncated: patternTruncated, limit: limit
-          });
+          // The sandbox failed to start; the pattern was never judged. Retire
+          // the worker path for this session and answer inline instead of
+          // blaming the user's pattern for the browser's refusal.
+          workerUnavailable = true;
+          try { if (workerUrl) URL.revokeObjectURL(workerUrl); } catch (ignored) { /* revoked once */ }
+          workerUrl = null;
+          resolve(inlineEvaluate(trimmedPattern, flags, sample, patternTruncated, started, {
+            engineFailure: String((error && error.message) || 'the sandboxed evaluator could not start')
+          }));
         };
         worker.postMessage({ pattern: trimmedPattern, flags: flags || '', sample: text });
       });
     }
 
-    // Inline fallback: a smaller sample, and the loop stops at the same budget.
-    return Promise.resolve((function () {
-      var regex;
-      try {
-        regex = new RegExp(trimmedPattern, flags.indexOf('g') === -1 ? flags + 'g' : flags);
-      } catch (error) {
-        return {
-          status: 'invalid', message: String(error && error.message || error), matches: [],
-          engine: 'inline', sampleTruncated: sampleTruncated, patternTruncated: patternTruncated, limit: limit
-        };
+    return Promise.resolve(
+      inlineEvaluate(trimmedPattern, flags, sample, patternTruncated, started, {})
+    );
+  }
+
+  /*
+   * Inline evaluation, used when no worker can be created and when one fails to
+   * start. It is bounded by input rather than by clock, because a clock cannot
+   * interrupt a single exec(): the sample is much smaller, and a pattern whose
+   * quantified group is itself quantified — the classic (x+)+ shape — is
+   * refused before it is ever compiled.
+   */
+  function nestedQuantifier(pattern) {
+    return /\([^)]*[*+?}][^)]*\)\s*[*+]/.test(pattern) ||
+      /\([^)]*[*+][^)]*\)\s*\{\d+,?\d*\}/.test(pattern);
+  }
+
+  function inlineEvaluate(pattern, flags, sample, patternTruncated, started, context) {
+    var limit = MAX_SAMPLE_INLINE;
+    var text = String(sample == null ? '' : sample).slice(0, limit);
+    var sampleTruncated = String(sample == null ? '' : sample).length > limit;
+    var base = {
+      engine: 'inline', sampleTruncated: sampleTruncated,
+      patternTruncated: patternTruncated, limit: limit,
+      engineFailure: context.engineFailure || ''
+    };
+    if (nestedQuantifier(pattern)) {
+      return Object.assign({ status: 'unsafe', matches: [] }, base);
+    }
+    var regex;
+    try {
+      regex = new RegExp(pattern, flags.indexOf('g') === -1 ? flags + 'g' : flags);
+    } catch (error) {
+      return Object.assign({
+        status: 'invalid', message: String((error && error.message) || error), matches: []
+      }, base);
+    }
+    var matches = [];
+    var match;
+    var deadline = (global.performance || Date).now() + TIMEOUT_MS;
+    while ((match = regex.exec(text)) !== null) {
+      matches.push(describeMatch(match));
+      if (match[0] === '') regex.lastIndex++;
+      if (matches.length >= MAX_MATCHES) break;
+      if ((global.performance || Date).now() > deadline) {
+        return Object.assign({ status: 'timeout', matches: matches, timeout: TIMEOUT_MS }, base);
       }
-      var matches = [];
-      var match;
-      var deadline = (global.performance || Date).now() + TIMEOUT_MS;
-      while ((match = regex.exec(text)) !== null) {
-        matches.push({
-          index: match.index,
-          text: match[0],
-          groups: Array.prototype.slice.call(match, 1),
-          named: match.groups ? Object.assign({}, match.groups) : null
-        });
-        if (match[0] === '') regex.lastIndex++;
-        if (matches.length >= MAX_MATCHES) break;
-        if ((global.performance || Date).now() > deadline) {
-          return {
-            status: 'timeout', matches: matches, timeout: TIMEOUT_MS, engine: 'inline',
-            sampleTruncated: sampleTruncated, patternTruncated: patternTruncated, limit: limit
-          };
+    }
+    return Object.assign({
+      status: matches.length ? 'ok' : 'nomatch', matches: matches,
+      truncated: matches.length >= MAX_MATCHES,
+      elapsed: Math.round((global.performance || Date).now() - started)
+    }, base);
+  }
+
+  /** Same shape the worker emits: engine numbering kept, gaps kept as null. */
+  function describeMatch(match) {
+    var names = match.groups ? Object.keys(match.groups) : [];
+    var groups = [];
+    for (var index = 1; index < match.length; index++) {
+      var name = null;
+      for (var n = 0; n < names.length; n++) {
+        if (match[index] !== undefined && match.groups[names[n]] === match[index]) {
+          name = names[n];
+          names.splice(n, 1);
+          break;
         }
       }
-      return {
-        status: matches.length ? 'ok' : 'nomatch', matches: matches,
-        truncated: matches.length >= MAX_MATCHES, engine: 'inline',
-        elapsed: Math.round((global.performance || Date).now() - started),
-        sampleTruncated: sampleTruncated, patternTruncated: patternTruncated, limit: limit
-      };
-    })());
+      groups.push({
+        n: index,
+        name: name,
+        value: match[index] === undefined ? null : match[index]
+      });
+    }
+    return { index: match.index, text: match[0], groups: groups };
   }
 
   /**
-   * The matcher search bars filter with. Plain text is the default everywhere;
-   * regex only applies when the caller says the user opted in.
+   * The plain-text matcher search bars filter with by default. Substring,
+   * case-insensitive, and incapable of backtracking — which is why it stays the
+   * default and why regex is an explicit opt-in routed through the worker.
    */
   function createMatcher(query, options) {
     var settings = options || {};
@@ -208,27 +285,73 @@
       return {
         ok: false,
         empty: false,
-        message: String(error && error.message || error),
+        message: String((error && error.message) || error),
         test: function () { return true; }
       };
     }
-    // Between-items budget: a runaway pattern stops the filter instead of the tab.
-    var deadline = (global.performance || Date).now() + TIMEOUT_MS;
-    var expired = false;
     return {
       ok: true,
       empty: false,
-      expired: function () { return expired; },
       test: function (value) {
-        if (expired) return true;
-        if ((global.performance || Date).now() > deadline) {
-          expired = true;
-          return true;
-        }
         regex.lastIndex = 0;
         return regex.test(String(value == null ? '' : value).slice(0, MAX_SAMPLE_INLINE));
       }
     };
+  }
+
+  /**
+   * Runs an opt-in regex over a surface's items inside the terminable worker.
+   * Resolves with { status, ids }: 'ok' with the matching ids, 'invalid' with
+   * the engine's message, 'timeout' when the pattern was cut off, or
+   * 'unsupported' when no worker could be created — in which case the caller
+   * keeps plain-text matching rather than running an uninterruptible engine on
+   * the thread that draws the page.
+   */
+  function filterWithWorker(pattern, flags, items) {
+    var worker = workerFactory();
+    if (!worker) return Promise.resolve({ status: 'unsupported', ids: null });
+    return new Promise(function (resolve) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        worker.terminate();
+        resolve({ status: 'timeout', ids: null, timeout: TIMEOUT_MS });
+      }, TIMEOUT_MS);
+      worker.onmessage = function (event) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        worker.terminate();
+        resolve(event.data.ok
+          ? { status: 'ok', ids: event.data.ids }
+          : { status: 'invalid', ids: null, message: event.data.message });
+      };
+      worker.onerror = function () {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        worker.terminate();
+        workerUnavailable = true;
+        resolve({ status: 'unsupported', ids: null });
+      };
+      worker.postMessage({
+        job: 'filter',
+        pattern: String(pattern).slice(0, MAX_PATTERN),
+        flags: flags || 'i',
+        items: items.map(function (item) {
+          return { id: item.id, text: String(item.text || '').slice(0, MAX_SAMPLE_INLINE) };
+        })
+      });
+    });
+  }
+
+  function workerSupported() {
+    if (workerUnavailable || typeof global.Worker !== 'function') return false;
+    var probe = workerFactory();
+    if (!probe) return false;
+    probe.terminate();
+    return true;
   }
 
   /* ------------------------------------------------------------ builder */
@@ -474,42 +597,42 @@
 
     function render(result) {
       statusLine.className = 'rb-status status-' + result.status;
-      if (result.status === 'invalid') {
-        statusLine.textContent = site.text('regex.invalid', { message: result.message });
+      var simple = {
+        invalid: ['regex.invalid', function () { return { message: result.message }; }],
+        timeout: ['regex.timeout', function () { return { ms: result.timeout }; }],
+        unsafe: ['regex.unsafe', null],
+        nomatch: ['regex.nomatch', null],
+        empty: [null, null]
+      }[result.status];
+      if (simple) {
+        site.setCopy(statusLine, simple[0], simple[1] ? simple[1]() : null);
         resultHost.innerHTML = '';
+        if (result.engineFailure) {
+          var note = global.document.createElement('span');
+          note.className = 'rb-note';
+          resultHost.appendChild(note);
+          site.setCopy(note, 'regex.enginefailed', { message: result.engineFailure });
+        }
         return;
       }
-      if (result.status === 'timeout') {
-        statusLine.textContent = site.text('regex.timeout', { ms: result.timeout });
-        resultHost.innerHTML = '';
-        return;
-      }
-      if (result.status === 'empty') {
-        statusLine.textContent = '';
-        resultHost.innerHTML = '';
-        return;
-      }
-      if (result.status === 'nomatch') {
-        statusLine.textContent = site.text('regex.nomatch');
-        resultHost.innerHTML = '';
-        return;
-      }
+      site.setCopy(statusLine, null);
       statusLine.textContent = site.text('regex.matches') + ': ' + result.matches.length +
         (result.truncated ? '+' : '') + ' · ' + result.elapsed + ' ms';
       if (result.sampleTruncated) {
         statusLine.textContent += ' · ' + site.text('regex.toolong', { limit: result.limit });
       }
+      // Group numbering is the engine's own; a group that did not participate
+      // is shown as such rather than renumbering the ones that did.
       resultHost.innerHTML = result.matches.slice(0, 40).map(function (match) {
-        var groups = match.groups.filter(function (group) { return group !== undefined; });
-        var named = match.named ? Object.keys(match.named) : [];
         return '<div class="rb-match">' +
           '<code class="rb-match-text">' + escapeHtml(match.text) + '</code>' +
           '<span class="rb-match-index mono">@' + match.index + '</span>' +
-          (groups.length
-            ? '<span class="rb-match-groups">' + site.text('regex.groups') + ': ' +
-              groups.map(function (group, index) {
-                var name = named[index] ? escapeHtml(named[index]) + '=' : (index + 1) + ': ';
-                return '<code>' + name + escapeHtml(String(group)) + '</code>';
+          (match.groups.length
+            ? '<span class="rb-match-groups">' + escapeHtml(site.text('regex.groups')) + ': ' +
+              match.groups.map(function (group) {
+                var label = group.name ? escapeHtml(group.name) + '=' : group.n + ': ';
+                return '<code>' + label +
+                  (group.value === null ? '—' : escapeHtml(String(group.value))) + '</code>';
               }).join(' ') + '</span>'
             : '') +
           '</div>';
@@ -545,10 +668,19 @@
    * A search bar with plain text as the default, an explicit regex opt-in, and
    * the full builder one button away. Query, pattern, flags, validation and
    * mode stay synchronised in both directions: typing in the field updates the
-   * builder's pattern, and applying a pattern from the builder updates the
-   * field and switches it to regex mode.
+   * builder's pattern, and applying a pattern from the builder fills the field,
+   * switches it to regex mode, and brings the builder's flags with it.
    *
-   * options: { labelKey, onChange(matcher, rawQuery), sampleProvider() }
+   * Filtering is id-based so that an opt-in regex can run inside the terminable
+   * worker instead of on the thread that draws the page. The caller supplies
+   * the items and receives the ids that matched:
+   *
+   *   options: {
+   *     labelKey,
+   *     items()      -> [{ id, text }]
+   *     onResults(ids | null, query, regexMode)   // null means "no filter"
+   *     sampleProvider()
+   *   }
    */
   function createSearchField(options) {
     var settings = options || {};
@@ -579,19 +711,78 @@
     var panel = element.querySelector('.sf-panel');
     var builder = null;
     var regexMode = false;
+    var regexFlags = 'i';
+    var generation = 0;
+
+    // Without a worker there is no way to stop a runaway pattern, so the opt-in
+    // is withdrawn rather than offered with a hazard attached.
+    var canRunRegex = workerSupported();
+    if (!canRunRegex) {
+      toggle.disabled = true;
+      toggle.setAttribute('data-copy-attr', 'aria-label:regex.unsupported;title:regex.unsupported');
+    }
+
+    function status(key, params) {
+      site.setCopy(statusLine, key, params);
+      statusLine.className = 'sf-status' + (key ? ' status-invalid' : '');
+    }
+
+    function items() {
+      return settings.items ? settings.items() : [];
+    }
+
+    function report(ids) {
+      if (settings.onResults) settings.onResults(ids, input.value, regexMode);
+    }
+
+    function plainFilter() {
+      var matcher = createMatcher(input.value, { regex: false });
+      if (matcher.empty) return null;
+      return items().filter(function (item) { return matcher.test(item.text); })
+        .map(function (item) { return item.id; });
+    }
 
     function emitChange() {
-      var matcher = createMatcher(input.value, { regex: regexMode, flags: 'i' });
-      statusLine.textContent = matcher.ok
-        ? ''
-        : site.text('regex.invalid', { message: matcher.message });
-      statusLine.className = 'sf-status' + (matcher.ok ? '' : ' status-invalid');
-      if (settings.onChange) settings.onChange(matcher, input.value, regexMode);
       if (builder) builder.setPattern(input.value);
+      if (!input.value) {
+        status(null);
+        report(null);
+        return;
+      }
+      if (!regexMode || !canRunRegex) {
+        status(null);
+        report(plainFilter());
+        return;
+      }
+      var mine = ++generation;
+      filterWithWorker(input.value, regexFlags, items()).then(function (result) {
+        if (mine !== generation) return; // a newer keystroke already answered
+        if (result.status === 'ok') {
+          status(null);
+          report(result.ids);
+          return;
+        }
+        if (result.status === 'invalid') {
+          // A half-typed pattern must not empty the list the user is reading.
+          status('regex.invalid', { message: result.message });
+          report(null);
+          return;
+        }
+        if (result.status === 'timeout') {
+          // Results stay as they were; the message says why they did not move.
+          status('regex.timeout', { ms: result.timeout });
+          return;
+        }
+        canRunRegex = false;
+        toggle.disabled = true;
+        status('regex.unsupported');
+        report(plainFilter());
+      });
     }
 
     input.addEventListener('input', emitChange);
     toggle.addEventListener('click', function () {
+      if (!canRunRegex) return;
       regexMode = !regexMode;
       toggle.setAttribute('aria-pressed', String(regexMode));
       toggle.classList.toggle('active', regexMode);
@@ -607,9 +798,12 @@
             flags: 'gi',
             compact: true,
             sample: settings.sampleProvider ? settings.sampleProvider() : '',
-            onApply: function (pattern) {
+            onApply: function (pattern, flags) {
               input.value = pattern;
-              if (!regexMode) {
+              // The flags come with the pattern: filtering with different flags
+              // from the ones previewed would contradict what the user just saw.
+              regexFlags = (flags || 'i').replace('g', '') || 'i';
+              if (!regexMode && canRunRegex) {
                 regexMode = true;
                 toggle.setAttribute('aria-pressed', 'true');
                 toggle.classList.add('active');
@@ -632,7 +826,8 @@
       element: element,
       value: function () { return input.value; },
       isRegex: function () { return regexMode; },
-      matcher: function () { return createMatcher(input.value, { regex: regexMode, flags: 'i' }); },
+      apply: emitChange,
+      matcher: function () { return createMatcher(input.value, { regex: false }); },
       refresh: function () {
         site.applyCopy(element);
         if (builder) builder.refresh();
@@ -648,6 +843,8 @@
     escapeLiteral: escapeLiteral,
     evaluate: evaluate,
     createMatcher: createMatcher,
+    filterWithWorker: filterWithWorker,
+    workerSupported: workerSupported,
     mountBuilder: mountBuilder,
     createSearchField: createSearchField
   };

@@ -155,7 +155,10 @@ test('every copy key the site assembles at runtime exists too', () => {
     ...['notify.saved', 'notify.reset.done', 'notify.copied', 'notify.copyfailed',
       'notify.exported', 'notify.tab.pinned', 'notify.tab.unpinned', 'notify.tab.reset',
       'notify.dimsum.off'],
-    ...['changelog.baseline', 'changelog.nochanges', 'settings.search.empty', 'settings.search.elsewhere']
+    ...['changelog.baseline', 'changelog.nochanges', 'changelog.samecommit',
+      'settings.search.empty', 'settings.search.elsewhere'],
+    ...['regex.unsafe', 'regex.enginefailed', 'regex.unsupported', 'regex.invalid',
+      'regex.timeout', 'regex.nomatch', 'shell.notifications.dismiss']
   ];
   const missing = families.filter((key) => !site.known(key));
   assert.deepEqual(missing, [], 'runtime-assembled copy keys missing from the catalog');
@@ -202,7 +205,7 @@ test('evaluation reports ok, nomatch and invalid without throwing', async () => 
   const ok = await regex.evaluate('md3-v(\\d+)', 'g', 'md3-v26 md3-v27');
   assert.equal(ok.status, 'ok');
   assert.equal(ok.matches.length, 2);
-  assert.equal(ok.matches[0].groups[0], '26');
+  assert.deepEqual(ok.matches[0].groups[0], { n: 1, name: null, value: '26' });
 
   const none = await regex.evaluate('zzz', 'g', 'md3-v27');
   assert.equal(none.status, 'nomatch');
@@ -213,6 +216,28 @@ test('evaluation reports ok, nomatch and invalid without throwing', async () => 
 
   const empty = await regex.evaluate('', 'g', 'sample');
   assert.equal(empty.status, 'empty');
+});
+
+test('capture groups keep the engine numbering and name the right group', async () => {
+  const result = await regex.evaluate('(\\d+)-(?<word>\\w+)', 'g', '12-abc');
+  assert.equal(result.status, 'ok');
+  const [match] = result.matches;
+  assert.deepEqual(match.groups, [
+    { n: 1, name: null, value: '12' },
+    { n: 2, name: 'word', value: 'abc' }
+  ], 'a named group must not land on its neighbour');
+
+  const optional = await regex.evaluate('(a)?(b)', 'g', 'b');
+  assert.deepEqual(optional.matches[0].groups, [
+    { n: 1, name: null, value: null },
+    { n: 2, name: null, value: 'b' }
+  ], 'a group that did not participate must keep its number, not be dropped');
+});
+
+test('a pattern that nests quantifiers is refused instead of run inline', async () => {
+  const result = await regex.evaluate('(a+)+$', 'g', 'a'.repeat(30) + 'b');
+  assert.equal(result.status, 'unsafe');
+  assert.deepEqual(result.matches, []);
 });
 
 test('a zero-width match cannot spin forever', async () => {
@@ -228,6 +253,20 @@ test('the sample is bounded before matching', async () => {
 });
 
 /* ------------------------------------------------------------- changelog */
+
+test('every date this view produces or reads is the same UTC calendar day', () => {
+  // A release published at 01:41Z is filed under that UTC day. Building filter
+  // bounds from the local calendar dropped the newest release out of "last 7
+  // days" for anyone west of Greenwich, so both sides use UTC.
+  assert.equal(changelogView.dayOf('2026-07-28').toISOString().slice(0, 10), '2026-07-28');
+  assert.equal(changelogView.isoOf(new Date('2026-07-28T01:41:08Z')), '2026-07-28');
+  assert.equal(changelogView.isoOf(new Date('2026-07-28T23:59:59Z')), '2026-07-28');
+  assert.equal(changelogView.isoOf(changelogView.dayOf('2026-01-01')), '2026-01-01');
+  const latest = changelog.releases[0];
+  const bound = changelogView.isoOf(new Date(Date.parse(latest.published)));
+  assert.equal(bound, latest.published.slice(0, 10),
+    'the day a release is filed under must equal the day a filter bound computes');
+});
 
 test('typed dates accept ISO input and refuse impossible ones', () => {
   assert.equal(changelogView.parseTypedDate('2026-07-28'), '2026-07-28');
@@ -256,6 +295,12 @@ test('the generated changelog carries only sourced facts', () => {
       assert.ok(asset.name.length > 0);
       assert.equal(typeof asset.bytes, 'number');
     }
+    assert.equal(typeof release.sameCommit, 'boolean');
+    // "v02" is the app version 02.08.01.55 leaking out of the release name; it
+    // is not a release number and must never be presented as one.
+    assert.notEqual(release.version, 'v02');
+    if (/^md3-v\d+$/.test(release.tag)) assert.equal(release.version, release.tag.slice(4));
+    else assert.equal(release.version, release.tag, 'a release with no vN carries its tag');
   }
   // Newest first, so the viewer never has to sort at render time.
   const dates = changelog.releases.map((release) => release.published);

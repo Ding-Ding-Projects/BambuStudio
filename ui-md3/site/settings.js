@@ -152,22 +152,38 @@
       groupHost.appendChild(section);
     });
 
+    // Each row and each off-tab control is an addressable item, so an opt-in
+    // regex can be evaluated inside the terminable worker rather than here.
+    function searchableItems() {
+      var items = [].slice.call(groupHost.querySelectorAll('.setting'))
+        .map(function (setting, index) {
+          setting.dataset.searchId = 'row-' + index;
+          return { id: 'row-' + index, text: searchTextFor(setting) };
+        });
+      ELSEWHERE.forEach(function (entry, index) {
+        var both = site.pair(entry.copy);
+        items.push({ id: 'away-' + index, text: both.en + ' ' + both.yue });
+      });
+      return items;
+    }
+
     var searchField = global.BambuRegex.createSearchField({
       labelKey: 'settings.search',
       sampleProvider: function () {
         return [].slice.call(groupHost.querySelectorAll('.setting'))
           .map(searchTextFor).join('\n');
       },
-      onChange: function (matcher) { filter(matcher); }
+      items: searchableItems,
+      onResults: function (ids) { filter(ids); }
     });
     panel.querySelector('.settings-search').appendChild(searchField.element);
 
-    function filter(matcher) {
+    function filter(ids) {
       var anyVisible = false;
       groupHost.querySelectorAll('.settings-group').forEach(function (section) {
         var visible = 0;
         section.querySelectorAll('.setting').forEach(function (setting) {
-          var hit = matcher.empty || matcher.test(searchTextFor(setting));
+          var hit = ids === null || ids.indexOf(setting.dataset.searchId) !== -1;
           setting.hidden = !hit;
           if (hit) visible++;
         });
@@ -176,9 +192,8 @@
       });
 
       // A setting the user is looking for may live on another tab entirely.
-      var elsewhere = matcher.empty ? [] : ELSEWHERE.filter(function (entry) {
-        var both = site.pair(entry.copy);
-        return matcher.test(both.en) || matcher.test(both.yue);
+      var elsewhere = ids === null ? [] : ELSEWHERE.filter(function (entry, index) {
+        return ids.indexOf('away-' + index) !== -1;
       });
       elsewhereHost.innerHTML = '';
       elsewhereHost.hidden = elsewhere.length === 0;
@@ -202,7 +217,7 @@
       site.applyCopy(elsewhereHost);
 
       var empty = panel.querySelector('.settings-empty');
-      if (!anyVisible && !matcher.empty && !elsewhere.length) {
+      if (!anyVisible && ids !== null && !elsewhere.length) {
         if (!empty) {
           empty = doc.createElement('p');
           empty.className = 'empty settings-empty';
@@ -421,19 +436,46 @@
     var select = doc.createElement('select');
     select.className = 'select';
     select.setAttribute('data-copy-attr', 'aria-label:settings.elements.pick');
+    /*
+     * A native <option> cannot wrap and cannot carry a secondary label, so in
+     * bilingual mode it shows the primary language alone rather than a composed
+     * string that the closed control would have to truncate at 160 CSS px.
+     * The setting's own label and description are still fully bilingual.
+     */
+    function optionLabel(key) {
+      var both = site.pair(key);
+      return site.languageMode() === 'yue_HK' ? (both.yue || both.en) : both.en;
+    }
+
     ELEMENT_TARGETS.forEach(function (target) {
       var option = doc.createElement('option');
       option.value = target.id;
-      option.textContent = site.text(target.copy);
-      option.setAttribute('data-copy-option', target.copy);
+      option.textContent = optionLabel(target.copy);
       select.appendChild(option);
     });
     pick.control.appendChild(select);
+    // <option> text is not a data-copy target, so it is repainted explicitly
+    // whenever the language mode or either funny level changes.
+    site.subscribe(function (keys) {
+      if (keys.indexOf('languageMode') === -1 && keys.indexOf('funnyEn') === -1 &&
+          keys.indexOf('funnyYue') === -1) {
+        return;
+      }
+      ELEMENT_TARGETS.forEach(function (target, index) {
+        select.options[index].textContent = optionLabel(target.copy);
+      });
+    });
 
+    /*
+     * `size` is consumed as a bare multiplier inside calc(), so it is stored
+     * unitless and only shown as a percentage. Writing "100%" into
+     * `calc(44px * 100%)` makes the whole declaration invalid, which silently
+     * collapsed the hero headline to the inherited body size.
+     */
     var editors = [
-      { property: 'radius', copy: 'settings.elements.radius', min: 0, max: 32, step: 2, unit: 'px' },
-      { property: 'spacing', copy: 'settings.elements.spacing', min: 0, max: 32, step: 2, unit: 'px' },
-      { property: 'size', copy: 'settings.elements.size', min: 80, max: 140, step: 5, unit: '%' }
+      { property: 'radius', copy: 'settings.elements.radius', min: 0, max: 32, step: 2, unit: 'px', ratio: false },
+      { property: 'spacing', copy: 'settings.elements.spacing', min: 0, max: 32, step: 2, unit: 'px', ratio: false },
+      { property: 'size', copy: 'settings.elements.size', min: 80, max: 140, step: 5, unit: '%', ratio: true }
     ];
     var controls = {};
     editors.forEach(function (editor) {
@@ -448,7 +490,10 @@
       var readout = doc.createElement('p');
       readout.className = 'slider-readout mono';
       slider.addEventListener('input', function () {
-        site.elementStyle(select.value, editor.property, slider.value + editor.unit);
+        var stored = editor.ratio
+          ? String(Number(slider.value) / 100)
+          : slider.value + editor.unit;
+        site.elementStyle(select.value, editor.property, stored);
         readout.textContent = slider.value + editor.unit;
       });
       shell.control.appendChild(slider);
@@ -482,7 +527,9 @@
       Object.keys(controls).forEach(function (property) {
         var entry = controls[property];
         var raw = stored[property];
-        var value = raw ? parseFloat(raw) : defaultFor(property, entry.editor);
+        var value = raw === undefined
+          ? defaultFor(property, entry.editor)
+          : (entry.editor.ratio ? Math.round(parseFloat(raw) * 100) : parseFloat(raw));
         entry.slider.value = String(value);
         entry.readout.textContent = value + entry.editor.unit;
       });

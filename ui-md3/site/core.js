@@ -158,10 +158,40 @@
     return { en: variantFor(key, 'en', params), yue: variantFor(key, 'yue', params) };
   }
 
-  /** The single string this key renders as in the active language mode. */
+  /**
+   * The single string this key renders as in the active language mode.
+   * Bilingual mode composes both, separated by a slash: callers that write
+   * straight into textContent have nowhere to put a companion element, and
+   * returning English alone would silently drop Cantonese from every status
+   * line and error message on the site.
+   */
   function text(key, params) {
     var both = pair(key, params);
-    return languageMode() === 'yue_HK' ? (both.yue || both.en) : both.en;
+    var mode = languageMode();
+    if (mode === 'yue_HK') return both.yue || both.en;
+    if (mode === 'bilingual_en_yue_HK' && both.yue && both.yue !== both.en) {
+      return both.en + ' / ' + both.yue;
+    }
+    return both.en;
+  }
+
+  /**
+   * Binds a key to a node instead of stamping a string into it, so the node
+   * re-renders on a language or funny-level change like every other label.
+   * Passing no key clears both the binding and the text.
+   */
+  function setCopy(node, key, params) {
+    if (!node) return;
+    if (!key) {
+      node.removeAttribute('data-copy');
+      node.removeAttribute('data-copy-params');
+      node.textContent = '';
+      return;
+    }
+    node.setAttribute('data-copy', key);
+    if (params) node.setAttribute('data-copy-params', JSON.stringify(params));
+    else node.removeAttribute('data-copy-params');
+    applyCopy(node.parentNode || node);
   }
 
   /** The Cantonese companion shown in bilingual mode, or '' when not applicable. */
@@ -337,8 +367,9 @@
     if (toastHost && global.document.body.contains(toastHost)) return toastHost;
     toastHost = global.document.createElement('div');
     toastHost.className = 'toast-host';
-    toastHost.setAttribute('aria-live', 'polite');
-    toastHost.setAttribute('aria-relevant', 'additions');
+    // No live region on the host: each toast carries its own role (status or
+    // alert). Nesting one inside the other makes assistive technology announce
+    // twice and lets the polite host soften an error's urgency.
     global.document.body.appendChild(toastHost);
     return toastHost;
   }
@@ -402,15 +433,17 @@
     var close = global.document.createElement('button');
     close.type = 'button';
     close.className = 'toast-close iconbtn';
-    close.setAttribute('data-copy-attr', 'aria-label:shell.notifications.clear');
+    close.setAttribute('data-copy-attr', 'aria-label:shell.notifications.dismiss');
     close.innerHTML = '<span data-icon aria-hidden="true">close</span>';
     close.addEventListener('click', function () { dismiss(); });
 
     toast.appendChild(icon);
     toast.appendChild(body);
     toast.appendChild(close);
-    host.appendChild(toast);
+    // Rendered before it is attached, so an alert enters the accessibility tree
+    // already carrying its text instead of announcing an empty container first.
     applyCopy(toast);
+    host.appendChild(toast);
 
     var timer = null;
     function dismiss() {
@@ -481,6 +514,7 @@
     known: known,
     variantIndex: variantIndex,
     applyCopy: applyCopy,
+    setCopy: setCopy,
     applyAppearance: applyAppearance,
     elementStyle: elementStyle,
     resetElement: resetElement,

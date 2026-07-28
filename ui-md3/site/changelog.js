@@ -27,10 +27,23 @@
 
   /* --------------------------------------------------------- date parsing */
 
+  /*
+   * One calendar throughout. Release timestamps are UTC instants, and the day
+   * shown for a release is its UTC day, so every bound this view produces is a
+   * UTC day too. Mixing the two hid the newest release from "last 7 days" for
+   * anyone west of Greenwich.
+   */
   function isoOf(date) {
-    return date.getFullYear() + '-' +
-      String(date.getMonth() + 1).padStart(2, '0') + '-' +
-      String(date.getDate()).padStart(2, '0');
+    return date.getUTCFullYear() + '-' +
+      String(date.getUTCMonth() + 1).padStart(2, '0') + '-' +
+      String(date.getUTCDate()).padStart(2, '0');
+  }
+
+  /** Parses `YYYY-MM-DD` as a UTC day, never as a local-midnight instant. */
+  function dayOf(iso) {
+    var parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!parts) return new Date();
+    return new Date(Date.UTC(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3])));
   }
 
   /** Locale field order, derived from the platform rather than assumed. */
@@ -66,8 +79,11 @@
 
   function validated(year, month, day) {
     if (!year || !month || !day || month < 1 || month > 12 || day < 1 || day > 31) return null;
-    var date = new Date(year, month - 1, day);
-    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+    var date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 ||
+        date.getUTCDate() !== day) {
+      return null;
+    }
     return isoOf(date);
   }
 
@@ -128,8 +144,13 @@
     var searchField = global.BambuRegex.createSearchField({
       labelKey: 'changelog.search',
       sampleProvider: function () { return data.releases.map(searchTextFor).join('\n'); },
-      onChange: function (matcher, query) {
-        stateValue.matcher = matcher;
+      items: function () {
+        return data.releases.map(function (release) {
+          return { id: release.tag, text: searchTextFor(release) };
+        });
+      },
+      onResults: function (ids, query) {
+        stateValue.matched = ids;
         stateValue.query = query;
         paint();
       }
@@ -147,9 +168,9 @@
           stateValue.from = '';
           stateValue.to = '';
         } else {
+          // Bounds are UTC days, matching the day each release is filed under.
           var now = new Date();
-          var start = new Date(now.getTime() - preset.days * 86400000);
-          stateValue.from = isoOf(start);
+          stateValue.from = isoOf(new Date(now.getTime() - preset.days * 86400000));
           stateValue.to = isoOf(now);
         }
         fromInput.value = stateValue.from;
@@ -193,19 +214,26 @@
     });
 
     function buildCalendar(host, field) {
-      var anchor = stateValue[field] ? new Date(stateValue[field]) : new Date();
-      var cursor = { year: anchor.getFullYear(), month: anchor.getMonth() };
+      var anchor = stateValue[field] ? dayOf(stateValue[field]) : new Date();
+      var cursor = { year: anchor.getUTCFullYear(), month: anchor.getUTCMonth() };
       var calendar = doc.createElement('div');
       calendar.className = 'calendar';
       calendar.setAttribute('role', 'group');
+      calendar.setAttribute('aria-label', site.text(field === 'from' ? 'changelog.from' : 'changelog.to'));
       host.appendChild(calendar);
 
-      function paintCalendar() {
-        var first = new Date(cursor.year, cursor.month, 1);
-        var startWeekday = first.getDay();
-        var days = new Date(cursor.year, cursor.month + 1, 0).getDate();
+      function paintCalendar(focusKey) {
+        var startWeekday = new Date(Date.UTC(cursor.year, cursor.month, 1)).getUTCDay();
+        var days = new Date(Date.UTC(cursor.year, cursor.month + 1, 0)).getUTCDate();
+        // The year list spans the data plus wherever the user has navigated to,
+        // so the header can never contradict the days on screen.
+        var published = data.releases.map(function (release) {
+          return Number(String(release.published).slice(0, 4));
+        });
+        var lowest = Math.min.apply(null, published.concat([cursor.year, new Date().getFullYear()]));
+        var highest = Math.max.apply(null, published.concat([cursor.year, new Date().getFullYear() + 1]));
         var years = [];
-        for (var year = 2024; year <= new Date().getFullYear() + 1; year++) years.push(year);
+        for (var year = lowest; year <= highest; year++) years.push(year);
         calendar.innerHTML =
           '<div class="calendar-head">' +
             '<button type="button" class="iconbtn cal-prev" aria-label="Previous month">' +
@@ -228,31 +256,48 @@
             Array.from({ length: startWeekday }, function () { return '<span class="cal-blank"></span>'; }).join('') +
             Array.from({ length: days }, function (unused, index) {
               var day = index + 1;
-              var iso = isoOf(new Date(cursor.year, cursor.month, day));
+              var date = new Date(Date.UTC(cursor.year, cursor.month, day));
+              var iso = isoOf(date);
               var inRange = stateValue.from && stateValue.to && iso >= stateValue.from && iso <= stateValue.to;
               var isEdge = iso === stateValue.from || iso === stateValue.to;
+              // The visible number stays short; the accessible name carries the
+              // full date and the selection state, which a class cannot convey.
+              var label = date.toLocaleDateString(undefined, {
+                dateStyle: 'full', timeZone: 'UTC'
+              });
               return '<button type="button" class="cal-day' + (inRange ? ' inrange' : '') +
-                (isEdge ? ' edge' : '') + '" data-iso="' + iso + '">' + day + '</button>';
+                (isEdge ? ' edge' : '') + '" data-iso="' + iso + '"' +
+                ' aria-label="' + label + '" aria-pressed="' + (inRange || isEdge) + '"' +
+                (isEdge ? ' aria-current="date"' : '') + '>' + day + '</button>';
             }).join('') +
           '</div>';
         calendar.querySelector('.cal-prev').addEventListener('click', function () {
           cursor.month--;
           if (cursor.month < 0) { cursor.month = 11; cursor.year--; }
-          paintCalendar();
+          paintCalendar('prev');
         });
         calendar.querySelector('.cal-next').addEventListener('click', function () {
           cursor.month++;
           if (cursor.month > 11) { cursor.month = 0; cursor.year++; }
-          paintCalendar();
+          paintCalendar('next');
         });
         calendar.querySelector('.cal-month').addEventListener('change', function (event) {
           cursor.month = Number(event.target.value);
-          paintCalendar();
+          paintCalendar('month');
         });
         calendar.querySelector('.cal-year').addEventListener('change', function (event) {
           cursor.year = Number(event.target.value);
-          paintCalendar();
+          paintCalendar('year');
         });
+        // The grid is rebuilt wholesale, so the control that caused the rebuild
+        // is focused again; otherwise paging a month throws focus to the body.
+        var restore = {
+          prev: '.cal-prev', next: '.cal-next', month: '.cal-month', year: '.cal-year'
+        }[focusKey];
+        var target = restore
+          ? calendar.querySelector(restore)
+          : (focusKey ? calendar.querySelector('.cal-day[data-iso="' + focusKey + '"]') : null);
+        if (target) target.focus();
         calendar.querySelectorAll('.cal-day').forEach(function (day) {
           day.addEventListener('click', function () {
             var iso = day.dataset.iso;
@@ -267,7 +312,7 @@
             fromInput.value = stateValue.from;
             toInput.value = stateValue.to;
             errorLine.hidden = true;
-            paintCalendar();
+            paintCalendar(iso);
             paint();
           });
         });
@@ -299,19 +344,20 @@
     }
 
     function visible() {
-      var matcher = stateValue.matcher;
+      var matched = stateValue.matched;
       return data.releases.filter(function (release) {
         var day = formatDate(release.published);
         if (stateValue.from && day < stateValue.from) return false;
         if (stateValue.to && day > stateValue.to) return false;
-        if (!matcher || matcher.empty) return true;
-        return matcher.test(searchTextFor(release));
+        // null means "no search is active"; the two filters compose.
+        if (matched === null || matched === undefined) return true;
+        return matched.indexOf(release.tag) !== -1;
       });
     }
 
     function paint() {
       var shown = visible();
-      countLine.textContent = site.text('changelog.count', { shown: shown.length, total: data.releases.length });
+      site.setCopy(countLine, 'changelog.count', { shown: shown.length, total: data.releases.length });
       if (!shown.length) {
         list.innerHTML = '<p class="empty" data-copy="changelog.empty"></p>';
         site.applyCopy(list);
@@ -335,7 +381,13 @@
                 'target="_blank" rel="noopener">' + change.short + '</a>' +
               '</li>';
           }).join('') + '</ul>'
-        : '<p class="empty small" data-copy="' + (release.baseline ? 'changelog.baseline' : 'changelog.nochanges') + '"></p>';
+        // Three different facts, three different sentences: the oldest release
+        // has nothing to compare against, a release on the same commit as its
+        // predecessor says so, and an empty range says only that — never that
+        // the trees were identical, which nothing here has checked.
+        : '<p class="empty small" data-copy="' + (release.baseline
+            ? 'changelog.baseline'
+            : (release.sameCommit ? 'changelog.samecommit' : 'changelog.nochanges')) + '"></p>';
       return '<article class="release-entry">' +
         '<header class="release-entry-head">' +
           '<h3 class="release-version mono">' + views.escapeHtml(release.version) + '</h3>' +
@@ -383,7 +435,9 @@
               change.subject + ' (`' + change.short + '`)');
           });
         } else {
-          lines.push('- ' + site.pair(release.baseline ? 'changelog.baseline' : 'changelog.nochanges').en);
+          lines.push('- ' + site.pair(release.baseline
+            ? 'changelog.baseline'
+            : (release.sameCommit ? 'changelog.samecommit' : 'changelog.nochanges')).en);
         }
         lines.push('');
       });
@@ -395,13 +449,15 @@
     }
 
     site.applyCopy(panel);
-    stateValue.matcher = searchField.matcher();
+    stateValue.matched = null;
     paint();
   }
 
   global.BambuChangelog = {
     render: render,
     parseTypedDate: parseTypedDate,
-    localeOrder: localeOrder
+    localeOrder: localeOrder,
+    isoOf: isoOf,
+    dayOf: dayOf
   };
 })(typeof window !== 'undefined' ? window : globalThis);

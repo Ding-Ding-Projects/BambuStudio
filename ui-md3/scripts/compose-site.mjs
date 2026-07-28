@@ -14,7 +14,7 @@
  * Running it locally produces byte-for-byte what CI publishes, so the layout
  * and clipping checks can be reproduced on a development machine.
  */
-import { cp, mkdir, readdir, rm, copyFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, rm, copyFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,7 +35,18 @@ for (const entry of await readdir(uiDir, { withFileTypes: true })) {
   await cp(path.join(uiDir, entry.name), path.join(outDir, 'app', entry.name), { recursive: true });
 }
 
-await copyFile(path.join(uiDir, 'landing.html'), path.join(outDir, 'index.html'));
+// In the composed tree the landing page is the root and the prototype moves to
+// /app/, so the app-base marker is rewritten to match. A stamped value beats a
+// hostname sniff: it is correct on Pages, on a custom domain and on localhost.
+const landing = await readFile(path.join(uiDir, 'landing.html'), 'utf8');
+const stamped = landing.replace(
+  /(<meta name="bambu-app-base" content=")[^"]*(">)/,
+  '$1app/$2'
+);
+if (stamped === landing) {
+  throw new Error('landing.html no longer carries the bambu-app-base marker to rewrite');
+}
+await writeFile(path.join(outDir, 'index.html'), stamped);
 await cp(path.join(uiDir, 'assets'), path.join(outDir, 'assets'), { recursive: true });
 await cp(path.join(uiDir, 'site'), path.join(outDir, 'site'), { recursive: true });
 

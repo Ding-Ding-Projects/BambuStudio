@@ -112,6 +112,7 @@
       tab.addEventListener('keydown', onTabKeydown);
       tab.addEventListener('contextmenu', function (event) {
         event.preventDefault();
+        menuOpener = tab;
         openMenu(definition.id);
       });
       tab.addEventListener('dragstart', function (event) {
@@ -250,8 +251,12 @@
         if (refresh) refresh(panels[id]);
       }
       site.applyCopy(panels[id]);
-      closeMenus();
-      layout();
+      closeMenus({ restoreFocus: false });
+      // The newly active tab may have been sitting in the overflow menu, where
+      // it is display:none. Un-hide it and re-run layout synchronously, because
+      // focusing an element that is not rendered throws focus back to <body>.
+      elements[id].classList.remove('overflowed');
+      runLayout();
       try {
         var url = new URL(global.location.href);
         url.hash = id;
@@ -287,11 +292,41 @@
 
     /* ------------------------------------------------------------ menus */
 
-    function closeMenus() {
+    var menuOpener = null;
+
+    /*
+     * Closing a popover while focus is inside it would drop focus on the body
+     * and strand a keyboard user at the top of the document, so focus goes back
+     * to whatever opened it.
+     */
+    function closeMenus(options) {
+      var restore = !options || options.restoreFocus !== false;
+      var hadFocus = overflowMenu.contains(doc.activeElement) || searchPanel.contains(doc.activeElement);
       overflowMenu.hidden = true;
       overflowButton.setAttribute('aria-expanded', 'false');
       searchPanel.hidden = true;
       searchButton.setAttribute('aria-expanded', 'false');
+      if (restore && hadFocus && menuOpener) menuOpener.focus();
+      menuOpener = null;
+    }
+
+    /** Roving focus inside the overflow menu, as a menu is expected to have. */
+    function onMenuKeydown(event) {
+      var focusable = [].slice.call(overflowMenu.querySelectorAll('.menuitem'));
+      if (!focusable.length) return;
+      var index = focusable.indexOf(doc.activeElement);
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        var step = event.key === 'ArrowDown' ? 1 : -1;
+        var next = (index + step + focusable.length) % focusable.length;
+        focusable[next < 0 ? focusable.length - 1 : next].focus();
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        focusable[0].focus();
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        focusable[focusable.length - 1].focus();
+      }
     }
 
     function menuItem(labelKey, icon, onClick, params) {
@@ -356,6 +391,8 @@
       searchPanel.hidden = true;
       overflowMenu.hidden = false;
       overflowButton.setAttribute('aria-expanded', 'true');
+      if (!menuOpener) menuOpener = forTab && elements[forTab] ? elements[forTab] : overflowButton;
+      overflowMenu.onkeydown = onMenuKeydown;
       var first = overflowMenu.querySelector('.menuitem');
       if (first) first.focus();
     }
@@ -375,12 +412,20 @@
       }).join('\n');
     }
 
+    function searchItems() {
+      return sortedIds().map(function (id) {
+        var both = site.pair(byId(definitions, id).copy);
+        return { id: id, text: both.en + ' ' + both.yue + ' ' + id };
+      });
+    }
+
     function openSearch() {
       if (!searchField) {
         searchField = global.BambuRegex.createSearchField({
           labelKey: 'shell.tabsearch',
           sampleProvider: tabSearchCorpus,
-          onChange: function (matcher) { renderSearchResults(matcher); }
+          items: searchItems,
+          onResults: function (ids) { renderSearchResults(ids); }
         });
         searchPanel.appendChild(searchField.element);
         searchResults = doc.createElement('div');
@@ -390,17 +435,15 @@
       overflowMenu.hidden = true;
       searchPanel.hidden = false;
       searchButton.setAttribute('aria-expanded', 'true');
-      renderSearchResults(searchField.matcher());
+      searchField.apply();
       searchField.element.querySelector('.sf-input').focus();
     }
 
-    function renderSearchResults(matcher) {
+    function renderSearchResults(ids) {
       searchResults.innerHTML = '';
-      var matched = sortedIds().filter(function (id) {
-        var definition = byId(definitions, id);
-        var both = site.pair(definition.copy);
-        return matcher.test(both.en) || matcher.test(both.yue) || matcher.test(id);
-      });
+      var matched = ids === null
+        ? sortedIds()
+        : sortedIds().filter(function (id) { return ids.indexOf(id) !== -1; });
       if (!matched.length) {
         var empty = doc.createElement('p');
         empty.className = 'empty';
@@ -429,11 +472,17 @@
 
     overflowButton.addEventListener('click', function () {
       if (!overflowMenu.hidden) closeMenus();
-      else openMenu(active);
+      else {
+        menuOpener = overflowButton;
+        openMenu(active);
+      }
     });
     searchButton.addEventListener('click', function () {
       if (!searchPanel.hidden) closeMenus();
-      else openSearch();
+      else {
+        menuOpener = searchButton;
+        openSearch();
+      }
     });
     doc.addEventListener('click', function (event) {
       if (!strip.contains(event.target)) closeMenus();

@@ -32,7 +32,9 @@ const gh = (endpoint) => JSON.parse(run('gh', ['api', endpoint, '--paginate', '-
 /** `Bambu Studio MD3 v27 — Water Chestnut Cake 馬蹄糕 (superseded master build)` */
 function parseReleaseName(name) {
   const dish = /—\s*([^()—]+?)\s*([㐀-鿿][㐀-鿿　-〿]*)\s*(?:\(([^)]*)\))?\s*$/u.exec(name);
-  const version = /\bv(\d+)\b/.exec(name);
+  // `v27` is a release number; the `v02` inside the app version `02.08.01.55`
+  // is not, so a v-token followed by a digit or a dot is rejected.
+  const version = /\bv(\d+)(?![\d.])/.exec(name);
   return {
     version: version ? `v${version[1]}` : '',
     ordinal: version ? Number(version[1]) : 0,
@@ -122,6 +124,9 @@ for (const release of releases) {
   const commit = tagCommit(release.tag_name) || commitFromBody;
   const changes = commitsBetween(previousCommit, commit);
   const baseline = !previousCommit;
+  // Distinguishes "tagged the same commit again" from "no commits recorded",
+  // so the viewer never has to guess which of the two it is looking at.
+  const sameCommit = Boolean(previousCommit && commit && previousCommit === commit);
   if (commit) previousCommit = commit;
 
   entries.push({
@@ -136,6 +141,7 @@ for (const release of releases) {
     prerelease: Boolean(release.prerelease),
     // The first published release predates any recorded range, so it lists no changes.
     baseline,
+    sameCommit,
     commit,
     build: metadata.version || '',
     workflow: metadata.workflow || '',

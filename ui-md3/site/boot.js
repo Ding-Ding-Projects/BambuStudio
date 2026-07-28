@@ -46,6 +46,11 @@
       site.setLanguageMode(select.value);
       refreshAll();
     });
+    // The same mode can be changed from Settings; without this the header would
+    // keep advertising a language the page is no longer rendering.
+    site.subscribe(function (keys) {
+      if (keys.indexOf('languageMode') !== -1) select.value = site.languageMode();
+    });
 
     var themeToggle = doc.getElementById('themeToggle');
     function paintTheme() {
@@ -119,8 +124,12 @@
     }
     paintBadge();
 
-    var launch = doc.getElementById('launchTop');
-    launch.setAttribute('href', global.BambuViews.APP_HREF);
+    // Both entry points to the prototype resolve the same way; the footer link
+    // used to keep landing.html's literal href and reload the landing page.
+    ['launchTop', 'footerLaunch'].forEach(function (id) {
+      var link = doc.getElementById(id);
+      if (link) link.setAttribute('href', global.BambuViews.APP_HREF);
+    });
   }
 
   /* ------------------------------------------------------------ dim sum */

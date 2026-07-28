@@ -17,8 +17,18 @@
   var changelog = global.BAMBU_CHANGELOG || { releases: [], releaseCount: 0 };
 
   var APP_HREF = (function () {
-    // Locally the app is a sibling file; on Pages it is composed under /app/.
-    return /github\.io$/i.test(global.location.hostname) ? 'app/' : 'index.html';
+    /*
+     * Where the prototype lives depends on how this page was published, not on
+     * what host is serving it: opened straight from the checkout the app is the
+     * sibling index.html, while the composed tree puts the landing page at the
+     * root and the app under /app/. compose-site.mjs stamps the answer into
+     * this meta tag, so localhost previews, Pages and a custom domain all
+     * resolve correctly — a hostname sniff got the local preview wrong, which
+     * is exactly the case the layout gate exercises.
+     */
+    var meta = doc.querySelector('meta[name="bambu-app-base"]');
+    var base = meta && meta.getAttribute('content');
+    return base || 'index.html';
   })();
 
   var REPO = 'https://github.com/Ding-Ding-Projects/BambuStudio';

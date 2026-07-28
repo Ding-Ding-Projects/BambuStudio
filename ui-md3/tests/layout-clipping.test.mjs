@@ -57,7 +57,9 @@ test('every header target keeps a 44px floor, including the tab strip', () => {
   assert.match(siteCss, /\.btn\s*\{[\s\S]*?min-height:\s*44px;\s*min-width:\s*44px;/);
   assert.match(siteCss, /\.tab\s*\{[\s\S]*?min-height:\s*44px;\s*min-width:\s*44px;/);
   assert.match(siteCss, /\.menuitem,\s*\.tabsearch-item\s*\{[\s\S]*?min-height:\s*44px;/);
-  assert.match(siteCss, /\.cal-day\s*\{\s*min-height:\s*44px;/);
+  // The calendar keeps a 44px touch height while giving up horizontal padding,
+  // because seven columns still have to fit inside a phone-width panel.
+  assert.match(siteCss, /\.cal-day\s*\{[\s\S]*?min-height:\s*44px;\s*min-width:\s*0;\s*padding:\s*0;/);
   assert.match(siteCss, /\.swatch\s*\{\s*width:\s*44px;\s*height:\s*44px;/);
 });
 
@@ -74,6 +76,24 @@ test('the tab strip degrades through overflow instead of clipping', () => {
   assert.doesNotMatch(tabsJsCode, /requestAnimationFrame/);
   assert.match(tabsJs, /layoutPending = setTimeout/);
   assert.match(tabsJs, /doc\.fonts\.load\("400 20px 'Material Symbols Outlined'"\)/);
+});
+
+test('focus is never dropped on the floor by the chrome', () => {
+  // The first tab stop on the page has to become a visible 44px target.
+  assert.match(siteCss, /\.sr-only:focus,\s*\.sr-only:focus-visible\s*\{[\s\S]*?min-height:\s*44px;/);
+  assert.match(siteCss, /\.sr-only:focus[\s\S]*?clip:\s*auto;/);
+  assert.match(landing, /<main class="wrap" id="panels" tabindex="-1">/);
+  // Closing a popover returns focus to whatever opened it.
+  assert.match(tabsJs, /function closeMenus\(options\)[\s\S]*?menuOpener\.focus\(\)/);
+  assert.match(tabsJs, /function onMenuKeydown[\s\S]*?ArrowDown/);
+  // A tab sitting in the overflow menu is display:none; focusing it there would
+  // send focus to <body>, so it is un-overflowed and re-laid-out first.
+  assert.match(
+    tabsJs,
+    /elements\[id\]\.classList\.remove\('overflowed'\);\s*runLayout\(\);[\s\S]*?options\.focus\) elements\[id\]\.focus\(\)/
+  );
+  // The strip keeps the wrap's horizontal inset, so end tabs are not clipped.
+  assert.match(siteCss, /\.tabstrip\s*\{[\s\S]*?padding-block:\s*var\(--el-tabstrip-spacing, 6px\);/);
 });
 
 test('the tab strip is a real tablist with roving focus and reachable actions', () => {

@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Where the interactive prototype lives relative to this page. Opened from
+     the checkout it is the sibling index.html; compose-site.mjs rewrites this
+     to "app/" for the published tree. -->
+<meta name="bambu-app-base" content="index.html">
 <title>Bambu Studio — Material Design 3 concept</title>
 <meta name="description" content="An independent Material Design 3 (Material You) concept redesign of the Bambu Studio slicer UI. Tabbed, bilingual, self-contained: light and dark themes, density, a customizable accent seed colour, a full regex builder and every published release.">
 <meta property="og:type" content="website">
@@ -58,7 +62,8 @@
   </div>
 </header>
 
-<main class="wrap" id="panels"></main>
+<!-- tabindex="-1" so the skip link actually moves focus here, not just the view. -->
+<main class="wrap" id="panels" tabindex="-1"></main>
 
 <footer>
   <div class="wrap">

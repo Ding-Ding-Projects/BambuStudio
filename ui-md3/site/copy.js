@@ -51,6 +51,7 @@
       ]
     },
     'shell.notifications.clear': { en: ['Clear all'], yue: ['清除全部'] },
+    'shell.notifications.dismiss': { en: ['Dismiss this notification'], yue: ['關閉呢個通知'] },
     'shell.tabsearch': {
       en: ['Search tabs', 'Find a tab', 'Where did that tab go?'],
       yue: ['搜尋分頁', '搵分頁', '嗰個分頁去咗邊？']
@@ -514,16 +515,32 @@
       en: [
         'No commits were recorded between this release and the one before it.',
         'No commits were recorded between this release and the one before it.',
-        'No commits sit between this release and the previous one — it was published from the same tree.',
-        'No commits sit between this release and the previous one. Same tree, new tag, no drama.',
-        'Not a single commit sits between this release and the last one. Same tree, fresh tag, zero drama.'
+        'No commits were recorded between this release and the previous one.',
+        'Not one commit was recorded between this release and the previous one.',
+        'Not one single commit was recorded between this release and the last one.'
       ],
       yue: [
         '呢個版本同上一個版本之間冇記錄到任何提交。',
         '呢個版本同上一個版本之間冇記錄到任何提交。',
-        '呢個版本同上一個之間冇提交 — 由同一份程式碼發佈。',
-        '呢個版本同上一個之間一個提交都冇。同一份程式碼、新標籤、冇故事。',
-        '呢個版本同上一個之間，一個提交都搵唔到。同一棵樹、新標籤、零劇情。'
+        '呢個版本同上一個之間冇記錄到提交。',
+        '呢個版本同上一個之間，一個提交都冇記錄到。',
+        '呢個版本同上一個之間，一個提交都搵唔返。'
+      ]
+    },
+    'changelog.samecommit': {
+      en: [
+        'This release was published from the same commit as the one before it.',
+        'This release was published from the same commit as the one before it.',
+        'Same commit as the previous release — a new tag on identical code.',
+        'Same commit as the previous release. New tag, identical code, no drama.',
+        'Same commit as the previous release. New tag, identical code, zero drama.'
+      ],
+      yue: [
+        '呢個版本同上一個版本用同一個提交發佈。',
+        '呢個版本同上一個版本用同一個提交發佈。',
+        '同上一個版本同一個提交 — 新標籤、一樣嘅程式碼。',
+        '同上一個版本同一個提交。新標籤、一模一樣嘅程式碼、冇故事。',
+        '同上一個版本同一個提交。新標籤、一模一樣嘅程式碼、零劇情。'
       ]
     },
     'changelog.baseline': {
@@ -616,6 +633,54 @@
         '{ms} 毫秒之後我哋叫停咗，所以冇結果。你嘅模式同文字原封不動 — 簡化個模式或者剪短段文字。',
         '{ms} 毫秒之後我哋直接拔咗插頭，所以冇結果。你嘅模式同文字原封不動；個模式回溯到自己捐晒入死角。',
         '{ms} 毫秒之後我哋直接拔咗插頭，所以冇結果。你嘅模式同文字原封不動 — 個模式回溯到捐晒入死角，仲要拉埋你部 CPU 落水。'
+      ]
+    },
+    'regex.unsafe': {
+      en: [
+        'This pattern nests one quantifier inside another, which can take exponential time, so it was not run. The pattern and sample were left unchanged.',
+        'This pattern nests one quantifier inside another, which can take exponential time, so it was not run. Your pattern and sample are unchanged.',
+        'That pattern puts a quantifier inside a quantified group — the shape that goes exponential — so we did not run it. Nothing was changed.',
+        'That pattern puts a quantifier inside a quantified group, which is the classic way to make a regex take until Thursday. Not run; nothing changed.',
+        'That pattern puts a quantifier inside a quantified group — the classic recipe for a regex that finishes some time next Thursday. Not run, nothing changed.'
+      ],
+      yue: [
+        '呢個模式喺數量詞入面再套數量詞，可能會用指數時間，所以冇執行。模式同測試文字保持原狀。',
+        '呢個模式喺數量詞入面再套數量詞，可能會用指數時間，所以冇執行。模式同文字保持原狀。',
+        '呢個模式喺已加數量詞嘅群組入面再加數量詞 — 就係會爆炸嗰種 — 所以冇行。乜都冇改。',
+        '呢個模式喺已加數量詞嘅群組入面再加數量詞，經典嘅「行到下星期四」寫法。冇行，乜都冇改。',
+        '呢個模式喺已加數量詞嘅群組入面再加數量詞，經典嘅「行到下星期四先有答案」寫法。冇行，乜都冇改。'
+      ]
+    },
+    'regex.enginefailed': {
+      en: [
+        'The sandboxed evaluator could not start, so this ran on the page instead. The browser reported: {message}',
+        'The sandboxed evaluator could not start, so this ran on the page instead. The browser reported: {message}',
+        'The sandboxed evaluator refused to start, so matching fell back to the page. Your pattern was never judged. The browser said: {message}',
+        'The sandboxed evaluator refused to start, so matching fell back to the page on a smaller sample. Nothing is wrong with your pattern. The browser said: {message}',
+        'The sandboxed evaluator flat-out refused to start, so matching fell back to the page on a smaller sample. Your pattern is innocent. The browser said: {message}'
+      ],
+      yue: [
+        '沙盒運算器啟動唔到，所以改咗喺頁面直接行。瀏覽器回報：{message}',
+        '沙盒運算器啟動唔到，所以改咗喺頁面直接行。瀏覽器回報：{message}',
+        '沙盒運算器唔肯啟動，改用頁面內比對。你個模式根本未被判過。瀏覽器話：{message}',
+        '沙盒運算器唔肯啟動，改用頁面內比對，樣本亦細咗。你個模式冇問題。瀏覽器話：{message}',
+        '沙盒運算器死都唔肯啟動，唯有喺頁面內用細樣本比對。你個模式係無辜嘅。瀏覽器話：{message}'
+      ]
+    },
+    'regex.unsupported': {
+      en: [
+        'Regular-expression search is unavailable because this browser will not create the sandboxed evaluator; plain text search is still available.',
+        'Regular-expression search is unavailable because this browser will not create the sandboxed evaluator. Plain text search still works.',
+        'Regex search is off here: this browser will not create the sandboxed evaluator, and running one unsandboxed could freeze the tab. Plain text still works.',
+        'Regex search is off here — this browser will not create the sandboxed evaluator, and running one unsandboxed could freeze the tab. Plain text still works fine.',
+        'Regex search is off here: this browser refuses to create the sandboxed evaluator, and running one unsandboxed is how you freeze a tab. Plain text still works fine.'
+      ],
+      yue: [
+        '呢部瀏覽器唔肯建立沙盒運算器，所以正則搜尋用唔到；純文字搜尋照常可用。',
+        '呢部瀏覽器唔肯建立沙盒運算器，所以正則搜尋用唔到。純文字搜尋照常。',
+        '呢度關咗正則搜尋：瀏覽器唔肯開沙盒，冇沙盒行落去可能會卡死成個分頁。純文字照用。',
+        '呢度關咗正則搜尋 — 瀏覽器唔肯開沙盒，冇沙盒行落去可能會卡死成個分頁。純文字照用得。',
+        '呢度關咗正則搜尋：瀏覽器死都唔肯開沙盒，而冇沙盒硬行就係卡死分頁嘅標準做法。純文字照用得。'
       ]
     },
     'regex.toolong': {
@@ -757,18 +822,18 @@
     'settings.reset': { en: ['Reset all settings'], yue: ['還原所有設定'] },
     'settings.reset.desc': {
       en: [
-        'Deletes every preference this site has stored in this browser: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order and pinning. This cannot be undone, and it does not touch anything outside this site.',
-        'Deletes every preference this site has stored in this browser — language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order and pinning. It cannot be undone, and it touches nothing outside this site.',
-        'Wipes every preference this site keeps in this browser: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order and pinning. No undo, and nothing outside this site is touched.',
-        'Wipes the lot — language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning. There is no undo. Nothing outside this site is touched.',
-        'Wipes the lot: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order and pinning. There is no undo button, no second thoughts, and nothing outside this site is touched.'
+        'Deletes every preference this site has stored in this browser: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise and the notification switch. This cannot be undone, and it does not touch anything outside this site.',
+        'Deletes every preference this site has stored in this browser — language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise and the notification switch. It cannot be undone, and it touches nothing outside this site.',
+        'Wipes every preference this site keeps in this browser: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise and the notification switch. No undo, and nothing outside this site is touched.',
+        'Wipes the lot — language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise, the notification switch. There is no undo. Nothing outside this site is touched.',
+        'Wipes the lot: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise and the notification switch. There is no undo button, no second thoughts, and nothing outside this site is touched.'
       ],
       yue: [
-        '會刪除本站存喺呢部瀏覽器嘅所有偏好：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、個別元件樣式、分頁次序同釘住狀態。無法復原，亦唔會影響本站以外任何嘢。',
-        '會刪除本站存喺呢部瀏覽器嘅所有偏好 — 語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、個別元件樣式、分頁次序同釘住。無法復原，本站以外嘅嘢一律唔碰。',
-        '會清走本站喺呢部瀏覽器嘅所有偏好：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序同釘住。冇得返轉頭，本站以外嘢一律唔郁。',
-        '一次過清走晒 — 語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住。冇得返轉頭。本站以外嘅嘢一律唔郁。',
-        '一次過清走晒：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序同釘住。冇 undo、冇後悔藥，本站以外嘅嘢一條毛都唔會碰。'
+        '會刪除本站存喺呢部瀏覽器嘅所有偏好：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、個別元件樣式、分頁次序、釘住狀態、分頁分組、點心驚喜同通知開關。無法復原，亦唔會影響本站以外任何嘢。',
+        '會刪除本站存喺呢部瀏覽器嘅所有偏好 — 語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、個別元件樣式、分頁次序、釘住、分頁分組、點心驚喜同通知開關。無法復原，本站以外嘅嘢一律唔碰。',
+        '會清走本站喺呢部瀏覽器嘅所有偏好：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組、點心驚喜同通知開關。冇得返轉頭，本站以外嘢一律唔郁。',
+        '一次過清走晒 — 語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組、點心驚喜、通知開關。冇得返轉頭。本站以外嘅嘢一律唔郁。',
+        '一次過清走晒：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組、點心驚喜同通知開關。冇 undo、冇後悔藥，本站以外嘅嘢一條毛都唔會碰。'
       ]
     },
     'settings.reset.confirm': { en: ['Delete stored settings'], yue: ['刪除已儲存設定'] },
