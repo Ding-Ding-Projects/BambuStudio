@@ -33,6 +33,29 @@ node ui-md3/scripts/capture-site.mjs https://ding-ding-projects.github.io/BambuS
 | `dim-sum-card.png` | The dim sum surprise card | 1280 wide |
 | `material-you-light.png` | Material You tab in the light theme | 1280×980 |
 
+## The prototype at `/app`
+
+`app/` holds captures of the interactive prototype, taken with
+[`ui-md3/scripts/capture-app.mjs`](../../../ui-md3/scripts/capture-app.mjs), plus
+`app/evidence.json` — measurements taken in the same session through Chrome's
+`Accessibility.getFullAXTree` and by driving the UI.
+
+| File | Shows |
+|:---|:---|
+| `app/titlebar-640.png` | The title bar at 640 CSS px with minimize, maximize and close all in frame |
+| `app/settings-switches.png` | The six General preference switches |
+| `app/version-history-dialog.png` | The version-history drawer as a real modal |
+| `app/filament-search-before.png` | The Filament Manager unfiltered |
+| `app/filament-search-filtered.png` | The same list filtered to one row by a plain-text search |
+| `app/evidence.json` | Accessible names, switch states, inert counts, focus behaviour, measured rects |
+
+Some of those fixes have **no visible surface** — an accessible name is not a pixel. For those,
+`evidence.json` is the evidence, and no screenshot is substituted to make the report look fuller.
+
+```bash
+node ui-md3/scripts/capture-app.mjs http://127.0.0.1:4173/app/index.html docs/screenshots/pages/app
+```
+
 `dim-sum-card.png` is the one capture whose trigger is simulated: the surprise fires on a genuine
 1% draw that cannot be waited for in a scripted capture, so the script calls the same renderer with
 the same data to photograph the surface. Everything it shows — artwork, bilingual name, copy at the

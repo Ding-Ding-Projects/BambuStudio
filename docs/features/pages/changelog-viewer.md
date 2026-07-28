@@ -17,12 +17,22 @@ Nothing in the viewer is written by hand.
   (`fix…` → Fixed, `add…` → Added, `remove…` → Removed, `document…`/`handoff…` → Documented,
   otherwise Changed). The viewer states this derivation on the page, so a miscategorised line reads
   as a mapping artifact rather than a claim.
-- A release with no commits in its range says so. The oldest release says that it has no earlier
-  release to compare against. Neither is padded with filler.
+- A release with no commits in its range says so. A release whose tag points at the **same commit**
+  as its predecessor says *that* instead — a different fact, and the only one of the two that has
+  actually been checked. The oldest release says it has no earlier release to compare against. None
+  of the three is padded with filler.
 
 Regenerate with `node ui-md3/scripts/build-changelog.mjs`; CI runs it with `--check` and fails if
 the committed file is stale. If the GitHub API is unavailable, `--check` reports that and stands
 down rather than failing a deploy that never touched the changelog.
+
+## One calendar: UTC
+
+A release timestamp is a UTC instant, and the day a release is filed under is its UTC day. Every
+bound this view produces is therefore a UTC day too — the presets, the calendar cells, the typed
+dates and the export header all agree. Building the bounds from the local calendar instead put the
+newest release outside "last 7 days" for anyone west of Greenwich, which is the kind of bug that
+only ever reproduces for other people.
 
 ## Date filter
 

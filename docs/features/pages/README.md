@@ -29,6 +29,21 @@ and no cookie banner; preferences live in the visitor's own browser and nowhere 
 - [Deployment and the layout gate](deployment-and-layout-gate.md) — how the site is composed,
   published, and held to 444 measured layout cases before a deploy is allowed.
 
+## The prototype at `/app`
+
+The interactive prototype published under `/app/` is documented with the design system, but two of
+its contracts are enforced by this category's tests and belong here:
+
+- **Every decorative icon is `aria-hidden`.** An icon-font ligature is read as literal text, and on
+  an icon-only button that text becomes the accessible name, shadowing the `title` meant to name it.
+- **Every one of its ten search fields is wired**, with plain text as the default and the search
+  field's mode travelling with the query. A field that opens a regex builder and filters nothing is
+  worse than no field at all.
+
+Both, plus the prototype's dialog semantics and title-bar collapse contract, are asserted in
+`ui-md3/tests/layout-clipping.test.mjs` and captured in
+[`docs/screenshots/pages/app/`](../../screenshots/pages/README.md).
+
 ## Postman
 
 Not applicable. This category ships no HTTP API: the site is static files, and the only network

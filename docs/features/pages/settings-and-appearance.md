@@ -27,6 +27,12 @@ notifications. Each element's values are stored under its own key and written ou
 default, so an unset property simply falls back. "Reset this element" removes that element's saved
 values and the corresponding custom properties without touching the others.
 
+The size control stores a **unitless ratio** and only displays a percentage. It is consumed as a
+bare multiplier inside `calc(44px * var(--site-font-scale) * var(--el-hero-size, 1))`, and
+`calc(44px * 100%)` is invalid at computed-value time — the whole declaration is dropped, which
+collapsed the hero headline to the inherited body size and persisted it. Length × percentage is not
+a length.
+
 ## Typography
 
 The font list contains the bundled Roboto and Roboto Mono plus faces confirmed present through
