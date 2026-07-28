@@ -1930,13 +1930,13 @@ export function AddEditDialog({
             <div
               data-testid="dialog-tab-manual"
               data-active={mode === 'manual' ? 'true' : 'false'}
-              className={`flex-1 flex items-center justify-center py-[4px] px-[16px] cursor-pointer rounded-[8px] border transition-all duration-150 ${mode === 'manual' ? 'border-fm-brand text-[#50e81d]' : 'border-fm-border-focus text-fm-text-primary hover:bg-fm-hover'}`}
+              className={`flex-1 flex items-center justify-center py-[4px] px-[16px] cursor-pointer rounded-[8px] border transition-all duration-150 ${mode === 'manual' ? 'border-fm-brand text-fm-brand' : 'border-fm-border-focus text-fm-text-primary hover:bg-fm-hover'}`}
               onClick={() => setMode('manual')}
             ><span className="py-[5px] text-[14px] leading-[22px]">{t('Manual Add')}</span></div>
             <div
               data-testid="dialog-tab-ams"
               data-active={mode === 'ams' ? 'true' : 'false'}
-              className={`flex-1 flex items-center justify-center py-[4px] px-[8px] cursor-pointer rounded-[8px] border transition-all duration-150 ${mode === 'ams' ? 'border-fm-brand text-[#50e81d]' : 'border-fm-border-focus text-fm-text-primary hover:bg-fm-hover'}`}
+              className={`flex-1 flex items-center justify-center py-[4px] px-[8px] cursor-pointer rounded-[8px] border transition-all duration-150 ${mode === 'ams' ? 'border-fm-brand text-fm-brand' : 'border-fm-border-focus text-fm-text-primary hover:bg-fm-hover'}`}
               onClick={switchToAms}
             ><span className="py-[5px] text-[14px] leading-[22px]">{t('Read from AMS')}</span></div>
           </div>
@@ -1946,7 +1946,9 @@ export function AddEditDialog({
         {mode === 'ams' && (
           <div className="flex flex-col gap-[16px]">
             <div className="flex items-center gap-[6px]">
-              <div className="w-[2px] h-[16px] rounded-[10px] bg-[#50e81d]" />
+              {/* Same accent bar as .fm-section-bar::before — track --color-fm-brand
+                  so the rule follows MD3 primary in both themes instead of a fixed lime. */}
+              <div className="w-[2px] h-[16px] rounded-[10px] bg-fm-brand" />
               <span className="text-[14px] leading-[22px] text-fm-text-primary">{t('Select Device')}</span>
             </div>
 
@@ -2204,7 +2206,7 @@ export function AddEditDialog({
             {/* Section title: 耗材信息 */}
             <div className="flex flex-col gap-[16px]">
               <div className="flex items-center gap-[6px]">
-                <div className="w-[2px] h-[16px] rounded-[10px] bg-[#50e81d]" />
+                <div className="w-[2px] h-[16px] rounded-[10px] bg-fm-brand" />
                 <span className="text-[14px] leading-[22px] text-fm-text-strong">{t('Filament Info')}</span>
               </div>
 

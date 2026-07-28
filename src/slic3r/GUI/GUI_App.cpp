@@ -4119,6 +4119,28 @@ void GUI_App::UpdateAllStaticTextDarkUI(wxWindow* parent)
 #endif
 }
 
+// The kit's fixed-pitch face for code / technical content (ui-md3 type scale):
+// Roboto Mono, taken from ::Label::Mono_12 (md3MonoFont on the MD3 mono type
+// style) instead of the generic OS teletype family — Courier New on Windows.
+// Sourcing it from Label is also what makes code_font() follow Appearance >
+// UI font size, since Label::rebuild_fonts() re-bakes the Mono_ helpers under
+// the current ui_font_scale; the OS face never tracked that. It also puts the
+// native dialogs on the same mono face the ImGui 3D overlay already uses.
+// Label::initSysFont() builds the Mono_ helpers from the GUI_App constructor,
+// well before init_fonts() runs, but the old TELETYPE work-around is kept as a
+// fallback for the case where a bundled font resource fails to resolve
+// (wxSYS_OEM_FIXED_FONT / wxSYS_ANSI_FIXED_FONT are no use here — wxGtk maps
+// both onto DEFAULT).
+static wxFont md3_code_font(int fallback_point_size)
+{
+    if (::Label::Mono_12.IsOk())
+        return ::Label::Mono_12;
+
+    wxFont fallback(wxFontInfo().Family(wxFONTFAMILY_TELETYPE));
+    fallback.SetPointSize(fallback_point_size);
+    return fallback;
+}
+
 void GUI_App::init_fonts()
 {
     // BBS: modify font
@@ -4131,10 +4153,7 @@ void GUI_App::init_fonts()
     m_bold_font.SetPointSize(13);
 #endif /*__WXMAC__*/
 
-    // wxSYS_OEM_FIXED_FONT and wxSYS_ANSI_FIXED_FONT use the same as
-    // DEFAULT in wxGtk. Use the TELETYPE family as a work-around
-    m_code_font = wxFont(wxFontInfo().Family(wxFONTFAMILY_TELETYPE));
-    m_code_font.SetPointSize(m_normal_font.GetPointSize());
+    m_code_font = md3_code_font(m_normal_font.GetPointSize());
 }
 
 void GUI_App::update_fonts(const MainFrame *main_frame)
@@ -4151,7 +4170,11 @@ void GUI_App::update_fonts(const MainFrame *main_frame)
     m_bold_font     = m_normal_font.Bold();
     m_link_font     = m_bold_font.Underlined();
     m_em_unit       = main_frame->em_unit();
-    m_code_font.SetPointSize(m_normal_font.GetPointSize());
+    // Re-take the mono face rather than only re-pointing the old one: a font
+    // rescale runs after Label::rebuild_fonts(), so Mono_12 may have been rebuilt
+    // at a new Appearance font scale. The point size only matters on the
+    // fallback path (see md3_code_font).
+    m_code_font     = md3_code_font(m_normal_font.GetPointSize());
 }
 
 void GUI_App::set_label_clr_modified(const wxColour& clr)

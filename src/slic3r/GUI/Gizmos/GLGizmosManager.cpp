@@ -130,22 +130,29 @@ bool GLGizmosManager::init()
 
 namespace {
 
-// The reset / reset-to-zero action buttons (object-manipulation panel) migrate
-// from the legacy orange toolbar_reset*.svg sprites to Material Symbols glyphs
-// tinted by MD3 role. State is expressed through colour (idle OnSurfaceVariant,
-// hover OnSurface), and the light/dark split is baked into separate texture keys
-// because the shared icon_list is built once and is not rebuilt on a runtime
-// theme switch -- the render site selects the matching key by theme, exactly as
-// the fit-camera / text / align icons already do.
+// Monochrome ImGui chrome icons migrate from their legacy Bambu SVG sprites to
+// Material Symbols glyphs tinted by MD3 role: the reset / reset-to-zero action
+// buttons of the object-manipulation panel, and the help "?" plus the selected-row
+// tick of the assembly view-angle menu. State is expressed through colour (idle
+// OnSurfaceVariant, hover OnSurface, selection Primary), and the light/dark split
+// is baked into separate texture keys because the shared icon_list is built once
+// and is not rebuilt on a runtime theme switch -- the theme-matching key is picked
+// per paint, either by the render site (reset) or by GLGizmosManager::theme_variant
+// (view help/tick, whose call sites predate the split).
 //
-// The glyph is supersampled (kResetGlyphPx) and scaled down by ImGui::Image at
+// Only sprites that are a single-colour mark qualify. The fit-camera / camera-lock
+// art carries its own circular plate, the align/distribute tiles carry a plate plus
+// an axis-encoding diagram, and text_B/text_T need format_bold / format_italic
+// codepoints that are not in MaterialIcon::Glyph -- those stay raster for now.
+//
+// The glyph is supersampled (kChromeGlyphPx) and scaled down by ImGui::Image at
 // paint time, so it stays crisp across DPI/density without the map needing a
 // per-DPI variant (48px stays 1:1 up to ~340% before any upscaling). Returns
 // false (caller keeps its raster sprite) when the icon font is unavailable or the
 // glyph cannot be rendered, so the panel never regresses to a blank button.
-constexpr int kResetGlyphPx = 48;
+constexpr int kChromeGlyphPx = 48;
 
-struct ResetGlyphSpec
+struct ChromeGlyphSpec
 {
     uint32_t  glyph;
     MD3::Role role;
@@ -153,7 +160,7 @@ struct ResetGlyphSpec
     bool      valid;
 };
 
-ResetGlyphSpec reset_glyph_spec(int icon)
+ChromeGlyphSpec chrome_glyph_spec(int icon)
 {
     using G = MaterialIcon::Glyph;
     switch (icon) {
@@ -167,18 +174,28 @@ ResetGlyphSpec reset_glyph_spec(int icon)
     case GLGizmosManager::IC_TOOLBAR_RESET_ZERO_HOVER:      return {G::SettingsBackupRestore, MD3::Role::OnSurface,        false, true};
     case GLGizmosManager::IC_TOOLBAR_RESET_ZERO_DARK:       return {G::SettingsBackupRestore, MD3::Role::OnSurfaceVariant, true,  true};
     case GLGizmosManager::IC_TOOLBAR_RESET_ZERO_HOVER_DARK: return {G::SettingsBackupRestore, MD3::Role::OnSurface,        true,  true};
+    // Assembly view-angle overlay. view_help.svg was a flat #909090 mark that
+    // matched neither theme; view_ok.svg was the legacy Bambu green #00AE42 tick,
+    // sitting on a menu whose surface, rows and text are already MD3 roles -- so
+    // the selection mark resolves through Primary like the rest of that menu
+    // instead of a frozen brand green. (As with the reset glyphs the texture is
+    // cached, so a seed/accent change is picked up on the next app start.)
+    case GLGizmosManager::IC_VIEW_HELP:      return {G::Help,  MD3::Role::OnSurfaceVariant, false, true};
+    case GLGizmosManager::IC_VIEW_HELP_DARK: return {G::Help,  MD3::Role::OnSurfaceVariant, true,  true};
+    case GLGizmosManager::IC_VIEW_OK:        return {G::Check, MD3::Role::Primary,          false, true};
+    case GLGizmosManager::IC_VIEW_OK_DARK:   return {G::Check, MD3::Role::Primary,          true,  true};
     default: return {0u, MD3::Role::OnSurfaceVariant, false, false};
     }
 }
 
 // True (and fills out) when the icon has an MD3 glyph mapping and the glyph
 // bridge produced a texture; false means the caller should fall back to raster.
-bool try_make_reset_glyph(int icon, ImTextureID& out)
+bool try_make_chrome_glyph(int icon, ImTextureID& out)
 {
-    const ResetGlyphSpec spec = reset_glyph_spec(icon);
+    const ChromeGlyphSpec spec = chrome_glyph_spec(icon);
     if (!spec.valid || !GLIconGlyphBridge::available())
         return false;
-    const unsigned int tex = GLIconGlyphBridge::make_glyph_texture(spec.glyph, kResetGlyphPx, MD3::resolve(spec.role, spec.dark));
+    const unsigned int tex = GLIconGlyphBridge::make_glyph_texture(spec.glyph, kChromeGlyphPx, MD3::resolve(spec.role, spec.dark));
     if (tex == 0)
         return false;
     out = (ImTextureID)(intptr_t) tex;
@@ -203,7 +220,7 @@ bool GLGizmosManager::init_icon_textures()
     // asset for both light and dark keys (its only pre-MD3 form).
     auto add_reset_icon = [&](int key, const char* raster_svg) -> bool {
         ImTextureID id;
-        if (try_make_reset_glyph(key, id)) {
+        if (try_make_chrome_glyph(key, id)) {
             icon_list[key] = id;
             return true;
         }
@@ -377,6 +394,14 @@ bool GLGizmosManager::init_icon_textures()
     else
         return false;
 
+    // The light-theme distribute-Z tile was missing from this eager pass, so it
+    // alone fell through to the 32x32 lazy path in ensure_icon_loaded and rendered
+    // visibly softer than the eleven 64x64 tiles beside it in the same align /
+    // distribute grid (GizmoObjectManipulation.cpp:1158 asks for it in light mode).
+    if (IMTexture::load_from_svg_file(Slic3r::resources_dir() + "/images/distribute_z.svg", 64, 64, texture_id))
+        icon_list.insert(std::make_pair((int)IC_DISTRIBUTE_Z, texture_id));
+    else
+        return false;
     if (IMTexture::load_from_svg_file(Slic3r::resources_dir() + "/images/distribute_z_dark.svg", 64, 64, texture_id))
         icon_list.insert(std::make_pair((int)IC_DISTRIBUTE_Z_DARK, texture_id));
     else
@@ -1795,12 +1820,13 @@ void* GLGizmosManager::ensure_icon_loaded(MENU_ICON_NAME icon)
     if (it != icon_list.end())
         return it->second;
 
-    // Reset / reset-to-zero action buttons prefer an MD3 glyph (theme-tinted);
-    // mirror init_icon_textures so a lazily-loaded reset icon is not stuck on the
-    // legacy raster sprite when the icon font is present.
+    // Glyph-backed chrome icons prefer an MD3 glyph (theme-tinted); mirror
+    // init_icon_textures so a lazily-loaded icon is not stuck on the legacy
+    // raster sprite when the icon font is present. The view help/tick icons are
+    // only ever reached through this path -- they have no eager load.
     {
         ImTextureID glyph_id;
-        if (try_make_reset_glyph((int) icon, glyph_id)) {
+        if (try_make_chrome_glyph((int) icon, glyph_id)) {
             icon_list[(int) icon] = glyph_id;
             return glyph_id;
         }
@@ -1831,10 +1857,15 @@ void* GLGizmosManager::ensure_icon_loaded(MENU_ICON_NAME icon)
         case IC_VIEW_FRONT:                 path = "/images/view_front.svg"; w = h = 64; break;
         case IC_VIEW_REAR:                  path = "/images/view_rear.svg"; w = h = 64; break;
         case IC_VIEW_LEFT:                  path = "/images/view_left.svg"; w = h = 64; break;
-        case IC_VIEW_OK:                    path = "/images/view_ok.svg"; w = h = 64; break;
+        // The view help / tick keys have no dedicated dark raster asset (the
+        // legacy sprites are theme-agnostic), so both keys fall back to the same
+        // SVG when the icon font is missing -- exactly as the reset keys do.
+        case IC_VIEW_OK:
+        case IC_VIEW_OK_DARK:               path = "/images/view_ok.svg"; w = h = 64; break;
         case IC_VIEW_RIGHT:                 path = "/images/view_right.svg"; w = h = 64; break;
         case IC_VIEW_ISO:                   path = "/images/view_iso.svg"; w = h = 64; break;
-        case IC_VIEW_HELP:                  path = "/images/view_help.svg"; w = h = 64; break;
+        case IC_VIEW_HELP:
+        case IC_VIEW_HELP_DARK:             path = "/images/view_help.svg"; w = h = 64; break;
         case IC_VIEW_BOTTOM_DARK:           path = "/images/view_bottom_dark.svg"; w = h = 64; break;
         case IC_VIEW_TOP_DARK:              path = "/images/view_top_dark.svg"; w = h = 64; break;
         case IC_VIEW_FRONT_DARK:            path = "/images/view_front_dark.svg"; w = h = 64; break;

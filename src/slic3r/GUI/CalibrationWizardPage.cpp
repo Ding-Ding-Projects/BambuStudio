@@ -151,28 +151,6 @@ CaliPageButton::CaliPageButton(wxWindow* parent, CaliPageActionType type, wxStri
     : m_action_type(type),
     Button(parent, text)
 {
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
-        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled),
-        std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
-        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
-        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-
-    StateColor btn_bd_green(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
-        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Enabled));
-
-    StateColor btn_bd_white(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
-        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
-
-    StateColor btn_text_green(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
-        std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
-
-    StateColor btn_text_white(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
-        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
-
     switch (m_action_type)
     {
     case CaliPageActionType::CALI_ACTION_MANAGE_RESULT:
@@ -227,14 +205,18 @@ CaliPageButton::CaliPageButton(wxWindow* parent, CaliPageActionType type, wxStri
         break;
     }
 
+    // MD3 action-button anatomy. The kit allows exactly one filled pill per
+    // surface, so only the step's affirmative action (start / calibrate / next /
+    // save) takes Filled; every wizard page shows at most one of them at a time
+    // (the coarse-save page swaps Finish and Calibrate rather than showing both).
+    // Everything else -- Prev, Recalibration, the start page's method choices and
+    // Manage Result -- stays on the neutral Outlined pill, which is what the old
+    // white-fill/Outline-border/OnSurface-label button already read as. The
+    // variant owns the fill, border, label colour, font, pill radius and height,
+    // so the six hand-built StateColor blocks and the explicit corner radius /
+    // 24px min height that used to live here are gone.
     switch (m_action_type)
     {
-    case CaliPageActionType::CALI_ACTION_PREV:
-    case CaliPageActionType::CALI_ACTION_RECALI:
-        SetBackgroundColor(btn_bg_white);
-        SetBorderColor(btn_bd_white);
-        SetTextColor(btn_text_white);
-        break;
     case CaliPageActionType::CALI_ACTION_START:
     case CaliPageActionType::CALI_ACTION_NEXT:
     case CaliPageActionType::CALI_ACTION_CALI:
@@ -245,24 +227,21 @@ CaliPageButton::CaliPageButton(wxWindow* parent, CaliPageActionType type, wxStri
     case CaliPageActionType::CALI_ACTION_FLOW_COARSE_SAVE:
     case CaliPageActionType::CALI_ACTION_FLOW_FINE_SAVE:
     case CaliPageActionType::CALI_ACTION_COMMON_SAVE:
-        SetBackgroundColor(btn_bg_green);
-        SetBorderColor(btn_bd_green);
-        SetTextColor(btn_text_green);
+        SetVariant(Button::Variant::Filled);
         break;
     default:
+        SetVariant(Button::Variant::Outlined);
         break;
     }
-
-    SetBackgroundColour(*wxWHITE);
-    SetFont(Label::Body_13);
-    SetMinSize(wxSize(-1, FromDIP(24)));
-    SetCornerRadius(FromDIP(12));
+    // These sit at the foot of a full workspace page, not in a dialog footer, so
+    // they take the page-level 44px tier rather than the 42px dialog one.
+    SetButtonSize(Button::Size::Large);
 }
 
 void CaliPageButton::msw_rescale()
 {
-    SetMinSize(wxSize(-1, FromDIP(24)));
-    SetCornerRadius(FromDIP(12));
+    // Rescale() re-runs applyMD3Style() for a variant Button, which re-derives
+    // the DPI-scaled pill radius, height, padding and font.
     Rescale();
 }
 
@@ -741,6 +720,12 @@ CaliPageActionPanel::CaliPageActionPanel(wxWindow* parent,
     : wxPanel(parent, id, pos, size, style)
 {
     m_parent = parent;
+
+    // The MD3 Outlined pill paints its resting fill with the parent surface, and
+    // it reads that surface once, when the button is constructed. Seed this
+    // panel from the page it sits on first, so the buttons below never latch a
+    // stale wxPanel system default and end up on a grey plate.
+    SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
 
     wxWindow* btn_parent = this;
 

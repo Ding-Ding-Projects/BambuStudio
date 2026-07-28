@@ -21,26 +21,42 @@ export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [toasts, autoDismissMs, onDismiss]);
 
-  if (toasts.length === 0) return null;
-
+  // The stack stays mounted even when empty. A live region has to already be in
+  // the accessibility tree when a message lands — mount the region and its first
+  // child in the same tick and most screen readers treat the whole thing as new
+  // content and say nothing. Empty it has no size and no pointer events, so it
+  // costs the layout nothing to leave standing.
   return (
-    <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[2000] pointer-events-none">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+      className="fixed bottom-6 right-6 flex flex-col gap-2 z-[2000] pointer-events-none"
+    >
       {toasts.map((toast) => {
-        const color = toast.level === 'error' ? '#ff6b6b'
-          : toast.level === 'warn' ? '#ffb84d'
-          : '#50e81d';
+        // Status tones are chrome, not data: the same danger / warning / brand
+        // triple SpoolTable maps its remaining-weight bar to, so a red dot means
+        // the same thing everywhere in the feature. Going through the fm tokens
+        // also lets the dot re-tint under [data-theme="light"] — the hexes that
+        // used to live here (#ff6b6b / #ffb84d / #50e81d) were eyeballed against
+        // the dark surface and collapsed to 2.5:1 / 1.6:1 / 1.5:1 on the light
+        // bg-fm-sidebar, below the 3:1 WCAG 1.4.11 floor for a meaningful
+        // graphic. The tokens hold 5.4:1 or better in both themes.
+        const dotClass = toast.level === 'error' ? 'bg-fm-danger'
+          : toast.level === 'warn' ? 'bg-fm-warning'
+          : 'bg-fm-brand';
         return (
           <div
             key={toast.id}
             className="pointer-events-auto flex items-start gap-3 max-w-[360px] bg-fm-sidebar border border-fm-border rounded-lg px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.25)] text-fm-text-primary text-xs leading-[19px]"
           >
             <span
-              className="mt-[4px] inline-block size-[8px] rounded-full shrink-0"
-              style={{ background: color }}
+              aria-hidden="true"
+              className={`mt-[4px] inline-block size-[8px] rounded-full shrink-0 ${dotClass}`}
             />
             <span className="flex-1 break-words">{toast.text}</span>
             <button
-              className="shrink-0 size-[18px] rounded-[6px] bg-transparent border-none text-fm-text-detail cursor-pointer hover:text-fm-text-strong"
+              className="shrink-0 size-[24px] inline-flex items-center justify-center rounded-full bg-transparent border-none text-fm-text-detail cursor-pointer hover:text-fm-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fm-brand"
               onClick={() => onDismiss(toast.id)}
               aria-label={t('Dismiss')}
             >
