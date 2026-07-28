@@ -294,8 +294,129 @@ async function measure(session) {
   return JSON.parse(evaluated.result.value);
 }
 
+/*
+ * Every tab panel, measured in one page load per viewport.
+ *
+ * Panels render lazily, so a tab that is never activated is never measured;
+ * activating them in-page is both faster and stricter than one navigation per
+ * tab. Target-size checks cover controls (buttons, selects, inputs and the
+ * anchors styled as buttons) rather than inline links inside prose, which are
+ * text, not targets.
+ */
+async function measureEveryTab(session) {
+  const expression = `JSON.stringify((() => {
+    const visible = element => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' &&
+        rect.width > 0 && rect.height > 0;
+    };
+    const describe = element => [
+      element.tagName.toLowerCase(),
+      element.id ? '#' + element.id : '',
+      [...element.classList].map(name => '.' + name).join(''),
+    ].join('');
+    const results = [];
+    const ids = window.BambuSiteTabs.ids();
+    for (const id of ids) {
+      window.BambuSiteTabs.activate(id);
+      const panel = document.getElementById('panel-' + id);
+      const clientWidth = document.documentElement.clientWidth;
+      const offenders = [...panel.querySelectorAll('*')]
+        .filter(visible)
+        .filter(element => {
+          const rect = element.getBoundingClientRect();
+          return rect.left < -1 || rect.right > clientWidth + 1 ||
+            element.scrollWidth > Math.ceil(rect.width) + 1;
+        })
+        .map(describe)
+        .slice(0, 6);
+      const undersized = [...panel.querySelectorAll(
+        'button, select, textarea, input, a.btn, a.asset'
+      )]
+        .filter(visible)
+        .filter(element => {
+          const rect = element.getBoundingClientRect();
+          if (rect.height >= 43.5 && rect.width >= 43.5) return false;
+          // A checkbox inside a 44px label is reachable through the label.
+          const label = element.closest('label');
+          if (label) {
+            const labelRect = label.getBoundingClientRect();
+            if (labelRect.height >= 43.5 && labelRect.width >= 43.5) return false;
+          }
+          return true;
+        })
+        .map(element => describe(element) + ' ' +
+          Math.round(element.getBoundingClientRect().width) + 'x' +
+          Math.round(element.getBoundingClientRect().height))
+        .slice(0, 6);
+      const tabs = [...document.querySelectorAll('#tabstrip .tab')].filter(visible);
+      const stripRows = [...new Set(tabs.map(tab => tab.offsetTop))].length;
+      results.push({
+        id,
+        empty: panel.textContent.trim().length < 40,
+        offenders,
+        undersized,
+        stripRows,
+        documentOverflow: document.documentElement.scrollWidth > clientWidth,
+      });
+    }
+    return results;
+  })())`;
+  const evaluated = await session.send('Runtime.evaluate', { expression, returnByValue: true });
+  return JSON.parse(evaluated.result.value);
+}
+
+test('every tab renders inside the viewport at each supported width, zoom and language', {
+  timeout: 240_000,
+  skip: !PAGE_URL && 'Set BAMBU_PAGES_TEST_URL to the locally served landing page',
+}, async () => {
+  const chrome = await startChrome();
+  const failures = [];
+  let cases = 0;
+  try {
+    for (const physicalWidth of [320, 360, 640, 1280]) {
+      for (const zoom of [1, 1.5, 2]) {
+        const cssWidth = Math.max(120, Math.floor(physicalWidth / zoom));
+        await chrome.session.send('Emulation.setDeviceMetricsOverride', {
+          width: cssWidth,
+          height: 900,
+          deviceScaleFactor: zoom,
+          mobile: false,
+          screenWidth: physicalWidth,
+          screenHeight: Math.round(900 * zoom),
+        });
+        for (const language of LANGUAGE_MODES) {
+          const url = new URL(PAGE_URL);
+          url.searchParams.set('lang', language);
+          await navigate(chrome.session, url.href);
+          const context = `${physicalWidth}px @ ${zoom * 100}% (${cssWidth} CSS px), ${language}`;
+          for (const result of await measureEveryTab(chrome.session)) {
+            cases++;
+            if (result.empty)
+              failures.push(`${context}: tab ${result.id} rendered no content`);
+            if (result.documentOverflow)
+              failures.push(`${context}: tab ${result.id} overflows the document horizontally`);
+            if (result.offenders.length)
+              failures.push(`${context}: tab ${result.id} clips ${JSON.stringify(result.offenders)}`);
+            if (result.undersized.length)
+              failures.push(`${context}: tab ${result.id} undersized ${JSON.stringify(result.undersized)}`);
+            if (result.stripRows > 1)
+              failures.push(`${context}: tab strip wrapped onto ${result.stripRows} rows instead of overflowing`);
+          }
+        }
+      }
+    }
+  } finally {
+    await stopChrome(chrome);
+  }
+
+  assert.equal(cases, 4 * 3 * 3 * 8);
+  assert.deepEqual(failures, []);
+});
+
 test('landing page stays inside every supported width, zoom and language viewport', {
-  timeout: 120_000,
+  timeout: 300_000,
   skip: !PAGE_URL && 'Set BAMBU_PAGES_TEST_URL to the locally served landing page',
 }, async () => {
   const chrome = await startChrome();

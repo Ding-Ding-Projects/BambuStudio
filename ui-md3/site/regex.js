@@ -558,9 +558,11 @@
     element.innerHTML =
       '<div class="sf-row">' +
         '<span class="sf-icon" data-icon aria-hidden="true">search</span>' +
-        '<label class="sr-only" for="' + id + '" data-copy="' + (settings.labelKey || 'settings.search') + '"></label>' +
+        // aria-label rather than a visually-hidden <label>: a 1px label element
+        // is content wider than its box, which the clipping gate rightly flags.
         '<input id="' + id + '" class="sf-input" type="search" autocomplete="off" spellcheck="false" ' +
-          'data-copy-attr="placeholder:' + (settings.labelKey || 'settings.search') + '">' +
+          'data-copy-attr="placeholder:' + (settings.labelKey || 'settings.search') +
+          ';aria-label:' + (settings.labelKey || 'settings.search') + '">' +
         '<button type="button" class="sf-toggle mono" aria-pressed="false" ' +
           'data-copy-attr="aria-label:regex.mode.regex;title:regex.mode.regex">.*</button>' +
         '<button type="button" class="sf-builder iconbtn" aria-expanded="false" ' +

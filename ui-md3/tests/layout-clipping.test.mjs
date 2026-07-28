@@ -9,6 +9,15 @@ const uiDir = path.resolve(testDir, '..');
 const repoDir = path.resolve(uiDir, '..');
 
 const landing = await readFile(path.join(uiDir, 'landing.html'), 'utf8');
+const siteCss = await readFile(path.join(uiDir, 'site', 'site.css'), 'utf8');
+const tabsJs = await readFile(path.join(uiDir, 'site', 'tabs.js'), 'utf8');
+// "must not contain" assertions run against code only: the comments explain why
+// a construct is banned, and naming it there must not fail the test.
+const stripComments = (source) => source
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^[ \t]*\/\/.*$/gm, '');
+const siteCssCode = stripComments(siteCss);
+const tabsJsCode = stripComments(tabsJs);
 const smartHome = await readFile(
   path.join(repoDir, 'src', 'slic3r', 'GUI', 'SmartHomeDialog.cpp'),
   'utf8'
@@ -26,39 +35,69 @@ const msgDialogHeader = await readFile(
   'utf8'
 );
 
-test('landing header has explicit desktop, compact, and phone clipping contracts', () => {
-  assert.match(
-    landing,
-    /@media\s*\(max-width:1120px\)\s*\{[\s\S]*?\.nav a\.navlink,\.nav \.tag\{\s*display:none;/
-  );
-  assert.match(
-    landing,
-    /@media\s*\(max-width:640px\)\s*\{[\s\S]*?\.wrap\.nav\{\s*padding-inline:12px;[\s\S]*?\.language-select\{\s*width:128px;[\s\S]*?#launchTop\{\s*width:44px;/
-  );
-  assert.match(
-    landing,
-    /@media\s*\(max-width:420px\)\s*\{[\s\S]*?\.brand-name\{[\s\S]*?width:1px;[\s\S]*?clip:rect\(0,0,0,0\);/
-  );
-  assert.match(
-    landing,
-    /@media\s*\(max-width:360px\)\s*\{[\s\S]*?\.wrap\.nav\{[\s\S]*?flex-wrap:wrap;[\s\S]*?\.nav \.brand,\.nav \.spacer\{\s*display:none;[\s\S]*?\.language-select\{[\s\S]*?flex:1 0 100%;/
-  );
-  assert.match(
-    landing,
-    /\.nav a\.navlink\{\s*min-width:44px;\s*min-height:44px;[\s\S]*?display:inline-flex;/
+test('the site never truncates or side-scrolls its way out of a clipping bug', () => {
+  // The runtime gate fails any element whose content is wider than its box, so
+  // an ellipsis or a horizontal scroller would trade a visible clip for a
+  // hidden one. Neither is allowed anywhere in the stylesheet.
+  assert.doesNotMatch(siteCssCode, /text-overflow\s*:\s*ellipsis/);
+  assert.doesNotMatch(siteCssCode, /overflow(-x)?\s*:\s*(auto|scroll)/);
+  // Author `display` rules outrank the UA sheet, so [hidden] needs enforcing.
+  assert.match(siteCss, /\[hidden\]\s*\{\s*display:\s*none\s*!important;\s*\}/);
+  // Long strings wrap instead of pushing the page sideways.
+  assert.match(siteCss, /body\s*\{[\s\S]*?overflow-x:\s*hidden;/);
+  assert.ok(
+    (siteCss.match(/overflow-wrap:\s*anywhere/g) || []).length >= 25,
+    'wrapping must be the default answer to long localized strings'
   );
 });
 
-test('landing compact controls retain accessible names and 44px targets', () => {
-  assert.match(landing, /\.iconbtn\{\s*width:44px;\s*height:44px;/);
-  assert.match(landing, /\.language-select\{\s*height:44px;/);
-  assert.match(
-    landing,
-    /id="themeToggle"[^>]*aria-label="Toggle light \/ dark"[\s\S]*?id="launchTop"[^>]*aria-label="Launch app"/
-  );
+test('every header target keeps a 44px floor, including the tab strip', () => {
+  assert.match(siteCss, /\.iconbtn\s*\{\s*width:\s*44px;\s*height:\s*44px;\s*flex:\s*0 0 44px;/);
+  assert.match(siteCss, /\.language-select\s*\{\s*height:\s*44px;\s*min-height:\s*44px;/);
+  assert.match(siteCss, /\.btn\s*\{[\s\S]*?min-height:\s*44px;\s*min-width:\s*44px;/);
+  assert.match(siteCss, /\.tab\s*\{[\s\S]*?min-height:\s*44px;\s*min-width:\s*44px;/);
+  assert.match(siteCss, /\.menuitem,\s*\.tabsearch-item\s*\{[\s\S]*?min-height:\s*44px;/);
+  assert.match(siteCss, /\.cal-day\s*\{\s*min-height:\s*44px;/);
+  assert.match(siteCss, /\.swatch\s*\{\s*width:\s*44px;\s*height:\s*44px;/);
+});
+
+test('the tab strip degrades through overflow instead of clipping', () => {
+  // Wrapping is the CSS-only guarantee; the staged algorithm is the browser-like
+  // behaviour layered on top of it.
+  assert.match(siteCss, /\.tabstrip-tabs\s*\{\s*display:\s*flex;\s*flex-wrap:\s*wrap;/);
+  assert.match(tabsJs, /function fits\(\)[\s\S]*?offsetTop/);
+  assert.match(tabsJs, /overflowButton\.hidden = false;[\s\S]*?icons-only/);
+  assert.match(tabsJs, /classList\.add\('overflowed'\)/);
+  assert.match(tabsJs, /searchButton\.hidden = true;/, 'the last stage must free the search slot');
+  // requestAnimationFrame never fires in a page nobody paints, which is exactly
+  // how the deploy gate and headless capture load this site.
+  assert.doesNotMatch(tabsJsCode, /requestAnimationFrame/);
+  assert.match(tabsJs, /layoutPending = setTimeout/);
+  assert.match(tabsJs, /doc\.fonts\.load\("400 20px 'Material Symbols Outlined'"\)/);
+});
+
+test('the tab strip is a real tablist with roving focus and reachable actions', () => {
+  assert.match(tabsJs, /setAttribute\('role', 'tablist'\)/);
+  assert.match(tabsJs, /tab\.setAttribute\('role', 'tab'\)/);
+  assert.match(tabsJs, /tab\.setAttribute\('aria-controls', 'panel-' \+ definition\.id\)/);
+  assert.match(tabsJs, /panel\.setAttribute\('role', 'tabpanel'\)/);
+  assert.match(tabsJs, /panel\.setAttribute\('aria-labelledby', tab\.id\)/);
+  assert.match(tabsJs, /tab\.tabIndex = isActive \? 0 : -1/);
+  assert.match(tabsJs, /event\.key === 'ArrowRight'/);
+  assert.match(tabsJs, /event\.key === 'Home'/);
+  assert.match(tabsJs, /event\.shiftKey && \(event\.key === 'ArrowRight'/);
+  assert.match(tabsJs, /site\.set\('tabOrder'[\s\S]*?site\.set\('tabPinned'[\s\S]*?site\.set\('tabGroups'/);
+});
+
+test('landing chrome keeps accessible names and one shared language selector', () => {
+  assert.match(landing, /id="languageMode"[^>]*aria-label="Language mode"/);
+  assert.match(landing, /id="themeToggle"[\s\S]{0,220}data-copy-attr="aria-label:shell\.theme\.toggle/);
+  assert.match(landing, /id="notifyButton"[\s\S]{0,220}data-copy-attr="aria-label:shell\.notifications/);
+  assert.match(landing, /id="launchTop"[^>]*data-copy-attr="aria-label:shell\.launch"/);
   assert.match(landing, /class="logo" aria-hidden="true"/);
   assert.match(landing, /id="themeIcon" aria-hidden="true"/);
-  assert.match(landing, /data-icon aria-hidden="true"[^>]*>rocket_launch/);
+  assert.match(landing, /<a class="sr-only" href="#panels"/, 'a skip link must come first');
+  assert.match(landing, /<noscript>/, 'the site must still hand out its links without scripting');
 });
 
 test('Smart Home keeps a fixed footer around a work-area-capped scrolling body', () => {

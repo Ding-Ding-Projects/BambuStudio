@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
-const siteDir = path.resolve(process.argv[2] || '_site');
-const indexPath = path.join(siteDir, 'index.html');
+const siteRoot = path.resolve(process.argv[2] || '_site');
+const indexPath = path.join(siteRoot, 'index.html');
 const index = await readFile(indexPath, 'utf8');
 const baseUrl = new URL('https://pages-layout.invalid/');
 const attribute = (tag, name) => {
@@ -25,7 +25,36 @@ const localImages = [
     .map((match) => match[3])
 ].filter((source) => !source.includes('+') && new URL(source, baseUrl).origin === baseUrl.origin);
 
+// The landing page builds its panels at runtime, so most showcase artwork is
+// referenced from the site modules rather than from the HTML. Those references
+// are resolved here too — a renamed image must fail the deploy, not 404 live.
+const moduleDir = path.join(siteRoot, 'site');
+const siteModules = (await readdir(moduleDir)).filter((name) => name.endsWith('.js'));
+const moduleImages = [];
+for (const name of siteModules) {
+  const source = await readFile(path.join(moduleDir, name), 'utf8');
+  for (const match of source.matchAll(/['"](\.\/assets\/[A-Za-z0-9._/-]+\.[a-z0-9]+)['"]/g)) {
+    moduleImages.push(match[1].replace(/^\.\//, ''));
+  }
+  // Card artwork is concatenated onto the showcase directory at render time.
+  for (const match of source.matchAll(/\bart:\s*'([A-Za-z0-9._-]+\.webp)'/g)) {
+    moduleImages.push(`assets/showcase/${match[1]}`);
+  }
+}
+
 assert.ok(localScripts.length > 0, 'The composed landing page must load at least one local script.');
+assert.ok(
+  localScripts.some((source) => source.includes('site/core.js')),
+  'The composed landing page must load the site runtime.'
+);
+assert.ok(
+  localStylesheets.includes('site/site.css'),
+  'The composed landing page must load the site stylesheet.'
+);
+assert.ok(
+  moduleImages.length >= 9,
+  `The site modules must reference the showcase artwork; found ${moduleImages.length}`
+);
 assert.ok(
   localStylesheets.includes('assets/fonts.css'),
   'The composed landing page must load its bundled typography.'
@@ -35,9 +64,28 @@ assert.doesNotMatch(
   /fonts\.(?:googleapis|gstatic)\.com/i,
   'The composed landing page must not depend on third-party font requests.'
 );
+assert.doesNotMatch(
+  index,
+  /<script\b[^>]*\bsrc=(['"])https?:/i,
+  'The composed landing page must not load third-party script.'
+);
 assert.ok(localImages.length >= 1, 'The composed landing page must publish its hero image.');
-await access(path.join(siteDir, 'app', 'index.html'));
-const showcaseDir = path.join(siteDir, 'assets', 'showcase');
+await access(path.join(siteRoot, 'app', 'index.html'));
+// The landing page loads the shared localisation runtime from the site root.
+await access(path.join(siteRoot, 'app', 'i18n.js'));
+await access(path.join(siteRoot, 'app', 'i18n.resources.js'));
+
+const expectedModules = [
+  'boot.js', 'changelog.data.js', 'changelog.js', 'copy.js', 'core.js',
+  'dimsum.data.js', 'regex.js', 'settings.js', 'tabs.js', 'views.js'
+];
+assert.deepEqual(
+  siteModules.sort(),
+  expectedModules,
+  'The composed Pages site must publish every site module.'
+);
+
+const showcaseDir = path.join(siteRoot, 'assets', 'showcase');
 const showcaseFiles = (await readdir(showcaseDir)).sort();
 assert.deepEqual(showcaseFiles, [
   'calibration.webp',
@@ -52,7 +100,7 @@ assert.deepEqual(showcaseFiles, [
   'project.webp',
   'settings.webp'
 ], 'The composed Pages site must publish the complete optimized showcase.');
-const fontDir = path.join(siteDir, 'assets', 'fonts');
+const fontDir = path.join(siteRoot, 'assets', 'fonts');
 const fontFiles = (await readdir(fontDir)).sort();
 assert.deepEqual(fontFiles, [
   'Apache-2.0-LICENSE.txt',
@@ -65,11 +113,11 @@ assert.deepEqual(fontFiles, [
   'RobotoMono-Regular.woff2',
 ], 'The composed Pages site must publish every bundled font and its license.');
 
-for (const source of [...localScripts, ...localStylesheets, ...localImages]) {
+for (const source of [...localScripts, ...localStylesheets, ...localImages, ...moduleImages]) {
   const pathname = decodeURIComponent(new URL(source, baseUrl).pathname).replace(/^\/+/, '');
-  const resolved = path.resolve(siteDir, pathname);
+  const resolved = path.resolve(siteRoot, pathname);
   assert.ok(
-    resolved.startsWith(`${siteDir}${path.sep}`),
+    resolved.startsWith(`${siteRoot}${path.sep}`),
     `Landing asset escapes the composed Pages root: ${source}`
   );
   await assert.doesNotReject(
@@ -81,5 +129,6 @@ for (const source of [...localScripts, ...localStylesheets, ...localImages]) {
 
 console.log(
   `Pages layout OK: ${localScripts.length} scripts, ${localStylesheets.length} stylesheets, ` +
-  `${localImages.length} showcase image references, ${fontFiles.length} font assets`
+  `${localImages.length + moduleImages.length} showcase image references, ` +
+  `${siteModules.length} site modules, ${fontFiles.length} font assets`
 );

@@ -444,13 +444,21 @@
 
     /* ----------------------------------------------------------- layout */
 
+    /*
+     * The strip fits when every visible tab AND the trailing controls sit on
+     * one row. Measuring only the tabs would call a strip "fitting" while the
+     * search and overflow buttons had already been pushed onto a second line.
+     */
     function fits() {
       var visible = sortedIds()
         .map(function (id) { return elements[id]; })
         .filter(function (tab) { return !tab.classList.contains('overflowed'); });
+      [searchButton, overflowButton].forEach(function (button) {
+        if (!button.hidden) visible.push(button);
+      });
       if (visible.length < 2) return true;
       var top = visible[0].offsetTop;
-      return visible.every(function (tab) { return Math.abs(tab.offsetTop - top) < 2; });
+      return visible.every(function (element) { return Math.abs(element.offsetTop - top) < 2; });
     }
 
     var layoutPending = null;

@@ -64,9 +64,11 @@
   /* --------------------------------------------------- font detection */
 
   function availableFonts() {
+    // Labels stay short enough to read inside a closed select at 160 CSS px;
+    // which faces are bundled is stated in the setting's description instead.
     var candidates = [
-      { id: 'roboto', label: 'Roboto (bundled)', probe: null },
-      { id: 'mono', label: 'Roboto Mono (bundled)', probe: null },
+      { id: 'roboto', label: 'Roboto', probe: null },
+      { id: 'mono', label: 'Roboto Mono', probe: null },
       { id: 'system', label: 'System UI', probe: null },
       { id: 'segoe', label: 'Segoe UI', probe: '12px "Segoe UI"' },
       { id: 'arial', label: 'Arial', probe: '12px Arial' },
@@ -236,27 +238,40 @@
 
   function buildLanguageGroup(host) {
     var mode = settingShell(host, 'settings.language.mode', 'settings.language.desc');
-    var select = doc.createElement('select');
-    select.className = 'select';
-    select.setAttribute('data-copy-attr', 'aria-label:settings.language.mode');
-    // The header keeps `#languageMode`; this one mirrors it inside Settings.
-    select.id = 'languageModeSettings';
-    [['en', 'English'], ['yue_HK', '廣東話（香港）'], ['bilingual_en_yue_HK', 'English + 廣東話']]
-      .forEach(function (option) {
-        var node = doc.createElement('option');
-        node.value = option[0];
-        node.textContent = option[1];
-        select.appendChild(node);
+    /*
+     * A wrapping radio group rather than a native <select>: a closed select can
+     * only truncate "English + 廣東話" at 160 CSS px, and truncation is exactly
+     * what this site refuses to do. These buttons wrap onto their own rows.
+     */
+    var group = doc.createElement('div');
+    group.className = 'seg langseg';
+    group.setAttribute('role', 'radiogroup');
+    group.setAttribute('data-copy-attr', 'aria-label:settings.language.mode');
+    var MODES = [['en', 'English'], ['yue_HK', '廣東話'], ['bilingual_en_yue_HK', 'English + 廣東話']];
+    MODES.forEach(function (option) {
+      var button = doc.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'radio');
+      button.dataset.mode = option[0];
+      button.textContent = option[1];
+      button.lang = option[0] === 'yue_HK' ? 'yue-Hant-HK' : 'en';
+      button.addEventListener('click', function () {
+        site.setLanguageMode(option[0]);
+        paintModes();
+        site.notify('info', 'notify.saved', { name: site.text('settings.language.mode') });
       });
-    select.value = site.languageMode();
-    select.addEventListener('change', function () {
-      site.setLanguageMode(select.value);
-      site.notify('info', 'notify.saved', { name: site.text('settings.language.mode') });
+      group.appendChild(button);
     });
-    site.subscribe(function (keys) {
-      if (keys.indexOf('languageMode') !== -1) select.value = site.languageMode();
-    });
-    mode.control.appendChild(select);
+    function paintModes() {
+      var active = site.languageMode();
+      group.querySelectorAll('button').forEach(function (button) {
+        button.setAttribute('aria-checked', String(button.dataset.mode === active));
+        button.setAttribute('aria-pressed', String(button.dataset.mode === active));
+      });
+    }
+    paintModes();
+    site.subscribe(function (keys) { if (keys.indexOf('languageMode') !== -1) paintModes(); });
+    mode.control.appendChild(group);
 
     [['funnyEn', 'settings.funny.en', 'en'], ['funnyYue', 'settings.funny.yue', 'yue']]
       .forEach(function (entry) {
@@ -382,7 +397,7 @@
     var weightSelect = doc.createElement('select');
     weightSelect.className = 'select';
     weightSelect.setAttribute('data-copy-attr', 'aria-label:settings.font.weight');
-    [['400', 'Regular 400'], ['500', 'Medium 500'], ['700', 'Bold 700']].forEach(function (option) {
+    [['400', 'Regular'], ['500', 'Medium'], ['700', 'Bold']].forEach(function (option) {
       var node = doc.createElement('option');
       node.value = option[0];
       node.textContent = option[1];

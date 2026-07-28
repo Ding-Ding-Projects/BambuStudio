@@ -13,6 +13,9 @@ on:
     paths:
       - 'ui-md3/**'
       - '.github/workflows/ui-md3-pages.yml'
+      # The static clipping contracts also assert against the native dialogs.
+      - 'src/slic3r/GUI/SmartHomeDialog.*'
+      - 'src/slic3r/GUI/MsgDialog.*'
   workflow_dispatch: {}
 
 # Least-privilege token scoped to what deploy-pages needs.
@@ -48,24 +51,22 @@ jobs:
           # so no manual Settings -> Pages toggle is required on first run.
           enablement: true
 
+      - name: Check the generated changelog is current
+        run: node ui-md3/scripts/build-changelog.mjs --check
+
       - name: Compose site (landing page at root, app under /app)
         run: |
-          rm -rf _site && mkdir -p _site/app
-          # App served at /app/ — exclude the heavy read-only design source and docs.
-          rsync -a --exclude 'design-source' --exclude 'desktop' --exclude '*.md' --exclude 'landing.html' ui-md3/ _site/app/
-          # Landing page is the site root.
-          cp ui-md3/landing.html _site/index.html
-          # Landing artwork is shared with the app, so publish it at both roots.
-          cp -R ui-md3/assets _site/assets
-          # Keep the landing page's local-preview asset paths valid after it is lifted to the site root.
-          cp ui-md3/app/i18n.resources.js ui-md3/app/i18n.js _site/app/
+          # One composer, used identically here and on a development machine, so
+          # a layout failure reproduces locally instead of only in CI.
+          node ui-md3/scripts/compose-site.mjs _site
           node ui-md3/tests/assert-pages-layout.mjs _site
           echo "Composed _site:"; find _site -maxdepth 2 -type f | sort
 
       - name: Verify localization and clipping at runtime
         run: |
-          node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/layout-clipping.test.mjs
-          python3 -m http.server 4173 --directory _site >/tmp/bambu-pages-http.log 2>&1 &
+          node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs \
+            ui-md3/tests/layout-clipping.test.mjs
+          node ui-md3/tests/serve.mjs _site 4173 >/tmp/bambu-pages-http.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           server_ready=false
@@ -82,6 +83,8 @@ jobs:
             cat /tmp/bambu-pages-http.log
             exit 1
           fi
+          # 156 landing cases plus 288 per-tab cases; a single clipped element,
+          # an undersized control or an empty panel fails the deploy.
           BAMBU_PAGES_TEST_URL=http://127.0.0.1:4173/index.html \
             node --test ui-md3/tests/runtime-layout-clipping.mjs
 

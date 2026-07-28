@@ -71,6 +71,9 @@ body {
   overflow-x: hidden;
 }
 a { color: inherit; text-decoration: none; }
+/* Every block of running text wraps rather than pushing the page sideways;
+ * bilingual mode and 200% scale both make strings much longer than the box. */
+p, li, dd, dt, code, time, span, label { overflow-wrap: anywhere; }
 p { margin: 0 0 10px; }
 h1, h2, h3 { margin: 0 0 10px; line-height: 1.15; overflow-wrap: anywhere; }
 h1 { font-size: calc(44px * var(--site-font-scale)); font-weight: 700; letter-spacing: -1px; }
@@ -153,7 +156,9 @@ h3 { font-size: calc(17px * var(--site-font-scale)); font-weight: 600; }
   border-radius: 12px; border: 1px solid var(--md-outline-variant);
   background: var(--md-sc-lowest); color: var(--md-on-surface); font: inherit;
 }
-.slider { width: 100%; min-width: 0; height: 44px; accent-color: var(--md-primary); }
+/* Chrome's UA sheet gives range inputs a 2px margin, which a width:100% slider
+ * turns into a 4px overflow of its own column. */
+.slider { width: 100%; min-width: 0; height: 44px; margin: 0; accent-color: var(--md-primary); }
 .switch {
   width: 56px; height: 44px; min-width: 44px; border: none; background: transparent;
   cursor: pointer; position: relative; padding: 0;
@@ -209,7 +214,7 @@ header {
 
 .tabstrip {
   position: relative;
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   padding: calc(var(--el-tabstrip-spacing, 6px)) 0;
   border-top: 1px solid var(--md-outline-variant);
   min-width: 0;
@@ -446,7 +451,10 @@ main { display: block; }
 }
 .daterange { display: flex; flex-wrap: wrap; gap: var(--gap); }
 .datefield { flex: 1 1 220px; min-width: 0; }
-.datefield-row { display: flex; gap: 8px; align-items: center; min-width: 0; }
+/* The field and its calendar button wrap onto separate rows before either one
+ * is squeezed below a usable 44px. */
+.datefield-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.datefield-row .input { flex: 1 1 140px; min-width: 44px; }
 .presets { display: flex; flex-wrap: wrap; gap: 8px; }
 .date-error { color: var(--md-error); font-size: calc(12.5px * var(--site-font-scale)); overflow-wrap: anywhere; }
 .changelog-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
@@ -566,6 +574,19 @@ main { display: block; }
   display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px;
   border-radius: 22px; border: 1px solid var(--md-primary); background: var(--md-sc-low);
   color: var(--md-on-surface); font: inherit; font-size: 13px; cursor: pointer; overflow-wrap: anywhere;
+}
+/* Grid and flex children default to min-width:auto, so one wide <select> can
+ * push a whole settings card past its own edge. Every track is allowed to
+ * shrink instead, and the control itself is capped at the column width. */
+.settings-groups, .settings-group, .settings-group-body, .setting,
+.setting-copy, .setting-control, .changelog-controls, .daterange, .datefield,
+.datefield-row, .searchfield, .sf-row, .rb-field, .rb-part { min-width: 0; }
+.settings-group-body > *, .setting > *, .setting-control > *,
+.changelog-controls > *, .rb-parts > * { min-width: 0; max-width: 100%; }
+.setting-control .select, .setting-control .input { width: 100%; }
+input[type="color"] {
+  width: 56px; height: 44px; min-width: 44px; padding: 2px;
+  border: 1px solid var(--md-outline-variant); border-radius: 12px; background: none;
 }
 .settings-groups { display: grid; gap: var(--gap); margin-top: 20px; }
 .settings-group {

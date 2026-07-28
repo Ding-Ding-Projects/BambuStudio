@@ -92,7 +92,21 @@ function commitsBetween(fromCommit, toCommit) {
   });
 }
 
-const releases = gh(`repos/${REPO}/releases?per_page=100`)
+let payloadPages;
+try {
+  payloadPages = gh(`repos/${REPO}/releases?per_page=100`);
+} catch (error) {
+  // The committed data file is the source of truth for the site; this script
+  // only refreshes it. A GitHub outage must not fail a deploy that is not
+  // otherwise changing the changelog, so --check reports and stands down.
+  if (checkOnly) {
+    console.warn(`Skipped the changelog freshness check: the releases API is unavailable (${error.message.split('\n')[0]}).`);
+    process.exit(0);
+  }
+  throw error;
+}
+
+const releases = payloadPages
   .flat()
   .filter((release) => !release.draft)
   .sort((a, b) => new Date(a.published_at) - new Date(b.published_at));

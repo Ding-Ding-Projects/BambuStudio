@@ -148,7 +148,7 @@
         'The Windows build is unsigned and installs per user. A SHA-256 checksum file is published beside it. The checksum confirms the file arrived intact; it does not confirm who published it.',
         'The Windows build is unsigned and installs per user. A SHA-256 checksum file ships beside it. The checksum proves the file arrived intact — it proves nothing about who published it.',
         'Heads up: the Windows build is unsigned and installs per user. The SHA-256 file beside it proves the download arrived intact — it does not prove who made it. Windows will say so too.',
-        'Fair warning: this Windows build is unsigned and installs just for you. The SHA-256 file proves the bytes arrived unharmed, not that anyone trustworthy made them. Windows SmartScreen will have opinions.',
+        'Fair warning: this Windows build is unsigned and installs per user, just for you. The SHA-256 file proves the bytes arrived unharmed, not that anyone trustworthy made them. Windows SmartScreen will have opinions.',
         'Fair warning: this Windows build is unsigned and installs per user only. The SHA-256 file proves the bytes survived the trip — it proves absolutely nothing about who packed them. SmartScreen will squint at you, and honestly it has a point.'
       ],
       yue: [
