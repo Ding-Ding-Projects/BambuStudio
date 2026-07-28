@@ -76,15 +76,23 @@ void CaliPresetCaliStagePanel::create_panel(wxWindow* parent)
     m_top_sizer->Add(title);
     m_top_sizer->AddSpacer(FromDIP(15));
 
+    // These two stay native wxRadioButtons on purpose. The drawn MD3 RadioBox is a
+    // label-less wxBitmapToggleButton, so adopting it here would cost the radio role,
+    // the checked state, the accessible name the label text supplies, arrow-key
+    // navigation inside the group and the automatic single-selection this code relies
+    // on -- an a11y trade the MD3 dot does not buy back. Token the type and the text
+    // colour instead so at least those stop being hardcoded (the glyph stays native).
     m_complete_radioBox = new wxRadioButton(parent, wxID_ANY, _L("Complete Calibration"));
-    m_complete_radioBox->SetForegroundColour(*wxBLACK);
+    m_complete_radioBox->SetFont(Label::Body_14);
+    m_complete_radioBox->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_complete_radioBox->SetValue(true);
     m_stage = CALI_MANUAL_STAGE_1;
     m_top_sizer->Add(m_complete_radioBox);
     m_top_sizer->AddSpacer(FromDIP(10));
     m_fine_radioBox = new wxRadioButton(parent, wxID_ANY, _L("Fine Calibration based on flow ratio"));
-    m_fine_radioBox->SetForegroundColour(*wxBLACK);
+    m_fine_radioBox->SetFont(Label::Body_14);
+    m_fine_radioBox->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_top_sizer->Add(m_fine_radioBox);
 
     input_panel = new wxPanel(parent);
@@ -1074,9 +1082,29 @@ wxSizer* CalibrationPresetPage::create_slot_items_sizer(wxPanel* slot_items_pane
     for (int i = 0; i < MAX_SLOT_NUM; i++) { // 4 slots
         auto           filament_comboBox_sizer = new wxBoxSizer(wxHORIZONTAL);
 
+        /* The slot selector stays a native wxRadioButton: it is what FilamentComboBox
+           types Set/GetRadioBox on, and the drawn RadioBox would drop the radio role and
+           checked state a screen reader reads off this row. */
         wxRadioButton *radio_btn               = new wxRadioButton(slot_items_panel, wxID_ANY, "");
         CheckBox *     check_box               = new CheckBox(slot_items_panel);
-        check_box->SetBackgroundColour(*wxWHITE);
+        /* The plate has to be set explicitly; the CheckBox cannot inherit it. The glyph is
+           transparent outside its rounded square and the button is wxBORDER_NONE + owner
+           drawn, so wxAnyButton::MSWOnDraw FillRect()s the whole 20px window with
+           GetBackgroundColour(). CheckBox's ctor seeds that from the parent, but
+           slot_items_panel is a bare wxPanel that never sets a background: wx's
+           background inheritance is compiled out (wxWindowBase::InheritAttributes has the
+           bg branch under #if 0), so GetBackgroundColour() falls through to
+           wxSYS_COLOUR_BTNFACE #F0F0F0 -- a grey square per slot, and #F0F0F0 is not a key
+           in gDarkColors, so it stays bright grey in dark mode. White is not a stray
+           literal here, it is the row: the enclosing m_filament_list_panel /
+           m_multi_exutrder_filament_list_panel are set to the same #ffffff below, and both
+           they and this plate are remapped together to #202127 by GUI_App::UpdateDarkUI
+           (ThemeColor::White is that exact gDarkColors key).
+           MD3::Role::SurfaceContainerLowest is deliberately NOT used: it agrees in light
+           (#ffffff) but resolves to #131317 in dark, which neither matches the #202127 row
+           nor reverse-maps, so a page built in dark mode would strand a near-black square
+           on a white row after switching to light. */
+        check_box->SetBackgroundColour(ThemeColor::White);
 
         int index = extuder_role == ExtruderRole::MAIN_EXTRUDER ? (i + 4) : i;
         FilamentComboBox *fcb = new FilamentComboBox(slot_items_panel, index);

@@ -1,6 +1,7 @@
 #include "2DBed.hpp"
 #include "GUI_App.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StateColor.hpp"
 
 #include <wx/dcbuffer.h>
 
@@ -28,21 +29,30 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 	auto cw = GetSize().GetWidth();
 	auto ch = GetSize().GetHeight();
 	// when canvas is not rendered yet, size is 0, 0
-	if (cw == 0) return ; 
+	if (cw == 0) return ;
+
+    // MD3 role snapshot for this paint, for the CHROME only. wxDC pen/brush colours
+    // never pass through GUI_App::UpdateDarkUI, so before this the whole preview was
+    // painted from light-mode literals and only the backdrop had a hand-written dark
+    // branch -- a white slab with black contour lines floating on a dark wash.
+    // Resolving the roles here instead means one lookup per repaint and a theme
+    // switch is picked up on the next paint, with no manual dark_mode() test below.
+    // The axis arrows and the position crosshair are NOT in this list: their colours
+    // encode which axis is which and where the head is, so they stay literal data
+    // (see the axes and current-position blocks).
+    const wxColour backdrop   = StateColor::semantic(MD3::Role::Surface);
+    const wxColour bed_fill   = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour grid_line  = StateColor::semantic(MD3::Role::OutlineVariant);
+    const wxColour contour    = StateColor::semantic(MD3::Role::Outline);
+    const wxColour annotation = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
 	if (m_user_drawn_background) {
 		// On all systems the AutoBufferedPaintDC() achieves double buffering.
 		// On MacOS the background is erased, on Windows the background is not erased
 		// and on Linux / GTK the background is erased to gray color.
 		// Fill DC with the background on Windows & Linux / GTK.
-        wxColour color;
-        if (wxGetApp().dark_mode()) {// SetBackgroundColour
-            color = wxColour(45, 45, 49); 
-        } else {
-            color = *wxWHITE;
-        }
-		dc.SetPen(*new wxPen(color, 1, wxPENSTYLE_SOLID));
-		dc.SetBrush(*new wxBrush(color, wxBRUSHSTYLE_SOLID));
+		dc.SetPen(wxPen(backdrop, 1, wxPENSTYLE_SOLID));
+		dc.SetBrush(wxBrush(backdrop, wxBRUSHSTYLE_SOLID));
 		auto rect = GetUpdateRegion().GetBox();
 		dc.DrawRectangle(rect.GetLeft(), rect.GetTop(), rect.GetWidth(), rect.GetHeight());
 	}
@@ -75,8 +85,21 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 	m_scale_factor = sfactor;
     m_shift = Vec2d(shift(0) + cbb.min(0), shift(1) - (cbb.max(1) - ch));
 
-	// draw bed fill
-	dc.SetBrush(wxBrush(wxColour(255, 255, 255), wxBRUSHSTYLE_SOLID));
+	// draw bed fill. What actually delimits the printable area is the Outline ring
+	// drawn below, not this fill: measured on the opaque token hexes (semantic()
+	// returns them verbatim -- no darkModeColorFor remap on this path), the ring is
+	// #75777f on #ffffff = 4.5:1 light and #94959f on #131317 = 6.3:1 dark, while
+	// the 1cm grid is 1.70:1 light / 2.20:1 dark (stock light-mode grid was 1.25:1).
+	// The fill-vs-backdrop step itself is only ~1.05:1 in both themes, which is the
+	// stock light-mode appearance (white slab on a white panel) and is inherent to
+	// the neutral tonal ramp -- every neighbouring container pair tops out near
+	// 1.6:1, and brightening the slab to buy that would drop the grid to ~1.3:1.
+	// So the slab keeps the lowest container (best grid contrast) and the boundary
+	// carries the delineation. Stroke the fill in its own tone rather than
+	// inheriting the backdrop pen; the contour pass redraws the same polygon, so
+	// this only decides the 1px ring before that.
+	dc.SetPen(wxPen(bed_fill, 1, wxPENSTYLE_SOLID));
+	dc.SetBrush(wxBrush(bed_fill, wxBRUSHSTYLE_SOLID));
 	wxPointList pt_list;
     for (auto pt : shape)
     {
@@ -96,7 +119,7 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 	}
 	polylines = intersection_pl(polylines, bed_polygon);
 
-    dc.SetPen(wxPen(wxColour(230, 230, 230), 1, wxPENSTYLE_SOLID));
+    dc.SetPen(wxPen(grid_line, 1, wxPENSTYLE_SOLID));
 	for (auto pl : polylines)
 	{
 		for (size_t i = 0; i < pl.points.size()-1; i++) {
@@ -107,8 +130,8 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 	}
 
 	// draw bed contour
-    dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID));
-	dc.SetBrush(wxBrush(wxColour(0, 0, 0), wxBRUSHSTYLE_TRANSPARENT));
+    dc.SetPen(wxPen(contour, 1, wxPENSTYLE_SOLID));
+	dc.SetBrush(wxBrush(contour, wxBRUSHSTYLE_TRANSPARENT));
 	dc.DrawPolygon(&pt_list, 0, 0);
 
     auto origin_px = to_pixels(Vec2d(0, 0), ch);
@@ -117,7 +140,12 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 	auto axes_len = 50;
 	auto arrow_len = 6;
 	auto arrow_angle = Geometry::deg2rad(45.0);
-    dc.SetPen(wxPen(wxColour(255, 0, 0), 2, wxPENSTYLE_SOLID));  // red
+    // Axis colours are exempt DATA, not chrome: red X / green Y is the convention
+    // the user reads to tell the two axes apart, and the 3D gizmo this preview
+    // mirrors still draws pure RGB (GLGizmoBase.cpp AXES_COLOR). Retinting them to
+    // a design-kit tone would make the 2D and 3D axes disagree, so they stay the
+    // stock literals in both themes.
+    dc.SetPen(wxPen(wxColour(255, 0, 0), 2, wxPENSTYLE_SOLID));  // red = X
 	auto x_end = Vec2d(origin_px(0) + axes_len, origin_px(1));
 	dc.DrawLine(wxPoint(origin_px(0), origin_px(1)), wxPoint(x_end(0), x_end(1)));
 	for (auto angle : { -arrow_angle, arrow_angle }) {
@@ -125,7 +153,7 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 		dc.DrawLine(wxPoint(x_end(0), x_end(1)), wxPoint(end(0), end(1)));
 	}
 
-    dc.SetPen(wxPen(wxColour(0, 255, 0), 2, wxPENSTYLE_SOLID));  // green
+    dc.SetPen(wxPen(wxColour(0, 255, 0), 2, wxPENSTYLE_SOLID));  // green = Y
 	auto y_end = Vec2d(origin_px(0), origin_px(1) - axes_len);
 	dc.DrawLine(wxPoint(origin_px(0), origin_px(1)), wxPoint(y_end(0), y_end(1)));
 	for (auto angle : { -arrow_angle, arrow_angle }) {
@@ -133,13 +161,15 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 		dc.DrawLine(wxPoint(y_end(0), y_end(1)), wxPoint(end(0), end(1)));
 	}
 
-	// draw origin
-    dc.SetPen(wxPen(wxColour(0, 0, 0), 1, wxPENSTYLE_SOLID));
-    dc.SetBrush(wxBrush(wxColour(0, 0, 0), wxBRUSHSTYLE_SOLID));
+	// draw origin -- dot and its "(0,0)" caption are one annotation, so both take
+	// the medium-emphasis content role rather than the Outline used for the bed
+	// boundary; at a 3px radius the dimmer boundary tone would barely register.
+    dc.SetPen(wxPen(annotation, 1, wxPENSTYLE_SOLID));
+    dc.SetBrush(wxBrush(annotation, wxBRUSHSTYLE_SOLID));
 	dc.DrawCircle(origin_px(0), origin_px(1), 3);
 
 	static const auto origin_label = wxString("(0,0)");
-	dc.SetTextForeground(wxColour(0, 0, 0));
+	dc.SetTextForeground(annotation);
     // MD3 micro type-scale token (Roboto ~10.5px/400) for the origin annotation.
     dc.SetFont(Label::Body_10);
 	auto extent = dc.GetTextExtent(origin_label);
@@ -147,7 +177,11 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 	const auto origin_label_y = origin_px(1) <= ch / 2 ? origin_px(1) + 1 : origin_px(1) - 1 - extent.GetHeight();
 	dc.DrawText(origin_label, origin_label_x, origin_label_y);
 
-	// draw current position
+	// draw current position -- a location marker, not an alert, so it is exempt data
+	// like the axes above and keeps its stock red rather than borrowing the Error
+	// role. (Contrast is adequate either way: #c80000 measures ~2.8:1 on the dark
+	// slab.) set_pos() is private with no callers in the tree, so this never paints
+	// today; keeping the literal avoids planting a wrong role for whoever revives it.
 	if (m_pos!= Vec2d(0, 0)) {
         auto pos_px = to_pixels(m_pos, ch);
         dc.SetPen(wxPen(wxColour(200, 0, 0), 2, wxPENSTYLE_SOLID));

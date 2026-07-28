@@ -333,10 +333,21 @@ export function FilamentManagerPage() {
   }, [cloudAutoPushSummary, t]);
 
   return (
+    // Font stack: Roboto first to match the native MD3 chrome, HarmonyOS Sans SC
+    // retained purely as the CJK fallback (Roboto has no CJK coverage), dead
+    // -apple-system dropped from this Windows-only fork. This does NOT close the
+    // font gap: nothing in device_page bundles an @font-face, so the webview can
+    // only resolve either family through the host process's session-visible
+    // AddFontResourceExW registration (Widgets/Label.cpp:275, flags 0 — not
+    // FR_PRIVATE), which registers Roboto on Windows and HarmonyOS only under
+    // __linux__. Whether the separate WebView2 renderer's DirectWrite collection
+    // picks that up is unverified here. The real fix is --font-sans in the
+    // styles.css @theme block plus deleting this per-element override; that file
+    // is owned elsewhere in this wave.
     <div
       data-testid="filament-page-root"
       data-logged-in={isLoggedIn ? 'true' : 'false'}
-      className="flex h-screen overflow-hidden bg-fm-base text-fm-text-primary text-xs leading-[19px] font-['HarmonyOS_Sans_SC',-apple-system,'Segoe_UI',sans-serif] fm-native-form"
+      className="flex h-screen overflow-hidden bg-fm-base text-fm-text-primary text-xs leading-[19px] font-['Roboto','HarmonyOS_Sans_SC',system-ui,sans-serif] fm-native-form"
     >
       {/* Main content (sidebar removed: Stats / Archive entries are not
           shipped in this version, and "My Filaments" is the only remaining
@@ -414,10 +425,14 @@ export function FilamentManagerPage() {
                   />
                 </div>
 
+                {/* Selected state tracks --md-primary through --color-fm-brand.
+                    It used to hardcode a neon lime label over a lime tint, which
+                    was a third green beside the mint primary in dark theme and
+                    measured ~2.1:1 against the light surface. */}
                 <button
                   data-testid="filament-group-toggle"
                   data-grouped={grouped ? 'true' : 'false'}
-                  className={`inline-flex items-center gap-1 h-[30px] px-3 rounded-lg border-none text-xs whitespace-nowrap transition-colors duration-150 bg-fm-inner text-fm-text-primary border border-fm-border-focus/50 hover:bg-fm-hover ${grouped ? '!bg-[rgba(44,173,0,0.08)] !border-fm-brand !text-[#50e81d]' : ''} ${!isLoggedIn ? 'opacity-40 cursor-not-allowed hover:bg-fm-inner' : 'cursor-pointer'}`}
+                  className={`inline-flex items-center gap-1 h-[30px] px-3 rounded-lg border-none text-xs whitespace-nowrap transition-colors duration-150 bg-fm-inner text-fm-text-primary border border-fm-border-focus/50 hover:bg-fm-hover ${grouped ? '!bg-fm-brand/10 !border-fm-brand !text-fm-brand' : ''} ${!isLoggedIn ? 'opacity-40 cursor-not-allowed hover:bg-fm-inner' : 'cursor-pointer'}`}
                   onClick={() => setGrouped(!grouped)}
                   disabled={!isLoggedIn}
                 >
@@ -467,12 +482,26 @@ export function FilamentManagerPage() {
                     <path d="M9 6v3.25L11 10.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
+                {/* MD3 pairs a filled container with its own foreground role.
+                    styles.css mirrors --md-primary / --md-error as
+                    --color-fm-brand / --color-fm-danger but carries no
+                    on-primary / on-error pair, and the literal `text-white` this
+                    replaces measured ~1.5:1 over the dark theme's #8bd89b mint —
+                    dark being the state the app starts in. Until styles.css
+                    (owned elsewhere this wave) gains --color-fm-on-brand /
+                    --color-fm-on-danger, use the one existing @theme token that
+                    is guaranteed to invert with the theme: fm-base, the page
+                    surface. #1b1c21 on #8bd89b is ~10:1 dark; #faf8fd on #146c2e
+                    is ~6.2:1 light. Disabled uses the MD3 disabled recipe
+                    (on-surface at 12% container, 38% label) instead of a tinted
+                    brand fill, which is what made the disabled label worse in
+                    dark than the `text-white/70` it replaced. */}
                 <button
                   data-testid="filament-add"
                   className={`inline-flex items-center gap-1 h-[30px] px-3 rounded-lg border-none text-xs whitespace-nowrap transition-colors duration-150 font-medium ${
                     isLoggedIn
-                      ? 'cursor-pointer bg-fm-brand text-white hover:bg-fm-brand-hover'
-                      : 'cursor-not-allowed bg-fm-brand/40 text-white/70'
+                      ? 'cursor-pointer bg-fm-brand text-fm-base hover:bg-fm-brand-hover'
+                      : 'cursor-not-allowed bg-fm-text-primary/12 text-fm-text-primary/38'
                   }`}
                   disabled={!isLoggedIn}
                   onClick={handleOpenAddDialog}
@@ -484,7 +513,7 @@ export function FilamentManagerPage() {
 
               {/* Selection action bar — sole batch-delete entry point for F6.3. */}
               {canBatchDelete && (
-                <div className="flex items-center justify-between shrink-0 bg-[rgba(224,64,64,0.08)] border border-fm-danger/60 rounded-lg px-4 py-2">
+                <div className="flex items-center justify-between shrink-0 bg-fm-danger/10 border border-fm-danger/60 rounded-lg px-4 py-2">
                   <div className="flex items-center gap-2 text-fm-danger text-sm">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
                       <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" fill="none" />
@@ -493,8 +522,11 @@ export function FilamentManagerPage() {
                     <span>{t('Selected {{count}} items', { count: selected.size })}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* text-fm-base as the on-error stand-in, same reasoning as
+                        the Add Filament button above: #1b1c21 on #ffb4ab is
+                        ~10:1 dark, #faf8fd on #ba1a1a is ~6.2:1 light. */}
                     <button
-                      className="inline-flex items-center gap-[6px] h-[28px] px-3 rounded-md border border-fm-danger bg-fm-danger text-white text-xs cursor-pointer hover:brightness-110"
+                      className="inline-flex items-center gap-[6px] h-[28px] px-3 rounded-md border border-fm-danger bg-fm-danger text-fm-base text-xs cursor-pointer hover:brightness-110"
                       onClick={handleBatchDelete}
                     >
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0">
