@@ -55,6 +55,7 @@ their Postman collections live under [`../api/`](../api/README.md).
 | Check | Command |
 |:---|:---|
 | Data and logic contracts | `node --test ui-md3/tests/site.test.mjs` |
+| Behavioural contracts (storage, appearance, notifications) | `node --test ui-md3/tests/site-behaviour.test.mjs` |
 | Localisation runtime | `node --test ui-md3/tests/i18n.test.mjs` |
 | Static clipping contracts | `node --test ui-md3/tests/layout-clipping.test.mjs` |
 | Composed tree | `node ui-md3/scripts/compose-site.mjs _site && node ui-md3/tests/assert-pages-layout.mjs _site` |

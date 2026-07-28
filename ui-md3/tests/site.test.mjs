@@ -84,6 +84,26 @@ test('funny levels select a variant in range for every supported ladder length',
   assert.equal(site.variantIndex(5, 99), 4);
 });
 
+test('every message-shaped entry actually varies with the funny level', () => {
+  /*
+   * The site tells the user the tone setting applies to every message. A
+   * single-variant entry silently opts out of that promise — it reads
+   * identically at level 1 and level 5 — so anything message-shaped must carry
+   * a real ladder. Atomic control labels ("Copy", "Font") legitimately do not,
+   * which is why this matches by shape rather than sweeping the whole catalog.
+   */
+  const MESSAGE_SHAPED = /^notify\.[a-z]|\.desc$|\.body$|\.hint$|empty$|baseline$|derivation$|dateformat$|escapenote$|\.line$/;
+  const ALLOWED_FLAT = new Set([
+    'notify.tone.action', // a button label, not a message
+    'footer.disclaimer' // legal text: identical wording at every level is the point
+  ]);
+  const flat = Object.keys(copy.entries)
+    .filter((key) => MESSAGE_SHAPED.test(key))
+    .filter((key) => !ALLOWED_FLAT.has(key))
+    .filter((key) => copy.entries[key].en.length < 2 || copy.entries[key].yue.length < 2);
+  assert.deepEqual(flat, [], 'message-shaped copy must carry a tone ladder in both languages');
+});
+
 test('warnings keep every fact at every funny level, in both languages', () => {
   const contracts = [
     ['hero.integrity', 'en', [/unsigned/i, /SHA-256/, /per user/i]],

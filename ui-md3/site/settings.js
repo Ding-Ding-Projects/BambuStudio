@@ -134,12 +134,39 @@
 
   /* ------------------------------------------------------- settings ui */
 
+  /*
+   * Each target declares the properties it actually consumes. Offering a
+   * control that writes a custom property nothing reads is worse than offering
+   * nothing: the user drags it, sees no change, and reasonably concludes the
+   * feature is broken. The hero has no border and no padding of its own, so it
+   * is offered neither.
+   */
+  var TYPE_PROPERTIES = ['radius', 'spacing', 'size', 'color', 'font', 'weight'];
   var ELEMENT_TARGETS = [
-    { id: 'tabstrip', copy: 'settings.element.tabstrip' },
-    { id: 'cards', copy: 'settings.element.cards' },
-    { id: 'hero', copy: 'settings.element.hero' },
-    { id: 'toasts', copy: 'settings.element.toasts' }
+    { id: 'tabstrip', copy: 'settings.element.tabstrip', properties: TYPE_PROPERTIES },
+    { id: 'cards', copy: 'settings.element.cards', properties: TYPE_PROPERTIES },
+    { id: 'hero', copy: 'settings.element.hero', properties: ['size', 'color', 'font', 'weight'] },
+    { id: 'toasts', copy: 'settings.element.toasts', properties: TYPE_PROPERTIES }
   ];
+
+  /*
+   * Every tab is its own customizable element, as the tab rules require: its
+   * font, colour, size and shape are set per tab, persisted per tab, and reset
+   * per tab. These are appended to the target list at build time from the live
+   * strip, so a tab added later is customizable without touching this file.
+   */
+  function tabTargets() {
+    return [].slice.call(doc.querySelectorAll('#tabstrip .tab')).map(function (tab) {
+      return {
+        id: 'tab-' + tab.dataset.tab,
+        copyText: function () {
+          return site.text('settings.element.tab') + ' · ' +
+            site.text('tab.' + tab.dataset.tab);
+        },
+        properties: ['radius', 'spacing', 'size', 'color', 'font', 'weight']
+      };
+    });
+  }
 
   // Controls that live on other tabs, so a settings search can still find them.
   var ELSEWHERE = [
@@ -153,6 +180,32 @@
     { tab: 'regex', copy: 'regex.sample', tabCopy: 'tab.regex' }
   ];
 
+  /*
+   * A row's searchable text is its labels in both languages plus the value its
+   * control is showing right now — read live rather than cached, so "dark",
+   * "compact", "on" or "#22c55e" finds the setting that is currently set to it.
+   */
+  function currentValueOf(host) {
+    var parts = [];
+    [].slice.call(host.querySelectorAll('select, input, button[role="switch"], .seg button, .langseg button'))
+      .forEach(function (node) {
+        if (node.tagName === 'SELECT') {
+          var selected = node.options[node.selectedIndex];
+          parts.push(node.value, selected ? selected.textContent : '');
+        } else if (node.getAttribute && node.getAttribute('role') === 'switch') {
+          parts.push(node.getAttribute('aria-checked') === 'true' ? 'on' : 'off');
+        } else if (node.tagName === 'BUTTON') {
+          if (node.getAttribute('aria-pressed') === 'true' ||
+              node.getAttribute('aria-checked') === 'true') {
+            parts.push(node.textContent, node.dataset.val || node.dataset.mode || '');
+          }
+        } else if (node.type === 'range' || node.type === 'color' || node.type === 'text') {
+          parts.push(node.value);
+        }
+      });
+    return parts.join(' ');
+  }
+
   function searchTextFor(host) {
     var keys = [].slice.call(host.querySelectorAll('[data-copy]')).map(function (node) {
       return node.getAttribute('data-copy');
@@ -162,7 +215,7 @@
       var both = site.pair(key);
       parts.push(both.en, both.yue, key);
     });
-    parts.push(host.dataset.value || '');
+    parts.push(currentValueOf(host));
     return parts.join(' ');
   }
 
@@ -488,35 +541,53 @@
     var select = doc.createElement('select');
     select.className = 'select';
     select.setAttribute('data-copy-attr', 'aria-label:settings.elements.pick');
+
     /*
      * A native <option> cannot wrap and cannot carry a secondary label, so in
      * bilingual mode it shows the primary language alone rather than a composed
-     * string that the closed control would have to truncate at 160 CSS px.
-     * The setting's own label and description are still fully bilingual.
+     * string the closed control would have to truncate at 160 CSS px. The
+     * setting's own label and description are still fully bilingual.
      */
-    function optionLabel(key) {
-      var both = site.pair(key);
+    function optionLabel(target) {
+      if (target.copyText) return target.copyText();
+      var both = site.pair(target.copy);
       return site.languageMode() === 'yue_HK' ? (both.yue || both.en) : both.en;
     }
 
-    ELEMENT_TARGETS.forEach(function (target) {
-      var option = doc.createElement('option');
-      option.value = target.id;
-      option.textContent = optionLabel(target.copy);
-      select.appendChild(option);
-    });
+    var targets = [];
+    function paintTargets() {
+      var previous = select.value;
+      targets = ELEMENT_TARGETS.concat(tabTargets());
+      select.innerHTML = '';
+      targets.forEach(function (target) {
+        var option = doc.createElement('option');
+        option.value = target.id;
+        option.textContent = optionLabel(target);
+        select.appendChild(option);
+      });
+      if (previous && targets.some(function (t) { return t.id === previous; })) {
+        select.value = previous;
+      }
+    }
+    paintTargets();
     pick.control.appendChild(select);
+
     // <option> text is not a data-copy target, so it is repainted explicitly
-    // whenever the language mode or either funny level changes.
+    // whenever the language mode or either funny level changes. The tab list is
+    // rebuilt too, so a renamed or reordered tab stays addressable.
     site.subscribe(function (keys) {
       if (keys.indexOf('languageMode') === -1 && keys.indexOf('funnyEn') === -1 &&
-          keys.indexOf('funnyYue') === -1) {
+          keys.indexOf('funnyYue') === -1 && keys.indexOf('tabOrder') === -1) {
         return;
       }
-      ELEMENT_TARGETS.forEach(function (target, index) {
-        select.options[index].textContent = optionLabel(target.copy);
-      });
+      paintTargets();
+      load();
     });
+
+    function currentTarget() {
+      return targets.filter(function (target) { return target.id === select.value; })[0] ||
+        targets[0] || { properties: [] };
+    }
 
     /*
      * `size` is consumed as a bare multiplier inside calc(), so it is stored
@@ -524,13 +595,13 @@
      * `calc(44px * 100%)` makes the whole declaration invalid, which silently
      * collapsed the hero headline to the inherited body size.
      */
-    var editors = [
-      { property: 'radius', copy: 'settings.elements.radius', min: 0, max: 32, step: 2, unit: 'px', ratio: false },
-      { property: 'spacing', copy: 'settings.elements.spacing', min: 0, max: 32, step: 2, unit: 'px', ratio: false },
-      { property: 'size', copy: 'settings.elements.size', min: 80, max: 140, step: 5, unit: '%', ratio: true }
+    var sliders = [
+      { property: 'radius', copy: 'settings.elements.radius', min: 0, max: 32, step: 2, unit: 'px', ratio: false, fallback: 16 },
+      { property: 'spacing', copy: 'settings.elements.spacing', min: 0, max: 32, step: 2, unit: 'px', ratio: false, fallback: 12 },
+      { property: 'size', copy: 'settings.elements.size', min: 80, max: 140, step: 5, unit: '%', ratio: true, fallback: 100 }
     ];
     var controls = {};
-    editors.forEach(function (editor) {
+    sliders.forEach(function (editor) {
       var shell = settingShell(host, editor.copy);
       var slider = doc.createElement('input');
       slider.type = 'range';
@@ -550,7 +621,7 @@
       });
       shell.control.appendChild(slider);
       shell.control.appendChild(readout);
-      controls[editor.property] = { slider: slider, readout: readout, editor: editor };
+      controls[editor.property] = { row: shell.setting, slider: slider, readout: readout, editor: editor };
     });
 
     var colorShell = settingShell(host, 'settings.elements.color');
@@ -561,6 +632,45 @@
       site.elementStyle(select.value, 'color', color.value);
     });
     colorShell.control.appendChild(color);
+    controls.color = { row: colorShell.setting, input: color };
+
+    // Per-element typography, which the appearance rules ask for by name.
+    var fontShell = settingShell(host, 'settings.elements.font');
+    var fontSelect = doc.createElement('select');
+    fontSelect.className = 'select';
+    fontSelect.setAttribute('data-copy-attr', 'aria-label:settings.elements.font');
+    var INHERIT = '';
+    var fontOptions = [{ id: INHERIT, label: '—' }].concat(availableFonts().map(function (font) {
+      return { id: font.id, label: font.label };
+    }));
+    fontOptions.forEach(function (font) {
+      var option = doc.createElement('option');
+      option.value = font.id;
+      option.textContent = font.label;
+      fontSelect.appendChild(option);
+    });
+    fontSelect.addEventListener('change', function () {
+      site.elementStyle(select.value, 'font',
+        fontSelect.value ? site.fontStacks[fontSelect.value] : null);
+    });
+    fontShell.control.appendChild(fontSelect);
+    controls.font = { row: fontShell.setting, input: fontSelect };
+
+    var weightShell = settingShell(host, 'settings.elements.weight');
+    var weightSelect = doc.createElement('select');
+    weightSelect.className = 'select';
+    weightSelect.setAttribute('data-copy-attr', 'aria-label:settings.elements.weight');
+    [[INHERIT, '—'], ['400', 'Regular'], ['500', 'Medium'], ['700', 'Bold']].forEach(function (option) {
+      var node = doc.createElement('option');
+      node.value = option[0];
+      node.textContent = option[1];
+      weightSelect.appendChild(node);
+    });
+    weightSelect.addEventListener('change', function () {
+      site.elementStyle(select.value, 'weight', weightSelect.value || null);
+    });
+    weightShell.control.appendChild(weightSelect);
+    controls.weight = { row: weightShell.setting, input: weightSelect };
 
     var resetShell = settingShell(host, 'settings.elements.reset');
     var reset = doc.createElement('button');
@@ -575,25 +685,44 @@
     resetShell.control.appendChild(reset);
 
     function load() {
+      var target = currentTarget();
+      var offered = target.properties || [];
       var stored = (site.get('elementStyles') || {})[select.value] || {};
+
+      // Only the properties this target actually consumes are shown. A control
+      // that writes a value nothing reads teaches the user the feature is
+      // broken, which is worse than not offering it.
       Object.keys(controls).forEach(function (property) {
-        var entry = controls[property];
-        var raw = stored[property];
+        controls[property].row.hidden = offered.indexOf(property) === -1;
+      });
+
+      sliders.forEach(function (editor) {
+        var entry = controls[editor.property];
+        var raw = stored[editor.property];
         var value = raw === undefined
-          ? defaultFor(property, entry.editor)
-          : (entry.editor.ratio ? Math.round(parseFloat(raw) * 100) : parseFloat(raw));
+          ? editor.fallback
+          : (editor.ratio ? Math.round(parseFloat(raw) * 100) : parseFloat(raw));
         entry.slider.value = String(value);
-        entry.readout.textContent = value + entry.editor.unit;
+        entry.readout.textContent = value + editor.unit;
       });
       color.value = stored.color || readableDefaultColor();
+      fontSelect.value = stackId(stored.font);
+      weightSelect.value = stored.weight ? String(stored.weight) : INHERIT;
     }
-    function defaultFor(property, editor) {
-      return property === 'size' ? 100 : (property === 'radius' ? 16 : 12);
+
+    function stackId(stack) {
+      if (!stack) return INHERIT;
+      var match = Object.keys(site.fontStacks).filter(function (id) {
+        return site.fontStacks[id] === stack;
+      })[0];
+      return match || INHERIT;
     }
+
     function readableDefaultColor() {
       var computed = getComputedStyle(doc.documentElement).getPropertyValue('--md-on-surface').trim();
       return /^#[0-9a-f]{6}$/i.test(computed) ? computed : '#e8e7ee';
     }
+
     select.addEventListener('change', load);
     load();
   }

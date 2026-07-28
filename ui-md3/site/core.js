@@ -97,7 +97,11 @@
   }
   function resetAll() {
     Object.keys(DEFAULTS).forEach(function (key) { state[key] = clone(DEFAULTS[key]); });
-    try { global.localStorage.removeItem(STORAGE_KEY); } catch (error) { storageBlocked = true; }
+    try {
+      global.localStorage.removeItem(STORAGE_KEY);
+      global.localStorage.removeItem(HISTORY_KEY);
+    } catch (error) { storageBlocked = true; }
+    history = [];
     if (i18n) i18n.setActiveMode(i18n.getDefaultMode ? i18n.getDefaultMode() : 'en', { persist: true });
     emit(Object.keys(DEFAULTS).concat(['languageMode']));
   }
@@ -331,6 +335,43 @@
         root.style.setProperty('--el-' + element + '-' + property, String(values[property]));
       });
     });
+    applyPerTabStyles(elements);
+  }
+
+  /*
+   * A single tab is styled directly rather than through a custom property: CSS
+   * cannot compose a variable name from an attribute, so per-tab properties
+   * would otherwise need one hand-written rule per tab per property. Writing
+   * the element's own style keeps the editor honest — what you set is what the
+   * tab gets — and an unset property is removed rather than left behind.
+   */
+  var TAB_STYLE_PROPERTIES = {
+    radius: 'borderRadius',
+    size: 'fontSize',
+    color: 'color',
+    font: 'fontFamily',
+    weight: 'fontWeight',
+    spacing: 'padding'
+  };
+
+  function applyPerTabStyles(elements) {
+    var tabs = global.document.querySelectorAll('#tabstrip .tab');
+    for (var index = 0; index < tabs.length; index++) {
+      var tab = tabs[index];
+      var values = elements['tab-' + tab.dataset.tab] || {};
+      Object.keys(TAB_STYLE_PROPERTIES).forEach(function (property) {
+        var name = TAB_STYLE_PROPERTIES[property];
+        var value = values[property];
+        if (value === undefined || value === '' || value === null) {
+          tab.style[name] = '';
+          return;
+        }
+        // `size` is stored unitless, like every other multiplier on the site.
+        tab.style[name] = property === 'size'
+          ? 'calc(' + (13.5 * Number(value)).toFixed(2) + 'px * var(--site-font-scale))'
+          : String(value);
+      });
+    }
   }
 
   function elementStyle(element, property, value) {
@@ -359,7 +400,34 @@
 
   /* ------------------------------------------------------ notifications */
 
-  var history = [];
+  /*
+   * The centre survives a reload. A notification that only exists until the
+   * page is refreshed is not a history, and the one thing a user reaches the
+   * centre for is the message they missed — often after reloading to see
+   * whether the setting really took.
+   *
+   * Records store their copy key and parameters, never rendered text, so a
+   * restored history re-renders in whatever language and funny level is active
+   * now rather than freezing the wording it was written in.
+   */
+  var HISTORY_KEY = 'bambuStudio.site.notifications.v1';
+  var HISTORY_LIMIT = 50;
+  var history = (function () {
+    try {
+      var raw = global.localStorage.getItem(HISTORY_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.slice(0, HISTORY_LIMIT) : [];
+    } catch (error) {
+      return [];
+    }
+  })();
+  function persistHistory() {
+    try {
+      global.localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch (error) {
+      storageBlocked = true;
+    }
+  }
   var toastHost = null;
   var AUTO_DISMISS = { info: 6000, success: 5000 };
 
@@ -389,7 +457,8 @@
       action: settings.action || null
     };
     history.unshift(record);
-    if (history.length > 50) history.length = 50;
+    if (history.length > HISTORY_LIMIT) history.length = HISTORY_LIMIT;
+    persistHistory();
     emit(['notifications']);
     if (!get('notifications') && kind !== 'error' && kind !== 'warning') return record;
     renderToast(record);
@@ -459,6 +528,7 @@
   }
   function clearNotifications() {
     history = [];
+    persistHistory();
     if (toastHost) toastHost.innerHTML = '';
     emit(['notifications']);
   }

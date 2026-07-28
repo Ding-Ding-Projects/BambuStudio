@@ -66,21 +66,36 @@
 
     var bell = doc.getElementById('notifyButton');
     var centre = doc.getElementById('notifyCentre');
+
+    function closeCentre(restoreFocus) {
+      if (centre.hasAttribute('hidden')) return;
+      var hadFocus = centre.contains(doc.activeElement);
+      centre.setAttribute('hidden', '');
+      bell.setAttribute('aria-expanded', 'false');
+      // A popover closed while focus was inside it must hand focus back, or a
+      // keyboard user is stranded on <body> at the top of the document.
+      if (restoreFocus !== false && hadFocus) bell.focus();
+    }
+
     bell.addEventListener('click', function () {
       var open = centre.hasAttribute('hidden');
       if (open) {
         centre.removeAttribute('hidden');
         paintCentre();
+        var first = centre.querySelector('button');
+        if (first) first.focus();
       } else {
-        centre.setAttribute('hidden', '');
+        closeCentre();
       }
       bell.setAttribute('aria-expanded', String(open));
     });
     doc.addEventListener('click', function (event) {
       if (!centre.contains(event.target) && event.target !== bell && !bell.contains(event.target)) {
-        centre.setAttribute('hidden', '');
-        bell.setAttribute('aria-expanded', 'false');
+        closeCentre(false);
       }
+    });
+    doc.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeCentre();
     });
 
     function paintCentre() {
@@ -129,6 +144,31 @@
     ['launchTop', 'footerLaunch'].forEach(function (id) {
       var link = doc.getElementById(id);
       if (link) link.setAttribute('href', global.BambuViews.APP_HREF);
+    });
+  }
+
+  /* ------------------------------------------------ funny-level disclosure */
+
+  /*
+   * The tone setting has to be disclosed, not just discoverable. A visitor who
+   * never opens Settings would otherwise meet playful copy — including on a
+   * warning — without ever being told it is a setting they control. So the
+   * first visit raises one non-blocking notification naming it, with an action
+   * that goes straight there. Shown once, then never again.
+   */
+  function discloseFunnyLevel() {
+    var key = 'bambuStudio.site.toneDisclosed';
+    try {
+      if (global.localStorage.getItem(key) === '1') return;
+      global.localStorage.setItem(key, '1');
+    } catch (error) {
+      return; // Storage is blocked; we would show this on every load.
+    }
+    site.notify('info', 'notify.tone.disclosure', null, {
+      action: {
+        key: 'notify.tone.action',
+        run: function () { if (tabs) tabs.activate('settings', { focus: true }); }
+      }
     });
   }
 
@@ -216,6 +256,7 @@
     site.applyCopy(doc.body);
 
     if (site.storageBlocked()) site.notify('warning', 'settings.storage.blocked');
+    discloseFunnyLevel();
     maybeDimSum();
   }
 

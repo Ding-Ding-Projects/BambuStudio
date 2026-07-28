@@ -476,8 +476,16 @@
     'changelog.preset.30': { en: ['Last 30 days'], yue: ['最近 30 日'] },
     'changelog.preset.90': { en: ['Last 90 days'], yue: ['最近 90 日'] },
     'changelog.dateformat': {
-      en: ['Type a date as YYYY-MM-DD, or use the calendar.'],
-      yue: ['可以打 YYYY-MM-DD 格式，或者用日曆揀。']
+      en: [
+        "Type a date as YYYY-MM-DD, or use the calendar.",
+        "Type a date as YYYY-MM-DD, or pick one from the calendar.",
+        "Type YYYY-MM-DD, or let the calendar do the typing."
+      ],
+      yue: [
+        "可以打 YYYY-MM-DD 格式，或者用日曆揀。",
+        "打 YYYY-MM-DD，或者用日曆揀一個。",
+        "打 YYYY-MM-DD，唔想打就用日曆幫你揀。"
+      ]
     },
     'changelog.dateinvalid': {
       en: [
@@ -544,15 +552,31 @@
       ]
     },
     'changelog.baseline': {
-      en: ['Oldest published release — there is no earlier release to compare it against.'],
-      yue: ['最早發佈嘅版本 — 冇更早嘅版本可以比較。']
+      en: [
+        "Oldest published release — there is no earlier release to compare it against.",
+        "The oldest published release, so there is nothing earlier to compare it against.",
+        "The oldest release there is. Nothing came before it, so there is nothing to diff against."
+      ],
+      yue: [
+        "最早發佈嘅版本 — 冇更早嘅版本可以比較。",
+        "最早發佈嗰個版本，所以冇更早嘅可以比。",
+        "最早嗰個版本。前面乜都冇，自然冇得比。"
+      ]
     },
     'changelog.count': { en: ['{shown} of {total} releases'], yue: ['{total} 個版本中顯示 {shown} 個'] },
     'changelog.export': { en: ['Export Markdown'], yue: ['匯出 Markdown'] },
     'changelog.copy': { en: ['Copy view'], yue: ['複製目前檢視'] },
     'changelog.derivation': {
-      en: ['Change categories are derived mechanically from each commit subject’s leading verb.'],
-      yue: ['變更分類係機械式由每個提交標題嘅開頭動詞推導出嚟。']
+      en: [
+        "Change categories are derived mechanically from each commit subject’s leading verb.",
+        "Change categories come mechanically from each commit subject’s leading verb.",
+        "Those category badges are guessed from each commit subject’s first word — a machine did it, not a human."
+      ],
+      yue: [
+        "變更分類係機械式由每個提交標題嘅開頭動詞推導出嚟。",
+        "變更分類係由每個提交標題嘅第一個動詞機械式推出嚟。",
+        "嗰啲分類牌係靠提交標題第一個字估出嚟 — 機器做嘅，唔係人揀嘅。"
+      ]
     },
     'changelog.cat.added': { en: ['Added'], yue: ['新增'] },
     'changelog.cat.fixed': { en: ['Fixed'], yue: ['修正'] },
@@ -718,8 +742,16 @@
     'regex.part.alternation': { en: ['Alternation'], yue: ['擇一'] },
     'regex.part.quantifier': { en: ['Quantifier'], yue: ['數量詞'] },
     'regex.escapenote': {
-      en: ['Literal text is escaped for you, so . and ? mean themselves.'],
-      yue: ['字面文字會自動加逸出字元，所以 . 同 ? 就係佢自己。']
+      en: [
+        "Literal text is escaped for you, so . and ? mean themselves.",
+        "Literal text is escaped for you, so . and ? mean exactly themselves.",
+        "Literal text gets escaped on the way in, so a full stop stays a full stop."
+      ],
+      yue: [
+        "字面文字會自動加逸出字元，所以 . 同 ? 就係佢自己。",
+        "字面文字會自動加逸出字元，所以 . 同 ? 就真係代表佢自己。",
+        "字面文字入嚟嗰陣會自動逸出，個句號就一世都係句號。"
+      ]
     },
 
     /* ------------------------------------------------------------ settings */
@@ -742,8 +774,16 @@
     },
     'settings.search': { en: ['Search settings'], yue: ['搜尋設定'] },
     'settings.search.hint': {
-      en: ['Searches every settings group, including the ones not currently open.'],
-      yue: ['會搜尋所有設定分組，包括而家未打開嗰啲。']
+      en: [
+        "Searches every settings group, including the ones not currently open.",
+        "Searches every settings group, including the ones you have not opened.",
+        "Searches every group here, even the ones you have not scrolled to yet."
+      ],
+      yue: [
+        "會搜尋所有設定分組，包括而家未打開嗰啲。",
+        "會搜尋所有設定分組，連你未開過嗰啲都搵。",
+        "呢度所有分組都會搵，連你未碌到落去嗰啲都計。"
+      ]
     },
     'settings.search.elsewhere': {
       en: ['{count} more match(es) in {group}.'],
@@ -773,8 +813,16 @@
     'settings.group.data': { en: ['Stored data'], yue: ['已儲存資料'] },
     'settings.language.mode': { en: ['Language mode'], yue: ['語言模式'] },
     'settings.language.desc': {
-      en: ['English, Hong Kong Cantonese, or both together.'],
-      yue: ['英文、香港廣東話，或者兩種一齊顯示。']
+      en: [
+        "English, Hong Kong Cantonese, or both together.",
+        "English, Hong Kong Cantonese, or both at once.",
+        "English, Hong Kong Cantonese, or both at once if you cannot choose."
+      ],
+      yue: [
+        "英文、香港廣東話，或者兩種一齊顯示。",
+        "英文、香港廣東話，或者兩樣一齊嚟。",
+        "英文、香港廣東話，揀唔到就兩樣一齊要。"
+      ]
     },
     'settings.funny.en': { en: ['Funny level — English'], yue: ['搞笑程度 — 英文'] },
     'settings.funny.yue': { en: ['Funny level — Cantonese'], yue: ['搞笑程度 — 廣東話'] },
@@ -793,47 +841,155 @@
     'settings.funny.current': { en: ['Level {level} of 5'], yue: ['第 {level} 級（共 5 級）'] },
     'settings.funny.preview': { en: ['Preview'], yue: ['預覽'] },
     'settings.theme': { en: ['Theme'], yue: ['主題'] },
-    'settings.theme.desc': { en: ['Light or dark surfaces.'], yue: ['淺色或深色表面。'] },
+    'settings.theme.desc': {
+      en: [
+        "Light or dark surfaces.",
+        "Light or dark surfaces.",
+        "Light or dark. There is no third option and there never will be."
+      ],
+      yue: [
+        "淺色或深色表面。",
+        "淺色定深色表面。",
+        "淺色定深色。冇第三個選擇，將來都唔會有。"
+      ]
+    },
     'settings.density': { en: ['Density'], yue: ['密度'] },
-    'settings.density.desc': { en: ['Comfortable or compact spacing.'], yue: ['寬鬆或者緊湊嘅間距。'] },
+    'settings.density.desc': {
+      en: [
+        "Comfortable or compact spacing.",
+        "Comfortable or compact spacing.",
+        "Comfortable, or compact for when the screen is small and the day is long."
+      ],
+      yue: [
+        "寬鬆或者緊湊嘅間距。",
+        "寬鬆定緊湊嘅間距。",
+        "寬鬆，或者當個芒細、個日又長嗰陣揀緊湊。"
+      ]
+    },
     'settings.accent': { en: ['Accent seed colour'], yue: ['重點種子色'] },
     'settings.accent.desc': {
-      en: ['The seed the whole tonal palette is derived from.'],
-      yue: ['成套色階由呢隻種子色推導出嚟。']
+      en: [
+        "The seed the whole tonal palette is derived from.",
+        "The seed colour the whole tonal palette is derived from.",
+        "One colour goes in; a whole tonal palette comes out."
+      ],
+      yue: [
+        "成套色階由呢隻種子色推導出嚟。",
+        "成套色階由呢隻種子色生成。",
+        "入一隻色，出成套色階。"
+      ]
     },
     'settings.accent.custom': { en: ['Custom seed colour'], yue: ['自訂種子色'] },
     'settings.font.family': { en: ['UI font'], yue: ['介面字型'] },
     'settings.font.family.desc': {
-      en: ['Bundled Roboto, or a font already installed on this computer. Chinese text falls back to a CJK-capable face automatically.'],
-      yue: ['內附 Roboto，或者你部電腦已安裝嘅字型。中文會自動退回支援中文嘅字型。']
+      en: [
+        "Bundled Roboto, or a font already installed on this computer. Chinese text falls back to a CJK-capable face automatically.",
+        "Bundled Roboto, or a font already installed on this computer. Chinese text falls back to a CJK-capable face automatically.",
+        "Bundled Roboto, or whatever this computer already has. Chinese always falls back to a face that can actually draw it — a Latin-only font would render it as tofu."
+      ],
+      yue: [
+        "內附 Roboto，或者你部電腦已安裝嘅字型。中文會自動退回支援中文嘅字型。",
+        "內附 Roboto，或者你部機已經有嘅字型。中文會自動退回識畫中文嘅字型。",
+        "內附 Roboto，或者你部機本身有嘅字型。中文一定會退返去畫得到中文嘅字型 — 唔係就變成一格格豆腐。"
+      ]
     },
     'settings.font.size': { en: ['Text size'], yue: ['文字大小'] },
-    'settings.font.size.desc': { en: ['Scales every text style on the site.'], yue: ['會縮放全站每種文字樣式。'] },
+    'settings.font.size.desc': {
+      en: [
+        "Scales every text style on the site.",
+        "Scales every text style on the site.",
+        "Scales every text style at once — one number, whole site."
+      ],
+      yue: [
+        "會縮放全站每種文字樣式。",
+        "會縮放全站每種文字樣式。",
+        "一個數字，全站文字一齊大細。"
+      ]
+    },
     'settings.font.weight': { en: ['Body weight'], yue: ['內文字重'] },
-    'settings.font.weight.desc': { en: ['Weight used for body copy.'], yue: ['內文使用嘅字重。'] },
+    'settings.font.weight.desc': {
+      en: [
+        "Weight used for body copy.",
+        "Weight used for body copy.",
+        "How heavy the body text sits. Headings keep their own weight."
+      ],
+      yue: [
+        "內文使用嘅字重。",
+        "內文用嘅字重。",
+        "內文有幾粗。標題自己有自己嘅字重，唔跟。"
+      ]
+    },
     'settings.elements.desc': {
-      en: ['Restyle one surface at a time. Each element keeps its own saved values and can be reset on its own.'],
-      yue: ['逐個表面單獨改樣。每個元件有自己嘅儲存值，可以單獨還原。']
+      en: [
+        "Restyle one surface at a time, including each tab on its own. Every element keeps its own saved values and resets on its own, and only the properties a surface actually uses are offered.",
+        "Restyle one surface at a time — including each tab on its own. Every element keeps its own saved values and resets on its own, and only the properties a surface actually uses are offered.",
+        "Restyle one surface at a time, right down to a single tab. Each element remembers its own values and resets on its own, and you are only offered the properties that surface actually uses — a slider that does nothing is worse than no slider."
+      ],
+      yue: [
+        "逐個表面單獨改樣，連每一個分頁都可以自己改。每個元件有自己嘅儲存值，可以單獨還原；而且只會俾你改嗰個表面真係用到嘅屬性。",
+        "逐個表面單獨改樣，連每一個分頁都改得。每個元件有自己嘅儲存值，可以單獨還原；只會俾你改嗰個表面真係用到嘅屬性。",
+        "逐個表面單獨改樣，細到單一個分頁都得。每個元件記住自己嗰份、單獨還原，而且淨係俾你改嗰個表面真係用到嘅嘢 — 一條拉極都冇反應嘅滑桿，仲衰過冇。"
+      ]
     },
     'settings.elements.pick': { en: ['Element'], yue: ['元件'] },
     'settings.elements.radius': { en: ['Corner radius'], yue: ['圓角'] },
     'settings.elements.spacing': { en: ['Spacing'], yue: ['間距'] },
     'settings.elements.color': { en: ['Text colour'], yue: ['文字顏色'] },
     'settings.elements.size': { en: ['Text size'], yue: ['文字大小'] },
+    'settings.elements.font': {
+      en: [
+        "Font"
+      ],
+      yue: [
+        "字型"
+      ]
+    },
+    'settings.elements.weight': {
+      en: [
+        "Weight"
+      ],
+      yue: [
+        "字重"
+      ]
+    },
     'settings.elements.reset': { en: ['Reset this element'], yue: ['還原呢個元件'] },
     'settings.element.tabstrip': { en: ['Tab strip'], yue: ['分頁列'] },
+    'settings.element.tab': {
+      en: [
+        "Tab"
+      ],
+      yue: [
+        "分頁"
+      ]
+    },
     'settings.element.cards': { en: ['Content cards'], yue: ['內容卡片'] },
     'settings.element.hero': { en: ['Hero headline'], yue: ['主標題'] },
     'settings.element.toasts': { en: ['Notifications'], yue: ['通知'] },
     'settings.dimsum': { en: ['Dim sum surprise'], yue: ['點心驚喜'] },
     'settings.dimsum.desc': {
-      en: ['A one-in-a-hundred chance, per visit, of a dim sum dish appearing in the corner. It never blocks the page and dismisses itself.'],
-      yue: ['每次入嚟有百分之一機會，角落會出現一款點心。唔會阻你做嘢，自己會消失。']
+      en: [
+        "A one-in-a-hundred chance, per visit, of a dim sum dish appearing in the corner. It never blocks the page and dismisses itself.",
+        "A one-in-a-hundred chance, per visit, of a dim sum dish appearing in the corner. It never blocks the page and dismisses itself.",
+        "One visit in a hundred, a dim sum dish turns up in the corner. It never blocks the page, and it clears its own plate."
+      ],
+      yue: [
+        "每次入嚟有百分之一機會，角落會出現一款點心。唔會阻你做嘢，自己會消失。",
+        "每次入嚟有百分之一機會，角落彈一款點心出嚟。唔會阻你做嘢，自己會走。",
+        "一百次入面有一次，角落會有碟點心出現。唔會阻你做嘢，仲會自己收檯。"
+      ]
     },
     'settings.notify.enabled': { en: ['Show notifications'], yue: ['顯示通知'] },
     'settings.notify.desc': {
-      en: ['Corner toasts for actions you take. Errors and warnings stay until dismissed either way, and everything is kept in the notification centre.'],
-      yue: ['你做嘢之後喺角落彈出嘅提示。錯誤同警告點都會留到你自己關咗佢，全部都會存入通知中心。']
+      en: [
+        "Corner toasts for actions you take. Errors and warnings stay until dismissed either way, and everything is kept in the notification centre.",
+        "Corner toasts for actions you take. Errors and warnings stay until you dismiss them either way, and everything is kept in the notification centre.",
+        "Corner toasts for what you do. Errors and warnings ignore this switch and stay until you dismiss them — a message you need in order to act is not decoration — and everything lands in the notification centre regardless."
+      ],
+      yue: [
+        "你做嘢之後喺角落彈出嘅提示。錯誤同警告點都會留到你自己關咗佢，全部都會存入通知中心。",
+        "你做完嘢喺角落彈出嘅提示。錯誤同警告點都要你自己關，全部都會入通知中心。",
+        "你做完嘢角落彈出嘅提示。錯誤同警告唔理呢個掣，一定要你自己關 — 你要靠佢做決定嘅訊息唔係裝飾 — 而且乜都照入通知中心。"
+      ]
     },
     'settings.reset': { en: ['Reset all settings'], yue: ['還原所有設定'] },
     'settings.reset.desc': {
@@ -916,10 +1072,78 @@
       en: ['Exported {count} release(s) as Markdown.', 'Exported {count} release(s) as Markdown.', '{count} release(s) exported as Markdown.', '{count} release(s) packed into Markdown.', '{count} release(s) packed into Markdown and sent to your downloads.'],
       yue: ['已將 {count} 個版本匯出成 Markdown。', '已將 {count} 個版本匯出成 Markdown。', '{count} 個版本已匯出成 Markdown。', '{count} 個版本打包成 Markdown。', '{count} 個版本打包成 Markdown，送咗去你嘅下載資料夾。']
     },
-    'notify.tab.pinned': { en: ['Pinned {name}.'], yue: ['已釘住「{name}」。'] },
-    'notify.tab.unpinned': { en: ['Unpinned {name}.'], yue: ['已解除釘住「{name}」。'] },
-    'notify.tab.reset': { en: ['Tab order and pinning restored to the defaults.'], yue: ['分頁次序同釘住已回復預設。'] },
-    'notify.dimsum.off': { en: ['The dim sum surprise is off.'], yue: ['點心驚喜已關閉。'] },
+    'notify.tab.pinned': {
+      en: [
+        "Pinned {name}.",
+        "Pinned {name}.",
+        "{name} is pinned. It keeps its spot now."
+      ],
+      yue: [
+        "已釘住「{name}」。",
+        "釘咗「{name}」。",
+        "「{name}」釘實咗，唔會走位。"
+      ]
+    },
+    'notify.tab.unpinned': {
+      en: [
+        "Unpinned {name}.",
+        "Unpinned {name}.",
+        "{name} is free to move again."
+      ],
+      yue: [
+        "已解除釘住「{name}」。",
+        "「{name}」解除咗釘住。",
+        "「{name}」拔咗釘，可以再郁。"
+      ]
+    },
+    'notify.tab.reset': {
+      en: [
+        "Tab order and pinning restored to the defaults.",
+        "Tab order, pinning and grouping are back to the defaults.",
+        "Tab order, pinning and grouping are back to the defaults. Nothing else was touched."
+      ],
+      yue: [
+        "分頁次序同釘住已回復預設。",
+        "分頁次序、釘住同分組已回復預設。",
+        "分頁次序、釘住、分組全部返晒預設。其他嘢一律冇郁。"
+      ]
+    },
+    'notify.dimsum.off': {
+      en: [
+        "The dim sum surprise is off.",
+        "The dim sum surprise is off.",
+        "No more dim sum. The trolley will pass you by."
+      ],
+      yue: [
+        "點心驚喜已關閉。",
+        "點心驚喜熄咗。",
+        "冇點心喇。架車會直接經過你。"
+      ]
+    },
+    'notify.tone.disclosure': {
+      en: [
+        "This site writes its text at a tone level you control, separately for English and Cantonese. It applies to every message, including errors and warnings, and never changes what a message says has happened.",
+        "This site writes its text at a tone level you control, separately for English and Cantonese. It applies to every message — errors and warnings included — and never changes what a message says has happened.",
+        "Heads up: the tone of everything here is a setting you control, one slider per language. It styles every message, errors and warnings included, and never changes the facts in them.",
+        "Heads up: the tone of everything here is yours to set, one slider per language. It styles every message — yes, including the ones telling you something went wrong — and never touches the facts inside them.",
+        "Heads up: the tone of everything here is yours to set, one slider per language. It styles every message, including the ones delivering bad news, and never lays a finger on the facts inside them."
+      ],
+      yue: [
+        "本站嘅文字語氣由你控制，英文同廣東話各自一條。所有訊息都受影響，包括錯誤同警告，但永遠唔會改變訊息講嘅事實。",
+        "本站嘅文字語氣由你控制，英文同廣東話各自一條。所有訊息都計，錯誤同警告都有份，但事實永遠唔會被改動。",
+        "講聲你知：呢度所有文字嘅語氣係你話事嘅設定，每種語言一條滑桿。所有訊息都受影響，錯誤警告都計，但入面嘅事實永遠唔變。",
+        "講聲你知：呢度所有文字嘅語氣你話事，每種語言一條滑桿。連報壞消息嗰啲訊息都會跟住變語氣，但入面嘅事實一個字都唔會郁。",
+        "講聲你知：呢度所有文字嘅語氣你話事，每種語言一條滑桿。連同你講衰嘢嗰啲訊息都會轉語氣，但入面嘅事實一條毛都唔會郁。"
+      ]
+    },
+    'notify.tone.action': {
+      en: [
+        "Open settings"
+      ],
+      yue: [
+        "開啟設定"
+      ]
+    },
 
     /* --------------------------------------------------------------- dimsum */
     'dimsum.badge': { en: ['Dim sum surprise'], yue: ['點心驚喜'] },
@@ -961,23 +1185,55 @@
     },
     'build.step1.title': { en: ['Imported the MD3 design'], yue: ['匯入 MD3 設計'] },
     'build.step1.body': {
-      en: ['A full desktop-shell Material 3 design of the real Bambu Studio UI — nine screens, dialogs and tokens.'],
-      yue: ['一套完整嘅桌面 Material 3 設計，覆蓋真實 Bambu Studio 介面 — 九版畫面、對話框同 token。']
+      en: [
+        "A full desktop-shell Material 3 design of the real Bambu Studio UI — nine screens, dialogs and tokens.",
+        "A full desktop-shell Material 3 design of the real Bambu Studio UI — nine screens, dialogs and tokens.",
+        "A whole desktop shell in Material 3, drawn against the real Bambu Studio UI — nine screens, the dialogs, and every token underneath."
+      ],
+      yue: [
+        "一套完整嘅桌面 Material 3 設計，覆蓋真實 Bambu Studio 介面 — 九版畫面、對話框同 token。",
+        "一套完整嘅桌面 Material 3 設計，照住真實 Bambu Studio 介面做 — 九版畫面、對話框同 token。",
+        "成個桌面外殼用 Material 3 重新畫過，對住真實 Bambu Studio 介面 — 九版畫面、啲對話框，連底下每粒 token。"
+      ]
     },
     'build.step2.title': { en: ['Tiny vanilla runtime'], yue: ['細細粒嘅原生執行環境'] },
     'build.step2.body': {
-      en: ['A dependency-free engine reimplements the design’s template dialect with keyed patching that preserves focus and caret.'],
-      yue: ['一個零依賴引擎重新實作咗設計嘅樣板語法，用鍵值修補保住焦點同游標位置。']
+      en: [
+        "A dependency-free engine reimplements the design’s template dialect with keyed patching that preserves focus and caret.",
+        "A dependency-free engine reimplements the design’s template dialect with keyed patching that preserves focus and caret.",
+        "A dependency-free engine reimplements the design’s own template dialect, patching by key so your focus and text caret survive a re-render."
+      ],
+      yue: [
+        "一個零依賴引擎重新實作咗設計嘅樣板語法，用鍵值修補保住焦點同游標位置。",
+        "一個零依賴引擎重新實作咗設計嘅樣板語法，用鍵值修補保住焦點同游標。",
+        "一個零依賴引擎照住設計自己嗰套樣板語法重寫，用鍵值修補，所以重繪之後你個焦點同打字游標都仲喺原位。"
+      ]
     },
     'build.step3.title': { en: ['Coded by the Codex CLI'], yue: ['由 Codex CLI 寫成'] },
     'build.step3.body': {
-      en: ['Screens built in parallel across git worktrees, orchestrated agent by agent, then assembled and QA’d.'],
-      yue: ['多個畫面喺 git worktree 並行開發，逐個代理指揮，之後合併同做 QA。']
+      en: [
+        "Screens built in parallel across git worktrees, orchestrated agent by agent, then assembled and QA’d.",
+        "Screens built in parallel across git worktrees, orchestrated agent by agent, then assembled and QA’d.",
+        "Nine screens built at once, one agent per git worktree, then assembled and put through QA — parallelism with a merge conflict budget."
+      ],
+      yue: [
+        "多個畫面喺 git worktree 並行開發，逐個代理指揮，之後合併同做 QA。",
+        "多個畫面喺 git worktree 並行開發，逐個代理指揮，之後合併同做 QA。",
+        "九版畫面一次過開工，一個 worktree 一個代理，之後合併再過 QA — 並行嘅代價就係要預埋合併衝突。"
+      ]
     },
     'build.step4.title': { en: ['Checked at 444 layout cases'], yue: ['444 格版面測試'] },
     'build.step4.body': {
-      en: ['156 landing cases — thirteen widths by four display scales by three language modes — plus 288 more that activate every tab, all driven in a real browser. One clipped element, one undersized control or one empty panel fails the deploy.'],
-      yue: ['156 格首頁測試 — 十三種闊度 × 四種顯示比例 × 三種語言模式 — 再加 288 格逐個分頁㩒一次，全部喺真實瀏覽器行。一個元件切字、一個掣細過標準、一版空白，就當部署失敗。']
+      en: [
+        "156 landing cases — thirteen widths by four display scales by three language modes — plus 288 more that activate every tab, all driven in a real browser. One clipped element, one undersized control or one empty panel fails the deploy.",
+        "156 landing cases — thirteen widths by four display scales by three language modes — plus 288 more that activate every tab, all driven in a real browser. One clipped element, one undersized control or one empty panel fails the deploy.",
+        "156 landing cases — thirteen widths, four display scales, three language modes — plus 288 more that press every tab, all in a real browser. One clipped element, one undersized control, one empty panel, and the deploy does not happen."
+      ],
+      yue: [
+        "156 格首頁測試 — 十三種闊度 × 四種顯示比例 × 三種語言模式 — 再加 288 格逐個分頁㩒一次，全部喺真實瀏覽器行。一個元件切字、一個掣細過標準、一版空白，就當部署失敗。",
+        "156 格首頁測試 — 十三種闊度 × 四種顯示比例 × 三種語言模式 — 再加 288 格逐個分頁㩒一次，全部喺真實瀏覽器行。一個元件切字、一個掣細過標準、一版空白，就當部署失敗。",
+        "156 格首頁 — 十三種闊度、四種比例、三種語言 — 再加 288 格逐個分頁㩒過，全部喺真瀏覽器行。有一個元件切字、一個掣細過標準、一版空白？咁就唔使部署喇。"
+      ]
     },
 
     /* -------------------------------------------------------------- footer */

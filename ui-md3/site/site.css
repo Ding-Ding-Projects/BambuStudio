@@ -240,8 +240,10 @@ header {
   border: 1px solid transparent;
   border-radius: var(--el-tabstrip-radius, 14px) var(--el-tabstrip-radius, 14px) 6px 6px;
   background: var(--md-sc-low); color: var(--el-tabstrip-color, var(--md-on-surface-variant));
-  font: inherit; font-size: calc(13.5px * var(--site-font-scale) * var(--el-tabstrip-size, 1));
-  font-weight: 500; cursor: pointer; white-space: normal; overflow-wrap: anywhere;
+  font-family: var(--el-tabstrip-font, inherit);
+  font-size: calc(13.5px * var(--site-font-scale) * var(--el-tabstrip-size, 1));
+  font-weight: var(--el-tabstrip-weight, 500);
+  padding: var(--el-tabstrip-spacing, 6px) 14px; cursor: pointer; white-space: normal; overflow-wrap: anywhere;
 }
 .tab:hover { background: var(--md-sc-high); }
 .tab.active {
@@ -336,6 +338,8 @@ main { display: block; }
 }
 .hero-title {
   color: var(--el-hero-color, inherit);
+  font-family: var(--el-hero-font, inherit);
+  font-weight: var(--el-hero-weight, 700);
   font-size: calc(44px * var(--site-font-scale) * var(--el-hero-size, 1));
 }
 .lede { font-size: calc(16.5px * var(--site-font-scale)); color: var(--md-on-surface-variant); max-width: 560px; }
@@ -372,7 +376,10 @@ main { display: block; }
 
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
 .card {
-  position: relative; overflow: hidden; min-height: 170px; padding: var(--pad);
+  position: relative; overflow: hidden; min-height: 170px;
+  padding: var(--el-cards-spacing, var(--pad));
+  font-family: var(--el-cards-font, inherit);
+  font-weight: var(--el-cards-weight, inherit);
   border-radius: var(--el-cards-radius, var(--radius));
   background: var(--md-sc-low); border: 1px solid var(--md-outline-variant);
   transition: border-color .15s, transform .15s;
@@ -654,8 +661,10 @@ input[type="color"] {
 }
 .toast {
   display: flex; gap: 10px; align-items: flex-start; pointer-events: auto;
-  padding: 12px 12px 12px 14px;
+  padding: var(--el-toasts-spacing, 12px) var(--el-toasts-spacing, 12px) var(--el-toasts-spacing, 12px) 14px;
   border-radius: var(--el-toasts-radius, 16px);
+  font-family: var(--el-toasts-font, inherit);
+  font-weight: var(--el-toasts-weight, inherit);
   background: var(--md-sc-high); color: var(--el-toasts-color, var(--md-on-surface));
   border: 1px solid var(--md-outline-variant); box-shadow: 0 12px 30px var(--md-shadow);
   font-size: calc(13.5px * var(--site-font-scale) * var(--el-toasts-size, 1));
