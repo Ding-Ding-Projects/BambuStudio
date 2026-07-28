@@ -45,8 +45,8 @@ node ui-md3/scripts/capture-site.mjs https://ding-ding-projects.github.io/BambuS
 | `app/titlebar-640.png` | The title bar at 640 CSS px with minimize, maximize and close all in frame |
 | `app/settings-switches.png` | The six General preference switches |
 | `app/version-history-dialog.png` | The version-history drawer as a real modal |
-| `app/filament-search-before.png` | The Filament Manager unfiltered |
-| `app/filament-search-filtered.png` | The same list filtered to one row by a plain-text search |
+| `app/ink-search-before.png` | The Ink Manager unfiltered |
+| `app/ink-search-filtered.png` | The same list filtered to one row by a plain-text search |
 | `app/evidence.json` | Accessible names, switch states, inert counts, focus behaviour, measured rects |
 
 Some of those fixes have **no visible surface** — an accessible name is not a pixel. For those,

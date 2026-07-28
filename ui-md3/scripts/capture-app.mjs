@@ -187,10 +187,10 @@ try {
   // #5 — a search field that actually filters, and its empty state.
   await viewport(1280, 900);
   await open({ view: 'filament' });
-  await shoot('filament-search-before', '.titlebar ~ *:last-child', 0).catch(() => shoot('filament-search-before'));
+  await shoot('ink-search-before', '.titlebar ~ *:last-child', 0).catch(() => shoot('ink-search-before'));
   evidence.search = JSON.parse(await evaluateAfterRender(`(async () => {
     const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-    const input = document.querySelector('input[placeholder="Search filaments"]');
+    const input = document.querySelector('input[placeholder="Search inks"]');
     // Count the preset rows themselves. Counting every "Bambu …" on the page
     // also counts the product name in the title bar and each row's vendor
     // cell, which is how a passing filter can look like a failing one.
@@ -205,7 +205,7 @@ try {
     await type('petg');
     const petg = { count: rows(), keepsPetg: /Bambu PETG HF/.test(document.body.innerText), dropsAbs: !/Bambu ABS/.test(document.body.innerText) };
     await type('.');
-    const dot = { count: rows(), empty: /No filaments match/i.test(document.body.innerText) };
+    const dot = { count: rows(), empty: /No inks match/i.test(document.body.innerText) };
     await type('');
     return JSON.stringify({
       rowsUnfiltered: before,
@@ -216,11 +216,11 @@ try {
   })()`));
   await evaluate(`(() => {
     const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-    const input = document.querySelector('input[placeholder="Search filaments"]');
+    const input = document.querySelector('input[placeholder="Search inks"]');
     set.call(input, 'petg'); input.dispatchEvent(new Event('input', { bubbles: true }));
   })()`);
   await delay(300);
-  await shoot('filament-search-filtered');
+  await shoot('ink-search-filtered');
 
   // #1 and #2 — accessible names and switch state, from Chrome's own AX tree.
   await open({ view: 'settings' });
