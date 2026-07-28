@@ -151,9 +151,14 @@ gallery above.
 
 [![Bambu Studio reimagined in Material You, with a desktop 3D printer and luminous toolpaths](ui-md3/assets/showcase/og-social.webp)](https://ding-ding-projects.github.io/BambuStudio/)
 
-The Pages landing and interactive Home screen now share a purpose-built, web-optimized visual
-showcase for model preparation, G-code preview, device monitoring, filament management, and
-calibration. [Open the landing page](https://ding-ding-projects.github.io/BambuStudio/) or read the
+The Pages site is a **browser-style tabbed application**, not a scrolling landing page: eight tabs
+with a strip you can pin, drag, group and search; English and Hong Kong Cantonese copy at five funny
+levels per language on two independent sliders; a full ECMAScript regex builder behind every search
+bar; a changelog viewer covering every published release; and a one-in-a-hundred dim sum surprise.
+Everything is served from this repository — no CDN, no analytics, no third-party request — and its
+deploy is gated on 444 measured layout cases in a real headless browser.
+[Open the site](https://ding-ding-projects.github.io/BambuStudio/), read the
+[site documentation](docs/features/pages/README.md), or see the
 [visual showcase documentation](docs/features/design-system/generated-visual-showcase.md).
 
 **Prepare · light theme · English**

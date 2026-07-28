@@ -61,6 +61,30 @@
 
 ## Landed
 
+### GitHub Pages site rebuilt as a tabbed Material 3 app (2026-07-28)
+
+- Replaced the single scrolling landing page with a **browser-style tabbed site** of eight tabs:
+  a persistent strip with an overflow menu, drag and keyboard reordering, pinning, user-assignable
+  groups, a searchable tab list, and order/pinning/grouping persisted across restarts.
+- Added **English and Hong Kong Cantonese copy at five funny levels each**, on two independent
+  persisted sliders. Facts are invariant across levels and that invariance is asserted per variant.
+- Added the **full ECMAScript regex builder** — guided parts, flags, live matches with correct
+  capture-group identity, copy and export — and wired it to every search bar on the site. Opt-in
+  regex filtering runs inside a terminable Web Worker; where none can be created the toggle is
+  disabled and plain text keeps working.
+- Added a **changelog viewer** covering all 34 published releases, generated from the Releases API
+  plus the commits between tags, with a UTC calendar range filter, typed ISO and locale dates,
+  composing search, and a Markdown export that states the range it exported.
+- Added **non-blocking notifications** with a history centre, a **settings surface** with
+  per-element appearance editors and a cross-tab search, and the **1% dim sum surprise** drawn from
+  bundled SVG.
+- Gated the deploy on **444 measured runtime layout cases** (156 landing + 288 per-tab) plus 44
+  static contracts; `compose-site.mjs` and `serve.mjs` make the published tree reproducible locally.
+- Fixed **29 defects** found by a twelve-agent adversarial review of the new site, and the
+  prototype's accessibility defects reported in issue #24.
+- Documented in [`docs/features/pages/`](docs/features/pages/README.md); captures in
+  [`docs/screenshots/pages/`](docs/screenshots/pages/README.md).
+
 ### Image-led app and GitHub Pages showcase (2026-07-27)
 
 - Added eleven original, web-optimized visuals covering the landing hero, every app screen card,

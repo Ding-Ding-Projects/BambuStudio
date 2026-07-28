@@ -171,6 +171,39 @@ Traps the driver already handles, listed so you do not "fix" them back:
 
 ## 5. What changed in this session (all of it)
 
+### 5.0 Session of 2026-07-28 — the GitHub Pages site was rebuilt
+
+**What you are inheriting.** `https://ding-ding-projects.github.io/BambuStudio/` is no longer a
+single scrolling landing page. It is a tabbed static application built from
+`ui-md3/landing.html` + `ui-md3/site/`, and it now carries the same obligations as the desktop app.
+Full documentation: [`docs/features/pages/`](docs/features/pages/README.md).
+
+| Commit | What |
+| --- | --- |
+| `f3ff11044` | Rebuilt the site: eight browser-style tabs, bilingual copy at five funny levels per language, the shared regex builder, the changelog viewer over 34 real releases, notifications, settings, the 1% dim sum surprise. |
+| `aea1327cd` | Gated the deploy on 444 measured runtime layout cases; replaced the workflow's inline `rsync`/`python3 -m http.server` with `compose-site.mjs` and `serve.mjs`; updated `i18n.test.mjs` for the new shape (this was issue #25). |
+| `2b2b7ce45` | Fixed 29 defects confirmed by a twelve-agent adversarial review of the new site. |
+
+**Things that will bite you if you do not know them:**
+
+- **The tab strip must not debounce with `requestAnimationFrame`.** A page that is never painted —
+  a background tab, a headless capture, the deploy gate — never runs rAF callbacks, so the strip
+  would stay frozen in its pre-font-load state, which is "everything overflowed". It uses a timer.
+- **No `text-overflow: ellipsis` and no horizontal scroller anywhere in `ui-md3/site/`.** The
+  runtime gate fails any element whose `scrollWidth` exceeds its width, and both of those hide a
+  clip rather than fix it. Long strings wrap.
+- **Where the prototype lives is stamped, not sniffed.** `compose-site.mjs` rewrites
+  `<meta name="bambu-app-base">` to `app/` for the published tree. A `github.io` hostname test got
+  the local preview wrong — which is exactly the copy the layout gate serves.
+- **`ui-md3/index.html` is generated.** Edit `app/screens/*.template.html`, then run
+  `node ui-md3/scripts/assemble-index.mjs --write`. `--check` runs in CI.
+- **`site/changelog.data.js` is generated.** `node ui-md3/scripts/build-changelog.mjs`; CI runs
+  `--check`, which stands down (exit 0) if the GitHub API is unavailable.
+
+**How to verify the site locally** — see
+[`docs/features/pages/deployment-and-layout-gate.md`](docs/features/pages/deployment-and-layout-gate.md).
+The runtime suite needs Chrome or Edge and takes about three minutes.
+
 ### 5.1 Pushed to `master` (already live)
 
 | Commit | What |
@@ -525,7 +558,10 @@ appears in any retained artifact.
 - `docs/features/windows/windows-only-platform.md` — the Windows-only policy in detail.
 - `docs/features/workspace/project-version-history.md` — the Git-backed history feature,
   including the crash-backup preservation behaviour described in §5.3.
+- `docs/features/pages/README.md` — the published GitHub Pages site: tabs, language modes and
+  funny levels, the regex builder, the changelog viewer, and the 444-case layout gate.
 - `docs/screenshots/README.md` — the screenshot matrix index.
+- `docs/screenshots/pages/README.md` — captures of the published site, and how to retake them.
 - `.claude/skills/run-bambustudio/SKILL.md` — how to run and drive the app. **Read this before
   trying to test anything in the UI.**
 
