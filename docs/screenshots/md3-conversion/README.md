@@ -56,10 +56,23 @@ Symbols, the preset combo, the save and search affordances, and the `Advanced` s
 | **2D bed preview, dark** | `2DBed.cpp` — chrome tokenised, and the X/Y axis arrows **reverted to pure red/green** because axis colours are exempt data and the 3D gizmo still draws pure RGB. Commit `bbdcd140d` | `BedShapeDialog` is the only `Bed_2D` call site and **bed shape is not exposed for Bambu printer profiles** — the profile fixes it. Needs a custom/third-party printer profile |
 | **Settings search popover** | Pre-existing surface; captured here only as evidence that every settings page routes search through the shared regex builder | Transient popover, same focus-kill problem as the Slice dropdown |
 
-The open *question* — as opposed to open work — is the 2D bed's dark-mode contrast, recorded at
-`src/slic3r/GUI/2DBed.cpp:88-100`: the slab sits at **1.05:1** against its backdrop by arithmetic,
-and every role pairing that raises it costs grid contrast. The measurements are in the code comment
-so the trade is explicit; a capture would settle whether it reads as a slab to a human eye.
+The 2D bed contrast question is **settled, and it passes** — numerically, which is a better answer
+than a screenshot because WCAG is a numeric standard an eye cannot adjudicate.
+
+| Pair | Light | Dark | Applicable rule | |
+| --- | --- | --- | --- | --- |
+| Contour ring vs bed fill — **the boundary that says where the printable area is** | 4.47:1 | 6.23:1 | 1.4.11 non-text, 3:1 | PASS |
+| Dimension annotation vs backdrop | 8.92:1 | 10.87:1 | 1.4.3 text, 4.5:1 | PASS |
+| Bed fill vs backdrop | 1.05:1 | 1.09:1 | none — see below | n/a |
+
+The 1.05:1 figure was read more than once as an AA failure. It is not one: WCAG 1.4.11 governs
+user-interface components and graphical objects required to understand content, and two adjacent
+decorative surface tones are neither. Raising it would cost grid separation, which is why the slab
+deliberately keeps the lowest container.
+
+Pinned in `ui-md3/tests/md3-conversion-contracts.test.mjs`, which reads the roles `2DBed.cpp`
+actually assigns rather than the palette — an earlier version asserted against the tokens alone and
+a mutation that re-pointed the contour role slipped straight through it.
 
 ## The action-bar clip: found, root-caused, fixed, proven
 

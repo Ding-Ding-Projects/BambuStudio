@@ -95,7 +95,19 @@ void Bed_2D::repaint(const std::vector<Vec2d>& shape)
 	// the neutral tonal ramp -- every neighbouring container pair tops out near
 	// 1.6:1, and brightening the slab to buy that would drop the grid to ~1.3:1.
 	// So the slab keeps the lowest container (best grid contrast) and the boundary
-	// carries the delineation. Stroke the fill in its own tone rather than
+	// carries the delineation.
+	//
+	// SETTLED, and it is a pass. The 1.05:1 figure has been read more than once as an
+	// accessibility failure against WCAG AA. It is not one: 1.4.11 governs user-interface
+	// components and graphical objects required to understand content, and two adjacent
+	// decorative surface tones are neither. What has to be perceivable is where the
+	// printable area IS, and that is the contour ring: measured from the tokens this file
+	// assigns, 4.47:1 light and 6.23:1 dark against a 3:1 requirement. The dimension
+	// annotation, which is real text, runs 8.92:1 / 10.87:1 against 4.5:1. Both are pinned
+	// in ui-md3/tests/md3-conversion-contracts.test.mjs, which reads the roles assigned
+	// below rather than the palette, so re-pointing any of them fails the test.
+	//
+	// Stroke the fill in its own tone rather than
 	// inheriting the backdrop pen; the contour pass redraws the same polygon, so
 	// this only decides the 1px ring before that.
 	dc.SetPen(wxPen(bed_fill, 1, wxPENSTYLE_SOLID));

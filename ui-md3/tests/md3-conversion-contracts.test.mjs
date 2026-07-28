@@ -137,6 +137,57 @@ test('2D bed keeps its axis colours as exempt data', async () => {
   assert.equal(source.match(/MD3::Viewport::axis/g), null,
     'axis colours are exempt data and must not be tokenised');
 
+  // The 1.05:1 fill-vs-backdrop step has been repeatedly read as an accessibility failure. It is
+  // not: WCAG 1.4.11 governs user-interface components and graphical objects required to understand
+  // content, and two adjacent decorative surface tones are neither. What must be perceivable is the
+  // boundary that says where the printable area IS — the contour ring — and that is what is pinned
+  // here. Brightening the slab to raise the fill step would drop the grid below its current
+  // separation, which is why the fill is deliberately left at the lowest container.
+  const tokens = await read('Widgets', 'MD3Tokens.hpp');
+  const namespaceTokens = (name) => {
+    const start = tokens.indexOf(`namespace ${name}`);
+    const next = tokens.indexOf('namespace', start + 10);
+    const block = tokens.slice(start, next === -1 ? undefined : next);
+    return Object.fromEntries(
+      [...block.matchAll(/inline const wxColour (\w+)\{"(#[0-9a-fA-F]{6})"\}/g)].map((m) => [m[1], m[2]]));
+  };
+
+  // Read the roles 2DBed ACTUALLY assigns rather than hard-coding them here. Asserting against
+  // the palette alone would pass even if this file stopped using it — a mutation that flattened
+  // the contour role slipped through exactly that way before this was bound to the source.
+  const roleOf = (local) => {
+    const m = source.match(new RegExp(`${local}\\s*=\\s*StateColor::semantic\\(MD3::Role::(\\w+)\\)`));
+    assert.ok(m, `2DBed must assign ${local} from an MD3 role`);
+    return m[1];
+  };
+  const roleToToken = {
+    Surface: 'surface', SurfaceContainerLowest: 'scLowest', SurfaceContainerLow: 'scLow',
+    SurfaceContainer: 'sc', SurfaceContainerHigh: 'scHigh', SurfaceContainerHighest: 'scHighest',
+    Outline: 'outline', OutlineVariant: 'outlineVariant',
+    OnSurface: 'onSurface', OnSurfaceVariant: 'onSurfaceVariant',
+  };
+  const tokenFor = (theme, role) => {
+    const key = roleToToken[role];
+    assert.ok(key, `unmapped role ${role}`);
+    const v = namespaceTokens(theme)[key];
+    assert.ok(v, `${theme} token ${key} must exist`);
+    return v;
+  };
+
+  const contourRole = roleOf('contour');
+  const fillRole = roleOf('bed_fill');
+  const backdropRole = roleOf('backdrop');
+  const annotationRole = roleOf('annotation');
+
+  for (const theme of ['Light', 'Dark']) {
+    const boundary = contrast(tokenFor(theme, contourRole), tokenFor(theme, fillRole));
+    assert.ok(boundary >= 3.0,
+      `${theme}: the contour ring (${contourRole} on ${fillRole}) must clear WCAG 1.4.11's 3:1 so the printable area stays perceivable, got ${boundary.toFixed(2)}:1`);
+    const label = contrast(tokenFor(theme, annotationRole), tokenFor(theme, backdropRole));
+    assert.ok(label >= 4.5,
+      `${theme}: bed annotation text (${annotationRole} on ${backdropRole}) must clear WCAG 1.4.3's 4.5:1, got ${label.toFixed(2)}:1`);
+  }
+
   // The surrounding chrome, which is not data, should be tokenised.
   assert.ok(/StateColor::semantic\(MD3::Role::/.test(source),
     'bed chrome (backdrop, grid, contour) must resolve from MD3 roles');
