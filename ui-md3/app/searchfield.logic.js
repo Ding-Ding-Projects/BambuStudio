@@ -40,9 +40,20 @@ class SearchField extends DCLogic {
    * to compiling the query — so a typed "." matched everything in a field whose
    * .* toggle was off.
    */
+  /*
+   * `w` is not an ECMAScript flag — it is a pattern shape, which is why
+   * compileFlags() never emitted it and the chip did nothing at all. With the
+   * chip and regex mode both on, the query leaves wrapped in word boundaries.
+   * A control that silently does nothing is worse than no control.
+   */
+  wholeWord(value){
+    if(!value || !this.state.regex || !this.state.flags.w) return value;
+    return '\\b(?:' + value + ')\\b';
+  }
+
   emit(v){
     if(typeof this.props.onQuery==='function'){
-      this.props.onQuery(v, { regex:this.state.regex, flags:this.searchFlags() });
+      this.props.onQuery(this.wholeWord(v), { regex:this.state.regex, flags:this.searchFlags() });
     }
   }
 

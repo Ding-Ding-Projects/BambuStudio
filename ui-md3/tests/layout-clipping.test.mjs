@@ -233,7 +233,10 @@ test('every prototype search field is wired, and plain text is the default', () 
   assert.deepEqual(inert, [], 'a search field that filters nothing must not ship');
   // The mode travels with the query, so a consumer can tell opt-in regex from
   // plain text instead of compiling everything it is handed.
-  assert.match(searchFieldLogic, /onQuery\(v, \{ regex:this\.state\.regex, flags:this\.searchFlags\(\) \}\)/);
+  assert.match(searchFieldLogic, /onQuery\(this\.wholeWord\(v\), \{ regex:this\.state\.regex, flags:this\.searchFlags\(\) \}\)/);
+  // `w` is a pattern shape, not an ECMAScript flag — compileFlags() could never
+  // emit it, so the "whole word" chip did nothing at all. It wraps instead.
+  assert.match(searchFieldLogic, /wholeWord\(value\)\{[\s\S]*?state\.flags\.w[\s\S]*?\\\\b\(\?:/);
   // searchFlags() drops `g` — a global regex carries lastIndex between calls
   // and starts skipping rows — and returns '' verbatim when every chip is off,
   // which is what "case-sensitive" looks like.

@@ -772,3 +772,13 @@ footer { border-top: 1px solid var(--md-outline-variant); padding: 28px 0 44px; 
 .you-search { margin-bottom: 12px; }
 .you-row { display: block; margin-bottom: 12px; }
 .you-empty { margin: 8px 0 0; font-size: calc(13px * var(--site-font-scale)); }
+
+/* A bilingual companion inside a filled control inherits that control's own
+ * foreground: the muted on-surface colour sits at about 1.12:1 on a primary
+ * background, which is unreadable rather than merely quiet. */
+.btn .copy-secondary,
+.tab.active .copy-secondary,
+.seg button[aria-pressed="true"] .copy-secondary,
+.chip-btn .copy-secondary,
+.menuitem .copy-secondary,
+.toast-action .copy-secondary { color: inherit; opacity: .82; }

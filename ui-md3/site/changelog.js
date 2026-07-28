@@ -176,6 +176,7 @@
         fromInput.value = stateValue.from;
         toInput.value = stateValue.to;
         errorLine.hidden = true;
+        repaintOpenCalendar();
         paint();
       });
       presetHost.appendChild(button);
@@ -192,6 +193,7 @@
         }
         errorLine.hidden = true;
         stateValue[entry[1]] = parsed;
+        repaintOpenCalendar();
         paint();
       });
     });
@@ -212,6 +214,19 @@
         buildCalendar(calendarHost, button.dataset.for);
       });
     });
+
+    /*
+     * An open calendar is a view of the same range the fields hold, so it has
+     * to be rebuilt when they change. Without this it kept highlighting the
+     * range that was selected when it opened, contradicting the inputs beside
+     * it — the worst kind of wrong, because it looks authoritative.
+     */
+    function repaintOpenCalendar() {
+      var field = calendarHost.dataset.open;
+      if (!field) return;
+      calendarHost.innerHTML = '';
+      buildCalendar(calendarHost, field);
+    }
 
     function buildCalendar(host, field) {
       var anchor = stateValue[field] ? dayOf(stateValue[field]) : new Date();

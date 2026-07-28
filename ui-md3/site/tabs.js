@@ -532,18 +532,27 @@
     }
 
     function runLayout() {
+      /*
+       * Hiding an element that currently holds focus drops focus on <body>, and
+       * this function hides things on every pass — the overflow button at stage
+       * 0, the search button at stage 3. A keyboard user pressing either one
+       * would be stranded at the top of the document, so focus is put back on a
+       * control that is still there.
+       */
+      var focused = strip.contains(doc.activeElement) ? doc.activeElement : null;
+
       // Stage 0 — everything visible with labels.
       stripInner.classList.remove('icons-only');
       searchButton.hidden = false;
       overflowButton.hidden = true;
       sortedIds().forEach(function (id) { elements[id].classList.remove('overflowed'); });
-      if (fits()) return finishLayout();
+      if (fits()) return finishLayout(focused);
 
       // Stage 1 — the strip keeps its labels only while they all fit.
       overflowButton.hidden = false;
-      if (fits()) return finishLayout();
+      if (fits()) return finishLayout(focused);
       stripInner.classList.add('icons-only');
-      if (fits()) return finishLayout();
+      if (fits()) return finishLayout(focused);
 
       // Stage 2 — push tabs into the overflow menu, last first, never the active one.
       var list = sortedIds().slice().reverse();
@@ -551,19 +560,31 @@
         if (list[index] === active) continue;
         elements[list[index]].classList.add('overflowed');
       }
-      if (fits()) return finishLayout();
+      if (fits()) return finishLayout(focused);
 
       // Stage 3 — the tab search lives inside the overflow menu at this width.
       searchButton.hidden = true;
-      finishLayout();
+      finishLayout(focused);
     }
 
-    function finishLayout() {
+    function finishLayout(focused) {
       var hidden = sortedIds().filter(function (id) {
         return elements[id].classList.contains('overflowed');
       });
       overflowButton.querySelector('.tabstrip-overflow-count').textContent = hidden.length ? String(hidden.length) : '';
       strip.classList.toggle('has-overflow', hidden.length > 0);
+      restoreFocus(focused);
+    }
+
+    /* Puts focus back when a layout pass hid the control that had it. */
+    function restoreFocus(focused) {
+      if (!focused) return;
+      var lost = doc.activeElement === doc.body || !doc.contains(doc.activeElement);
+      var gone = focused.hidden || focused.classList.contains('overflowed');
+      if (!lost && !gone) return;
+      var fallback = (!overflowButton.hidden && overflowButton) ||
+        (!searchButton.hidden && searchButton) || elements[active];
+      if (fallback) fallback.focus();
     }
 
     if (global.ResizeObserver) {
