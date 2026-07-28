@@ -3,12 +3,12 @@
 #include <thread>
 #include <wx/event.h>
 #include <wx/sizer.h>
-#include <wx/slider.h>
 #include <wx/dcmemory.h>
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/Slider.hpp"
 #include "Widgets/TextInput.hpp"
 #include <chrono>
 
@@ -128,6 +128,25 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     tips_sizer->Add(tips, 0, wxALIGN_LEFT);
     bSizer->Add(tips_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, LEFT_RIGHT_PADING);
 
+    // Recounting the facets kicks off a mesh job, so it must wait for a gesture to
+    // END rather than run per value tick: the mouse path hooks the button release,
+    // and this hooks the key release for the arrow/page/home/end steps the kit
+    // Slider handles, so keyboard operation lands on the same count as a drag.
+    auto recount_on_key_up = [this](wxKeyEvent& e) {
+        switch (e.GetKeyCode()) {
+        case WXK_LEFT:
+        case WXK_RIGHT:
+        case WXK_UP:
+        case WXK_DOWN:
+        case WXK_PAGEUP:
+        case WXK_PAGEDOWN:
+        case WXK_HOME:
+        case WXK_END: update_mesh_number_text(); break;
+        default: break;
+        }
+        e.Skip();
+    };
+
     wxBoxSizer* linear_sizer = new wxBoxSizer(wxHORIZONTAL);
     //linear_sizer->SetMinSize(wxSize(MIN_DIALOG_WIDTH, -1));
     wxStaticText* linear_title = new wxStaticText(this,
@@ -135,11 +154,19 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     linear_title->SetForegroundColour(FONT_COLOR);
     linear_sizer->Add(linear_title, 0, wxALIGN_LEFT);
     linear_sizer->AddStretchSpacer(1);
-    wxSlider* linear_slider = new wxSlider(this, wxID_ANY,
-                                           SLIDER_SCALE(get_linear_defletion()),
-                                           1, 100, wxDefaultPosition,
-                                           wxSize(SLIDER_WIDTH, SLIDER_HEIGHT),
-                                           wxSL_HORIZONTAL);
+    // Kit Slider (Widgets/Slider): thin Primary track + circular thumb, so the
+    // deflection control matches the ::TextInput it is bound to instead of sitting
+    // beside it as an OS-grey Win32 trackbar that never re-tints in dark mode.
+    // The kit widget takes its best size from DIP metrics, so pin the dialog's
+    // own SLIDER_WIDTH/HEIGHT as the min size or the sizer would shrink it.
+    auto linear_slider = new ::Slider(this, SLIDER_SCALE(get_linear_defletion()),
+                                      1, 100, /*vertical=*/false, wxDefaultPosition,
+                                      wxSize(SLIDER_WIDTH, SLIDER_HEIGHT));
+    linear_slider->SetMinSize(wxSize(SLIDER_WIDTH, SLIDER_HEIGHT));
+    // Owner-drawn, so unlike the native trackbar it has no window text for MSAA to
+    // read back: name it after its own label row so a screen reader still says which
+    // deflection has focus (same existing msgid as the title beside it).
+    linear_slider->SetLabel(_L("Linear Deflection"));
     linear_sizer->Add(linear_slider, 0, wxALIGN_RIGHT | wxLEFT, FromDIP(5));
 
     auto linear_input = new ::TextInput(this, m_linear_last, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(TEXT_CTRL_WIDTH, -1), wxTE_CENTER);
@@ -170,15 +197,18 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
             }
         }
     }));
-    linear_slider->Bind(wxEVT_SLIDER, ([this, linear_slider, linear_input](wxCommandEvent& e) {
-        double slider_value = SLIDER_UNSCALE(linear_slider->GetValue());
+    // The kit Slider reports through SetOnChange rather than wxEVT_SLIDER; SetValue()
+    // above stays silent, so the text field and the thumb still cannot loop.
+    linear_slider->SetOnChange([this, linear_input](int value) {
+        double slider_value = SLIDER_UNSCALE(value);
         linear_input->GetTextCtrl()->SetValue(wxString::Format("%.3f", slider_value));
         m_linear_last = wxString::Format("%.3f", slider_value);
-    }));
+    });
     linear_slider->Bind(wxEVT_LEFT_UP, ([this](wxMouseEvent& e) {
         update_mesh_number_text();
-        e.Skip();
+        e.Skip(); // let the widget end its own drag and release the capture
     }));
+    linear_slider->Bind(wxEVT_KEY_UP, recount_on_key_up);
 
     bSizer->Add(linear_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, LEFT_RIGHT_PADING);
 
@@ -188,11 +218,11 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     angle_title->SetForegroundColour(FONT_COLOR);
     angle_sizer->Add(angle_title, 0, wxALIGN_LEFT);
     angle_sizer->AddStretchSpacer(1);
-    wxSlider* angle_slider = new wxSlider(this, wxID_ANY,
-                                           SLIDER_SCALE_10(get_angle_defletion()),
-                                           1, 100, wxDefaultPosition,
-                                           wxSize(SLIDER_WIDTH, SLIDER_HEIGHT),
-                                           wxSL_HORIZONTAL);
+    auto angle_slider = new ::Slider(this, SLIDER_SCALE_10(get_angle_defletion()),
+                                     1, 100, /*vertical=*/false, wxDefaultPosition,
+                                     wxSize(SLIDER_WIDTH, SLIDER_HEIGHT));
+    angle_slider->SetMinSize(wxSize(SLIDER_WIDTH, SLIDER_HEIGHT));
+    angle_slider->SetLabel(_L("Angle Deflection"));
     angle_sizer->Add(angle_slider, 0, wxALIGN_RIGHT | wxLEFT, FromDIP(5));
 
     auto angle_input = new ::TextInput(this, m_angle_last, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(TEXT_CTRL_WIDTH, -1), wxTE_CENTER);
@@ -224,15 +254,16 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
         }
     }));
 
-    angle_slider->Bind(wxEVT_SLIDER, ([this, angle_slider, angle_input](wxCommandEvent& e) {
-        double slider_value = SLIDER_UNSCALE_10(angle_slider->GetValue());
+    angle_slider->SetOnChange([this, angle_input](int value) {
+        double slider_value = SLIDER_UNSCALE_10(value);
         angle_input->GetTextCtrl()->SetValue(wxString::Format("%.2f", slider_value));
         m_angle_last = wxString::Format("%.2f", slider_value);
-    }));
+    });
     angle_slider->Bind(wxEVT_LEFT_UP, ([this](wxMouseEvent& e) {
         update_mesh_number_text();
-        e.Skip();
+        e.Skip(); // let the widget end its own drag and release the capture
     }));
+    angle_slider->Bind(wxEVT_KEY_UP, recount_on_key_up);
 
     bSizer->Add(angle_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
 

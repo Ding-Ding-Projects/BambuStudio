@@ -1,5 +1,6 @@
 #include "SideButton.hpp"
 #include "Label.hpp"
+#include "MD3Tokens.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
 
@@ -7,6 +8,7 @@
 #include <wx/dcgraph.h>
 
 #include <algorithm>
+#include <utility>
 
 BEGIN_EVENT_TABLE(SideButton, wxPanel)
 EVT_LEFT_DOWN(SideButton::mouseDown)
@@ -18,7 +20,12 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, stlye)
     , state_handler(this)
 {
-    radius = 12;
+    // MD3 shape token rather than a bare literal. radius_rail (12) is the
+    // rail/snackbar tier and reproduces the previous default exactly, so nothing
+    // moves: both consumers override it anyway (the Slice/Print pills take the
+    // pill radius in MainFrame::update_side_button_style, the dropdown rows take
+    // SetCornerRadius(0)).
+    radius = MD3::Metrics::radius_rail;
 #ifdef __APPLE__
     extra_size = wxSize(38 + FromDIP(20), 10);
     text_margin = 15 + FromDIP(20);
@@ -30,26 +37,7 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     icon_offset = 0;
     text_orientation = HO_Left;
 
-    // Disabled trio kept as raw literals: light-grey text on mid-grey fill — the token
-    // greys (Grey450 on Grey700) would render dark-on-dark in light mode.
-    border_color.append(wxColour("#6B6B6B"), StateColor::Disabled);
-    border_color.append(ThemeColor::BrandGreenPressed, StateColor::Pressed);
-    border_color.append(ThemeColor::BrandGreenHovered, StateColor::Hovered);
-    border_color.append(ThemeColor::BrandGreen, StateColor::Normal);
-    border_color.setTakeFocusedAsHovered(false);
-
-    text_color.append(wxColour("#ACACAC"), StateColor::Disabled);
-    text_color.append(ThemeColor::White, StateColor::Pressed);
-    text_color.append(ThemeColor::White, StateColor::Hovered);
-    text_color.append(ThemeColor::White, StateColor::Normal);
-
-    background_color.append(wxColour("#6B6B6B"), StateColor::Disabled);
-    background_color.append(ThemeColor::BrandGreenPressed, StateColor::Pressed);
-    background_color.append(ThemeColor::BrandGreenHovered, StateColor::Hovered);
-    background_color.append(ThemeColor::BrandGreen, StateColor::Normal);
-    background_color.setTakeFocusedAsHovered(false);
-
-    SetBottomColour(wxColour("#3B4446"));
+    applyMenuRowStyle();
 
     state_handler.attach({ &border_color, &text_color, &background_color });
     state_handler.update_binds();
@@ -63,6 +51,62 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     wxWindow::SetLabel(text);
 
     messureSize();
+}
+
+void SideButton::applyMenuRowStyle()
+{
+    using R = MD3::Role;
+
+    // Every SideButton that is not one of MainFrame's four Slice/Print action
+    // controls is a row in the Slice/Print dropdown (SidePopup), and those rows
+    // only ever call SetCornerRadius(0) — they keep whatever the constructor
+    // leaves behind. That default used to be the whole legacy brand palette
+    // (BrandGreen fill, white label, a #3B4446 slate slab painted underneath),
+    // so opening either dropdown dropped a stack of solid green bars over the
+    // MD3 Prepare workspace. The kit menu row (design-system NavItem, and the
+    // list rows DropDown.cpp already paints) is neutral instead: the menu
+    // container at rest, SurfaceContainerHigh on hover, SurfaceContainerHighest
+    // while pressed.
+    //
+    // Every role below is a neutral surface/on-surface tone, which is why this
+    // takes no ColorScheme: Brand, Preview and Device resolve them identically —
+    // only the accent roles diverge (see MD3::resolve).
+    const wxColour rest    = StateColor::semantic(R::SurfaceContainer);
+    const wxColour hover   = StateColor::semantic(R::SurfaceContainerHigh);
+    const wxColour pressed = StateColor::semantic(R::SurfaceContainerHighest);
+
+    // These are construction-time snapshots, but each light tone used here is a
+    // key in StateColor.cpp's gDarkColors table mapping to exactly its MD3::Dark
+    // counterpart, so a runtime theme toggle re-colours the row at its next
+    // paint rather than stranding a light menu on a dark shell.
+    background_color = StateColor(
+        std::make_pair(rest,    (int) StateColor::Disabled),
+        std::make_pair(pressed, (int) StateColor::Pressed),
+        std::make_pair(hover,   (int) StateColor::Hovered),
+        std::make_pair(rest,    (int) StateColor::Normal));
+    background_color.setTakeFocusedAsHovered(false);
+
+    // The ring tracks the fill in every state: a menu row is a highlight band,
+    // not an outlined button, so no contrasting border may show.
+    border_color = StateColor(
+        std::make_pair(rest,    (int) StateColor::Disabled),
+        std::make_pair(pressed, (int) StateColor::Pressed),
+        std::make_pair(hover,   (int) StateColor::Hovered),
+        std::make_pair(rest,    (int) StateColor::Normal));
+    border_color.setTakeFocusedAsHovered(false);
+
+    // Disabled label: Outline is the theme-tracking "dimmed content on a
+    // container" tone. An OnSurface-at-opacity blend would be closer to the kit,
+    // but the blended result is not a gDarkColors key, so it would freeze at
+    // whichever theme was active when the row was built.
+    text_color = StateColor(
+        std::make_pair(StateColor::semantic(R::Outline),   (int) StateColor::Disabled),
+        std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Normal));
+
+    // The surface the row sits on, seen through the rounded corners whenever a
+    // radius is in play — the SidePopup menu container, replacing the legacy
+    // #3B4446 slate.
+    SetBottomColour(rest);
 }
 
 void SideButton::SetCornerRadius(double radius)

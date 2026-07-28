@@ -161,7 +161,9 @@ public:
     Button* m_button_cancel { nullptr };
     Button* m_button_fn { nullptr };
     Button* m_button_resume { nullptr };
-    wxCheckBox* m_show_again_checkbox;
+    // MD3 CheckBox (drawn glyph); only created when not_show_again_check is set,
+    // and on_hide() tests it, so it must start null rather than indeterminate.
+    ::CheckBox* m_show_again_checkbox { nullptr };
     ButtonStyle m_button_style;
     bool not_show_again = false;
     std::string show_again_config_text = "";
@@ -293,7 +295,9 @@ protected:
     Button* m_button_ok;
     Button* m_button_cancel;
     Button* m_button_update_nozzle;
-    wxCheckBox* m_show_again_checkbox;
+    // MD3 CheckBox (drawn glyph); optional, so null until not_show_again_check
+    // builds the footer row that on_hide() checks.
+    ::CheckBox* m_show_again_checkbox { nullptr };
     bool not_show_again = false;
     std::string show_again_config_text = "";
 };

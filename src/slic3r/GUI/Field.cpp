@@ -27,6 +27,8 @@
 #include "Widgets/SpinInput.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/TextCtrl.h"
+#include "Widgets/MD3ColorPicker.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include "../Utils/ColorSpaceConvert.hpp"
 #ifdef __WXOSX__
@@ -1647,6 +1649,141 @@ void Choice::msw_rescale()
 #endif
 }
 
+// Clear-affordance geometry, in design px: a 24px MD3 icon button plus the 6px
+// gap that separates it from the swatch. Both are FromDIP-scaled where they are
+// used, so the row holds together at 125/150/200% display scale -- the values
+// they replace (25 and 5) were raw device pixels and did not.
+static const int COLOUR_CLEAR_BUTTON_PX = 24;
+static const int COLOUR_CLEAR_GAP_PX    = 6;
+// Fallback swatch height for options that pin none (m_opt.height < 0). The
+// native picker used to contribute its own best height here; the kit field is
+// sized explicitly so the option-grid row keeps a stable height.
+static const int COLOUR_SWATCH_HEIGHT_PX = 24;
+
+ColourSwatchButton::ColourSwatchButton(wxWindow *parent, const wxColour &colour, const wxSize &size)
+{
+    // MD3 filled-field anatomy, mirroring ::TextInput so the swatch matches the
+    // fields it sits beside: radius 10 through the StaticBox default-radius path
+    // (FromDIP-scaled at Create and recomputed on every monitor/DPI change), and
+    // a 1px border that is Outline at rest, Primary on hover/press, and
+    // OutlineVariant when disabled. Stored as the MD3 *light* role values --
+    // each is a key in StateColor.cpp's gDarkColors table -- so they live-remap
+    // on a runtime dark-mode toggle. Set before Create() so StaticBox picks them
+    // up there. The Pressed entry is also what makes StateHandler bind the
+    // press events at all, which the state layer in doRender() reads.
+    SetDefaultCornerRadius(10);
+    border_width = 1;
+    border_color = StateColor(std::make_pair(MD3::Light::outlineVariant, (int) StateColor::Disabled),
+                              std::make_pair(MD3::Light::primary, (int) StateColor::Pressed),
+                              std::make_pair(MD3::Light::primary, (int) StateColor::Hovered),
+                              std::make_pair(MD3::Light::outline, (int) StateColor::Normal));
+
+    Create(parent, wxEmptyString, wxEmptyString, 0, 0, wxID_ANY);
+
+    // The swatch carries no label and no glyph, so the pill padding would only
+    // inflate its best size; the option grid sizes this field explicitly.
+    SetPaddingSize(wxSize(0, 0));
+    SetCursor(wxCursor(wxCURSOR_HAND));
+    SetColour(colour);
+    SetMinSize(size);
+    if (size.GetWidth() > 0 && size.GetHeight() > 0)
+        SetSize(size);
+}
+
+bool ColourSwatchButton::HasColour() const
+{
+    return m_colour.IsOk() && m_colour.Alpha() != wxALPHA_TRANSPARENT;
+}
+
+void ColourSwatchButton::SetColour(const wxColour &colour)
+{
+    m_colour = colour;
+    // Only the focus ring reads background_color -- Button::render resolves the
+    // ring against whatever the interior shows -- while doRender() paints the
+    // raw value. Keeping the two roughly in step keeps the ring legible on a
+    // dark swatch without ever letting the swap table touch the drawn colour.
+    background_color = StateColor(HasColour() ? m_colour
+                                              : StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    // The swatch has no visible label, so the value IS its accessible name.
+    SetName(_L("Color") + ": " +
+            (HasColour() ? m_colour.GetAsString(wxC2S_HTML_SYNTAX) : _L("Undefined")));
+    Refresh();
+}
+
+void ColourSwatchButton::doRender(wxDC &dc)
+{
+    const wxSize sz = GetSize();
+    if (sz.x <= 0 || sz.y <= 0)
+        return;
+
+    const int states = state_handler.states();
+
+    // Same border inset StaticBox::doRender() uses, so the 1px ring is not
+    // clipped at either content scale.
+    wxRect rc(0, 0, sz.x, sz.y);
+    if (border_width > 0) {
+        if (dc.GetContentScaleFactor() == 1.0) {
+            rc.x      += border_width / 2;
+            rc.y      += border_width / 2;
+            rc.width  -= border_width - 1;
+            rc.height -= border_width - 1;
+        } else {
+            rc.x      += 1;
+            rc.y      += 1;
+            rc.width  -= 1;
+            rc.height -= 1;
+        }
+    }
+    double r = radius - border_width;
+    if (r < 0.0) r = 0.0;
+
+    // The interior is DATA, not chrome: it is the exact value the option holds.
+    // It is therefore painted verbatim -- handing it to a StateColor would run
+    // it past StateColor's light->dark swap table, which would repaint a white
+    // or black filament colour as a theme grey the moment the user went dark.
+    const bool     defined = HasColour();
+    const wxColour fill    = defined ? m_colour
+                                     : StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+
+    dc.SetPen(wxPen(border_color.colorForStates(states), border_width));
+    dc.SetBrush(wxBrush(fill));
+    dc.DrawRoundedRectangle(rc, r);
+
+    if (!defined) {
+        // "No colour set" reads as an Error stroke across the empty field --
+        // the same signal the native picker baked into its swatch bitmap.
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Error), border_width > 0 ? border_width : 1));
+        dc.DrawLine(rc.GetLeftBottom(), rc.GetTopRight());
+    }
+
+    if (!IsEnabled()) {
+        // MD3 disabled treatment: content drops to 38% presence. The swatch
+        // keeps its own hue -- it is still the option's value -- but is washed
+        // toward the surface so an inactive option is perceivably inactive
+        // rather than only losing its border tone.
+        const wxColour surface = StateColor::semantic(MD3::Role::Surface);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(wxColour(surface.Red(), surface.Green(), surface.Blue(), 158)));
+        dc.DrawRoundedRectangle(rc, r);
+        return;
+    }
+
+    // MD3 state layer (8% hover / 12% pressed of OnSurface). The swatch cannot
+    // signal hover by changing its own fill the way a normal Button does --
+    // that fill is the option's value -- so the layer goes over the top.
+    int layer_alpha = 0;
+    if (states & StateHandler::Pressed)
+        layer_alpha = 31;
+    else if (states & StateHandler::Hovered)
+        layer_alpha = 20;
+    if (layer_alpha > 0) {
+        const wxColour layer = StateColor::semantic(MD3::Role::OnSurface);
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(wxColour(layer.Red(), layer.Green(), layer.Blue(), layer_alpha)));
+        dc.DrawRoundedRectangle(rc, r);
+    }
+}
+
 void ColourPicker::BUILD()
 {
     auto size = wxSize(def_width_wider() * m_em_unit, wxDefaultCoord);
@@ -1660,32 +1797,36 @@ void ColourPicker::BUILD()
 	    clr = wxTransparentColour;
     }
 
-    // create a horizontal sizer with the color picker and a clear button
+    // create a horizontal sizer with the color swatch and a clear button
     auto sizer = new wxBoxSizer(wxHORIZONTAL);
     auto panel = new wxPanel(m_parent, wxID_ANY, wxDefaultPosition, size, wxBORDER_NONE);
     panel->SetSizer(sizer);
+    // Both children clear the area outside their rounded shape with the surface
+    // behind them, so the wrapper panel is given the option group's surface
+    // explicitly before either child snapshots it -- an inherited-but-never-set
+    // background reports the system grey and would fringe both in dark mode.
+    panel->SetBackgroundColour(StaticBox::GetParentBackgroundColor(m_parent));
 
     wxSize picker_size = size;
-    picker_size.SetWidth(picker_size.GetWidth() - 30);
+    picker_size.SetWidth(picker_size.GetWidth() - panel->FromDIP(COLOUR_CLEAR_BUTTON_PX + COLOUR_CLEAR_GAP_PX));
+    if (picker_size.GetHeight() <= 0)
+        picker_size.SetHeight(panel->FromDIP(COLOUR_SWATCH_HEIGHT_PX));
 
-	m_color_picker = new wxColourPickerCtrl(panel, wxID_ANY, clr, wxDefaultPosition, picker_size);
+    m_color_picker = new ColourSwatchButton(panel, clr, picker_size);
     if (parent_is_custom_ctrl && m_opt.height < 0)
-        opt_height = (double)m_color_picker->GetSize().GetHeight() / m_em_unit;
-    m_color_picker->SetFont(Slic3r::GUI::wxGetApp().normal_font());
-    convert_to_picker_widget(m_color_picker);
-    if (!wxOSX) {
-        m_color_picker->SetBackgroundStyle(wxBG_STYLE_PAINT);
-    }
-	wxGetApp().UpdateDarkUI(m_color_picker);
+        opt_height = (double) picker_size.GetHeight() / m_em_unit;
 
     // create the clear button
-    m_clear_button = new wxButton(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(25, picker_size.GetHeight()), wxBORDER_NONE);
-    update_clear_button_icon();
+    m_clear_button = new ::Button(panel, wxEmptyString, wxEmptyString, 0, 0, wxID_ANY);
+    m_clear_button->SetGlyph(MaterialIcon::Close);
+    m_clear_button->SetToolTip(_L("Clear color"));
+    refresh_clear_button_style();
 
     bool has_color = clr.IsOk() && clr != wxTransparentColour;
     m_clear_button->Show(has_color);
 
-    sizer->Add(m_color_picker, 1, wxEXPAND | (has_color ? wxRIGHT : 0), has_color ? 5 : 0);
+    sizer->Add(m_color_picker, 1, wxEXPAND | (has_color ? wxRIGHT : 0),
+               has_color ? panel->FromDIP(COLOUR_CLEAR_GAP_PX) : 0);
     sizer->Add(m_clear_button, 0, wxALIGN_CENTER_VERTICAL);
 
     sizer->Layout();
@@ -1694,28 +1835,72 @@ void ColourPicker::BUILD()
 	// 	// recast as a wxWindow to fit the calling convention
     window = dynamic_cast<wxWindow *>(panel);
 
-    m_color_picker->Bind(wxEVT_COLOURPICKER_CHANGED, ([this](wxCommandEvent e) {
-        update_clear_button_visibility();
-        on_change_field();
-        }), m_color_picker->GetId());
+    m_color_picker->Bind(wxEVT_BUTTON, ([this](wxCommandEvent &e) { pick_color(); }), m_color_picker->GetId());
 
-    m_clear_button->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { clear_color(); }), m_clear_button->GetId());
+    m_clear_button->Bind(wxEVT_BUTTON, ([this](wxCommandEvent &e) { clear_color(); }), m_clear_button->GetId());
 
     m_color_picker->SetToolTip(get_tooltip_text(clr_str));
+}
+
+void ColourPicker::pick_color()
+{
+    // The MD3 continuous picker (S/V field + hue strip + Material tonal ladder)
+    // in place of the Windows 'Choose Color' common dialog, so the preset editor
+    // no longer opens OS chrome on top of the kit settings window. wxNullColour
+    // lets the dialog fall back to its own default when the option is undefined.
+    const wxColour initial = m_color_picker->HasColour() ? m_color_picker->GetColour() : wxNullColour;
+
+    MD3ColorPickerDialog dlg(wxGetTopLevelParent(m_color_picker), initial);
+    if (dlg.ShowModal() != wxID_OK)
+        return;
+
+    const wxColour picked = dlg.GetColour();
+    if (!picked.IsOk())
+        return;
+
+    m_color_picker->SetColour(picked);
+    remember_custom_color(picked);
+    update_clear_button_visibility();
+    on_change_field();
+}
+
+void ColourPicker::remember_custom_color(const wxColour &color)
+{
+    // The native common dialog kept a 16-slot custom-colour palette in its
+    // wxColourData, and this field mirrored that palette into app_config so the
+    // AMS material and filament pickers saw the same recents. The MD3 dialog
+    // owns no palette, so the shared list is kept alive here instead: every
+    // accepted pick moves to the front of it. Entries past the end are left
+    // where they are rather than padded, so a short list never writes empty
+    // slots that the other readers would have to parse.
+    if (!color.IsOk() || color.Alpha() == wxALPHA_TRANSPARENT)
+        return;
+
+    const std::string picked = color_to_string(color);
+
+    std::vector<std::string> recents;
+    recents.reserve(CUSTOM_COLOR_COUNT);
+    recents.push_back(picked);
+    for (const std::string &previous : wxGetApp().app_config->get_custom_color_from_config()) {
+        if (previous.empty() || previous == picked)
+            continue;
+        if ((int) recents.size() >= CUSTOM_COLOR_COUNT)
+            break;
+        recents.push_back(previous);
+    }
+    wxGetApp().app_config->save_custom_color_to_config(recents);
 }
 
 void ColourPicker::clear_color()
 {
     m_color_picker->SetColour(wxTransparentColour);
-    set_undef_value(m_color_picker);
     update_clear_button_visibility();
     on_change_field();
 }
 
 void ColourPicker::update_clear_button_visibility()
 {
-    wxColour current_color = m_color_picker->GetColour();
-    bool has_color = current_color.IsOk() && current_color != wxTransparentColour;
+    bool has_color = m_color_picker->HasColour();
 
     if (m_clear_button->IsShown() != has_color) {
         m_clear_button->Show(has_color);
@@ -1723,10 +1908,10 @@ void ColourPicker::update_clear_button_visibility()
         wxSizer *sizer = window->GetSizer();
         if (sizer) {
             wxSizerItem *item = sizer->GetItem(static_cast<size_t>(0));
-            // resize the color picker to occupy the freed space
+            // resize the color swatch to occupy the freed space
             if (item) {
                 item->SetFlag(wxEXPAND | (has_color ? wxRIGHT : 0));
-                item->SetBorder(has_color ? 5 : 0);
+                item->SetBorder(has_color ? window->FromDIP(COLOUR_CLEAR_GAP_PX) : 0);
                 sizer->Layout();
                 window->GetParent()->Layout();
             }
@@ -1736,33 +1921,6 @@ void ColourPicker::update_clear_button_visibility()
     }
 }
 
-void ColourPicker::set_undef_value(wxColourPickerCtrl* field)
-{
-    field->SetColour(wxTransparentColour);
-
-    wxButton* btn = dynamic_cast<wxButton*>(field->GetPickerCtrl());
-    if (!btn->GetBitmap().IsOk()) return;
-
-    wxImage image(btn->GetBitmap().GetSize());
-    image.InitAlpha();
-    memset(image.GetAlpha(), 0, image.GetWidth() * image.GetHeight());
-    wxBitmap   bmp(std::move(image));
-    wxMemoryDC dc(bmp);
-    if (!dc.IsOk()) return;
-#ifdef __WXMSW__
-    wxGCDC dc2(dc);
-#else
-    wxDC &dc2(dc);
-#endif
-    dc2.SetPen(wxPen(StateColor::semantic(MD3::Role::Error), 1));
-
-    const wxRect rect = wxRect(0, 0, bmp.GetWidth(), bmp.GetHeight());
-    dc2.DrawLine(rect.GetLeftBottom(), rect.GetTopRight());
-
-    dc.SelectObject(wxNullBitmap);
-    btn->SetBitmapLabel(bmp);
-}
-
 void ColourPicker::set_value(const boost::any& value, bool change_event)
 {
     m_disable_change_event = !change_event;
@@ -1770,7 +1928,7 @@ void ColourPicker::set_value(const boost::any& value, bool change_event)
 
     wxColour clr(clr_str);
     if (clr_str.IsEmpty() || !clr.IsOk())
-        set_undef_value(m_color_picker);
+        m_color_picker->SetColour(wxTransparentColour);
     else
         m_color_picker->SetColour(clr);
 
@@ -1780,11 +1938,10 @@ void ColourPicker::set_value(const boost::any& value, bool change_event)
 
 boost::any& ColourPicker::get_value()
 {
-    save_colors_to_config();
-    auto colour = m_color_picker->GetColour();
-    if (colour == wxTransparentColour)
+    if (!m_color_picker->HasColour())
         m_value = std::string("");
     else {
+        auto colour = m_color_picker->GetColour();
 		auto clr_str = wxString::Format(wxT("#%02X%02X%02X"), colour.Red(), colour.Green(), colour.Blue());
 		m_value = clr_str.ToStdString();
     }
@@ -1807,26 +1964,22 @@ void ColourPicker::msw_rescale()
         else
             window->SetMinSize(size);
 
-        // recalculate the size of the color picker and clear button
+        // recalculate the size of the color swatch; the clear affordance
+        // re-derives its own DPI-scaled geometry from the icon-button tier.
         wxSize picker_size = size;
-        picker_size.SetWidth(size.GetWidth() - 30);
+        picker_size.SetWidth(size.GetWidth() - window->FromDIP(COLOUR_CLEAR_BUTTON_PX + COLOUR_CLEAR_GAP_PX));
+        if (picker_size.GetHeight() <= 0)
+            picker_size.SetHeight(window->FromDIP(COLOUR_SWATCH_HEIGHT_PX));
 
-        if (parent_is_custom_ctrl) {
+        m_color_picker->SetMinSize(picker_size);
+        if (parent_is_custom_ctrl)
             m_color_picker->SetSize(picker_size);
-            m_clear_button->SetSize(wxSize(25, picker_size.GetHeight()));
-        } else {
-            m_color_picker->SetMinSize(picker_size);
-            m_clear_button->SetMinSize(wxSize(25, picker_size.GetHeight()));
-        }
+        m_clear_button->Rescale();
 
         wxSizer *sizer = window->GetSizer();
         if (sizer) { sizer->Layout(); }
         window->Refresh();
     }
-
-
-    if (m_color_picker->GetColour() == wxTransparentColour)
-        set_undef_value(m_color_picker);
 }
 
 void ColourPicker::sys_color_changed()
@@ -1834,64 +1987,31 @@ void ColourPicker::sys_color_changed()
 #ifdef _WIN32
     if (wxWindow* win = this->getWindow()) {
         wxGetApp().UpdateDarkUI(win);
-        if (m_color_picker)
-            wxGetApp().UpdateDarkUI(m_color_picker->GetPickerCtrl(), true);
-        if (m_clear_button) {
-            update_clear_button_icon();
+        // Both children resolve their chrome from MD3 roles, so they only need
+        // the parent-surface snapshot behind their rounded shapes re-taken and a
+        // repaint. Deliberately NOT UpdateDarkUI on the swatch: the legacy swap
+        // table would also try to rewrite the data colour it is showing.
+        if (m_color_picker) {
+            m_color_picker->SyncWindowBackground();
+            m_color_picker->Refresh();
         }
+        if (m_clear_button)
+            refresh_clear_button_style();
     }
 #endif
 }
 
-void ColourPicker::update_clear_button_icon()
+void ColourPicker::refresh_clear_button_style()
 {
-    if (m_clear_button) {
-        const std::string icon_name  = wxGetApp().dark_mode() ? "clear_color_dark" : "clear_color_light";
-        wxBitmap new_bitmap = create_scaled_bitmap(icon_name, m_clear_button->GetParent(), 20, false);
-        m_clear_button->SetBitmap(new_bitmap);
-        m_clear_button->SetToolTip(_L("Clear color"));
-        m_clear_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-        wxGetApp().UpdateDarkUI(m_clear_button);
-        m_clear_button->Refresh();
-    }
-}
-
-void ColourPicker::on_button_click(wxCommandEvent &event) {
-#if !defined(__linux__) && !defined(__LINUX__)
-    if (m_clrData) {
-        std::vector<std::string> colors = wxGetApp().app_config->get_custom_color_from_config();
-        for (int i = 0; i < colors.size(); i++) {
-            m_clrData->SetCustomColour(i, string_to_wxColor(colors[i]));
-        }
-    }
-    m_picker_widget->OnButtonClick(event);
-#endif
-}
-
-void ColourPicker::convert_to_picker_widget(wxColourPickerCtrl *widget)
-{
-#if !defined(__linux__) && !defined(__LINUX__)
-    m_picker_widget = dynamic_cast<wxColourPickerWidget*>(widget->GetPickerCtrl());
-    if (m_picker_widget) {
-        m_picker_widget->Bind(wxEVT_BUTTON, &ColourPicker::on_button_click, this);
-        m_clrData = m_picker_widget->GetColourData();
-    }
-#endif
-}
-
-void ColourPicker::save_colors_to_config() {
-#if !defined(__linux__) && !defined(__LINUX__)
-    if (m_clrData) {
-        std::vector<std::string> colors;
-        if (colors.size() != CUSTOM_COLOR_COUNT) {
-            colors.resize(CUSTOM_COLOR_COUNT);
-        }
-        for (int i = 0; i < CUSTOM_COLOR_COUNT; i++) {
-            colors[i] = color_to_string(m_clrData->GetCustomColour(i));
-        }
-        wxGetApp().app_config->save_custom_color_to_config(colors);
-    }
-#endif
+    if (!m_clear_button)
+        return;
+    // The clear affordance is an MD3 icon button: its Close glyph and hover
+    // surface come from OnSurfaceVariant / SurfaceContainerHigh, so a theme
+    // change only needs the parent-surface snapshot it caches behind its
+    // circular shape re-taken -- no clear_color_dark / clear_color_light pair,
+    // and no legacy dark swap.
+    m_clear_button->SetIconButton(::Button::IconShape::Circle, COLOUR_CLEAR_BUTTON_PX);
+    m_clear_button->Refresh();
 }
 
 void PointCtrl::BUILD()

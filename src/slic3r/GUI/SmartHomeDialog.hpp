@@ -14,10 +14,10 @@ class Label;
 class Button;
 class CheckBox;
 class SearchField;
+class TextInput;
+class wxSlider;
 class wxListBox;
 class wxScrolledWindow;
-class wxSlider;
-class wxTextCtrl;
 
 namespace Slic3r { namespace GUI {
 
@@ -57,8 +57,8 @@ private:
     std::vector<HomeAssistant::Entity> m_entities;
     std::vector<int>                   m_visible; // filtered indices
 
-    wxTextCtrl  *m_url { nullptr };
-    wxTextCtrl  *m_token { nullptr };
+    TextInput   *m_url { nullptr };
+    TextInput   *m_token { nullptr };
     Label       *m_status { nullptr };
     Label       *m_config_limit_status { nullptr };
     Button      *m_add_printers { nullptr };

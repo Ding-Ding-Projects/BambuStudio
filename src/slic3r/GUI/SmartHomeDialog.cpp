@@ -13,7 +13,9 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/SearchField.hpp"
+#include <wx/slider.h>
 #include "Widgets/StateColor.hpp"
+#include "Widgets/TextInput.hpp"
 
 #include "libslic3r/AppConfig.hpp"
 
@@ -28,10 +30,18 @@
 #include <wx/listbox.h>
 #include <wx/scrolwin.h>
 #include <wx/sizer.h>
-#include <wx/slider.h>
-#include <wx/textctrl.h>
 #include <wx/weakref.h>
 #include <wx/wrapsizer.h>
+
+#ifdef __WXMSW__
+// Needed only for EM_SETPASSWORDCHAR on the token field (see mask_text_entry).
+// NOMINMAX keeps windows.h from defining min/max as macros, which would break
+// the std::min / std::max used throughout this file.
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 namespace Slic3r { namespace GUI {
 
@@ -202,6 +212,32 @@ void make_responsive_action(Button &button)
     button.SetAllowShrink(false);
     if (!button.GetLabel().empty())
         button.SetToolTip(button.GetLabel());
+}
+
+// Hide the long-lived Home Assistant token behind bullets.
+//
+// The masking style cannot travel through the MD3 field's constructor: TextInput
+// strips wxALIGN_MASK from the style before forwarding it to its inner text
+// control (Widgets/TextInput.cpp), and wxTE_PASSWORD (0x0800) is the same bit as
+// wxALIGN_CENTER_VERTICAL, so it would be silently dropped and the credential
+// would render in clear text. EM_SETPASSWORDCHAR is the documented way to turn
+// masking on after the EDIT control exists -- adding ES_PASSWORD with
+// SetWindowLong afterwards is explicitly not supported.
+void mask_text_entry(wxTextCtrl *entry)
+{
+#ifdef __WXMSW__
+    if (entry == nullptr || entry->GetHWND() == nullptr)
+        return;
+    // U+25CF BLACK CIRCLE, the glyph Windows itself uses for password edits.
+    ::SendMessage(
+        static_cast<HWND>(entry->GetHWND()),
+        EM_SETPASSWORDCHAR,
+        static_cast<WPARAM>(0x25CF),
+        0);
+    entry->Refresh();
+#else
+    (void) entry;
+#endif
 }
 
 bool has_suffix(const std::string &value, const std::string &suffix)
@@ -436,25 +472,34 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
     // --- connection ---------------------------------------------------------
     auto *conn = new wxBoxSizer(wxVERTICAL);
     conn->Add(label(_L("Home Assistant URL")), 0, wxBOTTOM, FromDIP(4));
-    m_url = new wxTextCtrl(
-        m_scroll, wxID_ANY, wxString::FromUTF8(cfg->get("ha_url")),
+    // The kit filled field (r10, SurfaceContainerHighest, Outline border that
+    // promotes to Primary on hover) instead of a native sunken edit box, so the
+    // credential row follows the theme like the rest of the dialog. The name is
+    // set on the container AND on the inner entry: the container is what the
+    // sizer and the layout tests address, the entry is what actually takes focus
+    // and is announced by a screen reader.
+    m_url = new ::TextInput(
+        m_scroll, wxString::FromUTF8(cfg->get("ha_url")), wxEmptyString, wxEmptyString,
         wxDefaultPosition, wxDefaultSize);
     m_url->SetMinSize(wxSize(-1, FromDIP(44)));
     m_url->SetName(_L("Home Assistant URL"));
+    m_url->GetTextCtrl()->SetName(_L("Home Assistant URL"));
     conn->Add(m_url, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
     conn->Add(label(_L("Token")), 0, wxBOTTOM, FromDIP(4));
-    m_token = new wxTextCtrl(
-        m_scroll, wxID_ANY, wxString::FromUTF8(cfg->get("ha_token")),
-        wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+    m_token = new ::TextInput(
+        m_scroll, wxString::FromUTF8(cfg->get("ha_token")), wxEmptyString, wxEmptyString,
+        wxDefaultPosition, wxDefaultSize);
     m_token->SetMinSize(wxSize(-1, FromDIP(44)));
     m_token->SetName(_L("Token"));
+    m_token->GetTextCtrl()->SetName(_L("Token"));
+    mask_text_entry(m_token->GetTextCtrl());
     conn->Add(m_token, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
     auto *connect = new Button(m_scroll, _L("Connect"));
     make_responsive_action(*connect);
     connect->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         AppConfig *c = wxGetApp().app_config;
-        c->set("ha_url", std::string(m_url->GetValue().ToUTF8()));
-        c->set("ha_token", std::string(m_token->GetValue().ToUTF8()));
+        c->set("ha_url", std::string(m_url->GetTextCtrl()->GetValue().ToUTF8()));
+        c->set("ha_token", std::string(m_token->GetTextCtrl()->GetValue().ToUTF8()));
         c->save();
         refresh_entities();
     });
@@ -534,10 +579,17 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
     m_search->SetOnQuery([this](const wxString &) { rebuild_list(); });
     m_search->SetOnRegexToggle([this](bool) { rebuild_list(); });
     body->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
+    // wxBORDER_NONE drops the sunken Win32 client edge so the list reads as an
+    // MD3 SurfaceContainer block against the dialog Surface rather than an OS
+    // control. wxLB_HSCROLL stays: long friendly names must remain reachable
+    // instead of being clipped.
     m_list = new wxListBox(
         m_scroll, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(150)),
-        0, nullptr, wxLB_SINGLE | wxLB_HSCROLL);
+        0, nullptr, wxBORDER_NONE | wxLB_SINGLE | wxLB_HSCROLL);
     m_list->SetName(_L("Search speakers and lights"));
+    m_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_list->SetForegroundColour(on);
+    m_list->SetFont(Label::Body_13);
     body->Add(m_list, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
     m_results_status = label(wxEmptyString, true, true);
     m_results_status->Hide();
@@ -573,6 +625,13 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
         m_pending_volume_entity.clear();
         HomeAssistant::media_volume(entity_id, m_pending_volume_level);
     });
+    // Deliberately still the native trackbar, not the shared MD3 Slider. Slider
+    // derives from wxWindow rather than wxControl, so it gets no WS_TABSTOP and
+    // cannot be reached by Tab, and it implements no wxAccessible - a screen reader
+    // sees a blank client area instead of a slider with a value. Swapping this
+    // control would trade a documented accessibility guarantee for a visual one,
+    // which this project's rules do not allow. Restore the swap once Slider is
+    // focusable and exposes ROLE_SYSTEM_SLIDER.
     m_volume = new wxSlider(
         m_scroll, wxID_ANY, 50, 0, 100,
         wxDefaultPosition, wxDefaultSize);
@@ -849,8 +908,8 @@ void SmartHomeDialog::add_printers_to_home_assistant()
     // Use the values currently visible in the dialog. Clicking this action is
     // an explicit request to use them, just like Connect.
     AppConfig *config = wxGetApp().app_config;
-    config->set("ha_url", std::string(m_url->GetValue().ToUTF8()));
-    config->set("ha_token", std::string(m_token->GetValue().ToUTF8()));
+    config->set("ha_url", std::string(m_url->GetTextCtrl()->GetValue().ToUTF8()));
+    config->set("ha_token", std::string(m_token->GetTextCtrl()->GetValue().ToUTF8()));
     config->save();
 
     const auto notify_or_status = [this](NotificationManager::NotificationLevel level,

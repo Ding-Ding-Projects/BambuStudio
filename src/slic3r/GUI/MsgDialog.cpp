@@ -405,12 +405,24 @@ static void add_msg_content(wxWindow   *parent,
         msg_lines++;
     }
 
-    wxFont      font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-    wxFont      monospace = wxGetApp().code_font();
+    // Kit typography (ui-md3 type scale). This is the body renderer for the whole
+    // message-dialog family, so its two faces decide the type of essentially every
+    // modal in the app: the prose face is the MD3 body style (::Label::Body_14 ==
+    // MD3::Type::body, 14/400) and the fixed-pitch face is Roboto Mono
+    // (::Label::Mono_12), in place of the Windows shell font (Segoe UI) and the
+    // OS teletype family behind code_font() (Courier New). Taking them from Label
+    // is also what makes the body follow Appearance > UI font / font size, which
+    // the OS faces never did. Both helpers are built in the GUI_App constructor
+    // (Label::initSysFont), but keep the OS faces as a fallback in case a bundled
+    // font resource ever fails to resolve.
+    wxFont      font = ::Label::Body_14.IsOk() ? ::Label::Body_14 : wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    wxFont      monospace = ::Label::Mono_12.IsOk() ? ::Label::Mono_12 : wxGetApp().code_font();
     wxColour    text_clr = wxGetApp().get_label_clr_default();
     wxColour    bgr_clr = parent->GetBackgroundColour(); //wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
     auto        text_clr_str = wxString::Format(wxT("#%02X%02X%02X"), text_clr.Red(), text_clr.Green(), text_clr.Blue());
     auto        bgr_clr_str = wxString::Format(wxT("#%02X%02X%02X"), bgr_clr.Red(), bgr_clr.Green(), bgr_clr.Blue());
+    // The HTML size ladder stays flat (as before) but is now anchored on the MD3
+    // body size rather than the shell font's point size.
     const int   font_size = font.GetPointSize();
     int         size[] = { font_size, font_size, font_size, font_size, font_size, font_size, font_size };
     html->SetFonts(font.GetFaceName(), monospace.GetFaceName(), size);
@@ -447,6 +459,10 @@ static void add_msg_content(wxWindow   *parent,
     }
     else {
         wxClientDC dc(parent);
+        // Measure in the face the body actually renders in. This used to fall out
+        // of the parent dialog's own font happening to match; pinning it keeps the
+        // sizing honest now that the body face comes from the kit type scale.
+        dc.SetFont(font);
         wxSize     msg_sz = dc.GetMultiLineTextExtent(msg);
 
         page_size = wxSize(std::min(msg_sz.GetX(), info_width), std::min(msg_sz.GetY(), info_width));
@@ -454,7 +470,11 @@ static void add_msg_content(wxWindow   *parent,
         if (link_text.IsEmpty() && !link_callback && is_marked_msg == false) {//for common text
             html->Destroy();
             if (msg_sz.GetX() < info_width) {//No need for line breaks
-                info_width = msg_sz.GetX();
+                // Measurement and rendering now use the same font, so collapsing to
+                // the bare extent would leave the native STATIC no room at all --
+                // mirror the Win32 slack Label::DoGetBestClientSize adds so the last
+                // glyph cannot be clipped off a single-line message.
+                info_width = std::min(info_width, msg_sz.GetX() + parent->FromDIP(4));
             }
             wxScrolledWindow *scrolledWindow = new wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
             scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
@@ -543,8 +563,11 @@ PostProcessScriptDialog::PostProcessScriptDialog(wxWindow* parent, const wxStrin
 {
     const int content_width =
         bounded_message_content_width(this, FromDIP(500));
-    wxFont msg_font = wxGetApp().normal_font();
-    msg_font.SetPointSize(wxGetApp().code_font().GetPointSize());
+    // Prose in the kit body style. The point size used to be borrowed from
+    // code_font(), which is the OS teletype family; since code_font() is sized
+    // off normal_font() that borrow was already a no-op, so this only drops the
+    // dependency on the OS face and names the MD3 style outright.
+    wxFont msg_font = ::Label::Body_14.IsOk() ? ::Label::Body_14 : wxGetApp().normal_font();
     auto* msg = new Label(this, msg_font, message, LB_AUTO_WRAP, wxSize(content_width, -1));
     msg->SetMinSize(wxSize(content_width, -1));
     msg->SetForegroundColour(wxGetApp().get_label_clr_default());
@@ -553,7 +576,9 @@ PostProcessScriptDialog::PostProcessScriptDialog(wxWindow* parent, const wxStrin
 
     m_script_text = new wxTextCtrl(this, wxID_ANY, script_content, wxDefaultPosition,
         wxSize(content_width, FromDIP(140)), wxTE_MULTILINE | wxTE_READONLY | wxTE_WORDWRAP);
-    m_script_text->SetFont(wxGetApp().code_font());
+    // The script body is technical/fixed-pitch content: Roboto Mono, the kit's
+    // canonical mono face, rather than the OS teletype family (Courier New).
+    m_script_text->SetFont(::Label::Mono_12.IsOk() ? ::Label::Mono_12 : wxGetApp().code_font());
     m_details_expanded = true;
     content_sizer->Add(m_script_text, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 

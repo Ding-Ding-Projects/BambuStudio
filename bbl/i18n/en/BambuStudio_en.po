@@ -22421,3 +22421,6 @@ msgstr "Your unsaved project was saved to version history before this prompt. It
 
 msgid "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."
 msgstr "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."
+
+msgid "Fan Control"
+msgstr "Fan Control"

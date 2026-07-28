@@ -2896,3 +2896,13 @@ msgstr "喺彈呢個窗之前，你未儲存嘅專案已經幫你擺咗入版本
 #. reviewed-category: destructive-dirty-error-security
 msgid "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."
 msgstr "你未儲存嘅專案複製唔入版本紀錄。個備份仍然會留喺硬碟，下次開機會再問你一次，所以而家撳「取消」唔會刪咗佢。"
+
+#. reviewed-category: preferences
+msgid "Fan Control"
+msgstr "風扇控制"
+
+#. reviewed-category: slicing-printing
+#. Shared msgid: it heads the AMS filament rail but is also used generically,
+#. so this stays the neutral "loading" rather than a filament-specific phrase.
+msgid "Loading"
+msgstr "載入中"

@@ -22,6 +22,7 @@
 
 #include "GUI.hpp"
 #include "wxExtensions.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/SpinInput.hpp"
 
 #ifdef __WXMSW__
@@ -402,10 +403,42 @@ public:
     void            suppress_scroll();
 };
 
+// MD3 colour swatch button: the kit's stand-in for wxColourPickerCtrl.
+//
+// Anatomy matches the ::TextInput / ::ComboBox fields it sits beside in the
+// parameter grid -- r10, 1px Outline at rest, Primary on hover -- but the
+// interior is a *functional data colour*: the literal value the option stores.
+// That is why doRender() paints m_colour verbatim instead of feeding it to a
+// StateColor. StateColor::colorForStates() runs every colour past the legacy
+// light->dark swap table, which would silently repaint a white or black
+// filament colour as a theme grey the moment the user switched to dark mode.
+//
+// Deriving from ::Button keeps the push-button role, keyboard focus and
+// Space/Enter activation the native picker had, and adds the kit focus ring.
+class ColourSwatchButton : public ::Button
+{
+public:
+    ColourSwatchButton(wxWindow *parent, const wxColour &colour, const wxSize &size);
+
+    void     SetColour(const wxColour &colour);
+    void     SetColour(const wxString &colour) { SetColour(wxColour(colour)); }
+    wxColour GetColour() const { return m_colour; }
+
+    // False when the option is empty / undefined -- drawn as an Error stroke
+    // across an empty field, the signal the native picker used to bake into
+    // its swatch bitmap.
+    bool     HasColour() const;
+
+protected:
+    void doRender(wxDC &dc) override;
+
+private:
+    wxColour m_colour;
+};
+
 class ColourPicker : public Field {
 	using Field::Field;
 
-    void            set_undef_value(wxColourPickerCtrl* field);
     void            clear_color();
 
 public:
@@ -419,7 +452,7 @@ public:
 	void			set_value(const std::string& value, bool change_event = false)
 	{
 		m_disable_change_event = !change_event;
-		m_color_picker->SetColour(value);
+		m_color_picker->SetColour(wxString(value));
         update_clear_button_visibility();
 		m_disable_change_event = false;
 	}
@@ -433,16 +466,13 @@ public:
 	wxWindow*		getWindow() override { return window; }
 
 private:
-    void convert_to_picker_widget(wxColourPickerCtrl *widget);
-    void on_button_click(wxCommandEvent &WXUNUSED(ev));
+    void pick_color();
+    void remember_custom_color(const wxColour &color);
     void update_clear_button_visibility();
-    void update_clear_button_icon();
-    void save_colors_to_config();
+    void refresh_clear_button_style();
 private:
-    wxColourData*  m_clrData{nullptr};
-    wxColourPickerWidget* m_picker_widget{nullptr};
-    wxColourPickerCtrl* m_color_picker{nullptr};
-    wxButton *m_clear_button{nullptr};
+    ColourSwatchButton* m_color_picker{nullptr};
+    ::Button*           m_clear_button{nullptr};
 };
 
 class PointCtrl : public Field {

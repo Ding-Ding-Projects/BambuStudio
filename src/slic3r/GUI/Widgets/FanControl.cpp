@@ -1,5 +1,6 @@
 #include "FanControl.hpp"
 #include "Label.hpp"
+#include "MD3DialogChrome.hpp"
 #include "StateColor.hpp"
 #include "../BitmapCache.hpp"
 #include "../I18N.hpp"
@@ -33,7 +34,9 @@ void Fan::create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
     m_current_speeds  = 0;
 
     wxWindow::Create(parent, id, pos, size, wxBORDER_NONE);
-    SetBackgroundColour(ThemeColor::White);
+    // The gauge is drawn over whatever card hosts it, so take the host's surface
+    // instead of a raw white plate that would stay white in dark mode.
+    SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
 
     m_rotate_offsets.push_back(RotateOffSet{ 2.5, wxPoint(-FromDIP(16), FromDIP(11)) });
     m_rotate_offsets.push_back(RotateOffSet{ 2.2, wxPoint(-FromDIP(20), FromDIP(11)) });
@@ -177,7 +180,9 @@ FanOperate::FanOperate(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
 void FanOperate::create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
 {
     wxWindow::Create(parent, id, pos, size, wxBORDER_NONE);
-    SetBackgroundColour(ThemeColor::White);
+    // An outlined stepper sitting on the fan card: share the card's surface so
+    // only the OutlineVariant frame separates the two.
+    SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
 
     m_bitmap_add        = ScalableBitmap(this, "fan_control_add", 24);
     m_bitmap_decrease   = ScalableBitmap(this, "fan_control_decrease", 24);
@@ -301,7 +306,7 @@ void FanOperate::doRender(wxDC& dc)
     wxSize size = GetSize();
     dc.SetPen(wxPen(DRAW_OPERATE_LINE_COLOUR));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRoundedRectangle(0,0,size.x,size.y,5);
+    dc.DrawRoundedRectangle(0, 0, size.x, size.y, FromDIP(MD3::Metrics::radius_tiny));
 
     //splt
     auto left_fir = size.x / 3;
@@ -315,7 +320,7 @@ void FanOperate::doRender(wxDC& dc)
 
     //txt
     dc.SetFont(::Label::Body_12);
-    dc.SetTextForeground(StateColor::darkModeColorFor(ThemeColor::TextMuted));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     wxString text = wxString::Format("%d%%", m_current_speeds * 10);
     wxSize text_size = dc.GetTextExtent(text);
     auto text_width = size.x - m_bitmap_decrease.GetBmpWidth() * 2;
@@ -338,13 +343,18 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
     , m_mode_id(mode_id)
     , m_part_id(part_id)
 {
-    SetMaxSize(wxSize(FromDIP(180), FromDIP(80)));
-    SetMinSize(wxSize(FromDIP(180), FromDIP(80)));
+    // 196 rather than the old 180: the real MD3 Switch is a 44px track where the
+    // toggle PNG was 16px wide, and the card has to hold the control it owns
+    // instead of clipping it against its own max size.
+    SetMaxSize(wxSize(FromDIP(196), FromDIP(80)));
+    SetMinSize(wxSize(FromDIP(196), FromDIP(80)));
     m_bitmap_fan = new ScalableBitmap(this, "fan_icon", 20);
-    m_bitmap_toggle_off = new ScalableBitmap(this, "toggle_off", 16);
-    m_bitmap_toggle_on = new ScalableBitmap(this, "toggle_on", 16);
 
-    SetBackgroundColour(ThemeColor::Grey250);
+    // Cards read as raised blocks on the popup's SurfaceContainer body. Set the
+    // surface before any child is built: the drawn Switch and the stepper both
+    // sample their parent's background when they first render.
+    const wxColour card_bg = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    SetBackgroundColour(card_bg);
 
     wxBoxSizer* m_sizer_main = new wxBoxSizer(wxHORIZONTAL);
 
@@ -357,27 +367,35 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
     m_static_bitmap_fan = new wxStaticBitmap(this, wxID_ANY, m_bitmap_fan->bmp(), wxDefaultPosition, wxDefaultSize);
 
     m_static_name = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END | wxALIGN_CENTER_HORIZONTAL);
-    m_static_name->SetBackgroundColour(ThemeColor::Grey250);
+    m_static_name->SetBackgroundColour(card_bg);
+    m_static_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_static_name->SetFont(Label::Head_16);
     m_static_name->SetMinSize(wxSize(FromDIP(100), -1));
     m_static_name->SetMaxSize(wxSize(FromDIP(100), -1));
 
-    m_switch_button = new wxStaticBitmap(this, wxID_ANY, m_bitmap_toggle_off->bmp(), wxDefaultPosition, wxDefaultSize, 0);
-    m_switch_button->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
-    m_switch_button->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_RIGHT_ARROW); });
-    m_switch_button->Bind(wxEVT_LEFT_DOWN, &FanControlNew::on_swith_fan, this);
-
+    // The drawn MD3 Switch replaces the toggle_off/toggle_on PNG pair shown
+    // through a wxStaticBitmap. That pseudo-control could only be poked with a
+    // mouse; this one takes Tab focus, toggles on Space/Enter and announces its
+    // role and checked state. Device teal, because the popup opens inside the
+    // Device workspace and has no business wearing the brand green.
+    m_switch_button = new SwitchButton(this);
+    m_switch_button->SetColorScheme(MD3::ColorScheme::Device);
+    m_switch_button->SetCursor(wxCURSOR_HAND);
+    m_switch_button->SetValue(false);
+    m_switch_button->Bind(wxEVT_TOGGLEBUTTON, &FanControlNew::on_switch_toggled, this);
 
     sizer_control_top->Add(m_static_bitmap_fan, 0, wxLEFT | wxTOP, FromDIP(8));
     sizer_control_top->Add(m_static_name, 0, wxLEFT | wxTOP, FromDIP(5));
     sizer_control_top->Add(0, 0, 1, wxEXPAND, 0);
-    sizer_control_top->Add(m_switch_button, 0, wxALIGN_RIGHT | wxRIGHT | wxTOP, FromDIP(5));
+    sizer_control_top->Add(m_switch_button, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(5));
 
     sizer_control->Add(sizer_control_top, 0, wxEXPAND, 0);
 
     m_static_status_name = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END | wxALIGN_CENTER_HORIZONTAL);
-    m_static_status_name->SetForegroundColour(ThemeColor::BrandGreen);
-    m_static_status_name->SetBackgroundColour(ThemeColor::Grey250);
+    // "Off" / "Auto" is the card's status accent; thread the Device scheme so it
+    // reads teal with the rest of the workspace instead of the brand green.
+    m_static_status_name->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));
+    m_static_status_name->SetBackgroundColour(card_bg);
     m_static_status_name->SetFont(Label::Head_16);
     m_static_status_name->SetMinSize(wxSize(FromDIP(100), -1));
     m_static_status_name->SetMaxSize(wxSize(FromDIP(100), -1));
@@ -385,13 +403,11 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
 
     m_fan_operate->Bind(EVT_FAN_SWITCH_ON, [this](const wxCommandEvent &e) {
         m_current_speed = e.GetInt();
-        m_switch_button->SetBitmap(m_bitmap_toggle_on->bmp());
-        m_switch_fan = true;
+        on_swith_fan(true);
     });
     m_fan_operate->Bind(EVT_FAN_SWITCH_OFF, [this](const wxCommandEvent &e) {
         m_current_speed = e.GetInt();
-        m_switch_button->SetBitmap(m_bitmap_toggle_off->bmp());
-        m_switch_fan = false;
+        on_swith_fan(false);
     });
 
     m_fan_operate->Bind(EVT_FAN_ADD, [this](const wxCommandEvent &e) {
@@ -434,16 +450,10 @@ void FanControlNew::msw_rescale()
     m_bitmap_fan->msw_rescale();
     m_static_bitmap_fan->SetBitmap(m_bitmap_fan->bmp());
 
-    m_bitmap_toggle_off->msw_rescale();
-    m_bitmap_toggle_on->msw_rescale();
-    if (m_switch_fan)
-    {
-        m_switch_button->SetBitmap(m_bitmap_toggle_on->bmp());
-    }
-    else
-    {
-        m_switch_button->SetBitmap(m_bitmap_toggle_off->bmp());
-    }
+    // The Switch is drawn, not blitted: re-render it at the new DPI (and re-read
+    // the theme tokens) instead of rescaling a pair of baked bitmaps.
+    if (m_switch_button)
+        m_switch_button->Rescale();
 
     m_fan_operate->msw_rescale();
 
@@ -481,36 +491,32 @@ bool FanControlNew::check_printing_state()
     return true;
 }
 
-void FanControlNew::on_swith_fan(wxMouseEvent& evt)
+void FanControlNew::on_switch_toggled(wxCommandEvent& evt)
 {
+    // The control has already flipped by the time this fires (that is what a real
+    // toggle button does), so the printing warning has to be able to undo it.
+    const bool want_on = m_switch_button->GetValue();
     if (!check_printing_state()) {
+        // Backed out of the warning: put the knob where the fan actually is. A
+        // switch reading ON over a fan that is OFF lies to the eye and, worse,
+        // to the screen reader that just announced "checked".
+        m_switch_button->SetValue(!want_on);
         return;
     }
 
-    int speed = 0;
-    if (m_switch_fan) {
-        m_switch_button->SetBitmap(m_bitmap_toggle_off->bmp());
-        m_switch_fan = false;
-    }
-    else {
-        speed = 255;
-        m_switch_button->SetBitmap(m_bitmap_toggle_on->bmp());
-        m_switch_fan = true;
-    }
-
-    set_fan_speed(speed);
+    m_switch_fan = want_on;
+    set_fan_speed(want_on ? 255 : 0);
     command_control_fan();
+    evt.Skip();
 }
 
 void FanControlNew::on_swith_fan(bool on)
 {
     m_switch_fan = on;
-    if (m_switch_fan) {
-        m_switch_button->SetBitmap(m_bitmap_toggle_on->bmp());
-    }
-    else {
-        m_switch_button->SetBitmap(m_bitmap_toggle_off->bmp());
-    }
+    // SetValue only re-renders the drawn Switch (and animates the knob); it
+    // posts no event, so echoing the printer's state back here cannot loop.
+    if (m_switch_button)
+        m_switch_button->SetValue(on);
 }
 
 void FanControlNew::update_mode()
@@ -558,6 +564,14 @@ void FanControlNew::set_machine_obj(MachineObject* obj)
 
 void FanControlNew::set_name(wxString name)
 {
+    if (m_switch_button) {
+        // Name the switch after the fan it drives, before the label below gets
+        // line-broken: assistive tech announces "Parts, switch, checked" rather
+        // than an anonymous toggle, and the tooltip says the same on hover.
+        m_switch_button->SetName(name);
+        m_switch_button->SetToolTip(name);
+    }
+
     if (name.Contains('(') && name.Contains(')'))
     {
         wxClientDC dc(m_static_name);
@@ -630,7 +644,10 @@ static void nop_deleter_fan_control_popup(FanControlPopupNew *) {}
 FanControlPopupNew::FanControlPopupNew(wxWindow* parent, MachineObject* obj, const AirDuctData& data)
     : wxDialog(parent, wxID_ANY, wxEmptyString)
 {
-    SetBackgroundColour(ThemeColor::White);
+    // The popup body is the MD3 dialog surface. Set it before any child is built
+    // so Labels and drawn widgets sample the right plate at construction, and so
+    // it resolves per theme instead of being a white card in dark mode.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     init_names(obj);
 
     m_data = data;
@@ -648,14 +665,18 @@ FanControlPopupNew::FanControlPopupNew(wxWindow* parent, MachineObject* obj, con
     m_mode_sizer->Add(m_radio_btn_sizer, 0, wxALIGN_CENTRE_VERTICAL, 0);
 
     m_mode_text = new Label(this);
-    m_mode_text->SetBackgroundColour(ThemeColor::White);
+    m_mode_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_mode_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     m_sub_mode_panel = new wxPanel(this, wxID_ANY);
-    m_sub_mode_panel->SetBackgroundColour(ThemeColor::Grey250);
+    m_sub_mode_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     m_sub_mode_sizer = new wxBoxSizer(wxVERTICAL);
     m_sub_mode_panel->SetSizer(m_sub_mode_sizer);
 
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(23));
+    // 12, not 23: the kit caption strip adopted at the end of this ctor now
+    // supplies the header, so the old hand-cut gap under the native title bar
+    // would just be dead space.
+    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(12));
     m_sizer_main->Add(m_mode_sizer, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT | wxRIGHT, FromDIP(30));
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(10));
     m_sizer_main->Add(m_mode_text, 0, wxLEFT, FromDIP(35));
@@ -670,8 +691,14 @@ FanControlPopupNew::FanControlPopupNew(wxWindow* parent, MachineObject* obj, con
     Layout();
     Fit();
 
+    // Last layout act of the ctor, as MD3DialogCaption::Adopt requires. This was
+    // the one dialog in this directory still wearing the native wxDialog title
+    // bar; it now gets the kit caption strip, a keyboard-reachable close and the
+    // DWM rounded frame, which is also what retires the old radius-0 Grey450
+    // border this class used to paint for itself.
+    MD3DialogCaption::Adopt(this, _L("Fan Control"));
+
     this->Centre(wxBOTH);
-    Bind(wxEVT_PAINT, &FanControlPopupNew::paintEvent, this);
 
 #if __APPLE__
     Bind(wxEVT_LEFT_DOWN, &FanControlPopupNew::on_left_down, this);
@@ -790,7 +817,14 @@ void FanControlPopupNew::UpdatePartSubMode()
                   if (m_obj && m_obj->is_in_printing() && m_cooling_filter_switch_panel->IsSwitchOn()) {
                       MessageDialog msg_wingow(nullptr, _L("Enabling filtration during printing may reduce cooling and affect print qulity. Please choose carefully"), "", wxICON_WARNING | wxCANCEL | wxOK);
                       msg_wingow.SetButtonLabel(wxID_OK, _L("Change Anyway"));
-                      if (msg_wingow.ShowModal() != wxID_OK) { return; }
+                      if (msg_wingow.ShowModal() != wxID_OK) {
+                          // Declined: no air-duct command goes out, so put the
+                          // switch back off. It is a real control announcing a
+                          // checked state now, and leaving it on would claim a
+                          // filtration mode the printer was never told about.
+                          m_cooling_filter_switch_panel->SetSwitchOn(false);
+                          return;
+                      }
                   }
 
                   int submode = m_cooling_filter_switch_panel->IsSwitchOn() ? 1 : 0;
@@ -890,15 +924,10 @@ void FanControlPopupNew::on_left_down(wxMouseEvent& evt)
     }
 
     for (auto fan_it : m_fan_control_list){
-        auto fan     = fan_it.second;
-        auto win_pos = fan->m_switch_button->ClientToScreen(wxPoint(0, 0));
-        auto size    = fan->m_switch_button->GetSize();
-        if (mouse_pos.x > win_pos.x && mouse_pos.x < (win_pos.x + fan->m_switch_button->GetSize().x) && mouse_pos.y > win_pos.y &&
-            mouse_pos.y < (win_pos.y + fan->m_switch_button->GetSize().y)) {
-            fan->on_swith_fan(evt);
-        }
-
-        fan->on_left_down(evt);
+        // The fan switch is a real control now and handles its own clicks, so no
+        // hit-test forwarding for it here; doing so would toggle it twice. Only
+        // the owner-drawn +/- stepper still needs the manual forward.
+        fan_it.second->on_left_down(evt);
     }
 
     Layout();
@@ -941,14 +970,6 @@ void FanControlPopupNew::msw_rescale()
 {
     for (const auto& btn_iter : m_mode_switch_btns) { btn_iter.second->msw_rescale(); }
     for (const auto& fan_iter : m_fan_control_list) { fan_iter.second->msw_rescale(); }
-}
-
-void FanControlPopupNew::paintEvent(wxPaintEvent& evt)
-{
-    wxPaintDC dc(this);
-    dc.SetPen(ThemeColor::Grey450);
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
 
 void FanControlPopupNew::on_mode_changed(const wxMouseEvent &event)
@@ -1104,26 +1125,37 @@ wxDEFINE_EVENT(EVT_FANCTRL_SWITCH, wxCommandEvent);
 FanControlNewSwitchPanel::FanControlNewSwitchPanel(wxWindow* parent, const wxString& title, const wxString& tips, bool on)
     : wxWindow(parent, wxID_ANY), switch_state_on(on)
 {
+    // Same raised-block tone as the fan cards it sits above. This has to come
+    // first: Label and the drawn Switch both read their parent's background when
+    // they are constructed, so setting it last (as this ctor used to) left them
+    // seeded from the system button face.
+    const wxColour panel_bg = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    SetBackgroundColour(panel_bg);
+
     Label* label = new Label(this);
-    label->SetBackgroundColour(ThemeColor::Grey250);
+    label->SetBackgroundColour(panel_bg);
+    label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     label->SetLabelText(title);
 
-    m_bitmap_toggle_off = new ScalableBitmap(this, "toggle_off", 19);
-    m_bitmap_toggle_on = new ScalableBitmap(this, "toggle_on", 19);
-    if (switch_state_on) {
-        m_switch_btn = new wxStaticBitmap(this, wxID_ANY, m_bitmap_toggle_on->bmp());
-    } else {
-        m_switch_btn = new wxStaticBitmap(this, wxID_ANY, m_bitmap_toggle_off->bmp());
-    }
-    m_switch_btn->Bind(wxEVT_LEFT_DOWN, &FanControlNewSwitchPanel::on_left_down, this);
+    // The drawn MD3 Switch, in place of the 19px toggle_on/toggle_off PNG pair
+    // that a wxStaticBitmap could only ever show, never operate: this one is
+    // focusable, works from the keyboard and reports its checked state.
+    m_switch_btn = new SwitchButton(this);
+    m_switch_btn->SetColorScheme(MD3::ColorScheme::Device);
+    m_switch_btn->SetName(title);
+    m_switch_btn->SetToolTip(title);
+    m_switch_btn->SetCursor(wxCURSOR_HAND);
+    m_switch_btn->SetValue(switch_state_on);
+    m_switch_btn->Bind(wxEVT_TOGGLEBUTTON, &FanControlNewSwitchPanel::on_toggled, this);
 
     wxSizer* m_label_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_label_sizer->Add(label, 0, wxALIGN_LEFT, 0);
+    m_label_sizer->Add(label, 0, wxALIGN_CENTER_VERTICAL, 0);
     m_label_sizer->AddStretchSpacer(1);
-    m_label_sizer->Add(m_switch_btn, 0, wxALIGN_RIGHT, 0);
+    m_label_sizer->Add(m_switch_btn, 0, wxALIGN_CENTER_VERTICAL, 0);
 
     Label* tips_label = new Label(this);
-    tips_label->SetBackgroundColour(ThemeColor::Grey250);
+    tips_label->SetBackgroundColour(panel_bg);
+    tips_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     tips_label->SetLabelText(tips);
     tips_label->Wrap(FromDIP(400));
 
@@ -1132,7 +1164,6 @@ FanControlNewSwitchPanel::FanControlNewSwitchPanel(wxWindow* parent, const wxStr
     m_sizer_main->Add(tips_label, 0, wxALL | wxALIGN_LEFT, FromDIP(5));
     SetSizer(m_sizer_main);
 
-    SetBackgroundColour(ThemeColor::Grey250);
     Layout();
 
     wxGetApp().UpdateDarkUIWin(this);
@@ -1142,19 +1173,20 @@ void FanControlNewSwitchPanel::SetSwitchOn(bool on)
 {
     if (switch_state_on != on) {
         switch_state_on = on;
-        switch_state_on ? m_switch_btn->SetBitmap(m_bitmap_toggle_on->bmp()) : m_switch_btn->SetBitmap(m_bitmap_toggle_off->bmp());
+        // SetValue animates the knob and posts no event, so echoing the printer's
+        // own state back into the control cannot re-enter on_toggled.
+        if (m_switch_btn)
+            m_switch_btn->SetValue(on);
         Refresh();
     }
 }
 
-void FanControlNewSwitchPanel::on_left_down(wxMouseEvent& event) {
-    switch_state_on = !switch_state_on;
-    switch_state_on ? m_switch_btn->SetBitmap(m_bitmap_toggle_on->bmp()) : m_switch_btn->SetBitmap(m_bitmap_toggle_off->bmp());
+void FanControlNewSwitchPanel::on_toggled(wxCommandEvent& event) {
+    switch_state_on = m_switch_btn->GetValue();
     event.Skip();
 
     wxCommandEvent evt(EVT_FANCTRL_SWITCH);
     wxPostEvent(this, evt);
-    evt.Skip();
 }
 
 }

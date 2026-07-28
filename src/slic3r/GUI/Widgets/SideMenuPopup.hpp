@@ -8,6 +8,7 @@
 #include <wx/frame.h>
 #include "../wxExtensions.hpp"
 #include "StateHandler.hpp"
+#include "StateColor.hpp"
 #include "SideButton.hpp"
 #include "PopupWindow.hpp"
 
@@ -15,6 +16,15 @@ class SidePopup : public PopupWindow
 {
 private:
 	std::vector<SideButton*> btn_list;
+
+    // MD3 floating surface, same idiom as the ComboBox popup in DropDown.cpp:
+    // a SurfaceContainer fill inside a 1px OutlineVariant frame at the kit
+    // popover radius. border_color holds the raw LIGHT role value because that
+    // hex is a gDarkColors key -- darkModeColorFor() remaps it on every paint,
+    // so the menu follows a runtime dark-mode toggle instead of freezing at the
+    // theme that was in force when the popup was constructed.
+    double   radius = 0.0;
+    wxColour border_color;
 public:
     SidePopup(wxWindow* parent);
     ~SidePopup();

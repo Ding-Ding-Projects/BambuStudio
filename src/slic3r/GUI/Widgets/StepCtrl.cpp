@@ -3,10 +3,24 @@
 
 #include "StepCtrl.hpp"
 #include "Label.hpp"
+#include "MaterialIcon.hpp"
+#include "MD3Tokens.hpp"
 #include "StateColor.hpp"
+#include "../I18N.hpp"
 
 wxDEFINE_EVENT( EVT_STEP_CHANGING, wxCommandEvent );
 wxDEFINE_EVENT( EVT_STEP_CHANGED, wxCommandEvent );
+
+namespace {
+
+// Logical px of the completed-step tick. The retired step_ok raster stroked its
+// checkmark edge to edge across the dot, whereas a Material Symbols glyph only
+// inks about 70% of its em box -- so the glyph is sized up past the dot to land
+// on the same visual weight. Only the transparent margin overhangs the dot; the
+// mark itself stays inside it.
+constexpr int kStepOkGlyphPx = 16;
+
+} // namespace
 
 BEGIN_EVENT_TABLE(StepCtrl, StepCtrlBase)
 EVT_LEFT_DOWN(StepCtrl::mouseDown)
@@ -22,14 +36,15 @@ StepCtrlBase::StepCtrlBase(wxWindow *      parent,
                    long            style)
     : StaticBox(parent, id, pos, size, style)
     , font_tip(Label::Body_14)
-    , clr_bar(ThemeColor::Grey450)
-    , clr_step(ThemeColor::Grey450)
-    , clr_text(std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Checked),
-            std::make_pair(ThemeColor::TextMuted, (int) StateColor::Normal))
-    , clr_tip(ThemeColor::TextMuted)
 {
     SetFont(Label::Body_14);
-    border_color     = StateColor(ThemeColor::Grey400);
+    // Qualified on purpose: a virtual call here would still resolve to the base
+    // during base construction. Each subclass re-applies its own mapping at the
+    // end of its own constructor.
+    StepCtrlBase::applyColorScheme();
+    // Set once here, not in applyColorScheme(): the border is a neutral role, so
+    // a scheme change must not stamp over a SetBorderColor() from a caller.
+    border_color      = StateColor(StateColor::semantic(MD3::Role::OutlineVariant));
     StaticBox::radius = 0;
     //wxString reason;
     //IsTransparentBackgroundSupported(&reason);
@@ -37,6 +52,48 @@ StepCtrlBase::StepCtrlBase(wxWindow *      parent,
 
 StepCtrlBase::~StepCtrlBase()
 {
+}
+
+void StepCtrlBase::applyColorScheme()
+{
+    // The connecting track reads as a divider, and the dots are plain position
+    // markers -- the accent belongs to the thumb painted over the current one.
+    clr_bar  = StateColor::semantic(MD3::Role::OutlineVariant);
+    clr_step = StateColor::semantic(MD3::Role::Outline);
+    // Captions and tips sit on the surface beside the dots, not inside them.
+    clr_text = StateColor(std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Checked),
+            std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal));
+    clr_tip  = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+}
+
+void StepCtrlBase::applyIndicatorColorScheme()
+{
+    // Qualified: the indicators' applyColorScheme() overrides delegate straight
+    // back here, so a virtual call would recurse forever.
+    StepCtrlBase::applyColorScheme();
+    // StateColor::Disabled means two different things on the indicator rails.
+    // On clr_step it is the whole control being disabled, so the dots drop to
+    // the neutral outline; on clr_text it is a step already completed, which
+    // the rail de-emphasises the same way.
+    clr_step = StateColor(
+            std::make_pair(StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled),
+            std::make_pair(StateColor::semantic(MD3::Role::Primary, m_scheme), 0));
+    clr_text = StateColor(
+            std::make_pair(StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled),
+            std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Checked),
+            std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), 0));
+    // The step numeral and the completed tick are painted on top of the accent
+    // dot, so they take the accent's own on-colour rather than a text role.
+    clr_tip = StateColor::semantic(MD3::Role::OnPrimary, m_scheme);
+}
+
+void StepCtrlBase::SetColorScheme(MD3::ColorScheme scheme)
+{
+    if (m_scheme == scheme)
+        return;
+    SetSchemeAccent(scheme); // keeps StaticBox's own accent in step with ours
+    applyColorScheme();
+    Refresh();
 }
 
 int StepCtrlBase::GetSelection() const { return step; }
@@ -256,20 +313,14 @@ StepIndicator::StepIndicator(wxWindow *parent, wxWindowID id, const wxPoint &pos
 {
     SetFont(Label::Body_12);
     font_tip = Label::Body_10;
-    clr_bar = ThemeColor::Grey300;
-    clr_step = StateColor(
-            std::make_pair(ThemeColor::Grey450, (int) StateColor::Disabled),
-            std::make_pair(ThemeColor::BrandGreen, 0));
-    clr_text = StateColor(
-            std::make_pair(ThemeColor::Grey450, (int) StateColor::Disabled),
-            std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Checked),
-            std::make_pair(ThemeColor::TextMuted, 0));
-    clr_tip = ThemeColor::White;
+    StepIndicator::applyColorScheme();
     StaticBox::border_width = 0;
     radius    = bmp_ok.GetBmpHeight() / 2;
     bar_width = bmp_ok.GetBmpHeight() / 20;
     if (bar_width < 2) bar_width = 2;
 }
+
+void StepIndicator::applyColorScheme() { applyIndicatorColorScheme(); }
 
 void StepIndicator::Rescale()
 {
@@ -325,8 +376,16 @@ void StepIndicator::doRender(wxDC &dc)
         dc.DrawEllipse(circleX - radius, circleY - radius, radius * 2, radius * 2);
         // Draw content ( icon or text ) in circle
         if (disabled) {
-            wxSize sz = bmp_ok.GetBmpSize();
-            dc.DrawBitmap(bmp_ok.bmp(), circleX - radius, circleY - radius);
+            // Completed step. The tick is a Material Symbols glyph tinted with
+            // the same on-accent role as the numerals, so it follows the theme
+            // and the owning scheme instead of freezing the step_ok raster's
+            // white; the raster remains the fallback when the font is missing.
+            const wxRect rcDot(circleX - radius, circleY - radius, radius * 2, radius * 2);
+            if (MaterialIcon::available())
+                MaterialIcon::drawCentered(dc, MaterialIcon::Check, kStepOkGlyphPx,
+                        clr_tip.colorForStates(states), rcDot);
+            else
+                dc.DrawBitmap(bmp_ok.bmp(), rcDot.x, rcDot.y);
         } else {
             dc.SetFont(font_tip);
             dc.SetTextForeground(clr_tip.colorForStates(states));
@@ -366,19 +425,17 @@ FilamentStepIndicator::FilamentStepIndicator(wxWindow* parent, wxWindowID id, co
     //bmp_extruder = *cache.load_png("filament_load_extruder", FromDIP(300), FromDIP(200), false, false);
     SetFont(Label::Body_12);
     font_tip = Label::Body_12;
-    clr_bar = ThemeColor::Grey300;
-    clr_step = StateColor(
-        std::make_pair(ThemeColor::Grey450, (int)StateColor::Disabled),
-        std::make_pair(ThemeColor::BrandGreen, 0));
-    clr_text = StateColor(
-        std::make_pair(ThemeColor::Grey450, (int)StateColor::Disabled),
-        std::make_pair(ThemeColor::TextPrimary, (int)StateColor::Checked),
-        std::make_pair(ThemeColor::TextMuted, 0));
-    clr_tip = ThemeColor::White;
+    // This rail only ever lives in the Device workspace's AMS filament panel
+    // (FilamentLoad), so it starts on the teal Device accent rather than making
+    // every caller remember to switch it away from brand green.
+    SetSchemeAccent(MD3::ColorScheme::Device);
+    FilamentStepIndicator::applyColorScheme();
     StaticBox::border_width = 0;
     radius = 9;
     bar_width = 0;
 }
+
+void FilamentStepIndicator::applyColorScheme() { applyIndicatorColorScheme(); }
 
 void FilamentStepIndicator::Rescale()
 {
@@ -406,19 +463,28 @@ void FilamentStepIndicator::doRender(wxDC& dc)
         states = clr_step.Disabled;
     }
 
+    // Rail heading. Neutral OnSurface, not the accent: the kit reserves Primary
+    // here for the step dots below, and the origin goes through FromDIP so the
+    // heading (and every dot measured from it) tracks the display scale.
     dc.SetFont(::Label::Head_16);
-    dc.SetTextForeground(ThemeColor::BrandGreen);
-    int circleX = 20;
-    int circleY = 20;
-    wxSize sz = dc.GetTextExtent(L"Loading");
-    dc.DrawText(L"Loading", circleX, circleY);
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
+    const wxString heading = _L("Loading");
+    int circleX = FromDIP(20);
+    int circleY = FromDIP(20);
+    wxSize sz = dc.GetTextExtent(heading);
+    dc.DrawText(heading, circleX, circleY);
 
     dc.SetFont(::Label::Body_13);
 
     //dc.DrawBitmap(bmp_extruder, FromDIP(250), circleY);
     circleY += sz.y;
 
-    int textWidth = size.x - radius * 5;
+    // The step text column starts at the heading origin, so the wrap budget has to
+    // subtract it. It never did - the origin used to be a bare 20, which merely made
+    // the budget 20px too generous. Now that the origin scales with the display, the
+    // same omission would push every wrapped line past the right edge by exactly the
+    // amount circleX grew: 20px at 150%, 40px at 200%.
+    int textWidth = size.x - circleX - radius * 5;
     dc.SetFont(GetFont());
     wxString firstLine;
     if (step == 0) dc.SetFont(GetFont().Bold());
@@ -447,8 +513,16 @@ void FilamentStepIndicator::doRender(wxDC& dc)
         dc.DrawEllipse(circleX - radius, circleY - radius, radius * 2, radius * 2);
         // Draw content ( icon or text ) in circle
         if (disabled) {
-            wxSize sz = bmp_ok.GetBmpSize();
-            dc.DrawBitmap(bmp_ok.bmp(), circleX - sz.x / 2, circleY - sz.y / 2);
+            // Completed step -- same theme-following tick as StepIndicator, with
+            // the step_ok raster kept as the fallback.
+            const wxRect rcDot(circleX - radius, circleY - radius, radius * 2, radius * 2);
+            if (MaterialIcon::available()) {
+                MaterialIcon::drawCentered(dc, MaterialIcon::Check, kStepOkGlyphPx,
+                    clr_tip.colorForStates(states), rcDot);
+            } else {
+                wxSize szOk = bmp_ok.GetBmpSize();
+                dc.DrawBitmap(bmp_ok.bmp(), circleX - szOk.x / 2, circleY - szOk.y / 2);
+            }
         }
         else {
             dc.SetFont(font_tip);

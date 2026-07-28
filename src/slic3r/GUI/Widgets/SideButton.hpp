@@ -22,6 +22,12 @@ public:
         Num_Horizontal_Orientations
     };
 
+    // Defaults to the MD3 menu-row treatment (see applyMenuRowStyle): neutral
+    // container fill, no contrasting ring, OnSurface label. That is what the
+    // Slice/Print dropdown rows render with, since they override nothing but
+    // their corner radius. A SideButton used as a standalone action button is
+    // expected to restyle itself explicitly, as MainFrame's Slice/Print pills do
+    // in update_side_button_style().
     SideButton(wxWindow* parent, wxString text, wxString icon = "", long style = 0, int iconSize = 0);
 
     void SetCornerRadius(double radius);
@@ -87,6 +93,11 @@ private:
     EHorizontalOrientation text_orientation;
     int text_margin;
 
+
+    // Install the MD3 menu-row palette on border/text/background + bottom colour.
+    // Assigns the StateColor members directly (no update_binds/Refresh), so it is
+    // safe to run from the constructor before state_handler.attach().
+    void applyMenuRowStyle();
 
     void paintEvent(wxPaintEvent& evt);
 
