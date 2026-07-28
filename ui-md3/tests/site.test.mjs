@@ -446,9 +446,25 @@ test('no release-ref run is sent to the environment-gated deploy job', async () 
  * each reported the rename finished.
  */
 test('the published UI kit says ink, not filament, in everything it renders', async () => {
-  const kit = path.join(uiDir, 'design-system', 'ui_kits', 'bambu-studio');
-  const files = (await readdir(kit)).filter((f) => /\.(jsx|html)$/.test(f));
-  assert.ok(files.length >= 8, 'the kit should still be assembled from its screens');
+  const root = path.join(uiDir, 'design-system');
+  const kit = path.join(root, 'ui_kits', 'bambu-studio');
+
+  // Sweep all of design-system/, not just the kit. Scoping this to the kit was
+  // the same mistake one level down: the typography specimen page under
+  // guidelines/ used "Filament Manager" and "Export filaments" as its sample
+  // strings, and a kit-only sweep would have walked straight past them.
+  const walk = async (dir) => {
+    const found = [];
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) found.push(...await walk(full));
+      else if (/\.(jsx|html)$/.test(entry.name)) found.push(full);
+    }
+    return found;
+  };
+  const files = (await walk(root)).map((f) => path.relative(root, f));
+  assert.ok(files.length >= 9, `expected the design system's pages, found ${files.length}`);
+  assert.ok(files.some((f) => f.includes('guidelines')), 'guidelines pages must be swept too');
 
   // Bindings, not copy: components, globals, dialog keys and the route id.
   const IDENTIFIER = new RegExp([
@@ -459,7 +475,7 @@ test('the published UI kit says ink, not filament, in everything it renders', as
 
   const offenders = [];
   for (const name of files) {
-    const text = await readFile(path.join(kit, name), 'utf8');
+    const text = await readFile(path.join(root, name), 'utf8');
     text.split('\n').forEach((line, index) => {
       if (!/\b(filaments?|AMS)\b/i.test(line)) return;
       if (IDENTIFIER.test(line)) return;
