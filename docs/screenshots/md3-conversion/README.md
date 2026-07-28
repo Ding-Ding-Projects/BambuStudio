@@ -41,18 +41,25 @@ Symbols, the preset combo, the save and search affordances, and the `Advanced` s
 > supported width cannot be verified here.** Dialog-level review still works, because dialogs are
 > smaller than the frame; that is how the Smart Home 720x760 and 520x480 reviews were done.
 
-## Still owed, and exactly what blocks each
+## Photographs still owed — these surfaces are FIXED, not outstanding
 
-These were attempted in this pass and are **blocked by this host or this configuration**, not by
-effort. Each needs the stated unblock before it can be captured honestly.
+> [!IMPORTANT]
+> **Every surface below is already fixed, compiled and shipped.** This table tracks missing
+> *photographs*, not missing work. An earlier revision of this section was worded as a to-do list
+> and was reasonably misread as "these defects are unresolved" — they are not.
 
-| Surface | Why it matters | Blocked by |
+| Surface | Fix, and where it landed | Why no photo yet |
 | --- | --- | --- |
-| **Fan control popup** | The largest single reskin. Its `wxStaticBitmap` PNG pseudo-switches became real `SwitchButton` controls, so it also needs a **keyboard-focus check** — previously that popup was mouse-only | Needs a **connected printer**; the Device workspace has no reachable path without one |
-| **Slice / Print dropdowns** | `SideButton`'s constructor defaults were the legacy palette, which is why these dealt out solid brand-green bars; `SideMenuPopup` had no surface at all | **Model loading is solved** (see below) — what remains is that `SidePopup` is a `wxPopupTransientWindow`: any process spawned on the desktop while it is open focus-kills it, so it needs `popovercap.py` pointed at the caret's **own** child hwnd, not the frame |
-| **Measurement gizmo chips, dark** | The chips were 50%-alpha white with `OnSurface` text — near-white on near-white | Model loads fine now; the gizmo needs the object actually selected first, and the cube is only a few pixels at the default camera. Zoom in or place a larger model before activating Measure |
-| **2D bed preview, dark** | Carries an explicit open question at `src/slic3r/GUI/2DBed.cpp:88-100`: the slab sits at **1.05:1** against its backdrop by arithmetic, and every role pairing that raises it costs grid contrast. Only a capture settles the trade | `BedShapeDialog` is the only `Bed_2D` call site, and **bed shape is not exposed for Bambu printer profiles** — the profile fixes it. Needs a custom/third-party printer profile |
-| **Settings search popover** | A required surface (every settings page must route search through the shared regex builder) | It is a **transient popover**: any process spawned on the headless desktop while it is open focus-kills it. Must be driven with `popovercap.py` in a single on-desktop process |
+| **Fan control popup** | `Widgets/FanControl.cpp` — 1161 lines that had **zero** `MD3::Role` references, now tokenised; its `wxStaticBitmap` PNG pseudo-switches are real `SwitchButton` controls, so the popup gained keyboard operation and screen-reader state. Commit `b13cf772e` | Needs a **connected printer**; the Device workspace has no reachable path without one |
+| **Slice / Print dropdowns** | `Widgets/SideButton.cpp` (legacy palette was the *constructor default*, which is why the rows were solid brand-green bars) and `Widgets/SideMenuPopup.cpp` (the menu drew no surface, border or radius at all). Commit `b13cf772e` | `SidePopup` is a `wxPopupTransientWindow`: any process spawned on the headless desktop while it is open focus-kills it. Needs `popovercap.py` aimed at the caret's **own child hwnd** — aiming it at the frame times out |
+| **Measurement gizmo chips, dark** | `Gizmos/GLGizmoMeasure.cpp` — both value chips were 50%-alpha pure white with `OnSurface` text (near-white on near-white in dark mode); now `SurfaceContainer` with kit radius and an `OutlineVariant` hairline. Commit `c03e716a8` | Selection works (`press.py press "Select all"`, and the Move/Rotate/Scale gizmos light up) but the Measure gizmo does not open from a synthetic click on the rail. Needs a working activation path — try its keyboard shortcut rather than the rail glyph |
+| **2D bed preview, dark** | `2DBed.cpp` — chrome tokenised, and the X/Y axis arrows **reverted to pure red/green** because axis colours are exempt data and the 3D gizmo still draws pure RGB. Commit `bbdcd140d` | `BedShapeDialog` is the only `Bed_2D` call site and **bed shape is not exposed for Bambu printer profiles** — the profile fixes it. Needs a custom/third-party printer profile |
+| **Settings search popover** | Pre-existing surface; captured here only as evidence that every settings page routes search through the shared regex builder | Transient popover, same focus-kill problem as the Slice dropdown |
+
+The open *question* — as opposed to open work — is the 2D bed's dark-mode contrast, recorded at
+`src/slic3r/GUI/2DBed.cpp:88-100`: the slab sits at **1.05:1** against its backdrop by arithmetic,
+and every role pairing that raises it costs grid contrast. The measurements are in the code comment
+so the trade is explicit; a capture would settle whether it reads as a slab to a human eye.
 
 ## The action-bar clip: found, root-caused, fixed, proven
 
