@@ -45,7 +45,7 @@ test('landing header has explicit desktop, compact, and phone clipping contracts
   );
   assert.match(
     landing,
-    /\.nav a\.navlink\{\s*min-height:44px;[\s\S]*?display:inline-flex;/
+    /\.nav a\.navlink\{\s*min-width:44px;\s*min-height:44px;[\s\S]*?display:inline-flex;/
   );
 });
 
