@@ -325,7 +325,69 @@ dead-pid `lock.txt` makes `has_restore_data()` return false from its `catch (...
 `BambuStudio.conf.bak`** — the file ends with an MD5 checksum line, so edit it with a real JSON
 serializer and recompute the checksum.
 
-### 5.4 Earlier session — how the two features above were built
+### 5.4 Session of 2026-07-28 — bug + clipping sweep, and the MD3 stock-UI purge
+
+Two audits (38 and 42 agents), four fix waves, every patch adversarially reviewed. All of it is
+pushed and ancestry-proven. **The full GUI Release build is clean** and the app runs on it.
+
+**Crash recovery had four defects, and the previously recorded diagnosis was wrong.**
+`docs/features/workspace/project-version-history.md` blamed `has_restore_data()`'s `catch (...)`.
+Probing Win32 directly disproved that: `OpenProcess` on a free pid returns **`NULL`** (error 87),
+not `INVALID_HANDLE_VALUE`, so for a dead pid the name comes back empty, the comparison does not
+match, and the `catch` is never reached. What was actually wrong:
+
+- the sentinel guard tested the wrong value, so a null handle reached `GetModuleFileNameEx` and
+  then `CloseHandle`;
+- Windows **reuses freed pids**, so relaunching after a crash could hand the new instance the
+  crashed one's pid — the app then compared itself against itself, concluded another instance
+  held the backup, and silently offered nothing. This is the likeliest explanation for the
+  2026-07-27 observation;
+- `load_string_file()` sat outside the `try`, so an unreadable lock threw out of
+  `has_restore_data()` into the startup handler;
+- **worst:** `Plater` discarded `preserve_unsaved_backup_in_history()`'s bool, so when preserving
+  failed its "stays restorable" snackbar never fired, the user read the ordinary prompt, clicked
+  Cancel, and `remove_all()` ate the only copy.
+
+> [!IMPORTANT]
+> **A severity claim was withdrawn.** The sentinel bug was first written up as crashing the app
+> under strict handle checking. That was reasoned, not measured — and measuring it did not support
+> it: a probe ran the old and the fixed guard under `ProcessStrictHandleCheckPolicy` and **both
+> survived**, as did a control that closed a garbage non-null handle, proving the policy was never
+> armed. The regression test built on that probe could not fail either way and was **removed**
+> rather than left green. The sentinel fix is correctness and hygiene, not a crash fix.
+> `tests/libslic3r/test_crash_restore.cpp` now records which of its cases actually discriminate.
+
+**Fourteen more native defects** were confirmed by adversarial verification and fixed: two
+`FilamentScanner` use-after-frees (a stack-allocated modal dialog with a detached 180-second
+thread posting `CallAfter` on a raw `this`), an invisible keyboard focus ring on every dialog's
+default action (`Primary` on a `Primary` fill), ~1.33:1 snackbar contrast, `StaticBox` flooding its
+own rounded corners so every pill drew as a rectangle, `CheckBox` glyphs baked at construction,
+`StateColor` missing a dark pair for `Surface`, a colour picker `Fit()` before its label had text,
+a resizable dialog with **no visible close control**, a non-wrapping label truncating the real
+libgit2 cause, and a command palette scrolling 52px against a 53px row pitch until the selection
+left the viewport entirely.
+
+**MD3 stock-UI purge.** The parity register said all 128 gaps were done. A fresh six-lens audit
+found **33 more across 26 files, three contradicting rows marked `done`**. 34 were closed across
+19 files. `FanControl` was the worst: 1161 lines with **zero** `MD3::Role` references, and its fan
+toggles were PNGs in a `wxStaticBitmap` — not controls — so that popup was **mouse-only** with no
+role, name or state. Row `gizmo-rail-svg-icons` is now correctly marked **partial**.
+
+**Two conversions were reverted on principle**, and both reverts matter more than the conversions:
+
+- the Smart Home volume control kept its native `wxSlider`, because the MD3 `Slider` could not be
+  reached by Tab and had no `wxAccessible`. `Slider` has since been fixed (§7 item 2);
+- `2DBed`'s X/Y axis arrows went back to pure red/green. Axis colours are **exempt data**, and the
+  3D gizmo still draws pure RGB, so the conversion would have desynced the 2D preview from the 3D
+  scene it mirrors.
+
+Also: the release codename roster grew from 97 to 217 Hong Kong dishes (styles 40 → 71), append-only
+and enforced by `scripts/ci/Test-ReleaseCodenames.ps1` — codenames are assigned **by index**, so an
+insertion renames every later release and contradicts published immutable ones. And chocolatey's
+third-party downloads now retry, after a SourceForge timeout failed a whole Windows build with zero
+compile errors.
+
+### 5.5 Earlier session — how the two features above were built
 
 - **Crash-backup preservation** (`Plater::priv::preserve_unsaved_backup_in_history`, in
   `src/slic3r/GUI/Plater.cpp`): when the app starts and finds an unsaved crash backup, it commits
@@ -349,19 +411,37 @@ serializer and recompute the checksum.
 ## 6. Current state of the world
 
 ```
-branch:          master; feature 6591d8968 and 44-pixel correction 32a5cc6d7 are pushed/remote-proven
-remote baseline: origin/master contains both code commits; the current documentation tip follows them
-hosted state:    Pages run 30375248289 is GREEN at 444/444 layout cases; Windows release runs remain tracked in #16
-local build:     full Release BambuStudio_app_gui exit 0 in 3,387 s; final incremental link 214.808 s;
-                 no-change 8.544 s; DLL 151,299,584 bytes, 2026-07-28 08:15:46 -04:00,
-                 SHA-256 41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972
-local tests:     30 cases / 267 assertions; 5/5 focused CTest; 50/50 static; 444/444 browser matrix
-native capture:  English 720x760 and declared-minimum 520x480 corrected captures use final 41BB1B…;
-                 media-actions close-up uses preceding layout-identical EBF646… DLL
-open issues:     #15 (waiting for user policy choice), #16 (implementation pushed;
-                 bilingual/live-HA/hardware/Windows-release evidence pending)
+branch:          master, all work pushed and ancestry-proven on origin/master
+local build:     full Release BambuStudio_app_gui exit 0, 0 errors / 370 warnings, 2 h 25 m 55 s
+                 (/m:2 — full -m OOMs this box, see §6.1); DLL 151,313,408 bytes,
+                 2026-07-28 13:48:51, SHA-256
+                 168F3F0D51CE7855ED26281D154DB27A0F19F5FADC2F245075FFED9017F505AD
+runtime smoke:   app launched headlessly on that DLL and rendered (MD3 topbar, glyphs, dark
+                 theme); app log shows no exceptions or asserts
+local tests:     crash_restore_tests 22 assertions / 7 cases; ui-md3 static clipping 17/17;
+                 i18n + language modes 722 native / 178 DeviceWeb / 168 legacy; all four
+                 home_assistant contracts pass; release-codename roster 15,674 unique names
+open issues:     #15 (waiting for a user policy choice), #16 (HA handover evidence pending),
+                 #24 (8 verified ui-md3 defects, left for that surface's owner)
 open PRs:        none
 ```
+
+### 6.1 Two machine limits that will bite you
+
+- **`MSBuild /m` (unbounded) runs this box out of memory.** A parallel GUI build died with
+  `C3859: Failed to create virtual memory for PCH` and `C1076: compiler limit: internal heap
+  limit reached` — 220 of them — while agent processes were also running. `/m:2` completes.
+  Neither error is a code error; do not go looking for one.
+- **A full GUI build takes ~2.5 hours, so do not use it as a syntax check.** Compile a single
+  file with the real settings instead:
+
+  ```
+  MSBuild build\src\slic3r\libslic3r_gui.vcxproj /t:ClCompile /p:Configuration=Release
+    /p:Platform=x64 /p:SelectedFiles="<abs path>.cpp" /p:DebugInformationFormat=None
+  ```
+
+  `DebugInformationFormat=None` matters: without it two `cl.exe` racing on the shared
+  `libslic3r_gui.pdb` fail with `C1041`, which looks exactly like a real error and is not.
 
 This handoff records local implementation evidence; exact pushed revisions, hosted runs, and
 release verdicts are maintained in
@@ -375,30 +455,45 @@ to make the branch list look tidy.
 
 ## 7. What to do next
 
-The previous implementation to-do list is finished. Runtime acceptance and one companion metadata
-decision remain. In rough priority order:
+Items 1 and 2 of the previous list are **done** (see §5.4). What remains, in priority order:
 
-1. **Sweep other dialogs for the same `StaticBox` symptom.** The two bugs in §5.3 item 2 were in
-   the widget, so most surfaces are fixed for free — but any surface that sets its card colour
-   through some *other* path may still be stale. The cheap check is the one that found it:
-   screenshot in dark mode and **sample the pixels**, because a light plate under a correct label
-   is invisible in a thumbnail.
-2. **Consider whether a dead-pid `lock.txt` should really suppress crash recovery.** Today
-   `has_restore_data()` returns false from its `catch (...)` when `get_process_name()` fails on the
-   pid in the lock file — which is exactly the state a real crash leaves behind. This session had
-   to delete the lock file to exercise recovery at all. That looks like a genuine bug in the
-   recovery path, but it was **not** investigated further and is **not** confirmed; treat it as a
-   lead, not a finding.
-3. **Verify and deliver "Add my printers to Home Assistant"** (issue #16). Its implementation,
-   focused Release build/tests, full GUI build, English native clipping review, cross-host probe,
-   documentation, and CI wiring are pushed. Read §7.1 for the remaining bilingual capture,
-   live Home Assistant, hardware, and separately tracked Windows-release evidence.
-4. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
-   does not appear in the rail in this build. Neither is a defect on its own; both are worth a
-   deliberate decision rather than being left implicit.
-5. **Issue #15 (app-data git history) is waiting on the user**, not on you: whether secrets are
-   redacted, committed with enable-time disclosure, or encrypted. The trade-offs are laid out in
-   the issue comment. Do not start it by guessing.
+1. **Native captures are still owed for everything changed on 2026-07-28.** The GUI build is
+   clean and the app runs, but almost none of the reskinned surfaces have been photographed.
+   Highest value first, all through `.claude/skills/run-bambustudio/`:
+   the **fan control popup** (the biggest single reskin, and its toggles are now real controls —
+   verify they take focus), the **Slice/Print dropdowns** (`SideButton` defaults + `SideMenuPopup`
+   surface), the **measurement gizmo chips in dark mode**, and the **2D bed preview in dark mode**
+   — that last one has an explicit open question recorded in `2DBed.cpp:88-100`: the slab sits at
+   1.05:1 against its backdrop by arithmetic, and the fix that raises it costs grid contrast. A
+   capture is the only thing that settles it.
+2. **Re-do the Smart Home volume slider conversion.** It was reverted because `Slider` could not
+   be reached by Tab and exposed no screen-reader role. Both are fixed now (`2283f5dc8`), so the
+   swap is safe — but `tests/home_assistant/home_assistant_ui_performance_contract.cmake:86`
+   anchors on the literal string `m_volume->Bind(wxEVT_SLIDER`, so that contract must be updated
+   in the same change or CI goes red. Keep what it is really asserting: that volume dispatch
+   happens inside the debounce callback, not before the slider hook.
+3. **Finish `gizmo-rail-svg-icons`** (register row now correctly marked **partial**, with the
+   reasoning inline). It needs new `MaterialIcon::Glyph` codepoints, a plated-glyph entry point on
+   `GLIconGlyphBridge`, and a decision on the Z-axis align/distribute tiles, which Material
+   Symbols cannot express at all.
+4. **Issue #24 — 8 verified `ui-md3` defects** (4 accessibility, 1 clipping, 3 search/regex).
+   Left unfixed on purpose: a concurrent session owned that tree. Check whether it still does.
+5. **Verify and deliver "Add my printers to Home Assistant"** (issue #16) — see §7.1.
+6. **Issue #15 is waiting on the user**, not on you: whether app-data secrets are redacted,
+   committed with disclosure, or encrypted. Do not start it by guessing.
+
+### 7.0 Two traps this session paid for — do not repeat them
+
+- **Do not edit source files while an audit or review agent is reading them.** Three verifiers
+  reported findings as "refuted — this code does not exist" when what had actually happened was
+  that the fix landed mid-audit. The verdicts were worthless and the time was wasted.
+- **A green patch is not a correct patch.** Of eleven fixes, four passed compilation and failed
+  adversarial review — one of them *introducing* a dark-mode regression while fixing a contrast
+  bug (a white error link brightened to `y=1.1`, which `IM_COL32` packed with no clamp so the
+  carry landed in blue and painted the underline magenta). Wave B repeated the pattern: a
+  conversion added `overflow: hidden` to a compressible flex item, i.e. introduced a clipping
+  defect inside a task whose entire purpose was removing them. **Review every patch, including
+  the ones that compile.**
 
 ### 7.1 Item 3 in detail — Home Assistant printer handover (IMPLEMENTED; VERIFICATION PENDING)
 
