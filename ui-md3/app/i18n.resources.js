@@ -79,7 +79,7 @@
     },
     'Accent → tonal ramp': '強調色 → 色調層級',
     'Screens and connected-home handover': '畫面同智能家居交接',
-    "The native fork adds an explicit Home Assistant printer handover with bounded background work and coalesced duplicate requests. This site's 156-case layout matrix covers the browser preview only; native wxWidgets clipping is assessed separately through static contracts and real captures.": {
+    "The native fork adds an explicit Home Assistant printer handover with bounded background work and coalesced duplicate requests. This site's runtime layout matrix covers the browser preview only; native wxWidgets clipping is assessed separately through static contracts and real captures.": {
       text: '原生分支加入明確嘅 Home Assistant 列印機交接，背景工作有上限，重複請求亦會合併，唔會一撳就成棚工人衝出嚟。本站 156 組版面矩陣只覆蓋瀏覽器預覽；原生 wxWidgets 裁切會用靜態合約同真實擷取畫面分開驗證，兩份成績表唔好撈亂。',
       display: 'detail'
     },
