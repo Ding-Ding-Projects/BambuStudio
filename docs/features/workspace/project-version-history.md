@@ -103,9 +103,19 @@ all three are fixed:
 
 1. **Wrong failure sentinel** (`src/libslic3r/utils.cpp`). The `INVALID_HANDLE_VALUE` guard missed
    `OpenProcess`'s actual `NULL`, so a dead pid — the normal input here — reached
-   `GetModuleFileNameEx` and then `CloseHandle` with a null handle. Closing an invalid handle
-   raises `STATUS_INVALID_HANDLE` under a debugger or with strict handle checking, turning crash
-   recovery into a second crash.
+   `GetModuleFileNameEx` and then `CloseHandle` with a null handle.
+
+   > [!NOTE]
+   > **Severity correction.** This was first written up as crashing the app, on the reasoning that
+   > closing an invalid handle raises `STATUS_INVALID_HANDLE` under strict handle checking. That
+   > was asserted, not measured, and measuring it did not support it. A standalone probe ran both
+   > the old and the fixed guard in child processes under `ProcessStrictHandleCheckPolicy`: **both
+   > survived**, and so did a control that closed a garbage non-null handle — proving the policy
+   > was never armed and the probe could not discriminate. The defect is real (wrong sentinel, two
+   > API calls on a null handle, an invalid-handle close) but **not observably fatal**: old and new
+   > both yield an empty name for a dead pid, so `has_restore_data()` behaves identically. It is a
+   > correctness and hygiene fix, not a crash fix. The regression test that depended on the unarmed
+   > probe was **removed** rather than left passing vacuously.
 2. **Own-pid reuse read as a live owner** (`src/libslic3r/Format/bbs_3mf.cpp`). Windows reuses
    freed pids, so relaunching straight after a crash can hand the new instance the crashed one's
    pid; the check then compared the process against itself and declined recovery. This is the most
@@ -119,10 +129,18 @@ all three are fixed:
    unknown, and logs the reason.
 
 Regression coverage: `tests/libslic3r/test_crash_restore.cpp` (target `crash_restore_tests`, in the
-maintained CTest gate). It asserts the `OpenProcess` sentinel invariant directly, covers the
-dead-owner, own-pid-reuse, corrupt, empty and unreadable lock bodies, and runs the fixed function in
-a **child process with strict handle checking enabled**, so defect 1 fails the suite instead of
-staying latent.
+maintained CTest gate) — **29 assertions in 8 test cases, all passing**. It asserts the `OpenProcess`
+sentinel invariant directly and covers the dead-owner, own-pid-reuse, corrupt, empty and unreadable
+lock bodies.
+
+Which of those actually discriminate, stated honestly:
+
+| Test | Fails without its fix? |
+| --- | --- |
+| `has_restore_data treats its own pid in the lock as reuse` | **Yes** — before the fix the name comparison matched and it returned false |
+| `has_restore_data declines without throwing when the lock cannot be read` | **Yes** — before the fix `load_string_file` threw straight out of the function |
+| `OpenProcess reports failure with NULL, not INVALID_HANDLE_VALUE` | No — it documents the Win32 contract the guard relies on, and would only fail if Windows changed |
+| `get_process_name … nothing for a dead pid` | No — old and new both return empty; it pins the contract `has_restore_data()` depends on |
 
 > [!WARNING]
 > Editing `BambuStudio.conf` by hand to stage this test is a trap. The file ends with a

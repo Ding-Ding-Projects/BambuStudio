@@ -6,9 +6,17 @@
 //
 //  1. get_process_name() tested OpenProcess's failure value against INVALID_HANDLE_VALUE.
 //     OpenProcess signals failure with NULL, so a dead pid - the normal input here - fell
-//     through to GetModuleFileNameEx(NULL, ...) and then CloseHandle(NULL). Closing an
-//     invalid handle raises STATUS_INVALID_HANDLE under a debugger or with strict handle
-//     checking, turning crash recovery into a second crash.
+//     through to GetModuleFileNameEx(NULL, ...) and then CloseHandle(NULL).
+//
+//     Scope note, because an earlier version of this comment overstated it: that is a real
+//     defect (wrong sentinel, two API calls on a null handle, an invalid-handle close) but it
+//     is NOT observably fatal. Both the old and the new code return an empty name for a dead
+//     pid, so has_restore_data() behaves identically either way. An attempt to catch it by
+//     enabling ProcessStrictHandleCheckPolicy in a child process was withdrawn: a control that
+//     closed a garbage non-null handle under the same policy also survived, proving the probe
+//     was never armed and the test could not fail whether the bug was present or not. Only
+//     defects 2 and 3 below have discriminating regression tests here - and they do fail
+//     without their fixes.
 //  2. Windows reuses freed pids. Relaunching straight after a crash can hand the new
 //     instance the crashed instance's pid, at which point the lock check compared the
 //     process against itself, concluded a live owner held the backup, and silently
@@ -35,10 +43,6 @@
 using namespace Slic3r;
 
 namespace {
-
-// The child half of the strict-handle-check probe, keyed off an environment variable so it
-// needs no custom Catch main.
-const char *kStrictHandleProbeEnv = "BAMBU_STRICT_HANDLE_PROBE_PID";
 
 struct ScopedBackupDirectory
 {
@@ -112,60 +116,6 @@ TEST_CASE("get_process_name reports the running executable and nothing for a dea
     // running executable's name, and a garbage match would suppress recovery.
     CHECK(get_process_name(free_pid).empty());
     CHECK(get_process_name(free_pid) != self);
-}
-
-TEST_CASE("querying a dead pid does not close an invalid handle", "[crash_restore]")
-{
-    // Strict handle checking is process-wide and cannot be switched off again, so the probe
-    // runs in a child process. With the guard fixed, get_process_name() returns before
-    // reaching CloseHandle; without it, the child dies with STATUS_INVALID_HANDLE.
-    const char *already_child = std::getenv(kStrictHandleProbeEnv);
-    if (already_child != nullptr) {
-        PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY policy = {};
-        policy.RaiseExceptionOnInvalidHandleReference = 1;
-        policy.HandleExceptionsPermanentlyEnabled     = 1;
-        REQUIRE(::SetProcessMitigationPolicy(ProcessStrictHandleCheckPolicy, &policy,
-                                             sizeof(policy)) != FALSE);
-        get_process_name(std::atoi(already_child));
-        // Leave immediately: any CRT or Catch teardown that touched a stale handle would now
-        // raise, and that would be noise rather than a result about the code under test.
-        ::TerminateProcess(::GetCurrentProcess(), 0);
-    }
-
-    const int free_pid = find_free_pid();
-    REQUIRE(free_pid != 0);
-
-    char module_path[MAX_PATH] = {0};
-    REQUIRE(::GetModuleFileNameA(NULL, module_path, MAX_PATH) != 0);
-
-    const std::string assignment = std::string(kStrictHandleProbeEnv) + "=" +
-                                   std::to_string(free_pid);
-    REQUIRE(::_putenv(assignment.c_str()) == 0);
-
-    std::string command = "\"";
-    command += module_path;
-    command += "\" \"querying a dead pid does not close an invalid handle\"";
-
-    STARTUPINFOA        startup = {};
-    PROCESS_INFORMATION child   = {};
-    startup.cb                  = sizeof(startup);
-    const BOOL launched = ::CreateProcessA(NULL, command.data(), NULL, NULL, FALSE, 0, NULL,
-                                           NULL, &startup, &child);
-    const int  launch_error = launched ? 0 : static_cast<int>(::GetLastError());
-    // Clear it before any assertion can leave the parent's environment poisoned for the
-    // remaining test cases.
-    ::_putenv((std::string(kStrictHandleProbeEnv) + "=").c_str());
-    INFO("CreateProcess error " << launch_error);
-    REQUIRE(launched);
-
-    REQUIRE(::WaitForSingleObject(child.hProcess, 60000) == WAIT_OBJECT_0);
-    DWORD exit_code = 1;
-    REQUIRE(::GetExitCodeProcess(child.hProcess, &exit_code) != FALSE);
-    ::CloseHandle(child.hThread);
-    ::CloseHandle(child.hProcess);
-
-    INFO("child exit code 0x" << std::hex << exit_code);
-    CHECK(exit_code == 0);
 }
 
 #endif // WIN32
