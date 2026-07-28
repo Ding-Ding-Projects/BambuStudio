@@ -54,17 +54,42 @@ effort. Each needs the stated unblock before it can be captured honestly.
 | **2D bed preview, dark** | Carries an explicit open question at `src/slic3r/GUI/2DBed.cpp:88-100`: the slab sits at **1.05:1** against its backdrop by arithmetic, and every role pairing that raises it costs grid contrast. Only a capture settles the trade | `BedShapeDialog` is the only `Bed_2D` call site, and **bed shape is not exposed for Bambu printer profiles** — the profile fixes it. Needs a custom/third-party printer profile |
 | **Settings search popover** | A required surface (every settings page must route search through the shared regex builder) | It is a **transient popover**: any process spawned on the headless desktop while it is open focus-kills it. Must be driven with `popovercap.py` in a single on-desktop process |
 
-> [!IMPORTANT]
-> **Main-frame clipping cannot be verified on this host at all** — see the note above. That is a
-> hardware limit (832 px display vs a 1000 px declared minimum), not an outstanding task. Anyone
-> continuing this work needs a machine with a display at least 1000 px wide before main-frame
-> clipping claims mean anything.
+## The main-frame clip is a real defect, root-caused — just not fixable blind
+
+The `"Slice pl…"` clip in `prepare-workspace-dark-D06044.png` was chased to its cause rather than
+dismissed as a host artefact. It is **both**: this host triggers it, and the mechanism is in the app.
+
+`GUI_App::get_min_size()` (GUI_App.cpp:4258) declares a **1000 x 600** minimum. But
+`GUI_App::window_pos_sanitize()` (GUI_App.cpp:8241) runs
+`WindowMetrics::sanitize_for_display()`, whose first act is
+`rect = rect.Intersect(screen_rect)` (GUI_Utils.cpp:373). The intersect wins: on a display narrower
+than the declared minimum, **the app clamps itself below its own minimum** and the bottom action bar
+overflows, with nothing on screen indicating it.
+
+Measured on this host via `WM_GETMINMAXINFO` on the live frame:
+
+```
+minTrackSize  832 x 1279      <- the app's own reported minimum, i.e. the screen width
+maxTrackSize  846 x 1539
+```
+
+So the frame is pinned between 832 and 846 px wide **by the app**, not by the window manager.
+`SetWindowPos` and `MoveWindow` to 1200 are both refused, restoring from maximized first changes
+nothing, and the app never was maximized.
+
+> [!WARNING]
+> **This was deliberately NOT blind-fixed.** The action bar is a high-traffic surface, and this host
+> can only render it at 832-846 px — an atypical width. Changing a prominent layout when the only
+> available verification is one unusual width is how a rare bug gets traded for a common one, which
+> already happened twice in this work (a contrast fix that painted a magenta hover underline, and an
+> MD3 conversion that introduced `overflow: hidden` clipping). The fix needs a >= 1000 px display to
+> validate the normal case.
 >
-> Two escapes were tried and both are closed on this box: `create_virtual_display` requires **Xvfb**
-> and is Linux-only, and `create_headless_desktop` takes no resolution argument — it inherits the
-> session's. Changing the host's display mode would disturb the user's own session, so it was not
-> done. (`Win32_VideoController` reports the adapter at 1280x800, but the session and every headless
-> desktop created from it report 832x1573, and `WinMove` to 1200 wide is clamped back.)
+> Two escapes from the display limit were tried and both are closed here: `create_virtual_display`
+> requires **Xvfb** and is Linux-only, and `create_headless_desktop` takes no resolution argument —
+> it inherits the session's. Changing the host's display mode would disturb the user's own session,
+> so it was not done. (`Win32_VideoController` reports the adapter at 1280x800, but the session and
+> every headless desktop created from it report 832x1573.)
 
 ## One blocker that turned out not to be real
 
