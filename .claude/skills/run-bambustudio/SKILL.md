@@ -148,6 +148,7 @@ headless desktop (`SwitchDesktop` is denied). The agent path is the only path.
 | `ahkclick` → `no result (AHK hung?)` | Runtime error dialog invisible on the headless desktop (bad hwnd/coords). Driver already kills leftover `AutoHotkey64.exe`; fix the args and retry. |
 | `ahkclick` → `ERR: Parameter #5 of ControlClick requires a Number` | You edited the generated script's arg order; param 4 = button name, 5 = click count (number), 6 = options. |
 | App started but a cold `launch` with a model crashed 0xC0000005 | Never pass a model on first launch; `launch` empty, then `open --model`. |
+| `open --model` → `no studio log contained 'finished init opengl' within 240s` | **The app is almost certainly fine — this is the driver's log wait, not GL init.** The second instance writes into a log the wait does not always pick up. Verified 2026-07-28: the same launch produced a usable `* Untitled - BambuStudio` frame **20 s** after the command reported failure. Ignore the error and poll `list_windows()` for a new frame wider than 700 px instead: <br>`r = driver.cheap("launch_on_headless_desktop", name=driver.DESKTOP, command=f'cmd /c "{driver.write_wrapper(model)}"')` then poll `driver.list_windows()`. |
 | Slice click does nothing | Raw `click` doesn't press custom wx buttons; use `ahkclick` (client coords). |
 
 ## Press buttons and menu items BY NAME — `press.py`
