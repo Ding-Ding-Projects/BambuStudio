@@ -66,7 +66,7 @@ window.Screens.Device = function Device({ notify }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, height: 36 }}><span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)' }}>lightbulb</span><span style={{ flex: 1, fontSize: 13 }}>Chamber light</span><Switch checked={lamp} onChange={setLamp} /></div>
           </Card>
           <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <SectionHeader icon="inventory_2" trailing={<span style={{ fontSize: 11, color: 'var(--md-primary)' }}>Humidity: Dry</span>}>AMS</SectionHeader>
+            <SectionHeader icon="inventory_2" trailing={<span style={{ fontSize: 11, color: 'var(--md-primary)' }}>Humidity: Dry</span>}>Ink Dispenser</SectionHeader>
             <div style={{ display: 'flex', gap: 8 }}>
               {filaments.map(f => (
                 <div key={f.slot} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 4px', background: 'var(--md-sc-highest)', borderRadius: 12 }}>

@@ -4,7 +4,7 @@ window.Screens.Calibration = function Calibration({ notify }) {
   const cards = [
     { title: 'Flow Dynamics', desc: 'Calibrate pressure advance for sharp corners', icon: 'water_drop' },
     { title: 'Flow Rate', desc: 'Tune extrusion multiplier for accurate walls', icon: 'opacity' },
-    { title: 'Max Volumetric Speed', desc: 'Find the fastest reliable flow for a filament', icon: 'speed' },
+    { title: 'Max Volumetric Speed', desc: 'Find the fastest reliable flow for an ink', icon: 'speed' },
     { title: 'Temperature Tower', desc: 'Find the ideal nozzle temperature', icon: 'thermostat' },
     { title: 'Retraction Test', desc: 'Reduce stringing and oozing', icon: 'undo' },
     { title: 'Vertical Fine Tuning', desc: 'Correct Z-offset and first layer', icon: 'height' },
@@ -18,7 +18,7 @@ window.Screens.Calibration = function Calibration({ notify }) {
           <div style={{ flex: 1 }} />
           <Button variant="outlined" icon="history">History</Button>
         </div>
-        <div style={{ fontSize: 13.5, color: 'var(--md-on-surface-variant)', marginBottom: 20 }}>Fine-tune your printer and filament for the best possible print quality.</div>
+        <div style={{ fontSize: 13.5, color: 'var(--md-on-surface-variant)', marginBottom: 20 }}>Fine-tune your printer and ink for the best possible print quality.</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 16 }}>
           {cards.map(c => (
             <Card key={c.title} interactive style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: 18, textAlign: 'left' }}

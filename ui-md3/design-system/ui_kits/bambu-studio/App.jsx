@@ -4,7 +4,7 @@ const TABS = [
   { id: 'home', label: 'Home', icon: 'home' }, { id: 'prepare', label: 'Prepare', icon: 'view_in_ar' },
   { id: 'preview', label: 'Preview', icon: 'layers' }, { id: 'device', label: 'Device', icon: 'cast' },
   { id: 'multi', label: 'Multi-device', icon: 'devices' }, { id: 'project', label: 'Project', icon: 'folder_open' },
-  { id: 'calibration', label: 'Calibration', icon: 'build' }, { id: 'filament', label: 'Filament', icon: 'palette' },
+  { id: 'calibration', label: 'Calibration', icon: 'build' }, { id: 'filament', label: 'Ink', icon: 'palette' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 const SEEDS = [['#22c55e','Green'],['#7c5cff','Purple'],['#14b8a6','Teal'],['#3b82f6','Blue'],['#f97316','Orange'],['#ec4899','Pink']];

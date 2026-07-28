@@ -108,7 +108,7 @@ window.Overlays.ExportDialog = function ExportDialog({ onClose, notify }) {
       <div onClick={e => e.stopPropagation()} style={{ width: 580, maxWidth: '94vw', maxHeight: '88vh', background: 'var(--md-sc)', borderRadius: 28, boxShadow: 'var(--md-elev-5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'mdfade .2s' }}>
         <div style={{ padding: '22px 24px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24 }}>file_download</span></div>
-          <div style={{ flex: 1 }}><div style={{ fontSize: 18, fontWeight: 600 }}>Export filaments</div><div style={{ fontSize: 12.5, color: 'var(--md-on-surface-variant)' }}>Filter, select and bulk-export presets</div></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 18, fontWeight: 600 }}>Export inks</div><div style={{ fontSize: 12.5, color: 'var(--md-on-surface-variant)' }}>Filter, select and bulk-export presets</div></div>
           <IconButton icon="close" onClick={onClose} />
         </div>
         <div style={{ padding: '0 24px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -135,14 +135,14 @@ window.Overlays.ExportDialog = function ExportDialog({ onClose, notify }) {
               <span style={{ fontFamily: 'var(--md-font-mono)', fontSize: 11.5, color: 'var(--md-on-surface-variant)', width: 78, textAlign: 'right' }}>{r.nozzle}/{r.bed}°</span>
             </button>
           ))}
-          {filtered.length === 0 && <div style={{ padding: '36px 12px', textAlign: 'center', color: 'var(--md-on-surface-variant)', fontSize: 13 }}>No filaments match your filter.</div>}
+          {filtered.length === 0 && <div style={{ padding: '36px 12px', textAlign: 'center', color: 'var(--md-on-surface-variant)', fontSize: 13 }}>No inks match your filter.</div>}
         </div>
         <div style={{ padding: '14px 24px', borderTop: '1px solid var(--md-outline-variant)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.4px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)' }}>Format</span>
           {['.bbsflmt', 'JSON', 'ZIP bundle'].map(t => <Chip key={t} label={t} mono selected={format === t} onClick={() => setFormat(t)} />)}
           <div style={{ flex: 1 }} />
           <Button variant="text" onClick={onClose}>Cancel</Button>
-          <Button variant="filled" icon="file_download" onClick={() => { notify('Exported ' + count + ' filament presets as ' + format, 'file_download'); onClose(); }}>Export {count}</Button>
+          <Button variant="filled" icon="file_download" onClick={() => { notify('Exported ' + count + ' ink presets as ' + format, 'file_download'); onClose(); }}>Export {count}</Button>
         </div>
       </div>
     </div>
@@ -167,7 +167,7 @@ window.Overlays.SendDialog = function SendDialog({ onClose, notify }) {
           <span data-icon style={{ fontSize: 20, color: 'var(--md-on-surface-variant)' }}>expand_more</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)' }}>AMS mapping</div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)' }}>Ink Dispenser mapping</div>
           <div style={{ display: 'flex', gap: 8 }}>
             {window.KIT_FILAMENTS.map(f => (
               <div key={f.slot} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 4px', background: 'var(--md-sc-highest)', borderRadius: 10 }}>
@@ -205,10 +205,10 @@ window.Overlays.AddFilamentDialog = function AddFilamentDialog({ onClose, notify
       <div onClick={e => e.stopPropagation()} style={{ width: 520, maxWidth: '92vw', maxHeight: '86vh', background: 'var(--md-sc)', borderRadius: 28, boxShadow: 'var(--md-elev-5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'mdfade .2s' }}>
         <div style={{ padding: '22px 24px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span data-icon style={{ fontSize: 24 }}>palette</span></div>
-          <div style={{ flex: 1 }}><div style={{ fontSize: 18, fontWeight: 600 }}>Add filament</div><div style={{ fontSize: 12.5, color: 'var(--md-on-surface-variant)' }}>Pick a preset to add to this project</div></div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 18, fontWeight: 600 }}>Add ink</div><div style={{ fontSize: 12.5, color: 'var(--md-on-surface-variant)' }}>Pick a preset to add to this project</div></div>
           <IconButton icon="close" onClose={onClose} onClick={onClose} />
         </div>
-        <div style={{ padding: '0 24px 12px' }}><SearchField placeholder="Search filament presets" onQuery={setQ} /></div>
+        <div style={{ padding: '0 24px 12px' }}><SearchField placeholder="Search ink presets" onQuery={setQ} /></div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignContent: 'start' }}>
           {rows.map(f => (
             <div key={f.name + f.color} onMouseEnter={() => setHov(f.name)} onMouseLeave={() => setHov(null)}
@@ -223,7 +223,7 @@ window.Overlays.AddFilamentDialog = function AddFilamentDialog({ onClose, notify
         </div>
         <div style={{ padding: '14px 24px', borderTop: '1px solid var(--md-outline-variant)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <Button variant="text" size="lg" onClick={onClose}>Cancel</Button>
-          <Button variant="filled" size="lg" icon="add" onClick={() => { notify('Added filament to project', 'add'); onClose(); }}>Add to project</Button>
+          <Button variant="filled" size="lg" icon="add" onClick={() => { notify('Added ink to project', 'add'); onClose(); }}>Add to project</Button>
         </div>
       </div>
     </div>

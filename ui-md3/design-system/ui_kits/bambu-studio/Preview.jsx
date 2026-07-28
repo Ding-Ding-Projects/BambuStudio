@@ -45,7 +45,7 @@ window.Screens.Preview = function Preview({ notify }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <SectionHeader icon="palette">Color scheme</SectionHeader>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {['Line type', 'Speed', 'Layer time', 'Height', 'Filament'].map(c => <Chip key={c} label={c} selected={scheme === c} onClick={() => setScheme(c)} />)}
+            {['Line type', 'Speed', 'Layer time', 'Height', 'Ink'].map(c => <Chip key={c} label={c} selected={scheme === c} onClick={() => setScheme(c)} />)}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -65,7 +65,7 @@ window.Screens.Preview = function Preview({ notify }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, background: 'var(--md-sc-highest)', borderRadius: 'var(--radius)' }}>
           <SectionHeader icon="insights">Statistics</SectionHeader>
-          {[['Estimated time', '1h 24m'], ['Filament', '23.4 g · 7.85 m'], ['Est. cost', '$0.47'], ['Layers', '180']].map(r => (
+          {[['Estimated time', '1h 24m'], ['Ink', '23.4 g · 7.85 m'], ['Est. cost', '$0.47'], ['Layers', '180']].map(r => (
             <div key={r[0]} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
               <span style={{ color: 'var(--md-on-surface-variant)' }}>{r[0]}</span>
               <span style={{ fontFamily: 'var(--md-font-mono)', fontWeight: 500 }}>{r[1]}</span>
