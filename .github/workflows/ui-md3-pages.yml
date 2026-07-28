@@ -31,8 +31,13 @@ permissions:
   id-token: write
 
 # One in-flight deploy at a time; let a newer push supersede an older run.
+#
+# A release run is a dispatcher, not a deploy, so it gets its own group. Sharing
+# one would let a release cancel a deploy that was midway through real work and
+# then, if no PAT is configured, dispatch nothing in its place — trading a
+# running deploy for none at all.
 concurrency:
-  group: ui-md3-pages
+  group: ui-md3-pages-${{ github.event_name == 'release' && 'dispatch' || 'deploy' }}
   cancel-in-progress: true
 
 jobs:

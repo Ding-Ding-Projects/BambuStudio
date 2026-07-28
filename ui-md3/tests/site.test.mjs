@@ -429,4 +429,10 @@ test('no release-ref run is sent to the environment-gated deploy job', async () 
   for (const event of ['push', 'workflow_dispatch']) {
     assert.doesNotMatch(deploy, new RegExp(`!= '${event}'`), `${event} must still deploy`);
   }
+
+  // The release run only dispatches, so it must not share the deploy's
+  // cancel-in-progress group: it would cancel a deploy doing real work and, with
+  // no PAT configured, put nothing in its place.
+  assert.match(workflow, /group: ui-md3-pages-\$\{\{ github\.event_name == 'release'/,
+    'the release dispatcher needs its own concurrency group');
 });
