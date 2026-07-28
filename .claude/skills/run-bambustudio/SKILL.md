@@ -160,6 +160,7 @@ are owner-drawn (AutoHotkey `MenuSelect` answers "unsupported menu", and
 ```bash
 "$PY" "$DRV_DIR/press.py" menus                    # every menu item + its live command id
 "$PY" "$DRV_DIR/press.py" press "Version history"  # opens File ▸ Version history…
+"$PY" "$DRV_DIR/press.py" press "Smart home" --physical  # real popup path for commands that ignore WM_COMMAND
 "$PY" "$DRV_DIR/press.py" controls --filter ink    # labelled child controls
 "$PY" "$DRV_DIR/press.py" press "Slice plate"      # falls back to a child-control click
 "$PY" "$DRV_DIR/press.py" id 888                   # raw WM_COMMAND escape hatch
@@ -176,7 +177,12 @@ How it works, and the two things that make it work at all:
 - Menu ids can only be learned by opening each menu for real, catching
   `EVENT_SYSTEM_MENUPOPUPSTART`, and asking the popup for its `HMENU` via
   `MN_GETHMENU`. Pressing then needs no menu at all — it posts `WM_COMMAND`
-  straight to the frame.
+  straight to the frame. A few owner-drawn commands (currently Smart home)
+  ignore that synthetic command; `--physical` opens the enumerated top-level
+  popup and selects the cached zero-based item position with menu keyboard
+  messages in the same worker process. Physical selection reuses cached
+  geometry across app restarts; pass `--refresh` after the menu layout itself
+  changes.
 - **The frame must be parked at (-183, -6) during discovery.** At its normal
   position the owner-drawn strip accepts the posted clicks and opens nothing.
   This constant is empirical, is restored afterwards, and is the difference

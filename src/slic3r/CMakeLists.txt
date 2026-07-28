@@ -280,6 +280,11 @@ set(SLIC3R_GUI_SOURCES
     GUI/TtsNarrator.hpp
     GUI/HomeAssistant.cpp
     GUI/HomeAssistant.hpp
+    GUI/HomeAssistantTaskExecutor.hpp
+    GUI/HomeAssistantTransportPolicy.cpp
+    GUI/HomeAssistantTransportPolicy.hpp
+    GUI/HomeAssistantSharingService.cpp
+    GUI/HomeAssistantSharingService.hpp
     GUI/SmartHomeDialog.cpp
     GUI/SmartHomeDialog.hpp
     GUI/third_party/qrcodegen.cpp

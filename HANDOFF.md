@@ -3,22 +3,24 @@
 You are taking over work on **this fork of BambuStudio** (`Ding-Ding-Projects/BambuStudio`),
 a Windows desktop 3D-printing slicer written in C++ with wxWidgets. This file is written
 to be self-contained: it assumes you know nothing about previous sessions. Everything
-below was verified on **2026-07-27** unless it says otherwise.
+below was reviewed through **2026-07-28** unless it says otherwise.
 
 ---
 
 ## 1. The 60-second summary
 
 - The fork is **Windows-only**. macOS and Linux support was deleted from the tree.
-- CI **works and publishes releases again**. Latest release is `md3-v22`
-  ("Beef Brisket Noodles 牛腩麵"), built from `366917016` with a real installer attached.
+- CI **works and publishes releases again**. The latest verified baseline before issue #16 is
+  `md3-v27`, built from `efb1689d` by green hosted run `30313911327`.
 - There is a **skill that launches and drives the app headlessly** on this machine:
   `.claude/skills/run-bambustudio/`. Use it for every "does it actually work" check.
 - The interactive app and GitHub Pages landing now share an eleven-image WebP showcase under
   `ui-md3/assets/showcase/`; its behavior and deployment contract are documented in
   `docs/features/design-system/generated-visual-showcase.md`.
 - No open PRs. Two open issues remain: #15 is waiting for the requested secret-history policy
-  choice, while #16 is deliberately paused at the documented Home Assistant handoff in §7.1.
+  choice, while #16 has a complete local implementation, green focused build/tests, and cross-host
+  transport evidence. Its full GUI build and English native clipping review are also complete; the
+  bilingual/live-HA/hardware/remote evidence sequence remains in §7.1.
 - The whole of the previous §7 to-do list is **finished** (see §5.3). Two of its five items were
   diagnosed wrongly by the previous session; §5.3 records what was actually true.
 
@@ -60,6 +62,10 @@ These cost previous sessions hours. Do not re-derive them.
 
 The real code lives in `build\src\Release\BambuStudio.dll` (~148 MB). `bambu-studio.exe` is only
 a ~173 KB launcher. Rebuilding the `BambuStudio_app_gui` project pulls in everything.
+
+The final issue #16 Release build produced a 151,299,584-byte DLL at
+`2026-07-28 08:15:46 -04:00`, SHA-256
+`41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`.
 
 ```bash
 cat > /c/Users/ADMINI~1/AppData/Local/Temp/msb.cmd <<'EOF'
@@ -295,20 +301,27 @@ serializer and recompute the checksum.
 ## 6. Current state of the world
 
 ```
-branch:          master (no task branches, no worktrees, no stashes)
-origin/master:   366917016
-latest release:  md3-v22 "Beef Brisket Noodles 牛腩麵" -- built from 366917016, non-draft,
-                 carries BambuStudioMD3-Setup.exe + .sha256 + CycloneDX SBOM
-CI proof:        runs 30243618401 / 30244124170 / 30245103054 all GREEN, one release each
-                 (md3-v20 / v21 / v22). NOTE md3-v16..v19 are NOT from this session --
-                 md3-v19 targets fcc9cb6b9. A tag number is not provenance.
-local build:     Windows Release, 0 errors, BambuStudio.dll relinked 2026-07-27 03:0x
-open issues:     none
+branch:          master; exact remote publication state is tracked in issue #16
+remote baseline: pre-issue-#16 origin/master efb1689d (tag md3-v27)
+hosted baseline: md3-v27 -- run 30313911327 is GREEN; issue #16 verdict is tracked separately
+local build:     full Release BambuStudio_app_gui exit 0 in 3,387 s; final incremental link 214.808 s;
+                 no-change 8.544 s; DLL 151,299,584 bytes, 2026-07-28 08:15:46 -04:00,
+                 SHA-256 41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972
+local tests:     30 cases / 267 assertions; 5/5 focused CTest; 21/21 static; 156/156 browser matrix
+native capture:  English 720x760 and declared-minimum 520x480 corrected captures use final 41BB1B…;
+                 media-actions close-up uses preceding layout-identical EBF646… DLL
+open issues:     #15 (waiting for user policy choice), #16 (implementation complete locally;
+                 bilingual/live-HA/hardware/remote evidence pending)
 open PRs:        none
 ```
 
-**Everything is on `master` and pushed.** The repo's convention is that work lands on `master` and
-every push builds and publishes a release.
+This handoff records local implementation evidence; exact pushed revisions, hosted runs, and
+release verdicts are maintained in
+[issue #16](https://github.com/Ding-Ding-Projects/BambuStudio/issues/16). The repository convention
+remains that completed work lands on `master` and every push builds and publishes a release. A remote
+`codex/windows-reinstall-backup-20260726-174428` branch contains an explicit WIP snapshot with a
+unique commit; retain it unless its work is reviewed and safely integrated—do not delete it merely
+to make the branch list look tidy.
 
 ---
 
@@ -327,9 +340,10 @@ The previous to-do list is finished. Nothing is blocking. In rough priority orde
    to delete the lock file to exercise recovery at all. That looks like a genuine bug in the
    recovery path, but it was **not** investigated further and is **not** confirmed; treat it as a
    lead, not a finding.
-3. **Finish "Add my printers to Home Assistant"** (issue #16). This is the item mid-flight —
-   read §7.1 below before touching it; it records exactly what is done, what is half-done in the
-   tree, and every API you would otherwise have to rediscover.
+3. **Verify and deliver "Add my printers to Home Assistant"** (issue #16). Its implementation,
+   focused Release build/tests, full GUI build, English native clipping review, cross-host probe,
+   documentation, and CI wiring are complete locally. Read §7.1 for the remaining bilingual
+   capture, live Home Assistant, hardware, and separately tracked hosted/remote evidence.
 4. **The `MeshBoolean` and `FuzzySkin` gizmos have no crop** in the screenshot matrix, and `Svg`
    does not appear in the rail in this build. Neither is a defect on its own; both are worth a
    deliberate decision rather than being left implicit.
@@ -337,73 +351,149 @@ The previous to-do list is finished. Nothing is blocking. In rough priority orde
    redacted, committed with enable-time disclosure, or encrypted. The trade-offs are laid out in
    the issue comment. Do not start it by guessing.
 
-### 7.1 Item 3 in detail — Home Assistant printer handover (MID-FLIGHT, read all of this)
+### 7.1 Item 3 in detail — Home Assistant printer handover (IMPLEMENTED; VERIFICATION PENDING)
 
-**The HA side is DONE and CI-green.** The fork
-[`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) (tip
-`97933ad`, 25 tests passing) provides **two** ways in, both ending at the same config-flow import
-step, both verified against a real HA 2025.1.4 in a throwaway WSL instance:
+**Current boundary:** the code, focused tests, cross-host probe, documentation, localization source,
+and Windows workflow wiring are complete. The focused Release targets are built and green; the full
+Release GUI build and English native 720×760/520×480 clipping review are also complete. Native
+bilingual capture, live Home Assistant paths, and physical-printer success remain acceptance
+conditions. Hosted CI/release and remote-publication evidence are tracked separately in issue #16
+because this local record must not predict their state. Do not call the feature fully
+runtime-verified, shipped, or issue-complete until every applicable boundary has observed evidence.
 
-- **Path B — service call (needs an HA long-lived token):**
-  `POST /api/services/bambu_lab/add_printer` with `{serial, host, access_code[, name]}`.
-  Works today; the service exists with zero printers configured (registered in `async_setup`,
-  cold start needs `bambu_lab:` in HA's `configuration.yaml`).
-- **Path A — zeroconf discovery (NO token anywhere):** the app advertises
-  `_bambu-slicer._tcp.local.` with TXT keys `pairing` (random per sharing window) and `name`,
-  and serves `GET /bambustudio/printers` (`Authorization: Bearer <pairing>`) returning
-  `{"printers":[{serial, host, access_code[, name]}]}`. HA raises a discovery card; the user's
-  confirmation in the HA UI is the authorisation. Payload is treated as untrusted by HA
-  (32 printers / 256 chars per field max). Full contract:
-  `ha-bambulab/docs/unattended-printer-add.md`.
+The companion
+[`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) baseline
+`97933ad` was CI-green with 25 tests before this pass. Its current local tree passes **89/89** tests
+both in the official Home Assistant 2025.1.4 image and in a clean Python 3.12 runner. Snapshot
+SHA-256 `10e2a876d0d7123f5c52450b12963b226ff1054f791db0d157fbe3321d0b2809` includes
+rejected-record accounting plus the real flow-manager and nested fake-MQTT regressions. Exact
+companion remote-publication and hosted-verdict evidence is tracked separately; live Home
+Assistant/physical-printer verification remains pending.
 
-**The app side is where work stopped, mid-implementation.** State of the tree:
+**Implemented Path B — explicit service call with a Home Assistant long-lived token:**
 
-- **DONE, uncommitted-then-committed in this push:** `HomeAssistant::add_printers()` in
-  `src/slic3r/GUI/HomeAssistant.{hpp,cpp}` — takes `std::vector<PrinterHandover>`
-  (`{serial, host, access_code, name}`), POSTs each to `bambu_lab.add_printer`, reports
-  `(added, per-printer errors)` back on the UI thread. Deliberately NOT fire-and-forget like the
-  rest of that file: a user-initiated action must not fail silently. **Compiles-unverified — no
-  build has been run since this edit. Build first, before writing more.**
-- **NOT started — the UI hook for path B:** a "Add my printers to Home Assistant" action in
-  `SmartHomeDialog` (`src/slic3r/GUI/SmartHomeDialog.{hpp,cpp}` — small file, reads in one pass)
-  that collects printers, calls `add_printers`, and toasts the result. Non-blocking notification,
-  bilingual, funny-level rules apply. It MUST tell the user plainly that printer **access codes**
-  are being copied into Home Assistant at the moment it happens.
-- **NOT started — path A (advertise + serve).** Two building blocks exist and were scouted:
-  - `DeviceHttpServer` (`src/slic3r/GUI/DeviceWeb/DeviceHttpServer.{hpp,cpp}`, ~244 lines,
-    boost::asio, binds `tcp::v4()` port 13628 on ALL interfaces) — pattern to copy or extend for
-    `GET /bambustudio/printers`. Bearer-check the pairing token; never log the payload.
-  - `Slic3r::Utils::Bonjour` (`src/slic3r/Utils/Bonjour.{hpp,cpp}`) is **browse-only** — it can
-    look up services but CANNOT advertise one. An mDNS responder must be written (answer
-    PTR/SRV/TXT/A queries for `_bambu-slicer._tcp.local.` on 224.0.0.251:5353) or vendored.
-    This is the only genuinely new machinery path A needs.
-  - Sharing must be OFF by default, ON only while the user has it on, fresh `pairing` token per
-    window, stop advertising AND serving when the window closes.
+- `SmartHomeDialog` collects accessible printers from `get_local_machinelist()` first and
+  `get_user_machinelist()` second, deduped by serial. Inclusion requires access rights, serial, LAN
+  address, and access code.
+- The visible **Add my printers to Home Assistant** action discloses the exact fields being copied
+  and states that access codes are credentials. The decision dialog uses **No** as its default.
+- `HomeAssistant::add_printers()` posts each printer to
+  `POST /api/services/bambu_lab/add_printer` with
+  `{serial, host, access_code[, name]}` and reports processed/failed request counts on the UI thread
+  (a 2xx may be an idempotent already-configured result). One import remains single-flight, but its
+  requests run in four-wide waves; 32 dead endpoints therefore consume at most eight 30-second
+  timeout waves instead of about 16 minutes of serial waiting.
+- Progress and results use non-blocking notifications with dialog-status fallback. Failures expose
+  the serial and HTTP status but never echo a response body that may contain credentials.
+- Every Home Assistant bearer request now goes through `HomeAssistantTransportPolicy`: HTTPS is
+  accepted; HTTP is accepted only for localhost or an explicit IPv4 loopback. Clear-text LAN HTTP,
+  malformed URLs, unsupported schemes, and URL user information are rejected before networking.
+  These requests also disable redirects and libcurl verbose tracing so credentials cannot be
+  replayed by a redirect or printed in a protocol trace.
 
-**Where printers come from (scouted, use these, do not re-derive):**
+**Implemented Path A — temporary local discovery without a Home Assistant long-lived token:**
 
-- `DeviceManager` definition is in `src/slic3r/GUI/DeviceCore/DevManager.h` (NOT DeviceManager.hpp):
-  `get_local_machinelist()` / `get_user_machinelist()` → `std::map<std::string, MachineObject*>`
-  keyed by dev_id (= serial).
-- Per machine (`src/slic3r/GUI/DeviceManager.hpp`): `get_dev_ip()` (:187), `get_dev_name()` (:184),
-  `get_access_code()` (:213), `has_access_right()` (:212). dev_id is the serial.
-- Reach it via `wxGetApp().getDeviceManager()` (verify exact accessor name in GUI_App.hpp).
+- **Share for discovery for 5 minutes (no Home Assistant token)** is off by default, never
+  persisted, starts only through the user's toggle, and automatically turns itself off after five
+  minutes.
+- Every sharing window gets a fresh URL-safe capability with more than 240 random bits.
+- `HomeAssistantSharingService` binds `GET /bambustudio/printers` to the RFC1918/shared IPv4 address
+  on the ordinary default route (not a multicast-preferred host-only virtual adapter) and an
+  operating-system-selected port, then advertises
+  `_bambu-slicer._tcp.local.` PTR/SRV/TXT/A records. TXT contains `pairing` and `name`.
+- The service resolves the real prefix length for that interface and answers mDNS only for usable
+  senders on the exact advertised link. Network, broadcast, public, loopback, and link-local
+  senders are rejected. Query admission is burst eight/refill one per second before allocation;
+  replies are deduplicated, queued to eight, and paced 50 ms apart.
+- The HTTP endpoint requires exactly one matching Bearer header before it asks for printer data.
+  It caps header bytes, target length, timeout, concurrent sessions, response size, printer count,
+  and field lengths; strips unknown fields; uses no-store/nosniff/close headers; and returns generic
+  errors without reflecting sensitive values.
+- Turning the toggle off, closing the dialog, reaching the five-minute expiry, or destroying the
+  service closes sessions, stops serving, sends a zero-TTL mDNS goodbye, and discards the pairing
+  capability.
+- This path is clear-text LAN HTTP. The pairing capability is visible in mDNS to the broadcast
+  domain, so the UI/docs instruct users to use a trusted LAN and keep the window brief. It is not a
+  claim of encrypted transfer.
 
-**Traps already hit on the HA side (do not re-hit):**
+**Local build, native UI, and focused verification completed on 2026-07-28:**
 
-- HA test envs miss packages a real HA fetches at runtime. The full set for the fork's tests:
-  `ha-ffmpeg home-assistant-frontend paho-mqtt zeroconf aiofiles async_upnp_client beautifulsoup4`.
-  Three CI runs went red on this before the recipe was rebuilt in a clean WSL container.
-- The permission classifier blocked one large Edit into `config_flow.py`; splitting the code into
-  its own module (`slicer_pairing.py`) went through fine and was better anyway.
-- Verify in a throwaway WSL Ubuntu 24.04 (`wsl_create_temp` with the ubuntu-base rootfs URL —
-  Alpine ships Python 3.14, which HA rejects). Destroy it after.
+- The Windows SDK 10.0.26100.0 Release build completed `home_assistant_tests` and
+  `home_assistant_sharing_probe`. The test binary passed **30 cases / 267 assertions**, and all five
+  `home_assistant_*` CTest entries passed.
+- The full `BambuStudio_app_gui` Release build exited 0 after **3,387 seconds**; its first no-change
+  rebuild exited 0 in **8.3 seconds**. After the clipping build described below, the final nonvisual
+  import-scheduling and cancellation-cleanup changes compiled and linked in **214.808 seconds**; the
+  final no-change rebuild exited 0 in **8.544 seconds**. The resulting DLL is 151,299,584 bytes,
+  timestamped `2026-07-28 08:15:46 -04:00`, with SHA-256
+  `41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`.
+- Lowlevel MCP headless review at 720×760 and the declared 520×480 minimum found a real clipping
+  defect: `make_responsive_action` forced text actions such as **Close** and the media controls
+  into 44-DIP widths. After removing that shrink, `SmartHomeDialog.cpp` rebuilt and the DLL linked
+  successfully in **141 seconds**; a no-change build exited 0 in **8.0 seconds**. The two primary
+  corrected captures were recaptured from the final `41BB1B…` DLL. The media-action close-up uses
+  the preceding `EBF646…` DLL; the later build changes only printer-import scheduling and
+  alert-light cancellation cleanup, not `SmartHomeDialog` or `MsgDialog` layout.
+- Genuine before/after evidence lives under `docs/screenshots/smart-home/`:
+  `dialog-720x760-before-text-action-fix.png`,
+  `dialog-720x760-after-text-action-fix.png`,
+  `dialog-520x480-before-text-action-fix.png`,
+  `dialog-520x480-after-text-action-fix.png`, and
+  `dialog-520x480-media-actions-after-fix.png`. The corrected **Close** and media actions remain
+  readable at both reviewed sizes. These captures are English; bilingual native capture remains
+  pending.
+- On the GPU-less Mesa llvmpipe headless host, cold first-run launch took **37.427 seconds** and a
+  subsequent launch took **32.339 seconds**. These are environment observations, not production
+  benchmarks. The app remained responsive with no hang at about 523 MB after 13.74 minutes and
+  about 549 MB after 6.26 minutes; the latter observation included three incidental Version
+  History windows.
+- `home_assistant_sharing_probe` runs the production service with a synthetic TEST-NET printer for
+  second-host mDNS/HTTP verification without printing its token or payload. A second LAN host
+  observed PTR/SRV/TXT/A, completed one authenticated bounded fetch, and observed the zero-TTL
+  goodbye.
+- That pass caught a real false-LAN selection: the multicast route preferred a host-only WSL
+  adapter. Auto-detection now follows the ordinary default route, while the multicast flood test
+  correctly sends real multicast rather than nondeterministic unicast into a shared Windows port.
+- The Cantonese catalog check passed 718 entries, the static Pages/i18n/clipping suite passed 21/21,
+  and the browser Pages matrix passed all 156 combinations of 13 physical widths, four zoom levels,
+  and three language modes. Template assembly is synchronized. Native bilingual Smart Home capture
+  remains pending.
+- Performance bounds now include a 4 MiB entity-state body, at most four query domains, 512 parsed
+  backend entities, 256 rendered matches, and persisted-list inspection capped at 256 segments,
+  64 KiB, and 256 bytes per value with at most 32 active unique entries. Path B imports at most four
+  printers concurrently, so the 32-printer cap takes no more than eight timeout waves. A failed
+  two-attempt light restore retains its generation-specific recovery scene rather than deleting it;
+  cancellation after scene creation but before a flash deletes the unused scene, and the focused
+  regression records the exact create/delete sequence and shutdown timeout.
+- `.github/workflows/build_bambu.yml` builds both targets and includes `home_assistant_tests` in the
+  maintained CTest gate.
+- `docs/features/windows/smart-home.md` is the user/maintainer behavior and security guide.
+  `docs/features/api/home-assistant-printer-discovery.md` plus focused and master Postman
+  collections document the transient endpoint.
 
-**Definition of done for issue #16:** path B button working end-to-end against a real HA (the
-throwaway-WSL recipe in `ha-bambulab/docs/verification.md` reproduces one in ~10 min), path A
-advertising + serving verified with the fork's discovery card actually appearing, screenshots of
-the new UI surface posted to the issue, and the fork's `docs/verification.md` updated to retire
-its "never run against a real broadcast" caveat.
+**Do this next, in order:**
+
+1. Capture the native bilingual Smart home dialog with `.claude/skills/run-bambustudio/` through
+   Lowlevel MCP headless mode. Check the wrapped “don't show again” footer, stacked actions,
+   credential disclosure, No-default confirmation, transport rejection, sharing status, keyboard
+   reachability, focus, and clipping.
+2. Verify Path B end-to-end against a real Home Assistant with `bambu_lab:` configured. Never place
+   a real token or access code in a command line, log, screenshot, issue, Discussion, or Git.
+3. Verify Home Assistant's real Path A confirmation card. Cross-host PTR/SRV/TXT/A discovery,
+   authenticated fetch, and goodbye are already observed; the synthetic probe is not a real-printer
+   import.
+4. Verify a physical-printer success path when hardware is available; do not substitute the
+   synthetic TEST-NET transport probe for that result.
+5. Update `ha-bambulab/docs/verification.md` only with observed evidence. Ensure both repositories'
+   remote default branches contain the exact verified commits, post the native screenshot and
+   evidence to issue #16, record the observed hosted CI/release verdict there, and close #16 only
+   after every acceptance condition is proven.
+
+**Definition of done for issue #16:** the Path B button works end-to-end against a real Home
+Assistant and physical printer; Path A's production service is observed across hosts and produces
+the companion integration's real discovery card; native UI screenshots are posted to the issue;
+both repositories are pushed; hosted checks have an honest recorded state; and no credential
+appears in any retained artifact.
 
 ---
 

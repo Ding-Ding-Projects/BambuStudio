@@ -246,8 +246,20 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`search-field--text-entry.png`](regex-builder/search-field--text-entry.png)
 - [`search-field.png`](regex-builder/search-field.png)
 
-## smart-home (1 captures)
+## smart-home (6 captures)
 
+The paired English captures show the text-action clipping defect and its correction at 720×760 and
+the declared 520×480 minimum. The two primary corrected captures were recaptured from the final
+151,299,584-byte DLL, SHA-256
+`41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`. The media-actions frame
+verifies the same fix beyond **Close** using the preceding layout-identical `EBF646…` DLL; the final
+binary changed only nonvisual printer-import scheduling and alert-light cancellation cleanup.
+
+- [`dialog-520x480-after-text-action-fix.png`](smart-home/dialog-520x480-after-text-action-fix.png)
+- [`dialog-520x480-before-text-action-fix.png`](smart-home/dialog-520x480-before-text-action-fix.png)
+- [`dialog-520x480-media-actions-after-fix.png`](smart-home/dialog-520x480-media-actions-after-fix.png)
+- [`dialog-720x760-after-text-action-fix.png`](smart-home/dialog-720x760-after-text-action-fix.png)
+- [`dialog-720x760-before-text-action-fix.png`](smart-home/dialog-720x760-before-text-action-fix.png)
 - [`dialog.png`](smart-home/dialog.png)
 
 ## version-history (12 captures)
@@ -298,4 +310,3 @@ its full-page capture.
 - [`wizard-step-5--nav-buttons.png`](wizard/wizard-step-5--nav-buttons.png)
 - [`wizard-step-5.png`](wizard/wizard-step-5.png)
 - [`wizard-step-6.png`](wizard/wizard-step-6.png)
-

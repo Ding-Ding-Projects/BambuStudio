@@ -1,0 +1,96 @@
+{
+  "info": {
+    "_postman_id": "7560ee71-b311-4bc4-a9c9-e70c5999446c",
+    "name": "Bambu Studio - Master API Collection",
+    "description": "Master index of HTTP contracts served by Bambu Studio. At present it contains only the five-minute Home Assistant printer-discovery endpoint. Defaults are non-routable TEST-NET placeholders. Never save or export real pairing tokens, printer access codes, or response bodies.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Home Assistant printer discovery",
+      "description": "Temporary local-LAN handover created only while File > Smart home > Share for discovery is enabled.",
+      "item": [
+        {
+          "name": "Authorized printer offer",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{pairing_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://{{share_host}}:{{share_port}}/bambustudio/printers",
+              "protocol": "http",
+              "host": [
+                "{{share_host}}"
+              ],
+              "port": "{{share_port}}",
+              "path": [
+                "bambustudio",
+                "printers"
+              ]
+            },
+            "description": "Authenticated GET for the current sharing window. This is clear-text LAN HTTP; use only on a trusted broadcast domain, never expose it to a WAN, and turn sharing off immediately after verification."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is bounded and non-cacheable', function () {",
+                  "  pm.expect(pm.response.headers.get('Cache-Control')).to.eql('no-store');",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.printers).to.be.an('array').with.length.at.most(32);",
+                  "  body.printers.forEach(function (printer) {",
+                  "    ['serial', 'host', 'access_code'].forEach(function (field) {",
+                  "      pm.expect(printer[field], field).to.be.a('string').and.not.empty;",
+                  "      pm.expect(printer[field].length, field + ' length').to.be.at.most(256);",
+                  "    });",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "share_host",
+      "value": "192.0.2.1",
+      "type": "string",
+      "description": "Set only in a disposable local environment from the active mDNS A/SRV records."
+    },
+    {
+      "key": "share_port",
+      "value": "1",
+      "type": "string",
+      "description": "Set only in a disposable local environment from the active mDNS SRV record."
+    },
+    {
+      "key": "pairing_token",
+      "value": "replace-in-a-disposable-local-environment",
+      "type": "string",
+      "description": "Set from the active pairing TXT record. Never save or export the real value."
+    }
+  ]
+}

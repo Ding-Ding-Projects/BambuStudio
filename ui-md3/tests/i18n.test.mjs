@@ -190,11 +190,14 @@ test('loads localization before the renderer and exposes exactly three Settings 
 
 test('shares canonical persisted modes with the Pages landing surface', async () => {
   const landing = await readFile(path.join(rootDir, 'landing.html'), 'utf8');
+  const verificationBoundary = "The native fork adds an explicit Home Assistant printer handover with bounded background work and coalesced duplicate requests. This site's 156-case layout matrix covers the browser preview only; native wxWidgets clipping is assessed separately through static contracts and real captures.";
   const optionValues = [...landing.matchAll(/<option value="([^"]+)"/g)].map((match) => match[1]);
   assert.deepEqual(optionValues, ['en', 'yue_HK', 'bilingual_en_yue_HK']);
   assert.ok(landing.indexOf('./app/i18n.resources.js') < landing.indexOf('./app/i18n.js'));
   assert.match(landing, /BambuI18n/);
   assert.match(landing, /setActiveMode\(event\.target\.value,\{persist:true\}\)/);
+  assert.ok(landing.includes(verificationBoundary));
+  assert.equal(i18n.describe(verificationBoundary, 'yue_HK').localized, true);
   const inlineScripts = [...landing.matchAll(/<script>([\s\S]*?)<\/script>/g)];
   assert.ok(inlineScripts.length > 0);
   inlineScripts.forEach((match) => assert.doesNotThrow(() => new Function(match[1])));

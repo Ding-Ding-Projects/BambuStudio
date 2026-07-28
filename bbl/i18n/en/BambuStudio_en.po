@@ -22235,3 +22235,183 @@ msgstr "The cloud page could not be opened securely. The current page remains op
 
 msgid "The cloud page is temporarily unavailable. The current page remains open."
 msgstr "The cloud page is temporarily unavailable. The current page remains open."
+
+msgid "This copies each accessible printer's serial number, LAN address and access code to Home Assistant. Access codes are credentials."
+msgstr "This copies each accessible printer's serial number, LAN address and access code to Home Assistant. Access codes are credentials."
+
+msgid "Adding printers..."
+msgstr "Adding printers..."
+
+msgid "Add my printers to Home Assistant"
+msgstr "Add my printers to Home Assistant"
+
+msgid "Printer handover"
+msgstr "Printer handover"
+
+msgid "Home Assistant is not configured. Enter its URL and long-lived access token first."
+msgstr "Home Assistant is not configured. Enter its URL and long-lived access token first."
+
+msgid "Printer access codes were not sent. Use HTTPS for a remote Home Assistant URL. HTTP is allowed only for localhost or an IPv4 loopback address."
+msgstr "Printer access codes were not sent. Use HTTPS for a remote Home Assistant URL. HTTP is allowed only for localhost or an IPv4 loopback address."
+
+msgid "No accessible printers were found. Connect a printer and make sure its LAN address and access code are available."
+msgstr "No accessible printers were found. Connect a printer and make sure its LAN address and access code are available."
+
+msgid "This will copy the serial number, LAN address and access code for one accessible printer to Home Assistant. Access codes are credentials. Continue?"
+msgstr "This will copy the serial number, LAN address and access code for one accessible printer to Home Assistant. Access codes are credentials. Continue?"
+
+msgid "This will copy the serial number, LAN address and access code for %d accessible printers to Home Assistant. Access codes are credentials. Continue?"
+msgstr "This will copy the serial number, LAN address and access code for %d accessible printers to Home Assistant. Access codes are credentials. Continue?"
+
+msgid "Copy printer access codes to Home Assistant?"
+msgstr "Copy printer access codes to Home Assistant?"
+
+msgid "Copy access codes and add printers"
+msgstr "Copy access codes and add printers"
+
+msgid "Adding one printer to Home Assistant..."
+msgstr "Adding one printer to Home Assistant..."
+
+msgid "Adding %d printers to Home Assistant..."
+msgstr "Adding %d printers to Home Assistant..."
+
+msgid "Home Assistant processed %d of %d printer requests."
+msgstr "Home Assistant processed %d of %d printer requests."
+
+msgid "Failed printers:"
+msgstr "Failed printers:"
+
+msgid "Share for discovery for 5 minutes (no Home Assistant token)"
+msgstr "Share for discovery for 5 minutes (no Home Assistant token)"
+
+msgid "Discovery publishes a temporary pairing value on this local network. Any device on this network can use it to request printer serial numbers, LAN addresses and access codes for up to five minutes. Enable only while importing, then switch it off."
+msgstr "Discovery publishes a temporary pairing value on this local network. Any device on this network can use it to request printer serial numbers, LAN addresses and access codes for up to five minutes. Enable only while importing, then switch it off."
+
+msgid "Printer discovery sharing is off."
+msgstr "Printer discovery sharing is off."
+
+msgid "Printer discovery sharing stopped. Access codes are no longer offered."
+msgstr "Printer discovery sharing stopped. Access codes are no longer offered."
+
+msgid "Printer discovery sharing expired after five minutes. Access codes are no longer offered."
+msgstr "Printer discovery sharing expired after five minutes. Access codes are no longer offered."
+
+msgid "Printer discovery sharing did not start. No accessible printer has both a LAN address and an access code."
+msgstr "Printer discovery sharing did not start. No accessible printer has both a LAN address and an access code."
+
+msgid "Printer discovery sharing could not start: %s"
+msgstr "Printer discovery sharing could not start: %s"
+
+msgid "Sharing one printer on the local network for up to five minutes. Turn sharing off after Home Assistant imports it."
+msgstr "Sharing one printer on the local network for up to five minutes. Turn sharing off after Home Assistant imports it."
+
+msgid "Sharing %d printers on the local network for up to five minutes. Turn sharing off after Home Assistant imports them."
+msgstr "Sharing %d printers on the local network for up to five minutes. Turn sharing off after Home Assistant imports them."
+
+msgid "Printer access codes are credentials. Adding sends them to Home Assistant; discovery makes them available for five minutes to any device on this local network that sees the pairing value."
+msgstr "Printer access codes are credentials. Adding sends them to Home Assistant; discovery makes them available for five minutes to any device on this local network that sees the pairing value."
+
+msgid "Home Assistant was not contacted. Use HTTPS for a remote URL. HTTP is allowed only for localhost or an IPv4 loopback address."
+msgstr "Home Assistant was not contacted. Use HTTPS for a remote URL. HTTP is allowed only for localhost or an IPv4 loopback address."
+
+msgid "Discovery sharing is limited to the first 32 accessible printers; additional printers were not included."
+msgstr "Discovery sharing is limited to the first 32 accessible printers; additional printers were not included."
+
+msgid "Home Assistant returned an invalid states response."
+msgstr "Home Assistant returned an invalid states response."
+
+msgid "Home Assistant request setup failed."
+msgstr "Home Assistant request setup failed."
+
+msgid "Saved Home Assistant speaker or light lists exceed the safe size limits. Existing entries were kept; only the first 32 valid entries are active."
+msgstr "Saved Home Assistant speaker or light lists exceed the safe size limits. Existing entries were kept; only the first 32 valid entries are active."
+
+msgid "The Home Assistant list already has 32 entries. Clear the list before adding another."
+msgstr "The Home Assistant list already has 32 entries. Clear the list before adding another."
+
+msgid "You can configure up to 32 announcement speakers and 32 alert lights."
+msgstr "You can configure up to 32 announcement speakers and 32 alert lights."
+
+msgid "Printer handover is limited to the first 32 accessible printers; additional printers will not be sent."
+msgstr "Printer handover is limited to the first 32 accessible printers; additional printers will not be sent."
+
+msgid "Clear speakers"
+msgstr "Clear speakers"
+
+msgid "Clear lights"
+msgstr "Clear lights"
+
+msgid "Home Assistant transport failed."
+msgstr "Home Assistant transport failed."
+
+msgid "Home Assistant returned HTTP %s."
+msgstr "Home Assistant returned HTTP %s."
+
+msgid "The Home Assistant printer import worker could not finish the request."
+msgstr "The Home Assistant printer import worker could not finish the request."
+
+msgid "The Home Assistant printer import worker could not start."
+msgstr "The Home Assistant printer import worker could not start."
+
+msgid "A Home Assistant printer import is already in progress."
+msgstr "A Home Assistant printer import is already in progress."
+
+msgid "Home Assistant request failed: %s"
+msgstr "Home Assistant request failed: %s"
+
+msgid "Home Assistant is shutting down."
+msgstr "Home Assistant is shutting down."
+
+msgid "Bambu Studio could not prepare the Home Assistant entity request."
+msgstr "Bambu Studio could not prepare the Home Assistant entity request."
+
+msgid "Home Assistant is busy with another entity request. Try again in a moment."
+msgstr "Home Assistant is busy with another entity request. Try again in a moment."
+
+msgid "Home Assistant could not be reached. Check the server and network connection."
+msgstr "Home Assistant could not be reached. Check the server and network connection."
+
+msgid "Home Assistant returned HTTP %d while listing speakers and lights."
+msgstr "Home Assistant returned HTTP %d while listing speakers and lights."
+
+msgid "Home Assistant returned more entity data than Bambu Studio can safely load."
+msgstr "Home Assistant returned more entity data than Bambu Studio can safely load."
+
+msgid "Home Assistant request failed."
+msgstr "Home Assistant request failed."
+
+msgid "Printer discovery sharing could not start."
+msgstr "Printer discovery sharing could not start."
+
+msgid "Printer discovery sharing is already active or still stopping. Turn it off and try again."
+msgstr "Printer discovery sharing is already active or still stopping. Turn it off and try again."
+
+msgid "Bambu Studio could not prepare printer discovery sharing."
+msgstr "Bambu Studio could not prepare printer discovery sharing."
+
+msgid "Printer discovery sharing needs a usable local-network IPv4 address."
+msgstr "Printer discovery sharing needs a usable local-network IPv4 address."
+
+msgid "Printer discovery sharing could not open its local HTTP endpoint."
+msgstr "Printer discovery sharing could not open its local HTTP endpoint."
+
+msgid "Printer discovery sharing could not advertise itself with mDNS on this network."
+msgstr "Printer discovery sharing could not advertise itself with mDNS on this network."
+
+msgid "Printer discovery sharing could not start its background worker."
+msgstr "Printer discovery sharing could not start its background worker."
+
+msgid "Problems:"
+msgstr "Problems:"
+
+msgid "No speakers or lights match this search."
+msgstr "No speakers or lights match this search."
+
+msgid "Showing %d of %d matching speakers and lights."
+msgstr "Showing %d of %d matching speakers and lights."
+
+msgid "Refine the search to see the remaining matches."
+msgstr "Refine the search to see the remaining matches."
+
+msgid "Home Assistant returned additional speakers and lights beyond the %d-entity safety limit. Those additional entities are not shown."
+msgstr "Home Assistant returned additional speakers and lights beyond the %d-entity safety limit. Those additional entities are not shown."

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "GUI_Utils.hpp"
 #include <wx/dialog.h>
 #include <wx/font.h>
@@ -21,7 +22,9 @@
 
 class wxBoxSizer;
 class wxCheckBox;
+class wxFlexGridSizer;
 class wxStaticBitmap;
+class wxStaticText;
 
 enum ButtonSizeType{
 	ButtonSizeNormal = 0,
@@ -69,7 +72,7 @@ struct MsgDialog : MD3Dialog
 	bool get_checkbox_state();
 	virtual void on_dpi_changed(const wxRect& suggested_rect);
 
-	void AddButton(wxWindowID btn_id, const wxString& label, bool set_focus = false) { add_button(btn_id, set_focus, label); };
+	void AddButton(wxWindowID btn_id, const wxString& label, bool set_focus = false);
 	void SetButtonLabel(wxWindowID btn_id, const wxString& label, bool set_focus = false);
 
 protected:
@@ -90,14 +93,24 @@ protected:
 	Button* get_button(wxWindowID btn_id);
 	void apply_style(long style);
 	void finalize();
+	void refit_to_work_area(bool recenter);
+	void reflow_footer_for_width(int available_width);
 
 	wxFont boldfont;
 	wxBoxSizer *content_sizer; // == GetContentSizer() (shell body)
 	wxBoxSizer *btn_sizer;     // == GetFooterSizer()  (shell footer)
 	wxBoxSizer *m_dsa_sizer;
+	wxBoxSizer *m_footer_content_sizer { nullptr };
+	wxBoxSizer *m_dsa_row_sizer { nullptr };
+	wxBoxSizer *m_action_row_sizer { nullptr };
+	wxFlexGridSizer *m_action_sizer { nullptr };
+	std::vector<Button *> m_button_order;
     MsgButtonsHash  m_buttons;
 	CheckBox* m_checkbox_dsa{nullptr};
+	wxStaticText* m_text_dsa{nullptr};
+	wxString m_dsa_text;
     wxString  m_forward_str;
+	bool      m_finalized { false };
 };
 
 

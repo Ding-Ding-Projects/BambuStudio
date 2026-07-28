@@ -103,9 +103,12 @@ assembled and QA'd in the browser.
 Run the dependency-free Node tests and the template assembly check from the repository root:
 
 ```powershell
-node --test ui-md3/tests/i18n.test.mjs
+node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/layout-clipping.test.mjs
 node ui-md3/scripts/assemble-index.mjs --check
 ```
 
-The GitHub Pages workflow additionally composes the root landing page and verifies every local
-script and showcase image with `ui-md3/tests/assert-pages-layout.mjs`.
+The GitHub Pages workflow additionally composes the root landing page, verifies every local script
+and showcase image with `ui-md3/tests/assert-pages-layout.mjs`, and drives headless Chrome through
+156 width/zoom/language combinations with `ui-md3/tests/runtime-layout-clipping.mjs`. To repeat the
+runtime matrix locally, serve `ui-md3/` over HTTP and set `BAMBU_PAGES_TEST_URL` to its
+`landing.html` URL before running that test.

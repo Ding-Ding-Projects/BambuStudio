@@ -36,6 +36,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
+      - name: Use the repository's runtime-test Node version
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
         with:
@@ -56,6 +61,29 @@ jobs:
           cp ui-md3/app/i18n.resources.js ui-md3/app/i18n.js _site/app/
           node ui-md3/tests/assert-pages-layout.mjs _site
           echo "Composed _site:"; find _site -maxdepth 2 -type f | sort
+
+      - name: Verify localization and clipping at runtime
+        run: |
+          node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/layout-clipping.test.mjs
+          python3 -m http.server 4173 --directory _site >/tmp/bambu-pages-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          server_ready=false
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent --show-error \
+                http://127.0.0.1:4173/index.html >/dev/null; then
+              server_ready=true
+              break
+            fi
+            sleep 0.1
+          done
+          if [ "$server_ready" != true ]; then
+            echo "The bounded Pages preview server readiness check failed."
+            cat /tmp/bambu-pages-http.log
+            exit 1
+          fi
+          BAMBU_PAGES_TEST_URL=http://127.0.0.1:4173/index.html \
+            node --test ui-md3/tests/runtime-layout-clipping.mjs
 
       - name: Upload composed site as the Pages artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3

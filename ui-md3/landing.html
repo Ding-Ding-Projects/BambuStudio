@@ -14,10 +14,7 @@
 <meta name="twitter:title" content="Bambu Studio, reimagined in Material You.">
 <meta name="twitter:description" content="A polished, interactive Material Design 3 concept for Bambu Studio.">
 <meta name="twitter:image" content="https://ding-ding-projects.github.io/BambuStudio/assets/showcase/og-social.webp">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-25..0&display=swap" rel="stylesheet">
+<link href="assets/fonts.css" rel="stylesheet">
 <style>
 :root, [data-theme="light"]{
   --md-surface:#faf8fd; --md-surface-dim:#dad9e0; --md-surface-bright:#faf8fd;
@@ -43,7 +40,7 @@ a{ color:inherit; text-decoration:none; }
 :where(a,button,select):focus-visible{ outline:3px solid var(--md-primary); outline-offset:3px; }
 [data-icon]{ font-family:'Material Symbols Outlined'; font-weight:400; line-height:1; -webkit-font-smoothing:antialiased; user-select:none; }
 .mono{ font-family:'Roboto Mono',monospace; }
-.wrap{ max-width:1120px; margin:0 auto; padding:0 24px; }
+.wrap{ width:100%; max-width:1120px; min-width:0; margin:0 auto; padding:0 24px; }
 @keyframes floaty{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-12px); } }
 @keyframes fadeup{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
 .reveal{ animation:fadeup .7s cubic-bezier(.2,.7,.2,1) both; }
@@ -52,26 +49,28 @@ a{ color:inherit; text-decoration:none; }
 header{ position:sticky; top:0; z-index:20; backdrop-filter:blur(14px);
   background:color-mix(in srgb, var(--md-surface) 82%, transparent); border-bottom:1px solid var(--md-outline-variant); }
 .nav{ display:flex; align-items:center; gap:14px; height:62px; }
-.brand{ display:flex; align-items:center; gap:10px; font-weight:600; font-size:15px; }
+.brand{ display:flex; align-items:center; gap:10px; min-width:0; white-space:nowrap; font-weight:600; font-size:15px; }
 .logo{ width:32px; height:32px; border-radius:9px; background:var(--md-primary); color:var(--md-on-primary);
-  display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px var(--md-shadow); }
+  display:flex; flex:0 0 32px; align-items:center; justify-content:center; box-shadow:0 2px 6px var(--md-shadow); }
 .logo [data-icon]{ font-size:21px; font-variation-settings:'FILL' 1; }
 .tag{ font-size:11px; font-weight:600; letter-spacing:.3px; padding:3px 9px; border-radius:20px;
   background:var(--md-secondary-container); color:var(--md-on-secondary-container); }
 .nav .spacer{ flex:1; }
-.nav a.navlink{ color:var(--md-on-surface-variant); font-size:13.5px; font-weight:500; padding:8px 10px; border-radius:10px; }
+.nav a.navlink{ min-height:44px; color:var(--md-on-surface-variant); font-size:13.5px; font-weight:500;
+  padding:8px 10px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; }
 .nav a.navlink:hover{ background:var(--md-sc-high); color:var(--md-on-surface); }
-.iconbtn{ width:38px; height:38px; border:none; background:transparent; color:var(--md-on-surface-variant);
+.iconbtn{ width:44px; height:44px; flex:0 0 44px; border:none; background:transparent; color:var(--md-on-surface-variant);
   border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .iconbtn:hover{ background:var(--md-sc-high); color:var(--md-on-surface); }
-.language-select{ height:36px; max-width:150px; padding:0 28px 0 10px; border:1px solid var(--md-outline-variant);
-  border-radius:18px; background:var(--md-sc); color:var(--md-on-surface); font:500 12px 'Roboto',system-ui,sans-serif; }
+.language-select{ height:44px; max-width:150px; padding:0 28px 0 10px; border:1px solid var(--md-outline-variant);
+  border-radius:22px; background:var(--md-sc); color:var(--md-on-surface); font:500 12px 'Roboto',system-ui,sans-serif; }
 .landing-i18n-secondary{ margin-inline-start:.35em; color:var(--md-on-surface-variant); font-size:.72em;
   font-weight:400; letter-spacing:0; line-height:1; text-transform:none; white-space:nowrap; vertical-align:middle; }
 .landing-i18n-secondary.detail{ display:inline-flex; align-items:center; justify-content:center; min-width:1.45em;
   height:1.45em; padding:0 .28em; border:1px solid var(--md-outline-variant); border-radius:999px;
   background:var(--md-sc-high); cursor:help; }
-.btn{ display:inline-flex; align-items:center; gap:8px; height:44px; padding:0 22px; border-radius:22px; border:none;
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:0; min-height:44px; height:auto;
+  padding:10px 22px; border-radius:22px; border:none; max-width:100%; white-space:normal; overflow-wrap:anywhere; text-align:center;
   font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:filter .15s, background .15s, transform .1s; }
 .btn:active{ transform:translateY(1px); }
 .btn-filled{ background:var(--md-primary); color:var(--md-on-primary); box-shadow:0 2px 8px var(--md-shadow); }
@@ -81,8 +80,10 @@ header{ position:sticky; top:0; z-index:20; backdrop-filter:blur(14px);
 
 /* ---------- hero ---------- */
 .hero{ position:relative; padding:74px 0 40px; overflow:hidden; }
-.hero-grid{ display:grid; grid-template-columns:1.05fr .95fr; gap:36px; align-items:center; }
-.eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600; letter-spacing:.4px;
+.hero-grid{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:36px; align-items:center; }
+.hero-grid > *{ min-width:0; max-width:100%; }
+.eyebrow{ display:inline-flex; align-items:center; flex-wrap:wrap; max-width:100%; gap:8px; font-size:12px;
+  font-weight:600; letter-spacing:.4px; overflow-wrap:anywhere;
   text-transform:uppercase; color:var(--md-primary); margin-bottom:16px; }
 .eyebrow [data-icon]{ font-size:17px; }
 h1{ font-size:52px; line-height:1.05; font-weight:700; letter-spacing:-1px; margin:0 0 18px; }
@@ -132,19 +133,22 @@ section{ padding:56px 0; }
 .card p{ font-size:13.5px; color:var(--md-on-surface-variant); margin:0; }
 
 /* material you band */
-.you{ background:linear-gradient(135deg, var(--md-primary-container), var(--md-secondary-container));
+.you{ min-width:0; background:linear-gradient(135deg, var(--md-primary-container), var(--md-secondary-container));
   color:var(--md-on-primary-container); border-radius:28px; padding:40px; display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:center; }
+.you > *{ min-width:0; }
 .you h2{ font-size:28px; margin:0 0 12px; letter-spacing:-.5px; }
 .you p{ font-size:15px; margin:0 0 18px; opacity:.9; }
-.you .demo{ background:var(--md-sc-lowest); border-radius:20px; padding:20px; box-shadow:0 10px 30px var(--md-shadow); color:var(--md-on-surface); }
+.you .demo{ min-width:0; background:var(--md-sc-lowest); border-radius:20px; padding:20px;
+  box-shadow:0 10px 30px var(--md-shadow); color:var(--md-on-surface); }
 .rowlbl{ font-size:11px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--md-on-surface-variant); margin:0 0 8px; }
 .seg{ display:flex; gap:6px; padding:4px; background:var(--md-sc-highest); border-radius:14px; margin-bottom:16px; }
-.seg button{ flex:1; height:34px; border:none; border-radius:11px; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:500;
+.seg button{ flex:1 1 0; min-width:0; min-height:44px; height:auto; padding:6px; border:none; border-radius:11px;
+  cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:500; overflow-wrap:anywhere;
   background:transparent; color:var(--md-on-surface-variant); display:flex; align-items:center; justify-content:center; gap:6px; }
 .seg button[aria-pressed="true"]{ background:var(--md-primary); color:var(--md-on-primary); }
 .seg button [data-icon]{ font-size:17px; }
-.swatches{ display:flex; gap:10px; }
-.swatch{ width:34px; height:34px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
+.swatches{ display:flex; flex-wrap:wrap; gap:10px; }
+.swatch{ width:44px; height:44px; flex:0 0 44px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
 .swatch[aria-pressed="true"]{ outline:2px solid var(--md-on-surface); outline-offset:2px; }
 
 /* build steps */
@@ -156,19 +160,49 @@ section{ padding:56px 0; }
 
 footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
 .foot{ display:flex; flex-wrap:wrap; gap:16px; align-items:center; }
+.foot .brand{ min-width:0; max-width:100%; white-space:normal; flex-wrap:wrap; overflow-wrap:anywhere; }
 .foot .spacer{ flex:1; }
 .foot a{ color:var(--md-on-surface-variant); font-size:13px; }
 .foot a:hover{ color:var(--md-primary); }
 .disclaimer{ margin-top:18px; font-size:12px; color:var(--md-on-surface-variant); max-width:760px; line-height:1.6; }
 
+@media (max-width:1120px){
+  .nav a.navlink,.nav .tag{ display:none; }
+}
 @media (max-width:860px){
-  .hero-grid{ grid-template-columns:1fr; } .stage{ min-height:0; order:-1; max-width:680px; margin:0 auto; }
+  .hero-grid{ grid-template-columns:minmax(0,1fr); } .stage{ min-height:0; order:-1; max-width:680px; margin:0 auto; }
   h1{ font-size:40px; } .grid{ grid-template-columns:1fr 1fr; } .steps{ grid-template-columns:1fr; }
   .you{ grid-template-columns:1fr; padding:28px; }
 }
-@media (max-width:560px){ .grid{ grid-template-columns:1fr; } .nav .navlink{ display:none; }
-  .language-select{ max-width:112px; } .nav{ gap:7px; } .hero{ padding-top:28px; }
-  .hero-art{ border-radius:24px; } .chip.c1{ right:8px; } .chip.c2{ left:8px; } }
+@media (max-width:640px){
+  .wrap.nav{ padding-inline:12px; } .nav{ gap:6px; } .brand{ gap:8px; }
+  .language-select{ width:128px; max-width:128px; min-width:0; padding-inline:8px 20px; }
+  #launchTop{ width:44px; min-width:44px; padding:0; justify-content:center; }
+  #launchTop .launch-label{ display:none; }
+}
+@media (max-width:560px){ .grid{ grid-template-columns:1fr; }
+  .hero{ padding-top:28px; }
+  .hero-art{ border-radius:24px; } .chip.c1{ right:8px; } .chip.c2{ left:8px; }
+  .stage::before{ inset:9% 0 -4%; } }
+@media (max-width:420px){
+  .brand-name{ position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+}
+@media (max-width:360px){
+  .wrap{ padding-inline:12px; }
+  .wrap.nav{ min-height:62px; height:auto; padding-block:8px; flex-wrap:wrap; align-content:center; }
+  .nav .brand,.nav .spacer{ display:none; }
+  .language-select{ flex:1 0 100%; width:100%; max-width:none; min-width:44px; }
+  h1{ font-size:clamp(26px,12vw,36px); overflow-wrap:anywhere; }
+  .chip{ display:none; }
+  .you{ padding:16px; gap:16px; border-radius:20px; }
+  .you .demo{ padding:12px; border-radius:16px; }
+  .seg{ flex-direction:column; }
+  .seg button{ flex-basis:auto; width:100%; }
+  .landing-i18n-secondary.inline{ white-space:normal; overflow-wrap:anywhere; }
+  h1,h2,h3,p,.hint,.foot,footer a{ overflow-wrap:anywhere; }
+  .foot .brand{ flex:1 1 100%; width:100%; }
+}
 @media (prefers-reduced-motion:reduce){
   html{ scroll-behavior:auto; } .reveal,.hero-art,.chip{ animation:none !important; }
   .card,.card-art{ transition:none; } .card:hover{ transform:none; }
@@ -180,8 +214,8 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
 <header>
   <div class="wrap nav">
     <div class="brand">
-      <span class="logo"><span data-icon>deployed_code</span></span>
-      Bambu Studio
+      <span class="logo" aria-hidden="true"><span data-icon>deployed_code</span></span>
+      <span class="brand-name">Bambu Studio</span>
       <span class="tag">Material Design 3</span>
     </div>
     <span class="spacer"></span>
@@ -194,8 +228,8 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
       <option value="yue_HK">廣東話（香港）</option>
       <option value="bilingual_en_yue_HK">English + 廣東話</option>
     </select>
-    <button class="iconbtn" id="themeToggle" title="Toggle light / dark"><span data-icon id="themeIcon">light_mode</span></button>
-    <a class="btn btn-filled" id="launchTop" href="index.html"><span data-icon style="font-size:20px;">rocket_launch</span> Launch app</a>
+    <button class="iconbtn" id="themeToggle" title="Toggle light / dark" aria-label="Toggle light / dark"><span data-icon id="themeIcon" aria-hidden="true">light_mode</span></button>
+    <a class="btn btn-filled" id="launchTop" href="index.html" aria-label="Launch app"><span data-icon aria-hidden="true" style="font-size:20px;">rocket_launch</span><span class="launch-label">Launch app</span></a>
   </div>
 </header>
 
@@ -204,7 +238,7 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
     <div class="wrap hero-grid">
       <div class="reveal">
         <div class="eyebrow"><span data-icon>auto_awesome</span> Independent concept redesign</div>
-        <h1>Bambu Studio,<br>reimagined in <span class="accent">Material&nbsp;You</span>.</h1>
+        <h1>Bambu Studio,<br>reimagined in <span class="accent">Material You</span>.</h1>
         <p class="lede">A pure Material Design 3 re-skin of the real Bambu Studio slicer — every screen,
           faithfully restyled. Runs entirely in the browser: light &amp; dark themes, a density toggle,
           and a customizable accent seed color that regenerates the whole tonal palette.</p>
@@ -231,8 +265,8 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
   <section id="features">
     <div class="wrap">
       <div class="section-head">
-        <h2>Every screen, restyled</h2>
-        <p>The full Bambu Studio information architecture — nothing invented, everything re-drawn in Material 3.</p>
+        <h2>Screens and connected-home handover</h2>
+        <p>The native fork adds an explicit Home Assistant printer handover with bounded background work and coalesced duplicate requests. This site's 156-case layout matrix covers the browser preview only; native wxWidgets clipping is assessed separately through static contracts and real captures.</p>
       </div>
       <div class="grid" id="featureGrid"></div>
     </div>
@@ -367,8 +401,8 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
     applyTheme(root.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
   });
 
-  // Feature grid — the real Bambu Studio tab set
-  var SCREENS = [
+  // Feature grid — the real Bambu Studio tab set plus one documented native feature.
+  var FEATURES = [
     ['home','Home','Start a project, reopen recents, browse the model library.','home.webp','Finished geometric prints and a project folder arranged on a creative build plate.'],
     ['view_in_ar','Prepare','The 3D editor — gizmo rail, scene tools, printer &amp; process sidebar.','prepare.webp','Geometric models arranged on a virtual build plate with transform guides.'],
     ['layers','Preview','G-code viewer with color schemes, legend, layer &amp; move sliders.','preview.webp','A detailed model formed from colorful sliced toolpath layers.'],
@@ -377,10 +411,11 @@ footer{ border-top:1px solid var(--md-outline-variant); padding:34px 0 48px; }
     ['folder','Project','Project files — pictures, BOM, assembly guides and notes.','project.webp','A 3D model surrounded by organized project pictures, parts, and assembly cards.'],
     ['tune','Calibration','Flow dynamics, flow rate, max volumetric speed, temp tower &amp; more.','calibration.webp','Calibration parts and a digital caliper arranged on a build plate.'],
     ['palette','Filament','Manage presets; filter, select and bulk-export filaments.','filament.webp','Colorful filament spools and material samples in a modular tray.'],
-    ['settings','Settings','Appearance, presets, network, version control and about.','settings.webp','Layered light and dark appearance surfaces with a generated tonal color palette.']
+    ['settings','Settings','Appearance, presets, network, version control and about.','settings.webp','Layered light and dark appearance surfaces with a generated tonal color palette.'],
+    ['home_iot_device','Home Assistant','Choose an explicit long-lived-token handover or a five-minute local discovery window; both disclose access-code transfer.','','']
   ];
   var grid = document.getElementById('featureGrid');
-  grid.innerHTML = SCREENS.map(function(s){
+  grid.innerHTML = FEATURES.map(function(s){
     var copy='<div class="'+(s[3]?'card-copy':'')+'"><div class="ico"><span data-icon>'+s[0]+'</span></div>'+
       '<h3>'+s[1]+'</h3><p>'+s[2]+'</p></div>';
     return '<article class="card '+(s[3]?'has-art':'')+'">'+

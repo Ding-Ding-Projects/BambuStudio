@@ -1,5 +1,62 @@
 # Roadmap
 
+## In progress
+
+### Home Assistant printer handover (implementation complete; verification pending — 2026-07-28)
+
+- **Token-backed handover:** the Smart home dialog collects accessible printers, presents a
+  No-default credential disclosure, calls `bambu_lab.add_printer` once per printer, and reports
+  exact success/partial/failure results asynchronously. Calls run in four-wide waves, so a full
+  32-printer batch occupies at most eight 30-second timeout waves instead of 32 serial timeouts.
+- **Token transport safety:** every Home Assistant bearer request now requires HTTPS, except for
+  HTTP to localhost or an explicit IPv4 loopback address. Clear-text LAN HTTP is rejected before a
+  socket is opened; redirects and verbose protocol tracing are disabled for credential-bearing
+  requests.
+- **Token-free discovery:** the opt-in, non-persisted sharing toggle starts a fresh-capability
+  `GET /bambustudio/printers` endpoint on one LAN interface and advertises it as
+  `_bambu-slicer._tcp.local.` for at most five minutes. Disabling the toggle, closing the dialog,
+  or reaching expiry stops serving and sends an mDNS goodbye.
+- **Bounded credential surface:** authentication happens before printer data is requested; method,
+  path, headers, time, concurrency, payload size, printer count, and field lengths are bounded.
+  Tokens, access codes, payloads, and supplier exception details are not logged.
+- **Bounded runtime work:** four/64 service execution, single-flight four-wide printer import and
+  entity refresh, a serialized transactional light-restoration worker, 200 ms volume coalescing,
+  authenticated HTTP rate limiting, cached sanitized offers, and paced/coalesced mDNS replies
+  replace per-action detached-thread and amplification paths. Entity-state bodies stop at 4 MiB,
+  parsing stops at 512 results, rendering stops at 256 matching rows, and persisted entity lists
+  inspect at most 256 segments/64 KiB/256 bytes per value while retaining at most 32 unique values.
+  A failed two-attempt light restore retains its generation-specific scene for manual recovery
+  instead of deleting the only recovery path; cancellation after scene creation but before any
+  flash deletes the unused scene, with a focused regression protecting that hand-off window.
+- **Clipping and target repair:** the native dialog is resizable and work-area capped, scrolls long
+  content behind a fixed footer, wraps dynamic/bilingual copy and rigid action rows, and exposes
+  44-DIP controls. The shared confirmation dialog wraps its separate “don't show again” footer and
+  stacks actions when width is constrained. The Pages landing header and Material You band reflow
+  through 200% zoom without an intrinsic-width floor.
+- **Documentation and verification harness:** the categorized API contract, focused and master
+  Postman collections, focused C++ tests, a production-service cross-host probe, and hosted
+  workflow targets are present.
+- **Native build and clipping evidence:** the full Release GUI target completed in 3,387 seconds
+  and its first no-change rebuild completed in 8.3 seconds. English captures at 720×760 and the
+  declared 520×480 minimum exposed text actions being squeezed to 44 DIP. The responsive-action
+  repair rebuilt and linked in 141 seconds, its no-change rebuild took 8.0 seconds, and the reviewed
+  before/after Close and media-action captures show the correction. The
+  subsequent nonvisual import-scheduling and cancellation-cleanup fixes compiled and linked in
+  214.808 seconds, followed by an 8.544-second no-change build. The final 151,299,584-byte DLL is
+  timestamped `2026-07-28 08:15:46 -04:00`, with SHA-256
+  `41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`. The two primary corrected
+  captures were recaptured from that exact DLL; the media-action close-up remains from the
+  layout-identical `EBF646…` build.
+- **Still required before moving this item to Landed:** native bilingual Smart home capture, Path B
+  against a real Home Assistant, a real Home Assistant Path A confirmation card, physical-printer
+  success, and issue #16 closure with exact evidence. Hosted CI/release and remote-publication state
+  is maintained separately in issue #16 so this local roadmap never predicts it. The full Release
+  GUI build, native English 720×760 and 520×480 review, focused Release targets,
+  30-case/267-assertion native suite, 5/5 focused CTest entries, 718-entry localization check, 21/21
+  static Pages/i18n/clipping checks, synchronized template assembly, 156/156 browser
+  width/zoom/language matrix, and cross-host discovery/fetch/goodbye probe are complete. The
+  synthetic TEST-NET probe is transport evidence, not a real-printer success claim.
+
 ## Landed
 
 ### Image-led app and GitHub Pages showcase (2026-07-27)
@@ -44,7 +101,8 @@
 - **Home Assistant integration** (Smart home dialog): entity browser with search bar +
   listbox, media-player rich controls (prev/play-pause/next/volume), announcement-speaker
   selection, alert lights with red-on-error / green-on-finish flashes protected by a
-  scene-snapshot restore so real room lights never stay stuck on the alert colour.
+  generation-specific scene snapshot, two restore attempts, and retention of that scene for manual
+  recovery when both restore attempts fail.
 
 
 ### Roadmap execution wave (2026-07-24, evening)

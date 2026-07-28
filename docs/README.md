@@ -13,6 +13,8 @@ surfaces. Upstream Bambu Studio material remains in [`../doc/`](../doc/).
   import.
 - [G-code preview](features/gcode-preview/README.md) — the sliced Preview page: toolpath viewport,
   the color-scheme legend, and the layer/transport controls.
+- [HTTP/API](features/api/README.md) — short-lived, user-enabled network contracts, including the
+  authenticated Home Assistant printer-discovery handover and its Postman collections.
 - [Releases](features/releases/README.md) — installer behavior, CI gates, SBOMs, attestations, and
   immutable-release policy.
 

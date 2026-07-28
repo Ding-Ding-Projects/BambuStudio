@@ -128,7 +128,7 @@ Per-feature folders with every button close-up: [notifications](docs/screenshots
 [appearance](docs/screenshots/appearance/) · [preferences](docs/screenshots/preferences/) ·
 [project-tabs](docs/screenshots/project-tabs/) · [main-window](docs/screenshots/main-window/) ·
 [home](docs/screenshots/home/) · [wizard](docs/screenshots/wizard/) ·
-[config-profiles](docs/screenshots/config-profiles/)
+[config-profiles](docs/screenshots/config-profiles/) · [smart-home](docs/screenshots/smart-home/)
 
 #### Earlier installed-app captures
 
@@ -163,6 +163,47 @@ calibration. [Open the landing page](https://ding-ding-projects.github.io/BambuS
 | Preview · dark theme · Hong Kong Cantonese | Device · compact dark theme · English + Cantonese |
 | :---: | :---: |
 | [![Bambu Studio Material Design 3 Preview design reference in the dark theme and Hong Kong Cantonese](docs/readme-assets/material-preview-dark-yue-hk.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=preview&theme=dark&density=comfortable&accent=%237c5cff&lang=yue_HK) | [![Bambu Studio Material Design 3 Device design reference in the compact dark theme with English and Cantonese](docs/readme-assets/material-device-dark-bilingual.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=device&theme=dark&density=compact&accent=%2314b8a6&lang=bilingual_en_yue_HK) |
+
+## Home Assistant printer handover
+
+The native Smart home dialog implements two explicit ways to add currently accessible printers to
+the companion
+[`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) integration:
+a confirmed service call through the user's Home Assistant long-lived token, or a temporary local
+discovery window that needs no Home Assistant token. Both paths disclose that printer LAN access
+codes are credentials before transfer. Discovery sharing is off by default, uses a fresh
+high-entropy pairing capability, and stops when the toggle is disabled or the dialog closes.
+Home Assistant work uses owned bounded queues, coalesces Connect and volume-slider bursts, caps
+printer/speaker/light fan-out at 32, imports printers in four-wide waves, paces mDNS replies, and
+cancels and joins its workers during app shutdown. If shutdown lands after an alert-light scene is
+created but before any flash, the unused scene is deleted instead of leaking. The resizable Smart
+home dialog keeps its footer fixed around a scrolling body and is implemented to wrap long English,
+Cantonese, and bilingual content instead of clipping it.
+
+The focused Windows Release targets build successfully: `home_assistant_tests` passes 30 test cases
+and 267 assertions, all five focused CTest entries pass, the Cantonese catalog contains 718 checked
+translations, the static Pages/i18n/clipping suite passes 21/21, and the browser Pages matrix passes
+all 156 width/zoom/language combinations. The production sharing probe also completed cross-host
+PTR/SRV/TXT/A discovery, one authenticated bounded fetch, and the zero-TTL goodbye. The full
+`BambuStudio_app_gui` Release build exited successfully after 3,387 seconds, followed by an
+8.3-second no-change build. Native headless review at 720×760 and the declared 520×480 minimum found
+text actions incorrectly squeezed to 44 DIP; after the responsive-action fix, a 141-second focused
+rebuild and link plus an 8.0-second no-change build passed. The later nonvisual import-scheduling
+and cancellation-cleanup fixes compiled and linked in 214.808 seconds; the final no-change build took
+8.544 seconds. The final 151,299,584-byte DLL is timestamped `2026-07-28 08:15:46 -04:00`, with
+SHA-256 `41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`.
+The primary corrected English captures were recaptured from that exact final DLL and are in
+[`docs/screenshots/smart-home/`](docs/screenshots/smart-home/). The media-action close-up remains
+from the preceding `EBF646…` DLL; the later source fixes changed only nonvisual printer scheduling
+and alert-light cleanup, not `SmartHomeDialog` or `MsgDialog` layout. Native bilingual capture, live Home
+Assistant confirmation and service paths, physical-printer success, hosted CI/release verdict,
+and remote-publication evidence are tracked separately in
+[issue #16](https://github.com/Ding-Ding-Projects/BambuStudio/issues/16); the local verification
+summary here does not substitute for those live or hosted results. See
+[Smart home](docs/features/windows/smart-home.md) for behavior, security, failure modes, and the
+honest verification boundary, and
+[Home Assistant printer-discovery API](docs/features/api/home-assistant-printer-discovery.md) for
+the temporary HTTP/mDNS contract and Postman collections.
 
 ## Windows installer
 
@@ -228,6 +269,7 @@ Key features are:
 - Basic slicing features & GCode viewer
 - Multiple plates management
 - Remote control & monitoring
+- Explicit Home Assistant printer handover and short-lived local discovery
 - Auto-arrange objects
 - Auto-orient objects
 - Hybrid/Tree/Normal support types, Customized support

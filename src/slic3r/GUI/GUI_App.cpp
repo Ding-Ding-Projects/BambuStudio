@@ -89,6 +89,7 @@
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
 #include "TtsNarrator.hpp"
+#include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
 
@@ -1542,6 +1543,7 @@ void GUI_App::shutdown()
     }
 
     if (m_is_recreating_gui) return;
+    HomeAssistant::shutdown();
     set_closing(true);
     BOOST_LOG_TRIVIAL(info) << "GUI_App::shutdown exit";
 }
@@ -2873,6 +2875,9 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    // Stop Home Assistant workers while wx and AppConfig are still alive.
+    // This is idempotent with the normal MainFrame -> GUI_App shutdown path.
+    HomeAssistant::shutdown();
 #ifdef __APPLE__
     UnRegisterMacPowerCallBack();
 #endif

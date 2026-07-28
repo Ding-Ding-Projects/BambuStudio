@@ -78,9 +78,9 @@
       display: 'inline', tone: 'literal'
     },
     'Accent → tonal ramp': '強調色 → 色調層級',
-    'Every screen, restyled': '每個畫面都重新整過',
-    'The full Bambu Studio information architecture — nothing invented, everything re-drawn in Material 3.': {
-      text: '完整保留 Bambu Studio 資訊架構—沒有自行加功能，全部用 Material 3 重新繪製。',
+    'Screens and connected-home handover': '畫面同智能家居交接',
+    "The native fork adds an explicit Home Assistant printer handover with bounded background work and coalesced duplicate requests. This site's 156-case layout matrix covers the browser preview only; native wxWidgets clipping is assessed separately through static contracts and real captures.": {
+      text: '原生分支加入明確嘅 Home Assistant 列印機交接，背景工作有上限，重複請求亦會合併，唔會一撳就成棚工人衝出嚟。本站 156 組版面矩陣只覆蓋瀏覽器預覽；原生 wxWidgets 裁切會用靜態合約同真實擷取畫面分開驗證，兩份成績表唔好撈亂。',
       display: 'detail'
     },
     'Material You, all the way down': 'Material You，由頭到尾',
@@ -121,6 +121,12 @@
     'Flow dynamics, flow rate, max volumetric speed, temp tower & more.': '流量動態、流量比、最大體積速度、溫度塔等等。',
     'Manage presets; filter, select and bulk-export filaments.': '管理預設；篩選、選擇同批量匯出耗材。',
     'Appearance, presets, network, version control and about.': '外觀、預設、網絡、版本控制同關於。',
+    'Home Assistant': 'Home Assistant',
+    'Choose an explicit long-lived-token handover or a five-minute local discovery window; both disclose access-code transfer.': {
+      text: '選擇明確嘅長期權杖交接，或者開啟五分鐘區域網絡探索；兩種方式都會清楚交代存取碼轉移。',
+      display: 'detail',
+      tone: 'literal'
+    },
     'An independent, open-source Material Design 3': {
       text: '一個獨立、開源的 Material Design 3',
       tone: 'literal'

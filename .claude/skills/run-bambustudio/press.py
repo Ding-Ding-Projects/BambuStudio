@@ -293,6 +293,60 @@ def worker(mode, frame, out_path, arg=None):
         u.PostMessageW(frame, 0x0111, int(arg), 0)
         pump(0.6)
         result = {"ok": True, "posted_command": int(arg)}
+    elif mode == "menupress":
+        # Some owner-drawn wx menu commands only react after Windows runs the
+        # real popup path. Open the runtime-enumerated top-level menu and select
+        # its item inside this one headless-desktop worker so another process
+        # cannot collapse the popup between the click and the selection.
+        menu_x_s, position_s = arg.split(",")
+        menu_x, position = int(menu_x_s), int(position_s)
+        bar = topbar(frame)
+        if bar is None:
+            result = {"ok": False, "error": "no topbar child found under the frame"}
+        else:
+            popup = {"hwnd": None}
+            WinEventProc = ctypes.WINFUNCTYPE(
+                None, wt.HANDLE, wt.DWORD, wt.HWND,
+                wt.LONG, wt.LONG, wt.DWORD, wt.DWORD,
+            )
+
+            def on_event(hook, event, hwnd, objid, childid, tid, when):
+                if event == 0x0006 and hwnd:  # EVENT_SYSTEM_MENUPOPUPSTART
+                    popup["hwnd"] = hwnd
+
+            proc = WinEventProc(on_event)
+            hook = u.SetWinEventHook(0x0006, 0x0007, 0, proc, 0, 0, 0)
+            orig = wt.RECT()
+            u.GetWindowRect(frame, ctypes.byref(orig))
+            flags = 0x0001 | 0x0004 | 0x0010  # NOSIZE | NOZORDER | NOACTIVATE
+            try:
+                u.SetWindowPos(frame, 0, -183, -6, 0, 0, flags)
+                pump(0.3)
+                post_click(bar["handle"], menu_x, max(4, bar["h"] // 2))
+                pump(0.85)
+                ph = popup["hwnd"]
+                if not ph or not u.IsWindow(ph):
+                    result = {"ok": False, "error": "menu popup did not open"}
+                else:
+                    u.PostMessageW(ph, 0x0100, 0x24, 0)  # VK_HOME
+                    pump(0.1)
+                    # The popup opens with no item selected. Its first Down
+                    # chooses position zero, so a zero-based position requires
+                    # one more navigation key than its numeric value.
+                    for _ in range(position + 1):
+                        u.PostMessageW(ph, 0x0100, 0x28, 0)  # VK_DOWN
+                        pump(0.05)
+                    u.PostMessageW(ph, 0x0100, 0x0D, 0)  # VK_RETURN
+                    pump(0.8)
+                    result = {
+                        "ok": True,
+                        "menu_x": menu_x,
+                        "position": position,
+                    }
+            finally:
+                u.UnhookWinEvent(hook)
+                u.SetWindowPos(frame, 0, orig.left, orig.top, 0, 0, flags)
+                pump(0.2)
     elif mode == "clickchild":
         hwnd_s, x_s, y_s = arg.split(",")
         post_click(int(hwnd_s), int(x_s), int(y_s))
@@ -313,14 +367,26 @@ def flatten(menus):
     out = []
 
     def walk(items, x, prefix=""):
+        # Arrow-key navigation skips separator rows even though HMENU's
+        # MF_BYPOSITION index counts them. Track the keyboard-selectable index
+        # independently so physical selection cannot drift after a separator.
+        keyboard_position = -1
         for it in items:
             label = (it.get("text") or "").split("\t")[0].replace("&", "").strip()
+            if label or it.get("sub"):
+                keyboard_position += 1
             if it.get("sub"):
                 walk(it["sub"], x, prefix + label + " > ")
                 continue
             if not label or it.get("id", 0) in (0, -1, 65534):
                 continue
-            out.append({"label": prefix + label, "id": it["id"], "menu_x": x})
+            out.append({
+                "label": prefix + label,
+                "id": it["id"],
+                "menu_x": x,
+                "position": keyboard_position,
+                "nested": bool(prefix),
+            })
 
     for m in menus.values():
         walk(m["items"], m["x"])
@@ -371,7 +437,21 @@ def cmd_press(args):
     frame = args.frame or app_frame()
     want = args.label.lower().strip()
 
-    data = load_menus(frame, refresh=args.refresh)
+    # Physical selection only needs the cached menu label, x coordinate and
+    # zero-based position; no cached HWND is used. Reuse that geometry across
+    # app restarts unless the caller explicitly requests a fresh sweep. This
+    # avoids reopening every owner-drawn menu just because the frame HWND
+    # changed between otherwise identical launches.
+    data = None
+    if args.physical and not args.refresh and CACHE.exists():
+        try:
+            candidate = json.loads(CACHE.read_text(encoding="utf-8"))
+            if candidate.get("menus"):
+                data = candidate
+        except (json.JSONDecodeError, OSError):
+            pass
+    if data is None:
+        data = load_menus(frame, refresh=args.refresh)
     items = flatten(data["menus"])
     exact = [i for i in items if i["label"].lower() == want]
     partial = [i for i in items if want in i["label"].lower()]
@@ -383,10 +463,25 @@ def cmd_press(args):
                              ensure_ascii=False, indent=1))
             sys.exit(2)
         target = hit[0]
-        res = run_worker("command", frame, target["id"])
-        print(json.dumps({"ok": res.get("ok", False), "pressed": target["label"],
-                          "via": "WM_COMMAND", "id": target["id"]},
+        if args.physical:
+            if target["nested"]:
+                die("physical selection currently supports top-level menu items only")
+            res = run_worker(
+                "menupress",
+                frame,
+                f"{target['menu_x']},{target['position']}",
+            )
+            via = "physical menu"
+        else:
+            res = run_worker("command", frame, target["id"])
+            via = "WM_COMMAND"
+        ok = bool(res.get("ok", False))
+        print(json.dumps({"ok": ok, "pressed": target["label"],
+                          "via": via, "id": target["id"],
+                          "error": res.get("error")},
                          ensure_ascii=False, indent=1))
+        if not ok:
+            sys.exit(1)
         return
 
     # Not a menu item: fall back to a labelled child control.
@@ -430,6 +525,11 @@ def main():
     s = sub.add_parser("press", help="press a menu item or control BY LABEL")
     s.add_argument("label")
     s.add_argument("--refresh", action="store_true")
+    s.add_argument(
+        "--physical",
+        action="store_true",
+        help="open the live owner-drawn menu and select a top-level item",
+    )
     s = sub.add_parser("id", help="post a raw WM_COMMAND id to the frame")
     s.add_argument("command_id", type=int)
 
