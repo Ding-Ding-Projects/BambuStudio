@@ -183,6 +183,14 @@ Full documentation: [`docs/features/pages/`](docs/features/pages/README.md).
 | `f3ff11044` | Rebuilt the site: eight browser-style tabs, bilingual copy at five funny levels per language, the shared regex builder, the changelog viewer over 34 real releases, notifications, settings, the 1% dim sum surprise. |
 | `aea1327cd` | Gated the deploy on 444 measured runtime layout cases; replaced the workflow's inline `rsync`/`python3 -m http.server` with `compose-site.mjs` and `serve.mjs`; updated `i18n.test.mjs` for the new shape (this was issue #25). |
 | `2b2b7ce45` | Fixed 29 defects confirmed by a twelve-agent adversarial review of the new site. |
+| `8f4dba64e` | Fixed the prototype's eight defects from issue #24: 143 icon spans made decorative, `role="switch"` on preference toggles, real dialog semantics in `app/dialogs.js`, a title bar that no longer clips its window controls, and all ten search fields wired. |
+| `beeb8703a` | Restored case-sensitive regex search: `SearchField.searchFlags()` returns filter-ready flags and an empty string verbatim, so a consumer can no longer substitute `'i'` for "no flags". |
+| `30d3f884e` | Title-bar collapse rules given `!important` (the prototype's inline styles beat them otherwise) and `capture-app.mjs` added. |
+| `bfd87cafa` | Removed the changelog freshness gate — every release CI publishes made the committed file stale and would have blocked the next Pages deploy. It is regenerated at deploy time now, with the committed file as the fallback. |
+
+**Issues closed this session:** #25 (the `i18n.test.mjs` assertion that broke master — fixed before it
+was filed) and #24 (the prototype's eight defects, each closed with measured evidence). #16 and #15
+are untouched and remain the concurrent session's.
 
 **Things that will bite you if you do not know them:**
 
@@ -197,8 +205,15 @@ Full documentation: [`docs/features/pages/`](docs/features/pages/README.md).
   the local preview wrong — which is exactly the copy the layout gate serves.
 - **`ui-md3/index.html` is generated.** Edit `app/screens/*.template.html`, then run
   `node ui-md3/scripts/assemble-index.mjs --write`. `--check` runs in CI.
-- **`site/changelog.data.js` is generated.** `node ui-md3/scripts/build-changelog.mjs`; CI runs
-  `--check`, which stands down (exit 0) if the GitHub API is unavailable.
+- **`site/changelog.data.js` is generated**, and deliberately **not** gated on freshness. CI
+  regenerates it at deploy time from the Releases API with the committed file as the fallback.
+  Gating on staleness looked tidy and was a trap: every release CI publishes makes the committed
+  file stale by definition, so the next Pages deploy would fail until a human regenerated it.
+- **The prototype's collapse rules need `!important`.** Every element in `ui-md3/index.html`
+  carries an inline `style="display:flex"`, and an inline style beats a stylesheet rule without it.
+  A responsive rule that looks correct in the diff can do absolutely nothing.
+- **`ui-md3/index.html` is stored with CRLF.** A search-and-replace whose pattern spans two lines
+  will silently never match. Prefer single-line edits, and verify the result rather than the diff.
 
 **How to verify the site locally** — see
 [`docs/features/pages/deployment-and-layout-gate.md`](docs/features/pages/deployment-and-layout-gate.md).
