@@ -33,9 +33,23 @@ but not directly. The `github-pages` environment on this fork accepts deployment
 first step: a three-second failure with no steps and no log. It failed that way 12 times out of 12
 before anyone noticed, and the refresh it promised never happened once. The release event now goes
 to a `redeploy-on-release` job that holds no environment and simply dispatches this workflow on
-`master`; that run lands as `workflow_dispatch` and deploys normally. It needs a real PAT —
-`GITHUB_TOKEN` cannot trigger another run — and says so in the log rather than failing if none is
-configured. [`ui-md3/tests/site.test.mjs`](../../../ui-md3/tests/site.test.mjs) asserts the shape.
+`master`; that run lands as `workflow_dispatch` and deploys normally, and it keeps its own
+concurrency group so a release cannot cancel a deploy that was doing real work.
+[`ui-md3/tests/site.test.mjs`](../../../ui-md3/tests/site.test.mjs) asserts that shape, and every
+assertion in it is mutation-verified.
+
+Two things about that fix are worth stating plainly rather than discovering later.
+
+**It is not retroactive.** A `release` event runs the workflow file as it existed at the **tag's**
+commit, not as it exists on `master`. Releases tagged at commits older than the fix keep failing
+the old way until they drain — `md3-v58` and `md3-v59` both did, after the fix landed. It is
+therefore **unverified** until a release tagged at a commit containing it publishes.
+
+**`GITHUB_TOKEN` can dispatch.** An earlier version of this page said it could not; that was wrong.
+GitHub's recursive-trigger prevention exempts `workflow_dispatch` and `repository_dispatch`, which
+"always create workflow runs". The real requirement is `actions: write`. `TOKEN_GITHUB` leads the
+chain only so the dispatch is attributed to the owner rather than to `github-actions[bot]`, and
+`GITHUB_TOKEN` is the final fallback so the job works with no PAT at all.
 
 There is deliberately **no freshness gate**. Requiring the committed file to be current looked
 tidy and was a trap: every release CI publishes makes it stale by definition, so the next Pages

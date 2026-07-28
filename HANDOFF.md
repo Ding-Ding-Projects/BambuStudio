@@ -252,10 +252,21 @@ are untouched and remain the concurrent session's.
   without anyone noticing: a `release` event runs at the **tag** ref. Anything that must deploy off
   a non-`master` ref has to dispatch a `master` run instead, which is what `redeploy-on-release`
   does. `ui-md3/tests/site.test.mjs` now asserts that shape.
-- **`GITHUB_TOKEN` cannot dispatch a workflow.** GitHub blocks a token-triggered run from
-  triggering another, so `gh workflow run` signed with it returns `204` and does nothing at all.
-  The PAT this repository actually has is **`TOKEN_GITHUB`** — not `RELEASE_TOKEN` or `ORG_TOKEN`,
-  which the org convention names but this fork does not define.
+- **A `release` event runs the workflow file as it existed at the TAG's commit**, not as it exists
+  on `master`. This is the part that makes the run history confusing: fixing a release-triggered
+  workflow does **nothing** for releases whose tags point at older commits, and they keep failing
+  the old way until they drain. `md3-v58` (tagged `6d1ad69de`) and `md3-v59` both failed exactly
+  that way *after* the fix landed. The same rule explains the earlier gap: eleven releases published
+  while `master` carried the `release:` trigger produced zero release runs, because their tag
+  commits predated it. So the fix is only proven once a release tagged at a commit **containing**
+  it publishes — until then, treat it as unverified.
+- **`GITHUB_TOKEN` CAN dispatch a workflow.** An earlier version of this file said the opposite;
+  that was wrong. GitHub's recursive-trigger prevention explicitly exempts two events:
+  `workflow_dispatch` and `repository_dispatch` "always create workflow runs", even when signed
+  with `GITHUB_TOKEN`. The job needs `actions: write`, which is the real requirement. `TOKEN_GITHUB`
+  is the owner PAT this repository has (`RELEASE_TOKEN` and `ORG_TOKEN` are org-convention names it
+  does not define at repository scope), and it leads the chain only so a dispatch is attributed to
+  the owner rather than to `github-actions[bot]`.
 - **The material vocabulary is display-only.** `ink` and `Ink Dispenser` are what a user reads;
   `filamentRows`, `?view=filament`, `.bbsflmt` and the native `.po` msgids keep upstream spelling
   because bindings and file formats match on them. But `ui-md3/app/i18n.resources.js` is the

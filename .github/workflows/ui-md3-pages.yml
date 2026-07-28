@@ -34,8 +34,7 @@ permissions:
 #
 # A release run is a dispatcher, not a deploy, so it gets its own group. Sharing
 # one would let a release cancel a deploy that was midway through real work and
-# then, if no PAT is configured, dispatch nothing in its place — trading a
-# running deploy for none at all.
+# replace it with a run that only makes one API call.
 concurrency:
   group: ui-md3-pages-${{ github.event_name == 'release' && 'dispatch' || 'deploy' }}
   cancel-in-progress: true
@@ -51,24 +50,29 @@ jobs:
   # then deploys normally and regenerates the changelog with the new release in it.
   # This cannot loop — the dispatched run arrives as workflow_dispatch, and nothing
   # in this workflow publishes a release.
+  #
+  # This fix is NOT retroactive, which is worth knowing before reading the run
+  # history: a release event runs the workflow file as it existed at the TAG's
+  # commit, not as it exists on master. Releases tagged at commits older than this
+  # change keep failing the old way until they drain — md3-v58, tagged at
+  # 6d1ad69de, did exactly that after this landed.
   redeploy-on-release:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
       actions: write
+      contents: read
     steps:
       - name: Redeploy from master so the changelog picks up this release
         env:
-          # GITHUB_TOKEN is deliberately absent: GitHub blocks runs triggered by it
-          # from triggering further runs, so a dispatch signed with it would return
-          # 204 and silently do nothing. This needs a real PAT or it needs to say so.
-          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || secrets.RELEASE_TOKEN || secrets.ORG_TOKEN }}
+          # GITHUB_TOKEN is a valid last resort here. The recursive-trigger
+          # prevention does not apply to this call: GitHub documents that
+          # workflow_dispatch and repository_dispatch "always create workflow
+          # runs", even when signed with GITHUB_TOKEN. The job already holds the
+          # actions: write that needs. A PAT is listed first only so the dispatch
+          # is attributed to the owner rather than to github-actions[bot].
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          if [ -z "${GH_TOKEN}" ]; then
-            echo "::warning::No PAT configured (TOKEN_GITHUB/RELEASE_TOKEN/ORG_TOKEN)." \
-                 "The site will list this release after the next push instead."
-            exit 0
-          fi
           gh workflow run ui-md3-pages.yml --repo "${GITHUB_REPOSITORY}" --ref master
           echo "Dispatched a master-ref Pages deploy for ${GITHUB_REF_NAME}."
 

@@ -7,7 +7,7 @@ export const APP_TABS = [
   { id: 'multi', label: 'Multi-device', icon: 'devices' },
   { id: 'project', label: 'Project', icon: 'folder_open' },
   { id: 'calibration', label: 'Calibration', icon: 'build' },
-  { id: 'filament', label: 'Filament', icon: 'palette' },
+  { id: 'filament', label: 'Ink', icon: 'palette' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 export function TabBar({ tabs = APP_TABS, value, onChange, style }) {

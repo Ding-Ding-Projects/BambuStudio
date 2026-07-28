@@ -13,7 +13,7 @@ Material Design 3 (Material You) design system for the **native C++ (wxWidgets/O
 
 ## The product
 
-Bambu Studio is a desktop 3D-printing slicer. One window, nine workspaces reached from a persistent tab bar: Home, Prepare (3D editor), Preview (G-code), Device (printer monitor), Multi-device, Project, Calibration, Filament manager, Settings. Plus an app-local Git-backed **version history** drawer, Export/Send-to-print/Add-filament dialogs, an appearance popover, and snackbars.
+Bambu Studio is a desktop 3D-printing slicer. One window, nine workspaces reached from a persistent tab bar: Home, Prepare (3D editor), Preview (G-code), Device (printer monitor), Multi-device, Project, Calibration, Ink manager, Settings. Plus an app-local Git-backed **version history** drawer, Export/Send-to-print/Add-ink dialogs, an appearance popover, and snackbars.
 
 ## Color architecture
 
@@ -34,7 +34,7 @@ In CSS: `data-theme="light|dark"` picks the theme, `data-scheme="preview|device"
 
 ## CONTENT FUNDAMENTALS
 
-- Sentence case everywhere ("Add filament", "Send print", "Restore this version"). Never Title Case; SCREAMING CAPS only in 11px section labels via CSS `text-transform:uppercase`.
+- Sentence case everywhere ("Add ink", "Send print", "Restore this version"). Never Title Case; SCREAMING CAPS only in 11px section labels via CSS `text-transform:uppercase`.
 - Terse, imperative button copy: verb first ("Slice plate", "Export 12"). Counts are appended to verbs, not parenthesized.
 - Supporting copy is one short sentence, no marketing voice: "Pick a preset to add to this project."
 - Numeric/technical values are ALWAYS Roboto Mono: temperatures, percentages, times ("1h 24m"), dimensions, commit hashes ("#a1f9c02"), coordinates.
@@ -75,7 +75,7 @@ Single icon system: **Material Symbols Outlined** variable ligature font (Google
 - `components/fields` — SearchField, SelectField, ValueField
 - `components/containment` — Card, SectionHeader, Badge, ProgressBar, Dialog, Snackbar
 - `components/navigation` — TitleBar, TabBar, GizmoRail, NavItem
-- `ui_kits/bambu-studio/` — interactive recreation of all 9 workspaces + Export/Send/Add-filament dialogs + version-history drawer (theme, density, accent-seed and contextual-scheme switching)
+- `ui_kits/bambu-studio/` — interactive recreation of all 9 workspaces + Export/Send/Add-ink dialogs + version-history drawer (theme, density, accent-seed and contextual-scheme switching)
 - `SKILL.md` — agent-skill entry point
 
 ## Intentional additions

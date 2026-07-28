@@ -2,7 +2,7 @@
 export interface SectionHeaderProps {
   /** Material Symbols ligature (print, palette, tune, thermostat…) */
   icon?: string;
-  /** Right-aligned slot (Sync AMS button, humidity status) */
+  /** Right-aligned slot (Sync Ink Dispenser button, humidity status) */
   trailing?: React.ReactNode;
   style?: React.CSSProperties;
   children?: React.ReactNode;

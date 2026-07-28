@@ -1,4 +1,4 @@
-The app-wide search field (objects, settings, filaments, commits, MakerWorld): 40px sc-highest pill, .* regex toggle, tune button opens a token-grid regex builder popover.
+The app-wide search field (objects, settings, inks, commits, MakerWorld): 40px sc-highest pill, .* regex toggle, tune button opens a token-grid regex builder popover.
 
 ```jsx
 <SearchField placeholder="Search objects" onQuery={setQuery} />

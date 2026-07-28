@@ -391,38 +391,70 @@ test('every dim sum dish is bundled, named in both languages, and drawn locally'
  * exactly that case, and it failed 12 times for 12 releases before this test.
  */
 test('no release-ref run is sent to the environment-gated deploy job', async () => {
-  const workflow = await readFile(
+  const raw = await readFile(
     path.resolve(uiDir, '..', '.github', 'workflows', 'ui-md3-pages.yml'), 'utf8');
 
-  // The workflow still listens for releases; it just must not deploy from one.
-  assert.match(workflow, /^ {2}release:\n {4}types: \[published\]$/m);
+  /*
+   * Normalize CRLF. Windows is this project's only supported platform, and git
+   * checks this file out with CRLF here — a regex written against \n silently
+   * matches nothing, so every assertion below would pass vacuously on a fresh
+   * clone while appearing to be thorough.
+   */
+  const workflow = raw.replace(/\r\n/g, '\n');
 
-  const jobs = workflow.slice(workflow.indexOf('\njobs:'));
+  /*
+   * Strip comments before asserting. This file explains at length why the
+   * release event cannot deploy, and those comments quote the very settings
+   * being asserted — "if: github.event_name != 'release'" appears in prose as
+   * well as in YAML. An unanchored match is satisfied by the explanation of a
+   * setting that has been deleted.
+   */
+  const code = workflow.split('\n').filter((line) => !/^\s*#/.test(line)).join('\n');
+
+  // The workflow still listens for releases; it just must not deploy from one.
+  assert.match(code, /^ {2}release:\n {4}types: \[published\]$/m);
+
+  const jobs = code.slice(code.indexOf('\njobs:'));
   const jobOf = (name) => {
     const start = jobs.indexOf(`\n  ${name}:\n`);
     assert.notEqual(start, -1, `the ${name} job is missing`);
     const rest = jobs.slice(start + 1);
-    const next = rest.slice(1).search(/\n {2}[a-z][\w-]*:\n/);
+    // Job ids may start with any word character, not just a lowercase letter —
+    // a terminator that only recognises [a-z] lets one job's slice swallow the
+    // next and be satisfied by ITS settings.
+    const next = rest.slice(1).search(/\n {2}[\w-]+:\n/);
     return next === -1 ? rest : rest.slice(0, next + 1);
   };
 
   const deploy = jobOf('deploy');
-  assert.match(deploy, /environment:\n\s+name: github-pages/,
+  const redeploy = jobOf('redeploy-on-release');
+  // Prove the slices are disjoint, or an assertion about one can be satisfied
+  // by the other's text.
+  assert.equal(deploy.includes('redeploy-on-release:'), false);
+  assert.equal(redeploy.includes('\n  deploy:'), false);
+
+  // Anchored to line starts so only real YAML keys count.
+  assert.match(deploy, /^ {4}environment:\n {6}name: github-pages$/m,
     'deploy is the environment-gated job');
-  assert.match(deploy, /if: github\.event_name != 'release'/,
+  assert.match(deploy, /^ {4}if: github\.event_name != 'release'$/m,
     'deploy must refuse the release event, whose ref is a tag the environment rejects');
 
-  // The redeploy path has to reach master some other way, and cannot use
-  // GITHUB_TOKEN: GitHub refuses to let a token-triggered run trigger another.
-  const redeploy = jobOf('redeploy-on-release');
-  assert.match(redeploy, /if: github\.event_name == 'release'/);
-  assert.doesNotMatch(redeploy, /environment:/,
+  assert.match(redeploy, /^ {4}if: github\.event_name == 'release'$/m);
+  assert.doesNotMatch(redeploy, /^ {4}environment:$/m,
     'the redeploy job must not be environment-gated, or it is rejected too');
   assert.match(redeploy, /--ref master/);
-  assert.match(redeploy, /permissions:\n\s+actions: write/,
+  assert.match(redeploy, /^ {4}permissions:\n {6}actions: write$/m,
     'dispatching a workflow needs actions: write');
-  assert.doesNotMatch(redeploy, /secrets\.GITHUB_TOKEN/,
-    'GITHUB_TOKEN cannot dispatch a workflow; the step must fall back loudly instead');
+
+  /*
+   * GITHUB_TOKEN must remain in the chain. It CAN dispatch: GitHub's
+   * recursive-trigger prevention explicitly exempts workflow_dispatch and
+   * repository_dispatch, which "always create workflow runs". An earlier
+   * version of this test asserted the opposite and enforced a fail-soft path
+   * that did nothing whenever no PAT was configured.
+   */
+  assert.match(redeploy, /secrets\.GITHUB_TOKEN/,
+    'GITHUB_TOKEN is a valid dispatch fallback and must not be excluded');
 
   // Both jobs are conditioned on the same event, and between them they must
   // cover every event the workflow listens for.
@@ -430,11 +462,15 @@ test('no release-ref run is sent to the environment-gated deploy job', async () 
     assert.doesNotMatch(deploy, new RegExp(`!= '${event}'`), `${event} must still deploy`);
   }
 
-  // The release run only dispatches, so it must not share the deploy's
-  // cancel-in-progress group: it would cancel a deploy doing real work and, with
-  // no PAT configured, put nothing in its place.
-  assert.match(workflow, /group: ui-md3-pages-\$\{\{ github\.event_name == 'release'/,
-    'the release dispatcher needs its own concurrency group');
+  /*
+   * The release run only dispatches, so it must not share the deploy's
+   * cancel-in-progress group. Match the whole expression, not its prefix: a
+   * group that begins correctly and then resolves to one constant for every
+   * event rejoins the deploy's group while still matching a prefix test.
+   */
+  assert.match(code,
+    /^concurrency:\n {2}group: ui-md3-pages-\$\{\{ github\.event_name == 'release' && 'dispatch' \|\| 'deploy' \}\}$/m,
+    'the release dispatcher needs its own concurrency group, resolved per event');
 });
 
 /*
@@ -453,32 +489,52 @@ test('the published UI kit says ink, not filament, in everything it renders', as
   // the same mistake one level down: the typography specimen page under
   // guidelines/ used "Filament Manager" and "Export filaments" as its sample
   // strings, and a kit-only sweep would have walked straight past them.
+  // Every extension the composer publishes. Sweeping only .jsx and .html left
+  // 20 published .d.ts files unread, three of which documented the old
+  // vocabulary to anyone authoring a new component against them.
+  const PUBLISHED = /\.(jsx|html|ts|css|js)$/;
   const walk = async (dir) => {
     const found = [];
     for (const entry of await readdir(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) found.push(...await walk(full));
-      else if (/\.(jsx|html)$/.test(entry.name)) found.push(full);
+      else if (PUBLISHED.test(entry.name)) found.push(full);
     }
     return found;
   };
   const files = (await walk(root)).map((f) => path.relative(root, f));
-  assert.ok(files.length >= 9, `expected the design system's pages, found ${files.length}`);
-  assert.ok(files.some((f) => f.includes('guidelines')), 'guidelines pages must be swept too');
+  // Pin the real size. A size floor of 9 against a 74-file tree would let the
+  // entire kit drop out of the sweep and still pass.
+  assert.ok(files.length >= 70, `expected the design system's pages, found ${files.length}`);
+  for (const required of ['guidelines', 'components', path.join('ui_kits', 'bambu-studio')]) {
+    assert.ok(files.some((f) => f.includes(required)), `${required} must be swept too`);
+  }
+  assert.ok(files.some((f) => f.endsWith('.d.ts')), 'the published type declarations must be swept');
 
-  // Bindings, not copy: components, globals, dialog keys and the route id.
-  const IDENTIFIER = new RegExp([
-    'window\\.Screens\\.Filament', 'AddFilamentDialog', 'KIT_FILAMENTS', 'FILAMENTS',
-    "id: 'filament'", "'addfil'", 'Filament\\.jsx',
-    'const filaments', '\\{filaments\\.map', // local binding off KIT_FILAMENTS
-  ].join('|'));
+  /*
+   * Bindings, not copy. These are STRIPPED from the line and the residue
+   * re-tested — never used to exempt the whole line. TabBar.jsx is why:
+   *
+   *   { id: 'filament', label: 'Filament', icon: 'palette' }
+   *
+   * A whole-line exemption clears that on `id: 'filament'` and ships the
+   * display label "Filament" on a published page, which is exactly what
+   * happened until this was rewritten.
+   */
+  const IDENTIFIERS = [
+    /window\.Screens\.Filament/g, /function Filament/g, /AddFilamentDialog/g,
+    /KIT_FILAMENTS/g, /\bFILAMENTS\b/g, /const filaments/g, /\{filaments\.map/g,
+    /id: 'filament'/g, /'addfil'/g, /Filament\.jsx/g, /filament\.logic\.js/g,
+  ];
 
   const offenders = [];
   for (const name of files) {
     const text = await readFile(path.join(root, name), 'utf8');
     text.split('\n').forEach((line, index) => {
       if (!/\b(filaments?|AMS)\b/i.test(line)) return;
-      if (IDENTIFIER.test(line)) return;
+      let residue = line;
+      for (const identifier of IDENTIFIERS) residue = residue.replace(identifier, ' ');
+      if (!/\b(filaments?|AMS)\b/i.test(residue)) return;
       offenders.push(`${name}:${index + 1} ${line.trim().slice(0, 80)}`);
     });
   }
