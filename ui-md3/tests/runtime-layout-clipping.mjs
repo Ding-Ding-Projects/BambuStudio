@@ -352,12 +352,32 @@ async function measureEveryTab(session) {
         .slice(0, 6);
       const tabs = [...document.querySelectorAll('#tabstrip .tab')].filter(visible);
       const stripRows = [...new Set(tabs.map(tab => tab.offsetTop))].length;
+      // A tab whose label is hidden by icons-only mode still has to be named:
+      // its icon is aria-hidden, so without an aria-label it has no accessible
+      // name at exactly the widths where one is most needed.
+      const unnamedTabs = tabs
+        .filter(tab => !(tab.getAttribute('aria-label') || '').trim() &&
+          !tab.textContent.trim())
+        .map(tab => tab.dataset.tab);
+      // Every rendered string appears once: applyCopy renders the Cantonese
+      // companion itself, so a primary that already contains it is a duplicate.
+      const duplicated = [...panel.querySelectorAll('[data-copy]')]
+        .filter(element => {
+          const main = element.querySelector('.copy-main');
+          const companion = element.querySelector('.copy-secondary');
+          return main && companion && companion.textContent &&
+            main.textContent.includes(companion.textContent);
+        })
+        .map(element => element.getAttribute('data-copy'))
+        .slice(0, 5);
       results.push({
         id,
         empty: panel.textContent.trim().length < 40,
         offenders,
         undersized,
         stripRows,
+        unnamedTabs,
+        duplicated,
         documentOverflow: document.documentElement.scrollWidth > clientWidth,
       });
     }
@@ -403,6 +423,10 @@ test('every tab renders inside the viewport at each supported width, zoom and la
               failures.push(`${context}: tab ${result.id} undersized ${JSON.stringify(result.undersized)}`);
             if (result.stripRows > 1)
               failures.push(`${context}: tab strip wrapped onto ${result.stripRows} rows instead of overflowing`);
+            if (result.unnamedTabs.length)
+              failures.push(`${context}: tabs with no accessible name ${JSON.stringify(result.unnamedTabs)}`);
+            if (result.duplicated.length)
+              failures.push(`${context}: tab ${result.id} renders these strings twice ${JSON.stringify(result.duplicated)}`);
           }
         }
       }

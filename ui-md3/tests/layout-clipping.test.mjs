@@ -130,6 +130,22 @@ test('the tab strip is a real tablist with roving focus and reachable actions', 
   assert.match(tabsJs, /site\.set\('tabOrder'[\s\S]*?site\.set\('tabPinned'[\s\S]*?site\.set\('tabGroups'/);
 });
 
+test('bilingual mode renders each string once, and a tab keeps its name when the label goes', async () => {
+  const core = await readFile(path.join(uiDir, 'site', 'core.js'), 'utf8');
+  /*
+   * text() composes "English / 廣東話" for callers writing into a textContent.
+   * applyCopy renders the companion itself, so taking the composed form there
+   * printed the Cantonese twice on every label — and the doubled label widths
+   * pushed the tab strip into icons-only at 1280px.
+   */
+  assert.match(core, /var primary = mode === 'yue_HK' \? \(both\.yue \|\| both\.en\) : both\.en;/);
+  assert.doesNotMatch(core, /var primary = text\(key, params\);/);
+  // Icons-only hides the label and the icon is aria-hidden, so the name has to
+  // live on the button or the tab has no accessible name at all.
+  assert.match(tabsJs, /tab\.setAttribute\('data-copy-attr', 'aria-label:' \+ definition\.copy/);
+  assert.match(siteCss, /\.tabstrip-tabs\.icons-only \.tab-label \{ display: none; \}/);
+});
+
 test('landing chrome keeps accessible names and one shared language selector', () => {
   assert.match(landing, /id="languageMode"[^>]*aria-label="Language mode"/);
   assert.match(landing, /id="themeToggle"[\s\S]{0,220}data-copy-attr="aria-label:shell\.theme\.toggle/);

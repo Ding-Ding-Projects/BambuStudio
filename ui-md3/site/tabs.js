@@ -105,6 +105,14 @@
       tab.setAttribute('aria-controls', 'panel-' + definition.id);
       tab.setAttribute('draggable', 'true');
       tab.dataset.tab = definition.id;
+      /*
+       * The name lives on the button, not only in the label: when the strip
+       * collapses to icons-only the label is display:none and the icon is
+       * aria-hidden, which left every tab with an empty accessible name at
+       * exactly the widths where a screen-reader user needs it most.
+       */
+      tab.setAttribute('data-copy-attr', 'aria-label:' + definition.copy +
+        ';title:' + definition.copy);
       tab.innerHTML =
         '<span class="tab-icon" data-icon aria-hidden="true">' + definition.icon + '</span>' +
         '<span class="tab-label" data-copy="' + definition.copy + '"></span>';

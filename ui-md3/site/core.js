@@ -219,7 +219,15 @@
     scope.querySelectorAll('[data-copy]').forEach(function (element) {
       var key = element.getAttribute('data-copy');
       var params = parseParams(element.getAttribute('data-copy-params'));
-      var primary = text(key, params);
+      var both = pair(key, params);
+      /*
+       * `text()` composes "English / 廣東話" for callers that write into a
+       * textContent and have nowhere to put a companion element. This is not
+       * one of those callers: it renders the companion itself, so taking the
+       * composed form here printed the Cantonese twice on every label — and
+       * doubled label widths pushed the tab strip into icons-only at 1280px.
+       */
+      var primary = mode === 'yue_HK' ? (both.yue || both.en) : both.en;
       var companion = secondary(key, params);
       element.textContent = '';
       var main = global.document.createElement('span');
