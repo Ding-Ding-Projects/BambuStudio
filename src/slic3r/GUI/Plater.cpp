@@ -8479,6 +8479,12 @@ private:
     void        remove_project_history_failure_manifest(const stdfs::path &staging_path);
     // Rebuilds quarantined commits left in prior sessions' staging directories.
     std::size_t adopt_orphaned_project_history_failures();
+    // Claims this instance's staging directory for the process lifetime, and
+    // answers whether a sibling's owner is provably gone. Multiple instances are
+    // the default (single_instance is off) and a staging directory is named by a
+    // bare UUID with no pid, so an OS lock is the only honest liveness signal.
+    void claim_project_history_staging_dir();
+    bool project_history_instance_is_dead(const stdfs::path &instance_dir) const;
     // path to project folder stored with no extension
     boost::filesystem::path     m_project_folder;
 
@@ -8534,6 +8540,11 @@ private:
     stdfs::path                                 m_project_history_session_identity;
     std::string                                 m_project_history_session_token;
     stdfs::path                                 m_project_history_staging_dir;
+    // Held open, exclusively and unshared, for as long as this process owns its
+    // staging directory. Another instance failing to open the same file is what
+    // proves this one is still alive; the OS drops it on exit or on a crash, which
+    // is exactly the signal a pid file cannot give.
+    HANDLE                                      m_project_history_instance_lock { INVALID_HANDLE_VALUE };
     std::deque<PendingProjectHistoryCapture>    m_project_history_pending_captures;
     std::vector<PendingProjectHistoryCommit>    m_project_history_pending_commits;
     std::vector<PendingProjectHistoryCommit>    m_project_history_retained_failures;
@@ -8622,6 +8633,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         const std::string instance_id = boost::uuids::to_string(boost::uuids::random_generator()());
         m_project_history_identity_root = app_data_dir / "project_history" / "session-identities";
         m_project_history_staging_dir   = app_data_dir / "project_history" / "staging" / instance_id;
+        claim_project_history_staging_dir();
         if (!reset_project_history_session())
             throw std::runtime_error("could not initialize the untitled project-history session");
         q->Bind(wxEVT_TIMER, &priv::on_project_history_debounce, this, m_project_history_debounce_timer.GetId());
@@ -9743,6 +9755,62 @@ void Plater::priv::remove_project_history_failure_manifest(const stdfs::path &st
     stdfs::remove(manifest_path, ec);
 }
 
+// Name of the exclusive marker each instance holds inside its own staging
+// directory. Kept next to the snapshots rather than in a central registry so it
+// disappears with the directory it describes.
+static const char *kProjectHistoryInstanceLockName = "instance.lock";
+
+void Plater::priv::claim_project_history_staging_dir()
+{
+    if (m_project_history_staging_dir.empty())
+        return;
+
+    std::error_code ec;
+    stdfs::create_directories(m_project_history_staging_dir, ec);
+    if (ec) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not create the project-history staging directory: " << ec.message();
+        return;
+    }
+
+    const stdfs::path lock_path = m_project_history_staging_dir / kProjectHistoryInstanceLockName;
+    // dwShareMode 0: no other process may open this file at all while we hold it.
+    // FILE_FLAG_DELETE_ON_CLOSE would remove the marker on a clean exit but NOT on
+    // a crash, and a crashed instance is precisely the case that must look dead -
+    // so the file is left behind deliberately and liveness is read from whether it
+    // can be opened, never from whether it exists.
+    m_project_history_instance_lock = ::CreateFileW(lock_path.wstring().c_str(), GENERIC_WRITE, 0, nullptr,
+                                                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (m_project_history_instance_lock == INVALID_HANDLE_VALUE) {
+        // Not fatal: without the marker this instance is simply treated as
+        // possibly-alive by others, which is the safe direction to fail in.
+        BOOST_LOG_TRIVIAL(warning) << "Could not claim the project-history staging directory (error "
+                                   << ::GetLastError() << "); orphan reaping will skip it";
+    }
+}
+
+bool Plater::priv::project_history_instance_is_dead(const stdfs::path &instance_dir) const
+{
+    const stdfs::path lock_path = instance_dir / kProjectHistoryInstanceLockName;
+
+    std::error_code ec;
+    if (!stdfs::exists(lock_path, ec) || ec) {
+        // Written by a build that predates the marker, or by an instance that
+        // could not create one. Its age cannot be trusted either way, so leave it
+        // alone: adopting is safe, deleting is not.
+        return false;
+    }
+
+    // Opening unshared succeeds only when nobody else holds it. A sharing
+    // violation is the live-owner signal; anything else (permissions, a vanished
+    // file) is inconclusive and must also read as "not provably dead".
+    HANDLE probe = ::CreateFileW(lock_path.wstring().c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+                                 FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (probe == INVALID_HANDLE_VALUE)
+        return false;
+    ::CloseHandle(probe);
+    return true;
+}
+
 std::size_t Plater::priv::adopt_orphaned_project_history_failures()
 {
     if (!m_project_history_manager || m_project_history_staging_dir.empty())
@@ -9767,7 +9835,14 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
             continue;
         if (instance_dir.lexically_normal() == current_instance)
             continue;
+        // Another instance may be running right now and may be actively writing
+        // into this directory. Touching it - adopting its manifests, let alone
+        // deleting it - would steal the only copy of a commit it is still
+        // retrying. Only a directory whose owner is provably gone is ours.
+        if (!project_history_instance_is_dead(instance_dir))
+            continue;
 
+        bool saw_any_snapshot = false;
         std::error_code scan_ec;
         for (stdfs::directory_iterator file_it(instance_dir, scan_ec), file_end; !scan_ec && file_it != file_end;
              file_it.increment(scan_ec)) {
@@ -9777,6 +9852,11 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
                 continue;
 
             const std::string name = file_path.filename().u8string();
+            // Count snapshots AND partially written ones: a ".3mf.tmp" left by a
+            // crash is still user data, and reaping the directory around it would
+            // discard it silently.
+            if (boost::iends_with(name, ".3mf") || boost::iends_with(name, ".3mf.tmp"))
+                saw_any_snapshot = true;
             if (!boost::iends_with(name, manifest_suffix))
                 continue;
 
@@ -9819,18 +9899,23 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
             }
         }
 
-        // A sweep used to delete the sibling directory whenever the scan above
-        // saw no "*.3mf" in it. That is not proof the owning session is dead,
-        // and it had two ways to destroy a live instance's only copy of a failed
-        // commit: the scan loop never runs when the inner directory_iterator
-        // fails to construct, so a directory that could not even be read was
-        // removed with whatever it still held; and make_project_history_staging_path()
-        // creates another instance's directory before it writes its first
-        // snapshot into it, so a concurrent instance was reaped in that window.
-        // Nothing cheaper distinguishes the cases - multiple instances are the
-        // default (single_instance is off) and the directory name is a bare UUID
-        // with no pid - so a leftover directory is left in place until an
-        // instance lock can prove its owner dead.
+        // Safe to reap now, and only now. Three conditions all hold: the owner's
+        // instance lock could be taken, so it is gone; the scan completed, so this
+        // is a real "nothing left" and not an unreadable directory reported as
+        // empty; and no snapshot or partial snapshot remains. Without the lock
+        // check this same sweep used to delete a *running* instance's only copy of
+        // a failed commit, because make_project_history_staging_path() creates the
+        // directory before writing the first snapshot into it.
+        if (!scan_ec && !saw_any_snapshot) {
+            std::error_code rm_ec;
+            const std::uintmax_t removed = stdfs::remove_all(instance_dir, rm_ec);
+            if (rm_ec)
+                BOOST_LOG_TRIVIAL(warning) << "Could not remove an abandoned project-history staging directory: "
+                                           << rm_ec.message();
+            else if (removed > 0)
+                BOOST_LOG_TRIVIAL(info) << "Removed an abandoned project-history staging directory ("
+                                        << removed << " entries)";
+        }
     }
 
     return adopted;
