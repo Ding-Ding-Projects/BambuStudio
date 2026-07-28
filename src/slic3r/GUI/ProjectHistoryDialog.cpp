@@ -20,6 +20,7 @@
 
 #include <wx/dataview.h>
 #include <wx/datetime.h>
+#include <wx/dcclient.h>
 #include <wx/display.h>
 #include <wx/filename.h>
 #include <wx/sizer.h>
@@ -64,6 +65,30 @@ StateColor outlined_button_background()
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Pressed),
         std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Surface), StateColor::Normal));
+}
+
+// A native tooltip never wraps, so handing it a 200-character libgit2 message
+// would re-clip the very text the tooltip exists to reveal. Break it onto lines
+// of a fixed reading measure first. The label's own width is not usable here
+// because callers set tooltips during create_ui(), before any layout has run.
+// Text that still fits one line at that measure is already fully readable in
+// the wrapped label, so it gets no tooltip rather than one echoing what is
+// visibly on screen. The measure is taken with the font the label carries at
+// this moment, so callers must settle the face before asking for a tooltip.
+void set_wrapped_tooltip(Label *label, const wxString &text)
+{
+    if (label == nullptr)
+        return;
+    wxClientDC dc(label);
+    dc.SetFont(label->GetFont());
+    wxString wrapped;
+    Label::split_lines(dc, label->FromDIP(480), text, wrapped);
+    // split_lines only ever inserts '\n' at a break it made, so its absence
+    // means the whole string fit a single line.
+    if (wrapped.Find('\n') == wxNOT_FOUND)
+        label->UnsetToolTip();
+    else
+        label->SetToolTip(wrapped);
 }
 
 } // namespace
@@ -127,8 +152,16 @@ void ProjectHistoryDialog::create_ui()
     const wxString saved_project = m_plater != nullptr ? m_plater->get_project_filename(".3mf") : wxString{};
     const wxString project_name  = saved_project.empty() ? _L("Untitled project") : wxFileName(saved_project).GetFullName();
     // TRN: %s is a project filename, or the localized text "Untitled project".
-    m_project_label = new Label(m_info_card, Label::Head_14,
-        wxString::Format(_L("Project: %s"), project_name));
+    const wxString project_line = wxString::Format(_L("Project: %s"), project_name);
+    // A project filename is unbounded user input, so this label wraps rather than
+    // letting the native STATIC control cut the name off; the tooltip keeps the
+    // whole name reachable when even the wrapped form is squeezed.
+    m_project_label = new Label(m_info_card, Label::Head_14, project_line,
+                                LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    // wxEXPAND hands the label the sizer's full width, so its unwrapped text
+    // extent must not be allowed to push the card's CalcMin out with it.
+    m_project_label->SetMinSize(wxSize(0, -1));
+    set_wrapped_tooltip(m_project_label, project_line);
     info_sizer->Add(m_project_label, 0, wxEXPAND | wxALL, FromDIP(14));
     m_info_card->SetSizer(info_sizer);
     root->Add(m_info_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
@@ -180,7 +213,13 @@ void ProjectHistoryDialog::create_ui()
     wxGetApp().UpdateDVCDarkUI(m_version_list); // native header follows the theme
     list_sizer->Add(m_version_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
-    m_status_label = new Label(m_list_card, Label::Body_13);
+    // This line is where every failure lands, and a libgit2 error carries its
+    // message plus an absolute repository path, far more than one line holds at
+    // the dialog's minimum width. Wrap it instead of clipping the actual cause
+    // away; set_status() mirrors the untruncated text into the tooltip.
+    m_status_label = new Label(m_list_card, Label::Body_13, wxEmptyString,
+                               LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_status_label->SetMinSize(wxSize(0, -1)); // as above: the sizer owns the width, the text does not
     list_sizer->Add(m_status_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(14));
 
     m_load_all_button = new Button(m_list_card, _L("Load all versions"));
@@ -532,18 +571,18 @@ void ProjectHistoryDialog::update_history_status()
     m_status_label->SetFont(Label::Body_13);
     if (m_search_field != nullptr && !m_search_field->GetValue().IsEmpty()) {
         // TRN: %1$d is how many project versions match the search; %2$d is the total.
-        m_status_label->SetLabel(wxString::Format(_L("%d of %d versions match the search"),
+        set_status(wxString::Format(_L("%d of %d versions match the search"),
             static_cast<int>(m_filtered_rows.size()), static_cast<int>(m_versions.size())));
         return;
     }
     if (m_list_truncated) {
         // TRN: %d is the number of newest local project versions currently displayed.
-        m_status_label->SetLabel(wxString::Format(
+        set_status(wxString::Format(
             _L("Showing the newest %d versions. Load all versions to browse older history."),
             static_cast<int>(HISTORY_INITIAL_LIMIT)));
     } else {
         // TRN: %d is the number of immutable project versions in local history.
-        m_status_label->SetLabel(
+        set_status(
             wxString::Format(_L("%d versions saved on this device"), static_cast<int>(m_versions.size())));
     }
 }
@@ -606,7 +645,7 @@ void ProjectHistoryDialog::set_busy(PendingOperation operation, const wxString &
     m_pending = operation;
     m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_status_label->SetFont(Label::Body_13);
-    m_status_label->SetLabel(message);
+    set_status(message);
     m_refresh_button->Enable(false);
     m_load_all_button->Enable(false);
     m_restore_button->Enable(false);
@@ -616,10 +655,33 @@ void ProjectHistoryDialog::set_busy(PendingOperation operation, const wxString &
     Layout();
 }
 
+void ProjectHistoryDialog::set_status(const wxString &message)
+{
+    // The label wraps (LB_AUTO_WRAP) so nothing is cut off horizontally; a
+    // message that needs a second line also carries the tooltip, which covers
+    // the remaining case where a short card cannot show every wrapped line.
+    // wxST_NO_AUTORESIZE matters more than it looks here: without it,
+    // wxStaticText::SetFont() runs AutoResizeIfNecessary() -> SetSize(GetBestSize())
+    // and widens the control past its sizer slot. Callers such as update_selection()
+    // change the face to Mono_13 immediately before this, and Label::SetLabel()
+    // wraps against GetSize().x - so the wrap would be measured against that
+    // widened width and the text would paint outside its slot.
+    m_status_label->SetLabel(message);
+    set_wrapped_tooltip(m_status_label, message);
+    // LB_AUTO_WRAP does not imply wxST_NO_AUTORESIZE, so SetLabel() grows the
+    // control to its wrapped height in place, outside the sizer that owns its
+    // slot. Relayout here rather than in each caller: update_history_status()
+    // and update_selection() have no layout pass of their own, and at the
+    // dialog's 560 DIP minimum both of their strings wrap onto a second line
+    // that would otherwise be drawn over the Load all versions button.
+    Layout();
+}
+
 void ProjectHistoryDialog::show_empty_state()
 {
     m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    m_status_label->SetLabel(_L("No versions yet. A version is created automatically after completed edits and project saves."));
+    m_status_label->SetFont(Label::Body_13);
+    set_status(_L("No versions yet. A version is created automatically after completed edits and project saves."));
     m_refresh_button->Enable(true);
     m_list_truncated = false;
     m_load_all_button->Hide();
@@ -632,7 +694,12 @@ void ProjectHistoryDialog::show_empty_state()
 void ProjectHistoryDialog::show_error(const wxString &message)
 {
     m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
-    m_status_label->SetLabel(message);
+    // The status line is shared with update_selection()'s mono commit id, and
+    // begin_restore() can reach here without an intervening set_busy(). Reset
+    // the face so prose never renders (or gets measured for its tooltip) in
+    // the technical-value font.
+    m_status_label->SetFont(Label::Body_13);
+    set_status(message);
     m_refresh_button->Enable(m_pending == PendingOperation::None);
     const bool can_load_all = !m_versions.empty() && m_list_truncated;
     m_load_all_button->Show(can_load_all);
@@ -653,7 +720,7 @@ void ProjectHistoryDialog::update_selection()
         // ids are technical values, so render them in the MD3 mono face.
         m_status_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_status_label->SetFont(Label::Mono_13);
-        m_status_label->SetLabel(_L("Selected commit: ") + wxString::FromUTF8(m_versions[m_filtered_rows[selected_row]].commit_id));
+        set_status(_L("Selected commit: ") + wxString::FromUTF8(m_versions[m_filtered_rows[selected_row]].commit_id));
     } else if (!m_versions.empty())
         update_history_status();
 }

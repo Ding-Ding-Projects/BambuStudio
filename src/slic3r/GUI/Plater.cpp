@@ -8184,7 +8184,10 @@ public:
     bool set_project_history_session_token(const std::string &token);
     bool persist_project_history_session_marker();
     bool restore_project_history_session_marker(const stdfs::path &backup_dir);
-    bool preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile);
+    // session_token reports the untitled identity the work was committed under,
+    // empty when the backup carried a saved project's own identity.
+    bool preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile,
+                                            std::string &session_token);
     void shutdown_project_history();
     Slic3r::ProjectHistoryManager *project_history_manager() { return m_project_history_manager.get(); }
     stdfs::path project_history_identity() const;
@@ -9156,13 +9159,15 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
             // exists in version history. With no restore data there is nothing to lose,
             // so the cleanup stays enabled; the moment we do have work to lose, this is
             // driven by whether preserving it actually succeeded.
-            bool backup_preserved = true;
+            bool        backup_preserved = true;
+            std::string preserved_session_token;
             if (has_restore) {
                 BOOST_LOG_TRIVIAL(info) << "test101: Restoring project from: " << PathSanitizer::sanitize(last_backup);
                 // Commit the unsaved work to the local history repository
                 // BEFORE the prompt: declining below deletes the backup dir,
                 // and that must never be the moment the only copy disappears.
-                backup_preserved = preserve_unsaved_backup_in_history(stdfs::u8path(last), originfile);
+                backup_preserved = preserve_unsaved_backup_in_history(stdfs::u8path(last), originfile,
+                                                                      preserved_session_token);
                 if (!backup_preserved) {
                     // Every failure inside preserve_unsaved_backup_in_history() reports
                     // itself to the log and nowhere else, and its success snackbar - the
@@ -9211,10 +9216,30 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
                     boost::filesystem::remove_all(last);
             }
             catch (...) {}
-            if (this->q->get_project_filename().IsEmpty() && this->q->is_empty_project()) {
+            // Only a session that is still blank may be rebound to the crashed
+            // identity below. Capture the test now: new_project() makes it
+            // trivially true afterwards, and it is the same condition that
+            // decides whether new_project() rotates the token at all.
+            const bool started_fresh_session = this->q->get_project_filename().IsEmpty() && this->q->is_empty_project();
+            if (started_fresh_session) {
                 int skip_confirm = e.GetInt();
                 this->q->new_project(skip_confirm, true);
             }
+            // Declining preserved the work under the crashed session's untitled
+            // identity, and the snackbar promised it "stays restorable from
+            // Version history even if you decline". Version history only ever
+            // queries the live session's identity, so a session that started
+            // blank has to adopt that token exactly as the Restore branch does.
+            // A session that already carries content - an STL handed to the app
+            // on the command line is loaded before this queued event runs - keeps
+            // its own token instead: rebinding it would hide the revisions it has
+            // already committed and, on the eventual Save As, migrate the
+            // discarded crash work into the saved project for good. It has to
+            // happen here and not before the deletion above: new_project()
+            // rotates the session token, which would discard an earlier bind.
+            if (started_fresh_session && backup_preserved && originfile != "<lock>" &&
+                !preserved_session_token.empty() && set_project_history_session_token(preserved_session_token))
+                persist_project_history_session_marker();
         });
         //wxPostEvent(this->q, wxCommandEvent{EVT_RESTORE_PROJECT});
     }
@@ -9406,12 +9431,14 @@ bool Plater::priv::restore_project_history_session_marker(const stdfs::path &bac
     return false;
 }
 
-bool Plater::priv::preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile)
+bool Plater::priv::preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile,
+                                                      std::string &session_token)
 {
     // A crash backup is the only copy of work the user never saved, and the
     // recovery prompt's Cancel branch deletes it outright. Commit it to the
     // local history repository FIRST, so declining the restore (or losing the
     // prompt to another crash) can never destroy the only copy.
+    session_token.clear();
     if (!m_project_history_manager || m_project_history_shutting_down)
         return false;
     if (m_project_history_staging_dir.empty() || m_project_history_identity_root.empty())
@@ -9430,7 +9457,11 @@ bool Plater::priv::preserve_unsaved_backup_in_history(const stdfs::path &backup_
         stdfs::path identity;
         if (!originfile.empty() && originfile != "<lock>") {
             const stdfs::path origin_path = stdfs::u8path(originfile).lexically_normal();
-            if (origin_path.extension() == ".3mf")
+            // Windows keeps the case the user typed, so "Bracket.3MF" is the very
+            // project the Version history dialog opens as "Bracket.3MF". A
+            // case-sensitive test would file its recovered work under a synthetic
+            // identity that project can never reach.
+            if (boost::iequals(origin_path.extension().u8string(), ".3mf"))
                 identity = origin_path;
         }
         if (identity.empty()) {
@@ -9453,6 +9484,10 @@ bool Plater::priv::preserve_unsaved_backup_in_history(const stdfs::path &backup_
             identity = (m_project_history_identity_root / ("untitled-" + token + ".3mf")).lexically_normal();
             if (identity.parent_path() != m_project_history_identity_root)
                 return false;
+            // Only the live session's own identity is ever queried, and the
+            // marker this token came from lives inside the backup directory the
+            // caller may be about to delete. Hand it back while it still exists.
+            session_token = token;
         }
 
         // The engine validates the snapshot's extension too, and the backup
@@ -9733,7 +9768,6 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
         if (instance_dir.lexically_normal() == current_instance)
             continue;
 
-        bool            saw_any_snapshot = false;
         std::error_code scan_ec;
         for (stdfs::directory_iterator file_it(instance_dir, scan_ec), file_end; !scan_ec && file_it != file_end;
              file_it.increment(scan_ec)) {
@@ -9743,8 +9777,6 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
                 continue;
 
             const std::string name = file_path.filename().u8string();
-            if (boost::iends_with(name, std::string(".3mf")))
-                saw_any_snapshot = true;
             if (!boost::iends_with(name, manifest_suffix))
                 continue;
 
@@ -9787,11 +9819,18 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
             }
         }
 
-        // A prior instance directory that no longer holds any snapshot is stale.
-        if (!saw_any_snapshot) {
-            std::error_code rm_ec;
-            stdfs::remove_all(instance_dir, rm_ec);
-        }
+        // A sweep used to delete the sibling directory whenever the scan above
+        // saw no "*.3mf" in it. That is not proof the owning session is dead,
+        // and it had two ways to destroy a live instance's only copy of a failed
+        // commit: the scan loop never runs when the inner directory_iterator
+        // fails to construct, so a directory that could not even be read was
+        // removed with whatever it still held; and make_project_history_staging_path()
+        // creates another instance's directory before it writes its first
+        // snapshot into it, so a concurrent instance was reaped in that window.
+        // Nothing cheaper distinguishes the cases - multiple instances are the
+        // default (single_instance is off) and the directory name is a bare UUID
+        // with no pid - so a leftover directory is left in place until an
+        // instance lock can prove its owner dead.
     }
 
     return adopted;

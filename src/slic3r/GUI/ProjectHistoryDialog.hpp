@@ -61,6 +61,11 @@ private:
     void update_responsive_layout();
     void update_window_constraints(bool initialize_size);
     void set_busy(PendingOperation operation, const wxString &message);
+    // Single sink for the status line: every message goes through here so the
+    // wrapped label, the tooltip carrying its untruncated text and the layout
+    // pass the new wrapped height needs stay in step. Callers settle the
+    // foreground colour and the font first; this only sets the text.
+    void set_status(const wxString &message);
     void show_empty_state();
     void show_error(const wxString &message);
     void update_selection();

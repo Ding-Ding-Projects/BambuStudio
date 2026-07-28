@@ -13,6 +13,8 @@
 #include "libslic3r/Config.hpp"
 #include "format.hpp"
 
+#include <algorithm>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/bind/bind.hpp>
@@ -79,10 +81,16 @@ namespace {
 		return to_imvec4(MD3::resolve(role, dark), alpha);
 	}
 	// Warning has no MD3 surface role; it lives in the ThemeColor bridge with a
-	// dark tone in the StateColor map.
+	// dark tone in the StateColor map. That tone is spelled out here instead of
+	// fetched through StateColor::darkModeColorFor(), which only maps while the
+	// GLOBAL dark flag is set: the snackbar asks for the warning tone of the theme
+	// opposite the app's (its card is InverseSurface), so the flag passed here is
+	// deliberately out of step with the global one. Keep in sync with
+	// gDarkColors[ThemeColor::Warning] in StateColor.cpp.
 	inline ImVec4 md3_notif_warning(bool dark, float alpha = 1.0f)
 	{
-		return to_imvec4(dark ? StateColor::darkModeColorFor(ThemeColor::Warning) : ThemeColor::Warning, alpha);
+		static const wxColour warning_dark{"#ffb77c"};
+		return to_imvec4(dark ? warning_dark : ThemeColor::Warning, alpha);
 	}
 
 	// MD3 elevation-4 drop shadow (kit Snackbar: box-shadow 0 8px 24px) for the
@@ -163,9 +171,11 @@ NotificationManager::PopNotification::PopNotification(const NotificationData &n,
         m_second_hypertext = n.second_hypertext;
     }
     // MD3 status/accent roles. use_bbl_theme() re-resolves these against the
-    // live dark-mode flag; these light defaults cover the pre-render window.
-    m_ErrorColor  = md3_notif_color(MD3::Role::Error, false);
-    m_WarnColor   = md3_notif_warning(false);
+    // live dark-mode flag; these light-app defaults cover the pre-render window.
+    // Error/Warning take the flag INVERTED because they are painted on the
+    // InverseSurface card, i.e. the other theme's surface (see use_bbl_theme()).
+    m_ErrorColor  = md3_notif_color(MD3::Role::Error, true);
+    m_WarnColor   = md3_notif_warning(true);
     // Normal-level status accent uses the inverse-surface companion tone so the
     // left sign / action read against the dark MD3 snackbar surface.
     m_NormalColor = md3_notif_color(MD3::Role::InversePrimary, false);
@@ -225,10 +235,21 @@ void NotificationManager::PopNotification::use_bbl_theme()
     OldStyle.WindowPadding             = ImVec2(0, 0);
     OldStyle.WindowRounding            = m_WindowRadius;
 
-	// Resolve the status/accent tones for the active theme (MD3 Error / Warning /
-	// Primary) before choosing the left-sign accent for this notification level.
-	m_ErrorColor  = md3_notif_color(MD3::Role::Error, m_is_dark);
-	m_WarnColor   = md3_notif_warning(m_is_dark);
+	// Resolve the status/accent tones before choosing the left-sign accent for this
+	// notification level. Error and Warning resolve against the INVERTED dark flag:
+	// the only surface that paints them is this card, which is InverseSurface —
+	// the opposite theme's surface — so the app-side status tones land the wrong
+	// way round. Dark::error #ffb4ab on Dark::inverseSurface #e3e2e9 is ~1.3:1,
+	// which left the warn left sign and the highlighted <Error> substrings in
+	// render_text() effectively invisible. InversePrimary needs no flip; the
+	// inverse roles are defined against this card by construction, which is also
+	// why m_TextColor / m_HyperTextColor below stay on m_is_dark.
+	// Error- and SeriousWarning-level notifications never reach this card at all:
+	// render_notifications() routes them to bbl_render_block_notification(), which
+	// paints a full-bleed ThemeColor::Danger / ThemeColor::Warning banner in both
+	// themes and picks its own tones against that fill.
+	m_ErrorColor  = md3_notif_color(MD3::Role::Error, !m_is_dark);
+	m_WarnColor   = md3_notif_warning(!m_is_dark);
 	m_NormalColor = md3_notif_color(MD3::Role::InversePrimary, m_is_dark);
 
 	if (m_data.level == NotificationLevel::ErrorNotificationLevel)
@@ -716,14 +737,15 @@ void NotificationManager::PopNotification::bbl_render_block_notif_text(ImGuiWrap
 			if (m_text1.size() > m_endlines[i])
 				last_end += (m_text1[m_endlines[i]] == '\n' || m_text1[m_endlines[i]] == ' ' ? 1 : 0);
 
-			if (pos_start != string::npos && pos_end != string::npos && m_endlines[i] - line.length() >= pos_start && m_endlines[i] <= pos_end) {
-				push_style_color(ImGuiCol_Text, m_ErrorColor, m_state == EState::FadingOut, m_current_fade_opacity);
-				imgui.text(line.c_str());
-				ImGui::PopStyleColor();
-			}
-			else {
-				imgui.text(line.c_str());
-			}
+			// No <Error> highlight on this path. The block banner is a full-bleed
+			// ThemeColor::Danger / ThemeColor::Warning fill with white body text, so
+			// MD3's onError white already IS the content colour here, and m_ErrorColor
+			// (the inverse-surface CARD tone, see use_bbl_theme()) must not be painted
+			// on it. Unreachable in practice as well: the tree's only <Error>-marked
+			// text comes from GUI_ObjectList's sidebar info, which arrives as a
+			// PrintInfoNotificationLevel card notification, so pos_start / pos_end stay
+			// npos for the two levels that render here.
+			imgui.text(line.c_str());
 		}
 	}
 	//hyperlink text
@@ -856,13 +878,24 @@ void NotificationManager::PopNotification::render_hypertext(
     ImVec4 HyperColor = m_HyperTextColor;//ImVec4(150.f / 255.f, 100.f / 255.f, 0.f / 255.f, 1)
     if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
 		HyperColor = ImVec4(0.f, 0.f, 0.f, 0.4f);
+	// Error level renders through bbl_render_block_notification(), whose background
+	// is a fixed ThemeColor::Danger fill in BOTH themes — not the inverse-surface
+	// card. Any theme-resolved error tone collapses onto that fill in one theme or
+	// the other (Light::error IS #ba1a1a, and m_ErrorColor deliberately holds the
+	// opposite theme's tone for the card), so the link takes the banner's MD3
+	// companion role: the same white the banner already pushes for its body text.
 	if (m_data.level == NotificationLevel::ErrorNotificationLevel)
-		HyperColor = md3_notif_color(MD3::Role::Error, m_is_dark);
+		HyperColor = md3_notif_color(MD3::Role::OnError, false);
 	if (ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
 	{
-		HyperColor.y += 0.1f;
-		if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel || m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
-			HyperColor.x += 0.2f;
+		// Saturating, and it has to be: the underline below converts these channels by
+		// hand with IM_COL32, which shifts each into its own byte with no clamp. A
+		// channel pushed past 1.0 therefore carries into the NEXT channel - an error
+		// link, whose text is white, brightened to y=1.1 packs as G=24 with the carry
+		// landing in B, and the underline repaints magenta.
+		HyperColor.y = std::min(HyperColor.y + 0.1f, 1.f);
+		if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
+			HyperColor.x = std::min(HyperColor.x + 0.2f, 1.f);
 	}
 
 
