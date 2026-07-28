@@ -224,10 +224,13 @@ jobs:
               }
           }
           $releaseNumber = $maxN + 1
-          # Combinatorial codename kitchen: bare dishes first (v1..v40), then
-          # style x dish combos ("Golden Har Gow 黃金蝦餃") - deterministic and
-          # unique for 40 + 40x40 = 1,640 releases; beyond that a serving
-          # counter ("2nd serving 第二籠") keeps names unique forever.
+          # Combinatorial codename kitchen: bare dishes first, one per release, then
+          # style x dish combos ("Golden Har Gow 黃金蝦餃"), then a serving counter
+          # ("2nd serving 第二籠") so names never repeat however long this runs.
+          # Sizes are read from the arrays, not hardcoded - an earlier version of this
+          # comment claimed "40 + 40x40 = 1,640" and was stale the moment the roster
+          # grew. scripts/ci/Test-ReleaseCodenames.ps1 asserts the real counts and
+          # proves uniqueness, so trust that over any number written here.
           $dishes = @(
               'Char Siu Bao 叉燒包', 'Har Gow 蝦餃', 'Siu Mai 燒賣', 'Milk Tea 港式奶茶',
               'Pineapple Bun 菠蘿包', 'Egg Tart 蛋撻', 'Cheung Fun 腸粉', 'Lo Mai Gai 糯米雞',
@@ -257,7 +260,64 @@ jobs:
               'Temple Street Squid 廟街魷魚', 'Stinky Tofu 臭豆腐', 'Three Treasures 煎釀三寶',
               'Bowl Pudding 砵仔糕', 'Dragon Beard Candy 龍鬚糖', 'Maltose Cracker 麥芽糖夾餅',
               'Cart Noodles 車仔麵', 'Fish Siu Mai 魚肉燒賣', 'Offal Skewer 生腸串',
-              'Roast Goose 燒鵝', 'Roast Duck 燒鴨', 'Soy Chicken 豉油雞', 'Century Egg Congee 皮蛋瘦肉粥'
+              'Roast Goose 燒鵝', 'Roast Duck 燒鴨', 'Soy Chicken 豉油雞', 'Century Egg Congee 皮蛋瘦肉粥',
+              # --- Appended, never inserted. Codenames are assigned by index, so an
+              # --- insertion would silently rename every release after it; only the
+              # --- tail may grow. Keep new dishes below this line.
+              # More of the trolley: dim sum a v1..v97 release never got to.
+              'Fun Gor 粉果', 'Soup Dumpling 灌湯餃', 'Ham Sui Gok 鹹水角', 'Beancurd Skin Roll 腐皮卷',
+              'Chicken Taro Wrap 雞紮', 'Pork Liver Siu Mai 豬潤燒賣', 'Plain Rice Roll 齋腸',
+              'Ja Leung 炸兩', 'Char Siu Cheung Fun 叉燒腸', 'Crab Roe Siu Mai 蟹籽燒賣',
+              'Lotus Paste Bun 蓮蓉包', 'Red Bean Bun 豆沙包', 'Longevity Peach Bun 壽桃包',
+              'Big Chicken Bun 雞球大包', 'Steamed Dace Ball 豉汁鯪魚球', 'Chive Dumpling 韭菜餃',
+              'Salted Pork Zongzi 鹹肉糉', 'Turnip Pastry 蘿蔔絲酥餅', 'Wife Cake 老婆餅',
+              'Husband Cake 老公餅', 'Chicken Biscuit 雞仔餅', 'Walnut Cookie 合桃酥',
+              'Egg Twist 蛋散', 'Smiling Sesame Ball 笑口棗', 'Sa Yung 沙翁', 'Egg Roll 蛋卷',
+              'Almond Cookie 杏仁餅',
+              # Cha chaan teng, where the tea is strong and the menu is laminated.
+              'Fujian Fried Rice 福建炒飯', 'Minced Beef Rice 免治牛肉飯',
+              'Soul-Stirring Rice 黯然銷魂飯', 'Shrimp and Egg Rice 滑蛋蝦仁飯',
+              'Beef with Raw Egg Rice 窩蛋牛肉飯', 'Pork Chop Bun 豬扒包', 'Egg Sandwich 蛋治',
+              'Egg and Beef Sandwich 蛋牛治', 'Ham and Egg Sandwich 火腿蛋治',
+              'Club Sandwich 公司三文治', 'Butter and Jam Toast 油占多',
+              'Peanut Butter Toast 花生醬多士', 'Lemon Coke 檸樂', 'Salty Lemon Seven 鹹檸七',
+              'Pineapple Ice 菠蘿冰', 'Fruit Punch 雜果賓治', 'Tomato Beef Macaroni 茄牛通',
+              'Tossed Instant Noodles 撈丁', 'Regular Set 常餐',
+              # Siu mei, hanging in the window since dawn.
+              'Roast Suckling Pig 乳豬', 'White Cut Chicken 白切雞', 'Honey Char Siu 蜜汁叉燒',
+              'Two-Item Roast Plate 燒味雙拼', 'Three-Treasure Rice 三寶飯',
+              'Braised Goose Slices 鹵水鵝片', 'Braised Tofu 鹵水豆腐', 'Braised Cuttlefish 鹵水墨魚',
+              'Preserved Meat Rice 臘味飯', 'Chinese Sausage 臘腸',
+              # Noodles and congee, the small-hours canon.
+              'Fish Ball Noodles 魚蛋粉', 'Beef Offal 牛雜', 'Fresh Shrimp Wonton 鮮蝦雲吞',
+              'Shrimp Roe Noodles 蝦子撈麵', 'Bamboo Pole Noodles 竹昇麵',
+              'Congee with Offal 及第粥', 'Dried Fish Peanut Congee 柴魚花生粥',
+              'Plain Congee 白粥', 'Fried Dough Stick 油炸鬼', 'Pork Blood 豬紅',
+              'Braised Radish 蘿蔔', 'Pig Skin 豬皮', 'Guilin Rice Noodles 桂林米粉',
+              # Street food, eaten standing up.
+              'Grid Waffle 格仔餅', 'Bowl of Faux Shark Fin 碗仔翅',
+              'Lettuce Fish Soup 生菜魚肉', 'Fried Intestine 炸大腸', 'Ding Ding Candy 叮叮糖',
+              'Sugar Scallion Pancake 糖蔥餅', 'Flying Olives 飛機欖', 'Preserved Plum 話梅',
+              'Tangerine Peel Plum 陳皮梅',
+              # Tong sui and the dessert shop at closing time.
+              'Mango Pancake 芒果班戟', 'Sweet Potato Soup 番薯糖水', 'Mung Bean Soup 綠豆沙',
+              'Red Bean Soup 紅豆沙', 'Black Sesame Soup 芝麻糊', 'Cha Chat 喳咋',
+              'Beancurd Gingko Soup 腐竹白果糖水', 'Ginger Steamed Milk 薑汁燉奶',
+              'Turtle Jelly 龜苓膏', 'Mango Sticky Rice 芒果糯米飯',
+              'Ice Cream Sandwich 雪糕三文治', 'Mobile Softee 富豪雪糕', 'Peanut Candy 花生糖',
+              'Sachima 薩其馬', 'Paper-Wrapped Cake 紙包蛋糕', 'Napoleon Cake 拿破崙',
+              'Palmier 蝴蝶酥', 'Cocktail Bun 雞尾包', 'Sausage Bun 腸仔包',
+              'Mexican Bun 墨西哥包', 'Raisin Bun 提子包', 'Butter Pig Bun 奶油豬',
+              # Dai pai dong, wok roaring, plastic stool wobbling.
+              'Typhoon Shelter Crab 避風塘炒蟹', 'Salt and Pepper Squid 椒鹽鮮魷',
+              'Clams in Black Bean 豉椒炒蜆', 'Scallop with Vermicelli 蒜蓉粉絲蒸扇貝',
+              'Blanched Prawns 白灼蝦', 'Steamed Garoupa 清蒸石斑',
+              'Ginger Scallion Crab 薑蔥炒蟹', 'Sweet and Sour Pork 咕嚕肉',
+              'Peking Spare Ribs 京都骨', 'Satay Skewer 沙嗲串燒',
+              # Festive, and worth queuing for.
+              'Poon Choi 盆菜', 'Mooncake 月餅', 'New Year Cake 年糕', 'Taro Cake 芋頭糕',
+              'Yau Gok 油角', 'Sugar Ring 糖環', 'Winter Melon Soup 冬瓜盅',
+              'Snake Soup 蛇羹', 'Birds Nest 燕窩', 'Abalone 鮑魚'
           )
           $styles = @(
               'Golden 黃金', 'Crispy 香脆', 'Jade 翡翠', 'Supreme 至尊', 'XO XO醬',
@@ -267,7 +327,17 @@ jobs:
               'Velvet 絲絨', 'Thunder 雷霆', 'Lucky 好彩', 'Jumbo 巨無霸', 'Mini 迷你',
               'Twin 孖寶', 'Emerald 碧綠', 'Ruby 紅寶', 'Smoky 煙韌', 'Springy 彈牙',
               'Sizzling 滋滋', 'Frosty 冰鎮', 'Garden 田園', 'Harbour 維港', 'Peak 山頂',
-              'Ferry 天星', 'Tram 叮叮', 'Bamboo 竹昇', 'Wok-Hei 鑊氣', 'Dai-Pai-Dong 大牌檔'
+              'Ferry 天星', 'Tram 叮叮', 'Bamboo 竹昇', 'Wok-Hei 鑊氣', 'Dai-Pai-Dong 大牌檔',
+              # Styles may be appended freely: they only affect codenames past the
+              # bare-dish range, and that range is still far ahead of the current tag.
+              'Signature 招牌', 'Secret-Recipe 秘製', 'Old-Method 古法', 'Hand-Pulled 手打',
+              'Fresh-Made 現做', 'Generous 足料', 'Molten 爆漿', 'Lava-Centre 流心',
+              'Black-Gold 黑金', 'White-Jade 白玉', 'Gold-Wrapped 金裝', 'Premium 極上',
+              'First-Pour 頭啖湯', 'Hidden-Gem 隱世', 'Neighbourhood 街坊', 'Long-Established 老字號',
+              'Ice-and-Fire 冰火', 'Peninsula 半島', 'Kowloon 九龍', 'Central 中環',
+              'Mongkok 旺角', 'Sham-Shui-Po 深水埗', 'Sai-Wan 西環', 'Lamma 南丫',
+              'Tai-O 大澳', 'Outlying-Island 離島', 'Fresh-Steamed 開籠', 'Extra-Portion 加底',
+              'Hold-The-Greens 走青', 'No-Sugar-No-Milk 飛沙走奶', 'Chiu-Chow-Supper 打冷'
           )
           $idx = $releaseNumber - 1
           if ($idx -lt $dishes.Count) {

@@ -10,10 +10,16 @@ unique dim sum art while the repository's default splash file never changes.
 `scripts/ci/New-DimSumSplash.ps1` deterministically composes a flat, simple
 dim sum scene in the same hand-drawn style as the default splash mark:
 
-- **Dishes**: 2-4 items picked without replacement from a library of ten
+- **Dishes**: 2-4 items picked without replacement from a library of eighteen
   hand-authored SVG fragments — har gow, siu mai with roe, custard bun, egg
   tart, spring roll, pleated bao, turnip cake slice, stylized chicken foot,
-  egg waffle wedge, and tea cup.
+  egg waffle wedge, tea cup, cheung fun roll, pineapple bun, lo mai gai parcel,
+  taro dumpling, char siu sou, mango pudding, sesame ball, and wonton bowl.
+  The library is append-only in practice but not by contract: adding a dish
+  changes which items a given seed draws, so art is reproducible for a seed
+  only *within one library revision*. Every generated file therefore records
+  its seed **and** its dish list in the SVG comment header, so any past mark
+  can be identified after the fact.
 - **Arrangement**: dishes land in left / right / front slots (front is the
   hero slot at full scale); a smaller back slot appears only when a fourth
   dish is drawn. Draw order is back, left, right, front so overlaps read

@@ -98,6 +98,10 @@ jobs:
         run: |
           .\scripts\ci\Test-WindowsRelease.ps1
           .\scripts\ci\Test-OneClickBuild.ps1
+          # Guards the release codename roster: bilingual shape, no duplicates, and
+          # append-only. Codenames are assigned by index, so inserting a dish renames
+          # every later release and contradicts already-published immutable ones.
+          .\scripts\ci\Test-ReleaseCodenames.ps1
 
       - name: Build slicer Win
         id: build_win
