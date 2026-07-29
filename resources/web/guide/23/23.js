@@ -619,22 +619,14 @@ function OnSelectMenu( nIndex )
 	switch(nIndex)
 	{
 		case 1:
-			$('#SystemFilamentBtn').addClass('TitleSelected');
-			$('#SystemFilamentBtn').removeClass('TitleUnselected');		
-			
-			$('#CustomFilamentBtn').addClass('TitleUnselected');
-			$('#CustomFilamentBtn').removeClass('TitleSelected');	
-			
+			$('#SystemFilamentBtn').addClass('TitleSelected').removeClass('TitleUnselected').attr('aria-pressed', 'true');
+			$('#CustomFilamentBtn').addClass('TitleUnselected').removeClass('TitleSelected').attr('aria-pressed', 'false');
 			$('#SystemFilamentsArea').css('display','flex');
 			$('#CustomFilamentsArea').css('display','none');
 			break;
 		case 2:
-			$('#CustomFilamentBtn').addClass('TitleSelected');
-			$('#CustomFilamentBtn').removeClass('TitleUnselected');
-			
-			$('#SystemFilamentBtn').addClass('TitleUnselected');
-			$('#SystemFilamentBtn').removeClass('TitleSelected');	
-			
+			$('#CustomFilamentBtn').addClass('TitleSelected').removeClass('TitleUnselected').attr('aria-pressed', 'true');
+			$('#SystemFilamentBtn').addClass('TitleUnselected').removeClass('TitleSelected').attr('aria-pressed', 'false');
 			$('#CustomFilamentsArea').css('display','flex');
 			$('#SystemFilamentsArea').css('display','none');			
 			break;
@@ -671,7 +663,7 @@ function UpdateCustomFilaments( CFList )
 		let F_name=pItem['name'];
 		
 		let strAdd='<div class="CFilament_Item">'+
-			       '<a  class="CFilament_Name" title="'+F_name+'">'+F_name+'</a><img onClick="CFEdit(\''+F_id+'\')" class="CFilament_EditBtn" src="../../image/edit.svg" />'+
+			       '<span class="CFilament_Name" title="'+F_name+'">'+F_name+'</span><button type="button" onClick="CFEdit(\''+F_id+'\')" class="CFilament_EditBtn" aria-label="Edit '+F_name+'"><img src="../../image/edit.svg" alt="" /></button>'+
 		           '</div>';
 		
 		strHtml+=strAdd;

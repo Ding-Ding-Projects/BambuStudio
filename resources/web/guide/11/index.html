@@ -21,11 +21,11 @@
 <div id="Content">
 	<div id="EarthIcon"><img src="earth.png"/></div>
 	<div id="RegionList">
-		<div class="trans RegionItem RegionSelected TextS1" tid="t48" region="Asia-Pacific" onclick="ChooseRegion('Asia-Pacific')">Asia-Pacific</div>
-		<div class="trans RegionItem" tid="t49" region="China" onclick="ChooseRegion('China')">Chinese Mainland</div>
-		<div class="trans RegionItem" tid="t60" region="Europe" onclick="ChooseRegion('Europe')">Europe</div>
-		<div class="trans RegionItem" tid="t61" region="North America" onclick="ChooseRegion('North America')">North America</div>
-		<div class="trans RegionItem" tid="t62" region="Others" onclick="ChooseRegion('Others')">Others</div>
+		<button type="button" class="trans RegionItem RegionSelected TextS1" tid="t48" region="Asia-Pacific" aria-pressed="true" onclick="ChooseRegion('Asia-Pacific')">Asia-Pacific</button>
+		<button type="button" class="trans RegionItem" aria-pressed="false" tid="t49" region="China" onclick="ChooseRegion('China')">Chinese Mainland</button>
+		<button type="button" class="trans RegionItem" aria-pressed="false" tid="t60" region="Europe" onclick="ChooseRegion('Europe')">Europe</button>
+		<button type="button" class="trans RegionItem" aria-pressed="false" tid="t61" region="North America" onclick="ChooseRegion('North America')">North America</button>
+		<button type="button" class="trans RegionItem" aria-pressed="false" tid="t62" region="Others" onclick="ChooseRegion('Others')">Others</button>
 	</div>
 <!--	<div id="ChangeTip">
 		<div><img class="TipIcon" src="tip.png" /></div>
@@ -33,7 +33,7 @@
 	</div>-->
 </div>
 <div id="AcceptArea">
-	<div class="NormalBtn trans" id="AcceptBtn" tid="t9"  onclick="GotoPolicyPage()">Next</div>
+	<button type="button" class="NormalBtn trans" id="AcceptBtn" tid="t9" onclick="GotoPolicyPage()">Next</button>
 </div>	
 </body>
 </html>

@@ -36,6 +36,9 @@ body
 
 .LinkBtn
 {
+	background: transparent;
+	font: inherit;
+	text-decoration: underline;
 	color: var(--md-primary);
 	cursor: pointer;
 }
@@ -157,3 +160,5 @@ body
 {
 	display: none;
 }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

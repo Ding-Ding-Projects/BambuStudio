@@ -439,14 +439,10 @@ function ExecuteDarkMode( DarkCssPath )
 SwitchDarkMode( "./css/dark.css" );
 
 /*-------KeyBoard------*/
+// Compatibility entry point for older pages. Browser and assistive-technology
+// shortcuts must remain available, so Ctrl/Cmd combinations are never cancelled.
 function DisableCtrlHotkey()
 {
-	document.onkeydown = function(event) {
-    event = event || window.event;
-    if (event.ctrlKey ) {
-        event.preventDefault();
-    }	
-    }
 }
 
 function OutputKey(keyCode, isCtrlDown, isShiftDown, isCmdDown) {
@@ -464,43 +460,19 @@ function OutputKey(keyCode, isCtrlDown, isShiftDown, isCmdDown) {
 
 function DisableHotkey( b_CtrlP )
 {
-    document.onkeydown = function (event) {
-		var e = event || window.event || arguments.callee.caller.arguments[0];
+	document.addEventListener('keydown', function (event) {
+		var e = event || window.event;
+		if (!e || (!e.ctrlKey && !e.metaKey))
+			return;
 
-		if (e.ctrlKey && e.metaKey)
-			OutputKey(e.keyCode, true, false, true);
-		else if (e.ctrlKey)
-            OutputKey(e.keyCode, true, false, false);
-		else if (e.metaKey)
-			OutputKey(e.keyCode, false, false, true);
+		OutputKey(e.keyCode, !!e.ctrlKey, !!e.shiftKey, !!e.metaKey);
+	});
 
-		if (e.shiftKey && e.ctrlKey)
-			OutputKey(e.keyCode, true, true, false);
-		
-		if (e.shiftKey && e.metaKey)
-			OutputKey(e.keyCode, false, true, true);
-
-		//F1--F12
-		if ( e.keyCode>=112 && e.keyCode<=123 )	
-		{
-			e.preventDefault();
-		}
-		
-//		if (window.event) {
-//			try { e.keyCode = 0; } catch (e) { }
-//			e.returnValue = false;
-//		}
-	};
-
-	window.addEventListener('mousewheel', function (event) {
-		if (event.ctrlKey === true || event.metaKey) {
-			event.preventDefault();
-		}
-	}, { passive: false });	
-	
+	// Mirror shortcuts to the host without replacing native key behavior.
+	// Browser zoom and function-key accessibility commands remain available.
 	DisableDropAction();
 }
-	
+
 DisableHotkey();
 
 /*--------Disable Drop Action---------*/
@@ -519,22 +491,83 @@ function DisableDropAction()
 	});
 }
 
-function showToast(message, duration = 2500) {
-  const old = document.querySelector('.toast');
-  if (old) old.remove();
+function getToastText(key, fallback) {
+  if (typeof GetCurrentPlainTextByKey === 'function') {
+    var localized = GetCurrentPlainTextByKey(key);
+    if (localized) return localized;
+  }
+  return fallback;
+}
 
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.innerText = message;
-  document.body.appendChild(toast);
+function getToastDismissLabel() {
+  return getToastText('t86', 'Dismiss notification');
+}
 
+function ensureToastRegion() {
+  var region = document.getElementById('toast-region');
+  if (region) return region;
+
+  region = document.createElement('div');
+  region.id = 'toast-region';
+  region.className = 'toast-region';
+  region.setAttribute('role', 'region');
+  region.setAttribute('aria-label', 'Notifications');
+  document.body.appendChild(region);
+  return region;
+}
+
+function dismissToast(toast) {
+  if (!toast || toast.dataset.dismissed === 'true') return;
+  toast.dataset.dismissed = 'true';
+  toast.classList.remove('show');
+  var removeDelay = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300;
+  window.setTimeout(function () { toast.remove(); }, removeDelay);
+}
+
+// Backwards compatible signatures:
+//   showToast(message, 2500)
+//   showToast(message, 'error')
+//   showToast(message, { severity: 'warning', duration: 5000 })
+function showToast(message, options) {
+  var opts = {};
+  if (typeof options === 'number') opts.duration = options;
+  else if (typeof options === 'string') opts.severity = options;
+  else if (options && typeof options === 'object') opts = options;
+
+  var severity = String(opts.severity || 'info').toLowerCase();
+  if (['success', 'info', 'warning', 'error'].indexOf(severity) < 0)
+    severity = 'info';
+
+  var persistent = opts.persistent === true || severity === 'warning' || severity === 'error';
+  var duration = typeof opts.duration === 'number' ? opts.duration : 2500;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast--' + severity;
+  toast.dataset.severity = severity;
+  toast.setAttribute('role', severity === 'warning' || severity === 'error' ? 'alert' : 'status');
+  toast.setAttribute('aria-live', severity === 'warning' || severity === 'error' ? 'assertive' : 'polite');
+  toast.setAttribute('aria-atomic', 'true');
+
+  var text = document.createElement('span');
+  text.className = 'toast__message';
+  text.innerText = message == null ? '' : String(message);
+  toast.appendChild(text);
+
+  var dismiss = document.createElement('button');
+  dismiss.type = 'button';
+  dismiss.className = 'toast__dismiss';
+  dismiss.setAttribute('aria-label', getToastDismissLabel());
+  dismiss.innerText = '×';
+  dismiss.addEventListener('click', function () { dismissToast(toast); });
+  toast.appendChild(dismiss);
+
+  ensureToastRegion().appendChild(toast);
   void toast.offsetWidth;
   toast.classList.add('show');
 
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
+  if (!persistent && duration > 0)
+    window.setTimeout(function () { dismissToast(toast); }, duration);
+
+  return toast;
 }
 
 function showConfirmDialog(options) {

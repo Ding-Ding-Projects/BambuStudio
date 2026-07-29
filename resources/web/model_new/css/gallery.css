@@ -13,6 +13,10 @@
 
 .bs-gallery-main {
   position: relative;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
   -webkit-box-flex: 1;
       -ms-flex: 0 0 560px;
           flex: 0 0 560px;
@@ -53,6 +57,11 @@
 }
 
 .bs-gallery-thumb {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
   border-radius: var(--radius-s, 10px);
   overflow: hidden;
   cursor: pointer;
@@ -74,3 +83,16 @@
 }
 
 .bs-gallery-thumb:last-child { margin-bottom: 0; }
+
+
+.bs-gallery-main:focus-visible,
+.bs-gallery-thumb:focus-visible,
+.bs-gallery:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bs-gallery-image {
+    transition: none !important;
+  }
+}
