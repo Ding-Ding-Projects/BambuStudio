@@ -109,7 +109,7 @@ function buildPageRange(cur: number, total: number): (number | '...')[] {
   return r;
 }
 
-const paginationButtonBase = 'min-w-6 h-6 flex items-center justify-center rounded-sm border text-xs cursor-pointer px-1 disabled:opacity-30 disabled:cursor-default';
+const paginationButtonBase = 'fm-pagination-target min-w-9 min-h-9 flex items-center justify-center rounded-md border text-xs cursor-pointer px-2 disabled:opacity-30 disabled:cursor-default';
 const paginationButtonIdle = 'border-transparent bg-transparent text-fm-text-secondary hover:bg-fm-hover hover:text-fm-text-strong';
 const paginationButtonActive = 'border-fm-border-focus bg-fm-selected text-fm-text-strong font-medium';
 const tableHeaderCellClass = 'text-left px-6 pt-2 pb-[9px] align-middle text-sm font-normal text-fm-text-strong h-12 sticky top-0 bg-[#141414] [html[data-theme=light]_&]:bg-white z-10 select-none border-b border-fm-border';
@@ -185,8 +185,8 @@ export function SpoolTable({
         );
         return sortAsc ? typeCmp : -typeCmp;
       }
-      const va = (a as any)[sortKey];
-      const vb = (b as any)[sortKey];
+      const va = a[sortKey];
+      const vb = b[sortKey];
       if (typeof va === 'number' && typeof vb === 'number') return sortAsc ? va - vb : vb - va;
       const sa = String(va || ''), sb = String(vb || '');
       return sortAsc ? sa.localeCompare(sb) : sb.localeCompare(sa);
@@ -287,7 +287,8 @@ export function SpoolTable({
               <th className={`${tableHeaderCellClass} !px-4 w-12 text-center`}>
                 <input
                   type="checkbox"
-                  className="w-4 h-4 cursor-pointer accent-fm-brand"
+                  className="fm-checkbox-target cursor-pointer accent-fm-brand"
+                  aria-label={t('Select all filaments')}
                   checked={selected.size > 0 && selected.size === spools.length}
                   onChange={onSelectAll}
                 />
@@ -309,16 +310,20 @@ export function SpoolTable({
                     data-group-key={g.key}
                     data-group-count={g.count}
                     data-group-weight={g.totalWeight}
-                    className="cursor-pointer select-none"
-                    onClick={() => toggleGroup(g.key)}
+                    className="select-none"
                   >
-                    <td colSpan={4} className="bg-fm-inner border-b border-fm-border px-6 pt-2 pb-[9px] h-8">
-                      <div className="flex items-center gap-3 text-xs text-fm-text-secondary">
-                        <span className={`inline-block w-3 transition-transform duration-150${isCollapsed ? ' -rotate-90' : ''}`}>▾</span>
-                        <span>{g.key}</span>
+                    <td colSpan={4} className="bg-fm-inner border-b border-fm-border p-0 h-9">
+                      <button
+                        type="button"
+                        className="fm-group-button w-full min-h-10 flex items-center gap-3 px-6 py-2 text-left text-xs text-fm-text-secondary cursor-pointer bg-transparent border-none hover:bg-fm-hover"
+                        aria-expanded={!isCollapsed}
+                        onClick={() => toggleGroup(g.key)}
+                      >
+                        <span aria-hidden="true" className={`inline-block w-3 transition-transform duration-150${isCollapsed ? ' -rotate-90' : ''}`}>▾</span>
+                        <span className="min-w-0 break-words">{g.key}</span>
                         <span className="bg-fm-input rounded-[10px] px-2 py-[1px] text-[11px]">{g.count}</span>
                         <span className="text-fm-text-detail">{g.totalWeight} g</span>
-                      </div>
+                      </button>
                     </td>
                   </tr>
                 );
@@ -342,7 +347,8 @@ export function SpoolTable({
                   <td className={`${tableBodyCellClass} !px-4 w-12 text-center`}>
                     <input
                       type="checkbox"
-                      className="w-4 h-4 cursor-pointer accent-fm-brand"
+                      className="fm-checkbox-target cursor-pointer accent-fm-brand"
+                      aria-label={t('Select {{name}}', { name: formatSpoolDisplayName(s) || s.spool_id })}
                       checked={selected.has(s.spool_id)}
                       onChange={() => onToggleSelect(s.spool_id)}
                     />
@@ -467,7 +473,7 @@ export function SpoolTable({
                   </td>
                   <td className={tableBodyCellClass}>
                     <div className="flex gap-2 items-center">
-                      <button data-testid="filament-row-detail" className="w-4 h-4 bg-transparent border-none cursor-pointer text-fm-brand p-0 flex items-center justify-center transition-colors duration-150 hover:text-fm-brand-hover [&>svg]:w-4 [&>svg]:h-4" onClick={() => onDetail(s.spool_id)} title={t('Spool Detail')}>
+                      <button type="button" data-testid="filament-row-detail" className="fm-row-action bg-transparent border-none cursor-pointer text-fm-brand p-0 flex items-center justify-center transition-colors duration-150 hover:text-fm-brand-hover [&>svg]:w-4 [&>svg]:h-4" onClick={() => onDetail(s.spool_id)} title={t('Spool Detail')} aria-label={t('Spool Detail')}>
                         <svg viewBox="0 0 16 16" fill="none">
                           <path d="M3 2.5h6.5L13 6v7.5H3V2.5z" stroke="currentColor" strokeWidth="1.1" />
                           <path d="M9.5 2.5V6H13" stroke="currentColor" strokeWidth="1.1" />
@@ -475,7 +481,7 @@ export function SpoolTable({
                           <line x1="9" y1="11" x2="11" y2="13" stroke="currentColor" strokeWidth="1.1" />
                         </svg>
                       </button>
-                      <button data-testid="filament-row-add-similar" className="w-4 h-4 bg-transparent border-none cursor-pointer text-fm-brand p-0 flex items-center justify-center transition-colors duration-150 hover:text-fm-brand-hover [&>svg]:w-4 [&>svg]:h-4" onClick={() => onAddSimilar(s.spool_id)} title={t('Add')}>
+                      <button type="button" data-testid="filament-row-add-similar" className="fm-row-action bg-transparent border-none cursor-pointer text-fm-brand p-0 flex items-center justify-center transition-colors duration-150 hover:text-fm-brand-hover [&>svg]:w-4 [&>svg]:h-4" onClick={() => onAddSimilar(s.spool_id)} title={t('Add')} aria-label={t('Add')}>
                         <svg viewBox="0 0 16 16" fill="none">
                           <path d="M3 2.5h6.5L13 6v7.5H3V2.5z" stroke="currentColor" strokeWidth="1.1" />
                           <path d="M9.5 2.5V6H13" stroke="currentColor" strokeWidth="1.1" />
@@ -483,7 +489,7 @@ export function SpoolTable({
                           <line x1="6" y1="9.5" x2="10" y2="9.5" stroke="currentColor" strokeWidth="1.2" />
                         </svg>
                       </button>
-                      <button data-testid="filament-row-delete" className="w-4 h-4 bg-transparent border-none cursor-pointer text-fm-brand p-0 flex items-center justify-center transition-colors duration-150 hover:text-fm-brand-hover [&>svg]:w-4 [&>svg]:h-4" onClick={() => onDelete(s.spool_id)} title={t('Delete')}>
+                      <button type="button" data-testid="filament-row-delete" className="fm-row-action bg-transparent border-none cursor-pointer text-fm-brand p-0 flex items-center justify-center transition-colors duration-150 hover:text-fm-brand-hover [&>svg]:w-4 [&>svg]:h-4" onClick={() => onDelete(s.spool_id)} title={t('Delete')} aria-label={t('Delete')}>
                         <svg viewBox="0 0 16 16" fill="none">
                           <path d="M4 5h8l-.6 8H4.6L4 5z" stroke="currentColor" strokeWidth="1.1" />
                           <path d="M6 3h4" stroke="currentColor" strokeWidth="1.1" />
@@ -502,8 +508,10 @@ export function SpoolTable({
       </div>
 
       {/* Pagination — always visible below the list (empty state returned earlier) */}
-      <div className="flex items-center justify-end gap-1 py-3 shrink-0">
+      <nav className="flex flex-wrap items-center justify-end gap-1 py-3 shrink-0" aria-label={t('Pagination')}>
         <button
+          type="button"
+          aria-label={t('Previous')}
           className={`${paginationButtonBase} ${paginationButtonIdle}`}
           disabled={safePage <= 1}
           onClick={() => setPage((p) => Math.max(1, Math.min(p, pages) - 1))}
@@ -512,26 +520,35 @@ export function SpoolTable({
           p === '...'
             ? <span key={`d${i}`} className="text-fm-text-detail text-xs px-[2px]">…</span>
             : <button
+                type="button"
                 key={p}
+                aria-label={t('Page {{page}}', { page: p })}
+                aria-current={p === safePage ? 'page' : undefined}
                 className={`${paginationButtonBase} ${p === safePage ? paginationButtonActive : paginationButtonIdle}`}
                 onClick={() => setPage(p)}
               >{p}</button>
         )}
         <button
+          type="button"
+          aria-label={t('Next')}
           className={`${paginationButtonBase} ${paginationButtonIdle}`}
           disabled={safePage >= pages}
           onClick={() => setPage((p) => Math.min(pages, Math.min(p, pages) + 1))}
         >›</button>
-        <select
-          className="ml-3 bg-fm-inner2 border-none rounded-sm text-fm-text-primary text-xs px-1 py-[2px] cursor-pointer outline-none"
-          value={pageSize}
-          onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-        >
-          {PAGE_SIZES.map((s) => (
-            <option key={s} value={s}>{s}{t('per page')}</option>
-          ))}
-        </select>
-      </div>
+        <label className="ml-3">
+          <span className="sr-only">{t('Items per page')}</span>
+          <select
+            aria-label={t('Items per page')}
+            className="min-h-9 bg-fm-inner2 border-none rounded-md text-fm-text-primary text-xs px-2 py-[2px] cursor-pointer outline-none"
+            value={pageSize}
+            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+          >
+            {PAGE_SIZES.map((s) => (
+              <option key={s} value={s}>{s}{t('per page')}</option>
+            ))}
+          </select>
+        </label>
+      </nav>
     </>
   );
 }
@@ -544,10 +561,21 @@ function ThSort({ label, sortKey, current, asc, onClick }: {
   asc: boolean;
   onClick: (k: SortKey) => void;
 }) {
-  const cls = current === sortKey ? (asc ? 'sort-asc' : 'sort-desc') : '';
+  const isCurrent = current === sortKey;
+  const cls = isCurrent ? (asc ? 'sort-asc' : 'sort-desc') : '';
   return (
-    <th className={`${tableHeaderCellClass} cursor-pointer hover:text-fm-text-strong ${cls}`} onClick={() => onClick(sortKey)}>
-      {label}<span className="fm-sort-icon" />
+    <th
+      className={`${tableHeaderCellClass} ${cls}`}
+      aria-sort={isCurrent ? (asc ? 'ascending' : 'descending') : 'none'}
+      data-sort-key={sortKey}
+    >
+      <button
+        type="button"
+        className="fm-sort-button -mx-2 min-h-9 px-2 inline-flex items-center rounded-md cursor-pointer bg-transparent border-none text-inherit hover:text-fm-text-strong"
+        onClick={() => onClick(sortKey)}
+      >
+        {label}<span className="fm-sort-icon" aria-hidden="true" />
+      </button>
     </th>
   );
 }

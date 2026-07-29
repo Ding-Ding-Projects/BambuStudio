@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   Spool, PresetVendor, MachineItem, AmsData, AmsUnit, AmsTray,
@@ -29,6 +29,8 @@ import {
 // STUDIO-18385: gate AMS save on duplicate RFID detection so users explicitly
 // agree before an existing spool record is overwritten.
 import { ConfirmDialog } from './ConfirmDialog';
+import { AccessibleDialog } from './AccessibleDialog';
+import { BilingualText } from './BilingualText';
 
 // STUDIO-17959: cap both 当前净重 / 总净重 inputs in the Add/Edit dialog.
 // Bug repro: users could type arbitrarily large numbers (e.g. 99999999999)
@@ -161,6 +163,8 @@ export function AddEditDialog({
   onFetchMachines, onRequestPushall, onFetchAmsData,
 }: Props) {
   const { t } = useTranslation();
+  const titleId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const isEdit = !!editingSpool;
   const initSpool = editingSpool || prefilledSpool;
 
@@ -1397,7 +1401,7 @@ export function AddEditDialog({
       // the printer eventually pushes back on its own.
     }
     window.setTimeout(() => setRefreshBusy(false), 2000);
-  }, [refreshBusy, amsData?.selected_dev_id, machines, onRequestPushall]);
+  }, [refreshBusy, amsData?.selected_dev_id, machines, onRequestPushall, t]);
 
   // F4.7: follow Studio-wide machine switches while the dialog is open on
   // the AMS tab. If the user picks a different printer elsewhere in
@@ -1559,7 +1563,7 @@ export function AddEditDialog({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [open, mode, amsLoading, amsData?.selected_dev_id, onFetchAmsData]);
+  }, [open, mode, amsLoading, amsData?.selected_dev_id, onFetchAmsData, t]);
 
   // Live-refresh the Printer dropdown while the AMS tab is open so
   // devices that come online / go offline / get (un)bound appear without
@@ -1898,14 +1902,18 @@ export function AddEditDialog({
 
   return (
     <>
-    <div className="fixed inset-0 bg-black/50 flex items-start justify-center pt-10 z-[1000]">
-      <div
-        data-testid={isEdit ? 'edit-dialog' : 'add-dialog'}
-        data-mode={mode}
-        className="w-[644px] max-h-[calc(100vh-80px)] bg-[#242424] [html[data-theme=light]_&]:bg-fm-sidebar rounded-lg shadow-[0px_8px_24px_0px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden fm-native-form"
-        style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AccessibleDialog
+      open={open}
+      onClose={onClose}
+      labelledBy={titleId}
+      dataTestId={isEdit ? 'edit-dialog' : 'add-dialog'}
+      dataAttributes={{ mode }}
+      overlayClassName="flex items-start justify-center p-4 sm:p-10"
+      panelClassName="fm-dialog-panel w-[644px] max-w-full max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-5rem)] bg-[#242424] [html[data-theme=light]_&]:bg-fm-sidebar rounded-lg shadow-[0px_8px_24px_0px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden fm-native-form"
+      panelStyle={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` }}
+      initialFocusRef={closeButtonRef}
+    >
+      <div className="contents">
         {/* Header — drag handle (F4.10). Double-click resets position. */}
         <div
           className="flex items-center justify-between h-[40px] pl-[24px] pr-[8px] shrink-0 relative cursor-move select-none"
@@ -1913,8 +1921,10 @@ export function AddEditDialog({
           onDoubleClick={resetDragOffset}
           title={t('Drag to move')}
         >
-          <h3 className="text-[14px] font-bold leading-[22px] text-fm-text-strong truncate">{isEdit ? t('Edit Filament') : t('Add Filament')}</h3>
-          <button className="size-[24px] rounded-[6px] flex items-center justify-center bg-transparent border-none text-fm-text-detail cursor-pointer hover:text-fm-text-strong hover:bg-fm-hover" onClick={onClose}>
+          <h3 id={titleId} className="min-w-0 text-[14px] font-bold leading-[22px] text-fm-text-strong overflow-hidden">
+            <BilingualText>{isEdit ? t('Edit Filament') : t('Add Filament')}</BilingualText>
+          </h3>
+          <button ref={closeButtonRef} type="button" aria-label={t('Close')} className="fm-icon-target rounded-[6px] flex items-center justify-center bg-transparent border-none text-fm-text-detail cursor-pointer hover:text-fm-text-strong hover:bg-fm-hover" onClick={onClose}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.2"/></svg>
           </button>
           <div className="absolute bottom-0 left-0 right-0 h-px bg-fm-border" />
@@ -1926,19 +1936,43 @@ export function AddEditDialog({
 
         {/* Mode tabs — only in add mode */}
         {!isEdit && (
-          <div className="flex gap-[16px] items-start w-full">
-            <div
+          <div className="flex gap-[16px] items-stretch w-full" role="tablist" aria-label={t('Add Filament')}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'manual'}
+              tabIndex={mode === 'manual' ? 0 : -1}
               data-testid="dialog-tab-manual"
               data-active={mode === 'manual' ? 'true' : 'false'}
-              className={`flex-1 flex items-center justify-center py-[4px] px-[16px] cursor-pointer rounded-[8px] border transition-all duration-150 ${mode === 'manual' ? 'border-fm-brand text-fm-brand' : 'border-fm-border-focus text-fm-text-primary hover:bg-fm-hover'}`}
+              className={`fm-tab flex-1 flex items-center justify-center min-h-[44px] py-[4px] px-[16px] cursor-pointer rounded-[8px] border transition-all duration-150 ${mode === 'manual' ? 'border-fm-brand text-fm-brand' : 'border-fm-border-focus text-fm-text-primary hover:bg-fm-hover'}`}
               onClick={() => setMode('manual')}
-            ><span className="py-[5px] text-[14px] leading-[22px]">{t('Manual Add')}</span></div>
-            <div
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                  event.preventDefault();
+                  switchToAms();
+                  const nextTab = event.currentTarget.nextElementSibling;
+                  if (nextTab instanceof HTMLElement) nextTab.focus();
+                }
+              }}
+            ><BilingualText className="py-[5px] text-[14px] leading-[22px]">{t('Manual Add')}</BilingualText></button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'ams'}
+              tabIndex={mode === 'ams' ? 0 : -1}
               data-testid="dialog-tab-ams"
               data-active={mode === 'ams' ? 'true' : 'false'}
-              className={`flex-1 flex items-center justify-center py-[4px] px-[8px] cursor-pointer rounded-[8px] border transition-all duration-150 ${mode === 'ams' ? 'border-fm-brand text-fm-brand' : 'border-fm-border-focus text-fm-text-primary hover:bg-fm-hover'}`}
+              className={`fm-tab flex-1 flex items-center justify-center min-h-[44px] py-[4px] px-[8px] cursor-pointer rounded-[8px] border transition-all duration-150 ${mode === 'ams' ? 'border-fm-brand text-fm-brand' : 'border-fm-border-focus text-fm-text-primary hover:bg-fm-hover'}`}
               onClick={switchToAms}
-            ><span className="py-[5px] text-[14px] leading-[22px]">{t('Read from AMS')}</span></div>
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  setMode('manual');
+                  const previousTab = event.currentTarget.previousElementSibling;
+                  if (previousTab instanceof HTMLElement) previousTab.focus();
+                }
+              }}
+            ><BilingualText className="py-[5px] text-[14px] leading-[22px]">{t('Read from AMS')}</BilingualText></button>
           </div>
         )}
 
@@ -2084,7 +2118,8 @@ export function AddEditDialog({
                         );
                       }
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={label}
                           data-testid={`ams-slot-${currentUnit.ams_id}-${tray.slot_id}`}
                           data-empty="false"
@@ -2092,7 +2127,9 @@ export function AddEditDialog({
                           data-color={tray.color}
                           data-color-type={tray.color_type}
                           data-colors={(tray.colors || []).join(',')}
-                          className={`relative flex-1 flex flex-col rounded-[6px] border cursor-pointer transition-all duration-150 overflow-hidden hover:border-fm-text-secondary ${isSelected ? 'border-fm-brand' : 'border-fm-border-focus'}`}
+                          aria-pressed={isSelected}
+                          aria-label={`${label}: ${tray.fila_type || t('Filament')}`}
+                          className={`relative flex-1 flex flex-col p-0 text-left bg-transparent rounded-[6px] border cursor-pointer transition-all duration-150 overflow-hidden hover:border-fm-text-secondary ${isSelected ? 'border-fm-brand' : 'border-fm-border-focus'}`}
                           onClick={() => toggleSlotSelection(currentUnit, tray)}
                         >
                           {/* STUDIO-18344: corner checkbox surfaces the
@@ -2136,7 +2173,7 @@ export function AddEditDialog({
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -2601,22 +2638,23 @@ export function AddEditDialog({
           )}
           {(isEdit || mode !== 'manual') && <div />}
           <div className="flex gap-[12px] items-center">
-            <button data-testid="dialog-cancel" className="h-[30px] px-[32px] rounded-[8px] cursor-pointer text-[12px] leading-[19px] whitespace-nowrap transition-colors duration-150 bg-fm-input text-fm-text-primary border-none hover:bg-fm-hover" onClick={onClose}>{t('Cancel')}</button>
+            <button data-testid="dialog-cancel" type="button" className="fm-action-target min-h-[36px] px-[32px] rounded-[8px] cursor-pointer text-[12px] leading-[19px] transition-colors duration-150 bg-fm-input text-fm-text-primary border-none hover:bg-fm-hover" onClick={onClose}><BilingualText>{t('Cancel')}</BilingualText></button>
             <button
+              type="button"
               data-testid="dialog-confirm"
               data-batch={isAmsBatch ? 'true' : 'false'}
-              className="h-[30px] px-[32px] rounded-[8px] border-none cursor-pointer text-[12px] leading-[19px] font-medium whitespace-nowrap transition-colors duration-150 bg-fm-brand text-white hover:bg-fm-brand-hover disabled:opacity-40 disabled:cursor-default"
+              className="fm-action-target min-h-[36px] px-[32px] rounded-[8px] border-none cursor-pointer text-[12px] leading-[19px] font-medium transition-colors duration-150 bg-fm-brand text-fm-base hover:bg-fm-brand-hover disabled:opacity-40 disabled:cursor-default"
               disabled={!isValid}
               onClick={handleSubmit}
             >
-              {isEdit
+              <BilingualText>{isEdit
                 ? t('Save')
-                : (isAmsBatch ? t('Batch Add ({{count}})', { count: slotSelectionCount }) : t('Add'))}
+                : (isAmsBatch ? t('Batch Add ({{count}})', { count: slotSelectionCount }) : t('Add'))}</BilingualText>
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </AccessibleDialog>
     {/* STUDIO-18385: duplicate RFID overwrite gate. Rendered as a sibling
         of the Add/Edit modal so the parent dialog stays mounted (and its
         selection state is preserved) while the user decides; canceling
