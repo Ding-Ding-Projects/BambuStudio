@@ -1,5 +1,6 @@
 #include "AMSSetting.hpp"
 #include "GUI_App.hpp"
+#include "GUI.hpp"
 #include "I18N.hpp"
 
 #include "slic3r/GUI/DeviceCore/DevExtruderSystem.h"
@@ -43,7 +44,7 @@ void AMSSetting::create()
     m_panel_body->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *m_sizerl_body = new wxBoxSizer(wxVERTICAL);
 
-    m_ams_type = new AMSSettingTypePanel(m_panel_body, this);
+    m_ams_type = new AMSSettingTypePanel(m_panel_body);
     m_ams_type->Show(false);
 
     m_ams_arrange_order = new AMSSettingArrangeAMSOrder(m_panel_body);
@@ -603,8 +604,8 @@ void AMSSetting::on_dpi_changed(const wxRect &suggested_rect)
     }
 }
 
-AMSSettingTypePanel::AMSSettingTypePanel(wxWindow* parent, AMSSetting* setting_dlg)
-    : wxPanel(parent), m_setting_dlg(setting_dlg)
+AMSSettingTypePanel::AMSSettingTypePanel(wxWindow* parent)
+    : wxPanel(parent)
 {
     CreateGui();
 }
@@ -719,22 +720,15 @@ void AMSSettingTypePanel::OnAmsTypeChanged(wxCommandEvent& event)
     auto obj_ = part->GetFilaSystem()->GetOwner();
     if (obj_) {
         if (obj_->is_in_printing() || obj_->is_in_upgrading())  {
-            MessageDialog dlg(this, _L("The printer is busy and cannot switch AMS type."), SLIC3R_APP_NAME + _L("Info"), wxOK | wxICON_INFORMATION);
-            dlg.ShowModal();
             m_type_combobox->SetSelection(part->GetCurrentFirmwareIdxSel());
+            show_info(this, _L("The printer is busy and cannot switch AMS type."), SLIC3R_APP_NAME + _L("Info"));
             return;
         }
 
         auto ext = obj_->GetExtderSystem()->GetCurrentExtder();
         if (ext && ext->HasFilamentInExt()) {
-            MessageDialog dlg(this, _L("Please unload all filament before switching."), SLIC3R_APP_NAME + _L("Info"), wxOK | wxICON_INFORMATION);
-            dlg.SetButtonLabel(wxID_OK, _L("Confirm"));
-            dlg.ShowModal();
             m_type_combobox->SetSelection(part->GetCurrentFirmwareIdxSel());
-            if (m_setting_dlg) {
-                m_setting_dlg->EndModal(wxID_OK);
-            }
-
+            warning_catcher(this, _L("Please unload all filament before switching."));
             return;
         }
 
