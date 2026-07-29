@@ -18,7 +18,8 @@ wxDECLARE_EVENT(wxEXPAND_LEFT_DOWN, wxCommandEvent);
 //  - Icon mode (no labels): the MD3 Switch drawn live to spec — a 44x24 track,
 //    2px border (Primary checked / Outline unchecked), Primary fill on / a
 //    transparent track off, and a knob that slides 4->22 and grows 12->16px over
-//    150ms. The legacy toggle_on/off PNGs are gone.
+//    150ms. With reduced motion it snaps directly to the stable endpoint. The
+//    legacy toggle_on/off PNGs are gone.
 //  - Labelled mode (SetLabels): a two-position segmented toggle whose selected
 //    half is the Primary thumb (OnPrimary text) and whose other half reads as the
 //    SurfaceContainerHighest track (OnSurfaceVariant text). The raw Grey350 /

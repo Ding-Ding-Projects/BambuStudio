@@ -53,6 +53,10 @@ public:
 
     void SelectItem(int item);
 
+    // Select an item through the normal event path; used by keyboard navigation
+    // and accessible default actions. Invalid indexes are ignored.
+    bool ActivateItem(int item);
+
     void Unselect();
 
     virtual void Rescale();

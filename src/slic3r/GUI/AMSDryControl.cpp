@@ -98,7 +98,7 @@ FilamentItemPanel::FilamentItemPanel(wxWindow* parent, const wxString& text, con
     m_text_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_text_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_text_label->SetFont(Label::Body_12);
-    m_text_label->Wrap(FromDIP(40));
+    m_text_label->Wrap(FromDIP(52));
     top_sizer->Add(m_text_label, 0, wxALIGN_CENTER_HORIZONTAL);
 
     top_sizer->AddStretchSpacer(1); // Increased bottom spacer to push text down
@@ -280,7 +280,6 @@ wxScrolledWindow* AMSDryCtrWin::create_preview_scrolled_window(wxWindow* parent)
 {
     wxScrolledWindow* panel = new wxScrolledWindow(parent, wxID_ANY);
     panel->SetScrollRate(10, 0);
-    panel->SetSize(AMS_ITEMS_PANEL_SIZE);
     panel->SetMinSize(AMS_ITEMS_PANEL_SIZE);
     panel->SetBackgroundColour(AMS_CONTROL_DEF_BLOCK_BK_COLOUR);
 
@@ -979,8 +978,7 @@ void AMSDryCtrWin::create()
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     SetSize(wxSize(FromDIP(700), FromDIP(500)));
-    SetMinSize(wxSize(FromDIP(700), FromDIP(500)));
-    SetMaxSize(wxSize(FromDIP(700), FromDIP(500)));
+    SetMinSize(wxSize(FromDIP(600), FromDIP(440)));
 
     m_main_simplebook = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
 
