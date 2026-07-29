@@ -2809,10 +2809,19 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     m_slice_btn = new SideButton(slice_panel, _L("Slice plate"), "");
     // The kit has no dropdown carets, so the legacy raster 'sidebutton_dropdown'
     // glyph is dropped; the options segment survives as a functional pill (its
-    // Material Symbol 'arrow_drop_down' is deferred to the icon wave).
+    // Material Symbol 'arrow_drop_down' is deferred to the icon wave). Since that
+    // leaves no visible text, give each segment a localized accessible name.
     m_slice_option_btn = new SideButton(slice_panel, "", "");
+    m_slice_option_btn->SetName(_L("Slice options"));
     m_print_btn = new SideButton(print_panel, _L("Print plate"), "");
     m_print_option_btn = new SideButton(print_panel, "", "");
+    m_print_option_btn->SetName(_L("Print options"));
+
+    // Logical split-button traversal follows the visible reading order: main
+    // action first, then its adjacent options segment. The controls were created
+    // in the reverse order for the legacy sizer, so repair the native tab chain.
+    m_slice_option_btn->MoveAfterInTabOrder(m_slice_btn);
+    m_print_option_btn->MoveAfterInTabOrder(m_print_btn);
 
     auto slice_sizer = new wxBoxSizer(wxHORIZONTAL);
     slice_sizer->Add(m_slice_option_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
