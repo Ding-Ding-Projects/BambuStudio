@@ -61,6 +61,12 @@
 
 ## Landed
 
+> Entries here are a dated record of what shipped, written in the vocabulary of the day. Waves that
+> predate 2026-07-26 therefore say "filament" and "AMS" where the shipped UI now reads "ink" and
+> "Ink Dispenser" — the rename is display-only and changed no identifier, so the entries stay as
+> written rather than being retold. See
+> [Ink terminology](docs/features/windows/ink-terminology.md).
+
 ### The published UI kit became self-contained (2026-07-28)
 
 - Removed the last three third-party requests on the site. The design-system UI kit at
@@ -241,7 +247,7 @@ recorded deviations / 5 open** after Wave 9 (2026-07-22). The register is the li
 truth; the counts here are a snapshot.
 
 - The 5 open rows are the deep Prepare-sidebar rebuilds that wrap live-bound widgets — printer
-  identity card, bed SelectField collapse, filament info-rows, Process card, Objects card. Each
+  identity card, bed SelectField collapse, ink info-rows, Process card, Objects card. Each
   needs an implement-build-verify loop against the live preset/printer combos; a concurrent
   implementation wave is finishing them.
 - The 4 recorded deviations each carry concrete evidence in the register: the Device XY dial kept

@@ -4,6 +4,16 @@ One capture per page and one per button, per feature — taken from the real run
 (native surfaces: headless Mesa llvmpipe + PrintWindow; webview surfaces: rendered page HTML).
 Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or dedicated crops).
 
+**Not every capture predating 2026-07-26 has been retaken since the ink rename**
+([Ink terminology](../features/windows/ink-terminology.md)), so some still read "Filament" and
+"AMS" where the shipped UI now reads "Ink" and "Ink Dispenser". Retaken on 2026-07-28:
+`notifications/toast-info.png`, `preferences/general-tab.png`, `wizard/wizard-step-22.png` and its
+`--filament-type-filter` crop, `main-window/nav-rail--filament.png` and
+`main-window/sidebar-prepare--add-filament.png`. Confirmed still pre-rename: `dark/prepare.png`,
+`bulk-filament/dialog.png`, `filament-scanner/dialog.png` — the rest of the matrix has not been
+audited image by image. File names keep the upstream spelling on purpose: they are identifiers this
+index links by, not displayed text.
+
 ## appearance (20 captures)
 
 - [`appearance-tab--accent-1.png`](appearance/appearance-tab--accent-1.png)

@@ -30,7 +30,7 @@ colors through semantic tokens instead of hardcoded hexes. A ground-up migration
 colors and fonts across essentially the whole GUI tree (roughly 120 files over six waves), backed by
 Roboto and Roboto Mono shipped as application resources. Contextual schemes are resolved per
 workspace: brand green for Prepare and general UI, Preview purple for the G-code preview, and Device
-teal for the printer surfaces. Functional data colors (filament swatches, G-code feature colors, 3D
+teal for the printer surfaces. Functional data colors (ink swatches, G-code feature colors, 3D
 paint palettes) are deliberately preserved.
 
 Beyond the token layer, an element-by-element conformance register
@@ -38,7 +38,7 @@ Beyond the token layer, an element-by-element conformance register
 drove nine implementation waves of structural component anatomy. As of 2026-07-22 the register
 stands at **120 rows done, 4 recorded deviations** (each documented with concrete evidence in the
 register), **and 5 open rows** — the deep Prepare-sidebar rebuilds (printer identity card, bed
-field, filament info-rows, Process card, Objects card) — which are being finished in a concurrent
+field, ink info-rows, Process card, Objects card) — which are being finished in a concurrent
 implementation wave. Landed anatomy includes the Material Symbols icon font and ImGui glyph atlas,
 the rebuilt shared widget kit, the `MD3Dialog` shell with the MessageDialog family and the
 raw-`wxMessageBox` sweep, the kit title bar, the Preferences NavRail with runtime density/accent
@@ -61,13 +61,13 @@ Full documentation of the token layer, migration, failure modes, and audit resul
 
 ### Live application captures
 
-These are captures of the running native executable at the current tip. They were produced on
-2026-07-23 by launching the built binary on an isolated off-screen desktop (via the headless
-computer-use harness) over a software OpenGL renderer, and capturing individual windows with
-`PrintWindow`. That method renders wxWidgets chrome and panels but not the OpenGL 3D viewport or the
-webview-backed panes (the Home body and Filament library are web content), so those regions appear
-empty in whole-window shots; the Prepare capture is a direct sidebar-panel grab to show real
-migrated content.
+These are captures of the running native executable at the current tip, produced by launching the
+built binary on an isolated off-screen desktop (via the headless computer-use harness) over a
+software OpenGL renderer, and capturing individual windows with `PrintWindow`. That method renders
+wxWidgets chrome and panels but not the OpenGL 3D viewport or the webview-backed panes (the Home
+body and Ink library are web content), so those regions appear empty in whole-window shots; the
+Prepare capture is a direct sidebar-panel grab to show real migrated content. The frame shot dates
+from 2026-07-26 and the sidebar from 2026-07-28, both taken after the ink rename.
 
 **Home — with the browser-like project tab bar**
 
@@ -86,9 +86,10 @@ content, which is why earlier captures of them were blank):
 | :---: | :---: |
 | ![Prepare sidebar](docs/readme-assets/shot-prepare-sidebar.png) | ![Setup Wizard welcome page](docs/readme-assets/shot-wizard.png) |
 
-The Prepare sidebar shows the migrated Printer, Filament, Process, and Object-manipulation cards —
+The Prepare sidebar shows the migrated Printer, Ink, Process, and Object-manipulation cards —
 including the Process card's Quality / Strength / Support / Others segmented control and the
-axis-colored X/Y/Z manipulation grid. The Setup Wizard is now hosted on the Material dialog shell
+head of the axis-colored X/Y/Z manipulation grid; that grid's rows sit below the fold at this panel
+height and the panel scrolls to them. The Setup Wizard is now hosted on the Material dialog shell
 (rounded surface, header icon tile) in place of the legacy native caption.
 
 #### Feature gallery — every page, every button
@@ -115,9 +116,9 @@ UI stays fully interactive.
 | :---: | :---: |
 | ![General tab](docs/screenshots/preferences/general-tab.png) | ![Other tab](docs/screenshots/preferences/other-tab.png) |
 
-| File menu (Version history · Open in External Editor) | Setup Wizard · Filament Selection |
+| File menu (Version history · Open in External Editor) | Setup Wizard · Ink Selection |
 | :---: | :---: |
-| ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard filament page](docs/screenshots/wizard/wizard-step-22.png) |
+| ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard ink page](docs/screenshots/wizard/wizard-step-22.png) |
 
 | Config profiles & backup (slide-to-confirm export) | |
 | :---: | :---: |
@@ -132,9 +133,12 @@ Per-feature folders with every button close-up: [notifications](docs/screenshots
 
 #### Earlier installed-app captures
 
-Reviewed on 2026-07-20; these predate the full token sweep and are kept for continuity.
+Reviewed on 2026-07-20; these predate the full token sweep and are kept for continuity. They also
+predate the ink rename, so their captions and their on-screen labels are the pre-rename wording —
+the shipped page is "Ink Manager" now. See
+[Ink terminology](docs/features/windows/ink-terminology.md).
 
-| Home | Filament Manager |
+| Home | Filament Manager (pre-rename capture) |
 | :---: | :---: |
 | ![Native Home](docs/readme-assets/native-material-home-light-en.png) | ![Native Filament Manager](docs/readme-assets/native-material-filament-manager-light-en.png) |
 
