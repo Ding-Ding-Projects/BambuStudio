@@ -3078,7 +3078,7 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
             m_slice_option_pop_up->append_button(slice_all_btn);
             m_slice_option_pop_up->append_button(slice_plate_btn);
-            m_slice_option_pop_up->Popup(m_slice_btn);
+            m_slice_option_pop_up->Popup(m_slice_option_btn);
         }
     );
 
@@ -3239,7 +3239,7 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
                 }
             }
 
-            p->Popup(m_print_btn);
+            p->Popup(m_print_option_btn);
         }
     );
 

@@ -169,7 +169,7 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     wxWindow::SetLabel(text);
 
 #if wxUSE_ACCESSIBILITY
-    new SideButtonAccessible(this); // wxWindow owns the accessible object.
+    SetAccessible(new SideButtonAccessible(this));
 #endif
     messureSize();
 }
@@ -583,7 +583,11 @@ void SideButton::messureSize()
 
 void SideButton::mouseDown(wxMouseEvent& event)
 {
-    event.Skip();
+    if (!IsEnabled() || !IsShown()) {
+        event.Skip();
+        return;
+    }
+
     pressedDown = true;
     SetFocus();
     if (!HasCapture())
@@ -595,8 +599,6 @@ void SideButton::mouseDown(wxMouseEvent& event)
 
 void SideButton::mouseReleased(wxMouseEvent& event)
 {
-    event.Skip();
-
     if (HasCapture())
         ReleaseMouse();
 
@@ -701,6 +703,11 @@ WXLRESULT SideButton::MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l
 {
     if (message == WM_GETDLGCODE)
         return DLGC_WANTMESSAGE;
+    if (message == WM_KEYDOWN && w_param == WXK_RETURN) {
+        wxKeyEvent event(CreateKeyEvent(wxEVT_KEY_DOWN, w_param, l_param));
+        GetEventHandler()->ProcessEvent(event);
+        return 0;
+    }
     return wxWindow::MSWWindowProc(message, w_param, l_param);
 }
 #endif
