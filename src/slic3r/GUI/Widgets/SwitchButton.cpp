@@ -358,6 +358,45 @@ void SwitchButton::onAnimTick(wxTimerEvent &)
 		m_anim_timer.Stop();
 }
 
+#if wxUSE_ACCESSIBILITY
+class SwitchBoard::Accessible final : public wxWindowAccessible
+{
+public:
+    explicit Accessible(SwitchBoard *board) : wxWindowAccessible(board), m_board(board) {}
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (child_id != wxACC_SELF || !name)
+            return wxACC_NOT_IMPLEMENTED;
+        *name = wxString::Format("%s: %s", m_board->leftLabel, m_board->rightLabel);
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (child_id != wxACC_SELF || !role)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_PAGETABLIST;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (child_id != wxACC_SELF || !state)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_board->HasFocus())
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (!m_board->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        return wxACC_OK;
+    }
+
+private:
+    SwitchBoard *m_board;
+};
+#endif
+
 SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSize size)
  : wxWindow(parent, wxID_ANY, wxDefaultPosition, size)
 {
@@ -550,45 +589,6 @@ void SwitchBoard::on_key_down(wxKeyEvent &evt)
         evt.Skip();
     }
 }
-
-#if wxUSE_ACCESSIBILITY
-class SwitchBoard::Accessible final : public wxWindowAccessible
-{
-public:
-    explicit Accessible(SwitchBoard *board) : wxWindowAccessible(board), m_board(board) {}
-
-    wxAccStatus GetName(int child_id, wxString *name) override
-    {
-        if (child_id != wxACC_SELF || !name)
-            return wxACC_NOT_IMPLEMENTED;
-        *name = wxString::Format("%s: %s", m_board->leftLabel, m_board->rightLabel);
-        return wxACC_OK;
-    }
-
-    wxAccStatus GetRole(int child_id, wxAccRole *role) override
-    {
-        if (child_id != wxACC_SELF || !role)
-            return wxACC_NOT_IMPLEMENTED;
-        *role = wxROLE_SYSTEM_PAGETABLIST;
-        return wxACC_OK;
-    }
-
-    wxAccStatus GetState(int child_id, long *state) override
-    {
-        if (child_id != wxACC_SELF || !state)
-            return wxACC_NOT_IMPLEMENTED;
-        *state = wxACC_STATE_SYSTEM_FOCUSABLE;
-        if (m_board->HasFocus())
-            *state |= wxACC_STATE_SYSTEM_FOCUSED;
-        if (!m_board->IsEnabled())
-            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
-        return wxACC_OK;
-    }
-
-private:
-    SwitchBoard *m_board;
-};
-#endif
 
 void SwitchBoard::Enable()
 {
