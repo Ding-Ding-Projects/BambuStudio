@@ -55,10 +55,10 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
     m_button_video = new ::Button(m_type_panel, _L("Video"), "", wxBORDER_NONE);
     m_button_video->SetToolTip(_L("Switch to video files."));
     m_button_model = new ::Button(m_type_panel, _L("Model"), "", wxBORDER_NONE);
-    m_button_video->SetToolTip(_L("Switch to 3mf model files."));
+    m_button_model->SetToolTip(_L("Switch to 3mf model files."));
     for (auto b : {m_button_timelapse, m_button_video, m_button_model}) {
         b->SetBackgroundColor(background);
-        b->SetCanFocus(false);
+        b->SetCanFocus(true);
     }
 
     wxBoxSizer *type_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -74,7 +74,7 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
     m_button_refresh->SetFont(Label::Body_12);
     m_button_refresh->SetCornerRadius(12);
     m_button_refresh->SetPaddingSize({10, 6});
-    m_button_refresh->SetCanFocus(false);
+    m_button_refresh->SetCanFocus(true);
     m_button_refresh->SetBorderWidth(0);
     m_button_refresh->SetBackgroundColor(StateColor(
         std::make_pair(ThemeColor::Grey350, (int) StateColor::Pressed),
@@ -96,11 +96,12 @@ MediaFilePanel::MediaFilePanel(wxWindow * parent)
     m_button_management = new ::Button(m_manage_panel, _L("Select"));
     m_button_management->SetToolTip(_L("Batch manage files."));
     m_button_select_all = new ::Button(m_manage_panel, _L("Select All"));
+    m_button_select_all->SetToolTip(_L("Select all files."));
     for (auto b : {m_button_delete, m_button_download, m_button_management, m_button_select_all}) {
         b->SetFont(Label::Body_12);
         b->SetCornerRadius(12);
         b->SetPaddingSize({10, 6});
-        b->SetCanFocus(false);
+        b->SetCanFocus(true);
     }
     m_button_delete->SetBorderColorNormal(ThemeColor::Warning);
     m_button_delete->SetTextColorNormal(ThemeColor::Warning);
@@ -521,6 +522,7 @@ void MediaFilePanel::SetSelecting(bool selecting, bool selectall)
         m_image_grid->SetSelecting(selecting);
 
     m_button_management->SetLabel(selecting ? _L("Cancel") : _L("Select"));
+    m_button_management->SetToolTip(selecting ? _L("Finish managing files.") : _L("Batch manage files."));
     auto fs = m_image_grid->GetFileSystem();
     bool download_support = fs && fs->GetFileType() < PrinterFileSystem::F_MODEL || m_model_download_support;
 

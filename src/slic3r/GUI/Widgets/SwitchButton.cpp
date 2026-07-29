@@ -3,6 +3,7 @@
 #include "StateColor.hpp"
 #include "StaticBox.hpp"
 #include "MaterialIcon.hpp"
+#include "MD3Motion.hpp"
 
 #include "../wxExtensions.hpp"
 #include "../Utils/MacDarkMode.hpp"
@@ -322,12 +323,25 @@ void SwitchButton::startAnim()
 		return;
 	}
 	m_anim_target = GetValue() ? 1.0 : 0.0;
+	if (MD3::Motion::reduced()) {
+		m_anim_timer.Stop();
+		m_anim = m_anim_target;
+		update();
+		return;
+	}
 	if (!m_anim_timer.IsRunning())
 		m_anim_timer.Start(16);
 }
 
 void SwitchButton::onAnimTick(wxTimerEvent &)
 {
+	if (MD3::Motion::reduced()) {
+		m_anim_timer.Stop();
+		m_anim = m_anim_target;
+		update();
+		return;
+	}
+
 	const double step = 16.0 / 150.0; // ~150ms sweep
 	if (m_anim < m_anim_target)
 		m_anim = std::min(m_anim_target, m_anim + step);
