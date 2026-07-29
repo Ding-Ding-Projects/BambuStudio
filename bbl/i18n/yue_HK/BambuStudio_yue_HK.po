@@ -180,6 +180,10 @@ msgid "AMS Settings"
 msgstr "墨水機設定"
 
 #. reviewed-category: navigation
+msgid "AMS settings"
+msgstr "墨水機設定"
+
+#. reviewed-category: navigation
 msgid "Camera Setting"
 msgstr "相機設定"
 
@@ -546,6 +550,14 @@ msgstr "項目快照"
 #. reviewed-category: file-actions
 msgid "Browse and restore local Git-backed project versions"
 msgstr "瀏覽及還原由本機 Git 管理嘅項目版本"
+
+#. reviewed-category: slicing-printing
+msgid "Slice options"
+msgstr "切片選項"
+
+#. reviewed-category: slicing-printing
+msgid "Print options"
+msgstr "打印選項"
 
 #. reviewed-category: slicing-printing
 msgid "Slice plate"

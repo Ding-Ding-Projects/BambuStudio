@@ -4316,6 +4316,9 @@ msgstr ""
 msgid "AMS Settings"
 msgstr ""
 
+msgid "AMS settings"
+msgstr ""
+
 msgid "Insertion update"
 msgstr ""
 
@@ -6857,6 +6860,12 @@ msgid "Printer Parts"
 msgstr ""
 
 msgid "Print Options"
+msgstr ""
+
+msgid "Slice options"
+msgstr ""
+
+msgid "Print options"
 msgstr ""
 
 msgid "Safety Options"

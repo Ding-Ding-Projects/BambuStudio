@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CloudToast } from './types';
 
@@ -11,6 +11,20 @@ interface Props {
 
 export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
   const { t } = useTranslation();
+  const [politeAnnouncement, setPoliteAnnouncement] = useState('');
+  const [assertiveAnnouncement, setAssertiveAnnouncement] = useState('');
+  const announcedToastIdsRef = useRef(new Set<number>());
+
+  useEffect(() => {
+    const newToasts = toasts.filter((toast) => !announcedToastIdsRef.current.has(toast.id));
+    if (newToasts.length === 0) return;
+
+    newToasts.forEach((toast) => announcedToastIdsRef.current.add(toast.id));
+    const latestPolite = [...newToasts].reverse().find((toast) => toast.level === 'info');
+    const latestAssertive = [...newToasts].reverse().find((toast) => toast.level !== 'info');
+    if (latestPolite) setPoliteAnnouncement(latestPolite.text);
+    if (latestAssertive) setAssertiveAnnouncement(latestAssertive.text);
+  }, [toasts]);
 
   useEffect(() => {
     if (!autoDismissMs) return;
@@ -32,6 +46,12 @@ export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
       aria-label={t('Notifications')}
       className="fm-toast-stack fixed bottom-6 right-6 flex flex-col gap-2 z-[2000] pointer-events-none"
     >
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {politeAnnouncement}
+      </span>
+      <span className="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
+        {assertiveAnnouncement}
+      </span>
       {toasts.map((toast) => {
         // Status tones are chrome, not data: the same danger / warning / brand
         // triple SpoolTable maps its remaining-weight bar to, so a red dot means
@@ -47,9 +67,6 @@ export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
         return (
           <div
             key={toast.id}
-            role={toast.level === 'error' || toast.level === 'warn' ? 'alert' : 'status'}
-            aria-live={toast.level === 'error' || toast.level === 'warn' ? 'assertive' : 'polite'}
-            aria-atomic="true"
             className="pointer-events-auto flex items-start gap-3 max-w-[360px] bg-fm-sidebar border border-fm-border rounded-lg px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.25)] text-fm-text-primary text-xs leading-[19px]"
           >
             <span

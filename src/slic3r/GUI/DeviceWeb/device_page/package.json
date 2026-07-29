@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "i18n": "npx i18next-parser --config i18next-parser.config.js",
     "test:i18n": "node --experimental-strip-types tests/i18nResources.test.ts",
-    "test:a11y": "node --experimental-strip-types tests/filamentManagerAccessibility.test.ts"
+    "test:a11y": "node --experimental-strip-types tests/filamentManagerAccessibility.test.ts && vitest run tests/filamentManagerBehavior.test.tsx"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
@@ -31,6 +31,8 @@
   "devDependencies": {
     "@eslint/js": "^9.25.0",
     "@tanstack/router-plugin": "^1.120.15",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
@@ -39,10 +41,12 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "i18next-parser": "^9.4.0",
+    "jsdom": "^30.0.1",
     "terser": "^5.46.2",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.7"
   },
   "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac",
   "optionalDependencies": {
