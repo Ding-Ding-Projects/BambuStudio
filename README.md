@@ -58,6 +58,10 @@ Two native features were added in the same effort:
 
 Full documentation of the token layer, migration, failure modes, and audit result is in
 [Vendored Material Design 3 design system](docs/features/design-system/md3-design-system.md).
+The native split actions, option menus, segmented selectors, links, tabs, Ink Dispenser controls,
+Filament Manager, Project page, and setup guides now share a documented keyboard, assistive, zoom,
+and responsive-layout baseline; see
+[Keyboard, assistive, and responsive GUI accessibility](docs/features/windows/gui-accessibility.md).
 
 ### Live application captures
 

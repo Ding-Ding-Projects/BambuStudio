@@ -2,6 +2,7 @@
 
 - [Windows-only platform policy](windows-only-platform.md)
 - [Native Material Design 3 UI](md3-native-ui.md)
+- [Keyboard, assistive, and responsive GUI accessibility](gui-accessibility.md)
 - [English, Hong Kong Cantonese, and bilingual modes](language-modes.md)
 - [Ink terminology (filament → ink, AMS → Ink Dispenser)](ink-terminology.md)
 - [Appearance customization](appearance-customization.md)
