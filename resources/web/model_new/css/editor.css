@@ -92,14 +92,16 @@ body {
   color: var(--md-on-primary);
 }
 .container {
-  width: 968px;
-  padding: 36px 50px;
+  width: min(100%, 1068px);
+  padding: 36px clamp(16px, 5vw, 50px);
   margin: 50px auto 40px;
+  box-sizing: border-box;
 }
 .editorGroup {
   margin-bottom: 16px;
 }
 .editorTitle {
+  display: block;
   color: var(--md-on-surface);
   margin-bottom: 8px;
   font-weight: 600;
@@ -114,6 +116,7 @@ body {
 }
 .editorInput {
   width: 100%;
+  box-sizing: border-box;
   height: 40px;
   border-radius: 10px;
   border: 1px solid var(--md-outline-variant);
@@ -164,6 +167,7 @@ body {
 .imageGroup {
   display: flex;
   gap: 16px;
+  flex-wrap: wrap;
 }
 .imagePreview {
   position: relative;
@@ -174,15 +178,6 @@ body {
   flex: 0 0 auto;
 }
 .imagePreview img {
-  display: none;
-  position: absolute;
-  right: 0;
-  top: 0;;
-}
-.imagePreview:hover .setModelCover {
-  display: flex;
-}
-.imagePreview:hover img {
   display: block;
 }
 .imageList {
@@ -213,7 +208,7 @@ body {
   background-color: var(--md-primary);
   color: var(--md-on-primary);
   transition: opacity 0.3s;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -298,4 +293,135 @@ hr {
   margin-top: 27px;
   margin-bottom: 19px;
   border-top: 1px solid var(--md-outline-variant)
+}
+
+
+button {
+  font: inherit;
+}
+button:focus-visible,
+label:has(input:focus-visible),
+input:focus-visible,
+[contenteditable="true"]:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 3px;
+}
+.returnBtn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.editorTitle,
+.comment,
+.ck-content {
+  user-select: text;
+}
+.imageDelete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--md-sc-lowest);
+  cursor: pointer;
+}
+.imageDelete img {
+  display: block;
+  position: static;
+  width: 100%;
+  height: 100%;
+}
+.modelCover,
+.setModelCover {
+  min-height: 32px;
+}
+.accessoriesMenu {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.accessoriesButton {
+  background: transparent;
+  cursor: pointer;
+  align-items: center;
+  gap: 4px;
+  white-space: normal;
+  text-align: left;
+}
+.attachment {
+  width: min(100%, 350px);
+  padding: 0;
+  cursor: default;
+}
+.attachment-open {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px 6px 16px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.attachment-open span {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+.attachment-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  background: transparent;
+  cursor: pointer;
+}
+.attachment-delete img {
+  width: 20px;
+  height: 20px;
+}
+.titleJustified {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-inline: 16px;
+  }
+  .topTool {
+    gap: 12px;
+  }
+  .returnBtn {
+    min-width: 0;
+  }
+  .returnBtn span {
+    overflow-wrap: anywhere;
+  }
+  .imageGroup,
+  .imageList {
+    gap: 10px;
+  }
+  .attachment {
+    width: 100%;
+  }
+  .accessory-rule-wrapper {
+    max-width: calc(100vw - 32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

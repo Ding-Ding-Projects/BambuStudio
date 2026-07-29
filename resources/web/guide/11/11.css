@@ -35,13 +35,17 @@
 /* MD3 list row — h48, left aligned, on-surface text */
 .RegionItem
 {
+	display: block;
+	width: 100%;
 	line-height: 48px;
 	height: 48px;
 	padding: 0 16px;
 	text-align: left;
 	color: var(--md-on-surface);
+	background: transparent;
 	border-bottom: 1px solid var(--md-outline-variant);
 	transition: background-color .12s ease;
+	cursor: pointer;
 }
 
 .RegionItem:last-child

@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Cache-Control" content="max-age=7200" />
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Model Editor</title>
   <link rel="stylesheet" type="text/css" href="css/editor.css" />
   <link rel="stylesheet" type="text/css" href="css/tool.css" />
@@ -19,13 +19,13 @@
 
 <body>
   <div class="topTool">
-    <div class="returnBtn" onclick="returnBtn()"><img src="img/return.svg"><label class="trans" tid="t134">Return</label></div>
-    <div class="saveBtn trans" onclick="saveInfo()" tid="t135">Save</div>
+    <button type="button" class="returnBtn" onclick="returnBtn()"><img src="img/return.svg" alt=""><span class="trans" tid="t134">Return</span></button>
+    <button type="button" class="saveBtn trans" onclick="saveInfo()" tid="t135">Save</button>
   </div>
   <div class="container">
     <div class="editorGroup">
-      <div class="editorTitle required trans" tid="t136">Project Name</div>
-      <input type="text" id="projectNameInput" class="editorInput" />
+      <label for="projectNameInput" class="editorTitle required trans" tid="t136">Project Name</label>
+      <input type="text" id="projectNameInput" class="editorInput" required />
     </div>
     <div class="editorGroup">
       <div class="editorTitle required trans" tid="t137">Pictures</div>
@@ -59,9 +59,11 @@
     </div>
     <div class="editorGroup">
       <div class="editorTitle titleJustified"><span class="trans" tid="t130">Add Accessories</span>
-        <div class="accessoriesButton" id="accessories-btn">
-          +<span class="trans" tid="t139">Add accessories</span>
-          <div class="accessory-rule-wrapper" style="display: none;">
+        <div class="accessoriesMenu">
+          <button type="button" class="accessoriesButton" id="accessories-btn" aria-expanded="false" aria-controls="accessory-rule-wrapper">
+            <span aria-hidden="true">+</span><span class="trans" tid="t139">Add accessories</span>
+          </button>
+          <div class="accessory-rule-wrapper" id="accessory-rule-wrapper" style="display: none;">
             <div class="accessory-rule-list">
               <label class="accessory-rule-card">
                 <input type="file" id="bom-input" accept=".xls,.xlsx,.pdf" />
@@ -131,7 +133,7 @@
       <hr />
 
       <div class="editorGroup">
-        <div class="editorTitle trans" tid="t133">Profile Name</div>
+        <label for="ProfileNameInput" class="editorTitle trans" tid="t133">Profile Name</label>
         <input type="text" id="ProfileNameInput" class="editorInput" />
       </div>
       <div class="editorGroup">

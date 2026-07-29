@@ -142,7 +142,7 @@ jobs:
           # reachable for Bambu profiles, and Measure will not open under synthetic
           # input), so the fixes are asserted against the shipped C++ instead of a
           # screenshot. Mutation-checked: reverting any one of them fails this.
-          node --test ui-md3/tests/md3-conversion-contracts.test.mjs
+          node --test ui-md3/tests/md3-conversion-contracts.test.mjs tests/web_resources_accessibility.test.mjs
 
       - name: Build slicer Win
         id: build_win

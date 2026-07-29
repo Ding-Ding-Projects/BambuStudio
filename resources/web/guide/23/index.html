@@ -16,8 +16,8 @@
 </head>
 <body onLoad="OnInit()">
 <div id="Title">
-	<div id="SystemFilamentBtn" class="TitleSelected trans" tid="t109" onClick="OnSelectMenu(1)">System Filaments</div>
-	<div id="CustomFilamentBtn" class="TitleUnselected trans" tid="t110" onClick="OnSelectMenu(2)">Custom Filaments</div>
+	<button type="button" id="SystemFilamentBtn" class="TitleSelected trans" tid="t109" aria-pressed="true" onClick="OnSelectMenu(1)">System Filaments</button>
+	<button type="button" id="CustomFilamentBtn" class="TitleUnselected trans" tid="t110" aria-pressed="false" onClick="OnSelectMenu(2)">Custom Filaments</button>
 </div>
 <div id="Content" class="ZScrol">
 	
@@ -126,7 +126,7 @@
 	
 <div id="CustomFilamentsArea">
 	<div id="CFilament_Btn_Area">
-		<div class="SmallBtn_Green trans" tid="t111" onClick="OnClickCustomFilamentAdd()">Create New</div>
+		<button type="button" class="SmallBtn_Green trans" tid="t111" onClick="OnClickCustomFilamentAdd()">Create New</button>
 	</div>
     <div id="CFilament_List" class="ZScrol">
 <!--		<div class="CFilament_Item">
@@ -266,8 +266,8 @@
 	
 </div>
 <div id="AcceptArea">
-	<div class="NormalBtn trans" tid="t39" id="AcceptBtn"  onclick="ConfirmSelect()">Confirm</div>	
-	<div class="GrayBtn trans" tid="t38" id="PreBtn"  onclick="CancelSelect()">Cancel</div>
+	<button type="button" class="NormalBtn trans" tid="t39" id="AcceptBtn" onclick="ConfirmSelect()">Confirm</button>
+	<button type="button" class="GrayBtn trans" tid="t38" id="PreBtn" onclick="CancelSelect()">Cancel</button>
 </div>
 <div id="NoticeMask">
 </div>
@@ -277,29 +277,16 @@
 	<div id="NoticeText" class="trans" tid="t19">At least one filament must be selected. </div>
 	<div id="NoticeText" class="trans" tid="t20">Do you want to use default filament ?</div>
 	<div id="NoticeBtns">
-		<div class="SmallBtn trans" tid="t21" onClick="ChooseDefaultFilament()">yes</div>
-		<div class="SmallBtn trans" tid="t22" onClick="ShowNotice(0)">no</div>
+		<button type="button" class="SmallBtn trans" tid="t21" onClick="ChooseDefaultFilament()">yes</button>
+		<button type="button" class="SmallBtn trans" tid="t22" onClick="ShowNotice(0)">no</button>
 	</div>
 	</div>
 	</div>
 
-</body>
 <script>
-	document.onkeydown = function (event) {
-		var e = event || window.event || arguments.callee.caller.arguments[0];
-
-		if (e.keyCode == 27)
-			ClosePage();
-
-		if (window.event) {
-			try { e.keyCode = 0; } catch (e) { }
-			e.returnValue = false;
-		}
-	};
-    window.addEventListener('wheel', function (event) {
-        if (event.ctrlKey === true || event.metaKey) {
-            event.preventDefault();
-        }
-    }, { passive: false });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') ClosePage();
+  });
 </script>
+</body>
 </html>
