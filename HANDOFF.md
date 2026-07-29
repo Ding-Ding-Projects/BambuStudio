@@ -199,6 +199,44 @@ Traps the driver already handles, listed so you do not "fix" them back:
 
 ## 5. What changed in this session (all of it)
 
+### 5.0.2 Session of 2026-07-28 (latest) — the UI kit stopped calling a CDN
+
+**What was wrong.** `ui-md3/design-system/ui_kits/bambu-studio/index.html`, published at
+`/app/design-system/ui_kits/bambu-studio/`, loaded React, ReactDOM and `@babel/standalone` from
+unpkg and compiled its own inlined JSX in the visitor's browser on every load. Three third-party
+requests and a 2.7 MB compiler on a site whose documentation opens by promising neither — and with
+unpkg unreachable the page served `<div id="app"></div>` and stopped. Nothing caught it: the layout
+gate's third-party assertion only ever looked at the landing page. The file's own header also
+credited an "assembler" that did not exist anywhere in the tree; the `.jsx` sources and the
+assembled page were kept in step by hand.
+
+**What is now true.**
+
+- React 18.3.1 and ReactDOM 18.3.1 UMD production builds are vendored under the kit's `vendor/`,
+  with their MIT licence. No Babel ships at all.
+- `ui-md3/scripts/jsx-transform.mjs` compiles the JSX at build time — a dependency-free compiler for
+  the subset the kit uses, which **throws** on anything outside it rather than guessing.
+- `ui-md3/scripts/assemble-ui-kit.mjs --check|--write` is the missing assembler, wired into the
+  Pages workflow beside `assemble-index.mjs --check`.
+- `App.jsx` now aliases `useState` to `useAppState`. Babel used to rewrite `const` to `var`, which
+  hid the fact that `Components.jsx` and `App.jsx` both declared a top-level `const { useState }`.
+  Compiled as real `const` in two classic scripts that share a global scope, the second is a
+  `SyntaxError` that kills every script after it. The assembler now fails the build on any such
+  collision.
+
+**Evidence.** All twelve sources compile to a program **byte-for-byte identical to Babel's own
+output** (verified by printing both through Babel's printer). Driving both builds through fourteen
+states — the initial render, all nine workspaces, the Print-plate dialog, its dismissal, and the
+version-history drawer — the compiled page **with the network cut** produced DOM identical to the
+old CDN page **online**, in all fourteen. New regression gates: `assert-pages-layout.mjs` now sweeps
+every published page rather than the root, and `ui-md3/tests/offline-render.test.mjs` loads the
+composed site in headless Chrome with every off-site host blackholed. Both fail on the pre-fix page
+and pass on this one. Full local run: 77 static cases, 11 transform cases, the 444-case runtime
+suite, and the offline suite — all green.
+
+Documentation: [`docs/features/pages/deployment-and-layout-gate.md`](docs/features/pages/deployment-and-layout-gate.md)
+and the kit's own README.
+
 ### 5.0 Session of 2026-07-28 — the GitHub Pages site was rebuilt
 
 **What you are inheriting.** `https://ding-ding-projects.github.io/BambuStudio/` is no longer a

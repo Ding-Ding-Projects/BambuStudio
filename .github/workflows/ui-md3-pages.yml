@@ -124,6 +124,11 @@ jobs:
           # index.html is generated from app/screens/*.template.html; a tree where the
           # two disagree ships a prototype nobody reviewed.
           node ui-md3/scripts/assemble-index.mjs --check
+          # The same contract for the design-system UI kit, whose index.html is
+          # compiled from the .jsx sources beside it. This one also decides
+          # whether the page is self-contained: it refuses to assemble a head
+          # that has drifted back to loading React from a CDN.
+          node ui-md3/scripts/assemble-ui-kit.mjs --check
           node ui-md3/scripts/compose-site.mjs _site
           node ui-md3/tests/assert-pages-layout.mjs _site
           echo "Composed _site:"; find _site -maxdepth 2 -type f | sort
@@ -131,7 +136,13 @@ jobs:
       - name: Verify localization and clipping at runtime
         run: |
           node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs \
-            ui-md3/tests/site-behaviour.test.mjs ui-md3/tests/layout-clipping.test.mjs
+            ui-md3/tests/site-behaviour.test.mjs ui-md3/tests/layout-clipping.test.mjs \
+            ui-md3/tests/jsx-transform.test.mjs
+          # Composes its own copy of the site and loads it in headless Chrome with
+          # every off-site host blackholed. The UI kit shipped a page that rendered
+          # nothing without unpkg for months; nothing caught it, because nothing
+          # had ever tried the site with the network taken away.
+          node --test ui-md3/tests/offline-render.test.mjs
           node ui-md3/tests/serve.mjs _site 4173 >/tmp/bambu-pages-http.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT

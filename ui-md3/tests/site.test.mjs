@@ -523,7 +523,10 @@ test('the published UI kit says ink, not filament, in everything it renders', as
    */
   const IDENTIFIERS = [
     /window\.Screens\.Filament/g, /function Filament/g, /AddFilamentDialog/g,
-    /KIT_FILAMENTS/g, /\bFILAMENTS\b/g, /const filaments/g, /\{filaments\.map/g,
+    // `filaments.map` is a local in Device.jsx. It was written here as
+    // `{filaments.map` back when index.html inlined raw JSX; the assembler
+    // compiles that brace away, so the binding is matched without it.
+    /KIT_FILAMENTS/g, /\bFILAMENTS\b/g, /const filaments/g, /\bfilaments\.map/g,
     /id: 'filament'/g, /'addfil'/g, /Filament\.jsx/g, /filament\.logic\.js/g,
   ];
 
@@ -540,9 +543,11 @@ test('the published UI kit says ink, not filament, in everything it renders', as
   }
   assert.deepEqual(offenders, []);
 
-  // The kit's header claims an assembler inlines the .jsx, and no such assembler
-  // exists here — so the source and the assembled page are kept in step by hand,
-  // and drifting apart is the failure this catches.
+  // The kit's index.html is generated from the .jsx sources by
+  // ui-md3/scripts/assemble-ui-kit.mjs, and CI runs that script with --check, so
+  // a page that disagrees with its sources cannot deploy. This stays as the
+  // reader-facing half of the contract: the vocabulary above is checked in the
+  // sources, and these are the strings the assembled page must actually carry.
   const assembled = await readFile(path.join(kit, 'index.html'), 'utf8');
   for (const phrase of ['Ink Manager', 'Search inks', 'New ink', 'Ink Dispenser mapping',
     'Sync Ink Dispenser', 'No inks match your filter.']) {

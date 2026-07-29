@@ -61,6 +61,24 @@
 
 ## Landed
 
+### The published UI kit became self-contained (2026-07-28)
+
+- Removed the last three third-party requests on the site. The design-system UI kit at
+  `/app/design-system/ui_kits/bambu-studio/` had been loading React, ReactDOM and
+  `@babel/standalone` from unpkg and compiling its own JSX in the browser on every visit; with
+  unpkg unreachable it rendered nothing at all.
+- **Vendored** React 18.3.1 and ReactDOM 18.3.1 locally (MIT, licence included) and **removed the
+  Babel runtime entirely** by compiling the JSX at build time.
+- Wrote the assembler the kit's header had credited for years without it existing:
+  `assemble-ui-kit.mjs --check|--write`, plus `jsx-transform.mjs`, a dependency-free JSX compiler
+  that throws on anything outside the supported subset instead of guessing. Its output is
+  byte-for-byte identical to Babel's for all twelve sources.
+- Fixed a latent `const` collision between `Components.jsx` and `App.jsx` that Babel's `const`→`var`
+  rewrite had been hiding, and taught the assembler to fail the build on any such collision.
+- Closed the hole that let this survive: the layout gate's third-party assertion now sweeps **every**
+  published page rather than only the landing page, and a new suite loads the composed site in
+  headless Chrome with every off-site host blackholed and requires it to render.
+
 ### GitHub Pages site rebuilt as a tabbed Material 3 app (2026-07-28)
 
 - Replaced the single scrolling landing page with a **browser-style tabbed site** of eight tabs:

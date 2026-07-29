@@ -10,6 +10,15 @@ notifications, a complete changelog viewer, and per-element appearance customiza
 Everything is served from this repository. There are no third-party requests, no CDN, no analytics
 and no cookie banner; preferences live in the visitor's own browser and nowhere else.
 
+That claim is now enforced rather than merely stated. `assert-pages-layout.mjs` sweeps every
+published page for an off-site script or stylesheet, and `offline-render.test.mjs` loads the
+composed site in a headless browser with every off-site host unreachable and requires it to render
+anyway. Both were added on 2026-07-28, after the design-system UI kit under `/app/` was found
+loading React, ReactDOM and `@babel/standalone` from unpkg — which also meant it compiled its own
+source in the visitor's browser on every visit, and rendered nothing at all when unpkg was blocked
+or down. See [deployment and the layout gate](deployment-and-layout-gate.md) for how both checks
+work.
+
 ## Features
 
 - [Tabbed navigation](tabbed-navigation.md) — the strip, its overflow surface, reordering, pinning,

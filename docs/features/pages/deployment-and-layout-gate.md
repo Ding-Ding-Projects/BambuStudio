@@ -26,6 +26,32 @@ complete showcase and every bundled font ship, no third-party font or script is 
 artwork the site modules build at runtime resolves too — a renamed image fails the deploy instead of
 404-ing live.
 
+The third-party check sweeps **every** published page, not just the landing page. It was scoped to
+the root until 2026-07-28, which is how the design-system UI kit at
+`/app/design-system/ui_kits/bambu-studio/` spent months loading React, ReactDOM and
+`@babel/standalone` from unpkg — on a site whose first documented promise is that it makes no
+third-party requests. The page it broke was simply never the page being inspected. Protocol-relative
+`//host/path` URLs count as off-site too; they are same-origin only by accident of how the page was
+reached.
+
+## Assembling generated pages
+
+Two pages in the tree are generated and are checked for staleness before the site is composed:
+
+| Script | Generates | From |
+|:---|:---|:---|
+| `assemble-index.mjs --check` | `ui-md3/index.html` | `ui-md3/app/screens/*.template.html` |
+| `assemble-ui-kit.mjs --check` | the UI kit's `index.html` | the twelve `.jsx` sources beside it |
+
+The UI kit's assembler also compiles the JSX, using `ui-md3/scripts/jsx-transform.mjs` — a
+dependency-free compiler for the subset the kit uses, whose output matches
+`@babel/plugin-transform-react-jsx`'s classic runtime and which throws on anything outside that
+subset rather than compiling it to something merely plausible. That is what removed the in-browser
+Babel transform the kit used to perform on every page load. The assembler refuses to build a page
+whose head has drifted back to a CDN, and refuses one where two sources declare the same top-level
+`const` — the compiled blocks are classic scripts sharing a global scope, so a collision is a
+`SyntaxError` that silently kills every script after it.
+
 ## The gate
 
 Before anything is uploaded, the workflow runs:
@@ -36,7 +62,18 @@ Before anything is uploaded, the workflow runs:
 | `ui-md3/tests/site.test.mjs` | copy ladders, placeholder parity, facts-per-level, key coverage, regex bounds, date parsing, changelog data integrity, dim sum catalogue |
 | `ui-md3/tests/layout-clipping.test.mjs` | static contracts: no ellipsis, no horizontal scroller, 44px floors, the strip's overflow stages, tablist semantics |
 | `ui-md3/tests/site-behaviour.test.mjs` | storage round-trips, element-appearance apply/reset, notification recording and persistence |
+| `ui-md3/tests/jsx-transform.test.mjs` | the JSX compiler: agreement with Babel's output and whitespace rules, and refusal of everything outside its subset |
+| `ui-md3/tests/offline-render.test.mjs` | the composed site rendering in a headless browser with **every off-site host blackholed** |
 | `ui-md3/tests/runtime-layout-clipping.mjs` | **444 measured site cases plus 6 that load the published prototype**, in a real headless browser |
+
+`offline-render.test.mjs` composes its own copy of the site, serves it, and points Chrome at it with
+`--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE 127.0.0.1`, so loopback still connects and everything
+else fails as if the machine were unplugged. It then requires that real UI came back: that the mount
+point filled, and that a floor of elements and text rendered. A blank page and a page that quietly
+depends on a CDN both fail. The static contract catches an off-site URL that is *written down*; this
+catches one that is *reached*, and it is the check that would have caught the UI kit years earlier.
+
+Both suites share the Chrome plumbing in `ui-md3/tests/devtools.mjs`.
 
 The runtime harness is the one that matters. It drives Chrome through the DevTools protocol against
 a locally served copy of the composed tree:

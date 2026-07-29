@@ -69,6 +69,35 @@ assert.doesNotMatch(
   /<script\b[^>]*\bsrc=(['"])https?:/i,
   'The composed landing page must not load third-party script.'
 );
+
+// The same rule, applied to everything published rather than to the landing
+// page alone. Checking only the root is how the UI kit under /app/ spent so
+// long fetching React, ReactDOM and @babel/standalone from unpkg on a site
+// whose documentation promises no third-party requests at all: the page that
+// broke the promise was never the page being inspected.
+//
+// Protocol-relative URLs (//host/path) count as off-site too — they are only
+// same-origin by accident of how the page was reached.
+const OFF_SITE_SCRIPT = /<script\b[^>]*\bsrc=(['"])\s*(?:https?:)?\/\//i;
+const OFF_SITE_LINK = /<link\b[^>]*\bhref=(['"])\s*(?:https?:)?\/\//i;
+const publishedPages = [];
+async function findPages(directory, prefix) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const next = path.join(directory, entry.name);
+    if (entry.isDirectory()) await findPages(next, `${prefix}${entry.name}/`);
+    else if (entry.name.toLowerCase().endsWith('.html')) publishedPages.push(`${prefix}${entry.name}`);
+  }
+}
+await findPages(siteRoot, '');
+assert.ok(
+  publishedPages.length >= 2,
+  `Expected the composed site to publish several pages; found ${publishedPages.length}`
+);
+for (const page of publishedPages) {
+  const markup = await readFile(path.join(siteRoot, page), 'utf8');
+  assert.doesNotMatch(markup, OFF_SITE_SCRIPT, `${page} loads a script from another origin.`);
+  assert.doesNotMatch(markup, OFF_SITE_LINK, `${page} loads a stylesheet or font from another origin.`);
+}
 assert.ok(localImages.length >= 1, 'The composed landing page must publish its hero image.');
 await access(path.join(siteRoot, 'app', 'index.html'));
 // The landing page loads the shared localisation runtime from the site root.

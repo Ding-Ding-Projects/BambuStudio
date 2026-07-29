@@ -1,4 +1,4 @@
-const { useState } = React;
+const { useState: useAppState } = React;
 
 const TABS = [
   { id: 'home', label: 'Home', icon: 'home' }, { id: 'prepare', label: 'Prepare', icon: 'view_in_ar' },
@@ -20,15 +20,15 @@ function accentVars(seed, theme){
 }
 
 function App() {
-  const [view, setView] = useState('prepare');
-  const [theme, setTheme] = useState('dark');
-  const [density, setDensity] = useState('comfortable');
-  const [accent, setAccent] = useState('#22c55e');
-  const [pop, setPop] = useState(false);
-  const [dialog, setDialog] = useState(null);
-  const [history, setHistory] = useState(false);
-  const [snacks, setSnacks] = useState([]);
-  const [hovTab, setHovTab] = useState(null);
+  const [view, setView] = useAppState('prepare');
+  const [theme, setTheme] = useAppState('dark');
+  const [density, setDensity] = useAppState('comfortable');
+  const [accent, setAccent] = useAppState('#22c55e');
+  const [pop, setPop] = useAppState(false);
+  const [dialog, setDialog] = useAppState(null);
+  const [history, setHistory] = useAppState(false);
+  const [snacks, setSnacks] = useAppState([]);
+  const [hovTab, setHovTab] = useAppState(null);
   const notify = (message, icon) => {
     const id = Date.now() + Math.random();
     setSnacks(s => [...s, { id, message, icon: icon || 'check_circle' }].slice(-3));
