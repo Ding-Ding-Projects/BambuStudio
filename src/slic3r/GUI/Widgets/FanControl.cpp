@@ -10,7 +10,72 @@
 #include <wx/simplebook.h>
 #include <wx/dcgraph.h>
 
+#include <algorithm>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
+
 namespace Slic3r { namespace GUI {
+
+namespace {
+
+#if wxUSE_ACCESSIBILITY
+class FanOperateAccessible final : public wxWindowAccessible
+{
+public:
+    explicit FanOperateAccessible(FanOperate *operate)
+        : wxWindowAccessible(operate), m_operate(operate)
+    {
+    }
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (child_id != wxACC_SELF || !name)
+            return wxACC_NOT_IMPLEMENTED;
+        *name = m_operate->GetName();
+        if (name->IsEmpty() || *name == wxASCII_STR(wxPanelNameStr))
+            *name = _L("Fan speed");
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (child_id != wxACC_SELF || !role)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_SPINBUTTON;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetValue(int child_id, wxString *value) override
+    {
+        if (child_id != wxACC_SELF || !value)
+            return wxACC_NOT_IMPLEMENTED;
+        *value = wxString::Format(wxT("%d%%"), m_operate->get_fan_speeds() * 10);
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (child_id != wxACC_SELF || !state)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = 0;
+        if (m_operate->AcceptsFocusFromKeyboard())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_operate->HasFocus())
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (!m_operate->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_operate->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+private:
+    FanOperate *m_operate;
+};
+#endif
+
+} // namespace
 
 wxDEFINE_EVENT(EVT_FAN_SWITCH_ON, wxCommandEvent);
 wxDEFINE_EVENT(EVT_FAN_SWITCH_OFF, wxCommandEvent);
@@ -179,7 +244,7 @@ FanOperate::FanOperate(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
 
 void FanOperate::create(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
 {
-    wxWindow::Create(parent, id, pos, size, wxBORDER_NONE);
+    wxWindow::Create(parent, id, pos, size, wxBORDER_NONE | wxWANTS_CHARS);
     // An outlined stepper sitting on the fan card: share the card's surface so
     // only the OutlineVariant frame separates the two.
     SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
@@ -192,10 +257,17 @@ void FanOperate::create(wxWindow *parent, wxWindowID id, const wxPoint &pos, con
     Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND);});
     Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW);});
     Bind(wxEVT_LEFT_DOWN, &FanOperate::on_left_down, this);
+    Bind(wxEVT_KEY_DOWN, &FanOperate::on_key_down, this);
+    Bind(wxEVT_SET_FOCUS, &FanOperate::on_focus, this);
+    Bind(wxEVT_KILL_FOCUS, &FanOperate::on_focus, this);
+#if wxUSE_ACCESSIBILITY
+    SetAccessible(new FanOperateAccessible(this));
+#endif
 }
 
 void FanOperate::on_left_down(wxMouseEvent& event)
 {
+     SetFocus();
      auto mouse_pos = ClientToScreen(event.GetPosition());
      auto win_pos = ClientToScreen(wxPoint(0, 0));
 
@@ -218,11 +290,76 @@ void FanOperate::set_machine_obj(MachineObject *obj)
     m_obj = obj;
 }
 
+void FanOperate::SetAccessibleName(const wxString& name)
+{
+    if (GetName() == name)
+        return;
+    SetName(name);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+}
+
 void FanOperate::set_fan_speeds(int g)
 {
-    m_current_speeds = g;
+    const int speed = std::max(0, std::min(10, g));
+    if (m_current_speeds == speed)
+        return;
+    m_current_speeds = speed;
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_VALUECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
+
+bool FanOperate::AccessibilityStep(bool increase)
+{
+    if (!IsEnabled() || !IsShown())
+        return false;
+    const int before = m_current_speeds;
+    if (increase)
+        add_fan_speeds();
+    else
+        decrease_fan_speeds();
+    return m_current_speeds != before;
+}
+
+void FanOperate::on_key_down(wxKeyEvent& event)
+{
+    switch (event.GetKeyCode()) {
+    case WXK_LEFT:
+    case WXK_DOWN:
+    case WXK_NUMPAD_SUBTRACT:
+        AccessibilityStep(false);
+        return;
+    case WXK_RIGHT:
+    case WXK_UP:
+    case WXK_NUMPAD_ADD:
+        AccessibilityStep(true);
+        return;
+    default:
+        event.Skip();
+    }
+}
+
+void FanOperate::on_focus(wxFocusEvent& event)
+{
+    Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    if (event.GetEventType() == wxEVT_SET_FOCUS)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    event.Skip();
+}
+
+#ifdef __WIN32__
+WXLRESULT FanOperate::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
+{
+    if (nMsg == WM_GETDLGCODE)
+        return DLGC_WANTARROWS;
+    return wxWindow::MSWWindowProc(nMsg, wParam, lParam);
+}
+#endif
 
 bool FanOperate::check_printing_state()
 {
@@ -242,7 +379,7 @@ void FanOperate::add_fan_speeds()
     }
 
     if (m_current_speeds + 1 > m_max_speeds) return;
-    set_fan_speeds(++m_current_speeds);
+    set_fan_speeds(m_current_speeds + 1);
     post_event(wxCommandEvent(EVT_FAN_ADD));
     post_event(wxCommandEvent(EVT_FAN_SWITCH_ON));
 }
@@ -255,12 +392,11 @@ void FanOperate::decrease_fan_speeds()
 
     //turn off
     if (m_current_speeds - 1 < m_min_speeds) {
-        m_current_speeds = 0;
-        set_fan_speeds(m_current_speeds);
+        set_fan_speeds(0);
         post_event(wxCommandEvent(EVT_FAN_SWITCH_OFF));
     }
     else {
-        set_fan_speeds(--m_current_speeds);
+        set_fan_speeds(m_current_speeds - 1);
     }
      post_event(wxCommandEvent(EVT_FAN_DEC));
 
@@ -304,7 +440,9 @@ void FanOperate::render(wxDC& dc)
 void FanOperate::doRender(wxDC& dc)
 {
     wxSize size = GetSize();
-    dc.SetPen(wxPen(DRAW_OPERATE_LINE_COLOUR));
+    dc.SetPen(wxPen(HasFocus() ? StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device)
+                               : DRAW_OPERATE_LINE_COLOUR,
+                    HasFocus() ? std::max(FromDIP(2), 1) : 1));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, size.x, size.y, FromDIP(MD3::Metrics::radius_tiny));
 
@@ -564,6 +702,9 @@ void FanControlNew::set_machine_obj(MachineObject* obj)
 
 void FanControlNew::set_name(wxString name)
 {
+    if (m_fan_operate)
+        m_fan_operate->SetAccessibleName(wxString::Format(_L("%s fan speed"), name));
+
     if (m_switch_button) {
         // Name the switch after the fan it drives, before the label below gets
         // line-broken: assistive tech announces "Parts, switch, checked" rather
