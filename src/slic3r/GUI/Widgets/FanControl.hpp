@@ -107,10 +107,23 @@ public:
 
 public:
     void    set_fan_speeds(int g);
+    int     get_fan_speeds() const { return m_current_speeds; }
     bool    check_printing_state();
     void    add_fan_speeds();
     void    decrease_fan_speeds();
+
+    bool AcceptsFocusFromKeyboard() const override { return IsEnabled() && IsShown(); }
+    bool AccessibilityStep(bool increase);
+    void SetAccessibleName(const wxString& name);
+
+protected:
+#ifdef __WIN32__
+    WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam) override;
+#endif
+
 private:
+    void    on_key_down(wxKeyEvent& event);
+    void    on_focus(wxFocusEvent& event);
     int     m_current_speeds;
     int     m_target_speed;
     int     m_min_speeds;
@@ -118,7 +131,7 @@ private:
     ScalableBitmap   m_bitmap_add;
     ScalableBitmap   m_bitmap_decrease;
 
-    MachineObject* m_obj;
+    MachineObject* m_obj{ nullptr };
 };
 
 

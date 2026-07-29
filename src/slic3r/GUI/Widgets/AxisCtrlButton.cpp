@@ -1,4 +1,5 @@
 #include "AxisCtrlButton.hpp"
+#include "../I18N.hpp"
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
@@ -6,6 +7,131 @@
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
+
+namespace {
+
+#if wxUSE_ACCESSIBILITY
+class AxisCtrlButtonAccessible final : public wxWindowAccessible
+{
+public:
+    explicit AxisCtrlButtonAccessible(AxisCtrlButton *button)
+        : wxWindowAccessible(button), m_button(button)
+    {
+    }
+
+    wxAccStatus GetChildCount(int *child_count) override
+    {
+        if (!child_count)
+            return wxACC_NOT_IMPLEMENTED;
+        *child_count = 5;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetChild(int child_id, wxAccessible **child) override
+    {
+        if (!child || child_id < 1 || child_id > 5)
+            return wxACC_NOT_IMPLEMENTED;
+        *child = nullptr;
+        return wxACC_OK;
+    }
+
+    wxAccStatus HitTest(const wxPoint& point, int *child_id, wxAccessible **child) override
+    {
+        if (!child_id || !child)
+            return wxACC_NOT_IMPLEMENTED;
+        *child_id = m_button->AccessibilityChildFromScreenPoint(point);
+        *child = nullptr;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetLocation(wxRect& location, int child_id) override
+    {
+        if (child_id < wxACC_SELF || child_id > 5)
+            return wxACC_NOT_IMPLEMENTED;
+        location = m_button->AccessibilityLocationForChild(child_id);
+        return location.IsEmpty() ? wxACC_NOT_IMPLEMENTED : wxACC_OK;
+    }
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (!name || child_id < wxACC_SELF || child_id > 5)
+            return wxACC_NOT_IMPLEMENTED;
+        if (child_id == wxACC_SELF) {
+            *name = m_button->GetName();
+            if (name->IsEmpty() || *name == wxASCII_STR(wxPanelNameStr))
+                *name = _L("XY axis controls");
+        } else {
+            *name = m_button->AccessibilityNameForChild(child_id);
+        }
+        return name->IsEmpty() ? wxACC_NOT_IMPLEMENTED : wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (!role || child_id < wxACC_SELF || child_id > 5)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = child_id == wxACC_SELF ? wxROLE_SYSTEM_GROUPING : wxROLE_SYSTEM_PUSHBUTTON;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (!state || child_id < wxACC_SELF || child_id > 5)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = 0;
+        if (m_button->AcceptsFocusFromKeyboard())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_button->HasFocus() &&
+            ((child_id == wxACC_SELF && !m_button->AccessibilityHasCurrentChild()) ||
+             m_button->AccessibilityChildIsCurrent(child_id)))
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (m_button->AccessibilityChildIsPressed(child_id))
+            *state |= wxACC_STATE_SYSTEM_PRESSED;
+        if (!m_button->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_button->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetFocus(int *child_id, wxAccessible **child) override
+    {
+        if (!child_id || !child)
+            return wxACC_NOT_IMPLEMENTED;
+        *child_id = 0;
+        *child = nullptr;
+        if (!m_button->HasFocus())
+            return wxACC_OK;
+        if (m_button->AccessibilityHasCurrentChild()) {
+            *child_id = m_button->AccessibilityCurrentChildId();
+        } else {
+            *child = this;
+        }
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetDefaultAction(int child_id, wxString *action_name) override
+    {
+        if (!action_name || child_id < 1 || child_id > 5)
+            return wxACC_NOT_IMPLEMENTED;
+        *action_name = _L("Press");
+        return wxACC_OK;
+    }
+
+    wxAccStatus DoDefaultAction(int child_id) override
+    {
+        return m_button->AccessibilityActivate(child_id) ? wxACC_OK : wxACC_FAIL;
+    }
+
+private:
+    AxisCtrlButton *m_button;
+};
+#endif
+
+} // namespace
 
 // MD3 Device-scheme tokens for the XY jog grid (Device.jsx Move control). The grid
 // is used only in the Device/Monitor control column, so its tiles, accent and home
@@ -51,6 +177,23 @@ AxisCtrlButton::AxisCtrlButton(wxWindow *parent, ScalableBitmap &icon, long stly
 
     state_handler.attach({ &border_color, &background_color });
     state_handler.update_binds();
+
+#if wxUSE_ACCESSIBILITY
+    SetAccessible(new AxisCtrlButtonAccessible(this));
+#endif
+    Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &event) {
+        Refresh(false);
+#if wxUSE_ACCESSIBILITY
+        const int child_id = AccessibilityCurrentChildId();
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT,
+                                  child_id == 0 ? wxACC_SELF : child_id);
+#endif
+        event.Skip();
+    });
+    Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &event) {
+        Refresh(false);
+        event.Skip();
+    });
 }
 
 void AxisCtrlButton::updateParams() {}
@@ -107,7 +250,71 @@ void AxisCtrlButton::SetBitmap(ScalableBitmap &bmp)
 
 void AxisCtrlButton::SetStep(int mm)
 {
-    m_step = (mm == 1) ? 1 : 10;
+    const int step = (mm == 1) ? 1 : 10;
+    if (m_step == step)
+        return;
+    m_step = step;
+#if wxUSE_ACCESSIBILITY
+    for (int child_id = 1; child_id <= 5; ++child_id)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, child_id);
+#endif
+}
+
+wxString AxisCtrlButton::AccessibilityNameForChild(int child_id) const
+{
+    switch (child_id) {
+    case 1: return wxString::Format(_L("Move Y up %d mm"), m_step);
+    case 2: return wxString::Format(_L("Move X left %d mm"), m_step);
+    case 3: return _L("Home XY axes");
+    case 4: return wxString::Format(_L("Move X right %d mm"), m_step);
+    case 5: return wxString::Format(_L("Move Y down %d mm"), m_step);
+    default: return wxString();
+    }
+}
+
+bool AxisCtrlButton::AccessibilityActivate(int child_id)
+{
+    if (!IsEnabled() || !IsShown() || child_id < 1 || child_id > 5)
+        return false;
+    current_cell = static_cast<unsigned char>(child_id - 1);
+    Refresh(false);
+    sendButtonEvent();
+    return true;
+}
+
+bool AxisCtrlButton::AccessibilityHasCurrentChild() const
+{
+    return current_cell >= CELL_UP && current_cell <= CELL_DOWN;
+}
+
+int AxisCtrlButton::AccessibilityCurrentChildId() const
+{
+    return AccessibilityHasCurrentChild() ? static_cast<int>(current_cell) + 1 : 0;
+}
+
+bool AxisCtrlButton::AccessibilityChildIsCurrent(int child_id) const
+{
+    return child_id >= 1 && child_id <= 5 && current_cell == child_id - 1;
+}
+
+bool AxisCtrlButton::AccessibilityChildIsPressed(int child_id) const
+{
+    return pressedDown && AccessibilityChildIsCurrent(child_id);
+}
+
+wxRect AxisCtrlButton::AccessibilityLocationForChild(int child_id) const
+{
+    wxRect location = child_id == 0 ? GetClientRect() : cellRect(child_id - 1);
+    if (location.IsEmpty())
+        return location;
+    location.SetPosition(ClientToScreen(location.GetPosition()));
+    return location;
+}
+
+int AxisCtrlButton::AccessibilityChildFromScreenPoint(const wxPoint& point) const
+{
+    const int cell = cellFromPoint(ScreenToClient(point));
+    return cell >= CELL_UP && cell <= CELL_DOWN ? cell + 1 : 0;
 }
 
 void AxisCtrlButton::Rescale() {
@@ -208,7 +415,8 @@ void AxisCtrlButton::render(wxDC& dc)
 
         gc->SetBrush(wxBrush(fill));
         if (active)
-            gc->SetPen(wxPen(border_color.colorForStates(state_handler.states() | StateColor::Hovered), 2));
+            gc->SetPen(wxPen(border_color.colorForStates(state_handler.states() | StateColor::Hovered),
+                               HasFocus() ? std::max(FromDIP(2), 1) : 2));
         else
             gc->SetPen(*wxTRANSPARENT_PEN);
         gc->DrawRoundedRectangle(r.x, r.y, r.width, r.height, TILE_RADIUS);
@@ -235,6 +443,13 @@ void AxisCtrlButton::render(wxDC& dc)
             gc->DrawText(s.fallback, r.x + (r.width - gw) / 2, r.y + (r.height - gh) / 2);
         }
     }
+
+    if (HasFocus() && !AccessibilityHasCurrentChild()) {
+        const wxRect grid_rect(ox, oy, 3 * tile + 2 * gap, 3 * tile + 2 * gap);
+        gc->SetBrush(*wxTRANSPARENT_BRUSH);
+        gc->SetPen(wxPen(axis_accent_col(), std::max(FromDIP(2), 1)));
+        gc->DrawRoundedRectangle(grid_rect.x, grid_rect.y, grid_rect.width, grid_rect.height, TILE_RADIUS);
+    }
 }
 
 void AxisCtrlButton::mouseDown(wxMouseEvent& event)
@@ -245,17 +460,27 @@ void AxisCtrlButton::mouseDown(wxMouseEvent& event)
     SetFocus();
     CaptureMouse();
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    const int child_id = AccessibilityCurrentChildId();
+    if (child_id != 0)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, child_id);
+#endif
 }
 
 void AxisCtrlButton::mouseReleased(wxMouseEvent& event)
 {
     event.Skip();
     if (pressedDown) {
+        const int child_id = AccessibilityCurrentChildId();
         pressedDown = false;
         if (HasCapture()) ReleaseMouse();
         if (wxRect({0, 0}, GetSize()).Contains(event.GetPosition()))
             sendButtonEvent();
         Refresh();
+#if wxUSE_ACCESSIBILITY
+        if (child_id != 0)
+            wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, child_id);
+#endif
     }
 }
 
@@ -266,6 +491,13 @@ void AxisCtrlButton::mouseMoving(wxMouseEvent& event)
     if (cell != current_cell) {
         current_cell = cell;
         Refresh();
+#if wxUSE_ACCESSIBILITY
+        if (HasFocus()) {
+            const int child_id = AccessibilityCurrentChildId();
+            wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT,
+                                      child_id == 0 ? wxACC_SELF : child_id);
+        }
+#endif
     }
 }
 
@@ -275,12 +507,16 @@ void AxisCtrlButton::mouseLeave(wxMouseEvent& event)
     if (!pressedDown && current_cell != CELL_NONE) {
         current_cell = CELL_NONE;
         Refresh();
+#if wxUSE_ACCESSIBILITY
+        if (HasFocus())
+            wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     }
 }
 
 void AxisCtrlButton::keyDown(wxKeyEvent& event)
 {
-    if (!IsEnabled()) { event.Skip(); return; }
+    if (!IsEnabled() || !IsShown()) { event.Skip(); return; }
     int cell = CELL_NONE;
     switch (event.GetKeyCode()) {
     case WXK_UP:    cell = CELL_UP; break;
@@ -292,8 +528,20 @@ void AxisCtrlButton::keyDown(wxKeyEvent& event)
     }
     current_cell = (unsigned char) cell;
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, cell + 1);
+#endif
     sendButtonEvent();
 }
+
+#ifdef __WIN32__
+WXLRESULT AxisCtrlButton::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
+{
+    if (nMsg == WM_GETDLGCODE)
+        return DLGC_WANTARROWS;
+    return wxWindow::MSWWindowProc(nMsg, wParam, lParam);
+}
+#endif
 
 void AxisCtrlButton::sendButtonEvent()
 {
