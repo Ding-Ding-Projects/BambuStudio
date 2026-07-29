@@ -42,9 +42,15 @@ SidePopup::~SidePopup()
 
 void SidePopup::OnDismiss()
 {
+    if (dismissing)
+        return;
+
+    // Restore focus while this transient window is still alive. The base
+    // implementation can destroy it synchronously on some wx backends.
+    dismissing = true;
     Slic3r::GUI::wxGetApp().set_side_menu_popup_status(false);
-    PopupWindow::OnDismiss();
     restoreInvokerFocus();
+    PopupWindow::OnDismiss();
 }
 
 bool SidePopup::ProcessLeftDown(wxMouseEvent& event)
