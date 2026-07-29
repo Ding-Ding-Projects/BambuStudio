@@ -227,28 +227,39 @@ Full documentation: [`docs/features/pages/`](docs/features/pages/README.md).
 was filed) and #24 (the prototype's eight defects, each closed with measured evidence). #16 and #15
 are untouched and remain the concurrent session's.
 
-#### 5.0.1 What is verified, and the one thing that is not
-
-Do not read "fixed" as "proven" here. The three event paths into the Pages workflow have different
-evidence behind them:
+#### 5.0.1 All three event paths are verified — and why the run history looks otherwise
 
 | Path | Evidence |
 | --- | --- |
 | `push` → deploy | **Verified.** Many green runs, most recently `da17ee1a7`. |
-| `workflow_dispatch` → deploy | **Verified.** Run `30404583829` shows `deploy` running and `redeploy-on-release` **skipped**, which is the intended job selection. |
-| `release` → dispatch → deploy | **NOT VERIFIED.** It has never executed once. |
+| `workflow_dispatch` → deploy | **Verified.** Run `30404583829`: `deploy` ran, `redeploy-on-release` **skipped**. |
+| `release` → dispatch → deploy | **Verified** by `md3-v62`, tagged at `d9159322e`. |
 
-The release path cannot be proven on demand, and this is the trap: **a `release` event runs the
-workflow file as it existed at the tag's commit.** Releases tagged at commits older than `5340bd466`
-run the *old* workflow and fail the old way — zero steps, ~2 seconds, no log — no matter what
-`master` says. `md3-v58` (`6d1ad69de`), `md3-v59` (`2dd74cfef`) and `md3-v60` (`a00319851`) all did
-exactly that *after* the fix landed, and `a90d72989`, `b6718eac0` and `65fcd2bc0` were still queued
-to do the same.
+The release path proved out like this, and it is the only release run in the repository's history
+that has not failed — 17 release runs, 16 failures, 1 success:
 
-So: **red release runs in the Actions tab are expected until the pre-fix queue drains.** The first
-release whose tag carries the fix is the real test. Success looks like `redeploy-on-release`
-**running** (not skipped) with a `workflow_dispatch` run appearing behind it at `master`. Until you
-see that, the correct word is "unverified".
+```
+00:09:57  release md3-v62 (tag at d9159322e, contains the fix) -> run 30410305947  success
+            redeploy-on-release : success, 3 steps
+            deploy              : skipped
+            log                 : "Dispatched a master-ref Pages deploy for md3-v62."
+00:10:07  workflow_dispatch at master -> run 30410314986  success (deployed)
+```
+
+**Why the Actions tab is full of red release runs anyway**, and the trap to inherit: **a `release`
+event runs the workflow file as it existed at the tag's commit.** Releases tagged at commits older
+than `5340bd466` run the *old* workflow and fail the old way — zero steps, ~2 seconds, no log — no
+matter what `master` says. `md3-v58` (`6d1ad69de`), `md3-v59` (`2dd74cfef`), `md3-v60`
+(`a00319851`) and `md3-v61` (`a90d72989`) all did exactly that *after* the fix landed. The same rule
+explains the original 12-of-12: eleven releases published while `master` carried the `release:`
+trigger produced zero release runs, because their tag commits predated the trigger.
+
+So before treating a red release run as a regression, check whether its tag predates the fix:
+
+```bash
+gh release view <tag> --json targetCommitish
+git merge-base --is-ancestor 5340bd466 <sha>   # exit 0 = post-fix = should have dispatched
+```
 
 **Three claims in this file were wrong earlier and are worth knowing as a pattern**, because the
 same mistake recurred four times: a check that was sound about what it read, wrapped in a claim
@@ -552,13 +563,9 @@ to make the branch list look tidy.
 
 **Pages/site work owed (see §5.0 and §5.0.1):**
 
-0. **Confirm the `release` → dispatch path actually runs**, once a release tagged at a commit
-   containing `5340bd466` publishes. Nothing else in the Pages workflow is unproven. Success is
-   `redeploy-on-release` **running** rather than skipped, plus a `workflow_dispatch` run at
-   `master` behind it. Red release runs before that point are the pre-fix queue draining and are
-   expected — check the tag's commit before treating one as a regression:
-   `gh release view <tag> --json targetCommitish` then
-   `git merge-base --is-ancestor 5340bd466 <sha>`.
+0. ~~Confirm the `release` → dispatch path~~ — **done**, proven by `md3-v62` (§5.0.1). Nothing in
+   the Pages workflow is unproven now. Red release runs from tags older than `5340bd466` are the
+   pre-fix queue draining, not regressions; check the tag's commit before reacting.
 0b. **`README.md` and `ROADMAP.md` still describe the renamed native screens by their old labels**
    (`Filament` cards, `AMS` dialogs, the wizard's filament page). The native UI, DeviceWeb, the
    prototype, the site and the design system have all moved to ink / Ink Dispenser; those two files

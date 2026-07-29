@@ -42,8 +42,14 @@ Two things about that fix are worth stating plainly rather than discovering late
 
 **It is not retroactive.** A `release` event runs the workflow file as it existed at the **tag's**
 commit, not as it exists on `master`. Releases tagged at commits older than the fix keep failing
-the old way until they drain — `md3-v58` and `md3-v59` both did, after the fix landed. It is
-therefore **unverified** until a release tagged at a commit containing it publishes.
+the old way until they drain — `md3-v58` through `md3-v61` all did, after the fix landed. So a red
+release run is not automatically a regression; check whether its tag predates `5340bd466` first.
+
+**It is verified.** `md3-v62`, tagged at `d9159322e`, is the first release whose tag carried the
+fix, and it is the only release run in this repository's history that has not failed (17 runs, 16
+failures, 1 success). `redeploy-on-release` ran and `deploy` was skipped, the log reads
+`Dispatched a master-ref Pages deploy for md3-v62`, and a `workflow_dispatch` run appeared at
+`master` ten seconds later.
 
 **`GITHUB_TOKEN` can dispatch.** An earlier version of this page said it could not; that was wrong.
 GitHub's recursive-trigger prevention exempts `workflow_dispatch` and `repository_dispatch`, which
