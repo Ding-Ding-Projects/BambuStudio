@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import {
   buildEnglishCantoneseTranslation,
   languageFallbacks,
+  splitStructuredTranslation,
 } from '../src/i18nResources.ts';
 
 type TranslationTable = Record<string, string>;
@@ -63,3 +64,8 @@ assert.equal(
   bilingual['Remain {{percent}}%'],
   'Remain {{percent}}%\n粵語：剩餘 {{percent}}%',
 );
+assert.deepEqual(splitStructuredTranslation('Remain 50%'), { primary: 'Remain 50%' });
+assert.deepEqual(splitStructuredTranslation('Remain 50%\n粵語：剩餘 50%'), {
+  primary: 'Remain 50%',
+  secondary: '粵語：剩餘 50%',
+});

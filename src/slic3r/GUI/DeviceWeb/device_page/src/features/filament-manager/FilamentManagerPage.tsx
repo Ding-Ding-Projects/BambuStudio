@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import useStore from '../../store/AppStore';
 import { useFilamentManagerBridge } from './useFilamentManagerBridge';
@@ -10,6 +10,7 @@ import { CloudBadge } from './CloudBadge';
 import { CloudHistoryPopover } from './CloudHistoryPopover';
 import { ToastStack } from './ToastStack';
 import { DebugLogPanel } from './DebugLogPanel';
+import { BilingualText } from './BilingualText';
 import type { Spool, MachineItem, AmsData } from './types';
 import './filament-manager.css';
 
@@ -93,7 +94,8 @@ export function FilamentManagerPage() {
   // Internal build: enable debug panel immediately (independent of init() success)
   const setDebugEnabled = useStore((s) => s.filament.setDebugEnabled);
   useEffect(() => {
-    if ((window as any).__internalBuild) {
+    const globalFlags = window as Window & { __internalBuild?: boolean };
+    if (globalFlags.__internalBuild) {
       setDebugEnabled(true);
     }
   }, [setDebugEnabled]);
@@ -165,8 +167,9 @@ export function FilamentManagerPage() {
     }
 
     // Filters
-    for (const [k, v] of Object.entries(filters)) {
-      if (v) list = list.filter((s) => (s as any)[k] === v);
+    for (const key of Object.keys(filters) as FilterKey[]) {
+      const value = filters[key];
+      if (value) list = list.filter((s) => s[key] === value);
     }
 
     return list;
@@ -184,7 +187,7 @@ export function FilamentManagerPage() {
   // Filter dropdown options
   const getFilterOptions = (key: FilterKey): string[] => {
     const vals = new Set<string>();
-    spools.forEach((s) => { const v = (s as any)[key]; if (v) vals.add(v); });
+    spools.forEach((s) => { const v = s[key]; if (v) vals.add(v); });
     return [...vals].sort();
   };
 
@@ -352,44 +355,63 @@ export function FilamentManagerPage() {
       {/* Main content (sidebar removed: Stats / Archive entries are not
           shipped in this version, and "My Filaments" is the only remaining
           view so a single-item nav is redundant.) */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden p-6">
+      <div className="fm-page-content flex-1 min-h-0 flex flex-col overflow-hidden p-6">
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden gap-4">
           <>
               {/* Toolbar */}
-              <div className="flex items-center justify-between gap-4 shrink-0">
-              <div className="flex items-center gap-4">
+              <div className="fm-toolbar flex flex-wrap items-start justify-between gap-3 shrink-0">
+              <div className="fm-toolbar-discovery flex min-w-0 flex-wrap items-center gap-3">
                 {/* Tabs */}
-                <div className={`flex gap-2 ${!isLoggedIn ? 'opacity-40 pointer-events-none' : ''}`}>
-                  {(['all', 'ams'] as const).map((tb) => (
-                    <div
+                <div className={`fm-tabs flex gap-2 ${!isLoggedIn ? 'opacity-40' : ''}`} role="tablist" aria-label={t('Filament List')}>
+                  {(['all', 'ams'] as const).map((tb, index) => (
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={tab === tb}
+                      tabIndex={tab === tb ? 0 : -1}
                       key={tb}
                       data-testid={`filament-tab-${tb}`}
                       data-active={tab === tb ? 'true' : 'false'}
-                      className={`px-[10px] py-1 h-7 rounded-md cursor-pointer text-xs text-fm-text-secondary flex items-center transition-colors duration-150 hover:bg-fm-hover ${tab === tb ? 'bg-fm-input text-fm-text-strong' : ''}`}
+                      className={`fm-tab px-[10px] py-1 min-h-9 rounded-md cursor-pointer text-xs text-fm-text-secondary flex items-center transition-colors duration-150 hover:bg-fm-hover ${tab === tb ? 'bg-fm-input text-fm-text-strong' : ''}`}
                       onClick={() => setTab(tb)}
+                      onKeyDown={(event) => {
+                        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+                        event.preventDefault();
+                        const nextIndex = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? (index + 1) % 2 : (index + 1) % 2;
+                        const nextTab = (['all', 'ams'] as const)[nextIndex];
+                        setTab(nextTab);
+                        event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
+                      }}
+                      disabled={!isLoggedIn}
                     >
-                      {tb === 'all' ? t('All') : t('In Printer')}
-                    </div>
+                      <BilingualText>{tb === 'all' ? t('All') : t('In Printer')}</BilingualText>
+                    </button>
                   ))}
                 </div>
 
-                <div className="w-px h-[11px] bg-fm-border" />
+                <div className="fm-toolbar-divider w-px h-[16px] bg-fm-border" aria-hidden="true" />
 
                 {/* Filters */}
-                <div className={`flex gap-2 ${!isLoggedIn ? 'opacity-40 pointer-events-none' : ''}`}>
+                <div className={`fm-filters flex flex-wrap gap-2 ${!isLoggedIn ? 'opacity-40' : ''}`} aria-label={t('Filament List')}>
                   {(['brand', 'material_type', 'series'] as const).map((fk) => (
-                    <div key={fk} style={{ position: 'relative' }}>
-                      <div
-                        className={`flex items-center gap-1 px-2 pl-[6px] py-[2px] h-6 rounded-md cursor-pointer text-sm text-fm-text-primary transition-colors duration-150 hover:bg-fm-hover ${filters[fk] ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
+                    <div key={fk} className="relative min-w-0">
+                      <button
+                        type="button"
+                        aria-haspopup="listbox"
+                        aria-expanded={openFilter === fk}
+                        aria-pressed={!!filters[fk]}
+                        className={`fm-filter-button flex items-center gap-1 px-2 min-h-9 rounded-md cursor-pointer text-sm text-fm-text-primary transition-colors duration-150 hover:bg-fm-hover ${filters[fk] ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
                         onClick={(e) => { e.stopPropagation(); setOpenFilter(openFilter === fk ? null : fk); }}
+                        disabled={!isLoggedIn}
                       >
-                        {t(FILTER_LABEL_KEYS[fk])}
-                        <svg width="8" height="5" viewBox="0 0 8 5" fill="none">
+                        <BilingualText>{t(FILTER_LABEL_KEYS[fk])}</BilingualText>
+                        <svg className="shrink-0" width="8" height="5" viewBox="0 0 8 5" fill="none" aria-hidden="true">
                           <path d="M1 1l3 3 3-3" stroke="currentColor" strokeWidth="1" />
                         </svg>
-                      </div>
+                      </button>
                       {openFilter === fk && (
                         <FilterDropdown
+                          label={t(FILTER_LABEL_KEYS[fk])}
                           options={getFilterOptions(fk)}
                           current={filters[fk] || ''}
                           onSelect={(val) => {
@@ -408,8 +430,9 @@ export function FilamentManagerPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className={`flex items-center gap-1 bg-fm-inner2 rounded-md px-2 h-[30px] w-[200px] ${!isLoggedIn ? 'opacity-40' : ''}`}>
+              <div className="fm-toolbar-actions flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
+                <label className={`fm-search flex min-w-[8rem] flex-1 items-center gap-1 bg-fm-inner2 rounded-md px-2 min-h-9 max-w-[200px] ${!isLoggedIn ? 'opacity-40' : ''}`}>
+                  <span className="sr-only">{t('Search Filament')}</span>
                   <svg className="text-fm-text-detail shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" />
                     <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.2" />
@@ -423,7 +446,7 @@ export function FilamentManagerPage() {
                     onChange={(e) => setSearch(e.target.value)}
                     disabled={!isLoggedIn}
                   />
-                </div>
+                </label>
 
                 {/* Selected state tracks --md-primary through --color-fm-brand.
                     It used to hardcode a neon lime label over a lime tint, which
@@ -432,11 +455,13 @@ export function FilamentManagerPage() {
                 <button
                   data-testid="filament-group-toggle"
                   data-grouped={grouped ? 'true' : 'false'}
-                  className={`inline-flex items-center gap-1 h-[30px] px-3 rounded-lg border-none text-xs whitespace-nowrap transition-colors duration-150 bg-fm-inner text-fm-text-primary border border-fm-border-focus/50 hover:bg-fm-hover ${grouped ? '!bg-fm-brand/10 !border-fm-brand !text-fm-brand' : ''} ${!isLoggedIn ? 'opacity-40 cursor-not-allowed hover:bg-fm-inner' : 'cursor-pointer'}`}
+                  type="button"
+                  aria-pressed={grouped}
+                  className={`fm-action-target inline-flex items-center gap-1 min-h-9 px-3 rounded-lg border-none text-xs transition-colors duration-150 bg-fm-inner text-fm-text-primary border border-fm-border-focus/50 hover:bg-fm-hover ${grouped ? '!bg-fm-brand/10 !border-fm-brand !text-fm-brand' : ''} ${!isLoggedIn ? 'opacity-40 cursor-not-allowed hover:bg-fm-inner' : 'cursor-pointer'}`}
                   onClick={() => setGrouped(!grouped)}
                   disabled={!isLoggedIn}
                 >
-                  {t('Group')}
+                  <BilingualText>{t('Group')}</BilingualText>
                 </button>
                 <CloudBadge
                   state={cloudSync}
@@ -449,7 +474,7 @@ export function FilamentManagerPage() {
                   type="button"
                   data-testid="filament-push-all"
                   data-pushing={pushingAll ? 'true' : 'false'}
-                  className={`inline-flex items-center justify-center h-[30px] w-[30px] rounded-lg border border-fm-border-focus/50 bg-fm-inner text-fm-text-secondary transition-colors duration-150 ${(!isLoggedIn || pushingAll) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-fm-hover'}`}
+                  className={`fm-icon-target inline-flex items-center justify-center rounded-lg border border-fm-border-focus/50 bg-fm-inner text-fm-text-secondary transition-colors duration-150 ${(!isLoggedIn || pushingAll) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-fm-hover'}`}
                   title={t('Push Local to Cloud')}
                   aria-label={t('Push Local to Cloud')}
                   onClick={handlePushAllNowClick}
@@ -470,7 +495,7 @@ export function FilamentManagerPage() {
                 </button>
                 <button
                   type="button"
-                  className={`inline-flex items-center justify-center h-[30px] w-[30px] rounded-lg border border-fm-border-focus/50 bg-fm-inner text-fm-text-secondary transition-colors duration-150 ${!isLoggedIn ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-fm-hover'}`}
+                  className={`fm-icon-target inline-flex items-center justify-center rounded-lg border border-fm-border-focus/50 bg-fm-inner text-fm-text-secondary transition-colors duration-150 ${!isLoggedIn ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-fm-hover'}`}
                   title={t('Sync History')}
                   aria-label={t('Sync History')}
                   onClick={() => setHistoryOpen(true)}
@@ -498,7 +523,8 @@ export function FilamentManagerPage() {
                     dark than the `text-white/70` it replaced. */}
                 <button
                   data-testid="filament-add"
-                  className={`inline-flex items-center gap-1 h-[30px] px-3 rounded-lg border-none text-xs whitespace-nowrap transition-colors duration-150 font-medium ${
+                  type="button"
+                  className={`fm-action-target inline-flex items-center gap-1 min-h-9 px-3 rounded-lg border-none text-xs transition-colors duration-150 font-medium ${
                     isLoggedIn
                       ? 'cursor-pointer bg-fm-brand text-fm-base hover:bg-fm-brand-hover'
                       : 'cursor-not-allowed bg-fm-text-primary/12 text-fm-text-primary/38'
@@ -506,7 +532,7 @@ export function FilamentManagerPage() {
                   disabled={!isLoggedIn}
                   onClick={handleOpenAddDialog}
                 >
-                  {t('Add Filament')}
+                  <BilingualText>{t('Add Filament')}</BilingualText>
                 </button>
               </div>
               </div>
@@ -637,8 +663,8 @@ export function FilamentManagerPage() {
 
 /* ===== Sub-components ===== */
 
-function FilterDropdown({ options, current, onSelect, onClose }: {
-  options: string[]; current: string;
+function FilterDropdown({ label, options, current, onSelect, onClose }: {
+  label: string; options: string[]; current: string;
   onSelect: (val: string) => void; onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -648,19 +674,36 @@ function FilterDropdown({ options, current, onSelect, onClose }: {
     return () => document.removeEventListener('click', handler);
   }, [onClose]);
 
+  const values = ['', ...options];
+  const handleOptionKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    let nextIndex = index;
+    if (event.key === 'ArrowDown') nextIndex = (index + 1) % values.length;
+    if (event.key === 'ArrowUp') nextIndex = (index - 1 + values.length) % values.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = values.length - 1;
+    event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="option"]')[nextIndex]?.focus();
+  };
+
   return (
-    <div className="absolute z-[100] bg-fm-sidebar border border-fm-border rounded-lg p-1 min-w-[120px] max-h-60 overflow-y-auto shadow-[0_4px_12px_rgba(0,0,0,0.4)]" onClick={(e) => e.stopPropagation()}>
-      <div
-        className={`px-3 py-[6px] rounded-sm cursor-pointer text-xs text-fm-text-primary hover:bg-fm-hover ${!current ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
-        onClick={() => onSelect('')}
-      >{t('All')}</div>
-      {options.map((v) => (
-        <div
-          key={v}
-          className={`px-3 py-[6px] rounded-sm cursor-pointer text-xs text-fm-text-primary hover:bg-fm-hover ${current === v ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
-          onClick={() => onSelect(v)}
-        >{v}</div>
-      ))}
+    <div role="listbox" aria-label={label} className="absolute z-[100] bg-fm-sidebar border border-fm-border rounded-lg p-1 min-w-[120px] max-w-[min(18rem,calc(100vw-2rem))] max-h-60 overflow-y-auto shadow-[0_4px_12px_rgba(0,0,0,0.4)]" onClick={(e) => e.stopPropagation()}>
+      {values.map((value, index) => {
+        const active = current === value;
+        return (
+          <button
+            type="button"
+            role="option"
+            aria-selected={active}
+            key={value || '__all'}
+            className={`fm-filter-option w-full min-h-9 px-3 py-[6px] rounded-sm cursor-pointer text-left text-xs text-fm-text-primary hover:bg-fm-hover ${active ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
+            onClick={() => onSelect(value)}
+            onKeyDown={(event) => handleOptionKeyDown(event, index)}
+          >
+            {value ? value : <BilingualText>{t('All')}</BilingualText>}
+          </button>
+        );
+      })}
     </div>
   );
 }
