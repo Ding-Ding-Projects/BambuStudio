@@ -3,6 +3,7 @@
 #include "StateColor.hpp"
 #include "StaticBox.hpp"
 #include "MaterialIcon.hpp"
+#include "MD3Motion.hpp"
 
 #include "../wxExtensions.hpp"
 #include "../Utils/MacDarkMode.hpp"
@@ -16,6 +17,9 @@
 #include <wx/dcgraph.h>
 #include <wx/dcmemory.h>
 #include <wx/graphics.h>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -322,12 +326,25 @@ void SwitchButton::startAnim()
 		return;
 	}
 	m_anim_target = GetValue() ? 1.0 : 0.0;
+	if (MD3::Motion::reduced()) {
+		m_anim_timer.Stop();
+		m_anim = m_anim_target;
+		update();
+		return;
+	}
 	if (!m_anim_timer.IsRunning())
 		m_anim_timer.Start(16);
 }
 
 void SwitchButton::onAnimTick(wxTimerEvent &)
 {
+	if (MD3::Motion::reduced()) {
+		m_anim_timer.Stop();
+		m_anim = m_anim_target;
+		update();
+		return;
+	}
+
 	const double step = 16.0 / 150.0; // ~150ms sweep
 	if (m_anim < m_anim_target)
 		m_anim = std::min(m_anim_target, m_anim + step);
@@ -340,6 +357,45 @@ void SwitchButton::onAnimTick(wxTimerEvent &)
 	if (std::abs(m_anim - m_anim_target) < 1e-6)
 		m_anim_timer.Stop();
 }
+
+#if wxUSE_ACCESSIBILITY
+class SwitchBoard::Accessible final : public wxWindowAccessible
+{
+public:
+    explicit Accessible(SwitchBoard *board) : wxWindowAccessible(board), m_board(board) {}
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (child_id != wxACC_SELF || !name)
+            return wxACC_NOT_IMPLEMENTED;
+        *name = wxString::Format("%s: %s", m_board->leftLabel, m_board->rightLabel);
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (child_id != wxACC_SELF || !role)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_PAGETABLIST;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (child_id != wxACC_SELF || !state)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_board->HasFocus())
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (!m_board->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        return wxACC_OK;
+    }
+
+private:
+    SwitchBoard *m_board;
+};
+#endif
 
 SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSize size)
  : wxWindow(parent, wxID_ANY, wxDefaultPosition, size)
@@ -363,6 +419,11 @@ SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSiz
 
     Bind(wxEVT_PAINT, &SwitchBoard::paintEvent, this);
     Bind(wxEVT_LEFT_DOWN, &SwitchBoard::on_left_down, this);
+    Bind(wxEVT_KEY_DOWN, &SwitchBoard::on_key_down, this);
+    SetToolTip(wxString::Format("%s / %s", leftLabel, rightLabel));
+#if wxUSE_ACCESSIBILITY
+    new Accessible(this); // wxWindow owns the accessible object.
+#endif
 
     Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_HAND); });
     Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_ARROW); });
@@ -404,7 +465,11 @@ void SwitchBoard::SetLabels(const wxString &left, const wxString &right)
         return;
     leftLabel  = left;
     rightLabel = right;
+    SetToolTip(wxString::Format("%s / %s", leftLabel, rightLabel));
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 void SwitchBoard::paintEvent(wxPaintEvent &evt)
@@ -483,24 +548,46 @@ void SwitchBoard::doRender(wxDC &dc)
     drawSegment(rightRect, switch_right, rightLabel);
 }
 
+void SwitchBoard::activateSegment(bool left)
+{
+    if (!is_enable)
+        return;
+
+    switch_left = left;
+    switch_right = !left;
+    if (auto_disable_when_switch)
+        is_enable = false; // make it disable while switching
+
+    Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    wxCommandEvent event(wxCUSTOMEVT_SWITCH_POS);
+    event.SetInt(static_cast<int>(switch_left));
+    wxPostEvent(this, event);
+}
+
 void SwitchBoard::on_left_down(wxMouseEvent &evt)
 {
-    if (!is_enable) {
+    activateSegment(evt.GetPosition().x < GetSize().GetWidth() / 2);
+}
+
+void SwitchBoard::on_key_down(wxKeyEvent &evt)
+{
+    switch (evt.GetKeyCode()) {
+    case WXK_LEFT:
+        activateSegment(true);
         return;
+    case WXK_RIGHT:
+        activateSegment(false);
+        return;
+    case WXK_SPACE:
+    case WXK_RETURN:
+        activateSegment(!switch_left);
+        return;
+    default:
+        evt.Skip();
     }
-
-    switch_left = evt.GetPosition().x < GetSize().GetWidth() / 2;
-    switch_right = !switch_left;
-
-    if (auto_disable_when_switch)
-    {
-        is_enable = false;// make it disable while switching
-    }
-    Refresh();
-
-    wxCommandEvent event(wxCUSTOMEVT_SWITCH_POS);
-    event.SetInt((int)switch_left);
-    wxPostEvent(this, event);
 }
 
 void SwitchBoard::Enable()

@@ -133,7 +133,7 @@ protected:
     Button *m_button_extruder_feed {nullptr};
     Button *m_button_extruder_back {nullptr};
     Button *m_button_auto_refill{ nullptr };
-    wxStaticBitmap* m_button_ams_setting   {nullptr};
+    Button*         m_button_ams_setting   {nullptr};
     wxStaticBitmap* m_img_ams_backup  {nullptr};
     wxStaticBitmap* m_img_amsmapping_tip {nullptr};
     wxStaticBitmap* m_img_vams_tip {nullptr};

@@ -223,10 +223,13 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_button_ams_setting_press = ScalableBitmap(this, "ams_setting_press", 24);
     update_ams_setting_bitmaps();
 
-    m_button_ams_setting = new wxStaticBitmap(m_panel_option_left, wxID_ANY, m_button_ams_setting_bmp_normal, wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)));
-    m_button_ams_setting->SetMaxSize(wxSize(FromDIP(24), FromDIP(24)));
-    m_button_ams_setting->SetMinSize(wxSize(FromDIP(24), FromDIP(24)));
-    m_button_ams_setting->SetSize(wxSize(FromDIP(24), FromDIP(24)));
+    m_button_ams_setting = new Button(m_panel_option_left, _L("AMS settings"));
+    m_button_ams_setting->SetIconButton(Button::IconShape::Circle, FromDIP(40));
+    m_button_ams_setting->SetGlyph(MaterialIcon::Settings, 24);
+    m_button_ams_setting->SetGlyphColor(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_button_ams_setting->SetToolTip(_L("AMS settings"));
+    m_button_ams_setting->SetMinSize(wxSize(FromDIP(40), FromDIP(40)));
+    m_button_ams_setting->SetMaxSize(wxSize(FromDIP(40), FromDIP(40)));
     m_sizer_option_left->Add(m_button_auto_refill, 0, wxALIGN_CENTER, 0);
     m_sizer_option_left->Add(0, 0, 0, wxLEFT, FromDIP(20));
     m_sizer_option_left->Add(m_button_ams_setting, 0, wxALIGN_CENTER, 0);
@@ -324,19 +327,8 @@ AMSControl::AMSControl(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
     m_button_extruder_back->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(AMSControl::on_filament_unload), NULL, this);
     m_button_auto_refill->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(AMSControl::auto_refill), NULL, this);
 
-    m_button_ams_setting->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_bmp_hover);
-        e.Skip();
-    });
-    m_button_ams_setting->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_bmp_press);
-        on_ams_setting_click(e);
-        e.Skip();
-    });
-
-    m_button_ams_setting->Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent& e) {
-        m_button_ams_setting->SetBitmap(m_button_ams_setting_bmp_normal);
-        e.Skip();
+    m_button_ams_setting->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& event) {
+        on_ams_setting_click(event);
     });
 
     Bind(EVT_AMS_SHOW_HUMIDITY_TIPS, [this](wxCommandEvent& evt) {
@@ -633,17 +625,13 @@ void AMSControl::msw_rescale()
     m_button_ams_setting_hover.msw_rescale();
     m_button_ams_setting_press.msw_rescale();
     update_ams_setting_bitmaps();
-    m_button_ams_setting->SetBitmap(m_button_ams_setting_bmp_normal);
-
     m_extruder->msw_rescale();
 
-    if (m_button_extruder_feed) m_button_extruder_feed->SetMinSize(wxSize(FromDIP(80), FromDIP(34)));
-    if (m_button_extruder_feed) m_button_extruder_feed->SetMaxSize(wxSize(FromDIP(80), FromDIP(34)));
-    if (m_button_extruder_back) m_button_extruder_back->SetMinSize(wxSize(FromDIP(80), FromDIP(34)));
-    if (m_button_extruder_back) m_button_extruder_back->SetMaxSize(wxSize(FromDIP(80), FromDIP(34)));
+    if (m_button_extruder_feed) { m_button_extruder_feed->SetMinSize(wxSize(FromDIP(80), FromDIP(34))); m_button_extruder_feed->SetMaxSize(wxSize(-1, FromDIP(34))); }
+    if (m_button_extruder_back) { m_button_extruder_back->SetMinSize(wxSize(FromDIP(80), FromDIP(34))); m_button_extruder_back->SetMaxSize(wxSize(-1, FromDIP(34))); }
     if (m_button_auto_refill) m_button_auto_refill->SetMinSize(wxSize(FromDIP(80), FromDIP(34)));
     if (m_button_auto_refill) m_button_auto_refill->SetMaxSize(wxSize(FromDIP(80), FromDIP(34)));
-    if (m_button_ams_setting) m_button_ams_setting->SetMinSize(wxSize(FromDIP(25), FromDIP(24)));
+    if (m_button_ams_setting) { m_button_ams_setting->SetMinSize(wxSize(FromDIP(40), FromDIP(40))); m_button_ams_setting->SetMaxSize(wxSize(FromDIP(40), FromDIP(40))); }
 
 
     for (auto ams_item : m_ams_item_list) {
