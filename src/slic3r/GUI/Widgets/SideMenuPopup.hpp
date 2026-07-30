@@ -19,7 +19,7 @@ private:
 	std::vector<SideButton*> btn_list;
     wxWeakRef<wxWindow>     invoker;
     bool                    restoring_focus = false;
-
+    bool                    dismissing = false;
 
     // MD3 floating surface, same idiom as the ComboBox popup in DropDown.cpp:
     // a SurfaceContainer fill inside a 1px OutlineVariant frame at the kit

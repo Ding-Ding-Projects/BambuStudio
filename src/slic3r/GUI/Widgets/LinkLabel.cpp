@@ -117,7 +117,7 @@ LinkLabel::LinkLabel(wxWindow *parent, wxString const &text, std::string url, lo
     Fit();
 
 #if wxUSE_ACCESSIBILITY
-    new LinkLabelAccessible(this); // wxWindow owns the accessible object.
+    SetAccessible(new LinkLabelAccessible(this));
 #endif
 }
 

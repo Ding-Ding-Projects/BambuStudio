@@ -11768,7 +11768,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                     // texture-import dialog does not pop up over an empty model.
                     if (model.objects.empty())
                         model.texture_mesh.reset();
-                    MessageDialog(q, _L("Objects with zero volume removed"), _L("The volume of the object is zero"), wxICON_INFORMATION | wxOK).ShowModal();
+                    show_info(q, _L("Objects with zero volume removed"), _L("The volume of the object is zero"));
                 }
                 if (imperial_units)
                     // Convert even if the object is big.
