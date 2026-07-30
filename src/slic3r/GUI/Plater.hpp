@@ -525,7 +525,10 @@ public:
     // Returns false when the frame is not laid out enough to size against yet,
     // so a startup caller knows to try again on the next size instead of
     // latching a width that silently clamped to the compact default.
-    bool                  request_sidebar_width(int width_px);
+    // grow_only leaves a sidebar that is already wider than the request alone:
+    // the sash is user-draggable and the dragged width is persisted, so the
+    // startup re-assert must never claw back a width the user chose.
+    bool                  request_sidebar_width(int width_px, bool grow_only = false);
     // Called after the Preferences dialog is closed and the program settings are saved.
     // Update the UI based on the current preferences.
     void update_ui_from_settings();

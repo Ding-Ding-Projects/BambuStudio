@@ -124,16 +124,32 @@ UI stays fully interactive.
 | :---: | :---: |
 | ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard ink page](docs/screenshots/wizard/wizard-step-22.png) |
 
-| Config profiles & backup (slide-to-confirm export) | |
+| Config profiles & backup (slide-to-confirm export) | Settings search on the full process tree |
 | :---: | :---: |
-| ![Config profiles & backup dialog](docs/screenshots/config-profiles/dialog.png) | |
+| ![Config profiles & backup dialog](docs/screenshots/config-profiles/dialog.png) | ![Search settings pill on the Simple settings bar](docs/screenshots/sidebar-process/after-search-settings.png) |
+
+**Prepare sidebar · process settings** — the full process tree is the settings-tab layout hosted in
+the sidebar, so Advanced mode widens the dock (weakly: capped at 55% of the frame, grow-only, and
+the sash stays draggable) and the body gained a real horizontal scrollbar as a backstop. The header
+row had been over-subscribed badly enough that the `Process` title and the Compare button were
+allocated **zero width** and vanished. Details and measurements:
+[`docs/features/prepare/process-settings-sidebar.md`](docs/features/prepare/process-settings-sidebar.md).
+
+| Before — values cut off, title and Compare button gone | After — values, units, tabs and title all present |
+| :---: | :---: |
+| ![Clipped process settings](docs/screenshots/sidebar-process/before-sidebar-clipped.png) | ![Readable process settings](docs/screenshots/sidebar-process/after-sidebar-readable.png) |
+
+| Header before (starved) | Header after |
+| :---: | :---: |
+| ![Starved header row](docs/screenshots/sidebar-process/before-header-starved.png) | ![Intact header row](docs/screenshots/sidebar-process/after-header-intact.png) |
 
 Per-feature folders with every button close-up: [notifications](docs/screenshots/notifications/) ·
 [version-history](docs/screenshots/version-history/) · [regex-builder](docs/screenshots/regex-builder/) ·
 [appearance](docs/screenshots/appearance/) · [preferences](docs/screenshots/preferences/) ·
 [project-tabs](docs/screenshots/project-tabs/) · [main-window](docs/screenshots/main-window/) ·
 [home](docs/screenshots/home/) · [wizard](docs/screenshots/wizard/) ·
-[config-profiles](docs/screenshots/config-profiles/) · [smart-home](docs/screenshots/smart-home/)
+[config-profiles](docs/screenshots/config-profiles/) · [smart-home](docs/screenshots/smart-home/) ·
+[sidebar-process](docs/screenshots/sidebar-process/)
 
 #### Earlier installed-app captures
 

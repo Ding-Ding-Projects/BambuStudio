@@ -5281,8 +5281,12 @@ void Sidebar::show_process_advanced(bool advanced, bool persist)
     // room while it is up, and hand the width back to the 3D canvas on the way
     // out. request_sidebar_width() clamps to 55% of the frame and ignores the
     // floating / top / bottom docks.
+    // grow_only on the way in, so flipping to Advanced never narrows a sidebar
+    // the user had already dragged wider; the flip back to Simple is an explicit
+    // request for the compact width, so that one does shrink.
     if (auto *plater = dynamic_cast<Plater *>(GetParent()))
-        plater->request_sidebar_width(advanced ? FromDIP(ADVANCED_SIDEBAR_WIDTH) : 0);
+        plater->request_sidebar_width(advanced ? FromDIP(ADVANCED_SIDEBAR_WIDTH) : 0,
+                                      /*grow_only=*/advanced);
 
     update_scroll_body();
     p->scrolled->Refresh();
@@ -8951,7 +8955,8 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
             // Latch only once the request actually had a laid-out frame to size
             // against; an early size event would otherwise clamp to the compact
             // default and then never be retried.
-            if (this->q->request_sidebar_width(this->q->FromDIP(ADVANCED_SIDEBAR_WIDTH)))
+            if (this->q->request_sidebar_width(this->q->FromDIP(ADVANCED_SIDEBAR_WIDTH),
+                                               /*grow_only=*/true))
                 m_advanced_width_applied = true;
         });
     }
@@ -24109,7 +24114,7 @@ void Plater::apply_sidebar_dock()
 }
 void                  Plater::reset_window_layout(int width) { p->reset_window_layout(width); }
 
-bool Plater::request_sidebar_width(int width_px)
+bool Plater::request_sidebar_width(int width_px, bool grow_only)
 {
     auto &pane = p->m_aui_mgr.GetPane(p->sidebar);
     if (!pane.IsOk() || pane.IsFloating())
@@ -24155,6 +24160,8 @@ bool Plater::request_sidebar_width(int width_px)
         return false;
     if (current == target)
         return true; // already the width we want
+    if (grow_only && current > target)
+        return true; // the user dragged it wider than we ask for; leave it alone
 
     persp = persp.Left(vstart) + wxString::Format("%d", target) + persp.Mid(vend);
     p->m_aui_mgr.LoadPerspective(persp, true);

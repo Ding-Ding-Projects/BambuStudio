@@ -3,7 +3,7 @@
 You are taking over work on **this fork of BambuStudio** (`Ding-Ding-Projects/BambuStudio`),
 a Windows desktop 3D-printing slicer written in C++ with wxWidgets. This file is written
 to be self-contained: it assumes you know nothing about previous sessions. Everything
-below was reviewed through **2026-07-29** unless it says otherwise.
+below was reviewed through **2026-07-30** unless it says otherwise.
 
 ---
 
@@ -23,6 +23,11 @@ below was reviewed through **2026-07-29** unless it says otherwise.
   bilingual/live-HA/hardware/remote evidence sequence remains in §7.1.
 - The whole of the previous §7 to-do list is **finished** (see §5.3). Two of its five items were
   diagnosed wrongly by the previous session; §5.3 records what was actually true.
+- **2026-07-30:** `master` had not compiled since the accessibility merge, and CI was separately red
+  on a stale i18n tripwire — both fixed, `md3-v80` shipped. The Prepare sidebar was cutting the
+  process settings off the right edge with no scrollbar able to reach them; fixed and captured
+  (§6.9). **A reported crash and a "model has no data" tab failure remain unreproduced and open —
+  see §7 item 0d before claiming either is fixed.**
 
 ---
 
@@ -620,7 +625,105 @@ to make the branch list look tidy.
 
 ---
 
+## 6.9 Session of 2026-07-30 — master did not compile, and the sidebar ate the process settings
+
+**`master` had not compiled since the accessibility merge.** `SwitchButton.cpp` defined
+`SwitchBoard::Accessible`, `on_key_down()` and `activateSegment()` that the header never declared —
+16 errors, all in that one file. A concurrent agent pushed a fuller fix (also adding
+`AcceptsFocus`/`AcceptsFocusFromKeyboard`, `MSWWindowProc`, `DoGetBestSize`) while this session was
+working, so the redundant local commit was dropped and the tree reset onto theirs. Verified by a
+clean local build and by CI publishing **`md3-v80`** from the identical tree.
+
+CI was *also* red for a second, unrelated reason that never reached the compiler:
+`scripts/i18n/Test-LanguageModes.ps1` pinned DeviceWeb English resources at **178** while the tree
+ships **184**. The six new keys are present and translated in both locales with matching keys and
+placeholders — a stale tripwire, not a resource defect. Already fixed upstream too.
+
+> [!WARNING]
+> Two `Windows build and release` runs failed at **`Test Windows release inputs`**, *before*
+> `Build slicer Win`. So CI never reached the compile break at all, and a green pre-build gate is
+> not evidence that the tree compiles. Check which step failed before concluding anything.
+
+**The Prepare sidebar was cutting the process settings off at the right edge.** The full process
+tree is the settings-tab layout reparented into a 344 dip sidebar; its option rows are label + value
+field and neither half reflows. Measured live: the `Layer height` row lays out **1234 px wide inside
+a 348 px sidebar**. The body was created `wxSHOW_SB_NEVER` for the horizontal bar with an x-scroll
+rate of `0`, so the clipped values were not merely off-screen — **nothing could scroll to them**.
+
+The header row above it had failed the same way the Print button did (§3.3): over-subscribed, so
+`wxBoxSizer` paid the fixed items in full and handed **zero** to what straddled the boundary. The
+`Process` title and the Compare-presets button were *absent*, not clipped. This is now the second
+time that failure mode has cost this project a visible control — when a row looks cramped, measure
+the children's widths before assuming everything is merely narrow.
+
+Fixed in `Plater.cpp` / `Plater.hpp`, all verified live at 846 px on the real Release build
+(`2421f9268`, plus the grow-only follow-up):
+
+- `update_sidebar_scroll_body()` grows the **virtual width** when content genuinely cannot compress,
+  and the body has a real horizontal scrollbar to grow into. Anything that *can* reflow still gets
+  the client width, so the compact cards are unchanged. A re-entrancy guard was added because
+  `SetVirtualSize()` can add/remove a scrollbar, resizing the client area and re-entering the helper
+  through the sidebar's own `EVT_SIZE`.
+- `Plater::request_sidebar_width()` widens the dock to 480 dip in Advanced mode — **weakly**: capped
+  at 55% of the frame, never below the density default, `grow_only` so a sidebar you dragged wider is
+  left alone, and the sash stays draggable with the dragged width persisted by the existing idle
+  handler. It shrinks back only on the explicit flip to Simple.
+- The width is re-asserted on the first **laid-out** size event. The `priv` ctor runs before the
+  frame has a width, so a request made there clamps to the compact default; the function returns
+  `false` while the frame is too small to size against, and the caller retries instead of latching.
+- Advanced mode gained its own settings-search pill on the **Simple settings** bar (same
+  `OptionsSearcher` and regex builder as the compact card's, whose field is hidden with the card).
+- **Object manipulation now starts hidden** and appears on selection. With nothing selected it was
+  twelve en dashes under a header, costing a screenful of sidebar height.
+
+Evidence: `docs/screenshots/sidebar-process/` (before/after pairs), documented in
+`docs/features/prepare/process-settings-sidebar.md`. The 3D canvas starts at **x=348** before and
+**x=461** after; `Object manipulation` is absent from `press.py controls` until something is selected.
+
+> [!IMPORTANT]
+> **Two of the reported symptoms are NOT fixed and were not reproduced.** See §7 item 0d.
+
+**Watch out — two shadowing traps in `Plater.cpp` cost two build cycles here.** `Plater::priv::priv`
+takes a parameter named **`q`** that shadows the member `Plater *q`, and the AUI block declares a
+local `auto &sidebar` that shadows the member `Sidebar *sidebar`. A lambda in that scope must reach
+both through `this->`, or you get `C3493: cannot be implicitly captured`.
+
+**Also worth knowing:** `press.py controls` only enumerates *labelled* children, so custom-drawn
+controls (the `Global`/`Objects` `SwitchButton`, search-field placeholders) never appear — their
+absence from that list is not evidence they are missing. Crop the capture instead.
+
+---
+
 ## 7. What to do next
+
+0d. **Two reported symptoms remain open — neither was reproduced, so neither is fixed.** The user
+   reported, in their words: *"it keeps crashing … when opening model or changing a lot of settings
+   at the same time"*, *"when it crashes it refuses to open until i open it a few times"*, and
+   *"switching tabs do not work and say model has no data"*.
+   - **The crash did not reproduce.** Opening `cube.stl` and switching to Preview both worked; the
+     model sliced and the time estimation rendered. Two instances stayed alive. No crash dump was
+     produced and `%APPDATA%\BambuStudioInternal\log\` holds **no logs from 2026-07-29 or 07-30**
+     despite the user hitting crashes, which is itself unexplained — either they are running a
+     different install, or it dies before the log opens. Establish *which build they are running*
+     before anything else. `procdump.exe` is on this box (`C:\ProgramData\chocolatey\bin`); attach
+     `procdump -e -ma -w bambu-studio.exe <dir>` and drive the reported sequence.
+   - The re-entrancy guard added to `update_sidebar_scroll_body()` is a **defensive** fix for a
+     plausible recursion (`SetVirtualSize` → scrollbar → `EVT_SIZE` → repeat, which both reported
+     triggers would cross). It is **not** a confirmed crash fix and must not be written up as one.
+   - **"Model has no data" was never located.** No such string exists in `src/` or the catalogs;
+     the user is paraphrasing. Get the exact wording or a screenshot before hunting further.
+   - Log truncation is **not** proof of a crash here: `driver.py stop` kills the process, which
+     truncates the buffered log identically. Six of eight older logs end mid-line for that reason.
+
+0e. **The dim sum surprise, release code names, and the tabbed-README requirement are unimplemented.**
+   Global memory gained sections this session that the local rules copy lacked (now synced to
+   `~/.claude/rules/`): *Autonomous completion*, *Dim sum release code names*, *Landing page and
+   documentation site* (tabbed README, site linked from the repo), *Sanitized instruction copy in
+   every repository*, and *Build dependencies and toolchains*. Releases already carry dish code
+   names (`md3-v80 — Swiss Wing 瑞士雞翼`), but the **in-app 1% startup dim sum surprise** does not
+   exist, and the catalog now ships 500+ bundled PNGs in `agent-global-memory/dim-sum/` to draw from.
+
+
 
 **Pages/site work owed (see §5.0 and §5.0.1):**
 
