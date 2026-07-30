@@ -246,10 +246,10 @@ static wxBitmap device_idle_thumbnail_tile(wxWindow *ref, int logical_px)
     return bmp;
 }
 
-// Camera-HUD status indicators as Material Symbols on the fixed-dark strip
-// (on-dark colours, never theme-swapped): active states use the kit 'live'
-// accent, absent/off use the muted on-dark grey, storage-abnormal keeps its
-// warning hue. Rebuilt identically by init_bitmaps() and rescale_camera_icons().
+// Camera-HUD status indicators as Material Symbols on the dark strip. Normal
+// themes use the kit on-dark tones; Windows high contrast resolves the HUD
+// accessors through the current system palette. Rebuilt identically by
+// init_bitmaps() and rescale_camera_icons().
 static void build_hud_status_glyphs(wxWindow *ref,
                                     ScalableBitmap &sd_normal, ScalableBitmap &sd_abnormal, ScalableBitmap &sd_no,
                                     ScalableBitmap &rec_on, ScalableBitmap &rec_off,
@@ -258,10 +258,14 @@ static void build_hud_status_glyphs(wxWindow *ref,
 {
     const wxColour on   = CameraHUD::Glyph();
     const wxColour off  = CameraHUD::GlyphMuted();
-    const wxColour live = MD3::Viewport::live;
-    // Storage-abnormal keeps a warning read via the semantic Error role, resolved
-    // dark since the HUD is fixed-dark (no theme swap, no raw literal).
-    const wxColour warn = MD3::resolve(MD3::Role::Error, true, MD3::ColorScheme::Device);
+    const wxColour live = CameraHUD::HighContrastActive()
+                              ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
+                              : MD3::Viewport::live;
+    // Preserve status colouring normally, but never override the user's selected
+    // text palette in Windows high contrast.
+    const wxColour warn = CameraHUD::HighContrastActive()
+                              ? wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT)
+                              : MD3::resolve(MD3::Role::Error, true, MD3::ColorScheme::Device);
     sd_normal   = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, on, "sdcard_state_normal_dark");
     sd_abnormal = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, warn, "sdcard_state_abnormal_dark");
     sd_no       = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, off, "sdcard_state_no_dark");
@@ -2278,9 +2282,9 @@ void StatusBasePanel::init_bitmaps()
     m_bitmap_extruder_empty_unload  = *cache.load_png("monitor_extruder_empty_unload", FromDIP(28), FromDIP(70), false, false);
     m_bitmap_extruder_filled_unload = *cache.load_png("monitor_extruder_filled_unload", FromDIP(28), FromDIP(70), false, false);
 
-    // The camera HUD interior is ALWAYS dark (kCardBg), in both app themes, so
-    // the status-indicator glyphs use fixed on-dark colours and are never
-    // theme-swapped (the legacy "_dark" rasters remain the graceful fallback).
+    // The camera HUD interior is dark in both normal app themes; Windows high
+    // contrast uses the system palette. The legacy "_dark" rasters remain the
+    // graceful fallback when the Material icon face is unavailable.
     build_hud_status_glyphs(this, m_bitmap_sdcard_state_normal, m_bitmap_sdcard_state_abnormal, m_bitmap_sdcard_state_no,
                             m_bitmap_recording_on, m_bitmap_recording_off, m_bitmap_timelapse_on, m_bitmap_timelapse_off,
                             m_bitmap_vcamera_on, m_bitmap_vcamera_off);
@@ -2290,10 +2294,10 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
 {
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-    // Always-dark camera HUD strip. Replaces the legacy device-title strip; it
-    // is stacked ABOVE the video by this sizer (index 0), so it never overlays
-    // the native wxMediaCtrl HWND (no MSW flicker/clip). Fixed-dark in both app
-    // themes and excluded from on_sys_color_changed re-tinting.
+    // Dark camera HUD strip. Replaces the legacy device-title strip; it is
+    // stacked ABOVE the video by this sizer (index 0), so it never overlays the
+    // native wxMediaCtrl HWND (no MSW flicker/clip). It stays dark across normal
+    // themes and switches to system colours in Windows high contrast.
     m_camera_hud = new CameraHUD(this);
 
     // Legacy debug-only widgets: referenced under !BBL_RELEASE_TO_PUBLIC in
@@ -2344,8 +2348,12 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
     m_bitmap_timelapse_img->SetToolTip(_L("Timelapse"));
     m_bitmap_recording_img->SetToolTip(_L("Video"));
     m_bitmap_vcamera_img->SetToolTip(_L("Go Live"));
-    m_camera_fullscreen_button->SetToolTip(_L("Enter Camera Full Screen"));
-    m_setting_button->SetToolTip(_L("Camera Setting"));
+    const wxString fullscreen_name = _L("Enter Camera Full Screen");
+    const wxString settings_name   = _L("Camera Setting");
+    m_camera_fullscreen_button->SetToolTip(fullscreen_name);
+    m_camera_fullscreen_button->SetName(fullscreen_name);
+    m_setting_button->SetToolTip(settings_name);
+    m_setting_button->SetName(settings_name);
 
     wxSizer *status_slot = m_camera_hud->status_slot();
     status_slot->Add(m_bitmap_sdcard_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
@@ -6207,7 +6215,14 @@ void StatusPanel::rescale_camera_icons()
 
     if (m_camera_hud) m_camera_hud->msw_rescale();
 
-    // Always-dark variants: the HUD interior is fixed-dark in both app themes.
+    // Rebuild against the HUD's normal dark or Windows high-contrast palette.
+    const wxColour hud_bg = CameraHUD::CardBg();
+    m_camera_hud->SetBackgroundColour(hud_bg);
+    for (wxWindow *indicator : {static_cast<wxWindow *>(m_bitmap_sdcard_img),
+                                static_cast<wxWindow *>(m_bitmap_timelapse_img),
+                                static_cast<wxWindow *>(m_bitmap_recording_img),
+                                static_cast<wxWindow *>(m_bitmap_vcamera_img)})
+        indicator->SetBackgroundColour(hud_bg);
     build_hud_status_glyphs(this, m_bitmap_sdcard_state_normal, m_bitmap_sdcard_state_abnormal, m_bitmap_sdcard_state_no,
                             m_bitmap_recording_on, m_bitmap_recording_off, m_bitmap_timelapse_on, m_bitmap_timelapse_off,
                             m_bitmap_vcamera_on, m_bitmap_vcamera_off);
@@ -6252,9 +6267,12 @@ void StatusPanel::on_sys_color_changed()
     SetBackgroundColour(device_page_color());
     m_machine_ctrl_panel->SetBackgroundColour(device_page_color());
     m_panel_control_title->SetBackgroundColour(device_title_color());
-    // The camera HUD is fixed-dark in both themes: it is NOT re-tinted to the
-    // Device title colour; just repaint it so the badge/chips redraw crisply.
-    if (m_camera_hud) m_camera_hud->Refresh();
+    // The HUD owns its dark/system palette. Rescale refreshes its backgrounds,
+    // chips, and status glyphs when high contrast or another system colour changes.
+    if (m_camera_hud) {
+        m_camera_hud->SetBackgroundColour(CameraHUD::CardBg());
+        m_camera_hud->Refresh();
+    }
     m_staticText_control->SetForegroundColour(device_secondary_text_color());
     // Keep the (title-strip-free) action row blended into the SurfaceDim column.
     if (m_panel_control_title) m_panel_control_title->SetBackgroundColour(device_page_color());

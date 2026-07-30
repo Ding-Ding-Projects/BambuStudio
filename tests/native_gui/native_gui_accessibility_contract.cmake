@@ -161,6 +161,70 @@ endif()
 if(NOT camera_source MATCHES "m_pulse_timer.Stop\\(\\);[\r\n ]*m_phase = 0\\.0")
     message(FATAL_ERROR "Camera LIVE pulse must snap to steady opacity when stopped")
 endif()
+
+# Camera HUD icon chips are true keyboard and assistive push buttons. Keep the
+# existing LEFT_DOWN event route so StatusPanel's mouse handlers and popup
+# positioning contract remain unchanged for keyboard/default actions too.
+foreach(required_text
+        "SetAccessible(new CameraHUDChipAccessible(this))"
+        "wxROLE_SYSTEM_PUSHBUTTON"
+        "wxACC_STATE_SYSTEM_FOCUSABLE"
+        "wxACC_STATE_SYSTEM_FOCUSED"
+        "wxACC_STATE_SYSTEM_PRESSED"
+        "wxACC_STATE_SYSTEM_UNAVAILABLE"
+        "wxACC_STATE_SYSTEM_INVISIBLE"
+        "wxACC_EVENT_OBJECT_FOCUS"
+        "wxACC_EVENT_OBJECT_NAMECHANGE"
+        "key_code == WXK_SPACE"
+        "key_code == WXK_RETURN"
+        "key_code == WXK_NUMPAD_ENTER"
+        "bool CameraHUD::CameraHUDChip::AcceptsFocusFromKeyboard() const"
+        "void CameraHUD::CameraHUDChip::AccessibilityActivate()"
+        "wxMouseEvent event(wxEVT_LEFT_DOWN)"
+        "gc->SetPen(wxPen(CameraHUD::FocusRing()"
+        "return DLGC_WANTMESSAGE")
+    string(FIND "${camera_source}" "${required_text}" required_offset)
+    if(required_offset EQUAL -1)
+        message(FATAL_ERROR "Camera HUD chip keyboard/accessibility contract missing: ${required_text}")
+    endif()
+endforeach()
+foreach(required_text
+        "m_camera_fullscreen_button->SetName(fullscreen_name)"
+        "m_setting_button->SetName(settings_name)")
+    string(FIND "${status_source}" "${required_text}" required_offset)
+    if(required_offset EQUAL -1)
+        message(FATAL_ERROR "Camera HUD icon-only controls need explicit localized names: ${required_text}")
+    endif()
+endforeach()
+
+# Windows high contrast replaces HUD chrome, text, disabled content, status, and
+# focus colours with the current system palette and suppresses decorative pulse.
+foreach(required_text
+        "SPI_GETHIGHCONTRAST"
+        "HCF_HIGHCONTRASTON"
+        "wxSYS_COLOUR_WINDOW"
+        "wxSYS_COLOUR_WINDOWTEXT"
+        "wxSYS_COLOUR_BTNFACE"
+        "wxSYS_COLOUR_HIGHLIGHT"
+        "wxSYS_COLOUR_GRAYTEXT"
+        "HighContrastActive() ? 255 : alpha"
+        "MD3::Motion::reduced() || HighContrastActive()")
+    string(FIND "${camera_source}" "${required_text}" required_offset)
+    if(required_offset EQUAL -1)
+        message(FATAL_ERROR "Camera HUD high-contrast contract missing: ${required_text}")
+    endif()
+endforeach()
+foreach(required_text
+        "CameraHUD::HighContrastActive()"
+        "wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)"
+        "wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT)"
+        "indicator->SetBackgroundColour(hud_bg)")
+    string(FIND "${status_source}" "${required_text}" required_offset)
+    if(required_offset EQUAL -1)
+        message(FATAL_ERROR "Camera status indicators must follow high-contrast HUD colours: ${required_text}")
+    endif()
+endforeach()
+
 foreach(required_text
         "m_anim_target = GetValue() ? 1.0 : 0.0;"
         "if (MD3::Motion::reduced())"

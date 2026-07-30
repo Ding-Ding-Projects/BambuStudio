@@ -187,6 +187,10 @@ msgstr "墨水機設定"
 msgid "Camera Setting"
 msgstr "相機設定"
 
+#. reviewed-category: navigation
+msgid "Enter Camera Full Screen"
+msgstr "相機進入全螢幕"
+
 #. reviewed-category: preferences
 msgid "General Settings"
 msgstr "一般設定"
