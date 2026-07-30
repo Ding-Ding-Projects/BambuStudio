@@ -1893,7 +1893,7 @@ void AMSControl::auto_refill(wxCommandEvent& event)
     post_event(SimpleEvent(EVT_AMS_FILAMENT_BACKUP));
 }
 
-void AMSControl::on_ams_setting_click(wxMouseEvent &event)
+void AMSControl::on_ams_setting_click(wxCommandEvent &event)
 {
     post_event(SimpleEvent(EVT_AMS_SETTINGS));
 }

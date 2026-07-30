@@ -2073,7 +2073,6 @@ void AmsReplaceMaterialDialog::create()
 {
     SetSize(wxSize(FromDIP(445), -1));
     SetMinSize(wxSize(FromDIP(445), -1));
-    SetMaxSize(wxSize(FromDIP(445), -1));
 
     // set icon for dialog
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();

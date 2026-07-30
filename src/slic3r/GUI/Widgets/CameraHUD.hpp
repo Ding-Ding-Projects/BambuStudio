@@ -15,14 +15,15 @@
 
 namespace Slic3r { namespace GUI {
 
-// CameraHUD is the always-dark chrome strip that bookends the device camera
-// video. It renders the MD3 design-kit "camera card" top band: a pulsing LIVE
-// badge on the left (MD3::Viewport::live), the camera status indicators, and
-// two icon-font control chips (settings / fullscreen) on the right.
+// CameraHUD is the dark chrome strip that bookends the device camera video. It
+// renders the MD3 design-kit "camera card" top band: a pulsing LIVE badge on the
+// left (MD3::Viewport::live), the camera status indicators, and two icon-font
+// control chips (settings / fullscreen) on the right.
 //
-// The strip is fixed-dark in BOTH app themes (the video underneath is always a
-// dark surface), so it deliberately does NOT follow the Device theme roles and
-// is excluded from StatusPanel's on_sys_color_changed re-tinting.
+// The strip stays dark in both normal app themes because the video underneath is
+// always a dark surface. Windows high-contrast mode is the deliberate exception:
+// the chrome switches to system colours so text, controls, and focus remain
+// visible under the user's contrast palette.
 //
 // It never overlays a live-rendered child over the native wxMediaCtrl HWND: the
 // HUD is a sibling band stacked above the video by the monitoring sizer, so
@@ -45,15 +46,32 @@ public:
         bool Enable(bool enable = true) override;
         void msw_rescale();
 
+        bool AcceptsFocus() const override;
+        bool AcceptsFocusFromKeyboard() const override;
+        bool IsPressedForAccessibility() const { return m_keyboard_pressed; }
+        void AccessibilityActivate();
+        void SetName(const wxString &name) override;
+
+    protected:
+#ifdef __WIN32__
+        WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param) override;
+#endif
+
     private:
         void on_paint(wxPaintEvent &evt);
         void on_enter(wxMouseEvent &evt);
         void on_leave(wxMouseEvent &evt);
+        void on_left_down(wxMouseEvent &evt);
+        void on_key_down(wxKeyEvent &evt);
+        void on_key_up(wxKeyEvent &evt);
+        void on_focus(wxFocusEvent &evt);
+        void send_activation_event();
 
         uint32_t       m_glyph;
         std::string    m_fallback_name;
         ScalableBitmap m_fallback;
         bool           m_hover{false};
+        bool           m_keyboard_pressed{false};
     };
 
     // A small custom-painted temperature pill (e.g. "220°C") shown in the band.
@@ -104,15 +122,17 @@ public:
     CameraHUDChip *fullscreen_chip() const { return m_fullscreen_chip; }
     wxSizer *      status_slot() const { return m_status_slot; }
 
-    // Fixed-dark palette (shared with StatusPanel for the status-indicator
-    // window backgrounds). Never theme-dependent.
-    static const wxColour &CardBg();
-    static const wxColour &Border();
-    static const wxColour &ChipBg();
-    static const wxColour &ChipHover();
-    static const wxColour &ChipPress();
-    static const wxColour &Glyph();
-    static const wxColour &GlyphMuted();
+    // Dark camera chrome in normal themes; Windows high-contrast mode resolves
+    // these through the user's current system palette.
+    static bool     HighContrastActive();
+    static wxColour CardBg();
+    static wxColour Border();
+    static wxColour ChipBg();
+    static wxColour ChipHover();
+    static wxColour ChipPress();
+    static wxColour Glyph();
+    static wxColour GlyphMuted();
+    static wxColour FocusRing();
 
 private:
     void on_paint(wxPaintEvent &evt);

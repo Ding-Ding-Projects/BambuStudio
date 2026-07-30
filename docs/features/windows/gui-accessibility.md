@@ -42,7 +42,8 @@ custom native switch/camera transitions and owned web transitions snap to their 
 
 - `Tab` and `Shift+Tab` move through interactive controls in logical order.
 - `Space` or `Enter` activates buttons, links, split-button segments, and other button-like custom
-  controls.
+  controls. Segmented selectors commit once on the matching key release, so keyboard auto-repeat does
+  not oscillate the selection or emit repeated commands.
 - Arrow keys move within option menus, tabs, segmented choices, and value controls where the
   platform convention expects them.
 - `Home` and `End` select the first or last enabled popup option.
@@ -96,8 +97,8 @@ npm --prefix src/slic3r/GUI/DeviceWeb/device_page run test:a11y
 npm --prefix src/slic3r/GUI/DeviceWeb/device_page run build
 ```
 
-On 2026-07-29, the integrated candidate passed the native shared-control contract, all 10 combined
-owned-web/MD3 contracts, both DeviceWeb focused tests, changed-file ESLint, TypeScript compilation,
-and the Vite production build. Exact Release DLL and real-app headless evidence are recorded in
-`HANDOFF.md` once the final integrated commit is built and captured; source-only success is not
-represented as runtime proof.
+On 2026-07-30, the delivery candidate passed all three focused native accessibility contracts, all
+10 combined owned-web/MD3 contracts, both DeviceWeb focused tests, changed-file ESLint, TypeScript
+compilation, and the Vite production build. MSVC compiled the repaired GUI library and linked the full
+Release application. Exact Release DLL and real-app headless evidence are recorded in `HANDOFF.md`
+after the last rebuild and capture; source-only success is not represented as runtime proof.

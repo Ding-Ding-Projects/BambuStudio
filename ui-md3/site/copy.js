@@ -304,14 +304,14 @@
     'screen.project': { en: ['Project'], yue: ['專案'] },
     'screen.project.body': {
       en: [
-        'Project files: pictures, bill of materials, assembly guides and notes.',
-        'Project files — pictures, bill of materials, assembly guides and notes.',
-        'Pictures, bill of materials, assembly guides and notes — everything future-you will wish past-you had written down.'
+        'Project files: keyboard-safe pictures, bill of materials, assembly guides and notes, with browser zoom left available.',
+        'Project files — keyboard-safe pictures, bill of materials, assembly guides and notes, with browser zoom left available.',
+        'Keyboard-safe pictures, bill of materials, assembly guides and notes — everything future-you will wish past-you had written down, without confiscating the zoom controls.'
       ],
       yue: [
-        '專案檔案：圖片、物料清單、組裝指南同筆記。',
-        '專案檔案 — 圖片、物料清單、組裝指南同筆記。',
-        '圖片、物料清單、組裝指南同筆記 — 即係將來嘅你，會慶幸而家嘅你有寫低。'
+        '專案檔案：可以用鍵盤操作嘅圖片、物料清單、組裝指南同筆記，瀏覽器縮放亦照常可用。',
+        '專案檔案 — 可以用鍵盤操作嘅圖片、物料清單、組裝指南同筆記，瀏覽器縮放照常可用。',
+        '圖片、物料清單、組裝指南同筆記全部可以用鍵盤操作 — 將來嘅你會多謝而家嘅你，個網頁亦唔會夾硬收起縮放掣。'
       ]
     },
     'screen.calibration': { en: ['Calibration'], yue: ['校準'] },

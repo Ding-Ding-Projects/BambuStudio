@@ -26,8 +26,14 @@ assert.deepEqual(splitStructuredTranslation('Ink\n粵語：墨水'), {
 
 assert.match(page, /role="tablist"/);
 assert.match(page, /role="tab"/);
-assert.match(page, /aria-selected=\{tab === tb\}/);
+assert.match(page, /aria-selected=\{tab === tabItem\}/);
+assert.match(page, /const FILAMENT_TABS: readonly TabMode\[\]/);
+assert.match(page, /index - 1 \+ FILAMENT_TABS\.length/);
 assert.match(page, /aria-haspopup="listbox"/);
+assert.match(page, /aria-label=\{`\$\{t\(FILTER_LABEL_KEYS\[fk\]\)\}: \$\{filters\[fk\] \|\| t\('All'\)\}`\}/);
+assert.match(page, /event\.key === 'Escape'/);
+assert.match(page, /tabIndex=\{index === activeIndex \? 0 : -1\}/);
+assert.match(page, /filterTriggerRefs\.current\[fk\]\?\.focus\(\)/);
 assert.match(page, /role="option"/);
 assert.match(page, /className=\{`fm-search/);
 assert.match(page, /min-w-\[8rem\].*flex-1/);
@@ -47,11 +53,18 @@ assert.match(dialog, /aria-modal="true"/);
 assert.match(dialog, /event\.key === 'Escape'/);
 assert.match(dialog, /event\.key !== 'Tab'/);
 assert.match(dialog, /restoreTarget\.focus/);
+assert.match(dialog, /onCloseRef\.current\(\)/);
+assert.match(dialog, /initialFocusRefRef\.current\?\.current/);
+assert.match(dialog, /\}, \[open\]\);/);
+assert.doesNotMatch(dialog, /\[initialFocusRef, onClose, open\]/);
 assert.doesNotMatch(confirm, /e\.key === 'Enter'/);
 
 assert.match(toast, /toast\.level === 'info'/);
-assert.match(toast, /role=\{toast\.level === 'error' \|\| toast\.level === 'warn' \? 'alert' : 'status'\}/);
-assert.match(toast, /aria-live=\{toast\.level === 'error' \|\| toast\.level === 'warn' \? 'assertive' : 'polite'\}/);
+assert.match(toast, /role="status" aria-live="polite"/);
+assert.match(toast, /role="alert" aria-live="assertive"/);
+assert.match(toast, /setPoliteAnnouncement/);
+assert.match(toast, /setAssertiveAnnouncement/);
+assert.doesNotMatch(toast, /role=\{toast\.level ===/);
 assert.match(toast, /fm-toast-dismiss/);
 
 for (const width of ['640px', '360px']) {

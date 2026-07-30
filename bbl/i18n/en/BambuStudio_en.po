@@ -4311,6 +4311,9 @@ msgstr "Select Ink"
 msgid "AMS Settings"
 msgstr "Ink Dispenser Settings"
 
+msgid "AMS settings"
+msgstr "Ink Dispenser settings"
+
 msgid "Insertion update"
 msgstr "Insertion update"
 
@@ -6897,6 +6900,12 @@ msgstr "Printer Parts"
 
 msgid "Print Options"
 msgstr "Print Options"
+
+msgid "Slice options"
+msgstr "Slice options"
+
+msgid "Print options"
+msgstr "Print options"
 
 msgid "Safety Options"
 msgstr ""

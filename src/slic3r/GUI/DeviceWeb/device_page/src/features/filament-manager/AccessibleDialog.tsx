@@ -62,6 +62,11 @@ export function AccessibleDialog({
   const panelRef = useRef<HTMLDivElement>(null);
   const tokenRef = useRef(Symbol('filament-manager-dialog'));
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const initialFocusRefRef = useRef(initialFocusRef);
+
+  onCloseRef.current = onClose;
+  initialFocusRefRef.current = initialFocusRef;
 
   useEffect(() => {
     if (!open) return;
@@ -75,7 +80,7 @@ export function AccessibleDialog({
     const focusInitialControl = () => {
       const panel = panelRef.current;
       if (!panel || dialogStack[dialogStack.length - 1] !== token) return;
-      const initial = initialFocusRef?.current;
+      const initial = initialFocusRefRef.current?.current;
       const target = initial && panel.contains(initial)
         ? initial
         : getFocusableElements(panel)[0] ?? panel;
@@ -89,7 +94,7 @@ export function AccessibleDialog({
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -127,7 +132,7 @@ export function AccessibleDialog({
         window.requestAnimationFrame(() => restoreTarget.focus({ preventScroll: true }));
       }
     };
-  }, [initialFocusRef, onClose, open]);
+  }, [open]);
 
   if (!open) return null;
 

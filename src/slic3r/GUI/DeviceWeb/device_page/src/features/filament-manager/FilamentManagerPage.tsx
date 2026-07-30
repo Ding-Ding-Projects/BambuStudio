@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import useStore from '../../store/AppStore';
 import { useFilamentManagerBridge } from './useFilamentManagerBridge';
@@ -24,6 +24,7 @@ type FilterKey = 'brand' | 'material_type' | 'series';
 const FILTER_LABEL_KEYS: Record<FilterKey, string> = {
   brand: 'Brand', material_type: 'Filament Type', series: 'Material Type',
 };
+const FILAMENT_TABS: readonly TabMode[] = ['all', 'ams'];
 
 export function FilamentManagerPage() {
   const { t } = useTranslation();
@@ -70,6 +71,7 @@ export function FilamentManagerPage() {
 
   // Filter dropdown
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
+  const filterTriggerRefs = useRef<Partial<Record<FilterKey, HTMLButtonElement | null>>>({});
 
   // Cloud sync history popover (triggered by the button next to CloudBadge).
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -362,32 +364,7 @@ export function FilamentManagerPage() {
               <div className="fm-toolbar flex flex-wrap items-start justify-between gap-3 shrink-0">
               <div className="fm-toolbar-discovery flex min-w-0 flex-wrap items-center gap-3">
                 {/* Tabs */}
-                <div className={`fm-tabs flex gap-2 ${!isLoggedIn ? 'opacity-40' : ''}`} role="tablist" aria-label={t('Filament List')}>
-                  {(['all', 'ams'] as const).map((tb, index) => (
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={tab === tb}
-                      tabIndex={tab === tb ? 0 : -1}
-                      key={tb}
-                      data-testid={`filament-tab-${tb}`}
-                      data-active={tab === tb ? 'true' : 'false'}
-                      className={`fm-tab px-[10px] py-1 min-h-9 rounded-md cursor-pointer text-xs text-fm-text-secondary flex items-center transition-colors duration-150 hover:bg-fm-hover ${tab === tb ? 'bg-fm-input text-fm-text-strong' : ''}`}
-                      onClick={() => setTab(tb)}
-                      onKeyDown={(event) => {
-                        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
-                        event.preventDefault();
-                        const nextIndex = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? (index + 1) % 2 : (index + 1) % 2;
-                        const nextTab = (['all', 'ams'] as const)[nextIndex];
-                        setTab(nextTab);
-                        event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
-                      }}
-                      disabled={!isLoggedIn}
-                    >
-                      <BilingualText>{tb === 'all' ? t('All') : t('In Printer')}</BilingualText>
-                    </button>
-                  ))}
-                </div>
+                <FilamentTabs tab={tab} isLoggedIn={isLoggedIn} onSelect={setTab} />
 
                 <div className="fm-toolbar-divider w-px h-[16px] bg-fm-border" aria-hidden="true" />
 
@@ -396,12 +373,16 @@ export function FilamentManagerPage() {
                   {(['brand', 'material_type', 'series'] as const).map((fk) => (
                     <div key={fk} className="relative min-w-0">
                       <button
+                        ref={(node) => { filterTriggerRefs.current[fk] = node; }}
                         type="button"
                         aria-haspopup="listbox"
                         aria-expanded={openFilter === fk}
-                        aria-pressed={!!filters[fk]}
+                        aria-label={`${t(FILTER_LABEL_KEYS[fk])}: ${filters[fk] || t('All')}`}
                         className={`fm-filter-button flex items-center gap-1 px-2 min-h-9 rounded-md cursor-pointer text-sm text-fm-text-primary transition-colors duration-150 hover:bg-fm-hover ${filters[fk] ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
-                        onClick={(e) => { e.stopPropagation(); setOpenFilter(openFilter === fk ? null : fk); }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpenFilter(openFilter === fk ? null : fk);
+                        }}
                         disabled={!isLoggedIn}
                       >
                         <BilingualText>{t(FILTER_LABEL_KEYS[fk])}</BilingualText>
@@ -421,8 +402,12 @@ export function FilamentManagerPage() {
                               return next;
                             });
                             setOpenFilter(null);
+                            window.requestAnimationFrame(() => filterTriggerRefs.current[fk]?.focus());
                           }}
-                          onClose={() => setOpenFilter(null)}
+                          onClose={() => {
+                            setOpenFilter(null);
+                            window.requestAnimationFrame(() => filterTriggerRefs.current[fk]?.focus());
+                          }}
                         />
                       )}
                     </div>
@@ -663,19 +648,78 @@ export function FilamentManagerPage() {
 
 /* ===== Sub-components ===== */
 
-function FilterDropdown({ label, options, current, onSelect, onClose }: {
+export function FilamentTabs({ tab, isLoggedIn, onSelect }: {
+  tab: TabMode;
+  isLoggedIn: boolean;
+  onSelect: (tab: TabMode) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className={`fm-tabs flex gap-2 ${!isLoggedIn ? 'opacity-40' : ''}`} role="tablist" aria-label={t('Filament List')}>
+      {FILAMENT_TABS.map((tabItem, index) => (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === tabItem}
+          tabIndex={tab === tabItem ? 0 : -1}
+          key={tabItem}
+          data-testid={`filament-tab-${tabItem}`}
+          data-active={tab === tabItem ? 'true' : 'false'}
+          className={`fm-tab px-[10px] py-1 min-h-9 rounded-md cursor-pointer text-xs text-fm-text-secondary flex items-center transition-colors duration-150 hover:bg-fm-hover ${tab === tabItem ? 'bg-fm-input text-fm-text-strong' : ''}`}
+          onClick={() => onSelect(tabItem)}
+          onKeyDown={(event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+            event.preventDefault();
+            const movingForward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+            const nextIndex = movingForward
+              ? (index + 1) % FILAMENT_TABS.length
+              : (index - 1 + FILAMENT_TABS.length) % FILAMENT_TABS.length;
+            onSelect(FILAMENT_TABS[nextIndex]);
+            event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
+          }}
+          disabled={!isLoggedIn}
+        >
+          <BilingualText>{tabItem === 'all' ? t('All') : t('In Printer')}</BilingualText>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function FilterDropdown({ label, options, current, onSelect, onClose }: {
   label: string; options: string[]; current: string;
   onSelect: (val: string) => void; onClose: () => void;
 }) {
   const { t } = useTranslation();
-  useEffect(() => {
-    const handler = () => onClose();
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, [onClose]);
+  const values = useMemo(() => ['', ...options], [options]);
+  const [activeIndex, setActiveIndex] = useState(() => Math.max(0, values.indexOf(current)));
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const onCloseRef = useRef(onClose);
 
-  const values = ['', ...options];
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => optionRefs.current[activeIndex]?.focus());
+    const handleDocumentClick = () => onCloseRef.current();
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [activeIndex]);
+
+  const focusOption = (index: number) => {
+    setActiveIndex(index);
+    optionRefs.current[index]?.focus();
+  };
+
   const handleOptionKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      onCloseRef.current();
+      return;
+    }
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
     let nextIndex = index;
@@ -683,21 +727,24 @@ function FilterDropdown({ label, options, current, onSelect, onClose }: {
     if (event.key === 'ArrowUp') nextIndex = (index - 1 + values.length) % values.length;
     if (event.key === 'Home') nextIndex = 0;
     if (event.key === 'End') nextIndex = values.length - 1;
-    event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="option"]')[nextIndex]?.focus();
+    focusOption(nextIndex);
   };
 
   return (
-    <div role="listbox" aria-label={label} className="absolute z-[100] bg-fm-sidebar border border-fm-border rounded-lg p-1 min-w-[120px] max-w-[min(18rem,calc(100vw-2rem))] max-h-60 overflow-y-auto shadow-[0_4px_12px_rgba(0,0,0,0.4)]" onClick={(e) => e.stopPropagation()}>
+    <div role="listbox" aria-label={label} className="absolute z-[100] bg-fm-sidebar border border-fm-border rounded-lg p-1 min-w-[120px] max-w-[min(18rem,calc(100vw-2rem))] max-h-60 overflow-y-auto shadow-[0_4px_12px_rgba(0,0,0,0.4)]" onClick={(event) => event.stopPropagation()}>
       {values.map((value, index) => {
         const active = current === value;
         return (
           <button
+            ref={(node) => { optionRefs.current[index] = node; }}
             type="button"
             role="option"
             aria-selected={active}
+            tabIndex={index === activeIndex ? 0 : -1}
             key={value || '__all'}
             className={`fm-filter-option w-full min-h-9 px-3 py-[6px] rounded-sm cursor-pointer text-left text-xs text-fm-text-primary hover:bg-fm-hover ${active ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
             onClick={() => onSelect(value)}
+            onFocus={() => setActiveIndex(index)}
             onKeyDown={(event) => handleOptionKeyDown(event, index)}
           >
             {value ? value : <BilingualText>{t('All')}</BilingualText>}

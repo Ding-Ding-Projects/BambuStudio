@@ -2,6 +2,24 @@
 
 ## In progress
 
+### Native and embedded GUI accessibility wave (delivery verification — 2026-07-30)
+
+- Shared native controls, the Filament Manager DeviceWeb page, Project resources, setup guides,
+  focused contracts, and maintainer documentation are implemented on the delivery branch.
+- Focused native source contracts, changed-file DeviceWeb lint, TypeScript compilation, accessibility
+  tests, and the Vite production build have passed locally.
+- Real MSVC compilation exposed and repaired the source-contract gaps: `SwitchBoard` now attaches its
+  two-radio accessible peer, uses wxWindow's enabled state, sizes from translated labels, emits full
+  command metadata, and activates Space/Enter once on the matching key-up instead of alternating under
+  auto-repeat. The AMS settings gear now uses the command-event signature its shared Button emits.
+- The post-repair focused Release library compilation and full `BambuStudio_app_gui` link both exit 0.
+  The exact post-key-pair DLL is 150,811,136 bytes, timestamped `2026-07-30 00:44:51 -04:00`, with
+  SHA-256 `1EECBBFFBB5AB87AF2A90050220E3B4A93E816291F5C29DF4276078CABF22530`.
+  Lowlevel MCP runtime evidence is accepted only from that build; older intermediate captures are not.
+- **Still required before moving this item to Landed:** exact-final-build Lowlevel MCP headless captures,
+  default-branch push and remote ancestry proof, and factual hosted workflow/release links. `HANDOFF.md`
+  is the evidence ledger.
+
 ### Home Assistant printer handover (implementation complete; verification pending — 2026-07-28)
 
 - **Token-backed handover:** the Smart home dialog collects accessible printers, presents a
@@ -60,25 +78,6 @@
   synthetic TEST-NET probe is transport evidence, not a real-printer success claim.
 
 ## Landed
-
-### Native and embedded GUI accessibility wave (2026-07-29)
-
-- Made shared native split actions, popup options, links, segmented choices, tabs, and Ink
-  Dispenser controls keyboard reachable, visibly focusable, and screen-reader sensible while
-  preserving their existing wx event contracts and restoring focus after popup dismissal.
-- Rebuilt the active Filament Manager interaction layer around labelled, focus-contained dialogs;
-  semantic tabs, filters, sorting, group expansion, selection, and pagination; persistent
-  warning/error notifications; structured bilingual labels; and narrow/zoom-safe reflow.
-- Removed browser-zoom suppression and pointer-only owned actions from the Project and setup-guide
-  resources, added visible focus/reduced-motion behavior, and made informational web notifications
-  severity aware.
-- Added native source contracts, DeviceWeb i18n/accessibility tests, owned-resource accessibility
-  tests, and CI wiring. The integrated candidate passed the focused contracts, changed-file lint,
-  TypeScript compilation, and Vite production build locally. The exact Release DLL, headless native
-  evidence, pushed commit, and hosted run are recorded in `HANDOFF.md`; this entry does not promote
-  a source check into runtime evidence.
-- Maintainer behavior, failure modes, security boundary, and verification commands are documented in
-  [`docs/features/windows/gui-accessibility.md`](docs/features/windows/gui-accessibility.md).
 
 > Entries here are a dated record of what shipped, written in the vocabulary of the day. Waves that
 > predate 2026-07-26 therefore say "filament" and "AMS" where the shipped UI now reads "ink" and
