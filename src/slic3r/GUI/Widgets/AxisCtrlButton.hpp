@@ -67,6 +67,24 @@ public:
 
     void Rescale();
 
+    bool AcceptsFocusFromKeyboard() const override { return IsEnabled() && IsShown(); }
+
+    // Accessibility bridge for the five owner-drawn grid actions. child_id is the
+    // one-based wxAccessible child id (up, left, home, right, down).
+    wxString AccessibilityNameForChild(int child_id) const;
+    bool     AccessibilityActivate(int child_id);
+    bool     AccessibilityHasCurrentChild() const;
+    int      AccessibilityCurrentChildId() const;
+    bool     AccessibilityChildIsCurrent(int child_id) const;
+    bool     AccessibilityChildIsPressed(int child_id) const;
+    wxRect   AccessibilityLocationForChild(int child_id) const;
+    int      AccessibilityChildFromScreenPoint(const wxPoint& point) const;
+
+protected:
+#ifdef __WIN32__
+    WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam) override;
+#endif
+
 private:
     void updateParams();
 
