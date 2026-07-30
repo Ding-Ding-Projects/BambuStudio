@@ -17,7 +17,7 @@ below was reviewed through **2026-07-30** unless it says otherwise.
 - The interactive app and GitHub Pages landing now share an eleven-image WebP showcase under
   `ui-md3/assets/showcase/`; its behavior and deployment contract are documented in
   `docs/features/design-system/generated-visual-showcase.md`.
-- No open PRs. Two open issues remain: #15 is waiting for the requested secret-history policy
+- No open PRs. One open branch: `fix/enable-crash-handler` (see §7 item 0d). Two open issues: #15 is waiting for the requested secret-history policy
   choice, while #16 has a complete local implementation, green focused build/tests, and cross-host
   transport evidence. Its full GUI build and English native clipping review are also complete; the
   bilingual/live-HA/hardware/remote evidence sequence remains in §7.1.
@@ -27,7 +27,10 @@ below was reviewed through **2026-07-30** unless it says otherwise.
   on a stale i18n tripwire — both fixed, `md3-v80` shipped. The Prepare sidebar was cutting the
   process settings off the right edge with no scrollbar able to reach them; fixed and captured
   (§6.9). **A reported crash and a "model has no data" tab failure remain unreproduced and open —
-  see §7 item 0d before claiming either is fixed.**
+  see §7 item 0d before claiming either is fixed.** The crash reporter turned out to be disabled
+  three ways over, which is why no crash ever left evidence; branch `fix/enable-crash-handler` fixes
+  that and is pushed **build-unverified** — check its CI, then merge it. **There is one open branch:
+  that one.**
 
 ---
 
@@ -696,24 +699,65 @@ absence from that list is not evidence they are missing. Crop the capture instea
 
 ## 7. What to do next
 
-0d. **Two reported symptoms remain open — neither was reproduced, so neither is fixed.** The user
+0d. **THE CRASH IS STILL OPEN — start here.** It was not reproduced, so it is not fixed. The user
    reported, in their words: *"it keeps crashing … when opening model or changing a lot of settings
    at the same time"*, *"when it crashes it refuses to open until i open it a few times"*, and
    *"switching tabs do not work and say model has no data"*.
-   - **The crash did not reproduce.** Opening `cube.stl` and switching to Preview both worked; the
-     model sliced and the time estimation rendered. Two instances stayed alive. No crash dump was
-     produced and `%APPDATA%\BambuStudioInternal\log\` holds **no logs from 2026-07-29 or 07-30**
-     despite the user hitting crashes, which is itself unexplained — either they are running a
-     different install, or it dies before the log opens. Establish *which build they are running*
-     before anything else. `procdump.exe` is on this box (`C:\ProgramData\chocolatey\bin`); attach
-     `procdump -e -ma -w bambu-studio.exe <dir>` and drive the reported sequence.
-   - The re-entrancy guard added to `update_sidebar_scroll_body()` is a **defensive** fix for a
-     plausible recursion (`SetVirtualSize` → scrollbar → `EVT_SIZE` → repeat, which both reported
-     triggers would cross). It is **not** a confirmed crash fix and must not be written up as one.
-   - **"Model has no data" was never located.** No such string exists in `src/` or the catalogs;
-     the user is paraphrasing. Get the exact wording or a screenshot before hunting further.
-   - Log truncation is **not** proof of a crash here: `driver.py stop` kills the process, which
-     truncates the buffered log identically. Six of eight older logs end mid-line for that reason.
+
+   **Why there was never any evidence — this is the actionable finding.** The crash reporter exists
+   in this tree and was switched off in *three independent ways*:
+   - `SET_DEFULTER_HANDLER()` commented out in `bambustu_main()` (`src/BambuStudio.cpp`), for both
+     release and internal builds;
+   - `CBaseException::set_log_folder(data_dir())` commented out (`GUI_App.cpp`), so the filter had
+     nowhere to write even if installed;
+   - `src/BaseException.cpp` and `src/StackWalker.cpp` were **in the tree but compiled by no
+     target**, so uncommenting either line alone only earns a link error.
+
+   That is why a crash left no dump, no stack and no marker: the process simply stops mid-line,
+   which is indistinguishable from being killed.
+
+   > [!IMPORTANT]
+   > **Branch `fix/enable-crash-handler` (`40bca594e`) enables all three and is pushed but
+   > BUILD-UNVERIFIED** — the CMake change forces a full libslic3r rebuild that had not finished
+   > when the session ended. It is deliberately **not** on master so a link error cannot redden
+   > CI. **Confirm the branch's CI build is green, then merge it.** These legacy files have never
+   > been compiled in this tree, so `TCHAR`/unicode or warnings-as-errors problems are plausible.
+   > Once merged, a crash writes `<data_dir>/log/crash_<when>_<n>.log` with exception code,
+   > registers, module list and call stack. It does **not** stop the crash; it makes the next one
+   > diagnosable.
+
+   **What was already ruled out here (do not redo):**
+   - Opening `cube.stl`, slicing, and Preview all work. **32 tab switches** across
+     Prepare/Preview/Device: clean. **10 rounds** of advanced/simple flips plus every segment
+     (Quality/Strength/Support/Others): clean. `procdump -e -ma -w` attached throughout produced
+     **no dump**, and both app instances stayed alive.
+   - No stale `wxSingleInstanceChecker` lock in `<data_dir>\cache\` and no zombie `bambu-studio.exe`
+     after a run, so the "refuses to open" symptom did not reproduce either.
+   - Log truncation is **not** proof of a crash: `driver.py stop` kills the process and truncates
+     the buffered log identically. Six of eight older logs end mid-line for that reason. The
+     2026-07-28 20:12 log that ends inside `_save_model_to_file` is a **27-second** session, which
+     fits a kill far better than a crash.
+
+   **The strongest untested lead:** `%APPDATA%\BambuStudioInternal\log\` holds **no logs at all from
+   2026-07-29 or 07-30** despite the user hitting crashes on those days. Either they are running a
+   *different* build, or it dies before the log opens (`instance_check()` runs before `wxEntry()`
+   and before boost log is initialised — an early exit there produces exactly "won't open, no
+   log"). **Establish which binary they actually run before anything else.** Note a release
+   installer uses data dir `BambuStudio`, not `BambuStudioInternal` — and no plain `BambuStudio`
+   dir exists on this host, so the reported crashes probably did not happen on this machine.
+
+   **A real robustness bug found while reading that path, not yet fixed:**
+   `instance_check_internal::send_message()` (`InstanceCheck.cpp`) uses a bare **blocking
+   `SendMessage(WM_COPYDATA)`** to the other instance's window. If that instance is hung, the new
+   process blocks at startup forever with no log — a plausible mechanism for *"refuses to open
+   until I open it a few times"*. `SendMessageTimeout` is the correct call. Worth doing.
+
+   The re-entrancy guard added to `update_sidebar_scroll_body()` is a **defensive** fix for a
+   plausible recursion (`SetVirtualSize` → scrollbar → `EVT_SIZE` → repeat, which both reported
+   triggers would cross). It is **not** a confirmed crash fix and must not be written up as one.
+
+   **"Model has no data" was never located.** No such string exists in `src/` or the catalogs; the
+   user is paraphrasing. Get the exact wording or a screenshot before hunting further.
 
 0e. **The dim sum surprise, release code names, and the tabbed-README requirement are unimplemented.**
    Global memory gained sections this session that the local rules copy lacked (now synced to
