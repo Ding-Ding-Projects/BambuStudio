@@ -86,8 +86,9 @@ public:
     ~CameraHUD() override;
 
     // Start / stop the pulsing LIVE badge. Idempotent and safe to call every
-    // refresh cycle: it reconciles the pulse timer with the live flag and the
-    // current on-screen visibility, so the timer never runs on a hidden page.
+    // refresh cycle: it reconciles the pulse timer with the live flag, the
+    // current on-screen visibility, and the OS reduced-motion preference. Under
+    // reduced motion the timer stops and the LIVE dot snaps to steady opacity.
     void SetLiveActive(bool live);
 
     // Nozzle / bed temperature chips (kit camera-card temp readouts). Fed once

@@ -8,7 +8,8 @@
 #include <wx/graphics.h>
 
 #include "../I18N.hpp" // _L
-#include "Label.hpp"   // ::Label::Mono_11 (Roboto Mono 11.5/400)
+#include "Label.hpp"     // ::Label::Mono_11 (Roboto Mono 11.5/400)
+#include "MD3Motion.hpp" // reduced-motion preference
 
 namespace Slic3r { namespace GUI {
 
@@ -322,11 +323,19 @@ void CameraHUD::SetLiveActive(bool live)
     // 50 ms timer never survives on a hidden monitor tab. When the page is
     // shown again StatusPanel's per-second update calls this again and restarts
     // the pulse.
-    if (m_live && IsShownOnScreen()) {
+    if (m_live && IsShownOnScreen() && !MD3::Motion::reduced()) {
         if (!m_pulse_timer.IsRunning())
             m_pulse_timer.Start(kPulseTick);
-    } else if (m_pulse_timer.IsRunning()) {
-        m_pulse_timer.Stop();
+    } else {
+        if (m_pulse_timer.IsRunning())
+            m_pulse_timer.Stop();
+        if (m_phase != 0.0) {
+            m_phase = 0.0; // steady maximum-opacity LIVE dot
+            if (m_dot_rect.IsEmpty())
+                Refresh();
+            else
+                RefreshRect(m_dot_rect);
+        }
     }
 }
 
@@ -401,8 +410,13 @@ void CameraHUD::msw_rescale()
 
 void CameraHUD::on_pulse(wxTimerEvent &)
 {
-    if (!m_live || !IsShownOnScreen()) {
+    if (!m_live || !IsShownOnScreen() || MD3::Motion::reduced()) {
         m_pulse_timer.Stop();
+        m_phase = 0.0;
+        if (m_dot_rect.IsEmpty())
+            Refresh();
+        else
+            RefreshRect(m_dot_rect);
         return;
     }
     m_phase += 2.0 * kPi * kPulseTick / static_cast<double>(kPulsePeriod);

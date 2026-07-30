@@ -98,6 +98,17 @@ static wxColour device_primary_container_color() { return StateColor::semantic(M
 static wxColour device_control_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHigh); }
 static wxColour device_control_emphasis_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHighest); }
 
+// Icon-only Buttons must expose the same localized action through their tooltip
+// and accessible name. Keeping both assignments together prevents stateful actions
+// (Pause / Resume) from announcing a stale name after their glyph changes.
+static void set_button_action_label(Button *button, const wxString &label)
+{
+    if (button->GetToolTipText() != label)
+        button->SetToolTip(label);
+    if (button->GetName() != label)
+        button->SetName(label);
+}
+
 // Kit icons-assets shared-dialog-action-icons (star->star): the 5-star rating
 // row (PrintingTaskPanel::m_score_star, ScoreDialog::m_score_star) expresses
 // lit/idle state through colour on the single 'star' Material Symbol glyph
@@ -1303,16 +1314,16 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_button_pause_resume->SetButtonSize(Button::Size::Large);
     m_button_pause_resume->SetColorScheme(MD3::ColorScheme::Device);
     m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
-    m_button_pause_resume->SetCanFocus(false);
-    m_button_pause_resume->SetToolTip(_L("Pause"));
+    m_button_pause_resume->SetCanFocus(true);
+    set_button_action_label(m_button_pause_resume, _L("Pause"));
 
     // MD3 stop: a danger pill (transparent fill, 1px Error border, Error glyph).
     m_button_abort = new Button(progress_lr_panel, wxEmptyString, "", wxBORDER_NONE, 0, wxID_ANY);
     m_button_abort->SetVariant(Button::Variant::Danger);
     m_button_abort->SetButtonSize(Button::Size::Large);
     m_button_abort->SetGlyph(MaterialIcon::Stop);
-    m_button_abort->SetCanFocus(false);
-    m_button_abort->SetToolTip(_L("Stop"));
+    m_button_abort->SetCanFocus(true);
+    set_button_action_label(m_button_abort, _L("Stop"));
 
     wxBoxSizer *bSizer_buttons     = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *bSizer_text        = new wxBoxSizer(wxHORIZONTAL);
@@ -1865,17 +1876,19 @@ void PrintingTaskPanel::enable_pause_resume_button(bool enable, std::string type
 
         if (type == "pause_disable") {
             m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
+            set_button_action_label(m_button_pause_resume, _L("Pause"));
         } else if (type == "resume_disable") {
             m_button_pause_resume->SetGlyph(MaterialIcon::PlayArrow);
+            set_button_action_label(m_button_pause_resume, _L("Resume"));
         }
     } else {
         m_button_pause_resume->Enable(true);
         if (type == "resume") {
             m_button_pause_resume->SetGlyph(MaterialIcon::PlayArrow);
-            if (m_button_pause_resume->GetToolTipText() != _L("Resume")) { m_button_pause_resume->SetToolTip(_L("Resume")); }
+            set_button_action_label(m_button_pause_resume, _L("Resume"));
         } else if (type == "pause") {
             m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
-            if (m_button_pause_resume->GetToolTipText() != _L("Pause")) { m_button_pause_resume->SetToolTip(_L("Pause")); }
+            set_button_action_label(m_button_pause_resume, _L("Pause"));
         }
     }
 }
