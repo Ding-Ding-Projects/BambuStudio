@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Headless driver for BambuStudio on this GPU-less Windows box.
 
-Run with the Lowlevel MCP venv python:
-  C:\\Users\\Administrator\\Documents\\GitHub\\lowlevel-computer-use-mcp\\.venv\\Scripts\\python.exe driver.py <cmd> ...
+Run with the repository-vendored Lowlevel MCP venv python:
+  vendor\\lowlevel-computer-use-mcp\\.venv\\Scripts\\python.exe driver.py <cmd> ...
 
 The app runs on an off-screen ("headless") Windows desktop created by the
 lowlevel-computer-use cheap CLI, with Mesa llvmpipe software GL (the Mesa
@@ -41,8 +41,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 EXE = REPO / "build" / "src" / "Release" / "bambu-studio.exe"
-LLCU_VENV = Path(os.environ.get(
-    "LLCU_VENV", r"C:\Users\Administrator\Documents\GitHub\lowlevel-computer-use-mcp\.venv"))
+LLCU_VENV = Path(os.environ.get("LLCU_VENV", REPO / "vendor" / "lowlevel-computer-use-mcp" / ".venv"))
 CHEAP = LLCU_VENV / "Scripts" / "lowlevel-computer-use-cheap.exe"
 DESKTOP = os.environ.get("BS_DESKTOP", "bsrun")
 STATE = Path(os.environ.get("TEMP", r"C:\Windows\Temp")) / "bs-run-driver"
@@ -191,11 +190,38 @@ def cmd_open(args):
     t0 = time.time()
     wrapper = write_wrapper(model)
     cheap("launch_on_headless_desktop", name=DESKTOP, command=f'cmd /c "{wrapper}"')
-    log = wait_gl_init(t0)
+
+    # A second instance does not always write its GL-ready line to the log selected
+    # by wait_gl_init(). The document frame is the authoritative readiness signal.
+    deadline = time.time() + 240
+    log = None
+    new = []
+    while time.time() < deadline:
+        current = list_windows()
+        new = [w for w in current if w["handle"] not in before]
+        if any(w.get("class") == "wxWindowNR" and
+               "BambuStudio" in (w.get("title") or "") and
+               w.get("width", 0) > 800 for w in new):
+            break
+        for p in LOGDIR.glob("studio_*.log*"):
+            if p.stat().st_mtime >= t0 - 1:
+                try:
+                    if GL_READY in p.read_text(errors="replace"):
+                        log = p
+                        break
+                except OSError:
+                    pass
+        time.sleep(2)
+    else:
+        die(f"no document frame or studio log contained '{GL_READY}' within 240s "
+            f"| windows now: {list_windows()}")
+
     time.sleep(5)  # model load + first paint
-    new = [w for w in list_windows() if w["handle"] not in before]
-    print(json.dumps({"ok": True, "log": str(log), "new_windows": new,
-                      "all_windows": list_windows()}, indent=1))
+    current = list_windows()
+    new = [w for w in current if w["handle"] not in before]
+    print(json.dumps({"ok": True, "log": str(log) if log else None,
+                      "readiness": "document_frame" if log is None else "studio_log",
+                      "new_windows": new, "all_windows": current}, indent=1))
 
 
 def cmd_windows(_):
@@ -235,8 +261,11 @@ def run_ahk_on_desktop(body, timeout=20):
     """Run an AHK v2 snippet ON the headless desktop. The snippet may use the
     variable `res` (result file path) and MUST NOT ExitApp itself — a
     FileAppend of the outcome plus ExitApp is appended automatically."""
-    ahk = json.loads(subprocess.run([str(CHEAP), "ahk_status"], capture_output=True,
-                                    text=True).stdout)["path"]
+    status = cheap("ahk_status")
+    ahk = status.get("path")
+    if not status.get("installed") or not ahk:
+        die("AutoHotkey v2 is unavailable; ahk/ahkclick require it. "
+            "Use press.py or another same-desktop Lowlevel MCP route instead.")
     STATE.mkdir(parents=True, exist_ok=True)
     res = STATE / f"ahk-res-{int(time.time()*1000)}.txt"
     script = STATE / "snippet.ahk"

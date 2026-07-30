@@ -203,7 +203,6 @@ public:
     void on_filament_load(wxCommandEvent &event);
     void on_filament_unload(wxCommandEvent &event);
     void auto_refill(wxCommandEvent& event);
-    void on_ams_setting_click(wxMouseEvent &event);
     void on_extrusion_cali(wxCommandEvent &event);
     void on_ams_setting_click(wxCommandEvent &event);
     void on_clibration_again_click(wxMouseEvent &event);

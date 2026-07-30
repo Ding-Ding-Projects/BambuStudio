@@ -1347,7 +1347,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
 
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
     sizer->Add(text_purify_air_context, 0, wxLEFT, FromDIP(58));
-    sizer->Add(purify_air_switch_board, 0, wxLEFT, FromDIP(58));
+    sizer->Add(purify_air_switch_board, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(58));
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
 
     // auto-recovery from step loss
@@ -1509,7 +1509,7 @@ wxBoxSizer* PrintOptionsDialog::create_settings_group(wxWindow* parent)
 
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
     sizer->Add(text_open_door_caption, 0, wxLEFT, FromDIP(58));
-    sizer->Add(open_door_switch_board, 0, wxLEFT, FromDIP(58));
+    sizer->Add(open_door_switch_board, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(58));
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
 
     m_snapshot_sizer = new wxBoxSizer(wxVERTICAL);

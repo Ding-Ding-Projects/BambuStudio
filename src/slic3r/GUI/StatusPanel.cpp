@@ -2484,7 +2484,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     bSizer_control->Add(temperature_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
     bSizer_control->Add(0, 0, 0, wxTOP, FromDIP(8));
     bSizer_control->Add(print_options_card, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
-    bSizer_control->Add(m_ams_rack_switch, 0, wxALIGN_CENTRE | wxTOP, FromDIP(6));
+    bSizer_control->Add(m_ams_rack_switch, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     bSizer_control->Add(0, 0, 0, wxTOP, FromDIP(6));
     bSizer_control->Add(ams_rack_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
     bSizer_control->Add(0, 0, 0, wxTOP, FromDIP(6));
@@ -2937,9 +2937,7 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     auto        panel         = new wxPanel(parent, wxID_ANY);
 
     panel->SetBackgroundColour(device_card_color());
-    panel->SetSize(wxSize(FromDIP(143), -1));
     panel->SetMinSize(wxSize(FromDIP(143), -1));
-    panel->SetMaxSize(wxSize(FromDIP(143), -1));
 
     StateColor e_ctrl_bg(std::pair<wxColour, int>(device_primary_container_color(), StateColor::Pressed),
                          std::pair<wxColour, int>(device_control_color(), StateColor::Normal));

@@ -91,14 +91,11 @@ public:
 
 	bool switch_left{false};
     bool switch_right{false};
-    bool is_enable {true};
 
     void* client_data = nullptr;/*MachineObject* in StatusPanel*/
 
 public:
-    void Enable();
-    void Disable();
-    bool IsEnabled(){return is_enable;};
+    bool Enable(bool enable = true) override;
 
     void  SetClientData(void* data) { client_data = data; };
     void* GetClientData() { return client_data; };
@@ -108,15 +105,36 @@ public:
     // Recolor the selected segment to a workspace scheme (Preview / Device).
     void SetColorScheme(MD3::ColorScheme scheme) { m_scheme = scheme; Refresh(); }
 
+    bool AcceptsFocus() const override;
+    bool AcceptsFocusFromKeyboard() const override;
+
 protected:
+#ifdef __WIN32__
+    WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param) override;
+#endif
+
+    wxSize DoGetBestSize() const override;
+
     void paintEvent(wxPaintEvent& evt);
     void render(wxDC& dc);
     void doRender(wxDC& dc);
     void on_left_down(wxMouseEvent& evt);
+    void on_key_down(wxKeyEvent& evt);
+    void on_key_up(wxKeyEvent& evt);
+    void on_focus(wxFocusEvent& evt);
 
 private:
+#if wxUSE_ACCESSIBILITY
+    class Accessible;
+    friend class Accessible;
+#endif
+
+    void activateSegment(bool left);
+
     bool auto_disable_when_switch = false;
+    int m_keyboard_pressed_key = WXK_NONE;
     MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
+    wxSize m_requested_min_size = wxDefaultSize;
 };
 
 class CustomToggleButton : public wxWindow {

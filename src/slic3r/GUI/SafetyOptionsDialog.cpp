@@ -213,7 +213,7 @@ wxBoxSizer* SafetyOptionsDialog::create_settings_group(wxWindow* parent)
     line_sizer->Add(m_text_open_door, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
 
     sizer->Add(line_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(18));
-    sizer->Add(m_open_door_switch_board, 0, wxLEFT, FromDIP(65));
+    sizer->Add(m_open_door_switch_board, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(65));
     line_sizer->Add(FromDIP(10), 0, 0, 0);
     sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
 

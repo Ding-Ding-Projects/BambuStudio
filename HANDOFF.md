@@ -3,7 +3,7 @@
 You are taking over work on **this fork of BambuStudio** (`Ding-Ding-Projects/BambuStudio`),
 a Windows desktop 3D-printing slicer written in C++ with wxWidgets. This file is written
 to be self-contained: it assumes you know nothing about previous sessions. Everything
-below was reviewed through **2026-07-28** unless it says otherwise.
+below was reviewed through **2026-07-29** unless it says otherwise.
 
 ---
 
@@ -32,16 +32,16 @@ These cost previous sessions hours. Do not re-derive them.
 
 | Thing | Value |
 | --- | --- |
-| Repo path | `C:\Users\Administrator\Documents\GitHub\BambuStudio` |
-| Visual Studio | Build Tools 17.14 installed at the **literal path `C:\Program`** (a mis-set install dir) |
-| MSBuild | `C:\Program\MSBuild\Current\Bin\MSBuild.exe` |
-| Windows SDK | **Must pin `PS_WINSDK=10.0.26100.0`** — SDK 10.0.28000.0 is half-installed and breaks builds with MSB8037 |
-| Prebuilt deps | `deps\build\out_deps` (already built; rebuilding takes ~30 min) |
+| Repo path | Resolve from the active checkout (`git rev-parse --show-toplevel`); on the current host it is `C:\Users\cntow\Documents\GitHub\BambuStudio`. |
+| Visual Studio | Visual Studio 18 Enterprise at `C:\Program Files\Microsoft Visual Studio\18\Enterprise`. |
+| MSBuild | `C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe` |
+| Windows SDK | The current generated tree selects **10.0.28000.0**. Do not reuse the obsolete 10.0.26100.0 pin from an earlier host image. |
+| Prebuilt deps | `..\bambu-deps\build\out_deps\usr\local` for the current generated tree. Recheck the CMake cache before regenerating. |
 | App logs | `%APPDATA%\BambuStudioInternal\log\studio_*.log*` |
 | App config | `%APPDATA%\BambuStudioInternal\BambuStudio.conf` (e.g. `"dark_color_mode": "1"`). **Ends with a `# MD5 checksum` line.** A stale checksum only logs a warning, but **malformed JSON makes the app silently fall back to `BambuStudio.conf.bak`** — so a botched hand-edit looks exactly like "the app ignored my setting". Edit with a real JSON serializer and recompute the checksum over everything up to and including the last `}`. |
-| GPU | **None.** "Microsoft Basic Display Adapter". The app needs Mesa llvmpipe software GL to start at all. |
-| Display | **832 x 1573 — narrower than the app's own minimum.** `GUI_App::get_min_size()` returns 1000x600, and `create_headless_desktop` inherits the primary display's resolution with no override, so the main frame always runs at ~846 wide here, **below its supported minimum**. Useful as a permanent narrow-width test bed; see §3.3 for the real defect it exposed. Main-frame layout at a *supported* width still cannot be checked here. |
-| Python | No system Python. Use `C:\Users\Administrator\Documents\GitHub\lowlevel-computer-use-mcp\.venv\Scripts\python.exe` |
+| GPU | **None.** The app needs the Mesa llvmpipe DLLs beside the Release executable to start. |
+| Display | The current primary display reports **1920 x 1080**. Treat this as a point-in-time host fact and recheck before drawing layout conclusions. |
+| Python | Use the repository-vendored Lowlevel MCP venv at `vendor\lowlevel-computer-use-mcp\.venv\Scripts\python.exe`; `LLCU_VENV` may override it. |
 
 **Shell gotchas on this box** (these silently produce wrong results):
 
@@ -67,22 +67,21 @@ a ~173 KB launcher. Rebuilding the `BambuStudio_app_gui` project pulls in everyt
 The final issue #16 Release build produced a 151,299,584-byte DLL at
 `2026-07-28 08:15:46 -04:00`, SHA-256
 `41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`.
+That hash predates the GUI accessibility wave and must not be used as evidence for it. The current
+accessibility DLL metadata is recorded in §6 only after the exact final rebuild completes.
 
-```bash
-cat > /c/Users/ADMINI~1/AppData/Local/Temp/msb.cmd <<'EOF'
+Create a temporary `.cmd` with the checkout's resolved absolute path:
+
+```bat
 @echo off
-cd /d C:\Users\Administrator\Documents\GitHub\BambuStudio
-"C:\Program\MSBuild\Current\Bin\MSBuild.exe" build\src\BambuStudio_app_gui.vcxproj /p:Configuration=Release /p:Platform=x64 /m
-EOF
-cmd //c "C:\Users\ADMINI~1\AppData\Local\Temp\msb.cmd" > /c/Users/ADMINI~1/AppData/Local/Temp/msb.log 2>&1
+cd /d <absolute-checkout-path>
+"C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe" build\src\BambuStudio_app_gui.vcxproj /p:Configuration=Release /p:Platform=x64 /m:2 /v:minimal
 ```
 
-Then **always check for errors explicitly** — do not trust a `0` exit code alone:
-
-```bash
-grep -cE "error C[0-9]+|error LNK|CMake Error" /c/Users/ADMINI~1/AppData/Local/Temp/msb.log
-grep -E "[0-9]+ Error\(s\)|Time Elapsed" /c/Users/ADMINI~1/AppData/Local/Temp/msb.log | tail -2
-```
+Invoke it as `cmd.exe //d //c "<absolute-temp-cmd-path>"` and capture stdout/stderr. Git Bash
+rewrites bare `/p`, `/m`, and `/v` switches, so do not call MSBuild directly from Bash. Then
+**always check for compiler, linker, CMake, and MSBuild errors explicitly** and verify
+`build\src\Release\BambuStudio.dll` advanced; an old DLL is not a successful current build.
 
 ### 3.2 Three build traps that will waste your time
 
@@ -158,8 +157,8 @@ an error. Both are documented in `SKILL.md`.
 Quick start:
 
 ```bash
-PY="C:/Users/Administrator/Documents/GitHub/lowlevel-computer-use-mcp/.venv/Scripts/python.exe"
-DRV="C:/Users/Administrator/Documents/GitHub/BambuStudio/.claude/skills/run-bambustudio/driver.py"
+PY="$PWD/vendor/lowlevel-computer-use-mcp/.venv/Scripts/python.exe"
+DRV="$PWD/.claude/skills/run-bambustudio/driver.py"
 
 "$PY" "$DRV" launch                                  # ~1-3 min: waits for "finished init opengl"
 "$PY" "$DRV" windows                                 # find the frame (title "Untitled - BambuStudio")
@@ -555,22 +554,46 @@ compile errors.
 ## 6. Current state of the world
 
 ```
-branch:          master, all work pushed and ancestry-proven on origin/master
-local build:     full Release BambuStudio_app_gui exit 0, 0 errors / 370 warnings, 2 h 25 m 55 s
-                 (/m:2 — full -m OOMs this box, see §6.1); DLL 151,313,408 bytes,
-                 2026-07-28 13:48:51, SHA-256
-                 168F3F0D51CE7855ED26281D154DB27A0F19F5FADC2F245075FFED9017F505AD
-runtime smoke:   app launched headlessly on that DLL and rendered (MD3 topbar, glyphs, dark
-                 theme); app log shows no exceptions or asserts
-local tests:     crash_restore_tests 22 assertions / 7 cases; ui-md3 static clipping 17/17;
-                 i18n + language modes 722 native / 178 DeviceWeb / 168 legacy; all four
-                 home_assistant contracts pass; release-codename roster 15,674 unique names
-open issues:     #15 (waiting for a user policy choice), #16 (HA handover evidence pending),
-                 #24 (8 verified ui-md3 defects, left for that surface's owner)
+branch:          fix/gui-accessibility-wave; 13 feature commits plus the current native repair are
+                 still branch-only. origin/master remains the integration baseline until final push.
+local build:     the post-key-pair focused Release GUI library compile and full
+                 BambuStudio_app_gui link exit 0 with only the existing C4099/LNK4098 warnings.
+                 DLL 150,811,136 bytes, 2026-07-30 00:44:51 -04:00, SHA-256
+                 1EECBBFFBB5AB87AF2A90050220E3B4A93E816291F5C29DF4276078CABF22530.
+runtime smoke:   exact-final-binary Lowlevel MCP verification is pending. Older intermediate captures
+                 are not proof; one file named as sliced still visibly says "Not sliced".
+local tests:     all three native accessibility contracts pass; DeviceWeb accessibility/behavior,
+                 changed-file lint, TypeScript, Vite, owned-web/MD3, and 726 native / 184 DeviceWeb /
+                 168 legacy localization checks passed earlier in this delivery branch.
+open issues:     #16 (HA handover evidence pending). #15 was refused and closed as not planned because
+                 it explicitly requested retaining secret material in Git history.
 open PRs:        none
 ```
 
-### 6.1 Two machine limits that will bite you
+### 6.1 GUI accessibility delivery evidence (2026-07-30)
+
+- `SwitchBoard` exposes one grouping object with two radio-button children, reports selected and
+  enabled states through `wxAccessible`, and preserves the existing `1 = left` / `0 = right`
+  asynchronous command contract with the real control ID and event object.
+- Its minimum size is measured from both translated labels; representative Safety/Print/AMS/Status
+  callers can grow instead of clipping against legacy maximum widths.
+- Arrow keys and Home/End select endpoints immediately. Space/Enter/Numpad Enter arm once and commit
+  only on the matching key-up; focus loss clears the armed key. This prevents OS key repeat and a
+  mismatched key release from alternating the choice or emitting duplicate commands.
+- The Ink Dispenser settings gear uses the shared focusable Button command event; the stale mouse
+  overload that caused the full Release unresolved external has been removed.
+- The maintained contracts are `native_shared_controls_accessibility_contract`,
+  `native_gui_accessibility_contract`, and `native_accessibility_contract`; all three pass. The
+  repaired `libslic3r_gui` project compiles and the full Release app links through MSBuild 18.7.8
+  with `/m:2`.
+- The exact post-key-pair DLL is **150,811,136 bytes**, timestamped
+  `2026-07-30 00:44:51 -04:00`, SHA-256
+  `1EECBBFFBB5AB87AF2A90050220E3B4A93E816291F5C29DF4276078CABF22530`. Lowlevel MCP captures,
+  default-branch integration, remote ancestry proof, and hosted workflow/release state remain in the
+  current-state block above. Do not reuse an intermediate hash or a capture whose visible state
+  contradicts its filename.
+
+### 6.2 Two machine limits that will bite you
 
 - **`MSBuild /m` (unbounded) runs this box out of memory.** A parallel GUI build died with
   `C3859: Failed to create virtual memory for PCH` and `C1076: compiler limit: internal heap

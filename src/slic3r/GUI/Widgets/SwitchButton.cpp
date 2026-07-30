@@ -364,31 +364,138 @@ class SwitchBoard::Accessible final : public wxWindowAccessible
 public:
     explicit Accessible(SwitchBoard *board) : wxWindowAccessible(board), m_board(board) {}
 
+    wxAccStatus GetChildCount(int *child_count) override
+    {
+        if (!child_count)
+            return wxACC_NOT_IMPLEMENTED;
+        *child_count = 2;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetChild(int child_id, wxAccessible **child) override
+    {
+        if (!child || child_id < 1 || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        *child = nullptr;
+        return wxACC_OK;
+    }
+
+    wxAccStatus HitTest(const wxPoint& point, int *child_id, wxAccessible **child) override
+    {
+        if (!child_id || !child)
+            return wxACC_NOT_IMPLEMENTED;
+        const wxPoint local = m_board->ScreenToClient(point);
+        *child_id = wxACC_SELF;
+        if (m_board->GetClientRect().Contains(local))
+            *child_id = local.x < m_board->GetClientSize().x / 2 ? 1 : 2;
+        *child = nullptr;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetLocation(wxRect& location, int child_id) override
+    {
+        if (child_id < wxACC_SELF || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        wxRect client = m_board->GetClientRect();
+        if (child_id == 1)
+            client.width /= 2;
+        else if (child_id == 2) {
+            const int half = client.width / 2;
+            client.x += half;
+            client.width -= half;
+        }
+        client.SetPosition(m_board->ClientToScreen(client.GetPosition()));
+        location = client;
+        return wxACC_OK;
+    }
+
     wxAccStatus GetName(int child_id, wxString *name) override
     {
-        if (child_id != wxACC_SELF || !name)
+        if (!name || child_id < wxACC_SELF || child_id > 2)
             return wxACC_NOT_IMPLEMENTED;
-        *name = wxString::Format("%s: %s", m_board->leftLabel, m_board->rightLabel);
-        return wxACC_OK;
+        if (child_id == wxACC_SELF) {
+            *name = m_board->GetName();
+            if (name->IsEmpty() || *name == wxASCII_STR(wxPanelNameStr))
+                *name = wxString::Format("%s / %s", m_board->leftLabel, m_board->rightLabel);
+        } else {
+            *name = child_id == 1 ? m_board->leftLabel : m_board->rightLabel;
+        }
+        return name->IsEmpty() ? wxACC_NOT_IMPLEMENTED : wxACC_OK;
     }
 
     wxAccStatus GetRole(int child_id, wxAccRole *role) override
     {
-        if (child_id != wxACC_SELF || !role)
+        if (!role || child_id < wxACC_SELF || child_id > 2)
             return wxACC_NOT_IMPLEMENTED;
-        *role = wxROLE_SYSTEM_PAGETABLIST;
+        *role = child_id == wxACC_SELF ? wxROLE_SYSTEM_GROUPING : wxROLE_SYSTEM_RADIOBUTTON;
         return wxACC_OK;
     }
 
     wxAccStatus GetState(int child_id, long *state) override
     {
-        if (child_id != wxACC_SELF || !state)
+        if (!state || child_id < wxACC_SELF || child_id > 2)
             return wxACC_NOT_IMPLEMENTED;
-        *state = wxACC_STATE_SYSTEM_FOCUSABLE;
-        if (m_board->HasFocus())
-            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        *state = 0;
+        if (m_board->AcceptsFocusFromKeyboard())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_board->HasFocus()) {
+            const int focused_child = m_board->switch_right ? 2 : 1;
+            if (child_id == wxACC_SELF || child_id == focused_child)
+                *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        }
+        if ((child_id == 1 && m_board->switch_left) ||
+            (child_id == 2 && m_board->switch_right))
+            *state |= wxACC_STATE_SYSTEM_CHECKED;
         if (!m_board->IsEnabled())
             *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_board->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetFocus(int *child_id, wxAccessible **child) override
+    {
+        if (!child_id || !child)
+            return wxACC_NOT_IMPLEMENTED;
+        *child_id = 0;
+        *child = nullptr;
+        if (!m_board->HasFocus())
+            return wxACC_OK;
+        if (m_board->switch_right)
+            *child_id = 2;
+        else
+            *child_id = 1;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetDefaultAction(int child_id, wxString *action_name) override
+    {
+        if (!action_name || child_id < 1 || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        *action_name = _L("Select");
+        return wxACC_OK;
+    }
+
+    wxAccStatus DoDefaultAction(int child_id) override
+    {
+        if (child_id < 1 || child_id > 2)
+            return wxACC_NOT_IMPLEMENTED;
+        if (!m_board->IsEnabled() || !m_board->IsShown())
+            return wxACC_FAIL;
+        m_board->activateSegment(child_id == 1);
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetValue(int child_id, wxString *value) override
+    {
+        if (child_id != wxACC_SELF || !value)
+            return wxACC_NOT_IMPLEMENTED;
+        if (m_board->switch_left)
+            *value = m_board->leftLabel;
+        else if (m_board->switch_right)
+            *value = m_board->rightLabel;
+        else
+            value->clear();
         return wxACC_OK;
     }
 
@@ -398,7 +505,7 @@ private:
 #endif
 
 SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSize size)
- : wxWindow(parent, wxID_ANY, wxDefaultPosition, size)
+ : wxWindow(parent, wxID_ANY, wxDefaultPosition, size), m_requested_min_size(size)
 {
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
@@ -414,15 +521,17 @@ SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSiz
 	leftLabel = leftL;
     rightLabel = right;
 
-	SetMinSize(size);
-	SetMaxSize(size);
+    SetMinSize(DoGetBestSize());
 
     Bind(wxEVT_PAINT, &SwitchBoard::paintEvent, this);
     Bind(wxEVT_LEFT_DOWN, &SwitchBoard::on_left_down, this);
     Bind(wxEVT_KEY_DOWN, &SwitchBoard::on_key_down, this);
+    Bind(wxEVT_KEY_UP, &SwitchBoard::on_key_up, this);
+    Bind(wxEVT_SET_FOCUS, &SwitchBoard::on_focus, this);
+    Bind(wxEVT_KILL_FOCUS, &SwitchBoard::on_focus, this);
     SetToolTip(wxString::Format("%s / %s", leftLabel, rightLabel));
 #if wxUSE_ACCESSIBILITY
-    new Accessible(this); // wxWindow owns the accessible object.
+    SetAccessible(new Accessible(this));
 #endif
 
     Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_HAND); });
@@ -431,6 +540,8 @@ SwitchBoard::SwitchBoard(wxWindow *parent, wxString leftL, wxString right, wxSiz
 
 void SwitchBoard::updateState(wxString target)
 {
+    const bool was_left = switch_left;
+    const bool was_right = switch_right;
     if (target.empty()) {
         if (!switch_left && !switch_right) {
             return;
@@ -457,19 +568,58 @@ void SwitchBoard::updateState(wxString target)
     }
 
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    if (was_left != switch_left)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 1);
+    if (was_right != switch_right)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 2);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_VALUECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 void SwitchBoard::SetLabels(const wxString &left, const wxString &right)
 {
     if (leftLabel == left && rightLabel == right)
         return;
+    const bool left_changed = leftLabel != left;
+    const bool right_changed = rightLabel != right;
+    const bool selected_label_changed = (switch_left && left_changed) || (switch_right && right_changed);
     leftLabel  = left;
     rightLabel = right;
     SetToolTip(wxString::Format("%s / %s", leftLabel, rightLabel));
+    InvalidateBestSize();
+    SetMinSize(DoGetBestSize());
+    if (wxWindow *parent = GetParent())
+        parent->Layout();
     Refresh();
 #if wxUSE_ACCESSIBILITY
     wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+    if (left_changed)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, 1);
+    if (right_changed)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, 2);
+    if (selected_label_changed)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_VALUECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
 #endif
+}
+
+wxSize SwitchBoard::DoGetBestSize() const
+{
+    int left_width = 0;
+    int right_width = 0;
+    int text_height = 0;
+    GetTextExtent(leftLabel, &left_width, &text_height, nullptr, nullptr, &::Label::Body_13);
+    int right_height = 0;
+    GetTextExtent(rightLabel, &right_width, &right_height, nullptr, nullptr, &::Label::Body_13);
+    text_height = std::max(text_height, right_height);
+
+    const int segment_width = std::max(left_width, right_width) + 2 * FromDIP(12);
+    const int measured_width = 2 * segment_width + FromDIP(4) + 2 * FromDIP(3);
+    const int measured_height = std::max(FromDIP(32), text_height + 2 * FromDIP(8));
+    const int requested_width = m_requested_min_size.x == wxDefaultCoord ? 0 : m_requested_min_size.x;
+    const int requested_height = m_requested_min_size.y == wxDefaultCoord ? 0 : m_requested_min_size.y;
+    return wxSize(std::max(measured_width, requested_width),
+                  std::max(measured_height, requested_height));
 }
 
 void SwitchBoard::paintEvent(wxPaintEvent &evt)
@@ -510,7 +660,7 @@ void SwitchBoard::doRender(wxDC &dc)
     const int    gap     = FromDIP(4);
     const int    rOuter  = FromDIP(12);
     const int    rInner  = FromDIP(9);
-    const bool   dis     = !is_enable;
+    const bool   dis     = !IsEnabled();
 
     const wxColour container = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
     const wxColour primary   = StateColor::semantic(MD3::Role::Primary, m_scheme);
@@ -546,29 +696,49 @@ void SwitchBoard::doRender(wxDC &dc)
 
     drawSegment(leftRect, switch_left, leftLabel);
     drawSegment(rightRect, switch_right, rightLabel);
+
+    if (HasFocus() && IsEnabled()) {
+        const int inset = std::max(FromDIP(2), 1);
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary, m_scheme), std::max(FromDIP(2), 1)));
+        dc.DrawRoundedRectangle(inset, inset, std::max(0, sz.x - 2 * inset), std::max(0, sz.y - 2 * inset),
+                                std::max(0, rOuter - inset));
+    }
 }
 
 void SwitchBoard::activateSegment(bool left)
 {
-    if (!is_enable)
+    if (!IsEnabled() || (left ? switch_left && !switch_right : switch_right && !switch_left))
         return;
 
+    const bool was_left = switch_left;
+    const bool was_right = switch_right;
     switch_left = left;
     switch_right = !left;
     if (auto_disable_when_switch)
-        is_enable = false; // make it disable while switching
+        Enable(false); // make it disable while switching
 
     Refresh();
 #if wxUSE_ACCESSIBILITY
-    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+    if (was_left != switch_left)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 1);
+    if (was_right != switch_right)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 2);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_VALUECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+    if (HasFocus())
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, switch_left ? 1 : 2);
 #endif
-    wxCommandEvent event(wxCUSTOMEVT_SWITCH_POS);
+    wxCommandEvent event(wxCUSTOMEVT_SWITCH_POS, GetId());
+    event.SetEventObject(this);
     event.SetInt(static_cast<int>(switch_left));
     wxPostEvent(this, event);
 }
 
 void SwitchBoard::on_left_down(wxMouseEvent &evt)
 {
+    if (!IsEnabled())
+        return;
+    SetFocus();
     activateSegment(evt.GetPosition().x < GetSize().GetWidth() / 2);
 }
 
@@ -576,40 +746,100 @@ void SwitchBoard::on_key_down(wxKeyEvent &evt)
 {
     switch (evt.GetKeyCode()) {
     case WXK_LEFT:
+    case WXK_UP:
+    case WXK_HOME:
         activateSegment(true);
         return;
     case WXK_RIGHT:
+    case WXK_DOWN:
+    case WXK_END:
         activateSegment(false);
         return;
     case WXK_SPACE:
     case WXK_RETURN:
-        activateSegment(!switch_left);
+    case WXK_NUMPAD_ENTER:
+        if (m_keyboard_pressed_key == WXK_NONE) {
+            m_keyboard_pressed_key = evt.GetKeyCode();
+            Refresh(false);
+        }
+        return;
+    case WXK_TAB:
+        HandleAsNavigationKey(evt);
         return;
     default:
         evt.Skip();
     }
 }
 
-void SwitchBoard::Enable()
+void SwitchBoard::on_key_up(wxKeyEvent &evt)
 {
-    if (is_enable == true)
-    {
+    switch (evt.GetKeyCode()) {
+    case WXK_SPACE:
+    case WXK_RETURN:
+    case WXK_NUMPAD_ENTER:
+        if (m_keyboard_pressed_key == evt.GetKeyCode()) {
+            m_keyboard_pressed_key = WXK_NONE;
+            Refresh(false);
+            if (IsEnabled() && IsShown())
+                activateSegment(!switch_left);
+        }
         return;
+    default:
+        evt.Skip();
     }
-
-    is_enable = true;
-    Refresh();
 }
 
-void SwitchBoard::Disable()
+void SwitchBoard::on_focus(wxFocusEvent &evt)
 {
-    if (is_enable == false)
-    {
-        return;
-    }
+    if (evt.GetEventType() == wxEVT_KILL_FOCUS)
+        m_keyboard_pressed_key = WXK_NONE;
+    Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    if (evt.GetEventType() == wxEVT_SET_FOCUS)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, switch_right ? 2 : 1);
+#endif
+    evt.Skip();
+}
 
-    is_enable = false;
+bool SwitchBoard::AcceptsFocus() const
+{
+    return IsEnabled() && IsShown();
+}
+
+bool SwitchBoard::AcceptsFocusFromKeyboard() const
+{
+    return AcceptsFocus();
+}
+
+#ifdef __WIN32__
+WXLRESULT SwitchBoard::MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param)
+{
+    if (message == WM_GETDLGCODE)
+        return DLGC_WANTMESSAGE | DLGC_WANTARROWS;
+    if ((message == WM_KEYDOWN || message == WM_KEYUP) &&
+        (w_param == WXK_RETURN || w_param == WXK_NUMPAD_ENTER)) {
+        const wxEventType event_type = message == WM_KEYDOWN ? wxEVT_KEY_DOWN : wxEVT_KEY_UP;
+        wxKeyEvent event(CreateKeyEvent(event_type, w_param, l_param));
+        GetEventHandler()->ProcessEvent(event);
+        return 0;
+    }
+    return wxWindow::MSWWindowProc(message, w_param, l_param);
+}
+#endif
+
+bool SwitchBoard::Enable(bool enable)
+{
+    if (IsEnabled() == enable)
+        return false;
+
+    const bool changed = wxWindow::Enable(enable);
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 1);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, 2);
+#endif
+    return changed;
 }
 
 CustomToggleButton::CustomToggleButton(wxWindow* parent, const wxString& label, wxWindowID id, const wxPoint& pos, const wxSize& size)

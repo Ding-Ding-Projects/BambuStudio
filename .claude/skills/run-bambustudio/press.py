@@ -33,8 +33,9 @@ import sys
 import time
 from pathlib import Path
 
+REPO = Path(__file__).resolve().parents[3]
 LLCU_VENV = Path(os.environ.get(
-    "LLCU_VENV", r"C:\Users\Administrator\Documents\GitHub\lowlevel-computer-use-mcp\.venv"))
+    "LLCU_VENV", REPO / "vendor" / "lowlevel-computer-use-mcp" / ".venv"))
 CHEAP = LLCU_VENV / "Scripts" / "lowlevel-computer-use-cheap.exe"
 VENV_PY = LLCU_VENV / "Scripts" / "python.exe"
 DESKTOP = os.environ.get("BS_DESKTOP", "bsrun")
