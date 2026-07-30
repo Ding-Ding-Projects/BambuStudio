@@ -14,8 +14,9 @@ export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
 
   useEffect(() => {
     if (!autoDismissMs) return;
-    if (toasts.length === 0) return;
-    const timers = toasts.map((toast) =>
+    const transientToasts = toasts.filter((toast) => toast.level === 'info');
+    if (transientToasts.length === 0) return;
+    const timers = transientToasts.map((toast) =>
       window.setTimeout(() => onDismiss(toast.id), autoDismissMs),
     );
     return () => timers.forEach((id) => window.clearTimeout(id));
@@ -28,10 +29,8 @@ export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
   // costs the layout nothing to leave standing.
   return (
     <div
-      role="status"
-      aria-live="polite"
-      aria-atomic="false"
-      className="fixed bottom-6 right-6 flex flex-col gap-2 z-[2000] pointer-events-none"
+      aria-label={t('Notifications')}
+      className="fm-toast-stack fixed bottom-6 right-6 flex flex-col gap-2 z-[2000] pointer-events-none"
     >
       {toasts.map((toast) => {
         // Status tones are chrome, not data: the same danger / warning / brand
@@ -48,6 +47,9 @@ export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
         return (
           <div
             key={toast.id}
+            role={toast.level === 'error' || toast.level === 'warn' ? 'alert' : 'status'}
+            aria-live={toast.level === 'error' || toast.level === 'warn' ? 'assertive' : 'polite'}
+            aria-atomic="true"
             className="pointer-events-auto flex items-start gap-3 max-w-[360px] bg-fm-sidebar border border-fm-border rounded-lg px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.25)] text-fm-text-primary text-xs leading-[19px]"
           >
             <span
@@ -56,7 +58,7 @@ export function ToastStack({ toasts, onDismiss, autoDismissMs = 5000 }: Props) {
             />
             <span className="flex-1 break-words">{toast.text}</span>
             <button
-              className="shrink-0 size-[24px] inline-flex items-center justify-center rounded-full bg-transparent border-none text-fm-text-detail cursor-pointer hover:text-fm-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fm-brand"
+              className="fm-toast-dismiss shrink-0 size-9 inline-flex items-center justify-center rounded-full bg-transparent border-none text-fm-text-detail cursor-pointer hover:text-fm-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fm-brand"
               onClick={() => onDismiss(toast.id)}
               aria-label={t('Dismiss')}
             >

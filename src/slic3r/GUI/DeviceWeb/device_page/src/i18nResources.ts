@@ -1,6 +1,12 @@
 export type TranslationTable = Record<string, string>;
 
 const CANTONESE_LABEL = '粵語：';
+export const BILINGUAL_SEPARATOR = '\n';
+
+export interface StructuredTranslation {
+  primary: string;
+  secondary?: string;
+}
 
 export const languageFallbacks: Record<string, string[]> = {
   yue_HK: ['en'],
@@ -21,7 +27,17 @@ export function buildEnglishCantoneseTranslation(
   return Object.fromEntries(
     Object.entries(english).map(([key, englishText]) => {
       const cantoneseText = cantonese[key] || englishText;
-      return [key, `${englishText}\n${CANTONESE_LABEL}${cantoneseText}`];
+      return [key, `${englishText}${BILINGUAL_SEPARATOR}${CANTONESE_LABEL}${cantoneseText}`];
     }),
   );
+}
+
+/** Split bilingual resources into visual lines without hiding either line from AT. */
+export function splitStructuredTranslation(value: string): StructuredTranslation {
+  const separatorIndex = value.indexOf(BILINGUAL_SEPARATOR);
+  if (separatorIndex < 0) return { primary: value };
+  return {
+    primary: value.slice(0, separatorIndex),
+    secondary: value.slice(separatorIndex + BILINGUAL_SEPARATOR.length),
+  };
 }

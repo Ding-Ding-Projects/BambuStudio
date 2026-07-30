@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Spool } from './types';
 import { SpoolColorChip } from './SpoolColorChip';
 import { formatSpoolDisplayName, formatSlotLocation } from './constants';
 import { cssBackgroundFor, colorNameWithHexLabel } from './colors';
+import { AccessibleDialog } from './AccessibleDialog';
+import { BilingualText } from './BilingualText';
 
 interface Props {
   open: boolean;
@@ -16,6 +18,8 @@ interface Props {
 
 export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onNavigate }: Props) {
   const { t } = useTranslation();
+  const titleId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // F4.10 parity: drag support for this dialog as well.
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -88,16 +92,18 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
   }) || '—';
 
   return (
-    <div
-      data-testid="detail-dialog"
-      data-spool-id={spool.spool_id}
-      className="fixed inset-0 bg-black/50 flex items-start justify-center pt-5 z-[1000]"
+    <AccessibleDialog
+      open={open}
+      onClose={onClose}
+      labelledBy={titleId}
+      dataTestId="detail-dialog"
+      dataAttributes={{ 'spool-id': spool.spool_id }}
+      overlayClassName="flex items-start justify-center p-5"
+      panelClassName="fm-dialog-panel w-[480px] max-w-full max-h-[calc(100vh-40px)] bg-fm-sidebar rounded-xl flex flex-col overflow-hidden"
+      panelStyle={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` }}
+      initialFocusRef={closeButtonRef}
     >
-      <div
-        className="w-[480px] max-h-[calc(100vh-40px)] bg-fm-sidebar rounded-xl flex flex-col overflow-hidden"
-        style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="contents">
         {/* Header — drag handle (F4.10). Double-click resets position. */}
         <div
           className="flex items-center px-6 py-4 border-b border-[#424242] gap-3 cursor-move select-none"
@@ -105,10 +111,12 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
           onDoubleClick={resetDragOffset}
           title={t('Drag to move')}
         >
-          <h3 className="flex-1 text-base font-medium text-fm-text-strong whitespace-nowrap overflow-hidden text-ellipsis">{t('Spool Detail')}</h3>
+          <h3 id={titleId} className="flex-1 min-w-0 text-base font-medium text-fm-text-strong overflow-hidden text-ellipsis">
+            <BilingualText>{t('Spool Detail')}</BilingualText>
+          </h3>
           <div className="flex items-center gap-[13px] shrink-0">
             <button
-              className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-fm-text-secondary text-xs px-2 pl-[6px] py-[2px] h-6 rounded-md transition-colors duration-150 hover:text-fm-text-strong hover:bg-fm-hover disabled:text-fm-text-gray disabled:cursor-default disabled:hover:bg-transparent [&>svg]:shrink-0"
+              className="fm-action-target flex items-center gap-1 bg-transparent border-none cursor-pointer text-fm-text-secondary text-xs px-2 min-h-[36px] rounded-md transition-colors duration-150 hover:text-fm-text-strong hover:bg-fm-hover disabled:text-fm-text-gray disabled:cursor-default disabled:hover:bg-transparent [&>svg]:shrink-0"
               disabled={!hasPrev}
               onClick={() => hasPrev && onNavigate(filteredSpools[idx - 1].spool_id)}
             >
@@ -118,7 +126,7 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
               {t('Previous')}
             </button>
             <button
-              className="flex items-center gap-1 bg-transparent border-none cursor-pointer text-fm-text-secondary text-xs px-2 pl-[6px] py-[2px] h-6 rounded-md transition-colors duration-150 hover:text-fm-text-strong hover:bg-fm-hover disabled:text-fm-text-gray disabled:cursor-default disabled:hover:bg-transparent [&>svg]:shrink-0"
+              className="fm-action-target flex items-center gap-1 bg-transparent border-none cursor-pointer text-fm-text-secondary text-xs px-2 min-h-[36px] rounded-md transition-colors duration-150 hover:text-fm-text-strong hover:bg-fm-hover disabled:text-fm-text-gray disabled:cursor-default disabled:hover:bg-transparent [&>svg]:shrink-0"
               disabled={!hasNext}
               onClick={() => hasNext && onNavigate(filteredSpools[idx + 1].spool_id)}
             >
@@ -128,7 +136,7 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
               </svg>
             </button>
           </div>
-          <button data-testid="detail-dialog-close" className="bg-transparent border-none text-fm-text-detail text-xl cursor-pointer leading-none hover:text-fm-text-strong" onClick={onClose}>×</button>
+          <button ref={closeButtonRef} type="button" data-testid="detail-dialog-close" aria-label={t('Close')} className="fm-icon-target bg-transparent border-none text-fm-text-detail text-xl cursor-pointer leading-none hover:text-fm-text-strong" onClick={onClose}>×</button>
         </div>
 
         {/* Spool banner */}
@@ -223,10 +231,10 @@ export function DetailDialog({ open, spool, filteredSpools, onClose, onEdit, onN
 
         {/* Footer */}
         <div className="flex items-center justify-end px-6 py-3 border-t border-fm-border">
-          <button data-testid="detail-dialog-edit" className="inline-flex items-center gap-1 h-[30px] px-8 rounded-lg border-none cursor-pointer text-xs whitespace-nowrap transition-colors duration-150 bg-fm-brand text-white font-medium hover:bg-fm-brand-hover" onClick={() => onEdit(spool)}>{t('Edit Filament Info')}</button>
+          <button data-testid="detail-dialog-edit" className="fm-action-target inline-flex items-center gap-1 min-h-[36px] px-8 rounded-lg border-none cursor-pointer text-xs transition-colors duration-150 bg-fm-brand text-fm-base font-medium hover:bg-fm-brand-hover" onClick={() => onEdit(spool)}><BilingualText>{t('Edit Filament Info')}</BilingualText></button>
         </div>
       </div>
-    </div>
+    </AccessibleDialog>
   );
 }
 
