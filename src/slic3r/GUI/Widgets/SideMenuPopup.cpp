@@ -32,6 +32,7 @@ SidePopup::SidePopup(wxWindow* parent)
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     border_color = MD3::Light::outlineVariant;
     radius       = FromDIP(SIDE_POPUP_RADIUS);
+    Bind(wxEVT_CHAR_HOOK, &SidePopup::keyDown, this);
 }
 
 SidePopup::~SidePopup()
@@ -41,7 +42,14 @@ SidePopup::~SidePopup()
 
 void SidePopup::OnDismiss()
 {
+    if (dismissing)
+        return;
+
+    // Restore focus while this transient window is still alive. The base
+    // implementation can destroy it synchronously on some wx backends.
+    dismissing = true;
     Slic3r::GUI::wxGetApp().set_side_menu_popup_status(false);
+    restoreInvokerFocus();
     PopupWindow::OnDismiss();
 }
 
@@ -56,6 +64,17 @@ bool SidePopup::Show( bool show )
 
 void SidePopup::Popup(wxWindow* focus)
 {
+    // The argument remains the positioning anchor for compatibility. The actual
+    // invoker is the focused control (the narrow options segment in MainFrame),
+    // because pointer-down and keyboard activation both focus it before opening.
+    wxWindow* focused = wxWindow::FindFocus();
+    for (wxWindow* owner = focused; owner; owner = owner->GetParent()) {
+        if (owner == this) {
+            focused = nullptr;
+            break;
+        }
+    }
+    invoker = focused ? focused : focus;
     Create();
     auto drect = wxDisplay(GetParent()).GetGeometry();
     int screenwidth = drect.x + drect.width;
@@ -80,6 +99,7 @@ void SidePopup::Popup(wxWindow* focus)
     }
     Slic3r::GUI::wxGetApp().set_side_menu_popup_status(true);
     PopupWindow::Popup();
+    focusBoundaryButton(true);
 }
 
 void SidePopup::Create()
@@ -151,4 +171,68 @@ void SidePopup::paintEvent(wxPaintEvent& evt)
 void SidePopup::append_button(SideButton* btn)
 {
     btn_list.push_back(btn);
+}
+
+void SidePopup::keyDown(wxKeyEvent& event)
+{
+    auto* current = dynamic_cast<SideButton*>(wxWindow::FindFocus());
+    switch (event.GetKeyCode()) {
+    case WXK_UP: focusRelativeButton(current, -1); break;
+    case WXK_DOWN: focusRelativeButton(current, 1); break;
+    case WXK_HOME: focusBoundaryButton(true); break;
+    case WXK_END: focusBoundaryButton(false); break;
+    case WXK_ESCAPE:
+        Dismiss();
+        break;
+    default: event.Skip(); break;
+    }
+}
+
+void SidePopup::focusBoundaryButton(bool first)
+{
+    if (first) {
+        for (SideButton* button : btn_list) {
+            if (button && button->IsShown() && button->IsEnabled()) {
+                button->SetFocus();
+                return;
+            }
+        }
+    } else {
+        for (auto it = btn_list.rbegin(); it != btn_list.rend(); ++it) {
+            SideButton* button = *it;
+            if (button && button->IsShown() && button->IsEnabled()) {
+                button->SetFocus();
+                return;
+            }
+        }
+    }
+}
+
+void SidePopup::focusRelativeButton(SideButton* current, int direction)
+{
+    if (btn_list.empty())
+        return;
+
+    auto current_it = std::find(btn_list.begin(), btn_list.end(), current);
+    int  index      = current_it == btn_list.end() ? (direction > 0 ? -1 : 0)
+                                                    : static_cast<int>(current_it - btn_list.begin());
+    for (size_t count = 0; count < btn_list.size(); ++count) {
+        index = (index + direction + static_cast<int>(btn_list.size())) %
+                static_cast<int>(btn_list.size());
+        SideButton* candidate = btn_list[index];
+        if (candidate && candidate->IsShown() && candidate->IsEnabled()) {
+            candidate->SetFocus();
+            return;
+        }
+    }
+}
+
+void SidePopup::restoreInvokerFocus()
+{
+    if (restoring_focus)
+        return;
+    restoring_focus = true;
+    if (invoker && invoker->IsShown() && invoker->IsEnabled())
+        invoker->SetFocus();
+    restoring_focus = false;
 }

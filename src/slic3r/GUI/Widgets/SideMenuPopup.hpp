@@ -6,6 +6,7 @@
 #include <wx/combo.h>
 #include <wx/htmllbox.h>
 #include <wx/frame.h>
+#include <wx/weakref.h>
 #include "../wxExtensions.hpp"
 #include "StateHandler.hpp"
 #include "StateColor.hpp"
@@ -16,6 +17,9 @@ class SidePopup : public PopupWindow
 {
 private:
 	std::vector<SideButton*> btn_list;
+    wxWeakRef<wxWindow>     invoker;
+    bool                    restoring_focus = false;
+    bool                    dismissing = false;
 
     // MD3 floating surface, same idiom as the ComboBox popup in DropDown.cpp:
     // a SurfaceContainer fill inside a 1px OutlineVariant frame at the kit
@@ -39,6 +43,12 @@ public:
     void append_button(SideButton* btn);
 
     void paintEvent(wxPaintEvent& evt);
+    void keyDown(wxKeyEvent& event);
+
+private:
+    void focusBoundaryButton(bool first);
+    void focusRelativeButton(SideButton* current, int direction);
+    void restoreInvokerFocus();
 
 	DECLARE_EVENT_TABLE()
 };

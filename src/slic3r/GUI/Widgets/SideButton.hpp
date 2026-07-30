@@ -70,6 +70,19 @@ public:
     // px<=0 derives a default size; codepoint 0 clears the glyph.
     void SetLeadingGlyph(uint32_t codepoint, int px = 0);
 
+    // This control is custom-painted, so wxWidgets cannot infer either its
+    // keyboard contract or its push-button semantics from the wxWindow base.
+    bool AcceptsFocus() const override;
+    bool AcceptsFocusFromKeyboard() const override;
+    bool IsPressedForAccessibility() const { return pressedDown || keyboard_pressed; }
+    void AccessibilityActivate();
+    void SetName(const wxString& name) override;
+
+protected:
+#ifdef __WIN32__
+    WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param) override;
+#endif
+
 private:
     wxSize textSize;
     wxSize minSize;
@@ -87,8 +100,9 @@ private:
     StateColor      background_color;
     wxColour        bottom_color;
 
-    bool pressedDown = false;
-    int  layout_style = 0;
+    bool pressedDown      = false;
+    bool keyboard_pressed = false;
+    int  layout_style     = 0;
 
     EHorizontalOrientation text_orientation;
     int text_margin;
@@ -111,6 +125,10 @@ private:
 
     void mouseDown(wxMouseEvent& event);
     void mouseReleased(wxMouseEvent& event);
+    void mouseCaptureLost(wxMouseCaptureLostEvent& event);
+    void keyDown(wxKeyEvent& event);
+    void keyUp(wxKeyEvent& event);
+    void focusChanged(wxFocusEvent& event);
 
     void sendButtonEvent();
 

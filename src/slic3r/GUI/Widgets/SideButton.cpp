@@ -1,4 +1,5 @@
 #include "SideButton.hpp"
+#include "../I18N.hpp"
 #include "Label.hpp"
 #include "MD3Tokens.hpp"
 #include "StateColor.hpp"
@@ -6,13 +7,130 @@
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
 
 #include <algorithm>
+#include <cmath>
 #include <utility>
 
-BEGIN_EVENT_TABLE(SideButton, wxPanel)
+namespace {
+
+// WCAG relative luminance, used only to keep the keyboard focus indicator at
+// 3:1 against whichever state fill a SideButton is currently painting.
+double relative_luminance(const wxColour &colour)
+{
+    auto linear = [](unsigned char channel) {
+        const double value = channel / 255.0;
+        return value <= 0.03928 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * linear(colour.Red()) + 0.7152 * linear(colour.Green()) +
+           0.0722 * linear(colour.Blue());
+}
+
+double contrast_ratio(const wxColour &first, const wxColour &second)
+{
+    const double first_luminance  = relative_luminance(first);
+    const double second_luminance = relative_luminance(second);
+    return (std::max(first_luminance, second_luminance) + 0.05) /
+           (std::min(first_luminance, second_luminance) + 0.05);
+}
+
+wxColour focus_ring_colour(const wxColour &interior, const wxColour &label)
+{
+    const wxColour primary = StateColor::semantic(MD3::Role::Primary);
+    if (contrast_ratio(primary, interior) >= 3.0)
+        return primary;
+    return label.IsOk() && contrast_ratio(label, interior) > contrast_ratio(primary, interior)
+               ? label
+               : primary;
+}
+
+#if wxUSE_ACCESSIBILITY
+class SideButtonAccessible final : public wxWindowAccessible
+{
+public:
+    explicit SideButtonAccessible(SideButton *button)
+        : wxWindowAccessible(button), m_button(button)
+    {
+    }
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (child_id != wxACC_SELF || name == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        const wxString configured_name = m_button->GetName();
+        *name = !configured_name.IsEmpty() && configured_name != wxASCII_STR(wxPanelNameStr)
+                    ? configured_name
+                    : m_button->GetLabel();
+        if (name->IsEmpty())
+            *name = m_button->GetToolTipText();
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (child_id != wxACC_SELF || role == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_PUSHBUTTON;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (child_id != wxACC_SELF || state == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = 0;
+        if (m_button->AcceptsFocusFromKeyboard())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_button->HasFocus())
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (m_button->IsPressedForAccessibility())
+            *state |= wxACC_STATE_SYSTEM_PRESSED;
+        if (!m_button->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_button->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetDefaultAction(int child_id, wxString *action_name) override
+    {
+        if (child_id != wxACC_SELF || action_name == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *action_name = _L("Press");
+        return wxACC_OK;
+    }
+
+    wxAccStatus DoDefaultAction(int child_id) override
+    {
+        if (child_id != wxACC_SELF)
+            return wxACC_NOT_IMPLEMENTED;
+        m_button->AccessibilityActivate();
+        return wxACC_OK;
+    }
+
+private:
+    SideButton *m_button;
+};
+#endif
+
+bool is_activation_key(int key_code)
+{
+    return key_code == WXK_SPACE || key_code == WXK_RETURN || key_code == WXK_NUMPAD_ENTER;
+}
+
+} // namespace
+
+BEGIN_EVENT_TABLE(SideButton, wxWindow)
 EVT_LEFT_DOWN(SideButton::mouseDown)
 EVT_LEFT_UP(SideButton::mouseReleased)
+EVT_MOUSE_CAPTURE_LOST(SideButton::mouseCaptureLost)
+EVT_KEY_DOWN(SideButton::keyDown)
+EVT_KEY_UP(SideButton::keyUp)
+EVT_SET_FOCUS(SideButton::focusChanged)
+EVT_KILL_FOCUS(SideButton::focusChanged)
 EVT_PAINT(SideButton::paintEvent)
 END_EVENT_TABLE()
 
@@ -50,6 +168,9 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     SetFont(Label::Body_14);
     wxWindow::SetLabel(text);
 
+#if wxUSE_ACCESSIBILITY
+    SetAccessible(new SideButtonAccessible(this));
+#endif
     messureSize();
 }
 
@@ -140,9 +261,24 @@ void SideButton::SetLayoutStyle(int style)
 
 void SideButton::SetLabel(const wxString& label)
 {
+    if (label == GetLabel())
+        return;
     wxWindow::SetLabel(label);
     messureSize();
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+}
+
+void SideButton::SetName(const wxString& name)
+{
+    if (name == wxWindow::GetName())
+        return;
+    wxWindow::SetName(name);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 bool SideButton::SetForegroundColour(wxColour const &color)
@@ -196,9 +332,14 @@ bool SideButton::Enable(bool enable)
 {
     bool result = wxWindow::Enable(enable);
     if (result) {
+        keyboard_pressed = false;
+        Refresh(false);
         wxCommandEvent e(EVT_ENABLE_CHANGED);
         e.SetEventObject(this);
         GetEventHandler()->ProcessEvent(e);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     }
     return result;
 }
@@ -385,6 +526,17 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
         text_dc.SetTextForeground(text_color.colorForStates(states));
         text_dc.DrawText(text, pt);
     }
+
+    if (HasFocus() && IsEnabled()) {
+        const int inset = std::max(FromDIP(3), 1);
+        wxRect    focus_rect(inset, inset, std::max(0, size.x - inset * 2),
+                             std::max(0, size.y - inset * 2));
+        const wxColour interior = background_color.colorForStates(states);
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetPen(wxPen(focus_ring_colour(interior, text_color.colorForStates(states)),
+                        std::max(FromDIP(2), 1)));
+        dc.DrawRoundedRectangle(focus_rect, std::max(0.0, radius - inset));
+    }
 }
 
 void SideButton::messureSize()
@@ -431,27 +583,112 @@ void SideButton::messureSize()
 
 void SideButton::mouseDown(wxMouseEvent& event)
 {
-    event.Skip();
+    if (!IsEnabled() || !IsShown()) {
+        event.Skip();
+        return;
+    }
+
     pressedDown = true;
     SetFocus();
-    CaptureMouse();
+    if (!HasCapture())
+        CaptureMouse();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 void SideButton::mouseReleased(wxMouseEvent& event)
 {
-    event.Skip();
-
     if (HasCapture())
-    {
-        // Release mouse capture regardless of pressedDown state, to avoid cases where capture may be stuck permanently
         ReleaseMouse();
-    }
 
     if (pressedDown) {
         pressedDown = false;
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
         if (wxRect({0, 0}, GetSize()).Contains(event.GetPosition()))
             sendButtonEvent();
     }
+}
+
+void SideButton::mouseCaptureLost(wxMouseCaptureLostEvent& event)
+{
+    pressedDown = false;
+    Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    event.Skip();
+}
+
+void SideButton::keyDown(wxKeyEvent& event)
+{
+    if (is_activation_key(event.GetKeyCode())) {
+        if (!keyboard_pressed) {
+            keyboard_pressed = true;
+            Refresh(false);
+#if wxUSE_ACCESSIBILITY
+            wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+        }
+        return;
+    }
+
+    switch (event.GetKeyCode()) {
+    case WXK_TAB:
+    case WXK_LEFT:
+    case WXK_RIGHT:
+    case WXK_UP:
+    case WXK_DOWN: HandleAsNavigationKey(event); break;
+    default: event.Skip(); break;
+    }
+}
+
+void SideButton::keyUp(wxKeyEvent& event)
+{
+    if (!is_activation_key(event.GetKeyCode())) {
+        event.Skip();
+        return;
+    }
+
+    if (keyboard_pressed) {
+        keyboard_pressed = false;
+        Refresh(false);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+        if (IsEnabled() && IsShown())
+            sendButtonEvent();
+    }
+}
+
+void SideButton::focusChanged(wxFocusEvent& event)
+{
+    if (event.GetEventType() == wxEVT_KILL_FOCUS)
+        keyboard_pressed = false;
+    Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    if (event.GetEventType() == wxEVT_SET_FOCUS)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    event.Skip();
+}
+
+bool SideButton::AcceptsFocus() const
+{
+    return IsEnabled() && IsShown();
+}
+
+bool SideButton::AcceptsFocusFromKeyboard() const
+{
+    return AcceptsFocus();
+}
+
+void SideButton::AccessibilityActivate()
+{
+    if (IsEnabled() && IsShown())
+        sendButtonEvent();
 }
 
 void SideButton::sendButtonEvent()
@@ -460,3 +697,17 @@ void SideButton::sendButtonEvent()
     event.SetEventObject(this);
     GetEventHandler()->ProcessEvent(event);
 }
+
+#ifdef __WIN32__
+WXLRESULT SideButton::MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param)
+{
+    if (message == WM_GETDLGCODE)
+        return DLGC_WANTMESSAGE;
+    if (message == WM_KEYDOWN && w_param == WXK_RETURN) {
+        wxKeyEvent event(CreateKeyEvent(wxEVT_KEY_DOWN, w_param, l_param));
+        GetEventHandler()->ProcessEvent(event);
+        return 0;
+    }
+    return wxWindow::MSWWindowProc(message, w_param, l_param);
+}
+#endif
