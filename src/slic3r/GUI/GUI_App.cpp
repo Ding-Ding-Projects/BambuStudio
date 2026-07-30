@@ -3083,10 +3083,14 @@ bool GUI_App::on_init_inner()
     g_object_set (gtk_settings_get_default (), "gtk-menu-images", TRUE, NULL);
 #endif
 
-//#ifdef WIN32
-    //BBS set crash log folder
-    //CBaseException::set_log_folder(data_dir());
-// #endif
+#ifdef WIN32
+    // Crash log folder. The unhandled-exception filter installed in
+    // bambustu_main() writes its stack walk into <data_dir>/log/crash_*.log, but
+    // ONLY once it knows where to put it -- with no folder set it silently keeps
+    // the report to itself, which is how a reported crash can leave behind no
+    // dump, no stack and no marker in the studio log at all.
+    CBaseException::set_log_folder(data_dir());
+#endif
 
     wxGetApp().Bind(wxEVT_QUERY_END_SESSION, [this](auto & e) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__<< "received wxEVT_QUERY_END_SESSION";

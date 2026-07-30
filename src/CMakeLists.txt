@@ -79,7 +79,15 @@ endif()
 # Process manifests for various platforms.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/msw/BambuStudio.rc.in ${CMAKE_CURRENT_BINARY_DIR}/BambuStudio.rc @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/msw/BambuStudio.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/BambuStudio.manifest @ONLY)
-add_library(BambuStudio SHARED BambuStudio.cpp BambuStudio.hpp)
+# BaseException/StackWalker back SET_DEFULTER_HANDLER() in bambustu_main(): the
+# unhandled-exception filter that writes <data_dir>/log/crash_*.log. They were
+# present in the tree but compiled by nothing, so the handler could not be
+# enabled without a link error -- and while it was disabled a crash left no
+# dump, no stack and no marker in the studio log at all. Windows-only (Dbghelp,
+# and this fork is Windows-only anyway).
+add_library(BambuStudio SHARED BambuStudio.cpp BambuStudio.hpp
+    BaseException.cpp BaseException.h
+    StackWalker.cpp StackWalker.h)
 
 target_link_libraries(BambuStudio libslic3r cereal)
 # Manifest is provided through BambuStudio.rc, don't generate your own.
