@@ -51,6 +51,7 @@ void SidePopup::OnDismiss()
     Slic3r::GUI::wxGetApp().set_side_menu_popup_status(false);
     restoreInvokerFocus();
     PopupWindow::OnDismiss();
+    restoreInvokerFocus();
 }
 
 bool SidePopup::ProcessLeftDown(wxMouseEvent& event)

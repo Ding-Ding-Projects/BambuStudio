@@ -117,7 +117,7 @@ LinkLabel::LinkLabel(wxWindow *parent, wxString const &text, std::string url, lo
     Fit();
 
 #if wxUSE_ACCESSIBILITY
-    SetAccessible(new LinkLabelAccessible(this));
+    new LinkLabelAccessible(this); // wxWindow owns the accessible object.
 #endif
 }
 
@@ -154,6 +154,7 @@ void LinkLabel::link(wxMouseEvent &evt)
     if (!HasFocus())
         SetFocus();
     activate();
+    evt.Skip();
 }
 
 void LinkLabel::activate()
