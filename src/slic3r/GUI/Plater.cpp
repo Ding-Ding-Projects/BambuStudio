@@ -805,6 +805,11 @@ struct Sidebar::priv
     // option on activation. The guard flag keeps the focus-driven popup from
     // being re-opened by the popup's own focus bounce.
     SearchField  *m_process_search = nullptr;
+    // Same searcher, second host: the compact card's field is hidden along with
+    // the card in advanced mode, which would leave the FULL process-settings
+    // tree — the surface with the most options in it — as the only settings
+    // surface with no search bar. This one lives on the 'Simple settings' bar.
+    SearchField  *m_process_search_adv = nullptr;
     bool          m_process_search_open = false;
 
     // BBS printer config
@@ -825,6 +830,9 @@ struct Sidebar::priv
     // (wxGetApp().obj_manipul()->get_cache()); a light UI-thread timer refreshes it
     // while the 3D editor is shown. Numeric edit/write-back stays in the gizmo overlay.
     wxPanel             *m_manip_panel{nullptr};
+    // Divider above the card; hidden and shown with it so no orphan rule is left
+    // behind while the card is away.
+    wxWindow            *m_manip_divider{nullptr};
     Label               *m_manip_cells[12]{};  // 4 rows (Position/Rotation/Scale%/Size) x 3 axes (X/Y/Z)
     wxTimer             *m_manip_timer{nullptr};
     void                 refresh_manip_card();
@@ -1152,19 +1160,49 @@ Sidebar::priv::~priv()
 #endif
 }
 
+// Sidebar width (DIP) while the full process-settings tree is showing. The
+// reparented ParamsPanel header alone needs ~420px before wxBoxSizer starts
+// starving items out of existence (leading icon + ellipsized title + the
+// Global/Objects switch + the Advance toggle + the table and compare buttons),
+// and the option rows below it want more still. Plater::request_sidebar_width()
+// clamps this to 55% of the frame, so a narrow window keeps its 3D canvas.
+static constexpr int ADVANCED_SIDEBAR_WIDTH = 480;
+
 // Sidebar body scroll maintenance (shared by Sidebar::update_scroll_body and
-// the priv:: paths that run before/without the public wrapper): virtual width
-// always tracks the client width so rows reflow to the sidebar instead of
-// keeping a stale (wider) content-min width, and virtual height grows past the
-// client so sections below the fold scroll into reach instead of clipping.
+// the priv:: paths that run before/without the public wrapper): virtual height
+// grows past the client so sections below the fold scroll into reach, and the
+// virtual width tracks the client width so rows reflow to the sidebar instead
+// of keeping a stale (wider) content-min width -- EXCEPT where a section
+// genuinely cannot compress, which must scroll rather than be cut off.
 static void update_sidebar_scroll_body(wxScrolledWindow *sw)
 {
     if (!sw || !sw->GetSizer()) return;
+
+    // SetVirtualSize() below can add or remove a scrollbar; on MSW that resizes
+    // the client area and re-enters this helper through the sidebar's own
+    // EVT_SIZE handler. When content sits near a scrollbar threshold the two
+    // can ping-pong, so let the outermost pass win instead of recursing.
+    static bool in_update = false;
+    if (in_update) return;
+    in_update = true;
+
     const wxSize client = sw->GetClientSize();
-    if (client.x <= 0 || client.y <= 0) return;
-    const int min_h = sw->GetSizer()->GetMinSize().y;
-    sw->SetVirtualSize(client.x, std::max(min_h, client.y));
-    sw->Layout();
+    if (client.x > 0 && client.y > 0) {
+        const wxSize content = sw->GetSizer()->GetMinSize();
+        // The reparented ParamsPanel tree is built for a full-width settings
+        // tab: its option rows are label + value field, and neither half
+        // reflows. Pinning the virtual width to a narrower client width does
+        // not compress that tree, it slices the value fields off the right edge
+        // where no scrollbar can reach them. Growing the virtual width when the
+        // content genuinely cannot fit costs a horizontal scrollbar and keeps
+        // every control reachable; everything that CAN reflow still gets the
+        // client width, so the compact cards are unaffected.
+        sw->SetVirtualSize(std::max(content.x, client.x),
+                           std::max(content.y, client.y));
+        sw->Layout();
+    }
+
+    in_update = false;
 }
 
 void Sidebar::priv::show_preset_comboboxes()
@@ -2820,10 +2858,13 @@ Sidebar::Sidebar(Plater *parent)
     // keeps the virtual width equal to the client width so rows always reflow
     // to the sidebar, and grows only the virtual height past the client.
     p->scrolled = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                       wxTAB_TRAVERSAL | wxVSCROLL);
-    p->scrolled->SetScrollRate(0, FromDIP(8));
-    p->scrolled->EnableScrolling(false, true);
-    p->scrolled->ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_DEFAULT);
+                                       wxTAB_TRAVERSAL | wxVSCROLL | wxHSCROLL);
+    p->scrolled->SetScrollRate(FromDIP(8), FromDIP(8));
+    p->scrolled->EnableScrolling(true, true);
+    // Horizontal scrolling is on demand, not always-on: update_sidebar_scroll_body()
+    // only grows the virtual width when a section cannot fit, so the bar appears
+    // for the full settings tree and stays away for the compact cards.
+    p->scrolled->ShowScrollbars(wxSHOW_SB_DEFAULT, wxSHOW_SB_DEFAULT);
     // Explicit small minimum: the body must never dictate the sidebar/frame
     // minimum size again — content taller than the window becomes scrollable
     // instead of a hard window-size floor.
@@ -4002,6 +4043,26 @@ Sidebar::Sidebar(Plater *parent)
         btn_simple->SetCanFocus(false);
         btn_simple->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_process_advanced(false); });
         simple_sizer->Add(btn_simple, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+
+        // Settings search for the FULL tree, same shared MD3 SearchField pill and
+        // the same OptionsSearcher (with its ".*" regex toggle and tune builder)
+        // as the compact card's, so the advanced surface is searchable too.
+        // Preset::TYPE_INVALID keeps the query scoped across every indexed preset
+        // type, and jumping to a result lands on the owning option in this tree.
+        p->m_process_search_adv = new SearchField(p->m_process_simple_bar, _L("Search settings"));
+        p->m_process_search_adv->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
+            if (!p->m_process_search_open) {
+                p->m_process_search_open = true;
+                p->searcher.show_dialog(Preset::TYPE_INVALID, p->m_process_simple_bar,
+                                        p->m_process_search_adv, p->m_process_search_adv);
+            }
+            e.Skip();
+        });
+        p->m_process_search_adv->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
+            p->m_process_search_open = false;
+        });
+        simple_sizer->Add(p->m_process_search_adv, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+
         p->m_process_simple_bar->SetSizer(simple_sizer);
         scrolled_sizer->Add(p->m_process_simple_bar, 0, wxEXPAND);
 
@@ -4049,6 +4110,7 @@ Sidebar::Sidebar(Plater *parent)
         auto *manip_divider = new ::StaticLine(p->scrolled);
         manip_divider->SetLineColour(outline);
         scrolled_sizer->Add(manip_divider, 0, wxEXPAND);
+        p->m_manip_divider = manip_divider;
 
         p->m_manip_panel = new wxPanel(p->scrolled, wxID_ANY);
         p->m_manip_panel->SetBackgroundColour(surface_low);
@@ -4106,6 +4168,13 @@ Sidebar::Sidebar(Plater *parent)
         p->m_manip_panel->SetSizer(manip_vsizer);
         scrolled_sizer->Add(p->m_manip_panel, 0, wxEXPAND);
 
+        // Hidden by default: with nothing selected every cell reads as an en
+        // dash, so the card was occupying a screenful of sidebar to say nothing.
+        // refresh_manip_card() brings it back the moment a selection makes its
+        // values real.
+        manip_divider->Hide();
+        p->m_manip_panel->Hide();
+
         p->m_manip_timer = new wxTimer();
         p->m_manip_timer->Bind(wxEVT_TIMER, [this](wxTimerEvent &) {
             p->refresh_manip_card();
@@ -4158,11 +4227,25 @@ void Sidebar::priv::refresh_manip_card()
             c->SetLabel(s);
     };
 
+    // The card only means anything while something is selected; the rest of the
+    // time it is twelve en dashes under a header. Show it on selection and take
+    // it away again after, so the sidebar's scarce height goes to the sections
+    // that always have something to say.
+    auto set_card_shown = [&](bool show) {
+        if (!m_manip_panel || m_manip_panel->IsShown() == show)
+            return;
+        m_manip_panel->Show(show);
+        if (m_manip_divider)
+            m_manip_divider->Show(show);
+        update_sidebar_scroll_body(scrolled);
+    };
+
     const wxString dash = wxString::FromUTF8("\xE2\x80\x93"); // en dash for the empty state
 
     Plater *pl = wxGetApp().plater();
     GizmoObjectManipulation *om = (pl && pl->is_view3D_shown()) ? wxGetApp().obj_manipul() : nullptr;
     if (!om) {
+        set_card_shown(false);
         for (int i = 0; i < 12; ++i)
             set(i, dash);
         return;
@@ -4170,10 +4253,13 @@ void Sidebar::priv::refresh_manip_card()
 
     const GizmoObjectManipulation::Cache &cache = om->get_cache();
     if (!cache.is_valid()) {
+        set_card_shown(false);
         for (int i = 0; i < 12; ++i)
             set(i, dash);
         return;
     }
+
+    set_card_shown(true);
 
     const wxString degsym = wxString::FromUTF8("\xC2\xB0"); // ° (U+00B0) suffix on rotation values
     auto ok  = [](double v) { return v < 1e300 && v > -1e300; };            // DBL_MAX/NaN guard
@@ -4897,6 +4983,7 @@ void Sidebar::msw_rescale()
     // Sidebar settings search + filament slot search pills re-derive their
     // geometry and glyph rasters at the new DPI the same way.
     if (p->m_process_search) p->m_process_search->Rescale();
+    if (p->m_process_search_adv) p->m_process_search_adv->Rescale();
     if (p->m_filament_search) p->m_filament_search->Rescale();
     if (p->process_layer_height) {
         p->process_layer_height->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
@@ -5166,6 +5253,8 @@ void Sidebar::jump_to_option(const std::string& opt_key, Preset::Type type, cons
     wxGetApp().get_tab(type)->activate_option(opt_key, category);
 }
 
+bool Sidebar::is_process_advanced() const { return p->process_advanced; }
+
 void Sidebar::show_process_advanced(bool advanced, bool persist)
 {
     if (!p->m_process_card || !p->params_panel_ref) return;
@@ -5184,6 +5273,17 @@ void Sidebar::show_process_advanced(bool advanced, bool persist)
     if (!advanced) p->refresh_process_card();
     if (persist && wxGetApp().app_config)
         wxGetApp().app_config->set("sidebar_process_advanced", advanced ? "true" : "false");
+
+    // The compact card is built for the sidebar's width; the full tree is not --
+    // it is the settings-tab layout (label + value field per row, plus a header
+    // carrying the Global/Objects switch and the compare/table buttons), and at
+    // the density default those value fields land past the right edge. Give it
+    // room while it is up, and hand the width back to the 3D canvas on the way
+    // out. request_sidebar_width() clamps to 55% of the frame and ignores the
+    // floating / top / bottom docks.
+    if (auto *plater = dynamic_cast<Plater *>(GetParent()))
+        plater->request_sidebar_width(advanced ? FromDIP(ADVANCED_SIDEBAR_WIDTH) : 0);
+
     update_scroll_body();
     p->scrolled->Refresh();
 }
@@ -7747,6 +7847,11 @@ public:
     Sidebar *  sidebar;
     AuiMgr                 m_aui_mgr;
     wxString               m_default_window_layout;
+    // One-shot latch for the startup re-assert of the advanced-mode sidebar
+    // width (see the EVT_SIZE hook in the ctor): the ctor itself runs before
+    // the frame has a usable size, and later startup layout passes overwrite an
+    // early attempt, so the width is claimed on the first real size instead.
+    bool                   m_advanced_width_applied{false};
     struct SidebarLayout
     {
         bool is_enabled{false};
@@ -8824,6 +8929,31 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         // Hide sidebar initially, will re-show it after initialization when we got proper window size
         //sidebar.Hide();
         m_aui_mgr.Update();
+
+        // The Sidebar ctor already applied the persisted compact/advanced choice,
+        // but it ran before this pane existed, so a session restored straight
+        // into the full settings tree would come up at the compact width with
+        // its option rows cut off. Re-assert the width now that there is a dock
+        // to widen. Deferred to idle: LoadPerspective() inside the manager's own
+        // setup is not safe here.
+        // Claim it on the first real size rather than here: at ctor time the
+        // frame has no usable width yet (the width request clamps itself to a
+        // share of the frame, so it would resolve to the compact default), and
+        // the remaining startup layout passes would overwrite an early attempt
+        // anyway. NB: this ctor's parameter is also named q, so the member has
+        // to be reached through this-> inside the lambda.
+        // Both `sidebar` (a local wxAuiPaneInfo reference) and `q` (this ctor's
+        // parameter) shadow the members here, so reach them through this->.
+        this->q->Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
+            e.Skip();
+            if (m_advanced_width_applied || !this->sidebar || !this->sidebar->is_process_advanced())
+                return;
+            // Latch only once the request actually had a laid-out frame to size
+            // against; an early size event would otherwise clamp to the compact
+            // default and then never be retried.
+            if (this->q->request_sidebar_width(this->q->FromDIP(ADVANCED_SIDEBAR_WIDTH)))
+                m_advanced_width_applied = true;
+        });
     }
 
     menus.init(main_frame);
@@ -23978,6 +24108,58 @@ void Plater::apply_sidebar_dock()
         wxGetApp().mainframe->update_prepare_action_bar_content();
 }
 void                  Plater::reset_window_layout(int width) { p->reset_window_layout(width); }
+
+bool Plater::request_sidebar_width(int width_px)
+{
+    auto &pane = p->m_aui_mgr.GetPane(p->sidebar);
+    if (!pane.IsOk() || pane.IsFloating())
+        return true; // nothing this call can usefully do; do not keep retrying
+    // Only the vertical docks are width-constrained; on a top/bottom dock the
+    // sidebar already spans the frame and height is the scarce axis.
+    if (pane.dock_direction == wxAUI_DOCK_TOP || pane.dock_direction == wxAUI_DOCK_BOTTOM)
+        return true;
+
+    const int def_w = FromDIP(MD3::Metrics::active().sidebar_width);
+    // Never shrink below the density default, and never take so much that the
+    // 3D canvas is squeezed out: cap at 55% of the frame. Below this floor the
+    // frame has not been laid out yet (early startup sizes come through at a
+    // few pixels), and capping against it would resolve every request to the
+    // compact default -- report "not ready" so the caller retries.
+    const int frame_w = GetClientSize().GetWidth();
+    if (frame_w < FromDIP(500))
+        return false;
+    int target = std::max(def_w, width_px);
+    target     = std::min(target, std::max(def_w, (frame_w * 55) / 100));
+
+    pane.BestSize(wxSize(target, pane.best_size.y));
+
+    // BestSize alone does not move a dock that already carries a stored size --
+    // wxAUI keeps that in the perspective's dock_size() entry, which is exactly
+    // what reset_window_layout() rewrites for the same reason. Retarget this
+    // pane's dock in the live perspective and reload it, so the width applies
+    // now instead of at the next layout reset.
+    wxString     persp = p->m_aui_mgr.SavePerspective();
+    const wxString key = wxString::Format("dock_size(%d,%d,%d)=", pane.dock_direction,
+                                          pane.dock_layer, pane.dock_row);
+    const int    at    = persp.Find(key);
+    if (at == wxNOT_FOUND)
+        return false; // no dock entry yet -- the layout is still settling
+    size_t vstart = size_t(at) + key.length();
+    size_t vend   = vstart;
+    while (vend < persp.length() && wxIsdigit(persp[vend]))
+        ++vend;
+    if (vend == vstart)
+        return false;
+    long current = 0;
+    if (!persp.Mid(vstart, vend - vstart).ToLong(&current))
+        return false;
+    if (current == target)
+        return true; // already the width we want
+
+    persp = persp.Left(vstart) + wxString::Format("%d", target) + persp.Mid(vend);
+    p->m_aui_mgr.LoadPerspective(persp, true);
+    return true;
+}
 //BBS
 void Plater::select_curr_plate_all() { p->select_curr_plate_all(); }
 void Plater::remove_curr_plate_all() { p->remove_curr_plate_all(); }
