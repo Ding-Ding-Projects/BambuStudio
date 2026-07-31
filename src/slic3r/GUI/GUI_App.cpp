@@ -8638,7 +8638,22 @@ static void sLocalBindFunc(std::string str_ip,
                            std::string sn)
 {
     detectResult detectData;
-    auto result = wxGetApp().getAgent()->bind_detect(str_ip, "secure", detectData);
+    // Re-check the agent HERE, not just at the caller. InnerLoad() validates it
+    // before spawning this, but this body runs later on a boost::thread, and the
+    // agent is deleted and nulled during shutdown (see the `delete m_agent;
+    // m_agent = nullptr;` in the app teardown). Between the two, getAgent() can
+    // come back null, and this is a background thread — the resulting null
+    // dereference is an access violation on a thread with no handler and no
+    // useful context in the log. It also stays null for the entire session when
+    // the network plugin fails to load, since m_agent is only ever constructed
+    // under `if (create_network_agent)`.
+    NetworkAgent *agent = wxGetApp().getAgent();
+    if (!agent) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded, or "
+                                                      "shutting down); skipping LAN bind detect.";
+        return;
+    }
+    auto result = agent->bind_detect(str_ip, "secure", detectData);
     if (result < 0) {
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": bind_detect failed code=" << result;
         wxGetApp().CallAfter([sn]() { wxGetApp().app_config->erase("user_access_dev_ip", sn);});
