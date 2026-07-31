@@ -699,7 +699,10 @@ absence from that list is not evidence they are missing. Crop the capture instea
 
 ## 7. What to do next
 
-0d. **THE CRASH IS STILL OPEN — start here.** It was not reproduced, so it is not fixed. The user
+0d. **THE CRASH ITSELF IS STILL OPEN — start here.** It was not reproduced, so it is not fixed.
+   Two of the three things reported around it *are* addressed: the app no longer refuses to reopen
+   afterwards (`bbcf1630b`, below), and a crash will finally leave a stack trace once
+   `fix/enable-crash-handler` is merged. The crash itself has not been found. The user
    reported, in their words: *"it keeps crashing … when opening model or changing a lot of settings
    at the same time"*, *"when it crashes it refuses to open until i open it a few times"*, and
    *"switching tabs do not work and say model has no data"*.
@@ -729,8 +732,15 @@ absence from that list is not evidence they are missing. Crop the capture instea
    **What was already ruled out here (do not redo):**
    - Opening `cube.stl`, slicing, and Preview all work. **32 tab switches** across
      Prepare/Preview/Device: clean. **10 rounds** of advanced/simple flips plus every segment
-     (Quality/Strength/Support/Others): clean. `procdump -e -ma -w` attached throughout produced
-     **no dump**, and both app instances stayed alive.
+     (Quality/Strength/Support/Others): clean. **12 modal open/close cycles** (`Version history`)
+     with a model loaded, to fire the sidebar's 250 ms timer inside nested modal event loops:
+     clean. `procdump -e -ma -w` attached throughout produced **no dump**, and both app instances
+     stayed alive every time.
+   - A genuine hazard was identified but not proven guilty: `Sidebar::priv::m_manip_timer` fires
+     every 250 ms and calls `refresh_process_card()`, which reads
+     `preset_bundle->prints.get_edited_preset()`. `ShowModal()` runs a nested event loop, so that
+     timer keeps firing *during* model loads and preset changes — both reported triggers. It
+     survived 12 forced cycles here, so it is a suspect, not a culprit.
    - No stale `wxSingleInstanceChecker` lock in `<data_dir>\cache\` and no zombie `bambu-studio.exe`
      after a run, so the "refuses to open" symptom did not reproduce either.
    - Log truncation is **not** proof of a crash: `driver.py stop` kills the process and truncates
@@ -746,11 +756,24 @@ absence from that list is not evidence they are missing. Crop the capture instea
    installer uses data dir `BambuStudio`, not `BambuStudioInternal` — and no plain `BambuStudio`
    dir exists on this host, so the reported crashes probably did not happen on this machine.
 
-   **A real robustness bug found while reading that path, not yet fixed:**
-   `instance_check_internal::send_message()` (`InstanceCheck.cpp`) uses a bare **blocking
-   `SendMessage(WM_COPYDATA)`** to the other instance's window. If that instance is hung, the new
-   process blocks at startup forever with no log — a plausible mechanism for *"refuses to open
-   until I open it a few times"*. `SendMessageTimeout` is the correct call. Worth doing.
+   **The "refuses to open" half IS fixed** (`bbcf1630b`, on master, CI running at session end).
+   `instance_check()` discarded `send_message()`'s return value and returned `true` — terminate —
+   regardless. So when the single-instance mutex is held by something that cannot answer (a process
+   wedged mid-crash, one still starting, one already tearing its windows down), the launch found no
+   window, handed off to nobody, and **exited anyway**. Every attempt did that until the stale
+   holder released the mutex: exactly *"try it a few times and eventually it opens"*. And because
+   this runs before `wxEntry()` and before boost log exists, it left **no log entry at all**, which
+   also explains the missing logs above. Now the hand-off decides: if nothing took it, the instance
+   starts normally and logs why. The bare blocking `SendMessage(WM_COPYDATA)` — which hangs startup
+   forever against a wedged instance, same silent non-start by a different route — is now
+   `SendMessageTimeout` (`SMTO_ABORTIFHUNG`, 5 s), and `l_bambu_studio_hwnd` is cleared before each
+   scan so a handle from a previous enumeration can never be messaged.
+
+   > [!NOTE]
+   > That fix was pushed with **local build verification incomplete** (the branch switch invalidated
+   > the CMake cache and forced a full libslic3r rebuild, which was stopped in favour of CI). It is
+   > a single self-contained `.cpp` change using Win32 calls already present in that file. Confirm
+   > run `30593749021` is green.
 
    The re-entrancy guard added to `update_sidebar_scroll_body()` is a **defensive** fix for a
    plausible recursion (`SetVirtualSize` → scrollbar → `EVT_SIZE` → repeat, which both reported
