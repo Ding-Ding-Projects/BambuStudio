@@ -74,7 +74,8 @@ using namespace nlohmann;
 //BBS: add exception handler for win32
 #include <wx/stdpaths.h>
 #ifdef WIN32
-//#include "BaseException.h"
+// Needed by SET_DEFULTER_HANDLER() in bambustu_main().
+#include "BaseException.h"
 #endif
 #include "slic3r/GUI/PartPlate.hpp"
 #include "slic3r/GUI/BitmapCache.hpp"
@@ -8627,12 +8628,17 @@ extern "C" {
             argv_ptrs[i] = argv_narrow[i].data();
 
 //BBS: register default exception handler
-#if BBL_RELEASE_TO_PUBLIC
-        //SET_DEFULTER_HANDLER();
-#else
-        //AddVectoredExceptionHandler(1, CBaseException::UnhandledExceptionFilter);
-        //SET_DEFULTER_HANDLER();
-#endif
+        // Installed for BOTH release and internal builds. While this was
+        // commented out a crash left no dump, no stack walk and nothing in the
+        // studio log -- the process simply vanished mid-line, which is
+        // indistinguishable from being killed and makes a user-reported crash
+        // impossible to act on. The filter returns EXCEPTION_CONTINUE_SEARCH, so
+        // it changes nothing about whether the app dies; it only writes
+        // <data_dir>/log/crash_*.log (exception code, registers, module list,
+        // call stack) on the way down. Codes below 0x80000000 and the managed
+        // 0xe0434352 are already skipped by the filter, so ordinary first-chance
+        // noise does not produce files.
+        SET_DEFULTER_HANDLER();
         std::set_new_handler([]() {
             int *a = nullptr;
             *a     = 0;
