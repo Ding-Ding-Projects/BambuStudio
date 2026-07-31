@@ -769,6 +769,14 @@ absence from that list is not evidence they are missing. Crop the capture instea
      an empty vector — a garbage pointer dereferenced immediately by `->GetDropDown()`. In Release
      that is an access violation **on project load**, which is exactly when filament counts change.
      Now guarded with `!choices.empty()`.
+     **Second route, needing no mixed filaments at all:** `on_filaments_delete()` calls
+     `remove_unused_filament_combos(combos_filament.size() - 1)`, so deleting the **last** filament
+     passes 0 and empties the vector outright. Any later count change to one physical filament — a
+     project load, for instance — then reads `[0]` of it. This makes the crash reachable through
+     ordinary filament editing, not just the mixed-slot edge case.
+     Pinned by `tests/sidebar_filament_combos/` (`a81a00fe0`), which asserts the guard, the call-site
+     count, and that `remove_unused_filament_combos()` still has no floor of one. **Mutation-checked
+     for real:** removing the guard fails the contract, restoring it passes.
    - Audited and clean in the same area: `update_filament_row_badges()`,
      `update_mixed_filament_list()` (all parallel-vector reads are size-checked), and the
      `combos_filament[0]` in the ctor (a `push_back` precedes it).
