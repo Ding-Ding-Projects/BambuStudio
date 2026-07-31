@@ -841,8 +841,33 @@ absence from that list is not evidence they are missing. Crop the capture instea
    plausible recursion (`SetVirtualSize` → scrollbar → `EVT_SIZE` → repeat, which both reported
    triggers would cross). It is **not** a confirmed crash fix and must not be written up as one.
 
-   **"Model has no data" was never located.** No such string exists in `src/` or the catalogs; the
-   user is paraphrasing. Get the exact wording or a screenshot before hunting further.
+   **"Model has no data" — FOUND, and it is not a crash.** The earlier "no such string exists"
+   note was wrong because it only searched C++ and the native `.po` catalogs. The tabs the user
+   says "do not work" (Ink / Device / Project) are **WebView2 surfaces**, so the string lives in
+   the DeviceWeb locales:
+   - `"No Data"` — `device_page/locales/en.json:59`, rendered by
+     `src/features/filament-manager/SpoolTable.tsx:269`
+   - `"Not signed in — no data available"` — `en.json:164`, rendered by
+     `FilamentManagerPage.tsx:566`
+
+   Both are the **empty state of the Filament Manager**, shown when there is no signed-in account
+   or no network agent. This host's log shows exactly why:
+   `NetworkAgent::initialize_network_module ... can not Load Library` → `unload_network_module` →
+   `WebViewPanel::ShowNetpluginTip: bValid=0` → `no plugins currently`. So "switching tabs doesn't
+   work and says no data" is **the network plugin not being installed / not signed in**, a separate
+   issue from the crash. Confirm with the user whether they are signed in and whether the network
+   plugin installed, before treating it as a defect.
+
+   **A null-deref found while reading that path and fixed** (`7e1ebbf28`): `sLocalBindFunc()` did
+   `wxGetApp().getAgent()->bind_detect(...)` with no null check. Its caller `InnerLoad()` validates
+   the agent, then spawns this onto a `boost::thread` — so the check and the use are on different
+   threads at different times. `m_agent` is deleted and nulled during teardown, and is only ever
+   constructed under `if (create_network_agent)`, so it stays **null for the whole session whenever
+   the network plugin fails to load** — the state this host runs in. A null deref on a background
+   thread is an access violation with no handler and nothing useful in the log. Note this path only
+   runs for users with a **stored `user_access_dev_ip` + `user_access_code`** (i.e. a previously
+   LAN-bound printer), which is a plausible reason it never fires on this box and might on the
+   user's. Still unproven as their crash.
 
 0e. **The dim sum surprise, release code names, and the tabbed-README requirement are unimplemented.**
    Global memory gained sections this session that the local rules copy lacked (now synced to
