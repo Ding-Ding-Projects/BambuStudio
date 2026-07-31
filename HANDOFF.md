@@ -758,7 +758,22 @@ absence from that list is not evidence they are missing. Crop the capture instea
      "a modal is open while settings are being applied" — i.e. both reported triggers. Now it bails
      out when a refresh is already in flight and restores the flag via RAII; the timer body takes
      one tick at a time.
-   - Still unproven as the culprit, so do not close the crash on it.
+   - **A genuine out-of-bounds crash WAS found and fixed on the model-load path** (`95fd064c0`).
+     `Sidebar::on_filament_count_change()` did `choices[0]->GetDropDown().Invalidate()` whenever
+     `num_physical == 1`, without checking `choices` was non-empty. With mixed filaments that
+     matters: `physical_indices` collects only non-mixed slots, so `num_physical` is **0** when
+     every slot is mixed; the tail of the same function then calls
+     `remove_unused_filament_combos(num_physical)`, which pops `combos_filament` with **no floor of
+     one** and at 0 empties it outright. The next call in with a single physical filament clears
+     the `num_physical == choices.size()` early-out (0 != 1), reaches that line, and reads `[0]` of
+     an empty vector — a garbage pointer dereferenced immediately by `->GetDropDown()`. In Release
+     that is an access violation **on project load**, which is exactly when filament counts change.
+     Now guarded with `!choices.empty()`.
+   - Audited and clean in the same area: `update_filament_row_badges()`,
+     `update_mixed_filament_list()` (all parallel-vector reads are size-checked), and the
+     `combos_filament[0]` in the ctor (a `push_back` precedes it).
+   - None of the above is *proven* to be the user's crash — it was found by auditing, not by
+     reproducing. Do not close the crash on it; do ask for a `crash_*.log` now that one gets written.
    - No stale `wxSingleInstanceChecker` lock in `<data_dir>\cache\` and no zombie `bambu-studio.exe`
      after a run, so the "refuses to open" symptom did not reproduce either.
    - Log truncation is **not** proof of a crash: `driver.py stop` kills the process and truncates
