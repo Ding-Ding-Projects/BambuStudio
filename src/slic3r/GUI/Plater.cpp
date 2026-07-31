@@ -797,6 +797,9 @@ struct Sidebar::priv
     wxWindow     *m_params_top_line_2 = nullptr;
     bool          process_advanced = false;
     bool          process_card_refreshing = false;
+    // Guards the 250ms sidebar refresh timer against re-entering itself through
+    // a nested event loop (see the wxEVT_TIMER binding).
+    bool          sidebar_tick_running = false;
     void          apply_process_segment(int seg);
     // Sidebar settings search: a shared MD3 SearchField at the top of the
     // Process card delegating to the global Search::OptionsSearcher popup
@@ -1368,10 +1371,37 @@ bool Sidebar::priv::apply_filament_search_filter()
 void Sidebar::priv::refresh_process_card()
 {
     if (!m_process_card || !m_process_card->IsShown()) return;
+
+    // Re-entrancy matters here, and it is not hypothetical: this runs off a
+    // 250ms timer, and EVERY ShowModal() spins a nested event loop that keeps
+    // that timer firing. So a tick can land in the middle of an earlier tick.
+    //
+    // process_card_refreshing is what tells the field handlers below "this value
+    // came from the config, not from the user". It used to be set true on entry
+    // and cleared unconditionally on exit, so a nested tick cleared the flag on
+    // ITS way out while the outer pass was still assigning values -- and every
+    // remaining SetValue()/SetSelection() in the outer pass was then read as a
+    // user edit, calling tab->load_config() and writing settings nobody touched,
+    // which in turn triggers another config change and another refresh.
+    //
+    // Bail out instead: the outer pass is already applying the current config,
+    // so a nested tick has nothing to add.
+    if (process_card_refreshing) return;
+
     PresetBundle *bundle = wxGetApp().preset_bundle;
     if (!bundle) return;
     const DynamicPrintConfig &cfg = bundle->prints.get_edited_preset().config;
-    process_card_refreshing = true;
+
+    // Restore rather than clear, so the flag can never be left false while an
+    // outer pass is still running even if a future caller re-enters some other
+    // way.
+    const bool was_refreshing = process_card_refreshing;
+    process_card_refreshing   = true;
+    struct RestoreFlag {
+        bool &flag;
+        bool  prev;
+        ~RestoreFlag() { flag = prev; }
+    } restore_flag{process_card_refreshing, was_refreshing};
 
     if (process_layer_height && !process_layer_height->GetTextCtrl()->HasFocus()) {
         if (auto *opt = cfg.option<ConfigOptionFloat>("layer_height")) {
@@ -1402,8 +1432,7 @@ void Sidebar::priv::refresh_process_card()
                 process_support->SetValue(opt->value);
         }
     }
-
-    process_card_refreshing = false;
+    // process_card_refreshing is restored by RestoreFlag above.
 }
 
 // Show only the curated rows whose segment tag matches the active
@@ -4177,6 +4206,17 @@ Sidebar::Sidebar(Plater *parent)
 
         p->m_manip_timer = new wxTimer();
         p->m_manip_timer->Bind(wxEVT_TIMER, [this](wxTimerEvent &) {
+            // Every ShowModal() spins a nested event loop, and this timer keeps
+            // firing inside it — so a tick can land while an earlier tick, a
+            // model load, or a preset switch is still half-applied. One tick at
+            // a time; a dropped tick costs nothing, the next one is 250ms away.
+            if (p->sidebar_tick_running) return;
+            p->sidebar_tick_running = true;
+            struct ClearTick {
+                bool &flag;
+                ~ClearTick() { flag = false; }
+            } clear_tick{p->sidebar_tick_running};
+
             p->refresh_manip_card();
             // Keep the compact Process card live against edits made through
             // the full tree / plate settings (no-op while hidden; focused
