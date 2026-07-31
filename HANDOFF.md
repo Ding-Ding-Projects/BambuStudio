@@ -748,6 +748,15 @@ absence from that list is not evidence they are missing. Crop the capture instea
      2026-07-28 20:12 log that ends inside `_save_model_to_file` is a **27-second** session, which
      fits a kill far better than a crash.
 
+   **Code paths audited and cleared (do not re-audit these):**
+   - `blend_color_multi()` (`FilamentMixer.cpp:115`) and `blend_mixed_color()` (`Plater.cpp`) —
+     the parallel colour/ratio vectors are bounds-guarded on both sides.
+   - `has_restore_data()` (`bbs_3mf.cpp:9674`) — already hardened by the earlier session (§5.3):
+     `load_string_file()` is inside the `try`, empty process names never compare equal, and pid
+     reuse is handled. Not a candidate any more.
+   - `Sidebar::on_filament_count_change()` / `update_mixed_filament_list()` — `physical_indices[i]`
+     is bounded by `num_physical`, and the mixed-filament option reads are all size-checked.
+
    **The strongest untested lead:** `%APPDATA%\BambuStudioInternal\log\` holds **no logs at all from
    2026-07-29 or 07-30** despite the user hitting crashes on those days. Either they are running a
    *different* build, or it dies before the log opens (`instance_check()` runs before `wxEntry()`
