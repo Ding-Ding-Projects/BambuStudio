@@ -17,7 +17,7 @@ below was reviewed through **2026-07-30** unless it says otherwise.
 - The interactive app and GitHub Pages landing now share an eleven-image WebP showcase under
   `ui-md3/assets/showcase/`; its behavior and deployment contract are documented in
   `docs/features/design-system/generated-visual-showcase.md`.
-- No open PRs. One open branch: `fix/enable-crash-handler` (see §7 item 0d). Two open issues: #15 is waiting for the requested secret-history policy
+- No open PRs and no open branches. Two open issues: #15 is waiting for the requested secret-history policy
   choice, while #16 has a complete local implementation, green focused build/tests, and cross-host
   transport evidence. Its full GUI build and English native clipping review are also complete; the
   bilingual/live-HA/hardware/remote evidence sequence remains in §7.1.
@@ -28,9 +28,9 @@ below was reviewed through **2026-07-30** unless it says otherwise.
   process settings off the right edge with no scrollbar able to reach them; fixed and captured
   (§6.9). **A reported crash and a "model has no data" tab failure remain unreproduced and open —
   see §7 item 0d before claiming either is fixed.** The crash reporter turned out to be disabled
-  three ways over, which is why no crash ever left evidence; branch `fix/enable-crash-handler` fixes
-  that and is pushed **build-unverified** — check its CI, then merge it. **There is one open branch:
-  that one.**
+  three ways over, which is why no crash ever left evidence; that is fixed and **merged**
+  (`e445d1a19`, branch CI green), so the next crash writes a stack trace to
+  `<data_dir>/log/crash_*.log`. **Ask the user for that file.** No open branches.
 
 ---
 
@@ -702,7 +702,7 @@ absence from that list is not evidence they are missing. Crop the capture instea
 0d. **THE CRASH ITSELF IS STILL OPEN — start here.** It was not reproduced, so it is not fixed.
    Two of the three things reported around it *are* addressed: the app no longer refuses to reopen
    afterwards (`bbcf1630b`, below), and a crash will finally leave a stack trace once
-   `fix/enable-crash-handler` is merged. The crash itself has not been found. The user
+   the crash reporter is merged and green. The crash itself has not been found. The user
    reported, in their words: *"it keeps crashing … when opening model or changing a lot of settings
    at the same time"*, *"when it crashes it refuses to open until i open it a few times"*, and
    *"switching tabs do not work and say model has no data"*.
@@ -720,14 +720,12 @@ absence from that list is not evidence they are missing. Crop the capture instea
    which is indistinguishable from being killed.
 
    > [!IMPORTANT]
-   > **Branch `fix/enable-crash-handler` (`40bca594e`) enables all three and is pushed but
-   > BUILD-UNVERIFIED** — the CMake change forces a full libslic3r rebuild that had not finished
-   > when the session ended. It is deliberately **not** on master so a link error cannot redden
-   > CI. **Confirm the branch's CI build is green, then merge it.** These legacy files have never
-   > been compiled in this tree, so `TCHAR`/unicode or warnings-as-errors problems are plausible.
-   > Once merged, a crash writes `<data_dir>/log/crash_<when>_<n>.log` with exception code,
-   > registers, module list and call stack. It does **not** stop the crash; it makes the next one
-   > diagnosable.
+   > **All three are now enabled and MERGED** (`e445d1a19`). The work went to a branch first
+   > precisely because those legacy files had never been compiled here; branch CI run
+   > `30589807507` came back **green** (built, linked, release published), so the merge rests on
+   > evidence. **A crash now writes `<data_dir>/log/crash_<when>_<n>.log`** with the exception
+   > code, registers, loaded modules and a call stack. It does **not** stop the crash — it makes
+   > the next one diagnosable. **Ask the user for that file.**
 
    **What was already ruled out here (do not redo):**
    - Opening `cube.stl`, slicing, and Preview all work. **32 tab switches** across
