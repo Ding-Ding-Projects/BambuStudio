@@ -417,7 +417,17 @@ static void refresh_agora_url(char const* device, char const* dev_ver, char cons
     device2 += "|\"agora\"|";
     device2 += channel;
 
-    wxGetApp().getAgent()->get_camera_url_for_golive(device2, wxGetApp().app_config->get("slicer_uuid") + "-golive",
+    // Null whenever the network plugin failed to load; this runs off an HTTP
+    // request handler, so dereferencing it takes the server thread down with no
+    // handler and nothing useful in the log. Answer the request instead.
+    NetworkAgent *agent = wxGetApp().getAgent();
+    if (!agent) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                      "cannot resolve the go-live camera URL.";
+        sess->send_text_response("");
+        return;
+    }
+    agent->get_camera_url_for_golive(device2, wxGetApp().app_config->get("slicer_uuid") + "-golive",
         [sess](std::string url) {
         sess->send_text_response(url);
     });

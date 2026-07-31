@@ -819,8 +819,16 @@ static void market_model_scoring_page(int design_id)
     std::string url;
     std::string country_code = GUI::wxGetApp().app_config->get_country_code();
     url                      = GUI::wxGetApp().get_model_http_url(country_code);
-    if (GUI::wxGetApp().getAgent()->get_model_mall_detail_url(&url, std::to_string(design_id)) == 0) {
-        std::string user_id = GUI::wxGetApp().getAgent()->get_user_id();
+    // Null whenever the network plugin failed to load. Without the agent there
+    // is no rating URL to build, so leave the page alone rather than dereference.
+    NetworkAgent *agent = GUI::wxGetApp().getAgent();
+    if (!agent) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                      "cannot open the model rating page.";
+        return;
+    }
+    if (agent->get_model_mall_detail_url(&url, std::to_string(design_id)) == 0) {
+        std::string user_id = agent->get_user_id();
         boost::algorithm::replace_first(url, "models", "u/" + user_id + "/rating");
         // Prevent user_id from containing design_id
         size_t      sign_in = url.find("/rating");
@@ -7006,9 +7014,21 @@ wxBoxSizer *ScoreDialog::get_button_sizer()
         std::string  http_error;
         wxString     error_info;
 
+        // Rating submission is pure network work, and the agent is null for the
+        // whole session whenever the network plugin failed to load. Bail out
+        // once here rather than dereferencing it at each of the three calls
+        // below (oss config, picture upload, rating put).
+        NetworkAgent *agent = wxGetApp().getAgent();
+        if (!agent) {
+            BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                          "cannot submit the rating.";
+            m_upload_status_code = StatusCode::UPLOAD_EXIST_ISSUE;
+            return;
+        }
+
         if (!need_upload_images.empty()) {
             std::string config;
-            int         ret = wxGetApp().getAgent()->get_oss_config(config, wxGetApp().app_config->get_country_code(), http_code, http_error);
+            int         ret = agent->get_oss_config(config, wxGetApp().app_config->get_country_code(), http_code, http_error);
             if (ret == -1) {
                 error_info += into_u8(_L("Get oss config failed.")) + "\n\thttp code: " + std::to_string(http_code) + "\n\thttp error: " + http_error;
                 BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": get oss config filed and http_error: " << http_error;
@@ -7026,7 +7046,7 @@ wxBoxSizer *ScoreDialog::get_button_sizer()
                     std::pair<wxStaticBitmap *, wxString> need_upload     = *it;
                     std::string                           need_upload_uf8 = into_u8(need_upload.second);
                     // Local path when incoming, cloud path when outgoing
-                    ret = wxGetApp().getAgent()->put_rating_picture_oss(config, need_upload_uf8, m_model_id, m_profile_id, http_code, http_error);
+                    ret = agent->put_rating_picture_oss(config, need_upload_uf8, m_model_id, m_profile_id, http_code, http_error);
                     std::unordered_map<wxStaticBitmap *, ImageMsg>::iterator iter;
                     switch (ret) {
                     case 0:
@@ -7082,7 +7102,7 @@ wxBoxSizer *ScoreDialog::get_button_sizer()
         }
 
         if (m_upload_status_code == StatusCode::UPLOAD_PROGRESS) {
-            int            ret = wxGetApp().getAgent()->put_model_mall_rating(m_rating_id, m_star_count, comment, m_image_url_paths, http_code, http_error);
+            int            ret = agent->put_model_mall_rating(m_rating_id, m_star_count, comment, m_image_url_paths, http_code, http_error);
             MessageDialog *dlg_info;
             switch (ret) {
             case 0: EndModal(wxID_OK); break;

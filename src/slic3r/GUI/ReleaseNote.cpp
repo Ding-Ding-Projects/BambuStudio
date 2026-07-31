@@ -1965,7 +1965,16 @@ void InputIpAddressDialog::workerThreadFunc(std::string str_ip, std::string str_
 #ifdef __APPLE__
         result = -3;
 #else
-        result = wxGetApp().getAgent()->bind_detect(str_ip, "secure", detectData);
+        // Null whenever the network plugin failed to load. Report the failure as
+        // a negative result (which every caller of this already handles) rather
+        // than dereferencing it.
+        if (NetworkAgent *agent = wxGetApp().getAgent()) {
+            result = agent->bind_detect(str_ip, "secure", detectData);
+        } else {
+            BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                          "cannot run LAN bind detect.";
+            result = -1;
+        }
 #endif
 
     } else {
