@@ -36,20 +36,6 @@ jobs:
           key: ${{ inputs.cache-key }}
           fail-on-cache-miss: true
 
-      - name: Get the version and date on Ubuntu and macOS
-        if: inputs.os != 'windows-latest'
-        run: |
-          ver_pure=$(grep 'set(SLIC3R_VERSION' version.inc | cut -d '"' -f2)
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            ver="PR-${{ github.event.number }}"
-          else
-            ver=V$ver_pure
-          fi
-          echo "ver=$ver" >> $GITHUB_ENV
-          echo "ver_pure=$ver_pure" >> $GITHUB_ENV
-          echo "date=$(date +'%Y%m%d')" >> $GITHUB_ENV
-        shell: bash
-
       - name: Get the version and date on Windows
         if: inputs.os == 'windows-latest'
         run: |
@@ -74,64 +60,6 @@ jobs:
         shell: pwsh
 
   #   Mac
-      - name: Build slicer mac
-        if: inputs.os == 'macos-15-intel'
-        working-directory: ${{ github.workspace }}
-        run: |
-          brew install automake texinfo
-          brew unlink cmake || true
-          brew tap-new $USER/old-cmake
-          brew extract --version=3.31.0 cmake $USER/old-cmake
-          brew install $USER/old-cmake/cmake@3.31.0
-          brew link --overwrite cmake@3.31.0
-          brew pin cmake@3.31.0
-          ./BuildMac.sh -s -x -a x86_64 -t 10.15 -1
-
-      - name: Build slicer mac
-        if: inputs.os == 'macos-15' || inputs.os == 'macos-26'
-        working-directory: ${{ github.workspace }}
-        run: |
-          brew install automake texinfo
-          brew unlink cmake || true
-          brew tap-new $USER/old-cmake
-          brew extract --version=3.31.0 cmake $USER/old-cmake
-          brew install $USER/old-cmake/cmake@3.31.0
-          brew link --overwrite cmake@3.31.0
-          brew pin cmake@3.31.0
-          ./BuildMac.sh -s -x -a universal -t 10.15 -1
-
-      - name: Build and run macOS bounded-regex tests
-        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26'
-        working-directory: ${{ github.workspace }}
-        shell: bash
-        run: |
-          runner_arch="$(uname -m)"
-          cmake -S . -B build-regex-macos -G Ninja \
-            -DBBL_RELEASE_TO_PUBLIC=1 \
-            -DBBL_INTERNAL_TESTING=0 \
-            -DSLIC3R_GUI=OFF \
-            -DSLIC3R_BUILD_TESTS=ON \
-            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/deps/build/$runner_arch/BambuStudio_deps/usr/local" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES="$runner_arch" \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
-          cmake --build build-regex-macos --target bounded_regex_tests
-          ctest --test-dir build-regex-macos --output-on-failure --no-tests=error \
-            -R '^bounded_regex_tests$'
-
-      - name: pack mac app
-        if: github.ref != 'refs/heads/main' && (inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26')
-        working-directory: ${{ github.workspace }}
-        run: zip -r BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}.zip ${{ github.workspace }}/build
-
-      - name: Upload artifacts mac
-        if: inputs.os == 'macos-15-intel' || inputs.os == 'macos-15' || inputs.os == 'macos-26'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}
-          path: ${{ github.workspace }}/BambuStudio_Mac_${{inputs.arch}}_${{ env.ver }}.zip
-
-  # Windows
       - name: setup MSVC
         if: inputs.os == 'windows-latest'
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
@@ -152,10 +80,40 @@ jobs:
 
       - name: Install nsis and pkgconfig
         if: inputs.os == 'windows-latest'
+        shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           dir "C:/Program Files (x86)/Windows Kits/10/Include"
-          choco install nsis --version=3.12.0 --yes --no-progress
-          choco install pkgconfiglite --version=0.28.0 --yes --no-progress
+
+          # Both packages fetch their payload from third-party hosts at install
+          # time - pkgconfiglite from SourceForge, which returned a 404/timeout on
+          # 2026-07-28 and failed the whole Windows build, blocking the release.
+          # A transient outage on someone else's CDN must not be indistinguishable
+          # from a broken commit, so each install gets bounded retries with a
+          # backoff before the step is allowed to fail.
+          function Install-ChocoPackage {
+              param(
+                  [Parameter(Mandatory)] [string] $Name,
+                  [Parameter(Mandatory)] [string] $Version,
+                  [int] $Attempts = 4
+              )
+              for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+                  choco install $Name --version=$Version --yes --no-progress
+                  if ($LASTEXITCODE -eq 0) {
+                      Write-Host "::notice::$Name $Version installed on attempt $attempt."
+                      return
+                  }
+                  if ($attempt -lt $Attempts) {
+                      $delay = 15 * $attempt
+                      Write-Host "::warning::$Name install attempt $attempt failed (exit $LASTEXITCODE); retrying in ${delay}s."
+                      Start-Sleep -Seconds $delay
+                  }
+              }
+              throw "$Name $Version could not be installed after $Attempts attempts."
+          }
+
+          Install-ChocoPackage -Name 'nsis' -Version '3.12.0'
+          Install-ChocoPackage -Name 'pkgconfiglite' -Version '0.28.0'
 
       - name: Setup Node.js for Windows checks
         if: inputs.os == 'windows-latest'
@@ -167,7 +125,24 @@ jobs:
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         shell: pwsh
-        run: .\scripts\ci\Test-WindowsRelease.ps1
+        run: |
+          .\scripts\ci\Test-WindowsRelease.ps1
+          .\scripts\ci\Test-OneClickBuild.ps1
+          # Guards the release codename roster: bilingual shape, no duplicates, and
+          # append-only. Codenames are assigned by index, so inserting a dish renames
+          # every later release and contradicts already-published immutable ones.
+          .\scripts\ci\Test-ReleaseCodenames.ps1
+          # Guards the fork's vocabulary (filament -> ink, AMS -> Ink Dispenser).
+          # The rename is display-only by design, so this checks translated VALUES
+          # and never the keys/msgids that code and 3MF compatibility match on.
+          .\scripts\ci\Test-InkTerminology.ps1
+          # Pins the native MD3 conversion. Four of these surfaces cannot be
+          # photographed on a build host (the fan popup needs a connected printer,
+          # the Slice/Print dropdown is a transient popup, the 2D bed dialog is not
+          # reachable for Bambu profiles, and Measure will not open under synthetic
+          # input), so the fixes are asserted against the shipped C++ instead of a
+          # screenshot. Mutation-checked: reverting any one of them fails this.
+          node --test ui-md3/tests/md3-conversion-contracts.test.mjs tests/web_resources_accessibility.test.mjs
 
       - name: Build slicer Win
         id: build_win
@@ -324,7 +299,7 @@ jobs:
           # The aggregate legacy suite and libnest2d_tests are currently
           # upstream-baseline failures; keep this gate focused on maintained,
           # independently buildable regression coverage. See HANDOFF.md.
-          cmake --build build-tests --target language_mode_tests project_history_tests bounded_regex_tests deviceweb_home_webview_failure_policy_tests deterministic_bbs_3mf_tests --config Release -- -m
+          cmake --build build-tests --target language_mode_tests project_history_tests bounded_regex_tests deviceweb_home_webview_failure_policy_tests home_assistant_tests home_assistant_sharing_probe deterministic_bbs_3mf_tests crash_restore_tests --config Release -- -m
           if ($LASTEXITCODE -ne 0) {
               throw "Building Windows C++ tests failed with exit code $LASTEXITCODE."
           }
@@ -336,7 +311,7 @@ jobs:
           $env:PATH = '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin;' +
               '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin\occt;' +
               '${{ github.workspace }}\install-dir;' + $env:PATH
-          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests|bounded_regex_tests|deviceweb_home_webview_failure_policy_tests|deviceweb_home_webview_failure_contract)$'
+          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests|bounded_regex_tests|deviceweb_home_webview_failure_policy_tests|deviceweb_home_webview_failure_contract|home_assistant_tests|home_assistant_http_security_contract|home_assistant_ui_performance_contract|home_assistant_amplification_contract|home_assistant_service_fanout_contract|crash_restore_tests)$'
           if ($LASTEXITCODE -ne 0) {
               throw "Windows C++ tests failed with exit code $LASTEXITCODE."
           }
@@ -781,59 +756,3 @@ jobs:
             ${{ github.workspace }}/BambuStudioMD3.cdx.json
           if-no-files-found: error
 
-
-  # Ubuntu
-      - name: Install dependencies from BuildLinux.sh
-        if: inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04'
-        shell: bash
-        run: sudo ./BuildLinux.sh -ur
-
-      - name: Fix permissions
-        if: inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04'
-        shell: bash
-        run: sudo chown $USER -R ./
-
-      - name: Build slicer
-        if: inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04'
-        shell: bash
-        run: |
-          ./BuildLinux.sh -isfr
-          mv -n ./build/BambuStudio_ubu64.AppImage ./build/Bambu_Studio_${{inputs.os}}_${{ env.ver }}.AppImage
-
-      # - name: Build orca_custom_preset_tests
-      #   if: github.ref == 'refs/heads/main' && inputs.os == 'ubuntu-22.04'
-      #   working-directory: ${{ github.workspace }}/build/src
-      #   shell: bash
-      #   run: |
-      #     ./OrcaSlicer_profile_validator -p ${{ github.workspace }}/resources/profiles -g 1
-      #     cd ${{ github.workspace }}/resources/profiles
-      #     zip -r orca_custom_preset_tests.zip user/
-
-      - name: Upload artifacts Ubuntu
-        if: ${{ ! env.ACT && (inputs.os == 'ubuntu-22.04' || inputs.os == 'ubuntu-24.04' || inputs.os == 'ubuntu-26.04') }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: BambuStudio_${{inputs.os}}_${{ env.ver }}
-          path: './build/Bambu_Studio_${{inputs.os}}_${{ env.ver }}.AppImage'
-
-      # - name: Deploy Ubuntu release
-      #   if: ${{ ! env.ACT && github.ref == 'refs/heads/main' && inputs.os == 'ubuntu-22.04' }}
-      #   uses: WebFreak001/deploy-nightly@v3.2.0
-      #   with:
-      #     upload_url: https://uploads.github.com/repos/SoftFever/OrcaSlicer/releases/137995723/assets{?name,label}
-      #     release_id: 137995723
-      #     asset_path: ./build/OrcaSlicer_Linux_${{ env.ver }}.AppImage
-      #     asset_name: OrcaSlicer_Linux_${{ env.ver }}.AppImage
-      #     asset_content_type: application/octet-stream
-      #     max_releases: 1 # optional, if there are more releases than this matching the asset_name, the oldest ones are going to be deleted
-
-      # - name: Deploy orca_custom_preset_tests
-      #   if: ${{ ! env.ACT && github.ref == 'refs/heads/main' && inputs.os == 'ubuntu-22.04' }}
-      #   uses: WebFreak001/deploy-nightly@v3.2.0
-      #   with:
-      #     upload_url: https://uploads.github.com/repos/SoftFever/OrcaSlicer/releases/137995723/assets{?name,label}
-      #     release_id: 137995723
-      #     asset_path: ${{ github.workspace }}/resources/profiles/orca_custom_preset_tests.zip
-      #     asset_name: orca_custom_preset_tests.zip
-      #     asset_content_type: application/octet-stream
-      #     max_releases: 1

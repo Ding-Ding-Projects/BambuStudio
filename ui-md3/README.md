@@ -1,6 +1,6 @@
 # Bambu Studio — Material Design 3
 
-**Live:** https://codingmachineedge.github.io/BambuStudio/ · **App:** https://codingmachineedge.github.io/BambuStudio/app/
+**Live:** https://ding-ding-projects.github.io/BambuStudio/ · **App:** https://ding-ding-projects.github.io/BambuStudio/app/
 
 A self-contained web implementation of a **Material Design 3 (Material You) concept redesign** of the
 Bambu Studio slicer UI. Every screen of the real app's information architecture, re-skinned in pure
@@ -13,13 +13,19 @@ MD3 — no invented features. Runs in any browser with **zero dependencies and n
 
 - **Simplest:** open [`index.html`](index.html) directly in a browser (`file://`).
 - **Static server:** serve this folder and open `/index.html`.
-- **Landing page:** [`landing.html`](landing.html) — the marketing/entry page (Pages site root).
+- **The site:** [`landing.html`](landing.html) + [`site/`](site/) — the Pages root. It is a
+  browser-style **tabbed application**, not a landing page: eight tabs with a pinnable, draggable,
+  groupable, searchable strip; English and Hong Kong Cantonese copy at five funny levels per
+  language; the shared regex builder behind every search bar; a changelog viewer over every
+  published release; non-blocking notifications; and a 1% dim sum surprise. Compose it exactly as
+  CI does with `node scripts/compose-site.mjs _site`. Documented in
+  [`../docs/features/pages/`](../docs/features/pages/README.md).
 - **Native Windows app:** use the
-  [latest installer](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe).
+  [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe).
   It is built from the C++ application by the
   [`Windows build and release`](../.github/workflows/build_all.yml) workflow. The installer is
   unsigned; verify the accompanying
-  [SHA-256 file](https://github.com/codingmachineedge/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256),
+  [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256),
   which confirms integrity but not publisher identity.
 - **Legacy concept wrapper:** [`desktop/`](desktop/) retains the earlier Electron prototype for
   reference; it is not the published installer.
@@ -75,13 +81,15 @@ ui-md3/
       <id>.template.html  one <template data-screen> per screen (verbatim MD3 markup)
       <id>.logic.js       that screen's render helpers + vals slice
       CONTRACT.md         the foundation↔screen contract
+  assets/showcase/        optimized original artwork shared by Home, landing, and social previews
   scripts/
     assemble-index.mjs  deterministic modular-template → index.html synchronization/check
   tests/
     i18n.test.mjs       browser-free language, persistence, coverage + assembly checks
   design-source/        read-only original Claude Design (the source of truth) + SPEC.md, ARCH-PARALLEL.md
   desktop/              legacy Electron concept shell (not the native release)
-  landing.html          marketing / entry page
+  landing.html          the tabbed Pages root (its modules live in site/)
+  site/                 the Pages site: copy, core, regex, tabs, views, settings, changelog, CSS
 ```
 
 **`mini-dc.js`** reimplements the design's template dialect (`{{ }}` interpolation, `<sc-for>`,
@@ -102,6 +110,12 @@ assembled and QA'd in the browser.
 Run the dependency-free Node tests and the template assembly check from the repository root:
 
 ```powershell
-node --test ui-md3/tests/i18n.test.mjs
+node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs ui-md3/tests/layout-clipping.test.mjs
 node ui-md3/scripts/assemble-index.mjs --check
 ```
+
+The GitHub Pages workflow additionally composes the root landing page, verifies every local script
+and showcase image with `ui-md3/tests/assert-pages-layout.mjs`, and drives headless Chrome through
+444 layout cases with `ui-md3/tests/runtime-layout-clipping.mjs` — 156 on the landing page and 288 that activate every tab. To repeat the
+runtime matrix locally, serve `ui-md3/` over HTTP and set `BAMBU_PAGES_TEST_URL` to its
+`landing.html` URL before running that test.

@@ -486,13 +486,33 @@ SecondaryCheckDialog::SecondaryCheckDialog(wxWindow* parent, wxWindowID id, cons
 
 
     if (not_show_again_check) {
-        m_show_again_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
-        m_show_again_checkbox->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, [this](wxCommandEvent& e) {
-            not_show_again = !not_show_again;
+        // The footer sat a stock Win32 checkbox (13px system square, system-blue
+        // focus rect, light-mode chrome in dark mode) next to MD3 pill buttons.
+        // ::CheckBox draws the 20px MD3 glyph instead; it carries no text of its
+        // own, so the caption is a sibling Label and clicking it toggles the box
+        // — the stock label was clickable and stays that way.
+        auto* show_again_row   = new wxBoxSizer(wxHORIZONTAL);
+        m_show_again_checkbox  = new ::CheckBox(this);
+        // The glyph has no label of its own; name it so MSAA still announces it.
+        m_show_again_checkbox->SetName(_L("Don't show again"));
+        show_again_row->Add(m_show_again_checkbox, 0, wxALIGN_CENTER_VERTICAL);
+        auto* show_again_label = new ::Label(this, ::Label::Body_13, _L("Don't show again"));
+        show_again_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        show_again_label->SetCursor(wxCursor(wxCURSOR_HAND));
+        show_again_row->Add(show_again_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        // ::CheckBox is a wxBitmapToggleButton, so the change event is
+        // wxEVT_TOGGLEBUTTON, not wxEVT_COMMAND_CHECKBOX_CLICKED. Skip so the
+        // widget's own handler still clears half-checked and repaints the glyph.
+        m_show_again_checkbox->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent& e) {
+            not_show_again = m_show_again_checkbox->GetValue();
+            e.Skip();
+        });
+        show_again_label->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent&) {
+            not_show_again = !m_show_again_checkbox->GetValue();
             m_show_again_checkbox->SetValue(not_show_again);
         });
         // Sits at the footer's left edge, buttons cluster right.
-        GetFooterSizer()->Insert(0, m_show_again_checkbox, 0, wxALIGN_CENTER_VERTICAL);
+        GetFooterSizer()->Insert(0, show_again_row, 0, wxALIGN_CENTER_VERTICAL);
     }
     m_button_ok = new Button(this, _L("Confirm"));
     m_button_ok->SetBackgroundColor(btn_bg_green);
@@ -771,6 +791,10 @@ void SecondaryCheckDialog::rescale()
 {
     m_button_ok->Rescale();
     m_button_cancel->Rescale();
+    // The MD3 glyph is rasterised at the DPI current when it was built, unlike
+    // the native checkbox it replaced, so it has to be re-rendered here.
+    if (m_show_again_checkbox != nullptr)
+        m_show_again_checkbox->Rescale();
 }
 
 PrintErrorDialog::PrintErrorDialog(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
@@ -1102,13 +1126,27 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
 
 
     if (not_show_again_check) {
-        m_show_again_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
-        m_show_again_checkbox->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, [this](wxCommandEvent& e) {
-            not_show_again = !not_show_again;
+        // Same swap as SecondaryCheckDialog: the MD3 20px glyph plus a sibling
+        // Label caption, in place of the stock Win32 checkbox that sat beside the
+        // kit's pill buttons. The caption stays clickable.
+        auto* show_again_row   = new wxBoxSizer(wxHORIZONTAL);
+        m_show_again_checkbox  = new ::CheckBox(this);
+        m_show_again_checkbox->SetName(_L("Don't show again"));
+        show_again_row->Add(m_show_again_checkbox, 0, wxALIGN_CENTER_VERTICAL);
+        auto* show_again_label = new ::Label(this, ::Label::Body_13, _L("Don't show again"));
+        show_again_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        show_again_label->SetCursor(wxCursor(wxCURSOR_HAND));
+        show_again_row->Add(show_again_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        m_show_again_checkbox->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent& e) {
+            not_show_again = m_show_again_checkbox->GetValue();
+            e.Skip();
+        });
+        show_again_label->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent&) {
+            not_show_again = !m_show_again_checkbox->GetValue();
             m_show_again_checkbox->SetValue(not_show_again);
         });
         // Footer left edge; buttons cluster right.
-        GetFooterSizer()->Insert(0, m_show_again_checkbox, 0, wxALIGN_CENTER_VERTICAL);
+        GetFooterSizer()->Insert(0, show_again_row, 0, wxALIGN_CENTER_VERTICAL);
     }
     m_button_ok = new Button(this, _L("Confirm"));
     m_button_ok->SetBackgroundColor(btn_bg_green);
@@ -1367,6 +1405,9 @@ void ConfirmBeforeSendDialog::rescale()
 {
     m_button_ok->Rescale();
     m_button_cancel->Rescale();
+    // Same as SecondaryCheckDialog: the drawn glyph does not follow DPI on its own.
+    if (m_show_again_checkbox != nullptr)
+        m_show_again_checkbox->Rescale();
 }
 
 static void nop_deleter(InputIpAddressDialog*) {}
@@ -1924,7 +1965,16 @@ void InputIpAddressDialog::workerThreadFunc(std::string str_ip, std::string str_
 #ifdef __APPLE__
         result = -3;
 #else
-        result = wxGetApp().getAgent()->bind_detect(str_ip, "secure", detectData);
+        // Null whenever the network plugin failed to load. Report the failure as
+        // a negative result (which every caller of this already handles) rather
+        // than dereferencing it.
+        if (NetworkAgent *agent = wxGetApp().getAgent()) {
+            result = agent->bind_detect(str_ip, "secure", detectData);
+        } else {
+            BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                          "cannot run LAN bind detect.";
+            result = -1;
+        }
 #endif
 
     } else {

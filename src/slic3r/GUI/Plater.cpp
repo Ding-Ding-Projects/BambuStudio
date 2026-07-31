@@ -797,6 +797,9 @@ struct Sidebar::priv
     wxWindow     *m_params_top_line_2 = nullptr;
     bool          process_advanced = false;
     bool          process_card_refreshing = false;
+    // Guards the 250ms sidebar refresh timer against re-entering itself through
+    // a nested event loop (see the wxEVT_TIMER binding).
+    bool          sidebar_tick_running = false;
     void          apply_process_segment(int seg);
     // Sidebar settings search: a shared MD3 SearchField at the top of the
     // Process card delegating to the global Search::OptionsSearcher popup
@@ -805,6 +808,11 @@ struct Sidebar::priv
     // option on activation. The guard flag keeps the focus-driven popup from
     // being re-opened by the popup's own focus bounce.
     SearchField  *m_process_search = nullptr;
+    // Same searcher, second host: the compact card's field is hidden along with
+    // the card in advanced mode, which would leave the FULL process-settings
+    // tree — the surface with the most options in it — as the only settings
+    // surface with no search bar. This one lives on the 'Simple settings' bar.
+    SearchField  *m_process_search_adv = nullptr;
     bool          m_process_search_open = false;
 
     // BBS printer config
@@ -825,6 +833,9 @@ struct Sidebar::priv
     // (wxGetApp().obj_manipul()->get_cache()); a light UI-thread timer refreshes it
     // while the 3D editor is shown. Numeric edit/write-back stays in the gizmo overlay.
     wxPanel             *m_manip_panel{nullptr};
+    // Divider above the card; hidden and shown with it so no orphan rule is left
+    // behind while the card is away.
+    wxWindow            *m_manip_divider{nullptr};
     Label               *m_manip_cells[12]{};  // 4 rows (Position/Rotation/Scale%/Size) x 3 axes (X/Y/Z)
     wxTimer             *m_manip_timer{nullptr};
     void                 refresh_manip_card();
@@ -1152,19 +1163,49 @@ Sidebar::priv::~priv()
 #endif
 }
 
+// Sidebar width (DIP) while the full process-settings tree is showing. The
+// reparented ParamsPanel header alone needs ~420px before wxBoxSizer starts
+// starving items out of existence (leading icon + ellipsized title + the
+// Global/Objects switch + the Advance toggle + the table and compare buttons),
+// and the option rows below it want more still. Plater::request_sidebar_width()
+// clamps this to 55% of the frame, so a narrow window keeps its 3D canvas.
+static constexpr int ADVANCED_SIDEBAR_WIDTH = 480;
+
 // Sidebar body scroll maintenance (shared by Sidebar::update_scroll_body and
-// the priv:: paths that run before/without the public wrapper): virtual width
-// always tracks the client width so rows reflow to the sidebar instead of
-// keeping a stale (wider) content-min width, and virtual height grows past the
-// client so sections below the fold scroll into reach instead of clipping.
+// the priv:: paths that run before/without the public wrapper): virtual height
+// grows past the client so sections below the fold scroll into reach, and the
+// virtual width tracks the client width so rows reflow to the sidebar instead
+// of keeping a stale (wider) content-min width -- EXCEPT where a section
+// genuinely cannot compress, which must scroll rather than be cut off.
 static void update_sidebar_scroll_body(wxScrolledWindow *sw)
 {
     if (!sw || !sw->GetSizer()) return;
+
+    // SetVirtualSize() below can add or remove a scrollbar; on MSW that resizes
+    // the client area and re-enters this helper through the sidebar's own
+    // EVT_SIZE handler. When content sits near a scrollbar threshold the two
+    // can ping-pong, so let the outermost pass win instead of recursing.
+    static bool in_update = false;
+    if (in_update) return;
+    in_update = true;
+
     const wxSize client = sw->GetClientSize();
-    if (client.x <= 0 || client.y <= 0) return;
-    const int min_h = sw->GetSizer()->GetMinSize().y;
-    sw->SetVirtualSize(client.x, std::max(min_h, client.y));
-    sw->Layout();
+    if (client.x > 0 && client.y > 0) {
+        const wxSize content = sw->GetSizer()->GetMinSize();
+        // The reparented ParamsPanel tree is built for a full-width settings
+        // tab: its option rows are label + value field, and neither half
+        // reflows. Pinning the virtual width to a narrower client width does
+        // not compress that tree, it slices the value fields off the right edge
+        // where no scrollbar can reach them. Growing the virtual width when the
+        // content genuinely cannot fit costs a horizontal scrollbar and keeps
+        // every control reachable; everything that CAN reflow still gets the
+        // client width, so the compact cards are unaffected.
+        sw->SetVirtualSize(std::max(content.x, client.x),
+                           std::max(content.y, client.y));
+        sw->Layout();
+    }
+
+    in_update = false;
 }
 
 void Sidebar::priv::show_preset_comboboxes()
@@ -1330,10 +1371,37 @@ bool Sidebar::priv::apply_filament_search_filter()
 void Sidebar::priv::refresh_process_card()
 {
     if (!m_process_card || !m_process_card->IsShown()) return;
+
+    // Re-entrancy matters here, and it is not hypothetical: this runs off a
+    // 250ms timer, and EVERY ShowModal() spins a nested event loop that keeps
+    // that timer firing. So a tick can land in the middle of an earlier tick.
+    //
+    // process_card_refreshing is what tells the field handlers below "this value
+    // came from the config, not from the user". It used to be set true on entry
+    // and cleared unconditionally on exit, so a nested tick cleared the flag on
+    // ITS way out while the outer pass was still assigning values -- and every
+    // remaining SetValue()/SetSelection() in the outer pass was then read as a
+    // user edit, calling tab->load_config() and writing settings nobody touched,
+    // which in turn triggers another config change and another refresh.
+    //
+    // Bail out instead: the outer pass is already applying the current config,
+    // so a nested tick has nothing to add.
+    if (process_card_refreshing) return;
+
     PresetBundle *bundle = wxGetApp().preset_bundle;
     if (!bundle) return;
     const DynamicPrintConfig &cfg = bundle->prints.get_edited_preset().config;
-    process_card_refreshing = true;
+
+    // Restore rather than clear, so the flag can never be left false while an
+    // outer pass is still running even if a future caller re-enters some other
+    // way.
+    const bool was_refreshing = process_card_refreshing;
+    process_card_refreshing   = true;
+    struct RestoreFlag {
+        bool &flag;
+        bool  prev;
+        ~RestoreFlag() { flag = prev; }
+    } restore_flag{process_card_refreshing, was_refreshing};
 
     if (process_layer_height && !process_layer_height->GetTextCtrl()->HasFocus()) {
         if (auto *opt = cfg.option<ConfigOptionFloat>("layer_height")) {
@@ -1364,8 +1432,7 @@ void Sidebar::priv::refresh_process_card()
                 process_support->SetValue(opt->value);
         }
     }
-
-    process_card_refreshing = false;
+    // process_card_refreshing is restored by RestoreFlag above.
 }
 
 // Show only the curated rows whose segment tag matches the active
@@ -2820,10 +2887,13 @@ Sidebar::Sidebar(Plater *parent)
     // keeps the virtual width equal to the client width so rows always reflow
     // to the sidebar, and grows only the virtual height past the client.
     p->scrolled = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                       wxTAB_TRAVERSAL | wxVSCROLL);
-    p->scrolled->SetScrollRate(0, FromDIP(8));
-    p->scrolled->EnableScrolling(false, true);
-    p->scrolled->ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_DEFAULT);
+                                       wxTAB_TRAVERSAL | wxVSCROLL | wxHSCROLL);
+    p->scrolled->SetScrollRate(FromDIP(8), FromDIP(8));
+    p->scrolled->EnableScrolling(true, true);
+    // Horizontal scrolling is on demand, not always-on: update_sidebar_scroll_body()
+    // only grows the virtual width when a section cannot fit, so the bar appears
+    // for the full settings tree and stays away for the compact cards.
+    p->scrolled->ShowScrollbars(wxSHOW_SB_DEFAULT, wxSHOW_SB_DEFAULT);
     // Explicit small minimum: the body must never dictate the sidebar/frame
     // minimum size again — content taller than the window becomes scrollable
     // instead of a hard window-size floor.
@@ -4002,6 +4072,26 @@ Sidebar::Sidebar(Plater *parent)
         btn_simple->SetCanFocus(false);
         btn_simple->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_process_advanced(false); });
         simple_sizer->Add(btn_simple, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+
+        // Settings search for the FULL tree, same shared MD3 SearchField pill and
+        // the same OptionsSearcher (with its ".*" regex toggle and tune builder)
+        // as the compact card's, so the advanced surface is searchable too.
+        // Preset::TYPE_INVALID keeps the query scoped across every indexed preset
+        // type, and jumping to a result lands on the owning option in this tree.
+        p->m_process_search_adv = new SearchField(p->m_process_simple_bar, _L("Search settings"));
+        p->m_process_search_adv->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
+            if (!p->m_process_search_open) {
+                p->m_process_search_open = true;
+                p->searcher.show_dialog(Preset::TYPE_INVALID, p->m_process_simple_bar,
+                                        p->m_process_search_adv, p->m_process_search_adv);
+            }
+            e.Skip();
+        });
+        p->m_process_search_adv->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
+            p->m_process_search_open = false;
+        });
+        simple_sizer->Add(p->m_process_search_adv, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+
         p->m_process_simple_bar->SetSizer(simple_sizer);
         scrolled_sizer->Add(p->m_process_simple_bar, 0, wxEXPAND);
 
@@ -4049,6 +4139,7 @@ Sidebar::Sidebar(Plater *parent)
         auto *manip_divider = new ::StaticLine(p->scrolled);
         manip_divider->SetLineColour(outline);
         scrolled_sizer->Add(manip_divider, 0, wxEXPAND);
+        p->m_manip_divider = manip_divider;
 
         p->m_manip_panel = new wxPanel(p->scrolled, wxID_ANY);
         p->m_manip_panel->SetBackgroundColour(surface_low);
@@ -4106,8 +4197,26 @@ Sidebar::Sidebar(Plater *parent)
         p->m_manip_panel->SetSizer(manip_vsizer);
         scrolled_sizer->Add(p->m_manip_panel, 0, wxEXPAND);
 
+        // Hidden by default: with nothing selected every cell reads as an en
+        // dash, so the card was occupying a screenful of sidebar to say nothing.
+        // refresh_manip_card() brings it back the moment a selection makes its
+        // values real.
+        manip_divider->Hide();
+        p->m_manip_panel->Hide();
+
         p->m_manip_timer = new wxTimer();
         p->m_manip_timer->Bind(wxEVT_TIMER, [this](wxTimerEvent &) {
+            // Every ShowModal() spins a nested event loop, and this timer keeps
+            // firing inside it — so a tick can land while an earlier tick, a
+            // model load, or a preset switch is still half-applied. One tick at
+            // a time; a dropped tick costs nothing, the next one is 250ms away.
+            if (p->sidebar_tick_running) return;
+            p->sidebar_tick_running = true;
+            struct ClearTick {
+                bool &flag;
+                ~ClearTick() { flag = false; }
+            } clear_tick{p->sidebar_tick_running};
+
             p->refresh_manip_card();
             // Keep the compact Process card live against edits made through
             // the full tree / plate settings (no-op while hidden; focused
@@ -4158,11 +4267,25 @@ void Sidebar::priv::refresh_manip_card()
             c->SetLabel(s);
     };
 
+    // The card only means anything while something is selected; the rest of the
+    // time it is twelve en dashes under a header. Show it on selection and take
+    // it away again after, so the sidebar's scarce height goes to the sections
+    // that always have something to say.
+    auto set_card_shown = [&](bool show) {
+        if (!m_manip_panel || m_manip_panel->IsShown() == show)
+            return;
+        m_manip_panel->Show(show);
+        if (m_manip_divider)
+            m_manip_divider->Show(show);
+        update_sidebar_scroll_body(scrolled);
+    };
+
     const wxString dash = wxString::FromUTF8("\xE2\x80\x93"); // en dash for the empty state
 
     Plater *pl = wxGetApp().plater();
     GizmoObjectManipulation *om = (pl && pl->is_view3D_shown()) ? wxGetApp().obj_manipul() : nullptr;
     if (!om) {
+        set_card_shown(false);
         for (int i = 0; i < 12; ++i)
             set(i, dash);
         return;
@@ -4170,10 +4293,13 @@ void Sidebar::priv::refresh_manip_card()
 
     const GizmoObjectManipulation::Cache &cache = om->get_cache();
     if (!cache.is_valid()) {
+        set_card_shown(false);
         for (int i = 0; i < 12; ++i)
             set(i, dash);
         return;
     }
+
+    set_card_shown(true);
 
     const wxString degsym = wxString::FromUTF8("\xC2\xB0"); // ° (U+00B0) suffix on rotation values
     auto ok  = [](double v) { return v < 1e300 && v > -1e300; };            // DBL_MAX/NaN guard
@@ -4897,6 +5023,7 @@ void Sidebar::msw_rescale()
     // Sidebar settings search + filament slot search pills re-derive their
     // geometry and glyph rasters at the new DPI the same way.
     if (p->m_process_search) p->m_process_search->Rescale();
+    if (p->m_process_search_adv) p->m_process_search_adv->Rescale();
     if (p->m_filament_search) p->m_filament_search->Rescale();
     if (p->process_layer_height) {
         p->process_layer_height->SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
@@ -5166,6 +5293,8 @@ void Sidebar::jump_to_option(const std::string& opt_key, Preset::Type type, cons
     wxGetApp().get_tab(type)->activate_option(opt_key, category);
 }
 
+bool Sidebar::is_process_advanced() const { return p->process_advanced; }
+
 void Sidebar::show_process_advanced(bool advanced, bool persist)
 {
     if (!p->m_process_card || !p->params_panel_ref) return;
@@ -5184,6 +5313,21 @@ void Sidebar::show_process_advanced(bool advanced, bool persist)
     if (!advanced) p->refresh_process_card();
     if (persist && wxGetApp().app_config)
         wxGetApp().app_config->set("sidebar_process_advanced", advanced ? "true" : "false");
+
+    // The compact card is built for the sidebar's width; the full tree is not --
+    // it is the settings-tab layout (label + value field per row, plus a header
+    // carrying the Global/Objects switch and the compare/table buttons), and at
+    // the density default those value fields land past the right edge. Give it
+    // room while it is up, and hand the width back to the 3D canvas on the way
+    // out. request_sidebar_width() clamps to 55% of the frame and ignores the
+    // floating / top / bottom docks.
+    // grow_only on the way in, so flipping to Advanced never narrows a sidebar
+    // the user had already dragged wider; the flip back to Simple is an explicit
+    // request for the compact width, so that one does shrink.
+    if (auto *plater = dynamic_cast<Plater *>(GetParent()))
+        plater->request_sidebar_width(advanced ? FromDIP(ADVANCED_SIDEBAR_WIDTH) : 0,
+                                      /*grow_only=*/advanced);
+
     update_scroll_body();
     p->scrolled->Refresh();
 }
@@ -5222,7 +5366,16 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
         return;
     }
 
-    if (choices.size() == 1 || num_physical == 1)
+    // !choices.empty() is load-bearing, not defensive noise. num_physical is 0
+    // whenever every slot is a mixed filament (physical_indices stays empty),
+    // and the tail of this function then calls remove_unused_filament_combos(0),
+    // which pops combos_filament all the way to EMPTY -- it has no floor of one.
+    // The next call in with a single physical filament walks straight past the
+    // early-out above (0 != 1), finds num_physical == 1 true here, and indexes
+    // [0] of an empty vector: a garbage pointer, immediately dereferenced by
+    // ->GetDropDown(). In a Release build that is an access violation on
+    // project load, which is exactly when filament counts change.
+    if (!choices.empty() && (choices.size() == 1 || num_physical == 1))
         choices[0]->GetDropDown().Invalidate();
 
     wxWindowUpdateLocker noUpdates_scrolled_panel(this);
@@ -7747,6 +7900,11 @@ public:
     Sidebar *  sidebar;
     AuiMgr                 m_aui_mgr;
     wxString               m_default_window_layout;
+    // One-shot latch for the startup re-assert of the advanced-mode sidebar
+    // width (see the EVT_SIZE hook in the ctor): the ctor itself runs before
+    // the frame has a usable size, and later startup layout passes overwrite an
+    // early attempt, so the width is claimed on the first real size instead.
+    bool                   m_advanced_width_applied{false};
     struct SidebarLayout
     {
         bool is_enabled{false};
@@ -8184,6 +8342,10 @@ public:
     bool set_project_history_session_token(const std::string &token);
     bool persist_project_history_session_marker();
     bool restore_project_history_session_marker(const stdfs::path &backup_dir);
+    // session_token reports the untitled identity the work was committed under,
+    // empty when the backup carried a saved project's own identity.
+    bool preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile,
+                                            std::string &session_token);
     void shutdown_project_history();
     Slic3r::ProjectHistoryManager *project_history_manager() { return m_project_history_manager.get(); }
     stdfs::path project_history_identity() const;
@@ -8475,6 +8637,12 @@ private:
     void        remove_project_history_failure_manifest(const stdfs::path &staging_path);
     // Rebuilds quarantined commits left in prior sessions' staging directories.
     std::size_t adopt_orphaned_project_history_failures();
+    // Claims this instance's staging directory for the process lifetime, and
+    // answers whether a sibling's owner is provably gone. Multiple instances are
+    // the default (single_instance is off) and a staging directory is named by a
+    // bare UUID with no pid, so an OS lock is the only honest liveness signal.
+    void claim_project_history_staging_dir();
+    bool project_history_instance_is_dead(const stdfs::path &instance_dir) const;
     // path to project folder stored with no extension
     boost::filesystem::path     m_project_folder;
 
@@ -8530,6 +8698,11 @@ private:
     stdfs::path                                 m_project_history_session_identity;
     std::string                                 m_project_history_session_token;
     stdfs::path                                 m_project_history_staging_dir;
+    // Held open, exclusively and unshared, for as long as this process owns its
+    // staging directory. Another instance failing to open the same file is what
+    // proves this one is still alive; the OS drops it on exit or on a crash, which
+    // is exactly the signal a pid file cannot give.
+    HANDLE                                      m_project_history_instance_lock { INVALID_HANDLE_VALUE };
     std::deque<PendingProjectHistoryCapture>    m_project_history_pending_captures;
     std::vector<PendingProjectHistoryCommit>    m_project_history_pending_commits;
     std::vector<PendingProjectHistoryCommit>    m_project_history_retained_failures;
@@ -8618,6 +8791,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         const std::string instance_id = boost::uuids::to_string(boost::uuids::random_generator()());
         m_project_history_identity_root = app_data_dir / "project_history" / "session-identities";
         m_project_history_staging_dir   = app_data_dir / "project_history" / "staging" / instance_id;
+        claim_project_history_staging_dir();
         if (!reset_project_history_session())
             throw std::runtime_error("could not initialize the untitled project-history session");
         q->Bind(wxEVT_TIMER, &priv::on_project_history_debounce, this, m_project_history_debounce_timer.GetId());
@@ -8808,6 +8982,32 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         // Hide sidebar initially, will re-show it after initialization when we got proper window size
         //sidebar.Hide();
         m_aui_mgr.Update();
+
+        // The Sidebar ctor already applied the persisted compact/advanced choice,
+        // but it ran before this pane existed, so a session restored straight
+        // into the full settings tree would come up at the compact width with
+        // its option rows cut off. Re-assert the width now that there is a dock
+        // to widen. Deferred to idle: LoadPerspective() inside the manager's own
+        // setup is not safe here.
+        // Claim it on the first real size rather than here: at ctor time the
+        // frame has no usable width yet (the width request clamps itself to a
+        // share of the frame, so it would resolve to the compact default), and
+        // the remaining startup layout passes would overwrite an early attempt
+        // anyway. NB: this ctor's parameter is also named q, so the member has
+        // to be reached through this-> inside the lambda.
+        // Both `sidebar` (a local wxAuiPaneInfo reference) and `q` (this ctor's
+        // parameter) shadow the members here, so reach them through this->.
+        this->q->Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
+            e.Skip();
+            if (m_advanced_width_applied || !this->sidebar || !this->sidebar->is_process_advanced())
+                return;
+            // Latch only once the request actually had a laid-out frame to size
+            // against; an early size event would otherwise clamp to the compact
+            // default and then never be retried.
+            if (this->q->request_sidebar_width(this->q->FromDIP(ADVANCED_SIDEBAR_WIDTH),
+                                               /*grow_only=*/true))
+                m_advanced_width_applied = true;
+        });
     }
 
     menus.init(main_frame);
@@ -9143,8 +9343,44 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         this->q->Bind(EVT_RESTORE_PROJECT, [this, last = last_backup](wxCommandEvent& e) {
             std::string last_backup = last;
             std::string originfile;
-            if (Slic3r::has_restore_data(last_backup, originfile)) {
+            const bool  has_restore = Slic3r::has_restore_data(last_backup, originfile);
+            // Crash recovery is all-or-nothing and silent when it declines, which
+            // makes "the prompt never appeared" impossible to diagnose after the
+            // fact. Record what was actually considered.
+            BOOST_LOG_TRIVIAL(info) << "restore check: last_backup_dir="
+                                    << PathSanitizer::sanitize(last)
+                                    << " has_restore_data=" << has_restore
+                                    << " originfile=" << originfile;
+            // Deleting the backup directory below is only ever safe once a second copy
+            // exists in version history. With no restore data there is nothing to lose,
+            // so the cleanup stays enabled; the moment we do have work to lose, this is
+            // driven by whether preserving it actually succeeded.
+            bool        backup_preserved = true;
+            std::string preserved_session_token;
+            if (has_restore) {
                 BOOST_LOG_TRIVIAL(info) << "test101: Restoring project from: " << PathSanitizer::sanitize(last_backup);
+                // Commit the unsaved work to the local history repository
+                // BEFORE the prompt: declining below deletes the backup dir,
+                // and that must never be the moment the only copy disappears.
+                backup_preserved = preserve_unsaved_backup_in_history(stdfs::u8path(last), originfile,
+                                                                      preserved_session_token);
+                if (!backup_preserved) {
+                    // Every failure inside preserve_unsaved_backup_in_history() reports
+                    // itself to the log and nowhere else, and its success snackbar - the
+                    // one that promises the work "stays restorable ... even if you decline"
+                    // - never fires. Without this the user reads the ordinary prompt,
+                    // declines it on the strength of a promise that was never made, and
+                    // the only copy of their unsaved work is deleted.
+                    BOOST_LOG_TRIVIAL(error)
+                        << "Unsaved crash backup was NOT preserved; keeping "
+                        << PathSanitizer::sanitize(last) << " instead of deleting it";
+                    if (notification_manager != nullptr)
+                        notification_manager->push_notification(NotificationType::CustomNotification,
+                            NotificationManager::NotificationLevel::WarningNotificationLevel,
+                            into_u8(_L("Your unsaved project could not be copied into version history. "
+                                       "It is being kept on disk and offered again next time, so declining "
+                                       "now will not delete it.")));
+                }
                 auto log_string = _L("It seems that you have projects that were not closed properly. Would you like to restore your last unsaved project?\nIf you have a currently opened project and click \"Restore\", the current project will be closed.");
                 MessageDialog dlg(this->q, log_string, wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Restore"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
                 dlg.SetButtonLabel(wxID_YES, _L("Restore"));
@@ -9169,14 +9405,37 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
                 }
             }
             try {
-                if (originfile != "<lock>") // see bbs_3mf.cpp for lock detail
+                // "<lock>" means another instance may own this backup, and
+                // !backup_preserved means this is still the only copy of the user's
+                // unsaved work. Neither is ours to delete.
+                if (originfile != "<lock>" && backup_preserved) // see bbs_3mf.cpp for lock detail
                     boost::filesystem::remove_all(last);
             }
             catch (...) {}
-            if (this->q->get_project_filename().IsEmpty() && this->q->is_empty_project()) {
+            // Only a session that is still blank may be rebound to the crashed
+            // identity below. Capture the test now: new_project() makes it
+            // trivially true afterwards, and it is the same condition that
+            // decides whether new_project() rotates the token at all.
+            const bool started_fresh_session = this->q->get_project_filename().IsEmpty() && this->q->is_empty_project();
+            if (started_fresh_session) {
                 int skip_confirm = e.GetInt();
                 this->q->new_project(skip_confirm, true);
             }
+            // Declining preserved the work under the crashed session's untitled
+            // identity, and the snackbar promised it "stays restorable from
+            // Version history even if you decline". Version history only ever
+            // queries the live session's identity, so a session that started
+            // blank has to adopt that token exactly as the Restore branch does.
+            // A session that already carries content - an STL handed to the app
+            // on the command line is loaded before this queued event runs - keeps
+            // its own token instead: rebinding it would hide the revisions it has
+            // already committed and, on the eventual Save As, migrate the
+            // discarded crash work into the saved project for good. It has to
+            // happen here and not before the deletion above: new_project()
+            // rotates the session token, which would discard an earlier bind.
+            if (started_fresh_session && backup_preserved && originfile != "<lock>" &&
+                !preserved_session_token.empty() && set_project_history_session_token(preserved_session_token))
+                persist_project_history_session_marker();
         });
         //wxPostEvent(this->q, wxCommandEvent{EVT_RESTORE_PROJECT});
     }
@@ -9364,6 +9623,115 @@ bool Plater::priv::restore_project_history_session_marker(const stdfs::path &bac
         BOOST_LOG_TRIVIAL(warning) << "Could not read the untitled project-history recovery marker: " << ex.what();
     } catch (...) {
         BOOST_LOG_TRIVIAL(warning) << "Could not read the untitled project-history recovery marker";
+    }
+    return false;
+}
+
+bool Plater::priv::preserve_unsaved_backup_in_history(const stdfs::path &backup_dir, const std::string &originfile,
+                                                      std::string &session_token)
+{
+    // A crash backup is the only copy of work the user never saved, and the
+    // recovery prompt's Cancel branch deletes it outright. Commit it to the
+    // local history repository FIRST, so declining the restore (or losing the
+    // prompt to another crash) can never destroy the only copy.
+    session_token.clear();
+    if (!m_project_history_manager || m_project_history_shutting_down)
+        return false;
+    if (m_project_history_staging_dir.empty() || m_project_history_identity_root.empty())
+        return false;
+
+    try {
+        const stdfs::path backup_snapshot = backup_dir.lexically_normal() / ".3mf";
+        std::error_code   probe_error;
+        if (!stdfs::is_regular_file(backup_snapshot, probe_error) || probe_error)
+            return false;
+
+        // Identity must be a .3mf path: a saved project keeps its own history,
+        // an untitled backup uses the identity its marker token encodes so the
+        // recovered work rejoins the crashed session's history instead of
+        // starting an orphan one.
+        stdfs::path identity;
+        if (!originfile.empty() && originfile != "<lock>") {
+            const stdfs::path origin_path = stdfs::u8path(originfile).lexically_normal();
+            // Windows keeps the case the user typed, so "Bracket.3MF" is the very
+            // project the Version history dialog opens as "Bracket.3MF". A
+            // case-sensitive test would file its recovered work under a synthetic
+            // identity that project can never reach.
+            if (boost::iequals(origin_path.extension().u8string(), ".3mf"))
+                identity = origin_path;
+        }
+        if (identity.empty()) {
+            std::string token;
+            const stdfs::path marker_path = backup_dir.lexically_normal() / PROJECT_HISTORY_SESSION_MARKER;
+            std::error_code   marker_error;
+            if (stdfs::is_regular_file(marker_path, marker_error) && !marker_error &&
+                stdfs::file_size(marker_path, marker_error) == PROJECT_HISTORY_SESSION_TOKEN_LENGTH && !marker_error) {
+                token.assign(PROJECT_HISTORY_SESSION_TOKEN_LENGTH, '\0');
+                std::ifstream marker_stream(marker_path, std::ios::binary);
+                marker_stream.read(token.data(), static_cast<std::streamsize>(token.size()));
+                if (marker_stream.gcount() != static_cast<std::streamsize>(token.size()) ||
+                    !project_history_session_token_is_valid(token))
+                    token.clear();
+            }
+            if (token.empty())
+                token = boost::uuids::to_string(boost::uuids::random_generator()());
+            if (!project_history_session_token_is_valid(token))
+                return false;
+            identity = (m_project_history_identity_root / ("untitled-" + token + ".3mf")).lexically_normal();
+            if (identity.parent_path() != m_project_history_identity_root)
+                return false;
+            // Only the live session's own identity is ever queried, and the
+            // marker this token came from lives inside the backup directory the
+            // caller may be about to delete. Hand it back while it still exists.
+            session_token = token;
+        }
+
+        // The engine validates the snapshot's extension too, and the backup
+        // file is literally named ".3mf" (no extension by path rules), so it
+        // is staged under a proper name before being committed.
+        std::error_code       staging_error;
+        stdfs::create_directories(m_project_history_staging_dir, staging_error);
+        const stdfs::path staged = m_project_history_staging_dir /
+            ("recovered-" + boost::uuids::to_string(boost::uuids::random_generator()()) + ".3mf");
+        stdfs::copy_file(backup_snapshot, staged, stdfs::copy_options::overwrite_existing, staging_error);
+        if (staging_error) {
+            BOOST_LOG_TRIVIAL(error) << "Could not stage the unsaved crash backup for project history: "
+                                     << staging_error.message();
+            return false;
+        }
+
+        ProjectHistoryCommitOptions options;
+        options.message = "Recovered unsaved project";
+        // The future carries the only error report; dropping it hides failures
+        // completely, so this waits and logs the outcome.
+        ProjectHistoryCommitResult result = m_project_history_manager
+                                                ->commit_snapshot(identity, staged, options)
+                                                .get();
+        std::error_code cleanup_error;
+        stdfs::remove(staged, cleanup_error);
+        if (!result.ok()) {
+            BOOST_LOG_TRIVIAL(error) << "Unsaved crash backup could not be preserved in project history: "
+                                     << result.error.message;
+            return false;
+        }
+        if (!result.committed) {
+            BOOST_LOG_TRIVIAL(info) << "Unsaved crash backup already matches the newest stored version";
+            return true;
+        }
+
+        const std::string commit_id = result.version ? result.version->commit_id : std::string();
+        BOOST_LOG_TRIVIAL(info) << "Unsaved crash backup preserved in project history as "
+                                << commit_id.substr(0, std::min<std::size_t>(commit_id.size(), 10));
+        if (notification_manager != nullptr)
+            notification_manager->push_notification(NotificationType::CustomNotification,
+                NotificationManager::NotificationLevel::RegularNotificationLevel,
+                into_u8(_L("Your unsaved project was saved to version history before this prompt. "
+                           "It stays restorable from Version history even if you decline to restore it now.")));
+        return true;
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << "Could not preserve the unsaved crash backup in project history: " << ex.what();
+    } catch (...) {
+        BOOST_LOG_TRIVIAL(error) << "Could not preserve the unsaved crash backup in project history";
     }
     return false;
 }
@@ -9571,6 +9939,62 @@ void Plater::priv::remove_project_history_failure_manifest(const stdfs::path &st
     stdfs::remove(manifest_path, ec);
 }
 
+// Name of the exclusive marker each instance holds inside its own staging
+// directory. Kept next to the snapshots rather than in a central registry so it
+// disappears with the directory it describes.
+static const char *kProjectHistoryInstanceLockName = "instance.lock";
+
+void Plater::priv::claim_project_history_staging_dir()
+{
+    if (m_project_history_staging_dir.empty())
+        return;
+
+    std::error_code ec;
+    stdfs::create_directories(m_project_history_staging_dir, ec);
+    if (ec) {
+        BOOST_LOG_TRIVIAL(warning) << "Could not create the project-history staging directory: " << ec.message();
+        return;
+    }
+
+    const stdfs::path lock_path = m_project_history_staging_dir / kProjectHistoryInstanceLockName;
+    // dwShareMode 0: no other process may open this file at all while we hold it.
+    // FILE_FLAG_DELETE_ON_CLOSE would remove the marker on a clean exit but NOT on
+    // a crash, and a crashed instance is precisely the case that must look dead -
+    // so the file is left behind deliberately and liveness is read from whether it
+    // can be opened, never from whether it exists.
+    m_project_history_instance_lock = ::CreateFileW(lock_path.wstring().c_str(), GENERIC_WRITE, 0, nullptr,
+                                                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (m_project_history_instance_lock == INVALID_HANDLE_VALUE) {
+        // Not fatal: without the marker this instance is simply treated as
+        // possibly-alive by others, which is the safe direction to fail in.
+        BOOST_LOG_TRIVIAL(warning) << "Could not claim the project-history staging directory (error "
+                                   << ::GetLastError() << "); orphan reaping will skip it";
+    }
+}
+
+bool Plater::priv::project_history_instance_is_dead(const stdfs::path &instance_dir) const
+{
+    const stdfs::path lock_path = instance_dir / kProjectHistoryInstanceLockName;
+
+    std::error_code ec;
+    if (!stdfs::exists(lock_path, ec) || ec) {
+        // Written by a build that predates the marker, or by an instance that
+        // could not create one. Its age cannot be trusted either way, so leave it
+        // alone: adopting is safe, deleting is not.
+        return false;
+    }
+
+    // Opening unshared succeeds only when nobody else holds it. A sharing
+    // violation is the live-owner signal; anything else (permissions, a vanished
+    // file) is inconclusive and must also read as "not provably dead".
+    HANDLE probe = ::CreateFileW(lock_path.wstring().c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+                                 FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (probe == INVALID_HANDLE_VALUE)
+        return false;
+    ::CloseHandle(probe);
+    return true;
+}
+
 std::size_t Plater::priv::adopt_orphaned_project_history_failures()
 {
     if (!m_project_history_manager || m_project_history_staging_dir.empty())
@@ -9595,8 +10019,14 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
             continue;
         if (instance_dir.lexically_normal() == current_instance)
             continue;
+        // Another instance may be running right now and may be actively writing
+        // into this directory. Touching it - adopting its manifests, let alone
+        // deleting it - would steal the only copy of a commit it is still
+        // retrying. Only a directory whose owner is provably gone is ours.
+        if (!project_history_instance_is_dead(instance_dir))
+            continue;
 
-        bool            saw_any_snapshot = false;
+        bool saw_any_snapshot = false;
         std::error_code scan_ec;
         for (stdfs::directory_iterator file_it(instance_dir, scan_ec), file_end; !scan_ec && file_it != file_end;
              file_it.increment(scan_ec)) {
@@ -9606,7 +10036,10 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
                 continue;
 
             const std::string name = file_path.filename().u8string();
-            if (boost::iends_with(name, std::string(".3mf")))
+            // Count snapshots AND partially written ones: a ".3mf.tmp" left by a
+            // crash is still user data, and reaping the directory around it would
+            // discard it silently.
+            if (boost::iends_with(name, ".3mf") || boost::iends_with(name, ".3mf.tmp"))
                 saw_any_snapshot = true;
             if (!boost::iends_with(name, manifest_suffix))
                 continue;
@@ -9650,10 +10083,22 @@ std::size_t Plater::priv::adopt_orphaned_project_history_failures()
             }
         }
 
-        // A prior instance directory that no longer holds any snapshot is stale.
-        if (!saw_any_snapshot) {
+        // Safe to reap now, and only now. Three conditions all hold: the owner's
+        // instance lock could be taken, so it is gone; the scan completed, so this
+        // is a real "nothing left" and not an unreadable directory reported as
+        // empty; and no snapshot or partial snapshot remains. Without the lock
+        // check this same sweep used to delete a *running* instance's only copy of
+        // a failed commit, because make_project_history_staging_path() creates the
+        // directory before writing the first snapshot into it.
+        if (!scan_ec && !saw_any_snapshot) {
             std::error_code rm_ec;
-            stdfs::remove_all(instance_dir, rm_ec);
+            const std::uintmax_t removed = stdfs::remove_all(instance_dir, rm_ec);
+            if (rm_ec)
+                BOOST_LOG_TRIVIAL(warning) << "Could not remove an abandoned project-history staging directory: "
+                                           << rm_ec.message();
+            else if (removed > 0)
+                BOOST_LOG_TRIVIAL(info) << "Removed an abandoned project-history staging directory ("
+                                        << removed << " entries)";
         }
     }
 
@@ -11507,7 +11952,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                     // texture-import dialog does not pop up over an empty model.
                     if (model.objects.empty())
                         model.texture_mesh.reset();
-                    MessageDialog(q, _L("Objects with zero volume removed"), _L("The volume of the object is zero"), wxICON_INFORMATION | wxOK).ShowModal();
+                    show_info(q, _L("Objects with zero volume removed"), _L("The volume of the object is zero"));
                 }
                 if (imperial_units)
                     // Convert even if the object is big.
@@ -23717,6 +24162,60 @@ void Plater::apply_sidebar_dock()
         wxGetApp().mainframe->update_prepare_action_bar_content();
 }
 void                  Plater::reset_window_layout(int width) { p->reset_window_layout(width); }
+
+bool Plater::request_sidebar_width(int width_px, bool grow_only)
+{
+    auto &pane = p->m_aui_mgr.GetPane(p->sidebar);
+    if (!pane.IsOk() || pane.IsFloating())
+        return true; // nothing this call can usefully do; do not keep retrying
+    // Only the vertical docks are width-constrained; on a top/bottom dock the
+    // sidebar already spans the frame and height is the scarce axis.
+    if (pane.dock_direction == wxAUI_DOCK_TOP || pane.dock_direction == wxAUI_DOCK_BOTTOM)
+        return true;
+
+    const int def_w = FromDIP(MD3::Metrics::active().sidebar_width);
+    // Never shrink below the density default, and never take so much that the
+    // 3D canvas is squeezed out: cap at 55% of the frame. Below this floor the
+    // frame has not been laid out yet (early startup sizes come through at a
+    // few pixels), and capping against it would resolve every request to the
+    // compact default -- report "not ready" so the caller retries.
+    const int frame_w = GetClientSize().GetWidth();
+    if (frame_w < FromDIP(500))
+        return false;
+    int target = std::max(def_w, width_px);
+    target     = std::min(target, std::max(def_w, (frame_w * 55) / 100));
+
+    pane.BestSize(wxSize(target, pane.best_size.y));
+
+    // BestSize alone does not move a dock that already carries a stored size --
+    // wxAUI keeps that in the perspective's dock_size() entry, which is exactly
+    // what reset_window_layout() rewrites for the same reason. Retarget this
+    // pane's dock in the live perspective and reload it, so the width applies
+    // now instead of at the next layout reset.
+    wxString     persp = p->m_aui_mgr.SavePerspective();
+    const wxString key = wxString::Format("dock_size(%d,%d,%d)=", pane.dock_direction,
+                                          pane.dock_layer, pane.dock_row);
+    const int    at    = persp.Find(key);
+    if (at == wxNOT_FOUND)
+        return false; // no dock entry yet -- the layout is still settling
+    size_t vstart = size_t(at) + key.length();
+    size_t vend   = vstart;
+    while (vend < persp.length() && wxIsdigit(persp[vend]))
+        ++vend;
+    if (vend == vstart)
+        return false;
+    long current = 0;
+    if (!persp.Mid(vstart, vend - vstart).ToLong(&current))
+        return false;
+    if (current == target)
+        return true; // already the width we want
+    if (grow_only && current > target)
+        return true; // the user dragged it wider than we ask for; leave it alone
+
+    persp = persp.Left(vstart) + wxString::Format("%d", target) + persp.Mid(vend);
+    p->m_aui_mgr.LoadPerspective(persp, true);
+    return true;
+}
 //BBS
 void Plater::select_curr_plate_all() { p->select_curr_plate_all(); }
 void Plater::remove_curr_plate_all() { p->remove_curr_plate_all(); }

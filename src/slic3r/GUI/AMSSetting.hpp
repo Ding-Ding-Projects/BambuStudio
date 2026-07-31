@@ -108,7 +108,7 @@ protected:
 class AMSSettingTypePanel : public wxPanel
 {
 public:
-    AMSSettingTypePanel(wxWindow* parent, AMSSetting* setting_dlg);
+    explicit AMSSettingTypePanel(wxWindow* parent);
     ~AMSSettingTypePanel();
 
 public:
@@ -125,7 +125,6 @@ private:
     std::map<int, DevAmsSystemFirmwareSwitch::DevAmsSystemFirmware> m_ams_firmwares;
 
     // widgets
-    AMSSetting*     m_setting_dlg;
     ComboBox*       m_type_combobox;
     Label*          m_switching_tips;
     AnimaIcon*      m_switching_icon;

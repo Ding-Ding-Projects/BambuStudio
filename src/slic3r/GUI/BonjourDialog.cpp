@@ -17,7 +17,9 @@
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/Utils/Bonjour.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/Label.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r {
 
@@ -62,10 +64,23 @@ BonjourDialog::BonjourDialog(wxWindow *parent, Slic3r::PrinterTechnology tech)
 	, timer_state(0)
 	, tech(tech)
 {
-	SetBackgroundColour(*wxWHITE);
+	// Dialog body surface. Resolved through the kit token rather than a raw
+	// white so it also reads as a surface in dark mode -- the hard *wxWHITE
+	// left this dialog a bright plate under the MD3 caption strip.
+	SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
 	const int em = GUI::wxGetApp().em_unit();
 	list->SetMinSize(wxSize(80 * em, 30 * em));
+	// The results grid stays a native wxListView (keyboard + screen-reader
+	// support come free with it); only its surface/text tones are tokenised so
+	// it follows the theme instead of the OS listbox colours.
+	list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+	list->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+
+	// Progress line ("Searching for devices ...") in the kit body face/tone
+	// instead of the OS default dialog font.
+	label->SetFont(Label::Body_14);
+	label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
 	wxBoxSizer *vsizer = new wxBoxSizer(wxVERTICAL);
 
@@ -85,30 +100,23 @@ BonjourDialog::BonjourDialog(wxWindow *parent, Slic3r::PrinterTechnology tech)
 
     auto button_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
+    // Footer: kit filled OK pill + outlined Cancel pill. The variants own their
+    // background/border/text StateColors, pill radius, height, padding and label
+    // font, so the hand-picked legacy greens (and the white/grey pair that stood
+    // in for an outlined button) are gone with them. Kept on wxEVT_LEFT_DOWN:
+    // Button::keyDownUp() re-posts Space/Enter as a synthetic left-down, so the
+    // keyboard path through these handlers is unchanged.
     auto m_button_ok = new Button(this, _L("OK"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(*wxWHITE);
-    m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetCornerRadius(FromDIP(12));
+    m_button_ok->SetMinSize(wxSize(FromDIP(96), -1));
+    m_button_ok->SetVariant(Button::Variant::Filled);
+    m_button_ok->SetButtonSize(Button::Size::Medium);
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](auto &e) { this->EndModal(wxID_OK); });
 
     auto m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetCornerRadius(FromDIP(12));
+    m_button_cancel->SetMinSize(wxSize(FromDIP(96), -1));
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
 
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](auto &e) { this->EndModal(wxID_CANCEL); });
 

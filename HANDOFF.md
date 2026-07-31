@@ -1,755 +1,1181 @@
-# TOP OF QUEUE for the next session (2026-07-26, second handoff)
+# HANDOFF — read this first
 
-Two fixes are committed but **NOT compile-verified or runtime-verified** — the session ended
-before their build finished. Build first (`scratchpad/build-gui-lowmem.cmd`, BUILDEXIT 0;
-kill bambu-studio.exe first if LNK1104), then verify headlessly, then fix forward:
+You are taking over work on **this fork of BambuStudio** (`Ding-Ding-Projects/BambuStudio`),
+a Windows desktop 3D-printing slicer written in C++ with wxWidgets. This file is written
+to be self-contained: it assumes you know nothing about previous sessions. Everything
+below was reviewed through **2026-07-30** unless it says otherwise.
 
-1. **Ctrl+F palette "cannot be closed"** (user report) — CommandPalette.{cpp,hpp}.
-   Diagnosis by code reading, not yet reproduced: `ShowPalette()` had no re-entry guard, so
-   pressing Ctrl+F while the palette was open stacked a SECOND modal dialog; each Esc closed
-   only the topmost, so the palette looked unclosable. Fixed with a `static bool s_open`
-   guard + a `dismiss()` helper (EndModal while modal, else Close()).
-   **Second suspect NOT yet addressed:** `MD3::Motion::FadeIn()` is called BEFORE
-   `ShowModal()` and immediately sets the window to `LWA_ALPHA 0`; if the Anim timer never
-   completes, the palette stays fully transparent while still modal — an invisible window
-   eating all input, which also reads as "cannot be closed". Verify the fade completes; if
-   in doubt, force opacity when the modal loop starts (or fade after Show).
-   Verification recipe (cross-desktop accelerators do NOT work): PostMessage WM_COMMAND
-   (0x0111) wParam=6089 (wxID_HIGHEST+90) to the frame hwnd to open it, then test Esc via
-   `cap.py key <hwnd> 27`, re-post WM_COMMAND for the toggle case, and click-away.
-2. **Sidebar clipping/scroll fix** in Plater.cpp/hpp (previous handoff item) — same
-   unverified status, verify at 900 and 700 window heights with scroll/collapse/expand.
-3. **Regex builder and evaluator hardening** (2026-07-26).
-   Every native search surface now routes through one persistent, out-of-process
-   Boost.Regex 1.84 ECMAScript evaluator. The shared SearchField and compact ImGui bridge
-   expose the same guided builder, raw editor, flags (including multiline anchors), syntax
-   feedback, matches, capture groups, and copy/export behavior; process startup is moved out
-   of input handlers so opening the tune affordance cannot kill a transient popover.
-   Worker startup, timeout/restart, stale-response rejection, protocol framing, caching,
-   invalid patterns, zero-width matches, Unicode, multiline, and concurrent callers are
-   covered by `tests/bounded_regex/`. Focused MSVC Release build and CTest passed locally
-   (1/1, 4.12 s). A genuine live-app popup capture is still required before the earlier
-   visual report can be called runtime-verified.
+---
 
-# Session handoff (2026-07-26): release drought ended, identity rebrand, five features
+## 1. The 60-second summary
 
-- **Releases flow again.** Root causes fixed in order: deterministic-test "hang" was
-  STATUS_DLL_NOT_FOUND (OCCT DLLs missing from test PATH); visual-smoke silent -1 was the
-  Ninja install shipping ONE dll (bambustudio_copy_dlls only ran in the multi-config CMake
-  branch — fixed in src/CMakeLists.txt); smoke scenario-2 blank was a PrintWindow paint race
-  (retry loop added). Supersede-cancel removed: every push runs its build to completion, and
-  only a successful gated build publishes its single product release.
-  Published: r265/r267/r268, then **md3-v1 "Char Siu Bao 叉燒包" (Latest)** under the new
-  scheme: sequential vN + unique dish codename (100 real dishes then style×dish combos,
-  build_all.yml publish step), CI-generated unique dim-sum splash per release
-  (scripts/ci/New-DimSumSplash.ps1, seeded by run number), dim-sum default splash SVG.
-- **Features shipped** (all headlessly verified): bulk ink actions dialog (icon button beside
-  Add ink), Preview print button restored (bar shown on tpPreview, Add-plate Prepare-only,
-  disabled-Print tooltips), feedrate-true print simulation (IMSlider transport, time-
-  authoritative clock), sidebar search pills (process→settings-search popup incl. printer;
-  ink rows filtered by name+color), bilingual Home webview fixed (whole-sentence composition,
-  no overlap). Terminology: filament→ink, AMS→Ink Dispenser via **en catalog msgstr
-  overrides** (resources/i18n/en/BambuStudio.mo IS loaded at runtime; empty msgstr entries
-  must be OMITTED from .mo or labels vanish — wxGetTranslation returns "" without fallback).
-  "Sync AMS" displays as compact "Sync"/同步 (longer forms clip at the panel edge).
-- **UNVERIFIED at handoff:** the last commit's Plater.cpp/hpp sidebar-clipping fix (user
-  report: hidden/unexpandable/unscrollable left-panel settings) was implemented by an agent
-  whose verification rebuild did not finish before handoff — compile state unknown; the next
-  session must build (scratchpad build-gui-lowmem.cmd), verify headlessly at 900/700 window
-  heights (scroll+collapse+expand every section), and fix forward if needed. CI runs for the
-  splash-generator/bilingual/ink/sync pushes were still concluding; check
-  `gh run list` + promote the newest green release to Latest (v2 Har Gow onward).
-- Project item move to Done blocked: gh token lacks `project` scope (external blocker).
+- The fork is **Windows-only**. macOS and Linux support was deleted from the tree.
+- CI **works and publishes releases again**. The latest verified baseline before issue #16 is
+  `md3-v27`, built from `efb1689d` by green hosted run `30313911327`.
+- There is a **skill that launches and drives the app headlessly** on this machine:
+  `.claude/skills/run-bambustudio/`. Use it for every "does it actually work" check.
+- The interactive app and GitHub Pages landing now share an eleven-image WebP showcase under
+  `ui-md3/assets/showcase/`; its behavior and deployment contract are documented in
+  `docs/features/design-system/generated-visual-showcase.md`.
+- **Testing the crash? Read §6.95 first** — it is written for the agent on the machine that actually
+  has the printer, and it lists exactly what to collect.
+- No open PRs and no open branches. Two open issues: #15 is waiting for the requested secret-history policy
+  choice, while #16 has a complete local implementation, green focused build/tests, and cross-host
+  transport evidence. Its full GUI build and English native clipping review are also complete; the
+  bilingual/live-HA/hardware/remote evidence sequence remains in §7.1.
+- The whole of the previous §7 to-do list is **finished** (see §5.3). Two of its five items were
+  diagnosed wrongly by the previous session; §5.3 records what was actually true.
+- **2026-07-30:** `master` had not compiled since the accessibility merge, and CI was separately red
+  on a stale i18n tripwire — both fixed, `md3-v80` shipped. The Prepare sidebar was cutting the
+  process settings off the right edge with no scrollbar able to reach them; fixed and captured
+  (§6.9). **A reported crash and a "model has no data" tab failure remain unreproduced and open —
+  see §7 item 0d before claiming either is fixed.** The crash reporter turned out to be disabled
+  three ways over, which is why no crash ever left evidence; that is fixed and **merged**
+  (`e445d1a19`, branch CI green), so the next crash writes a stack trace to
+  `<data_dir>/log/crash_*.log`. **Ask the user for that file.** No open branches.
 
-# CI "6-hour test hang" root cause (2026-07-25) — READ BEFORE TOUCHING CI TESTS
+---
 
-- The deterministic_bbs_3mf_tests "hang" that ate two 6-hour jobs was **STATUS_DLL_NOT_FOUND
-  (0xC0000135)**: the test exe imports OCCT DLLs (TKernel/TKBRep/TKLCAF) that live in
-  `deps\...\usr\local\bin{,\occt}` and are not all shipped in install-dir — the only PATH
-  entry the test step set. Under ctest the loader failure surfaced as the Windows hard-error
-  path and blocked forever with zero output; under Start-Process with redirected stdio it
-  dies instantly with the real code. Diagnosis chain that worked: ctest --timeout 900 (fail
-  fast) → direct Start-Process watchdog + procdump artifact (exposed the exit code).
-  Fixed in 54d239b46 by prepending the deps bin dirs to the step's PATH; the watchdog stays.
-- Local test-tree recipe for this machine (build-tests): configure INSIDE
-  `VsDevCmd.bat -arch=amd64 -winsdk=10.0.26100.0` (C:\Program\Common7\Tools) or the
-  VCTargetsPath probe hard-fails on the half-installed 28000 SDK (MSB8037); plus
-  `-D CMAKE_GENERATOR_INSTANCE=C:\Program -DCMAKE_SYSTEM_VERSION=10.0.26100.0`. Tests need
-  `build/src/Release` on PATH to run. `build-tests/` is gitignored (an early commit nearly
-  pushed 2 GB of .obj/.lib — GitHub's 100 MB limit rejected it; amend-stripped before push).
-- Earlier in the chain, ~_BBS_Backup_Manager's unbounded static-dtor join was ALSO hardened
-  (try_join_for(10s) + detach, bbs_3mf.cpp) — kept: correct defensive fix, just not the CI
-  culprit. Local exit path verified: File ▸ Quit terminates in ~1 s.
+## 2. Machine facts you cannot guess
 
-# Chrome-sweep tranche 3: completion scan + 46 more ctors (2026-07-25)
+These cost previous sessions hours. Do not re-derive them.
 
-- Completion scan enumerated every remaining DPIDialog/wxDialog subclass: 48 plain-Adopt
-  candidates (all adopted; 46 ctors edited this tranche), 10 flagged complex/popover
-  (NOT adopted — FilamentPickerDialog is shaped, FanControlPopupNew and
-  uiAmsPercentHumidityDryPopup are position-anchored popovers, CommandPalette is a
-  deliberate chrome-less overlay, SettingsDialog is a frame, ParamsDialog/BedShapeDialog/
-  ObjectTableDialog/ZUserLogin need designed treatment), 7 dead classes skipped.
-- `MD3DialogCaption::Height(ref)` added for owner-drawn dialogs; RecenterDialog's painted
-  hint offset by it (its render() draws at absolute client coords which the caption now
-  overlaps). Same trap exists for any future owner-drawn adopter.
-- Known cosmetic follow-ups: FeedDirectionDialog's caption is static (`_L("Confirm")`)
-  while the dialog re-titles itself dynamically via SetTitle; ManualNozzleCountDialog's
-  window title is an unlocalized upstream literal. NewCalibrationHistoryDialog has
-  pre-existing early-return paths that skip layout entirely (native caption remains there).
-- Verified headlessly: Network Test dialog (Help menu) fully chromed →
-  docs/screenshots/dialog-chrome/network-test.png. Build green 7 min.
+| Thing | Value |
+| --- | --- |
+| Repo path | Resolve from the active checkout (`git rev-parse --show-toplevel`); on the current host it is `C:\Users\cntow\Documents\GitHub\BambuStudio`. |
+| Visual Studio | Visual Studio 18 Enterprise at `C:\Program Files\Microsoft Visual Studio\18\Enterprise`. |
+| MSBuild | `C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe` |
+| Windows SDK | The current generated tree selects **10.0.28000.0**. Do not reuse the obsolete 10.0.26100.0 pin from an earlier host image. |
+| Prebuilt deps | `..\bambu-deps\build\out_deps\usr\local` for the current generated tree. Recheck the CMake cache before regenerating. |
+| App logs | `%APPDATA%\BambuStudioInternal\log\studio_*.log*` |
+| App config | `%APPDATA%\BambuStudioInternal\BambuStudio.conf` (e.g. `"dark_color_mode": "1"`). **Ends with a `# MD5 checksum` line.** A stale checksum only logs a warning, but **malformed JSON makes the app silently fall back to `BambuStudio.conf.bak`** — so a botched hand-edit looks exactly like "the app ignored my setting". Edit with a real JSON serializer and recompute the checksum over everything up to and including the last `}`. |
+| GPU | **None.** The app needs the Mesa llvmpipe DLLs beside the Release executable to start. |
+| Display | The current primary display reports **1920 x 1080**. Treat this as a point-in-time host fact and recheck before drawing layout conclusions. |
+| Python | Use the repository-vendored Lowlevel MCP venv at `vendor\lowlevel-computer-use-mcp\.venv\Scripts\python.exe`; `LLCU_VENV` may override it. |
 
-# Chrome-sweep tranche: stock dialogs (2026-07-25)
+**Shell gotchas on this box** (these silently produce wrong results):
 
-- **`MD3DialogCaption::Adopt(dialog, title = "")`** added to Widgets/MD3DialogChrome: strips
-  native caption styles in place (`SetWindowStyleFlag` — wxMSW applies SWP_FRAMECHANGED),
-  wraps the existing root sizer under the caption strip, restores client height, preserves
-  `wxRESIZE_BORDER`, then FinishChrome. Contract: LAST layout act of the ctor, after
-  UpdateDlgDarkUI, with CenterOnParent moved after it.
-- 17 classes adopted + 7 raw stock-dialog call sites rerouted (4× wxSingleChoiceDialog →
-  chromed SingleChoiceDialog, 1× wxGetTextFromUser → adopted wxTextEntryDialog, 2×
-  wxMessageDialog → MessageDialog). Slic3r MessageDialog has no `SetYesNoLabels`; the idiom
-  is `SetButtonLabel(wxID_YES/wxID_NO, ...)`. Startup-error wxMessageBoxes intentionally
-  left native (fire around GUI teardown).
-- Build green in 9 min (lowmem profile). Verified headlessly: Keyboard shortcuts + About
-  show the MD3 caption, no native bar, content intact → docs/screenshots/dialog-chrome/.
-  Menu-driving gotchas: Calibration menu is *disabled* without a printer (NO MENUPOPUPSTART
-  is expected, not a harness failure); menucap's fixed frame position fails for the Help
-  menu — menudo's position sweep opens it (second position works). AMS dryness / Save preset
-  / rename dialogs compile with the identical pattern but need printer/preset state to open;
-  recorded for the next hardware pass.
+- `cmd` does **not** resolve executables from the current directory. Always call `.exe`/`.cmd`
+  files by absolute path, and use `cmd /c "cd /d <dir> && call C:\full\path\to\thing.bat"`.
+- Git-bash `printf` eats backslashes in the **format** string: `printf 'C:\Users\...'` fails with
+  "missing unicode digit for \U". Write `.cmd` files with a **quoted heredoc** (`<<'EOF'`) instead.
+- Git-bash mangles `git show origin/master:path/to/file` (the colon). Use PowerShell for that,
+  or `git show 'origin/master:path' -- ` quoted carefully.
+- Python's `Path.write_text` converts `\n` to `\r\n` on Windows. For `.cmd` files that already
+  contain `\r\n`, this produces `\r\r\n`, and the stray `\r` **poisons `set` variable values**.
+  Write bytes instead.
 
-# Scanner / smart-home / installer wave (2026-07-24, overnight)
+---
 
-- **LANDED (2026-07-25):** the scanner/smart-home wave is pushed as `3ef03bb00` after full
-  headless verification (File-menu entries; scanner QR renders and decodes to the token URL;
-  upload server 200-with-token / 404-without probes; posted photo flows to identification and
-  the no-Ollama case shows the designed error status; Smart home dialog renders every control
-  with narrator OFF by default). Changelog on Discussion #3, milestone on #4, Desktop
-  Material Project item `In progress` until CI run 30143103800 lands — record the real
-  conclusion, never predict it. GOTCHA: a rolling-discussion node ID recalled from memory was
-  one character off and silently resolved to a *different repository's* discussion —
-  addDiscussionComment happily posted there. Always re-resolve Discussion IDs from
-  `repository(owner,name){discussions}` immediately before posting. The stray comment on
-  biomejs/biome#11073 (comment DC_kwDOKAiibM4BDzs9) could not be deleted — the permission
-  classifier blocked both GraphQL and REST deletes; flagged to the user.
+## 3. How to build
 
-- **Installer MD3 fixes VERIFIED + pushed (`34ead5b83`):** reproduced with a dummy-payload
-  makensis compile driven headlessly (MSYS quirks: `//INPUTCHARSET`, `MSYS2_ARG_CONV_EXCL='*'`
-  + full Windows paths incl. the script itself, else `__FILEDIR__` breaks File globs). Found:
-  stale "License Agreement" MUI header bleeding over every custom page (fixed with per-page
-  bilingual `MUI_HEADER_TEXT`), and REAL invisible text — controls authored past the
-  140-dialog-unit MUI page height (language caption/divider, install-mode explanation).
-  Re-laid out + captions shortened; before/after captures in scratchpad out/inst*.png.
-- **CI release-based build cache** (historical, superseded 2026-07-26): that push added
-  post-build `ci-cache-windows-<run>` prereleases, but the current release hardening removes
-  them because a successful workflow must create exactly one GitHub Release. Dependency and
-  object reuse remain in GitHub Actions caches, not release records.
-  GOTCHA while editing: a literal `\b` written through python became a BACKSPACE byte in the
-  YAML and persisted through several fix attempts — full-line sed rewrite with forward
-  slashes (7z accepts them) resolved it.
-- **AI filament scanner + TTS narrator + Home Assistant** (uncommitted, build in flight):
-  new FilamentScanner (QR/token LAN upload server via boost::beast, vendored Nayuki
-  qrcodegen under GUI/third_party, Ollama vision identify, AMS auto-slot, preset
-  auto-selection mapped to the BBL.json vendor families, flashing AnnounceOverlay + TTS),
-  TtsNarrator (SAPI via **IDispatch late binding** — <sapi.h> is unusable under the PCH:
-  its unqualified `byte` is ambiguous vs std::byte), HomeAssistant client (entities, media
-  controls, tts.speak speakers, alert lights with **scene-snapshot restore** so real room
-  lights never stick on the alert colour — user-raised risk), SmartHomeDialog (search bar +
-  entity listbox + rich media controls + toggles). Catalogs at 602 (--check green).
-- **Build-machine incident:** an OOM'd parallel build left 10 zombie cl.exe processes and a
-  corrupted FileTracker (MSB6003 in SaveTlog). Recovery: kill cl/Tracker/MSBuild strays,
-  delete `libslic3r_gui.tlog/`, rebuild at `/m:2 /p:CL_MPCount=6`.
+### 3.1 Rebuild after editing one or a few GUI/source files (the normal case, ~10–40 min)
 
-# Chrome-sweep continuation (2026-07-24, night)
+The real code lives in `build\src\Release\BambuStudio.dll` (~148 MB). `bambu-studio.exe` is only
+a ~173 KB launcher. Rebuilding the `BambuStudio_app_gui` project pulls in everything.
 
-- **MD3Dialog resizable variant de-natived** (one-line style change +
-  bind_drag un-gated): every MsgDialog/SecondaryCheck/SyncAms/TextureImport/
-  Helio/ReleaseNote-family dialog now drops the native title bar — the
-  shell's own header (glyph + title + circular close) and drag handles are
-  the chrome for BOTH variants. Startup smoke green; the resizable adopters
-  (TextureImport, Helio) were not re-opened headlessly this session —
-  first-open visual check recorded as a follow-up.
+The final issue #16 Release build produced a 151,299,584-byte DLL at
+`2026-07-28 08:15:46 -04:00`, SHA-256
+`41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`.
+That hash predates the GUI accessibility wave and must not be used as evidence for it. The current
+accessibility DLL metadata is recorded in §6 only after the exact final rebuild completes.
 
-- **Preferences + upload queue chromed** (MD3DialogCaption; borderless styles): headlessly
-  verified — the Preferences dialog renders the MD3 caption with zero clipping across all six
-  tabs; the full Preferences/appearance screenshot set re-captured and re-matched (nearly all
-  1.000 — the caption shift is absorbed by template matching).
-- **FadeIn rewritten to layered-window alpha** (WS_EX_LAYERED + SetLayeredWindowAttributes):
-  wxPopupTransientWindow is not a wxTopLevelWindow, so SetTransparent could not compile for
-  popovers; the layered path works for dialogs, the palette AND the regex-builder popover
-  (fade added on open), and drops the layered style once opaque.
-- **ObjColor compare-panel greys tokenized** (SurfaceContainer/SurfaceContainerHigh replace
-  the hand-picked dark/light pairs); SyncAms was already on the MD3Dialog shell — the register
-  deviation's grey item is addressed, the shell item was stale.
-- **Capture-harness lessons:** generic small crops (a bare Browse button, a bare combobox)
-  template-match the WRONG row at 1.000 — never trust matches for widget-generic crops;
-  verify against the page. AHK ControlSetText/ControlSend can HANG cross-desktop (kill it,
-  use ControlClick only). WM_VSCROLL SB_PAGEDOWN works on ScrollPanel children but state can
-  reset between captures — capture immediately after scrolling.
-- Old external-editor row crops and toast-try-slice deliberately retained (still accurate at
-  row level / needs a sliceable state) — recorded in ROADMAP follow-ups.
+Create a temporary `.cmd` with the checkout's resolved absolute path:
 
-# Roadmap execution wave (2026-07-24, evening)
+```bat
+@echo off
+cd /d <absolute-checkout-path>
+"C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe" build\src\BambuStudio_app_gui.vcxproj /p:Configuration=Release /p:Platform=x64 /m:2 /v:minimal
+```
 
-User: "Please finish roadmap." Executed the recorded mandates in one build cycle:
+Invoke it as `cmd.exe //d //c "<absolute-temp-cmd-path>"` and capture stdout/stderr. Git Bash
+rewrites bare `/p`, `/m`, and `/v` switches, so do not call MSBuild directly from Bash. Then
+**always check for compiler, linker, CMake, and MSBuild errors explicitly** and verify
+`build\src\Release\BambuStudio.dll` advanced; an old DLL is not a successful current build.
 
-- **CI root-caused + unblocked first:** the 5b7acac48 failure was the DeviceWeb pnpm audit
-  gate hitting the fresh brace-expansion advisory (GHSA-mh99-v99m-4gvg) — NOT the new code
-  (0 compiles, sccache untouched; the "Extracting Node.js" tail was a red herring — the real
-  line was "high-severity advisory or audit failure"). Fixed by the known override pattern
-  (`brace-expansion: 5.0.8`), lock regenerated, audit + DeviceWeb build verified locally,
-  pushed as `3a718f5f6`. NOTE: rerunning a FAILED run of an older commit cancels the newer
-  commit's in-flight build via the shared concurrency group — prefer rerunning the newest.
-- **MD3DialogChrome** (new): borderless caption for owned dialogs (ConfigProfiles, Version
-  history, MD3ColorPicker, StopPrintGate) — HTCAPTION drag, mnemonic-safe title, 44px close
-  target, DWMWCP_ROUND. **MD3Motion** (new): duration tokens + standard/emphasized easing +
-  interruptible Anim honouring SPI_GETCLIENTAREAANIMATION; adopted for dialog fade-ins,
-  palette fade, SlideToConfirm animated snap-back.
-- **PreferencesHistory** (new): `AppConfig::set_save_observer` (new libslic3r hook, fired on
-  the main thread after both save() variants) → 2s-debounced commit of BambuStudio.conf via
-  the profiles-root ProjectHistoryManager (identity `preferences.history`); browser/restore in
-  ConfigProfilesDialog ("Preferences history…", restore writes BESIDE the live conf).
-- **PrinterWatch** (new, opt-in OFF): timer → PrintWindow the Device live-view media window
-  (uniform-frame skip = no stream) → 768px JPEG → base64 → local Ollama /api/generate
-  (default model qwen2.5vl; gemma3 fine; gpt-oss text-only) → two-line OK/PROBLEM verdict →
-  info toast or persistent warning with a fix hint. Ollama-down is log-only. Preferences ▸
-  Other section (enable / model tag / interval). Needs printer+Ollama for end-to-end.
-- **Register truth-restored:** scene-toolbar centering (get_main_toolbar_offset) and the
-  Objects card (Plater.cpp:3744 SectionHeader+SearchField; GUI_ObjectList.cpp:93
-  SecondaryContainer chip rows) had ALREADY landed — flipped deviation→done with evidence:
-  128 done / 3 justified deviations / 0 open.
-- Catalogs at 562 (--check green). Docs: preferences-history.md, ai-printer-watch.md +
-  indexes; ROADMAP mandates moved to Landed. Pending: wave build verification + captures of
-  the chrome'd dialogs, then push.
+### 3.2 Three build traps that will waste your time
 
-# Screenshot replacement + light/dark fixes + search everywhere + config profiles (2026-07-24, later)
+1. **`LNK1104: cannot open file ...BambuStudio.dll`** means **the app is still running** and
+   holding the DLL. Stop it first (`driver.py stop`, see §4), then rebuild. This exact error
+   ended one build in this session after a 37-minute compile.
+2. **Never edit source files while a build is running** in the same tree. MSBuild's FileTracker
+   gets corrupted and *later* builds exit 0 while silently skipping compiles and links. If you
+   suspect it, delete the target's `.obj` and rebuild, then verify the `.obj` timestamp actually
+   moved.
+3. After a build, verify `BambuStudio.dll`'s timestamp advanced. MSBuild can leave the thin
+   `bambu-studio.exe` stale at exit 0; the **DLL** is what matters.
 
-**Wave 2 (same session):** Ctrl+F **command palette** (`CommandPalette` — every enabled menu
-command with icon+description, nav targets, rich inline theme/density/accent rows, SearchField
-query with the regex builder, 120-row cap); the regex-builder popover became **tabbed**
-(Build | Reference) with full per-token documentation rendered from the chip tables, engine
-mini-docs, examples, and an **OpenCode helper** (prompt → clipboard, launches OpenCode when on
-PATH; nothing leaves the machine). Dark-mode pass on the new ConfigProfilesDialog caught and
-fixed: unwrapped/truncated subtitle+secrets labels, '&'-mnemonic title ("_backup"), light label
-bands, dark-on-dark secrets text (UpdateDlgDarkUI before apply_theme), and light native list
-headers in both new dialogs (UpdateDVCDarkUI). Light+dark evidence set committed under
-`docs/screenshots/dark/`. Verified fixed on rebuild: Preview legend legibility (dark OnSurface
-values in light mode) and the narrow move-bar overlap (progressive shed of skips → counter).
-Catalogs at 530 (`compile_translation.py --check` green, language gate 13/13). Known recorded
-findings (not yet fixed): "Slice plate" truncates to "Slice pl" at 846px window width in both
-themes (plate-bar right cluster needs responsive shrink); PrintHostQueueDialog find-bar and
-ProjectHistoryDialog dark-mode label bands unaudited pixel-by-pixel.
+### 3.3 The narrow display found a real bug — read this before dismissing a layout as "just this host"
 
-**Wave 3 (same session):** `Widgets/MD3ColorPicker` — continuous MD3 picker (S/V field + hue
-strip + per-hue Material tonal ladder + rgb/hsv/nearest-name **color translator**) replacing
-wxColourDialog on the accent "+" tile; `StopPrintGate` — the requested launch-console stop
-interlock (2 painted key switches → 3 double-press arming buttons → SlideToConfirm → hazard
-cover → real STOP button), wired into `StatusPanel::on_subtask_abort` with plain-language
-stage captions (destructive copy stays unambiguous). Reference-tab nits fixed (term column
-width, scroll-to-top). Catalogs at 547, gate green. **Pending verification:** wave-3 build was
-in flight at handoff time; the stop interlock needs a connected printer for end-to-end
-verification (dialog itself is modal-testable); popover Reference-tab captures need a retake
-after the nit fixes; Preferences scrolled/external-editor crops still need a WM_VSCROLL-driven
-capture (keyboard PageDown does not scroll the wx panel).
+The bottom action bar rendered **"Slice pl"** and *no Print button at all*. That was written off
+twice as an artefact of the 832 px screen. It was not.
 
-User-directed mid-wave: replace ALL screenshots, test light and dark mode for visibility and
-clipping, answer "where is the search bar in print process settings" (it is the magnifier icon
-in the settings tab's top row — collapsed until clicked / Ctrl+F), add many more search bars
-(regex builder always included), colour-aware search, and a full AppData export/import with
-slide-to-confirm, unlimited profiles, and per-profile Git history.
+`update_prepare_action_bar_content()` sized the canvas-alignment spacers to the **full** sidebar
+width (344 px). Those spacers are **proportion-0** sizer items; the tool row is **proportion-1**.
+When a row cannot fit every minimum, `wxBoxSizer` takes its degenerate branch
+(`sizer.cpp:2253`): it pays the **fixed** items in full first (`:2257-2269`) and gives the
+proportional ones only what is left (`:2274-2286`). So the spacer took its 344 px and the tool row
+was truncated to the remainder — short by 214 px, which cascaded down three nested sizers and
+reached the Slice pill as a **92 px** window and the Print pill as a **0 px** one.
 
-- **Git consolidation:** the last unmerged agent branch `codex/native-material-validation` was
-  proven file-identical/superseded, ours-merged (`7c27f9626`) for ancestry, then deleted from
-  the remote; local `claude/recursing-kepler-58a6c3` + its worktree removed after ancestry
-  proof against pushed `origin/master`. Upstream `v1.x`/`release/*`/contributor branches
-  retained (unmerged, not agent work).
-- **Screenshot matrix replaced** from the current build: native surfaces via headless Mesa
-  llvmpipe + PrintWindow (menus via the WinEvent menucap machinery, popovers via bldcap on the
-  headless desktop — transient popups dismiss if any helper process spawns, so click+capture
-  must run in ONE process), webviews via headless Edge, old crop framing recovered by
-  FFT template-matching each old crop against the fresh page shots (score 1.0 = same box).
-  New captures added for the Calibration nav tab and the advanced builder's new sections.
-- **Light-mode Preview bugs found by this pass, fixed in-tree:** legend dock text was
-  ImGui-default white on the light surface (now pushes OnSurface with the window's other
-  style colors — pops bumped 8→9 at all three sites); the move bar's clamped groove slid the
-  handle over the "Move N / N" counter at narrow widths (now sheds skip buttons, then the
-  counter, before ever overlapping).
-- **Search everywhere:** ProjectHistoryDialog gained a filtering SearchField (selection and
-  restore map through `m_filtered_rows`); PrintHostQueueDialog gained find-in-queue (count +
-  select — rows can't hide because job ids are row indices); the Plater object search is now
-  colour-aware via `SearchField::colorSearchText` (hex + nearest-name haystack).
-- **Config profiles & backup (File menu):** `ConfigProfilesDialog` + `Widgets/SlideToConfirm`.
-  Whole-datadir zip export (secrets included — explicit ErrorContainer warning, slide gate,
-  keyboard-operable), import→new-profile only (zip-slip guarded), unlimited profiles under
-  `<datadir-parent>/BambuStudio-profiles/`, one-click launch via `--datadir`, per-profile
-  snapshots/restore through ProjectHistoryManager (identity = `<name>.profile`, content =
-  fresh zip). 43 new curated yue_HK entries; catalog 494, `compile_translation.py --check`
-  green. Docs: `docs/features/workspace/config-profiles-backup.md` + index/regex-builder/
-  version-history updates.
+Two things make this hard to see, and both misled this session:
 
-# Dark-mode/clipping wave + advanced regex builder + release-pipeline repair (2026-07-24)
+- **It never looks like overflow.** wx truncates the straddling item and allocates **zero** to
+  everything after it (`GetMinOrRemainingSize`, `sizer.cpp:2162-2190`), so every child still
+  reports a rect *inside* the frame. Measuring the children and concluding "nothing overhangs, so
+  nothing is clipped" is exactly the wrong inference — the starved control is simply gone.
+- **A zero-width control leaves no trace.** The Print action was absent from every capture for
+  hours without anyone noticing a button was missing rather than merely narrow.
 
-User-reported: "hardly visible text everywhere" (dark mode), Process-card overlap, "latest
-release app not launching", release list flooded/mis-ordered, "not all search bars have regex
-builder", and a mandate for a fully advanced regex builder with documentation. Four parallel
-Fable agents (disjoint owners) + orchestrator; one serial build gate; headless dark-mode
-verification via the DarkQA recipe (see lowlevel-mcp-headless-driving memory — cross-desktop
-hwnd access now requires launching the cheap CLI ON the headless desktop).
+Fixed in `MainFrame.cpp`: the spacers may claim only what the row does not need — cosmetic
+alignment with the 3D canvas never outranks a primary action — plus a `BOOST_LOG_TRIVIAL(warning)`
+when the row is still over-subscribed, so the next starved control says so instead of vanishing.
+Before/after at 846 px: `docs/screenshots/md3-conversion/action-bar-{before,after}-starved-row.png`.
 
-- **Release loop root-caused/killed (`0d4091229`, `6be213882`):** `on: push: {}` also matched
-  the tags the release job itself created → every release re-built the same commit under a
-  stale title (142 releases, newest not on top). Push trigger is branches-only now, release
-  job refuses tag refs, in-flight tag-echo runs cancelled, 140 old releases deleted (tags
-  kept; keepers: r192, r174, portable-preview-1).
-- **"App not launching" root-caused:** r192's payload launches fine (extracted + verified
-  headlessly with Mesa). Fresh installs die at the OpenGL<2.0 gate on GPU-less machines.
-  Fix shipped in-tree: hash-pinned Mesa llvmpipe 26.1.3 (pal1000 mesa-dist-win, byte-identical
-  to the locally proven DLLs) staged into the installer's mesa\ subfolder + OpenGLManager
-  one-shot self-relaunch (copy-beside-exe, BBS_SOFTGL_RETRIED triple loop-guard), uninstaller
-  handles the runtime copies, docs/features/windows/software-gl-fallback.md.
-- **Dark-mode systemic fix:** StateColor::darkModeColorFor was applied twice on many paths and
-  the map was not idempotent — MD3::Dark::onSurface was hex-identical to a light key, so
-  correct dark text got remapped to near-black (#2f3036 on dark surfaces; pixel-verified).
-  Fixed by 1-step hex nudges severing the aliases (+ invariant comments), TextDisabled dark
-  legibility bump, StaticBox stale-parent-bg refresh (white squares behind rounded controls),
-  SideButton radius clamp (the green "eggplant" blob), action-bar disabled-text derivation,
-  SwitchButton min-size (Process "bal Obj" overlap), TabCtrl glyph pinning + Tab.cpp fallback
-  fix (orange segment glyphs), Label dark seeding, frame bg + topbar width sync (grey band).
-- **Advanced regex builder (user mandate):** new Widgets/RegexBuilderPopup.{hpp,cpp} — guided
-  sections (literals auto-escape, classes, anchors, groups/alternation, quantifiers + lazy),
-  raw pattern editor (bidir sync), flags, live validity with friendly std::regex_error text,
-  collapsible Test area (sample text, highlighted matches, capture groups), copy, engine
-  caption (std::regex ECMAScript); bounded (2000-char pattern / 20000-char sample / 200
-  matches, all guarded). docs/features/windows/regex-builder.md rewritten.
-- **Regex on every search surface:** object-list search's builder was inert (search_object
-  ignored flags — now routed through textMatches + live re-filter, highlight index bug fixed);
-  Tab preset pill and Ctrl+F SearchDialog now host real SearchFields; device picker on the
-  shared matcher; ImGui font picker + assembly tree gained guarded `.*` toggles.
-- **CI speed:** per-ref cancel-in-progress; Windows app build moved to Ninja + sccache (GHA
-  cache). First canary failed on C1041 (parallel cl racing the shared /Zi PDB) — root fix:
-  the one live /Zi (root CMakeLists add_compile_options) is now /Z7, which also makes objs
-  sccache-cacheable. Re-validated by the wave push's CI run.
-- **Catalogs:** 451 yue_HK translations (+68 regex builder, +2 softgl), .mo --check green,
-  coverage.json updated. PO escape gotcha recorded: the parser is ast.literal_eval, so \b and
-  mesa\opengl32.dll must be double-backslashed in msgid/msgstr.
+---
 
-**Verification (completed):** serial local Release build green (1h11m, 0 errors, DLL relink
-proven against object timestamps). Headless dark-mode recapture PASS on every reported defect:
-"Not sliced" + both action pills legible, white square gone, option segments proper capsules,
-Layer-height/manipulation values legible, Global/Objects header with zero overlap, neutral
-segment glyphs, dark caption full-width. The residual half-clipped preset-row glyph was
-root-caused to the sizer-less DISABLE_UNDO_SYS undo-to-sys button floating at the panel origin —
-hidden (`f8461434e`), re-verified by crop. Light-mode regression pass clean on the same surfaces.
-Wave pushed as `e2ed70365` (38 files) + `f8461434e`; summary in Discussion #2; wiki Releases page
-updated.
+## 4. How to RUN and DRIVE the app (this is the important part)
 
-**Release-loop postscript:** the loop RESURRECTED after the trigger fix — tag-triggered runs
-execute the OLD workflow snapshot at the tag's commit, so surviving echoes kept re-seeding
-(~25 more releases). Contained by cancelling every tag-ref run and arming a session reaper
-(cancels new tag-ref runs within 2 min); echoes starve because none reaches publish. 165 echo
-releases deleted in total; keepers r192/r174/portable-preview-1. Any future session that sees
-`md3-windows-*`-ref runs should cancel them on sight until the old tags age out.
+There is no usable interactive desktop and no GPU on this machine. You cannot "just run it".
+Use the committed skill.
 
-**CI state at handoff-write:** final wave run 30081955084 (head `f8461434e`, Ninja+sccache path
-with SLIC3R_MSVC_PDB=OFF) in progress — NOT yet claimed green; its release will be the first
-containing this wave. First sccache run only populates the cache; warm timing evidence needs the
-run after it. e2ed70365's run was cancelled by design (per-ref cancel-in-progress supersede).
+```
+.claude/skills/run-bambustudio/
+  SKILL.md        ← read this; it documents every command and every trap
+  driver.py       ← the harness
+  cube.stl        ← 20 mm test cube
+  popovercap.py   ← for transient popovers only
+```
 
-# Post-conformance feature + polish program (2026-07-23)
+**To press a button or menu item, use `press.py` — press by NAME, not by pixel:**
 
-With the parity register closed (127 done / 4 recorded deviations / 0 open), this session delivered
-the user's feature/quality backlog on top. Each wave: parallel disjoint-owner edits, then ONE serial
-build (to avoid concurrent-build MSBuild-tracker corruption), then adversarial review; visual waves
-verified by rendering the real app.
+```bash
+"$PY" "$D/press.py" menus                    # every menu item + its live command id
+"$PY" "$D/press.py" press "Version history"  # opens File > Version history...  (verified)
+"$PY" "$D/press.py" controls --filter ink    # labelled child controls
+```
 
-**Verification harness (new).** This VM has no GPU, so BambuStudio gated at OpenGL<2.0 and never
-reached its UI. Fix: Mesa llvmpipe `opengl32.dll` beside the exe + `GALLIUM_DRIVER=llvmpipe`. The app
-is now driven/captured fully HEADLESS via the `lowlevel-computer-use-mcp` cheap CLI (off-screen
-CreateDesktop + PrintWindow) — see the `lowlevel-mcp-headless-driving` memory + `scratchpad/ll-drive.sh`.
-This uncovered + fixed the real startup crash: the Material Symbols variable TTF through GDI+
-(wxGCDC/wxGraphicsContext) corrupted the heap (PageHeap-verified at `GdipCloneFontFamily`); MaterialIcon
-now renders exclusively via plain GDI and the bundled faces register session-visible (not FR_PRIVATE).
-CI-verified (`7b6ea27f9`). A portable-ZIP preview (`portable-preview-1`) was published from a
-launch-verified local build. The CI publish HTTP 403 (org-side, flapping) is worked around by the
-`TOKEN_GITHUB` PAT in `build_all.yml`; releases auto-publish again (r94..r101+).
+This solves what the previous handoff listed as the top blocker ("no known way to open a
+topbar menu item programmatically"). Menu ids are `wxID_ANY` allocations that **shift between
+builds** — `Version history...` was 849 in one build and 888 in the next — so `press.py`
+enumerates them live and caches per frame hwnd. Never hardcode one. Two details make it work
+and are easy to break: the frame must be parked at **(-183, -6)** while discovering menus (at
+its normal position the owner-drawn strip opens nothing), and **ctypes silently swallows
+exceptions raised inside an `EnumChildWindows` callback**, yielding an empty list instead of
+an error. Both are documented in `SKILL.md`.
 
-**Features shipped (all pushed to master):**
-- Clipping + accessibility (`bca31b40b`): left-edge bleed-through root-caused to the docked AUI sidebar
-  pane border; app-wide keyboard focus/activation + accessible names + focus rings, contrast, unit
-  suffix + HMS width clipping. (The checkbox/radio 44px hit-target was reverted — it regressed layout
-  app-wide; row-level hit targets are the followup.)
-- MD3 first-run Setup Wizard + Home hero (`50dee281e`): guide webview restyled to MD3 tokens (region
-  list an outlined card, not a flat green bar), GuideFrame on the MD3Dialog shell, Home hero given a
-  leading brand title instead of an empty green band.
-- Regex builder on every search bar (`66c807f54`): SearchField `.*` toggle + tune builder popover
-  (token chips, case/whole-word) + shared `textMatches()`, wired into Preferences, preset editor,
-  user-presets, device farm, global option search, and the ImGui in-canvas search; guarded against
-  catastrophic-backtracking throws at every site.
-- Full UI font customization (`f4ed83643`): Appearance Font family + Text size, runtime-applied via the
-  Label factory (`rebuild_fonts`) with CJK-safe fallback and a live preview.
-- Browser-like project tabs + grouping (`04a02a676`): new MD3 `ProjectTabBar` (one tab per project,
-  drag-reorder, colored groups, per-tab dirty dot, custom-font labels) as session file-tabs over the
-  single Plater (switch = save-outgoing-if-dirty + load-selected, reusing the Backup/Restore round-trip).
-  A spike confirmed true multi-live-project is a ~1200-call-site rewrite (out of scope). Known: a switch
-  costs a file-open (full deserialize) + resets transient undo/camera; followups — orphan temp-snapshot
-  sweep on restart, never-saved-tab Save-As identity, command-line-opened file getting its own tab.
+Quick start:
 
-Catalogs at 368 yue_HK translations (.mo --check green).
+```bash
+PY="$PWD/vendor/lowlevel-computer-use-mcp/.venv/Scripts/python.exe"
+DRV="$PWD/.claude/skills/run-bambustudio/driver.py"
 
-**Non-blocking notifications wave (2026-07-23, `ab007cda2`):** the three central OK-only funnels
-(`show_info` / `warning_catcher` / `show_error` in GUI.cpp) now route to NotificationManager corner
-toasts (Regular/Warning/Error), covering ~120 informational call sites; modal fallback when a modal
-dialog is on top or the Plater isn't up yet. Decision dialogs untouched. Full-build gate 0 errors;
-mirrored into the user's global agent instructions (agent-global-memory `e71ece3`) alongside
-appearance-editor, external-editor, and local-version-control mandates.
+"$PY" "$DRV" launch                                  # ~1-3 min: waits for "finished init opengl"
+"$PY" "$DRV" windows                                 # find the frame (title "Untitled - BambuStudio")
+"$PY" "$DRV" ss --hwnd <H> --out shot.png            # screenshot, then LOOK at it
+"$PY" "$DRV" open --model .claude/skills/run-bambustudio/cube.stl
+"$PY" "$DRV" ahkclick --hwnd <H> --x 975 --y 760     # click "Slice plate" (client coords)
+"$PY" "$DRV" stop                                    # ALWAYS do this before rebuilding
+```
 
-**External editor + appearance completion wave (2026-07-23, in tree, GUI-lib compile green):**
-- `Utils/ExternalEditor.{hpp,cpp}` (registry+PATH detection, table transcribed from the
-  desktop-material reference), `open_in_external_editor` launcher, Preferences ▸ General editor
-  combobox + Custom path row, File ▸ "Open in External Editor" with warning-toast fallback.
-- Appearance: free accent color picker (wxColourDialog into the same `setAccentSeed` pipeline),
-  "Reset appearance to defaults" (under a reentrancy guard — `MultiSwitchButton::SetSelection`
-  EMITS its event), live MD3 token preview panel; `AccentSwatch::colour()` keeps preset rings
-  truthful on matching custom picks.
-- Hardening: CheckBox.hpp docstrings corrected (20/18px reality), Label.cpp SectionHeader GC-font
-  guard made effective (strict `IsValidFacename`, cached — `faceIsInstalled`'s probe fallback echoes
-  any name on MSW and never fails).
-- Adversarial review (3 agents): 2 FAIL verdicts → all MEDIUM findings fixed in-tree (reset
-  reentrancy, dead GC guard); LOWs fixed (custom-editor silent fallback, swatch rings).
-- Feature docs: new `docs/features/workspace/` category (notifications, version history, project
-  tabs, external editor) + `windows/appearance-customization.md` + `windows/regex-builder.md`.
+**Verified working end-to-end**: launch → load cube → click Slice → the sliced Preview with the
+gcode legend appears in the screenshot.
 
-**Screenshot matrix (complete, `9f450f86d` + follow-up):** `docs/screenshots/<feature>/` — 202
-captures, one per page and one per button per feature. Webview surfaces (Home, Wizard) captured via
-headless Edge against `resources/web` HTML (WebView2 never composes on a headless desktop); native
-surfaces via PrintWindow, which — with Mesa llvmpipe — DOES capture the GL viewport + ImGui toasts
-(memory `lowlevel-mcp-headless-driving` updated). Pass-2 verification against the rebuilt exe, all
-headlessly measured: toast bottom-RIGHT anchoring PASS (17px right margin), toast fully visible
-above the plate/slice bar PASS (root cause: notification base was SLIDER_DEFAULT_BOTTOM_MARGIN=10
-while the native bar overlaps the canvas bottom ~66px — new NOTIFICATION_DEFAULT_BOTTOM_MARGIN,
-final value 80 for a 14px breathing gap; 80 is geometry-derived from the measured 64-flush capture,
-compile-gated but not yet re-captured); presets-up-to-date modal→toast PASS (no modal in a 39-frame
-watch); External-editor rows present in General (VS Code auto-detected) PASS; appearance
-Custom…/reset/MD3-preview present PASS; Other-tab toggle spacing PASS. Known cosmetic followups:
-Preview legend column alignment — RESOLVED (`809a230d6`): reproduced the sliced-cube Preview
-headlessly and found the FILAMENT|MODEL value columns were already aligned (header + value share
-`offsets_`); the real defect was the grey "Filament change times" / "Cost" summary rows crammed
-directly under the table. Fixed by wrapping them in the table's own ItemSpacing.y (6*m_scale) plus
-a spacer row so they get the same row advance; before/after headless crops confirm the summary
-rows now clear the value row. The Custom-accent-button edge clip was FIXED in-session (replaced with a 32px "+" tile
-matching the swatch geometry; headlessly re-verified, screenshots refreshed). The CI failure on
-9f450f86d/94f72d916 was root-caused to the Cantonese catalog gate: entries were added to the
-.po/.mo without updating bbl/i18n/yue_HK/coverage.json — fixed via the official
-compile_translation.py (381 validated translations, deterministic .mo, Test-LanguageModes.ps1
-passing locally). NOTIFICATION_DEFAULT_BOTTOM_MARGIN finalized at 80px (14px gap above the bar).
-The captured File menu now truthfully shows "Open in External Editor" (disabled on an unsaved
-project — its enable-condition at work).
+Traps the driver already handles, listed so you do not "fix" them back:
 
-# Handoff
+- The headless desktop **dies when its last process exits**, so the app runs in the wrapper
+  `cmd`'s foreground (no `start`).
+- hwnd-addressed calls **fail from the normal desktop** (`IsWindow` fails cross-desktop). Every
+  such call is relayed by launching the tool *on* the headless desktop.
+- **AutoHotkey never exits** without `ExitApp`, and its runtime errors open **invisible** dialogs
+  on the headless desktop. Scripts must try/catch to a result file.
+- `ahkclick` uses **client** coords; plain `click` uses **desktop-screen** coords (the frame sits
+  at about (136, 95)). Custom wx buttons ignore plain clicks — use `ahkclick`.
+- **Transient popovers die if you spawn another process on the desktop while one is open** (it
+  steals focus). "Click, then list windows from another process" therefore always reports nothing,
+  which reads as "the popover never opened". The click, the WinEvent catch, the repaint and the
+  `PrintWindow` must happen in **one** on-desktop process — that is what `popovercap.py` is for.
+  Point it at the **control's own hwnd**, not the containing panel: a raw `WM_LBUTTON*` posted to a
+  panel does not fire these custom wx controls.
+- **WebView2 panes never render** in captures (Home tab, Setup Wizard body come out blank). To
+  see those, render the bundled page with headless Edge instead:
+  `msedge --headless=new --disable-gpu --screenshot=out.png --window-size=1200,766 file:///.../resources/web/homepage3/home.html`
+- Topbar menus are **custom-drawn**: AHK `MenuSelect` fails ("unsupported menu") and clicking the
+  menu labels via `ControlClick` did **not** open them in this session. Opening a menu item
+  programmatically is still an **unsolved problem** — see §7.
 
-## Delivered evidence — 2026-07-21
+---
 
-This effort completed the Material Design 3 token and typography migration across the native GUI tree
-and added two native features (a MakerWorld OpenGL model preview and a dockable Prepare sidebar). The
-parity audit reports the color, token, and typography layer as complete; the remaining deltas are
-structural component anatomy (camera-HUD overlay, Material Symbols icon-font infrastructure, some
-pill-geometry variants). This is not yet a faithful component-by-component MD3 rewrite, and no
-release success is claimed.
+## 5. What changed in this session (all of it)
 
-## Commits
+### 5.0.2 Session of 2026-07-28 (latest) — the UI kit stopped calling a CDN
 
-- Repository: `https://github.com/Ding-Ding-Projects/BambuStudio.git`
-- Branch: `master`.
-- `origin/master` is at `a29f629c0` — "Ship the Material Symbols Outlined icon font" (the vendored
-  variable TTF + Apache-2.0 license from google/material-design-icons, first commit of the
-  structural-anatomy waves). Everything described in this handoff is pushed. Work-in-progress waves
-  land on `claude/md3-structural-waves` in the `.claude/worktrees` build worktree and are pushed to
-  `master` per completed wave.
-- Key migration commits (all pushed): `23688c23d` (MD3 token parity with the vendored kit),
-  `49a7c4d46` (UI to MD3 theme tokens and fonts), `2f968cbc1` (GUI colors to MD3 tokens),
-  `2cebf9091` (Roboto Mono and mono type helpers), `e4b468c5f` (GUI colors to MD3 semantic tokens),
-  `76db0d5c1` (SBOM repository identity), `c700c91b0` (immutable-probe 403 tolerance),
-  `8d727d49d` (completion sweep + model preview + dockable sidebar), `ec631dfb2` (draft-release
-  lookup fix + docs).
-- The unrelated generated change to
-  `src/slic3r/GUI/DeviceWeb/device_page/src/routeTree.gen.ts` lives only in the detached build
-  worktree under `.claude/worktrees/`, not in this checkout. Preserve it there; do not fold it into
-  migration commits.
-- Merged and deleted task branches (ancestry proven against `origin/master` before deletion):
-  `claude/bambu-studio-ui-migration-38d0ef`, `codex/build-and-test-lowlevel-mcp`,
-  `codex/native-material-validation`, `codex/auto-install-build-dependencies`,
-  `remote_branch_v12`. Retained: upstream `v1.x`/`release/*` branches and four historic branches
-  with unmerged work that cannot be integrated safely (`SaltWei-patch-1`,
-  `copilot/fix-ams-spinning-icon-issue`, `feature/libnoise-deps`, `bambu-pomfret/web-conflict`).
+**What was wrong.** `ui-md3/design-system/ui_kits/bambu-studio/index.html`, published at
+`/app/design-system/ui_kits/bambu-studio/`, loaded React, ReactDOM and `@babel/standalone` from
+unpkg and compiled its own inlined JSX in the visitor's browser on every load. Three third-party
+requests and a 2.7 MB compiler on a site whose documentation opens by promising neither — and with
+unpkg unreachable the page served `<div id="app"></div>` and stopped. Nothing caught it: the layout
+gate's third-party assertion only ever looked at the landing page. The file's own header also
+credited an "assembler" that did not exist anywhere in the tree; the `.jsx` sources and the
+assembled page were kept in step by hand.
 
-## Local build and tests
+**What is now true.**
 
-- Full local Release builds of the migrated tree succeed for both dependencies and the application
-  (VS2022 BuildTools, Windows SDK 10.0.26100).
-- Earlier focused gate (2026-07-20, commit `3b00dc6aa`): `language_mode_tests`,
-  `project_history_tests`, and `deterministic_bbs_3mf_tests` — 3/3 passed. This is not full-suite
-  coverage. Aggregate `libslic3r_tests` currently has upstream/API-drift compilation failures and
-  `libnest2d_tests` has known baseline runtime failures; both remain intentionally waived from the
-  focused gate pending upstream repair. Do not describe the gate as an aggregate-suite pass.
+- React 18.3.1 and ReactDOM 18.3.1 UMD production builds are vendored under the kit's `vendor/`,
+  with their MIT licence. No Babel ships at all.
+- `ui-md3/scripts/jsx-transform.mjs` compiles the JSX at build time — a dependency-free compiler for
+  the subset the kit uses, which **throws** on anything outside it rather than guessing.
+- `ui-md3/scripts/assemble-ui-kit.mjs --check|--write` is the missing assembler, wired into the
+  Pages workflow beside `assemble-index.mjs --check`.
+- `App.jsx` now aliases `useState` to `useAppState`. Babel used to rewrite `const` to `var`, which
+  hid the fact that `Components.jsx` and `App.jsx` both declared a top-level `const { useState }`.
+  Compiled as real `const` in two classic scripts that share a global scope, the second is a
+  `SyntaxError` that kills every script after it. The assembler now fails the build on any such
+  collision.
 
-## Hosted CI and release status
+**Evidence.** All twelve sources compile to a program **byte-for-byte identical to Babel's own
+output** (verified by printing both through Babel's printer). Driving both builds through fourteen
+states — the initial render, all nine workspaces, the Print-plate dialog, its dismissal, and the
+version-history drawer — the compiled page **with the network cut** produced DOM identical to the
+old CDN page **online**, in all fourteen. New regression gates: `assert-pages-layout.mjs` now sweeps
+every published page rather than the root, and `ui-md3/tests/offline-render.test.mjs` loads the
+composed site in headless Chrome with every off-site host blackholed. Both fail on the pre-fix page
+and pass on this one. Full local run: 77 static cases, 11 transform cases, the 444-case runtime
+suite, and the offline suite — all green.
 
-- On the migrated tree the hosted `Build BambuStudio` job succeeds: run
-  [`29848731027`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29848731027)
-  (head `7a027fa26`) and the later run
-  [`29862992010`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29862992010)
-  (head `c700c91b0`, `origin/master`). Both overall runs are marked failure because the separate
-  `Publish Windows release` job fails.
-- **The publish pipeline is green.** Run
-  [`29877040307`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29877040307)
-  (head `ec631dfb2`, which contains the draft-release lookup fix and the `8d727d49d` feature commit)
-  completed with **both** `Build BambuStudio` and `Publish Windows release` succeeding on
-  2026-07-22Z. It published the non-draft release
-  [`md3-windows-v02.08.01.55-r37`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-windows-v02.08.01.55-r37)
-  with `BambuStudioMD3-Setup.exe` (~208 MB), its `.sha256`, and the CycloneDX SBOM
-  (`BambuStudioMD3.cdx.json`). The earlier SBOM-identity (`76db0d5c1`), immutable-probe 403
-  (`c700c91b0`), and draft-visibility (`ec631dfb2`) fixes are all verified by this run. The model
-  preview and dockable sidebar are therefore pushed, built, and shipped in that installer.
-- Authenticode provisioning remains external work; GitHub attestations and SHA-256 checksums stand in
-  for it in the published release.
+Documentation: [`docs/features/pages/deployment-and-layout-gate.md`](docs/features/pages/deployment-and-layout-gate.md)
+and the kit's own README.
 
-## Native smoke and screenshots
+### 5.0 Session of 2026-07-28 — the GitHub Pages site was rebuilt
 
-The installed application was launched with an isolated `--datadir` and a real STL on 2026-07-20, and
-full-display compositor captures were visually reviewed. These captures predate the full token sweep;
-they are evidence of native modernization only, not `ui-md3` reference images and not proof of full
-component-anatomy conformance:
+**What you are inheriting.** `https://ding-ding-projects.github.io/BambuStudio/` is no longer a
+single scrolling landing page. It is a tabbed static application built from
+`ui-md3/landing.html` + `ui-md3/site/`, and it now carries the same obligations as the desktop app.
+Full documentation: [`docs/features/pages/`](docs/features/pages/README.md).
 
-- `docs/readme-assets/native-material-home-light-en.png` — native Home.
-- `docs/readme-assets/native-material-filament-manager-light-en.png` — native Filament Manager,
-  signed-out state.
-- `docs/readme-assets/native-material-device-plugin-gate-light-en.png` — native Device official
-  plug-in gate; no plug-in installation was performed.
-- `docs/readme-assets/native-material-project-history-light-en.png` — native **File → Version
-  history** showing two local Git snapshots for `material-history-smoke.3mf`.
+| Commit | What |
+| --- | --- |
+| `f3ff11044` | Rebuilt the site: eight browser-style tabs, bilingual copy at five funny levels per language, the shared regex builder, the changelog viewer over 34 real releases, notifications, settings, the 1% dim sum surprise. |
+| `aea1327cd` | Gated the deploy on 444 measured runtime layout cases; replaced the workflow's inline `rsync`/`python3 -m http.server` with `compose-site.mjs` and `serve.mjs`; updated `i18n.test.mjs` for the new shape (this was issue #25). |
+| `2b2b7ce45` | Fixed 29 defects confirmed by a twelve-agent adversarial review of the new site. |
+| `8f4dba64e` | Fixed the prototype's eight defects from issue #24: 143 icon spans made decorative, `role="switch"` on preference toggles, real dialog semantics in `app/dialogs.js`, a title bar that no longer clips its window controls, and all ten search fields wired. |
+| `beeb8703a` | Restored case-sensitive regex search: `SearchField.searchFlags()` returns filter-ready flags and an empty string verbatim, so a consumer can no longer substitute `'i'` for "no flags". |
+| `30d3f884e` | Title-bar collapse rules given `!important` (the prototype's inline styles beat them otherwise) and `capture-app.mjs` added. |
+| `bfd87cafa` | Removed the changelog freshness gate — every release CI publishes made the committed file stale and would have blocked the next Pages deploy. It is regenerated at deploy time now, with the committed file as the fallback. |
+| `b6718eac0` | Renamed the site and prototype's material vocabulary to **ink** / **Ink Dispenser** (display text only), and repaired the Cantonese the English-side rename had silently broken. |
+| `65fcd2bc0` | Retook all 23 captures; `capture-app.mjs` was still querying `input[placeholder="Search filaments"]`. |
+| `5340bd466` | Reworked the `release` Pages trigger, which had failed **12 times out of 12** and never once done what it claimed. Added the first test that reads the workflow. **Still unverified** — see §5.0.1. |
+| `d61e4e47f` | Gave the release dispatcher its own concurrency group so it cannot cancel a deploy and then replace it with nothing. |
+| `0b900b73b` | Renamed the **published MD3 UI kit** at `/app/design-system/` — 61 matching lines across eight files that three earlier terminology passes had all walked past. |
+| `d9159322e` | Widened the sweep from the kit to the whole design system; the typography specimen page used real product strings as its samples. |
+| `da17ee1a7` | Fixed everything a twelve-agent adversarial review found: a GitHub behaviour I had documented backwards, a guard that exempted whole lines, a sweep reading two of five published extensions, and workflow assertions that were comment-satisfiable and vacuous on CRLF. |
 
-Fresh captures of the fully migrated Prepare, Preview, and Device surfaces are still pending.
+**Issues closed this session:** #25 (the `i18n.test.mjs` assertion that broke master — fixed before it
+was filed) and #24 (the prototype's eight defects, each closed with measured evidence). #16 and #15
+are untouched and remain the concurrent session's.
 
-## Project history (unchanged behavior)
+#### 5.0.1 All three event paths are verified — and why the run history looks otherwise
 
-The native app includes app-local, Git-backed version history for `.3mf` projects. Each retained
-revision is a complete project snapshot in an isolated bare repository below Bambu Studio's data
-directory, never a `.git` directory beside the user's project. `project_history_tests` includes the
-shutdown-drain cases: stopping is admission-only, accepted work drains (including bounded external-lock
-waits) before the worker joins, and a lock held by another process can delay shutdown up to the
-existing timeout rather than being silently cancelled. History stays local to the device: it is not
-pushed to the source repository, not synced, and not a backup, and there is not yet a
-retention/pruning policy.
+| Path | Evidence |
+| --- | --- |
+| `push` → deploy | **Verified.** Many green runs, most recently `da17ee1a7`. |
+| `workflow_dispatch` → deploy | **Verified.** Run `30404583829`: `deploy` ran, `redeploy-on-release` **skipped**. |
+| `release` → dispatch → deploy | **Verified** by `md3-v62`, tagged at `d9159322e`. |
 
-## Register closed — final structural wave (2026-07-23)
+The release path proved out like this, and it is the only release run in the repository's history
+that has not failed — 17 release runs, 16 failures, 1 success:
 
-The parity register is **127 done / 4 recorded deviations / 0 open**. The final build-in-the-loop
-wave closed the five audit-reopened rows: the Process card gained a SectionHeader(tune) + a
-process-preset SelectField wrapping the live PlaterPresetComboBox + a Quality/Strength/Support/Others
-SegmentedControl that filters curated rows (this fixes the cramped/overlapping Process header the
-visual QA caught); the Filament title moved onto the literal SectionHeader class; ReleaseNote's five
-stock-chrome siblings and ProgressDialog reparented onto the MD3Dialog shell (which gained an
-additive two-phase CreateShell path — the 32 other subclasses are untouched). The objects-searchctrl
-row is a recorded deviation: the selected-row SecondaryContainer chip landed, but the per-cell type
-glyphs + visibility/checkbox anatomy need a change in ObjectDataViewModel (outside the wave's owned
-files). Review verified behavior preservation and no GDI+ font regressions; all TUs compiled and
-libslic3r_gui.lib re-archived. Reused existing catalog strings only.
+```
+00:09:57  release md3-v62 (tag at d9159322e, contains the fix) -> run 30410305947  success
+            redeploy-on-release : success, 3 steps
+            deploy              : skipped
+            log                 : "Dispatched a master-ref Pages deploy for md3-v62."
+00:10:07  workflow_dispatch at master -> run 30410314986  success (deployed)
+```
 
-**Verification harness this session:** the startup crash (variable-font-through-GDI+ heap corruption)
-is fixed and pushed; a Mesa llvmpipe software-GL DLL beside the exe lets the GPU-less VM render the
-real UI, and the lowlevel-computer-use-mcp cheap CLI drives + PrintWindow-captures it fully headless
-(see the ci-is-free and lowlevel-mcp memories). Live visual QA found: the fixed Process header (now
-addressed), a left-edge ~15px bleed-through clip, the legacy Setup Wizard/GuideFrame, and the Home
-hero — plus a 71-item clipping+a11y audit (25 high). Those, the regex-builder-on-every-search-bar,
-full font customization, and browser-like project tabs are the queued follow-on waves.
+**Why the Actions tab is full of red release runs anyway**, and the trap to inherit: **a `release`
+event runs the workflow file as it existed at the tag's commit.** Releases tagged at commits older
+than `5340bd466` run the *old* workflow and fail the old way — zero steps, ~2 seconds, no log — no
+matter what `master` says. `md3-v58` (`6d1ad69de`), `md3-v59` (`2dd74cfef`), `md3-v60`
+(`a00319851`) and `md3-v61` (`a90d72989`) all did exactly that *after* the fix landed. The same rule
+explains the original 12-of-12: eleven releases published while `master` carried the `release:`
+trigger produced zero release runs, because their tag commits predated the trigger.
+
+So before treating a red release run as a regression, check whether its tag predates the fix:
+
+```bash
+gh release view <tag> --json targetCommitish
+git merge-base --is-ancestor 5340bd466 <sha>   # exit 0 = post-fix = should have dispatched
+```
+
+**Three claims in this file were wrong earlier and are worth knowing as a pattern**, because the
+same mistake recurred four times: a check that was sound about what it read, wrapped in a claim
+written wider than what it read. "No user-facing filament remains" came from grepping one file;
+"72/72 published files clean" came from an audit filtered to three of the seven published
+extensions (it never opened the `.jsx` that was shipping the label `Filament`); the file counts in
+the correction to that were estimates rather than counts. The guards now strip identifiers and
+re-test the residue instead of exempting whole lines, pin real tree sizes instead of floors, and
+every number is counted. The full record, including the corrections, is
+[discussion #22](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/22).
+
+**Things that will bite you if you do not know them:**
+
+- **The tab strip must not debounce with `requestAnimationFrame`.** A page that is never painted —
+  a background tab, a headless capture, the deploy gate — never runs rAF callbacks, so the strip
+  would stay frozen in its pre-font-load state, which is "everything overflowed". It uses a timer.
+- **No `text-overflow: ellipsis` and no horizontal scroller anywhere in `ui-md3/site/`.** The
+  runtime gate fails any element whose `scrollWidth` exceeds its width, and both of those hide a
+  clip rather than fix it. Long strings wrap.
+- **Where the prototype lives is stamped, not sniffed.** `compose-site.mjs` rewrites
+  `<meta name="bambu-app-base">` to `app/` for the published tree. A `github.io` hostname test got
+  the local preview wrong — which is exactly the copy the layout gate serves.
+- **`ui-md3/index.html` is generated.** Edit `app/screens/*.template.html`, then run
+  `node ui-md3/scripts/assemble-index.mjs --write`. `--check` runs in the Pages workflow.
+- **`site/changelog.data.js` is generated**, and deliberately **not** gated on freshness. CI
+  regenerates it at deploy time from the Releases API with the committed file as the fallback.
+  Gating on staleness looked tidy and was a trap: every release CI publishes makes the committed
+  file stale by definition, so the next Pages deploy would fail until a human regenerated it.
+- **The prototype's collapse rules need `!important`.** Every element in `ui-md3/index.html`
+  carries an inline `style="display:flex"`, and an inline style beats a stylesheet rule without it.
+  A responsive rule that looks correct in the diff can do absolutely nothing.
+- **`ui-md3/index.html` is stored with CRLF.** A search-and-replace whose pattern spans two lines
+  will silently never match. Prefer single-line edits, and verify the result rather than the diff.
+- **The `github-pages` environment on this fork accepts deployments only from `master`**, and a job
+  gated on that environment at any other ref is rejected *before its first step* — three seconds,
+  zero steps, no log, conclusion `failure`. That is what made the `release` trigger fail 12 for 12
+  without anyone noticing: a `release` event runs at the **tag** ref. Anything that must deploy off
+  a non-`master` ref has to dispatch a `master` run instead, which is what `redeploy-on-release`
+  does. `ui-md3/tests/site.test.mjs` now asserts that shape.
+- **A `release` event runs the workflow file as it existed at the TAG's commit**, not as it exists
+  on `master`. This is the part that makes the run history confusing: fixing a release-triggered
+  workflow does **nothing** for releases whose tags point at older commits, and they keep failing
+  the old way until they drain. `md3-v58` (tagged `6d1ad69de`) and `md3-v59` both failed exactly
+  that way *after* the fix landed. The same rule explains the earlier gap: eleven releases published
+  while `master` carried the `release:` trigger produced zero release runs, because their tag
+  commits predated it. So the fix is only proven once a release tagged at a commit **containing**
+  it publishes — until then, treat it as unverified.
+- **`GITHUB_TOKEN` CAN dispatch a workflow.** An earlier version of this file said the opposite;
+  that was wrong. GitHub's recursive-trigger prevention explicitly exempts two events:
+  `workflow_dispatch` and `repository_dispatch` "always create workflow runs", even when signed
+  with `GITHUB_TOKEN`. The job needs `actions: write`, which is the real requirement. `TOKEN_GITHUB`
+  is the owner PAT this repository has (`RELEASE_TOKEN` and `ORG_TOKEN` are org-convention names it
+  does not define at repository scope), and it leads the chain only so a dispatch is attributed to
+  the owner rather than to `github-actions[bot]`.
+- **The material vocabulary is display-only.** `ink` and `Ink Dispenser` are what a user reads;
+  `filamentRows`, `?view=filament`, `.bbsflmt` and the native `.po` msgids keep upstream spelling
+  because bindings and file formats match on them. But `ui-md3/app/i18n.resources.js` is the
+  exception that will catch you: it is keyed on the **rendered English string**, not on a msgid, so
+  renaming display text without renaming its keys makes every lookup miss and fall back to English
+  — silently, with nothing anywhere reporting a problem.
+
+**How to verify the site locally** — see
+[`docs/features/pages/deployment-and-layout-gate.md`](docs/features/pages/deployment-and-layout-gate.md).
+The runtime suite needs Chrome or Edge and takes about three minutes.
+
+### 5.1 Pushed to `master` (already live)
+
+| Commit | What |
+| --- | --- |
+| `e2d2f4566` | **CI fix.** `scripts/ci/Test-WindowsNativeVisual.ps1` contained raw Cantonese text, but `scripts/ci/Test-BuildFromSourceHelpers.ps1` deliberately parses that file under Windows PowerShell 5.1's ANSI decoding *and* asserts it is byte-level ASCII. Every CI run failed with a ParseException at lines 307–308. The CJK strings are now assembled from explicit code points; output is byte-identical (verified by comparison). |
+| `42f7c097b` | **CI fix.** Commit `fa0f0d6ce` added tests using `Slic3r::GUI::DeviceWeb::LatestRequestGate` but never committed the header. Every build died with C1083. Header reconstructed from the tests' contract and verified by compiling + running both test scenarios standalone. |
+| `e429048f2` | Replaced blank README/wizard screenshots with genuine captures. Refs issue #5. |
+| `2bc2131dc` | Added the `run-bambustudio` skill described in §4. |
+
+**Why releases had stalled:** every run after `md3-v10` failed on the two bugs above. `md3-v11`
+shipped an *old* commit simply because an older queued run finished last — the workflow's
+supersession labelling was correct, nothing was mixed up. After the fixes, `md3-v12`, `v13`,
+`v14`, `v15` all published. **`md3-v14` is Latest.**
+
+### 5.2 On branch `windows-only-and-recovery-hardening` → **PR #13** (CI-green, unmerged)
+
+| Commit | What |
+| --- | --- |
+| `b365c13f5` | **The fork is now Windows-only.** ~4,200 deletions. |
+| `450077be1` | FadeIn hardening + documentation. |
+| `477569225` | Restored a CI job that commit `b365c13f5` accidentally deleted. |
+
+**Windows-only removal, in detail** — deleted: `BuildLinux.sh`, `BuildFedora.sh`, `BuildMac.sh`,
+`DockerBuild.sh`, `DockerEntrypoint.sh`, `DockerRun.sh`, `Dockerfile`; `src/platform/osx/` and
+`src/platform/unix/`; all 10 Objective-C++ `.mm` files; the macOS Homebrew deploy workflow; every
+macOS/Ubuntu step in `build_bambu.yml` and `build_deps.yml`; mac/linux branches in four
+CMakeLists files; the `SLIC3R_FHS` option and its generated header; GTK / webkit2gtk / GStreamer
+/ Wayland / DiskArbitration wiring. `CMakeLists.txt` now **fails immediately** if configured on a
+non-Windows system. `src/BambuStudio.cpp` resolves the resources dir directly instead of through
+a four-way platform `#ifdef` chain.
+
+**Deliberately NOT done:** `__APPLE__` / `__linux__` blocks *inside* shared source files remain
+(~200 files). They compile out on Windows. Removing them is a separate, riskier sweep with no
+functional gain. Do not start it casually.
+
+**The FadeIn fix** (`src/slic3r/GUI/Widgets/MD3Motion.cpp`): `FadeIn` applied `WS_EX_LAYERED` with
+**alpha 0** and depended entirely on a `wxTimer` to raise it. If that timer never runs, the window
+stays fully transparent **while remaining modal and still consuming input** — which is exactly
+what the two user reports ("Ctrl+F palette cannot be closed", "regex builder does not pop up")
+look like from outside. Entrances now start at a 25% alpha floor, and if `wxTimer::Start` fails
+the window jumps straight to opaque. **This is a robustness fix, not a confirmed root cause.**
+
+**The CI job that got deleted and restored** — worth understanding, because it is how you know a
+CI run is real: the job graph is
+`build_all.yml` → `build_check_cache.yml` (*Check Cache*) → `build_deps.yml` (*Build Deps*) →
+`build_bambu.yml` (*Build BambuStudio*). The `build_Bambu` job at the tail of `build_deps.yml` is
+the link between the last two. When it was accidentally removed, the run showed *no application
+build at all* and Publish failed on an installer that had never been built. **If you ever edit
+these workflows, re-check that `Build BambuStudio` still appears in the job list.**
+
+### 5.3 Session of 2026-07-27 (overnight) — §7's list is now finished
+
+Everything the previous §7 listed is done. What it said was wrong in two places; both are
+corrected below, because acting on the old text would waste hours.
+
+| Item | Outcome |
+| --- | --- |
+| 1. Merge PR #13 | Already merged (`29902b4aa`) before this session. |
+| 2. Dark-mode Version-history labels | **Fixed — but the diagnosis was wrong.** See below. |
+| 3. Crash-backup preservation | **Verified live end-to-end**, including the Cancel branch. |
+| 4. FadeIn hypothesis | **Refuted.** Both surfaces open fully opaque. |
+| 5. Issue #5 blank crops | **All 14 gizmo crops were blank**, not 2. Recaptured; issue closed. |
+
+**Item 2 — the labels were never the problem.** Pixel-sampling a live capture showed the two
+"black-on-white" labels painting correctly dark (`#202127`) while the **`StaticBox` card underneath
+them** painted `#F0F0F0`. Two stacked causes, both now fixed in the widget so every themed card in
+the app benefits:
+
+- `StateColor::setColorForStates()` only **updates** a state entry that already exists and returns
+  `false` otherwise. `StaticBox`'s constructor seeds only `border_color`, so
+  `SetBackgroundColorNormal()` was a **silent no-op on every card without an explicit
+  `SetBackgroundColor()`**, and `doRender()` fell through to its `count()==0` fallback.
+- That fallback fills with the plain `wxWindow` background, which `Create()` seeds once from the
+  parent — the light surface for any card built before a theme is applied. `SyncWindowBackground()`
+  now keeps it in step.
+
+See `docs/features/design-system/themed-surface-colors.md`. Before/after captures are committed.
+
+**Item 4 — refuted, and two harness traps explain the reports.** The Ctrl+F palette (642x502) and
+the regex-builder popover (393x608) both open opaque and fully populated. What made them *look*
+absent: a raw `WM_LBUTTON*` posted to a panel does **not** fire these custom wx controls (post to
+the control's own hwnd, or use `ahkclick`), and **any process spawned on the headless desktop while
+a popover is open focus-kills it** — so "click, then list windows from another process" always
+reports nothing. That is exactly why `popovercap.py` exists.
+
+The capture also caught a real defect, now fixed: every regex-builder flag row drew its text twice
+(clipped ghost text inside the 44 px checkbox plus the real label), because `CheckBox` is a
+`wxBitmapToggleButton` — a native MSW `BUTTON` — and `addFlag()` called `SetLabel()` on it.
+
+**Item 5 — the scope was bigger than recorded.** All 14 gizmo crops were bare rail background
+(min luminance 178, zero dark pixels), not just two. Also, two crop names are **aliases of one
+gizmo each**: `color-paint` == `mmu-segment` and `support-paint` == `fdm-support`, which is why
+those two looked like the only casualties. Recaptured in **light mode** (matching the rest of that
+matrix) with a model loaded, since the rail only renders with an object in the scene. A sweep of
+all 241 committed captures now reports zero blank images. Issue #5 closed.
+
+**Item 3 — verified, and the fixture recipe is worth keeping.** Load a model, wait for the backup
+`.3mf`, hard-kill the process, delete the stale `lock.txt`, point `app/last_backup_path` at that
+directory, relaunch, click **Cancel**. Result: the backup directory is deleted and the
+`Recovered unsaved project` commit survives carrying the identical 8662-byte `.3mf`. Two traps cost
+real time here and are documented in `docs/features/workspace/project-version-history.md`: a
+dead-pid `lock.txt` makes `has_restore_data()` return false from its `catch (...)`, and a
+**hand-edited `BambuStudio.conf` with malformed JSON is silently ignored in favour of
+`BambuStudio.conf.bak`** — the file ends with an MD5 checksum line, so edit it with a real JSON
+serializer and recompute the checksum.
+
+### 5.4 Session of 2026-07-28 — bug + clipping sweep, and the MD3 stock-UI purge
+
+Two audits (38 and 42 agents), four fix waves, every patch adversarially reviewed. All of it is
+pushed and ancestry-proven. **The full GUI Release build is clean** and the app runs on it.
+
+**Crash recovery had four defects, and the previously recorded diagnosis was wrong.**
+`docs/features/workspace/project-version-history.md` blamed `has_restore_data()`'s `catch (...)`.
+Probing Win32 directly disproved that: `OpenProcess` on a free pid returns **`NULL`** (error 87),
+not `INVALID_HANDLE_VALUE`, so for a dead pid the name comes back empty, the comparison does not
+match, and the `catch` is never reached. What was actually wrong:
+
+- the sentinel guard tested the wrong value, so a null handle reached `GetModuleFileNameEx` and
+  then `CloseHandle`;
+- Windows **reuses freed pids**, so relaunching after a crash could hand the new instance the
+  crashed one's pid — the app then compared itself against itself, concluded another instance
+  held the backup, and silently offered nothing. This is the likeliest explanation for the
+  2026-07-27 observation;
+- `load_string_file()` sat outside the `try`, so an unreadable lock threw out of
+  `has_restore_data()` into the startup handler;
+- **worst:** `Plater` discarded `preserve_unsaved_backup_in_history()`'s bool, so when preserving
+  failed its "stays restorable" snackbar never fired, the user read the ordinary prompt, clicked
+  Cancel, and `remove_all()` ate the only copy.
+
+> [!IMPORTANT]
+> **A severity claim was withdrawn.** The sentinel bug was first written up as crashing the app
+> under strict handle checking. That was reasoned, not measured — and measuring it did not support
+> it: a probe ran the old and the fixed guard under `ProcessStrictHandleCheckPolicy` and **both
+> survived**, as did a control that closed a garbage non-null handle, proving the policy was never
+> armed. The regression test built on that probe could not fail either way and was **removed**
+> rather than left green. The sentinel fix is correctness and hygiene, not a crash fix.
+> `tests/libslic3r/test_crash_restore.cpp` now records which of its cases actually discriminate.
+
+**Fourteen more native defects** were confirmed by adversarial verification and fixed: two
+`FilamentScanner` use-after-frees (a stack-allocated modal dialog with a detached 180-second
+thread posting `CallAfter` on a raw `this`), an invisible keyboard focus ring on every dialog's
+default action (`Primary` on a `Primary` fill), ~1.33:1 snackbar contrast, `StaticBox` flooding its
+own rounded corners so every pill drew as a rectangle, `CheckBox` glyphs baked at construction,
+`StateColor` missing a dark pair for `Surface`, a colour picker `Fit()` before its label had text,
+a resizable dialog with **no visible close control**, a non-wrapping label truncating the real
+libgit2 cause, and a command palette scrolling 52px against a 53px row pitch until the selection
+left the viewport entirely.
+
+**MD3 stock-UI purge.** The parity register said all 128 gaps were done. A fresh six-lens audit
+found **33 more across 26 files, three contradicting rows marked `done`**. 34 were closed across
+19 files. `FanControl` was the worst: 1161 lines with **zero** `MD3::Role` references, and its fan
+toggles were PNGs in a `wxStaticBitmap` — not controls — so that popup was **mouse-only** with no
+role, name or state. Row `gizmo-rail-svg-icons` is now correctly marked **partial**.
+
+**Two conversions were reverted on principle**, and both reverts matter more than the conversions:
+
+- the Smart Home volume control kept its native `wxSlider`, because the MD3 `Slider` could not be
+  reached by Tab and had no `wxAccessible`. `Slider` has since been fixed (§7 item 2);
+- `2DBed`'s X/Y axis arrows went back to pure red/green. Axis colours are **exempt data**, and the
+  3D gizmo still draws pure RGB, so the conversion would have desynced the 2D preview from the 3D
+  scene it mirrors.
+
+Also: the release codename roster grew from 97 to 217 Hong Kong dishes (styles 40 → 71), append-only
+and enforced by `scripts/ci/Test-ReleaseCodenames.ps1` — codenames are assigned **by index**, so an
+insertion renames every later release and contradicts published immutable ones. And chocolatey's
+third-party downloads now retry, after a SourceForge timeout failed a whole Windows build with zero
+compile errors.
+
+### 5.5 Earlier session — how the two features above were built
+
+- **Crash-backup preservation** (`Plater::priv::preserve_unsaved_backup_in_history`, in
+  `src/slic3r/GUI/Plater.cpp`): when the app starts and finds an unsaved crash backup, it commits
+  that backup to the local Git-backed project history **before** showing the "restore your last
+  unsaved project?" prompt, because declining the prompt runs
+  `boost::filesystem::remove_all` on the backup directory. **Now verified live — see 5.3 item 3.**
+  - The snapshot is staged under a real `.3mf` filename because the backup file is literally
+    named `.3mf`, which has *no extension* by path rules, and the engine validates extensions on
+    both the identity path and the snapshot path.
+  - The commit future is `.get()`-ed because **that future carries the only error report** —
+    dropping it hides failures completely.
+- **ProjectHistoryDialog dark mode** (`src/slic3r/GUI/ProjectHistoryDialog.cpp`): `apply_theme()`
+  re-seeds label backgrounds as well as foregrounds, because `Label`'s constructor caches its
+  parent's background colour and the dialog builds its layout before any theme is applied. That
+  fix is correct and still needed — but it was **not** what caused the remaining light plates.
+  Those were the `StaticBox` bugs in 5.3 item 2. The previously suspected `WM_CTLCOLORSTATIC`
+  explanation was wrong; do not go looking for it.
+
+---
+
+## 6. Current state of the world
+
+```
+branch:          fix/gui-accessibility-wave; 13 feature commits plus the current native repair are
+                 still branch-only. origin/master remains the integration baseline until final push.
+local build:     the post-key-pair focused Release GUI library compile and full
+                 BambuStudio_app_gui link exit 0 with only the existing C4099/LNK4098 warnings.
+                 DLL 150,811,136 bytes, 2026-07-30 00:44:51 -04:00, SHA-256
+                 1EECBBFFBB5AB87AF2A90050220E3B4A93E816291F5C29DF4276078CABF22530.
+runtime smoke:   exact-final-binary Lowlevel MCP verification is pending. Older intermediate captures
+                 are not proof; one file named as sliced still visibly says "Not sliced".
+local tests:     all three native accessibility contracts pass; DeviceWeb accessibility/behavior,
+                 changed-file lint, TypeScript, Vite, owned-web/MD3, and 726 native / 184 DeviceWeb /
+                 168 legacy localization checks passed earlier in this delivery branch.
+open issues:     #16 (HA handover evidence pending). #15 was refused and closed as not planned because
+                 it explicitly requested retaining secret material in Git history.
+open PRs:        none
+```
+
+### 6.1 GUI accessibility delivery evidence (2026-07-30)
+
+- `SwitchBoard` exposes one grouping object with two radio-button children, reports selected and
+  enabled states through `wxAccessible`, and preserves the existing `1 = left` / `0 = right`
+  asynchronous command contract with the real control ID and event object.
+- Its minimum size is measured from both translated labels; representative Safety/Print/AMS/Status
+  callers can grow instead of clipping against legacy maximum widths.
+- Arrow keys and Home/End select endpoints immediately. Space/Enter/Numpad Enter arm once and commit
+  only on the matching key-up; focus loss clears the armed key. This prevents OS key repeat and a
+  mismatched key release from alternating the choice or emitting duplicate commands.
+- The Ink Dispenser settings gear uses the shared focusable Button command event; the stale mouse
+  overload that caused the full Release unresolved external has been removed.
+- The maintained contracts are `native_shared_controls_accessibility_contract`,
+  `native_gui_accessibility_contract`, and `native_accessibility_contract`; all three pass. The
+  repaired `libslic3r_gui` project compiles and the full Release app links through MSBuild 18.7.8
+  with `/m:2`.
+- The exact post-key-pair DLL is **150,811,136 bytes**, timestamped
+  `2026-07-30 00:44:51 -04:00`, SHA-256
+  `1EECBBFFBB5AB87AF2A90050220E3B4A93E816291F5C29DF4276078CABF22530`. Lowlevel MCP captures,
+  default-branch integration, remote ancestry proof, and hosted workflow/release state remain in the
+  current-state block above. Do not reuse an intermediate hash or a capture whose visible state
+  contradicts its filename.
+
+### 6.2 Two machine limits that will bite you
+
+- **`MSBuild /m` (unbounded) runs this box out of memory.** A parallel GUI build died with
+  `C3859: Failed to create virtual memory for PCH` and `C1076: compiler limit: internal heap
+  limit reached` — 220 of them — while agent processes were also running. `/m:2` completes.
+  Neither error is a code error; do not go looking for one.
+- **A full GUI build takes ~2.5 hours, so do not use it as a syntax check.** Compile a single
+  file with the real settings instead:
+
+  ```
+  MSBuild build\src\slic3r\libslic3r_gui.vcxproj /t:ClCompile /p:Configuration=Release
+    /p:Platform=x64 /p:SelectedFiles="<abs path>.cpp" /p:DebugInformationFormat=None
+  ```
+
+  `DebugInformationFormat=None` matters: without it two `cl.exe` racing on the shared
+  `libslic3r_gui.pdb` fail with `C1041`, which looks exactly like a real error and is not.
+
+This handoff records local implementation evidence; exact pushed revisions, hosted runs, and
+release verdicts are maintained in
+[issue #16](https://github.com/Ding-Ding-Projects/BambuStudio/issues/16). The repository convention
+remains that completed work lands on `master` and every push builds and publishes a release. A remote
+`codex/windows-reinstall-backup-20260726-174428` branch contains an explicit WIP snapshot with a
+unique commit; retain it unless its work is reviewed and safely integrated—do not delete it merely
+to make the branch list look tidy.
+
+---
+
+## 6.9 Session of 2026-07-30 — master did not compile, and the sidebar ate the process settings
+
+**`master` had not compiled since the accessibility merge.** `SwitchButton.cpp` defined
+`SwitchBoard::Accessible`, `on_key_down()` and `activateSegment()` that the header never declared —
+16 errors, all in that one file. A concurrent agent pushed a fuller fix (also adding
+`AcceptsFocus`/`AcceptsFocusFromKeyboard`, `MSWWindowProc`, `DoGetBestSize`) while this session was
+working, so the redundant local commit was dropped and the tree reset onto theirs. Verified by a
+clean local build and by CI publishing **`md3-v80`** from the identical tree.
+
+CI was *also* red for a second, unrelated reason that never reached the compiler:
+`scripts/i18n/Test-LanguageModes.ps1` pinned DeviceWeb English resources at **178** while the tree
+ships **184**. The six new keys are present and translated in both locales with matching keys and
+placeholders — a stale tripwire, not a resource defect. Already fixed upstream too.
+
+> [!WARNING]
+> Two `Windows build and release` runs failed at **`Test Windows release inputs`**, *before*
+> `Build slicer Win`. So CI never reached the compile break at all, and a green pre-build gate is
+> not evidence that the tree compiles. Check which step failed before concluding anything.
+
+**The Prepare sidebar was cutting the process settings off at the right edge.** The full process
+tree is the settings-tab layout reparented into a 344 dip sidebar; its option rows are label + value
+field and neither half reflows. Measured live: the `Layer height` row lays out **1234 px wide inside
+a 348 px sidebar**. The body was created `wxSHOW_SB_NEVER` for the horizontal bar with an x-scroll
+rate of `0`, so the clipped values were not merely off-screen — **nothing could scroll to them**.
+
+The header row above it had failed the same way the Print button did (§3.3): over-subscribed, so
+`wxBoxSizer` paid the fixed items in full and handed **zero** to what straddled the boundary. The
+`Process` title and the Compare-presets button were *absent*, not clipped. This is now the second
+time that failure mode has cost this project a visible control — when a row looks cramped, measure
+the children's widths before assuming everything is merely narrow.
+
+Fixed in `Plater.cpp` / `Plater.hpp`, all verified live at 846 px on the real Release build
+(`2421f9268`, plus the grow-only follow-up):
+
+- `update_sidebar_scroll_body()` grows the **virtual width** when content genuinely cannot compress,
+  and the body has a real horizontal scrollbar to grow into. Anything that *can* reflow still gets
+  the client width, so the compact cards are unchanged. A re-entrancy guard was added because
+  `SetVirtualSize()` can add/remove a scrollbar, resizing the client area and re-entering the helper
+  through the sidebar's own `EVT_SIZE`.
+- `Plater::request_sidebar_width()` widens the dock to 480 dip in Advanced mode — **weakly**: capped
+  at 55% of the frame, never below the density default, `grow_only` so a sidebar you dragged wider is
+  left alone, and the sash stays draggable with the dragged width persisted by the existing idle
+  handler. It shrinks back only on the explicit flip to Simple.
+- The width is re-asserted on the first **laid-out** size event. The `priv` ctor runs before the
+  frame has a width, so a request made there clamps to the compact default; the function returns
+  `false` while the frame is too small to size against, and the caller retries instead of latching.
+- Advanced mode gained its own settings-search pill on the **Simple settings** bar (same
+  `OptionsSearcher` and regex builder as the compact card's, whose field is hidden with the card).
+- **Object manipulation now starts hidden** and appears on selection. With nothing selected it was
+  twelve en dashes under a header, costing a screenful of sidebar height.
+
+Evidence: `docs/screenshots/sidebar-process/` (before/after pairs), documented in
+`docs/features/prepare/process-settings-sidebar.md`. The 3D canvas starts at **x=348** before and
+**x=461** after; `Object manipulation` is absent from `press.py controls` until something is selected.
+
+> [!IMPORTANT]
+> **Two of the reported symptoms are NOT fixed and were not reproduced.** See §7 item 0d.
+
+**Watch out — two shadowing traps in `Plater.cpp` cost two build cycles here.** `Plater::priv::priv`
+takes a parameter named **`q`** that shadows the member `Plater *q`, and the AUI block declares a
+local `auto &sidebar` that shadows the member `Sidebar *sidebar`. A lambda in that scope must reach
+both through `this->`, or you get `C3493: cannot be implicitly captured`.
+
+**Also worth knowing:** `press.py controls` only enumerates *labelled* children, so custom-drawn
+controls (the `Global`/`Objects` `SwitchButton`, search-field placeholders) never appear — their
+absence from that list is not evidence they are missing. Crop the capture instead.
+
+---
+
+## 6.95 READ FIRST IF YOU ARE ON THE MACHINE WITH THE PRINTER
+
+The 2026-07-30 session could not reproduce the reported crash **because this build host has no
+printer bound and no network plugin**, and every strong suspect it found lives in code that only
+runs when those exist. If you are the agent on the user's other machine, you can settle in ten
+minutes what cost that session a day.
+
+**Collect these, in this order:**
+
+1. **`crash_*.log`.** The crash reporter was disabled three ways and is now merged and CI-green
+   (`e445d1a19`). After the next crash, get
+   `%APPDATA%\BambuStudio\log\crash_*.log` (release build) or
+   `%APPDATA%\BambuStudioInternal\log\crash_*.log` (internal build). It carries the exception code,
+   registers, loaded modules and a **call stack**. This single file replaces all the guesswork below.
+2. **Which binary.** Installed release (which `md3-v*` tag?) or a local build? A release installer
+   uses data dir `BambuStudio`; an internal build uses `BambuStudioInternal`. The 07-30 session
+   found **no logs at all** on the days the user reported crashing, which is why it suspects the
+   crashes happen on a different machine or build than the one it could test.
+3. **Network plugin + sign-in state.** Help ▸ check the plugin, and whether the user is signed in.
+   This matters more than it sounds — see below.
+
+**The leading theory, and what makes it testable there:**
+
+`GUI_App::getAgent()` returns `m_agent`, which is **only ever constructed under
+`if (create_network_agent)`**. If the network plugin fails to load, it is null for the *entire
+session*. A sweep of all 155 `getAgent()` call sites found **8 that dereferenced it unchecked**, all
+in device/media/model-mall code — the live-view camera URL, the go-live camera URL (on the HTTP
+server thread), LAN bind detect, and the model-rating flow. Two run on non-UI threads, where a null
+dereference is an access violation with no handler and nothing in the log. Fixed in `4e31b2e6d`
+and `7e1ebbf28`; the audit now reports zero unguarded.
+
+Every one of those needs a **bound printer** to reach, which is exactly why a host with none sails
+past them. The user's config has a `Bambu Lab X1 Carbon`.
+
+The same null agent is also why the Ink/Device tabs read **"No Data"** — that string is the Filament
+Manager's empty state in the DeviceWeb locales (`en.json:59`, `SpoolTable.tsx:269`), rendered when
+there is no agent. **One root cause would explain both reported symptoms.** Confirming the plugin
+state is therefore the highest-value single check on that machine.
+
+> [!WARNING]
+> **Do not report any of this as "the crash is fixed" without a stack trace or a reproduction.**
+> This session already had to withdraw one reachability claim (§7 item 0d) for being reasoned
+> rather than measured, and §5.3 records an earlier severity claim withdrawn for the same reason.
+> The fixes are real; their connection to the user's specific crash is not established.
+
+> [!NOTE]
+> **Build state:** commits from `95fd064c0` through `4e31b2e6d` were pushed with local build
+> verification **incomplete** — the local rebuild was stopped in favour of CI at the user's
+> instruction, after a CMake change forced a full libslic3r rebuild. Confirm the CI runs on master
+> from 2026-07-31 are green before building on top of them. Touched: `Plater.cpp`, `GUI_App.cpp`,
+> `MediaPlayCtrl.cpp`, `HttpServer.cpp`, `ReleaseNote.cpp`, `StatusPanel.cpp`.
+
+---
+
+## 7. What to do next
+
+0d. **THE CRASH ITSELF IS STILL OPEN — start here.** It was not reproduced, so it is not fixed.
+   Two of the three things reported around it *are* addressed: the app no longer refuses to reopen
+   afterwards (`bbcf1630b`, below), and a crash will finally leave a stack trace once
+   the crash reporter is merged and green. The crash itself has not been found. The user
+   reported, in their words: *"it keeps crashing … when opening model or changing a lot of settings
+   at the same time"*, *"when it crashes it refuses to open until i open it a few times"*, and
+   *"switching tabs do not work and say model has no data"*.
+
+   **Why there was never any evidence — this is the actionable finding.** The crash reporter exists
+   in this tree and was switched off in *three independent ways*:
+   - `SET_DEFULTER_HANDLER()` commented out in `bambustu_main()` (`src/BambuStudio.cpp`), for both
+     release and internal builds;
+   - `CBaseException::set_log_folder(data_dir())` commented out (`GUI_App.cpp`), so the filter had
+     nowhere to write even if installed;
+   - `src/BaseException.cpp` and `src/StackWalker.cpp` were **in the tree but compiled by no
+     target**, so uncommenting either line alone only earns a link error.
+
+   That is why a crash left no dump, no stack and no marker: the process simply stops mid-line,
+   which is indistinguishable from being killed.
+
+   > [!IMPORTANT]
+   > **All three are now enabled and MERGED** (`e445d1a19`). The work went to a branch first
+   > precisely because those legacy files had never been compiled here; branch CI run
+   > `30589807507` came back **green** (built, linked, release published), so the merge rests on
+   > evidence. **A crash now writes `<data_dir>/log/crash_<when>_<n>.log`** with the exception
+   > code, registers, loaded modules and a call stack. It does **not** stop the crash — it makes
+   > the next one diagnosable. **Ask the user for that file.**
+
+   **What was already ruled out here (do not redo):**
+   - Opening `cube.stl`, slicing, and Preview all work. **32 tab switches** across
+     Prepare/Preview/Device: clean. **10 rounds** of advanced/simple flips plus every segment
+     (Quality/Strength/Support/Others): clean. **12 modal open/close cycles** (`Version history`)
+     with a model loaded, to fire the sidebar's 250 ms timer inside nested modal event loops:
+     clean. `procdump -e -ma -w` attached throughout produced **no dump**, and both app instances
+     stayed alive every time.
+   - Racing the **background slicing worker** against config changes (8 rounds of Slice-plate
+     followed immediately by category switches, no wait): clean.
+   - Loading a **dual-filament 3MF** (`resources/calib/pressure_advance/auto_pa_line_dual.3mf`) —
+     chosen because it forces a filament-count change *and* a whole-config apply at once, the
+     closest thing to "changing a lot of settings at the same time": clean.
+   - Testing constraint worth knowing: **this box supports only two concurrent app instances.** A
+     third dies pre-log at the GL gate (`bs-out.txt` empty, no studio log, no process) because two
+     llvmpipe contexts already exhaust software GL here. `driver.py open` spawns an instance, so
+     with two already up it silently fails. That is a local resource limit, **not** an app defect —
+     do not chase it. `single_instance` is `false` in this config, so it is not the instance check
+     either.
+   - **A real defect was found here by inspection and fixed** (`e897d6b3b`), though it is not
+     proven to be *the* crash. `refresh_process_card()` runs off the 250 ms `m_manip_timer`, and
+     every `ShowModal()` spins a nested event loop in which that timer keeps firing — so the
+     function re-enters. Its `process_card_refreshing` flag (which tells the field handlers "this
+     value came from the config, not the user") was set true on entry and cleared
+     **unconditionally** on exit with no re-entrancy check. A nested tick therefore cleared the
+     flag while the outer pass was still assigning values, so every remaining
+     `SetValue()`/`SetSelection()` in that outer pass was treated as a **user edit** →
+     `tab->load_config()` wrote settings nobody touched → that raised another config change → which
+     scheduled another refresh. Phantom writes plus a self-feeding loop, and the window it needs is
+     "a modal is open while settings are being applied" — i.e. both reported triggers. Now it bails
+     out when a refresh is already in flight and restores the flag via RAII; the timer body takes
+     one tick at a time.
+   - **A genuine out-of-bounds crash WAS found and fixed on the model-load path** (`95fd064c0`).
+     `Sidebar::on_filament_count_change()` did `choices[0]->GetDropDown().Invalidate()` whenever
+     `num_physical == 1`, without checking `choices` was non-empty. With mixed filaments that
+     matters: `physical_indices` collects only non-mixed slots, so `num_physical` is **0** when
+     every slot is mixed; the tail of the same function then calls
+     `remove_unused_filament_combos(num_physical)`, which pops `combos_filament` with **no floor of
+     one** and at 0 empties it outright. The next call in with a single physical filament clears
+     the `num_physical == choices.size()` early-out (0 != 1), reaches that line, and reads `[0]` of
+     an empty vector — a garbage pointer dereferenced immediately by `->GetDropDown()`. In Release
+     that is an access violation **on project load**, which is exactly when filament counts change.
+     Now guarded with `!choices.empty()`.
+     > [!WARNING]
+     > **A reachability claim was withdrawn — read this before citing the fix.** It was first
+     > written up as reachable through ordinary filament editing, via
+     > `on_filaments_delete()` → `remove_unused_filament_combos(size - 1)` emptying the vector when
+     > the last filament is deleted. **That is wrong.** `Sidebar::delete_filament()` returns early
+     > on `combos_filament.size() <= 1` (Plater.cpp:5470), so the physical filaments cannot be
+     > deleted down to zero. And `add_custom_filament()` appends a mixed slot at
+     > `new_idx == total`, so adding mixed filaments never converts the existing physical ones —
+     > `num_physical >= 1` always holds through the UI. Reasoned, not measured, and measuring it
+     > did not support it. Same failure mode as the withdrawn sentinel claim in §5.3.
+     >
+     > What survives: this is a **latent** out-of-bounds worth guarding, not a demonstrated
+     > user-facing crash. The one route not closed off is a project whose `filament_is_mixed` marks
+     > every slot mixed — `check_mixed_filament_integrity()` only *flags* such slots as broken, it
+     > does not refuse them, so a hand-edited or corrupt 3MF still reaches
+     > `on_filament_count_change()` with `num_physical == 0`. Unverified.
+
+     Pinned by `tests/sidebar_filament_combos/` (`a81a00fe0`), which asserts the guard, the call-site
+     count, and that `remove_unused_filament_combos()` still has no floor of one. **Mutation-checked
+     for real:** removing the guard fails the contract, restoring it passes.
+   - Audited and clean in the same area: `update_filament_row_badges()`,
+     `update_mixed_filament_list()` (all parallel-vector reads are size-checked), and the
+     `combos_filament[0]` in the ctor (a `push_back` precedes it).
+   - None of the above is *proven* to be the user's crash — it was found by auditing, not by
+     reproducing. Do not close the crash on it; do ask for a `crash_*.log` now that one gets written.
+   - No stale `wxSingleInstanceChecker` lock in `<data_dir>\cache\` and no zombie `bambu-studio.exe`
+     after a run, so the "refuses to open" symptom did not reproduce either.
+   - Log truncation is **not** proof of a crash: `driver.py stop` kills the process and truncates
+     the buffered log identically. Six of eight older logs end mid-line for that reason. The
+     2026-07-28 20:12 log that ends inside `_save_model_to_file` is a **27-second** session, which
+     fits a kill far better than a crash.
+
+   **Code paths audited and cleared (do not re-audit these):**
+   - `blend_color_multi()` (`FilamentMixer.cpp:115`) and `blend_mixed_color()` (`Plater.cpp`) —
+     the parallel colour/ratio vectors are bounds-guarded on both sides.
+   - `has_restore_data()` (`bbs_3mf.cpp:9674`) — already hardened by the earlier session (§5.3):
+     `load_string_file()` is inside the `try`, empty process names never compare equal, and pid
+     reuse is handled. Not a candidate any more.
+   - `Sidebar::on_filament_count_change()` / `update_mixed_filament_list()` — `physical_indices[i]`
+     is bounded by `num_physical`, and the mixed-filament option reads are all size-checked.
+
+   **The strongest untested lead:** `%APPDATA%\BambuStudioInternal\log\` holds **no logs at all from
+   2026-07-29 or 07-30** despite the user hitting crashes on those days. Either they are running a
+   *different* build, or it dies before the log opens (`instance_check()` runs before `wxEntry()`
+   and before boost log is initialised — an early exit there produces exactly "won't open, no
+   log"). **Establish which binary they actually run before anything else.** Note a release
+   installer uses data dir `BambuStudio`, not `BambuStudioInternal` — and no plain `BambuStudio`
+   dir exists on this host, so the reported crashes probably did not happen on this machine.
+
+   **The "refuses to open" half IS fixed** (`bbcf1630b`, on master, CI running at session end).
+   `instance_check()` discarded `send_message()`'s return value and returned `true` — terminate —
+   regardless. So when the single-instance mutex is held by something that cannot answer (a process
+   wedged mid-crash, one still starting, one already tearing its windows down), the launch found no
+   window, handed off to nobody, and **exited anyway**. Every attempt did that until the stale
+   holder released the mutex: exactly *"try it a few times and eventually it opens"*. And because
+   this runs before `wxEntry()` and before boost log exists, it left **no log entry at all**, which
+   also explains the missing logs above. Now the hand-off decides: if nothing took it, the instance
+   starts normally and logs why. The bare blocking `SendMessage(WM_COPYDATA)` — which hangs startup
+   forever against a wedged instance, same silent non-start by a different route — is now
+   `SendMessageTimeout` (`SMTO_ABORTIFHUNG`, 5 s), and `l_bambu_studio_hwnd` is cleared before each
+   scan so a handle from a previous enumeration can never be messaged.
+
+   > [!NOTE]
+   > That fix was pushed with **local build verification incomplete** (the branch switch invalidated
+   > the CMake cache and forced a full libslic3r rebuild, which was stopped in favour of CI). It is
+   > a single self-contained `.cpp` change using Win32 calls already present in that file. Confirm
+   > run `30593749021` is green.
+
+   The re-entrancy guard added to `update_sidebar_scroll_body()` is a **defensive** fix for a
+   plausible recursion (`SetVirtualSize` → scrollbar → `EVT_SIZE` → repeat, which both reported
+   triggers would cross). It is **not** a confirmed crash fix and must not be written up as one.
+
+   **"Model has no data" — FOUND, and it is not a crash.** The earlier "no such string exists"
+   note was wrong because it only searched C++ and the native `.po` catalogs. The tabs the user
+   says "do not work" (Ink / Device / Project) are **WebView2 surfaces**, so the string lives in
+   the DeviceWeb locales:
+   - `"No Data"` — `device_page/locales/en.json:59`, rendered by
+     `src/features/filament-manager/SpoolTable.tsx:269`
+   - `"Not signed in — no data available"` — `en.json:164`, rendered by
+     `FilamentManagerPage.tsx:566`
+
+   Both are the **empty state of the Filament Manager**, shown when there is no signed-in account
+   or no network agent. This host's log shows exactly why:
+   `NetworkAgent::initialize_network_module ... can not Load Library` → `unload_network_module` →
+   `WebViewPanel::ShowNetpluginTip: bValid=0` → `no plugins currently`. So "switching tabs doesn't
+   work and says no data" is **the network plugin not being installed / not signed in**, a separate
+   issue from the crash. Confirm with the user whether they are signed in and whether the network
+   plugin installed, before treating it as a defect.
+
+   **A null-deref found while reading that path and fixed** (`7e1ebbf28`): `sLocalBindFunc()` did
+   `wxGetApp().getAgent()->bind_detect(...)` with no null check. Its caller `InnerLoad()` validates
+   the agent, then spawns this onto a `boost::thread` — so the check and the use are on different
+   threads at different times. `m_agent` is deleted and nulled during teardown, and is only ever
+   constructed under `if (create_network_agent)`, so it stays **null for the whole session whenever
+   the network plugin fails to load** — the state this host runs in. A null deref on a background
+   thread is an access violation with no handler and nothing useful in the log. Note this path only
+   runs for users with a **stored `user_access_dev_ip` + `user_access_code`** (i.e. a previously
+   LAN-bound printer), which is a plausible reason it never fires on this box and might on the
+   user's. Still unproven as their crash.
+
+0e. **The dim sum surprise, release code names, and the tabbed-README requirement are unimplemented.**
+   Global memory gained sections this session that the local rules copy lacked (now synced to
+   `~/.claude/rules/`): *Autonomous completion*, *Dim sum release code names*, *Landing page and
+   documentation site* (tabbed README, site linked from the repo), *Sanitized instruction copy in
+   every repository*, and *Build dependencies and toolchains*. Releases already carry dish code
+   names (`md3-v80 — Swiss Wing 瑞士雞翼`), but the **in-app 1% startup dim sum surprise** does not
+   exist, and the catalog now ships 500+ bundled PNGs in `agent-global-memory/dim-sum/` to draw from.
 
 
-## Deferred work
 
-- ~~Push local `master` (`8d727d49d`) and obtain a hosted CI run~~ — done; verified by green run
-  `29877040307` and published release `md3-windows-v02.08.01.55-r37`.
-- ~~Achieve a fully green publish run~~ — done; same run and release as above.
-- **Structural-anatomy waves implemented (multi-agent session, 2026-07-21/22).** All four waves are
-  written and committed on the build worktree branch:
-  - `ae690fa85` (pushed) — Cantonese strings for the model-preview and Prepare-dock surfaces:
-    yue_HK + English catalogs, rebuilt `.mo`, refreshed `coverage.json`, and new
-    `language_mode_tests` assertions for standalone-Cantonese and bilingual modes.
-  - `c4417d883` — Material Symbols icon-font infrastructure: private registration of the bundled
-    TTF in `Label::initSysFont`, the `MaterialIcon` helper (28 cmap-verified PUA glyphs,
-    availability probe, font factory, wxDC draw/measure, antialiased bitmap producer), CMake
-    wiring, and an AxisCtrlButton proving site with bitmap fallback. Only the default
-    Outlined/wght400/FILL0 instance renders through wxFont; active state is expressed via colour.
-  - `be90ec1f0` — Device camera-HUD strip per the kit camera-card anatomy: always-dark `CameraHUD`
-    band with a visibility-aware pulsing LIVE badge (`MD3::Viewport::live`), migrated status
-    indicators pinned to on-dark bitmaps, and icon-font settings/fullscreen chips preserving the
-    old CameraItem event wiring. Sizer sibling above the video — nothing overlays the native
-    `wxMediaCtrl` HWND.
-  - `f9005d609` — pill/literals closure: `MD3::Metrics::pill_radius(height)`; verified the shared
-    Widgets pills are already DPI-safe (`applyMD3Style`/`Rescale`); each residual bitmap-bound
-    theme literal is anchored and justified in `docs/features/design-system/md3-design-system.md`
-    rather than unsafely tokenized.
-  **All four waves are pushed** (`origin/master` = `a924a9f1f`). The three C++ commits passed the
-  local incremental Release build gate first: 0 errors, "All steps completed successfully",
-  41 minutes, MaterialIcon/CameraHUD/StatusPanel compiled and linked (only the pre-existing
-  LNK4098 warning). Twelve Opus agents (plan → implement → 3-lens adversarial review → fix)
-  produced them; the review's one blocker (wxBitmapBundle absent from the vendored wx 3.1.5) was
-  fixed before commit. Hosted CI runs for these pushes were in progress at the time of writing; the
-  local gate did not build the test binaries, so `language_mode_tests` for the new Cantonese
-  assertions is proven by CI, not locally. The LIVE-badge follow-up is closed: "LIVE" is in the
-  en catalog, yue_HK renders it 直播中 (connection-offline category), coverage.json counts 288,
-  the shipped `.mo` was rebuilt with `bbl/i18n/yue_HK/compile_translation.py` and its `--check`
-  reproducibility gate passes locally, and `language_mode_tests` asserts the key in standalone
-  and bilingual modes. A scoped audit confirmed no other string from the wave commits is missing
-  catalog entries.
-  **Next program (in flight): full MD3 conformance.** The user has mandated that the entire UI
-  match `ui-md3/design-system/` with zero original design elements (functional data colors
-  exempt). A 10-surface Opus audit is generating
-  `docs/features/design-system/md3-parity-register.md` — the canonical open-gap register and
-  wave plan; implementation proceeds register-wave by register-wave (each build-gated and pushed),
-  folding in the already-scoped feature-pill (CapsuleButton 5px→pill, Tab search field 5px→pill),
-  camera-HUD temp-chip, and project-history durable-retry slices.
-  **Register Wave 1 is implemented** (17 Opus implement groups, zero unfinished assignments; 3-lens
-  review found 4 findings — 3 fixed, 1 verified false positive): 22 register rows done and 2 partial
-  (the Preview section-header `palette` and status-pill `layers` glyphs wait on the Wave 2 ImGui
-  Material-Symbols atlas), plus the scoped extras — CapsuleButton chip pill, Tab search-field pill,
-  and CameraHUD nozzle/bed temp chips. The new Preview status string "Sliced · %1% layers" is
-  catalogued (en + yue_HK 切好片喇 · 共 %1% 層, coverage 289, `.mo` rebuilt, `--check` green).
-  Wave 1 is pushed (`70bd80309`). **Delivery policy per user 2026-07-22: ship-first — waves push
-  right after implement+review; hosted CI is the build verification and failures are fixed forward;
-  local builds run only as informational checks.**
-  **Progress through the register (59 done / ~5 partial / 67 open):** Wave 2 shipped (`bd1788b48`
-  glyph enum ~126 verified codepoints, `67d3079b5` ImGui Roboto/Mono/Material-Symbols atlas);
-  Wave 3 subset shipped (`d8960fa96`, raster→glyph on eight surfaces; review fixed three HiDPI
-  dpiRef threads and a glyph-semantics swap); Wave 4 shipped (`4341bc4f1`, Preview overlay + slider
-  on the atlas, both former partial rows closed); Sprint A shipped (`6a2f3e346` shared-widget
-  library rebuild incl. new SearchField/Slider widgets, `7bbff238f` Slice/Print + tab controls +
-  preset search, `0a061e984` HMS/MediaPlay/pause-stop, plus the project-history durable-retry
-  commit) — all 10 Sprint A groups delivered every assigned gap; reviews across these waves found
-  only isolated defects, all fixed (one false-positive exclusion alarm was my own atlas edit).
-  The recurring infra annoyance is StructuredOutput retry-cap failures on some final agent reports;
-  work always landed and was recovered from journals — later reviews use plain-text output.
-  Project-history retry semantics shipped: durable failure notification with Retry, retained
-  failures surfaced in the history dialog with per-item and bulk retry, orphaned-manifest adoption
-  on restart; new error-flow strings catalogued (en + yue_HK, coverage 294, `.mo` `--check` green).
-  **Sprint B shipped** (`3aa4bb972`, release `md3-windows-v02.08.01.55-r53`): the ten-group glyph
-  and anatomy sweep — MainFrame/Plater/StatusPanel icon slices, SideTools signal draw,
-  FilamentGroupPopup anatomy, Slice/Print leading glyphs, snackbar recolor, and every formerly
-  glyph-blocked row; 16 gaps, review traced every symbol clean, two verified defects fixed.
-  Register stood at 73 done / 56 open. CI green down the entire train (r37–r53 releases published).
-  **Wave 7 shipped (this push, 2026-07-22): register now 108 done / 21 open.** The prior session
-  hit its usage limit mid-Wave-7; this session salvaged the marshal partition from the session
-  export and relaunched — 14 Opus agents (10 disjoint-owner groups + read-only test-repair scout +
-  2 adversarial reviewers + fixer). Landed: the `MD3Dialog` borderless shell primitive and the
-  whole MsgDialog family + 10 leaf dialogs reparented onto it; the `GLIconGlyphBridge`
-  glyph→GL-texture bridge routing the 3D-editor toolbar and gizmo rail to Material Symbols
-  (capability-gated, SVG fallback intact); title bar to kit anatomy (brand tile, history chip,
-  project chip, appearance button; Save/Undo/Redo/Publish removed from the caption, Calibration
-  re-homed as a text menu button); Preferences rebuilt (230px NavRail, new Appearance section with
-  Theme/Density/Accent controls — density/accent persist but await runtime wiring); Preview
-  timeline transport bar; device farm list→card grid; StatusPanel section headers + Z/extruder
-  glyphs; Prepare-sidebar safe subset. Reviewers found 3 real defects, all fixed: SendToPrinter
-  and PublishDialog header-X paths bypassed job teardown (both now route the original close
-  handlers), plus a `-Wreorder` cleanup. Three agents' final reports died on the recurring
-  StructuredOutput retry-cap; their edits landed and were recovered from transcripts. New strings
-  catalogued: 12 en entries, 21 yue_HK entries (coverage 315, `.mo` rebuilt, `--check` green).
-  Local informational Release build gate passed (0 errors, exe + dll relinked).
-  During the ship a parallel push by codingmachineedge (`ef6fd59f2`/`156f9dd2d`) landed a
-  hand-rolled variant of the same device-section-headers row; the wave was rebased onto it and
-  the reviewed kit-SectionHeader version supersedes it at the tip (the parallel commits remain
-  ancestors; their register edit had introduced a corrupted duplicate row, repaired here).
-  **Test-repair re-scope (scout, read-only) — premise correction:** the CI waiver is pure omission
-  (only 3 targets built/run); `libslic3r_tests` has NO statically-provable compile blocker — the
-  provable drift is RUNTIME: PrusaSlicer config keys removed in BambuStudio (`perimeters`→
-  `wall_loops`, `first_layer_height`→`initial_layer_print_height`, etc.) throw or null-deref in
-  `test_config.cpp`/`test_placeholder_parser.cpp`; `libnest2d_tests` compiles, and its
-  `exclude:[NotWorking]` quarantine is invalid Catch2 syntax (would not apply). Executable repair
-  plan recorded: port the config keys, fix the Catch2 exclusion to `~[NotWorking]`, optionally
-  split a runtime-passing `libslic3r` subset into CI.
-  **Installer overhaul shipped (`3c12a1771`):** the NSIS installer is restyled to MD3 (custom
-  Welcome/language/install-mode/build-progress/Finish pages, documented D1–D7 Win32 deviation
-  list) and the mojibake language page is fixed at the root (UTF-8 BOM + `/INPUTCHARSET UTF8` on
-  all five makensis calls — the Cantonese strings were being read as CP-1252). A new
-  build-from-source mode bootstraps Git/Node.js/VS Build Tools, installs opencode, and builds the
-  release source with a bounded five-cycle fully non-interactive opencode auto-repair loop
-  (blanket-allow config scoped to the clone, question stays deny); the build page is non-closable
-  while the build runs. Review hardening before ship: `FileReadUTF16LE` for manifest/status reads
-  (plain `FileRead` truncated UTF-16LE, which would have made from-source uninstalls delete
-  nothing), and a declined prebuilt fallback can no longer advance into INSTFILES with a partial
-  payload. Compiles at makensis 3.12 EXIT=0 locally; silent-mode CI fixtures unchanged.
-  From-source is interactive-only and never runs in CI; its first end-to-end run on a real
-  machine is still an open verification item. The later provenance hardening binds release
-  installers to the current repository and exact workflow commit, with no mutable tag fallback.
-  **Wave 8 shipped: register 113 done / 16 open.** Eleven Opus agents (marshal + 8 groups + 2
-  reviewers + fixer; both reviews CLEAN, fixer verified with zero edits). Landed: the
-  `raw-wxmessagebox` sweep (22 live sites across 8 files onto the MD3 MessageDialog with exact
-  return-code preservation; early-boot/fatal-handler sites deliberately left native with reasons
-  recorded), preset-editor NavItem pills via a new TabCtrl leading-glyph API, device temperature
-  rows (teal glyphs + mono values + trailing edit IconButton, live AMS humidity wired), GL
-  gizmo-rail/scene-toolbar background chrome plus the viewport zoom cluster and object stat pill,
-  filament subtitle row folded into its SectionHeader, four new cmap-verified MaterialIcon glyphs,
-  and runtime Density/Accent application (`MD3::Metrics::active()` + accent-seed override;
-  density is restart-scoped until ~40 call sites adopt `active()`). Catalogs at 322 (`--check`
-  green).
-  **Wave 9 shipped (completion wave): register 120 done / 4 recorded deviations / 5 open.**
-  Ten Opus agents, both reviews CLEAN, fixer applied one density nit. Done: the sidebar
-  object-manipulation card (read-only live mirror of the gizmo cache, 250ms timer), device
-  print-options (4-way speed SegmentedControl, teal fan Sliders, chamber-light Switch), the
-  Control-strip removal into an overflow menu, the AMS card reskin to Device-teal tokens (every
-  load/unload/RFID/tray signal preserved), the gizmo-rail kit anatomy (44px r12 tiles,
-  Primary-fill selected, group dividers), and TextureImport + Helio onto new additive MD3Dialog
-  resizable / forced-dark variants. Recorded deviations, each with concrete evidence in the
-  register commit: XY dial→3x3 grid + 10/1 step selector (dial encoded magnitude in hit radius —
-  one-gesture jog becomes two-step), scene-toolbar pill reskinned but not re-centred (collides
-  with the collapse toolbar), SyncAms partial shell (simplebook footer gating), and the
-  project-webview (host-injected read-only page restyled to kit tokens/CSS; true file-manager
-  anatomy needs C++ host APIs). Test repair: config keys ported to BambuStudio names, the invalid
-  Catch2 exclusion fixed; the isolated suite build did not finish in-window — CI wiring deferred.
-  New strings catalogued (coverage 331, .mo --check green).
-  **Waves 10-14 shipped (2026-07-22, parallel worktrees): THE REGISTER IS CLOSED — 125 done /
-  4 recorded deviations / 0 open.** The combined Fable wave landed the five build-in-the-loop
-  Plater rows (printer identity card, bed SelectField with relocated hover popup, filament
-  info-rows with lockstep teardown, Process card with an Advanced/Simple flip keeping the full
-  ParamsPanel reachable, kit Objects card), finished the aggregate-test repair (both suites
-  compile and RUN: libslic3r_tests 87/95 pass, libnest2d 3 failures — the 11 residual runtime
-  failures are algorithm drift, recorded and deliberately NOT wired into CI), migrated 21 density
-  call sites to Metrics::active(), and polished MD3Dialog DPI / StateColor Device dark pairs /
-  Helio siblings. Opus waves 12-13 delivered GL viewport polish (glyph sub-chrome with per-icon
-  kept-raster reasons, identity-driven rail dividers, cached chrome with a review-caught
-  texture use-after-free fixed) and SendToPrinter/calibration/device-farm completion. Fable wave
-  14 wired startup density/accent, added Preferences live search, refreshed README/ROADMAP/docs
-  indexes and the GitHub wiki (6b0747d). Catalogs at 348, .mo --check green throughout.
-  **CRITICAL open verification — startup crash:** the Wave 14 screenshot pass found the
-  Wave 8/9-era binary crashes with heap corruption before any window (6/6 launches, WER evidence
-  recorded). That binary was built while agents were mid-edit, so the evidence is tainted; a
-  clean incremental build of the final tree was launched and a runtime smoke on it is the
-  mandatory next gate (the staged capture scripts make the screenshot retry fast). Until that
-  smoke passes, no runtime-health claim is made for the shipped tree.
-  **Startup crash root-caused and fixed (2026-07-22/23, user-reported 'App not launching'):**
-  deterministic heap corruption (0xc0000374) during MainFrame construction, WinDbg-dumped to
-  MaterialIcon::bitmap -> wxGDIPlusContext: the Material Symbols face is a VARIABLE TTF
-  (fvar/gvar) and rendering it through GDI+ corrupts the heap (GDI is fine). Fix: MaterialIcon
-  glyphs are now rasterized exclusively with plain GDI (shared glyph_image core; draw/measure/
-  bitmap/bitmapPx all GDI+-free) and every gc->SetFont(MaterialIcon::font(...)) site
-  (CheckBox/RadioBox/CameraHUD/AxisCtrlButton/StatusPanel/BBLTopbar) composites pre-rendered
-  bitmaps. Debug-heap masking (_NO_DEBUG_HEAP=1) and a poisoned MSBuild tracker (stale objs/libs
-  silently skipping compile+link, which also hid a get_extruder_color_icons signature drift)
-  prolonged the hunt; local builds in this worktree now force-link before trusting results.
-  **Sonnet conformance double-check (15 agents): 114 done-rows re-verified, 51 findings
-  adversarially confirmed, 24 fixed + 2 partial in-tree** (ScoreDialog/MultiMachinePickPage onto
-  the shell, SideTools/TempInput/ProgressBar de-legacied, star-rating + picker-checkbox glyphs,
-  preview polish, swatch ring geometry, i18n literals). Register truth-reconciled to
-  **123 done / 3 deviations / 5 open**: the stale XY-grid deviation flipped to done (the grid IS
-  implemented), three over-claimed rows reopened (Process card completion, ObjectList row
-  anatomy, section-header literal-class swap), and two audit-discovered rows added (ReleaseNote
-  sibling shells, ProgressDialog shell). Those five need one build-in-the-loop follow-up wave.
-  A locally built portable-ZIP preview release ships once the fixed binary passes the launch
-  stress test; CI releases continue per push via the TOKEN_GITHUB path.
-- Capture and review fresh full-compositor screenshots of the fully token-migrated native surfaces
-  and replace the pre-sweep captures above.
-- Repair/re-enable the aggregate and `libnest2d_tests` suites instead of relying on the focused waiver.
-- Complete dark-theme/Cantonese native smoke and independent Cantonese review, including the new
-  model-preview and sidebar surfaces.
-- Add retention/pruning/quota controls and user-controlled backup/export for local project history.
-- Provision Authenticode with a trusted signing identity; GitHub attestations and SHA-256 checksums do
-  not satisfy this.
+**Pages/site work owed (see §5.0 and §5.0.1):**
+
+0. ~~Confirm the `release` → dispatch path~~ — **done**, proven by `md3-v62` (§5.0.1). Nothing in
+   the Pages workflow is unproven now. Red release runs from tags older than `5340bd466` are the
+   pre-fix queue draining, not regressions; check the tag's commit before reacting.
+0b. **`README.md` and `ROADMAP.md` still describe the renamed native screens by their old labels**
+   (`Filament` cards, `AMS` dialogs, the wizard's filament page). The native UI, DeviceWeb, the
+   prototype, the site and the design system have all moved to ink / Ink Dispenser; those two files
+   have not, so they document a UI that no longer exists. Judge each line — `FilamentPicker` is a
+   class name and stays, and completed ROADMAP history should not be retroactively rewritten.
+0c. The published UI kit loads React and Babel from **unpkg.com**, so it makes third-party requests
+   and renders nothing if that CDN is blocked — unlike every other page on the site. A separate
+   session was started for this.
+
+Items 1 and 2 of the previous list are **done** (see §5.4). What remains, in priority order:
+
+1. **Native captures are still owed for everything changed on 2026-07-28.** The GUI build is
+   clean and the app runs, but almost none of the reskinned surfaces have been photographed.
+   Highest value first, all through `.claude/skills/run-bambustudio/`:
+   the **fan control popup** (the biggest single reskin, and its toggles are now real controls —
+   verify they take focus), the **Slice/Print dropdowns** (`SideButton` defaults + `SideMenuPopup`
+   surface), the **measurement gizmo chips in dark mode**, and the **2D bed preview in dark mode**
+   — that last one has an explicit open question recorded in `2DBed.cpp:88-100`: the slab sits at
+   1.05:1 against its backdrop by arithmetic, and the fix that raises it costs grid contrast. A
+   capture is the only thing that settles it.
+2. **Re-do the Smart Home volume slider conversion.** It was reverted because `Slider` could not
+   be reached by Tab and exposed no screen-reader role. Both are fixed now (`2283f5dc8`), so the
+   swap is safe — but `tests/home_assistant/home_assistant_ui_performance_contract.cmake:86`
+   anchors on the literal string `m_volume->Bind(wxEVT_SLIDER`, so that contract must be updated
+   in the same change or CI goes red. Keep what it is really asserting: that volume dispatch
+   happens inside the debounce callback, not before the slider hook.
+3. **Finish `gizmo-rail-svg-icons`** (register row now correctly marked **partial**, with the
+   reasoning inline). It needs new `MaterialIcon::Glyph` codepoints, a plated-glyph entry point on
+   `GLIconGlyphBridge`, and a decision on the Z-axis align/distribute tiles, which Material
+   Symbols cannot express at all.
+4. **Issue #24 — 8 verified `ui-md3` defects** (4 accessibility, 1 clipping, 3 search/regex).
+   Left unfixed on purpose: a concurrent session owned that tree. Check whether it still does.
+5. **Verify and deliver "Add my printers to Home Assistant"** (issue #16) — see §7.1.
+6. **Issue #15 is waiting on the user**, not on you: whether app-data secrets are redacted,
+   committed with disclosure, or encrypted. Do not start it by guessing.
+
+### 7.0 Two traps this session paid for — do not repeat them
+
+- **Do not edit source files while an audit or review agent is reading them.** Three verifiers
+  reported findings as "refuted — this code does not exist" when what had actually happened was
+  that the fix landed mid-audit. The verdicts were worthless and the time was wasted.
+- **A green patch is not a correct patch.** Of eleven fixes, four passed compilation and failed
+  adversarial review — one of them *introducing* a dark-mode regression while fixing a contrast
+  bug (a white error link brightened to `y=1.1`, which `IM_COL32` packed with no clamp so the
+  carry landed in blue and painted the underline magenta). Wave B repeated the pattern: a
+  conversion added `overflow: hidden` to a compressible flex item, i.e. introduced a clipping
+  defect inside a task whose entire purpose was removing them. **Review every patch, including
+  the ones that compile.**
+
+### 7.1 Item 3 in detail — Home Assistant printer handover (IMPLEMENTED; VERIFICATION PENDING)
+
+**Current boundary:** the code, focused tests, cross-host probe, documentation, localization source,
+and Windows workflow wiring are complete. The focused Release targets are built and green; the full
+Release GUI build and English native 720×760/520×480 clipping review are also complete. Native
+bilingual capture, live Home Assistant paths, and physical-printer success remain acceptance
+conditions. Remote publication and hosted Pages are verified; Windows CI/release evidence is tracked
+separately in issue #16 because this record must not predict a running job. Do not call the feature fully
+runtime-verified, shipped, or issue-complete until every applicable boundary has observed evidence.
+
+The companion
+[`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) now pins
+Home Assistant 2025.1.4 plus its matching fixture package. Its canonical Ubuntu workflow passes
+**93/93** in 3.36 seconds at
+[run 30359258358](https://github.com/Ding-Ding-Projects/ha-bambulab/actions/runs/30359258358),
+and published the tested root-content
+[`v3.0.7` HACS package](https://github.com/Ding-Ding-Projects/ha-bambulab/releases/tag/v3.0.7).
+Hassfest is green. The separate HACS repository validator remains red because neither fork nor
+upstream declares a license; choosing terms requires owner authority and is tracked in
+[companion issue #1](https://github.com/Ding-Ding-Projects/ha-bambulab/issues/1). Live Home
+Assistant/physical-printer verification remains pending.
+
+**Implemented Path B — explicit service call with a Home Assistant long-lived token:**
+
+- `SmartHomeDialog` collects accessible printers from `get_local_machinelist()` first and
+  `get_user_machinelist()` second, deduped by serial. Inclusion requires access rights, serial, LAN
+  address, and access code.
+- The visible **Add my printers to Home Assistant** action discloses the exact fields being copied
+  and states that access codes are credentials. The decision dialog uses **No** as its default.
+- `HomeAssistant::add_printers()` posts each printer to
+  `POST /api/services/bambu_lab/add_printer` with
+  `{serial, host, access_code[, name]}` and reports processed/failed request counts on the UI thread
+  (a 2xx may be an idempotent already-configured result). One import remains single-flight, but its
+  requests run in four-wide waves; 32 dead endpoints therefore consume at most eight 30-second
+  timeout waves instead of about 16 minutes of serial waiting.
+- Progress and results use non-blocking notifications with dialog-status fallback. Failures expose
+  the serial and HTTP status but never echo a response body that may contain credentials.
+- Every Home Assistant bearer request now goes through `HomeAssistantTransportPolicy`: HTTPS is
+  accepted; HTTP is accepted only for localhost or an explicit IPv4 loopback. Clear-text LAN HTTP,
+  malformed URLs, unsupported schemes, and URL user information are rejected before networking.
+  These requests also disable redirects and libcurl verbose tracing so credentials cannot be
+  replayed by a redirect or printed in a protocol trace.
+
+**Implemented Path A — temporary local discovery without a Home Assistant long-lived token:**
+
+- **Share for discovery for 5 minutes (no Home Assistant token)** is off by default, never
+  persisted, starts only through the user's toggle, and automatically turns itself off after five
+  minutes.
+- Every sharing window gets a fresh URL-safe capability with more than 240 random bits.
+- `HomeAssistantSharingService` binds `GET /bambustudio/printers` to the RFC1918/shared IPv4 address
+  on the ordinary default route (not a multicast-preferred host-only virtual adapter) and an
+  operating-system-selected port, then advertises
+  `_bambu-slicer._tcp.local.` PTR/SRV/TXT/A records. TXT contains `pairing` and `name`.
+- The service resolves the real prefix length for that interface and answers mDNS only for usable
+  senders on the exact advertised link. Network, broadcast, public, loopback, and link-local
+  senders are rejected. Query admission is burst eight/refill one per second before allocation;
+  replies are deduplicated, queued to eight, and paced 50 ms apart.
+- The HTTP endpoint requires exactly one matching Bearer header before it asks for printer data.
+  It caps header bytes, target length, timeout, concurrent sessions, response size, printer count,
+  and field lengths; strips unknown fields; uses no-store/nosniff/close headers; and returns generic
+  errors without reflecting sensitive values.
+- Turning the toggle off, closing the dialog, reaching the five-minute expiry, or destroying the
+  service closes sessions, stops serving, sends a zero-TTL mDNS goodbye, and discards the pairing
+  capability.
+- This path is clear-text LAN HTTP. The pairing capability is visible in mDNS to the broadcast
+  domain, so the UI/docs instruct users to use a trusted LAN and keep the window brief. It is not a
+  claim of encrypted transfer.
+
+**Local build, native UI, and focused verification completed on 2026-07-28:**
+
+- The Windows SDK 10.0.26100.0 Release build completed `home_assistant_tests` and
+  `home_assistant_sharing_probe`. The test binary passed **30 cases / 267 assertions**, and all five
+  `home_assistant_*` CTest entries passed.
+- The full `BambuStudio_app_gui` Release build exited 0 after **3,387 seconds**; its first no-change
+  rebuild exited 0 in **8.3 seconds**. After the clipping build described below, the final nonvisual
+  import-scheduling and cancellation-cleanup changes compiled and linked in **214.808 seconds**; the
+  final no-change rebuild exited 0 in **8.544 seconds**. The resulting DLL is 151,299,584 bytes,
+  timestamped `2026-07-28 08:15:46 -04:00`, with SHA-256
+  `41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`.
+- Lowlevel MCP headless review at 720×760 and the declared 520×480 minimum found a real clipping
+  defect: `make_responsive_action` forced text actions such as **Close** and the media controls
+  into 44-DIP widths. After removing that shrink, `SmartHomeDialog.cpp` rebuilt and the DLL linked
+  successfully in **141 seconds**; a no-change build exited 0 in **8.0 seconds**. The two primary
+  corrected captures were recaptured from the final `41BB1B…` DLL. The media-action close-up uses
+  the preceding `EBF646…` DLL; the later build changes only printer-import scheduling and
+  alert-light cancellation cleanup, not `SmartHomeDialog` or `MsgDialog` layout.
+- Genuine before/after evidence lives under `docs/screenshots/smart-home/`:
+  `dialog-720x760-before-text-action-fix.png`,
+  `dialog-720x760-after-text-action-fix.png`,
+  `dialog-520x480-before-text-action-fix.png`,
+  `dialog-520x480-after-text-action-fix.png`, and
+  `dialog-520x480-media-actions-after-fix.png`. The corrected **Close** and media actions remain
+  readable at both reviewed sizes. These captures are English; bilingual native capture remains
+  pending.
+- On the GPU-less Mesa llvmpipe headless host, cold first-run launch took **37.427 seconds** and a
+  subsequent launch took **32.339 seconds**. These are environment observations, not production
+  benchmarks. The app remained responsive with no hang at about 523 MB after 13.74 minutes and
+  about 549 MB after 6.26 minutes; the latter observation included three incidental Version
+  History windows.
+- `home_assistant_sharing_probe` runs the production service with a synthetic TEST-NET printer for
+  second-host mDNS/HTTP verification without printing its token or payload. A second LAN host
+  observed PTR/SRV/TXT/A, completed one authenticated bounded fetch, and observed the zero-TTL
+  goodbye.
+- That pass caught a real false-LAN selection: the multicast route preferred a host-only WSL
+  adapter. Auto-detection now follows the ordinary default route, while the multicast flood test
+  correctly sends real multicast rather than nondeterministic unicast into a shared Windows port.
+- The Cantonese catalog check passed 718 entries, the static Pages/i18n/clipping suite passed 21/21,
+  and the browser Pages matrix passed all 156 combinations of 13 physical widths, four zoom levels,
+  and three language modes. Template assembly is synchronized. Native bilingual Smart Home capture
+  remains pending.
+- Performance bounds now include a 4 MiB entity-state body, at most four query domains, 512 parsed
+  backend entities, 256 rendered matches, and persisted-list inspection capped at 256 segments,
+  64 KiB, and 256 bytes per value with at most 32 active unique entries. Path B imports at most four
+  printers concurrently, so the 32-printer cap takes no more than eight timeout waves. A failed
+  two-attempt light restore retains its generation-specific recovery scene rather than deleting it;
+  cancellation after scene creation but before a flash deletes the unused scene, and the focused
+  regression records the exact create/delete sequence and shutdown timeout.
+- `.github/workflows/build_bambu.yml` builds both targets and includes `home_assistant_tests` in the
+  maintained CTest gate.
+- `docs/features/windows/smart-home.md` is the user/maintainer behavior and security guide.
+  `docs/features/api/home-assistant-printer-discovery.md` plus focused and master Postman
+  collections document the transient endpoint.
+
+**Do this next, in order:**
+
+1. Capture the native bilingual Smart home dialog with `.claude/skills/run-bambustudio/` through
+   Lowlevel MCP headless mode. Check the wrapped “don't show again” footer, stacked actions,
+   credential disclosure, No-default confirmation, transport rejection, sharing status, keyboard
+   reachability, focus, and clipping.
+2. Verify Path B end-to-end against a real Home Assistant with `bambu_lab:` configured. Never place
+   a real token or access code in a command line, log, screenshot, issue, Discussion, or Git.
+3. Verify Home Assistant's real Path A confirmation card. Cross-host PTR/SRV/TXT/A discovery,
+   authenticated fetch, and goodbye are already observed; the synthetic probe is not a real-printer
+   import.
+4. Verify a physical-printer success path when hardware is available; do not substitute the
+   synthetic TEST-NET transport probe for that result.
+5. Update `ha-bambulab/docs/verification.md` only with observed evidence. Ensure both repositories'
+   remote default branches contain the exact verified commits, post the native screenshot and
+   evidence to issue #16, record the observed hosted CI/release verdict there, and close #16 only
+   after every acceptance condition is proven.
+
+**Definition of done for issue #16:** the Path B button works end-to-end against a real Home
+Assistant and physical printer; Path A's production service is observed across hosts and produces
+the companion integration's real discovery card; native UI screenshots are posted to the issue;
+both repositories are pushed; hosted checks have an honest recorded state; and no credential
+appears in any retained artifact.
+
+---
+
+## 8. Rules this repo is run by (do not skip)
+
+- **An auto-commit daemon runs on this machine.** It periodically commits *all* uncommitted
+  changes in this repo and pushes `master`. Never leave half-finished work in the tree expecting
+  to commit it later with a clean message. Commit deliberately and promptly.
+- **Never claim a build or CI run succeeded before it reports.** Check the log, check the job
+  list, and say "running" when it is running.
+- **Screenshot evidence must be genuine**: from the real built binary, through the project's own
+  capture harness. Never a mockup, never a different surface passed off as the fixed one.
+- Commit messages are **bilingual**: concise English subject, playful Hong Kong Cantonese in the
+  body.
+- Every user-facing surface must follow Material Design 3, provide the three language modes
+  (English / Cantonese / bilingual), use non-blocking toasts for anything informational, and
+  route every search bar through the shared regex builder. See `docs/features/` for per-feature
+  documentation and `.claude/skills/` for tooling.
+
+---
+
+## 9. Where documentation lives
+
+- `docs/features/README.md` — index of categorized feature docs.
+- `docs/features/windows/windows-only-platform.md` — the Windows-only policy in detail.
+- `docs/features/workspace/project-version-history.md` — the Git-backed history feature,
+  including the crash-backup preservation behaviour described in §5.3.
+- `docs/features/pages/README.md` — the published GitHub Pages site: tabs, language modes and
+  funny levels, the regex builder, the changelog viewer, and the 444-case layout gate.
+- `docs/screenshots/README.md` — the screenshot matrix index.
+- `docs/screenshots/pages/README.md` — captures of the published site, and how to retake them.
+- `.claude/skills/run-bambustudio/SKILL.md` — how to run and drive the app. **Read this before
+  trying to test anything in the UI.**
+
+---
+
+## 10. One-click local Windows installer build
+
+`OneClickBuildInstaller.cmd` now provides the local bootstrap → dependencies → Release app →
+payload → verified Mesa fallback → SBOM → NSIS → SHA-256 path. Its implementation is
+`scripts/windows/Invoke-OneClickBuild.ps1`, its static contract test is
+`scripts/ci/Test-OneClickBuild.ps1`, and its operator guide is
+`docs/features/releases/windows-one-click-build.md`. The installer remains unsigned and is launched
+only when the caller explicitly supplies `-Install`.

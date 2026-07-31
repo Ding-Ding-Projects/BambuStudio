@@ -26,6 +26,7 @@ class Main extends DCLogic {
       speedMode: 'Standard',
       lamp: true,
       snacks: [],
+      shellSearch: {},
       branch: 'main',
       showHistory: false,
       selectedCommit: 'a1f9c02',
@@ -108,7 +109,7 @@ class Main extends DCLogic {
       {id:'multi', label:'Multi-device', icon:'devices'},
       {id:'project', label:'Project', icon:'folder'},
       {id:'calibration', label:'Calibration', icon:'tune'},
-      {id:'filament', label:'Filament', icon:'palette'},
+      {id:'filament', label:'Ink', icon:'palette'},
       {id:'settings', label:'Settings', icon:'settings'},
     ];
     return defs.map(d=>{ const on = cur===d.id; return {
@@ -120,10 +121,10 @@ class Main extends DCLogic {
   }
   render_filaments(){
     return [
-      {color:'#111418', name:'Bambu PLA Basic', type:'PLA', slot:'AMS · Slot 1'},
-      {color:'#e11d2e', name:'Bambu PLA Matte', type:'PLA', slot:'AMS · Slot 2'},
-      {color:'#1560d4', name:'Bambu PETG HF', type:'PETG', slot:'AMS · Slot 3'},
-      {color:'#f5c518', name:'Bambu Support', type:'SUP', slot:'AMS · Slot 4'},
+      {color:'#111418', name:'Bambu PLA Basic', type:'PLA', slot:'Ink Dispenser · Slot 1'},
+      {color:'#e11d2e', name:'Bambu PLA Matte', type:'PLA', slot:'Ink Dispenser · Slot 2'},
+      {color:'#1560d4', name:'Bambu PETG HF', type:'PETG', slot:'Ink Dispenser · Slot 3'},
+      {color:'#f5c518', name:'Bambu Support', type:'SUP', slot:'Ink Dispenser · Slot 4'},
     ];
   }
   render_accents(){
@@ -151,7 +152,35 @@ class Main extends DCLogic {
     setTimeout(()=>this.dismissSnack(id), opts.duration||3200);
   }
   dismissSnack(id){ this.setState(st=>({ snacks: st.snacks.filter(x=>x.id!==id) })); }
-  exMatch(name){ const q=this.state.export.contains; if(!q) return true; try{ return new RegExp(q,'i').test(name); }catch(e){ return name.toLowerCase().includes(q.toLowerCase()); } }
+  /*
+   * Shell-level search state, shared by the two search fields that live in the
+   * app shell rather than on a screen: the version-history drawer and the
+   * add-filament dialog. Same rule as everywhere else — plain text by default,
+   * a RegExp only when the field reports that its .* toggle is on.
+   */
+  setShellQuery(key, value, mode){
+    this.setState(st=>({ shellSearch:{...(st.shellSearch||{}),
+      [key]:value,
+      [key+'Regex']:!!(mode&&mode.regex),
+      [key+'Flags']:(mode&&typeof mode.flags==='string'?mode.flags:'i') } }));
+  }
+  shellMatch(key, text){
+    const search=this.state.shellSearch||{};
+    const q=search[key];
+    if(!q) return true;
+    if(!search[key+'Regex']) return String(text).toLowerCase().includes(q.toLowerCase());
+    try{ return new RegExp(q, (typeof search[key+'Flags']==='string'?search[key+'Flags']:'i')).test(String(text)); }
+    catch(e){ return String(text).toLowerCase().includes(q.toLowerCase()); }
+  }
+
+  // Plain text is the default; a regular expression is compiled only when the
+  // search field says the user turned its .* toggle on.
+  exMatch(name){
+    const q=this.state.export.contains; if(!q) return true;
+    if(!this.state.export.regex) return name.toLowerCase().includes(q.toLowerCase());
+    try{ return new RegExp(q, this.state.export.flags||'i').test(name); }
+    catch(e){ return name.toLowerCase().includes(q.toLowerCase()); }
+  }
   toggleExportItem(name){ this.setState(st=>{ const sel={...(st.export.selected||{})}; sel[name]=!sel[name]; return {export:{...st.export, selected:sel}}; }); }
   toggleSelectAllExport(){ const ex=this.state.export; const rows=this.render_filRows().filter(f=>this.exMatch(f.name)&&(ex.type==='All'||f.type===ex.type)&&(ex.vendor==='All'||f.vendor===ex.vendor)); const sel={...(ex.selected||{})}; const all=rows.length>0&&rows.every(f=>sel[f.name]); rows.forEach(f=>sel[f.name]=!all); this.setState({export:{...ex,selected:sel}}); }
   doExport(){ const ex=this.state.export; const sel=ex.selected||{}; const n=Object.keys(sel).filter(k=>sel[k]).length; this.setState({dialog:null}); this.notify(this.msg('exportedPresets',{count:n,suffix:n===1?'':'s',format:ex.format}), {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}); }
@@ -206,20 +235,29 @@ class Main extends DCLogic {
       openAddFilament:()=>this.setState({dialog:'addfil'}),
       openDialog:(id)=>this.setState({dialog:id}), closeDialog:()=>this.setState({dialog:null}),
       goPrepare:this.go('prepare'), goDevice:this.go('device'), goHome:this.go('home'), goProject:this.go('project'),
-      filamentRows:this.render_filRows(), historyCount:s.history.length,
+      filamentRows:this.render_filRows().filter(f=>this.shellMatch('addFilament', f.name+' '+f.vendor+' '+f.type)),
+      addFilamentEmpty:this.render_filRows().filter(f=>this.shellMatch('addFilament', f.name+' '+f.vendor+' '+f.type)).length===0,
+      addFilamentQuery:(this.state.shellSearch||{}).addFilament||'',
+      setAddFilamentQuery:(v,mode)=>this.setShellQuery('addFilament', v, mode),
+      setHistoryQuery:(v,mode)=>this.setShellQuery('history', v, mode),
+      historyQuery:(this.state.shellSearch||{}).history||'',
+      historyEmpty:s.history.filter(h=>this.shellMatch('history', h.hash+' '+h.message+' '+(h.author||'')+' '+(h.files||''))).length===0,
+      historyCount:s.history.length,
       isDlgSend:s.dialog==='send', isDlgAbout:s.dialog==='about', isDlgAddfil:s.dialog==='addfil', isDlgSlice:s.dialog==='slice',
       openAbout:()=>this.setState({dialog:'about'}),
       snacks: s.snacks.map(n=>({ ...n, hasAction: !!n.action, dismiss:()=>this.dismissSnack(n.id), action: n.action||(()=>{}) })),
       branch: s.branch, historyHead: (s.history[0]||{}).hash,
       showHistory: s.showHistory, toggleHistory:()=>this.setState({showHistory:!s.showHistory}),
       autoCommitNote: 'Every edit is auto-committed to this project\u2019s local Git repo',
-      history: s.history.map((h,i)=>{ const on=s.selectedCommit===h.hash; return { ...h, isHead:i===0, expanded:on, chevron:on?'expand_less':'expand_more', dotBg:on?'var(--md-primary)':'var(--md-sc-highest)', dotFg:on?'var(--md-on-primary)':'var(--md-on-surface-variant)', onSelect:()=>this.setState({selectedCommit: on?null:h.hash}), restore:()=>this.notify(this.msg('restoredProject',{hash:h.hash}), {icon:'history'}) }; }),
-      addFilamentConfirm:()=>{ this.setState({dialog:null}); this.commit('Add filament: Bambu PLA Basic','palette'); },
+      history: s.history.filter(h=>this.shellMatch('history', h.hash+' '+h.message+' '+(h.author||'')+' '+(h.files||''))).map((h,i)=>{ const on=s.selectedCommit===h.hash; return { ...h, isHead:i===0, expanded:on, chevron:on?'expand_less':'expand_more', dotBg:on?'var(--md-primary)':'var(--md-sc-highest)', dotFg:on?'var(--md-on-primary)':'var(--md-on-surface-variant)', onSelect:()=>this.setState({selectedCommit: on?null:h.hash}), restore:()=>this.notify(this.msg('restoredProject',{hash:h.hash}), {icon:'history'}) }; }),
+      addFilamentConfirm:()=>{ this.setState({dialog:null}); this.commit('Add ink: Bambu PLA Basic','palette'); },
       sendPrint:()=>{ this.setState({dialog:null}); this.notify(this.msg('printSent',{printer:'Bambu Lab X1 Carbon'}), {icon:'send', actionLabel:'Device', action:this.go('device'), duration:4200}); },
-      exportFilament:()=>this.notify('Exported \u201CBambu PLA Basic\u201D \u2192 filament preset (.bbsflmt)', {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}),
-      exportAllFilaments:()=>this.notify('Exported 6 filament presets \u2192 bundle (.bbsflmt.zip)', {icon:'folder_zip', duration:4000}),
+      exportFilament:()=>this.notify('Exported \u201CBambu PLA Basic\u201D \u2192 ink preset (.bbsflmt)', {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}),
+      exportAllFilaments:()=>this.notify('Exported 6 ink presets \u2192 bundle (.bbsflmt.zip)', {icon:'folder_zip', duration:4000}),
       openExport:()=>{ const all={}; this.render_filRows().forEach(f=>all[f.name]=true); this.setState({ dialog:'export', export:{...this.state.export, selected:all, contains:'', type:'All', vendor:'All'} }); },
-      isDlgExport: s.dialog==='export', setExQuery:(v)=>this.setState({export:{...this.state.export, contains:v}}),
+      isDlgExport: s.dialog==='export',
+      setExQuery:(v,mode)=>this.setState({export:{...this.state.export, contains:v,
+        regex:!!(mode&&mode.regex), flags:(mode&&typeof mode.flags==='string'?mode.flags:'i')}}),
       exRows, exSelCount, exTotal: exFiltered.length, exAllIcon, exFormat: s.export.format,
       exEmpty: exFiltered.length===0, exploreModels:()=>this.notify(this.msg('openingLibrary'), {icon:'public'}),
       toggleSelectAllExport:()=>this.toggleSelectAllExport(), doExport:()=>this.doExport(),

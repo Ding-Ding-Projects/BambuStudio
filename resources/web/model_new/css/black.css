@@ -61,7 +61,11 @@ body {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
   width: auto;
   flex: 0 0 auto;
   margin-top: 16px;
@@ -75,4 +79,15 @@ body {
   color: var(--md-on-surface-variant);
   text-align: center;
   font-size: 14px;
+}
+
+.addBtn:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }

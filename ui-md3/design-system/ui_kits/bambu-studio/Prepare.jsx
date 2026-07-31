@@ -2,10 +2,10 @@ const { useState: usePrepState } = React;
 window.Screens = window.Screens || {};
 
 const FILAMENTS = [
-  { name: 'Bambu PLA Basic', slot: 'AMS A1', type: 'PLA', color: '#22c55e' },
-  { name: 'Bambu PLA Basic', slot: 'AMS A2', type: 'PLA', color: '#f5f5f4' },
-  { name: 'Bambu PETG HF', slot: 'AMS A3', type: 'PETG', color: '#3b82f6' },
-  { name: 'Bambu Support W', slot: 'AMS A4', type: 'PLA-S', color: '#78716c' },
+  { name: 'Bambu PLA Basic', slot: 'Dispenser A1', type: 'PLA', color: '#22c55e' },
+  { name: 'Bambu PLA Basic', slot: 'Dispenser A2', type: 'PLA', color: '#f5f5f4' },
+  { name: 'Bambu PETG HF', slot: 'Dispenser A3', type: 'PETG', color: '#3b82f6' },
+  { name: 'Bambu Support W', slot: 'Dispenser A4', type: 'PLA-S', color: '#78716c' },
 ];
 window.KIT_FILAMENTS = FILAMENTS;
 
@@ -87,7 +87,7 @@ window.Screens.Prepare = function Prepare({ notify, openDialog }) {
         </div>
         <div style={{ height: 1, background: 'var(--md-outline-variant)', margin: '0 var(--pad)' }} />
         <div style={{ padding: 'var(--pad)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <SectionHeader icon="palette" trailing={<Button variant="outlined" size="sm" icon="sync" style={{ height: 30, fontSize: 11.5, color: 'var(--md-primary)', padding: '0 10px' }} onClick={() => notify('Synced with AMS', 'sync')}>Sync AMS</Button>}>Filament</SectionHeader>
+          <SectionHeader icon="palette" trailing={<Button variant="outlined" size="sm" icon="sync" style={{ height: 30, fontSize: 11.5, color: 'var(--md-primary)', padding: '0 10px' }} onClick={() => notify('Synced with Ink Dispenser', 'sync')}>Sync Ink Dispenser</Button>}>Ink</SectionHeader>
           {FILAMENTS.map(f => (
             <div key={f.slot} style={{ display: 'flex', alignItems: 'center', gap: 10, height: 44, padding: '0 8px', background: 'var(--md-sc-highest)', borderRadius: 12 }}>
               <div style={{ width: 28, height: 28, borderRadius: 8, background: f.color, border: '1px solid rgba(0,0,0,.25)', boxShadow: 'inset 0 0 0 2px var(--md-sc-highest), inset 0 0 0 3px rgba(255,255,255,.15)' }} />
@@ -98,7 +98,7 @@ window.Screens.Prepare = function Prepare({ notify, openDialog }) {
               <Badge>{f.type}</Badge>
             </div>
           ))}
-          <Button variant="outlined" size="sm" icon="add" style={{ color: 'var(--md-primary)' }} onClick={() => openDialog('addfil')}>Add filament</Button>
+          <Button variant="outlined" size="sm" icon="add" style={{ color: 'var(--md-primary)' }} onClick={() => openDialog('addfil')}>Add ink</Button>
         </div>
         <div style={{ height: 1, background: 'var(--md-outline-variant)', margin: '0 var(--pad)' }} />
         <div style={{ padding: 'var(--pad)', display: 'flex', flexDirection: 'column', gap: 10 }}>

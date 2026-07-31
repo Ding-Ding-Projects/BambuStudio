@@ -40,6 +40,12 @@ public:
 protected:
     CaliPresetStage m_stage;
     wxBoxSizer*   m_top_sizer;
+    // Deliberately native, not the drawn MD3 RadioBox: RadioBox is a label-less
+    // wxBitmapToggleButton, so retyping these would trade the radio role, the checked
+    // state, the label-derived accessible name, arrow-key group navigation and the
+    // automatic single-selection for a themed dot. Their type and text colour are
+    // tokened in create_panel(); the glyph itself stays an OS radio until a RadioBox
+    // that carries a label and a radio role exists.
     wxRadioButton* m_complete_radioBox;
     wxRadioButton* m_fine_radioBox;
     TextInput *    flow_ratio_input;

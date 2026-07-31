@@ -42,7 +42,7 @@ test('normalizes QA aliases while invalid values fall back to English', () => {
 
 test('uses Cantonese resources and retains English for missing entries', () => {
   assert.equal(i18n.translateText('Home', 'yue_HK'), '主頁');
-  assert.equal(i18n.translateText('No filaments match your filter.', 'yue_HK'), '沒有耗材符合篩選條件。');
+  assert.equal(i18n.translateText('No inks match your filter.', 'yue_HK'), '沒有墨水符合篩選條件。');
   assert.equal(i18n.translateText('Uncatalogued future control', 'yue_HK'), 'Uncatalogued future control');
   assert.equal(i18n.describe('Uncatalogued future control', 'yue_HK').fallback, true);
 });
@@ -62,7 +62,7 @@ test('bilingual mode keeps English primary and progressively discloses long Cant
   assert.equal(longCopy.disclosure, true);
 
   // Safety/error text is deliberately literal and remains directly visible.
-  const errorCopy = i18n.describe('No filaments match your filter.', 'bilingual_en_yue_HK');
+  const errorCopy = i18n.describe('No inks match your filter.', 'bilingual_en_yue_HK');
   assert.equal(errorCopy.disclosure, false);
   assert.equal(errorCopy.tone, 'literal');
 });
@@ -117,13 +117,13 @@ test('covers all required navigation, Settings, search, and common-action source
   const required = [
     'File', 'Edit', 'View', 'Objects', 'Help',
     'Home', 'Prepare', 'Preview', 'Device', 'Multi-device', 'Project',
-    'Calibration', 'Filament', 'Settings',
+    'Calibration', 'Ink', 'Settings',
     'Appearance', 'General', 'Presets', 'Network', 'Version control', 'About',
     'Language', 'Language mode', 'Theme', 'Density', 'Accent color',
-    'Search', 'Search settings', 'Search objects', 'Search filaments',
+    'Search', 'Search settings', 'Search objects', 'Search inks',
     'Open', 'Cancel', 'Save', 'Send', 'Export', 'Restore this version',
     'New Project', 'Open project', 'Slice plate', 'Send print', 'Export all',
-    'Import', 'New filament'
+    'Import', 'New ink'
   ];
   const missing = required.filter((source) => !i18n.describe(source, 'yue_HK').localized);
   assert.deepEqual(missing, []);
@@ -144,7 +144,7 @@ test('maintains broad Cantonese coverage for visible static app copy', async () 
   const productOrTechnical = new Set([
     'Bambu Studio', 'Bambu Studio — Material Design 3', 'Bambu Lab X1 Carbon',
     '3DBenchy_project', '3DBenchy.gcode.3mf', '3DBenchy.stl',
-    'STL, STEP, 3MF, OBJ', 'AMS', 'X', 'Y', 'Z', 'Z +10', 'Z −10', 'Z axis'
+    'STL, STEP, 3MF, OBJ', 'Ink Dispenser', 'X', 'Y', 'Z', 'Z +10', 'Z −10', 'Z axis'
   ]);
   const candidates = [...new Set(
     [...html.matchAll(/>([^<>]+)</g)].map((match) => decode(match[1]).trim()).filter(Boolean)
@@ -190,12 +190,22 @@ test('loads localization before the renderer and exposes exactly three Settings 
 
 test('shares canonical persisted modes with the Pages landing surface', async () => {
   const landing = await readFile(path.join(rootDir, 'landing.html'), 'utf8');
+  const core = await readFile(path.join(rootDir, 'site', 'core.js'), 'utf8');
+  const settingsModule = await readFile(path.join(rootDir, 'site', 'settings.js'), 'utf8');
+
   const optionValues = [...landing.matchAll(/<option value="([^"]+)"/g)].map((match) => match[1]);
   assert.deepEqual(optionValues, ['en', 'yue_HK', 'bilingual_en_yue_HK']);
+
+  // The landing page selects and persists its mode through the app's runtime,
+  // so a mode chosen on the site survives into the prototype and back.
   assert.ok(landing.indexOf('./app/i18n.resources.js') < landing.indexOf('./app/i18n.js'));
-  assert.match(landing, /BambuI18n/);
-  assert.match(landing, /setActiveMode\(event\.target\.value,\{persist:true\}\)/);
-  const inlineScripts = [...landing.matchAll(/<script>([\s\S]*?)<\/script>/g)];
-  assert.ok(inlineScripts.length > 0);
-  inlineScripts.forEach((match) => assert.doesNotThrow(() => new Function(match[1])));
+  assert.ok(landing.indexOf('./app/i18n.js') < landing.indexOf('./site/core.js'));
+  assert.match(core, /global\.BambuI18n/);
+  assert.match(core, /i18n\.initialize\(\{ search: global\.location\.search \}\)/);
+  assert.match(core, /i18n\.setActiveMode\(mode, \{ persist: true \}\)/);
+  assert.match(settingsModule, /site\.setLanguageMode\(option\[0\]\)/);
+
+  // Every line of the site's script is a separate file, so a strict inline
+  // script policy cannot blank the page.
+  assert.equal([...landing.matchAll(/<script>([\s\S]*?)<\/script>/g)].length, 0);
 });

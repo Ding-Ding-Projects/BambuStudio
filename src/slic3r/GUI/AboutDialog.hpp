@@ -8,7 +8,9 @@
 #include "GUI_Utils.hpp"
 #include "wxExtensions.hpp"
 
-namespace Slic3r { 
+class Button;
+
+namespace Slic3r {
 namespace GUI {
 
 class AboutDialogLogo : public wxPanel
@@ -59,6 +61,9 @@ class AboutDialog : public DPIDialog
     ScalableBitmap  m_logo_bitmap;
     wxHtmlWindow*   m_html;
     wxStaticBitmap* m_logo;
+    // The MD3 "Portions copyright" button, kept so on_dpi_changed can re-derive
+    // its variant geometry (msw_buttons_rescale only handles native wxButtons).
+    Button*         m_btn_portions { nullptr };
     int             m_copy_rights_btn_id { wxID_ANY };
     int             m_copy_version_btn_id { wxID_ANY };
 public:

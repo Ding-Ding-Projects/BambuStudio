@@ -50,12 +50,13 @@ class MD3HeaderTile;
 // classic borderless, shaped, theme-adaptive shell byte-for-byte, so every
 // subclass built on the pinned 4-arg ctor is unaffected):
 //
-//   * Options::resizable  — keep native window chrome (a wxRESIZE_BORDER title
-//     bar + resize grip) and lay the MD3 header/footer panels inside the client
-//     area, instead of the borderless wxFRAME_SHAPED rounded silhouette. For
-//     dialogs that embed a wxGLCanvas or must be user-resizable. The MD3
-//     circular close is hidden in this mode (the native title bar owns close),
-//     and no window shape / borderless-drag is applied.
+//   * Options::resizable  — trade the wxFRAME_SHAPED rounded silhouette for a
+//     thin resize frame (wxRESIZE_BORDER | wxBORDER_NONE — still no wxCAPTION),
+//     for dialogs that embed a wxGLCanvas or must be user-resizable. This
+//     variant is borderless too, so it keeps the whole MD3 header — circular
+//     close included, since that circle is the only close affordance either
+//     variant has — and the borderless drag handles; only the rounded window
+//     shape is skipped, as a shape region would clip the resize frame.
 //   * Options::forced_dark — pin the shell chrome (background, header
 //     title/subtitle/close glyph, icon tile, footer divider) to the dark colour
 //     scheme regardless of the running app theme, for always-dark brand
@@ -137,6 +138,9 @@ protected:
     // built. In the two-phase path the window itself was created classic
     // (borderless shaped) by the default ctor, so opts.resizable is not applied
     // (the window style is fixed at creation); opts.forced_dark is honoured.
+    // The header's circular close is laid out unconditionally here, as in every
+    // other path and variant; a shell that must not be closable (an
+    // uncancelable progress shell) calls ShowHeaderClose(false) afterwards.
     bool CreateShell(wxWindow *          parent,
                      const wxString &    title,
                      const wxString &    subtitle,
@@ -164,8 +168,8 @@ protected:
 private:
     void build_shell(const wxString &title, const wxString &subtitle, MaterialIcon::Glyph glyph);
     // Make w a drag handle for the borderless frame (restores movability lost
-    // with the native title bar). No-op in the resizable variant (the native
-    // title bar already moves the window).
+    // with the native title bar). Applies to both variants — the resizable one
+    // is borderless too, so nothing else would move the window.
     void bind_drag(wxWindow *w);
     // Resolve a chrome role honouring m_forced_dark (dark scheme pinned) or the
     // live app theme otherwise.

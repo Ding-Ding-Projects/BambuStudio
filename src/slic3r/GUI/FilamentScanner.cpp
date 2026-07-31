@@ -308,8 +308,16 @@ FilamentScanDialog::FilamentScanDialog(wxWindow *parent)
                 MaterialIcon::Palette)
 {
     const std::string token = random_token();
-    m_server = std::make_unique<ScanUploadServer>(token, [this](std::string path) {
-        wxTheApp->CallAfter([this, path]() { on_image_received(path); });
+    // The server hands the photo over from its own accept thread. Joining that
+    // thread in ~ScanUploadServer cannot retract a call already queued on
+    // wxTheApp, so the queued lambda re-checks liveness before it touches us.
+    auto alive = m_alive;
+    m_server = std::make_unique<ScanUploadServer>(token, [this, alive](std::string path) {
+        wxTheApp->CallAfter([this, alive, path]() {
+            if (!alive->load())
+                return;
+            on_image_received(path);
+        });
     });
 
     wxBoxSizer *body = GetContentSizer();
@@ -358,7 +366,14 @@ FilamentScanDialog::FilamentScanDialog(wxWindow *parent)
     CenterOnParent();
 }
 
-FilamentScanDialog::~FilamentScanDialog() = default;
+FilamentScanDialog::~FilamentScanDialog()
+{
+    // Clearing the flag here - on the UI thread, the same thread the queued
+    // lambdas run on - is what turns every in-flight callback into a no-op. It
+    // must happen before the members go, so ~ScanUploadServer's join window
+    // cannot slip one last live callback past us.
+    *m_alive = false;
+}
 
 void FilamentScanDialog::on_image_received(std::string image_path)
 {
@@ -367,12 +382,15 @@ void FilamentScanDialog::on_image_received(std::string image_path)
     m_status->SetLabel(_L("Photo received - identifying the filament with the local model..."));
     Layout();
 
-    std::thread([this, image_path]() {
-        std::string model = wxGetApp().app_config->get("printer_watch_model");
-        if (model.empty()) model = "qwen2.5vl";
-        std::string endpoint = wxGetApp().app_config->get("printer_watch_endpoint");
-        if (endpoint.empty()) endpoint = "http://127.0.0.1:11434";
+    // AppConfig is a bare map with no lock and the TTS toggle writes it on this
+    // thread, so the model/endpoint are read here and the worker gets copies.
+    std::string model = wxGetApp().app_config->get("printer_watch_model");
+    if (model.empty()) model = "qwen2.5vl";
+    std::string endpoint = wxGetApp().app_config->get("printer_watch_endpoint");
+    if (endpoint.empty()) endpoint = "http://127.0.0.1:11434";
 
+    auto alive = m_alive;
+    std::thread([this, alive, image_path, model, endpoint]() {
         std::string image_b64;
         {
             std::ifstream in(image_path, std::ios::binary);
@@ -389,6 +407,13 @@ void FilamentScanDialog::on_image_received(std::string image_path)
         http.header("Content-Type", "application/json")
             .set_post_body(body.dump())
             .timeout_max(180)
+            // Closing the dialog must not leave a three-minute request pinning
+            // this thread; curl polls the progress callback even while the
+            // model is still thinking, so the wait ends with the dialog.
+            .on_progress([alive](Http::Progress, bool &cancel) {
+                if (!alive->load())
+                    cancel = true;
+            })
             .on_complete([&](std::string response, unsigned) {
                 try {
                     const auto reply  = nlohmann::json::parse(response).value("response", "");
@@ -401,7 +426,9 @@ void FilamentScanDialog::on_image_received(std::string image_path)
             .on_error([&](std::string, std::string err, unsigned) { error = err; })
             .perform_sync();
 
-        wxTheApp->CallAfter([this, fila_type, brand, color_hex, error]() {
+        wxTheApp->CallAfter([this, alive, fila_type, brand, color_hex, error]() {
+            if (!alive->load())
+                return; // the dialog was closed while the model was thinking
             m_analyzing = false;
             if (!error.empty()) {
                 m_status->SetLabel(wxString::Format(

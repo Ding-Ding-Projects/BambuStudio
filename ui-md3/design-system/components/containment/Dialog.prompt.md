@@ -1,4 +1,4 @@
-Modal shell for Export / Send-to-print / Add-filament.
+Modal shell for Export / Send-to-print / Add-ink.
 
 ```jsx
 <Dialog icon="print" title="Print Plate 1" subtitle="Send to printer over the network" onClose={close}

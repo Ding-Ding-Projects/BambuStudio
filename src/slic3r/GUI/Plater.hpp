@@ -192,6 +192,11 @@ public:
     // app_config "sidebar_process_advanced" unless persist is false, e.g.
     // for transient flips such as search-result jumps).
     void show_process_advanced(bool advanced, bool persist = true);
+    // True while the full (global) process-settings tree is showing instead of
+    // the compact Process card. Read at startup so the restored sidebar gets the
+    // wider dock the tree needs, since the ctor applies the persisted choice
+    // before the AUI pane that carries the width even exists.
+    bool is_process_advanced() const;
     // BBS. Add filament_added() method.
     void on_filament_count_change(size_t num_filaments);
     void on_filaments_delete(size_t filament_id);
@@ -513,6 +518,17 @@ public:
     // "prepare_sidebar_dock" (left|right|top|bottom). Applies live, no restart.
     void                  apply_sidebar_dock();
     void                  reset_window_layout(int width = -1);
+    // Widen (or restore) the docked Prepare sidebar so the full process-settings
+    // tree gets a width its option rows can actually live at. Pass 0 to go back
+    // to the density default. No-op while the sidebar is floating or docked to a
+    // horizontal (top/bottom) edge, where width is not the constrained axis.
+    // Returns false when the frame is not laid out enough to size against yet,
+    // so a startup caller knows to try again on the next size instead of
+    // latching a width that silently clamped to the compact default.
+    // grow_only leaves a sidebar that is already wider than the request alone:
+    // the sash is user-draggable and the dragged width is persisted, so the
+    // startup re-assert must never claw back a width the user chose.
+    bool                  request_sidebar_width(int width_px, bool grow_only = false);
     // Called after the Preferences dialog is closed and the program settings are saved.
     // Update the UI based on the current preferences.
     void update_ui_from_settings();

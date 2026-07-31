@@ -1,6 +1,7 @@
 #ifndef slic3r_GUI_StepCtrlBase_hpp_
 #define slic3r_GUI_StepCtrlBase_hpp_
 
+#include "MD3Tokens.hpp"
 #include "StaticBox.hpp"
 
 wxDECLARE_EVENT( EVT_STEP_CHANGING, wxCommandEvent );
@@ -56,6 +57,24 @@ public:
     int      GetItemUseText(wxString txt) const;
     void     SetItemText(unsigned int item, wxString const& value);
 
+    // Retint the rail for the workspace that owns it -- Device teal, Preview
+    // purple, or the default brand accent. Only the step dot and the numeral
+    // painted inside it follow the accent; the track, the border and the step
+    // captions stay on neutral roles, which are scheme-independent.
+    void SetColorScheme(MD3::ColorScheme scheme);
+
+protected:
+    // (Re)build clr_bar / clr_step / clr_text / clr_tip from the MD3 roles for
+    // the scheme currently held in StaticBox::m_scheme. Every constructor calls
+    // it once, and SetColorScheme() calls it again on each scheme change --
+    // which is why the colours cannot simply be baked into the init list.
+    virtual void applyColorScheme();
+
+    // Shared by both indicator rails: the dot carries the scheme accent and the
+    // numeral drawn *inside* it carries OnPrimary. The plain rail instead paints
+    // its tips on the surface beside the dot, so it keeps the base mapping.
+    void applyIndicatorColorScheme();
+
 private:
     // some useful events
     bool sendStepCtrlEvent(bool changing = false);
@@ -87,6 +106,9 @@ private:
 
 class StepIndicator : public StepCtrlBase
 {
+    // Kept as the graceful fallback for the completed-step tick (and as the
+    // DPI metric that sizes the dot); the tick itself is now a Material Symbols
+    // glyph whenever the icon font resolved.
     ScalableBitmap bmp_ok;
 
 public:
@@ -99,6 +121,10 @@ public:
     virtual void Rescale();
 
     void SelectNext();
+
+protected:
+    void applyColorScheme() override;
+
 private:
     void doRender(wxDC &dc) override;
 };
@@ -122,6 +148,10 @@ public:
 
     void SelectNext();
     void SetSlotInformation(wxString slot);
+
+protected:
+    void applyColorScheme() override;
+
 private:
     void doRender(wxDC& dc) override;
 };

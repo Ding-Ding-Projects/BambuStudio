@@ -4,7 +4,7 @@ export interface DialogProps {
   icon: string;
   title: string;
   subtitle?: string;
-  /** 460 (send) · 520 (add filament) · 580 (export) */
+  /** 460 (send) · 520 (add ink) · 580 (export) */
   width?: number;
   onClose?: () => void;
   /** Action row: text Cancel + filled confirm */

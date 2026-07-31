@@ -25,6 +25,7 @@ html,body{ margin:0; padding:0; height:100%; background:var(--md-surface); }
 button{ font-family:inherit; }
 a{ color:var(--md-primary); text-decoration:none; }
 a:hover{ text-decoration:underline; }
+:where(a,button,input,select,[tabindex]):focus-visible{ outline:3px solid var(--md-primary); outline-offset:2px; }
 [data-icon]{ font-family:'Material Symbols Outlined'; font-weight:400; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; white-space:nowrap; word-wrap:normal; direction:ltr; -webkit-font-feature-settings:'liga'; -webkit-font-smoothing:antialiased; user-select:none; }
 ::-webkit-scrollbar{ width:10px; height:10px; }
 ::-webkit-scrollbar-thumb{ background:var(--md-outline-variant); border-radius:8px; border:2px solid transparent; background-clip:content-box; }
@@ -68,3 +69,61 @@ button .i18n-secondary{ color:inherit; }
 @media (max-width:760px){
   .i18n-secondary--inline{ font-size:.68em; margin-inline-start:.28em; }
 }
+
+/* Image-led Home surface. The artwork is decorative and softly masked so
+   localized copy and actions keep strong contrast in every theme. */
+.home-welcome{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  min-height:150px;
+}
+.home-welcome::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--md-primary-container) 94%, transparent) 0 38%, transparent 76%);
+}
+.home-welcome-art{
+  position:absolute;
+  inset:0 0 0 auto;
+  z-index:-1;
+  width:62%;
+  height:100%;
+  object-fit:cover;
+  object-position:70% center;
+  opacity:.48;
+  filter:saturate(.9) contrast(1.04);
+}
+@media (max-width:920px){
+  .home-welcome-art{ opacity:.24; width:100%; }
+  .home-welcome::after{ background:color-mix(in srgb, var(--md-primary-container) 72%, transparent); }
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{ scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}
+
+/* ---------------------------------------------------------------- title bar
+ * The title bar is a single non-wrapping row inside a shell with
+ * overflow:hidden and no scroll region, so anything that does not fit is
+ * unreachable rather than merely ugly. Measured at 1280 physical px @ 200%
+ * (640 CSS px) the close button used to sit 217px past the viewport edge.
+ *
+ * The contract: the window controls are pinned and never shrink; everything
+ * to their left gives way in order of how much a user needs it.
+ */
+.titlebar{ min-width:0; }
+.titlebar .tb-menus{ display:flex; align-items:center; gap:2px; min-width:0; flex:0 1 auto; overflow:hidden; }
+.titlebar .tb-spacer{ flex:1 1 0; min-width:0; }
+.titlebar .tb-controls{ display:flex; align-items:center; flex:0 0 auto; }
+.titlebar .tb-branch,
+.titlebar .tb-project,
+.titlebar .tb-appearance{ flex:0 0 auto; }
+/* The prototype carries inline styles, so a collapse rule needs !important to
+ * beat an element style="display:flex". */
+@media (max-width:1000px){ .titlebar .tb-project{ display:none !important; } }
+@media (max-width:860px){ .titlebar .tb-menus{ display:none !important; } }
+@media (max-width:700px){ .titlebar .tb-branch{ display:none !important; } }
+@media (max-width:560px){ .titlebar .tb-title{ display:none !important; } }

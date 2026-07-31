@@ -1,16 +1,136 @@
 #include "SideButton.hpp"
+#include "../I18N.hpp"
 #include "Label.hpp"
+#include "MD3Tokens.hpp"
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
 
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
 
 #include <algorithm>
+#include <cmath>
+#include <utility>
 
-BEGIN_EVENT_TABLE(SideButton, wxPanel)
+namespace {
+
+// WCAG relative luminance, used only to keep the keyboard focus indicator at
+// 3:1 against whichever state fill a SideButton is currently painting.
+double relative_luminance(const wxColour &colour)
+{
+    auto linear = [](unsigned char channel) {
+        const double value = channel / 255.0;
+        return value <= 0.03928 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * linear(colour.Red()) + 0.7152 * linear(colour.Green()) +
+           0.0722 * linear(colour.Blue());
+}
+
+double contrast_ratio(const wxColour &first, const wxColour &second)
+{
+    const double first_luminance  = relative_luminance(first);
+    const double second_luminance = relative_luminance(second);
+    return (std::max(first_luminance, second_luminance) + 0.05) /
+           (std::min(first_luminance, second_luminance) + 0.05);
+}
+
+wxColour focus_ring_colour(const wxColour &interior, const wxColour &label)
+{
+    const wxColour primary = StateColor::semantic(MD3::Role::Primary);
+    if (contrast_ratio(primary, interior) >= 3.0)
+        return primary;
+    return label.IsOk() && contrast_ratio(label, interior) > contrast_ratio(primary, interior)
+               ? label
+               : primary;
+}
+
+#if wxUSE_ACCESSIBILITY
+class SideButtonAccessible final : public wxWindowAccessible
+{
+public:
+    explicit SideButtonAccessible(SideButton *button)
+        : wxWindowAccessible(button), m_button(button)
+    {
+    }
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (child_id != wxACC_SELF || name == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        const wxString configured_name = m_button->GetName();
+        *name = !configured_name.IsEmpty() && configured_name != wxASCII_STR(wxPanelNameStr)
+                    ? configured_name
+                    : m_button->GetLabel();
+        if (name->IsEmpty())
+            *name = m_button->GetToolTipText();
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (child_id != wxACC_SELF || role == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_PUSHBUTTON;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (child_id != wxACC_SELF || state == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = 0;
+        if (m_button->AcceptsFocusFromKeyboard())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_button->HasFocus())
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (m_button->IsPressedForAccessibility())
+            *state |= wxACC_STATE_SYSTEM_PRESSED;
+        if (!m_button->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_button->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetDefaultAction(int child_id, wxString *action_name) override
+    {
+        if (child_id != wxACC_SELF || action_name == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *action_name = _L("Press");
+        return wxACC_OK;
+    }
+
+    wxAccStatus DoDefaultAction(int child_id) override
+    {
+        if (child_id != wxACC_SELF)
+            return wxACC_NOT_IMPLEMENTED;
+        m_button->AccessibilityActivate();
+        return wxACC_OK;
+    }
+
+private:
+    SideButton *m_button;
+};
+#endif
+
+bool is_activation_key(int key_code)
+{
+    return key_code == WXK_SPACE || key_code == WXK_RETURN || key_code == WXK_NUMPAD_ENTER;
+}
+
+} // namespace
+
+BEGIN_EVENT_TABLE(SideButton, wxWindow)
 EVT_LEFT_DOWN(SideButton::mouseDown)
 EVT_LEFT_UP(SideButton::mouseReleased)
+EVT_MOUSE_CAPTURE_LOST(SideButton::mouseCaptureLost)
+EVT_KEY_DOWN(SideButton::keyDown)
+EVT_KEY_UP(SideButton::keyUp)
+EVT_SET_FOCUS(SideButton::focusChanged)
+EVT_KILL_FOCUS(SideButton::focusChanged)
 EVT_PAINT(SideButton::paintEvent)
 END_EVENT_TABLE()
 
@@ -18,7 +138,12 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, stlye)
     , state_handler(this)
 {
-    radius = 12;
+    // MD3 shape token rather than a bare literal. radius_rail (12) is the
+    // rail/snackbar tier and reproduces the previous default exactly, so nothing
+    // moves: both consumers override it anyway (the Slice/Print pills take the
+    // pill radius in MainFrame::update_side_button_style, the dropdown rows take
+    // SetCornerRadius(0)).
+    radius = MD3::Metrics::radius_rail;
 #ifdef __APPLE__
     extra_size = wxSize(38 + FromDIP(20), 10);
     text_margin = 15 + FromDIP(20);
@@ -30,26 +155,7 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     icon_offset = 0;
     text_orientation = HO_Left;
 
-    // Disabled trio kept as raw literals: light-grey text on mid-grey fill — the token
-    // greys (Grey450 on Grey700) would render dark-on-dark in light mode.
-    border_color.append(wxColour("#6B6B6B"), StateColor::Disabled);
-    border_color.append(ThemeColor::BrandGreenPressed, StateColor::Pressed);
-    border_color.append(ThemeColor::BrandGreenHovered, StateColor::Hovered);
-    border_color.append(ThemeColor::BrandGreen, StateColor::Normal);
-    border_color.setTakeFocusedAsHovered(false);
-
-    text_color.append(wxColour("#ACACAC"), StateColor::Disabled);
-    text_color.append(ThemeColor::White, StateColor::Pressed);
-    text_color.append(ThemeColor::White, StateColor::Hovered);
-    text_color.append(ThemeColor::White, StateColor::Normal);
-
-    background_color.append(wxColour("#6B6B6B"), StateColor::Disabled);
-    background_color.append(ThemeColor::BrandGreenPressed, StateColor::Pressed);
-    background_color.append(ThemeColor::BrandGreenHovered, StateColor::Hovered);
-    background_color.append(ThemeColor::BrandGreen, StateColor::Normal);
-    background_color.setTakeFocusedAsHovered(false);
-
-    SetBottomColour(wxColour("#3B4446"));
+    applyMenuRowStyle();
 
     state_handler.attach({ &border_color, &text_color, &background_color });
     state_handler.update_binds();
@@ -62,7 +168,66 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
     SetFont(Label::Body_14);
     wxWindow::SetLabel(text);
 
+#if wxUSE_ACCESSIBILITY
+    SetAccessible(new SideButtonAccessible(this));
+#endif
     messureSize();
+}
+
+void SideButton::applyMenuRowStyle()
+{
+    using R = MD3::Role;
+
+    // Every SideButton that is not one of MainFrame's four Slice/Print action
+    // controls is a row in the Slice/Print dropdown (SidePopup), and those rows
+    // only ever call SetCornerRadius(0) — they keep whatever the constructor
+    // leaves behind. That default used to be the whole legacy brand palette
+    // (BrandGreen fill, white label, a #3B4446 slate slab painted underneath),
+    // so opening either dropdown dropped a stack of solid green bars over the
+    // MD3 Prepare workspace. The kit menu row (design-system NavItem, and the
+    // list rows DropDown.cpp already paints) is neutral instead: the menu
+    // container at rest, SurfaceContainerHigh on hover, SurfaceContainerHighest
+    // while pressed.
+    //
+    // Every role below is a neutral surface/on-surface tone, which is why this
+    // takes no ColorScheme: Brand, Preview and Device resolve them identically —
+    // only the accent roles diverge (see MD3::resolve).
+    const wxColour rest    = StateColor::semantic(R::SurfaceContainer);
+    const wxColour hover   = StateColor::semantic(R::SurfaceContainerHigh);
+    const wxColour pressed = StateColor::semantic(R::SurfaceContainerHighest);
+
+    // These are construction-time snapshots, but each light tone used here is a
+    // key in StateColor.cpp's gDarkColors table mapping to exactly its MD3::Dark
+    // counterpart, so a runtime theme toggle re-colours the row at its next
+    // paint rather than stranding a light menu on a dark shell.
+    background_color = StateColor(
+        std::make_pair(rest,    (int) StateColor::Disabled),
+        std::make_pair(pressed, (int) StateColor::Pressed),
+        std::make_pair(hover,   (int) StateColor::Hovered),
+        std::make_pair(rest,    (int) StateColor::Normal));
+    background_color.setTakeFocusedAsHovered(false);
+
+    // The ring tracks the fill in every state: a menu row is a highlight band,
+    // not an outlined button, so no contrasting border may show.
+    border_color = StateColor(
+        std::make_pair(rest,    (int) StateColor::Disabled),
+        std::make_pair(pressed, (int) StateColor::Pressed),
+        std::make_pair(hover,   (int) StateColor::Hovered),
+        std::make_pair(rest,    (int) StateColor::Normal));
+    border_color.setTakeFocusedAsHovered(false);
+
+    // Disabled label: Outline is the theme-tracking "dimmed content on a
+    // container" tone. An OnSurface-at-opacity blend would be closer to the kit,
+    // but the blended result is not a gDarkColors key, so it would freeze at
+    // whichever theme was active when the row was built.
+    text_color = StateColor(
+        std::make_pair(StateColor::semantic(R::Outline),   (int) StateColor::Disabled),
+        std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Normal));
+
+    // The surface the row sits on, seen through the rounded corners whenever a
+    // radius is in play — the SidePopup menu container, replacing the legacy
+    // #3B4446 slate.
+    SetBottomColour(rest);
 }
 
 void SideButton::SetCornerRadius(double radius)
@@ -96,9 +261,24 @@ void SideButton::SetLayoutStyle(int style)
 
 void SideButton::SetLabel(const wxString& label)
 {
+    if (label == GetLabel())
+        return;
     wxWindow::SetLabel(label);
     messureSize();
     Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+}
+
+void SideButton::SetName(const wxString& name)
+{
+    if (name == wxWindow::GetName())
+        return;
+    wxWindow::SetName(name);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 bool SideButton::SetForegroundColour(wxColour const &color)
@@ -152,9 +332,14 @@ bool SideButton::Enable(bool enable)
 {
     bool result = wxWindow::Enable(enable);
     if (result) {
+        keyboard_pressed = false;
+        Refresh(false);
         wxCommandEvent e(EVT_ENABLE_CHANGED);
         e.SetEventObject(this);
         GetEventHandler()->ProcessEvent(e);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     }
     return result;
 }
@@ -341,6 +526,17 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
         text_dc.SetTextForeground(text_color.colorForStates(states));
         text_dc.DrawText(text, pt);
     }
+
+    if (HasFocus() && IsEnabled()) {
+        const int inset = std::max(FromDIP(3), 1);
+        wxRect    focus_rect(inset, inset, std::max(0, size.x - inset * 2),
+                             std::max(0, size.y - inset * 2));
+        const wxColour interior = background_color.colorForStates(states);
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetPen(wxPen(focus_ring_colour(interior, text_color.colorForStates(states)),
+                        std::max(FromDIP(2), 1)));
+        dc.DrawRoundedRectangle(focus_rect, std::max(0.0, radius - inset));
+    }
 }
 
 void SideButton::messureSize()
@@ -387,27 +583,112 @@ void SideButton::messureSize()
 
 void SideButton::mouseDown(wxMouseEvent& event)
 {
-    event.Skip();
+    if (!IsEnabled() || !IsShown()) {
+        event.Skip();
+        return;
+    }
+
     pressedDown = true;
     SetFocus();
-    CaptureMouse();
+    if (!HasCapture())
+        CaptureMouse();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
 }
 
 void SideButton::mouseReleased(wxMouseEvent& event)
 {
-    event.Skip();
-
     if (HasCapture())
-    {
-        // Release mouse capture regardless of pressedDown state, to avoid cases where capture may be stuck permanently
         ReleaseMouse();
-    }
 
     if (pressedDown) {
         pressedDown = false;
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
         if (wxRect({0, 0}, GetSize()).Contains(event.GetPosition()))
             sendButtonEvent();
     }
+}
+
+void SideButton::mouseCaptureLost(wxMouseCaptureLostEvent& event)
+{
+    pressedDown = false;
+    Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    event.Skip();
+}
+
+void SideButton::keyDown(wxKeyEvent& event)
+{
+    if (is_activation_key(event.GetKeyCode())) {
+        if (!keyboard_pressed) {
+            keyboard_pressed = true;
+            Refresh(false);
+#if wxUSE_ACCESSIBILITY
+            wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+        }
+        return;
+    }
+
+    switch (event.GetKeyCode()) {
+    case WXK_TAB:
+    case WXK_LEFT:
+    case WXK_RIGHT:
+    case WXK_UP:
+    case WXK_DOWN: HandleAsNavigationKey(event); break;
+    default: event.Skip(); break;
+    }
+}
+
+void SideButton::keyUp(wxKeyEvent& event)
+{
+    if (!is_activation_key(event.GetKeyCode())) {
+        event.Skip();
+        return;
+    }
+
+    if (keyboard_pressed) {
+        keyboard_pressed = false;
+        Refresh(false);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+        if (IsEnabled() && IsShown())
+            sendButtonEvent();
+    }
+}
+
+void SideButton::focusChanged(wxFocusEvent& event)
+{
+    if (event.GetEventType() == wxEVT_KILL_FOCUS)
+        keyboard_pressed = false;
+    Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    if (event.GetEventType() == wxEVT_SET_FOCUS)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    event.Skip();
+}
+
+bool SideButton::AcceptsFocus() const
+{
+    return IsEnabled() && IsShown();
+}
+
+bool SideButton::AcceptsFocusFromKeyboard() const
+{
+    return AcceptsFocus();
+}
+
+void SideButton::AccessibilityActivate()
+{
+    if (IsEnabled() && IsShown())
+        sendButtonEvent();
 }
 
 void SideButton::sendButtonEvent()
@@ -416,3 +697,17 @@ void SideButton::sendButtonEvent()
     event.SetEventObject(this);
     GetEventHandler()->ProcessEvent(event);
 }
+
+#ifdef __WIN32__
+WXLRESULT SideButton::MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param)
+{
+    if (message == WM_GETDLGCODE)
+        return DLGC_WANTMESSAGE;
+    if (message == WM_KEYDOWN && w_param == WXK_RETURN) {
+        wxKeyEvent event(CreateKeyEvent(wxEVT_KEY_DOWN, w_param, l_param));
+        GetEventHandler()->ProcessEvent(event);
+        return 0;
+    }
+    return wxWindow::MSWWindowProc(message, w_param, l_param);
+}
+#endif

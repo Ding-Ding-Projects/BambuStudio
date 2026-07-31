@@ -60,6 +60,24 @@ static std::map<wxColour, wxColour> gDarkColors{
     {"#D9D9D9", "#393a41"},
     {"#EBF9F0", "#095228"},
     {"#DBFDE7", "#095228"},
+    // MD3 neutral surface roles. Construction-time semantic() snapshots of the
+    // light surfaces (MainFrame's notebook plate, the Monitor/Project/Calibration
+    // page backgrounds, HMSPanel, SideTools) are taken once and never re-resolved,
+    // so without these pairs a runtime theme switch leaves a near-white plate on an
+    // otherwise dark shell until restart.
+    // SurfaceBright shares Light::surface's #faf8fd and so cannot own a second key;
+    // it remaps to Dark::surface rather than Dark::surfaceBright. Harmless while it
+    // has no consumers, but a future one must re-resolve on theme change instead of
+    // relying on this table.
+    // ErrorContainer is deliberately NOT paired: Dark::onErrorContainer aliases
+    // Light::errorContainer (#ffdad6). Mapping errorContainer alone would recolour
+    // the plate to #93000a while its #410002 text stayed put (~1.3:1, unreadable),
+    // and adding the reciprocal onErrorContainer pair to fix that would put #ffdad6
+    // on both sides of the table — the idempotency violation described above. It
+    // needs a one-step hex nudge of Dark::onErrorContainer in MD3Tokens.hpp (see
+    // the HEX-ALIAS INVARIANT note there) before either pair is safe.
+    {MD3::Light::surface,    MD3::Dark::surface},    /*#faf8fd -> #1b1c21*/
+    {MD3::Light::surfaceDim, MD3::Dark::surfaceDim}, /*#dad9e0 -> #161619*/
     // MD3 brand container-green tokens. Construction-time semantic() snapshots of
     // the tonal greens capture the light value; these pairs live-remap them when
     // the app toggles to dark mode (mirrors the resolve() dark tones exactly).

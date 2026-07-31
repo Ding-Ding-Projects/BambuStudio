@@ -1,8 +1,9 @@
 name: Deploy ui-md3 (MD3 redesign) to GitHub Pages
 
-# Publishes the self-contained Material Design 3 web app in ui-md3/ to GitHub Pages,
-# so the redesign has a live, always-current preview URL. The app is static (no build
-# step): the ui-md3/ directory is uploaded verbatim and served at the site root.
+# Publishes the Material Design 3 site to GitHub Pages. It is static — no build step —
+# but it is not uploaded verbatim: scripts/compose-site.mjs assembles the published tree
+# (landing site at the root, the interactive prototype under /app/, shared assets at both),
+# and the same script runs locally, so what CI publishes is reproducible on a laptop.
 #
 # One-time setup on the fork: Settings -> Pages -> Build and deployment -> Source:
 # "GitHub Actions". Then this workflow deploys on every push that touches ui-md3/.
@@ -13,6 +14,14 @@ on:
     paths:
       - 'ui-md3/**'
       - '.github/workflows/ui-md3-pages.yml'
+      # The static clipping contracts also assert against the native dialogs.
+      - 'src/slic3r/GUI/SmartHomeDialog.*'
+      - 'src/slic3r/GUI/MsgDialog.*'
+  # A published release changes what the changelog should say, and the changelog is
+  # regenerated at deploy time — so a release redeploys the site. It cannot deploy
+  # from here directly: see the redeploy-on-release job for why.
+  release:
+    types: [published]
   workflow_dispatch: {}
 
 # Least-privilege token scoped to what deploy-pages needs.
@@ -22,12 +31,55 @@ permissions:
   id-token: write
 
 # One in-flight deploy at a time; let a newer push supersede an older run.
+#
+# A release run is a dispatcher, not a deploy, so it gets its own group. Sharing
+# one would let a release cancel a deploy that was midway through real work and
+# replace it with a run that only makes one API call.
 concurrency:
-  group: ui-md3-pages
+  group: ui-md3-pages-${{ github.event_name == 'release' && 'dispatch' || 'deploy' }}
   cancel-in-progress: true
 
 jobs:
+  # A release fires this workflow at the tag ref (md3-v57), not at master. The
+  # github-pages environment accepts deployments only from master, so it rejects a
+  # tag-ref run before its first step runs — a three-second failure with no steps and
+  # no log, which is why this went unnoticed: 12 release runs, 12 red X's, and the
+  # changelog refresh they were supposed to perform never once happened.
+  #
+  # So re-enter through the front door: dispatch this same workflow on master, which
+  # then deploys normally and regenerates the changelog with the new release in it.
+  # This cannot loop — the dispatched run arrives as workflow_dispatch, and nothing
+  # in this workflow publishes a release.
+  #
+  # This fix is NOT retroactive, which is worth knowing before reading the run
+  # history: a release event runs the workflow file as it existed at the TAG's
+  # commit, not as it exists on master. Releases tagged at commits older than this
+  # change keep failing the old way until they drain — md3-v58, tagged at
+  # 6d1ad69de, did exactly that after this landed.
+  redeploy-on-release:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Redeploy from master so the changelog picks up this release
+        env:
+          # GITHUB_TOKEN is a valid last resort here. The recursive-trigger
+          # prevention does not apply to this call: GitHub documents that
+          # workflow_dispatch and repository_dispatch "always create workflow
+          # runs", even when signed with GITHUB_TOKEN. The job already holds the
+          # actions: write that needs. A PAT is listed first only so the dispatch
+          # is attributed to the owner rather than to github-actions[bot].
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run ui-md3-pages.yml --repo "${GITHUB_REPOSITORY}" --ref master
+          echo "Dispatched a master-ref Pages deploy for ${GITHUB_REF_NAME}."
+
   deploy:
+    # Never on a release: the environment would refuse it. redeploy-on-release
+    # dispatches a master-ref run, and that run lands here as workflow_dispatch.
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -35,6 +87,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          # The changelog generator reads the commits between release tags.
+          fetch-depth: 0
+
+      - name: Use the repository's runtime-test Node version
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
 
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
@@ -43,17 +103,67 @@ jobs:
           # so no manual Settings -> Pages toggle is required on first run.
           enablement: true
 
+      - name: Refresh the changelog from the published releases
+        # Regenerated at deploy time so the site lists every release, including
+        # the ones this repository published after the file was last committed.
+        # A gate on staleness would be self-defeating: every release CI publishes
+        # would block the next Pages deploy until someone regenerated by hand.
+        # The committed file is the fallback, so an API outage costs freshness,
+        # not the deploy.
+        continue-on-error: true
+        env:
+          # TOKEN_GITHUB is the owner PAT this repository actually has; the others
+          # are the org-standard names, kept so the chain still resolves elsewhere.
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+        run: node ui-md3/scripts/build-changelog.mjs
+
       - name: Compose site (landing page at root, app under /app)
         run: |
-          rm -rf _site && mkdir -p _site/app
-          # App served at /app/ — exclude the heavy read-only design source and docs.
-          rsync -a --exclude 'design-source' --exclude 'desktop' --exclude '*.md' --exclude 'landing.html' ui-md3/ _site/app/
-          # Landing page is the site root.
-          cp ui-md3/landing.html _site/index.html
-          # Keep the landing page's local-preview asset paths valid after it is lifted to the site root.
-          cp ui-md3/app/i18n.resources.js ui-md3/app/i18n.js _site/app/
+          # One composer, used identically here and on a development machine, so
+          # a layout failure reproduces locally instead of only in CI.
+          # index.html is generated from app/screens/*.template.html; a tree where the
+          # two disagree ships a prototype nobody reviewed.
+          node ui-md3/scripts/assemble-index.mjs --check
+          # The same contract for the design-system UI kit, whose index.html is
+          # compiled from the .jsx sources beside it. This one also decides
+          # whether the page is self-contained: it refuses to assemble a head
+          # that has drifted back to loading React from a CDN.
+          node ui-md3/scripts/assemble-ui-kit.mjs --check
+          node ui-md3/scripts/compose-site.mjs _site
           node ui-md3/tests/assert-pages-layout.mjs _site
           echo "Composed _site:"; find _site -maxdepth 2 -type f | sort
+
+      - name: Verify localization and clipping at runtime
+        run: |
+          node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs \
+            ui-md3/tests/site-behaviour.test.mjs ui-md3/tests/layout-clipping.test.mjs \
+            ui-md3/tests/jsx-transform.test.mjs
+          # Composes its own copy of the site and loads it in headless Chrome with
+          # every off-site host blackholed. The UI kit shipped a page that rendered
+          # nothing without unpkg for months; nothing caught it, because nothing
+          # had ever tried the site with the network taken away.
+          node --test ui-md3/tests/offline-render.test.mjs
+          node ui-md3/tests/serve.mjs _site 4173 >/tmp/bambu-pages-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          server_ready=false
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent --show-error \
+                http://127.0.0.1:4173/index.html >/dev/null; then
+              server_ready=true
+              break
+            fi
+            sleep 0.1
+          done
+          if [ "$server_ready" != true ]; then
+            echo "The bounded Pages preview server readiness check failed."
+            cat /tmp/bambu-pages-http.log
+            exit 1
+          fi
+          # 156 landing cases plus 288 per-tab cases; a single clipped element,
+          # an undersized control or an empty panel fails the deploy.
+          BAMBU_PAGES_TEST_URL=http://127.0.0.1:4173/index.html \
+            node --test ui-md3/tests/runtime-layout-clipping.mjs
 
       - name: Upload composed site as the Pages artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3

@@ -520,13 +520,6 @@ set(lisbslic3r_sources
     ColorDecomposeRecipe.cpp
 )
 
-if (APPLE)
-    list(APPEND lisbslic3r_sources
-			MacUtils.mm
-            Format/ModelIO.hpp
-            Format/ModelIO.mm
-        )
-endif ()
 
 set(libslic3r_runtime_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/../slic3r/Utils/BBLUtil.cpp

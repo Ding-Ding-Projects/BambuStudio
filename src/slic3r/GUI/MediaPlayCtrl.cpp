@@ -408,7 +408,22 @@ void refresh_agora_url(char const* device, char const* dev_ver, char const* chan
     device2 += dev_ver;
     device2 += "|\"agora\"|";
     device2 += channel;
-    wxGetApp().getAgent()->get_camera_url(device2, [context, callback](std::string url) {
+    // The agent is null for the whole session whenever the network plugin fails
+    // to load (m_agent is only constructed under `if (create_network_agent)`),
+    // and this is reached from live-view playback on a real printer -- a
+    // combination that never occurs on a machine with no printer bound, which is
+    // exactly how it survives testing. Hand the callback an empty URL instead of
+    // dereferencing null: the caller already has to cope with a URL it cannot
+    // open, and it cannot cope with an access violation.
+    NetworkAgent *agent = wxGetApp().getAgent();
+    if (!agent) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                      "cannot resolve the camera URL.";
+        if (callback)
+            callback(context, "");
+        return;
+    }
+    agent->get_camera_url(device2, [context, callback](std::string url) {
         callback(context, url.c_str());
     });
 }

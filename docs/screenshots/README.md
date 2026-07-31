@@ -4,6 +4,16 @@ One capture per page and one per button, per feature — taken from the real run
 (native surfaces: headless Mesa llvmpipe + PrintWindow; webview surfaces: rendered page HTML).
 Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or dedicated crops).
 
+**Not every capture predating 2026-07-26 has been retaken since the ink rename**
+([Ink terminology](../features/windows/ink-terminology.md)), so some still read "Filament" and
+"AMS" where the shipped UI now reads "Ink" and "Ink Dispenser". Retaken on 2026-07-28:
+`notifications/toast-info.png`, `preferences/general-tab.png`, `wizard/wizard-step-22.png` and its
+`--filament-type-filter` crop, `main-window/nav-rail--filament.png` and
+`main-window/sidebar-prepare--add-filament.png`. Confirmed still pre-rename: `dark/prepare.png`,
+`bulk-filament/dialog.png`, `filament-scanner/dialog.png` — the rest of the matrix has not been
+audited image by image. File names keep the upstream spelling on purpose: they are identifiers this
+index links by, not displayed text.
+
 ## appearance (20 captures)
 
 - [`appearance-tab--accent-1.png`](appearance/appearance-tab--accent-1.png)
@@ -212,9 +222,11 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`tab-bar-two-tabs.png`](project-tabs/tab-bar-two-tabs.png)
 - [`tab-bar.png`](project-tabs/tab-bar.png)
 
-## regex-builder (29 captures)
+## regex-builder (31 captures)
 
 - [`builder-popover--case-sensitive.png`](regex-builder/builder-popover--case-sensitive.png)
+- [`builder-popover--flags-before-fix.png`](regex-builder/builder-popover--flags-before-fix.png)
+- [`builder-popover--flags.png`](regex-builder/builder-popover--flags.png)
 - [`builder-popover--insert-header.png`](regex-builder/builder-popover--insert-header.png)
 - [`builder-popover--pattern-editor.png`](regex-builder/builder-popover--pattern-editor.png)
 - [`builder-popover--quantifiers.png`](regex-builder/builder-popover--quantifiers.png)
@@ -244,13 +256,28 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 - [`search-field--text-entry.png`](regex-builder/search-field--text-entry.png)
 - [`search-field.png`](regex-builder/search-field.png)
 
-## smart-home (1 captures)
+## smart-home (6 captures)
 
+The paired English captures show the text-action clipping defect and its correction at 720×760 and
+the declared 520×480 minimum. The two primary corrected captures were recaptured from the final
+151,299,584-byte DLL, SHA-256
+`41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`. The media-actions frame
+verifies the same fix beyond **Close** using the preceding layout-identical `EBF646…` DLL; the final
+binary changed only nonvisual printer-import scheduling and alert-light cancellation cleanup.
+
+- [`dialog-520x480-after-text-action-fix.png`](smart-home/dialog-520x480-after-text-action-fix.png)
+- [`dialog-520x480-before-text-action-fix.png`](smart-home/dialog-520x480-before-text-action-fix.png)
+- [`dialog-520x480-media-actions-after-fix.png`](smart-home/dialog-520x480-media-actions-after-fix.png)
+- [`dialog-720x760-after-text-action-fix.png`](smart-home/dialog-720x760-after-text-action-fix.png)
+- [`dialog-720x760-before-text-action-fix.png`](smart-home/dialog-720x760-before-text-action-fix.png)
 - [`dialog.png`](smart-home/dialog.png)
 
-## version-history (9 captures)
+## version-history (12 captures)
 
+- [`crash-restore-prompt.png`](version-history/crash-restore-prompt.png)
 - [`history-dialog--close.png`](version-history/history-dialog--close.png)
+- [`history-dialog-dark--before-card-fix.png`](version-history/history-dialog-dark--before-card-fix.png)
+- [`history-dialog-dark.png`](version-history/history-dialog-dark.png)
 - [`history-dialog--project-banner.png`](version-history/history-dialog--project-banner.png)
 - [`history-dialog--refresh.png`](version-history/history-dialog--refresh.png)
 - [`history-dialog--restore-selected.png`](version-history/history-dialog--restore-selected.png)
@@ -293,4 +320,3 @@ its full-page capture.
 - [`wizard-step-5--nav-buttons.png`](wizard/wizard-step-5--nav-buttons.png)
 - [`wizard-step-5.png`](wizard/wizard-step-5.png)
 - [`wizard-step-6.png`](wizard/wizard-step-6.png)
-

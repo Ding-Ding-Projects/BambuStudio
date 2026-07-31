@@ -24,12 +24,14 @@
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MD3Tokens.hpp"
-#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/MD3Dialog.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/Label.hpp"
+#include "Widgets/TextInput.hpp"
 #include "SingleChoiceDialog.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <wx/progdlg.h>
-#include <wx/textdlg.h>
 #include <libslic3r/Orient.hpp>
 #include <unordered_set>
 #include <wx/listbook.h>
@@ -6388,15 +6390,101 @@ void ObjectList::split_instances()
     instances_to_separated_object(obj_idx, inst_idxs);
 }
 
+namespace {
+
+// MD3 rename dialog for the object list.
+//
+// The rename prompt used to be a stock wxTextEntryDialog with
+// MD3DialogCaption::Adopt() bolted on: the caption strip was ours, but the body
+// wx built itself -- a sunken Win32 edit box and OS push buttons -- so the
+// most-used context-menu action in Prepare was the one visibly half-migrated
+// dialog in that workflow. This rides the shared MD3Dialog shell instead, with
+// the kit TextInput (r10 filled field, SurfaceContainerHighest) and kit pill
+// footer buttons. Behaviour is unchanged: seeded with the current name, Enter
+// commits, Escape cancels, ShowModal() still answers wxID_OK / wxID_CANCEL and
+// the caller still runs the illegal-filename validation on GetValue().
+class ObjectRenameDialog : public MD3Dialog
+{
+public:
+    ObjectRenameDialog(wxWindow *parent, const wxString &value)
+        : MD3Dialog(parent, _(L("Renaming")), wxEmptyString, MaterialIcon::Edit)
+    {
+        const wxString prompt_text = _(L("Enter new name")) + ":";
+
+        auto *prompt = new ::Label(this, ::Label::Body_14, prompt_text);
+        prompt->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        GetContentSizer()->Add(prompt, 0, wxEXPAND);
+
+        // Field height follows the active Appearance > Density row height so it
+        // matches every other kit field rather than a pinned literal.
+        const int field_h = FromDIP(MD3::Metrics::active().row_height);
+        // No style flags: TextInput::Create already ORs wxTE_PROCESS_ENTER onto
+        // its inner ctrl, and the style it is handed also reaches StaticBox.
+        m_input = new ::TextInput(this, value, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                  wxSize(FromDIP(320), field_h));
+        m_input->SetMinSize(wxSize(FromDIP(320), field_h));
+        // The prompt is a sibling Label, not the field's own wx label, so name
+        // the field explicitly for screen readers.
+        m_input->SetName(prompt_text);
+        if (auto *tc = m_input->GetTextCtrl())
+            tc->SetName(prompt_text);
+        GetContentSizer()->Add(m_input, 0, wxEXPAND | wxTOP, FromDIP(10));
+        // TextInput forwards its inner ctrl's wxEVT_TEXT_ENTER to itself, so
+        // Enter still accepts the dialog as it did with wxTextEntryDialog.
+        m_input->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { EndModal(wxID_OK); });
+
+        auto *cancel = new Button(this, _L("Cancel"));
+        cancel->SetVariant(Button::Variant::Text);
+        cancel->SetButtonSize(Button::Size::Medium);
+        cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
+        AddFooterButton(cancel);
+
+        auto *ok = new Button(this, _L("OK"));
+        ok->SetVariant(Button::Variant::Filled);
+        ok->SetButtonSize(Button::Size::Medium);
+        ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_OK); });
+        AddFooterButton(ok);
+
+        // The shell is borderless and its footer buttons carry no wxID_CANCEL,
+        // so wxDialog's usual Escape routing has nothing to fire; keep the
+        // native dialog's Esc-cancels explicitly.
+        Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
+            if (e.GetKeyCode() == WXK_ESCAPE)
+                EndModal(wxID_CANCEL);
+            else
+                e.Skip();
+        });
+
+        SetMinSize(wxSize(FromDIP(420), -1));
+        Layout();
+        Fit();
+        CenterOnParent();
+        UpdateShape();
+        wxGetApp().UpdateDlgDarkUI(this);
+
+        // wxTextEntryDialog opened with the seeded name focused and selected so
+        // typing replaces it; preserve that.
+        if (auto *tc = m_input->GetTextCtrl()) {
+            tc->SetFocus();
+            tc->SetSelection(-1, -1);
+        }
+    }
+
+    wxString GetValue() const { return m_input->GetTextCtrl()->GetValue(); }
+
+private:
+    ::TextInput *m_input {nullptr};
+};
+
+} // namespace
+
 void ObjectList::rename_item()
 {
     const wxDataViewItem item = GetSelection();
     if (!item || !(m_objects_model->GetItemType(item) & (itVolume | itObject)))
         return ;
 
-    wxTextEntryDialog dlg(this, _(L("Enter new name"))+":", _(L("Renaming")));
-    dlg.SetValue(m_objects_model->GetName(item));
-    MD3DialogCaption::Adopt(&dlg);
+    ObjectRenameDialog dlg(this, m_objects_model->GetName(item));
     if (dlg.ShowModal() != wxID_OK)
         return;
     const wxString new_name = dlg.GetValue();

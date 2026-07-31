@@ -180,8 +180,16 @@ msgid "AMS Settings"
 msgstr "墨水機設定"
 
 #. reviewed-category: navigation
+msgid "AMS settings"
+msgstr "墨水機設定"
+
+#. reviewed-category: navigation
 msgid "Camera Setting"
 msgstr "相機設定"
+
+#. reviewed-category: navigation
+msgid "Enter Camera Full Screen"
+msgstr "相機進入全螢幕"
 
 #. reviewed-category: preferences
 msgid "General Settings"
@@ -546,6 +554,14 @@ msgstr "項目快照"
 #. reviewed-category: file-actions
 msgid "Browse and restore local Git-backed project versions"
 msgstr "瀏覽及還原由本機 Git 管理嘅項目版本"
+
+#. reviewed-category: slicing-printing
+msgid "Slice options"
+msgstr "切片選項"
+
+#. reviewed-category: slicing-printing
+msgid "Print options"
+msgstr "打印選項"
 
 #. reviewed-category: slicing-printing
 msgid "Slice plate"
@@ -2648,3 +2664,261 @@ msgstr "未能安全噉開啟雲端頁面；而家個頁面會繼續保留。"
 #. reviewed-category: destructive-dirty-error-security
 msgid "The cloud page is temporarily unavailable. The current page remains open."
 msgstr "雲端頁面暫時用唔到；而家個頁面會繼續保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This copies each accessible printer's serial number, LAN address and access code to Home Assistant. Access codes are credentials."
+msgstr "呢個動作會將每部可存取打印機嘅序號、LAN 位址同存取碼複製去 Home Assistant。存取碼係憑證。"
+
+#. reviewed-category: preferences
+msgid "Adding printers..."
+msgstr "加入打印機中..."
+
+#. reviewed-category: navigation
+msgid "Add my printers to Home Assistant"
+msgstr "將我嘅打印機加入 Home Assistant"
+
+#. reviewed-category: navigation
+msgid "Printer handover"
+msgstr "打印機交接"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant is not configured. Enter its URL and long-lived access token first."
+msgstr "Home Assistant 未設定好。請先輸入網址同長期存取權杖。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Printer access codes were not sent. Use HTTPS for a remote Home Assistant URL. HTTP is allowed only for localhost or an IPv4 loopback address."
+msgstr "未有傳送打印機存取碼。遠端 Home Assistant 網址必須使用 HTTPS；HTTP 只可以用於 localhost 或 IPv4 回送位址。"
+
+#. reviewed-category: connection-offline
+msgid "No accessible printers were found. Connect a printer and make sure its LAN address and access code are available."
+msgstr "搵唔到可存取嘅打印機。請連接打印機，並確保 LAN 位址同存取碼可用。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This will copy the serial number, LAN address and access code for one accessible printer to Home Assistant. Access codes are credentials. Continue?"
+msgstr "呢個動作會將一部可存取打印機嘅序號、LAN 位址同存取碼複製去 Home Assistant。存取碼係憑證。要繼續嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This will copy the serial number, LAN address and access code for %d accessible printers to Home Assistant. Access codes are credentials. Continue?"
+msgstr "呢個動作會將 %d 部可存取打印機嘅序號、LAN 位址同存取碼複製去 Home Assistant。存取碼係憑證。要繼續嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Copy printer access codes to Home Assistant?"
+msgstr "將打印機存取碼複製去 Home Assistant？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Copy access codes and add printers"
+msgstr "複製存取碼並加入打印機"
+
+#. reviewed-category: preferences
+msgid "Adding one printer to Home Assistant..."
+msgstr "正將一部打印機加入 Home Assistant..."
+
+#. reviewed-category: preferences
+msgid "Adding %d printers to Home Assistant..."
+msgstr "正將 %d 部打印機加入 Home Assistant..."
+
+#. reviewed-category: preferences
+msgid "Home Assistant processed %d of %d printer requests."
+msgstr "Home Assistant 已處理 %d / %d 個打印機要求。"
+
+#. reviewed-category: preferences
+msgid "Failed printers:"
+msgstr "加入失敗嘅打印機："
+
+#. reviewed-category: navigation
+msgid "Share for discovery for 5 minutes (no Home Assistant token)"
+msgstr "分享畀人探索 5 分鐘（唔使 Home Assistant 權杖）"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Discovery publishes a temporary pairing value on this local network. Any device on this network can use it to request printer serial numbers, LAN addresses and access codes for up to five minutes. Enable only while importing, then switch it off."
+msgstr "探索功能會喺呢個本地網絡公開臨時配對值。網絡上任何裝置都可以喺五分鐘內用佢要求取得打印機序號、LAN 位址同存取碼。只應喺匯入期間開啟，完成後立即關閉。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing is off."
+msgstr "打印機探索分享已關閉。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Printer discovery sharing stopped. Access codes are no longer offered."
+msgstr "打印機探索分享已停止。存取碼已不再提供。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Printer discovery sharing expired after five minutes. Access codes are no longer offered."
+msgstr "打印機探索分享已喺五分鐘後到期。存取碼已不再提供。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing did not start. No accessible printer has both a LAN address and an access code."
+msgstr "打印機探索分享未有啟動。搵唔到同時有 LAN 位址同存取碼嘅可存取打印機。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing could not start: %s"
+msgstr "打印機探索分享無法啟動：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Sharing one printer on the local network for up to five minutes. Turn sharing off after Home Assistant imports it."
+msgstr "正喺本地網絡分享一部打印機，最多五分鐘。Home Assistant 匯入後請立即關閉分享。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Sharing %d printers on the local network for up to five minutes. Turn sharing off after Home Assistant imports them."
+msgstr "正喺本地網絡分享 %d 部打印機，最多五分鐘。Home Assistant 匯入後請立即關閉分享。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Printer access codes are credentials. Adding sends them to Home Assistant; discovery makes them available for five minutes to any device on this local network that sees the pairing value."
+msgstr "打印機存取碼係憑證。加入功能會將佢哋傳送去 Home Assistant；探索功能就會喺五分鐘內提供畀本地網絡上任何睇到配對值嘅裝置。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Home Assistant was not contacted. Use HTTPS for a remote URL. HTTP is allowed only for localhost or an IPv4 loopback address."
+msgstr "未有聯絡 Home Assistant。遠端網址必須使用 HTTPS；HTTP 只可以用於 localhost 或 IPv4 回送位址。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Discovery sharing is limited to the first 32 accessible printers; additional printers were not included."
+msgstr "探索分享只包括頭 32 部可存取打印機；其餘打印機未有包括。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant returned an invalid states response."
+msgstr "Home Assistant 傳回咗無效嘅狀態回應。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant request setup failed."
+msgstr "Home Assistant 要求設定失敗。"
+
+#. reviewed-category: preferences
+msgid "Saved Home Assistant speaker or light lists exceed the safe size limits. Existing entries were kept; only the first 32 valid entries are active."
+msgstr "已儲存嘅 Home Assistant 喇叭或燈光清單超出安全大小限制。現有項目已保留；只有頭 32 個有效項目會啟用。"
+
+#. reviewed-category: preferences
+msgid "The Home Assistant list already has 32 entries. Clear the list before adding another."
+msgstr "Home Assistant 清單已經有 32 項，請先清空清單再加新嘅。"
+
+#. reviewed-category: preferences
+msgid "You can configure up to 32 announcement speakers and 32 alert lights."
+msgstr "你最多可以設定 32 個廣播喇叭同 32 盞提示燈。"
+
+#. reviewed-category: preferences
+msgid "Printer handover is limited to the first 32 accessible printers; additional printers will not be sent."
+msgstr "打印機交接只會處理頭 32 部可存取打印機；其餘唔會傳送。"
+
+#. reviewed-category: preferences
+msgid "Clear speakers"
+msgstr "清空喇叭"
+
+#. reviewed-category: preferences
+msgid "Clear lights"
+msgstr "清空燈光"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant transport failed."
+msgstr "Home Assistant 傳輸失敗。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant returned HTTP %s."
+msgstr "Home Assistant 傳回 HTTP %s。"
+
+#. reviewed-category: connection-offline
+msgid "The Home Assistant printer import worker could not finish the request."
+msgstr "Home Assistant 打印機匯入背景工作無法完成要求。"
+
+#. reviewed-category: connection-offline
+msgid "The Home Assistant printer import worker could not start."
+msgstr "Home Assistant 打印機匯入背景工作無法啟動。"
+
+#. reviewed-category: connection-offline
+msgid "A Home Assistant printer import is already in progress."
+msgstr "已有一個 Home Assistant 打印機匯入正在進行。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant request failed: %s"
+msgstr "Home Assistant 要求失敗：%s"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant is shutting down."
+msgstr "Home Assistant 正在關閉。"
+
+#. reviewed-category: connection-offline
+msgid "Bambu Studio could not prepare the Home Assistant entity request."
+msgstr "Bambu Studio 無法準備 Home Assistant 實體要求。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant is busy with another entity request. Try again in a moment."
+msgstr "Home Assistant 正忙於處理另一個實體要求，請稍後再試。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant could not be reached. Check the server and network connection."
+msgstr "無法連接 Home Assistant。請檢查伺服器同網絡連線。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant returned HTTP %d while listing speakers and lights."
+msgstr "列出喇叭同燈光時，Home Assistant 傳回 HTTP %d。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant returned more entity data than Bambu Studio can safely load."
+msgstr "Home Assistant 傳回嘅實體資料超出 Bambu Studio 可安全載入嘅大小。"
+
+#. reviewed-category: connection-offline
+msgid "Home Assistant request failed."
+msgstr "Home Assistant 要求失敗。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing could not start."
+msgstr "打印機探索分享無法啟動。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing is already active or still stopping. Turn it off and try again."
+msgstr "打印機探索分享已啟動或仍在停止中。請先關閉再試。"
+
+#. reviewed-category: connection-offline
+msgid "Bambu Studio could not prepare printer discovery sharing."
+msgstr "Bambu Studio 無法準備打印機探索分享。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing needs a usable local-network IPv4 address."
+msgstr "打印機探索分享需要可用嘅本地網絡 IPv4 位址。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing could not open its local HTTP endpoint."
+msgstr "打印機探索分享無法開啟本地 HTTP 端點。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing could not advertise itself with mDNS on this network."
+msgstr "打印機探索分享無法透過此網絡嘅 mDNS 發佈。"
+
+#. reviewed-category: connection-offline
+msgid "Printer discovery sharing could not start its background worker."
+msgstr "打印機探索分享無法啟動背景工作。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Problems:"
+msgstr "問題："
+
+#. reviewed-category: preferences
+msgid "No speakers or lights match this search."
+msgstr "冇喇叭或燈光符合呢個搜尋。"
+
+#. reviewed-category: preferences
+msgid "Showing %d of %d matching speakers and lights."
+msgstr "顯示 %d 個，共 %d 個符合嘅喇叭同燈光。"
+
+#. reviewed-category: preferences
+msgid "Refine the search to see the remaining matches."
+msgstr "請收窄搜尋，以查看其餘符合項目。"
+
+#. reviewed-category: preferences
+msgid "Home Assistant returned additional speakers and lights beyond the %d-entity safety limit. Those additional entities are not shown."
+msgstr "Home Assistant 傳回咗超出 %d 個實體安全上限嘅其他喇叭同燈光。呢啲額外實體唔會顯示。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Your unsaved project was saved to version history before this prompt. It stays restorable from Version history even if you decline to restore it now."
+msgstr "喺彈呢個窗之前，你未儲存嘅專案已經幫你擺咗入版本紀錄。就算你而家撳「取消」唔還原，都仲可以喺「版本紀錄」度攞返。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."
+msgstr "你未儲存嘅專案複製唔入版本紀錄。個備份仍然會留喺硬碟，下次開機會再問你一次，所以而家撳「取消」唔會刪咗佢。"
+
+#. reviewed-category: preferences
+msgid "Fan Control"
+msgstr "風扇控制"
+
+#. reviewed-category: slicing-printing
+#. Shared msgid: it heads the AMS filament rail but is also used generically,
+#. so this stays the neutral "loading" rather than a filament-specific phrase.
+msgid "Loading"
+msgstr "載入中"

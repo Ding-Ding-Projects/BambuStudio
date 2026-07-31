@@ -189,6 +189,14 @@ public:
         IC_TOOLBAR_RESET_HOVER_DARK,
         IC_TOOLBAR_RESET_ZERO_DARK,
         IC_TOOLBAR_RESET_ZERO_HOVER_DARK,
+        // Dark-theme companions for the assembly view-angle overlay's help mark
+        // and selected-row tick, which the MD3 pass moved off their flat #909090
+        // and legacy-green #00AE42 sprites onto colour-driven Material glyphs.
+        // Unlike the reset pair, the render sites (GLCanvas3D.cpp:10378, :10503)
+        // ask for the light key unconditionally, so theme_variant() below does the
+        // key selection instead of every call site learning about the pair.
+        IC_VIEW_HELP_DARK,
+        IC_VIEW_OK_DARK,
     };
 
     explicit GLGizmosManager(GLCanvas3D& parent);
@@ -271,17 +279,33 @@ public:
     void set_rotation(const Vec3d& rotation);
 
     //BBS
+    // Redirect a light-theme key to its dark companion while the dark theme is
+    // active. MD3 glyph icons are colour-driven and icon_list is built once (it is
+    // not rebuilt on a runtime theme switch), so each theme owns its own texture
+    // key. Keys whose call site already selects the pair itself, and every icon
+    // still backed by a light/dark SVG twin, pass straight through untouched.
+    MENU_ICON_NAME theme_variant(MENU_ICON_NAME icon) const {
+        if (!m_is_dark)
+            return icon;
+        switch (icon) {
+        case IC_VIEW_HELP: return IC_VIEW_HELP_DARK;
+        case IC_VIEW_OK:   return IC_VIEW_OK_DARK;
+        default:           return icon;
+        }
+    }
     void* get_icon_texture_id(MENU_ICON_NAME icon) {
-        auto it = icon_list.find((int)icon);
+        const MENU_ICON_NAME key = theme_variant(icon);
+        auto it = icon_list.find((int)key);
         if (it != icon_list.end())
             return it->second;
-        return ensure_icon_loaded(icon);
+        return ensure_icon_loaded(key);
     }
     void* get_icon_texture_id(MENU_ICON_NAME icon) const{
-        auto it = icon_list.find((int)icon);
+        const MENU_ICON_NAME key = theme_variant(icon);
+        auto it = icon_list.find((int)key);
         if (it != icon_list.end())
             return it->second;
-        return ensure_icon_loaded(icon);
+        return ensure_icon_loaded(key);
     }
     void  update_paint_base_camera_rotate_rad();
     Vec3d get_flattening_normal() const;

@@ -26,6 +26,10 @@ namespace {
 constexpr int kWidth      = 640;
 constexpr int kListHeight = 420;
 constexpr int kRowHeight  = 52;
+// The hairline between two rows belongs to the row's pitch. It is a raw pixel
+// on purpose (a scaled hairline blurs), so the pitch is FromDIP(kRowHeight) +
+// kDividerHeight — never FromDIP(kRowHeight + kDividerHeight).
+constexpr int kDividerHeight = 1;
 
 std::uint32_t glyph_for_menu(const wxString &top)
 {
@@ -56,7 +60,7 @@ CommandPalette::CommandPalette(MainFrame *frame)
                                   wxSize(FromDIP(kWidth), FromDIP(kListHeight)),
                                   wxVSCROLL | wxBORDER_NONE);
     m_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
-    m_list->SetScrollRate(0, FromDIP(kRowHeight));
+    m_list->SetScrollRate(0, FromDIP(kRowHeight) + kDividerHeight);
     m_list->SetSizer(new wxBoxSizer(wxVERTICAL));
     root->Add(m_list, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
 
@@ -306,7 +310,7 @@ void CommandPalette::rebuild_rows()
         m_visible.push_back(i);
         m_rows.push_back(row);
         m_list->GetSizer()->Add(row, 0, wxEXPAND);
-        auto *divider = new wxPanel(m_list, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
+        auto *divider = new wxPanel(m_list, wxID_ANY, wxDefaultPosition, wxSize(-1, kDividerHeight));
         divider->SetBackgroundColour(outline);
         m_list->GetSizer()->Add(divider, 0, wxEXPAND | wxLEFT, FromDIP(56));
         if (m_rows.size() >= 120)
@@ -330,17 +334,29 @@ void CommandPalette::select_row(int index)
     m_selected = index;
     m_rows[m_selected]->SetBackgroundColour(sel);
     m_rows[m_selected]->Refresh();
-    // keep the selection visible
+    // Keep the selection visible. A row index is NOT a scroll unit: every row
+    // carries its divider, so multiplying the index by the row height loses a
+    // hairline per row until the highlight sits below the viewport entirely and
+    // Enter runs a command that was never on screen. Ask the panel where it
+    // actually landed instead — that stays right after a query rebuild and if a
+    // row ever grows past kRowHeight.
+    int unit_x = 0, unit_y = 0;
+    m_list->GetScrollPixelsPerUnit(&unit_x, &unit_y);
+    if (unit_y <= 0)
+        return;
+    wxPanel *row       = m_rows[m_selected];
+    int      virtual_x = 0, virtual_y = 0;
+    m_list->CalcUnscrolledPosition(0, row->GetPosition().y, &virtual_x, &virtual_y);
+    const int row_bottom  = virtual_y + row->GetSize().GetHeight();
+    const int view_height = m_list->GetClientSize().GetHeight();
     int sy = 0;
     m_list->GetViewStart(nullptr, &sy);
-    const int row_units = m_selected; // one scroll unit per row (incl. divider rounding)
-    if (row_units < sy)
-        m_list->Scroll(0, row_units);
-    else {
-        const int visible = m_list->GetClientSize().GetHeight() / FromDIP(kRowHeight);
-        if (row_units >= sy + visible)
-            m_list->Scroll(0, row_units - visible + 1);
-    }
+    const int view_top = sy * unit_y;
+    if (virtual_y < view_top)
+        m_list->Scroll(-1, virtual_y / unit_y);
+    else if (row_bottom > view_top + view_height)
+        // Round up: the unit that first brings the row's bottom edge into view.
+        m_list->Scroll(-1, (row_bottom - view_height + unit_y - 1) / unit_y);
 }
 
 void CommandPalette::run_selected()

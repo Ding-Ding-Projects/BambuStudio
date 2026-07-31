@@ -15,11 +15,31 @@ registerScreen({
       {name:'cover.png', type:'PNG', icon:'image'},{name:'assembly_1.pdf', type:'PDF', icon:'picture_as_pdf'},
       {name:'assembly_2.pdf', type:'PDF', icon:'picture_as_pdf'},{name:'notes.txt', type:'TXT', icon:'description'},
     ];
+  },
+  // The mode rides along with the query so the field's .* toggle is the only
+  // thing that turns a typed string into a pattern.
+  setProjectQuery(v, mode){
+    this.setState({projectSearch:{ query:v,
+      regex:!!(mode&&mode.regex), flags:(mode&&typeof mode.flags==='string'?mode.flags:'i') }});
+  },
+  // Plain text is the default; a regular expression is compiled only when the
+  // search field says the user turned its .* toggle on.
+  projectFileMatch(name){
+    const ps=this.state.projectSearch||{}; const q=ps.query; if(!q) return true;
+    if(!ps.regex) return name.toLowerCase().includes(q.toLowerCase());
+    try{ return new RegExp(q, ps.flags||'i').test(name); }
+    catch(e){ return name.toLowerCase().includes(q.toLowerCase()); }
   }
   },
-  vals: function(){ return {
+  vals: function(){
+    const files = this.render_projectFiles().filter(f=>this.projectFileMatch(f.name));
+    const ps = this.state.projectSearch||{};
+    return {
     isProject: this.state.view === 'project',
     projectCats: this.render_projectCats(),
-    projectFiles: this.render_projectFiles()
+    projectFiles: files,
+    projectQuery: ps.query||'',
+    projectEmpty: files.length === 0,
+    setProjectQuery: (v, mode)=>this.setProjectQuery(v, mode)
   }; }
 });

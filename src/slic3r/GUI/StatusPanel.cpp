@@ -98,6 +98,17 @@ static wxColour device_primary_container_color() { return StateColor::semantic(M
 static wxColour device_control_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHigh); }
 static wxColour device_control_emphasis_color() { return StateColor::semantic(MD3::Role::SurfaceContainerHighest); }
 
+// Icon-only Buttons must expose the same localized action through their tooltip
+// and accessible name. Keeping both assignments together prevents stateful actions
+// (Pause / Resume) from announcing a stale name after their glyph changes.
+static void set_button_action_label(Button *button, const wxString &label)
+{
+    if (button->GetToolTipText() != label)
+        button->SetToolTip(label);
+    if (button->GetName() != label)
+        button->SetName(label);
+}
+
 // Kit icons-assets shared-dialog-action-icons (star->star): the 5-star rating
 // row (PrintingTaskPanel::m_score_star, ScoreDialog::m_score_star) expresses
 // lit/idle state through colour on the single 'star' Material Symbol glyph
@@ -235,10 +246,10 @@ static wxBitmap device_idle_thumbnail_tile(wxWindow *ref, int logical_px)
     return bmp;
 }
 
-// Camera-HUD status indicators as Material Symbols on the fixed-dark strip
-// (on-dark colours, never theme-swapped): active states use the kit 'live'
-// accent, absent/off use the muted on-dark grey, storage-abnormal keeps its
-// warning hue. Rebuilt identically by init_bitmaps() and rescale_camera_icons().
+// Camera-HUD status indicators as Material Symbols on the dark strip. Normal
+// themes use the kit on-dark tones; Windows high contrast resolves the HUD
+// accessors through the current system palette. Rebuilt identically by
+// init_bitmaps() and rescale_camera_icons().
 static void build_hud_status_glyphs(wxWindow *ref,
                                     ScalableBitmap &sd_normal, ScalableBitmap &sd_abnormal, ScalableBitmap &sd_no,
                                     ScalableBitmap &rec_on, ScalableBitmap &rec_off,
@@ -247,10 +258,14 @@ static void build_hud_status_glyphs(wxWindow *ref,
 {
     const wxColour on   = CameraHUD::Glyph();
     const wxColour off  = CameraHUD::GlyphMuted();
-    const wxColour live = MD3::Viewport::live;
-    // Storage-abnormal keeps a warning read via the semantic Error role, resolved
-    // dark since the HUD is fixed-dark (no theme swap, no raw literal).
-    const wxColour warn = MD3::resolve(MD3::Role::Error, true, MD3::ColorScheme::Device);
+    const wxColour live = CameraHUD::HighContrastActive()
+                              ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
+                              : MD3::Viewport::live;
+    // Preserve status colouring normally, but never override the user's selected
+    // text palette in Windows high contrast.
+    const wxColour warn = CameraHUD::HighContrastActive()
+                              ? wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT)
+                              : MD3::resolve(MD3::Role::Error, true, MD3::ColorScheme::Device);
     sd_normal   = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, on, "sdcard_state_normal_dark");
     sd_abnormal = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, warn, "sdcard_state_abnormal_dark");
     sd_no       = device_glyph_scalable(ref, MaterialIcon::SdCard, 20, off, "sdcard_state_no_dark");
@@ -804,8 +819,16 @@ static void market_model_scoring_page(int design_id)
     std::string url;
     std::string country_code = GUI::wxGetApp().app_config->get_country_code();
     url                      = GUI::wxGetApp().get_model_http_url(country_code);
-    if (GUI::wxGetApp().getAgent()->get_model_mall_detail_url(&url, std::to_string(design_id)) == 0) {
-        std::string user_id = GUI::wxGetApp().getAgent()->get_user_id();
+    // Null whenever the network plugin failed to load. Without the agent there
+    // is no rating URL to build, so leave the page alone rather than dereference.
+    NetworkAgent *agent = GUI::wxGetApp().getAgent();
+    if (!agent) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                      "cannot open the model rating page.";
+        return;
+    }
+    if (agent->get_model_mall_detail_url(&url, std::to_string(design_id)) == 0) {
+        std::string user_id = agent->get_user_id();
         boost::algorithm::replace_first(url, "models", "u/" + user_id + "/rating");
         // Prevent user_id from containing design_id
         size_t      sign_in = url.find("/rating");
@@ -1303,16 +1326,16 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_button_pause_resume->SetButtonSize(Button::Size::Large);
     m_button_pause_resume->SetColorScheme(MD3::ColorScheme::Device);
     m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
-    m_button_pause_resume->SetCanFocus(false);
-    m_button_pause_resume->SetToolTip(_L("Pause"));
+    m_button_pause_resume->SetCanFocus(true);
+    set_button_action_label(m_button_pause_resume, _L("Pause"));
 
     // MD3 stop: a danger pill (transparent fill, 1px Error border, Error glyph).
     m_button_abort = new Button(progress_lr_panel, wxEmptyString, "", wxBORDER_NONE, 0, wxID_ANY);
     m_button_abort->SetVariant(Button::Variant::Danger);
     m_button_abort->SetButtonSize(Button::Size::Large);
     m_button_abort->SetGlyph(MaterialIcon::Stop);
-    m_button_abort->SetCanFocus(false);
-    m_button_abort->SetToolTip(_L("Stop"));
+    m_button_abort->SetCanFocus(true);
+    set_button_action_label(m_button_abort, _L("Stop"));
 
     wxBoxSizer *bSizer_buttons     = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *bSizer_text        = new wxBoxSizer(wxHORIZONTAL);
@@ -1865,17 +1888,19 @@ void PrintingTaskPanel::enable_pause_resume_button(bool enable, std::string type
 
         if (type == "pause_disable") {
             m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
+            set_button_action_label(m_button_pause_resume, _L("Pause"));
         } else if (type == "resume_disable") {
             m_button_pause_resume->SetGlyph(MaterialIcon::PlayArrow);
+            set_button_action_label(m_button_pause_resume, _L("Resume"));
         }
     } else {
         m_button_pause_resume->Enable(true);
         if (type == "resume") {
             m_button_pause_resume->SetGlyph(MaterialIcon::PlayArrow);
-            if (m_button_pause_resume->GetToolTipText() != _L("Resume")) { m_button_pause_resume->SetToolTip(_L("Resume")); }
+            set_button_action_label(m_button_pause_resume, _L("Resume"));
         } else if (type == "pause") {
             m_button_pause_resume->SetGlyph(MaterialIcon::Pause);
-            if (m_button_pause_resume->GetToolTipText() != _L("Pause")) { m_button_pause_resume->SetToolTip(_L("Pause")); }
+            set_button_action_label(m_button_pause_resume, _L("Pause"));
         }
     }
 }
@@ -2265,9 +2290,9 @@ void StatusBasePanel::init_bitmaps()
     m_bitmap_extruder_empty_unload  = *cache.load_png("monitor_extruder_empty_unload", FromDIP(28), FromDIP(70), false, false);
     m_bitmap_extruder_filled_unload = *cache.load_png("monitor_extruder_filled_unload", FromDIP(28), FromDIP(70), false, false);
 
-    // The camera HUD interior is ALWAYS dark (kCardBg), in both app themes, so
-    // the status-indicator glyphs use fixed on-dark colours and are never
-    // theme-swapped (the legacy "_dark" rasters remain the graceful fallback).
+    // The camera HUD interior is dark in both normal app themes; Windows high
+    // contrast uses the system palette. The legacy "_dark" rasters remain the
+    // graceful fallback when the Material icon face is unavailable.
     build_hud_status_glyphs(this, m_bitmap_sdcard_state_normal, m_bitmap_sdcard_state_abnormal, m_bitmap_sdcard_state_no,
                             m_bitmap_recording_on, m_bitmap_recording_off, m_bitmap_timelapse_on, m_bitmap_timelapse_off,
                             m_bitmap_vcamera_on, m_bitmap_vcamera_off);
@@ -2277,10 +2302,10 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
 {
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-    // Always-dark camera HUD strip. Replaces the legacy device-title strip; it
-    // is stacked ABOVE the video by this sizer (index 0), so it never overlays
-    // the native wxMediaCtrl HWND (no MSW flicker/clip). Fixed-dark in both app
-    // themes and excluded from on_sys_color_changed re-tinting.
+    // Dark camera HUD strip. Replaces the legacy device-title strip; it is
+    // stacked ABOVE the video by this sizer (index 0), so it never overlays the
+    // native wxMediaCtrl HWND (no MSW flicker/clip). It stays dark across normal
+    // themes and switches to system colours in Windows high contrast.
     m_camera_hud = new CameraHUD(this);
 
     // Legacy debug-only widgets: referenced under !BBL_RELEASE_TO_PUBLIC in
@@ -2331,8 +2356,12 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
     m_bitmap_timelapse_img->SetToolTip(_L("Timelapse"));
     m_bitmap_recording_img->SetToolTip(_L("Video"));
     m_bitmap_vcamera_img->SetToolTip(_L("Go Live"));
-    m_camera_fullscreen_button->SetToolTip(_L("Enter Camera Full Screen"));
-    m_setting_button->SetToolTip(_L("Camera Setting"));
+    const wxString fullscreen_name = _L("Enter Camera Full Screen");
+    const wxString settings_name   = _L("Camera Setting");
+    m_camera_fullscreen_button->SetToolTip(fullscreen_name);
+    m_camera_fullscreen_button->SetName(fullscreen_name);
+    m_setting_button->SetToolTip(settings_name);
+    m_setting_button->SetName(settings_name);
 
     wxSizer *status_slot = m_camera_hud->status_slot();
     status_slot->Add(m_bitmap_sdcard_img, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
@@ -2463,7 +2492,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     bSizer_control->Add(temperature_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
     bSizer_control->Add(0, 0, 0, wxTOP, FromDIP(8));
     bSizer_control->Add(print_options_card, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
-    bSizer_control->Add(m_ams_rack_switch, 0, wxALIGN_CENTRE | wxTOP, FromDIP(6));
+    bSizer_control->Add(m_ams_rack_switch, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     bSizer_control->Add(0, 0, 0, wxTOP, FromDIP(6));
     bSizer_control->Add(ams_rack_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
     bSizer_control->Add(0, 0, 0, wxTOP, FromDIP(6));
@@ -2916,9 +2945,7 @@ wxBoxSizer *StatusBasePanel::create_extruder_control(wxWindow *parent)
     auto        panel         = new wxPanel(parent, wxID_ANY);
 
     panel->SetBackgroundColour(device_card_color());
-    panel->SetSize(wxSize(FromDIP(143), -1));
     panel->SetMinSize(wxSize(FromDIP(143), -1));
-    panel->SetMaxSize(wxSize(FromDIP(143), -1));
 
     StateColor e_ctrl_bg(std::pair<wxColour, int>(device_primary_container_color(), StateColor::Pressed),
                          std::pair<wxColour, int>(device_control_color(), StateColor::Normal));
@@ -6194,7 +6221,14 @@ void StatusPanel::rescale_camera_icons()
 
     if (m_camera_hud) m_camera_hud->msw_rescale();
 
-    // Always-dark variants: the HUD interior is fixed-dark in both app themes.
+    // Rebuild against the HUD's normal dark or Windows high-contrast palette.
+    const wxColour hud_bg = CameraHUD::CardBg();
+    m_camera_hud->SetBackgroundColour(hud_bg);
+    for (wxWindow *indicator : {static_cast<wxWindow *>(m_bitmap_sdcard_img),
+                                static_cast<wxWindow *>(m_bitmap_timelapse_img),
+                                static_cast<wxWindow *>(m_bitmap_recording_img),
+                                static_cast<wxWindow *>(m_bitmap_vcamera_img)})
+        indicator->SetBackgroundColour(hud_bg);
     build_hud_status_glyphs(this, m_bitmap_sdcard_state_normal, m_bitmap_sdcard_state_abnormal, m_bitmap_sdcard_state_no,
                             m_bitmap_recording_on, m_bitmap_recording_off, m_bitmap_timelapse_on, m_bitmap_timelapse_off,
                             m_bitmap_vcamera_on, m_bitmap_vcamera_off);
@@ -6239,9 +6273,12 @@ void StatusPanel::on_sys_color_changed()
     SetBackgroundColour(device_page_color());
     m_machine_ctrl_panel->SetBackgroundColour(device_page_color());
     m_panel_control_title->SetBackgroundColour(device_title_color());
-    // The camera HUD is fixed-dark in both themes: it is NOT re-tinted to the
-    // Device title colour; just repaint it so the badge/chips redraw crisply.
-    if (m_camera_hud) m_camera_hud->Refresh();
+    // The HUD owns its dark/system palette. Rescale refreshes its backgrounds,
+    // chips, and status glyphs when high contrast or another system colour changes.
+    if (m_camera_hud) {
+        m_camera_hud->SetBackgroundColour(CameraHUD::CardBg());
+        m_camera_hud->Refresh();
+    }
     m_staticText_control->SetForegroundColour(device_secondary_text_color());
     // Keep the (title-strip-free) action row blended into the SurfaceDim column.
     if (m_panel_control_title) m_panel_control_title->SetBackgroundColour(device_page_color());
@@ -6977,9 +7014,21 @@ wxBoxSizer *ScoreDialog::get_button_sizer()
         std::string  http_error;
         wxString     error_info;
 
+        // Rating submission is pure network work, and the agent is null for the
+        // whole session whenever the network plugin failed to load. Bail out
+        // once here rather than dereferencing it at each of the three calls
+        // below (oss config, picture upload, rating put).
+        NetworkAgent *agent = wxGetApp().getAgent();
+        if (!agent) {
+            BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                          "cannot submit the rating.";
+            m_upload_status_code = StatusCode::UPLOAD_EXIST_ISSUE;
+            return;
+        }
+
         if (!need_upload_images.empty()) {
             std::string config;
-            int         ret = wxGetApp().getAgent()->get_oss_config(config, wxGetApp().app_config->get_country_code(), http_code, http_error);
+            int         ret = agent->get_oss_config(config, wxGetApp().app_config->get_country_code(), http_code, http_error);
             if (ret == -1) {
                 error_info += into_u8(_L("Get oss config failed.")) + "\n\thttp code: " + std::to_string(http_code) + "\n\thttp error: " + http_error;
                 BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": get oss config filed and http_error: " << http_error;
@@ -6997,7 +7046,7 @@ wxBoxSizer *ScoreDialog::get_button_sizer()
                     std::pair<wxStaticBitmap *, wxString> need_upload     = *it;
                     std::string                           need_upload_uf8 = into_u8(need_upload.second);
                     // Local path when incoming, cloud path when outgoing
-                    ret = wxGetApp().getAgent()->put_rating_picture_oss(config, need_upload_uf8, m_model_id, m_profile_id, http_code, http_error);
+                    ret = agent->put_rating_picture_oss(config, need_upload_uf8, m_model_id, m_profile_id, http_code, http_error);
                     std::unordered_map<wxStaticBitmap *, ImageMsg>::iterator iter;
                     switch (ret) {
                     case 0:
@@ -7053,7 +7102,7 @@ wxBoxSizer *ScoreDialog::get_button_sizer()
         }
 
         if (m_upload_status_code == StatusCode::UPLOAD_PROGRESS) {
-            int            ret = wxGetApp().getAgent()->put_model_mall_rating(m_rating_id, m_star_count, comment, m_image_url_paths, http_code, http_error);
+            int            ret = agent->put_model_mall_rating(m_rating_id, m_star_count, comment, m_image_url_paths, http_code, http_error);
             MessageDialog *dlg_info;
             switch (ret) {
             case 0: EndModal(wxID_OK); break;

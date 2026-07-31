@@ -9678,16 +9678,47 @@ bool has_restore_data(std::string & path, std::string& origin)
         return false;
     }
     if (boost::filesystem::exists(path + "/lock.txt")) {
-        std::string pid;
-        load_string_file(path + "/lock.txt", pid);
+        // load_string_file() throws if the lock file cannot be read - including when it
+        // is deleted between the exists() check above and the read below. It used to sit
+        // outside the try, so that exception escaped has_restore_data() into the
+        // EVT_RESTORE_PROJECT handler, where an unhandled throw takes the whole app down
+        // at startup instead of merely skipping recovery.
         try {
-            if (get_process_name(boost::lexical_cast<int>(pid)) ==
-                get_process_name(0)) {
+            std::string pid;
+            load_string_file(path + "/lock.txt", pid);
+            const int         lock_pid = boost::lexical_cast<int>(pid);
+            const std::string owner    = get_process_name(lock_pid);
+            const std::string self     = get_process_name(0);
+            // Two guards, both of which used to be missing:
+            //  - An empty name means "could not be determined". It must never compare
+            //    equal to anything, or two failed lookups would read as a live owner and
+            //    silently suppress recovery.
+            //  - Windows reuses freed pids, and relaunching right after a crash can hand
+            //    this instance the crashed one's pid. The process asking the question is
+            //    definitionally not the instance that wrote the lock, so a matching name
+            //    on our own pid is reuse, not a live owner.
+            if (!owner.empty() && lock_pid != static_cast<int>(get_current_pid()) &&
+                owner == self) {
                 origin = "<lock>";
                 return false;
             }
         }
+        // Declining is the safe answer - an unreadable lock cannot prove the owning
+        // instance is gone, and racing a live one over the same backup is worse than not
+        // offering recovery. But it must not be silent: this is exactly the "the restore
+        // prompt never appeared" report that is impossible to diagnose after the fact.
+        catch (const std::exception &ex) {
+            BOOST_LOG_TRIVIAL(warning)
+                << "has_restore_data: cannot evaluate lock.txt in "
+                << PathSanitizer::sanitize(path) << ", declining restore: " << ex.what();
+            origin = "<lock>";
+            return false;
+        }
         catch (...) {
+            BOOST_LOG_TRIVIAL(warning)
+                << "has_restore_data: cannot evaluate lock.txt in "
+                << PathSanitizer::sanitize(path) << ", declining restore";
+            origin = "<lock>";
             return false;
         }
     }

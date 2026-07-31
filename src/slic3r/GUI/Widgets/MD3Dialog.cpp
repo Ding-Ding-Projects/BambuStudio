@@ -166,15 +166,17 @@ MD3Dialog::MD3Dialog(wxWindow *          parent,
     if (!m_resizable) {
         // A shaped, borderless window must re-apply its rounded region whenever
         // its size changes (initial fit, extended-message re-fit, details
-        // expand, ...). The resizable variant keeps a rectangular native window.
+        // expand, ...). The resizable variant is never shaped, so it has no
+        // region to keep in sync.
         Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
             UpdateShape();
             e.Skip();
         });
     }
     // Restore the movability lost with the native title bar: the dialog surface
-    // and the (non-interactive) header widgets act as drag handles. bind_drag()
-    // is a no-op in the resizable variant (native chrome already moves it).
+    // and the (non-interactive) header widgets act as drag handles. This applies
+    // to both variants — the resizable one is borderless too (its thin resize
+    // frame is all the native chrome it has), so nothing else would move it.
     bind_drag(this);
 }
 
@@ -306,11 +308,13 @@ void MD3Dialog::build_shell(const wxString &title, const wxString &subtitle, Mat
     m_close_btn->SetToolTip(_L("Close"));
     m_close_btn->SetName(_L("Close"));
     m_close_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { OnHeaderClose(); });
-    // Forced-dark shells re-tint the close glyph/hover to the dark scheme; the
-    // resizable variant hides it (the native title bar owns the close control).
+    // Forced-dark shells re-tint the close glyph/hover to the dark scheme. Both
+    // variants show this circle: the resizable style is
+    // wxRESIZE_BORDER|wxBORDER_NONE, i.e. WS_POPUP|WS_THICKFRAME with no
+    // WS_CAPTION on MSW, so there is no native [x] hiding behind it — suppress
+    // it here and the shell is left with no discoverable close affordance at
+    // all. A shell that must not be closable opts out via ShowHeaderClose(false).
     style_close_button();
-    if (m_resizable)
-        m_close_btn->Hide();
     header->Add(m_close_btn, 0, wxALIGN_CENTER_VERTICAL);
 
     main->AddSpacer(FromDIP(22));
@@ -423,8 +427,8 @@ void MD3Dialog::OnHeaderClose() { EndModal(wxID_CANCEL); }
 
 void MD3Dialog::UpdateShape()
 {
-    // The resizable variant keeps a rectangular native window; applying a
-    // rounded shape region would clip the native title bar / resize border.
+    // The resizable variant is left unshaped: a rounded region would clip the
+    // thin resize frame (WS_THICKFRAME), the only native chrome it still has.
     if (m_resizable)
         return;
 
@@ -456,7 +460,7 @@ void MD3Dialog::on_dpi_changed(const wxRect & /*suggested_rect*/)
     // Re-derive the header icon tile's FromDIP-pinned edge for the new monitor
     // DPI (every shell variant shares the tile), re-flow the shell, and re-apply
     // the rounded silhouette (UpdateShape is a no-op for the resizable variant,
-    // which keeps a rectangular native window).
+    // which is left unshaped).
     if (m_tile)
         m_tile->Rescale();
     Layout();

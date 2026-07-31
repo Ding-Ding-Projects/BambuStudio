@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include <wx/access.h>
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 
@@ -23,6 +24,77 @@ constexpr int kVBestW       = 12;  // vertical best width (12x300 variant)
 constexpr int kVBestH       = 300; // vertical best height
 
 inline double clamp01(double v) { return v < 0.0 ? 0.0 : (v > 1.0 ? 1.0 : v); }
+
+#if wxUSE_ACCESSIBILITY
+// Without this a screen reader sees a bare client area: wxWindow's default
+// accessible reports ROLE_SYSTEM_CLIENT and no value, so the user is told there
+// is *something* focused but not that it is a slider, nor where it is set. The
+// native trackbar this control is meant to replace reports both, and replacing
+// an accessible control with an inaccessible one is not an option.
+class SliderAccessible : public wxAccessible
+{
+public:
+    explicit SliderAccessible(Slider *window) : wxAccessible(window) {}
+
+    wxAccStatus GetRole(int childId, wxAccRole *role) override
+    {
+        if (childId != wxACC_SELF || role == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_SLIDER;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetValue(int childId, wxString *strValue) override
+    {
+        const Slider *slider = slider_window();
+        if (childId != wxACC_SELF || strValue == nullptr || slider == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *strValue = wxString::Format(wxT("%d"), slider->GetValue());
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetName(int childId, wxString *name) override
+    {
+        const wxWindow *window = GetWindow();
+        if (childId != wxACC_SELF || name == nullptr || window == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        // Callers label the control with SetName(); fall back to the framework's
+        // own resolution rather than inventing a name here.
+        const wxString label = window->GetName();
+        if (label.empty())
+            return wxACC_NOT_IMPLEMENTED;
+        *name = label;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int childId, long *state) override
+    {
+        const wxWindow *window = GetWindow();
+        if (childId != wxACC_SELF || state == nullptr || window == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        long flags = wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (!window->IsEnabled())
+            flags |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (window->HasFocus())
+            flags |= wxACC_STATE_SYSTEM_FOCUSED;
+        *state = flags;
+        return wxACC_OK;
+    }
+
+    // A slider is a leaf: saying so stops assistive tech walking for children.
+    wxAccStatus GetChildCount(int *childCount) override
+    {
+        if (childCount == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *childCount = 0;
+        return wxACC_OK;
+    }
+
+private:
+    // wxAccessible::GetWindow() is non-const, so this cannot be a const member.
+    Slider *slider_window() { return static_cast<Slider *>(GetWindow()); }
+};
+#endif // wxUSE_ACCESSIBILITY
 } // namespace
 
 Slider::Slider() {}
@@ -58,6 +130,11 @@ bool Slider::Create(wxWindow *parent, int value, int minValue, int maxValue, boo
         Refresh(false);
         e.Skip();
     });
+
+#if wxUSE_ACCESSIBILITY
+    // wxWindow takes ownership of the accessible.
+    SetAccessible(new SliderAccessible(this));
+#endif
 
     const wxSize best = DoGetBestSize();
     SetMinSize(best);
@@ -156,6 +233,11 @@ void Slider::setValueInternal(int value, bool notify)
         return;
     m_value = c;
     Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    // Announce every change, including programmatic SetValue: a screen reader that
+    // is told the role but never the new value is only half a slider.
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_VALUECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     if (notify && m_on_change)
         m_on_change(c);
 }
@@ -214,6 +296,10 @@ void Slider::onFocus(wxFocusEvent &evt)
 {
     m_focused = (evt.GetEventType() == wxEVT_SET_FOCUS);
     Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    if (m_focused)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
     evt.Skip();
 }
 

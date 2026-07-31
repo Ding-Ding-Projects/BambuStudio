@@ -1,6 +1,8 @@
 ﻿#include "MsgDialog.hpp"
 
+#include <algorithm>
 #include <wx/settings.h>
+#include <wx/display.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/button.h>
@@ -26,6 +28,31 @@
 #define MSG_DLG_MAX_SIZE wxSize(-1, FromDIP(464))//notice:ban setting the maximum width value
 namespace Slic3r {
 namespace GUI {
+
+static wxRect msg_dialog_work_area(wxWindow *window)
+{
+    int display_index = wxDisplay::GetFromWindow(window);
+    if (display_index == wxNOT_FOUND && window && window->GetParent())
+        display_index = wxDisplay::GetFromWindow(window->GetParent());
+    if (display_index == wxNOT_FOUND)
+        display_index = 0;
+    if (display_index < 0 || display_index >= static_cast<int>(wxDisplay::GetCount()))
+        return {};
+    return wxDisplay(display_index).GetClientArea();
+}
+
+static int bounded_message_content_width(wxWindow *dialog, int preferred_width)
+{
+    const wxRect work_area = msg_dialog_work_area(dialog);
+    if (work_area.IsEmpty())
+        return preferred_width;
+
+    // Reserve the shell's 24-DIP body padding, a narrow scrollbar/gutter, and
+    // 16-DIP screen margins on both sides before fixing a wrapped body width.
+    const int available =
+        work_area.GetWidth() - dialog->FromDIP(96);
+    return std::max(1, std::min(preferred_width, available));
+}
 
 // Preserve the legacy behaviour of parenting a message dialog to the main frame
 // when no explicit parent is given (MainFrame is fully defined in this TU, so
@@ -61,11 +88,27 @@ MsgDialog::MsgDialog(wxWindow *parent, const wxString &title, const wxString &he
     content_sizer = GetContentSizer();
     btn_sizer     = GetFooterSizer();
 
-    // "Don't show again" checkbox sits at the far left of the footer row (kit
-    // footer: toggle/secondary left, actions right). It is inserted before the
-    // shell's leading stretch so the action buttons stay right-aligned.
+    // Keep the optional "Don't show again" block on its own responsive row.
+    // A translated/custom label may be much wider than the actions; sharing
+    // one horizontal row let that text force the whole dialog off-screen at
+    // narrow widths and high DPI.
+    btn_sizer->Clear(false); // remove the shell's initial leading stretch
+    m_footer_content_sizer = new wxBoxSizer(wxVERTICAL);
     m_dsa_sizer = new wxBoxSizer(wxHORIZONTAL);
-    btn_sizer->Insert(0, m_dsa_sizer, 0, wxALIGN_CENTER_VERTICAL);
+    m_dsa_row_sizer = new wxBoxSizer(wxHORIZONTAL);
+    m_dsa_row_sizer->Add(m_dsa_sizer, 1, wxEXPAND);
+    m_action_sizer = new wxFlexGridSizer(1, 0, FromDIP(8), FromDIP(10));
+    m_action_row_sizer = new wxBoxSizer(wxHORIZONTAL);
+    m_action_row_sizer->AddStretchSpacer();
+    m_action_row_sizer->Add(m_action_sizer, 0, wxALIGN_CENTER_VERTICAL);
+    m_footer_content_sizer->Add(
+        m_dsa_row_sizer,
+        0,
+        wxEXPAND | wxBOTTOM,
+        FromDIP(8));
+    m_footer_content_sizer->Hide(m_dsa_row_sizer, true);
+    m_footer_content_sizer->Add(m_action_row_sizer, 0, wxEXPAND);
+    btn_sizer->Add(m_footer_content_sizer, 1, wxEXPAND);
 
     // Error dialogs get the Error-toned icon tile; every other status keeps the
     // kit's PrimaryContainer tile, with the status glyph carrying the meaning.
@@ -93,12 +136,27 @@ void MsgDialog::show_dsa_button(wxString const &title)
         e.Skip();
     });
 
-    auto  m_text_dsa = new wxStaticText(this, wxID_ANY, title.IsEmpty() ? _L("Don't show again") : title, wxDefaultPosition, wxDefaultSize, 0);
-    m_dsa_sizer->Add(m_text_dsa, 0, wxALL | wxALIGN_CENTER, FromDIP(2));
+    m_dsa_text = title.IsEmpty() ? _L("Don't show again") : title;
+    m_text_dsa = new wxStaticText(
+        this,
+        wxID_ANY,
+        m_dsa_text,
+        wxDefaultPosition,
+        wxDefaultSize,
+        0);
+    m_text_dsa->SetMinSize(wxSize(0, -1));
+    m_dsa_sizer->Add(
+        m_text_dsa,
+        1,
+        wxLEFT | wxALIGN_CENTER_VERTICAL,
+        FromDIP(8));
     m_text_dsa->SetFont(::Label::Body_13);
     m_text_dsa->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    btn_sizer->Layout();
-    Fit();
+    m_footer_content_sizer->Show(m_dsa_row_sizer, true, true);
+    if (m_finalized)
+        refit_to_work_area(!IsShown());
+    else
+        btn_sizer->Layout();
 }
 
 bool MsgDialog::get_checkbox_state()
@@ -111,6 +169,7 @@ bool MsgDialog::get_checkbox_state()
 
 void MsgDialog::on_dpi_changed(const wxRect &suggested_rect)
  {
+     MD3Dialog::on_dpi_changed(suggested_rect);
      // Kit footer buttons self-manage their pill radius / height / padding, so a
      // DPI change is handled by re-running their MD3 style via Rescale().
      MsgButtonsHash::iterator i = m_buttons.begin();
@@ -120,17 +179,29 @@ void MsgDialog::on_dpi_changed(const wxRect &suggested_rect)
              bd->buttondata->button->Rescale();
          ++i;
      }
-     // Re-apply the rounded window region for the (possibly) rescaled size.
-     UpdateShape();
+     if (m_finalized)
+         refit_to_work_area(false);
+     else
+         UpdateShape();
  }
 
 void MsgDialog::SetButtonLabel(wxWindowID btn_id, const wxString& label, bool set_focus/* = false*/)
 {
     if (Button* btn = get_button(btn_id)) {
         btn->SetLabel(label);
+        btn->SetToolTip(label);
         if (set_focus)
             btn->SetFocus();
+        if (m_finalized)
+            refit_to_work_area(!IsShown());
     }
+}
+
+void MsgDialog::AddButton(wxWindowID btn_id, const wxString &label, bool set_focus)
+{
+    add_button(btn_id, set_focus, label);
+    if (m_finalized)
+        refit_to_work_area(!IsShown());
 }
 
 Button* MsgDialog::add_button(wxWindowID btn_id, bool set_focus /*= false*/, const wxString& label/* = wxString()*/)
@@ -144,10 +215,14 @@ Button* MsgDialog::add_button(wxWindowID btn_id, bool set_focus /*= false*/, con
     // fixed 58/76/90 x 24 sizing + first-focused-green heuristic.
     btn->SetVariant(set_focus ? Button::Variant::Filled : Button::Variant::Text);
     btn->SetButtonSize(Button::Size::Medium);
+    btn->SetMinSize(FromDIP(wxSize(44, 42)));
+    btn->SetAllowShrink(true);
+    btn->SetToolTip(label);
 
     if (set_focus)
         btn->SetFocus();
-    AddFooterButton(btn);
+    m_action_sizer->Add(btn, 0, wxALIGN_CENTER_VERTICAL);
+    m_button_order.push_back(btn);
     btn->Bind(wxEVT_BUTTON, [this, btn_id](wxCommandEvent&) { EndModal(btn_id); });
 
     MsgButton *mb = new MsgButton;
@@ -186,14 +261,116 @@ void MsgDialog::apply_style(long style)
     // raster logo no longer exists.
 }
 
-void MsgDialog::finalize()
+void MsgDialog::reflow_footer_for_width(int available_width)
 {
+    if (!m_action_sizer)
+        return;
+
+    if (m_text_dsa) {
+        const int checkbox_width =
+            m_checkbox_dsa
+                ? std::max(
+                      m_checkbox_dsa->GetBestSize().GetWidth(),
+                      m_checkbox_dsa->GetMinSize().GetWidth())
+                : 0;
+        const int text_budget =
+            std::max(1, available_width - checkbox_width - FromDIP(12));
+        // wxStaticText::Wrap() inserts line breaks into the current label.
+        // Restore the source before every reflow so moving to a wider monitor
+        // or lower DPI can unwrap it again.
+        m_text_dsa->SetLabel(m_dsa_text);
+        m_text_dsa->SetMinSize(wxSize(0, -1));
+        m_text_dsa->SetMaxSize(wxSize(text_budget, -1));
+        m_text_dsa->Wrap(text_budget);
+        m_dsa_sizer->Layout();
+    }
+
+    const int action_budget = std::max(FromDIP(44), available_width);
+
+    int preferred_width = 0;
+    for (Button *button : m_button_order) {
+        if (!button)
+            continue;
+        button->SetMaxSize(wxDefaultSize);
+        preferred_width += button->GetBestSize().GetWidth();
+    }
+    if (m_button_order.size() > 1)
+        preferred_width +=
+            static_cast<int>(m_button_order.size() - 1) * FromDIP(10);
+
+    const bool stack = preferred_width > action_budget;
+    if (stack) {
+        m_action_sizer->SetCols(1);
+        m_action_sizer->SetRows(0);
+    } else {
+        m_action_sizer->SetRows(1);
+        m_action_sizer->SetCols(0);
+    }
+
+    for (Button *button : m_button_order) {
+        if (!button)
+            continue;
+        if (stack && button->GetBestSize().GetWidth() > action_budget)
+            button->SetMaxSize(wxSize(action_budget, -1));
+    }
+    m_action_sizer->Layout();
+    if (m_dsa_row_sizer)
+        m_dsa_row_sizer->Layout();
+    if (m_action_row_sizer)
+        m_action_row_sizer->Layout();
+    if (m_footer_content_sizer)
+        m_footer_content_sizer->Layout();
+}
+
+void MsgDialog::refit_to_work_area(bool recenter)
+{
+    const wxRect work_area = msg_dialog_work_area(this);
+    if (work_area.IsEmpty()) {
+        Layout();
+        Fit();
+        if (recenter)
+            CenterOnParent();
+        UpdateShape();
+        return;
+    }
+
+    const int margin = FromDIP(16);
+    const wxSize available(
+        std::max(1, work_area.GetWidth() - 2 * margin),
+        std::max(1, work_area.GetHeight() - 2 * margin));
+
+    // The footer wrapper itself owns 24-DIP padding on each side.
+    reflow_footer_for_width(std::max(1, available.GetWidth() - FromDIP(48)));
     Layout();
     Fit();
-    CenterOnParent();
-    // The shell is borderless + shaped; re-derive the rounded region for the
-    // final fitted size (the wxEVT_SIZE hook covers later re-fits).
+
+    wxSize target(
+        std::min(GetSize().GetWidth(), available.GetWidth()),
+        std::min(GetSize().GetHeight(), available.GetHeight()));
+    const wxSize explicit_max = GetMaxSize();
+    if (explicit_max.GetWidth() > 0)
+        target.SetWidth(std::min(target.GetWidth(), explicit_max.GetWidth()));
+    if (explicit_max.GetHeight() > 0)
+        target.SetHeight(std::min(target.GetHeight(), explicit_max.GetHeight()));
+    SetSize(target);
+    Layout();
+
+    if (recenter)
+        CenterOnParent();
+
+    const int max_x = work_area.GetRight() - margin - target.GetWidth() + 1;
+    const int max_y = work_area.GetBottom() - margin - target.GetHeight() + 1;
+    const wxPoint current = GetPosition();
+    Move(
+        std::max(work_area.GetLeft() + margin, std::min(current.x, max_x)),
+        std::max(work_area.GetTop() + margin, std::min(current.y, max_y)));
     UpdateShape();
+}
+
+void MsgDialog::finalize()
+{
+    m_finalized = true;
+    refit_to_work_area(true);
     wxGetApp().UpdateDlgDarkUI(this);
 }
 
@@ -228,12 +405,24 @@ static void add_msg_content(wxWindow   *parent,
         msg_lines++;
     }
 
-    wxFont      font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-    wxFont      monospace = wxGetApp().code_font();
+    // Kit typography (ui-md3 type scale). This is the body renderer for the whole
+    // message-dialog family, so its two faces decide the type of essentially every
+    // modal in the app: the prose face is the MD3 body style (::Label::Body_14 ==
+    // MD3::Type::body, 14/400) and the fixed-pitch face is Roboto Mono
+    // (::Label::Mono_12), in place of the Windows shell font (Segoe UI) and the
+    // OS teletype family behind code_font() (Courier New). Taking them from Label
+    // is also what makes the body follow Appearance > UI font / font size, which
+    // the OS faces never did. Both helpers are built in the GUI_App constructor
+    // (Label::initSysFont), but keep the OS faces as a fallback in case a bundled
+    // font resource ever fails to resolve.
+    wxFont      font = ::Label::Body_14.IsOk() ? ::Label::Body_14 : wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    wxFont      monospace = ::Label::Mono_12.IsOk() ? ::Label::Mono_12 : wxGetApp().code_font();
     wxColour    text_clr = wxGetApp().get_label_clr_default();
     wxColour    bgr_clr = parent->GetBackgroundColour(); //wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
     auto        text_clr_str = wxString::Format(wxT("#%02X%02X%02X"), text_clr.Red(), text_clr.Green(), text_clr.Blue());
     auto        bgr_clr_str = wxString::Format(wxT("#%02X%02X%02X"), bgr_clr.Red(), bgr_clr.Green(), bgr_clr.Blue());
+    // The HTML size ladder stays flat (as before) but is now anchored on the MD3
+    // body size rather than the shell font's point size.
     const int   font_size = font.GetPointSize();
     int         size[] = { font_size, font_size, font_size, font_size, font_size, font_size, font_size };
     html->SetFonts(font.GetFaceName(), monospace.GetFaceName(), size);
@@ -256,7 +445,7 @@ static void add_msg_content(wxWindow   *parent,
         em = std::max<size_t>(10, 10.0f * scale_factor);
 #endif // __WXGTK__
     }
-    auto info_width = 68 * em;
+    auto info_width = bounded_message_content_width(parent, 68 * em);
     // if message containes the table
     if (msg.Contains("<tr>")) {
         int lines = msg.Freq('\n') + 1;
@@ -270,6 +459,10 @@ static void add_msg_content(wxWindow   *parent,
     }
     else {
         wxClientDC dc(parent);
+        // Measure in the face the body actually renders in. This used to fall out
+        // of the parent dialog's own font happening to match; pinning it keeps the
+        // sizing honest now that the body face comes from the kit type scale.
+        dc.SetFont(font);
         wxSize     msg_sz = dc.GetMultiLineTextExtent(msg);
 
         page_size = wxSize(std::min(msg_sz.GetX(), info_width), std::min(msg_sz.GetY(), info_width));
@@ -277,7 +470,11 @@ static void add_msg_content(wxWindow   *parent,
         if (link_text.IsEmpty() && !link_callback && is_marked_msg == false) {//for common text
             html->Destroy();
             if (msg_sz.GetX() < info_width) {//No need for line breaks
-                info_width = msg_sz.GetX();
+                // Measurement and rendering now use the same font, so collapsing to
+                // the bare extent would leave the native STATIC no room at all --
+                // mirror the Win32 slack Label::DoGetBestClientSize adds so the last
+                // glyph cannot be clipped off a single-line message.
+                info_width = std::min(info_width, msg_sz.GetX() + parent->FromDIP(4));
             }
             wxScrolledWindow *scrolledWindow = new wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
             scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
@@ -364,9 +561,13 @@ PostProcessScriptDialog::PostProcessScriptDialog(wxWindow* parent, const wxStrin
         wxString::Format(_L("%s has a warning") + ":", SLIC3R_APP_FULL_NAME),
         wxICON_WARNING)
 {
-    const int content_width = FromDIP(500);
-    wxFont msg_font = wxGetApp().normal_font();
-    msg_font.SetPointSize(wxGetApp().code_font().GetPointSize());
+    const int content_width =
+        bounded_message_content_width(this, FromDIP(500));
+    // Prose in the kit body style. The point size used to be borrowed from
+    // code_font(), which is the OS teletype family; since code_font() is sized
+    // off normal_font() that borrow was already a no-op, so this only drops the
+    // dependency on the OS face and names the MD3 style outright.
+    wxFont msg_font = ::Label::Body_14.IsOk() ? ::Label::Body_14 : wxGetApp().normal_font();
     auto* msg = new Label(this, msg_font, message, LB_AUTO_WRAP, wxSize(content_width, -1));
     msg->SetMinSize(wxSize(content_width, -1));
     msg->SetForegroundColour(wxGetApp().get_label_clr_default());
@@ -375,7 +576,9 @@ PostProcessScriptDialog::PostProcessScriptDialog(wxWindow* parent, const wxStrin
 
     m_script_text = new wxTextCtrl(this, wxID_ANY, script_content, wxDefaultPosition,
         wxSize(content_width, FromDIP(140)), wxTE_MULTILINE | wxTE_READONLY | wxTE_WORDWRAP);
-    m_script_text->SetFont(wxGetApp().code_font());
+    // The script body is technical/fixed-pitch content: Roboto Mono, the kit's
+    // canonical mono face, rather than the OS teletype family (Courier New).
+    m_script_text->SetFont(::Label::Mono_12.IsOk() ? ::Label::Mono_12 : wxGetApp().code_font());
     m_details_expanded = true;
     content_sizer->Add(m_script_text, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 
@@ -391,8 +594,7 @@ PostProcessScriptDialog::PostProcessScriptDialog(wxWindow* parent, const wxStrin
         m_details_expanded = !m_details_expanded;
         m_script_text->Show(m_details_expanded);
         m_toggle_details->SetLabel(m_details_expanded ? (_L("Collapse") + " \u2227") : (_L("View details") + " \u2228"));
-        Layout();
-        Fit();
+        refit_to_work_area(false);
     });
     content_sizer->Add(m_toggle_details, 0, wxBOTTOM, FromDIP(4));
 
@@ -406,9 +608,7 @@ PostProcessScriptDialog::PostProcessScriptDialog(wxWindow* parent, const wxStrin
     SetMaxSize(MSG_DLG_MAX_SIZE);
     finalize();
     CallAfter([this]() {
-        Layout();
-        Fit();
-        CenterOnParent();
+        refit_to_work_area(true);
     });
 }
 
@@ -499,8 +699,7 @@ DownloadDialog::DownloadDialog(wxWindow *parent, const wxString &msg, const wxSt
 void DownloadDialog::SetExtendedMessage(const wxString &extendedMessage)
 {
     add_msg_content(this, content_sizer, msg + "\n" + extendedMessage, false, false);
-    Layout();
-    Fit();
+    refit_to_work_area(false);
 }
 
 DeleteConfirmDialog::DeleteConfirmDialog(wxWindow *parent, const wxString &title, const wxString &msg)

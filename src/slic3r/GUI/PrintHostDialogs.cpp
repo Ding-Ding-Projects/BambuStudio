@@ -29,6 +29,11 @@
 #include "ExtraRenderers.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/ComboBox.hpp"
+#include "Widgets/Label.hpp"
+#include "Widgets/StateColor.hpp"
+#include "Widgets/TextInput.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -40,16 +45,32 @@ static const char *CONFIG_KEY_GROUP = "printhost_group";
 
 PrintHostSendDialog::PrintHostSendDialog(const fs::path &path, PrintHostPostUploadActions post_actions, const wxArrayString &groups)
     : MsgDialog(static_cast<wxWindow*>(wxGetApp().mainframe), _L("Send to print"), _L("Upload to Printer Host with the following filename:"),0)
-    , txt_filename(new wxTextCtrl(this, wxID_ANY))
-    , combo_groups(!groups.IsEmpty() ? new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, groups, wxCB_READONLY) : nullptr)
+    , txt_filename(nullptr)
+    , combo_groups(nullptr)
     , post_upload_action(PrintHostPostUploadAction::None)
 {
+    // Kit fields in place of the stock wx controls this dialog used to drop
+    // straight into the MD3 body: TextInput is the r10 SurfaceContainerHighest
+    // ValueField and ComboBox the SelectField with the Material Symbols
+    // chevron, so the only input of the upload dialog stops being a sunken
+    // Win32 edit box under kit chrome. Field height follows the active
+    // Appearance > Density row height rather than a pinned literal.
+    const int field_h = FromDIP(MD3::Metrics::active().row_height);
+    txt_filename = new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(-1, field_h));
+    txt_filename->SetMinSize(wxSize(-1, field_h));
+    // MSW infers an edit box's accessible name from the static text before it;
+    // the entry is now nested inside a custom container, so name it from the
+    // dialog headline explicitly rather than lose the name to the reskin.
+    txt_filename->SetName(_L("Upload to Printer Host with the following filename:"));
+    txt_filename->GetTextCtrl()->SetName(txt_filename->GetName());
+
 #ifdef __APPLE__
-    txt_filename->OSXDisableAllSmartSubstitutions();
+    txt_filename->GetTextCtrl()->OSXDisableAllSmartSubstitutions();
 #endif
     const AppConfig *app_config = wxGetApp().app_config;
 
-    auto *label_dir_hint = new wxStaticText(this, wxID_ANY, _L("Use forward slashes ( / ) as a directory separator if needed."));
+    auto *label_dir_hint = new ::Label(this, ::Label::Body_13, _L("Use forward slashes ( / ) as a directory separator if needed."));
+    label_dir_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     label_dir_hint->Wrap(CONTENT_WIDTH * wxGetApp().em_unit());
 
     content_sizer->Add(txt_filename, 0, wxEXPAND | wxALL, FromDIP(10));
@@ -57,14 +78,31 @@ PrintHostSendDialog::PrintHostSendDialog(const fs::path &path, PrintHostPostUplo
     content_sizer->Add(label_dir_hint, 0, 0, FromDIP(10));
     content_sizer->AddSpacer(VERT_SPACING);
     
-    if (combo_groups != nullptr) {
+    if (! groups.IsEmpty()) {
         // Repetier specific: Show a selection of file groups.
-        auto *label_group = new wxStaticText(this, wxID_ANY, _L("Group"));
+        combo_groups = new ::ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(-1, field_h), 0, nullptr, wxCB_READONLY);
+        combo_groups->SetMinSize(wxSize(-1, field_h));
+        combo_groups->SetName(_L("Group"));
+        for (size_t i = 0; i < groups.GetCount(); ++i)
+            combo_groups->Append(groups[i]);
+
+        auto *label_group = new ::Label(this, ::Label::Body_13, _L("Group"));
+        label_group->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         content_sizer->Add(label_group);
-        content_sizer->Add(combo_groups, 0, wxBOTTOM, 2*VERT_SPACING);        
+        // The SelectField draws its own value text and does not measure itself
+        // from the item strings, so give it the body width the filename field
+        // already has instead of letting it collapse to a default box.
+        content_sizer->Add(combo_groups, 0, wxEXPAND | wxBOTTOM, 2*VERT_SPACING);
         wxString recent_group = from_u8(app_config->get("recent", CONFIG_KEY_GROUP));
-        if (! recent_group.empty())
-            combo_groups->SetValue(recent_group);
+        if (! recent_group.empty()) {
+            // The read-only wxComboBox silently ignored a value that was not in
+            // the list; ComboBox::SetValue() would instead display it verbatim
+            // and hand it back from group(). Resolve the stored name to an index
+            // so a group the host no longer offers leaves the field empty.
+            const int recent_idx = combo_groups->FindString(recent_group);
+            if (recent_idx != wxNOT_FOUND)
+                combo_groups->SetSelection(recent_idx);
+        }
     }
 
     wxString recent_path = from_u8(app_config->get("recent", CONFIG_KEY_PATH));
@@ -76,9 +114,9 @@ PrintHostSendDialog::PrintHostSendDialog(const fs::path &path, PrintHostPostUplo
     wxString stem(path.stem().wstring());
     const auto stem_len = stem.Length();
 
-    txt_filename->SetValue(recent_path);
-    txt_filename->SetFocus();
-    
+    txt_filename->GetTextCtrl()->SetValue(recent_path);
+    txt_filename->GetTextCtrl()->SetFocus();
+
     m_valid_suffix = recent_path.substr(recent_path.find_last_of('.'));
     // .gcode suffix control
     auto validate_path = [this](const wxString &path) -> bool {
@@ -92,7 +130,7 @@ PrintHostSendDialog::PrintHostSendDialog(const fs::path &path, PrintHostPostUplo
 
     auto* btn_upload = add_button(wxID_YES, false, _L("Upload"));
     btn_upload->Bind(wxEVT_BUTTON, [this, validate_path](wxCommandEvent&) {
-        if (validate_path(txt_filename->GetValue())) {
+        if (validate_path(txt_filename->GetTextCtrl()->GetValue())) {
             post_upload_action = PrintHostPostUploadAction::None;
             EndDialog(wxID_OK);
         }
@@ -101,7 +139,7 @@ PrintHostSendDialog::PrintHostSendDialog(const fs::path &path, PrintHostPostUplo
     if (post_actions.has(PrintHostPostUploadAction::StartPrint)) {
         auto* btn_print = add_button(wxID_YES, false, _L("Print"));
         btn_print->Bind(wxEVT_BUTTON, [this, validate_path](wxCommandEvent&) {
-            if (validate_path(txt_filename->GetValue())) {
+            if (validate_path(txt_filename->GetTextCtrl()->GetValue())) {
                 post_upload_action = PrintHostPostUploadAction::StartPrint;
                 EndDialog(wxID_OK);
             }
@@ -112,7 +150,7 @@ PrintHostSendDialog::PrintHostSendDialog(const fs::path &path, PrintHostPostUplo
         // Using wxID_MORE as a button identifier to be different from the other buttons, wxID_MORE has no other meaning here.
         auto* btn_simulate = add_button(wxID_MORE, false, _L("Simulate"));
         btn_simulate->Bind(wxEVT_BUTTON, [this, validate_path](wxCommandEvent&) {
-            if (validate_path(txt_filename->GetValue())) {
+            if (validate_path(txt_filename->GetTextCtrl()->GetValue())) {
                 post_upload_action = PrintHostPostUploadAction::StartSimulation;
                 EndDialog(wxID_OK);
             }        
@@ -127,24 +165,24 @@ PrintHostSendDialog::PrintHostSendDialog(const fs::path &path, PrintHostPostUplo
     // and as a result the text is invisible with light mode
     // see https://github.com/prusa3d/PrusaSlicer/issues/4532
     // Workaround: Unselect text selection explicitly on kill focus
-    txt_filename->Bind(wxEVT_KILL_FOCUS, [this](wxEvent& e) {
+    txt_filename->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [this](wxEvent& e) {
         e.Skip();
-        txt_filename->SetInsertionPoint(txt_filename->GetLastPosition());
-    }, txt_filename->GetId());
+        txt_filename->GetTextCtrl()->SetInsertionPoint(txt_filename->GetTextCtrl()->GetLastPosition());
+    });
 #endif /* __linux__ */
 
     Bind(wxEVT_SHOW, [=](const wxShowEvent &) {
         // Another similar case where the function only works with EVT_SHOW + CallAfter,
         // this time on Mac.
         CallAfter([=]() {
-            txt_filename->SetSelection(recent_path_len, recent_path_len + stem_len);
+            txt_filename->GetTextCtrl()->SetSelection(recent_path_len, recent_path_len + stem_len);
         });
     });
 }
 
 fs::path PrintHostSendDialog::filename() const
 {
-    return into_path(txt_filename->GetValue());
+    return into_path(txt_filename->GetTextCtrl()->GetValue());
 }
 
 PrintHostPostUploadAction PrintHostSendDialog::post_action() const
@@ -166,7 +204,7 @@ void PrintHostSendDialog::EndModal(int ret)
 {
     if (ret == wxID_OK) {
         // Persist path and print settings
-        wxString path = txt_filename->GetValue();
+        wxString path = txt_filename->GetTextCtrl()->GetValue();
         int last_slash = path.Find('/', true);
 		if (last_slash == wxNOT_FOUND)
 			path.clear();
@@ -222,6 +260,12 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
 {
     const auto em = GetTextExtent("m").x;
 
+    // Own the dialog face before any child is built: the kit Buttons below take
+    // their resting fill from the parent background at construction, so leaving
+    // this on the system dialog colour would bake a system-grey plate into the
+    // Outlined / Text pills.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+
     auto *topsizer = new wxBoxSizer(wxVERTICAL);
     topsizer->Add(new MD3DialogCaption(this, _L("Print host upload queue")), 0, wxEXPAND);
 
@@ -254,17 +298,38 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
     append_text_column(_L("Filename"),      widths[5]);
     append_text_column(_L("Error Message"), -1, wxALIGN_CENTER, wxDATAVIEW_COL_HIDDEN);
  
+    // Kit action row instead of three stock Windows push buttons sitting under
+    // the MD3 SearchField: Outlined / Text secondaries and a Filled primary at
+    // the kit medium height. The wxID_DELETE / wxID_CANCEL ids are kept — the
+    // dialog's own EVT_BUTTON(wxID_CANCEL) close routing and on_dpi_changed()
+    // both key off them.
     auto *btnsizer = new wxBoxSizer(wxHORIZONTAL);
-    btn_cancel = new wxButton(this, wxID_DELETE, _L("Cancel selected"));
+    btn_cancel = new ::Button(this, _L("Cancel selected"), "", 0, 0, wxID_DELETE);
+    btn_cancel->SetButtonSize(::Button::Size::Medium);
+    btn_cancel->SetVariant(::Button::Variant::Outlined);
     btn_cancel->Disable();
-    btn_error = new wxButton(this, wxID_ANY, _L("Show error message"));
+    btn_error = new ::Button(this, _L("Show error message"));
+    btn_error->SetButtonSize(::Button::Size::Medium);
+    btn_error->SetVariant(::Button::Variant::Text);
     btn_error->Disable();
     // Note: The label needs to be present, otherwise we get accelerator bugs on Mac
-    auto *btn_close = new wxButton(this, wxID_CANCEL, _L("Close"));
+    btn_close = new ::Button(this, _L("Close"), "", 0, 0, wxID_CANCEL);
+    btn_close->SetButtonSize(::Button::Size::Medium);
+    btn_close->SetVariant(::Button::Variant::Filled);
     btnsizer->Add(btn_cancel, 0, wxRIGHT, SPACING);
     btnsizer->Add(btn_error, 0);
     btnsizer->AddStretchSpacer();
     btnsizer->Add(btn_close);
+
+    // wxDialogBase routes Escape through EmulateButtonClickIfPresent(), which
+    // wxDynamicCasts the wxID_CANCEL window to wxButton — a kit Button is not
+    // one, so the native Esc-closes behaviour has to be restored explicitly.
+    Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
+        if (e.GetKeyCode() == WXK_ESCAPE)
+            EndDialog(wxID_CANCEL);
+        else
+            e.Skip();
+    });
 
     // Find-in-queue bar. Upload job ids are row indices, so rows are never
     // hidden: the search selects the first matching row and reports the match
@@ -272,7 +337,8 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
     auto *searchsizer = new wxBoxSizer(wxHORIZONTAL);
     // TRN: Placeholder of the search field in the print host upload queue.
     search_field = new SearchField(this, _L("Search uploads"));
-    search_status = new wxStaticText(this, wxID_ANY, wxEmptyString);
+    search_status = new ::Label(this, ::Label::Body_13, wxEmptyString);
+    search_status->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     search_field->SetOnQuery([this](const wxString &) { run_queue_search(); });
     search_field->SetOnRegexToggle([this](bool) { run_queue_search(); });
     searchsizer->Add(search_field, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, SPACING);
@@ -321,7 +387,14 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
         GUI::show_error(nullptr, job_list->GetTextValue(selected, COL_ERRORMSG));
     });
 
+    // The legacy dark walk above still exists for the native wxDataViewListCtrl,
+    // and it re-touches every child's window colours on the way. Re-derive the
+    // kit pills afterwards so their surfaces come from the MD3 roles, not from
+    // whatever the walk last wrote.
     wxGetApp().UpdateDlgDarkUI(this);
+    btn_cancel->Rescale();
+    btn_error->Rescale();
+    btn_close->Rescale();
 }
 
 void PrintHostQueueDialog::append_job(const PrintHostJob &job)
@@ -356,7 +429,12 @@ void PrintHostQueueDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     const int& em = em_unit();
 
-    msw_buttons_rescale(this, em, { wxID_DELETE, wxID_CANCEL, btn_error->GetId() });
+    // Not msw_buttons_rescale(): it pins every listed button to 2.5em of height,
+    // which would overwrite the kit pill height and radius the variant owns.
+    // Button::Rescale() re-derives both from the new DPI instead.
+    btn_cancel->Rescale();
+    btn_error->Rescale();
+    btn_close->Rescale();
 
     SetMinSize(wxSize(HEIGHT * em, WIDTH * em));
 
@@ -369,8 +447,16 @@ void PrintHostQueueDialog::on_dpi_changed(const wxRect &suggested_rect)
 void PrintHostQueueDialog::on_sys_color_changed()
 {
 #ifdef _WIN32
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     wxGetApp().UpdateDlgDarkUI(this);
     wxGetApp().UpdateDVCDarkUI(job_list);
+    // Same reason as in the ctor: re-resolve the kit pills for the new theme
+    // after the legacy walk has been over them.
+    btn_cancel->Rescale();
+    btn_error->Rescale();
+    btn_close->Rescale();
+    if (search_status)
+        search_status->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 #endif
 }
 

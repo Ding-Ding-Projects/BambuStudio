@@ -10,21 +10,21 @@ usable interactive desktop for it. It runs on an **off-screen Windows desktop**
 with **Mesa llvmpipe** software GL, driven entirely through
 `.claude/skills/run-bambustudio/driver.py` — a wrapper around the
 lowlevel-computer-use "cheap" CLI. All paths below are relative to the repo
-root. Everything in this file was executed and verified on 2026-07-26.
+root. The current host paths and Release workflow were revalidated on 2026-07-29.
 
 ## Prerequisites (already satisfied on this box — check, don't reinstall)
 
 - Built app at `build/src/Release/bambu-studio.exe` **with Mesa DLLs beside it**
   (`opengl32.dll`, `libgallium_wgl.dll`). Without them the app exits at the
   OpenGL < 2.0 gate.
-- Lowlevel MCP venv: `C:\Users\Administrator\Documents\GitHub\lowlevel-computer-use-mcp\.venv`
-  (override with env `LLCU_VENV`). Its python runs the driver; its
-  `Scripts\lowlevel-computer-use-cheap.exe` is the tool CLI.
-- AutoHotkey v2 at `C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe` (for `ahkclick`).
+- Lowlevel MCP venv: `vendor/lowlevel-computer-use-mcp/.venv` (override with
+  `LLCU_VENV`). Its Python runs the driver; its
+  `Scripts/lowlevel-computer-use-cheap.exe` is the tool CLI.
+- AutoHotkey v2 is optional for `ahk`/`ahkclick`. It is not installed on the current host; the driver now reports that prerequisite clearly instead of crashing. Prefer `press.py` or another same-desktop Lowlevel MCP route unless AutoHotkey becomes available.
 
 ```bash
-PY="C:/Users/Administrator/Documents/GitHub/lowlevel-computer-use-mcp/.venv/Scripts/python.exe"
-DRV="C:/Users/Administrator/Documents/GitHub/BambuStudio/.claude/skills/run-bambustudio/driver.py"
+PY="$PWD/vendor/lowlevel-computer-use-mcp/.venv/Scripts/python.exe"
+DRV="$PWD/.claude/skills/run-bambustudio/driver.py"
 ```
 
 ## Run (agent path) — the only path
@@ -65,11 +65,13 @@ Interact (all relayed to run *on* the headless desktop — see Gotchas):
 "$PY" "$DRV" stop                                  # kill app + close desktop
 ```
 
-**Verified end-to-end flow** (slice a cube): `launch` → `open --model cube.stl`
+**Previously verified end-to-end flow** (slice a cube): `launch` → `open --model cube.stl`
 → `ahkclick` the "Slice plate" button at client `x975 y760` of the 1200x800
 model frame → wait ~25 s → `ss` shows the Preview tab with "Sliced · 100
-layers", the gcode legend, and time estimation. Custom wx buttons often ignore
-raw `click`; `ahkclick` is what actually works.
+layers", the gcode legend, and time estimation. AutoHotkey is not presently
+available on this host, and neither the named-control message path nor a raw
+background click activated the current owner-drawn Slice button. Do not treat
+either helper's success response as action proof; verify the resulting UI state.
 
 ## Rebuild after editing a GUI source file (~min, verified)
 
@@ -77,14 +79,17 @@ The app logic lives in `build/src/Release/BambuStudio.dll`; `bambu-studio.exe`
 is a thin launcher. Incremental rebuild + relink (write it as a .cmd file and
 run that — quoting MSBuild args through git-bash mangles them):
 
-```bash
-cat > /c/Users/ADMINI~1/AppData/Local/Temp/msb.cmd <<'EOF'
+Create a temporary `.cmd` with the checkout's resolved absolute path, then run:
+
+```bat
 @echo off
-cd /d C:\Users\Administrator\Documents\GitHub\BambuStudio
-"C:\Program\MSBuild\Current\Bin\MSBuild.exe" build\src\BambuStudio_app_gui.vcxproj /p:Configuration=Release /p:Platform=x64 /m
-EOF
-cmd //c "C:\Users\ADMINI~1\AppData\Local\Temp\msb.cmd"
+cd /d <absolute-checkout-path>
+"C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe" build\src\BambuStudio_app_gui.vcxproj /p:Configuration=Release /p:Platform=x64 /m:2 /v:minimal
 ```
+
+Use `/m:2` on this host to keep native compilation within the available memory. Invoke the command
+file through `cmd.exe //d //c "<absolute-temp-cmd-path>"`; Git Bash rewrites bare `/p`, `/m`, and
+`/v` switches if MSBuild is called directly.
 
 (Write the .cmd with a quoted heredoc, NOT `printf` — bash printf eats the
 backslashes in the format string, `\U` in `C:\Users` becomes "missing unicode
@@ -92,10 +97,9 @@ digit". The app must not be running when the link step fires or LNK1104 on the
 locked `BambuStudio.dll` — `driver.py stop` first.)
 
 Afterwards verify `BambuStudio.dll`'s mtime advanced — the exe may stay stale
-at exit 0 (that's fine, the DLL is what matters). Full/cold builds and deps are
-a different beast (VS at the literal path `C:\Program`, `PS_WINSDK=10.0.26100.0`
-pin, `build_win.bat -s app-dirty -d deps\build\out_deps -c Release -v 17 -r none`)
-— see `HANDOFF.md` and the project memory; not re-verified in this session.
+at exit 0 (that's fine, the DLL is what matters). The current generated tree uses
+Visual Studio 18 Enterprise, Windows SDK 10.0.28000.0, and the dependency prefix
+`..\bambu-deps\build\out_deps\usr\local`; see `HANDOFF.md` before regenerating it.
 
 ## Run (human path)
 
@@ -145,13 +149,63 @@ headless desktop (`SwitchDesktop` is denied). The agent path is the only path.
 |---|---|
 | `launch` times out, `bs-out.txt` empty, no new studio log | Wrapper env poisoned (CRLF) or Mesa DLLs missing beside the exe — the app died pre-log at the GL gate. Check `%TEMP%\bs-run-driver\bs-launch.cmd` line endings; check `opengl32.dll` exists. |
 | `OpenDesktopW('bsrun') ... GetLastError=2` | Desktop is gone because the app exited. `launch` again. |
-| `ahkclick` → `no result (AHK hung?)` | Runtime error dialog invisible on the headless desktop (bad hwnd/coords). Driver already kills leftover `AutoHotkey64.exe`; fix the args and retry. |
+| `ahkclick` → `AutoHotkey v2 is unavailable` | AutoHotkey is not installed on the current host. Use `press.py` or another same-desktop Lowlevel MCP route, and verify the resulting UI state. |
+| `ahkclick` → `no result (AHK hung?)` | If AutoHotkey is later installed, this means a runtime error dialog may be invisible on the headless desktop (bad hwnd/coords). The driver kills leftover `AutoHotkey64.exe`; fix the args and retry. |
 | `ahkclick` → `ERR: Parameter #5 of ControlClick requires a Number` | You edited the generated script's arg order; param 4 = button name, 5 = click count (number), 6 = options. |
 | App started but a cold `launch` with a model crashed 0xC0000005 | Never pass a model on first launch; `launch` empty, then `open --model`. |
-| Slice click does nothing | Raw `click` doesn't press custom wx buttons; use `ahkclick` (client coords). |
+| `open --model` → readiness timeout | The driver accepts either a fresh GL-ready log or a newly appearing BambuStudio document frame wider than 800 px. If both signals remain absent for 240 s, inspect `windows` and `log`; do not infer success from the wrapper process alone. |
+| Slice click does nothing | Raw/background clicks and the named-control helper can report delivery without activating this owner-drawn button. Use an available same-desktop physical-input route; `ahkclick` is one option only when AutoHotkey is installed. Always verify the resulting sliced state. |
+
+## Press buttons and menu items BY NAME — `press.py`
+
+`driver.py` clicks a pixel. `press.py` presses a **label**, which is what you
+usually want: pixel coordinates drift every build, and this app's topbar menus
+are owner-drawn (AutoHotkey `MenuSelect` answers "unsupported menu", and
+`ControlClick` on the menu labels does nothing).
+
+```bash
+"$PY" "$DRV_DIR/press.py" menus                    # every menu item + its live command id
+"$PY" "$DRV_DIR/press.py" press "Version history"  # opens File ▸ Version history…
+"$PY" "$DRV_DIR/press.py" press "Smart home" --physical  # real popup path for commands that ignore WM_COMMAND
+"$PY" "$DRV_DIR/press.py" controls --filter ink    # labelled child controls
+"$PY" "$DRV_DIR/press.py" press "Slice plate"      # falls back to a child-control click
+"$PY" "$DRV_DIR/press.py" id 888                   # raw WM_COMMAND escape hatch
+```
+
+Verified: `press "Version history"` opens the dialog with no coordinates
+anywhere. Menu ids are `wxID_ANY` allocations — they shift between builds
+(`Version history…` was 849 in one build and 888 in the next), so **never
+hardcode one**; `press.py` enumerates live and caches per frame hwnd
+(`--refresh` re-scans).
+
+How it works, and the two things that make it work at all:
+
+- Menu ids can only be learned by opening each menu for real, catching
+  `EVENT_SYSTEM_MENUPOPUPSTART`, and asking the popup for its `HMENU` via
+  `MN_GETHMENU`. Pressing then needs no menu at all — it posts `WM_COMMAND`
+  straight to the frame. A few owner-drawn commands (currently Smart home)
+  ignore that synthetic command; `--physical` opens the enumerated top-level
+  popup and selects the cached zero-based item position with menu keyboard
+  messages in the same worker process. Physical selection reuses cached
+  geometry across app restarts; pass `--refresh` after the menu layout itself
+  changes.
+- **The frame must be parked at (-183, -6) during discovery.** At its normal
+  position the owner-drawn strip accepts the posted clicks and opens nothing.
+  This constant is empirical, is restored afterwards, and is the difference
+  between "menus enumerate" and "menus never open".
+- Everything runs on the headless desktop: `press.py` relays a worker copy of
+  itself through `launch_on_headless_desktop`, because hwnd calls fail
+  cross-desktop and because a separate process spawned while a menu is open
+  kills that menu.
+
+Gotcha worth knowing if you extend it: **ctypes swallows exceptions raised
+inside an `EnumChildWindows` callback** — they reach stderr, which nobody sees
+on an off-screen desktop, and the enumeration silently returns an empty list.
+Collect handles in the callback and read their properties outside it.
 
 ## Files
 
+- `press.py` — press buttons/menu items by name (above). Start here for UI work.
 - `driver.py` — the harness (this directory). Env overrides: `LLCU_VENV`, `BS_DESKTOP`.
 - `cube.stl` — 684-byte binary cube (20 mm), the standard test model for `open`/slice.
 - `popovercap.py` — one-process click+catch+paint+capture for TRANSIENT popovers

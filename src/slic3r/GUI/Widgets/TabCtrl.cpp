@@ -55,7 +55,7 @@ int TabCtrl::GetSelection() const { return sel; }
 
 void TabCtrl::SelectItem(int item)
 {
-    if (item == sel || !sendTabCtrlEvent(true))
+    if (item < -1 || item >= static_cast<int>(btns.size()) || item == sel || !sendTabCtrlEvent(true))
         return;
     if (sel >= 0) {
         wxCommandEvent e(wxEVT_CHECKBOX);
@@ -73,6 +73,14 @@ void TabCtrl::SelectItem(int item)
     sendTabCtrlEvent();
     relayout();
     Refresh();
+}
+
+bool TabCtrl::ActivateItem(int item)
+{
+    if (item < 0 || item >= static_cast<int>(btns.size()) || !btns[item]->IsShown() || !btns[item]->IsEnabled())
+        return false;
+    SelectItem(item);
+    return sel == item;
 }
 
 void TabCtrl::Unselect()
@@ -386,7 +394,8 @@ void TabCtrl::buttonClicked(wxCommandEvent &event)
     SetFocus();
     auto btn  = event.GetEventObject();
     auto iter = std::find(btns.begin(), btns.end(), btn);
-    SelectItem(iter == btns.end() ? -1 : iter - btns.begin());
+    if (iter != btns.end())
+        ActivateItem(static_cast<int>(iter - btns.begin()));
 }
 
 void TabCtrl::keyDown(wxKeyEvent &event)
@@ -397,9 +406,9 @@ void TabCtrl::keyDown(wxKeyEvent &event)
     case WXK_LEFT:
     case WXK_RIGHT:
         if ((event.GetKeyCode() == WXK_UP || event.GetKeyCode() == WXK_LEFT) && GetSelection() > 0) {
-            SelectItem(GetSelection() - 1);
+            ActivateItem(GetSelection() - 1);
         } else if ((event.GetKeyCode() == WXK_DOWN || event.GetKeyCode() == WXK_RIGHT) && GetSelection() + 1 < btns.size()) {
-            SelectItem(GetSelection() + 1);
+            ActivateItem(GetSelection() + 1);
         }
         break;
     }

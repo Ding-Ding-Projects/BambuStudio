@@ -58,6 +58,14 @@ void rgb_to_hsv(const wxColour &col, double &h, double &s, double &v)
     if (h < 0.0) h += 360.0;
 }
 
+// The colour translator line, in the one format both the live value and the
+// worst case reserved for it at construction are built from - they have to
+// stay the same shape or the reservation stops covering the value.
+wxString translate_line(int r, int g, int b, int h, int s, int v, const wxString &named)
+{
+    return wxString::Format("rgb(%d, %d, %d)  hsv(%d, %d%%, %d%%)  ~ %s", r, g, b, h, s, v, named);
+}
+
 } // namespace
 
 MD3ColorPickerDialog::MD3ColorPickerDialog(wxWindow *parent, const wxColour &initial)
@@ -181,9 +189,22 @@ MD3ColorPickerDialog::MD3ColorPickerDialog(wxWindow *parent, const wxColour &ini
     // Colour translator: the same colour in every notation people paste at
     // each other - rgb(), hsv(), and the nearest everyday name (the exact
     // text colour-aware search matches on).
-    m_translate = new Label(this, Label::Mono_11, wxEmptyString);
+    //
+    // sync_hex() writes this line only after the SetSizerAndFit() below has
+    // frozen the dialog, and one line of it is far wider than the kFieldW
+    // picker column - so the label wraps into the column instead of running
+    // off the window edge, and its box is reserved here at the widest value
+    // the formatter can ever produce. Reserving a measured box rather than a
+    // fixed line count also survives a large ui_font_scale, where the same
+    // text needs another row.
+    m_translate = new Label(this, Label::Mono_11, wxEmptyString, LB_AUTO_WRAP,
+                            wxSize(FromDIP(kFieldW), -1));
     m_translate->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_translate->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_translate->SetLabel(translate_line(255, 255, 255, 360, 100, 100,
+                                         "dark red maroon")); // longest name SearchField can return
+    m_translate->Wrap(FromDIP(kFieldW));
+    m_translate->SetMinSize(wxSize(FromDIP(kFieldW), m_translate->GetBestSize().y));
     root->Add(m_translate, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
 
     auto *actions = new wxBoxSizer(wxHORIZONTAL);
@@ -240,12 +261,19 @@ void MD3ColorPickerDialog::sync_hex()
         m_hex->ChangeValue(m_colour.GetAsString(wxC2S_HTML_SYNTAX));
     if (m_translate) {
         const wxString named = SearchField::colorSearchText(m_colour).AfterFirst(' ');
-        m_translate->SetLabel(wxString::Format("rgb(%d, %d, %d)  hsv(%d, %d%%, %d%%)  ~ %s",
-            m_colour.Red(), m_colour.Green(), m_colour.Blue(),
+        const wxString line  = translate_line(m_colour.Red(), m_colour.Green(), m_colour.Blue(),
             int(std::lround(m_h)), int(std::lround(m_s * 100)), int(std::lround(m_v * 100)),
-            named));
+            named);
+        m_translate->SetLabel(line);
+        // Re-flow against the reserved column, never against the label's own
+        // width: a static text shrinks itself to whatever it last drew, so by
+        // the second pick that width is narrower than the column it sits in.
+        m_translate->Wrap(FromDIP(kFieldW));
+        // Hover still yields the unwrapped line, so a name longer than the
+        // reserved box stays readable.
+        m_translate->SetToolTip(line);
         // The translation grows/shrinks per pick; without a re-layout the
-        // label keeps its first width and clips the colour name.
+        // label keeps the box it just drew instead of its reserved one.
         Layout();
     }
 }

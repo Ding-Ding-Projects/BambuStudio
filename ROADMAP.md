@@ -1,6 +1,143 @@
 # Roadmap
 
+## In progress
+
+### Native and embedded GUI accessibility wave (delivery verification — 2026-07-30)
+
+- Shared native controls, the Filament Manager DeviceWeb page, Project resources, setup guides,
+  focused contracts, and maintainer documentation are implemented on the delivery branch.
+- Focused native source contracts, changed-file DeviceWeb lint, TypeScript compilation, accessibility
+  tests, and the Vite production build have passed locally.
+- Real MSVC compilation exposed and repaired the source-contract gaps: `SwitchBoard` now attaches its
+  two-radio accessible peer, uses wxWindow's enabled state, sizes from translated labels, emits full
+  command metadata, and activates Space/Enter once on the matching key-up instead of alternating under
+  auto-repeat. The AMS settings gear now uses the command-event signature its shared Button emits.
+- The post-repair focused Release library compilation and full `BambuStudio_app_gui` link both exit 0.
+  The exact post-key-pair DLL is 150,811,136 bytes, timestamped `2026-07-30 00:44:51 -04:00`, with
+  SHA-256 `1EECBBFFBB5AB87AF2A90050220E3B4A93E816291F5C29DF4276078CABF22530`.
+  Lowlevel MCP runtime evidence is accepted only from that build; older intermediate captures are not.
+- **Still required before moving this item to Landed:** exact-final-build Lowlevel MCP headless captures,
+  default-branch push and remote ancestry proof, and factual hosted workflow/release links. `HANDOFF.md`
+  is the evidence ledger.
+
+### Home Assistant printer handover (implementation complete; verification pending — 2026-07-28)
+
+- **Token-backed handover:** the Smart home dialog collects accessible printers, presents a
+  No-default credential disclosure, calls `bambu_lab.add_printer` once per printer, and reports
+  exact success/partial/failure results asynchronously. Calls run in four-wide waves, so a full
+  32-printer batch occupies at most eight 30-second timeout waves instead of 32 serial timeouts.
+- **Token transport safety:** every Home Assistant bearer request now requires HTTPS, except for
+  HTTP to localhost or an explicit IPv4 loopback address. Clear-text LAN HTTP is rejected before a
+  socket is opened; redirects and verbose protocol tracing are disabled for credential-bearing
+  requests.
+- **Token-free discovery:** the opt-in, non-persisted sharing toggle starts a fresh-capability
+  `GET /bambustudio/printers` endpoint on one LAN interface and advertises it as
+  `_bambu-slicer._tcp.local.` for at most five minutes. Disabling the toggle, closing the dialog,
+  or reaching expiry stops serving and sends an mDNS goodbye.
+- **Bounded credential surface:** authentication happens before printer data is requested; method,
+  path, headers, time, concurrency, payload size, printer count, and field lengths are bounded.
+  Tokens, access codes, payloads, and supplier exception details are not logged.
+- **Bounded runtime work:** four/64 service execution, single-flight four-wide printer import and
+  entity refresh, a serialized transactional light-restoration worker, 200 ms volume coalescing,
+  authenticated HTTP rate limiting, cached sanitized offers, and paced/coalesced mDNS replies
+  replace per-action detached-thread and amplification paths. Entity-state bodies stop at 4 MiB,
+  parsing stops at 512 results, rendering stops at 256 matching rows, and persisted entity lists
+  inspect at most 256 segments/64 KiB/256 bytes per value while retaining at most 32 unique values.
+  A failed two-attempt light restore retains its generation-specific scene for manual recovery
+  instead of deleting the only recovery path; cancellation after scene creation but before any
+  flash deletes the unused scene, with a focused regression protecting that hand-off window.
+- **Clipping and target repair:** the native dialog is resizable and work-area capped, scrolls long
+  content behind a fixed footer, wraps dynamic/bilingual copy and rigid action rows, and exposes
+  44-DIP controls. The shared confirmation dialog wraps its separate “don't show again” footer and
+  stacks actions when width is constrained. The Pages landing header and Material You band reflow
+  through 200% zoom; translated header links have explicit 44-pixel width and height floors so
+  Linux CJK glyph metrics cannot shrink a target below the accessibility minimum.
+- **Documentation and verification harness:** the categorized API contract, focused and master
+  Postman collections, focused C++ tests, a production-service cross-host probe, and hosted
+  workflow targets are present.
+- **Native build and clipping evidence:** the full Release GUI target completed in 3,387 seconds
+  and its first no-change rebuild completed in 8.3 seconds. English captures at 720×760 and the
+  declared 520×480 minimum exposed text actions being squeezed to 44 DIP. The responsive-action
+  repair rebuilt and linked in 141 seconds, its no-change rebuild took 8.0 seconds, and the reviewed
+  before/after Close and media-action captures show the correction. The
+  subsequent nonvisual import-scheduling and cancellation-cleanup fixes compiled and linked in
+  214.808 seconds, followed by an 8.544-second no-change build. The final 151,299,584-byte DLL is
+  timestamped `2026-07-28 08:15:46 -04:00`, with SHA-256
+  `41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`. The two primary corrected
+  captures were recaptured from that exact DLL; the media-action close-up remains from the
+  layout-identical `EBF646…` build.
+- **Still required before moving this item to Landed:** native bilingual Smart home capture, Path B
+  against a real Home Assistant, a real Home Assistant Path A confirmation card, physical-printer
+  success, and issue #16 closure with exact evidence. The implementation and follow-up target fix
+  are pushed and remotely proven; hosted Pages run `30359493216` passed 156/156 as the matrix stood on 2026-07-27 (it is 444 cases now), while the Windows
+  release verdict remains maintained separately in issue #16. The full Release
+  GUI build, native English 720×760 and 520×480 review, focused Release targets,
+  30-case/267-assertion native suite, 5/5 focused CTest entries, 718-entry localization check, the
+  static Pages/i18n/clipping checks and the browser width/zoom/language matrix as they stood that
+  day (21/21 and 156/156; now 50 and 444), synchronized template assembly, and cross-host discovery/fetch/goodbye probe are complete. The
+  synthetic TEST-NET probe is transport evidence, not a real-printer success claim.
+
 ## Landed
+
+> Entries here are a dated record of what shipped, written in the vocabulary of the day. Waves that
+> predate 2026-07-26 therefore say "filament" and "AMS" where the shipped UI now reads "ink" and
+> "Ink Dispenser" — the rename is display-only and changed no identifier, so the entries stay as
+> written rather than being retold. See
+> [Ink terminology](docs/features/windows/ink-terminology.md).
+
+### The published UI kit became self-contained (2026-07-28)
+
+- Removed the last three third-party requests on the site. The design-system UI kit at
+  `/app/design-system/ui_kits/bambu-studio/` had been loading React, ReactDOM and
+  `@babel/standalone` from unpkg and compiling its own JSX in the browser on every visit; with
+  unpkg unreachable it rendered nothing at all.
+- **Vendored** React 18.3.1 and ReactDOM 18.3.1 locally (MIT, licence included) and **removed the
+  Babel runtime entirely** by compiling the JSX at build time.
+- Wrote the assembler the kit's header had credited for years without it existing:
+  `assemble-ui-kit.mjs --check|--write`, plus `jsx-transform.mjs`, a dependency-free JSX compiler
+  that throws on anything outside the supported subset instead of guessing. Its output is
+  byte-for-byte identical to Babel's for all twelve sources.
+- Fixed a latent `const` collision between `Components.jsx` and `App.jsx` that Babel's `const`→`var`
+  rewrite had been hiding, and taught the assembler to fail the build on any such collision.
+- Closed the hole that let this survive: the layout gate's third-party assertion now sweeps **every**
+  published page rather than only the landing page, and a new suite loads the composed site in
+  headless Chrome with every off-site host blackholed and requires it to render.
+
+### GitHub Pages site rebuilt as a tabbed Material 3 app (2026-07-28)
+
+- Replaced the single scrolling landing page with a **browser-style tabbed site** of eight tabs:
+  a persistent strip with an overflow menu, drag and keyboard reordering, pinning, user-assignable
+  groups, a searchable tab list, and order/pinning/grouping persisted across restarts.
+- Added **English and Hong Kong Cantonese copy at five funny levels each**, on two independent
+  persisted sliders. Facts are invariant across levels and that invariance is asserted per variant.
+- Added the **full ECMAScript regex builder** — guided parts, flags, live matches with correct
+  capture-group identity, copy and export — and wired it to every search bar on the site. Opt-in
+  regex filtering runs inside a terminable Web Worker; where none can be created the toggle is
+  disabled and plain text keeps working.
+- Added a **changelog viewer** covering every published release (38 at the time of writing), which CI
+  regenerates at deploy time from the Releases API
+  plus the commits between tags, with a UTC calendar range filter, typed ISO and locale dates,
+  composing search, and a Markdown export that states the range it exported.
+- Added **non-blocking notifications** with a history centre, a **settings surface** with
+  per-element appearance editors and a cross-tab search, and the **1% dim sum surprise** drawn from
+  bundled SVG.
+- Gated the deploy on **444 measured runtime layout cases** (156 landing + 288 per-tab) plus 50
+  static contracts; `compose-site.mjs` and `serve.mjs` make the published tree reproducible locally.
+- Fixed **29 defects** found by a twelve-agent adversarial review of the new site, and the
+  prototype's accessibility defects reported in issue #24.
+- Documented in [`docs/features/pages/`](docs/features/pages/README.md); captures in
+  [`docs/screenshots/pages/`](docs/screenshots/pages/README.md).
+
+### Image-led app and GitHub Pages showcase (2026-07-27)
+
+- Added eleven original, web-optimized visuals covering the landing hero, every app screen card,
+  and social sharing.
+- Upgraded the GitHub Pages landing page from CSS-only motifs to responsive editorial artwork with
+  lazy feature cards, accessible descriptions, reduced-motion behavior, and Open Graph metadata.
+- Reused the visual language inside the interactive app's Home welcome panel and recent-project
+  cards, while keeping every action and localized label as live HTML.
+- Extended the Pages composition and layout assertion so root-level landing assets cannot silently
+  disappear during deployment.
 
 ### Chrome-sweep tranche: stock dialogs adopted (2026-07-25)
 
@@ -33,7 +170,8 @@
 - **Home Assistant integration** (Smart home dialog): entity browser with search bar +
   listbox, media-player rich controls (prev/play-pause/next/volume), announcement-speaker
   selection, alert lights with red-on-error / green-on-finish flashes protected by a
-  scene-snapshot restore so real room lights never stay stuck on the alert colour.
+  generation-specific scene snapshot, two restore attempts, and retention of that scene for manual
+  recovery when both restore attempts fail.
 
 
 ### Roadmap execution wave (2026-07-24, evening)
@@ -127,7 +265,7 @@ recorded deviations / 5 open** after Wave 9 (2026-07-22). The register is the li
 truth; the counts here are a snapshot.
 
 - The 5 open rows are the deep Prepare-sidebar rebuilds that wrap live-bound widgets — printer
-  identity card, bed SelectField collapse, filament info-rows, Process card, Objects card. Each
+  identity card, bed SelectField collapse, ink info-rows, Process card, Objects card. Each
   needs an implement-build-verify loop against the live preset/printer combos; a concurrent
   implementation wave is finishing them.
 - The 4 recorded deviations each carry concrete evidence in the register: the Device XY dial kept
@@ -192,6 +330,10 @@ truth; the counts here are a snapshot.
   account/privacy, recovery, and networking flows.
 
 ## Later or externally blocked
+
+- Keep the one-click Windows build aligned with the hosted release pipeline whenever dependency,
+  Mesa, SBOM, or NSIS packaging policy changes; add a disposable-runner end-to-end invocation once
+  its several-hour cost is acceptable for scheduled CI.
 
 - Add an explicit history quota, retention/pruning controls, repository maintenance, export/import,
   and optional user-controlled backup or synchronization. None of these are part of the current

@@ -263,3 +263,36 @@ body
     font-weight: 600;
 	cursor: pointer;
 }
+
+
+/* Native buttons and links inherit the guide's existing visual classes. */
+button.NormalBtn,
+button.GrayBtn,
+button.SmallBtn,
+button.SmallBtn_Green {
+  font-family: inherit;
+  border-style: solid;
+}
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 3px;
+}
+button.NormalBtn,
+button.GrayBtn,
+button.SmallBtn,
+button.SmallBtn_Green,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import useStore from '../../store/AppStore';
 import { useFilamentManagerBridge } from './useFilamentManagerBridge';
@@ -10,6 +10,7 @@ import { CloudBadge } from './CloudBadge';
 import { CloudHistoryPopover } from './CloudHistoryPopover';
 import { ToastStack } from './ToastStack';
 import { DebugLogPanel } from './DebugLogPanel';
+import { BilingualText } from './BilingualText';
 import type { Spool, MachineItem, AmsData } from './types';
 import './filament-manager.css';
 
@@ -23,6 +24,7 @@ type FilterKey = 'brand' | 'material_type' | 'series';
 const FILTER_LABEL_KEYS: Record<FilterKey, string> = {
   brand: 'Brand', material_type: 'Filament Type', series: 'Material Type',
 };
+const FILAMENT_TABS: readonly TabMode[] = ['all', 'ams'];
 
 export function FilamentManagerPage() {
   const { t } = useTranslation();
@@ -69,6 +71,7 @@ export function FilamentManagerPage() {
 
   // Filter dropdown
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
+  const filterTriggerRefs = useRef<Partial<Record<FilterKey, HTMLButtonElement | null>>>({});
 
   // Cloud sync history popover (triggered by the button next to CloudBadge).
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -93,7 +96,8 @@ export function FilamentManagerPage() {
   // Internal build: enable debug panel immediately (independent of init() success)
   const setDebugEnabled = useStore((s) => s.filament.setDebugEnabled);
   useEffect(() => {
-    if ((window as any).__internalBuild) {
+    const globalFlags = window as Window & { __internalBuild?: boolean };
+    if (globalFlags.__internalBuild) {
       setDebugEnabled(true);
     }
   }, [setDebugEnabled]);
@@ -165,8 +169,9 @@ export function FilamentManagerPage() {
     }
 
     // Filters
-    for (const [k, v] of Object.entries(filters)) {
-      if (v) list = list.filter((s) => (s as any)[k] === v);
+    for (const key of Object.keys(filters) as FilterKey[]) {
+      const value = filters[key];
+      if (value) list = list.filter((s) => s[key] === value);
     }
 
     return list;
@@ -184,7 +189,7 @@ export function FilamentManagerPage() {
   // Filter dropdown options
   const getFilterOptions = (key: FilterKey): string[] => {
     const vals = new Set<string>();
-    spools.forEach((s) => { const v = (s as any)[key]; if (v) vals.add(v); });
+    spools.forEach((s) => { const v = s[key]; if (v) vals.add(v); });
     return [...vals].sort();
   };
 
@@ -333,52 +338,61 @@ export function FilamentManagerPage() {
   }, [cloudAutoPushSummary, t]);
 
   return (
+    // Font stack: Roboto first to match the native MD3 chrome, HarmonyOS Sans SC
+    // retained purely as the CJK fallback (Roboto has no CJK coverage), dead
+    // -apple-system dropped from this Windows-only fork. This does NOT close the
+    // font gap: nothing in device_page bundles an @font-face, so the webview can
+    // only resolve either family through the host process's session-visible
+    // AddFontResourceExW registration (Widgets/Label.cpp:275, flags 0 — not
+    // FR_PRIVATE), which registers Roboto on Windows and HarmonyOS only under
+    // __linux__. Whether the separate WebView2 renderer's DirectWrite collection
+    // picks that up is unverified here. The real fix is --font-sans in the
+    // styles.css @theme block plus deleting this per-element override; that file
+    // is owned elsewhere in this wave.
     <div
       data-testid="filament-page-root"
       data-logged-in={isLoggedIn ? 'true' : 'false'}
-      className="flex h-screen overflow-hidden bg-fm-base text-fm-text-primary text-xs leading-[19px] font-['HarmonyOS_Sans_SC',-apple-system,'Segoe_UI',sans-serif] fm-native-form"
+      className="flex h-screen overflow-hidden bg-fm-base text-fm-text-primary text-xs leading-[19px] font-['Roboto','HarmonyOS_Sans_SC',system-ui,sans-serif] fm-native-form"
     >
       {/* Main content (sidebar removed: Stats / Archive entries are not
           shipped in this version, and "My Filaments" is the only remaining
           view so a single-item nav is redundant.) */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden p-6">
+      <div className="fm-page-content flex-1 min-h-0 flex flex-col overflow-hidden p-6">
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden gap-4">
           <>
               {/* Toolbar */}
-              <div className="flex items-center justify-between gap-4 shrink-0">
-              <div className="flex items-center gap-4">
+              <div className="fm-toolbar flex flex-wrap items-start justify-between gap-3 shrink-0">
+              <div className="fm-toolbar-discovery flex min-w-0 flex-wrap items-center gap-3">
                 {/* Tabs */}
-                <div className={`flex gap-2 ${!isLoggedIn ? 'opacity-40 pointer-events-none' : ''}`}>
-                  {(['all', 'ams'] as const).map((tb) => (
-                    <div
-                      key={tb}
-                      data-testid={`filament-tab-${tb}`}
-                      data-active={tab === tb ? 'true' : 'false'}
-                      className={`px-[10px] py-1 h-7 rounded-md cursor-pointer text-xs text-fm-text-secondary flex items-center transition-colors duration-150 hover:bg-fm-hover ${tab === tb ? 'bg-fm-input text-fm-text-strong' : ''}`}
-                      onClick={() => setTab(tb)}
-                    >
-                      {tb === 'all' ? t('All') : t('In Printer')}
-                    </div>
-                  ))}
-                </div>
+                <FilamentTabs tab={tab} isLoggedIn={isLoggedIn} onSelect={setTab} />
 
-                <div className="w-px h-[11px] bg-fm-border" />
+                <div className="fm-toolbar-divider w-px h-[16px] bg-fm-border" aria-hidden="true" />
 
                 {/* Filters */}
-                <div className={`flex gap-2 ${!isLoggedIn ? 'opacity-40 pointer-events-none' : ''}`}>
+                <div className={`fm-filters flex flex-wrap gap-2 ${!isLoggedIn ? 'opacity-40' : ''}`} aria-label={t('Filament List')}>
                   {(['brand', 'material_type', 'series'] as const).map((fk) => (
-                    <div key={fk} style={{ position: 'relative' }}>
-                      <div
-                        className={`flex items-center gap-1 px-2 pl-[6px] py-[2px] h-6 rounded-md cursor-pointer text-sm text-fm-text-primary transition-colors duration-150 hover:bg-fm-hover ${filters[fk] ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
-                        onClick={(e) => { e.stopPropagation(); setOpenFilter(openFilter === fk ? null : fk); }}
+                    <div key={fk} className="relative min-w-0">
+                      <button
+                        ref={(node) => { filterTriggerRefs.current[fk] = node; }}
+                        type="button"
+                        aria-haspopup="listbox"
+                        aria-expanded={openFilter === fk}
+                        aria-label={`${t(FILTER_LABEL_KEYS[fk])}: ${filters[fk] || t('All')}`}
+                        className={`fm-filter-button flex items-center gap-1 px-2 min-h-9 rounded-md cursor-pointer text-sm text-fm-text-primary transition-colors duration-150 hover:bg-fm-hover ${filters[fk] ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpenFilter(openFilter === fk ? null : fk);
+                        }}
+                        disabled={!isLoggedIn}
                       >
-                        {t(FILTER_LABEL_KEYS[fk])}
-                        <svg width="8" height="5" viewBox="0 0 8 5" fill="none">
+                        <BilingualText>{t(FILTER_LABEL_KEYS[fk])}</BilingualText>
+                        <svg className="shrink-0" width="8" height="5" viewBox="0 0 8 5" fill="none" aria-hidden="true">
                           <path d="M1 1l3 3 3-3" stroke="currentColor" strokeWidth="1" />
                         </svg>
-                      </div>
+                      </button>
                       {openFilter === fk && (
                         <FilterDropdown
+                          label={t(FILTER_LABEL_KEYS[fk])}
                           options={getFilterOptions(fk)}
                           current={filters[fk] || ''}
                           onSelect={(val) => {
@@ -388,8 +402,12 @@ export function FilamentManagerPage() {
                               return next;
                             });
                             setOpenFilter(null);
+                            window.requestAnimationFrame(() => filterTriggerRefs.current[fk]?.focus());
                           }}
-                          onClose={() => setOpenFilter(null)}
+                          onClose={() => {
+                            setOpenFilter(null);
+                            window.requestAnimationFrame(() => filterTriggerRefs.current[fk]?.focus());
+                          }}
                         />
                       )}
                     </div>
@@ -397,8 +415,9 @@ export function FilamentManagerPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className={`flex items-center gap-1 bg-fm-inner2 rounded-md px-2 h-[30px] w-[200px] ${!isLoggedIn ? 'opacity-40' : ''}`}>
+              <div className="fm-toolbar-actions flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
+                <label className={`fm-search flex min-w-[8rem] flex-1 items-center gap-1 bg-fm-inner2 rounded-md px-2 min-h-9 max-w-[200px] ${!isLoggedIn ? 'opacity-40' : ''}`}>
+                  <span className="sr-only">{t('Search Filament')}</span>
                   <svg className="text-fm-text-detail shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" />
                     <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.2" />
@@ -412,16 +431,22 @@ export function FilamentManagerPage() {
                     onChange={(e) => setSearch(e.target.value)}
                     disabled={!isLoggedIn}
                   />
-                </div>
+                </label>
 
+                {/* Selected state tracks --md-primary through --color-fm-brand.
+                    It used to hardcode a neon lime label over a lime tint, which
+                    was a third green beside the mint primary in dark theme and
+                    measured ~2.1:1 against the light surface. */}
                 <button
                   data-testid="filament-group-toggle"
                   data-grouped={grouped ? 'true' : 'false'}
-                  className={`inline-flex items-center gap-1 h-[30px] px-3 rounded-lg border-none text-xs whitespace-nowrap transition-colors duration-150 bg-fm-inner text-fm-text-primary border border-fm-border-focus/50 hover:bg-fm-hover ${grouped ? '!bg-[rgba(44,173,0,0.08)] !border-fm-brand !text-[#50e81d]' : ''} ${!isLoggedIn ? 'opacity-40 cursor-not-allowed hover:bg-fm-inner' : 'cursor-pointer'}`}
+                  type="button"
+                  aria-pressed={grouped}
+                  className={`fm-action-target inline-flex items-center gap-1 min-h-9 px-3 rounded-lg border-none text-xs transition-colors duration-150 bg-fm-inner text-fm-text-primary border border-fm-border-focus/50 hover:bg-fm-hover ${grouped ? '!bg-fm-brand/10 !border-fm-brand !text-fm-brand' : ''} ${!isLoggedIn ? 'opacity-40 cursor-not-allowed hover:bg-fm-inner' : 'cursor-pointer'}`}
                   onClick={() => setGrouped(!grouped)}
                   disabled={!isLoggedIn}
                 >
-                  {t('Group')}
+                  <BilingualText>{t('Group')}</BilingualText>
                 </button>
                 <CloudBadge
                   state={cloudSync}
@@ -434,7 +459,7 @@ export function FilamentManagerPage() {
                   type="button"
                   data-testid="filament-push-all"
                   data-pushing={pushingAll ? 'true' : 'false'}
-                  className={`inline-flex items-center justify-center h-[30px] w-[30px] rounded-lg border border-fm-border-focus/50 bg-fm-inner text-fm-text-secondary transition-colors duration-150 ${(!isLoggedIn || pushingAll) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-fm-hover'}`}
+                  className={`fm-icon-target inline-flex items-center justify-center rounded-lg border border-fm-border-focus/50 bg-fm-inner text-fm-text-secondary transition-colors duration-150 ${(!isLoggedIn || pushingAll) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-fm-hover'}`}
                   title={t('Push Local to Cloud')}
                   aria-label={t('Push Local to Cloud')}
                   onClick={handlePushAllNowClick}
@@ -455,7 +480,7 @@ export function FilamentManagerPage() {
                 </button>
                 <button
                   type="button"
-                  className={`inline-flex items-center justify-center h-[30px] w-[30px] rounded-lg border border-fm-border-focus/50 bg-fm-inner text-fm-text-secondary transition-colors duration-150 ${!isLoggedIn ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-fm-hover'}`}
+                  className={`fm-icon-target inline-flex items-center justify-center rounded-lg border border-fm-border-focus/50 bg-fm-inner text-fm-text-secondary transition-colors duration-150 ${!isLoggedIn ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-fm-hover'}`}
                   title={t('Sync History')}
                   aria-label={t('Sync History')}
                   onClick={() => setHistoryOpen(true)}
@@ -467,24 +492,39 @@ export function FilamentManagerPage() {
                     <path d="M9 6v3.25L11 10.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
+                {/* MD3 pairs a filled container with its own foreground role.
+                    styles.css mirrors --md-primary / --md-error as
+                    --color-fm-brand / --color-fm-danger but carries no
+                    on-primary / on-error pair, and the literal `text-white` this
+                    replaces measured ~1.5:1 over the dark theme's #8bd89b mint —
+                    dark being the state the app starts in. Until styles.css
+                    (owned elsewhere this wave) gains --color-fm-on-brand /
+                    --color-fm-on-danger, use the one existing @theme token that
+                    is guaranteed to invert with the theme: fm-base, the page
+                    surface. #1b1c21 on #8bd89b is ~10:1 dark; #faf8fd on #146c2e
+                    is ~6.2:1 light. Disabled uses the MD3 disabled recipe
+                    (on-surface at 12% container, 38% label) instead of a tinted
+                    brand fill, which is what made the disabled label worse in
+                    dark than the `text-white/70` it replaced. */}
                 <button
                   data-testid="filament-add"
-                  className={`inline-flex items-center gap-1 h-[30px] px-3 rounded-lg border-none text-xs whitespace-nowrap transition-colors duration-150 font-medium ${
+                  type="button"
+                  className={`fm-action-target inline-flex items-center gap-1 min-h-9 px-3 rounded-lg border-none text-xs transition-colors duration-150 font-medium ${
                     isLoggedIn
-                      ? 'cursor-pointer bg-fm-brand text-white hover:bg-fm-brand-hover'
-                      : 'cursor-not-allowed bg-fm-brand/40 text-white/70'
+                      ? 'cursor-pointer bg-fm-brand text-fm-base hover:bg-fm-brand-hover'
+                      : 'cursor-not-allowed bg-fm-text-primary/12 text-fm-text-primary/38'
                   }`}
                   disabled={!isLoggedIn}
                   onClick={handleOpenAddDialog}
                 >
-                  {t('Add Filament')}
+                  <BilingualText>{t('Add Filament')}</BilingualText>
                 </button>
               </div>
               </div>
 
               {/* Selection action bar — sole batch-delete entry point for F6.3. */}
               {canBatchDelete && (
-                <div className="flex items-center justify-between shrink-0 bg-[rgba(224,64,64,0.08)] border border-fm-danger/60 rounded-lg px-4 py-2">
+                <div className="flex items-center justify-between shrink-0 bg-fm-danger/10 border border-fm-danger/60 rounded-lg px-4 py-2">
                   <div className="flex items-center gap-2 text-fm-danger text-sm">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
                       <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" fill="none" />
@@ -493,8 +533,11 @@ export function FilamentManagerPage() {
                     <span>{t('Selected {{count}} items', { count: selected.size })}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* text-fm-base as the on-error stand-in, same reasoning as
+                        the Add Filament button above: #1b1c21 on #ffb4ab is
+                        ~10:1 dark, #faf8fd on #ba1a1a is ~6.2:1 light. */}
                     <button
-                      className="inline-flex items-center gap-[6px] h-[28px] px-3 rounded-md border border-fm-danger bg-fm-danger text-white text-xs cursor-pointer hover:brightness-110"
+                      className="inline-flex items-center gap-[6px] h-[28px] px-3 rounded-md border border-fm-danger bg-fm-danger text-fm-base text-xs cursor-pointer hover:brightness-110"
                       onClick={handleBatchDelete}
                     >
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0">
@@ -605,30 +648,109 @@ export function FilamentManagerPage() {
 
 /* ===== Sub-components ===== */
 
-function FilterDropdown({ options, current, onSelect, onClose }: {
-  options: string[]; current: string;
+export function FilamentTabs({ tab, isLoggedIn, onSelect }: {
+  tab: TabMode;
+  isLoggedIn: boolean;
+  onSelect: (tab: TabMode) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className={`fm-tabs flex gap-2 ${!isLoggedIn ? 'opacity-40' : ''}`} role="tablist" aria-label={t('Filament List')}>
+      {FILAMENT_TABS.map((tabItem, index) => (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === tabItem}
+          tabIndex={tab === tabItem ? 0 : -1}
+          key={tabItem}
+          data-testid={`filament-tab-${tabItem}`}
+          data-active={tab === tabItem ? 'true' : 'false'}
+          className={`fm-tab px-[10px] py-1 min-h-9 rounded-md cursor-pointer text-xs text-fm-text-secondary flex items-center transition-colors duration-150 hover:bg-fm-hover ${tab === tabItem ? 'bg-fm-input text-fm-text-strong' : ''}`}
+          onClick={() => onSelect(tabItem)}
+          onKeyDown={(event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+            event.preventDefault();
+            const movingForward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+            const nextIndex = movingForward
+              ? (index + 1) % FILAMENT_TABS.length
+              : (index - 1 + FILAMENT_TABS.length) % FILAMENT_TABS.length;
+            onSelect(FILAMENT_TABS[nextIndex]);
+            event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
+          }}
+          disabled={!isLoggedIn}
+        >
+          <BilingualText>{tabItem === 'all' ? t('All') : t('In Printer')}</BilingualText>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function FilterDropdown({ label, options, current, onSelect, onClose }: {
+  label: string; options: string[]; current: string;
   onSelect: (val: string) => void; onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const values = useMemo(() => ['', ...options], [options]);
+  const [activeIndex, setActiveIndex] = useState(() => Math.max(0, values.indexOf(current)));
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const onCloseRef = useRef(onClose);
+
+  onCloseRef.current = onClose;
+
   useEffect(() => {
-    const handler = () => onClose();
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, [onClose]);
+    const frame = window.requestAnimationFrame(() => optionRefs.current[activeIndex]?.focus());
+    const handleDocumentClick = () => onCloseRef.current();
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [activeIndex]);
+
+  const focusOption = (index: number) => {
+    setActiveIndex(index);
+    optionRefs.current[index]?.focus();
+  };
+
+  const handleOptionKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      onCloseRef.current();
+      return;
+    }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    let nextIndex = index;
+    if (event.key === 'ArrowDown') nextIndex = (index + 1) % values.length;
+    if (event.key === 'ArrowUp') nextIndex = (index - 1 + values.length) % values.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = values.length - 1;
+    focusOption(nextIndex);
+  };
 
   return (
-    <div className="absolute z-[100] bg-fm-sidebar border border-fm-border rounded-lg p-1 min-w-[120px] max-h-60 overflow-y-auto shadow-[0_4px_12px_rgba(0,0,0,0.4)]" onClick={(e) => e.stopPropagation()}>
-      <div
-        className={`px-3 py-[6px] rounded-sm cursor-pointer text-xs text-fm-text-primary hover:bg-fm-hover ${!current ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
-        onClick={() => onSelect('')}
-      >{t('All')}</div>
-      {options.map((v) => (
-        <div
-          key={v}
-          className={`px-3 py-[6px] rounded-sm cursor-pointer text-xs text-fm-text-primary hover:bg-fm-hover ${current === v ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
-          onClick={() => onSelect(v)}
-        >{v}</div>
-      ))}
+    <div role="listbox" aria-label={label} className="absolute z-[100] bg-fm-sidebar border border-fm-border rounded-lg p-1 min-w-[120px] max-w-[min(18rem,calc(100vw-2rem))] max-h-60 overflow-y-auto shadow-[0_4px_12px_rgba(0,0,0,0.4)]" onClick={(event) => event.stopPropagation()}>
+      {values.map((value, index) => {
+        const active = current === value;
+        return (
+          <button
+            ref={(node) => { optionRefs.current[index] = node; }}
+            type="button"
+            role="option"
+            aria-selected={active}
+            tabIndex={index === activeIndex ? 0 : -1}
+            key={value || '__all'}
+            className={`fm-filter-option w-full min-h-9 px-3 py-[6px] rounded-sm cursor-pointer text-left text-xs text-fm-text-primary hover:bg-fm-hover ${active ? 'bg-fm-brand/15 text-fm-brand font-medium' : ''}`}
+            onClick={() => onSelect(value)}
+            onFocus={() => setActiveIndex(index)}
+            onKeyDown={(event) => handleOptionKeyDown(event, index)}
+          >
+            {value ? value : <BilingualText>{t('All')}</BilingualText>}
+          </button>
+        );
+      })}
     </div>
   );
 }

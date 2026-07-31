@@ -183,18 +183,18 @@ function saveInfo() {
   let modelData = {};
   getProjectName();
   if (!projectName) {
-    showToast("The project name is empty.");
+    showToast("The project name is empty.", 'warning');
     return;
   }
   modelData["name"] = encodeURIComponent(projectName);
   if (projectPictures.length <= 0) {
-    showToast("The project pictures is empty.");
+    showToast("The project pictures is empty.", 'warning');
     return;
   }
   modelData["preview_img"] = projectPictures;
   getProjectDescription();
   if (!projectEditorData) {
-    showToast("The project description is empty.");
+    showToast("The project description is empty.", 'warning');
     return;
   }
   modelData["description"] = encodeURIComponent(projectEditorData);
@@ -316,35 +316,35 @@ function getProfileDescription() {
 }
 //Pictures tool
 function setPictures(id, picturesList) {
-  let updateHtml = "";
+  const $container = $(`#${id}`);
+  $container.empty();
   for (let i = 0; i < picturesList.length; i++) {
-    let pic_filepath = picturesList[i].filepath;
-    if(picturesList[i].base64) {
-      pic_filepath = picturesList[i].base64;
+    let pic_filepath = picturesList[i].base64 || picturesList[i].filepath;
+    let filename = safeDecode(picturesList[i].filename || `Image ${i + 1}`);
+    const $preview = $('<div>').addClass('imagePreview').attr('data-index', i).css('background-image', `url('${pic_filepath}')`);
+    const $remove = $('<button type="button">')
+      .addClass('imageDelete')
+      .attr('aria-label', `Remove ${filename}`)
+      .append($('<img>').attr({ src: 'img/img_del.svg', alt: '' }));
+    $preview.append($remove);
+    if (i === 0) {
+      $preview.append($('<span>').addClass('modelCover').text('Model cover'));
+    } else {
+      $preview.append($('<button type="button">')
+        .addClass('setModelCover')
+        .attr('aria-label', `Set ${filename} as cover`)
+        .text('Set as cover'));
     }
-    if (i == 0) {
-      let html = `<div class="imagePreview" data-index="${i}" style="background-image: url('${pic_filepath}')">
-  <img src="img/img_del.svg" />
-  <div class="modelCover">Model cover</div>
-</div>`;
-      updateHtml = html + updateHtml;
-    }else {
-      let html = `<div class="imagePreview" data-index="${i}" style="background-image: url('${pic_filepath}')">
-  <img src="img/img_del.svg" />
-  <div class="setModelCover">Set as cover</div>
-</div>`;
-      updateHtml += html;
-    }
+    $container.append($preview);
   }
-  $(`#${id}`).html(updateHtml);
-  $(`#${id}`).off('click', 'img');
-  $(`#${id}`).on('click', 'img', function (event) {
+  $container.off('click', '.imageDelete');
+  $container.on('click', '.imageDelete', function () {
     let index = parseInt($(this).parent().data('index'));
     removePictureAt(index, picturesList);
     setPictures(id, picturesList);
   });
-  $(`#${id}`).off('click', '.setModelCover');
-  $(`#${id}`).on('click', '.setModelCover', function (event) {
+  $container.off('click', '.setModelCover');
+  $container.on('click', '.setModelCover', function () {
     let index = parseInt($(this).parent().data('index'));
     const [item] = picturesList.splice(index, 1);
     picturesList.unshift(item);
@@ -369,16 +369,16 @@ function addPictureUploadListener(inputId, showPictrueId, picturesList, allowTyp
     if (!file) return;
     // Validate file type
     if (allowTypes && !allowTypes.includes(file.type)) {
-      showToast(GetCurrentPlainTextByKey("t144"));
+      showToast(GetCurrentPlainTextByKey("t144"), 'warning');
       return;
     }
     // Validate file size
     if (maxSize && file.size > maxSize) {
-      showToast(GetCurrentPlainTextByKey("t145"));
+      showToast(GetCurrentPlainTextByKey("t145"), 'warning');
       return;
     }
     if (picturesList.length >= maxCount) {
-      showToast(GetCurrentPlainTextByKey("t146"));
+      showToast(GetCurrentPlainTextByKey("t146"), 'warning');
       return;
     }
     uploadFileToCpp(file).then(result => {
@@ -396,21 +396,32 @@ function addPictureUploadListener(inputId, showPictrueId, picturesList, allowTyp
         
       }
     }).catch(error => {
-      showToast(GetCurrentPlainTextByKey("t147"));
+      showToast(GetCurrentPlainTextByKey("t147"), 'error');
     });
   });
 }
 //accessories tool
 function addAccessoryBtnListener() {
-  $("#accessories-btn").on("click", function (e) {
+  const $button = $("#accessories-btn");
+  const $menu = $(".accessory-rule-wrapper");
+  function setMenuOpen(open) {
+    $menu.toggle(open);
+    $button.attr('aria-expanded', String(open));
+  }
+  $button.on("click", function (e) {
     e.stopPropagation();
-    $(".accessory-rule-wrapper").toggle();
+    setMenuOpen(!$menu.is(':visible'));
+  });
+  $button.on('keydown', function (e) {
+    if (e.key === 'Escape') {
+      setMenuOpen(false);
+      $button.trigger('focus');
+    }
   });
   $(document).on('click', function (e) {
-  if (!$(e.target).closest('#accessories-btn, .accessory-rule-wrapper').length) {
-    $('.accessory-rule-wrapper').hide();
-  }
-});1
+    if (!$(e.target).closest('#accessories-btn, .accessory-rule-wrapper').length)
+      setMenuOpen(false);
+  });
 }
 function setAccessories(id, accessoriesList) {
   const $container = $(`#${id}`);
@@ -429,11 +440,15 @@ function setAccessories(id, accessoriesList) {
       type = getFileType(acc_filepath);
     }
     let iconPath = `img/icon_${type}.svg`;
+    const filename = safeDecode(accessoriesList[i].filename);
     let $attachment = $('<div>').addClass('attachment').attr('data-index', i);
     $attachment.data('path', acc_filepath || '');
-    $attachment.append($('<img>').addClass('attachment-icon').attr('src', iconPath));
-    $attachment.append(document.createTextNode(decodeURIComponent(accessoriesList[i].filename)));
-    $attachment.append($('<img>').addClass('attachment-delete').attr('src', 'img/del.svg'));
+    const $open = $('<button type="button">').addClass('attachment-open').attr('aria-label', filename);
+    $open.append($('<img>').addClass('attachment-icon').attr({ src: iconPath, alt: '' }));
+    $open.append($('<span>').text(filename));
+    const $remove = $('<button type="button">').addClass('attachment-delete').attr('aria-label', `Remove ${filename}`);
+    $remove.append($('<img>').attr({ src: 'img/del.svg', alt: '' }));
+    $attachment.append($open, $remove);
     $container.append($attachment);
   }
   $container.prev().children('label').text(accessoriesList.length);
@@ -444,10 +459,9 @@ function setAccessories(id, accessoriesList) {
     removeAccessoryAt(index, accessoriesList);
     setAccessories(id, accessoriesList);
   });
-  $container.off('click', '.attachment');
-  $container.on('click', '.attachment', function (event) {
-    if ($(event.target).closest('.attachment-delete').length) return;
-    const path = $(this).data('path');
+  $container.off('click', '.attachment-open');
+  $container.on('click', '.attachment-open', function (event) {
+    const path = $(this).parent().data('path');
     OnClickOpenFile(event, path);
   });
 }
@@ -508,16 +522,16 @@ function addAccessoryUploadListener(inputId, showAccessoryId, accessoriesList, a
     const lowerName = file.name.toLowerCase();
     const matchedExt = Object.keys(allowTypes).find(ext => lowerName.endsWith(ext));
     if (!matchedExt) {
-      showToast(GetCurrentPlainTextByKey("t144"));
+      showToast(GetCurrentPlainTextByKey("t144"), 'warning');
       return;
     }
     const maxSize = allowTypes[matchedExt];
     if (maxSize && file.size > maxSize) {
-      showToast(GetCurrentPlainTextByKey("t145"));
+      showToast(GetCurrentPlainTextByKey("t145"), 'warning');
       return;
     }
     if (accessoriesList.length >= maxCount) {
-      showToast(GetCurrentPlainTextByKey("t146"));
+      showToast(GetCurrentPlainTextByKey("t146"), 'warning');
       return;
     }
     uploadFileToCpp(file).then(result => {
@@ -531,7 +545,7 @@ function addAccessoryUploadListener(inputId, showAccessoryId, accessoriesList, a
         setAccessories(showAccessoryId, accessoriesList);
       }
     }).catch(error => {
-      showToast(GetCurrentPlainTextByKey("t147"));
+      showToast(GetCurrentPlainTextByKey("t147"), 'error');
     });
   });
 }
@@ -677,11 +691,11 @@ function handleEditorMessage(rawMessage) {
   }
   if (command === 'update_3mf_info_result') {
     if (payload.error) {
-      showToast(payload.error);
+      showToast(payload.error, 'error');
       return;
     }
     bakRequestData = JSON.parse(JSON.stringify(getCurrentRequestData()));
-    showToast(payload.message || 'Saved successfully.');
+    showToast(payload.message || 'Saved successfully.', 'success');
     window.location.href = "index.html";
   }
 }

@@ -24,6 +24,17 @@ public:
     void setLabel(wxString label);
     bool SeLinkLabelFColour(const wxColour &colour);
     bool SeLinkLabelBColour(const wxColour &colour);
+
+    bool AcceptsFocus() const override;
+    bool AcceptsFocusFromKeyboard() const override;
+    void AccessibilityActivate();
+    void SetName(const wxString& name) override;
+
+private:
+    void activate();
+    void keyDown(wxKeyEvent &event);
+    void focusChanged(wxFocusEvent &event);
+    void paintFocus(wxPaintEvent &event);
 };
 
 #endif // !slic3r_GUI_LinkLabel_hpp_

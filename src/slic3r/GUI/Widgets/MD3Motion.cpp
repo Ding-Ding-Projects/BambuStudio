@@ -39,6 +39,12 @@ double easeEmphasized(double t)
 
 namespace {
 constexpr int kFrameMs = 16; // ~60fps
+
+// A fade must never be able to strand a window at alpha 0: an invisible window
+// that still takes input reads to the user as "the palette will not close" or
+// "the builder never opened". Entrances therefore start from a visible floor
+// rather than fully transparent (imperceptible over a 100 ms fade).
+constexpr int kEntranceFloorAlpha = 64; // 25%
 } // namespace
 
 void Anim::Play(int duration_ms, std::function<void(double)> tick,
@@ -86,7 +92,7 @@ void FadeIn(wxWindow *window, int duration_ms)
         return;
     }
     ::SetWindowLongW(hwnd, GWL_EXSTYLE, ::GetWindowLongW(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-    ::SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
+    ::SetLayeredWindowAttributes(hwnd, 0, (BYTE) kEntranceFloorAlpha, LWA_ALPHA);
     auto *anim = new Anim();
     wxWeakRef<wxWindow> ref(window);
     anim->Play(duration_ms,
@@ -96,13 +102,21 @@ void FadeIn(wxWindow *window, int duration_ms)
             HWND h = (HWND) ref->GetHWND();
             if (h == nullptr)
                 return;
-            ::SetLayeredWindowAttributes(h, 0, (BYTE) std::lround(255.0 * t), LWA_ALPHA);
+            const BYTE alpha = (BYTE) std::max<long>(kEntranceFloorAlpha, std::lround(255.0 * t));
+            ::SetLayeredWindowAttributes(h, 0, alpha, LWA_ALPHA);
             if (t >= 1.0) // drop the layered style once opaque (avoids DWM cost)
                 ::SetWindowLongW(h, GWL_EXSTYLE, ::GetWindowLongW(h, GWL_EXSTYLE) & ~WS_EX_LAYERED);
         },
         // Deferred delete: done() can fire synchronously from inside Play()
         // (reduced motion), so the Anim must never delete itself re-entrantly.
         [anim]() { wxTheApp->CallAfter([anim]() { delete anim; }); });
+
+    // wxTimer::Start can fail (no event loop yet, timer exhaustion). Without
+    // this the window would keep the entrance alpha forever.
+    if (!anim->IsRunning() && ::IsWindow(hwnd)) {
+        ::SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
+        ::SetWindowLongW(hwnd, GWL_EXSTYLE, ::GetWindowLongW(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+    }
 #else
     (void) duration_ms;
 #endif

@@ -168,6 +168,17 @@ static inline ImU32 md3_imu32(MD3::Role role, unsigned char alpha = 255)
     const wxColour &c = MD3::resolve(role, wxGetApp().dark_mode());
     return IM_COL32(c.Red(), c.Green(), c.Blue(), alpha);
 }
+// Dimming wash for viewport thumbnails. The MD3 scrim token already carries the
+// theme-correct dim strength (see MD3Tokens.hpp), so plate tiles stop baking a
+// fixed black alpha; `strength` scales it down for the far lighter wash used on
+// plates that are merely progressing rather than blocked.
+static inline ImU32 md3_scrim_imu32(float strength = 1.0f)
+{
+    const wxColour &s = MD3::scrim(wxGetApp().dark_mode());
+    int             a = static_cast<int>(static_cast<float>(s.Alpha()) * strength + 0.5f);
+    a                 = std::max(0, std::min(255, a));
+    return IM_COL32(s.Red(), s.Green(), s.Blue(), a);
+}
 
 bool                                        GLCanvas3D::s_enable_bvh = true;
 std::vector<GLCanvas3D::IsolatedVolumeInfo> GLCanvas3D::s_isolated_volumes;
@@ -1121,10 +1132,16 @@ void GLCanvas3D::Labels::render(const std::vector<const ModelInstance*>& sorted_
         if (x < 0.0f || viewport[2] < x || y < 0.0f || viewport[3] < y)
             continue;
 
+        // MD3 floating label: same inverse-surface container the canvas tooltip
+        // uses (see Tooltip::render below), with a token corner radius in place of
+        // the hard-cornered 40%-black rectangle. Border weights are left at their
+        // original values - GLCanvas3D::get_scale() returns 1.0f on every non-mac
+        // build, so multiplying by it would only look like DPI awareness.
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, owner.selected ? 3.0f : 1.5f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, static_cast<float>(MD3::Metrics::radius_tiny));
         ImGui::PushStyleColor(ImGuiCol_Border, owner.selected ? md3_imvec4(MD3::Role::Primary) : ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.4f));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imvec4(MD3::Role::InverseSurface, 0.94f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::InverseOn));
         imgui.set_next_window_pos(x, y, ImGuiCond_Always, 0.5f, 0.5f);
         imgui.begin(owner.title, ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
         ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
@@ -1135,7 +1152,7 @@ void GLCanvas3D::Labels::render(const std::vector<const ModelInstance*>& sorted_
         imgui.text(owner.label);
 
         if (show_object_label) {
-            ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(1.0f, 1.0f, 1.0f, 0.3f));
+            ImGui::PushStyleColor(ImGuiCol_Separator, md3_imvec4(MD3::Role::OutlineVariant));
             ImGui::Separator();
             ImGui::PopStyleColor();
             ImGui::AlignTextToFramePadding();
@@ -1147,7 +1164,7 @@ void GLCanvas3D::Labels::render(const std::vector<const ModelInstance*>& sorted_
             imgui.set_requires_extra_frame();
 
         imgui.end();
-        ImGui::PopStyleColor(2);
+        ImGui::PopStyleColor(3);
         ImGui::PopStyleVar(2);
     }
 }
@@ -10002,25 +10019,41 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
     float window_height = std::min(item_count * (button_height + (frame_padding + margin_size) * 2.0f + button_margin) - button_margin + 28.0f * f_scale, window_height_max);
     float window_width = m_sel_plate_toolbar.icon_width + margin_size * 2 + (show_scroll ? 28.0f * f_scale : 20.0f * f_scale);
 
-    ImVec4 window_bg = ImVec4(0.82f, 0.82f, 0.82f, 0.5f);
+    // MD3 floating-toolbar chrome. The strip is a real container plate that
+    // follows the theme, not the old 50%-alpha grey slab; the window/hover
+    // mapping mirrors ImGuiWrapper::push_toolbar_style without disturbing this
+    // window's hand-computed geometry above.
+    ImVec4 window_bg = m_is_dark ? md3_imvec4(MD3::Role::SurfaceContainer) : md3_imvec4(MD3::Role::SurfaceContainerLowest);
     ImVec4 button_active = md3_imvec4(MD3::Role::Primary);
-    ImVec4 button_hover = ImVec4(0.67f, 0.67f, 0.67, 1.0f);
+    // Every ImGuiCol_Button* in this window ends up as a BORDER STROKE, never a
+    // fill: ImageButtonEx2 (src/imgui/imgui_widgets.cpp) passes the button colour
+    // to AddRect only, and the per-plate tiles below stroke ImGuiCol_Border by
+    // hand. A container tone would sit at ~1.05:1 against the window plate and
+    // disappear, so hover and press both use the outline role, which reads.
+    ImVec4 hover_border = md3_imvec4(MD3::Role::Outline);
     ImVec4 scroll_col = md3_imvec4(MD3::Role::OutlineVariant);
-    //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.f, 0.f, 0.f, 1.0f));
-    //use white text as the background switch to black
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, window_bg);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, window_bg);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, scroll_col);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, scroll_col);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, scroll_col);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, button_active);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, button_hover);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover_border);
+
+    // Shape tokens follow the active density, replacing the 4/3 px literals.
+    // They are deliberately NOT multiplied by f_scale: this window's geometry
+    // (tile size, paddings, font) is unscaled on Windows, so a scaled radius
+    // would be the only scaled quantity here. frame_rounding is applied to the
+    // button frames only - see the slice-state washes below for why the
+    // overlays that sit on the thumbnails stay square.
+    const float window_rounding = static_cast<float>(MD3::Metrics::active().radius);
+    const float frame_rounding  = static_cast<float>(MD3::Metrics::active().small_radius);
 
     ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 10.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, window_rounding);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, frame_rounding);
 
     imgui.set_next_window_pos(canvas_w * 0, canvas_h * 0 + y_offset, ImGuiCond_Always, 0, 0);
     imgui.set_next_window_size(window_width, window_height, ImGuiCond_Always);
@@ -10055,8 +10088,8 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_Button));
             }
             else {
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, button_hover);
-                ImGui::PushStyleColor(ImGuiCol_ButtonActive, button_hover);
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover_border);
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, hover_border);
             }
         }
 
@@ -10092,29 +10125,33 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         }
         ImGui::PopStyleColor(3);
 
+        // The slice-state washes are drawn on the thumbnail's own rect. The
+        // thumbnail itself is a straight AddImage (ImageButtonEx2), so these must
+        // stay SQUARE: a rounded wash over a square image leaves an undimmed
+        // crescent in every corner. Rounding lives on the button frame instead.
         ImVec2 start_pos = ImVec2(button_start_pos.x + frame_padding + margin.x, button_start_pos.y + frame_padding + margin.y);
         if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::UNSLICED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(0, 0, 0, 80));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32());
         }
         else if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICING) {
             ImVec2 size = ImVec2(button_width, button_height * all_plates_stats_item->percent / 100.0f);
             ImVec2 rect_start_pos = ImVec2(start_pos.x, start_pos.y + size.y);
             ImVec2 rect_end_pos = ImVec2(start_pos.x + button_width, start_pos.y + button_height);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, rect_end_pos, IM_COL32(0, 0, 0, 10));
-            ImGui::GetWindowDrawList()->AddRectFilled(rect_start_pos, rect_end_pos, IM_COL32(0, 0, 0, 80));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, rect_end_pos, md3_scrim_imu32(0.125f));
+            ImGui::GetWindowDrawList()->AddRectFilled(rect_start_pos, rect_end_pos, md3_scrim_imu32());
         }
         else if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(40, 1, 1, 64));
-            ImGui::GetWindowDrawList()->AddRect(start_pos, end_pos, IM_COL32(208, 27, 27, 255), 0.0f, 0, 1.0f);
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_imu32(MD3::Role::Error, 64));
+            ImGui::GetWindowDrawList()->AddRect(start_pos, end_pos, md3_imu32(MD3::Role::Error), 0.0f, 0, 1.0f);
         }
         else if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(0, 0, 0, 10));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32(0.125f));
         }
 
         // draw text
@@ -10130,7 +10167,7 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         ImGui::SetWindowFontScale(1.2f);
     }
 
-    ImVec4 error_text_clr = ImVec4(1, 0, 0, 1);
+    ImVec4 error_text_clr = md3_imvec4(MD3::Role::Error);
     for (int i = 0; i < m_sel_plate_toolbar.m_items.size(); i++) {
         IMToolbarItem* item = m_sel_plate_toolbar.m_items[i];
 
@@ -10158,7 +10195,7 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         }
         else {
             if (ImGui::IsMouseHoveringRect(button_start_pos, button_start_pos + button_size)) {
-                ImGui::PushStyleColor(ImGuiCol_Border, button_hover);
+                ImGui::PushStyleColor(ImGuiCol_Border, hover_border);
             }
             else {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.0f, .0f, .0f, .0f));
@@ -10181,37 +10218,39 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         ImGui::PopStyleColor(4);
         ImGui::PopStyleVar();
 
+        // Square washes for the same reason as the all-plates tile above: the
+        // thumbnail under them is a straight ImGui::Image, so a rounded overlay
+        // would leave a bright, undimmed crescent in each corner.
         ImVec2 start_pos = ImVec2(button_start_pos.x + frame_padding + margin.x, button_start_pos.y + frame_padding + margin.y);
         if (item->slice_state == IMToolbarItem::SliceState::UNSLICED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(0, 0, 0, 80));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32());
         } else if (item->slice_state == IMToolbarItem::SliceState::SLICING) {
             ImVec2 size = ImVec2(button_width, button_height * item->percent / 100.0f);
             ImVec2 rect_start_pos = ImVec2(start_pos.x, start_pos.y + size.y);
             ImVec2 rect_end_pos = ImVec2(start_pos.x + button_width, start_pos.y + button_height);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, rect_end_pos, IM_COL32(0, 0, 0, 10));
-            ImGui::GetWindowDrawList()->AddRectFilled(rect_start_pos, rect_end_pos, IM_COL32(0, 0, 0, 80));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, rect_end_pos, md3_scrim_imu32(0.125f));
+            ImGui::GetWindowDrawList()->AddRectFilled(rect_start_pos, rect_end_pos, md3_scrim_imu32());
         } else if (item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED) {
             ImVec2 size    = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(250, 0, 0, 64));
-            ImGui::GetWindowDrawList()->AddRect(start_pos, end_pos, IM_COL32(208, 27, 27, 255), 0.0f, 0, 1.0f);
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_imu32(MD3::Role::Error, 64));
+            ImGui::GetWindowDrawList()->AddRect(start_pos, end_pos, md3_imu32(MD3::Role::Error), 0.0f, 0, 1.0f);
         } else if (item->slice_state == IMToolbarItem::SliceState::SLICED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(0, 0, 0, 10));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32(0.125f));
         }
         // draw text
+        const ImVec2 badge_pos = ImVec2(start_pos.x + 10.0f, start_pos.y + 8.0f);
         if (item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED) {
             ImGui::PushStyleColor(ImGuiCol_Text, error_text_clr);
-            ImVec2 text_start_pos = ImVec2(start_pos.x + 10.0f, start_pos.y + 8.0f);
-            ImGui::RenderText(text_start_pos, std::to_string(i + 1).c_str());
+            ImGui::RenderText(badge_pos, std::to_string(i + 1).c_str());
             ImGui::PopStyleColor();
 
         } else {
-            ImVec2 text_start_pos = ImVec2(start_pos.x + 10.0f, start_pos.y + 8.0f);
-            ImGui::RenderText(text_start_pos, std::to_string(i + 1).c_str());
+            ImGui::RenderText(badge_pos, std::to_string(i + 1).c_str());
         }
         ImGui::PopID();
     }
@@ -10659,12 +10698,18 @@ void GLCanvas3D::_render_return_toolbar()
     imgui.set_next_window_size(window_width, window_height, ImGuiCond_Always);
 #endif
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 18.0f);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.149f, 0.180f, 0.188f, 0.3f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.149f, 0.180f, 0.188f, 0.15f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.149f, 0.180f, 0.188f, 0.5f));
+    // MD3 pill: stadium radius is exactly half the button's own height (the
+    // ImageTextButton bb is real_size.y tall - see imgui_widgets.cpp), which is
+    // derived from the live ImGui font size, so it tracks the font scale instead
+    // of sitting at the 18px literal. The container tones now RISE with
+    // interaction - the old triple faded out on hover, because its alpha dropped
+    // from .3 at rest to .15 hovered.
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.5f * real_size.y);
+    ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::SurfaceContainer));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(MD3::Role::SurfaceContainerHigh));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::SurfaceContainerHighest));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface));
 
     imgui.begin(_L("Assembly Return"), ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground
         | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
@@ -10682,7 +10727,10 @@ void GLCanvas3D::_render_return_toolbar()
     ImVec2 uv1 = ImVec2(1.0f, 1.0f);
 
     ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-    ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    // assemble_return.svg is authored in flat white, so the ImageTextButton tint
+    // multiplies straight to the requested role - the arrow now matches the pill's
+    // OnSurface label instead of staying hard white on a light container.
+    ImVec4 tint_col = md3_imvec4(MD3::Role::OnSurface);
     ImVec2 margin = ImVec2(10.0f, 5.0f);
 
     if (ImGui::ImageTextButton(real_size,_utf8(L("return")).c_str(), m_return_toolbar.get_return_texture_id(), button_icon_size, uv0, uv1, -1, bg_col, tint_col, margin)) {

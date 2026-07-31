@@ -46,8 +46,8 @@ function ChooseRegion( strRegion )
 {
 	m_Region=strRegion;
 	
-	$('.RegionItem').removeClass('RegionSelected');
-	$(".RegionItem[region='"+strRegion+"']").addClass('RegionSelected');
+	$('.RegionItem').removeClass('RegionSelected').attr('aria-pressed', 'false');
+	$(".RegionItem[region='"+strRegion+"']").addClass('RegionSelected').attr('aria-pressed', 'true');
 }
 
 function GotoPolicyPage()

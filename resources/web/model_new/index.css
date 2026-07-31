@@ -66,6 +66,21 @@
 	border-color: var(--md-outline-variant);
 	user-select: none;
 }
+button {
+  font: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--md-primary);
+  outline-offset: 3px;
+}
+.text,
+.comment,
+#projectDescription,
+#profileDescript {
+  user-select: text;
+}
 
 html, body {
 	line-height: 20px;
@@ -180,9 +195,18 @@ hr {
 }
 
 #projectName {
+  display: block;
+  max-width: 100%;
+  background: transparent;
+  color: inherit;
+  text-align: left;
   font-size: var(--md-type-dialog-title);
   font-weight: 700;
   margin-top: 14px;
+  overflow-wrap: anywhere;
+}
+#projectName:disabled {
+  cursor: default;
 }
 .link {
   cursor: pointer;
@@ -258,4 +282,35 @@ hr {
 }
 #profileDescript {
   margin-top: 8px;
+}
+
+
+@media (max-width: 760px) {
+  .container {
+    display: block;
+    padding-inline: clamp(12px, 4vw, 24px);
+  }
+  .Navigation {
+    position: static;
+    overflow-x: auto;
+  }
+  .Navigation ul {
+    display: flex;
+    min-width: max-content;
+  }
+  .content {
+    padding: 22px 0;
+  }
+  .attachment {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

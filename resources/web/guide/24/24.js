@@ -52,10 +52,9 @@ function ChooseModel( ModelName )
 	
 	if(ChooseItem!=null)
 	{
-		if( $(ChooseItem).hasClass('ModelCheckBoxSelected') )
-			$(ChooseItem).removeClass('ModelCheckBoxSelected');
-		else
-			$(ChooseItem).addClass('ModelCheckBoxSelected');		
+		let isSelected=$(ChooseItem).hasClass('ModelCheckBoxSelected');
+		$(ChooseItem).toggleClass('ModelCheckBoxSelected', !isSelected);
+		$(ChooseItem).attr('aria-pressed', String(!isSelected));
 	}		
 }
 
@@ -83,10 +82,10 @@ function HandleModelList( pVal )
 			
 			let HtmlNewVendor='<div class="OneVendorBlock" Vendor="'+strVendor+'">'+
 '<div class="BlockBanner">'+
-'	<a>'+sVV+'</a>'+				
+'	<span>'+sVV+'</span>'+
 '	<div class="BannerBtns">'+
-'		<div class="SmallBtn_Green trans" tid="t11" onClick="SelectPrinterAll('+"\'"+strVendor+"\'"+')">all</div>'+
-'		<div class="SmallBtn trans" tid="t12" onClick="SelectPrinterNone('+"\'"+strVendor+"\'"+')">none</div>'+
+'		<button type="button" class="SmallBtn_Green trans" tid="t11" onClick="SelectPrinterAll('+"\'"+strVendor+"\'"+')">all</button>'+
+'		<button type="button" class="SmallBtn trans" tid="t12" onClick="SelectPrinterNone('+"\'"+strVendor+"\'"+')">none</button>'+
 '	</div>'+
 '</div>'+
 '<div class="PrinterArea">	'+
@@ -113,7 +112,7 @@ function HandleModelList( pVal )
 		ModelHtml[strVendor]+='<div class="PrinterBlock">'+
         '<div class="PImg">'+
 		    '<img class="ModelThumbnail" src="'+CoverImage3+'" onerror="ShowPrinterThumb(this,\''+CoverImage2+'\')" />'+
-			'<div class="ModelCheckBox" model="'+OneModel['model']+'" onClick="ChooseModel(\''+OneModel['model']+'\')"></div>'+
+			'<button type="button" class="ModelCheckBox" model="'+OneModel['model']+'" aria-label="Select '+OneModel['model']+'" aria-pressed="false" onClick="ChooseModel(\''+OneModel['model']+'\')"></button>'+
 		'</div>'+
         '    <div class="PName">'+OneModel['model']+'</div>'+ 
 		'</div>';
@@ -143,7 +142,7 @@ function HandleModelList( pVal )
 	let nSelect=AlreadySelect.length;
 	if(nSelect==0)
 	{
-		$("div.OneVendorBlock[vendor='BBL'] .ModelCheckBox").addClass('ModelCheckBoxSelected');
+		$("div.OneVendorBlock[vendor='BBL'] .ModelCheckBox").addClass('ModelCheckBoxSelected').attr('aria-pressed', 'true');
 	}
 	
 	TranslatePage();
@@ -152,13 +151,13 @@ function HandleModelList( pVal )
 
 function SelectPrinterAll( sVendor )
 {
-	$("div.OneVendorBlock[vendor='"+sVendor+"'] .ModelCheckBox").addClass('ModelCheckBoxSelected');
+	$("div.OneVendorBlock[vendor='"+sVendor+"'] .ModelCheckBox").addClass('ModelCheckBoxSelected').attr('aria-pressed', 'true');
 }
 
 
 function SelectPrinterNone( sVendor )
 {
-	$("div.OneVendorBlock[vendor='"+sVendor+"'] .ModelCheckBox").removeClass('ModelCheckBoxSelected');
+	$("div.OneVendorBlock[vendor='"+sVendor+"'] .ModelCheckBox").removeClass('ModelCheckBoxSelected').attr('aria-pressed', 'false');
 }
 
 

@@ -13,12 +13,11 @@
 #include "MsgDialog.hpp"
 #include "../Utils/PrintHost.hpp"
 
-class wxButton;
-class wxTextCtrl;
-class wxChoice;
-class wxComboBox;
 class wxDataViewListCtrl;
-class wxStaticText;
+class Button;
+class ComboBox;
+class Label;
+class TextInput;
 class SearchField;
 
 namespace Slic3r {
@@ -35,8 +34,10 @@ public:
 
     virtual void EndModal(int ret) override;
 private:
-    wxTextCtrl *txt_filename;
-    wxComboBox *combo_groups;
+    // Kit ValueField / SelectField (Widgets/TextInput.hpp, Widgets/ComboBox.hpp);
+    // the raw text goes through GetTextCtrl(), the group through GetValue().
+    TextInput *txt_filename;
+    ComboBox  *combo_groups;
     PrintHostPostUploadAction post_upload_action;
     wxString    m_valid_suffix;
 };
@@ -103,10 +104,14 @@ private:
         UDT_COLS = 4
     };
 
-    wxButton *btn_cancel;
-    wxButton *btn_error;
+    // Kit action row: Outlined / Text secondaries + a Filled primary. btn_close
+    // is held so on_dpi_changed() can re-derive the pill geometry (the generic
+    // msw_buttons_rescale would overwrite the variant's kit height).
+    Button *btn_cancel;
+    Button *btn_error;
+    Button *btn_close { nullptr };
     SearchField *search_field { nullptr };
-    wxStaticText *search_status { nullptr };
+    Label *search_status { nullptr };
     wxDataViewListCtrl *job_list;
     // Find-in-queue: rows stay in place (job ids are row indices), the search
     // selects and counts matches instead of filtering.

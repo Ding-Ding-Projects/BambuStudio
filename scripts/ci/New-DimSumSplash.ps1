@@ -181,6 +181,89 @@ $dishLibrary = [ordered]@{
     <path d="M-8.5 4 h17" stroke="$($P.ChopA)" stroke-width="1.6"/>
 "@
     }
+    # --- Appended below. Adding a dish changes which items a given seed draws, so the
+    # --- art for a seed is only stable within one library revision - that is expected
+    # --- and is why every generated file carries its seed AND its dish list in the
+    # --- comment header. Food colours are fixed rather than palette-derived wherever
+    # --- the dish is recognised BY its colour (a green har gow is not a har gow);
+    # --- doughs and wrappers follow the palette so the scene still reads as one set.
+    'cheung fun roll' = {
+        param($P)
+        @"
+    <path d="M-16 2 q4 -8 8 0 q4 -8 8 0 q4 -8 8 0 l0 6 q-12 3 -24 0 z" fill="$($P.Wrap)"/>
+    <path d="M-16 2 q4 -8 8 0 q4 -8 8 0 q4 -8 8 0" stroke="$($P.WrapLine)" stroke-width="1.6" fill="none"/>
+    <path d="M-13 7 h26" stroke="#8A5A2B" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+"@
+    }
+    'pineapple bun' = {
+        param($P)
+        @"
+    <path d="M-13 6 q0 -14 13 -14 q13 0 13 14 z" fill="#E8B65C"/>
+    <path d="M-9 1 h18 M-11 -3 h22 M-7 5 h14" stroke="#C9922F" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M-4 -8 v14 M4 -8 v14" stroke="#C9922F" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M-13 6 h26" stroke="$($P.BunLine)" stroke-width="2"/>
+"@
+    }
+    'lo mai gai parcel' = {
+        param($P)
+        @"
+    <path d="M-13 -6 l13 -4 l13 4 l-4 13 h-18 z" fill="#5F7F4A"/>
+    <path d="M-13 -6 l13 -4 l13 4" stroke="#4A6639" stroke-width="1.6" fill="none"/>
+    <path d="M0 -10 v17" stroke="#4A6639" stroke-width="1.4"/>
+    <path d="M-6 3 q6 -4 12 0" stroke="#7A9C60" stroke-width="1.6" fill="none"/>
+"@
+    }
+    'taro dumpling' = {
+        param($P)
+        @"
+    <ellipse cx="0" cy="0" rx="14" ry="10" fill="#C9A98C"/>
+    <path d="M-13 -2 q6 -7 13 -7 q7 0 13 7" fill="#D8BCA2"/>
+    <path d="M-11 3 q5 3 11 3 q6 0 11 -3" stroke="#B08F70" stroke-width="1.4" fill="none"/>
+    <path d="M-9 -4 l-3 -4 M-2 -6 l-1 -5 M5 -6 l2 -5 M11 -4 l4 -4" stroke="#E3CDB6" stroke-width="1.6" stroke-linecap="round"/>
+"@
+    }
+    'char siu sou' = {
+        param($P)
+        @"
+    <ellipse cx="0" cy="0" rx="14" ry="9" fill="$($P.Bun)"/>
+    <path d="M-14 0 q7 -9 14 -9 q7 0 14 9" fill="#F3DFAF"/>
+    <path d="M-10 -3 q10 -5 20 0 M-9 2 q9 -4 18 0" stroke="$($P.BunLine)" stroke-width="1.4" fill="none"/>
+    <circle cx="0" cy="-7" r="1.6" fill="#3E3021"/>
+    <circle cx="-4.5" cy="-6" r="1.4" fill="#3E3021"/>
+    <circle cx="4.5" cy="-6" r="1.4" fill="#3E3021"/>
+"@
+    }
+    'mango pudding' = {
+        param($P)
+        @"
+    <path d="M-11 -7 h22 l-3 14 h-16 z" fill="#F5B23C"/>
+    <path d="M-11 -7 h22 l-1 4 h-20 z" fill="#F8C868"/>
+    <ellipse cx="0" cy="-7" rx="11" ry="3" fill="#FAD68A"/>
+    <path d="M-4 1 q4 3 8 0" stroke="#DE9526" stroke-width="1.4" fill="none"/>
+"@
+    }
+    'sesame ball' = {
+        param($P)
+        @"
+    <circle cx="0" cy="0" r="11" fill="#D9913F"/>
+    <circle cx="0" cy="-2" r="9" fill="#E6A85B"/>
+    <circle cx="-4" cy="-4" r="1.1" fill="#F6E3C4"/>
+    <circle cx="2" cy="-6" r="1.1" fill="#F6E3C4"/>
+    <circle cx="6" cy="-1" r="1.1" fill="#F6E3C4"/>
+    <circle cx="-6" cy="2" r="1.1" fill="#F6E3C4"/>
+    <circle cx="1" cy="4" r="1.1" fill="#F6E3C4"/>
+"@
+    }
+    'wonton bowl' = {
+        param($P)
+        @"
+    <path d="M-13 -3 h26 l-3 10 q-1 3 -4 3 h-12 q-3 0 -4 -3 z" fill="#EEF2F6"/>
+    <ellipse cx="0" cy="-3" rx="13" ry="4" fill="#C9975A"/>
+    <path d="M-6 -4 q3 -4 6 -1 q3 -3 5 1" fill="$($P.Wrap)"/>
+    <path d="M-13 -3 h26" stroke="#9FB0C2" stroke-width="1.4"/>
+    <path d="M-8 6 h16" stroke="#4E6C99" stroke-width="1.6"/>
+"@
+    }
 }
 
 # --- Seeded choices (order of draws is part of the deterministic contract;

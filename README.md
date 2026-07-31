@@ -8,9 +8,10 @@ This fork's maintained delivery target is native Windows UI modernization inform
 is a per-user install and does not require administrator elevation. It is currently unsigned; verify
 the accompanying
 [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256)
-before running it. Upstream cross-platform releases remain available from
-[Bambu Lab](https://github.com/bambulab/BambuStudio/releases/), but macOS and Linux are outside this
-fork's release acceptance gate.
+before running it. **This fork is Windows-only.** macOS and Linux support has been removed from the tree: the
+platform sources, build scripts, packaging and CI jobs are gone, and CMake fails fast when
+configured on any other system. Cross-platform builds remain available upstream from
+[Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 
 The Windows UI provides three canonical fork modes: English (`en`), playful Hong Kong Cantonese
 preview (`yue_HK`), and compact English + Cantonese preview (`bilingual_en_yue_HK`). Existing Bambu Studio
@@ -29,7 +30,7 @@ colors through semantic tokens instead of hardcoded hexes. A ground-up migration
 colors and fonts across essentially the whole GUI tree (roughly 120 files over six waves), backed by
 Roboto and Roboto Mono shipped as application resources. Contextual schemes are resolved per
 workspace: brand green for Prepare and general UI, Preview purple for the G-code preview, and Device
-teal for the printer surfaces. Functional data colors (filament swatches, G-code feature colors, 3D
+teal for the printer surfaces. Functional data colors (ink swatches, G-code feature colors, 3D
 paint palettes) are deliberately preserved.
 
 Beyond the token layer, an element-by-element conformance register
@@ -37,7 +38,7 @@ Beyond the token layer, an element-by-element conformance register
 drove nine implementation waves of structural component anatomy. As of 2026-07-22 the register
 stands at **120 rows done, 4 recorded deviations** (each documented with concrete evidence in the
 register), **and 5 open rows** — the deep Prepare-sidebar rebuilds (printer identity card, bed
-field, filament info-rows, Process card, Objects card) — which are being finished in a concurrent
+field, ink info-rows, Process card, Objects card) — which are being finished in a concurrent
 implementation wave. Landed anatomy includes the Material Symbols icon font and ImGui glyph atlas,
 the rebuilt shared widget kit, the `MD3Dialog` shell with the MessageDialog family and the
 raw-`wxMessageBox` sweep, the kit title bar, the Preferences NavRail with runtime density/accent
@@ -57,16 +58,20 @@ Two native features were added in the same effort:
 
 Full documentation of the token layer, migration, failure modes, and audit result is in
 [Vendored Material Design 3 design system](docs/features/design-system/md3-design-system.md).
+The native split actions, option menus, segmented selectors, links, tabs, Ink Dispenser controls,
+Filament Manager, Project page, and setup guides now share a documented keyboard, assistive, zoom,
+and responsive-layout baseline; see
+[Keyboard, assistive, and responsive GUI accessibility](docs/features/windows/gui-accessibility.md).
 
 ### Live application captures
 
-These are captures of the running native executable at the current tip. They were produced on
-2026-07-23 by launching the built binary on an isolated off-screen desktop (via the headless
-computer-use harness) over a software OpenGL renderer, and capturing individual windows with
-`PrintWindow`. That method renders wxWidgets chrome and panels but not the OpenGL 3D viewport or the
-webview-backed panes (the Home body and Filament library are web content), so those regions appear
-empty in whole-window shots; the Prepare capture is a direct sidebar-panel grab to show real
-migrated content.
+These are captures of the running native executable at the current tip, produced by launching the
+built binary on an isolated off-screen desktop (via the headless computer-use harness) over a
+software OpenGL renderer, and capturing individual windows with `PrintWindow`. That method renders
+wxWidgets chrome and panels but not the OpenGL 3D viewport or the webview-backed panes (the Home
+body and Ink library are web content), so those regions appear empty in whole-window shots; the
+Prepare capture is a direct sidebar-panel grab to show real migrated content. The frame shot dates
+from 2026-07-26 and the sidebar from 2026-07-28, both taken after the ink rename.
 
 **Home — with the browser-like project tab bar**
 
@@ -85,9 +90,10 @@ content, which is why earlier captures of them were blank):
 | :---: | :---: |
 | ![Prepare sidebar](docs/readme-assets/shot-prepare-sidebar.png) | ![Setup Wizard welcome page](docs/readme-assets/shot-wizard.png) |
 
-The Prepare sidebar shows the migrated Printer, Filament, Process, and Object-manipulation cards —
+The Prepare sidebar shows the migrated Printer, Ink, Process, and Object-manipulation cards —
 including the Process card's Quality / Strength / Support / Others segmented control and the
-axis-colored X/Y/Z manipulation grid. The Setup Wizard is now hosted on the Material dialog shell
+head of the axis-colored X/Y/Z manipulation grid; that grid's rows sit below the fold at this panel
+height and the panel scrolls to them. The Setup Wizard is now hosted on the Material dialog shell
 (rounded surface, header icon tile) in place of the legacy native caption.
 
 #### Feature gallery — every page, every button
@@ -114,26 +120,45 @@ UI stays fully interactive.
 | :---: | :---: |
 | ![General tab](docs/screenshots/preferences/general-tab.png) | ![Other tab](docs/screenshots/preferences/other-tab.png) |
 
-| File menu (Version history · Open in External Editor) | Setup Wizard · Filament Selection |
+| File menu (Version history · Open in External Editor) | Setup Wizard · Ink Selection |
 | :---: | :---: |
-| ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard filament page](docs/screenshots/wizard/wizard-step-22.png) |
+| ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard ink page](docs/screenshots/wizard/wizard-step-22.png) |
 
-| Config profiles & backup (slide-to-confirm export) | |
+| Config profiles & backup (slide-to-confirm export) | Settings search on the full process tree |
 | :---: | :---: |
-| ![Config profiles & backup dialog](docs/screenshots/config-profiles/dialog.png) | |
+| ![Config profiles & backup dialog](docs/screenshots/config-profiles/dialog.png) | ![Search settings pill on the Simple settings bar](docs/screenshots/sidebar-process/after-search-settings.png) |
+
+**Prepare sidebar · process settings** — the full process tree is the settings-tab layout hosted in
+the sidebar, so Advanced mode widens the dock (weakly: capped at 55% of the frame, grow-only, and
+the sash stays draggable) and the body gained a real horizontal scrollbar as a backstop. The header
+row had been over-subscribed badly enough that the `Process` title and the Compare button were
+allocated **zero width** and vanished. Details and measurements:
+[`docs/features/prepare/process-settings-sidebar.md`](docs/features/prepare/process-settings-sidebar.md).
+
+| Before — values cut off, title and Compare button gone | After — values, units, tabs and title all present |
+| :---: | :---: |
+| ![Clipped process settings](docs/screenshots/sidebar-process/before-sidebar-clipped.png) | ![Readable process settings](docs/screenshots/sidebar-process/after-sidebar-readable.png) |
+
+| Header before (starved) | Header after |
+| :---: | :---: |
+| ![Starved header row](docs/screenshots/sidebar-process/before-header-starved.png) | ![Intact header row](docs/screenshots/sidebar-process/after-header-intact.png) |
 
 Per-feature folders with every button close-up: [notifications](docs/screenshots/notifications/) ·
 [version-history](docs/screenshots/version-history/) · [regex-builder](docs/screenshots/regex-builder/) ·
 [appearance](docs/screenshots/appearance/) · [preferences](docs/screenshots/preferences/) ·
 [project-tabs](docs/screenshots/project-tabs/) · [main-window](docs/screenshots/main-window/) ·
 [home](docs/screenshots/home/) · [wizard](docs/screenshots/wizard/) ·
-[config-profiles](docs/screenshots/config-profiles/)
+[config-profiles](docs/screenshots/config-profiles/) · [smart-home](docs/screenshots/smart-home/) ·
+[sidebar-process](docs/screenshots/sidebar-process/)
 
 #### Earlier installed-app captures
 
-Reviewed on 2026-07-20; these predate the full token sweep and are kept for continuity.
+Reviewed on 2026-07-20; these predate the full token sweep and are kept for continuity. They also
+predate the ink rename, so their captions and their on-screen labels are the pre-rename wording —
+the shipped page is "Ink Manager" now. See
+[Ink terminology](docs/features/windows/ink-terminology.md).
 
-| Home | Filament Manager |
+| Home | Filament Manager (pre-rename capture) |
 | :---: | :---: |
 | ![Native Home](docs/readme-assets/native-material-home-light-en.png) | ![Native Filament Manager](docs/readme-assets/native-material-filament-manager-light-en.png) |
 
@@ -148,6 +173,18 @@ reference, not screenshots of the native application. Select an image to open th
 screen, theme, density, accent, and language state. The installed-app captures are the separate
 gallery above.
 
+[![Bambu Studio reimagined in Material You, with a desktop 3D printer and luminous toolpaths](ui-md3/assets/showcase/og-social.webp)](https://ding-ding-projects.github.io/BambuStudio/)
+
+The Pages site is a **browser-style tabbed application**, not a scrolling landing page: eight tabs
+with a strip you can pin, drag, group and search; English and Hong Kong Cantonese copy at five funny
+levels per language on two independent sliders; a full ECMAScript regex builder behind every search
+bar; a changelog viewer covering every published release; and a one-in-a-hundred dim sum surprise.
+Everything is served from this repository — no CDN, no analytics, no third-party request — and its
+deploy is gated on 444 measured layout cases in a real headless browser.
+[Open the site](https://ding-ding-projects.github.io/BambuStudio/), read the
+[site documentation](docs/features/pages/README.md), or see the
+[visual showcase documentation](docs/features/design-system/generated-visual-showcase.md).
+
 **Prepare · light theme · English**
 
 [![Bambu Studio Material Design 3 Prepare design reference in the light theme and English](docs/readme-assets/material-prepare-light-en.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=prepare&theme=light&density=comfortable&accent=%2322c55e&lang=en)
@@ -155,6 +192,53 @@ gallery above.
 | Preview · dark theme · Hong Kong Cantonese | Device · compact dark theme · English + Cantonese |
 | :---: | :---: |
 | [![Bambu Studio Material Design 3 Preview design reference in the dark theme and Hong Kong Cantonese](docs/readme-assets/material-preview-dark-yue-hk.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=preview&theme=dark&density=comfortable&accent=%237c5cff&lang=yue_HK) | [![Bambu Studio Material Design 3 Device design reference in the compact dark theme with English and Cantonese](docs/readme-assets/material-device-dark-bilingual.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=device&theme=dark&density=compact&accent=%2314b8a6&lang=bilingual_en_yue_HK) |
+
+## Home Assistant printer handover
+
+The native Smart home dialog implements two explicit ways to add currently accessible printers to
+the companion
+[`Ding-Ding-Projects/ha-bambulab`](https://github.com/Ding-Ding-Projects/ha-bambulab) integration:
+a confirmed service call through the user's Home Assistant long-lived token, or a temporary local
+discovery window that needs no Home Assistant token. Both paths disclose that printer LAN access
+codes are credentials before transfer. Discovery sharing is off by default, uses a fresh
+high-entropy pairing capability, and stops when the toggle is disabled or the dialog closes.
+Home Assistant work uses owned bounded queues, coalesces Connect and volume-slider bursts, caps
+printer/speaker/light fan-out at 32, imports printers in four-wide waves, paces mDNS replies, and
+cancels and joins its workers during app shutdown. If shutdown lands after an alert-light scene is
+created but before any flash, the unused scene is deleted instead of leaking. The resizable Smart
+home dialog keeps its footer fixed around a scrolling body and is implemented to wrap long English,
+Cantonese, and bilingual content instead of clipping it.
+
+The focused Windows Release targets build successfully: `home_assistant_tests` passes 30 test cases
+and 267 assertions, all five focused CTest entries pass, the Cantonese catalog contains 718 checked
+translations, the static Pages/i18n/clipping suite passes 50/50, and the browser Pages matrix passes all 444
+cases — 156 on the landing page plus 288 that activate every tab. Ubuntu's CJK font metrics then exposed the translated
+**Screens / 畫面** header target shrinking to 31.984×44 pixels at two desktop widths; commit
+[`32a5cc6d7`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/32a5cc6d79e40a46d3c1758052fbdeac5c01f1a3)
+adds a 44-pixel width floor, and hosted Pages
+[run 30359493216](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/30359493216)
+passes the full matrix. The production sharing probe also completed cross-host
+PTR/SRV/TXT/A discovery, one authenticated bounded fetch, and the zero-TTL goodbye. The full
+`BambuStudio_app_gui` Release build exited successfully after 3,387 seconds, followed by an
+8.3-second no-change build. Native headless review at 720×760 and the declared 520×480 minimum found
+text actions incorrectly squeezed to 44 DIP; after the responsive-action fix, a 141-second focused
+rebuild and link plus an 8.0-second no-change build passed. The later nonvisual import-scheduling
+and cancellation-cleanup fixes compiled and linked in 214.808 seconds; the final no-change build took
+8.544 seconds. The final 151,299,584-byte DLL is timestamped `2026-07-28 08:15:46 -04:00`, with
+SHA-256 `41BB1BFC754E3184C5908E2145A93E3640D3866E59380F32EEFF7A76F418E972`.
+The primary corrected English captures were recaptured from that exact final DLL and are in
+[`docs/screenshots/smart-home/`](docs/screenshots/smart-home/). The media-action close-up remains
+from the preceding `EBF646…` DLL; the later source fixes changed only nonvisual printer scheduling
+and alert-light cleanup, not `SmartHomeDialog` or `MsgDialog` layout. Native bilingual capture, live Home
+Assistant confirmation and service paths, physical-printer success, and the still-running Windows
+release verdict are tracked separately in
+[issue #16](https://github.com/Ding-Ding-Projects/BambuStudio/issues/16). The implementation and
+44-pixel correction are pushed and remotely proven; this summary still does not substitute for
+the remaining live-runtime evidence. See
+[Smart home](docs/features/windows/smart-home.md) for behavior, security, failure modes, and the
+honest verification boundary, and
+[Home Assistant printer-discovery API](docs/features/api/home-assistant-printer-discovery.md) for
+the temporary HTTP/mDNS contract and Postman collections.
 
 ## Windows installer
 
@@ -220,6 +304,7 @@ Key features are:
 - Basic slicing features & GCode viewer
 - Multiple plates management
 - Remote control & monitoring
+- Explicit Home Assistant printer handover and short-lived local discovery
 - Auto-arrange objects
 - Auto-orient objects
 - Hybrid/Tree/Normal support types, Customized support
@@ -237,6 +322,13 @@ Other major features are:
 - Flushing transition-filament into infill/object during filament change
 
 # How to compile on Windows
+
+For a local Release installer, double-click [`OneClickBuildInstaller.cmd`](OneClickBuildInstaller.cmd).
+It detects and installs missing ordinary prerequisites, builds dependencies and Bambu Studio,
+stages the payload, and produces the NSIS installer, CycloneDX SBOM, SHA-256 checksum, and a detailed
+log under `artifacts/windows/`. See the
+[one-click Windows build guide](docs/features/releases/windows-one-click-build.md) for clean,
+bootstrap-only, plan, and explicit post-build install modes.
 
 Use the upstream
 [Windows compile guide](https://github.com/bambulab/BambuStudio/wiki/Windows-Compile-Guide) for a

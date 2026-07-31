@@ -89,6 +89,7 @@
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
 #include "TtsNarrator.hpp"
+#include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
 #include "EncodedFilament.hpp"
 
@@ -1542,6 +1543,7 @@ void GUI_App::shutdown()
     }
 
     if (m_is_recreating_gui) return;
+    HomeAssistant::shutdown();
     set_closing(true);
     BOOST_LOG_TRIVIAL(info) << "GUI_App::shutdown exit";
 }
@@ -2873,6 +2875,9 @@ bool GUI_App::OnInit()
 
 int GUI_App::OnExit()
 {
+    // Stop Home Assistant workers while wx and AppConfig are still alive.
+    // This is idempotent with the normal MainFrame -> GUI_App shutdown path.
+    HomeAssistant::shutdown();
 #ifdef __APPLE__
     UnRegisterMacPowerCallBack();
 #endif
@@ -3078,10 +3083,14 @@ bool GUI_App::on_init_inner()
     g_object_set (gtk_settings_get_default (), "gtk-menu-images", TRUE, NULL);
 #endif
 
-//#ifdef WIN32
-    //BBS set crash log folder
-    //CBaseException::set_log_folder(data_dir());
-// #endif
+#ifdef WIN32
+    // Crash log folder. The unhandled-exception filter installed in
+    // bambustu_main() writes its stack walk into <data_dir>/log/crash_*.log, but
+    // ONLY once it knows where to put it -- with no folder set it silently keeps
+    // the report to itself, which is how a reported crash can leave behind no
+    // dump, no stack and no marker in the studio log at all.
+    CBaseException::set_log_folder(data_dir());
+#endif
 
     wxGetApp().Bind(wxEVT_QUERY_END_SESSION, [this](auto & e) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__<< "received wxEVT_QUERY_END_SESSION";
@@ -4114,6 +4123,28 @@ void GUI_App::UpdateAllStaticTextDarkUI(wxWindow* parent)
 #endif
 }
 
+// The kit's fixed-pitch face for code / technical content (ui-md3 type scale):
+// Roboto Mono, taken from ::Label::Mono_12 (md3MonoFont on the MD3 mono type
+// style) instead of the generic OS teletype family — Courier New on Windows.
+// Sourcing it from Label is also what makes code_font() follow Appearance >
+// UI font size, since Label::rebuild_fonts() re-bakes the Mono_ helpers under
+// the current ui_font_scale; the OS face never tracked that. It also puts the
+// native dialogs on the same mono face the ImGui 3D overlay already uses.
+// Label::initSysFont() builds the Mono_ helpers from the GUI_App constructor,
+// well before init_fonts() runs, but the old TELETYPE work-around is kept as a
+// fallback for the case where a bundled font resource fails to resolve
+// (wxSYS_OEM_FIXED_FONT / wxSYS_ANSI_FIXED_FONT are no use here — wxGtk maps
+// both onto DEFAULT).
+static wxFont md3_code_font(int fallback_point_size)
+{
+    if (::Label::Mono_12.IsOk())
+        return ::Label::Mono_12;
+
+    wxFont fallback(wxFontInfo().Family(wxFONTFAMILY_TELETYPE));
+    fallback.SetPointSize(fallback_point_size);
+    return fallback;
+}
+
 void GUI_App::init_fonts()
 {
     // BBS: modify font
@@ -4126,10 +4157,7 @@ void GUI_App::init_fonts()
     m_bold_font.SetPointSize(13);
 #endif /*__WXMAC__*/
 
-    // wxSYS_OEM_FIXED_FONT and wxSYS_ANSI_FIXED_FONT use the same as
-    // DEFAULT in wxGtk. Use the TELETYPE family as a work-around
-    m_code_font = wxFont(wxFontInfo().Family(wxFONTFAMILY_TELETYPE));
-    m_code_font.SetPointSize(m_normal_font.GetPointSize());
+    m_code_font = md3_code_font(m_normal_font.GetPointSize());
 }
 
 void GUI_App::update_fonts(const MainFrame *main_frame)
@@ -4146,7 +4174,11 @@ void GUI_App::update_fonts(const MainFrame *main_frame)
     m_bold_font     = m_normal_font.Bold();
     m_link_font     = m_bold_font.Underlined();
     m_em_unit       = main_frame->em_unit();
-    m_code_font.SetPointSize(m_normal_font.GetPointSize());
+    // Re-take the mono face rather than only re-pointing the old one: a font
+    // rescale runs after Label::rebuild_fonts(), so Mono_12 may have been rebuilt
+    // at a new Appearance font scale. The point size only matters on the
+    // fallback path (see md3_code_font).
+    m_code_font     = md3_code_font(m_normal_font.GetPointSize());
 }
 
 void GUI_App::set_label_clr_modified(const wxColour& clr)
@@ -8606,7 +8638,22 @@ static void sLocalBindFunc(std::string str_ip,
                            std::string sn)
 {
     detectResult detectData;
-    auto result = wxGetApp().getAgent()->bind_detect(str_ip, "secure", detectData);
+    // Re-check the agent HERE, not just at the caller. InnerLoad() validates it
+    // before spawning this, but this body runs later on a boost::thread, and the
+    // agent is deleted and nulled during shutdown (see the `delete m_agent;
+    // m_agent = nullptr;` in the app teardown). Between the two, getAgent() can
+    // come back null, and this is a background thread — the resulting null
+    // dereference is an access violation on a thread with no handler and no
+    // useful context in the log. It also stays null for the entire session when
+    // the network plugin fails to load, since m_agent is only ever constructed
+    // under `if (create_network_agent)`.
+    NetworkAgent *agent = wxGetApp().getAgent();
+    if (!agent) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded, or "
+                                                      "shutting down); skipping LAN bind detect.";
+        return;
+    }
+    auto result = agent->bind_detect(str_ip, "secure", detectData);
     if (result < 0) {
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": bind_detect failed code=" << result;
         wxGetApp().CallAfter([sn]() { wxGetApp().app_config->erase("user_access_dev_ip", sn);});

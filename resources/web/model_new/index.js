@@ -119,18 +119,17 @@ function ShowModelInfo(pModel)
   };
 
   if( pModel.hasOwnProperty('model_id') )
-	{
-		let m_id=pModel['model_id']+'';
-		m_ModelID = m_id.trim();
-    if (m_ModelID != "") {
-      if( !$('#projectName').hasClass('link') );
-        $("#projectName").addClass("link");
-    }else {
-      $("#projectName").removeClass("link");
-    }
-    
-	}
-	let sModelName=DOMPurify.sanitize(rawName);
+		{
+			let m_id=pModel['model_id']+'';
+			m_ModelID = m_id.trim();
+	    if (m_ModelID != "") {
+	      $("#projectName").addClass("link").prop('disabled', false);
+	    }else {
+	      $("#projectName").removeClass("link").prop('disabled', true);
+	    }
+
+		}
+		let sModelName=DOMPurify.sanitize(rawName);
 	let sModelAuthor=DOMPurify.sanitize(rawAuthor);
 	let UploadType=pModel.upload_type.toLowerCase();
 	let sLicence=pModel.license.toUpperCase();
@@ -304,17 +303,18 @@ function ConstructFileHtml( ID, pItem ){
       ImgPath='img/icon_pdf.svg';
     }
 
-    let $attachment = $('<div>').addClass('attachment');
+    let $attachment = tPath ? $('<button type="button">') : $('<div>');
+    $attachment.addClass('attachment');
     if (isImageFile && tPath) {
       $attachment.addClass('attachment-image');
     }
     if (tPath) {
-      $attachment.on('click', function() {
+      $attachment.attr('aria-label', tName).on('click', function() {
         OnClickOpenFile(tPath);
       });
     }
 
-    let $img = $('<img>').attr('alt', tName);
+    let $img = $('<img>').attr('alt', '');
     if (isImageFile && tPath) {
       $img.addClass('attachment-thumb').attr('src', tPath);
     } else {

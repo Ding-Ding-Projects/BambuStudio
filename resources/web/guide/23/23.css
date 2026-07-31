@@ -154,7 +154,7 @@ input {
 	align-items: center;
 }
 
-#Title div
+#Title button
 {
 	cursor: pointer;
 	font-size: var(--md-type-page-title);
@@ -162,7 +162,7 @@ input {
 	padding: 0 16px;
 }
 
-#Title div.TitleSelected
+#Title button.TitleSelected
 {
 	height: calc(100% - 3px);
 	display: flex;
@@ -171,7 +171,7 @@ input {
 	border-bottom: 3px solid var(--md-primary);
 }
 
-#Title div.TitleUnselected
+#Title button.TitleUnselected
 {
 	height: 100%;
 	display: flex;
@@ -217,7 +217,18 @@ input {
 
 .CFilament_EditBtn
 {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	cursor: pointer;
+	width: 40px;
+	height: 40px;
+	background: transparent;
+	border-radius: 50%;
+}
+
+.CFilament_EditBtn img
+{
 	width: 20px;
 	height: 20px;
 }

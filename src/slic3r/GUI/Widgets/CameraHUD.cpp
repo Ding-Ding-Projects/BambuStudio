@@ -6,9 +6,18 @@
 #include <wx/dcbuffer.h>
 #include <wx/dcgraph.h> // wxGCDC
 #include <wx/graphics.h>
+#include <wx/settings.h>
+#if wxUSE_ACCESSIBILITY
+#include <wx/access.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include "../I18N.hpp" // _L
-#include "Label.hpp"   // ::Label::Mono_11 (Roboto Mono 11.5/400)
+#include "Label.hpp"     // ::Label::Mono_11 (Roboto Mono 11.5/400)
+#include "MD3Motion.hpp" // reduced-motion preference
 
 namespace Slic3r { namespace GUI {
 
@@ -26,45 +35,140 @@ constexpr int    kTempChipGap   = 6;  // gap between the nozzle / bed chips
 // "°C" as a UTF-8 unit suffix. Kept split ("\xC2\xB0" "C") so the trailing 'C'
 // is not swallowed into the \x hex escape.
 inline wxString deg_c(int value) { return wxString::Format("%d", value) + wxString::FromUTF8("\xC2\xB0" "C"); }
+
+bool is_activation_key(int key_code)
+{
+    return key_code == WXK_SPACE || key_code == WXK_RETURN || key_code == WXK_NUMPAD_ENTER;
+}
+
+#if wxUSE_ACCESSIBILITY
+class CameraHUDChipAccessible final : public wxWindowAccessible
+{
+public:
+    explicit CameraHUDChipAccessible(CameraHUD::CameraHUDChip *chip)
+        : wxWindowAccessible(chip), m_chip(chip)
+    {
+    }
+
+    wxAccStatus GetName(int child_id, wxString *name) override
+    {
+        if (child_id != wxACC_SELF || name == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        const wxString configured_name = m_chip->GetName();
+        *name = !configured_name.IsEmpty() && configured_name != wxASCII_STR(wxPanelNameStr)
+                    ? configured_name
+                    : m_chip->GetToolTipText();
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetRole(int child_id, wxAccRole *role) override
+    {
+        if (child_id != wxACC_SELF || role == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *role = wxROLE_SYSTEM_PUSHBUTTON;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetState(int child_id, long *state) override
+    {
+        if (child_id != wxACC_SELF || state == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *state = 0;
+        if (m_chip->AcceptsFocusFromKeyboard())
+            *state |= wxACC_STATE_SYSTEM_FOCUSABLE;
+        if (m_chip->HasFocus())
+            *state |= wxACC_STATE_SYSTEM_FOCUSED;
+        if (m_chip->IsPressedForAccessibility())
+            *state |= wxACC_STATE_SYSTEM_PRESSED;
+        if (!m_chip->IsEnabled())
+            *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
+        if (!m_chip->IsShown())
+            *state |= wxACC_STATE_SYSTEM_INVISIBLE;
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetDefaultAction(int child_id, wxString *action_name) override
+    {
+        if (child_id != wxACC_SELF || action_name == nullptr)
+            return wxACC_NOT_IMPLEMENTED;
+        *action_name = _L("Press");
+        return wxACC_OK;
+    }
+
+    wxAccStatus DoDefaultAction(int child_id) override
+    {
+        if (child_id != wxACC_SELF)
+            return wxACC_NOT_IMPLEMENTED;
+        m_chip->AccessibilityActivate();
+        return wxACC_OK;
+    }
+
+private:
+    CameraHUD::CameraHUDChip *m_chip;
+};
+#endif
 } // namespace
 
 // ---------------------------------------------------------------------------
-// Fixed-dark palette (identical in light and dark app themes).
+// Fixed-dark palette in normal themes; system palette in high contrast.
 // ---------------------------------------------------------------------------
-const wxColour &CameraHUD::CardBg()
+bool CameraHUD::HighContrastActive()
 {
-    static const wxColour c(0x0c, 0x0e, 0x13);
-    return c;
+#ifdef _WIN32
+    HIGHCONTRASTW high_contrast = {sizeof(high_contrast)};
+    return ::SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(high_contrast), &high_contrast, FALSE) &&
+           (high_contrast.dwFlags & HCF_HIGHCONTRASTON) != 0;
+#else
+    return false;
+#endif
 }
-const wxColour &CameraHUD::Border()
+
+wxColour CameraHUD::CardBg()
 {
-    static const wxColour c(0x2a, 0x2d, 0x34);
-    return c;
+    return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW)
+                                : wxColour(0x0c, 0x0e, 0x13);
 }
-const wxColour &CameraHUD::ChipBg()
+
+wxColour CameraHUD::Border()
 {
-    static const wxColour c(0x1b, 0x1e, 0x25);
-    return c;
+    return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT)
+                                : wxColour(0x2a, 0x2d, 0x34);
 }
-const wxColour &CameraHUD::ChipHover()
+
+wxColour CameraHUD::ChipBg()
 {
-    static const wxColour c(0x26, 0x2a, 0x33);
-    return c;
+    return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)
+                                : wxColour(0x1b, 0x1e, 0x25);
 }
-const wxColour &CameraHUD::ChipPress()
+
+wxColour CameraHUD::ChipHover()
 {
-    static const wxColour c(0x12, 0x14, 0x19);
-    return c;
+    return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
+                                : wxColour(0x26, 0x2a, 0x33);
 }
-const wxColour &CameraHUD::Glyph()
+
+wxColour CameraHUD::ChipPress()
 {
-    static const wxColour c(0xE6, 0xE8, 0xEC);
-    return c;
+    return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
+                                : wxColour(0x12, 0x14, 0x19);
 }
-const wxColour &CameraHUD::GlyphMuted()
+
+wxColour CameraHUD::Glyph()
 {
-    static const wxColour c(0x8A, 0x8F, 0x98);
-    return c;
+    return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT)
+                                : wxColour(0xE6, 0xE8, 0xEC);
+}
+
+wxColour CameraHUD::GlyphMuted()
+{
+    return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT)
+                                : wxColour(0x8A, 0x8F, 0x98);
+}
+
+wxColour CameraHUD::FocusRing()
+{
+    return HighContrastActive() ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
+                                : wxColour(0xE6, 0xE8, 0xEC);
 }
 
 // ===========================================================================
@@ -87,13 +191,20 @@ CameraHUD::CameraHUDChip::CameraHUDChip(wxWindow *parent, uint32_t glyph, const 
     if (!m_fallback_name.empty())
         m_fallback = ScalableBitmap(this, m_fallback_name, kChipGlyphPx);
 
-    // Only hover feedback is bound here. The click action is a handler that
-    // StatusPanel Connect()s to this same window (LEFT_DOWN / LEFT_DCLICK), so
-    // this chip deliberately does NOT bind the mouse-down events, avoiding any
-    // handler-ordering coupling with that external Connect.
+    // StatusPanel still owns the existing LEFT_DOWN / LEFT_DCLICK actions. This
+    // local LEFT_DOWN hook only moves keyboard focus and then Skip()s so those
+    // legacy handlers keep receiving their exact mouse event and coordinates.
     Bind(wxEVT_PAINT, &CameraHUDChip::on_paint, this);
     Bind(wxEVT_ENTER_WINDOW, &CameraHUDChip::on_enter, this);
     Bind(wxEVT_LEAVE_WINDOW, &CameraHUDChip::on_leave, this);
+    Bind(wxEVT_LEFT_DOWN, &CameraHUDChip::on_left_down, this);
+    Bind(wxEVT_KEY_DOWN, &CameraHUDChip::on_key_down, this);
+    Bind(wxEVT_KEY_UP, &CameraHUDChip::on_key_up, this);
+    Bind(wxEVT_SET_FOCUS, &CameraHUDChip::on_focus, this);
+    Bind(wxEVT_KILL_FOCUS, &CameraHUDChip::on_focus, this);
+#if wxUSE_ACCESSIBILITY
+    SetAccessible(new CameraHUDChipAccessible(this));
+#endif
 }
 
 void CameraHUD::CameraHUDChip::reset_hover()
@@ -107,7 +218,8 @@ void CameraHUD::CameraHUDChip::reset_hover()
 bool CameraHUD::CameraHUDChip::Enable(bool enable)
 {
     const bool ret = wxWindow::Enable(enable);
-    m_hover        = false;
+    m_hover           = false;
+    m_keyboard_pressed = false;
     Refresh();
     return ret;
 }
@@ -140,6 +252,109 @@ void CameraHUD::CameraHUDChip::on_leave(wxMouseEvent &evt)
     evt.Skip();
 }
 
+void CameraHUD::CameraHUDChip::on_left_down(wxMouseEvent &evt)
+{
+    if (AcceptsFocus())
+        SetFocus();
+    evt.Skip();
+}
+
+void CameraHUD::CameraHUDChip::on_key_down(wxKeyEvent &evt)
+{
+    if (!is_activation_key(evt.GetKeyCode())) {
+        if (evt.GetKeyCode() == WXK_TAB || evt.GetKeyCode() == WXK_LEFT || evt.GetKeyCode() == WXK_RIGHT ||
+            evt.GetKeyCode() == WXK_UP || evt.GetKeyCode() == WXK_DOWN)
+            HandleAsNavigationKey(evt);
+        else
+            evt.Skip();
+        return;
+    }
+
+    if (!m_keyboard_pressed) {
+        m_keyboard_pressed = true;
+        Refresh(false);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    }
+}
+
+void CameraHUD::CameraHUDChip::on_key_up(wxKeyEvent &evt)
+{
+    if (!is_activation_key(evt.GetKeyCode())) {
+        evt.Skip();
+        return;
+    }
+
+    if (m_keyboard_pressed) {
+        m_keyboard_pressed = false;
+        Refresh(false);
+#if wxUSE_ACCESSIBILITY
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+        AccessibilityActivate();
+    }
+}
+
+void CameraHUD::CameraHUDChip::on_focus(wxFocusEvent &evt)
+{
+    if (evt.GetEventType() == wxEVT_KILL_FOCUS)
+        m_keyboard_pressed = false;
+    Refresh(false);
+#if wxUSE_ACCESSIBILITY
+    if (evt.GetEventType() == wxEVT_SET_FOCUS)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    evt.Skip();
+}
+
+bool CameraHUD::CameraHUDChip::AcceptsFocus() const
+{
+    return IsEnabled() && IsShown();
+}
+
+bool CameraHUD::CameraHUDChip::AcceptsFocusFromKeyboard() const
+{
+    return AcceptsFocus();
+}
+
+void CameraHUD::CameraHUDChip::send_activation_event()
+{
+    wxMouseEvent event(wxEVT_LEFT_DOWN);
+    event.SetEventObject(this);
+    GetEventHandler()->ProcessEvent(event);
+}
+
+void CameraHUD::CameraHUDChip::AccessibilityActivate()
+{
+    if (IsEnabled() && IsShown())
+        send_activation_event();
+}
+
+void CameraHUD::CameraHUDChip::SetName(const wxString &name)
+{
+    if (name == wxWindow::GetName())
+        return;
+    wxWindow::SetName(name);
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+}
+
+#ifdef __WIN32__
+WXLRESULT CameraHUD::CameraHUDChip::MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param)
+{
+    if (message == WM_GETDLGCODE)
+        return DLGC_WANTMESSAGE;
+    if (message == WM_KEYDOWN && w_param == WXK_RETURN) {
+        wxKeyEvent event(CreateKeyEvent(wxEVT_KEY_DOWN, w_param, l_param));
+        GetEventHandler()->ProcessEvent(event);
+        return 0;
+    }
+    return wxWindow::MSWWindowProc(message, w_param, l_param);
+}
+#endif
+
 void CameraHUD::CameraHUDChip::on_paint(wxPaintEvent &)
 {
     wxAutoBufferedPaintDC pdc(this);
@@ -155,9 +370,9 @@ void CameraHUD::CameraHUDChip::on_paint(wxPaintEvent &)
     gc->SetBrush(wxBrush(behind));
     gc->DrawRectangle(0, 0, sz.x, sz.y);
 
-    const wxColour bg = !IsEnabled() ? CameraHUD::CardBg()
-                        : m_hover    ? CameraHUD::ChipHover()
-                                     : CameraHUD::ChipBg();
+    const wxColour bg = !IsEnabled()                     ? CameraHUD::CardBg()
+                        : (m_hover || m_keyboard_pressed) ? CameraHUD::ChipHover()
+                                                          : CameraHUD::ChipBg();
     gc->SetBrush(wxBrush(bg));
     const double d  = std::min(sz.x, sz.y);
     const double cx = (sz.x - d) / 2.0;
@@ -178,6 +393,14 @@ void CameraHUD::CameraHUDChip::on_paint(wxPaintEvent &)
         const wxBitmap &b = m_fallback.bmp();
         gc->DrawBitmap(b, (sz.x - b.GetScaledWidth()) / 2.0, (sz.y - b.GetScaledHeight()) / 2.0, b.GetScaledWidth(),
                        b.GetScaledHeight());
+    }
+
+    if (HasFocus() && IsEnabled()) {
+        const double inset = std::max(FromDIP(2), 1);
+        gc->SetBrush(*wxTRANSPARENT_BRUSH);
+        gc->SetPen(wxPen(CameraHUD::FocusRing(), std::max(FromDIP(2), 1)));
+        gc->DrawEllipse(cx + inset, cy + inset, std::max(0.0, d - 2.0 * inset),
+                        std::max(0.0, d - 2.0 * inset));
     }
 }
 
@@ -246,12 +469,15 @@ void CameraHUD::CameraHUDTempChip::on_paint(wxPaintEvent &)
     const double pillH  = FromDIP(kTempChipPillH);
     const double pillY  = (sz.y - pillH) / 2.0;
     const double radius = FromDIP(10);
-    gc->SetBrush(wxBrush(wxColour(0, 0, 0, 140)));
+    const wxColour pill_bg = CameraHUD::HighContrastActive()
+                                 ? wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)
+                                 : wxColour(0, 0, 0, 140);
+    gc->SetBrush(wxBrush(pill_bg));
     gc->DrawRoundedRectangle(0, pillY, sz.x, pillH, radius);
 
     // The pill spans the whole (best-fitted) chip; centre the mono value so a
     // minor DC/gc metric difference never clips it.
-    gc->SetFont(::Label::Mono_11, *wxWHITE);
+    gc->SetFont(::Label::Mono_11, CameraHUD::Glyph());
     wxDouble tw = 0, thd = 0, desc = 0, lead = 0;
     gc->GetTextExtent(m_text, &tw, &thd, &desc, &lead);
     gc->DrawText(m_text, (sz.x - tw) / 2.0, pillY + (pillH - thd) / 2.0);
@@ -322,11 +548,19 @@ void CameraHUD::SetLiveActive(bool live)
     // 50 ms timer never survives on a hidden monitor tab. When the page is
     // shown again StatusPanel's per-second update calls this again and restarts
     // the pulse.
-    if (m_live && IsShownOnScreen()) {
+    if (m_live && IsShownOnScreen() && !MD3::Motion::reduced() && !HighContrastActive()) {
         if (!m_pulse_timer.IsRunning())
             m_pulse_timer.Start(kPulseTick);
-    } else if (m_pulse_timer.IsRunning()) {
-        m_pulse_timer.Stop();
+    } else {
+        if (m_pulse_timer.IsRunning())
+            m_pulse_timer.Stop();
+        if (m_phase != 0.0) {
+            m_phase = 0.0; // steady maximum-opacity LIVE dot
+            if (m_dot_rect.IsEmpty())
+                Refresh();
+            else
+                RefreshRect(m_dot_rect);
+        }
     }
 }
 
@@ -384,6 +618,7 @@ bool CameraHUD::Enable(bool enable)
 
 void CameraHUD::msw_rescale()
 {
+    SetBackgroundColour(CardBg());
     SetMinSize(wxSize(-1, FromDIP(kHudHeight)));
     if (m_badge_spacer)
         m_badge_spacer->SetMinSize(FromDIP(80), FromDIP(kHudHeight));
@@ -401,8 +636,13 @@ void CameraHUD::msw_rescale()
 
 void CameraHUD::on_pulse(wxTimerEvent &)
 {
-    if (!m_live || !IsShownOnScreen()) {
+    if (!m_live || !IsShownOnScreen() || MD3::Motion::reduced() || HighContrastActive()) {
         m_pulse_timer.Stop();
+        m_phase = 0.0;
+        if (m_dot_rect.IsEmpty())
+            Refresh();
+        else
+            RefreshRect(m_dot_rect);
         return;
     }
     m_phase += 2.0 * kPi * kPulseTick / static_cast<double>(kPulsePeriod);
@@ -455,7 +695,7 @@ void CameraHUD::on_paint(wxPaintEvent &)
         pt = pt * 4.0 / 5.0;
 #endif
         badge.SetFractionalPointSize(pt);
-        gc->SetFont(badge, *wxWHITE);
+        gc->SetFont(badge, Glyph());
 
         wxDouble tw = 0, th = 0;
         gc->GetTextExtent(live, &tw, &th);
@@ -468,17 +708,23 @@ void CameraHUD::on_paint(wxPaintEvent &)
         const double pillY = (sz.y - pillH) / 2.0;
         const double pillW = padX + dotR * 2.0 + gap + tw + padX;
 
-        // Semi-transparent black pill (alpha via graphics context, reliable on
-        // MSW where raw wxDC alpha is not).
-        gc->SetBrush(wxBrush(wxColour(0, 0, 0, 140)));
+        // Semi-transparent black pill in normal themes; the current system button
+        // surface in Windows high contrast.
+        const wxColour badge_bg = HighContrastActive()
+                                      ? wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)
+                                      : wxColour(0, 0, 0, 140);
+        gc->SetBrush(wxBrush(badge_bg));
         gc->DrawRoundedRectangle(pillX, pillY, pillW, pillH, pillH / 2.0);
 
         const double dotCx = pillX + padX + dotR;
         const double dotCy = pillY + pillH / 2.0;
         const double op    = 0.45 + 0.55 * (0.5 + 0.5 * std::cos(m_phase));
         const int    alpha = std::clamp(static_cast<int>(op * 255.0 + 0.5), 0, 255);
-        const wxColour &live_col = MD3::Viewport::live;
-        gc->SetBrush(wxBrush(wxColour(live_col.Red(), live_col.Green(), live_col.Blue(), alpha)));
+        const wxColour live_col = HighContrastActive()
+                                      ? wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)
+                                      : MD3::Viewport::live;
+        gc->SetBrush(wxBrush(wxColour(live_col.Red(), live_col.Green(), live_col.Blue(),
+                                      HighContrastActive() ? 255 : alpha)));
         gc->DrawEllipse(dotCx - dotR, dotCy - dotR, dotR * 2.0, dotR * 2.0);
 
         gc->DrawText(live, pillX + padX + dotR * 2.0 + gap, pillY + (pillH - th) / 2.0);

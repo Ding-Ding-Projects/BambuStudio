@@ -6,7 +6,7 @@ This fork renames the user-facing terms in the UI:
 | --- | --- | --- |
 | Filament / filament(s) | Ink / ink(s) | 墨水 |
 | AMS | Ink Dispenser | 墨水機 |
-| Sync AMS (width-constrained sidebar button) | Sync dispenser | 同步墨水機 |
+| Sync AMS (width-constrained sidebar button) | Sync | 同步 |
 
 ## Mechanism
 
@@ -49,26 +49,57 @@ output, and upstream merges are unaffected.
 ## Width-constrained labels
 
 `Sidebar::priv::adjust_filament_title_layout()` squeezes the trailing buttons
-in the INK section header, so the compact "Sync dispenser" (同步墨水機) is used
-for the `Sync AMS` msgid instead of the full "Sync Ink Dispenser". Longer
-renamed labels worth watching at narrow widths (they reflow but were not
+in the INK section header, so the bare "Sync" (同步) is used for the `Sync AMS`
+msgid instead of the full "Sync Ink Dispenser"; the tooltip
+(`Sync AMS and nozzle information` → "Sync Ink Dispenser and nozzle
+information") carries the full name. The first attempt at this shortening,
+"Sync dispenser", still overran the panel edge and was cut back in `a4498bc72`.
+Longer renamed labels worth watching at narrow widths (they reflow but were not
 shortened): "Ink Dispenser Settings" (device status page) and
 "Sync Ink Dispenser and nozzle information" (tooltip, unconstrained).
 
 ## Intentionally left
 
-- **Device-page webview** (`src/slic3r/GUI/DeviceWeb/device_page`): its i18next
-  locale JSONs still say Filament/耗材 because the shipped page is the
-  pre-built `dist/` bundle with strings baked in; an edit-only pass cannot
-  rebuild it. Rename the locales and rebuild `dist/` in a follow-up.
-- **ui-md3 design-kit demo** (`ui-md3/app`): English strings double as i18n
-  lookup keys there; renaming them is a key migration, out of scope for a
-  catalog-level rename.
 - **`AMS Materials Setting`** already displays as "Materials Setting" via an
   upstream copy-edit override, so no AMS remains visible in that title.
 - Other display languages (de/fr/ja/…): upstream terminology retained.
 - Internal/log-only strings, HMS cloud-served error texts, and any msgid text
   itself: unchanged by design.
+
+Two surfaces were listed here as holdouts by the original rename and have since
+been renamed; they are no longer exceptions:
+
+- **Device-page webview** (`src/slic3r/GUI/DeviceWeb/device_page`): the `en` and
+  `yue_HK` i18next catalogues now carry the ink values ("Ink Manager",
+  "Ink Type", "Search Ink"). Its runtime bundle is generated, not committed —
+  the CMake `device_page_build` target rebuilds `resources/web/device_page/dist/`
+  from these locales — so a normal build ships the renamed page.
+- **ui-md3 design-kit demo** (`ui-md3/app`): renamed with its lookup keys in one
+  pass. Those keys are the rendered English string, so display text and key had
+  to move together or every Cantonese lookup would silently miss.
+
+## History and prose documentation
+
+The rename is display-only in time as well as in scope. Prose that records
+**what shipped and when** — the `## Landed` waves in `ROADMAP.md`, the commit
+tables in `HANDOFF.md`, the parity-register rows — keeps the wording of its own
+date, so a 2026-07-24 entry still reads "AI filament scanner" for a menu item
+that reads "AI ink scanner" today. Rewriting a dated record to match today's
+labels makes it a worse record without making anything easier to find; the same
+reasoning is why `scripts/ci/Test-InkTerminology.ps1` skips obsolete `#~` PO
+entries, which are merge history and are never loaded.
+
+Prose that describes the **current** product — the README's feature and
+screenshot sections, `ROADMAP.md`'s `## Remaining`, feature documentation — uses
+the ink wording, because a reader is meant to find those words on screen.
+Identifiers quoted in prose (`FilamentPicker`, `filamentRows`, `?view=filament`,
+`filament_start_gcode`) keep the upstream spelling wherever they appear, current
+or historical, for exactly the reason the rest of this document gives.
+
+A screenshot is a dated record too. A capture taken before the rename is not
+corrected by editing its caption: either retake it from a current build, or say
+in the surrounding prose that it predates the rename. A caption that claims
+"Ink" over an image that plainly reads "Filament" is worse than either.
 
 ## Verification
 
@@ -79,6 +110,6 @@ shortened): "Ink Dispenser Settings" (device status page) and
   catalog, DeviceWeb, and legacy web checks).
 - The English MO was regenerated deterministically (3748 entries) with the same
   writer layout the yue_HK compiler uses; probes confirm
-  `Filament→Ink`, `Add filament→Add ink`, `Sync AMS→Sync dispenser`,
+  `Filament→Ink`, `Add filament→Add ink`, `Sync AMS→Sync`,
   `AMS Settings→Ink Dispenser Settings`, and zero residual
   "filament"/"AMS" words across all translated strings.

@@ -22,6 +22,12 @@ public:
         Num_Horizontal_Orientations
     };
 
+    // Defaults to the MD3 menu-row treatment (see applyMenuRowStyle): neutral
+    // container fill, no contrasting ring, OnSurface label. That is what the
+    // Slice/Print dropdown rows render with, since they override nothing but
+    // their corner radius. A SideButton used as a standalone action button is
+    // expected to restyle itself explicitly, as MainFrame's Slice/Print pills do
+    // in update_side_button_style().
     SideButton(wxWindow* parent, wxString text, wxString icon = "", long style = 0, int iconSize = 0);
 
     void SetCornerRadius(double radius);
@@ -64,6 +70,19 @@ public:
     // px<=0 derives a default size; codepoint 0 clears the glyph.
     void SetLeadingGlyph(uint32_t codepoint, int px = 0);
 
+    // This control is custom-painted, so wxWidgets cannot infer either its
+    // keyboard contract or its push-button semantics from the wxWindow base.
+    bool AcceptsFocus() const override;
+    bool AcceptsFocusFromKeyboard() const override;
+    bool IsPressedForAccessibility() const { return pressedDown || keyboard_pressed; }
+    void AccessibilityActivate();
+    void SetName(const wxString& name) override;
+
+protected:
+#ifdef __WIN32__
+    WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM w_param, WXLPARAM l_param) override;
+#endif
+
 private:
     wxSize textSize;
     wxSize minSize;
@@ -81,12 +100,18 @@ private:
     StateColor      background_color;
     wxColour        bottom_color;
 
-    bool pressedDown = false;
-    int  layout_style = 0;
+    bool pressedDown      = false;
+    bool keyboard_pressed = false;
+    int  layout_style     = 0;
 
     EHorizontalOrientation text_orientation;
     int text_margin;
 
+
+    // Install the MD3 menu-row palette on border/text/background + bottom colour.
+    // Assigns the StateColor members directly (no update_binds/Refresh), so it is
+    // safe to run from the constructor before state_handler.attach().
+    void applyMenuRowStyle();
 
     void paintEvent(wxPaintEvent& evt);
 
@@ -100,6 +125,10 @@ private:
 
     void mouseDown(wxMouseEvent& event);
     void mouseReleased(wxMouseEvent& event);
+    void mouseCaptureLost(wxMouseCaptureLostEvent& event);
+    void keyDown(wxKeyEvent& event);
+    void keyUp(wxKeyEvent& event);
+    void focusChanged(wxFocusEvent& event);
 
     void sendButtonEvent();
 

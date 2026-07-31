@@ -14,16 +14,16 @@ window.Screens.Filament = function Filament({ notify, openDialog }) {
     <div style={{ position: 'absolute', inset: 0, overflow: 'auto', background: 'var(--md-surface)', padding: '24px 28px' }}>
       <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          <div style={{ fontSize: 20, fontWeight: 700, flex: '0 0 auto' }}>Filament Manager</div>
-          <div style={{ flex: 1, maxWidth: 380 }}><SearchField placeholder="Search filaments" /></div>
+          <div style={{ fontSize: 20, fontWeight: 700, flex: '0 0 auto' }}>Ink Manager</div>
+          <div style={{ flex: 1, maxWidth: 380 }}><SearchField placeholder="Search inks" /></div>
           <div style={{ flex: 1 }} />
           <Button variant="outlined" icon="file_download" onClick={() => openDialog('export')}>Export all</Button>
-          <Button variant="outlined" icon="download" onClick={() => notify('Import filament presets', 'download')}>Import</Button>
-          <Button variant="filled" icon="add" onClick={() => openDialog('addfil')}>New filament</Button>
+          <Button variant="outlined" icon="download" onClick={() => notify('Import ink presets', 'download')}>Import</Button>
+          <Button variant="filled" icon="add" onClick={() => openDialog('addfil')}>New ink</Button>
         </div>
         <div style={{ border: '1px solid var(--md-outline-variant)', borderRadius: 'var(--radius)', overflow: 'hidden', background: 'var(--md-sc-low)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 12, padding: '12px 16px', background: 'var(--md-sc-high)', fontSize: 11, fontWeight: 700, letterSpacing: '.4px', textTransform: 'uppercase', color: 'var(--md-on-surface-variant)' }}>
-            <span>Filament</span><span>Vendor</span><span>Type</span><span>Nozzle °C</span><span>Bed °C</span><span />
+            <span>Ink</span><span>Vendor</span><span>Type</span><span>Nozzle °C</span><span>Bed °C</span><span />
           </div>
           {window.FILAMENT_ROWS.map(f => (
             <div key={f.name + f.color} style={{ display: 'grid', gridTemplateColumns: cols, gap: 12, padding: '12px 16px', alignItems: 'center', borderTop: '1px solid var(--md-outline-variant)', fontSize: 13 }}>
@@ -36,7 +36,7 @@ window.Screens.Filament = function Filament({ notify, openDialog }) {
               <span style={{ fontFamily: 'var(--md-font-mono)' }}>{f.nozzle}</span>
               <span style={{ fontFamily: 'var(--md-font-mono)' }}>{f.bed}</span>
               <span style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <IconButton icon="file_download" size={32} title="Export filament" onClick={() => notify('Exported ' + f.name, 'file_download')} />
+                <IconButton icon="file_download" size={32} title="Export ink" onClick={() => notify('Exported ' + f.name, 'file_download')} />
                 <IconButton icon="more_vert" size={32} />
               </span>
             </div>
