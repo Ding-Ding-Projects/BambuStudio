@@ -769,11 +769,23 @@ absence from that list is not evidence they are missing. Crop the capture instea
      an empty vector — a garbage pointer dereferenced immediately by `->GetDropDown()`. In Release
      that is an access violation **on project load**, which is exactly when filament counts change.
      Now guarded with `!choices.empty()`.
-     **Second route, needing no mixed filaments at all:** `on_filaments_delete()` calls
-     `remove_unused_filament_combos(combos_filament.size() - 1)`, so deleting the **last** filament
-     passes 0 and empties the vector outright. Any later count change to one physical filament — a
-     project load, for instance — then reads `[0]` of it. This makes the crash reachable through
-     ordinary filament editing, not just the mixed-slot edge case.
+     > [!WARNING]
+     > **A reachability claim was withdrawn — read this before citing the fix.** It was first
+     > written up as reachable through ordinary filament editing, via
+     > `on_filaments_delete()` → `remove_unused_filament_combos(size - 1)` emptying the vector when
+     > the last filament is deleted. **That is wrong.** `Sidebar::delete_filament()` returns early
+     > on `combos_filament.size() <= 1` (Plater.cpp:5470), so the physical filaments cannot be
+     > deleted down to zero. And `add_custom_filament()` appends a mixed slot at
+     > `new_idx == total`, so adding mixed filaments never converts the existing physical ones —
+     > `num_physical >= 1` always holds through the UI. Reasoned, not measured, and measuring it
+     > did not support it. Same failure mode as the withdrawn sentinel claim in §5.3.
+     >
+     > What survives: this is a **latent** out-of-bounds worth guarding, not a demonstrated
+     > user-facing crash. The one route not closed off is a project whose `filament_is_mixed` marks
+     > every slot mixed — `check_mixed_filament_integrity()` only *flags* such slots as broken, it
+     > does not refuse them, so a hand-edited or corrupt 3MF still reaches
+     > `on_filament_count_change()` with `num_physical == 0`. Unverified.
+
      Pinned by `tests/sidebar_filament_combos/` (`a81a00fe0`), which asserts the guard, the call-site
      count, and that `remove_unused_filament_combos()` still has no floor of one. **Mutation-checked
      for real:** removing the guard fails the contract, restoring it passes.

@@ -4,27 +4,30 @@
 ##
 ##     choices[0]->GetDropDown().Invalidate();
 ##
-## combos_filament can legitimately be EMPTY when that line is reached, by two
-## routes, neither of them exotic:
+## combos_filament would be EMPTY at that line if num_physical ever reached 0:
+## remove_unused_filament_combos(n) pops combos_filament down to n with NO floor
+## of one, and on_filament_count_change() calls it with num_physical, which is 0
+## whenever every slot is a mixed filament (physical_indices collects only
+## non-mixed slots). The next call in with a single physical filament would then
+## clear the `num_physical == choices.size()` early-out (0 != 1), reach the line
+## above with num_physical == 1 true, and read [0] of an empty vector: a garbage
+## pointer dereferenced on the spot by ->GetDropDown() -- an access violation in
+## a Release build, on project load.
 ##
-##   1. remove_unused_filament_combos(n) pops combos_filament down to n with no
-##      floor of one. on_filaments_delete() calls it with
-##      combos_filament.size() - 1, so deleting the last filament passes 0 and
-##      empties the vector outright.
-##   2. on_filament_count_change() itself calls it with num_physical, and
-##      num_physical is 0 whenever every slot is a mixed filament, because
-##      physical_indices only collects non-mixed slots.
+## SCOPE, HONESTLY: that state has NOT been shown to be reachable through the UI,
+## and two upstream guards currently stand in the way --
+##   * Sidebar::delete_filament() returns early on combos_filament.size() <= 1,
+##     so the physical filaments cannot be deleted down to zero; and
+##   * add_custom_filament() appends a mixed slot at new_idx == total, so adding
+##     mixed filaments never converts the existing physical ones.
+## So this guards a latent out-of-bounds, not a demonstrated user-facing crash.
+## The remaining way in is a project whose filament_is_mixed says every slot is
+## mixed: check_mixed_filament_integrity() only FLAGS such slots as broken, it
+## does not refuse them, so a hand-edited or corrupt 3MF still reaches
+## on_filament_count_change() with num_physical == 0.
 ##
-## Either way the next call in with a single physical filament clears the
-## `num_physical == choices.size()` early-out (0 != 1), reaches the line above
-## with num_physical == 1 true, and reads [0] of an empty vector: a garbage
-## pointer dereferenced immediately by ->GetDropDown(). In a Release build that
-## is an access violation, and it happens on project load, which is exactly when
-## filament counts change.
-##
-## This is asserted against the shipped C++ rather than a screenshot because an
-## access violation has no visible surface to photograph, and because the crash
-## needs a filament-count sequence that no static capture can express.
+## Asserted against the shipped C++ rather than a screenshot because an
+## out-of-bounds read has no visible surface to photograph.
 ##
 ## Mutation-checked: delete the emptiness guard and this test fails.
 
