@@ -17,6 +17,8 @@ below was reviewed through **2026-07-30** unless it says otherwise.
 - The interactive app and GitHub Pages landing now share an eleven-image WebP showcase under
   `ui-md3/assets/showcase/`; its behavior and deployment contract are documented in
   `docs/features/design-system/generated-visual-showcase.md`.
+- **Testing the crash? Read §6.95 first** — it is written for the agent on the machine that actually
+  has the printer, and it lists exactly what to collect.
 - No open PRs and no open branches. Two open issues: #15 is waiting for the requested secret-history policy
   choice, while #16 has a complete local implementation, green focused build/tests, and cross-host
   transport evidence. Its full GUI build and English native clipping review are also complete; the
@@ -694,6 +696,60 @@ both through `this->`, or you get `C3493: cannot be implicitly captured`.
 **Also worth knowing:** `press.py controls` only enumerates *labelled* children, so custom-drawn
 controls (the `Global`/`Objects` `SwitchButton`, search-field placeholders) never appear — their
 absence from that list is not evidence they are missing. Crop the capture instead.
+
+---
+
+## 6.95 READ FIRST IF YOU ARE ON THE MACHINE WITH THE PRINTER
+
+The 2026-07-30 session could not reproduce the reported crash **because this build host has no
+printer bound and no network plugin**, and every strong suspect it found lives in code that only
+runs when those exist. If you are the agent on the user's other machine, you can settle in ten
+minutes what cost that session a day.
+
+**Collect these, in this order:**
+
+1. **`crash_*.log`.** The crash reporter was disabled three ways and is now merged and CI-green
+   (`e445d1a19`). After the next crash, get
+   `%APPDATA%\BambuStudio\log\crash_*.log` (release build) or
+   `%APPDATA%\BambuStudioInternal\log\crash_*.log` (internal build). It carries the exception code,
+   registers, loaded modules and a **call stack**. This single file replaces all the guesswork below.
+2. **Which binary.** Installed release (which `md3-v*` tag?) or a local build? A release installer
+   uses data dir `BambuStudio`; an internal build uses `BambuStudioInternal`. The 07-30 session
+   found **no logs at all** on the days the user reported crashing, which is why it suspects the
+   crashes happen on a different machine or build than the one it could test.
+3. **Network plugin + sign-in state.** Help ▸ check the plugin, and whether the user is signed in.
+   This matters more than it sounds — see below.
+
+**The leading theory, and what makes it testable there:**
+
+`GUI_App::getAgent()` returns `m_agent`, which is **only ever constructed under
+`if (create_network_agent)`**. If the network plugin fails to load, it is null for the *entire
+session*. A sweep of all 155 `getAgent()` call sites found **8 that dereferenced it unchecked**, all
+in device/media/model-mall code — the live-view camera URL, the go-live camera URL (on the HTTP
+server thread), LAN bind detect, and the model-rating flow. Two run on non-UI threads, where a null
+dereference is an access violation with no handler and nothing in the log. Fixed in `4e31b2e6d`
+and `7e1ebbf28`; the audit now reports zero unguarded.
+
+Every one of those needs a **bound printer** to reach, which is exactly why a host with none sails
+past them. The user's config has a `Bambu Lab X1 Carbon`.
+
+The same null agent is also why the Ink/Device tabs read **"No Data"** — that string is the Filament
+Manager's empty state in the DeviceWeb locales (`en.json:59`, `SpoolTable.tsx:269`), rendered when
+there is no agent. **One root cause would explain both reported symptoms.** Confirming the plugin
+state is therefore the highest-value single check on that machine.
+
+> [!WARNING]
+> **Do not report any of this as "the crash is fixed" without a stack trace or a reproduction.**
+> This session already had to withdraw one reachability claim (§7 item 0d) for being reasoned
+> rather than measured, and §5.3 records an earlier severity claim withdrawn for the same reason.
+> The fixes are real; their connection to the user's specific crash is not established.
+
+> [!NOTE]
+> **Build state:** commits from `95fd064c0` through `4e31b2e6d` were pushed with local build
+> verification **incomplete** — the local rebuild was stopped in favour of CI at the user's
+> instruction, after a CMake change forced a full libslic3r rebuild. Confirm the CI runs on master
+> from 2026-07-31 are green before building on top of them. Touched: `Plater.cpp`, `GUI_App.cpp`,
+> `MediaPlayCtrl.cpp`, `HttpServer.cpp`, `ReleaseNote.cpp`, `StatusPanel.cpp`.
 
 ---
 
