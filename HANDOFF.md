@@ -736,6 +736,15 @@ absence from that list is not evidence they are missing. Crop the capture instea
      stayed alive every time.
    - Racing the **background slicing worker** against config changes (8 rounds of Slice-plate
      followed immediately by category switches, no wait): clean.
+   - Loading a **dual-filament 3MF** (`resources/calib/pressure_advance/auto_pa_line_dual.3mf`) —
+     chosen because it forces a filament-count change *and* a whole-config apply at once, the
+     closest thing to "changing a lot of settings at the same time": clean.
+   - Testing constraint worth knowing: **this box supports only two concurrent app instances.** A
+     third dies pre-log at the GL gate (`bs-out.txt` empty, no studio log, no process) because two
+     llvmpipe contexts already exhaust software GL here. `driver.py open` spawns an instance, so
+     with two already up it silently fails. That is a local resource limit, **not** an app defect —
+     do not chase it. `single_instance` is `false` in this config, so it is not the instance check
+     either.
    - **A real defect was found here by inspection and fixed** (`e897d6b3b`), though it is not
      proven to be *the* crash. `refresh_process_card()` runs off the 250 ms `m_manip_timer`, and
      every `ShowModal()` spins a nested event loop in which that timer keeps firing — so the
