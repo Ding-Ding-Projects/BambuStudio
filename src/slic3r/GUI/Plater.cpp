@@ -5366,7 +5366,16 @@ void Sidebar::on_filament_count_change(size_t num_filaments)
         return;
     }
 
-    if (choices.size() == 1 || num_physical == 1)
+    // !choices.empty() is load-bearing, not defensive noise. num_physical is 0
+    // whenever every slot is a mixed filament (physical_indices stays empty),
+    // and the tail of this function then calls remove_unused_filament_combos(0),
+    // which pops combos_filament all the way to EMPTY -- it has no floor of one.
+    // The next call in with a single physical filament walks straight past the
+    // early-out above (0 != 1), finds num_physical == 1 true here, and indexes
+    // [0] of an empty vector: a garbage pointer, immediately dereferenced by
+    // ->GetDropDown(). In a Release build that is an access violation on
+    // project load, which is exactly when filament counts change.
+    if (!choices.empty() && (choices.size() == 1 || num_physical == 1))
         choices[0]->GetDropDown().Invalidate();
 
     wxWindowUpdateLocker noUpdates_scrolled_panel(this);
