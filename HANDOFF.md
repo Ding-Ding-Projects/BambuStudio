@@ -736,11 +736,22 @@ absence from that list is not evidence they are missing. Crop the capture instea
      with a model loaded, to fire the sidebar's 250 ms timer inside nested modal event loops:
      clean. `procdump -e -ma -w` attached throughout produced **no dump**, and both app instances
      stayed alive every time.
-   - A genuine hazard was identified but not proven guilty: `Sidebar::priv::m_manip_timer` fires
-     every 250 ms and calls `refresh_process_card()`, which reads
-     `preset_bundle->prints.get_edited_preset()`. `ShowModal()` runs a nested event loop, so that
-     timer keeps firing *during* model loads and preset changes — both reported triggers. It
-     survived 12 forced cycles here, so it is a suspect, not a culprit.
+   - Racing the **background slicing worker** against config changes (8 rounds of Slice-plate
+     followed immediately by category switches, no wait): clean.
+   - **A real defect was found here by inspection and fixed** (`e897d6b3b`), though it is not
+     proven to be *the* crash. `refresh_process_card()` runs off the 250 ms `m_manip_timer`, and
+     every `ShowModal()` spins a nested event loop in which that timer keeps firing — so the
+     function re-enters. Its `process_card_refreshing` flag (which tells the field handlers "this
+     value came from the config, not the user") was set true on entry and cleared
+     **unconditionally** on exit with no re-entrancy check. A nested tick therefore cleared the
+     flag while the outer pass was still assigning values, so every remaining
+     `SetValue()`/`SetSelection()` in that outer pass was treated as a **user edit** →
+     `tab->load_config()` wrote settings nobody touched → that raised another config change → which
+     scheduled another refresh. Phantom writes plus a self-feeding loop, and the window it needs is
+     "a modal is open while settings are being applied" — i.e. both reported triggers. Now it bails
+     out when a refresh is already in flight and restores the flag via RAII; the timer body takes
+     one tick at a time.
+   - Still unproven as the culprit, so do not close the crash on it.
    - No stale `wxSingleInstanceChecker` lock in `<data_dir>\cache\` and no zombie `bambu-studio.exe`
      after a run, so the "refuses to open" symptom did not reproduce either.
    - Log truncation is **not** proof of a crash: `driver.py stop` kills the process and truncates
