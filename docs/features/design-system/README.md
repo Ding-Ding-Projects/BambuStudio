@@ -9,6 +9,9 @@ Design 3 design system.
 - [MD3 parity register](md3-parity-register.md) — the canonical element-by-element conformance
   register and wave plan driving the structural-anatomy migration. The register itself carries the
   live done / deviation / open counts; consult it rather than any snapshot elsewhere.
+- [Gizmo rail SVG completion](gizmo-rail-svg-icons-completion.md) — the bounded 34-asset MD3-token
+  overlay for the remaining semantic gizmo composites, with native-runtime evidence still required
+  before the parity row can move from partial to done.
 
 - [Themed surface colors on StaticBox cards](themed-surface-colors.md) — how a card gets its fill,
   why `SetBackgroundColorNormal()` could silently do nothing, and the stale constructor-time window

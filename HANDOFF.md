@@ -967,10 +967,13 @@ Items 1 and 2 of the previous list are **done** (see §5.4). What remains, in pr
    anchors on the literal string `m_volume->Bind(wxEVT_SLIDER`, so that contract must be updated
    in the same change or CI goes red. Keep what it is really asserting: that volume dispatch
    happens inside the debounce callback, not before the slider hook.
-3. **Finish `gizmo-rail-svg-icons`** (register row now correctly marked **partial**, with the
-   reasoning inline). It needs new `MaterialIcon::Glyph` codepoints, a plated-glyph entry point on
-   `GLIconGlyphBridge`, and a decision on the Z-axis align/distribute tiles, which Material
-   Symbols cannot express at all.
+3. **Finish `gizmo-rail-svg-icons`** (register row remains **partial** until native evidence).
+   The conservative closure overlay is now present in the working tree: 34 existing SVG resource
+   keys have MD3-token artwork, with no C++ or behavior change. Static inventory/XML/palette/
+   geometry/source-link checks pass via `scripts/validate_md3_gizmo_assets.py`; Windows build,
+   light/dark/DPI runtime captures, operation checks, and the two bounded investigations remain
+   outstanding. Do not mark the row done from static review alone; use
+   `CODEX_HANDOFF_BAMBUSTUDIO_MD3.md` and `ACCEPTANCE_MATRIX_BAMBUSTUDIO_MD3.md`.
 4. **Issue #24 — 8 verified `ui-md3` defects** (4 accessibility, 1 clipping, 3 search/regex).
    Left unfixed on purpose: a concurrent session owned that tree. Check whether it still does.
 5. **Verify and deliver "Add my printers to Home Assistant"** (issue #16) — see §7.1.
