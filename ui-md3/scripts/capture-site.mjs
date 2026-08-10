@@ -15,9 +15,13 @@ import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { suppressAutomaticDimSum } from './browser-test-mode.mjs';
 
 const PAGE_URL = process.argv[2] || 'http://127.0.0.1:4173/index.html';
 const OUT_DIR = path.resolve(process.argv[3] || 'docs/screenshots/pages');
+const ONLY_CAPTURE = process.env.BAMBU_CAPTURE_ONLY?.trim() || '';
+const knownCaptures = new Set();
+const completedCaptures = new Set();
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function chromePath() {
@@ -105,6 +109,7 @@ const session = new Session(page.webSocketDebuggerUrl);
 await session.connect();
 await session.send('Page.enable');
 await session.send('Runtime.enable');
+await suppressAutomaticDimSum(session);
 await mkdir(OUT_DIR, { recursive: true });
 
 async function viewport(width, height = 900, scale = 1) {
@@ -132,6 +137,8 @@ async function evaluate(expression) {
 }
 
 async function shoot(name, options) {
+  knownCaptures.add(name);
+  if (ONLY_CAPTURE && name !== ONLY_CAPTURE) return;
   const settings = options || {};
   let clip;
   if (settings.selector) {
@@ -153,6 +160,7 @@ async function shoot(name, options) {
   });
   const file = path.join(OUT_DIR, `${name}.png`);
   await writeFile(file, Buffer.from(shot.data, 'base64'));
+  completedCaptures.add(name);
   console.log(`captured ${path.basename(file)}`);
 }
 
@@ -204,37 +212,33 @@ try {
   await open({ tab: 'settings', lang: 'yue_HK' });
   await shoot('settings-cantonese-narrow');
 
-  // The dim sum card. The 1% draw is not forced in normal use; this capture
-  // invokes the same renderer directly so the surface can be documented.
+  // The dim sum card. The 10% draw is not forced in normal use; this capture
+  // constructs the same public-photo surface directly so it can be documented.
   await viewport(1280, 980);
   await open({ tab: 'overview' });
-  await evaluate(`(() => {
-    const dish = window.BAMBU_DIM_SUM.dishes[0];
-    const name = dish.en + ' · ' + dish.yue;
-    const card = document.createElement('aside');
-    card.className = 'dimsum';
-    card.setAttribute('role', 'note');
-    card.innerHTML =
-      '<svg class="dimsum-art" viewBox="0 0 120 120" role="img" aria-label="' + name + '">' + dish.art + '</svg>' +
-      '<div class="dimsum-copy">' +
-        '<p class="dimsum-badge" data-copy="dimsum.badge"></p>' +
-        '<p class="dimsum-name">' + name + '</p>' +
-        '<p class="dimsum-line" data-copy="dimsum.line" data-copy-params=' + JSON.stringify(JSON.stringify({ dish: name })) + '></p>' +
-        '<button type="button" class="link-btn" data-copy="dimsum.turnoff"></button>' +
-      '</div>' +
-      '<button type="button" class="iconbtn" data-copy-attr="aria-label:dimsum.dismiss">' +
-        '<span data-icon aria-hidden="true">close</span></button>';
-    document.body.appendChild(card);
-    window.BambuSite.applyCopy(card);
-  })()`);
-  await delay(300);
-  await shoot('dim-sum-card', { selector: '.dimsum', pad: 12 });
+  if (!ONLY_CAPTURE || ONLY_CAPTURE === 'dim-sum-card') {
+    const dimSumRender = await session.send('Runtime.evaluate', { expression: `(() => {
+      const dish = window.BAMBU_DIM_SUM.dishes[0];
+      return window.BambuSite.renderDimSumSurprise(dish);
+    })()`, awaitPromise: true, returnByValue: true });
+    assert.equal(dimSumRender.exceptionDetails, undefined,
+      dimSumRender.exceptionDetails?.exception?.description || 'Dim sum renderer threw');
+    assert.equal(dimSumRender.result.value, true, 'Public dim sum photo did not load and decode');
+  }
+  await shoot('dim-sum-card', { selector: '.dimsum', pad: 0 });
 
   // Light theme, so the palette is documented in both schemes.
   await open({ tab: 'materialyou' });
   await evaluate("window.BambuSite.set('theme','light'); window.BambuSite.applyAppearance();");
   await delay(250);
   await shoot('material-you-light');
+
+  if (ONLY_CAPTURE) {
+    assert.ok(knownCaptures.has(ONLY_CAPTURE),
+      `BAMBU_CAPTURE_ONLY names an unknown capture: ${ONLY_CAPTURE}`);
+    assert.ok(completedCaptures.has(ONLY_CAPTURE),
+      `BAMBU_CAPTURE_ONLY did not complete the requested capture: ${ONLY_CAPTURE}`);
+  }
 } finally {
   try { await session.send('Browser.close'); } catch { chrome.kill(); }
   session.close();

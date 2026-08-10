@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "generator": "ui-md3/scripts/capture-site.mjs",
+  "provenance": {
+    "source": "runtime Pages site from the same revision as this manifest",
+    "method": "Chrome DevTools Protocol Page.captureScreenshot"
+  },
+  "captures": [
+    {
+      "name": "tab-overview",
+      "file": "tab-overview.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "4e570e74ad08a3805a029f9c6337123559b8734db5d44bce5b845223200cd0c3",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    },
+    {
+      "name": "tab-screens",
+      "file": "tab-screens.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "457398aae04f0419e1fd661ee79cbde5191e5189d7cea11744d665e43da14fe7",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    },
+    {
+      "name": "tab-materialyou",
+      "file": "tab-materialyou.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "ac273a6f9f4263e7c01c6cf6d1255dd65415a45651cd53d1ffdbccc0485fe960",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    },
+    {
+      "name": "tab-download",
+      "file": "tab-download.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "7345649a0ae64427046a4c4f0ee338e8731200607ad91ae0d5d8976f755f8423",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    },
+    {
+      "name": "tab-changelog",
+      "file": "tab-changelog.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "219b5eb7a6df5311338a9e9476efe8d2abc431a5c9a061b1788c1f2b9425247f",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    },
+    {
+      "name": "tab-regex",
+      "file": "tab-regex.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "0f336eed719d31e9eab16925bd0cc4249a2c4cc21e770c22aeaf36082b68edc7",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    },
+    {
+      "name": "tab-settings",
+      "file": "tab-settings.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "8bfe1cd66d2f0b8b1ca57df62135b9e8baf227218fe4af74b85dea466af911ee",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    },
+    {
+      "name": "tab-build",
+      "file": "tab-build.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "883d82c605bef88c88814aee5b7e9f58f10850f21f35151c9ee88b56002524b7",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    },
+    {
+      "name": "tabstrip-wide",
+      "file": "tabstrip-wide.png",
+      "width": 1280,
+      "height": 120,
+      "sha256": "44f5a3aa258b406180beceda5502b1a8e1e321a1bab8b1ddfd69a238078d5fe5",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 },
+      "selector": "header",
+      "padding": 0
+    },
+    {
+      "name": "tabstrip-overflow-menu",
+      "file": "tabstrip-overflow-menu.png",
+      "width": 420,
+      "height": 120,
+      "sha256": "b1fd2ed188274289163845e8df0c7154edb1736086cd0125e0ef63b3f82d0034",
+      "viewport": { "width": 420, "height": 900, "scale": 1 },
+      "selector": "header",
+      "padding": 0
+    },
+    {
+      "name": "settings-language-and-funny",
+      "file": "settings-language-and-funny.png",
+      "width": 1156,
+      "height": 488,
+      "sha256": "e722b6c7a89fd58a14c6845f381d63c9af535b235b801967474d3a12bc68861b",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 },
+      "selector": ".settings-group[data-group=\"settings.group.language\"]",
+      "padding": 8
+    },
+    {
+      "name": "settings-search-cross-tab",
+      "file": "settings-search-cross-tab.png",
+      "width": 1140,
+      "height": 695,
+      "sha256": "7bfa9c7474d1b09badffc9f06e2941ae26094970bee9a500a6acf290fa94bc4d",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 },
+      "selector": "#panel-settings",
+      "padding": 0
+    },
+    {
+      "name": "regex-lab-matches",
+      "file": "regex-lab-matches.png",
+      "width": 1156,
+      "height": 1483,
+      "sha256": "224ba3af00ee58606f9152c2d15653090c8da4fbcb07a406d3713752cd819812",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 },
+      "selector": ".regex-lab",
+      "padding": 8
+    },
+    {
+      "name": "changelog-calendar",
+      "file": "changelog-calendar.png",
+      "width": 1156,
+      "height": 642,
+      "sha256": "b60ee65c11719a6d1f481f631dc00112aafc1eb0b4ac14652287fa019d8b7d77",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 },
+      "selector": ".changelog-controls",
+      "padding": 8
+    },
+    {
+      "name": "bilingual-narrow",
+      "file": "bilingual-narrow.png",
+      "width": 420,
+      "height": 900,
+      "sha256": "00376e5ab896013959bd352f109fd759a7e01f77df99c370f01316de21fe1a96",
+      "viewport": { "width": 420, "height": 900, "scale": 1 }
+    },
+    {
+      "name": "settings-cantonese-narrow",
+      "file": "settings-cantonese-narrow.png",
+      "width": 420,
+      "height": 900,
+      "sha256": "2c5d0d59ce62b0c9f1b5bccacd50e4b6a1bf541d81065696d2c6af6d92b83fe1",
+      "viewport": { "width": 420, "height": 900, "scale": 1 }
+    },
+    {
+      "name": "dim-sum-card",
+      "file": "dim-sum-card.png",
+      "width": 360,
+      "height": 113,
+      "sha256": "29f1a34bc170276bf6f1bba0511a7695d75e7a8e5f2360ae064974d9a49d2a50",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 },
+      "selector": ".dimsum",
+      "padding": 0
+    },
+    {
+      "name": "material-you-light",
+      "file": "material-you-light.png",
+      "width": 1280,
+      "height": 980,
+      "sha256": "14d074938f1d4e15f18e14ad22e155642ee14ab3f49111e8c50ef8af3f319c3e",
+      "viewport": { "width": 1280, "height": 980, "scale": 1 }
+    }
+  ]
+}

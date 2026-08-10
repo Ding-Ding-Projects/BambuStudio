@@ -174,51 +174,17 @@
 
   /* ------------------------------------------------------------ dim sum */
 
+  var dimSumController = global.BambuDimSum.createController({
+    document: doc,
+    site: site
+  });
+
+  // The capture harness invokes this exact renderer with a fixed catalog item;
+  // normal visits still reach it only through the single startup draw below.
+  site.renderDimSumSurprise = dimSumController.render;
+
   function maybeDimSum() {
-    var catalogue = global.BAMBU_DIM_SUM;
-    if (!catalogue || !site.get('dimSum')) return;
-    // Never on a visitor's first run: a surprise is for people already settled in.
-    var seenKey = 'bambuStudio.site.seen';
-    var seen = false;
-    try {
-      seen = global.localStorage.getItem(seenKey) === '1';
-      global.localStorage.setItem(seenKey, '1');
-    } catch (error) {
-      return;
-    }
-    if (!seen) return;
-    if (Math.random() >= catalogue.chance) return;
-
-    var dish = catalogue.dishes[Math.floor(Math.random() * catalogue.dishes.length)];
-    var card = doc.createElement('aside');
-    card.className = 'dimsum';
-    card.setAttribute('role', 'note');
-    var name = dish.en + ' · ' + dish.yue;
-    card.innerHTML =
-      '<svg class="dimsum-art" viewBox="0 0 120 120" role="img" aria-label="' + name + '">' + dish.art + '</svg>' +
-      '<div class="dimsum-copy">' +
-        '<p class="dimsum-badge" data-copy="dimsum.badge"></p>' +
-        '<p class="dimsum-name">' + name + '</p>' +
-        '<p class="dimsum-line" data-copy="dimsum.line" data-copy-params=\'' +
-          JSON.stringify({ dish: name }) + '\'></p>' +
-        '<button type="button" class="link-btn dimsum-off" data-copy="dimsum.turnoff"></button>' +
-      '</div>' +
-      '<button type="button" class="iconbtn dimsum-dismiss" data-copy-attr="aria-label:dimsum.dismiss">' +
-        '<span data-icon aria-hidden="true">close</span></button>';
-    doc.body.appendChild(card);
-    site.applyCopy(card);
-
-    function dismiss() {
-      if (card.parentNode) card.parentNode.removeChild(card);
-      if (timer) clearTimeout(timer);
-    }
-    card.querySelector('.dimsum-dismiss').addEventListener('click', dismiss);
-    card.querySelector('.dimsum-off').addEventListener('click', function () {
-      site.set('dimSum', false);
-      site.notify('info', 'notify.dimsum.off');
-      dismiss();
-    });
-    var timer = setTimeout(dismiss, 12000);
+    dimSumController.maybeStart(global.BAMBU_DIM_SUM);
   }
 
   /* --------------------------------------------------------------- boot */

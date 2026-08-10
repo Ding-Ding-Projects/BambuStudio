@@ -112,8 +112,8 @@
       '<div class="stats">' +
         stat('overview.stat.releases', String(changelog.releaseCount || 0)) +
         stat('overview.stat.screens', String(SCREENS.length)) +
-        stat('overview.stat.cases', '444') +
-        stat('overview.stat.requests', '0') +
+        stat('overview.stat.cases', '447') +
+        stat('overview.stat.trackers', '0') +
       '</div>' +
       '<div class="prose-card">' +
         '<h2 data-copy="overview.facts.heading"></h2>' +

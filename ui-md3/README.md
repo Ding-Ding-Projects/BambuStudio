@@ -17,7 +17,7 @@ MD3 — no invented features. Runs in any browser with **zero dependencies and n
   browser-style **tabbed application**, not a landing page: eight tabs with a pinnable, draggable,
   groupable, searchable strip; English and Hong Kong Cantonese copy at five funny levels per
   language; the shared regex builder behind every search bar; a changelog viewer over every
-  published release; non-blocking notifications; and a 1% dim sum surprise. Compose it exactly as
+  published release; non-blocking notifications; and a 10% dim sum surprise. Compose it exactly as
   CI does with `node scripts/compose-site.mjs _site`. Documented in
   [`../docs/features/pages/`](../docs/features/pages/README.md).
 - **Native Windows app:** use the
@@ -110,12 +110,13 @@ assembled and QA'd in the browser.
 Run the dependency-free Node tests and the template assembly check from the repository root:
 
 ```powershell
-node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs ui-md3/tests/layout-clipping.test.mjs
+node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs ui-md3/tests/site-behaviour.test.mjs ui-md3/tests/dim-sum-runtime.test.mjs ui-md3/tests/layout-clipping.test.mjs
 node ui-md3/scripts/assemble-index.mjs --check
 ```
 
 The GitHub Pages workflow additionally composes the root landing page, verifies every local script
 and showcase image with `ui-md3/tests/assert-pages-layout.mjs`, and drives headless Chrome through
-444 layout cases with `ui-md3/tests/runtime-layout-clipping.mjs` — 156 on the landing page and 288 that activate every tab. To repeat the
+447 layout cases with `ui-md3/tests/runtime-layout-clipping.mjs` — 156 on the landing page, 288 that
+activate every tab, and 3 compact corner-surface cases. To repeat the
 runtime matrix locally, serve `ui-md3/` over HTTP and set `BAMBU_PAGES_TEST_URL` to its
 `landing.html` URL before running that test.

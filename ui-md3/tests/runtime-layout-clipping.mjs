@@ -337,6 +337,78 @@ test('the published prototype keeps its window controls reachable', {
   assert.deepEqual(failures, []);
 });
 
+test('compact notification and dim-sum corner surfaces stack without collision', {
+  timeout: 60_000,
+  skip: !PAGE_URL && 'Set BAMBU_PAGES_TEST_URL to the locally served landing page',
+}, async () => {
+  const chrome = await startChrome();
+  const failures = [];
+  const widths = [420, 210, 160];
+  try {
+    for (const width of widths) {
+      await chrome.session.send('Emulation.setDeviceMetricsOverride', {
+        width,
+        height: 900,
+        deviceScaleFactor: 1,
+        mobile: false,
+        screenWidth: width,
+        screenHeight: 900,
+      });
+      const url = new URL(PAGE_URL);
+      url.searchParams.set('lang', 'bilingual_en_yue_HK');
+      await navigate(chrome.session, url.href);
+      const evaluated = await chrome.session.send('Runtime.evaluate', {
+        expression: `JSON.stringify((() => {
+          window.BambuSite.clearNotifications();
+          const host = window.BambuSite.cornerSurfaceHost();
+          const card = document.createElement('aside');
+          card.className = 'dimsum';
+          card.setAttribute('role', 'note');
+          card.innerHTML =
+            '<div class="dimsum-art" aria-hidden="true"></div>' +
+            '<div class="dimsum-copy"><p class="dimsum-badge">Dim sum surprise</p>' +
+            '<p class="dimsum-name">Classic Har Gow · 蝦餃</p>' +
+            '<p class="dimsum-line">One visit in ten gets a dish. Yours is Classic Har Gow · 蝦餃.</p></div>' +
+            '<button type="button" class="iconbtn dimsum-dismiss" aria-label="Dismiss">' +
+            '<span data-icon aria-hidden="true">close</span></button>';
+          host.appendChild(card);
+          window.BambuSite.notify('warning', 'settings.storage.blocked');
+          const toast = document.querySelector('.toast-host .toast');
+          const rect = element => {
+            const value = element.getBoundingClientRect();
+            return { left: value.left, right: value.right, top: value.top, bottom: value.bottom,
+              width: value.width, scrollWidth: element.scrollWidth };
+          };
+          const cardRect = rect(card);
+          const toastRect = rect(toast);
+          const overlapWidth = Math.min(cardRect.right, toastRect.right) -
+            Math.max(cardRect.left, toastRect.left);
+          const overlapHeight = Math.min(cardRect.bottom, toastRect.bottom) -
+            Math.max(cardRect.top, toastRect.top);
+          return {
+            clientWidth: document.documentElement.clientWidth,
+            card: cardRect,
+            toast: toastRect,
+            overlaps: overlapWidth > 1 && overlapHeight > 1,
+          };
+        })())`,
+        returnByValue: true,
+      });
+      const result = JSON.parse(evaluated.result.value);
+      for (const [name, rect] of [['card', result.card], ['toast', result.toast]]) {
+        if (rect.left < -1 || rect.right > result.clientWidth + 1)
+          failures.push(`${width}px: ${name} outside viewport ${JSON.stringify(rect)}`);
+        if (rect.scrollWidth > Math.ceil(rect.width) + 1)
+          failures.push(`${width}px: ${name} clips horizontally ${JSON.stringify(rect)}`);
+      }
+      if (result.overlaps) failures.push(`${width}px: toast overlaps dim-sum card`);
+    }
+  } finally {
+    await stopChrome(chrome);
+  }
+  assert.deepEqual(failures, []);
+});
+
 test('landing page stays inside every supported width, zoom and language viewport', {
   timeout: 300_000,
   skip: !PAGE_URL && 'Set BAMBU_PAGES_TEST_URL to the locally served landing page',

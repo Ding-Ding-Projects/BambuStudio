@@ -64,7 +64,7 @@ Before anything is uploaded, the workflow runs:
 | `ui-md3/tests/site-behaviour.test.mjs` | storage round-trips, element-appearance apply/reset, notification recording and persistence |
 | `ui-md3/tests/jsx-transform.test.mjs` | the JSX compiler: agreement with Babel's output and whitespace rules, and refusal of everything outside its subset |
 | `ui-md3/tests/offline-render.test.mjs` | the composed site rendering in a headless browser with **every off-site host blackholed** |
-| `ui-md3/tests/runtime-layout-clipping.mjs` | **444 measured site cases plus 6 that load the published prototype**, in a real headless browser |
+| `ui-md3/tests/runtime-layout-clipping.mjs` | **447 measured site cases (156 landing + 288 per-tab + 3 compact corner-surface cases) plus 6 that load the published prototype**, in a real headless browser |
 
 `offline-render.test.mjs` composes its own copy of the site, serves it, and points Chrome at it with
 `--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE 127.0.0.1`, so loopback still connects and everything
@@ -115,4 +115,4 @@ BAMBU_PAGES_TEST_URL=http://127.0.0.1:4173/index.html node --test ui-md3/tests/r
 ```
 
 The runtime suite needs Chrome or Edge; it finds one through `CHROME_PATH` or the usual install
-locations, and takes roughly three minutes for all 444 cases.
+locations, and takes roughly three minutes for all 447 site cases.

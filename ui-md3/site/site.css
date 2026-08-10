@@ -654,10 +654,16 @@ input[type="color"] {
 
 /* --------------------------------------------------------- notifications */
 
+.corner-surfaces {
+  position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 70;
+  display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 380px);
+  align-items: end; justify-content: space-between; gap: 10px 16px;
+  pointer-events: none;
+}
 .toast-host {
-  position: fixed; right: 16px; bottom: 16px; z-index: 70;
+  grid-column: 2; width: 100%; justify-self: end;
   display: flex; flex-direction: column; gap: 10px;
-  width: min(380px, calc(100vw - 32px)); pointer-events: none;
+  pointer-events: none;
 }
 .toast {
   display: flex; gap: 10px; align-items: flex-start; pointer-events: auto;
@@ -700,14 +706,17 @@ input[type="color"] {
 /* ------------------------------------------------------------- dim sum */
 
 .dimsum {
-  position: fixed; left: 16px; bottom: 16px; z-index: 65;
+  grid-column: 1; grid-row: 1; width: 100%; pointer-events: auto;
   display: flex; gap: 12px; align-items: flex-start;
-  width: min(360px, calc(100vw - 32px)); padding: 14px;
+  padding: 14px;
   border-radius: 20px; background: var(--md-sc-high);
   border: 1px solid var(--md-outline-variant); box-shadow: 0 14px 36px var(--md-shadow);
   animation: dimsum-in .35s cubic-bezier(.2,.7,.2,1) both;
 }
-.dimsum-art { width: 76px; height: 76px; flex: 0 0 76px; }
+.dimsum-art {
+  width: 76px; height: 76px; flex: 0 0 76px; object-fit: cover;
+  border-radius: 14px; background: var(--md-sc-lowest);
+}
 .dimsum-copy { flex: 1 1 auto; min-width: 0; }
 .dimsum-badge {
   margin: 0 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .4px;
@@ -747,6 +756,25 @@ footer { border-top: 1px solid var(--md-outline-variant); padding: 28px 0 44px; 
   #launchTop .launch-label { display: none; }
   #launchTop { width: 44px; min-width: 44px; padding: 0; }
   .language-select { max-width: 132px; }
+}
+
+@media (max-width: 800px) {
+  .corner-surfaces {
+    left: auto; width: min(380px, calc(100vw - 32px));
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .toast-host { grid-column: 1; grid-row: 1; }
+  .dimsum { grid-column: 1; grid-row: 2; width: min(360px, 100%); justify-self: end; }
+}
+
+@media (max-width: 240px) {
+  .toast { flex-wrap: wrap; gap: 6px; }
+  .toast-body { order: 3; flex-basis: 100%; }
+  .toast-close { margin-inline-start: auto; }
+  .dimsum { flex-wrap: wrap; gap: 6px; }
+  .dimsum-art { width: 48px; height: 48px; flex-basis: 48px; }
+  .dimsum-copy { order: 3; flex-basis: 100%; }
+  .dimsum-dismiss { margin-inline-start: auto; }
 }
 @media (max-width: 460px) {
   .brand-name, .tag { display: none; }

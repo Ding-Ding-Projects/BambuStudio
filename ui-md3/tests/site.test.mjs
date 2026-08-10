@@ -173,8 +173,7 @@ test('every copy key the site assembles at runtime exists too', () => {
     ...['tab.overview', 'tab.screens', 'tab.materialyou', 'tab.download', 'tab.changelog',
       'tab.regex', 'tab.settings', 'tab.build'],
     ...['notify.saved', 'notify.reset.done', 'notify.copied', 'notify.copyfailed',
-      'notify.exported', 'notify.tab.pinned', 'notify.tab.unpinned', 'notify.tab.reset',
-      'notify.dimsum.off'],
+      'notify.exported', 'notify.tab.pinned', 'notify.tab.unpinned', 'notify.tab.reset'],
     ...['changelog.baseline', 'changelog.nochanges', 'changelog.samecommit',
       'settings.search.empty', 'settings.search.elsewhere'],
     ...['regex.unsafe', 'regex.enginefailed', 'regex.unsupported', 'regex.invalid',
@@ -334,7 +333,7 @@ test('the site states its real layout-case count, computed from the harness', as
   // like any other, and it went stale the moment the per-tab matrix was added:
   // the Overview stat and the "How it is built" step both still said 156.
   const harness = await readFile(path.join(testDir, 'runtime-layout-clipping.mjs'), 'utf8');
-  // Only the two suites that measure the SITE count toward the site's own
+  // Only the three suites that measure the SITE count toward the site's own
   // claim; the prototype at /app/ is a different surface with its own gate.
   const countFor = (title) => {
     const start = harness.indexOf(`test('${title}`);
@@ -343,12 +342,24 @@ test('the site states its real layout-case count, computed from the harness', as
     assert.ok(expression, `"${title}" must assert its own case count`);
     return expression[1].split('*').map(Number).reduce((product, value) => product * value, 1);
   };
+  const countArrayFor = (title, constantName) => {
+    const start = harness.indexOf(`test('${title}`);
+    assert.notEqual(start, -1, `harness must contain the "${title}" suite`);
+    const expression = new RegExp(`const\\s+${constantName}\\s*=\\s*\\[([^\\]]+)\\]`)
+      .exec(harness.slice(start));
+    assert.ok(expression, `"${title}" must enumerate ${constantName}`);
+    const values = expression[1].split(',').map(value => Number(value.trim()));
+    assert.ok(values.every(Number.isFinite), `"${title}" ${constantName} must contain only numbers`);
+    return values.length;
+  };
   const landing = countFor('landing page stays inside every supported width');
   const perTab = countFor('every tab renders inside the viewport');
-  const total = landing + perTab;
+  const compactCorners = countArrayFor('compact notification and dim-sum corner surfaces', 'widths');
+  const total = landing + perTab + compactCorners;
   assert.equal(landing, 156);
   assert.equal(perTab, 288);
-  assert.equal(total, 444);
+  assert.equal(compactCorners, 3);
+  assert.equal(total, 447);
 
   const views = await readFile(path.join(siteDir, 'views.js'), 'utf8');
   assert.match(views, new RegExp(`stat\\('overview\\.stat\\.cases', '${total}'\\)`),
@@ -364,23 +375,57 @@ test('the site states its real layout-case count, computed from the harness', as
       `build.step4.body (${language}) must still break the total down`);
     assert.ok(body[language].join(' ').includes('288'),
       `build.step4.body (${language}) must name the per-tab half`);
+    assert.ok(body[language].join(' ').includes('3'),
+      `build.step4.body (${language}) must name the compact corner-surface cases`);
   }
 });
 
 /* ---------------------------------------------------------------- dimsum */
 
-test('every dim sum dish is bundled, named in both languages, and drawn locally', () => {
+test('the dim sum surprise uses the public catalog release at the required odds', () => {
   const catalogue = globalThis.BAMBU_DIM_SUM;
-  assert.equal(catalogue.chance, 0.01, 'the stated one-in-a-hundred odds are the implemented odds');
+  assert.equal(catalogue.chance, 0.10, 'the required one-in-ten odds are the implemented odds');
+  assert.match(catalogue.source.catalogUrl,
+    /^https:\/\/raw\.githubusercontent\.com\/Ding-Ding-Projects\/dim-sum-photos\/main\/catalog\/index\.json$/);
+  assert.match(catalogue.source.revision, /^[0-9a-f]{40}$/);
+  assert.equal(catalogue.source.releaseTag, 'catalog-v1');
   assert.ok(catalogue.dishes.length >= 8);
   const ids = new Set();
   for (const dish of catalogue.dishes) {
     assert.ok(dish.en.length > 0 && dish.yue.length > 0, `${dish.id} needs both names`);
+    assert.ok(dish.altEn.length > 0 && dish.altYue.length > 0, `${dish.id} needs both alt texts`);
     assert.ok(!ids.has(dish.id));
     ids.add(dish.id);
-    assert.ok(dish.art.length > 0);
-    assert.doesNotMatch(dish.art, /https?:|url\(|<script|<image/i, `${dish.id} must be self-contained artwork`);
+    assert.match(dish.photo.url,
+      /^https:\/\/github\.com\/Ding-Ding-Projects\/dim-sum-photos\/releases\/download\/catalog-v1\/hk-dish-[0-9]{4}[-a-z0-9]+\.png$/);
+    assert.match(dish.photo.sha256, /^[0-9a-f]{64}$/);
+    assert.equal(Object.hasOwn(dish, 'art'), false, `${dish.id} must not vendor inline artwork`);
   }
+});
+
+test('the unavoidable surprise has no opt-out control or stored preference', async () => {
+  const [boot, core, dimSumRuntime, settings, copySource, capture] = await Promise.all([
+    readFile(path.join(siteDir, 'boot.js'), 'utf8'),
+    readFile(path.join(siteDir, 'core.js'), 'utf8'),
+    readFile(path.join(siteDir, 'dimsum.js'), 'utf8'),
+    readFile(path.join(siteDir, 'settings.js'), 'utf8'),
+    readFile(path.join(siteDir, 'copy.js'), 'utf8'),
+    readFile(path.join(uiDir, 'scripts', 'capture-site.mjs'), 'utf8'),
+  ]);
+  assert.doesNotMatch(boot, /dimsum-off|dimsum\.turnoff|site\.set\(['"]dimSum/);
+  assert.doesNotMatch(settings, /settings\.dimsum|['"]dimSum['"]/);
+  assert.doesNotMatch(copySource, /settings\.dimsum|notify\.dimsum\.off|dimsum\.turnoff/);
+  assert.doesNotMatch(JSON.stringify(site.DEFAULTS), /dimSum/);
+  assert.match(core, /delete stored\.dimSum/,
+    'old opt-out values must be migrated away instead of silently retained');
+  assert.match(dimSumRuntime, /LOAD_DEADLINE_MS = 4000/,
+    'a slow photo must be abandoned before it can interrupt later work');
+  assert.match(boot, /dimSumController\.maybeStart\(global\.BAMBU_DIM_SUM\)/,
+    'startup must use the executable controller instead of a parallel draw path');
+  assert.match(capture, /BambuSite\.renderDimSumSurprise\(dish\)/,
+    'the documentation capture must exercise the production renderer');
+  assert.doesNotMatch(capture, /dish\.art|dimsum\.turnoff/,
+    'the capture must not recreate retired inline artwork or opt-out UI');
 });
 
 /*

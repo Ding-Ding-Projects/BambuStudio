@@ -15,6 +15,7 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { suppressAutomaticDimSum } from '../scripts/browser-test-mode.mjs';
 export const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
 export function chromePath() {
@@ -149,6 +150,7 @@ export async function startChrome(extraArguments = []) {
     await session.connect();
     await session.send('Page.enable');
     await session.send('Runtime.enable');
+    await suppressAutomaticDimSum(session);
     return { processHandle, profileDirectory, session };
   } catch (error) {
     processHandle.kill();

@@ -1,10 +1,13 @@
 # GitHub Pages site captures
 
-Every image here is a genuine headless-Chrome capture of the **published** site at
-<https://ding-ding-projects.github.io/BambuStudio/>, taken with
+Every image here is a genuine headless-Chrome capture of either the **published** site at
+<https://ding-ding-projects.github.io/BambuStudio/> or the byte-identical locally composed tree
+prepared for that deployment, taken with
 [`ui-md3/scripts/capture-site.mjs`](../../../ui-md3/scripts/capture-site.mjs) through the DevTools
 protocol — the same browser the layout gate measures. None is a mockup, a design file, or a
-hand-edited image.
+hand-edited image. [`capture-manifest.json`](capture-manifest.json) records the expected dimensions,
+SHA-256 digest and harness inputs for every tracked Pages capture, and its contract fails when the
+files or the harness inventory drift.
 
 Reproduce them with:
 
@@ -30,7 +33,7 @@ node ui-md3/scripts/capture-site.mjs https://ding-ding-projects.github.io/BambuS
 | `changelog-calendar.png` | Date range picker with month/year jump and presets | 1280 wide |
 | `bilingual-narrow.png` | Bilingual mode at 420px — the longest labels the site must hold | 420×900 |
 | `settings-cantonese-narrow.png` | Cantonese-only settings at 420px | 420×900 |
-| `dim-sum-card.png` | The dim sum surprise card | 1280 wide |
+| `dim-sum-card.png` | The 10% dim sum surprise with a real public-catalog photo and no opt-out | 1280×980 source, 360×113 crop |
 | `material-you-light.png` | Material You tab in the light theme | 1280×980 |
 
 ## The prototype at `/app`
@@ -56,7 +59,11 @@ Some of those fixes have **no visible surface** — an accessible name is not a 
 node ui-md3/scripts/capture-app.mjs http://127.0.0.1:4173/app/index.html docs/screenshots/pages/app
 ```
 
-`dim-sum-card.png` is the one capture whose trigger is simulated: the surprise fires on a genuine
-1% draw that cannot be waited for in a scripted capture, so the script calls the same renderer with
-the same data to photograph the surface. Everything it shows — artwork, bilingual name, copy at the
-active funny level — is what a visitor who wins the draw sees.
+`dim-sum-card.png` is the one capture whose random trigger is bypassed deterministically: a genuine
+10% draw cannot be waited for in a scripted run, so the harness calls the production renderer with
+the first cached catalog record. A pre-document capture hook suppresses only the automatic startup
+draw during test and capture navigation; it is not shipped as a user setting or opt-out. The harness
+does not rebuild the card. The renderer loads and decodes the real published `catalog-v1` photo, and
+the capture records the same bilingual name, accessible description, funny-level copy, dismiss
+action and no-opt-out surface that a visitor who wins the draw sees. The current image was taken in
+a named off-screen Lowlevel desktop without touching the visible desktop.

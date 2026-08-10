@@ -187,24 +187,24 @@
     },
     'overview.facts.body': {
       en: [
-        'This page is a static site with no build step and no third-party requests. Fonts, artwork and code are served from this repository. Preferences are stored in your browser only.',
-        'This page is a static site: no build step, no third-party requests. Fonts, artwork and code all come from this repository, and your preferences never leave your browser.',
-        'No build step, no trackers, no CDN. The fonts, the artwork and every line of script come from this repository, and your preferences stay in your own browser where they belong.',
-        'No build step, no trackers, no CDN, no cookie banner to decline. Fonts, artwork and script all come from this repository, and your preferences never leave your browser.',
-        'No build step, no trackers, no CDN, and no cookie banner for you to angrily decline. Everything — fonts, artwork, every line of script — comes from this repository, and your preferences stay locked in your own browser like a diary.'
+        'This page is a static site with no build step, trackers or CDN. Fonts, interface artwork and code are served from this repository. On an eligible repeat visit, the dim sum card loads one public catalog release photo without a referrer. Preferences stay in your browser.',
+        'This page is static: no build step, trackers or CDN. Fonts, interface artwork and code come from this repository. An eligible dim sum surprise loads one public catalog release photo without a referrer, and your preferences never leave your browser.',
+        'No build step, no trackers, no CDN. Fonts, interface artwork and every line of script come from this repository; an eligible dim sum visit fetches one public catalog release photo without a referrer. Your preferences stay in your browser.',
+        'No build step, no trackers, no CDN, no cookie banner to decline. Fonts, interface artwork and script come from this repository; the occasional dim sum card fetches one public catalog release photo without a referrer. Preferences never leave your browser.',
+        'No build step, trackers, CDN, or cookie banner for you to angrily decline. Fonts, interface artwork and every line of script come from this repository; when the dim sum trolley visits, it fetches one public catalog release photo without bringing a referrer. Your preferences stay locked in your browser like a diary.'
       ],
       yue: [
-        '呢一版係靜態網站，冇建置步驟，亦冇第三方請求。字型、圖像同程式碼全部由呢個 repository 提供，偏好設定只存喺你部瀏覽器。',
-        '呢一版係靜態網站：冇建置步驟、冇第三方請求。字型、圖像同程式碼全部由呢個 repository 出，偏好設定唔會離開你部瀏覽器。',
-        '冇建置步驟、冇追蹤、冇 CDN。字型、圖像同每一行 script 都由呢個 repository 出，偏好設定安安穩穩留喺你自己部瀏覽器。',
-        '冇建置步驟、冇追蹤、冇 CDN，連俾你嬲住撳「拒絕」嘅 cookie 橫額都冇。字型、圖像、script 全部自己 repository 出，偏好設定唔會離開你部瀏覽器。',
-        '冇建置步驟、冇追蹤、冇 CDN，連俾你嬲住撳「拒絕」嘅 cookie 橫額都慳返。字型、圖像、每一行 script 都係自己 repository 出，偏好設定就好似日記咁鎖喺你自己部瀏覽器。'
+        '呢一版係靜態網站，冇建置步驟、追蹤器或 CDN。字型、介面圖像同程式碼全部由呢個 repository 提供；合資格嘅再次到訪抽中點心時，只會唔帶 referrer 載入一張公開 catalog release 相。偏好只存喺你部瀏覽器。',
+        '呢一版係靜態網站：冇建置步驟、追蹤器或 CDN。字型、介面圖像同程式碼全部由呢個 repository 出；點心驚喜抽中時只會唔帶 referrer 載入一張公開 catalog release 相，偏好唔會離開你部瀏覽器。',
+        '冇建置步驟、冇追蹤、冇 CDN。字型、介面圖像同每一行 script 都由呢個 repository 出；點心抽中時只會唔帶 referrer 攞一張公開 catalog release 相。偏好安安穩穩留喺你部瀏覽器。',
+        '冇建置步驟、冇追蹤、冇 CDN，連俾你撳拒絕嘅 cookie 橫額都冇。字型、介面圖像同 script 全部自己 repository 出；偶爾點心卡只會唔帶 referrer 攞一張公開 catalog release 相。偏好唔會離開你部瀏覽器。',
+        '冇建置步驟、追蹤器、CDN，連俾你嬲住撳拒絕嘅 cookie 橫額都慳返。字型、介面圖像同每一行 script 都係自己 repository 出；點心車到站先唔帶 referrer 攞一張公開 catalog release 相。偏好就好似日記咁鎖喺你部瀏覽器。'
       ]
     },
     'overview.stat.releases': { en: ['Published releases'], yue: ['已發佈版本'] },
     'overview.stat.screens': { en: ['Restyled screens'], yue: ['重新設計嘅介面'] },
     'overview.stat.cases': { en: ['Layout cases checked'], yue: ['已檢查嘅版面情況'] },
-    'overview.stat.requests': { en: ['Third-party requests'], yue: ['第三方請求'] },
+    'overview.stat.trackers': { en: ['Trackers'], yue: ['追蹤器'] },
 
     /* ------------------------------------------------------------- screens */
     'screens.heading': {
@@ -809,7 +809,7 @@
     'settings.group.appearance': { en: ['Appearance'], yue: ['外觀'] },
     'settings.group.typography': { en: ['Typography'], yue: ['字型'] },
     'settings.group.elements': { en: ['Element appearance'], yue: ['個別元件外觀'] },
-    'settings.group.surprises': { en: ['Surprises and notifications'], yue: ['驚喜同通知'] },
+    'settings.group.notifications': { en: ['Notifications'], yue: ['通知'] },
     'settings.group.data': { en: ['Stored data'], yue: ['已儲存資料'] },
     'settings.language.mode': { en: ['Language mode'], yue: ['語言模式'] },
     'settings.language.desc': {
@@ -965,19 +965,6 @@
     'settings.element.cards': { en: ['Content cards'], yue: ['內容卡片'] },
     'settings.element.hero': { en: ['Hero headline'], yue: ['主標題'] },
     'settings.element.toasts': { en: ['Notifications'], yue: ['通知'] },
-    'settings.dimsum': { en: ['Dim sum surprise'], yue: ['點心驚喜'] },
-    'settings.dimsum.desc': {
-      en: [
-        "A one-in-a-hundred chance, per visit, of a dim sum dish appearing in the corner. It never blocks the page and dismisses itself.",
-        "A one-in-a-hundred chance, per visit, of a dim sum dish appearing in the corner. It never blocks the page and dismisses itself.",
-        "One visit in a hundred, a dim sum dish turns up in the corner. It never blocks the page, and it clears its own plate."
-      ],
-      yue: [
-        "每次入嚟有百分之一機會，角落會出現一款點心。唔會阻你做嘢，自己會消失。",
-        "每次入嚟有百分之一機會，角落彈一款點心出嚟。唔會阻你做嘢，自己會走。",
-        "一百次入面有一次，角落會有碟點心出現。唔會阻你做嘢，仲會自己收檯。"
-      ]
-    },
     'settings.notify.enabled': { en: ['Show notifications'], yue: ['顯示通知'] },
     'settings.notify.desc': {
       en: [
@@ -994,18 +981,18 @@
     'settings.reset': { en: ['Reset all settings'], yue: ['還原所有設定'] },
     'settings.reset.desc': {
       en: [
-        'Deletes every preference this site has stored in this browser: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise and the notification switch. This cannot be undone, and it does not touch anything outside this site.',
-        'Deletes every preference this site has stored in this browser — language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise and the notification switch. It cannot be undone, and it touches nothing outside this site.',
-        'Wipes every preference this site keeps in this browser: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise and the notification switch. No undo, and nothing outside this site is touched.',
-        'Wipes the lot — language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise, the notification switch. There is no undo. Nothing outside this site is touched.',
-        'Wipes the lot: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping, the dim sum surprise and the notification switch. There is no undo button, no second thoughts, and nothing outside this site is touched.'
+        'Deletes every preference this site has stored in this browser: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping and the notification switch. This cannot be undone, and it does not touch anything outside this site.',
+        'Deletes every preference this site has stored in this browser — language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping and the notification switch. It cannot be undone, and it touches nothing outside this site.',
+        'Wipes every preference this site keeps in this browser: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping and the notification switch. No undo, and nothing outside this site is touched.',
+        'Wipes the lot — language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping and the notification switch. There is no undo. Nothing outside this site is touched.',
+        'Wipes the lot: language mode, both funny levels, theme, density, accent, fonts, per-element styling, tab order, pinning, tab grouping and the notification switch. There is no undo button, no second thoughts, and nothing outside this site is touched.'
       ],
       yue: [
-        '會刪除本站存喺呢部瀏覽器嘅所有偏好：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、個別元件樣式、分頁次序、釘住狀態、分頁分組、點心驚喜同通知開關。無法復原，亦唔會影響本站以外任何嘢。',
-        '會刪除本站存喺呢部瀏覽器嘅所有偏好 — 語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、個別元件樣式、分頁次序、釘住、分頁分組、點心驚喜同通知開關。無法復原，本站以外嘅嘢一律唔碰。',
-        '會清走本站喺呢部瀏覽器嘅所有偏好：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組、點心驚喜同通知開關。冇得返轉頭，本站以外嘢一律唔郁。',
-        '一次過清走晒 — 語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組、點心驚喜、通知開關。冇得返轉頭。本站以外嘅嘢一律唔郁。',
-        '一次過清走晒：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組、點心驚喜同通知開關。冇 undo、冇後悔藥，本站以外嘅嘢一條毛都唔會碰。'
+        '會刪除本站存喺呢部瀏覽器嘅所有偏好：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、個別元件樣式、分頁次序、釘住狀態、分頁分組同通知開關。無法復原，亦唔會影響本站以外任何嘢。',
+        '會刪除本站存喺呢部瀏覽器嘅所有偏好 — 語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、個別元件樣式、分頁次序、釘住、分頁分組同通知開關。無法復原，本站以外嘅嘢一律唔碰。',
+        '會清走本站喺呢部瀏覽器嘅所有偏好：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組同通知開關。冇得返轉頭，本站以外嘢一律唔郁。',
+        '一次過清走晒 — 語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組、通知開關。冇得返轉頭。本站以外嘅嘢一律唔郁。',
+        '一次過清走晒：語言模式、兩條搞笑滑桿、主題、密度、重點色、字型、元件樣式、分頁次序、釘住、分頁分組同通知開關。冇 undo、冇後悔藥，本站以外嘅嘢一條毛都唔會碰。'
       ]
     },
     'settings.reset.confirm': { en: ['Delete stored settings'], yue: ['刪除已儲存設定'] },
@@ -1108,18 +1095,6 @@
         "分頁次序、釘住、分組全部返晒預設。其他嘢一律冇郁。"
       ]
     },
-    'notify.dimsum.off': {
-      en: [
-        "The dim sum surprise is off.",
-        "The dim sum surprise is off.",
-        "No more dim sum. The trolley will pass you by."
-      ],
-      yue: [
-        "點心驚喜已關閉。",
-        "點心驚喜熄咗。",
-        "冇點心喇。架車會直接經過你。"
-      ]
-    },
     'notify.tone.disclosure': {
       en: [
         "This site writes its text at a tone level you control, separately for English and Cantonese. It applies to every message, including errors and warnings, and never changes what a message says has happened.",
@@ -1149,22 +1124,21 @@
     'dimsum.badge': { en: ['Dim sum surprise'], yue: ['點心驚喜'] },
     'dimsum.line': {
       en: [
-        'A one-in-a-hundred visit. Today it is {dish}.',
-        'A one-in-a-hundred visit. Today it is {dish}.',
-        'One visit in a hundred gets a dish. Yours is {dish}.',
-        'One visit in a hundred gets a dish, and yours is {dish}. Enjoy.',
-        'One visit in a hundred gets a dish, and the trolley stopped at yours: {dish}. Eat it before it goes cold.'
+        'A one-in-ten visit. Today it is {dish}.',
+        'A one-in-ten visit. Today it is {dish}.',
+        'One visit in ten gets a dish. Yours is {dish}.',
+        'One visit in ten gets a dish, and yours is {dish}. Enjoy.',
+        'One visit in ten gets a dish, and the trolley stopped at yours: {dish}. Eat it before it goes cold.'
       ],
       yue: [
-        '百分之一嘅機會。今次係{dish}。',
-        '百分之一嘅機會。今次係{dish}。',
-        '一百次入面得一次有點心，你今次係{dish}。',
-        '一百次入面得一次有點心，你今次抽到{dish}。慢用。',
-        '一百次入面得一次有點心，架點心車啱啱停咗喺你度：{dish}。趁熱食啦。'
+        '十分之一嘅機會。今次係{dish}。',
+        '十分之一嘅機會。今次係{dish}。',
+        '十次入面有一次有點心，你今次係{dish}。',
+        '十次入面有一次有點心，你今次抽到{dish}。慢用。',
+        '十次入面有一次有點心，架點心車啱啱停咗喺你度：{dish}。趁熱食啦。'
       ]
     },
     'dimsum.dismiss': { en: ['Dismiss'], yue: ['關閉'] },
-    'dimsum.turnoff': { en: ['Turn this off'], yue: ['關閉呢個功能'] },
 
     /* --------------------------------------------------------------- build */
     'build.heading': {
@@ -1222,17 +1196,17 @@
         "九版畫面一次過開工，一個 worktree 一個代理，之後合併再過 QA — 並行嘅代價就係要預埋合併衝突。"
       ]
     },
-    'build.step4.title': { en: ['Checked at 444 layout cases'], yue: ['444 格版面測試'] },
+    'build.step4.title': { en: ['Checked at 447 layout cases'], yue: ['447 格版面測試'] },
     'build.step4.body': {
       en: [
-        "156 landing cases — thirteen widths by four display scales by three language modes — plus 288 more that activate every tab, all driven in a real browser. One clipped element, one undersized control or one empty panel fails the deploy.",
-        "156 landing cases — thirteen widths by four display scales by three language modes — plus 288 more that activate every tab, all driven in a real browser. One clipped element, one undersized control or one empty panel fails the deploy.",
-        "156 landing cases — thirteen widths, four display scales, three language modes — plus 288 more that press every tab, all in a real browser. One clipped element, one undersized control, one empty panel, and the deploy does not happen."
+        "156 landing cases — thirteen widths by four display scales by three language modes — plus 288 that activate every tab and 3 compact corner-surface cases, all driven in a real browser. One clipped element, one undersized control or one empty panel fails the deploy.",
+        "156 landing cases — thirteen widths by four display scales by three language modes — plus 288 that activate every tab and 3 compact corner-surface cases, all driven in a real browser. One clipped element, one undersized control or one empty panel fails the deploy.",
+        "156 landing cases — thirteen widths, four display scales, three language modes — plus 288 that press every tab and 3 compact corner-surface cases, all in a real browser. One clipped element, one undersized control, one empty panel, and the deploy does not happen."
       ],
       yue: [
-        "156 格首頁測試 — 十三種闊度 × 四種顯示比例 × 三種語言模式 — 再加 288 格逐個分頁㩒一次，全部喺真實瀏覽器行。一個元件切字、一個掣細過標準、一版空白，就當部署失敗。",
-        "156 格首頁測試 — 十三種闊度 × 四種顯示比例 × 三種語言模式 — 再加 288 格逐個分頁㩒一次，全部喺真實瀏覽器行。一個元件切字、一個掣細過標準、一版空白，就當部署失敗。",
-        "156 格首頁 — 十三種闊度、四種比例、三種語言 — 再加 288 格逐個分頁㩒過，全部喺真瀏覽器行。有一個元件切字、一個掣細過標準、一版空白？咁就唔使部署喇。"
+        "156 格首頁測試 — 十三種闊度 × 四種顯示比例 × 三種語言模式 — 再加 288 格逐個分頁㩒一次同 3 格窄畫面角落疊卡測試，全部喺真實瀏覽器行。一個元件切字、一個掣細過標準、一版空白，就當部署失敗。",
+        "156 格首頁測試 — 十三種闊度 × 四種顯示比例 × 三種語言模式 — 再加 288 格逐個分頁㩒一次同 3 格窄畫面角落疊卡測試，全部喺真實瀏覽器行。一個元件切字、一個掣細過標準、一版空白，就當部署失敗。",
+        "156 格首頁 — 十三種闊度、四種比例、三種語言 — 再加 288 格逐個分頁㩒過同 3 格窄畫面角落疊卡，全部喺真瀏覽器行。有一個元件切字、一個掣細過標準、一版空白？咁就唔使部署喇。"
       ]
     },
 

@@ -136,7 +136,8 @@ jobs:
       - name: Verify localization and clipping at runtime
         run: |
           node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs \
-            ui-md3/tests/site-behaviour.test.mjs ui-md3/tests/layout-clipping.test.mjs \
+            ui-md3/tests/site-behaviour.test.mjs ui-md3/tests/dim-sum-runtime.test.mjs \
+            ui-md3/tests/layout-clipping.test.mjs \
             ui-md3/tests/jsx-transform.test.mjs
           # Composes its own copy of the site and loads it in headless Chrome with
           # every off-site host blackholed. The UI kit shipped a page that rendered

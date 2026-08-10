@@ -238,7 +238,7 @@
       { key: 'settings.group.appearance', build: buildAppearanceGroup },
       { key: 'settings.group.typography', build: buildTypographyGroup },
       { key: 'settings.group.elements', build: buildElementGroup },
-      { key: 'settings.group.surprises', build: buildSurpriseGroup },
+      { key: 'settings.group.notifications', build: buildNotificationGroup },
       { key: 'settings.group.data', build: buildDataGroup }
     ];
 
@@ -727,10 +727,7 @@
     load();
   }
 
-  function buildSurpriseGroup(host) {
-    toggle(host, 'settings.dimsum', 'settings.dimsum.desc', 'dimSum', function (value) {
-      if (!value) site.notify('info', 'notify.dimsum.off');
-    });
+  function buildNotificationGroup(host) {
     toggle(host, 'settings.notify.enabled', 'settings.notify.desc', 'notifications');
   }
 

@@ -178,9 +178,11 @@ gallery above.
 The Pages site is a **browser-style tabbed application**, not a scrolling landing page: eight tabs
 with a strip you can pin, drag, group and search; English and Hong Kong Cantonese copy at five funny
 levels per language on two independent sliders; a full ECMAScript regex builder behind every search
-bar; a changelog viewer covering every published release; and a one-in-a-hundred dim sum surprise.
-Everything is served from this repository — no CDN, no analytics, no third-party request — and its
-deploy is gated on 444 measured layout cases in a real headless browser.
+bar; a changelog viewer covering every published release; and a one-in-ten dim sum surprise.
+Code, fonts and interface artwork are served from this repository with no CDN, analytics or
+trackers. On an eligible repeat visit, the surprise loads one published photo from the public
+dim-sum catalog without sending a referrer. Deployment is gated on 447 measured layout cases in a
+real headless browser.
 [Open the site](https://ding-ding-projects.github.io/BambuStudio/), read the
 [site documentation](docs/features/pages/README.md), or see the
 [visual showcase documentation](docs/features/design-system/generated-visual-showcase.md).
@@ -211,8 +213,8 @@ Cantonese, and bilingual content instead of clipping it.
 
 The focused Windows Release targets build successfully: `home_assistant_tests` passes 30 test cases
 and 267 assertions, all five focused CTest entries pass, the Cantonese catalog contains 718 checked
-translations, the static Pages/i18n/clipping suite passes 50/50, and the browser Pages matrix passes all 444
-cases — 156 on the landing page plus 288 that activate every tab. Ubuntu's CJK font metrics then exposed the translated
+translations, the static Pages/i18n/clipping suite passes 50/50, and the browser Pages matrix passes all 447
+cases — 156 on the landing page, 288 that activate every tab, and 3 compact corner-surface cases. Ubuntu's CJK font metrics then exposed the translated
 **Screens / 畫面** header target shrinking to 31.984×44 pixels at two desktop widths; commit
 [`32a5cc6d7`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/32a5cc6d79e40a46d3c1758052fbdeac5c01f1a3)
 adds a 44-pixel width floor, and hosted Pages

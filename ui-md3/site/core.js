@@ -28,7 +28,6 @@
     fontFamily: 'roboto',
     fontScale: 100,
     fontWeight: 400,
-    dimSum: true,
     notifications: true,
     tabOrder: [],
     tabPinned: [],
@@ -61,6 +60,14 @@
 
   var state = (function () {
     var stored = readStorage();
+    // The dim-sum surprise is intentionally not configurable. Older builds
+    // persisted an opt-out under `dimSum`; remove it once so every upgraded
+    // profile rejoins the single 10% startup draw without disturbing any other
+    // preference.
+    if (Object.prototype.hasOwnProperty.call(stored, 'dimSum')) {
+      delete stored.dimSum;
+      writeStorage(stored);
+    }
     var merged = {};
     Object.keys(DEFAULTS).forEach(function (key) {
       merged[key] = stored[key] === undefined ? clone(DEFAULTS[key]) : stored[key];
@@ -436,8 +443,17 @@
       storageBlocked = true;
     }
   }
+  var cornerHost = null;
   var toastHost = null;
   var AUTO_DISMISS = { info: 6000, success: 5000 };
+
+  function ensureCornerHost() {
+    if (cornerHost && global.document.body.contains(cornerHost)) return cornerHost;
+    cornerHost = global.document.createElement('div');
+    cornerHost.className = 'corner-surfaces';
+    global.document.body.appendChild(cornerHost);
+    return cornerHost;
+  }
 
   function ensureHost() {
     if (toastHost && global.document.body.contains(toastHost)) return toastHost;
@@ -446,7 +462,7 @@
     // No live region on the host: each toast carries its own role (status or
     // alert). Nesting one inside the other makes assistive technology announce
     // twice and lets the polite host soften an error's urgency.
-    global.document.body.appendChild(toastHost);
+    ensureCornerHost().appendChild(toastHost);
     return toastHost;
   }
 
@@ -597,6 +613,7 @@
     elementStyle: elementStyle,
     resetElement: resetElement,
     notify: notify,
+    cornerSurfaceHost: ensureCornerHost,
     notificationHistory: notificationHistory,
     clearNotifications: clearNotifications,
     copyText: copyText,

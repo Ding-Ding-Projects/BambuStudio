@@ -54,6 +54,11 @@ function stubNode(tag) {
 }
 
 const storage = memoryStorage();
+const STORAGE_KEY = 'bambuStudio.site.v1';
+const HISTORY_KEY = 'bambuStudio.site.notifications.v1';
+// Profiles from the prior release may carry the removed opt-out. Seed one
+// before module initialization so this suite exercises the real migration.
+storage.setItem(STORAGE_KEY, JSON.stringify({ dimSum: false }));
 globalThis.window = globalThis;
 globalThis.localStorage = storage;
 globalThis.location = { search: '', href: 'https://example.invalid/', hostname: 'example.invalid' };
@@ -73,10 +78,15 @@ await import('../site/dimsum.data.js');
 await import('../site/core.js');
 
 const site = globalThis.BambuSite;
-const STORAGE_KEY = 'bambuStudio.site.v1';
-const HISTORY_KEY = 'bambuStudio.site.notifications.v1';
 
 /* ------------------------------------------------------------ settings */
+
+test('the retired dim sum opt-out is removed without changing other defaults', () => {
+  const migrated = JSON.parse(storage.getItem(STORAGE_KEY));
+  assert.equal(Object.hasOwn(migrated, 'dimSum'), false);
+  assert.equal(site.get('dimSum'), undefined);
+  assert.equal(site.get('theme'), site.DEFAULTS.theme);
+});
 
 test('a preference round-trips through storage and notifies subscribers', () => {
   const seen = [];
@@ -179,7 +189,6 @@ test('resetting deletes every stored key it says it deletes', () => {
   site.set('theme', 'light');
   site.set('funnyYue', 1);
   site.elementStyle('toasts', 'radius', '2px');
-  site.set('dimSum', false);
   site.set('notifications', false);
   site.set('tabGroups', { overview: 'group.tools' });
   site.notify('info', 'notify.copied');
@@ -196,12 +205,12 @@ test('resetting deletes every stored key it says it deletes', () => {
 
 /* -------------------------------------------------------------- dimsum */
 
-test('the dim sum odds the setting promises are the odds implemented', () => {
-  assert.equal(globalThis.BAMBU_DIM_SUM.chance, 0.01);
-  const description = globalThis.BAMBU_SITE_COPY.entries['settings.dimsum.desc'];
+test('the unavoidable dim sum copy states the implemented one-in-ten odds', () => {
+  assert.equal(globalThis.BAMBU_DIM_SUM.chance, 0.10);
+  const description = globalThis.BAMBU_SITE_COPY.entries['dimsum.line'];
   for (const language of ['en', 'yue']) {
     for (const variant of description[language]) {
-      assert.match(variant, /(one-in-a-hundred|one visit in a hundred|百分之一|一百次)/i,
+      assert.match(variant, /(one-in-ten|one visit in ten|十分之一|十次)/i,
         `the dim sum description (${language}) must state the real odds at every level`);
     }
   }

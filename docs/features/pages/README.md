@@ -7,8 +7,12 @@ browser-style tabbed surface carrying the same obligations as the desktop app �
 modes, two funny-level sliders, a full regex builder behind every search bar, non-blocking
 notifications, a complete changelog viewer, and per-element appearance customization.
 
-Everything is served from this repository. There are no third-party requests, no CDN, no analytics
-and no cookie banner; preferences live in the visitor's own browser and nowhere else.
+Code, fonts and interface artwork are served from this repository. There are no off-site scripts
+or stylesheets, no CDN, no analytics, no trackers and no cookie banner; preferences live in the
+visitor's own browser and nowhere else. On an eligible repeat visit, the dim-sum surprise makes one
+image request to a published release asset in the public
+[`Ding-Ding-Projects/dim-sum-photos`](https://github.com/Ding-Ding-Projects/dim-sum-photos)
+catalog with a `no-referrer` policy.
 
 That claim is now enforced rather than merely stated. `assert-pages-layout.mjs` sweeps every
 published page for an off-site script or stylesheet, and `offline-render.test.mjs` loads the
@@ -33,10 +37,10 @@ work.
   per-element editors, the settings search, and the one blocking dialog on the site.
 - [Notifications](notifications.md) — the toast stack, the notification centre, and which messages
   are allowed to block.
-- [Dim sum surprise](dim-sum-surprise.md) — the 1% startup delight, its bundled artwork, and the
-  conditions under which it stays quiet.
+- [Dim sum surprise](dim-sum-surprise.md) — the 10% startup delight, its public catalog photo, and
+  the conditions under which it stays quiet.
 - [Deployment and the layout gate](deployment-and-layout-gate.md) — how the site is composed,
-  published, and held to 444 measured layout cases before a deploy is allowed.
+  published, and held to 447 measured layout cases before a deploy is allowed.
 
 ## The prototype at `/app`
 
@@ -55,9 +59,10 @@ Both, plus the prototype's dialog semantics and title-bar collapse contract, are
 
 ## Postman
 
-Not applicable. This category ships no HTTP API: the site is static files, and the only network
-requests it makes are for its own assets on the same origin. The repository's HTTP contracts and
-their Postman collections live under [`../api/`](../api/README.md).
+Not applicable. This category ships no HTTP API: the site is static files. Its executable and style
+assets are same-origin; an eligible dim-sum surprise may load one public catalog release image.
+The repository's HTTP contracts and their Postman collections live under
+[`../api/`](../api/README.md).
 
 ## Verification
 
@@ -68,4 +73,4 @@ their Postman collections live under [`../api/`](../api/README.md).
 | Localisation runtime | `node --test ui-md3/tests/i18n.test.mjs` |
 | Static clipping contracts | `node --test ui-md3/tests/layout-clipping.test.mjs` |
 | Composed tree | `node ui-md3/scripts/compose-site.mjs _site && node ui-md3/tests/assert-pages-layout.mjs _site` |
-| 444 runtime layout cases | `node ui-md3/tests/serve.mjs _site 4173 &` then `BAMBU_PAGES_TEST_URL=http://127.0.0.1:4173/index.html node --test ui-md3/tests/runtime-layout-clipping.mjs` |
+| 447 runtime layout cases (156 landing + 288 per-tab + 3 compact corner-surface cases) | `node ui-md3/tests/serve.mjs _site 4173 &` then `BAMBU_PAGES_TEST_URL=http://127.0.0.1:4173/index.html node --test ui-md3/tests/runtime-layout-clipping.mjs` |

@@ -73,8 +73,9 @@ assert.doesNotMatch(
 // The same rule, applied to everything published rather than to the landing
 // page alone. Checking only the root is how the UI kit under /app/ spent so
 // long fetching React, ReactDOM and @babel/standalone from unpkg on a site
-// whose documentation promises no third-party requests at all: the page that
-// broke the promise was never the page being inspected.
+// whose documentation promises no off-site executable or style dependencies:
+// the page that broke the promise was never the page being inspected. The
+// optional dim-sum card may load one published catalog photo, but never code.
 //
 // Protocol-relative URLs (//host/path) count as off-site too — they are only
 // same-origin by accident of how the page was reached.
@@ -120,7 +121,7 @@ assert.deepEqual(prose, [], 'The composed Pages site must not publish markdown.'
 
 const expectedModules = [
   'boot.js', 'changelog.data.js', 'changelog.js', 'copy.js', 'core.js',
-  'dimsum.data.js', 'regex.js', 'settings.js', 'tabs.js', 'views.js'
+  'dimsum.data.js', 'dimsum.js', 'regex.js', 'settings.js', 'tabs.js', 'views.js'
 ];
 assert.deepEqual(
   siteModules.sort(),

@@ -3,7 +3,9 @@
 You are taking over work on **this fork of BambuStudio** (`Ding-Ding-Projects/BambuStudio`),
 a Windows desktop 3D-printing slicer written in C++ with wxWidgets. This file is written
 to be self-contained: it assumes you know nothing about previous sessions. Everything
-below was reviewed through **2026-07-30** unless it says otherwise.
+below was reviewed through **2026-07-30** unless it says otherwise. The Pages dim-sum contract was
+updated on **2026-08-09** to a one-in-ten startup draw backed by published public-catalog photos;
+there is no opt-out, and old stored opt-out values are migrated away.
 
 ---
 
@@ -255,7 +257,7 @@ Full documentation: [`docs/features/pages/`](docs/features/pages/README.md).
 
 | Commit | What |
 | --- | --- |
-| `f3ff11044` | Rebuilt the site: eight browser-style tabs, bilingual copy at five funny levels per language, the shared regex builder, the changelog viewer over 34 real releases, notifications, settings, the 1% dim sum surprise. |
+| `f3ff11044` | Rebuilt the site: eight browser-style tabs, bilingual copy at five funny levels per language, the shared regex builder, the changelog viewer over 34 real releases, notifications, settings, and the original dim sum surprise. |
 | `aea1327cd` | Gated the deploy on 444 measured runtime layout cases; replaced the workflow's inline `rsync`/`python3 -m http.server` with `compose-site.mjs` and `serve.mjs`; updated `i18n.test.mjs` for the new shape (this was issue #25). |
 | `2b2b7ce45` | Fixed 29 defects confirmed by a twelve-agent adversarial review of the new site. |
 | `8f4dba64e` | Fixed the prototype's eight defects from issue #24: 143 icon spans made decorative, `role="switch"` on preference toggles, real dialog semantics in `app/dialogs.js`, a title bar that no longer clips its window controls, and all ten search fields wired. |
@@ -925,13 +927,12 @@ state is therefore the highest-value single check on that machine.
    LAN-bound printer), which is a plausible reason it never fires on this box and might on the
    user's. Still unproven as their crash.
 
-0e. **The dim sum surprise, release code names, and the tabbed-README requirement are unimplemented.**
-   Global memory gained sections this session that the local rules copy lacked (now synced to
-   `~/.claude/rules/`): *Autonomous completion*, *Dim sum release code names*, *Landing page and
-   documentation site* (tabbed README, site linked from the repo), *Sanitized instruction copy in
-   every repository*, and *Build dependencies and toolchains*. Releases already carry dish code
-   names (`md3-v80 — Swiss Wing 瑞士雞翼`), but the **in-app 1% startup dim sum surprise** does not
-   exist, and the catalog now ships 500+ bundled PNGs in `agent-global-memory/dim-sum/` to draw from.
+0e. **The Pages dim-sum surprise is implemented; native-app and release coverage still need a fresh
+   inventory.** The static site now performs one fresh 10% draw on eligible repeat visits, names the
+   dish in English and Traditional Chinese, and loads only a published `catalog-v1` release photo
+   from `Ding-Ding-Projects/dim-sum-photos` with no referrer. It never appears on first run, never
+   blocks startup or steals focus, auto-dismisses, has no opt-out, and removes the retired stored
+   opt-out during migration. Do not restore repository-bundled or generated consumer images.
 
 
 
@@ -1163,7 +1164,7 @@ appears in any retained artifact.
 - `docs/features/workspace/project-version-history.md` — the Git-backed history feature,
   including the crash-backup preservation behaviour described in §5.3.
 - `docs/features/pages/README.md` — the published GitHub Pages site: tabs, language modes and
-  funny levels, the regex builder, the changelog viewer, and the 444-case layout gate.
+  funny levels, the regex builder, the changelog viewer, and the current 447-case layout gate.
 - `docs/screenshots/README.md` — the screenshot matrix index.
 - `docs/screenshots/pages/README.md` — captures of the published site, and how to retake them.
 - `.claude/skills/run-bambustudio/SKILL.md` — how to run and drive the app. **Read this before

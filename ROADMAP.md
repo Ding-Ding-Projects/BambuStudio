@@ -69,12 +69,12 @@
 - **Still required before moving this item to Landed:** native bilingual Smart home capture, Path B
   against a real Home Assistant, a real Home Assistant Path A confirmation card, physical-printer
   success, and issue #16 closure with exact evidence. The implementation and follow-up target fix
-  are pushed and remotely proven; hosted Pages run `30359493216` passed 156/156 as the matrix stood on 2026-07-27 (it is 444 cases now), while the Windows
+  are pushed and remotely proven; hosted Pages run `30359493216` passed 156/156 as the matrix stood on 2026-07-27 (it is 447 cases now), while the Windows
   release verdict remains maintained separately in issue #16. The full Release
   GUI build, native English 720×760 and 520×480 review, focused Release targets,
   30-case/267-assertion native suite, 5/5 focused CTest entries, 718-entry localization check, the
   static Pages/i18n/clipping checks and the browser width/zoom/language matrix as they stood that
-  day (21/21 and 156/156; now 50 and 444), synchronized template assembly, and cross-host discovery/fetch/goodbye probe are complete. The
+  day (21/21 and 156/156; now 50 and 447), synchronized template assembly, and cross-host discovery/fetch/goodbye probe are complete. The
   synthetic TEST-NET probe is transport evidence, not a real-printer success claim.
 
 ## Landed
@@ -119,8 +119,8 @@
   plus the commits between tags, with a UTC calendar range filter, typed ISO and locale dates,
   composing search, and a Markdown export that states the range it exported.
 - Added **non-blocking notifications** with a history centre, a **settings surface** with
-  per-element appearance editors and a cross-tab search, and the **1% dim sum surprise** drawn from
-  bundled SVG.
+  per-element appearance editors and a cross-tab search, and the **10% dim sum surprise** drawn from
+  published assets in the public dim-sum photo catalog, with no opt-out.
 - Gated the deploy on **444 measured runtime layout cases** (156 landing + 288 per-tab) plus 50
   static contracts; `compose-site.mjs` and `serve.mjs` make the published tree reproducible locally.
 - Fixed **29 defects** found by a twelve-agent adversarial review of the new site, and the

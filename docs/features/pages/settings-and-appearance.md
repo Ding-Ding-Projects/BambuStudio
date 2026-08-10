@@ -16,7 +16,7 @@ for the session and says so once, in a notification, instead of pretending the s
 | Appearance | Theme, density, accent seed swatches, custom seed colour |
 | Typography | UI font from bundled and installed faces, text size 85–140%, body weight |
 | Element appearance | Per-element corner radius, spacing, text size and text colour, with a per-element reset |
-| Surprises and notifications | Dim sum surprise, show notifications |
+| Notifications | Show notifications |
 | Stored data | Reset all settings |
 
 ## Per-element appearance editors
