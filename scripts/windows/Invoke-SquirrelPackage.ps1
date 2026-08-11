@@ -36,6 +36,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 Add-Type -AssemblyName System.IO.Compression
+Import-Module Microsoft.PowerShell.Security -ErrorAction Stop
 
 $script:SquirrelPackageSha256 = '923e18abb4fd50b5a4878a39dbcd042ed3f7eb68fc0f82c0955cd5380c921ac7'
 $script:SquirrelPackageUri = "https://api.nuget.org/v3-flatcontainer/squirrel.windows/$SquirrelVersion/squirrel.windows.$SquirrelVersion.nupkg"
