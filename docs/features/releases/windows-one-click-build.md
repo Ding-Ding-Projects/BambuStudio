@@ -18,7 +18,10 @@ outputs are written to `artifacts/windows/`:
 ## What it does
 
 The workflow checks for at least 40 GB of free space and installs missing ordinary prerequisites:
-Git and Git LFS, Visual Studio 2022 C++ Build Tools, a complete Windows SDK, CMake, NSIS, and 7-Zip.
+Git and Git LFS, Visual Studio 2022 C++ Build Tools, a complete Windows SDK, CMake, Strawberry Perl,
+NSIS, and 7-Zip. Strawberry Perl supplies the Windows `pkg-config.bat` fallback when the native
+`pkgconfiglite` executable is not present; the build exports that wrapper explicitly so CMake does
+not mistake Strawberry's extensionless helper script for a runnable executable.
 Existing supported installations are reused. Tool installation uses `winget` silently with
 package/source agreement acceptance; the shared toolchain helper retains its publisher and
 pinned-hash checks for vendor fallbacks. The dependency superbuild supplies the product's

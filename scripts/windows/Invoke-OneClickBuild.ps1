@@ -22,7 +22,9 @@ param(
 
     [switch] $BootstrapOnly,
 
-    [switch] $Plan
+    [switch] $Plan,
+
+    [switch] $BuildOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -166,6 +168,46 @@ function Install-WingetPackageIfMissing {
     }
 }
 
+function Resolve-PkgConfigExecutable {
+    $native = Get-Command pkg-config.exe -ErrorAction SilentlyContinue
+    if ($null -ne $native) {
+        return $native.Source
+    }
+
+    # Strawberry Perl ships a maintained pkg-config implementation as a .bat
+    # wrapper. CMake can execute the wrapper, while its extensionless sibling
+    # is discoverable but cannot be launched by FindPkgConfig on Windows.
+    $wrapper = Get-Command pkg-config.bat -ErrorAction SilentlyContinue
+    if ($null -ne $wrapper) {
+        return $wrapper.Source
+    }
+
+    throw 'pkg-config is missing. Install pkgconfiglite or Strawberry Perl, then rerun.'
+}
+
+function Normalize-PkgConfigFiles {
+    param([Parameter(Mandatory)][string] $DependencyDestination)
+
+    $pkgConfigDirectory = Join-Path $DependencyDestination 'usr\local\lib\pkgconfig'
+    if (-not (Test-Path -LiteralPath $pkgConfigDirectory -PathType Container)) {
+        return
+    }
+    $prefix = (Resolve-Path -LiteralPath (Join-Path $DependencyDestination 'usr\local')).Path.Replace('\', '/')
+    foreach ($file in (Get-ChildItem -LiteralPath $pkgConfigDirectory -Filter '*.pc' -File)) {
+        $content = [System.IO.File]::ReadAllText($file.FullName)
+        $normalized = $content.Replace('prefix=./dist', "prefix=$prefix")
+        $normalized = $normalized.Replace('libdir=./dist/lib', "libdir=$prefix/lib")
+        $normalized = $normalized.Replace('includedir=./dist/include', "includedir=$prefix/include")
+        if ($normalized -ne $content) {
+            [System.IO.File]::WriteAllText(
+                $file.FullName,
+                $normalized,
+                [System.Text.UTF8Encoding]::new($false)
+            )
+        }
+    }
+}
+
 function Install-PortableNsis {
     $sevenZip = Get-SevenZipPath
     if ([string]::IsNullOrWhiteSpace($sevenZip)) {
@@ -250,6 +292,15 @@ function Initialize-LocalToolchain {
         Update-SessionPath
     }
 
+    Install-WingetPackageIfMissing -DisplayName 'Strawberry Perl' `
+        -PackageId 'StrawberryPerl.StrawberryPerl' `
+        -Probe { $null -ne (Get-Command perl.exe -ErrorAction SilentlyContinue) }
+    if (-not $Plan) {
+        $pkgConfig = Resolve-PkgConfigExecutable
+        $env:PKG_CONFIG_EXECUTABLE = $pkgConfig
+        Write-BuildLog "Using pkg-config at $pkgConfig."
+    }
+
     Install-WingetPackageIfMissing -DisplayName '7-Zip' -PackageId '7zip.7zip' `
         -Probe { $null -ne (Get-SevenZipPath) }
     Install-WingetPackageIfMissing -DisplayName 'NSIS 3' -PackageId 'NSIS.NSIS' `
@@ -280,6 +331,29 @@ function Invoke-RepositoryCommand {
     Assert-LastExitCode $Label
 }
 
+function Invoke-DownloadWithRetry {
+    param(
+        [Parameter(Mandatory)][string] $Uri,
+        [Parameter(Mandatory)][string] $OutFile,
+        [int] $MaxAttempts = 3,
+        [int] $RetryDelaySeconds = 15
+    )
+
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        try {
+            Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing
+            return
+        }
+        catch {
+            if ($attempt -eq $MaxAttempts) {
+                throw
+            }
+            Write-BuildLog "Download attempt $attempt failed; retrying in $RetryDelaySeconds seconds."
+            Start-Sleep -Seconds $RetryDelaySeconds
+        }
+    }
+}
+
 function Add-MesaFallback {
     param(
         [Parameter(Mandatory)][string] $PayloadDirectory,
@@ -299,7 +373,7 @@ function Add-MesaFallback {
         $archive = Join-Path $temporaryRoot "mesa3d-$mesaVersion-release-msvc.7z"
         $url = "https://github.com/pal1000/mesa-dist-win/releases/download/$mesaVersion/mesa3d-$mesaVersion-release-msvc.7z"
         Write-BuildLog "Downloading hash-pinned Mesa $mesaVersion fallback..."
-        Invoke-WebRequest -Uri $url -OutFile $archive -MaximumRetryCount 3 -RetryIntervalSec 15
+        Invoke-DownloadWithRetry -Uri $url -OutFile $archive
         $actualArchiveHash = Get-FileSha256Lower -Path $archive
         if ($actualArchiveHash -ne $archiveSha256) {
             throw "Mesa archive SHA-256 mismatch; expected $archiveSha256, got $actualArchiveHash."
@@ -379,21 +453,38 @@ function Invoke-OneClickBuild {
 
         $dependencyDestination = Join-Path $script:RepositoryRoot 'deps\build\BambuStudio_dep'
         $dependencyMarker = Join-Path $dependencyDestination 'usr\local'
+        $payloadDirectory = Join-Path $script:RepositoryRoot 'install-dir'
+        $appCache = Join-Path $script:RepositoryRoot 'build\CMakeCache.txt'
+        $expectedInstallPrefix = [System.IO.Path]::GetFullPath($payloadDirectory).Replace('\', '/')
+        $hasExpectedInstallPrefix = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
+            ($null -ne (Select-String -LiteralPath $appCache -SimpleMatch `
+                -Pattern "CMAKE_INSTALL_PREFIX:PATH=$expectedInstallPrefix" -Quiet))
         $dependencyStep = if ($BuildMode -eq 'Clean' -or
             -not (Test-Path -LiteralPath $dependencyMarker -PathType Container)) { 'deps' } else { 'deps-dirty' }
         $appStep = if ($BuildMode -eq 'Clean' -or
-            -not (Test-Path -LiteralPath (Join-Path $script:RepositoryRoot 'build\CMakeCache.txt'))) { 'app' } else { 'app-dirty' }
+            -not $hasExpectedInstallPrefix) { 'app' } else { 'app-dirty' }
 
         Invoke-RepositoryCommand "Building dependencies ($dependencyStep)..." {
             & (Join-Path $script:RepositoryRoot 'build_win.bat') -v 17 -p $vsProduct `
                 -c Release -d $dependencyDestination -s $dependencyStep -r none
         }
-        Invoke-RepositoryCommand "Building Bambu Studio ($appStep)..." {
-            & (Join-Path $script:RepositoryRoot 'build_win.bat') -v 17 -p $vsProduct `
-                -c Release -d $dependencyDestination -s $appStep -r none
+        Normalize-PkgConfigFiles -DependencyDestination $dependencyDestination
+        $previousInstallPrefix = [Environment]::GetEnvironmentVariable('BAMBU_INSTALL_PREFIX', 'Process')
+        $env:BAMBU_INSTALL_PREFIX = $payloadDirectory
+        try {
+            Invoke-RepositoryCommand "Building Bambu Studio ($appStep)..." {
+                & (Join-Path $script:RepositoryRoot 'build_win.bat') -v 17 -p $vsProduct `
+                    -c Release -d $dependencyDestination -s $appStep -r none
+            }
+        }
+        finally {
+            if ($null -eq $previousInstallPrefix) {
+                Remove-Item Env:BAMBU_INSTALL_PREFIX -ErrorAction SilentlyContinue
+            } else {
+                $env:BAMBU_INSTALL_PREFIX = $previousInstallPrefix
+            }
         }
 
-        $payloadDirectory = Join-Path $script:RepositoryRoot 'install-dir'
         if (Test-Path -LiteralPath $payloadDirectory) {
             $expectedPayload = [System.IO.Path]::GetFullPath((Join-Path $script:RepositoryRoot 'install-dir'))
             $resolvedPayload = [System.IO.Path]::GetFullPath($payloadDirectory)
@@ -409,6 +500,11 @@ function Invoke-OneClickBuild {
         $application = Join-Path $payloadDirectory 'bambu-studio.exe'
         if (-not (Test-Path -LiteralPath $application -PathType Leaf)) {
             throw "The staged payload is missing '$application'."
+        }
+
+        if ($BuildOnly) {
+            Write-BuildLog "Build-only workflow completed; runnable payload: $application"
+            return
         }
 
         $sevenZip = Get-SevenZipPath

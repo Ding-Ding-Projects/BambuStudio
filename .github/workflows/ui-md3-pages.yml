@@ -40,20 +40,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # A release fires this workflow at the tag ref (md3-v57), not at master. The
-  # github-pages environment accepts deployments only from master, so it rejects a
+  # A release fires this workflow at the tag ref (md3-v57), not at the default branch. The
+  # github-pages environment accepts deployments only from the default branch, so it rejects a
   # tag-ref run before its first step runs — a three-second failure with no steps and
   # no log, which is why this went unnoticed: 12 release runs, 12 red X's, and the
   # changelog refresh they were supposed to perform never once happened.
   #
-  # So re-enter through the front door: dispatch this same workflow on master, which
+  # So re-enter through the front door: dispatch this same workflow on the default branch, which
   # then deploys normally and regenerates the changelog with the new release in it.
   # This cannot loop — the dispatched run arrives as workflow_dispatch, and nothing
   # in this workflow publishes a release.
   #
   # This fix is NOT retroactive, which is worth knowing before reading the run
   # history: a release event runs the workflow file as it existed at the TAG's
-  # commit, not as it exists on master. Releases tagged at commits older than this
+  # commit, not as it exists on the default branch. Releases tagged at commits older than this
   # change keep failing the old way until they drain — md3-v58, tagged at
   # 6d1ad69de, did exactly that after this landed.
   redeploy-on-release:
@@ -63,7 +63,7 @@ jobs:
       actions: write
       contents: read
     steps:
-      - name: Redeploy from master so the changelog picks up this release
+      - name: Redeploy from the default branch so the changelog picks up this release
         env:
           # GITHUB_TOKEN is a valid last resort here. The recursive-trigger
           # prevention does not apply to this call: GitHub documents that
@@ -73,12 +73,14 @@ jobs:
           # is attributed to the owner rather than to github-actions[bot].
           GH_TOKEN: ${{ secrets.TOKEN_GITHUB || secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run ui-md3-pages.yml --repo "${GITHUB_REPOSITORY}" --ref master
-          echo "Dispatched a master-ref Pages deploy for ${GITHUB_REF_NAME}."
+          default_branch="$(gh repo view "${GITHUB_REPOSITORY}" --json defaultBranchRef --jq '.defaultBranchRef.name')"
+          test -n "$default_branch"
+          gh workflow run ui-md3-pages.yml --repo "${GITHUB_REPOSITORY}" --ref "$default_branch"
+          echo "Dispatched a default-branch Pages deploy for ${GITHUB_REF_NAME}."
 
   deploy:
     # Never on a release: the environment would refuse it. redeploy-on-release
-    # dispatches a master-ref run, and that run lands here as workflow_dispatch.
+    # dispatches a default-branch run, and that run lands here as workflow_dispatch.
     if: github.event_name != 'release'
     runs-on: ubuntu-latest
     environment:

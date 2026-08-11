@@ -10,7 +10,11 @@ if not exist "%BAMBU_ONE_CLICK_SCRIPT%" (
     goto :finish
 )
 
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%BAMBU_ONE_CLICK_SCRIPT%" %*
+if "%SILENT%"=="1" set "BAMBU_ONE_CLICK_NO_PAUSE=1"
+set "BAMBU_ONE_CLICK_ARGS=%*"
+if /I "%~1"=="/s" set "BAMBU_ONE_CLICK_ARGS="
+if /I "%~1"=="--silent" set "BAMBU_ONE_CLICK_ARGS="
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%BAMBU_ONE_CLICK_SCRIPT%" %BAMBU_ONE_CLICK_ARGS%
 set "BAMBU_ONE_CLICK_EXIT=%ERRORLEVEL%"
 
 :finish

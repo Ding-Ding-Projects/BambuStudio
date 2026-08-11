@@ -9,7 +9,7 @@ on:
     branches: ['**']
 
   pull_request:
-    branches: [master]
+    branches: [main]
 
   workflow_dispatch: {}
 
@@ -103,6 +103,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Download installer artifact
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
@@ -189,6 +190,14 @@ jobs:
           "installer_path=$($installer.FullName)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
           "checksum_path=$checksumPath" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
           "sbom_path=$($sbom.FullName)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+
+          $lineCountPath = Join-Path $env:GITHUB_WORKSPACE 'release-line-count.md'
+          & pwsh -NoLogo -NoProfile -File (Join-Path $env:GITHUB_WORKSPACE 'scripts\ci\Measure-LineCount.ps1') `
+              -Root $env:GITHUB_WORKSPACE -OutputMarkdown $lineCountPath
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $lineCountPath -PathType Leaf)) {
+              throw 'The committed line-count script did not produce release-line-count.md.'
+          }
+          "line_count_path=$lineCountPath" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
 
       - name: Attest Windows installer provenance
         uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4
@@ -360,6 +369,7 @@ jobs:
           "release_codename=$codename" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
           Write-Host "Release v$releaseNumber '$codename' (tag $env:release_tag)"
 
+          $lineCount = Get-Content -LiteralPath $env:line_count_path
           $notes = @(
               'Native Windows build of Bambu Studio with the Material Design 3 rewrite.'
               ''
@@ -373,11 +383,20 @@ jobs:
               '- SBOM: CycloneDX 1.6 payload inventory is attached and attested'
               '- Software OpenGL fallback: ships hash-pinned Mesa llvmpipe 26.1.3 in the mesa\ subfolder; self-heals on machines without OpenGL 2.0 (VMs / Microsoft Basic Display Adapter)'
               '- Release integrity: published as a GitHub immutable release after all assets are validated in draft state'
+              ''
+              '- Line-count evidence (measured by the committed CI script at this commit):'
+          ) + $lineCount + @(
+              ''
+              '- Exclusions: vendored/third-party trees, dependencies, binary/generated payloads, build output, caches, and lockfiles are shown but excluded from the project total'
           )
           $notes | Set-Content release-notes.md -Encoding utf8
 
+          $defaultBranch = (& gh repo view $env:GITHUB_REPOSITORY --json defaultBranchRef --jq '.defaultBranchRef.name').Trim()
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($defaultBranch)) {
+              throw 'Could not resolve the repository default branch before publishing.'
+          }
           $releaseTitle = "Bambu Studio MD3 v$releaseNumber $([char]0x2014) $codename"
-          if ($env:GITHUB_REF -ne 'refs/heads/master') {
+          if ($env:GITHUB_REF_NAME -ne $defaultBranch) {
               $releaseTitle += " ($env:GITHUB_REF_NAME)"
           }
 
@@ -752,18 +771,18 @@ jobs:
 
               [void](Wait-ForReleaseState -ExpectedState Draft)
 
-              # Serialize release jobs, then resolve master immediately before
-              # publication so a queued older build cannot become latest.
+              # Serialize release jobs, then resolve the default branch immediately
+              # before publication so a queued older build cannot become latest.
               $latestArgument = '--latest=false'
-              if ($env:GITHUB_REF -eq 'refs/heads/master') {
-                  $masterSha = (& gh api "repos/$env:GITHUB_REPOSITORY/commits/master" --jq '.sha').Trim()
-                  if ($LASTEXITCODE -ne 0 -or -not $masterSha) {
-                      throw 'Could not resolve the current master commit immediately before publishing.'
+              if ($env:GITHUB_REF_NAME -eq $defaultBranch) {
+                  $defaultSha = (& gh api "repos/$env:GITHUB_REPOSITORY/commits/$defaultBranch" --jq '.sha').Trim()
+                  if ($LASTEXITCODE -ne 0 -or -not $defaultSha) {
+                      throw "Could not resolve the current $defaultBranch commit immediately before publishing."
                   }
-                  if ($masterSha -eq $env:GITHUB_SHA) {
+                  if ($defaultSha -eq $env:GITHUB_SHA) {
                       $latestArgument = '--latest'
                   } else {
-                      $releaseTitle += ' (superseded master build)'
+                      $releaseTitle += " (superseded $defaultBranch build)"
                   }
               }
 

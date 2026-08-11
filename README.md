@@ -326,6 +326,11 @@ Other major features are:
 # How to compile on Windows
 
 For a local Release installer, double-click [`OneClickBuildInstaller.cmd`](OneClickBuildInstaller.cmd).
+Automation and fresh checkouts can use the root [`build.bat`](build.bat) and
+[`build-installer.bat`](build-installer.bat) entry points; `/s`, `--silent`, or `SILENT=1` keeps either
+path non-interactive. `build.bat` leaves a runnable Release payload, while `build-installer.bat`
+produces the unsigned NSIS installer, SHA-256 sidecar, and CycloneDX SBOM through the same supported
+toolchain. Neither script launches the app or publishes a release.
 It detects and installs missing ordinary prerequisites, builds dependencies and Bambu Studio,
 stages the payload, and produces the NSIS installer, CycloneDX SBOM, SHA-256 checksum, and a detailed
 log under `artifacts/windows/`. See the
