@@ -73,6 +73,18 @@ body and Ink library are web content), so those regions appear empty in whole-wi
 Prepare capture is a direct sidebar-panel grab to show real migrated content. The frame shot dates
 from 2026-07-26 and the sidebar from 2026-07-28, both taken after the ink rename.
 
+**Fresh yum tong capture set — 2026-08-11**
+
+The native binary was built by `build-installer.bat /s` from source commit
+[`ca49ec7d9f6623a5474ec85d6b5b3c556ab2ab8a`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/ca49ec7d9f6623a5474ec85d6b5b3c556ab2ab8a),
+then launched on a named hidden desktop through the Cheap Lowlevel route. Each image below is a
+real `PrintWindow` capture resolved from the live window list; the documentation-only descendant
+`fe52d9766d900f09d7611d1dc5e0bc24854ca1cf` does not change these pixels.
+
+| Fresh native main surface | Fresh Setup Wizard surface |
+| :---: | :---: |
+| ![Fresh Bambu Studio native main surface with Home and project tabs](docs/readme-assets/yum-20260811-native-main-ca49.png) | ![Fresh Bambu Studio Setup Wizard welcome surface](docs/readme-assets/yum-20260811-wizard-ca49.png) |
+
 **Home — with the browser-like project tab bar**
 
 The new project tab strip (one tab per open project, a close button, and a "+" new-tab button) sits
