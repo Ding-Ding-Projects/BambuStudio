@@ -6,6 +6,7 @@ Set-StrictMode -Version Latest
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $generator = Join-Path $repoRoot 'packaging\windows\GenerateUninstallInclude.ps1'
+$installerSource = Get-Content -LiteralPath (Join-Path $repoRoot 'packaging\windows\BambuStudioMD3.nsi') -Raw
 $sbomGenerator = Join-Path $repoRoot 'scripts\ci\New-WindowsCycloneDxSbom.ps1'
 $languageVerifier = Join-Path $repoRoot 'scripts\i18n\Test-LanguageModes.ps1'
 
@@ -144,26 +145,20 @@ Assert-True ($releaseWorkflowText.Contains("'--draft'")) `
 Assert-True ($releaseWorkflowText.Contains('--draft=false')) `
     'The validated draft must have one explicit publication transition.'
 
-$installerSource = Get-Content -LiteralPath (Join-Path $repoRoot 'packaging\windows\BambuStudioMD3.nsi') -Raw
-Assert-True ($installerSource.Contains(
-        '!define PRODUCT_SOURCE_REPO_URL "https://github.com/Ding-Ding-Projects/BambuStudio.git"')) `
-    'The installer source-build repository default does not match the current origin.'
-Assert-True ($installerSource.Contains(
-        '!error "PRODUCT_SOURCE_TAG must be the exact 40-character source commit used to build this installer"')) `
-    'The installer must fail compilation when its exact source commit is not supplied.'
-Assert-True (-not $installerSource.Contains('!define PRODUCT_SOURCE_TAG "v${PRODUCT_VERSION}"')) `
-    'The installer must not silently rebuild from a mutable/shared product-version tag.'
-$makensisCalls = @([regex]::Matches($buildWorkflowText, '(?m)^\s*&\s+\$makensis\b'))
-$sourceRepoDefines = @([regex]::Matches(
-    $buildWorkflowText,
-    '(?m)^\s*"/DPRODUCT_SOURCE_REPO_URL=https://github\.com/\$\{\{ github\.repository \}\}\.git"'))
-$sourceCommitDefines = @([regex]::Matches(
-    $buildWorkflowText,
-    '(?m)^\s*"/DPRODUCT_SOURCE_TAG=\$\{\{ github\.sha \}\}"'))
-Assert-True ($makensisCalls.Count -gt 0 -and
-    $sourceRepoDefines.Count -eq $makensisCalls.Count -and
-    $sourceCommitDefines.Count -eq $makensisCalls.Count) `
-    "Every makensis path must bind the source repository and exact workflow commit; found $($makensisCalls.Count) call(s), $($sourceRepoDefines.Count) repository define(s), and $($sourceCommitDefines.Count) commit define(s)."
+$packager = Join-Path $repoRoot 'scripts\windows\Invoke-SquirrelPackage.ps1'
+$packageValidator = Join-Path $repoRoot 'scripts\ci\Test-SquirrelWindowsPackage.ps1'
+Assert-True (Test-Path -LiteralPath $packager -PathType Leaf) 'The Squirrel package script is missing.'
+Assert-True (Test-Path -LiteralPath $packageValidator -PathType Leaf) 'The Squirrel package validator is missing.'
+Assert-True ($buildWorkflowText.Contains('Invoke-SquirrelPackage.ps1')) `
+    'The build workflow must invoke the committed Squirrel package script.'
+Assert-True (-not $buildWorkflowText.Contains('makensis')) `
+    'The active build workflow must not invoke the retired NSIS compiler.'
+Assert-True ($releaseWorkflowText.Contains('Setup.exe')) `
+    'The release workflow must publish Setup.exe.'
+Assert-True ($releaseWorkflowText.Contains('RELEASES')) `
+    'The release workflow must validate the RELEASES feed index.'
+Assert-True ($releaseWorkflowText.Contains('*-full.nupkg')) `
+    'The release workflow must validate a Squirrel full package.'
 foreach ($relativePath in $workflowPaths) {
     $workflowText = Get-Content -LiteralPath (Join-Path $repoRoot $relativePath) -Raw
     foreach ($match in [regex]::Matches($workflowText, '(?m)^\s*(?:-\s*)?uses:\s+([^\s#]+)')) {

@@ -37,7 +37,6 @@ Assert-True ($errors.Count -eq 0) "The one-click PowerShell script has parse err
 foreach ($required in @(
     'Install-VisualCppBuildTools',
     'Install-CMake',
-    'NSIS.NSIS',
     '7zip.7zip',
     'git lfs pull',
     'System.Threading.Mutex',
@@ -45,12 +44,17 @@ foreach ($required in @(
     'cmake.exe --install',
     'Add-MesaFallback',
     'New-WindowsCycloneDxSbom.ps1',
-    'GenerateUninstallInclude.ps1',
-    '/INPUTCHARSET UTF8',
+    'Invoke-SquirrelPackage.ps1',
+    'Squirrel.Windows',
+    'RELEASES',
+    'Setup.exe',
     '$checksum = "$installer.sha256"'
 )) {
     Assert-True $text.Contains($required) "The one-click workflow is missing required contract '$required'."
 }
+
+Assert-True (-not $text.Contains('NSIS.NSIS')) 'The one-click workflow must not bootstrap NSIS after the Squirrel.Windows migration.'
+Assert-True (-not $text.Contains('Get-MakeNsisPath')) 'The one-click workflow must not invoke the retired NSIS compiler path.'
 
 $launcherText = Get-Content -LiteralPath $launcher -Raw
 Assert-True $launcherText.Contains('Invoke-OneClickBuild.ps1') 'The CMD launcher does not call the PowerShell workflow.'

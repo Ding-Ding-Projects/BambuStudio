@@ -4,10 +4,10 @@ Bambu Studio is a cutting-edge, feature-rich slicing software.
 It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
 
 This fork's maintained delivery target is native Windows UI modernization informed by Material Design 3. The
-[latest Windows installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe)
+[latest Windows installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe)
 is a per-user install and does not require administrator elevation. It is currently unsigned; verify
 the accompanying
-[SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256)
+[SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe.sha256)
 before running it. **This fork is Windows-only.** macOS and Linux support has been removed from the tree: the
 platform sources, build scripts, packaging and CI jobs are gone, and CMake fails fast when
 configured on any other system. Cross-platform builds remain available upstream from
@@ -244,17 +244,13 @@ the temporary HTTP/mDNS contract and Postman collections.
 
 ## Windows installer
 
-The NSIS installer is restyled to Material Design 3: custom Welcome, language, install-source,
-build-progress, and Finish pages, with the unavoidable Win32 dialog deviations recorded in the
-installer documentation, and a root-cause fix for the previously garbled Cantonese language page
-(UTF-8 sources compiled with `/INPUTCHARSET UTF8`). Alongside the default prebuilt install, an
-optional interactive **Build from source** mode bootstraps Git, Node.js LTS, the Visual Studio 2022
-C++ Build Tools, and CMake, clones this repository at the exact commit that produced the installer,
-verifies that detached checkout, compiles it locally with a
-bounded five-cycle automated repair loop, and hands the built payload to the same ownership,
-recovery, and uninstall flow as the prebuilt path. Build from source is never reachable in silent
-mode and never runs in CI; its first end-to-end run on a real machine is still an open verification
-item. See [Native Windows installer](docs/features/releases/windows-native-installer.md) and
+The supported Windows installer is Squirrel.Windows. It produces the standard unsigned
+`Setup.exe`, `RELEASES` feed index, full `.nupkg`, and any delta packages Squirrel can generate,
+alongside a SHA-256 sidecar and CycloneDX SBOM. The package records the exact source commit in its
+NuGet metadata, and the release workflow verifies the package layout and unsigned Authenticode
+status before publication. The old NSIS UI-page path is retired; local source builds remain
+available through the documented one-click build scripts. See [Windows native installer](docs/features/releases/windows-native-installer.md),
+[Windows one-click build](docs/features/releases/windows-one-click-build.md), and
 [Build from source](docs/features/releases/windows-build-from-source.md).
 
 ## Project history
@@ -271,26 +267,23 @@ computer, or a replacement for backups. There is not yet a retention or pruning 
 can grow with project size and edit count. A restore changes the open session; the project file is
 only replaced when the user explicitly saves it.
 
-The Windows pipeline builds and tests the native application, exercises installer upgrade
-and recovery behavior on a disposable GitHub-hosted runner, produces a per-file CycloneDX 1.6 SBOM,
-and creates GitHub provenance and SBOM attestations for the installer. It validates all three assets
-in a draft before publication and refuses to publish unless repository immutable releases are
-enabled. The publish pipeline is verified green: hosted run
+The Windows pipeline builds the native application, produces a per-file CycloneDX 1.6 SBOM, packages
+the payload with Squirrel.Windows, and creates GitHub provenance and SBOM attestations for `Setup.exe`.
+It validates the Squirrel feed, full package, checksum, unsigned Authenticode state, and SBOM in a
+draft before publication and refuses to publish unless repository immutable releases are enabled.
+The last historical publish pipeline proof is hosted run
 [`29877040307`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29877040307)
 completed with both `Build BambuStudio` and `Publish Windows release` succeeding and published the
-non-draft release
+non-draft NSIS-era release
 [`md3-windows-v02.08.01.55-r37`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-windows-v02.08.01.55-r37)
-(installer, SHA-256 checksum, CycloneDX SBOM), and the subsequent register waves shipped further
-releases through the same gate. When an org-side restriction began returning HTTP 403 on release
+(installer, SHA-256 checksum, CycloneDX SBOM). New releases ship `Setup.exe`, `RELEASES`, the full
+Squirrel package, any delta packages, the sidecar, and SBOM. When an org-side restriction began returning HTTP 403 on release
 creation with the workflow token, the publish step was switched to authenticate with the
 `TOKEN_GITHUB` owner PAT (commit `fc7257366`, falling back to the workflow token where the secret
 is absent); release `r56` was published manually from run artifacts during that incident. GitHub
 attestations and checksums are not Authenticode signatures; configuring a trusted Windows signing
-identity remains external work. Local focused validation on commit `3b00dc6aa` passed
-`language_mode_tests`, `project_history_tests`, and `deterministic_bbs_3mf_tests` (3/3). This
-focused gate is not the full aggregate suite: `libslic3r_tests` and `libnest2d_tests` remain
-waived from the hosted gate; a Wave 9 repair ported the drifted config keys and fixed the invalid
-Catch2 exclusion, but the repaired suites are not yet wired back into CI. See
+identity remains external work. Local release checks are the evidence boundary for the current
+Squirrel migration; a cancelled or pending hosted run is not treated as green. See
 [`HANDOFF.md`](HANDOFF.md) for the authoritative, current CI state.
 
 Bambu Studio is based on [PrusaSlicer](https://github.com/prusa3d/PrusaSlicer) by Prusa Research, which is from [Slic3r](https://github.com/Slic3r/Slic3r) by Alessandro Ranellucci and the RepRap community.
@@ -329,11 +322,12 @@ For a local Release installer, double-click [`OneClickBuildInstaller.cmd`](OneCl
 Automation and fresh checkouts can use the root [`build.bat`](build.bat) and
 [`build-installer.bat`](build-installer.bat) entry points; `/s`, `--silent`, or `SILENT=1` keeps either
 path non-interactive. `build.bat` leaves a runnable Release payload, while `build-installer.bat`
-produces the unsigned NSIS installer, SHA-256 sidecar, and CycloneDX SBOM through the same supported
-toolchain. Neither script launches the app or publishes a release.
+produces the unsigned Squirrel.Windows `Setup.exe`, `RELEASES` feed, full package, any generated
+delta packages, SHA-256 sidecar, and CycloneDX SBOM through the same supported toolchain. Neither
+script launches the app or publishes a release.
 It detects and installs missing ordinary prerequisites, builds dependencies and Bambu Studio,
-stages the payload, and produces the NSIS installer, CycloneDX SBOM, SHA-256 checksum, and a detailed
-log under `artifacts/windows/`. See the
+stages the payload, and writes Squirrel artifacts under `artifacts/windows/squirrel/` plus the
+CycloneDX SBOM, SHA-256 checksum, and detailed log under `artifacts/windows/`. See the
 [one-click Windows build guide](docs/features/releases/windows-one-click-build.md) for clean,
 bootstrap-only, plan, and explicit post-build install modes.
 
@@ -345,7 +339,7 @@ bootstraps the toolchain and runs the same documented build path. The fork's rel
 is encoded in
 [`.github/workflows/build_bambu.yml`](.github/workflows/build_bambu.yml) and is orchestrated by
 [`.github/workflows/build_all.yml`](.github/workflows/build_all.yml). The release workflow enables
-native C++ tests and packages the installed payload with NSIS; see the
+native C++ tests and packages the installed payload with Squirrel.Windows; see the
 [Windows CI and supply-chain documentation](docs/features/releases/windows-release-supply-chain.md)
 before treating a local build as equivalent to a published artifact.
 

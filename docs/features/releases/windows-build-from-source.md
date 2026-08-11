@@ -1,5 +1,10 @@
 # Build from source (Windows installer)
 
+> **Historical note:** the current release path is the unsigned Squirrel.Windows package documented
+> in [Native Windows installer](windows-native-installer.md). The interactive NSIS build-from-source
+> helper described below is retained for audit/history only and is not invoked by the current build
+> or release workflow.
+
 ## Overview
 
 The Windows installer offers an optional, interactive **Build from source** install source alongside

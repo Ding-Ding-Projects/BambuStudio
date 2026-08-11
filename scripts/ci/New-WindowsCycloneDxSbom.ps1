@@ -36,6 +36,17 @@ if ($resolvedOutput.StartsWith($payloadRoot + '\', [System.StringComparison]::Or
 }
 
 $components = [System.Collections.Generic.List[object]]::new()
+$sha256 = [System.Security.Cryptography.SHA256]::Create()
+function Get-Sha256Lower {
+    param([Parameter(Mandatory)][string] $Path)
+    $stream = [System.IO.File]::OpenRead($Path)
+    try {
+        return ([System.BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
 $entries = @(Get-ChildItem -LiteralPath $payloadRoot -Recurse -Force)
 $reparseEntry = $entries | Where-Object {
     ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0
@@ -50,7 +61,7 @@ if ($files.Count -eq 0) {
 
 foreach ($file in $files) {
     $relativePath = $file.FullName.Substring($payloadRoot.Length + 1).Replace('\', '/')
-    $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    $hash = Get-Sha256Lower -Path $file.FullName
     $components.Add([ordered]@{
         type = 'file'
         name = $relativePath
@@ -69,6 +80,7 @@ foreach ($file in $files) {
         )
     })
 }
+$sha256.Dispose()
 
 $bom = [ordered]@{
     '$schema' = 'https://cyclonedx.org/schema/bom-1.6.schema.json'

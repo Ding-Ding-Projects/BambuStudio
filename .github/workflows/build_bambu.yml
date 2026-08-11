@@ -78,7 +78,7 @@ jobs:
         if: inputs.os == 'windows-latest'
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
 
-      - name: Install nsis and pkgconfig
+      - name: Install pkgconfig for the Windows build
         if: inputs.os == 'windows-latest'
         shell: pwsh
         run: |
@@ -112,7 +112,6 @@ jobs:
               throw "$Name $Version could not be installed after $Attempts attempts."
           }
 
-          Install-ChocoPackage -Name 'nsis' -Version '3.12.0'
           Install-ChocoPackage -Name 'pkgconfiglite' -Version '0.28.0'
 
       - name: Setup Node.js for Windows checks
@@ -207,7 +206,7 @@ jobs:
           sccache --show-stats
 
       # Stage the Mesa llvmpipe software-OpenGL fallback into the payload's
-      # mesa/ subfolder before SBOM generation, the portable zip, and NSIS
+      # mesa/ subfolder before SBOM generation, the portable zip, and Squirrel
       # packaging. The app copies these DLLs beside bambu-studio.exe and
       # relaunches itself when the host GPU driver offers no OpenGL >= 2.0
       # (see docs/features/windows/software-gl-fallback.md). The archive is a
@@ -400,11 +399,6 @@ jobs:
             -Commit '${{ github.sha }}' `
             -Repository '${{ github.repository }}'
 
-      # - name: Create installer Win
-      #   if: inputs.os == 'windows-latest'
-      #   working-directory: ${{ github.workspace }}/build
-      #   run: |
-      #     cpack -G NSIS
 
       - name: Pack app
         if: inputs.os == 'windows-latest'
@@ -412,326 +406,65 @@ jobs:
         shell: cmd
         run: '"C:/Program Files/7-Zip/7z.exe" a -tzip BambuStudio_Windows_${{ env.ver }}_portable.zip ${{ github.workspace }}/install-dir'
 
-      - name: Create Windows installer
+      - name: Create Windows Squirrel installer
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-
           $versionContent = Get-Content version.inc -Raw
           if ($versionContent -notmatch 'set\(SLIC3R_VERSION "([^"]+)"\)') {
               throw 'Could not read SLIC3R_VERSION from version.inc.'
           }
 
-          $productVersion = $matches[1]
-          $numericParts = @([regex]::Matches($productVersion, '\d+') | ForEach-Object { [int]$_.Value })
-          if ($numericParts.Count -gt 4) {
-              $numericParts = @($numericParts[0..3])
-          }
-          while ($numericParts.Count -lt 4) {
-              $numericParts += 0
-          }
-          if ($numericParts | Where-Object { $_ -gt 65535 }) {
-              throw "Version '$productVersion' contains a component larger than 65535."
-          }
-          $fileVersion = $numericParts -join '.'
-          $makensis = 'C:\Program Files (x86)\NSIS\makensis.exe'
-          if (-not (Test-Path -LiteralPath $makensis)) {
-              throw "NSIS compiler was not found at $makensis."
-          }
-
-          $uninstallInclude = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-UninstallFiles.nsh'
-          & '${{ github.workspace }}\packaging\windows\GenerateUninstallInclude.ps1' `
-            -PayloadDir '${{ github.workspace }}\install-dir' `
-            -OutputPath $uninstallInclude
-
-          & $makensis /V3 /INPUTCHARSET UTF8 `
-            "/DPRODUCT_VERSION=$productVersion" `
-            "/DFILE_VERSION=$fileVersion" `
-            "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
-            "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
-            "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
-            "/DOUT_FILE=${{ github.workspace }}\BambuStudioMD3-Setup.exe" `
-            "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
-            "/DUNINSTALL_INCLUDE=$uninstallInclude" `
-            "${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi"
-
+          $sourceCommit = (git rev-parse HEAD).Trim()
           if ($LASTEXITCODE -ne 0) {
-              throw "makensis failed with exit code $LASTEXITCODE."
+              throw 'Could not read the source commit.'
           }
 
-          & 'C:\Program Files\7-Zip\7z.exe' t "${{ github.workspace }}\BambuStudioMD3-Setup.exe"
+          & .\scripts\windows\Invoke-SquirrelPackage.ps1 `
+            -PayloadDirectory '${{ github.workspace }}\install-dir' `
+            -OutputDirectory '${{ github.workspace }}\artifacts\windows' `
+            -ProductVersion $matches[1] `
+            -SourceCommit $sourceCommit `
+            -Repository 'https://github.com/${{ github.repository }}.git' `
+            -IconPath '${{ github.workspace }}\resources\images\BambuStudio.ico'
           if ($LASTEXITCODE -ne 0) {
-              throw "Installer archive validation failed with exit code $LASTEXITCODE."
+              throw "Squirrel.Windows packaging failed with exit code $LASTEXITCODE."
+          }
+          $squirrelDir = Join-Path '${{ github.workspace }}\artifacts\windows' 'squirrel'
+          foreach ($required in @('Setup.exe', 'RELEASES', 'Setup.exe.sha256')) {
+              if (-not (Test-Path -LiteralPath (Join-Path $squirrelDir $required) -PathType Leaf)) {
+                  throw "Squirrel output is missing $required."
+              }
+          }
+          $fullPackages = @(Get-ChildItem -LiteralPath $squirrelDir -File -Filter '*-full.nupkg')
+          if ($fullPackages.Count -ne 1) {
+              throw "Squirrel output must contain exactly one full package; found $($fullPackages.Count)."
           }
 
-      - name: Validate MD3 installer pages and from-source helpers
+      - name: Validate Squirrel Windows package contract
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          Set-StrictMode -Version Latest
-
-          # Static, no-execution validation of the MD3 restyle + build-from-source
-          # additions to the installer. The heavy "Create Windows installer" step
-          # already proved the real .nsi (and its new custom pages) compile with
-          # makensis; from-source itself is interactive-only and never runs in CI
-          # (see docs/features/releases/windows-build-from-source.md), so here it
-          # degrades to compile-and-static-check only.
-          $packagingDir = Join-Path $env:GITHUB_WORKSPACE 'packaging\windows'
-          $nsiPath = Join-Path $packagingDir 'BambuStudioMD3.nsi'
-          $bfsDir = Join-Path $packagingDir 'build-from-source'
-
-          # The installer launches its helper with Windows PowerShell 5.1, not
-          # this step's pwsh host. Exercise decoding and compatibility there.
-          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File `
-              (Join-Path $env:GITHUB_WORKSPACE 'scripts\ci\Test-BuildFromSourceHelpers.ps1') `
-              -RepositoryRoot $env:GITHUB_WORKSPACE
-          if ($LASTEXITCODE -ne 0) {
-              throw "Windows PowerShell 5.1 build-from-source checks failed with exit code $LASTEXITCODE."
+          $squirrelDir = Join-Path '${{ github.workspace }}\artifacts\windows' 'squirrel'
+          $fullPackage = @(Get-ChildItem -LiteralPath $squirrelDir -File -Filter '*-full.nupkg')
+          if ($fullPackage.Count -ne 1) {
+              throw "Expected one Squirrel full package; found $($fullPackage.Count)."
           }
-
-          # 1. The .nsi must keep its UTF-8 BOM (makensis /INPUTCHARSET UTF8 relies on
-          #    it to decode the inline Cantonese strings).
-          $nsiBytes = [System.IO.File]::ReadAllBytes($nsiPath)
-          if ($nsiBytes.Length -lt 3 -or $nsiBytes[0] -ne 0xEF -or $nsiBytes[1] -ne 0xBB -or $nsiBytes[2] -ne 0xBF) {
-              throw 'BambuStudioMD3.nsi lost its UTF-8 BOM.'
-          }
-
-          # 2. Every makensis invocation in this workflow keeps /INPUTCHARSET UTF8.
-          $workflowPath = Join-Path $env:GITHUB_WORKSPACE '.github\workflows\build_bambu.yml'
-          $workflowLines = @(Get-Content -LiteralPath $workflowPath)
-          $makensisLines = @($workflowLines | Where-Object { $_ -match '&\s+\$makensis\b' })
-          $charsetLines = @($makensisLines | Where-Object { $_ -match '/INPUTCHARSET\s+UTF8' })
-          if ($makensisLines.Count -lt 5 -or $charsetLines.Count -ne $makensisLines.Count) {
-              throw "Every makensis call must keep /INPUTCHARSET UTF8; found $($makensisLines.Count) call(s), $($charsetLines.Count) carrying the flag."
-          }
-
-          # 3. The three from-source PowerShell helpers exist and parse.
-          foreach ($helper in @('Build-FromSource.ps1', 'Toolchain.ps1', 'Opencode.ps1')) {
-              $helperPath = Join-Path $bfsDir $helper
-              if (-not (Test-Path -LiteralPath $helperPath -PathType Leaf)) {
-                  throw "Missing from-source helper: $helperPath"
-              }
-              $null = [scriptblock]::Create((Get-Content -LiteralPath $helperPath -Raw))
-          }
-
-          # 4. Structural tokens the new pages / flows must contain.
-          $nsi = Get-Content -LiteralPath $nsiPath -Raw -Encoding UTF8
-          $mustContain = @(
-              'Function WelcomePageCreate',
-              'Function InstallModePageCreate',
-              'Function BuildProgressPageCreate',
-              'Function FinishPageCreate',
-              '"InstallSource"',
-              '.md3-owned-manifest.txt',
-              'GetSystemMenu',
-              'DeleteMenu',
-              'SC_CLOSE'
-          )
-          foreach ($needle in $mustContain) {
-              if (-not $nsi.Contains($needle)) {
-                  throw "BambuStudioMD3.nsi is missing expected token: $needle"
-              }
-          }
-
-          # 5. Silent mode must force the prebuilt path and skip the mode chooser.
-          $imStart = $nsi.IndexOf('Function InstallModePageCreate')
-          $imEnd = $nsi.IndexOf('FunctionEnd', [Math]::Max($imStart, 0))
-          if ($imStart -lt 0 -or $imEnd -lt 0) { throw 'InstallModePageCreate is malformed.' }
-          $imBody = $nsi.Substring($imStart, $imEnd - $imStart)
-          foreach ($needle in @('${Silent}', 'StrCpy $InstallMode "prebuilt"', 'Abort')) {
-              if (-not $imBody.Contains($needle)) {
-                  throw "InstallModePageCreate silent-mode prebuilt guard is missing '$needle'."
-              }
-          }
-
-          # 6. Each new page string is bilingual: an EN label with a Cantonese (CJK)
-          #    counterpart within the same MD3BiText block. Checked without embedding
-          #    CJK literals in this workflow (encoding-robust).
-          $enStrings = @(
-              'How would you like to install?',
-              'Install prebuilt (recommended)',
-              'Build from source (advanced',
-              'Building Bambu Studio MD3 from source',
-              'This can take a long time'
-          )
-          foreach ($en in $enStrings) {
-              $idx = $nsi.IndexOf($en)
-              if ($idx -lt 0) { throw "Missing EN installer string: $en" }
-              $window = $nsi.Substring($idx, [Math]::Min(600, $nsi.Length - $idx))
-              $hasCjk = $false
-              foreach ($ch in $window.ToCharArray()) {
-                  $code = [int][char]$ch
-                  if ($code -ge 0x4E00 -and $code -le 0x9FFF) { $hasCjk = $true; break }
-              }
-              if (-not $hasCjk) {
-                  throw "No Cantonese counterpart found near EN string: $en"
-              }
-          }
-
-          # 7. The opencode blanket-allow emitter keeps its security posture:
-          #    question=deny and external_directory=deny (grant scoped to the clone),
-          #    while action classes stay allow.
-          . (Join-Path $bfsDir 'Opencode.ps1')
-          $emitterDir = Join-Path $env:RUNNER_TEMP ('bfs-opencode-check-' + [guid]::NewGuid().ToString('N'))
-          try {
-              $configPath = New-OpencodeAllowConfig -CloneDir $emitterDir
-              $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-              if ($config.permission.question -ne 'deny') {
-                  throw "opencode config: question must be 'deny', got '$($config.permission.question)'."
-              }
-              if ($config.permission.external_directory -ne 'deny') {
-                  throw "opencode config: external_directory must be 'deny', got '$($config.permission.external_directory)'."
-              }
-              if ($config.permission.edit -ne 'allow' -or $config.permission.bash -ne 'allow') {
-                  throw 'opencode config: action classes edit/bash must be allow.'
-              }
-          }
-          finally {
-              if (Test-Path -LiteralPath $emitterDir) {
-                  Remove-Item -LiteralPath $emitterDir -Recurse -Force
-              }
-          }
-
-          Write-Host 'MD3 installer page and from-source helper validation passed.'
-
-      - name: Test Windows install, upgrade, and uninstall behavior
-        if: inputs.os == 'windows-latest'
-        working-directory: ${{ github.workspace }}
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-
-          $versionContent = Get-Content version.inc -Raw
-          if ($versionContent -notmatch 'set\(SLIC3R_VERSION "([^"]+)"\)') {
-              throw 'Could not read SLIC3R_VERSION from version.inc.'
-          }
-
-          $productVersion = $matches[1]
-          $numericParts = @([regex]::Matches($productVersion, '\d+') | ForEach-Object { [int]$_.Value })
-          if ($numericParts.Count -gt 4) {
-              $numericParts = @($numericParts[0..3])
-          }
-          while ($numericParts.Count -lt 4) {
-              $numericParts += 0
-          }
-          $fileVersion = $numericParts -join '.'
-
-          $obsoleteRelativePath = 'md3-ci-obsolete-owned-file.txt'
-          $obsoletePayloadPath = Join-Path '${{ github.workspace }}\install-dir' $obsoleteRelativePath
-          $previousInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-PreviousFixture.exe'
-          $previousUninstallInclude = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-PreviousFixture-UninstallFiles.nsh'
-          $ancestorGuardRoot = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-AncestorGuard'
-          $ancestorGuardPrograms = Join-Path $ancestorGuardRoot 'Programs'
-          $ancestorGuardInstallDir = Join-Path $ancestorGuardPrograms 'Bambu Studio MD3'
-          $ancestorGuardInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-AncestorGuardFixture.exe'
-          $bootstrapFailureInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-BootstrapFailureFixture.exe'
-          $shortcutGuardRoot = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-ShortcutGuard'
-          $shortcutGuardDir = Join-Path $shortcutGuardRoot 'Bambu Studio MD3'
-          $shortcutGuardInstaller = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-ShortcutGuardFixture.exe'
-          $guardPayload = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-GuardPayload'
-          $guardUninstallInclude = Join-Path $env:RUNNER_TEMP 'BambuStudioMD3-GuardPayload-UninstallFiles.nsh'
-          $makensis = 'C:\Program Files (x86)\NSIS\makensis.exe'
-
-          try {
-              Set-Content -LiteralPath $obsoletePayloadPath -Value 'Owned only by the previous CI fixture.' -Encoding ascii
-              & '${{ github.workspace }}\packaging\windows\GenerateUninstallInclude.ps1' `
-                -PayloadDir '${{ github.workspace }}\install-dir' `
-                -OutputPath $previousUninstallInclude
-
-              & $makensis /V2 /INPUTCHARSET UTF8 `
-                "/DPRODUCT_VERSION=$productVersion" `
-                "/DFILE_VERSION=$fileVersion" `
-                "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
-                "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
-                "/DPAYLOAD_DIR=${{ github.workspace }}\install-dir" `
-                "/DOUT_FILE=$previousInstaller" `
-                "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
-                "/DUNINSTALL_INCLUDE=$previousUninstallInclude" `
-                '${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi'
-
-              if ($LASTEXITCODE -ne 0) {
-                  throw "Creating the previous-version installer fixture failed with exit code $LASTEXITCODE."
-              }
-
-              New-Item -ItemType Directory -Path $guardPayload | Out-Null
-              Set-Content -LiteralPath (Join-Path $guardPayload 'bambu-studio.exe') `
-                -Value 'CI-only destination-guard fixture.' -Encoding ascii
-              Copy-Item -LiteralPath '${{ github.workspace }}\LICENSE' `
-                -Destination (Join-Path $guardPayload 'LICENSE.txt')
-              & '${{ github.workspace }}\packaging\windows\GenerateUninstallInclude.ps1' `
-                -PayloadDir $guardPayload `
-                -OutputPath $guardUninstallInclude
-
-              & $makensis /V2 /INPUTCHARSET UTF8 `
-                "/DPRODUCT_VERSION=$productVersion" `
-                "/DFILE_VERSION=$fileVersion" `
-                "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
-                "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
-                "/DPAYLOAD_DIR=$guardPayload" `
-                "/DOUT_FILE=$ancestorGuardInstaller" `
-                "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
-                "/DUNINSTALL_INCLUDE=$guardUninstallInclude" `
-                "/DPRODUCT_INSTALL_ROOT=$ancestorGuardRoot" `
-                "/DPRODUCT_PROGRAMS_DIR=$ancestorGuardPrograms" `
-                "/DPRODUCT_INSTALL_DIR=$ancestorGuardInstallDir" `
-                '${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi'
-
-              if ($LASTEXITCODE -ne 0) {
-                  throw "Creating the ancestor-guard installer fixture failed with exit code $LASTEXITCODE."
-              }
-
-              & $makensis /V2 /INPUTCHARSET UTF8 `
-                "/DPRODUCT_VERSION=$productVersion" `
-                "/DFILE_VERSION=$fileVersion" `
-                "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
-                "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
-                "/DPAYLOAD_DIR=$guardPayload" `
-                "/DOUT_FILE=$bootstrapFailureInstaller" `
-                "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
-                "/DUNINSTALL_INCLUDE=$guardUninstallInclude" `
-                /DTEST_FORCE_BOOTSTRAP_CLEANUP_FAILURE `
-                '${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi'
-
-              if ($LASTEXITCODE -ne 0) {
-                  throw "Creating the bootstrap-failure installer fixture failed with exit code $LASTEXITCODE."
-              }
-
-              & $makensis /V2 /INPUTCHARSET UTF8 `
-                "/DPRODUCT_VERSION=$productVersion" `
-                "/DFILE_VERSION=$fileVersion" `
-                "/DPRODUCT_SOURCE_REPO_URL=https://github.com/${{ github.repository }}.git" `
-                "/DPRODUCT_SOURCE_TAG=${{ github.sha }}" `
-                "/DPAYLOAD_DIR=$guardPayload" `
-                "/DOUT_FILE=$shortcutGuardInstaller" `
-                "/DINSTALLER_ICON=${{ github.workspace }}\resources\images\BambuStudio.ico" `
-                "/DUNINSTALL_INCLUDE=$guardUninstallInclude" `
-                "/DPRODUCT_SHORTCUT_ROOT=$shortcutGuardRoot" `
-                "/DPRODUCT_SHORTCUT_DIR=$shortcutGuardDir" `
-                '${{ github.workspace }}\packaging\windows\BambuStudioMD3.nsi'
-
-              if ($LASTEXITCODE -ne 0) {
-                  throw "Creating the shortcut-guard installer fixture failed with exit code $LASTEXITCODE."
-              }
-          }
-          finally {
-              Remove-Item -LiteralPath $obsoletePayloadPath -Force -ErrorAction SilentlyContinue
-          }
-
-          .\scripts\ci\Test-WindowsInstaller.ps1 `
-            -Installer '${{ github.workspace }}\BambuStudioMD3-Setup.exe' `
-            -PreviousInstaller $previousInstaller `
-            -PreviousOwnedFile $obsoleteRelativePath `
+          & .\scripts\ci\Test-SquirrelWindowsPackage.ps1 `
+            -Installer (Join-Path $squirrelDir 'Setup.exe') `
+            -Releases (Join-Path $squirrelDir 'RELEASES') `
+            -FullPackage $fullPackage[0].FullName `
+            -Checksum (Join-Path $squirrelDir 'Setup.exe.sha256') `
             -Sbom '${{ github.workspace }}\BambuStudioMD3.cdx.json' `
-            -AncestorGuardInstaller $ancestorGuardInstaller `
-            -BootstrapFailureInstaller $bootstrapFailureInstaller `
-            -ShortcutGuardInstaller $shortcutGuardInstaller `
-            -AncestorGuardRoot $ancestorGuardRoot `
-            -ShortcutGuardRoot $shortcutGuardRoot `
+            -SourceCommit '${{ github.sha }}' `
             -CiExecutionApproved
+          if ($LASTEXITCODE -ne 0) {
+              throw "Squirrel package contract failed with exit code $LASTEXITCODE."
+          }
 
       # - name: Pack PDB
       #   if: inputs.os == 'windows-latest'
@@ -740,19 +473,21 @@ jobs:
       #   run: '"C:/Program Files/7-Zip/7z.exe" a -m0=lzma2 -mx9 Debug_PDB_${{ env.ver }}_for_developers_only.7z  *.pdb'
 
       - name: Upload artifacts Win zip
-        if: inputs.os == 'windows-latest'
+        if: always() && inputs.os == 'windows-latest'
+        continue-on-error: true
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_Windows_${{ env.ver }}_portable
           path: ${{ github.workspace }}/BambuStudio_Windows_${{ env.ver }}_portable.zip
+          if-no-files-found: warn
 
       - name: Upload Windows installer
-        if: inputs.os == 'windows-latest'
+        if: always() && inputs.os == 'windows-latest'
+        continue-on-error: true
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_Windows_${{ env.ver }}_installer
           path: |
-            ${{ github.workspace }}/BambuStudioMD3-Setup.exe
+            ${{ github.workspace }}/artifacts/windows/squirrel/*
             ${{ github.workspace }}/BambuStudioMD3.cdx.json
-          if-no-files-found: error
-
+          if-no-files-found: warn

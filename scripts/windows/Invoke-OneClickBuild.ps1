@@ -5,7 +5,8 @@
     Installs missing ordinary build prerequisites through winget, builds the
     repository dependencies and Release application, stages the payload, adds
     the hash-pinned Mesa software OpenGL fallback, creates a CycloneDX SBOM,
-    compiles the NSIS installer, validates it, and writes a SHA-256 sidecar.
+    builds an unsigned Squirrel.Windows release, validates its Setup.exe,
+    RELEASES index, and package, and writes a SHA-256 sidecar.
 
     Double-click OneClickBuildInstaller.cmd for the default incremental build.
     Use -Install only when the newly built unsigned installer should be run.
@@ -77,35 +78,6 @@ function Resolve-OutputDirectory {
     return [System.IO.Path]::GetFullPath((Join-Path $script:RepositoryRoot $RequestedPath))
 }
 
-function Get-MakeNsisPath {
-    $command = Get-Command makensis.exe -ErrorAction SilentlyContinue
-    if ($command) { return $command.Source }
-    foreach ($candidate in @(
-        (Join-Path ${env:ProgramFiles(x86)} 'NSIS\makensis.exe'),
-        (Join-Path $env:ProgramFiles 'NSIS\makensis.exe'),
-        (Join-Path $env:LOCALAPPDATA 'codingmachineedge\BambuStudioMD3-BuildTools\nsis-3.12\makensis.exe')
-    )) {
-        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
-    }
-    $uninstallRoots = @(
-        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
-        'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
-        'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
-    )
-    foreach ($entry in @(Get-ItemProperty $uninstallRoots -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.PSObject.Properties['DisplayName'] -and
-            $_.DisplayName -eq 'Nullsoft Install System'
-        })) {
-        if ($entry.PSObject.Properties['InstallLocation'] -and
-            -not [string]::IsNullOrWhiteSpace($entry.InstallLocation)) {
-            $candidate = Join-Path $entry.InstallLocation.Trim('"') 'makensis.exe'
-            if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
-        }
-    }
-    return $null
-}
-
 function Get-SevenZipPath {
     $command = Get-Command 7z.exe -ErrorAction SilentlyContinue
     if ($command) { return $command.Source }
@@ -122,7 +94,6 @@ function Install-WingetPackageIfMissing {
     param(
         [Parameter(Mandatory)][string] $DisplayName,
         [Parameter(Mandatory)][string] $PackageId,
-        [switch] $PortableNsisFallback,
         [Parameter(Mandatory)][scriptblock] $Probe
     )
 
@@ -151,12 +122,7 @@ function Install-WingetPackageIfMissing {
             --accept-source-agreements
         $uninstallExitCode = $LASTEXITCODE
         if ($uninstallExitCode -ne 0) {
-            if (-not $PortableNsisFallback) {
-                throw "Removing the stale $DisplayName registration failed with exit code $uninstallExitCode."
-            }
-            Install-PortableNsis
-            if (& $Probe) { return }
-            throw "$DisplayName portable installation completed but the tool is still unavailable."
+            throw "Removing the stale $DisplayName registration failed with exit code $uninstallExitCode."
         }
         & winget.exe install --id $PackageId --exact --silent `
             --accept-package-agreements --accept-source-agreements
@@ -208,62 +174,6 @@ function Normalize-PkgConfigFiles {
     }
 }
 
-function Install-PortableNsis {
-    $sevenZip = Get-SevenZipPath
-    if ([string]::IsNullOrWhiteSpace($sevenZip)) {
-        throw '7-Zip is required for the non-admin NSIS portable fallback.'
-    }
-
-    $temporaryRoot = Join-Path ([System.IO.Path]::GetTempPath()) `
-        ('BambuStudio-NSIS-' + [guid]::NewGuid().ToString('N'))
-    $destination = Join-Path $env:LOCALAPPDATA `
-        'codingmachineedge\BambuStudioMD3-BuildTools\nsis-3.12'
-    try {
-        New-Item -ItemType Directory -Path $temporaryRoot | Out-Null
-        Write-BuildLog 'Downloading the official NSIS 3.12 package through winget for verified portable extraction...'
-        & winget.exe download --id NSIS.NSIS --exact --version 3.12 `
-            --download-directory $temporaryRoot --accept-package-agreements `
-            --accept-source-agreements
-        Assert-LastExitCode 'Downloading the verified NSIS 3.12 package'
-        $installers = @(Get-ChildItem -LiteralPath $temporaryRoot -File -Filter '*.exe')
-        if ($installers.Count -ne 1) {
-            throw "Expected one downloaded NSIS installer, found $($installers.Count)."
-        }
-
-        $extracted = Join-Path $temporaryRoot 'extracted'
-        & $sevenZip x $installers[0].FullName "-o$extracted" -y | Out-Host
-        Assert-LastExitCode 'Extracting the verified NSIS package'
-        if (-not (Test-Path -LiteralPath (Join-Path $extracted 'makensis.exe') -PathType Leaf)) {
-            throw 'The verified NSIS package did not contain makensis.exe.'
-        }
-
-        if (Test-Path -LiteralPath $destination) {
-            $expectedPrefix = [System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA `
-                'codingmachineedge\BambuStudioMD3-BuildTools')).TrimEnd('\') + '\'
-            $resolvedDestination = [System.IO.Path]::GetFullPath($destination)
-            if (-not $resolvedDestination.StartsWith($expectedPrefix,
-                    [System.StringComparison]::OrdinalIgnoreCase)) {
-                throw "Refusing to replace unexpected NSIS directory '$resolvedDestination'."
-            }
-            Remove-Item -LiteralPath $resolvedDestination -Recurse -Force
-        }
-        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
-        Move-Item -LiteralPath $extracted -Destination $destination
-        Write-BuildLog "Portable NSIS 3.12 is ready at '$destination'."
-    }
-    finally {
-        if (Test-Path -LiteralPath $temporaryRoot) {
-            $resolved = [System.IO.Path]::GetFullPath($temporaryRoot)
-            $tempPrefix = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd('\') + '\'
-            if (-not $resolved.StartsWith($tempPrefix, [System.StringComparison]::OrdinalIgnoreCase) -or
-                [System.IO.Path]::GetFileName($resolved) -notlike 'BambuStudio-NSIS-*') {
-                throw "Refusing to remove unexpected NSIS temporary directory '$resolved'."
-            }
-            Remove-Item -LiteralPath $resolved -Recurse -Force
-        }
-    }
-}
-
 function Test-FreeDiskSpace {
     $driveRoot = [System.IO.Path]::GetPathRoot($script:RepositoryRoot)
     $drive = [System.IO.DriveInfo]::new($driveRoot)
@@ -303,8 +213,6 @@ function Initialize-LocalToolchain {
 
     Install-WingetPackageIfMissing -DisplayName '7-Zip' -PackageId '7zip.7zip' `
         -Probe { $null -ne (Get-SevenZipPath) }
-    Install-WingetPackageIfMissing -DisplayName 'NSIS 3' -PackageId 'NSIS.NSIS' `
-        -PortableNsisFallback -Probe { $null -ne (Get-MakeNsisPath) }
 
     if (-not $Plan) {
         $vsProduct = Get-VisualStudio2022Product
@@ -416,17 +324,6 @@ function Get-ProductVersion {
     return $matches[1]
 }
 
-function Get-FileVersion {
-    param([Parameter(Mandatory)][string] $ProductVersion)
-    $parts = @([regex]::Matches($ProductVersion, '\d+') | ForEach-Object { [int]$_.Value })
-    if ($parts.Count -gt 4) { $parts = @($parts[0..3]) }
-    while ($parts.Count -lt 4) { $parts += 0 }
-    if ($parts | Where-Object { $_ -gt 65535 }) {
-        throw "Version '$ProductVersion' contains a component larger than 65535."
-    }
-    return $parts -join '.'
-}
-
 function Invoke-OneClickBuild {
     if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
         throw 'The one-click installer build is supported only on Windows.'
@@ -527,38 +424,29 @@ function Invoke-OneClickBuild {
 
         $outputDirectory = Resolve-OutputDirectory -RequestedPath $OutputDirectory
         New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
-        $installer = Join-Path $outputDirectory 'BambuStudioMD3-Setup.exe'
+        $squirrelOutputDirectory = Join-Path $outputDirectory 'squirrel'
+        $installer = Join-Path $squirrelOutputDirectory 'Setup.exe'
         $sbom = Join-Path $outputDirectory 'BambuStudioMD3.cdx.json'
         $checksum = "$installer.sha256"
-        $uninstallInclude = Join-Path $outputDirectory 'BambuStudioMD3-UninstallFiles.nsh'
 
         & (Join-Path $script:RepositoryRoot 'scripts\ci\New-WindowsCycloneDxSbom.ps1') `
             -PayloadDir $payloadDirectory -OutputPath $sbom -Version $productVersion `
             -Commit $sourceCommit -Repository ($sourceRepo -replace '^https://github.com/|\.git$', '')
-
-        & (Join-Path $script:RepositoryRoot 'packaging\windows\GenerateUninstallInclude.ps1') `
-            -PayloadDir $payloadDirectory -OutputPath $uninstallInclude
-
-        $makeNsis = Get-MakeNsisPath
-        $fileVersion = Get-FileVersion -ProductVersion $productVersion
-        Write-BuildLog "Compiling NSIS installer $installer..."
-        & $makeNsis /V3 /INPUTCHARSET UTF8 `
-            "/DPRODUCT_VERSION=$productVersion" `
-            "/DFILE_VERSION=$fileVersion" `
-            "/DPRODUCT_SOURCE_REPO_URL=$sourceRepo" `
-            "/DPRODUCT_SOURCE_TAG=$sourceCommit" `
-            "/DPAYLOAD_DIR=$payloadDirectory" `
-            "/DOUT_FILE=$installer" `
-            "/DINSTALLER_ICON=$(Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico')" `
-            "/DUNINSTALL_INCLUDE=$uninstallInclude" `
-            (Join-Path $script:RepositoryRoot 'packaging\windows\BambuStudioMD3.nsi')
-        Assert-LastExitCode 'Compiling the NSIS installer'
-
-        & $sevenZip t $installer | Out-Host
-        Assert-LastExitCode 'Validating the installer archive'
+        Write-BuildLog 'Building the unsigned Squirrel.Windows release...'
+        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
+            -File (Join-Path $script:RepositoryRoot 'scripts\windows\Invoke-SquirrelPackage.ps1') `
+            -PayloadDirectory $payloadDirectory -OutputDirectory $outputDirectory `
+            -ProductVersion $productVersion -SourceCommit $sourceCommit `
+            -Repository $sourceRepo -IconPath (Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico')
+        Assert-LastExitCode 'Building the Squirrel.Windows release'
+        if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
+            throw "Squirrel.Windows did not produce '$installer'."
+        }
         $hash = Get-FileSha256Lower -Path $installer
-        "$hash *BambuStudioMD3-Setup.exe" | Set-Content -LiteralPath $checksum -Encoding Ascii
-        Remove-Item -LiteralPath $uninstallInclude -Force
+        $checksumText = (Get-Content -LiteralPath $checksum -Raw).Trim()
+        if ($checksumText -cne "$hash *Setup.exe") {
+            throw 'Squirrel Setup.exe checksum sidecar does not match the generated installer.'
+        }
 
         Write-BuildLog "Installer: $installer"
         Write-BuildLog "SBOM: $sbom"

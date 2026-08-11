@@ -2,48 +2,35 @@
 
 ## Trigger and publication policy
 
-`.github/workflows/build_all.yml` is the fork's Windows acceptance and publication workflow. Every
-branch push and manual dispatch builds and tests the Windows candidate; a pull request targeting
-`master` runs the same Windows build without the release job. A lightweight path-classification job
-still records whether code changed, but it is intentionally informational: documentation-only pushes
-are not exempt from the required acceptance run. Branch-only push filters and an explicit tag guard
-prevent release tags from recursively starting another build.
+`.github/workflows/build_all.yml` is the fork's Windows build and publication workflow. Every
+branch push and manual dispatch builds the Windows candidate; a pull request targeting `main` runs
+the build without publishing. A lightweight path-classification job remains informational, so
+documentation-only pushes are not silently skipped. Branch-only push filters and an explicit tag
+guard prevent release tags from recursively starting another build.
 
-Every successful non-pull-request branch-push or manual-dispatch run is designed to publish one uniquely tagged
-release. Tags include the application version and workflow run number. All attempts of a rerun
-therefore converge on the same tag instead of creating duplicate releases. A matching published
-release is accepted only when it is non-draft and immutable, targets the same commit, has exactly the
-expected three assets, and its downloaded checksum, GitHub asset digests, installer archive, and
-commit-bound SBOM validate.
-The build job never creates a cache prerelease or any other secondary GitHub Release. Dependency and
-object reuse remain within GitHub Actions cache mechanisms, so a successful run has exactly one
-non-draft release creation path and a failed build or test has none.
-Release jobs are serialized. Immediately before first publication, the job resolves the current
-`master` tip: only an artifact built from that exact tip may become latest, while superseded master
-and non-default-ref builds stay non-latest.
+Every successful non-pull-request branch-push or manual-dispatch run publishes one uniquely tagged,
+non-draft release. Tags include the application version and workflow run number. A rerun converges on
+the same tag instead of creating a duplicate. The release job validates the exact Squirrel assets,
+source-commit metadata, checksum, unsigned Authenticode status, feed index, full package, SBOM, and
+GitHub asset digests before publishing the draft. The build job does not create a cache prerelease or
+any other secondary GitHub Release.
 
-## Windows acceptance gates
+The release job resolves the current default-branch tip immediately before publication. Only an
+artifact built from that exact tip may become latest; superseded or non-default-ref builds remain
+non-latest.
 
-The reusable build resolves or rebuilds the dependency cache, then performs these Windows gates:
+## Windows build and package boundary
 
-1. Build and type-check DeviceWeb through the product CMake toolchain's hash-pinned Node/pnpm
-   versions and frozen `pnpm-lock.yaml`, fail on a high-severity audit finding, then reject a stale
-   generated route tree.
-2. Parse PowerShell/JSON/JavaScript inputs; run DeviceWeb, language-resource, Pages language,
-   ownership-generator, and SBOM-generator fixture tests.
-3. Configure and install the production native Release build with `SLIC3R_BUILD_TESTS=OFF`.
-4. Configure a separate test tree with `SLIC3R_BUILD_TESTS=ON`, then build and run only
-   `libnest2d_tests` and `language_mode_tests` through CTest.
-5. Launch the unsigned native app only on the disposable runner and capture light English, dark
-   Cantonese, and light bilingual evidence.
-6. Generate a CycloneDX 1.6 inventory from the exact installed payload.
-7. Build the NSIS installer and validate its archive with 7-Zip.
-8. Execute the fresh-install, upgrade, unknown-path, locked-file recovery, language hand-off,
-   uninstall, bootstrap-recovery, exact SBOM-payload, and install/Start-menu reparse-guard matrix.
+The reusable build resolves or rebuilds the dependency cache, configures and installs the production
+native Release payload, adds the hash-pinned Mesa software-OpenGL fallback, generates a CycloneDX 1.6
+inventory, and packages the payload with the committed `scripts/windows/Invoke-SquirrelPackage.ps1`.
+Squirrel.Windows 2.0.1 is downloaded from the official NuGet flat-container URL only when it is not
+already cached, and its package SHA-256 is checked before extraction.
 
-Failure in any dependency, build, test, capture, SBOM, installer, or archive gate prevents the release
-job from starting. The native capture and installer scripts additionally refuse to execute unless
-they receive an explicit CI switch on a GitHub-hosted Actions runner.
+The current workflow deliberately keeps correctness and UI evidence checks as local release-operator
+Chuts rather than Actions test jobs. The committed local checks remain available and are run before a
+manual release or before accepting a candidate build. A workflow build still fails on compiler,
+dependency, SBOM, or Squirrel packaging failures.
 
 ## CycloneDX payload inventory
 
@@ -53,67 +40,51 @@ SHA-256 digest. The document binds its top-level application component to the Ba
 repository, and 40-character source commit.
 
 The generator rejects an empty payload, payload/output path overlap, source reparse points, duplicate
-component names, a missing `bambu-studio.exe`, or a malformed component digest. The release job
+component names, a missing `bambu-studio.exe`, or malformed component digests. The release job
 revalidates the document, requires at least 1,000 components, checks the version and commit-bound
 source URL, and enforces GitHub's 16 MiB SBOM-attestation limit.
 
-This is a precise installed-file inventory, not a complete dependency-license or vulnerability
-analysis. It helps answer which bytes were packaged; it does not by itself certify that every bundled
-component is vulnerability-free.
+## Squirrel release assets and attestations
 
-## Attestations and release assets
+After validating the downloaded build artifact, the release job creates build-provenance and SBOM
+attestations for `Setup.exe`. A candidate release contains:
 
-After validating the downloaded build artifact, the release job creates two GitHub attestations for
-the installer with `actions/attest@v4`: build provenance and an SBOM attestation using the generated
-CycloneDX document. A candidate published by this workflow must contain exactly:
+- `Setup.exe`;
+- `Setup.exe.sha256`;
+- `RELEASES`;
+- one `*-full.nupkg` and any generated `*-delta.nupkg` files;
+- `BambuStudioMD3.cdx.json`.
 
-- `BambuStudioMD3-Setup.exe`
-- `BambuStudioMD3-Setup.exe.sha256`
-- `BambuStudioMD3.cdx.json`
-
-After downloading the installer, provenance can be checked with:
+The bootstrapper is intentionally unsigned and may trigger an unknown-publisher or SmartScreen
+warning. Verify download integrity with:
 
 ```powershell
-gh attestation verify BambuStudioMD3-Setup.exe --repo Ding-Ding-Projects/BambuStudio
+Get-FileHash .\Setup.exe -Algorithm SHA256
+Get-Content .\Setup.exe.sha256
+gh attestation verify Setup.exe --repo Ding-Ding-Projects/BambuStudio
 ```
 
-The SHA-256 sidecar verifies download integrity, while the GitHub attestations bind the installer
-digest to the repository's Actions identity. Neither mechanism is a Windows Authenticode signature or
-a substitute for trusted publisher identity.
+The checksum and GitHub attestations are not Authenticode signatures and do not create publisher
+identity. No signing certificate, private key, signing service, or signing credential is requested.
 
 ## Draft-to-immutable publication
 
-The release job first reads the repository immutable-release setting and fails if it is not enabled.
-It then creates a draft containing all three assets, verifies their target, names, sizes, and GitHub
+The release job reads the repository immutable-release setting and fails if it is not enabled. It
+creates a draft containing the complete Squirrel feed, verifies target, names, sizes, and GitHub
 SHA-256 digests against the local candidate, resolves latest status, and publishes the validated
-draft. With repository immutability enabled, the resulting published tag and assets cannot be altered
-after publication. Remote Actions are pinned to reviewed 40-character commit SHAs; comments retain
-their human-readable major versions.
+draft. With immutable releases enabled, the resulting published tag and assets cannot be altered
+after publication.
 
 If an error occurs while the matching release is still a draft, the job deletes that draft and its
 temporary tag. If state cannot be determined, the target differs, or publication may already have
 completed, cleanup fails safe by preserving the release for inspection. A retry removes only a
-same-commit leftover draft; it validates and reuses a same-commit immutable publication without
-comparing nondeterministic rebuilt NSIS/SBOM bytes. It never attempts to mutate a published immutable
-release.
-
-Enabling repository immutable releases is a separate administrator action; the workflow check proves
-that it was enabled at publication time. Documentation should not treat the candidate release as
-immutable until the final workflow has passed and its published state has been inspected.
-
-## Permissions and external publishing
-
-The workflow default is read-only repository access. Only the release job receives `contents: write`,
-`id-token: write`, `attestations: write`, and `artifact-metadata: write`; checkout does not persist
-credentials. Upstream WinGet and Homebrew publication remains gated to the upstream Bambu Lab
-repository, so this fork cannot update those feeds automatically.
-
-No Postman collection is applicable because this release surface exposes no HTTP API.
+same-commit leftover draft and validates/reuses a same-commit immutable publication; it never mutates
+a published immutable release.
 
 ## Verification status
 
-The last fully published baseline before these candidate gates is commit `1f1ecb960`, Actions run
-`29671557311`, and release `md3-windows-v02.08.01.55-r6.1`. The expanded tests, CycloneDX asset,
-attestations, visual evidence, and draft-to-immutable path still require a successful candidate run.
-Final evidence should record the candidate commit, Actions run URL/ID, release tag, installer SHA-256,
-SBOM component count, attestation verification, immutable state, and reviewed capture artifact.
+Before a candidate is accepted, run the local release contract and one-click checks, build the real
+Squirrel output, inspect the README capture matrix from the built artifact, and record the exact
+commit, Actions run, release tag, installer SHA-256, Squirrel package names, SBOM component count,
+attestation verification, immutable state, and reviewed HuiShot set. A pending, cancelled, or absent
+remote result is not release proof.

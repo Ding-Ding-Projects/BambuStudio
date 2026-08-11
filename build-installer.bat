@@ -3,7 +3,7 @@ setlocal EnableExtensions
 cd /d "%~dp0"
 
 rem Standard repository entry point: bootstrap prerequisites and create the
-rem unsigned NSIS installer, checksum, and SBOM through the supported path.
+rem unsigned Squirrel.Windows Setup.exe, release packages, checksum, and SBOM.
 set "BAMBU_ONE_CLICK_NO_PAUSE=1"
 set "FORWARD_ARGS=%*"
 if /I "%~1"=="/s" set "FORWARD_ARGS="

@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions
-title Bambu Studio - One-click Windows installer build
+title Bambu Studio - One-click Squirrel.Windows installer build
 cd /d "%~dp0"
 
 set "BAMBU_ONE_CLICK_SCRIPT=%~dp0scripts\windows\Invoke-OneClickBuild.ps1"
