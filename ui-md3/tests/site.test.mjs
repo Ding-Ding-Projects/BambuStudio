@@ -430,7 +430,7 @@ test('the unavoidable surprise has no opt-out control or stored preference', asy
 
 /*
  * The deploy job is gated on the github-pages environment, which this repository
- * restricts to master. A run at any other ref is rejected before its first step,
+ * restricts to its current default branch. A run at any other ref is rejected before its first step,
  * with no steps and no log to explain it — so the failure is silent unless
  * something asserts the shape. The release event fires at the tag ref, which is
  * exactly that case, and it failed 12 times for 12 releases before this test.
@@ -487,7 +487,11 @@ test('no release-ref run is sent to the environment-gated deploy job', async () 
   assert.match(redeploy, /^ {4}if: github\.event_name == 'release'$/m);
   assert.doesNotMatch(redeploy, /^ {4}environment:$/m,
     'the redeploy job must not be environment-gated, or it is rejected too');
-  assert.match(redeploy, /--ref master/);
+  // Resolve the current default branch instead of baking a historical name into
+  // the workflow contract. This keeps release redeploys safe across a master to
+  // main rename without ever dispatching the tag ref that the environment rejects.
+  assert.match(redeploy, /defaultBranchRef/);
+  assert.match(redeploy, /gh workflow run ui-md3-pages\.yml --repo "\$\{GITHUB_REPOSITORY\}" --ref "\$default_branch"/);
   assert.match(redeploy, /^ {4}permissions:\n {6}actions: write$/m,
     'dispatching a workflow needs actions: write');
 
