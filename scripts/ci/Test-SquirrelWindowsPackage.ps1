@@ -23,7 +23,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-Import-Module Microsoft.PowerShell.Security -ErrorAction Stop
 
 function Assert-True {
     param([Parameter(Mandatory)][bool] $Condition, [Parameter(Mandatory)][string] $Message)
