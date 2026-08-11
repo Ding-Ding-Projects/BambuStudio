@@ -462,8 +462,9 @@ jobs:
             -Sbom '${{ github.workspace }}\BambuStudioMD3.cdx.json' `
             -SourceCommit '${{ github.sha }}' `
             -CiExecutionApproved
-          if ($LASTEXITCODE -ne 0) {
-              throw "Squirrel package contract failed with exit code $LASTEXITCODE."
+          $validatorSucceeded = $?
+          if (-not $validatorSucceeded) {
+              throw 'Squirrel package contract failed.'
           }
 
       # - name: Pack PDB

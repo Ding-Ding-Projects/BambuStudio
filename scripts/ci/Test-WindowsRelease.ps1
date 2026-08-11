@@ -153,6 +153,8 @@ Assert-True ($buildWorkflowText.Contains('Invoke-SquirrelPackage.ps1')) `
     'The build workflow must invoke the committed Squirrel package script.'
 Assert-True (-not $buildWorkflowText.Contains('makensis')) `
     'The active build workflow must not invoke the retired NSIS compiler.'
+Assert-True ($buildWorkflowText.Contains('$validatorSucceeded = $?')) `
+    'The build workflow must check the PowerShell Squirrel validator status rather than an unset native exit-code variable.'
 Assert-True ($releaseWorkflowText.Contains('Setup.exe')) `
     'The release workflow must publish Setup.exe.'
 Assert-True ($releaseWorkflowText.Contains('RELEASES')) `
