@@ -46,6 +46,48 @@ function Get-Sha256Lower {
     }
 }
 
+function Get-PeCertificateTable {
+    param([Parameter(Mandatory)][string] $Path)
+
+    $stream = [System.IO.File]::OpenRead($Path)
+    $reader = [System.IO.BinaryReader]::new($stream)
+    try {
+        if ($reader.ReadUInt16() -ne 0x5a4d) {
+            throw "'$Path' is not a PE executable (missing MZ header)."
+        }
+        $stream.Seek(0x3c, [System.IO.SeekOrigin]::Begin) | Out-Null
+        $peOffset = $reader.ReadInt32()
+        if ($peOffset -lt 0 -or $peOffset -gt ($stream.Length - 256)) {
+            throw "'$Path' has an invalid PE header offset."
+        }
+        $stream.Seek($peOffset, [System.IO.SeekOrigin]::Begin) | Out-Null
+        if ($reader.ReadUInt32() -ne 0x00004550) {
+            throw "'$Path' is not a PE executable (missing PE signature)."
+        }
+        $stream.Seek(16, [System.IO.SeekOrigin]::Current) | Out-Null
+        $optionalHeaderSize = $reader.ReadUInt16()
+        $reader.ReadUInt16() | Out-Null
+        $optionalHeaderStart = $stream.Position
+        $magic = $reader.ReadUInt16()
+        $dataDirectoryOffset = if ($magic -eq 0x10b) { 96 } elseif ($magic -eq 0x20b) { 112 } else {
+            throw "'$Path' has an unsupported PE optional-header format."
+        }
+        $certificateEntry = $optionalHeaderStart + $dataDirectoryOffset + (8 * 4)
+        if ($certificateEntry + 8 -gt $optionalHeaderStart + $optionalHeaderSize) {
+            throw "'$Path' has no complete PE security directory."
+        }
+        $stream.Seek($certificateEntry, [System.IO.SeekOrigin]::Begin) | Out-Null
+        return [pscustomobject]@{
+            Offset = $reader.ReadUInt32()
+            Size = $reader.ReadUInt32()
+        }
+    }
+    finally {
+        $reader.Dispose()
+        $stream.Dispose()
+    }
+}
+
 if (-not $CiExecutionApproved -or $env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted') {
     throw 'This script validates unsigned Squirrel.Windows artifacts only on an explicitly approved disposable GitHub-hosted runner.'
 }
@@ -56,8 +98,8 @@ $packagePath = (Resolve-Path -LiteralPath $FullPackage).Path
 $checksumPath = (Resolve-Path -LiteralPath $Checksum).Path
 $sbomPath = (Resolve-Path -LiteralPath $Sbom).Path
 
-$signature = Get-AuthenticodeSignature -LiteralPath $installerPath
-Assert-True ($signature.Status -eq 'NotSigned') "Squirrel Setup.exe is not unsigned; Authenticode status is '$($signature.Status)'."
+$certificateTable = Get-PeCertificateTable -Path $installerPath
+Assert-True ($certificateTable.Size -eq 0) "Squirrel Setup.exe is not unsigned; its PE security directory contains $($certificateTable.Size) certificate bytes."
 $actualHash = Get-Sha256Lower -Path $installerPath
 $expectedChecksum = "$actualHash *Setup.exe"
 Assert-True ((Get-Content -LiteralPath $checksumPath -Raw).Trim() -ceq $expectedChecksum) 'Setup.exe SHA-256 sidecar does not match the installer.'

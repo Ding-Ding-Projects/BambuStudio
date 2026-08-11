@@ -62,6 +62,7 @@ $packagerText = Get-Content -LiteralPath $packager -Raw
 foreach ($required in @(
     'Write-Utf8NoBom',
     'Write-SquirrelZipArchive',
+    'Get-PeCertificateTable',
     "Replace('\', '/')"
 )) {
     Assert-True $packagerText.Contains($required) "The Squirrel package workflow is missing required contract '$required'."
