@@ -73,16 +73,15 @@ three entries in Preferences are English, Cantonese preview, and bilingual; ever
 that has an installed catalog remains listed after them. A mode change uses the existing restart/
 recreate flow and preserves the normal modified-preset confirmation.
 
-The NSIS installer exposes the same three choices and accepts the silent-install option
-`/LANGMODE=en`, `/LANGMODE=yue_HK`, or `/LANGMODE=bilingual_en_yue_HK`. It writes the selection to
-`HKCU\Software\codingmachineedge\BambuStudioMD3Preferences\LanguageMode`. On first launch, the app
-imports that value only when its own language setting is empty; an existing application preference
-always wins. The preference registry key intentionally survives uninstall so a reinstall keeps the
-user's choice.
+The supported installer is the unsigned Squirrel.Windows `Setup.exe` package. It does not expose a
+language command-line switch or write a separate installer registry preference: the first launch
+uses the application's persisted `language` setting, while a new profile starts in English and can
+choose Cantonese or bilingual mode from Preferences. Squirrel updates keep the application-data
+setting in place, so an update does not reset the user's language choice.
 
-Installer errors use English, Cantonese, or English followed by Cantonese according to the selected
-mode. Silent installs default to English unless a valid persisted or command-line mode is present;
-unknown command-line values fail before an install directory is created.
+Installer and update failures are reported in the app's current language mode after launch. The
+installer itself remains language-neutral and never pretends that a command-line language value was
+accepted when the Squirrel package has no such contract.
 
 ## Fallback and safety rules
 
