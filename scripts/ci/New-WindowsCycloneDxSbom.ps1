@@ -117,7 +117,9 @@ $bom = [ordered]@{
     components = $components
 }
 
-$bom | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $resolvedOutput -Encoding utf8NoBOM
+$bomJson = $bom | ConvertTo-Json -Depth 12
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($resolvedOutput, $bomJson, $utf8NoBom)
 $sbomSize = (Get-Item -LiteralPath $resolvedOutput).Length
 if ($sbomSize -gt 16MB) {
     throw "Generated SBOM is $sbomSize bytes, above the 16 MiB attestation limit."
