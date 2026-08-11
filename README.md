@@ -73,7 +73,7 @@ body and Ink library are web content), so those regions appear empty in whole-wi
 Prepare capture is a direct sidebar-panel grab to show real migrated content. The frame shot dates
 from 2026-07-26 and the sidebar from 2026-07-28, both taken after the ink rename.
 
-**Fresh yum tong capture set — 2026-08-11**
+**Fresh release capture set — 2026-08-11**
 
 The native binary was built by `build-installer.bat /s` from source commit
 [`ca49ec7d9f6623a5474ec85d6b5b3c556ab2ab8a`](https://github.com/Ding-Ding-Projects/BambuStudio/commit/ca49ec7d9f6623a5474ec85d6b5b3c556ab2ab8a),

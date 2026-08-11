@@ -86,5 +86,5 @@ a published immutable release.
 Before a candidate is accepted, run the local release contract and one-click checks, build the real
 Squirrel output, inspect the README capture matrix from the built artifact, and record the exact
 commit, Actions run, release tag, installer SHA-256, Squirrel package names, SBOM component count,
-attestation verification, immutable state, and reviewed HuiShot set. A pending, cancelled, or absent
+attestation verification, immutable state, and reviewed screenshot set. A pending, cancelled, or absent
 remote result is not release proof.
