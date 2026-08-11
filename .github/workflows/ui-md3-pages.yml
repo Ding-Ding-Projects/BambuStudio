@@ -10,7 +10,7 @@ name: Deploy ui-md3 (MD3 redesign) to GitHub Pages
 
 on:
   push:
-    branches: [md3-redesign, master, main]
+    branches: [md3-redesign, main]
     paths:
       - 'ui-md3/**'
       - '.github/workflows/ui-md3-pages.yml'
