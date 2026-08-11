@@ -20,9 +20,11 @@ if ([string]::IsNullOrWhiteSpace($RepositoryRoot)) {
 $RepositoryRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
 $launcher = Join-Path $RepositoryRoot 'OneClickBuildInstaller.cmd'
 $script = Join-Path $RepositoryRoot 'scripts\windows\Invoke-OneClickBuild.ps1'
+$packager = Join-Path $RepositoryRoot 'scripts\windows\Invoke-SquirrelPackage.ps1'
 
 Assert-True (Test-Path -LiteralPath $launcher -PathType Leaf) 'The one-click CMD launcher is missing.'
 Assert-True (Test-Path -LiteralPath $script -PathType Leaf) 'The one-click PowerShell orchestrator is missing.'
+Assert-True (Test-Path -LiteralPath $packager -PathType Leaf) 'The Squirrel package PowerShell script is missing.'
 
 $tokens = $null
 $errors = $null
@@ -55,6 +57,15 @@ foreach ($required in @(
 
 Assert-True (-not $text.Contains('NSIS.NSIS')) 'The one-click workflow must not bootstrap NSIS after the Squirrel.Windows migration.'
 Assert-True (-not $text.Contains('Get-MakeNsisPath')) 'The one-click workflow must not invoke the retired NSIS compiler path.'
+
+$packagerText = Get-Content -LiteralPath $packager -Raw
+foreach ($required in @(
+    'Write-Utf8NoBom',
+    'Write-SquirrelZipArchive',
+    "Replace('\', '/')"
+)) {
+    Assert-True $packagerText.Contains($required) "The Squirrel package workflow is missing required contract '$required'."
+}
 
 $launcherText = Get-Content -LiteralPath $launcher -Raw
 Assert-True $launcherText.Contains('Invoke-OneClickBuild.ps1') 'The CMD launcher does not call the PowerShell workflow.'

@@ -35,6 +35,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.IO.Compression
 
 $script:SquirrelPackageSha256 = '923e18abb4fd50b5a4878a39dbcd042ed3f7eb68fc0f82c0955cd5380c921ac7'
 $script:SquirrelPackageUri = "https://api.nuget.org/v3-flatcontainer/squirrel.windows/$SquirrelVersion/squirrel.windows.$SquirrelVersion.nupkg"
@@ -101,6 +102,53 @@ function ConvertTo-SquirrelVersion {
 function Get-SafeXmlText {
     param([Parameter(Mandatory)][string] $Text)
     return [System.Security.SecurityElement]::Escape($Text)
+}
+
+function Write-Utf8NoBom {
+    param(
+        [Parameter(Mandatory)][string] $Path,
+        [Parameter(Mandatory)][string] $Value
+    )
+
+    [System.IO.File]::WriteAllText(
+        $Path,
+        $Value,
+        (New-Object System.Text.UTF8Encoding($false))
+    )
+}
+
+function Write-SquirrelZipArchive {
+    param(
+        [Parameter(Mandatory)][string] $SourceDirectory,
+        [Parameter(Mandatory)][string] $ArchivePath
+    )
+
+    $archive = [System.IO.Compression.ZipFile]::Open(
+        $ArchivePath,
+        [System.IO.Compression.ZipArchiveMode]::Create
+    )
+    try {
+        $sourceRoot = [System.IO.Path]::GetFullPath($SourceDirectory).TrimEnd('\') + '\'
+        foreach ($item in @(Get-ChildItem -LiteralPath $SourceDirectory -Recurse -File | Sort-Object FullName)) {
+            $entryName = $item.FullName.Substring($sourceRoot.Length).Replace('\', '/')
+            $entry = $archive.CreateEntry(
+                $entryName,
+                [System.IO.Compression.CompressionLevel]::Optimal
+            )
+            $input = [System.IO.File]::OpenRead($item.FullName)
+            $output = $entry.Open()
+            try {
+                $input.CopyTo($output)
+            }
+            finally {
+                $output.Dispose()
+                $input.Dispose()
+            }
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
 }
 
 function Resolve-SquirrelTool {
@@ -180,7 +228,13 @@ function New-SquirrelNuGetPackage {
     $escapedVersion = Get-SafeXmlText -Text $Version
     $escapedRepository = Get-SafeXmlText -Text $RepositoryUrl
     $description = Get-SafeXmlText -Text "Bambu Studio MD3 Windows application built from source commit $Commit."
-    $releaseNotes = Get-SafeXmlText -Text "Source commit: $Commit; repository: $RepositoryUrl"
+    # Squirrel.Windows reads release notes through its NuGet manifest parser.  It
+    # expects the notes payload to be CDATA-wrapped; plain text here makes
+    # NuGet.ZipPackage report that the package has no manifest even though the
+    # .nuspec file is present at the archive root.
+    $releaseNotes = Get-SafeXmlText -Text "<![CDATA[
+<p>Source commit: $Commit; repository: $RepositoryUrl</p>
+]]>"
     $nuspec = @"
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
@@ -197,7 +251,7 @@ function New-SquirrelNuGetPackage {
   </metadata>
 </package>
 "@
-    Set-Content -LiteralPath (Join-Path $PackageRoot "$Id.nuspec") -Value $nuspec -Encoding UTF8
+    Write-Utf8NoBom -Path (Join-Path $PackageRoot "$Id.nuspec") -Value $nuspec
     $corePropertiesDirectory = Join-Path $PackageRoot 'package\services\metadata\core-properties'
     New-Item -ItemType Directory -Path (Join-Path $PackageRoot '_rels'),$corePropertiesDirectory -Force | Out-Null
     $corePropertiesName = "$Id.psmdcp"
@@ -211,7 +265,7 @@ function New-SquirrelNuGetPackage {
   <lastModifiedBy>BambuStudio Squirrel package builder</lastModifiedBy>
 </coreProperties>
 "@
-    Set-Content -LiteralPath (Join-Path $corePropertiesDirectory $corePropertiesName) -Value $coreProperties -Encoding UTF8
+    Write-Utf8NoBom -Path (Join-Path $corePropertiesDirectory $corePropertiesName) -Value $coreProperties
     $relationships = @"
 <?xml version="1.0" encoding="utf-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -219,7 +273,7 @@ function New-SquirrelNuGetPackage {
   <Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="/package/services/metadata/core-properties/$corePropertiesName" Id="Rcore" />
 </Relationships>
 "@
-    Set-Content -LiteralPath (Join-Path $PackageRoot '_rels\.rels') -Value $relationships -Encoding UTF8
+    Write-Utf8NoBom -Path (Join-Path $PackageRoot '_rels\.rels') -Value $relationships
     $extensions = @('rels', 'psmdcp', 'nuspec') + @(
         Get-ChildItem -LiteralPath $PackageRoot -Recurse -File |
             ForEach-Object { $_.Extension.TrimStart('.').ToLowerInvariant() } |
@@ -241,14 +295,9 @@ function New-SquirrelNuGetPackage {
         $contentTypeLines
         '</Types>'
     ) -join [Environment]::NewLine
-    Set-Content -LiteralPath (Join-Path $PackageRoot '[Content_Types].xml') -Value $contentTypes -Encoding UTF8
+    Write-Utf8NoBom -Path (Join-Path $PackageRoot '[Content_Types].xml') -Value $contentTypes
     $nupkg = [IO.Path]::GetFullPath($NupkgPath)
-    [System.IO.Compression.ZipFile]::CreateFromDirectory(
-        $PackageRoot,
-        $nupkg,
-        [System.IO.Compression.CompressionLevel]::Optimal,
-        $false
-    )
+    Write-SquirrelZipArchive -SourceDirectory $PackageRoot -ArchivePath $nupkg
     return $nupkg
 }
 
