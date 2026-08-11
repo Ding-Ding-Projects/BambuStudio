@@ -16,9 +16,10 @@ The release directory contains:
 | `Setup.exe.sha256` | Locally reproducible SHA-256 sidecar |
 
 The package nuspec records the exact 40-character source commit and HTTPS repository URL. The
-wrapper validates the feed reference, the full package contents, the Setup.exe Authenticode status,
-and the checksum before handing the assets to CI or a manual release. Code signing is permanently
-disabled; provenance and SBOM attestations do not make an unsigned executable signed.
+wrapper validates the feed reference, the full package contents, that Setup.exe has an empty PE
+security directory (unsigned), and the checksum before handing the assets to CI or a manual release.
+Code signing is permanently disabled; provenance and SBOM attestations do not make an unsigned
+executable signed.
 
 ## Update and install behavior
 
@@ -30,7 +31,8 @@ HTTPS metadata plus package hashes. A release must never claim authenticity from
 The one-click wrapper does not launch Setup.exe unless `-Install` is explicitly supplied. It writes
 all generated artifacts outside the source payload and refuses to continue when the payload is empty,
 the version is not numeric, the source commit is not a full SHA, the repository is not HTTPS, the
-package is missing `bambu-studio.exe`, or the generated Setup.exe is not `NotSigned`.
+package is missing `bambu-studio.exe`, or the generated Setup.exe contains an Authenticode
+certificate table.
 
 ## Security and failure boundaries
 
@@ -62,5 +64,6 @@ pwsh -NoLogo -NoProfile -File scripts/ci/Test-WindowsRelease.ps1
 
 After a build, the CI-only validator checks the real Squirrel output on the disposable hosted
 runner. It verifies the exact source commit in the nuspec, `RELEASES`, the full package contents,
-SBOM metadata, the checksum, and unsigned Authenticode state. Runtime UI captures remain a separate
+SBOM metadata, the checksum, and the empty PE security directory that proves the unsigned state.
+Runtime UI captures remain a separate
 evidence boundary and are listed in the repository screenshot matrix.

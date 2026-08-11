@@ -269,7 +269,8 @@ only replaced when the user explicitly saves it.
 
 The Windows pipeline builds the native application, produces a per-file CycloneDX 1.6 SBOM, packages
 the payload with Squirrel.Windows, and creates GitHub provenance and SBOM attestations for `Setup.exe`.
-It validates the Squirrel feed, full package, checksum, unsigned Authenticode state, and SBOM in a
+It validates the Squirrel feed, full package, checksum, empty PE security directory (unsigned
+Setup.exe), and SBOM in a
 draft before publication and refuses to publish unless repository immutable releases are enabled.
 The last historical publish pipeline proof is hosted run
 [`29877040307`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/29877040307)

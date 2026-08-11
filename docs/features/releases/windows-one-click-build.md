@@ -38,7 +38,7 @@ The script fetches Git LFS objects, compiles dependencies, compiles the Release 
 the CMake install payload, downloads and verifies the same hash-pinned Mesa llvmpipe fallback used
 by CI, creates the CycloneDX SBOM, creates the Squirrel NuGet package with the exact source commit
 and repository metadata, runs `Squirrel.exe --releasify`, validates `Setup.exe`, `RELEASES`, the
-full package, and unsigned Authenticode status, then writes the checksum sidecar.
+full package, and an empty PE security directory on Setup.exe (unsigned), then writes the checksum sidecar.
 
 The default is incremental. Use a clean rebuild when caches may be stale:
 
@@ -75,7 +75,7 @@ caches.
 - Tracked working-tree edits can be compiled locally, but the Squirrel nuspec can record only the
   current Git commit. The workflow warns when this makes the local payload non-reproducible.
 - The generated Squirrel package must contain `lib/net45/bambu-studio.exe`; a missing executable,
-  missing `RELEASES`, mismatched checksum, or signed Setup.exe fails closed.
+  missing `RELEASES`, mismatched checksum, or a non-empty PE security directory on Setup.exe fails closed.
 
 No pattern, source content, or build log is transmitted except to the declared package, Git/LFS,
 and pinned artifact endpoints needed by the build.

@@ -11,7 +11,7 @@ guard prevent release tags from recursively starting another build.
 Every successful non-pull-request branch-push or manual-dispatch run publishes one uniquely tagged,
 non-draft release. Tags include the application version and workflow run number. A rerun converges on
 the same tag instead of creating a duplicate. The release job validates the exact Squirrel assets,
-source-commit metadata, checksum, unsigned Authenticode status, feed index, full package, SBOM, and
+source-commit metadata, checksum, an empty PE security directory (unsigned Setup.exe), feed index, full package, SBOM, and
 GitHub asset digests before publishing the draft. The build job does not create a cache prerelease or
 any other secondary GitHub Release.
 
