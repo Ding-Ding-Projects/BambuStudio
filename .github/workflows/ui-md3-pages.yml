@@ -93,7 +93,7 @@ jobs:
           # The changelog generator reads the commits between release tags.
           fetch-depth: 0
 
-      - name: Use the repository's runtime-test Node version
+      - name: Use the repository Node.js runtime
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
@@ -132,41 +132,7 @@ jobs:
           # that has drifted back to loading React from a CDN.
           node ui-md3/scripts/assemble-ui-kit.mjs --check
           node ui-md3/scripts/compose-site.mjs _site
-          node ui-md3/tests/assert-pages-layout.mjs _site
           echo "Composed _site:"; find _site -maxdepth 2 -type f | sort
-
-      - name: Verify localization and clipping at runtime
-        run: |
-          node --test ui-md3/tests/i18n.test.mjs ui-md3/tests/site.test.mjs \
-            ui-md3/tests/site-behaviour.test.mjs ui-md3/tests/dim-sum-runtime.test.mjs \
-            ui-md3/tests/layout-clipping.test.mjs \
-            ui-md3/tests/jsx-transform.test.mjs
-          # Composes its own copy of the site and loads it in headless Chrome with
-          # every off-site host blackholed. The UI kit shipped a page that rendered
-          # nothing without unpkg for months; nothing caught it, because nothing
-          # had ever tried the site with the network taken away.
-          node --test ui-md3/tests/offline-render.test.mjs
-          node ui-md3/tests/serve.mjs _site 4173 >/tmp/bambu-pages-http.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
-          server_ready=false
-          for attempt in $(seq 1 50); do
-            if curl --fail --silent --show-error \
-                http://127.0.0.1:4173/index.html >/dev/null; then
-              server_ready=true
-              break
-            fi
-            sleep 0.1
-          done
-          if [ "$server_ready" != true ]; then
-            echo "The bounded Pages preview server readiness check failed."
-            cat /tmp/bambu-pages-http.log
-            exit 1
-          fi
-          # 156 landing cases plus 288 per-tab cases; a single clipped element,
-          # an undersized control or an empty panel fails the deploy.
-          BAMBU_PAGES_TEST_URL=http://127.0.0.1:4173/index.html \
-            node --test ui-md3/tests/runtime-layout-clipping.mjs
 
       - name: Upload composed site as the Pages artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3

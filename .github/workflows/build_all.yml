@@ -364,14 +364,24 @@ jobs:
           "release_codename=$codename" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
           Write-Host "Release v$releaseNumber '$codename' (tag $env:release_tag)"
 
-          $lineCount = Get-Content -LiteralPath $env:line_count_path
-          $notes = @(
+           $lineCount = Get-Content -LiteralPath $env:line_count_path
+           $workflowStartedAt = [DateTimeOffset]::Parse('${{ github.run_started_at }}').ToUniversalTime()
+           if ($workflowStartedAt -gt [DateTimeOffset]::UtcNow) {
+               throw "GitHub reported a workflow start time in the future: $workflowStartedAt"
+           }
+           $workflowCompletedAt = [DateTimeOffset]::UtcNow
+           $workflowDuration = $workflowCompletedAt - $workflowStartedAt
+           $workflowDurationText = '{0:00}:{1:00}:{2:00}' -f [int]$workflowDuration.TotalHours, $workflowDuration.Minutes, $workflowDuration.Seconds
+           $notes = @(
               'Native Windows build of Bambu Studio with the Material Design 3 rewrite.'
               ''
               "- Version: v$releaseNumber `"$codename`" (app build $env:release_version)"
               "- Commit: $env:GITHUB_SHA"
-              "- Source ref: $env:GITHUB_REF"
-              "- Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+               "- Source ref: $env:GITHUB_REF"
+               "- Workflow started: $($workflowStartedAt.ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+               "- Workflow completed: $($workflowCompletedAt.ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+               "- Workflow duration: $workflowDurationText"
+               "- Workflow: https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
               '- Install scope: current user (`%LOCALAPPDATA%\Programs\Bambu Studio MD3`)'
               '- Signing: unsigned; verify the accompanying SHA-256 checksum before running'
               "- Provenance: verify with ``gh attestation verify Setup.exe --repo $env:GITHUB_REPOSITORY``"
@@ -773,8 +783,8 @@ jobs:
 
               [void](Wait-ForReleaseState -ExpectedState Draft)
 
-              # Serialize release jobs, then resolve the default branch immediately
-              # before publication so a queued older build cannot become latest.
+               # Serialize release jobs, then resolve the default branch immediately
+               # before publication so a queued older build cannot become latest.
               $latestArgument = '--latest=false'
               if ($env:GITHUB_REF_NAME -eq $defaultBranch) {
                   $defaultSha = (& gh api "repos/$env:GITHUB_REPOSITORY/commits/$defaultBranch" --jq '.sha').Trim()
@@ -788,7 +798,24 @@ jobs:
                   }
               }
 
-              & gh release edit $env:release_tag --repo $env:GITHUB_REPOSITORY --title $releaseTitle --draft=false $latestArgument
+              # Refresh the completion timestamp immediately before the final
+              # publication command, then replace the three timing rows in the
+              # draft notes so the immutable release carries the measured value.
+              $workflowCompletedAt = [DateTimeOffset]::UtcNow
+              $workflowDuration = $workflowCompletedAt - $workflowStartedAt
+              $workflowDurationText = '{0:00}:{1:00}:{2:00}' -f [int]$workflowDuration.TotalHours, $workflowDuration.Minutes, $workflowDuration.Seconds
+              $timedNotes = @()
+              foreach ($line in @(Get-Content -LiteralPath 'release-notes.md')) {
+                  if ($line -match '^- Workflow (started|completed|duration):') { continue }
+                  $timedNotes += $line
+                  if ($line -like '- Source ref:*') {
+                      $timedNotes += "- Workflow started: $($workflowStartedAt.ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+                      $timedNotes += "- Workflow completed: $($workflowCompletedAt.ToString('yyyy-MM-ddTHH:mm:ssZ'))"
+                      $timedNotes += "- Workflow duration: $workflowDurationText"
+                  }
+              }
+              $timedNotes | Set-Content -LiteralPath 'release-notes.md' -Encoding utf8
+              & gh release edit $env:release_tag --repo $env:GITHUB_REPOSITORY --title $releaseTitle --notes-file release-notes.md --draft=false $latestArgument
               if ($LASTEXITCODE -ne 0) {
                   throw "Publishing the validated draft release failed with exit code $LASTEXITCODE."
               }

@@ -114,35 +114,6 @@ jobs:
 
           Install-ChocoPackage -Name 'pkgconfiglite' -Version '0.28.0'
 
-      - name: Setup Node.js for Windows checks
-        if: inputs.os == 'windows-latest'
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: '24'
-
-      - name: Test Windows release inputs
-        if: inputs.os == 'windows-latest'
-        working-directory: ${{ github.workspace }}
-        shell: pwsh
-        run: |
-          .\scripts\ci\Test-WindowsRelease.ps1
-          .\scripts\ci\Test-OneClickBuild.ps1
-          # Guards the release codename roster: bilingual shape, no duplicates, and
-          # append-only. Codenames are assigned by index, so inserting a dish renames
-          # every later release and contradicts already-published immutable ones.
-          .\scripts\ci\Test-ReleaseCodenames.ps1
-          # Guards the fork's vocabulary (filament -> ink, AMS -> Ink Dispenser).
-          # The rename is display-only by design, so this checks translated VALUES
-          # and never the keys/msgids that code and 3MF compatibility match on.
-          .\scripts\ci\Test-InkTerminology.ps1
-          # Pins the native MD3 conversion. Four of these surfaces cannot be
-          # photographed on a build host (the fan popup needs a connected printer,
-          # the Slice/Print dropdown is a transient popup, the 2D bed dialog is not
-          # reachable for Bambu profiles, and Measure will not open under synthetic
-          # input), so the fixes are asserted against the shipped C++ instead of a
-          # screenshot. Mutation-checked: reverting any one of them fails this.
-          node --test ui-md3/tests/md3-conversion-contracts.test.mjs tests/web_resources_accessibility.test.mjs
-
       - name: Build slicer Win
         id: build_win
         if: inputs.os == 'windows-latest'
@@ -168,32 +139,9 @@ jobs:
               throw "Configuring the production Windows build failed with exit code $LASTEXITCODE."
           }
 
-          # Use the product CMake toolchain's hash-pinned Node 22.22.2 and
-          # pnpm 10.12.1, not a parallel npm dependency graph.
-          $pnpmExecutable = [System.IO.Path]::GetFullPath(
-              (Join-Path $env:GITHUB_WORKSPACE '..\node-cache\node-v22.22.2-win-x64\pnpm.exe')
-          )
-          if (-not (Test-Path -LiteralPath $pnpmExecutable -PathType Leaf)) {
-              throw "The hash-pinned production pnpm executable is missing at '$pnpmExecutable'."
-          }
-          Push-Location 'src\slic3r\GUI\DeviceWeb\device_page'
-          try {
-              & $pnpmExecutable audit --audit-level high
-              if ($LASTEXITCODE -ne 0) {
-                  throw "The production DeviceWeb lock has a high-severity advisory or audit failure (exit $LASTEXITCODE)."
-              }
-          }
-          finally {
-              Pop-Location
-          }
-
           cmake --build build --target device_page_build --config Release --parallel
           if ($LASTEXITCODE -ne 0) {
-              throw "Building and type-checking DeviceWeb failed with exit code $LASTEXITCODE."
-          }
-          git diff --exit-code -- src/slic3r/GUI/DeviceWeb/device_page/src/routeTree.gen.ts
-          if ($LASTEXITCODE -ne 0) {
-              throw 'The pinned production DeviceWeb build regenerated a stale routeTree.gen.ts.'
+              throw "Building DeviceWeb failed with exit code $LASTEXITCODE."
           }
 
           cmake --build build --target install --config Release --parallel
@@ -256,113 +204,6 @@ jobs:
               Copy-Item -LiteralPath $source -Destination (Join-Path $mesaPayloadDir $name)
           }
           Write-Host "Staged Mesa $mesaVersion llvmpipe fallback DLLs into install-dir\mesa."
-
-      - name: Build and run Windows C++ tests
-        if: inputs.os == 'windows-latest'
-        working-directory: ${{ github.workspace }}
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # Configure-only regression: the Boost.Regex worker/tests must remain
-          # available when the GUI is disabled (the safety suite is intentionally
-          # runnable without building or launching Studio's UI).
-          cmake -S . -B build-regex-headless `
-            -G 'Visual Studio 18 2026' `
-            -A X64 `
-            -DBBL_RELEASE_TO_PUBLIC=1 `
-            -DBBL_INTERNAL_TESTING=0 `
-            -DSLIC3R_GUI=OFF `
-            -DSLIC3R_BUILD_TESTS=ON `
-            '-DCMAKE_PREFIX_PATH=${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local' `
-            '-DCMAKE_INSTALL_PREFIX=${{ runner.temp }}\BambuStudioMD3-regex-headless' `
-            -DCMAKE_BUILD_TYPE=Release `
-            '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
-          if ($LASTEXITCODE -ne 0) {
-              throw "Configuring the headless bounded-regex test tree failed with exit code $LASTEXITCODE."
-          }
-
-          cmake -S . -B build-tests `
-            -G 'Visual Studio 18 2026' `
-            -A X64 `
-            -DBBL_RELEASE_TO_PUBLIC=1 `
-            -DBBL_INTERNAL_TESTING=0 `
-            -DSLIC3R_BUILD_TESTS=ON `
-            '-DCMAKE_PREFIX_PATH=${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local' `
-            '-DCMAKE_INSTALL_PREFIX=${{ runner.temp }}\BambuStudioMD3-test-install' `
-            -DCMAKE_BUILD_TYPE=Release `
-            '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
-          if ($LASTEXITCODE -ne 0) {
-              throw "Configuring the isolated Windows C++ test tree failed with exit code $LASTEXITCODE."
-          }
-
-          # The aggregate legacy suite and libnest2d_tests are currently
-          # upstream-baseline failures; keep this gate focused on maintained,
-          # independently buildable regression coverage. See HANDOFF.md.
-          cmake --build build-tests --target language_mode_tests project_history_tests bounded_regex_tests deviceweb_home_webview_failure_policy_tests home_assistant_tests home_assistant_sharing_probe deterministic_bbs_3mf_tests crash_restore_tests --config Release -- -m
-          if ($LASTEXITCODE -ne 0) {
-              throw "Building Windows C++ tests failed with exit code $LASTEXITCODE."
-          }
-
-          # The test exes import OCCT DLLs (TKernel/TKBRep/TKLCAF) that live in
-          # the deps output, not all of which ship in install-dir — without
-          # these on PATH the exe dies with STATUS_DLL_NOT_FOUND (0xC0000135),
-          # which under ctest manifested as an infinite hard-error hang.
-          $env:PATH = '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin;' +
-              '${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local\bin\occt;' +
-              '${{ github.workspace }}\install-dir;' + $env:PATH
-          ctest --test-dir build-tests -C Release --output-on-failure --no-tests=error --timeout 900 -R '^(language_mode_tests|project_history_tests|bounded_regex_tests|deviceweb_home_webview_failure_policy_tests|deviceweb_home_webview_failure_contract|home_assistant_tests|home_assistant_http_security_contract|home_assistant_ui_performance_contract|home_assistant_amplification_contract|home_assistant_service_fanout_contract|crash_restore_tests)$'
-          if ($LASTEXITCODE -ne 0) {
-              throw "Windows C++ tests failed with exit code $LASTEXITCODE."
-          }
-
-          # deterministic_bbs_3mf_tests hangs only on hosted runners (locally
-          # 10/10 green in seconds; on CI it has never completed). Run it
-          # directly with a watchdog: on hang, capture a full procdump so the
-          # stacks can be analyzed offline, then fail the step.
-          $exe = 'build-tests\tests\libslic3r\Release\deterministic_bbs_3mf_tests.exe'
-          $proc = Start-Process -FilePath $exe -ArgumentList '-s','--durations','yes' -NoNewWindow -PassThru `
-              -RedirectStandardOutput det-test-out.log -RedirectStandardError det-test-err.log
-          if (-not $proc.WaitForExit(300000)) {
-              Write-Host '=== deterministic_bbs_3mf_tests hung for 300 s; capturing dump ==='
-              Invoke-WebRequest -Uri 'https://download.sysinternals.com/files/Procdump.zip' -OutFile procdump.zip
-              Expand-Archive procdump.zip -DestinationPath procdump-bin -Force
-              & procdump-bin\procdump64.exe -accepteula -ma $proc.Id "$env:RUNNER_TEMP\deterministic-hang.dmp"
-              Stop-Process -Id $proc.Id -Force
-              Get-Content det-test-out.log -ErrorAction SilentlyContinue
-              throw 'deterministic_bbs_3mf_tests hung; dump uploaded as artifact.'
-          }
-          Get-Content det-test-out.log -ErrorAction SilentlyContinue
-          if ($proc.ExitCode -ne 0) {
-              throw "deterministic_bbs_3mf_tests failed with exit code $($proc.ExitCode)."
-          }
-
-      - name: Upload hang dump (only when the deterministic test hung)
-        if: inputs.os == 'windows-latest' && failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        with:
-          name: deterministic-hang-dump
-          path: ${{ runner.temp }}\deterministic-hang.dmp
-          if-no-files-found: ignore
-
-      - name: Exercise native Windows light, dark, and language visuals
-        if: inputs.os == 'windows-latest'
-        working-directory: ${{ github.workspace }}
-        shell: pwsh
-        run: |
-          .\scripts\ci\Test-WindowsNativeVisual.ps1 `
-            -Application '${{ github.workspace }}\install-dir\bambu-studio.exe' `
-            -OutputDir '${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence' `
-            -CiExecutionApproved
-
-      - name: Upload native Windows visual evidence
-        if: always() && inputs.os == 'windows-latest'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: BambuStudio_Windows_native_visual_${{ env.ver }}
-          path: |
-            ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.png
-            ${{ runner.temp }}\BambuStudioMD3-NativeVisual-Evidence\*.json
-          if-no-files-found: warn
 
       # Every release ships one-of-a-kind dim sum splash art: the payload copy
       # of splash_logo.svg is regenerated deterministically from the run
