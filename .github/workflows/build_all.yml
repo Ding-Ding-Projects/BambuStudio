@@ -365,7 +365,11 @@ jobs:
           Write-Host "Release v$releaseNumber '$codename' (tag $env:release_tag)"
 
            $lineCount = Get-Content -LiteralPath $env:line_count_path
-           $workflowStartedAt = [DateTimeOffset]::Parse('${{ github.run_started_at }}').ToUniversalTime()
+           $workflowStartedText = (& gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID" --jq '.run_started_at').Trim()
+           if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($workflowStartedText)) {
+               throw 'Could not resolve the authoritative workflow start timestamp from the Actions run API.'
+           }
+           $workflowStartedAt = [DateTimeOffset]::Parse($workflowStartedText).ToUniversalTime()
            if ($workflowStartedAt -gt [DateTimeOffset]::UtcNow) {
                throw "GitHub reported a workflow start time in the future: $workflowStartedAt"
            }
