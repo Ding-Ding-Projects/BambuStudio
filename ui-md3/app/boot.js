@@ -16,11 +16,21 @@
   var language = window.BambuI18n
     ? window.BambuI18n.initialize({search:window.location.search})
     : 'en';
+  // Query overrides are validated against the design's own enums (the
+  // data-props of design-source/Bambu Studio.dc.html) and fall back to its
+  // defaults. An unknown view used to render an empty body and an unknown
+  // theme dropped every colour token.
+  var pick = function(value, options, fallback){
+    return options.indexOf(value) === -1 ? fallback : value;
+  };
+  var accent = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(qp.accent || '')
+    ? (qp.accent.charAt(0) === '#' ? qp.accent : '#' + qp.accent)
+    : '#22c55e';
   DC.mount('main', document.getElementById('app'), {
-    theme:qp.theme||'dark',
-    density:qp.density||'comfortable',
-    accent:qp.accent||'#22c55e',
-    view:qp.view||'prepare',
+    theme:pick(qp.theme, ['light','dark'], 'dark'),
+    density:pick(qp.density, ['comfortable','compact'], 'comfortable'),
+    accent:accent,
+    view:pick(qp.view, ['home','prepare','preview','device','multi','project','calibration','filament','settings'], 'prepare'),
     language:language
   });
 })();

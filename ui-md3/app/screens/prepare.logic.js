@@ -114,9 +114,6 @@ registerScreen({
     objQueryEcho: '“'+(os.query||'')+'” · '+(os.regex?'regex':'plain text'),
     // The mode travels with the query; 'g' is stripped because a global RegExp
     // keeps lastIndex between .test() calls and would alternate hit and miss.
-    setObjQuery:(v,mode)=>this.setState({objSearch:{
-      query:v, regex:!!(mode&&mode.regex),
-      flags:((mode&&mode.flags)||'i').replace(/g/g,'')
-    }}),
+    setObjQuery:(v,mode)=>this.setState({objSearch:{ query:v, ...this.searchMode(mode) }}),
   }; }
 });

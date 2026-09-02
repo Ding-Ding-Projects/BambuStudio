@@ -57,6 +57,16 @@ class SearchField extends DCLogic {
     }
   }
 
+  /*
+   * The mode travels with the query, so a change of mode is a change of query
+   * for the consumer: toggling .* or a flag chip after typing must refilter
+   * the list, otherwise the field shows one mode and the list another.
+   * mini-dc merges state synchronously, so this reads the value just set.
+   */
+  reemit(){
+    if(this.state.value) this.emit(this.state.value);
+  }
+
   ins(t){
     // Compute once because mini-dc merges state synchronously before batching
     // its render; this preserves the design component's intended query value.
@@ -69,7 +79,7 @@ class SearchField extends DCLogic {
     const f=this.state.flags;
     const chip=(k,label)=>({
       label,
-      onClick:()=>this.setState(st=>({ flags:{...st.flags, [k]:!st.flags[k]} })),
+      onClick:()=>{ this.setState(st=>({ flags:{...st.flags, [k]:!st.flags[k]} })); this.reemit(); },
       bg:f[k]?'var(--md-primary)':'transparent',
       fg:f[k]?'var(--md-on-primary)':'var(--md-on-surface-variant)',
       border:f[k]?'1px solid var(--md-primary)':'1px solid var(--md-outline)'
@@ -117,13 +127,13 @@ class SearchField extends DCLogic {
         this.setState({ value:'', pattern:'' });
         this.emit('');
       },
-      toggleRegex:()=>this.setState({ regex:!s.regex }),
+      toggleRegex:()=>{ this.setState({ regex:!s.regex }); this.reemit(); },
       toggleBuilder:()=>this.setState({ open:!s.open }),
       applyBuilder:()=>{
         this.setState({ open:false, value:s.pattern, regex:true });
         this.emit(s.pattern);
       },
-      clearBuilder:()=>this.setState({ pattern:'' }),
+      clearBuilder:()=>{ this.setState({ pattern:'' }); if(s.regex && s.value) this.emit(''); },
       tokens:tokenDefs.map(td=>({ ...td, onClick:()=>this.ins(td.t) })),
       flagChips:this.flagChips(),
     };

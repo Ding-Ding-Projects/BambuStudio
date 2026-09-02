@@ -19,15 +19,14 @@ registerScreen({
   // The mode rides along with the query so the field's .* toggle is the only
   // thing that turns a typed string into a pattern.
   setProjectQuery(v, mode){
-    this.setState({projectSearch:{ query:v,
-      regex:!!(mode&&mode.regex), flags:(mode&&typeof mode.flags==='string'?mode.flags:'i') }});
+    this.setState({projectSearch:{ query:v, ...this.searchMode(mode) }});
   },
   // Plain text is the default; a regular expression is compiled only when the
   // search field says the user turned its .* toggle on.
   projectFileMatch(name){
     const ps=this.state.projectSearch||{}; const q=ps.query; if(!q) return true;
     if(!ps.regex) return name.toLowerCase().includes(q.toLowerCase());
-    try{ return new RegExp(q, ps.flags||'i').test(name); }
+    try{ return new RegExp(q, typeof ps.flags==='string'?ps.flags:'i').test(name); }
     catch(e){ return name.toLowerCase().includes(q.toLowerCase()); }
   }
   },

@@ -9,7 +9,7 @@ registerScreen({
     const q = fs.q || '';
     const re = (function(){
       if(!q || !fs.regex) return null;
-      try{ return new RegExp(q, fs.flags || 'i'); }
+      try{ return new RegExp(q, typeof fs.flags==='string' ? fs.flags : 'i'); }
       catch(e){ return null; }
     })();
     const needle = q.toLowerCase();
@@ -21,8 +21,7 @@ registerScreen({
       filRows: rows,
       filEmpty: q !== '' && rows.length === 0,
       filEmptyNote: 'Searched “' + q + '” · ' + (re ? 'regular expression' : 'plain text'),
-      setFilQuery:(v,mode)=>this.setState({filamentSearch:{ q:v,
-        regex:!!(mode&&mode.regex), flags:(mode&&typeof mode.flags==='string'?mode.flags:'i') }})
+      setFilQuery:(v,mode)=>this.setState({filamentSearch:{ q:v, ...this.searchMode(mode) }})
     };
   }
 });

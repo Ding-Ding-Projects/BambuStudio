@@ -79,7 +79,7 @@ class Main extends DCLogic {
     };});
   }
   hexToHsl(hex){
-    let h = (hex||'').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+    let h = (hex||'').replace('#',''); if(!/^[0-9a-f]{3}$|^[0-9a-f]{6}$/i.test(h)) h='22c55e'; if(h.length===3) h=h.split('').map(c=>c+c).join('');
     const r=parseInt(h.slice(0,2),16)/255, g=parseInt(h.slice(2,4),16)/255, b=parseInt(h.slice(4,6),16)/255;
     const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let hu=0, s=0, l=(mx+mn)/2;
     if(mx!==mn){ const d=mx-mn; s=l>0.5?d/(2-mx-mn):d/(mx+mn);
@@ -173,17 +173,31 @@ class Main extends DCLogic {
     catch(e){ return String(text).toLowerCase().includes(q.toLowerCase()); }
   }
 
+  /*
+   * The search mode a field reports, normalised for every consumer. An empty
+   * flag string is a real answer — "Ignore case" was switched off — so it must
+   * not be coerced back to 'i'; only a missing string gets the default. 'g' is
+   * stripped because a global RegExp keeps lastIndex between .test() calls.
+   */
+  searchMode(mode){
+    return {
+      regex:!!(mode&&mode.regex),
+      flags:(mode&&typeof mode.flags==='string'?mode.flags:'i').replace(/g/g,'')
+    };
+  }
   // Plain text is the default; a regular expression is compiled only when the
   // search field says the user turned its .* toggle on.
   exMatch(name){
     const q=this.state.export.contains; if(!q) return true;
     if(!this.state.export.regex) return name.toLowerCase().includes(q.toLowerCase());
-    try{ return new RegExp(q, this.state.export.flags||'i').test(name); }
+    try{ return new RegExp(q, typeof this.state.export.flags==='string'?this.state.export.flags:'i').test(name); }
     catch(e){ return name.toLowerCase().includes(q.toLowerCase()); }
   }
   toggleExportItem(name){ this.setState(st=>{ const sel={...(st.export.selected||{})}; sel[name]=!sel[name]; return {export:{...st.export, selected:sel}}; }); }
   toggleSelectAllExport(){ const ex=this.state.export; const rows=this.render_filRows().filter(f=>this.exMatch(f.name)&&(ex.type==='All'||f.type===ex.type)&&(ex.vendor==='All'||f.vendor===ex.vendor)); const sel={...(ex.selected||{})}; const all=rows.length>0&&rows.every(f=>sel[f.name]); rows.forEach(f=>sel[f.name]=!all); this.setState({export:{...ex,selected:sel}}); }
-  doExport(){ const ex=this.state.export; const sel=ex.selected||{}; const n=Object.keys(sel).filter(k=>sel[k]).length; this.setState({dialog:null}); this.notify(this.msg('exportedPresets',{count:n,suffix:n===1?'':'s',format:ex.format}), {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}); }
+  // Exports exactly the rows the dialog showed as selected — the filtered set
+  // the "Export N" button counted — not every name ever ticked.
+  doExport(){ const ex=this.state.export; const sel=ex.selected||{}; const n=this.render_filRows().filter(f=>this.exMatch(f.name)&&(ex.type==='All'||f.type===ex.type)&&(ex.vendor==='All'||f.vendor===ex.vendor)&&sel[f.name]).length; this.setState({dialog:null}); this.notify(this.msg('exportedPresets',{count:n,suffix:n===1?'':'s',format:ex.format}), {icon:'file_download', actionLabel:'Show file', action:this.go('project'), duration:4200}); }
   saveProject(){ this.notify(this.msg('projectSaved'), {icon:'save', duration:3800}); }
   render_filRows(){
     return [
@@ -256,8 +270,7 @@ class Main extends DCLogic {
       exportAllFilaments:()=>this.notify('Exported 6 ink presets \u2192 bundle (.bbsflmt.zip)', {icon:'folder_zip', duration:4000}),
       openExport:()=>{ const all={}; this.render_filRows().forEach(f=>all[f.name]=true); this.setState({ dialog:'export', export:{...this.state.export, selected:all, contains:'', type:'All', vendor:'All'} }); },
       isDlgExport: s.dialog==='export',
-      setExQuery:(v,mode)=>this.setState({export:{...this.state.export, contains:v,
-        regex:!!(mode&&mode.regex), flags:(mode&&typeof mode.flags==='string'?mode.flags:'i')}}),
+      setExQuery:(v,mode)=>this.setState({export:{...this.state.export, contains:v, ...this.searchMode(mode)}}),
       exRows, exSelCount, exTotal: exFiltered.length, exAllIcon, exFormat: s.export.format,
       exEmpty: exFiltered.length===0, exploreModels:()=>this.notify(this.msg('openingLibrary'), {icon:'public'}),
       toggleSelectAllExport:()=>this.toggleSelectAllExport(), doExport:()=>this.doExport(),
