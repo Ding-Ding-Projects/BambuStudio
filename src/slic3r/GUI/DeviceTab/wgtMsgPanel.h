@@ -1,7 +1,8 @@
 #pragma once
 
+#include "slic3r/GUI/Widgets/LinkLabel.hpp"
+
 #include <wx/panel.h>
-#include <wx/hyperlink.h>
 #include <wx/sizer.h>
 
 #include <string>

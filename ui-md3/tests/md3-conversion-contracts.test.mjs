@@ -300,6 +300,15 @@ test('stock wx controls are gone from the GUI except the allowlisted holders', a
   ]), 'wxButton');
 });
 
+test('wgtMsgPanel includes the widget header that owns LinkLabel', async () => {
+  const header = stripComments(await read('DeviceTab', 'wgtMsgPanel.h'));
+
+  assert.ok(/^[ \t]*#include[ \t]+"slic3r\/GUI\/Widgets\/LinkLabel[.]hpp"[ \t]*$/m.test(header),
+    'wgtMsgPanel.h must include LinkLabel.hpp before declaring its LinkLabel member');
+  assert.ok(/\bLinkLabel[ \t]*\*[ \t]*m_wiki_link\b/.test(header),
+    'wgtMsgPanel.h must retain the converted LinkLabel member');
+});
+
 test('the kit ProgressBar carries the gauge surface the status bars rely on', async () => {
   const hpp = stripComments(await read('Widgets', 'ProgressBar.hpp'));
   for (const member of ['int          GetValue() const', 'int          GetRange() const', 'void         SetRange(int range);', 'void         Pulse();']) {
