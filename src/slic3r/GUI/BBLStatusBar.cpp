@@ -1,4 +1,5 @@
 #include "BBLStatusBar.hpp"
+#include "Widgets/StaticLine.hpp"
 
 #include <wx/timer.h>
 #include <wx/gauge.h>
@@ -17,20 +18,18 @@ namespace Slic3r {
 
 BBLStatusBar::BBLStatusBar(wxWindow *parent, int id)
     : m_self{new wxPanel(parent, id == -1 ? wxID_ANY : id)}
-    , m_prog{new wxGauge(m_self,
-                         wxGA_HORIZONTAL,
-                         100,
-                         wxDefaultPosition,
-                         wxSize(120, -1))}
-    , m_cancelbutton{new wxButton(m_self,
-                                  -1,
-                                  _(L("Cancel")),
-                                  wxDefaultPosition,
-                                  wxDefaultSize)}
+    , m_prog{new ProgressBar(m_self,
+                             wxID_ANY,
+                             100,
+                             wxDefaultPosition,
+                             wxSize(120, -1))}
+    , m_cancelbutton{new Button(m_self, _(L("Cancel")))}
     , m_sizer(new wxBoxSizer(wxHORIZONTAL))
     , m_slice_info_sizer(new wxBoxSizer(wxHORIZONTAL))
     , m_object_info_sizer(new wxBoxSizer(wxHORIZONTAL))
 {
+    m_cancelbutton->SetVariant(Button::Variant::Text);
+    m_cancelbutton->SetButtonSize(Button::Size::Small);
     m_status_text = new wxStaticText(m_self, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
@@ -40,8 +39,8 @@ BBLStatusBar::BBLStatusBar(wxWindow *parent, int id)
     m_slice_info = new wxStaticText(m_self, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     m_slice_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-    wxStaticLine* seperator_1 = new wxStaticLine(m_self, wxID_ANY, wxDefaultPosition, wxSize(3, -1), wxLI_VERTICAL);
-    wxStaticLine* seperator_2 = new wxStaticLine(m_self, wxID_ANY, wxDefaultPosition, wxSize(3, -1), wxLI_VERTICAL);
+    StaticLine* seperator_1 = new StaticLine(m_self, true);
+    StaticLine* seperator_2 = new StaticLine(m_self, true);
 
     m_object_info_sizer->Add(m_object_info, 1, wxEXPAND | wxALL, 0);
     m_object_info_sizer->Add(seperator_1, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);

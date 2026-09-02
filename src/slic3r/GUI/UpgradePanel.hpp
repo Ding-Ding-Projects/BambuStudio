@@ -4,6 +4,7 @@
 #include <wx/panel.h>
 #include <slic3r/GUI/Widgets/Button.hpp>
 #include "Widgets/ProgressBar.hpp"
+#include "Widgets/StaticLine.hpp"
 #include <slic3r/GUI/DeviceManager.hpp>
 #include <slic3r/GUI/Widgets/ScrolledWindow.hpp>
 #include <slic3r/GUI/StatusPanel.hpp>
@@ -87,9 +88,9 @@ protected:
     wxStaticText *  m_staticText_ver;
     wxStaticText *  m_staticText_ver_val;
     wxStaticText *  m_staticText_beta_version;
-    wxStaticLine *  m_staticline;
+    StaticLine *  m_staticline;
     wxStaticBitmap *m_ams_img;
-    wxStaticLine*   m_staticline2;
+    StaticLine*   m_staticline2;
     ExtraAmsPanel*  m_extra_ams_panel;
     wxStaticBitmap* m_extra_ams_img;
     wxStaticBitmap* m_ext_img;
@@ -112,47 +113,47 @@ protected:
     /* air_pump info*/
     wxBoxSizer*            m_air_pump_sizer = nullptr;
     wxStaticBitmap*        m_air_pump_img   = nullptr;
-    wxStaticLine*          m_air_pump_line_above = nullptr;
+    StaticLine*          m_air_pump_line_above = nullptr;
     uiDeviceUpdateVersion* m_air_pump_version = nullptr;
 
     /* rotary attachment*/
     wxBoxSizer            *m_rotary_sizer      = nullptr;
     wxStaticBitmap        *m_rotary_img        = nullptr;
-    wxStaticLine          *m_rotary_line_above = nullptr;
+    StaticLine          *m_rotary_line_above = nullptr;
     uiDeviceUpdateVersion *m_rotary_version    = nullptr;
 
     /* cutting module info*/
     wxBoxSizer*            m_cutting_sizer = nullptr;
     wxStaticBitmap*        m_cutting_img = nullptr;
-    wxStaticLine*          m_cutting_line_above = nullptr;
+    StaticLine*          m_cutting_line_above = nullptr;
     uiDeviceUpdateVersion* m_cutting_version = nullptr;
 
     /* laser info*/
     wxBoxSizer*            m_laser_sizer = nullptr;
     wxStaticBitmap*        m_lazer_img = nullptr;
-    wxStaticLine*          m_laser_line_above = nullptr;
+    StaticLine*          m_laser_line_above = nullptr;
     uiDeviceUpdateVersion* m_laser_version = nullptr;
 
     /* fire extinguish*/
     wxBoxSizer* m_extinguish_sizer = nullptr;
     wxStaticBitmap* m_extinguish_img = nullptr;
-    wxStaticLine* m_extinguish_line_above = nullptr;;
+    StaticLine* m_extinguish_line_above = nullptr;;
     uiDeviceUpdateVersion* m_extinguish_version = nullptr;
 
     /*amshub*/
     wxBoxSizer*            m_amshub_sizer = nullptr;
     wxStaticBitmap*        m_amshub_img = nullptr;
-    wxStaticLine*          m_amshub_line_above = nullptr;
+    StaticLine*          m_amshub_line_above = nullptr;
     uiDeviceUpdateVersion* m_amshub_version = nullptr;
 
     /* filament track switch */
     wxBoxSizer*            m_filatrack_sizer = nullptr;
     wxStaticBitmap*        m_filatrack_img = nullptr;
-    wxStaticLine*          m_filatrack_line_above = nullptr;
+    StaticLine*          m_filatrack_line_above = nullptr;
     uiDeviceUpdateVersion* m_filatrack_version = nullptr;
 
     /* nozzle_rack*/
-    wxStaticLine * m_nozzle_rack_line_above{nullptr};
+    StaticLine * m_nozzle_rack_line_above{nullptr};
     wxStaticBitmap *m_nozzle_rack_img = nullptr;
     wxBoxSizer   *m_nozzle_rack_sizer{nullptr};
     wxStaticText *m_nozzle_rack_text{nullptr};
@@ -160,7 +161,7 @@ protected:
      /* exhaust fan */
     wxBoxSizer            *m_exhaustfan_sizer   = nullptr;
     wxStaticBitmap        *m_exhaustfan_img     = nullptr;
-    wxStaticLine          *m_exhaustfan_line_above = nullptr;
+    StaticLine          *m_exhaustfan_line_above = nullptr;
     uiDeviceUpdateVersion *m_exhaustfan_version    = nullptr;
 
     /* upgrade widgets */

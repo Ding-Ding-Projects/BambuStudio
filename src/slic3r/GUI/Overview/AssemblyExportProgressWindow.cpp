@@ -26,7 +26,7 @@ AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     m_message = new wxStaticText(panel, wxID_ANY, wxEmptyString);
     m_message->SetForegroundColour(wxColour(107, 107, 107));
 
-    m_gauge = new wxGauge(panel, wxID_ANY, 100, wxDefaultPosition, wxSize(FromDIP(480), FromDIP(8)), wxGA_HORIZONTAL | wxGA_SMOOTH);
+    m_gauge = new ProgressBar(panel, wxID_ANY, 100, wxDefaultPosition, wxSize(FromDIP(480), FromDIP(8)));
 
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(m_message, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));

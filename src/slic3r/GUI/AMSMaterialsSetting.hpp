@@ -2,6 +2,7 @@
 #define slic3r_AMSMaterialsSetting_hpp_
 
 #include "libslic3r/Preset.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include "wxExtensions.hpp"
 #include "GUI_Utils.hpp"
 #include "DeviceManager.hpp"
@@ -219,7 +220,7 @@ protected:
 
     wxPanel *           m_panel_kn;
     wxStaticText*       m_ratio_text;
-    wxHyperlinkCtrl *   m_wiki_ctrl;
+    LinkLabel *   m_wiki_ctrl;
     wxStaticText*       m_k_param;
     TextInput*          m_input_k_val;
     wxStaticText*       m_n_param;

@@ -1,4 +1,5 @@
 #include "DownloadProgressDialog.hpp"
+#include "Widgets/LinkLabel.hpp"
 
 #include <wx/settings.h>
 #include <wx/sizer.h>
@@ -72,7 +73,7 @@ DownloadProgressDialog::DownloadProgressDialog(wxString title, bool post_login)
 
     sizer_download_failed->Add(m_statictext_download_failed, 0, wxALIGN_CENTER | wxALL, 5);
 
-    auto m_download_hyperlink = new wxHyperlinkCtrl(m_panel_download_failed, wxID_ANY, _L("click here to see more info"), download_failed_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+    auto m_download_hyperlink = new LinkLabel(m_panel_download_failed, _L("click here to see more info"), std::string(wxString(download_failed_url).ToUTF8()));
     sizer_download_failed->Add(m_download_hyperlink, 0, wxALIGN_CENTER | wxALL, 5);
 
 
@@ -93,7 +94,7 @@ DownloadProgressDialog::DownloadProgressDialog(wxString title, bool post_login)
 
     sizer_install_failed->Add(m_statictext_install_failed, 0, wxALIGN_CENTER | wxALL, 5);
 
-    auto m_install_hyperlink = new wxHyperlinkCtrl(m_panel_install_failed, wxID_ANY, _L("click here to see more info"), install_failed_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+    auto m_install_hyperlink = new LinkLabel(m_panel_install_failed, _L("click here to see more info"), std::string(wxString(install_failed_url).ToUTF8()));
     sizer_install_failed->Add(m_install_hyperlink, 0, wxALIGN_CENTER | wxALL, 5);
 
 

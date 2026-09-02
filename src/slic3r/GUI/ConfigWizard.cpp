@@ -1,6 +1,8 @@
 // FIXME: extract absolute units -> em
 
 #include "ConfigWizard_private.hpp"
+#include "Widgets/TextInput.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 
 #include <algorithm>
 #include <numeric>
@@ -516,10 +518,10 @@ PageWelcome::PageWelcome(ConfigWizard *parent)
         % _utf8(ConfigWizard::name())).str())
     ))
     , cbox_reset(append(
-        new wxCheckBox(this, wxID_ANY, _L("Remove user profiles (a snapshot will be taken beforehand)"))
+        new LabeledCheckBox(this, _L("Remove user profiles (a snapshot will be taken beforehand)"))
     ))
     , cbox_integrate(append(
-        new wxCheckBox(this, wxID_ANY, _L("Perform desktop integration (Sets this binary to be searchable by the system)."))
+        new LabeledCheckBox(this, _L("Perform desktop integration (Sets this binary to be searchable by the system)."))
     ))
 {
     welcome_text->Hide();
@@ -1205,19 +1207,19 @@ const char *PageCustom::default_profile_name = "My Settings";
 PageCustom::PageCustom(ConfigWizard *parent)
     : ConfigWizardPage(parent, _L("Custom Printer Setup"), _L("Custom Printer"))
 {
-    cb_custom = new wxCheckBox(this, wxID_ANY, _L("Define a custom printer profile"));
-    tc_profile_name = new wxTextCtrl(this, wxID_ANY, default_profile_name);
+    cb_custom = new LabeledCheckBox(this, _L("Define a custom printer profile"));
+    tc_profile_name = new TextInput(this, default_profile_name);
     auto *label = new wxStaticText(this, wxID_ANY, _L("Custom profile name:"));
 
     wxGetApp().UpdateDarkUI(tc_profile_name);
 
     tc_profile_name->Enable(false);
-    tc_profile_name->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &evt) {
-        if (tc_profile_name->GetValue().IsEmpty()) {
-            if (profile_name_prev.IsEmpty()) { tc_profile_name->SetValue(default_profile_name); }
-            else { tc_profile_name->SetValue(profile_name_prev); }
+    tc_profile_name->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &evt) {
+        if (tc_profile_name->GetTextCtrl()->GetValue().IsEmpty()) {
+            if (profile_name_prev.IsEmpty()) { tc_profile_name->GetTextCtrl()->SetValue(default_profile_name); }
+            else { tc_profile_name->GetTextCtrl()->SetValue(profile_name_prev); }
         } else {
-            profile_name_prev = tc_profile_name->GetValue();
+            profile_name_prev = tc_profile_name->GetTextCtrl()->GetValue();
         }
         evt.Skip();
     });
@@ -1248,8 +1250,10 @@ PageFirmware::PageFirmware(ConfigWizard *parent)
         choices.Add(label);
     }
 
-    gcode_picker = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, choices);
-    wxGetApp().UpdateDarkUI(gcode_picker);
+    // Kit SelectField: a read-only ComboBox instead of the stock wxChoice.
+    gcode_picker = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+    for (const auto &choice : choices)
+        gcode_picker->Append(choice);
     const auto &enum_values = gcode_opt.enum_values;
     auto needle = enum_values.cend();
     if (gcode_opt.default_value) {

@@ -2,6 +2,7 @@
 #define slic3r_BindDialog_hpp_
 
 #include "I18N.hpp"
+#include "Widgets/LinkLabel.hpp"
 
 #include <wx/font.h>
 #include <wx/colour.h>
@@ -67,7 +68,7 @@ private:
     Label* m_st_txt_error_code{ nullptr };
     Label* m_st_txt_error_desc{ nullptr };
     Label* m_st_txt_extra_info{ nullptr };
-    wxHyperlinkCtrl* m_link_network_state{ nullptr };
+    LinkLabel* m_link_network_state{ nullptr };
     wxString        m_result_info;
     wxString        m_result_extra;
     wxString        m_ping_code_wiki;
@@ -111,7 +112,7 @@ private:
     Label*          m_st_txt_error_code{ nullptr };
     Label*          m_st_txt_error_desc{ nullptr };
     Label*          m_st_txt_extra_info{ nullptr };
-    wxHyperlinkCtrl* m_link_network_state{ nullptr };
+    LinkLabel* m_link_network_state{ nullptr };
     wxString        m_result_info;
     wxString        m_result_extra;
     bool            m_show_error_info_state = true;

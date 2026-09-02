@@ -30,6 +30,8 @@
 #include <memory>
 
 //#include "BedShapeDialog.hpp"
+#include "Widgets/CheckBox.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "Event.hpp"
 #include "wxExtensions.hpp"
 #include "ConfigManipulation.hpp"
@@ -177,7 +179,7 @@ protected:
 
    	struct PresetDependencies {
 		Preset::Type type	  = Preset::TYPE_INVALID;
-		wxCheckBox 	*checkbox = nullptr;
+		LabeledCheckBox *checkbox = nullptr;
 		ScalableButton 	*btn  = nullptr;
 		std::string  key_list; // "compatible_printers"
 		std::string  key_condition;
@@ -622,7 +624,7 @@ private:
     void            update_filament_overrides_page();
 	void 			update_volumetric_flow_preset_hints();
 
-    std::map<std::string, wxCheckBox*> m_overrides_options;
+    std::map<std::string, ::CheckBox*> m_overrides_options;
 
 public:
 	//BBS: GUI refactor

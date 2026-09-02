@@ -1,4 +1,6 @@
 #include "Plater.hpp"
+#include "Widgets/LinkLabel.hpp"
+#include "Widgets/ProgressBar.hpp"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -16460,9 +16462,8 @@ public:
         option2_desc->Wrap(wxWindowBase::FromDIP(440, this));
         option2_sizer->Add(option2_desc, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
 
-        wxHyperlinkCtrl* supported_materials_link = new wxHyperlinkCtrl(option2_box, wxID_ANY,
-            _L("See supported materials"), "https://wiki.helioadditive.com/en/supportedprinters",
-            wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+        LinkLabel* supported_materials_link = new LinkLabel(option2_box,
+            _L("See supported materials"), "https://wiki.helioadditive.com/en/supportedprinters");
         option2_sizer->Add(supported_materials_link, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
         option2_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
@@ -16713,9 +16714,8 @@ public:
         option2_desc->Wrap(wxWindowBase::FromDIP(440, this));
         option2_sizer->Add(option2_desc, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
 
-        wxHyperlinkCtrl* supported_materials_link = new wxHyperlinkCtrl(option2_box, wxID_ANY,
-            _L("See supported materials"), "https://wiki.helioadditive.com/en/supportedprinters",
-            wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+        LinkLabel* supported_materials_link = new LinkLabel(option2_box,
+            _L("See supported materials"), "https://wiki.helioadditive.com/en/supportedprinters");
         option2_sizer->Add(supported_materials_link, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
         option2_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 
@@ -16847,8 +16847,8 @@ public:
         sizer->Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(20, this));
         sizer->AddSpacer(wxWindowBase::FromDIP(15, this));
 
-        m_gauge = new wxGauge(this, wxID_ANY, 100, wxDefaultPosition,
-                              wxSize(wxWindowBase::FromDIP(300, this), -1), wxGA_HORIZONTAL);
+        m_gauge = new ProgressBar(this, wxID_ANY, 100, wxDefaultPosition,
+                                  wxSize(wxWindowBase::FromDIP(300, this), -1));
         m_gauge->Pulse();
         sizer->Add(m_gauge, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(20, this));
         sizer->AddSpacer(wxWindowBase::FromDIP(20, this));
@@ -16889,7 +16889,7 @@ private:
     }
 
     wxTimer* m_timer;
-    wxGauge* m_gauge;
+    ProgressBar* m_gauge;
     std::chrono::steady_clock::time_point m_start_time;
 };
 
@@ -17549,9 +17549,8 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                     option2_desc->Wrap(wxWindowBase::FromDIP(440, this));
                     option2_sizer->Add(option2_desc, 0, wxEXPAND | wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
 
-                    wxHyperlinkCtrl* supported_printers_link = new wxHyperlinkCtrl(option2_box, wxID_ANY,
-                        _L("See supported printers"), "https://wiki.helioadditive.com/en/supportedprinters",
-                        wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+                    LinkLabel* supported_printers_link = new LinkLabel(option2_box,
+                        _L("See supported printers"), "https://wiki.helioadditive.com/en/supportedprinters");
                     option2_sizer->Add(supported_printers_link, 0, wxLEFT | wxRIGHT, wxWindowBase::FromDIP(16, this));
                     option2_sizer->AddSpacer(wxWindowBase::FromDIP(12, this));
 

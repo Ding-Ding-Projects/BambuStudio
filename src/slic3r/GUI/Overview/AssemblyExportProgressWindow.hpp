@@ -2,9 +2,9 @@
 #define slic3r_AssemblyExportProgressWindow_hpp_
 
 #include <wx/frame.h>
+#include "slic3r/GUI/Widgets/ProgressBar.hpp"
 #include <wx/string.h>
 
-class wxGauge;
 class wxStaticText;
 class wxWindow;
 
@@ -21,7 +21,7 @@ public:
 
 private:
     wxStaticText *m_message{nullptr};
-    wxGauge      *m_gauge{nullptr};
+    ProgressBar      *m_gauge{nullptr};
 };
 
 } // namespace GUI

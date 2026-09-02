@@ -22,6 +22,7 @@
 #include <chrono>
 
 #include "Event.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "../libslic3r/libslic3r_version.h"
 #include "../libslic3r/Utils.hpp"
 #include "wxExtensions.hpp"
@@ -461,7 +462,7 @@ public:
 private:
     struct ExtraPanel : public wxPanel
     {
-        wxCheckBox *cbox;
+        LabeledCheckBox *cbox;
 
         ExtraPanel(wxWindow *parent);
         static wxWindow* ctor(wxWindow *parent);

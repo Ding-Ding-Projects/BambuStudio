@@ -1,4 +1,5 @@
 #include "UpgradePanel.hpp"
+#include "Widgets/StaticLine.hpp"
 #include <slic3r/GUI/Widgets/SideTools.hpp>
 #include <slic3r/GUI/Widgets/Label.hpp>
 #include <slic3r/GUI/I18N.hpp>
@@ -132,8 +133,8 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
 
     m_main_left_sizer->Add(m_ota_sizer, 0, wxEXPAND, 0);
 
-    m_staticline = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_staticline->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_staticline = new StaticLine(this);
+    m_staticline->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_staticline->Show(false);
     m_main_left_sizer->Add(m_staticline, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
@@ -192,8 +193,8 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
 
     show_extra_ams(false, true);
 
-    m_staticline2 = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_staticline2->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_staticline2 = new StaticLine(this);
+    m_staticline2->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_left_sizer->Add(m_staticline2, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     // ext
@@ -313,8 +314,8 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
 void MachineInfoPanel::createNozzleRackWidgets(wxBoxSizer *main_left_sizer)
 {
     // horizontal line above
-    m_nozzle_rack_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_nozzle_rack_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_nozzle_rack_line_above = new StaticLine(this);
+    m_nozzle_rack_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_nozzle_rack_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_nozzle_rack_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -381,8 +382,8 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
 
 void MachineInfoPanel::createAirPumpWidgets(wxBoxSizer* main_left_sizer)
 {
-    m_air_pump_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_air_pump_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_air_pump_line_above = new StaticLine(this);
+    m_air_pump_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_air_pump_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
     m_air_pump_img->SetBitmap(m_img_air_pump.bmp());
@@ -406,8 +407,8 @@ void MachineInfoPanel::createAirPumpWidgets(wxBoxSizer* main_left_sizer)
 
 void MachineInfoPanel::createCuttingWidgets(wxBoxSizer* main_left_sizer)
 {
-    m_cutting_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_cutting_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_cutting_line_above = new StaticLine(this);
+    m_cutting_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_cutting_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_cutting_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -434,8 +435,8 @@ void MachineInfoPanel::createCuttingWidgets(wxBoxSizer* main_left_sizer)
 void MachineInfoPanel::createExhaustFan(wxBoxSizer *main_left_sizer)
 {
 
-    m_exhaustfan_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_exhaustfan_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_exhaustfan_line_above = new StaticLine(this);
+    m_exhaustfan_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_exhaustfan_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_exhaustfan_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -461,8 +462,8 @@ void MachineInfoPanel::createExhaustFan(wxBoxSizer *main_left_sizer)
 
 void MachineInfoPanel::createLaserWidgets(wxBoxSizer* main_left_sizer)
 {
-    m_laser_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_laser_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_laser_line_above = new StaticLine(this);
+    m_laser_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_laser_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_lazer_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -489,8 +490,8 @@ void MachineInfoPanel::createLaserWidgets(wxBoxSizer* main_left_sizer)
 
 void MachineInfoPanel::createExtinguishWidgets(wxBoxSizer* main_left_sizer)
 {
-    m_extinguish_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_extinguish_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_extinguish_line_above = new StaticLine(this);
+    m_extinguish_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_extinguish_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_extinguish_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -516,8 +517,8 @@ void MachineInfoPanel::createExtinguishWidgets(wxBoxSizer* main_left_sizer)
 
 void MachineInfoPanel::createRotaryWidgets(wxBoxSizer *main_left_sizer)
 {
-    m_rotary_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_rotary_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_rotary_line_above = new StaticLine(this);
+    m_rotary_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_rotary_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_rotary_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -548,8 +549,8 @@ void MachineInfoPanel::createRotaryWidgets(wxBoxSizer *main_left_sizer)
 
 void MachineInfoPanel::createAmshubWidgets(wxBoxSizer *main_left_sizer)
 {
-    m_amshub_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_amshub_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_amshub_line_above = new StaticLine(this);
+    m_amshub_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_amshub_line_above, 0,wxEXPAND | wxLEFT, FromDIP(40));
 
     m_amshub_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
@@ -1449,8 +1450,8 @@ void MachineInfoPanel::show_amshub(bool show)
 
 void MachineInfoPanel::createFilaTrackSwitchWidgets(wxBoxSizer* main_left_sizer)
 {
-    m_filatrack_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_filatrack_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_filatrack_line_above = new StaticLine(this);
+    m_filatrack_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_filatrack_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_filatrack_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));

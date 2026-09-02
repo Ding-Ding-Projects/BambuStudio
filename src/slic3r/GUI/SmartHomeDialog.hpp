@@ -2,6 +2,7 @@
 #define slic3r_GUI_SmartHomeDialog_hpp_
 
 #include "Widgets/MD3Dialog.hpp"
+#include "Widgets/Slider.hpp"
 #include "HomeAssistant.hpp"
 
 #include <memory>
@@ -68,7 +69,7 @@ private:
     SearchField *m_search { nullptr };
     wxListBox   *m_list { nullptr };
     Label       *m_results_status { nullptr };
-    wxSlider    *m_volume { nullptr };
+    Slider      *m_volume { nullptr };
     Label       *m_speakers_label { nullptr };
     Label       *m_lights_label { nullptr };
     CheckBox    *m_narrator_toggle { nullptr };

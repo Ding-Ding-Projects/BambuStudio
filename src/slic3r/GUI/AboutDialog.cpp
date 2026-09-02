@@ -1,4 +1,5 @@
 #include "AboutDialog.hpp"
+#include "Widgets/StaticLine.hpp"
 #include "I18N.hpp"
 
 #include "libslic3r/Utils.hpp"
@@ -66,7 +67,7 @@ CopyrightsDialog::CopyrightsDialog()
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    wxStaticLine *staticline1 = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+    StaticLine *staticline1 = new StaticLine(this);
 
 	auto sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add( staticline1, 0, wxEXPAND | wxALL, 5 );

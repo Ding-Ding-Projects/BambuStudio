@@ -33,7 +33,7 @@ BBLStatusBarSend::BBLStatusBarSend(wxWindow *parent, int id)
     m_status_text->SetFont(::Label::Body_13);
     m_status_text->SetMaxSize(wxSize(m_self->FromDIP(360), m_self->FromDIP(40)));
 
-    m_prog = new wxGauge(m_self, wxID_ANY, 100, wxDefaultPosition, wxSize(-1, m_self->FromDIP(6)), wxGA_HORIZONTAL);
+    m_prog = new ProgressBar(m_self, wxID_ANY, 100, wxDefaultPosition, wxSize(-1, m_self->FromDIP(6)));
     m_prog->SetMinSize(wxSize(m_self->FromDIP(300),m_self->FromDIP(6)));
     m_prog->SetValue(0);
 

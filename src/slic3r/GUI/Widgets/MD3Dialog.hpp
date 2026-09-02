@@ -145,7 +145,14 @@ protected:
                      const wxString &    title,
                      const wxString &    subtitle,
                      MaterialIcon::Glyph header_glyph,
-                     const Options &     opts = Options{});
+                     const Options &     opts);
+    // Default-options overload (an out-of-line overload rather than a
+    // `= Options{}` default argument: GCC cannot evaluate a nested aggregate's
+    // member initializers inside the still-incomplete enclosing class).
+    bool CreateShell(wxWindow *          parent,
+                     const wxString &    title,
+                     const wxString &    subtitle,
+                     MaterialIcon::Glyph header_glyph);
 
     // Show/hide the header circular close affordance (e.g. an uncancelable
     // progress shell hides it). No-op before the shell is built.

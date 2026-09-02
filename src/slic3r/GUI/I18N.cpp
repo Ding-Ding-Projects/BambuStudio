@@ -40,7 +40,7 @@ LocalizedText translate_mode(const wxString &s, const char *ctx)
 wxString L_str(const std::string &str)
 {
 	//! Explicitly specify that the source string is already in UTF-8 encoding
-	return wxGetTranslation(wxString(str.c_str(), wxConvUTF8));
+	return I18N::vocabulary(wxGetTranslation(wxString(str.c_str(), wxConvUTF8)));
 }
 
 } }

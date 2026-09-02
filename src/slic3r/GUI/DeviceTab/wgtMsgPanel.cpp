@@ -54,11 +54,9 @@ void wgtMsgPanelItem::CreateGui()
     text_sizer->Add(m_text_label, 0, wxALIGN_CENTER_VERTICAL);
 
     if (!m_wiki_url.IsEmpty()) {
-        m_wiki_link = new wxHyperlinkCtrl(this, wxID_ANY, "Wiki->", m_wiki_url);
-        m_wiki_link->SetNormalColour(m_colour);
-        m_wiki_link->SetHoverColour(wxColour(0, 0, 200));
-        m_wiki_link->SetVisitedColour(*wxBLUE);
-        Bind(wxEVT_HYPERLINK, &wgtMsgPanelItem::OnClickWiki, this, m_wiki_link->GetId());
+        m_wiki_link = new LinkLabel(this, "Wiki->", m_wiki_url.ToStdString());
+        m_wiki_link->SeLinkLabelFColour(m_colour);
+        Bind(EVT_LINK_LABEL_LEFT_DOWN, &wgtMsgPanelItem::OnClickWiki, this, m_wiki_link->GetId());
         text_sizer->AddSpacer(FromDIP(4));
         text_sizer->Add(m_wiki_link, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND);
     }
@@ -89,15 +87,14 @@ void wgtMsgPanelItem::SetWiki(const wxString& wiki_url)
 {
     m_wiki_url = wiki_url;
     if (m_wiki_link) {
-        m_wiki_link->SetURL(m_wiki_url);
+        m_wiki_link->setLinkUrl(m_wiki_url);
     }
 }
 
-void wgtMsgPanelItem::OnClickWiki(wxHyperlinkEvent& evt)
+void wgtMsgPanelItem::OnClickWiki(wxCommandEvent& evt)
 {
-    if (!m_wiki_url.IsEmpty()) {
-        wxLaunchDefaultBrowser(m_wiki_url);
-    }
+    // The kit LinkLabel opens its own URL on activation; nothing else to do here.
+    evt.Skip();
 }
 
 // ===== wgtMsgPanel ==========================================================

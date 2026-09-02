@@ -924,7 +924,7 @@ wxString file_wildcards(FileType file_type, const std::string &custom_extension)
     return GUI::format_wxstr("%s (%s)|%s", data.title, title, mask);
 }
 
-static std::string libslic3r_translate_callback(const char *s) { return wxGetTranslation(wxString(s, wxConvUTF8)).utf8_str().data(); }
+static std::string libslic3r_translate_callback(const char *s) { return I18N::vocabulary(wxGetTranslation(wxString(s, wxConvUTF8))).utf8_str().data(); }
 
 #ifdef WIN32
 #if !wxVERSION_EQUAL_OR_GREATER_THAN(3,1,3)

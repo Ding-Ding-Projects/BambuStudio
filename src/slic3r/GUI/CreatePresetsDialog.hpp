@@ -192,9 +192,9 @@ private:
     ::CheckBox *                                       m_can_not_find_vendor_combox     = nullptr;
     ::CheckBox *                                       m_can_not_find_nozzle_checkbox   = nullptr;
     wxStaticText *                                     m_can_not_find_vendor_text       = nullptr;
-    wxTextCtrl *                                       m_custom_vendor_text_ctrl        = nullptr;
-    wxTextCtrl *                                       m_custom_model_text_ctrl         = nullptr;
-    wxTextCtrl *                                       m_custom_nozzle_diameter_ctrl    = nullptr;
+    TextInput *                                        m_custom_vendor_text_ctrl        = nullptr;
+    TextInput *                                        m_custom_model_text_ctrl         = nullptr;
+    TextInput *                                        m_custom_nozzle_diameter_ctrl    = nullptr;
     ComboBox *                                         m_nozzle_diameter                = nullptr;
     ComboBox *                                         m_printer_vendor                 = nullptr;
     ComboBox *                                         m_printer_model                  = nullptr;

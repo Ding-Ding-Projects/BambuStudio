@@ -1,4 +1,6 @@
 #include "CreatePresetsDialog.hpp"
+#include "Widgets/TextInput.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -1558,7 +1560,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_step_switch_item()
     wxBoxSizer *step_switch_sizer = new wxBoxSizer(wxVERTICAL);
 
     std::string      wiki_url             = "https://wiki.bambulab.com/en/software/bambu-studio/3rd-party-printer-profile";
-    wxHyperlinkCtrl *m_download_hyperlink = new wxHyperlinkCtrl(this, wxID_ANY, _L("wiki"), wiki_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+    LinkLabel *m_download_hyperlink = new LinkLabel(this, _L("wiki"), wiki_url);
     step_switch_sizer->Add(m_download_hyperlink, 0,  wxRIGHT | wxALIGN_RIGHT, FromDIP(5));
 
     wxBoxSizer *horizontal_sizer  = new wxBoxSizer(wxHORIZONTAL);
@@ -1705,9 +1707,9 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
     });
     m_select_printer->Hide();
 
-    m_custom_vendor_text_ctrl                      = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
-    m_custom_vendor_text_ctrl->SetHint(_L("Input Custom Vendor"));
-    m_custom_vendor_text_ctrl->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
+    m_custom_vendor_text_ctrl                      = new TextInput(parent, "", "", "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
+    m_custom_vendor_text_ctrl->GetTextCtrl()->SetHint(_L("Input Custom Vendor"));
+    m_custom_vendor_text_ctrl->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
         int key = event.GetKeyCode();
         if (cannot_input_key.find(key) != cannot_input_key.end()) { // "@" can not be inputed
             event.Skip(false);
@@ -1717,9 +1719,9 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
     });
     comboBoxSizer->Add(m_custom_vendor_text_ctrl, 0, wxEXPAND | wxALL, 0);
     m_custom_vendor_text_ctrl->Hide();
-    m_custom_model_text_ctrl = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
-    m_custom_model_text_ctrl->SetHint(_L("Input Custom Model"));
-    m_custom_model_text_ctrl->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
+    m_custom_model_text_ctrl = new TextInput(parent, "", "", "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
+    m_custom_model_text_ctrl->GetTextCtrl()->SetHint(_L("Input Custom Model"));
+    m_custom_model_text_ctrl->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
         int key = event.GetKeyCode();
         if (cannot_input_key.find(key) != cannot_input_key.end()) { // "@" can not be inputed
             event.Skip(false);
@@ -1802,9 +1804,9 @@ wxBoxSizer *CreatePrinterPresetDialog::create_nozzle_diameter_item(wxWindow *par
     m_nozzle_diameter->SetSelection(0);
     comboBoxSizer->Add(m_nozzle_diameter, 0, wxEXPAND | wxALL, 0);
 
-    m_custom_nozzle_diameter_ctrl = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
-    m_custom_nozzle_diameter_ctrl->SetHint(_L("Input Custom Nozzle Diameter"));
-    m_custom_nozzle_diameter_ctrl->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
+    m_custom_nozzle_diameter_ctrl = new TextInput(parent, "", "", "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
+    m_custom_nozzle_diameter_ctrl->GetTextCtrl()->SetHint(_L("Input Custom Nozzle Diameter"));
+    m_custom_nozzle_diameter_ctrl->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
         int key = event.GetKeyCode();
         if (key != 44 && key != 46 && cannot_input_key.find(key) != cannot_input_key.end()) { // "@" can not be inputed
             event.Skip(false);
@@ -2371,7 +2373,7 @@ std::string CreatePrinterPresetDialog::get_printer_vendor() const
     assert(curr_create_printer_type() == m_create_type.create_printer);
     std::string custom_vendor;
     if (m_can_not_find_vendor_combox->GetValue()) {
-        custom_vendor = into_u8(m_custom_vendor_text_ctrl->GetValue());
+        custom_vendor = into_u8(m_custom_vendor_text_ctrl->GetTextCtrl()->GetValue());
         custom_vendor             = remove_special_key(custom_vendor);
         boost::algorithm::trim(custom_vendor);
     } else {
@@ -2385,7 +2387,7 @@ std::string CreatePrinterPresetDialog::get_printer_model() const
     assert(curr_create_printer_type() == m_create_type.create_printer);
     std::string custom_model;
     if (m_can_not_find_vendor_combox->GetValue()) {
-        custom_model  = into_u8(m_custom_model_text_ctrl->GetValue());
+        custom_model  = into_u8(m_custom_model_text_ctrl->GetTextCtrl()->GetValue());
         custom_model              = remove_special_key(custom_model);
         boost::algorithm::trim(custom_model);
     } else {
@@ -2398,7 +2400,7 @@ std::string CreatePrinterPresetDialog::get_nozzle_diameter() const
 {
     std::string diameter;
     if (m_can_not_find_nozzle_checkbox->GetValue()) {
-        diameter = into_u8(m_custom_nozzle_diameter_ctrl->GetValue());
+        diameter = into_u8(m_custom_nozzle_diameter_ctrl->GetTextCtrl()->GetValue());
     } else {
         diameter = into_u8(m_nozzle_diameter->GetStringSelection());
         size_t index_mm = diameter.find(" mm");
@@ -3341,7 +3343,7 @@ bool CreatePrinterPresetDialog::validate_input_valid()
 
     std::string nozzle_diameter;
     if (m_can_not_find_nozzle_checkbox->GetValue()) {
-        nozzle_diameter = into_u8(m_custom_nozzle_diameter_ctrl->GetValue());
+        nozzle_diameter = into_u8(m_custom_nozzle_diameter_ctrl->GetTextCtrl()->GetValue());
     } else {
         nozzle_diameter = into_u8(m_nozzle_diameter->GetStringSelection());
         size_t index_mm = nozzle_diameter.find(" mm");
@@ -5227,8 +5229,8 @@ wxPanel *PresetTree::get_child_item(wxPanel *parent, std::shared_ptr<Preset> pre
     if (preset->inherits() == "" && preset->base_id != "") base_id_error = true;
     if (base_id_error) {
         std::string      wiki_url             = "https://wiki.bambulab.com/en/software/bambu-studio/custom-filament-issue";
-        wxHyperlinkCtrl *m_download_hyperlink = new wxHyperlinkCtrl(panel, wxID_ANY, _L("[Delete Required]"), wiki_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
-        m_download_hyperlink->SetFont(Label::Body_10);
+        LinkLabel *m_download_hyperlink = new LinkLabel(panel, _L("[Delete Required]"), wiki_url);
+        m_download_hyperlink->getLabel()->SetFont(Label::Body_10);
         sizer->Add(m_download_hyperlink, 0, wxEXPAND | wxALL, 5);
     }
     sizer->Add(0, 0, 1, wxEXPAND, 0);

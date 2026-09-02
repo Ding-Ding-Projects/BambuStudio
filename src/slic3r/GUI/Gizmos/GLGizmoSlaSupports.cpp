@@ -1,5 +1,6 @@
 // Include GLGizmoBase.hpp before I18N.hpp as it includes some libigl code, which overrides our localization "L" macro.
 #include "GLGizmoSlaSupports.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "slic3r/GUI/GLCanvas3D.hpp"
 #include "slic3r/GUI/Camera.hpp"
 #include "slic3r/GUI/Gizmos/GLGizmosCommon.hpp"
@@ -1240,6 +1241,8 @@ SlaGizmoHelpDialog::SlaGizmoHelpDialog()
 
     SetSizer(hsizer);
     hsizer->SetSizeHints(this);
+    // Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+    MD3DialogCaption::Adopt(this);
 }
 
 

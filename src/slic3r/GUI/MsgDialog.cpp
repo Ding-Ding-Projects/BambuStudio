@@ -1,4 +1,5 @@
 ﻿#include "MsgDialog.hpp"
+#include "Widgets/LinkLabel.hpp"
 
 #include <algorithm>
 #include <wx/settings.h>
@@ -769,7 +770,7 @@ wxBoxSizer *Newer3mfVersionDialog::get_msg_sizer()
     if (file_version_newer) {
         text1 = new wxStaticText(this, wxID_ANY, _L("The 3mf file version is in Beta and it is newer than the current Bambu Studio version."));
         wxStaticText *   text2       = new wxStaticText(this, wxID_ANY, _L("If you would like to try Bambu Studio Beta, you may click to"));
-        wxHyperlinkCtrl *github_link = new wxHyperlinkCtrl(this, wxID_ANY, _L("Download Beta Version"), "https://github.com/bambulab/BambuStudio/releases");
+        LinkLabel *github_link = new LinkLabel(this, _L("Download Beta Version"), "https://github.com/bambulab/BambuStudio/releases");
         horizontal_sizer->Add(text2, 0, wxEXPAND, 0);
         horizontal_sizer->Add(github_link, 0, wxEXPAND | wxLEFT, 5);
 
@@ -851,11 +852,9 @@ NetworkErrorDialog::NetworkErrorDialog(wxWindow* parent)
     m_text_basic->SetFont(::Label::Body_14);
     body->Add(m_text_basic, 0, wxEXPAND);
 
-    m_link_server_state = new wxHyperlinkCtrl(this, wxID_ANY, _L("Check the status of current system services"), "");
-    m_link_server_state->SetFont(::Label::Body_13);
-    m_link_server_state->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {wxGetApp().link_to_network_check(); });
-    m_link_server_state->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
-    m_link_server_state->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
+    m_link_server_state = new LinkLabel(this, _L("Check the status of current system services"), "");
+    m_link_server_state->getLabel()->SetFont(::Label::Body_13);
+    m_link_server_state->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](auto& e) { wxGetApp().link_to_network_check(); });
     body->Add(m_link_server_state, 0, wxTOP, FromDIP(6));
 
     m_text_proposal = new Label(this, _L("If the server is in a fault state, you can temporarily use offline printing or local network printing."));
@@ -866,11 +865,9 @@ NetworkErrorDialog::NetworkErrorDialog(wxWindow* parent)
     m_text_proposal->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     body->Add(m_text_proposal, 0, wxEXPAND | wxTOP, FromDIP(16));
 
-    m_text_wiki = new wxHyperlinkCtrl(this, wxID_ANY, _L("How to use LAN only mode"), "");
-    m_text_wiki->SetFont(::Label::Body_13);
-    m_text_wiki->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {wxGetApp().link_to_lan_only_wiki(); });
-    m_text_wiki->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
-    m_text_wiki->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
+    m_text_wiki = new LinkLabel(this, _L("How to use LAN only mode"), "");
+    m_text_wiki->getLabel()->SetFont(::Label::Body_13);
+    m_text_wiki->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](auto& e) { wxGetApp().link_to_lan_only_wiki(); });
     body->Add(m_text_wiki, 0, wxTOP, FromDIP(4));
 
     /*dont show again — sits at the far left of the footer row*/

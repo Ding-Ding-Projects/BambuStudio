@@ -252,6 +252,18 @@
 
 ## Next: continue matching `ui-md3/design-system` (standing mandate)
 
+**Second-pass sweep (2026-09-02)** — recorded in the register under "Second-pass sweep: generic
+elements and vocabulary": every user-visible string is rewritten at the translation boundary so
+filament reads "ink" and the AMS reads "Ink Dispenser" (`GUI/LanguageMode.cpp` `vocabulary()`);
+the stock wxButton / wxGauge / wxStaticLine / wxHyperlinkCtrl / wxCheckBox / wxChoice / wxSlider
+constructions and seven single-line wxTextCtrl inputs became their kit widgets (a new
+`Widgets/LabeledCheckBox` row, `ProgressBar::Pulse()` for indeterminate gauges); six owned dialogs
+still on native OS chrome adopted `MD3DialogCaption`. Still open there: the seven wxRadioButton
+groups, the multi-line text views, the SmartHome list box, and the 175 static bitmaps that belong
+to the icons-assets families. Pinned by the "second-pass sweep" tests in
+`ui-md3/tests/md3-conversion-contracts.test.mjs`; the Windows build and light/dark captures of each
+converted surface are still owed.
+
 The parity register is **128 done / 3 justified deviations / 0 open** (2026-07-24). The three
 deviations are held deliberately: corner-anchored toasts (the standing notification rules
 override the kit's bottom-center), the project webview (needs C++ host APIs), and the SyncAms

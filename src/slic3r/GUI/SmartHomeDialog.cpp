@@ -1,4 +1,5 @@
 #include "SmartHomeDialog.hpp"
+#include "Widgets/Slider.hpp"
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceManager.hpp"
@@ -625,19 +626,13 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
         m_pending_volume_entity.clear();
         HomeAssistant::media_volume(entity_id, m_pending_volume_level);
     });
-    // Deliberately still the native trackbar, not the shared MD3 Slider. Slider
-    // derives from wxWindow rather than wxControl, so it gets no WS_TABSTOP and
-    // cannot be reached by Tab, and it implements no wxAccessible - a screen reader
-    // sees a blank client area instead of a slider with a value. Swapping this
-    // control would trade a documented accessibility guarantee for a visual one,
-    // which this project's rules do not allow. Restore the swap once Slider is
-    // focusable and exposes ROLE_SYSTEM_SLIDER.
-    m_volume = new wxSlider(
-        m_scroll, wxID_ANY, 50, 0, 100,
-        wxDefaultPosition, wxDefaultSize);
+    // Kit Slider: the shared MD3 Slider now takes keyboard focus and exposes
+    // ROLE_SYSTEM_SLIDER with its value through SliderAccessible, so the native
+    // trackbar this once kept for accessibility is replaced without losing it.
+    m_volume = new Slider(m_scroll, 50, 0, 100);
     m_volume->SetMinSize(FromDIP(wxSize(44, 44)));
     m_volume->SetName(_L("Volume"));
-    m_volume->Bind(wxEVT_SLIDER, [this](wxCommandEvent &) {
+    m_volume->SetOnChange([this](int) {
         if (const auto *entity = selected_entity()) {
             m_pending_volume_entity = entity->entity_id;
             m_pending_volume_level  = m_volume->GetValue() / 100.0;

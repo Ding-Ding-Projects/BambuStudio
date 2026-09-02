@@ -2,6 +2,9 @@
 #define slic3r_ConfigWizard_private_hpp_
 
 #include "ConfigWizard.hpp"
+#include "Widgets/TextInput.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
+#include "Widgets/ComboBox.hpp"
 
 #include <vector>
 #include <set>
@@ -230,8 +233,8 @@ struct ConfigWizardPage: wxPanel
 struct PageWelcome: ConfigWizardPage
 {
     wxStaticText *welcome_text;
-    wxCheckBox *cbox_reset;
-    wxCheckBox *cbox_integrate;
+    LabeledCheckBox *cbox_reset;
+    LabeledCheckBox *cbox_integrate;
 
     PageWelcome(ConfigWizard *parent);
 
@@ -376,13 +379,13 @@ struct PageCustom: ConfigWizardPage
     PageCustom(ConfigWizard *parent);
 
     bool custom_wanted() const { return cb_custom->GetValue(); }
-    std::string profile_name() const { return into_u8(tc_profile_name->GetValue()); }
+    std::string profile_name() const { return into_u8(tc_profile_name->GetTextCtrl()->GetValue()); }
 
 private:
     static const char* default_profile_name;
 
-    wxCheckBox *cb_custom;
-    wxTextCtrl *tc_profile_name;
+    LabeledCheckBox *cb_custom;
+    TextInput *tc_profile_name;
     wxString profile_name_prev;
 
 };
@@ -427,7 +430,7 @@ private:
 struct PageFirmware: ConfigWizardPage
 {
     const ConfigOptionDef &gcode_opt;
-    wxChoice *gcode_picker;
+    ComboBox *gcode_picker;
 
     PageFirmware(ConfigWizard *parent);
     virtual void apply_custom_config(DynamicPrintConfig &config);

@@ -2,6 +2,7 @@
 #define MULTI_NOZZLE_SYNC_HPP
 
 #include "../wxExtensions.hpp"
+#include "ComboBox.hpp"
 #include "../MsgDialog.hpp"
 #include "libslic3r/PrintConfig.hpp"
 #include "libslic3r/MultiNozzleUtils.hpp"
@@ -40,8 +41,8 @@ public:
     virtual void on_dpi_changed(const wxRect& suggested_rect) {};
     int GetNozzleCount(NozzleVolumeType volume_type) const;
 private:
-    wxChoice* m_standard_choice { nullptr };
-    wxChoice* m_highflow_choice { nullptr };
+    ComboBox* m_standard_choice { nullptr };
+    ComboBox* m_highflow_choice { nullptr };
     Button* m_confirm_btn{ nullptr };
     Label* m_error_label{ nullptr };
     NozzleVolumeType m_volume_type;

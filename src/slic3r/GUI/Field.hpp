@@ -17,6 +17,7 @@
 #include <wx/clrpicker.h>
 
 #include "libslic3r/libslic3r.h"
+#include "Widgets/Slider.hpp"
 #include "libslic3r/Config.hpp"
 #include "libslic3r/Utils.hpp"
 
@@ -546,7 +547,7 @@ public:
 
 	wxSizer*		m_sizer{ nullptr };
 	wxTextCtrl*		m_textctrl{ nullptr };
-	wxSlider*		m_slider{ nullptr };
+	Slider*			m_slider{ nullptr };
 
 	int				m_scale = 10;
 

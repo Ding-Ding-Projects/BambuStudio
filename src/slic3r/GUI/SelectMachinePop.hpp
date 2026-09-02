@@ -25,6 +25,7 @@
 #include <wx/srchctrl.h>
 
 #include "ReleaseNote.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include "GUI_Utils.hpp"
 #include "wxExtensions.hpp"
 #include "DeviceManager.hpp"
@@ -196,7 +197,7 @@ private:
     PinCodePanel*                     m_panel_ping_code{nullptr};
     PinCodePanel*                     m_panel_direct_connection{nullptr};
     wxWindow*                         m_placeholder_panel{nullptr};
-    wxHyperlinkCtrl*                  m_hyperlink{nullptr};
+    LinkLabel*                  m_hyperlink{nullptr};
     Label*                            m_ping_code_text{nullptr};
     wxStaticBitmap*                   m_img_ping_code{nullptr};
     wxBoxSizer *                      m_sizer_body{nullptr};

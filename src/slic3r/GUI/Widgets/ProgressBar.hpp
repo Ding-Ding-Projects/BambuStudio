@@ -2,6 +2,7 @@
 #define slic3r_GUI_ProgressBar_hpp_
 
 #include <wx/window.h>
+#include <wx/timer.h>
 #include "../wxExtensions.hpp"
 #include "StateColor.hpp"
 
@@ -51,6 +52,15 @@ public:
     void         SetProgressForedColour(wxColour colour);
     void         SetProgressBackgroundColour(wxColour colour);
     void         Rescale();
+
+    // wxGauge-compatible surface, so the stock gauges in the status bars and
+    // progress windows can become this kit ProgressBar without touching their
+    // callers: range accessors plus an indeterminate Pulse() that sweeps a
+    // Primary segment along the track until the next SetValue().
+    int          GetValue() const { return m_step; }
+    int          GetRange() const { return m_max; }
+    void         SetRange(int range);
+    void         Pulse();
     void         SetHeight(int height) {
         m_minHeight = height;
         m_radius    = defaultRadius;
@@ -59,6 +69,10 @@ public:
     virtual void SetMinSize(const wxSize &size) override;
 
 protected:
+    bool         m_indeterminate = false;
+    double       m_pulse_phase   = 0.0;
+    wxTimer      m_pulse_timer;
+    void         onPulseTick(wxTimerEvent &evt);
     void         paintEvent(wxPaintEvent &evt);
     void         render(wxDC &dc);
     void         doRender(wxDC &dc);

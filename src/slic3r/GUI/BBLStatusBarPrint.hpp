@@ -11,11 +11,11 @@
 #include <wx/hyperlink.h>
 
 #include "Jobs/ProgressIndicator.hpp"
+#include "Widgets/ProgressBar.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
 
 class wxTimer;
-class wxGauge;
 class wxButton;
 class wxTimerEvent;
 class wxStatusBar;
@@ -29,7 +29,7 @@ namespace Slic3r {
 class BBLStatusBarPrint : public ProgressIndicator
 {
     wxPanel *     m_self; // we cheat! It should be the base class but: perl!
-    wxGauge *     m_prog;
+    ProgressBar *     m_prog;
     Label *       m_link_show_error;
     wxBoxSizer*   m_sizer_status_text;
     wxStaticBitmap* m_static_bitmap_show_error;

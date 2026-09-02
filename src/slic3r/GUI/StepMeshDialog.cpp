@@ -1,4 +1,5 @@
 #include "StepMeshDialog.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 
 #include <thread>
 #include <wx/event.h>
@@ -268,7 +269,7 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     bSizer->Add(angle_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
 
     wxBoxSizer* check_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_split_compound_checkbox = new wxCheckBox(this, wxID_ANY, _L("Split compound and compsolid into multiple objects"), wxDefaultPosition, wxDefaultSize, 0);
+    m_split_compound_checkbox = new LabeledCheckBox(this, _L("Split compound and compsolid into multiple objects"));
     m_split_compound_checkbox->SetForegroundColour(FONT_COLOR);
     m_split_compound_checkbox->SetValue(wxGetApp().app_config->get_bool("is_split_compound"));
     check_sizer->Add(m_split_compound_checkbox, 0, wxALIGN_LEFT);
@@ -286,7 +287,7 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
 
     // "Don't show again" lives at the footer's leading edge; OK/Cancel become
     // kit pill footer Buttons (filled OK, text Cancel).
-    m_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
+    m_checkbox = new LabeledCheckBox(this, _L("Don't show again"));
     m_checkbox->SetForegroundColour(FONT_COLOR);
 
     m_button_ok = new Button(this, _L("OK"));

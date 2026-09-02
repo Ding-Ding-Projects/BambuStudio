@@ -1,4 +1,5 @@
 #include "PhysicalPrinterDialog.hpp"
+#include "Widgets/TextInput.hpp"
 #include "PresetComboBoxes.hpp"
 
 #include <cstddef>
@@ -68,9 +69,8 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
     wxBoxSizer *input_sizer_h = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *input_sizer_v = new wxBoxSizer(wxVERTICAL);
 
-    m_input_ctrl = new wxTextCtrl(m_input_area, -1, from_u8(preset_name), wxDefaultPosition, wxSize(FromDIP(360), -1), 0 | wxBORDER_NONE);
-    m_input_ctrl->SetBackgroundColour(*wxWHITE);
-    m_input_ctrl->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update(); });
+    m_input_ctrl = new TextInput(m_input_area, from_u8(preset_name), "", "", wxDefaultPosition, wxSize(FromDIP(360), -1), wxBORDER_NONE);
+    m_input_ctrl->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update(); });
 
     input_sizer_v->Add(m_input_ctrl, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, BORDER_W);
     input_sizer_h->Add(input_sizer_v, 0, wxALIGN_CENTER, 0);
@@ -349,7 +349,7 @@ void PhysicalPrinterDialog::update_printhost_buttons()
 }
 
 void PhysicalPrinterDialog::update_preset_input() {
-    m_preset_name = into_u8(m_input_ctrl->GetValue());
+    m_preset_name = into_u8(m_input_ctrl->GetTextCtrl()->GetValue());
 
     m_valid_type = Valid;
     wxString info_line;

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include "GUI_Utils.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include <wx/dialog.h>
 #include <wx/font.h>
 #include <wx/bitmap.h>
@@ -464,9 +465,9 @@ public:
 
 private:
     Label* m_text_basic;
-    wxHyperlinkCtrl* m_link_server_state;
+    LinkLabel* m_link_server_state;
     Label* m_text_proposal;
-    wxHyperlinkCtrl* m_text_wiki;
+    LinkLabel* m_text_wiki;
     Button *         m_button_confirm;
 
 public:

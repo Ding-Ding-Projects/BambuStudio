@@ -27,6 +27,7 @@
 #include <unordered_map>
 
 #include "GUI_ObjectLayers.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include "boost/bimap/bimap.hpp"
 #include "AmsMappingPopup.hpp"
 #include "ReleaseNote.hpp"
@@ -400,7 +401,7 @@ protected:
     Label*                              m_st_txt_error_desc{nullptr};
     Label*                              m_st_txt_extra_info{nullptr};
     Label*                              m_ams_backup_tip{nullptr};
-    wxHyperlinkCtrl*                    m_link_network_state{ nullptr };
+    LinkLabel*                    m_link_network_state{ nullptr };
     wxSimplebook*                       m_rename_switch_panel{nullptr};
     wxSimplebook*                       m_simplebook{nullptr};
     wxStaticText*                       m_rename_text{nullptr};

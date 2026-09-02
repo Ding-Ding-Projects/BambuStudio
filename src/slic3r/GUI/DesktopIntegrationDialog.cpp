@@ -1,5 +1,7 @@
 #ifdef __linux__
 #include "DesktopIntegrationDialog.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "GUI_App.hpp"
 #include "GUI.hpp"
 #include "format.hpp"
@@ -477,23 +479,29 @@ DesktopIntegrationDialog::DesktopIntegrationDialog(wxWindow *parent)
 	
 
 	wxBoxSizer *btn_szr = new wxBoxSizer(wxHORIZONTAL);
-	wxButton *btn_perform = new wxButton(this, wxID_ANY, _L("Perform"));
+	// Kit Button variants: one filled primary action, outlined secondary, text cancel.
+	Button *btn_perform = new Button(this, _L("Perform"));
+	btn_perform->SetVariant(Button::Variant::Filled);
 	btn_szr->Add(btn_perform, 0, wxALL, 10);
 
 	btn_perform->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { DesktopIntegrationDialog::perform_desktop_integration(); EndModal(wxID_ANY); });
 	
 	if (can_undo){
-		wxButton *btn_undo = new wxButton(this, wxID_ANY, _L("Undo"));
+		Button *btn_undo = new Button(this, _L("Undo"));
+		btn_undo->SetVariant(Button::Variant::Outlined);
 		btn_szr->Add(btn_undo, 0, wxALL, 10);
 		btn_undo->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { DesktopIntegrationDialog::undo_desktop_intgration(); EndModal(wxID_ANY); });
 	}
-	wxButton *btn_cancel = new wxButton(this, wxID_ANY, _L("Cancel"));
+	Button *btn_cancel = new Button(this, _L("Cancel"));
+	btn_cancel->SetVariant(Button::Variant::Text);
 	btn_szr->Add(btn_cancel, 0, wxALL, 10);
 	btn_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_ANY); });
 
 	vbox->Add(btn_szr, 0, wxALIGN_CENTER);
 
     SetSizerAndFit(vbox);
+    // Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+    MD3DialogCaption::Adopt(this);
 }
 
 DesktopIntegrationDialog::~DesktopIntegrationDialog()

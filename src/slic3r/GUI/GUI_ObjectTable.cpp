@@ -1,4 +1,5 @@
 #include "wx/clipbrd.h"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "wx/display.h"
 
 #include "SelectMachine.hpp"
@@ -3412,6 +3413,8 @@ ObjectTableDialog::ObjectTableDialog(wxWindow* parent, Plater* platerObj, Model 
     Fit();
     Layout();
     wxGetApp().UpdateDlgDarkUI(this);
+    // Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+    MD3DialogCaption::Adopt(this);
 }
 
 ObjectTableDialog::~ObjectTableDialog()

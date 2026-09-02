@@ -4,6 +4,7 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include "Label.hpp"
+#include <algorithm>
 
 
 
@@ -31,6 +32,39 @@ ProgressBar::ProgressBar(wxWindow *parent, wxWindowID id, int max, const wxPoint
 
     SetFont(Label::Head_12);
     create(parent, id, pos, temp_size);
+    m_pulse_timer.SetOwner(this);
+    Bind(wxEVT_TIMER, &ProgressBar::onPulseTick, this, m_pulse_timer.GetId());
+}
+
+void ProgressBar::SetRange(int range)
+{
+    if (range <= 0) return;
+    m_max = range;
+    if (m_step > m_max) m_step = m_max;
+    Refresh();
+}
+
+void ProgressBar::Pulse()
+{
+    m_disable = false;
+    if (!m_indeterminate) {
+        m_indeterminate = true;
+        m_pulse_phase   = 0.0;
+    }
+    if (!m_pulse_timer.IsRunning())
+        m_pulse_timer.Start(40);
+    Refresh();
+}
+
+void ProgressBar::onPulseTick(wxTimerEvent &)
+{
+    if (!m_indeterminate || !IsShownOnScreen()) {
+        m_pulse_timer.Stop();
+        return;
+    }
+    m_pulse_phase += 0.02;
+    if (m_pulse_phase > 1.0) m_pulse_phase -= 1.0;
+    Refresh();
 }
 
 
@@ -118,7 +152,10 @@ void ProgressBar::Reset()
 void ProgressBar::SetProgress(int step)
 {
     if (step < 0) return;
-    if (m_disable == false && m_step == step)
+    const bool was_indeterminate = m_indeterminate;
+    m_indeterminate = false;
+    m_pulse_timer.Stop();
+    if (!was_indeterminate && m_disable == false && m_step == step)
     {
         return;
     }
@@ -209,6 +246,18 @@ void ProgressBar::doRender(wxDC &dc)
         pt.y    = (size.y - textSize.y) / 2;
         dc.DrawText(m_disable_text, pt);
 
+    } else if (m_indeterminate) {
+        // Indeterminate: a 30% Primary segment sweeping left to right.
+        const double seg  = std::max(size.x * 0.3, m_radius * 2.0);
+        const double span = size.x + seg;
+        const double x    = m_pulse_phase * span - seg;
+        dc.SetPen(wxPen(m_progress_colour, 1));
+        dc.SetBrush(wxBrush(m_progress_colour));
+        if (m_radius == 0) {
+            dc.DrawRectangle(x, 0, seg, size.y);
+        } else {
+            dc.DrawRoundedRectangle(x, 0, seg, size.y, drawRadius);
+        }
     } else {
         m_proportion = float(size.x * float(this->m_step) / float(this->m_max));
         if (m_proportion < m_radius * 2  && m_proportion != 0) { m_proportion = m_radius * 2; }

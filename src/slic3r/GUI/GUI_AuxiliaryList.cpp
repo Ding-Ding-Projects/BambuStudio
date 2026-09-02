@@ -1,5 +1,6 @@
 #include <wx/button.h>
 #include "GUI_AuxiliaryList.hpp"
+#include "Widgets/Button.hpp"
 #include "I18N.hpp"
 #include "wxExtensions.hpp"
 
@@ -39,9 +40,13 @@ AuxiliaryList::AuxiliaryList(wxWindow* parent)
 #endif
 
 	//m_nf_btn = new wxButton(panel, wxID_NEW, _L("New Folder"));
-	m_if_btn = new wxButton(panel, wxID_ADD, _L("Import File"));
-	m_of_btn = new wxButton(panel, wxID_OPEN, _("Open File"));
-	m_del_btn = new wxButton(panel, wxID_DELETE, _L("Delete"));
+	// Kit Button variants: filled primary action, outlined secondary, outlined-error delete.
+	m_if_btn = new Button(panel, _L("Import File"), "", 0, 0, wxID_ADD);
+	m_if_btn->SetVariant(Button::Variant::Filled);
+	m_of_btn = new Button(panel, _("Open File"), "", 0, 0, wxID_OPEN);
+	m_of_btn->SetVariant(Button::Variant::Outlined);
+	m_del_btn = new Button(panel, _L("Delete"), "", 0, 0, wxID_DELETE);
+	m_del_btn->SetVariant(Button::Variant::Danger);
 
 	wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
 	//hsizer->Add(m_nf_btn, 0, wxRIGHT, 5);

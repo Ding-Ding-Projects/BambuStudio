@@ -1,4 +1,7 @@
 #include "AMSDryControl.hpp"
+#include "Widgets/TextInput.hpp"
+#include "Widgets/CheckBox.hpp"
+#include "Widgets/StaticLine.hpp"
 #include "DeviceCore/DevFilaSystem.h"
 #include "GUI_App.hpp"
 #include "I18N.hpp"
@@ -343,14 +346,14 @@ wxBoxSizer* AMSDryCtrWin::create_status_descriptions_section(wxPanel* parent)
     wxBoxSizer* hum_desc_sizer = create_description_item(parent, _L("Humidity"), m_humidity_data_label);
     desc_sizer->Add(hum_desc_sizer, 1, wxEXPAND, FromDIP(1));
 
-    wxStaticLine* vert_separator = new wxStaticLine(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL);
+    StaticLine* vert_separator = new StaticLine(parent, true);
     desc_sizer->Add(vert_separator, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(5));
 
     wxBoxSizer* temp_desc_sizer = create_description_item(parent, _L("Temperature"), m_temperature_data_label);
     desc_sizer->Add(temp_desc_sizer, 1, wxEXPAND, FromDIP(1));
 
     m_time_descrition_container = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticLine* vert_separator2 = new wxStaticLine(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL);
+    StaticLine* vert_separator2 = new StaticLine(parent, true);
     m_time_descrition_container->Add(vert_separator2, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(5));
 
     wxBoxSizer* time_desc_sizer = create_description_item(parent, _L("Left Time"), m_time_data_label);
@@ -431,10 +434,10 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
     // part 3 time and temperature
     // Temperature part
     wxBoxSizer* temp_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_temperature_input = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxSize(FromDIP(80), -1));
-    m_temperature_input->SetMaxLength(3); // Limit to 3 digits
+    m_temperature_input = new TextInput(parent, "", "", "", wxDefaultPosition, wxSize(FromDIP(80), -1));
+    m_temperature_input->GetTextCtrl()->SetMaxLength(3); // Limit to 3 digits
 
-    m_temperature_input->Bind(wxEVT_CHAR, [this](wxKeyEvent& event) {
+    m_temperature_input->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent& event) {
         int keycode = event.GetKeyCode();
         if (keycode >= '0' && keycode <= '9') {
             event.Skip();
@@ -443,13 +446,11 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
         }
     });
 
-    m_temperature_input->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
+    m_temperature_input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
         m_next_button->Disable();
         m_start_button->Disable();
     });
 
-    m_temperature_input->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_temperature_input->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     Label* temp_unit_label = new Label(parent, wxString::FromUTF8("℃"));
     temp_unit_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -458,10 +459,10 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
 
     // Time part
     wxBoxSizer* time_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_time_input = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxSize(FromDIP(100), -1));
-    m_time_input->SetMaxLength(3); // Limit to 3 digits
+    m_time_input = new TextInput(parent, "", "", "", wxDefaultPosition, wxSize(FromDIP(100), -1));
+    m_time_input->GetTextCtrl()->SetMaxLength(3); // Limit to 3 digits
 
-    m_time_input->Bind(wxEVT_CHAR, [this](wxKeyEvent& event) {
+    m_time_input->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent& event) {
         int keycode = event.GetKeyCode();
         if (keycode >= '0' && keycode <= '9') {
             event.Skip();
@@ -470,13 +471,11 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
         }
     });
 
-    m_time_input->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
+    m_time_input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
         m_next_button->Disable();
         m_start_button->Disable();
     });
 
-    m_time_input->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_time_input->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     Label* time_unit_label = new Label(parent, "H");
     time_unit_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -692,10 +691,10 @@ wxBoxSizer* AMSDryCtrWin::create_guide_info_section(wxPanel* parent)
     // Part 4: Circular toggle with description
     wxBoxSizer* toggle_section = new wxBoxSizer(wxHORIZONTAL);
 
-    m_rotate_spool_toggle = new wxCheckBox(parent, wxID_ANY, "");
+    m_rotate_spool_toggle = new ::CheckBox(parent);
     m_rotate_spool_toggle->SetValue(false);
 
-    m_rotate_spool_toggle->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& event) {
+    m_rotate_spool_toggle->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent& event) {
         bool is_checked = event.IsChecked();
         // Add toggle behavior logic here
     });
@@ -790,15 +789,15 @@ void AMSDryCtrWin::start_sending_drying_command()
         return;
     }
 
-    if (m_temperature_input->GetValue().IsEmpty() || m_time_input->GetValue().IsEmpty()) {
+    if (m_temperature_input->GetTextCtrl()->GetValue().IsEmpty() || m_time_input->GetTextCtrl()->GetValue().IsEmpty()) {
         // Show error message to user
         BOOST_LOG_TRIVIAL(info) << "AMSDryCtrWin::start_sending_drying_command: Time or temperature is empty";
         return;
     }
 
     long temperature, time;
-    if (!m_temperature_input->GetValue().ToLong(&temperature) ||
-        !m_time_input->GetValue().ToLong(&time)) {
+    if (!m_temperature_input->GetTextCtrl()->GetValue().ToLong(&temperature) ||
+        !m_time_input->GetTextCtrl()->GetValue().ToLong(&time)) {
         BOOST_LOG_TRIVIAL(info) << "AMSDryCtrWin::start_sending_drying_command: Failed to convert temperature or time";
         return;
     }
@@ -1178,8 +1177,8 @@ void AMSDryCtrWin::update_normal_description(DevAms* dev_ams)
     wxString warning_text;
     bool can_enable_button = true;
     long temp_val = 0, time_val = 0;
-    m_temperature_input->GetValue().ToLong(&temp_val);
-    m_time_input->GetValue().ToLong(&time_val);
+    m_temperature_input->GetTextCtrl()->GetValue().ToLong(&temp_val);
+    m_time_input->GetTextCtrl()->GetValue().ToLong(&time_val);
     std::optional<Slic3r::DevFilamentDryingPreset> preset = DevUtilBackend::GetFilamentDryingPreset(info.filament_id);
     auto total_dry = preset.has_value() ? preset.value().ams_limitations : std::unordered_set<DevAmsType>();
 
@@ -1250,8 +1249,8 @@ void AMSDryCtrWin::update_normal_state(DevAms* dev_ams)
         m_next_button->Show(true);
         m_normal_description->Show(true);
         m_trays_combo->Enable();
-        m_temperature_input->SetEditable(true);
-        m_time_input->SetEditable(true);
+        m_temperature_input->GetTextCtrl()->SetEditable(true);
+        m_time_input->GetTextCtrl()->SetEditable(true);
 
         m_stop_button->Hide();
         m_dry_error_sizer->Show(false);
@@ -1269,13 +1268,13 @@ void AMSDryCtrWin::update_normal_state(DevAms* dev_ams)
         m_normal_description->Hide();
 
         m_trays_combo->Disable();
-        m_temperature_input->SetEditable(false);
-        m_time_input->SetEditable(false);
+        m_temperature_input->GetTextCtrl()->SetEditable(false);
+        m_time_input->GetTextCtrl()->SetEditable(false);
         m_stop_button->Show(true);
         m_dry_error_sizer->Show(false);
     }
 
-    if (m_temperature_input->GetValue().IsEmpty() || m_time_input->GetValue().IsEmpty()) {
+    if (m_temperature_input->GetTextCtrl()->GetValue().IsEmpty() || m_time_input->GetTextCtrl()->GetValue().IsEmpty()) {
         m_next_button->Disable();
         m_start_button->Disable();
     } else {
@@ -1306,11 +1305,11 @@ void AMSDryCtrWin::OnFilamentSelectionChanged(wxCommandEvent& event)
     if (preset.has_value()) {
         DevFilamentDryingPreset info = preset.value();
         if (m_printer_status.m_is_printing) {
-            m_temperature_input->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_temperature_on_print[dev_ams->GetAmsType()])));
-            m_time_input->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_time_on_print[dev_ams->GetAmsType()])));
+            m_temperature_input->GetTextCtrl()->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_temperature_on_print[dev_ams->GetAmsType()])));
+            m_time_input->GetTextCtrl()->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_time_on_print[dev_ams->GetAmsType()])));
         } else {
-            m_temperature_input->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_temperature_on_idle[dev_ams->GetAmsType()])));
-            m_time_input->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_time_on_idle[dev_ams->GetAmsType()])));
+            m_temperature_input->GetTextCtrl()->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_temperature_on_idle[dev_ams->GetAmsType()])));
+            m_time_input->GetTextCtrl()->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_time_on_idle[dev_ams->GetAmsType()])));
         }
     }
 
@@ -1440,12 +1439,12 @@ int AMSDryCtrWin::update_ams_change(DevAms* dev_ams)
 
     m_ams_info.m_ams_id = dev_ams->GetAmsId();
     if (dev_ams->GetAmsType() == DevAmsType::N3F) {
-        m_temperature_input->SetHint("45-65" + wxString::FromUTF8("°C"));
+        m_temperature_input->GetTextCtrl()->SetHint("45-65" + wxString::FromUTF8("°C"));
     } else if (dev_ams->GetAmsType() == DevAmsType::N3S) {
-        m_temperature_input->SetHint("45-85" + wxString::FromUTF8("°C"));
+        m_temperature_input->GetTextCtrl()->SetHint("45-85" + wxString::FromUTF8("°C"));
     }
 
-    m_time_input->SetHint("1-24 h");
+    m_time_input->GetTextCtrl()->SetHint("1-24 h");
 
     return 0;
 }
@@ -1503,8 +1502,8 @@ void AMSDryCtrWin::update_filament_guide_info(DevAms* dev_ams)
 
     // Get the temperature input value
     long input_temp = 0;
-    bool valid_temp = !m_temperature_input->GetValue().IsEmpty() &&
-                      m_temperature_input->GetValue().ToLong(&input_temp);
+    bool valid_temp = !m_temperature_input->GetTextCtrl()->GetValue().IsEmpty() &&
+                      m_temperature_input->GetTextCtrl()->GetValue().ToLong(&input_temp);
     bool can_start = true;
 
     int slot_count = 0, empty_count = 0;
@@ -1671,15 +1670,15 @@ int AMSDryCtrWin::update_filament_list(DevAms* dev_ams, MachineObject* obj)
 
         if (settings_opt.has_value()) {
             const auto& settings = settings_opt.value();
-            m_temperature_input->SetValue(std::to_string(settings.dry_temp));
-            m_time_input->SetValue(std::to_string(settings.dry_hour));
+            m_temperature_input->GetTextCtrl()->SetValue(std::to_string(settings.dry_temp));
+            m_time_input->GetTextCtrl()->SetValue(std::to_string(settings.dry_hour));
             set_filament_label_by_type(settings.dry_filament);
         } else {
             auto it_name = m_dry_setting.m_filament_names.find(ams_id);
             if (it_name != m_dry_setting.m_filament_names.end()) {
                 m_trays_combo->SetLabel(wxString::FromUTF8(it_name->second));
-                m_temperature_input->SetValue(std::to_string(m_dry_setting.m_dry_temp[ams_id]));
-                m_time_input->SetValue(std::to_string(m_dry_setting.m_dry_time[ams_id]));
+                m_temperature_input->GetTextCtrl()->SetValue(std::to_string(m_dry_setting.m_dry_temp[ams_id]));
+                m_time_input->GetTextCtrl()->SetValue(std::to_string(m_dry_setting.m_dry_time[ams_id]));
             }
         }
 

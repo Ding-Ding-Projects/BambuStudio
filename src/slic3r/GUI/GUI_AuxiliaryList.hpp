@@ -12,6 +12,7 @@
 #include <wx/dir.h>
 
 #include "AuxiliaryDataViewModel.hpp"
+#include "Widgets/Button.hpp"
 
 class AuxiliaryList : public wxDataViewCtrl
 {
@@ -43,9 +44,9 @@ private:
 	wxSizer* m_sizer;
 
 	//wxButton* m_nf_btn;
-	wxButton* m_if_btn;
-	wxButton* m_of_btn;
-	wxButton* m_del_btn;
+	Button* m_if_btn;
+	Button* m_of_btn;
+	Button* m_del_btn;
 };
 
 #endif //slic3r_GUI_AuxiliaryList_hpp_

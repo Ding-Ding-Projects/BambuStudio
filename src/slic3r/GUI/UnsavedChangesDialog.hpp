@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "GUI_Utils.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "wxExtensions.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "Widgets/Button.hpp"
@@ -424,7 +425,7 @@ class DiffPresetDialog : public DPIDialog
     DiffViewCtrl*           m_tree              { nullptr };
     wxStaticText*           m_top_info_line     { nullptr };
     wxStaticText*           m_bottom_info_line  { nullptr };
-    wxCheckBox*             m_show_all_presets  { nullptr };
+    LabeledCheckBox*        m_show_all_presets  { nullptr };
 
     Preset::Type            m_view_type         { Preset::TYPE_INVALID };
     PrinterTechnology       m_pr_technology;

@@ -1,4 +1,5 @@
 #include "BindDialog.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include "GUI_App.hpp"
 
 #include <wx/wx.h>
@@ -598,11 +599,9 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      wxBoxSizer* m_sizer_bind_failed_info = new wxBoxSizer(wxVERTICAL);
      m_sw_bind_failed_info->SetSizer( m_sizer_bind_failed_info );
 
-     m_link_network_state = new wxHyperlinkCtrl(m_sw_bind_failed_info, wxID_ANY,_L("Check the status of current system services"),"");
-     m_link_network_state->SetFont(::Label::Body_12);
-     m_link_network_state->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {wxGetApp().link_to_network_check(); });
-     m_link_network_state->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_HAND); });
-     m_link_network_state->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_ARROW); });
+     m_link_network_state = new LinkLabel(m_sw_bind_failed_info, _L("Check the status of current system services"), "");
+     m_link_network_state->getLabel()->SetFont(::Label::Body_12);
+     m_link_network_state->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](auto& e) { wxGetApp().link_to_network_check(); });
 
 
 

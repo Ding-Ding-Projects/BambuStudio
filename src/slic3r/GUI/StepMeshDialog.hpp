@@ -4,6 +4,7 @@
 #include <future>
 #include <thread>
 #include "GUI_App.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "GUI_Utils.hpp"
 #include "libslic3r/Format/STEP.hpp"
 #include "Widgets/Button.hpp"
@@ -39,8 +40,8 @@ private:
     Slic3r::Step& m_file;
     Button* m_button_ok = nullptr;
     Button* m_button_cancel = nullptr;
-    wxCheckBox* m_checkbox = nullptr;
-    wxCheckBox* m_split_compound_checkbox = nullptr;
+    LabeledCheckBox* m_checkbox = nullptr;
+    LabeledCheckBox* m_split_compound_checkbox = nullptr;
     wxString m_linear_last;
     wxString m_angle_last;
     wxStaticText* mesh_face_number_text;

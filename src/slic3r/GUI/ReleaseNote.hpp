@@ -29,6 +29,7 @@
 #include <wx/richtext/richtextctrl.h>
 
 #include "AmsMappingPopup.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include "GUI_Utils.hpp"
 #include "wxExtensions.hpp"
 #include "DeviceManager.hpp"
@@ -104,7 +105,7 @@ public:
     wxBoxSizer *      sizer_text_release_note{nullptr};
     Label *           m_staticText_release_note{nullptr};
     wxStaticBitmap*   m_bitmap_open_in_browser;
-    wxHyperlinkCtrl*  m_link_open_in_browser;
+    LinkLabel*  m_link_open_in_browser;
     Button*           m_button_skip_version;
     Button*           m_button_download;
     Button*           m_button_cancel;
@@ -341,7 +342,7 @@ public:
     wxStaticBitmap* m_img_step1{ nullptr };
     wxStaticBitmap* m_img_step2{ nullptr };
     wxStaticBitmap* m_img_step3{ nullptr };
-    wxHyperlinkCtrl* m_trouble_shoot{ nullptr };
+    LinkLabel* m_trouble_shoot{ nullptr };
     wxTimer* closeTimer{ nullptr };
     int     closeCount{3};
     bool   m_show_access_code{ false };

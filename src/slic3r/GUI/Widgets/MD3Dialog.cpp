@@ -194,6 +194,11 @@ MD3Dialog::MD3Dialog()
                 md3dialog_shell_style(MD3Dialog::Options{}))
 {}
 
+bool MD3Dialog::CreateShell(wxWindow *parent, const wxString &title, const wxString &subtitle, MaterialIcon::Glyph header_glyph)
+{
+    return CreateShell(parent, title, subtitle, header_glyph, Options{});
+}
+
 bool MD3Dialog::CreateShell(wxWindow *          parent,
                             const wxString &    title,
                             const wxString &    subtitle,

@@ -1,4 +1,5 @@
 #include "WebUserLoginDialog.hpp"
+#include "Widgets/LinkLabel.hpp"
 
 #include <string.h>
 #include "I18N.hpp"
@@ -62,24 +63,10 @@ ZUserLogin::ZUserLogin() : wxDialog((wxWindow *) (wxGetApp().mainframe), wxID_AN
         m_message->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         m_message->Wrap(FromDIP(360));
 
-        auto m_download_hyperlink = new wxHyperlinkCtrl(this, wxID_ANY, _L("Click here to download it."), wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
-        // Style the link with the semantic Link token (theme-aware) instead of the wx generic
-        // blue, deriving a hovered tone that always moves AWAY from the surface for visible
-        // feedback: lighten toward white on dark surfaces, darken toward black on light ones
-        // (the MD3 state-layer direction is theme-aware, so a fixed darken would reduce
-        // contrast against the dark SurfaceContainerLowest fill).
-        const wxColour link_color = StateColor::darkModeColorFor(ThemeColor::Link);
-        wxColour link_hover_color;
-        if (StateColor::isDarkMode())
-            link_hover_color = wxColour(link_color.Red() + (255 - link_color.Red()) * 55 / 255,
-                                        link_color.Green() + (255 - link_color.Green()) * 55 / 255,
-                                        link_color.Blue() + (255 - link_color.Blue()) * 55 / 255);
-        else
-            link_hover_color = wxColour(link_color.Red() * 200 / 255, link_color.Green() * 200 / 255, link_color.Blue() * 200 / 255);
-        m_download_hyperlink->SetNormalColour(link_color);
-        m_download_hyperlink->SetHoverColour(link_hover_color);
-        m_download_hyperlink->SetVisitedColour(link_color);
-        m_download_hyperlink->Bind(wxEVT_HYPERLINK, [this](wxCommandEvent& event) {
+        auto m_download_hyperlink = new LinkLabel(this, _L("Click here to download it."), "");
+        // Kit link colour: the semantic Link token, theme-aware through darkModeColorFor().
+        m_download_hyperlink->SeLinkLabelFColour(StateColor::darkModeColorFor(ThemeColor::Link));
+        m_download_hyperlink->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](wxCommandEvent& event) {
             this->Close();
             wxGetApp().ShowDownNetPluginDlg();
             });

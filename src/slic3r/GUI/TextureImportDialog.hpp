@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GUI_Utils.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/MD3Dialog.hpp"
 #include "libslic3r/TexturePainting.hpp"
@@ -360,7 +361,7 @@ private:
     SpinInput*   m_smooth_spin    = nullptr;
     Button*      m_btn_apply      = nullptr;
 
-    wxCheckBox*           m_auto_merge_cb = nullptr;
+    LabeledCheckBox*      m_auto_merge_cb = nullptr;
     Button*               m_btn_auto_mix  = nullptr;
     Button*               m_btn_mix_reset = nullptr;
     bool                  m_auto_mix_applied = false;

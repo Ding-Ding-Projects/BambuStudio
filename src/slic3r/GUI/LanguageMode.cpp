@@ -1,5 +1,7 @@
 #include "LanguageMode.hpp"
 
+#include <cwctype>
+
 #include <wx/dcclient.h>
 #include <wx/filefn.h>
 #include <wx/filename.h>
@@ -142,6 +144,58 @@ wxString translate_standard_plural(const wxString &singular, const wxString &plu
 
 } // namespace
 
+namespace {
+
+bool vocabulary_word_char(wchar_t c)
+{
+    return std::iswalnum(static_cast<wint_t>(c)) || c == L'_';
+}
+
+// Whole-word, case-form-preserving substitution. Longer forms first so the
+// plural is rewritten before its singular prefix could match.
+const std::pair<const wchar_t *, const wchar_t *> VOCABULARY_RULES[] = {
+    { L"Filaments", L"Inks" },
+    { L"filaments", L"inks" },
+    { L"FILAMENTS", L"INKS" },
+    { L"Filament",  L"Ink" },
+    { L"filament",  L"ink" },
+    { L"FILAMENT",  L"INK" },
+    { L"AMS",       L"Ink Dispenser" },
+};
+
+} // namespace
+
+wxString vocabulary(const wxString &text)
+{
+    if (text.empty())
+        return text;
+    std::wstring value = text.ToStdWstring();
+    if (value.find(L"://") != std::wstring::npos)
+        return text;
+    if (value.find(L'_') != std::wstring::npos && value.find(L' ') == std::wstring::npos)
+        return text;
+
+    bool changed = false;
+    for (const auto &rule : VOCABULARY_RULES) {
+        const std::wstring from(rule.first);
+        const std::wstring to(rule.second);
+        size_t pos = 0;
+        while ((pos = value.find(from, pos)) != std::wstring::npos) {
+            const bool starts = pos == 0 || !vocabulary_word_char(value[pos - 1]);
+            const size_t end  = pos + from.size();
+            const bool ends   = end >= value.size() || !vocabulary_word_char(value[end]);
+            if (starts && ends) {
+                value.replace(pos, from.size(), to);
+                pos += to.size();
+                changed = true;
+            } else {
+                pos += from.size();
+            }
+        }
+    }
+    return changed ? wxString(value) : text;
+}
+
 std::string normalize_language_mode_id(std::string_view language_mode_id)
 {
     size_t begin = 0;
@@ -280,16 +334,16 @@ const wxString *LanguageModeService::find_cantonese(const wxString &message, uns
 LocalizedText LanguageModeService::translate(const wxString &message, const wxString &context) const
 {
     if (m_profile.kind == LanguageModeKind::Standard)
-        return { translate_standard(message, context), wxString() };
+        return { vocabulary(translate_standard(message, context)), wxString() };
 
     if (m_profile.kind == LanguageModeKind::English)
-        return { message, wxString() };
+        return { vocabulary(message), wxString() };
 
     const wxString *cantonese = find_cantonese(message, UINT_MAX, context);
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
-        return { cantonese == nullptr ? message : *cantonese, wxString() };
+        return { cantonese == nullptr ? vocabulary(message) : *cantonese, wxString() };
 
-    LocalizedText result { message, wxString() };
+    LocalizedText result { vocabulary(message), wxString() };
     if (cantonese != nullptr && !cantonese->empty() && *cantonese != message)
         result.secondary = *cantonese;
     return result;
@@ -299,9 +353,9 @@ LocalizedText LanguageModeService::translate_plural(const wxString &singular, co
                                                      unsigned int n, const wxString &context) const
 {
     if (m_profile.kind == LanguageModeKind::Standard)
-        return { translate_standard_plural(singular, plural, n, context), wxString() };
+        return { vocabulary(translate_standard_plural(singular, plural, n, context)), wxString() };
 
-    const wxString source = untranslated_plural(singular, plural, n);
+    const wxString source = vocabulary(untranslated_plural(singular, plural, n));
     if (m_profile.kind == LanguageModeKind::English)
         return { source, wxString() };
 

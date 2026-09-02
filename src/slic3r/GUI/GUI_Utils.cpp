@@ -1,4 +1,5 @@
 #include "GUI.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "GUI_Utils.hpp"
 #include "GUI_App.hpp"
 #include "Widgets/StateColor.hpp"
@@ -290,7 +291,7 @@ CheckboxFileDialog::ExtraPanel::ExtraPanel(wxWindow *parent)
     const wxString checkbox_label(dlg != nullptr ? dlg->checkbox_label : wxString("String long enough to contain dlg->checkbox_label"));
 
     auto* sizer = new wxBoxSizer(wxHORIZONTAL);
-    cbox = new wxCheckBox(this, wxID_ANY, checkbox_label);
+    cbox = new LabeledCheckBox(this, checkbox_label);
     cbox->SetValue(true);
     sizer->AddSpacer(5);
     sizer->Add(this->cbox, 0, wxEXPAND | wxALL, 5);

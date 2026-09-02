@@ -54,6 +54,13 @@ struct LanguageModeProfile {
     }
 };
 
+// Product vocabulary applied to every user-visible string after translation:
+// the design kit calls filament "ink" and the AMS the "Ink Dispenser". Source
+// strings, catalogs, config keys and URLs keep their original words; only the
+// text handed to the UI is rewritten, at whole-word boundaries. Strings that
+// look like identifiers (contain '_' and no space) or carry "://" are left alone.
+wxString            vocabulary(const wxString &text);
+
 std::string         normalize_language_mode_id(std::string_view language_mode_id);
 LanguageModeProfile resolve_language_mode(std::string_view language_mode_id);
 bool                is_custom_language_mode(std::string_view language_mode_id);

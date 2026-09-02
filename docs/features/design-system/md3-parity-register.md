@@ -47,6 +47,40 @@ overwhelmingly three things:
 
 ---
 
+## Second-pass sweep: generic elements and vocabulary (2026-09-02)
+
+The register above closed the *designed* anatomy. A second mechanical pass measured what the
+design folder still had no counterpart for in the shipped tree: stock wxWidgets controls the kit
+never draws, dialogs still on native OS chrome, and the product vocabulary. Rules: nothing is
+removed, every stock element becomes its kit widget, terminology is untouched except that
+**filament is always "ink" and the AMS is always the "Ink Dispenser"** in every user-visible
+string. Pinned by `ui-md3/tests/md3-conversion-contracts.test.mjs` (the "second-pass sweep" tests).
+
+| ID | Legacy element | Kit ref | Native anchor | Change | Status |
+|---|---|---|---|---|---|
+| vocabulary-ink-dispenser | Every `_L()`/`_u8L()`/`L_str()`/libslic3r-callback string still said Filament / AMS | readme.md "The product"; TabBar.jsx `Ink`; Device.jsx `Ink Dispenser` | `GUI/LanguageMode.cpp` `vocabulary()`, `GUI/I18N.hpp`, `GUI/GUI_App.cpp:927` | One rewrite at the translation boundary: whole-word, case-form preserving (Filament/filament/FILAMENT(+s) → Ink/ink/INK(+s), AMS → Ink Dispenser); identifiers (`_` without a space) and URLs (`://`) are never touched; catalogs, config keys and source strings keep their words | done |
+| generic-buttons | 36 `new wxButton(` sites | actions/Button.jsx (pill, Filled/Outlined/Text/Danger, h36/42/44) | DesktopIntegrationDialog, GUI_AuxiliaryList, SysInfoDialog, SelectMachine timelapse dialog, SendSystemInfoDialog (3 dialogs), BBLStatusBar / ProgressStatusBar cancel, Jobs/SLAImportJob | `Button` + `SetVariant()`; the four remaining files hold bitmap holders or the developer-only browser toolbar (allowlisted in the contract test) | done |
+| generic-gauges | 7 `new wxGauge(` sites | containment/ProgressBar.jsx (8px track, r6, Primary fill) | BBLStatusBar{,Send,Print,Bind}, ProgressStatusBar, Plater refresh popup, Overview/AssemblyExportProgressWindow | Kit `ProgressBar`, which gained the gauge surface (`GetValue/GetRange/SetRange`) and an indeterminate `Pulse()` sweep | done |
+| generic-static-lines | 18 `new wxStaticLine(` sites | 1px OutlineVariant dividers | UpgradePanel (11), BBLStatusBar (2), AMSDryControl (2), AboutDialog | Kit `StaticLine` (`SetLineColour` instead of a window background) | done |
+| generic-hyperlinks | 20 `new wxHyperlinkCtrl(` sites | Link token, underline, keyboard/AT link role | SendToPrinter, BindDialog, SelectMachine (2), ReleaseNote (2), AMSMaterialsSetting, Widgets/SideTools (2), CreatePresetsDialog (2), MsgDialog (3), SelectMachinePop, DownloadProgressDialog (2), WebUserLoginDialog, Plater (3), DeviceTab/wgtMsgPanel | Kit `LinkLabel`; custom click handlers moved to `EVT_LINK_LABEL_LEFT_DOWN`, fonts to the inner label, colours to `SeLinkLabelFColour` | done |
+| generic-checkboxes | 10 `new wxCheckBox(` sites | selection/Checkbox.jsx (20px glyph + label) | UnsavedChangesDialog, ConfigWizard (3), StepMeshDialog (2), Tab (2), TextureImportDialog, GUI_Utils file-dialog extra, AMSDryControl | New kit row `Widgets/LabeledCheckBox` (CheckBox glyph + Label, re-emits `wxEVT_CHECKBOX`) for labelled sites; bare `CheckBox` for the two unlabelled toggles | done |
+| generic-choices-combos | 3 `new wxChoice(` + 3 live `new wxComboBox(` sites | fields/SelectField.jsx | ConfigWizard gcode picker, Widgets/MultiNozzleSync (2), Jobs/SLAImportJob (2) | Read-only kit `ComboBox` (`wxEVT_CHOICE` → `wxEVT_COMBOBOX`) | done |
+| generic-sliders | 2 `new wxSlider(` sites | selection/Slider.jsx | Field.cpp SliderCtrl, SmartHomeDialog volume | Kit `Slider` with `SetOnChange`; the SmartHome trackbar was held back for accessibility, which `SliderAccessible` now provides | done |
+| generic-text-inputs | 7 single-line `new wxTextCtrl(` inputs | fields/ValueField.jsx / TextInput | AMSDryControl (2), CreatePresetsDialog (3), PhysicalPrinterDialog, ConfigWizard profile name | Kit `TextInput` (editor reached through `GetTextCtrl()`) | done |
+| legacy-dialog-chrome-residue | 6 owned dialogs still created with `wxDEFAULT_DIALOG_STYLE` / `wxCAPTION` and no MD3 caption | containment/Dialog.jsx (borderless shell, 44px caption) | ParamsDialog, AuxiliaryDialog, GUI_ObjectTable ObjectTableDialog, DesktopIntegrationDialog, SendSystemInfoDialog (3), Gizmos/GLGizmoSlaSupports help | `MD3DialogCaption::Adopt()` as the last layout act of each ctor | done |
+| generic-radios | 7 `new wxRadioButton(` sites | selection (RadioBox glyph) | Widgets/AMSItem FeedDirectionDialog (3), CalibrationWizardPresetPage (3, one handed to `SetRadioBox(wxRadioButton*)`), SavePresetDialog (3 in a group) | Needs a labelled, auto-exclusive kit radio row (the kit `RadioBox` is a bare toggle) and a `SetRadioBox` API change; not a mechanical swap | open |
+| generic-text-views | Multi-line / read-only `wxTextCtrl` views and editors | no kit text-area component | UnsavedChangesDialog diff, UpdateDialogs changelog, MsgDialog script, WebViewDialog page/source, SendSystemInfoDialog JSON, NetworkTestDialog log, StatusPanel comment, MixedFilamentDialog ratio editor, ExtraRenderers cell editor, Field.cpp slider readout, Overview/AssemblyPdfExportDialog (helper API takes `wxTextCtrl*`), WebViewDialog dev URL bar | Kept as native editors inside kit-toned panels; a kit text-area spec is required first | open |
+| generic-listbox | 1 `new wxListBox(` | none in kit | SmartHomeDialog entity list | Kept; no kit list component | open |
+| fatal-path-message-boxes | 5 live `wxMessageBox(` calls | containment/Dialog.jsx | GUI_App.cpp:1091/1105/6919, GUI_Init.cpp:77/84 | Fire before or while the GUI is torn down, where the MD3 shell may not be constructible; deliberately native | deviation |
+| static-bitmaps | 175 `new wxStaticBitmap(` sites | Material Symbols glyphs where the kit shows an icon; product photos / diagrams are data | across the GUI tree | Belongs to the icons-assets families above; not part of this sweep | open |
+
+Verification of this sweep: every edited translation unit was compiled with `g++ -fsyntax-only`
+against wxWidgets 3.2 / Boost / OpenCASCADE headers on Linux (the Windows-only chrome paths are
+inside `#ifdef _WIN32`). The Windows build and a light/dark capture of each converted surface remain
+to be run on the Windows box, per the mandate.
+
+---
+
 ## Surface: widgets-core (shared Widgets library, part 1)
 
 | ID | Legacy element | Kit ref | Native anchor | Required change | Size | Risk | Status |

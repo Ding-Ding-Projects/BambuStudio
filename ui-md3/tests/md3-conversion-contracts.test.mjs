@@ -211,3 +211,128 @@ test('the prepare action bar cannot starve its primary actions again', async () 
   assert.ok(/prepare action bar: tool row allocated/.test(source),
     'a still-over-subscribed row must log its shortfall rather than vanish silently');
 });
+
+// ---------------------------------------------------------------------------
+// Second-pass sweep: generic (stock wx) elements → kit widgets, kit vocabulary.
+//
+// The design folder (ui-md3/design-system) has no stock-looking control: every
+// button is a pill Button, every divider a StaticLine, every progress a
+// ProgressBar, every link a LinkLabel, every toggle a CheckBox/Switch, every
+// dropdown a ComboBox, every dialog a borderless MD3 shell. These tests pin
+// the sweep that converted the remaining stock constructions and keep a
+// ratchet on the ones that are still allowed (image holders, dev-only chrome,
+// frames, and controls that wrap a native editor).
+// ---------------------------------------------------------------------------
+
+import { readdir } from 'node:fs/promises';
+
+async function guiSources() {
+  const files = [];
+  async function walk(dir) {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else if (entry.name.endsWith('.cpp')) files.push(full);
+    }
+  }
+  await walk(gui());
+  return files;
+}
+
+async function sitesOf(pattern) {
+  const hits = new Map();
+  for (const file of await guiSources()) {
+    const source = stripComments(await readFile(file, 'utf8'));
+    const count = (source.match(pattern) || []).length;
+    if (count) hits.set(path.relative(gui(), file).replace(/\\/g, '/'), count);
+  }
+  return hits;
+}
+
+function assertOnlyAllowed(hits, allowed, what) {
+  const offenders = [...hits.keys()].filter((file) => !allowed.has(file));
+  assert.deepEqual(offenders, [], `${what} must only remain in the allowlisted files`);
+}
+
+test('every user-visible string passes through the Ink / Ink Dispenser vocabulary', async () => {
+  const mode = stripComments(await read('LanguageMode.cpp'));
+  assert.ok(/wxString vocabulary\(const wxString &text\)/.test(mode), 'LanguageMode.cpp must define vocabulary()');
+  for (const [from, to] of [['Filaments', 'Inks'], ['filament', 'ink'], ['Filament', 'Ink'], ['AMS', 'Ink Dispenser']]) {
+    assert.ok(new RegExp(`L"${from}",\\s*L"${to}"`).test(mode), `vocabulary must rewrite ${from} -> ${to}`);
+  }
+  // Identifiers and URLs are never rewritten.
+  assert.ok(mode.includes('L"://"') && mode.includes("L'_'"), 'vocabulary must skip URLs and identifiers');
+
+  const i18n = stripComments(await read('I18N.hpp'));
+  const translateBodies = i18n.match(/inline (?:wxString|std::string) translate(?:_utf8)?\([^)]*\)\s*\{[^}]*\}/g) || [];
+  assert.ok(translateBodies.length >= 20, 'I18N.hpp must keep its translate overloads');
+  for (const body of translateBodies) {
+    // Either applies the vocabulary itself or delegates to an overload that does.
+    assert.ok(body.includes('vocabulary(') || /return translate\(/.test(body),
+      `every translate overload must apply the vocabulary:\n${body}`);
+  }
+  assert.ok(/I18N::vocabulary\(wxGetTranslation/.test(stripComments(await read('GUI_App.cpp'))),
+    'the libslic3r translate callback must apply the vocabulary too');
+  for (const kind of ['Standard', 'English']) {
+    assert.ok(new RegExp(`LanguageModeKind::${kind}\\)\\s*return \\{ vocabulary\\(`).test(mode),
+      `LanguageModeService::translate must apply the vocabulary for the ${kind} mode`);
+  }
+});
+
+test('stock wx controls are gone from the GUI except the allowlisted holders', async () => {
+  assertOnlyAllowed(await sitesOf(/new wxGauge\(/g), new Set(), 'wxGauge');
+  assertOnlyAllowed(await sitesOf(/new wxStaticLine\(/g), new Set(), 'wxStaticLine');
+  assertOnlyAllowed(await sitesOf(/new wxHyperlinkCtrl\(/g), new Set(), 'wxHyperlinkCtrl');
+  assertOnlyAllowed(await sitesOf(/new wxChoice\(/g), new Set(), 'wxChoice');
+  assertOnlyAllowed(await sitesOf(/new wxCheckBox\(/g), new Set(), 'wxCheckBox');
+  // The SmartHome volume trackbar and the option-field slider are on the kit
+  // Slider now; nothing else may bring a native trackbar back.
+  assertOnlyAllowed(await sitesOf(/new wxSlider\(/g), new Set(), 'wxSlider');
+  assertOnlyAllowed(await sitesOf(/new wxComboBox\(/g), new Set([
+    'ExtrusionCalibration.cpp', // legacy branch of an #ifdef whose live branch is the kit ComboBox
+    'Auxiliary.cpp',            // dead designer-panel code behind a commented member
+  ]), 'wxComboBox');
+  assertOnlyAllowed(await sitesOf(/new wxButton\(/g), new Set([
+    'CalibrationWizardSavePage.cpp', // bitmap holder for the tray thumbnail
+    'SyncAmsInfoDialog.cpp',         // two bitmap holders of the compare panel
+    'ObjColorDialog.cpp',            // bitmap holders / colour icon wells
+    'WebViewDialog.cpp',             // developer-only browser toolbar (!BBL_RELEASE_TO_PUBLIC)
+  ]), 'wxButton');
+});
+
+test('the kit ProgressBar carries the gauge surface the status bars rely on', async () => {
+  const hpp = stripComments(await read('Widgets', 'ProgressBar.hpp'));
+  for (const member of ['int          GetValue() const', 'int          GetRange() const', 'void         SetRange(int range);', 'void         Pulse();']) {
+    assert.ok(hpp.includes(member), `ProgressBar.hpp must declare ${member.trim()}`);
+  }
+  const cpp = stripComments(await read('Widgets', 'ProgressBar.cpp'));
+  assert.ok(/void ProgressBar::Pulse\(\)/.test(cpp) && /m_indeterminate/.test(cpp), 'Pulse() must drive an indeterminate sweep');
+});
+
+test('LabeledCheckBox is a registered kit widget that re-emits wxEVT_CHECKBOX', async () => {
+  const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
+  assert.ok(cmake.includes('GUI/Widgets/LabeledCheckBox.cpp') && cmake.includes('GUI/Widgets/LabeledCheckBox.hpp'),
+    'LabeledCheckBox must be part of the libslic3r_gui target');
+  const cpp = stripComments(await read('Widgets', 'LabeledCheckBox.cpp'));
+  assert.ok(cpp.includes('wxCommandEvent event(wxEVT_CHECKBOX, GetId());'), 'the row must emit wxEVT_CHECKBOX so old handlers keep working');
+  assert.ok(cpp.includes('new CheckBox(this)') && cpp.includes('new Label(this, label)'), 'the row is the kit CheckBox glyph plus a Label');
+});
+
+test('every owned dialog is on the MD3 caption shell; only frames keep native chrome', async () => {
+  const allowedNative = new Set([
+    'ModelMall.cpp',              // DPIFrame window, not a dialog
+    'ImageDPIFrame.cpp',          // already borderless (!wxCAPTION)
+    'BaseTransparentDPIFrame.cpp',// already borderless (!wxCAPTION)
+    'MainFrame.cpp',              // SettingsDialog uses wxDEFAULT_FRAME_STYLE (a frame)
+    'GUI_App.cpp',                // GuideFrame wizard window
+  ]);
+  const offenders = [];
+  for (const file of await guiSources()) {
+    const source = stripComments(await readFile(file, 'utf8'));
+    if (!/wxDEFAULT_DIALOG_STYLE|wxCAPTION/.test(source)) continue;
+    if (/MD3DialogCaption::Adopt|MD3DialogCaption\(|public MD3Dialog\b|MD3Dialog\(/.test(source)) continue;
+    const rel = path.relative(gui(), file).replace(/\\/g, '/');
+    if (!allowedNative.has(rel)) offenders.push(rel);
+  }
+  assert.deepEqual(offenders, [], 'dialogs constructed with native OS chrome must adopt the MD3 caption');
+});

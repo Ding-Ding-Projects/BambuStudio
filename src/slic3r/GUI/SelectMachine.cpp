@@ -1,4 +1,6 @@
 #include "SelectMachine.hpp"
+#include "Widgets/LinkLabel.hpp"
+#include "Widgets/Button.hpp"
 #include "I18N.hpp"
 
 #include "libslic3r/Utils.hpp"
@@ -908,11 +910,9 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_extra_info->Add(m_st_txt_extra_info, 0, wxALL, 0);
 
 
-    m_link_network_state = new wxHyperlinkCtrl(m_sw_print_failed_info, wxID_ANY,_L("Check the status of current system services"),"");
-    m_link_network_state->SetFont(::Label::Body_12);
-    m_link_network_state->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {wxGetApp().link_to_network_check();});
-    m_link_network_state->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_HAND);});
-    m_link_network_state->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_ARROW);});
+    m_link_network_state = new LinkLabel(m_sw_print_failed_info, _L("Check the status of current system services"), "");
+    m_link_network_state->getLabel()->SetFont(::Label::Body_12);
+    m_link_network_state->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](auto& e) { wxGetApp().link_to_network_check(); });
 
     sizer_print_failed_info->Add(m_link_network_state, 0, wxLEFT, 5);
     sizer_print_failed_info->Add(sizer_error_code, 0, wxLEFT, 5);
@@ -2554,13 +2554,13 @@ void SelectMachineDialog::timelapse_button_click()
 
     auto timelapse_url = wxString::Format(L"https://wiki.bambulab.com/%s/software/bambu-studio/Timelapse",
         wxGetApp().current_language_code_safe() == "zh_CN" ? "zh" : "en");
-    wxHyperlinkCtrl* learn_more = new wxHyperlinkCtrl(&dlg, wxID_ANY, _L("Learn more"),
-        timelapse_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+    LinkLabel* learn_more = new LinkLabel(&dlg, _L("Learn more"), timelapse_url.ToStdString());
     main_sizer->Add(learn_more, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(20));
 
     wxBoxSizer* button_sizer = new wxBoxSizer(wxHORIZONTAL);
     button_sizer->AddStretchSpacer();
-    wxButton* ok_button = new wxButton(&dlg, wxID_OK, _L("OK"), wxDefaultPosition, wxDefaultSize);
+    Button* ok_button = new Button(&dlg, _L("OK"), "", 0, 0, wxID_OK);
+    ok_button->SetVariant(Button::Variant::Filled);
     button_sizer->Add(ok_button, 0, wxALL, FromDIP(5));
     main_sizer->Add(button_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(15));
 

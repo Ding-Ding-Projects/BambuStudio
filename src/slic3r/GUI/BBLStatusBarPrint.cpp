@@ -115,7 +115,7 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
     m_sizer_status_text->Add(m_static_bitmap_show_error, 0, wxALIGN_CENTER, 0);
 
 
-    m_prog = new wxGauge(m_self, wxID_ANY, 100, wxDefaultPosition, wxSize(-1, m_self->FromDIP(6)), wxGA_HORIZONTAL);
+    m_prog = new ProgressBar(m_self, wxID_ANY, 100, wxDefaultPosition, wxSize(-1, m_self->FromDIP(6)));
     m_prog->SetMinSize(wxSize(m_self->FromDIP(550), m_self->FromDIP(6)));
     m_prog->SetMaxSize(wxSize(m_self->FromDIP(550), m_self->FromDIP(6)));
     m_prog->SetValue(0);

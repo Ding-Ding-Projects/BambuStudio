@@ -4170,9 +4170,9 @@ void TabFilament::add_filament_overrides_page()
         line = optgroup->create_single_option_line(optgroup->get_option(opt_key, opt_index));
 
         line.near_label_widget = [this, optgroup, opt_key, opt_index](wxWindow* parent) {
-            wxCheckBox* check_box = new wxCheckBox(parent, wxID_ANY, "");
+            ::CheckBox* check_box = new ::CheckBox(parent);
 
-            check_box->Bind(wxEVT_CHECKBOX, [optgroup, opt_key, opt_index](wxCommandEvent& evt) {
+            check_box->Bind(wxEVT_TOGGLEBUTTON, [optgroup, opt_key, opt_index](wxCommandEvent& evt) {
                 const bool is_checked = evt.IsChecked();
                 Field* field = optgroup->get_fieldc(opt_key, opt_index);
                 if (field != nullptr) {
@@ -7339,7 +7339,7 @@ void Tab::create_line_with_widget(ConfigOptionsGroup* optgroup, const std::strin
 // Return a callback to create a Tab widget to mark the preferences as compatible / incompatible to the current printer.
 wxSizer* Tab::compatible_widget_create(wxWindow* parent, PresetDependencies &deps)
 {
-    deps.checkbox = new wxCheckBox(parent, wxID_ANY, _(L("All")));
+    deps.checkbox = new LabeledCheckBox(parent, _(L("All")));
     deps.checkbox->SetFont(Slic3r::GUI::wxGetApp().normal_font());
     wxGetApp().UpdateDarkUI(deps.checkbox, false, true);
     deps.btn = new ScalableButton(parent, wxID_ANY, "printer", from_u8((boost::format(" %s %s") % _utf8(L("Set")) % std::string(dots.ToUTF8())).str()),

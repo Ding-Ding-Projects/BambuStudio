@@ -1,4 +1,5 @@
 #include "GUI.hpp"
+#include "Widgets/Slider.hpp"
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "Field.hpp"
@@ -2223,9 +2224,9 @@ void SliderCtrl::BUILD()
 	const int min = m_opt.min == ConfigOptionDef::min_default ? 0 : (int)std::clamp<double>(m_opt.min, INT_MIN, INT_MAX);
 	const int max = m_opt.max == ConfigOptionDef::max_default ? 100 : (int)std::clamp<double>(m_opt.max, INT_MIN, INT_MAX);
 
-	m_slider = new wxSlider(m_parent, wxID_ANY, def_val * m_scale,
-							min * m_scale, max * m_scale,
-							wxDefaultPosition, size);
+	m_slider = new Slider(m_parent, def_val * m_scale,
+						  min * m_scale, max * m_scale,
+						  false, wxDefaultPosition, size);
 	m_slider->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 	m_slider->SetBackgroundStyle(wxBG_STYLE_PAINT);
  	wxSize field_size(40, -1);
@@ -2238,13 +2239,13 @@ void SliderCtrl::BUILD()
 	temp->Add(m_slider, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL, 0);
 	temp->Add(m_textctrl, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-	m_slider->Bind(wxEVT_SLIDER, ([this](wxCommandEvent e) {
+	m_slider->SetOnChange([this](int) {
 		if (!m_disable_change_event) {
 			int val = boost::any_cast<int>(get_value());
 			m_textctrl->SetLabel(wxString::Format("%d", val));
 			on_change_field();
 		}
-	}), m_slider->GetId());
+	});
 
 	m_textctrl->Bind(wxEVT_TEXT, ([this](wxCommandEvent e) {
 		std::string value = e.GetString().utf8_str().data();

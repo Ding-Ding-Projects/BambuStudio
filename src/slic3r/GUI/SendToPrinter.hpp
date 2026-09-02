@@ -25,6 +25,7 @@
 #include <wx/srchctrl.h>
 
 #include "SelectMachine.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include "GUI_Utils.hpp"
 #include "wxExtensions.hpp"
 #include "DeviceManager.hpp"
@@ -117,7 +118,7 @@ private:
     Label*                              m_st_txt_error_code{ nullptr };
     Label*                              m_st_txt_error_desc{ nullptr };
     Label*                              m_st_txt_extra_info{ nullptr };
-    wxHyperlinkCtrl*                    m_link_network_state{ nullptr };
+    LinkLabel*                    m_link_network_state{ nullptr };
     wxBoxSizer*                         rename_sizer_v{ nullptr };
     wxBoxSizer*                         rename_sizer_h{ nullptr };
     wxBoxSizer*                         sizer_thumbnail;

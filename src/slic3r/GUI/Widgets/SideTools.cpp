@@ -1,4 +1,5 @@
 #include "SideTools.hpp"
+#include "LinkLabel.hpp"
 #include "bambu_networking.hpp"
 #include <wx/dcmemory.h>
 #include <wx/dcgraph.h>
@@ -387,8 +388,8 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
                              wxT("https://wiki.bambulab.com/en/software/bambu-studio/failed-to-connect-printer");
 
 
-    m_hyperlink = new wxHyperlinkCtrl(m_connection_info, wxID_ANY, _L("Failed to connect to the server"), hyperlink_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
-    m_hyperlink->SetBackgroundColour(ThemeColor::Warning);
+    m_hyperlink = new LinkLabel(m_connection_info, _L("Failed to connect to the server"), hyperlink_url.ToStdString());
+    m_hyperlink->SeLinkLabelBColour(ThemeColor::Warning);
 
     // MD3: expand/collapse chevron glyph on the warning-fill banner, falling
     // back to the legacy monitir_err_open/close rasters when the icon face is
@@ -445,13 +446,11 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     wxBoxSizer* sizer_error_desc = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* sizer_extra_info = new wxBoxSizer(wxHORIZONTAL);
 
-    m_link_network_state = new wxHyperlinkCtrl(m_side_error_panel, wxID_ANY,_L("Check the status of current system services"),"",wxDefaultPosition,wxDefaultSize, wxHL_ALIGN_CENTRE |wxST_ELLIPSIZE_END);
+    m_link_network_state = new LinkLabel(m_side_error_panel, _L("Check the status of current system services"), "");
     m_link_network_state->SetMinSize(wxSize(FromDIP(220), -1));
     m_link_network_state->SetMaxSize(wxSize(FromDIP(220), -1));
-    m_link_network_state->SetFont(::Label::Body_12);
-    m_link_network_state->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {wxGetApp().link_to_network_check(); });
-    m_link_network_state->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_HAND); });
-    m_link_network_state->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_ARROW); });
+    m_link_network_state->getLabel()->SetFont(::Label::Body_12);
+    m_link_network_state->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](auto& e) { wxGetApp().link_to_network_check(); });
 
     auto st_title_error_code = new wxStaticText(m_side_error_panel, wxID_ANY, _L("code"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     auto st_title_error_code_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
@@ -620,13 +619,13 @@ void SideTools::show_status(int status)
 {
     if (((status & (int)MonitorStatus::MONITOR_DISCONNECTED) != 0) || ((status & (int)MonitorStatus::MONITOR_DISCONNECTED_SERVER) != 0)) {
         if ((status & (int)MonitorStatus::MONITOR_DISCONNECTED_SERVER)) {
-            m_hyperlink->SetLabel(_L("Failed to connect to the server"));
+            m_hyperlink->setLabel(_L("Failed to connect to the server"));
             update_connect_err_info(BAMBU_NETWORK_ERR_CONNECTION_TO_SERVER_FAILED,
                 _L("Failed to connect to cloud service"),
                 _L("Please click on the hyperlink above to view the cloud service status"));
         }
         else {
-            m_hyperlink->SetLabel(_L("Failed to connect to the printer"));
+            m_hyperlink->setLabel(_L("Failed to connect to the printer"));
             update_connect_err_info(BAMBU_NETWORK_ERR_CONNECTION_TO_PRINTER_FAILED,
                 _L("Connection to printer failed"),
                 _L("Please check the network connection of the printer and Studio."));

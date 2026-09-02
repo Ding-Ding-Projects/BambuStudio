@@ -268,8 +268,8 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
 
 
     m_bitmap_open_in_browser = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("open_in_browser", this, 12), wxDefaultPosition, wxDefaultSize, 0 );
-    m_link_open_in_browser   = new wxHyperlinkCtrl(this, wxID_ANY, "Open in browser", "");
-    m_link_open_in_browser->SetFont(Label::Body_12);
+    m_link_open_in_browser   = new LinkLabel(this, "Open in browser", "");
+    m_link_open_in_browser->getLabel()->SetFont(Label::Body_12);
 
 
     // Footer: kit Download (filled) / Skip (text) / Cancel (text) pills; the
@@ -432,7 +432,7 @@ void UpdateVersionDialog::update_version_info(wxString release_note, wxString ve
         m_text_up_info->Hide();
         m_simplebook_release_note->SetSelection(1);
         m_vebview_release_note->LoadURL(from_u8(url_line));
-        m_link_open_in_browser->SetURL(url_line);
+        m_link_open_in_browser->setLinkUrl(url_line);
     }
     else {
         m_simplebook_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
@@ -1572,7 +1572,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     m_tip4->SetMinSize(wxSize(FromDIP(355), -1));
     m_tip4->SetMaxSize(wxSize(FromDIP(355), -1));
 
-    m_trouble_shoot = new wxHyperlinkCtrl(this, wxID_ANY, "How to trouble shooting", "");
+    m_trouble_shoot = new LinkLabel(this, "How to trouble shooting", "");
 
     m_img_help = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("input_access_code_x1_en", this, 198), wxDefaultPosition, wxSize(FromDIP(355), -1), 0);
 

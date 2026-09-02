@@ -1,4 +1,6 @@
 #include "SLAImportJob.hpp"
+#include "slic3r/GUI/Widgets/ComboBox.hpp"
+#include "slic3r/GUI/Widgets/Button.hpp"
 
 #include "libslic3r/Format/SL1.hpp"
 
@@ -23,7 +25,7 @@ enum class Sel { modelAndProfile, profileOnly, modelOnly};
 
 class ImportDlg: public wxDialog {
     wxFilePickerCtrl *m_filepicker;
-    wxComboBox *m_import_dropdown, *m_quality_dropdown;
+    ComboBox *m_import_dropdown, *m_quality_dropdown;
 
 public:
     ImportDlg(Plater *plater)
@@ -49,7 +51,7 @@ public:
             _(L("Import model only"))
         };
 
-        m_import_dropdown = new wxComboBox(
+        m_import_dropdown = new ComboBox(
             this, wxID_ANY, inp_choices[0], wxDefaultPosition, wxDefaultSize,
             inp_choices.size(), inp_choices.data(), wxCB_READONLY | wxCB_DROPDOWN);
 
@@ -62,7 +64,7 @@ public:
             _(L("Quick"))
         };
 
-        m_quality_dropdown = new wxComboBox(
+        m_quality_dropdown = new ComboBox(
             this, wxID_ANY, qual_choices[0], wxDefaultPosition, wxDefaultSize,
             qual_choices.size(), qual_choices.data(), wxCB_READONLY | wxCB_DROPDOWN);
         szchoices->Add(m_quality_dropdown);
@@ -76,8 +78,12 @@ public:
         szvert->Add(szchoices, 0, wxALL, 5);
         szvert->AddStretchSpacer(1);
         auto szbtn = new wxBoxSizer(wxHORIZONTAL);
-        szbtn->Add(new wxButton{this, wxID_CANCEL});
-        szbtn->Add(new wxButton{this, wxID_OK});
+        auto *cancel_btn = new Button(this, _L("Cancel"), "", 0, 0, wxID_CANCEL);
+        cancel_btn->SetVariant(Button::Variant::Text);
+        auto *ok_btn = new Button(this, _L("OK"), "", 0, 0, wxID_OK);
+        ok_btn->SetVariant(Button::Variant::Filled);
+        szbtn->Add(cancel_btn);
+        szbtn->Add(ok_btn);
         szvert->Add(szbtn, 0, wxALIGN_RIGHT | wxALL, 5);
 
         SetSizerAndFit(szvert);

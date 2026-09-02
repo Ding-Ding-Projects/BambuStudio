@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 
 #include "TextureImportDialog.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
 #include "MsgDialog.hpp"
@@ -2220,7 +2221,7 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
     sizer->Add(header_sizer, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
 
     wxBoxSizer* merge_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_auto_merge_cb = new wxCheckBox(parent, wxID_ANY, _L("Auto-merge same filament"));
+    m_auto_merge_cb = new LabeledCheckBox(parent, _L("Auto-merge same filament"));
     m_auto_merge_cb->SetToolTip(_L("Automatically merge identical filaments into existing filaments in the project"));
     m_auto_merge_cb->SetForegroundColour(secondary_fg);
     m_auto_merge_cb->SetValue(true);

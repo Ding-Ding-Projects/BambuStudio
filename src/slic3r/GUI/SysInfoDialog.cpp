@@ -1,4 +1,5 @@
 #include "SysInfoDialog.hpp"
+#include "Widgets/Button.hpp"
 #include "I18N.hpp"
 #include "3DScene.hpp"
 #include "GUI.hpp"
@@ -167,7 +168,8 @@ SysInfoDialog::SysInfoDialog()
     }
 
     wxStdDialogButtonSizer* buttons = this->CreateStdDialogButtonSizer(wxOK);
-    m_btn_copy_to_clipboard = new wxButton(this, wxID_ANY, _L("Copy to Clipboard"), wxDefaultPosition, wxDefaultSize);
+    m_btn_copy_to_clipboard = new Button(this, _L("Copy to Clipboard"));
+    m_btn_copy_to_clipboard->SetVariant(Button::Variant::Outlined);
 
     buttons->Insert(0, m_btn_copy_to_clipboard, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
     m_btn_copy_to_clipboard->Bind(wxEVT_BUTTON, &SysInfoDialog::onCopyToClipboard, this);

@@ -1,4 +1,5 @@
 #include "MultiNozzleSync.hpp"
+#include "ComboBox.hpp"
 #include "MD3DialogChrome.hpp"
 #include "StateColor.hpp"
 #include "../GUI_App.hpp"
@@ -47,9 +48,10 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
         auto *standard_label = new wxStaticText(content, wxID_ANY, _L(get_nozzle_volume_type_string(nvtStandard)));
         choice_sizer->Add(standard_label, 0, wxALL | wxALIGN_LEFT, FromDIP(5));
 
-        m_standard_choice = new wxChoice(content, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(100), -1), nozzle_choices);
+        m_standard_choice = new ComboBox(content, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, nullptr, wxCB_READONLY);
+        for (const auto &choice : nozzle_choices)
+            m_standard_choice->Append(choice);
         m_standard_choice->SetSelection(standard_count);
-        m_standard_choice->SetBackgroundColour(ThemeColor::White);
         choice_sizer->Add(m_standard_choice, 0, wxLEFT | wxBOTTOM | wxRIGHT, FromDIP(10));
     }
 
@@ -58,9 +60,10 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
         auto *highflow_label = new wxStaticText(content, wxID_ANY, _L(get_nozzle_volume_type_string(nvtHighFlow)));
         choice_sizer->Add(highflow_label, 0, wxALL | wxALIGN_LEFT, FromDIP(5));
 
-        m_highflow_choice = new wxChoice(content, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(100), -1), nozzle_choices);
+        m_highflow_choice = new ComboBox(content, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, nullptr, wxCB_READONLY);
+        for (const auto &choice : nozzle_choices)
+            m_highflow_choice->Append(choice);
         m_highflow_choice->SetSelection(highflow_count);
-        m_highflow_choice->SetBackgroundColour(ThemeColor::White);
         choice_sizer->Add(m_highflow_choice, 0, wxLEFT | wxBOTTOM | wxRIGHT, FromDIP(10));
     }
 
@@ -97,7 +100,7 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
     };
 
     if (m_standard_choice) {
-        m_standard_choice->Bind(wxEVT_CHOICE, [this, update_nozzle_error](wxCommandEvent &e) {
+        m_standard_choice->Bind(wxEVT_COMBOBOX, [this, update_nozzle_error](wxCommandEvent &e) {
             int standard_count = m_standard_choice->GetSelection();
             int highflow_count = m_highflow_choice ? m_highflow_choice->GetSelection() : 0;
             update_nozzle_error(standard_count, highflow_count);
@@ -106,7 +109,7 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
     }
 
     if (m_highflow_choice) {
-        m_highflow_choice->Bind(wxEVT_CHOICE, [this, update_nozzle_error](wxCommandEvent &e) {
+        m_highflow_choice->Bind(wxEVT_COMBOBOX, [this, update_nozzle_error](wxCommandEvent &e) {
             int standard_count = m_standard_choice ? m_standard_choice->GetSelection() : 0;
             int highflow_count = m_highflow_choice->GetSelection();
             update_nozzle_error(standard_count, highflow_count);
