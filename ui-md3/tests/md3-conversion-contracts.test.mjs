@@ -302,11 +302,16 @@ test('stock wx controls are gone from the GUI except the allowlisted holders', a
 
 test('wgtMsgPanel includes the widget header that owns LinkLabel', async () => {
   const header = stripComments(await read('DeviceTab', 'wgtMsgPanel.h'));
+  const includeLine = '#include "slic3r/GUI/Widgets/LinkLabel.hpp"';
+  const memberIndex = header.search(/\bLinkLabel[ \t]*\*[ \t]*m_wiki_link\b/);
 
-  assert.ok(/^[ \t]*#include[ \t]+"slic3r\/GUI\/Widgets\/LinkLabel[.]hpp"[ \t]*$/m.test(header),
-    'wgtMsgPanel.h must include LinkLabel.hpp before declaring its LinkLabel member');
-  assert.ok(/\bLinkLabel[ \t]*\*[ \t]*m_wiki_link\b/.test(header),
+  assert.match(header,
+    /^[ \t]*#pragma once[ \t]*\r?\n(?:[ \t]*\r?\n)*[ \t]*#include[ \t]+"slic3r\/GUI\/Widgets\/LinkLabel[.]hpp"[ \t]*(?:\r?\n|$)/,
+    'wgtMsgPanel.h must include LinkLabel.hpp unconditionally after pragma once');
+  assert.notEqual(memberIndex, -1,
     'wgtMsgPanel.h must retain the converted LinkLabel member');
+  assert.ok(header.indexOf(includeLine) < memberIndex,
+    'wgtMsgPanel.h must make LinkLabel visible before the member declaration');
 });
 
 test('the kit ProgressBar carries the gauge surface the status bars rely on', async () => {
