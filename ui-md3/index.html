@@ -65,11 +65,13 @@
     <div style="width:26px; height:26px; border-radius:8px; background:var(--md-primary); color:var(--md-on-primary); display:flex; align-items:center; justify-content:center; box-shadow:0 1px 2px var(--md-shadow);">
       <span data-icon style="font-size:18px; font-variation-settings:'FILL' 1;" aria-hidden="true">deployed_code</span>
     </div>
-    <div class="tb-title" style="font-weight:500; font-size:14px; margin-right:10px; letter-spacing:.1px; flex:0 0 auto;">Bambu Studio</div><div class="tb-menus">
+    <div class="tb-title" style="font-weight:500; font-size:14px; margin-right:10px; letter-spacing:.1px; flex:0 0 auto;">Bambu Studio</div>
+    <div class="tb-menus">
     <sc-for list="{{ menus }}" as="m" hint-placeholder-count="5">
       <button onClick="{{ m.onClick }}" style="height:30px; padding:0 10px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; font-size:13px; cursor:pointer;" style-hover="background:var(--md-sc-high);">{{ m.label }}</button>
     </sc-for>
-    </div><div class="tb-spacer" style="-webkit-app-region:drag; height:100%;"></div>
+    </div>
+    <div class="tb-spacer" style="-webkit-app-region:drag; height:100%;"></div>
     <button class="tb-branch" onClick="{{ toggleHistory }}" title="Version history — every edit is auto-saved to this project's Git repo" style="display:flex; align-items:center; gap:7px; height:30px; padding:0 12px; margin-right:6px; border:none; border-radius:16px; background:var(--md-sc); color:var(--md-on-surface-variant); cursor:pointer; font-size:12px;" style-hover="background:var(--md-sc-high);">
       <span data-icon style="font-size:16px; color:var(--md-primary);" aria-hidden="true">account_tree</span>
       <span style="font-family:'Roboto Mono',monospace;">{{ branch }}</span>
@@ -87,7 +89,8 @@
     <div style="width:1px; height:22px; background:var(--md-outline-variant); margin:0 4px;"></div>
     <button title="Minimize" aria-label="Minimize" style="width:38px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:18px;" aria-hidden="true">remove</span></button>
     <button title="Maximize" aria-label="Maximize" style="width:38px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; cursor:pointer;" style-hover="background:var(--md-sc-high);"><span data-icon style="font-size:15px;" aria-hidden="true">crop_square</span></button>
-    <button title="Close" aria-label="Close" style="width:38px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; cursor:pointer;" style-hover="background:var(--md-error); color:var(--md-on-error);"><span data-icon style="font-size:18px;" aria-hidden="true">close</span></button></div>
+    <button title="Close" aria-label="Close" style="width:38px; height:32px; border:none; background:transparent; color:var(--md-on-surface-variant); border-radius:8px; cursor:pointer;" style-hover="background:var(--md-error); color:var(--md-on-error);"><span data-icon style="font-size:18px;" aria-hidden="true">close</span></button>
+    </div>
   </div>
 
   <!-- ===== TAB BAR ===== -->
