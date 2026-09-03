@@ -1183,3 +1183,52 @@ payload → verified Mesa fallback → SBOM → NSIS → SHA-256 path. Its imple
 `scripts/ci/Test-OneClickBuild.ps1`, and its operator guide is
 `docs/features/releases/windows-one-click-build.md`. The installer remains unsigned and is launched
 only when the caller explicitly supplies `-Install`.
+
+---
+
+## 11. `wgtMsgPanel` LinkLabel build repair (2026-09-02)
+
+### Scope and root cause
+
+The `c2d7d36c7d455b7ca5088b617708e0294ac61721` control-conversion commit changed
+`wgtMsgPanelItem::m_wiki_link` from `wxHyperlinkCtrl*` to `LinkLabel*`, but
+`src/slic3r/GUI/DeviceTab/wgtMsgPanel.h` did not include or declare `LinkLabel`. MSVC first stopped
+at line 41 with `error C2143: syntax error: missing ';' before '*'`; the later undeclared-member
+diagnostics were a cascade.
+
+### Landed repair
+
+- `1a855ea0d1adbb04d324a31ff9ba9c402e7d098b` replaces the obsolete wx hyperlink include with
+  `slic3r/GUI/Widgets/LinkLabel.hpp` and adds a focused source contract.
+- `48e9378cd071c34302c8b4333de392a3ca8c5c15` makes that contract require the owning include as
+  the first nonblank directive after `#pragma once`, before the converted member. Read-only break
+  probes verified that a late include and an include inside `#if 0` both fail the contract.
+- `node --test ui-md3/tests/md3-conversion-contracts.test.mjs` passed 12 tests with 0 failures.
+  Before the source repair, the new focused test failed as intended (11 passed, 1 failed).
+
+### Hosted verification and release
+
+- Run [`33695532981`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/33695532981)
+  succeeded for the source repair and published immutable release
+  [`md3-v100`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v100).
+- Final-tip run [`33696115604`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/33696115604)
+  succeeded at `48e9378cd071c34302c8b4333de392a3ca8c5c15` and published immutable, non-draft,
+  non-prerelease release
+  [`md3-v101`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v101),
+  **Bambu Studio MD3 v101, Beancurd Skin Roll 腐皮卷**.
+- The final workflow recorded `2026-09-02T23:39:52Z` to `2026-09-03T01:38:56Z`, duration
+  `02:59:04`. All five release-asset endpoints returned HTTP 200 with their expected filenames and
+  content lengths. `Setup.exe` is intentionally unsigned.
+
+### Public records and remaining work
+
+- Issue [#28](https://github.com/Ding-Ding-Projects/BambuStudio/issues/28) contains the start,
+  diagnosis, red-to-green proof, commits, workflow evidence, release inventory, and finished
+  handoff; it is closed as completed.
+- Discussion [#29](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/29) is the rolling
+  progress record. Announcement [#30](https://github.com/Ding-Ding-Projects/BambuStudio/discussions/30)
+  records the v101 release.
+- This was a compiler-only repair with no visible application state, so no screenshot applied.
+  The separate light and dark capture matrix for the converted controls remains open in
+  `ROADMAP.md` and the parity register.
+- The pre-existing Home Assistant issue #16 remains separate and unchanged.

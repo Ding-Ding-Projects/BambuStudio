@@ -261,8 +261,13 @@ constructions and seven single-line wxTextCtrl inputs became their kit widgets (
 still on native OS chrome adopted `MD3DialogCaption`. Still open there: the seven wxRadioButton
 groups, the multi-line text views, the SmartHome list box, and the 175 static bitmaps that belong
 to the icons-assets families. Pinned by the "second-pass sweep" tests in
-`ui-md3/tests/md3-conversion-contracts.test.mjs`; the Windows build and light/dark captures of each
-converted surface are still owed.
+`ui-md3/tests/md3-conversion-contracts.test.mjs`.
+
+- [x] Verify the converted controls in the Windows build. Runs `33695532981` and `33696115604`
+  completed successfully on 2026-09-03, including the application build, unsigned Squirrel
+  package validation, asset upload, and immutable release publication.
+- [ ] Capture and review the light and dark states of each converted surface. The compiler-only
+  repair in issue #28 had no visible state and did not satisfy this separate capture item.
 
 The parity register is **128 done / 3 justified deviations / 0 open** (2026-07-24). The three
 deviations are held deliberately: corner-anchored toasts (the standing notification rules

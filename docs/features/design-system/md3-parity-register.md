@@ -76,8 +76,12 @@ string. Pinned by `ui-md3/tests/md3-conversion-contracts.test.mjs` (the "second-
 
 Verification of this sweep: every edited translation unit was compiled with `g++ -fsyntax-only`
 against wxWidgets 3.2 / Boost / OpenCASCADE headers on Linux (the Windows-only chrome paths are
-inside `#ifdef _WIN32`). The Windows build and a light/dark capture of each converted surface remain
-to be run on the Windows box, per the mandate.
+inside `#ifdef _WIN32`). The Windows build is verified by successful runs
+[`33695532981`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/33695532981) and
+[`33696115604`](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/33696115604), including
+the application build, unsigned Squirrel package validation, and immutable release publication.
+Light and dark captures of each converted surface remain open. Issue #28 was compiler-only and had
+no visible state, so its build evidence does not substitute for those captures.
 
 ---
 
