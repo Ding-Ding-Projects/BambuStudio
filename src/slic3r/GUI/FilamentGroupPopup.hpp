@@ -6,6 +6,7 @@
 #include <wx/sizer.h>
 #include <wx/timer.h>
 #include "libslic3r/PrintConfig.hpp"
+#include "Widgets/RadioBox.hpp"
 #include "Widgets/PopupWindow.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/SwitchButton.hpp"
@@ -68,7 +69,7 @@ private:
     FilamentMapMode m_mode;
     wxTimer        *m_timer;
 
-    std::vector<wxBitmapButton*> radio_btns;
+    std::vector<Slic3r::GUI::RadioBox*> radio_btns;
     std::vector<Label *>   button_labels;
     std::vector<Label *>   button_desps;
     std::vector<Label *>   detail_infos;

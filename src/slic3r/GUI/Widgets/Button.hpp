@@ -97,6 +97,10 @@ public:
 
     void SetInactiveIcon(const wxString& icon);
 
+    // Show a bitmap the caller already rendered (a colour swatch) as the icon,
+    // in every state. For data images that have no icon name.
+    void SetIconBitmap(const wxBitmap& bitmap);
+
     void SetMinSize(const wxSize& size) override;
     void SetMaxSize(const wxSize& size) override;
 

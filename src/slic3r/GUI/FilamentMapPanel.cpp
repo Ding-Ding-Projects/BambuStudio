@@ -1,4 +1,5 @@
 #include "FilamentMapPanel.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/MultiNozzleSync.hpp"
 #include "GUI_App.hpp"
 #include "DeviceCore/DevConfigUtil.h"
@@ -460,7 +461,7 @@ private:
     wxBitmap icon_enabled;
     wxBitmap icon_disabled;
 
-    wxBitmapButton *m_btn;
+    Button *m_btn;
     wxStaticText   *m_label;
     Label          *m_disable_tip;
     Label          *m_detail;
@@ -481,8 +482,10 @@ GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &
     icon_enabled = create_scaled_bitmap(icon, nullptr, 20);
     icon_disabled = create_scaled_bitmap(icon + "_disabled", nullptr, 20);
 
-    m_btn    = new wxBitmapButton(this, wxID_ANY, icon_enabled, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
-    m_btn->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    m_btn = new Button(this, "", "", 0, 0);
+    m_btn->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    m_btn->SetIconBitmap(icon_enabled);
+    m_btn->SetCanFocus(false); // the card itself is the interactive target
 
     m_label = new Label(this, label);
     m_label->SetFont(Label::Head_14);
@@ -525,7 +528,11 @@ GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &
         this->ProcessEvent(click_event);
     };
 
-    m_btn->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
+    m_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        wxCommandEvent click_event(wxEVT_LEFT_DOWN, GetId());
+        click_event.SetEventObject(this);
+        this->ProcessEvent(click_event);
+    });
     m_label->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
     m_detail->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
 
@@ -576,14 +583,14 @@ void FilamentMapBtnPanel::UpdateStatus()
     if (!m_enabled) {
         m_disable_tip->SetLabel(_L("(Sync with printer)"));
         m_disable_tip->SetForegroundColour(TextDisableColor);
-        m_btn->SetBitmap(icon_disabled);
+        m_btn->SetIconBitmap(icon_disabled);
         m_btn->SetForegroundColour(BgDisableColor);
         m_label->SetForegroundColour(TextDisableColor);
         m_detail->SetForegroundColour(TextDisableColor);
     } else {
         m_disable_tip->SetLabel("");
         m_disable_tip->SetForegroundColour(TextNormalBlackColor);
-        m_btn->SetBitmap(icon_enabled);
+        m_btn->SetIconBitmap(icon_enabled);
         m_btn->SetForegroundColour(BgNormalColor);
         m_label->SetForegroundColour(TextNormalBlackColor);
         m_detail->SetForegroundColour(TextNormalGreyColor);

@@ -380,14 +380,12 @@ wxScrolledWindow* FilamentPickerDialog::CreateColorGrid()
                 continue;
             }
 
-            wxBitmapButton* btn = new wxBitmapButton(
-                scroll_win,
-                wxID_ANY,
-                btn_bmp,
-                wxDefaultPosition,
-                COLOR_BTN_SIZE,
-                wxBU_EXACTFIT | wxNO_BORDER
-            );
+            // Kit icon button carrying the swatch as a data image; the selection
+            // ring is the kit border (Primary, 2 px) rather than a second paint handler.
+            Button* btn = new Button(scroll_win, "", "", 0, 0);
+            btn->SetIconButton(Button::IconShape::Square, COLOR_BTN_SIZE.GetWidth());
+            btn->SetIconBitmap(btn_bmp);
+            btn->SetMinSize(COLOR_BTN_SIZE);
 
             if (btn) {
                 // Remove any default background and borders
@@ -406,11 +404,12 @@ wxScrolledWindow* FilamentPickerDialog::CreateColorGrid()
                     m_cur_filament_color = color_code->GetFilaColor();
                     m_cur_selected_btn = btn;
                     UpdatePreview(*color_code);
-                    btn->Bind(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint, this);
+                    btn->SetBorderColorNormal(StateColor::semantic(MD3::Role::Primary));
+                    btn->SetBorderWidth(FromDIP(2));
                 }
 
                 // Bind click
-                btn->Bind(wxEVT_LEFT_DOWN, [this, btn, color_code](wxMouseEvent& evt) {
+                btn->Bind(wxEVT_BUTTON, [this, btn, color_code](wxCommandEvent& evt) {
                     m_cur_filament_color = color_code->GetFilaColor();
                     UpdatePreview(*color_code);
                     UpdateButtonStates(btn);
@@ -503,18 +502,18 @@ void FilamentPickerDialog::UpdateCustomColorPreview(const wxColour& custom_color
     Layout();
 }
 
-void FilamentPickerDialog::UpdateButtonStates(wxBitmapButton* selected_btn)
+void FilamentPickerDialog::UpdateButtonStates(Button* selected_btn)
 {
-    // Reset selected button appearance
+    // Reset selected button appearance: no ring.
     if (m_cur_selected_btn) {
-        m_cur_selected_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-        m_cur_selected_btn->Unbind(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint, this);
+        m_cur_selected_btn->SetBorderWidth(0);
         m_cur_selected_btn->Refresh();
     }
 
     if (selected_btn) {
-        // Bind paint event to draw custom green border
-        selected_btn->Bind(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint, this);
+        // MD3 selection ring: Primary, 2 px, on the kit border.
+        selected_btn->SetBorderColorNormal(StateColor::semantic(MD3::Role::Primary));
+        selected_btn->SetBorderWidth(FromDIP(2));
         selected_btn->Refresh();
     }
 
@@ -714,37 +713,6 @@ void FilamentPickerDialog::OnMouseLeftUp(wxMouseEvent& event)
     }
 
     event.Skip();
-}
-
-void FilamentPickerDialog::OnButtonPaint(wxPaintEvent& event)
-{
-    wxWindow* button = dynamic_cast<wxWindow*>(event.GetEventObject());
-    if (!button) {
-        event.Skip();
-        return;
-    }
-
-    // Create paint DC and let default painting happen first
-    wxPaintDC dc(button);
-
-    //Clear the button with white background
-    dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
-    dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.DrawRectangle(0, 0, COLOR_BTN_SIZE.GetWidth(), COLOR_BTN_SIZE.GetHeight());
-
-    // Draw the bitmap in the center
-    wxBitmapButton* bmpBtn = dynamic_cast<wxBitmapButton*>(button);
-    if (bmpBtn && bmpBtn->GetBitmap().IsOk()) {
-        wxBitmap bmp = bmpBtn->GetBitmap();
-        int x = (COLOR_BTN_SIZE.GetWidth() - COLOR_BTN_BITMAP_SIZE.GetWidth()) / 2;
-        int y = (COLOR_BTN_SIZE.GetHeight() - COLOR_BTN_BITMAP_SIZE.GetHeight()) / 2;
-        dc.DrawBitmap(bmp, x, y, true);
-    }
-
-    // Draw the green border
-    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), 2));  // Green pen, 2px thick
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRectangle(1, 1, COLOR_BTN_SIZE.GetWidth() - 1, COLOR_BTN_SIZE.GetHeight() - 1);
 }
 
 bool FilamentPickerDialog::IsClickOnTopMostWindow(const wxPoint& mouse_pos)

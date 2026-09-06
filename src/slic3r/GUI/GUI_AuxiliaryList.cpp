@@ -29,15 +29,8 @@ AuxiliaryList::AuxiliaryList(wxWindow* parent)
 	wxPanel* panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(21)));
 	//panel->SetBackgroundColour(*wxLIGHT_GREY);
 
-#if 0
-	wxBitmap if_bitmap = create_scaled_bitmap("import_file.png", nullptr, FromDIP(21));
-	wxBitmap nf_bitmap = create_scaled_bitmap("new_folder.png", nullptr, FromDIP(21));
-	wxBitmap del_bitmap = create_scaled_bitmap("delete.png", nullptr, FromDIP(21));
-
-	wxBitmapButton* m_if_btn = new wxBitmapButton(panel, wxID_OPEN, if_bitmap);
-	wxBitmapButton* m_nf_btn = new wxBitmapButton(panel, wxID_NEW, nf_bitmap);
-	wxBitmapButton* m_del_btn = new wxBitmapButton(panel, wxID_DELETE, del_bitmap);
-#endif
+// The three bitmap buttons that used to sit here were dead code behind #if 0;
+// the kit Buttons below are the live controls.
 
 	//m_nf_btn = new wxButton(panel, wxID_NEW, _L("New Folder"));
 	// Kit Button variants: filled primary action, outlined secondary, outlined-error delete.

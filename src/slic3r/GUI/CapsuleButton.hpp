@@ -2,6 +2,7 @@
 #define CAPSULE_BUTTON_HPP
 
 #include "wxExtensions.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
@@ -29,7 +30,7 @@ private:
     void SendButtonEvent();
     void UpdateStatus();
 
-    wxBitmapButton *m_btn;
+    Button *m_btn;
     Label          *m_label;
 
     wxBitmap tag_on_bmp;

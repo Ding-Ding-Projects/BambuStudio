@@ -1149,6 +1149,8 @@ int ScalableBitmap::GetBmpHeight() const
 
 void ScalableBitmap::msw_rescale()
 {
+    // A bitmap wrapped from a ready wxBitmap has no resource to reload.
+    if (m_icon_name.empty()) return;
     // BBS: support resize by fill border
     m_bmp = create_scaled_bitmap(m_icon_name, m_parent, m_px_cnt, m_grayscale, std::string(), false, m_resize);
 }

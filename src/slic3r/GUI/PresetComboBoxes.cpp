@@ -868,7 +868,10 @@ PlaterPresetComboBox::PlaterPresetComboBox(wxWindow *parent, Preset::Type preset
         // Kit filament-row swatch (prepare/filament-rows-preset-combobox-not-inforow):
         // 28x28 r8 color swatch with an inset ring, replacing the legacy 20x20
         // square button; see get_extruder_color_icon(..., rounded_ring).
-        clr_picker = new wxBitmapButton(parent, wxID_ANY, {}, wxDefaultPosition, wxSize(FromDIP(28), FromDIP(28)), wxBU_EXACTFIT | wxBU_AUTODRAW | wxBORDER_NONE);
+        // Kit square icon button hosting the swatch (a data image, kept as data).
+        clr_picker = new Button(parent, "", "", 0, 0);
+        clr_picker->SetIconButton(Button::IconShape::Square, FromDIP(28));
+        clr_picker->SetMinSize(wxSize(FromDIP(28), FromDIP(28)));
         clr_picker->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
         clr_picker->SetToolTip(_L("Click to pick filament color"));
         clr_picker->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e) {
@@ -1143,7 +1146,7 @@ void PlaterPresetComboBox::update()
     {
         std::vector<wxBitmap *> bitmaps = get_extruder_color_icons(true, true);
         if (m_filament_idx < bitmaps.size()) {
-            clr_picker->SetBitmap(*bitmaps[m_filament_idx]);
+            clr_picker->SetIconBitmap(*bitmaps[m_filament_idx]);
         } else {
             return;
         }
@@ -1855,7 +1858,7 @@ void GUI::CalibrateFilamentComboBox::load_tray(const DynamicPrintConfig &config)
     m_filament_color = config.opt_string("filament_colour", 0u);
     m_filament_exist = config.opt_bool("filament_exist", 0u);
     wxColor clr(m_filament_color);
-    clr_picker->SetBitmap(*get_extruder_color_icon(m_filament_color, m_tray_name, FromDIP(28), FromDIP(28), true));
+    clr_picker->SetIconBitmap(*get_extruder_color_icon(m_filament_color, m_tray_name, FromDIP(28), FromDIP(28), true));
 #ifdef __WXOSX__
     clr_picker->SetLabel(clr_picker->GetLabel()); // Let setBezelStyle: be called
     clr_picker->Refresh();
@@ -1864,8 +1867,7 @@ void GUI::CalibrateFilamentComboBox::load_tray(const DynamicPrintConfig &config)
         SetValue(_L("Empty"));
         m_selected_preset = nullptr;
         m_is_compatible = false;
-        clr_picker->SetBitmap(*get_extruder_color_icon("#F0F0F0FF", m_tray_name, FromDIP(28), FromDIP(28), true));
-        clr_picker->SetBitmapDisabled(*get_extruder_color_icon("#F0F0F0FF", m_tray_name, FromDIP(28), FromDIP(28), true));
+        clr_picker->SetIconBitmap(*get_extruder_color_icon("#F0F0F0FF", m_tray_name, FromDIP(28), FromDIP(28), true));
     } else {
         auto &filaments = m_collection->get_presets();
         auto  iter      = std::find_if(filaments.begin(), filaments.end(), [this](auto &f) {
@@ -1982,7 +1984,7 @@ void GUI::CalibrateFilamentComboBox::msw_rescale()
 {
     if (clr_picker) {
         clr_picker->SetSize(FromDIP(28), FromDIP(28));
-        clr_picker->SetBitmap(*get_extruder_color_icon(m_filament_color, m_tray_name, FromDIP(28), FromDIP(28), true));
+        clr_picker->SetIconBitmap(*get_extruder_color_icon(m_filament_color, m_tray_name, FromDIP(28), FromDIP(28), true));
     }
     // BBS
     if (edit_btn != nullptr)

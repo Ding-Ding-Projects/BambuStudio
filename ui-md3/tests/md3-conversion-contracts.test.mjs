@@ -353,6 +353,28 @@ test('every text field is a kit TextInput or TextArea; native editors exist only
   }
 });
 
+test('every bitmap button is a kit icon Button or RadioBox; swatches ride Button::SetIconBitmap', async () => {
+  assertOnlyAllowed(await sitesOf(/new wxBitmapButton\(/g), new Set(), 'wxBitmapButton');
+  const button = stripComments(await read('Widgets', 'Button.cpp'));
+  assert.match(button, /^void Button::SetIconBitmap\(const wxBitmap &bitmap\)/m, 'Button must accept a ready bitmap for data swatches');
+  const ext = stripComments(await read('wxExtensions.cpp'));
+  assert.match(ext, /if \(m_icon_name\.empty\(\)\) return;/, 'a wrapped bitmap must survive msw_rescale');
+  for (const [file, needle] of [
+    ['WebViewDialog.cpp', 'btn->SetIconButton(Button::IconShape::Square, FromDIP(28));'],
+    ['Plater.cpp', 'm_hover_btn->SetGlyph(MaterialIcon::FiberManualRecord'],
+    ['CapsuleButton.cpp', 'm_btn->SetGlyph(selected ? MaterialIcon::TaskAlt : MaterialIcon::Circle'],
+    ['FilamentGroupPopup.cpp', 'radio_btns[idx]          = new RadioBox(this);'],
+    ['FilamentPickerDialog.cpp', 'btn->SetIconBitmap(btn_bmp);'],
+    ['PresetComboBoxes.cpp', 'clr_picker->SetIconButton(Button::IconShape::Square, FromDIP(28));'],
+    ['FilamentMapPanel.cpp', 'm_btn->SetIconBitmap(icon_enabled);'],
+  ]) {
+    assert.ok(stripComments(await read(file)).includes(needle), `${file} must construct its icon control from the kit`);
+  }
+  // The picker's selection ring is the kit border, not a second paint handler.
+  const picker = stripComments(await read('FilamentPickerDialog.cpp'));
+  assert.doesNotMatch(picker, /Bind\(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint/, 'the swatch ring must be drawn through the kit border');
+});
+
 test('no window is sized by an unscaled pixel literal', async () => {
   // SetSize/SetMinSize/SetMaxSize(wxSize(N, M)) with a positive literal is a
   // 100%-only size: at 150% and 200% it clips whatever it holds. The zero and

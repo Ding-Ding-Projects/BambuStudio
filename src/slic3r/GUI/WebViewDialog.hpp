@@ -3,6 +3,7 @@
 
 
 #include "wx/artprov.h"
+class Button;
 #include "wx/cmdline.h"
 #include "wx/notifmsg.h"
 #include "wx/settings.h"
@@ -218,9 +219,9 @@ private:
     // Online page toolbar
     wxPanel *       m_online_toolbar_panel { nullptr };
     wxBoxSizer *    m_online_toolbar_sizer { nullptr };
-    wxBitmapButton *m_online_back_btn { nullptr };
-    wxBitmapButton *m_online_refresh_btn { nullptr };
-    wxBitmapButton *m_online_open_browser_btn { nullptr };
+    Button *m_online_back_btn { nullptr };
+    Button *m_online_refresh_btn { nullptr };
+    Button *m_online_open_browser_btn { nullptr };
     wxPanel *       m_online_container { nullptr };
     wxBoxSizer *    m_online_container_sizer { nullptr };
     int             m_online_toolbar_icon_px { 16 };

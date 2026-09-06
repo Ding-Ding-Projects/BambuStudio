@@ -260,7 +260,7 @@ void FilamentGroupPopup::RecreateUIElements()
 
     for (size_t idx = 0; idx < mode_count; ++idx) {
         button_sizers[idx] = new wxBoxSizer(wxHORIZONTAL);
-        radio_btns[idx]          = new wxBitmapButton(this, wxID_ANY, unchecked_bmp, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
+        radio_btns[idx]          = new RadioBox(this);
         radio_btns[idx]->SetBackgroundColour(BackGroundColor);
 
         button_labels[idx] = new Label(this, btn_texts[idx]);
@@ -273,11 +273,6 @@ void FilamentGroupPopup::RecreateUIElements()
         button_desps[idx]->SetForegroundColour(LabelEnableColor);
         button_desps[idx]->SetFont(Label::Body_14);
 
-#if 0
-        global_mode_tags[idx] = new wxBitmapButton(this, wxID_ANY, global_tag_bmp, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
-        global_mode_tags[idx]->SetBackgroundColour(BackGroundColor);
-        global_mode_tags[idx]->SetToolTip(_L("Global settings"));
-#endif
         button_sizers[idx]->Add(radio_btns[idx], 0, wxALIGN_CENTER);
         button_sizers[idx]->AddSpacer(ratio_spacing);
         button_sizers[idx]->Add(button_labels[idx], 0, wxALIGN_CENTER);
@@ -300,6 +295,7 @@ void FilamentGroupPopup::RecreateUIElements()
         top_sizer->Add(label_sizers[idx], 0, wxLEFT | wxRIGHT, horizontal_margin);
         mode_spacer[idx] = top_sizer->AddSpacer(vertical_padding);
 
+        radio_btns[idx]->Bind(wxEVT_TOGGLEBUTTON, [this, idx](auto &) { OnRadioBtn(idx);});
         radio_btns[idx]->Bind(wxEVT_LEFT_DOWN, [this, idx](auto &) { OnRadioBtn(idx);});
 
         radio_btns[idx]->Bind(wxEVT_ENTER_WINDOW, [this, idx](auto &) { UpdateButtonStatus(idx); });
@@ -464,14 +460,16 @@ void FilamentGroupPopup::Init(const std::vector<FilamentMapMode>& available_mode
                 button_labels[i]->SetForegroundColour(LabelEnableColor);
                 button_desps[i]->SetForegroundColour(LabelEnableColor);
                 detail_infos[i]->SetForegroundColour(GreyColor);
-                radio_btns[i]->SetBitmap(unchecked_bmp);
+                radio_btns[i]->Enable();
+                radio_btns[i]->SetValue(false);
                 button_desps[i]->SetLabel(AutoForMatchDesp);
             }
             else {
                 button_labels[i]->SetForegroundColour(LabelDisableColor);
                 button_desps[i]->SetForegroundColour(LabelDisableColor);
                 detail_infos[i]->SetForegroundColour(LabelDisableColor);
-                radio_btns[i]->SetBitmap(disabled_bmp);
+                radio_btns[i]->SetValue(false);
+                radio_btns[i]->Disable();
                 button_desps[i]->SetLabel(MachineSyncTip);
             }
         }
@@ -703,16 +701,10 @@ void FilamentGroupPopup::UpdateButtonStatus(int hover_idx)
         }
         // process checked and unchecked status
         if (mode == m_mode) {
-            if (static_cast<int>(i) == hover_idx)
-                radio_btns[i]->SetBitmap(checked_hover_bmp);
-            else
-                radio_btns[i]->SetBitmap(checked_bmp);
+            radio_btns[i]->SetValue(true); // the kit glyph draws its own hover state
             button_labels[i]->SetFont(Label::Head_14);
         } else {
-            if (static_cast<int>(i) == hover_idx)
-                radio_btns[i]->SetBitmap(unchecked_hover_bmp);
-            else
-                radio_btns[i]->SetBitmap(unchecked_bmp);
+            radio_btns[i]->SetValue(false);
             button_labels[i]->SetFont(Label::Body_14);
         }
     }

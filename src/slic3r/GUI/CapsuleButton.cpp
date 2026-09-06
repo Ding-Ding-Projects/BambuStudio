@@ -109,9 +109,12 @@ CapsuleButton::CapsuleButton(wxWindow *parent, wxWindowID id, const wxString &la
     tag_on_bmp = create_scaled_bitmap("capsule_tag_on", nullptr, FromDIP(16));
     tag_off_bmp = create_scaled_bitmap("capsule_tag_off", nullptr, FromDIP(16));
 
-    m_btn = new wxBitmapButton(this, wxID_ANY, selected?tag_on_bmp:tag_off_bmp, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
-    m_btn->SetBackgroundColour(*wxWHITE);
-    m_btn->DisableFocusFromKeyboard();
+    // Filter-chip selection mark as a kit icon button: a check circle when the
+    // chip is selected, an empty circle otherwise (Material filter-chip anatomy).
+    m_btn = new Button(this, "", "", 0, 0);
+    m_btn->SetIconButton(Button::IconShape::Square, FromDIP(24));
+    m_btn->SetGlyph(selected ? MaterialIcon::TaskAlt : MaterialIcon::Circle, FromDIP(16));
+    m_btn->SetCanFocus(false); // the capsule itself takes focus
 
     m_label = new Label(this, label);
     wxWindow::SetLabel(label);
@@ -131,7 +134,7 @@ CapsuleButton::CapsuleButton(wxWindow *parent, wxWindowID id, const wxString &la
         SendButtonEvent();
     };
 
-    m_btn->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
+    m_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { SetFocus(); SendButtonEvent(); });
     m_label->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
     this->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
 
@@ -269,12 +272,12 @@ void CapsuleButton::OnLeaveWindow(wxMouseEvent &event)
 void CapsuleButton::UpdateStatus()
 {
     if (m_selected) {
-        m_btn->SetBitmap(tag_on_bmp);
+        m_btn->SetGlyph(MaterialIcon::TaskAlt, FromDIP(16));
         m_label->SetForegroundColour(ThemeColor::BrandGreen);
         m_label->SetBackgroundColour(MD3::Light::secondaryContainer);
         m_btn->SetBackgroundColour(MD3::Light::secondaryContainer);
     } else {
-        m_btn->SetBitmap(tag_off_bmp);
+        m_btn->SetGlyph(MaterialIcon::Circle, FromDIP(16));
         m_label->SetForegroundColour(ThemeColor::TextPrimary);
         m_label->SetBackgroundColour(ThemeColor::White);
         m_btn->SetBackgroundColour(ThemeColor::White);

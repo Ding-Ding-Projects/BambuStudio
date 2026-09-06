@@ -512,8 +512,9 @@ public:
         m_brace_right->SetFont(Label::Body_13);
         m_brace_right->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-        auto hover_icon = create_scaled_bitmap("dot", this, 16);
-        m_hover_btn     = new wxBitmapButton(this, wxID_ANY, hover_icon, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_hover_btn = new Button(this, "", "", 0, 0);
+        m_hover_btn->SetIconButton(Button::IconShape::Circle, FromDIP(24));
+        m_hover_btn->SetGlyph(MaterialIcon::FiberManualRecord, FromDIP(16));
         m_hover_btn->SetMinSize(wxSize(FromDIP(25), -1));
 #ifdef __WXOSX__
         m_hover_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
@@ -537,11 +538,7 @@ public:
     void EnableEdit(bool enable)
     {
         m_enabled = enable;
-        if (enable) {
-            m_hover_btn->SetBitmap(create_scaled_bitmap("edit"));
-        } else {
-            m_hover_btn->SetBitmap(create_scaled_bitmap("dot"));
-        }
+        m_hover_btn->SetGlyph(enable ? MaterialIcon::Edit : MaterialIcon::FiberManualRecord, FromDIP(16));
     }
     void SetOnHoverClick(std::function<void()> on_click) { m_hover_on_click = on_click; }
 
@@ -592,7 +589,7 @@ public:
 
 private:
     wxStaticText   *m_label;
-    wxBitmapButton *m_hover_btn;
+    Button *m_hover_btn;
     wxStaticText   *m_count;
     wxStaticText   *m_title_type;
 

@@ -266,6 +266,14 @@ void Button::SetIcon(const wxString& icon)
     }
 }
 
+void Button::SetIconBitmap(const wxBitmap &bitmap)
+{
+    this->active_icon   = ScalableBitmap(this, bitmap);
+    this->inactive_icon = ScalableBitmap(this, bitmap);
+    if (m_md3_variant) applyMD3Style();
+    Refresh();
+}
+
 void Button::SetInactiveIcon(const wxString &icon)
 {
     if (!icon.IsEmpty()) {

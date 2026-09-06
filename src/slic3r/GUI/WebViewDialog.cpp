@@ -1,5 +1,6 @@
 #include "WebViewDialog.hpp"
 #include "Widgets/TextArea.hpp"
+#include "Widgets/Button.hpp"
 
 #include "I18N.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
@@ -218,21 +219,17 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     // Prefer Material Symbols glyphs; fall back to the legacy raster SVGs when the
     // icon font is unavailable so a missing TTF degrades to the old look, not tofu.
     const bool use_glyphs = MaterialIcon::available();
-    auto make_online_toolbar_button = [this, &toolbar_bg, &icon_enabled, &icon_disabled, use_glyphs]
+    // Kit icon buttons: the glyph and its enabled/disabled tint come from the
+    // Button's own MD3 state machine, so no tinted bitmaps are baked here.
+    auto make_online_toolbar_button = [this, use_glyphs]
         (uint32_t glyph, const std::string &raster_icon, const wxString &tooltip) {
-        wxBitmap enabled_bmp, disabled_bmp;
-        if (use_glyphs) {
-            enabled_bmp  = MaterialIcon::bitmap(this, glyph, m_online_toolbar_icon_px, icon_enabled);
-            disabled_bmp = MaterialIcon::bitmap(this, glyph, m_online_toolbar_icon_px, icon_disabled);
-        } else {
-            enabled_bmp  = create_scaled_bitmap(raster_icon, this, m_online_toolbar_icon_px, false, icon_enabled.GetAsString(wxC2S_HTML_SYNTAX).ToStdString());
-            disabled_bmp = create_scaled_bitmap(raster_icon, this, m_online_toolbar_icon_px, false, icon_disabled.GetAsString(wxC2S_HTML_SYNTAX).ToStdString());
-        }
-        auto *btn = new wxBitmapButton(m_online_toolbar_panel, wxID_ANY, enabled_bmp, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        auto *btn = new Button(m_online_toolbar_panel, "", "", 0, 0);
+        btn->SetIconButton(Button::IconShape::Square, FromDIP(28));
+        if (use_glyphs)
+            btn->SetGlyph(glyph, FromDIP(m_online_toolbar_icon_px));
+        else
+            btn->SetIcon(raster_icon);
         btn->SetToolTip(tooltip);
-        btn->SetBackgroundColour(toolbar_bg);
-        btn->SetBitmapDisabled(disabled_bmp);
-        btn->SetMinSize(wxSize(FromDIP(28), FromDIP(28)));
         return btn;
     };
 
@@ -2588,14 +2585,10 @@ void WebViewPanel::UpdateOnlineToolbarState()
     wxColour   enabled_color  = StateColor::semantic(MD3::Role::OnSurface);
     wxColour   disabled_color = StateColor::semantic(MD3::Role::OutlineVariant);
     const bool use_glyphs     = MaterialIcon::available();
-    auto update_btn_state = [this, &enabled_color, &disabled_color, use_glyphs](wxBitmapButton *btn, bool enable, uint32_t glyph, const std::string &icon) {
+    auto update_btn_state = [](Button *btn, bool enable, uint32_t /*glyph*/, const std::string & /*icon*/) {
         if (!btn) return;
+        // The kit Button tints its glyph for the disabled state itself.
         btn->Enable(enable);
-        const int       px   = m_online_toolbar_icon_px;
-        const wxColour &tint = enable ? enabled_color : disabled_color;
-        wxBitmap        bmp  = use_glyphs ? MaterialIcon::bitmap(this, glyph, px, tint)
-                                          : create_scaled_bitmap(icon, this, px, false, tint.GetAsString(wxC2S_HTML_SYNTAX).ToStdString());
-        btn->SetBitmap(bmp);
     };
 
     bool can_go_back = false;
