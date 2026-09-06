@@ -130,11 +130,16 @@ class App:
         # finished one: the first read came back with a torn last line and
         # every row failed on a JSON delimiter. Wait until the size has held
         # still, then parse; a torn tail on a still-growing file is retried.
+        # A file made of whole lines parses fine while still short (the first
+        # fix here accepted one that ended before the tab strip), so completion
+        # is the probe's own end record when the build writes one, else a size
+        # that has held still for three polls.
         deadline = time.monotonic() + 30
-        last = -1
+        history = []
         while time.monotonic() < deadline:
             size = os.path.getsize(path) if os.path.exists(path) else 0
-            if size > 0 and size == last:
+            history.append(size)
+            if size > 0:
                 try:
                     records = []
                     with open(path, encoding='utf-8') as fh:
@@ -142,10 +147,12 @@ class App:
                             line = line.strip()
                             if line:
                                 records.append(json.loads(line))
-                    return records
+                    if records and records[-1].get('kind') == 'end':
+                        return records
+                    if len(history) >= 3 and history[-1] == history[-2] == history[-3]:
+                        return records
                 except json.JSONDecodeError:
                     pass
-            last = size
             time.sleep(0.5)
         raise RuntimeError('layout probe produced no complete dump (is this build carrying the probe?)')
 
@@ -368,7 +375,7 @@ def main():
                     r['status'] = 'done'
                 except Exception as e:  # noqa: BLE001 - every row reports, none aborts the run
                     status = str(e) if str(e).startswith('blocked') else f'failed: {e}'
-                print(f'  {status:60.60s} {r["file"]}')
+                print(f'  {status} :: {r["file"]}')
                 report['rows'].append({'file': r['file'], 'status': status})
                 # Return to a known state between rows: close any dialog we opened.
                 if runner.front and runner.front != app.main:
