@@ -43,6 +43,7 @@ CHEAP = os.environ.get('LLCU_CHEAP', DEFAULT_CHEAP)
 
 TAB_LABELS = {'en': {'home': 'Home', 'prepare': 'Prepare', 'preview': 'Preview', 'device': 'Device', 'project': 'Project', 'ink': 'Ink'}}
 GEAR = (1155, 121)
+PREF_CLOSE = (753, 21)
 PREF_TABS = {'appearance': (79, 75), 'general': (79, 120), 'user': (79, 166), '3d': (79, 212), 'other': (79, 258)}
 # Surfaces that are the main frame itself.
 MAIN_SURFACES = {'main', 'home', 'prepare', 'preview', 'device', 'project', 'ink', 'toast', 'menu'}
@@ -361,11 +362,16 @@ def main():
                 report['rows'].append({'file': r['file'], 'status': status})
                 # Return to a known state between rows: close any dialog we opened.
                 if runner.front and runner.front != app.main:
+                    # press_keys by handle does not reach a window on another
+                    # desktop (the same wall SendMessage hit), so Escape never
+                    # closed anything and the dialogs stacked up. A background
+                    # click does cross: close Preferences by its caption glyph,
+                    # anything else by the same corner, then forget the handle.
                     try:
-                        cheap('press_keys', keys=['esc'], hwnd=runner.front)
-                        time.sleep(1.0)
-                    except RuntimeError:
+                        app.click(runner.front, *PREF_CLOSE, settle=1.0)
+                    except (RuntimeError, SystemExit):
                         pass
+                    runner.front = None
         except Exception as e:  # noqa: BLE001
             for r in trows:
                 report['rows'].append({'file': r['file'], 'status': f'failed: {e}'})
