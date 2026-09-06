@@ -3272,7 +3272,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-app.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/app/ink-search-filtered.png",
@@ -3284,7 +3289,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-app.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/app/settings-switches.png",
@@ -3296,7 +3306,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-app.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/app/titlebar-640.png",
@@ -3308,7 +3323,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-app.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/app/version-history-dialog.png",
@@ -3320,7 +3340,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-app.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/bilingual-narrow.png",
@@ -3332,7 +3357,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/changelog-calendar.png",
@@ -3344,7 +3374,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/dim-sum-card.png",
@@ -3356,7 +3391,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/material-you-light.png",
@@ -3368,7 +3408,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/regex-lab-matches.png",
@@ -3380,7 +3425,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/settings-cantonese-narrow.png",
@@ -3392,7 +3442,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/settings-language-and-funny.png",
@@ -3404,7 +3459,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/settings-search-cross-tab.png",
@@ -3416,7 +3476,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tab-build.png",
@@ -3428,7 +3493,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tab-changelog.png",
@@ -3440,7 +3510,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tab-download.png",
@@ -3452,7 +3527,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tab-materialyou.png",
@@ -3464,7 +3544,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tab-overview.png",
@@ -3476,7 +3561,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tab-regex.png",
@@ -3488,7 +3578,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tab-screens.png",
@@ -3500,7 +3595,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tab-settings.png",
@@ -3512,7 +3612,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tabstrip-overflow-menu.png",
@@ -3524,7 +3629,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/pages/tabstrip-wide.png",
@@ -3536,7 +3646,12 @@
         "kind": "pages",
         "script": "ui-md3/scripts/capture-site.mjs"
       },
-      "status": "pending"
+      "status": "done",
+      "retaken": {
+        "run": "2026-09-05T22:58 capture-site.mjs",
+        "siteCommit": "976437ada",
+        "note": "11 changed, 12 byte-identical"
+      }
     },
     {
       "file": "docs/screenshots/preferences/3d-tab.png",
