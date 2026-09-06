@@ -140,14 +140,13 @@ body
 
 #NoPluginTip
 {
-	margin-top: 5px;
+	/* Sits on the same 8px inset as the nav items below it instead of hugging
+	   the window edge; body-small text gets the banner's 12px inner padding. */
+	margin: 6px 8px 0 8px;
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
-	padding-top: 0px;
-	padding-bottom: 0px;
-	padding-left: 5px;
-	padding-right: 5px;
+	padding: 8px 12px;
 	border-radius: 12px;
 	border: 1px solid var(--md-error);
 	background: var(--md-error-container);
