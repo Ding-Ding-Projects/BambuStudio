@@ -105,20 +105,12 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
 
     cali_left_sizer->Add(0, 0, 0, wxTOP, FromDIP(20));
 
-   /* auto cali_left_text_top_prepar = new wxStaticText(cali_left_panel, wxID_ANY, _L("Preparation before calibration"), wxDefaultPosition, wxDefaultSize, 0);
-     cali_left_text_top_prepar->SetFont(::Label::Head_14);
-     cali_left_text_top_prepar->SetForegroundColour(wxColour(0x32, 0x3A, 0x3D));
-     cali_left_text_top_prepar->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
-     cali_left_text_top_prepar->Wrap(-1);
-     cali_left_sizer->Add(cali_left_text_top_prepar, 0, wxLEFT, FromDIP(15));
-
-     cali_left_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
-
-     auto cali_left_text_body_prepar =
-         new wxStaticText(cali_left_panel, wxID_ANY,
-                          _L("Before calibration, please make sure a filament is loaded and its nozzle temperature and bed temperature is set in Feeding lab."),
-     wxDefaultPosition, wxSize(FromDIP(260), -1), 0); cali_left_text_body_prepar->Wrap(FromDIP(260)); cali_left_text_body_prepar->SetFont(::Label::Body_13);
-     cali_left_text_body_prepar->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+   /* auto cali_left_text_top_prepar = new ::Label(cali_left_panel,
+                    _L("Before calibration, please make sure a filament is loaded and its nozzle temperature and bed temperature is set in Feeding lab."),
+                    0, wxSize(FromDIP(260), -1));
+    cali_left_text_body_prepar->Wrap(FromDIP(260));
+    cali_left_text_body_prepar->SetFont(::Label::Body_13);
+    cali_left_text_body_prepar->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      cali_left_text_body_prepar->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
      cali_left_sizer->Add(cali_left_text_body_prepar, 0, wxLEFT, FromDIP(15));*/
 

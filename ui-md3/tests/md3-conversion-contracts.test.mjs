@@ -680,3 +680,14 @@ test('every process setting is shown: no Simple/Advanced filter or flip remains'
   assert.doesNotMatch(plater, /_L\("Advanced settings"\)/, 'no Advanced settings button');
   assert.match(plater, /^\s*p->process_advanced = true;/m, 'the full tree is the default');
 });
+
+test('the gizmo object-manipulation panels draw every value field through the kit helper', async () => {
+  // Move, rotate and scale panels: Roboto Mono digits in OnSurface on
+  // SurfaceContainerHighest pills, label column in OnSurfaceVariant.
+  const src = await read('Gizmos', 'GizmoObjectManipulation.cpp');
+  assert.match(src, /^inline bool md3_value_input\(ImGuiWrapper \*imgui, bool dark,/m, 'the helper exists');
+  const raw = (src.match(/ImGui::BBLInputDouble\(/g) || []).length;
+  assert.equal(raw, 1, 'only the helper calls BBLInputDouble directly');
+  assert.equal((src.match(/md3_value_input\(imgui_wrapper, m_is_dark_mode, /g) || []).length, 15, 'all fifteen value fields use it');
+  assert.equal((src.match(/ImGui::PushStyleColor\(ImGuiCol_FrameBg, md3_imvec4\(MD3::Role::SurfaceContainerHighest, m_is_dark_mode\)\);/g) || []).length, 3, 'each of the three windows paints filled fields');
+});

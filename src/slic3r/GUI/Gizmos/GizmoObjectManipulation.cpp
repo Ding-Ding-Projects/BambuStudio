@@ -35,6 +35,21 @@ inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
     const wxColour &c = MD3::resolve(role, dark);
     return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
 }
+// Kit ValueField (Prepare > Object manipulation): the digits are Roboto Mono in
+// OnSurface on the SurfaceContainerHighest pill that the enclosing window
+// style already paints for every frame. Every numeric input of the move,
+// rotate and scale panels goes through here so the anatomy cannot drift
+// between the three windows.
+inline bool md3_value_input(ImGuiWrapper *imgui, bool dark, const char *label, double *v, double step, double step_fast,
+                            const char *format, ImGuiInputTextFlags flags = 0, bool support_numerical_operation = false)
+{
+    const bool mono = imgui->push_mono_font();
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface, dark));
+    const bool changed = ImGui::BBLInputDouble(label, v, step, step_fast, format, flags, support_numerical_operation);
+    ImGui::PopStyleColor();
+    if (mono) imgui->pop_mono_font();
+    return changed;
+}
 // Convert a fixed design-kit colour (e.g. the theme-independent viewport axis
 // tokens) to an ImGui colour.
 inline ImVec4 imvec4_of(const wxColour &c, float alpha = 1.0f)
@@ -890,6 +905,12 @@ void GizmoObjectManipulation::set_init_rotation(const Geometry::Transformation &
 
     // BBS
     ImGuiWrapper::push_toolbar_style(m_glcanvas.get_scale());
+    // Kit panel anatomy: label column in OnSurfaceVariant, value fields as
+    // filled borderless SurfaceContainerHighest pills (md3_value_input paints
+    // the digits in OnSurface and Roboto Mono).
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::SurfaceContainerHighest, m_is_dark_mode));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0, 6.0));
 
     std::string name = this->m_new_title_string + "##" + window_name;
@@ -990,13 +1011,13 @@ void GizmoObjectManipulation::set_init_rotation(const Geometry::Transformation &
     ImGui::SameLine(caption_max + index * space_size + space_size);
     ImGui::SetCursorPosY(start_y + (max_h - input_height) * 0.5f);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_values[0][0], &display_position[0], 0.0f, 0.0f, "%.2f", 0, true);
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[0][0], &display_position[0], 0.0f, 0.0f, "%.2f", 0, true);
     ImGui::SameLine(caption_max + unit_size + (++index) * space_size + intput_box_space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_values[0][1], &display_position[1], 0.0f, 0.0f, "%.2f", 0, true);
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[0][1], &display_position[1], 0.0f, 0.0f, "%.2f", 0, true);
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size + intput_box_space_size + space_size *0.75f);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_values[0][2], &display_position[2], 0.0f, 0.0f, "%.2f", 0, true);
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[0][2], &display_position[2], 0.0f, 0.0f, "%.2f", 0, true);
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size + intput_box_space_size);
     imgui_wrapper->text(this->m_new_unit_string);
     ImGui::SetCursorPosY(start_y + max_h + ImGui::GetStyle().ItemSpacing.y);
@@ -1185,6 +1206,8 @@ void GizmoObjectManipulation::set_init_rotation(const Geometry::Transformation &
     last_move_input_window_width = ImGui::GetWindowWidth();
     imgui_wrapper->end();
     ImGui::PopStyleVar(1);
+    ImGui::PopStyleVar(1);
+    ImGui::PopStyleColor(2);
     ImGuiWrapper::pop_toolbar_style();
 }
 
@@ -1281,6 +1304,12 @@ void GizmoObjectManipulation::do_render_rotate_window(ImGuiWrapper *imgui_wrappe
 
     // BBS
     ImGuiWrapper::push_toolbar_style(m_glcanvas.get_scale());
+    // Kit panel anatomy: label column in OnSurfaceVariant, value fields as
+    // filled borderless SurfaceContainerHighest pills (md3_value_input paints
+    // the digits in OnSurface and Roboto Mono).
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::SurfaceContainerHighest, m_is_dark_mode));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0, 6.0));
 
     std::string name = this->m_new_title_string + "##" + window_name;
@@ -1341,17 +1370,17 @@ void GizmoObjectManipulation::do_render_rotate_window(ImGuiWrapper *imgui_wrappe
     imgui_wrapper->text(_L("Rotate (relative)"));
     ImGui::SameLine(caption_max + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    if (ImGui::BBLInputDouble(label_values[1][0], &rotation[0], 0.0f, 0.0f, "%.2f")) {
+    if (md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[1][0], &rotation[0], 0.0f, 0.0f, "%.2f")) {
         is_relative_input = true;
     }
     ImGui::SameLine(caption_max + unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    if (ImGui::BBLInputDouble(label_values[1][1], &rotation[1], 0.0f, 0.0f, "%.2f")) {
+    if (md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[1][1], &rotation[1], 0.0f, 0.0f, "%.2f")) {
         is_relative_input = true;
     }
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    if (ImGui::BBLInputDouble(label_values[1][2], &rotation[2], 0.0f, 0.0f, "%.2f")) {
+    if (md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[1][2], &rotation[2], 0.0f, 0.0f, "%.2f")) {
         is_relative_input = true;
     }
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size);
@@ -1398,17 +1427,17 @@ void GizmoObjectManipulation::do_render_rotate_window(ImGuiWrapper *imgui_wrappe
     ImGui::SameLine(caption_max + index * space_size);
     ImGui::PushItemWidth(unit_size);
     bool is_absolute_input = false;
-    if (ImGui::BBLInputDouble(label_values[2][0], &absolute_rotation[0], 0.0f, 0.0f, "%.2f")) {
+    if (md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[2][0], &absolute_rotation[0], 0.0f, 0.0f, "%.2f")) {
         is_absolute_input = true;
     }
     ImGui::SameLine(caption_max + unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    if (ImGui::BBLInputDouble(label_values[2][1], &absolute_rotation[1], 0.0f, 0.0f, "%.2f")) {
+    if (md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[2][1], &absolute_rotation[1], 0.0f, 0.0f, "%.2f")) {
         is_absolute_input = true;
     }
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    if (ImGui::BBLInputDouble(label_values[2][2], &absolute_rotation[2], 0.0f, 0.0f, "%.2f")) {
+    if (md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[2][2], &absolute_rotation[2], 0.0f, 0.0f, "%.2f")) {
         is_absolute_input = true;
     }
     ImGui::SameLine(caption_max + (++index_unit) * unit_size + (++index) * space_size);
@@ -1459,6 +1488,8 @@ void GizmoObjectManipulation::do_render_rotate_window(ImGuiWrapper *imgui_wrappe
 
     // BBS
     ImGui::PopStyleVar(1);
+    ImGui::PopStyleVar(1);
+    ImGui::PopStyleColor(2);
     ImGuiWrapper::pop_toolbar_style();
 }
 
@@ -1481,6 +1512,12 @@ void GizmoObjectManipulation::do_render_scale_input_window(ImGuiWrapper* imgui_w
 
     //BBS
     ImGuiWrapper::push_toolbar_style(m_glcanvas.get_scale());
+    // Kit panel anatomy: label column in OnSurfaceVariant, value fields as
+    // filled borderless SurfaceContainerHighest pills (md3_value_input paints
+    // the digits in OnSurface and Roboto Mono).
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurfaceVariant, m_is_dark_mode));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imvec4(MD3::Role::SurfaceContainerHighest, m_is_dark_mode));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0, 6.0));
 
     std::string name = this->m_new_title_string + "##" + window_name;
@@ -1561,13 +1598,13 @@ void GizmoObjectManipulation::do_render_scale_input_window(ImGuiWrapper* imgui_w
     imgui_wrapper->text(_L("Scale"));
     ImGui::SameLine(caption_max + space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_scale_values[0][0], &scale[0], 0.0f, 0.0f, "%.2f");
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_scale_values[0][0], &scale[0], 0.0f, 0.0f, "%.2f");
     ImGui::SameLine(caption_max + unit_size + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_scale_values[0][1], &scale[1], 0.0f, 0.0f, "%.2f");
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_scale_values[0][1], &scale[1], 0.0f, 0.0f, "%.2f");
     ImGui::SameLine(caption_max + (++index_unit) *unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_scale_values[0][2], &scale[2], 0.0f, 0.0f, "%.2f");
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_scale_values[0][2], &scale[2], 0.0f, 0.0f, "%.2f");
     ImGui::SameLine(caption_max + (++index_unit) *unit_size + (++index) * space_size);
     imgui_wrapper->text(_L("%"));
     if (scale.x() > 0 && scale.y() > 0 && scale.z() > 0) {
@@ -1597,13 +1634,13 @@ void GizmoObjectManipulation::do_render_scale_input_window(ImGuiWrapper* imgui_w
     imgui_wrapper->text(_L("Size"));
     ImGui::SameLine(caption_max + space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_scale_values[1][0], &display_size[0], 0.0f, 0.0f, "%.2f");
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_scale_values[1][0], &display_size[0], 0.0f, 0.0f, "%.2f");
     ImGui::SameLine(caption_max + unit_size + index * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_scale_values[1][1], &display_size[1], 0.0f, 0.0f, "%.2f");
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_scale_values[1][1], &display_size[1], 0.0f, 0.0f, "%.2f");
     ImGui::SameLine(caption_max + (++index_unit) *unit_size + (++index) * space_size);
     ImGui::PushItemWidth(unit_size);
-    ImGui::BBLInputDouble(label_scale_values[1][2], &display_size[2], 0.0f, 0.0f, "%.2f");
+    md3_value_input(imgui_wrapper, m_is_dark_mode, label_scale_values[1][2], &display_size[2], 0.0f, 0.0f, "%.2f");
     ImGui::SameLine(caption_max + (++index_unit) *unit_size + (++index) * space_size);
     imgui_wrapper->text(this->m_new_unit_string);
     for (int i = 0; i < display_size.size(); i++) {
@@ -1700,6 +1737,8 @@ void GizmoObjectManipulation::do_render_scale_input_window(ImGuiWrapper* imgui_w
     imgui_wrapper->end();
 
     //BBS
+    ImGui::PopStyleVar(1);
+    ImGui::PopStyleColor(2);
     ImGuiWrapper::pop_toolbar_style();
 }
 

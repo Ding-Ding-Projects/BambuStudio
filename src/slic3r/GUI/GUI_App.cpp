@@ -1,5 +1,8 @@
 #include "libslic3r/Technologies.hpp"
 #include "GUI_App.hpp"
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include "GUI_Init.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_Factories.hpp"
@@ -5780,77 +5783,90 @@ bool GUI_App::check_send_print_version_policy()
 
 void GUI_App::check_new_version(bool show_tips, int by_user)
 {
-    std::string platform = "windows";
-
-#ifdef __WINDOWS__
-    platform = "windows";
-#endif
-#ifdef __APPLE__
-    platform = "macos";
-#endif
-#ifdef __LINUX__
-    platform = "linux";
-#endif
-    std::string query_params = (boost::format("?name=slicer&version=%1%&guide_version=%2%")
-        % VersionInfo::convert_full_version(SLIC3R_VERSION)
-        % VersionInfo::convert_full_version("0.0.0.1")
-        ).str();
-
-    std::string url = get_http_url(app_config->get_country_code()) + query_params;
+    // This fork updates from its own GitHub releases (Ding-Ding-Projects/
+    // BambuStudio, tags md3-v<N>), never from Bambu Lab's cloud feed: that feed
+    // announced upstream 2.8.2.x builds that would replace this app with the
+    // stock one. A release is "newer" when it was published after this binary
+    // was compiled (SLIC3R_BUILD_TIME, %Y%m%d-%H%M%S on the build host); a
+    // three-hour margin absorbs the build host's clock offset from UTC and
+    // the minutes between compiling and publishing. The dialog then offers the
+    // release's Setup.exe asset (or the release page when no asset is listed).
+    const std::string url = "https://api.github.com/repos/Ding-Ding-Projects/BambuStudio/releases/latest";
     Slic3r::Http http = Slic3r::Http::get(url);
-
-    http.header("accept", "application/json")
+    http.header("accept", "application/vnd.github+json")
+        .header("user-agent", std::string("BambuStudioMD3/") + SLIC3R_VERSION)
         .timeout_connect(TIMEOUT_CONNECT)
         .timeout_max(TIMEOUT_RESPONSE)
         .on_complete([this, show_tips, by_user](std::string body, unsigned) {
-        try {
-            json j = json::parse(body);
-            if (j.contains("message")) {
-                if (j["message"].get<std::string>() == "success") {
-                    if (j.contains("software")) {
-                        if (j["software"].empty()) {
-                            // Same reasoning as in check_update(): suppress the toast when
-                            // the beta channel is enabled so it cannot contradict the beta
-                            // release dialog raised by the async GitHub check below.
-                            if (show_tips && app_config->get("enable_beta_version_update") != "true") {
-                                this->no_new_version();
-                            } else {
-                                check_beta_version(show_tips);
-                            }
-                        }
-                        else {
-                            if (j["software"].contains("url")
-                                && j["software"].contains("version")
-                                && j["software"].contains("description")) {
-                                version_info.url = j["software"]["url"].get<std::string>();
-                                version_info.version_str = j["software"]["version"].get<std::string>();
-                                version_info.description = j["software"]["description"].get<std::string>();
-
-                                wxGetApp().app_config->set_str("app", "cloud_software_url", version_info.url);
-                            }
-                            if (j["software"].contains("force_update")) {
-                                version_info.force_upgrade = j["software"]["force_update"].get<bool>();
-                            }
-                            CallAfter([this, show_tips, by_user](){
-                                this->check_update(show_tips, by_user);
-                            });
+            try {
+                json j = json::parse(body);
+                if (!j.contains("tag_name") || !j.contains("published_at")) {
+                    if (show_tips) this->no_new_version();
+                    return;
+                }
+                const std::string tag       = j["tag_name"].get<std::string>();
+                const std::string published = j["published_at"].get<std::string>(); // 2026-09-06T03:52:13Z
+                std::tm pub_tm{};
+                std::istringstream pub_in(published);
+                pub_in >> std::get_time(&pub_tm, "%Y-%m-%dT%H:%M:%S");
+                std::tm build_tm{};
+                std::istringstream build_in(std::string(SLIC3R_BUILD_TIME));
+                build_in >> std::get_time(&build_tm, "%Y%m%d-%H%M%S");
+                if (pub_in.fail() || build_in.fail()) {
+                    BOOST_LOG_TRIVIAL(warning) << "check new version: cannot compare " << published << " with build time " << SLIC3R_BUILD_TIME;
+                    if (show_tips) this->no_new_version();
+                    return;
+                }
+                const std::time_t pub_t   = _mkgmtime(&pub_tm);
+                const std::time_t build_t = std::mktime(&build_tm);
+                const double margin_s     = 3.0 * 3600.0;
+                const bool newer = std::difftime(pub_t, build_t) > margin_s;
+                if (!newer) {
+                    if (show_tips) this->no_new_version();
+                    return;
+                }
+                std::string asset_url;
+                if (j.contains("assets") && j["assets"].is_array()) {
+                    for (const auto &a : j["assets"]) {
+                        if (a.contains("name") && a["name"].get<std::string>() == "Setup.exe" && a.contains("browser_download_url")) {
+                            asset_url = a["browser_download_url"].get<std::string>();
+                            break;
                         }
                     }
                 }
+                if (asset_url.empty() && j.contains("html_url"))
+                    asset_url = j["html_url"].get<std::string>();
+                version_info.version_str  = tag;
+                version_info.version_name = j.contains("name") ? j["name"].get<std::string>() : tag;
+                version_info.url          = asset_url;
+                version_info.description  = version_info.version_name + "
+
+" +
+                                            (j.contains("body") && j["body"].is_string() ? j["body"].get<std::string>() : std::string());
+                version_info.force_upgrade = false;
+                wxGetApp().app_config->set_str("app", "cloud_software_url", version_info.url);
+                // "Skip this version" stores the exact tag; a manual check ignores it.
+                if (by_user == 0 && this->app_config->get("app", "skip_version") == tag)
+                    return;
+                CallAfter([this, by_user]() { GUI::wxGetApp().request_new_version(by_user); });
             }
-        }
-        catch (...) {
-            ;
-        }
-            })
-        .on_error([this](std::string body, std::string error, unsigned int status) {
-            handle_http_error(status, body);
-            BOOST_LOG_TRIVIAL(error) << "check new version error" << body;
-    }).perform();
+            catch (...) {
+                if (show_tips) this->no_new_version();
+            }
+        })
+        .on_error([this, show_tips](std::string body, std::string error, unsigned int status) {
+            BOOST_LOG_TRIVIAL(error) << "check new version error (" << status << "): " << error;
+            if (show_tips) this->no_new_version();
+        }).perform();
 }
 
 void GUI_App::check_beta_version(bool show_tips_when_no_beta)
 {
+    // This fork has no beta channel: its releases are the md3-v<N> GitHub
+    // releases already checked by check_new_version(). The stable check owns
+    // the "newest version" toast, so nothing is left to do here.
+    (void) show_tips_when_no_beta;
+    return;
     // When the beta channel is off the stable callers have already shown the toast
     // (see check_update / check_new_version), so we just bail out here.
     if (app_config->get("enable_beta_version_update") != "true") {

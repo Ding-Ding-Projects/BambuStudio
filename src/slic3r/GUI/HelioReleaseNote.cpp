@@ -3756,12 +3756,16 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
     m_button_enhance->Bind(wxEVT_LEFT_DOWN, &HelioSimulationResultsDialog::on_enhance_speed_quality, this);
     m_button_enhance->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     m_button_enhance->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
-    wxStaticBitmap* save_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("save", this, 24), wxDefaultPosition,
-        wxSize(FromDIP(24), FromDIP(24)));
+    // Kit icon Button (Save glyph) instead of a click-bound static bitmap: focusable,
+    // named for assistive technology, drawn from the Material Symbols face.
+    Button* save_icon = new Button(this, "", "", 0, 0);
+    save_icon->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    save_icon->SetGlyph(MaterialIcon::Save, FromDIP(20));
     save_icon->SetToolTip(_L("Save the simulated sliced 3MF locally"));
+    save_icon->SetName(_L("Save the simulated sliced 3MF locally"));
     save_icon->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     save_icon->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
-    save_icon->Bind(wxEVT_LEFT_DOWN, [](wxMouseEvent& e) {
+    save_icon->Bind(wxEVT_BUTTON, [](wxCommandEvent& e) {
         wxPostEvent(wxGetApp().plater(), SimpleEvent(EVT_GLTOOLBAR_EXPORT_SLICED_FILE));
     });
 

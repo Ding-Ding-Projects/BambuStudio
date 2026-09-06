@@ -18,6 +18,7 @@
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/Utils.hpp"
 #include "wxExtensions.hpp"
 
@@ -352,11 +353,8 @@ std::string build_html(const std::vector<PolicyHit> &hits)
 wxString html_color(const wxColour &color) { return StateColor::darkModeColorFor(color).GetAsString(wxC2S_HTML_SYNTAX); }
 
 /** @brief Applies the shared button metrics of the design. */
-void style_button(Button *button, const StateColor &background, const wxColour &border, const wxColour &text)
+void style_button(Button *button)
 {
-    button->SetBackgroundColor(background);
-    button->SetBorderColor(border);
-    button->SetTextColor(text);
     button->SetFont(Label::Body_12);
 
     const wxSize size(button->FromDIP(BUTTON_WIDTH), button->FromDIP(BUTTON_HEIGHT));
@@ -370,6 +368,8 @@ void style_button(Button *button, const StateColor &background, const wxColour &
 VersionPolicyDialog::VersionPolicyDialog(wxWindow *parent)
     : DPIDialog(parent, wxID_ANY, _L("Warning"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
+    // MD3 caption shell instead of the native title bar.
+    MD3DialogCaption::Adopt(this, _L("Warning"));
     CreateGUI();
 }
 
@@ -445,17 +445,9 @@ Button *VersionPolicyDialog::add_button(ButtonId id, const wxString &label, Butt
     }
 
     auto *button = new Button(this, label);
-    if (style == ButtonStyle::Primary) {
-        StateColor background(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-                              std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                              std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-        style_button(button, background, ThemeColor::White, wxColour("#FFFFFE"));
-    } else {
-        StateColor background(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
-                              std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
-                              std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-        style_button(button, background, ThemeColor::Grey400, ThemeColor::TextPrimary);
-    }
+    // Kit variants: a filled primary action, an outlined secondary one.
+    button->SetVariant(style == ButtonStyle::Primary ? Button::Variant::Filled : Button::Variant::Outlined);
+    style_button(button);
 
     button->Bind(wxEVT_LEFT_DOWN, [this, id](wxMouseEvent &) {
         fire(id);

@@ -312,7 +312,7 @@ private:
     Label*          m_staticText_finish_time;
     RectTextPanel*  m_staticText_finish_day;
     wxStaticText*   m_staticText_layers;
-    wxStaticText*   m_staticTextPauses;
+    Label*          m_staticTextPauses;
     wxStaticText *  m_has_rated_prompt;
     wxStaticText *  m_request_failed_info;
     wxStaticBitmap* m_bitmap_thumbnail;

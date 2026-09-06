@@ -1388,9 +1388,10 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_staticText_layers->SetForegroundColour(device_secondary_text_color());
     m_staticText_layers->Hide();
 
-    m_staticTextPauses = new wxStaticText(penel_text, wxID_ANY, _L("Pause") + ": N/A");
-    m_staticTextPauses->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL,
-                                      false, wxT("HarmonyOS Sans SC")));
+    // Kit Label on the type face; the hard-coded 12pt HarmonyOS font upstream
+    // used is not a token.
+    m_staticTextPauses = new ::Label(penel_text, _L("Pause") + ": N/A");
+    m_staticTextPauses->SetFont(::Label::Body_12);
     m_staticTextPauses->SetForegroundColour(wxColour(107, 107, 107));
     m_staticTextPauses->Hide();
 

@@ -287,8 +287,7 @@ void MixedFilamentDialog::apply_uniform_label_width(wxStaticText* lbl)
 void MixedFilamentDialog::append_material_row()
 {
     auto* row = new wxBoxSizer(wxHORIZONTAL);
-    auto* lbl = new wxStaticText(this, wxID_ANY,
-                                 wxString::Format(_L("Filament %d"), (int)(m_combo_filaments.size() + 1)));
+    auto* lbl = new ::Label(this, wxString::Format(_L("Filament %d"), (int)(m_combo_filaments.size() + 1)));
     lbl->SetFont(::Label::Body_12);
     apply_uniform_label_width(lbl);
     row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
