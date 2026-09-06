@@ -63,6 +63,9 @@ test('every row is complete and its fix commit exists', () => {
       assert.ok(row[key].length >= 8, row.id + ' ' + key + ' is too short to mean anything');
     }
     assert.ok(STATUSES.has(row.status), row.id + ' status ' + row.status);
+    // An open defect has no fix yet, and demanding a SHA there only invites a
+    // borrowed one; every fixed or verified row must point at a real commit.
+    if (row.status === 'open' && row.commit === 'pending') continue;
     assert.match(row.commit, /^[0-9a-f]{7,40}$/, row.id + ' fix commit');
     assert.ok(commitExists(row.commit), row.id + ' fix commit ' + row.commit + ' does not exist');
   }
