@@ -126,18 +126,28 @@ class App:
         # desktops), so it is launched there through the cheap CLI.
         sender = os.path.join(HERE, 'send-layout-probe.py')
         cheap('launch_on_headless_desktop', name=self.desktop, command=f'"{sys.executable}" "{sender}" {self.main} "{path}" --timeout 20')
-        deadline = time.monotonic() + 25
-        while time.monotonic() < deadline and not (os.path.exists(path) and os.path.getsize(path) > 0):
+        # The app streams the dump while we poll, so a non-empty file is not a
+        # finished one: the first read came back with a torn last line and
+        # every row failed on a JSON delimiter. Wait until the size has held
+        # still, then parse; a torn tail on a still-growing file is retried.
+        deadline = time.monotonic() + 30
+        last = -1
+        while time.monotonic() < deadline:
+            size = os.path.getsize(path) if os.path.exists(path) else 0
+            if size > 0 and size == last:
+                try:
+                    records = []
+                    with open(path, encoding='utf-8') as fh:
+                        for line in fh:
+                            line = line.strip()
+                            if line:
+                                records.append(json.loads(line))
+                    return records
+                except json.JSONDecodeError:
+                    pass
+            last = size
             time.sleep(0.5)
-        if not (os.path.exists(path) and os.path.getsize(path) > 0):
-            raise RuntimeError('layout probe produced no dump (is this build carrying the probe?)')
-        records = []
-        with open(path, encoding='utf-8') as fh:
-            for line in fh:
-                line = line.strip()
-                if line:
-                    records.append(json.loads(line))
-        return records
+        raise RuntimeError('layout probe produced no complete dump (is this build carrying the probe?)')
 
     def click(self, hwnd, x, y, settle=1.5):
         cheap('mouse_click', hwnd=hwnd, x=int(x), y=int(y))
