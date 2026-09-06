@@ -1906,7 +1906,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "assembly",
         "pad": 8,
@@ -1928,7 +1929,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "brim_ears",
         "pad": 8,
@@ -1950,7 +1952,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "Color Painting",
         "pad": 8,
@@ -1972,7 +1975,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "cut",
         "pad": 8,
@@ -1994,7 +1998,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "fdm_supports",
         "pad": 8,
@@ -2016,7 +2021,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "Mesause",
         "pad": 8,
@@ -2038,7 +2044,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "Color Painting",
         "pad": 8,
@@ -2060,7 +2067,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "move",
         "pad": 8,
@@ -2082,7 +2090,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "Flatten",
         "pad": 8,
@@ -2104,7 +2113,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "*rail*",
         "pad": 8,
@@ -2126,7 +2136,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "rotate",
         "pad": 8,
@@ -2148,7 +2159,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "scale",
         "pad": 8,
@@ -2170,7 +2182,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "seam",
         "pad": 8,
@@ -2192,7 +2205,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "fdm_supports",
         "pad": 8,
@@ -2214,7 +2228,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "text",
         "pad": 8,
@@ -2434,7 +2449,8 @@
         "kind": "crop-gl",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "open:cube.stl"
         ],
         "item": "cut",
         "pad": 8,
