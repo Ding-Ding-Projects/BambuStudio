@@ -2,6 +2,37 @@
 
 ## In progress
 
+### Every element Material Design 3, every clipping defect fixed (issue #32, 2026-09-05)
+
+Tracked on issue #32 and Discussion #33. Ticks mean implemented, guarded and compiled; runtime
+captures are a separate box and stay unticked until they exist from the real built artifact.
+
+- [x] `build.bat` is our own CMake pipeline (upstream `build_win.bat` retired); six bootstrap
+      defects fixed on a fresh host; Mesa fallback staged in build-only mode.
+- [x] 548 `wxStaticText` sites retyped to kit `Label` by committed codemod; Label seeds MD3 roles.
+- [x] 7 `wxRadioButton` sites on kit `LabeledRadioButton` + `RadioGroup` with accessible peer.
+- [x] Multi-line `wxTextCtrl` views on kit `TextArea`; single-line strays on `TextInput`.
+- [x] `wxListBox` on kit `ListBox`.
+- [x] 11 `wxBitmapButton` sites on kit icon `Button` / `RadioBox`; `Button::SetIconBitmap`.
+- [x] `wxStaticBitmap` inventory committed; 12 clickable holders are kit Buttons; 17 rasters are
+      Material glyphs; 9 clickable content images carry written reasons.
+- [ ] Remaining 32 glyph + 15 badge runtime-state static bitmaps rendered as Material glyphs.
+- [ ] 16 unclassified static-bitmap rows judged.
+- [x] `Button` Material by default (Outlined at first paint; Checked state for Outlined/Text).
+- [ ] Button call sites that hand-style with the legacy palette moved to variants.
+- [x] 15 pinned density reads on `Metrics::active()`; `ImageSwitchButton` retoned.
+- [x] ImGui canvas chrome literals on MD3 roles.
+- [x] Runtime layout probe (`LayoutProbe`) and report reader.
+- [x] 21 unscaled pixel sizes on `FromDIP`; triple-ellipsize label fixed; guards added.
+- [ ] Task branch merged into the primary tree and compiled with our `build.bat`.
+- [ ] Layout-probe tuple matrix run on the real binary; every finding fixed and inventoried in
+      `docs/features/design-system/cheap-jor-inventory.md`.
+- [ ] Baseline and after captures, light and dark, for every converted surface under
+      `docs/screenshots/md3-everything/`; README canonical images refreshed.
+- [ ] Gizmo rail, scene toolbar and preview overlay register rows closed with runtime evidence.
+- [ ] Changelog entry, HANDOFF §12, hosted release from the final tip.
+
+
 ### Native and embedded GUI accessibility wave (delivery verification — 2026-07-30)
 
 - Shared native controls, the Filament Manager DeviceWeb page, Project resources, setup guides,
