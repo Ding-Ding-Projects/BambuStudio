@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "purpose": "Every tracked capture must be retaken from the named artifact; a row is done only when its file was rewritten by the run named in provenance.",
   "provenance": {
-    "sourceCommit": null,
-    "dllSha256": null,
-    "run": null
+    "sourceCommit": "8cacafd1d",
+    "dllSha256": "9d2b57e421b6985ea9abebb63456a7c045dd3b37e14f3fbd2cffa843be3adac0",
+    "run": "2026-09-06T02:12:38"
   },
   "captures": [
     {
@@ -25,7 +25,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/readme-assets/material-prepare-light-en.png",
@@ -45,7 +45,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/readme-assets/material-preview-dark-yue-hk.png",
@@ -86,7 +86,7 @@
         },
         "note": "plugin gate visible when the network plugin is absent"
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/readme-assets/native-material-filament-manager-light-en.png",
@@ -127,7 +127,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/readme-assets/native-material-project-history-light-en.png",
@@ -167,7 +167,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/readme-assets/shot-prepare-frame.png",
@@ -187,7 +187,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/readme-assets/shot-prepare-sidebar.png",
@@ -209,7 +209,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/readme-assets/shot-wizard.png",
@@ -249,7 +249,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/readme-assets/yum-20260811-wizard-ca49.png",
@@ -422,7 +422,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Custom accent",
+        "label": "Accent custom-btn",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -445,7 +445,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Comfortable",
+        "label": "Density Comfortable",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -476,7 +476,7 @@
           "density": "compact"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/appearance/appearance-tab--font-combo.png",
@@ -499,7 +499,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/appearance/appearance-tab--md3-preview-panel.png",
@@ -514,7 +514,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Appearance preview",
+        "label": "Md3 Preview Panel",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -537,7 +537,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Appearance preview text",
+        "label": "Preview Text",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -560,7 +560,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Reset appearance to defaults",
+        "label": "Reset Defaults",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -583,7 +583,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Text size",
+        "label": "Text Size Default",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -606,7 +606,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Large",
+        "label": "Text Size Large",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -629,7 +629,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Small",
+        "label": "Text Size Small",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -660,7 +660,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/appearance/appearance-tab--theme-light.png",
@@ -683,7 +683,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/appearance/appearance-tab.png",
@@ -704,7 +704,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/appearance/custom-color-dialog.png",
@@ -718,7 +718,7 @@
         "steps": [
           "open:Preferences",
           "tab:Appearance",
-          "click:Custom accent"
+          "click:Custom"
         ],
         "tuple": {
           "language": "en",
@@ -1116,7 +1116,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/dark/prepare.png",
@@ -1136,7 +1136,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/dialog-chrome/about.png",
@@ -1307,7 +1307,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/home/home--open-project-btn.png",
@@ -1371,7 +1371,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/ink-terminology-sidebar.png",
@@ -1393,7 +1393,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/menu-calibration.png",
@@ -1539,7 +1539,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/nav-rail--device.png",
@@ -1559,7 +1559,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/nav-rail--filament.png",
@@ -1579,7 +1579,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/nav-rail--home.png",
@@ -1599,7 +1599,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/nav-rail--prepare.png",
@@ -1619,7 +1619,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/nav-rail--preview.png",
@@ -1639,7 +1639,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/nav-rail--project.png",
@@ -1659,7 +1659,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/nav-rail--settings-gear.png",
@@ -1679,7 +1679,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/nav-rail.png",
@@ -1719,7 +1719,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/page-preview.png",
@@ -1739,7 +1739,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/prepare-action-bar.png",
@@ -1761,7 +1761,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/preview-action-bar-print-button.png",
@@ -1805,7 +1805,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--advanced-settings.png",
@@ -1827,7 +1827,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--filament-menu.png",
@@ -1871,7 +1871,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-assembly.png",
@@ -2223,7 +2223,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--plate-1-chip.png",
@@ -2245,7 +2245,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--plate-add.png",
@@ -2311,7 +2311,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--printer-wifi.png",
@@ -2333,7 +2333,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--process-preset.png",
@@ -2355,7 +2355,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--scene-arrange.png",
@@ -2575,7 +2575,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--seg-quality.png",
@@ -2597,7 +2597,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--seg-strength.png",
@@ -2619,7 +2619,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--seg-support.png",
@@ -2641,7 +2641,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--slice-plate.png",
@@ -2663,7 +2663,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/sidebar-prepare--zoom-controls.png",
@@ -2729,7 +2729,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--history-chip-main.png",
@@ -2749,7 +2749,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--logo-bambu-studio.png",
@@ -2789,7 +2789,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--menu-edit.png",
@@ -2809,7 +2809,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--menu-file.png",
@@ -2829,7 +2829,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--menu-help.png",
@@ -2849,7 +2849,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--menu-objects.png",
@@ -2889,7 +2889,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--palette-icon.png",
@@ -2929,7 +2929,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--window-close.png",
@@ -2949,7 +2949,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar--window-maximize.png",
@@ -2989,7 +2989,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/main-window/topbar.png",
@@ -3031,7 +3031,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/md3-conversion/action-bar-before-starved-row.png",
@@ -3107,7 +3107,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/md3-conversion/printer-settings-dark-D06044.png",
@@ -3128,7 +3128,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/notifications/toast-info--accent-bar.png",
@@ -3672,7 +3672,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/appearance-tab--reset-all-warning-dialogs.png",
@@ -3695,7 +3695,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/appearance-tab--reset-preferences.png",
@@ -3718,7 +3718,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/appearance-tab.png",
@@ -3739,7 +3739,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/developer-tools-tab.png",
@@ -3783,7 +3783,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/general-tab--download-path-browse.png",
@@ -3829,7 +3829,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/general-tab--language-combo.png",
@@ -3852,7 +3852,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/general-tab--login-region-combo.png",
@@ -3875,7 +3875,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/general-tab--prepare-panel-position-combo.png",
@@ -3898,7 +3898,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/general-tab--toggle-beta-update.png",
@@ -4036,7 +4036,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/general-tab-external-editor--browse-button.png",
@@ -4105,7 +4105,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/general-tab-external-editor.png",
@@ -4126,7 +4126,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/general-tab-scrolled.png",
@@ -4169,7 +4169,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/other-tab.png",
@@ -4190,7 +4190,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/sidebar-3d.png",
@@ -4212,7 +4212,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/sidebar-appearance.png",
@@ -4234,7 +4234,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/sidebar-developer-tools.png",
@@ -4278,7 +4278,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/sidebar-other.png",
@@ -4300,7 +4300,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/sidebar-user.png",
@@ -4322,7 +4322,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/preferences/user-tab.png",
@@ -4343,7 +4343,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/project-tabs/tab-bar--new-tab-plus.png",
@@ -4403,7 +4403,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/project-tabs/tab-bar--tab-close-x.png",
@@ -4467,7 +4467,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/project-tabs/tab-bar-two-tabs.png",
@@ -5219,7 +5219,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/sidebar-process/after-header-intact.png",
@@ -5241,7 +5241,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/sidebar-process/after-search-settings.png",
@@ -5263,7 +5263,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/sidebar-process/after-sidebar-readable.png",
@@ -5285,7 +5285,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/sidebar-process/before-header-starved.png",
@@ -5662,7 +5662,7 @@
           "density": "comfortable"
         }
       },
-      "status": "pending"
+      "status": "done"
     },
     {
       "file": "docs/screenshots/wizard/wizard-index.png",
