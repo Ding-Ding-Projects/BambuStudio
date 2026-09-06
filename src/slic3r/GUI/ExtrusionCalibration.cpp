@@ -179,8 +179,6 @@ void ExtrusionCalibration::create()
         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_cali->SetVariant(Button::Variant::Filled);
     m_button_cali->SetFont(Label::Body_13);
-    m_button_cali->SetBorderColor({ std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Enabled) });
-    m_button_cali->SetTextColor({ std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled), std::pair<wxColour, int>(EXTRUSION_CALIBRATION_GREY200, StateColor::Enabled) });
     m_button_cali->SetCornerRadius(FromDIP(12));
     m_button_cali->SetMinSize(wxSize(-1, FromDIP(24)));
     m_button_cali->Bind(wxEVT_BUTTON, &ExtrusionCalibration::on_click_cali, this);

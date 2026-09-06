@@ -250,16 +250,16 @@ wxBoxSizer* NetworkTestDialog::create_top_sizer(wxWindow* parent)
 
 	auto line_sizer = new wxBoxSizer(wxHORIZONTAL);
 	btn_start = new Button(this, _L("Start Test Multi-Thread"));
-    btn_start->SetBackgroundColor(btn_bg);
+    btn_start->SetVariant(Button::Variant::Outlined);
 	line_sizer->Add(btn_start, 0, wxALL, 5);
 
 	btn_start_sequence = new Button(this, _L("Start Test Single-Thread"));
-    btn_start_sequence->SetBackgroundColor(btn_bg);
+    btn_start_sequence->SetVariant(Button::Variant::Outlined);
 
 	line_sizer->Add(btn_start_sequence, 0, wxALL, 5);
 
 	btn_download_log = new Button(this, _L("Export Log"));
-    btn_download_log->SetBackgroundColor(btn_bg);
+    btn_download_log->SetVariant(Button::Variant::Outlined);
 	line_sizer->Add(btn_download_log, 0, wxALL, 5);
 	btn_download_log->Hide();
 
@@ -329,7 +329,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 
     StateColor btn_bg(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(wxColour(255,255,255), StateColor::Enabled));
 	btn_link = new Button(this, _L("Test BambuLab"));
-    btn_link->SetBackgroundColor(btn_bg);
+    btn_link->SetVariant(Button::Variant::Outlined);
 	grid_sizer->Add(btn_link, 0, wxEXPAND | wxALL, 5);
 
 	text_link_title = new Label(this, _L("Test BambuLab:"));
@@ -341,7 +341,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 	grid_sizer->Add(text_link_val, 0, wxALL, 5);
 
 	btn_bing = new Button(this, _L("Test Bing.com"));
-    btn_bing->SetBackgroundColor(btn_bg);
+    btn_bing->SetVariant(Button::Variant::Outlined);
 	grid_sizer->Add(btn_bing, 0, wxEXPAND | wxALL, 5);
 
     text_bing_title = new Label(this, _L("Test bing.com:"));
@@ -354,7 +354,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 	grid_sizer->Add(text_bing_val, 0, wxALL, 5);
 
 	btn_iot = new Button(this, _L("Test HTTP"));
-    btn_iot->SetBackgroundColor(btn_bg);
+    btn_iot->SetVariant(Button::Variant::Outlined);
 	grid_sizer->Add(btn_iot, 0, wxEXPAND | wxALL, 5);
 
 	text_iot_title = new Label(this, _L("Test HTTP Service:"));
@@ -366,7 +366,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 	grid_sizer->Add(text_iot_value, 0, wxALL, 5);
 
 	btn_oss = new Button(this, _L("Test storage"));
-    btn_oss->SetBackgroundColor(btn_bg);
+    btn_oss->SetVariant(Button::Variant::Outlined);
 	grid_sizer->Add(btn_oss, 0, wxEXPAND | wxALL, 5);
 
 	text_oss_title = new Label(this, _L("Test Storage Upload:"));
@@ -378,7 +378,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 	grid_sizer->Add(text_oss_value, 0, wxALL, 5);
 
 	btn_oss_upgrade = new Button(this, _L("Test storage upgrade"));
-    btn_oss_upgrade->SetBackgroundColor(btn_bg);
+    btn_oss_upgrade->SetVariant(Button::Variant::Outlined);
 	grid_sizer->Add(btn_oss_upgrade, 0, wxEXPAND | wxALL, 5);
 
 	text_oss_upgrade_title = new Label(this, _L("Test Storage Upgrade:"));
@@ -390,7 +390,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 	grid_sizer->Add(text_oss_upgrade_value, 0, wxALL, 5);
 
 	btn_oss_download = new Button(this, _L("Test storage download"));
-    btn_oss_download->SetBackgroundColor(btn_bg);
+    btn_oss_download->SetVariant(Button::Variant::Outlined);
 	grid_sizer->Add(btn_oss_download, 0, wxEXPAND | wxALL, 5);
 
 	text_oss_download_title = new Label(this, _L("Test Storage Download:"));
@@ -402,7 +402,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 	grid_sizer->Add(text_oss_download_value, 0, wxALL, 5);
 
 	btn_network_plugin=new Button(this, _L("Test plugin download"));
-    btn_network_plugin->SetBackgroundColor(btn_bg);
+    btn_network_plugin->SetVariant(Button::Variant::Outlined);
 	grid_sizer->Add(btn_network_plugin, 0, wxEXPAND | wxALL, 5);
 
 	text_network_plugin_title=new Label(this, _L("Test Plugin Download:"));
@@ -415,7 +415,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 
 
 	btn_oss_upload = new Button(this, _L("Test Storage Upload"));
-    btn_oss_upload->SetBackgroundColor(btn_bg);
+    btn_oss_upload->SetVariant(Button::Variant::Outlined);
 	grid_sizer->Add(btn_oss_upload, 0, wxEXPAND | wxALL, 5);
 
 	text_oss_upload_title = new Label(this, _L("Test Storage Upload:"));

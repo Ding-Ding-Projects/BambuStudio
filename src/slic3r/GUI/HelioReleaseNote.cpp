@@ -3738,8 +3738,7 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
 
     m_button_enhance = new Button(this, wxEmptyString);
     m_button_enhance->SetLabel(_L("Enhance Speed & Quality"));
-    m_button_enhance->SetBackgroundColor(btn_bg_purple);
-    m_button_enhance->SetBorderColor(*wxWHITE);
+    m_button_enhance->SetVariant(Button::Variant::Filled);
     // White text for all states (use 254 to avoid dark mode remapping)
     StateColor enhance_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),

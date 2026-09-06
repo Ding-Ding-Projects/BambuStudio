@@ -79,7 +79,13 @@ function resolve(arg, src, before) {
   let last = -1, m;
   while ((m = re.exec(src)) && m.index < before) last = m.index;
   if (last < 0) return arg;
-  let depth = 0, i = src.indexOf('(', last), start = i;
+  const eq = src.indexOf('=', last), paren = src.indexOf('(', last);
+  if (eq >= 0 && (paren < 0 || eq < paren)) {
+    // `StateColor name = expr;` : the whole initialiser, helper name included.
+    const semi = src.indexOf(';', eq);
+    return semi < 0 ? arg : src.slice(eq + 1, semi).trim();
+  }
+  let depth = 0, i = paren, start = i;
   if (i < 0) return arg;
   for (; i < src.length; i++) {
     if (src[i] === '(') depth++;
@@ -128,7 +134,7 @@ function normalOf(resolved) {
   // One argument (no bare commas; one level of parentheses allowed) directly
   // followed by the Normal state, so a multi-state list yields its Normal entry
   // and never the first entry.
-  const m = resolved.match(/std::(?:pair<wxColou?r,\s*int>|make_pair)\(\s*((?:[^,()]|\([^()]*\))+?)\s*,\s*(?:\(int\)\s*)?StateColor::Normal\s*\)/);
+  const m = resolved.match(/std::(?:pair<wxColou?r,\s*int>|make_pair)\(\s*((?:[^,()]|\([^()]*\))+?)\s*,\s*(?:\(int\)\s*)?StateColor::(?:Normal|Enabled)\s*\)/);
   if (m) return m[1];
   if (/StateColor::(Hovered|Pressed|Disabled|Focused|Checked)/.test(resolved)) return null; // states only, no rest
   return resolved;
@@ -140,6 +146,12 @@ function classify(setters, name, ctx) {
   const all = bg + border + text;
   // Already on MD3 roles: leave the caller's semantic styling alone.
   if (/MD3::Role::/.test(all) && !/ThemeColor::|wxColou?r\(|\*wx(WHITE|BLACK)/.test(all)) return 'semantic';
+  // Tone helpers that already return MD3 roles (device panel, dialog helpers,
+  // the AMS macros annotated to MD3 tokens): the caller is semantic already.
+  if (/\bdevice_\w*(?:color|text|border|background)\(\)|(?:outlined|filled)_button_background\(\)|AMS_CONTROL_\w+/.test(all) && !/ThemeColor::|wxColou?r\(\s*\d/.test(all)) return 'semantic';
+  // Data-coloured chips (filament type tiles painted with the filament colour)
+  // are data, not chrome: keep them.
+  if (/^f_type$/.test(name) || /decode_color\(|\bf\.color\b|/.test(all)) return 'semantic';
   if (CANCEL_FAMILY.test(name)) return 'Outlined';
   const bgN = bg ? normalOf(bg) : null;
   const lBg = bgN ? luminance(bgN, ctx) : null;
@@ -206,7 +218,7 @@ for (const file of await walk(guiRoot)) {
       i = j; continue;
     }
     if (variant === 'semantic') {
-      report.push(`  keep (MD3 roles)     ${site}`);
+      report.push(`  keep (roles / data)  ${site}`);
       for (let q = i; q < j; q++) out.push(lines[q]);
       i = j; continue;
     }
