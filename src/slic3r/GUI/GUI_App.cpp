@@ -3554,6 +3554,9 @@ bool GUI_App::on_init_inner()
             // If there are substitutions in system profiles, then a "reconfigure" event shall be triggered, which will force
             // installation of a compatible system preset, thus nullifying the system preset substitutions.
             std::string errors_cummulative;
+            // The splash names each startup phase so a slow machine shows where it
+            // is instead of sitting on "Loading configuration" for the whole launch.
+            if (scrn) { scrn->SetText(_L("Loading presets") + dots); wxYield(); }
             std::tie(init_params->preset_substitutions, errors_cummulative) = preset_bundle->load_presets(*app_config, ForwardCompatibilitySubstitutionRule::EnableSystemSilent);
             if (!errors_cummulative.empty())
                 show_error(nullptr, errors_cummulative);
@@ -3609,6 +3612,7 @@ bool GUI_App::on_init_inner()
         }
     }
 
+    if (scrn) { scrn->SetText(_L("Building the window") + dots); wxYield(); }
     BOOST_LOG_TRIVIAL(info) << "create the main window";
     mainframe = new MainFrame();
     // hide settings tabs after first Layout
@@ -3633,6 +3637,7 @@ bool GUI_App::on_init_inner()
             // ensure the selected technology is ptFFF
             plater_->set_printer_technology(ptFFF);
     }
+    if (scrn) { scrn->SetText(_L("Applying presets") + dots); wxYield(); }
     else
         load_current_presets();
     
