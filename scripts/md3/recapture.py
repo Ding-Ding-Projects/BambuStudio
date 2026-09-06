@@ -342,6 +342,10 @@ class Runner:
         elif kind == 'open' and arg.lower() == 'command palette':
             self.app.command('palette')
             self.front = self.app.wait(lambda w: w['class'] == '#32770' and 'palette' in w['title'].lower(), 10, 'command-palette')['handle']
+        elif kind == 'invoke':
+            # Fire a menu item that raises no dialog (a toast, a background check).
+            self.app.command(f'invoke {OPEN_ITEMS.get(arg.lower(), arg)}')
+            time.sleep(3.0)
         elif kind == 'menu':
             # Pop a top-bar menu; the popup is its own top-level window
             # (class #32768) and becomes the front for the capture.

@@ -3175,7 +3175,7 @@
           "theme": "light",
           "density": "comfortable"
         },
-        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
+        "blocked": "the toast is ImGui on the canvas; its parts have no window rectangle the probe can crop to (the page row captures it under Mesa)"
       },
       "status": "done"
     },
@@ -3199,7 +3199,7 @@
           "theme": "light",
           "density": "comfortable"
         },
-        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
+        "blocked": "the toast is ImGui on the canvas; its parts have no window rectangle the probe can crop to (the page row captures it under Mesa)"
       },
       "status": "done"
     },
@@ -3223,7 +3223,7 @@
           "theme": "light",
           "density": "comfortable"
         },
-        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
+        "blocked": "the toast is ImGui on the canvas; its parts have no window rectangle the probe can crop to (the page row captures it under Mesa)"
       },
       "status": "pending"
     },
@@ -3259,14 +3259,14 @@
         "kind": "page",
         "surface": "toast",
         "steps": [
-          "open:Check for presets updates"
+          "nav:Prepare",
+          "invoke:Check for preset"
         ],
         "tuple": {
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        },
-        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
+        }
       },
       "status": "pending"
     },
