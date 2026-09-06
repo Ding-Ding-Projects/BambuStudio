@@ -289,9 +289,9 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     m_input_nozzle_min->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(20)));
 
     // The unit mark is text, set in the kit body face and the secondary role.
-    bitmap_max_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\xC2\xB0C"));
+    bitmap_max_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\xC2\xB0" "C"));
     bitmap_max_degree->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    bitmap_min_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\xC2\xB0C"));
+    bitmap_min_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\xC2\xB0" "C"));
     bitmap_min_degree->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     sizer_tempinput->Add(m_input_nozzle_max, 1, wxALIGN_CENTER, 0);
@@ -2716,7 +2716,8 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
     m_custom_cp->SetMinSize(wxSize(FromDIP(60), FromDIP(25)));
     m_custom_cp->SetMaxSize(wxSize(FromDIP(60), FromDIP(25)));
     m_custom_cp->SetBorderColor(StateColor(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal)));
-    m_custom_cp->Bind(wxEVT_LEFT_DOWN, &ColorPickerPopup::on_custom_clr_picker, this);
+    // The panel around the custom-colour Button still accepts a click; forward it as a command.
+    m_custom_cp->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { wxCommandEvent ev(wxEVT_BUTTON); on_custom_clr_picker(ev); });
     m_custom_cp->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {
         SetCursor(wxCURSOR_HAND);
     });

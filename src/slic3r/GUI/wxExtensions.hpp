@@ -171,7 +171,7 @@ public:
     // preview). It has no icon name, so msw_rescale() leaves it alone rather
     // than trying to reload a resource that does not exist.
     ScalableBitmap(wxWindow *parent, const wxBitmap &bitmap)
-        : m_parent(parent), m_bmp(bitmap), m_icon_name(), m_px_cnt(bitmap.IsOk() ? bitmap.GetLogicalHeight() : 16) {}
+        : m_parent(parent), m_bmp(bitmap), m_icon_name(), m_px_cnt(bitmap.IsOk() ? bitmap.GetHeight() : 16) {}
     ScalableBitmap( wxWindow *parent,
                     const std::string& icon_name = "",
                     const int px_cnt = 16,
