@@ -232,6 +232,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         << ",\"name\":" << json(w->GetName())
         << ",\"label\":" << json(label)
         << ",\"shown\":" << (shown ? "true" : "false")
+        << ",\"on_screen\":" << (w->IsShownOnScreen() ? "true" : "false")
         << ",\"enabled\":" << (w->IsEnabled() ? "true" : "false")
         << ",\"rect\":" << rect_json(rect)
         << ",\"screen\":" << rect_json(screen)
