@@ -279,7 +279,13 @@ class Runner:
         if kind == 'nav':
             label = arg
             records = self.app.probe()
-            c = find_control(records, label, self.app.main)
+            # Scope to the navigation rail: 'Ink' is also the sidebar section
+            # header, which is smaller and therefore won every exact match,
+            # so nav:Ink collapsed the Ink section instead of switching tabs.
+            rail = next((r for r in records if r.get('kind') == 'window' and r.get('name') == 'Navigation rail'), None)
+            c = find_control(records, label, rail['hwnd']) if rail else None
+            if not c:
+                c = find_control(records, label, self.app.main)
             if not c and label.lower() in TABS:
                 # Non-English tuples label the rail in that language; the rail
                 # geometry is language-independent at 1200x800.
