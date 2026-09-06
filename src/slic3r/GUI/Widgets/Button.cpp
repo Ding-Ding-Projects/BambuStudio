@@ -172,15 +172,15 @@ Button::Button()
     // density. Variant buttons re-derive their radius in applyMD3Style(), and
     // any explicit SetCornerRadius() still overrides this default.
     SetDefaultCornerRadius(MD3::Metrics::active().row_height / 2);
+    // Neutral MD3 seed only. The legacy white/green palette is gone: a Button
+    // that reaches its first paint without SetVariant()/SetIconButton() and
+    // without caller styling adopts the Outlined variant (see paintEvent).
     background_color = StateColor(
-        std::make_pair(ThemeColor::Grey300, (int) StateColor::Disabled),
-        std::make_pair(ThemeColor::BrandGreenHovered, (int) StateColor::Hovered | StateColor::Checked),
-        std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Checked),
-        std::make_pair(ThemeColor::Grey200, (int) StateColor::Hovered),
-        std::make_pair(ThemeColor::White, (int) StateColor::Normal));
+        std::make_pair(StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Disabled),
+        std::make_pair(StateColor::semantic(MD3::Role::Surface), (int) StateColor::Normal));
     text_color       = StateColor(
-        std::make_pair(ThemeColor::TextDisabled, (int) StateColor::Disabled),
-        std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal));
+        std::make_pair(StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled),
+        std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Normal));
 }
 
 Button::Button(wxWindow* parent, wxString text, wxString icon, long style, int iconSize, wxWindowID btn_id)
@@ -311,8 +311,40 @@ void Button::SetAllowShrink(bool allow)
     messureSize();
 }
 
+void Button::SetBackgroundColor(StateColor const &color)
+{
+    m_caller_styled = true;
+    StaticBox::SetBackgroundColor(color);
+}
+
+void Button::SetBackgroundColorNormal(wxColor const &color)
+{
+    m_caller_styled = true;
+    StaticBox::SetBackgroundColorNormal(color);
+}
+
+void Button::SetBorderColor(StateColor const &color)
+{
+    m_caller_styled = true;
+    StaticBox::SetBorderColor(color);
+}
+
+void Button::SetBorderColorNormal(wxColor const &color)
+{
+    m_caller_styled = true;
+    StaticBox::SetBorderColorNormal(color);
+}
+
+void Button::SetCornerRadius(double radius)
+{
+    // A radius pinned by the MD3 style itself is not caller styling.
+    if (!m_applying_md3) m_caller_styled = true;
+    StaticBox::SetCornerRadius(radius);
+}
+
 void Button::SetTextColor(StateColor const& color)
 {
+    m_caller_styled = true;
     text_color = color;
     state_handler.update_binds();
     Refresh();
@@ -320,6 +352,7 @@ void Button::SetTextColor(StateColor const& color)
 
 void Button::SetTextColorNormal(wxColor const &color)
 {
+    m_caller_styled = true;
     text_color.setColorForStates(color, 0);
     Refresh();
 }
@@ -404,6 +437,7 @@ void Button::applyMD3Style()
 {
     if (!m_md3_variant)
         return;
+    struct ApplyingGuard { bool &f; ApplyingGuard(bool &flag) : f(flag) { f = true; } ~ApplyingGuard() { f = false; } } applying(m_applying_md3);
 
     using R = MD3::Role;
     const MD3::ColorScheme s = m_scheme;
@@ -413,7 +447,7 @@ void Button::applyMD3Style()
     // geometry and neutral surface colours differ from the pill variants, so it
     // is configured here and returns before the pill layout runs.
     if (m_variant == Variant::IconButton) {
-        const wxColour disabledFg = ThemeColor::TextDisabled;
+        const wxColour disabledFg = StateColor::semantic(R::Outline);
         const wxColour parentBg   = StaticBox::GetParentBackgroundColor(GetParent());
         const int      container  = m_icon_container_px > 0 ? m_icon_container_px : 36;
         const wxColour rest       = m_icon_filled ? StateColor::semantic(R::SurfaceContainerHighest)
@@ -500,7 +534,7 @@ void Button::applyMD3Style()
     }
 
     const wxColour disabledBg  = StateColor::semantic(R::SurfaceContainerHigh);
-    const wxColour disabledTxt = ThemeColor::TextDisabled;
+    const wxColour disabledTxt = StateColor::semantic(R::Outline);
     const wxColour parentBg    = StaticBox::GetParentBackgroundColor(GetParent());
 
     // Same stale-snapshot fix as the IconButton branch above: keep the pill's
@@ -535,9 +569,14 @@ void Button::applyMD3Style()
     case Variant::Outlined: {
         // Transparent interior (parent bg for the rest fill) + Outline ring;
         // hover adds a SurfaceContainerHigh wash while the ring/label hold.
-        bg = StateColor(std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+        // Checked (a toggle Button) fills SecondaryContainer, the MD3 selected
+        // state of an outlined button, so legacy toggles keep a selected look.
+        bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered | StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
                         std::make_pair(parentBg, (int) StateColor::Normal));
         fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
+                        std::make_pair(StateColor::semantic(R::OnSecondaryContainer, s), (int) StateColor::Checked),
                         std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Normal));
         bd = StateColor(std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Disabled),
                         std::make_pair(StateColor::semantic(R::Outline), (int) StateColor::Normal));
@@ -546,7 +585,10 @@ void Button::applyMD3Style()
     }
     case Variant::Text: {
         // No border, transparent at rest; hover adds a SecondaryContainer wash.
-        bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered),
+        // Checked keeps the wash as the selected state.
+        bg = StateColor(std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered | StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(R::SecondaryContainer, s), (int) StateColor::Hovered),
                         std::make_pair(parentBg, (int) StateColor::Normal));
         fg = StateColor(std::make_pair(disabledTxt, (int) StateColor::Disabled),
                         std::make_pair(StateColor::semantic(R::Primary, s), (int) StateColor::Normal));
@@ -653,6 +695,12 @@ void Button::Rescale()
 
 void Button::paintEvent(wxPaintEvent& evt)
 {
+    // MD3 is the default: a Button that reaches its first paint with neither a
+    // variant nor caller styling becomes an Outlined action button. Callers
+    // that styled it by hand keep their styling; callers that chose a variant
+    // keep theirs.
+    if (!m_md3_variant && !m_caller_styled)
+        SetVariant(Variant::Outlined);
     // depending on your system you may need to look at double-buffered dcs
     wxPaintDC dc(this);
     render(dc);

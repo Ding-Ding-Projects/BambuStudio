@@ -47,6 +47,12 @@ private:
     Size              m_button_size   = Size::Medium;
     MD3::ColorScheme  m_scheme        = MD3::ColorScheme::Brand;
     bool              m_md3_variant   = false;
+    // Set the moment a caller styles this Button by hand (background, border,
+    // text colour, corner radius). A Button that reaches its first paint with
+    // neither a variant nor caller styling adopts the MD3 Outlined variant, so
+    // the Material look is the default and the legacy white/green pill is gone.
+    bool              m_caller_styled = false;
+    bool              m_applying_md3  = false;
 
     // Optional Material Symbols glyph content (part b). When m_has_glyph is set
     // and the icon font resolves, render() draws this codepoint through the
@@ -113,6 +119,14 @@ public:
     void SetTextColor(StateColor const &color);
 
     void SetTextColorNormal(wxColor const &color);
+
+    // Explicit styling marks the Button as caller-styled (see m_caller_styled).
+    // These hide the StaticBox setters of the same name.
+    void SetBackgroundColor(StateColor const &color);
+    void SetBackgroundColorNormal(wxColor const &color);
+    void SetBorderColor(StateColor const &color);
+    void SetBorderColorNormal(wxColor const &color);
+    void SetCornerRadius(double radius);
 
     // MD3 opt-in styling. SetVariant() switches the Button onto the Material
     // action-button appearance (filled/tonal/outlined/text/danger) with the
