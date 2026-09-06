@@ -469,7 +469,11 @@ def main():
     json.dump(report, open(args.report, 'w', encoding='utf-8'), indent=2)
     if done:
         manifest['provenance'] = {'sourceCommit': args.commit, 'dllSha256': report.get('dll_sha256'), 'run': report['started']}
-        json.dump(manifest, open(MANIFEST, 'w', encoding='utf-8', newline='\n'), indent=2)
+        # Re-read before writing: a run holds the manifest for an hour or more,
+        # and recipes edited meanwhile were clobbered by this dump once (run 5).
+        fresh = json.load(open(MANIFEST, encoding='utf-8'))
+        fresh['provenance'] = manifest['provenance']
+        json.dump(fresh, open(MANIFEST, 'w', encoding='utf-8', newline='\n'), indent=2)
     print(f"{done}/{len(report['rows'])} rows retaken; report {args.report}")
     return 0 if done == len(report['rows']) else 1
 
