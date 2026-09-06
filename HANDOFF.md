@@ -1298,6 +1298,12 @@ diagnostics were a cascade.
   after.png` (software-GL route; only the first rail item clicked per launch activates its gizmo,
   so capture one panel per launch). The update dialog cannot be captured until a release newer
   than the running build exists.
+- CJ-013 (`92cd7bce7`, verified on attempt 28): the category pill strip overflowed and the settings
+  tree lived in a 144 px inner scroller at the default sidebar width. TabCtrl pill mode now flows its
+  items onto further rows (relayoutPills) and ParamsPanel::fit_page_to_content sizes the page to
+  its content and tells the sidebar, which hosts the tree at proportion 0, so the sidebar body is
+  the only scroller. Rule: a scroller inside a scroller is a defect here; measure with the probe
+  (page scroller rect vs best) rather than by eye.
 - Capture matrix `docs/screenshots/md3-everything/`: 132 before (baseline payload `9e8d005b0`) and
   132 after (attempt 13, `80734696c`) across 12 tuples (en / yue_HK / bilingual x light / dark x
   comfortable / compact), 24 probe dumps per build under `probe/`. Runner

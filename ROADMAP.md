@@ -50,6 +50,8 @@ captures are a separate box and stay unticked until they exist from the real bui
 - [x] Gizmo move/rotate/scale panels use the kit value field (mono digits, filled pills); captured on the
       software-GL route from attempt 27 (`gizmo-rotate-panel--...--after.png`, `gizmo-move-panel--...--after.png`).
 - [x] 24-hour clocks by default (Device pane locale strings).
+- [x] Sidebar settings tree visible without dragging: category pills wrap, the tree is hosted at its
+      content height in the one sidebar scroller (CJ-013, `92cd7bce7`, verified on attempt 28).
 - [ ] Startup: splash names each phase; the encrypted app log still hides where a slow machine
       spends its time, so a timing instrument is the next step.
 - [ ] Upstream's new Preferences option (WebView devtools toggle) is not in this fork's
