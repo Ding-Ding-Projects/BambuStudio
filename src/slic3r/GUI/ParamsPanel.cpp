@@ -454,15 +454,20 @@ void ParamsPanel::create_layout()
         m_mode_sizer->AddSpacer(FromDIP(10));
         m_mode_sizer->Add(m_process_icon, 0, wxALIGN_CENTER);
         m_mode_sizer->AddSpacer(FromDIP(10));
-        // Proportion 1 + the label's wxST_ELLIPSIZE_END style: when the header
-        // runs out of width the title compresses (down to its FromDIP(56) min)
-        // and ellipsizes instead of being overlapped by the mode switch.
-        m_mode_sizer->Add( m_title_label, 1, wxALIGN_CENTER );
-        m_mode_sizer->AddStretchSpacer(2);
+        // The title is a fixed item and the header carries exactly ONE stretch
+        // spacer. wxBoxSizer::CalcMin scales the largest proportional item's
+        // minimum by the TOTAL proportion, so the former layout (title at
+        // proportion 1 with a FromDIP(56) minimum beside stretch spacers of
+        // 2, 1 and 12) reported a minimum width of 56 x 16 + the fixed items,
+        // 1271 px at 100%. The sidebar scroller honours the content minimum as
+        // its virtual width, so every sidebar row was laid out 1271 px wide and
+        // cut at the sidebar edge behind a horizontal scrollbar (CJ-012).
+        m_mode_sizer->Add( m_title_label, 0, wxALIGN_CENTER );
+        m_mode_sizer->AddSpacer(FromDIP(8));
         m_mode_sizer->Add(m_mode_region, 0, wxALIGN_CENTER);
-        m_mode_sizer->AddStretchSpacer(1);
+        m_mode_sizer->AddSpacer(FromDIP(4));
         m_mode_sizer->Add(m_tips_arrow, 0, wxALIGN_CENTER);
-        m_mode_sizer->AddStretchSpacer(12);
+        m_mode_sizer->AddStretchSpacer(1);
         m_mode_sizer->Add( m_title_view, 0, wxALIGN_CENTER );
         m_mode_sizer->AddSpacer(FromDIP(2));
         m_mode_sizer->Add(m_mode_view, 0, wxALIGN_CENTER);

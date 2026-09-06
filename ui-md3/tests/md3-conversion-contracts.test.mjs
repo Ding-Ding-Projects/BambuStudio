@@ -644,3 +644,19 @@ test('the search field keeps its icon buttons inside the pill and reserves no em
   assert.match(src, /const bool\s+clear\s*=\s*m_clear_button && m_clear_button->IsShown\(\);/, 'the clear slot is reserved only while shown');
   assert.doesNotMatch(src, /reserve = right \+ 3 \* action \+ 3 \* gap;/, 'no permanently reserved third slot');
 });
+
+test('the ParamsPanel header sizer carries one stretch spacer and a fixed title (CJ-012)', async () => {
+  // wxBoxSizer::CalcMin scales the largest proportional item's minimum by the
+  // total proportion: a title at proportion 1 with a 56px minimum beside
+  // stretch spacers of 2, 1 and 12 reported 56 x 16 + fixed = 1271px, which
+  // the sidebar scroller took as its virtual width and cut every row at the
+  // sidebar edge.
+  const src = await read('ParamsPanel.cpp');
+  const at = src.indexOf('m_mode_sizer = new wxBoxSizer( wxHORIZONTAL );');
+  assert.ok(at > 0, 'the header sizer is built in create_layout');
+  const block = src.slice(at, src.indexOf('m_top_panel->SetSizer(m_mode_sizer);', at));
+  assert.match(block, /^\s*m_mode_sizer->Add\( m_title_label, 0, wxALIGN_CENTER \);/m, 'the title is a fixed item');
+  const stretch = block.match(/AddStretchSpacer\(/g) || [];
+  assert.equal(stretch.length, 1, 'exactly one stretch spacer in the header');
+  assert.match(block, /^\s*m_mode_sizer->AddStretchSpacer\(1\);/m, 'and it is proportion 1');
+});
