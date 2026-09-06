@@ -161,12 +161,12 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
     const wxSize client = w->GetClientSize();
     const bool shown = w->IsShown();
 
-    std::string label;
-    bool has_label = false;
-    if (auto *ctrl = dynamic_cast<wxControl *>(w)) {
-        label = std::string(ctrl->GetLabel().ToUTF8().data());
-        has_label = !label.empty();
-    }
+    // wxWindow carries the label, not only wxControl: the kit Button and
+    // every other StaticBox-based control descend from wxWindow directly and
+    // do set their text, so reading it only through wxControl dumped every
+    // kit button with an empty label and the recapture driver found no tab.
+    std::string label = std::string(w->GetLabel().ToUTF8().data());
+    bool        has_label = !label.empty();
 
     bool text_clipped = false;
     bool ellipsized = false;
