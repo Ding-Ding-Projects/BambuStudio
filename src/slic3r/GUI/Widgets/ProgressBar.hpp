@@ -1,14 +1,25 @@
 #ifndef slic3r_GUI_ProgressBar_hpp_
 #define slic3r_GUI_ProgressBar_hpp_
 
+#include <optional>
+#include <vector>
+
 #include <wx/window.h>
 #include <wx/timer.h>
 #include "../wxExtensions.hpp"
 #include "StateColor.hpp"
 
+wxDECLARE_EVENT(EVT_PROGRESS_BAR_HEIGHT_CHANGED, wxCommandEvent);
+
 class ProgressBar : public wxWindow
 {
 public: 
+    struct Marker
+    {
+        int      m_position = 0;
+        wxString m_label;
+    };
+
     ProgressBar();
     ProgressBar(wxWindow *         parent,
                 wxWindowID         id        = wxID_ANY,
@@ -51,6 +62,8 @@ public:
     void         SetRadius(double radius);
     void         SetProgressForedColour(wxColour colour);
     void         SetProgressBackgroundColour(wxColour colour);
+    void         SetMarkers(const std::vector<Marker> &markers);
+    void         ClearMarkers() { SetMarkers({}); }
     void         Rescale();
 
     // wxGauge-compatible surface, so the stock gauges in the status bars and
@@ -61,11 +74,7 @@ public:
     int          GetRange() const { return m_max; }
     void         SetRange(int range);
     void         Pulse();
-    void         SetHeight(int height) {
-        m_minHeight = height;
-        m_radius    = defaultRadius;
-        SetSize(GetSize().x,  height);
-    }
+    void         SetHeight(int height);
     virtual void SetMinSize(const wxSize &size) override;
 
 protected:
@@ -74,10 +83,21 @@ protected:
     wxTimer      m_pulse_timer;
     void         onPulseTick(wxTimerEvent &evt);
     void         paintEvent(wxPaintEvent &evt);
+    void         mouseMove(wxMouseEvent &evt);
+    void         mouseLeave(wxMouseEvent &evt);
     void         render(wxDC &dc);
     void         doRender(wxDC &dc);
+    void         renderMarkers(wxDC &dc, const wxSize &size, int barHeight);
     virtual void DoSetSize(int x, int y, int width, int height, int sizeFlags = wxSIZE_AUTO);
 
+private:
+    int  findHoveredMarker(const wxPoint &position) const;
+    void updateControlHeight();
+
+    int                 m_barHeight = miniHeight;
+    int                 m_hoveredMarker = -1;
+    std::optional<wxPoint> m_lastMousePosition;
+    std::vector<Marker> m_markers;
 
 
     DECLARE_EVENT_TABLE()

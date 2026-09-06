@@ -339,8 +339,9 @@ void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& it
     dc.SetFont(m_font);
     dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
 
-    int textWidth = 0, textHeight = 0;
-    dc.GetTextExtent(item.GetLabel(), &textWidth, &textHeight);
+    int textWidth = dc.GetTextExtent(item.GetLabel()).x;
+    wxFontMetrics fm = dc.GetFontMetrics();
+    int textHeight = fm.ascent + fm.descent;
 
     wxRect clipRect = rect;
     clipRect.width -= 1;
@@ -406,11 +407,10 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
 
     if (m_flags & wxAUI_TB_TEXT)
     {
-        int tx, ty;
-
-        dc.GetTextExtent(wxT("ABCDHgj"), &tx, &textHeight);
-        textWidth = 0;
-        dc.GetTextExtent(item.GetLabel(), &textWidth, &ty);
+        dc.SetFont(m_font);
+        wxFontMetrics fm = dc.GetFontMetrics();
+        textHeight = fm.ascent + fm.descent;
+        textWidth = dc.GetTextExtent(item.GetLabel()).x;
     }
 
     int bmpX = 0, bmpY = 0;

@@ -7,6 +7,7 @@
 #include "../DeviceCore/DevManager.h"
 #include "libslic3r/PresetBundle.hpp"
 #include "Label.hpp"
+#include "libslic3r/LocalesUtils.hpp"
 #include <wx/sizer.h>
 
 
@@ -384,7 +385,7 @@ std::vector<int> HotEndTable::FilterHotEnds(const NozzleOption& option)
 
     for (auto& info : nozzles_to_search) {
 
-        float diameter = atof(info.diameter.c_str());
+        float diameter = string_to_double_decimal_point(info.diameter);
         NozzleFlowType flow = DevNozzle::ToNozzleFlowType(info.volume_type);
         int extruder_id = 1 - info.extruder_id; //physical
 

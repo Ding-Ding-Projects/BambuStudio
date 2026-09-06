@@ -299,6 +299,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/SmartHomeDialog.hpp
     GUI/third_party/qrcodegen.cpp
     GUI/third_party/qrcodegen.hpp
+    GUI/PerfTrace.cpp
+    GUI/PerfTrace.hpp
     GUI/BBLTopbar.cpp
     GUI/BBLTopbar.hpp
     GUI/BedShapeDialog.cpp
@@ -417,6 +419,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Overview/AssemblyStepsUtilsImgui.cpp
     GUI/Overview/AssemblyStepsUtils.hpp
     GUI/Overview/AssemblyStepsUtilsInternal.hpp
+    GUI/Overview/OverviewUtils.cpp
+    GUI/Overview/OverviewUtils.hpp
     GUI/CameraUtils.cpp
     GUI/CameraUtils.hpp
     GUI/wxExtensions.cpp
@@ -599,6 +603,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/AmsMappingPopupUpdate.cpp
     GUI/ReleaseNote.hpp
     GUI/ReleaseNote.cpp
+    GUI/VersionPolicyDialog.hpp
+    GUI/VersionPolicyDialog.cpp
     GUI/HelioReleaseNote.hpp
     GUI/HelioReleaseNote.cpp
     GUI/HelioHistoryDialog.hpp
@@ -678,6 +684,12 @@ set(SLIC3R_GUI_SOURCES
     Utils/FileHelp.hpp
     Utils/PresetUpdater.cpp
     Utils/PresetUpdater.hpp
+    Utils/VersionPolicyParser.cpp
+    Utils/VersionPolicyParser.hpp
+    Utils/VersionPolicyFetcher.cpp
+    Utils/VersionPolicyFetcher.hpp
+    Utils/VersionPolicyManager.cpp
+    Utils/VersionPolicyManager.hpp
     Utils/Process.cpp
     Utils/Process.hpp
     Utils/RaycastManager.cpp
@@ -722,6 +734,10 @@ set(SLIC3R_GUI_SOURCES
     Utils/WxFontUtils.cpp
     Utils/HelioDragon.cpp
     Utils/HelioDragon.hpp
+    Utils/HelioRetryPolicy.cpp
+    Utils/HelioRetryPolicy.hpp
+    Utils/HelioSupportData.cpp
+    Utils/HelioSupportData.hpp
     Utils/FileTransferUtils.cpp
     Utils/FileTransferUtils.hpp
     Utils/FileTransferObject.cpp
@@ -784,11 +800,15 @@ encoding_check(libslic3r_gui)
 # on Linux/macOS. Use find_library so every CMAKE_PREFIX_PATH entry is searched
 # and the platform-specific library name is resolved automatically, instead of
 # hardcoding ${CMAKE_PREFIX_PATH}/lib (which breaks when it is a multi-path list).
-find_library(HPDF_LIBRARY_RELEASE NAMES hpdf)
-find_library(HPDF_LIBRARY_DEBUG NAMES hpdf PATH_SUFFIXES Debug)
-set(HPDF_LIBRARY
-    $<$<CONFIG:Debug>:${HPDF_LIBRARY_DEBUG}>
-    $<$<NOT:$<CONFIG:Debug>>:${HPDF_LIBRARY_RELEASE}>)
+if (WIN32)
+    find_library(HPDF_LIBRARY_RELEASE NAMES hpdf)
+    find_library(HPDF_LIBRARY_DEBUG NAMES hpdf PATH_SUFFIXES Debug)
+    set(HPDF_LIBRARY
+        $<$<CONFIG:Debug>:${HPDF_LIBRARY_DEBUG}>
+        $<$<NOT:$<CONFIG:Debug>>:${HPDF_LIBRARY_RELEASE}>)
+else ()
+    find_library(HPDF_LIBRARY NAMES hpdf hpdfd HINTS lib REQUIRED)
+endif ()
 
 target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi
     ${HPDF_LIBRARY}
