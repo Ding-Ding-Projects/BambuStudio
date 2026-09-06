@@ -4457,8 +4457,9 @@ void FeedDirectionDialog::SetExtruderMapping(MachineObject* obj,
     }
     else
     {
-        m_radioHelper->SetValue(true);
-        m_lastChecked = m_radioHelper;
+        // Neither extruder is preselected: clear the group instead of ticking a hidden helper.
+        m_radioGroup.SetSelection(-1);
+        m_lastChecked = nullptr;
         m_confirmBtn->Enable(false);
         m_extruderImage->update(DevExtruderState::EMPTY_LOAD, DevExtruderState::EMPTY_LOAD);
         m_extruderImage->setExtruderUsed("");

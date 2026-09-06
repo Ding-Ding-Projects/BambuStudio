@@ -425,8 +425,8 @@ void OptionsGroup::activate_line(Line& line)
 			wxString str_label = (option.label == L_CONTEXT("Top", "Layers") || option.label == L_CONTEXT("Bottom", "Layers")) ?
 				_CTX(option.label, "Layers") :
 				_(option.label);
-			label = new Label(this->ctrl_parent(), str_label + ": ", 0, //wxDefaultSize);
-				wxSize(sublabel_width != -1 ? sublabel_width * wxGetApp().em_unit() : -1, -1), wxALIGN_RIGHT);
+			label = new Label(this->ctrl_parent(), str_label + ": ", wxALIGN_RIGHT,
+				wxSize(sublabel_width != -1 ? sublabel_width * wxGetApp().em_unit() : -1, -1));
 			label->SetBackgroundStyle(wxBG_STYLE_PAINT);
             label->SetFont(wxGetApp().normal_font());
 			sizer_tmp->Add(label, 0, wxALIGN_CENTER_VERTICAL, 0);

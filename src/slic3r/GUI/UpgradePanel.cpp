@@ -615,7 +615,7 @@ void MachineInfoPanel::init_bitmaps()
 
         upgrade_green_icon  = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Primary)));
         upgrade_gray_icon   = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Outline)));
-        upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Tertiary)));
+        upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     }
     catch (const std::exception &e)
     {
@@ -637,7 +637,7 @@ void MachineInfoPanel::rescale_bitmaps()
     // Glyph dots are re-rendered at the new DPI rather than rescaled.
     upgrade_green_icon  = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Primary)));
     upgrade_gray_icon   = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Outline)));
-    upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Tertiary)));
+    upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_ota_new_version_img->SetBitmap(upgrade_green_icon.bmp());
 }
 
