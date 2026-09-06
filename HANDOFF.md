@@ -1291,6 +1291,13 @@ diagnostics were a cascade.
   table from scripts/ci/Measure-LineCount.ps1 (fixed for cp1252 consoles in `60ed72397`).
 - Local hook: .git/hooks/pre-commit piped unquoted filenames into grep; fixed locally with
   `-z | xargs -0` (the hook is not tracked).
+- Attempt 27 (`07335a340`, DLL `a0392d4affee9d77`) is the first green build of the merged tree;
+  attempts 24 to 26 found the pnpm wedge and eight merge compile slips, each fixed in its own
+  commit. Evidence from it: `prepare-full-tree-default--...--after.png` (fresh profile, full tree,
+  no Simple/Advanced control), `gizmo-rotate-panel--...--after.png` and `gizmo-move-panel--...--
+  after.png` (software-GL route; only the first rail item clicked per launch activates its gizmo,
+  so capture one panel per launch). The update dialog cannot be captured until a release newer
+  than the running build exists.
 - Capture matrix `docs/screenshots/md3-everything/`: 132 before (baseline payload `9e8d005b0`) and
   132 after (attempt 13, `80734696c`) across 12 tuples (en / yue_HK / bilingual x light / dark x
   comfortable / compact), 24 probe dumps per build under `probe/`. Runner
