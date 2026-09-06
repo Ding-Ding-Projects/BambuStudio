@@ -76,6 +76,9 @@ class App:
         self.n = 0
 
     def start(self, timeout=240):
+        # The probe is gated on this variable; the cheap CLI launch inherits it.
+        os.environ['BAMBU_LAYOUT_PROBE'] = '1'
+        os.environ['BAMBU_LAYOUT_PROBE_TAG'] = os.path.basename(self.datadir)
         cheap('create_headless_desktop', name=self.desktop)
         self.pid = cheap('launch_on_headless_desktop', name=self.desktop, command=f'"{self.exe}" --datadir "{self.datadir}"')['pid']
         deadline = time.monotonic() + timeout
@@ -118,8 +121,14 @@ class App:
     def probe(self):
         self.n += 1
         path = os.path.join(self.probe_dir, f'recapture-{self.pid}-{self.n}.jsonl')
-        r = subprocess.run([sys.executable, os.path.join(HERE, 'send-layout-probe.py'), str(self.main), path, '--timeout', '20'], capture_output=True, text=True)
-        if r.returncode != 0:
+        # The sender must live on the hidden desktop (IsWindow fails across
+        # desktops), so it is launched there through the cheap CLI.
+        sender = os.path.join(HERE, 'send-layout-probe.py')
+        cheap('launch_on_headless_desktop', name=self.desktop, command=f'"{sys.executable}" "{sender}" {self.main} "{path}" --timeout 20')
+        deadline = time.monotonic() + 25
+        while time.monotonic() < deadline and not (os.path.exists(path) and os.path.getsize(path) > 0):
+            time.sleep(0.5)
+        if not (os.path.exists(path) and os.path.getsize(path) > 0):
             raise RuntimeError('layout probe produced no dump (is this build carrying the probe?)')
         records = []
         with open(path, encoding='utf-8') as fh:

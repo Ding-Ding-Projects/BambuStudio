@@ -82,9 +82,21 @@ def click(hwnd, xy, settle=1.5):
     time.sleep(settle)
 
 
-def probe(hwnd, path, timeout=20):
+def probe(hwnd, path, timeout=20, desktop='bscap'):
+    # IsWindow / SendMessage fail across desktops, so the sender itself runs on
+    # the hidden desktop: launched there through the cheap CLI, then this side
+    # only waits for the dump file to appear.
     here = os.path.dirname(os.path.abspath(__file__))
-    subprocess.run([sys.executable, os.path.join(here, 'send-layout-probe.py'), str(hwnd), path, '--timeout', str(timeout)], check=False)
+    sender = os.path.join(here, 'send-layout-probe.py')
+    cheap('launch_on_headless_desktop', name=desktop, command=f'"{sys.executable}" "{sender}" {hwnd} "{path}" --timeout {timeout}')
+    deadline = time.monotonic() + timeout + 5
+    while time.monotonic() < deadline:
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            print(f'  probe dump {os.path.basename(path)} ({os.path.getsize(path)} bytes)')
+            return True
+        time.sleep(0.5)
+    print(f'  no probe dump for {os.path.basename(path)}')
+    return False
 
 
 def main():
@@ -105,6 +117,11 @@ def main():
     def out(surface):
         return os.path.join(args.out, f'{surface}--{args.tuple_id}--{args.suffix}.png')
 
+    if args.probe:
+        # The probe is gated on this variable; a launch through the cheap CLI
+        # inherits this process's environment, so set it here.
+        os.environ['BAMBU_LAYOUT_PROBE'] = '1'
+        os.environ['BAMBU_LAYOUT_PROBE_TAG'] = f'{args.tuple_id}--{args.suffix}'
     cheap('create_headless_desktop', name=args.desktop)
     launch = cheap('launch_on_headless_desktop', name=args.desktop, command=f'"{args.exe}" --datadir "{args.datadir}"')
     pid = launch['pid']
@@ -118,7 +135,7 @@ def main():
             click(hwnd, xy, settle=2.5)
             shot(hwnd, out(surface))
             if args.probe and surface == 'prepare':
-                probe(hwnd, os.path.join(args.probe, f'{args.tuple_id}--{args.suffix}-prepare.jsonl'))
+                probe(hwnd, os.path.join(args.probe, f'{args.tuple_id}--{args.suffix}-prepare.jsonl'), desktop=args.desktop)
         click(hwnd, GEAR, settle=2.5)
         # The title is localized; the dialog is the 780-wide #32770 the gear opens.
         prefs = wait_window(args.desktop, pid, lambda w: w['class'] == '#32770' and w['width'] >= 700 and w['height'] >= 560 and w['title'] != '', 20, 'Preferences')
@@ -126,7 +143,7 @@ def main():
             click(prefs['handle'], xy, settle=1.5)
             shot(prefs['handle'], out(f'preferences-{tab}'))
         if args.probe:
-            probe(hwnd, os.path.join(args.probe, f'{args.tuple_id}--{args.suffix}-preferences.jsonl'))
+            probe(hwnd, os.path.join(args.probe, f'{args.tuple_id}--{args.suffix}-preferences.jsonl'), desktop=args.desktop)
         click(prefs['handle'], PREF_CLOSE, settle=1.0)
     finally:
         cheap('kill_process', pid=pid, force=True)
