@@ -606,8 +606,8 @@ void Tab::create_preset_tab()
         });
 
         wxBoxSizer *wiki_sizer = new wxBoxSizer(wxHORIZONTAL);
-        auto wiki_icon = new ScalableBitmap(panel, "wiki", 16);
-        auto wiki_icon_hover = new ScalableBitmap(panel, "wiki_hover", 16);
+        auto wiki_icon = new ScalableBitmap(panel, MaterialIcon::bitmap(panel, MaterialIcon::MenuBook, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
+        auto wiki_icon_hover = new ScalableBitmap(panel, MaterialIcon::bitmap(panel, MaterialIcon::MenuBook, 16, StateColor::semantic(MD3::Role::Primary)));
         m_wiki_bmp = new wxStaticBitmap(panel, wxID_ANY, wiki_icon->bmp());
         wiki_sizer->Add(m_wiki_bmp, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxBOTTOM, 2);
         m_wiki_label = new Label(panel, _L("Wiki"));
@@ -8024,8 +8024,7 @@ void Tab::update_nozzle_status_display()
         return;
     }
     if (r_nozzles.empty() && l_nozzles.empty()) {
-        auto bmp = ScalableBitmap(this, "warning", 16);
-        auto warning_icon = new wxStaticBitmap(this, wxID_ANY, bmp.bmp(), wxDefaultPosition, wxDefaultSize, 0);
+        auto warning_icon = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)), wxDefaultPosition, wxDefaultSize, 0);
         m_nozzle_status_sizer->Add(warning_icon, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
         wxStaticText *reminder_text = new Label(this, _L("No available nozzles for current preset"));
         reminder_text->SetFont(Label::Body_13);

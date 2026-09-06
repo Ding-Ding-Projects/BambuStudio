@@ -1,5 +1,6 @@
 #include "UpgradePanel.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/StaticLine.hpp"
 #include <slic3r/GUI/Widgets/SideTools.hpp>
@@ -102,7 +103,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
 
     m_ota_ver_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
-    m_ota_new_version_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(5), FromDIP(5)));
+    m_ota_new_version_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)));
     m_ota_new_version_img->SetBitmap(upgrade_green_icon.bmp());
     m_ota_ver_sizer->Add(m_ota_new_version_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
@@ -371,7 +372,7 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
 
     m_caption_sizer->Add(17, 0, 0, wxEXPAND, 0);
 
-    m_upgrade_status_img = new wxStaticBitmap(caption_panel, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(5), FromDIP(5)));
+    m_upgrade_status_img = new wxStaticBitmap(caption_panel, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)));
     m_upgrade_status_img->SetBitmap(upgrade_gray_icon.bmp());
     m_upgrade_status_img->Hide();
     m_caption_sizer->Add(m_upgrade_status_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
@@ -614,9 +615,9 @@ void MachineInfoPanel::init_bitmaps()
         m_img_exhaustfan  = ScalableBitmap(this, "exhaustfan", 160);
         m_img_amshub      = ScalableBitmap(this, "amshub_N7", 160);
 
-        upgrade_green_icon  = ScalableBitmap(this, "monitor_upgrade_online", 5);
-        upgrade_gray_icon   = ScalableBitmap(this, "monitor_upgrade_offline", 5);
-        upgrade_yellow_icon = ScalableBitmap(this, "monitor_upgrade_busy", 5);
+        upgrade_green_icon  = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Primary)));
+        upgrade_gray_icon   = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Outline)));
+        upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Tertiary)));
     }
     catch (const std::exception &e)
     {
@@ -635,9 +636,10 @@ void MachineInfoPanel::rescale_bitmaps()
     m_ams_img->SetBitmap(m_img_monitor_ams.bmp());
     m_img_ext.msw_rescale();
     m_ext_img->SetBitmap(m_img_ext.bmp());
-    upgrade_green_icon.msw_rescale();
-    upgrade_gray_icon.msw_rescale();
-    upgrade_yellow_icon.msw_rescale();
+    // Glyph dots are re-rendered at the new DPI rather than rescaled.
+    upgrade_green_icon  = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Primary)));
+    upgrade_gray_icon   = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Outline)));
+    upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Tertiary)));
     m_ota_new_version_img->SetBitmap(upgrade_green_icon.bmp());
 }
 
@@ -1832,7 +1834,7 @@ bool UpgradePanel::Show(bool show)
 
      m_ams_ver_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
-     m_ams_new_version_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(5), FromDIP(5)));
+     m_ams_new_version_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)));
      m_ams_new_version_img->SetBitmap(upgrade_green_icon.bmp());
      m_ams_ver_sizer->Add(m_ams_new_version_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
      m_ams_new_version_img->Hide();
@@ -1918,7 +1920,7 @@ bool UpgradePanel::Show(bool show)
 
      wxBoxSizer* m_ext_ver_sizer = new wxBoxSizer(wxHORIZONTAL);
      m_ext_ver_sizer->Add(0, 0, 1, wxEXPAND, 0);
-     m_ext_new_version_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(5), FromDIP(5)));
+     m_ext_new_version_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)));
      m_ext_new_version_img->SetBitmap(upgrade_green_icon.bmp());
      m_ext_ver_sizer->Add(m_ext_new_version_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
      m_ext_new_version_img->Hide();

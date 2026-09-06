@@ -999,14 +999,13 @@ void AMSControl::show_switcher_status(bool show)
     {
         m_sizer_body->Add(0, 0, 1, wxEXPAND | wxTOP, FromDIP(5));
         tipPanel = new wxPanel(m_amswin);
-        tipPanel->SetBackgroundColour(ThemeColor::Warning);
+        tipPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
         tipSizer = new wxBoxSizer(wxHORIZONTAL);
         tipPanel->SetSizer(tipSizer);
-        icon = new wxStaticBitmap(tipPanel, wxID_ANY,
-            wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_MESSAGE_BOX, wxSize(FromDIP(16), FromDIP(16))));
+        icon = new wxStaticBitmap(tipPanel, wxID_ANY, MaterialIcon::bitmap(tipPanel, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnErrorContainer)));
         tipSizer->Add(icon, 0, wxALL, FromDIP(8));
         tipText = new Label(tipPanel, _L("AMS has not been initialized. Please initialize it before use."));
-        tipText->SetForegroundColour(ThemeColor::White);
+        tipText->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
         tipText->SetFont(Label::Head_10);
         tipText->Wrap(-1);
         tipText->SetMinSize(wxSize(-1, -1));

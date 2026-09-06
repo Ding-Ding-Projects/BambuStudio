@@ -294,9 +294,11 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     m_input_nozzle_min->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     m_input_nozzle_min->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(20)));
 
-    degree            = new ScalableBitmap(parent, "degree", 16);
-    bitmap_max_degree = new wxStaticBitmap(parent, -1, degree->bmp(), wxDefaultPosition, wxDefaultSize);
-    bitmap_min_degree = new wxStaticBitmap(parent, -1, degree->bmp(), wxDefaultPosition, wxDefaultSize);
+    // The unit mark is text, set in the kit body face and the secondary role.
+    bitmap_max_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\xC2\xB0C"));
+    bitmap_max_degree->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    bitmap_min_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\xC2\xB0C"));
+    bitmap_min_degree->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     sizer_tempinput->Add(m_input_nozzle_max, 1, wxALIGN_CENTER, 0);
     sizer_tempinput->Add(bitmap_min_degree, 0, wxALIGN_CENTER, 0);
@@ -2413,9 +2415,6 @@ void AMSMaterialsSetting::on_dpi_changed(const wxRect &suggested_rect)
     m_input_nozzle_min->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(20)));
     m_input_k_val->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(20)));
     m_clr_picker->msw_rescale();
-    degree->msw_rescale();
-    bitmap_max_degree->SetBitmap(degree->bmp());
-    bitmap_min_degree->SetBitmap(degree->bmp());
     m_button_reset->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_reset->SetCornerRadius(FromDIP(12));
     m_button_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);

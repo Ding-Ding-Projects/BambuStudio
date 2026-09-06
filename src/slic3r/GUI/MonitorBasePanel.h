@@ -54,27 +54,20 @@ namespace Slic3r
 			wxSplitterWindow* m_splitter;
 			wxPanel* m_panel_splitter_left;
 			wxPanel* m_panel_printer;
-			wxStaticBitmap* m_bitmap_printer;
-			wxStaticBitmap* m_bitmap_arrow1;
 			wxStaticText* m_staticText_machine_name;
 			wxStaticText* m_staticText_capacity_val;
 			StaticLine* m_staticline1;
 			wxPanel* m_panel_status_tab;
 			wxStaticText* m_staticText_status;
-			wxStaticBitmap* m_bitmap_signal;
-			wxStaticBitmap* m_bitmap_arrow2;
 			StaticLine* m_staticline2;
 			wxPanel* m_panel_time_lapse_tab;
 			wxStaticText* m_staticText_time_lapse;
-			wxStaticBitmap* m_bitmap_arrow3;
 			StaticLine* m_staticline3;
 			wxPanel* m_panel_video_tab;
 			wxStaticText* m_staticText_video_monitoring;
-			wxStaticBitmap* m_bitmap_arrow4;
 			StaticLine* m_staticline4;
 			wxPanel* m_panel_task_list_tab;
 			wxStaticText* m_staticText_subtask_list;
-			wxStaticBitmap* m_bitmap_arrow5;
 			StaticLine* m_staticline5;
 			wxPanel* m_panel_splitter_right;
 
@@ -134,7 +127,6 @@ namespace Slic3r
 			wxPanel* m_panel_model_name_caption;
 			wxStaticText* m_staticText_model_name;
 			wxPanel* m_panel_model_name_content;
-			wxStaticBitmap* m_bitmap_task;
 			wxStaticText* m_staticText_task_desc;
 			wxStaticText* m_staticText_ceation_time_title;
 			wxStaticText* m_staticText_creation_time;

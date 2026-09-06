@@ -1570,14 +1570,14 @@ wxBoxSizer *CreatePrinterPresetDialog::create_step_switch_item()
     wxPanel *   step_switch_panel = new wxPanel(this);
     step_switch_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     horizontal_sizer->Add(0, 0, 1, wxEXPAND,0);
-    m_step_1 = new wxStaticBitmap(step_switch_panel, wxID_ANY, create_scaled_bitmap("step_1", nullptr, FromDIP(20)), wxDefaultPosition, wxDefaultSize);
+    m_step_1 = new wxStaticBitmap(step_switch_panel, wxID_ANY, MaterialIcon::bitmap(step_switch_panel, MaterialIcon::Counter1, 20, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, wxDefaultSize);
     horizontal_sizer->Add(m_step_1, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
     wxStaticText *static_create_printer_text = new Label(step_switch_panel, m_create_type.create_printer);
     horizontal_sizer->Add(static_create_printer_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
     auto divider_line = new wxPanel(step_switch_panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(50), 1));
     divider_line->SetBackgroundColour(PRINTER_LIST_COLOUR);
     horizontal_sizer->Add(divider_line, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
-    m_step_2 = new wxStaticBitmap(step_switch_panel, wxID_ANY, create_scaled_bitmap("step_2_ready", nullptr, FromDIP(20)), wxDefaultPosition, wxDefaultSize);
+    m_step_2 = new wxStaticBitmap(step_switch_panel, wxID_ANY, MaterialIcon::bitmap(step_switch_panel, MaterialIcon::Counter2, 20, StateColor::semantic(MD3::Role::Outline)), wxDefaultPosition, wxDefaultSize);
     horizontal_sizer->Add(m_step_2, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
     wxStaticText *static_import_presets_text = new Label(step_switch_panel, _L("Import Preset"));
     horizontal_sizer->Add(static_import_presets_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
@@ -2956,8 +2956,8 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page2_btns_item(wxWindow *parent)
 
 void CreatePrinterPresetDialog::show_page1()
 {
-    m_step_1->SetBitmap(create_scaled_bitmap("step_1", nullptr, FromDIP(20)));
-    m_step_2->SetBitmap(create_scaled_bitmap("step_2_ready", nullptr, FromDIP(20)));
+    m_step_1->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Counter1, 20, StateColor::semantic(MD3::Role::Primary)));
+    m_step_2->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Counter2, 20, StateColor::semantic(MD3::Role::Outline)));
     m_page1->Show();
     m_page2->Hide();
     Refresh();
@@ -2967,8 +2967,8 @@ void CreatePrinterPresetDialog::show_page1()
 
 void CreatePrinterPresetDialog::show_page2()
 {
-    m_step_1->SetBitmap(create_scaled_bitmap("step_is_ok", nullptr, FromDIP(20)));
-    m_step_2->SetBitmap(create_scaled_bitmap("step_2", nullptr, FromDIP(20)));
+    m_step_1->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::CheckCircle, 20, StateColor::semantic(MD3::Role::Primary)));
+    m_step_2->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Counter2, 20, StateColor::semantic(MD3::Role::Primary)));
     m_page2->Show();
     m_page1->Hide();
     Refresh();

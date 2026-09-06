@@ -3,6 +3,7 @@
 #include <slic3r/GUI/Widgets/SideTools.hpp>
 #include <slic3r/GUI/Widgets/Label.hpp>
 #include <slic3r/GUI/Widgets/StateColor.hpp>
+#include <slic3r/GUI/Widgets/MaterialIcon.hpp>
 #include <slic3r/GUI/I18N.hpp>
 #include "GUI.hpp"
 #include "GUI_App.hpp"
@@ -173,10 +174,10 @@ void HMSNotifyItem::set_content_width(int card_width)
 }
 
 void HMSNotifyItem::init_bitmaps() {
-    m_img_notify_lv1 = create_scaled_bitmap("hms_notify_lv1", nullptr, 18);
-    m_img_notify_lv2 = create_scaled_bitmap("hms_notify_lv2", nullptr, 18);
-    m_img_notify_lv3 = create_scaled_bitmap("hms_notify_lv3", nullptr, 18);
-    m_img_arrow      = create_scaled_bitmap("hms_arrow", nullptr, 14);
+    m_img_notify_lv1 = MaterialIcon::bitmap(this, MaterialIcon::Error, 18, StateColor::semantic(MD3::Role::Error));
+    m_img_notify_lv2 = MaterialIcon::bitmap(this, MaterialIcon::Warning, 18, StateColor::semantic(MD3::Role::Error));
+    m_img_notify_lv3 = MaterialIcon::bitmap(this, MaterialIcon::Warning, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_img_arrow      = MaterialIcon::bitmap(this, MaterialIcon::ChevronRight, 14, StateColor::semantic(MD3::Role::OnSurfaceVariant));
 }
 
 wxBitmap & HMSNotifyItem::get_notify_bitmap()

@@ -1607,9 +1607,9 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     auto m_sizer_step_icon_panel2 = new wxBoxSizer(wxVERTICAL);
     auto m_sizer_step_icon_panel3 = new wxBoxSizer(wxVERTICAL);
 
-    m_img_step1 = new wxStaticBitmap(m_step_icon_panel1, wxID_ANY, create_scaled_bitmap("ip_address_step", this, 6), wxDefaultPosition, wxSize(FromDIP(6), FromDIP(6)), 0);
-    m_img_step2 = new wxStaticBitmap(m_step_icon_panel2, wxID_ANY, create_scaled_bitmap("ip_address_step", this, 6), wxDefaultPosition, wxSize(FromDIP(6), FromDIP(6)), 0);
-    m_img_step3 = new wxStaticBitmap(m_step_icon_panel3, wxID_ANY, create_scaled_bitmap("ip_address_step", this, 6), wxDefaultPosition, wxSize(FromDIP(6), FromDIP(6)), 0);
+    m_img_step1 = new wxStaticBitmap(m_step_icon_panel1, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)), 0);
+    m_img_step2 = new wxStaticBitmap(m_step_icon_panel2, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)), 0);
+    m_img_step3 = new wxStaticBitmap(m_step_icon_panel3, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)), 0);
 
     m_step_icon_panel1->SetSizer(m_sizer_step_icon_panel1);
     m_step_icon_panel1->Layout();
@@ -2289,7 +2289,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     card1->SetMinSize(wxSize(FromDIP(220), FromDIP(190)));
     card1->SetToolTip(tooltip_text);
     wxBoxSizer* card1_sizer = new wxBoxSizer(wxVERTICAL);
-    auto check_icon = new wxStaticBitmap(card1, wxID_ANY, create_scaled_bitmap("helio_feature_shield_check", card1, 48), wxDefaultPosition, wxSize(FromDIP(48), FromDIP(48)), 0);
+    auto check_icon = new wxStaticBitmap(card1, wxID_ANY, MaterialIcon::bitmap(card1, MaterialIcon::VerifiedUser, 48, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, wxSize(FromDIP(48), FromDIP(48)), 0);
     check_icon->SetToolTip(tooltip_text);
     auto card1_title = new Label(card1, Label::Body_16, _L("Fewer Failed Prints"));
     card1_title->SetForegroundColour(HELIO_TEXT);
@@ -2312,7 +2312,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     card2->SetMinSize(wxSize(FromDIP(220), FromDIP(190)));
     card2->SetToolTip(tooltip_text);
     wxBoxSizer* card2_sizer = new wxBoxSizer(wxVERTICAL);
-    auto speed_icon = new wxStaticBitmap(card2, wxID_ANY, create_scaled_bitmap("helio_feature_speed", card2, 48), wxDefaultPosition, wxSize(FromDIP(48), FromDIP(48)), 0);
+    auto speed_icon = new wxStaticBitmap(card2, wxID_ANY, MaterialIcon::bitmap(card2, MaterialIcon::Speed, 48, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, wxSize(FromDIP(48), FromDIP(48)), 0);
     speed_icon->SetToolTip(tooltip_text);
     auto card2_title = new Label(card2, Label::Body_16, _L("Faster Prints, Better Quality"));
     card2_title->SetForegroundColour(HELIO_TEXT);

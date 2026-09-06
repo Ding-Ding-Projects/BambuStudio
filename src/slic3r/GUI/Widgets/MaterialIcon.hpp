@@ -176,6 +176,12 @@ enum Glyph : uint32_t {
     // --- Aliases for names absent from the vendored font (nearest verified glyph) ---
     Download                = 0xE171, // 'file_download' is not in this font; 'download' is the Material Symbols name
     SettingsBackupRestore   = 0xE8BA, // 'restore' is not in this font (use for undo-to-system-value / restore defaults)
+    Counter1                = 0xF784, // numbered step marker 1 (create-preset wizard)
+    Counter2                = 0xF785, // numbered step marker 2
+    CheckCircle             = 0xE86C, // completed step / selected option
+    VerifiedUser            = 0xE8E8, // Helio feature card: verified / shielded
+    MenuBook                = 0xEA19, // wiki / documentation link
+    VisibilityOff           = 0xE8F5, // hide toggle (pair of Visibility)
 };
 
 // True when the Material Symbols face is registered and resolvable, so callers

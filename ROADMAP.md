@@ -16,8 +16,9 @@ captures are a separate box and stay unticked until they exist from the real bui
 - [x] 11 `wxBitmapButton` sites on kit icon `Button` / `RadioBox`; `Button::SetIconBitmap`.
 - [x] `wxStaticBitmap` inventory committed; 12 clickable holders are kit Buttons; 17 rasters are
       Material glyphs; 9 clickable content images carry written reasons.
-- [ ] Remaining 32 glyph + 15 badge runtime-state static bitmaps rendered as Material glyphs.
-- [ ] 16 unclassified static-bitmap rows judged.
+- [x] Remaining 32 glyph + 15 badge runtime-state static bitmaps rendered as Material glyphs, or
+      recorded as content with a written reason; 8 never-populated holders deleted.
+- [x] 16 unclassified static-bitmap rows judged (triage now holds only data and md3-rendered).
 - [x] `Button` Material by default (Outlined at first paint; Checked state for Outlined/Text).
 - [ ] Button call sites that hand-style with the legacy palette moved to variants.
 - [x] 15 pinned density reads on `Metrics::active()`; `ImageSwitchButton` retoned.

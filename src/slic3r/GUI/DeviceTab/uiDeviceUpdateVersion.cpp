@@ -10,6 +10,8 @@
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 
 #include <wx/stattext.h>
 
@@ -92,8 +94,8 @@ void uiDeviceUpdateVersion::CreateWidgets()
     grid_sizer->Add(serial_text, 0, wxALIGN_RIGHT | wxALL, FromDIP(5));
     grid_sizer->Add(m_dev_snl, 0, wxALL | wxEXPAND, FromDIP(5));
 
-    m_dev_upgrade_indicator = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(5), FromDIP(5)));
-    m_dev_upgrade_indicator->SetBitmap(ScalableBitmap(this, "monitor_upgrade_online", 5).bmp());
+    m_dev_upgrade_indicator = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)));
+    m_dev_upgrade_indicator->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Primary)));
 
     wxBoxSizer* version_hsizer = new wxBoxSizer(wxHORIZONTAL);
     version_hsizer->Add(0, 0, 1, wxEXPAND, 0);

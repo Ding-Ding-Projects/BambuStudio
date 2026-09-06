@@ -839,11 +839,11 @@ void HelioStatementDialog::create_pat_page()
     helio_pat_refresh->Hide();
     helio_pat_refresh->SetSize(0, 0);
     
-    helio_pat_eview = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("helio_eview", page_pat_panel, 24), wxDefaultPosition, wxSize(0, 0), 0);
+    helio_pat_eview = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::Visibility, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(0, 0), 0);
     helio_pat_eview->Hide();
     helio_pat_eview->SetSize(0, 0);
     
-    helio_pat_dview = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("helio_dview", page_pat_panel, 24), wxDefaultPosition, wxSize(0, 0), 0);
+    helio_pat_dview = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::VisibilityOff, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(0, 0), 0);
     helio_pat_dview->Hide();
     helio_pat_dview->SetSize(0, 0);
     

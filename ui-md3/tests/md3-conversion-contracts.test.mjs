@@ -412,7 +412,44 @@ test('every static bitmap is inventoried in the triage CSV, and none is an unacc
   for (const r of rows.filter((r) => r.hasBind)) {
     assert.ok(r.reason && r.reason.length > 20, `${r.file}:${r.member} has a click binding and needs a written reason`);
   }
-  for (const r of rows) assert.ok(['data', 'glyph', 'badge', 'md3-rendered', 'unclassified'].includes(r.verdict), `${r.file}:${r.lineNo} unknown verdict ${r.verdict}`);
+  // Ratchet: the triage is finished. Every remaining static bitmap is either
+  // content (data) or fed a Material glyph (md3-rendered). A new glyph, badge or
+  // unclassified row means a raster icon crept back in.
+  for (const r of rows) assert.ok(['data', 'md3-rendered'].includes(r.verdict), `${r.file}:${r.lineNo} verdict ${r.verdict}: convert it or record why it is content`);
+  // Hand-written: the sites this sweep converted must still be recorded as glyph-fed.
+  const rendered = new Set(rows.filter((r) => r.verdict === 'md3-rendered').map((r) => `${r.file}:${r.member}`));
+  for (const site of [
+    'HMSPanel.cpp:m_bitmap_notify', 'HMSPanel.cpp:m_bitmap_arrow',
+    'UpgradePanel.cpp:m_ota_new_version_img', 'UpgradePanel.cpp:m_upgrade_status_img', 'UpgradePanel.cpp:m_ams_new_version_img', 'UpgradePanel.cpp:m_ext_new_version_img',
+    'DeviceTab/uiDeviceUpdateVersion.cpp:m_dev_upgrade_indicator',
+    'CreatePresetsDialog.cpp:m_step_1', 'CreatePresetsDialog.cpp:m_step_2',
+    'Tab.cpp:m_wiki_bmp', 'Widgets/FanControl.cpp:m_static_bitmap_fan', 'PurgeModeDialog.cpp:m_check_btn',
+    'HelioReleaseNote.cpp:helio_pat_eview', 'HelioReleaseNote.cpp:helio_pat_dview',
+    'StatusPanel.cpp:m_bitmap_static_use_time', 'StatusPanel.cpp:m_bitmap_static_use_weight',
+  ]) assert.ok(rendered.has(site), `${site} must stay inventoried as md3-rendered`);
+  // And the source must actually feed those holders a glyph.
+  for (const [file, needle] of [
+    ['HMSPanel.cpp', 'm_img_notify_lv1 = MaterialIcon::bitmap(this, MaterialIcon::Error, 18, StateColor::semantic(MD3::Role::Error))'],
+    ['HMSPanel.cpp', 'm_img_arrow      = MaterialIcon::bitmap(this, MaterialIcon::ChevronRight, 14'],
+    ['UpgradePanel.cpp', 'upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Tertiary)))'],
+    ['DeviceTab/uiDeviceUpdateVersion.cpp', 'm_dev_upgrade_indicator->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10'],
+    ['ReleaseNote.cpp', 'MaterialIcon::bitmap(card1, MaterialIcon::VerifiedUser, 48'],
+    ['ReleaseNote.cpp', 'MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)), 0);'],
+    ['CreatePresetsDialog.cpp', 'm_step_1->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::CheckCircle, 20'],
+    ['Tab.cpp', 'new ScalableBitmap(panel, MaterialIcon::bitmap(panel, MaterialIcon::MenuBook, 16, StateColor::semantic(MD3::Role::Primary)))'],
+    ['Widgets/FanControl.cpp', '*m_bitmap_fan = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::ModeFan, 20'],
+    ['PurgeModeDialog.cpp', 'check_icon = MaterialIcon::bitmap(this, MaterialIcon::CheckCircle, 20'],
+    ['Widgets/AMSControl.cpp', 'icon = new wxStaticBitmap(tipPanel, wxID_ANY, MaterialIcon::bitmap(tipPanel, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnErrorContainer)))'],
+    ['HelioReleaseNote.cpp', 'MaterialIcon::bitmap(page_pat_panel, MaterialIcon::VisibilityOff, 24'],
+    ['AMSMaterialsSetting.cpp', 'bitmap_min_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\\xC2\\xB0C"));'],
+  ]) assert.ok(stripComments(await read(file)).includes(needle), `${file} must feed its holder a Material glyph: ${needle}`);
+  // The eight MonitorBasePanel holders that never received a bitmap are gone.
+  assert.doesNotMatch(await read('MonitorBasePanel.cpp'), /m_bitmap_(?:printer|arrow[1-5]|signal|task)\b/, 'MonitorBasePanel must not rebuild its dead bitmap holders');
+  // New glyph codepoints were verified against the vendored cmap before use.
+  const icons = await read('Widgets', 'MaterialIcon.hpp');
+  for (const [name, cp] of [['Counter1', '0xF784'], ['Counter2', '0xF785'], ['CheckCircle', '0xE86C'], ['VerifiedUser', '0xE8E8'], ['MenuBook', '0xEA19'], ['VisibilityOff', '0xE8F5']]) {
+    assert.match(icons, new RegExp(`^\\s+${name}\\s+= ${cp},`, 'm'), `MaterialIcon::${name} must be ${cp}`);
+  }
 });
 
 test('density metrics are read live through Metrics::active(), not pinned to one preset', async () => {

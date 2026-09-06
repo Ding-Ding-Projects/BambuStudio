@@ -11,6 +11,8 @@
 #include "wxExtensions.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include "wx/graphics.h"
 
 namespace Slic3r { namespace GUI {
@@ -195,7 +197,7 @@ GUI::PurgeModeBtnPanel::PurgeModeBtnPanel(wxWindow *parent, const wxString &labe
     icon = create_scaled_bitmap(icon_path, nullptr, 20);
     m_btn = new wxStaticBitmap(this, wxID_ANY, icon, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
 
-    check_icon = create_scaled_bitmap("completed_2", nullptr, 20);
+    check_icon = MaterialIcon::bitmap(this, MaterialIcon::CheckCircle, 20, StateColor::semantic(MD3::Role::Primary));
     m_check_btn = new wxStaticBitmap(this, wxID_ANY, check_icon, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
     m_check_btn->Hide();
 

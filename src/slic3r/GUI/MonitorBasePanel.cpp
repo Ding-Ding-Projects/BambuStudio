@@ -8,6 +8,7 @@
 #include "MonitorBasePanel.h"
 #include "Printer/PrinterFileSystem.h"
 #include "Widgets/Label.hpp"
+#include "Widgets/StateColor.hpp"
 
 ///////////////////////////////////////////////////////////////////////////
 using namespace Slic3r::GUI;
@@ -49,16 +50,12 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_printer->Add(23, 0, 0, wxEXPAND, 0);
 
-	m_bitmap_printer = new wxStaticBitmap(m_panel_printer, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_printer->Add(m_bitmap_printer, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
 
 	bSizer_printer->Add(3, 0, 0, wxEXPAND, 0);
 
-	m_bitmap_arrow1 = new wxStaticBitmap(m_panel_printer, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_printer->Add(m_bitmap_arrow1, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
 
 	bSizer_printer->Add(8, 0, 0, 0, 0);
@@ -97,7 +94,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_printer, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline1 = new StaticLine(m_panel_splitter_left);
-	m_staticline1->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline1->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 	bSizerleft->Add(m_staticline1, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
 	m_panel_status_tab = new wxPanel(m_panel_splitter_left, wxID_ANY, wxDefaultPosition, wxSize(182, 52), wxTAB_TRAVERSAL);
@@ -115,16 +112,12 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_status_caption->Add(m_staticText_status, 0, wxALIGN_CENTER_VERTICAL | wxBOTTOM | wxLEFT, 0);
 
-	m_bitmap_signal = new wxStaticBitmap(m_panel_status_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_status_caption->Add(m_bitmap_signal, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
 
 	bSizer_status_caption->AddStretchSpacer();
 
-	m_bitmap_arrow2 = new wxStaticBitmap(m_panel_status_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_status_caption->Add(m_bitmap_arrow2, 0, wxALIGN_CENTER_VERTICAL, 26);
 
 	bSizer_status_caption->Add(16, 0, 0, wxEXPAND, 0);
 
@@ -134,7 +127,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_status_tab, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline2 = new StaticLine(m_panel_splitter_left);
-	m_staticline2->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline2->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 	bSizerleft->Add(m_staticline2, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
 	m_panel_time_lapse_tab = new wxPanel(m_panel_splitter_left, wxID_ANY, wxDefaultPosition, wxSize(182, 52), wxTAB_TRAVERSAL);
@@ -155,9 +148,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_time_lapse_caption->AddStretchSpacer();
 
-	m_bitmap_arrow3 = new wxStaticBitmap(m_panel_time_lapse_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_time_lapse_caption->Add(m_bitmap_arrow3, 0, wxALIGN_CENTER_VERTICAL, 26);
 
 	bSizer_time_lapse_caption->Add(16, 0, 0, wxEXPAND, 0);
 
@@ -167,7 +158,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_time_lapse_tab, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline3 = new StaticLine(m_panel_splitter_left);
-	m_staticline3->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline3->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 	bSizerleft->Add(m_staticline3, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
 	m_panel_video_tab = new wxPanel(m_panel_splitter_left, wxID_ANY, wxDefaultPosition, wxSize(182, 52), wxTAB_TRAVERSAL);
@@ -188,9 +179,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_video_monitoring_caption->AddStretchSpacer();
 
-	m_bitmap_arrow4 = new wxStaticBitmap(m_panel_video_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_video_monitoring_caption->Add(m_bitmap_arrow4, 0, wxALIGN_CENTER_VERTICAL, 26);
 
 	bSizer_video_monitoring_caption->Add(16, 0, 0, wxEXPAND, 0);
 
@@ -200,7 +189,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_video_tab, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline4 = new StaticLine(m_panel_splitter_left);
-	m_staticline4->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline4->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
 	bSizerleft->Add(m_staticline4, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
@@ -222,9 +211,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_tasklist_caption->AddStretchSpacer();
 
-	m_bitmap_arrow5 = new wxStaticBitmap(m_panel_task_list_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_tasklist_caption->Add(m_bitmap_arrow5, 0, wxALIGN_CENTER_VERTICAL, 26);
 
 	bSizer_tasklist_caption->Add(16, 0, 0, wxEXPAND, 0);
 
@@ -234,7 +221,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_task_list_tab, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline5 = new StaticLine(m_panel_splitter_left);
-	m_staticline5->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline5->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 	bSizerleft->Add(m_staticline5, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
 
@@ -334,9 +321,7 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 	wxBoxSizer* bSizer11;
 	bSizer11 = new wxBoxSizer(wxHORIZONTAL);
 
-	m_bitmap_task = new wxStaticBitmap(m_panel_model_name_content, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0);
 
-	bSizer11->Add(m_bitmap_task, 0, wxALL, 5);
 
 	wxBoxSizer* bSizer12;
 	bSizer12 = new wxBoxSizer(wxVERTICAL);

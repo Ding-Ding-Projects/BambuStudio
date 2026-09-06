@@ -2,6 +2,7 @@
 #include "Label.hpp"
 #include "MD3DialogChrome.hpp"
 #include "StateColor.hpp"
+#include "MaterialIcon.hpp"
 #include "../BitmapCache.hpp"
 #include "../I18N.hpp"
 #include "../GUI_App.hpp"
@@ -486,7 +487,7 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
     // instead of clipping it against its own max size.
     SetMaxSize(wxSize(FromDIP(196), FromDIP(80)));
     SetMinSize(wxSize(FromDIP(196), FromDIP(80)));
-    m_bitmap_fan = new ScalableBitmap(this, "fan_icon", 20);
+    m_bitmap_fan = new ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::ModeFan, 20, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
 
     // Cards read as raised blocks on the popup's SurfaceContainer body. Set the
     // surface before any child is built: the drawn Switch and the stepper both
@@ -585,7 +586,7 @@ void FanControlNew::on_left_down(wxMouseEvent& evt)
 
 void FanControlNew::msw_rescale()
 {
-    m_bitmap_fan->msw_rescale();
+    *m_bitmap_fan = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::ModeFan, 20, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_static_bitmap_fan->SetBitmap(m_bitmap_fan->bmp());
 
     // The Switch is drawn, not blitted: re-render it at the new DPI (and re-read
