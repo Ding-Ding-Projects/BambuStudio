@@ -31,16 +31,32 @@
   --md-accent: #146c2e;
   --md-secondary-container: #d7e8d9;
   --md-on-secondary-container: #0e1f13;
+  --md-font: "Roboto Flex", Roboto, "Segoe UI", system-ui, sans-serif;
+}
+
+/* The page had no font-family at all, so the empty-state copy and its button
+   rendered in the browser's default serif. Type is body-medium on the kit face;
+   the body is a scroll container of at least one viewport with no default
+   margin, and the card is centred only when it fits. */
+html, body {
+  margin: 0;
+  padding: 0;
 }
 
 body {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
   align-items: center;
-  height: 100vh;
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 24px;
+  overflow-y: auto;
   background-color: var(--md-surface);
   color: var(--md-on-surface);
+  font-family: var(--md-font);
+  font-size: 14px;
+  line-height: 20px;
 }
 
 
@@ -58,8 +74,12 @@ body {
   box-sizing: border-box;
   height: 40px;
   border-radius: 999px;
+  /* Buttons do not inherit the page font; label-large on the kit face. */
+  font-family: var(--md-font);
   font-size: 14px;
-  font-weight: 600;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
