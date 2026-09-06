@@ -94,7 +94,8 @@ class App:
         self.main = None
         self.n = 0
 
-    def start(self, timeout=240):
+    def start(self, timeout=None):
+        timeout = timeout or getattr(self, 'startup_timeout', 240)
         # The probe is gated on this variable; the cheap CLI launch inherits it.
         os.environ['BAMBU_LAYOUT_PROBE'] = '1'
         os.environ['BAMBU_LAYOUT_PROBE_TAG'] = os.path.basename(self.datadir)
@@ -460,6 +461,9 @@ def main():
     ap.add_argument('--exe', required=True)
     ap.add_argument('--datadir-root', required=True)
     ap.add_argument('--only', default=None)
+    ap.add_argument('--match', default=None, help='regex on the row path (in addition to --only)')
+    ap.add_argument('--kinds', default='page,crop-probe', help='comma-separated recipe kinds to attempt')
+    ap.add_argument('--mesa', action='store_true', help='software GL: the exe must have the Mesa pair beside it; enables the canvas rows')
     ap.add_argument('--report', default=os.path.join(REPO, 'artifacts', 'recapture-report.json'))
     ap.add_argument('--desktop', default='bsrecap')
     ap.add_argument('--probe-dir', default=os.path.join(REPO, 'artifacts', 'probe'))
@@ -468,9 +472,22 @@ def main():
     os.makedirs(args.probe_dir, exist_ok=True)
     os.makedirs(os.path.dirname(args.report), exist_ok=True)
     manifest = json.load(open(MANIFEST, encoding='utf-8'))
-    rows = [r for r in manifest['captures'] if r['recipe'] and r['recipe']['kind'] in ('page', 'crop-probe')]
+    kinds = set(k.strip() for k in args.kinds.split(',') if k.strip())
+    rows = [r for r in manifest['captures'] if r['recipe'] and r['recipe']['kind'] in kinds]
     if args.only:
         rows = [r for r in rows if args.only in r['file']]
+    if args.match:
+        import re
+        rows = [r for r in rows if re.search(args.match, r['file'])]
+    if args.mesa:
+        # Software GL renders the canvas into a DIB that PrintWindow can read,
+        # so the rows blocked on the GL route are attempted here.
+        os.environ['GALLIUM_DRIVER'] = 'llvmpipe'
+        os.environ['MESA_GL_VERSION_OVERRIDE'] = '3.3'
+        os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'
+        for r in rows:
+            if 'needs the Mesa route' in (r['recipe'].get('blocked') or ''):
+                r['recipe'] = dict(r['recipe']); r['recipe'].pop('blocked', None)
     # Group by tuple so each tuple is one process.
     by_tuple = {}
     for r in rows:
@@ -488,6 +505,7 @@ def main():
                 report['rows'].append({'file': r['file'], 'status': f'blocked: no datadir for {tuple_id}'})
             continue
         app = App(args.exe, datadir, args.desktop, args.probe_dir)
+        app.startup_timeout = 300 if args.mesa else 240
         print(f'== {tuple_id}: {len(trows)} rows')
         try:
             app.start()
