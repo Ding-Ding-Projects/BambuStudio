@@ -735,7 +735,7 @@ wxBitmap *get_extruder_color_icon(std::string color, std::string label, int icon
 {
     static Slic3r::GUI::BitmapCache bmp_cache;
 
-    std::string bitmap_key = color + "-h" + std::to_string(icon_height) + "-w" + std::to_string(icon_width) + "-i" + label + (rounded_ring ? "-ring" : "");
+    std::string bitmap_key = color + "-h" + std::to_string(icon_height) + "-w" + std::to_string(icon_width) + "-i" + label + (rounded_ring ? "-r" : "");
 
     wxBitmap *bitmap = bmp_cache.find(bitmap_key);
     if (bitmap == nullptr) {
@@ -744,7 +744,7 @@ wxBitmap *get_extruder_color_icon(std::string color, std::string label, int icon
         if (!base_bitmap.IsOk())
             return nullptr;
 
-        if (!label.empty()) {
+        if (rounded_ring || !label.empty()) {
 #ifndef __WXMSW__
             wxMemoryDC dc(base_bitmap);
 #else
@@ -752,64 +752,59 @@ wxBitmap *get_extruder_color_icon(std::string color, std::string label, int icon
             wxMemoryDC dc(&cdc);
             dc.SelectObject(base_bitmap);
 #endif
-        dc.SetFont(::Label::Body_12);
-        Slic3r::GUI::WxFontUtils::get_suitable_font_size(icon_height - 2, dc);
+            dc.SetFont(::Label::Body_12);
+            Slic3r::GUI::WxFontUtils::get_suitable_font_size(icon_height - 2, dc);
 
-        if (rounded_ring) {
-            // MD3 filament-row swatch (prepare/filament-rows-preset-combobox-not-
-            // inforow): r8 rounded corners + a 1px inset OutlineVariant ring,
-            // geometry only -- the colour data itself is unchanged. Radius is
-            // proportional to MD3::Metrics::radius_tiny (8) at the kit's 28px
-            // reference size, so callers passing a different DPI-scaled size
-            // still get a correctly-scaled corner. Corners outside the rounded
-            // rect are filled with the row's own SurfaceContainerHighest token
-            // (rather than relying on per-pixel alpha, which the wxMemoryDC path
-            // selected above does not reliably round-trip on every platform).
-            const wxColour row_bg = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
-            dc.SetBackground(wxBrush(row_bg));
-            dc.Clear();
-            const double radius = icon_height * static_cast<double>(MD3::Metrics::radius_tiny) / 28.0;
-            std::unique_ptr<wxGraphicsContext> gc(wxGraphicsContext::Create(dc));
-            if (gc) {
-                gc->SetPen(*wxTRANSPARENT_PEN);
-                gc->SetBrush(wxBrush(clr.Alpha() == 0 ? *wxWHITE : clr));
-                gc->DrawRoundedRectangle(0.5, 0.5, icon_width - 1.0, icon_height - 1.0, radius);
-                const bool     dark = Slic3r::GUI::wxGetApp().dark_mode();
-                const wxColour ring = MD3::resolve(MD3::Role::OutlineVariant, dark);
-                gc->SetPen(wxPen(ring, 1));
-                gc->SetBrush(*wxTRANSPARENT_BRUSH);
-                gc->DrawRoundedRectangle(0.5, 0.5, icon_width - 1.0, icon_height - 1.0, radius);
-            }
-            if (!label.empty()) {
+            if (rounded_ring) {
+                // MD3 filament-row swatch (prepare/filament-rows-preset-combobox-not-
+                // inforow): r8 rounded corners + a 1px inset OutlineVariant ring,
+                // geometry only -- the colour data itself is unchanged. Radius is
+                // proportional to MD3::Metrics::radius_tiny (8) at the kit's 28px
+                // reference size, so callers passing a different DPI-scaled size
+                // still get a correctly-scaled corner. Corners outside the rounded
+                // rect are filled with the row's own SurfaceContainerHighest token
+                // (rather than relying on per-pixel alpha, which the wxMemoryDC path
+                // selected above does not reliably round-trip on every platform).
+                const wxColour row_bg = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+                dc.SetBackground(wxBrush(row_bg));
+                dc.Clear();
+                const double radius = icon_height * static_cast<double>(MD3::Metrics::radius_tiny) / 28.0;
+                std::unique_ptr<wxGraphicsContext> gc(wxGraphicsContext::Create(dc));
+                if (gc) {
+                    gc->SetPen(*wxTRANSPARENT_PEN);
+                    gc->SetBrush(wxBrush(clr.Alpha() == 0 ? *wxWHITE : clr));
+                    gc->DrawRoundedRectangle(0.5, 0.5, icon_width - 1.0, icon_height - 1.0, radius);
+                    const bool     dark = Slic3r::GUI::wxGetApp().dark_mode();
+                    const wxColour ring = MD3::resolve(MD3::Role::OutlineVariant, dark);
+                    gc->SetPen(wxPen(ring, 1));
+                    gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                    gc->DrawRoundedRectangle(0.5, 0.5, icon_width - 1.0, icon_height - 1.0, radius);
+                }
+                if (!label.empty()) {
+                    auto size = dc.GetTextExtent(wxString(label));
+                    dc.SetBackgroundMode(wxTRANSPARENT);
+                    dc.SetTextForeground(clr.Alpha() != 0 && clr.GetLuminance() < 0.51 ? *wxWHITE : *wxBLACK);
+                    dc.DrawText(label, (icon_width - size.x) / 2, (icon_height - size.y) / 2);
+                }
+            } else {
+                // Upstream's plain swatch label: transparent text background, text
+                // colour by the swatch's luminance.
+                dc.SetBackgroundMode(wxTRANSPARENT);
                 auto size = dc.GetTextExtent(wxString(label));
-                dc.SetTextForeground(clr.Alpha() != 0 && clr.GetLuminance() < 0.51 ? *wxWHITE : *wxBLACK);
+                if (clr.Alpha() == 0)
+                    dc.SetTextForeground(*wxBLACK);
+                else
+                    dc.SetTextForeground(clr.GetLuminance() < 0.51 ? *wxWHITE : *wxBLACK);
                 dc.DrawText(label, (icon_width - size.x) / 2, (icon_height - size.y) / 2);
             }
             dc.SelectObject(wxNullBitmap);
-            return bitmap;
-        }
-
-        if (clr.Alpha() == 0) {
-            int             size        = icon_height * 2;
-            static wxBitmap transparent = *Slic3r::GUI::BitmapCache().load_svg("transparent", size, size);
-            if (transparent.GetHeight() != size) transparent = *Slic3r::GUI::BitmapCache().load_svg("transparent", size, size);
-            wxPoint pt(0, 0);
-            while (pt.x < icon_width) {
-                dc.DrawBitmap(transparent, pt);
-                pt.x += size;
-            }
-            clr.SetRGB(0xffffff); // for text color
-            dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        } else {
-            dc.SetBackground(wxBrush(clr));
-            dc.Clear();
-            dc.SetBrush(wxBrush(clr));
         }
 
         bitmap = bmp_cache.insert(bitmap_key, base_bitmap);
     }
     return bitmap;
 }
+
 void apply_extruder_selector(Slic3r::GUI::BitmapComboBox** ctrl,
                              wxWindow* parent,
                              const std::string& first_item/* = ""*/,
