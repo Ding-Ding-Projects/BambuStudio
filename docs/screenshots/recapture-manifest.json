@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "purpose": "Every tracked capture must be retaken from the named artifact; a row is done only when its file was rewritten by the run named in provenance.",
   "provenance": {
-    "sourceCommit": "84f6bc5c9",
-    "dllSha256": "4152b27a4d46948319517bdf788c41ad8254f244700b6d9ba7280b7a39ace64e",
-    "run": "2026-09-06T11:58:52"
+    "sourceCommit": "2dcc26658",
+    "dllSha256": "ba6ebba7baad232ec8f198f352797751ced5f75c5dbe50684a6c5c688ca4e582",
+    "run": "2026-09-06T12:43:05"
   },
   "captures": [
     {
