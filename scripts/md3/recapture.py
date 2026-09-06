@@ -270,6 +270,37 @@ class Runner:
             cheap('crop_image', input_path=page, left=max(0, r['x'] - pad), top=max(0, r['y'] - pad), width=r['w'] + 2 * pad, height=r['h'] + 2 * pad, output_path=out_path)
             os.remove(page)
             return 'done'
+        if recipe['kind'] == 'crop-gl':
+            # GL toolbar / gizmo rail items come from the probe's gl_item
+            # records: name, host canvas handle, and screen rectangle. The crop
+            # is taken from the main frame's capture in its image coordinates.
+            page = out_path + '.page.png'
+            self.app.shot(self.app.main, page)
+            records = self.app.probe()
+            tops = {r['hwnd']: r for r in records if r.get('kind') == 'toplevel'}
+            wanted = recipe['item']
+            items = [r for r in records if r.get('kind') == 'gl_item']
+            if wanted.startswith('*'):
+                # A whole toolbar or rail: the union of its items.
+                key = 'gizmo' if 'rail' in wanted else ('main' if 'toolbar' in wanted else None)
+                group = [r for r in items if key is None or r['toolbar'] == key]
+                if not group:
+                    os.remove(page)
+                    raise RuntimeError(f'blocked: no gl_item records for {wanted}')
+                xs = [r['screen']['x'] for r in group]; ys = [r['screen']['y'] for r in group]
+                xe = [r['screen']['x'] + r['screen']['w'] for r in group]; ye = [r['screen']['y'] + r['screen']['h'] for r in group]
+                s = {'x': min(xs), 'y': min(ys), 'w': max(xe) - min(xs), 'h': max(ye) - min(ys)}
+            else:
+                match = [r for r in items if norm(r.get('name')) == norm(wanted)] or [r for r in items if norm(wanted) in norm(r.get('name'))]
+                if not match:
+                    os.remove(page)
+                    raise RuntimeError(f"blocked: no gl_item named '{wanted}' (have: {', '.join(sorted(set(r['name'] for r in items)))})")
+                s = match[0]['screen']
+            origin = tops.get(self.app.main, {}).get('rect', {'x': 0, 'y': 0})
+            pad = int(recipe.get('pad', 8))
+            cheap('crop_image', input_path=page, left=max(0, s['x'] - origin['x'] - pad), top=max(0, s['y'] - origin['y'] - pad), width=s['w'] + 2 * pad, height=s['h'] + 2 * pad, output_path=out_path)
+            os.remove(page)
+            return 'done'
         raise RuntimeError(f"blocked: kind {recipe['kind']}")
 
 
