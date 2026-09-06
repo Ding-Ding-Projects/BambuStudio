@@ -254,6 +254,11 @@ def find_control(records, label, toplevel_hwnd=None):
     origin = scope_win['screen'] if scope_win is not None else (top['rect'] if top else {'x': 0, 'y': 0})
     s = r['screen']
     r['image_rect'] = {'x': s['x'] - origin['x'], 'y': s['y'] - origin['y'], 'w': s['w'], 'h': s['h']}
+    # Always keep the rectangle relative to the owning top-level as well: a
+    # scoped search (rail, popover) anchors image_rect to the scope, but a
+    # click is delivered to the top-level window.
+    top_origin = top['rect'] if top else {'x': 0, 'y': 0}
+    r['top_rect'] = {'x': s['x'] - top_origin['x'], 'y': s['y'] - top_origin['y'], 'w': s['w'], 'h': s['h']}
     return r
 
 
@@ -420,7 +425,10 @@ class Runner:
             raise RuntimeError(f'blocked: {s}')
 
     def click_control(self, owner_hwnd, control):
-        rect = control.get('image_rect')
+        # Clicks go to the owning top-level, so use the rectangle relative to
+        # it (a rail-scoped nav lookup otherwise clicked near the frame's
+        # top-left corner and never left the Home tab).
+        rect = control.get('top_rect') or control.get('image_rect')
         if rect is None:
             raise RuntimeError('control without a rectangle')
         # image_rect is in the owning top-level's window coordinates, which is
