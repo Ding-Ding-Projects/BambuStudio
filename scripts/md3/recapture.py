@@ -312,8 +312,11 @@ class Runner:
                     records = self.app.probe()
                     add = [r for r in records if r.get('kind') == 'window' and r.get('label') == 'Add ink']
                     if add and not add[0].get('on_screen', True):
-                        header = find_control(records, 'Ink', self.app.main)
-                        if header:
+                        # Scope to the sidebar: an unscoped exact 'Ink' fell
+                        # through to the rail's Ink tab and navigated away.
+                        sidebar = next((r for r in records if r.get('kind') == 'window' and r.get('name') == 'Sidebar'), None)
+                        header = find_control(records, 'Ink', sidebar['hwnd']) if sidebar else None
+                        if header and header.get('on_screen', True):
                             self.click_control(self.app.main, header)
                             time.sleep(2.0)
         elif kind == 'wizard-page':
