@@ -45,6 +45,10 @@ A dump runs once after the main frame is first shown and idle, and again wheneve
 receives `WM_COPYDATA` with `dwData == 2` and payload `L"layout-probe [<path>]"`, which is how a
 headless driver asks for a dump after opening a dialog. Unset, the cost is one environment read.
 
+`scripts/md3/send-layout-probe.py <hwnd> <out.jsonl>` sends that message from the standard library
+alone, given the main window handle a headless window list reports, and exits non-zero when no dump
+appears within its timeout.
+
 ## Reading a dump
 
 ```bash
