@@ -133,7 +133,7 @@ export default function WSAvcCDialogDemo() {
 
     // 日志追加（修复换行 + 自动滚动）
     const log = React.useCallback((...a: any[]) => {
-        const line = `[${new Date().toLocaleTimeString()}] ` + a.map(String).join(" ");
+        const line = `[${new Date().toLocaleTimeString([], { hour12: false })}] ` + a.map(String).join(" ");
         setLogs((old) => (old ? old + "" : "") + line);
   }, []);
     React.useEffect(() => {

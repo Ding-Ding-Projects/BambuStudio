@@ -34,7 +34,7 @@ export function CloudBadge({ state, onPullClick, tooltipExtra }: Props) {
     if (last_synced_at) {
       try {
         const d = new Date(last_synced_at);
-        return t('Last synced: {{time}}', { time: d.toLocaleString() });
+        return t('Last synced: {{time}}', { time: d.toLocaleString([], { hour12: false }) });
       } catch {
         return last_synced_at;
       }

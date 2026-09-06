@@ -660,3 +660,23 @@ test('the ParamsPanel header sizer carries one stretch spacer and a fixed title 
   assert.equal(stretch.length, 1, 'exactly one stretch spacer in the header');
   assert.match(block, /^\s*m_mode_sizer->AddStretchSpacer\(1\);/m, 'and it is proportion 1');
 });
+
+test('every process setting is shown: no Simple/Advanced filter or flip remains', async () => {
+  // GUI_App::get_mode() is always advanced (develop stays distinct), the
+  // settings header builds no "Advance" switch, and the sidebar has no
+  // 'Simple settings' / 'Advanced settings' flip buttons.
+  const app = await read('GUI_App.cpp');
+  const at = app.indexOf('ConfigOptionMode GUI_App::get_mode()');
+  assert.ok(at > 0, 'get_mode exists');
+  const body = app.slice(at, app.indexOf('std::string GUI_App::get_mode_str()', at));
+  assert.match(body, /return comAdvanced;/, 'get_mode falls through to comAdvanced');
+  assert.doesNotMatch(body, /return comSimple;/, 'no simple mode');
+  const params = await read('ParamsPanel.cpp');
+  assert.doesNotMatch(params, /^\s*m_mode_view = new SwitchButton\(m_top_panel, wxID_ABOUT\);/m, 'no header mode switch in ParamsPanel');
+  const tab = await read('Tab.cpp');
+  assert.doesNotMatch(tab, /^\s*m_mode_view = new SwitchButton\(m_top_panel, wxID_ABOUT\);/m, 'no header mode switch in Tab');
+  const plater = await read('Plater.cpp');
+  assert.doesNotMatch(plater, /_L\("Simple settings"\)/, 'no Simple settings button');
+  assert.doesNotMatch(plater, /_L\("Advanced settings"\)/, 'no Advanced settings button');
+  assert.match(plater, /^\s*p->process_advanced = true;/m, 'the full tree is the default');
+});

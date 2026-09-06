@@ -12,7 +12,7 @@ interface Props {
 
 function formatTs(ts: number): string {
   try {
-    return new Date(ts).toLocaleString();
+    return new Date(ts).toLocaleString([], { hour12: false });
   } catch {
     return String(ts);
   }

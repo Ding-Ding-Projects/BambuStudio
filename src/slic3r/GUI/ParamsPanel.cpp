@@ -304,8 +304,10 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         m_tips_arrow = new ScalableButton(m_top_panel, wxID_ANY, "tips_arrow");
         m_tips_arrow->Hide();
 
-        m_title_view = new Label(m_top_panel, _L("Advance"));
-        m_mode_view = new SwitchButton(m_top_panel, wxID_ABOUT);
+        // No "Advance" label and no mode switch: the option filter is gone
+        // (GUI_App::get_mode() is always advanced), so every setting is shown.
+        m_title_view = nullptr;
+        m_mode_view = nullptr;
 
         // BBS: new layout
         //m_search_btn = new ScalableButton(m_top_panel, wxID_ANY, "search", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
@@ -468,9 +470,11 @@ void ParamsPanel::create_layout()
         m_mode_sizer->AddSpacer(FromDIP(4));
         m_mode_sizer->Add(m_tips_arrow, 0, wxALIGN_CENTER);
         m_mode_sizer->AddStretchSpacer(1);
-        m_mode_sizer->Add( m_title_view, 0, wxALIGN_CENTER );
-        m_mode_sizer->AddSpacer(FromDIP(2));
-        m_mode_sizer->Add(m_mode_view, 0, wxALIGN_CENTER);
+        if (m_title_view) m_mode_sizer->Add( m_title_view, 0, wxALIGN_CENTER );
+        if (m_mode_view) {
+            m_mode_sizer->AddSpacer(FromDIP(2));
+            m_mode_sizer->Add(m_mode_view, 0, wxALIGN_CENTER);
+        }
         m_mode_sizer->AddSpacer(FromDIP(10));
         m_mode_sizer->Add(m_setting_btn, 0, wxALIGN_CENTER);
         m_mode_sizer->AddSpacer(FromDIP(12));

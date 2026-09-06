@@ -419,18 +419,11 @@ void Tab::create_preset_tab()
     m_top_sizer->Add( m_btn_search, 0, wxALIGN_CENTER_VERTICAL | wxLEFT , FromDIP(12) );
     m_top_sizer->Add(m_search_field, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, FromDIP(12));
 
-    if (dynamic_cast<TabPrint*>(this) == nullptr) {
-        m_static_title = new Label(m_top_panel, Label::Body_12, _L("Advance"));
-        m_static_title->Wrap( -1 );
-        // BBS: open this tab by select first
-        m_static_title->Bind(wxEVT_LEFT_UP, [this](auto& e) {
-            restore_last_select_item();
-        });
-        m_top_sizer->Add( m_static_title, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 8 );
-        m_mode_view = new SwitchButton(m_top_panel, wxID_ABOUT);
-        m_top_sizer->AddSpacer(4);
-        m_top_sizer->Add( m_mode_view, 0, wxALIGN_CENTER_VERTICAL);
-    }
+    // The per-tab "Advance" label and mode switch are gone: the option filter
+    // no longer exists (GUI_App::get_mode() is always advanced), so every
+    // setting on every tab is shown.
+    m_static_title = nullptr;
+    m_mode_view = nullptr;
 
     m_top_sizer->AddSpacer(FromDIP(16));
 

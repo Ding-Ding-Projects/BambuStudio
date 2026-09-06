@@ -6994,20 +6994,18 @@ Tab* GUI_App::get_layer_tab()
 
 ConfigOptionMode GUI_App::get_mode()
 {
-    if (!app_config->has("user_mode"))
-        return comSimple;
-    //BBS
-    const auto mode = app_config->get("user_mode");
-    return mode == "advanced" ? comAdvanced :
-           mode == "simple" ? comSimple :
-           mode == "develop" ? comDevelop : comSimple;
+    // Every process setting is shown, always. The Simple/Advanced option
+    // filter (and its header switch) no longer exists in this fork; a stored
+    // "simple" user_mode from an older profile is read as advanced. Develop
+    // mode is the one remaining distinct mode.
+    if (app_config->has("user_mode") && app_config->get("user_mode") == "develop")
+        return comDevelop;
+    return comAdvanced;
 }
 
 std::string GUI_App::get_mode_str()
 {
-    if (!app_config->has("user_mode"))
-        return "simple";
-    return app_config->get("user_mode");
+    return get_mode() == comDevelop ? "develop" : "advanced";
 }
 
 void GUI_App::save_mode(const /*ConfigOptionMode*/int mode)

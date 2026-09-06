@@ -3986,14 +3986,9 @@ Sidebar::Sidebar(Plater *parent)
         });
         add_process_row(_L("Enable support"), p->process_support, 2 /*Support*/);
 
-        // 'Advanced settings' text button (kit: tune glyph, Primary, h30).
-        auto *btn_advanced = new Button(p->m_process_card, _L("Advanced settings"));
-        btn_advanced->SetVariant(Button::Variant::Text);
-        btn_advanced->SetButtonSize(Button::Size::Small);
-        btn_advanced->SetGlyph(MaterialIcon::Tune, 17);
-        btn_advanced->SetCanFocus(false);
-        btn_advanced->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_process_advanced(true); });
-        card_sizer->Add(btn_advanced, 0, wxALIGN_LEFT | wxALL, pad / 2);
+        // No 'Advanced settings' flip: the compact card is never shown any more
+        // (process_advanced is always true below); the full tree is the only
+        // Process surface.
 
         p->m_process_card->SetSizer(card_sizer);
 
@@ -4069,13 +4064,8 @@ Sidebar::Sidebar(Plater *parent)
         p->m_process_simple_bar = new wxPanel(p->scrolled, wxID_ANY);
         p->m_process_simple_bar->SetBackgroundColour(surface_lowest);
         auto *simple_sizer = new wxBoxSizer(wxHORIZONTAL);
-        auto *btn_simple = new Button(p->m_process_simple_bar, _L("Simple settings"));
-        btn_simple->SetVariant(Button::Variant::Text);
-        btn_simple->SetButtonSize(Button::Size::Small);
-        btn_simple->SetGlyph(MaterialIcon::Tune, 17);
-        btn_simple->SetCanFocus(false);
-        btn_simple->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_process_advanced(false); });
-        simple_sizer->Add(btn_simple, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+        // No 'Simple settings' flip button: every process setting is always
+        // shown, so this bar carries only the settings search pill.
 
         // Settings search for the FULL tree, same shared MD3 SearchField pill and
         // the same OptionsSearcher (with its ".*" regex toggle and tune builder)
@@ -4108,7 +4098,10 @@ Sidebar::Sidebar(Plater *parent)
 
         // Apply the persisted compact/advanced choice (compact is the kit
         // default; 'true' restores the full legacy tree).
-        p->process_advanced = wxGetApp().app_config && wxGetApp().app_config->get("sidebar_process_advanced") == "true";
+        // Every process setting is shown by default and there is no simple
+        // mode to flip back to; the stored sidebar_process_advanced value is
+        // ignored on purpose.
+        p->process_advanced = true;
         p->m_process_card->Show(!p->process_advanced);
         p->m_process_simple_bar->Show(p->process_advanced);
         params_panel->set_host_visibility_gate(p->process_advanced);
