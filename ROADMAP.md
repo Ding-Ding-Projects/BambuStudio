@@ -47,7 +47,8 @@ captures are a separate box and stay unticked until they exist from the real bui
       removed (`67328e94f`); fresh-profile capture `prepare-full-tree-default--en-light-comfortable--after.png` (attempt 27).
 - [x] Update check reads this fork's GitHub releases and offers Setup.exe; the Bambu Lab feed and
       beta channel are no longer consulted (`5d52a8e53`, compiled on attempt 27). The dialog itself can only be captured once a release newer than the running build exists.
-- [ ] Gizmo move/rotate/scale panels use the kit value field (mono digits, filled pills); compile and capture pending.
+- [x] Gizmo move/rotate/scale panels use the kit value field (mono digits, filled pills); captured on the
+      software-GL route from attempt 27 (`gizmo-rotate-panel--...--after.png`, `gizmo-move-panel--...--after.png`).
 - [x] 24-hour clocks by default (Device pane locale strings).
 - [ ] Startup: splash names each phase; the encrypted app log still hides where a slow machine
       spends its time, so a timing instrument is the next step.
