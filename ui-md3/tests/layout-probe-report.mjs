@@ -34,6 +34,9 @@ for (const file of files) {
   const tops = new Map(records.filter((r) => r.kind === 'toplevel').map((r) => [r.hwnd, r]));
   const byHwnd = new Map(records.filter((r) => r.kind === 'window').map((r) => [r.hwnd, r]));
   const shownChain = (w) => {
+    // Dumps from builds after 2026-09-06 carry IsShownOnScreen; older dumps
+    // fall back to walking the shown flags up the parent chain.
+    if (typeof w.on_screen === 'boolean') return w.on_screen;
     for (let cur = w; cur; cur = byHwnd.get(cur.parent)) if (!cur.shown) return false;
     const top = tops.get(w.top);
     return !top || top.shown;
@@ -54,7 +57,15 @@ for (const file of files) {
       }
     }
     if (w.text_clipped) findings.push({ ...base, finding: 'text_clipped', text_width: w.text_width, client: w.client });
-    if (w.clipped_by_parent) findings.push({ ...base, finding: 'clipped_by_parent' });
+    // A top-level window is positioned by the user, not clipped by its owner;
+    // a row further down a scrolled page is scrolled out of view, not clipped.
+    // Both would otherwise flood the report (measured on Preferences: 30 of 44
+    // findings were the Developer Mode rows below the fold).
+    const underScroller = (() => {
+      for (let cur = byHwnd.get(w.parent); cur; cur = byHwnd.get(cur.parent)) if (/Scrolled/.test(cur.class)) return true;
+      return false;
+    })();
+    if (w.clipped_by_parent && w.depth > 0 && !underScroller) findings.push({ ...base, finding: 'clipped_by_parent' });
   }
 }
 
