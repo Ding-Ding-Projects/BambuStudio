@@ -134,6 +134,34 @@ function Install-WingetPackageIfMissing {
     }
 }
 
+function Set-StrawberryPerlFirst {
+    param([Parameter(Mandatory)][string] $PkgConfigPath)
+    # The dependency build runs a bare `perl Configure` for OpenSSL. Git for
+    # Windows ships its own msys perl, and Update-SessionPath APPENDS registry
+    # entries, so Git's perl stayed first and OpenSSL died on a missing
+    # Locale::Maketext::Simple (attempt five, 2026-09-05). Put Strawberry's
+    # three bin directories at the front of this process's PATH and prove the
+    # module loads before any dependency step runs.
+    $perlBin = Split-Path -Parent $PkgConfigPath                 # ...\Strawberry\perl\bin
+    $root = Split-Path -Parent (Split-Path -Parent $perlBin)     # ...\Strawberry
+    $front = @(
+        (Join-Path $root 'c\bin'),
+        (Join-Path $root 'perl\site\bin'),
+        $perlBin
+    ) | Where-Object { Test-Path -LiteralPath $_ -PathType Container }
+    $rest = ($env:Path -split ';') | Where-Object { $_ -and ($front -notcontains $_.TrimEnd('\')) }
+    $env:Path = (($front + $rest) -join ';')
+    $perl = Get-Command perl.exe -ErrorAction SilentlyContinue
+    if ($null -eq $perl -or $perl.Source -notlike "$perlBin*") {
+        throw "Strawberry Perl is not first on PATH after reordering (resolved '$($perl.Source)')."
+    }
+    & $perl.Source -MLocale::Maketext::Simple -e 1 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        throw "The perl at $($perl.Source) cannot load Locale::Maketext::Simple, which OpenSSL's Configure requires."
+    }
+    Write-BuildLog "Using Perl at $($perl.Source) (Strawberry first on PATH; Locale::Maketext::Simple loads)."
+}
+
 function Resolve-PkgConfigExecutable {
     $native = Get-Command pkg-config.exe -ErrorAction SilentlyContinue
     if ($null -ne $native) {
@@ -216,6 +244,7 @@ function Initialize-LocalToolchain {
         $pkgConfig = Resolve-PkgConfigExecutable
         $env:PKG_CONFIG_EXECUTABLE = $pkgConfig
         Write-BuildLog "Using pkg-config at $pkgConfig."
+        Set-StrawberryPerlFirst -PkgConfigPath $pkgConfig
     }
 
     Install-WingetPackageIfMissing -DisplayName '7-Zip' -PackageId '7zip.7zip' `
