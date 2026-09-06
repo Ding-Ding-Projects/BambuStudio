@@ -76,23 +76,20 @@ void CaliPresetCaliStagePanel::create_panel(wxWindow* parent)
     m_top_sizer->Add(title);
     m_top_sizer->AddSpacer(FromDIP(15));
 
-    // These two stay native wxRadioButtons on purpose. The drawn MD3 RadioBox is a
-    // label-less wxBitmapToggleButton, so adopting it here would cost the radio role,
-    // the checked state, the accessible name the label text supplies, arrow-key
-    // navigation inside the group and the automatic single-selection this code relies
-    // on -- an a11y trade the MD3 dot does not buy back. Token the type and the text
-    // colour instead so at least those stop being hardcoded (the glyph stays native).
-    m_complete_radioBox = new wxRadioButton(parent, wxID_ANY, _L("Complete Calibration"));
+    // Kit radios: LabeledRadioButton carries the radio role, checked state, the
+    // accessible name from its label and arrow-key navigation through RadioGroup,
+    // which is what the earlier native exception was protecting.
+    m_complete_radioBox = new LabeledRadioButton(parent, _L("Complete Calibration"));
     m_complete_radioBox->SetFont(Label::Body_14);
-    m_complete_radioBox->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_stage_radio_group.Add(m_complete_radioBox);
 
     m_complete_radioBox->SetValue(true);
     m_stage = CALI_MANUAL_STAGE_1;
     m_top_sizer->Add(m_complete_radioBox);
     m_top_sizer->AddSpacer(FromDIP(10));
-    m_fine_radioBox = new wxRadioButton(parent, wxID_ANY, _L("Fine Calibration based on flow ratio"));
+    m_fine_radioBox = new LabeledRadioButton(parent, _L("Fine Calibration based on flow ratio"));
     m_fine_radioBox->SetFont(Label::Body_14);
-    m_fine_radioBox->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_stage_radio_group.Add(m_fine_radioBox);
     m_top_sizer->Add(m_fine_radioBox);
 
     input_panel = new wxPanel(parent);
@@ -1082,10 +1079,11 @@ wxSizer* CalibrationPresetPage::create_slot_items_sizer(wxPanel* slot_items_pane
     for (int i = 0; i < MAX_SLOT_NUM; i++) { // 4 slots
         auto           filament_comboBox_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-        /* The slot selector stays a native wxRadioButton: it is what FilamentComboBox
-           types Set/GetRadioBox on, and the drawn RadioBox would drop the radio role and
-           checked state a screen reader reads off this row. */
-        wxRadioButton *radio_btn               = new wxRadioButton(slot_items_panel, wxID_ANY, "");
+        // Kit slot selector (no label: the combo box beside it names the slot); one
+        // RadioGroup across every slot keeps the selection single.
+        LabeledRadioButton *radio_btn          = new LabeledRadioButton(slot_items_panel);
+        radio_btn->SetBackgroundColour(ThemeColor::White);
+        m_slot_radio_group.Add(radio_btn);
         CheckBox *     check_box               = new CheckBox(slot_items_panel);
         /* The plate has to be set explicitly; the CheckBox cannot inherit it. The glyph is
            transparent outside its rounded square and the button is wxBORDER_NONE + owner

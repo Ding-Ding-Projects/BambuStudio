@@ -46,8 +46,10 @@ protected:
     // automatic single-selection for a themed dot. Their type and text colour are
     // tokened in create_panel(); the glyph itself stays an OS radio until a RadioBox
     // that carries a label and a radio role exists.
-    wxRadioButton* m_complete_radioBox;
-    wxRadioButton* m_fine_radioBox;
+    LabeledRadioButton* m_complete_radioBox;
+    LabeledRadioButton* m_fine_radioBox;
+    RadioGroup m_stage_radio_group;
+    RadioGroup m_slot_radio_group;
     TextInput *    flow_ratio_input;
     wxPanel*       input_panel;
     float m_flow_ratio_value;

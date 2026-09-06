@@ -7,6 +7,7 @@
 #include "wxExtensions.hpp"
 #include "GUI_Utils.hpp"
 #include "Widgets/RadioBox.hpp"
+#include "Widgets/LabeledRadioButton.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/Label.hpp"
@@ -84,6 +85,7 @@ class SavePresetDialog : public DPIDialog
     wxStaticText*       m_label             {nullptr};
     wxBoxSizer*         m_radio_sizer       {nullptr};  
     ActionType          m_action            {UndefAction};
+    RadioGroup          m_action_radio_group;
 
     std::string         m_ph_printer_name;
     std::string         m_old_preset_name;

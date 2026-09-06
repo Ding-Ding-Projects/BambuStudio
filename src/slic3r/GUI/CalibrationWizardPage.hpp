@@ -3,6 +3,7 @@
 
 #include "wx/event.h"
 #include "Widgets/Button.hpp"
+#include "Widgets/LabeledRadioButton.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/AMSControl.hpp"
@@ -100,8 +101,8 @@ public:
     CalibrateFilamentComboBox* GetComboBox() { return m_comboBox; }
     CheckBox* GetCheckBox() { return m_checkBox; }
     void SetCheckBox(CheckBox* cb) { m_checkBox = cb; }
-    wxRadioButton* GetRadioBox() { return m_radioBox; }
-    void SetRadioBox(wxRadioButton* btn) { m_radioBox = btn; }
+    LabeledRadioButton* GetRadioBox() { return m_radioBox; }
+    void SetRadioBox(LabeledRadioButton* btn) { m_radioBox = btn; }
     virtual bool Show(bool show = true);
     virtual bool Enable(bool enable);
     virtual void SetValue(bool value, bool send_event = true);
@@ -125,7 +126,7 @@ protected:
     bool m_is_bbl_filamnet{ false };
 
     CheckBox* m_checkBox{ nullptr };
-    wxRadioButton* m_radioBox{ nullptr };
+    LabeledRadioButton* m_radioBox{ nullptr };
     CalibrateFilamentComboBox* m_comboBox{ nullptr };
     wxStaticBitmap* m_nozzle_bmp{ nullptr };
     ComboBox* m_nozzle_combo{ nullptr };

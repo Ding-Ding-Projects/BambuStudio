@@ -6,6 +6,7 @@
 #include "StateColor.hpp" // MD3 tokens (namespace ThemeColor) for the theme-colour macros below
 #include "StepCtrl.hpp"
 #include "Button.hpp"
+#include "LabeledRadioButton.hpp"
 #include "../DeviceManager.hpp"
 #include "slic3r/GUI/Event.hpp"
 #include "slic3r/GUI/AmsMappingPopup.hpp"
@@ -972,10 +973,10 @@ private:
     int m_extruder_num{};
     std::string m_printer_type;
     wxString m_filament_id{};
-    wxRadioButton* m_radioHelper{nullptr};
-    wxRadioButton* m_leftRadio{nullptr};
-    wxRadioButton* m_rightRadio{nullptr};
-    wxRadioButton* m_lastChecked{nullptr};
+    LabeledRadioButton* m_leftRadio{nullptr};
+    LabeledRadioButton* m_rightRadio{nullptr};
+    LabeledRadioButton* m_lastChecked{nullptr};
+    RadioGroup m_radioGroup;
     DevExtruderImage* m_extruderImage{nullptr};
     Button* m_confirmBtn{nullptr};
     std::optional<int> m_load_extruder_id = std::nullopt;

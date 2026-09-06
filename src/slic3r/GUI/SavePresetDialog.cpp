@@ -460,7 +460,8 @@ void SavePresetDialog::add_info_for_edit_ph_printer(wxBoxSizer *sizer)
 
     wxStaticBoxSizer *stb_sizer = new wxStaticBoxSizer(action_stb, wxVERTICAL);
     for (int id = 0; id < 3; id++) {
-        wxRadioButton *btn = new wxRadioButton(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, id == 0 ? wxRB_GROUP : 0);
+        LabeledRadioButton *btn = new LabeledRadioButton(this);
+        m_action_radio_group.Add(btn);
         btn->SetValue(id == int(ChangePreset));
         btn->Bind(wxEVT_RADIOBUTTON, [this, id](wxCommandEvent &) { m_action = (ActionType) id; });
         stb_sizer->Add(btn, 0, wxEXPAND | wxTOP, 5);

@@ -301,6 +301,24 @@ test('the kit Label seeds MD3 roles, not the legacy palette', async () => {
     'Label::SetLabel must compare against wxStaticText::GetLabel() as well as m_text');
 });
 
+test('every radio is the kit LabeledRadioButton, which carries the radio role and group navigation', async () => {
+  // The earlier native exception existed because the bare RadioBox lost the radio
+  // role, checked state, accessible name and arrow keys. LabeledRadioButton and
+  // RadioGroup supply all four, so no stock wxRadioButton may remain.
+  assertOnlyAllowed(await sitesOf(/new wxRadioButton\(/g), new Set(), 'wxRadioButton');
+  const widget = stripComments(await read('Widgets', 'LabeledRadioButton.cpp'));
+  assert.match(widget, /wxROLE_SYSTEM_RADIOBUTTON/, 'the accessible peer must report the radio role');
+  assert.match(widget, /wxACC_STATE_SYSTEM_CHECKED/, 'the accessible peer must expose the checked state');
+  assert.match(widget, /wxCommandEvent event\(wxEVT_RADIOBUTTON, GetId\(\)\);/, 'activation must emit wxEVT_RADIOBUTTON from the row');
+  assert.match(widget, /case WXK_UP: case WXK_LEFT:\s+moveTo\(here - 1\)/, 'RadioGroup must move selection with the arrow keys');
+  assert.match(widget, /new RadioBox\(this\)/, 'the row must draw the kit RadioBox glyph');
+  const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
+  assert.match(cmake, /^\s*GUI\/Widgets\/LabeledRadioButton\.cpp\s*$/m, 'LabeledRadioButton.cpp must be registered');
+  const page = stripComments(await read('CalibrationWizardPage.hpp'));
+  assert.doesNotMatch(page, /wxRadioButton/, 'FilamentComboBox must type its slot radio as the kit row');
+  assert.match(page, /void SetRadioBox\(LabeledRadioButton\* btn\)/, 'SetRadioBox must take the kit row');
+});
+
 test('no window is sized by an unscaled pixel literal', async () => {
   // SetSize/SetMinSize/SetMaxSize(wxSize(N, M)) with a positive literal is a
   // 100%-only size: at 150% and 200% it clips whatever it holds. The zero and

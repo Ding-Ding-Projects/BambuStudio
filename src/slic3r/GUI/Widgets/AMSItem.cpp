@@ -4296,16 +4296,14 @@ FeedDirectionDialog::FeedDirectionDialog(wxWindow* parent,
 
     wxGridSizer* topSizer = new wxGridSizer (1, 3, FromDIP(5), 0);
 
-    m_radioHelper = new wxRadioButton(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-    m_leftRadio = new wxRadioButton(this, wxID_ANY,
+    // Kit radios in one RadioGroup. "No choice yet" is GetSelection() == -1, which
+    // replaces the hidden helper wxRadioButton the native version needed.
+    m_leftRadio = new LabeledRadioButton(this,
         _L(DevPrinterConfigUtil::get_toolhead_display_name(m_printer_type, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::TitleCase, true)));
-    m_rightRadio = new wxRadioButton(this, wxID_ANY,
+    m_rightRadio = new LabeledRadioButton(this,
         _L(DevPrinterConfigUtil::get_toolhead_display_name(m_printer_type, MAIN_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::TitleCase, true)));
-    m_radioHelper->Show(false);
-    m_radioHelper->SetCanFocus(false);
-
-    m_leftRadio->SetForegroundColour(ThemeColor::TextPrimary);
-    m_rightRadio->SetForegroundColour(ThemeColor::TextPrimary);
+    m_radioGroup.Add(m_leftRadio);
+    m_radioGroup.Add(m_rightRadio);
 
     topSizer->Add(m_leftRadio, 0, wxALIGN_CENTER | wxALL, FromDIP(20));
     m_extruderImage = new DevExtruderImage(this, wxID_ANY, m_extruder_num);
@@ -4330,7 +4328,7 @@ FeedDirectionDialog::FeedDirectionDialog(wxWindow* parent,
     MD3DialogCaption::Adopt(this, _L("Confirm"));
     Centre(wxBOTH);
 
-    m_lastChecked = m_radioHelper;
+    m_lastChecked = nullptr;
     m_confirmBtn->Bind(wxEVT_BUTTON, &FeedDirectionDialog::OnConfirm, this);
     m_leftRadio->Bind(wxEVT_RADIOBUTTON, &FeedDirectionDialog::OnRadioClicked, this);
     m_rightRadio->Bind(wxEVT_RADIOBUTTON, &FeedDirectionDialog::OnRadioClicked, this);
@@ -4343,12 +4341,13 @@ void FeedDirectionDialog::OnConfirm(wxCommandEvent& event)
 
 void FeedDirectionDialog::OnRadioClicked(wxCommandEvent& evt)
 {
-    auto clicked = static_cast<wxRadioButton*>(evt.GetEventObject());
+    auto clicked = static_cast<LabeledRadioButton*>(evt.GetEventObject());
     m_load_extruder_id = std::nullopt;
     if (clicked == m_lastChecked)
     {
-        m_radioHelper->SetValue(true);
-        m_lastChecked = m_radioHelper;
+        // Second activation of the selected side clears the choice.
+        m_radioGroup.SetSelection(-1);
+        m_lastChecked = nullptr;
         m_confirmBtn->Enable(false);
         m_extruderImage->update(DevExtruderState::EMPTY_LOAD, DevExtruderState::EMPTY_LOAD);
         m_extruderImage->setExtruderUsed("");
