@@ -1571,7 +1571,7 @@ namespace Slic3r
                 // Clamp only for genuinely narrow canvases; at normal desktop
                 // widths the dock is the same 344 DIP column as the Material
                 // reference and occupies the canvas above the bottom timeline.
-                const float legend_width = std::max(1.0f, std::min(float(MD3::Metrics::comfortable.sidebar_width) * m_scale, available_width - 12.0f * m_scale));
+                const float legend_width = std::max(1.0f, std::min(float(MD3::Metrics::active().sidebar_width) * m_scale, available_width - 12.0f * m_scale));
                 ImGui::SetNextWindowSize({ legend_width, dock_collapsed ? header_height : max_height }, ImGuiCond_Always);
                 imgui.begin(std::string("Legend"), ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove |
@@ -3006,7 +3006,7 @@ namespace Slic3r
                     draw_list->ChannelsSetCurrent(0);
                     // Statistics card: sc-highest fill + outline-variant hairline
                     // at the card radius, matching the kit Preview statistics card.
-                    const float stats_radius = float(MD3::Metrics::comfortable.radius) * m_scale;
+                    const float stats_radius = float(MD3::Metrics::active().radius) * m_scale;
                     draw_list->AddRectFilled(stats_min, stats_max, ImGui::GetColorU32(md3_imgui_color(MD3::Role::SurfaceContainerHighest, m_is_dark)), stats_radius);
                     draw_list->AddRect(stats_min, stats_max, ImGui::GetColorU32(outline), stats_radius, 0, 1.0f * m_scale);
                     draw_list->ChannelsMerge();

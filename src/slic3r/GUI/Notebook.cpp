@@ -204,7 +204,7 @@ void ButtonsListCtrl::StyleButton(Button* button, bool selected)
     // is already correct, so only the horizontal padding moves off the compact
     // density value (10). Vertical padding stays at the compact gap since the
     // tab height is pinned by SetMinSize.
-    button->SetPaddingSize({FromDIP(tab_horizontal_padding), FromDIP(MD3::Metrics::compact.gap)});
+    button->SetPaddingSize({FromDIP(tab_horizontal_padding), FromDIP(MD3::Metrics::active().gap)});
 
     // Kit tab label is body-s 13.5px: active SemiBold/600, inactive Normal/400.
     // Head_13 already carries the 13.5px/600 face (px-pinned), so clone it and

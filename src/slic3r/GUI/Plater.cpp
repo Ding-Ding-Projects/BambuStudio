@@ -2896,7 +2896,7 @@ Sidebar::Sidebar(Plater *parent)
     // Explicit small minimum: the body must never dictate the sidebar/frame
     // minimum size again — content taller than the window becomes scrollable
     // instead of a hard window-size floor.
-    p->scrolled->SetMinSize(wxSize(FromDIP(MD3::Metrics::compact.sidebar_width), FromDIP(240)));
+    p->scrolled->SetMinSize(wxSize(FromDIP(MD3::Metrics::active().sidebar_width), FromDIP(240)));
     const wxColour surface_low    = StateColor::semantic(MD3::Role::SurfaceContainerLow);
     const wxColour surface_lowest = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     const wxColour surface_high   = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
@@ -4959,7 +4959,7 @@ void Sidebar::change_top_border_for_mode_sizer(bool increase_border)
 
 void Sidebar::msw_rescale()
 {
-    SetMinSize(wxSize(FromDIP(MD3::Metrics::compact.sidebar_width), -1));
+    SetMinSize(wxSize(FromDIP(MD3::Metrics::active().sidebar_width), -1));
     // No fixed-height title bar: the Printer header is a content-sized
     // SectionHeader (DPI-safe by construction, no rescale call needed), and the
     // Filament title row now sizes to its own content the same way.
@@ -4986,10 +4986,10 @@ void Sidebar::msw_rescale()
         apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, glyph_col);
         apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, glyph_col);
     }
-    p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::compact.row_height / 2));
+    p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
     p->btn_add_filament_row->SetPaddingSize({FromDIP(10), FromDIP(6)});
-    p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::compact.row_height)});
-    p->btn_add_filament_row->SetMaxSize({-1, FromDIP(MD3::Metrics::compact.row_height)});
+    p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});
+    p->btn_add_filament_row->SetMaxSize({-1, FromDIP(MD3::Metrics::active().row_height)});
     p->btn_add_filament_row->Rescale();
     p->m_flushing_volume_btn->Rescale();
     p->m_purge_mode_btn->Rescale();
@@ -8918,7 +8918,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
                                    .BottomDockable(true)
                                    .Floatable(wxGetApp().app_config->get_bool("enable_sidebar_floatable"))
                                    .Resizable(true)
-                                   .MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), 90 * wxGetApp().em_unit()))
+                                   .MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * wxGetApp().em_unit()))
                                    .BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * wxGetApp().em_unit())));
 
     auto *panel_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -10882,7 +10882,7 @@ void Plater::priv::apply_sidebar_dock(bool force_dock, bool reset_size, bool upd
         const int min_h   = q->FromDIP(260);
         const int avail_h = q->GetClientSize().GetHeight();
         const int cap_h   = avail_h > 0 ? std::max(min_h, (avail_h * 2) / 5) : min_h;
-        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), min_h));
+        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), min_h));
         if (set_best_size)
             pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), cap_h));
         if (position == "top")
@@ -10892,7 +10892,7 @@ void Plater::priv::apply_sidebar_dock(bool force_dock, bool reset_size, bool upd
     } else {
         // Horizontal split: fixed-width column, existing behavior mirrored on the
         // chosen side.
-        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::compact.sidebar_width), 90 * em));
+        pane.MinSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * em));
         if (set_best_size)
             pane.BestSize(wxSize(q->FromDIP(MD3::Metrics::active().sidebar_width), 90 * em));
         if (position == "right")

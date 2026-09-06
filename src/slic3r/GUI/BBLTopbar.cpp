@@ -482,7 +482,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
                 radius      = d / 2;
             } else {
                 state_rect.Deflate(wnd->FromDIP(2), wnd->FromDIP(4));
-                radius = wnd->FromDIP(MD3::Metrics::compact.small_radius);
+                radius = wnd->FromDIP(MD3::Metrics::active().small_radius);
             }
             dc.SetPen(*wxTRANSPARENT_PEN);
             dc.SetBrush(wxBrush(state_layer));
@@ -553,7 +553,7 @@ void BBLTopbar::Init(wxFrame* parent)
     if (m_history_branch.IsEmpty())
         m_history_branch = "main";
 
-    this->AddSpacer(FromDIP(MD3::Metrics::compact.gap));
+    this->AddSpacer(FromDIP(MD3::Metrics::active().gap));
 
     // §3.1 brand tile: r8 Primary square + on-primary 'deployed_code' glyph,
     // followed by the 'Bambu Studio' wordmark (drawn as this tool's label).
@@ -562,7 +562,7 @@ void BBLTopbar::Init(wxFrame* parent)
     m_brand_item->SetHoverBitmap(brand_bitmap);
     m_brand_item->SetActive(false);
 
-    this->AddSpacer(FromDIP(MD3::Metrics::compact.gap));
+    this->AddSpacer(FromDIP(MD3::Metrics::active().gap));
 
     // Each application menu is a first-class top-bar control.  The menu objects
     // are still built and owned by MainFrame, so existing handlers, update-UI

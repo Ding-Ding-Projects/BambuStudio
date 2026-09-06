@@ -227,7 +227,7 @@ static wxBitmap device_idle_thumbnail_tile(wxWindow *ref, int logical_px)
             gc->SetBrush(wxBrush(device_control_emphasis_color()));
             // Logical coordinate space (gc is already DPI-scaled), so the radius is
             // the raw kit metric (comfortable.radius == 16) — no FromDIP here.
-            gc->DrawRoundedRectangle(0, 0, logical_px, logical_px, MD3::Metrics::comfortable.radius);
+            gc->DrawRoundedRectangle(0, 0, logical_px, logical_px, MD3::Metrics::active().radius);
             const int glyph_px = std::max(1, static_cast<int>(logical_px * 0.4 + 0.5));
             // The variable icon face must not reach GDI+ as a font (heap
             // corruption); composite a plain-GDI raster at device resolution

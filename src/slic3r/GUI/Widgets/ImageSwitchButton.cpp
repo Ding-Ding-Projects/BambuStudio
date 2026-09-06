@@ -28,20 +28,23 @@ EVT_PAINT(FanSwitchButton::paintEvent)
 
 END_EVENT_TABLE()
 
-static const wxColour DEFAULT_HOVER_COL = ThemeColor::BrandGreenHovered;
-static const wxColour DEFAULT_PRESS_COL = ThemeColor::Grey300;
+// MD3 roles, resolved per construction like SideButton: hover/focus outline in
+// Primary, pressed fill in SurfaceContainerHighest, resting fill in Surface.
+using R = MD3::Role;
+#define DEFAULT_HOVER_COL StateColor::semantic(R::Primary)
+#define DEFAULT_PRESS_COL StateColor::semantic(R::SurfaceContainerHighest)
 
 ImageSwitchButton::ImageSwitchButton(wxWindow *parent, ScalableBitmap &img_on, ScalableBitmap &img_off, long style)
-    : text_color(std::make_pair(ThemeColor::TextMuted, (int) StateColor::Disabled), std::make_pair(ThemeColor::TextPrimary, (int) StateColor::Normal))
+    : text_color(std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int) StateColor::Disabled), std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Normal))
 {
     radius = 0;
     m_padding = 0;
     m_on         = img_on;
     m_off        = img_off;
-    background_color = StateColor(std::make_pair(ThemeColor::White, (int) StateColor::Disabled), std::make_pair(DEFAULT_PRESS_COL, (int) StateColor::Pressed),
-                                  std::make_pair(ThemeColor::White, (int) StateColor::Normal));
-    border_color = StateColor(std::make_pair(ThemeColor::White, (int) StateColor::Disabled), std::make_pair(DEFAULT_HOVER_COL, (int) StateColor::Focused),
-                              std::make_pair(DEFAULT_HOVER_COL, (int) StateColor::Hovered), std::make_pair(ThemeColor::White, (int) StateColor::Normal));
+    background_color = StateColor(std::make_pair(StateColor::semantic(R::Surface), (int) StateColor::Disabled), std::make_pair(DEFAULT_PRESS_COL, (int) StateColor::Pressed),
+                                  std::make_pair(StateColor::semantic(R::Surface), (int) StateColor::Normal));
+    border_color = StateColor(std::make_pair(StateColor::semantic(R::Surface), (int) StateColor::Disabled), std::make_pair(DEFAULT_HOVER_COL, (int) StateColor::Focused),
+                              std::make_pair(DEFAULT_HOVER_COL, (int) StateColor::Hovered), std::make_pair(StateColor::semantic(R::Surface), (int) StateColor::Normal));
 
     StaticBox::Create(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, style);
 
@@ -195,17 +198,17 @@ void ImageSwitchButton::sendButtonEvent()
 }
 
 FanSwitchButton::FanSwitchButton(wxWindow* parent, ScalableBitmap& img_on, ScalableBitmap& img_off, long style)
-    : text_color(std::make_pair(ThemeColor::TextMuted, (int)StateColor::Disabled), std::make_pair(ThemeColor::TextPrimary, (int)StateColor::Normal))
+    : text_color(std::make_pair(StateColor::semantic(R::OnSurfaceVariant), (int)StateColor::Disabled), std::make_pair(StateColor::semantic(R::OnSurface), (int)StateColor::Normal))
 {
     radius = 0;
     m_padding = 0;
     m_speed = 0;
     m_on = img_on;
     m_off = img_off;
-    background_color = StateColor(std::make_pair(ThemeColor::White, (int)StateColor::Disabled), std::make_pair(DEFAULT_PRESS_COL, (int)StateColor::Pressed),
-        std::make_pair(ThemeColor::White, (int)StateColor::Normal));
-    border_color = StateColor(std::make_pair(ThemeColor::White, (int)StateColor::Disabled), std::make_pair(DEFAULT_HOVER_COL, (int)StateColor::Focused),
-        std::make_pair(DEFAULT_HOVER_COL, (int)StateColor::Hovered), std::make_pair(ThemeColor::White, (int)StateColor::Normal));
+    background_color = StateColor(std::make_pair(StateColor::semantic(R::Surface), (int)StateColor::Disabled), std::make_pair(DEFAULT_PRESS_COL, (int)StateColor::Pressed),
+        std::make_pair(StateColor::semantic(R::Surface), (int)StateColor::Normal));
+    border_color = StateColor(std::make_pair(StateColor::semantic(R::Surface), (int)StateColor::Disabled), std::make_pair(DEFAULT_HOVER_COL, (int)StateColor::Focused),
+        std::make_pair(DEFAULT_HOVER_COL, (int)StateColor::Hovered), std::make_pair(StateColor::semantic(R::Surface), (int)StateColor::Normal));
 
     StaticBox::Create(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, style);
 

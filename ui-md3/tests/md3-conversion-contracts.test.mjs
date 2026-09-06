@@ -415,6 +415,19 @@ test('every static bitmap is inventoried in the triage CSV, and none is an unacc
   for (const r of rows) assert.ok(['data', 'glyph', 'badge', 'md3-rendered', 'unclassified'].includes(r.verdict), `${r.file}:${r.lineNo} unknown verdict ${r.verdict}`);
 });
 
+test('density metrics are read live through Metrics::active(), not pinned to one preset', async () => {
+  // A read of Metrics::comfortable.<field> or Metrics::compact.<field> ignores the
+  // Appearance > Density choice until restart. Only the tokens header (which
+  // defines the presets) and StaticBox (whose SetDensity() switches its default
+  // radius between the two) may name a preset directly.
+  assertOnlyAllowed(await sitesOf(/MD3::Metrics::(?:comfortable|compact)\./g), new Set([
+    'Widgets/StaticBox.cpp', // the density switch itself and the compact default seed
+  ]), 'pinned density preset read');
+  const stateColorFree = stripComments(await read('Widgets', 'ImageSwitchButton.cpp'));
+  assert.doesNotMatch(stateColorFree, /ThemeColor::/, 'ImageSwitchButton must resolve its colours from MD3 roles');
+  assert.match(stateColorFree, /StateColor::semantic\(R::Primary\)/, 'ImageSwitchButton hover/focus outline must be Primary');
+});
+
 test('no window is sized by an unscaled pixel literal', async () => {
   // SetSize/SetMinSize/SetMaxSize(wxSize(N, M)) with a positive literal is a
   // 100%-only size: at 150% and 200% it clips whatever it holds. The zero and
