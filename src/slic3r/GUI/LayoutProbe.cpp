@@ -29,6 +29,7 @@
 #include <wx/window.h>
 
 #include <atomic>
+#include <functional>
 #include <cstdint>
 #include <sstream>
 #include <string>
@@ -421,7 +422,16 @@ bool handle_command(const std::wstring &payload)
         }
         if (payload.compare(0, scroll.size(), scroll) == 0) {
             const unsigned long long h = std::wcstoull(payload.substr(scroll.size()).c_str(), nullptr, 0);
-            wxWindow *w = wxWindow::FindWindowByHandle(reinterpret_cast<WXWidget>(h));
+            // Portable handle lookup: walk every top-level window's tree.
+            std::function<wxWindow *(wxWindow *)> find_by_handle = [&](wxWindow *cur) -> wxWindow * {
+                if (handle_of(cur) == static_cast<std::uintptr_t>(h)) return cur;
+                for (wxWindow *child : cur->GetChildren())
+                    if (wxWindow *hit = find_by_handle(child)) return hit;
+                return nullptr;
+            };
+            wxWindow *w = nullptr;
+            for (wxWindow *top : wxTopLevelWindows)
+                if ((w = find_by_handle(top)) != nullptr) break;
             if (auto *sw = dynamic_cast<wxScrolledWindow *>(w)) {
                 int x = 0, y = 0; sw->GetVirtualSize(&x, &y);
                 int ux = 0, uy = 0; sw->GetScrollPixelsPerUnit(&ux, &uy);
