@@ -13,7 +13,9 @@
 #include <wx/dcgraph.h>
 #include "CalibUtils.hpp"
 #include "../Utils/ColorSpaceConvert.hpp"
+#include "../Utils/BBLUtil.hpp"
 #include "EncodedFilament.hpp"
+#include "FilamentBitmapUtils.hpp"
 
 
 #include "DeviceCore/DevConfig.h"
@@ -24,6 +26,7 @@
 
 #include "fila_manager/wgtFilaManagerStore.h"
 #include "fila_manager/wgtFilaManagerCloudDispatcher.h"
+#include "fila_manager/wgtFilaManagerCloudSync.h"
 #include "Widgets/Label.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 
@@ -164,9 +167,9 @@ void AMSMaterialsSetting::create()
     m_sizer_button->Add(m_button_reset, 0, wxALIGN_CENTER | wxRIGHT, FromDIP(20));
     m_sizer_button->Add(m_button_close, 0, wxALIGN_CENTER, 0);
 
-    m_sizer_main->Add(m_panel_normal, 0, wxALL, FromDIP(2));
+    m_sizer_main->Add(m_panel_normal, 0, 0, 0);
 
-    m_sizer_main->Add(m_panel_kn, 0, wxALL, FromDIP(2));
+    m_sizer_main->Add(m_panel_kn, 0, 0, 0);
 
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(24));
     m_sizer_main->Add(m_sizer_button, 0,  wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
@@ -596,9 +599,8 @@ std::vector<ColorPickerPopup::ColorItem> AMSMaterialsSetting::get_preset_color_i
 
         std::string key = std::to_string(item.ctype);
         for (const wxColour& color : fila_color.m_colors) {
-            wxColour solid_color(color.Red(), color.Green(), color.Blue(), 255);
-            item.colors.emplace_back(solid_color);
-            key += "|" + colour_to_ams_string(solid_color);
+            item.colors.emplace_back(color);
+            key += "|" + colour_to_ams_string(color);
         }
 
         if (item.colors.empty() || !seen.insert(key).second) continue;
@@ -736,6 +738,13 @@ sCheckFilamentInfo(PresetBundle* preset_bundle,
     return result;
 }
 
+namespace {
+
+void remember_ams_recent_filament_preset(
+    const wxString& selected);
+
+} // namespace
+
 void AMSMaterialsSetting::on_select_ok(wxCommandEvent& event)
 {
     if (!obj) {
@@ -858,6 +867,13 @@ void AMSMaterialsSetting::on_select_ok(wxCommandEvent& event)
     if (m_is_third) {
         obj->command_ams_filament_settings(ams_id, slot_id, ams_filament_id, ams_setting_id, tray_color, m_filament_type, nozzle_temp_min_int, nozzle_temp_max_int,
                                            tray_colors, tray_ctype);
+
+        // Filament Manager entries are identified by their spool ID. Only
+        // remember actual system-preset aliases in the shared recent list.
+        if (m_selected_spool_id.empty()) {
+            remember_ams_recent_filament_preset(
+                m_comboBox_filament->GetValue());
+        }
     }
 
     // Optimistic local update: write the new color into the tray object immediately
@@ -973,22 +989,13 @@ void AMSMaterialsSetting::on_select_ok(wxCommandEvent& event)
                                          ams_id,
                                          resolved_ams_type,
                                          std::to_string(slot_id))) {
-                store->save();
-                // Push in-printer snapshot to cloud.
-                if (auto* disp = wxGetApp().fila_manager_cloud_disp()) {
-                    const FilamentSpool* s = store->get_spool(m_selected_spool_id);
-                    if (s) {
-                        nlohmann::json patch = {
-                            {"in_printer",  s->in_printer},
-                            {"dev_id",      s->dev_id},
-                            {"ams_sn",      s->ams_sn},
-                            {"ams_id",      s->ams_id},
-                            {"ams_type",    s->ams_type},
-                            {"slot_id",     s->slot_id},
-                            {"device_name", s->device_name}
-                        };
-                        disp->enqueue_push_update(m_selected_spool_id, patch);
-                    }
+                // 手动绑定卷通过 slot-mappings/sync 上报绑定关系到云端。
+                // 官方 RFID 卷（tag_uid 有效）不走此路径（它们由 MQTT sync 自动
+                // 更新 in-printer 状态；手动绑定通常只针对无 RFID 的手动录入卷）。
+                if (auto* cloud = wxGetApp().fila_manager_cloud_sync()) {
+                    cloud->sync_slot_bindings_to_cloud(obj->get_dev_id(),
+                                                       {m_selected_spool_id},
+                                                       /*is_bind=*/true);
                 }
             }
         }
@@ -1260,10 +1267,19 @@ static wxBitmap _make_spool_color_chip(wxWindow* ctx, const Slic3r::GUI::Filamen
 
 static wxString _spool_display_name(const Slic3r::GUI::FilamentSpool& sp)
 {
-    if (!sp.series.empty())        return wxString::FromUTF8(sp.series);
-    if (!sp.material_type.empty()) return wxString::FromUTF8(sp.material_type);
-    if (!sp.color_name.empty())    return wxString::FromUTF8(sp.color_name);
-    return _L("Filament");
+    wxString name_part;
+    if (!sp.series.empty())
+        name_part = wxString::FromUTF8(sp.series);
+    else if (!sp.material_type.empty())
+        name_part = wxString::FromUTF8(sp.material_type);
+    else if (!sp.color_name.empty())
+        name_part = wxString::FromUTF8(sp.color_name);
+    else
+        name_part = _L("Filament");
+
+    if (!sp.brand.empty())
+        return wxString::FromUTF8(sp.brand) + " " + name_part;
+    return name_part;
 }
 
 static wxString _spool_note_line(const Slic3r::GUI::FilamentSpool& sp)
@@ -1379,11 +1395,83 @@ static wxBitmap _render_spool_row_bitmap(wxWindow* ctx,
 //
 // The "(N)" suffix on Filament Manager group keys prevents DropDown's
 // top-level de-duplication from merging same-brand rows across sections.
+namespace {
+
+constexpr size_t AMS_RECENT_FILAMENT_PRESETS_MAX = 5;
+constexpr const char* AMS_RECENT_FILAMENT_PRESETS_KEY =
+    "ams_recent_filament_presets";
+
+std::vector<wxString> parse_ams_recent_filament_presets(
+    const std::string& value)
+{
+    std::vector<wxString> result;
+    std::stringstream stream(value);
+    std::string item;
+
+    while (std::getline(stream, item, '\n')) {
+        if (!item.empty())
+            result.emplace_back(from_u8(item));
+    }
+
+    return result;
+}
+
+std::string serialize_ams_recent_filament_presets(
+    const std::vector<wxString>& items)
+{
+    std::string value;
+
+    for (const wxString& item : items) {
+        if (item.empty())
+            continue;
+
+        if (!value.empty())
+            value += '\n';
+
+        value += into_u8(item);
+    }
+
+    return value;
+}
+
+std::vector<wxString> load_ams_recent_filament_presets()
+{
+    return parse_ams_recent_filament_presets(
+        wxGetApp().app_config->get(
+            AMS_RECENT_FILAMENT_PRESETS_KEY));
+}
+
+void remember_ams_recent_filament_preset(
+    const wxString& selected)
+{
+    if (selected.empty())
+        return;
+
+    std::vector<wxString> items =
+        load_ams_recent_filament_presets();
+
+    items.erase(
+        std::remove(items.begin(), items.end(), selected),
+        items.end());
+
+    items.insert(items.begin(), selected);
+
+    if (items.size() > AMS_RECENT_FILAMENT_PRESETS_MAX)
+        items.resize(AMS_RECENT_FILAMENT_PRESETS_MAX);
+
+    wxGetApp().app_config->set(
+        AMS_RECENT_FILAMENT_PRESETS_KEY,
+        serialize_ams_recent_filament_presets(items));
+}
+
+} // namespace
+
 static void _populate_filament_combobox_grouped(
     ::ComboBox*                                    combo,
     const wxArrayString&                           filament_items,
     const std::unordered_map<wxString, wxString>&  query_filament_vendors,
     const std::unordered_map<wxString, wxString>&  query_filament_types,
+    const std::vector<wxString>&                   recent_filament_items,
     std::map<int, std::string>*                    out_idx_to_spool_id = nullptr)
 {
     if (!combo) return;
@@ -1423,6 +1511,24 @@ static void _populate_filament_combobox_grouped(
     };
     for (auto& kv : brand_to_aliases)
         std::sort(kv.second.begin(), kv.second.end(), _intra_bucket_sorter);
+
+    // Keep recently used system presets in their shared recency order. This is
+    // an additive shortcut group: the aliases stay in their vendor buckets so
+    // they remain reachable under the brand they belong to.
+    std::vector<wxString> recent_aliases;
+
+    for (const wxString& recent : recent_filament_items) {
+        for (const auto& [vendor, aliases] : brand_to_aliases) {
+            auto alias_it =
+                std::find(aliases.begin(), aliases.end(), recent);
+
+            if (alias_it == aliases.end())
+                continue;
+
+            recent_aliases.emplace_back(*alias_it);
+            break;
+        }
+    }
 
     std::vector<wxString> ordered_brands;
     for (const wxString& b : priority_brands)
@@ -1591,14 +1697,36 @@ static void _populate_filament_combobox_grouped(
     }
 
     // Section 2
-    if (!ordered_brands.empty()) {
-        combo->Append(_L("System presets"), wxNullBitmap, DD_ITEM_STYLE_SPLIT_ITEM);
-                for (const wxString& brand : ordered_brands) {
-                    for (const wxString& alias : brand_to_aliases[brand]) {
-                        combo->Append(alias, wxNullBitmap, brand, nullptr, 0);
-                    }
-                }
+    if (!recent_aliases.empty() || !ordered_brands.empty()) {
+        combo->Append(
+            _L("System presets"),
+            wxNullBitmap,
+            DD_ITEM_STYLE_SPLIT_ITEM);
+
+        if (!recent_aliases.empty()) {
+            const wxString recent_group = _L("Recently used");
+
+            for (const wxString& alias : recent_aliases) {
+                combo->Append(
+                    alias,
+                    wxNullBitmap,
+                    recent_group,
+                    nullptr,
+                    0);
             }
+        }
+
+        for (const wxString& brand : ordered_brands) {
+            for (const wxString& alias : brand_to_aliases[brand]) {
+                combo->Append(
+                    alias,
+                    wxNullBitmap,
+                    brand,
+                    nullptr,
+                    0);
+            }
+        }
+    }
 }
 
 static void _collect_filament_info(const wxString& shown_name,
@@ -1693,6 +1821,11 @@ Preset* AMSMaterialsSetting::get_filament_by_id(const std::string& filament_id, 
 void AMSMaterialsSetting::Popup(wxString filament, wxString sn, wxString temp_min, wxString temp_max, wxString k, wxString n)
 {
     if (!obj) return;
+    BOOST_LOG_TRIVIAL(info) << "AMSMaterialsSetting::Popup dev_id=" << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id())
+                             << ", ams_id=" << ams_id << ", slot_id=" << slot_id
+                             << ", calib_version_inited=" << obj->GetCalib()->IsVersionInited()
+                             << ", pa_history_ready=" << obj->GetCalib()->IsPAHistoryReady()
+                             << ", pa_history_status=" << (int)obj->GetCalib()->GetPAHistoryStatus();
     update_widgets();
     // set default value
     if (k.IsEmpty())
@@ -1797,10 +1930,15 @@ void AMSMaterialsSetting::Popup(wxString filament, wxString sn, wxString temp_mi
     // the hint via a linear scan of the alias list.
     m_combo_idx_to_spool_id.clear();
     m_selected_spool_id.clear();
+
+    const std::vector<wxString> recent_filament_items =
+        load_ams_recent_filament_presets();
+
     _populate_filament_combobox_grouped(m_comboBox_filament,
                                         filament_items,
                                         query_filament_vendors,
                                         query_filament_types,
+                                        recent_filament_items,
                                         &m_combo_idx_to_spool_id);
 
     // If the current tray belongs to a Filament Manager spool, prefer selecting
@@ -1812,9 +1950,17 @@ void AMSMaterialsSetting::Popup(wxString filament, wxString sn, wxString temp_mi
     if (auto tray_opt = obj->get_tray(std::to_string(ams_id), std::to_string(slot_id))) {
         auto* store = wxGetApp().fila_manager_store();
         const FilamentSpool* sp = nullptr;
-        // Prefer exact RFID match; fall back to setting_id+color for cloud-only spools.
-        if (!tray_opt->tag_uid.empty() && store)
-            sp = store->find_by_tag_uid(tray_opt->tag_uid);
+        // 与 wgtFilaManagerSync::match_tray 保持同一口径：
+        //   1. 槽位锚（用户手动绑定过 → in_printer + dev/ams/slot 三配）
+        //   2. tray.uuid 精确匹配（32 位云 UUID，不是 tray.tag_uid 那 16 位 NFC）
+        //   3. setting_id + color 唯一模糊匹配
+        if (store) {
+            sp = store->find_by_slot(obj->get_dev_id(),
+                                     std::to_string(ams_id),
+                                     std::to_string(slot_id));
+        }
+        if (!sp && store && !tray_opt->uuid.empty())
+            sp = store->find_by_tag_uid(tray_opt->uuid);
         if (!sp && store && !tray_opt->setting_id.empty())
             sp = store->find_by_setting_and_color(tray_opt->setting_id, tray_opt->color);
         if (sp) {
@@ -1858,15 +2004,26 @@ void AMSMaterialsSetting::Popup(wxString filament, wxString sn, wxString temp_mi
     if (obj->GetCalib()->IsVersionInited() && !obj->GetCalib()->IsPAHistoryReady()) {
         PACalibExtruderInfo cali_info;
         int ext_id = obj->GetFilaSystem()->GetExtruderIdByAmsId(std::to_string(ams_id));
-        if (ext_id > 0) {
+        if (ext_id >= 0) {
             cali_info.nozzle_diameter = obj->GetExtderSystem()->GetNozzleDiameter(ext_id);
             cali_info.use_extruder_id = false;
             cali_info.use_nozzle_volume_type = false;
             CalibUtils::emit_get_PA_calib_infos(cali_info);
             m_pa_data_pending = true;
+            BOOST_LOG_TRIVIAL(info) << "AMSMaterialsSetting::on_select_filament request PA history, dev_id="
+                                     << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id())
+                                     << ", ams_id=" << ams_id << ", ext_id=" << ext_id
+                                     << ", nozzle_diameter=" << cali_info.nozzle_diameter;
+        } else {
+            BOOST_LOG_TRIVIAL(warning) << "AMSMaterialsSetting::on_select_filament cannot request PA history, invalid ext_id, dev_id="
+                                        << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id()) << ", ams_id=" << ams_id;
         }
     } else {
         m_pa_data_pending = false;
+        BOOST_LOG_TRIVIAL(info) << "AMSMaterialsSetting::on_select_filament PA history already ready or version not inited, dev_id="
+                                 << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id())
+                                 << ", calib_version_inited=" << obj->GetCalib()->IsVersionInited()
+                                 << ", pa_history_ready=" << obj->GetCalib()->IsPAHistoryReady();
     }
 
     update();
@@ -1885,12 +2042,19 @@ void AMSMaterialsSetting::post_select_event(int index) {
 void AMSMaterialsSetting::TryRefreshPAProfiles()
 {
     if (!m_pa_data_pending || !obj) return;
-    if (!obj->GetCalib()->IsPAHistoryReady()) return;
+    if (!obj->GetCalib()->IsPAHistoryReady()) {
+        BOOST_LOG_TRIVIAL(info) << "AMSMaterialsSetting::TryRefreshPAProfiles PA history not ready yet, dev_id="
+                                 << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id())
+                                 << ", pa_history_status=" << (int)obj->GetCalib()->GetPAHistoryStatus();
+        return;
+    }
 
     m_pa_data_pending = false;
 
     // Re-trigger filament selection to repopulate PA profile dropdown with real data
     int sel = m_comboBox_filament->GetSelection();
+    BOOST_LOG_TRIVIAL(info) << "AMSMaterialsSetting::TryRefreshPAProfiles PA history ready, re-triggering selection, dev_id="
+                             << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id()) << ", sel=" << sel;
     if (sel >= 0) {
         m_comboBox_filament->SetClientData(new int(1));
         post_select_event(sel);
@@ -1950,6 +2114,12 @@ void AMSMaterialsSetting::update_pa_profile_items()
 
     std::vector<PACalibResult> cali_history = obj->GetCalib()->GetPAHistory();
     std::sort(cali_history.begin(), cali_history.end(), [](const PACalibResult &left, const PACalibResult &right) { return left.nozzle_pos_id < right.nozzle_pos_id; });
+
+    BOOST_LOG_TRIVIAL(info) << "AMSMaterialsSetting::update_pa_profile_items dev_id=" << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id())
+                             << ", ams_id=" << ams_id << ", ams_filament_id=" << ams_filament_id
+                             << ", calib_version_inited=" << obj->GetCalib()->IsVersionInited()
+                             << ", pa_history_ready=" << obj->GetCalib()->IsPAHistoryReady()
+                             << ", cali_history_size=" << cali_history.size();
 
     {
         BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << " AMS Calibration Histtory";
@@ -2392,10 +2562,20 @@ void AMSMaterialsSetting::on_select_filament(wxCommandEvent &evt)
             m_input_k_val->GetTextCtrl()->SetValue(float_to_string_with_precision(m_pa_profile_items[0].k_value));
             m_input_n_val->GetTextCtrl()->SetValue(float_to_string_with_precision(m_pa_profile_items[0].n_coef));
         }
+        BOOST_LOG_TRIVIAL(info) << "AMSMaterialsSetting::on_select_filament k/n resolved, dev_id="
+                                 << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id())
+                                 << ", ams_id=" << ams_id << ", slot_id=" << slot_id
+                                 << ", from_printer=" << (from_printer ? *from_printer : -1)
+                                 << ", cali_select_idx=" << cali_select_idx
+                                 << ", k=" << m_input_k_val->GetTextCtrl()->GetValue().ToStdString()
+                                 << ", n=" << m_input_n_val->GetTextCtrl()->GetValue().ToStdString();
     }
     else {
         //m_input_k_val->GetTextCtrl()->SetValue("0.00");
         m_input_k_val->Enable(!ams_filament_id.empty());
+        BOOST_LOG_TRIVIAL(info) << "AMSMaterialsSetting::on_select_filament calib version not inited, k input left as-is, dev_id="
+                                 << BBLCrossTalk::Crosstalk_DevId(obj->get_dev_id())
+                                 << ", ams_id=" << ams_id << ", slot_id=" << slot_id;
     }
 
     m_comboBox_filament->SetClientData(new int(0));
@@ -2494,14 +2674,16 @@ void ColorPicker::doRender(wxDC& dc)
 {
     wxSize     size = GetSize();
     auto alpha = m_colour.Alpha();
-    auto radius = m_show_full ? size.x / 2 - FromDIP(1) : size.x / 2;
+    // Keep the outer edge inside the bitmap for even pixel sizes produced by DPI scaling.
+    const int outer_radius = (std::min(size.x, size.y) - 1) / 2;
+    auto radius = m_show_full ? outer_radius - FromDIP(1) : outer_radius;
     if (m_selected) radius -= FromDIP(1);
 
     auto draw_state = [&]() {
         if (m_selected) {
             dc.SetPen(wxPen(m_colour));
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
-            dc.DrawCircle(size.x / 2, size.y / 2, size.x / 2);
+            dc.DrawCircle(size.x / 2, size.y / 2, outer_radius);
         }
 
         if (m_show_full) {
@@ -2523,6 +2705,7 @@ void ColorPicker::doRender(wxDC& dc)
             const double center_x = size.x / 2.0;
             const double center_y = size.y / 2.0;
             const double draw_radius = radius;
+            dc.SetPen(*wxTRANSPARENT_PEN);
             for (int x = 0; x < size.x; ++x) {
                 const double dx = x + 0.5 - center_x;
                 if (std::abs(dx) > draw_radius) continue;
@@ -2535,8 +2718,10 @@ void ColorPicker::doRender(wxDC& dc)
                 const size_t idx = std::min(static_cast<size_t>(scaled), m_cols.size() - 2);
                 const double ratio = scaled - idx;
 
-                dc.SetPen(wxPen(mix_colour(m_cols[idx], m_cols[idx + 1], ratio)));
-                dc.DrawLine(x, top, x, bottom + 1);
+                if (top <= bottom) {
+                    dc.SetBrush(wxBrush(mix_colour(m_cols[idx], m_cols[idx + 1], ratio)));
+                    dc.DrawRectangle(x, top, 1, bottom - top + 1);
+                }
             }
         }
         else {
@@ -2566,17 +2751,7 @@ void ColorPicker::doRender(wxDC& dc)
     }
     else if (alpha != 254 && alpha != 255) {
         if (transparent_changed) {
-            std::string rgb = (m_colour.GetAsString(wxC2S_HTML_SYNTAX)).ToStdString();
-            if (rgb.size() == 9) {
-                //delete alpha value
-                rgb = rgb.substr(0, rgb.size() - 2);
-            }
-            float alpha_f = 0.7 * m_colour.Alpha() / 255.0;
-            std::vector<std::string> replace;
-            replace.push_back(rgb);
-            std::string fill_replace = "fill-opacity=\"" + std::to_string(alpha_f);
-            replace.push_back(fill_replace);
-            m_bitmap_transparent = ScalableBitmap(this, "transparent_color_picker", 25, false, false, true, replace).bmp();
+            m_bitmap_transparent = create_translucent_circle_bitmap(m_colour, size.x, FromDIP(1));
             transparent_changed = false;
         }
             wxSize bmp_size = m_bitmap_transparent.GetSize();

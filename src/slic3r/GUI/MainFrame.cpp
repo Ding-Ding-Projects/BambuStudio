@@ -64,6 +64,7 @@
 #include <string_view>
 
 #include "GUI_App.hpp"
+#include "slic3r/GUI/PerfTrace.hpp"
 #include "UnsavedChangesDialog.hpp"
 #include "MsgDialog.hpp"
 #include "Notebook.hpp"
@@ -238,6 +239,8 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     , m_settings_dialog(this)
     , diff_dialog(this)
 {
+    PERF_TRACE("Creating main window");
+
 #ifdef __WXOSX__
     set_miniaturizable(GetHandle());
 #endif
@@ -262,12 +265,6 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     long max_recent_count = 18;
     if (max_recent_count_str.ToLong(&max_recent_count))
         set_max_recent_count((int)max_recent_count);
-
-    //reset log level
-    auto loglevel = wxGetApp().app_config->get("severity_level");
-    std::map<std::string, int> wx_log_levels{{"fatal", wxLOG_FatalError}, {"error", wxLOG_FatalError}, {"warning", wxLOG_Warning},
-                                             {"info", wxLOG_Info},        {"debug", wxLOG_Debug},      {"trace", wxLOG_Trace}};
-    wxLog::SetLogLevel(wx_log_levels[loglevel]);
 
     // BBS
     m_recent_projects.SetMenuPathStyle(wxFH_PATH_SHOW_ALWAYS);
@@ -445,8 +442,14 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
 #ifdef _WIN32
         if (m_is_in_move_or_resize) {
             ULONGLONG now = GetTickCount64();
-            if (now - m_last_resize_layout_ms < 33)
+            if (now - m_last_resize_layout_ms < 33) {
+                // Throttling the full layout keeps the 3D views cheap while dragging, but the
+                // topbar cannot be skipped: it is a child window, so a stale (still wider) topbar
+                // keeps its window controls and title laid out past the frame's client area, where
+                // they are clipped away - leaving what looks like empty space where the buttons were.
+                if (m_topbar) m_topbar->UpdateToolbarWidth(GetClientSize().GetWidth());
                 return;
+            }
             m_last_resize_layout_ms = now;
         }
 #endif
@@ -524,22 +527,7 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     update_layout();
     sizer->SetSizeHints(this);
 
-    // BBS: fix taskbar overlay on windows
 #ifdef WIN32
-    auto setMaxSize = [this]() {
-        wxDisplay display(this);
-        auto size = display.GetClientArea().GetSize();
-        HWND      hWnd = GetHandle();
-        RECT      borderThickness;
-        SetRectEmpty(&borderThickness);
-        AdjustWindowRectEx(&borderThickness, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE, 0);
-        SetMaxSize(size + wxSize{-borderThickness.left + borderThickness.right, -borderThickness.top + borderThickness.bottom});
-    };
-    this->Bind(wxEVT_DPI_CHANGED, [setMaxSize](auto & e) {
-        setMaxSize();
-        e.Skip();
-        });
-    setMaxSize();
     // SetMaximize already position window at left/top corner, even if Windows Task Bar is at left side.
     // Not known why, but fix it here
     this->Bind(wxEVT_MAXIMIZE, [this](auto &e) {
@@ -784,7 +772,16 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
             }
             return;}
 #endif
-        if (evt.CmdDown() && evt.GetKeyCode() == 'R') { if (m_slice_enable) { wxGetApp().plater()->update(true, true); wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_SLICE_PLATE)); this->m_tabpanel->SetSelection(tpPreview); } return; }
+        // on_action_slice_plate already switches to the Preview tab via select_view_3D("Preview").
+        // Do NOT also SetSelection(tpPreview) here: that posts a second preview-enter event whose
+        // do_reslice would run the version-policy guard a second time (double dialog on a blocked version).
+        if (evt.CmdDown() && evt.GetKeyCode() == 'R') {
+            if (wxGetApp().check_slice_version_policy() && m_slice_enable) {
+                wxGetApp().plater()->update(true, true);
+                wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_SLICE_PLATE));
+            }
+            return;
+        }
         if (evt.CmdDown() && evt.ShiftDown() && evt.GetKeyCode() == 'G') {
             m_plater->apply_background_progress();
             m_print_enable = get_enable_print_status();
@@ -936,6 +933,36 @@ static void AdjustWorkingAreaForAutoHide(const HWND hWnd, MINMAXINFO *mmi)
     }
 }
 
+// Constrain the maximized size/position to the monitor work area. This frame is borderless
+// (no wxCAPTION), so Windows defaults ptMaxSize/ptMaxPosition to the whole monitor - covering
+// the taskbar. wxWidgets' HandleGetMinMaxInfo only touches the track size, never ptMaxSize, so
+// without this a plain Maximize() (e.g. the startup restore in window_pos_restore, which does not
+// go through the topbar maximize button) leaves the taskbar hidden until the first restore.
+static void ClampMaxToWorkArea(const HWND hWnd, MINMAXINFO *mmi)
+{
+    const auto monitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+    if (!monitor) { return; }
+    MONITORINFO mi;
+    mi.cbSize = sizeof(mi);
+    if (!GetMonitorInfo(monitor, &mi)) { return; }
+    const RECT &work      = mi.rcWork;      // excludes a normal (non-auto-hide) taskbar
+    const RECT &monitorRc = mi.rcMonitor;
+
+    // WM_NCCALCSIZE above does NOT return 0 when maximized, so DefWindowProc still subtracts the
+    // maximized non-client frame from the client area. If ptMaxSize were exactly the work area, the
+    // visible client would end up shorter/narrower by that frame. Grow ptMaxSize by the frame so the
+    // client fills the work area, and shift ptMaxPosition by the same amount to keep it aligned - the
+    // off-screen overhang is clipped to the monitor by Windows, matching BBLTopbar::OnFullScreen.
+    RECT frame;
+    SetRectEmpty(&frame);
+    AdjustWindowRectEx(&frame, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE, 0);
+
+    mmi->ptMaxPosition.x = (work.left - monitorRc.left) + frame.left;
+    mmi->ptMaxPosition.y = (work.top - monitorRc.top) + frame.top;
+    mmi->ptMaxSize.x     = (work.right - work.left) + (frame.right - frame.left);
+    mmi->ptMaxSize.y     = (work.bottom - work.top) + (frame.bottom - frame.top);
+}
+
 WXLRESULT MainFrame::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
 {
     /* When we have a custom titlebar in the window, we don't need the non-client area of a normal window
@@ -984,6 +1011,7 @@ WXLRESULT MainFrame::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam
             HWND hWnd = GetHandle();
             auto mmi = (MINMAXINFO *) lParam;
             HandleGetMinMaxInfo(mmi);
+            ClampMaxToWorkArea(hWnd, mmi);
             AdjustWorkingAreaForAutoHide(hWnd, mmi);
             return 0;
         }
@@ -1100,6 +1128,9 @@ void MainFrame::update_layout()
             }
             else if (evt.GetId() == tpCalibration) {
                 m_calibration->update_all();
+            } else if (evt.GetId() == tpPreview && !wxGetApp().check_slice_version_policy()) {
+                if (wxWindow *cur = m_tabpanel->GetCurrentPage()) cur->SetFocus();
+                return;
             }
             evt.Skip();
         });
@@ -2115,7 +2146,7 @@ void MainFrame::init_tabpanel()
     });
 
     if (wxGetApp().is_editor()) {
-        m_webview         = new WebViewPanel(m_tabpanel);
+        m_webview = new WebViewPanel(m_tabpanel);
         Bind(EVT_LOAD_URL, [this](wxCommandEvent &evt) {
             wxString url = evt.GetString();
             select_tab(MainFrame::tpHome);
@@ -2919,8 +2950,9 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
         });
 #endif
 
-    m_slice_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event)
-        {
+    m_slice_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event) {
+            if (!wxGetApp().check_slice_version_policy()) return;
+
             if (m_plater->is_background_process_update_scheduled())
                 m_plater->update(false, true);
 
@@ -3063,6 +3095,8 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
                 m_slice_select = eSliceAll;
                 m_slice_enable = get_enable_slice_status();
                 m_slice_btn->Enable(m_slice_enable);
+                update_helio_button_state();
+
                 this->Layout();
                 if(m_slice_option_pop_up)
                     m_slice_option_pop_up->Dismiss();
@@ -3074,6 +3108,8 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
                 m_slice_select = eSlicePlate;
                 m_slice_enable = get_enable_slice_status();
                 m_slice_btn->Enable(m_slice_enable);
+                update_helio_button_state();
+
                 this->Layout();
                 if(m_slice_option_pop_up)
                     m_slice_option_pop_up->Dismiss();
@@ -3575,19 +3611,32 @@ void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_sl
     m_slice_enable = enable_slice;
     m_print_enable = enable_print;
 
-    /*for healio*/
-    if (expand_program_holder) {
-        expand_program_holder->updateExpandButtonBitmap(expand_helio_id, m_print_enable?"helio_icon_topbar":"helio_icon_topbar_disable");
-        expand_program_holder->EnableExpandButton(expand_helio_id, m_print_enable);
-    }
+    update_helio_button_state();
 
-
-    if (!old_slice_status && enable_slice)
+    if (!old_slice_status && enable_slice) {
         m_plater->stop_helio_process();
         m_plater->reset_check_status();
+    }
 
     update_prepare_action_bar_content();
 }
+
+void MainFrame::update_helio_button_state()
+{
+    if (!expand_program_holder)
+        return;
+
+    const PartPlate* current_plate = m_plater != nullptr ? m_plater->get_partplate_list().get_curr_plate() : nullptr;
+    const bool helio_enabled = m_plater != nullptr && !m_plater->only_gcode_mode() &&
+                               !m_plater->using_exported_file() && current_plate != nullptr &&
+                               current_plate->is_slice_result_valid() && current_plate->can_slice() &&
+                               !m_plater->sidebar().has_broken_mixed_filament() &&
+                               !m_plater->is_background_process_slicing();
+    expand_program_holder->updateExpandButtonBitmap(expand_helio_id, helio_enabled ? "helio_icon_topbar" : "helio_icon_topbar_disable");
+    expand_program_holder->EnableExpandButton(expand_helio_id, helio_enabled);
+}
+
+
 
 
 void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
@@ -3948,6 +3997,21 @@ void MainFrame::init_menubar_as_editor()
             [this](wxCommandEvent&) { if (m_plater) m_plater->save_project(true); }, "", nullptr,
             [this](){return m_plater != nullptr && can_save_as(); }, this);
 #endif
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Show Project in Folder"), _L("Show current project in folder"),
+            [this](wxCommandEvent&) {
+                if (m_plater) {
+                    const wxString filename = m_plater->get_project_filename(".3mf");
+                    if (!filename.IsEmpty() && wxFileExists(filename))
+                        Slic3r::GUI::desktop_open_any_folder(into_u8(filename));
+                }
+            }, "", nullptr,
+            [this]() {
+                if (m_plater == nullptr)
+                    return false;
+                const wxString filename = m_plater->get_project_filename(".3mf");
+                return !filename.IsEmpty() && wxFileExists(filename);
+            }, this);
 
 
         append_menu_item(fileMenu, wxID_ANY, _L("Version history") + dots,
@@ -5223,6 +5287,25 @@ void MainFrame::jump_to_multipage()
     ((MultiMachinePage*)m_multi_machine)->jump_to_send_page();
 }
 
+// Readable name for a tab index, for perf tracing.
+static const char *perf_tab_name(size_t tab)
+{
+    switch (tab) {
+    case MainFrame::tpHome: return "Home";
+    case MainFrame::tp3DEditor: return "3D Editor";
+    case MainFrame::tpPreview: return "Preview";
+    case MainFrame::tpMonitor: return "Device";
+    case MainFrame::tpMultiDevice: return "Multi-device";
+    case MainFrame::tpProject: return "Project";
+    case MainFrame::tpCalibration: return "Calibration";
+    case MainFrame::tpAuxiliary: return "Auxiliary";
+    case MainFrame::toDebugTool: return "Debug Tool";
+    case MainFrame::tpFilamentManager: return "Filament Manager";
+    case MainFrame::tpWebDevice: return "Web Device";
+    case size_t(-1): return "last selected";
+    default: return "unknown";
+    }
+}
 
 //BBS GUI refactor: remove unused layout new/dlg
 void MainFrame::select_tab(size_t tab/* = size_t(-1)*/)
@@ -5256,6 +5339,7 @@ void MainFrame::select_tab(size_t tab/* = size_t(-1)*/)
         }
     };
 
+    PERF_TRACE(std::string("Switching to ") + perf_tab_name(tab) + " tab");
     select(false);
 }
 

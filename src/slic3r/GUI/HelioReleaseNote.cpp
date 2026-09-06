@@ -1716,12 +1716,15 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     bool has_heated_chamber = false;
     if (!printer_name.empty()) {
         std::string target_lower = boost::to_lower_copy(printer_name);
-        for (const auto& p : HelioQuery::global_supported_printers) {
-            if (p.native_name.empty()) continue;
-            std::string native_lower = boost::to_lower_copy(p.native_name);
-            if (target_lower == native_lower || target_lower.find(native_lower) != std::string::npos) {
-                has_heated_chamber = p.heated_chamber;
-                break;
+        const auto supported_printers = HelioQuery::supported_data_view().printers;
+        if (supported_printers) {
+            for (const auto& p : *supported_printers) {
+                if (p.native_name.empty()) continue;
+                std::string native_lower = boost::to_lower_copy(p.native_name);
+                if (target_lower == native_lower || target_lower.find(native_lower) != std::string::npos) {
+                    has_heated_chamber = p.heated_chamber;
+                    break;
+                }
             }
         }
     }
@@ -3753,6 +3756,15 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
     m_button_enhance->Bind(wxEVT_LEFT_DOWN, &HelioSimulationResultsDialog::on_enhance_speed_quality, this);
     m_button_enhance->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     m_button_enhance->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
+    wxStaticBitmap* save_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("save", this, 24), wxDefaultPosition,
+        wxSize(FromDIP(24), FromDIP(24)));
+    save_icon->SetToolTip(_L("Save the simulated sliced 3MF locally"));
+    save_icon->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
+    save_icon->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
+    save_icon->Bind(wxEVT_LEFT_DOWN, [](wxMouseEvent& e) {
+        wxPostEvent(wxGetApp().plater(), SimpleEvent(EVT_GLTOOLBAR_EXPORT_SLICED_FILE));
+    });
+
 
     // Layout
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(26));

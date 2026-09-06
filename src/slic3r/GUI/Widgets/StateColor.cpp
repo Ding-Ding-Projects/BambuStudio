@@ -46,6 +46,7 @@ static std::map<wxColour, wxColour> gDarkColors{
     {"#F4F4F4", "#202127"},
     {"#F7F7F7", "#202127"},
     {"#DBDBDB", "#4a4c54"},
+    {ThemeColor::LightGreen,  "#095228"},
     {"#EDFAF2", "#095228"},
     {"#323A3C", MD3::Dark::onSurface},
     {"#6B6B6A", "#a8a9b3"},

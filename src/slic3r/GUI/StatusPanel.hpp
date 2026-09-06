@@ -312,6 +312,7 @@ private:
     Label*          m_staticText_finish_time;
     RectTextPanel*  m_staticText_finish_day;
     wxStaticText*   m_staticText_layers;
+    wxStaticText*   m_staticTextPauses;
     wxStaticText *  m_has_rated_prompt;
     wxStaticText *  m_request_failed_info;
     wxStaticBitmap* m_bitmap_thumbnail;
@@ -349,8 +350,8 @@ private:
 public:
     void init_bitmaps();
     void init_scaled_buttons();
-    void error_info_reset();
-    void show_error_msg(wxString msg);
+    bool error_info_reset();
+    void show_error_msg(const wxString &msg);
     void reset_printing_value();
     void msw_rescale();
 
@@ -372,6 +373,8 @@ public:
     void update_left_time(int mc_left_time);
     void show_layers_num(bool show) { m_staticText_layers->Show(show); }
     void update_layers_num(bool show, wxString num = wxEmptyString);
+    void updatePauseNum(bool show, wxString num = wxEmptyString);
+    void updatePauseMarkers(const DevPrintPauseList *pauseList, int printRemainingTime = 0);
     void show_priting_use_info(bool show, wxString time = wxEmptyString, wxString weight = wxEmptyString);
     void show_profile_info(bool show, wxString profile = wxEmptyString);
     void set_thumbnail_img(const wxBitmap& bmp, const std::string& bmp_name);
@@ -401,6 +404,7 @@ public:
     void                           set_has_reted_text(bool has_rated);
 
 private:
+    void refreshErrorContents();
     void paint(wxPaintEvent&);
 };
 
@@ -760,6 +764,7 @@ protected:
     void on_subtask_abort(wxCommandEvent &event);
     void on_print_error_clean(wxCommandEvent &event);
     void error_info_reset();
+    void refreshProjectTaskLayout();
     void show_recenter_dialog();
 
     /* axis control */
@@ -869,6 +874,7 @@ protected:
 
 public:
     void update_error_message();
+    void set_ams_new_filament_hint(const std::string& ams_id, const std::string& slot_id, bool show);
 
 public:
     StatusPanel(wxWindow *      parent,

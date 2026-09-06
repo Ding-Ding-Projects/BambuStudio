@@ -26,6 +26,19 @@ const FILTER_LABEL_KEYS: Record<FilterKey, string> = {
 };
 const FILAMENT_TABS: readonly TabMode[] = ['all', 'ams'];
 
+function spoolSearchText(spool: Spool): string {
+  return [
+    spool.brand,
+    spool.material_type,
+    spool.series,
+    spool.color_name,
+    spool.note,
+  ]
+    .filter((value): value is string => typeof value === 'string' && value.length > 0)
+    .join(' ')
+    .toLowerCase();
+}
+
 export function FilamentManagerPage() {
   const { t } = useTranslation();
   const {
@@ -162,10 +175,8 @@ export function FilamentManagerPage() {
 
     // Search
     if (search.trim()) {
-      const kw = search.toLowerCase();
-      list = list.filter((s) =>
-        `${s.brand} ${s.material_type} ${s.series} ${s.color_name}`.toLowerCase().includes(kw)
-      );
+      const kw = search.trim().toLowerCase();
+      list = list.filter((s) => spoolSearchText(s).includes(kw));
     }
 
     // Filters
@@ -284,9 +295,9 @@ export function FilamentManagerPage() {
   }, [batchCreateSpools]);
 
   // AMS bridge callbacks for dialog
-  const handleFetchMachines = useCallback(async (): Promise<MachineItem[]> => {
-    await fetchMachines();
-    return useStore.getState().filament.machines;
+  const handleFetchMachines = useCallback(async (): Promise<{ machines: MachineItem[]; selectedDevId: string }> => {
+    const result = await fetchMachines();
+    return result;
   }, [fetchMachines]);
 
   const handleFetchAmsData = useCallback(async (
