@@ -38,6 +38,22 @@ One `gl_item` record per visible item of the scene toolbar (`"toolbar":"main"`) 
 item's world-space render rectangle and the camera zoom. These are not wx windows, so no flag
 applies; they exist so a capture can be cropped to a toolbar or rail item by name.
 
+One `tool` record per labelled item of every `wxAuiToolBar` (the caption bar's brand tile, menu
+tools, history chip, palette and window controls), carrying the item id, its label or help text,
+and its rectangle in toolbar and screen coordinates. Tools are not windows, so without these the
+caption bar was unaddressable by the recapture driver and invisible to any label-based check.
+
+Every dump ends with `{"kind":"end"}`. A reader that polls the file while the application is
+still streaming it must wait for that record: a partial file made of whole lines parses cleanly and
+silently lacks whatever had not been walked yet (the first recapture runs lost the tab strip that way).
+
+The command channel (`WM_COPYDATA`, `dwData` 2) also accepts two driver hooks while the probe is
+armed: `menu-popup <Title>` pops one of the caption bar's menus (File, Edit, View, Objects,
+Calibration, Help) and `invoke <label>` fires the first menu item whose label contains the text.
+Both defer through `CallAfter`, so the sender's `SendMessage` returns before a popup loop or a
+modal dialog blocks. Keystrokes and menu clicks do not reach a window on another desktop; these
+hooks are how the headless driver reaches anything behind a menu.
+
 ## Activation
 
 | Setting | Effect |
