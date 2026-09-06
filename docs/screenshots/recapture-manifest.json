@@ -739,6 +739,7 @@
         "surface": "bulk-ink",
         "steps": [
           "nav:Prepare",
+          "click:Add ink",
           "click:Bulk ink"
         ],
         "tuple": {
@@ -759,7 +760,8 @@
         "kind": "crop-probe",
         "surface": "prepare",
         "steps": [
-          "nav:Prepare"
+          "nav:Prepare",
+          "click:Add ink"
         ],
         "label": "Bulk ink",
         "pad": 8,

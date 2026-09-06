@@ -374,7 +374,15 @@ class Runner:
             if not c:
                 raise RuntimeError(f'blocked: click {arg} (no control labelled so)')
             owner = c.get('top') or (self.front or self.app.main)
+            before = {w['handle'] for w in self.app.windows() if w['class'] == '#32770'}
             self.click_control(owner, c)
+            # A click that opens a dialog makes it the front for the capture
+            # (the colour picker, bulk actions, ...).
+            for w in self.app.windows():
+                if w['class'] == '#32770' and w['handle'] not in before and w['width'] >= 200 and w['title'] != '':
+                    self.front = w['handle']
+                    time.sleep(1.0)
+                    break
             time.sleep(1.5)
             # A click may have opened a new top-level; adopt the newest dialog.
             dlg = self.app.find(lambda w: w['class'] == '#32770' and w['title'] != '' and w['handle'] not in (self.app.main, self.front))
