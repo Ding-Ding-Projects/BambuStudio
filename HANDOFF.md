@@ -1232,3 +1232,58 @@ diagnostics were a cascade.
   The separate light and dark capture matrix for the converted controls remains open in
   `ROADMAP.md` and the parity register.
 - The pre-existing Home Assistant issue #16 remains separate and unchanged.
+
+## 12. Every element Material Design 3, every clipping defect fixed (2026-09-05/06)
+
+### What landed
+
+- Own CMake pipeline behind `build.bat` (`scripts/windows/Invoke-OneClickBuild.ps1`); the upstream
+  `build_win.bat` is retired. Thirteen attempts on this host: 1 to 5 were bootstrap defects in the
+  script (all fixed in-tree), 6 and 7 built the unmodified baseline, 8 and 10 to 13 built the
+  converted tree, 9 went red on one missing `wx/glcanvas.h` include in `LayoutProbe.cpp`.
+  Configure runs only when the CMake cache is missing or `BAMBU_RECONFIGURE=1`, because
+  `libslic3r/CMakeLists.txt` stamps the build time into a generated header and any configure is a
+  full recompile.
+- Stock control conversions: 548 `wxStaticText` to kit `Label`, 7 `wxRadioButton` to
+  `LabeledRadioButton` + `RadioGroup`, multi-line `wxTextCtrl` to `TextArea`, `wxListBox` to
+  `ListBox`, 11 `wxBitmapButton` to icon `Button` / `RadioBox`, static-bitmap triage closed,
+  `Button` Material by default, 207 legacy palette runs to variants. Eight compile defects from the
+  merge fixed in `68b0107da`, `df80dba36`, `cc6affdc1`, `bbc9db5cf`.
+- Runtime layout probe (`src/slic3r/GUI/LayoutProbe.{hpp,cpp}`, gated on `BAMBU_LAYOUT_PROBE`,
+  triggered by `WM_COPYDATA` dwData 2 from `scripts/md3/send-layout-probe.py`, which must itself run
+  on the hidden desktop). Records carry `on_screen` and the canvas emits `gl_item` rectangles for
+  the scene toolbar and gizmo rail (`GLCanvas3D::get_toolbar_item_rects()`). Reader:
+  `ui-md3/tests/layout-probe-report.mjs`.
+- Clipping inventory `docs/features/design-system/cheap-jor-inventory.md`, rows CJ-001..CJ-010,
+  guarded by `ui-md3/tests/cheap-jor-inventory.test.mjs`. Verified from real captures: CJ-005
+  (starvation class), CJ-006 (Device placeholder heading, CSS), CJ-007 (split-button chevrons),
+  CJ-008 (ink swatch badge regression from the sweep itself), CJ-009 (Home caption bar stuck at
+  787 px: `wxAuiToolBar::Realize` resizes to content unless `wxAUI_TB_NO_AUTORESIZE`; both
+  `BBLTopbar` constructors now pass it), CJ-010 (the preset combo's stock cog on the Printer card,
+  shown at zero width outside every sizer; hidden). CJ-001..004 are the high-DPI rows: fixed and
+  guarded, unverifiable on this 96 dpi host.
+- Capture matrix `docs/screenshots/md3-everything/`: 132 before (baseline payload `9e8d005b0`) and
+  132 after (attempt 13, `80734696c`) across 12 tuples (en / yue_HK / bilingual x light / dark x
+  comfortable / compact), 24 probe dumps per build under `probe/`. Runner
+  `scripts/md3/capture-tuple.py`; datadirs from `scripts/md3/prepare-capture-datadirs.py`.
+- Full recapture of the 294 tracked screenshots: manifest `docs/screenshots/recapture-manifest.json`
+  (recipes from `scripts/md3/fill-recapture-recipes.py`), orchestrator `scripts/md3/recapture.py`,
+  report `artifacts/recapture-report.json`. See the manifest's `provenance` for the payload.
+
+### Machine facts learned (corrects §2)
+
+- The host has an NVIDIA RTX 3050; the app runs on the real driver on a hidden desktop. GL canvases
+  capture blank through `PrintWindow` on that route; canvas crops need the Mesa pair staged in
+  `install-dir/mesa`.
+- Only a 96 dpi display exists; 125/150/200% tuples cannot be produced here.
+- Cross-desktop rule: `IsWindow`, `SendMessage`, `press_keys` and `resize_window` by handle all fail
+  from the visible desktop against a window on a hidden one. Launch the sender or use a background
+  `mouse_click`, which does cross.
+
+### Open
+
+- Gizmo rail, scene toolbar and preview overlay register rows still need runtime evidence from the
+  Mesa route (crop-gl rows in the recapture manifest).
+- Issue #32 and Discussion #33 were deleted by an owner on 2026-09-05; the finish handoff needs a
+  fresh issue unless told otherwise.
+- Hosted release from the final tip.
