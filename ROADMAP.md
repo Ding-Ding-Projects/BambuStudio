@@ -41,12 +41,12 @@ captures are a separate box and stay unticked until they exist from the real bui
       need a sliced model on the Mesa route, which the driver does not produce (recorded in the
       recapture manifest as the blocker).
 - [ ] Changelog entry, HANDOFF §12, hosted release from the final tip.
-- [ ] Upstream Bambu Studio v02.08.02.61 merged (`5a08b703d`, 34 conflicts, every Material Design 3
-      surface kept); compile proof pending on attempt 25 (see HANDOFF §12).
+- [x] Upstream Bambu Studio v02.08.02.61 merged (`5a08b703d`, 34 conflicts, every Material Design 3
+      surface kept); compiled green on attempt 27 after seven merge slips were fixed (HANDOFF §12).
 - [x] Every process setting shown by default; the Simple/Advanced filter and its header switch
-      removed (`67328e94f`).
-- [ ] Update check reads this fork's GitHub releases and offers Setup.exe; the Bambu Lab feed and
-      beta channel are no longer consulted (`5d52a8e53`); compile and capture pending.
+      removed (`67328e94f`); fresh-profile capture `prepare-full-tree-default--en-light-comfortable--after.png` (attempt 27).
+- [x] Update check reads this fork's GitHub releases and offers Setup.exe; the Bambu Lab feed and
+      beta channel are no longer consulted (`5d52a8e53`, compiled on attempt 27). The dialog itself can only be captured once a release newer than the running build exists.
 - [ ] Gizmo move/rotate/scale panels use the kit value field (mono digits, filled pills); compile and capture pending.
 - [x] 24-hour clocks by default (Device pane locale strings).
 - [ ] Startup: splash names each phase; the encrypted app log still hides where a slow machine
