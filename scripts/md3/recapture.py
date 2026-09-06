@@ -300,6 +300,16 @@ class Runner:
                     if hit and hit.get('on_screen', True):
                         break
                     time.sleep(1.0)
+                # A collapsed Ink section (its content panel hidden under a shown
+                # scroller) hides every ink row; expand it by its header.
+                if label.lower() == 'prepare':
+                    records = self.app.probe()
+                    add = [r for r in records if r.get('kind') == 'window' and r.get('label') == 'Add ink']
+                    if add and not add[0].get('on_screen', True):
+                        header = find_control(records, 'Ink', self.app.main)
+                        if header:
+                            self.click_control(self.app.main, header)
+                            time.sleep(2.0)
         elif kind == 'wizard-page':
             self.app.command(f'wizard-page {int(arg)}')
             time.sleep(2.5)
