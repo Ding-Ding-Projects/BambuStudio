@@ -5844,9 +5844,7 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
                 version_info.version_str  = tag;
                 version_info.version_name = j.contains("name") ? j["name"].get<std::string>() : tag;
                 version_info.url          = asset_url;
-                version_info.description  = version_info.version_name + "
-
-" +
+                version_info.description  = version_info.version_name + "\n\n" +
                                             (j.contains("body") && j["body"].is_string() ? j["body"].get<std::string>() : std::string());
                 version_info.force_upgrade = false;
                 wxGetApp().app_config->set_str("app", "cloud_software_url", version_info.url);

@@ -7797,6 +7797,7 @@ void AssemblyStepsUtils::render_assembly_tree_ui(float panel_x, float panel_y, f
             return v;
         };
         const std::string search_lc = to_lower_ascii(m_assembly_tree_search_text);
+        const AssemblyTreeSearchMatcher search_matcher(m_assembly_tree_search_text);
         const bool filter_unassembled = m_assembly_tree_filter_unassembled;
         // Same as render_assembly_tree_selector: only search forces expand; filter
         // keeps single-volume object collapse.

@@ -16671,6 +16671,7 @@ public:
 
         option2_box->SetSizer(option2_sizer);
         main_sizer->Add(option2_box, 0, wxLEFT | wxRIGHT | wxBOTTOM, wxWindowBase::FromDIP(15, this));
+        const bool is_dark_mode = wxGetApp().dark_mode();
         wxColour option3_bg = is_dark_mode ? wxColour(30, 45, 70) : wxColour("#E3F2FD");
         wxColour option3_border = is_dark_mode ? wxColour(100, 181, 246) : wxColour("#2196F3");
         wxColour option3_text_color = is_dark_mode ? wxColour(240, 240, 240) : text_color;
