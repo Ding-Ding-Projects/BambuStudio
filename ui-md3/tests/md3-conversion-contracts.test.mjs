@@ -431,7 +431,7 @@ test('every static bitmap is inventoried in the triage CSV, and none is an unacc
   for (const [file, needle] of [
     ['HMSPanel.cpp', 'm_img_notify_lv1 = MaterialIcon::bitmap(this, MaterialIcon::Error, 18, StateColor::semantic(MD3::Role::Error))'],
     ['HMSPanel.cpp', 'm_img_arrow      = MaterialIcon::bitmap(this, MaterialIcon::ChevronRight, 14'],
-    ['UpgradePanel.cpp', 'upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::Tertiary)))'],
+    ['UpgradePanel.cpp', 'upgrade_yellow_icon = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)))'],
     ['DeviceTab/uiDeviceUpdateVersion.cpp', 'm_dev_upgrade_indicator->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10'],
     ['ReleaseNote.cpp', 'MaterialIcon::bitmap(card1, MaterialIcon::VerifiedUser, 48'],
     ['ReleaseNote.cpp', 'MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)), 0);'],
@@ -615,4 +615,14 @@ test('every owned dialog is on the MD3 caption shell; only frames keep native ch
     if (!allowedNative.has(rel)) offenders.push(rel);
   }
   assert.deepEqual(offenders, [], 'dialogs constructed with native OS chrome must adopt the MD3 caption');
+});
+
+test('the caption bar never lets wxAuiToolBar::Realize shrink it back to its content width', async () => {
+  // Realize() calls SetClientSize(min) unless wxAUI_TB_NO_AUTORESIZE is set,
+  // so every Realize after the frame widened snapped the bar back to 787px
+  // and parked the window controls mid-window on the Home tab (CJ-009).
+  const src = await read('BBLTopbar.cpp');
+  const ctors = src.match(/^\s*: wxAuiToolBar\([^\n]*\)$/gm) || [];
+  assert.equal(ctors.length, 2, 'two BBLTopbar constructors delegate to wxAuiToolBar');
+  for (const ctor of ctors) assert.match(ctor, /\| wxAUI_TB_NO_AUTORESIZE\)/, ctor.trim());
 });

@@ -514,13 +514,13 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
 }
 
 BBLTopbar::BBLTopbar(wxFrame* parent)
-    : wxAuiToolBar(parent, ID_TOOL_BAR, wxDefaultPosition, wxDefaultSize, wxAUI_TB_TEXT | wxAUI_TB_HORZ_TEXT)
+    : wxAuiToolBar(parent, ID_TOOL_BAR, wxDefaultPosition, wxDefaultSize, wxAUI_TB_TEXT | wxAUI_TB_HORZ_TEXT | wxAUI_TB_NO_AUTORESIZE)
 {
     Init(parent);
 }
 
 BBLTopbar::BBLTopbar(wxWindow* pwin, wxFrame* parent)
-    : wxAuiToolBar(pwin, ID_TOOL_BAR, wxDefaultPosition, wxDefaultSize, wxAUI_TB_TEXT | wxAUI_TB_HORZ_TEXT)
+    : wxAuiToolBar(pwin, ID_TOOL_BAR, wxDefaultPosition, wxDefaultSize, wxAUI_TB_TEXT | wxAUI_TB_HORZ_TEXT | wxAUI_TB_NO_AUTORESIZE)
 {
     Init(parent);
 }
