@@ -293,12 +293,14 @@ test('Smart Home reflows actions and all changing text at the viewport width', (
   );
 });
 
-test('Smart Home keeps long Home Assistant entity names horizontally reachable', () => {
-  assert.match(
-    smartHome,
-    /new wxListBox\([\s\S]*?wxLB_SINGLE\s*\|\s*wxLB_HSCROLL\)/,
-    'the native entity list must expose long friendly names instead of clipping them',
-  );
+test('Smart Home keeps long Home Assistant entity names reachable', async () => {
+  // The entity list is the kit ListBox now: a long friendly name is ellipsized
+  // in the row and exposed in full as the hovered row's tooltip, instead of the
+  // former native list's horizontal scroller.
+  assert.match(smartHome, /m_list = new ListBox\(m_scroll/, 'the entity list must be the kit ListBox');
+  const listBox = await readFile(path.join(repoDir, 'src', 'slic3r', 'GUI', 'Widgets', 'ListBox.cpp'), 'utf8');
+  assert.match(listBox, /wxControl::Ellipsize\(m_rows\[n\], dc, wxELLIPSIZE_END/, 'long rows must ellipsize rather than clip');
+  assert.match(listBox, /SetToolTip\(row >= 0/, 'the hovered row must expose its full text');
 });
 
 test('Smart Home names and enlarges every custom toggle target', () => {

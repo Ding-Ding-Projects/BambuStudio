@@ -1,0 +1,2657 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Every tracked capture must be retaken from the named artifact; a row is done only when its file was rewritten by the run named in provenance.",
+  "provenance": {
+    "sourceCommit": null,
+    "dllSha256": null,
+    "run": null
+  },
+  "captures": [
+    {
+      "file": "docs/readme-assets/material-device-dark-bilingual.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "material-device-dark-bilingual",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/material-prepare-light-en.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "material-prepare-light-en",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/material-preview-dark-yue-hk.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "material-preview-dark-yue-hk",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/native-material-device-plugin-gate-light-en.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "native-material-device-plugin-gate-light-en",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/native-material-filament-manager-light-en.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "native-material-filament-manager-light-en",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/native-material-home-light-en.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "native-material-home-light-en",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/native-material-project-history-light-en.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "native-material-project-history-light-en",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/shot-home.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "shot-home",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/shot-prepare-frame.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "shot-prepare-frame",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/shot-prepare-sidebar.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "shot-prepare-sidebar",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/shot-wizard.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "shot-wizard",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/yum-20260811-native-main-ca49.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "yum-20260811-native-main-ca49",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/readme-assets/yum-20260811-wizard-ca49.png",
+      "group": "readme-assets",
+      "kind": "readme",
+      "page": "yum-20260811-wizard-ca49",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--accent-1.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "accent-1",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--accent-2.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "accent-2",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--accent-3.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "accent-3",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--accent-4.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "accent-4",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--accent-5.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "accent-5",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--accent-6.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "accent-6",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--accent-custom-btn.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "accent-custom-btn",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--density-comfortable.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "density-comfortable",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--density-compact.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "density-compact",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--font-combo.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "font-combo",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--md3-preview-panel.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "md3-preview-panel",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--preview-text.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "preview-text",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--reset-defaults-btn.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "reset-defaults-btn",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--text-size-default.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "text-size-default",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--text-size-large.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "text-size-large",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--text-size-small.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "text-size-small",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--theme-dark.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "theme-dark",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab--theme-light.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "theme-light",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/appearance-tab.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/appearance/custom-color-dialog.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "custom-color-dialog",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/bulk-filament/dialog.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/bulk-filament/entry-button.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "entry-button",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/command-palette/palette.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "palette",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--armed.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "armed",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--export-btn-armed.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "export-btn-armed",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--export-btn.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "export-btn",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--import-btn.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "import-btn",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--md3-caption.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "md3-caption",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--profile-actions.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "profile-actions",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--profile-list.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "profile-list",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--search-field.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "search-field",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--secrets-card.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "secrets-card",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--slide-to-confirm-confirmed.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "slide-to-confirm-confirmed",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog--slide-to-confirm.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "slide-to-confirm",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/config-profiles/dialog.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/dark/config-profiles.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "config-profiles",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/dark/menu-file.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "menu-file",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/dark/preferences-appearance.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "preferences-appearance",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/dark/prepare.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "prepare",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/dialog-chrome/about.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "about",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/dialog-chrome/export-preset-bundle.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "export-preset-bundle",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/dialog-chrome/keyboard-shortcuts.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "keyboard-shortcuts",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/dialog-chrome/network-test.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "network-test",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/filament-scanner/dialog--after-upload-no-model.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": "after-upload-no-model",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/filament-scanner/dialog.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/home/home--create-new-project-btn.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "home",
+      "control": "create-new-project-btn",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/home/home--more-link.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "home",
+      "control": "more-link",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/home/home--open-project-btn.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "home",
+      "control": "open-project-btn",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/home/home--recently-opened-header.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "home",
+      "control": "recently-opened-header",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/home/home.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "home",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/ink-terminology-sidebar.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "ink-terminology-sidebar",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/menu-calibration.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "menu-calibration",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/menu-edit.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "menu-edit",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/menu-file.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "menu-file",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/menu-help.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "menu-help",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/menu-objects.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "menu-objects",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/menu-view.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "menu-view",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail--calibration.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": "calibration",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail--device.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": "device",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail--filament.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": "filament",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail--home.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": "home",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail--prepare.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": "prepare",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail--preview.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": "preview",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail--project.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": "project",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail--settings-gear.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": "settings-gear",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/nav-rail.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "nav-rail",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/page-device.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "page-device",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/page-preview.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "page-preview",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/prepare-action-bar.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "prepare-action-bar",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/preview-action-bar-print-button.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "preview-action-bar-print-button",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--add-filament.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "add-filament",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--advanced-settings.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "advanced-settings",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--filament-menu.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "filament-menu",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--filament-row-1.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "filament-row-1",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-assembly.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-assembly",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-brim.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-brim",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-color-paint.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-color-paint",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-cut.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-cut",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-fdm-support.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-fdm-support",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-measure.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-measure",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-mmu-segment.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-mmu-segment",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-move.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-move",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-place-on-face.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-place-on-face",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-rail.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-rail",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-rotate.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-rotate",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-scale.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-scale",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-seam.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-seam",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-support-paint.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-support-paint",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--gizmo-text.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "gizmo-text",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--layer-height-edit.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "layer-height-edit",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--plate-1-chip.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "plate-1-chip",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--plate-add.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "plate-add",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--printer-edit-pencil.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "printer-edit-pencil",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--printer-settings-gear.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "printer-settings-gear",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--printer-wifi.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "printer-wifi",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--process-preset.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "process-preset",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-arrange.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-arrange",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-assembly-view.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-assembly-view",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-cut2.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-cut2",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-import.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-import",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-layers.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-layers",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-orient.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-orient",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-split.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-split",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-toolbar.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-toolbar",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--scene-undo.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "scene-undo",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--seg-others.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "seg-others",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--seg-quality.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "seg-quality",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--seg-strength.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "seg-strength",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--seg-support.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "seg-support",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--slice-plate.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "slice-plate",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare--zoom-controls.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": "zoom-controls",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-prepare.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-prepare",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/sidebar-search-pills.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-search-pills",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--history-chip-main.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "history-chip-main",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--logo-bambu-studio.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "logo-bambu-studio",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--menu-calibration.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "menu-calibration",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--menu-edit.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "menu-edit",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--menu-file.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "menu-file",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--menu-help.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "menu-help",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--menu-objects.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "menu-objects",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--menu-view.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "menu-view",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--palette-icon.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "palette-icon",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--project-chip-untitled.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "project-chip-untitled",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--window-close.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "window-close",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--window-maximize.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "window-maximize",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar--window-minimize.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": "window-minimize",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/main-window/topbar.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/md3-conversion/action-bar-after-starved-row.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "action-bar-after-starved-row",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/md3-conversion/action-bar-before-starved-row.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "action-bar-before-starved-row",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/md3-conversion/gizmo-rail-glyphs-dark-D06044.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "gizmo-rail-glyphs-dark-D06044",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/md3-conversion/prepare-model-loaded-dark-D06044.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "prepare-model-loaded-dark-D06044",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/md3-conversion/prepare-workspace-dark-D06044.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "prepare-workspace-dark-D06044",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/md3-conversion/printer-settings-dark-D06044.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "printer-settings-dark-D06044",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/notifications/toast-info--accent-bar.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "toast-info",
+      "control": "accent-bar",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/notifications/toast-info--close-x.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "toast-info",
+      "control": "close-x",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/notifications/toast-info--toast.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "toast-info",
+      "control": "toast",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/notifications/toast-info.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "toast-info",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/notifications/toast-presets-up-to-date.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "toast-presets-up-to-date",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/notifications/toast-try-slice.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "toast-try-slice",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/app/ink-search-before.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "ink-search-before",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/app/ink-search-filtered.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "ink-search-filtered",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/app/settings-switches.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "settings-switches",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/app/titlebar-640.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "titlebar-640",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/app/version-history-dialog.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "version-history-dialog",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/bilingual-narrow.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "bilingual-narrow",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/changelog-calendar.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "changelog-calendar",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/dim-sum-card.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "dim-sum-card",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/material-you-light.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "material-you-light",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/regex-lab-matches.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "regex-lab-matches",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/settings-cantonese-narrow.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "settings-cantonese-narrow",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/settings-language-and-funny.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "settings-language-and-funny",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/settings-search-cross-tab.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "settings-search-cross-tab",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tab-build.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tab-build",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tab-changelog.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tab-changelog",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tab-download.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tab-download",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tab-materialyou.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tab-materialyou",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tab-overview.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tab-overview",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tab-regex.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tab-regex",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tab-screens.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tab-screens",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tab-settings.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tab-settings",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tabstrip-overflow-menu.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tabstrip-overflow-menu",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/pages/tabstrip-wide.png",
+      "group": "screenshots",
+      "kind": "pages",
+      "page": "tabstrip-wide",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/3d-tab.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "3d-tab",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/appearance-tab--reset-all-warning-dialogs.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "reset-all-warning-dialogs",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/appearance-tab--reset-preferences.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": "reset-preferences",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/appearance-tab.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "appearance-tab",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/developer-tools-tab.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "developer-tools-tab",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--auto-purge-combo.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "auto-purge-combo",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--download-path-browse.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "download-path-browse",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--download-path-field.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "download-path-field",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--language-combo.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "language-combo",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--login-region-combo.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "login-region-combo",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--prepare-panel-position-combo.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "prepare-panel-position-combo",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--toggle-beta-update.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "toggle-beta-update",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--toggle-filament-manager.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "toggle-filament-manager",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--toggle-multi-device.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "toggle-multi-device",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--toggle-single-instance.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "toggle-single-instance",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--toggle-uxip.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "toggle-uxip",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab--units-combo.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": "units-combo",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab-external-editor--browse-button.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab-external-editor",
+      "control": "browse-button",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab-external-editor--combobox.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab-external-editor",
+      "control": "combobox",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab-external-editor--editor-path-field.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab-external-editor",
+      "control": "editor-path-field",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab-external-editor.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab-external-editor",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab-scrolled.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab-scrolled",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/general-tab.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "general-tab",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/other-tab.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "other-tab",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/sidebar-3d.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-3d",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/sidebar-appearance.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-appearance",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/sidebar-developer-tools.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-developer-tools",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/sidebar-general.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-general",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/sidebar-other.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-other",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/sidebar-user.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "sidebar-user",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/preferences/user-tab.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "user-tab",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/project-tabs/tab-bar--new-tab-plus.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "tab-bar",
+      "control": "new-tab-plus",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/project-tabs/tab-bar--tab-active-close-x.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "tab-bar",
+      "control": "tab-active-close-x",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/project-tabs/tab-bar--tab-active.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "tab-bar",
+      "control": "tab-active",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/project-tabs/tab-bar--tab-close-x.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "tab-bar",
+      "control": "tab-close-x",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/project-tabs/tab-bar--tab-inactive.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "tab-bar",
+      "control": "tab-inactive",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/project-tabs/tab-bar--tab-untitled.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "tab-bar",
+      "control": "tab-untitled",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/project-tabs/tab-bar-two-tabs.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "tab-bar-two-tabs",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/project-tabs/tab-bar.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "tab-bar",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--case-sensitive.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "case-sensitive",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--flags-before-fix.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "flags-before-fix",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--flags.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "flags",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--insert-header.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "insert-header",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--pattern-editor.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "pattern-editor",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--quantifiers.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "quantifiers",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--reference-tab.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "reference-tab",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--regex-mode.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "regex-mode",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--test-pattern.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "test-pattern",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-alternation.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-alternation",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-backref.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-backref",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-caret.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-caret",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-charclass.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-charclass",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-digit.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-digit",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-dollar.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-dollar",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-dot.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-dot",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-grid.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-grid",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-group.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-group",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-noncapture.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-noncapture",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-plus.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-plus",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-question.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-question",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-space.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-space",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-star.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-star",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--token-word.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "token-word",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover--whole-word.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": "whole-word",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/builder-popover.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "builder-popover",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/search-field--builder-button.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "search-field",
+      "control": "builder-button",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/search-field--regex-toggle.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "search-field",
+      "control": "regex-toggle",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/search-field--search-icon.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "search-field",
+      "control": "search-icon",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/search-field--text-entry.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "search-field",
+      "control": "text-entry",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/regex-builder/search-field.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "search-field",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/sidebar-process/after-header-intact.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "after-header-intact",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/sidebar-process/after-search-settings.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "after-search-settings",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/sidebar-process/after-sidebar-readable.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "after-sidebar-readable",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/sidebar-process/before-header-starved.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "before-header-starved",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/sidebar-process/before-sidebar-clipped.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "before-sidebar-clipped",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/smart-home/dialog-520x480-after-text-action-fix.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog-520x480-after-text-action-fix",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/smart-home/dialog-520x480-before-text-action-fix.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog-520x480-before-text-action-fix",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/smart-home/dialog-520x480-media-actions-after-fix.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog-520x480-media-actions-after-fix",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/smart-home/dialog-720x760-after-text-action-fix.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog-720x760-after-text-action-fix",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/smart-home/dialog-720x760-before-text-action-fix.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog-720x760-before-text-action-fix",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/smart-home/dialog.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "dialog",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/crash-restore-prompt.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "crash-restore-prompt",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog--close.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog",
+      "control": "close",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog--project-banner.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog",
+      "control": "project-banner",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog--refresh.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog",
+      "control": "refresh",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog--restore-selected.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog",
+      "control": "restore-selected",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog--search-field.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog",
+      "control": "search-field",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog--version-list.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog",
+      "control": "version-list",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog-dark--before-card-fix.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog-dark",
+      "control": "before-card-fix",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog-dark.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog-dark",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/history-dialog.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "history-dialog",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/menu-entry.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "menu-entry",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/version-history/topbar-chip.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "topbar-chip",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-index.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-index",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-0.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-0",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-1.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-1",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-11--nav-buttons.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-11",
+      "control": "nav-buttons",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-11.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-11",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-21--nav-buttons.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-21",
+      "control": "nav-buttons",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-21.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-21",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-22--back-btn.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-22",
+      "control": "back-btn",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-22--filament-type-filter.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-22",
+      "control": "filament-type-filter",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-22--finish-btn.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-22",
+      "control": "finish-btn",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-22--nav-buttons.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-22",
+      "control": "nav-buttons",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-22--printer-filter.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-22",
+      "control": "printer-filter",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-22--select-all-checkbox.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-22",
+      "control": "select-all-checkbox",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-22--vendor-filter.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-22",
+      "control": "vendor-filter",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-22.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-22",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-23--nav-buttons.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-23",
+      "control": "nav-buttons",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-23.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-23",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-24--nav-buttons.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-24",
+      "control": "nav-buttons",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-24.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-24",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-3--nav-buttons.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-3",
+      "control": "nav-buttons",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-3.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-3",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-31--nav-buttons.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-31",
+      "control": "nav-buttons",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-31.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-31",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-5--nav-buttons.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-5",
+      "control": "nav-buttons",
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-5.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-5",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    },
+    {
+      "file": "docs/screenshots/wizard/wizard-step-6.png",
+      "group": "screenshots",
+      "kind": "native",
+      "page": "wizard-step-6",
+      "control": null,
+      "recipe": null,
+      "status": "pending"
+    }
+  ]
+}
