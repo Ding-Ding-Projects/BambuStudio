@@ -223,7 +223,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     wxBoxSizer* m_sizer_filament = new wxBoxSizer(wxHORIZONTAL);
 
-    m_title_filament = new wxStaticText(parent, wxID_ANY, _L("Filament"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
+    m_title_filament = new Label(parent, _L("Filament"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
     m_title_filament->SetFont(::Label::Body_13);
     m_title_filament->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_filament->Wrap(-1);
@@ -249,7 +249,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     wxBoxSizer* m_sizer_colour = new wxBoxSizer(wxHORIZONTAL);
 
-    m_title_colour = new wxStaticText(parent, wxID_ANY, _L("Colour"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
+    m_title_colour = new Label(parent, _L("Colour"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
     m_title_colour->SetFont(::Label::Body_13);
     m_title_colour->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_colour->Wrap(-1);
@@ -271,7 +271,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     m_sizer_colour->Add(m_clr_name, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
 
     wxBoxSizer* m_sizer_temperature = new wxBoxSizer(wxHORIZONTAL);
-    m_title_temperature = new wxStaticText(parent, wxID_ANY, _L("Nozzle\nTemperature"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
+    m_title_temperature = new Label(parent, _L("Nozzle\nTemperature"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
     m_title_temperature->SetFont(::Label::Body_13);
     m_title_temperature->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_temperature->Wrap(-1);
@@ -303,10 +303,10 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     sizer_tempinput->Add(bitmap_max_degree, 0, wxALIGN_CENTER, 0);
 
     wxBoxSizer* sizer_temp_txt = new wxBoxSizer(wxHORIZONTAL);
-    auto m_title_max = new wxStaticText(parent, wxID_ANY, _L("max"), wxDefaultPosition, AMS_MATERIALS_SETTING_INPUT_SIZE);
+    auto m_title_max = new Label(parent, _L("max"), 0, AMS_MATERIALS_SETTING_INPUT_SIZE);
     m_title_max->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_max->SetFont(::Label::Body_13);
-    auto m_title_min = new wxStaticText(parent, wxID_ANY, _L("min"), wxDefaultPosition, AMS_MATERIALS_SETTING_INPUT_SIZE);
+    auto m_title_min = new Label(parent, _L("min"), 0, AMS_MATERIALS_SETTING_INPUT_SIZE);
     m_title_min->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_min->SetFont(::Label::Body_13);
     sizer_temp_txt->Add(m_title_max, 1, wxALIGN_CENTER, 0);
@@ -322,7 +322,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     wxString warning_string = wxString::FromUTF8(
         (boost::format(_u8L("The input value should be greater than %1% and less than %2%")) % FILAMENT_MIN_TEMP % FILAMENT_MAX_TEMP).str());
-    warning_text = new wxStaticText(parent, wxID_ANY, warning_string, wxDefaultPosition, wxDefaultSize, 0);
+    warning_text = new Label(parent, warning_string);
     warning_text->SetFont(::Label::Body_13);
     warning_text->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
 
@@ -336,7 +336,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     wxBoxSizer* m_sizer_SN_inside = new wxBoxSizer(wxHORIZONTAL);
 
-    auto m_title_SN = new wxStaticText(m_panel_SN, wxID_ANY, _L("SN"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
+    auto m_title_SN = new Label(m_panel_SN, _L("SN"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
     m_title_SN->SetFont(::Label::Body_13);
     m_title_SN->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_SN->Wrap(-1);
@@ -344,7 +344,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     m_sizer_SN_inside->Add(0, 0, 0, wxEXPAND, 0);
 
-    m_sn_number = new wxStaticText(m_panel_SN, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize);
+    m_sn_number = new Label(m_panel_SN, wxEmptyString);
     m_sn_number->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_sizer_SN_inside->Add(m_sn_number, 0, wxALIGN_CENTER, 0);
     m_sizer_SN->Add(m_sizer_SN_inside);
@@ -381,7 +381,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     auto sizer = new wxBoxSizer(wxVERTICAL);
     auto cali_title_sizer = new wxBoxSizer(wxHORIZONTAL);
     // title
-    m_ratio_text   = new wxStaticText(parent, wxID_ANY, _L("Factors of Flow Dynamics Calibration"));
+    m_ratio_text   = new Label(parent, _L("Factors of Flow Dynamics Calibration"));
     m_ratio_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_ratio_text->SetFont(Label::Head_14);
 
@@ -398,7 +398,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
 
     wxBoxSizer *m_sizer_nozzle_type = new wxBoxSizer(wxHORIZONTAL);
     // Nozzle Type
-    m_title_nozzle_type = new wxStaticText(parent, wxID_ANY, _L("Nozzle Type"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
+    m_title_nozzle_type = new Label(parent, _L("Nozzle Type"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
     m_title_nozzle_type->SetMinSize(wxSize(FromDIP(80), -1));
     m_title_nozzle_type->SetMaxSize(wxSize(FromDIP(80), -1));
     m_title_nozzle_type->SetFont(::Label::Body_13);
@@ -414,7 +414,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
 
     wxBoxSizer *m_sizer_cali_resutl = new wxBoxSizer(wxHORIZONTAL);
     // pa profile
-    m_title_pa_profile = new wxStaticText(parent, wxID_ANY, _L("PA Profile"), wxDefaultPosition, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1), 0);
+    m_title_pa_profile = new Label(parent, _L("PA Profile"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
     m_title_pa_profile->SetMinSize(wxSize(FromDIP(80), -1));
     m_title_pa_profile->SetMaxSize(wxSize(FromDIP(80), -1));
     m_title_pa_profile->SetFont(::Label::Body_13);
@@ -432,7 +432,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     kn_val_sizer->AddGrowableCol(1);
 
     // k params input
-    m_k_param = new wxStaticText(parent, wxID_ANY, _L("Factor K"), wxDefaultPosition, wxDefaultSize, 0);
+    m_k_param = new Label(parent, _L("Factor K"));
     m_k_param->SetMinSize(wxSize(FromDIP(80), -1));
     m_k_param->SetMaxSize(wxSize(FromDIP(80), -1));
     m_k_param->SetFont(::Label::Body_13);
@@ -448,7 +448,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
 
     // n params input
     wxBoxSizer* n_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_n_param = new wxStaticText(parent, wxID_ANY, _L("Factor N"), wxDefaultPosition, wxDefaultSize, 0);
+    m_n_param = new Label(parent, _L("Factor N"));
     m_n_param->SetFont(::Label::Body_13);
     m_n_param->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_n_param->Wrap(-1);
@@ -2650,7 +2650,7 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
 
     m_def_color_box = new StaticBox(this);
     wxBoxSizer* m_sizer_ams = new wxBoxSizer(wxHORIZONTAL);
-    auto m_title_ams = new wxStaticText(m_def_color_box, wxID_ANY, _L("AMS"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_title_ams = new Label(m_def_color_box, _L("AMS"));
     m_title_ams->SetFont(::Label::Body_14);
     m_title_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_sizer_ams->Add(m_title_ams, 0, wxALL, 5);
@@ -2696,7 +2696,7 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
     }
 
     wxBoxSizer* m_sizer_other = new wxBoxSizer(wxHORIZONTAL);
-    auto m_title_other = new wxStaticText(m_def_color_box, wxID_ANY, _L("Other Color"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_title_other = new Label(m_def_color_box, _L("Other Color"));
     m_title_other->SetFont(::Label::Body_14);
     m_title_other->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     m_sizer_other->Add(m_title_other, 0, wxALL, 5);
@@ -2708,7 +2708,7 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
 
     //custom color
     wxBoxSizer* m_sizer_custom = new wxBoxSizer(wxHORIZONTAL);
-    auto m_title_custom = new wxStaticText(m_def_color_box, wxID_ANY, _L("Custom Color"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_title_custom = new Label(m_def_color_box, _L("Custom Color"));
     m_title_custom->SetFont(::Label::Body_14);
     m_title_custom->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     auto custom_line = new wxPanel(m_def_color_box, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
@@ -2979,9 +2979,7 @@ void AMSNewOfficialFilamentDlg::create()
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto* label = new wxStaticText(this, wxID_ANY,
-        _L("AMS detected a new official filament. Add it to Filament Manager?"),
-        wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    auto* label = new Label(this, _L("AMS detected a new official filament. Add it to Filament Manager?"), wxALIGN_LEFT);
     label->Wrap(FromDIP(360));
     sizer->Add(label, 0, wxALL, FromDIP(12));
 
@@ -2992,7 +2990,7 @@ void AMSNewOfficialFilamentDlg::create()
     auto _row = [&](RadioBox* rb, const wxString& text) {
         auto* row = new wxBoxSizer(wxHORIZONTAL);
         row->Add(rb, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
-        row->Add(new wxStaticText(this, wxID_ANY, text), 0, wxALIGN_CENTER_VERTICAL);
+        row->Add(new Label(this, text), 0, wxALIGN_CENTER_VERTICAL);
         sizer->Add(row, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     };
     _row(m_radio_record_new,    _L("Add as new filament"));

@@ -8,6 +8,7 @@
 #include "FilamentMapDialog.hpp"
 #include "DeviceCore/DevConfigUtil.h"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/Label.hpp"
 
 #include <wx/dcmemory.h>
 #include <wx/dcclient.h>
@@ -313,7 +314,7 @@ void FilamentGroupPopup::RecreateUIElements()
         wxBoxSizer *button_sizer = new wxBoxSizer(wxHORIZONTAL);
 
         auto* video_sizer = new wxBoxSizer(wxHORIZONTAL);
-        video_link = new wxStaticText(this, wxID_ANY, _L("Video tutorial"));
+        video_link = new Label(this, _L("Video tutorial"));
         video_link->SetBackgroundColour(BackGroundColor);
         video_link->SetForegroundColour(GreenColor);
         video_link->SetFont(Label::Body_12.Underlined());
@@ -330,7 +331,7 @@ void FilamentGroupPopup::RecreateUIElements()
 
 
         auto* wiki_sizer = new wxBoxSizer(wxHORIZONTAL);
-        wiki_link = new wxStaticText(this, wxID_ANY, _L("Learn more"));
+        wiki_link = new Label(this, _L("Learn more"));
         wiki_link->SetBackgroundColour(BackGroundColor);
         wiki_link->SetForegroundColour(GreenColor);
         wiki_link->SetFont(Label::Body_12.Underlined());

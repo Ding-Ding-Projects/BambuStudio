@@ -12,6 +12,7 @@
 #include "DeviceCore/DevNozzleSystem.h"
 #include "DeviceCore/DevPrintOptions.h"
 #include "DeviceCore/DevFan.h"
+#include "Widgets/Label.hpp"
 
 static const wxColour STATIC_BOX_LINE_COL = ThemeColor::Grey400;
 static const wxColour STATIC_TEXT_CAPTION_COL = ThemeColor::TextSecondary;
@@ -2120,7 +2121,7 @@ void PrinterPartsDialog::UpdateNozzleInfo(){
  {
      SetBackgroundColour(StateColor::semantic(MD3::Role::InverseSurface));
 
-     wxStaticText *textContent = new wxStaticText(this, wxID_ANY, text);
+     wxStaticText *textContent = new Label(this, text);
      textContent->SetForegroundColour(StateColor::semantic(MD3::Role::InverseOn));
      wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
      sizer->Add(textContent, 1, wxALIGN_CENTER | wxALL, 10);

@@ -252,7 +252,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     rename_sizer_v = new wxBoxSizer(wxVERTICAL);
     rename_sizer_h = new wxBoxSizer(wxHORIZONTAL);
 
-    m_rename_text = new wxStaticText(m_rename_normal_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_rename_text = new Label(m_rename_normal_panel, wxEmptyString, wxST_ELLIPSIZE_END);
     m_rename_text->SetFont(::Label::Head_14);
     m_rename_text->SetBackgroundColour(ThemeColor::White);
     m_rename_text->SetMaxSize(wxSize(FromDIP(340), -1));
@@ -828,7 +828,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     auto completedimg = new wxStaticBitmap(m_panel_finish, wxID_ANY, dialog_action_glyph(m_panel_finish, MaterialIcon::TaskAlt, MD3::Role::Primary, "completed", 25), wxDefaultPosition, wxSize(imgsize, imgsize), 0);
     m_sizer_finish_h->Add(completedimg, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
-    m_statictext_finish = new wxStaticText(m_panel_finish, wxID_ANY, L("send completed"), wxDefaultPosition, wxDefaultSize, 0);
+    m_statictext_finish = new Label(m_panel_finish, L("send completed"));
     m_statictext_finish->Wrap(-1);
     m_statictext_finish->SetForegroundColour(ThemeColor::BrandGreen);
     m_sizer_finish_h->Add(m_statictext_finish, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
@@ -857,8 +857,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     wxBoxSizer* sizer_error_desc = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* sizer_extra_info = new wxBoxSizer(wxHORIZONTAL);
 
-    auto st_title_error_code = new wxStaticText(m_sw_print_failed_info, wxID_ANY, _L("Error code"));
-    auto st_title_error_code_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY,": ");
+    auto st_title_error_code = new Label(m_sw_print_failed_info, _L("Error code"));
+    auto st_title_error_code_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_code = new Label(m_sw_print_failed_info, wxEmptyString);
     st_title_error_code->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_error_code_doc->SetForegroundColour(ThemeColor::TextSecondary);
@@ -875,8 +875,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_error_code->Add(m_st_txt_error_code, 0, wxALL, 0);
 
 
-    auto st_title_error_desc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, wxT("Error desc"));
-    auto st_title_error_desc_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY,": ");
+    auto st_title_error_desc = new Label(m_sw_print_failed_info, wxT("Error desc"));
+    auto st_title_error_desc_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_desc = new Label(m_sw_print_failed_info, wxEmptyString);
     st_title_error_desc->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_error_desc_doc->SetForegroundColour(ThemeColor::TextSecondary);
@@ -892,8 +892,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_error_desc->Add(st_title_error_desc_doc, 0, wxALL, 0);
     sizer_error_desc->Add(m_st_txt_error_desc, 0, wxALL, 0);
 
-    auto st_title_extra_info = new wxStaticText(m_sw_print_failed_info, wxID_ANY, wxT("Extra info"));
-    auto st_title_extra_info_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, ": ");
+    auto st_title_extra_info = new Label(m_sw_print_failed_info, wxT("Extra info"));
+    auto st_title_extra_info_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_extra_info = new Label(m_sw_print_failed_info, wxEmptyString);
     st_title_extra_info->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_extra_info_doc->SetForegroundColour(ThemeColor::TextSecondary);

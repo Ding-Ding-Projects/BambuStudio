@@ -504,7 +504,7 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
 
     m_static_bitmap_fan = new wxStaticBitmap(this, wxID_ANY, m_bitmap_fan->bmp(), wxDefaultPosition, wxDefaultSize);
 
-    m_static_name = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END | wxALIGN_CENTER_HORIZONTAL);
+    m_static_name = new Label(this, wxEmptyString, wxST_ELLIPSIZE_END | wxALIGN_CENTER_HORIZONTAL);
     m_static_name->SetBackgroundColour(card_bg);
     m_static_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_static_name->SetFont(Label::Head_16);
@@ -529,7 +529,7 @@ FanControlNew::FanControlNew(wxWindow *parent, const AirDuctData &fan_data, int 
 
     sizer_control->Add(sizer_control_top, 0, wxEXPAND, 0);
 
-    m_static_status_name = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END | wxALIGN_CENTER_HORIZONTAL);
+    m_static_status_name = new Label(this, wxEmptyString, wxST_ELLIPSIZE_END | wxALIGN_CENTER_HORIZONTAL);
     // "Off" / "Auto" is the card's status accent; thread the Device scheme so it
     // reads teal with the rest of the workspace instead of the brand green.
     m_static_status_name->SetForegroundColour(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device));

@@ -991,7 +991,7 @@ RichTooltipPopup::RichTooltipPopup(wxWindow* parent, const wxString& iconName, c
     }
     
     // Add text
-    wxStaticText* textCtrl = new wxStaticText(this, wxID_ANY, m_text);
+    wxStaticText* textCtrl = new Label(this, m_text);
     textCtrl->SetFont(Label::Body_13);
     textCtrl->SetForegroundColour(StateColor::semantic(MD3::Role::InverseOn));
     sizer->Add(textCtrl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(12));

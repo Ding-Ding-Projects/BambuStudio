@@ -30,6 +30,7 @@
 #include <boost/uuid/detail/md5.hpp>
 
 #include "GL/glew.h"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 #include <wx/display.h>
 #include <wx/htmllbox.h>
@@ -95,7 +96,7 @@ public:
     SendSystemInfoProgressDialog(wxWindow* parent, const wxString& message)
         : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxCAPTION)
     {
-        auto* text = new wxStaticText(this, wxID_ANY, message, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+        auto* text = new Label(this, message, wxALIGN_CENTER_HORIZONTAL);
         //auto* btn = new wxButton(this, wxID_CANCEL, _L("Cancel"));
         auto* btn = new Button(this, wxEmptyString, "", 0, 0, wxID_CANCEL);
         btn->SetVariant(Button::Variant::Text);

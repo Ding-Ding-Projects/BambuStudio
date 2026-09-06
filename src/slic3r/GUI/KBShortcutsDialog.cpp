@@ -10,6 +10,7 @@
 #include "wxExtensions.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 #include <wx/notebook.h>
 
 namespace Slic3r {
@@ -124,7 +125,7 @@ wxWindow *KBShortcutsDialog::create_button(int id, wxString text)
 
     sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(22));
 
-    auto stext = new wxStaticText(tab_button, wxID_ANY, text, wxDefaultPosition, wxDefaultSize, 0);
+    auto stext = new Label(tab_button, text);
     stext->SetFont(::Label::Body_13);
     stext->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     stext->Wrap(-1);
@@ -327,7 +328,7 @@ wxPanel* KBShortcutsDialog::create_page(wxWindow* parent, const ShortcutsItem& s
         main_sizer->AddSpacer(FromDIP(10));
         wxBoxSizer* info_sizer = new wxBoxSizer(wxHORIZONTAL);
         info_sizer->AddStretchSpacer();
-        info_sizer->Add(new wxStaticText(main_page, wxID_ANY, shortcuts.first.second), 0);
+        info_sizer->Add(new Label(main_page, shortcuts.first.second), 0);
         info_sizer->AddStretchSpacer();
         main_sizer->Add(info_sizer, 0, wxEXPAND);
         main_sizer->AddSpacer(FromDIP(10));
@@ -346,16 +347,16 @@ wxPanel* KBShortcutsDialog::create_page(wxWindow* parent, const ShortcutsItem& s
         const auto &[shortcut, description] = shortcuts.second[i];
         wxStaticText* key                    = nullptr;
         if (shortcut == "Delete" || shortcut == "BackSpace") {
-            key = new wxStaticText(scrollable_panel, wxID_ANY, shortcut);
+            key = new Label(scrollable_panel, shortcut);
         }
         else {
-            key = new wxStaticText(scrollable_panel, wxID_ANY, _(shortcut));
+            key = new Label(scrollable_panel, _(shortcut));
         }
         key->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         key->SetFont(bold_font);
         grid_sizer->Add(key, 0, wxALIGN_CENTRE_VERTICAL);
 
-        auto desc = new wxStaticText(scrollable_panel, wxID_ANY, _(description));
+        auto desc = new Label(scrollable_panel, _(description));
         desc->SetFont(font);
         desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         desc->Wrap(FromDIP(600));

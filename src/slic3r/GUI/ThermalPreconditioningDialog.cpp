@@ -6,6 +6,7 @@
 #include "DeviceManager.hpp"
 #include "DeviceCore/DevManager.h"
 #include "Widgets/Button.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -56,7 +57,7 @@ void ThermalPreconditioningDialog::create_ui()
     wxBoxSizer *content = GetContentSizer();
 
     // Remaining time label
-    m_remaining_time_label = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    m_remaining_time_label = new Label(this, "", wxALIGN_LEFT);
     wxFont time_font       = m_remaining_time_label->GetFont();
     time_font.SetPointSize(14);
     time_font.SetWeight(wxFONTWEIGHT_BOLD);
@@ -65,9 +66,7 @@ void ThermalPreconditioningDialog::create_ui()
 
     // Explanation text
     m_explanation_label =
-        new wxStaticText(this, wxID_ANY,
-                         _L("The heated bed's thermal preconditioning helps optimize the first layer print quality. Printing will start once preconditioning is complete."),
-                         wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+        new Label(this, _L("The heated bed's thermal preconditioning helps optimize the first layer print quality. Printing will start once preconditioning is complete."), wxALIGN_LEFT);
     m_explanation_label->Wrap(FromDIP(450));
     m_explanation_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 

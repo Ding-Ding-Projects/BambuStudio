@@ -6,6 +6,7 @@
 #include "../DeviceCore/DevConfigUtil.h"
 #include "../DeviceCore/DevManager.h"
 #include "libslic3r/PresetBundle.hpp"
+#include "Label.hpp"
 #include <wx/sizer.h>
 
 
@@ -34,7 +35,7 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
 
     wxBoxSizer *choice_sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto* label = new wxStaticText(content, wxID_ANY, _L("Please set nozzle count"));
+    auto* label = new Label(content, _L("Please set nozzle count"));
     choice_sizer->Add(label, 0, wxALL | wxALIGN_LEFT, FromDIP(10));
 
     wxArrayString nozzle_choices;
@@ -45,7 +46,7 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
 
     if (show_standard) {
         // Standard nozzle choice
-        auto *standard_label = new wxStaticText(content, wxID_ANY, _L(get_nozzle_volume_type_string(nvtStandard)));
+        auto *standard_label = new Label(content, _L(get_nozzle_volume_type_string(nvtStandard)));
         choice_sizer->Add(standard_label, 0, wxALL | wxALIGN_LEFT, FromDIP(5));
 
         m_standard_choice = new ComboBox(content, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, nullptr, wxCB_READONLY);
@@ -57,7 +58,7 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
 
     if (show_highflow) {
         // Highflow nozzle choice
-        auto *highflow_label = new wxStaticText(content, wxID_ANY, _L(get_nozzle_volume_type_string(nvtHighFlow)));
+        auto *highflow_label = new Label(content, _L(get_nozzle_volume_type_string(nvtHighFlow)));
         choice_sizer->Add(highflow_label, 0, wxALL | wxALIGN_LEFT, FromDIP(5));
 
         m_highflow_choice = new ComboBox(content, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, nullptr, wxCB_READONLY);

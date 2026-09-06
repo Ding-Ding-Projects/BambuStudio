@@ -31,6 +31,7 @@
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 using boost::optional;
 
@@ -878,7 +879,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
 
     wxBoxSizer *m_sizer_main = GetContentSizer();
 
-    m_action_line = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, UNSAVE_CHANGE_DIALOG_ACTION_LINE_SIZE, 0);
+    m_action_line = new Label(this, wxEmptyString, 0, UNSAVE_CHANGE_DIALOG_ACTION_LINE_SIZE);
     m_action_line->SetFont(::Label::Body_13);
     m_action_line->SetForegroundColour(GREY900);
     m_action_line->Wrap(UNSAVE_CHANGE_DIALOG_ACTION_LINE_SIZE.GetWidth());
@@ -908,7 +909,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         wxBoxSizer *top_title_temp_v = new wxBoxSizer(wxVERTICAL);
         top_title_temp_v->SetMinSize(wxSize(UNSAVE_CHANGE_DIALOG_VALUE_WIDTH, -1));
         wxBoxSizer *top_title_temp_h = new wxBoxSizer(wxHORIZONTAL);
-        static_temp_title            = new wxStaticText(m_panel_temp, wxID_ANY, _L("Settings"), wxDefaultPosition, wxDefaultSize, 0);
+        static_temp_title            = new Label(m_panel_temp, _L("Settings"));
         static_temp_title->SetFont(::Label::Body_13);
         static_temp_title->Wrap(-1);
         static_temp_title->SetForegroundColour(StateColor::semantic(MD3::Role::InverseOn));
@@ -927,7 +928,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         wxBoxSizer *top_title_oldv_h = new wxBoxSizer(wxHORIZONTAL);
 
         std::string ucd_pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
-        static_oldv_title = new wxStaticText(m_panel_oldv, wxID_ANY, params ? _L(DevPrinterConfigUtil::get_toolhead_display_name(ucd_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::SentenceCase)) + ": " + get_nozzle_volume_type_name(params->nozzle) : _L("Preset(Old)"), wxDefaultPosition, wxDefaultSize, 0);
+        static_oldv_title = new Label(m_panel_oldv, params ? _L(DevPrinterConfigUtil::get_toolhead_display_name(ucd_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::SentenceCase)) + ": " + get_nozzle_volume_type_name(params->nozzle) : _L("Preset(Old)"));
         static_oldv_title->SetFont(::Label::Body_13);
         static_oldv_title->Wrap(-1);
         static_oldv_title->SetForegroundColour(params && params->left_to_right ? wxGetApp().get_label_clr_modified() : StateColor::semantic(MD3::Role::InverseOn));
@@ -946,8 +947,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
         wxBoxSizer *top_title_newv = new wxBoxSizer(wxVERTICAL);
         wxBoxSizer *top_title_newv_h = new wxBoxSizer(wxHORIZONTAL);
 
-        static_newv_title = new wxStaticText(m_panel_newv, wxID_ANY, params ? _L(DevPrinterConfigUtil::get_toolhead_display_name(ucd_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::SentenceCase)) + ": " + get_nozzle_volume_type_name(params->nozzle) : _L("Modified Value(New)"),
-                                             wxDefaultPosition, wxDefaultSize, 0);
+        static_newv_title = new Label(m_panel_newv, params ? _L(DevPrinterConfigUtil::get_toolhead_display_name(ucd_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::SentenceCase)) + ": " + get_nozzle_volume_type_name(params->nozzle) : _L("Modified Value(New)"));
         static_newv_title->SetFont(::Label::Body_13);
         static_newv_title->Wrap(-1);
         static_newv_title->SetForegroundColour(params && !params->left_to_right ? wxGetApp().get_label_clr_modified() : StateColor::semantic(MD3::Role::InverseOn));
@@ -990,7 +990,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
     auto checkbox       = new ::CheckBox(this, wxID_APPLY);
     checkbox_sizer->Add(checkbox, 0, wxALL | wxALIGN_CENTER, FromDIP(2));
 
-    auto checkbox_text = new wxStaticText(this, wxID_ANY, _L("Remember my choice."), wxDefaultPosition, wxDefaultSize, 0);
+    auto checkbox_text = new Label(this, _L("Remember my choice."));
     checkbox_sizer->Add(checkbox_text, 0, wxALL | wxALIGN_CENTER, FromDIP(2));
     checkbox_text->SetFont(::Label::Body_13);
     checkbox_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -1536,7 +1536,7 @@ void UnsavedChangesDialog::update_list(SyncExtruderParams *params)
         wxBoxSizer *sizer_category   = new wxBoxSizer(wxHORIZONTAL);
         wxBoxSizer *sizer_category_v = new wxBoxSizer(wxHORIZONTAL);
 
-        auto text_category = new wxStaticText(panel_category, wxID_ANY, iter->first, wxDefaultPosition, wxSize(-1, -1), 0);
+        auto text_category = new Label(panel_category, iter->first, 0, wxSize(-1, -1));
         text_category->SetFont(::Label::Head_13);
         text_category->SetForegroundColour(GREY900);
         text_category->Wrap(-1);
@@ -1571,7 +1571,7 @@ void UnsavedChangesDialog::update_list(SyncExtruderParams *params)
 
                      wxBoxSizer *sizer_left_v = new wxBoxSizer(wxVERTICAL);
 
-                     auto text_left = new wxStaticText(panel_left, wxID_ANY, class_g_list[gname][0].group_name, wxDefaultPosition, wxSize(-1, -1), 0);
+                     auto text_left = new Label(panel_left, class_g_list[gname][0].group_name, 0, wxSize(-1, -1));
                      text_left->SetFont(::Label::Head_13);
                      text_left->Wrap(-1);
 #ifdef __linux__
@@ -1604,7 +1604,7 @@ void UnsavedChangesDialog::update_list(SyncExtruderParams *params)
 
                 wxBoxSizer *sizer_left_v = new wxBoxSizer(wxVERTICAL);
 
-                auto text_left = new wxStaticText(panel_left, wxID_ANY, data.option_name, wxDefaultPosition, wxSize(-1, -1), 0);
+                auto text_left = new Label(panel_left, data.option_name, 0, wxSize(-1, -1));
                 text_left->SetFont(::Label::Body_13);
                 text_left->Wrap(-1);
 #ifdef __linux__
@@ -1625,7 +1625,7 @@ void UnsavedChangesDialog::update_list(SyncExtruderParams *params)
 
 
                 data.old_value = subreplace(data.old_value.ToStdString(), "\n", " ");
-                auto text_oldv = new wxStaticText(panel_oldv, wxID_ANY, data.old_value, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+                auto text_oldv = new Label(panel_oldv, data.old_value, wxST_ELLIPSIZE_END);
                 text_oldv->SetFont(::Label::Body_13);
                 text_oldv->Wrap(-1);
                 text_oldv->SetForegroundColour(params && params->left_to_right ? wxGetApp().get_label_clr_modified() : GREY700);
@@ -1639,7 +1639,7 @@ void UnsavedChangesDialog::update_list(SyncExtruderParams *params)
                 wxBoxSizer *sizer_new_v = new wxBoxSizer(wxVERTICAL);
 
                 data.new_value = subreplace(data.new_value.ToStdString(), "\n", " ");
-                auto text_newv = new wxStaticText(panel_newv, wxID_ANY, data.new_value, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+                auto text_newv = new Label(panel_newv, data.new_value, wxST_ELLIPSIZE_END);
                 text_newv->SetFont(::Label::Body_13);
                 text_newv->Wrap(-1);
                 text_newv->SetForegroundColour(params && !params->left_to_right ? wxGetApp().get_label_clr_modified() : GREY700);
@@ -1861,7 +1861,7 @@ FullCompareDialog::FullCompareDialog(const wxString& option_name, const wxString
     grid_sizer->AddGrowableRow(1,1);
 
     auto add_header = [grid_sizer, border, this](wxString label) {
-        wxStaticText* text = new wxStaticText(this, wxID_ANY, label);
+        wxStaticText* text = new Label(this, label);
         text->SetFont(this->GetFont().Bold());
         grid_sizer->Add(text, 0, wxALL, border);
     };
@@ -1964,10 +1964,10 @@ DiffPresetDialog::DiffPresetDialog(MainFrame* mainframe)
     m_preset_bundle_right = std::make_unique<PresetBundle>(*wxGetApp().preset_bundle);
 
     //m_top_info_line = new wxStaticText(this, wxID_ANY, "Select presets to compare");
-    m_top_info_line = new wxStaticText(this, wxID_ANY, _L("Select presets to compare"));
+    m_top_info_line = new Label(this, _L("Select presets to compare"));
     m_top_info_line->SetFont(wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT).Bold());
 
-    m_bottom_info_line = new wxStaticText(this, wxID_ANY, "");
+    m_bottom_info_line = new Label(this, "");
     m_bottom_info_line->SetFont(wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT).Bold());
 
     wxBoxSizer* presets_sizer = new wxBoxSizer(wxVERTICAL);

@@ -11,6 +11,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/Slider.hpp"
 #include "Widgets/TextInput.hpp"
+#include "Widgets/Label.hpp"
 #include <chrono>
 
 using namespace Slic3r;
@@ -114,9 +115,9 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     // bSizer->Add(overlay_panel, 0, wxALIGN_CENTER | wxALL, 10);
 
     wxBoxSizer* tips_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText* info = new wxStaticText(this, wxID_ANY, _L("Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."));
+    wxStaticText* info = new Label(this, _L("Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."));
     info->SetForegroundColour(FONT_COLOR);
-    wxStaticText *tips = new wxStaticText(this, wxID_ANY, _L("View Wiki for more information"));
+    wxStaticText *tips = new Label(this, _L("View Wiki for more information"));
     wxFont font(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
     font.SetUnderlined(true);
     tips->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
@@ -150,8 +151,7 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
 
     wxBoxSizer* linear_sizer = new wxBoxSizer(wxHORIZONTAL);
     //linear_sizer->SetMinSize(wxSize(MIN_DIALOG_WIDTH, -1));
-    wxStaticText* linear_title = new wxStaticText(this,
-                                                  wxID_ANY, _L("Linear Deflection") + ": ");
+    wxStaticText* linear_title = new Label(this, _L("Linear Deflection") + ": ");
     linear_title->SetForegroundColour(FONT_COLOR);
     linear_sizer->Add(linear_title, 0, wxALIGN_LEFT);
     linear_sizer->AddStretchSpacer(1);
@@ -214,8 +214,7 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     bSizer->Add(linear_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, LEFT_RIGHT_PADING);
 
     wxBoxSizer* angle_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText* angle_title = new wxStaticText(this,
-                                                  wxID_ANY, _L("Angle Deflection") + ": ");
+    wxStaticText* angle_title = new Label(this, _L("Angle Deflection") + ": ");
     angle_title->SetForegroundColour(FONT_COLOR);
     angle_sizer->Add(angle_title, 0, wxALIGN_LEFT);
     angle_sizer->AddStretchSpacer(1);
@@ -276,9 +275,9 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     bSizer->Add(check_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
 
     wxBoxSizer* mesh_face_number_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText *mesh_face_number_title = new wxStaticText(this, wxID_ANY, _L("Number of triangular facets") + ": ");
+    wxStaticText *mesh_face_number_title = new Label(this, _L("Number of triangular facets") + ": ");
     mesh_face_number_title->SetForegroundColour(FONT_COLOR);
-    mesh_face_number_text = new wxStaticText(this, wxID_ANY, _L("0"));
+    mesh_face_number_text = new Label(this, _L("0"));
     mesh_face_number_text->SetForegroundColour(FONT_COLOR);
     mesh_face_number_text->SetMinSize(wxSize(FromDIP(150), -1));
     mesh_face_number_sizer->Add(mesh_face_number_title, 0, wxALIGN_LEFT);

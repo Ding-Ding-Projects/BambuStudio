@@ -5,6 +5,7 @@
 #include "Widgets/SearchField.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "Widgets/Label.hpp"
 
 #include <wx/wrapsizer.h>
 
@@ -327,7 +328,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     // (m_table_head_panel) stay functional. ----
     auto* toolbar_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    auto* farm_title = new wxStaticText(m_main_panel, wxID_ANY, _L("Device farm"));
+    auto* farm_title = new Label(m_main_panel, _L("Device farm"));
     farm_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     farm_title->SetFont(Label::Head_20);
 
@@ -459,7 +460,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     m_action->Hide();
     m_table_head_panel->Layout();
 
-    m_tip_text = new wxStaticText(m_main_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    m_tip_text = new Label(m_main_panel, wxEmptyString, wxALIGN_CENTER);
     m_tip_text->SetLabel(_L("Please select the devices you would like to manage here (up to 6 devices)"));
     m_tip_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_text->SetFont(::Label::Head_20);
@@ -535,7 +536,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
         refresh_user_device();
         update_page_number();
     });
-    st_page_number = new wxStaticText(m_flipping_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize);
+    st_page_number = new Label(m_flipping_panel, wxEmptyString);
     btn_next_page = new Button(m_flipping_panel, "", "go_next_plate", 0, FromDIP(20));
     btn_next_page->SetMinSize(wxSize(FromDIP(20), FromDIP(20)));
     btn_next_page->SetMaxSize(wxSize(FromDIP(20), FromDIP(20)));

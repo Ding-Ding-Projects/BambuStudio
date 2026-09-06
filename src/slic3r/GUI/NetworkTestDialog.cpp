@@ -12,6 +12,7 @@
 #include "slic3r/Utils/Http.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 #include <boost/asio/ip/address.hpp>
 #include <boost/log/trivial.hpp>
 
@@ -276,40 +277,40 @@ wxBoxSizer* NetworkTestDialog::create_info_sizer(wxWindow* parent)
 {
 	auto sizer = new wxBoxSizer(wxVERTICAL);
 
-	text_basic_info = new wxStaticText(this, wxID_ANY, _L("Basic Info"), wxDefaultPosition, wxDefaultSize, 0);
+	text_basic_info = new Label(this, _L("Basic Info"));
 	text_basic_info->Wrap(-1);
 	sizer->Add(text_basic_info, 0, wxALL, 5);
 
 	wxBoxSizer* version_sizer = new wxBoxSizer(wxHORIZONTAL);
-	text_version_title = new wxStaticText(this, wxID_ANY, _L("Studio Version:"), wxDefaultPosition, wxDefaultSize, 0);
+	text_version_title = new Label(this, _L("Studio Version:"));
 	text_version_title->Wrap(-1);
 	version_sizer->Add(text_version_title, 0, wxALL, 5);
 
 	wxString text_version = get_studio_version();
-	text_version_val = new wxStaticText(this, wxID_ANY, text_version, wxDefaultPosition, wxDefaultSize, 0);
+	text_version_val = new Label(this, text_version);
 	text_version_val->Wrap(-1);
 	version_sizer->Add(text_version_val, 0, wxALL, 5);
 	sizer->Add(version_sizer, 1, wxEXPAND, 5);
 
 	wxBoxSizer* sys_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-	txt_sys_info_title = new wxStaticText(this, wxID_ANY, _L("System Version:"), wxDefaultPosition, wxDefaultSize, 0);
+	txt_sys_info_title = new Label(this, _L("System Version:"));
 	txt_sys_info_title->Wrap(-1);
 	sys_sizer->Add(txt_sys_info_title, 0, wxALL, 5);
 
-	txt_sys_info_value = new wxStaticText(this, wxID_ANY, get_os_info(), wxDefaultPosition, wxDefaultSize, 0);
+	txt_sys_info_value = new Label(this, get_os_info());
 	txt_sys_info_value->Wrap(-1);
 	sys_sizer->Add(txt_sys_info_value, 0, wxALL, 5);
 
 	sizer->Add(sys_sizer, 1, wxEXPAND, 5);
 
 	wxBoxSizer* line_sizer = new wxBoxSizer(wxHORIZONTAL);
-	txt_dns_info_title = new wxStaticText(this, wxID_ANY, _L("DNS Server:"), wxDefaultPosition, wxDefaultSize, 0);
+	txt_dns_info_title = new Label(this, _L("DNS Server:"));
 	txt_dns_info_title->Wrap(-1);
 	txt_dns_info_title->Hide();
 	line_sizer->Add(txt_dns_info_title, 0, wxALL, 5);
 
-	txt_dns_info_value = new wxStaticText(this, wxID_ANY, get_dns_info(), wxDefaultPosition, wxDefaultSize, 0);
+	txt_dns_info_value = new Label(this, get_dns_info());
 	txt_dns_info_value->Hide();
 	line_sizer->Add(txt_dns_info_value, 0, wxALL, 5);
 	sizer->Add(line_sizer, 1, wxEXPAND, 5);
@@ -331,11 +332,11 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
     btn_link->SetBackgroundColor(btn_bg);
 	grid_sizer->Add(btn_link, 0, wxEXPAND | wxALL, 5);
 
-	text_link_title = new wxStaticText(this, wxID_ANY, _L("Test BambuLab:"), wxDefaultPosition, wxDefaultSize, 0);
+	text_link_title = new Label(this, _L("Test BambuLab:"));
 	text_link_title->Wrap(-1);
 	grid_sizer->Add(text_link_title, 0, wxALIGN_RIGHT | wxALL, 5);
 
-	text_link_val = new wxStaticText(this, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	text_link_val = new Label(this, _L("N/A"));
 	text_link_val->Wrap(-1);
 	grid_sizer->Add(text_link_val, 0, wxALL, 5);
 
@@ -343,12 +344,12 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
     btn_bing->SetBackgroundColor(btn_bg);
 	grid_sizer->Add(btn_bing, 0, wxEXPAND | wxALL, 5);
 
-    text_bing_title = new wxStaticText(this, wxID_ANY, _L("Test bing.com:"), wxDefaultPosition, wxDefaultSize, 0);
+    text_bing_title = new Label(this, _L("Test bing.com:"));
 
 	text_bing_title->Wrap(-1);
 	grid_sizer->Add(text_bing_title, 0, wxALIGN_RIGHT | wxALL, 5);
 
-	text_bing_val = new wxStaticText(this, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	text_bing_val = new Label(this, _L("N/A"));
 	text_bing_val->Wrap(-1);
 	grid_sizer->Add(text_bing_val, 0, wxALL, 5);
 
@@ -356,11 +357,11 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
     btn_iot->SetBackgroundColor(btn_bg);
 	grid_sizer->Add(btn_iot, 0, wxEXPAND | wxALL, 5);
 
-	text_iot_title = new wxStaticText(this, wxID_ANY, _L("Test HTTP Service:"), wxDefaultPosition, wxDefaultSize, 0);
+	text_iot_title = new Label(this, _L("Test HTTP Service:"));
 	text_iot_title->Wrap(-1);
 	grid_sizer->Add(text_iot_title, 0, wxALIGN_RIGHT | wxALL, 5);
 
-	text_iot_value = new wxStaticText(this, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	text_iot_value = new Label(this, _L("N/A"));
 	text_iot_value->Wrap(-1);
 	grid_sizer->Add(text_iot_value, 0, wxALL, 5);
 
@@ -368,11 +369,11 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
     btn_oss->SetBackgroundColor(btn_bg);
 	grid_sizer->Add(btn_oss, 0, wxEXPAND | wxALL, 5);
 
-	text_oss_title = new wxStaticText(this, wxID_ANY, _L("Test Storage Upload:"), wxDefaultPosition, wxDefaultSize, 0);
+	text_oss_title = new Label(this, _L("Test Storage Upload:"));
 	text_oss_title->Wrap(-1);
 	grid_sizer->Add(text_oss_title, 0, wxALIGN_RIGHT | wxALL, 5);
 
-	text_oss_value = new wxStaticText(this, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	text_oss_value = new Label(this, _L("N/A"));
 	text_oss_value->Wrap(-1);
 	grid_sizer->Add(text_oss_value, 0, wxALL, 5);
 
@@ -380,11 +381,11 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
     btn_oss_upgrade->SetBackgroundColor(btn_bg);
 	grid_sizer->Add(btn_oss_upgrade, 0, wxEXPAND | wxALL, 5);
 
-	text_oss_upgrade_title = new wxStaticText(this, wxID_ANY, _L("Test Storage Upgrade:"), wxDefaultPosition, wxDefaultSize, 0);
+	text_oss_upgrade_title = new Label(this, _L("Test Storage Upgrade:"));
 	text_oss_upgrade_title->Wrap(-1);
 	grid_sizer->Add(text_oss_upgrade_title, 0, wxALIGN_RIGHT | wxALL, 5);
 
-	text_oss_upgrade_value = new wxStaticText(this, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	text_oss_upgrade_value = new Label(this, _L("N/A"));
 	text_oss_upgrade_value->Wrap(-1);
 	grid_sizer->Add(text_oss_upgrade_value, 0, wxALL, 5);
 
@@ -392,11 +393,11 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
     btn_oss_download->SetBackgroundColor(btn_bg);
 	grid_sizer->Add(btn_oss_download, 0, wxEXPAND | wxALL, 5);
 
-	text_oss_download_title = new wxStaticText(this, wxID_ANY, _L("Test Storage Download:"), wxDefaultPosition, wxDefaultSize, 0);
+	text_oss_download_title = new Label(this, _L("Test Storage Download:"));
 	text_oss_download_title->Wrap(-1);
 	grid_sizer->Add(text_oss_download_title, 0, wxALIGN_RIGHT | wxALL, 5);
 
-	text_oss_download_value = new wxStaticText(this, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	text_oss_download_value = new Label(this, _L("N/A"));
 	text_oss_download_value->Wrap(-1);
 	grid_sizer->Add(text_oss_download_value, 0, wxALL, 5);
 
@@ -404,11 +405,11 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
     btn_network_plugin->SetBackgroundColor(btn_bg);
 	grid_sizer->Add(btn_network_plugin, 0, wxEXPAND | wxALL, 5);
 
-	text_network_plugin_title=new wxStaticText(this, wxID_ANY, _L("Test Plugin Download:"), wxDefaultPosition, wxDefaultSize, 0);
+	text_network_plugin_title=new Label(this, _L("Test Plugin Download:"));
 	text_network_plugin_title->Wrap(-1);
 	grid_sizer->Add(text_network_plugin_title, 0, wxALIGN_RIGHT | wxALL, 5);
 
-	text_network_plugin_value=new wxStaticText(this, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	text_network_plugin_value=new Label(this, _L("N/A"));
 	text_network_plugin_value->Wrap(-1);
 	grid_sizer->Add(text_network_plugin_value, 0, wxALL, 5);
 
@@ -417,11 +418,11 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
     btn_oss_upload->SetBackgroundColor(btn_bg);
 	grid_sizer->Add(btn_oss_upload, 0, wxEXPAND | wxALL, 5);
 
-	text_oss_upload_title = new wxStaticText(this, wxID_ANY, _L("Test Storage Upload:"), wxDefaultPosition, wxDefaultSize, 0);
+	text_oss_upload_title = new Label(this, _L("Test Storage Upload:"));
 	text_oss_upload_title->Wrap(-1);
 	grid_sizer->Add(text_oss_upload_title, 0, wxALIGN_RIGHT | wxALL, 5);
 
-	text_oss_upload_value = new wxStaticText(this, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	text_oss_upload_value = new Label(this, _L("N/A"));
 	text_oss_upload_value->Wrap(-1);
 	grid_sizer->Add(text_oss_upload_value, 0, wxALL, 5);
 
@@ -464,7 +465,7 @@ wxBoxSizer* NetworkTestDialog::create_content_sizer(wxWindow* parent)
 wxBoxSizer* NetworkTestDialog::create_result_sizer(wxWindow* parent)
 {
 	auto sizer = new wxBoxSizer(wxVERTICAL);
-	text_result = new wxStaticText(this, wxID_ANY, _L("Log Info"), wxDefaultPosition, wxDefaultSize, 0);
+	text_result = new Label(this, _L("Log Info"));
 	text_result->Wrap(-1);
 	sizer->Add(text_result, 0, wxALL, 5);
 

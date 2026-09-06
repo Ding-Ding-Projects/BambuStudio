@@ -1,6 +1,7 @@
 #include "AssemblyExportProgressWindow.hpp"
 
 #include "../GUI_App.hpp"
+#include "../Widgets/Label.hpp"
 
 #include <wx/gauge.h>
 #include <wx/panel.h>
@@ -23,7 +24,7 @@ AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     wxPanel *panel = new wxPanel(this, wxID_ANY);
     panel->SetBackgroundColour(wxColour(255, 255, 255));
 
-    m_message = new wxStaticText(panel, wxID_ANY, wxEmptyString);
+    m_message = new Label(panel, wxEmptyString);
     m_message->SetForegroundColour(wxColour(107, 107, 107));
 
     m_gauge = new ProgressBar(panel, wxID_ANY, 100, wxDefaultPosition, wxSize(FromDIP(480), FromDIP(8)));

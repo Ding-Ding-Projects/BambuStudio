@@ -18,6 +18,7 @@
 #include "Widgets/MD3DialogChrome.hpp"
 #include "../libslic3r/BlacklistedLibraryCheck.hpp"
 #include "format.hpp"
+#include "Widgets/Label.hpp"
 
 #ifdef _WIN32
 	// The standard Windows includes.
@@ -105,7 +106,7 @@ SysInfoDialog::SysInfoDialog()
 
     // title
     {
-        wxStaticText* title = new wxStaticText(this, wxID_ANY, wxGetApp().is_editor() ? SLIC3R_APP_FULL_NAME : GCODEVIEWER_APP_NAME, wxDefaultPosition, wxDefaultSize);
+        wxStaticText* title = new Label(this, wxGetApp().is_editor() ? SLIC3R_APP_FULL_NAME : GCODEVIEWER_APP_NAME);
         wxFont title_font = wxGetApp().bold_font();
         title_font.SetFamily(wxFONTFAMILY_ROMAN);
         title_font.SetPointSize(22);

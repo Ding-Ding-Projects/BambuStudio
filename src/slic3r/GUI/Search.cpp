@@ -870,7 +870,7 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
         m_regex_toggle->SetName(_L("Regular expression"));
         m_regex_toggle->Bind(wxEVT_TOGGLEBUTTON, &SearchDialog::OnRegexToggle, this);
 
-        auto *regex_label = new wxStaticText(m_client_panel, wxID_ANY, _L("Regex"));
+        auto *regex_label = new Label(m_client_panel, _L("Regex"));
         regex_label->SetForegroundColour(m_text_color);
         regex_label->SetBackgroundColour(m_bg_colour);
 

@@ -8,6 +8,7 @@
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "Monitor.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -47,7 +48,7 @@ HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMS
     m_bitmap_notify->SetBitmap(get_notify_bitmap());
 
     m_content_text = wxGetApp().get_hms_query()->query_hms_msg(dev_id, m_hms_item.get_long_error_code());
-    m_hms_content = new wxStaticText(m_panel_hms, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_hms_content = new Label(m_panel_hms, "", wxST_ELLIPSIZE_END);
     m_hms_content->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     // A small floor so the card can shrink with the container; HMSPanel corrects
     // the real width via set_content_width() on layout / EVT_SIZE.

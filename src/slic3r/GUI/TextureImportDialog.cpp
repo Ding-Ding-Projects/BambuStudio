@@ -11,6 +11,7 @@
 #include "Widgets/StaticLine.hpp"
 #include "libslic3r/ColorDecomposeRecipe.hpp"
 #include "libslic3r/Win10ModelRepair.hpp"
+#include "Widgets/Label.hpp"
 
 #include <wx/button.h>
 #include <wx/colour.h>
@@ -518,7 +519,7 @@ public:
         const wxColour header_clr = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
         auto add_section_header = [&](const wxString& label) {
-            auto* hdr = new wxStaticText(m_content, wxID_ANY, label);
+            auto* hdr = new Label(m_content, label);
             wxFont hf = hdr->GetFont();
             hf.SetPointSize(9);
             hdr->SetFont(hf);
@@ -554,8 +555,8 @@ public:
         add_section(_L("New Physical Filaments"), TextureFilamentKind::NewPhysical);
         add_section(_L("New Mixed Filaments"), TextureFilamentKind::NewMixed);
 
-        auto* decompose_label = new wxStaticText(this, wxID_ANY, _L("Decompose Color"));
-        auto* add_label = new wxStaticText(this, wxID_ANY, _L("+ Add Material"));
+        auto* decompose_label = new Label(this, _L("Decompose Color"));
+        auto* add_label = new Label(this, _L("+ Add Material"));
         wxFont af = add_label->GetFont();
         af.SetPointSize(10);
         add_label->SetFont(af);
@@ -2011,7 +2012,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
     wxColour label_fg = StateColor::semantic(MD3::Role::OnSurface);
 
     wxBoxSizer* color_header_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText* lbl_colors = new wxStaticText(parent, wxID_ANY, _L("Color Count"));
+    wxStaticText* lbl_colors = new Label(parent, _L("Color Count"));
     lbl_colors->SetForegroundColour(label_fg);
     lbl_colors->SetFont(lbl_colors->GetFont().Bold());
     color_header_sizer->Add(lbl_colors, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
@@ -2071,7 +2072,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
     color_slider_sizer->Add(m_color_spin, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(color_slider_sizer, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 
-    wxStaticText* lbl_smooth = new wxStaticText(parent, wxID_ANY, _L("Smooth Level"));
+    wxStaticText* lbl_smooth = new Label(parent, _L("Smooth Level"));
     lbl_smooth->SetForegroundColour(label_fg);
     lbl_smooth->SetFont(lbl_smooth->GetFont().Bold());
     sizer->Add(lbl_smooth, 0, wxBOTTOM, FromDIP(4));
@@ -2141,8 +2142,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
     apply_sizer->Add(m_btn_apply, 0);
     sizer->Add(apply_sizer, 0, wxALIGN_RIGHT | wxBOTTOM, FromDIP(8));
 
-    m_hint_label = new wxStaticText(parent, wxID_ANY,
-        _L("Reminder: parameters changed, click Apply to take effect"));
+    m_hint_label = new Label(parent, _L("Reminder: parameters changed, click Apply to take effect"));
     m_hint_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_hint_label->SetFont(texture_import_section_title_font(parent));
     m_hint_label->Hide();
@@ -2159,7 +2159,7 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
 
     wxBoxSizer* header_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    wxStaticText* lbl_mapping = new wxStaticText(parent, wxID_ANY, _L("Filament Mapping"));
+    wxStaticText* lbl_mapping = new Label(parent, _L("Filament Mapping"));
     lbl_mapping->SetForegroundColour(secondary_fg);
     lbl_mapping->SetFont(texture_import_section_title_font(parent));
     m_auto_mix_font_point_size = lbl_mapping->GetFont().GetPointSize();
@@ -2246,8 +2246,7 @@ void TextureImportDialog::build_bottom_buttons()
 {
     // Inline drop-warning (Error role) sits at the foot of the kit body, above
     // the footer divider, preserving its left-aligned, full-width placement.
-    m_drop_warning_label = new wxStaticText(this, wxID_ANY,
-        wxString::Format(
+    m_drop_warning_label = new Label(this, wxString::Format(
             _L("The project supports up to %d filaments. Extra filaments will be discarded."),
             (int)max_filament_count()));
     m_drop_warning_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));

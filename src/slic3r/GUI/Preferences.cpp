@@ -131,7 +131,7 @@ wxBoxSizer *PreferencesDialog::create_item_title(wxString title, wxWindow *paren
 
     // MD3 content section title: 16px / 700 in OnSurface (kit Settings section
     // header), replacing the legacy Head_13 in TextSecondary.
-    auto m_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    auto m_title = new Label(parent, title);
     m_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title->SetFont(::Label::Head_16);
 
@@ -181,7 +181,7 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *pa
     m_sizer_combox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, title_width == 0 ? wxSize(FromDIP(TITLE_WIDTH), -1) : wxSize(title_width, -1), 0);
+    auto combo_title = new Label(parent, title, 0, title_width == 0 ? wxSize(FromDIP(TITLE_WIDTH), -1) : wxSize(title_width, -1));
     combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
@@ -228,7 +228,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
     m_sizer_combox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
+    auto combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
     combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
@@ -396,8 +396,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_mode_combobox(
     row->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     row->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto *combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition,
-                                          wxSize(FromDIP(TITLE_WIDTH), -1), 0);
+    auto *combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
     combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
@@ -507,7 +506,7 @@ wxBoxSizer *PreferencesDialog::create_item_region_combobox(wxString title, wxWin
     m_sizer_combox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
+    auto combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
     combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
@@ -577,7 +576,7 @@ wxBoxSizer *PreferencesDialog::create_item_loglevel_combobox(wxString title, wxW
     m_sizer_combox->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     m_sizer_combox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
+    auto combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
     combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     combo_title->SetFont(::Label::Body_13);
     combo_title->SetToolTip(tooltip);
@@ -622,7 +621,7 @@ wxBoxSizer *PreferencesDialog::create_item_multiple_combobox(
    m_sizer_tcombox->Add(0, 0, 0, wxEXPAND | wxLEFT, 23);
    m_sizer_tcombox->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-   auto combo_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
+   auto combo_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
    combo_title->SetToolTip(tooltip);
    combo_title->Wrap(-1);
    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -639,7 +638,7 @@ wxBoxSizer *PreferencesDialog::create_item_multiple_combobox(
    combobox_left->SetValue(std::string(params[0].mb_str()));
    m_sizer_tcombox->Add(combobox_left, 0, wxALIGN_CENTER, 0);
 
-   auto combo_title_add = new wxStaticText(parent, wxID_ANY, wxT("+"), wxDefaultPosition, wxDefaultSize, 0);
+   auto combo_title_add = new Label(parent, wxT("+"));
    combo_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
    combo_title->SetFont(::Label::Body_13);
    combo_title_add->Wrap(-1);
@@ -676,7 +675,7 @@ wxBoxSizer *PreferencesDialog::create_item_input(wxString title, wxString title2
 {
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto        input_title   = new wxStaticText(parent, wxID_ANY, title);
+    auto        input_title   = new Label(parent, title);
     input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     input_title->SetFont(::Label::Body_13);
     input_title->SetToolTip(tooltip);
@@ -695,7 +694,7 @@ wxBoxSizer *PreferencesDialog::create_item_input(wxString title, wxString title2
 
     wxStaticText *second_title = nullptr;
     if (!title2.empty()) {
-        second_title = new wxStaticText(parent, wxID_ANY, title2, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
+        second_title = new Label(parent, title2, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
         second_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         second_title->SetFont(::Label::Body_13);
         second_title->SetToolTip(tooltip);
@@ -731,7 +730,7 @@ wxBoxSizer *PreferencesDialog::create_item_range_input(
 {
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto        input_title = new wxStaticText(parent, wxID_ANY, title);
+    auto        input_title = new Label(parent, title);
     input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     input_title->SetFont(::Label::Body_13);
     input_title->SetToolTip(tooltip);
@@ -801,7 +800,7 @@ wxBoxSizer *PreferencesDialog::create_item_range_two_input(wxString             
 {
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto        input_title = new wxStaticText(parent, wxID_ANY, title);
+    auto        input_title = new Label(parent, title);
     input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     input_title->SetFont(::Label::Body_13);
     input_title->SetToolTip(tooltip);
@@ -897,7 +896,7 @@ wxBoxSizer *PreferencesDialog::create_item_switch(wxString title, wxWindow *pare
 {
     wxBoxSizer *m_sizer_switch = new wxBoxSizer(wxHORIZONTAL);
     m_sizer_switch->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto        switch_title   = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(FromDIP(TITLE_WIDTH), -1), 0);
+    auto        switch_title   = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
     switch_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     switch_title->SetFont(::Label::Body_13);
     switch_title->SetToolTip(tooltip);
@@ -1027,13 +1026,13 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
     // description (12/OnSurfaceVariant) sourced from the tooltip when it adds
     // information beyond the primary label.
     auto *text_col = new wxBoxSizer(wxVERTICAL);
-    auto  checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    auto  checkbox_title = new Label(parent, title);
     checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(FromDIP(320));
     text_col->Add(checkbox_title, 0);
     if (!tooltip.empty() && tooltip != title) {
-        auto *checkbox_desc = new wxStaticText(parent, wxID_ANY, tooltip, wxDefaultPosition, wxDefaultSize, 0);
+        auto *checkbox_desc = new Label(parent, tooltip);
         checkbox_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         checkbox_desc->SetFont(::Label::Body_12);
         checkbox_desc->Wrap(FromDIP(320));
@@ -1226,7 +1225,7 @@ wxWindow* PreferencesDialog::create_item_downloads(wxWindow* parent, int padding
     sizer->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     sizer->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto m_staticTextTitle = new wxStaticText(item_panel, wxID_ANY, _L("Download path"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_staticTextTitle = new Label(item_panel, _L("Download path"));
     m_staticTextTitle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_staticTextTitle->SetFont(::Label::Body_13);
     m_staticTextTitle->Wrap(-1);
@@ -1283,7 +1282,7 @@ wxWindow* PreferencesDialog::create_item_external_editor(wxWindow* parent, int p
     sizer->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     sizer->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
 
-    auto m_staticTextTitle = new wxStaticText(item_panel, wxID_ANY, _L("External editor path"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_staticTextTitle = new Label(item_panel, _L("External editor path"));
     m_staticTextTitle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_staticTextTitle->SetFont(::Label::Body_13);
     m_staticTextTitle->Wrap(-1);
@@ -1338,7 +1337,7 @@ wxSizer *PreferencesDialog::create_item_radiobox(wxString title, wxWindow *paren
     rs->m_selected    = false;
     m_radio_group.Append(rs);
 
-    wxStaticText *text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+    wxStaticText *text = new Label(parent, title);
 
     radiobox->SetToolTip(tooltip);
     text->SetToolTip(tooltip);
@@ -1595,7 +1594,7 @@ void PreferencesDialog::create()
     content_pane->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     // Inline "no results" hint under the search pill; hidden until an active
     // query matches nothing (see apply_search_filter).
-    m_search_empty_hint = new wxStaticText(this, wxID_ANY, _L("No settings match your search."));
+    m_search_empty_hint = new Label(this, _L("No settings match your search."));
     m_search_empty_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_search_empty_hint->SetFont(::Label::Body_13);
     m_search_empty_hint->Hide();
@@ -2106,7 +2105,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto make_row = [this, scrolled](const wxString &label, wxWindow *control) -> wxBoxSizer * {
         auto *row = new wxBoxSizer(wxHORIZONTAL);
         row->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-        auto *lbl = new wxStaticText(scrolled, wxID_ANY, label, wxDefaultPosition, wxSize(FromDIP(150), -1), 0);
+        auto *lbl = new Label(scrolled, label, 0, wxSize(FromDIP(150), -1));
         lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         lbl->SetFont(::Label::Body_13);
         row->Add(lbl, wxSizerFlags().CenterVertical());

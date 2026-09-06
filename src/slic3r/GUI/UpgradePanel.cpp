@@ -16,6 +16,7 @@
 #include "DeviceCore/DevManager.h"
 
 #include "DeviceTab/wgtDeviceNozzleRackUpdate.h"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -77,21 +78,21 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_ota_info_sizer->SetFlexibleDirection(wxHORIZONTAL);
     m_ota_info_sizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    m_staticText_model_id = new wxStaticText(this, wxID_ANY, _L("Model:"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_model_id = new Label(this, _L("Model:"));
     m_staticText_model_id->Wrap(-1);
     m_staticText_model_id->SetFont(Label::Head_14);
     m_ota_info_sizer->Add(m_staticText_model_id, 0, wxALIGN_RIGHT | wxALL, FromDIP(5));
 
-    m_staticText_model_id_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_model_id_val = new Label(this, "-");
     m_staticText_model_id_val->Wrap(-1);
     m_ota_info_sizer->Add(m_staticText_model_id_val, 0, wxALL | wxEXPAND, FromDIP(5));
 
-    m_staticText_sn = new wxStaticText(this, wxID_ANY, _L("Serial:"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_sn = new Label(this, _L("Serial:"));
     m_staticText_sn->Wrap(-1);
     m_staticText_sn->SetFont(Label::Head_14);
     m_ota_info_sizer->Add(m_staticText_sn, 0, wxALIGN_RIGHT | wxALL | wxEXPAND, FromDIP(5));
 
-    m_staticText_sn_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_sn_val = new Label(this, "-");
     m_staticText_sn_val->Wrap(-1);
     m_ota_info_sizer->Add(m_staticText_sn_val, 0, wxALL | wxEXPAND, FromDIP(5));
 
@@ -103,18 +104,18 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_ota_new_version_img->SetBitmap(upgrade_green_icon.bmp());
     m_ota_ver_sizer->Add(m_ota_new_version_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_staticText_ver = new wxStaticText(this, wxID_ANY, _L("Version:"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_ver = new Label(this, _L("Version:"));
     m_staticText_ver->Wrap(-1);
     m_staticText_ver->SetFont(Label::Head_14);
     m_ota_ver_sizer->Add(m_staticText_ver, 0, wxALL, FromDIP(5));
 
     wxBoxSizer* m_ota_content_sizer2 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_staticText_ver_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_ver_val = new Label(this, "-");
     m_staticText_ver_val->Wrap(-1);
 
 
-    m_staticText_beta_version = new wxStaticText(this, wxID_ANY, "Beta", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_beta_version = new Label(this, "Beta");
     m_staticText_beta_version->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_staticText_beta_version->Wrap(-1);
     m_staticText_beta_version->Hide();
@@ -252,7 +253,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_button_upgrade_firmware->SetCornerRadius(FromDIP(12));
     m_main_right_sizer->Add(m_button_upgrade_firmware, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, FromDIP(5));
 
-    m_staticText_upgrading_info = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_upgrading_info = new Label(this, "");
     m_staticText_upgrading_info->Wrap(-1);
     m_main_right_sizer->Add(m_staticText_upgrading_info, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, FromDIP(5));
 
@@ -266,7 +267,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_upgrade_progress->SetMinSize(wxSize(FromDIP(54), FromDIP(14)));
     m_upgrading_sizer->Add(m_upgrade_progress, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_staticText_upgrading_percent = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize);
+    m_staticText_upgrading_percent = new Label(this, "");
     m_staticText_upgrading_percent->SetFont(Label::Mono_13);
     m_staticText_upgrading_percent->Wrap(-1);
     m_upgrading_sizer->Add(m_staticText_upgrading_percent, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
@@ -281,7 +282,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     wxBoxSizer *sizer_release_note = new wxBoxSizer(wxVERTICAL);
 
 
-    m_staticText_release_note = new wxStaticText(this, wxID_ANY, _L("Release Note"), wxDefaultPosition, wxDefaultSize);
+    m_staticText_release_note = new Label(this, _L("Release Note"));
     m_staticText_release_note->Wrap(-1);
     m_staticText_release_note->SetForegroundColour(ThemeColor::Link);
 
@@ -327,7 +328,7 @@ void MachineInfoPanel::createNozzleRackWidgets(wxBoxSizer *main_left_sizer)
 
     // right content: label + update button
     auto *content_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_nozzle_rack_text  = new wxStaticText(this, wxID_ANY, _L("Hotends on Rack"), wxDefaultPosition, wxDefaultSize, 0);
+    m_nozzle_rack_text  = new Label(this, _L("Hotends on Rack"));
     m_nozzle_rack_text->Wrap(-1);
     m_nozzle_rack_text->SetFont(Label::Head_14);
     content_sizer->Add(m_nozzle_rack_text, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, FromDIP(50));
@@ -368,7 +369,7 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
     m_upgrade_status_img->Hide();
     m_caption_sizer->Add(m_upgrade_status_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_caption_text = new wxStaticText(caption_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize);
+    m_caption_text = new Label(caption_panel, wxEmptyString);
     m_caption_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_caption_text->Wrap(-1);
     m_caption_sizer->Add(m_caption_text, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
@@ -1802,21 +1803,21 @@ bool UpgradePanel::Show(bool show)
      ams_sizer->SetFlexibleDirection(wxHORIZONTAL);
      ams_sizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-     m_staticText_ams_model_id = new wxStaticText(this, wxID_ANY, _L("Model:"), wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ams_model_id = new Label(this, _L("Model:"));
      m_staticText_ams_model_id->Wrap(-1);
      m_staticText_ams_model_id->SetFont(Label::Head_14);
 
-     m_staticText_ams = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ams = new Label(this, "-");
      m_staticText_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams->SetFont(Label::Head_14);
      m_staticText_ams->Wrap(-1);
 
-     auto m_staticText_ams_sn = new wxStaticText(this, wxID_ANY, _L("Serial:"), wxDefaultPosition, wxDefaultSize, 0);
+     auto m_staticText_ams_sn = new Label(this, _L("Serial:"));
      m_staticText_ams_sn->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams_sn->Wrap(-1);
      m_staticText_ams_sn->SetFont(Label::Head_14);
 
-     m_staticText_ams_sn_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ams_sn_val = new Label(this, "-");
      m_staticText_ams_sn_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams_sn_val->Wrap(-1);
 
@@ -1829,17 +1830,17 @@ bool UpgradePanel::Show(bool show)
      m_ams_ver_sizer->Add(m_ams_new_version_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
      m_ams_new_version_img->Hide();
 
-     auto m_staticText_ams_ver = new wxStaticText(this, wxID_ANY, _L("Version:"), wxDefaultPosition, wxDefaultSize, 0);
+     auto m_staticText_ams_ver = new Label(this, _L("Version:"));
      m_staticText_ams_ver->Wrap(-1);
      m_staticText_ams_ver->SetFont(Label::Head_14);
      m_staticText_ams_ver->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_ams_ver_sizer->Add(m_staticText_ams_ver, 0, wxALL, FromDIP(5));
 
-     m_staticText_ams_ver_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ams_ver_val = new Label(this, "-");
      m_staticText_ams_ver_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ams_ver_val->Wrap(-1);
 
-     m_staticText_beta_version = new wxStaticText(this, wxID_ANY, "Beta", wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_beta_version = new Label(this, "Beta");
      m_staticText_beta_version->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_staticText_beta_version->Wrap(-1);
      m_staticText_beta_version->Hide();
@@ -1889,22 +1890,22 @@ bool UpgradePanel::Show(bool show)
      ext_sizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
 
-     m_staticText_ext = new wxStaticText(this, wxID_ANY, _L("Model:"), wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ext = new Label(this, _L("Model:"));
      m_staticText_ext->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext->Wrap(-1);
      m_staticText_ext->SetFont(Label::Head_14);
 
-     m_staticText_ext_val = new wxStaticText(this, wxID_ANY, _L("Extension Board"), wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ext_val = new Label(this, _L("Extension Board"));
      m_staticText_ext_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext_val->SetFont(Label::Head_14);
      m_staticText_ext_val->Wrap(-1);
 
-     auto m_staticText_ext_sn = new wxStaticText(this, wxID_ANY, _L("Serial:"), wxDefaultPosition, wxDefaultSize, 0);
+     auto m_staticText_ext_sn = new Label(this, _L("Serial:"));
      m_staticText_ext_sn->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext_sn->Wrap(-1);
      m_staticText_ext_sn->SetFont(Label::Head_14);
 
-     m_staticText_ext_sn_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ext_sn_val = new Label(this, "-");
      m_staticText_ext_sn_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext_sn_val->Wrap(-1);
 
@@ -1915,13 +1916,13 @@ bool UpgradePanel::Show(bool show)
      m_ext_ver_sizer->Add(m_ext_new_version_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
      m_ext_new_version_img->Hide();
 
-     m_staticText_ext_ver = new wxStaticText(this, wxID_ANY, _L("Version:"), wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ext_ver = new Label(this, _L("Version:"));
      m_staticText_ext_ver->Wrap(-1);
      m_staticText_ext_ver->SetFont(Label::Head_14);
      m_staticText_ext_ver->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_ext_ver_sizer->Add(m_staticText_ext_ver, 0, wxALL, FromDIP(5));
 
-     m_staticText_ext_ver_val = new wxStaticText(this, wxID_ANY, "-", wxDefaultPosition, wxDefaultSize, 0);
+     m_staticText_ext_ver_val = new Label(this, "-");
      m_staticText_ext_ver_val->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_staticText_ext_ver_val->Wrap(-1);
 

@@ -438,10 +438,10 @@ SlicedInfo::SlicedInfo(wxWindow *parent) :
     info_vec.reserve(siCount);
 
     auto init_info_label = [this, parent, grid_sizer](wxString text_label) {
-        auto *text = new wxStaticText(parent, wxID_ANY, text_label);
+        auto *text = new Label(parent, text_label);
         text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         text->SetFont(wxGetApp().small_font());
-        auto info_label = new wxStaticText(parent, wxID_ANY, "N/A");
+        auto info_label = new Label(parent, "N/A");
         info_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         info_label->SetFont(wxGetApp().small_font());
         grid_sizer->Add(text, 0);
@@ -491,24 +491,24 @@ public:
 
         auto sizer = new wxBoxSizer(wxHORIZONTAL);
 
-        m_label = new wxStaticText(this, wxID_ANY, label, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_label = new Label(this, label, wxBORDER_NONE);
         m_label->SetFont(Label::Body_13);
         m_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        m_count = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_count = new Label(this, "", wxBORDER_NONE);
         m_count->SetFont(Label::Body_13.Bold());
         m_count->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-        m_title_type = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_title_type = new Label(this, "", wxBORDER_NONE);
         m_title_type->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
 
         m_count->Hide();
         m_title_type->Hide();
 
-        m_brace_left = new wxStaticText(this, wxID_ANY, "(", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_brace_left = new Label(this, "(", wxBORDER_NONE);
         m_brace_left->SetFont(Label::Body_13);
         m_brace_left->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-        m_brace_right = new wxStaticText(this, wxID_ANY, ")", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+        m_brace_right = new Label(this, ")", wxBORDER_NONE);
         m_brace_right->SetFont(Label::Body_13);
         m_brace_right->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
@@ -1823,7 +1823,7 @@ public:
         : PopupWindow(extruder, wxBORDER_NONE | wxPU_CONTAINS_CONTROLS)
     {
         SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-        auto msg  = new wxStaticText(this, wxID_ANY, _L("Set the number of AMS installed on the nozzle."));
+        auto msg  = new Label(this, _L("Set the number of AMS installed on the nozzle."));
         msg->SetFont(Label::Body_14);
         msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         msg->Wrap(FromDIP(280));
@@ -1834,11 +1834,11 @@ public:
         //img4->SetBackgroundColour(*wxWHITE);
         auto img1 = new ScalableButton(box, wxID_ANY, "ams_1_tray", {}, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, false, 44);
         //img1->SetBackgroundColour(*wxWHITE);
-        auto txt4 = new wxStaticText(box, wxID_ANY, _L("AMS(4 slots)"));
+        auto txt4 = new Label(box, _L("AMS(4 slots)"));
         txt4->SetFont(Label::Body_14);
         txt4->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
         txt4->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-        auto txt1 = new wxStaticText(box, wxID_ANY, _L("AMS(1 slot)"));
+        auto txt1 = new Label(box, _L("AMS(1 slot)"));
         txt1->SetFont(Label::Body_14);
         txt1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
         txt1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -1949,14 +1949,14 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
 #endif
 
     // Nozzle
-    wxStaticText *label_diameter = new wxStaticText(this, wxID_ANY, _L("Diameter"));
+    wxStaticText *label_diameter = new Label(this, _L("Diameter"));
     label_diameter->SetFont(Label::Body_14);
     label_diameter->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     if (index >= 0) label_diameter->SetMinSize({FromDIP(80), -1});
     auto combo_diameter = new ComboBox(this, wxID_ANY, wxString(""), wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     combo_diameter->GetDropDown().SetUseContentWidth(true);
     this->combo_diameter = combo_diameter;
-    wxStaticText *label_flow = new wxStaticText(this, wxID_ANY, _L("Flow"));
+    wxStaticText *label_flow = new Label(this, _L("Flow"));
     label_flow->SetFont(Label::Body_14);
     label_flow->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     if (index >= 0) label_flow->SetMinSize({FromDIP(80), -1});
@@ -1975,7 +1975,7 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     this->combo_flow = combo_flow;
 
     // AMS
-    wxStaticText *label_ams  = new wxStaticText(this, wxID_ANY, _L("AMS"));
+    wxStaticText *label_ams  = new Label(this, _L("AMS"));
     label_ams->SetFont(Label::Body_14);
     label_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     //label_ams->SetMinSize({FromDIP(70), -1});
@@ -2004,7 +2004,7 @@ ExtruderGroup::ExtruderGroup(wxWindow * parent, int index, wxString const &title
     }
 
     // AMS not installed message
-    ams_not_installed_msg = new wxStaticText(this, wxID_ANY, _L("Not installed"));
+    ams_not_installed_msg = new Label(this, _L("Not installed"));
     ams_not_installed_msg->SetFont(Label::Body_14);
     ams_not_installed_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
@@ -3164,7 +3164,7 @@ Sidebar::Sidebar(Plater *parent)
         p->combo_printer_bed->Bind(wxEVT_LEAVE_WINDOW, &Sidebar::on_leave_image_printer_bed, this);
 
         wxBoxSizer *bed_type_vsizer = new wxBoxSizer(wxVERTICAL);
-        p->text_printer_bed = new wxStaticText(p->panel_printer_bed, wxID_ANY, _L("Bed type"));
+        p->text_printer_bed = new Label(p->panel_printer_bed, _L("Bed type"));
         p->text_printer_bed->SetFont(::Label::Body_11);
         p->text_printer_bed->SetForegroundColour(inactive_text);
 
@@ -3651,8 +3651,7 @@ Sidebar::Sidebar(Plater *parent)
         // already applied to every sibling icon button in this file.
         apply_scalable_glyph(icon_add, MaterialIcon::Add, 16, active_text);
 
-        auto* add_label = new wxStaticText(p->m_btn_add_mixed_filament, wxID_ANY, _L("Add Mixed Filament"),
-                                           wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+        auto* add_label = new Label(p->m_btn_add_mixed_filament, _L("Add Mixed Filament"), wxST_ELLIPSIZE_END);
         add_label->SetForegroundColour(active_text);
         add_label->SetFont(::Label::Body_13);
 
@@ -3674,8 +3673,7 @@ Sidebar::Sidebar(Plater *parent)
         p->m_panel_mixed_title->SetBackgroundColour(surface_lowest);
         auto* title_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-        p->m_text_mixed_title = new wxStaticText(p->m_panel_mixed_title, wxID_ANY, _L("Mixed Filament").Upper(),
-                                                   wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+        p->m_text_mixed_title = new Label(p->m_panel_mixed_title, _L("Mixed Filament").Upper(), wxST_ELLIPSIZE_END);
         p->m_text_mixed_title->SetForegroundColour(inactive_text);
         // MD3 section-label typography (containment/SectionHeader): 11px/600
         // uppercase, matching the Printer/Filament/Objects section headers,
@@ -3758,8 +3756,7 @@ Sidebar::Sidebar(Plater *parent)
         p->m_panel_mixed_warning = new wxPanel(p->m_filament_area_wrapper, wxID_ANY);
         p->m_panel_mixed_warning->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
         auto* warn_sizer = new wxBoxSizer(wxHORIZONTAL);
-        p->m_text_mixed_warning = new wxStaticText(p->m_panel_mixed_warning, wxID_ANY,
-            _L("Mixed filament has invalid or mismatched components. Please re-edit affected entries."));
+        p->m_text_mixed_warning = new Label(p->m_panel_mixed_warning, _L("Mixed filament has invalid or mismatched components. Please re-edit affected entries."));
         p->m_text_mixed_warning->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
         p->m_text_mixed_warning->SetFont(::Label::Body_12);
         p->m_text_mixed_warning->Wrap(FromDIP(360));
@@ -23345,7 +23342,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     wxBoxSizer *m_sizer_name = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_fline = new wxBoxSizer(wxHORIZONTAL);
 
-    m_fname_title = new wxStaticText(this, wxID_ANY, _L("Please select an action"), wxDefaultPosition, wxDefaultSize, 0);
+    m_fname_title = new Label(this, _L("Please select an action"));
     m_fname_title->Wrap(-1);
     m_fname_title->SetFont(::Label::Body_13);
     m_fname_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -23354,7 +23351,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     m_sizer_fline->Add(m_fname_title, 0, wxALL, 0);
     m_sizer_fline->Add(0, 0, 0, wxEXPAND | wxLEFT, 5);
 
-    m_fname_f = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    m_fname_f = new Label(this, wxEmptyString);
     m_fname_f->SetFont(::Label::Head_13);
     m_fname_f->Wrap(-1);
     m_fname_f->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -23363,7 +23360,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
 
     m_sizer_name->Add(m_sizer_fline, 1, wxEXPAND, 0);
 
-    m_fname_s = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    m_fname_s = new Label(this, wxEmptyString);
     m_fname_s->SetFont(::Label::Head_13);
     m_fname_s->Wrap(-1);
     m_fname_s->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -23482,7 +23479,7 @@ wxBoxSizer *ProjectDropDialog ::create_item_radiobox(wxString title, wxWindow *p
     radiobox->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     sizer->Add(radiobox, 0, wxALL, 5);
     sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, 5);
-    auto text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    auto text = new Label(parent, title);
     text->Wrap(-1);
     text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
@@ -23512,7 +23509,7 @@ wxBoxSizer *ProjectDropDialog::create_item_checkbox(wxString title, wxWindow *pa
     m_sizer_checkbox->Add(checkbox, 0, wxALIGN_CENTER, 0);
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(-1, -1), 0);
+    auto checkbox_title = new Label(parent, title, 0, wxSize(-1, -1));
     checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(-1);

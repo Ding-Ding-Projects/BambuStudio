@@ -138,13 +138,7 @@ void MsgDialog::show_dsa_button(wxString const &title)
     });
 
     m_dsa_text = title.IsEmpty() ? _L("Don't show again") : title;
-    m_text_dsa = new wxStaticText(
-        this,
-        wxID_ANY,
-        m_dsa_text,
-        wxDefaultPosition,
-        wxDefaultSize,
-        0);
+    m_text_dsa = new Label(this, m_dsa_text);
     m_text_dsa->SetMinSize(wxSize(0, -1));
     m_dsa_sizer->Add(
         m_text_dsa,
@@ -710,7 +704,7 @@ DeleteConfirmDialog::DeleteConfirmDialog(wxWindow *parent, const wxString &title
     // (the shell owns the footer's 1px OutlineVariant top border).
     SetHeaderAccent(MD3::Role::ErrorContainer, MD3::Role::OnErrorContainer);
 
-    m_msg_text = new wxStaticText(this, wxID_ANY, msg);
+    m_msg_text = new Label(this, msg);
     m_msg_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_msg_text->SetFont(::Label::Body_14);
     GetContentSizer()->Add(m_msg_text, 0, wxEXPAND);
@@ -768,29 +762,29 @@ wxBoxSizer *Newer3mfVersionDialog::get_msg_sizer()
     wxBoxSizer *     horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxString    msg_str;
     if (file_version_newer) {
-        text1 = new wxStaticText(this, wxID_ANY, _L("The 3mf file version is in Beta and it is newer than the current Bambu Studio version."));
-        wxStaticText *   text2       = new wxStaticText(this, wxID_ANY, _L("If you would like to try Bambu Studio Beta, you may click to"));
+        text1 = new Label(this, _L("The 3mf file version is in Beta and it is newer than the current Bambu Studio version."));
+        wxStaticText *   text2       = new Label(this, _L("If you would like to try Bambu Studio Beta, you may click to"));
         LinkLabel *github_link = new LinkLabel(this, _L("Download Beta Version"), "https://github.com/bambulab/BambuStudio/releases");
         horizontal_sizer->Add(text2, 0, wxEXPAND, 0);
         horizontal_sizer->Add(github_link, 0, wxEXPAND | wxLEFT, 5);
 
     } else {
-        text1 = new wxStaticText(this, wxID_ANY, _L("The 3mf file version is newer than the current Bambu Studio version."));
-        wxStaticText *text2 = new wxStaticText(this, wxID_ANY, _L("Update your Bambu Studio could enable all functionality in the 3mf file."));
+        text1 = new Label(this, _L("The 3mf file version is newer than the current Bambu Studio version."));
+        wxStaticText *text2 = new Label(this, _L("Update your Bambu Studio could enable all functionality in the 3mf file."));
         horizontal_sizer->Add(text2, 0, wxEXPAND, 0);
     }
     Semver        app_version = *(Semver::parse(SLIC3R_VERSION));
-    wxStaticText *cur_version = new wxStaticText(this, wxID_ANY, _L("Current Version: ") + app_version.to_string());
+    wxStaticText *cur_version = new Label(this, _L("Current Version: ") + app_version.to_string());
 
     vertical_sizer->Add(text1, 0, wxEXPAND | wxTOP, FromDIP(5));
     vertical_sizer->Add(horizontal_sizer, 0, wxEXPAND | wxTOP, FromDIP(5));
     vertical_sizer->Add(cur_version, 0, wxEXPAND | wxTOP, FromDIP(5));
     if (!file_version_newer) {
-        wxStaticText *latest_version = new wxStaticText(this, wxID_ANY, _L("Latest Version: ") + m_cloud_version->to_string());
+        wxStaticText *latest_version = new Label(this, _L("Latest Version: ") + m_cloud_version->to_string());
         vertical_sizer->Add(latest_version, 0, wxEXPAND | wxTOP, FromDIP(5));
     }
 
-    wxStaticText *unrecognized_keys = new wxStaticText(this, wxID_ANY, m_new_keys);
+    wxStaticText *unrecognized_keys = new Label(this, m_new_keys);
     vertical_sizer->Add(unrecognized_keys, 0, wxEXPAND | wxTOP, FromDIP(10));
 
     return vertical_sizer;

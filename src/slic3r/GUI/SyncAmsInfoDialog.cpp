@@ -532,7 +532,7 @@ void SyncAmsInfoDialog::add_two_image_control()
     m_choose_plate_sizer         = new wxBoxSizer(wxHORIZONTAL);
     m_choose_plate_sizer->AddStretchSpacer();
 
-    wxStaticText *chose_combox_title = new wxStaticText(m_two_thumbnail_panel, wxID_ANY, _CTX(L_CONTEXT("Plate", "Sync_AMS"), "Sync_AMS"));
+    wxStaticText *chose_combox_title = new Label(m_two_thumbnail_panel, _CTX(L_CONTEXT("Plate", "Sync_AMS"), "Sync_AMS"));
     m_choose_plate_sizer->Add(chose_combox_title, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxEXPAND | wxTOP, FromDIP(6));
     m_choose_plate_sizer->AddSpacer(FromDIP(10));
 
@@ -904,7 +904,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
 
     {//new content//tip confirm ok button
         wxBoxSizer *tip_sizer = new wxBoxSizer(wxHORIZONTAL);
-        m_attention_text      = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Tip") + ": ");
+        m_attention_text      = new Label(m_scrolledWindow, _L("Tip") + ": ");
         tip_sizer->Add(m_attention_text, 0, wxALIGN_LEFT | wxTOP, FromDIP(2));
         m_tip_attention_color_map = _L("Only synchronize filament type and color, not including AMS slot information.");
         m_tip_attention_override  = _L("Replace the project filaments list sequentially based on printer filaments. And unused printer filaments will be automatically added to the end of the list.");
@@ -921,7 +921,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         wxBoxSizer * more_setting_sizer = new wxBoxSizer(wxVERTICAL);
 
         m_advace_setting_sizer         = new wxBoxSizer(wxHORIZONTAL);
-        m_more_setting_tips    = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Advanced settings"));
+        m_more_setting_tips    = new Label(m_scrolledWindow, _L("Advanced settings"));
         m_more_setting_tips->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
         m_more_setting_tips->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
             m_expand_more_settings = !m_expand_more_settings;
@@ -992,13 +992,13 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         m_confirm_title->SetMinSize(wxSize(SyncLabelWidth, -1));
         m_confirm_title->SetMaxSize(wxSize(SyncLabelWidth, -1));
         confirm_boxsizer->Add(m_confirm_title, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxTOP | wxRIGHT, FromDIP(10));
-        m_are_you_sure_title = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Are you sure to synchronize the filaments?"));
+        m_are_you_sure_title = new Label(m_scrolledWindow, _L("Are you sure to synchronize the filaments?"));
         //m_are_you_sure_title->SetFont(Label::Head_14);
         confirm_boxsizer->Add(m_are_you_sure_title, 0, wxALIGN_LEFT  | wxTOP, FromDIP(0));
         bSizer->Add(confirm_boxsizer, 0, wxALIGN_LEFT | wxLEFT , FromDIP(25));
 
         wxBoxSizer *warning_sizer = new wxBoxSizer(wxHORIZONTAL);
-        m_warning_text            = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Error") + ":");
+        m_warning_text            = new Label(m_scrolledWindow, _L("Error") + ":");
         m_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_warning_text->Hide();
         warning_sizer->Add(m_warning_text, 0, wxALIGN_CENTER | wxTOP, FromDIP(2));
@@ -2629,14 +2629,14 @@ void SyncAmsInfoDialog::reset_and_sync_ams_list()
             if (is_first_row) {
                 is_first_row              = false;
                 if (!m_original_in_colormap) {
-                    m_original_in_colormap = new wxStaticText(m_filament_panel, wxID_ANY, _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS") + ":");
+                    m_original_in_colormap = new Label(m_filament_panel, _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS") + ":");
                     m_original_in_colormap->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                     m_original_in_colormap->SetFont(::Label::Head_12);
                 }
                 ams_tip_sizer->Add(m_original_in_colormap, 0, wxALIGN_LEFT | wxTOP, FromDIP(6));
 
                 if (!m_ams_or_ext_text_in_colormap) {
-                    m_ams_or_ext_text_in_colormap = new wxStaticText(m_filament_panel, wxID_ANY, _L("AMS") + ":");
+                    m_ams_or_ext_text_in_colormap = new Label(m_filament_panel, _L("AMS") + ":");
                     m_ams_or_ext_text_in_colormap->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                     m_ams_or_ext_text_in_colormap->SetFont(::Label::Head_12);
                 }
@@ -2854,7 +2854,7 @@ void SyncAmsInfoDialog::generate_override_fix_ams_list()
             if (is_first_row) {
                 is_first_row   = false;
                 if (!m_original_in_override) {
-                    m_original_in_override = new wxStaticText(m_fix_filament_panel, wxID_ANY, _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS") + ":");
+                    m_original_in_override = new Label(m_fix_filament_panel, _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS") + ":");
                     m_original_in_override->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                     m_original_in_override->SetFont(::Label::Head_12);
                 }
@@ -2862,7 +2862,7 @@ void SyncAmsInfoDialog::generate_override_fix_ams_list()
 
                 if (!m_ams_or_ext_text_in_override) {
                     auto text = (m_only_exist_ext_spool_flag ? _L("Ext spool") : _L("AMS")) + ":";
-                    m_ams_or_ext_text_in_override = new wxStaticText(m_fix_filament_panel, wxID_ANY, text);
+                    m_ams_or_ext_text_in_override = new Label(m_fix_filament_panel, text);
                     m_ams_or_ext_text_in_override->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                     m_ams_or_ext_text_in_override->SetFont(::Label::Head_12);
                 }

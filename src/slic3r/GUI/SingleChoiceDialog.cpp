@@ -3,6 +3,7 @@
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -15,7 +16,7 @@ SingleChoiceDialog::SingleChoiceDialog(const wxString &message, const wxString &
     wxBoxSizer *bSizer    = new wxBoxSizer(wxVERTICAL);
     bSizer->SetMinSize(wxSize(FromDIP(dlg_width), -1));
 
-    wxStaticText *message_text = new wxStaticText(this, wxID_ANY, message, wxDefaultPosition, wxDefaultSize, 0);
+    wxStaticText *message_text = new Label(this, message);
     message_text->Wrap(-1);
     bSizer->Add(message_text, 0, wxALL, 5);
 

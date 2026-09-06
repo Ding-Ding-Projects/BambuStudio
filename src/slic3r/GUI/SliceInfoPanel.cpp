@@ -65,7 +65,7 @@ SliceInfoPopup::SliceInfoPopup(wxWindow *parent, wxBitmap bmp, BBLSliceInfo *inf
     wxString predict_text;
     if (info)
         predict_text = get_bbl_monitor_time_dhm(info->prediction);
-    auto prediction = new wxStaticText(m_panel, wxID_ANY, predict_text, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto prediction = new Label(m_panel, predict_text, wxST_ELLIPSIZE_END);
     caption_left_sizer->Add(prediction_bitmap, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
     caption_left_sizer->Add(prediction, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
     prediction->Wrap(-1);
@@ -78,7 +78,7 @@ SliceInfoPopup::SliceInfoPopup(wxWindow *parent, wxBitmap bmp, BBLSliceInfo *inf
             cost_text = "0g";
         }
     }
-    auto used_g_text = new wxStaticText(m_panel, wxID_ANY, cost_text, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto used_g_text = new Label(m_panel, cost_text, wxST_ELLIPSIZE_END);
     caption_right_sizer->Add(cost_bitmap, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
     caption_right_sizer->Add(used_g_text, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
@@ -109,7 +109,7 @@ SliceInfoPopup::SliceInfoPopup(wxWindow *parent, wxBitmap bmp, BBLSliceInfo *inf
             f_type->SetCornerRadius(FromDIP(10));
 
             wxString used_g_text = wxString::Format("%.1fg", f.used_g);
-            auto f_used_g = new wxStaticText(m_panel, wxID_ANY, used_g_text, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+            auto f_used_g = new Label(m_panel, used_g_text, wxST_ELLIPSIZE_END);
             f_used_g->Wrap(-1);
             f_used_g->SetSize(wxSize(FromDIP(60), -1));
             f_sizer->Add(f_type, 0, wxEXPAND | wxALL, FromDIP(5));
@@ -192,7 +192,7 @@ SliceInfoPanel::SliceInfoPanel(wxWindow *parent, wxBitmap &prediction, wxBitmap 
     m_bmp_item_prediction->SetSize(ICON_SIZE);
     m_item_info_sizer->Add(m_bmp_item_prediction, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_text_item_prediction = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxSize(FromDIP(60), -1));
+    m_text_item_prediction = new Label(this, "", 0, wxSize(FromDIP(60), -1));
     m_text_item_prediction->Wrap(-1);
     m_item_info_sizer->Add(m_text_item_prediction, 1, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 
@@ -201,7 +201,7 @@ SliceInfoPanel::SliceInfoPanel(wxWindow *parent, wxBitmap &prediction, wxBitmap 
     m_bmp_item_cost->SetSize(ICON_SIZE);
     m_item_info_sizer->Add(m_bmp_item_cost, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_text_item_cost = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxSize(FromDIP(35), -1));
+    m_text_item_cost = new Label(this, "", 0, wxSize(FromDIP(35), -1));
     m_text_item_cost->Wrap(-1);
     m_item_info_sizer->Add(m_text_item_cost, 1, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 
@@ -223,7 +223,7 @@ SliceInfoPanel::SliceInfoPanel(wxWindow *parent, wxBitmap &prediction, wxBitmap 
 
     m_item_right_sizer->Add(0, 0, 1, wxEXPAND, FromDIP(5));
 
-    m_text_plate_index = new wxStaticText(this, wxID_ANY, "");
+    m_text_plate_index = new Label(this, "");
     m_text_plate_index->Wrap(-1);
     m_text_plate_index->SetForegroundColour(wxColour(107, 107, 107));
     m_item_right_sizer->Add(m_text_plate_index, 0, wxALIGN_RIGHT | wxALL, FromDIP(5));

@@ -70,14 +70,14 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_printer_info->Add(0, 14, 0, wxEXPAND, 0);
 
-	m_staticText_machine_name = new wxStaticText(m_panel_printer, wxID_ANY, wxT("BBL-Printer001"), wxDefaultPosition, wxSize(-1, -1), wxST_ELLIPSIZE_END | wxST_ELLIPSIZE_MIDDLE | wxST_ELLIPSIZE_START);
+	m_staticText_machine_name = new Label(m_panel_printer, wxT("BBL-Printer001"), wxST_ELLIPSIZE_END | wxST_ELLIPSIZE_MIDDLE | wxST_ELLIPSIZE_START, wxSize(-1, -1));
 	m_staticText_machine_name->Wrap(-1);
 	m_staticText_machine_name->SetFont(Label::Body_11);
 	m_staticText_machine_name->SetMinSize(wxSize(100, -1));
 
 	bSizer_printer_info->Add(m_staticText_machine_name, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 
-	m_staticText_capacity_val = new wxStaticText(m_panel_printer, wxID_ANY, wxT("N/A"), wxDefaultPosition, wxSize(-1, -1), 0);
+	m_staticText_capacity_val = new Label(m_panel_printer, wxT("N/A"), 0, wxSize(-1, -1));
 	m_staticText_capacity_val->Wrap(-1);
 	m_staticText_capacity_val->SetFont(Label::Body_10);
 
@@ -108,7 +108,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_status_caption->Add(28, 0, 0, 0, 0);
 
-	m_staticText_status = new wxStaticText(m_panel_status_tab, wxID_ANY, wxT("Status"), wxDefaultPosition, wxSize(-1, -1), wxST_ELLIPSIZE_END);
+	m_staticText_status = new Label(m_panel_status_tab, wxT("Status"), wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_status->Wrap(-1);
 	m_staticText_status->SetFont(Label::Body_14);
 	m_staticText_status->SetMinSize(wxSize(65, -1));
@@ -145,7 +145,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_time_lapse_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_time_lapse = new wxStaticText(m_panel_time_lapse_tab, wxID_ANY, wxT("Time Lapse"), wxDefaultPosition, wxSize(-1, -1), wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+	m_staticText_time_lapse = new Label(m_panel_time_lapse_tab, wxT("Time Lapse"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_time_lapse->Wrap(-1);
 	m_staticText_time_lapse->SetFont(Label::Body_14);
 	m_staticText_time_lapse->SetMinSize(wxSize(122, -1));
@@ -178,7 +178,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_video_monitoring_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_video_monitoring = new wxStaticText(m_panel_video_tab, wxID_ANY, wxT("Video"), wxDefaultPosition, wxSize(-1, -1), wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+	m_staticText_video_monitoring = new Label(m_panel_video_tab, wxT("Video"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_video_monitoring->Wrap(-1);
 	m_staticText_video_monitoring->SetFont(Label::Body_14);
 	m_staticText_video_monitoring->SetMinSize(wxSize(122, -1));
@@ -212,7 +212,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_tasklist_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_subtask_list = new wxStaticText(m_panel_task_list_tab, wxID_ANY, wxT("Task List"), wxDefaultPosition, wxSize(-1, -1), wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+	m_staticText_subtask_list = new Label(m_panel_task_list_tab, wxT("Task List"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_subtask_list->Wrap(-1);
 	m_staticText_subtask_list->SetFont(Label::Body_14);
 	m_staticText_subtask_list->SetMinSize(wxSize(122, -1));
@@ -310,7 +310,7 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 
 	bSizer_model_name_caption->Add(23, 0, 0, wxEXPAND, 0);
 
-	m_staticText_model_name = new wxStaticText(m_panel_model_name_caption, wxID_ANY, wxT("Model Name"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_model_name = new Label(m_panel_model_name_caption, wxT("Model Name"));
 	m_staticText_model_name->Wrap(-1);
 	m_staticText_model_name->SetFont(Label::Head_14);
 
@@ -341,18 +341,18 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 	wxBoxSizer* bSizer12;
 	bSizer12 = new wxBoxSizer(wxVERTICAL);
 
-	m_staticText_task_desc = new wxStaticText(m_panel_model_name_content, wxID_ANY, wxT("Robort expose task dao movie with smart part \ndesigned for new year\n"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_task_desc = new Label(m_panel_model_name_content, wxT("Robort expose task dao movie with smart part \ndesigned for new year\n"));
 	m_staticText_task_desc->Wrap(-1);
 	bSizer12->Add(m_staticText_task_desc, 0, wxALL, 5);
 
 	wxBoxSizer* bSizer13;
 	bSizer13 = new wxBoxSizer(wxHORIZONTAL);
 
-	m_staticText_ceation_time_title = new wxStaticText(m_panel_model_name_content, wxID_ANY, wxT("CreationTime:"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_ceation_time_title = new Label(m_panel_model_name_content, wxT("CreationTime:"));
 	m_staticText_ceation_time_title->Wrap(-1);
 	bSizer13->Add(m_staticText_ceation_time_title, 0, wxALL, 5);
 
-	m_staticText_creation_time = new wxStaticText(m_panel_model_name_content, wxID_ANY, wxT("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_creation_time = new Label(m_panel_model_name_content, wxT("N/A"));
 	m_staticText_creation_time->Wrap(-1);
 	bSizer13->Add(m_staticText_creation_time, 0, wxALL, 5);
 
@@ -386,7 +386,7 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 
 	bSizer_plater_caption->Add(23, 0, 0, wxEXPAND, 0);
 
-	m_staticText_plater = new wxStaticText(m_panel_plater_caption, wxID_ANY, wxT("Plater"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_plater = new Label(m_panel_plater_caption, wxT("Plater"));
 	m_staticText_plater->Wrap(-1);
 	m_staticText_plater->SetFont(Label::Head_14);
 

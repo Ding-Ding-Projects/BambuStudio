@@ -42,7 +42,7 @@ TipsDialog::TipsDialog(wxWindow *parent, const wxString &title, const wxString &
 
     m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(20));
 
-    m_msg = new wxStaticText(this, wxID_ANY, description, wxDefaultPosition, wxDefaultSize, 0);
+    m_msg = new Label(this, description);
     m_msg->Wrap(-1);
     m_msg->SetFont(::Label::Body_13);
     m_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -114,7 +114,7 @@ wxBoxSizer *TipsDialog::create_item_checkbox(wxString title, wxWindow *parent, w
     m_sizer_checkbox->Add(checkbox, 0, wxALIGN_CENTER, 0);
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(-1, -1), 0);
+    auto checkbox_title = new Label(parent, title, 0, wxSize(-1, -1));
     checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(-1);

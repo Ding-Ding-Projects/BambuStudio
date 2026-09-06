@@ -35,6 +35,7 @@
 
 #include "DeviceTab/wgtDeviceNozzleSelect.h"
 #include "DeviceTab/wgtMsgPanel.h"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 #define MATERIAL_ITEM_SIZE wxSize(FromDIP(65), FromDIP(50))
@@ -827,7 +828,7 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
      wxBoxSizer *title_sizer_h= new wxBoxSizer(wxHORIZONTAL);
      wxBoxSizer *title_sizer_v = new wxBoxSizer(wxVERTICAL);
 
-     m_title_text = new wxStaticText(title_panel, wxID_ANY, _L("AMS Slots"));
+     m_title_text = new Label(title_panel, _L("AMS Slots"));
      m_title_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_title_text->SetFont(::Label::Body_16);
      title_sizer_v->Add(m_title_text, 0, wxALIGN_LEFT | wxLEFT,  FromDIP(15));
@@ -1552,13 +1553,13 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     m_panel_enable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *sizer_enable_ams = new wxBoxSizer(wxVERTICAL);
 
-    m_title_enable_ams = new wxStaticText(m_panel_enable_ams, wxID_ANY, _L("Enable AMS"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_enable_ams = new Label(m_panel_enable_ams, _L("Enable AMS"));
     m_title_enable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_enable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_title_enable_ams->Wrap(-1);
     sizer_enable_ams->Add(m_title_enable_ams, 0, 0, 0);
 
-    m_tip_enable_ams = new wxStaticText(m_panel_enable_ams, wxID_ANY, _L("Print with filaments in the AMS"), wxDefaultPosition, wxDefaultSize, 0);
+    m_tip_enable_ams = new Label(m_panel_enable_ams, _L("Print with filaments in the AMS"));
     m_tip_enable_ams->SetMinSize(wxSize(FromDIP(200), FromDIP(50)));
     m_tip_enable_ams->Wrap(FromDIP(200));
     m_tip_enable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -1588,13 +1589,13 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     wxBoxSizer *sizer_disable_ams;
     sizer_disable_ams = new wxBoxSizer(wxVERTICAL);
 
-    m_title_disable_ams = new wxStaticText(m_panel_disable_ams, wxID_ANY, _L("Disable AMS"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_disable_ams = new Label(m_panel_disable_ams, _L("Disable AMS"));
     m_title_disable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_title_disable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_disable_ams->Wrap(-1);
     sizer_disable_ams->Add(m_title_disable_ams, 0, 0, 0);
 
-    m_tip_disable_ams = new wxStaticText(m_panel_disable_ams, wxID_ANY, _L("Print with the filament mounted on the back of chassis"), wxDefaultPosition, wxDefaultSize, 0);
+    m_tip_disable_ams = new Label(m_panel_disable_ams, _L("Print with the filament mounted on the back of chassis"));
     m_tip_disable_ams->SetMinSize(wxSize(FromDIP(200), FromDIP(50)));
     m_tip_disable_ams->Wrap(FromDIP(200));
     m_tip_disable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -1817,7 +1818,7 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
     arrows_top = new wxStaticBitmap(this, wxID_ANY, arrow_top_bmp, wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
     sizer_tip_top->Add(arrows_top, 0, wxALIGN_CENTER, 0);
 
-    tip_top = new wxStaticText(this, wxID_ANY, _L("Filament used in this print job"), wxDefaultPosition, wxDefaultSize, 0);
+    tip_top = new Label(this, _L("Filament used in this print job"));
     tip_top->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     sizer_tip_top->Add(tip_top, 0, wxALL, 0);
@@ -1834,7 +1835,7 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
         ? MaterialIcon::bitmap(this, MaterialIcon::ChevronLeft, 8, StateColor::semantic(MD3::Role::OnSurfaceVariant))
         : create_scaled_bitmap("ams_arrow", this, 8);
     arrows_bottom = new wxStaticBitmap(this, wxID_ANY, arrow_bottom_bmp, wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
-    tip_bottom = new wxStaticText(this, wxID_ANY, _L("AMS slot used for this filament"), wxDefaultPosition, wxDefaultSize, 0);
+    tip_bottom = new Label(this, _L("AMS slot used for this filament"));
     tip_bottom->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
 
@@ -1855,7 +1856,7 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
     img_middle= new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("ams_item_examples", this, 30), wxDefaultPosition, wxSize(FromDIP(50), FromDIP(30)), 0);
     sizer_middle->Add(img_middle, 0, wxALIGN_CENTER, 0);
 
-    tip_middle = new wxStaticText(this, wxID_ANY, _L("Click to select AMS slot manually"), wxDefaultPosition, wxDefaultSize, 0);
+    tip_middle = new Label(this, _L("Click to select AMS slot manually"));
     tip_middle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     sizer_middle->Add(0, 0, 0,wxLEFT, 15);
     sizer_middle->Add(tip_middle, 0, wxALIGN_CENTER, 0);

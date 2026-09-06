@@ -2654,10 +2654,8 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     m_prepare_add_plate_button = new Button(parent, "+", "", wxNO_BORDER);
     // Two-tier print estimate (MD3 Prepare kit §67-70): a stacked time line
     // (Roboto Mono 15/500) over a weight/length line (11px OnSurfaceVariant).
-    m_prepare_estimate_label = new wxStaticText(parent, wxID_ANY, _L("Not sliced"),
-                                                 wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
-    wxStaticText *m_prepare_estimate_detail = new wxStaticText(parent, wxID_ANY, wxEmptyString,
-                                                 wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+    m_prepare_estimate_label = new Label(parent, _L("Not sliced"), wxALIGN_RIGHT);
+    wxStaticText *m_prepare_estimate_detail = new Label(parent, wxEmptyString, wxALIGN_RIGHT);
     m_prepare_estimate_detail->SetName(PREPARE_ESTIMATE_DETAIL_NAME);
 
     const wxColour primary = StateColor::semantic(MD3::Role::Primary);

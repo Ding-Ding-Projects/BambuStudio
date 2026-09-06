@@ -20,6 +20,7 @@
 #include "ConfigWizard.hpp"
 #include "wxExtensions.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -99,7 +100,7 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
 {
     wxBoxSizer *m_sizer_right = GetContentSizer();
 
-    auto m_text_up_info = new wxStaticText(this, wxID_ANY, _L("A new configuration package available, Do you want to install it?"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_text_up_info = new Label(this, _L("A new configuration package available, Do you want to install it?"));
     m_text_up_info->SetFont(::Label::Head_14);
     m_text_up_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_text_up_info->Wrap(-1);
@@ -143,14 +144,14 @@ MsgUpdateConfig::MsgUpdateConfig(const std::vector<Update> &updates, bool force_
     for (const auto &update : updates) {
         auto *flex = new wxFlexGridSizer(2, 0, FromDIP(15));
 
-        auto *text_vendor = new wxStaticText(m_scrollwindw_release_note, wxID_ANY, update.vendor);
+        auto *text_vendor = new Label(m_scrollwindw_release_note, update.vendor);
         text_vendor->SetFont(::Label::Body_13);
         flex->Add(text_vendor);
-        flex->Add(new wxStaticText(m_scrollwindw_release_note, wxID_ANY, update.version.to_string()));
+        flex->Add(new Label(m_scrollwindw_release_note, update.version.to_string()));
 
         // BBS: use changelog string instead of url
         if (!update.comment.empty()) {
-            flex->Add(new wxStaticText(m_scrollwindw_release_note, wxID_ANY, _(L("Description:"))), 0, wxALIGN_RIGHT);
+            flex->Add(new Label(m_scrollwindw_release_note, _(L("Description:"))), 0, wxALIGN_RIGHT);
             auto *update_comment = new Label(m_scrollwindw_release_note,std::string(""));
             update_comment->SetLabel(from_u8(update.comment));
             update_comment->SetMaxSize(wxSize(FromDIP(520), -1));
@@ -209,7 +210,7 @@ MsgUpdateConfig::~MsgUpdateConfig() {}
 MsgUpdateForced::MsgUpdateForced(const std::vector<Update>& updates) :
     MsgDialog(nullptr, _(L("Configuration incompatible")), _(L("the configuration package is incompatible with current application.")) + " ", wxOK | wxICON_ERROR)
 {
-	auto* text = new wxStaticText(this, wxID_ANY, wxString::Format(_(L(
+	auto* text = new Label(this, wxString::Format(_(L(
 		"The configuration package is incompatible with current application.\n"
 		"%s will update the configuration package, Otherwise it won't be able to start"
 	)), SLIC3R_APP_FULL_NAME));
@@ -225,15 +226,15 @@ MsgUpdateForced::MsgUpdateForced(const std::vector<Update>& updates) :
 	//BBS: use changelog string instead of url
 	wxTextCtrl* changelog_textctrl = nullptr;
 	for (const auto& update : updates) {
-		auto* text_vendor = new wxStaticText(this, wxID_ANY, update.vendor);
+		auto* text_vendor = new Label(this, update.vendor);
 		text_vendor->SetFont(boldfont);
 		versions->Add(text_vendor);
-		versions->Add(new wxStaticText(this, wxID_ANY, update.version.to_string()));
+		versions->Add(new Label(this, update.version.to_string()));
 
 		//BBS: use changelog string instead of url
 		if (!update.comment.empty()) {
-			versions->Add(new wxStaticText(this, wxID_ANY, _(L("Description:")))/*, 0, wxALIGN_RIGHT*/);//uncoment if align to right (might not look good if 1  vedor name is longer than other names)
-			auto* update_comment = new wxStaticText(this, wxID_ANY, from_u8(update.comment));
+			versions->Add(new Label(this, _(L("Description:")))/*, 0, wxALIGN_RIGHT*/);//uncoment if align to right (might not look good if 1  vedor name is longer than other names)
+			auto* update_comment = new Label(this, from_u8(update.comment));
 			update_comment->Wrap(CONTENT_WIDTH * wxGetApp().em_unit());
 			versions->Add(update_comment);
 		}
@@ -361,7 +362,7 @@ MsgNoUpdates::MsgNoUpdates() :
     MsgDialog(nullptr, _(L("Configuration updates")), _(L("No updates available.")), wxICON_ERROR | wxOK)
 {
 
-	auto* text = new wxStaticText(this, wxID_ANY, _(L("The configuration is up to date.")));
+	auto* text = new Label(this, _(L("The configuration is up to date.")));
 	text->Wrap(CONTENT_WIDTH * wxGetApp().em_unit());
 	content_sizer->Add(text);
 	content_sizer->AddSpacer(VERT_SPACING);

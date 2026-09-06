@@ -35,7 +35,7 @@ void AMSSetting::create()
     m_sizer_main = new wxBoxSizer(wxVERTICAL);
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
-    m_static_ams_settings = new wxStaticText(this, wxID_ANY, _L("AMS Settings"), wxDefaultPosition, wxDefaultSize, 0);
+    m_static_ams_settings = new Label(this, _L("AMS Settings"));
     m_static_ams_settings->SetFont(::Label::Head_14);
     m_static_ams_settings->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
@@ -62,8 +62,7 @@ void AMSSetting::create()
 
     m_sizer_Insert_material->Add(0, 0, 0, wxLEFT, FromDIP(12));
 
-    m_title_Insert_material_auto_read = new wxStaticText(m_panel_Insert_material, wxID_ANY, _L("Insertion update"),
-                                                         wxDefaultPosition, wxDefaultSize, 0);
+    m_title_Insert_material_auto_read = new Label(m_panel_Insert_material, _L("Insertion update"));
 
     m_title_Insert_material_auto_read->SetFont(::Label::Head_13);
     m_title_Insert_material_auto_read->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -119,7 +118,7 @@ void AMSSetting::create()
     m_checkbox_starting_auto_read->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_starting_read, this);
     m_sizer_starting->Add(m_checkbox_starting_auto_read, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_starting->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_starting_auto_read = new wxStaticText(m_panel_body, wxID_ANY, _L("Power on update"), wxDefaultPosition,wxDefaultSize, 0);
+    m_title_starting_auto_read = new Label(m_panel_body, _L("Power on update"));
     m_title_starting_auto_read->SetFont(::Label::Head_13);
     m_title_starting_auto_read->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_starting_auto_read->Wrap(AMS_SETTING_BODY_WIDTH);
@@ -156,7 +155,7 @@ void AMSSetting::create()
     m_checkbox_remain->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_remain, this);
     m_sizer_remain->Add(m_checkbox_remain, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_remain->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_remain = new wxStaticText(m_panel_body, wxID_ANY, _L("Update remaining capacity"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_remain = new Label(m_panel_body, _L("Update remaining capacity"));
     m_title_remain->SetFont(::Label::Head_13);
     m_title_remain->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_remain->Wrap(AMS_SETTING_BODY_WIDTH);
@@ -184,7 +183,7 @@ void AMSSetting::create()
     m_checkbox_switch_filament->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_switch_filament, this);
     m_sizer_switch_filament->Add(m_checkbox_switch_filament, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_switch_filament->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_switch_filament = new wxStaticText(m_panel_body, wxID_ANY, _L("AMS filament backup"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_switch_filament = new Label(m_panel_body, _L("AMS filament backup"));
     m_title_switch_filament->SetFont(::Label::Head_13);
     m_title_switch_filament->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_switch_filament->Wrap(AMS_SETTING_BODY_WIDTH);
@@ -216,7 +215,7 @@ void AMSSetting::create()
     m_checkbox_air_print->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_air_print_detect, this);
     m_sizer_air_print->Add(m_checkbox_air_print, 0, wxTOP, 1);
     m_sizer_air_print->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_air_print = new wxStaticText(m_panel_body, wxID_ANY, _L("Air Printing Detection"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_air_print = new Label(m_panel_body, _L("Air Printing Detection"));
     m_title_air_print->SetFont(::Label::Head_13);
     m_title_air_print->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_air_print->Wrap(AMS_SETTING_BODY_WIDTH);

@@ -24,6 +24,7 @@
 #include <nlohmann/json.hpp>
 #include "MainFrame.hpp"
 #include "MsgDialog.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 #include <boost/dll.hpp>
 
 #include <sstream>
@@ -59,7 +60,7 @@ ZUserLogin::ZUserLogin() : wxDialog((wxWindow *) (wxGetApp().mainframe), wxID_AN
         m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
         m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
 
-        auto* m_message = new wxStaticText(this, wxID_ANY, _L("Bambu Network plug-in not detected."), wxDefaultPosition, wxDefaultSize, 0);
+        auto* m_message = new Label(this, _L("Bambu Network plug-in not detected."));
         m_message->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         m_message->Wrap(FromDIP(360));
 

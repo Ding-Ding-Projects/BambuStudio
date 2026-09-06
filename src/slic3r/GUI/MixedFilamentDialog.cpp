@@ -459,7 +459,7 @@ void MixedFilamentDialog::start_ratio_editor(size_t idx, wxWindow* anchor, const
             m_ratio_editor->SetMinSize(wxSize(digits_w + FromDIP(2), -1));
         }
 
-        auto* pct_label = new wxStaticText(m_ratio_editor_panel, wxID_ANY, wxT("%"));
+        auto* pct_label = new Label(m_ratio_editor_panel, wxT("%"));
         pct_label->SetFont(::Label::Body_10);
         pct_label->SetForegroundColour(fg);
         pct_label->SetBackgroundColour(bg);
@@ -689,7 +689,7 @@ wxBoxSizer* MixedFilamentDialog::create_preview_panel()
 
     sizer->Add(m_preview_canvas, 0, wxALIGN_CENTER);
 
-    auto* label = new wxStaticText(this, wxID_ANY, _L("Effect Preview"));
+    auto* label = new Label(this, _L("Effect Preview"));
     label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     label->SetFont(::Label::Body_13);
     sizer->Add(label, 0, wxALIGN_CENTER | wxTOP, FromDIP(4));
@@ -765,7 +765,7 @@ wxBoxSizer* MixedFilamentDialog::create_material_selection()
     });
     sizer->Add(m_summary_panel, 0, wxEXPAND);
 
-    auto* sel_label = new wxStaticText(this, wxID_ANY, _L("Select Mixed Materials"));
+    auto* sel_label = new Label(this, _L("Select Mixed Materials"));
     sel_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     sel_label->SetFont(::Label::Body_12);
     sizer->Add(sel_label, 0, wxTOP, FromDIP(6));
@@ -777,7 +777,7 @@ wxBoxSizer* MixedFilamentDialog::create_material_selection()
     for (size_t i = 0; i < m_result.components.size(); ++i) {
         auto* row = new wxBoxSizer(wxHORIZONTAL);
         wxString lbl_text = wxString::Format(_L("Filament %d"), (int)(i + 1));
-        auto* lbl = new wxStaticText(this, wxID_ANY, lbl_text);
+        auto* lbl = new Label(this, lbl_text);
         lbl->SetFont(::Label::Body_12);
         row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
 
@@ -825,7 +825,7 @@ wxBoxSizer* MixedFilamentDialog::create_ratio_slider()
 {
     auto* sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto* ratio_label = new wxStaticText(this, wxID_ANY, _L("Ratio"));
+    auto* ratio_label = new Label(this, _L("Ratio"));
     ratio_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     ratio_label->SetFont(::Label::Body_12);
     sizer->Add(ratio_label, 0, wxBOTTOM, FromDIP(4));
@@ -1151,7 +1151,7 @@ wxBoxSizer* MixedFilamentDialog::create_gradient_section()
     m_chk_gradient->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent& e) { e.Skip(); on_gradient_toggled(); });
     m_gradient_sizer->Add(m_chk_gradient, 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, FromDIP(4));
 
-    m_label_gradient = new wxStaticText(this, wxID_ANY, _L("Gradient Effect"));
+    m_label_gradient = new Label(this, _L("Gradient Effect"));
     m_label_gradient->SetFont(::Label::Body_13);
     m_gradient_sizer->Add(m_label_gradient, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
@@ -1194,7 +1194,7 @@ wxBoxSizer* MixedFilamentDialog::create_gradient_section()
     m_per_part_gradient_sizer->Add(m_chk_per_part_gradient, 0,
         wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, FromDIP(4));
 
-    m_label_per_part_gradient = new wxStaticText(this, wxID_ANY, _L("Enable per-part gradient effect"));
+    m_label_per_part_gradient = new Label(this, _L("Enable per-part gradient effect"));
     m_label_per_part_gradient->SetFont(::Label::Body_13);
     m_per_part_gradient_sizer->Add(m_label_per_part_gradient, 0,
         wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
@@ -1210,7 +1210,7 @@ wxBoxSizer* MixedFilamentDialog::create_recommendation_grid()
     auto* outer = new wxBoxSizer(wxVERTICAL);
 
     auto* title_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto* rec_label = new wxStaticText(this, wxID_ANY, _L("Mixing Recommendations"));
+    auto* rec_label = new Label(this, _L("Mixing Recommendations"));
     rec_label->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
     rec_label->SetFont(::Label::Body_10);
     title_sizer->Add(rec_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
@@ -1579,7 +1579,7 @@ void MixedFilamentDialog::on_add_material()
 
     auto* row = new wxBoxSizer(wxHORIZONTAL);
     wxString lbl_text = wxString::Format(_L("Filament %d"), (int)(n + 1));
-    auto* lbl = new wxStaticText(this, wxID_ANY, lbl_text);
+    auto* lbl = new Label(this, lbl_text);
     lbl->SetFont(::Label::Body_12);
     row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
 
@@ -1679,7 +1679,7 @@ void MixedFilamentDialog::on_recommendation_clicked_triple(unsigned int a, unsig
             size_t idx = m_combo_filaments.size();
             auto* row = new wxBoxSizer(wxHORIZONTAL);
             wxString lbl_text = wxString::Format(_L("Filament %d"), (int)(idx + 1));
-            auto* lbl = new wxStaticText(this, wxID_ANY, lbl_text);
+            auto* lbl = new Label(this, lbl_text);
             lbl->SetFont(::Label::Body_12);
             row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
 

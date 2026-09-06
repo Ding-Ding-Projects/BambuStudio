@@ -165,7 +165,7 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
         m_simplebook->AddPage(m_panel_2line, wxEmptyString, false);
 
         wxBoxSizer *sizer_1line = new wxBoxSizer(wxHORIZONTAL);
-        m_msg                   = new wxStaticText(m_panel_1line, wxID_ANY, wxEmptyString, wxDefaultPosition, PROGRESSDIALOG_SIMPLEBOOK_SIZE, 0);
+        m_msg                   = new Label(m_panel_1line, wxEmptyString, 0, PROGRESSDIALOG_SIMPLEBOOK_SIZE);
         m_msg->Wrap(-1);
         m_msg->SetFont(::Label::Body_13);
         m_msg->SetForegroundColour(PROGRESSDIALOG_GREY_700);
@@ -175,7 +175,7 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
         sizer_1line->Fit(m_panel_1line);
 
         wxBoxSizer *sizer_2line = new wxBoxSizer(wxVERTICAL);
-        m_msg_2line             = new wxStaticText(m_panel_2line, wxID_ANY, wxEmptyString, wxDefaultPosition, PROGRESSDIALOG_SIMPLEBOOK_SIZE, 0);
+        m_msg_2line             = new Label(m_panel_2line, wxEmptyString, 0, PROGRESSDIALOG_SIMPLEBOOK_SIZE);
         m_msg_2line->Wrap(PROGRESSDIALOG_SIMPLEBOOK_SIZE.x);
         m_msg_2line->SetFont(::Label::Body_13);
         m_msg_2line->SetForegroundColour(PROGRESSDIALOG_GREY_700);
@@ -192,7 +192,7 @@ bool ProgressDialog::Create(const wxString &title, const wxString &message, int 
         m_msg_scrolledWindow->SetScrollRate(0,5);
         wxBoxSizer* m_msg_sizer= new wxBoxSizer(wxVERTICAL);
 
-        m_msg = new wxStaticText(m_msg_scrolledWindow, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(PROGRESSDIALOG_SIMPLEBOOK_SIZE.x, -1), 0);
+        m_msg = new Label(m_msg_scrolledWindow, wxEmptyString, 0, wxSize(PROGRESSDIALOG_SIMPLEBOOK_SIZE.x, -1));
         m_msg->Wrap(PROGRESSDIALOG_SIMPLEBOOK_SIZE.x);
         m_msg->SetFont(::Label::Body_13);
         m_msg->SetForegroundColour(PROGRESSDIALOG_GREY_700);
@@ -324,8 +324,8 @@ void ProgressDialog::EnsureActiveEventLoopExists()
 
 wxStaticText *ProgressDialog::CreateLabel(const wxString &text, wxSizer *sizer)
 {
-    wxStaticText *label = new wxStaticText(this, wxID_ANY, text);
-    wxStaticText *value = new wxStaticText(this, wxID_ANY, wxGetTranslation("unknown"));
+    wxStaticText *label = new Label(this, text);
+    wxStaticText *value = new Label(this, wxGetTranslation("unknown"));
 
     // select placement most native or nice on target GUI
 #if defined(__WXMSW__) || defined(__WXMAC__) || defined(__WXGTK20__)

@@ -16,6 +16,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include "FileHelp.hpp"
+#include "Widgets/Label.hpp"
 #include <wx/dcgraph.h>
 #include <algorithm>
 
@@ -303,7 +304,7 @@ wxPanel *BedShapePanel::init_texture_panel()
         wxSizer * load_sizer = new wxBoxSizer(wxHORIZONTAL);
         load_sizer->Add(load_btn, 1, wxEXPAND);
 
-        wxStaticText *filename_lbl = new wxStaticText(parent, wxID_ANY, _(NONE));
+        wxStaticText *filename_lbl = new Label(parent, _(NONE));
 
         wxSizer *filename_sizer = new wxBoxSizer(wxHORIZONTAL);
         filename_sizer->Add(filename_lbl, 1, wxEXPAND);
@@ -385,7 +386,7 @@ wxPanel *BedShapePanel::init_model_panel()
         wxSizer * load_sizer = new wxBoxSizer(wxHORIZONTAL);
         load_sizer->Add(load_btn, 1, wxEXPAND);
 
-        wxStaticText *filename_lbl   = new wxStaticText(parent, wxID_ANY, _(NONE));
+        wxStaticText *filename_lbl   = new Label(parent, _(NONE));
         wxSizer *     filename_sizer = new wxBoxSizer(wxHORIZONTAL);
         filename_sizer->Add(filename_lbl, 1, wxEXPAND);
 

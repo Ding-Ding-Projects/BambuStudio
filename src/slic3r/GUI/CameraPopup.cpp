@@ -57,14 +57,14 @@ CameraPopup::CameraPopup(wxWindow *parent)
     top_sizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
     //recording
-    m_text_recording = new wxStaticText(m_panel, wxID_ANY, _L("Auto-record Monitoring"));
+    m_text_recording = new Label(m_panel, _L("Auto-record Monitoring"));
     m_text_recording->Wrap(-1);
     m_text_recording->SetFont(Label::Head_14);
     m_text_recording->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_switch_recording = new SwitchButton(m_panel);
 
     //vcamera
-    m_text_vcamera = new wxStaticText(m_panel, wxID_ANY, _L("Go Live"));
+    m_text_vcamera = new Label(m_panel, _L("Go Live"));
     m_text_vcamera->Wrap(-1);
     m_text_vcamera->SetFont(Label::Head_14);
     m_text_vcamera->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -76,7 +76,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
     top_sizer->Add(m_switch_vcamera, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxALL, FromDIP(5));
 
 #if !BBL_RELEASE_TO_PUBLIC
-    m_text_liveview_retry = new wxStaticText(m_panel, wxID_ANY, _L("Liveview Retry"));
+    m_text_liveview_retry = new Label(m_panel, _L("Liveview Retry"));
     m_text_liveview_retry->Wrap(-1);
     m_text_liveview_retry->SetFont(Label::Head_14);
     m_text_liveview_retry->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -94,7 +94,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
 #endif
 
     //resolution
-    m_text_resolution = new wxStaticText(m_panel, wxID_ANY, _L("Resolution"));
+    m_text_resolution = new Label(m_panel, _L("Resolution"));
     m_text_resolution->Wrap(-1);
     m_text_resolution->SetFont(Label::Head_14);
     m_text_resolution->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -218,7 +218,7 @@ wxWindow* CameraPopup::create_item_radiobox(wxString title, wxWindow* parent, wx
         }
         });
 
-    wxStaticText *text = new wxStaticText(item, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+    wxStaticText *text = new Label(item, title);
     text->SetForegroundColour(*wxBLACK);
     resolution_texts.push_back(text);
     text->SetPosition(wxPoint(padding_left + radiobox->GetSize().GetWidth() + 10, (item->GetSize().GetHeight() - text->GetSize().GetHeight()) / 2));

@@ -17,6 +17,7 @@
 
 #include "libslic3r/ObjColorUtils.hpp"
 #include "libslic3r/Model.hpp"
+#include "Widgets/Label.hpp"
 using namespace Slic3r;
 using namespace Slic3r::GUI;
 
@@ -52,7 +53,7 @@ wxBoxSizer* ObjColorDialog::create_btn_sizer(long flags,bool exist_error)
     auto btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     if (!exist_error) {
         btn_sizer->AddSpacer(FromDIP(25));
-        wxStaticText *tips = new wxStaticText(this, wxID_ANY, _L("Open Wiki for more information >"));
+        wxStaticText *tips = new Label(this, _L("Open Wiki for more information >"));
         /* wxFont        font(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
          font.SetUnderlined(true);
          tips->SetFont(font);*/
@@ -209,14 +210,14 @@ ObjColorDialog::ObjColorDialog(wxWindow *parent, Slic3r::ObjDialogInOut &in_out,
     else {
         wxBoxSizer *  error_mtl_sizer       = new wxBoxSizer(wxVERTICAL);
 
-        wxStaticText *error_mtl_title       = new wxStaticText(this, wxID_ANY, _L("Some faces don't have color defined."));
+        wxStaticText *error_mtl_title       = new Label(this, _L("Some faces don't have color defined."));
         if (!in_out.lost_material_name.empty()) {
             error_mtl_title->SetLabel(_L("mtl file exist error,could not find the material:") + " " + in_out.lost_material_name + ".");
         }
         error_mtl_title->SetFont(Label::Head_12);
         error_mtl_sizer->Add(error_mtl_title, 0, wxALIGN_LEFT | wxBOTTOM | wxTOP, FromDIP(5));
 
-        wxStaticText *tip_title = new wxStaticText(this, wxID_ANY, _L("Please check obj or mtl file."));
+        wxStaticText *tip_title = new Label(this, _L("Please check obj or mtl file."));
         tip_title->SetFont(Label::Head_12);
         error_mtl_sizer->Add(tip_title, 0, wxALIGN_LEFT | wxBOTTOM | wxTOP, FromDIP(5));
 
@@ -319,7 +320,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
     {
         //color cluster results
         wxBoxSizer *  specify_cluster_sizer       = new wxBoxSizer(wxHORIZONTAL);
-        wxStaticText *specify_color_cluster_title = new wxStaticText(m_page_simple, wxID_ANY, _L("Specify number of colors:"));
+        wxStaticText *specify_color_cluster_title = new Label(m_page_simple, _L("Specify number of colors:"));
         specify_color_cluster_title->SetFont(Label::Head_14);
         specify_cluster_sizer->Add(specify_color_cluster_title, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
@@ -359,7 +360,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
         specify_cluster_sizer->AddSpacer(FromDIP(2));
         specify_cluster_sizer->Add(m_color_cluster_num_by_user_ebox, 0, wxALIGN_CENTER | wxALL, 0);
         specify_cluster_sizer->AddSpacer(FromDIP(15));
-        wxStaticText *recommend_color_cluster_title = new wxStaticText(m_page_simple, wxID_ANY, "(" + std::to_string(m_color_num_recommend) + " " + _L("Recommended ") + ")");
+        wxStaticText *recommend_color_cluster_title = new Label(m_page_simple, "(" + std::to_string(m_color_num_recommend) + " " + _L("Recommended ") + ")");
         specify_cluster_sizer->Add(recommend_color_cluster_title, 0, wxALIGN_CENTER | wxALL, 0);
 
         m_sizer_simple->Add(specify_cluster_sizer, 0, wxEXPAND | wxLEFT, FromDIP(20));
@@ -433,7 +434,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
             generate_origin_thumbnail();
         }
         wxBoxSizer *  current_filaments_title_sizer  = new wxBoxSizer(wxHORIZONTAL);
-        wxStaticText *current_filaments_title = new wxStaticText(m_page_simple, wxID_ANY, _L("Current filament colors"));
+        wxStaticText *current_filaments_title = new Label(m_page_simple, _L("Current filament colors"));
         current_filaments_title->SetFont(Label::Head_14);
         current_filaments_title_sizer->Add(current_filaments_title, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
         m_sizer_simple->Add(current_filaments_title_sizer, 0, wxEXPAND | wxLEFT, FromDIP(20));
@@ -461,7 +462,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
         //colors table title
         wxBoxSizer *  matching_title_sizer = new wxBoxSizer(wxHORIZONTAL);
         matching_title_sizer->AddSpacer(FromDIP(25));
-        wxStaticText *matching_title       = new wxStaticText(m_page_simple, wxID_ANY, _L("Matching"));
+        wxStaticText *matching_title       = new Label(m_page_simple, _L("Matching"));
         matching_title->SetFont(Label::Head_14);
         matching_title_sizer->Add(matching_title, 0, wxEXPAND , 0);
         m_sizer_simple->Add(matching_title_sizer, 0, wxEXPAND | wxTOP, FromDIP(15));// wxTop has FromDIP(10) margin
@@ -477,7 +478,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
         //buttons
         wxBoxSizer *quick_set_sizer = new wxBoxSizer(wxHORIZONTAL);
         quick_set_sizer->AddSpacer(FromDIP(25));
-        wxStaticText *quick_set_title = new wxStaticText(m_page_simple, wxID_ANY, _L("Quick set"));
+        wxStaticText *quick_set_title = new Label(m_page_simple, _L("Quick set"));
         quick_set_title->SetFont(Label::Head_12);
         quick_set_sizer->Add(quick_set_title, 0, wxALIGN_CENTER | wxALL, 0);
         quick_set_sizer->AddSpacer(FromDIP(10));
@@ -1296,7 +1297,7 @@ wxBoxSizer *ObjColorPanel::create_color_icon_map_rgba_sizer(wxWindow *parent, in
     icon_sizer->Add(icon, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0); // wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM
     icon_sizer->AddSpacer(FromDIP(10));
 
-    wxStaticText *map_text = new wxStaticText(parent, wxID_ANY, _L("—> "));
+    wxStaticText *map_text = new Label(parent, _L("—> "));
     map_text->SetFont(Label::Head_12);
     icon_sizer->Add(map_text, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 

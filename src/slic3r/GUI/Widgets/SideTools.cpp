@@ -452,8 +452,8 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     m_link_network_state->getLabel()->SetFont(::Label::Body_12);
     m_link_network_state->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](auto& e) { wxGetApp().link_to_network_check(); });
 
-    auto st_title_error_code = new wxStaticText(m_side_error_panel, wxID_ANY, _L("code"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    auto st_title_error_code_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
+    auto st_title_error_code = new Label(m_side_error_panel, _L("code"), wxST_ELLIPSIZE_END);
+    auto st_title_error_code_doc = new Label(m_side_error_panel, ": ");
     m_st_txt_error_code = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
     // a11y-contrast: this text sits on the ErrorContainer fill (see
     // m_side_error_panel above), so it must use the OnErrorContainer role to meet
@@ -473,8 +473,8 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     sizer_error_code->Add(m_st_txt_error_code, 0, wxALL, 0);
 
 
-    auto st_title_error_desc = new wxStaticText(m_side_error_panel, wxID_ANY, wxT("desc"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    auto st_title_error_desc_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
+    auto st_title_error_desc = new Label(m_side_error_panel, wxT("desc"), wxST_ELLIPSIZE_END);
+    auto st_title_error_desc_doc = new Label(m_side_error_panel, ": ");
     m_st_txt_error_desc = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
     st_title_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
     st_title_error_desc_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
@@ -490,8 +490,8 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     sizer_error_desc->Add(st_title_error_desc_doc, 0, wxALL, 0);
     sizer_error_desc->Add(m_st_txt_error_desc, 0, wxALL, 0);
 
-    auto st_title_extra_info = new wxStaticText(m_side_error_panel, wxID_ANY, wxT("info"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    auto st_title_extra_info_doc = new wxStaticText(m_side_error_panel, wxID_ANY, ": ");
+    auto st_title_extra_info = new Label(m_side_error_panel, wxT("info"), wxST_ELLIPSIZE_END);
+    auto st_title_extra_info_doc = new Label(m_side_error_panel, ": ");
     m_st_txt_extra_info = new Label(m_side_error_panel, wxEmptyString, LB_AUTO_WRAP);
     st_title_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
     st_title_extra_info_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));

@@ -108,7 +108,7 @@ AuFile::AuFile(wxWindow *parent, fs::path file_path, wxString file_name, Auxilia
     
 
     wxBoxSizer *m_text_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_text_name              = new wxStaticText(m_text_panel, wxID_ANY, m_file_name, wxDefaultPosition, wxSize(panel_size.x, -1), wxST_ELLIPSIZE_END);
+    m_text_name              = new Label(m_text_panel, m_file_name, wxST_ELLIPSIZE_END, wxSize(panel_size.x, -1));
     m_text_name->Wrap(panel_size.x - FromDIP(10));
     m_text_name->SetFont(::Label::Body_14);
     m_text_name->SetForegroundColour(ThemeColor::TextPrimary);
@@ -1101,7 +1101,7 @@ void AuxiliaryPanel::update_all_cover()
      wxBoxSizer *m_sizer_body = new wxBoxSizer(wxVERTICAL);
      wxBoxSizer *m_sizer_designer = new wxBoxSizer(wxHORIZONTAL);
 
-     auto m_text_designer = new wxStaticText(this, wxID_ANY, _L("Author"), wxDefaultPosition, wxSize(180, -1), 0);
+     auto m_text_designer = new Label(this, _L("Author"), 0, wxSize(180, -1));
      m_text_designer->Wrap(-1);
      m_text_designer->SetForegroundColour(ThemeColor::TextPrimary);
      m_sizer_designer->Add(m_text_designer, 0, wxALIGN_CENTER, 0);
@@ -1113,7 +1113,7 @@ void AuxiliaryPanel::update_all_cover()
 
      wxBoxSizer *m_sizer_model_name = new wxBoxSizer(wxHORIZONTAL);
 
-     auto m_text_model_name = new wxStaticText(this, wxID_ANY, _L("Model Name"), wxDefaultPosition, wxSize(180, -1), 0);
+     auto m_text_model_name = new Label(this, _L("Model Name"), 0, wxSize(180, -1));
      m_text_model_name->SetForegroundColour(ThemeColor::TextPrimary);
      m_text_model_name->Wrap(-1);
      m_sizer_model_name->Add(m_text_model_name, 0, wxALIGN_CENTER, 0);

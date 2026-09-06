@@ -8,6 +8,7 @@
 #include "CalibUtils.hpp"
 #include "DeviceCore/DevFilaSystem.h"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -60,7 +61,7 @@ void ExtrusionCalibration::create()
 
     auto select_sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto nozzle_dia_sel_text = new wxStaticText(m_step_1_panel, wxID_ANY, _L("Nozzle Diameter"), wxDefaultPosition, wxDefaultSize, 0);
+    auto nozzle_dia_sel_text = new Label(m_step_1_panel, _L("Nozzle Diameter"));
     select_sizer->Add(nozzle_dia_sel_text, 0, wxALIGN_LEFT);
     select_sizer->AddSpacer(FromDIP(4));
 
@@ -78,7 +79,7 @@ void ExtrusionCalibration::create()
     select_sizer->Add(m_comboBox_nozzle_dia, 0, wxEXPAND);
     select_sizer->Add(0, EXTRUSION_CALIBRATION_WIDGET_GAP, 0, 0);
 
-    auto filament_sel_text = new wxStaticText(m_step_1_panel, wxID_ANY, _L("Filament"), wxDefaultPosition, wxDefaultSize, 0);
+    auto filament_sel_text = new Label(m_step_1_panel, _L("Filament"));
     select_sizer->Add(filament_sel_text, 0, wxALIGN_LEFT);
     select_sizer->AddSpacer(FromDIP(4));
 #ifdef __APPLE__
@@ -89,7 +90,7 @@ void ExtrusionCalibration::create()
     select_sizer->Add(m_comboBox_filament, 0, wxEXPAND);
     select_sizer->Add(0, EXTRUSION_CALIBRATION_WIDGET_GAP, 0, 0);
 
-    auto bed_type_sel_text = new wxStaticText(m_step_1_panel, wxID_ANY, _L("Bed Type"), wxDefaultPosition, wxDefaultSize, 0);
+    auto bed_type_sel_text = new Label(m_step_1_panel, _L("Bed Type"));
     select_sizer->Add(bed_type_sel_text, 0, wxALIGN_LEFT);
     select_sizer->AddSpacer(FromDIP(4));
 
@@ -125,7 +126,7 @@ void ExtrusionCalibration::create()
     info_sizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
     auto nozzle_temp_sizer = new wxBoxSizer(wxVERTICAL);
-    auto nozzle_temp_text = new wxStaticText(m_step_1_panel, wxID_ANY, _L("Nozzle temperature"));
+    auto nozzle_temp_text = new Label(m_step_1_panel, _L("Nozzle temperature"));
     auto max_input_width = std::max(std::max(std::max(wxWindow::GetTextExtent(_L("Nozzle temperature")).x,
         wxWindow::GetTextExtent(_L("Bed Temperature")).x),
         wxWindow::GetTextExtent(_L("Max volumetric speed")).x),
@@ -136,14 +137,14 @@ void ExtrusionCalibration::create()
     nozzle_temp_sizer->Add(m_nozzle_temp, 0, wxEXPAND);
 
     auto bed_temp_sizer = new wxBoxSizer(wxVERTICAL);
-    auto bed_temp_text = new wxStaticText(m_step_1_panel, wxID_ANY, _L("Bed temperature"));
+    auto bed_temp_text = new Label(m_step_1_panel, _L("Bed temperature"));
     m_bed_temp = new TextInput(m_step_1_panel, wxEmptyString, "°C", "", wxDefaultPosition, { max_input_width, EXTRUSION_CALIBRATION_INPUT_SIZE.y }, wxTE_READONLY);
     bed_temp_sizer->Add(bed_temp_text, 0, wxALIGN_LEFT);
     bed_temp_sizer->AddSpacer(FromDIP(4));
     bed_temp_sizer->Add(m_bed_temp, 0, wxEXPAND);
 
     auto max_flow_sizer = new wxBoxSizer(wxVERTICAL);
-    auto max_flow_text = new wxStaticText(m_step_1_panel, wxID_ANY, _L("Max volumetric speed"));
+    auto max_flow_text = new Label(m_step_1_panel, _L("Max volumetric speed"));
     m_max_flow_ratio = new TextInput(m_step_1_panel, wxEmptyString, "mm³", "", wxDefaultPosition, { max_input_width, EXTRUSION_CALIBRATION_INPUT_SIZE.y }, wxTE_READONLY);
     max_flow_sizer->Add(max_flow_text, 0, wxALIGN_LEFT);
     max_flow_sizer->AddSpacer(FromDIP(4));
@@ -164,11 +165,11 @@ void ExtrusionCalibration::create()
 
     auto cali_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    m_info_text = new wxStaticText(m_step_1_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_info_text = new Label(m_step_1_panel, wxEmptyString, wxST_ELLIPSIZE_END);
     m_info_text->SetFont(Label::Body_12);
     m_info_text->Hide();
 
-    m_error_text = new wxStaticText(m_step_1_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_error_text = new Label(m_step_1_panel, wxEmptyString, wxST_ELLIPSIZE_END);
     m_error_text->SetFont(Label::Body_12);
     m_error_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_error_text->Hide();
@@ -244,9 +245,9 @@ void ExtrusionCalibration::create()
     content_sizer->Add(EXTRUSION_CALIBRATION_WIDGET_GAP, 0, 0, 0);
     // k/n input value
     auto kn_sizer = new wxBoxSizer(wxVERTICAL);
-    auto k_val_text = new wxStaticText(m_step_2_panel, wxID_ANY, _L("Factor K"), wxDefaultPosition, wxDefaultSize, 0);
+    auto k_val_text = new Label(m_step_2_panel, _L("Factor K"));
     m_k_val = new TextInput(m_step_2_panel, wxEmptyString, "", "", wxDefaultPosition, wxDefaultSize);
-    auto n_val_text = new wxStaticText(m_step_2_panel, wxID_ANY, _L("Factor N"), wxDefaultPosition, wxDefaultSize, 0);
+    auto n_val_text = new Label(m_step_2_panel, _L("Factor N"));
     m_n_val = new TextInput(m_step_2_panel, wxEmptyString, "", "", wxDefaultPosition, wxDefaultSize);
 
     // hide n

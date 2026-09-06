@@ -10,6 +10,7 @@
 #include "GUI_App.hpp"
 
 #include "I18N.hpp"
+#include "Widgets/Label.hpp"
 
 #include <iostream>
 #include <regex>
@@ -28,7 +29,7 @@ BBLStatusBarSend::BBLStatusBarSend(wxWindow *parent, int id)
     wxBoxSizer *m_sizer_body = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_bottom = new wxBoxSizer(wxHORIZONTAL);
 
-    m_status_text = new wxStaticText(m_self, wxID_ANY, wxEmptyString);
+    m_status_text = new Label(m_self, wxEmptyString);
     m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_status_text->SetFont(::Label::Body_13);
     m_status_text->SetMaxSize(wxSize(m_self->FromDIP(360), m_self->FromDIP(40)));
@@ -72,7 +73,7 @@ BBLStatusBarSend::BBLStatusBarSend(wxWindow *parent, int id)
         cancel();
     });
 
-    m_stext_percent = new wxStaticText(m_self, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
+    m_stext_percent = new Label(m_self, "");
     m_stext_percent->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_stext_percent->SetFont(::Label::Body_13);
     m_stext_percent->Wrap(-1);

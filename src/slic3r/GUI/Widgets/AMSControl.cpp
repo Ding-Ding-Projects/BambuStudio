@@ -1005,7 +1005,7 @@ void AMSControl::show_switcher_status(bool show)
         icon = new wxStaticBitmap(tipPanel, wxID_ANY,
             wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_MESSAGE_BOX, wxSize(FromDIP(16), FromDIP(16))));
         tipSizer->Add(icon, 0, wxALL, FromDIP(8));
-        tipText = new wxStaticText(tipPanel, wxID_ANY, _L("AMS has not been initialized. Please initialize it before use."));
+        tipText = new Label(tipPanel, _L("AMS has not been initialized. Please initialize it before use."));
         tipText->SetForegroundColour(ThemeColor::White);
         tipText->SetFont(Label::Head_10);
         tipText->Wrap(-1);

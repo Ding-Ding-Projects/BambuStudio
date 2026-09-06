@@ -9,6 +9,7 @@
 
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 #include <wx/stattext.h>
 
@@ -65,13 +66,13 @@ void uiDeviceUpdateVersion::SetVersion(const wxString& cur_version, const wxStri
 
 void uiDeviceUpdateVersion::CreateWidgets()
 {
-    m_dev_name = new wxStaticText(this, wxID_ANY, "-");
-    m_dev_snl = new wxStaticText(this, wxID_ANY, "-");
-    m_dev_version = new wxStaticText(this, wxID_ANY, "-");
+    m_dev_name = new Label(this, "-");
+    m_dev_snl = new Label(this, "-");
+    m_dev_version = new Label(this, "-");
 
-    wxStaticText* serial_text = new wxStaticText(this, wxID_ANY, _L(SERIAL_STR));
-    wxStaticText* version_text = new wxStaticText(this, wxID_ANY, _L(VERSION_STR));
-    wxStaticText *model_text   = new wxStaticText(this, wxID_ANY, _L(MODEL_STR));
+    wxStaticText* serial_text = new Label(this, _L(SERIAL_STR));
+    wxStaticText* version_text = new Label(this, _L(VERSION_STR));
+    wxStaticText *model_text   = new Label(this, _L(MODEL_STR));
 
     // Use bold font
     wxFont font = Label::Head_14;

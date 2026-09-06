@@ -11,6 +11,7 @@
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/Platform.hpp"
 #include "libslic3r/Config.hpp"
+#include "Widgets/Label.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
@@ -470,7 +471,7 @@ DesktopIntegrationDialog::DesktopIntegrationDialog(wxWindow *parent)
 		text += "\nPress \"Undo\" to remove previous integration.";
 
     vbox->Add(
-        new wxStaticText( this, wxID_ANY, text),
+        new Label(this, text),
         //	, wxDefaultPosition, wxSize(100,50), wxTE_MULTILINE),
         1,            // make vertically stretchable
         wxEXPAND |    // make horizontally stretchable

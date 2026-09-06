@@ -11,6 +11,7 @@
 #include "Widgets/StateColor.hpp"
 
 #include "I18N.hpp"
+#include "Widgets/Label.hpp"
 
 #include <iostream>
 
@@ -30,13 +31,13 @@ BBLStatusBar::BBLStatusBar(wxWindow *parent, int id)
 {
     m_cancelbutton->SetVariant(Button::Variant::Text);
     m_cancelbutton->SetButtonSize(Button::Size::Small);
-    m_status_text = new wxStaticText(m_self, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_status_text = new Label(m_self, "", wxST_ELLIPSIZE_END);
     m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-    m_object_info = new wxStaticText(m_self, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_object_info = new Label(m_self, "", wxST_ELLIPSIZE_END);
     m_object_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-    m_slice_info = new wxStaticText(m_self, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_slice_info = new Label(m_self, "", wxST_ELLIPSIZE_END);
     m_slice_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     StaticLine* seperator_1 = new StaticLine(m_self, true);

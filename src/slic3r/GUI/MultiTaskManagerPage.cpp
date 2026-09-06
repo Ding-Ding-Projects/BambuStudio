@@ -9,6 +9,7 @@
 #include "BBLUtil.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -667,7 +668,7 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
     m_table_head_panel->SetSizer(m_table_head_sizer);
     m_table_head_panel->Layout();
 
-    m_tip_text = new wxStaticText(m_main_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    m_tip_text = new Label(m_main_panel, wxEmptyString, wxALIGN_CENTER);
     m_tip_text->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetLabel(_L("There are no tasks to be sent!"));
@@ -705,7 +706,7 @@ LocalTaskManagerPage::LocalTaskManagerPage(wxWindow* parent)
     btn_stop_all = new Button(m_ctrl_btn_panel, _L("Stop"));
     btn_stop_all->SetBackgroundColor(ctrl_bg);
     btn_stop_all->SetCornerRadius(FromDIP(5));
-    m_sel_text = new wxStaticText(m_ctrl_btn_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize);
+    m_sel_text = new Label(m_ctrl_btn_panel, wxEmptyString);
 
     m_btn_sizer->Add(m_sel_text, 0, wxLEFT, FromDIP(15));;
     m_btn_sizer->Add(btn_stop_all, 0, wxLEFT, FromDIP(10));
@@ -1039,7 +1040,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_table_head_panel->SetSizer(m_table_head_sizer);
     m_table_head_panel->Layout();
 
-    m_tip_text = new wxStaticText(m_main_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    m_tip_text = new Label(m_main_panel, wxEmptyString, wxALIGN_CENTER);
     m_tip_text->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetLabel(_L("No historical tasks!"));
@@ -1047,7 +1048,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     m_tip_text->SetFont(::Label::Head_24);
     m_tip_text->Wrap(-1);
 
-    m_loading_text = new wxStaticText(m_main_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    m_loading_text = new Label(m_main_panel, wxEmptyString, wxALIGN_CENTER);
     m_loading_text->SetMinSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_loading_text->SetMaxSize(wxSize(FromDIP(CLOUD_TASK_ITEM_MAX_WIDTH), -1));
     m_loading_text->SetLabel(_L("Loading..."));
@@ -1101,7 +1102,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
         m_loading_text->Show(true);
         Layout();*/
     });
-    st_page_number = new wxStaticText(m_flipping_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize);
+    st_page_number = new Label(m_flipping_panel, wxEmptyString);
     btn_next_page = new Button(m_flipping_panel, "", "go_next_plate", wxBORDER_NONE, FromDIP(20));
     btn_next_page->SetMinSize(wxSize(FromDIP(20), FromDIP(20)));
     btn_next_page->SetMaxSize(wxSize(FromDIP(20), FromDIP(20)));
@@ -1167,7 +1168,7 @@ CloudTaskManagerPage::CloudTaskManagerPage(wxWindow* parent)
     btn_stop_all = new Button(m_ctrl_btn_panel, _L("Stop"));
     btn_stop_all->SetBackgroundColor(ctrl_bg);
     btn_stop_all->SetCornerRadius(FromDIP(5));
-    m_sel_text = new wxStaticText(m_ctrl_btn_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize);
+    m_sel_text = new Label(m_ctrl_btn_panel, wxEmptyString);
 
     btn_pause_all->Bind(wxEVT_BUTTON, &CloudTaskManagerPage::pause_all, this);
     btn_continue_all->Bind(wxEVT_BUTTON, &CloudTaskManagerPage::resume_all, this);

@@ -610,7 +610,7 @@ void Tab::create_preset_tab()
         auto wiki_icon_hover = new ScalableBitmap(panel, "wiki_hover", 16);
         m_wiki_bmp = new wxStaticBitmap(panel, wxID_ANY, wiki_icon->bmp());
         wiki_sizer->Add(m_wiki_bmp, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxBOTTOM, 2);
-        m_wiki_label = new wxStaticText(panel, wxID_ANY, _L("Wiki"));
+        m_wiki_label = new Label(panel, _L("Wiki"));
         m_wiki_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_wiki_label->SetFont(Label::Body_13);
         m_wiki_label->SetToolTip(_L("Click to learn more"));
@@ -8027,7 +8027,7 @@ void Tab::update_nozzle_status_display()
         auto bmp = ScalableBitmap(this, "warning", 16);
         auto warning_icon = new wxStaticBitmap(this, wxID_ANY, bmp.bmp(), wxDefaultPosition, wxDefaultSize, 0);
         m_nozzle_status_sizer->Add(warning_icon, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
-        wxStaticText *reminder_text = new wxStaticText(this, wxID_ANY, _L("No available nozzles for current preset"));
+        wxStaticText *reminder_text = new Label(this, _L("No available nozzles for current preset"));
         reminder_text->SetFont(Label::Body_13);
         reminder_text->SetForegroundColour(m_modified_label_clr);
         m_nozzle_status_sizer->Add(reminder_text, 1, wxALIGN_CENTER_VERTICAL);
@@ -8035,7 +8035,7 @@ void Tab::update_nozzle_status_display()
         return;
     }
 
-    wxStaticText *reminder_text = new wxStaticText(this, wxID_ANY, _L("Available nozzles for current preset: "));
+    wxStaticText *reminder_text = new Label(this, _L("Available nozzles for current preset: "));
     reminder_text->SetFont(Label::Body_13);
     reminder_text->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_nozzle_status_sizer->Add(reminder_text, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);

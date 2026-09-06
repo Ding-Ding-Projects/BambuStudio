@@ -32,6 +32,7 @@
 #include "Widgets/MaterialIcon.hpp"
 
 #include "../Utils/ColorSpaceConvert.hpp"
+#include "Widgets/Label.hpp"
 #ifdef __WXOSX__
 #define wxOSX true
 #else
@@ -2044,8 +2045,8 @@ void PointCtrl::BUILD()
 	y_textctrl->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 	y_textctrl->SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	auto static_text_x = new wxStaticText(m_parent, wxID_ANY, "x : ");
-	auto static_text_y = new wxStaticText(m_parent, wxID_ANY, "   y : ");
+	auto static_text_x = new Label(m_parent, "x : ");
+	auto static_text_y = new Label(m_parent, "   y : ");
 	static_text_x->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 	static_text_x->SetBackgroundStyle(wxBG_STYLE_PAINT);
 	static_text_y->SetFont(Slic3r::GUI::wxGetApp().normal_font());
@@ -2183,7 +2184,7 @@ void StaticText::BUILD()
     if (m_opt.width >= 0) size.SetWidth(m_opt.width*m_em_unit);
 
     const wxString legend = from_u8(m_opt.get_default_value<ConfigOptionString>()->value);
-    auto temp = new wxStaticText(m_parent, wxID_ANY, legend, wxDefaultPosition, size, wxST_ELLIPSIZE_MIDDLE);
+    auto temp = new Label(m_parent, legend, wxST_ELLIPSIZE_MIDDLE, size);
 	temp->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 	temp->SetBackgroundStyle(wxBG_STYLE_PAINT);
     temp->SetFont(wxGetApp().bold_font());

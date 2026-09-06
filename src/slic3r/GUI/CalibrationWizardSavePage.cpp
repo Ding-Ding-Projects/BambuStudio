@@ -501,7 +501,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
 
     // main extruder
     {
-        left_grid_sizer->Add(new wxStaticText(m_multi_extruder_grid_panel, wxID_ANY, ""), 1, wxEXPAND); // fill empty space
+        left_grid_sizer->Add(new Label(m_multi_extruder_grid_panel, ""), 1, wxEXPAND); // fill empty space
 
         auto brand_title = new Label(m_multi_extruder_grid_panel, _L("Name"), 0, CALIBRATION_SAVE_INPUT_SIZE);
         brand_title->SetFont(Label::Head_14);
@@ -514,7 +514,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
 
     // deputy extruder
     {
-        right_grid_sizer->Add(new wxStaticText(m_multi_extruder_grid_panel, wxID_ANY, ""), 1, wxEXPAND); // fill empty space
+        right_grid_sizer->Add(new Label(m_multi_extruder_grid_panel, ""), 1, wxEXPAND); // fill empty space
 
         auto brand_title = new Label(m_multi_extruder_grid_panel, _L("Name"), 0, CALIBRATION_SAVE_INPUT_SIZE);
         brand_title->SetFont(Label::Head_14);

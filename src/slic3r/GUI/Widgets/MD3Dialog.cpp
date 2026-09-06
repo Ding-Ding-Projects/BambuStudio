@@ -278,12 +278,12 @@ void MD3Dialog::build_shell(const wxString &title, const wxString &subtitle, Mat
     header->AddSpacer(FromDIP(12));
 
     auto *titles = new wxBoxSizer(wxVERTICAL);
-    m_title_txt  = new wxStaticText(this, wxID_ANY, title);
+    m_title_txt  = new Label(this, title);
     m_title_txt->SetFont(::Label::Head_18);
     m_title_txt->SetForegroundColour(chrome_color(MD3::Role::OnSurface));
     titles->Add(m_title_txt, 0, wxEXPAND);
 
-    m_subtitle_txt = new wxStaticText(this, wxID_ANY, subtitle);
+    m_subtitle_txt = new Label(this, subtitle);
     m_subtitle_txt->SetFont(::Label::Body_12);
     m_subtitle_txt->SetForegroundColour(chrome_color(MD3::Role::OnSurfaceVariant));
     titles->Add(m_subtitle_txt, 0, wxEXPAND | wxTOP, FromDIP(2));

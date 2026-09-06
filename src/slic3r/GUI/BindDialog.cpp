@@ -19,6 +19,7 @@
 #include "Widgets/MD3DialogChrome.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -102,7 +103,7 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
     m_status_text->Wrap(FromDIP(440));
     m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
-    m_link_show_ping_code_wiki = new wxStaticText(request_bind_panel, wxID_ANY, _L("Can't find Pin Code?"));
+    m_link_show_ping_code_wiki = new Label(request_bind_panel, _L("Can't find Pin Code?"));
     m_link_show_ping_code_wiki->SetFont(Label::Body_14);
     m_link_show_ping_code_wiki->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_link_show_ping_code_wiki->SetForegroundColour(ThemeColor::Link);
@@ -115,7 +116,7 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
         wxLaunchDefaultBrowser(m_ping_code_wiki);
     });
 
-    m_text_input_title = new wxStaticText(request_bind_panel, wxID_ANY, _L("Pin Code"));
+    m_text_input_title = new Label(request_bind_panel, _L("Pin Code"));
     m_text_input_title->SetFont(Label::Body_14);
     m_text_input_title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
@@ -384,7 +385,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      m_printer_img = new wxStaticBitmap(m_panel_left, wxID_ANY, create_scaled_bitmap("printer_thumbnail", nullptr, FromDIP(100)), wxDefaultPosition, wxSize(FromDIP(120), FromDIP(120)), 0);
      m_printer_img->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_printer_img->Hide();
-     m_printer_name = new wxStaticText(m_panel_left, wxID_ANY, wxEmptyString);
+     m_printer_name = new Label(m_panel_left, wxEmptyString);
      m_printer_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_printer_name->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_printer_name->SetFont(::Label::Head_14);
@@ -405,7 +406,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      m_panel_right->SetCornerRadius(FromDIP(8));
      m_panel_right->SetBackgroundColor(BIND_DIALOG_GREY200);
 
-     m_user_name = new wxStaticText(m_panel_right, wxID_ANY, wxEmptyString);
+     m_user_name = new Label(m_panel_right, wxEmptyString);
      m_user_name->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_user_name->SetFont(::Label::Head_14);
      wxBoxSizer *m_sizer_right_h = new wxBoxSizer(wxHORIZONTAL);
@@ -427,13 +428,13 @@ PingCodeBindDialog::~PingCodeBindDialog() {
 
 
      auto m_sizer_status_text = new wxBoxSizer(wxHORIZONTAL);
-     m_status_text = new wxStaticText(this, wxID_ANY, _L("Would you like to log in this printer with current account?"));
+     m_status_text = new Label(this, _L("Would you like to log in this printer with current account?"));
      m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_status_text->SetFont(::Label::Body_13);
      m_status_text->Wrap(-1);
 
 
-     m_link_show_error = new wxStaticText(this, wxID_ANY, _L("Check the reason"));
+     m_link_show_error = new Label(this, _L("Check the reason"));
      m_link_show_error->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_link_show_error->SetFont(::Label::Head_13);
 
@@ -609,8 +610,8 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      wxBoxSizer* sizer_error_desc = new wxBoxSizer(wxHORIZONTAL);
      wxBoxSizer* sizer_extra_info = new wxBoxSizer(wxHORIZONTAL);
 
-     auto st_title_error_code = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, _L("Error code"));
-     auto st_title_error_code_doc = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, ": ");
+     auto st_title_error_code = new Label(m_sw_bind_failed_info, _L("Error code"));
+     auto st_title_error_code_doc = new Label(m_sw_bind_failed_info, ": ");
      m_st_txt_error_code = new Label(m_sw_bind_failed_info, wxEmptyString);
      st_title_error_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      st_title_error_code_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -627,8 +628,8 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      sizer_error_code->Add(m_st_txt_error_code, 0, wxALL, 0);
 
 
-     auto st_title_error_desc = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, wxT("Error desc"));
-     auto st_title_error_desc_doc = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, ": ");
+     auto st_title_error_desc = new Label(m_sw_bind_failed_info, wxT("Error desc"));
+     auto st_title_error_desc_doc = new Label(m_sw_bind_failed_info, ": ");
      m_st_txt_error_desc = new Label(m_sw_bind_failed_info, wxEmptyString);
      st_title_error_desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      st_title_error_desc_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -644,8 +645,8 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      sizer_error_desc->Add(st_title_error_desc_doc, 0, wxALL, 0);
      sizer_error_desc->Add(m_st_txt_error_desc, 0, wxALL, 0);
 
-     auto st_title_extra_info = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, wxT("Extra info"));
-     auto st_title_extra_info_doc = new wxStaticText(m_sw_bind_failed_info, wxID_ANY, ": ");
+     auto st_title_extra_info = new Label(m_sw_bind_failed_info, wxT("Extra info"));
+     auto st_title_extra_info_doc = new Label(m_sw_bind_failed_info, ": ");
      m_st_txt_extra_info = new Label(m_sw_bind_failed_info, wxEmptyString);
      st_title_extra_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      st_title_extra_info_doc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -989,7 +990,7 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
      m_printer_img = new wxStaticBitmap(m_panel_left, wxID_ANY, create_scaled_bitmap("printer_thumbnail", nullptr, FromDIP(100)), wxDefaultPosition, wxSize(FromDIP(120), FromDIP(120)), 0);
      m_printer_img->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_printer_img->Hide();
-     m_printer_name     = new wxStaticText(m_panel_left, wxID_ANY, wxEmptyString);
+     m_printer_name     = new Label(m_panel_left, wxEmptyString);
      m_printer_name->SetFont(::Label::Head_14);
      m_printer_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_printer_name->SetBackgroundColour(BIND_DIALOG_GREY200);
@@ -1009,7 +1010,7 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
      m_panel_right->SetMinSize(wxSize(FromDIP(201), FromDIP(212)));
      m_panel_right->SetCornerRadius(FromDIP(8));
      m_panel_right->SetBackgroundColor(BIND_DIALOG_GREY200);
-     m_user_name = new wxStaticText(m_panel_right, wxID_ANY, wxEmptyString);
+     m_user_name = new Label(m_panel_right, wxEmptyString);
      m_user_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_user_name->SetBackgroundColour(BIND_DIALOG_GREY200);
      m_user_name->SetFont(::Label::Head_14);
@@ -1030,7 +1031,7 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
 
      m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(20));
 
-     m_status_text = new wxStaticText(this, wxID_ANY, _L("Would you like to log out the printer?"), wxDefaultPosition, wxSize(BIND_DIALOG_BUTTON_PANEL_SIZE.x, -1), wxST_ELLIPSIZE_END);
+     m_status_text = new Label(this, _L("Would you like to log out the printer?"), wxST_ELLIPSIZE_END, wxSize(BIND_DIALOG_BUTTON_PANEL_SIZE.x, -1));
      m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      m_status_text->SetFont(::Label::Body_13);
 

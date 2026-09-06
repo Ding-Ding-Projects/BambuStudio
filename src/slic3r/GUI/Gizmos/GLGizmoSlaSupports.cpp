@@ -22,6 +22,7 @@
 #include "slic3r/GUI/MsgDialog.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/SLAPrint.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 
 namespace Slic3r {
@@ -1196,7 +1197,7 @@ SlaGizmoHelpDialog::SlaGizmoHelpDialog()
     const wxFont& font = wxGetApp().small_font();
     const wxFont& bold_font = wxGetApp().bold_font();
 
-    auto note_text = new wxStaticText(this, wxID_ANY, _L("Note: some shortcuts work in (non)editing mode only."));
+    auto note_text = new Label(this, _L("Note: some shortcuts work in (non)editing mode only."));
     note_text->SetFont(font);
 
     auto vsizer    = new wxBoxSizer(wxVERTICAL);
@@ -1231,8 +1232,8 @@ SlaGizmoHelpDialog::SlaGizmoHelpDialog()
     shortcuts.push_back(std::make_pair("A",                           _L("Auto-generate points")));
 
     for (const auto& pair : shortcuts) {
-        auto shortcut = new wxStaticText(this, wxID_ANY, pair.first);
-        auto desc = new wxStaticText(this, wxID_ANY, pair.second);
+        auto shortcut = new Label(this, pair.first);
+        auto desc = new Label(this, pair.second);
         shortcut->SetFont(bold_font);
         desc->SetFont(font);
         gridsizer->Add(shortcut, -1, wxALIGN_CENTRE_VERTICAL);

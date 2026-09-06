@@ -1,6 +1,7 @@
 #include "WindowsNativeVisualSmoke.hpp"
 
 #include "LanguageMode.hpp"
+#include "Widgets/Label.hpp"
 
 #include <algorithm>
 #include <array>
@@ -68,7 +69,7 @@ wxStaticText *add_text(wxWindow       *parent,
                        int             flags      = wxEXPAND,
                        int             border     = 0)
 {
-    auto *label = new wxStaticText(parent, wxID_ANY, text);
+    auto *label = new Label(parent, text);
     label->SetName(text);
     label->SetForegroundColour(foreground);
     label->SetBackgroundColour(background);

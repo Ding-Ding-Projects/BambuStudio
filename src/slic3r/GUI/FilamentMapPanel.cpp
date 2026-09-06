@@ -6,6 +6,7 @@
 #include <cassert>
 #include <wx/dcbuffer.h>
 #include "wx/graphics.h"
+#include "Widgets/Label.hpp"
 #include <map>
 #include <algorithm>
 
@@ -483,7 +484,7 @@ GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &
     m_btn    = new wxBitmapButton(this, wxID_ANY, icon_enabled, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
     m_btn->SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-    m_label = new wxStaticText(this, wxID_ANY, label);
+    m_label = new Label(this, label);
     m_label->SetFont(Label::Head_14);
     m_label->SetForegroundColour(TextNormalBlackColor);
 

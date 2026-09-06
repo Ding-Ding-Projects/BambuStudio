@@ -261,14 +261,9 @@ wxBoxSizer* FilamentPickerDialog::CreateInfoSection()
     wxStaticBoxSizer *box_sizer = new wxStaticBoxSizer(info_box, wxHORIZONTAL);
 
     // Create labels with ellipsize style for text overflow
-    m_label_preview_color = new wxStaticText(this, wxID_ANY, _L("Custom Color"),
-                                           wxDefaultPosition, wxDefaultSize,
-                                           wxST_ELLIPSIZE_END);
-    m_label_preview_idx = new wxStaticText(this, wxID_ANY, _L(""),
-                                         wxDefaultPosition, wxDefaultSize); // No size limit, no ellipsis
-    m_label_preview_type = new wxStaticText(this, wxID_ANY, _L(""),
-                                          wxDefaultPosition, wxSize(FromDIP(220), FromDIP(16)),
-                                          wxST_ELLIPSIZE_END);
+    m_label_preview_color = new Label(this, _L("Custom Color"), wxST_ELLIPSIZE_END);
+    m_label_preview_idx = new Label(this, _L("")); // No size limit, no ellipsis
+    m_label_preview_type = new Label(this, _L(""), wxST_ELLIPSIZE_END, wxSize(FromDIP(220), FromDIP(16)));
 
     // Set maximum width for color label to enable proper ellipsis behavior
     m_label_preview_color->SetMaxSize(wxSize(FromDIP(160), -1));
@@ -336,7 +331,7 @@ wxBoxSizer* FilamentPickerDialog::CreateSeparatorLine()
     wxBoxSizer *line_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxPanel* separator_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(1)));
     separator_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
-    wxStaticText* line_text = new wxStaticText(this, wxID_ANY, _L("Official Filament"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+    wxStaticText* line_text = new Label(this, _L("Official Filament"), wxALIGN_CENTER_HORIZONTAL);
     line_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(line_text, 0, wxEXPAND, 0);
     line_sizer->AddSpacer(FromDIP(8));

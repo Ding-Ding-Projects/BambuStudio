@@ -19,6 +19,7 @@
 #include "format.hpp"
 #include "Tab.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 using Slic3r::GUI::format_wxstr;
 
@@ -54,7 +55,7 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
         values.push_back(preset.name);
     }
 
-    wxStaticText *label_top = new wxStaticText(m_parent, wxID_ANY, from_u8((boost::format(_utf8(L("Save %s as"))) % into_u8(tab->title())).str()));
+    wxStaticText *label_top = new Label(m_parent, from_u8((boost::format(_utf8(L("Save %s as"))) % into_u8(tab->title())).str()));
     label_top->SetFont(::Label::Body_13);
     label_top->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
@@ -101,7 +102,7 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
     input_sizer_h->Add(input_sizer_v, 1, wxALIGN_CENTER, 0);
     input_sizer_h->Layout();
 
-    m_valid_label = new wxStaticText(m_parent, wxID_ANY, "");
+    m_valid_label = new Label(m_parent, "");
     m_valid_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
 
     sizer->Add(label_top, 0, wxEXPAND | wxLEFT | wxTOP | wxBOTTOM, BORDER_W);
@@ -124,7 +125,7 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
 
     m_sizer_left->Add(0, 0, 0, wxLEFT, 10);
 
-    auto m_left_text = new wxStaticText(parent, wxID_ANY, _L("User Preset"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_left_text = new Label(parent, _L("User Preset"));
     m_left_text->Wrap(-1);
     m_left_text->SetFont(::Label::Body_13);
     m_left_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -143,7 +144,7 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
 
     m_sizer_right->Add(0, 0, 0, wxLEFT, 10);
 
-    auto m_right_text = new wxStaticText(parent, wxID_ANY, _L("Preset Inside Project"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_right_text = new Label(parent, _L("Preset Inside Project"));
     m_right_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_right_text->SetFont(::Label::Body_13);
     m_right_text->Wrap(-1);
@@ -447,7 +448,7 @@ void SavePresetDialog::add_info_for_edit_ph_printer(wxBoxSizer *sizer)
     wxString msg_text = from_u8((boost::format(_u8L("Printer \"%1%\" is selected with preset \"%2%\"")) %
                                  m_ph_printer_name % m_old_preset_name)
                                     .str());
-    m_label           = new wxStaticText(this, wxID_ANY, msg_text);
+    m_label           = new Label(this, msg_text);
     m_label->SetFont(wxGetApp().bold_font());
 
     m_action      = ChangePreset;

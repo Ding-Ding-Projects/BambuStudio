@@ -10,6 +10,7 @@
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/DevStorage.h"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -829,7 +830,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_title(wxString title, wxWindow* pa
 {
     wxBoxSizer* m_sizer_title = new wxBoxSizer(wxHORIZONTAL);
 
-    auto m_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    auto m_title = new Label(parent, title);
     m_title->SetForegroundColour(ThemeColor::TextSecondary);
     m_title->SetFont(::Label::Head_13);
     m_title->Wrap(-1);
@@ -858,7 +859,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_checkbox(wxString title, wxWindow*
     m_sizer_checkbox->Add(checkbox, 0, wxALIGN_CENTER, 0);
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, 0);
+    auto checkbox_title = new Label(parent, title);
     checkbox_title->SetForegroundColour(ThemeColor::TextPrimary);
     checkbox_title->SetFont(::Label::Body_13);
 
@@ -882,7 +883,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_checkbox(wxString title, wxWindow*
 wxBoxSizer* SendMultiMachinePage::create_item_input(wxString str_before, wxString str_after, wxWindow* parent, wxString tooltip, std::string param)
 {
     wxBoxSizer* sizer_input = new wxBoxSizer(wxHORIZONTAL);
-    auto input_title = new wxStaticText(parent, wxID_ANY, str_before);
+    auto input_title = new Label(parent, str_before);
     input_title->SetForegroundColour(ThemeColor::TextPrimary);
     input_title->SetFont(::Label::Body_13);
     input_title->SetToolTip(tooltip);
@@ -895,7 +896,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_input(wxString str_before, wxStrin
     wxTextValidator validator(wxFILTER_DIGITS);
     input->GetTextCtrl()->SetValidator(validator);
 
-    auto second_title = new wxStaticText(parent, wxID_ANY, str_after, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto second_title = new Label(parent, str_after, wxST_ELLIPSIZE_END);
     second_title->SetForegroundColour(ThemeColor::TextPrimary);
     second_title->SetFont(::Label::Body_13);
     second_title->SetToolTip(tooltip);
@@ -940,7 +941,7 @@ wxBoxSizer* SendMultiMachinePage::create_item_radiobox(wxString title, wxWindow*
     rs->m_selected = false;
     m_radio_group.Append(rs);
 
-    wxStaticText* text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+    wxStaticText* text = new Label(parent, title);
     radiobox_sizer->Add(radiobox, 0, wxLEFT, FromDIP(23));
     radiobox_sizer->Add(text, 0, wxLEFT, FromDIP(10));
     radiobox->SetToolTip(tooltip);
@@ -1093,7 +1094,7 @@ wxPanel* SendMultiMachinePage::create_page()
     rename_sizer_v = new wxBoxSizer(wxVERTICAL);
     rename_sizer_h = new wxBoxSizer(wxHORIZONTAL);
 
-    m_task_name = new wxStaticText(m_rename_normal_panel, wxID_ANY, wxT("MyLabel"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END | wxALIGN_CENTRE);
+    m_task_name = new Label(m_rename_normal_panel, wxT("MyLabel"), wxST_ELLIPSIZE_END | wxALIGN_CENTRE);
     m_task_name->SetFont(::Label::Body_13);
     m_task_name->SetMinSize(wxSize(FromDIP(200), -1));
     m_task_name->SetMaxSize(wxSize(FromDIP(200), -1));
@@ -1169,7 +1170,7 @@ wxPanel* SendMultiMachinePage::create_page()
     print_time = new ScalableBitmap(m_title_panel, "print-time", 18);
     timeimg = new wxStaticBitmap(m_title_panel, wxID_ANY, print_time->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_sizer_basic_time->Add(timeimg, 1, wxEXPAND | wxALL, FromDIP(5));
-    m_stext_time = new wxStaticText(m_title_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+    m_stext_time = new Label(m_title_panel, wxEmptyString, wxALIGN_RIGHT);
     m_sizer_basic_time->Add(m_stext_time, 0, wxALL, FromDIP(5));
     m_sizer_basic->Add(m_sizer_basic_time, 0, wxALIGN_CENTER, 0);
     m_sizer_basic->Add(0, 0, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(30));
@@ -1177,7 +1178,7 @@ wxPanel* SendMultiMachinePage::create_page()
     print_weight = new ScalableBitmap(m_title_panel, "print-weight", 18);
     weightimg = new wxStaticBitmap(m_title_panel, wxID_ANY, print_weight->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_sizer_basic_weight->Add(weightimg, 1, wxEXPAND | wxALL, FromDIP(5));
-    m_stext_weight = new wxStaticText(m_title_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    m_stext_weight = new Label(m_title_panel, wxEmptyString, wxALIGN_LEFT);
     m_sizer_basic_weight->Add(m_stext_weight, 0, wxALL, FromDIP(5));
     m_sizer_basic->Add(m_sizer_basic_weight, 0, wxALIGN_CENTER, 0);
 
@@ -1349,7 +1350,7 @@ wxPanel* SendMultiMachinePage::create_page()
     m_table_head_panel->SetSizer(m_table_head_sizer);
     m_table_head_panel->Layout();
 
-    m_tip_text = new wxStaticText(main_page, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    m_tip_text = new Label(main_page, wxEmptyString, wxALIGN_CENTER);
     m_tip_text->SetMinSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetMaxSize(wxSize(FromDIP(DEVICE_ITEM_MAX_WIDTH), -1));
     m_tip_text->SetLabel(_L("Please select the devices you would like to manage here (up to 6 devices)"));

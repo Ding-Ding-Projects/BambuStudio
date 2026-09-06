@@ -12,6 +12,7 @@
 
 #include "libslic3r/Model.hpp"
 #include "libslic3r/PresetBundle.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 #include <wx/dialog.h>
 #include <wx/stattext.h>
@@ -39,7 +40,7 @@ public:
                                             "SL1 / SL1S archive files (*.sl1, *.sl1s, *.zip)|*.sl1;*.SL1;*.sl1s;*.SL1S;*.zip;*.ZIP",
                                             wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE | wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
-        szfilepck->Add(new wxStaticText(this, wxID_ANY, _L("Import file") + ": "), 0, wxALIGN_CENTER);
+        szfilepck->Add(new Label(this, _L("Import file") + ": "), 0, wxALIGN_CENTER);
         szfilepck->Add(m_filepicker, 1);
         szvert->Add(szfilepck, 0, wxALL | wxEXPAND, 5);
 
@@ -56,7 +57,7 @@ public:
             inp_choices.size(), inp_choices.data(), wxCB_READONLY | wxCB_DROPDOWN);
 
         szchoices->Add(m_import_dropdown);
-        szchoices->Add(new wxStaticText(this, wxID_ANY, _L("Quality") + ": "), 0, wxALIGN_CENTER | wxALL, 5);
+        szchoices->Add(new Label(this, _L("Quality") + ": "), 0, wxALIGN_CENTER | wxALL, 5);
 
         static const std::vector<wxString> qual_choices = {
             _(L("Accurate")),

@@ -10,6 +10,7 @@
 #include "GUI_App.hpp"
 
 #include "I18N.hpp"
+#include "Widgets/Label.hpp"
 
 #include <iostream>
 #include <regex>
@@ -33,7 +34,7 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
     top_panel->SetMinSize(wxSize(m_self->FromDIP(550), m_self->FromDIP(26)));
     top_panel->SetMaxSize(wxSize(m_self->FromDIP(550), m_self->FromDIP(26)));
 
-    m_status_text = new wxStaticText(top_panel, wxID_ANY, wxEmptyString);
+    m_status_text = new Label(top_panel, wxEmptyString);
     m_status_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_status_text->SetMaxSize(wxSize(m_self->FromDIP(440), m_self->FromDIP(26)));
     m_status_text->SetMinSize(wxSize(m_self->FromDIP(440), m_self->FromDIP(26)));
@@ -73,7 +74,7 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
             m_cancel_cb_fina();
     });
 
-    m_stext_percent = new wxStaticText(top_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
+    m_stext_percent = new Label(top_panel, "");
     m_stext_percent->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_stext_percent->SetFont(::Label::Head_13);
     m_stext_percent->Wrap(-1);

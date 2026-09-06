@@ -9,6 +9,7 @@
 #include <vector>
 #include "libslic3r/Config.hpp"
 #include "libslic3r/PrintConfig.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -22,7 +23,7 @@ wxBoxSizer* create_item_checkbox(wxString title, wxWindow* parent, bool* value, 
     m_sizer_checkbox->Add(checkbox, 0, wxALIGN_CENTER, 0);
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(-1, -1), 0);
+    auto checkbox_title = new Label(parent, title, 0, wxSize(-1, -1));
     checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(-1);
@@ -71,7 +72,7 @@ static wxBoxSizer* make_labeled_segment(wxWindow* parent, const wxString& captio
 {
     auto* col = new wxBoxSizer(wxVERTICAL);
 
-    auto* cap = new wxStaticText(parent, wxID_ANY, caption);
+    auto* cap = new Label(parent, caption);
     cap->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     cap->SetFont(::Label::Body_13);
     col->Add(cap, 0, wxBOTTOM, parent->FromDIP(4));
@@ -132,7 +133,7 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
 	auto ti_size = FromDIP(wxSize(90, -1));
     // start PA
     auto start_PA_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto start_pa_text = new wxStaticText(this, wxID_ANY, start_pa_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto start_pa_text = new Label(this, start_pa_str, wxALIGN_LEFT, st_size);
     m_tiStartPA = new TextInput(this, "", "", "", wxDefaultPosition, ti_size, wxTE_CENTRE | wxTE_PROCESS_ENTER);
     m_tiStartPA->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStartPA);
@@ -143,7 +144,7 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
 
     // end PA
     auto end_PA_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto end_pa_text = new wxStaticText(this, wxID_ANY, end_pa_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto end_pa_text = new Label(this, end_pa_str, wxALIGN_LEFT, st_size);
     m_tiEndPA = new TextInput(this, "", "", "", wxDefaultPosition, ti_size, wxTE_CENTRE | wxTE_PROCESS_ENTER);
     m_tiEndPA->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiEndPA);
@@ -153,7 +154,7 @@ PA_Calibration_Dlg::PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* 
 
     // PA step
     auto PA_step_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto PA_step_text = new wxStaticText(this, wxID_ANY, PA_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto PA_step_text = new Label(this, PA_step_str, wxALIGN_LEFT, st_size);
     m_tiPAStep = new TextInput(this, "", "", "", wxDefaultPosition, ti_size, wxTE_CENTRE | wxTE_PROCESS_ENTER);
     m_tiPAStep->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiPAStep);
@@ -316,7 +317,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     wxString filamentLabels[] = {"PLA", "ABS/ASA", "PETG", "PCTG", "TPU", "TPU-AMS", "PA-CF", "PET-CF", _L("Custom")};
     const int nFilament = sizeof(filamentLabels) / sizeof(wxString);
 
-    auto* fil_caption = new wxStaticText(this, wxID_ANY, _L("Filament type"));
+    auto* fil_caption = new Label(this, _L("Filament type"));
     fil_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     fil_caption->SetFont(::Label::Body_13);
 
@@ -330,7 +331,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
         // announces the focused radio.
         rb->SetName(filamentLabels[i]);
 
-        auto* lbl = new wxStaticText(this, wxID_ANY, filamentLabels[i]);
+        auto* lbl = new Label(this, filamentLabels[i]);
         lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         lbl->SetFont(::Label::Body_13);
 
@@ -371,7 +372,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
     auto ti_size = FromDIP(wxSize(90, -1));
     // start temp
     auto start_temp_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto start_temp_text = new wxStaticText(this, wxID_ANY, start_temp_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto start_temp_text = new Label(this, start_temp_str, wxALIGN_LEFT, st_size);
     m_tiStart = new TextInput(this, std::to_string(230), "°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStart);
@@ -382,7 +383,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
 
     // end temp
     auto end_temp_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto end_temp_text = new wxStaticText(this, wxID_ANY, end_temp_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto end_temp_text = new Label(this, end_temp_str, wxALIGN_LEFT, st_size);
     m_tiEnd = new TextInput(this, std::to_string(190), "°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiEnd);
@@ -392,7 +393,7 @@ Temp_Calibration_Dlg::Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plat
 
     // temp step
     auto temp_step_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto temp_step_text = new wxStaticText(this, wxID_ANY, temp_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto temp_step_text = new Label(this, temp_step_str, wxALIGN_LEFT, st_size);
     m_tiStep = new TextInput(this, wxString::FromDouble(5),"°C", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStep);
@@ -555,7 +556,7 @@ MaxVolumetricSpeed_Test_Dlg::MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWin
     auto ti_size = FromDIP(wxSize(90, -1));
     // start vol
     auto start_vol_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto start_vol_text = new wxStaticText(this, wxID_ANY, start_vol_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto start_vol_text = new Label(this, start_vol_str, wxALIGN_LEFT, st_size);
     m_tiStart = new TextInput(this, std::to_string(5), _L("mm³/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStart);
@@ -566,7 +567,7 @@ MaxVolumetricSpeed_Test_Dlg::MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWin
 
     // end vol
     auto end_vol_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto end_vol_text = new wxStaticText(this, wxID_ANY, end_vol_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto end_vol_text = new Label(this, end_vol_str, wxALIGN_LEFT, st_size);
     m_tiEnd = new TextInput(this, std::to_string(20), _L("mm³/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiEnd);
@@ -576,7 +577,7 @@ MaxVolumetricSpeed_Test_Dlg::MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWin
 
     // vol step
     auto vol_step_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto vol_step_text = new wxStaticText(this, wxID_ANY, vol_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto vol_step_text = new Label(this, vol_step_str, wxALIGN_LEFT, st_size);
     m_tiStep = new TextInput(this, wxString::FromDouble(0.5), _L("mm³/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStep);
@@ -658,7 +659,7 @@ VFA_Test_Dlg::VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
     auto ti_size = FromDIP(wxSize(90, -1));
     // start vol
     auto start_vol_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto start_vol_text = new wxStaticText(this, wxID_ANY, start_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto start_vol_text = new Label(this, start_str, wxALIGN_LEFT, st_size);
     m_tiStart = new TextInput(this, std::to_string(40), _L("mm/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStart);
@@ -669,7 +670,7 @@ VFA_Test_Dlg::VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
 
     // end vol
     auto end_vol_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto end_vol_text = new wxStaticText(this, wxID_ANY, end_vol_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto end_vol_text = new Label(this, end_vol_str, wxALIGN_LEFT, st_size);
     m_tiEnd = new TextInput(this, std::to_string(200), _L("mm/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiEnd);
@@ -679,7 +680,7 @@ VFA_Test_Dlg::VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater)
 
     // vol step
     auto vol_step_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto vol_step_text = new wxStaticText(this, wxID_ANY, vol_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto vol_step_text = new Label(this, vol_step_str, wxALIGN_LEFT, st_size);
     m_tiStep = new TextInput(this, wxString::FromDouble(10), _L("mm/s"), "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStep);
@@ -762,7 +763,7 @@ Retraction_Test_Dlg::Retraction_Test_Dlg(wxWindow* parent, wxWindowID id, Plater
     auto ti_size = FromDIP(wxSize(90, -1));
     // start length
     auto start_length_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto start_length_text = new wxStaticText(this, wxID_ANY, start_length_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto start_length_text = new Label(this, start_length_str, wxALIGN_LEFT, st_size);
     m_tiStart = new TextInput(this, std::to_string(0), "mm", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStart);
@@ -773,7 +774,7 @@ Retraction_Test_Dlg::Retraction_Test_Dlg(wxWindow* parent, wxWindowID id, Plater
 
     // end length
     auto end_length_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto end_length_text = new wxStaticText(this, wxID_ANY, end_length_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto end_length_text = new Label(this, end_length_str, wxALIGN_LEFT, st_size);
     m_tiEnd = new TextInput(this, std::to_string(2), "mm", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiEnd);
@@ -783,7 +784,7 @@ Retraction_Test_Dlg::Retraction_Test_Dlg(wxWindow* parent, wxWindowID id, Plater
 
     // length step
     auto length_step_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto length_step_text = new wxStaticText(this, wxID_ANY, length_step_str, wxDefaultPosition, st_size, wxALIGN_LEFT);
+    auto length_step_text = new Label(this, length_step_str, wxALIGN_LEFT, st_size);
     m_tiStep = new TextInput(this, wxString::FromDouble(0.1), "mm/mm", "", wxDefaultPosition, ti_size, wxTE_CENTRE);
     m_tiStart->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     apply_valuefield_style(m_tiStep);

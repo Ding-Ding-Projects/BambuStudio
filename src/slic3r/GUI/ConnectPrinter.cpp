@@ -6,6 +6,7 @@
 #include "libslic3r/AppConfig.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
@@ -24,7 +25,7 @@ ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, cons
 
     sizer_top->Add(0, FromDIP(40));
 
-    m_staticText_connection_code = new wxStaticText(this, wxID_ANY, _L("Please input the printer access code:"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_connection_code = new Label(this, _L("Please input the printer access code:"));
     m_staticText_connection_code->SetFont(Label::Body_15);
     m_staticText_connection_code->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_staticText_connection_code->Wrap(-1);
@@ -81,7 +82,7 @@ ConnectPrinterDialog::ConnectPrinterDialog(wxWindow *parent, wxWindowID id, cons
 
     sizer_top->Add(0, FromDIP(35));
 
-    m_staticText_hints = new wxStaticText(this, wxID_ANY, _L("You can find it in \"Settings > Network > Access code\"\non the printer, as shown in the figure:"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_hints = new Label(this, _L("You can find it in \"Settings > Network > Access code\"\non the printer, as shown in the figure:"));
     m_staticText_hints->SetFont(Label::Body_15);
     m_staticText_hints->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_staticText_hints->Wrap(-1);

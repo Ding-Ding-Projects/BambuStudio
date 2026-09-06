@@ -327,10 +327,7 @@ void TempInput::Warning(bool warn, WarningType type)
 
 
 
-            warning_text = new wxStaticText(body, wxID_ANY,
-                                            wxEmptyString,
-                                            wxDefaultPosition, wxDefaultSize,
-                                            wxALIGN_CENTER_HORIZONTAL);
+            warning_text = new Label(body, wxEmptyString, wxALIGN_CENTER_HORIZONTAL);
             warning_text->SetFont(::Label::Body_12);
             // No dedicated MD3 Warning role; Error is the semantically closest.
             warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));

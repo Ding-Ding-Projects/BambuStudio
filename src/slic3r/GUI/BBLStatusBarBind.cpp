@@ -10,6 +10,7 @@
 #include "GUI_App.hpp"
 
 #include "I18N.hpp"
+#include "Widgets/Label.hpp"
 
 #include <iostream>
 
@@ -27,7 +28,7 @@ BBLStatusBarBind::BBLStatusBarBind(wxWindow *parent, int id)
     m_prog = new ProgressBar(m_self, wxID_ANY, 100, wxDefaultPosition, wxSize(m_self->FromDIP(400), m_self->FromDIP(6)));
     m_prog->SetValue(0);
 
-    m_stext_percent = new wxStaticText(m_self, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
+    m_stext_percent = new Label(m_self, "");
     m_stext_percent->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_stext_percent->SetFont(::Label::Body_13);
     m_stext_percent->Wrap(-1);

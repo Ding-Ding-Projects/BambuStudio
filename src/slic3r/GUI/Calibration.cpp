@@ -13,6 +13,7 @@
 #include "Widgets/MD3DialogChrome.hpp"
 
 #include "DeviceCore/DevConfig.h"
+#include "Widgets/Label.hpp"
 
 static wxColour FG_COLOR = ThemeColor::TextPrimary; // §2f OnSurface (was #323A3D)
 static wxColour BG_COLOR = ThemeColor::Grey200;     // §2f SurfaceContainerLow (was #F8F8F8)
@@ -53,7 +54,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     cali_left_sizer->Add(0, 0, 0, wxTOP, FromDIP(25));
 
     // calibration step selection
-    auto cali_step_select_title = new wxStaticText(cali_left_panel, wxID_ANY, _L("Calibration step selection"), wxDefaultPosition, wxDefaultSize, 0);
+    auto cali_step_select_title = new Label(cali_left_panel, _L("Calibration step selection"));
     cali_step_select_title->SetFont(::Label::Head_14);
     cali_step_select_title->Wrap(-1);
     cali_step_select_title->SetForegroundColour(FG_COLOR);
@@ -84,7 +85,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     cali_left_sizer->Add(select_clumppos_cali, 0, wxLEFT, FromDIP(15));
     cali_left_sizer->Add(0, FromDIP(30), 0, wxEXPAND, 0);
 
-    auto cali_left_text_top = new wxStaticText(cali_left_panel, wxID_ANY, _L("Calibration program"), wxDefaultPosition, wxDefaultSize, 0);
+    auto cali_left_text_top = new Label(cali_left_panel, _L("Calibration program"));
     cali_left_text_top->SetFont(::Label::Head_14);
     cali_left_text_top->Wrap(-1);
     cali_left_text_top->SetForegroundColour(FG_COLOR);
@@ -134,7 +135,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     cali_right_panel->SetBackgroundColor(BG_COLOR);
     cali_right_panel->SetBorderColor(BG_COLOR);
 
-    auto cali_text_right_top = new wxStaticText(cali_right_panel, wxID_ANY, _L("Calibration Flow"), wxDefaultPosition, wxDefaultSize, 0);
+    auto cali_text_right_top = new Label(cali_right_panel, _L("Calibration Flow"));
     cali_text_right_top->Wrap(-1);
     cali_text_right_top->SetFont(::Label::Head_14);
     cali_text_right_top->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
@@ -207,7 +208,7 @@ wxWindow* CalibrationDialog::create_check_option(wxString title, wxWindow* paren
     sizer_checkbox->Add(sizer_check, 0, wxEXPAND, FromDIP(5));
     sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(11));
 
-    auto text = new wxStaticText(checkbox, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto text = new Label(checkbox, title, wxST_ELLIPSIZE_END);
     text->SetFont(::Label::Body_13);
     text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text->Wrap(-1);

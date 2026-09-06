@@ -83,7 +83,7 @@ PurgeModeDialog::PurgeModeDialog(wxWindow *parent, PurgeModeDialogType dialog_ty
     options_sizer->Add(panels_sizer, 0, wxEXPAND | wxALL, FromDIP(20));
 
     auto wiki_sizer      = new wxBoxSizer(wxHORIZONTAL);
-    auto learn_more_text = new wxStaticText(options_panel, wxID_ANY, _L("Learn more about prime mode"));
+    auto learn_more_text = new Label(options_panel, _L("Learn more about prime mode"));
     learn_more_text->SetFont(Label::Body_12);
     learn_more_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     wiki_sizer->Add(learn_more_text, 0, wxALIGN_CENTER_VERTICAL);
@@ -206,7 +206,7 @@ GUI::PurgeModeBtnPanel::PurgeModeBtnPanel(wxWindow *parent, const wxString &labe
     icon_sizer->Add(m_check_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, horizontal_margin);
 
     // label
-    m_label = new wxStaticText(this, wxID_ANY, label);
+    m_label = new Label(this, label);
     m_label->SetFont(Label::Head_14);
     m_label->SetForegroundColour(TextNormalBlackColor);
 

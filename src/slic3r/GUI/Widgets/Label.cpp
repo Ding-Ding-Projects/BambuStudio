@@ -597,12 +597,11 @@ Label::Label(wxWindow *parent, wxFont const &font, wxString const &text, long st
     this->m_text = text;
     SetFont(font);
     SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
-    // Resolve the default text tone for the CURRENT theme at construction
-    // (darkModeColorFor is an identity in light mode). The old raw
-    // ThemeColor::TextPrimary seed was a light-only value that stayed
-    // near-black on dark surfaces until some later UpdateDarkUI pass happened
-    // to revisit the control.
-    SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
+    // Seed the text tone from the MD3 OnSurface role for the CURRENT theme.
+    // Every stock wxStaticText in the GUI is being retyped to Label, so this
+    // default is what the whole application reads in; a legacy palette seed
+    // here would leak into hundreds of converted labels at once.
+    SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     if (style & LB_PROPAGATE_MOUSE_EVENT) {
         for (auto evt : { wxEVT_LEFT_UP, wxEVT_LEFT_DOWN })
             Bind(evt, [this] (auto & e) { GetParent()->GetEventHandler()->ProcessEventLocally(e); });
@@ -615,7 +614,11 @@ Label::Label(wxWindow *parent, wxFont const &font, wxString const &text, long st
 
 void Label::SetLabel(const wxString& label)
 {
-    if (m_text == label)
+    // Compare against the NATIVE label too: a caller holding this Label through
+    // a wxStaticText* can call the non-virtual base Wrap(), which rewrites the
+    // native text without touching m_text. Returning early on m_text alone would
+    // then leave the stale wrapped text on screen for a same-text SetLabel().
+    if (m_text == label && ((GetWindowStyle() & LB_AUTO_WRAP) || wxStaticText::GetLabel() == label))
         return;
     m_text = label;
     if ((GetWindowStyle() & LB_AUTO_WRAP)) {
@@ -638,9 +641,10 @@ void Label::SetWindowStyleFlag(long style)
     wxStaticText::SetWindowStyleFlag(style);
     if (style & LB_HYPERLINK) {
         this->m_color = GetForegroundColour();
-        static wxColor clr_url(ThemeColor::BrandGreen);
+        // Link tone is the MD3 Primary role, resolved per call so a theme flip
+        // after construction is honoured (a static wxColor froze the light value).
         SetFont(this->m_font.Underlined());
-        SetForegroundColour(clr_url);
+        SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
         SetCursor(wxCURSOR_HAND);
 #ifdef __WXOSX__
         SetLabelMarkup(m_text);

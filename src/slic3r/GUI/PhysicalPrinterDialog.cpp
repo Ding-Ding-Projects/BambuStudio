@@ -34,6 +34,7 @@
 #include "BonjourDialog.hpp"
 #include "MsgDialog.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -59,7 +60,7 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
 
     auto input_sizer = new wxBoxSizer(wxVERTICAL);
 
-    wxStaticText *label_top = new wxStaticText(this, wxID_ANY, from_u8((boost::format(_utf8(L("Save %s as"))) % into_u8(tab->title())).str()));
+    wxStaticText *label_top = new Label(this, from_u8((boost::format(_utf8(L("Save %s as"))) % into_u8(tab->title())).str()));
     label_top->SetFont(::Label::Body_13);
     label_top->SetForegroundColour(wxColour(38,46,48));
 
@@ -78,7 +79,7 @@ PhysicalPrinterDialog::PhysicalPrinterDialog(wxWindow* parent) :
     m_input_area->SetSizer(input_sizer_h);
     m_input_area->Layout();
 
-    m_valid_label = new wxStaticText(this, wxID_ANY, "");
+    m_valid_label = new Label(this, "");
     m_valid_label->SetForegroundColour(wxColor(255, 111, 0));
 
     input_sizer->Add(label_top, 0, wxEXPAND | wxLEFT | wxTOP | wxBOTTOM, BORDER_W);
@@ -265,7 +266,7 @@ void PhysicalPrinterDialog::build_printhost_settings(ConfigOptionsGroup* m_optgr
         Line cafile_hint{ "", "" };
         cafile_hint.full_width = 1;
         cafile_hint.widget = [ca_file_hint](wxWindow* parent) {
-            auto txt = new wxStaticText(parent, wxID_ANY, ca_file_hint);
+            auto txt = new Label(parent, ca_file_hint);
             auto sizer = new wxBoxSizer(wxHORIZONTAL);
             sizer->Add(txt);
             return sizer;
@@ -283,7 +284,7 @@ void PhysicalPrinterDialog::build_printhost_settings(ConfigOptionsGroup* m_optgr
                 "\n\t" + _u8L("To use a custom CA file, please import your CA file into Certificate Store / Keychain.");
 
             //auto txt = new wxStaticText(parent, wxID_ANY, from_u8((boost::format("%1%\n\n\t%2%") % info % ca_file_hint).str()));
-            auto txt = new wxStaticText(parent, wxID_ANY, from_u8((boost::format("%1%\n\t%2%") % info % ca_file_hint).str()));
+            auto txt = new Label(parent, from_u8((boost::format("%1%\n\t%2%") % info % ca_file_hint).str()));
             txt->SetFont(wxGetApp().normal_font());
             auto sizer = new wxBoxSizer(wxHORIZONTAL);
             sizer->Add(txt, 1, wxEXPAND|wxALIGN_LEFT);

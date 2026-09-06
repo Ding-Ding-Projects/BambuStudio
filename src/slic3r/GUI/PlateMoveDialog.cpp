@@ -1,6 +1,7 @@
 #include "PlateMoveDialog.hpp"
 #include "MsgDialog.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -31,7 +32,7 @@ PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString
     auto text_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto combox_sizer = new wxBoxSizer(wxHORIZONTAL);
     {
-        wxStaticText *temp_title = new wxStaticText(this, wxID_ANY, _L("Move the current plate to"));
+        wxStaticText *temp_title = new Label(this, _L("Move the current plate to"));
         text_sizer->Add(temp_title, 0, wxEXPAND | wxALL, FromDIP(5));
     }
     {//                                                           icon_name

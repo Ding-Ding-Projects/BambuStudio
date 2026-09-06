@@ -39,7 +39,7 @@ AssemblyPdfExportDialog::AssemblyPdfExportDialog(wxWindow *parent, const Assembl
 
     auto add_text_row = [this, top_sizer](const wxString &label, const wxString &value) {
         auto *row = new wxBoxSizer(wxHORIZONTAL);
-        auto *label_ctrl = new wxStaticText(this, wxID_ANY, label);
+        auto *label_ctrl = new Label(this, label);
         label_ctrl->SetForegroundColour(label_fg());
         m_title_ctrl = new wxTextCtrl(this, wxID_ANY, value, wxDefaultPosition, FromDIP(wxSize(360, -1)));
         m_title_ctrl->SetMaxLength(kPdfCoverTitleMaxLength);
@@ -147,7 +147,7 @@ wxTextCtrl *AssemblyPdfExportDialog::create_path_row(wxWindow *parent, wxBoxSize
                                                      const wxString &tooltip)
 {
     auto *row = new wxBoxSizer(wxHORIZONTAL);
-    auto *label_ctrl = new wxStaticText(parent, wxID_ANY, label);
+    auto *label_ctrl = new Label(parent, label);
     label_ctrl->SetForegroundColour(label_fg());
     auto *text_ctrl = new wxTextCtrl(parent, wxID_ANY, value, wxDefaultPosition, FromDIP(wxSize(360, -1)));
 

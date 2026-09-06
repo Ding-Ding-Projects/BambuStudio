@@ -10,6 +10,7 @@
 #include "libslic3r/Polygon.hpp"
 #include "MainFrame.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/Label.hpp"
 
 
 namespace Slic3r {
@@ -39,7 +40,7 @@ PublishDialog::PublishDialog(Plater *plater)
 
     content->Add(0, FromDIP(20), 0, wxEXPAND, 0);
 
-    m_text_note = new wxStaticText(this, wxID_ANY, NOTE_STRING, wxDefaultPosition, wxDefaultSize, 0);
+    m_text_note = new Label(this, NOTE_STRING);
     m_text_note->SetFont(Label::Body_14);
     m_text_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_text_note->Wrap(-1);
@@ -51,7 +52,7 @@ PublishDialog::PublishDialog(Plater *plater)
     content->Add(m_staticline, 0, wxEXPAND, FromDIP(0));
     content->Add(0, FromDIP(10), 0, wxEXPAND, 0);
 
-    m_text_progress = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
+    m_text_progress = new Label(this, "");
     m_text_progress->Wrap(-1);
     m_text_progress->SetFont(Label::Body_12);
     m_text_progress->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
@@ -64,7 +65,7 @@ PublishDialog::PublishDialog(Plater *plater)
     content->Add(m_progress, 0, wxEXPAND, 0);
     content->Add(0, FromDIP(8), 0, wxEXPAND, 0);
 
-    m_text_errors = new wxStaticText(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
+    m_text_errors = new Label(this, "");
     m_text_errors->Wrap(-1);
     m_text_errors->SetFont(Label::Body_12);
     m_text_errors->SetForegroundColour(StateColor::semantic(MD3::Role::Error));

@@ -12,6 +12,7 @@
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 
 #include <wx/dcgraph.h>
@@ -622,7 +623,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
                                                     StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::semantic(MD3::Role::SurfaceContainerLowest), true, FromDIP(1), FromDIP(5), true);
 
 
-    filamentTips = new wxStaticText(this, wxID_ANY, _L("Filament Status:"));
+    filamentTips = new Label(this, _L("Filament Status:"));
     filamentTips->SetFont(wxGetApp().normal_font());
 
     // statusBar = new UiStatusContainer(this);
@@ -634,7 +635,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
 
     wxBoxSizer* adjustGroupSizer = new wxBoxSizer(wxHORIZONTAL);
     UiAMSSlot* amsSlotAdjust= new UiAMSSlot(statusBar, colourAdjust, wxString("Ax\nPLA"), DataStatusType::ADJUST, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(58), FromDIP(90)), 1.0, 1.0);
-    wxStaticText* adjustLabel = new wxStaticText(statusBar, wxID_ANY, _L("Position adjustment required"));
+    wxStaticText* adjustLabel = new Label(statusBar, _L("Position adjustment required"));
     adjustLabel->SetFont(wxGetApp().normal_font());
     adjustLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
@@ -643,7 +644,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
 
     wxBoxSizer* okGroupSizer = new wxBoxSizer(wxHORIZONTAL);
     UiAMSSlot* amsSlotOK= new UiAMSSlot(statusBar, colourOK, wxString("Ax\nPLA"), DataStatusType::OK, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(58), FromDIP(90)), 1.0, 1.0);
-    wxStaticText* okLabel = new wxStaticText(statusBar, wxID_ANY, _CTX(L_CONTEXT("OK", "FilamentTrack"), "FilamentTrack"));
+    wxStaticText* okLabel = new Label(statusBar, _CTX(L_CONTEXT("OK", "FilamentTrack"), "FilamentTrack"));
     okLabel->SetFont(wxGetApp().normal_font());
     okLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
@@ -652,7 +653,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
 
     wxBoxSizer* unusedGroupSizer = new wxBoxSizer(wxHORIZONTAL);
     UiAMSSlot* amsSlotUnused= new UiAMSSlot(statusBar, colourUnused, wxString("Ax\nPLA"), DataStatusType::UNMATCHED, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(58), FromDIP(90)), 0.2, 1.0);
-    wxStaticText* unusedLabel = new wxStaticText(statusBar, wxID_ANY, _L("Unused"));
+    wxStaticText* unusedLabel = new Label(statusBar, _L("Unused"));
     unusedLabel->SetFont(wxGetApp().normal_font());
     unusedLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 

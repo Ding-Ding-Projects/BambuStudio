@@ -21,6 +21,7 @@
 #include "slic3r/GUI/MainFrame.hpp"
 #include "GUI_App.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 #define DESIGN_INPUT_SIZE wxSize(FromDIP(100), -1)
 
@@ -66,7 +67,7 @@ DownloadProgressDialog::DownloadProgressDialog(wxString title, bool post_login)
 
     wxBoxSizer* sizer_download_failed = new wxBoxSizer(wxVERTICAL);
 
-    auto m_statictext_download_failed = new wxStaticText(m_panel_download_failed, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    auto m_statictext_download_failed = new Label(m_panel_download_failed, wxEmptyString);
     m_statictext_download_failed->SetForegroundColour(*wxBLACK);
     m_statictext_download_failed->SetLabel(format_text(m_statictext_download_failed, download_failed_msg, FromDIP(360)));
     m_statictext_download_failed->Wrap(FromDIP(360));
@@ -87,7 +88,7 @@ DownloadProgressDialog::DownloadProgressDialog(wxString title, bool post_login)
 
     wxBoxSizer* sizer_install_failed = new wxBoxSizer(wxVERTICAL);
 
-    auto m_statictext_install_failed = new wxStaticText(m_panel_install_failed, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    auto m_statictext_install_failed = new Label(m_panel_install_failed, wxEmptyString);
     m_statictext_install_failed->SetForegroundColour(*wxBLACK);
     m_statictext_install_failed->SetLabel(format_text(m_statictext_install_failed, install_failed_msg,FromDIP(360)));
     m_statictext_install_failed->Wrap(FromDIP(360));

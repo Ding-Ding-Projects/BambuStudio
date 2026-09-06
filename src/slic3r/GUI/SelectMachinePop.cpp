@@ -33,6 +33,7 @@
 #include "BindDialog.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -543,7 +544,7 @@ wxWindow *SelectMachinePopup::create_title_panel(wxString text)
 
     wxBoxSizer *m_sizer_title_own = new wxBoxSizer(wxHORIZONTAL);
 
-    auto m_title_own = new wxStaticText(m_panel_title_own, wxID_ANY, text, wxDefaultPosition, wxDefaultSize, 0);
+    auto m_title_own = new Label(m_panel_title_own, text);
     m_title_own->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_title_own->Wrap(-1);
     m_sizer_title_own->Add(m_title_own, 0, wxALIGN_CENTER, 0);
@@ -975,7 +976,7 @@ EditDevNameDialog::EditDevNameDialog(Plater *plater /*= nullptr*/)
     m_textCtr->SetMinSize(wxSize(FromDIP(260), FromDIP(40)));
     m_sizer_main->Add(m_textCtr, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT | wxRIGHT, FromDIP(40));
 
-    m_static_valid = new wxStaticText(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDefaultSize, 0);
+    m_static_valid = new Label(this, wxT(""));
     m_static_valid->Wrap(-1);
     m_static_valid->SetFont(::Label::Body_13);
     m_static_valid->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));

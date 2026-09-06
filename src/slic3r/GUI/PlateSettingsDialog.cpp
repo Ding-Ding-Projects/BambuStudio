@@ -2,6 +2,7 @@
 #include "MsgDialog.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/FilamentMixer.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 static constexpr int MIN_LAYER_VALUE = 2;
@@ -188,7 +189,7 @@ OtherLayersSeqPanel::OtherLayersSeqPanel(wxWindow* parent)
     m_other_layer_print_seq_choice->Append(_L("Auto"));
     m_other_layer_print_seq_choice->Append(_L("Customize"));
     m_other_layer_print_seq_choice->SetSelection(0);
-    wxStaticText* other_layer_txt = new wxStaticText(this, wxID_ANY, _L("Other layer filament sequence"));
+    wxStaticText* other_layer_txt = new Label(this, _L("Other layer filament sequence"));
     other_layer_txt->SetFont(Label::Body_14);
     title_sizer->Add(other_layer_txt, 0, wxALIGN_CENTER | wxALIGN_LEFT, 0);
     title_sizer->AddStretchSpacer();
@@ -278,12 +279,12 @@ void OtherLayersSeqPanel::append_layer(const LayerSeqInfo* layer_info)
 {
     wxBoxSizer* layer_panel_sizer = static_cast<wxBoxSizer*>(m_layer_input_panel->GetSizer());
 
-    wxStaticText* choose_layer_head_txt = new wxStaticText(m_layer_input_panel, wxID_ANY, _L("Layer"));
+    wxStaticText* choose_layer_head_txt = new Label(m_layer_input_panel, _L("Layer"));
     choose_layer_head_txt->SetFont(Label::Body_14);
 
     LayerNumberTextInput* begin_layer_input = new LayerNumberTextInput(m_layer_input_panel, -1, wxSize(FromDIP(100), -1), LayerNumberTextInput::Type::Begin, LayerNumberTextInput::ValueType::Custom);
 
-    wxStaticText* choose_layer_to_txt = new wxStaticText(m_layer_input_panel, wxID_ANY, _L("to"));
+    wxStaticText* choose_layer_to_txt = new Label(m_layer_input_panel, _L("to"));
     choose_layer_to_txt->SetFont(Label::Body_14);
 
     LayerNumberTextInput* end_layer_input = new LayerNumberTextInput(m_layer_input_panel, -1, wxSize(FromDIP(100), -1), LayerNumberTextInput::Type::End, LayerNumberTextInput::ValueType::End);
@@ -406,7 +407,7 @@ PlateSettingsDialog::PlateSettingsDialog(wxWindow* parent, const wxString& title
             m_bed_type_choice->Append(to_bed_type_name(i));
         }
     }
-    wxStaticText* m_bed_type_txt = new wxStaticText(this, wxID_ANY, _L("Bed type"));
+    wxStaticText* m_bed_type_txt = new Label(this, _L("Bed type"));
     m_bed_type_txt->SetFont(Label::Body_14);
     top_sizer->Add(m_bed_type_txt, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxTOP | wxBOTTOM, FromDIP(5));
     top_sizer->Add(m_bed_type_choice, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxTOP | wxBOTTOM, FromDIP(5));
@@ -417,7 +418,7 @@ PlateSettingsDialog::PlateSettingsDialog(wxWindow* parent, const wxString& title
     for (auto i = PrintSequence::ByLayer; i < PrintSequence::ByDefault; i = PrintSequence(int(i) + 1)) {
         m_print_seq_choice->Append(to_print_sequence_name(i));
     }
-    wxStaticText* m_print_seq_txt = new wxStaticText(this, wxID_ANY, _L("Print sequence"));
+    wxStaticText* m_print_seq_txt = new Label(this, _L("Print sequence"));
     m_print_seq_txt->SetFont(Label::Body_14);
     top_sizer->Add(m_print_seq_txt, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxTOP | wxBOTTOM, FromDIP(5));
     top_sizer->Add(m_print_seq_choice, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxTOP | wxBOTTOM, FromDIP(5));
@@ -428,7 +429,7 @@ PlateSettingsDialog::PlateSettingsDialog(wxWindow* parent, const wxString& title
     m_spiral_mode_choice->Append(_L("Enable"));
     m_spiral_mode_choice->Append(_L("Disable"));
     m_spiral_mode_choice->SetSelection(0);
-    wxStaticText* spiral_mode_txt = new wxStaticText(this, wxID_ANY, _L("Spiral vase"));
+    wxStaticText* spiral_mode_txt = new Label(this, _L("Spiral vase"));
     spiral_mode_txt->SetFont(Label::Body_14);
     top_sizer->Add(spiral_mode_txt, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxTOP | wxBOTTOM, FromDIP(5));
     top_sizer->Add(m_spiral_mode_choice, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxTOP | wxBOTTOM, FromDIP(5));
@@ -448,7 +449,7 @@ PlateSettingsDialog::PlateSettingsDialog(wxWindow* parent, const wxString& title
         Layout();
         Fit();
         });
-    wxStaticText* first_layer_txt = new wxStaticText(this, wxID_ANY, _L("First layer filament sequence"));
+    wxStaticText* first_layer_txt = new Label(this, _L("First layer filament sequence"));
     first_layer_txt->SetFont(Label::Body_14);
     top_sizer->Add(first_layer_txt, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT | wxTOP | wxBOTTOM, FromDIP(5));
     top_sizer->Add(m_first_layer_print_seq_choice, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT | wxTOP | wxBOTTOM, FromDIP(5));
@@ -524,8 +525,7 @@ PlateSettingsDialog::PlateSettingsDialog(wxWindow* parent, const wxString& title
 
             auto *warn_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("warning", this, 16),
                                                  wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
-            auto *warn_text = new wxStaticText(this, wxID_ANY,
-                _L("The filament list contains mixed filaments. Custom filament sequence will not take effect."));
+            auto *warn_text = new Label(this, _L("The filament list contains mixed filaments. Custom filament sequence will not take effect."));
             warn_text->SetForegroundColour(ThemeColor::Warning);
             warn_text->SetFont(Label::Body_12);
             warn_text->Wrap(FromDIP(300));
@@ -707,7 +707,7 @@ PlateNameEditDialog::PlateNameEditDialog(wxWindow *parent, wxWindowID id, const 
     top_sizer->SetFlexibleDirection(wxBOTH);
     top_sizer->SetNonFlexibleGrowMode(wxFLEX_GROWMODE_SPECIFIED);
 
-    auto plate_name_txt = new wxStaticText(this, wxID_ANY, _L("Plate name"));
+    auto plate_name_txt = new Label(this, _L("Plate name"));
     plate_name_txt->SetFont(Label::Body_14);
     m_ti_plate_name = new TextInput(this, wxString::FromDouble(0.0), "", "", wxDefaultPosition, wxSize(FromDIP(240), -1), wxTE_PROCESS_ENTER);
     m_ti_plate_name->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &e) {

@@ -147,7 +147,7 @@ static wxPanel* create_h_divider(wxWindow* parent, int fixed_width = -1)
 
 static wxStaticText* create_mode_group_label(wxWindow* parent, const wxString& text)
 {
-    auto* label = new wxStaticText(parent, wxID_ANY, text);
+    auto* label = new Label(parent, text);
     label->SetFont(Label::Body_11);
     label->SetForegroundColour(StateColor::darkModeColorFor(COLOR_LABEL_GREY));
     return label;
@@ -333,7 +333,7 @@ wxBoxSizer* ColorDecomposeDialog::create_target_color_section()
 {
     auto* sizer = new wxBoxSizer(wxHORIZONTAL);
 
-    auto* label = new wxStaticText(this, wxID_ANY, _L("Target Color"));
+    auto* label = new Label(this, _L("Target Color"));
     label->SetFont(Label::Head_14);
     label->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     sizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(19));
@@ -341,21 +341,19 @@ wxBoxSizer* ColorDecomposeDialog::create_target_color_section()
     m_target_swatch = create_color_swatch(this, m_target_color, FromDIP(28));
     sizer->Add(m_target_swatch, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
-    m_target_rgb_text = new wxStaticText(this, wxID_ANY,
-        wxString::Format("RGB: %d, %d, %d", m_target_color.Red(), m_target_color.Green(), m_target_color.Blue()));
+    m_target_rgb_text = new Label(this, wxString::Format("RGB: %d, %d, %d", m_target_color.Red(), m_target_color.Green(), m_target_color.Blue()));
     m_target_rgb_text->SetFont(Label::Body_13);
     m_target_rgb_text->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     sizer->Add(m_target_rgb_text, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
-    auto* arrow_text = new wxStaticText(this, wxID_ANY, wxString::FromUTF8("\xe2\x86\x92"));
+    auto* arrow_text = new Label(this, wxString::FromUTF8("\xe2\x86\x92"));
     arrow_text->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     sizer->Add(arrow_text, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
     m_matched_swatch = create_color_swatch(this, m_target_color, FromDIP(28));
     sizer->Add(m_matched_swatch, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
-    m_matched_rgb_text = new wxStaticText(this, wxID_ANY,
-        wxString::Format("RGB: %d, %d, %d", m_target_color.Red(), m_target_color.Green(), m_target_color.Blue()));
+    m_matched_rgb_text = new Label(this, wxString::Format("RGB: %d, %d, %d", m_target_color.Red(), m_target_color.Green(), m_target_color.Blue()));
     m_matched_rgb_text->SetFont(Label::Head_13);
     m_matched_rgb_text->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     sizer->Add(m_matched_rgb_text, 0, wxALIGN_CENTER_VERTICAL);
@@ -374,7 +372,7 @@ wxPanel* ColorDecomposeDialog::create_mode_card(wxWindow* parent, DecomposeMode 
     auto* card_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto* title_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto* title_label = new wxStaticText(card, wxID_ANY, title);
+    auto* title_label = new Label(card, title);
     title_label->SetFont(Label::Body_14);
     title_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     match_parent_bg(title_label, StateColor::darkModeColorFor(COLOR_BG_CARD));
@@ -454,7 +452,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
 {
     auto* sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto* section_label = new wxStaticText(this, wxID_ANY, _L("Select Color Decomposition"));
+    auto* section_label = new Label(this, _L("Select Color Decomposition"));
     section_label->SetFont(Label::Head_14);
     section_label->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     sizer->Add(section_label, 0, wxBOTTOM, FromDIP(4));
@@ -502,8 +500,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
 
     sizer->Add(modes_sizer, 0, wxEXPAND);
 
-    m_no_card_hint = new wxStaticText(this, wxID_ANY,
-        _L("At least two filaments of the same material type are required for decomposition"));
+    m_no_card_hint = new Label(this, _L("At least two filaments of the same material type are required for decomposition"));
     m_no_card_hint->SetFont(Label::Body_13);
     m_no_card_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_no_card_hint->Wrap(FromDIP(400));
@@ -516,7 +513,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     auto* warn_bmp = new wxStaticBitmap(m_limit_warning_panel, wxID_ANY,
         create_scaled_bitmap("obj_warning", m_limit_warning_panel, 16),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
-    m_limit_warning_text = new wxStaticText(m_limit_warning_panel, wxID_ANY, wxEmptyString);
+    m_limit_warning_text = new Label(m_limit_warning_panel, wxEmptyString);
     m_limit_warning_text->SetFont(Label::Body_13);
     m_limit_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_limit_warning_text->Wrap(FromDIP(400));
@@ -741,7 +738,7 @@ void ColorDecomposeDialog::update_mode_card_content(DecomposeMode mode)
         auto* swatch = create_color_swatch(card, components[i].colour, swatch_sz);
         bind_select(swatch);
         col->Add(swatch, 0, wxALIGN_CENTER_HORIZONTAL);
-        auto* ratio_text = new wxStaticText(card, wxID_ANY, wxString::Format("%d%%", components[i].ratio));
+        auto* ratio_text = new Label(card, wxString::Format("%d%%", components[i].ratio));
         ratio_text->SetFont(ratio_font);
         ratio_text->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
         match_parent_bg(ratio_text, StateColor::darkModeColorFor(COLOR_BG_CARD));
@@ -756,7 +753,7 @@ void ColorDecomposeDialog::update_mode_card_content(DecomposeMode mode)
             plus_panel->SetMaxSize(wxSize(plus_gap, swatch_sz));
             plus_panel->SetBackgroundColour(StateColor::darkModeColorFor(COLOR_BG_CARD));
             auto* plus_sizer = new wxBoxSizer(wxVERTICAL);
-            auto* plus_label = new wxStaticText(plus_panel, wxID_ANY, "+");
+            auto* plus_label = new Label(plus_panel, "+");
             plus_label->SetFont(Label::Body_13);
             plus_label->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
             match_parent_bg(plus_label, StateColor::darkModeColorFor(COLOR_BG_CARD));

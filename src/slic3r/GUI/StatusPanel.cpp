@@ -1204,7 +1204,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_panel_printing_title = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_TITLE_HEIGHT), wxTAB_TRAVERSAL);
     m_panel_printing_title->SetBackgroundColour(device_title_color());
 
-    m_staticText_printing = new wxStaticText(m_panel_printing_title, wxID_ANY, _L("Printing Progress"));
+    m_staticText_printing = new Label(m_panel_printing_title, _L("Printing Progress"));
     m_staticText_printing->Wrap(-1);
     // m_staticText_printing->SetFont(PAGE_TITLE_FONT);
     m_staticText_printing->SetForegroundColour(device_secondary_text_color());
@@ -1225,7 +1225,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     wxBoxSizer *bSizer_task_name_hor = new wxBoxSizer(wxHORIZONTAL);
     wxPanel    *task_name_panel      = new wxPanel(parent);
 
-    m_staticText_subtask_value = new wxStaticText(task_name_panel, wxID_ANY, _L("N/A"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+    m_staticText_subtask_value = new Label(task_name_panel, _L("N/A"), wxALIGN_LEFT | wxST_ELLIPSIZE_END);
     m_staticText_subtask_value->SetMaxSize(wxSize(FromDIP(600), -1));
     m_staticText_subtask_value->Wrap(-1);
 #ifdef __WXOSX_MAC__
@@ -1237,14 +1237,14 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 
     m_bitmap_static_use_time = new wxStaticBitmap(task_name_panel, wxID_ANY, m_bitmap_use_time.bmp(), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
 
-    m_staticText_consumption_of_time = new wxStaticText(task_name_panel, wxID_ANY, "0m", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_consumption_of_time = new Label(task_name_panel, "0m");
     m_staticText_consumption_of_time->SetFont(::Label::Body_12);
     m_staticText_consumption_of_time->SetForegroundColour(device_secondary_text_color());
     m_staticText_consumption_of_time->Wrap(-1);
 
     m_bitmap_static_use_weight = new wxStaticBitmap(task_name_panel, wxID_ANY, m_bitmap_use_weight.bmp(), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
 
-    m_staticText_consumption_of_weight = new wxStaticText(task_name_panel, wxID_ANY, "0g", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_consumption_of_weight = new Label(task_name_panel, "0g");
     m_staticText_consumption_of_weight->SetFont(::Label::Body_12);
     m_staticText_consumption_of_weight->SetForegroundColour(device_secondary_text_color());
     m_staticText_consumption_of_weight->Wrap(-1);
@@ -1263,7 +1263,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
 
     bSizer_task_name->Add(task_name_panel, 0, wxEXPAND, FromDIP(5));
 
-    m_staticText_profile_value = new wxStaticText(parent, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+    m_staticText_profile_value = new Label(parent, "", wxALIGN_LEFT | wxST_ELLIPSIZE_END);
     m_staticText_profile_value->Wrap(-1);
 #ifdef __WXOSX_MAC__
     m_staticText_profile_value->SetFont(::Label::Body_11);
@@ -1352,13 +1352,13 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     wxBoxSizer *sizer_percent_icon = new wxBoxSizer(wxVERTICAL);
     sizer_percent_icon->Add(0, 0, 1, wxEXPAND, 0);
 
-    m_staticText_progress_percent = new wxStaticText(penel_text, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_progress_percent = new Label(penel_text, "0");
     // Signature Device percentage: Roboto Mono 28px / 600, teal.
     m_staticText_progress_percent->SetFont(device_mono_font(28.0, 600));
     m_staticText_progress_percent->SetMaxSize(wxSize(-1, FromDIP(34)));
     m_staticText_progress_percent->SetForegroundColour(device_primary_color());
 
-    m_staticText_progress_percent_icon = new wxStaticText(penel_text, wxID_ANY, "%", wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_progress_percent_icon = new Label(penel_text, "%");
     m_staticText_progress_percent_icon->SetFont(::Label::Mono_11);
     m_staticText_progress_percent_icon->SetMaxSize(wxSize(-1, FromDIP(13)));
     m_staticText_progress_percent_icon->SetForegroundColour(device_primary_color());
@@ -1371,12 +1371,12 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     sizer_percent_icon->Add(m_staticText_progress_percent_icon, 0, 0, 0);
 #endif
 
-    m_staticText_progress_left = new wxStaticText(penel_text, wxID_ANY, L("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_progress_left = new Label(penel_text, L("N/A"));
     m_staticText_progress_left->Wrap(-1);
     m_staticText_progress_left->SetFont(::Label::Body_12);
     m_staticText_progress_left->SetForegroundColour(device_secondary_text_color());
 
-    m_staticText_layers = new wxStaticText(penel_text, wxID_ANY, _L("Layer: N/A"));
+    m_staticText_layers = new Label(penel_text, _L("Layer: N/A"));
     m_staticText_layers->SetFont(::Label::Body_12);
     m_staticText_layers->SetForegroundColour(device_secondary_text_color());
     m_staticText_layers->Hide();
@@ -1398,7 +1398,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_printing_stage_underline->SetBackgroundColour(device_divider_color());
     m_printing_stage_underline->Hide();
 
-    m_printing_stage_value = new wxStaticText(m_printing_stage_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+    m_printing_stage_value = new Label(m_printing_stage_panel, "", wxALIGN_LEFT | wxST_ELLIPSIZE_END);
     m_printing_stage_value->Wrap(-1);
     m_printing_stage_value->SetMaxSize(wxSize(FromDIP(800), -1));
 #ifdef __WXOSX_MAC__
@@ -1587,9 +1587,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_request_failed_panel = new wxPanel(parent, wxID_ANY);
     m_request_failed_panel->SetBackgroundColour(device_card_color());
     wxBoxSizer *static_request_failed_panel_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_request_failed_info                         = new wxStaticText(m_request_failed_panel, wxID_ANY,
-                                                                     _L("You have completed printing the mall model, \nbut the synchronization of rating information has failed."), wxDefaultPosition,
-                                                                     wxDefaultSize, 0);
+    m_request_failed_info                         = new Label(m_request_failed_panel, _L("You have completed printing the mall model, \nbut the synchronization of rating information has failed."));
     m_request_failed_info->Wrap(-1);
     m_request_failed_info->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_request_failed_info->SetFont(::Label::Body_10);
@@ -1613,11 +1611,10 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_score_subtask_info->SetBackgroundColour(device_card_color());
 
     wxBoxSizer   *static_score_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_score_text  = new wxStaticText(m_score_subtask_info, wxID_ANY, _L("How do you like this printing file?"), wxDefaultPosition, wxDefaultSize, 0);
+    wxStaticText *static_score_text  = new Label(m_score_subtask_info, _L("How do you like this printing file?"));
     static_score_text->Wrap(-1);
     static_score_sizer->Add(static_score_text, 1, wxEXPAND | wxALL, FromDIP(10));
-    m_has_rated_prompt = new wxStaticText(m_score_subtask_info, wxID_ANY, _L("(The model has already been rated. Your rating will overwrite the previous rating.)"),
-                                          wxDefaultPosition, wxDefaultSize, 0);
+    m_has_rated_prompt = new Label(m_score_subtask_info, _L("(The model has already been rated. Your rating will overwrite the previous rating.)"));
     m_has_rated_prompt->Wrap(-1);
     m_has_rated_prompt->SetForegroundColour(device_secondary_text_color());
     m_has_rated_prompt->SetFont(::Label::Body_10);
@@ -2311,11 +2308,11 @@ wxBoxSizer *StatusBasePanel::create_monitoring_page()
     // Legacy debug-only widgets: referenced under !BBL_RELEASE_TO_PUBLIC in
     // update(). Kept allocated + hidden (parented to the HUD, never added to its
     // layout) so those references stay valid without cluttering the strip.
-    m_staticText_timelapse = new wxStaticText(m_camera_hud, wxID_ANY, _L("Timelapse"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_timelapse = new Label(m_camera_hud, _L("Timelapse"));
     m_staticText_timelapse->Wrap(-1);
     m_staticText_timelapse->Hide();
 
-    m_mqtt_source = new wxStaticText(m_camera_hud, wxID_ANY, "MqttSource", wxDefaultPosition, wxDefaultSize, 0);
+    m_mqtt_source = new Label(m_camera_hud, "MqttSource");
     m_mqtt_source->Wrap(-1);
     m_mqtt_source->Hide();
 
@@ -2888,7 +2885,7 @@ wxPanel *StatusBasePanel::create_bed_control(wxWindow *parent)
 
     // bSizer_z_ctrl->Add(0, FromDIP(6), 0, wxEXPAND, 0);
 
-    m_staticText_z_tip = new wxStaticText(panel, wxID_ANY, _L("Bed"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_z_tip = new Label(panel, _L("Bed"));
     m_staticText_z_tip->SetFont(::Label::Body_12);
     if (wxGetApp().app_config->get("language") == "de_DE") m_staticText_z_tip->SetFont(::Label::Body_11);
     m_staticText_z_tip->Wrap(-1);
@@ -6819,7 +6816,7 @@ void ScoreDialog::init()
 wxBoxSizer *ScoreDialog::get_score_sizer()
 {
     wxBoxSizer   *score_sizer       = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText *static_score_text = new wxStaticText(this, wxID_ANY, _L("Rate"), wxDefaultPosition, wxDefaultSize, 0);
+    wxStaticText *static_score_text = new Label(this, _L("Rate"));
     static_score_text->Wrap(-1);
     score_sizer->Add(static_score_text, 1, wxEXPAND | wxLEFT, FromDIP(24));
     score_sizer->Add(0, 0, 1, wxEXPAND, 0);
@@ -6879,7 +6876,7 @@ wxBoxSizer *ScoreDialog::get_star_sizer()
 wxBoxSizer *ScoreDialog::get_comment_text_sizer()
 {
     wxBoxSizer   *m_comment_sizer     = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText *static_comment_text = new wxStaticText(this, wxID_ANY, _L("Comment"), wxDefaultPosition, wxDefaultSize, 0);
+    wxStaticText *static_comment_text = new Label(this, _L("Comment"));
     static_comment_text->Wrap(-1);
     m_comment_sizer->Add(static_comment_text, 1, wxEXPAND | wxLEFT, FromDIP(24));
     m_comment_sizer->Add(0, 0, 1, wxEXPAND, 0);

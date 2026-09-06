@@ -22,6 +22,7 @@
 #include <wx/fontutil.h>
 
 #include "libslic3r/Config.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -507,7 +508,7 @@ void WikiPanel::init_components()
     m_wiki_bmp = new wxStaticBitmap(this, wxID_ANY, m_wiki_icon->bmp());
 
     // Create text label
-    m_wiki_label = new wxStaticText(this, wxID_ANY, m_wiki_text);
+    m_wiki_label = new Label(this, m_wiki_text);
     // Match set_hover_state()'s non-hover branch exactly: darkModeColorFor remaps
     // TextMuted (#5c5f66 -> #a8a9b3) in dark mode so the resting label is correct on
     // first paint, not just after the first hover cycle. Light mode is unaffected

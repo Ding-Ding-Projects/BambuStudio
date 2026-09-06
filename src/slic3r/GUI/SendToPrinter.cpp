@@ -30,6 +30,7 @@
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/DevStorage.h"
 #include "slic3r/Utils/FileTransferUtils.hpp"
+#include "Widgets/Label.hpp"
 
 
 namespace Slic3r {
@@ -366,14 +367,14 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
 
     auto timeimg = new wxStaticBitmap(m_scrollable_region, wxID_ANY, create_scaled_bitmap("print-time", this, 18), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_sizer_basic_weight->Add(timeimg, 1, wxEXPAND | wxALL, FromDIP(5));
-    m_stext_time = new wxStaticText(m_scrollable_region, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+    m_stext_time = new Label(m_scrollable_region, wxEmptyString, wxALIGN_RIGHT);
     m_sizer_basic_weight->Add(m_stext_time, 0, wxALL, FromDIP(5));
     m_sizer_basic->Add(m_sizer_basic_weight, 0, wxALIGN_CENTER, 0);
     m_sizer_basic->Add(0, 0, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(30));
 
     auto weightimg = new wxStaticBitmap(m_scrollable_region, wxID_ANY, create_scaled_bitmap("print-weight", this, 18), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_sizer_basic_time->Add(weightimg, 1, wxEXPAND | wxALL, FromDIP(5));
-    m_stext_weight = new wxStaticText(m_scrollable_region, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    m_stext_weight = new Label(m_scrollable_region, wxEmptyString, wxALIGN_LEFT);
     m_sizer_basic_time->Add(m_stext_weight, 0, wxALL, FromDIP(5));
     m_sizer_basic->Add(m_sizer_basic_time, 0, wxALIGN_CENTER, 0);
 
@@ -398,13 +399,13 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     wxBoxSizer *m_sizer_printer_head = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *m_sizer_printer_sel  = new wxBoxSizer(wxHORIZONTAL);
 
-    m_stext_printer_title = new wxStaticText(m_printer_card, wxID_ANY, _L("Printer"), wxDefaultPosition, wxSize(-1, -1), 0);
+    m_stext_printer_title = new Label(m_printer_card, _L("Printer"), 0, wxSize(-1, -1));
     m_stext_printer_title->SetFont(::Label::Head_14);
     m_stext_printer_title->Wrap(-1);
     m_stext_printer_title->SetForegroundColour(m_colour_bold_color);
     m_stext_printer_title->SetBackgroundColour(card_fill);
 
-    m_printer_status = new wxStaticText(m_printer_card, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+    m_printer_status = new Label(m_printer_card, wxEmptyString, wxALIGN_RIGHT);
     m_printer_status->SetFont(::Label::Body_13);
     m_printer_status->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_printer_status->SetBackgroundColour(card_fill);
@@ -437,7 +438,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_storage_panel->Layout();
 
     // try to connect
-    m_statictext_printer_msg = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+    m_statictext_printer_msg = new Label(this, wxEmptyString, wxALIGN_CENTER_HORIZONTAL);
     m_statictext_printer_msg->SetFont(::Label::Body_13);
     m_statictext_printer_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_statictext_printer_msg->Hide();
@@ -446,7 +447,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     m_connecting_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_connecting_panel->SetBackgroundColour(m_colour_def_color);
 
-    m_connecting_printer_msg = new wxStaticText(m_connecting_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+    m_connecting_printer_msg = new Label(m_connecting_panel, wxEmptyString, wxALIGN_CENTER_HORIZONTAL);
     m_connecting_printer_msg->SetFont(::Label::Body_13);
     m_connecting_printer_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_connecting_printer_msg->SetBackgroundColour(m_colour_def_color);
@@ -508,7 +509,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     auto completedimg = new wxStaticBitmap(m_panel_finish, wxID_ANY, create_scaled_bitmap("completed", m_panel_finish, 25), wxDefaultPosition, wxSize(imgsize, imgsize), 0);
     m_sizer_finish_h->Add(completedimg, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
-    m_statictext_finish = new wxStaticText(m_panel_finish, wxID_ANY, L("send completed"), wxDefaultPosition, wxDefaultSize, 0);
+    m_statictext_finish = new Label(m_panel_finish, L("send completed"));
     m_statictext_finish->Wrap(-1);
     m_statictext_finish->SetForegroundColour(ThemeColor::BrandGreen);
     m_sizer_finish_h->Add(m_statictext_finish, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
@@ -536,8 +537,8 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     wxBoxSizer* sizer_error_desc = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* sizer_extra_info = new wxBoxSizer(wxHORIZONTAL);
 
-    auto st_title_error_code = new wxStaticText(m_sw_print_failed_info, wxID_ANY, _L("Error code"));
-    auto st_title_error_code_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, ": ");
+    auto st_title_error_code = new Label(m_sw_print_failed_info, _L("Error code"));
+    auto st_title_error_code_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_code = new Label(m_sw_print_failed_info, wxEmptyString);
     st_title_error_code->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_error_code_doc->SetForegroundColour(ThemeColor::TextSecondary);
@@ -553,8 +554,8 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     sizer_error_code->Add(st_title_error_code_doc, 0, wxALL, 0);
     sizer_error_code->Add(m_st_txt_error_code, 0, wxALL, 0);
 
-    auto st_title_error_desc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, wxT("Error desc"));
-    auto st_title_error_desc_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, ": ");
+    auto st_title_error_desc = new Label(m_sw_print_failed_info, wxT("Error desc"));
+    auto st_title_error_desc_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_desc = new Label(m_sw_print_failed_info, wxEmptyString);
     st_title_error_desc->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_error_desc_doc->SetForegroundColour(ThemeColor::TextSecondary);
@@ -570,8 +571,8 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     sizer_error_desc->Add(st_title_error_desc_doc, 0, wxALL, 0);
     sizer_error_desc->Add(m_st_txt_error_desc, 0, wxALL, 0);
 
-    auto st_title_extra_info = new wxStaticText(m_sw_print_failed_info, wxID_ANY, wxT("Extra info"));
-    auto st_title_extra_info_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, ": ");
+    auto st_title_extra_info = new Label(m_sw_print_failed_info, wxT("Extra info"));
+    auto st_title_extra_info_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_extra_info = new Label(m_sw_print_failed_info, wxEmptyString);
     st_title_extra_info->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_extra_info_doc->SetForegroundColour(ThemeColor::TextSecondary);
@@ -626,7 +627,7 @@ SendToPrinterDialog::SendToPrinterDialog(Plater *plater)
     rename_sizer_v = new wxBoxSizer(wxVERTICAL);
     rename_sizer_h = new wxBoxSizer(wxHORIZONTAL);
 
-    m_rename_text = new wxStaticText(m_rename_normal_panel, wxID_ANY, wxT("MyLabel"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_rename_text = new Label(m_rename_normal_panel, wxT("MyLabel"), wxST_ELLIPSIZE_END);
     m_rename_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_rename_text->SetFont(::Label::Body_13);
     m_rename_text->SetMaxSize(wxSize(FromDIP(390), -1));
