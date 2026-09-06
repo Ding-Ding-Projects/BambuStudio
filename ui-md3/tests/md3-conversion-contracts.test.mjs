@@ -635,3 +635,12 @@ test('the printer card hides the preset combo\'s stock cog button (CJ-010)', asy
   assert.ok(at > 0, 'combo_printer->Hide() is where the card takes over');
   assert.match(src.slice(at, at + 400), /^\s*combo_printer->edit_btn->Hide\(\);/m, 'the dead cog must be hidden right after the combo');
 });
+
+test('the search field keeps its icon buttons inside the pill and reserves no empty clear slot', async () => {
+  // 44px buttons in a 44px pill painted over its outline, and a permanently
+  // reserved clear slot left an empty hole at the trailing edge (CJ-011).
+  const src = await read('Widgets', 'SearchField.cpp');
+  assert.match(src, /^constexpr int kActionPx\s*=\s*40;/m, 'icon buttons are 40px inside the 44px pill');
+  assert.match(src, /const bool\s+clear\s*=\s*m_clear_button && m_clear_button->IsShown\(\);/, 'the clear slot is reserved only while shown');
+  assert.doesNotMatch(src, /reserve = right \+ 3 \* action \+ 3 \* gap;/, 'no permanently reserved third slot');
+});

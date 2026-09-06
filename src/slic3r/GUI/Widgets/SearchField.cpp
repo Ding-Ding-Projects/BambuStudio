@@ -27,7 +27,7 @@ constexpr int kPadRight  = 5;  // trailing padding
 constexpr int kGap       = 4;  // glyph <-> input, input <-> clear
 constexpr int kSearchPx  = 20; // leading search glyph
 constexpr int kClosePx   = 18; // clear glyph
-constexpr int kActionPx  = 44; // non-overlapping clear / tune / regex targets
+constexpr int kActionPx  = 40; // clear / tune / regex icon buttons: 2px inside the 44px pill so they never paint over its outline
 constexpr int kTunePx    = 20; // tune glyph
 constexpr int kRadius    = 22; // stadium corner radius
 constexpr int kMinWidth  = 220;
@@ -150,8 +150,10 @@ void SearchField::SetValue(const wxString &value)
     const wxString bounded_value = value.Left(kMaxQueryLen);
     m_text->ChangeValue(bounded_value); // no wxEVT_TEXT -> no query emit
     m_had_text = !bounded_value.IsEmpty();
-    if (m_clear_button)
+    if (m_clear_button) {
         m_clear_button->Show(m_had_text);
+        layoutText();
+    }
     layoutText();
     Refresh();
 }
@@ -265,8 +267,10 @@ void SearchField::openBuilder()
         const bool hasText = !pattern.IsEmpty();
         if (hasText != m_had_text) {
             m_had_text = hasText;
-            if (m_clear_button)
+            if (m_clear_button) {
                 m_clear_button->Show(hasText);
+                layoutText(); // the clear slot now changes the entry width
+            }
         }
         Refresh();
         emit(pattern);
@@ -405,13 +409,15 @@ void SearchField::layoutText()
         return;
     const wxSize sz   = GetSize();
     const int    lead = leadingWidth();
-    // The regex toggle and tune button are persistent and the clear slot is
-    // always reserved, so the trailing width is constant — the entry never
-    // reflows when the query gains or loses its first character.
+    // The regex toggle and tune button are persistent at the trailing edge;
+    // the clear button sits inboard of them and only claims width while the
+    // query has text. A permanently reserved clear slot left the pill with an
+    // empty 44px hole at its right end (CJ-011).
     const int    action  = FromDIP(kActionPx);
     const int    gap     = FromDIP(kGap);
     const int    right   = FromDIP(kPadRight);
-    const int    reserve = right + 3 * action + 3 * gap;
+    const bool   clear   = m_clear_button && m_clear_button->IsShown();
+    const int    reserve = right + (clear ? 3 : 2) * action + (clear ? 3 : 2) * gap;
     int          w       = sz.x - lead - reserve;
     if (w < 0)
         w = 0;
@@ -423,14 +429,14 @@ void SearchField::layoutText()
 
     const int action_y = (sz.y - action) / 2;
     int       action_x = sz.x - right - action;
-    if (m_clear_button)
-        m_clear_button->SetSize(action_x, action_y, action, action);
-    action_x -= gap + action;
     if (m_tune_button)
         m_tune_button->SetSize(action_x, action_y, action, action);
     action_x -= gap + action;
     if (m_regex_button)
         m_regex_button->SetSize(action_x, action_y, action, action);
+    action_x -= gap + action;
+    if (m_clear_button)
+        m_clear_button->SetSize(action_x, action_y, action, action);
 }
 
 void SearchField::applyTextCtrlTheme()
@@ -457,8 +463,10 @@ void SearchField::onText()
     const bool hasText = !GetValue().IsEmpty();
     if (hasText != m_had_text) {
         m_had_text = hasText;
-        if (m_clear_button)
+        if (m_clear_button) {
             m_clear_button->Show(hasText);
+            layoutText(); // the clear slot now changes the entry width
+        }
     }
     Refresh();
     emit(GetValue());
