@@ -284,6 +284,18 @@ class Runner:
             if not c:
                 raise RuntimeError(f'blocked: nav {label} (no tab labelled so)')
             self.click_control(self.app.main, c)
+            # The first switch to Prepare or Preview brings the GL canvas up,
+            # which takes longer than a click settle; the bulk-ink rows probed
+            # the sidebar while it was still off screen. Wait for a control
+            # that only that page shows.
+            marker = {'prepare': 'Search inks', 'preview': 'Search inks', 'device': None, 'home': None, 'project': None, 'ink': None}.get(label.lower())
+            if marker:
+                for _ in range(8):
+                    records = self.app.probe()
+                    hit = find_control(records, marker, self.app.main)
+                    if hit and hit.get('on_screen', True):
+                        break
+                    time.sleep(1.0)
         elif kind == 'wizard-page':
             self.app.command(f'wizard-page {int(arg)}')
             time.sleep(2.5)
