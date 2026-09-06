@@ -39,10 +39,11 @@ for (const file of files) {
     // A hidden top-level still answers IsShownOnScreen for its children on
     // MSW (the hidden Compare Presets dialog's buttons kept coming back), so
     // the top-level's own flag always wins.
-    const top0 = tops.get(w.top);
-    if (top0 && !top0.shown) return false;
-    if (typeof w.on_screen === 'boolean') return w.on_screen;
+    // A dialog owned by the frame records the frame as its top, so the
+    // top-level flag alone misses a hidden dialog: any hidden ancestor on the
+    // parent chain hides the window, whatever on_screen says.
     for (let cur = w; cur; cur = byHwnd.get(cur.parent)) if (!cur.shown) return false;
+    if (typeof w.on_screen === 'boolean') return w.on_screen;
     const top = tops.get(w.top);
     return !top || top.shown;
   };
