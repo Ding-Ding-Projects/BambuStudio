@@ -338,8 +338,7 @@ std::string dump(const std::string &reason, const std::string &out_path)
     }
     // Readers poll the file while it streams; the end record is the only
     // reliable completion signal (a partial file of whole lines still parses).
-    out << "{\"kind\":\"end\"}
-";
+    out << "{\"kind\":\"end\"}\n";
     out.flush();
     BOOST_LOG_TRIVIAL(info) << "LayoutProbe: wrote " << path << " (" << reason << ")";
     return path;
