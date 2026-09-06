@@ -106,6 +106,8 @@ namespace GUI {
         default:
             return HomeWebFailureKind::ServiceUnavailable;
         }
+    }
+
     std::string GetSafeWebUrlForLog(const wxString &url)
     {
         std::string safe_url = url.ToUTF8().data();
