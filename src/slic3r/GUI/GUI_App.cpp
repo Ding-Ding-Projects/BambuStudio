@@ -81,6 +81,7 @@
 #include "GUI_Utils.hpp"
 #include "3DScene.hpp"
 #include "MainFrame.hpp"
+#include "LayoutProbe.hpp"
 #include "slic3r/GUI/Widgets/WebView.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MD3Tokens.hpp"
@@ -1041,6 +1042,11 @@ static void register_win32_device_notification_event()
 		if (copy_data_structure->dwData == 1) {
 			LPCWSTR arguments = (LPCWSTR)copy_data_structure->lpData;
 			Slic3r::GUI::wxGetApp().other_instance_message_handler()->handle_message(boost::nowide::narrow(arguments));
+		} else if (copy_data_structure->dwData == 2) {
+			// Layout-probe command from the headless driver: L"layout-probe [<path>]".
+			// Only honoured when BAMBU_LAYOUT_PROBE armed the probe at launch.
+			LPCWSTR arguments = (LPCWSTR)copy_data_structure->lpData;
+			Slic3r::GUI::LayoutProbe::handle_command(arguments ? std::wstring(arguments) : std::wstring());
 		}
 		return true;
 		});
@@ -3569,6 +3575,7 @@ bool GUI_App::on_init_inner()
     mainframe->topbar()->SaveNormalRect();
 #endif
     mainframe->Show(true);
+    LayoutProbe::install(mainframe);
     BOOST_LOG_TRIVIAL(info) << "main frame firstly shown";
 
 //#if BBL_HAS_FIRST_PAGE
@@ -4374,6 +4381,7 @@ void GUI_App::recreate_GUI(const wxString &msg_name)
     m_printhost_job_queue.reset(new PrintHostJobQueue(mainframe->printhost_queue_dlg()));
     load_current_presets();
     mainframe->Show(true);
+    LayoutProbe::install(mainframe);
     //mainframe->refresh_plugin_tips();
 
     dlg.Update(90, _L("Loading a mode view") + dots);

@@ -255,6 +255,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/GUI_App.cpp
     GUI/GUI_App.hpp
     GUI/GUI_Utils.cpp
+    GUI/LayoutProbe.cpp
+    GUI/LayoutProbe.hpp
     GUI/GUI_Utils.hpp
     GUI/I18N.cpp
     GUI/I18N.hpp
