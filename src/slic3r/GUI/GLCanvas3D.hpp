@@ -1162,6 +1162,12 @@ public:
     Size get_canvas_size() const;
     Vec2d get_local_mouse_position() const;
 
+    // Layout-probe support: every visible item of the scene toolbar ("main")
+    // and the gizmo rail ("gizmo") with its rectangle in canvas client pixels,
+    // derived from the item's world-space render rectangle and the camera zoom.
+    struct ToolbarItemRect { std::string toolbar; std::string name; int x; int y; int w; int h; };
+    std::vector<ToolbarItemRect> get_toolbar_item_rects() const;
+
         // store opening position of menu
     std::optional<Vec2d>        m_popup_menu_positon; // position of mouse right click
     void                        set_popup_menu_position(const Vec2d &position) { m_popup_menu_positon = position; }

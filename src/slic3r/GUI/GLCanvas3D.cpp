@@ -6400,6 +6400,31 @@ void GLCanvas3D::on_back_slice_begin() {
     t_gcode_viewer.reset_curr_plate_thermal_options();
 }
 
+std::vector<GLCanvas3D::ToolbarItemRect> GLCanvas3D::get_toolbar_item_rects() const
+{
+    std::vector<ToolbarItemRect> out;
+    const Size   cnv    = get_canvas_size();
+    const double zoom   = wxGetApp().plater() ? wxGetApp().plater()->get_camera().get_zoom() : 1.0;
+    const double half_w = 0.5 * cnv.get_width();
+    const double half_h = 0.5 * cnv.get_height();
+    auto add = [&](const char *toolbar, const std::shared_ptr<GLToolbar> &t) {
+        if (!t) return;
+        for (const auto &item : t->get_items()) {
+            if (!item || !item->is_visible() || item->is_collapsed()) continue;
+            // render_rect is left, right, bottom, top in world units with y up;
+            // one canvas pixel is one world unit times the zoom.
+            const float *r = item->render_rect;
+            if (r[1] <= r[0] || r[3] <= r[2]) continue;
+            out.push_back({toolbar, item->get_name(),
+                           (int) std::lround(r[0] * zoom + half_w), (int) std::lround(half_h - r[3] * zoom),
+                           (int) std::lround((r[1] - r[0]) * zoom), (int) std::lround((r[3] - r[2]) * zoom)});
+        }
+    };
+    add("main", m_main_toolbar);
+    add("gizmo", m_gizmo_toolbar);
+    return out;
+}
+
 Size GLCanvas3D::get_canvas_size() const
 {
     int w = 0;

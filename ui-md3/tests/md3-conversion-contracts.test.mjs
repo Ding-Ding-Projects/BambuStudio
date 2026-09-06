@@ -531,6 +531,13 @@ test('the runtime layout probe is wired, off by default, and reports the starvat
     assert.ok(probe.includes(`"${key}"`) || probe.includes(`\\"${key}\\"`), `the probe must emit the ${key} flag`);
   }
   assert.match(probe, /required > v\.available/, 'the row verdict must compare required minimum against available size');
+  // The scene toolbar and gizmo rail are GL, not wx windows; the probe emits
+  // their items from the canvas so captures can be cropped to them.
+  assert.ok(probe.includes('\\"kind\\":\\"gl_item\\"'), 'the probe must emit gl_item records for toolbar and rail items');
+  assert.match(probe, /canvas->get_toolbar_item_rects\(\)/, 'gl_item records must come from the canvas helper');
+  const canvas = stripComments(await read('GLCanvas3D.cpp'));
+  assert.match(canvas, /add\("main", m_main_toolbar\);\s*add\("gizmo", m_gizmo_toolbar\);/, 'the helper must cover both the scene toolbar and the gizmo rail');
+  assert.match(canvas, /std::lround\(r\[0\] \* zoom \+ half_w\)/, 'item rectangles must be converted from world units through the camera zoom');
   const app = stripComments(await read('GUI_App.cpp'));
   assert.match(app, /copy_data_structure->dwData == 2/, 'WM_COPYDATA must dispatch dwData == 2 to the probe');
   assert.match(app, /^\s*LayoutProbe::install\(mainframe\);/m, 'the probe must be installed after the main frame is shown');

@@ -1,6 +1,8 @@
 #include "LayoutProbe.hpp"
 
 #include "GUI_App.hpp"
+#include "GLCanvas3D.hpp"
+#include "Plater.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
@@ -315,6 +317,22 @@ std::string dump(const std::string &reason, const std::string &out_path)
             << ",\"client\":" << size_json(top->GetClientSize())
             << "}\n";
         write_window(out, top, top, 0);
+    }
+    // The scene toolbar and gizmo rail are ImGui / GL, not wx windows: emit
+    // their items from the canvas so a capture can be cropped to them too.
+    if (Plater *plater = wxGetApp().plater()) {
+        if (GLCanvas3D *canvas = plater->get_view3D_canvas3D()) {
+            wxWindow     *host   = canvas->get_wxglcanvas();
+            const wxPoint origin = host ? host->GetScreenPosition() : wxPoint(0, 0);
+            for (const auto &it : canvas->get_toolbar_item_rects()) {
+                out << "{\"kind\":\"gl_item\",\"toolbar\":" << json(it.toolbar)
+                    << ",\"name\":" << json(it.name)
+                    << ",\"host\":" << (host ? handle_of(host) : 0)
+                    << ",\"rect\":" << rect_json(wxRect(it.x, it.y, it.w, it.h))
+                    << ",\"screen\":" << rect_json(wxRect(origin.x + it.x, origin.y + it.y, it.w, it.h))
+                    << "}\n";
+            }
+        }
     }
     out.flush();
     BOOST_LOG_TRIVIAL(info) << "LayoutProbe: wrote " << path << " (" << reason << ")";

@@ -33,6 +33,11 @@ Flags on each window record:
 | `ellipsized` | the label carries an ellipsize style (reported for review, not a finding) |
 | `clipped_by_parent` | a shown window's rect leaves its parent's client area |
 
+One `gl_item` record per visible item of the scene toolbar (`"toolbar":"main"`) and the gizmo rail
+(`"gizmo"`): name, host canvas handle, rectangle in canvas pixels and on screen, derived from the
+item's world-space render rectangle and the camera zoom. These are not wx windows, so no flag
+applies; they exist so a capture can be cropped to a toolbar or rail item by name.
+
 ## Activation
 
 | Setting | Effect |

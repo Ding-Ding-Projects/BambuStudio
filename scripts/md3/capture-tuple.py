@@ -120,7 +120,8 @@ def main():
             if args.probe and surface == 'prepare':
                 probe(hwnd, os.path.join(args.probe, f'{args.tuple_id}--{args.suffix}-prepare.jsonl'))
         click(hwnd, GEAR, settle=2.5)
-        prefs = wait_window(args.desktop, pid, lambda w: w['title'] == 'Preferences' and w['class'] == '#32770', 20, 'Preferences')
+        # The title is localized; the dialog is the 780-wide #32770 the gear opens.
+        prefs = wait_window(args.desktop, pid, lambda w: w['class'] == '#32770' and w['width'] >= 700 and w['height'] >= 560 and w['title'] != '', 20, 'Preferences')
         for tab, xy in PREF_TABS.items():
             click(prefs['handle'], xy, settle=1.5)
             shot(prefs['handle'], out(f'preferences-{tab}'))
