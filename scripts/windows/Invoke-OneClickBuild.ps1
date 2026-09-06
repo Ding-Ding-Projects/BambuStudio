@@ -134,6 +134,34 @@ function Install-WingetPackageIfMissing {
     }
 }
 
+function Set-StrawberryPerlFirst {
+    param([Parameter(Mandatory)][string] $PkgConfigPath)
+    # The dependency build runs a bare `perl Configure` for OpenSSL. Git for
+    # Windows ships its own msys perl, and Update-SessionPath APPENDS registry
+    # entries, so Git's perl stayed first and OpenSSL died on a missing
+    # Locale::Maketext::Simple (attempt five, 2026-09-05). Put Strawberry's
+    # three bin directories at the front of this process's PATH and prove the
+    # module loads before any dependency step runs.
+    $perlBin = Split-Path -Parent $PkgConfigPath                 # ...\Strawberry\perl\bin
+    $root = Split-Path -Parent (Split-Path -Parent $perlBin)     # ...\Strawberry
+    $front = @(
+        (Join-Path $root 'c\bin'),
+        (Join-Path $root 'perl\site\bin'),
+        $perlBin
+    ) | Where-Object { Test-Path -LiteralPath $_ -PathType Container }
+    $rest = ($env:Path -split ';') | Where-Object { $_ -and ($front -notcontains $_.TrimEnd('\')) }
+    $env:Path = (($front + $rest) -join ';')
+    $perl = Get-Command perl.exe -ErrorAction SilentlyContinue
+    if ($null -eq $perl -or $perl.Source -notlike "$perlBin*") {
+        throw "Strawberry Perl is not first on PATH after reordering (resolved '$($perl.Source)')."
+    }
+    & $perl.Source -MLocale::Maketext::Simple -e 1 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        throw "The perl at $($perl.Source) cannot load Locale::Maketext::Simple, which OpenSSL's Configure requires."
+    }
+    Write-BuildLog "Using Perl at $($perl.Source) (Strawberry first on PATH; Locale::Maketext::Simple loads)."
+}
+
 function Resolve-PkgConfigExecutable {
     $native = Get-Command pkg-config.exe -ErrorAction SilentlyContinue
     if ($null -ne $native) {
@@ -185,8 +213,8 @@ function Test-FreeDiskSpace {
 }
 
 function Initialize-LocalToolchain {
-    $toolchainScript = Join-Path $script:RepositoryRoot 'packaging\windows\build-from-source\Toolchain.ps1'
-    . $toolchainScript
+    # Toolchain.ps1 is dot-sourced at script scope (see Import-ToolchainHelpers) so
+    # its detection helpers stay visible to every later phase, not only this one.
 
     if ($Plan) {
         Write-BuildLog "PLAN: bootstrap Git, Visual Studio 2022 C++ tools, Windows SDK, and CMake."
@@ -199,16 +227,24 @@ function Initialize-LocalToolchain {
         Install-Git -WorkDir $bootstrapDir
         Install-VisualCppBuildTools -WorkDir $bootstrapDir
         Install-CMake -WorkDir $bootstrapDir
+        Install-Node -WorkDir $bootstrapDir
         Update-SessionPath
     }
 
+    # Probe for the pkg-config wrapper Strawberry Perl ships, not for perl.exe:
+    # Git for Windows puts its own perl.exe on PATH, which satisfied the old
+    # probe and left pkg-config permanently missing (verified 2026-09-05).
     Install-WingetPackageIfMissing -DisplayName 'Strawberry Perl' `
         -PackageId 'StrawberryPerl.StrawberryPerl' `
-        -Probe { $null -ne (Get-Command perl.exe -ErrorAction SilentlyContinue) }
+        -Probe { $null -ne (Get-Command pkg-config.exe, pkg-config.bat -ErrorAction SilentlyContinue) }
     if (-not $Plan) {
+        # A package installed moments ago is only on the registry PATH, not on
+        # this process's PATH, until the session path is refreshed.
+        Update-SessionPath
         $pkgConfig = Resolve-PkgConfigExecutable
         $env:PKG_CONFIG_EXECUTABLE = $pkgConfig
         Write-BuildLog "Using pkg-config at $pkgConfig."
+        Set-StrawberryPerlFirst -PkgConfigPath $pkgConfig
     }
 
     Install-WingetPackageIfMissing -DisplayName '7-Zip' -PackageId '7zip.7zip' `
@@ -324,6 +360,166 @@ function Get-ProductVersion {
     return $matches[1]
 }
 
+function Resolve-CMakeExecutable {
+    param([Parameter(Mandatory)][string] $VisualStudioPath)
+    # Never trust whichever cmake happens to be first on PATH. On this host that
+    # was a MinGW (WinLibs) CMake whose curl has no Windows certificate store, so
+    # every ExternalProject download failed with "certificate signer not trusted"
+    # (build attempt four, 2026-09-05). Prefer the CMake that ships with the
+    # Visual Studio C++ toolset, then a Kitware install, and prove the choice
+    # with a real HTTPS download before handing it to the dependency build.
+    $candidates = @(
+        (Join-Path $VisualStudioPath 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'),
+        (Join-Path $env:ProgramFiles 'CMake\bin\cmake.exe'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\CMake\bin\cmake.exe')
+    )
+    $onPath = Get-Command cmake.exe -ErrorAction SilentlyContinue
+    if ($null -ne $onPath -and $onPath.Source -notmatch 'mingw|msys|WinLibs') { $candidates += $onPath.Source }
+    $probeScript = Join-Path $env:TEMP 'bambu-cmake-tls-probe.cmake'
+    Set-Content -LiteralPath $probeScript -Encoding ascii -Value @(
+        'file(DOWNLOAD "https://github.com/USCiLab/cereal/archive/refs/tags/v1.3.0.zip" "${OUT}" STATUS st TIMEOUT 60)',
+        'list(GET st 0 code)',
+        'if(NOT code EQUAL 0)',
+        '  message(FATAL_ERROR "tls-probe-failed: ${st}")',
+        'endif()'
+    )
+    foreach ($candidate in $candidates) {
+        if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
+        $probeOut = Join-Path $env:TEMP 'bambu-cmake-tls-probe.zip'
+        & $candidate "-DOUT=$probeOut" -P $probeScript 2>&1 | Out-Null
+        $ok = ($LASTEXITCODE -eq 0)
+        Remove-Item -LiteralPath $probeOut -ErrorAction SilentlyContinue
+        if ($ok) {
+            Write-BuildLog "Using CMake at $candidate (HTTPS download probe passed)."
+            return $candidate
+        }
+        Write-BuildLog "Rejecting CMake at ${candidate}: HTTPS download probe failed."
+    }
+    throw 'No CMake that can download over HTTPS was found. Install the Visual Studio "C++ CMake tools for Windows" component or Kitware CMake.'
+}
+
+function Resolve-BuildToolchain {
+    # Our own toolchain resolution. The upstream build_win.bat asked vswhere for a
+    # product id WITHOUT `-products *`, and vswhere hides Build Tools by default,
+    # so a machine with only VS Build Tools was reported as having no Visual
+    # Studio at all (verified 2026-09-05). We ask for every product explicitly.
+    $vsPath = Get-VisualStudio2022Path
+    if ([string]::IsNullOrWhiteSpace($vsPath)) {
+        throw 'No Visual Studio 2022 C++ toolset was found by vswhere (-products *).'
+    }
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    $version = [string](@(& $vswhere -path $vsPath -property installationVersion 2>$null)[0])
+    if ($version -notmatch '^(\d+)\.') {
+        throw "vswhere returned an unusable installation version '$version' for '$vsPath'."
+    }
+    $major = [int]$Matches[1]
+    $generator = switch ($major) {
+        16 { 'Visual Studio 16 2019' }
+        17 { 'Visual Studio 17 2022' }
+        18 { 'Visual Studio 18 2026' }
+        default { throw "Unsupported Visual Studio major version $major for a CMake generator." }
+    }
+    $sdkVersion = Get-WindowsSdkVersion
+    if ($null -eq $sdkVersion) { throw 'No complete Windows 10/11 SDK was detected.' }
+    $sdkInclude = Join-Path ${env:ProgramFiles(x86)} "Windows Kits\10\Include\$sdkVersion"
+    if (-not (Test-Path -LiteralPath (Join-Path $sdkInclude 'winrt\windows.graphics.printing3d.h') -PathType Leaf)) {
+        throw "Windows SDK $sdkVersion at '$sdkInclude' lacks winrt\windows.graphics.printing3d.h, which CMakeLists.txt requires through WIN10SDK_PATH."
+    }
+    return [pscustomobject]@{
+        VisualStudioPath = $vsPath
+        Generator        = $generator
+        SdkVersion       = [string]$sdkVersion
+        SdkIncludePath   = $sdkInclude
+        CMake            = (Resolve-CMakeExecutable -VisualStudioPath $vsPath)
+    }
+}
+
+function Get-BuildParallelism {
+    # PCH-heavy GUI translation units exhaust memory under an unbounded /m on
+    # smaller hosts (HANDOFF.md records C3859/C1076 storms). Default to a bounded
+    # count and let the caller raise it through BAMBU_BUILD_JOBS.
+    $requested = $env:BAMBU_BUILD_JOBS
+    if ($requested -match '^\d+$' -and [int]$requested -ge 1) { return [int]$requested }
+    $cores = [Environment]::ProcessorCount
+    return [Math]::Max(1, [Math]::Min(8, [int][Math]::Floor($cores / 4)))
+}
+
+function Invoke-DependencyBuild {
+    param(
+        [Parameter(Mandatory)] $Toolchain,
+        [Parameter(Mandatory)][string] $Destination,
+        [switch] $Clean
+    )
+    $buildDirectory = Join-Path $script:RepositoryRoot 'deps\build'
+    $cache = Join-Path $buildDirectory 'CMakeCache.txt'
+    if (-not $Clean -and (Test-Path -LiteralPath $cache -PathType Leaf)) {
+        $cachedCMake = (Select-String -LiteralPath $cache -Pattern '^CMAKE_COMMAND:INTERNAL=(.*)$' |
+            Select-Object -First 1).Matches.Groups[1].Value
+        if ($cachedCMake -and ([System.IO.Path]::GetFullPath($cachedCMake) -ne [System.IO.Path]::GetFullPath($Toolchain.CMake))) {
+            Write-BuildLog "Dependency cache was generated by a different CMake ($cachedCMake); rebuilding it cleanly."
+            $Clean = $true
+        }
+    }
+    if ($Clean) {
+        foreach ($path in @($buildDirectory, $Destination)) {
+            if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Recurse -Force }
+        }
+    }
+    New-Item -ItemType Directory -Path $buildDirectory -Force | Out-Null
+    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+    $jobs = Get-BuildParallelism
+    Invoke-RepositoryCommand "Configuring dependencies ($($Toolchain.Generator))..." {
+        & $Toolchain.CMake -S (Join-Path $script:RepositoryRoot 'deps') -B $buildDirectory `
+            -G $Toolchain.Generator -A x64 `
+            "-DDESTDIR=$Destination" -DCMAKE_BUILD_TYPE=Release -DDEP_DEBUG=OFF
+    }
+    Invoke-RepositoryCommand "Building dependencies (parallel $jobs)..." {
+        & $Toolchain.CMake --build $buildDirectory --config Release --parallel $jobs
+    }
+    if (-not (Test-Path -LiteralPath (Join-Path $Destination 'usr\local') -PathType Container)) {
+        throw "The dependency build finished without producing '$Destination\usr\local'."
+    }
+}
+
+function Invoke-ApplicationBuild {
+    param(
+        [Parameter(Mandatory)] $Toolchain,
+        [Parameter(Mandatory)][string] $DependencyDestination,
+        [Parameter(Mandatory)][string] $InstallPrefix,
+        [switch] $Clean
+    )
+    $buildDirectory = Join-Path $script:RepositoryRoot 'build'
+    if ($Clean -and (Test-Path -LiteralPath $buildDirectory)) {
+        Remove-Item -LiteralPath $buildDirectory -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $buildDirectory -Force | Out-Null
+    $prefixPath = Join-Path $DependencyDestination 'usr\local'
+    $jobs = Get-BuildParallelism
+    Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
+        & $Toolchain.CMake -S $script:RepositoryRoot -B $buildDirectory `
+            -G $Toolchain.Generator -A x64 `
+            -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 `
+            -DSLIC3R_BUILD_TESTS=OFF `
+            "-DCMAKE_PREFIX_PATH=$prefixPath" "-DCMAKE_INSTALL_PREFIX=$InstallPrefix" `
+            -DCMAKE_CONFIGURATION_TYPES=Release -DCMAKE_BUILD_TYPE=Release `
+            "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)"
+    }
+    Invoke-RepositoryCommand 'Building the DeviceWeb page...' {
+        & $Toolchain.CMake --build $buildDirectory --target device_page_build --config Release --parallel $jobs
+    }
+    Invoke-RepositoryCommand "Building and installing Bambu Studio (parallel $jobs)..." {
+        & $Toolchain.CMake --build $buildDirectory --target install --config Release --parallel $jobs
+    }
+}
+
+function Import-ToolchainHelpers {
+    # Dot-sourcing inside a function scopes the helpers to that function and
+    # loses them on return (this bit build attempt three on 2026-09-05); load
+    # them here and dot-source THIS function from script scope.
+    $toolchainScript = Join-Path $script:RepositoryRoot 'packaging\windows\build-from-source\Toolchain.ps1'
+    . $toolchainScript
+}
+
 function Invoke-OneClickBuild {
     if ([System.Environment]::OSVersion.Platform -ne [System.PlatformID]::Win32NT) {
         throw 'The one-click installer build is supported only on Windows.'
@@ -341,57 +537,31 @@ function Invoke-OneClickBuild {
 
     Push-Location $script:RepositoryRoot
     try {
-        Invoke-RepositoryCommand 'Initializing Git LFS for this checkout...' {
-            & git lfs install --local
-        }
-        Invoke-RepositoryCommand 'Downloading required Git LFS objects...' {
-            & git lfs pull
-        }
+        # This repository tracks no Git LFS objects (git lfs ls-files is empty), and
+        # the project policy routes large files through its own transfer path, so the
+        # former `git lfs install/pull` steps are gone rather than silently failing.
 
         $dependencyDestination = Join-Path $script:RepositoryRoot 'deps\build\BambuStudio_dep'
         $dependencyMarker = Join-Path $dependencyDestination 'usr\local'
         $payloadDirectory = Join-Path $script:RepositoryRoot 'install-dir'
-        $appCache = Join-Path $script:RepositoryRoot 'build\CMakeCache.txt'
-        $expectedInstallPrefix = [System.IO.Path]::GetFullPath($payloadDirectory).Replace('\', '/')
-        $hasExpectedInstallPrefix = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
-            ($null -ne (Select-String -LiteralPath $appCache -SimpleMatch `
-                -Pattern "CMAKE_INSTALL_PREFIX:PATH=$expectedInstallPrefix" -Quiet))
-        $dependencyStep = if ($BuildMode -eq 'Clean' -or
-            -not (Test-Path -LiteralPath $dependencyMarker -PathType Container)) { 'deps' } else { 'deps-dirty' }
-        $appStep = if ($BuildMode -eq 'Clean' -or
-            -not $hasExpectedInstallPrefix) { 'app' } else { 'app-dirty' }
+        $cleanDependencies = ($BuildMode -eq 'Clean') -or
+            -not (Test-Path -LiteralPath $dependencyMarker -PathType Container)
+        $cleanApplication = ($BuildMode -eq 'Clean')
 
-        Invoke-RepositoryCommand "Building dependencies ($dependencyStep)..." {
-            & (Join-Path $script:RepositoryRoot 'build_win.bat') -v 17 -p $vsProduct `
-                -c Release -d $dependencyDestination -s $dependencyStep -r none
-        }
+        $toolchain = Resolve-BuildToolchain
+        Write-BuildLog "Generator: $($toolchain.Generator); SDK include: $($toolchain.SdkIncludePath)"
+
+        Invoke-DependencyBuild -Toolchain $toolchain -Destination $dependencyDestination `
+            -Clean:$cleanDependencies
         Normalize-PkgConfigFiles -DependencyDestination $dependencyDestination
-        $previousInstallPrefix = [Environment]::GetEnvironmentVariable('BAMBU_INSTALL_PREFIX', 'Process')
-        $env:BAMBU_INSTALL_PREFIX = $payloadDirectory
-        try {
-            Invoke-RepositoryCommand "Building Bambu Studio ($appStep)..." {
-                & (Join-Path $script:RepositoryRoot 'build_win.bat') -v 17 -p $vsProduct `
-                    -c Release -d $dependencyDestination -s $appStep -r none
-            }
-        }
-        finally {
-            if ($null -eq $previousInstallPrefix) {
-                Remove-Item Env:BAMBU_INSTALL_PREFIX -ErrorAction SilentlyContinue
-            } else {
-                $env:BAMBU_INSTALL_PREFIX = $previousInstallPrefix
-            }
-        }
+        Invoke-ApplicationBuild -Toolchain $toolchain -DependencyDestination $dependencyDestination `
+            -InstallPrefix $payloadDirectory -Clean:$cleanApplication
 
-        if (Test-Path -LiteralPath $payloadDirectory) {
-            $expectedPayload = [System.IO.Path]::GetFullPath((Join-Path $script:RepositoryRoot 'install-dir'))
-            $resolvedPayload = [System.IO.Path]::GetFullPath($payloadDirectory)
-            if ($resolvedPayload -ne $expectedPayload) {
-                throw "Refusing to clean unexpected payload path '$resolvedPayload'."
-            }
-            Remove-Item -LiteralPath $resolvedPayload -Recurse -Force
-        }
+        # The application build installed into install-dir already; re-run the
+        # install step so a partially staged payload from an interrupted run is
+        # brought back into a complete state instead of being deleted blindly.
         Invoke-RepositoryCommand 'Staging the Release payload...' {
-            & cmake.exe --install (Join-Path $script:RepositoryRoot 'build') `
+            & $toolchain.CMake --install (Join-Path $script:RepositoryRoot 'build') `
                 --config Release --prefix $payloadDirectory
         }
         $application = Join-Path $payloadDirectory 'bambu-studio.exe'
@@ -399,13 +569,17 @@ function Invoke-OneClickBuild {
             throw "The staged payload is missing '$application'."
         }
 
+        # The payload is only "runnable" with the software-OpenGL fallback beside
+        # the executable: a host without a GPU (or a headless capture desktop)
+        # exits at the OpenGL 2.0 gate otherwise. Stage it in build-only mode too,
+        # so build.bat hands over something that starts.
+        $sevenZip = Get-SevenZipPath
+        Add-MesaFallback -PayloadDirectory $payloadDirectory -SevenZip $sevenZip
+
         if ($BuildOnly) {
             Write-BuildLog "Build-only workflow completed; runnable payload: $application"
             return
         }
-
-        $sevenZip = Get-SevenZipPath
-        Add-MesaFallback -PayloadDirectory $payloadDirectory -SevenZip $sevenZip
 
         $productVersion = Get-ProductVersion
         $sourceCommit = (& git rev-parse HEAD).Trim()
@@ -484,6 +658,7 @@ try {
     Start-Transcript -LiteralPath $script:LogPath -Append | Out-Null
     $script:TranscriptStarted = $true
     Write-BuildLog "Bambu Studio one-click build started (mode=$BuildMode, install=$Install, plan=$Plan)."
+    . Import-ToolchainHelpers
     Invoke-OneClickBuild
     Write-BuildLog 'One-click workflow completed successfully.'
 }
