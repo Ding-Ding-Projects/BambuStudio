@@ -9,8 +9,8 @@ exist on disk is a defect, not a plan.
 
 | Field | Baseline (before) | After |
 | --- | --- | --- |
-| Source commit | `9e8d005b0` (main, unmodified) | pending |
-| Executable | `install-dir/bambu-studio.exe`, `BambuStudio.dll` sha256 `e44dd4288e3f46deb4a25eeced2b28f9cc75a5fbb7fe426328841dc3c03cd0c0` (attempt 7 relink of the same source) | pending |
+| Source commit | `9e8d005b0` (main, unmodified) | `80734696c` (main, attempt 13) |
+| Executable | `install-dir/bambu-studio.exe`, `BambuStudio.dll` sha256 `e44dd4288e3f46deb4a25eeced2b28f9cc75a5fbb7fe426328841dc3c03cd0c0` (attempt 7 relink of the same source) | `BambuStudio.dll` sha256 `8aa20531ef2b94c0577bc518b33d76c0bf7d22274b42fe2bc9a0c0833f8ee9e8` (attempt 12 link, attempt 13 re-installed resources on top) |
 | Capture route | hidden Win32 desktop, `PrintWindow` per top-level window, real GPU driver (GL canvases come back blank on this route; canvas surfaces use the Mesa software path) | same |
 | Display scale | 100% (the host's single display; see Limitations) | same |
 
