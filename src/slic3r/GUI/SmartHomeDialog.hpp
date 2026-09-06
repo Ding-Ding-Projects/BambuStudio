@@ -3,6 +3,7 @@
 
 #include "Widgets/MD3Dialog.hpp"
 #include "Widgets/Slider.hpp"
+#include "Widgets/ListBox.hpp"
 #include "HomeAssistant.hpp"
 
 #include <memory>
@@ -17,7 +18,6 @@ class CheckBox;
 class SearchField;
 class TextInput;
 class wxSlider;
-class wxListBox;
 class wxScrolledWindow;
 
 namespace Slic3r { namespace GUI {
@@ -67,7 +67,7 @@ private:
     Label       *m_discovery_status { nullptr };
     wxScrolledWindow *m_scroll { nullptr };
     SearchField *m_search { nullptr };
-    wxListBox   *m_list { nullptr };
+    ListBox     *m_list { nullptr };
     Label       *m_results_status { nullptr };
     Slider      *m_volume { nullptr };
     Label       *m_speakers_label { nullptr };

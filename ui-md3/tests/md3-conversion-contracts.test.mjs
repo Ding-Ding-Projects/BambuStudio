@@ -375,6 +375,19 @@ test('every bitmap button is a kit icon Button or RadioBox; swatches ride Button
   assert.doesNotMatch(picker, /Bind\(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint/, 'the swatch ring must be drawn through the kit border');
 });
 
+test('the only list is the kit ListBox, drawn with the DropDown row anatomy', async () => {
+  assertOnlyAllowed(await sitesOf(/new wxListBox\(/g), new Set(), 'wxListBox');
+  const list = stripComments(await read('Widgets', 'ListBox.cpp'));
+  assert.match(list, /class ListBox : public wxVListBox|ListBox::ListBox\(wxWindow \*parent/, 'ListBox must be the owner-drawn wxVListBox');
+  assert.match(list, /MD3::Role::SecondaryContainer, m_scheme/, 'the selected pane must be SecondaryContainer in the active scheme');
+  assert.match(list, /MD3::Role::SurfaceContainerHigh/, 'the hover pane must be SurfaceContainerHigh');
+  assert.match(list, /wxControl::Ellipsize\(m_rows\[n\], dc, wxELLIPSIZE_END/, 'long rows must ellipsize, with the full text in the tooltip');
+  assert.match(list, /SetToolTip\(row >= 0/, 'the hovered row must expose its full text as the tooltip');
+  const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
+  assert.match(cmake, /^\s*GUI\/Widgets\/ListBox\.cpp\s*$/m, 'ListBox.cpp must be registered');
+  assert.ok(stripComments(await read('SmartHomeDialog.cpp')).includes('m_list = new ListBox(m_scroll'), 'SmartHome must use the kit ListBox');
+});
+
 test('no window is sized by an unscaled pixel literal', async () => {
   // SetSize/SetMinSize/SetMaxSize(wxSize(N, M)) with a positive literal is a
   // 100%-only size: at 150% and 200% it clips whatever it holds. The zero and

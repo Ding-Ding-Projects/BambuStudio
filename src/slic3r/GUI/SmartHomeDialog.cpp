@@ -580,17 +580,11 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
     m_search->SetOnQuery([this](const wxString &) { rebuild_list(); });
     m_search->SetOnRegexToggle([this](bool) { rebuild_list(); });
     body->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
-    // wxBORDER_NONE drops the sunken Win32 client edge so the list reads as an
-    // MD3 SurfaceContainer block against the dialog Surface rather than an OS
-    // control. wxLB_HSCROLL stays: long friendly names must remain reachable
-    // instead of being clipped.
-    m_list = new wxListBox(
-        m_scroll, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(150)),
-        0, nullptr, wxBORDER_NONE | wxLB_SINGLE | wxLB_HSCROLL);
+    // Kit ListBox: owner-drawn rows on a SurfaceContainer field with the kit's
+    // hover and selected panes. Long friendly names ellipsize and stay
+    // reachable through the row tooltip.
+    m_list = new ListBox(m_scroll, wxID_ANY, wxSize(-1, FromDIP(150)));
     m_list->SetName(_L("Search speakers and lights"));
-    m_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
-    m_list->SetForegroundColour(on);
-    m_list->SetFont(Label::Body_13);
     body->Add(m_list, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
     m_results_status = label(wxEmptyString, true, true);
     m_results_status->Hide();
