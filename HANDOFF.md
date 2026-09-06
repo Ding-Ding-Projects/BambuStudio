@@ -1262,6 +1262,16 @@ diagnostics were a cascade.
   `BBLTopbar` constructors now pass it), CJ-010 (the preset combo's stock cog on the Printer card,
   shown at zero width outside every sizer; hidden). CJ-001..004 are the high-DPI rows: fixed and
   guarded, unverifiable on this 96 dpi host.
+- CJ-011 (`baabd4e17`): every kit `SearchField` painted its 44 px regex and builder buttons over the
+  44 px pill's outline and reserved an empty clear slot; buttons are 40 px and the clear slot is
+  reserved only while shown. CJ-012 (`3f4d8ffeb`, verified on attempt 23): with Advanced settings
+  open every sidebar row was laid out 1271 px wide inside a 479 px scroller behind a horizontal
+  scrollbar. `wxBoxSizer::CalcMin` scales the largest proportional minimum by the total
+  proportion, and the ParamsPanel header had its title at proportion 1 (56 px) beside stretch
+  spacers of 2, 1 and 12 (56 x 16 + fixed = 1271); `update_sidebar_scroll_body` honours the content
+  minimum as the virtual width. The header now has a fixed title and one stretch spacer. Rule for
+  the next reader: a proportional item with a minimum next to stretch spacers inflates the sizer
+  minimum; keep stretch spacers to one, or give the proportional item no minimum.
 - Capture matrix `docs/screenshots/md3-everything/`: 132 before (baseline payload `9e8d005b0`) and
   132 after (attempt 13, `80734696c`) across 12 tuples (en / yue_HK / bilingual x light / dark x
   comfortable / compact), 24 probe dumps per build under `probe/`. Runner
