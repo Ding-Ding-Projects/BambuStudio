@@ -626,3 +626,12 @@ test('the caption bar never lets wxAuiToolBar::Realize shrink it back to its con
   assert.equal(ctors.length, 2, 'two BBLTopbar constructors delegate to wxAuiToolBar');
   for (const ctor of ctors) assert.match(ctor, /\| wxAUI_TB_NO_AUTORESIZE\)/, ctor.trim());
 });
+
+test('the printer card hides the preset combo\'s stock cog button (CJ-010)', async () => {
+  // PlaterPresetComboBox creates a ScalableButton on its parent that the
+  // printer card never adds to a sizer; unhidden it reports shown at 0x23.
+  const src = await read('Plater.cpp');
+  const at = src.indexOf('combo_printer->Hide();');
+  assert.ok(at > 0, 'combo_printer->Hide() is where the card takes over');
+  assert.match(src.slice(at, at + 400), /^\s*combo_printer->edit_btn->Hide\(\);/m, 'the dead cog must be hidden right after the combo');
+});

@@ -3033,6 +3033,11 @@ Sidebar::Sidebar(Plater *parent)
         combo_printer->SetWindowStyle(combo_printer->GetWindowStyle() & ~wxALIGN_MASK | wxALIGN_LEFT);
         combo_printer->SetBorderWidth(0);
         combo_printer->Hide();
+        // The combo also builds its legacy cog on this panel; the card has its
+        // own kit edit button, so the stock one otherwise sits shown at 0,0 with
+        // zero width, outside every sizer (layout probe, CJ-010).
+        if (combo_printer->edit_btn)
+            combo_printer->edit_btn->Hide();
         p->combo_printer = combo_printer;
         p->panel_printer_preset->Bind(wxEVT_SIZE, [this](wxSizeEvent &evt) {
             // Keep the hidden combo's geometry equal to the card so its
