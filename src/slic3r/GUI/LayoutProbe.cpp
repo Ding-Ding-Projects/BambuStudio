@@ -15,6 +15,7 @@
 
 #include <wx/app.h>
 #include <wx/control.h>
+#include <wx/glcanvas.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/toplevel.h>
