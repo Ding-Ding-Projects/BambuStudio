@@ -53,3 +53,4 @@ build-ninja/
 
 # Composed GitHub Pages tree (scripts/compose-site.mjs); the docs use this path.
 _site/
+install-dir/

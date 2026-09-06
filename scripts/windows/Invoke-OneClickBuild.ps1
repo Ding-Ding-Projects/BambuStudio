@@ -495,14 +495,29 @@ function Invoke-ApplicationBuild {
     New-Item -ItemType Directory -Path $buildDirectory -Force | Out-Null
     $prefixPath = Join-Path $DependencyDestination 'usr\local'
     $jobs = Get-BuildParallelism
-    Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
-        & $Toolchain.CMake -S $script:RepositoryRoot -B $buildDirectory `
-            -G $Toolchain.Generator -A x64 `
-            -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 `
-            -DSLIC3R_BUILD_TESTS=OFF `
-            "-DCMAKE_PREFIX_PATH=$prefixPath" "-DCMAKE_INSTALL_PREFIX=$InstallPrefix" `
-            -DCMAKE_CONFIGURATION_TYPES=Release -DCMAKE_BUILD_TYPE=Release `
-            "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)"
+    # src/libslic3r/CMakeLists.txt stamps the configure time into a generated
+    # header (SLIC3R_BUILD_TIME), so every explicit configure recompiles the
+    # whole tree. Configure only when the cache is missing, points at another
+    # install prefix, or a reconfigure was asked for; otherwise the generator's
+    # own ZERO_CHECK re-runs CMake exactly when a CMakeLists changed.
+    $appCache = Join-Path $buildDirectory 'CMakeCache.txt'
+    $expectedPrefix = [System.IO.Path]::GetFullPath($InstallPrefix).Replace('\', '/')
+    $cacheMatches = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
+        ($null -ne (Select-String -LiteralPath $appCache -SimpleMatch `
+            -Pattern "CMAKE_INSTALL_PREFIX:PATH=$expectedPrefix" -Quiet))
+    $forceConfigure = $env:BAMBU_RECONFIGURE -eq '1'
+    if ($Clean -or $forceConfigure -or -not $cacheMatches) {
+        Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
+            & $Toolchain.CMake -S $script:RepositoryRoot -B $buildDirectory `
+                -G $Toolchain.Generator -A x64 `
+                -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 `
+                -DSLIC3R_BUILD_TESTS=OFF `
+                "-DCMAKE_PREFIX_PATH=$prefixPath" "-DCMAKE_INSTALL_PREFIX=$InstallPrefix" `
+                -DCMAKE_CONFIGURATION_TYPES=Release -DCMAKE_BUILD_TYPE=Release `
+                "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)"
+        }
+    } else {
+        Write-BuildLog "Reusing the configured build tree at $buildDirectory (set BAMBU_RECONFIGURE=1 to force a configure; note it recompiles everything)."
     }
     Invoke-RepositoryCommand 'Building the DeviceWeb page...' {
         & $Toolchain.CMake --build $buildDirectory --target device_page_build --config Release --parallel $jobs
