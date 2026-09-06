@@ -96,10 +96,10 @@
       "control": null,
       "recipe": {
         "kind": "page",
-        "surface": "filament-manager",
+        "surface": "ink",
         "steps": [
           "nav:Prepare",
-          "open:Ink manager"
+          "nav:Ink"
         ],
         "tuple": {
           "language": "en",
@@ -422,7 +422,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Accent custom-btn",
+        "label": "Custom accent",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -445,7 +445,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Density Comfortable",
+        "label": "Comfortable",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -514,7 +514,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Md3 Preview Panel",
+        "label": "Appearance preview",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -537,7 +537,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Preview Text",
+        "label": "Appearance preview text",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -560,7 +560,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Reset Defaults",
+        "label": "Reset appearance to defaults",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -583,7 +583,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Text Size Default",
+        "label": "Text size",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -606,7 +606,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Text Size Large",
+        "label": "Large",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -629,7 +629,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Text Size Small",
+        "label": "Small",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -718,7 +718,7 @@
         "steps": [
           "open:Preferences",
           "tab:Appearance",
-          "click:Custom"
+          "click:Custom accent"
         ],
         "tuple": {
           "language": "en",
@@ -781,7 +781,7 @@
         "kind": "page",
         "surface": "command-palette",
         "steps": [
-          "key:ctrl+shift+f"
+          "open:Command palette"
         ],
         "tuple": {
           "language": "en",
@@ -810,7 +810,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "slide-to-confirm needs a pointer drag, which does not cross desktops"
       },
       "status": "pending"
     },
@@ -833,7 +834,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "slide-to-confirm needs a pointer drag, which does not cross desktops"
       },
       "status": "pending"
     },
@@ -893,7 +895,7 @@
         "steps": [
           "open:Config profiles"
         ],
-        "label": "Md3 Caption",
+        "label": "Config profiles",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -915,7 +917,7 @@
         "steps": [
           "open:Config profiles"
         ],
-        "label": "Profile Actions",
+        "label": "Launch profile",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -937,7 +939,7 @@
         "steps": [
           "open:Config profiles"
         ],
-        "label": "Profile List",
+        "label": "dataviewCtrl",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -959,7 +961,7 @@
         "steps": [
           "open:Config profiles"
         ],
-        "label": "Search Field",
+        "label": "Search profiles",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -981,7 +983,7 @@
         "steps": [
           "open:Config profiles"
         ],
-        "label": "Secrets Card",
+        "label": "A full backup includes secrets",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -1010,7 +1012,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "slide-to-confirm needs a pointer drag, which does not cross desktops"
       },
       "status": "pending"
     },
@@ -1148,8 +1151,7 @@
         "kind": "page",
         "surface": "about",
         "steps": [
-          "menu:Help",
-          "click:About"
+          "open:About"
         ],
         "tuple": {
           "language": "en",
@@ -1169,8 +1171,7 @@
         "kind": "page",
         "surface": "export-preset-bundle",
         "steps": [
-          "menu:File",
-          "click:Export preset bundle"
+          "open:Export preset bundle"
         ],
         "tuple": {
           "language": "en",
@@ -1190,8 +1191,7 @@
         "kind": "page",
         "surface": "keyboard-shortcuts",
         "steps": [
-          "menu:Help",
-          "click:Keyboard shortcuts"
+          "open:Keyboard shortcuts"
         ],
         "tuple": {
           "language": "en",
@@ -1211,8 +1211,7 @@
         "kind": "page",
         "surface": "network-test",
         "steps": [
-          "menu:Help",
-          "click:Network test"
+          "open:Network test"
         ],
         "tuple": {
           "language": "en",
@@ -1240,7 +1239,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "no control named \"Ink scanner\" exists in the sidebar; the scanner has no entry point the driver can address"
       },
       "status": "pending"
     },
@@ -1261,7 +1261,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "no control named \"Ink scanner\" exists in the sidebar; the scanner has no entry point the driver can address"
       },
       "status": "pending"
     },
@@ -3169,7 +3170,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
       },
       "status": "done"
     },
@@ -3192,7 +3194,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
       },
       "status": "done"
     },
@@ -3215,7 +3218,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
       },
       "status": "pending"
     },
@@ -3236,7 +3240,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
       },
       "status": "done"
     },
@@ -3250,14 +3255,14 @@
         "kind": "page",
         "surface": "toast",
         "steps": [
-          "menu:Help",
-          "click:Check for presets updates"
+          "open:Check for presets updates"
         ],
         "tuple": {
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
       },
       "status": "pending"
     },
@@ -3278,7 +3283,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "toasts are ImGui on the GL canvas; blank under PrintWindow, needs the Mesa route"
       },
       "status": "done"
     },
@@ -3778,7 +3784,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "the Developer Tools tab exists only with developer mode enabled in the profile"
       },
       "status": "pending"
     },
@@ -4077,7 +4084,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "the row exists only after a custom external editor is chosen"
       },
       "status": "pending"
     },
@@ -4274,7 +4282,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "the Developer Tools tab exists only with developer mode enabled in the profile"
       },
       "status": "pending"
     },
@@ -4435,7 +4444,7 @@
         "kind": "crop-probe",
         "surface": "main",
         "steps": [
-          "open:New project"
+          "click:New project tab"
         ],
         "label": "Close tab",
         "pad": 8,
@@ -4457,7 +4466,7 @@
         "kind": "crop-probe",
         "surface": "main",
         "steps": [
-          "open:New project"
+          "click:New project tab"
         ],
         "label": "Untitled",
         "pad": 8,
@@ -4499,7 +4508,7 @@
         "kind": "crop-probe",
         "surface": "main",
         "steps": [
-          "open:New project"
+          "click:New project tab"
         ],
         "label": "Project tabs",
         "pad": 0,
@@ -4544,7 +4553,7 @@
           "nav:Prepare",
           "click:Regex builder"
         ],
-        "label": "Case Sensitive",
+        "label": "Case sensitive",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4602,7 +4611,7 @@
           "nav:Prepare",
           "click:Regex builder"
         ],
-        "label": "Insert Header",
+        "label": "Literals",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4625,7 +4634,7 @@
           "nav:Prepare",
           "click:Regex builder"
         ],
-        "label": "Pattern Editor",
+        "label": "Regex pattern",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4671,7 +4680,7 @@
           "nav:Prepare",
           "click:Regex builder"
         ],
-        "label": "Reference Tab",
+        "label": "Reference",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4694,7 +4703,7 @@
           "nav:Prepare",
           "click:Regex builder"
         ],
-        "label": "Regex Mode",
+        "label": "Regex mode",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4717,7 +4726,7 @@
           "nav:Prepare",
           "click:Regex builder"
         ],
-        "label": "Test Pattern",
+        "label": "Test pattern",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4741,7 +4750,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Alternation",
+        "label": "|",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4765,7 +4774,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Backref",
+        "label": "\\1",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4789,7 +4798,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Caret",
+        "label": "^",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4813,7 +4822,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Charclass",
+        "label": "[ ]",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4837,7 +4846,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Digit",
+        "label": "\\d",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4861,7 +4870,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Dollar",
+        "label": "$",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4885,7 +4894,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Dot",
+        "label": ".",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4909,7 +4918,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Grid",
+        "label": "Character classes",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4933,7 +4942,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Group",
+        "label": "( )",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4957,7 +4966,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Noncapture",
+        "label": "(?: )",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -4981,7 +4990,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Plus",
+        "label": "+",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5005,7 +5014,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Question",
+        "label": "?",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5029,7 +5038,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Space",
+        "label": "\\s",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5053,7 +5062,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Star",
+        "label": "*",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5077,7 +5086,7 @@
           "click:Regex builder",
           "tab:Tokens"
         ],
-        "label": "Word",
+        "label": "\\w",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5100,7 +5109,7 @@
           "nav:Prepare",
           "click:Regex builder"
         ],
-        "label": "Whole Word",
+        "label": "Whole word",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5193,7 +5202,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "the search glyph is painted by the field, not a window; crop the field row instead"
       },
       "status": "pending"
     },
@@ -5454,7 +5464,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "needs a crash remnant (backup written, process killed, lock removed); documented in project-version-history.md"
       },
       "status": "pending"
     },
@@ -5492,7 +5503,7 @@
         "steps": [
           "open:Version history"
         ],
-        "label": "Project Banner",
+        "label": "Project:",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5536,7 +5547,7 @@
         "steps": [
           "open:Version history"
         ],
-        "label": "Restore Selected",
+        "label": "Restore selected",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5558,7 +5569,7 @@
         "steps": [
           "open:Version history"
         ],
-        "label": "Search Field",
+        "label": "Search versions",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -5580,7 +5591,7 @@
         "steps": [
           "open:Version history"
         ],
-        "label": "Version List",
+        "label": "dataviewCtrl",
         "pad": 8,
         "tuple": {
           "language": "en",

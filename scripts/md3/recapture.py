@@ -205,6 +205,19 @@ def find_control(records, label, toplevel_hwnd=None):
     wanted = norm(label)
     best = None
     tops = {r['hwnd']: r for r in records if r.get('kind') == 'toplevel'}
+    byh = {r['hwnd']: r for r in records if r.get('kind') == 'window'}
+    # A target that is not a top-level (the regex popover is a child of the
+    # frame) scopes the search to its descendants and anchors image_rect to it.
+    scope_win = byh.get(toplevel_hwnd) if toplevel_hwnd is not None and toplevel_hwnd not in tops else None
+
+    def within(r):
+        cur = r
+        while cur is not None:
+            if cur.get('parent') == toplevel_hwnd:
+                return True
+            cur = byh.get(cur.get('parent'))
+        return False
+
     for r in records:
         if r.get('kind') not in ('window', 'tool') or not r.get('shown', True):
             continue
@@ -213,7 +226,10 @@ def find_control(records, label, toplevel_hwnd=None):
         # x = -272. Builds since ae2273d84 record IsShownOnScreen.
         if r.get('on_screen') is False:
             continue
-        if toplevel_hwnd is not None and r.get('top') != toplevel_hwnd:
+        if scope_win is not None:
+            if r.get('kind') != 'window' or not within(r):
+                continue
+        elif toplevel_hwnd is not None and r.get('top') != toplevel_hwnd:
             continue
         cands = [norm(r.get('label')), norm(r.get('name'))]
         exact = wanted in cands
@@ -231,7 +247,7 @@ def find_control(records, label, toplevel_hwnd=None):
         return None
     r = best[1]
     top = tops.get(r.get('top'))
-    origin = top['rect'] if top else {'x': 0, 'y': 0}
+    origin = scope_win['screen'] if scope_win is not None else (top['rect'] if top else {'x': 0, 'y': 0})
     s = r['screen']
     r['image_rect'] = {'x': s['x'] - origin['x'], 'y': s['y'] - origin['y'], 'w': s['w'], 'h': s['h']}
     return r
@@ -260,9 +276,24 @@ class Runner:
             label = arg
             records = self.app.probe()
             c = find_control(records, label, self.app.main)
+            if not c and label.lower() in TABS:
+                # Non-English tuples label the rail in that language; the rail
+                # geometry is language-independent at 1200x800.
+                self.app.click(self.app.main, *TABS[label.lower()], settle=2.5)
+                return
             if not c:
                 raise RuntimeError(f'blocked: nav {label} (no tab labelled so)')
             self.click_control(self.app.main, c)
+        elif kind == 'wizard-page':
+            self.app.command(f'wizard-page {int(arg)}')
+            time.sleep(2.5)
+        elif kind == 'resize':
+            w, h = [int(v) for v in arg.lower().split('x')]
+            self.app.command(f'resize {self.front or self.app.main} {w} {h}')
+            time.sleep(2.0)
+        elif kind == 'open' and arg.lower() == 'command palette':
+            self.app.command('palette')
+            self.front = self.app.wait(lambda w: w['class'] == '#32770' and 'palette' in w['title'].lower(), 10, 'command-palette')['handle']
         elif kind == 'menu':
             # Pop a top-bar menu; the popup is its own top-level window
             # (class #32768) and becomes the front for the capture.
@@ -338,6 +369,8 @@ class Runner:
 
     def run(self, recipe, out_path):
         self.front = None
+        if recipe.get('blocked'):
+            raise RuntimeError('blocked: ' + recipe['blocked'])
         for s in recipe.get('steps', []):
             self.step(s)
         time.sleep(1.5)
@@ -454,10 +487,24 @@ def main():
                     # click does cross: close Preferences by its caption glyph,
                     # anything else by the same corner, then forget the handle.
                     try:
-                        app.click(runner.front, *PREF_CLOSE, settle=1.0)
+                        # Menus are dismissed by a click on the frame; dialogs
+                        # and popups close through the app (EndModal / Close),
+                        # which works whatever their size.
+                        if any(w['handle'] == runner.front and w['class'] == '#32768' for w in app.windows()):
+                            app.click(app.main, 600, 400, settle=1.0)
+                        else:
+                            app.command(f'close {runner.front}')
                     except (RuntimeError, SystemExit):
                         pass
                     runner.front = None
+                    # Anything else left open by the row (a second dialog, a
+                    # popover) is closed too, so rows cannot stack windows.
+                    for w in app.windows():
+                        if w['class'] == '#32770' and w['handle'] != app.main and w['width'] >= 200 and w['title'] not in ('', 'Downloading Bambu Network Plug-in'):
+                            try:
+                                app.command(f"close {w['handle']}")
+                            except (RuntimeError, SystemExit):
+                                pass
         except Exception as e:  # noqa: BLE001
             for r in trows:
                 report['rows'].append({'file': r['file'], 'status': f'failed: {e}'})

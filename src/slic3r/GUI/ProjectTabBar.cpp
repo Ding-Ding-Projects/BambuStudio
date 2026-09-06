@@ -400,6 +400,7 @@ ProjectTabBar::ProjectTabBar(wxWindow *parent)
         m_add_btn->SetCornerRadius(FromDIP(add_container) / 2.0);
     }
     m_add_btn->SetToolTip(_L("New project tab"));
+    m_add_btn->SetName(_L("New project tab"));
     m_add_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         wxCommandEvent evt(EVT_PROJECT_TAB_NEW);
         evt.SetEventObject(this);

@@ -6,6 +6,8 @@
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 #include "NotificationManager.hpp"
+#include "CommandPalette.hpp"
+#include "ConfigWizard.hpp"
 #include <wx/scrolwin.h>
 #include <cwchar>
 #include "Widgets/MD3Tokens.hpp"
@@ -419,6 +421,58 @@ bool handle_command(const std::wstring &payload)
                 if (Plater *plater = wxGetApp().plater()) plater->get_notification_manager()->push_notification(text);
             });
             return true;
+        }
+        //   close <hwnd>         close a dialog (EndModal when modal) or window
+        //   resize <hwnd> <w> <h> resize a window
+        //   palette              open the command palette
+        //   wizard-page <n>      jump the open configuration wizard to index page n
+        const std::wstring close = L"close ", resize = L"resize ", palette = L"palette", wizard = L"wizard-page ";
+        auto find_by_handle_any = [](unsigned long long h) -> wxWindow * {
+            std::function<wxWindow *(wxWindow *)> rec = [&](wxWindow *cur) -> wxWindow * {
+                if (handle_of(cur) == static_cast<std::uintptr_t>(h)) return cur;
+                for (wxWindow *child : cur->GetChildren())
+                    if (wxWindow *hit = rec(child)) return hit;
+                return nullptr;
+            };
+            for (wxWindow *top : wxTopLevelWindows)
+                if (wxWindow *hit = rec(top)) return hit;
+            return nullptr;
+        };
+        if (payload.compare(0, close.size(), close) == 0) {
+            wxWindow *w = find_by_handle_any(std::wcstoull(payload.substr(close.size()).c_str(), nullptr, 0));
+            if (!w) return false;
+            w->CallAfter([w]() {
+                if (auto *dlg = dynamic_cast<wxDialog *>(w)) {
+                    if (dlg->IsModal()) dlg->EndModal(wxID_CANCEL); else dlg->Close(true);
+                } else if (auto *tlw = dynamic_cast<wxTopLevelWindow *>(w)) {
+                    tlw->Close(true);
+                } else {
+                    w->Hide();
+                }
+            });
+            return true;
+        }
+        if (payload.compare(0, resize.size(), resize) == 0) {
+            std::wistringstream in(payload.substr(resize.size()));
+            unsigned long long h = 0; int cw = 0, ch = 0;
+            in >> h >> cw >> ch;
+            wxWindow *w = find_by_handle_any(h);
+            if (!w || cw <= 0 || ch <= 0) return false;
+            w->CallAfter([w, cw, ch]() { w->SetSize(cw, ch); w->Layout(); });
+            return true;
+        }
+        if (frame && payload == palette) {
+            frame->CallAfter([frame]() { CommandPalette::ShowPalette(frame); });
+            return true;
+        }
+        if (payload.compare(0, wizard.size(), wizard) == 0) {
+            const size_t index = static_cast<size_t>(std::wcstoull(payload.substr(wizard.size()).c_str(), nullptr, 10));
+            for (wxWindow *top : wxTopLevelWindows)
+                if (auto *wz = dynamic_cast<ConfigWizard *>(top)) {
+                    wz->CallAfter([wz, index]() { wz->go_to_page(index); });
+                    return true;
+                }
+            return false;
         }
         if (payload.compare(0, scroll.size(), scroll) == 0) {
             const unsigned long long h = std::wcstoull(payload.substr(scroll.size()).c_str(), nullptr, 0);

@@ -2854,3 +2854,8 @@ void ConfigWizard::on_sys_color_changed()
 
 }
 }
+
+void ConfigWizard::go_to_page(size_t index)
+{
+    if (p && p->index) p->index->go_to(index);
+}

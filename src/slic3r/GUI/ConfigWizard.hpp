@@ -18,6 +18,8 @@ namespace GUI {
 class ConfigWizard: public DPIDialog
 {
 public:
+    // Headless-driver hook: jump to the index page at `index` (layout probe "wizard-page N").
+    void go_to_page(size_t index);
     // Why is the Wizard run
     enum RunReason {
         RR_DATA_EMPTY,                  // No or empty datadir
