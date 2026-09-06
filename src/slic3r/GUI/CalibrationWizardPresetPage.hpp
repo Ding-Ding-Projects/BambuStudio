@@ -40,16 +40,12 @@ public:
 protected:
     CaliPresetStage m_stage;
     wxBoxSizer*   m_top_sizer;
-    // Deliberately native, not the drawn MD3 RadioBox: RadioBox is a label-less
-    // wxBitmapToggleButton, so retyping these would trade the radio role, the checked
-    // state, the label-derived accessible name, arrow-key group navigation and the
-    // automatic single-selection for a themed dot. Their type and text colour are
-    // tokened in create_panel(); the glyph itself stays an OS radio until a RadioBox
-    // that carries a label and a radio role exists.
+    // Kit radios: LabeledRadioButton carries the radio role, the checked state, the
+    // label-derived accessible name and, through the RadioGroup, arrow-key navigation
+    // and single selection.
     LabeledRadioButton* m_complete_radioBox;
     LabeledRadioButton* m_fine_radioBox;
     RadioGroup m_stage_radio_group;
-    RadioGroup m_slot_radio_group;
     TextInput *    flow_ratio_input;
     wxPanel*       input_panel;
     float m_flow_ratio_value;
@@ -258,6 +254,8 @@ public:
     ExtruderType get_extruder_type(int extruder_id) const;
 
 protected:
+    // One group across the per-slot radios keeps the slot selection single.
+    RadioGroup m_slot_radio_group;
     void create_selection_panel(wxWindow* parent);
     void create_filament_list_panel(wxWindow* parent);
     wxSizer* create_ams_items_sizer(wxPanel* ams_preview_panel, std::vector<AMSPreview*> &ams_preview_list, std::vector<AMSinfo> &ams_info, ExtruderRole role);
