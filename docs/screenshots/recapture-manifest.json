@@ -13,7 +13,18 @@
       "kind": "readme",
       "page": "material-device-dark-bilingual",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "device",
+        "steps": [
+          "nav:Device"
+        ],
+        "tuple": {
+          "language": "bilingual_en_yue_HK",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -22,7 +33,18 @@
       "kind": "readme",
       "page": "material-prepare-light-en",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -31,7 +53,18 @@
       "kind": "readme",
       "page": "material-preview-dark-yue-hk",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preview",
+        "steps": [
+          "nav:Preview"
+        ],
+        "tuple": {
+          "language": "yue_HK",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -40,7 +73,19 @@
       "kind": "readme",
       "page": "native-material-device-plugin-gate-light-en",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "device",
+        "steps": [
+          "nav:Device"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        },
+        "note": "plugin gate visible when the network plugin is absent"
+      },
       "status": "pending"
     },
     {
@@ -49,7 +94,19 @@
       "kind": "readme",
       "page": "native-material-filament-manager-light-en",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "filament-manager",
+        "steps": [
+          "nav:Prepare",
+          "open:Ink manager"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -58,7 +115,18 @@
       "kind": "readme",
       "page": "native-material-home-light-en",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "home",
+        "steps": [
+          "nav:Home"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -67,7 +135,18 @@
       "kind": "readme",
       "page": "native-material-project-history-light-en",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "project-history",
+        "steps": [
+          "open:Project history"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -76,7 +155,18 @@
       "kind": "readme",
       "page": "shot-home",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "home",
+        "steps": [
+          "nav:Home"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -85,7 +175,18 @@
       "kind": "readme",
       "page": "shot-prepare-frame",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -94,7 +195,20 @@
       "kind": "readme",
       "page": "shot-prepare-sidebar",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Process",
+        "pad": 16,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -103,7 +217,18 @@
       "kind": "readme",
       "page": "shot-wizard",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -112,7 +237,18 @@
       "kind": "readme",
       "page": "yum-20260811-native-main-ca49",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -121,7 +257,18 @@
       "kind": "readme",
       "page": "yum-20260811-wizard-ca49",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -130,7 +277,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "accent-1",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Accent 1",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -139,7 +300,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "accent-2",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Accent 2",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -148,7 +323,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "accent-3",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Accent 3",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -157,7 +346,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "accent-4",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Accent 4",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -166,7 +369,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "accent-5",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Accent 5",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -175,7 +392,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "accent-6",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Accent 6",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -184,7 +415,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "accent-custom-btn",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Accent custom-btn",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -193,7 +438,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "density-comfortable",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Density Comfortable",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -202,7 +461,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "density-compact",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Compact",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "compact"
+        }
+      },
       "status": "pending"
     },
     {
@@ -211,7 +484,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "font-combo",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Font",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -220,7 +507,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "md3-preview-panel",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Md3 Preview Panel",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -229,7 +530,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "preview-text",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Preview Text",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -238,7 +553,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "reset-defaults-btn",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Reset Defaults",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -247,7 +576,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "text-size-default",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Text Size Default",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -256,7 +599,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "text-size-large",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Text Size Large",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -265,7 +622,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "text-size-small",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Text Size Small",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -274,7 +645,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "theme-dark",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Dark",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -283,7 +668,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "theme-light",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Light",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -292,7 +691,19 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -301,7 +712,20 @@
       "kind": "native",
       "page": "custom-color-dialog",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "custom-color",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance",
+          "click:Custom"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -310,7 +734,19 @@
       "kind": "native",
       "page": "dialog",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "bulk-ink",
+        "steps": [
+          "nav:Prepare",
+          "click:Bulk ink"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -319,7 +755,20 @@
       "kind": "native",
       "page": "entry-button",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Bulk ink",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -328,7 +777,18 @@
       "kind": "native",
       "page": "palette",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "command-palette",
+        "steps": [
+          "key:ctrl+shift+f"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -337,7 +797,21 @@
       "kind": "native",
       "page": "dialog",
       "control": "armed",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles",
+          "arm:Slide to confirm"
+        ],
+        "label": "Slide to confirm",
+        "pad": 12,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -346,7 +820,21 @@
       "kind": "native",
       "page": "dialog",
       "control": "export-btn-armed",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles",
+          "arm:Slide to confirm"
+        ],
+        "label": "Slide to confirm",
+        "pad": 12,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -355,7 +843,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "export-btn",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "label": "Export",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -364,7 +865,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "import-btn",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "label": "Import",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -373,7 +887,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "md3-caption",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "label": "Md3 Caption",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -382,7 +909,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "profile-actions",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "label": "Profile Actions",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -391,7 +931,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "profile-list",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "label": "Profile List",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -400,7 +953,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "search-field",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "label": "Search Field",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -409,7 +975,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "secrets-card",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "label": "Secrets Card",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -418,7 +997,21 @@
       "kind": "native",
       "page": "dialog",
       "control": "slide-to-confirm-confirmed",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles",
+          "arm:Slide to confirm"
+        ],
+        "label": "Slide to confirm",
+        "pad": 12,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -427,7 +1020,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "slide-to-confirm",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "label": "Slide To Confirm",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -436,7 +1042,18 @@
       "kind": "native",
       "page": "dialog",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -445,7 +1062,18 @@
       "kind": "native",
       "page": "config-profiles",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-profiles",
+        "steps": [
+          "open:Config profiles"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -454,7 +1082,19 @@
       "kind": "native",
       "page": "menu-file",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "menu",
+        "steps": [
+          "menu:File"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        },
+        "note": "popup menu, capture via popovercap"
+      },
       "status": "pending"
     },
     {
@@ -463,7 +1103,19 @@
       "kind": "native",
       "page": "preferences-appearance",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -472,7 +1124,18 @@
       "kind": "native",
       "page": "prepare",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -481,7 +1144,19 @@
       "kind": "native",
       "page": "about",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "about",
+        "steps": [
+          "menu:Help",
+          "click:About"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -490,7 +1165,19 @@
       "kind": "native",
       "page": "export-preset-bundle",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "export-preset-bundle",
+        "steps": [
+          "menu:File",
+          "click:Export preset bundle"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -499,7 +1186,19 @@
       "kind": "native",
       "page": "keyboard-shortcuts",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "keyboard-shortcuts",
+        "steps": [
+          "menu:Help",
+          "click:Keyboard shortcuts"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -508,7 +1207,19 @@
       "kind": "native",
       "page": "network-test",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "network-test",
+        "steps": [
+          "menu:Help",
+          "click:Network test"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -517,7 +1228,20 @@
       "kind": "native",
       "page": "dialog",
       "control": "after-upload-no-model",
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "ink-scanner",
+        "steps": [
+          "nav:Prepare",
+          "click:Ink scanner",
+          "upload:no-model"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -526,7 +1250,19 @@
       "kind": "native",
       "page": "dialog",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "ink-scanner",
+        "steps": [
+          "nav:Prepare",
+          "click:Ink scanner"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -535,7 +1271,20 @@
       "kind": "native",
       "page": "home",
       "control": "create-new-project-btn",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "home",
+        "steps": [
+          "nav:Home"
+        ],
+        "label": "Create new project",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -544,7 +1293,20 @@
       "kind": "native",
       "page": "home",
       "control": "more-link",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "home",
+        "steps": [
+          "nav:Home"
+        ],
+        "label": "More",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -553,7 +1315,20 @@
       "kind": "native",
       "page": "home",
       "control": "open-project-btn",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "home",
+        "steps": [
+          "nav:Home"
+        ],
+        "label": "Open project",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -562,7 +1337,20 @@
       "kind": "native",
       "page": "home",
       "control": "recently-opened-header",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "home",
+        "steps": [
+          "nav:Home"
+        ],
+        "label": "Recently opened",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -571,7 +1359,18 @@
       "kind": "native",
       "page": "home",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "home",
+        "steps": [
+          "nav:Home"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -580,7 +1379,20 @@
       "kind": "native",
       "page": "ink-terminology-sidebar",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Ink",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -589,7 +1401,19 @@
       "kind": "native",
       "page": "menu-calibration",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "menu",
+        "steps": [
+          "menu:Calibration"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        },
+        "note": "popup menu, capture via popovercap"
+      },
       "status": "pending"
     },
     {
@@ -598,7 +1422,19 @@
       "kind": "native",
       "page": "menu-edit",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "menu",
+        "steps": [
+          "menu:Edit"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        },
+        "note": "popup menu, capture via popovercap"
+      },
       "status": "pending"
     },
     {
@@ -607,7 +1443,19 @@
       "kind": "native",
       "page": "menu-file",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "menu",
+        "steps": [
+          "menu:File"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        },
+        "note": "popup menu, capture via popovercap"
+      },
       "status": "pending"
     },
     {
@@ -616,7 +1464,19 @@
       "kind": "native",
       "page": "menu-help",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "menu",
+        "steps": [
+          "menu:Help"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        },
+        "note": "popup menu, capture via popovercap"
+      },
       "status": "pending"
     },
     {
@@ -625,7 +1485,19 @@
       "kind": "native",
       "page": "menu-objects",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "menu",
+        "steps": [
+          "menu:Objects"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        },
+        "note": "popup menu, capture via popovercap"
+      },
       "status": "pending"
     },
     {
@@ -634,7 +1506,19 @@
       "kind": "native",
       "page": "menu-view",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "menu",
+        "steps": [
+          "menu:View"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        },
+        "note": "popup menu, capture via popovercap"
+      },
       "status": "pending"
     },
     {
@@ -643,7 +1527,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": "calibration",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Calibration",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -652,7 +1547,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": "device",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Device",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -661,7 +1567,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": "filament",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Ink",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -670,7 +1587,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": "home",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Home",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -679,7 +1607,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": "prepare",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Prepare",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -688,7 +1627,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": "preview",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Preview",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -697,7 +1647,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": "project",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Project",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -706,7 +1667,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": "settings-gear",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Settings",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -715,7 +1687,18 @@
       "kind": "native",
       "page": "nav-rail",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "nav rail",
+        "pad": 0,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -724,7 +1707,18 @@
       "kind": "native",
       "page": "page-device",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "device",
+        "steps": [
+          "nav:Device"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -733,7 +1727,18 @@
       "kind": "native",
       "page": "page-preview",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preview",
+        "steps": [
+          "nav:Preview"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -742,7 +1747,20 @@
       "kind": "native",
       "page": "prepare-action-bar",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Slice plate",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -751,7 +1769,20 @@
       "kind": "native",
       "page": "preview-action-bar-print-button",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preview",
+        "steps": [
+          "nav:Preview"
+        ],
+        "label": "Print plate",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -760,7 +1791,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "add-filament",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Add ink",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -769,7 +1813,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "advanced-settings",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Advanced",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -778,7 +1835,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "filament-menu",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Ink menu",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -787,7 +1857,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "filament-row-1",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Ink 1",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -796,7 +1879,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-assembly",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "assembly",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -805,7 +1901,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-brim",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "brim_ears",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -814,7 +1923,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-color-paint",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "mmu_painting",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -823,7 +1945,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-cut",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "cut",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -832,7 +1967,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-fdm-support",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "fdm_supports",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -841,7 +1989,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-measure",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "measure",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -850,7 +2011,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-mmu-segment",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "mmu_segmentation",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -859,7 +2033,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-move",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "move",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -868,7 +2055,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-place-on-face",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "place",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -877,7 +2077,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-rail",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "*rail*",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -886,7 +2099,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-rotate",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "rotate",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -895,7 +2121,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-scale",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "scale",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -904,7 +2143,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-seam",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "seam",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -913,7 +2165,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-support-paint",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "fdm_supports",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -922,7 +2187,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "gizmo-text",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "text",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -931,7 +2209,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "layer-height-edit",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Layer height",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -940,7 +2231,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "plate-1-chip",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Plate 1",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -949,7 +2253,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "plate-add",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Add plate",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -958,7 +2275,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "printer-edit-pencil",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Edit printer",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -967,7 +2297,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "printer-settings-gear",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Printer settings",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -976,7 +2319,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "printer-wifi",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Connect",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -985,7 +2341,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "process-preset",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Process",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -994,7 +2363,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-arrange",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "arrange",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1003,7 +2385,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-assembly-view",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "assembly_view",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1012,7 +2407,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-cut2",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "cut",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1021,7 +2429,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-import",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "add",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1030,7 +2451,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-layers",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "layersediting",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1039,7 +2473,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-orient",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "orient",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1048,7 +2495,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-split",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "splitobjects",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1057,7 +2517,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-toolbar",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "*toolbar*",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1066,7 +2539,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "scene-undo",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "undo",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1075,7 +2561,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "seg-others",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Others",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1084,7 +2583,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "seg-quality",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Quality",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1093,7 +2605,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "seg-strength",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Strength",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1102,7 +2627,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "seg-support",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Support",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1111,7 +2649,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "slice-plate",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Slice plate",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1120,7 +2671,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": "zoom-controls",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "item": "*zoom*",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1129,7 +2693,20 @@
       "kind": "native",
       "page": "sidebar-prepare",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "sidebar",
+        "pad": 0,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1138,7 +2715,20 @@
       "kind": "native",
       "page": "sidebar-search-pills",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Search settings",
+        "pad": 12,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1147,7 +2737,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "history-chip-main",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "main",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1156,7 +2757,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "logo-bambu-studio",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Bambu Studio",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1165,7 +2777,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "menu-calibration",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Calibration",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1174,7 +2797,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "menu-edit",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Edit",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1183,7 +2817,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "menu-file",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "File",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1192,7 +2837,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "menu-help",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Help",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1201,7 +2857,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "menu-objects",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Objects",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1210,7 +2877,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "menu-view",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "View",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1219,7 +2897,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "palette-icon",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Command palette",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1228,7 +2917,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "project-chip-untitled",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Untitled",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1237,7 +2937,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "window-close",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Close",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1246,7 +2957,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "window-maximize",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Maximize",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1255,7 +2977,18 @@
       "kind": "native",
       "page": "topbar",
       "control": "window-minimize",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Minimize",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1264,7 +2997,18 @@
       "kind": "native",
       "page": "topbar",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "topbar",
+        "pad": 0,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1273,7 +3017,20 @@
       "kind": "native",
       "page": "action-bar-after-starved-row",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Slice plate",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1282,7 +3039,10 @@
       "kind": "native",
       "page": "action-bar-before-starved-row",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "historical",
+        "note": "starved action bar before the sizer fix"
+      },
       "status": "pending"
     },
     {
@@ -1291,7 +3051,21 @@
       "kind": "native",
       "page": "gizmo-rail-glyphs-dark-D06044",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-gl",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare",
+          "open:cube.stl"
+        ],
+        "item": "*rail*",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1300,7 +3074,19 @@
       "kind": "native",
       "page": "prepare-model-loaded-dark-D06044",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare",
+          "open:cube.stl"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1309,7 +3095,18 @@
       "kind": "native",
       "page": "prepare-workspace-dark-D06044",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1318,7 +3115,19 @@
       "kind": "native",
       "page": "printer-settings-dark-D06044",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "printer-settings",
+        "steps": [
+          "nav:Prepare",
+          "click:Printer settings"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1327,7 +3136,21 @@
       "kind": "native",
       "page": "toast-info",
       "control": "accent-bar",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "toast",
+        "steps": [
+          "nav:Prepare",
+          "trigger:info-toast"
+        ],
+        "label": "accent",
+        "pad": 4,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1336,7 +3159,21 @@
       "kind": "native",
       "page": "toast-info",
       "control": "close-x",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "toast",
+        "steps": [
+          "nav:Prepare",
+          "trigger:info-toast"
+        ],
+        "label": "Close",
+        "pad": 4,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1345,7 +3182,21 @@
       "kind": "native",
       "page": "toast-info",
       "control": "toast",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "toast",
+        "steps": [
+          "nav:Prepare",
+          "trigger:info-toast"
+        ],
+        "label": "toast",
+        "pad": 4,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1354,7 +3205,19 @@
       "kind": "native",
       "page": "toast-info",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "toast",
+        "steps": [
+          "nav:Prepare",
+          "trigger:info-toast"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1363,7 +3226,19 @@
       "kind": "native",
       "page": "toast-presets-up-to-date",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "toast",
+        "steps": [
+          "menu:Help",
+          "click:Check for presets updates"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1372,7 +3247,19 @@
       "kind": "native",
       "page": "toast-try-slice",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "toast",
+        "steps": [
+          "nav:Prepare",
+          "open:cube.stl"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1381,7 +3268,10 @@
       "kind": "pages",
       "page": "ink-search-before",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-app.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1390,7 +3280,10 @@
       "kind": "pages",
       "page": "ink-search-filtered",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-app.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1399,7 +3292,10 @@
       "kind": "pages",
       "page": "settings-switches",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-app.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1408,7 +3304,10 @@
       "kind": "pages",
       "page": "titlebar-640",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-app.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1417,7 +3316,10 @@
       "kind": "pages",
       "page": "version-history-dialog",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-app.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1426,7 +3328,10 @@
       "kind": "pages",
       "page": "bilingual-narrow",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1435,7 +3340,10 @@
       "kind": "pages",
       "page": "changelog-calendar",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1444,7 +3352,10 @@
       "kind": "pages",
       "page": "dim-sum-card",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1453,7 +3364,10 @@
       "kind": "pages",
       "page": "material-you-light",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1462,7 +3376,10 @@
       "kind": "pages",
       "page": "regex-lab-matches",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1471,7 +3388,10 @@
       "kind": "pages",
       "page": "settings-cantonese-narrow",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1480,7 +3400,10 @@
       "kind": "pages",
       "page": "settings-language-and-funny",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1489,7 +3412,10 @@
       "kind": "pages",
       "page": "settings-search-cross-tab",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1498,7 +3424,10 @@
       "kind": "pages",
       "page": "tab-build",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1507,7 +3436,10 @@
       "kind": "pages",
       "page": "tab-changelog",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1516,7 +3448,10 @@
       "kind": "pages",
       "page": "tab-download",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1525,7 +3460,10 @@
       "kind": "pages",
       "page": "tab-materialyou",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1534,7 +3472,10 @@
       "kind": "pages",
       "page": "tab-overview",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1543,7 +3484,10 @@
       "kind": "pages",
       "page": "tab-regex",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1552,7 +3496,10 @@
       "kind": "pages",
       "page": "tab-screens",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1561,7 +3508,10 @@
       "kind": "pages",
       "page": "tab-settings",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1570,7 +3520,10 @@
       "kind": "pages",
       "page": "tabstrip-overflow-menu",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1579,7 +3532,10 @@
       "kind": "pages",
       "page": "tabstrip-wide",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "pages",
+        "script": "ui-md3/scripts/capture-site.mjs"
+      },
       "status": "pending"
     },
     {
@@ -1588,7 +3544,19 @@
       "kind": "native",
       "page": "3d-tab",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:3D"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1597,7 +3565,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "reset-all-warning-dialogs",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Reset All Warning Dialogs",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1606,7 +3588,21 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": "reset-preferences",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "label": "Reset Preferences",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1615,7 +3611,19 @@
       "kind": "native",
       "page": "appearance-tab",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Appearance"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1624,7 +3632,19 @@
       "kind": "native",
       "page": "developer-tools-tab",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Developer Tools"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1633,7 +3653,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "auto-purge-combo",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Auto Purge",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1642,7 +3676,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "download-path-browse",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Download Path Browse",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1651,7 +3699,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "download-path-field",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Download Path",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1660,7 +3722,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "language-combo",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Language",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1669,7 +3745,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "login-region-combo",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Login Region",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1678,7 +3768,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "prepare-panel-position-combo",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Prepare Panel Position",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1687,7 +3791,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "toggle-beta-update",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Beta Update",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1696,7 +3814,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "toggle-filament-manager",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Filament Manager",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1705,7 +3837,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "toggle-multi-device",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Multi Device",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1714,7 +3860,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "toggle-single-instance",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Single Instance",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1723,7 +3883,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "toggle-uxip",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Uxip",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1732,7 +3906,21 @@
       "kind": "native",
       "page": "general-tab",
       "control": "units-combo",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Units",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1741,7 +3929,21 @@
       "kind": "native",
       "page": "general-tab-external-editor",
       "control": "browse-button",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Browse Button",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1750,7 +3952,21 @@
       "kind": "native",
       "page": "general-tab-external-editor",
       "control": "combobox",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Combobox",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1759,7 +3975,21 @@
       "kind": "native",
       "page": "general-tab-external-editor",
       "control": "editor-path-field",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "label": "Editor Path",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1768,7 +3998,19 @@
       "kind": "native",
       "page": "general-tab-external-editor",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1777,7 +4019,20 @@
       "kind": "native",
       "page": "general-tab-scrolled",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General",
+          "scroll:end"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1786,7 +4041,19 @@
       "kind": "native",
       "page": "general-tab",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:General"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1795,7 +4062,19 @@
       "kind": "native",
       "page": "other-tab",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:Other"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1804,7 +4083,20 @@
       "kind": "native",
       "page": "sidebar-3d",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences"
+        ],
+        "label": "3D",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1813,7 +4105,20 @@
       "kind": "native",
       "page": "sidebar-appearance",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences"
+        ],
+        "label": "Appearance",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1822,7 +4127,20 @@
       "kind": "native",
       "page": "sidebar-developer-tools",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences"
+        ],
+        "label": "Developer Tools",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1831,7 +4149,20 @@
       "kind": "native",
       "page": "sidebar-general",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences"
+        ],
+        "label": "General",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1840,7 +4171,20 @@
       "kind": "native",
       "page": "sidebar-other",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences"
+        ],
+        "label": "Other",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1849,7 +4193,20 @@
       "kind": "native",
       "page": "sidebar-user",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences"
+        ],
+        "label": "User",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1858,7 +4215,19 @@
       "kind": "native",
       "page": "user-tab",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "preferences",
+        "steps": [
+          "open:Preferences",
+          "tab:User"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1867,7 +4236,18 @@
       "kind": "native",
       "page": "tab-bar",
       "control": "new-tab-plus",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "New project",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1876,7 +4256,18 @@
       "kind": "native",
       "page": "tab-bar",
       "control": "tab-active-close-x",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Close tab",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1885,7 +4276,18 @@
       "kind": "native",
       "page": "tab-bar",
       "control": "tab-active",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Untitled",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1894,7 +4296,20 @@
       "kind": "native",
       "page": "tab-bar",
       "control": "tab-close-x",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [
+          "open:New project"
+        ],
+        "label": "Close tab",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1903,7 +4318,20 @@
       "kind": "native",
       "page": "tab-bar",
       "control": "tab-inactive",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [
+          "open:New project"
+        ],
+        "label": "Untitled",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1912,7 +4340,18 @@
       "kind": "native",
       "page": "tab-bar",
       "control": "tab-untitled",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "Untitled",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1921,7 +4360,20 @@
       "kind": "native",
       "page": "tab-bar-two-tabs",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [
+          "open:New project"
+        ],
+        "label": "project tabs",
+        "pad": 0,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1930,7 +4382,18 @@
       "kind": "native",
       "page": "tab-bar",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "project tabs",
+        "pad": 0,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1939,7 +4402,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "case-sensitive",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Case Sensitive",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1948,7 +4425,10 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "flags-before-fix",
-      "recipe": null,
+      "recipe": {
+        "kind": "historical",
+        "note": "flags row before the 2026-07 clipping fix"
+      },
       "status": "pending"
     },
     {
@@ -1957,7 +4437,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "flags",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Flags",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1966,7 +4460,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "insert-header",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Insert Header",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1975,7 +4483,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "pattern-editor",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Pattern Editor",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1984,7 +4506,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "quantifiers",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Quantifiers",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -1993,7 +4529,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "reference-tab",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Reference Tab",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2002,7 +4552,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "regex-mode",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Regex Mode",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2011,7 +4575,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "test-pattern",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Test Pattern",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2020,7 +4598,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-alternation",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Alternation",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2029,7 +4622,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-backref",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Backref",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2038,7 +4646,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-caret",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Caret",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2047,7 +4670,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-charclass",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Charclass",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2056,7 +4694,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-digit",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Digit",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2065,7 +4718,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-dollar",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Dollar",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2074,7 +4742,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-dot",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Dot",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2083,7 +4766,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-grid",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Grid",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2092,7 +4790,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-group",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Group",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2101,7 +4814,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-noncapture",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Noncapture",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2110,7 +4838,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-plus",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Plus",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2119,7 +4862,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-question",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Question",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2128,7 +4886,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-space",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Space",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2137,7 +4910,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-star",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Star",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2146,7 +4934,22 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "token-word",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder",
+          "tab:Tokens"
+        ],
+        "label": "Word",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2155,7 +4958,21 @@
       "kind": "native",
       "page": "builder-popover",
       "control": "whole-word",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "label": "Whole Word",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2164,7 +4981,19 @@
       "kind": "native",
       "page": "builder-popover",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "regex-builder",
+        "steps": [
+          "nav:Prepare",
+          "click:Regex builder"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2173,7 +5002,20 @@
       "kind": "native",
       "page": "search-field",
       "control": "builder-button",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Builder Button",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2182,7 +5024,20 @@
       "kind": "native",
       "page": "search-field",
       "control": "regex-toggle",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Regex Toggle",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2191,7 +5046,20 @@
       "kind": "native",
       "page": "search-field",
       "control": "search-icon",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Search Icon",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2200,7 +5068,20 @@
       "kind": "native",
       "page": "search-field",
       "control": "text-entry",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Text Entry",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2209,7 +5090,20 @@
       "kind": "native",
       "page": "search-field",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Search settings",
+        "pad": 12,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2218,7 +5112,20 @@
       "kind": "native",
       "page": "after-header-intact",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Process",
+        "pad": 16,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2227,7 +5134,20 @@
       "kind": "native",
       "page": "after-search-settings",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Search settings",
+        "pad": 12,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2236,7 +5156,20 @@
       "kind": "native",
       "page": "after-sidebar-readable",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "prepare",
+        "steps": [
+          "nav:Prepare"
+        ],
+        "label": "Process",
+        "pad": 16,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2245,7 +5178,10 @@
       "kind": "native",
       "page": "before-header-starved",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "historical",
+        "note": "sidebar before the starved-row fix"
+      },
       "status": "pending"
     },
     {
@@ -2254,7 +5190,10 @@
       "kind": "native",
       "page": "before-sidebar-clipped",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "historical",
+        "note": "sidebar before the starved-row fix"
+      },
       "status": "pending"
     },
     {
@@ -2263,7 +5202,19 @@
       "kind": "native",
       "page": "dialog-520x480-after-text-action-fix",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "smart-home",
+        "steps": [
+          "open:Smart home",
+          "resize:520x480"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2272,7 +5223,10 @@
       "kind": "native",
       "page": "dialog-520x480-before-text-action-fix",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "historical",
+        "note": "dialog before the text-action fix"
+      },
       "status": "pending"
     },
     {
@@ -2281,7 +5235,19 @@
       "kind": "native",
       "page": "dialog-520x480-media-actions-after-fix",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "smart-home",
+        "steps": [
+          "open:Smart home",
+          "resize:520x480"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2290,7 +5256,19 @@
       "kind": "native",
       "page": "dialog-720x760-after-text-action-fix",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "smart-home",
+        "steps": [
+          "open:Smart home",
+          "resize:720x760"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2299,7 +5277,10 @@
       "kind": "native",
       "page": "dialog-720x760-before-text-action-fix",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "historical",
+        "note": "dialog before the text-action fix"
+      },
       "status": "pending"
     },
     {
@@ -2308,7 +5289,18 @@
       "kind": "native",
       "page": "dialog",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "smart-home",
+        "steps": [
+          "open:Smart home"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2317,7 +5309,18 @@
       "kind": "native",
       "page": "crash-restore-prompt",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "crash-restore",
+        "steps": [
+          "launch:with-crash-marker"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2326,7 +5329,20 @@
       "kind": "native",
       "page": "history-dialog",
       "control": "close",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "version-history",
+        "steps": [
+          "open:Version history"
+        ],
+        "label": "Close",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2335,7 +5351,20 @@
       "kind": "native",
       "page": "history-dialog",
       "control": "project-banner",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "version-history",
+        "steps": [
+          "open:Version history"
+        ],
+        "label": "Project Banner",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2344,7 +5373,20 @@
       "kind": "native",
       "page": "history-dialog",
       "control": "refresh",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "version-history",
+        "steps": [
+          "open:Version history"
+        ],
+        "label": "Refresh",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2353,7 +5395,20 @@
       "kind": "native",
       "page": "history-dialog",
       "control": "restore-selected",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "version-history",
+        "steps": [
+          "open:Version history"
+        ],
+        "label": "Restore Selected",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2362,7 +5417,20 @@
       "kind": "native",
       "page": "history-dialog",
       "control": "search-field",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "version-history",
+        "steps": [
+          "open:Version history"
+        ],
+        "label": "Search Field",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2371,7 +5439,20 @@
       "kind": "native",
       "page": "history-dialog",
       "control": "version-list",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "version-history",
+        "steps": [
+          "open:Version history"
+        ],
+        "label": "Version List",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2380,7 +5461,10 @@
       "kind": "native",
       "page": "history-dialog-dark",
       "control": "before-card-fix",
-      "recipe": null,
+      "recipe": {
+        "kind": "historical",
+        "note": "dark card before fix"
+      },
       "status": "pending"
     },
     {
@@ -2389,7 +5473,18 @@
       "kind": "native",
       "page": "history-dialog-dark",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "version-history",
+        "steps": [
+          "open:Version history"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "dark",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2398,7 +5493,18 @@
       "kind": "native",
       "page": "history-dialog",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "version-history",
+        "steps": [
+          "open:Version history"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2407,7 +5513,20 @@
       "kind": "native",
       "page": "menu-entry",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "menu",
+        "steps": [
+          "menu:File"
+        ],
+        "label": "Version history",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2416,7 +5535,18 @@
       "kind": "native",
       "page": "topbar-chip",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "main",
+        "steps": [],
+        "label": "main",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2425,7 +5555,18 @@
       "kind": "native",
       "page": "wizard-index",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2434,7 +5575,19 @@
       "kind": "native",
       "page": "wizard-step-0",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:0"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2443,7 +5596,19 @@
       "kind": "native",
       "page": "wizard-step-1",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:1"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2452,7 +5617,21 @@
       "kind": "native",
       "page": "wizard-step-11",
       "control": "nav-buttons",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:11"
+        ],
+        "label": "Next",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2461,7 +5640,19 @@
       "kind": "native",
       "page": "wizard-step-11",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:11"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2470,7 +5661,21 @@
       "kind": "native",
       "page": "wizard-step-21",
       "control": "nav-buttons",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:21"
+        ],
+        "label": "Next",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2479,7 +5684,19 @@
       "kind": "native",
       "page": "wizard-step-21",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:21"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2488,7 +5705,21 @@
       "kind": "native",
       "page": "wizard-step-22",
       "control": "back-btn",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:22"
+        ],
+        "label": "Back",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2497,7 +5728,21 @@
       "kind": "native",
       "page": "wizard-step-22",
       "control": "filament-type-filter",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:22"
+        ],
+        "label": "Filament Type Filter",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2506,7 +5751,21 @@
       "kind": "native",
       "page": "wizard-step-22",
       "control": "finish-btn",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:22"
+        ],
+        "label": "Finish",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2515,7 +5774,21 @@
       "kind": "native",
       "page": "wizard-step-22",
       "control": "nav-buttons",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:22"
+        ],
+        "label": "Next",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2524,7 +5797,21 @@
       "kind": "native",
       "page": "wizard-step-22",
       "control": "printer-filter",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:22"
+        ],
+        "label": "Printer Filter",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2533,7 +5820,21 @@
       "kind": "native",
       "page": "wizard-step-22",
       "control": "select-all-checkbox",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:22"
+        ],
+        "label": "Select All",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2542,7 +5843,21 @@
       "kind": "native",
       "page": "wizard-step-22",
       "control": "vendor-filter",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:22"
+        ],
+        "label": "Vendor Filter",
+        "pad": 8,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2551,7 +5866,19 @@
       "kind": "native",
       "page": "wizard-step-22",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:22"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2560,7 +5887,21 @@
       "kind": "native",
       "page": "wizard-step-23",
       "control": "nav-buttons",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:23"
+        ],
+        "label": "Next",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2569,7 +5910,19 @@
       "kind": "native",
       "page": "wizard-step-23",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:23"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2578,7 +5931,21 @@
       "kind": "native",
       "page": "wizard-step-24",
       "control": "nav-buttons",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:24"
+        ],
+        "label": "Next",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2587,7 +5954,19 @@
       "kind": "native",
       "page": "wizard-step-24",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:24"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2596,7 +5975,21 @@
       "kind": "native",
       "page": "wizard-step-3",
       "control": "nav-buttons",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:3"
+        ],
+        "label": "Next",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2605,7 +5998,19 @@
       "kind": "native",
       "page": "wizard-step-3",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:3"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2614,7 +6019,21 @@
       "kind": "native",
       "page": "wizard-step-31",
       "control": "nav-buttons",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:31"
+        ],
+        "label": "Next",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2623,7 +6042,19 @@
       "kind": "native",
       "page": "wizard-step-31",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:31"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2632,7 +6063,21 @@
       "kind": "native",
       "page": "wizard-step-5",
       "control": "nav-buttons",
-      "recipe": null,
+      "recipe": {
+        "kind": "crop-probe",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:5"
+        ],
+        "label": "Next",
+        "pad": 24,
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2641,7 +6086,19 @@
       "kind": "native",
       "page": "wizard-step-5",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:5"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     },
     {
@@ -2650,7 +6107,19 @@
       "kind": "native",
       "page": "wizard-step-6",
       "control": null,
-      "recipe": null,
+      "recipe": {
+        "kind": "page",
+        "surface": "config-wizard",
+        "steps": [
+          "open:Config wizard",
+          "wizard-page:6"
+        ],
+        "tuple": {
+          "language": "en",
+          "theme": "light",
+          "density": "comfortable"
+        }
+      },
       "status": "pending"
     }
   ]
