@@ -772,9 +772,7 @@ void AMSSettingArrangeAMSOrder::CreateGui()
     StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
 
     m_btn_rearrange = new Button(this, _L("Reset"));
-    m_btn_rearrange->SetBackgroundColor(btn_bg_green);
-    m_btn_rearrange->SetBorderColor(btn_bd_green);
-    m_btn_rearrange->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+    m_btn_rearrange->SetVariant(Button::Variant::Filled);
     m_btn_rearrange->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_btn_rearrange->SetMinSize(wxSize(-1, FromDIP(26)));
     m_btn_rearrange->SetMaxSize(wxSize(-1, FromDIP(26)));

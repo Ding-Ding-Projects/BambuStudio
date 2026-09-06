@@ -531,7 +531,7 @@ void FilamentPickerDialog::CreateMoreInfoButton()
     );
 
 
-    m_more_btn->SetBackgroundColor(btn_bg);
+    m_more_btn->SetVariant(Button::Variant::Outlined);
     m_more_btn->SetBorderStyle(wxPENSTYLE_SHORT_DASH);
     m_more_btn->SetCornerRadius(FromDIP(0));
 }
@@ -572,9 +572,7 @@ wxBoxSizer* FilamentPickerDialog::CreateButtonPanel()
     m_cancel_btn = new Button(this, _L("Cancel"), "", 0, 0, wxID_CANCEL);
     m_cancel_btn->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_cancel_btn->SetCornerRadius(FromDIP(12));
-    m_cancel_btn->SetBackgroundColor(btn_bg_white);
-    m_cancel_btn->SetBorderColor(btn_bd_white);
-    m_cancel_btn->SetTextColor(btn_text_white);
+    m_cancel_btn->SetVariant(Button::Variant::Outlined);
     btn_sizer->Add(m_cancel_btn, 0, wxEXPAND, 0);
     btn_sizer->AddSpacer(FromDIP(10));
 
@@ -582,9 +580,7 @@ wxBoxSizer* FilamentPickerDialog::CreateButtonPanel()
     m_ok_btn = new Button(this, _L("OK"), "", 0, 0, wxID_OK);
     m_ok_btn->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_ok_btn->SetCornerRadius(FromDIP(12));
-    m_ok_btn->SetBackgroundColor(btn_bg_green);
-    m_ok_btn->SetBorderColor(btn_bd_green);
-    m_ok_btn->SetTextColor(btn_text_green);
+    m_ok_btn->SetVariant(Button::Variant::Filled);
     m_ok_btn->SetFocus();
     btn_sizer->Add(m_ok_btn, 0, wxEXPAND, 0);
 

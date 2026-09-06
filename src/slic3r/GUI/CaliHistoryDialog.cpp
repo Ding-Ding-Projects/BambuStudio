@@ -128,9 +128,7 @@ HistoryWindow::HistoryWindow(wxWindow* parent, const std::vector<PACalibResult>&
     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     mew_btn->SetBackgroundColour(*wxWHITE);
-    mew_btn->SetBackgroundColor(btn_bg_green);
-    mew_btn->SetBorderColor(ThemeColor::BrandGreen);
-    mew_btn->SetTextColor(ThemeColor::White);
+    mew_btn->SetVariant(Button::Variant::Filled);
     mew_btn->SetMinSize(wxSize(FromDIP(100), FromDIP(24)));
     mew_btn->SetMaxSize(wxSize(FromDIP(100), FromDIP(24)));
     mew_btn->SetCornerRadius(FromDIP(12));
@@ -468,9 +466,7 @@ void HistoryWindow::sync_history_data() {
             std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         edit_button->SetBackgroundColour(*wxWHITE);
-        edit_button->SetBackgroundColor(btn_bg_green);
-        edit_button->SetBorderColor(ThemeColor::BrandGreen);
-        edit_button->SetTextColor(ThemeColor::White);
+        edit_button->SetVariant(Button::Variant::Filled);
         edit_button->SetMinSize(wxSize(-1, FromDIP(24)));
         edit_button->SetCornerRadius(FromDIP(12));
         edit_button->Bind(wxEVT_BUTTON, [this, result, k_value, name_value, edit_button](auto& e) {
@@ -667,9 +663,7 @@ EditCalibrationHistoryDialog::EditCalibrationHistoryDialog(wxWindow             
         std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     save_btn->SetBackgroundColour(*wxWHITE);
-    save_btn->SetBackgroundColor(btn_bg_green);
-    save_btn->SetBorderColor(ThemeColor::BrandGreen);
-    save_btn->SetTextColor(ThemeColor::White);
+    save_btn->SetVariant(Button::Variant::Filled);
     save_btn->SetMinSize(wxSize(-1, FromDIP(24)));
     save_btn->SetCornerRadius(FromDIP(12));
     Button* cancel_btn = new Button(top_panel, _L("Cancel"));
@@ -962,9 +956,7 @@ NewCalibrationHistoryDialog::NewCalibrationHistoryDialog(wxWindow *parent, const
     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     ok_btn->SetBackgroundColour(*wxWHITE);
-    ok_btn->SetBackgroundColor(btn_bg_green);
-    ok_btn->SetBorderColor(ThemeColor::BrandGreen);
-    ok_btn->SetTextColor(ThemeColor::White);
+    ok_btn->SetVariant(Button::Variant::Filled);
     ok_btn->SetMinSize(wxSize(-1, FromDIP(24)));
     ok_btn->SetCornerRadius(FromDIP(12));
     Button *cancel_btn = new Button(top_panel, _L("Cancel"));

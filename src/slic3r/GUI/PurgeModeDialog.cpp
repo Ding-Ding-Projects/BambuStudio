@@ -126,19 +126,15 @@ PurgeModeDialog::PurgeModeDialog(wxWindow *parent, PurgeModeDialogType dialog_ty
     auto ok_btn = new Button(this, _L("Confirm"));
     ok_btn->SetMinSize(wxSize(FromDIP(62), FromDIP(24)));
     ok_btn->SetCornerRadius(FromDIP(12));
-    ok_btn->SetBackgroundColor(ok_btn_bg);
+    ok_btn->SetVariant(Button::Variant::Filled);
     ok_btn->SetFont(Label::Body_12);
-    ok_btn->SetBorderColor(ThemeColor::BrandGreen);
-    ok_btn->SetTextColor(ok_btn_text);
     ok_btn->SetId(wxID_OK);
 
     auto cancel_btn = new Button(this, _L("Cancel"));
     cancel_btn->SetMinSize(wxSize(FromDIP(62), FromDIP(24)));
     cancel_btn->SetCornerRadius(FromDIP(12));
-    cancel_btn->SetBackgroundColor(cancel_btn_bg);
+    cancel_btn->SetVariant(Button::Variant::Outlined);
     cancel_btn->SetFont(Label::Body_12);
-    cancel_btn->SetBorderColor(cancel_btn_bd);
-    cancel_btn->SetTextColor(cancel_btn_text);
     cancel_btn->SetId(wxID_CANCEL);
 
     btn_sizer->Add(ok_btn, 0, wxRIGHT, FromDIP(12));

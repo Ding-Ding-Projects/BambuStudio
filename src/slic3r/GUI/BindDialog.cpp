@@ -147,9 +147,7 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
         std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
         std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-    m_button_bind->SetBackgroundColor(btn_bg_green);
-    m_button_bind->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-    m_button_bind->SetTextColor(ThemeColor::White);
+    m_button_bind->SetVariant(Button::Variant::Filled);
     m_button_bind->SetSize(BIND_DIALOG_BUTTON_SIZE);
     m_button_bind->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
     m_button_bind->SetCornerRadius(FromDIP(12));
@@ -159,11 +157,9 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
         std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_cancel = new Button(request_bind_panel, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(BIND_DIALOG_GREY900);
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
     m_button_cancel->SetSize(BIND_DIALOG_BUTTON_SIZE);
     m_button_cancel->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
-    m_button_cancel->SetTextColor(BIND_DIALOG_GREY900);
     m_button_cancel->SetCornerRadius(FromDIP(12));
 
     m_sizer_button->Add(m_button_bind, 0, wxALIGN_CENTER, 0);
@@ -204,11 +200,9 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
     m_sizer_binding_button->Add(0, 0, 1, wxEXPAND, 5);
 
     m_button_close = new Button(binding_panel, _L("Close"));
-    m_button_close->SetBackgroundColor(btn_bg_white);
-    m_button_close->SetBorderColor(BIND_DIALOG_GREY900);
+    m_button_close->SetVariant(Button::Variant::Outlined);
     m_button_close->SetSize(BIND_DIALOG_BUTTON_SIZE);
     m_button_close->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
-    m_button_close->SetTextColor(BIND_DIALOG_GREY900);
     m_button_close->SetCornerRadius(FromDIP(12));
     m_sizer_binding_button->Add(m_button_close, 0, wxALIGN_CENTER, 0);
 
@@ -691,9 +685,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
          std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
          std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
          std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-     m_button_bind->SetBackgroundColor(btn_bg_green);
-     m_button_bind->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-     m_button_bind->SetTextColor(ThemeColor::White);
+     m_button_bind->SetVariant(Button::Variant::Filled);
      m_button_bind->SetSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_bind->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_bind->SetCornerRadius(FromDIP(12));
@@ -704,11 +696,9 @@ PingCodeBindDialog::~PingCodeBindDialog() {
                             std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
      m_button_cancel = new Button(button_panel, _L("Cancel"));
-     m_button_cancel->SetBackgroundColor(btn_bg_white);
-     m_button_cancel->SetBorderColor(BIND_DIALOG_GREY900);
+     m_button_cancel->SetVariant(Button::Variant::Outlined);
      m_button_cancel->SetSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_cancel->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
-     m_button_cancel->SetTextColor(BIND_DIALOG_GREY900);
      m_button_cancel->SetCornerRadius(FromDIP(12));
 
      m_sizer_button->Add(m_button_bind, 0, wxALIGN_CENTER, 0);
@@ -1050,9 +1040,7 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
      m_button_unbind = new Button(this, _L("Confirm"));
      StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
                              std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-     m_button_unbind->SetBackgroundColor(btn_bg_green);
-     m_button_unbind->SetBorderColor(ThemeColor::BrandGreen);
-     m_button_unbind->SetTextColor(ThemeColor::White);
+     m_button_unbind->SetVariant(Button::Variant::Filled);
      m_button_unbind->SetSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_unbind->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_unbind->SetCornerRadius(FromDIP(12));
@@ -1062,11 +1050,9 @@ UnBindMachineDialog::UnBindMachineDialog(Plater *plater /*= nullptr*/)
                             std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
      m_button_cancel = new Button(this, _L("Cancel"));
-     m_button_cancel->SetBackgroundColor(btn_bg_white);
-     m_button_cancel->SetBorderColor(BIND_DIALOG_GREY900);
+     m_button_cancel->SetVariant(Button::Variant::Outlined);
      m_button_cancel->SetSize(BIND_DIALOG_BUTTON_SIZE);
      m_button_cancel->SetMinSize(BIND_DIALOG_BUTTON_SIZE);
-     m_button_cancel->SetTextColor(BIND_DIALOG_GREY900);
      m_button_cancel->SetCornerRadius(FromDIP(12));
 
      m_sizer_button->Add(m_button_unbind, 0, wxALIGN_CENTER, 0);

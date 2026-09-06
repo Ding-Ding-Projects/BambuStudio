@@ -1064,8 +1064,7 @@ ExtruderSwithingStatus::ExtruderSwithingStatus(wxWindow *parent) : wxPanel(paren
     m_button_retry->Bind(wxEVT_BUTTON, &ExtruderSwithingStatus::on_retry, this);
     m_button_retry->SetMinSize(SWITCHING_STATUS_BTN_SIZE);
     m_button_retry->SetMaxSize(SWITCHING_STATUS_BTN_SIZE);
-    m_button_retry->SetBackgroundColor(e_ctrl_bg);
-    m_button_retry->SetBorderColor(e_ctrl_bd);
+    m_button_retry->SetVariant(Button::Variant::Outlined);
     m_button_retry->SetBorderWidth(2);
     if (parent) { m_button_retry->SetBackgroundColour(parent->GetBackgroundColour()); }
 
@@ -1308,9 +1307,8 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     m_button_partskip = new Button(progress_lr_panel, wxEmptyString, "print_control_partskip_disable", 0, 20, wxID_ANY);
     m_button_partskip->Enable(false);
     m_button_partskip->Hide();
-    m_button_partskip->SetBackgroundColor(white_bg);
+    m_button_partskip->SetVariant(Button::Variant::Outlined);
     m_button_partskip->SetIcon("print_control_partskip_disable");
-    m_button_partskip->SetBorderColor(device_card_color());
     m_button_partskip->SetFont(Label::Body_12);
     m_button_partskip->SetCornerRadius(0);
     m_button_partskip->SetToolTip(_L("Parts Skip"));
@@ -1595,9 +1593,7 @@ void PrintingTaskPanel::create_panel(wxWindow *parent)
     StateColor btn_bg_green = device_primary_button_background();
     StateColor btn_bd_green = device_primary_button_border();
     m_button_market_retry = new Button(m_request_failed_panel, _L("Retry"));
-    m_button_market_retry->SetBackgroundColor(btn_bg_green);
-    m_button_market_retry->SetBorderColor(btn_bd_green);
-    m_button_market_retry->SetTextColor(device_primary_button_text());
+    m_button_market_retry->SetVariant(Button::Variant::Outlined);
     m_button_market_retry->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_button_market_retry->SetMinSize(wxSize(-1, FromDIP(26)));
     m_button_market_retry->SetCornerRadius(FromDIP(13));
@@ -3108,10 +3104,8 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
 
     m_button_retry = new Button(m_filament_load_box, _L("Retry"));
     m_button_retry->SetFont(Label::Body_13);
-    m_button_retry->SetBorderColor(btn_bd_white);
-    m_button_retry->SetTextColor(btn_text_white);
+    m_button_retry->SetVariant(Button::Variant::Outlined);
     m_button_retry->SetMinSize(wxSize(FromDIP(80), FromDIP(31)));
-    m_button_retry->SetBackgroundColor(btn_bg_white);
     m_button_retry->SetCornerRadius(FromDIP(15));
     // m_button_retry->Hide();
 
@@ -3122,10 +3116,8 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
 
     m_fila_change_abort = new Button(m_filament_load_box, _L("Stop"));
     m_fila_change_abort->SetFont(Label::Body_13);
-    m_fila_change_abort->SetBorderColor(btn_bd_white);
-    m_fila_change_abort->SetTextColor(btn_text_white);
+    m_fila_change_abort->SetVariant(Button::Variant::Outlined);
     m_fila_change_abort->SetMinSize(wxSize(FromDIP(80), FromDIP(31)));
-    m_fila_change_abort->SetBackgroundColor(btn_bg_white);
     m_fila_change_abort->SetCornerRadius(FromDIP(15));
     m_fila_change_abort->Hide();
 

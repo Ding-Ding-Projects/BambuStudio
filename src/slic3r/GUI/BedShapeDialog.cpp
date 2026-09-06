@@ -297,8 +297,7 @@ wxPanel *BedShapePanel::init_texture_panel()
         StateColor btn_bd_white(std::pair<wxColour, int>(*wxWHITE, StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
 
         Button* load_btn = new Button(parent, _L("Load..."));
-        load_btn->SetBackgroundColor(btn_bg_white);
-        load_btn->SetBorderColor(btn_bd_white);
+        load_btn->SetVariant(Button::Variant::Outlined);
         load_btn->SetBackgroundColour(*wxWHITE);
         load_btn->Enable(true);
         wxSizer * load_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -310,8 +309,7 @@ wxPanel *BedShapePanel::init_texture_panel()
         filename_sizer->Add(filename_lbl, 1, wxEXPAND);
 
         Button* remove_btn = new Button(parent, _L("Remove"));
-        remove_btn->SetBackgroundColor(btn_bg_white);
-        remove_btn->SetBorderColor(btn_bd_white);
+        remove_btn->SetVariant(Button::Variant::Outlined);
         remove_btn->SetBackgroundColour(*wxWHITE);
         wxSizer * remove_sizer = new wxBoxSizer(wxHORIZONTAL);
         remove_sizer->Add(remove_btn, 1, wxEXPAND);
@@ -379,8 +377,7 @@ wxPanel *BedShapePanel::init_model_panel()
         StateColor btn_bd_white(std::pair<wxColour, int>(*wxWHITE, StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
 
         Button* load_btn = new Button(parent, _L("Load..."));
-        load_btn->SetBackgroundColor(btn_bg_white);
-        load_btn->SetBorderColor(btn_bd_white);
+        load_btn->SetVariant(Button::Variant::Outlined);
         load_btn->SetBackgroundColour(*wxWHITE);
         load_btn->Enable(m_can_edit);
         wxSizer * load_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -391,8 +388,7 @@ wxPanel *BedShapePanel::init_model_panel()
         filename_sizer->Add(filename_lbl, 1, wxEXPAND);
 
         Button* remove_btn = new Button(parent, _L("Remove"));
-        remove_btn->SetBackgroundColor(btn_bg_white);
-        remove_btn->SetBorderColor(btn_bd_white);
+        remove_btn->SetVariant(Button::Variant::Outlined);
         remove_btn->SetBackgroundColour(*wxWHITE);
         wxSizer * remove_sizer = new wxBoxSizer(wxHORIZONTAL);
         remove_sizer->Add(remove_btn, 1, wxEXPAND);

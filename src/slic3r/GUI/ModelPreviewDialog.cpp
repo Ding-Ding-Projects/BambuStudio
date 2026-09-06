@@ -506,9 +506,7 @@ void ModelPreviewDialog::build_ui(const wxString& model_name)
             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         StateColor open_text(
             std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-        m_btn_open->SetBackgroundColor(open_bg);
-        m_btn_open->SetBorderColor(open_bd);
-        m_btn_open->SetTextColor(open_text);
+        m_btn_open->SetVariant(Button::Variant::Filled);
     }
 
     m_btn_fit->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {

@@ -1047,7 +1047,7 @@ void UnsavedChangesDialog::build(Preset::Type type, PresetCollection *dependent_
       buttons->Add(cancel_btn, 1, wxLEFT | wxRIGHT, 5);
       cancel_btn->SetFont(btn_font);*/
     /* m_cancel_btn = new Button(this, _L("Cancel"));
-     m_cancel_btn->SetTextColor(wxColour(107, 107, 107));
+     m_cancel_btn->SetVariant(Button::Variant::Outlined);
      m_cancel_btn->Bind(wxEVT_LEFT_DOWN, [this](wxEvent &) { this->EndModal(wxID_CANCEL); });
      m_cancel_btn->SetMinSize(UNSAVE_CHANGE_DIALOG_BUTTON_SIZE);
      m_cancel_btn->SetCornerRadius(12);

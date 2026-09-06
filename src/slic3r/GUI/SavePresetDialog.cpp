@@ -361,9 +361,7 @@ void SavePresetDialog::build(std::vector<Preset::Type> types, std::string suffix
                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     StateColor btn_br_green(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-    m_confirm->SetBackgroundColor(btn_bg_green);
-    m_confirm->SetBorderColor(btn_br_green);
-    m_confirm->SetTextColor(ThemeColor::White);
+    m_confirm->SetVariant(Button::Variant::Filled);
     m_confirm->SetMinSize(SAVE_PRESET_DIALOG_BUTTON_SIZE);
     m_confirm->SetCornerRadius(FromDIP(12));
     m_confirm->Bind(wxEVT_BUTTON, &SavePresetDialog::accept, this);

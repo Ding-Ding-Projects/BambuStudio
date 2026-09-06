@@ -805,9 +805,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_btn_bg_enable = StateColor(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_ensure = new Button(m_panel_prepare, _L("Send"));
-    m_button_ensure->SetBackgroundColor(m_btn_bg_enable);
-    m_button_ensure->SetBorderColor(m_btn_bg_enable);
-    m_button_ensure->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+    m_button_ensure->SetVariant(Button::Variant::Filled);
     m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE2);
     m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE2);
     m_button_ensure->SetCornerRadius(FromDIP(4));
@@ -2818,8 +2816,7 @@ void SelectMachineDialog::show_timelapse_storage_dialog(MachineObject* obj)
     if (show_confirm_btn) {
         auto* btn_confirm = new Button(&dlg, _L("Confirm & Print"));
         StateColor confirm_bg(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-        btn_confirm->SetBackgroundColor(confirm_bg);
-        btn_confirm->SetTextColor(StateColor(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal)));
+        btn_confirm->SetVariant(Button::Variant::Filled);
         btn_confirm->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) { dlg.EndModal(wxID_OK); });
         btn_sizer->Add(btn_confirm, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
     }
@@ -2827,8 +2824,7 @@ void SelectMachineDialog::show_timelapse_storage_dialog(MachineObject* obj)
     auto* btn_cancel_tl = new Button(&dlg, _L("Cancel Timelapse & Print"));
     if (!show_confirm_btn) {
         StateColor cancel_bg(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-        btn_cancel_tl->SetBackgroundColor(cancel_bg);
-        btn_cancel_tl->SetTextColor(StateColor(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal)));
+        btn_cancel_tl->SetVariant(Button::Variant::Outlined);
     }
     btn_cancel_tl->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) { dlg.EndModal(wxID_NO); });
     btn_sizer->Add(btn_cancel_tl, 0, wxEXPAND | (show_cleanup_btn ? wxBOTTOM : 0), FromDIP(8));
@@ -4324,14 +4320,12 @@ void SelectMachineDialog::Enable_Send_Button(bool en)
     if (!en) {
         if (m_button_ensure->IsEnabled()) {
             m_button_ensure->Disable();
-            m_button_ensure->SetBackgroundColor(ThemeColor::Grey400);
-            m_button_ensure->SetBorderColor(ThemeColor::Grey400);
+            m_button_ensure->SetVariant(Button::Variant::Outlined);
         }
     } else {
         if (!m_button_ensure->IsEnabled()) {
             m_button_ensure->Enable();
-            m_button_ensure->SetBackgroundColor(m_btn_bg_enable);
-            m_button_ensure->SetBorderColor(m_btn_bg_enable);
+            m_button_ensure->SetVariant(Button::Variant::Filled);
         }
     }
 }

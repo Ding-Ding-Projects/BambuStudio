@@ -3977,9 +3977,7 @@ StyleNameEditDialog::StyleNameEditDialog(
     StateColor       ok_btn_bd(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_ok = new Button(this, _L("OK"));
     m_button_ok->Enable(true);
-    m_button_ok->SetBackgroundColor(ok_btn_bg);
-    m_button_ok->SetBorderColor(ok_btn_bd);
-    m_button_ok->SetTextColor(ok_btn_text);
+    m_button_ok->SetVariant(Button::Variant::Filled);
     m_button_ok->SetFont(Label::Body_12);
     m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -3991,7 +3989,7 @@ StyleNameEditDialog::StyleNameEditDialog(
                 m_tip->SetLabel(_L("Name can't be empty."));
             }
             m_button_ok->Enable(false);
-            m_button_ok->SetBackgroundColor(ok_btn_disable_bg);
+            m_button_ok->SetVariant(Button::Variant::Outlined);
             return;
         }
         if (this->IsModal())
@@ -4001,8 +3999,7 @@ StyleNameEditDialog::StyleNameEditDialog(
         e.StopPropagation();
     });
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));

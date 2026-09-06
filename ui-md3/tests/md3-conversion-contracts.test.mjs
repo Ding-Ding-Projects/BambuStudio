@@ -475,6 +475,22 @@ test('the kit Button is Material by default: no legacy palette seed, Outlined at
   assert.match(button, /StateColor::semantic\(R::SecondaryContainer, s\), \(int\) StateColor::Checked\)/, 'the Outlined variant must define its Checked (selected) state');
 });
 
+test('no kit Button is hand-styled with the legacy palette where a variant would do', async () => {
+  // scripts/md3/convert-button-styling.mjs rewrote every classifiable run of
+  // SetBackgroundColor / SetBorderColor / SetTextColor on a Button into
+  // SetVariant(). Its check mode is the guard: anything it would still convert
+  // is a legacy palette that crept back. The unclassified remainder (partner
+  // branding, state machines that repaint by hand) is a ratchet that may only
+  // shrink.
+  const { execFileSync } = await import('node:child_process');
+  const out = execFileSync(process.execPath, [path.join(repoDir, 'scripts', 'md3', 'convert-button-styling.mjs'), '--check'], { cwd: repoDir, encoding: 'utf8' });
+  const summary = out.trim().split('\n').pop();
+  assert.match(summary, /^0 run\(s\) converted/, `the Button styling codemod still has work to do:\n${out.split('\n').filter((l) => /^  (Filled|Outlined)/.test(l)).join('\n')}`);
+  const unclassified = out.split('\n').filter((l) => l.includes('skip (unclassified)')).length;
+  assert.ok(unclassified <= 57, `unclassified legacy Button palettes grew to ${unclassified} (ratchet 57)`);
+  assert.ok((await sitesOf(/SetVariant\(Button::Variant::/g)).size >= 40, 'the converted call sites must still use kit variants');
+});
+
 test('ImGui chrome in the canvas resolves MD3 roles, not white and grey literals', async () => {
   const wrapper = stripComments(await read('ImGuiWrapper.cpp'));
   assert.doesNotMatch(wrapper, /PushStyleColor\(ImGuiCol_Text, ImVec4\(1\.0+f, 1\.0+f, 1\.0+f, 1\.0+f\)\)/, 'no pushed pure-white text in ImGuiWrapper');

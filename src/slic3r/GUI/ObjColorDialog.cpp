@@ -114,9 +114,7 @@ wxBoxSizer* ObjColorDialog::create_btn_sizer(long flags,bool exist_error)
         ok_btn->SetMinSize(BTN_SIZE);
         ok_btn->SetCornerRadius(FromDIP(12));
         ok_btn->Enable(false);
-        ok_btn->SetBackgroundColor(ok_btn_disable_bg);
-        ok_btn->SetBorderColor(ok_btn_bd);
-        ok_btn->SetTextColor(ok_btn_text);
+        ok_btn->SetVariant(Button::Variant::Outlined);
         ok_btn->SetFocus();
         ok_btn->SetId(wxID_OK);
         btn_sizer->Add(ok_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, BTN_GAP);
@@ -126,9 +124,7 @@ wxBoxSizer* ObjColorDialog::create_btn_sizer(long flags,bool exist_error)
         Button* cancel_btn = new Button(this, _L("Cancel"));
         cancel_btn->SetMinSize(BTN_SIZE);
         cancel_btn->SetCornerRadius(FromDIP(12));
-        cancel_btn->SetBackgroundColor(cancel_btn_bg);
-        cancel_btn->SetBorderColor(cancel_btn_bd_);
-        cancel_btn->SetTextColor(cancel_btn_text);
+        cancel_btn->SetVariant(Button::Variant::Outlined);
         cancel_btn->SetId(wxID_CANCEL);
         btn_sizer->Add(cancel_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, BTN_GAP);
         m_button_list[wxCANCEL] = cancel_btn;

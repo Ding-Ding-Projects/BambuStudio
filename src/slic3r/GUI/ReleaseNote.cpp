@@ -2189,9 +2189,7 @@ void InputIpAddressDialog::OnHeaderClose()
 
 
      auto m_button_retry = new Button(this, _L("Retry"));
-     m_button_retry->SetBackgroundColor(btn_bg_green);
-     m_button_retry->SetBorderColor(*wxWHITE);
-     m_button_retry->SetTextColor(ThemeColor::White);
+     m_button_retry->SetVariant(Button::Variant::Outlined);
      m_button_retry->SetFont(Label::Body_12);
      m_button_retry->SetSize(wxSize(-1, FromDIP(24)));
      m_button_retry->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2202,8 +2200,7 @@ void InputIpAddressDialog::OnHeaderClose()
      });
 
      auto m_button_input = new Button(this, _L("reconnect"));
-     m_button_input->SetBackgroundColor(btn_bg_white);
-     m_button_input->SetBorderColor(ThemeColor::TextPrimary);
+     m_button_input->SetVariant(Button::Variant::Outlined);
      m_button_input->SetFont(Label::Body_12);
      m_button_input->SetSize(wxSize(-1, FromDIP(24)));
      m_button_input->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2342,16 +2339,14 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     Button* m_button_activate = new Button(this, _L("Enable Helio Additive"));
-    m_button_activate->SetBackgroundColor(btn_bg_green);
-    m_button_activate->SetBorderColor(ThemeColor::BrandGreen);
+    m_button_activate->SetVariant(Button::Variant::Filled);
     // White text for all states
     StateColor activate_btn_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
                                   std::pair<wxColour, int>(ThemeColor::White, StateColor::Hovered),
                                   std::pair<wxColour, int>(ThemeColor::White, StateColor::Pressed),
                                   std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
                                   std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-    m_button_activate->SetTextColor(activate_btn_text);
-    m_button_activate->SetTextColorNormal(ThemeColor::White);
+    m_button_activate->SetVariant(Button::Variant::Filled);
     m_button_activate->SetFont(Label::Body_14);
     m_button_activate->SetSize(wxSize(FromDIP(300), FromDIP(36)));
     m_button_activate->SetMinSize(wxSize(FromDIP(300), FromDIP(36)));

@@ -353,9 +353,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     });
 
     m_button_edit = new Button(m_main_panel, _L("Edit Printers"));
-    m_button_edit->SetBackgroundColor(m_btn_bg_enable);
-    m_button_edit->SetBorderColor(m_btn_bg_enable);
-    m_button_edit->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+    m_button_edit->SetVariant(Button::Variant::Filled);
     m_button_edit->SetFont(Label::Body_12);
     m_button_edit->SetCornerRadius(FromDIP(18));
     m_button_edit->SetMinSize(wxSize(FromDIP(120), FromDIP(40)));
@@ -467,9 +465,7 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     m_tip_text->Wrap(-1);
 
     m_button_add = new Button(m_main_panel, _L("Add"));
-    m_button_add->SetBackgroundColor(m_btn_bg_enable);
-    m_button_add->SetBorderColor(m_btn_bg_enable);
-    m_button_add->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+    m_button_add->SetVariant(Button::Variant::Filled);
     m_button_add->SetFont(Label::Body_12);
     m_button_add->SetCornerRadius(FromDIP(18));
     m_button_add->SetMinSize(wxSize(FromDIP(90), FromDIP(36)));

@@ -169,9 +169,7 @@ void HelioHistoryDialog::create_ui()
 
     m_button_close = new Button(this, _L("Close"));
     if (m_button_close) {
-        m_button_close->SetBackgroundColor(close_btn_bg);
-        m_button_close->SetBorderColor(close_btn_border);
-        m_button_close->SetTextColor(close_btn_text);
+        m_button_close->SetVariant(Button::Variant::Outlined);
         m_button_close->SetMinSize(wxSize(FromDIP(100), FromDIP(36)));
         m_button_close->SetCornerRadius(FromDIP(6));
         m_button_close->Bind(wxEVT_LEFT_DOWN, &HelioHistoryDialog::on_close, this);
@@ -223,9 +221,7 @@ void HelioHistoryDialog::create_header(wxBoxSizer* parent_sizer)
         std::pair<wxColour, int>(HELIO_TEXT, StateColor::Normal));
 
     m_button_refresh = new Button(header_panel, _L("Refresh"));
-    m_button_refresh->SetBackgroundColor(refresh_btn_bg);
-    m_button_refresh->SetBorderColor(refresh_btn_border);
-    m_button_refresh->SetTextColor(refresh_btn_text);
+    m_button_refresh->SetVariant(Button::Variant::Outlined);
     m_button_refresh->SetMinSize(wxSize(FromDIP(100), FromDIP(32)));
     m_button_refresh->SetCornerRadius(FromDIP(6));
     m_button_refresh->Bind(wxEVT_LEFT_DOWN, &HelioHistoryDialog::on_refresh, this);
@@ -537,8 +533,7 @@ wxPanel* HelioHistoryDialog::create_run_card(wxWindow* parent, const HelioQuery:
         std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
 
     auto* download_btn = new Button(card, _L("Download GCode"));
-    download_btn->SetBackgroundColor(btn_bg);
-    download_btn->SetTextColor(btn_text);
+    download_btn->SetVariant(Button::Variant::Filled);
     download_btn->SetMinSize(wxSize(FromDIP(140), FromDIP(32)));
     download_btn->SetCornerRadius(FromDIP(4));
     download_btn->Bind(wxEVT_LEFT_DOWN, [this, run](wxMouseEvent&) {
@@ -647,8 +642,7 @@ wxPanel* HelioHistoryDialog::create_run_card(wxWindow* parent, const HelioQuery:
         std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
 
     auto* download_btn = new Button(card, _L("Download GCode"));
-    download_btn->SetBackgroundColor(btn_bg);
-    download_btn->SetTextColor(btn_text);
+    download_btn->SetVariant(Button::Variant::Filled);
     download_btn->SetMinSize(wxSize(FromDIP(140), FromDIP(32)));
     download_btn->SetCornerRadius(FromDIP(4));
     download_btn->Bind(wxEVT_LEFT_DOWN, [this, run](wxMouseEvent&) {

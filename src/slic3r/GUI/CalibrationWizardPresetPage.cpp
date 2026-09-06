@@ -590,8 +590,7 @@ void CalibrationPresetPage::create_selection_panel(wxWindow* parent)
     StateColor btn_sync_bd_col(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed),
                                std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
                                std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal));
-    m_btn_sync->SetBackgroundColor(btn_sync_bg_col);
-    m_btn_sync->SetBorderColor(btn_sync_bd_col);
+    m_btn_sync->SetVariant(Button::Variant::Outlined);
     m_btn_sync->SetCanFocus(false);
     m_btn_sync->SetPaddingSize({FromDIP(6), FromDIP(12)});
     m_btn_sync->SetMinSize(SYNC_BUTTON_SIZE);
@@ -1801,11 +1800,10 @@ void CalibrationPresetPage::update_sync_button_status()
         StateColor synced_colour(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
         StateColor not_synced_colour(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         if (synced) {
-            m_btn_sync->SetBorderColor(synced_colour);
+            m_btn_sync->SetVariant(Button::Variant::Outlined);
             m_btn_sync->SetIcon("ams_nozzle_sync");
             m_sync_button_text->SetLabel(_L("AMS and nozzle information are synced"));
         } else {
-            m_btn_sync->SetBorderColor(not_synced_colour);
             m_btn_sync->SetIcon("printer_sync");
             m_sync_button_text->SetLabel(_L("Sync AMS and nozzle information"));
         }

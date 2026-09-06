@@ -2851,8 +2851,7 @@ wxWindow *PreferencesDialog::create_developer_tab()
 
     Button *debug_button                = new Button(scrolled, _L("debug save button"));
     m_button_list[m_button_list.size()] = debug_button;
-    debug_button->SetBackgroundColor(btn_bg_white);
-    debug_button->SetBorderColor(btn_bd_white);
+    debug_button->SetVariant(Button::Variant::Outlined);
     debug_button->SetFont(Label::Body_13);
     debug_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         // success message box
@@ -3005,8 +3004,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     StateColor btn_bg_gray(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Hovered),
                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     m_details_btn = new Button(this, _L("Check details"));
-    m_details_btn->SetBackgroundColor(btn_bg_gray);
-    m_details_btn->SetBorderColor(ThemeColor::Grey450);
+    m_details_btn->SetVariant(Button::Variant::Outlined);
     m_details_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     m_details_btn->SetFont(::Label::Body_12);
     m_details_btn->SetCornerRadius(FromDIP(6));
@@ -3035,9 +3033,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     auto *btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     btn_sizer->AddStretchSpacer(1);
     auto      *cancel_btn = new Button(this, _L("Cancel"));
-    cancel_btn->SetBackgroundColor(btn_bg_gray);
-    cancel_btn->SetBorderColor(ThemeColor::Grey450);
-    cancel_btn->SetTextColor(ThemeColor::TextPrimary);
+    cancel_btn->SetVariant(Button::Variant::Outlined);
     cancel_btn->SetFont(::Label::Body_12);
     cancel_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     cancel_btn->SetCornerRadius(FromDIP(6));
@@ -3047,9 +3043,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
                             std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     auto      *confirm_btn = new Button(this, _L("Confirm"));
-    confirm_btn->SetBackgroundColor(btn_bg_green);
-    confirm_btn->SetBorderColor(ThemeColor::BrandGreen);
-    confirm_btn->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+    confirm_btn->SetVariant(Button::Variant::Filled);
     confirm_btn->SetFont(::Label::Body_12);
     confirm_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     confirm_btn->SetCornerRadius(FromDIP(6));

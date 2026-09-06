@@ -611,8 +611,7 @@ AuFolderPanel::AuFolderPanel(wxWindow *parent, AuxiliaryFolderType type, wxWindo
     m_big_button_add = new AuFile(m_scrolledWindow, fs::path(), "", AddFileButton, -1);
 
     /*m_button_del = new Button(m_scrolledWindow, _L("Delete"), "auxiliary_delete_file", 12, 12);
-    m_button_del->SetBackgroundColor(btn_bg_white);
-    m_button_del->SetBorderColor(btn_bd_white);
+    m_button_del->SetVariant(Button::Variant::Outlined);
     m_button_del->SetMinSize(wxSize(FromDIP(80), FromDIP(24)));
     m_button_del->SetCornerRadius(12);
     m_button_del->SetFont(Label::Body_14);*/

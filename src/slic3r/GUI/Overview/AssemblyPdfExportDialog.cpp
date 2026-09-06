@@ -79,9 +79,7 @@ AssemblyPdfExportDialog::AssemblyPdfExportDialog(wxWindow *parent, const Assembl
     m_ok_btn = new Button(this, _L("OK"));
     m_ok_btn->SetMinSize(btn_size);
     m_ok_btn->SetCornerRadius(FromDIP(12));
-    m_ok_btn->SetBackgroundColor(ok_btn_bg);
-    m_ok_btn->SetBorderColor(ok_btn_bd);
-    m_ok_btn->SetTextColor(ok_btn_text);
+    m_ok_btn->SetVariant(Button::Variant::Filled);
     m_ok_btn->SetFont(Label::Body_12);
     // Belt-and-braces: even though Enable(false) makes wxWidgets stop
     m_ok_btn->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &evt) {
@@ -106,9 +104,7 @@ AssemblyPdfExportDialog::AssemblyPdfExportDialog(wxWindow *parent, const Assembl
     auto *cancel_btn = new Button(this, _L("Cancel"));
     cancel_btn->SetMinSize(btn_size);
     cancel_btn->SetCornerRadius(FromDIP(12));
-    cancel_btn->SetBackgroundColor(cancel_btn_bg);
-    cancel_btn->SetBorderColor(cancel_btn_bd);
-    cancel_btn->SetTextColor(cancel_btn_text);
+    cancel_btn->SetVariant(Button::Variant::Outlined);
     cancel_btn->SetFont(Label::Body_12);
     cancel_btn->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { EndModal(wxID_CANCEL); });
 
@@ -161,8 +157,7 @@ wxTextCtrl *AssemblyPdfExportDialog::create_path_row(wxWindow *parent, wxBoxSize
                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     StateColor browse_fg(std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal));
     auto *browse_btn = new Button(parent, _L("Browse"));
-    browse_btn->SetBackgroundColor(browse_bg);
-    browse_btn->SetTextColor(browse_fg);
+    browse_btn->SetVariant(Button::Variant::Outlined);
     browse_btn->SetMinSize(wxSize(FromDIP(48), FromDIP(20)));
     browse_btn->SetCornerRadius(FromDIP(4));
 

@@ -16388,9 +16388,7 @@ public:
                                  std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
         Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
-        proceed_button->SetBackgroundColor(btn_bg_purple);
-        proceed_button->SetBorderColor(*wxWHITE);
-        proceed_button->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Preview));
+        proceed_button->SetVariant(Button::Variant::Filled);
         proceed_button->SetFont(Label::Body_12);
         proceed_button->SetSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
         proceed_button->SetMinSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
@@ -16470,9 +16468,7 @@ public:
                                  std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
         Button* goback_button = new Button(option2_box, _L("Go Back"));
-        goback_button->SetBackgroundColor(btn_bg_green2);
-        goback_button->SetBorderColor(*wxWHITE);
-        goback_button->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+        goback_button->SetVariant(Button::Variant::Outlined);
         goback_button->SetFont(Label::Body_12);
         goback_button->SetSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
         goback_button->SetMinSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
@@ -16649,9 +16645,7 @@ public:
                                  std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
         Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
-        proceed_button->SetBackgroundColor(btn_bg_purple);
-        proceed_button->SetBorderColor(*wxWHITE);
-        proceed_button->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Preview));
+        proceed_button->SetVariant(Button::Variant::Filled);
         proceed_button->SetFont(Label::Body_12);
         proceed_button->SetSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
         proceed_button->SetMinSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
@@ -16722,9 +16716,7 @@ public:
                                 std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
         Button* goback_button = new Button(option2_box, _L("Go Back"));
-        goback_button->SetBackgroundColor(btn_bg_green);
-        goback_button->SetBorderColor(*wxWHITE);
-        goback_button->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+        goback_button->SetVariant(Button::Variant::Outlined);
         goback_button->SetFont(Label::Body_12);
         goback_button->SetSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
         goback_button->SetMinSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
@@ -16776,9 +16768,7 @@ public:
                                std::pair<wxColour, int>(StateColor::darkModeColorFor(ThemeColor::Link), StateColor::Normal));
 
         Button* refresh_button = new Button(option3_box, _L("Refresh & Retry"));
-        refresh_button->SetBackgroundColor(btn_bg_blue);
-        refresh_button->SetBorderColor(*wxWHITE);
-        refresh_button->SetTextColor(wxColour("#FFFFFE"));
+        refresh_button->SetVariant(Button::Variant::Outlined);
         refresh_button->SetFont(Label::Body_12);
         refresh_button->SetSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
         refresh_button->SetMinSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
@@ -17491,9 +17481,7 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                                              std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Preview), StateColor::Normal));
 
                     Button* proceed_button = new Button(option1_box, _L("Proceed Anyway"));
-                    proceed_button->SetBackgroundColor(btn_bg_purple);
-                    proceed_button->SetBorderColor(*wxWHITE);
-                    proceed_button->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary, MD3::ColorScheme::Preview));
+                    proceed_button->SetVariant(Button::Variant::Filled);
                     proceed_button->SetFont(Label::Body_12);
                     proceed_button->SetSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
                     proceed_button->SetMinSize(wxSize(wxWindowBase::FromDIP(130, this), wxWindowBase::FromDIP(28, this)));
@@ -17557,9 +17545,7 @@ int Plater::priv::update_helio_background_process(std::string& printer_id,
                                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
                     Button* goback_button = new Button(option2_box, _L("Go Back"));
-                    goback_button->SetBackgroundColor(btn_bg_green);
-                    goback_button->SetBorderColor(*wxWHITE);
-                    goback_button->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+                    goback_button->SetVariant(Button::Variant::Outlined);
                     goback_button->SetFont(Label::Body_12);
                     goback_button->SetSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
                     goback_button->SetMinSize(wxSize(wxWindowBase::FromDIP(100, this), wxWindowBase::FromDIP(28, this)));
@@ -23415,9 +23401,7 @@ ProjectDropDialog::ProjectDropDialog(const std::string &filename)
     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-    m_confirm->SetBackgroundColor(btn_bg_green);
-    m_confirm->SetBorderColor(ThemeColor::BrandGreen);
-    m_confirm->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+    m_confirm->SetVariant(Button::Variant::Filled);
     m_confirm->SetSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_confirm->SetMinSize(PROJECT_DROP_DIALOG_BUTTON_SIZE);
     m_confirm->SetCornerRadius(FromDIP(12));

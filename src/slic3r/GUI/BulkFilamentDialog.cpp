@@ -134,10 +134,8 @@ BulkFilamentDialog::BulkFilamentDialog(wxWindow* parent,
     auto style_action_btn = [&](Button* btn) {
         btn->SetMinSize(wxSize(FromDIP(110), FromDIP(24)));
         btn->SetCornerRadius(FromDIP(12));
-        btn->SetBackgroundColor(action_btn_bg);
+        btn->SetVariant(Button::Variant::Outlined);
         btn->SetFont(Label::Body_12);
-        btn->SetBorderColor(action_btn_bd);
-        btn->SetTextColor(action_btn_text);
     };
 
     // ---- Action: set preset ----
@@ -244,19 +242,15 @@ BulkFilamentDialog::BulkFilamentDialog(wxWindow* parent,
     m_btn_apply = new Button(this, _L("Apply"));
     m_btn_apply->SetMinSize(wxSize(FromDIP(62), FromDIP(24)));
     m_btn_apply->SetCornerRadius(FromDIP(12));
-    m_btn_apply->SetBackgroundColor(ok_btn_bg);
+    m_btn_apply->SetVariant(Button::Variant::Filled);
     m_btn_apply->SetFont(Label::Body_12);
-    m_btn_apply->SetBorderColor(ThemeColor::BrandGreen);
-    m_btn_apply->SetTextColor(ok_btn_text);
     m_btn_apply->SetId(wxID_OK);
 
     auto cancel_btn = new Button(this, _L("Cancel"));
     cancel_btn->SetMinSize(wxSize(FromDIP(62), FromDIP(24)));
     cancel_btn->SetCornerRadius(FromDIP(12));
-    cancel_btn->SetBackgroundColor(action_btn_bg);
+    cancel_btn->SetVariant(Button::Variant::Outlined);
     cancel_btn->SetFont(Label::Body_12);
-    cancel_btn->SetBorderColor(action_btn_bd);
-    cancel_btn->SetTextColor(action_btn_text);
     cancel_btn->SetId(wxID_CANCEL);
 
     btn_sizer->Add(m_btn_apply, 0, wxRIGHT, FromDIP(12));

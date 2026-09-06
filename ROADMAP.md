@@ -20,7 +20,8 @@ captures are a separate box and stay unticked until they exist from the real bui
       recorded as content with a written reason; 8 never-populated holders deleted.
 - [x] 16 unclassified static-bitmap rows judged (triage now holds only data and md3-rendered).
 - [x] `Button` Material by default (Outlined at first paint; Checked state for Outlined/Text).
-- [ ] Button call sites that hand-style with the legacy palette moved to variants.
+- [x] Button call sites that hand-style with the legacy palette moved to variants (188 runs in 45
+      files by committed codemod; 57 unclassified runs remain behind a shrink-only ratchet).
 - [x] 15 pinned density reads on `Metrics::active()`; `ImageSwitchButton` retoned.
 - [x] ImGui canvas chrome literals on MD3 roles.
 - [x] Runtime layout probe (`LayoutProbe`) and report reader.

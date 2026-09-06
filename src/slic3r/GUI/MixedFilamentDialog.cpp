@@ -1349,16 +1349,12 @@ wxBoxSizer* MixedFilamentDialog::create_button_panel()
     auto* sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_btn_cancel = new Button(this, _L("Cancel"));
-    m_btn_cancel->SetBackgroundColor(ThemeColor::White);
-    m_btn_cancel->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
-    m_btn_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
+    m_btn_cancel->SetVariant(Button::Variant::Outlined);
     m_btn_cancel->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CANCEL); });
 
     m_btn_ok = new Button(this, _L("OK"));
-    m_btn_ok->SetBackgroundColor(ThemeColor::BrandGreen);
-    m_btn_ok->SetBorderColor(ThemeColor::BrandGreen);
-    m_btn_ok->SetTextColor(ThemeColor::White);
+    m_btn_ok->SetVariant(Button::Variant::Filled);
     m_btn_ok->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_OK); });
 
@@ -1837,8 +1833,7 @@ void MixedFilamentDialog::update_ok_button_state()
         m_btn_ok->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
         m_btn_ok->SetToolTip(_L("Cannot mix different filament types"));
     } else {
-        m_btn_ok->SetBackgroundColor(ThemeColor::BrandGreen);
-        m_btn_ok->SetBorderColor(ThemeColor::BrandGreen);
+        m_btn_ok->SetVariant(Button::Variant::Filled);
         m_btn_ok->SetToolTip(wxEmptyString);
     }
 

@@ -106,30 +106,26 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_zoom_out_btn = new Button(m_book_third_panel, wxEmptyString);
     m_zoom_out_btn->SetIcon("canvas_zoom_out");
     m_zoom_out_btn->SetToolTip(_L("Zoom Out"));
-    m_zoom_out_btn->SetBackgroundColor(zoom_bg);
-    m_zoom_out_btn->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_zoom_out_btn->SetVariant(Button::Variant::Outlined);
     m_zoom_out_btn->SetCornerRadius(0);
     m_zoom_out_btn->SetMinSize(wxSize(FromDIP(56), FromDIP(28)));
 
     m_percent_label = new Button(m_book_third_panel, _L("100 %"));
-    m_percent_label->SetBackgroundColor(percent_bg);
-    m_percent_label->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_percent_label->SetVariant(Button::Variant::Outlined);
     m_percent_label->SetMinSize(wxSize(FromDIP(56), FromDIP(28)));
     m_percent_label->SetCornerRadius(0);
 
     m_zoom_in_btn = new Button(m_book_third_panel, wxEmptyString);
     m_zoom_in_btn->SetIcon("canvas_zoom_in");
     m_zoom_in_btn->SetToolTip(_L("Zoom In"));
-    m_zoom_in_btn->SetBackgroundColor(zoom_bg);
-    m_zoom_in_btn->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_zoom_in_btn->SetVariant(Button::Variant::Outlined);
     m_zoom_in_btn->SetMinSize(wxSize(FromDIP(56), FromDIP(28)));
     m_zoom_in_btn->SetCornerRadius(0);
 
     m_switch_drag_btn = new Button(m_book_third_panel, wxEmptyString);
     m_switch_drag_btn->SetIcon("canvas_drag");
     m_switch_drag_btn->SetToolTip(_L("Drag"));
-    m_switch_drag_btn->SetBackgroundColor(ThemeColor::White);
-    m_switch_drag_btn->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
+    m_switch_drag_btn->SetVariant(Button::Variant::Outlined);
     m_switch_drag_btn->SetMinSize(wxSize(FromDIP(56), FromDIP(28)));
     m_switch_drag_btn->SetCornerRadius(0);
 
@@ -188,8 +184,7 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_tot_label->SetMinSize(wxSize(FromDIP(200), FromDIP(20)));
 
     m_apply_btn = new Button(m_book_third_panel, _L("Skip"));
-    m_apply_btn->SetBackgroundColor(btn_bg_gray);
-    m_apply_btn->SetTextColor(ThemeColor::White);
+    m_apply_btn->SetVariant(Button::Variant::Outlined);
     // m_apply_btn->SetBorderColor(wxColour(38, 46, 48));
     m_apply_btn->SetFont(Label::Body_14);
     m_apply_btn->SetSize(wxSize(FromDIP(80), FromDIP(32)));
@@ -252,9 +247,8 @@ PartSkipDialog::PartSkipDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _
     m_book_second_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
     m_second_retry_btn = new Button(m_book_second_panel, _L("Retry"));
-    m_second_retry_btn->SetBackgroundColor(btn_bg_green);
+    m_second_retry_btn->SetVariant(Button::Variant::Outlined);
     // m_second_retry_btn->SetBorderColor(wxColour(38, 46, 48));
-    m_second_retry_btn->SetTextColor(ThemeColor::White);
     m_second_retry_btn->SetFont(Label::Body_14);
     m_second_retry_btn->SetSize(wxSize(FromDIP(80), FromDIP(32)));
     m_second_retry_btn->SetMinSize(wxSize(FromDIP(80), FromDIP(32)));
@@ -624,11 +618,11 @@ void PartSkipDialog::OnSwitchDrag(wxCommandEvent &event)
 {
     if (this->is_drag_mode()) {
         m_is_drag = false;
-        m_switch_drag_btn->SetBackgroundColor(ThemeColor::White);
+        m_switch_drag_btn->SetVariant(Button::Variant::Outlined);
         m_switch_drag_btn->SetIcon("canvas_drag");
     } else {
         m_is_drag = true;
-        m_switch_drag_btn->SetBackgroundColor(ThemeColor::BrandGreen);
+        m_switch_drag_btn->SetVariant(Button::Variant::Filled);
         m_switch_drag_btn->SetIcon("canvas_drag_active");
     }
     m_canvas->SwitchDrag(m_is_drag);
@@ -711,7 +705,7 @@ void PartSkipDialog::InitDialogUI()
     string slice_info = m_local_paths[2];
 
     m_switch_drag_btn->SetIcon("canvas_drag");
-    m_switch_drag_btn->SetBackgroundColor(ThemeColor::White);
+    m_switch_drag_btn->SetVariant(Button::Variant::Outlined);
     m_is_drag = false;
     m_canvas->SwitchDrag(false);
     m_canvas->SetZoomPercent(100);
@@ -900,19 +894,18 @@ void PartSkipDialog::OnAllCheckbox(wxCommandEvent &event)
 void PartSkipDialog::UpdateApplyButtonStatus()
 {
     if (IsAllCancled()) {
-        m_apply_btn->SetBackgroundColor(btn_bg_gray);
+        m_apply_btn->SetVariant(Button::Variant::Outlined);
         m_apply_btn->SetToolTip(_L("Nothing selected"));
         m_enable_apply_btn = false;
     } else if (m_parts_state.size() > 64) {
-        m_apply_btn->SetBackgroundColor(btn_bg_gray);
         m_apply_btn->SetToolTip(_L("Over 64 objects in single plate"));
         m_enable_apply_btn = false;
     } else if (!is_model_support_partskip) {
-        m_apply_btn->SetBackgroundColor(btn_bg_gray);
+        m_apply_btn->SetVariant(Button::Variant::Outlined);
         m_apply_btn->SetToolTip(_L("The current print job cannot be skipped"));
         m_enable_apply_btn = false;
     } else {
-        m_apply_btn->SetBackgroundColor(btn_bg_green);
+        m_apply_btn->SetVariant(Button::Variant::Filled);
         m_apply_btn->SetToolTip(wxEmptyString);
         m_enable_apply_btn = true;
     }
@@ -1013,8 +1006,7 @@ PartSkipConfirmDialog::PartSkipConfirmDialog(wxWindow *parent) : DPIDialog(paren
                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_apply_button = new Button(this, _L("Continue"));
-    m_apply_button->SetBackgroundColor(btn_bg_green);
-    m_apply_button->SetTextColor(ThemeColor::White);
+    m_apply_button->SetVariant(Button::Variant::Filled);
     // m_apply_button->SetBorderColor(wxColour(38, 46, 48));
     m_apply_button->SetFont(Label::Body_14);
     m_apply_button->SetSize(wxSize(FromDIP(80), FromDIP(32)));

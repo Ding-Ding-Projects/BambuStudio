@@ -347,9 +347,7 @@ void MachineInfoPanel::createNozzleRackWidgets(wxBoxSizer *main_left_sizer)
                       std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     StateColor btn_bd(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::Grey500, StateColor::Enabled));
     StateColor btn_text(std::pair<wxColour, int>(ThemeColor::Grey500, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
-    m_nozzle_rack_update_btn->SetBackgroundColor(btn_bg);
-    m_nozzle_rack_update_btn->SetBorderColor(btn_bd);
-    m_nozzle_rack_update_btn->SetTextColor(btn_text);
+    m_nozzle_rack_update_btn->SetVariant(Button::Variant::Outlined);
     m_nozzle_rack_update_btn->SetFont(Label::Body_10.Bold());
     m_nozzle_rack_update_btn->SetMinSize(wxSize(FromDIP(-1), FromDIP(24)));
     m_nozzle_rack_update_btn->SetCornerRadius(FromDIP(12));

@@ -533,22 +533,12 @@ wxBoxSizer* ColorDecomposeDialog::create_button_panel()
     sizer->AddStretchSpacer();
 
     m_btn_cancel = new Button(this, _L("Cancel"));
-    m_btn_cancel->SetBackgroundColor(ThemeColor::White);
-    m_btn_cancel->SetBorderColor(ThemeColor::Grey400);
-    m_btn_cancel->SetTextColor(ThemeColor::TextPrimary);
+    m_btn_cancel->SetVariant(Button::Variant::Outlined);
     m_btn_cancel->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CANCEL); });
 
     m_btn_ok = new Button(this, _L("OK"));
-    m_btn_ok->SetBackgroundColor(StateColor(
-        std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled),
-        std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Normal)));
-    m_btn_ok->SetBorderColor(StateColor(
-        std::make_pair(ThemeColor::Grey400, (int) StateColor::Disabled),
-        std::make_pair(ThemeColor::BrandGreen, (int) StateColor::Normal)));
-    m_btn_ok->SetTextColor(StateColor(
-        std::make_pair(ThemeColor::White, (int) StateColor::Disabled),
-        std::make_pair(ThemeColor::White, (int) StateColor::Normal)));
+    m_btn_ok->SetVariant(Button::Variant::Filled);
     m_btn_ok->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
         EndModal(wxID_OK);

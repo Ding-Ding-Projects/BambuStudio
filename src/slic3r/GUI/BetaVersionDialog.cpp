@@ -86,9 +86,7 @@ BetaVersionDialog::BetaVersionDialog(wxWindow *parent)
 
     // "Try Now" — brand color
     m_button_try_now = new Button(this, _L("Try Now"));
-    m_button_try_now->SetBackgroundColor(btn_bg_green);
-    m_button_try_now->SetBorderColor(*wxWHITE);
-    m_button_try_now->SetTextColor(ThemeColor::White);
+    m_button_try_now->SetVariant(Button::Variant::Filled);
     m_button_try_now->SetFont(Label::Body_12);
     m_button_try_now->SetSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
     m_button_try_now->SetMinSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
@@ -99,8 +97,7 @@ BetaVersionDialog::BetaVersionDialog(wxWindow *parent)
 
     // "Skip"
     m_button_skip = new Button(this, _L("Skip"));
-    m_button_skip->SetBackgroundColor(btn_bg_white);
-    m_button_skip->SetBorderColor(ThemeColor::TextPrimary);
+    m_button_skip->SetVariant(Button::Variant::Outlined);
     m_button_skip->SetFont(Label::Body_12);
     m_button_skip->SetSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
     m_button_skip->SetMinSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));
@@ -111,8 +108,7 @@ BetaVersionDialog::BetaVersionDialog(wxWindow *parent)
 
     // "Don't show me Beta updates again"
     m_button_dont_show = new Button(this, _L("Don't show me Beta updates again"));
-    m_button_dont_show->SetBackgroundColor(btn_bg_white);
-    m_button_dont_show->SetBorderColor(ThemeColor::TextPrimary);
+    m_button_dont_show->SetVariant(Button::Variant::Outlined);
     m_button_dont_show->SetFont(Label::Body_12);
     m_button_dont_show->SetSize(wxSize(-1, FromDIP(BUTTON_H)));
     m_button_dont_show->SetMinSize(wxSize(FromDIP(58), FromDIP(BUTTON_H)));

@@ -391,11 +391,8 @@ void FilamentMapDialog::make_footer(wxBoxSizer *main_sizer, const FilamentMapMod
         m_ok_btn->SetFont(Label::Body_12);
         m_cancel_btn->SetFont(Label::Body_12);
 
-        m_ok_btn->SetBackgroundColor(btn_bg_green);
-        m_ok_btn->SetTextColor(btn_text_green);
-        m_cancel_btn->SetBackgroundColor(btn_bg_white);
-        m_cancel_btn->SetBorderColor(btn_bd_white);
-        m_cancel_btn->SetTextColor(btn_text_white);
+        m_ok_btn->SetVariant(Button::Variant::Filled);
+        m_cancel_btn->SetVariant(Button::Variant::Outlined);
 
         button_sizer->Add(m_ok_btn, 1, wxRIGHT, FromDIP(4));
         button_sizer->Add(m_cancel_btn, 1, wxLEFT, FromDIP(4));

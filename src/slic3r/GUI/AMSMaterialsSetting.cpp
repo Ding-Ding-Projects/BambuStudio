@@ -140,9 +140,7 @@ void AMSMaterialsSetting::create()
     m_button_confirm = new Button(this, _L("Confirm"));
     m_btn_bg_green   = StateColor(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
                             std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-    m_button_confirm->SetBackgroundColor(m_btn_bg_green);
-    m_button_confirm->SetBorderColor(ThemeColor::BrandGreen);
-    m_button_confirm->SetTextColor(ThemeColor::White);
+    m_button_confirm->SetVariant(Button::Variant::Filled);
     m_button_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_confirm->SetCornerRadius(FromDIP(12));
     m_button_confirm->Bind(wxEVT_BUTTON, &AMSMaterialsSetting::on_select_ok, this);
@@ -151,17 +149,13 @@ void AMSMaterialsSetting::create()
     m_btn_bg_gray = StateColor(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::White, StateColor::Focused),
         std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
         std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-    m_button_reset->SetBackgroundColor(m_btn_bg_gray);
-    m_button_reset->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
-    m_button_reset->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
+    m_button_reset->SetVariant(Button::Variant::Outlined);
     m_button_reset->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_reset->SetCornerRadius(FromDIP(12));
     m_button_reset->Bind(wxEVT_BUTTON, &AMSMaterialsSetting::on_select_reset, this);
 
     m_button_close = new Button(this, _L("Close"));
-    m_button_close->SetBackgroundColor(m_btn_bg_gray);
-    m_button_close->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
-    m_button_close->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
+    m_button_close->SetVariant(Button::Variant::Outlined);
     m_button_close->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_close->SetCornerRadius(FromDIP(12));
     m_button_close->Bind(wxEVT_BUTTON, &AMSMaterialsSetting::on_select_close, this);
@@ -2276,9 +2270,7 @@ void AMSMaterialsSetting::on_select_filament(wxCommandEvent &evt)
         return;
     }
     else {
-        m_button_confirm->SetBackgroundColor(m_btn_bg_green);
-        m_button_confirm->SetBorderColor(ThemeColor::BrandGreen);
-        m_button_confirm->SetTextColor(ThemeColor::White);
+        m_button_confirm->SetVariant(Button::Variant::Filled);
         m_button_confirm->Enable(true);
     }
 
@@ -3045,13 +3037,7 @@ void AMSNewOfficialFilamentDlg::create()
     m_btn_confirm = new Button(this, _L("Confirm"));
     m_btn_confirm->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_btn_confirm->SetCornerRadius(FromDIP(12));
-    m_btn_confirm->SetBackgroundColor(StateColor(
-        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed,  StateColor::Pressed),
-        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-        std::pair<wxColour, int>(ThemeColor::BrandGreen,   StateColor::Normal)
-    ));
-    m_btn_confirm->SetBorderColor(ThemeColor::BrandGreen);
-    m_btn_confirm->SetTextColor(ThemeColor::White);
+    m_btn_confirm->SetVariant(Button::Variant::Filled);
     m_btn_confirm->Bind(wxEVT_BUTTON, &AMSNewOfficialFilamentDlg::on_confirm, this);
 
     m_btn_cancel = new Button(this, _L("Cancel"));

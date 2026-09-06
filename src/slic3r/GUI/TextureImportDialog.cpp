@@ -2044,9 +2044,7 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
         for (auto* btn : {m_btn_color_4, m_btn_color_8, m_btn_color_16}) {
             btn->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
             btn->SetMinSize(wxSize(FromDIP(28), FromDIP(28)));
-            btn->SetBackgroundColor(preset_bg);
-            btn->SetBorderColor(preset_bd);
-            btn->SetTextColor(preset_text);
+            btn->SetVariant(Button::Variant::Outlined);
         }
     }
 
@@ -2107,15 +2105,11 @@ void TextureImportDialog::build_params_panel(wxWindow* parent, wxSizer* sizer)
 
         m_btn_color_auto->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
         m_btn_color_auto->SetMinSize(wxSize(FromDIP(60), FromDIP(28)));
-        m_btn_color_auto->SetBackgroundColor(btn_bg_white);
-        m_btn_color_auto->SetBorderColor(btn_bd_green);
-        m_btn_color_auto->SetTextColor(btn_text_green);
+        m_btn_color_auto->SetVariant(Button::Variant::Outlined);
 
         m_btn_apply->SetCornerRadius(FromDIP(14)); // pill (28px height / 2)
         m_btn_apply->SetMinSize(wxSize(FromDIP(60), FromDIP(28)));
-        m_btn_apply->SetBackgroundColor(btn_bg_white);
-        m_btn_apply->SetBorderColor(btn_bd_green);
-        m_btn_apply->SetTextColor(btn_text_green);
+        m_btn_apply->SetVariant(Button::Variant::Outlined);
     }
 
     // Defer attaching the Auto/Apply tooltips until the dialog has actually

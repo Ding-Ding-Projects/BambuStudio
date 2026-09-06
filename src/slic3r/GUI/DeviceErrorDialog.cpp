@@ -166,8 +166,7 @@ void DeviceErrorDialog::init_button(ActionButton style, wxString buton_text)
     }
 
     Button* print_error_button = new Button(this, buton_text);
-    print_error_button->SetBackgroundColor(btn_bg_white);
-    print_error_button->SetBorderColor(ThemeColor::Grey500);
+    print_error_button->SetVariant(Button::Variant::Outlined);
     print_error_button->SetFont(Label::Body_14);
     print_error_button->SetSize(wxSize(FromDIP(300), FromDIP(30)));
     print_error_button->SetMinSize(wxSize(FromDIP(300), FromDIP(30)));

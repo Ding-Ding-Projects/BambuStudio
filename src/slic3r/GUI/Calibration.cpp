@@ -157,9 +157,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
 
     m_calibration_btn = new Button(cali_right_panel, _L("Start Calibration"));
-    m_calibration_btn->SetBackgroundColor(btn_bg_green);
-    m_calibration_btn->SetBorderColor(btn_bd_green);
-    m_calibration_btn->SetTextColor(ThemeColor::White);
+    m_calibration_btn->SetVariant(Button::Variant::Filled);
     m_calibration_btn->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_calibration_btn->SetMinSize(wxSize(FromDIP(128), FromDIP(26)));
 
