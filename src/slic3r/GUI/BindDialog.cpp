@@ -1,4 +1,6 @@
 #include "BindDialog.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "GUI_App.hpp"
 
@@ -440,20 +442,25 @@ PingCodeBindDialog::~PingCodeBindDialog() {
 
      m_bitmap_show_error_close = create_scaled_bitmap("link_more_error_close",nullptr, 7);
      m_bitmap_show_error_open = create_scaled_bitmap("link_more_error_open",nullptr, 7);
-     m_static_bitmap_show_error = new wxStaticBitmap(this, wxID_ANY, m_bitmap_show_error_open, wxDefaultPosition, wxSize(FromDIP(7), FromDIP(7)));
+     // Kit icon Button: the error-details expander is focusable and exposes a role;
+     // its chevron flips by glyph instead of by swapping two 7 px bitmaps.
+     m_static_bitmap_show_error = new Button(this, "", "", 0, 0);
+     m_static_bitmap_show_error->SetIconButton(Button::IconShape::Circle, FromDIP(20));
+     m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, FromDIP(14));
+     m_static_bitmap_show_error->SetToolTip(_L("Show details"));
 
      m_link_show_error->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
      m_link_show_error->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
      m_link_show_error->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
-         if (!m_show_error_info_state) { m_show_error_info_state = true; m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_open); }
-         else { m_show_error_info_state = false; m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_close); }
+         if (!m_show_error_info_state) { m_show_error_info_state = true; m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, FromDIP(14)); }
+         else { m_show_error_info_state = false; m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandLess, FromDIP(14)); }
          show_bind_failed_info(true);}
      );
      m_static_bitmap_show_error->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
      m_static_bitmap_show_error->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
-     m_static_bitmap_show_error->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
-         if (!m_show_error_info_state) { m_show_error_info_state = true; m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_open); }
-         else { m_show_error_info_state = false; m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_close); }
+     m_static_bitmap_show_error->Bind(wxEVT_BUTTON, [this](auto& e) {
+         if (!m_show_error_info_state) { m_show_error_info_state = true; m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, FromDIP(14)); }
+         else { m_show_error_info_state = false; m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandLess, FromDIP(14)); }
          show_bind_failed_info(true);
      });
 

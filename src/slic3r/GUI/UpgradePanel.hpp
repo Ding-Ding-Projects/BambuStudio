@@ -169,7 +169,7 @@ protected:
     wxStaticText *  m_staticText_upgrading_info;
     ProgressBar *   m_upgrade_progress;
     wxStaticText *  m_staticText_upgrading_percent;
-    wxStaticBitmap *m_upgrade_retry_img;
+    Button *m_upgrade_retry_img;
     wxStaticText *  m_staticText_release_note;
     Button *        m_button_upgrade_firmware;
     Button *        m_nozzle_rack_update_btn;

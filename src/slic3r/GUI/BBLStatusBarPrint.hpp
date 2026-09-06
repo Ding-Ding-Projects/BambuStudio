@@ -32,7 +32,7 @@ class BBLStatusBarPrint : public ProgressIndicator
     ProgressBar *     m_prog;
     Label *       m_link_show_error;
     wxBoxSizer*   m_sizer_status_text;
-    wxStaticBitmap* m_static_bitmap_show_error;
+    Button*        m_static_bitmap_show_error;
     wxBitmap      m_bitmap_show_error_close;
     wxBitmap      m_bitmap_show_error_open;
     Button *      m_cancelbutton;

@@ -388,6 +388,33 @@ test('the only list is the kit ListBox, drawn with the DropDown row anatomy', as
   assert.ok(stripComments(await read('SmartHomeDialog.cpp')).includes('m_list = new ListBox(m_scroll'), 'SmartHome must use the kit ListBox');
 });
 
+test('every static bitmap is inventoried in the triage CSV, and none is an unaccounted click target', async () => {
+  // The CSV is the hand-reviewed allowlist. A site missing from it is a static
+  // bitmap nobody has judged; a clickable one must either have become a Button
+  // (and so no longer be a wxStaticBitmap) or carry a written reason why the
+  // click belongs to a surrounding control.
+  const csvText = await readFile(path.join(repoDir, 'docs', 'features', 'design-system', 'static-bitmap-triage.csv'), 'utf8');
+  const rows = csvText.split(/\r?\n/).slice(1).filter((l) => l.trim()).map((line) => {
+    const cells = line.match(/"((?:[^"]|"")*)"/g).map((c) => c.slice(1, -1).replace(/""/g, '"'));
+    const [file, lineNo, member, px, hasBind, verdict, source, reason] = cells;
+    return { file, lineNo: Number(lineNo), member, px, hasBind: hasBind === 'yes', verdict, source, reason };
+  });
+  assert.ok(rows.length >= 100, `the triage must inventory the real population, got ${rows.length}`);
+  const inventoried = new Map();
+  for (const r of rows) inventoried.set(r.file, (inventoried.get(r.file) || 0) + 1);
+  const live = await sitesOf(/new wxStaticBitmap\(/g);
+  for (const [file, count] of live) {
+    assert.equal(inventoried.get(file) || 0, count, `${file}: ${count} live wxStaticBitmap site(s) but ${inventoried.get(file) || 0} inventoried row(s); rerun scripts/md3/triage-static-bitmaps.mjs --write and review`);
+  }
+  for (const [file] of inventoried) assert.ok(live.has(file), `${file} is inventoried but has no live site; rerun the triage`);
+  const pending = rows.filter((r) => r.verdict === 'needs-control');
+  assert.deepEqual(pending.map((r) => `${r.file}:${r.member}`), [], 'a clickable static bitmap must become a Button or carry a reason');
+  for (const r of rows.filter((r) => r.hasBind)) {
+    assert.ok(r.reason && r.reason.length > 20, `${r.file}:${r.member} has a click binding and needs a written reason`);
+  }
+  for (const r of rows) assert.ok(['data', 'glyph', 'badge', 'md3-rendered', 'unclassified'].includes(r.verdict), `${r.file}:${r.lineNo} unknown verdict ${r.verdict}`);
+});
+
 test('no window is sized by an unscaled pixel literal', async () => {
   // SetSize/SetMinSize/SetMaxSize(wxSize(N, M)) with a positive literal is a
   // 100%-only size: at 150% and 200% it clips whatever it holds. The zero and

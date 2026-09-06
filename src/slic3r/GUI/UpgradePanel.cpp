@@ -1,4 +1,6 @@
 #include "UpgradePanel.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/StaticLine.hpp"
 #include <slic3r/GUI/Widgets/SideTools.hpp>
 #include <slic3r/GUI/Widgets/Label.hpp>
@@ -272,7 +274,12 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     m_staticText_upgrading_percent->Wrap(-1);
     m_upgrading_sizer->Add(m_staticText_upgrading_percent, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
-    m_upgrade_retry_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize);
+    // Was a wxStaticBitmap holding wxNullBitmap that never received an image: an
+    // invisible click target. It is a visible kit icon Button now.
+    m_upgrade_retry_img = new Button(this, "", "", 0, 0);
+    m_upgrade_retry_img->SetIconButton(Button::IconShape::Circle, FromDIP(28));
+    m_upgrade_retry_img->SetGlyph(MaterialIcon::Refresh, FromDIP(20));
+    m_upgrade_retry_img->SetToolTip(_L("Retry"));
     m_upgrading_sizer->Add(m_upgrade_retry_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
 
     m_upgrading_sizer->Add(0, 0, 1, wxEXPAND, 0);
@@ -304,7 +311,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     this->Layout();
 
     // Connect Events
-    m_upgrade_retry_img->Bind(wxEVT_LEFT_UP, [this](auto &e) {
+    m_upgrade_retry_img->Bind(wxEVT_BUTTON, [this](auto &e) {
         upgrade_firmware_internal();
         });
 

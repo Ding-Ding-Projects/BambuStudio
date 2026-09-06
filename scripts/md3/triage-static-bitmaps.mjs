@@ -135,7 +135,23 @@ for (const file of await walk(guiRoot)) {
 sites.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line);
 const csvEscape = (v) => `"${String(v).replace(/"/g, '""')}"`;
 const header = 'file,line,member,px,has_bind,verdict,source,reason';
-const rows = sites.map((s) => [s.file, s.line, s.member, s.px ?? '', s.hasBind ? 'yes' : 'no', s.verdict, s.source, ''].map(csvEscape).join(','));
+// A human's verdict and reason survive regeneration: keyed by file + member (or
+// file + source for anonymous holders), so line drift never erases a decision.
+const previous = new Map();
+try {
+  const old = await fs.readFile(csvPath, 'utf8');
+  for (const line of old.split(/\r?\n/).slice(1)) {
+    if (!line.trim()) continue;
+    const cells = line.match(/"((?:[^"]|"")*)"/g).map((c) => c.slice(1, -1).replace(/""/g, '"'));
+    const [file, , member, , , verdict, source, reason] = cells;
+    if (reason) previous.set(`${file}|${member || source}`, { verdict, reason });
+  }
+} catch { /* first run: nothing to preserve */ }
+for (const s of sites) {
+  const kept = previous.get(`${s.file}|${s.member || s.source}`);
+  if (kept) { s.verdict = kept.verdict; s.reason = kept.reason; }
+}
+const rows = sites.map((s) => [s.file, s.line, s.member, s.px ?? '', s.hasBind ? 'yes' : 'no', s.verdict, s.source, s.reason || ''].map(csvEscape).join(','));
 const csv = [header, ...rows].join('\n') + '\n';
 if (write) {
   await fs.mkdir(path.dirname(csvPath), { recursive: true });

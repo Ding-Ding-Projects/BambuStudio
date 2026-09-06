@@ -1,5 +1,7 @@
 #include "Tab.hpp"
 #include "Auxiliary.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/Model.hpp"
 #include "libslic3r/Format/bbs_3mf.hpp"
@@ -118,9 +120,12 @@ AuFile::AuFile(wxWindow *parent, fs::path file_path, wxString file_name, Auxilia
     m_input_name->SetFont(::Label::Body_14);
     m_input_name->Hide();
 
-    m_file_exit_rename = new wxStaticBitmap(m_text_panel, wxID_ANY, create_scaled_bitmap("auxiliary_delete", this, 20), wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)), 0);
+    m_file_exit_rename = new Button(m_text_panel, "", "", 0, 0);
+    m_file_exit_rename->SetIconButton(Button::IconShape::Square, FromDIP(24));
+    m_file_exit_rename->SetGlyph(MaterialIcon::Close, FromDIP(18));
+    m_file_exit_rename->SetToolTip(_L("Cancel"));
 
-    m_file_exit_rename->Bind(wxEVT_LEFT_UP, [this](auto& e) {
+    m_file_exit_rename->Bind(wxEVT_BUTTON, [this](auto& e) {
         exit_rename_mode();
     });
 

@@ -1,6 +1,8 @@
 #include "GUI.hpp"
 #include "Widgets/LabeledCheckBox.hpp"
 #include "GUI_Utils.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "GUI_App.hpp"
 #include "Widgets/StateColor.hpp"
 
@@ -504,8 +506,10 @@ void WikiPanel::init_components()
     m_wiki_icon       = new ScalableBitmap(this, "wiki", 16);
     m_wiki_icon_hover = new ScalableBitmap(this, "wiki_hover", 16);
 
-    // Create bitmap control
-    m_wiki_bmp = new wxStaticBitmap(this, wxID_ANY, m_wiki_icon->bmp());
+    // Kit icon Button carrying the help glyph; the Button paints its own hover tone.
+    m_wiki_bmp = new Button(this, "", "", 0, 0);
+    m_wiki_bmp->SetIconButton(Button::IconShape::Circle, FromDIP(24));
+    m_wiki_bmp->SetGlyph(MaterialIcon::Help, FromDIP(16));
 
     // Create text label
     m_wiki_label = new Label(this, m_wiki_text);
@@ -540,8 +544,8 @@ void WikiPanel::bind_events()
 
     auto open_wiki = [this](wxMouseEvent &) { open_wiki_url(); };
 
-    // Bind events for both bitmap and label
-    m_wiki_bmp->Bind(wxEVT_LEFT_DOWN, open_wiki);
+    // Bind events for both the icon button and the label
+    m_wiki_bmp->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { open_wiki_url(); });
     m_wiki_label->Bind(wxEVT_LEFT_DOWN, open_wiki);
 
     m_wiki_bmp->Bind(wxEVT_ENTER_WINDOW, [set_hover](wxMouseEvent &) { set_hover(true); });
@@ -554,7 +558,6 @@ void WikiPanel::bind_events()
 void WikiPanel::set_hover_state(bool hover)
 {
     wxColour color = hover ? StateColor::semantic(MD3::Role::Primary) : StateColor::darkModeColorFor(ThemeColor::TextMuted);
-    m_wiki_bmp->SetBitmap(hover ? m_wiki_icon_hover->bmp() : m_wiki_icon->bmp());
     m_wiki_label->SetForegroundColour(color);
     m_wiki_label->SetFont(hover ? Label::Body_13.Underlined() : Label::Body_13);
     m_wiki_label->SetCursor(hover ? wxCURSOR_HAND : wxCURSOR_ARROW);
@@ -600,9 +603,9 @@ void WikiPanel::SetTooltip(const wxString &tooltip)
 
 void WikiPanel::msw_rescale()
 {
+    if (m_wiki_bmp) m_wiki_bmp->Rescale();
     if (m_wiki_icon) {
         m_wiki_icon->msw_rescale();
-        m_wiki_bmp->SetBitmap(m_wiki_icon->bmp());
     }
     if (m_wiki_icon_hover) {
         m_wiki_icon_hover->msw_rescale();

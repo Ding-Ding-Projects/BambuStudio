@@ -104,7 +104,7 @@ private:
     wxSimplebook *m_simplebook;
     wxStaticBitmap *m_avatar;
     wxStaticBitmap *m_printer_img;
-    wxStaticBitmap *m_static_bitmap_show_error;
+    Button*        m_static_bitmap_show_error;
     wxBitmap      m_bitmap_show_error_close;
     wxBitmap      m_bitmap_show_error_open;
     wxScrolledWindow* m_sw_bind_failed_info;

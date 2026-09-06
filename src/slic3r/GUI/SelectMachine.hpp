@@ -380,10 +380,10 @@ protected:
     wxBoxSizer*                         m_change_filament_times_sizer{ nullptr };
     wxBoxSizer*                         m_warn_when_drying_sizer{ nullptr };
     Button*                             m_button_ensure{ nullptr };
-    wxStaticBitmap *                    m_rename_button{nullptr};
+    Button *                            m_rename_button{nullptr};
     wxStaticBitmap*                     m_staticbitmap{ nullptr };
-    wxStaticBitmap*                     m_bitmap_last_plate{ nullptr };
-    wxStaticBitmap*                     m_bitmap_next_plate{ nullptr };
+    Button*                             m_bitmap_last_plate{ nullptr };
+    Button*                             m_bitmap_next_plate{ nullptr };
     wxStaticBitmap*                     img_amsmapping_tip{nullptr};
     ThumbnailPanel*                     m_thumbnailPanel{ nullptr };
     wxPanel*                            m_panel_status{ nullptr };
@@ -432,7 +432,7 @@ protected:
     wxStaticBitmap *                    weightimg{nullptr};
     ScalableBitmap *                    print_weight{nullptr};
     ScalableBitmap *                    ams_mapping_help_icon{nullptr};
-    wxStaticBitmap *                    img_ams_backup{nullptr};
+    Button* img_ams_backup{nullptr};
     ThumbnailData                       m_cur_input_thumbnail_data;
     ThumbnailData                       m_cur_no_light_thumbnail_data;
     ThumbnailData                       m_preview_thumbnail_data;//when ams map change
@@ -513,7 +513,7 @@ public:
     void update_best_pos_dialog(wxCommandEvent &evt);
     void update_ams_check(MachineObject* obj);
     void update_filament_change_count();
-    void on_rename_click(wxMouseEvent &event);
+    void on_rename_click(wxCommandEvent &event);
     void on_rename_enter();
     void update_printer_combobox(wxCommandEvent& event);
     void on_cancel(wxCloseEvent& event);

@@ -1,4 +1,6 @@
 #include "BBLStatusBarSend.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include <wx/timer.h>
 #include <wx/gauge.h>
@@ -85,13 +87,18 @@ BBLStatusBarSend::BBLStatusBarSend(wxWindow *parent, int id)
 
     m_bitmap_show_error_close = create_scaled_bitmap("link_more_error_close", nullptr, 7);
     m_bitmap_show_error_open = create_scaled_bitmap("link_more_error_open", nullptr, 7);
-    m_static_bitmap_show_error = new wxStaticBitmap(m_self, wxID_ANY, m_bitmap_show_error_open, wxDefaultPosition, wxSize(m_self->FromDIP(7), m_self->FromDIP(7)));
+    // Kit icon Button: the error-details expander is focusable and exposes a role;
+    // its chevron flips by glyph instead of by swapping two 7 px bitmaps.
+    m_static_bitmap_show_error = new Button(m_self, "", "", 0, 0);
+    m_static_bitmap_show_error->SetIconButton(Button::IconShape::Circle, m_self->FromDIP(20));
+    m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, m_self->FromDIP(14));
+    m_static_bitmap_show_error->SetToolTip(_L("Show details"));
 
     m_link_show_error->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {this->m_self->SetCursor(wxCURSOR_HAND); });
     m_link_show_error->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {this->m_self->SetCursor(wxCURSOR_ARROW); });
     m_link_show_error->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
-        if (!m_show_error_info_state) { m_show_error_info_state = true; m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_close); }
-        else { m_show_error_info_state = false; m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_open); }
+        if (!m_show_error_info_state) { m_show_error_info_state = true; m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandLess, m_self->FromDIP(14)); }
+        else { m_show_error_info_state = false; m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, m_self->FromDIP(14)); }
         wxCommandEvent* evt = new wxCommandEvent(EVT_SHOW_ERROR_INFO_SEND);
         wxQueueEvent(this->m_self->GetParent(), evt);
     });
@@ -103,9 +110,9 @@ BBLStatusBarSend::BBLStatusBarSend(wxWindow *parent, int id)
 
     m_static_bitmap_show_error->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {this->m_self->SetCursor(wxCURSOR_HAND); });
     m_static_bitmap_show_error->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {this->m_self->SetCursor(wxCURSOR_ARROW); });
-    m_static_bitmap_show_error->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
-        if (!m_show_error_info_state) {m_show_error_info_state = true;m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_close);}
-        else {m_show_error_info_state = false;m_static_bitmap_show_error->SetBitmap(m_bitmap_show_error_open);}
+    m_static_bitmap_show_error->Bind(wxEVT_BUTTON, [this](auto& e) {
+        if (!m_show_error_info_state) {m_show_error_info_state = true;m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandLess, m_self->FromDIP(14));}
+        else {m_show_error_info_state = false;m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, m_self->FromDIP(14));}
         wxCommandEvent* evt = new wxCommandEvent(EVT_SHOW_ERROR_INFO_SEND);
         wxQueueEvent(this->m_self->GetParent(), evt);
     });

@@ -1,4 +1,6 @@
 #include "AMSMaterialsSetting.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "ExtrusionCalibration.hpp"
 #include "MsgDialog.hpp"
@@ -2732,9 +2734,13 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
     });
 
     m_ts_bitmap_custom = ScalableBitmap(this, "ts_custom_color_picker", 25);
-    m_ts_stbitmap_custom = new wxStaticBitmap(m_custom_cp, wxID_ANY, m_ts_bitmap_custom.bmp());
+    // Kit icon Button (focusable, exposes a role) carrying the palette glyph.
+    m_ts_stbitmap_custom = new Button(m_custom_cp, "", "", 0, 0);
+    m_ts_stbitmap_custom->SetIconButton(Button::IconShape::Circle, FromDIP(28));
+    m_ts_stbitmap_custom->SetGlyph(MaterialIcon::Palette, FromDIP(20));
+    m_ts_stbitmap_custom->SetToolTip(_L("Custom color"));
 
-    m_ts_stbitmap_custom->Bind(wxEVT_LEFT_DOWN, &ColorPickerPopup::on_custom_clr_picker, this);
+    m_ts_stbitmap_custom->Bind(wxEVT_BUTTON, &ColorPickerPopup::on_custom_clr_picker, this);
     m_ts_stbitmap_custom->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {
         SetCursor(wxCURSOR_HAND);
         });
@@ -2775,7 +2781,7 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent)
     wxGetApp().UpdateDarkUIWin(this);
 }
 
-void ColorPickerPopup::on_custom_clr_picker(wxMouseEvent& event)
+void ColorPickerPopup::on_custom_clr_picker(wxCommandEvent& event)
 {
     std::vector<std::string> colors = wxGetApp().app_config->get_custom_color_from_config();
     for (int i = 0; i < colors.size(); i++) {

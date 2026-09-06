@@ -259,9 +259,11 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     rename_editable = new ScalableBitmap(m_scroll_area, "rename_edit", 20);
     rename_editable_light = new ScalableBitmap(m_scroll_area, "rename_edit", 20);
     // Wave 3 (shared-dialog-action-icons): rename affordance -> edit glyph.
-    m_rename_button = new wxStaticBitmap(m_rename_normal_panel, wxID_ANY,
-        dialog_action_glyph(m_rename_normal_panel, MaterialIcon::Edit, MD3::Role::OnSurfaceVariant, "rename_edit", 20),
-        wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)), 0);
+    // Kit icon Button: focusable, exposes a role, and tints its own states.
+    m_rename_button = new Button(m_rename_normal_panel, "", "", 0, 0);
+    m_rename_button->SetIconButton(Button::IconShape::Square, FromDIP(24));
+    m_rename_button->SetGlyph(MaterialIcon::Edit, FromDIP(20));
+    m_rename_button->SetToolTip(_L("Rename"));
     m_rename_button->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
     m_rename_button->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
 
@@ -295,7 +297,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_rename_edit_panel->Layout();
     rename_edit_sizer_v->Fit(m_rename_edit_panel);
 
-    m_rename_button->Bind(wxEVT_LEFT_DOWN, &SelectMachineDialog::on_rename_click, this);
+    m_rename_button->Bind(wxEVT_BUTTON, &SelectMachineDialog::on_rename_click, this);
     m_rename_switch_panel->AddPage(m_rename_normal_panel, wxEmptyString, true);
     m_rename_switch_panel->AddPage(m_rename_edit_panel, wxEmptyString, false);
 
@@ -357,12 +359,18 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     /*last & next page*/
     auto last_plate_sizer = new wxBoxSizer(wxVERTICAL);
     // Wave 3 (shared-dialog-action-icons): plate navigation arrows -> chevron glyphs.
-    m_bitmap_last_plate = new wxStaticBitmap(m_basic_panel, wxID_ANY, dialog_action_glyph(m_basic_panel, MaterialIcon::ChevronLeft, MD3::Role::OnSurfaceVariant, "go_last_plate", 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
+    m_bitmap_last_plate = new Button(m_basic_panel, "", "", 0, 0);
+    m_bitmap_last_plate->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    m_bitmap_last_plate->SetGlyph(MaterialIcon::ChevronLeft, FromDIP(24));
+    m_bitmap_last_plate->SetToolTip(_L("Previous plate"));
     m_bitmap_last_plate->Hide();
     last_plate_sizer->Add(m_bitmap_last_plate, 0, wxALIGN_CENTER, 0);
 
     auto next_plate_sizer = new wxBoxSizer(wxVERTICAL);
-    m_bitmap_next_plate = new wxStaticBitmap(m_basic_panel, wxID_ANY, dialog_action_glyph(m_basic_panel, MaterialIcon::ChevronRight, MD3::Role::OnSurfaceVariant, "go_next_plate", 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
+    m_bitmap_next_plate = new Button(m_basic_panel, "", "", 0, 0);
+    m_bitmap_next_plate->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    m_bitmap_next_plate->SetGlyph(MaterialIcon::ChevronRight, FromDIP(24));
+    m_bitmap_next_plate->SetToolTip(_L("Next plate"));
     m_bitmap_next_plate->Hide();
     next_plate_sizer->Add(m_bitmap_next_plate, 0, wxALIGN_CENTER, 0);
 
@@ -428,7 +436,10 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_ams_backup_tip->SetForegroundColour(ThemeColor::BrandGreen);
     m_ams_backup_tip->SetBackgroundColour(ThemeColor::White);
     // Wave 3 (shared-dialog-action-icons): auto-refill renewal -> sync glyph (Primary accent).
-    img_ams_backup = new wxStaticBitmap(m_scroll_area, wxID_ANY, dialog_action_glyph(this, MaterialIcon::Sync, MD3::Role::Primary, "automatic_material_renewal", 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)), 0);
+    img_ams_backup = new Button(m_scroll_area, "", "", 0, 0);
+    img_ams_backup->SetIconButton(Button::IconShape::Square, FromDIP(22));
+    img_ams_backup->SetGlyph(MaterialIcon::Sync, FromDIP(16));
+    img_ams_backup->SetGlyphColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::Primary), (int) StateColor::Normal)));
     img_ams_backup->SetBackgroundColour(ThemeColor::White);
 
     m_sizer_autorefill->Add(0, 0, 1, wxEXPAND, 0);
@@ -445,7 +456,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     img_ams_backup->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
 
     m_ams_backup_tip->Bind(wxEVT_LEFT_DOWN, [this](auto& e) { if (!m_is_in_sending_mode) { popup_filament_backup(); on_rename_enter(); }  });
-    img_ams_backup->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {if (!m_is_in_sending_mode) popup_filament_backup(); on_rename_enter(); });
+    img_ams_backup->Bind(wxEVT_BUTTON, [this](auto& e) {if (!m_is_in_sending_mode) popup_filament_backup(); on_rename_enter(); });
 
     sizer_split_filament->Add(0, 0, 0, wxEXPAND, 0);
     sizer_split_filament->Add(m_stext_filament_title, 0, wxALIGN_CENTER, 0);
@@ -999,7 +1010,7 @@ void SelectMachineDialog::init_bind()
         }
     });
 
-    m_bitmap_last_plate->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
+    m_bitmap_last_plate->Bind(wxEVT_BUTTON, [this](auto& e) {
         if (m_print_plate_idx > 0) {
             m_print_plate_idx--;
             update_page_turn_state(true);
@@ -1008,7 +1019,7 @@ void SelectMachineDialog::init_bind()
         }
     });
 
-    m_bitmap_next_plate->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
+    m_bitmap_next_plate->Bind(wxEVT_BUTTON, [this](auto& e) {
         if (m_print_plate_idx < (m_print_plate_total - 1)) {
             m_print_plate_idx++;
             update_page_turn_state(true);
@@ -3560,7 +3571,7 @@ void SelectMachineDialog::update_user_printer()
     update_by_obj(get_current_machine());
 }
 
-void SelectMachineDialog::on_rename_click(wxMouseEvent& event)
+void SelectMachineDialog::on_rename_click(wxCommandEvent& event)
 {
     m_is_rename_mode = true;
     m_rename_input->GetTextCtrl()->SetValue(m_current_project_name);
@@ -5297,14 +5308,8 @@ void SelectMachineDialog::sys_color_changed()
     // Wave 3 (shared-dialog-action-icons): keep the rename affordance on the edit
     // glyph across theme switches; the glyph recolours via its semantic role, so both
     // light/dark map to the same helper (the raster fallback also used one asset).
-    if (wxGetApp(). dark_mode()) {
-        //rename_button->SetIcon("ams_editable_light");
-        m_rename_button->SetBitmap(dialog_action_glyph(m_rename_button, MaterialIcon::Edit, MD3::Role::OnSurfaceVariant, "rename_edit", 20));
-
-    }
-    else {
-        m_rename_button->SetBitmap(dialog_action_glyph(m_rename_button, MaterialIcon::Edit, MD3::Role::OnSurfaceVariant, "rename_edit", 20));
-    }
+    // The kit Button resolves its glyph tone for the current theme itself.
+    m_rename_button->SetGlyph(MaterialIcon::Edit, FromDIP(20));
     m_rename_button->Refresh();
 }
 

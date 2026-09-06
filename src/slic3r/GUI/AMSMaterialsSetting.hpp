@@ -76,7 +76,7 @@ public:
     };
 
     ScalableBitmap m_ts_bitmap_custom;
-    wxStaticBitmap* m_ts_stbitmap_custom;
+    Button* m_ts_stbitmap_custom;
     StaticBox* m_custom_cp;
     wxColourData* m_clrData;
     StaticBox* m_def_color_box;
@@ -95,7 +95,7 @@ public:
 public:
     ColorPickerPopup(wxWindow* parent);
     ~ColorPickerPopup() {};
-    void on_custom_clr_picker(wxMouseEvent& event);
+    void on_custom_clr_picker(wxCommandEvent& event);
     void set_ams_colours(const std::vector<ColorItem>& ams);
     void set_preset_colours(const std::vector<ColorItem>& preset_colors);
     void set_def_colour(wxColour col, std::vector<wxColour> cols = {}, int ctype = 0);

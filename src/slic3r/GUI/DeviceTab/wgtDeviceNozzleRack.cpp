@@ -9,6 +9,8 @@
 //**********************************************************/
 
 #include "wgtDeviceNozzleRack.h"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 #include "wgtDeviceNozzleRackUpdate.h"
 
 #include "slic3r/GUI/DeviceCore/DevNozzleSystem.h"
@@ -772,9 +774,12 @@ void wgtDeviceNozzleRackNozzleItem::CreateGui()
 
     label_h_sizer->Add(m_nozzle_label_1, 0, wxALIGN_LEFT);
 
-    auto status_icon = create_scaled_bitmap("dev_rack_nozzle_error_icon", this, 14);
-    m_nozzle_status_icon = new wxStaticBitmap(this, wxID_ANY, status_icon, wxDefaultPosition, WX_DIP_SIZE(14, 14));
-    m_nozzle_status_icon->Bind(wxEVT_LEFT_DOWN, &wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus, this);
+    // Kit icon Button with the Error glyph in the Error role; focusable, with a role.
+    m_nozzle_status_icon = new Button(this, "", "", 0, 0);
+    m_nozzle_status_icon->SetIconButton(Button::IconShape::Circle, FromDIP(20));
+    m_nozzle_status_icon->SetGlyph(MaterialIcon::Error, FromDIP(14));
+    m_nozzle_status_icon->SetGlyphColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::Error), (int) StateColor::Normal)));
+    m_nozzle_status_icon->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus, this);
     m_nozzle_status_icon->Bind(wxEVT_ENTER_WINDOW, [this](auto&) { SetCursor(wxCURSOR_HAND); });
     m_nozzle_status_icon->Bind(wxEVT_LEAVE_WINDOW, [this](auto&) { SetCursor(wxCURSOR_ARROW); });
     m_nozzle_status_icon->SetBackgroundColour(*wxWHITE);
@@ -907,7 +912,7 @@ void wgtDeviceNozzleRackNozzleItem::SetNozzleStatus(NOZZLE_STATUS status, const 
     }
 }
 
-void wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus(wxMouseEvent& evt)
+void wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus(wxCommandEvent& evt)
 {
     if (m_is_disabled) {
         return;
@@ -935,7 +940,7 @@ void wgtDeviceNozzleRackNozzleItem::Rescale()
     if (m_nozzle_error_image) { m_nozzle_error_image->msw_rescale(); }
 
     auto status_icon = create_scaled_bitmap("dev_rack_nozzle_error_icon", this, 14);
-    m_nozzle_status_icon->SetBitmap(status_icon);
+    m_nozzle_status_icon->SetGlyph(MaterialIcon::Error, FromDIP(14));
     m_nozzle_status_icon->Refresh();
 
     if (m_nozzle_selected_image) {

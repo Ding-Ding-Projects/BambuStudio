@@ -1,4 +1,6 @@
 #include "HelioReleaseNote.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "HelioHistoryDialog.hpp"
 #include "I18N.hpp"
 
@@ -2100,11 +2102,14 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     last_tid_label = new Label(last_tid_panel, wxEmptyString);
     last_tid_label->SetBackgroundColour(theme.bg);
     last_tid_label->SetForegroundColour(theme.muted);
-    wxStaticBitmap* helio_tid_copy = new wxStaticBitmap(last_tid_panel, wxID_ANY, create_scaled_bitmap("helio_copy", last_tid_panel, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    Button* helio_tid_copy = new Button(last_tid_panel, "", "", 0, 0);
+    helio_tid_copy->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    helio_tid_copy->SetGlyph(MaterialIcon::ContentCopy, FromDIP(20));
+    helio_tid_copy->SetToolTip(_L("Copy"));
     helio_tid_copy->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     helio_tid_copy->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
 
-    helio_tid_copy->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
+    helio_tid_copy->Bind(wxEVT_BUTTON, [this](auto& e) {
         if (wxTheClipboard->Open()) {
             wxTheClipboard->Clear();
             wxTextDataObject* dataObj = new wxTextDataObject(last_tid_label->GetLabel());
@@ -3323,13 +3328,14 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     sizer_rating->Add(rating_star4, 0, wxLEFT, FromDIP(10));
     sizer_rating->Add(rating_star5, 0, wxLEFT, FromDIP(10));
 
-    wxStaticBitmap* save_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("save", this, 24), wxDefaultPosition,
-        wxSize(FromDIP(24), FromDIP(24)));
+    Button* save_icon = new Button(this, "", "", 0, 0);
+    save_icon->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    save_icon->SetGlyph(MaterialIcon::Save, FromDIP(20));
     save_icon->SetToolTip(_L("Save the enhanced gcode locally"));
 
     save_icon->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     save_icon->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
-    save_icon->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
+    save_icon->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e) {
         wxPostEvent(wxGetApp().plater(), SimpleEvent(EVT_GLTOOLBAR_EXPORT_SLICED_FILE));
     });
 
