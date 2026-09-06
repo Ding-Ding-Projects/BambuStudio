@@ -45,15 +45,15 @@ These cost previous sessions hours. Do not re-derive them.
 | Thing | Value |
 | --- | --- |
 | Repo path | Resolve from the active checkout (`git rev-parse --show-toplevel`); on the current host it is `C:\Users\cntow\Documents\GitHub\BambuStudio`. |
-| Visual Studio | Visual Studio 18 Enterprise at `C:\Program Files\Microsoft Visual Studio\18\Enterprise`. |
-| MSBuild | `C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe` |
-| Windows SDK | The current generated tree selects **10.0.28000.0**. Do not reuse the obsolete 10.0.26100.0 pin from an earlier host image. |
-| Prebuilt deps | `..\bambu-deps\build\out_deps\usr\local` for the current generated tree. Recheck the CMake cache before regenerating. |
+| Visual Studio | VS 2022 Build Tools 17.14 at `%LOCALAPPDATA%\material-virtualbox-toolchain\BuildTools`, installed by `build.bat` (2026-09-05). The earlier VS 18 Enterprise path no longer exists on this host. |
+| MSBuild | `%LOCALAPPDATA%\material-virtualbox-toolchain\BuildTools\MSBuild\Current\Bin\MSBuild.exe`. A bare MSBuild run cannot regenerate the projects (CMake needs pkg-config on PATH); regenerate through `build.bat /s`. |
+| Windows SDK | The generated tree selects **10.0.26100.0** (installed by `build.bat`). |
+| Prebuilt deps | `deps\build\BambuStudio_dep\usr\local`, built by `build.bat` (attempt 6, 2026-09-05). |
 | App logs | `%APPDATA%\BambuStudioInternal\log\studio_*.log*` |
 | App config | `%APPDATA%\BambuStudioInternal\BambuStudio.conf` (e.g. `"dark_color_mode": "1"`). **Ends with a `# MD5 checksum` line.** A stale checksum only logs a warning, but **malformed JSON makes the app silently fall back to `BambuStudio.conf.bak`** — so a botched hand-edit looks exactly like "the app ignored my setting". Edit with a real JSON serializer and recompute the checksum over everything up to and including the last `}`. |
-| GPU | **None.** The app needs the Mesa llvmpipe DLLs beside the Release executable to start. |
+| GPU | NVIDIA GeForce RTX 3050. The app starts on the real driver on a hidden desktop; GL canvases come back blank through `PrintWindow` on that route, so canvas captures use the Mesa pair in `install-dir\mesa`. |
 | Display | The current primary display reports **1920 x 1080**. Treat this as a point-in-time host fact and recheck before drawing layout conclusions. |
-| Python | Use the repository-vendored Lowlevel MCP venv at `vendor\lowlevel-computer-use-mcp\.venv\Scripts\python.exe`; `LLCU_VENV` may override it. |
+| Python | The vendored venv is absent on this host. The cheap Lowlevel CLI lives in the sibling checkout at `%USERPROFILE%\Documents\GitHub\lowlevel-computer-use-mcp\.venv\Scripts`; set `LLCU_VENV` to that `.venv` for `driver.py`. Plain `py -3` runs the `scripts/md3/*.py` helpers. |
 
 **Shell gotchas on this box** (these silently produce wrong results):
 
