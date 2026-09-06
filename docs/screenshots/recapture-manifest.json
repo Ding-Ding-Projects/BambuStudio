@@ -422,7 +422,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Accent custom-btn",
+        "label": "Custom accent",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -445,7 +445,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Density Comfortable",
+        "label": "Comfortable",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -514,7 +514,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Md3 Preview Panel",
+        "label": "Appearance preview",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -537,7 +537,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Preview Text",
+        "label": "Appearance preview text",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -560,7 +560,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Reset Defaults",
+        "label": "Reset appearance to defaults",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -583,7 +583,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Text Size Default",
+        "label": "Text size",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -606,7 +606,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Text Size Large",
+        "label": "Large",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -629,7 +629,7 @@
           "open:Preferences",
           "tab:Appearance"
         ],
-        "label": "Text Size Small",
+        "label": "Small",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -718,7 +718,7 @@
         "steps": [
           "open:Preferences",
           "tab:Appearance",
-          "click:Custom"
+          "click:Custom accent"
         ],
         "tuple": {
           "language": "en",

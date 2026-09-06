@@ -1,6 +1,8 @@
 #include "LayoutProbe.hpp"
 
 #include "GUI_App.hpp"
+#include "MainFrame.hpp"
+#include "BBLTopbar.hpp"
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 #include "Widgets/MD3Tokens.hpp"
@@ -360,6 +362,24 @@ void install(wxWindow *frame)
 
 bool handle_command(const std::wstring &payload)
 {
+    // Driver hooks beyond the dump itself, still gated on the probe being armed:
+    //   menu-popup <Title>   pop a top-bar menu (File, Edit, View, Objects, Calibration, Help)
+    //   invoke <label>       fire the first menu item whose label contains <label>
+    if (enabled()) {
+        const std::wstring popup = L"menu-popup ", invoke = L"invoke ";
+        MainFrame *frame = wxGetApp().mainframe;
+        BBLTopbar *bar   = frame ? frame->topbar() : nullptr;
+        if (bar && payload.compare(0, popup.size(), popup) == 0) {
+            const bool ok = bar->PopupMenuByTitle(wxString(payload.substr(popup.size())));
+            BOOST_LOG_TRIVIAL(info) << "LayoutProbe: menu-popup " << (ok ? "ok" : "no such menu");
+            return ok;
+        }
+        if (bar && payload.compare(0, invoke.size(), invoke) == 0) {
+            const bool ok = bar->InvokeMenuItem(wxString(payload.substr(invoke.size())));
+            BOOST_LOG_TRIVIAL(info) << "LayoutProbe: invoke " << (ok ? "ok" : "no such item");
+            return ok;
+        }
+    }
     static const std::wstring prefix = L"layout-probe";
     if (payload.compare(0, prefix.size(), prefix) != 0) return false;
     std::string out_path;

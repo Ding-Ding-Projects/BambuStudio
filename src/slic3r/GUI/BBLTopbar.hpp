@@ -45,6 +45,12 @@ public:
     void SetTopMenus(wxMenu* file_menu, wxMenu* edit_menu, wxMenu* view_menu,
                      wxMenu* objects_menu, wxMenu* help_menu);
     wxMenu *GetCalibMenu();
+    // Headless-driver hooks (only reached through the layout probe's command
+    // channel): pop a top menu by its title, or fire the first menu item whose
+    // label contains `label`. Both defer through CallAfter so the sender's
+    // WM_COPYDATA returns before a popup loop or a modal dialog blocks.
+    bool PopupMenuByTitle(const wxString &title);
+    bool InvokeMenuItem(const wxString &label);
     void SetTitle(wxString title);
     // §3.5 history chip label content (branch + short head). Decorative; the
     // click always opens the real version-history backend.

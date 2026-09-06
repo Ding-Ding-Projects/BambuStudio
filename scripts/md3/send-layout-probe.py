@@ -49,12 +49,13 @@ def main() -> int:
     ap.add_argument("hwnd", help="main window handle, decimal or 0x-hex")
     ap.add_argument("out", nargs="?", help="dump path; omitted means the app chooses under its log dir")
     ap.add_argument("--timeout", type=float, default=30.0)
+    ap.add_argument("--command", default=None, help="send this payload instead of layout-probe (menu-popup <Title>, invoke <label>)")
     args = ap.parse_args()
     hwnd = int(args.hwnd, 0)
-    payload = "layout-probe" + (f" {os.path.abspath(args.out)}" if args.out else "")
+    payload = args.command if args.command else "layout-probe" + (f" {os.path.abspath(args.out)}" if args.out else "")
     result = send(hwnd, payload)
     print(f"sent {payload!r} to {hwnd:#x}; reply {result}")
-    if not args.out:
+    if not args.out or args.command:
         return 0
     deadline = time.monotonic() + args.timeout
     while time.monotonic() < deadline:

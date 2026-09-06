@@ -48,6 +48,18 @@ PREF_TABS = {'appearance': (79, 75), 'general': (79, 120), 'user': (79, 166), '3
 # Surfaces that are the main frame itself.
 MAIN_SURFACES = {'main', 'home', 'prepare', 'preview', 'device', 'project', 'ink', 'toast', 'menu'}
 # Surface -> predicate on a top-level window record from the probe / window list.
+# open:<name> -> substring of the menu item label the app should fire.
+OPEN_ITEMS = {
+    'config wizard': 'wizard',
+    'config profiles': 'config profiles',
+    'ink manager': 'ink manager',
+    'project history': 'history',
+    'about': 'about',
+    'keyboard shortcuts': 'keyboard shortcuts',
+    'network test': 'network test',
+    'export preset bundle': 'export preset bundle',
+}
+
 DIALOG_SURFACES = {
     'preferences': lambda w: w['class'] == '#32770' and w['width'] >= 700 and w['height'] >= 560,
     'config-wizard': lambda w: w['class'] == '#32770' and w['width'] >= 900,
@@ -156,6 +168,14 @@ class App:
             time.sleep(0.5)
         raise RuntimeError('layout probe produced no complete dump (is this build carrying the probe?)')
 
+    def command(self, payload):
+        """Send a driver command (menu-popup <Title>, invoke <label>) through the
+        probe sender on the hidden desktop; the app defers the action, so this
+        returns at once and the caller waits for the resulting window."""
+        sender = os.path.join(HERE, 'send-layout-probe.py')
+        cheap('launch_on_headless_desktop', name=self.desktop, command=f'"{sys.executable}" "{sender}" {self.main} --command "{payload}"')
+        time.sleep(1.5)
+
     def click(self, hwnd, x, y, settle=1.5):
         cheap('mouse_click', hwnd=hwnd, x=int(x), y=int(y))
         time.sleep(settle)
@@ -184,6 +204,11 @@ def find_control(records, label, toplevel_hwnd=None):
     tops = {r['hwnd']: r for r in records if r.get('kind') == 'toplevel'}
     for r in records:
         if r.get('kind') != 'window' or not r.get('shown', True):
+            continue
+        # A shown flag says nothing about the ancestors; a control inside an
+        # unmapped dialog matched 'custom colour' and produced a click at
+        # x = -272. Builds since ae2273d84 record IsShownOnScreen.
+        if r.get('on_screen') is False:
             continue
         if toplevel_hwnd is not None and r.get('top') != toplevel_hwnd:
             continue
@@ -235,6 +260,19 @@ class Runner:
             if not c:
                 raise RuntimeError(f'blocked: nav {label} (no tab labelled so)')
             self.click_control(self.app.main, c)
+        elif kind == 'menu':
+            # Pop a top-bar menu; the popup is its own top-level window
+            # (class #32768) and becomes the front for the capture.
+            self.app.command(f'menu-popup {arg}')
+            self.front = self.app.wait(lambda w: w['class'] == '#32768' and w['width'] > 40, 10, f'menu {arg}')['handle']
+        elif kind == 'open' and arg.lower() not in ('preferences',):
+            # Fire the menu item whose label contains the name and wait for a
+            # dialog whose title contains it (or any new dialog if the title
+            # differs, e.g. the wizard).
+            before = {w['handle'] for w in self.app.windows() if w['class'] == '#32770'}
+            self.app.command(f'invoke {OPEN_ITEMS.get(arg.lower(), arg)}')
+            want = arg.lower().split()[0]
+            self.front = self.app.wait(lambda w: w['class'] == '#32770' and w['handle'] not in before and w['width'] >= 200 and (want in w['title'].lower() or w['title'] != ''), 20, f'dialog for {arg}')['handle']
         elif kind == 'open' and arg.lower() == 'preferences':
             self.app.click(self.app.main, *GEAR, settle=2.5)
             self.front = self.app.wait(lambda w: DIALOG_SURFACES['preferences'](w) and w['title'] != '', 20, 'Preferences')['handle']

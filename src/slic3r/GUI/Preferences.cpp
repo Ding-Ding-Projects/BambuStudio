@@ -2039,6 +2039,7 @@ public:
     {
         SetBackgroundStyle(wxBG_STYLE_PAINT);
         SetMinSize(wxSize(-1, FromDIP(72)));
+        SetName(_L("Appearance preview"));
         Bind(wxEVT_PAINT, &MD3AppearancePreview::OnPaint, this);
     }
 
@@ -2118,6 +2119,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto *theme = new MultiSwitchButton(scrolled);
     m_segmented_list.push_back(theme);
     theme->SetOptions({_L("Light"), _L("Dark")});
+    theme->SetName(_L("Theme"));
     theme->SetMinSize(wxSize(FromDIP(200), FromDIP(30)));
     const bool is_dark = app_config->get("dark_color_mode") == "1";
     theme->SetSelection(is_dark ? 1 : 0); // set before Bind so init does not re-fire the handler
@@ -2151,6 +2153,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto *density = new MultiSwitchButton(scrolled);
     m_segmented_list.push_back(density);
     density->SetOptions({_L("Comfortable"), _L("Compact")});
+    density->SetName(_L("Density"));
     density->SetMinSize(wxSize(FromDIP(220), FromDIP(30)));
     const std::string density_val = app_config->get("ui_density");
     density->SetSelection(density_val == "compact" ? 1 : 0);
@@ -2188,6 +2191,8 @@ wxWindow *PreferencesDialog::create_appearance_tab()
             refresh_md3_appearance(this);
         });
         sw->SetToolTip(seeds[i].second);
+        // Accessible name: the swatch is a painted wxWindow with no text of its own.
+        sw->SetName(wxString::Format(_L("Accent %d"), int(i + 1)));
         swatches->push_back(sw);
         accent_row->Add(sw, 0, wxRIGHT, FromDIP(10));
     }
@@ -2204,6 +2209,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     accent_custom->SetButtonSize(Button::Size::Small);
     accent_custom->SetMinSize(wxSize(FromDIP(32), FromDIP(32)));
     accent_custom->SetToolTip(_L("Custom color"));
+    accent_custom->SetName(_L("Custom accent"));
     accent_custom->Bind(wxEVT_BUTTON, [this, swatches](wxCommandEvent &) {
         std::string seed = app_config->get("ui_accent_seed");
         if (seed.empty()) seed = "#146c2e";
@@ -2235,6 +2241,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     // the CJK + digits sample is fixed so all three language modes exercise CJK
     // fallback.)
     auto *font_preview = new Label(scrolled, _L("The quick brown fox") + wxString::FromUTF8(" / \xE4\xB8\xAD\xE6\x96\x87\xE7\xA4\xBA\xE4\xBE\x8B 123"));
+    font_preview->SetName(_L("Appearance preview text"));
     font_preview->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     font_preview->SetFont(::Label::Body_16);
 
@@ -2300,6 +2307,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto *text_size = new MultiSwitchButton(scrolled);
     m_segmented_list.push_back(text_size);
     text_size->SetOptions({_L("Small"), _L("Default"), _L("Large")});
+    text_size->SetName(_L("Text size"));
     text_size->SetMinSize(wxSize(FromDIP(220), FromDIP(30)));
     double cur_scale = 1.0;
     try {

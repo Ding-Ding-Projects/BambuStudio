@@ -895,6 +895,73 @@ wxMenu* BBLTopbar::top_menu_for_tool(int tool_id) const
     }
 }
 
+static wxString driver_norm(wxString s)
+{
+    s = wxMenuItem::GetLabelText(s);
+    const int tab = s.Find('\t');
+    if (tab != wxNOT_FOUND) s = s.Left(tab);
+    while (!s.empty() && (s.Last() == '.' || s.Last() == wxUniChar(0x2026) || s.Last() == ' ')) s.RemoveLast();
+    return s.Lower();
+}
+
+bool BBLTopbar::PopupMenuByTitle(const wxString &title)
+{
+    const wxString want = driver_norm(title);
+    struct Entry { const char *name; int id; wxMenu *menu; };
+    const Entry entries[] = {
+        {"file", ID_TOP_FILE_MENU, m_file_menu},       {"edit", ID_TOP_EDIT_MENU, m_edit_menu},
+        {"view", ID_TOP_VIEW_MENU, m_view_menu},       {"objects", ID_TOP_OBJECTS_MENU, m_objects_menu},
+        {"calibration", ID_CALIB, &m_calib_menu},      {"help", ID_TOP_HELP_MENU, m_help_menu},
+    };
+    for (const Entry &e : entries) {
+        if (want != wxString(e.name) || !e.menu) continue;
+        const int id = e.id; wxMenu *menu = e.menu;
+        CallAfter([this, id, menu]() {
+            SetToolSticky(id, true);
+            const wxRect  tool_rect = GetToolRect(id);
+            const wxPoint anchor    = ClientToScreen(wxPoint(tool_rect.GetLeft(), GetClientSize().GetHeight() - FromDIP(1)));
+            GetParent()->PopupMenu(menu, GetParent()->ScreenToClient(anchor));
+            SetToolSticky(id, false);
+        });
+        return true;
+    }
+    return false;
+}
+
+static wxMenuItem *driver_find_item(wxMenu *menu, const wxString &want)
+{
+    if (!menu) return nullptr;
+    for (wxMenuItem *item : menu->GetMenuItems()) {
+        if (item->IsSeparator()) continue;
+        if (item->GetSubMenu()) {
+            if (wxMenuItem *hit = driver_find_item(item->GetSubMenu(), want)) return hit;
+            continue;
+        }
+        if (driver_norm(item->GetItemLabel()).Contains(want)) return item;
+    }
+    return nullptr;
+}
+
+bool BBLTopbar::InvokeMenuItem(const wxString &label)
+{
+    const wxString want = driver_norm(label);
+    if (want.empty()) return false;
+    wxMenu *menus[] = {m_file_menu, m_edit_menu, m_view_menu, m_objects_menu, &m_calib_menu, m_help_menu};
+    for (wxMenu *menu : menus) {
+        wxMenuItem *item = driver_find_item(menu, want);
+        if (!item) continue;
+        const int id = item->GetId();
+        wxMenu *owner = item->GetMenu();
+        CallAfter([this, id, owner]() {
+            wxCommandEvent evt(wxEVT_MENU, id);
+            evt.SetEventObject(owner);
+            if (!owner->GetEventHandler()->ProcessEvent(evt))
+                GetParent()->GetEventHandler()->ProcessEvent(evt);
+        });
+        return true;
+    }
+    return false;
+}
 wxMenu* BBLTopbar::GetCalibMenu()
 {
     return &m_calib_menu;
