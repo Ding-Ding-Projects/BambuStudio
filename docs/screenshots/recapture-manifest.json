@@ -1952,7 +1952,7 @@
         "steps": [
           "nav:Prepare"
         ],
-        "item": "mmu_painting",
+        "item": "Color Painting",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -2018,7 +2018,7 @@
         "steps": [
           "nav:Prepare"
         ],
-        "item": "measure",
+        "item": "Mesause",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -2040,7 +2040,7 @@
         "steps": [
           "nav:Prepare"
         ],
-        "item": "mmu_segmentation",
+        "item": "Color Painting",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -2084,7 +2084,7 @@
         "steps": [
           "nav:Prepare"
         ],
-        "item": "place",
+        "item": "Flatten",
         "pad": 8,
         "tuple": {
           "language": "en",
@@ -2574,7 +2574,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "undo lives on the caption bar now, not the scene toolbar"
       },
       "status": "pending"
     },
@@ -2706,7 +2707,8 @@
           "language": "en",
           "theme": "light",
           "density": "comfortable"
-        }
+        },
+        "blocked": "the zoom cluster is an ImGui overlay without item rectangles in the probe"
       },
       "status": "pending"
     },
