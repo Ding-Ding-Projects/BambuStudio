@@ -1258,14 +1258,10 @@ bool ImGuiWrapper::bbl_checkbox(const wxString &label, bool &value, bool enabled
     }
     if (!enabled) {
         float factor = b_value ? 0.8f : 1.0f;
-        if (b_dark_mode) {
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(factor * 39.0f / 255.0f, factor * 39.0f / 255.0f, factor * 39.0f / 255.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(factor * 108.0f / 255.0f, factor * 108.0f / 255.0f, factor * 108.0f / 255.0f, 1.0f));
-        }
-        else {
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(factor * 230.0f / 255.0f, factor * 230.0f / 255.0f, factor * 230.0f / 255.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(factor * 163.0f / 255.0f, factor * 163.0f / 255.0f, factor * 163.0f / 255.0f, 1.0f));
-        }
+        // Disabled: MD3 disabled container / disabled label, theme-resolved by role.
+        (void) b_dark_mode;
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imgui_color(MD3::Role::SurfaceContainerHigh, factor));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::Outline, factor));
     }
     auto label_utf8 = into_u8(label);
     result          = ImGui::BBLCheckbox(label_utf8.c_str(), &value);
@@ -1386,7 +1382,7 @@ void ImGuiWrapper::tooltip(const char *label, float wrap_width)
 {
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(wrap_width);
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface
     ImGui::TextUnformatted(label);
     ImGui::PopStyleColor(1);
     ImGui::PopTextWrapPos();
@@ -1401,7 +1397,7 @@ void ImGuiWrapper::tooltip(const wxString &label, float wrap_width)
 {
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(wrap_width);
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface
     ImGui::TextUnformatted(label.ToUTF8().data());
     ImGui::PopStyleColor(1);
     ImGui::PopTextWrapPos();
@@ -1734,7 +1730,7 @@ static bool selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     char marked_label[512]; //255 symbols is not enough for translated string (e.t. to Russian)
     if (hovered || selected) {
         sprintf(marked_label, "%c%s", ImGui::ColorMarkerHovered, label);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnPrimary)); // row fill is Primary
     }
     else
         strcpy(marked_label, label);
@@ -3771,11 +3767,11 @@ void ImGuiWrapper::filament_group(const std::string& filament_type, const char* 
 void ImGuiWrapper::sub_title(const std::string &label)
 {
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
-    text_colored(ImVec4(1.0f, 1.0f, 1.0f, 0.5f), label);
+    text_colored(md3_imgui_color(MD3::Role::OnSurfaceVariant), label);
     ImGui::SameLine();
     ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
     float available_width = ImGui::GetContentRegionAvail().x;
-    draw_list->AddLine(ImVec2(cursor_pos.x, cursor_pos.y + 8.0f), ImVec2(cursor_pos.x + available_width, cursor_pos.y + 8.0f), IM_COL32(255, 255, 255, 100));
+    draw_list->AddLine(ImVec2(cursor_pos.x, cursor_pos.y + 8.0f), ImVec2(cursor_pos.x + available_width, cursor_pos.y + 8.0f), ImGui::GetColorU32(md3_imgui_color(MD3::Role::OutlineVariant)));
     ImGui::NewLine();
 }
 

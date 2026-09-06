@@ -3086,8 +3086,8 @@ void GLCanvas3D::render(bool only_init)
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.13f, 0.13f, 0.94f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imvec4(MD3::Role::InverseSurface, 0.94f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::InverseOn));
 
         ImGui::ShowMetricsWindow();
 

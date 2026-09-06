@@ -438,6 +438,17 @@ test('the kit Button is Material by default: no legacy palette seed, Outlined at
   assert.match(button, /StateColor::semantic\(R::SecondaryContainer, s\), \(int\) StateColor::Checked\)/, 'the Outlined variant must define its Checked (selected) state');
 });
 
+test('ImGui chrome in the canvas resolves MD3 roles, not white and grey literals', async () => {
+  const wrapper = stripComments(await read('ImGuiWrapper.cpp'));
+  assert.doesNotMatch(wrapper, /PushStyleColor\(ImGuiCol_Text, ImVec4\(1\.0+f, 1\.0+f, 1\.0+f, 1\.0+f\)\)/, 'no pushed pure-white text in ImGuiWrapper');
+  assert.doesNotMatch(wrapper, /factor \* 39\.0f \/ 255\.0f/, 'the disabled checkbox must not hard-code its greys');
+  assert.match(wrapper, /md3_imgui_color\(MD3::Role::InverseOn\)/, 'tooltips must take InverseOn text on the InverseSurface plate');
+  assert.match(wrapper, /md3_imgui_color\(MD3::Role::OutlineVariant\)/, 'the sub-title rule must be OutlineVariant');
+  const canvas = stripComments(await read('GLCanvas3D.cpp'));
+  assert.doesNotMatch(canvas, /ImVec4\(0\.13f, 0\.13f, 0\.13f, 0\.94f\)/, 'the statistics overlay must not hard-code its plate');
+  assert.match(canvas, /md3_imvec4\(MD3::Role::InverseSurface, 0\.94f\)/, 'the statistics overlay plate must be InverseSurface');
+});
+
 test('no window is sized by an unscaled pixel literal', async () => {
   // SetSize/SetMinSize/SetMaxSize(wxSize(N, M)) with a positive literal is a
   // 100%-only size: at 150% and 200% it clips whatever it holds. The zero and
