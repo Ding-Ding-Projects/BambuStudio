@@ -25,6 +25,7 @@ Statuses:
 | CJ-003 | Device monitor base panel | 125% and above | printer-name label truncated at an arbitrary position; panel and label columns fixed at 100% widths | three ellipsize styles ORed on one label; `600x400` and label column widths unscaled | 44ed39a18 | pending | pending | fixed-unverified |
 | CJ-004 | Monitor add-machine button, PartSkip label, object-table page field, Tab button, StatusPanel day counter, AMS setting, Create presets, Unsaved changes | 150% and 200% | controls sized in raw pixels clipped their own label at high scale | literal `wxSize(N, M)` in `SetMinSize` / `SetMaxSize` | 44ed39a18 | pending | pending | fixed-unverified |
 | CJ-005 | Every wxBoxSizer row (Print pill, Process title precedent) | every tuple (class-level) | over-subscribed rows starve later items to zero width; nothing overflows so nothing is visible | wx pays proportion-0 items in full and hands later items the remainder | 49a505a67 | pending | pending | open |
+| CJ-006 | Device tab placeholder page ("Printer Connection") | every tuple, 1200x800 frame | the heading is cut off at the top of the page and cannot be scrolled into view | body was a flex box centred at exactly 100vh; a taller card overflowed upward where no scrollbar reaches | fbfae7d38 | device--en-light-comfortable--before.png | pending | fixed-unverified |
 <!-- cheap-jor-inventory:end -->
 
 CJ-005 is the class the runtime layout probe exists for. It stays `open` until the tuple matrix has
