@@ -19,6 +19,15 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# git prints paths and blame authors as UTF-8 (core.quotePath=false below), but
+# PowerShell decodes native output with the console code page. On a host whose
+# console is a legacy code page the tracked CJK-named file
+# deps/libharu/libharu/版本.txt arrived mangled and was reported missing from
+# the checkout; the hosted runner's console is already UTF-8, which is why CI
+# never saw it. Decode as UTF-8 for this process only and restore on exit.
+$script:previousConsoleEncoding = [Console]::OutputEncoding
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
 $resolvedRoot = (Resolve-Path -LiteralPath $Root).Path
 
 function Invoke-Git {
@@ -312,3 +321,5 @@ if (-not [string]::IsNullOrWhiteSpace($OutputMarkdown)) {
     Set-Content -LiteralPath $outputPath -Value $report -Encoding utf8
 }
 Write-Output $report
+
+[Console]::OutputEncoding = $script:previousConsoleEncoding

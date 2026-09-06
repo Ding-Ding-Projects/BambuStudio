@@ -35,7 +35,11 @@ captures are a separate box and stay unticked until they exist from the real bui
       96 dpi host, which the inventory records.
 - [ ] Baseline and after captures, light and dark, for every converted surface under
       `docs/screenshots/md3-everything/`; README canonical images refreshed.
-- [ ] Gizmo rail, scene toolbar and preview overlay register rows closed with runtime evidence.
+- [x] Gizmo rail and scene toolbar register rows closed with runtime evidence from the Mesa
+      software-GL route (25 canvas captures, `941033793`, `0ab07a906`, `52310f20c`).
+- [ ] Preview overlay register rows: marked done from source, but no runtime capture yet; they
+      need a sliced model on the Mesa route, which the driver does not produce (recorded in the
+      recapture manifest as the blocker).
 - [ ] Changelog entry, HANDOFF §12, hosted release from the final tip.
 
 
