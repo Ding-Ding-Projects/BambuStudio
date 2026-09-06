@@ -3,6 +3,8 @@
 #include "Widgets/MD3DialogChrome.hpp"
 #include "libslic3r/FilamentMixer.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r { namespace GUI {
 static constexpr int MIN_LAYER_VALUE = 2;
@@ -523,7 +525,7 @@ PlateSettingsDialog::PlateSettingsDialog(wxWindow* parent, const wxString& title
             m_first_layer_print_seq_choice->Enable(false);
             m_other_layers_seq_panel->enable_seq_choice(false);
 
-            auto *warn_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("warning", this, 16),
+            auto *warn_icon = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)),
                                                  wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
             auto *warn_text = new Label(this, _L("The filament list contains mixed filaments. Custom filament sequence will not take effect."));
             warn_text->SetForegroundColour(ThemeColor::Warning);

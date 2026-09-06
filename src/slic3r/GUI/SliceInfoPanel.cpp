@@ -4,6 +4,8 @@
 #include "Widgets/Label.hpp"
 #include "libslic3r/Utils.hpp"
 #include "GUI_App.hpp"//for  ICON_SIZE (wxSize(FromDIP(16), FromDIP(16)))
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include <boost/log/trivial.hpp>
 
 namespace Slic3r {
@@ -61,7 +63,7 @@ SliceInfoPopup::SliceInfoPopup(wxWindow *parent, wxBitmap bmp, BBLSliceInfo *inf
     wxBoxSizer * caption_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer * caption_left_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer * caption_right_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto prediction_bitmap = new wxStaticBitmap(m_panel, wxID_ANY, create_scaled_bitmap("monitor_item_prediction", nullptr, 16));
+    auto prediction_bitmap = new wxStaticBitmap(m_panel, wxID_ANY, MaterialIcon::bitmap(m_panel, MaterialIcon::Schedule, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     wxString predict_text;
     if (info)
         predict_text = get_bbl_monitor_time_dhm(info->prediction);
@@ -69,7 +71,7 @@ SliceInfoPopup::SliceInfoPopup(wxWindow *parent, wxBitmap bmp, BBLSliceInfo *inf
     caption_left_sizer->Add(prediction_bitmap, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
     caption_left_sizer->Add(prediction, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
     prediction->Wrap(-1);
-    auto cost_bitmap = new wxStaticBitmap(m_panel, wxID_ANY, create_scaled_bitmap("monitor_item_cost", nullptr, 16));
+    auto cost_bitmap = new wxStaticBitmap(m_panel, wxID_ANY, MaterialIcon::bitmap(m_panel, MaterialIcon::Payments, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     wxString cost_text;
     if (info) {
         if (info->weight > 0) {

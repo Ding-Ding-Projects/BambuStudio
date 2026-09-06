@@ -44,6 +44,7 @@ namespace GUI {
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/DevStorage.h"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -669,7 +670,7 @@ void HelioStatementDialog::create_pat_page()
     wxBoxSizer* pat_sizer = new wxBoxSizer(wxVERTICAL);
     
     // Success icon - using create_success or helio_feature_check
-    wxStaticBitmap* success_icon = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("create_success", page_pat_panel, 80), wxDefaultPosition, wxSize(FromDIP(80), FromDIP(80)), 0);
+    wxStaticBitmap* success_icon = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::TaskAlt, 80, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, wxSize(FromDIP(80), FromDIP(80)), 0);
     
     // "Activation Successful!" heading
     auto success_title = new Label(page_pat_panel, Label::Head_18, _L("Activation Successful!"));
@@ -824,7 +825,7 @@ void HelioStatementDialog::create_pat_page()
     // Legacy controls kept for backward compatibility with show_pat_option() method
     // These are always hidden in the new design but still referenced in show_pat_option()
     // Create them with zero size and hidden to prevent any visual artifacts
-    helio_pat_copy = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("helio_copy", page_pat_panel, 20), wxDefaultPosition, wxSize(0, 0), 0);
+    helio_pat_copy = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::ContentCopy, 20, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(0, 0), 0);
     helio_pat_copy->Hide();
     helio_pat_copy->SetSize(0, 0);
     
@@ -834,7 +835,7 @@ void HelioStatementDialog::create_pat_page()
     helio_input_pat->SetMinSize(wxSize(0, 0));
     helio_input_pat->SetMaxSize(wxSize(0, 0));
     
-    helio_pat_refresh = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("helio_refesh", page_pat_panel, 24), wxDefaultPosition, wxSize(0, 0), 0);
+    helio_pat_refresh = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::Refresh, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(0, 0), 0);
     helio_pat_refresh->Hide();
     helio_pat_refresh->SetSize(0, 0);
     
@@ -3294,11 +3295,11 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     wxBoxSizer *sizer_rating = new wxBoxSizer(wxHORIZONTAL);
     std::vector<wxStaticBitmap *> stars;
     // score_star_dark = grey/unselected, score_star_light = yellow/selected
-    auto rating_star1 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    auto rating_star2 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    auto rating_star3 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    auto rating_star4 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    auto rating_star5 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star1 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star2 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star3 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star4 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star5 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
 
     stars.push_back(rating_star1);
     stars.push_back(rating_star2);

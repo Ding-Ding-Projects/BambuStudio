@@ -23,6 +23,8 @@
 #include "wxExtensions.hpp"
 #include "ColorDecomposeSupport.hpp"
 #include "libslic3r/ColorDecomposeRecipe.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -510,8 +512,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     m_limit_warning_panel = new wxPanel(this, wxID_ANY);
     m_limit_warning_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* warning_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto* warn_bmp = new wxStaticBitmap(m_limit_warning_panel, wxID_ANY,
-        create_scaled_bitmap("obj_warning", m_limit_warning_panel, 16),
+    auto* warn_bmp = new wxStaticBitmap(m_limit_warning_panel, wxID_ANY, MaterialIcon::bitmap(m_limit_warning_panel, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     m_limit_warning_text = new Label(m_limit_warning_panel, wxEmptyString);
     m_limit_warning_text->SetFont(Label::Body_13);

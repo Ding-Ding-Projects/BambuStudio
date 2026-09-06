@@ -55,6 +55,7 @@
 #include "Notebook.hpp"
 #include "BitmapCache.hpp"
 #include "BindDialog.hpp"
+#include "Widgets/StateColor.hpp"
 
 // definitions
 #define S_RACK_NOZZLE_OFFSET_CALI_WARNING _L(\
@@ -578,7 +579,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     suggestion_sizer->Add(m_label_ext_change_assist, 0, wxRIGHT, 0);
 
     m_mapping_sugs_sizer = new wxBoxSizer(wxHORIZONTAL);
-    //auto m_img_mapping_sugs = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("warning", this, 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
+    //auto m_img_mapping_sugs = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     auto m_txt_mapping_sugs = new Label(m_scroll_area, wxEmptyString);
     m_txt_mapping_sugs->SetFont(::Label::Body_13);
     m_txt_mapping_sugs->SetForegroundColour(ThemeColor::Warning);
@@ -590,7 +591,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_mapping_sugs_sizer->Add(m_txt_mapping_sugs, 0, wxALIGN_CENTER, 0);
 
     m_change_filament_times_sizer = new wxBoxSizer(wxHORIZONTAL);
-    //auto m_img_change_filament_times = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("warning", this, 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
+    //auto m_img_change_filament_times = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     m_txt_change_filament_times = new Label(m_scroll_area, wxEmptyString);
     m_txt_change_filament_times->SetFont(::Label::Body_13);
     m_txt_change_filament_times->SetMinSize(wxSize(FromDIP(580), -1));

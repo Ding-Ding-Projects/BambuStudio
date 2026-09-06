@@ -19,6 +19,8 @@
 #include "MainFrame.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 #define NAME_OPTION_COMBOBOX_SIZE wxSize(FromDIP(200), FromDIP(24))
 #define FILAMENT_PRESET_COMBOBOX_SIZE wxSize(FromDIP(300), FromDIP(24))
@@ -3431,7 +3433,7 @@ CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, con
     horizontal_sizer->Add(0, 0, 0, wxLEFT, FromDIP(30));
 
     wxBoxSizer *success_bitmap_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticBitmap *success_bitmap       = new wxStaticBitmap(this,wxID_ANY, create_scaled_bitmap("create_success", nullptr, FromDIP(24)));
+    wxStaticBitmap *success_bitmap       = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::TaskAlt, FromDIP(24), StateColor::semantic(MD3::Role::Primary)));
     success_bitmap_sizer->Add(success_bitmap, 0, wxEXPAND, 0);
     horizontal_sizer->Add(success_bitmap_sizer, 0, wxEXPAND | wxALL, FromDIP(5));
 

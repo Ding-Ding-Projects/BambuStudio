@@ -30,6 +30,8 @@
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/DevStorage.h"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -267,7 +269,7 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
 
 
 
-    m_bitmap_open_in_browser = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("open_in_browser", this, 12), wxDefaultPosition, wxDefaultSize, 0 );
+    m_bitmap_open_in_browser = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::OpenInNew, 12, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxDefaultSize, 0 );
     m_link_open_in_browser   = new LinkLabel(this, "Open in browser", "");
     m_link_open_in_browser->getLabel()->SetFont(Label::Body_12);
 
@@ -2391,7 +2393,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     microcopy_text->SetForegroundColour(HELIO_MUTED);
     
     // Info icon with tooltip
-    auto info_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("more_info", this, 14), wxDefaultPosition, wxSize(FromDIP(14), FromDIP(14)), 0);
+    auto info_icon = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Info, 14, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(14), FromDIP(14)), 0);
     info_icon->SetToolTip(_L("Helio Additive does not change your printer's firmware."));
     microcopy_text->SetToolTip(_L("Helio Additive does not change your printer's firmware."));
     
