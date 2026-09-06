@@ -4405,7 +4405,10 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
     auto combo_and_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     combo_and_btn_sizer->Add(FromDIP(8), 0, 0, 0, 0 );
-    (*combo)->clr_picker->SetLabel(wxString::Format("%d", filament_idx + 1));
+    // The swatch is a kit Button now, which paints its label beside the icon;
+    // the filament index is its accessible name, not visible text (the bitmap
+    // already shows the number).
+    (*combo)->clr_picker->SetName(wxString::Format(_L("Ink %d color"), filament_idx + 1));
     combo_and_btn_sizer->Add((*combo)->clr_picker, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
     combo_and_btn_sizer->Add(*combo, 1, wxALIGN_CENTER_VERTICAL, 0)
         ->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});

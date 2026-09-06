@@ -2839,6 +2839,10 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     // self-gates on MaterialIcon::available(): the label alone shows when absent.
     m_slice_btn->SetLeadingGlyph(MaterialIcon::DeployedCode);
     m_print_btn->SetLeadingGlyph(MaterialIcon::Print);
+    // The options segments have no text: the expand_more chevron is their only
+    // content, so the split button reads as a split button instead of a sliver.
+    m_slice_option_btn->SetLeadingGlyph(MaterialIcon::ExpandMore);
+    m_print_option_btn->SetLeadingGlyph(MaterialIcon::ExpandMore);
     m_slice_option_btn->Enable();
     m_print_option_btn->Enable();
     sizer->Add(m_prepare_plate_button, 0, wxALIGN_CENTER_VERTICAL);
