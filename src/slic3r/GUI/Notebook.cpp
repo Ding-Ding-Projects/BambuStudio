@@ -85,6 +85,7 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
     const int navigation_height = FromDIP(MD3::Metrics::navigation_bar_height);
     SetMinSize({-1, navigation_height});
     SetMaxSize({-1, navigation_height});
+    SetName(_L("Navigation rail"));
 
     m_sizer = new wxBoxSizer(wxHORIZONTAL);
     this->SetSizer(m_sizer);

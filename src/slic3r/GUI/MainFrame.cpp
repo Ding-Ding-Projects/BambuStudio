@@ -2652,6 +2652,7 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
     m_prepare_plate_button = new Button(parent, _L("Plate 1"), "", wxNO_BORDER);
     m_prepare_add_plate_button = new Button(parent, "+", "", wxNO_BORDER);
+    m_prepare_add_plate_button->SetName(_L("Add plate"));
     // Two-tier print estimate (MD3 Prepare kit §67-70): a stacked time line
     // (Roboto Mono 15/500) over a weight/length line (11px OnSurfaceVariant).
     m_prepare_estimate_label = new Label(parent, _L("Not sliced"), wxALIGN_RIGHT);

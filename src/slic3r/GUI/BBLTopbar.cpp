@@ -641,6 +641,11 @@ void BBLTopbar::Init(wxFrame* parent)
     wxBitmap close_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Close, TOPBAR_WINDOW_ICON_SIZE,
                                                 MD3::Role::OnSurface, "topbar_close", TOPBAR_ICON_SIZE);
     wxAuiToolBarItem* close_btn = this->AddTool(wxID_CLOSE_FRAME, "", close_bitmap);
+    // Help texts double as the tools' accessible names (the probe reports them).
+    iconize_btn->SetShortHelp(_L("Minimize"));
+    maximize_btn->SetShortHelp(_L("Maximize"));
+    close_btn->SetShortHelp(_L("Close window"));
+    SetName(_L("Top bar"));
 
     Realize();
     // m_toolbar_h = this->GetSize().GetHeight();

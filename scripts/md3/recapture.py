@@ -203,7 +203,7 @@ def find_control(records, label, toplevel_hwnd=None):
     best = None
     tops = {r['hwnd']: r for r in records if r.get('kind') == 'toplevel'}
     for r in records:
-        if r.get('kind') != 'window' or not r.get('shown', True):
+        if r.get('kind') not in ('window', 'tool') or not r.get('shown', True):
             continue
         # A shown flag says nothing about the ancestors; a control inside an
         # unmapped dialog matched 'custom colour' and produced a click at
@@ -333,6 +333,15 @@ class Runner:
                 raise RuntimeError(f"blocked: no control labelled '{recipe['label']}' on {recipe['surface']}")
             r = c['image_rect']; pad = int(recipe.get('pad', 8))
             cheap('crop_image', input_path=page, left=max(0, r['x'] - pad), top=max(0, r['y'] - pad), width=r['w'] + 2 * pad, height=r['h'] + 2 * pad, output_path=out_path)
+            os.remove(page)
+            return 'done'
+        if recipe['kind'] == 'crop-rect':
+            # A fixed rectangle in the surface's image coordinates, for pages
+            # the probe cannot see into (the Home webview at 1200x800).
+            page = out_path + '.page.png'
+            self.app.shot(target, page)
+            x, y, w, h = recipe['rect']
+            cheap('crop_image', input_path=page, left=int(x), top=int(y), width=int(w), height=int(h), output_path=out_path)
             os.remove(page)
             return 'done'
         if recipe['kind'] == 'crop-gl':

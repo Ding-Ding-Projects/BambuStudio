@@ -2872,6 +2872,8 @@ Sidebar::Sidebar(Plater *parent)
               wxSize(parent->FromDIP(MD3::Metrics::active().sidebar_width), -1))
     , p(new priv(parent))
 {
+    // Region name for assistive technology and the headless driver.
+    SetName(_L("Sidebar"));
     Choice::register_dynamic_list("support_filament", &dynamic_filament_list);
     Choice::register_dynamic_list("support_interface_filament", &dynamic_filament_list);
     Choice::register_dynamic_list("wall_filament", &dynamic_filament_list);
@@ -3599,6 +3601,7 @@ Sidebar::Sidebar(Plater *parent)
     // width (Purge mode + Flushing volumes + Sync AMS) and a labelled fourth
     // button clips. The tooltip carries the name.
     p->m_bulk_filament_btn = new Button(p->m_filament_area_wrapper, wxString());
+    p->m_bulk_filament_btn->SetName(_L("Bulk ink"));
     // 'Stack' is the closest cmap-verified Material Symbols glyph for a
     // multi-slot batch action (no Checklist/LibraryAddCheck in the vendored TTF).
     p->m_bulk_filament_btn->SetGlyph(MaterialIcon::Stack, 16);
@@ -4441,6 +4444,7 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
     // MD3: per-row menu as a Material Symbols 'more_vert' glyph
     // (OnSurfaceVariant); the raster stays the graceful fallback.
     apply_scalable_glyph(edit_btn, MaterialIcon::MoreVert, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    edit_btn->SetName(_L("Ink menu"));
     edit_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     PlaterPresetComboBox* combobox = (*combo);

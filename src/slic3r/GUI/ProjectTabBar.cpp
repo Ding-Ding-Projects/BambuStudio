@@ -139,6 +139,7 @@ ProjectTabButton::ProjectTabButton(ProjectTabBar *bar, wxWindow *parent)
         m_close->SetCornerRadius(FromDIP(close_container) / 2.0);
     }
     m_close->SetToolTip(_L("Close tab"));
+    m_close->SetName(_L("Close tab"));
     m_close->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { m_bar->EmitClose(m_index); });
 
     Bind(wxEVT_PAINT, &ProjectTabButton::OnPaint, this);
@@ -368,6 +369,7 @@ void ProjectTabButton::OnLeave(wxMouseEvent &e)
 ProjectTabBar::ProjectTabBar(wxWindow *parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxTAB_TRAVERSAL)
 {
+    SetName(_L("Project tabs"));
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif

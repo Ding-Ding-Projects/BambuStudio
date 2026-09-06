@@ -17,6 +17,7 @@
 
 #include <wx/app.h>
 #include <wx/control.h>
+#include <wx/aui/auibar.h>
 #include <wx/glcanvas.h>
 #include <wx/sizer.h>
 #include <wx/stattext.h>
@@ -251,6 +252,28 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         << ",\"sizer\":" << sizer_json
         << "}\n";
 
+    // wxAuiToolBar tools are not windows, so the caption bar's brand tile, menu
+    // tools, palette and window controls would otherwise be unaddressable;
+    // emit one record per tool with its label (or help text) and rectangle.
+    if (auto *bar = dynamic_cast<wxAuiToolBar *>(w)) {
+        const wxPoint bar_origin = bar->GetScreenPosition();
+        for (size_t i = 0; i < bar->GetToolCount(); ++i) {
+            wxAuiToolBarItem *item = bar->FindToolByIndex(int(i));
+            if (!item || item->GetKind() == wxITEM_SEPARATOR || item->GetKind() == wxITEM_SPACER) continue;
+            wxString name = item->GetLabel();
+            if (name.empty()) name = item->GetShortHelp();
+            if (name.empty()) continue;
+            const wxRect r = bar->GetToolRect(item->GetId());
+            out << "{\"kind\":\"tool\",\"host\":" << handle_of(w)
+                << ",\"top\":" << handle_of(top)
+                << ",\"id\":" << item->GetId()
+                << ",\"label\":" << json(name)
+                << ",\"shown\":true,\"on_screen\":" << (bar->IsShownOnScreen() ? "true" : "false")
+                << ",\"rect\":" << rect_json(r)
+                << ",\"screen\":" << rect_json(wxRect(bar_origin.x + r.x, bar_origin.y + r.y, r.width, r.height))
+                << "}\n";
+        }
+    }
     for (wxWindow *child : w->GetChildren())
         write_window(out, child, top, depth + 1);
 }

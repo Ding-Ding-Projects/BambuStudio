@@ -191,6 +191,7 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *pa
     auto combobox = new ::ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, combox_width == 0 ? wxSize(FromDIP(LARGE_COMBOBOX_WIDTH), -1) : wxSize(combox_width, -1),
                                    0, nullptr, wxCB_READONLY);
     m_combobox_list[m_combobox_list.size()] = combobox;
+    combobox->SetName(title);
     combobox->SetFont(::Label::Body_13);
     combobox->GetDropDown().SetFont(::Label::Body_13);
     combobox->SetCornerRadius(FromDIP(10)); // MD3 SelectField r10
@@ -1013,6 +1014,7 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
     // CheckBox. The AppConfig read/write bindings below are unchanged — only the
     // control class and the row anatomy change.
     auto checkbox = new ::SwitchButton(parent, wxID_ANY);
+    checkbox->SetName(title);
     m_checkbox_list[m_checkbox_list.size()] = checkbox;
     if (param == "privacyuse") {
         checkbox->SetValue((app_config->get("firstguide", param) == "true") ? true : false);
@@ -1293,6 +1295,8 @@ wxWindow* PreferencesDialog::create_item_external_editor(wxWindow* parent, int p
 
     // MD3 outlined button, matching the Download-path Browse button above.
     auto m_button_browse = new Button(item_panel, _L("Browse"));
+    m_button_browse->SetName(_L("External editor browse"));
+    m_button_browse->SetName(_L("Download path browse"));
     m_button_list[m_button_list.size()] = m_button_browse;
     m_button_browse->SetVariant(Button::Variant::Outlined);
     m_button_browse->SetButtonSize(Button::Size::Small);
