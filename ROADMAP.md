@@ -27,9 +27,12 @@ captures are a separate box and stay unticked until they exist from the real bui
 - [x] ImGui canvas chrome literals on MD3 roles.
 - [x] Runtime layout probe (`LayoutProbe`) and report reader.
 - [x] 21 unscaled pixel sizes on `FromDIP`; triple-ellipsize label fixed; guards added.
-- [ ] Task branch merged into the primary tree and compiled with our `build.bat`.
-- [ ] Layout-probe tuple matrix run on the real binary; every finding fixed and inventoried in
-      `docs/features/design-system/cheap-jor-inventory.md` (inventory and its guard exist; matrix not run).
+- [x] Task branch merged into the primary tree and compiled with our `build.bat` (attempts 8, 10 to 13
+      green on this host; two red attempts, 9 on a missing include, fixed in-tree).
+- [x] Layout-probe tuple matrix run on the real binary (12 tuples, Prepare + Preferences, 24 dumps
+      per build, attempts 8, 10, 11 and 13); ten inventory rows CJ-001..CJ-010: six (CJ-005..010) verified
+      from captures, four high-DPI rows (CJ-001..004) fixed and guarded but unverifiable on this
+      96 dpi host, which the inventory records.
 - [ ] Baseline and after captures, light and dark, for every converted surface under
       `docs/screenshots/md3-everything/`; README canonical images refreshed.
 - [ ] Gizmo rail, scene toolbar and preview overlay register rows closed with runtime evidence.
