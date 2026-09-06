@@ -1,25 +1,20 @@
-body {
-    background-color:#4c4c54;
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+/* Dark tokens for the Device tab placeholder. Only the tokens change; the
+   layout in home.css stays. Applies when the host prefers a dark colour scheme
+   or when body.dark is set, never merely because this file is linked. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --md-surface: #1b1c21;
+        --md-surface-container-lowest: #141518;
+        --md-on-surface: #e3e2e8;
+        --md-on-surface-variant: #c4c6d0;
+        --md-outline-variant: #44464e;
+    }
 }
 
-.container {
-    text-align: center;
-    padding: 30px;
-    border-radius: 10px;
-    background-color: #272727;
-    box-shadow: 0 4px 6px rgba(39, 39, 39, 0.1);
-}
-
-h1 {
-    color: #ffffff;
-}
-
-p {
-    color: #ffffff;
+body.dark {
+    --md-surface: #1b1c21;
+    --md-surface-container-lowest: #141518;
+    --md-on-surface: #e3e2e8;
+    --md-on-surface-variant: #c4c6d0;
+    --md-outline-variant: #44464e;
 }
