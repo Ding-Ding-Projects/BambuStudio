@@ -465,6 +465,12 @@ bool handle_command(const std::wstring &payload)
             frame->CallAfter([frame]() { CommandPalette::ShowPalette(frame); });
             return true;
         }
+        //   config-wizard        run the native configuration wizard (no menu item opens it;
+        //                        the Help entry named Setup Wizard is the web guide)
+        if (frame && payload == L"config-wizard") {
+            frame->CallAfter([]() { wxGetApp().run_wizard(ConfigWizard::RR_USER); });
+            return true;
+        }
         if (payload.compare(0, wizard.size(), wizard) == 0) {
             const size_t index = static_cast<size_t>(std::wcstoull(payload.substr(wizard.size()).c_str(), nullptr, 10));
             for (wxWindow *top : wxTopLevelWindows)

@@ -44,6 +44,9 @@ CHEAP = os.environ.get('LLCU_CHEAP', DEFAULT_CHEAP)
 TAB_LABELS = {'en': {'home': 'Home', 'prepare': 'Prepare', 'preview': 'Preview', 'device': 'Device', 'project': 'Project', 'ink': 'Ink'}}
 GEAR = (1155, 121)
 PREF_CLOSE = (753, 21)
+# Rail geometry at 1200x800, language-independent; the nav fallback for tuples
+# whose tab labels are not English.
+TABS = {'home': (90, 119), 'prepare': (211, 119), 'preview': (346, 119), 'device': (483, 119), 'project': (619, 119), 'ink': (755, 119)}
 PREF_TABS = {'appearance': (79, 75), 'general': (79, 120), 'user': (79, 166), '3d': (79, 212), 'other': (79, 258)}
 # Surfaces that are the main frame itself.
 MAIN_SURFACES = {'main', 'home', 'prepare', 'preview', 'device', 'project', 'ink', 'toast', 'menu'}
@@ -302,6 +305,13 @@ class Runner:
         elif kind == 'resize':
             w, h = [int(v) for v in arg.lower().split('x')]
             self.app.command(f'resize {self.front or self.app.main} {w} {h}')
+            time.sleep(2.0)
+        elif kind == 'open' and arg.lower() == 'config wizard':
+            # The native configuration wizard has no menu item (Help > Setup
+            # Wizard is the web guide); the app runs it on this command.
+            before = {w['handle'] for w in self.app.windows() if w['class'] == '#32770'}
+            self.app.command('config-wizard')
+            self.front = self.app.wait(lambda w: w['class'] == '#32770' and w['handle'] not in before and w['width'] >= 700, 30, 'config-wizard')['handle']
             time.sleep(2.0)
         elif kind == 'open' and arg.lower() == 'command palette':
             self.app.command('palette')
