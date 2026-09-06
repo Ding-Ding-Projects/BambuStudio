@@ -279,6 +279,28 @@ test('every user-visible string passes through the Ink / Ink Dispenser vocabular
   }
 });
 
+test('every label is the kit Label; no stock wxStaticText is constructed anywhere', async () => {
+  // Label subclasses wxStaticText and reaches the base through an initializer, never
+  // through `new wxStaticText(`, so the allowlist is genuinely empty. 548 sites were
+  // retyped by scripts/md3/convert-static-text.mjs; anything reintroducing the stock
+  // control renders in the system font and the legacy tone instead of MD3 body type.
+  assertOnlyAllowed(await sitesOf(/new wxStaticText\(/g), new Set(), 'wxStaticText');
+});
+
+test('the kit Label seeds MD3 roles, not the legacy palette', async () => {
+  const source = stripComments(await read('Widgets', 'Label.cpp'));
+  assert.match(source, /^\s*SetForegroundColour\(StateColor::semantic\(MD3::Role::OnSurface\)\);/m,
+    'Label must seed its text tone from MD3::Role::OnSurface');
+  assert.match(source, /^\s*SetForegroundColour\(StateColor::semantic\(MD3::Role::Primary\)\);/m,
+    'Label hyperlinks must take MD3::Role::Primary, resolved per call');
+  assert.doesNotMatch(source, /ThemeColor::(TextPrimary|BrandGreen)\b/,
+    'Label must not reference the legacy ThemeColor palette');
+  // The SetLabel early-return must also consult the native label, or a base-class
+  // Wrap() through a wxStaticText* leaves stale wrapped text on screen.
+  assert.match(source, /m_text == label && \(\(GetWindowStyle\(\) & LB_AUTO_WRAP\) \|\| wxStaticText::GetLabel\(\) == label\)/,
+    'Label::SetLabel must compare against wxStaticText::GetLabel() as well as m_text');
+});
+
 test('stock wx controls are gone from the GUI except the allowlisted holders', async () => {
   assertOnlyAllowed(await sitesOf(/new wxGauge\(/g), new Set(), 'wxGauge');
   assertOnlyAllowed(await sitesOf(/new wxStaticLine\(/g), new Set(), 'wxStaticLine');

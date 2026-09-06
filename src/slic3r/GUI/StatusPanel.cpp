@@ -7192,7 +7192,7 @@ wxBoxSizer *ScoreDialog::get_main_sizer(const std::vector<std::pair<wxString, st
     // the legacy Outline top divider line is dropped here (was redundant).
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(8));
 
-    warning_text = new wxStaticText(this, wxID_ANY, _L("At least one successful print record of this print profile is required \nto give a positive rating(4 or 5stars)."));
+    warning_text = new Label(this, _L("At least one successful print record of this print profile is required \nto give a positive rating(4 or 5stars)."));
     warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     warning_text->SetFont(::Label::Body_13);
 

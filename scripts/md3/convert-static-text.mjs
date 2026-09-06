@@ -82,16 +82,30 @@ function splitArgs(inner) {
   return parts.map((p) => p.trim()).filter((p, i, a) => !(p === '' && i === a.length - 1));
 }
 
-function isLineCommented(src, idx) {
-  const lineStart = src.lastIndexOf('\n', idx) + 1;
-  return /^\s*\/\//.test(src.slice(lineStart, idx));
-}
-
-function inBlockComment(src, idx) {
-  const open = src.lastIndexOf('/*', idx);
-  if (open === -1) return false;
-  const close = src.lastIndexOf('*/', idx);
-  return close < open;
+// One forward scan that knows about string/char literals, line comments and
+// block comments, so a "/*" inside a string can never make the rest of the
+// file look commented out (that heuristic silently skipped five live sites).
+function commentMask(src) {
+  const mask = new Uint8Array(src.length);
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i], n = src[i + 1];
+    if (c === '"' || c === "'") {
+      const q = c; i++;
+      while (i < src.length && src[i] !== q) { if (src[i] === '\\') i++; i++; }
+      i++;
+      continue;
+    }
+    if (c === '/' && n === '/') { while (i < src.length && src[i] !== '\n') mask[i++] = 1; continue; }
+    if (c === '/' && n === '*') {
+      const end = src.indexOf('*/', i + 2);
+      const stop = end === -1 ? src.length : end + 2;
+      while (i < stop) mask[i++] = 1;
+      continue;
+    }
+    i++;
+  }
+  return mask;
 }
 
 function rewriteCall(callArgs) {
@@ -135,12 +149,13 @@ async function processFile(file) {
   const needle = 'new wxStaticText(';
   let idx = 0, out = '', cursor = 0;
   const converted = [], refused = [];
+  const mask = commentMask(src);
   while ((idx = src.indexOf(needle, idx)) !== -1) {
     const lineNo = src.slice(0, idx).split('\n').length;
     const open = idx + needle.length - 1;
     const close = matchParen(src, open);
     if (close === -1) { refused.push({ lineNo, why: 'unbalanced parentheses' }); idx = open + 1; continue; }
-    if (isLineCommented(src, idx) || inBlockComment(src, idx)) { idx = close; continue; }
+    if (mask[idx]) { idx = close; continue; }
     const inner = src.slice(open + 1, close - 1);
     const r = rewriteCall(splitArgs(inner));
     if (r.refuse) { refused.push({ lineNo, why: r.refuse }); idx = close; continue; }

@@ -2233,9 +2233,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     // even before the tree-wide re-theme walk runs. (Latin phrase is translatable;
     // the CJK + digits sample is fixed so all three language modes exercise CJK
     // fallback.)
-    auto *font_preview = new wxStaticText(
-        scrolled, wxID_ANY,
-        _L("The quick brown fox") + wxString::FromUTF8(" / \xE4\xB8\xAD\xE6\x96\x87\xE7\xA4\xBA\xE4\xBE\x8B 123"));
+    auto *font_preview = new Label(scrolled, _L("The quick brown fox") + wxString::FromUTF8(" / \xE4\xB8\xAD\xE6\x96\x87\xE7\xA4\xBA\xE4\xBE\x8B 123"));
     font_preview->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     font_preview->SetFont(::Label::Body_16);
 
@@ -2369,7 +2367,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     // Accent row (label + swatches).
     auto *accent_line = new wxBoxSizer(wxHORIZONTAL);
     accent_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    auto *accent_lbl = new wxStaticText(scrolled, wxID_ANY, _L("Accent color"), wxDefaultPosition, wxSize(FromDIP(150), -1), 0);
+    auto *accent_lbl = new Label(scrolled, _L("Accent color"), 0, wxSize(FromDIP(150), -1));
     accent_lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     accent_lbl->SetFont(::Label::Body_13);
     accent_line->Add(accent_lbl, wxSizerFlags().CenterVertical());
@@ -2995,8 +2993,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     auto *main_sizer = new wxBoxSizer(wxVERTICAL);
 
     // Body text.
-    auto *msg = new wxStaticText(this, wxID_ANY,
-                                 _L("All warning dialogs that you have disabled by checking \"Don't show again\" "
+    auto *msg = new Label(this, _L("All warning dialogs that you have disabled by checking \"Don't show again\" "
                                     "are now re-enabled and will show next time they apply."));
     msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     msg->SetFont(::Label::Body_14);
@@ -3020,8 +3017,7 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     m_details_panel = new wxPanel(this, wxID_ANY);
     m_details_panel->SetBackgroundColour(ThemeColor::Grey300);
     auto *det_sizer = new wxBoxSizer(wxVERTICAL);
-    auto *det_text  = new wxStaticText(m_details_panel, wxID_ANY,
-                                       _L("- Sync printer presets after loading a file\n"
+    auto *det_text  = new Label(m_details_panel, _L("- Sync printer presets after loading a file\n"
                                           "- \"Load 3MF\" dialog settings\n"
                                           "- Executing post-processing scripts\n"
                                           "- Support structure recommendation prompt\n"
