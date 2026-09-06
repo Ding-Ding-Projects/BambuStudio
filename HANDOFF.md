@@ -1272,6 +1272,25 @@ diagnostics were a cascade.
   minimum as the virtual width. The header now has a fixed title and one stretch spacer. Rule for
   the next reader: a proportional item with a minimum next to stretch spacers inflates the sizer
   minimum; keep stretch spacers to one, or give the proportional item no minimum.
+- Upstream v02.08.02.61 merged (`5a08b703d` on `md3-upstream-merge`, integrated `3886fd482`):
+  34 conflicted files, resolved keeping every Material Design 3 surface; Preferences.cpp taken
+  whole from this fork (upstream rewrote its layout; its WebView devtools toggle is a follow-up).
+  The merge reintroduced four stock controls and one legacy-palette dialog, all converted in
+  `5d52a8e53`. Rule: after any upstream merge run `node --test ui-md3/tests/` first; the four
+  contracts that went red name the exact sites.
+- Update check (`GUI_App::check_new_version`) reads this fork's GitHub releases and compares
+  `published_at` with `SLIC3R_BUILD_TIME` (three-hour margin); the Bambu Lab feed and the beta
+  channel are no longer consulted. See docs/features/windows/app-updates.md.
+- Every process setting is shown by default (`get_mode()` always advanced; header switches and
+  the Simple/Advanced flip removed, `67328e94f`).
+- Build script: the device_page pnpm steps run under CI=1 (`c127ab158`); without it pnpm waited
+  on a terminal for over fifteen minutes in the console-less one-click build.
+- GitHub Actions is disabled for this account (dispatch answers HTTP 422); the last hosted run
+  (`34006586101`) failed on a `GetLogicalHeight` call removed in `68b0107da`. Releases from here
+  are manual: build.bat /s, build-installer.bat /s, then gh release create with the line-count
+  table from scripts/ci/Measure-LineCount.ps1 (fixed for cp1252 consoles in `60ed72397`).
+- Local hook: .git/hooks/pre-commit piped unquoted filenames into grep; fixed locally with
+  `-z | xargs -0` (the hook is not tracked).
 - Capture matrix `docs/screenshots/md3-everything/`: 132 before (baseline payload `9e8d005b0`) and
   132 after (attempt 13, `80734696c`) across 12 tuples (en / yue_HK / bilingual x light / dark x
   comfortable / compact), 24 probe dumps per build under `probe/`. Runner

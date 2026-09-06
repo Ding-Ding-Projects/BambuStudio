@@ -41,6 +41,20 @@ captures are a separate box and stay unticked until they exist from the real bui
       need a sliced model on the Mesa route, which the driver does not produce (recorded in the
       recapture manifest as the blocker).
 - [ ] Changelog entry, HANDOFF §12, hosted release from the final tip.
+- [ ] Upstream Bambu Studio v02.08.02.61 merged (`5a08b703d`, 34 conflicts, every Material Design 3
+      surface kept); compile proof pending on attempt 25 (see HANDOFF §12).
+- [x] Every process setting shown by default; the Simple/Advanced filter and its header switch
+      removed (`67328e94f`).
+- [ ] Update check reads this fork's GitHub releases and offers Setup.exe; the Bambu Lab feed and
+      beta channel are no longer consulted (`5d52a8e53`); compile and capture pending.
+- [ ] Gizmo move/rotate/scale panels use the kit value field (mono digits, filled pills); compile and capture pending.
+- [x] 24-hour clocks by default (Device pane locale strings).
+- [ ] Startup: splash names each phase; the encrypted app log still hides where a slow machine
+      spends its time, so a timing instrument is the next step.
+- [ ] Upstream's new Preferences option (WebView devtools toggle) is not in this fork's
+      Preferences yet (Preferences.cpp was kept whole in the merge).
+- [ ] Chrome-style in-app updater (Squirrel feed with increasing package versions); today the
+      dialog hands Setup.exe to the browser.
 
 
 ### Native and embedded GUI accessibility wave (delivery verification — 2026-07-30)

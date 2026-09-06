@@ -20,6 +20,7 @@
 - [Native visual smoke test](native-visual-smoke.md)
 - [Cloud web-page failure recovery](cloud-web-recovery.md)
 - [Software OpenGL fallback (Mesa llvmpipe)](software-gl-fallback.md)
+- [App updates from this fork's releases](app-updates.md)
 
 Windows is the active release target for this fork. macOS and Linux source support remains upstream,
 but those platforms are not part of the fork's release acceptance gate.
