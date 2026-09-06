@@ -226,6 +226,12 @@ void GuideFrame::load_url(wxString &url)
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__<< " exit";
 }
 
+void GuideFrame::LoadTarget(int target)
+{
+    const wxString url = from_u8((boost::filesystem::path(resources_dir()) / ("web/guide/0/index.html?target=" + std::to_string(target))).make_preferred().string());
+    WebView::LoadUrl(m_browser, url);
+}
+
 wxString GuideFrame::SetStartPage(GuidePage startpage, bool load)
 {
     m_page = startpage;

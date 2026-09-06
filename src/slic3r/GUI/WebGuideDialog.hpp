@@ -60,6 +60,8 @@ public:
     //Web Function
     void load_url(wxString &url);
     wxString SetStartPage(GuidePage startpage=BBL_WELCOME, bool load = true);
+    // Headless-driver hook: load the guide step `target` (the number after ?target= in the guide URL).
+    void LoadTarget(int target);
 
     void UpdateState();
     void OnIdle(wxIdleEvent &evt);

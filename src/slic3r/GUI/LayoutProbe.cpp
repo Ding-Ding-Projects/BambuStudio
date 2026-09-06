@@ -8,6 +8,7 @@
 #include "NotificationManager.hpp"
 #include "CommandPalette.hpp"
 #include "ConfigWizard.hpp"
+#include "WebGuideDialog.hpp"
 #include <wx/scrolwin.h>
 #include <cwchar>
 #include "Widgets/MD3Tokens.hpp"
@@ -470,6 +471,17 @@ bool handle_command(const std::wstring &payload)
         if (frame && payload == L"config-wizard") {
             frame->CallAfter([]() { wxGetApp().run_wizard(ConfigWizard::RR_USER); });
             return true;
+        }
+        //   guide-page <n>       load step n of the open web Setup Wizard (the guide URL target)
+        const std::wstring guide = L"guide-page ";
+        if (payload.compare(0, guide.size(), guide) == 0) {
+            const int target = static_cast<int>(std::wcstol(payload.substr(guide.size()).c_str(), nullptr, 10));
+            for (wxWindow *top : wxTopLevelWindows)
+                if (auto *g = dynamic_cast<GuideFrame *>(top)) {
+                    g->CallAfter([g, target]() { g->LoadTarget(target); });
+                    return true;
+                }
+            return false;
         }
         if (payload.compare(0, wizard.size(), wizard) == 0) {
             const size_t index = static_cast<size_t>(std::wcstoull(payload.substr(wizard.size()).c_str(), nullptr, 10));

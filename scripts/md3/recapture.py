@@ -317,8 +317,9 @@ class Runner:
                             self.click_control(self.app.main, header)
                             time.sleep(2.0)
         elif kind == 'wizard-page':
-            self.app.command(f'wizard-page {int(arg)}')
-            time.sleep(2.5)
+            # The Setup Wizard is the web guide; its steps are URL targets.
+            self.app.command(f'guide-page {int(arg)}')
+            time.sleep(4.0)
         elif kind == 'resize':
             # Only a dialog the row opened may be resized: with nothing in
             # front this once shrank the main frame to its 1000x600 minimum
