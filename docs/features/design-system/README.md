@@ -17,6 +17,8 @@ Design 3 design system.
   RadioGroup, TextArea, ListBox, Button::SetIconBitmap, and the Material-by-default Button.
 - [Runtime layout probe](layout-probe.md) — the off-by-default NDJSON walker that finds starved
   sizer rows, zero-sized controls and clipped labels mechanically, and its report reader.
+- [Layout clipping inventory](cheap-jor-inventory.md) — every found clipping defect with its tuple,
+  cause, fix commit and capture pair; machine-checked so a row cannot claim evidence it lacks.
 - [Themed surface colors on StaticBox cards](themed-surface-colors.md) — how a card gets its fill,
   why `SetBackgroundColorNormal()` could silently do nothing, and the stale constructor-time window
   background behind light plates in dark mode.

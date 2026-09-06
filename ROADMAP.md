@@ -26,7 +26,7 @@ captures are a separate box and stay unticked until they exist from the real bui
 - [x] 21 unscaled pixel sizes on `FromDIP`; triple-ellipsize label fixed; guards added.
 - [ ] Task branch merged into the primary tree and compiled with our `build.bat`.
 - [ ] Layout-probe tuple matrix run on the real binary; every finding fixed and inventoried in
-      `docs/features/design-system/cheap-jor-inventory.md`.
+      `docs/features/design-system/cheap-jor-inventory.md` (inventory and its guard exist; matrix not run).
 - [ ] Baseline and after captures, light and dark, for every converted surface under
       `docs/screenshots/md3-everything/`; README canonical images refreshed.
 - [ ] Gizmo rail, scene toolbar and preview overlay register rows closed with runtime evidence.
