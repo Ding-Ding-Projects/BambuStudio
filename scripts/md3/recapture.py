@@ -304,8 +304,13 @@ class Runner:
             self.app.command(f'wizard-page {int(arg)}')
             time.sleep(2.5)
         elif kind == 'resize':
+            # Only a dialog the row opened may be resized: with nothing in
+            # front this once shrank the main frame to its 1000x600 minimum
+            # and every later row inherited the wrong geometry.
+            if not self.front:
+                raise RuntimeError('blocked: resize with no dialog in front')
             w, h = [int(v) for v in arg.lower().split('x')]
-            self.app.command(f'resize {self.front or self.app.main} {w} {h}')
+            self.app.command(f'resize {self.front} {w} {h}')
             time.sleep(2.0)
         elif kind == 'open' and arg.lower() == 'config wizard':
             # The native configuration wizard has no menu item (Help > Setup
@@ -512,6 +517,17 @@ def main():
             runner = Runner(app, tuple_id.split('-')[0])
             for r in trows:
                 out_path = os.path.join(REPO, r['file'])
+                # Known state before every row: no stray dialog (one appears
+                # late after the plugin-gate row), frame back at 1200x800.
+                for w in app.windows():
+                    if w['class'] == '#32770' and w['width'] >= 200 and w['title'] not in ('', 'Downloading Bambu Network Plug-in'):
+                        try:
+                            app.command(f"close {w['handle']}")
+                        except (RuntimeError, SystemExit):
+                            pass
+                mainw = app.find(lambda w: w['handle'] == app.main)
+                if mainw and (mainw['width'], mainw['height']) != (1200, 800):
+                    app.command(f'resize {app.main} 1200 800')
                 try:
                     status = runner.run(r['recipe'], out_path)
                     r['status'] = 'done'
