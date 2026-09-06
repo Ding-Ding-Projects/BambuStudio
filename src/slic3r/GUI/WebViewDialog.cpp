@@ -1495,8 +1495,8 @@ bool WebViewPanel::UpdateMakerworldLoginStatus()
                                  << " failed to acquire bind ticket, ret=" << ret;
         m_makerworld_sso_navigation_pending = false;
         m_makerworld_sso_redirect_completed = false;
-        wxString UrlDisconnect = MakeDisconnectUrl("online");
-        m_browserMW->LoadURL(UrlDisconnect);
+        // This fork shows the MD3 cloud-failure surface (ShowCloudPageFailure
+        // below) instead of upstream's disconnect page.
     }
     ShowCloudPageFailure(CloudPage::MakerWorld, HomeWebFailureKind::CloudAuthentication,
                          m_browserMW, [this] { UpdateMakerworldLoginStatus(); });
