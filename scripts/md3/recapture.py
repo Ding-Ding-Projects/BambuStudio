@@ -476,7 +476,11 @@ class Runner:
                 xe = [r['screen']['x'] + r['screen']['w'] for r in group]; ye = [r['screen']['y'] + r['screen']['h'] for r in group]
                 s = {'x': min(xs), 'y': min(ys), 'w': max(xe) - min(xs), 'h': max(ye) - min(ys)}
             else:
-                match = [r for r in items if norm(r.get('name')) == norm(wanted)] or [r for r in items if norm(wanted) in norm(r.get('name'))]
+                # Recipes name items in snake_case, the toolbar in CamelCase or
+                # with spaces (brim_ears vs BrimEars, mmu_painting vs Color
+                # Painting): compare with case, spaces and underscores removed.
+                squash = lambda v: norm(v).replace(' ', '').replace('_', '')
+                match = [r for r in items if squash(r.get('name')) == squash(wanted)] or [r for r in items if squash(wanted) in squash(r.get('name'))]
                 if not match:
                     os.remove(page)
                     raise RuntimeError(f"blocked: no gl_item named '{wanted}' (have: {', '.join(sorted(set(r['name'] for r in items)))})")
