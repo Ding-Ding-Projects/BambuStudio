@@ -441,7 +441,7 @@ test('every static bitmap is inventoried in the triage CSV, and none is an unacc
     ['PurgeModeDialog.cpp', 'check_icon = MaterialIcon::bitmap(this, MaterialIcon::CheckCircle, 20'],
     ['Widgets/AMSControl.cpp', 'icon = new wxStaticBitmap(tipPanel, wxID_ANY, MaterialIcon::bitmap(tipPanel, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnErrorContainer)))'],
     ['HelioReleaseNote.cpp', 'MaterialIcon::bitmap(page_pat_panel, MaterialIcon::VisibilityOff, 24'],
-    ['AMSMaterialsSetting.cpp', 'bitmap_min_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\\xC2\\xB0C"));'],
+    ['AMSMaterialsSetting.cpp', 'bitmap_min_degree = new Label(parent, Label::Body_14, wxString::FromUTF8("\\xC2\\xB0" "C"));'],
   ]) assert.ok(stripComments(await read(file)).includes(needle), `${file} must feed its holder a Material glyph: ${needle}`);
   // The eight MonitorBasePanel holders that never received a bitmap are gone.
   assert.doesNotMatch(await read('MonitorBasePanel.cpp'), /m_bitmap_(?:printer|arrow[1-5]|signal|task)\b/, 'MonitorBasePanel must not rebuild its dead bitmap holders');
