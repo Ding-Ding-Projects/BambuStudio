@@ -301,6 +301,42 @@ test('the kit Label seeds MD3 roles, not the legacy palette', async () => {
     'Label::SetLabel must compare against wxStaticText::GetLabel() as well as m_text');
 });
 
+test('no window is sized by an unscaled pixel literal', async () => {
+  // SetSize/SetMinSize/SetMaxSize(wxSize(N, M)) with a positive literal is a
+  // 100%-only size: at 150% and 200% it clips whatever it holds. The zero and
+  // minus-one forms are sizer contracts ("the sizer owns this axis"), not
+  // pixel sizes, and stay legal. Everything else goes through FromDIP.
+  const hits = new Map();
+  for (const [file, count] of await sitesOf(/\bSet(?:Min|Max)?Size\(wxSize\((?!0, *(?:0|-1)\))\d+, *-?\d+\)\)/g)) hits.set(file, count);
+  assertOnlyAllowed(hits, new Set(), 'unscaled wxSize literal');
+  const prefs = stripComments(await read('Preferences.cpp'));
+  assert.match(prefs, /SetSize\(FromDIP\(wxSize\(780, 580\)\)\);/, 'Preferences must scale its 780x580 default size');
+  const app = stripComments(await read('GUI_App.cpp'));
+  assert.doesNotMatch(app, /SetSize\(wxSize\(270, 158\)\)/, 'the plugin download dialog must be sized through FromDIP on every path');
+});
+
+test('no label combines two ellipsize styles', async () => {
+  // wxST_ELLIPSIZE_START|MIDDLE|END on one control is contradictory; wx picks
+  // one arbitrarily (and asserts in debug builds). MonitorBasePanel shipped that.
+  assertOnlyAllowed(await sitesOf(/wxST_ELLIPSIZE_\w+\s*\|\s*wxST_ELLIPSIZE_/g), new Set([
+    'LayoutProbe.cpp', // ORs the three flags as a MASK to test a style, never applies them
+  ]), 'combined ellipsize styles');
+});
+
+test('the runtime layout probe is wired, off by default, and reports the starvation flags', async () => {
+  const probe = stripComments(await read('LayoutProbe.cpp'));
+  assert.match(probe, /env_value\("BAMBU_LAYOUT_PROBE"\)/, 'the probe must be gated on BAMBU_LAYOUT_PROBE');
+  for (const key of ['starved', 'zero_sized', 'oversubscribed', 'text_clipped', 'clipped_by_parent']) {
+    assert.ok(probe.includes(`"${key}"`) || probe.includes(`\\"${key}\\"`), `the probe must emit the ${key} flag`);
+  }
+  assert.match(probe, /required > v\.available/, 'the row verdict must compare required minimum against available size');
+  const app = stripComments(await read('GUI_App.cpp'));
+  assert.match(app, /copy_data_structure->dwData == 2/, 'WM_COPYDATA must dispatch dwData == 2 to the probe');
+  assert.match(app, /^\s*LayoutProbe::install\(mainframe\);/m, 'the probe must be installed after the main frame is shown');
+  const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
+  assert.match(cmake, /^\s*GUI\/LayoutProbe\.cpp\s*$/m, 'LayoutProbe.cpp must be registered in src/slic3r/CMakeLists.txt');
+});
+
 test('stock wx controls are gone from the GUI except the allowlisted holders', async () => {
   assertOnlyAllowed(await sitesOf(/new wxGauge\(/g), new Set(), 'wxGauge');
   assertOnlyAllowed(await sitesOf(/new wxStaticLine\(/g), new Set(), 'wxStaticLine');

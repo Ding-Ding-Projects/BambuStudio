@@ -478,7 +478,7 @@ void SavePresetDialog::update_info_for_edit_ph_printer(const std::string &preset
     m_label->Show(show);
     m_radio_sizer->ShowItems(show);
     if (!show) {
-        this->SetMinSize(wxSize(100, 50));
+        this->SetMinSize(FromDIP(wxSize(100, 50)));
         return;
     }
 

@@ -1355,7 +1355,8 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
 {
     // Root dialog surface (kit Settings root = Surface); resolves by role in dark.
     SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
-    SetSize(wxSize(780, 580));
+    SetSize(FromDIP(wxSize(780, 580)));
+    SetMinSize(FromDIP(wxSize(640, 480)));
     m_original_use_12h_time_format = wxGetApp().app_config->get("use_12h_time_format");
     // Sync the MD3 density/accent token state to the persisted Appearance choices
     // before the tabs are built so this dialog and later-constructed surfaces

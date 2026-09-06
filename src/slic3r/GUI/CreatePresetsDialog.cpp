@@ -4870,7 +4870,7 @@ wxBoxSizer *EditFilamentPresetDialog::create_preset_tree_sizer()
     m_preset_tree_panel = new wxPanel(m_preset_tree_window);
     m_preset_tree_sizer = new wxBoxSizer(wxVERTICAL);
     m_preset_tree_panel->SetSizer(m_preset_tree_sizer);
-    m_preset_tree_panel->SetMinSize(wxSize(580, -1));
+    m_preset_tree_panel->SetMinSize(FromDIP(wxSize(580, -1)));
     m_preset_tree_panel->SetBackgroundColour(PRINTER_LIST_COLOUR);
     wxBoxSizer* m_preset_tree_window_sizer = new wxBoxSizer(wxVERTICAL);
     m_preset_tree_window_sizer->Add(m_preset_tree_panel, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));

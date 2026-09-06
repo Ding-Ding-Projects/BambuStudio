@@ -8043,7 +8043,7 @@ void Tab::update_nozzle_status_display()
     auto create_nozzle_button = [this](const wxString &name) {
         Button *btn = new Button();
         btn->Create(this, name, "", wxBORDER_NONE);
-        btn->SetMinSize(wxSize(24, 24));
+        btn->SetMinSize(FromDIP(wxSize(24, 24)));
         btn->SetFont(wxGetApp().bold_font());
         StateColor bg_color(StateColor::semantic(MD3::Role::SecondaryContainer));
         btn->SetBackgroundColor(bg_color);

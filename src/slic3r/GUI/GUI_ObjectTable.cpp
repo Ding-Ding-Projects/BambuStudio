@@ -2791,7 +2791,7 @@ ObjectTablePanel::ObjectTablePanel( wxWindow* parent, wxWindowID id, const wxPoi
     //m_side_window->SetSize(wxSize(128, 512));
 
     /* m_page_text = new wxStaticText(m_side_window, wxID_ANY, wxString(L("Per Object Setting")), wxDefaultPosition, wxSize(-1, 32), wxALIGN_CENTRE_HORIZONTAL|wxST_ELLIPSIZE_END);
-     m_page_text->SetMaxSize(wxSize(256, 32));
+     m_page_text->SetMaxSize(FromDIP(wxSize(256, 32)));
      m_page_text->SetFont(Label::Head_18);
      m_page_top_sizer->Add(m_page_text, 0, wxEXPAND, 5);*/
 

@@ -624,7 +624,7 @@ void AMSSettingTypePanel::CreateGui()
     title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_type_combobox = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(240, -1), 0, nullptr, wxCB_READONLY);
-    m_type_combobox->SetMinSize(wxSize(240, -1));
+    m_type_combobox->SetMinSize(FromDIP(wxSize(240, -1)));
     m_type_combobox->Bind(wxEVT_COMBOBOX, &AMSSettingTypePanel::OnAmsTypeChanged, this);
 
     m_switching_tips = new Label(this, ::Label::Body_14);
