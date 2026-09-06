@@ -691,3 +691,20 @@ test('the gizmo object-manipulation panels draw every value field through the ki
   assert.equal((src.match(/md3_value_input\(imgui_wrapper, m_is_dark_mode, /g) || []).length, 15, 'all fifteen value fields use it');
   assert.equal((src.match(/ImGui::PushStyleColor\(ImGuiCol_FrameBg, md3_imvec4\(MD3::Role::SurfaceContainerHighest, m_is_dark_mode\)\);/g) || []).length, 3, 'each of the three windows paints filled fields');
 });
+
+test('the settings tree is one scroll surface: pill categories wrap and the page fits its content', async () => {
+  // The category strip hid tabs behind an overflow at the default sidebar
+  // width and the tree scrolled inside a 144px inner scroller; now the pill
+  // strip wraps onto more rows and the ParamsPanel reports its content height
+  // to the sidebar, whose body is the only scroller.
+  const tabctrl = await read('Widgets', 'TabCtrl.cpp');
+  assert.match(tabctrl, /^void TabCtrl::relayoutPills\(\)/m, 'pill mode has its own flow layout');
+  assert.match(tabctrl, /^\s*if \(m_pill_style\) \{\s*relayoutPills\(\);\s*return;/m, 'relayout defers to it in pill mode');
+  const params = await read('ParamsPanel.cpp');
+  assert.match(params, /^void ParamsPanel::fit_page_to_content\(\)/m, 'the panel can fit its page to content');
+  const tab = await read('Tab.cpp');
+  assert.equal((tab.match(/host->fit_page_to_content\(\);/g) || []).length, 4, 'every page re-layout in Tab refreshes the host height');
+  const plater = await read('Plater.cpp');
+  assert.match(plater, /^\s*scrolled_sizer->Add\(params_panel, 0, wxEXPAND\);/m, 'the tree is hosted at content height, not as a proportional item');
+  assert.match(plater, /params_panel->set_host_height_changed\(/, 'the sidebar listens for height changes');
+});

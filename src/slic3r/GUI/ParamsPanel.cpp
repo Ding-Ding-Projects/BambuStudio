@@ -653,6 +653,20 @@ void ParamsPanel::OnToggled(wxCommandEvent& event)
 }
 
 // This is special, DO NOT call it from outer except from Tab
+void ParamsPanel::fit_page_to_content()
+{
+    if (!m_page_view || !m_page_sizer)
+        return;
+    const int content = m_page_sizer->GetMinSize().y + FromDIP(12);
+    m_page_view->SetMinSize(wxSize(-1, content));
+    m_page_view->SetVirtualSize(wxSize(-1, content));
+    Layout();
+    if (GetSizer())
+        SetMinSize(wxSize(-1, GetSizer()->GetMinSize().y));
+    if (m_host_height_changed)
+        m_host_height_changed();
+}
+
 void ParamsPanel::set_active_tab(wxPanel* tab)
 {
     Tab* cur_tab = dynamic_cast<Tab *> (tab);
@@ -698,6 +712,7 @@ void ParamsPanel::set_active_tab(wxPanel* tab)
         //m_left_sizer->GetItem(t)->SetProportion(tab == t ? 1 : 0);
     }
     m_left_sizer->Layout();
+    fit_page_to_content();
     if (auto dialog = dynamic_cast<wxDialog*>(GetParent())) {
         wxString title = cur_tab->type() == Preset::TYPE_FILAMENT ? _L("Filament settings") : _L("Printer settings");
         dialog->SetTitle(title);

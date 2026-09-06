@@ -49,6 +49,7 @@
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/TabCtrl.hpp"
+#include "ParamsPanel.hpp"
 #include "Widgets/TextInput.hpp"
 #include "MarkdownTip.hpp"
 #include "Search.hpp"
@@ -2783,7 +2784,8 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
     update();
     if (m_active_page)
         m_active_page->update_visibility(m_mode, true);
-    m_page_view->GetParent()->Layout();
+    m_page_view->GetParent()->Layout();
+    if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
 }
 
 void Tab::show_timelapse_warning_dialog() {
@@ -5146,7 +5148,8 @@ void Tab::update_pages_with_multi_variant()
                 optgroup->custom_ctrl->update_line_height_for_field(opt_key);
             }
         }
-        m_page_view->GetParent()->Layout();
+        m_page_view->GetParent()->Layout();
+        if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
         m_parent->Layout();
     }
     update_changed_ui();
@@ -8278,7 +8281,8 @@ void Tab::switch_excluder(int extruder_id, bool reload)
         toggle_options();
         if (m_active_page)
             m_active_page->update_visibility(m_mode, true);
-        m_page_view->GetParent()->Layout();
+        m_page_view->GetParent()->Layout();
+        if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
     }
 }
 
@@ -8354,7 +8358,8 @@ void Tab::sync_excluder()
         update();
         if (m_active_page)
             m_active_page->update_visibility(m_mode, true);
-        m_page_view->GetParent()->Layout();
+        m_page_view->GetParent()->Layout();
+        if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
     }
 }
 

@@ -123,10 +123,12 @@ int TabCtrl::AppendItem(const wxString &item,
     btn->SetTextColor(tabTextColor());
     applyItemStyle(btn);
     btns.push_back(btn);
-    if (btns.size() > 1)
-        sizer->GetItem(sizer->GetItemCount() - 1)->SetMinSize({0, 0});
-    sizer->Add(btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, TAB_BUTTON_SPACE);
-    sizer->AddStretchSpacer(1);
+    if (!m_pill_style) {
+        if (btns.size() > 1)
+            sizer->GetItem(sizer->GetItemCount() - 1)->SetMinSize({0, 0});
+        sizer->Add(btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, TAB_BUTTON_SPACE);
+        sizer->AddStretchSpacer(1);
+    }
     relayout();
     return btns.size() - 1;
 }
@@ -138,6 +140,10 @@ bool TabCtrl::DeleteItem(int item)
 
 void TabCtrl::DeleteAllItems()
 {
+    // In pill mode the items are not sizer children, so the sizer's Clear
+    // would leave them alive; destroy them by hand.
+    if (m_pill_style)
+        for (auto *b : btns) b->Destroy();
     sizer->Clear(true);
     sizer->AddSpacer(10);
     btns.clear();
@@ -299,6 +305,18 @@ void TabCtrl::SetNavItemStyle(bool pill)
     if (m_pill_style == pill)
         return;
     m_pill_style = pill;
+    // Pill mode owns the item positions (relayoutPills); the flat strip lets
+    // the horizontal sizer place them. Move the buttons across accordingly.
+    sizer->Clear(false);
+    sizer->AddSpacer(10);
+    if (!pill) {
+        for (auto *b : btns) {
+            if (sizer->GetItemCount() > 1)
+                sizer->GetItem(sizer->GetItemCount() - 1)->SetMinSize({0, 0});
+            sizer->Add(b, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, TAB_BUTTON_SPACE);
+            sizer->AddStretchSpacer(1);
+        }
+    }
     for (auto &b : btns) {
         applyItemStyle(b);
         b->SetTextColor(tabTextColor());
@@ -350,8 +368,41 @@ WXLRESULT TabCtrl::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
 
 #endif
 
+void TabCtrl::relayoutPills()
+{
+    // Flow layout: items keep their natural width and wrap to the next row
+    // when the strip is too narrow, so no category is ever hidden behind an
+    // overflow. The control's minimum height follows the number of rows.
+    const int width   = GetSize().x;
+    const int gap     = FromDIP(8);
+    const int row_gap = FromDIP(6);
+    const int left    = FromDIP(10);
+    int x = left, y = border_width * 2, row_h = 0;
+    for (auto *b : btns) {
+        const wxSize s = b->GetMinSize();
+        if (x > left && x + s.x > width - left) {
+            x = left;
+            y += row_h + row_gap;
+            row_h = 0;
+        }
+        b->SetSize(x, y, s.x, s.y);
+        b->Show();
+        x += s.x + gap;
+        row_h = std::max(row_h, s.y);
+    }
+    const int h = y + row_h + border_width * 4;
+    if (GetMinSize().y != h) {
+        SetMinSize(wxSize(-1, h));
+        if (GetParent()) GetParent()->Layout();
+    }
+}
+
 void TabCtrl::relayout()
 {
+    if (m_pill_style) {
+        relayoutPills();
+        return;
+    }
     int offset = 10;
     int item = sel + 1;
     int first = 0;

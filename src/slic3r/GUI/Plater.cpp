@@ -4148,7 +4148,16 @@ Sidebar::Sidebar(Plater *parent)
         // keeps a usable minimum (its own internal scroller handles the rest)
         // instead of being crushed to nothing at short window heights.
         params_panel->SetMinSize(wxSize(-1, FromDIP(240)));
-        scrolled_sizer->Add(params_panel, 3, wxEXPAND);
+        // The tree is hosted at its content height (ParamsPanel::fit_page_to_
+        // content), so the sidebar body is one scroll surface and every
+        // setting is reachable by scrolling the sidebar; no inner scroller.
+        scrolled_sizer->Add(params_panel, 0, wxEXPAND);
+        params_panel->set_host_height_changed([this]() {
+            if (p->scrolled) {
+                p->scrolled->Layout();
+                update_scroll_body();
+            }
+        });
 
         // Apply the persisted compact/advanced choice (compact is the kit
         // default; 'true' restores the full legacy tree).

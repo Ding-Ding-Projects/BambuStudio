@@ -88,6 +88,11 @@ public:
     // m_pill_style). Restyles every existing item and every item appended after.
     void SetNavItemStyle(bool pill);
 
+    // Pill mode positions the items itself and wraps them onto further rows
+    // when the strip is narrower than its items, growing the control's minimum
+    // height so every category stays visible (no "..." overflow).
+    void relayoutPills();
+
     // Re-bake the (theme-varying) pill fill for every item. The pill background
     // StateColor captures the current theme's SecondaryContainer/High at build
     // time, so a runtime theme toggle (which does not recreate the item buttons)

@@ -2,6 +2,7 @@
 #define slic3r_params_panel_hpp_
 
 
+#include <functional>
 #include <map>
 #include <vector>
 #include <memory>
@@ -178,6 +179,13 @@ class ParamsPanel : public wxPanel
         wxPanel* filament_panel() { return m_tab_filament; }
 
         wxScrolledWindow* get_paged_view() { return m_page_view;}
+
+        // Size the page view to its content so the host (the Prepare sidebar's
+        // single scroller) shows the whole settings tree without an inner
+        // scroller; then tell the host its height changed.
+        void fit_page_to_content();
+        void set_host_height_changed(std::function<void()> fn) { m_host_height_changed = std::move(fn); }
+        std::function<void()> m_host_height_changed;
         wxPanel*    get_current_tab() { return m_current_tab; }
 
 };
