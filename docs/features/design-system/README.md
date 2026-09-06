@@ -13,6 +13,10 @@ Design 3 design system.
   overlay for the remaining semantic gizmo composites, with native-runtime evidence still required
   before the parity row can move from partial to done.
 
+- [Kit widgets added in the every-element sweep](kit-widgets-2026-09.md) — LabeledRadioButton and
+  RadioGroup, TextArea, ListBox, Button::SetIconBitmap, and the Material-by-default Button.
+- [Runtime layout probe](layout-probe.md) — the off-by-default NDJSON walker that finds starved
+  sizer rows, zero-sized controls and clipped labels mechanically, and its report reader.
 - [Themed surface colors on StaticBox cards](themed-surface-colors.md) — how a card gets its fill,
   why `SetBackgroundColorNormal()` could silently do nothing, and the stale constructor-time window
   background behind light plates in dark mode.
