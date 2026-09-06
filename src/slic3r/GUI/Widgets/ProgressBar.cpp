@@ -298,16 +298,20 @@ void ProgressBar::doRender(wxDC &dc)
 {
     if (m_step >= m_max) m_step = m_max;
     wxSize size   = GetSize();
+    // The track is m_barHeight tall; the window can be taller when marker
+    // bubbles sit below it (upstream SetHeight), so every track draw uses
+    // barHeight, never the window height.
+    const int barHeight = std::max(1, std::min(m_barHeight, size.y));
     // The kit uses a fixed soft radius (r6); clamp it to the track's half-height
     // so short bars round to a clean stadium end (matching CSS border-radius)
     // while taller bars keep the soft r6 corner instead of a full height/2 pill.
-    const double drawRadius = (m_radius > size.y / 2.0) ? size.y / 2.0 : m_radius;
+    const double drawRadius = (m_radius > barHeight / 2.0) ? barHeight / 2.0 : m_radius;
     dc.SetPen(wxPen(m_progress_background_colour, 1));
     dc.SetBrush(wxBrush(m_progress_background_colour));
     if (m_radius == 0) {
         dc.DrawRectangle(0, 0, size.x, barHeight);
     } else {
-        dc.DrawRoundedRectangle(0, 0, size.x, size.y, drawRadius);
+        dc.DrawRoundedRectangle(0, 0, size.x, barHeight, drawRadius);
     }
 
     //draw progress
@@ -320,7 +324,7 @@ void ProgressBar::doRender(wxDC &dc)
         if (m_radius == 0) {
             dc.DrawRectangle(0, 0, m_proportion, barHeight);
         } else {
-            dc.DrawRoundedRectangle(0, 0, m_proportion, size.y, drawRadius);
+            dc.DrawRoundedRectangle(0, 0, m_proportion, barHeight, drawRadius);
         }
 
         dc.SetFont(::Label::Head_12);
@@ -341,7 +345,7 @@ void ProgressBar::doRender(wxDC &dc)
         if (m_radius == 0) {
             dc.DrawRectangle(x, 0, seg, size.y);
         } else {
-            dc.DrawRoundedRectangle(x, 0, seg, size.y, drawRadius);
+            dc.DrawRoundedRectangle(x, 0, seg, barHeight, drawRadius);
         }
     } else {
         m_proportion = float(size.x * float(this->m_step) / float(this->m_max));
@@ -352,7 +356,7 @@ void ProgressBar::doRender(wxDC &dc)
         if (m_radius == 0) {
             dc.DrawRectangle(0, 0, m_proportion, barHeight);
         } else {
-            dc.DrawRoundedRectangle(0, 0, m_proportion, size.y, drawRadius);
+            dc.DrawRoundedRectangle(0, 0, m_proportion, barHeight, drawRadius);
         }
 
         // Kit ProgressBar bakes no percentage text into the bar itself
