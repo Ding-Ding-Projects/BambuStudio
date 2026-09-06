@@ -193,8 +193,8 @@ PlateMoveDialog::~PlateMoveDialog() {
 
 void PlateMoveDialog::update_ok_button_enable() {
     auto disable = m_specify_plate_idx == GUI::wxGetApp().plater()->get_partplate_list().get_curr_plate_index();
+    // The Filled variant paints its own disabled state; no palette swap needed.
     m_button_ok->Enable(!disable);
-    m_button_ok->SetBackgroundColor(disable ? btn_bg_disable_bg_in_plate_swap :btn_bg_green_in_plate_swap);
 }
 
 void PlateMoveDialog::on_dpi_changed(const wxRect &suggested_rect)

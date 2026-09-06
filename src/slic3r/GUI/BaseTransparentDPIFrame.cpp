@@ -70,7 +70,6 @@ BaseTransparentDPIFrame::BaseTransparentDPIFrame(
     StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(23, 25, 22), StateColor::Pressed), std::pair<wxColour, int>(wxColour(43, 45, 42), StateColor::Hovered),
                             std::pair<wxColour, int>(wxColour(23, 25, 22), StateColor::Normal));
     m_button_ok = new Button(this, ok_text);
-    m_button_ok->SetBackgroundColor(btn_bg_green);
     m_button_ok->SetBorderWidth(0);
     m_button_ok->SetVariant(Button::Variant::Filled);
     m_button_ok->SetFont(Label::Body_12);

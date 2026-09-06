@@ -4078,7 +4078,6 @@ void Slic3r::GUI::StyleNameEditDialog::on_edit_text(wxCommandEvent &event)
         SetMinSize(wxSize(-1, StyleNameEditDialogHeight));
         SetMaxSize(wxSize(-1, StyleNameEditDialogHeight));
     }
-    m_button_ok->SetBackgroundColor(m_button_ok->IsEnabled() ? ok_btn_bg : ok_btn_disable_bg);
     Layout();
     Fit();
 }

@@ -262,14 +262,12 @@ void wgtDeviceNozzleRackArea::CreateGui()
     wxSizer* btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_btn_hotends_infos = new Button(m_panel_content, _L("Hotends Info"));
     m_btn_hotends_infos->SetFont(Label::Body_12);
-    m_btn_hotends_infos->SetBackgroundColor(StateColor::createButtonStyleGray());
-    m_btn_hotends_infos->SetBackgroundColour(*wxWHITE);
+    m_btn_hotends_infos->SetVariant(Button::Variant::Outlined);
     m_btn_hotends_infos->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackArea::OnBtnHotendsInfos, this);
 
     m_btn_read_all = new Button(m_panel_content, _L("Read All"));
     m_btn_read_all->SetFont(Label::Body_12);
-    m_btn_read_all->SetBackgroundColor(StateColor::createButtonStyleGray());
-    m_btn_read_all->SetBackgroundColour(*wxWHITE);
+    m_btn_read_all->SetVariant(Button::Variant::Outlined);
     m_btn_read_all->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackArea::OnBtnReadAll, this);
 
     btn_sizer->Add(m_btn_hotends_infos, 0, wxLEFT);

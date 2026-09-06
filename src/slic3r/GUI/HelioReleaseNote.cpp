@@ -3099,8 +3099,6 @@ HelioPatNotEnoughDialog::HelioPatNotEnoughDialog(wxWindow* parent /*= nullptr*/)
 
 
     auto m_button_ok = new Button(this, _L("Confirm"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
     // White text for all states
     StateColor white_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
                           std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));

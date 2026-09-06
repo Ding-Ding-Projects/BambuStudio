@@ -487,7 +487,7 @@ test('no kit Button is hand-styled with the legacy palette where a variant would
   const summary = out.trim().split('\n').pop();
   assert.match(summary, /^0 run\(s\) converted/, `the Button styling codemod still has work to do:\n${out.split('\n').filter((l) => /^  (Filled|Outlined)/.test(l)).join('\n')}`);
   const unclassified = out.split('\n').filter((l) => l.includes('skip (unclassified)')).length;
-  assert.ok(unclassified <= 16, `unclassified legacy Button palettes grew to ${unclassified} (ratchet 16)`);
+  assert.ok(unclassified <= 9, `unclassified legacy Button palettes grew to ${unclassified} (ratchet 9)`);
   assert.ok((await sitesOf(/SetVariant\(Button::Variant::/g)).size >= 40, 'the converted call sites must still use kit variants');
 });
 

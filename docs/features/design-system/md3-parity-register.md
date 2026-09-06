@@ -92,6 +92,8 @@ regression before it was trusted.
 | imgui-chrome-literals | Overlay plate, tooltip text, hovered row text, disabled checkbox greys, sub-title rule | tokens | `md3_imgui_color` / `md3_imvec4` roles; transparent fills, image tints and data colours untouched | done |
 | layout-probe | no mechanical clipping detection | -- | `LayoutProbe.{hpp,cpp}` (BAMBU_LAYOUT_PROBE, WM_COPYDATA dwData 2), `ui-md3/tests/layout-probe-report.mjs` | done (runtime sweep pending the built binary) |
 | unscaled-sizes | 21 literal `Set*Size(wxSize(N, M))` pixel sizes, one label with three ellipsize styles | -- | `FromDIP` everywhere; `wxST_ELLIPSIZE_END` only; guards forbid both | done |
+| button-legacy-palettes | 201 runs of hand-styled `SetBackgroundColor/SetBorderColor/SetTextColor` on kit Buttons in 47 files | actions/Button | `scripts/md3/convert-button-styling.mjs` rewrites each run to `SetVariant(Filled)` or `SetVariant(Outlined)` from the Normal-state luminance; cancel-family names go Outlined; palettes already built from MD3 role helpers are kept; six leftovers hand-converted | done (source) |
+| helio-partner-branding | 9 runs on Helio dialogs and the Helio uninstall button using the partner purple / blue palette (`theme.purple`, `theme.blue`, `HELIO_*`) | -- | Kept: these buttons carry a third party's brand colours inside a partner-provided flow; recorded here and held by the codemod's shrink-only ratchet (9) | deviation |
 
 Verification of this sweep: every edited translation unit was compiled with `g++ -fsyntax-only`
 against wxWidgets 3.2 / Boost / OpenCASCADE headers on Linux (the Windows-only chrome paths are
