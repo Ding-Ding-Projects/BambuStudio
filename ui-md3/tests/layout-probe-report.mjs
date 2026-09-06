@@ -44,10 +44,21 @@ for (const file of files) {
   const labelOf = (w) => w.label || w.name || '';
   const where = (w) => `${(tops.get(w.top) || {}).title || ''} > ${w.class}${labelOf(w) ? ` "${labelOf(w).slice(0, 48)}"` : ''}`;
   const seenRows = new Set();
+  // A window whose ancestor has collapsed to zero size is not on screen even
+  // when every shown flag says yes (the rating stars live inside a 0x0 scroller
+  // until a file is rated). IsShownOnScreen does not see that either.
+  const underCollapsed = (w) => {
+    for (let cur = byHwnd.get(w.parent); cur; cur = byHwnd.get(cur.parent)) if (cur.rect && (cur.rect.w === 0 || cur.rect.h === 0)) return true;
+    return false;
+  };
   for (const w of byHwnd.values()) {
-    if (!shownChain(w)) continue;
+    if (!shownChain(w) || underCollapsed(w)) continue;
     const base = { file, hwnd: w.hwnd, where: where(w), rect: w.rect, min: w.min };
-    if (w.zero_sized) findings.push({ ...base, finding: 'zero_sized' });
+    // An empty label legitimately measures zero wide (the estimate detail is
+    // blank until a plate is sliced); only a labelled or non-text control
+    // that vanished is a finding.
+    const emptyLabel = /StaticText|Label/.test(w.class) && !(w.label || '').trim();
+    if (w.zero_sized && !emptyLabel) findings.push({ ...base, finding: 'zero_sized' });
     if (w.starved) findings.push({ ...base, finding: 'starved', alloc: w.sizer?.alloc, need: w.sizer?.min });
     if (w.sizer?.row?.oversubscribed) {
       const key = `${w.parent}:${w.sizer.row.orient}:${w.sizer.row.available}:${w.sizer.row.required}`;
