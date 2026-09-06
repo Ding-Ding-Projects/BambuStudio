@@ -569,11 +569,11 @@ PostProcessScriptDialog::PostProcessScriptDialog(wxWindow* parent, const wxStrin
     msg->Wrap(content_width);
     content_sizer->Add(msg, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 
-    m_script_text = new wxTextCtrl(this, wxID_ANY, script_content, wxDefaultPosition,
-        wxSize(content_width, FromDIP(140)), wxTE_MULTILINE | wxTE_READONLY | wxTE_WORDWRAP);
+    m_script_text = new TextArea(this, script_content, wxSize(content_width, FromDIP(140)),
+        wxTE_READONLY | wxTE_WORDWRAP);
     // The script body is technical/fixed-pitch content: Roboto Mono, the kit's
     // canonical mono face, rather than the OS teletype family (Courier New).
-    m_script_text->SetFont(::Label::Mono_12.IsOk() ? ::Label::Mono_12 : wxGetApp().code_font());
+    m_script_text->SetMonospace(true);
     m_details_expanded = true;
     content_sizer->Add(m_script_text, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 

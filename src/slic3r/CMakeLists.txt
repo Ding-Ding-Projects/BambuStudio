@@ -22,6 +22,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/LabeledCheckBox.hpp
     GUI/Widgets/LabeledRadioButton.cpp
     GUI/Widgets/LabeledRadioButton.hpp
+    GUI/Widgets/TextArea.cpp
+    GUI/Widgets/TextArea.hpp
     GUI/Widgets/RadioBox.hpp
     GUI/Widgets/RadioBox.cpp
     GUI/Widgets/ProgressDialog.hpp

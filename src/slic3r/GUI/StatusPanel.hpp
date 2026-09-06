@@ -24,6 +24,7 @@
 #include "ExtrusionCalibration.hpp"
 #include "ReleaseNote.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Widgets/TextArea.hpp"
 #include "Widgets/AxisCtrlButton.hpp"
 #include "Widgets/CameraHUD.hpp"
 #include "Widgets/TextInput.hpp"
@@ -227,7 +228,7 @@ protected:
     };
 
     std::vector<ScalableButton *>                  m_score_star;
-    wxTextCtrl *                                   m_comment_text  = nullptr;
+    TextArea *                                     m_comment_text  = nullptr;
     Button *                                       m_button_ok     = nullptr;
     Button *                                       m_button_cancel = nullptr;
     Label *                                        m_add_photo     = nullptr;

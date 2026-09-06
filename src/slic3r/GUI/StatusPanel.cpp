@@ -6885,19 +6885,17 @@ wxBoxSizer *ScoreDialog::get_comment_text_sizer()
 
 void ScoreDialog::create_comment_text(const wxString &comment)
 {
-    m_comment_text = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(FromDIP(492), FromDIP(104)), wxTE_MULTILINE);
-    m_comment_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_comment_text = new TextArea(this, "", wxSize(FromDIP(492), FromDIP(104)));
 
     if (!comment.empty()) { m_comment_text->SetValue(comment); }
-    m_comment_text->SetHint(_L("Rate this print"));
-    m_comment_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_comment_text->GetTextCtrl()->SetHint(_L("Rate this print"));
     // m_comment_text->SetForegroundColour(wxColor("#BBBBBB"));
     m_comment_text->SetMinSize(wxSize(FromDIP(492), FromDIP(104)));
 
     m_comment_text->Bind(wxEVT_SET_FOCUS, [this](auto &event) {
         // Theme-adaptive OnSurface role instead of hand-branched *wxWHITE/*wxBLACK
         // on dark_mode(), matching this file's StateColor::semantic pattern.
-        m_comment_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        m_comment_text->GetTextCtrl()->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         m_comment_text->Refresh();
         event.Skip();
     });

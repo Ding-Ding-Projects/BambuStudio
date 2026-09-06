@@ -14,6 +14,7 @@
 #include <wx/textctrl.h>
 #include <wx/statline.h>
 #include "Widgets/Button.hpp"
+#include "Widgets/TextArea.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/MD3Dialog.hpp"
@@ -151,7 +152,7 @@ public:
 // Post-processing script confirmation before slicing (3MF with post_process scripts)
 class PostProcessScriptDialog : public MsgDialog
 {
-	::wxTextCtrl* m_script_text{ nullptr };
+	TextArea* m_script_text{ nullptr };
 	Button*     m_toggle_details{ nullptr };
 	bool        m_details_expanded{ false };
 

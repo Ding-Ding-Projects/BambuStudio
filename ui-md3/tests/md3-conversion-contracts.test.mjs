@@ -319,6 +319,40 @@ test('every radio is the kit LabeledRadioButton, which carries the radio role an
   assert.match(page, /void SetRadioBox\(LabeledRadioButton\* btn\)/, 'SetRadioBox must take the kit row');
 });
 
+test('every text field is a kit TextInput or TextArea; native editors exist only inside kit fields', async () => {
+  // A native wxTextCtrl may exist only as the INNER editor of a kit field
+  // (TextInput, TextArea, SearchField, TempInput, MD3ColorPicker, the regex
+  // builder's own fields) or where the host owns the editor's lifetime.
+  assertOnlyAllowed(await sitesOf(/new wxTextCtrl\(/g), new Set([
+    'Widgets/TextInput.cpp',
+    'Widgets/TextArea.cpp',
+    'Widgets/SearchField.cpp',
+    'Widgets/TempInput.cpp',
+    'Widgets/MD3ColorPicker.cpp',
+    'Widgets/RegexBuilderPopup.cpp',   // kit-internal fields drawn by the popup's own field panels
+    'ExtraRenderers.cpp',              // wxDataViewCustomRenderer owns the cell editor's lifetime
+    'MixedFilamentDialog.cpp',         // inline cell editor inside a hand-drawn table row
+    'WebViewDialog.cpp',               // developer-only URL bar, compiled out for public releases
+  ]), 'wxTextCtrl');
+  const area = stripComments(await read('Widgets', 'TextArea.cpp'));
+  assert.match(area, /R::SurfaceContainerLow : R::SurfaceContainerLowest/, 'TextArea must tone read-only and editable fields from MD3 roles');
+  assert.match(area, /m_focused \? R::Primary : R::OutlineVariant/, 'TextArea must promote its outline to Primary on focus');
+  assert.match(area, /MD3::Metrics::radius_tiny/, 'TextArea must use the kit small radius');
+  assert.match(area, /new TextCtrl\(this, wxID_ANY, text/, 'TextArea must host the MSW-colour-safe TextCtrl editor');
+  const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
+  assert.match(cmake, /^\s*GUI\/Widgets\/TextArea\.cpp\s*$/m, 'TextArea.cpp must be registered');
+  for (const [file, needle] of [
+    ['UpdateDialogs.cpp', 'new TextArea(this, from_u8(update.change_log)'],
+    ['MsgDialog.cpp', 'm_script_text = new TextArea('],
+    ['SendSystemInfoDialog.cpp', 'new TextArea(this, json'],
+    ['NetworkTestDialog.cpp', 'txt_log = new TextArea('],
+    ['StatusPanel.cpp', 'm_comment_text = new TextArea('],
+    ['UnsavedChangesDialog.cpp', 'new TextArea(this, label'],
+  ]) {
+    assert.ok(stripComments(await read(file)).includes(needle), `${file} must construct its view as TextArea`);
+  }
+});
+
 test('no window is sized by an unscaled pixel literal', async () => {
   // SetSize/SetMinSize/SetMaxSize(wxSize(N, M)) with a positive literal is a
   // 100%-only size: at 150% and 200% it clips whatever it holds. The zero and

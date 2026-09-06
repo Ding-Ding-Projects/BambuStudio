@@ -1,6 +1,7 @@
 #include "AssemblyPdfExportDialog.hpp"
 
 #include "../GUI_App.hpp"
+#include "../Widgets/TextInput.hpp"
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
@@ -41,10 +42,13 @@ AssemblyPdfExportDialog::AssemblyPdfExportDialog(wxWindow *parent, const Assembl
         auto *row = new wxBoxSizer(wxHORIZONTAL);
         auto *label_ctrl = new Label(this, label);
         label_ctrl->SetForegroundColour(label_fg());
-        m_title_ctrl = new wxTextCtrl(this, wxID_ANY, value, wxDefaultPosition, FromDIP(wxSize(360, -1)));
+        // Kit TextInput draws the field; the dialog keeps its handle on the inner
+        // editor so the watchers and validators below are unchanged.
+        auto *title_input = new TextInput(this, value, "", "", wxDefaultPosition, FromDIP(wxSize(360, -1)));
+        m_title_ctrl = title_input->GetTextCtrl();
         m_title_ctrl->SetMaxLength(kPdfCoverTitleMaxLength);
         row->Add(label_ctrl, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
-        row->Add(m_title_ctrl, 1, wxEXPAND);
+        row->Add(title_input, 1, wxEXPAND);
         top_sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     };
 
@@ -149,7 +153,8 @@ wxTextCtrl *AssemblyPdfExportDialog::create_path_row(wxWindow *parent, wxBoxSize
     auto *row = new wxBoxSizer(wxHORIZONTAL);
     auto *label_ctrl = new Label(parent, label);
     label_ctrl->SetForegroundColour(label_fg());
-    auto *text_ctrl = new wxTextCtrl(parent, wxID_ANY, value, wxDefaultPosition, FromDIP(wxSize(360, -1)));
+    auto *path_input = new TextInput(parent, value, "", "", wxDefaultPosition, FromDIP(wxSize(360, -1)));
+    auto *text_ctrl = path_input->GetTextCtrl();
 
     StateColor browse_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
                          std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
@@ -170,7 +175,7 @@ wxTextCtrl *AssemblyPdfExportDialog::create_path_row(wxWindow *parent, wxBoxSize
     }
 
     row->Add(label_ctrl, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
-    row->Add(text_ctrl, 1, wxEXPAND | wxRIGHT, FromDIP(8));
+    row->Add(path_input, 1, wxEXPAND | wxRIGHT, FromDIP(8));
     row->Add(browse_btn, 0, wxALIGN_CENTER_VERTICAL);
     sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     return text_ctrl;

@@ -469,7 +469,8 @@ wxBoxSizer* NetworkTestDialog::create_result_sizer(wxWindow* parent)
 	text_result->Wrap(-1);
 	sizer->Add(text_result, 0, wxALL, 5);
 
-	txt_log = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+	txt_log = new TextArea(this, wxEmptyString, wxDefaultSize, 0);
+	txt_log->SetMonospace(true);
 	sizer->Add(txt_log, 1, wxALL | wxEXPAND, 5);
 	return sizer;
 }

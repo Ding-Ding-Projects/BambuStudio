@@ -1,4 +1,5 @@
 #include "WebViewDialog.hpp"
+#include "Widgets/TextArea.hpp"
 
 #include "I18N.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
@@ -1964,18 +1965,18 @@ void WebViewPanel::OnViewSourceRequest(wxCommandEvent& WXUNUSED(evt))
 void WebViewPanel::OnViewTextRequest(wxCommandEvent& WXUNUSED(evt))
 {
     wxDialog textViewDialog(this, wxID_ANY, "Page Text",
-        wxDefaultPosition, wxSize(700, 500),
+        wxDefaultPosition, FromDIP(wxSize(700, 500)),
         wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
 
-    wxTextCtrl* text = new wxTextCtrl(this, wxID_ANY, m_browser->GetPageText(),
-        wxDefaultPosition, wxDefaultSize,
-        wxTE_MULTILINE |
-        wxTE_RICH |
-        wxTE_READONLY);
+    // The viewer used to be parented to the panel and its sizer set on the
+    // panel, so the modal dialog opened empty; both now belong to the dialog.
+    TextArea* text = new TextArea(&textViewDialog, m_browser->GetPageText(), wxDefaultSize,
+        wxTE_RICH | wxTE_READONLY);
+    text->SetMonospace(true);
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(text, 1, wxEXPAND);
-    SetSizer(sizer);
+    textViewDialog.SetSizer(sizer);
     textViewDialog.ShowModal();
 }
 
@@ -2626,11 +2627,9 @@ SourceViewDialog::SourceViewDialog(wxWindow* parent, wxString source) :
                            wxDefaultPosition, wxSize(700,500),
                            wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
-    wxTextCtrl* text = new wxTextCtrl(this, wxID_ANY, source,
-                                      wxDefaultPosition, wxDefaultSize,
-                                      wxTE_MULTILINE |
-                                      wxTE_RICH |
-                                      wxTE_READONLY);
+    SetSize(FromDIP(wxSize(700, 500)));
+    TextArea* text = new TextArea(this, source, wxDefaultSize, wxTE_RICH | wxTE_READONLY);
+    text->SetMonospace(true);
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(text, 1, wxEXPAND);

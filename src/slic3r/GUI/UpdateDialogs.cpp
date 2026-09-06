@@ -21,6 +21,7 @@
 #include "wxExtensions.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/TextArea.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -224,7 +225,7 @@ MsgUpdateForced::MsgUpdateForced(const std::vector<Update>& updates) :
 
 	auto* versions = new wxFlexGridSizer(2, 0, VERT_SPACING);
 	//BBS: use changelog string instead of url
-	wxTextCtrl* changelog_textctrl = nullptr;
+	TextArea* changelog_textctrl = nullptr;
 	for (const auto& update : updates) {
 		auto* text_vendor = new Label(this, update.vendor);
 		text_vendor->SetFont(boldfont);
@@ -241,7 +242,7 @@ MsgUpdateForced::MsgUpdateForced(const std::vector<Update>& updates) :
 		//BBS: use changelog string instead of url
 		if (! update.change_log.empty()) {
 			if (!changelog_textctrl)
-				changelog_textctrl = new wxTextCtrl(this, wxID_ANY, from_u8(update.change_log), wxDefaultPosition,  wxDefaultSize, wxTE_MULTILINE|wxTE_READONLY|wxHSCROLL);
+				changelog_textctrl = new TextArea(this, from_u8(update.change_log), wxDefaultSize, wxTE_READONLY|wxHSCROLL);
 			else
 				changelog_textctrl->AppendText(from_u8(update.change_log));
 		}

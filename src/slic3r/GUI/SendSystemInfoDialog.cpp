@@ -1,5 +1,6 @@
 #include "SendSystemInfoDialog.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/TextArea.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 
 #if __APPLE__
@@ -126,11 +127,9 @@ public:
         //: wxDialog(parent, wxID_ANY, _L("Data to send"), wxDefaultPosition, size, wxCAPTION|wxRESIZE_BORDER)
         : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, size, wxCAPTION|wxRESIZE_BORDER)
     {
-        auto* text = new wxTextCtrl(this, wxID_ANY, json,
-                                    wxDefaultPosition, wxDefaultSize,
-                                    wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
-        text->SetFont(wxGetApp().code_font());
-        text->ShowPosition(0);
+        auto* text = new TextArea(this, json, wxDefaultSize, wxTE_READONLY | wxTE_DONTWRAP);
+        text->SetMonospace(true);
+        text->GetTextCtrl()->ShowPosition(0);
 
         //auto* btn = new wxButton(this, wxID_CANCEL, _L("Close"));
         auto* btn = new Button(this, wxEmptyString, "", 0, 0, wxID_CANCEL);

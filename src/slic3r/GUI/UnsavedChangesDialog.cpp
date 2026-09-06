@@ -1,5 +1,6 @@
 #include "UnsavedChangesDialog.hpp"
 #include "Widgets/LabeledCheckBox.hpp"
+#include "Widgets/TextArea.hpp"
 
 #include <cstddef>
 #include <string>
@@ -1891,7 +1892,8 @@ FullCompareDialog::FullCompareDialog(const wxString& option_name, const wxString
     std::set_difference(new_set.begin(), new_set.end(), old_set.begin(), old_set.end(), std::inserter(new_old_diff_set, new_old_diff_set.begin()));
 
     auto add_value = [grid_sizer, border, this](wxString label, const std::set<wxString>& diff_set, bool is_colored = false) {
-        wxTextCtrl* text = new wxTextCtrl(this, wxID_ANY, label, wxDefaultPosition, FromDIP(wxSize(400, 400)), wxTE_MULTILINE | wxTE_READONLY | wxBORDER_DEFAULT | wxTE_RICH);
+        TextArea* area = new TextArea(this, label, FromDIP(wxSize(400, 400)), wxTE_READONLY | wxTE_RICH);
+        wxTextCtrl* text = area->GetTextCtrl();
         wxGetApp().UpdateDarkUI(text);
         text->SetStyle(0, label.Len(), wxTextAttr(is_colored ? wxColour(modified_text_color()) : wxNullColour, wxNullColour, this->GetFont()));
 
@@ -1902,7 +1904,7 @@ FullCompareDialog::FullCompareDialog(const wxString& option_name, const wxString
             text->SetStyle(pos, pos + (int)str.Len(), wxTextAttr(is_colored ? wxColour(modified_text_color()) : wxNullColour, wxNullColour, this->GetFont().Bold()));
         }
 
-        grid_sizer->Add(text, 1, wxALL | wxEXPAND, border);
+        grid_sizer->Add(area, 1, wxALL | wxEXPAND, border);
     };
     add_value(old_value, old_new_diff_set);
     add_value(new_value, new_old_diff_set, true);

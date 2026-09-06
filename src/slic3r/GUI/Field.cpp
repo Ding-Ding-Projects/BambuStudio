@@ -2232,13 +2232,15 @@ void SliderCtrl::BUILD()
 	m_slider->SetBackgroundStyle(wxBG_STYLE_PAINT);
  	wxSize field_size(40, -1);
 
-	m_textctrl = new wxTextCtrl(m_parent, wxID_ANY, wxString::Format("%d", m_slider->GetValue()/m_scale),
-								wxDefaultPosition, field_size);
+	// Kit TextInput draws the field chrome; the readout logic keeps its handle
+	// on the inner editor so the existing binds and SetLabel calls are unchanged.
+	auto* readout = new TextInput(m_parent, wxString::Format("%d", m_slider->GetValue()/m_scale), "", "",
+								  wxDefaultPosition, field_size);
+	m_textctrl = readout->GetTextCtrl();
 	m_textctrl->SetFont(Slic3r::GUI::wxGetApp().normal_font());
-	m_textctrl->SetBackgroundStyle(wxBG_STYLE_PAINT);
 
 	temp->Add(m_slider, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL, 0);
-	temp->Add(m_textctrl, 0, wxALIGN_CENTER_VERTICAL, 0);
+	temp->Add(readout, 0, wxALIGN_CENTER_VERTICAL, 0);
 
 	m_slider->SetOnChange([this](int) {
 		if (!m_disable_change_event) {
