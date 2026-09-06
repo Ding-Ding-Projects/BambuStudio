@@ -48,6 +48,9 @@ PREF_TABS = {'appearance': (79, 75), 'general': (79, 120), 'user': (79, 166), '3
 # Surfaces that are the main frame itself.
 MAIN_SURFACES = {'main', 'home', 'prepare', 'preview', 'device', 'project', 'ink', 'toast', 'menu'}
 # Surface -> predicate on a top-level window record from the probe / window list.
+# Sample files for open:<file> steps.
+SAMPLES = os.path.join(REPO, '.claude', 'skills', 'run-bambustudio')
+
 # open:<name> -> substring of the menu item label the app should fire.
 OPEN_ITEMS = {
     'config wizard': 'wizard',
@@ -265,6 +268,25 @@ class Runner:
             # (class #32768) and becomes the front for the capture.
             self.app.command(f'menu-popup {arg}')
             self.front = self.app.wait(lambda w: w['class'] == '#32768' and w['width'] > 40, 10, f'menu {arg}')['handle']
+        elif kind == 'open' and arg.lower().endswith(('.stl', '.3mf', '.obj', '.step')):
+            # Load a sample model; the app answers with the object in the scene.
+            path = os.path.join(SAMPLES, os.path.basename(arg))
+            if not os.path.exists(path):
+                raise RuntimeError(f'blocked: no sample file {path}')
+            self.app.command(f'load {path}')
+            time.sleep(6)
+        elif kind == 'trigger' and arg.lower().endswith('toast'):
+            self.app.command('notify Sample notification from the capture driver')
+            time.sleep(2)
+        elif kind == 'scroll' and arg.lower() == 'end':
+            # Scroll the front dialog's largest scrolled window to its end.
+            records = self.app.probe()
+            cands = [r for r in records if r.get('kind') == 'window' and r['class'] == 'wxScrolledWindow' and r.get('on_screen') and r.get('top') == (self.front or self.app.main)]
+            if not cands:
+                raise RuntimeError('blocked: scroll:end (no scrolled window on the front surface)')
+            best = max(cands, key=lambda r: r['rect']['w'] * r['rect']['h'])
+            self.app.command(f"scroll-end {best['hwnd']}")
+            time.sleep(1.5)
         elif kind == 'open' and arg.lower() not in ('preferences',):
             # Fire the menu item whose label contains the name and wait for a
             # dialog whose title contains it (or any new dialog if the title

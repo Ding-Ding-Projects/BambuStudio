@@ -5,6 +5,9 @@
 #include "BBLTopbar.hpp"
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
+#include "NotificationManager.hpp"
+#include <wx/scrolwin.h>
+#include <cwchar>
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
@@ -259,7 +262,7 @@ void write_window(boost::nowide::ofstream &out, wxWindow *w, wxWindow *top, int 
         const wxPoint bar_origin = bar->GetScreenPosition();
         for (size_t i = 0; i < bar->GetToolCount(); ++i) {
             wxAuiToolBarItem *item = bar->FindToolByIndex(int(i));
-            if (!item || item->GetKind() == wxITEM_SEPARATOR || item->GetKind() == wxITEM_SPACER) continue;
+            if (!item || item->GetKind() == wxITEM_SEPARATOR) continue; // spacers carry no label and drop out below
             wxString name = item->GetLabel();
             if (name.empty()) name = item->GetShortHelp();
             if (name.empty()) continue;
@@ -396,6 +399,36 @@ bool handle_command(const std::wstring &payload)
             const bool ok = bar->PopupMenuByTitle(wxString(payload.substr(popup.size())));
             BOOST_LOG_TRIVIAL(info) << "LayoutProbe: menu-popup " << (ok ? "ok" : "no such menu");
             return ok;
+        }
+        //   load <path>          load a model file into the plater
+        //   notify <text>        push a plain notification (toast)
+        //   scroll-end <hwnd>    scroll a wxScrolledWindow to its end
+        const std::wstring load = L"load ", notify = L"notify ", scroll = L"scroll-end ";
+        if (frame && payload.compare(0, load.size(), load) == 0) {
+            const wxString path(payload.substr(load.size()));
+            frame->CallAfter([path]() {
+                wxArrayString files; files.Add(path);
+                if (Plater *plater = wxGetApp().plater()) plater->load_files(files);
+            });
+            return true;
+        }
+        if (frame && payload.compare(0, notify.size(), notify) == 0) {
+            const std::string text = boost::nowide::narrow(payload.substr(notify.size()));
+            frame->CallAfter([text]() {
+                if (Plater *plater = wxGetApp().plater()) plater->get_notification_manager()->push_notification(text);
+            });
+            return true;
+        }
+        if (payload.compare(0, scroll.size(), scroll) == 0) {
+            const unsigned long long h = std::wcstoull(payload.substr(scroll.size()).c_str(), nullptr, 0);
+            wxWindow *w = wxWindow::FindWindowByHandle(reinterpret_cast<WXWidget>(h));
+            if (auto *sw = dynamic_cast<wxScrolledWindow *>(w)) {
+                int x = 0, y = 0; sw->GetVirtualSize(&x, &y);
+                int ux = 0, uy = 0; sw->GetScrollPixelsPerUnit(&ux, &uy);
+                sw->Scroll(-1, uy > 0 ? y / uy : y);
+                return true;
+            }
+            return false;
         }
         if (bar && payload.compare(0, invoke.size(), invoke) == 0) {
             const bool ok = bar->InvokeMenuItem(wxString(payload.substr(invoke.size())));
