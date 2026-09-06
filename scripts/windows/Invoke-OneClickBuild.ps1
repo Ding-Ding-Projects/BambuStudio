@@ -569,13 +569,17 @@ function Invoke-OneClickBuild {
             throw "The staged payload is missing '$application'."
         }
 
+        # The payload is only "runnable" with the software-OpenGL fallback beside
+        # the executable: a host without a GPU (or a headless capture desktop)
+        # exits at the OpenGL 2.0 gate otherwise. Stage it in build-only mode too,
+        # so build.bat hands over something that starts.
+        $sevenZip = Get-SevenZipPath
+        Add-MesaFallback -PayloadDirectory $payloadDirectory -SevenZip $sevenZip
+
         if ($BuildOnly) {
             Write-BuildLog "Build-only workflow completed; runnable payload: $application"
             return
         }
-
-        $sevenZip = Get-SevenZipPath
-        Add-MesaFallback -PayloadDirectory $payloadDirectory -SevenZip $sevenZip
 
         $productVersion = Get-ProductVersion
         $sourceCommit = (& git rev-parse HEAD).Trim()
