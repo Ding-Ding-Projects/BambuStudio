@@ -61,6 +61,8 @@ captures are a separate box and stay unticked until they exist from the real bui
       (2026-09-07).
 - [x] Hosted releases carry the release-number package version: md3-v111 (`7a036286c`,
       run 34154014720 green, `2.8.2111`).
+- [x] Setup.exe "Installation has failed" on upgrade: session fonts registered from inside the
+      install folder kept it locked; faces are now staged under the data directory (HANDOFF §12).
 - [x] The software-OpenGL payload copy exited at launch: Mesa needs the llvmpipe environment from
       process start; startup now relaunches once with it when the pair is beside the exe
       (verified on build attempt 32, HANDOFF §12).

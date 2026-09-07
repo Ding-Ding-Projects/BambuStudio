@@ -742,3 +742,19 @@ test('a Mesa pair beside the exe gets the llvmpipe environment before any GL con
   const app = await read('GUI_App.cpp');
   assert.match(app, /if \(OpenGLManager::apply_bundled_softgl_environment\(\)\)[^;]*::ExitProcess\(0\);/, 'OnInit relaunches before anything else when the pair is beside the exe');
 });
+
+test('session fonts are registered from a staged copy outside the install folder', async () => {
+  // A session-visible font inside app-<version>\resources\fonts is mapped by
+  // the Windows Font Cache Service and by browsers, so Squirrel could not
+  // delete the old install folder and Setup.exe failed with 'Installation
+  // has failed' (Roboto-Regular.ttf held by FontCache and Chrome). Both
+  // registrars now register a copy under <data_dir>/fonts instead.
+  const label = await read('Widgets', 'Label.cpp');
+  assert.match(label, /^std::wstring stage_session_font\(const std::wstring &source\)/m, 'the staging helper exists');
+  assert.match(label, /boost::filesystem::path\(Slic3r::data_dir\(\)\) \/ "fonts"/, 'it stages under the data directory');
+  assert.match(label, /const std::wstring w = stage_session_font\(path\.ToStdWstring\(\)\);\s*\n\s*if \(::AddFontResourceExW\(w\.c_str\(\), 0, nullptr\) > 0\)/, 'the registrar registers the staged copy');
+  assert.match(label, /::SendNotifyMessageW\(HWND_BROADCAST, WM_FONTCHANGE, 0, 0\);/, 'and broadcasts the removal');
+  const icon = await read('Widgets', 'MaterialIcon.cpp');
+  assert.match(icon, /::AddFontResourceExW\(Label::sessionFontPath\(font_path\)\.c_str\(\), 0, nullptr\)/, 'the icon font goes through the same staging');
+  assert.doesNotMatch(icon, /AddFontResourceExW\(font_path\.ToStdWstring\(\)/, 'no registrar points at the install folder any more');
+});

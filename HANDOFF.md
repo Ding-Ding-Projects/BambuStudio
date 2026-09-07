@@ -1361,3 +1361,13 @@ diagnostics were a cascade.
   in-process was proven insufficient on attempt 31). Verified on attempt 32: the launcher hands
   over to a child that stayed alive with the main frame rendered
   (`docs/screenshots/md3-everything/evidence/softgl-relaunch-main-frame--build32.png`).
+- Fixed 2026-09-07 (build attempt 35): Setup.exe reported "Installation has failed" on a machine
+  with an earlier install. Squirrel's log: it could not delete
+  `app-2.8.1-build55esourcesonts\Roboto-Regular.ttf` because the Windows Font Cache Service,
+  fontdrvhost and Chrome held it. The app registers its bundled faces session-wide on purpose
+  (GDI+ crashes on FR_PRIVATE faces), and a session font inside the versioned install folder
+  stays mapped by other processes after the app exits, so no installer or updater can replace
+  that folder. `Label.cpp` and `MaterialIcon.cpp` now copy each face to `<data_dir>onts` and
+  register the copy (Restart Manager proof: zero holders on the payload's fonts while the app
+  runs, holders only on the staged copies). Machines already locked need a sign-out or reboot
+  (or a Font Cache Service restart) once before the next Setup.exe succeeds.

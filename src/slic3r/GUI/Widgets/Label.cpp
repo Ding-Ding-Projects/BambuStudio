@@ -259,6 +259,7 @@ wxFont Label::Mono_11;
 
 #ifdef __WXMSW__
 #include <windows.h>
+#include <boost/filesystem.hpp>
 namespace {
 // GDI+ builds its font-family table from the session font list. Faces added
 // with FR_PRIVATE (wxFont::AddPrivateFont) are invisible to that table, and
@@ -267,11 +268,47 @@ namespace {
 // as the deterministic startup heap-corruption crash (PageHeap-verified).
 // Register the bundled faces session-visible instead, and remove them again
 // when the process exits so the session font table stays clean.
+//
+// The registered file must NOT live inside the versioned install folder
+// (%LOCALAPPDATA%\BambuStudioMD3\app-<version>\resources\fonts): a session-
+// visible font is mapped by the Windows Font Cache Service and by every
+// font-enumerating process (browsers included), and those mappings outlive
+// this process. Squirrel then cannot delete the old app-<version> folder on
+// update or reinstall and Setup.exe fails with "Installation has failed"
+// (seen 2026-09-07: Roboto-Regular.ttf held by FontCache and Chrome). The
+// face is therefore copied once into <data_dir>\fonts, which no installer
+// ever removes, and the copy is what gets registered.
+std::wstring stage_session_font(const std::wstring &source)
+{
+    try {
+        const boost::filesystem::path src(source);
+        const boost::filesystem::path dir = boost::filesystem::path(Slic3r::data_dir()) / "fonts";
+        boost::system::error_code ec;
+        boost::filesystem::create_directories(dir, ec);
+        const boost::filesystem::path dst = dir / src.filename();
+        bool copy = true;
+        if (boost::filesystem::exists(dst, ec) && !ec)
+            copy = boost::filesystem::file_size(dst, ec) != boost::filesystem::file_size(src, ec);
+        if (copy) {
+            boost::filesystem::copy_file(src, dst, boost::filesystem::copy_option::overwrite_if_exists, ec);
+            if (ec) {
+                // A stale copy that is still mapped cannot be overwritten; keep
+                // using it if it exists, otherwise fall back to the source.
+                if (!boost::filesystem::exists(dst))
+                    return source;
+            }
+        }
+        return dst.wstring();
+    } catch (...) {
+        return source;
+    }
+}
+
 struct SessionFontRegistrar {
     std::vector<std::wstring> paths;
     bool add(const wxString &path)
     {
-        const std::wstring w = path.ToStdWstring();
+        const std::wstring w = stage_session_font(path.ToStdWstring());
         if (::AddFontResourceExW(w.c_str(), 0, nullptr) > 0) {
             paths.push_back(w);
             return true;
@@ -282,11 +319,15 @@ struct SessionFontRegistrar {
     {
         for (const auto &w : paths)
             ::RemoveFontResourceExW(w.c_str(), 0, nullptr);
+        if (!paths.empty())
+            ::SendNotifyMessageW(HWND_BROADCAST, WM_FONTCHANGE, 0, 0);
     }
 };
 SessionFontRegistrar g_session_fonts;
 bool add_app_font(const wxString &path) { return g_session_fonts.add(path); }
 } // namespace
+
+std::wstring Label::sessionFontPath(const wxString &path) { return stage_session_font(path.ToStdWstring()); }
 #else
 static bool add_app_font(const wxString &path) { return wxFont::AddPrivateFont(path); }
 #endif

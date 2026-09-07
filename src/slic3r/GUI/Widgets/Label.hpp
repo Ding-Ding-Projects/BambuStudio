@@ -67,6 +67,11 @@ public:
 	static wxFont Mono_12;
 	static wxFont Mono_11;
 
+#ifdef __WXMSW__
+    // Path of the session-registered copy of a bundled font (kept outside the
+    // versioned install folder so installers can always replace that folder).
+    static std::wstring sessionFontPath(const wxString &path);
+#endif
 	static void initSysFont(std::string lang_code = "", bool load_font_resource = true);
 
 	// Rebuild the static Head_/Body_/Mono_ wxFonts from the CURRENT AppConfig

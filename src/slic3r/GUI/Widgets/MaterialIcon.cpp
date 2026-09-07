@@ -1,4 +1,5 @@
 #include "MaterialIcon.hpp"
+#include "Label.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -52,7 +53,10 @@ void ensureRegistered()
         // context — the PageHeap-verified startup heap corruption. Mirrors the
         // SessionFontRegistrar in Label.cpp; this fallback face is removed with
         // the process (single face, registered at most once via call_once).
-        const bool added = ::AddFontResourceExW(font_path.ToStdWstring().c_str(), 0, nullptr) > 0;
+        // Register the staged copy under <data_dir>\fonts (see Label.cpp): a
+        // session font inside app-<version> is held by the Font Cache Service
+        // and blocks Squirrel from replacing the install folder.
+        const bool added = ::AddFontResourceExW(Label::sessionFontPath(font_path).c_str(), 0, nullptr) > 0;
 #else
         const bool added = wxFont::AddPrivateFont(font_path);
 #endif
