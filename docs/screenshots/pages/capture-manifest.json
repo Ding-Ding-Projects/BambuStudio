@@ -11,7 +11,7 @@
       "file": "tab-overview.png",
       "width": 1280,
       "height": 980,
-      "sha256": "4e570e74ad08a3805a029f9c6337123559b8734db5d44bce5b845223200cd0c3",
+      "sha256": "2167127b78112feb22d29347e74e4f7daf2b9d4538365337f63de985973c34bb",
       "viewport": { "width": 1280, "height": 980, "scale": 1 }
     },
     {
@@ -19,7 +19,7 @@
       "file": "tab-screens.png",
       "width": 1280,
       "height": 980,
-      "sha256": "457398aae04f0419e1fd661ee79cbde5191e5189d7cea11744d665e43da14fe7",
+      "sha256": "2af40e7040647899873706aec8f27150614bea01d9e5ad2b3c27727f6a8048fd",
       "viewport": { "width": 1280, "height": 980, "scale": 1 }
     },
     {
@@ -35,7 +35,7 @@
       "file": "tab-download.png",
       "width": 1280,
       "height": 980,
-      "sha256": "7345649a0ae64427046a4c4f0ee338e8731200607ad91ae0d5d8976f755f8423",
+      "sha256": "c3144389ddcca1aa5173aee67a7660fc828666cf26f9fd976a45235221c827e4",
       "viewport": { "width": 1280, "height": 980, "scale": 1 }
     },
     {
@@ -43,7 +43,7 @@
       "file": "tab-changelog.png",
       "width": 1280,
       "height": 980,
-      "sha256": "219b5eb7a6df5311338a9e9476efe8d2abc431a5c9a061b1788c1f2b9425247f",
+      "sha256": "1c1b27ce0f68b1f0b9dc266624de3bbcc2b99c1e39be3c03bdccaa6821d6c49c",
       "viewport": { "width": 1280, "height": 980, "scale": 1 }
     },
     {
@@ -67,7 +67,7 @@
       "file": "tab-build.png",
       "width": 1280,
       "height": 980,
-      "sha256": "883d82c605bef88c88814aee5b7e9f58f10850f21f35151c9ee88b56002524b7",
+      "sha256": "e0b5fc00fef84295d9ee9cd00e8c8ee62266aeef6431d3b4a8454b58c2c3b67f",
       "viewport": { "width": 1280, "height": 980, "scale": 1 }
     },
     {
@@ -105,7 +105,7 @@
       "file": "settings-search-cross-tab.png",
       "width": 1140,
       "height": 695,
-      "sha256": "7bfa9c7474d1b09badffc9f06e2941ae26094970bee9a500a6acf290fa94bc4d",
+      "sha256": "2216fc82e665c5b0ffd9fb76d4036ec55a02b59ee64796e4fd0b45c9f254fdcc",
       "viewport": { "width": 1280, "height": 980, "scale": 1 },
       "selector": "#panel-settings",
       "padding": 0
@@ -115,7 +115,7 @@
       "file": "regex-lab-matches.png",
       "width": 1156,
       "height": 1483,
-      "sha256": "224ba3af00ee58606f9152c2d15653090c8da4fbcb07a406d3713752cd819812",
+      "sha256": "4ac38c1e47b42823be9fbbdde43cf4128fe79b2920b36b1cc1bba870b642ad0a",
       "viewport": { "width": 1280, "height": 980, "scale": 1 },
       "selector": ".regex-lab",
       "padding": 8
@@ -125,7 +125,7 @@
       "file": "changelog-calendar.png",
       "width": 1156,
       "height": 642,
-      "sha256": "b60ee65c11719a6d1f481f631dc00112aafc1eb0b4ac14652287fa019d8b7d77",
+      "sha256": "5fdffb6ab1eccb89bf7cdc81a0ab330191942c37703e77bd155595db6be4d251",
       "viewport": { "width": 1280, "height": 980, "scale": 1 },
       "selector": ".changelog-controls",
       "padding": 8
@@ -135,7 +135,7 @@
       "file": "bilingual-narrow.png",
       "width": 420,
       "height": 900,
-      "sha256": "00376e5ab896013959bd352f109fd759a7e01f77df99c370f01316de21fe1a96",
+      "sha256": "1cb1d516ab90c8e114fe17e45c58c68550f0224756d9e9531af58993265ec323",
       "viewport": { "width": 420, "height": 900, "scale": 1 }
     },
     {
@@ -143,15 +143,15 @@
       "file": "settings-cantonese-narrow.png",
       "width": 420,
       "height": 900,
-      "sha256": "2c5d0d59ce62b0c9f1b5bccacd50e4b6a1bf541d81065696d2c6af6d92b83fe1",
+      "sha256": "40655ef1df4375e478745e5a88602ee535f93944a0259437f4aa11bb27007d59",
       "viewport": { "width": 420, "height": 900, "scale": 1 }
     },
     {
       "name": "dim-sum-card",
       "file": "dim-sum-card.png",
       "width": 360,
-      "height": 113,
-      "sha256": "29f1a34bc170276bf6f1bba0511a7695d75e7a8e5f2360ae064974d9a49d2a50",
+      "height": 112,
+      "sha256": "2e7db2159be40c2fa6f494e1b8a29b5fef491717e395e978295e8c0116aac664",
       "viewport": { "width": 1280, "height": 980, "scale": 1 },
       "selector": ".dimsum",
       "padding": 0

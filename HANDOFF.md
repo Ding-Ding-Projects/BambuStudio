@@ -1333,3 +1333,11 @@ diagnostics were a cascade.
   (`Invoke-SquirrelPackage.ps1 -ReleaseNumber`, resolved by `Invoke-OneClickBuild.ps1` from the
   parameter, `BAMBU_RELEASE_NUMBER`, or `gh release list`), fixing the identical `2.8.2-build61`
   package version of md3-v104 and md3-v105.
+- Open (found 2026-09-07 during the md3-v106 pass): the software-OpenGL copy of the payload
+  (`install-dir-mesa`, Mesa 26.1.3 `opengl32.dll` + `libgallium_wgl.dll` beside the exe) exits
+  within ten seconds of launch on the build host, before any frame, on a fresh and on a reused
+  `--datadir`; the Mesa DLL hashes are identical to the build's hash-pinned set and the real-GPU
+  payload (`install-dir`) runs for minutes. No Application event-log crash record was written.
+  Capture matrices therefore run on `install-dir` (canvas panes come back blank on PrintWindow)
+  until this is diagnosed; the installer's own Mesa fallback is only used when OpenGL 2.0 is
+  missing and was not exercised by this pass.
