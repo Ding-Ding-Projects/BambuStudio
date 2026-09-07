@@ -260,6 +260,11 @@ jobs:
               throw 'Could not read SLIC3R_VERSION from version.inc.'
           }
 
+          # Capture the product version now: the tag-matching loop below
+          # overwrites the automatic $matches variable (hosted runs
+          # 34148103919 and 34149103478 passed a tag number as the product
+          # version and failed inside the packaging script).
+          $productVersion = $matches[1]
           $sourceCommit = (git rev-parse HEAD).Trim()
           if ($LASTEXITCODE -ne 0) {
               throw 'Could not read the source commit.'
@@ -287,7 +292,7 @@ jobs:
           & .\scripts\windows\Invoke-SquirrelPackage.ps1 `
             -PayloadDirectory '${{ github.workspace }}\install-dir' `
             -OutputDirectory '${{ github.workspace }}\artifacts\windows' `
-            -ProductVersion $matches[1] `
+            -ProductVersion $productVersion `
             -SourceCommit $sourceCommit `
             -Repository 'https://github.com/${{ github.repository }}.git' `
             -ReleaseNumber $releaseNumber `

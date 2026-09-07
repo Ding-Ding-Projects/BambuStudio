@@ -725,6 +725,8 @@ test('the Squirrel package version is derived from the GitHub release number', a
   const workflow = await readFile(path.join(repoDir, '.github', 'workflows', 'build_bambu.yml'), 'utf8');
   assert.match(workflow, /^\s*-ReleaseNumber \$releaseNumber `$/m, 'the hosted packaging step passes the release number too');
   assert.match(workflow, /^\s*\$releaseNumber = \$maxN \+ 1$/m, 'which it derives from the highest existing md3-v tag');
+  assert.ok(workflow.indexOf('$productVersion = $matches[1]') < workflow.indexOf("-match '^md3-v(\\d+)$'"), 'the product version is captured before the tag loop clobbers $matches');
+  assert.match(workflow, /^\s*-ProductVersion \$productVersion `$/m, 'and the captured value is what packaging receives');
 });
 
 test('a Mesa pair beside the exe gets the llvmpipe environment before any GL context', async () => {
