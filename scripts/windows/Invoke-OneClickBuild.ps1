@@ -25,7 +25,12 @@ param(
 
     [switch] $Plan,
 
-    [switch] $BuildOnly
+    [switch] $BuildOnly,
+
+    # GitHub release number (the N in md3-v<N>) used for the Squirrel package
+    # version. 0 means: read BAMBU_RELEASE_NUMBER, else ask gh for the latest
+    # md3-v<N> release and use N+1, else fall back to the product version alone.
+    [int] $ReleaseNumber = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -352,6 +357,33 @@ function Add-MesaFallback {
     }
 }
 
+function Resolve-ReleaseNumber {
+    param([int] $Requested, [string] $Repository)
+    if ($Requested -gt 0) { return $Requested }
+    if ($env:BAMBU_RELEASE_NUMBER -match '^\d+$' -and [int] $env:BAMBU_RELEASE_NUMBER -gt 0) {
+        return [int] $env:BAMBU_RELEASE_NUMBER
+    }
+    $gh = Get-Command gh -ErrorAction SilentlyContinue
+    if ($null -eq $gh) {
+        Write-Warning 'gh is not installed; the Squirrel package version falls back to the product version alone.'
+        return 0
+    }
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $tags = & $gh.Source release list --repo $Repository --limit 200 --json tagName --jq '.[].tagName' 2>$null
+        $exit = $LASTEXITCODE
+    }
+    finally { $ErrorActionPreference = $previous }
+    if ($exit -ne 0) {
+        Write-Warning 'gh could not list releases; the Squirrel package version falls back to the product version alone.'
+        return 0
+    }
+    $numbers = @($tags | ForEach-Object { if ($_ -match '^md3-v(\d+)$') { [int] $matches[1] } })
+    if ($numbers.Count -eq 0) { return 1 }
+    return (($numbers | Measure-Object -Maximum).Maximum + 1)
+}
+
 function Get-ProductVersion {
     $content = Get-Content -LiteralPath (Join-Path $script:RepositoryRoot 'version.inc') -Raw
     if ($content -notmatch 'set\(SLIC3R_VERSION "([^"]+)"\)') {
@@ -611,6 +643,8 @@ function Invoke-OneClickBuild {
             Write-Warning 'Tracked working-tree changes are included in this local payload but cannot be represented by the installer source commit.'
         }
 
+        $releaseNumber = Resolve-ReleaseNumber -Requested $ReleaseNumber -Repository ($sourceRepo -replace '^https://github.com/|\.git$', '')
+        Write-BuildLog "Squirrel package release number: $releaseNumber (0 = product version only)"
         $outputDirectory = Resolve-OutputDirectory -RequestedPath $OutputDirectory
         New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
         $squirrelOutputDirectory = Join-Path $outputDirectory 'squirrel'
@@ -626,7 +660,7 @@ function Invoke-OneClickBuild {
             -File (Join-Path $script:RepositoryRoot 'scripts\windows\Invoke-SquirrelPackage.ps1') `
             -PayloadDirectory $payloadDirectory -OutputDirectory $outputDirectory `
             -ProductVersion $productVersion -SourceCommit $sourceCommit `
-            -Repository $sourceRepo -IconPath (Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico')
+            -Repository $sourceRepo -ReleaseNumber $releaseNumber -IconPath (Join-Path $script:RepositoryRoot 'resources\images\BambuStudio.ico')
         Assert-LastExitCode 'Building the Squirrel.Windows release'
         if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
             throw "Squirrel.Windows did not produce '$installer'."

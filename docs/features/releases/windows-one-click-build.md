@@ -13,7 +13,12 @@ outputs are written to `artifacts/windows/`:
 
 - `squirrel/Setup.exe` — unsigned Squirrel bootstrapper;
 - `squirrel/RELEASES` — update-feed index;
-- `squirrel/BambuStudioMD3-<version>-full.nupkg` and any generated delta packages;
+- `squirrel/BambuStudioMD3-<version>-full.nupkg` and any generated delta packages. `<version>` is
+  `<major>.<minor>.<patch>.<N>` where `N` is the GitHub release number (`md3-v<N>`), so every
+  release ships a strictly increasing Squirrel package version even when `version.inc` is
+  unchanged. The number is resolved from `-ReleaseNumber`, then `BAMBU_RELEASE_NUMBER`, then the
+  latest `md3-v<N>` release seen by `gh` plus one; with none of those the package version falls
+  back to the product version alone (`2.8.2-build61`) and the log says so;
 - `squirrel/Setup.exe.sha256` — SHA-256 sidecar for the bootstrapper;
 - `BambuStudioMD3.cdx.json` — CycloneDX SBOM bound to the source commit.
 

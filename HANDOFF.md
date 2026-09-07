@@ -1329,3 +1329,7 @@ diagnostics were a cascade.
 - Issue #32 and Discussion #33 were deleted by an owner on 2026-09-05; the finish handoff needs a
   fresh issue unless told otherwise.
 - Hosted release from the final tip.
+- Done 2026-09-06: the Squirrel package version now carries the release number
+  (`Invoke-SquirrelPackage.ps1 -ReleaseNumber`, resolved by `Invoke-OneClickBuild.ps1` from the
+  parameter, `BAMBU_RELEASE_NUMBER`, or `gh release list`), fixing the identical `2.8.2-build61`
+  package version of md3-v104 and md3-v105.

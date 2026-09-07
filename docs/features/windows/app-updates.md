@@ -28,6 +28,9 @@
 - No network, an API error, or a malformed payload: nothing is shown on the automatic check; a
   manual check shows the "newest version" toast rather than an error, and the reason is logged.
 - Unparseable `published_at` or build time: logged, treated as "no update".
+- Squirrel feed ordering: since md3-v106 the package version is `2.8.2.<N>` with `N` the release
+  number, so a Squirrel-feed updater ranks releases correctly; md3-v104 and md3-v105 both carried
+  `2.8.2-build61` and are not distinguishable by package version.
 
 ## Security considerations
 

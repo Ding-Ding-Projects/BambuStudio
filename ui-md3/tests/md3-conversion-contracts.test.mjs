@@ -708,3 +708,17 @@ test('the settings tree is one scroll surface: pill categories wrap and the page
   assert.match(plater, /^\s*scrolled_sizer->Add\(params_panel, 0, wxEXPAND\);/m, 'the tree is hosted at content height, not as a proportional item');
   assert.match(plater, /params_panel->set_host_height_changed\(/, 'the sidebar listens for height changes');
 });
+
+test('the Squirrel package version is derived from the GitHub release number', async () => {
+  // Two releases built from one version.inc used to ship the same package
+  // version (2.8.2-build61 for both md3-v104 and md3-v105), so a Squirrel feed
+  // could not rank them. The packaging script now takes the release number
+  // and emits <major>.<minor>.<patch>.<N>; the one-click build resolves N.
+  const squirrel = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-SquirrelPackage.ps1'), 'utf8');
+  assert.match(squirrel, /^\s*\[int\] \$ReleaseNumber = 0/m, 'the packaging script accepts a release number');
+  assert.match(squirrel, /^\s*return \(\(\$base -join '\.'\) \+ '\.' \+ \$ReleaseNumber\)/m, 'the release number becomes the fourth version part');
+  assert.match(squirrel, /^\$normalizedVersion = ConvertTo-SquirrelVersion -Version \$ProductVersion -ReleaseNumber \$ReleaseNumber/m, 'the package version uses it');
+  const build = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-OneClickBuild.ps1'), 'utf8');
+  assert.match(build, /^function Resolve-ReleaseNumber \{/m, 'the one-click build resolves the release number');
+  assert.match(build, /-ReleaseNumber \$releaseNumber -IconPath/m, 'and passes it to the packaging script');
+});

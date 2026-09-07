@@ -29,7 +29,14 @@ param(
 
     [string] $PackageId = 'BambuStudioMD3',
 
-    [string] $SquirrelVersion = '2.0.1'
+    [string] $SquirrelVersion = '2.0.1',
+
+    # GitHub release number (the N in md3-v<N>). When greater than zero the
+    # Squirrel package version becomes <major>.<minor>.<patch>.<N>, so every
+    # published release carries a strictly increasing package version even
+    # when the application version in version.inc is unchanged.
+    [ValidateRange(0, 2147483647)]
+    [int] $ReleaseNumber = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -129,12 +136,19 @@ function Invoke-DownloadWithRetry {
 }
 
 function ConvertTo-SquirrelVersion {
-    param([Parameter(Mandatory)][string] $Version)
+    param([Parameter(Mandatory)][string] $Version, [int] $ReleaseNumber = 0)
     $parts = $Version.Trim().Split('.')
     if ($parts.Count -lt 2 -or $parts.Count -gt 4 -or ($parts | Where-Object { $_ -notmatch '^\d+$' })) {
         throw "Product version '$Version' is not a numeric Squirrel-compatible version."
     }
     $normalizedParts = @($parts | ForEach-Object { ([int] $_).ToString() })
+    if ($ReleaseNumber -gt 0) {
+        # Release-number form: the first three numeric parts of the product
+        # version plus the GitHub release number as the fourth part.
+        $base = @($normalizedParts[0..([Math]::Min(2, $normalizedParts.Count - 1))])
+        while ($base.Count -lt 3) { $base += '0' }
+        return (($base -join '.') + '.' + $ReleaseNumber)
+    }
     if ($normalizedParts.Count -eq 4) {
         return (($normalizedParts[0..2] -join '.') + '-build' + $normalizedParts[3])
     }
@@ -389,7 +403,8 @@ function Assert-SquirrelOutputs {
 $resolvedPayload = (Resolve-Path -LiteralPath $PayloadDirectory).Path
 $resolvedOutput = [IO.Path]::GetFullPath($OutputDirectory)
 $squirrelVersion = $SquirrelVersion.Trim()
-$normalizedVersion = ConvertTo-SquirrelVersion -Version $ProductVersion
+$normalizedVersion = ConvertTo-SquirrelVersion -Version $ProductVersion -ReleaseNumber $ReleaseNumber
+Write-SquirrelLog "Squirrel package version: $normalizedVersion (product version $ProductVersion, release number $ReleaseNumber)"
 $squirrelTool = Resolve-SquirrelTool -Version $squirrelVersion
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ($script:TempPrefix + [guid]::NewGuid().ToString('N'))
 $packageRoot = Join-Path $temporaryRoot 'package'
