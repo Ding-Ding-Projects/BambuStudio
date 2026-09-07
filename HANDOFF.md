@@ -1337,8 +1337,12 @@ diagnostics were a cascade.
   (`a3b121673`, the same commit as the manual md3-v106) and md3-v110 (`a0902033a`), each with
   package version 2.8.2-build61 because the workflow did not yet pass the release number; that is
   fixed in `5ee2219bc` (the build job derives the highest existing md3-v tag plus one and passes
-  `-ReleaseNumber`). The after-capture matrix and line count in the v106 notes were measured at
-  `a3b121673`; the v106 notes carry the same correction.
+  `-ReleaseNumber`). That first attempt failed on the hosted runner (`-match` in the new loop
+  rewrote `$matches`, so packaging received a tag number); `7a036286c` captures the product
+  version first. Hosted run 34154014720 on `7a036286c` is green (02:39:56) and published
+  md3-v111 "Big Chicken Bun" with `BambuStudioMD3-2.8.2111-full.nupkg`, the first hosted release
+  whose package version carries the release number. The after-capture matrix and line count in
+  the v106 notes were measured at `a3b121673`; the v106 notes carry the same correction.
 - Done 2026-09-06: the Squirrel package version now carries the release number
   (`Invoke-SquirrelPackage.ps1 -ReleaseNumber`, resolved by `Invoke-OneClickBuild.ps1` from the
   parameter, `BAMBU_RELEASE_NUMBER`, or `gh release list`), fixing the identical `2.8.2-build61`

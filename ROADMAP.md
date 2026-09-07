@@ -59,6 +59,8 @@ captures are a separate box and stay unticked until they exist from the real bui
 - [x] Squirrel package version derived from the release number (`2.8.<patch*1000+N>`, md3-v106 onward).
 - [x] md3-v106 published from `a3b121673` with the after-capture matrix retaken from its payload
       (2026-09-07).
+- [x] Hosted releases carry the release-number package version: md3-v111 (`7a036286c`,
+      run 34154014720 green, `2.8.2111`).
 - [x] The software-OpenGL payload copy exited at launch: Mesa needs the llvmpipe environment from
       process start; startup now relaunches once with it when the pair is beside the exe
       (verified on build attempt 32, HANDOFF §12).
