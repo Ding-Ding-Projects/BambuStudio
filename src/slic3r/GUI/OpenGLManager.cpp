@@ -516,6 +516,63 @@ bool bbs_try_softgl_relaunch()
 }
 
 } // anonymous namespace
+
+// Called once at startup, before any OpenGL context exists. When the Mesa
+// llvmpipe pair already sits beside the executable (a previous self-heal
+// copied it there, or the user installed it by hand), the process must run
+// with the environment the relaunched child gets: without
+// GALLIUM_DRIVER=llvmpipe / LIBGL_ALWAYS_SOFTWARE=1, Mesa 26 picks another
+// gallium driver and the process exits within seconds. Mesa reads these
+// through its C runtime's environment copy, which SetEnvironmentVariableW
+// alone does not reach (verified 2026-09-07: setting them in-process changed
+// nothing, a child created with them lived for minutes), so the fix is the
+// same one-generation relaunch the self-heal path uses. Returns true when a
+// replacement process was started and this one must exit.
+bool OpenGLManager::apply_bundled_softgl_environment()
+{
+    if (bbs_softgl_retry_marker_set())
+        return false; // we are the relaunched child: the environment is inherited
+    const std::wstring exe_path = bbs_executable_path();
+    if (exe_path.empty())
+        return false;
+    const size_t last_sep = exe_path.find_last_of(L'\\');
+    if (last_sep == std::wstring::npos)
+        return false;
+    const std::wstring exe_dir = exe_path.substr(0, last_sep);
+    const auto file_exists = [](const std::wstring& path) {
+        const DWORD attributes = ::GetFileAttributesW(path.c_str());
+        return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+    };
+    if (!file_exists(exe_dir + L"\\opengl32.dll") || !file_exists(exe_dir + L"\\libgallium_wgl.dll"))
+        return false;
+    wchar_t buffer[8] = { 0 };
+    if (::GetEnvironmentVariableW(L"GALLIUM_DRIVER", buffer, 8) > 0)
+        return false; // the caller already chose a driver; respect it
+
+    ::SetEnvironmentVariableW(BBS_SOFTGL_RETRY_ENV, L"1");
+    ::SetEnvironmentVariableW(L"GALLIUM_DRIVER", L"llvmpipe");
+    ::SetEnvironmentVariableW(L"MESA_GL_VERSION_OVERRIDE", L"3.3");
+    ::SetEnvironmentVariableW(L"LIBGL_ALWAYS_SOFTWARE", L"1");
+
+    const std::wstring original_cmdline = ::GetCommandLineW();
+    std::vector<wchar_t> cmdline(original_cmdline.begin(), original_cmdline.end());
+    cmdline.push_back(L'\0');
+    STARTUPINFOW startup_info = {};
+    startup_info.cb = sizeof(startup_info);
+    PROCESS_INFORMATION process_info = {};
+    const BOOL started = ::CreateProcessW(exe_path.c_str(), cmdline.data(), nullptr, nullptr, FALSE,
+                                          0, nullptr /* inherit this environment */, nullptr,
+                                          &startup_info, &process_info);
+    if (started == 0) {
+        BOOST_LOG_TRIVIAL(error) << "Software-GL: relaunch with the llvmpipe environment failed (error " << ::GetLastError() << "); continuing in this process.";
+        ::SetEnvironmentVariableW(BBS_SOFTGL_RETRY_ENV, nullptr);
+        return false;
+    }
+    ::CloseHandle(process_info.hThread);
+    ::CloseHandle(process_info.hProcess);
+    BOOST_LOG_TRIVIAL(info) << "Software-GL: Mesa llvmpipe DLLs found beside the executable; replacement process started with the llvmpipe environment.";
+    return true;
+}
 #endif // _WIN32
 
 bool OpenGLManager::init_gl(bool popup_error)

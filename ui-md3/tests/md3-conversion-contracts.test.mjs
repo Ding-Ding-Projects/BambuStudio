@@ -726,3 +726,17 @@ test('the Squirrel package version is derived from the GitHub release number', a
   assert.match(workflow, /^\s*-ReleaseNumber \$releaseNumber `$/m, 'the hosted packaging step passes the release number too');
   assert.match(workflow, /^\s*\$releaseNumber = \$maxN \+ 1$/m, 'which it derives from the highest existing md3-v tag');
 });
+
+test('a Mesa pair beside the exe gets the llvmpipe environment before any GL context', async () => {
+  // The self-heal relaunch passed GALLIUM_DRIVER / LIBGL_ALWAYS_SOFTWARE /
+  // MESA_GL_VERSION_OVERRIDE only to its child, so every later plain start
+  // with the copied DLLs picked another gallium driver, failed the GL check,
+  // relaunched again and exited within seconds. Startup now applies the
+  // environment itself whenever the pair is already beside the executable.
+  const mgr = await read('OpenGLManager.cpp');
+  assert.match(mgr, /^bool OpenGLManager::apply_bundled_softgl_environment\(\)/m, 'the helper exists');
+  assert.equal((mgr.match(/::SetEnvironmentVariableW\(L"GALLIUM_DRIVER", L"llvmpipe"\);/g) || []).length, 2, 'both the self-heal and the startup path force llvmpipe');
+  assert.equal((mgr.match(/::SetEnvironmentVariableW\(L"LIBGL_ALWAYS_SOFTWARE", L"1"\);/g) || []).length, 2, 'and software rendering');
+  const app = await read('GUI_App.cpp');
+  assert.match(app, /if \(OpenGLManager::apply_bundled_softgl_environment\(\)\)[^;]*::ExitProcess\(0\);/, 'OnInit relaunches before anything else when the pair is beside the exe');
+});

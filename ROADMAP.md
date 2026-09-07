@@ -59,8 +59,9 @@ captures are a separate box and stay unticked until they exist from the real bui
 - [x] Squirrel package version derived from the release number (`2.8.<patch*1000+N>`, md3-v106 onward).
 - [x] md3-v106 published from `a3b121673` with the after-capture matrix retaken from its payload
       (2026-09-07).
-- [ ] The software-OpenGL payload copy (`install-dir-mesa`) exits at launch on the build host;
-      diagnose before relying on the Mesa fallback for canvas captures (HANDOFF §12).
+- [x] The software-OpenGL payload copy exited at launch: Mesa needs the llvmpipe environment from
+      process start; startup now relaunches once with it when the pair is beside the exe
+      (verified on build attempt 32, HANDOFF §12).
 - [ ] Chrome-style in-app updater (Squirrel feed); today the dialog hands Setup.exe to the browser.
 
 

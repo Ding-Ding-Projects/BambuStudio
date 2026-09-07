@@ -2896,6 +2896,11 @@ void GUI_App::UnRegisterMacPowerCallBack()
 bool GUI_App::OnInit()
 {
 #ifdef _WIN32
+    // Before any window or GL context: a Mesa pair beside the exe needs the
+    // llvmpipe environment or the process exits within seconds (see
+    // OpenGLManager::apply_bundled_softgl_environment).
+    if (OpenGLManager::apply_bundled_softgl_environment())
+        ::ExitProcess(0);
     const WindowsNativeVisualSmokeResult native_visual_smoke = try_start_windows_native_visual_smoke();
     if (native_visual_smoke != WindowsNativeVisualSmokeResult::NotRequested)
         return native_visual_smoke == WindowsNativeVisualSmokeResult::Started;

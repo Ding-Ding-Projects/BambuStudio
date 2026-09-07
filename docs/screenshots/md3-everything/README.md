@@ -11,7 +11,7 @@ exist on disk is a defect, not a plan.
 | --- | --- | --- |
 | Source commit | `9e8d005b0` (main, unmodified) | `a55930919` (main, build attempt 30, md3-v106 payload; C++ unchanged since `92cd7bce7`) |
 | Executable | `install-dir/bambu-studio.exe`, `BambuStudio.dll` sha256 `e44dd4288e3f46deb4a25eeced2b28f9cc75a5fbb7fe426328841dc3c03cd0c0` (attempt 7 relink of the same source) | `BambuStudio.dll` sha256 `060dc040a5e60739fd20439ca9b7c165db6001abd80cc613ddae57f4e7ef6814` (attempt 28 link, attempt 30 re-installed resources on top; the md3-v106 installer payload) |
-| Capture route | hidden Win32 desktop, `PrintWindow` per top-level window, real GPU driver (GL canvases come back blank on this route; canvas surfaces use the Mesa software path) | same, real GPU driver only: the Mesa copy of this payload exits at launch on the capture host (see HANDOFF.md §12 open items), so canvas panes are blank in this set |
+| Capture route | hidden Win32 desktop, `PrintWindow` per top-level window, real GPU driver (GL canvases come back blank on this route; canvas surfaces use the Mesa software path) | same, real GPU driver only: the Mesa copy of this payload exited at launch on the capture host when these were taken (root cause and fix recorded in HANDOFF.md §12; fixed after this set), so canvas panes are blank in this set |
 | Display scale | 100% (the host's single display; see Limitations) | same |
 | Taken | 2026-09-05 | 2026-09-07 04:11 to 04:36 UTC, 132 captures and 24 probe dumps (282 residual findings, all in the frame-minimum class recorded under CJ-005; the attempt-13 set had 300) |
 

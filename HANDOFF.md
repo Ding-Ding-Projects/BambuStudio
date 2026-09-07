@@ -1285,7 +1285,8 @@ diagnostics were a cascade.
   the Simple/Advanced flip removed, `67328e94f`).
 - Build script: the device_page pnpm steps run under CI=1 (`c127ab158`); without it pnpm waited
   on a terminal for over fifteen minutes in the console-less one-click build.
-- GitHub Actions is disabled for this account (dispatch answers HTTP 422); the last hosted run
+- GitHub Actions answered HTTP 422 for a dispatch on 2026-09-06; by 2026-09-07 03:38Z it was
+  publishing again on every push (correction recorded below). At that time the last hosted run
   (`34006586101`) failed on a `GetLogicalHeight` call removed in `68b0107da`. Releases from here
   are manual: build.bat /s, build-installer.bat /s, then gh release create with the line-count
   table from scripts/ci/Measure-LineCount.ps1 (fixed for cp1252 consoles in `60ed72397`).
@@ -1331,9 +1332,13 @@ diagnostics were a cascade.
 - Hosted release from the final tip: md3-v106 "Char Siu Cheung Fun" published 2026-09-07 by hand
   from `a3b121673` (build attempt 30, `BambuStudioMD3-2.8.2106-full.nupkg`, unsigned Setup.exe
   SHA-256 `3b5fe0424ca602deed99c0e39f8f3d77ddab73d4197347a8d14d32222f71db9b`, six assets, download
-  verified HTTP 200). GitHub Actions is still disabled for the account, so there is no hosted run
-  and no green CI verdict for any release; the after-capture matrix and line count in the notes
-  were measured at that commit.
+  verified HTTP 200). Correction: GitHub Actions was enabled again by then and the per-push
+  workflow independently published md3-v107 (`a467e28ef`), md3-v108 (`a55930919`), md3-v109
+  (`a3b121673`, the same commit as the manual md3-v106) and md3-v110 (`a0902033a`), each with
+  package version 2.8.2-build61 because the workflow did not yet pass the release number; that is
+  fixed in `5ee2219bc` (the build job derives the highest existing md3-v tag plus one and passes
+  `-ReleaseNumber`). The after-capture matrix and line count in the v106 notes were measured at
+  `a3b121673`; the v106 notes carry the same correction.
 - Done 2026-09-06: the Squirrel package version now carries the release number
   (`Invoke-SquirrelPackage.ps1 -ReleaseNumber`, resolved by `Invoke-OneClickBuild.ps1` from the
   parameter, `BAMBU_RELEASE_NUMBER`, or `gh release list`), fixing the identical `2.8.2-build61`
@@ -1343,6 +1348,12 @@ diagnostics were a cascade.
   within ten seconds of launch on the build host, before any frame, on a fresh and on a reused
   `--datadir`; the Mesa DLL hashes are identical to the build's hash-pinned set and the real-GPU
   payload (`install-dir`) runs for minutes. No Application event-log crash record was written.
-  Capture matrices therefore run on `install-dir` (canvas panes come back blank on PrintWindow)
-  until this is diagnosed; the installer's own Mesa fallback is only used when OpenGL 2.0 is
-  missing and was not exercised by this pass.
+  Root cause (2026-09-07, build attempts 31/32): Mesa reads GALLIUM_DRIVER / LIBGL_ALWAYS_SOFTWARE
+  through its C runtime environment copy; without them Mesa 26 picks another gallium driver and
+  the process exits within seconds. The self-heal relaunch passed those variables only to its
+  child, so every later plain start with the copied pair died. Fix: `GUI_App::OnInit` now calls
+  `OpenGLManager::apply_bundled_softgl_environment()`, which relaunches once with the llvmpipe
+  environment when the pair sits beside the exe and no driver was chosen (setting the variables
+  in-process was proven insufficient on attempt 31). Verified on attempt 32: the launcher hands
+  over to a child that stayed alive with the main frame rendered
+  (`docs/screenshots/md3-everything/evidence/softgl-relaunch-main-frame--build32.png`).
