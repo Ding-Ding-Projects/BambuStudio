@@ -1326,9 +1326,14 @@ diagnostics were a cascade.
 
 - Gizmo rail, scene toolbar and preview overlay register rows still need runtime evidence from the
   Mesa route (crop-gl rows in the recapture manifest).
-- Issue #32 and Discussion #33 were deleted by an owner on 2026-09-05; the finish handoff needs a
-  fresh issue unless told otherwise.
-- Hosted release from the final tip.
+- Issues #32, #33 and #34 were deleted by an owner (2026-09-05/06); the current handoff record is
+  issue #35 (opened 2026-09-07).
+- Hosted release from the final tip: md3-v106 "Char Siu Cheung Fun" published 2026-09-07 by hand
+  from `a3b121673` (build attempt 30, `BambuStudioMD3-2.8.2106-full.nupkg`, unsigned Setup.exe
+  SHA-256 `3b5fe0424ca602deed99c0e39f8f3d77ddab73d4197347a8d14d32222f71db9b`, six assets, download
+  verified HTTP 200). GitHub Actions is still disabled for the account, so there is no hosted run
+  and no green CI verdict for any release; the after-capture matrix and line count in the notes
+  were measured at that commit.
 - Done 2026-09-06: the Squirrel package version now carries the release number
   (`Invoke-SquirrelPackage.ps1 -ReleaseNumber`, resolved by `Invoke-OneClickBuild.ps1` from the
   parameter, `BAMBU_RELEASE_NUMBER`, or `gh release list`), fixing the identical `2.8.2-build61`
