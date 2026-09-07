@@ -32,7 +32,9 @@ param(
     [string] $SquirrelVersion = '2.0.1',
 
     # GitHub release number (the N in md3-v<N>). When greater than zero the
-    # Squirrel package version becomes <major>.<minor>.<patch>.<N>, so every
+    # Squirrel package version becomes <major>.<minor>.<patch*1000+N> (three
+    # numeric parts: Squirrel.Windows rejects a fourth part and compares
+    # prerelease labels lexically), so every
     # published release carries a strictly increasing package version even
     # when the application version in version.inc is unchanged.
     [ValidateRange(0, 2147483647)]
@@ -143,11 +145,12 @@ function ConvertTo-SquirrelVersion {
     }
     $normalizedParts = @($parts | ForEach-Object { ([int] $_).ToString() })
     if ($ReleaseNumber -gt 0) {
-        # Release-number form: the first three numeric parts of the product
-        # version plus the GitHub release number as the fourth part.
+        # Release-number form: major.minor.(patch*1000+N). Squirrel.Windows
+        # 2.0.1 throws on a fourth version part and orders prerelease labels
+        # as strings, so the release number is folded into the patch part.
         $base = @($normalizedParts[0..([Math]::Min(2, $normalizedParts.Count - 1))])
         while ($base.Count -lt 3) { $base += '0' }
-        return (($base -join '.') + '.' + $ReleaseNumber)
+        return ('{0}.{1}.{2}' -f $base[0], $base[1], (([int] $base[2]) * 1000 + $ReleaseNumber))
     }
     if ($normalizedParts.Count -eq 4) {
         return (($normalizedParts[0..2] -join '.') + '-build' + $normalizedParts[3])

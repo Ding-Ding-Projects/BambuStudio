@@ -56,7 +56,7 @@ captures are a separate box and stay unticked until they exist from the real bui
       spends its time, so a timing instrument is the next step.
 - [ ] Upstream's new Preferences option (WebView devtools toggle) is not in this fork's
       Preferences yet (Preferences.cpp was kept whole in the merge).
-- [x] Squirrel package version derived from the release number (`2.8.2.<N>`, md3-v106 onward).
+- [x] Squirrel package version derived from the release number (`2.8.<patch*1000+N>`, md3-v106 onward).
 - [ ] Chrome-style in-app updater (Squirrel feed); today the dialog hands Setup.exe to the browser.
 
 

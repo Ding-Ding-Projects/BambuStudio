@@ -14,7 +14,9 @@ outputs are written to `artifacts/windows/`:
 - `squirrel/Setup.exe` — unsigned Squirrel bootstrapper;
 - `squirrel/RELEASES` — update-feed index;
 - `squirrel/BambuStudioMD3-<version>-full.nupkg` and any generated delta packages. `<version>` is
-  `<major>.<minor>.<patch>.<N>` where `N` is the GitHub release number (`md3-v<N>`), so every
+  `<major>.<minor>.<patch*1000+N>` where `N` is the GitHub release number (`md3-v<N>`), for
+  example `2.8.2106` for product 2.8.2 at release 106 (Squirrel.Windows accepts only three
+  numeric parts and compares prerelease labels as strings), so every
   release ships a strictly increasing Squirrel package version even when `version.inc` is
   unchanged. The number is resolved from `-ReleaseNumber`, then `BAMBU_RELEASE_NUMBER`, then the
   latest `md3-v<N>` release seen by `gh` plus one; with none of those the package version falls

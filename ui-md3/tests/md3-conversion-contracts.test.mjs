@@ -713,10 +713,11 @@ test('the Squirrel package version is derived from the GitHub release number', a
   // Two releases built from one version.inc used to ship the same package
   // version (2.8.2-build61 for both md3-v104 and md3-v105), so a Squirrel feed
   // could not rank them. The packaging script now takes the release number
-  // and emits <major>.<minor>.<patch>.<N>; the one-click build resolves N.
+  // and emits <major>.<minor>.<patch*1000+N> (Squirrel rejects a fourth part
+  // and sorts prerelease labels lexically); the one-click build resolves N.
   const squirrel = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-SquirrelPackage.ps1'), 'utf8');
   assert.match(squirrel, /^\s*\[int\] \$ReleaseNumber = 0/m, 'the packaging script accepts a release number');
-  assert.match(squirrel, /^\s*return \(\(\$base -join '\.'\) \+ '\.' \+ \$ReleaseNumber\)/m, 'the release number becomes the fourth version part');
+  assert.match(squirrel, /^\s*return \('\{0\}\.\{1\}\.\{2\}' -f \$base\[0\], \$base\[1\], \(\(\[int\] \$base\[2\]\) \* 1000 \+ \$ReleaseNumber\)\)/m, 'the release number is folded into the patch part');
   assert.match(squirrel, /^\$normalizedVersion = ConvertTo-SquirrelVersion -Version \$ProductVersion -ReleaseNumber \$ReleaseNumber/m, 'the package version uses it');
   const build = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-OneClickBuild.ps1'), 'utf8');
   assert.match(build, /^function Resolve-ReleaseNumber \{/m, 'the one-click build resolves the release number');
