@@ -251,6 +251,8 @@ jobs:
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           $versionContent = Get-Content version.inc -Raw
@@ -263,12 +265,32 @@ jobs:
               throw 'Could not read the source commit.'
           }
 
+          # The Squirrel package version carries the release number
+          # (major.minor.(patch*1000+N)) so a Squirrel feed can rank releases
+          # whose version.inc has not moved. The release job assigns md3-v<N>
+          # later under its serialized concurrency group; this step reads the
+          # same "highest existing md3-v tag plus one", so the two agree unless
+          # another run publishes in between, in which case the package version
+          # is still strictly increasing in build order and the release notes
+          # name it.
+          $maxN = 0
+          $existing = & gh api --paginate "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
+          foreach ($r in $existing) {
+              if ($r.tag_name -match '^md3-v(\d+)$') {
+                  $n = [int]$Matches[1]
+                  if ($n -gt $maxN) { $maxN = $n }
+              }
+          }
+          $releaseNumber = $maxN + 1
+          Write-Host "Squirrel package release number: $releaseNumber"
+
           & .\scripts\windows\Invoke-SquirrelPackage.ps1 `
             -PayloadDirectory '${{ github.workspace }}\install-dir' `
             -OutputDirectory '${{ github.workspace }}\artifacts\windows' `
             -ProductVersion $matches[1] `
             -SourceCommit $sourceCommit `
             -Repository 'https://github.com/${{ github.repository }}.git' `
+            -ReleaseNumber $releaseNumber `
             -IconPath '${{ github.workspace }}\resources\images\BambuStudio.ico'
           if ($LASTEXITCODE -ne 0) {
               throw "Squirrel.Windows packaging failed with exit code $LASTEXITCODE."

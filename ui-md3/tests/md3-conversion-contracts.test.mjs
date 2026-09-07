@@ -722,4 +722,7 @@ test('the Squirrel package version is derived from the GitHub release number', a
   const build = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-OneClickBuild.ps1'), 'utf8');
   assert.match(build, /^function Resolve-ReleaseNumber \{/m, 'the one-click build resolves the release number');
   assert.match(build, /-ReleaseNumber \$releaseNumber -IconPath/m, 'and passes it to the packaging script');
+  const workflow = await readFile(path.join(repoDir, '.github', 'workflows', 'build_bambu.yml'), 'utf8');
+  assert.match(workflow, /^\s*-ReleaseNumber \$releaseNumber `$/m, 'the hosted packaging step passes the release number too');
+  assert.match(workflow, /^\s*\$releaseNumber = \$maxN \+ 1$/m, 'which it derives from the highest existing md3-v tag');
 });
