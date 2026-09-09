@@ -22,6 +22,7 @@
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/Slider.hpp"
 #include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StaticBox.hpp"
@@ -1004,6 +1005,105 @@ static void refresh_md3_appearance(wxWindow *dialog)
     }
 }
 
+// Bilingual label helpers for the funny-level rows. The source strings carry
+// their own Cantonese entry in the LanguageMode copy table, so they render as
+// "English · 廣東話" in bilingual mode and as plain English otherwise.
+static wxString funny_row_label(const char *source)
+{
+    return I18N::render_localized_text_compact(I18N::translate_mode(source).finalize_without_arguments()).label;
+}
+
+static wxString funny_row_label_int(const char *source, int value)
+{
+    const I18N::LocalizedText copy = I18N::translate_mode(source);
+    return I18N::render_localized_text_compact(
+               copy.format_each([value](wxString pattern) { return wxString::Format(pattern, value); }))
+        .label;
+}
+
+wxBoxSizer *PreferencesDialog::create_item_funny_level_slider(wxWindow *parent, std::string param, bool cantonese)
+{
+    const I18N::FunnyLanguage language = cantonese ? I18N::FunnyLanguage::Cantonese : I18N::FunnyLanguage::English;
+    const wxString            title    = funny_row_label(cantonese ? "Funny level (Cantonese)" : "Funny level (English)");
+    const int                 level    = I18N::parse_funny_level(app_config->get(param));
+    // Provenance: the key is only written when the user moves the slider, so an
+    // absent key genuinely means the compiled default is in effect.
+    auto stored = std::make_shared<bool>(!app_config->get(param).empty());
+
+    auto *row  = new wxBoxSizer(wxVERTICAL);
+    auto *head = new wxBoxSizer(wxHORIZONTAL);
+    head->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
+
+    auto *text_col = new wxBoxSizer(wxVERTICAL);
+    auto *label    = new Label(parent, title);
+    label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    label->SetFont(::Label::Body_13);
+    label->Wrap(FromDIP(320));
+    text_col->Add(label, 0);
+
+    auto *value_label = new Label(parent, wxEmptyString);
+    value_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    value_label->SetFont(::Label::Body_12);
+    text_col->Add(value_label, 0, wxTOP, FromDIP(2));
+
+    auto *provenance = new Label(parent, wxEmptyString);
+    provenance->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    provenance->SetFont(::Label::Body_12);
+    text_col->Add(provenance, 0, wxTOP, FromDIP(2));
+
+    auto *slider = new ::Slider(parent, level, I18N::FUNNY_LEVEL_MIN, I18N::FUNNY_LEVEL_MAX, false, wxDefaultPosition,
+                                wxSize(FromDIP(200), -1));
+    slider->SetName(title); // screen-reader name (SliderAccessible reads GetName())
+    slider->SetToolTip(funny_row_label("1 = fully serious, 5 = maximum playfulness"));
+
+    head->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
+    head->Add(text_col, wxSizerFlags().CenterVertical().Proportion(1));
+    head->Add(slider, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+    row->Add(head, 0, wxEXPAND);
+
+    // Progressive disclosure: the full explanation stays behind a Text button
+    // (keyboard operable: Space / Enter) until the user asks for it.
+    auto *details = new ::Button(parent, funny_row_label("What does this change?"));
+    details->SetVariant(Button::Variant::Text);
+    details->SetButtonSize(Button::Size::Small);
+    auto *caption = new Label(parent, funny_row_label(
+        "Sets the tone of every message Bambu Studio shows in this language, including errors, warnings and destructive confirmations. It never changes what a message says has happened or what will be affected."));
+    caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    caption->SetFont(::Label::Body_12);
+    caption->Wrap(FromDIP(480));
+    caption->Hide();
+    row->Add(details, 0, wxLEFT, FromDIP(ITEM_LEFT_PADDING - 12));
+    row->Add(caption, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(ITEM_LEFT_PADDING));
+
+    details->Bind(wxEVT_BUTTON, [parent, details, caption](wxCommandEvent &) {
+        const bool show = !caption->IsShown();
+        caption->Show(show);
+        details->SetLabel(funny_row_label(show ? "Hide details" : "What does this change?"));
+        parent->Layout();
+        if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(parent))
+            scrolled->FitInside();
+    });
+
+    auto refresh = [value_label, provenance, stored](int value) {
+        value_label->SetLabel(funny_row_label_int("Level %d of 5", value));
+        provenance->SetLabel(*stored ? funny_row_label_int("Stored in BambuStudio.conf as %d.", value)
+                                     : funny_row_label_int("Not stored yet; using the compiled default %d.",
+                                                           I18N::FUNNY_LEVEL_DEFAULT));
+    };
+    refresh(level);
+
+    slider->SetOnChange([this, param, language, stored, refresh](int value) {
+        const int clamped = I18N::clamp_funny_level(value);
+        app_config->set(param, std::to_string(clamped));
+        app_config->save();
+        I18N::language_mode_service().set_funny_level(language, clamped);
+        *stored = true;
+        refresh(clamped);
+    });
+
+    return row;
+}
+
 wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param)
 {
     wxBoxSizer *m_sizer_checkbox  = new wxBoxSizer(wxHORIZONTAL);
@@ -1066,6 +1166,9 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
             app_config->set_bool(param, checkbox->GetValue());
             app_config->save();
         }
+
+        if (param == I18N::DIALOG_EMOJIS_KEY)
+            I18N::language_mode_service().set_dialog_emojis(checkbox->GetValue());
 
         if (param == "staff_pick_switch") {
             bool pbool = app_config->get("staff_pick_switch") == "true";
@@ -2450,6 +2553,15 @@ wxWindow *PreferencesDialog::create_general_tab()
     auto item_language = create_item_language_mode_combobox(
         _L("Language"), scrolled, _L("Language"), "language", language_choices);
 
+    // Per-language funny levels and the dialog emoji toggle sit directly under
+    // the language picker; all three persist in AppConfig and apply live.
+    auto item_funny_en  = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_ENGLISH_KEY, false);
+    auto item_funny_yue = create_item_funny_level_slider(scrolled, I18N::FUNNY_LEVEL_CANTONESE_KEY, true);
+    auto item_dialog_emojis = create_item_checkbox(
+        funny_row_label("Show emojis in dialogs and message boxes"), scrolled,
+        funny_row_label("Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one."),
+        50, I18N::DIALOG_EMOJIS_KEY);
+
     std::vector<wxString> Regions     = {_L("Asia-Pacific"), _L("Chinese Mainland"), _L("Europe"), _L("North America"), _L("Others")};
     auto                  item_region = create_item_region_combobox(_L("Login Region"), scrolled, _L("Login Region"), Regions);
 
@@ -2540,6 +2652,9 @@ wxWindow *PreferencesDialog::create_general_tab()
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
     sizer->Add(item_language, flags);
+    sizer->Add(item_funny_en, flags);
+    sizer->Add(item_funny_yue, flags);
+    sizer->Add(item_dialog_emojis, flags);
     sizer->Add(item_region, flags);
     sizer->Add(item_currency, flags);
     sizer->Add(item_auto_flush, flags);

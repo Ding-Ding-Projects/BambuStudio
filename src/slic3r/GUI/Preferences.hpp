@@ -139,6 +139,9 @@ public:
                                                    const std::vector<std::pair<std::string, wxString>> &choices);
     wxBoxSizer *create_item_loglevel_combobox(wxString title, wxWindow *parent, wxString tooltip, std::vector<wxString> vlist);
     wxBoxSizer *create_item_checkbox(wxString title, wxWindow *parent, wxString tooltip, int padding_left, std::string param);
+    // Funny level row: MD3 Slider (1..5) bound to param, with a progressive
+    // disclosure caption and a provenance line. cantonese selects the ladder.
+    wxBoxSizer *create_item_funny_level_slider(wxWindow *parent, std::string param, bool cantonese);
     void        set_dark_mode();
     // Apply a theme switch + fan out the dark-mode side effects (Appearance Theme control).
     void        apply_dark_mode(bool dark);

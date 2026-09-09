@@ -1147,6 +1147,33 @@ std::vector<std::string> GUI_App::split_str(std::string src, std::string separat
     return result;
 }
 
+void GUI_App::show_funny_level_disclosure_once()
+{
+    if (app_config == nullptr || plater_ == nullptr)
+        return;
+    if (app_config->get_bool(I18N::FUNNY_LEVEL_DISCLOSED_KEY))
+        return;
+
+    const I18N::LanguageModeService &mode_service = I18N::language_mode_service();
+    const bool above_serious = mode_service.funny_level(I18N::FunnyLanguage::English) > I18N::FUNNY_LEVEL_MIN ||
+                               mode_service.funny_level(I18N::FunnyLanguage::Cantonese) > I18N::FUNNY_LEVEL_MIN;
+    if (!above_serious)
+        return;
+
+    NotificationManager *manager = plater_->get_notification_manager();
+    if (manager == nullptr)
+        return;
+
+    const I18N::LocalizedText copy = I18N::translate_mode(
+        L("The funny level styles every message in this language, including errors and warnings. Facts never change. Adjust it in Preferences > General."));
+    const wxString text = I18N::render_localized_text_stacked(copy.finalize_without_arguments()).label;
+    manager->push_notification(NotificationType::FunnyLevelDisclosure, NotificationManager::NotificationLevel::RegularNotificationLevel,
+                               into_u8(text));
+
+    app_config->set_bool(I18N::FUNNY_LEVEL_DISCLOSED_KEY, true);
+    app_config->save();
+}
+
 void GUI_App::post_init()
 {
     assert(initialized());
@@ -1163,6 +1190,9 @@ void GUI_App::post_init()
     // TTS narrator (opt-in, off by default): printer state changes + errors,
     // with optional Home Assistant speakers and alert lights.
     TtsNarrator::install();
+
+    // Funny level disclosure (non-blocking snackbar, recorded so it fires once).
+    show_funny_level_disclosure_once();
 
     if (app_config->get("sync_user_preset") == "true") {
         if (m_agent) { start_sync_user_preset(); }
@@ -7154,6 +7184,17 @@ bool GUI_App::load_language(wxString language, bool initial)
         app_config->set("language", requested_profile.canonical_id);
 
     m_imgui->set_language(I18N::language_mode_profile().font_language);
+
+    // Funny levels and dialog emojis ride along with the language mode so every
+    // translate_mode() call and MsgDialog sees the persisted values from startup.
+    {
+        I18N::LanguageModeService &mode_service = I18N::language_mode_service();
+        mode_service.set_funny_level(I18N::FunnyLanguage::English,
+                                     I18N::parse_funny_level(app_config->get(I18N::FUNNY_LEVEL_ENGLISH_KEY)));
+        mode_service.set_funny_level(I18N::FunnyLanguage::Cantonese,
+                                     I18N::parse_funny_level(app_config->get(I18N::FUNNY_LEVEL_CANTONESE_KEY)));
+        mode_service.set_dialog_emojis(I18N::parse_dialog_emojis(app_config->get(I18N::DIALOG_EMOJIS_KEY)));
+    }
     ::Label::initSysFont(I18N::language_mode_profile().font_language, false);
 
     //FIXME This is a temporary workaround, the correct solution is to switch to "C" locale during file import / export only.

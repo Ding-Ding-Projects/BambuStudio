@@ -12,7 +12,10 @@
 #include <algorithm>
 #include <cctype>
 #include <climits>
+#include <cstdlib>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace Slic3r { namespace GUI { namespace I18N {
 
@@ -286,6 +289,233 @@ bool is_baseline_language_mode(std::string_view language_mode_id)
     return normalized == LANGUAGE_MODE_ENGLISH || normalized == LANGUAGE_MODE_ENGLISH_US;
 }
 
+namespace {
+
+// One ladder per language for a known English source string. Ladders may hold
+// 1, 2, 3 or 5 entries and are expanded to the five levels exactly like
+// ui-md3/site/copy.js:
+//   5 entries -> levels 1..5 map one to one
+//   3 entries -> levels 1-2 use [0], level 3 uses [1], levels 4-5 use [2]
+//   2 entries -> levels 1-2 use [0], levels 3-5 use [1]
+//   1 entry   -> the same text at every level
+// Every entry keeps its printf placeholders, so the facts a caller formats in
+// (file names, counts) are identical at every level.
+struct FunnyCopyEntry {
+    const char *              source;
+    std::vector<const char *> english;
+    std::vector<const char *> cantonese;
+};
+
+const std::vector<FunnyCopyEntry> &funny_copy_table()
+{
+    static const std::vector<FunnyCopyEntry> table = {
+        {"Slicing complete",
+         {"Slicing complete", "Slicing complete", "Slicing complete. Ready to print.",
+          "Slicing done. Every layer accounted for.", "Slicing done. Every layer counted and nothing left behind."},
+         {"切片完成", "切片完成", "切片完成，可以印喇。", "切片搞掂，每一層都數齊。", "切片搞掂晒，一層都冇走漏。"}},
+        {"Export successfully.",
+         {"Export successfully.", "Export successfully.", "Exported. The file is where you asked.",
+          "Exported. Go and find it where you put it.", "Exported and delivered. It is exactly where you asked, waiting for you."},
+         {"匯出成功。", "匯出成功。", "匯出咗喇，檔案喺你揀嘅位置。", "匯出咗，去你放嘅地方搵啦。", "匯出咗仲送到埗，就喺你揀嗰度等你。"}},
+        {"Model file downloaded.",
+         {"Model file downloaded.", "Model file downloaded.", "Model downloaded. It is on disk now.",
+          "Model downloaded and safely on disk.", "Model downloaded, landed, and sitting comfortably on disk."},
+         {"模型檔案已下載。", "模型檔案已下載。", "模型下載咗，已經喺硬碟。", "模型下載咗，穩穩陣陣喺硬碟。", "模型下載咗，落咗地，喺硬碟坐得好舒服。"}},
+        {"Setting saved: %s",
+         {"Setting saved: %s", "Setting saved: %s", "Saved: %s", "Noted: %s", "Noted and filed: %s"},
+         {"已儲存設定：%s", "已儲存設定：%s", "已儲存：%s", "記低咗：%s", "記低咗，仲入咗檔：%s"}},
+        {"Deleted: %s",
+         {"Deleted: %s", "Deleted: %s", "Deleted: %s", "Gone: %s", "Gone, and it is not coming back on its own: %s"},
+         {"已刪除：%s", "已刪除：%s", "刪除咗：%s", "冇咗喇：%s", "冇咗喇，自己唔會返嚟：%s"}},
+        {"Error",
+         {"Error", "Error", "Error", "Something went wrong", "Well, that did not go to plan"},
+         {"錯誤", "錯誤", "錯誤", "出咗問題", "呢個唔喺計劃之內"}},
+        {"Warning",
+         {"Warning", "Warning", "Warning", "Heads up", "Heads up before this goes any further"},
+         {"警告", "警告", "警告", "注意", "小心，行落去之前先睇睇"}},
+        {"Unsaved Changes",
+         {"Unsaved Changes", "Unsaved Changes", "Unsaved changes", "You have unsaved changes", "Unsaved changes are waiting for a decision"},
+         {"未儲存嘅變更", "未儲存嘅變更", "有變更未儲存", "你有變更未儲存", "有變更未儲存，等你決定"}},
+        {"Do you want to continue?",
+         {"Do you want to continue?", "Do you want to continue?", "Continue?", "Continue anyway?", "Shall we carry on regardless?"},
+         {"你想繼續嗎？", "你想繼續嗎？", "繼續？", "照樣繼續？", "咁都要繼續？"}},
+
+        // Settings labels for the feature itself: one entry per language, so the
+        // label never varies with the level but still renders bilingually.
+        {"Funny level (English)", {"Funny level (English)"}, {"搞笑程度（英文）"}},
+        {"Funny level (Cantonese)", {"Funny level (Cantonese)"}, {"搞笑程度（廣東話）"}},
+        {"Level %d of 5", {"Level %d of 5"}, {"第 %d 級（共 5 級）"}},
+        {"1 = fully serious, 5 = maximum playfulness", {"1 = fully serious, 5 = maximum playfulness"}, {"1 = 完全認真，5 = 玩到盡"}},
+        {"Sets the tone of every message Bambu Studio shows in this language, including errors, warnings and destructive confirmations. It never changes what a message says has happened or what will be affected.",
+         {"Sets the tone of every message Bambu Studio shows in this language, including errors, warnings and destructive confirmations. It never changes what a message says has happened or what will be affected."},
+         {"控制 Bambu Studio 用呢種語言顯示嘅所有訊息語氣，包括錯誤、警告同破壞性確認。但永遠唔會改變訊息講嘅事實同影響範圍。"}},
+        {"What does this change?", {"What does this change?"}, {"呢個會改變啲乜？"}},
+        {"Hide details", {"Hide details"}, {"收起詳情"}},
+        {"Stored in BambuStudio.conf as %d.", {"Stored in BambuStudio.conf as %d."}, {"已儲存喺 BambuStudio.conf，值係 %d。"}},
+        {"Not stored yet; using the compiled default %d.", {"Not stored yet; using the compiled default %d."}, {"未儲存；用編譯預設值 %d。"}},
+        {"Show emojis in dialogs and message boxes", {"Show emojis in dialogs and message boxes"}, {"喺對話框同訊息框顯示表情符號"}},
+        {"Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one.",
+         {"Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one."},
+         {"喺對話框標題加一個裝飾表情符號。按鈕、動作標籤同欄位標籤永遠唔會加。"}},
+        {"The funny level styles every message in this language, including errors and warnings. Facts never change. Adjust it in Preferences > General.",
+         {"The funny level styles every message in this language, including errors and warnings. Facts never change. Adjust it in Preferences > General."},
+         {"搞笑程度會影響呢種語言嘅所有訊息語氣，包括錯誤同警告。事實永遠唔變。可以喺「偏好設定 > 一般」更改。"}},
+    };
+    return table;
+}
+
+size_t funny_ladder_index(size_t ladder_size, int level)
+{
+    level = clamp_funny_level(level);
+    switch (ladder_size) {
+    case 5: return static_cast<size_t>(level - 1);
+    case 3: return level <= 2 ? 0 : (level == 3 ? 1 : 2);
+    case 2: return level <= 2 ? 0 : 1;
+    default: return 0;
+    }
+}
+
+struct DialogEmojiGlyph {
+    DialogEmojiKind kind;
+    const char *    utf8;
+};
+
+const std::vector<DialogEmojiGlyph> &dialog_emoji_glyphs()
+{
+    static const std::vector<DialogEmojiGlyph> glyphs = {
+        {DialogEmojiKind::Info,     "\xE2\x84\xB9\xEF\xB8\x8F"},   // information source
+        {DialogEmojiKind::Warning,  "\xE2\x9A\xA0\xEF\xB8\x8F"},   // warning sign
+        {DialogEmojiKind::Error,    "\xE2\x9D\x8C"},               // cross mark
+        {DialogEmojiKind::Question, "\xE2\x9D\x93"},               // question mark
+        {DialogEmojiKind::Success,  "\xE2\x9C\x85"},               // check mark button
+    };
+    return glyphs;
+}
+
+} // namespace
+
+int clamp_funny_level(int level)
+{
+    return std::max(FUNNY_LEVEL_MIN, std::min(FUNNY_LEVEL_MAX, level));
+}
+
+int parse_funny_level(std::string_view stored, int fallback)
+{
+    size_t begin = 0;
+    while (begin < stored.size() && std::isspace(static_cast<unsigned char>(stored[begin])))
+        ++begin;
+    size_t end = stored.size();
+    while (end > begin && std::isspace(static_cast<unsigned char>(stored[end - 1])))
+        --end;
+    if (begin == end)
+        return clamp_funny_level(fallback);
+
+    const std::string digits(stored.substr(begin, end - begin));
+    char *            parse_end = nullptr;
+    const long        value     = std::strtol(digits.c_str(), &parse_end, 10);
+    if (parse_end == nullptr || *parse_end != '\0')
+        return clamp_funny_level(fallback);
+    if (value < FUNNY_LEVEL_MIN) return FUNNY_LEVEL_MIN;
+    if (value > FUNNY_LEVEL_MAX) return FUNNY_LEVEL_MAX;
+    return static_cast<int>(value);
+}
+
+bool parse_dialog_emojis(std::string_view stored)
+{
+    return stored == "true" || stored == "1";
+}
+
+const wxString *funny_copy_variant(const wxString &source, FunnyLanguage language, int level)
+{
+    // Cache the wxString conversions once per (entry, language, ladder index).
+    struct Resolved {
+        wxString              source;
+        std::vector<wxString> english;
+        std::vector<wxString> cantonese;
+    };
+    static const std::vector<Resolved> resolved = [] {
+        std::vector<Resolved> out;
+        for (const FunnyCopyEntry &entry : funny_copy_table()) {
+            Resolved item;
+            item.source = wxString::FromUTF8(entry.source);
+            for (const char *text : entry.english)   item.english.emplace_back(wxString::FromUTF8(text));
+            for (const char *text : entry.cantonese) item.cantonese.emplace_back(wxString::FromUTF8(text));
+            out.push_back(std::move(item));
+        }
+        return out;
+    }();
+
+    for (size_t i = 0; i < resolved.size(); ++i) {
+        if (source != resolved[i].source)
+            continue;
+        const std::vector<wxString> &ladder =
+            language == FunnyLanguage::English ? resolved[i].english : resolved[i].cantonese;
+        if (ladder.empty())
+            return nullptr;
+        return &ladder[funny_ladder_index(ladder.size(), level)];
+    }
+    return nullptr;
+}
+
+DialogEmojiKind dialog_emoji_kind_for_style(long wx_message_style)
+{
+    if (wx_message_style & wxAPPLY)            return DialogEmojiKind::Success;
+    if (wx_message_style & wxICON_ERROR)       return DialogEmojiKind::Error;
+    if (wx_message_style & wxICON_WARNING)     return DialogEmojiKind::Warning;
+    if (wx_message_style & wxICON_QUESTION)    return DialogEmojiKind::Question;
+    return DialogEmojiKind::Info;
+}
+
+wxString dialog_emoji(DialogEmojiKind kind)
+{
+    for (const DialogEmojiGlyph &glyph : dialog_emoji_glyphs())
+        if (glyph.kind == kind)
+            return wxString::FromUTF8(glyph.utf8);
+    return wxString();
+}
+
+bool has_dialog_emoji(const wxString &text)
+{
+    for (const DialogEmojiGlyph &glyph : dialog_emoji_glyphs())
+        if (text.StartsWith(wxString::FromUTF8(glyph.utf8)))
+            return true;
+    return false;
+}
+
+wxString decorate_dialog_text(const wxString &text, DialogEmojiKind kind, bool enabled)
+{
+    if (!enabled || text.empty() || has_dialog_emoji(text))
+        return text;
+    return dialog_emoji(kind) + wxString::FromUTF8(" ") + text;
+}
+
+wxString strip_dialog_emoji(const wxString &text)
+{
+    for (const DialogEmojiGlyph &glyph : dialog_emoji_glyphs()) {
+        const wxString prefix = wxString::FromUTF8(glyph.utf8);
+        if (!text.StartsWith(prefix))
+            continue;
+        wxString rest = text.Mid(prefix.length());
+        while (!rest.empty() && rest[0] == ' ')
+            rest = rest.Mid(1);
+        return rest;
+    }
+    return text;
+}
+
+void LanguageModeService::set_funny_level(FunnyLanguage language, int level)
+{
+    if (language == FunnyLanguage::English)
+        m_funny_level_english = clamp_funny_level(level);
+    else
+        m_funny_level_cantonese = clamp_funny_level(level);
+}
+
+int LanguageModeService::funny_level(FunnyLanguage language) const
+{
+    return language == FunnyLanguage::English ? m_funny_level_english : m_funny_level_cantonese;
+}
+
 LanguageModeService::LanguageModeService()
     : m_profile(resolve_language_mode(LANGUAGE_MODE_ENGLISH))
 {
@@ -336,14 +566,21 @@ LocalizedText LanguageModeService::translate(const wxString &message, const wxSt
     if (m_profile.kind == LanguageModeKind::Standard)
         return { vocabulary(translate_standard(message, context)), wxString() };
 
+    // The funny level swaps in a voice variant when the source string has a
+    // ladder; every other string falls through to the unchanged base copy.
+    const wxString *english_variant = funny_copy_variant(message, FunnyLanguage::English, m_funny_level_english);
+    const wxString  english         = vocabulary(english_variant == nullptr ? message : *english_variant);
+
     if (m_profile.kind == LanguageModeKind::English)
-        return { vocabulary(message), wxString() };
+        return { english, wxString() };
 
-    const wxString *cantonese = find_cantonese(message, UINT_MAX, context);
+    const wxString *cantonese = funny_copy_variant(message, FunnyLanguage::Cantonese, m_funny_level_cantonese);
+    if (cantonese == nullptr)
+        cantonese = find_cantonese(message, UINT_MAX, context);
     if (m_profile.kind == LanguageModeKind::CantoneseHongKong)
-        return { cantonese == nullptr ? vocabulary(message) : *cantonese, wxString() };
+        return { cantonese == nullptr ? english : *cantonese, wxString() };
 
-    LocalizedText result { vocabulary(message), wxString() };
+    LocalizedText result { english, wxString() };
     if (cantonese != nullptr && !cantonese->empty() && *cantonese != message)
         result.secondary = *cantonese;
     return result;

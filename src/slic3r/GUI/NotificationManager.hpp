@@ -178,6 +178,9 @@ enum class NotificationType
     // and de-duplicated so repeated failures refresh one snackbar; carries a
     // Retry hyperlink that re-drives the retained commits.
     ProjectHistoryFailure,
+    // One-time disclosure that the funny level styles every message. Fires the
+    // first time a level above 1 is active and is then recorded in AppConfig.
+    FunnyLevelDisclosure,
     NotificationTypeCount
 
 };
