@@ -2,6 +2,7 @@
 #define slic3r_GUI_ConfigProfilesDialog_hpp_
 
 #include "GUI_Utils.hpp"
+#include "Bulk/BulkSelection.hpp"
 #include "libslic3r/ProjectHistoryManager.hpp"
 
 #include <filesystem>
@@ -37,6 +38,15 @@ namespace Slic3r::GUI {
 //   * Every profile - including the active one - has a local, Git-backed
 //     snapshot history driven by the same engine as project version history
 //     (complete snapshots, isolated bare repo, restore-as-new-profile only).
+//   * The list is multi-select through a BulkSelection keyed by the profile's
+//     data-folder path: "Select visible" = rows matching the search, "Select
+//     all N profiles" = every profile, "Invert selection" = visible rows.
+//     Snapshot selected runs the single snapshot routine per selected profile
+//     behind the reviewable preview and a cancellable progress dialog;
+//     Export list writes the profile table as JSON or CSV. Launch stays a
+//     single-row action (it starts another instance). There is no delete on
+//     this surface, single or bulk: profiles are removed by deleting their
+//     folder outside the app.
 class ConfigProfilesDialog final : public DPIDialog
 {
 public:
@@ -68,7 +78,24 @@ private:
     void on_snapshot(wxCommandEvent &event);
     void on_history(wxCommandEvent &event);
     void on_prefs_history(wxCommandEvent &event);
+    void on_bulk_snapshot(wxCommandEvent &event);
+    void on_export_list(wxCommandEvent &event);
+    void on_char_hook(wxKeyEvent &event);
 
+    // Selection model helpers. Ids are data-folder paths (stable across a
+    // repopulate); "page" = rows shown after the search, "all" = every profile.
+    std::vector<std::string> page_ids() const;
+    std::vector<std::string> all_ids() const;
+    void sync_selection_from_view();
+    void sync_selection_to_view();
+    void select_page();
+    void select_all_matches();
+    void invert_page();
+    // Records one complete snapshot of `row` (blocking). Empty string = success.
+    static wxString record_snapshot(const ProfileRow &row, const std::filesystem::path &identity,
+                                    const std::filesystem::path &staging, ProjectHistoryManager *history);
+
+    // The single selected profile, or nullptr when zero or several rows are selected.
     const ProfileRow *selected_profile() const;
     std::filesystem::path profiles_root() const;
     // Stable per-profile archive path: both the snapshot input and the
@@ -77,6 +104,8 @@ private:
 
     std::vector<ProfileRow> m_profiles;
     std::vector<std::size_t> m_filtered_rows;
+    Bulk::BulkSelection<std::string> m_selection;
+    bool                             m_syncing_selection { false };
 
     std::unique_ptr<ProjectHistoryManager> m_history;
     std::future<wxString>                  m_busy_future; // empty string = success, else error text
@@ -99,6 +128,11 @@ private:
     Button             *m_snapshot_button { nullptr };
     Button             *m_history_button { nullptr };
     Button             *m_prefs_history_button { nullptr };
+    Button             *m_select_page_button { nullptr };
+    Button             *m_select_all_button { nullptr };
+    Button             *m_invert_button { nullptr };
+    Button             *m_bulk_snapshot_button { nullptr };
+    Button             *m_export_list_button { nullptr };
     Button             *m_close_button { nullptr };
 };
 

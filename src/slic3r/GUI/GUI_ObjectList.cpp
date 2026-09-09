@@ -4,6 +4,7 @@
 #include "GUI_Factories.hpp"
 //#include "GUI_ObjectLayers.hpp"
 #include "GUI_App.hpp"
+#include "GUI.hpp"
 #include "GLToolbar.hpp"
 #include "I18N.hpp"
 #include "Plater.hpp"
@@ -29,8 +30,12 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/TextInput.hpp"
 #include "SingleChoiceDialog.hpp"
+#include "Bulk/BulkActionPreviewDialog.hpp"
+#include "Bulk/BulkRenameDialog.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <wx/dirdlg.h>
 #include <wx/progdlg.h>
 #include <libslic3r/Orient.hpp>
 #include <unordered_set>
@@ -1875,8 +1880,15 @@ void ObjectList::key_event(wxKeyEvent& event)
         remove();
     //else if (event.GetKeyCode() == WXK_F5)
     //    wxGetApp().plater()->reload_all_from_disk();
+    // Ctrl+Shift+A ("Select all matches") and Ctrl+A ("Select all objects")
+    // coincide here: the object list has no filter, so the page is the whole
+    // set of matches. Both are wired so the menu labels stay truthful.
+    else if (wxGetKeyState(wxKeyCode('A')) && wxGetKeyState(WXK_CONTROL) && wxGetKeyState(WXK_SHIFT))
+        select_item_all_children();
     else if (wxGetKeyState(wxKeyCode('A')) && wxGetKeyState(WXK_CONTROL/*WXK_SHIFT*/))
         select_item_all_children();
+    else if (wxGetKeyState(wxKeyCode('I')) && wxGetKeyState(WXK_CONTROL))
+        invert_selection();
     else if (wxGetKeyState(wxKeyCode('C')) && wxGetKeyState(WXK_CONTROL))
         copy();
     else if (wxGetKeyState(wxKeyCode('V')) && wxGetKeyState(WXK_CONTROL))
@@ -5697,6 +5709,239 @@ void ObjectList::select_item_all_children()
 
     SetSelections(sels);
     selection_changed();
+}
+
+// ---------------------------------------------------------------------------
+// Bulk actions over the selected objects
+
+// Indices of the objects that own the current selection, ascending (which is
+// list order for top-level objects). A selected part, instance or layer counts
+// for its parent object.
+std::vector<int> ObjectList::selected_object_indexes()
+{
+    std::vector<int> obj_idxs, vol_idxs;
+    get_selection_indexes(obj_idxs, vol_idxs);
+    std::vector<int> out;
+    for (int idx : obj_idxs)
+        if (idx >= 0 && m_objects && idx < int(m_objects->size()))
+            out.push_back(idx);
+    return out;
+}
+
+void ObjectList::invert_selection()
+{
+    if (m_objects == nullptr || m_objects_model == nullptr)
+        return;
+    if (wxGetApp().plater() && !wxGetApp().plater()->canvas3D()->get_gizmos_manager().is_allow_select_all())
+        return;
+
+    const std::vector<int> selected = selected_object_indexes();
+    const std::set<int>    selected_set(selected.begin(), selected.end());
+
+    // Every top-level object that is not currently (wholly or partly) selected
+    // becomes selected; every selected one is dropped. Going through
+    // SetSelections + selection_changed keeps the 3D scene in sync exactly the
+    // way Ctrl+A does.
+    wxDataViewItemArray sels;
+    for (size_t i = 0; i < m_objects->size(); ++i)
+        if (selected_set.count(int(i)) == 0)
+            sels.Add(m_objects_model->GetItemById(int(i)));
+
+    m_selection_mode = smInstance;
+    UnselectAll();
+    if (!sels.empty())
+        SetSelections(sels);
+    selection_changed();
+}
+
+void ObjectList::bulk_rename()
+{
+    const std::vector<int> obj_idxs = selected_object_indexes();
+    if (obj_idxs.empty())
+        return;
+
+    // Selected names in list order; every unselected object's name is reserved
+    // so the plan reports a collision instead of silently producing a twin.
+    const std::set<int>      selected_set(obj_idxs.begin(), obj_idxs.end());
+    std::vector<std::string> names;
+    std::set<std::string>    reserved;
+    for (size_t i = 0; i < m_objects->size(); ++i) {
+        const std::string &name = (*m_objects)[i]->name;
+        if (selected_set.count(int(i)))
+            names.push_back(name);
+        else
+            reserved.insert(name);
+    }
+
+    Bulk::RenamePlan plan;
+    if (!Bulk::BulkRenameDialog::Run(this, _L("Bulk rename objects"), names, reserved, plan))
+        return;
+
+    // One undo snapshot for the whole batch (the single-rename path takes one
+    // per object through update_name_in_model; here that would be N entries).
+    Plater::TakeSnapshot snapshot(wxGetApp().plater(), "Bulk rename objects");
+
+    const size_t n = std::min(obj_idxs.size(), plan.rows.size());
+    for (size_t i = 0; i < n; ++i) {
+        const Bulk::RenameRow &row = plan.rows[i];
+        if (row.outcome != Bulk::RenameOutcome::Changed)
+            continue;
+        if (row.after.empty() || Plater::has_illegal_filename_characters(row.after))
+            continue;
+
+        ModelObject *obj = object(obj_idxs[i]);
+        if (obj == nullptr || obj->name == row.after)
+            continue;
+        obj->name = row.after;
+        // Mirror the single-rename rule: a one-part object renames its part too.
+        if (obj->volumes.size() == 1)
+            obj->volumes[0]->name = obj->name;
+        Slic3r::save_object_mesh(*obj);
+
+        const wxDataViewItem item = m_objects_model->GetItemById(obj_idxs[i]);
+        if (item.IsOk())
+            m_objects_model->SetName(from_u8(row.after), item);
+    }
+
+    Refresh();
+    wxGetApp().plater()->update();
+}
+
+void ObjectList::bulk_delete()
+{
+    const std::vector<int> obj_idxs = selected_object_indexes();
+    if (obj_idxs.empty())
+        return;
+
+    Bulk::BulkActionPlan plan;
+    plan.action      = into_u8(_L("Delete objects"));
+    plan.consequence = into_u8(_L("Each object is removed from its plate together with all of its parts and instances. "
+                                  "This is only recoverable through Undo."));
+    plan.destructive = true;
+
+    // Mirror what the existing delete path refuses: nothing deletable selected
+    // (empty selection or the wipe tower), or a list entry that is no longer
+    // valid at the moment of deletion.
+    const bool can_delete = wxGetApp().plater()->can_delete();
+    for (int idx : obj_idxs) {
+        const ModelObject *obj    = object(idx);
+        const std::string  label  = obj ? obj->name : std::string();
+        const std::string  detail = obj
+            ? into_u8(wxString::Format(_L("%d part(s), %d instance(s)"), int(obj->volumes.size()), int(obj->instances.size())))
+            : std::string();
+        const wxDataViewItem item = m_objects_model->GetItemById(idx);
+        if (!item.IsOk() || m_objects_model->InvalidItem(item))
+            plan.items.push_back(Bulk::BulkItem::skipped(label, into_u8(_L("the list entry is no longer valid")), detail));
+        else if (!can_delete)
+            plan.items.push_back(Bulk::BulkItem::skipped(label, into_u8(_L("the current selection cannot be deleted")), detail));
+        else
+            plan.items.push_back(Bulk::BulkItem::changed(label, detail));
+    }
+
+    if (!Bulk::BulkActionPreviewDialog::Run(this, plan))
+        return;
+
+    // Re-select exactly the objects the plan will change, then hand off to the
+    // existing delete-selected path, which takes its own undo snapshot.
+    wxDataViewItemArray sels;
+    for (size_t i = 0; i < obj_idxs.size() && i < plan.items.size(); ++i)
+        if (plan.items[i].will_change)
+            sels.Add(m_objects_model->GetItemById(obj_idxs[i]));
+    if (sels.empty())
+        return;
+    m_selection_mode = smInstance;
+    select_items(sels);
+    update_selections_on_canvas();
+    wxGetApp().plater()->remove_selected();
+}
+
+// Turn an object name into a file stem that is safe on every supported
+// filesystem: reserved characters and control characters become underscores,
+// leading and trailing spaces/dots are dropped, and an empty result falls back
+// to "object".
+static std::string bulk_export_file_stem(const std::string &name)
+{
+    std::string stem;
+    stem.reserve(name.size());
+    for (unsigned char c : name) {
+        const bool reserved = c < 0x20 || c == '<' || c == '>' || c == ':' || c == '"' || c == '/' || c == '\\' ||
+                              c == '|' || c == '?' || c == '*';
+        stem.push_back(reserved ? '_' : char(c));
+    }
+    boost::algorithm::trim_if(stem, [](char c) { return c == ' ' || c == '.'; });
+    if (stem.empty())
+        stem = "object";
+    return stem;
+}
+
+void ObjectList::bulk_export()
+{
+    const std::vector<int> obj_idxs = selected_object_indexes();
+    if (obj_idxs.empty())
+        return;
+
+    wxDirDialog dir_dlg(this, _L("Choose a folder for the STL files"), from_u8(wxGetApp().app_config->get_last_dir()),
+                        wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+    if (dir_dlg.ShowModal() != wxID_OK)
+        return;
+    const boost::filesystem::path dir(into_path(dir_dlg.GetPath()));
+
+    struct ExportJob
+    {
+        int         obj_idx;
+        std::string name;
+        std::string path;
+    };
+    std::vector<ExportJob> jobs;
+
+    Bulk::BulkActionPlan plan;
+    plan.action      = into_u8(_L("Export objects as STL"));
+    plan.consequence = into_u8(wxString::Format(_L("Each object is written to its own STL file in %s. Existing files are never overwritten."),
+                                                from_u8(dir.string())));
+
+    std::set<std::string> planned_paths;
+    for (int idx : obj_idxs) {
+        const ModelObject *obj = object(idx);
+        if (obj == nullptr)
+            continue;
+        const boost::filesystem::path file = dir / (bulk_export_file_stem(obj->name) + ".stl");
+        const std::string file_u8 = file.string();
+        if (boost::filesystem::exists(file))
+            plan.items.push_back(Bulk::BulkItem::skipped(obj->name, into_u8(_L("file already exists")), file_u8));
+        else if (planned_paths.count(file_u8))
+            plan.items.push_back(Bulk::BulkItem::skipped(obj->name, into_u8(_L("another selected object exports to the same file name")), file_u8));
+        else {
+            planned_paths.insert(file_u8);
+            plan.items.push_back(Bulk::BulkItem::changed(obj->name, file_u8));
+            jobs.push_back(ExportJob{idx, obj->name, file_u8});
+        }
+    }
+
+    if (!Bulk::BulkActionPreviewDialog::Run(this, plan))
+        return;
+
+    bool   cancelled = false;
+    size_t failed    = 0;
+    const size_t done = Bulk::BulkActionPreviewDialog::RunWithProgress(
+        this, _L("Exporting STL files"), jobs.size(),
+        [&jobs](size_t i) { return from_u8(jobs[i].name); },
+        [&jobs](size_t i) { return wxGetApp().plater()->export_object_stl(size_t(jobs[i].obj_idx), jobs[i].path); },
+        &cancelled, &failed);
+
+    const size_t exported  = done >= failed ? done - failed : 0;
+    const size_t not_run   = jobs.size() - done;
+    const size_t skipped   = plan.skipped() + not_run;
+
+    wxString text = wxString::Format(_L("Bulk export finished: %d exported, %d skipped, %d failed."),
+                                     int(exported), int(skipped), int(failed));
+    if (cancelled)
+        text += " " + _L("The export was cancelled before every object was written.");
+    if (auto *notify = wxGetApp().plater()->get_notification_manager())
+        notify->push_notification(NotificationType::CustomNotification,
+                                  failed > 0 ? NotificationManager::NotificationLevel::WarningNotificationLevel
+                                             : NotificationManager::NotificationLevel::RegularNotificationLevel,
+                                  into_u8(text));
+    wxGetApp().app_config->update_last_output_dir(dir.string());
 }
 
 // update selection mode for non-multiple selection

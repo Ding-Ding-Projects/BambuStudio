@@ -2,6 +2,7 @@
 #define slic3r_GUI_ProjectHistoryDialog_hpp_
 
 #include "GUI_Utils.hpp"
+#include "Bulk/BulkSelection.hpp"
 
 #include "libslic3r/ProjectHistoryManager.hpp"
 
@@ -20,6 +21,7 @@ class wxCloseEvent;
 class wxCommandEvent;
 class wxDataViewEvent;
 class wxDataViewListCtrl;
+class wxKeyEvent;
 class wxSizeEvent;
 
 namespace Slic3r::GUI {
@@ -71,6 +73,23 @@ private:
     void update_selection();
     void cleanup_restore_temp();
 
+    // Bulk selection over commit ids (survives filtering and reloads). The
+    // list control's own selection is mirrored into m_bulk on every change and
+    // re-applied to the visible rows after every populate.
+    std::vector<std::string> visible_ids() const;
+    std::vector<std::string> loaded_ids() const;
+    std::vector<std::string> selected_ids_in_order() const;
+    void sync_bulk_from_list();
+    void apply_bulk_to_list();
+    void select_visible();
+    void select_all_loaded();
+    void invert_selection();
+    void update_bulk_controls();
+    void bulk_export();
+    void bulk_label();
+    void notify(const wxString &text);
+    void on_char_hook(wxKeyEvent &event);
+
     void on_refresh(wxCommandEvent &event);
     void on_retry_failures(wxCommandEvent &event);
     void on_restore(wxCommandEvent &event);
@@ -116,6 +135,14 @@ private:
     wxDataViewListCtrl     *m_version_list{nullptr};
     // View-row -> m_versions index for the current (possibly filtered) list.
     std::vector<std::size_t> m_filtered_rows;
+    Bulk::BulkSelection<std::string> m_bulk;
+    bool                    m_syncing_selection{false};
+    Label                  *m_bulk_counts_label{nullptr};
+    Button                 *m_select_visible_button{nullptr};
+    Button                 *m_select_all_button{nullptr};
+    Button                 *m_invert_button{nullptr};
+    Button                 *m_export_button{nullptr};
+    Button                 *m_label_button{nullptr};
     Button                 *m_refresh_button{nullptr};
     Button                 *m_load_all_button{nullptr};
     Button                 *m_retry_failures_button{nullptr};

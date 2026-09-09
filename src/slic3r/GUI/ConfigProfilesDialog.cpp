@@ -1,5 +1,7 @@
 #include "ConfigProfilesDialog.hpp"
 
+#include "Bulk/BulkActionPlan.hpp"
+#include "Bulk/BulkActionPreviewDialog.hpp"
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MsgDialog.hpp"
@@ -25,9 +27,14 @@
 #include <wx/sizer.h>
 #include <wx/stdpaths.h>
 #include <wx/wfstream.h>
+#include <wx/textctrl.h>
 #include <wx/zipstrm.h>
 
+#include <boost/nowide/fstream.hpp>
+
 #include <chrono>
+#include <cstdio>
+#include <set>
 
 namespace Slic3r::GUI {
 
@@ -124,6 +131,43 @@ wxString unzip_to_directory(const std::filesystem::path &archive, const std::fil
     return wxString{};
 }
 
+std::string json_escape(const std::string &s)
+{
+    std::string out;
+    out.reserve(s.size() + 8);
+    for (char c : s) {
+        switch (c) {
+        case '"': out += "\\\""; break;
+        case '\\': out += "\\\\"; break;
+        case '\n': out += "\\n"; break;
+        case '\r': out += "\\r"; break;
+        case '\t': out += "\\t"; break;
+        default:
+            if (static_cast<unsigned char>(c) < 0x20) {
+                char buf[8];
+                snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned>(static_cast<unsigned char>(c)));
+                out += buf;
+            } else {
+                out += c;
+            }
+        }
+    }
+    return out;
+}
+
+std::string csv_escape(const std::string &s)
+{
+    if (s.find_first_of(",\"\r\n") == std::string::npos)
+        return s;
+    std::string out = "\"";
+    for (char c : s) {
+        if (c == '"') out += '"';
+        out += c;
+    }
+    out += '"';
+    return out;
+}
+
 } // namespace
 
 ConfigProfilesDialog::ConfigProfilesDialog(wxWindow *parent)
@@ -147,6 +191,8 @@ ConfigProfilesDialog::ConfigProfilesDialog(wxWindow *parent)
     apply_theme();
     refresh_profiles();
     Bind(wxEVT_TIMER, &ConfigProfilesDialog::poll_operation, this);
+    // Ctrl+A / Ctrl+Shift+A / Ctrl+I: the shared bulk-selection shortcuts.
+    Bind(wxEVT_CHAR_HOOK, &ConfigProfilesDialog::on_char_hook, this);
     SetMinSize(FromDIP(wxSize(680, 640)));
     SetSize(FromDIP(wxSize(720, 700)));
     CenterOnParent();
@@ -190,29 +236,62 @@ void ConfigProfilesDialog::create_ui()
     m_search_field->SetOnRegexToggle([this](bool) { populate_profiles(); update_buttons(); });
     list_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     m_profile_list = new wxDataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                            wxDV_SINGLE | wxBORDER_NONE);
+                                            wxDV_MULTIPLE | wxBORDER_NONE);
     m_profile_list->AppendTextColumn(_L("Profile"), wxDATAVIEW_CELL_INERT, FromDIP(180));
     m_profile_list->AppendTextColumn(_L("Data folder"), wxDATAVIEW_CELL_INERT, FromDIP(360));
     wxGetApp().UpdateDVCDarkUI(m_profile_list); // native header follows the theme
-    m_profile_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent &) { update_buttons(); });
+    m_profile_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent &evt) {
+        sync_selection_from_view();
+        update_buttons();
+        evt.Skip();
+    });
     list_sizer->Add(m_profile_list, 1, wxEXPAND | wxALL, FromDIP(8));
+
+    // Selection scope row: each label states which universe it touches.
+    auto *select_actions = new wxBoxSizer(wxHORIZONTAL);
+    m_select_page_button = new Button(m_list_card, _L("Select visible"));
+    m_select_all_button  = new Button(m_list_card, _L("Select all"));
+    m_invert_button      = new Button(m_list_card, _L("Invert selection"));
+    for (Button *b : {m_select_page_button, m_select_all_button, m_invert_button})
+        b->SetMinSize(FromDIP(wxSize(120, 32)));
+    m_select_page_button->SetToolTip(_L("Select every profile matching the current search (Ctrl+A)"));
+    m_select_all_button->SetToolTip(_L("Select every profile, including rows hidden by the search (Ctrl+Shift+A)"));
+    m_invert_button->SetToolTip(_L("Invert the selection within the visible rows (Ctrl+I)"));
+    m_select_page_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { select_page(); });
+    m_select_all_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { select_all_matches(); });
+    m_invert_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { invert_page(); });
+    select_actions->Add(m_select_page_button, 0, wxRIGHT, FromDIP(8));
+    select_actions->Add(m_select_all_button, 0, wxRIGHT, FromDIP(8));
+    select_actions->Add(m_invert_button, 0);
+    list_sizer->Add(select_actions, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(8));
 
     auto *profile_actions = new wxBoxSizer(wxHORIZONTAL);
     m_launch_button   = new Button(m_list_card, _L("Launch profile"));
     m_snapshot_button = new Button(m_list_card, _L("Snapshot now"));
     m_history_button  = new Button(m_list_card, _L("History..."));
     m_prefs_history_button = new Button(m_list_card, _L("Preferences history..."));
-    for (Button *b : {m_launch_button, m_snapshot_button, m_history_button, m_prefs_history_button})
+    m_bulk_snapshot_button = new Button(m_list_card, _L("Snapshot selected"));
+    m_export_list_button   = new Button(m_list_card, _L("Export list..."));
+    for (Button *b : {m_launch_button, m_snapshot_button, m_history_button, m_prefs_history_button,
+                      m_bulk_snapshot_button, m_export_list_button})
         b->SetMinSize(FromDIP(wxSize(140, 36)));
+    m_bulk_snapshot_button->SetToolTip(_L("Record a complete snapshot of every selected profile, after a review"));
+    m_export_list_button->SetToolTip(_L("Write the profile list (name, data folder, last snapshot) as JSON or CSV"));
     m_launch_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_launch, this);
     m_snapshot_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_snapshot, this);
     m_history_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_history, this);
     m_prefs_history_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_prefs_history, this);
+    m_bulk_snapshot_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_bulk_snapshot, this);
+    m_export_list_button->Bind(wxEVT_BUTTON, &ConfigProfilesDialog::on_export_list, this);
     profile_actions->Add(m_launch_button, 0, wxRIGHT, FromDIP(8));
     profile_actions->Add(m_snapshot_button, 0, wxRIGHT, FromDIP(8));
     profile_actions->Add(m_history_button, 0, wxRIGHT, FromDIP(8));
     profile_actions->Add(m_prefs_history_button, 0);
     list_sizer->Add(profile_actions, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(8));
+    auto *bulk_actions = new wxBoxSizer(wxHORIZONTAL);
+    bulk_actions->Add(m_bulk_snapshot_button, 0, wxRIGHT, FromDIP(8));
+    bulk_actions->Add(m_export_list_button, 0);
+    list_sizer->Add(bulk_actions, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(8));
     m_list_card->SetSizer(list_sizer);
     root->Add(m_list_card, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
@@ -291,7 +370,8 @@ void ConfigProfilesDialog::apply_theme()
     const StateColor outlined_bg = outlined_button_background();
     const StateColor outlined_border(outline);
     const StateColor outlined_text(text);
-    for (Button *button : {m_launch_button, m_snapshot_button, m_history_button, m_prefs_history_button, m_import_button, m_close_button}) {
+    for (Button *button : {m_launch_button, m_snapshot_button, m_history_button, m_prefs_history_button, m_import_button, m_close_button,
+                           m_select_page_button, m_select_all_button, m_invert_button, m_bulk_snapshot_button, m_export_list_button}) {
         button->SetBackgroundColor(outlined_bg);
         button->SetBorderColor(outlined_border);
         button->SetTextColor(outlined_text);
@@ -333,6 +413,7 @@ void ConfigProfilesDialog::populate_profiles()
 {
     m_profile_list->DeleteAllItems();
     m_filtered_rows.clear();
+    const std::vector<std::string> ids_all = all_ids();
     const wxString query = m_search_field != nullptr ? m_search_field->GetValue() : wxString{};
     const bool regex      = m_search_field != nullptr && m_search_field->IsRegexEnabled();
     const bool case_sense = m_search_field != nullptr && m_search_field->IsCaseSensitive();
@@ -351,25 +432,139 @@ void ConfigProfilesDialog::populate_profiles()
         m_profile_list->AppendItem(cells);
         m_filtered_rows.push_back(i);
     }
+    // The selection survives a filter change; rows hidden by the search stay
+    // selected and are reported as hidden in the status line.
+    m_selection.retain(std::set<std::string>(ids_all.begin(), ids_all.end()));
+    sync_selection_to_view();
+}
+
+std::vector<std::string> ConfigProfilesDialog::page_ids() const
+{
+    std::vector<std::string> ids;
+    for (std::size_t index : m_filtered_rows)
+        ids.push_back(m_profiles[index].data_dir.string());
+    return ids;
+}
+
+std::vector<std::string> ConfigProfilesDialog::all_ids() const
+{
+    std::vector<std::string> ids;
+    for (const ProfileRow &row : m_profiles)
+        ids.push_back(row.data_dir.string());
+    return ids;
+}
+
+void ConfigProfilesDialog::sync_selection_from_view()
+{
+    if (m_syncing_selection)
+        return;
+    wxDataViewItemArray items;
+    m_profile_list->GetSelections(items);
+    std::set<std::string> in_view;
+    for (const wxDataViewItem &item : items) {
+        const int row = m_profile_list->ItemToRow(item);
+        if (row != wxNOT_FOUND && static_cast<std::size_t>(row) < m_filtered_rows.size())
+            in_view.insert(m_profiles[m_filtered_rows[row]].data_dir.string());
+    }
+    // Only the visible rows can change through the view; hidden selected
+    // rows are left as they are.
+    for (const std::string &id : page_ids())
+        m_selection.set(id, in_view.count(id) != 0);
+}
+
+void ConfigProfilesDialog::sync_selection_to_view()
+{
+    m_syncing_selection = true;
+    m_profile_list->UnselectAll();
+    for (std::size_t row = 0; row < m_filtered_rows.size(); ++row)
+        if (m_selection.contains(m_profiles[m_filtered_rows[row]].data_dir.string()))
+            m_profile_list->SelectRow(static_cast<unsigned>(row));
+    m_syncing_selection = false;
+    update_buttons();
+}
+
+void ConfigProfilesDialog::select_page()
+{
+    m_selection.select_page(page_ids());
+    sync_selection_to_view();
+}
+
+void ConfigProfilesDialog::select_all_matches()
+{
+    m_selection.select_all_matches(all_ids());
+    sync_selection_to_view();
+}
+
+void ConfigProfilesDialog::invert_page()
+{
+    m_selection.invert(page_ids());
+    sync_selection_to_view();
+}
+
+void ConfigProfilesDialog::on_char_hook(wxKeyEvent &event)
+{
+    // A focused text control keeps Ctrl+A for its own select-all.
+    const bool text_focused = dynamic_cast<wxTextCtrl *>(wxWindow::FindFocus()) != nullptr;
+    if (event.ControlDown() && event.GetKeyCode() == 'A') {
+        if (event.ShiftDown()) {
+            select_all_matches();
+            return;
+        }
+        if (!text_focused) {
+            select_page();
+            return;
+        }
+    } else if (event.ControlDown() && event.GetKeyCode() == 'I') {
+        invert_page();
+        return;
+    }
+    event.Skip();
 }
 
 const ConfigProfilesDialog::ProfileRow *ConfigProfilesDialog::selected_profile() const
 {
-    const int row = m_profile_list->GetSelectedRow();
-    if (row == wxNOT_FOUND || static_cast<std::size_t>(row) >= m_filtered_rows.size())
+    if (m_selection.size() != 1)
         return nullptr;
-    return &m_profiles[m_filtered_rows[row]];
+    const std::string &id = *m_selection.ids().begin();
+    for (const ProfileRow &row : m_profiles)
+        if (row.data_dir.string() == id)
+            return &row;
+    return nullptr;
 }
 
 void ConfigProfilesDialog::update_buttons()
 {
     const ProfileRow *sel = selected_profile();
+    const std::size_t selected = m_selection.size();
+    const std::size_t hidden   = selected - m_selection.count_within(page_ids());
     const bool armed = m_confirm_slider != nullptr && m_confirm_slider->IsConfirmed();
     m_export_button->Enable(!m_busy && armed);
     m_import_button->Enable(!m_busy && armed);
+    // Launch starts another instance on ONE data folder: single-row by nature.
     m_launch_button->Enable(!m_busy && sel != nullptr && !sel->active);
+    if (selected > 1)
+        m_launch_button->SetToolTip(_L("Launch starts one instance on one profile: select a single row to launch it."));
+    else if (sel != nullptr && sel->active)
+        m_launch_button->SetToolTip(_L("This profile is already running (it is the active one)."));
+    else
+        m_launch_button->SetToolTip(_L("Start another Bambu Studio instance on the selected profile"));
     m_snapshot_button->Enable(!m_busy && sel != nullptr && m_history != nullptr);
     m_history_button->Enable(!m_busy && sel != nullptr && m_history != nullptr);
+    m_bulk_snapshot_button->Enable(!m_busy && selected > 0 && m_history != nullptr);
+    m_export_list_button->Enable(!m_profiles.empty());
+    m_select_page_button->SetLabel(wxString::Format(_L("Select visible (%d)"), static_cast<int>(m_filtered_rows.size())));
+    m_select_page_button->Enable(!m_filtered_rows.empty());
+    m_select_all_button->SetLabel(wxString::Format(_L("Select all %d profiles"), static_cast<int>(m_profiles.size())));
+    m_select_all_button->Enable(!m_profiles.empty());
+    m_invert_button->Enable(!m_filtered_rows.empty());
+    if (selected > 0 && m_status_label != nullptr && !m_busy) {
+        wxString text = wxString::Format(_L("%d profiles selected"), static_cast<int>(selected));
+        if (hidden > 0)
+            // TRN: %d selected profiles are hidden by the current search filter.
+            text += wxString::Format(_L(" (%d hidden by the search)"), static_cast<int>(hidden));
+        m_status_label->SetLabel(text);
+    }
+    m_list_card->Layout();
 }
 
 void ConfigProfilesDialog::poll_operation(wxTimerEvent &)
@@ -483,20 +678,7 @@ void ConfigProfilesDialog::on_snapshot(wxCommandEvent &)
     m_status_label->SetLabel(_L("Recording a complete profile snapshot..."));
     ProjectHistoryManager *history = m_history.get();
     m_busy_future = std::async(std::launch::async, [row, identity, staging, history]() -> wxString {
-        std::error_code ec;
-        std::filesystem::create_directories(staging.parent_path(), ec);
-        int skipped = 0;
-        wxString err = zip_directory(row.data_dir, staging, &skipped);
-        if (!err.IsEmpty())
-            return err;
-        ProjectHistoryCommitOptions options;
-        options.message = "Manual profile snapshot";
-        auto result = history->commit_snapshot(identity, staging, options).get();
-        std::filesystem::remove(staging, ec);
-        if (!result.ok())
-            return wxString::Format(_L("The snapshot could not be recorded: %s"),
-                                    wxString::FromUTF8(result.error.message));
-        return wxString{};
+        return record_snapshot(row, identity, staging, history);
     });
     m_busy_done = [this, name = row.name](wxString error) {
         m_status_label->SetLabel(error.IsEmpty()
@@ -505,6 +687,152 @@ void ConfigProfilesDialog::on_snapshot(wxCommandEvent &)
     };
     m_poll_timer.Start(POLL_INTERVAL_MS);
     update_buttons();
+}
+
+wxString ConfigProfilesDialog::record_snapshot(const ProfileRow &row, const std::filesystem::path &identity,
+                                               const std::filesystem::path &staging, ProjectHistoryManager *history)
+{
+    std::error_code ec;
+    std::filesystem::create_directories(staging.parent_path(), ec);
+    int skipped = 0;
+    wxString err = zip_directory(row.data_dir, staging, &skipped);
+    if (!err.IsEmpty())
+        return err;
+    ProjectHistoryCommitOptions options;
+    options.message = "Manual profile snapshot";
+    auto result = history->commit_snapshot(identity, staging, options).get();
+    std::filesystem::remove(staging, ec);
+    if (!result.ok())
+        return wxString::Format(_L("The snapshot could not be recorded: %s"),
+                                wxString::FromUTF8(result.error.message));
+    return wxString{};
+}
+
+void ConfigProfilesDialog::on_bulk_snapshot(wxCommandEvent &)
+{
+    if (m_history == nullptr || m_selection.empty())
+        return;
+    // Reviewable plan: one row per selected profile. A profile whose data
+    // folder is gone, or any profile while a snapshot / transfer is already
+    // running, is skipped with the reason.
+    Bulk::BulkActionPlan plan;
+    plan.action      = _u8L("Snapshot profiles");
+    plan.consequence = _u8L("A complete zip of each profile's data folder is committed to that profile's local history. Nothing is deleted or overwritten.");
+    std::vector<ProfileRow> targets;
+    for (const ProfileRow &row : m_profiles) {
+        if (!m_selection.contains(row.data_dir.string()))
+            continue;
+        const std::string label  = row.name.ToUTF8().data();
+        const std::string detail = row.data_dir.string();
+        std::error_code ec;
+        if (m_busy)
+            plan.items.push_back(Bulk::BulkItem::skipped(label, _u8L("Another snapshot or transfer is still running"), detail));
+        else if (!std::filesystem::is_directory(row.data_dir, ec) || ec)
+            plan.items.push_back(Bulk::BulkItem::skipped(label, _u8L("The data folder no longer exists"), detail));
+        else {
+            plan.items.push_back(Bulk::BulkItem::changed(label, detail));
+            targets.push_back(row);
+        }
+    }
+    if (!Bulk::BulkActionPreviewDialog::Run(this, plan) || targets.empty())
+        return;
+
+    ProjectHistoryManager *history = m_history.get();
+    std::vector<wxString> errors;
+    bool cancelled = false;
+    std::size_t failed = 0;
+    m_busy = true;
+    update_buttons();
+    const std::size_t done = Bulk::BulkActionPreviewDialog::RunWithProgress(
+        this, _L("Recording profile snapshots"), targets.size(),
+        [&targets](std::size_t i) { return targets[i].name; },
+        [this, &targets, &errors, history](std::size_t i) {
+            const ProfileRow &row = targets[i];
+            const std::filesystem::path identity = profile_archive_path(row);
+            const std::filesystem::path staging  = profiles_root() / ".staging" / (row.name.ToStdString() + ".snapshot.3mf");
+            const wxString err = record_snapshot(row, identity, staging, history);
+            if (!err.IsEmpty()) {
+                errors.push_back(row.name + ": " + err);
+                return false;
+            }
+            return true;
+        },
+        &cancelled, &failed);
+    m_busy = false;
+    const std::size_t recorded = done - failed;
+    // TRN: %1$d snapshots recorded, %2$d failed, %3$d skipped (preview skips + not reached after cancel).
+    wxString text = wxString::Format(_L("Recorded %d snapshots, %d failed, %d skipped."),
+                                     static_cast<int>(recorded), static_cast<int>(failed),
+                                     static_cast<int>(plan.skipped() + (targets.size() - done)));
+    if (cancelled)
+        text += " " + _L("The run was cancelled.");
+    if (!errors.empty())
+        text += " " + errors.front();
+    m_status_label->SetLabel(text);
+    update_buttons();
+}
+
+void ConfigProfilesDialog::on_export_list(wxCommandEvent &)
+{
+    if (m_profiles.empty())
+        return;
+    const wxString default_name = wxString::Format("BambuStudio-profiles-%s", wxDateTime::Now().Format("%Y%m%d-%H%M"));
+    wxFileDialog dialog(this, _L("Export the profile list"), wxEmptyString, default_name,
+                        "JSON (*.json)|*.json|CSV (*.csv)|*.csv", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+    if (dialog.ShowModal() != wxID_OK)
+        return;
+    const bool csv = dialog.GetFilterIndex() == 1;
+    wxString path = dialog.GetPath();
+    const wxString ext = csv ? ".csv" : ".json";
+    if (!path.Lower().EndsWith(ext))
+        path += ext;
+
+    // Selected rows when there is a selection, otherwise every profile;
+    // the export states which.
+    std::vector<const ProfileRow *> rows;
+    for (const ProfileRow &row : m_profiles)
+        if (m_selection.empty() || m_selection.contains(row.data_dir.string()))
+            rows.push_back(&row);
+
+    auto last_snapshot = [this](const ProfileRow &row) -> std::string {
+        if (m_history == nullptr)
+            return {};
+        auto versions = m_history->list_versions(profile_archive_path(row)).get();
+        if (!versions.ok() || versions.versions.empty())
+            return {};
+        std::chrono::system_clock::time_point latest = versions.versions.front().committed_at;
+        for (const auto &v : versions.versions)
+            if (v.committed_at > latest)
+                latest = v.committed_at;
+        const wxDateTime when(std::chrono::system_clock::to_time_t(latest));
+        return when.FormatISOCombined().ToUTF8().data();
+    };
+
+    std::string payload;
+    if (csv) {
+        payload = "name,data_folder,active,last_snapshot\r\n";
+        for (const ProfileRow *row : rows)
+            payload += csv_escape(row->name.ToUTF8().data()) + "," + csv_escape(row->data_dir.string()) + "," +
+                       (row->active ? "true" : "false") + "," + csv_escape(last_snapshot(*row)) + "\r\n";
+    } else {
+        payload = "{\n  \"schema\": \"bambustudio.config-profiles/1\",\n  \"scope\": \"" +
+                  std::string(m_selection.empty() ? "all" : "selected") + "\",\n  \"profiles\": [\n";
+        for (std::size_t i = 0; i < rows.size(); ++i) {
+            const ProfileRow *row = rows[i];
+            const std::string snap = last_snapshot(*row);
+            payload += "    {\"name\": \"" + json_escape(row->name.ToUTF8().data()) + "\", \"data_folder\": \"" +
+                       json_escape(row->data_dir.string()) + "\", \"active\": " + (row->active ? "true" : "false") +
+                       ", \"last_snapshot\": " + (snap.empty() ? std::string("null") : "\"" + json_escape(snap) + "\"") + "}" +
+                       (i + 1 < rows.size() ? "," : "") + "\n";
+        }
+        payload += "  ]\n}\n";
+    }
+    boost::nowide::ofstream out(path.ToUTF8().data(), std::ios::binary | std::ios::trunc);
+    const bool ok = static_cast<bool>(out) && static_cast<bool>(out << payload);
+    m_status_label->SetLabel(ok
+        // TRN: %1$d profiles written, %2$s file path.
+        ? wxString::Format(_L("Exported %d profiles to %s"), static_cast<int>(rows.size()), path)
+        : wxString::Format(_L("Could not write the export to %s. Check the folder is writable and try again."), path));
 }
 
 void ConfigProfilesDialog::on_history(wxCommandEvent &)

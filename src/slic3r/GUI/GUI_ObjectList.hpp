@@ -437,6 +437,15 @@ public:
     void select_all();
     void expand_collapse_plate(int plate_idx, bool expand);
     void select_item_all_children();
+
+    // Bulk actions over the selected top-level objects (the "Bulk" group of
+    // the object context menu). Each one works on the objects that own the
+    // current selection, in list order.
+    std::vector<int> selected_object_indexes();
+    void invert_selection();
+    void bulk_rename();
+    void bulk_delete();
+    void bulk_export();
     void update_selection_mode();
     bool check_last_selection(wxString& msg_str);
     // correct current selections to avoid of the possible conflicts

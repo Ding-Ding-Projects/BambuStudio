@@ -90,6 +90,7 @@
 #include "libslic3r/LocalesUtils.hpp"
 #include "libslic3r/SLAPrint.hpp"
 #include "BulkFilamentDialog.hpp"
+#include "Bulk/BulkActionPreviewDialog.hpp"
 #include "MixedFilamentDialog.hpp"
 #include "ColorDecomposeDialog.hpp"
 #include "ColorDecomposeSupport.hpp"
@@ -7709,6 +7710,87 @@ void Sidebar::bulk_filament_actions()
     if (dlg.ShowModal() != wxID_OK)
         return;
     BulkFilamentResult res = dlg.get_result();
+
+    // Reviewable preview before anything is applied: one row per checked slot
+    // (plus one row for the add action), the exact staged consequence, and
+    // the two-key gate when a delete is staged. Skip reasons mirror what
+    // delete_filament() itself refuses: it never removes the last filament,
+    // so past the min-1 rule the remaining slots are reported as skipped.
+    {
+        Bulk::BulkActionPlan plan;
+        plan.action      = into_u8(_L("Bulk filament actions"));
+        plan.destructive = res.do_delete;
+
+        const size_t slot_count  = res.selected_physical.size();
+        std::vector<wxString> staged;
+        if (res.do_preset)
+            // TRN %1$s preset name, %2$d slot count.
+            staged.push_back(wxString::Format(_L("preset \"%s\" to %d slot(s)"), from_u8(res.preset_name), int(slot_count)));
+        if (res.do_color)
+            staged.push_back(wxString::Format(_L("colour %s to %d slot(s)"), from_u8(res.color_hex), int(slot_count)));
+        // Only combos beyond the first can go; the sidebar always keeps one.
+        const size_t deletable   = combos_filament().size() > 1 ? combos_filament().size() - 1 : 0;
+        const size_t will_delete = res.do_delete ? std::min(slot_count, deletable) : 0;
+        if (res.do_delete)
+            staged.push_back(wxString::Format(_L("delete %d slot(s)"), int(will_delete)));
+        if (res.add_count > 0)
+            staged.push_back(wxString::Format(_L("add %d new filament(s)"), res.add_count));
+        wxString consequence = _L("Staged:");
+        for (size_t i = 0; i < staged.size(); ++i)
+            consequence += (i == 0 ? " " : "; ") + staged[i];
+        consequence += ".";
+        if (res.do_delete)
+            consequence += " " + _L("Deleted slots are removed from the project; objects and paint assigned to them move to another slot.");
+        plan.consequence = into_u8(consequence);
+
+        // Deletion runs in descending config-index order and stops at the
+        // min-1 rule, so the highest-index slots go first; the lowest ones
+        // past the limit stay.
+        std::vector<size_t> delete_order;
+        for (size_t phys : res.selected_physical)
+            if (phys < config_indices.size())
+                delete_order.push_back(phys);
+        std::sort(delete_order.begin(), delete_order.end(),
+                  [&config_indices](size_t a, size_t b) { return config_indices[a] > config_indices[b]; });
+        std::set<size_t> delete_kept; // physical slots the min-1 rule keeps
+        for (size_t k = will_delete; k < delete_order.size(); ++k)
+            delete_kept.insert(delete_order[k]);
+
+        for (size_t phys : res.selected_physical) {
+            const std::string label  = into_u8(wxString::Format(_L("Slot %d: %s"), int(phys) + 1,
+                                                                phys < names.size() ? from_u8(names[phys]) : wxString()));
+            const std::string detail = phys < color_strs.size() ? color_strs[phys] : std::string();
+            if (phys >= config_indices.size()) {
+                plan.items.push_back(Bulk::BulkItem::skipped(label, into_u8(_L("the slot no longer exists")), detail));
+                continue;
+            }
+            if (res.do_delete && delete_kept.count(phys)) {
+                // A kept slot still receives the staged preset/colour.
+                if (res.do_preset || res.do_color)
+                    plan.items.push_back(Bulk::BulkItem::changed(label, detail,
+                        into_u8(_L("kept (at least one filament must remain); preset/colour still applied"))));
+                else
+                    plan.items.push_back(Bulk::BulkItem::skipped(label, into_u8(_L("at least one filament must remain")), detail));
+                continue;
+            }
+            std::string after;
+            if (res.do_delete)
+                after = into_u8(_L("deleted"));
+            else {
+                wxString a;
+                if (res.do_preset) a = from_u8(res.preset_name);
+                if (res.do_color)  a += (a.empty() ? "" : ", ") + from_u8(res.color_hex);
+                after = into_u8(a);
+            }
+            plan.items.push_back(Bulk::BulkItem::changed(label, detail, after));
+        }
+        if (res.add_count > 0)
+            plan.items.push_back(Bulk::BulkItem::changed(into_u8(wxString::Format(_L("Add %d new filament(s)"), res.add_count)),
+                                                         into_u8(_L("appended after the last slot"))));
+
+        if (plan.empty() || !Bulk::BulkActionPreviewDialog::Run(this, plan))
+            return;
+    }
 
     wxWindowUpdateLocker noUpdates(this);
 
@@ -26287,6 +26369,37 @@ void Plater::export_stl(bool extended, bool selection_only, bool multi_stls)
 
     Slic3r::store_stl(path_u8.c_str(), &mesh, true);
 //    p->statusbar()->set_status_text(format_wxstr(_L("STL file exported to %s"), path));
+}
+
+bool Plater::export_object_stl(size_t obj_idx, const std::string& path)
+{
+    if (obj_idx >= p->model.objects.size() || path.empty())
+        return false;
+    const ModelObject& mo = *p->model.objects[obj_idx];
+
+    // Same recipe as the "Export as STLs" path without mesh boolean: merge
+    // every model part in its volume frame, then stamp every instance.
+    TriangleMesh parts;
+    for (const ModelVolume* v : mo.volumes)
+        if (v->is_model_part()) {
+            TriangleMesh vol_mesh(v->mesh());
+            vol_mesh.transform(v->get_matrix(), true);
+            parts.merge(vol_mesh);
+        }
+    if (parts.empty())
+        return false;
+
+    TriangleMesh mesh;
+    for (const ModelInstance* inst : mo.instances) {
+        TriangleMesh m = parts;
+        m.transform(inst->get_matrix(), true);
+        mesh.merge(m);
+    }
+    if (mesh.empty())
+        return false;
+    mesh.translate(-mo.origin_translation.cast<float>());
+
+    return Slic3r::store_stl(path.c_str(), &mesh, true);
 }
 
 //BBS: remove amf export

@@ -1,16 +1,71 @@
 #include "MultiMachineManagerPage.hpp"
+#include "Bulk/BulkActionPlan.hpp"
+#include "Bulk/BulkActionPreviewDialog.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
+#include "NotificationManager.hpp"
+#include "Plater.hpp"
+#include "Widgets/CheckBox.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/SearchField.hpp"
 
 #include "DeviceCore/DevManager.h"
 #include "Widgets/Label.hpp"
 
+#include <algorithm>
+#include <fstream>
+
+#include <wx/filedlg.h>
+#include <wx/filename.h>
 #include <wx/wrapsizer.h>
 
 namespace Slic3r {
 namespace GUI {
+
+namespace {
+
+// Logical size of the kit CheckBox glyph plus the gap to the icon tile; the
+// card header columns shift right by this much so nothing overlaps the box.
+constexpr int CARD_CHECKBOX_PX  = 20;
+constexpr int CARD_CHECKBOX_GAP = 8;
+
+std::string json_escape(const std::string& in)
+{
+    std::string out;
+    out.reserve(in.size() + 8);
+    for (const unsigned char c : in) {
+        switch (c) {
+        case '"': out += "\\\""; break;
+        case '\\': out += "\\\\"; break;
+        case '\n': out += "\\n"; break;
+        case '\r': out += "\\r"; break;
+        case '\t': out += "\\t"; break;
+        default:
+            if (c < 0x20) {
+                char buf[8];
+                std::snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned>(c));
+                out += buf;
+            } else {
+                out.push_back(static_cast<char>(c));
+            }
+        }
+    }
+    return out;
+}
+
+std::string csv_escape(const std::string& in)
+{
+    if (in.find_first_of(",\"\r\n") == std::string::npos)
+        return in;
+    std::string out = "\"";
+    for (const char c : in) {
+        if (c == '"') out += "\"\""; else out.push_back(c);
+    }
+    out += "\"";
+    return out;
+}
+
+} // namespace
 
 MultiMachineItem::MultiMachineItem(wxWindow* parent, MachineObject* obj)
     : DeviceItem(parent, obj)
@@ -20,6 +75,26 @@ MultiMachineItem::MultiMachineItem(wxWindow* parent, MachineObject* obj)
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize(wxSize(FromDIP(DEVICE_CARD_WIDTH), FromDIP(DEVICE_CARD_HEIGHT)));
     SetMaxSize(wxSize(FromDIP(DEVICE_CARD_WIDTH), FromDIP(DEVICE_CARD_HEIGHT)));
+
+    // Bulk-selection checkbox, vertically centred on the 44px icon tile row.
+    // It is a real child control so it is keyboard-reachable and carries its
+    // own accessible name; the card paint leaves its column free.
+    m_check = new CheckBox(this);
+    m_check->SetColorScheme(MD3::ColorScheme::Device);
+    m_check->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    {
+        const int pad  = FromDIP(16);
+        const int tile = FromDIP(44);
+        m_check->SetPosition(wxPoint(pad, pad + (tile - FromDIP(CARD_CHECKBOX_PX)) / 2));
+    }
+    m_check->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent&) {
+        m_selected = m_check->GetValue();
+        update_accessible_name();
+        Refresh();
+        if (m_on_toggle)
+            m_on_toggle(this, wxGetKeyState(WXK_SHIFT));
+    });
+    update_accessible_name();
 
     Bind(wxEVT_PAINT, &MultiMachineItem::paintEvent, this);
     Bind(wxEVT_ENTER_WINDOW, &MultiMachineItem::OnEnterWindow, this);
@@ -33,6 +108,27 @@ MultiMachineItem::MultiMachineItem(wxWindow* parent, MachineObject* obj)
         }
     });
     wxGetApp().UpdateDarkUIWin(this);
+}
+
+void MultiMachineItem::SetSelected(bool selected)
+{
+    if (m_selected == selected && m_check && m_check->GetValue() == selected)
+        return;
+    m_selected = selected;
+    if (m_check)
+        m_check->SetValue(selected);
+    update_accessible_name();
+    Refresh();
+}
+
+void MultiMachineItem::update_accessible_name()
+{
+    const wxString name = obj_ ? wxString::FromUTF8(obj_->get_dev_name()) : wxString();
+    // TRN: Accessible name of a device card; %1$s device name, %2$s "selected" or "not selected".
+    SetName(wxString::Format(_L("%s, %s"), name, m_selected ? _L("selected") : _L("not selected")));
+    if (m_check)
+        // TRN: Accessible name of the per-device selection checkbox; %s is the device name.
+        m_check->SetName(wxString::Format(_L("Select %s"), name));
 }
 
 void MultiMachineItem::OnEnterWindow(wxMouseEvent& evt)
@@ -143,12 +239,16 @@ void MultiMachineItem::doRender(wxDC& dc)
 
     // ---- Card surface + interactive hover border (Card.jsx: sc-low fill,
     // 1px outline-variant, primary on hover, r16) ----
-    dc.SetPen(wxPen(StateColor::semantic(m_hover ? MD3::Role::Primary : MD3::Role::OutlineVariant)));
-    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+    dc.SetPen(wxPen(StateColor::semantic((m_hover || m_selected) ? MD3::Role::Primary : MD3::Role::OutlineVariant)));
+    dc.SetBrush(wxBrush(StateColor::semantic(m_selected ? MD3::Role::SecondaryContainer : MD3::Role::SurfaceContainerLow)));
     dc.DrawRoundedRectangle(0, 0, size.x - 1, size.y - 1, FromDIP(16));
 
     if (!obj_)
         return;
+
+    // The checkbox child sits at the far left of the header row; every header
+    // column starts after it.
+    const int checkW = FromDIP(CARD_CHECKBOX_PX) + FromDIP(CARD_CHECKBOX_GAP);
 
     // Local ellipsizing text draw (top-left anchored, unlike the vertically
     // centered DrawTextWithEllipsis used by the legacy row).
@@ -173,10 +273,10 @@ void MultiMachineItem::doRender(wxDC& dc)
     // icon tile (r12 sc-highest + print glyph 26 on-surface-variant)
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
-    dc.DrawRoundedRectangle(pad, headTop, tile, tile, FromDIP(12));
+    dc.DrawRoundedRectangle(pad + checkW, headTop, tile, tile, FromDIP(12));
     if (glyphOk) {
         MaterialIcon::drawCentered(dc, MaterialIcon::Print, FromDIP(26),
-            StateColor::semantic(MD3::Role::OnSurfaceVariant), wxRect(pad, headTop, tile, tile));
+            StateColor::semantic(MD3::Role::OnSurfaceVariant), wxRect(pad + checkW, headTop, tile, tile));
     }
 
     // status dot + text (right-aligned within the header row)
@@ -204,7 +304,7 @@ void MultiMachineItem::doRender(wxDC& dc)
     dc.DrawText(statusText, statusTextX, headCenterY - dc.GetTextExtent(statusText).GetHeight() / 2);
 
     // name (14/600) + model/task sub-line (11.5 on-surface-variant), ellipsized
-    const int textX    = pad + tile + FromDIP(12);
+    const int textX    = pad + checkW + tile + FromDIP(12);
     const int textMaxW = (dotX - FromDIP(8)) - textX;
     wxString dev_name = wxString::FromUTF8(obj_->get_dev_name());
     // Sub-line surfaces the running job when printing (as the legacy row did),
@@ -370,6 +470,45 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     toolbar_sizer->Add(m_search, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
     toolbar_sizer->AddStretchSpacer(1);
     toolbar_sizer->Add(m_button_edit, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
+
+    // Bulk-selection strip: page / all-matches / invert / clear, the counts
+    // label, and the bulk actions over the selected devices.
+    //   "Send to selected..." is not wired: the multi-machine send dialog
+    //   (SendMultiMachinePage) has no entry point that accepts a preselected
+    //   device set, so there is nothing to hand the selection to.
+    //   "Remove selected from list" is not wired: this page has no single
+    //   remove/unbind action of its own (membership is edited in the
+    //   Edit Printers picker), so there is no per-device action to run in bulk.
+    auto* bulk_sizer = new wxBoxSizer(wxHORIZONTAL);
+    const auto make_bulk_button = [this](const wxString& text, Button::Variant variant) {
+        auto* b = new Button(m_main_panel, text);
+        b->SetVariant(variant);
+        b->SetButtonSize(Button::Size::Small);
+        b->SetColorScheme(MD3::ColorScheme::Device);
+        return b;
+    };
+    m_button_select_page = make_bulk_button(_L("Select this page"), Button::Variant::Tonal);
+    m_button_select_all  = make_bulk_button(_L("Select all matches"), Button::Variant::Tonal);
+    m_button_invert      = make_bulk_button(_L("Invert selection"), Button::Variant::Tonal);
+    m_button_clear       = make_bulk_button(_L("Clear"), Button::Variant::Text);
+    m_button_export      = make_bulk_button(_L("Export selected..."), Button::Variant::Outlined);
+    m_button_select_page->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { select_page(); });
+    m_button_select_all->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { select_all_matches(); });
+    m_button_invert->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { invert_selection(); });
+    m_button_clear->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { clear_selection(); });
+    m_button_export->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { bulk_export(); });
+    // TRN: Tooltip of the device-farm "Export selected..." bulk action.
+    m_button_export->SetToolTip(_L("Writes the selected devices (name, id, model, status, task, progress) to a JSON or CSV file"));
+    m_bulk_counts = new Label(m_main_panel, Label::Body_12, wxEmptyString);
+    m_bulk_counts->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    bulk_sizer->Add(m_button_select_page, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    bulk_sizer->Add(m_button_select_all, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    bulk_sizer->Add(m_button_invert, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    bulk_sizer->Add(m_button_clear, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    bulk_sizer->Add(m_bulk_counts, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    bulk_sizer->Add(m_button_export, 0, wxALIGN_CENTER_VERTICAL, 0);
+
+    Bind(wxEVT_CHAR_HOOK, &MultiMachineManagerPage::on_char_hook, this);
 
     // Sort strip: no longer pinned to the fixed farm width; it spans fluidly
     // (added wxEXPAND below) with the two functional sort toggles left-packed.
@@ -582,6 +721,8 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
 
     m_main_sizer->AddSpacer(FromDIP(16));
     m_main_sizer->Add(toolbar_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(4));
+    m_main_sizer->AddSpacer(FromDIP(8));
+    m_main_sizer->Add(bulk_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(4));
     m_main_sizer->AddSpacer(FromDIP(12));
     m_main_sizer->Add(m_table_head_panel, 0, wxEXPAND, 0);
     m_main_sizer->Add(m_tip_text, 0, wxEXPAND | wxTOP, FromDIP(50));
@@ -598,6 +739,199 @@ MultiMachineManagerPage::MultiMachineManagerPage(wxWindow* parent)
     Fit();
 
     Bind(wxEVT_TIMER, &MultiMachineManagerPage::on_timer, this);
+    update_bulk_controls();
+}
+
+// ---- Bulk selection -------------------------------------------------------
+
+void MultiMachineManagerPage::on_item_toggled(MultiMachineItem* item, bool shift)
+{
+    if (!item || !item->obj_) return;
+    const std::string id = item->obj_->get_dev_id();
+    if (shift && !m_bulk_anchor.empty() && item->IsSelected()) {
+        // Shift-click: select the inclusive run between the anchor and this
+        // card in the current page order.
+        m_bulk.select_range(m_page_ids, m_bulk_anchor, id);
+    } else {
+        m_bulk.set(id, item->IsSelected());
+    }
+    m_bulk_anchor = id;
+    apply_selection_to_items();
+    update_bulk_controls();
+}
+
+void MultiMachineManagerPage::select_page()
+{
+    m_bulk.select_page(m_page_ids);
+    apply_selection_to_items();
+    update_bulk_controls();
+}
+
+void MultiMachineManagerPage::select_all_matches()
+{
+    m_bulk.select_all_matches(m_match_ids);
+    apply_selection_to_items();
+    update_bulk_controls();
+}
+
+void MultiMachineManagerPage::invert_selection()
+{
+    m_bulk.invert(m_match_ids);
+    apply_selection_to_items();
+    update_bulk_controls();
+}
+
+void MultiMachineManagerPage::clear_selection()
+{
+    m_bulk.clear();
+    m_bulk_anchor.clear();
+    apply_selection_to_items();
+    update_bulk_controls();
+}
+
+void MultiMachineManagerPage::apply_selection_to_items()
+{
+    for (MultiMachineItem* item : m_device_items)
+        if (item && item->obj_)
+            item->SetSelected(m_bulk.contains(item->obj_->get_dev_id()));
+}
+
+void MultiMachineManagerPage::update_bulk_controls()
+{
+    if (!m_bulk_counts) return;
+    const int page    = static_cast<int>(m_page_ids.size());
+    const int matches = static_cast<int>(m_match_ids.size());
+    // TRN: %d is how many device cards are on the current page.
+    m_button_select_page->SetLabel(wxString::Format(_L("Select this page (%d)"), page));
+    m_button_select_page->SetToolTip(_L("Selects every device card on this page") + " (Ctrl+A)");
+    // TRN: %d is how many devices match the search across every page.
+    m_button_select_all->SetLabel(wxString::Format(_L("Select all %d matches"), matches));
+    m_button_select_all->SetToolTip(_L("Selects every device matching the search, on every page") + " (Ctrl+Shift+A)");
+    m_button_invert->SetToolTip(_L("Inverts the selection across every matching device") + " (Ctrl+I)");
+    m_button_clear->SetToolTip(_L("Clears the selection"));
+
+    const std::size_t selected = m_bulk.size();
+    const std::size_t on_page  = m_bulk.count_within(m_page_ids);
+    // TRN: %d devices are selected in total.
+    wxString counts = wxString::Format(_L("%d selected"), static_cast<int>(selected));
+    if (selected > on_page)
+        // TRN: %d selected devices sit on other pages (or are hidden by the search).
+        counts += " " + wxString::Format(_L("(%d on other pages)"), static_cast<int>(selected - on_page));
+    m_bulk_counts->SetLabel(counts);
+
+    m_button_select_page->Enable(page > 0);
+    m_button_select_all->Enable(matches > 0);
+    m_button_invert->Enable(matches > 0);
+    m_button_clear->Enable(selected > 0);
+    m_button_export->Enable(selected > 0);
+    m_main_panel->Layout();
+}
+
+void MultiMachineManagerPage::on_char_hook(wxKeyEvent& event)
+{
+    const bool ctrl  = event.ControlDown() || event.RawControlDown();
+    const bool shift = event.ShiftDown();
+    // Leave the search field's own editing shortcuts alone.
+    wxWindow* focus = wxWindow::FindFocus();
+    const bool editing = focus && dynamic_cast<wxTextCtrl*>(focus) != nullptr;
+    if (ctrl && !event.AltDown() && !editing) {
+        if (event.GetKeyCode() == 'A') {
+            if (shift) select_all_matches(); else select_page();
+            return;
+        }
+        if (event.GetKeyCode() == 'I' && !shift) {
+            invert_selection();
+            return;
+        }
+    }
+    event.Skip();
+}
+
+void MultiMachineManagerPage::bulk_export()
+{
+    // Selected devices in display order; devices no longer in the farm are
+    // dropped by retain() in refresh_user_device, so every id resolves.
+    std::vector<std::string> all_ids;
+    all_ids.reserve(m_user_machines.size());
+    for (const auto& kv : m_user_machines) all_ids.push_back(kv.first);
+    const std::vector<std::string> selected = m_bulk.ordered_within(all_ids);
+    if (selected.empty()) return;
+
+    // TRN: Title of the file picker for exporting selected devices.
+    wxFileDialog picker(this, _L("Export selected devices"), wxEmptyString, "devices.json",
+                        "JSON (*.json)|*.json|CSV (*.csv)|*.csv", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+    if (picker.ShowModal() != wxID_OK) return;
+    wxFileName target(picker.GetPath());
+    const bool csv = picker.GetFilterIndex() == 1 || target.GetExt().Lower() == "csv";
+    if (target.GetExt().IsEmpty()) target.SetExt(csv ? "csv" : "json");
+
+    struct Row
+    {
+        std::string name, id, model, status, task;
+        int         progress{ -1 };
+    };
+    std::vector<Row>     rows;
+    Bulk::BulkActionPlan plan;
+    plan.action = _u8L("Export devices");
+    // TRN: %s is the export file name.
+    plan.consequence = std::string(wxString::Format(csv ? _L("The selected devices are written as CSV rows to %s. Devices are not changed.")
+                                                        : _L("The selected devices are written as a JSON list to %s. Devices are not changed."),
+                                                    target.GetFullName()).ToUTF8());
+    for (const std::string& id : selected) {
+        auto it = m_user_machines.find(id);
+        if (it == m_user_machines.end() || !it->second) {
+            plan.items.push_back(Bulk::BulkItem::skipped(id, _u8L("device is no longer in the farm")));
+            continue;
+        }
+        MachineObject* obj = it->second;
+        Row row;
+        row.name   = obj->get_dev_name();
+        row.id     = id;
+        row.model  = obj->printer_type;
+        row.status = obj->is_online() ? obj->print_status : std::string("OFFLINE");
+        row.task   = obj->subtask_name;
+        if (obj->is_in_printing() && obj->subtask_) row.progress = obj->subtask_->task_progress;
+        plan.items.push_back(Bulk::BulkItem::changed(row.name, row.model + " / " + row.status));
+        rows.push_back(std::move(row));
+    }
+    if (!Bulk::BulkActionPreviewDialog::Run(this, plan)) return;
+
+    const int of = static_cast<int>(m_user_machines.size());
+    std::ofstream out(target.GetFullPath().ToStdWstring(), std::ios::binary | std::ios::trunc);
+    if (!out) {
+        // TRN: %s is the export file path.
+        wxGetApp().plater()->get_notification_manager()->push_notification(
+            NotificationType::CustomNotification, NotificationManager::NotificationLevel::ErrorNotificationLevel,
+            std::string(wxString::Format(_L("Could not write %s"), target.GetFullPath()).ToUTF8()));
+        return;
+    }
+    if (csv) {
+        // Comment header states the selection scope; UTF-8, LF line endings.
+        out << "# " << rows.size() << " of " << of << " devices selected\n";
+        out << "name,dev_id,model,status,task,progress\n";
+        for (const Row& r : rows) {
+            out << csv_escape(r.name) << ',' << csv_escape(r.id) << ',' << csv_escape(r.model) << ',' << csv_escape(r.status)
+                << ',' << csv_escape(r.task) << ',';
+            if (r.progress >= 0) out << r.progress;
+            out << '\n';
+        }
+    } else {
+        out << "{\n  \"schema\": \"bambustudio.device-export/1\",\n  \"encoding\": \"UTF-8\",\n";
+        out << "  \"selected\": " << rows.size() << ",\n  \"of\": " << of << ",\n  \"devices\": [\n";
+        for (std::size_t i = 0; i < rows.size(); ++i) {
+            const Row& r = rows[i];
+            out << "    {\"name\": \"" << json_escape(r.name) << "\", \"dev_id\": \"" << json_escape(r.id) << "\", \"model\": \""
+                << json_escape(r.model) << "\", \"status\": \"" << json_escape(r.status) << "\", \"task\": \"" << json_escape(r.task)
+                << "\", \"progress\": ";
+            if (r.progress >= 0) out << r.progress; else out << "null";
+            out << "}" << (i + 1 < rows.size() ? "," : "") << "\n";
+        }
+        out << "  ]\n}\n";
+    }
+    out.close();
+    // TRN: %1$d devices were exported of %2$d in the farm, to file %3$s.
+    wxGetApp().plater()->get_notification_manager()->push_notification(
+        std::string(wxString::Format(_L("Exported %d of %d devices to %s"), static_cast<int>(rows.size()), of, target.GetFullName()).ToUTF8()));
 }
 
 void MultiMachineManagerPage::update_page()
@@ -612,8 +946,15 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
 {
     m_sizer_machine_list->Clear(true);
     m_device_items.clear();
+    m_page_ids.clear();
+    m_match_ids.clear();
 
-    if(clear) return;
+    if (clear) {
+        m_user_machines.clear();
+        m_bulk.clear();
+        update_bulk_controls();
+        return;
+    }
 
     Slic3r::DeviceManager* dev = Slic3r::GUI::wxGetApp().getDeviceManager();
     if (!dev) return;
@@ -632,6 +973,13 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
 
 
     const int total_selected = static_cast<int>(user_machine.size());
+    m_user_machines = user_machine;
+    {
+        std::vector<std::string> live;
+        live.reserve(user_machine.size());
+        for (const auto& kv : user_machine) live.push_back(kv.first);
+        m_bulk.retain_listed(live);
+    }
 
     // Full state list for the selected devices.
     m_state_objs.clear();
@@ -670,6 +1018,7 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
     if (m_sort.rule != SortItem::SortRule::SR_None) {
         std::sort(filtered.begin(), filtered.end(), m_sort.get_machine_call_back());
     }
+    for (const ObjState& st : filtered) m_match_ids.push_back(st.dev_id);
 
     // Pagination is driven by the FILTERED count; keep the current page in range
     // as filtering shrinks the result set.
@@ -690,6 +1039,9 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
         auto machine = user_machine[dev_id];
 
         MultiMachineItem* di = new MultiMachineItem(m_machine_list, machine);
+        di->SetSelected(m_bulk.contains(dev_id));
+        di->SetOnToggle([this](MultiMachineItem* item, bool shift) { on_item_toggled(item, shift); });
+        m_page_ids.push_back(dev_id);
         m_device_items.push_back(di);
         // Fixed-size cards separated by a uniform gutter (the wxALL border is the
         // half-gutter); no wxEXPAND so cards keep their card width and wrap.
@@ -720,6 +1072,7 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
 
     update_page_number();
     m_flipping_panel->Show(m_total_page > 1);
+    update_bulk_controls();
     m_sizer_machine_list->Layout();
     m_machine_list->FitInside();
     Layout();
@@ -885,6 +1238,10 @@ void MultiMachineManagerPage::msw_rescale()
         m_search->SetMinSize(wxSize(FromDIP(240), FromDIP(40)));
         m_search->SetMaxSize(wxSize(FromDIP(340), FromDIP(40)));
     }
+    for (Button* b : {m_button_select_page, m_button_select_all, m_button_invert, m_button_clear, m_button_export})
+        if (b) b->Rescale();
+    for (MultiMachineItem* item : m_device_items)
+        if (item && item->m_check) item->m_check->Rescale();
 
 
     for (const auto& item : m_device_items) {

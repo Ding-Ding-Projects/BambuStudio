@@ -11,6 +11,11 @@ work is in progress.
   opens a searchable, filterable history of every toast (500 entries, persisted),
   with multi-select, bulk dismiss, bulk export in four formats and a
   slide-to-confirm bulk delete.
+- [Bulk actions](bulk-actions.md) — multi-select (click, shift-range,
+  Ctrl+A page / Ctrl+Shift+A all matches / Ctrl+I invert) on every list, a
+  reviewable "N selected / M will change / K skipped" preview before any bulk
+  action, rename-by-pattern with live preview and collision detection, and
+  destructive batches routed through the two-key super confirmation gate.
 - [Project version history](project-version-history.md) — local, libgit2-backed
   snapshots of every project, browsable/restorable from File ▸ Version history
   and the topbar history chip.

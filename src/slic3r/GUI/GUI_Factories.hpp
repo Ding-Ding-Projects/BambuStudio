@@ -154,6 +154,9 @@ private:
     void        append_menu_items_assembly_steps(wxMenu* menu);
     void        append_menu_item_delete(wxMenu* menu);
     void        append_menu_item_delete_all_cutter(wxMenu *menu);
+    // "Bulk" group: select all / select all matches / invert selection, and
+    // the reviewable bulk rename, delete and export over the selected objects.
+    void        append_menu_items_bulk(wxMenu* menu);
     void        append_menu_item_scale_selection_to_fit_print_volume(wxMenu* menu);
     void        append_menu_items_convert_unit(wxMenu* menu); // Add "Conver/Revert..." menu items (from/to inches/meters) after "Reload From Disk"
     void        append_menu_items_flush_options(wxMenu* menu);

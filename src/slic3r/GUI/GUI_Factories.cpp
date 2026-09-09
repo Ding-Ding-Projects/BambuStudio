@@ -519,6 +519,34 @@ void MenuFactory::append_menu_item_delete(wxMenu* menu)
 #endif
 }
 
+void MenuFactory::append_menu_items_bulk(wxMenu* menu)
+{
+    // Shortcuts are shown in the label the same way "Delete\tDelete" is, and
+    // each one names the binding ObjectList::key_event actually handles.
+    menu->AppendSeparator();
+    append_menu_item(menu, wxID_ANY, _L("Select all objects") + "\tCtrl+A", _L("Select every object in the list"),
+        [](wxCommandEvent&) { obj_list()->select_item_all_children(); }, "", nullptr,
+        []() { return !plater()->model().objects.empty(); }, m_parent);
+    // The object list is unfiltered, so "all matches" and "all objects" are the
+    // same set; the entry exists so the label set matches every other list.
+    append_menu_item(menu, wxID_ANY, _L("Select all matches") + "\tCtrl+Shift+A", _L("Select every object the list shows (the list has no filter, so this equals Select all objects)"),
+        [](wxCommandEvent&) { obj_list()->select_item_all_children(); }, "", nullptr,
+        []() { return !plater()->model().objects.empty(); }, m_parent);
+    append_menu_item(menu, wxID_ANY, _L("Invert selection") + "\tCtrl+I", _L("Select every unselected object and unselect the selected ones"),
+        [](wxCommandEvent&) { obj_list()->invert_selection(); }, "", nullptr,
+        []() { return !plater()->model().objects.empty(); }, m_parent);
+    menu->AppendSeparator();
+    append_menu_item(menu, wxID_ANY, _L("Bulk rename") + dots, _L("Rename the selected objects with a pattern and a live before/after preview"),
+        [](wxCommandEvent&) { obj_list()->bulk_rename(); }, "", nullptr,
+        []() { return obj_list()->GetSelectedItemsCount() > 0; }, m_parent);
+    append_menu_item(menu, wxID_ANY, _L("Bulk delete") + dots, _L("Review the selected objects, then delete them behind the two-key gate"),
+        [](wxCommandEvent&) { obj_list()->bulk_delete(); }, "", nullptr,
+        []() { return obj_list()->GetSelectedItemsCount() > 0 && plater()->can_delete(); }, m_parent);
+    append_menu_item(menu, wxID_ANY, _L("Bulk export") + dots, _L("Export each selected object to its own STL file in a folder you choose"),
+        [](wxCommandEvent&) { obj_list()->bulk_export(); }, "", nullptr,
+        []() { return obj_list()->GetSelectedItemsCount() > 0; }, m_parent);
+}
+
 void MenuFactory::append_menu_item_delete_all_cutter(wxMenu *menu)
 {
 #ifdef __WINDOWS__
@@ -1301,6 +1329,7 @@ void MenuFactory::create_common_object_menu(wxMenu* menu)
 
     append_menu_item_fix_through_netfabb(menu);
     append_menu_items_mirror(menu);
+    append_menu_items_bulk(menu);
 }
 
 void MenuFactory::create_object_menu()
@@ -1849,6 +1878,7 @@ wxMenu* MenuFactory::multi_selection_menu()
         append_menu_item_reload_from_disk(menu);
         menu->AppendSeparator();
         append_menu_item_export_stl(menu, true);
+        append_menu_items_bulk(menu);
     }
     else {
         append_menu_item_center(menu);

@@ -70,6 +70,18 @@ BulkFilamentDialog::BulkFilamentDialog(wxWindow* parent,
             set_all_rows(target);
         });
         row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+
+        // "Invert selection" beside Select all: every checked slot becomes
+        // unchecked and vice versa.
+        m_btn_invert = new Button(this, _L("Invert selection"));
+        m_btn_invert->SetMinSize(wxSize(FromDIP(110), FromDIP(24)));
+        m_btn_invert->SetCornerRadius(FromDIP(12));
+        m_btn_invert->SetVariant(Button::Variant::Outlined);
+        m_btn_invert->SetFont(Label::Body_12);
+        m_btn_invert->SetToolTip(_L("Check every unchecked slot and uncheck the checked ones"));
+        m_btn_invert->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { invert_rows(); });
+        row->Add(m_btn_invert, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
+
         main_sizer->Add(row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(20));
     }
 
@@ -84,8 +96,21 @@ BulkFilamentDialog::BulkFilamentDialog(wxWindow* parent,
             auto row = new wxBoxSizer(wxHORIZONTAL);
 
             auto chk = new CheckBox(scroll);
-            chk->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent& e) {
+            // The toggle event carries no modifier state, so read Shift live:
+            // a shift-toggle extends the run from the anchor row to this one.
+            chk->Bind(wxEVT_TOGGLEBUTTON, [this, i](wxCommandEvent& e) {
                 e.Skip();
+                if (m_syncing_checks) return;
+                if (wxGetKeyState(WXK_SHIFT) && m_anchor_row >= 0 && i < m_row_checks.size()) {
+                    const bool target = m_row_checks[i]->GetValue();
+                    const size_t lo = std::min(size_t(m_anchor_row), i);
+                    const size_t hi = std::max(size_t(m_anchor_row), i);
+                    m_syncing_checks = true;
+                    for (size_t r = lo; r <= hi && r < m_row_checks.size(); ++r)
+                        m_row_checks[r]->SetValue(target);
+                    m_syncing_checks = false;
+                }
+                m_anchor_row = int(i);
                 sync_select_all_state();
                 update_apply_enabled();
             });
@@ -104,11 +129,7 @@ BulkFilamentDialog::BulkFilamentDialog(wxWindow* parent,
             auto name = new Label(scroll, wxString::FromUTF8(m_physical_names[i]));
             name->SetFont(Label::Body_13);
             name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
-            name->Bind(wxEVT_LEFT_DOWN, [this, chk](wxMouseEvent&) {
-                chk->SetValue(!chk->GetValue());
-                sync_select_all_state();
-                update_apply_enabled();
-            });
+            name->Bind(wxEVT_LEFT_DOWN, [this, i](wxMouseEvent& ev) { on_row_clicked(i, ev.ShiftDown()); });
             row->Add(name, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
             rows_sizer->Add(row, 0, wxEXPAND | wxTOP, i == 0 ? 0 : FromDIP(6));
@@ -337,6 +358,36 @@ void BulkFilamentDialog::set_all_rows(bool checked)
     update_apply_enabled();
 }
 
+void BulkFilamentDialog::invert_rows()
+{
+    m_syncing_checks = true;
+    for (auto* chk : m_row_checks)
+        chk->SetValue(!chk->GetValue());
+    m_syncing_checks = false;
+    sync_select_all_state();
+    update_apply_enabled();
+}
+
+void BulkFilamentDialog::on_row_clicked(size_t i, bool shift)
+{
+    if (i >= m_row_checks.size())
+        return;
+    const bool target = !m_row_checks[i]->GetValue();
+    m_syncing_checks = true;
+    if (shift && m_anchor_row >= 0) {
+        const size_t lo = std::min(size_t(m_anchor_row), i);
+        const size_t hi = std::max(size_t(m_anchor_row), i);
+        for (size_t r = lo; r <= hi && r < m_row_checks.size(); ++r)
+            m_row_checks[r]->SetValue(target);
+    } else {
+        m_row_checks[i]->SetValue(target);
+    }
+    m_syncing_checks = false;
+    m_anchor_row = int(i);
+    sync_select_all_state();
+    update_apply_enabled();
+}
+
 void BulkFilamentDialog::sync_select_all_state()
 {
     if (m_syncing_checks || !m_chk_select_all)
@@ -421,6 +472,7 @@ void BulkFilamentDialog::on_dpi_changed(const wxRect& /*suggested_rect*/)
     if (m_btn_set_color)  m_btn_set_color->Rescale();
     if (m_btn_apply)      m_btn_apply->Rescale();
     if (m_chk_select_all) m_chk_select_all->Rescale();
+    if (m_btn_invert)     m_btn_invert->Rescale();
     for (auto* chk : m_row_checks) chk->Rescale();
     if (m_chk_delete) m_chk_delete->Rescale();
     if (m_chk_add)    m_chk_add->Rescale();

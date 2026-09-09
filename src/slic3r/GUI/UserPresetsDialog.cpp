@@ -7,8 +7,50 @@
 #include <slic3r/GUI/Widgets/TabCtrl.hpp>
 #include <slic3r/GUI/Widgets/SearchField.hpp>
 
+#include "Bulk/BulkActionPlan.hpp"
+#include "Bulk/BulkActionPreviewDialog.hpp"
+#include "Bulk/BulkRenameDialog.hpp"
+#include "NotificationManager.hpp"
+#include "Plater.hpp"
+
+#include "Tab.hpp"
+#include "MsgDialog.hpp"
+
+#include <wx/dirdlg.h>
+#include <wx/filename.h>
+
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+
 namespace Slic3r {
 namespace GUI {
+
+static void find_compatible_user_presets(PresetCollection const &collection, std::string printer, std::vector<std::string> &presets);
+
+namespace {
+
+// File-system safe stem for an exported preset: every character Windows
+// refuses in a file name becomes '_'.
+std::string sanitize_file_stem(const std::string &name)
+{
+    std::string out = name;
+    for (char &c : out)
+        if (c == '\\' || c == '/' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|' ||
+            static_cast<unsigned char>(c) < 0x20)
+            c = '_';
+    while (!out.empty() && (out.back() == ' ' || out.back() == '.'))
+        out.pop_back();
+    return out.empty() ? std::string("preset") : out;
+}
+
+void notify(NotificationManager::NotificationLevel level, const wxString &text)
+{
+    if (Plater *plater = wxGetApp().plater())
+        if (NotificationManager *manager = plater->get_notification_manager())
+            manager->push_notification(NotificationType::CustomNotification, level, text.ToUTF8().data());
+}
+
+} // namespace
 
 UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     : MD3Dialog(parent, _L("Management user presets"), wxEmptyString, MaterialIcon::Tune)
@@ -70,20 +112,41 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
         m_scrolled->SetSizer(sizer);
     }
 
-    m_check_all = new CheckBox(this);
-    auto label = new Label(this, _L("Select All"));
+    m_check_all = new ::CheckBox(this);
+    // TRN: Label beside the master checkbox; toggles every visible preset row.
+    auto label = new Label(this, _L("Select visible"));
     m_label_check_count = new Label(this);
     m_label_check_count->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    m_button_delete     = new Button(this, _L("Delete"));
+    // Select-scope buttons: their labels state exactly which universe they
+    // touch, so "everything" is never ambiguous behind a search filter.
+    m_button_select_visible = new Button(this, _L("Select visible"));
+    m_button_select_all     = new Button(this, _L("Select all"));
+    m_button_invert         = new Button(this, _L("Invert selection"));
+    m_button_export         = new Button(this, _L("Export selected..."));
+    m_button_rename         = new Button(this, _L("Rename selected..."));
+    m_button_delete         = new Button(this, _L("Delete"));
     m_button_delete->SetBorderColorNormal(StateColor::semantic(MD3::Role::Error));
     m_button_delete->SetTextColorNormal(StateColor::semantic(MD3::Role::Error));
+    m_button_select_visible->SetToolTip(_L("Select every preset matching the current search (Ctrl+A)"));
+    m_button_select_all->SetToolTip(_L("Select every preset in this collection, including rows hidden by the search (Ctrl+Shift+A)"));
+    m_button_invert->SetToolTip(_L("Invert the selection within the visible rows (Ctrl+I)"));
+    m_button_export->SetToolTip(_L("Write each selected preset as a .json file into a folder you choose"));
+    m_button_rename->SetToolTip(_L("Rename the selected presets with a pattern or find/replace"));
     m_check_all->Bind(wxEVT_TOGGLEBUTTON, [this](auto &evt) { evt.Skip(); on_all_checked(evt.IsChecked(), true); });
     label->Bind(wxEVT_LEFT_UP, [this](auto &evt) {
         bool checked = !m_check_all->GetValue();
         m_check_all->SetValue(checked);
         on_all_checked(checked, true);
     });
+    m_button_select_visible->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &) { select_visible(); });
+    m_button_select_all->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &) { select_all_matches(); });
+    m_button_invert->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &) { invert_visible(); });
+    m_button_export->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &) { export_selected(); });
+    m_button_rename->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &) { rename_selected(); });
     m_button_delete->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &evt) { delete_checked(); });
+    // Ctrl+A / Ctrl+Shift+A / Ctrl+I / Delete: the same shortcut set as every
+    // other bulk surface. A focused text field keeps its native keys.
+    Bind(wxEVT_CHAR_HOOK, &UserPresetsDialog::on_char_hook, this);
 
     // Body: tab bar + Custom/Others toggle + kit SearchField + list/empty state
     // (the shell already pads the body 24px on each side).
@@ -94,11 +157,21 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     content->Add(m_scrolled, 1, wxEXPAND);
     content->Add(m_empty_panel, 1, wxEXPAND);
 
-    // Footer action bar: leading select-all + selection count, trailing Delete.
+    // Selection scope row under the list: visible / all / invert.
+    auto *select_row = new wxBoxSizer(wxHORIZONTAL);
+    select_row->Add(m_button_select_visible, 0, wxRIGHT, FromDIP(8));
+    select_row->Add(m_button_select_all, 0, wxRIGHT, FromDIP(8));
+    select_row->Add(m_button_invert, 0);
+    content->Add(select_row, 0, wxTOP, FromDIP(10));
+
+    // Footer action bar: leading select-visible + selection count, trailing
+    // Export / Rename / Delete.
     auto *footer = GetFooterSizer();
     footer->Insert(0, m_check_all, 0, wxALIGN_CENTER_VERTICAL);
     footer->Insert(1, label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
     footer->Insert(2, m_label_check_count, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    AddFooterButton(m_button_export);
+    AddFooterButton(m_button_rename);
     AddFooterButton(m_button_delete);
 
     wxGetApp().UpdateDlgDarkUI(this);
@@ -151,7 +224,7 @@ wxSizer *UserPresetsDialog::create_preset_line(wxWindow *parent, std::string con
 {
     wxSizer *vsizer = new wxBoxSizer(wxVERTICAL);
     wxSizer *hsizer = new wxBoxSizer(wxHORIZONTAL);
-    auto check = new CheckBox(parent);
+    auto check = new ::CheckBox(parent);
     auto label = new Label(parent, from_u8(preset), wxST_ELLIPSIZE_END);
     auto line  = new StaticLine(parent);
     label->SetMaxSize({FromDIP(268), -1});
@@ -176,7 +249,7 @@ wxSizer *UserPresetsDialog::create_filament_group(wxWindow *parent, std::pair<st
 {
     wxSizer * vsizer = new wxBoxSizer(wxVERTICAL);
     wxSizer * hsizer = new wxBoxSizer(wxHORIZONTAL);
-    auto check  = new CheckBox(parent);
+    auto check  = new ::CheckBox(parent);
     auto label = new Label(parent, from_u8(m_filament_names[filament.first]), wxST_ELLIPSIZE_END);
     auto line  = new StaticLine(parent);
     label->SetMaxSize({-1, FromDIP(268)});
@@ -278,7 +351,7 @@ void UserPresetsDialog::on_collection_changed(int collection)
 {
     std::swap(m_collection, collection);
     m_checked_filaments.clear();
-    m_checked_presets.clear();
+    m_selection.clear();
     m_preset_sizers.clear();
     m_filament_sizers.clear();
     m_hiden_sizers.clear();
@@ -307,6 +380,7 @@ void UserPresetsDialog::on_search(wxString const &keyword)
         m_scrolled->Freeze();
         layout_preset_list();
         m_scrolled->Thaw();
+        update_checked();
         return;
     }
     auto & hiden_sizers = m_hiden_sizers;
@@ -354,41 +428,130 @@ void UserPresetsDialog::on_search(wxString const &keyword)
     }
     layout_preset_list();
     m_scrolled->Thaw();
+    // The selection is kept across a filter change; only the hidden count moves.
+    update_checked();
+}
+
+std::vector<std::string> UserPresetsDialog::all_ids() const
+{
+    std::vector<std::string> ids;
+    if (is_filament_list()) {
+        for (auto &filament : m_filament_presets)
+            ids.insert(ids.end(), filament.second.begin(), filament.second.end());
+    } else if (m_collection >= 0 && static_cast<size_t>(m_collection) < m_presets.size()) {
+        ids = m_presets[m_collection];
+    }
+    return ids;
+}
+
+std::vector<std::string> UserPresetsDialog::visible_ids() const
+{
+    std::vector<std::string> ids;
+    for (const std::string &id : all_ids()) {
+        auto it = m_preset_sizers.find(id);
+        if (it != m_preset_sizers.end() && m_hiden_sizers.count(it->second) == 0)
+            ids.push_back(id);
+    }
+    return ids;
+}
+
+std::vector<std::string> UserPresetsDialog::selected_sorted() const
+{
+    std::vector<std::string> out = m_selection.ordered_within(all_ids());
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+void UserPresetsDialog::update_filament_group_checkbox(std::string const &filament)
+{
+    auto group = m_filament_presets.find(filament);
+    auto sizer = m_filament_sizers.find(filament);
+    if (group == m_filament_presets.end() || sizer == m_filament_sizers.end())
+        return;
+    const size_t count = m_selection.count_within(group->second);
+    auto *cb = dynamic_cast<::CheckBox *>(sizer->second->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
+    if (count == 0) {
+        cb->SetValue(false);
+        cb->SetHalfChecked(false);
+        m_checked_filaments.erase(filament);
+    } else if (count == group->second.size()) {
+        cb->SetValue(true);
+        cb->SetHalfChecked(false);
+        m_checked_filaments[filament] = count;
+    } else {
+        cb->SetValue(false);
+        cb->SetHalfChecked(true);
+        m_checked_filaments[filament] = count;
+    }
+}
+
+void UserPresetsDialog::sync_checkboxes()
+{
+    for (auto &entry : m_preset_sizers) {
+        auto *cb = dynamic_cast<::CheckBox *>(entry.second->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
+        if (cb)
+            cb->SetValue(m_selection.contains(entry.first));
+    }
+    if (m_collection == 1)
+        for (auto &filament : m_filament_presets)
+            update_filament_group_checkbox(filament.first);
+    update_checked();
+}
+
+void UserPresetsDialog::select_visible()
+{
+    m_selection.select_page(visible_ids());
+    sync_checkboxes();
+}
+
+void UserPresetsDialog::select_all_matches()
+{
+    m_selection.select_all_matches(all_ids());
+    sync_checkboxes();
+}
+
+void UserPresetsDialog::invert_visible()
+{
+    m_selection.invert(visible_ids());
+    sync_checkboxes();
+}
+
+void UserPresetsDialog::on_char_hook(wxKeyEvent &event)
+{
+    // A focused text control keeps Ctrl+A (select text) and Delete.
+    const bool text_focused = dynamic_cast<wxTextCtrl *>(wxWindow::FindFocus()) != nullptr;
+    if (event.ControlDown() && event.GetKeyCode() == 'A') {
+        if (event.ShiftDown()) {
+            select_all_matches();
+            return;
+        }
+        if (!text_focused) {
+            select_visible();
+            return;
+        }
+    } else if (event.ControlDown() && event.GetKeyCode() == 'I') {
+        invert_visible();
+        return;
+    } else if (event.GetKeyCode() == WXK_DELETE && !text_focused && !m_selection.empty()) {
+        delete_checked();
+        return;
+    }
+    event.Skip();
 }
 
 void UserPresetsDialog::on_preset_checked(std::string const &preset, bool checked, bool from_user)
 {
-    auto iter = std::lower_bound(m_checked_presets.begin(), m_checked_presets.end(), preset);
-    bool old  = iter != m_checked_presets.end() && *iter == preset;
-    if (old == checked)
+    if (m_selection.contains(preset) == checked)
         return;
-    if (checked) {
-        m_checked_presets.insert(iter, preset);
-    } else {
-        m_checked_presets.erase(iter);
-    }
+    m_selection.set(preset, checked);
     if (!from_user) {
-        auto *cb = dynamic_cast<CheckBox *>(m_preset_sizers[preset]->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
+        auto *cb = dynamic_cast<::CheckBox *>(m_preset_sizers[preset]->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
         cb->SetValue(checked);
     } else {
         if (m_collection == 1) {
             for (auto &filament : m_filament_presets) {
-                auto iter = std::lower_bound(filament.second.begin(), filament.second.end(), preset);
-                if (iter != filament.second.end() && *iter == preset) {
-                    auto & count = m_checked_filaments[filament.first];
-                    count += checked ? 1 : -1;
-                    auto *cb = dynamic_cast<CheckBox *>(m_filament_sizers[filament.first]->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
-                    if (count == 0) {
-                        cb->SetValue(false);
-                        cb->SetHalfChecked(false);
-                        m_checked_filaments.erase(filament.first);
-                    } else if (count == filament.second.size()) {
-                        cb->SetValue(true);
-                        cb->SetHalfChecked(false);
-                    } else {
-                        cb->SetValue(false);
-                        cb->SetHalfChecked(true);
-                    }
+                if (std::find(filament.second.begin(), filament.second.end(), preset) != filament.second.end()) {
+                    update_filament_group_checkbox(filament.first);
                     break;
                 }
             }
@@ -407,7 +570,7 @@ void UserPresetsDialog::on_filament_checked(std::string const &filament, bool ch
     else
         m_checked_filaments.erase(filament);
     if (!from_user) {
-        auto *cb = dynamic_cast<CheckBox *>(m_filament_sizers[filament]->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
+        auto *cb = dynamic_cast<::CheckBox *>(m_filament_sizers[filament]->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
         cb->SetValue(checked);
         cb->SetHalfChecked(false);
     } else {
@@ -417,17 +580,15 @@ void UserPresetsDialog::on_filament_checked(std::string const &filament, bool ch
 
 void UserPresetsDialog::on_all_checked(bool checked, bool from_user)
 {
-    if (is_filament_list()) {
-        for (auto &filament : m_filament_presets)
-            on_filament_checked(filament.first, checked, false);
-    } else {
-        auto & presets = m_presets[m_collection];
-        for (auto &preset : presets)
-            on_preset_checked(preset, checked, false);
-    }
+    // The master checkbox is scoped to the visible rows (the page).
+    if (checked)
+        m_selection.select_page(visible_ids());
+    else
+        for (const std::string &id : visible_ids())
+            m_selection.set(id, false);
     if (!from_user)
         m_check_all->SetValue(checked);
-    update_checked();
+    sync_checkboxes();
 }
 
 void UserPresetsDialog::update_preset_counts()
@@ -446,43 +607,124 @@ void UserPresetsDialog::update_preset_counts()
 
 void UserPresetsDialog::update_checked()
 {
-    size_t total = 0;
-    if (is_filament_list()) {
-        total = std::accumulate(m_filament_presets.begin(), m_filament_presets.end(), total,
-            [](size_t t, auto &filament) { return t + filament.second.size(); });
-    } else {
-        total = m_presets[m_collection].size();
-    }
-    size_t count = m_checked_presets.size();
-    if (count == 0) {
+    const std::vector<std::string> all     = all_ids();
+    const std::vector<std::string> visible = visible_ids();
+    // Drop ids that no longer exist (a deleted or renamed preset).
+    m_selection.retain(std::set<std::string>(all.begin(), all.end()));
+    const size_t count          = m_selection.size();
+    const size_t visible_count  = m_selection.count_within(visible);
+    const size_t hidden_count   = count - visible_count;
+    if (visible_count == 0) {
         m_check_all->SetValue(false);
         m_check_all->SetHalfChecked(false);
-    } else if (count == total) {
+    } else if (visible_count == visible.size()) {
         m_check_all->SetValue(true);
         m_check_all->SetHalfChecked(false);
     } else {
         m_check_all->SetValue(false);
         m_check_all->SetHalfChecked(true);
     }
-    m_label_check_count->SetLabel(count > 0 ? wxString::Format(_L("%u Selected"), count) : "");
+    wxString counts;
+    if (count > 0) {
+        counts = wxString::Format(_L("%u Selected"), static_cast<unsigned>(count));
+        if (hidden_count > 0)
+            // TRN: %u selected presets are hidden by the current search filter.
+            counts += wxString::Format(_L(" (%u hidden by the search)"), static_cast<unsigned>(hidden_count));
+    }
+    m_label_check_count->SetLabel(counts);
+    m_button_select_visible->SetLabel(wxString::Format(_L("Select visible (%d)"), static_cast<int>(visible.size())));
+    m_button_select_visible->Enable(!visible.empty());
+    m_button_select_all->SetLabel(wxString::Format(_L("Select all %d presets"), static_cast<int>(all.size())));
+    m_button_select_all->Enable(!all.empty());
+    m_button_invert->Enable(!visible.empty());
     m_button_delete->Enable(count > 0);
-    m_button_delete->SetToolTip(count > 0 ? "" : _L("Please select the preset to be deleted"));
+    m_button_delete->SetToolTip(count > 0 ? _L("Review and delete the selected presets (Delete)")
+                                          : _L("Please select the preset to be deleted"));
+    m_button_export->Enable(count > 0);
+    m_button_rename->Enable(count > 0);
+    Layout();
 }
 
 void UserPresetsDialog::delete_checked()
 {
-    if (!delete_presets(m_collection + 3, m_checked_presets)) // check only
+    if (m_selection.empty())
+        return;
+    Preset::Type types[] = {Preset::TYPE_PRINTER, Preset::TYPE_FILAMENT, Preset::TYPE_PRINT};
+    Tab *tab = wxGetApp().get_tab(types[m_collection % 3]);
+    PresetCollection *collection = tab->get_presets();
+    const std::string edited = collection->get_edited_preset().name;
+
+    // Build the reviewable plan. A preset is skipped when another preset that
+    // is NOT part of this deletion still inherits from it (the same refusal
+    // Tab::delete_preset applies); everything else will change.
+    Bulk::BulkActionPlan plan;
+    plan.action      = _u8L("Delete presets");
+    plan.consequence = _u8L("The preset files are removed from the user preset folder and cannot be recovered "
+                            "except from a config-profile snapshot. Deleting a custom printer also deletes the "
+                            "filament and process presets attached to it.");
+    plan.destructive = true;
+    for (const std::string &name : m_selection.ordered_within(all_ids())) {
+        const Preset *preset = collection->find_preset(name, false);
+        if (preset == nullptr) {
+            plan.items.push_back(Bulk::BulkItem::skipped(name, _u8L("Preset no longer exists")));
+            continue;
+        }
+        std::string blocker;
+        if (collection->get_preset_base(*preset) == preset) {
+            for (const Preset &other : *collection) {
+                if (other.inherits() == name && !m_selection.contains(other.name)) {
+                    blocker = other.name;
+                    break;
+                }
+            }
+        }
+        if (!blocker.empty()) {
+            plan.items.push_back(Bulk::BulkItem::skipped(
+                name, (boost::format(_u8L("Inherited by \"%1%\", which is not selected")) % blocker).str()));
+            continue;
+        }
+        std::string detail;
+        if (name == edited)
+            detail = _u8L("Currently selected in the tab; another preset will be selected");
+        if (m_collection == 0 && !preset->is_system) {
+            std::vector<std::string> filaments, prints;
+            find_compatible_user_presets(wxGetApp().preset_bundle->filaments, name, filaments);
+            find_compatible_user_presets(wxGetApp().preset_bundle->prints, name, prints);
+            if (!filaments.empty() || !prints.empty())
+                detail = (boost::format(_u8L("Also deletes %1% filament and %2% process presets attached to this printer")) %
+                          filaments.size() % prints.size()).str();
+        }
+        plan.items.push_back(Bulk::BulkItem::changed(name, detail));
+    }
+    if (!Bulk::BulkActionPreviewDialog::Run(this, plan))
         return;
 
-    // Collect checked sizer of presets (need m_checked_presets, so do it befor delete_presets)
+    std::vector<std::string> presets = plan.changed_labels();
+    std::sort(presets.begin(), presets.end());
+    if (presets.empty())
+        return;
+    // Everything below already ran through the preview and the two-key gate:
+    // the legacy confirmation dialogs must not prompt a second time.
+    struct ConfirmedScope {
+        bool &flag;
+        explicit ConfirmedScope(bool &f) : flag(f) { flag = true; }
+        ~ConfirmedScope() { flag = false; }
+    } confirmed(m_bulk_confirmed);
+
+    if (!delete_presets(m_collection + 3, presets)) // check only
+        return;
+
+    // Collect checked sizer of presets (need the name list, so do it before delete_presets)
     std::set<wxSizer*> checked_sizers;
-    for (auto &preset : m_checked_presets) {
+    for (auto &preset : presets) {
         auto iter = m_preset_sizers.find(preset);
+        if (iter == m_preset_sizers.end())
+            continue;
         checked_sizers.insert(iter->second);
         m_preset_sizers.erase(iter);
     }
 
-    delete_presets(m_collection, m_checked_presets); // real delete
+    delete_presets(m_collection, presets); // real delete
 
     // Collect checked sizer of filaments
     if (is_filament_list()) {
@@ -499,7 +741,7 @@ void UserPresetsDialog::delete_checked()
                 for (auto sizer : checked_sizers)
                     iter2->second->Detach(sizer);
                 // Update check box
-                auto *cb = dynamic_cast<CheckBox *>(iter2->second->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
+                auto *cb = dynamic_cast<::CheckBox *>(iter2->second->GetItem(size_t(0))->GetSizer()->GetItem(size_t(0))->GetWindow());
                 cb->SetValue(false);
                 cb->SetHalfChecked(false);
             }
@@ -509,13 +751,193 @@ void UserPresetsDialog::delete_checked()
 
     update_preset_counts();
     layout_preset_list();
-    update_checked();
+    // Deleted names fall out of the selection (retain), skipped ones stay selected.
+    sync_checkboxes();
 
     for (auto sizer : checked_sizers) {
         sizer->DeleteWindows();
         m_hiden_sizers.erase(sizer);
         delete sizer;
     }
+}
+
+void UserPresetsDialog::export_selected()
+{
+    if (m_selection.empty())
+        return;
+    Preset::Type types[] = {Preset::TYPE_PRINTER, Preset::TYPE_FILAMENT, Preset::TYPE_PRINT};
+    PresetCollection *collection = wxGetApp().get_tab(types[m_collection % 3])->get_presets();
+
+    wxDirDialog dir_dialog(this, _L("Choose the folder to export the selected presets into"), wxEmptyString,
+                           wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+    if (dir_dialog.ShowModal() != wxID_OK)
+        return;
+    const boost::filesystem::path folder(dir_dialog.GetPath().ToStdWstring());
+
+    // Plan: one .json per preset, named after the preset; an existing file is
+    // never overwritten, the row is skipped and says so.
+    Bulk::BulkActionPlan plan;
+    plan.action      = _u8L("Export presets");
+    plan.consequence = (boost::format(_u8L("Each preset is written as a .json file into %1%. Existing files are left untouched.")) %
+                        folder.string()).str();
+    std::vector<std::pair<std::string, boost::filesystem::path>> targets;
+    for (const std::string &name : m_selection.ordered_within(all_ids())) {
+        const boost::filesystem::path path = folder / (sanitize_file_stem(name) + ".json");
+        boost::system::error_code ec;
+        if (collection->find_preset(name, false) == nullptr) {
+            plan.items.push_back(Bulk::BulkItem::skipped(name, _u8L("Preset no longer exists")));
+        } else if (boost::filesystem::exists(path, ec)) {
+            plan.items.push_back(Bulk::BulkItem::skipped(name, _u8L("A file with this name already exists"), path.filename().string()));
+        } else {
+            plan.items.push_back(Bulk::BulkItem::changed(name, path.filename().string()));
+            targets.emplace_back(name, path);
+        }
+    }
+    if (!Bulk::BulkActionPreviewDialog::Run(this, plan) || targets.empty())
+        return;
+
+    bool cancelled = false;
+    std::size_t failed = 0;
+    const std::size_t done = Bulk::BulkActionPreviewDialog::RunWithProgress(
+        this, _L("Exporting presets"), targets.size(),
+        [&targets](std::size_t i) { return from_u8(targets[i].first); },
+        [&targets, collection](std::size_t i) {
+            const Preset *preset = collection->find_preset(targets[i].first, false);
+            if (preset == nullptr)
+                return false;
+            try {
+                // Same serialization Preset::save uses for a full (non-diff) user preset.
+                preset->config.save_to_json(targets[i].second.string(), preset->name, std::string("User"), preset->version.to_string());
+            } catch (const std::exception &err) {
+                BOOST_LOG_TRIVIAL(error) << "export preset " << preset->name << " failed: " << err.what();
+                return false;
+            }
+            return true;
+        },
+        &cancelled, &failed);
+    const std::size_t exported = done - failed;
+    const std::size_t skipped  = plan.skipped() + (targets.size() - done);
+    // TRN: %1$d exported, %2$d skipped (existing file / cancelled), %3$d failed; %4$s folder.
+    wxString text = wxString::Format(_L("Exported %d presets, skipped %d, failed %d - %s"),
+                                     static_cast<int>(exported), static_cast<int>(skipped), static_cast<int>(failed),
+                                     wxString::FromUTF8(folder.string()));
+    if (cancelled)
+        text += " " + _L("(cancelled)");
+    notify(failed > 0 ? NotificationManager::NotificationLevel::WarningNotificationLevel
+                      : NotificationManager::NotificationLevel::RegularNotificationLevel, text);
+}
+
+void UserPresetsDialog::rename_selected()
+{
+    if (m_selection.empty())
+        return;
+    Preset::Type types[] = {Preset::TYPE_PRINTER, Preset::TYPE_FILAMENT, Preset::TYPE_PRINT};
+    Tab *tab = wxGetApp().get_tab(types[m_collection % 3]);
+    PresetCollection *collection = tab->get_presets();
+    const std::string edited = collection->get_edited_preset().name;
+    const bool edited_dirty  = collection->current_is_dirty();
+
+    // A rename is "save under the new name, then delete the old file", so it
+    // is refused for a preset other presets inherit from (their inherits
+    // field would dangle) and for the edited preset while it has unsaved
+    // changes (they belong to neither name).
+    std::vector<std::string> names;
+    std::vector<std::string> refused;
+    for (const std::string &name : m_selection.ordered_within(all_ids())) {
+        const Preset *preset = collection->find_preset(name, false);
+        if (preset == nullptr)
+            continue;
+        bool inherited = false;
+        for (const Preset &other : *collection)
+            if (other.inherits() == name) { inherited = true; break; }
+        if (inherited || (name == edited && edited_dirty))
+            refused.push_back(name);
+        else
+            names.push_back(name);
+    }
+    if (names.empty()) {
+        notify(NotificationManager::NotificationLevel::WarningNotificationLevel,
+               _L("None of the selected presets can be renamed: they are inherited by other presets or have unsaved changes."));
+        return;
+    }
+    std::set<std::string> reserved;
+    for (const Preset &other : *collection)
+        if (std::find(names.begin(), names.end(), other.name) == names.end())
+            reserved.insert(other.name);
+
+    Bulk::RenamePlan rename_plan;
+    if (!Bulk::BulkRenameDialog::Run(this, _L("Rename presets"), names, reserved, rename_plan))
+        return;
+    std::vector<Bulk::RenameRow> rows;
+    for (const Bulk::RenameRow &row : rename_plan.rows)
+        if (row.outcome == Bulk::RenameOutcome::Changed)
+            rows.push_back(row);
+    if (rows.empty())
+        return;
+
+    std::string target = edited; // the preset the tab shows once the batch is done
+    bool cancelled = false;
+    std::size_t failed = 0;
+    const std::size_t done = Bulk::BulkActionPreviewDialog::RunWithProgress(
+        this, _L("Renaming presets"), rows.size(),
+        [&rows](std::size_t i) { return from_u8(rows[i].before) + " -> " + from_u8(rows[i].after); },
+        [&rows, &target, collection](std::size_t i) {
+            const Bulk::RenameRow &row = rows[i];
+            Preset *real = collection->find_preset(row.before, false, true);
+            if (real == nullptr || !real->is_user() || collection->find_preset(row.after, false) != nullptr)
+                return false;
+            Preset       copy        = *real;
+            const std::string old_setting_id = real->setting_id;
+            const std::string old_base_id    = real->base_id;
+            // Save the same configuration under the new name (creates the new
+            // file and preset entry), keeping the inherits field as it was.
+            collection->save_current_preset(row.after, false, false, &copy);
+            Preset *renamed = collection->find_preset(row.after, false, true);
+            if (renamed == nullptr)
+                return false;
+            if (renamed->inherits() == row.before) {
+                // A base preset: save_current_preset chained it onto the old
+                // name, which is about to disappear. Detach and re-save in full.
+                renamed->inherits().clear();
+                renamed->base_id = old_base_id;
+                renamed->save(nullptr);
+            }
+            // Retire the old name exactly like a delete does (cloud sync included).
+            if (!old_setting_id.empty()) {
+                collection->set_sync_info_and_save(row.before, old_setting_id, "delete", 0);
+                wxGetApp().delete_preset_from_cloud(old_setting_id);
+            }
+            collection->delete_preset(row.before);
+            if (target == row.before)
+                target = row.after;
+            return true;
+        },
+        &cancelled, &failed);
+
+    // Re-select in the tab so the sidebar, tab combo and edited copy follow the new names.
+    tab->select_preset(target, false, "", true);
+    wxGetApp().plater()->sidebar().update_presets(collection->type());
+    rebuild_from_bundle();
+
+    const std::size_t renamed = done - failed;
+    // TRN: %1$d renamed, %2$d refused (inherited / unsaved), %3$d failed.
+    wxString text = wxString::Format(_L("Renamed %d presets, refused %d, failed %d"),
+                                     static_cast<int>(renamed), static_cast<int>(refused.size()), static_cast<int>(failed));
+    if (cancelled)
+        text += " " + _L("(cancelled)");
+    notify(failed > 0 ? NotificationManager::NotificationLevel::WarningNotificationLevel
+                      : NotificationManager::NotificationLevel::RegularNotificationLevel, text);
+}
+
+void UserPresetsDialog::rebuild_from_bundle()
+{
+    m_presets.clear();
+    m_filament_names.clear();
+    m_filament_presets.clear();
+    m_selection.clear();
+    init_preset_list();
+    update_preset_counts();
+    on_collection_changed(m_collection);
 }
 
 }}
@@ -555,6 +977,8 @@ static void remove_both(std::vector<std::string> &l, std::vector<std::string> &r
 
 bool UserPresetsDialog::delete_confirm(int collection, int preset_num)
 {
+    if (m_bulk_confirmed) // the reviewable preview and two-key gate already ran
+        return true;
     wxString types[] = {_L("Printer"), _L("Filament"), _L("Process")};
     DeleteConfirmDialog dlg(this, wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Delete"),
                             wxString::Format(_L("%d %s Preset will be deleted."), preset_num, types[collection % 3]));
@@ -564,6 +988,8 @@ bool UserPresetsDialog::delete_confirm(int collection, int preset_num)
 
 bool UserPresetsDialog::delete_confirm(int collection, int filament_preset_num, int print_preset_num)
 {
+    if (m_bulk_confirmed) // attached-preset counts were already shown in the preview
+        return true;
     DeleteConfirmDialog
         dlg(this, wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Delete"),
             wxString::Format(_L("%d Filament Preset and %d Process Preset is attached to this printer. Those presets would be deleted if the printer is deleted."),

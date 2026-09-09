@@ -87,6 +87,13 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/SearchField.hpp
     GUI/Widgets/SlideToConfirm.cpp
     GUI/Widgets/SlideToConfirm.hpp
+    GUI/Bulk/BulkSelection.hpp
+    GUI/Bulk/BulkRenamePattern.hpp
+    GUI/Bulk/BulkActionPlan.hpp
+    GUI/Bulk/BulkActionPreviewDialog.cpp
+    GUI/Bulk/BulkActionPreviewDialog.hpp
+    GUI/Bulk/BulkRenameDialog.cpp
+    GUI/Bulk/BulkRenameDialog.hpp
     GUI/Widgets/SuperConfirmGate.cpp
     GUI/Widgets/SuperConfirmGate.hpp
     GUI/Widgets/SuperConfirmState.hpp

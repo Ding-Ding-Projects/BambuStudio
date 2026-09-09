@@ -35,6 +35,18 @@ struct ProjectHistoryVersion
     std::chrono::system_clock::time_point committed_at;
     int                                   utc_offset_minutes{0};
     std::uint64_t                         snapshot_size{0};
+    // User labels attached with label_version(), in tag-name order.
+    std::vector<std::string>              labels;
+};
+
+struct ProjectHistoryLabelResult
+{
+    ProjectHistoryError error;
+    std::string         commit_id;
+    std::string         label;    // the sanitized label that was stored
+    std::string         tag_name; // full lightweight tag name below refs/tags/
+
+    bool ok() const noexcept { return error.ok(); }
 };
 
 struct ProjectHistoryCommitOptions
@@ -128,6 +140,12 @@ public:
     // inside the managed history root are rejected; the original project is
     // never overwritten by this primitive.
     std::future<ProjectHistoryRestoreResult> restore_version(std::filesystem::path project_path, std::string commit_id, std::filesystem::path destination_path);
+
+    // Attaches a user label to an existing version as a lightweight Git tag
+    // named "label/<sanitized label>/<commit id>". Labels never rewrite or
+    // remove history; the same label may be attached to several versions, and
+    // attaching a label a version already carries fails with DestinationExists.
+    std::future<ProjectHistoryLabelResult> label_version(std::filesystem::path project_path, std::string commit_id, std::string label);
 
     const std::filesystem::path &history_root() const noexcept;
 

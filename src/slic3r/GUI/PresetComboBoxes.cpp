@@ -42,6 +42,7 @@
 #include "MsgDialog.hpp"
 #include "ParamsDialog.hpp"
 #include "FilamentPickerDialog.hpp"
+#include "UserPresetsDialog.hpp"
 #include "wxExtensions.hpp"
 
 #include "DeviceCore/DevManager.h"
@@ -1118,6 +1119,16 @@ void PlaterPresetComboBox::show_edit_menu()
         [](wxCommandEvent&) {
             wxTheApp->CallAfter([]() { run_wizard(ConfigWizard::SP_PRINTERS); });
         }, "menu_edit_preset", menu, []() { return true; }, wxGetApp().plater());
+
+    // The combo picks one preset; bulk work on the collection (select,
+    // delete, export, rename many) lives in the batch management dialog.
+    append_menu_item(menu, wxID_ANY, _L("Batch Preset Management") + "...", _L("Select, delete, export or rename several user presets at once"),
+        [](wxCommandEvent&) {
+            wxTheApp->CallAfter([]() {
+                UserPresetsDialog dlg(wxGetApp().mainframe);
+                dlg.ShowModal();
+            });
+        }, "", menu, []() { return true; }, wxGetApp().plater());
 
     wxGetApp().plater()->PopupMenu(menu);
 }

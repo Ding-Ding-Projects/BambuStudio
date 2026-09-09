@@ -28,6 +28,7 @@
 #include <exception>
 #include <functional>
 #include <iomanip>
+#include <map>
 #include <mutex>
 #include <sstream>
 #include <system_error>
@@ -43,6 +44,8 @@ constexpr const char *HISTORY_DIRECTORY       = "project_history";
 constexpr const char *HISTORY_LAYOUT_VERSION  = "v1";
 constexpr const char *LOCK_DIRECTORY          = "locks";
 constexpr const char *SNAPSHOT_TREE_PATH      = "project.3mf";
+constexpr const char *LABEL_TAG_PREFIX        = "label/";
+constexpr const char *LABEL_REF_PREFIX        = "refs/tags/label/";
 constexpr const char *CONFIG_LAYOUT_VERSION   = "bambu.projecthistoryversion";
 constexpr const char *CONFIG_PROJECT_IDENTITY = "bambu.projectidentitysha256";
 constexpr auto        LOCK_WAIT_TIMEOUT        = std::chrono::seconds(30);
@@ -74,6 +77,50 @@ std::string lowercase_ascii(std::string value)
 bool has_3mf_extension(const fs::path &path) { return lowercase_ascii(path_utf8(path.extension())) == ".3mf"; }
 
 bool contains_nul(const std::string &value) { return value.find('\0') != std::string::npos; }
+
+// Reduces a user label to a single Git ref component: ASCII letters, digits,
+// '.', '_' and '-' are kept, every other byte becomes '-', runs of '-' collapse
+// and leading/trailing '.' or '-' are trimmed. Returns an empty string when
+// nothing usable remains, which the caller reports as an invalid argument.
+std::string sanitize_label(const std::string &label)
+{
+    std::string out;
+    for (const unsigned char c : label) {
+        const bool keep = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '_';
+        const char mapped = keep ? static_cast<char>(c) : '-';
+        if (mapped == '-' && !out.empty() && out.back() == '-') continue;
+        out.push_back(mapped);
+    }
+    while (!out.empty() && (out.front() == '-' || out.front() == '.')) out.erase(out.begin());
+    while (!out.empty() && (out.back() == '-' || out.back() == '.')) out.pop_back();
+    if (out.size() > 64) out.resize(64);
+    if (out.find("..") != std::string::npos || out.find("@{") != std::string::npos) return {};
+    if (out.size() >= 5 && out.compare(out.size() - 5, 5, ".lock") == 0) return {};
+    return out;
+}
+
+bool oid_to_string(const git_oid *oid, std::string &value);
+
+// Collects every "label/<label>/<commit>" lightweight tag as commit id -> labels.
+struct LabelIndex
+{
+    std::map<std::string, std::vector<std::string>> by_commit;
+};
+
+int collect_label_tag(const char *name, git_oid *oid, void *payload)
+{
+    auto *index = static_cast<LabelIndex *>(payload);
+    const std::string ref = name != nullptr ? name : "";
+    const std::size_t prefix_length = std::char_traits<char>::length(LABEL_REF_PREFIX);
+    if (ref.compare(0, prefix_length, LABEL_REF_PREFIX) != 0) return 0;
+    const std::string rest = ref.substr(prefix_length);
+    const std::size_t slash = rest.rfind('/');
+    if (slash == std::string::npos || slash == 0) return 0;
+    std::string commit_id;
+    if (!oid_to_string(oid, commit_id)) return 0;
+    index->by_commit[commit_id].push_back(rest.substr(0, slash));
+    return 0;
+}
 
 bool normalize_project_identity(const fs::path &project_path, std::string &normalized, ProjectHistoryError &error)
 {
@@ -1469,6 +1516,62 @@ public:
         if (walk_rc != 0 && walk_rc != GIT_ITEROVER)
             return failure_with_repository<ProjectHistoryListResult>(result.repository_path, ProjectHistoryErrorCode::RepositoryError,
                                                                      git_error_message("Could not finish reading project-history revisions"));
+
+        // Attach user labels. A tag that cannot be read must not hide the
+        // versions themselves, so a failure here only leaves labels empty.
+        LabelIndex labels;
+        if (git_tag_foreach(repository.get(), collect_label_tag, &labels) == 0) {
+            for (ProjectHistoryVersion &version : result.versions) {
+                const auto found = labels.by_commit.find(version.commit_id);
+                if (found == labels.by_commit.end()) continue;
+                version.labels = found->second;
+                std::sort(version.labels.begin(), version.labels.end());
+            }
+        }
+        return result;
+    }
+
+    ProjectHistoryLabelResult label(const fs::path &project_path, const std::string &commit_id, const std::string &label)
+    {
+        if (commit_id.size() != GIT_OID_SHA1_HEXSIZE || !std::all_of(commit_id.begin(), commit_id.end(), [](unsigned char c) { return std::isxdigit(c) != 0; }))
+            return failure<ProjectHistoryLabelResult>(ProjectHistoryErrorCode::InvalidArgument, "History version must be a full 40-character Git commit identifier");
+        const std::string sanitized = sanitize_label(label);
+        if (sanitized.empty())
+            return failure<ProjectHistoryLabelResult>(ProjectHistoryErrorCode::InvalidArgument, "Label must contain at least one letter, digit, '.', '_' or '-'");
+
+        ResolvedProject project = resolve_project(m_history_root, project_path);
+        if (!project.error.ok()) return failure<ProjectHistoryLabelResult>(project.error.code, project.error.message);
+
+        std::vector<std::unique_ptr<InterprocessFileLock>> locks;
+        ProjectHistoryError                                lock_error;
+        if (!acquire_identity_locks({project.identity_hash}, locks, lock_error))
+            return failure<ProjectHistoryLabelResult>(lock_error.code, lock_error.message);
+
+        RepositoryPtr       repository;
+        ProjectHistoryError repository_error;
+        if (!open_repository(project.repository_path, project.identity_hash, false, repository, repository_error))
+            return failure<ProjectHistoryLabelResult>(repository_error.code, repository_error.message);
+
+        git_oid requested_oid{};
+        if (git_oid_fromstr(&requested_oid, commit_id.c_str()) != 0)
+            return failure<ProjectHistoryLabelResult>(ProjectHistoryErrorCode::InvalidArgument, "History version identifier is invalid");
+        git_commit *raw_commit = nullptr;
+        if (git_commit_lookup(&raw_commit, repository.get(), &requested_oid) != 0)
+            return failure<ProjectHistoryLabelResult>(ProjectHistoryErrorCode::NotFound, "Requested project-history version does not exist");
+        CommitPtr commit(raw_commit);
+
+        ProjectHistoryLabelResult result;
+        result.commit_id = commit_id;
+        result.label     = sanitized;
+        result.tag_name  = std::string(LABEL_TAG_PREFIX) + sanitized + '/' + commit_id;
+
+        git_oid   tag_oid{};
+        const int tag_rc = git_tag_create_lightweight(&tag_oid, repository.get(), result.tag_name.c_str(),
+                                                      reinterpret_cast<const git_object *>(commit.get()), 0);
+        if (tag_rc == GIT_EEXISTS)
+            return failure<ProjectHistoryLabelResult>(ProjectHistoryErrorCode::DestinationExists, "This version already carries that label");
+        if (tag_rc != 0)
+            return failure<ProjectHistoryLabelResult>(ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not attach the label"));
         return result;
     }
 
@@ -1665,6 +1768,12 @@ std::future<ProjectHistoryRestoreResult> ProjectHistoryManager::restore_version(
 {
     return m_impl->enqueue<ProjectHistoryRestoreResult>([impl = m_impl.get(), project_path = std::move(project_path), commit_id = std::move(commit_id),
                                                          destination_path = std::move(destination_path)] { return impl->restore(project_path, commit_id, destination_path); });
+}
+
+std::future<ProjectHistoryLabelResult> ProjectHistoryManager::label_version(fs::path project_path, std::string commit_id, std::string label)
+{
+    return m_impl->enqueue<ProjectHistoryLabelResult>([impl = m_impl.get(), project_path = std::move(project_path), commit_id = std::move(commit_id),
+                                                       label = std::move(label)] { return impl->label(project_path, commit_id, label); });
 }
 
 const fs::path &ProjectHistoryManager::history_root() const noexcept { return m_impl->history_root(); }

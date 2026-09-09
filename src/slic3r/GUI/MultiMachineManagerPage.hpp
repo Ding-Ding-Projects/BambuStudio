@@ -3,7 +3,14 @@
 
 #include "GUI_Utils.hpp"
 #include "MultiMachine.hpp"
+#include "Bulk/BulkSelection.hpp"
 
+#include <functional>
+#include <map>
+#include <string>
+#include <vector>
+
+class CheckBox;
 class SearchField;
 
 namespace Slic3r {
@@ -43,8 +50,19 @@ public:
     void         post_event(wxCommandEvent&& event);
     virtual void DoSetSize(int x, int y, int width, int height, int sizeFlags = wxSIZE_AUTO);
 
+    // Bulk-selection checkbox at the left of the card header. The page owns
+    // the selection model; the card only reflects it and reports toggles
+    // (shift = true when Shift was held, for range selection).
+    void SetSelected(bool selected);
+    bool IsSelected() const { return m_selected; }
+    void SetOnToggle(std::function<void(MultiMachineItem*, bool shift)> callback) { m_on_toggle = std::move(callback); }
+
 public:
     bool m_hover{ false };
+    bool m_selected{ false };
+    CheckBox* m_check{ nullptr };
+    std::function<void(MultiMachineItem*, bool)> m_on_toggle;
+    void update_accessible_name();
     ScalableBitmap m_bitmap_check_disable;
     ScalableBitmap m_bitmap_check_off;
     ScalableBitmap m_bitmap_check_on;
@@ -75,6 +93,31 @@ public:
     void msw_rescale();
 
 private:
+    // Bulk selection over device ids; lives on the page so it survives paging
+    // and filtering. m_match_ids is every device matching the search across
+    // all pages (display order), m_page_ids the slice rendered on this page.
+    void on_item_toggled(MultiMachineItem* item, bool shift);
+    void select_page();
+    void select_all_matches();
+    void invert_selection();
+    void clear_selection();
+    void apply_selection_to_items();
+    void update_bulk_controls();
+    void bulk_export();
+    void on_char_hook(wxKeyEvent& event);
+
+    Bulk::BulkSelection<std::string>     m_bulk;
+    std::string                          m_bulk_anchor;
+    std::vector<std::string>             m_match_ids;
+    std::vector<std::string>             m_page_ids;
+    std::map<std::string, MachineObject*> m_user_machines;
+    Label*                               m_bulk_counts{ nullptr };
+    Button*                              m_button_select_page{ nullptr };
+    Button*                              m_button_select_all{ nullptr };
+    Button*                              m_button_invert{ nullptr };
+    Button*                              m_button_clear{ nullptr };
+    Button*                              m_button_export{ nullptr };
+
     std::vector<ObjState>          m_state_objs;
     std::vector<MultiMachineItem*> m_device_items;
     SortItem                m_sort;

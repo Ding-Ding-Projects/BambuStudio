@@ -584,6 +584,10 @@ public:
     void export_core_3mf();
     static TriangleMesh combine_mesh_fff(const ModelObject& mo, int instance_id, std::function<void(const std::string&)> notify_func = {});
     void export_stl(bool extended = false, bool selection_only = false, bool multi_stls = false);
+    // Write one object (all parts, all instances, no mesh boolean) to `path`
+    // as a binary STL. Used by the object list's bulk export. Returns false
+    // when the index is out of range, the mesh is empty, or the write fails.
+    bool export_object_stl(size_t obj_idx, const std::string& path);
     //BBS: remove amf
     //void export_amf();
     //BBS add extra param for exporting 3mf silence
