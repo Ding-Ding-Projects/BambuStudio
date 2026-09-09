@@ -278,6 +278,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/ConfigProfilesDialog.hpp
     GUI/CommandPalette.cpp
     GUI/CommandPalette.hpp
+    GUI/CommandPaletteIndex.cpp
+    GUI/CommandPaletteIndex.hpp
     GUI/StopPrintGate.cpp
     GUI/StopPrintGate.hpp
     GUI/PreferencesHistory.cpp

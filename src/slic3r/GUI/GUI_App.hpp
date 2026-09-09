@@ -701,7 +701,10 @@ public:
     wxString 		current_language_code_safe() const;
     bool            is_localized() const { return m_wxLocale->GetLocale() != "English"; }
 
-    void            open_preferences();
+    // `teleport_key`: an AppConfig key from PaletteIndex::preference_entries();
+    // when set, the dialog selects that setting's page, scrolls the row into
+    // view, focuses its control and flashes it (command-palette teleport).
+    void            open_preferences(const std::string &teleport_key = std::string());
 
     void            report_consent_common(bool agree, std::string scene, std::string formID);
     virtual bool OnExceptionInMainLoop();

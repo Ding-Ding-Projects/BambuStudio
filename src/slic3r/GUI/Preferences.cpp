@@ -219,6 +219,7 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *pa
         }
         e.Skip();
     });
+    register_option_row(param, m_sizer_combox);
     return m_sizer_combox;
 }
 
@@ -384,6 +385,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
         e.Skip();
     });
 
+    register_option_row(param, m_sizer_combox);
     return m_sizer_combox;
 }
 
@@ -496,6 +498,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_mode_combobox(
         event.Skip();
     });
 
+    register_option_row(param, row);
     return row;
 }
 
@@ -568,6 +571,7 @@ wxBoxSizer *PreferencesDialog::create_item_region_combobox(wxString title, wxWin
         //e.Skip();
     });
 
+    register_option_row("region", m_sizer_combox);
     return m_sizer_combox;
 }
 
@@ -606,6 +610,7 @@ wxBoxSizer *PreferencesDialog::create_item_loglevel_combobox(wxString title, wxW
         app_config->save();
         e.Skip();
      });
+    register_option_row("severity_level", m_sizer_combox);
     return m_sizer_combox;
 }
 
@@ -669,6 +674,7 @@ wxBoxSizer *PreferencesDialog::create_item_multiple_combobox(
         e.Skip();
     });
 
+    register_option_row(param, m_sizer_tcombox);
     return m_sizer_tcombox;
 }
 
@@ -723,6 +729,7 @@ wxBoxSizer *PreferencesDialog::create_item_input(wxString title, wxString title2
         e.Skip();
     });
 
+    register_option_row(param, sizer_input);
     return sizer_input;
 }
 
@@ -785,6 +792,7 @@ wxBoxSizer *PreferencesDialog::create_item_range_input(
         e.Skip();
     });
 
+    register_option_row(param, sizer_input);
     return sizer_input;
 }
 
@@ -890,6 +898,8 @@ wxBoxSizer *PreferencesDialog::create_item_range_two_input(wxString             
         e.Skip();
     });
 
+    register_option_row(param, sizer_input);
+    register_option_row(param1, sizer_input);
     return sizer_input;
 }
 
@@ -918,6 +928,7 @@ wxBoxSizer *PreferencesDialog::create_item_switch(wxString title, wxWindow *pare
         app_config->save();
         e.Skip();
     });
+    register_option_row(param, m_sizer_switch);
     return m_sizer_switch;
 }
 
@@ -1214,6 +1225,7 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
 
 
     checkbox->SetToolTip(tooltip);
+    register_option_row(param, m_sizer_checkbox);
     return m_sizer_checkbox;
 }
 
@@ -1267,6 +1279,7 @@ wxWindow* PreferencesDialog::create_item_downloads(wxWindow* parent, int padding
     item_panel->SetSizer(sizer);
     item_panel->Layout();
 
+    register_option_row(param, nullptr, item_panel);
     return item_panel;
 }
 
@@ -1325,6 +1338,7 @@ wxWindow* PreferencesDialog::create_item_external_editor(wxWindow* parent, int p
     item_panel->SetSizer(sizer);
     item_panel->Layout();
 
+    register_option_row(param, nullptr, item_panel);
     return item_panel;
 }
 
@@ -1351,6 +1365,7 @@ wxSizer *PreferencesDialog::create_item_radiobox(wxString title, wxWindow *paren
     sizer->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
     sizer->Add(text, wxSizerFlags().CenterVertical().Proportion(1));
     sizer->Add(radiobox, wxSizerFlags().CenterVertical().Border(wxRIGHT, ITEM_RIGHT_PADDING));
+    register_option_row(param, sizer);
     return sizer;
 }
 
@@ -1730,10 +1745,117 @@ void PreferencesDialog::build_search_index()
             row.haystack = haystack; // original case; the matcher folds case itself
             // Section headers are the Head_16 titles from create_item_title().
             row.is_title = !row.labels.empty() && row.labels.front()->GetFont() == ::Label::Head_16;
+            // Fold the create_item_* key registry into the row: a palette
+            // teleport looks rows up by AppConfig key.
+            for (const OptionRow &opt : m_option_rows) {
+                const bool same_sizer  = opt.sizer != nullptr && item->IsSizer() && item->GetSizer() == opt.sizer;
+                const bool same_window = opt.window != nullptr && item->IsWindow() && item->GetWindow() == opt.window;
+                if (same_sizer || same_window) row.keys.push_back(opt.key);
+            }
             m_search_rows.push_back(std::move(row));
         }
     }
 }
+
+void PreferencesDialog::register_option_row(const std::string &key, wxSizer *sizer, wxWindow *window)
+{
+    if (key.empty() || (sizer == nullptr && window == nullptr)) return;
+    m_option_rows.push_back({key, sizer, window});
+}
+
+void PreferencesDialog::select_page(int page)
+{
+    if (m_book == nullptr || page < 0 || page >= int(m_book->GetPageCount())) return;
+    if (m_book->GetSelection() != page) {
+        m_book->SetSelection(page);
+        if (m_tabbar) m_tabbar->SetSelection(page);
+    }
+}
+
+void PreferencesDialog::clear_teleport_highlight()
+{
+    for (auto &entry : m_teleport_saved_colours) {
+        if (entry.first == nullptr) continue;
+        // A live search may have re-tinted the label meanwhile; leave its
+        // colour to the search pass in that case.
+        if (m_search_saved_colours.find(entry.first) != m_search_saved_colours.end()) continue;
+        entry.first->SetForegroundColour(entry.second);
+        entry.first->Refresh();
+    }
+    m_teleport_saved_colours.clear();
+}
+
+// First focusable, non-label descendant of a row: the switch, combo, input
+// or button the setting is edited with.
+static wxWindow *first_focusable_control(wxWindow *win)
+{
+    if (win == nullptr) return nullptr;
+    if (dynamic_cast<wxStaticText *>(win) == nullptr && win->IsShown() && win->IsEnabled() &&
+        win->AcceptsFocus() && win->GetChildren().empty())
+        return win;
+    for (auto *child : win->GetChildren())
+        if (auto *hit = first_focusable_control(child)) return hit;
+    return nullptr;
+}
+
+static wxWindow *first_focusable_control(wxSizer *sizer)
+{
+    if (sizer == nullptr) return nullptr;
+    for (auto *item : sizer->GetChildren()) {
+        wxWindow *hit = nullptr;
+        if (item->IsWindow()) hit = first_focusable_control(item->GetWindow());
+        else if (item->IsSizer()) hit = first_focusable_control(item->GetSizer());
+        if (hit) return hit;
+    }
+    return nullptr;
+}
+
+bool PreferencesDialog::teleport_to_setting(const std::string &key)
+{
+    if (key.empty()) return false;
+    if (m_search_rows.empty()) build_search_index();
+    const SearchRow *target = nullptr;
+    for (const SearchRow &row : m_search_rows)
+        if (std::find(row.keys.begin(), row.keys.end(), key) != row.keys.end()) { target = &row; break; }
+    if (target == nullptr || target->item == nullptr) return false;
+
+    // Any active search filter would hide the row; teleport wins.
+    if (m_search) m_search->SetValue(wxEmptyString);
+    reset_search_filter();
+
+    select_page(target->page);
+    target->item->Show(true);
+    if (wxWindow *page_win = m_book->GetPage(target->page)) {
+        page_win->Layout();
+        if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(page_win)) scrolled->FitInside();
+    }
+    Layout();
+    scroll_search_row_into_view(*target);
+
+    // Focus the row's control so keyboard users land ON the setting.
+    wxWindow *control = target->item->IsWindow() ? first_focusable_control(target->item->GetWindow())
+                                                 : first_focusable_control(target->item->GetSizer());
+    if (control) control->SetFocus();
+
+    // Brief Primary-tint flash on the row's labels, restored by the timer.
+    clear_teleport_highlight();
+    const wxColour highlight = StateColor::semantic(MD3::Role::Primary);
+    for (wxStaticText *label : target->labels) {
+        if (label == nullptr) continue;
+        m_teleport_saved_colours.emplace(label, label->GetForegroundColour());
+        label->SetForegroundColour(highlight);
+        label->Refresh();
+    }
+    if (!m_teleport_saved_colours.empty()) {
+        m_teleport_timer.SetOwner(this, wxID_HIGHEST + 91);
+        Unbind(wxEVT_TIMER, &PreferencesDialog::on_teleport_timer, this, wxID_HIGHEST + 91);
+        Bind(wxEVT_TIMER, &PreferencesDialog::on_teleport_timer, this, wxID_HIGHEST + 91);
+        m_teleport_timer.StartOnce(1400);
+    }
+    return true;
+}
+
+void PreferencesDialog::on_teleport_timer(wxTimerEvent &) { clear_teleport_highlight(); }
 
 void PreferencesDialog::clear_search_highlights()
 {
@@ -2374,8 +2496,12 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     sizer->Add(title, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
-    sizer->Add(make_row(_L("Theme"), theme), flags);
-    sizer->Add(make_row(_L("Density"), density), flags);
+    auto *theme_row = make_row(_L("Theme"), theme);
+    register_option_row("dark_color_mode", theme_row);
+    sizer->Add(theme_row, flags);
+    auto *density_row = make_row(_L("Density"), density);
+    register_option_row("ui_density", density_row);
+    sizer->Add(density_row, flags);
 
     // Accent row (label + swatches).
     auto *accent_line = new wxBoxSizer(wxHORIZONTAL);
@@ -2385,6 +2511,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     accent_lbl->SetFont(::Label::Body_13);
     accent_line->Add(accent_lbl, wxSizerFlags().CenterVertical());
     accent_line->Add(accent_row, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
+    register_option_row("ui_accent_seed", accent_line);
     sizer->Add(accent_line, flags);
 
     // Live token preview row (label-column indented, stretches to the row edge).
@@ -2394,8 +2521,12 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     sizer->Add(md3_preview_line, flags);
 
     // UI font rows (family + size + live preview), consistent with the rows above.
-    sizer->Add(make_row(_L("Font"), font_combo), flags);
-    sizer->Add(make_row(_L("Text size"), text_size), flags);
+    auto *font_row = make_row(_L("Font"), font_combo);
+    register_option_row("ui_font_family", font_row);
+    sizer->Add(font_row, flags);
+    auto *text_size_row = make_row(_L("Text size"), text_size);
+    register_option_row("ui_font_scale", text_size_row);
+    sizer->Add(text_size_row, flags);
     sizer->Add(make_row(_L("Preview"), font_preview), flags);
 
     // Reset row (indent-aligned with the rows above, no leading label).

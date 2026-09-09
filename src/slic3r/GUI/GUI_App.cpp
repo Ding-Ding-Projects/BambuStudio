@@ -111,6 +111,7 @@
 #include "../Utils/HelioDragon.hpp"
 #include "slic3r/Config/Snapshot.hpp"
 #include "Preferences.hpp"
+#include "CommandPaletteIndex.hpp"
 #include "Tab.hpp"
 #include "SysInfoDialog.hpp"
 #include "UpdateDialogs.hpp"
@@ -7435,7 +7436,7 @@ void  GUI_App::show_ip_address_enter_dialog_handler(wxCommandEvent& evt)
 //    menu->AppendSubMenu(local_menu, _L("Configuration"));
 //}
 
-void GUI_App::open_preferences()
+void GUI_App::open_preferences(const std::string &teleport_key)
 {
     bool app_layout_changed = false;
     {
@@ -7443,6 +7444,16 @@ void GUI_App::open_preferences()
         // or sometimes the application crashes into wxDialogBase() destructor
         // so we put it into an inner scope
         PreferencesDialog dlg(mainframe);
+        if (!teleport_key.empty()) {
+            // Once the modal loop is running the pages are laid out, so the
+            // scroll/focus/flash lands on the real row geometry.
+            PreferencesDialog *dlg_ptr = &dlg;
+            const std::string  key     = teleport_key;
+            dlg.CallAfter([dlg_ptr, key]() {
+                if (!dlg_ptr->teleport_to_setting(key))
+                    if (const auto *entry = PaletteIndex::find_preference(key)) dlg_ptr->select_page(entry->page);
+            });
+        }
         dlg.ShowModal();
 
         // BBS
