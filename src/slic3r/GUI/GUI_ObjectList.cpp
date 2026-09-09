@@ -4438,6 +4438,17 @@ void ObjectList::update_info_items(size_t obj_idx, wxDataViewItemArray *selectio
 }
 
 
+// The sidebar sizes this list to its visible rows (Sidebar::fit_object_list_
+// height); every row add/remove path schedules a refit once the mutation has
+// finished, so the scroll body's extent follows the list.
+void ObjectList::refit_sidebar_body()
+{
+    CallAfter([]() {
+        if (wxGetApp().plater())
+            wxGetApp().sidebar().update_scroll_body();
+    });
+}
+
 void ObjectList::add_objects_to_list(std::vector<size_t> obj_idxs, bool call_selection_changed, bool notify_partplate, bool do_info_update)
 {
 #ifdef __WXOSX__
@@ -4453,6 +4464,7 @@ void ObjectList::add_objects_to_list(std::vector<size_t> obj_idxs, bool call_sel
 
 void ObjectList::add_object_to_list(size_t obj_idx, bool call_selection_changed, bool notify_partplate, bool do_info_update)
 {
+    refit_sidebar_body();
     auto model_object = (*m_objects)[obj_idx];
     //BBS start add obj_idx for debug
     PartPlateList& list = wxGetApp().plater()->get_partplate_list();
@@ -4594,6 +4606,7 @@ void ObjectList::delete_object_from_list()
 
 void ObjectList::delete_object_from_list(const size_t obj_idx)
 {
+    refit_sidebar_body();
     select_item([this, obj_idx]() { return m_objects_model->Delete(m_objects_model->GetItemById(obj_idx)); });
 }
 
@@ -4609,6 +4622,7 @@ void ObjectList::delete_instance_from_list(const size_t obj_idx, const size_t in
 
 void ObjectList::delete_from_model_and_list(const ItemType type, const int obj_idx, const int sub_obj_idx)
 {
+    refit_sidebar_body();
     if (!(type&(itObject|itVolume|itInstance)))
         return;
 
@@ -4638,6 +4652,7 @@ void ObjectList::delete_from_model_and_list(const ItemType type, const int obj_i
 
 void ObjectList::delete_from_model_and_list(const std::vector<ItemForDelete>& items_for_delete)
 {
+    refit_sidebar_body();
     if (items_for_delete.empty())
         return;
 
@@ -4716,6 +4731,7 @@ void ObjectList::update_lock_icons_for_model()
 
 void ObjectList::delete_all_objects_from_list()
 {
+    refit_sidebar_body();
     m_prevent_list_events = true;
     reload_all_plates();
     m_prevent_list_events = false;
@@ -7133,6 +7149,7 @@ void ObjectList::on_plate_deleted(int plate_idx)
 
 void ObjectList::reload_all_plates(bool notify_partplate)
 {
+    refit_sidebar_body();
     m_prevent_canvas_selection_update = true;
 #ifdef __WXOSX__
     AssociateModel(nullptr);
@@ -7202,6 +7219,7 @@ void ObjectList::notify_instance_updated(int obj_idx)
 
 void ObjectList::update_after_undo_redo()
 {
+    refit_sidebar_body();
     Plater::SuppressSnapshots suppress(wxGetApp().plater());
     //BBS: undo/redo will rebuild all the plates before
     //no need to notify instance to partplate

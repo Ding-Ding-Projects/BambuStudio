@@ -11,6 +11,8 @@
 #include "WebGuideDialog.hpp"
 #include <wx/scrolwin.h>
 #include <cwchar>
+#include <cstdlib>
+#include <algorithm>
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/AppConfig.hpp"
@@ -511,6 +513,35 @@ bool handle_command(const std::wstring &payload)
                 return true;
             }
             return false;
+        }
+        //   sidebar-check        assert the sidebar body is laid out over its virtual
+        //                        height: the last stacked child ends at the virtual
+        //                        bottom and the virtual height covers the content min
+        //                        height. Logs the numbers; returns false on a defect.
+        if (frame && payload == L"sidebar-check") {
+            auto *sw = dynamic_cast<wxScrolledWindow *>(wxGetApp().sidebar().scrolled_panel());
+            if (!sw || !sw->GetSizer()) return false;
+            int vx = 0, vy = 0; sw->GetVirtualSize(&vx, &vy);
+            const int client_h  = sw->GetClientSize().GetHeight();
+            const int content_h = sw->GetSizer()->GetMinSize().GetHeight();
+            int last_bottom = 0;
+            for (wxSizerItem *item : sw->GetSizer()->GetChildren())
+                if (item->IsShown()) last_bottom = std::max(last_bottom, item->GetRect().GetBottom() + 1);
+            const bool ok = vy >= content_h && std::abs(last_bottom - vy) <= 2;
+            BOOST_LOG_TRIVIAL(info) << "LayoutProbe: sidebar-check client_h=" << client_h
+                                    << " virtual_h=" << vy << " content_h=" << content_h
+                                    << " last_bottom=" << last_bottom << (ok ? " ok" : " DEFECT");
+            // The info log is filtered at the default level, so the verdict also
+            // lands beside the dumps where the driver can read it.
+            {
+                const boost::filesystem::path out_path =
+                    boost::filesystem::path(default_path()).parent_path() / "sidebar-check.json";
+                boost::nowide::ofstream out(out_path.string());
+                out << "{\"client_h\":" << client_h << ",\"virtual_h\":" << vy
+                    << ",\"content_h\":" << content_h << ",\"last_bottom\":" << last_bottom
+                    << ",\"ok\":" << (ok ? "true" : "false") << "}\n";
+            }
+            return ok;
         }
         if (bar && payload.compare(0, invoke.size(), invoke) == 0) {
             const bool ok = bar->InvokeMenuItem(wxString(payload.substr(invoke.size())));

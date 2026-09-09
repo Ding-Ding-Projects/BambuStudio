@@ -1240,9 +1240,17 @@ static void update_sidebar_scroll_body(wxScrolledWindow *sw)
         // content genuinely cannot fit costs a horizontal scrollbar and keeps
         // every control reachable; everything that CAN reflow still gets the
         // client width, so the compact cards are unaffected.
-        sw->SetVirtualSize(std::max(content.x, client.x),
-                           std::max(content.y, client.y));
-        sw->Layout();
+        const wxSize virt(std::max(content.x, client.x), std::max(content.y, client.y));
+        sw->SetVirtualSize(virt);
+        // wxWindow::Layout() arranges the sizer over the CLIENT rect, so the
+        // scroll range would grow while the children stayed squeezed into the
+        // visible area and the last section (the settings tree) got crushed
+        // against the bottom edge. Lay the sizer out over the VIRTUAL rect
+        // instead so everything below the fold is really placed below the fold
+        // and the scrollbar reaches it. (FitInside() is still the wrong tool:
+        // it pins the virtual width to the content min width, see the note in
+        // update_process_segment.)
+        sw->GetSizer()->SetDimension(wxPoint(0, 0), virt);
     }
 
     in_update = false;
@@ -4094,6 +4102,13 @@ Sidebar::Sidebar(Plater *parent)
     // height (it still stretches with its proportion when space allows);
     // without a min it collapses to a sliver before the scrollbar engages.
     p->m_object_list->SetMinSize(wxSize(-1, FromDIP(180)));
+    // Expanding or collapsing a plate/object changes the visible row count, so
+    // refit the list and the scroll body (fit_object_list_height).
+    for (auto evt : {wxEVT_DATAVIEW_ITEM_EXPANDED, wxEVT_DATAVIEW_ITEM_COLLAPSED})
+        p->m_object_list->Bind(evt, [this](wxDataViewEvent &e) {
+            CallAfter([this]() { update_scroll_body(); });
+            e.Skip();
+        });
 
     {
         const int pad = FromDIP(MD3::Metrics::active().padding);
@@ -4101,7 +4116,10 @@ Sidebar::Sidebar(Plater *parent)
         p->sizer_params->Add(p->m_search_bar, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP | wxBOTTOM, pad / 2);
     }
     p->sizer_params->Add(p->m_object_list, 1, wxEXPAND | wxTOP, 0);
-    scrolled_sizer->Add(p->sizer_params, 2, wxEXPAND | wxLEFT, 0);
+    // Proportion 0: nothing stretches inside a scroll body. The list gets a
+    // content-derived height (fit_object_list_height) instead of eating the
+    // slack that the settings tree below it needs.
+    scrolled_sizer->Add(p->sizer_params, 0, wxEXPAND | wxLEFT, 0);
     p->m_object_list->Hide();
     p->m_search_bar->Hide();
     p->m_objects_header->Hide();
@@ -6521,8 +6539,47 @@ void Sidebar::recalc_filament_scroll_sizes()
     update_scroll_body();
 }
 
+// Content-derived height for the object list. The list sits in a scroll body
+// with proportion 0 (nothing stretches there), so its height must come from
+// its own rows: header + visible rows, clamped to a usable floor and to a
+// ceiling that leaves the settings tree below it in view. Expanded/collapsed
+// state is honoured so a collapsed plate does not reserve empty space.
+void Sidebar::fit_object_list_height() const
+{
+    ObjectList *list = p->m_object_list;
+    if (!list || !list->IsShown() || !list->GetModel()) return;
+
+    int rows = 0;
+    std::function<void(const wxDataViewItem &)> walk = [&](const wxDataViewItem &parent) {
+        wxDataViewItemArray children;
+        const unsigned n = list->GetModel()->GetChildren(parent, children);
+        for (unsigned i = 0; i < n; ++i) {
+            ++rows;
+            if (list->GetModel()->IsContainer(children[i]) && list->IsExpanded(children[i]))
+                walk(children[i]);
+        }
+    };
+    walk(wxDataViewItem(nullptr));
+
+    int row_h = 0;
+    {
+        wxDataViewItemArray top;
+        if (list->GetModel()->GetChildren(wxDataViewItem(nullptr), top) > 0)
+            row_h = list->GetItemRect(top[0], nullptr).GetHeight();
+    }
+    if (row_h <= 0) row_h = list->GetCharHeight() + FromDIP(8);
+    const int header_h = list->GetCharHeight() + FromDIP(12);
+
+    const int floor_h   = FromDIP(180);
+    const int ceiling_h = FromDIP(420);
+    const int wanted    = std::clamp(header_h + rows * row_h + FromDIP(8), floor_h, ceiling_h);
+    if (list->GetMinSize().GetHeight() != wanted)
+        list->SetMinSize(wxSize(-1, wanted));
+}
+
 void Sidebar::update_scroll_body() const
 {
+    fit_object_list_height();
     update_sidebar_scroll_body(p->scrolled);
 }
 

@@ -296,6 +296,9 @@ public:
     // any change that alters the stacked content's height (collapse/expand,
     // row add/remove, compact<->advanced flips).
     void update_scroll_body() const;
+    // Size the object list to its visible rows (see Plater.cpp); called by
+    // update_scroll_body, exposed for the layout probe.
+    void fit_object_list_height() const;
     void update_mixed_filament_list();
     bool has_broken_mixed_filament() const;
     bool has_broken_mixed_filament(const PartPlate* plate) const;
