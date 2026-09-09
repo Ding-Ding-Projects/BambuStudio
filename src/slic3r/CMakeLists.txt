@@ -285,6 +285,13 @@ set(SLIC3R_GUI_SOURCES
     GUI/CommandPalette.hpp
     GUI/CommandPaletteIndex.cpp
     GUI/CommandPaletteIndex.hpp
+    GUI/Export/ExportFormats.hpp
+    GUI/Export/ExportEverything.cpp
+    GUI/Export/ExportEverything.hpp
+    GUI/Export/ExportDatasets.cpp
+    GUI/Export/ExportDatasets.hpp
+    GUI/Export/ExportDialog.cpp
+    GUI/Export/ExportDialog.hpp
     GUI/StopPrintGate.cpp
     GUI/StopPrintGate.hpp
     GUI/PreferencesHistory.cpp

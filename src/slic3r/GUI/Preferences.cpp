@@ -1,4 +1,6 @@
 #include "Preferences.hpp"
+#include "Export/ExportDatasets.hpp"
+#include "Export/ExportDialog.hpp"
 #include "OptionsGroup.hpp"
 #include "GUI_App.hpp"
 #include "AppDisplayName.hpp"
@@ -3368,24 +3370,33 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
 
     auto *btn_reset_warnings            = new Button(this, _L("Reset all warning dialogs"));
     auto *btn_reset_prefs               = new Button(this, _L("Reset preferences"));
+    // TRN: Opens the shared Export dialog with every preference section.
+    auto *btn_export_prefs              = new Button(this, _L("Export preferences..."));
     m_button_list[m_button_list.size()] = btn_reset_warnings;
     m_button_list[m_button_list.size()] = btn_reset_prefs;
+    m_button_list[m_button_list.size()] = btn_export_prefs;
 
     // MD3 outlined buttons: transparent interior + 1px Outline ring with an
     // OnSurface label, pill radius (height/2) and a SurfaceContainerHigh hover
     // wash — geometry, font and colours are all resolved through semantic roles
     // by Button::applyMD3Style(), replacing the Grey300/Grey400/BrandGreen r6 look.
-    for (Button *b : {btn_reset_warnings, btn_reset_prefs}) {
+    for (Button *b : {btn_reset_warnings, btn_reset_prefs, btn_export_prefs}) {
         b->SetVariant(Button::Variant::Outlined);
         b->SetButtonSize(Button::Size::Small);
     }
+    btn_export_prefs->SetToolTip(_L("Export every preference section as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"));
+    btn_export_prefs->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        if (wxGetApp().app_config != nullptr)
+            ExportDialog::run(this, Export::app_config_dataset(*wxGetApp().app_config));
+    });
 
     btn_reset_warnings->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_reset_all_warnings(); });
     btn_reset_prefs->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_reset_preferences(); });
 
     row->AddStretchSpacer();
     row->Add(btn_reset_warnings, 0, wxRIGHT, FromDIP(8));
-    row->Add(btn_reset_prefs, 0, 0, 0);
+    row->Add(btn_reset_prefs, 0, wxRIGHT, FromDIP(8));
+    row->Add(btn_export_prefs, 0, 0, 0);
     row->AddStretchSpacer();
     return row;
 }

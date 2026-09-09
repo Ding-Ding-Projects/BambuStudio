@@ -3,6 +3,8 @@
 #include "libslic3r/Model.hpp"
 
 #include "GUI_Factories.hpp"
+#include "Export/ExportDatasets.hpp"
+#include "Export/ExportDialog.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_App.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -896,6 +898,14 @@ wxMenuItem* MenuFactory::append_menu_item_fix_through_netfabb(wxMenu* menu)
     return menu_item;
 }
 
+void MenuFactory::append_menu_item_export_object_list(wxMenu* menu)
+{
+    // TRN: Context-menu item exporting the whole object list table.
+    append_menu_item(menu, wxID_ANY, _L("Export object list") + dots, _L("Export every object's name, parts, instances and size as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"),
+        [](wxCommandEvent&) { ExportDialog::run(plater(), Export::object_list_dataset(plater()->model())); }, "", nullptr,
+        []() { return plater() != nullptr && !plater()->model().objects.empty(); }, m_parent);
+}
+
 void MenuFactory::append_menu_item_export_stl(wxMenu* menu, bool is_mulity_menu)
 {
     append_menu_item(menu, wxID_ANY, _L("Export as one STL"), "",
@@ -1296,6 +1306,7 @@ void MenuFactory::create_common_object_menu(wxMenu* menu)
     // BBS
     append_menu_item_reload_from_disk(menu);
     append_menu_item_export_stl(menu);
+    append_menu_item_export_object_list(menu);
     // "Scale to print volume" makes a sense just for whole object
     append_menu_item_scale_selection_to_fit_print_volume(menu);
 
@@ -1378,6 +1389,7 @@ void MenuFactory::create_bbl_object_menu()
     append_menu_item_reload_from_disk(&m_object_menu);
     append_menu_item_replace_with_stl(&m_object_menu);
     append_menu_item_export_stl(&m_object_menu);
+    append_menu_item_export_object_list(&m_object_menu);
 }
 
 void MenuFactory::create_bbl_assemble_object_menu()

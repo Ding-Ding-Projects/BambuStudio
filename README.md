@@ -55,6 +55,11 @@ Two native features were added in the same effort:
 - A dockable Prepare sidebar can be docked left, right, top, or bottom (default left) and re-docks
   live from a Preferences control. See
   [Dockable Prepare sidebar](docs/features/prepare/dockable-sidebar.md).
+- Every record the app owns is exportable through one shared Export dialog: version history,
+  preferences, presets, the object list and print statistics, in JSON, JSON Lines, YAML, TOML, XML,
+  CSV, TSV, Markdown or HTML with lossless/lossy badges and the exact loss reasons, UTF-8 with an
+  LF/CRLF choice and a schema header, optionally wrapped in ZIP or a fully configurable 7z. See
+  [Export everything, in every format](docs/features/workspace/export-everything.md).
 
 Full documentation of the token layer, migration, failure modes, and audit result is in
 [Vendored Material Design 3 design system](docs/features/design-system/md3-design-system.md).

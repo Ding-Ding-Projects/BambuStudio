@@ -1,5 +1,8 @@
 #include "ProjectHistoryDialog.hpp"
 
+#include "Export/ExportDatasets.hpp"
+#include "Export/ExportDialog.hpp"
+
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MsgDialog.hpp"
@@ -238,20 +241,26 @@ void ProjectHistoryDialog::create_ui()
 
     auto *actions = new wxBoxSizer(wxHORIZONTAL);
     m_refresh_button = new Button(this, _L("Refresh"));
+    // TRN: Opens the shared Export dialog for the version list.
+    m_export_button  = new Button(this, _L("Export..."));
     m_restore_button = new Button(this, _L("Restore selected"), "", 0, 0, wxID_APPLY);
     m_close_button   = new Button(this, _L("Close"), "", 0, 0, wxID_CANCEL);
 
     m_refresh_button->SetMinSize(FromDIP(wxSize(104, 40)));
+    m_export_button->SetMinSize(FromDIP(wxSize(104, 40)));
     m_restore_button->SetMinSize(FromDIP(wxSize(154, 40)));
     m_close_button->SetMinSize(FromDIP(wxSize(104, 40)));
     m_restore_button->Enable(false);
+    m_export_button->SetToolTip(_L("Export every listed version as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"));
 
     m_refresh_button->Bind(wxEVT_BUTTON, &ProjectHistoryDialog::on_refresh, this);
+    m_export_button->Bind(wxEVT_BUTTON, &ProjectHistoryDialog::on_export, this);
     m_restore_button->Bind(wxEVT_BUTTON, &ProjectHistoryDialog::on_restore, this);
     m_close_button->Bind(wxEVT_BUTTON, &ProjectHistoryDialog::on_close_button, this);
 
     actions->AddStretchSpacer();
     actions->Add(m_refresh_button, 0, wxRIGHT, FromDIP(8));
+    actions->Add(m_export_button, 0, wxRIGHT, FromDIP(8));
     actions->Add(m_close_button, 0, wxRIGHT, FromDIP(8));
     actions->Add(m_restore_button, 0);
     root->Add(actions, 0, wxEXPAND | wxALL, FromDIP(24));
@@ -318,7 +327,7 @@ void ProjectHistoryDialog::apply_theme()
     const StateColor outlined_bg = outlined_button_background();
     const StateColor outlined_border(outline);
     const StateColor outlined_text(text);
-    for (Button *button : {m_refresh_button, m_load_all_button, m_close_button}) {
+    for (Button *button : {m_refresh_button, m_export_button, m_load_all_button, m_close_button}) {
         button->SetBackgroundColor(outlined_bg);
         button->SetBorderColor(outlined_border);
         button->SetTextColor(outlined_text);
@@ -882,15 +891,24 @@ wxString ProjectHistoryDialog::display_message(const std::string &message)
     return result.empty() ? _L("Project snapshot") : result;
 }
 
+void ProjectHistoryDialog::on_export(wxCommandEvent &)
+{
+    const wxString saved_project = m_plater != nullptr ? m_plater->get_project_filename(".3mf") : wxString{};
+    const wxString project_name  = saved_project.empty() ? _L("Untitled project") : wxFileName(saved_project).GetFullName();
+    ExportDialog::run(this, Export::project_history_dataset(m_versions, project_name.ToUTF8().data()));
+}
+
 void ProjectHistoryDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     (void) suggested_rect;
     m_refresh_button->Rescale();
+    m_export_button->Rescale();
     m_load_all_button->Rescale();
     m_retry_failures_button->Rescale();
     m_restore_button->Rescale();
     m_close_button->Rescale();
     m_refresh_button->SetMinSize(FromDIP(wxSize(104, 40)));
+    m_export_button->SetMinSize(FromDIP(wxSize(104, 40)));
     m_load_all_button->SetMinSize(FromDIP(wxSize(144, 36)));
     m_retry_failures_button->SetMinSize(FromDIP(wxSize(140, 36)));
     m_restore_button->SetMinSize(FromDIP(wxSize(154, 40)));

@@ -165,6 +165,7 @@ protected:
 	// Material Symbols glyphs (Save / Close) instead of legacy raster ScalableButtons.
 	Button*				m_btn_save_preset;
 	Button*				m_btn_delete_preset;
+	Button*				m_btn_export_preset{nullptr};
 	//ScalableButton*		m_btn_edit_ph_printer {nullptr};
 	//ScalableButton*		m_btn_hide_incompatible_presets;
 	//wxBoxSizer*			m_hsizer;

@@ -167,6 +167,8 @@ public:
 		{ return m_storage.find(section)->second; }
 	void set_section(const std::string &section, const std::map<std::string, std::string>& data)
 		{ m_storage[section] = data; }
+	// Every section with its key/value pairs, for the "export everything" surface.
+	const std::map<std::string, std::map<std::string, std::string>>& storage() const { return m_storage; }
 	void 				clear_section(const std::string &section)
 		{ m_storage[section].clear(); }
 

@@ -1,4 +1,7 @@
 #include "MainFrame.hpp"
+#include "Export/ExportDatasets.hpp"
+#include "Export/ExportDialog.hpp"
+#include "libslic3r/GCode/GCodeProcessor.hpp"
 #include "GLToolbar.hpp"
 #include <wx/panel.h>
 #include <wx/notebook.h>
@@ -4136,6 +4139,23 @@ void MainFrame::init_menubar_as_editor()
             export_menu, wxID_ANY, _L("Export Preset Bundle") + dots /* + "\tCtrl+E"*/, _L("Export current configuration to files"),
             [this](wxCommandEvent &) { export_config(); },
             "menu_export_config", nullptr,
+            []() { return true; }, this);
+
+        export_menu->AppendSeparator();
+        // "Export everything": every record the app owns, in every format.
+        append_menu_item(export_menu, wxID_ANY, _L("Export object list") + dots, _L("Export every object's name, parts, instances and size as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"),
+            [this](wxCommandEvent&) { if (m_plater) ExportDialog::run(this, Export::object_list_dataset(m_plater->model())); }, "", nullptr,
+            [this]() { return can_export_model(); }, this);
+        append_menu_item(export_menu, wxID_ANY, _L("Export print statistics") + dots, _L("Export the current plate's estimated times, filament use and flush volumes as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"),
+            [this](wxCommandEvent&) {
+                if (m_plater == nullptr) return;
+                PartPlate *plate = m_plater->get_partplate_list().get_curr_plate();
+                if (plate == nullptr || plate->get_slice_result() == nullptr) return;
+                ExportDialog::run(this, Export::print_statistics_dataset(*plate->get_slice_result(), plate->get_index(), plate->get_plate_name()));
+            }, "", nullptr,
+            [this]() { return can_export_gcode(); }, this);
+        append_menu_item(export_menu, wxID_ANY, _L("Export preferences") + dots, _L("Export every preference section as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"),
+            [this](wxCommandEvent&) { if (wxGetApp().app_config != nullptr) ExportDialog::run(this, Export::app_config_dataset(*wxGetApp().app_config)); }, "", nullptr,
             []() { return true; }, this);
 
         append_submenu(fileMenu, export_menu, wxID_ANY, _L("Export"), "");

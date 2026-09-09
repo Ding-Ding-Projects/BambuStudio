@@ -18,6 +18,12 @@ work is in progress.
   entire data directory (secrets included, behind a slide-to-confirm gate),
   import it on another PC as a new profile, keep unlimited profiles, and give
   each one local Git-backed snapshot history.
+- [Export everything, in every format](export-everything.md) — one shared
+  MD3 Export dialog for version history, preferences, presets, the object
+  list and print statistics: JSON/JSONL/YAML/TOML/XML/CSV/TSV/Markdown/HTML
+  with lossless/lossy badges and exact loss reasons, UTF-8 + LF/CRLF headers,
+  ZIP (miniz) or 7z (installed 7-Zip, full option set incl. AES-256 and
+  encrypted headers).
 - [Preferences auto-history](preferences-history.md) — every settings change
   commits BambuStudio.conf into an isolated local Git repo (debounced,
   deduped), with a browser and restore-beside-the-live-file semantics.
