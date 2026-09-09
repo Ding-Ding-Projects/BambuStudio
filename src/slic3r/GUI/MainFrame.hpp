@@ -404,6 +404,8 @@ public:
     BBLTopbar*            m_topbar{ nullptr };
     // BBS: session file-tabs bar, inserted between the title bar and the workspace tabs.
     ProjectTabBar*        m_project_tabbar{ nullptr };
+    wxBoxSizer*           m_project_dock_sizer{ nullptr }; // strip + workspace; orientation follows the dock edge
+    void                  place_project_tabbar();          // (re)insert the strip per its dock edge
     ProjectTabBar*        project_tabbar() { return m_project_tabbar; }
     PrintHostQueueDialog* printhost_queue_dlg() { return m_printhost_queue_dlg; }
     Plater*               m_plater { nullptr };

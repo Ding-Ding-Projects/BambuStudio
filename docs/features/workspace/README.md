@@ -16,6 +16,11 @@ work is in progress.
   and the topbar history chip.
 - [Browser-like project tabs](project-tabs.md) — one tab per project with
   snapshot-based switching, plus the new-tab and close affordances.
+- [Tabbed settings and the shared tab strip](tabbed-settings.md) — the one
+  browser-style strip behind project tabs and the Preferences sections: dock
+  edge (left default for settings), overflow menu, reorder, pinning, grouping,
+  four tab searches with regex builders, two bulk-close actions, per-surface
+  persistence, and orientation-aware tablist accessibility.
 - [External editor](external-editor.md) — configurable "Open in External
   Editor" for the current project folder, with editor auto-detection.
 - [Config profiles & full-data backup](config-profiles-backup.md) — export the

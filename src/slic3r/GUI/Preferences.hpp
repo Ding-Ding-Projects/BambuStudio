@@ -51,7 +51,7 @@ public:
 WX_DECLARE_LIST(RadioSelector, RadioSelectorList);
 class CheckBox;
 class TextInput;
-class PreferenceTabbar;
+class TabStrip;
 
 class PreferencesDialog : public DPIDialog
 {
@@ -59,7 +59,15 @@ private:
     AppConfig *app_config;
 
 protected:
-    PreferenceTabbar *m_tabbar = nullptr;
+    // Section strip: the shared browser-style TabStrip (Widgets/TabStrip.hpp),
+    // docked left by default and re-placed in m_body_row when the user docks
+    // it elsewhere. m_page_ids maps m_book page index -> strip tab id (the
+    // strip may reorder, pin, group or hide sections; the book never moves).
+    TabStrip *        m_tabbar   = nullptr;
+    wxBoxSizer *      m_body_row = nullptr;
+    std::vector<std::string> m_page_ids;
+    void              place_settings_strip();
+    int               page_for_id(const std::string &id) const;
     wxSimplebook *    m_book   = nullptr;
     SearchField *     m_search = nullptr;
     std::vector<MultiSwitchButton *> m_segmented_list; // Appearance segmented controls (rescale)
