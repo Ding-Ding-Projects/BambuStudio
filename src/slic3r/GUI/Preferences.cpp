@@ -8,6 +8,8 @@
 #include "I18N.hpp"
 #include "UxProgramTermsDialog.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Schedule/ScheduledSettings.hpp"
+#include "Schedule/ScheduledSettingsPanel.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "../Utils/ExternalEditor.hpp"
 #include <cassert>
@@ -1739,6 +1741,7 @@ void PreferencesDialog::create()
     // the MaterialIcon set (falls back to Sync — see followups).
     add_tab(_L("Appearance"), MaterialIcon::Palette, create_appearance_tab());
     add_tab(_CTX(L_CONTEXT("General", "Preference"), "Preference"), MaterialIcon::Settings, create_general_tab());
+    add_tab(_L("Schedules"), MaterialIcon::Schedule, create_schedules_tab());
     add_tab(_CTX(L_CONTEXT("User", "Preference"), "Preference"), MaterialIcon::Sync, create_user_tab());
     add_tab(_CTX(L_CONTEXT("3D", "Preference"), "Preference"), MaterialIcon::ViewInAr, create_3d_tab());
     add_tab(_CTX(L_CONTEXT("Other", "Preference"), "Preference"), MaterialIcon::Tune, create_other_tab());
@@ -2951,6 +2954,18 @@ wxWindow *PreferencesDialog::create_general_tab()
     scrolled->SetSizer(sizer);
     scrolled->FitInside();
     return scrolled;
+}
+
+// Schedules: the scheduled-settings rule list and editor (see
+// Schedule/ScheduledSettingsPanel). Every top-level row is registered under
+// the document's config key so the settings search and the command palette
+// can land on the section; the panel's own SearchField filters the rules.
+wxWindow *PreferencesDialog::create_schedules_tab()
+{
+    auto *panel = new Schedule::ScheduledSettingsPanel(m_book);
+    for (wxSizer *row : panel->search_rows())
+        register_option_row(Schedule::kDocumentConfigKey, row);
+    return panel;
 }
 
 wxWindow *PreferencesDialog::create_user_tab()

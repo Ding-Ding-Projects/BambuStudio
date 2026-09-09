@@ -195,6 +195,7 @@ public:
 
     wxWindow* create_appearance_tab();
     wxWindow* create_general_tab();
+    wxWindow* create_schedules_tab();
     wxWindow* create_user_tab();
     wxWindow* create_3d_tab();
     wxWindow* create_other_tab();

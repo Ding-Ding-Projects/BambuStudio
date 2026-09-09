@@ -302,6 +302,14 @@ set(SLIC3R_GUI_SOURCES
     GUI/HomeAssistantTransportPolicy.hpp
     GUI/HomeAssistantSharingService.cpp
     GUI/HomeAssistantSharingService.hpp
+    GUI/HomeAssistantSettingsSync.cpp
+    GUI/HomeAssistantSettingsSync.hpp
+    GUI/HomeAssistantSettingsSyncModel.hpp
+    GUI/Schedule/ScheduledSettings.cpp
+    GUI/Schedule/ScheduledSettings.hpp
+    GUI/Schedule/ScheduledSettingsModel.hpp
+    GUI/Schedule/ScheduledSettingsPanel.cpp
+    GUI/Schedule/ScheduledSettingsPanel.hpp
     GUI/SmartHomeDialog.cpp
     GUI/SmartHomeDialog.hpp
     GUI/third_party/qrcodegen.cpp

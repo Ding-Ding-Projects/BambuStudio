@@ -65,6 +65,9 @@ public:
 	// installs this to record automatic preferences-history snapshots; core
 	// code must not depend on it.
 	static void set_save_observer(std::function<void()> observer) { s_save_observer = std::move(observer); }
+	// The currently installed observer (empty when none). A feature that wants
+	// to observe saves alongside an earlier one captures this and calls it first.
+	static std::function<void()> save_observer() { return s_save_observer; }
 
 	// Does this config need to be saved?
 	bool 				dirty() const { return m_dirty; }

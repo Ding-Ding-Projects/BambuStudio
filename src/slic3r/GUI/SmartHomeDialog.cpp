@@ -4,6 +4,7 @@
 #include "DeviceCore/DevManager.h"
 #include "DeviceManager.hpp"
 #include "GUI_App.hpp"
+#include "HomeAssistantSettingsSync.hpp"
 #include "HomeAssistantSharingService.hpp"
 #include "I18N.hpp"
 #include "MsgDialog.hpp"
@@ -763,6 +764,46 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
     add_toggle(m_flash_finish_toggle, "ha_flash_on_finish",
                _L("Pulse alert lights green when a print finishes (auto-restores)"), true);
 
+    // --- settings sync (issue #16) ------------------------------------------
+    // Opt-in. Publishes the app's user settings as sensor.bambustudio_*
+    // entities through POST /api/states, which needs nothing configured on the
+    // Home Assistant side. The deny-list in HomeAssistantSettingsSyncModel.hpp
+    // keeps tokens, URLs, paths and credentials out of every payload.
+    {
+        auto *row = new wxBoxSizer(wxHORIZONTAL);
+        m_settings_sync_toggle = new CheckBox(m_scroll);
+        m_settings_sync_toggle->SetMinSize(FromDIP(wxSize(44, 44)));
+        const wxString sync_copy = _L("Sync settings to Home Assistant (language, theme, density, accent, fonts, funny levels, app name and other preferences; never tokens, paths or printer credentials)");
+        m_settings_sync_toggle->SetName(sync_copy);
+        m_settings_sync_toggle->SetToolTip(sync_copy);
+        m_settings_sync_toggle->SetValue(HomeAssistant::SettingsSync::enabled());
+        m_settings_sync_toggle->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &e) {
+            HomeAssistant::SettingsSync::set_enabled(m_settings_sync_toggle->GetValue());
+            e.Skip();
+        });
+        row->Add(m_settings_sync_toggle, 0, wxALIGN_CENTER_VERTICAL);
+        auto *sync_label = label(sync_copy, false, true);
+        sync_label->SetCursor(wxCursor(wxCURSOR_HAND));
+        sync_label->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent &) {
+            const bool on = !m_settings_sync_toggle->GetValue();
+            m_settings_sync_toggle->SetValue(on);
+            HomeAssistant::SettingsSync::set_enabled(on);
+        });
+        row->Add(sync_label, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        body->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+
+        auto *status_row = new wxBoxSizer(wxVERTICAL);
+        m_settings_sync_status = label(wxEmptyString, true, true);
+        status_row->Add(m_settings_sync_status, 0, wxEXPAND);
+        m_settings_sync_now = new Button(m_scroll, _L("Sync now"));
+        make_responsive_action(*m_settings_sync_now);
+        m_settings_sync_now->Bind(wxEVT_BUTTON, [](wxCommandEvent &) { HomeAssistant::SettingsSync::sync_now(); });
+        status_row->Add(m_settings_sync_now, 0, wxTOP, FromDIP(4));
+        body->Add(status_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(4));
+        HomeAssistant::SettingsSync::set_status_listener([this]() { refresh_settings_sync_status(); });
+        refresh_settings_sync_status();
+    }
+
     auto *close = new Button(this, _L("Close"), "", 0, 0, wxID_CANCEL);
     make_responsive_action(*close);
     close->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
@@ -790,6 +831,7 @@ SmartHomeDialog::SmartHomeDialog(wxWindow *parent)
 
 SmartHomeDialog::~SmartHomeDialog()
 {
+    HomeAssistant::SettingsSync::set_status_listener({});
     m_volume_debounce_timer.Stop();
     m_discovery_expiry_timer.Stop();
     if (m_sharing_service)
@@ -802,6 +844,41 @@ void SmartHomeDialog::update_wrapped_label(Label *label, const wxString &text)
         return;
     label->SetLabel(text);
     relayout_content();
+}
+
+void SmartHomeDialog::refresh_settings_sync_status()
+{
+    if (!m_settings_sync_status || !m_settings_sync_now)
+        return;
+    using HomeAssistant::SettingsSync::State;
+    const HomeAssistant::SettingsSync::Status status = HomeAssistant::SettingsSync::status();
+    wxString text;
+    switch (status.state) {
+    case State::Off:
+        text = _L("Settings sync is off. Nothing about this app is sent to Home Assistant.");
+        break;
+    case State::Idle:
+        text = _L("Settings sync is on. Waiting for the first push.");
+        break;
+    case State::Syncing:
+        text = wxString::Format(_L("Syncing %d entities to Home Assistant..."), status.entities_total);
+        break;
+    case State::Synced:
+        text = wxString::Format(_L("Last synced %s (%d entities). Look for sensor.bambustudio_settings in Home Assistant."),
+                                wxString::FromUTF8(status.last_synced_at), status.entities_ok);
+        break;
+    case State::Failed:
+        text = wxString::Format(_L("Last sync failed: %s. Your settings are unchanged."), wxString::FromUTF8(status.last_error));
+        if (!status.last_synced_at.empty())
+            text += " " + wxString::Format(_L("Last successful sync %s."), wxString::FromUTF8(status.last_synced_at));
+        break;
+    }
+    const bool on = status.state != State::Off;
+    m_settings_sync_now->Enable(on && status.state != State::Syncing);
+    m_settings_sync_now->SetToolTip(!on ? _L("Turn on settings sync first.")
+                                    : status.state == State::Syncing ? _L("A sync is already running.")
+                                                                      : _L("Push the current settings to Home Assistant now."));
+    update_wrapped_label(m_settings_sync_status, text);
 }
 
 void SmartHomeDialog::update_config_limit_notice()

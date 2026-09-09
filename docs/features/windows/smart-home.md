@@ -216,6 +216,74 @@ Assistant URL and long-lived token.
 - Output is the local Windows SAPI voice plus configured Home Assistant announcement speakers via
   `tts.speak`.
 
+## Settings sync to Home Assistant (issue #16)
+
+An opt-in **Sync settings to Home Assistant** switch in the Smart home dialog publishes the app's
+user settings to Home Assistant so automations can react to them and dashboards can show them.
+It is off by default and stored under `ha_settings_sync`.
+
+Code: `src/slic3r/GUI/HomeAssistantSettingsSyncModel.hpp` (deny-list and payload builder, wx-free),
+`HomeAssistantSettingsSync.{hpp,cpp}` (timers, transport, status), `HomeAssistant::set_entity_state`
+(the REST call). Tests: `tests/scheduled_settings/home_assistant_settings_sync_tests.cpp`.
+
+### What is published
+
+- Route: `POST /api/states/<entity_id>` with the token from this dialog. Home Assistant creates or
+  updates a state object for any entity id an authenticated caller sends, so nothing has to be
+  configured on the Home Assistant side (no helper, no YAML, no companion integration). The
+  entities are plain sensors from Home Assistant's point of view; nothing reads settings back.
+- `sensor.bambustudio_settings`: state is the local ISO-8601 time of the push; attributes are every
+  publishable key of the `app` section of `BambuStudio.conf`, plus `app_version` and
+  `setting_count`.
+- One sensor per headline setting so an automation can trigger on it directly:
+  `sensor.bambustudio_language`, `_dark_color_mode`, `_ui_density`, `_ui_accent_seed`,
+  `_ui_font_family`, `_ui_font_scale`, `_funny_level_en`, `_funny_level_yue`,
+  `_app_display_name`. A setting that has no value yet is reported as `unknown`, never invented.
+- Attribute values are cut at 255 bytes on a UTF-8 boundary; at most 200 attributes are sent.
+
+### When it runs
+
+- On every settings save, debounced 5 seconds so a burst of edits is one push.
+- Every 15 minutes while enabled, so a restarted Home Assistant gets the entities back.
+- On **Sync now** in the dialog, and on the failure toast's **Retry**.
+- Turning the switch on pushes immediately; turning it off stops the timers and clears the status
+  line (existing entities in Home Assistant are left as they are).
+
+Only one push runs at a time; a newer push supersedes an older one's late completions.
+
+### What is never sent (deny-list)
+
+The deny-list is tested and runs on every key and every value, and the transport refuses any
+payload that fails it a second time before the request is built:
+
+- Keys containing `token`, `password`, `secret`, `access_code`, `api_key`, `cookie`, `session`,
+  `credential`, `auth`, `private`, `cert`, `pin`, `path`, `dir`, `folder`, `file`, `recent`, `url`,
+  `host`, `address`, `ip`, `serial`, `dev_id`, `device_id`, `user_id`, `uid`, `email`, `phone`,
+  `license`, `webview`, `printer_` (`pin`, `dir`, `file`, `ip` and `uid` match only in their
+  word-boundary forms such as `_dir`, `file_` or `_ip`, so `filament`, `direction` and `guid` are
+  not swept up); and the exact keys `ha_speakers`, `ha_lights`, `region`,
+  `user_name`, `nickname`, `avatar`, `install_id`, `machine_id`. `ha_url` and `ha_token` fall
+  under `url` and `token`.
+- Values that look like a Windows drive path, a UNC path, a POSIX absolute path, a URL, a JWT, or a
+  long mixed letter-and-digit string with no spaces (a token under an innocent key).
+- Only the `app` section is read. Printer, preset, cloud, account and recent-file sections are not
+  candidates at all.
+
+### Status and failure
+
+The dialog shows a status line: off, waiting for the first push, syncing N entities, last synced at
+a time with the entity count, or the last failure in plain words (token refused, HTTPS required,
+unreachable, HTTP status). The first failure in a streak also posts a non-blocking warning toast
+with **Retry**. A failed push never changes a setting; the last successful sync time stays visible.
+
+### Security
+
+- The token never leaves `BambuStudio.conf` and is sent only over HTTPS or to a loopback address,
+  through the same transport check every other Home Assistant call uses.
+- Entity ids are fixed constants derived from the setting key; nothing user-typed reaches the URL.
+- The payload is settings only. If you export `BambuStudio.conf` the deny-list does not apply to
+  that file; the existing config-export secrets warning covers it.
+
 ## Failure modes
 
 | Condition | Behavior |

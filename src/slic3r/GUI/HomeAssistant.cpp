@@ -896,6 +896,241 @@ void flash_lights(int r, int g, int b, int flashes)
     }
 }
 
+namespace {
+
+constexpr std::size_t kMaxSingleStateResponseBytes = 64 * 1024;
+
+// `<domain>.<object_id>`, lowercase letters, digits and underscores only, so a
+// caller can never smuggle a path segment or a query into the request URL.
+bool valid_single_entity_id(const std::string &entity_id)
+{
+    if (entity_id.empty() || entity_id.size() > Execution::kMaxEntityIdBytes)
+        return false;
+    const std::size_t dot = entity_id.find('.');
+    if (dot == std::string::npos || dot == 0 || dot + 1 >= entity_id.size())
+        return false;
+    if (entity_id.find('.', dot + 1) != std::string::npos)
+        return false;
+    for (char c : entity_id) {
+        const bool ok = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '.';
+        if (!ok)
+            return false;
+    }
+    return true;
+}
+
+template <typename Result>
+Execution::OnceUiCompletion<Result> make_ui_completion(std::function<void(Result)> done)
+{
+    return Execution::OnceUiCompletion<Result>(
+        [](std::function<void()> callback) {
+            if (wxTheApp == nullptr)
+                return false;
+            try {
+                wxTheApp->CallAfter(std::move(callback));
+                return true;
+            } catch (...) {
+                return false;
+            }
+        },
+        [done = std::move(done)](Result result) mutable { done(std::move(result)); });
+}
+
+template <typename Result>
+Result typed_error(EntityFetchErrorCode code, unsigned http_status = 0)
+{
+    Result result;
+    result.error_code = code;
+    if (http_status <= std::numeric_limits<std::uint16_t>::max())
+        result.http_status = static_cast<std::uint16_t>(http_status);
+    return result;
+}
+
+// Shared prologue for the single-entity calls: shutdown, transport safety and
+// executor acquisition, reporting each failure through the typed completion.
+template <typename Result>
+bool prepare_single_entity_call(
+    const Execution::OnceUiCompletion<Result> &completion,
+    const std::string &entity_id,
+    ConnectionSnapshot &connection,
+    std::shared_ptr<Execution::BoundedTaskExecutor> &executor,
+    bool use_query_executor)
+{
+    if (s_shutdown_requested.load()) {
+        completion.dispatch(typed_error<Result>(EntityFetchErrorCode::ShuttingDown));
+        return false;
+    }
+    if (!valid_single_entity_id(entity_id)) {
+        completion.dispatch(typed_error<Result>(EntityFetchErrorCode::InvalidFilter));
+        return false;
+    }
+    connection = connection_snapshot();
+    const CredentialTransportSafety transport = credential_transport_safety(connection);
+    if (transport != CredentialTransportSafety::Safe) {
+        completion.dispatch(typed_error<Result>(
+            transport == CredentialTransportSafety::NotConfigured
+                ? EntityFetchErrorCode::NotConfigured
+                : EntityFetchErrorCode::InsecureTransport));
+        return false;
+    }
+    try {
+        executor = use_query_executor ? runtime_state().query_executor()
+                                      : runtime_state().service_executor();
+    } catch (...) {
+        completion.dispatch(typed_error<Result>(EntityFetchErrorCode::WorkerUnavailable));
+        return false;
+    }
+    if (!executor) {
+        completion.dispatch(typed_error<Result>(
+            s_shutdown_requested.load() ? EntityFetchErrorCode::ShuttingDown
+                                        : EntityFetchErrorCode::WorkerUnavailable));
+        return false;
+    }
+    return true;
+}
+
+template <typename Result>
+void report_submit_status(
+    const Execution::OnceUiCompletion<Result> &completion,
+    Execution::BoundedTaskExecutor::SubmitStatus status)
+{
+    switch (status) {
+    case Execution::BoundedTaskExecutor::SubmitStatus::Accepted:
+        break;
+    case Execution::BoundedTaskExecutor::SubmitStatus::QueueFull:
+        completion.dispatch(typed_error<Result>(EntityFetchErrorCode::QueueFull));
+        break;
+    case Execution::BoundedTaskExecutor::SubmitStatus::Stopping:
+        completion.dispatch(typed_error<Result>(EntityFetchErrorCode::ShuttingDown));
+        break;
+    case Execution::BoundedTaskExecutor::SubmitStatus::InvalidTask:
+    case Execution::BoundedTaskExecutor::SubmitStatus::AllocationFailure:
+        completion.dispatch(typed_error<Result>(EntityFetchErrorCode::WorkerUnavailable));
+        break;
+    }
+}
+
+} // namespace
+
+void fetch_entity_state(const std::string &entity_id, EntityStateCallback done)
+{
+    if (!done)
+        return;
+    const auto completion = make_ui_completion<EntityStateResult>(std::move(done));
+    ConnectionSnapshot connection;
+    std::shared_ptr<Execution::BoundedTaskExecutor> executor;
+    if (!prepare_single_entity_call(completion, entity_id, connection, executor, true))
+        return;
+
+    const std::string url  = connection.url + "/api/states/" + entity_id;
+    const std::string auth = "Bearer " + connection.token;
+    Execution::BoundedTaskExecutor::SubmitStatus submit_status =
+        Execution::BoundedTaskExecutor::SubmitStatus::AllocationFailure;
+    try {
+        submit_status = executor->submit_with_discard(
+            [url, auth, entity_id, completion](const std::atomic_bool &cancel_requested) {
+                EntityStateResult result = typed_error<EntityStateResult>(EntityFetchErrorCode::TransportError);
+                bool terminal = false;
+                bool too_large = false;
+                try {
+                    auto http = Http::get(url);
+                    http.follow_redirects(false)
+                        .verbose(false)
+                        .header("Authorization", auth)
+                        .header("Accept", "application/json")
+                        .header("Accept-Encoding", "identity")
+                        .timeout_max(10)
+                        .size_limit(kMaxSingleStateResponseBytes)
+                        .on_progress([&cancel_requested, &too_large](Http::Progress progress, bool &cancel) {
+                            too_large = too_large || progress.dltotal > kMaxSingleStateResponseBytes ||
+                                        progress.dlnow > kMaxSingleStateResponseBytes;
+                            cancel = cancel_requested.load();
+                        })
+                        .on_complete([&result, &entity_id, &terminal](std::string body, unsigned) {
+                            terminal = true;
+                            nlohmann::json j = nlohmann::json::parse(body, nullptr, false);
+                            if (j.is_discarded() || !j.is_object() || !j.contains("state") || !j["state"].is_string()) {
+                                result = typed_error<EntityStateResult>(EntityFetchErrorCode::InvalidResponse);
+                                return;
+                            }
+                            result = EntityStateResult{};
+                            result.entity.entity_id = entity_id;
+                            result.entity.state     = j["state"].get<std::string>();
+                            if (result.entity.state.size() > 255)
+                                result.entity.state.resize(255);
+                            if (auto attrs = j.find("attributes"); attrs != j.end() && attrs->is_object()) {
+                                if (auto name = attrs->find("friendly_name"); name != attrs->end() && name->is_string()) {
+                                    result.entity.friendly_name = name->get<std::string>();
+                                    if (result.entity.friendly_name.size() > 255)
+                                        result.entity.friendly_name.resize(255);
+                                }
+                            }
+                        })
+                        .on_error([&result, &terminal, &too_large](std::string, std::string error, unsigned status) {
+                            terminal = true;
+                            if (status != 0)
+                                result = typed_error<EntityStateResult>(EntityFetchErrorCode::HttpStatus, status);
+                            else if (too_large || is_http_body_limit_error(error))
+                                result = typed_error<EntityStateResult>(EntityFetchErrorCode::ResponseTooLarge);
+                            else
+                                result = typed_error<EntityStateResult>(EntityFetchErrorCode::TransportError);
+                        })
+                        .perform_sync();
+                } catch (...) {
+                    result   = typed_error<EntityStateResult>(EntityFetchErrorCode::RequestSetupFailed);
+                    terminal = true;
+                }
+                if (cancel_requested.load() || s_shutdown_requested.load())
+                    result = typed_error<EntityStateResult>(EntityFetchErrorCode::ShuttingDown);
+                else if (!terminal)
+                    result = typed_error<EntityStateResult>(EntityFetchErrorCode::TransportError);
+                completion.dispatch(std::move(result));
+            },
+            [completion]() { completion.dispatch(typed_error<EntityStateResult>(EntityFetchErrorCode::ShuttingDown)); });
+    } catch (...) {
+        completion.dispatch(typed_error<EntityStateResult>(EntityFetchErrorCode::WorkerUnavailable));
+        return;
+    }
+    report_submit_status(completion, submit_status);
+}
+
+void set_entity_state(const std::string &entity_id, const std::string &json_body, StateWriteCallback done)
+{
+    if (!done)
+        done = [](StateWriteResult) {};
+    const auto completion = make_ui_completion<StateWriteResult>(std::move(done));
+    ConnectionSnapshot connection;
+    std::shared_ptr<Execution::BoundedTaskExecutor> executor;
+    if (!prepare_single_entity_call(completion, entity_id, connection, executor, false))
+        return;
+
+    const std::string url           = connection.url + "/api/states/" + entity_id;
+    const std::string authorization = "Bearer " + connection.token;
+    Execution::BoundedTaskExecutor::SubmitStatus submit_status =
+        Execution::BoundedTaskExecutor::SubmitStatus::AllocationFailure;
+    try {
+        submit_status = executor->submit_with_discard(
+            [url, authorization, json_body, completion](const std::atomic_bool &cancel_requested) {
+                const PostResult post = perform_http_post(url, authorization, json_body, 10, cancel_requested, false, true);
+                StateWriteResult result;
+                if (cancel_requested.load() || s_shutdown_requested.load())
+                    result = typed_error<StateWriteResult>(EntityFetchErrorCode::ShuttingDown);
+                else if (post.completed && post.status >= 200 && post.status < 300)
+                    result.http_status = static_cast<std::uint16_t>(post.status);
+                else if (post.status != 0)
+                    result = typed_error<StateWriteResult>(EntityFetchErrorCode::HttpStatus, post.status);
+                else
+                    result = typed_error<StateWriteResult>(EntityFetchErrorCode::TransportError);
+                completion.dispatch(std::move(result));
+            },
+            [completion]() { completion.dispatch(typed_error<StateWriteResult>(EntityFetchErrorCode::ShuttingDown)); });
+    } catch (...) {
+        completion.dispatch(typed_error<StateWriteResult>(EntityFetchErrorCode::WorkerUnavailable));
+        return;
+    }
+    report_submit_status(completion, submit_status);
+}
+
 void shutdown() noexcept
 {
     runtime_state().shutdown();

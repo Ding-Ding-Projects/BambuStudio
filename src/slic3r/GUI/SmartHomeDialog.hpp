@@ -50,6 +50,7 @@ private:
     void set_discovery_sharing(bool enabled, bool expired = false);
     void update_wrapped_label(Label *label, const wxString &text);
     void update_config_limit_notice();
+    void refresh_settings_sync_status();
     void relayout_content();
     void constrain_to_work_area(bool use_preferred_size);
     void on_dpi_changed(const wxRect &suggested_rect) override;
@@ -75,6 +76,9 @@ private:
     CheckBox    *m_narrator_toggle { nullptr };
     CheckBox    *m_flash_error_toggle { nullptr };
     CheckBox    *m_flash_finish_toggle { nullptr };
+    CheckBox    *m_settings_sync_toggle { nullptr };
+    Label       *m_settings_sync_status { nullptr };
+    Button      *m_settings_sync_now { nullptr };
     std::unique_ptr<HomeAssistant::SharingService> m_sharing_service;
     wxTimer      m_volume_debounce_timer;
     wxTimer      m_discovery_expiry_timer;

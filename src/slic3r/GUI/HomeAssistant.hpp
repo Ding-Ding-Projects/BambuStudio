@@ -130,6 +130,36 @@ void add_printers(const std::vector<PrinterHandover> &printers,
 // corresponding toggles are on.
 void flash_lights(int r, int g, int b, int flashes = 3);
 
+// One entity's current state (GET /api/states/<entity_id>). Used by the
+// scheduled-settings Home Assistant source to read an input_boolean or
+// binary_sensor. `entity_id` must be a lowercase `<domain>.<object_id>`; the
+// callback runs exactly once on the UI thread while its queue is available.
+struct EntityStateResult
+{
+    Entity               entity;
+    EntityFetchErrorCode error_code = EntityFetchErrorCode::None;
+    std::uint16_t        http_status = 0;
+
+    explicit operator bool() const noexcept { return error_code == EntityFetchErrorCode::None; }
+};
+using EntityStateCallback = std::function<void(EntityStateResult)>;
+void fetch_entity_state(const std::string &entity_id, EntityStateCallback done);
+
+// Create or update an entity's state (POST /api/states/<entity_id>). Home
+// Assistant accepts any entity id from an authenticated caller, so the
+// settings-sync feature needs nothing configured on the Home Assistant side.
+// `json_body` is {"state": ..., "attributes": {...}}; it must already have
+// passed the settings-sync deny-list. The callback runs once on the UI thread.
+struct StateWriteResult
+{
+    EntityFetchErrorCode error_code = EntityFetchErrorCode::None;
+    std::uint16_t        http_status = 0;
+
+    explicit operator bool() const noexcept { return error_code == EntityFetchErrorCode::None; }
+};
+using StateWriteCallback = std::function<void(StateWriteResult)>;
+void set_entity_state(const std::string &entity_id, const std::string &json_body, StateWriteCallback done);
+
 // Stops accepting work, cancels active HTTP transfers through their progress
 // callbacks, restores any active light-alert transaction, and joins owned
 // workers. Entity queries that were accepted still attempt exactly one typed
