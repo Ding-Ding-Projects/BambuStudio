@@ -114,6 +114,8 @@ individually.
 
 ## Verification
 
+- Capture (built payload, hidden desktop): `docs/screenshots/md3-everything/preferences-appearance-app-name--en-light-comfortable--after.png` — the App name field with its provenance line, the reset button and the folded explanation toggle on its own line.
+
 - `tests/app_display_name/app_display_name_tests` (Catch2): bounds, code-point counting, control
   and whitespace handling, sanitization idempotence, fallback, provenance, stored-value folding.
 - `tests/app_display_name/app_display_name_identity_contract.cmake`: hand-listed identity files

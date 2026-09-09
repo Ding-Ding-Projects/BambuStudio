@@ -115,6 +115,8 @@ notice fires once per configuration directory. It never gates startup or steals 
 
 ## Verification
 
+- Capture (built payload, hidden desktop): `docs/screenshots/md3-everything/preferences-general-funny-levels--en-light-comfortable--after.png` — both sliders at level 2 with their provenance lines and the dialog-emoji toggle under the Language picker.
+
 Catch2 tests in `tests/language_mode/funny_level_tests.cpp` (target `language_mode_tests`):
 
 - `Funny levels clamp to the 1..5 range`

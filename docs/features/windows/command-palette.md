@@ -111,6 +111,8 @@ build's test step rather than shipping a palette that quietly lacks it.
 
 ## Verification
 
+- Capture (built payload, hidden desktop): `docs/screenshots/md3-everything/command-palette-card--en-light-comfortable--after.png` — the bounded card with the search pill, size toggle and rich rows for theme, density and accent.
+
 - `command_palette_tests` (Catch2) covers the accelerator table, persistence,
   teleport resolution and the three completeness guards.
 - Headless drive (Mesa llvmpipe + Lowlevel MCP): `Ctrl+Shift+F` opens the

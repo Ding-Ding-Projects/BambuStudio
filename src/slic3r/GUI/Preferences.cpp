@@ -2773,9 +2773,14 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto *name_actions = new wxBoxSizer(wxVERTICAL);
     auto *name_actions_line = new wxBoxSizer(wxHORIZONTAL);
     name_actions_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
-    name_actions_line->Add(name_reset, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
-    name_actions_line->Add(name_explain_toggle, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    name_actions_line->Add(name_reset, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
     name_actions->Add(name_actions_line, 0, wxEXPAND);
+    // The explain toggle sits on its own line: beside the reset button the two
+    // labels overran the dialog's 780 px width and the toggle was clipped.
+    auto *name_toggle_line = new wxBoxSizer(wxHORIZONTAL);
+    name_toggle_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
+    name_toggle_line->Add(name_explain_toggle, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    name_actions->Add(name_toggle_line, 0, wxEXPAND | wxTOP, FromDIP(2));
     auto *name_explain_line = new wxBoxSizer(wxHORIZONTAL);
     name_explain_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
     name_explain_line->Add(name_explain, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
