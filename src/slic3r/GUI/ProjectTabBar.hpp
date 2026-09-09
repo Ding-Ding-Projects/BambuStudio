@@ -88,6 +88,10 @@ public:
     // DPI + re-fetch fonts --------------------------------------------------
     void Rescale();
 
+    // Stable per-element appearance id of a tab ("project-tab/<file stem>",
+    // or "project-tab" for an unsaved tab). Appearance/ElementStyle.hpp.
+    std::string ElementIdOf(int index) const;
+
 private:
     friend class ProjectTabButton;
 
@@ -111,6 +115,7 @@ private:
     std::vector<TabGroup>          m_groups;
     int                            m_active = -1;
     int                            m_next_group_id = 1;
+    int                            m_style_token = 0; // ElementStyle listener
 
     wxBoxSizer *m_root_sizer    = nullptr;
     wxBoxSizer *m_buttons_sizer = nullptr;

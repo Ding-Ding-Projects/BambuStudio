@@ -44,6 +44,7 @@
 #include "ConfigProfilesDialog.hpp"
 #include "CommandPalette.hpp"
 #include "CommandPaletteIndex.hpp"
+#include "Appearance/AppearanceEditorPopover.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
 #include "WebViewDialog.hpp"
@@ -375,6 +376,10 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
         // rows (theme / density / accent).
         Bind(wxEVT_MENU, [this](wxCommandEvent &) { CommandPalette::ShowPalette(this); },
              PaletteIndex::kPaletteCommandId);
+        // Ctrl+Shift+E opens the per-element appearance editor beside the
+        // focused control; the chord lives in the same single table.
+        Bind(wxEVT_MENU, [](wxCommandEvent &) { AppearanceEditor::open_for_focused(); },
+             PaletteIndex::kAppearanceEditorCommandId);
     }
 
     // BBS

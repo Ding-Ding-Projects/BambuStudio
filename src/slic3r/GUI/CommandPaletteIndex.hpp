@@ -21,6 +21,8 @@ namespace Slic3r::GUI::PaletteIndex {
 
 // Command id the palette accelerator posts as wxEVT_MENU.
 constexpr int kPaletteCommandId = wxID_HIGHEST + 90;
+// Ctrl+Shift+E: per-element appearance editor for the focused control.
+constexpr int kAppearanceEditorCommandId = wxID_HIGHEST + 91;
 // Ctrl+Numpad1..6 fake the Ctrl+1..6 window-menu chords on Windows; the id
 // for Numpad N is kNumpadTabBaseId + N - 1 and selects workspace tab N - 1.
 constexpr int kNumpadTabBaseId  = wxID_HIGHEST + 1;

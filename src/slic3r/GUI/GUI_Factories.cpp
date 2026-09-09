@@ -3,6 +3,7 @@
 #include "libslic3r/Model.hpp"
 
 #include "GUI_Factories.hpp"
+#include "Appearance/AppearanceEditorPopover.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_App.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -1731,6 +1732,7 @@ wxMenu* MenuFactory::object_menu()
     append_menu_item_edit_text(&m_object_menu);
     append_menu_item_edit_svg(&m_object_menu);
     append_menu_item_change_filament(&m_object_menu);
+    AppearanceEditor::append_edit_appearance_item(m_object_menu, "object-list.row", nullptr);
     {
         NetworkAgent* agent = GUI::wxGetApp().getAgent();
         if (agent) agent->track_update_property("object_menu", std::to_string(++object_menu_count));
@@ -1753,6 +1755,7 @@ wxMenu* MenuFactory::part_menu()
     append_menu_items_convert_unit(&m_part_menu);
     append_menu_item_change_filament(&m_part_menu);
     append_menu_item_per_object_settings(&m_part_menu);
+    AppearanceEditor::append_edit_appearance_item(m_part_menu, "object-list.row", nullptr);
     {
         NetworkAgent* agent = GUI::wxGetApp().getAgent();
         if (agent) agent->track_update_property("part_menu", std::to_string(++part_menu_count));
@@ -1880,6 +1883,7 @@ wxMenu* MenuFactory::multi_selection_menu()
         append_menu_item_per_object_process(menu);
     }
 
+    AppearanceEditor::append_edit_appearance_item(*menu, "object-list.row", nullptr);
     {
         NetworkAgent* agent = GUI::wxGetApp().getAgent();
         if (agent) agent->track_update_property("multi_selection_menu", std::to_string(++multi_selection_menu_count));
@@ -1913,6 +1917,7 @@ wxMenu* MenuFactory::assemble_multi_selection_menu()
 
 wxMenu *MenuFactory::filament_action_menu(int active_filament_menu_id) {
     create_filament_action_menu(false, active_filament_menu_id);
+    AppearanceEditor::append_edit_appearance_item(m_filament_action_menu, "sidebar.filament-row", nullptr);
     return &m_filament_action_menu;
 }
 
@@ -1922,6 +1927,7 @@ wxMenu* MenuFactory::plate_menu()
 {
     append_menu_item_locked(&m_plate_menu);
     append_menu_item_plate_name(&m_plate_menu);
+    AppearanceEditor::append_edit_appearance_item(m_plate_menu, "object-list.plate", nullptr);
     {
         NetworkAgent* agent = GUI::wxGetApp().getAgent();
         if (agent) agent->track_update_property("plate_menu", std::to_string(++plate_menu_count));

@@ -12,10 +12,11 @@ namespace Slic3r::GUI::PaletteIndex {
 std::vector<wxAcceleratorEntry> main_frame_accelerators()
 {
     std::vector<wxAcceleratorEntry> entries;
-    entries.reserve(kNumpadTabCount + 1);
+    entries.reserve(kNumpadTabCount + 2);
     for (int n = 1; n <= kNumpadTabCount; ++n)
         entries.emplace_back(wxACCEL_CTRL, WXK_NUMPAD0 + n, kNumpadTabBaseId + n - 1);
     entries.emplace_back(wxACCEL_CTRL | wxACCEL_SHIFT, 'F', kPaletteCommandId);
+    entries.emplace_back(wxACCEL_CTRL | wxACCEL_SHIFT, 'E', kAppearanceEditorCommandId);
     return entries;
 }
 
