@@ -21,6 +21,7 @@
 #include "fila_manager/wgtFilaManagerFeature.h"
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Appearance/ElementStyle.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
@@ -1032,6 +1033,10 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
     checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(FromDIP(320));
+    // Right-click on a setting row -> "Edit appearance..." for that row; the
+    // id is the AppConfig key so the override follows the setting, not its
+    // position ("preferences.row/<param>" inherits from "preferences.row").
+    ElementStyle::apply(checkbox_title, "preferences.row/" + param, title);
     text_col->Add(checkbox_title, 0);
     if (!tooltip.empty() && tooltip != title) {
         auto *checkbox_desc = new Label(parent, tooltip);

@@ -90,6 +90,7 @@
 #include "slic3r/GUI/Widgets/WebView.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MD3Tokens.hpp"
+#include "Appearance/AppearanceEditorPopover.hpp"
 #include "Widgets/BoundedRegex.hpp"
 #include "Plater.hpp"
 #include "PreferencesHistory.hpp"
@@ -3240,6 +3241,10 @@ bool GUI_App::on_init_inner()
                 MD3::setAccentSeed(seed_colour);
         }
     }
+    // Per-element appearance overrides (Appearance/ElementStyle.hpp): load the
+    // registry from data_dir()/appearance/element-styles.json and install the
+    // context-menu / shortcut hooks before the first adopted widget is built.
+    AppearanceEditor::init(data_dir() + "/appearance");
 
 // initialize label colors and fonts
     init_label_colours();

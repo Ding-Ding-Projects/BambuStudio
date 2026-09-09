@@ -124,7 +124,7 @@ UI stays fully interactive.
 | :---: | :---: |
 | ![Version history dialog](docs/screenshots/version-history/history-dialog.png) | ![Regex builder popover](docs/screenshots/regex-builder/builder-popover.png) |
 
-| Appearance settings (theme / density / accent / font) | Project tabs (one tab per project) |
+| Appearance settings (theme / density / accent / font) — plus a per-element editor: right-click ▸ *Edit appearance...* or Ctrl+Shift+E ([docs](docs/features/windows/appearance-editor.md)) | Project tabs (one tab per project) |
 | :---: | :---: |
 | ![Appearance tab](docs/screenshots/appearance/appearance-tab.png) | ![Two project tabs](docs/screenshots/project-tabs/tab-bar-two-tabs.png) |
 

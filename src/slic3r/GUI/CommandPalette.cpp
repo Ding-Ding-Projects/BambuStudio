@@ -1,5 +1,8 @@
 #include "CommandPalette.hpp"
 
+#include "Appearance/AppearanceEditorPopover.hpp"
+#include "Appearance/ElementStyle.hpp"
+
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MainFrame.hpp"
@@ -146,6 +149,28 @@ void CommandPalette::collect_entries()
     m_entries.push_back({MaterialIcon::Search, _L("Search in settings"),
                          _L("Find any print / filament / printer parameter"),
                          [this]() { wxGetApp().sidebar().search(); }});
+
+    // --- Per-element appearance editor + its presets --------------------------
+    m_entries.push_back({MaterialIcon::Brush, _L("Edit appearance of the focused element"),
+                         wxString::Format(_L("Open the anchored appearance editor (%s) for whatever has focus"),
+                                          AppearanceEditor::shortcut_text()),
+                         [this]() {
+                             MainFrame *frame = m_frame;
+                             // The palette is modal: reopen the editor once it has closed
+                             // and focus has returned to the frame.
+                             frame->CallAfter([]() { AppearanceEditor::open_for_focused(); });
+                         }});
+    {
+        StyleRegistry &reg = ElementStyle::registry();
+        for (const std::string &name : reg.preset_names()) {
+            const wxString title = wxString::Format(_L("Apply appearance preset: %s"), wxString::FromUTF8(name));
+            const wxString desc  = reg.is_shipped_preset(name) ? _L("Shipped Material preset") : _L("Your saved appearance preset");
+            m_entries.push_back({MaterialIcon::Palette, title, desc, [name]() {
+                                     ElementStyle::registry().set_active_preset(name);
+                                     ElementStyle::save();
+                                 }});
+        }
+    }
 
     // --- Every enabled menubar command ---------------------------------------
     wxMenuBar *bar = m_frame->GetMenuBar();

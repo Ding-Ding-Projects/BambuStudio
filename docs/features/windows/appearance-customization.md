@@ -51,6 +51,16 @@ on Windows, fonts reaching `wxGraphicsContext` paths are strictly validated
 (enumerator check, cached per face) because GDI+ heap-corrupts on unregistered
 variable fonts — see the plain-GDI MaterialIcon rendering rationale.
 
+## Per-element overrides
+
+The controls above set the global theme. Any single element can be restyled on
+top of it — right-click ▸ **Edit appearance...**, Shift+right-click, or
+**Ctrl+Shift+E** on the focused control — through the anchored non-modal
+editor described in [Per-element appearance editor](appearance-editor.md).
+Those overrides live in `data_dir()/appearance/element-styles.json`, resolve
+through named presets, and reset independently of this page's *Reset
+appearance to defaults*.
+
 ## Verification
 
 - Compiled clean after adversarial review; review findings (reset reentrancy,

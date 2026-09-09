@@ -42,6 +42,7 @@
 #include "ProjectHistoryDialog.hpp"
 #include "ConfigProfilesDialog.hpp"
 #include "CommandPalette.hpp"
+#include "Appearance/AppearanceEditorPopover.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
 #include "WebViewDialog.hpp"
@@ -366,10 +367,15 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     // quick-settings rows (theme / density / accent).
     {
         const int palette_id = wxID_HIGHEST + 90;
-        wxAcceleratorEntry palette_entries[1];
+        // Ctrl+Shift+E opens the per-element appearance editor beside the
+        // focused control (Appearance/AppearanceEditorPopover.hpp).
+        const int appearance_id = wxID_HIGHEST + 91;
+        wxAcceleratorEntry palette_entries[2];
         palette_entries[0].Set(wxACCEL_CTRL, 'F', palette_id);
-        SetAcceleratorTable(wxAcceleratorTable(1, palette_entries));
+        palette_entries[1].Set(wxACCEL_CTRL | wxACCEL_SHIFT, 'E', appearance_id);
+        SetAcceleratorTable(wxAcceleratorTable(2, palette_entries));
         Bind(wxEVT_MENU, [this](wxCommandEvent &) { CommandPalette::ShowPalette(this); }, palette_id);
+        Bind(wxEVT_MENU, [](wxCommandEvent &) { AppearanceEditor::open_for_focused(); }, appearance_id);
     }
 
     // BBS

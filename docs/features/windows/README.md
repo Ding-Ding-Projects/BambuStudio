@@ -6,6 +6,7 @@
 - [English, Hong Kong Cantonese, and bilingual modes](language-modes.md)
 - [Ink terminology (filament → ink, AMS → Ink Dispenser)](ink-terminology.md)
 - [Appearance customization](appearance-customization.md)
+- [Per-element appearance editor (right-click ▸ Edit appearance..., Ctrl+Shift+E)](appearance-editor.md)
 - [Regex builder](regex-builder.md)
 - [Material context menus (search, shortcuts, submenus)](material-context-menus.md)
 - [Command palette (Ctrl+F)](command-palette.md)

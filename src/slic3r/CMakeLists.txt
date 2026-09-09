@@ -45,6 +45,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3MenuModel.hpp
     GUI/Widgets/MD3Menu.cpp
     GUI/Widgets/MD3Menu.hpp
+    GUI/Appearance/ElementStyle.cpp
+    GUI/Appearance/ElementStyle.hpp
+    GUI/Appearance/AppearanceEditorPopover.cpp
+    GUI/Appearance/AppearanceEditorPopover.hpp
     GUI/Widgets/Label.cpp
     GUI/Widgets/Label.hpp
     GUI/Widgets/MaterialIcon.cpp

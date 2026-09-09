@@ -1,5 +1,6 @@
 #include "BBLTopbar.hpp"
 #include "Widgets/MD3Menu.hpp"
+#include "Appearance/ElementStyle.hpp"
 #include "wx/artprov.h"
 #include "wx/aui/framemanager.h"
 #include "wx/display.h"
@@ -673,6 +674,10 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnCloseFrame, this, wxID_CLOSE_FRAME);
     this->Bind(wxEVT_LEFT_DCLICK, &BBLTopbar::OnMouseLeftDClock, this);
     this->Bind(wxEVT_LEFT_DOWN, &BBLTopbar::OnMouseLeftDown, this);
+    // Per-element appearance: the top bar is one editable element ("topbar").
+    // Adoption wires right-click -> "Edit appearance...", Shift+right-click
+    // and Ctrl+Shift+E; the bar keeps its own font/colours as the base.
+    ElementStyle::apply(this, "topbar", _L("Top bar"));
     this->Bind(wxEVT_LEFT_UP, &BBLTopbar::OnMouseLeftUp, this);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnOpenProject, this, wxID_OPEN);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnSaveProject, this, wxID_SAVE);

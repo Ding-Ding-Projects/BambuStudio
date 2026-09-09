@@ -208,6 +208,8 @@ void KBShortcutsDialog::fill_shortcuts()
             #ifndef __APPLE__
                 { ctrl + "Tab", L("Switch tab page")},
             #endif
+            // Per-element appearance editor
+            { ctrl + "Shift+E", L("Edit appearance of the focused element") },
             //DEL
             #ifdef __APPLE__
                 {"BackSpace", L("Delete selected")},

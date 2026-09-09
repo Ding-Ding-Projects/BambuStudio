@@ -7,6 +7,11 @@
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/MD3Menu.hpp"
+#include "Appearance/AppearanceEditorPopover.hpp"
+#include "Appearance/ElementStyle.hpp"
+
+#include <wx/menu.h>
 
 #include "libslic3r/AppConfig.hpp"
 
@@ -80,6 +85,9 @@ public:
     void SetIndex(int i) { m_index = i; }
     int  Index() const { return m_index; }
     void Restyle(); // re-fetch fonts/colours (theme + DPI)
+    // Per-element appearance id this tab resolves through.
+    void SetElementId(const std::string &id) { m_element_id = id; }
+    const std::string &ElementId() const { return m_element_id; }
 
 private:
     void OnPaint(wxPaintEvent &);
@@ -90,6 +98,7 @@ private:
     void OnCaptureLost(wxMouseCaptureLostEvent &);
     void OnEnter(wxMouseEvent &);
     void OnLeave(wxMouseEvent &);
+    void OnRightUp(wxMouseEvent &);
     void DoLayout();
     void UpdateColors();
 
@@ -97,7 +106,8 @@ private:
     Label         *m_title = nullptr;
     Button        *m_close = nullptr;
 
-    int      m_index   = -1;
+    int         m_index   = -1;
+    std::string m_element_id = "project-tab";
     bool     m_active  = false;
     bool     m_dirty   = false;
     bool     m_hover   = false;
@@ -152,6 +162,29 @@ ProjectTabButton::ProjectTabButton(ProjectTabBar *bar, wxWindow *parent)
     Bind(wxEVT_LEAVE_WINDOW, &ProjectTabButton::OnLeave, this);
 
     UpdateColors();
+    // Right-click: the tab-management menu (Close tab, Edit tab appearance...).
+    // Shift+right-click opens the appearance editor directly.
+    Bind(wxEVT_RIGHT_UP, &ProjectTabButton::OnRightUp, this);
+}
+
+void ProjectTabButton::OnRightUp(wxMouseEvent &e)
+{
+    if (m_pressed) {
+        m_pressed  = false;
+        m_dragging = false;
+        if (HasCapture())
+            ReleaseMouse();
+    }
+    if (e.ShiftDown()) {
+        Slic3r::GUI::AppearanceEditor::open_for(this, m_element_id);
+        return;
+    }
+    wxMenu menu;
+    const int close_id = wxID_HIGHEST + 9611;
+    menu.Append(close_id, _L("Close tab"), _L("Close this project tab"));
+    menu.Bind(wxEVT_MENU, [this](wxCommandEvent &) { m_bar->EmitClose(m_index); }, close_id);
+    Slic3r::GUI::AppearanceEditor::append_edit_appearance_item(menu, m_element_id, this, _L("Edit tab appearance..."));
+    MD3::PopupMenu(this, &menu, ClientToScreen(e.GetPosition()));
 }
 
 void ProjectTabButton::SetTitle(const wxString &t)
@@ -206,16 +239,19 @@ void ProjectTabButton::UpdateColors()
     const wxColour active   = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand);
     const wxColour inactive = StateColor::semantic(MD3::Role::OnSurfaceVariant);
 
-    SetBackgroundColour(fill);
+    // Per-element appearance overrides sit on top of the tokens: the tab's
+    // own id first ("project-tab/<stem>"), then the shared "project-tab".
+    const wxColour styled_fill = ElementStyle::colour_for(m_element_id, StyleProp::background, fill);
+    SetBackgroundColour(styled_fill);
     if (m_title) {
-        m_title->SetBackgroundColour(fill);
-        m_title->SetForegroundColour(m_active ? active : inactive);
+        m_title->SetBackgroundColour(styled_fill);
+        m_title->SetForegroundColour(ElementStyle::colour_for(m_element_id, StyleProp::foreground, m_active ? active : inactive));
         wxFont f = Label::Body_14;
         if (m_active) {
             f.SetWeight(wxFONTWEIGHT_SEMIBOLD);
             f.SetNumericWeight(600);
         }
-        m_title->SetFont(f);
+        m_title->SetFont(ElementStyle::font_for(m_element_id, f));
     }
     if (m_close) {
         // Keep the ghost close target's rest fill matched to the current tab
@@ -269,7 +305,7 @@ void ProjectTabButton::OnPaint(wxPaintEvent &)
 
     const wxColour surface = StateColor::semantic(MD3::Role::Surface);
     const wxColour hoverBg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
-    const wxColour fill    = m_hover ? hoverBg : surface;
+    const wxColour fill    = ElementStyle::colour_for(m_element_id, StyleProp::background, m_hover ? hoverBg : surface);
 
     dc.SetBackground(wxBrush(fill));
     dc.Clear();
@@ -414,9 +450,31 @@ ProjectTabBar::ProjectTabBar(wxWindow *parent)
         RestyleAll();
         e.Skip();
     });
+    // Live re-style when a "project-tab..." appearance override changes.
+    ElementStyle::registry().register_id("project-tab", _L("Project tab"));
+    m_style_token = ElementStyle::registry().subscribe([this](const std::string &id) {
+        if (id == StyleRegistry::kEveryElement || id.rfind("project-tab", 0) == 0)
+            CallAfter([this]() { RestyleAll(); });
+    });
 }
 
-ProjectTabBar::~ProjectTabBar() = default;
+ProjectTabBar::~ProjectTabBar()
+{
+    ElementStyle::registry().unsubscribe(m_style_token);
+}
+
+std::string ProjectTabBar::ElementIdOf(int index) const
+{
+    if (index < 0 || index >= int(m_tabs.size()) || m_tabs[index].file_path.empty())
+        return "project-tab";
+    const std::string &path = m_tabs[index].file_path;
+    const size_t s   = path.find_last_of("/\\");
+    std::string  stem = s == std::string::npos ? path : path.substr(s + 1);
+    const size_t dot = stem.find_last_of('.');
+    if (dot != std::string::npos && dot > 0)
+        stem = stem.substr(0, dot);
+    return "project-tab/" + stem;
+}
 
 int ProjectTabBar::AddTab(const std::string &file_path, const wxString &title, bool activate)
 {
@@ -746,6 +804,8 @@ void ProjectTabBar::Relayout()
     for (int k = 0; k < int(m_buttons.size()); ++k) {
         ProjectTabButton *btn = m_buttons[k];
         btn->SetIndex(k);
+        btn->SetElementId(ElementIdOf(k));
+        ElementStyle::registry().register_id(btn->ElementId(), wxString::Format(_L("Project tab: %s"), m_tabs[k].title));
         btn->SetMinSize({minW, tabH});
         btn->SetMaxSize({maxW, tabH});
         m_buttons_sizer->Add(btn, wxSizerFlags(1).Align(wxALIGN_TOP));

@@ -2,6 +2,8 @@
 
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
+#include "../Appearance/AppearanceEditorPopover.hpp"
+#include "../Appearance/ElementStyle.hpp"
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
 #include "MD3Motion.hpp"
@@ -66,7 +68,9 @@ wxFont body_s_font()
         return wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     f.SetFractionalPointSize(f.GetFractionalPointSize() * (MD3::Type::body_s.size / 13.0));
     f.SetWeight(wxFONTWEIGHT_MEDIUM);
-    return f;
+    // Per-element appearance: "menu.item" is the id every Material menu row
+    // resolves through (Appearance/ElementStyle.hpp).
+    return ElementStyle::font_for("menu.item", f);
 }
 
 wxFont caption_font()
@@ -752,7 +756,8 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
     const bool selected = vis == m_selected;
     const bool hovered  = vis == m_hover && it->enabled;
 
-    const wxColour on_surface = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour on_surface = ElementStyle::colour_for("menu.item", StyleProp::foreground,
+                                                         StateColor::semantic(MD3::Role::OnSurface));
     wxColour fg        = on_surface;
     wxColour fg_muted  = StateColor::semantic(MD3::Role::OnSurfaceVariant);
     if (selected) {
@@ -1281,6 +1286,19 @@ int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_
 
     wxMenuInvokingWindowSetter invoking(*menu, owner);
 
+    // Every context menu offers "Edit appearance..." for the element it was
+    // opened on: when the owner (or an ancestor) was adopted through
+    // ElementStyle::apply and the menu does not already carry the item, it is
+    // appended for this popup and removed again once the menu has closed.
+    bool auto_edit_item = false;
+    {
+        const std::string element_id = Slic3r::GUI::ElementStyle::element_id_of(owner);
+        if (!element_id.empty() && !menu->FindItem(Slic3r::GUI::AppearanceEditor::edit_appearance_item_id())) {
+            Slic3r::GUI::AppearanceEditor::append_edit_appearance_item(*menu, element_id, owner);
+            auto_edit_item = true;
+        }
+    }
+
     auto *popup = new Slic3r::GUI::MD3MenuPopup(owner, menu);
     popup->SetSendEvents(send_events);
     wxWeakRef<Slic3r::GUI::MD3MenuPopup> popup_ref(popup);
@@ -1324,6 +1342,8 @@ int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_
         result = popup_ref->Result();
         popup_ref->Destroy();
     }
+    if (auto_edit_item)
+        Slic3r::GUI::AppearanceEditor::remove_edit_appearance_item(*menu);
     return result;
 }
 
