@@ -1,6 +1,7 @@
 #include "Plater.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ProgressBar.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include <array>
 #include <boost/format/format_fwd.hpp>
 #include <cstddef>
@@ -4524,11 +4525,9 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
     PlaterPresetComboBox* combobox = (*combo);
     edit_btn->Bind(wxEVT_BUTTON, [this, edit_btn, filament_idx](wxCommandEvent) {
         auto menu = p->plater->filament_action_menu(filament_idx);
-        wxPoint pt { 0, edit_btn->GetSize().GetHeight() + 10 };
-        pt = edit_btn->ClientToScreen(pt);
-        pt = wxGetApp().mainframe->ScreenToClient(pt);
         p->m_menu_filament_id = filament_idx;
-        p->plater->PopupMenu(menu, (int) pt.x, pt.y);
+        // Anchored below the button so the surface never covers its opener.
+        MD3::PopupMenuBelow(edit_btn, menu);
     });
     combobox->edit_btn = edit_btn;
 
@@ -6987,7 +6986,7 @@ void Sidebar::update_mixed_filament_list()
             auto* menu_btn = new ScalableButton(p->m_panel_mixed_content, wxID_ANY,
                 is_broken ? "error" : "menu_filament");
             menu_btn->SetToolTip(is_broken ? _L("Mixed filament has broken component references") : _L("Edit / Delete / Merge"));
-            menu_btn->Bind(wxEVT_BUTTON, [this, panel_idx, cfg_idx](wxCommandEvent&) {
+            menu_btn->Bind(wxEVT_BUTTON, [this, menu_btn, panel_idx, cfg_idx](wxCommandEvent&) {
                 wxMenu menu;
 
                 auto* edit_item = menu.Append(wxID_ANY, _L("Edit"));
@@ -7032,7 +7031,7 @@ void Sidebar::update_mixed_filament_list()
                 else
                     delete sub_menu;
 
-                PopupMenu(&menu);
+                MD3::PopupMenuBelow(menu_btn, &menu);
             });
             combo_and_btn_sizer->Add(menu_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
 
@@ -30518,7 +30517,12 @@ bool Plater::PopupMenu(wxMenu *menu, const wxPoint& pos)
     SuppressBackgroundProcessingUpdate sbpu;
     // When tracking a pop-up menu, postpone error messages from the slicing result.
     m_tracking_popup_menu = true;
-    bool out = wxGetApp().mainframe->PopupMenu(menu, pos);
+    // Material menu surface over the same wxMenu; keeps the native call's
+    // client-coordinate contract (pos is relative to the main frame) and its
+    // blocking semantics, so the error bracket below still works.
+    MainFrame *frame = wxGetApp().mainframe;
+    const wxPoint screen = pos == wxDefaultPosition ? wxGetMousePosition() : frame->ClientToScreen(pos);
+    bool out = MD3::PopupMenu(frame, menu, screen);
     m_tracking_popup_menu = false;
     if (! m_tracking_popup_menu_error_message.empty()) {
         // Don't know whether the CallAfter is necessary, but it should not hurt.

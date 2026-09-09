@@ -99,8 +99,9 @@ accepted when the Squirrel package has no such contract.
 `scripts/i18n/Test-LanguageModes.ps1` checks canonical IDs, catalog presence and reproducibility,
 native coverage metadata, DeviceWeb and legacy-web key parity, placeholders, and the Pages language
 tests. `language_mode_tests` covers native normalization, route separation, and
-format-before-presentation behavior. The Windows workflow is configured to build and run that test
-target.
+format-before-presentation behavior. The one-click build and the Windows workflow configure with
+`SLIC3R_BUILD_TESTS=OFF`, so that target is compiled and run by hand (a standalone `cl` link against
+the dependency prefix) rather than by CI.
 
 The resources and test gates exist in the candidate code, but this documentation does not claim that
 the pending candidate Windows workflow or release has passed. The 242-message native catalog is a

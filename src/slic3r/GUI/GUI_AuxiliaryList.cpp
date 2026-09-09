@@ -1,6 +1,7 @@
 #include <wx/button.h>
 #include "GUI_AuxiliaryList.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include "I18N.hpp"
 #include "wxExtensions.hpp"
 
@@ -235,7 +236,7 @@ void AuxiliaryList::on_context_menu(wxDataViewEvent& evt)
 			});
 	}
 
-	PopupMenu(menu);
+	MD3::PopupMenu(this, menu, wxGetMousePosition());
 }
 
 void AuxiliaryList::on_begin_drag(wxDataViewEvent& evt)

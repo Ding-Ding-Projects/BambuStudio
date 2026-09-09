@@ -42,6 +42,9 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/DropDown.hpp
     GUI/Widgets/PopupWindow.cpp
     GUI/Widgets/PopupWindow.hpp
+    GUI/Widgets/MD3MenuModel.hpp
+    GUI/Widgets/MD3Menu.cpp
+    GUI/Widgets/MD3Menu.hpp
     GUI/Widgets/Label.cpp
     GUI/Widgets/Label.hpp
     GUI/Widgets/MaterialIcon.cpp

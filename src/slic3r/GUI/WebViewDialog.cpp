@@ -1,6 +1,7 @@
 #include "WebViewDialog.hpp"
 #include "Widgets/TextArea.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3Menu.hpp"
 
 #include "I18N.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
@@ -2110,8 +2111,7 @@ void WebViewPanel::OnToolsClicked(wxCommandEvent& WXUNUSED(evt))
     m_context_menu->Check(m_browser->IsContextMenuEnabled());
     m_dev_tools->Check(m_browser->IsAccessToDevToolsEnabled());
 
-    wxPoint position = ScreenToClient(wxGetMousePosition());
-    PopupMenu(m_tools_menu, position.x, position.y);
+    MD3::PopupMenu(this, m_tools_menu, wxGetMousePosition());
 }
 
 void WebViewPanel::RunScript(const wxString& javascript)

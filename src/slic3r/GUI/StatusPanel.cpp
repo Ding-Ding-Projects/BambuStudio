@@ -5,6 +5,7 @@
 #include "I18N.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StepCtrl.hpp"
 #include "Widgets/SideTools.hpp"
@@ -6220,7 +6221,8 @@ void StatusPanel::on_show_more_options(wxCommandEvent &event)
 
     // Synchronous selection: the menu has already closed when this returns, so the
     // handler's modal dialog opens cleanly. wxID_NONE means the user dismissed it.
-    int sel = m_more_btn->GetPopupMenuSelectionFromUser(menu);
+    int sel = MD3::PopupMenuSelection(m_more_btn, menu,
+                                      m_more_btn->ClientToScreen(wxPoint(0, m_more_btn->GetSize().GetHeight())));
     wxCommandEvent ev;
     if (sel == ID_PARTS)
         on_show_parts_options(ev);

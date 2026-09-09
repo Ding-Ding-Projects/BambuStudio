@@ -53,6 +53,7 @@
 #include "Preferences.hpp"
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -2753,7 +2754,8 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
             wxMenuItem *item = menu.AppendRadioItem(id, label);
             item->Check(index == plates.get_curr_plate_index());
         }
-        const int selected = m_prepare_plate_button->GetPopupMenuSelectionFromUser(menu);
+        const int selected = MD3::PopupMenuSelection(m_prepare_plate_button, menu,
+                                                     m_prepare_plate_button->ClientToScreen(wxPoint(0, m_prepare_plate_button->GetSize().GetHeight())));
         const auto found = std::find(ids.begin(), ids.end(), selected);
         if (found != ids.end()) {
             m_plater->select_plate(static_cast<int>(std::distance(ids.begin(), found)));

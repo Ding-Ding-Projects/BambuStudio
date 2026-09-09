@@ -1,4 +1,5 @@
 #include "BBLTopbar.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include "wx/artprov.h"
 #include "wx/aui/framemanager.h"
 #include "wx/display.h"
@@ -925,7 +926,7 @@ bool BBLTopbar::PopupMenuByTitle(const wxString &title)
             SetToolSticky(id, true);
             const wxRect  tool_rect = GetToolRect(id);
             const wxPoint anchor    = ClientToScreen(wxPoint(tool_rect.GetLeft(), GetClientSize().GetHeight() - FromDIP(1)));
-            GetParent()->PopupMenu(menu, GetParent()->ScreenToClient(anchor));
+            MD3::PopupMenu(GetParent(), menu, anchor);
             SetToolSticky(id, false);
         });
         return true;
@@ -1169,7 +1170,7 @@ void BBLTopbar::OnTopMenuToolItem(wxAuiToolBarEvent& evt)
         const wxRect tool_rect = GetToolRect(evt.GetId());
         const wxPoint screen_anchor = ClientToScreen(
             wxPoint(tool_rect.GetLeft(), GetClientSize().GetHeight() - FromDIP(1)));
-        GetParent()->PopupMenu(menu, GetParent()->ScreenToClient(screen_anchor));
+        MD3::PopupMenu(GetParent(), menu, screen_anchor);
     } else {
         m_skip_popup_menu_id = wxID_ANY;
     }
@@ -1186,7 +1187,7 @@ void BBLTopbar::OnCalibToolItem(wxAuiToolBarEvent &evt)
 
     if (!m_skip_popup_calib_menu) {
         auto rec = this->GetToolRect(ID_CALIB);
-        GetParent()->PopupMenu(&m_calib_menu, wxPoint(rec.GetLeft(), this->GetSize().GetHeight() - 2));
+        MD3::PopupMenu(GetParent(), &m_calib_menu, ClientToScreen(wxPoint(rec.GetLeft(), this->GetSize().GetHeight() - 2)));
     } else {
         m_skip_popup_calib_menu = false;
     }

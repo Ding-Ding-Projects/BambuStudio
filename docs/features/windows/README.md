@@ -7,6 +7,7 @@
 - [Ink terminology (filament → ink, AMS → Ink Dispenser)](ink-terminology.md)
 - [Appearance customization](appearance-customization.md)
 - [Regex builder](regex-builder.md)
+- [Material context menus (search, shortcuts, submenus)](material-context-menus.md)
 - [Command palette (Ctrl+F)](command-palette.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)
 - [Material color picker & color translator](md3-color-picker.md)
