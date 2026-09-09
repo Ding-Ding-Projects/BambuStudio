@@ -24,6 +24,20 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
 )
 encoding_check(libslic3r_project_history)
 
+add_library(libslic3r_changelog STATIC
+    Changelog.cpp
+    Changelog.hpp
+)
+# The in-app changelog viewer's wx-free data model (JSON parsing, typed-date
+# handling, filtering and export). Kept as its own target so tests/changelog
+# links it without the whole of libslic3r.
+target_include_directories(libslic3r_changelog PUBLIC ${PROJECT_SOURCE_DIR}/src)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
+    Changelog.cpp
+    Changelog.hpp
+)
+encoding_check(libslic3r_changelog)
+
 string(TIMESTAMP COMPILE_TIME %Y%m%d-%H%M%S)
 set(SLIC3R_BUILD_TIME ${COMPILE_TIME})
 
@@ -647,6 +661,7 @@ set(OCCT_LIBS
 
 target_link_libraries(libslic3r
     libslic3r_project_history
+    libslic3r_changelog
     noise::noise
     libnest2d
     admesh

@@ -8,6 +8,7 @@
 - [Appearance customization](appearance-customization.md)
 - [Regex builder](regex-builder.md)
 - [Command palette (Ctrl+F)](command-palette.md)
+- [In-app changelog viewer (Help ▸ What's new)](changelog-viewer.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)
 - [Material color picker & color translator](md3-color-picker.md)
 - [Bulk filament actions](bulk-filament-actions.md)

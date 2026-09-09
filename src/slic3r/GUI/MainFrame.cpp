@@ -40,6 +40,7 @@
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 #include "ProjectHistoryDialog.hpp"
+#include "ChangelogDialog.hpp"
 #include "ConfigProfilesDialog.hpp"
 #include "CommandPalette.hpp"
 #include "FilamentScanner.hpp"
@@ -3838,6 +3839,15 @@ static wxMenu* generate_help_menu()
             NetworkTestDialog dlg(wxGetApp().mainframe);
             dlg.ShowModal();
         });
+
+    // In-app changelog: every published release with dated, categorized,
+    // commit-linked entries (resources/changelog/changelog.json).
+    append_menu_item(helpMenu, wxID_ANY, _L("What's new / Changelog") + dots,
+            _L("Browse every released version with its dated, commit-linked changes"),
+            [](wxCommandEvent&) {
+                ChangelogDialog dialog(wxGetApp().mainframe);
+                dialog.ShowModal();
+            });
 
     // About
 #ifndef __APPLE__
