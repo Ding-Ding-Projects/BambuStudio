@@ -61,3 +61,9 @@ markup or executed.
 - Headless visual proof: captured in the screenshot matrix under
   `docs/screenshots/notifications/` (toast render on the Mesa GL canvas via
   PrintWindow).
+
+## Suggested articles
+
+- [Notification centre](notification-center.md) — the bell on the top bar
+  keeps a searchable, exportable history of every toast recorded here, so a
+  faded-out message is never lost.

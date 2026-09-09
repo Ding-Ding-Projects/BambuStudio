@@ -15,6 +15,8 @@
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/Label.hpp"
+#include "NotificationCenterPanel.hpp"
+#include "NotificationManager.hpp"
 
 #include <wx/dcmemory.h>
 #include <wx/graphics.h>
@@ -55,6 +57,7 @@ enum CUSTOM_ID
     ID_CALIB,
     ID_HISTORY,
     ID_APPEARANCE,
+    ID_NOTIFICATIONS,
     ID_TOOL_BAR = 3200,
     ID_AMS_NOTEBOOK,
 };
@@ -170,6 +173,49 @@ static wxBitmap topbar_text_alpha(const wxFont &logical_font, double scale,
         al[i]          = static_cast<unsigned char>(255u - lum);
     }
     return wxBitmap(out, 32);
+}
+
+// Notification bell: the 20px `notifications` glyph (`notifications_active`
+// while anything is unread) in OnSurfaceVariant, with an Error-filled badge
+// carrying the unread count docked at the top-right when `unread` > 0. The
+// count is clamped to "99+" so the badge never grows past the glyph.
+static wxBitmap topbar_bell_bitmap(wxWindow *ref, int unread)
+{
+    const int    glyph_px = 20;
+    const int    canvas   = 24; // glyph + badge overhang
+    const double scale    = topbar_scale(ref);
+    const wxColour glyph_colour = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    wxBitmap glyph = MaterialIcon::bitmap(ref, unread > 0 ? MaterialIcon::NotificationsActive : MaterialIcon::Notifications,
+                                          glyph_px, glyph_colour);
+    if (unread <= 0)
+        return glyph;
+
+    const wxString count = unread > 99 ? wxString("99+") : wxString::Format("%d", unread);
+    wxFont badge_font = Label::Body_12;
+    badge_font.SetPointSize(std::max(6, badge_font.GetPointSize() - 3));
+    badge_font.SetWeight(wxFONTWEIGHT_BOLD);
+    wxBitmap text = topbar_text_alpha(badge_font, scale, count, StateColor::semantic(MD3::Role::OnError));
+    const int text_w = static_cast<int>(std::ceil(text.GetWidth() / scale));
+    const int text_h = static_cast<int>(std::ceil(text.GetHeight() / scale));
+    const int badge_h = std::max(12, text_h + 2);
+    const int badge_w = std::max(badge_h, text_w + 6);
+
+    wxBitmap out = topbar_make_canvas(ref, wxSize(canvas, canvas), [&](wxGraphicsContext *gc) {
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(wxBrush(StateColor::semantic(MD3::Role::Error)));
+        const double bx = canvas - badge_w, by = 0;
+        gc->DrawRoundedRectangle(bx, by, badge_w, badge_h, badge_h / 2.0);
+    });
+    {
+        wxMemoryDC dc(out);
+        // glyph bottom-left, badge top-right (the badge canvas is already painted)
+        dc.DrawBitmap(glyph, 0, static_cast<int>(std::lround((canvas - glyph_px) * scale)), true);
+        const int tx = static_cast<int>(std::lround((canvas - badge_w + (badge_w - text_w) / 2.0) * scale));
+        const int ty = static_cast<int>(std::lround(((badge_h - text_h) / 2.0) * scale));
+        dc.DrawBitmap(text, tx, ty, true);
+        dc.SelectObject(wxNullBitmap);
+    }
+    return out;
 }
 
 // §3.1 brand tile: a 26x26 r8 Primary rounded square carrying the on-primary
@@ -476,8 +522,8 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
         if (state_layer.IsOk()) {
             wxRect state_rect = rect;
             int    radius;
-            if (item_id == ID_APPEARANCE) {
-                // §3.7 appearance button: a circular ghost hover disc.
+            if (item_id == ID_APPEARANCE || item_id == ID_NOTIFICATIONS) {
+                // §3.7 appearance button / notification bell: a circular ghost hover disc.
                 const int d = std::max(1, std::min(state_rect.width, state_rect.height) - wnd->FromDIP(4));
                 state_rect  = wxRect(rect.x + (rect.width - d) / 2, rect.y + (rect.height - d) / 2, d, d);
                 radius      = d / 2;
@@ -605,6 +651,16 @@ void BBLTopbar::Init(wxFrame* parent)
     m_title_item->SetAlignment(wxALIGN_CENTRE);
     this->AddSpacer(FromDIP(6));
 
+    // Notification centre bell (circular ghost, unread badge). Guarded on the
+    // Material Symbols face like the appearance button below.
+    if (MaterialIcon::available()) {
+        m_notification_item = this->AddTool(ID_NOTIFICATIONS, "", topbar_bell_bitmap(this, m_notification_unread),
+                                            wxEmptyString, wxITEM_NORMAL);
+        // TRN: Tooltip / accessible name of the top-bar notification bell.
+        m_notification_item->SetShortHelp(_L("Notifications"));
+        this->AddSpacer(FromDIP(6));
+    }
+
     // §3.7 appearance / palette button (circular ghost). Guarded on the Material
     // Symbols face; when it is unavailable the button is simply omitted (there is
     // no legacy palette raster to fall back to -- reported as a followup).
@@ -669,6 +725,7 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnCalibToolItem, this, ID_CALIB);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnHistoryChip, this, ID_HISTORY);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnAppearanceButton, this, ID_APPEARANCE);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnNotificationBell, this, ID_NOTIFICATIONS);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnIconize, this, wxID_ICONIZE_FRAME);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnFullScreen, this, wxID_MAXIMIZE_FRAME);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnCloseFrame, this, wxID_CLOSE_FRAME);
@@ -694,6 +751,7 @@ void BBLTopbar::Init(wxFrame* parent)
             m_brand_item->SetHoverBitmap(brand);
         }
         rebuild_history_chip();
+        rebuild_notification_bell();
         if (m_appearance_item)
             m_appearance_item->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Palette, 20,
                                                               StateColor::semantic(MD3::Role::OnSurfaceVariant)));
@@ -861,6 +919,45 @@ void BBLTopbar::OnAppearanceButton(wxAuiToolBarEvent& event)
     // popover is a followup; for now this opens the Preferences dialog whose
     // Appearance section carries theme/density/accent.
     wxGetApp().open_preferences();
+}
+
+void BBLTopbar::OnNotificationBell(wxAuiToolBarEvent& event)
+{
+    Plater* plater = wxGetApp().plater();
+    if (plater == nullptr || plater->get_notification_manager() == nullptr)
+        return;
+    if (m_notification_center == nullptr)
+        m_notification_center = new NotificationCenterPanel(m_frame, plater->get_notification_manager());
+    if (m_notification_center->IsShown()) {
+        m_notification_center->Hide();
+        return;
+    }
+    wxRect anchor = GetToolRect(ID_NOTIFICATIONS);
+    anchor.SetPosition(ClientToScreen(anchor.GetPosition()));
+    static_cast<NotificationCenterPanel*>(m_notification_center)->AnchorBelow(anchor);
+    m_notification_center->Show();
+    m_notification_center->Raise();
+}
+
+void BBLTopbar::SetNotificationUnread(int count)
+{
+    count = std::max(0, count);
+    if (count == m_notification_unread)
+        return;
+    m_notification_unread = count;
+    rebuild_notification_bell();
+    Refresh(false);
+}
+
+void BBLTopbar::rebuild_notification_bell()
+{
+    if (!m_notification_item)
+        return;
+    m_notification_item->SetBitmap(topbar_bell_bitmap(this, m_notification_unread));
+    // TRN: %d unread notifications (tooltip of the bell).
+    m_notification_item->SetShortHelp(m_notification_unread > 0
+        ? wxString::Format(_L("Notifications (%d unread)"), m_notification_unread)
+        : _L("Notifications"));
 }
 
 void BBLTopbar::rebuild_history_chip()
@@ -1082,6 +1179,7 @@ void BBLTopbar::Rescale() {
 
     // §3.5 history chip + §3.7 appearance button re-rasterize at the new DPI.
     rebuild_history_chip();
+    rebuild_notification_bell();
     if (m_appearance_item)
         m_appearance_item->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Palette, 20,
                                                           StateColor::semantic(MD3::Role::OnSurfaceVariant)));

@@ -7,6 +7,10 @@ work is in progress.
 - [Non-blocking notifications](non-blocking-notifications.md) — informational,
   warning, and error messages surface as corner toasts instead of modal dialogs;
   decision dialogs stay modal.
+- [Notification centre](notification-center.md) — the bell on the top bar
+  opens a searchable, filterable history of every toast (500 entries, persisted),
+  with multi-select, bulk dismiss, bulk export in four formats and a
+  slide-to-confirm bulk delete.
 - [Project version history](project-version-history.md) — local, libgit2-backed
   snapshots of every project, browsable/restorable from File ▸ Version history
   and the topbar history chip.
