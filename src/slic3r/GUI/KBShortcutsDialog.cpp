@@ -176,6 +176,8 @@ void KBShortcutsDialog::fill_shortcuts()
         Shortcuts global_shortcuts = {
             // Command palette: the one global search-everything chord
             { ctrl + "Shift+F", L("Command palette") },
+            // In-app offline documentation browser
+            { "F1", L("Documentation") },
             // File
             { ctrl + "N", L("New Project") },
             { ctrl + "O", L("Open Project") },

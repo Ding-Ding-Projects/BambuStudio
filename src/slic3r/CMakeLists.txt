@@ -281,6 +281,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/ProjectHistoryDialog.hpp
     GUI/ConfigProfilesDialog.cpp
     GUI/ConfigProfilesDialog.hpp
+    GUI/DocsBrowserDialog.cpp
+    GUI/DocsBrowserDialog.hpp
     GUI/CommandPalette.cpp
     GUI/CommandPalette.hpp
     GUI/CommandPaletteIndex.cpp
@@ -785,6 +787,29 @@ add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
 if (TARGET device_page_build)
     add_dependencies(libslic3r_gui device_page_build)
 endif()
+
+# In-app documentation bundle (DocsBrowserDialog). Every docs/features/**/*.md
+# article plus the images it references is packed into
+# resources/docs/bundle.json + resources/docs/assets by a script-mode CMake run,
+# so no Node/Python is needed at build time. The generated snapshot is
+# committed as well (a stale configure still ships data) and tests/docs_bundle
+# fails when the committed snapshot drifts from the docs tree.
+file(GLOB_RECURSE SLIC3R_DOCS_ARTICLES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/docs/features/*.md")
+set(SLIC3R_DOCS_BUNDLE "${SLIC3R_RESOURCES_DIR}/docs/bundle.json")
+add_custom_command(
+    OUTPUT "${SLIC3R_DOCS_BUNDLE}.stamp"
+    COMMAND ${CMAKE_COMMAND}
+        -DDOCS_SOURCE=${PROJECT_SOURCE_DIR}/docs
+        -DDOCS_OUTPUT=${SLIC3R_RESOURCES_DIR}/docs
+        -P ${PROJECT_SOURCE_DIR}/cmake/modules/BundleDocs.cmake
+    COMMAND ${CMAKE_COMMAND} -E touch "${SLIC3R_DOCS_BUNDLE}.stamp"
+    DEPENDS ${SLIC3R_DOCS_ARTICLES} ${PROJECT_SOURCE_DIR}/cmake/modules/BundleDocs.cmake
+    COMMENT "Bundling docs/features into resources/docs for the in-app documentation browser"
+    VERBATIM
+)
+add_custom_target(docs_bundle DEPENDS "${SLIC3R_DOCS_BUNDLE}.stamp")
+set_property(TARGET docs_bundle PROPERTY FOLDER "resources")
+add_dependencies(libslic3r_gui docs_bundle)
 
 #if (MSVC)
 #    target_compile_options(libslic3r_gui PRIVATE /Od /Zi)

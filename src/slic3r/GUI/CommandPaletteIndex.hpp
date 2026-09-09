@@ -21,6 +21,8 @@ namespace Slic3r::GUI::PaletteIndex {
 
 // Command id the palette accelerator posts as wxEVT_MENU.
 constexpr int kPaletteCommandId = wxID_HIGHEST + 90;
+// F1 opens the in-app documentation browser (DocsBrowserDialog).
+constexpr int kDocsCommandId    = wxID_HIGHEST + 91;
 // Ctrl+Numpad1..6 fake the Ctrl+1..6 window-menu chords on Windows; the id
 // for Numpad N is kNumpadTabBaseId + N - 1 and selects workspace tab N - 1.
 constexpr int kNumpadTabBaseId  = wxID_HIGHEST + 1;
@@ -30,6 +32,8 @@ constexpr int kNumpadTabCount   = 6;
 // chord lives here so a later SetAcceleratorTable() can never clobber an
 // earlier one (which is exactly how Ctrl+F used to wipe the numpad entries).
 std::vector<wxAcceleratorEntry> main_frame_accelerators();
+bool is_docs_accelerator(const wxAcceleratorEntry &entry);
+const char *docs_shortcut_label(); // "F1"
 
 // True for the palette chord: Ctrl+Shift+F, the one global shortcut.
 bool is_palette_accelerator(const wxAcceleratorEntry &entry);
@@ -112,8 +116,9 @@ struct Article
 };
 
 const std::vector<Article> &documentation_articles();
-// The Pages site does not host the articles as pages yet, so the palette
-// opens the rendered Markdown in the repository.
+// Repository URL of the article's Markdown source. The palette itself opens
+// articles in the in-app DocsBrowserDialog; this is the external fallback
+// (and what the docs browser uses for links that leave the bundle).
 std::string article_url(const Article &article);
 
 } // namespace Slic3r::GUI::PaletteIndex

@@ -42,6 +42,7 @@
 #include "ProjectHistoryDialog.hpp"
 #include "ConfigProfilesDialog.hpp"
 #include "CommandPalette.hpp"
+#include "DocsBrowserDialog.hpp"
 #include "CommandPaletteIndex.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
@@ -374,6 +375,10 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
         // rows (theme / density / accent).
         Bind(wxEVT_MENU, [this](wxCommandEvent &) { CommandPalette::ShowPalette(this); },
              PaletteIndex::kPaletteCommandId);
+
+        // F1 opens the in-app documentation browser (Help > Documentation).
+        Bind(wxEVT_MENU, [this](wxCommandEvent &) { DocsBrowserDialog::ShowArticle(this); },
+             PaletteIndex::kDocsCommandId);
     }
 
     // BBS
@@ -3819,6 +3824,10 @@ static wxMenu* generate_help_menu()
     append_menu_item(helpMenu, wxID_ANY, _L("Keyboard Shortcuts") + sep + "& Shift+?", _L("Show the list of the keyboard shortcuts"),
                      [](wxCommandEvent &) { wxGetApp().keyboard_shortcuts(); });
 #endif
+    // In-app offline documentation browser (also F1 and the command palette).
+    append_menu_item(helpMenu, wxID_ANY, _L("Documentation") + sep + PaletteIndex::docs_shortcut_label(),
+        _L("Browse every feature article offline, inside the app"),
+        [](wxCommandEvent &) { DocsBrowserDialog::ShowArticle(wxGetApp().mainframe); });
     // Show Beginner's Tutorial
     append_menu_item(helpMenu, wxID_ANY, _L("Setup Wizard"), _L("Setup Wizard"), [](wxCommandEvent &) {wxGetApp().ShowUserGuide();});
 

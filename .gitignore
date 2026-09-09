@@ -55,3 +55,6 @@ build-ninja/
 _site/
 install-dir/
 install-dir-mesa/
+
+# Build-time stamp of the in-app docs bundle (resources/docs/bundle.json itself is committed)
+resources/docs/bundle.json.stamp

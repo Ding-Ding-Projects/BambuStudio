@@ -211,7 +211,7 @@ std::string first_heading(const std::filesystem::path &path)
 TEST_CASE("Main frame accelerator table carries the numpad chords and Ctrl+Shift+F together", "[CommandPalette][accelerators]")
 {
     const std::vector<wxAcceleratorEntry> entries = main_frame_accelerators();
-    REQUIRE(entries.size() == size_t(kNumpadTabCount) + 1);
+    REQUIRE(entries.size() == size_t(kNumpadTabCount) + 2);
 
     for (int n = 1; n <= kNumpadTabCount; ++n) {
         const bool present = std::any_of(entries.begin(), entries.end(),
@@ -220,6 +220,9 @@ TEST_CASE("Main frame accelerator table carries the numpad chords and Ctrl+Shift
         REQUIRE(present);
     }
     REQUIRE(std::count_if(entries.begin(), entries.end(), is_palette_accelerator) == 1);
+    // F1 -> in-app documentation browser lives in the same single table.
+    REQUIRE(std::count_if(entries.begin(), entries.end(), is_docs_accelerator) == 1);
+    REQUIRE(std::string(docs_shortcut_label()) == "F1");
 
     // Ctrl+F (without Shift) is no longer a palette chord anywhere in the table.
     const bool ctrl_f = std::any_of(entries.begin(), entries.end(), [](const wxAcceleratorEntry &e) {

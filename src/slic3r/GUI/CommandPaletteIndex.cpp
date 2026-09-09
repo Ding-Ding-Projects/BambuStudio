@@ -12,12 +12,21 @@ namespace Slic3r::GUI::PaletteIndex {
 std::vector<wxAcceleratorEntry> main_frame_accelerators()
 {
     std::vector<wxAcceleratorEntry> entries;
-    entries.reserve(kNumpadTabCount + 1);
+    entries.reserve(kNumpadTabCount + 2);
     for (int n = 1; n <= kNumpadTabCount; ++n)
         entries.emplace_back(wxACCEL_CTRL, WXK_NUMPAD0 + n, kNumpadTabBaseId + n - 1);
     entries.emplace_back(wxACCEL_CTRL | wxACCEL_SHIFT, 'F', kPaletteCommandId);
+    // F1 was free in the frame (no menu item or canvas handler claims it).
+    entries.emplace_back(wxACCEL_NORMAL, WXK_F1, kDocsCommandId);
     return entries;
 }
+
+bool is_docs_accelerator(const wxAcceleratorEntry &entry)
+{
+    return entry.GetFlags() == wxACCEL_NORMAL && entry.GetKeyCode() == WXK_F1 && entry.GetCommand() == kDocsCommandId;
+}
+
+const char *docs_shortcut_label() { return "F1"; }
 
 bool is_palette_accelerator(const wxAcceleratorEntry &entry)
 {
@@ -219,16 +228,21 @@ const std::vector<Article> &documentation_articles()
         {"docs/features/windows/appearance-customization.md", "Appearance customization"},
         {"docs/features/windows/bulk-filament-actions.md", "Bulk filament actions"},
         {"docs/features/windows/cloud-web-recovery.md", "Cloud web-page failure recovery"},
+        {"docs/features/windows/color-picker-translator.md", "Color picker translator (infinite picker)"},
         {"docs/features/windows/command-palette.md", "Command palette (Ctrl+Shift+F)"},
+        {"docs/features/windows/documentation-browser.md", "In-app documentation browser (F1)"},
+        {"docs/features/windows/funny-levels-and-dialog-emojis.md", "Funny levels and dialog emojis"},
         {"docs/features/windows/gui-accessibility.md", "Keyboard, assistive, and responsive GUI accessibility"},
         {"docs/features/windows/ink-terminology.md", "Ink terminology (filament \xE2\x86\x92 ink, AMS \xE2\x86\x92 Ink Dispenser)"},
         {"docs/features/windows/language-modes.md", "English, Hong Kong Cantonese, and bilingual modes"},
+        {"docs/features/windows/material-context-menus.md", "Material context menus"},
         {"docs/features/windows/md3-color-picker.md", "Material color picker & color translator"},
         {"docs/features/windows/md3-native-ui.md", "Native Material Design 3 UI on Windows"},
         {"docs/features/windows/native-visual-smoke.md", "Native Windows visual smoke test"},
         {"docs/features/windows/print-simulation.md", "Print simulation playback (feedrate-true)"},
         {"docs/features/windows/regex-builder.md", "Regex builder"},
         {"docs/features/windows/release-splash-art.md", "Release splash art (fresh dim sum per release)"},
+        {"docs/features/windows/renamable-app-name.md", "Renamable app name (display label only)"},
         {"docs/features/windows/sidebar-search.md", "Prepare sidebar search"},
         {"docs/features/windows/smart-home.md", "Smart home: printer handover, TTS narrator, and alert lights"},
         {"docs/features/windows/software-gl-fallback.md", "Software OpenGL fallback (Mesa llvmpipe)"},
