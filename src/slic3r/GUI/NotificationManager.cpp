@@ -11,6 +11,8 @@
 #include "ParamsPanel.hpp"
 #include "MainFrame.hpp"
 #include "libslic3r/Config.hpp"
+#include "libslic3r/Utils.hpp"
+#include "BBLTopbar.hpp"
 #include "format.hpp"
 
 #include <algorithm>
@@ -1108,6 +1110,8 @@ void NotificationManager::PopNotification::render_minimize_button(ImGuiWrapper& 
 
 bool NotificationManager::PopNotification::on_text_click()
 {
+	if (m_history != nullptr && m_history_id != 0)
+		m_history->record_action(m_history_id, m_data.hypertext.empty() ? std::string("hypertext") : m_data.hypertext);
 	if(m_data.callback != nullptr)
 		return m_data.callback(m_evt_handler);
 	return false;
@@ -1115,6 +1119,8 @@ bool NotificationManager::PopNotification::on_text_click()
 
 bool NotificationManager::PopNotification::on_second_text_click()
 {
+    if (m_history != nullptr && m_history_id != 0)
+        m_history->record_action(m_history_id, m_data.second_hypertext.empty() ? std::string("hypertext 2") : m_data.second_hypertext);
     if (m_data.second_callback != nullptr)
         return m_data.second_callback(m_evt_handler);
     return false;
@@ -1748,6 +1754,153 @@ void NotificationManager::ProgressIndicatorNotification::render_close_button(ImG
 NotificationManager::NotificationManager(wxEvtHandler* evt_handler) :
 	m_evt_handler(evt_handler)
 {
+    // NotificationHistory::level_name() mirrors this enum by value; keep them in step.
+    static_assert(static_cast<int>(NotificationLevel::ProgressBarNotificationLevel) == 1, "history level names assume ProgressBar == 1");
+    static_assert(static_cast<int>(NotificationLevel::WarningNotificationLevel) == 7, "history level names assume Warning == 7");
+    static_assert(static_cast<int>(NotificationLevel::ErrorNotificationLevel) == 9, "history level names assume Error == 9");
+
+    // Notification-centre history: persisted beside the other per-user data.
+    // A missing or unreadable file only costs the old records; it never blocks startup.
+    if (!data_dir().empty()) {
+        m_history_path = data_dir() + "/notification_history.json";
+        std::string error;
+        if (!m_history.load(m_history_path, &error))
+            BOOST_LOG_TRIVIAL(warning) << "Notification history not loaded from " << m_history_path << ": " << error;
+    }
+    m_history.set_on_change([this] { on_history_changed(); });
+}
+
+std::string NotificationManager::type_name(NotificationType type)
+{
+    switch (type) {
+    case NotificationType::CustomNotification: return "CustomNotification";
+    case NotificationType::ExportFinished: return "ExportFinished";
+    case NotificationType::Mouse3dDisconnected: return "Mouse3dDisconnected";
+    case NotificationType::NewAppAvailable: return "NewAppAvailable";
+    case NotificationType::NewAlphaAvailable: return "NewAlphaAvailable";
+    case NotificationType::NewBetaAvailable: return "NewBetaAvailable";
+    case NotificationType::PresetUpdateAvailable: return "PresetUpdateAvailable";
+    case NotificationType::PresetUpdateFinished: return "PresetUpdateFinished";
+    case NotificationType::ValidateError: return "ValidateError";
+    case NotificationType::ValidateWarning: return "ValidateWarning";
+    case NotificationType::SlicingError: return "SlicingError";
+    case NotificationType::HelioSlicingError: return "HelioSlicingError";
+    case NotificationType::SlicingSeriousWarning: return "SlicingSeriousWarning";
+    case NotificationType::SlicingWarning: return "SlicingWarning";
+    case NotificationType::BBLGeneralError: return "BBLGeneralError";
+    case NotificationType::PlaterError: return "PlaterError";
+    case NotificationType::LeftExtruderUnprintableError: return "LeftExtruderUnprintableError";
+    case NotificationType::RightExtruderUnprintableError: return "RightExtruderUnprintableError";
+    case NotificationType::PlaterWarning: return "PlaterWarning";
+    case NotificationType::ProgressBar: return "ProgressBar";
+    case NotificationType::PrintHostUpload: return "PrintHostUpload";
+    case NotificationType::SlicingProgress: return "SlicingProgress";
+    case NotificationType::EmptyColorChangeCode: return "EmptyColorChangeCode";
+    case NotificationType::CustomSupportsAndSeamRemovedAfterRepair: return "CustomSupportsAndSeamRemovedAfterRepair";
+    case NotificationType::EmptyAutoColorChange: return "EmptyAutoColorChange";
+    case NotificationType::SignDetected: return "SignDetected";
+    case NotificationType::QuitSLAManualMode: return "QuitSLAManualMode";
+    case NotificationType::DesktopIntegrationSuccess: return "DesktopIntegrationSuccess";
+    case NotificationType::DesktopIntegrationFail: return "DesktopIntegrationFail";
+    case NotificationType::UndoDesktopIntegrationSuccess: return "UndoDesktopIntegrationSuccess";
+    case NotificationType::UndoDesktopIntegrationFail: return "UndoDesktopIntegrationFail";
+    case NotificationType::MmSegmentationExceededExtrudersLimit: return "MmSegmentationExceededExtrudersLimit";
+    case NotificationType::DidYouKnowHint: return "DidYouKnowHint";
+    case NotificationType::UpdatedItemsInfo: return "UpdatedItemsInfo";
+    case NotificationType::ProgressIndicator: return "ProgressIndicator";
+    case NotificationType::SimplifySuggestion: return "SimplifySuggestion";
+    case NotificationType::NetfabbFinished: return "NetfabbFinished";
+    case NotificationType::ExportOngoing: return "ExportOngoing";
+    case NotificationType::ArrangeOngoing: return "ArrangeOngoing";
+    case NotificationType::BBLPlateInfo: return "BBLPlateInfo";
+    case NotificationType::BBL3MFInfo: return "BBL3MFInfo";
+    case NotificationType::BBLObjectInfo: return "BBLObjectInfo";
+    case NotificationType::BBLSliceEmptyLayer: return "BBLSliceEmptyLayer";
+    case NotificationType::BBLNeedSupportON: return "BBLNeedSupportON";
+    case NotificationType::BBLGcodeOverlap: return "BBLGcodeOverlap";
+    case NotificationType::BBLSeqPrintInfo: return "BBLSeqPrintInfo";
+    case NotificationType::BBLPluginInstallHint: return "BBLPluginInstallHint";
+    case NotificationType::BBLFlushingVolumeZero: return "BBLFlushingVolumeZero";
+    case NotificationType::BBLPluginUpdateAvailable: return "BBLPluginUpdateAvailable";
+    case NotificationType::BBLPreviewOnlyMode: return "BBLPreviewOnlyMode";
+    case NotificationType::BBLPrinterConfigUpdateAvailable: return "BBLPrinterConfigUpdateAvailable";
+    case NotificationType::BBLUserPresetExceedLimit: return "BBLUserPresetExceedLimit";
+    case NotificationType::BBLFilamentPrintableError: return "BBLFilamentPrintableError";
+    case NotificationType::BBLSliceLimitError: return "BBLSliceLimitError";
+    case NotificationType::BBLSliceMultiExtruderHeightOutside: return "BBLSliceMultiExtruderHeightOutside";
+    case NotificationType::BBLBedFilamentIncompatible: return "BBLBedFilamentIncompatible";
+    case NotificationType::BBLMixUsePLAAndPETG: return "BBLMixUsePLAAndPETG";
+    case NotificationType::BBLBrittleFilament: return "BBLBrittleFilament";
+    case NotificationType::BBLMixedFilamentBroken: return "BBLMixedFilamentBroken";
+    case NotificationType::BBLMultiFilaNoWipeTower: return "BBLMultiFilaNoWipeTower";
+    case NotificationType::BBLNozzleFilamentIncompatible: return "BBLNozzleFilamentIncompatible";
+    case NotificationType::BBLTpuNozzleHasMultiFilament: return "BBLTpuNozzleHasMultiFilament";
+    case NotificationType::BBLHighTempNeedWrappingDetection: return "BBLHighTempNeedWrappingDetection";
+    case NotificationType::BBLPrintedWeightOverLimitWarn: return "BBLPrintedWeightOverLimitWarn";
+    case NotificationType::BBLBedHeatSoakInfo: return "BBLBedHeatSoakInfo";
+    case NotificationType::BBLSingleExtruderMixedFilamentRisk: return "BBLSingleExtruderMixedFilamentRisk";
+    case NotificationType::AssemblyWarning: return "AssemblyWarning";
+    case NotificationType::AssemblyInfo: return "AssemblyInfo";
+    case NotificationType::BBLIsolatedVolumeInfo: return "BBLIsolatedVolumeInfo";
+    case NotificationType::BBLAssemblyFarFromOrigin: return "BBLAssemblyFarFromOrigin";
+    case NotificationType::BBLIntersectsVolumeInfo: return "BBLIntersectsVolumeInfo";
+    case NotificationType::BBLArcFittingInfo: return "BBLArcFittingInfo";
+    case NotificationType::BBLCalibExtruderMismatch: return "BBLCalibExtruderMismatch";
+    case NotificationType::ProjectHistoryFailure: return "ProjectHistoryFailure";
+    default: return "notification_" + std::to_string(static_cast<int>(type));
+    }
+}
+
+void NotificationManager::on_history_changed()
+{
+    if (!m_history_path.empty()) {
+        std::string error;
+        if (!m_history.save(m_history_path, &error))
+            BOOST_LOG_TRIVIAL(warning) << "Notification history not saved to " << m_history_path << ": " << error;
+    }
+    // Bell badge on the top bar. The main frame may not exist yet while the
+    // history is being loaded from disk, and may already be gone at shutdown.
+    if (wxGetApp().mainframe != nullptr && wxGetApp().mainframe->topbar() != nullptr)
+        wxGetApp().mainframe->topbar()->SetNotificationUnread(static_cast<int>(m_history.unread_count()));
+}
+
+void NotificationManager::record_history_push(PopNotification* notification)
+{
+    if (notification == nullptr || notification->history_id() != 0)
+        return;
+    const NotificationData& data = notification->get_data();
+    // Progress bars re-push on every tick; they are transient status, not events
+    // worth a history row (the centre would drown in them).
+    if (data.level == NotificationLevel::ProgressBarNotificationLevel)
+        return;
+    std::string text = data.text1;
+    if (!data.text2.empty())
+        text += "\n" + data.text2;
+    const std::uint64_t id = m_history.append(static_cast<int>(data.level), type_name(data.type), text);
+    notification->set_history(&m_history, id);
+}
+
+void NotificationManager::record_history_dismissed(PopNotification* notification)
+{
+    if (notification != nullptr && notification->history_id() != 0)
+        m_history.mark_dismissed(notification->history_id());
+}
+
+void NotificationManager::mark_history_seen()
+{
+    m_history.mark_all_seen();
+}
+
+void NotificationManager::dismiss_history_entries(const std::set<std::uint64_t>& ids)
+{
+    if (ids.empty())
+        return;
+    for (std::unique_ptr<PopNotification>& notification : m_pop_notifications) {
+        if (notification->history_id() != 0 && ids.count(notification->history_id()) != 0)
+            notification->close();
+    }
+    for (std::uint64_t id : ids)
+        m_history.mark_dismissed(id);
 }
 
 void NotificationManager::on_change_color_mode(bool is_dark) {
@@ -2096,6 +2249,7 @@ void NotificationManager::show_assembly_info_notification(const std::string& tex
     for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
         std::unique_ptr<PopNotification>& notification = *it;
         if (notification->get_type() == NotificationType::AssemblyInfo) {
+            record_history_dismissed(notification.get());
             it = m_pop_notifications.erase(it);
             break;
         }
@@ -2244,6 +2398,7 @@ void NotificationManager::close_and_delete_self(PopNotification * self)
     for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
         std::unique_ptr<PopNotification> &notification = *it;
         if (notification.get() == self) {
+            record_history_dismissed(notification.get());
             m_pop_notifications.erase(it);
             break;
         }else
@@ -2255,6 +2410,7 @@ void NotificationManager::remove_notification_of_type(const NotificationType typ
     for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
         std::unique_ptr<PopNotification> &notification = *it;
         if (notification->get_type() == type) {
+            record_history_dismissed(notification.get());
             it = m_pop_notifications.erase(it);
             break;
         } else
@@ -2676,6 +2832,7 @@ bool NotificationManager::push_notification_data(std::unique_ptr<NotificationMan
                 m_pop_notifications.back()->update(notification->get_data());
 		}
 	} else {
+		record_history_push(notification.get());
 		m_pop_notifications.emplace_back(std::move(notification));
 
 		retval = true;
@@ -2793,9 +2950,10 @@ bool NotificationManager::update_notifications(GLCanvas3D& canvas)
 		std::unique_ptr<PopNotification>& notification = *it;
 		request_render |= notification->update_state(hover, time_since_render);
 		next_render = std::min<int64_t>(next_render, notification->next_render());
-		if (notification->get_state() == PopNotification::EState::Finished)
+		if (notification->get_state() == PopNotification::EState::Finished) {
+			record_history_dismissed(notification.get());
 			it = m_pop_notifications.erase(it);
-		else
+		} else
 			++it;
 	}
 
@@ -3033,6 +3191,7 @@ void NotificationManager::bbl_show_objectsinfo_notification(const std::string &t
     for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
         std::unique_ptr<PopNotification>& notification = *it;
         if (notification->get_type() == NotificationType::BBLObjectInfo) {
+            record_history_dismissed(notification.get());
             it = m_pop_notifications.erase(it);
             break;
         }

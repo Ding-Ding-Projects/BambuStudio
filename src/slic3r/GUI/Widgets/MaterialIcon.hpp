@@ -182,6 +182,12 @@ enum Glyph : uint32_t {
     VerifiedUser            = 0xE8E8, // Helio feature card: verified / shielded
     MenuBook                = 0xEA19, // wiki / documentation link
     VisibilityOff           = 0xE8F5, // hide toggle (pair of Visibility)
+    // Notification centre (all verified against the shipped TTF's cmap).
+    Notifications           = 0xE7F4, // top-bar bell, no unread entries
+    NotificationsActive     = 0xE7F7, // top-bar bell with unread entries
+    DeleteForever           = 0xE92B, // bulk delete of history entries
+    SelectAll               = 0xE162, // select this page
+    DoneAll                 = 0xE877, // select all matches
 };
 
 // True when the Material Symbols face is registered and resolvable, so callers

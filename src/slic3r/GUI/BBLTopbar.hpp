@@ -39,6 +39,9 @@ public:
     // §3.5 / §3.7 kit title-bar chips added this wave.
     void OnHistoryChip(wxAuiToolBarEvent& event);
     void OnAppearanceButton(wxAuiToolBarEvent& event);
+    // Notification centre bell: toggles the NotificationCenterPanel popover
+    // anchored under the bell (docs/features/workspace/notification-center.md).
+    void OnNotificationBell(wxAuiToolBarEvent& event);
 
     wxAuiToolBarItem* FindToolByCurrentPosition();
 
@@ -55,6 +58,9 @@ public:
     // §3.5 history chip label content (branch + short head). Decorative; the
     // click always opens the real version-history backend.
     void SetHistoryInfo(const wxString& branch, const wxString& head);
+    // Unread badge on the notification bell (0 hides the badge). Driven by
+    // NotificationManager whenever its history changes.
+    void SetNotificationUnread(int count);
     void SetMaximizedSize();
     void SetWindowSize();
 
@@ -96,6 +102,13 @@ private:
     wxAuiToolBarItem* m_model_store_item;
     wxAuiToolBarItem* m_history_item{nullptr};
     wxAuiToolBarItem* m_appearance_item{nullptr};
+    wxAuiToolBarItem* m_notification_item{nullptr};
+    int               m_notification_unread{0};
+    // The popover, created on first click and reused (hidden, never destroyed
+    // while the frame lives). Held as wxWindow* to keep the panel type out of
+    // this header.
+    wxWindow*         m_notification_center{nullptr};
+    void rebuild_notification_bell();
     wxString          m_history_branch;
     wxString          m_history_head;
 

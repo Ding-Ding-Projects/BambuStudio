@@ -7,6 +7,7 @@
 #include "Event.hpp"
 #include "I18N.hpp"
 #include "Jobs/ProgressIndicator.hpp"
+#include "NotificationHistory.hpp"
 
 #include <libslic3r/ObjectID.hpp>
 #include <libslic3r/Technologies.hpp>
@@ -18,6 +19,8 @@
 #include <deque>
 #include <unordered_set>
 #include <functional>
+#include <set>
+#include <cstdint>
 
 namespace Slic3r {
 namespace GUI {
@@ -213,6 +216,20 @@ public:
 	~NotificationManager(){}
 
 	void on_change_color_mode(bool is_dark);
+
+	// --- Notification centre history -----------------------------------------
+	// Append-only record of every pushed toast (except progress bars), persisted
+	// to <data_dir>/notification_history.json. See docs/features/workspace/notification-center.md.
+	NotificationHistory&       history() { return m_history; }
+	const NotificationHistory& history() const { return m_history; }
+	// Mark every recorded entry seen (the centre was opened); clears the bell badge.
+	void mark_history_seen();
+	// Bulk dismiss from the centre: closes any live toast still on screen for the
+	// given history ids and flags the records dismissed.
+	void dismiss_history_entries(const std::set<std::uint64_t>& ids);
+	// Stable enum name for a NotificationType (falls back to "notification_<n>").
+	static std::string type_name(NotificationType type);
+
 	// init is called after canvas3d is created. Notifications added before init are not showed or updated
 	void init() { m_initialized = true; }
 	// Push a prefabricated notification from basic_notifications (see the table at the end of this file).
@@ -509,6 +526,9 @@ private:
         typedef std::function<void(PopNotification*)> DeleteCallback;
         void set_delete_callback(DeleteCallback);
         bool is_valid_delete_callback();
+        // Notification-centre history record backing this toast (0 = not recorded).
+        void          set_history(NotificationHistory* history, std::uint64_t id) { m_history = history; m_history_id = id; }
+        std::uint64_t history_id() const { return m_history_id; }
 	protected:
 		// Call after every size change
 		virtual void init();
@@ -650,6 +670,8 @@ private:
         size_t           m_lines_count{ 1 };
 	    // Target for wxWidgets events sent by clicking on the hyperlink available at some notifications.
 		wxEvtHandler*    m_evt_handler;
+        NotificationHistory* m_history { nullptr };
+        std::uint64_t        m_history_id { 0 };
 
 		float m_scale = 1.0f;
 	};
@@ -908,6 +930,13 @@ private:
 	}
 
 	bool m_is_dark = false;
+	// Notification-centre history (see history()). Loaded from and saved to
+	// m_history_path on every change; a failed save is logged, never thrown.
+	NotificationHistory   m_history;
+	std::string           m_history_path;
+	void record_history_push(PopNotification* notification);
+	void record_history_dismissed(PopNotification* notification);
+	void on_history_changed();
 	// set by init(), until false notifications are only added not updated and frame is not requested after push
 	bool m_initialized{ false };
 	// Target for wxWidgets events sent by clicking on the hyperlink available at some notifications.
