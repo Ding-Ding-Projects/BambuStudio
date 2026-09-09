@@ -85,6 +85,11 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/RegexBuilderBridgeState.hpp
     GUI/Widgets/SearchField.cpp
     GUI/Widgets/SearchField.hpp
+    GUI/Widgets/TabStripModel.hpp
+    GUI/Widgets/TabStrip.cpp
+    GUI/Widgets/TabStrip.hpp
+    GUI/Widgets/TabStripDialogs.cpp
+    GUI/Widgets/TabStripDialogs.hpp
     GUI/Widgets/SlideToConfirm.cpp
     GUI/Widgets/SlideToConfirm.hpp
     GUI/Widgets/MD3ColorPicker.cpp

@@ -22,6 +22,7 @@
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/TabStrip.hpp"
 #include "Widgets/MD3ColorPicker.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StaticBox.hpp"
@@ -1389,186 +1390,27 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
         });
 }
 
-//  PrefNavItem — one MD3 NavItem pill (kit navigation/NavItem): a 44px-tall
-//  stadium (r = h/2) with a 20px leading Material Symbol and a label. Selected =
-//  SecondaryContainer fill + OnSecondaryContainer 600; hover = SurfaceContainerHigh;
-//  idle = transparent + OnSurfaceVariant 400. Fully custom-drawn so the glyph and
-//  label share one role colour and the pill re-themes/re-DPIs live. Capability-
-//  gated: with no Material Symbols face the label still renders (no leading glyph).
-class PrefNavItem : public wxWindow
+void PreferencesDialog::place_settings_strip()
 {
-public:
-    PrefNavItem(wxWindow *parent, uint32_t glyph, const wxString &label, std::function<void()> on_click)
-        : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS),
-          m_glyph(glyph), m_label(label), m_on_click(std::move(on_click))
-    {
-        SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
-        SetBackgroundStyle(wxBG_STYLE_PAINT);
-        SetMinSize(wxSize(-1, FromDIP(44)));
-        // Accessible name so screen readers announce the nav pill by its section label.
-        SetName(label);
-        Bind(wxEVT_PAINT, &PrefNavItem::OnPaint, this);
-        Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { SetFocus(); if (m_on_click) m_on_click(); });
-        Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent &e) { m_hover = true; SetCursor(wxCURSOR_HAND); Refresh(); e.Skip(); });
-        Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent &e) { m_hover = false; Refresh(); e.Skip(); });
-        // Keyboard: focusable pill activates on Enter/Space (MD3 nav-item contract).
-        Bind(wxEVT_SET_FOCUS,  [this](wxFocusEvent &e) { m_focused = true;  Refresh(); e.Skip(); });
-        Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &e) { m_focused = false; Refresh(); e.Skip(); });
-        Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &e) {
-            const int k = e.GetKeyCode();
-            if (k == WXK_RETURN || k == WXK_NUMPAD_ENTER || k == WXK_SPACE) {
-                if (m_on_click) m_on_click();
-            } else {
-                e.Skip();
-            }
-        });
-    }
-
-    void SetSelected(bool s) { if (m_selected == s) return; m_selected = s; Refresh(); }
-
-    bool AcceptsFocus() const override { return true; }
-    bool AcceptsFocusFromKeyboard() const override { return IsShown() && IsThisEnabled(); }
-
-private:
-    void OnPaint(wxPaintEvent &)
-    {
-        wxPaintDC pdc(this);
-        const wxSize sz = GetSize();
-        pdc.SetBackground(wxBrush(GetBackgroundColour()));
-        pdc.Clear();
-#ifdef __WXMSW__
-        wxGCDC dc(pdc);
-#else
-        wxDC &dc = pdc;
-#endif
-        // Pill background: selected -> SecondaryContainer, hover -> SurfaceContainerHigh.
-        wxColour pill;
-        bool     draw_pill = false;
-        if (m_selected) { pill = StateColor::semantic(MD3::Role::SecondaryContainer); draw_pill = true; }
-        else if (m_hover) { pill = StateColor::semantic(MD3::Role::SurfaceContainerHigh); draw_pill = true; }
-        if (draw_pill) {
-            dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.SetBrush(wxBrush(pill));
-            dc.DrawRoundedRectangle(0, 0, sz.x, sz.y, sz.y / 2.0); // pill r = height/2
-        }
-
-        const wxColour fg = m_selected ? StateColor::semantic(MD3::Role::OnSecondaryContainer)
-                                       : StateColor::semantic(MD3::Role::OnSurfaceVariant);
-        const int pad_l   = FromDIP(14);
-        const int gap     = FromDIP(10);
-        const int icon_px = 20; // logical px; the icon font scales with the DC
-
-        dc.SetFont(m_selected ? ::Label::Head_13 : ::Label::Body_13);
-        dc.SetTextForeground(fg);
-        wxCoord tw = 0, th = 0;
-        dc.GetTextExtent(m_label, &tw, &th);
-
-        wxSize is(0, 0);
-        const bool has_icon = m_glyph && MaterialIcon::available();
-        if (has_icon) is = MaterialIcon::measure(dc, m_glyph, icon_px);
-
-        const int content_h = std::max<int>(th, is.y);
-        const int y0        = (sz.y - content_h) / 2;
-        int       x         = pad_l;
-        if (has_icon) {
-            const int iy = y0 + (content_h - is.y) / 2;
-            MaterialIcon::draw(dc, m_glyph, icon_px, fg, wxPoint(x, iy));
-            x += is.x + gap;
-        }
-        const int ty = y0 + (content_h - th) / 2;
-        dc.DrawText(m_label, x, ty);
-
-        // Keyboard focus ring: a Primary stadium outline inset inside the pill so
-        // it stays visible over both the selected fill and the idle background.
-        if (m_focused) {
-            const int inset = FromDIP(2);
-            const int pw    = std::max(1, FromDIP(2));
-            dc.SetBrush(*wxTRANSPARENT_BRUSH);
-            dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), pw));
-            dc.DrawRoundedRectangle(inset, inset, sz.x - 2 * inset, sz.y - 2 * inset,
-                                    (sz.y - 2 * inset) / 2.0);
-        }
-    }
-
-    uint32_t              m_glyph;
-    wxString              m_label;
-    std::function<void()> m_on_click;
-    bool                  m_selected = false;
-    bool                  m_hover    = false;
-    bool                  m_focused  = false;
-};
-
-//  PreferenceTabbar — the fixed 230px vertical NavRail (kit Settings.jsx): a
-//  SurfaceContainerLow strip with a 1px OutlineVariant right edge, 16/10 padding
-//  and a 2px gap between NavItem pills. Emits the standard wxEVT_CHOICE
-//  (int = selected index) when the user picks a section — the same contract the
-//  legacy horizontal tab-bar exposed, so create()'s wiring is unchanged.
-class PreferenceTabbar : public wxWindow
-{
-public:
-    PreferenceTabbar(wxWindow *parent);
-    void AddTab(const wxString &label, uint32_t glyph);
-    void SetSelection(int sel);
-    int  GetSelection() const { return m_selection; }
-    void Rescale();
-
-private:
-    std::vector<PrefNavItem *> m_items;
-    wxBoxSizer                *m_itemsV   = nullptr;
-    int                        m_selection = -1;
-};
-
-PreferenceTabbar::PreferenceTabbar(wxWindow *parent) : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
-{
-    // Nav-rail surface (kit Settings nav = SurfaceContainerLow), one container
-    // step off the Surface content pane; resolves by role in dark.
-    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
-
-    auto *outer = new wxBoxSizer(wxHORIZONTAL);
-    m_itemsV    = new wxBoxSizer(wxVERTICAL);
-    // 16px top/bottom, 10px left/right padding around the pill stack.
-    outer->Add(m_itemsV, 1, wxEXPAND | wxTOP | wxBOTTOM | wxLEFT | wxRIGHT, FromDIP(10));
-    // 1px OutlineVariant right edge separating the rail from the content pane.
-    auto *line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(1), -1));
-    line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
-    outer->Add(line, 0, wxEXPAND);
-    SetSizer(outer);
-    SetMinSize(wxSize(FromDIP(MD3::Metrics::settings_nav_width), -1));
+    if (!m_body_row || !m_tabbar)
+        return;
+    m_body_row->Detach(m_tabbar);
+    using MD3::Tabs::DockEdge;
+    const DockEdge edge = m_tabbar->GetDockEdge();
+    m_body_row->SetOrientation(MD3::Tabs::is_vertical(edge) ? wxHORIZONTAL : wxVERTICAL);
+    if (edge == DockEdge::Left || edge == DockEdge::Top)
+        m_body_row->Insert(0, m_tabbar, 0, wxEXPAND);
+    else
+        m_body_row->Add(m_tabbar, 0, wxEXPAND);
+    m_body_row->Layout();
 }
 
-void PreferenceTabbar::AddTab(const wxString &label, uint32_t glyph)
+int PreferencesDialog::page_for_id(const std::string &id) const
 {
-    const int index = (int) m_items.size();
-    auto     *item  = new PrefNavItem(this, glyph, label, [this, index]() {
-        SetSelection(index);
-        wxCommandEvent evt(wxEVT_CHOICE, GetId());
-        evt.SetEventObject(this);
-        evt.SetInt(index);
-        wxPostEvent(this, evt);
-    });
-    m_items.push_back(item);
-    m_itemsV->Add(item, 0, wxEXPAND | wxBOTTOM, FromDIP(2)); // 2px inter-item gap
-    if (m_selection < 0) SetSelection(0);
-    Layout();
-}
-
-void PreferenceTabbar::SetSelection(int sel)
-{
-    if (sel < 0 || sel >= (int) m_items.size()) return;
-    m_selection = sel;
-    for (int i = 0; i < (int) m_items.size(); ++i)
-        m_items[i]->SetSelected(i == m_selection);
-}
-
-void PreferenceTabbar::Rescale()
-{
-    for (auto *item : m_items) {
-        item->SetMinSize(wxSize(-1, FromDIP(44)));
-        item->Refresh();
-    }
-    SetMinSize(wxSize(FromDIP(MD3::Metrics::settings_nav_width), -1));
-    Layout();
-    Refresh();
+    for (size_t i = 0; i < m_page_ids.size(); ++i)
+        if (m_page_ids[i] == id)
+            return int(i);
+    return -1;
 }
 
 void PreferencesDialog::create()
@@ -1590,7 +1432,14 @@ void PreferencesDialog::create()
     auto main_sizer = new wxBoxSizer(wxVERTICAL);
     main_sizer->Add(new MD3DialogCaption(this, _L("Preferences")), 0, wxEXPAND);
 
-    m_tabbar = new PreferenceTabbar(this);
+    TabStrip::Options strip_opts;
+    strip_opts.surface_key     = "preferences";
+    strip_opts.surface_name    = _L("Preferences");
+    strip_opts.strip_name      = _L("Settings sections");
+    strip_opts.default_edge    = MD3::Tabs::DockEdge::Left;
+    strip_opts.close_mode      = TabStrip::CloseMode::Hide; // "close" hides a section; restore from the overflow menu
+    strip_opts.show_new_button = false;
+    m_tabbar = new TabStrip(this, strip_opts);
     m_book   = new wxSimplebook(this, wxID_ANY);
 
     // Right-hand content pane: a top MD3 SearchField pill over the section book.
@@ -1606,31 +1455,47 @@ void PreferencesDialog::create()
     content_pane->Add(m_search_empty_hint, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     content_pane->Add(m_book, 1, wxEXPAND | wxTOP, FromDIP(12));
 
-    // Section rail (left) + content pane (right).
-    auto *body_row = new wxBoxSizer(wxHORIZONTAL);
-    body_row->Add(m_tabbar, 0, wxEXPAND);
-    body_row->Add(content_pane, 1, wxEXPAND);
+    // Section strip + content pane. The strip's dock edge decides the row's
+    // orientation and which side the strip sits on (see place_settings_strip).
+    m_body_row = new wxBoxSizer(wxHORIZONTAL);
+    m_body_row->Add(content_pane, 1, wxEXPAND);
 
-    auto add_tab = [this](const wxString &label, uint32_t glyph, wxWindow *page) {
-        m_tabbar->AddTab(label, glyph);
+    auto add_tab = [this](const std::string &id, const wxString &label, wxWindow *page) {
+        m_page_ids.push_back(id);
         m_book->AddPage(page, label);
+        m_tabbar->AddTab(id, label);
     };
-    // Sections map to MD3 NavItem glyphs (kit Settings.jsx). "Appearance" is the
-    // new theme/density/accent section; a person glyph for "User" is not yet in
-    // the MaterialIcon set (falls back to Sync — see followups).
-    add_tab(_L("Appearance"), MaterialIcon::Palette, create_appearance_tab());
-    add_tab(_CTX(L_CONTEXT("General", "Preference"), "Preference"), MaterialIcon::Settings, create_general_tab());
-    add_tab(_CTX(L_CONTEXT("User", "Preference"), "Preference"), MaterialIcon::Sync, create_user_tab());
-    add_tab(_CTX(L_CONTEXT("3D", "Preference"), "Preference"), MaterialIcon::ViewInAr, create_3d_tab());
-    add_tab(_CTX(L_CONTEXT("Other", "Preference"), "Preference"), MaterialIcon::Tune, create_other_tab());
+    // Sections are stable ids so the persisted strip layout (order / pins /
+    // groups / hidden / dock edge) survives relabelling and reordering in code.
+    add_tab("appearance", _L("Appearance"), create_appearance_tab());
+    add_tab("general", _CTX(L_CONTEXT("General", "Preference"), "Preference"), create_general_tab());
+    add_tab("user", _CTX(L_CONTEXT("User", "Preference"), "Preference"), create_user_tab());
+    add_tab("3d", _CTX(L_CONTEXT("3D", "Preference"), "Preference"), create_3d_tab());
+    add_tab("other", _CTX(L_CONTEXT("Other", "Preference"), "Preference"), create_other_tab());
 
 #if !BBL_RELEASE_TO_PUBLIC
-    add_tab(_L("Developer Tools"), MaterialIcon::Build, create_developer_tab());
+    add_tab("developer", _L("Developer Tools"), create_developer_tab());
 #endif
 
-    m_tabbar->SetSelection(0);
-    m_book->SetSelection(0);
-    m_tabbar->Bind(wxEVT_CHOICE, [this](wxCommandEvent &e) { m_book->SetSelection(e.GetInt()); });
+    // Apply the saved layout, then show whichever section the strip made
+    // active (the saved one, or the first displayed section).
+    m_tabbar->LoadLayout();
+    {
+        const int page = page_for_id(m_tabbar->ActiveId());
+        m_book->SetSelection(page < 0 ? 0 : page);
+        if (page < 0 && !m_page_ids.empty())
+            m_tabbar->Activate(m_page_ids[0], /*emit*/ false);
+    }
+    m_tabbar->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &e) {
+        const int page = page_for_id(std::string(e.GetString().ToUTF8()));
+        if (page >= 0 && page != m_book->GetSelection())
+            m_book->SetSelection(page);
+    });
+    m_tabbar->Bind(EVT_TABSTRIP_DOCK_CHANGED, [this](wxCommandEvent &) {
+        place_settings_strip();
+        Layout();
+    });
+    place_settings_strip();
 
     // Wire the search pill to live row filtering across every section. The row
     // index is built once here, after all pages and their gates (e.g. the
@@ -1642,7 +1507,7 @@ void PreferencesDialog::create()
     // Passing the raw field value keeps the empty-query reset path intact.
     m_search->SetOnRegexToggle([this](bool) { apply_search_filter(m_search->GetValue()); });
 
-    main_sizer->Add(body_row, 1, wxEXPAND);
+    main_sizer->Add(m_body_row, 1, wxEXPAND);
     main_sizer->Add(create_bottom_buttons(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
 
     SetSizer(main_sizer);
@@ -1882,7 +1747,11 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
         const SearchRow &target = m_search_rows[nav_match];
         if (m_book->GetSelection() != target.page) {
             m_book->SetSelection(target.page);
-            m_tabbar->SetSelection(target.page);
+            // Reveal the section in the strip too (a hidden or collapsed-group
+            // section comes back into view without touching the collapsed
+            // preference); no event, the book already switched.
+            if (target.page >= 0 && target.page < int(m_page_ids.size()))
+                m_tabbar->Activate(m_page_ids[target.page], /*emit*/ false);
         }
         // Re-layout the now-visible page before measuring the anchor position.
         if (wxWindow *page_win = m_book->GetPage(target.page)) page_win->Layout();

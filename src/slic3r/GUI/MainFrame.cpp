@@ -504,7 +504,17 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     Bind(EVT_PROJECT_TAB_SWITCH, [this](wxCommandEvent& e) { switch_project_tab(e.GetInt()); });
     Bind(EVT_PROJECT_TAB_CLOSE,  [this](wxCommandEvent& e) { close_project_tab(e.GetInt()); });
     Bind(EVT_PROJECT_TAB_NEW,    [this](wxCommandEvent&)   { new_project_tab(); });
-    sizer->Add(m_project_tabbar, 0, wxEXPAND);
+    // Dock host: the strip and the workspace share one box sizer whose
+    // orientation follows the strip's dock edge (top by default; left/right
+    // turn it into a side rail beside the workspace).
+    m_project_dock_sizer = new wxBoxSizer(wxVERTICAL);
+    sizer->Add(m_project_dock_sizer, 1, wxEXPAND);
+    Bind(EVT_TABSTRIP_DOCK_CHANGED, [this](wxCommandEvent& e) {
+        if (e.GetEventObject() == m_project_tabbar) {
+            place_project_tabbar();
+            Layout();
+        }
+    });
 
     // Restore persisted tab entries; seed a single tab for the current (Untitled)
     // project when none were restored so single-tab use behaves exactly like today.
@@ -522,7 +532,7 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     // and canvases are realized and the app finished its own startup file loading.
     CallAfter([this]() { reconcile_initial_project_tab(); });
 
-    sizer->Add(m_main_sizer, 1, wxEXPAND);
+    place_project_tabbar();
     SetSizerAndFit(sizer);
     // initialize layout from config
     update_layout();
@@ -1384,6 +1394,24 @@ std::string make_project_tab_snapshot_path()
     return file.string();
 }
 } // namespace
+
+void MainFrame::place_project_tabbar()
+{
+    if (!m_project_dock_sizer || !m_project_tabbar || !m_main_sizer)
+        return;
+    m_project_dock_sizer->Detach(m_project_tabbar);
+    m_project_dock_sizer->Detach(m_main_sizer);
+    using MD3::Tabs::DockEdge;
+    const DockEdge edge        = m_project_tabbar->GetDockEdge();
+    const bool     strip_first = edge == DockEdge::Top || edge == DockEdge::Left;
+    m_project_dock_sizer->SetOrientation(MD3::Tabs::is_vertical(edge) ? wxHORIZONTAL : wxVERTICAL);
+    if (strip_first)
+        m_project_dock_sizer->Add(m_project_tabbar, 0, wxEXPAND);
+    m_project_dock_sizer->Add(m_main_sizer, 1, wxEXPAND);
+    if (!strip_first)
+        m_project_dock_sizer->Add(m_project_tabbar, 0, wxEXPAND);
+    m_project_dock_sizer->Layout();
+}
 
 bool MainFrame::save_active_tab_snapshot_if_dirty()
 {

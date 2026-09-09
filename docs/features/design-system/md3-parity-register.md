@@ -286,6 +286,11 @@ restructure wave.
 row)** absorbs chrome-nav `settings-navrail-horizontal-tabbar` (same `Preferences.cpp:1260`
 PreferenceTabbar, same replace-with-kit-vertical-NavRail change).
 
+**Superseded (tabbed settings):** the `PreferenceTabbar` NavRail that closed that row has since
+been replaced by the shared browser-style `Widgets/TabStrip` docked left (same 230 px rail, same
+NavItem pill treatment, plus overflow / reorder / pinning / grouping / searches / bulk close and
+tablist accessibility). See `docs/features/workspace/tabbed-settings.md`.
+
 ---
 
 ## Surface: home-project (Home + Project webviews and their native chrome)
