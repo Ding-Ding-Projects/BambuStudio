@@ -1,5 +1,9 @@
 #include "DimSumSurprise.hpp"
+#include "LanguageMode.hpp"
 #include "DimSumSurpriseModel.hpp"
+
+static_assert(Slic3r::GUI::DimSum::FUNNY_LEVEL_DEFAULT == Slic3r::GUI::I18N::FUNNY_LEVEL_DEFAULT,
+              "dim sum funny-level default must match the shared language-mode default");
 
 #include "GUI.hpp"
 #include "GUI_App.hpp"

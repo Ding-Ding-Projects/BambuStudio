@@ -464,6 +464,18 @@ bool handle_command(const std::wstring &payload)
             w->CallAfter([w, cw, ch]() { w->SetSize(cw, ch); w->Layout(); });
             return true;
         }
+        //   notification-center  toggle the top-bar notification centre popover
+        //   delete-all           run Plater::delete_all_objects_from_model (raises the gate)
+        if (frame && payload == L"notification-center") {
+            frame->CallAfter([frame]() {
+                if (BBLTopbar *tb = frame->topbar()) { wxAuiToolBarEvent ev; tb->OnNotificationBell(ev); }
+            });
+            return true;
+        }
+        if (frame && payload == L"delete-all") {
+            frame->CallAfter([]() { if (Plater *plater = wxGetApp().plater()) plater->delete_all_objects_from_model(); });
+            return true;
+        }
         if (frame && payload == palette) {
             frame->CallAfter([frame]() { CommandPalette::ShowPalette(frame); });
             return true;

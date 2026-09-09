@@ -92,6 +92,7 @@
 #include "Widgets/StateColor.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Appearance/AppearanceEditorPopover.hpp"
+#include "Widgets/TabStrip.hpp"
 #include "Widgets/BoundedRegex.hpp"
 #include "Plater.hpp"
 #include "PreferencesHistory.hpp"
@@ -3283,6 +3284,11 @@ bool GUI_App::on_init_inner()
     // registry from data_dir()/appearance/element-styles.json and install the
     // context-menu / shortcut hooks before the first adopted widget is built.
     AppearanceEditor::init(data_dir() + "/appearance");
+    // Tab strips (project tabs, settings tabs) open the same editor from their
+    // "Edit tab appearance..." menu entries and Shift+right-click.
+    TabStrip::SetAppearanceEditorHook([](wxWindow *anchor, const std::string &element_id) {
+        AppearanceEditor::open_for(anchor, element_id);
+    });
 
 // initialize label colors and fonts
     init_label_colours();

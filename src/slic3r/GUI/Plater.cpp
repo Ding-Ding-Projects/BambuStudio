@@ -25417,6 +25417,17 @@ bool Plater::delete_object_from_model(size_t obj_idx, bool refresh_immediately) 
 //BBS: delete all from model
 void Plater::delete_all_objects_from_model()
 {
+    // Edit > Delete all and Ctrl+Shift+D land here, not in reset_with_confirm,
+    // so the two-key super confirmation gate has to sit on this path too.
+    if (!p->model.objects.empty()) {
+        SuperConfirmGate::Spec spec;
+        spec.action      = _L("Delete all");
+        spec.consequence = _L("Every object on every plate will be removed from this project.");
+        for (const ModelObject *obj : p->model.objects)
+            spec.affected.push_back(from_u8(obj->name));
+        if (!SuperConfirmGate::Run(static_cast<wxWindow *>(this), spec))
+            return;
+    }
     p->delete_all_objects_from_model();
 }
 

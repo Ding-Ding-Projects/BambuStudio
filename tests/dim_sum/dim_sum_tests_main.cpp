@@ -300,12 +300,14 @@ TEST_CASE("Picking only ever returns a dish whose photo is cached", "[DimSum][pi
 
 TEST_CASE("Copy honours the funny level but never touches the dish name", "[DimSum][copy]")
 {
-    REQUIRE(parse_funny_level("") == 3);
+    // The absent-key default mirrors the shared language-mode default (2).
+    REQUIRE(parse_funny_level("") == FUNNY_LEVEL_DEFAULT);
+    REQUIRE(FUNNY_LEVEL_DEFAULT == 2);
     REQUIRE(parse_funny_level("1") == 1);
     REQUIRE(parse_funny_level("5") == 5);
     REQUIRE(parse_funny_level("9") == 5);
     REQUIRE(parse_funny_level("0") == 1);
-    REQUIRE(parse_funny_level("abc") == 3);
+    REQUIRE(parse_funny_level("abc") == FUNNY_LEVEL_DEFAULT);
     REQUIRE(parse_funny_level("abc", 1) == 1);
 
     const Dish dish = sample_dish("hk-dish-0001", "hk-dish-0001-classic-har-gow.png");

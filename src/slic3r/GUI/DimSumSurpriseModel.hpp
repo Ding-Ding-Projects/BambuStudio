@@ -372,7 +372,9 @@ std::optional<Dish> pick_prefetch(const std::vector<Dish> &dishes, Predicate &&p
 // a fact and never changes; only the sentence around it does.
 inline constexpr int FUNNY_LEVEL_MIN     = 1;
 inline constexpr int FUNNY_LEVEL_MAX     = 5;
-inline constexpr int FUNNY_LEVEL_DEFAULT = 3;
+// Mirrors I18N::FUNNY_LEVEL_DEFAULT in LanguageMode.hpp (this header stays free of
+// GUI includes so the tests can build it alone); DimSumSurprise.cpp asserts they agree.
+inline constexpr int FUNNY_LEVEL_DEFAULT = 2;
 
 inline int clamp_funny_level(int level)
 {

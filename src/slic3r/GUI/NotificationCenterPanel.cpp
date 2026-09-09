@@ -10,6 +10,7 @@
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/SlideToConfirm.hpp"
+#include "Widgets/SuperConfirmGate.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
 
@@ -239,9 +240,8 @@ void NotificationCenterPanel::build_ui()
     root->Add(bulk_row, 0, wxEXPAND | wxTOP, FromDIP(8));
 
     // --- Delete gate (hidden until requested) ----------------------------
-    // TODO(SuperConfirmGate): the two-key super confirmation gate is being built
-    // in a parallel lane. Swap this SlideToConfirm for SuperConfirmGate once it
-    // lands so bulk delete carries both independent keys plus the slider.
+    // Bulk delete is gated by SuperConfirmGate (on_delete_requested); this
+    // inline slide card is kept only as the no-anchor fallback surface.
     m_delete_card = new StaticBox(this);
     auto *gate_sizer = new wxBoxSizer(wxVERTICAL);
     m_delete_label = new Label(m_delete_card, Label::Body_13, wxEmptyString);
@@ -655,14 +655,24 @@ void NotificationCenterPanel::on_delete_requested(wxCommandEvent &)
     const std::size_t selected = m_selection.count_within(m_matches);
     if (selected == 0)
         return;
-    // TRN: %d is the number of history entries the slide will delete.
-    m_delete_label->SetLabel(wxString::Format(
+    // Bulk delete goes through the shared two-key super confirmation gate,
+    // anchored to the delete button; the inline slide card stays as the
+    // fallback surface only when the gate cannot anchor (see hide_delete_gate).
+    SuperConfirmGate::Spec spec;
+    // TRN: Title of the confirmation gate for deleting notification history entries.
+    spec.action = _L("Delete notification entries");
+    // TRN: %d is the number of history entries the gate will delete.
+    spec.consequence = wxString::Format(
         _L("Permanently delete %d notification entries from the history. This cannot be undone; the export button above keeps a copy first."),
-        static_cast<int>(selected)));
-    m_delete_gate->Reset();
-    m_delete_card->Show();
-    Layout();
-    m_delete_gate->SetFocus();
+        static_cast<int>(selected));
+    for (std::uint64_t id : m_matches)
+        if (m_selection.contains(id))
+            if (const auto *e = m_manager ? m_manager->history().find(id) : nullptr)
+                spec.affected.push_back(from_u8(e->title.empty() ? e->text : e->title));
+    spec.affected_count = static_cast<int>(selected);
+    SuperConfirmGate::Show(m_delete_button, spec,
+                           [this]() { on_delete_confirmed(); },
+                           [this]() { m_delete_button->SetFocus(); });
 }
 
 void NotificationCenterPanel::on_delete_cancelled(wxCommandEvent &)
