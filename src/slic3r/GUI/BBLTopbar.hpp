@@ -52,6 +52,9 @@ public:
     bool PopupMenuByTitle(const wxString &title);
     bool InvokeMenuItem(const wxString &label);
     void SetTitle(wxString title);
+    // Live update of the wordmark beside the brand tile (user-renamable display
+    // name); re-fits the project chip against the new fixed-content width.
+    void SetBrandLabel(const wxString& label);
     // §3.5 history chip label content (branch + short head). Decorative; the
     // click always opens the real version-history backend.
     void SetHistoryInfo(const wxString& branch, const wxString& head);

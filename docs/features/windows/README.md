@@ -6,6 +6,7 @@
 - [English, Hong Kong Cantonese, and bilingual modes](language-modes.md)
 - [Ink terminology (filament → ink, AMS → Ink Dispenser)](ink-terminology.md)
 - [Appearance customization](appearance-customization.md)
+- [Renamable app name (display label only)](renamable-app-name.md)
 - [Regex builder](regex-builder.md)
 - [Command palette (Ctrl+F)](command-palette.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)

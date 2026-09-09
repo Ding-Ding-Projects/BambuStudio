@@ -556,9 +556,10 @@ void BBLTopbar::Init(wxFrame* parent)
     this->AddSpacer(FromDIP(MD3::Metrics::active().gap));
 
     // §3.1 brand tile: r8 Primary square + on-primary 'deployed_code' glyph,
-    // followed by the 'Bambu Studio' wordmark (drawn as this tool's label).
+    // followed by the app display-name wordmark (drawn as this tool's label). The
+    // wordmark is the user-renamable display name, never the translated brand.
     wxBitmap brand_bitmap = topbar_brand_tile_bitmap(this);
-    m_brand_item = this->AddTool(ID_LOGO, _L("Bambu Studio"), brand_bitmap, wxEmptyString, wxITEM_NORMAL);
+    m_brand_item = this->AddTool(ID_LOGO, wxGetApp().app_display_name(), brand_bitmap, wxEmptyString, wxITEM_NORMAL);
     m_brand_item->SetHoverBitmap(brand_bitmap);
     m_brand_item->SetActive(false);
 
@@ -976,6 +977,18 @@ void BBLTopbar::SetTitle(wxString title)
 {
     m_full_title = title;
     update_responsive_title();
+}
+
+void BBLTopbar::SetBrandLabel(const wxString& label)
+{
+    if (!m_brand_item || m_brand_item->GetLabel() == label)
+        return;
+    m_brand_item->SetLabel(label);
+    // The wordmark width changed, so the fixed-content budget the project chip
+    // measures against did too: re-realize and re-fit the chip in one pass.
+    Realize();
+    update_responsive_title();
+    Refresh(false);
 }
 
 int BBLTopbar::measure_fixed_content_width() const
