@@ -76,8 +76,18 @@ static MaterialIcon::Glyph msg_glyph_for_style(long style)
     return MaterialIcon::Info;
 }
 
+// Optional dialog emoji (Preferences > General > "Show emojis in dialogs and
+// message boxes"): one non-semantic glyph in front of the headline only. The
+// status meaning stays on the header glyph and the copy; buttons are guarded
+// separately in add_button() / SetButtonLabel().
+static wxString decorated_headline(const wxString &headline, long style)
+{
+    return I18N::decorate_dialog_text(headline, I18N::dialog_emoji_kind_for_style(style),
+                                      I18N::language_mode_service().dialog_emojis());
+}
+
 MsgDialog::MsgDialog(wxWindow *parent, const wxString &title, const wxString &headline, long style, wxBitmap /*bitmap*/, const wxString &forward_str)
-    : MD3Dialog(msg_parent(parent), title, headline, msg_glyph_for_style(style))
+    : MD3Dialog(msg_parent(parent), title, decorated_headline(headline, style), msg_glyph_for_style(style))
     , boldfont(wxGetApp().normal_font())
     , m_forward_str(forward_str)
 {
@@ -183,8 +193,10 @@ void MsgDialog::on_dpi_changed(const wxRect &suggested_rect)
 void MsgDialog::SetButtonLabel(wxWindowID btn_id, const wxString& label, bool set_focus/* = false*/)
 {
     if (Button* btn = get_button(btn_id)) {
-        btn->SetLabel(label);
-        btn->SetToolTip(label);
+        // Action labels never carry the dialog emoji, whatever the caller passed.
+        const wxString plain_label = I18N::strip_dialog_emoji(label);
+        btn->SetLabel(plain_label);
+        btn->SetToolTip(plain_label);
         if (set_focus)
             btn->SetFocus();
         if (m_finalized)
@@ -201,7 +213,9 @@ void MsgDialog::AddButton(wxWindowID btn_id, const wxString &label, bool set_foc
 
 Button* MsgDialog::add_button(wxWindowID btn_id, bool set_focus /*= false*/, const wxString& label/* = wxString()*/)
 {
-    Button* btn = new Button(this, label, "", 0, 0, btn_id);
+    // Action labels never carry the dialog emoji, whatever the caller passed.
+    const wxString plain_label = I18N::strip_dialog_emoji(label);
+    Button* btn = new Button(this, plain_label, "", 0, 0, btn_id);
 
     // Kit footer geometry (containment/Dialog + actions/Button): the default /
     // focused action is a Filled primary pill; secondary actions are Text
@@ -212,7 +226,7 @@ Button* MsgDialog::add_button(wxWindowID btn_id, bool set_focus /*= false*/, con
     btn->SetButtonSize(Button::Size::Medium);
     btn->SetMinSize(FromDIP(wxSize(44, 42)));
     btn->SetAllowShrink(true);
-    btn->SetToolTip(label);
+    btn->SetToolTip(plain_label);
 
     if (set_focus)
         btn->SetFocus();

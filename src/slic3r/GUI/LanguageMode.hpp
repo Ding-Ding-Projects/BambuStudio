@@ -66,6 +66,46 @@ LanguageModeProfile resolve_language_mode(std::string_view language_mode_id);
 bool                is_custom_language_mode(std::string_view language_mode_id);
 bool                is_baseline_language_mode(std::string_view language_mode_id);
 
+// Funny level: a per-language tone ladder from 1 (fully serious) to 5
+// (maximum playfulness). The level changes the voice of a message, never its
+// facts: file names, counts, and actions are carried by format arguments and
+// stay exact at every level. Mirrors ui-md3/site/copy.js.
+enum class FunnyLanguage { English, Cantonese };
+
+inline constexpr int FUNNY_LEVEL_MIN     = 1;
+inline constexpr int FUNNY_LEVEL_MAX     = 5;
+inline constexpr int FUNNY_LEVEL_DEFAULT = 2;
+
+// AppConfig keys shared by the Preferences dialog, GUI_App and the tests.
+inline constexpr const char *FUNNY_LEVEL_ENGLISH_KEY   = "funny_level_en";
+inline constexpr const char *FUNNY_LEVEL_CANTONESE_KEY = "funny_level_yue";
+inline constexpr const char *DIALOG_EMOJIS_KEY         = "dialog_emojis";
+inline constexpr const char *FUNNY_LEVEL_DISCLOSED_KEY = "funny_level_disclosed";
+
+int  clamp_funny_level(int level);
+// Parses a persisted value; empty or malformed input yields fallback and
+// out-of-range numbers are clamped.
+int  parse_funny_level(std::string_view stored, int fallback = FUNNY_LEVEL_DEFAULT);
+bool parse_dialog_emojis(std::string_view stored);
+
+// Returns the copy variant for a known source string at the given level, or
+// nullptr when the string has no ladder. Ladders of 1, 2, 3 or 5 entries are
+// expanded exactly as the site catalog does (see LanguageMode.cpp).
+const wxString *funny_copy_variant(const wxString &source, FunnyLanguage language, int level);
+
+// Dialog emoji decoration. Only a dialog headline or body is ever decorated;
+// buttons, action labels, field labels and accessible names keep plain text.
+enum class DialogEmojiKind { Info, Warning, Error, Question, Success };
+
+DialogEmojiKind dialog_emoji_kind_for_style(long wx_message_style);
+wxString        dialog_emoji(DialogEmojiKind kind);
+// Prefixes one emoji when enabled; text that is empty or already decorated is
+// returned unchanged so repeated calls never stack glyphs.
+wxString        decorate_dialog_text(const wxString &text, DialogEmojiKind kind, bool enabled);
+bool            has_dialog_emoji(const wxString &text);
+// Removes a leading dialog emoji; used as the guard on every action label.
+wxString        strip_dialog_emoji(const wxString &text);
+
 struct FormattedLocalizedText;
 
 // These strings are translated format templates. Keep the two variants
@@ -138,6 +178,13 @@ public:
     bool cantonese_catalog_loaded() const { return m_cantonese_catalog != nullptr; }
     const wxString &cantonese_catalog_path() const { return m_cantonese_catalog_path; }
 
+    // Per-language funny level; values are clamped to [FUNNY_LEVEL_MIN, FUNNY_LEVEL_MAX].
+    void set_funny_level(FunnyLanguage language, int level);
+    int  funny_level(FunnyLanguage language) const;
+
+    void set_dialog_emojis(bool enabled) { m_dialog_emojis = enabled; }
+    bool dialog_emojis() const { return m_dialog_emojis; }
+
     LocalizedText translate(const wxString &message, const wxString &context = wxString()) const;
     LocalizedText translate_plural(const wxString &singular, const wxString &plural, unsigned int n,
                                    const wxString &context = wxString()) const;
@@ -148,6 +195,9 @@ private:
     LanguageModeProfile          m_profile;
     std::unique_ptr<wxMsgCatalog> m_cantonese_catalog;
     wxString                     m_cantonese_catalog_path;
+    int                          m_funny_level_english { FUNNY_LEVEL_DEFAULT };
+    int                          m_funny_level_cantonese { FUNNY_LEVEL_DEFAULT };
+    bool                         m_dialog_emojis { false };
 };
 
 enum class LocalizedTextPresentation {

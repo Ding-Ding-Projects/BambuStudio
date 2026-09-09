@@ -445,6 +445,8 @@ public:
     // Process command line parameters cached in this->init_params,
     // load configs, STLs etc.
     void            post_init();
+    // Non-blocking, once-only notice that the funny level styles all messages.
+    void            show_funny_level_disclosure_once();
     void            shutdown();
     // If formatted for github, plaintext with OpenGL extensions enclosed into <details>.
     // Otherwise HTML formatted for the system info dialog.
