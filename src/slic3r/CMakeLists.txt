@@ -87,6 +87,9 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/SearchField.hpp
     GUI/Widgets/SlideToConfirm.cpp
     GUI/Widgets/SlideToConfirm.hpp
+    GUI/Widgets/SuperConfirmGate.cpp
+    GUI/Widgets/SuperConfirmGate.hpp
+    GUI/Widgets/SuperConfirmState.hpp
     GUI/Widgets/MD3ColorPicker.cpp
     GUI/Widgets/MD3ColorPicker.hpp
     GUI/Widgets/MD3Motion.cpp

@@ -204,6 +204,9 @@ public:
 
     void add_filament();
     void delete_filament(size_t filament_id = size_t(-1), int replace_filament_id = -1);  // 0 base, -1 means default
+    // User-initiated filament deletion: runs the destructive-action super
+    // confirmation gate first and only then calls delete_filament().
+    void delete_filament_with_confirm(size_t filament_id = size_t(-1));
     void change_filament(size_t from_id, size_t to_id);  // 0 base
     void edit_filament();
     void add_custom_filament(wxColour new_col, const std::string& preset_name = std::string(), bool skip_preset_validation = false);
@@ -888,6 +891,10 @@ public:
     int select_plate_by_hover_id(int hover_id, bool right_click = false, bool isModidyPlateName = false, bool is_swap_plate = false);
     //BBS: delete the plate, index= -1 means the current plate
     int delete_plate(int plate_index = -1);
+    // Destructive-action super confirmation for deleting a plate that still
+    // carries objects. Returns true when the deletion may proceed (an empty
+    // plate needs no gate because nothing is lost).
+    bool confirm_delete_plate(int plate_index = -1);
     //BBS: select the sliced plate by index
     int select_sliced_plate(int plate_index);
     //BBS: set bed positions

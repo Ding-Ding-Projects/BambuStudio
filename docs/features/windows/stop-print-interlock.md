@@ -30,6 +30,12 @@ rules, every label states plainly that the print will be discarded.
   reachable end to end (buttons and the slider are focusable; the cover
   opens on click after the slide).
 - No state persists: reopening the dialog starts the interlock from zero.
+- The same two-keys-then-slide anatomy is generalized for every other
+  irreversible action (delete all, delete preset, delete filament, delete
+  plate) by the anchored `SuperConfirmGate` - see
+  [Destructive-action super confirmation](super-confirmation.md). This
+  dialog keeps its extra arming buttons and safety cover because stopping a
+  print also discards material and time already spent.
 
 ## Verification
 

@@ -16,6 +16,7 @@
 - [Color picker translator (infinite picker, every notation, gamut, contrast)](color-picker-translator.md)
 - [Bulk filament actions](bulk-filament-actions.md)
 - [Stop-print safety interlock](stop-print-interlock.md)
+- [Destructive-action super confirmation (two keys + full slide)](super-confirmation.md)
 - [Print simulation playback (feedrate-true)](print-simulation.md)
 - [AI printer watch (local models)](ai-printer-watch.md)
 - [AI filament scanner (QR phone upload → AMS slot)](ai-filament-scanner.md)
