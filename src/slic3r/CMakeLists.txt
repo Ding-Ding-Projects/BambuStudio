@@ -291,6 +291,9 @@ set(SLIC3R_GUI_SOURCES
     GUI/PreferencesHistory.hpp
     GUI/PrinterWatch.cpp
     GUI/PrinterWatch.hpp
+    GUI/DimSumSurprise.cpp
+    GUI/DimSumSurprise.hpp
+    GUI/DimSumSurpriseModel.hpp
     GUI/FilamentScanner.cpp
     GUI/FilamentScanner.hpp
     GUI/TtsNarrator.cpp
