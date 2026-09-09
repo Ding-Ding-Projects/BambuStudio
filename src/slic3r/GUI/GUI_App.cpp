@@ -1,5 +1,6 @@
 #include "libslic3r/Technologies.hpp"
 #include "GUI_App.hpp"
+#include "AppDisplayName.hpp"
 #include <ctime>
 #include <iomanip>
 #include <sstream>
@@ -524,7 +525,7 @@ private:
         void init(wxFont init_font)
         {
             // title
-            title = wxGetApp().is_editor() ? SLIC3R_APP_FULL_NAME : GCODEVIEWER_APP_NAME;
+            title = wxGetApp().is_editor() ? wxGetApp().app_display_name() : wxString(GCODEVIEWER_APP_NAME);
 
             // dynamically get the version to display
             version = _L("V") + " " + GUI_App::format_display_version();
@@ -692,7 +693,7 @@ private:
         void init(wxFont init_font)
         {
             // title
-            title = wxGetApp().is_editor() ? SLIC3R_APP_FULL_NAME : GCODEVIEWER_APP_NAME;
+            title = wxGetApp().is_editor() ? wxGetApp().app_display_name() : wxString(GCODEVIEWER_APP_NAME);
 
             // dynamically get the version to display
             auto version_text = GUI_App::format_display_version();
@@ -1538,6 +1539,7 @@ wxDEFINE_EVENT(EVT_ENTER_FORCE_UPGRADE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_SHOW_NO_NEW_VERSION, wxCommandEvent);
 wxDEFINE_EVENT(EVT_SHOW_DIALOG, wxCommandEvent);
 wxDEFINE_EVENT(EVT_CONNECT_LAN_MODE_PRINT, wxCommandEvent);
+wxDEFINE_EVENT(EVT_APP_DISPLAY_NAME_CHANGED, wxCommandEvent);
 IMPLEMENT_APP(GUI_App)
 
 //BBS: remove GCodeViewer as seperate APP logic
@@ -7789,7 +7791,7 @@ bool GUI_App::check_print_host_queue()
     //wxMessageDialog dialog(mainframe,
     MessageDialog dialog(mainframe,
         message,
-        wxString(SLIC3R_APP_NAME) + " - " + _(L("Ongoing uploads")),
+        wxGetApp().app_display_name() + " - " + _(L("Ongoing uploads")),
         wxICON_QUESTION | wxYES_NO | wxNO_DEFAULT);
     if (dialog.ShowModal() == wxID_YES)
         return true;
@@ -8273,6 +8275,43 @@ wxString GUI_App::current_language_mode() const
 wxString GUI_App::current_local_web_language() const
 {
     return from_u8(I18N::language_mode_profile().local_web_language);
+}
+
+wxString GUI_App::app_display_name() const
+{
+    // The shipped product name is a brand string and is deliberately not run
+    // through the translation catalog: it reads the same in every language mode.
+    const std::string shipped = SLIC3R_APP_FULL_NAME;
+    if (app_config == nullptr)
+        return from_u8(shipped);
+    return from_u8(AppDisplayName::resolve(app_config->get(AppDisplayName::CONFIG_KEY), shipped));
+}
+
+bool GUI_App::set_app_display_name(const std::string &candidate)
+{
+    if (app_config == nullptr)
+        return false;
+    const std::string shipped = SLIC3R_APP_FULL_NAME;
+    const std::string stored  = AppDisplayName::to_stored_value(candidate, shipped);
+    // "" is the reset value; anything else must pass the same rules the
+    // Preferences field validates inline, so a programmatic caller cannot store
+    // a name the field would have refused.
+    if (!stored.empty() && !AppDisplayName::validate(stored).ok())
+        return false;
+    if (app_config->get(AppDisplayName::CONFIG_KEY) == stored)
+        return true; // nothing changed; do not wake the listeners
+    app_config->set(AppDisplayName::CONFIG_KEY, stored);
+    app_config->save();
+
+    // The main frame is owned here, so it is told directly rather than through a
+    // Bind on the app object: recreate_GUI() destroys and rebuilds the frame, and
+    // a lambda bound from the old frame would dangle into the next rename.
+    if (mainframe)
+        mainframe->on_app_display_name_changed();
+    wxCommandEvent evt(EVT_APP_DISPLAY_NAME_CHANGED);
+    evt.SetString(app_display_name());
+    ProcessEvent(evt); // synchronous, for any other live surface that Bind()s on wxGetApp()
+    return true;
 }
 
 wxString GUI_App::current_language_code_safe() const

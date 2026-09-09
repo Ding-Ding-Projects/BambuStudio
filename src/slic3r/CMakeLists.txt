@@ -271,6 +271,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/I18N.hpp
     GUI/LanguageMode.cpp
     GUI/LanguageMode.hpp
+    GUI/AppDisplayName.cpp
+    GUI/AppDisplayName.hpp
     GUI/IconManager.cpp
     GUI/IconManager.hpp
     GUI/MainFrame.cpp

@@ -292,6 +292,9 @@ public:
     void update_filament_tab_ui();
 
     void        update_title();
+    // Re-derive the window title and topbar wordmark after the user renamed the
+    // app (GUI_App::set_app_display_name calls this before broadcasting).
+    void        on_app_display_name_changed();
     void        set_max_recent_count(int max);
 
     void        show_calibration_button(bool show, bool is_BBL);

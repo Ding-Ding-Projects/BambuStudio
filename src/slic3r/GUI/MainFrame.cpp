@@ -1267,6 +1267,20 @@ void MainFrame::update_filament_tab_ui()
     wxGetApp().get_tab(Preset::Type::TYPE_FILAMENT)->update_tab_ui();
 }
 
+void MainFrame::on_app_display_name_changed()
+{
+    // Live rename from Preferences > Appearance > App name. The title cache is
+    // keyed on the project part only, so poison it (a control character no
+    // sanitized title can equal) or update_title() would short-circuit on an
+    // unchanged project name, including the empty one.
+    m_title_cache = wxString::FromUTF8("\x1f");
+#ifdef __WINDOWS__
+    if (m_topbar)
+        m_topbar->SetBrandLabel(wxGetApp().app_display_name());
+#endif
+    update_title();
+}
+
 void MainFrame::update_title()
 {
     if (!m_plater)
@@ -1296,8 +1310,8 @@ void MainFrame::update_title()
     if (m_topbar)
         m_topbar->SetTitle(title);
     // Also reflect the "*" in the window/taskbar title, which set_project_name builds
-    // as "<name> - BambuStudio".
-    SetTitle(title + " - BambuStudio");
+    // as "<name> - <display name>" (the user-renamable label, not the product id).
+    SetTitle(title + " - " + wxGetApp().app_display_name());
 #else
     SetTitle(title);
 #ifdef __APPLE__
@@ -3847,7 +3861,7 @@ static wxMenu* generate_help_menu()
 
     // About
 #ifndef __APPLE__
-    wxString about_title = wxString::Format(_L("&About %s"), SLIC3R_APP_FULL_NAME);
+    wxString about_title = wxString::Format(_L("&About %s"), wxGetApp().app_display_name());
     append_menu_item(helpMenu, wxID_ANY, about_title, about_title,
             [](wxCommandEvent&) { Slic3r::GUI::about(); });
 #endif
@@ -4584,7 +4598,7 @@ void MainFrame::init_menubar_as_editor()
 //    });
 
 #ifdef __APPLE__
-    wxString about_title = wxString::Format(_L("&About %s"), SLIC3R_APP_FULL_NAME);
+    wxString about_title = wxString::Format(_L("&About %s"), wxGetApp().app_display_name());
     //auto about_item = new wxMenuItem(parent_menu, BambuStudioMenuAbout + bambu_studio_id_base, about_title, "");
         //parent_menu->Bind(wxEVT_MENU, [this, bambu_studio_id_base](wxEvent& event) {
         //    switch (event.GetId() - bambu_studio_id_base) {
@@ -4986,7 +5000,7 @@ void MainFrame::init_menubar_as_gcodeviewer()
             [](wxCommandEvent&) { start_new_slicer(); }, "", nullptr,
             []() {return true; }, this);
         fileMenu->AppendSeparator();
-        append_menu_item(fileMenu, wxID_EXIT, _L("&Quit"), wxString::Format(_L("Quit %s"), SLIC3R_APP_NAME),
+        append_menu_item(fileMenu, wxID_EXIT, _L("&Quit"), wxString::Format(_L("Quit %s"), wxGetApp().app_display_name()),
             [this](wxCommandEvent&) { Close(false); });
     }
 

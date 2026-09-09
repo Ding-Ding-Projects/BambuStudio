@@ -699,6 +699,19 @@ public:
     wxString        current_language_mode() const;
     wxString        current_local_web_language() const;
 
+    // User-renamable display name (AppConfig "app_display_name"; empty = shipped
+    // SLIC3R_APP_FULL_NAME). Presentational surfaces only: the title bar wordmark,
+    // window title, About caption and dialog captions that introduce the app.
+    // Identity (data_dir, config/log file names, updater ids, user agents,
+    // diagnostic headers, file associations) keeps the compiled-in constants and
+    // must never call this. Safe before app_config exists (returns the shipped name).
+    wxString        app_display_name() const;
+    // Persist a new display name (sanitized; "" or the shipped name resets to the
+    // default) and broadcast EVT_APP_DISPLAY_NAME_CHANGED on the app object so
+    // live surfaces re-read app_display_name() without a restart. Returns false
+    // (and changes nothing) when the sanitized value fails validation.
+    bool            set_app_display_name(const std::string &candidate);
+
 	// Translate the language code to a code, for which Prusa Research maintains translations. Defaults to "en_US".
     wxString 		current_language_code_safe() const;
     bool            is_localized() const { return m_wxLocale->GetLocale() != "English"; }
@@ -899,6 +912,9 @@ private:
 
 DECLARE_APP(GUI_App)
 wxDECLARE_EVENT(EVT_CONNECT_LAN_MODE_PRINT, wxCommandEvent);
+// Fired on the GUI_App object (Bind via wxGetApp()) after set_app_display_name()
+// persisted a change; GetString() carries the new effective display name.
+wxDECLARE_EVENT(EVT_APP_DISPLAY_NAME_CHANGED, wxCommandEvent);
 
 bool is_support_filament(int extruder_id, bool strict_check = true);
 bool is_soluble_filament(int extruder_id);

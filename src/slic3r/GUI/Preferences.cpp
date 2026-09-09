@@ -1,6 +1,7 @@
 #include "Preferences.hpp"
 #include "OptionsGroup.hpp"
 #include "GUI_App.hpp"
+#include "AppDisplayName.hpp"
 #include "MainFrame.hpp"
 #include "Plater.hpp"
 #include "MsgDialog.hpp"
@@ -2637,6 +2638,150 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     reset_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
     reset_line->Add(reset_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
     sizer->Add(reset_line, flags);
+
+    // ---- App name (user-renamable display label) -----------------------------
+    // Persists AppConfig "app_display_name" through GUI_App::set_app_display_name,
+    // which sanitizes, validates (1-40 code points, no control characters) and
+    // broadcasts the change so the title bar wordmark, window title and dialog
+    // captions re-read it live. It is a label only: identity-bound paths (data
+    // folder, installer/updater ids, logs, diagnostics) never read this key.
+    const std::string shipped_name = SLIC3R_APP_FULL_NAME;
+    const std::string stored_name  = app_config->get(AppDisplayName::CONFIG_KEY);
+    auto *name_input = new ::TextInput(scrolled, from_u8(AppDisplayName::resolve(stored_name, shipped_name)), wxEmptyString, wxEmptyString,
+                                       wxDefaultPosition, wxSize(FromDIP(260), -1), wxTE_PROCESS_ENTER);
+    {
+        // MD3 ValueField fill, resolved by role so it re-themes in dark.
+        StateColor name_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Disabled),
+                           std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Enabled));
+        name_input->SetBackgroundColor(name_bg);
+        name_input->SetCornerRadius(FromDIP(10));
+        name_input->GetTextCtrl()->SetFont(::Label::Body_13);
+        name_input->GetTextCtrl()->SetName(_L("App name"));
+        // Sanitized suggested default: the shipped name is what the field falls back
+        // to, so it is also the hint shown while the box is empty.
+        name_input->GetTextCtrl()->SetHint(from_u8(shipped_name));
+        // Hard input bound well above the 40-code-point rule so an over-long paste is
+        // reported inline instead of silently clipped mid-word by the control.
+        name_input->GetTextCtrl()->SetMaxLength(200);
+    }
+
+    // Inline status line: the validation problem in plain words while the typed
+    // value is invalid, otherwise the provenance of the value in effect.
+    auto *name_status = new Label(scrolled, wxEmptyString, 0, wxSize(FromDIP(520), -1));
+    name_status->SetFont(::Label::Body_12);
+    name_status->SetName(_L("App name status"));
+
+    auto name_problem = [](const std::string &typed) {
+        const AppDisplayName::Validation raw = AppDisplayName::validate(typed);
+        if (raw.problem == AppDisplayName::Problem::ControlCharacters || raw.problem == AppDisplayName::Problem::TooLong)
+            return raw.problem;
+        // Empty is judged after sanitizing so whitespace-only input is reported,
+        // but "  Name  " (which sanitize() trims) is not.
+        return AppDisplayName::sanitize(typed).empty() ? AppDisplayName::Problem::Empty : AppDisplayName::Problem::None;
+    };
+
+    auto refresh_name_status = [this, name_input, name_status, name_problem, shipped_name, scrolled]() {
+        const std::string typed   = into_u8(name_input->GetTextCtrl()->GetValue());
+        const auto        problem = name_problem(typed);
+        wxString          text;
+        bool              is_error = true;
+        switch (problem) {
+        case AppDisplayName::Problem::Empty:
+            text = wxString::Format(_L("Enter a name of 1 to %d characters, or reset to the shipped name."), int(AppDisplayName::MAX_LENGTH));
+            break;
+        case AppDisplayName::Problem::TooLong:
+            text = wxString::Format(_L("Too long: %d characters. Use %d or fewer."), int(AppDisplayName::utf8_length(typed)), int(AppDisplayName::MAX_LENGTH));
+            break;
+        case AppDisplayName::Problem::ControlCharacters:
+            text = _L("Remove line breaks and other control characters.");
+            break;
+        case AppDisplayName::Problem::None: {
+            is_error                = false;
+            const std::string stored = app_config->get(AppDisplayName::CONFIG_KEY);
+            if (AppDisplayName::provenance(stored, shipped_name) == AppDisplayName::Provenance::Stored)
+                text = wxString::Format(_L("Stored in your settings (%s). Shipped name: %s"), from_u8(AppDisplayName::CONFIG_KEY), from_u8(shipped_name));
+            else
+                text = wxString::Format(_L("Not set. Showing the shipped name, %s."), from_u8(shipped_name));
+            break;
+        }
+        }
+        name_status->SetForegroundColour(StateColor::semantic(is_error ? MD3::Role::Error : MD3::Role::OnSurfaceVariant));
+        name_status->SetLabel(text);
+        name_status->Wrap(FromDIP(520));
+        scrolled->Layout();
+    };
+
+    // Commit on Enter / focus loss: sanitize, refuse invalid input (the status
+    // line already says why, and the typed text is kept for correction), else
+    // persist + broadcast and echo the sanitized form back into the field.
+    auto commit_name = [this, name_input, name_problem, refresh_name_status](wxEvent &e) {
+        e.Skip();
+        const std::string typed = into_u8(name_input->GetTextCtrl()->GetValue());
+        if (name_problem(typed) != AppDisplayName::Problem::None) { refresh_name_status(); return; }
+        const std::string clean = AppDisplayName::sanitize(typed);
+        wxGetApp().set_app_display_name(clean);
+        if (clean != typed) name_input->GetTextCtrl()->ChangeValue(from_u8(clean));
+        refresh_name_status();
+    };
+    name_input->GetTextCtrl()->Bind(wxEVT_TEXT, [refresh_name_status](wxCommandEvent &e) { e.Skip(); refresh_name_status(); });
+    name_input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, commit_name);
+    name_input->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, commit_name);
+
+    // Reset: clears the stored value (the accessor then falls back to the shipped
+    // name) and shows that name in the field so the result is visible at once.
+    auto *name_reset = new Button(scrolled, _L("Reset to shipped name"));
+    m_button_list[m_button_list.size()] = name_reset;
+    name_reset->SetVariant(Button::Variant::Outlined);
+    name_reset->SetButtonSize(Button::Size::Small);
+    name_reset->Bind(wxEVT_BUTTON, [name_input, shipped_name, refresh_name_status](wxCommandEvent &) {
+        wxGetApp().set_app_display_name(std::string());
+        name_input->GetTextCtrl()->ChangeValue(from_u8(shipped_name));
+        refresh_name_status();
+    });
+
+    // Progressive disclosure: the explanation stays folded behind a toggle so the
+    // row reads as one field, and unfolds into a caption that says exactly what
+    // the rename does and does not touch.
+    auto *name_explain = new Label(scrolled, wxString::Format(
+        _L("The name is a label only. It changes the title bar, the window title, the About dialog and the dialog captions that "
+           "introduce the app. Your data folder, the installer and updater, log files, crash and diagnostic reports, and file "
+           "associations keep the real product name, %s, so support can still tell which software this is."),
+        from_u8(shipped_name)), 0, wxSize(FromDIP(520), -1));
+    name_explain->SetFont(::Label::Body_12);
+    name_explain->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    name_explain->Wrap(FromDIP(520));
+    name_explain->Hide();
+    auto *name_explain_toggle = new Button(scrolled, _L("What does renaming change?"));
+    m_button_list[m_button_list.size()] = name_explain_toggle;
+    name_explain_toggle->SetVariant(Button::Variant::Text);
+    name_explain_toggle->SetButtonSize(Button::Size::Small);
+    name_explain_toggle->Bind(wxEVT_BUTTON, [name_explain, name_explain_toggle, scrolled](wxCommandEvent &) {
+        const bool show = !name_explain->IsShown();
+        name_explain->Show(show);
+        name_explain_toggle->SetLabel(show ? _L("Hide explanation") : _L("What does renaming change?"));
+        scrolled->Layout();
+        scrolled->FitInside();
+    });
+
+    sizer->Add(make_row(_L("App name"), name_input), flags);
+    auto *name_status_line = new wxBoxSizer(wxHORIZONTAL);
+    name_status_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
+    name_status_line->Add(name_status, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    sizer->Add(name_status_line, wxSizerFlags().Expand().Border(wxTOP, FromDIP(4)));
+    // Actions + folded explanation share one row so a settings-search show/hide
+    // of the row never fights the user's own fold state.
+    auto *name_actions = new wxBoxSizer(wxVERTICAL);
+    auto *name_actions_line = new wxBoxSizer(wxHORIZONTAL);
+    name_actions_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
+    name_actions_line->Add(name_reset, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
+    name_actions_line->Add(name_explain_toggle, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    name_actions->Add(name_actions_line, 0, wxEXPAND);
+    auto *name_explain_line = new wxBoxSizer(wxHORIZONTAL);
+    name_explain_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
+    name_explain_line->Add(name_explain, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
+    name_actions->Add(name_explain_line, 0, wxEXPAND | wxTOP, FromDIP(4));
+    sizer->Add(name_actions, flags);
+    refresh_name_status();
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);

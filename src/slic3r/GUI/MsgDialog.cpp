@@ -537,8 +537,8 @@ static void add_msg_content(wxWindow   *parent,
 // ErrorDialog
 
 ErrorDialog::ErrorDialog(wxWindow *parent, const wxString &temp_msg, bool monospaced_font)
-    : MsgDialog(parent, wxString::Format(_(L("%s error")), SLIC3R_APP_FULL_NAME),
-                        wxString::Format(_(L("%s has encountered an error")), SLIC3R_APP_FULL_NAME), wxOK | wxICON_ERROR)
+    : MsgDialog(parent, wxString::Format(_(L("%s error")), wxGetApp().app_display_name()),
+                        wxString::Format(_(L("%s has encountered an error")), wxGetApp().app_display_name()), wxOK | wxICON_ERROR)
     , msg(temp_msg)
 {
     add_msg_content(this, content_sizer, msg, monospaced_font);
@@ -557,8 +557,8 @@ WarningDialog::WarningDialog(wxWindow *parent,
                              const wxString& message,
                              const wxString& caption/* = wxEmptyString*/,
                              long style/* = wxOK*/)
-    : MsgDialog(parent, caption.IsEmpty() ? wxString::Format(_L("%s warning"), SLIC3R_APP_FULL_NAME) : caption,
-                        wxString::Format(_L("%s has a warning")+":", SLIC3R_APP_FULL_NAME), style)
+    : MsgDialog(parent, caption.IsEmpty() ? wxString::Format(_L("%s warning"), wxGetApp().app_display_name()) : caption,
+                        wxString::Format(_L("%s has a warning")+":", wxGetApp().app_display_name()), style)
 {
     add_msg_content(this, content_sizer, message);
     finalize();
@@ -566,8 +566,8 @@ WarningDialog::WarningDialog(wxWindow *parent,
 
 PostProcessScriptDialog::PostProcessScriptDialog(wxWindow* parent, const wxString& message, const wxString& script_content)
     : MsgDialog(parent,
-        wxString::Format(_L("%s warning"), SLIC3R_APP_FULL_NAME),
-        wxString::Format(_L("%s has a warning") + ":", SLIC3R_APP_FULL_NAME),
+        wxString::Format(_L("%s warning"), wxGetApp().app_display_name()),
+        wxString::Format(_L("%s has a warning") + ":", wxGetApp().app_display_name()),
         wxICON_WARNING)
 {
     const int content_width =
@@ -643,7 +643,7 @@ MessageDialog::MessageDialog(wxWindow* parent,
     const wxString &link_text,
     std::function<void(const wxString &)> link_callback,
     bool is_marked_msg)
-    : MsgDialog(parent, caption.IsEmpty() ? wxString::Format(_L("%s info"), SLIC3R_APP_FULL_NAME) : caption, wxEmptyString, style, wxBitmap(),forward_str)
+    : MsgDialog(parent, caption.IsEmpty() ? wxString::Format(_L("%s info"), wxGetApp().app_display_name()) : caption, wxEmptyString, style, wxBitmap(),forward_str)
 {
     add_msg_content(this, content_sizer, message, false, is_marked_msg, link_text, link_callback);
     SetMaxSize(MSG_DLG_MAX_SIZE);
@@ -657,7 +657,7 @@ RichMessageDialog::RichMessageDialog(wxWindow* parent,
     const wxString& message,
     const wxString& caption/* = wxEmptyString*/,
     long style/* = wxOK*/)
-    : MsgDialog(parent, caption.IsEmpty() ? wxString::Format(_L("%s info"), SLIC3R_APP_FULL_NAME) : caption, wxEmptyString, style)
+    : MsgDialog(parent, caption.IsEmpty() ? wxString::Format(_L("%s info"), wxGetApp().app_display_name()) : caption, wxEmptyString, style)
 {
     add_msg_content(this, content_sizer, message);
 
@@ -687,7 +687,7 @@ bool RichMessageDialog::IsCheckBoxChecked() const
 
 // InfoDialog
 InfoDialog::InfoDialog(wxWindow* parent, const wxString &title, const wxString& msg, bool is_marked_msg/* = false*/, long style/* = wxOK | wxICON_INFORMATION*/)
-    : MsgDialog(parent, wxString::Format(_L("%s information"), SLIC3R_APP_FULL_NAME), title, style)
+    : MsgDialog(parent, wxString::Format(_L("%s information"), wxGetApp().app_display_name()), title, style)
     , msg(msg)
 {
     add_msg_content(this, content_sizer, msg, false, is_marked_msg);
@@ -751,7 +751,7 @@ void DeleteConfirmDialog::on_dpi_changed(const wxRect &suggested_rect) { UpdateS
 
 
 Newer3mfVersionDialog::Newer3mfVersionDialog(wxWindow *parent, const Semver *file_version, const Semver *cloud_version, wxString new_keys)
-    : MD3Dialog(parent, wxString(SLIC3R_APP_FULL_NAME " - ") + _L("Newer 3mf version"), wxEmptyString, MaterialIcon::Info)
+    : MD3Dialog(parent, wxGetApp().app_display_name() + " - " + _L("Newer 3mf version"), wxEmptyString, MaterialIcon::Info)
     , m_file_version(file_version)
     , m_cloud_version(cloud_version)
     , m_new_keys(new_keys)
@@ -912,7 +912,7 @@ NetworkErrorDialog::NetworkErrorDialog(wxWindow* parent)
 
 
 FilamentWarningDialog::FilamentWarningDialog(wxWindow *parent, const wxString &title, std::vector<FilamentWarningInfo> infos)
-    : MsgDialog(parent, title.IsEmpty() ? wxString::Format(_L("%s warning"), SLIC3R_APP_FULL_NAME) : title, wxEmptyString, wxOK | wxICON_WARNING), m_messages(infos)
+    : MsgDialog(parent, title.IsEmpty() ? wxString::Format(_L("%s warning"), wxGetApp().app_display_name()) : title, wxEmptyString, wxOK | wxICON_WARNING), m_messages(infos)
 {
     BuildContent();
     finalize();
