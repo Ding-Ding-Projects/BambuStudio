@@ -12,6 +12,7 @@
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "ChangelogDialog.hpp"
 
 #include <wx/clipbrd.h>
 #include <wx/image.h>
@@ -468,8 +469,22 @@ AboutDialog::AboutDialog()
     button_portions->SetVariant(Button::Variant::Outlined);
     button_portions->SetButtonSize(Button::Size::Small);
 
+    // "What's new" opens the in-app changelog viewer: every released version,
+    // dated and commit-linked, from the same About surface that names the build.
+    Button* button_whats_new = new Button(this, _L("What's new"));
+    m_btn_whats_new = button_whats_new;
+    button_whats_new->SetVariant(Button::Variant::Outlined);
+    button_whats_new->SetButtonSize(Button::Size::Small);
+    button_whats_new->SetToolTip(_L("Browse every released version with its dated, commit-linked changes"));
+    button_whats_new->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        ChangelogDialog dialog(this);
+        dialog.ShowModal();
+    });
+
     wxBoxSizer *copyright_button_ver = new wxBoxSizer(wxVERTICAL);
     copyright_button_ver->Add( 0, 0, 0, wxTOP, FromDIP(10));
+    copyright_button_ver->Add(button_whats_new, 0, wxALL,0);
+    copyright_button_ver->Add( 0, 0, 0, wxTOP, FromDIP(8));
     copyright_button_ver->Add(button_portions, 0, wxALL,0);
 
     copyright_hor_sizer->AddStretchSpacer();

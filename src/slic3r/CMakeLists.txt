@@ -282,6 +282,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/MainFrame.hpp
     GUI/ProjectHistoryDialog.cpp
     GUI/ProjectHistoryDialog.hpp
+    GUI/ChangelogDialog.cpp
+    GUI/ChangelogDialog.hpp
     GUI/ConfigProfilesDialog.cpp
     GUI/ConfigProfilesDialog.hpp
     GUI/CommandPalette.cpp

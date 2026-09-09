@@ -64,6 +64,7 @@ class AboutDialog : public DPIDialog
     // The MD3 "Portions copyright" button, kept so on_dpi_changed can re-derive
     // its variant geometry (msw_buttons_rescale only handles native wxButtons).
     Button*         m_btn_portions { nullptr };
+    Button*         m_btn_whats_new { nullptr };
     int             m_copy_rights_btn_id { wxID_ANY };
     int             m_copy_version_btn_id { wxID_ANY };
 public:

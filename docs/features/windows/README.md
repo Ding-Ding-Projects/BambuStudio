@@ -11,6 +11,7 @@
 - [Regex builder](regex-builder.md)
 - [Material context menus (search, shortcuts, submenus)](material-context-menus.md)
 - [Command palette (Ctrl+Shift+F)](command-palette.md)
+- [In-app changelog viewer (Help ▸ What's new)](changelog-viewer.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)
 - [Material color picker & color translator](md3-color-picker.md)
 - [Color picker translator (infinite picker, every notation, gamut, contrast)](color-picker-translator.md)
