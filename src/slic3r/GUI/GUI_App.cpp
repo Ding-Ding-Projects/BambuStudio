@@ -94,6 +94,7 @@
 #include "Plater.hpp"
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
+#include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
 #include "HomeAssistant.hpp"
 #include "GLCanvas3D.hpp"
@@ -1410,6 +1411,10 @@ void GUI_App::post_init()
         //BOOST_LOG_TRIVIAL(info) << "after check_updates";
         CallAfter([this] {
             bool cw_showed = this->config_wizard_startup();
+
+            // Dim sum surprise: one launch in ten, never on a first run, never
+            // over a wizard, a startup error, a modal dialog or a CLI-opened file.
+            DimSumSurprise::maybe_show_after_startup(cw_showed);
 
             std::string http_url = get_http_url(app_config->get_country_code());
             std::string language = GUI::into_u8(current_language_code_safe());
@@ -3563,8 +3568,10 @@ bool GUI_App::on_init_inner()
             // is instead of sitting on "Loading configuration" for the whole launch.
             if (scrn) { scrn->SetText(_L("Loading presets") + dots); wxYield(); }
             std::tie(init_params->preset_substitutions, errors_cummulative) = preset_bundle->load_presets(*app_config, ForwardCompatibilitySubstitutionRule::EnableSystemSilent);
-            if (!errors_cummulative.empty())
+            if (!errors_cummulative.empty()) {
+                DimSumSurprise::mark_startup_error();
                 show_error(nullptr, errors_cummulative);
+            }
         }
         catch (const std::exception& ex) {
             show_error(nullptr, ex.what());
