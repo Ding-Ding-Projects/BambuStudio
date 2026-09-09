@@ -48,6 +48,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/SuperConfirmGate.hpp"
 #include "Widgets/TabCtrl.hpp"
 #include "ParamsPanel.hpp"
 #include "Widgets/TextInput.hpp"
@@ -2784,7 +2785,7 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
     update();
     if (m_active_page)
         m_active_page->update_visibility(m_mode, true);
-    m_page_view->GetParent()->Layout();
+    m_page_view->GetParent()->Layout();
     if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
 }
 
@@ -5148,7 +5149,7 @@ void Tab::update_pages_with_multi_variant()
                 optgroup->custom_ctrl->update_line_height_for_field(opt_key);
             }
         }
-        m_page_view->GetParent()->Layout();
+        m_page_view->GetParent()->Layout();
         if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
         m_parent->Layout();
     }
@@ -7636,10 +7637,19 @@ void Tab::delete_preset()
     //action = current_preset.is_external ? _utf8(L("Remove")) : _utf8(L("Delete"));
     // TRN  Remove/Delete
     wxString title = from_u8((boost::format(_utf8(L("%1% Preset"))) % action).str());  //action + _(L(" Preset"));
-    if (current_preset.is_default || !(confirm_delete_third_party_printer ||
-        //wxID_YES != wxMessageDialog(parent(), msg, title, wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION).ShowModal())
-        wxID_YES == MessageDialog(parent(), msg, title, wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION).ShowModal()))
+    if (current_preset.is_default)
         return;
+    if (!confirm_delete_third_party_printer) {
+        // Destructive-action super confirmation (two keys + full slide),
+        // anchored to the preset combo that offered the delete. Deleting a
+        // user preset removes its file for good.
+        SuperConfirmGate::Spec spec;
+        spec.action      = title;
+        spec.consequence = msg;
+        spec.affected.push_back(from_u8(current_preset.name));
+        if (!SuperConfirmGate::Run(static_cast<wxWindow *>(m_presets_choice), spec))
+            return;
+    }
     auto delete_cur_bed_type_to_config = [this]() {
         PresetBundle &preset_bundle   = *wxGetApp().preset_bundle;
         auto          cur_preset_name = preset_bundle.printers.get_edited_preset().name;
@@ -8281,7 +8291,7 @@ void Tab::switch_excluder(int extruder_id, bool reload)
         toggle_options();
         if (m_active_page)
             m_active_page->update_visibility(m_mode, true);
-        m_page_view->GetParent()->Layout();
+        m_page_view->GetParent()->Layout();
         if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
     }
 }
@@ -8358,7 +8368,7 @@ void Tab::sync_excluder()
         update();
         if (m_active_page)
             m_active_page->update_visibility(m_mode, true);
-        m_page_view->GetParent()->Layout();
+        m_page_view->GetParent()->Layout();
         if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
     }
 }

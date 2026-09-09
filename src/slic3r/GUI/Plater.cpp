@@ -171,6 +171,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/SuperConfirmGate.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/ComboBox.hpp"
@@ -7574,6 +7575,33 @@ void Sidebar::edit_mixed_filament(size_t panel_idx)
         wxGetApp().plater()->update_project_dirty_from_presets();
         wxPostEvent(this, SimpleEvent(EVT_SCHEDULE_BACKGROUND_PROCESS, this));
     }
+}
+
+void Sidebar::delete_filament_with_confirm(size_t filament_id)
+{
+    if (p->combos_filament.size() <= 1)
+        return;
+    size_t resolved = filament_id;
+    if (resolved == static_cast<size_t>(kSidebarContextMenuFilamentId))
+        resolved = p->m_menu_filament_id;
+    if (resolved == size_t(-1))
+        resolved = p->combos_filament.size() - 1;
+
+    wxString preset_name;
+    const auto &presets = wxGetApp().preset_bundle->filament_presets;
+    if (resolved < presets.size())
+        preset_name = from_u8(presets[resolved]);
+
+    SuperConfirmGate::Spec spec;
+    spec.action      = _L("Delete filament");
+    spec.consequence = _L("This filament slot will be removed from the project. Objects and paint "
+                          "assigned to it are moved to another slot.");
+    // TRN %d is the 1-based filament slot number, %s the preset name.
+    spec.affected.push_back(wxString::Format(_L("Slot %d: %s"), int(resolved) + 1, preset_name));
+    wxWindow *anchor = resolved < p->combos_filament.size() ? static_cast<wxWindow *>(p->combos_filament[resolved]) : nullptr;
+    if (!SuperConfirmGate::Run(anchor, spec))
+        return;
+    delete_filament(filament_id);
 }
 
 void Sidebar::delete_mixed_filament_at(size_t panel_idx)
@@ -16087,7 +16115,7 @@ void Plater::priv::on_action_add_plate(SimpleEvent&)
 //BBS: remove plate from toolbar
 void Plater::priv::on_action_del_plate(SimpleEvent&)
 {
-    if (q != nullptr) {
+    if (q != nullptr && q->confirm_delete_plate(-1)) {
         q->delete_plate();
         //q->get_camera().select_view("topfront");
         //q->get_camera().requires_zoom_to_plate = REQUIRES_ZOOM_TO_ALL_PLATE;
@@ -20750,7 +20778,7 @@ void Plater::priv::on_add_filament(SimpleEvent &evt) {
 }
 
 void Plater::priv::on_delete_filament(SimpleEvent &evt) {
-    sidebar->delete_filament();
+    sidebar->delete_filament_with_confirm();
 }
 
 void Plater::priv::on_add_custom_filament(ColorEvent &evt)
@@ -25308,9 +25336,18 @@ bool Plater::reset(bool apply_presets_change)
 }
 void Plater::reset_with_confirm()
 {
-    if (p->model.objects.empty() || MessageDialog(static_cast<wxWindow *>(this), _L("All objects will be removed, continue?"),
-                                                  wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Delete all"), wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxCENTRE)
-                                            .ShowModal() == wxID_YES) {
+    bool proceed = p->model.objects.empty();
+    if (!proceed) {
+        // Destructive-action super confirmation: two keys plus a full slide,
+        // naming every object that goes.
+        SuperConfirmGate::Spec spec;
+        spec.action      = _L("Delete all");
+        spec.consequence = _L("Every object on every plate will be removed from this project.");
+        for (const ModelObject *obj : p->model.objects)
+            spec.affected.push_back(from_u8(obj->name));
+        proceed = SuperConfirmGate::Run(static_cast<wxWindow *>(this), spec);
+    }
+    if (proceed) {
         if (!reset())
             return;
         // BBS: jump to plater panel
@@ -29659,8 +29696,8 @@ int Plater::select_plate_by_hover_id(int hover_id, bool right_click, bool isModi
     }
     else if ((action == 1)&&(!right_click))
     {
-        //delete plate
-        ret = delete_plate(plate_index);
+        //delete plate (gated when the plate still carries objects)
+        ret = confirm_delete_plate(plate_index) ? delete_plate(plate_index) : -1;
     }
     else if ((action == 2)&&(!right_click))
     {
@@ -29791,6 +29828,24 @@ int Plater::select_plate_by_hover_id(int hover_id, bool right_click, bool isModi
 
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(" %1%: return %2%")%__LINE__ % ret;
     return ret;
+}
+
+bool Plater::confirm_delete_plate(int plate_index)
+{
+    const int index = plate_index == -1 ? p->partplate_list.get_curr_plate_index() : plate_index;
+    PartPlate *plate = p->partplate_list.get_plate(index);
+    if (plate == nullptr)
+        return false;
+    const ModelObjectPtrs objects = plate->get_objects_on_this_plate();
+    if (objects.empty())
+        return true; // nothing on it: deleting an empty plate loses no work
+    SuperConfirmGate::Spec spec;
+    spec.action = _L("Delete plate");
+    // TRN %d is the 1-based plate number.
+    spec.consequence = wxString::Format(_L("Plate %d and every object on it will be removed from this project."), index + 1);
+    for (const ModelObject *obj : objects)
+        spec.affected.push_back(from_u8(obj->name));
+    return SuperConfirmGate::Run(p->view3D != nullptr ? static_cast<wxWindow *>(p->view3D) : nullptr, spec);
 }
 
 //BBS: delete the plate, index= -1 means the current plate

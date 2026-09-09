@@ -1530,7 +1530,7 @@ void MenuFactory::create_filament_action_menu(bool init, int active_filament_men
     if (init) {
         append_menu_item(
             menu, wxID_ANY, _L("Delete"), _L("Delete this filament"), [](wxCommandEvent&) {
-                plater()->sidebar().delete_filament(kSidebarContextMenuFilamentId); }, "", nullptr,
+                plater()->sidebar().delete_filament_with_confirm(kSidebarContextMenuFilamentId); }, "", nullptr,
             []() { return plater()->sidebar().combos_filament().size() > 1; }, m_parent);
     }
 

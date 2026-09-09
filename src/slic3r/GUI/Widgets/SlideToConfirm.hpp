@@ -33,6 +33,11 @@ public:
 
     // Fired exactly once each time the slide completes.
     void SetOnConfirm(std::function<void()> cb) { m_on_confirm = std::move(cb); }
+    // Fired whenever the knob moves (drag, key step, snap-back) with the travel
+    // as a 0..1 fraction; lets a host animate alongside the slide.
+    void SetOnProgress(std::function<void(double)> cb) { m_on_progress = std::move(cb); }
+    // Current knob travel as a 0..1 fraction of the full slide.
+    double Progress() const;
 
     bool IsConfirmed() const { return m_confirmed; }
     // Return to the unarmed state (e.g. after the guarded action ran or failed).
@@ -55,10 +60,12 @@ private:
     int  knobDiameter() const;
     int  maxTravel() const;
     void complete();
+    void notifyProgress();
 
     wxString m_instruction;
     wxString m_confirmed_label;
     std::function<void()> m_on_confirm;
+    std::function<void(double)> m_on_progress;
 
     int  m_pos { 0 };          // knob travel in px from the left dock
     MD3::Motion::Anim m_snap_back;

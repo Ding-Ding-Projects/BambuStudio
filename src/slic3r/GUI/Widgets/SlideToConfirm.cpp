@@ -55,6 +55,18 @@ void SlideToConfirm::Reset()
     m_dragging  = false;
     m_pos       = 0;
     Refresh();
+    notifyProgress();
+}
+
+double SlideToConfirm::Progress() const
+{
+    return std::clamp(double(m_pos) / double(maxTravel()), 0.0, 1.0);
+}
+
+void SlideToConfirm::notifyProgress()
+{
+    if (m_on_progress)
+        m_on_progress(Progress());
 }
 
 void SlideToConfirm::Rescale()
@@ -70,6 +82,7 @@ void SlideToConfirm::complete()
     m_confirmed = true;
     m_pos       = maxTravel();
     Refresh();
+    notifyProgress();
     if (m_on_confirm)
         m_on_confirm();
 }
@@ -91,6 +104,7 @@ void SlideToConfirm::OnMouse(wxMouseEvent &event)
     } else if (event.Dragging() && m_dragging) {
         m_pos = std::clamp(event.GetX() - m_drag_grab_dx - FromDIP(kKnobPad), 0, maxTravel());
         Refresh();
+        notifyProgress();
     } else if (event.LeftUp() && m_dragging) {
         m_dragging = false;
         if (HasCapture())
@@ -104,6 +118,7 @@ void SlideToConfirm::OnMouse(wxMouseEvent &event)
             m_snap_back.Play(MD3::Motion::medium1, [this, from](double t) {
                 m_pos = static_cast<int>(std::lround(from * (1.0 - t)));
                 Refresh();
+                notifyProgress();
             });
         }
     }
@@ -118,10 +133,12 @@ void SlideToConfirm::OnKey(wxKeyEvent &event)
         m_pos = std::min(m_pos + step, maxTravel());
         if (m_pos >= maxTravel()) complete();
         Refresh();
+        notifyProgress();
         return;
     case WXK_LEFT: case WXK_DOWN:
         m_pos = std::max(0, m_pos - step);
         Refresh();
+        notifyProgress();
         return;
     case WXK_END:
         complete();
@@ -129,6 +146,7 @@ void SlideToConfirm::OnKey(wxKeyEvent &event)
     case WXK_HOME:
         m_pos = 0;
         Refresh();
+        notifyProgress();
         return;
     default:
         event.Skip();
