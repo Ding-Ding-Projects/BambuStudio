@@ -10,6 +10,7 @@
 - [Command palette (Ctrl+F)](command-palette.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)
 - [Material color picker & color translator](md3-color-picker.md)
+- [Color picker translator (infinite picker, every notation, gamut, contrast)](color-picker-translator.md)
 - [Bulk filament actions](bulk-filament-actions.md)
 - [Stop-print safety interlock](stop-print-interlock.md)
 - [Print simulation playback (feedrate-true)](print-simulation.md)

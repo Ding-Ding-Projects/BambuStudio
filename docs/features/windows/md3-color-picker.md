@@ -14,10 +14,12 @@
   wheel.
 - A live preview chip and a `#RRGGBB` hex field in two-way sync (typing a
   full hex jumps the picker; picking updates the field).
-- **Color translator**: the same colour is always shown as `rgb(r, g, b)`,
-  `hsv(h, s%, v%)`, and the nearest everyday name — exactly the text the
-  colour-aware search matches on (`SearchField::colorSearchText`), so what
-  the translator prints is what a search for that colour will find.
+- **Color translator**: a Translations column shows the same colour in
+  every notation (CSS name, HEX, HEX8, RGB, RGBA, HSL, HSLA, HSV, HWB, XYZ,
+  Lab, LCH, OKLab, OKLCH, CMYK), each with a Copy button, alongside an
+  opacity slider, an "Enter any format" field, a gamut warning and a WCAG
+  contrast readout. See [Color picker translator](color-picker-translator.md)
+  for the full contract and precision notes.
 - OK feeds the pick into the same `MD3::setAccentSeed` pipeline as the six
   preset swatches; Cancel changes nothing.
 

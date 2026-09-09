@@ -12,7 +12,7 @@ live where feasible.
 | Theme (Light/Dark) | `dark_color_mode` | `apply_dark_mode` → full re-theme walk |
 | Density (Comfortable/Compact) | `ui_density` | `MD3::Metrics::setDensity` + `refresh_md3_appearance` |
 | Accent: 6 preset swatches | `ui_accent_seed` | `MD3::setAccentSeed` (derives 6 tonal roles for light+dark) |
-| Accent: **Custom…** picker | `ui_accent_seed` | same pipeline — any `wxColourDialog` color is a valid seed |
+| Accent: **Custom…** picker | `ui_accent_seed` | same pipeline — the [MD3 infinite picker with colour translator](color-picker-translator.md) supplies any sRGB seed |
 | Font family (installed + bundled Roboto, CJK-safe fallback) | `ui_font_family` | `Label::rebuild_fonts` |
 | Text size (Small/Default/Large) | `ui_font_scale` | `Label::rebuild_fonts` (scale multiplies the MD3 type ramp) |
 | **Live MD3 preview panel** | — | repaints via `StateColor::semantic` + `Metrics::active()` on every refresh |
