@@ -79,6 +79,7 @@ protected:
         wxString                     haystack;         // original-case label text
         bool                         is_title = false; // Head_16 section header row
         bool                         baseline_shown = true;
+        std::vector<std::string>     keys;            // AppConfig keys the row edits (teleport targets)
     };
     std::vector<SearchRow>                       m_search_rows;
     std::unordered_map<wxStaticText *, wxColour> m_search_saved_colours; // pre-highlight foregrounds
@@ -92,6 +93,33 @@ protected:
     void clear_search_highlights();
     void scroll_search_row_into_view(const SearchRow &row);
 
+    // --- Command-palette teleport ------------------------------------------
+    // Every create_item_* row registers the AppConfig key it edits, so a
+    // palette result can land on the exact row rather than merely opening the
+    // dialog: select the owning page, scroll the row into view, focus its
+    // control and flash its labels. build_search_index() folds the registry
+    // into SearchRow::keys once the pages exist.
+    struct OptionRow
+    {
+        std::string key;
+        wxSizer    *sizer  = nullptr; // rows built as sizers (most create_item_*)
+        wxWindow   *window = nullptr; // rows built as panels (downloads, external editor)
+    };
+    std::vector<OptionRow>                       m_option_rows;
+    std::unordered_map<wxStaticText *, wxColour> m_teleport_saved_colours; // pre-flash foregrounds
+    wxTimer                                      m_teleport_timer;
+    void register_option_row(const std::string &key, wxSizer *sizer, wxWindow *window = nullptr);
+    void clear_teleport_highlight();
+    void on_teleport_timer(wxTimerEvent &);
+
+public:
+    // Teleport to the row bound to `key`: returns false when no row registered
+    // that key (the caller then falls back to the page from the palette index).
+    bool teleport_to_setting(const std::string &key);
+    // Select a Preferences page by index (PaletteIndex::PreferencePage).
+    void select_page(int page);
+
+protected:
     bool m_seq_top_layer_only_changed{false};
     bool m_recreate_GUI{false};
     bool m_use_12h_time_format_changed{false};

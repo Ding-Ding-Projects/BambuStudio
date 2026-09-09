@@ -3,7 +3,9 @@
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MainFrame.hpp"
+#include "Notebook.hpp"
 #include "Plater.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3Motion.hpp"
@@ -52,9 +54,23 @@ CommandPalette::CommandPalette(MainFrame *frame)
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     auto *root = new wxBoxSizer(wxVERTICAL);
 
+    // Header: the search pill plus the size toggle (bounded card <-> full
+    // window). The toggle is a real IconButton with an accessible name, so it
+    // is reachable by Tab from the search field and read by AT.
+    auto *header = new wxBoxSizer(wxHORIZONTAL);
     // TRN: Placeholder of the command palette's search field.
     m_search = new SearchField(this, _L("Search commands, settings and pages"));
-    root->Add(m_search, 0, wxEXPAND | wxALL, FromDIP(12));
+    header->Add(m_search, 1, wxALIGN_CENTER_VERTICAL);
+    m_size_button = new Button(this, wxEmptyString);
+    m_size_button->SetIconButton(Button::IconShape::Circle, FromDIP(36));
+    m_size_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        apply_size(m_size == PaletteIndex::PaletteSize::Card ? PaletteIndex::PaletteSize::FullWindow
+                                                             : PaletteIndex::PaletteSize::Card,
+                   /*persist=*/true);
+        m_search->GetTextCtrl()->SetFocus();
+    });
+    header->Add(m_size_button, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    root->Add(header, 0, wxEXPAND | wxALL, FromDIP(12));
 
     m_list = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition,
                                   wxSize(FromDIP(kWidth), FromDIP(kListHeight)),
@@ -65,7 +81,12 @@ CommandPalette::CommandPalette(MainFrame *frame)
     root->Add(m_list, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
 
     SetSizerAndFit(root);
-    SetClientSize(FromDIP(kWidth), FromDIP(kListHeight) + m_search->GetSize().GetHeight() + FromDIP(36));
+
+    // Restore the persisted size choice (bounded card is the default).
+    AppConfig *cfg = wxGetApp().app_config;
+    apply_size(PaletteIndex::load_palette_size(
+                   [cfg](const std::string &key) { return cfg ? cfg->get(key) : std::string(); }),
+               /*persist=*/false);
 
     collect_entries();
     rebuild_rows();
@@ -93,7 +114,7 @@ CommandPalette::CommandPalette(MainFrame *frame)
 
 void CommandPalette::ShowPalette(MainFrame *frame)
 {
-    // Ctrl+F while the palette is already open used to stack a second modal
+    // Ctrl+Shift+F while the palette is already open used to stack a second modal
     // dialog on top of the first: every Esc dismissed only the topmost one,
     // so the palette read as impossible to close. One at a time.
     static bool s_open = false;
@@ -102,11 +123,56 @@ void CommandPalette::ShowPalette(MainFrame *frame)
     s_open = true;
     {
         CommandPalette palette(frame);
-        palette.CenterOnParent();
+        // apply_size() already placed a full-window palette over the frame.
+        if (palette.size_choice() == PaletteIndex::PaletteSize::Card)
+            palette.CenterOnParent();
         MD3::Motion::FadeIn(&palette, MD3::Motion::short2);
         palette.ShowModal();
     }
     s_open = false;
+}
+
+void CommandPalette::apply_size(PaletteIndex::PaletteSize size, bool persist)
+{
+    m_size = size;
+    if (persist) {
+        AppConfig *cfg = wxGetApp().app_config;
+        PaletteIndex::store_palette_size(size, [cfg](const std::string &key, const std::string &value) {
+            if (cfg == nullptr) return;
+            cfg->set(key, value);
+            cfg->save();
+        });
+    }
+
+    // Toggle glyph + accessible name describe the STATE the button switches
+    // to, the way a maximize control does.
+    const bool full = size == PaletteIndex::PaletteSize::FullWindow;
+    if (m_size_button != nullptr) {
+        if (MaterialIcon::available())
+            m_size_button->SetGlyph(full ? MaterialIcon::FullscreenExit : MaterialIcon::Fullscreen, FromDIP(20));
+        else
+            m_size_button->SetLabel(full ? wxString(wxUniChar(0x2B0D)) : wxString(wxUniChar(0x26F6)));
+        const wxString name = full ? _L("Shrink the palette to a card") : _L("Expand the palette to the full window");
+        m_size_button->SetName(name);
+        m_size_button->SetToolTip(name);
+    }
+
+    Freeze();
+    if (full && m_frame != nullptr) {
+        // Cover the frame's client area (inside its own chrome), not the screen.
+        const wxRect area = m_frame->GetClientRect();
+        const wxPoint origin = m_frame->ClientToScreen(area.GetTopLeft());
+        SetSize(wxRect(origin, area.GetSize()));
+    } else {
+        const int header_h = m_search != nullptr ? m_search->GetSize().GetHeight() : FromDIP(40);
+        SetClientSize(FromDIP(kWidth), FromDIP(kListHeight) + header_h + FromDIP(36));
+        if (IsShown())
+            CenterOnParent();
+    }
+    Layout();
+    if (m_list != nullptr)
+        m_list->FitInside();
+    Thaw();
 }
 
 void CommandPalette::collect_entries()
@@ -124,19 +190,28 @@ void CommandPalette::collect_entries()
                          _L("Pick the accent seed the interface is tinted with"),
                          nullptr, Rich::Accent});
 
-    // --- Navigation ---------------------------------------------------------
-    struct Nav { std::uint32_t glyph; wxString title; wxString desc; size_t tab; };
-    const std::vector<Nav> navs = {
-        {MaterialIcon::Home,       _L("Go to Home"),        _L("Start page with recent projects"), 0},
-        {MaterialIcon::ViewInAr,   _L("Go to Prepare"),     _L("Arrange models and set up the print"), 1},
-        {MaterialIcon::Layers,     _L("Go to Preview"),     _L("Sliced result, layers and toolpaths"), 2},
-        {MaterialIcon::Cast,       _L("Go to Device"),      _L("Printer status and control"), 3},
-        {MaterialIcon::FolderOpen, _L("Go to Project"),     _L("Project files and metadata"), 4},
+    // --- Workspace tabs -----------------------------------------------------
+    // Positions come from the shared index (MainFrame::TabPosition values);
+    // only tabs the frame actually built get a row, so a gated page
+    // (Multi-device, Filament) never yields a dead "Go to".
+    auto glyph_for_tab = [](int position) -> std::uint32_t {
+        switch (position) {
+        case MainFrame::tpHome:        return MaterialIcon::Home;
+        case MainFrame::tp3DEditor:    return MaterialIcon::ViewInAr;
+        case MainFrame::tpPreview:     return MaterialIcon::Layers;
+        case MainFrame::tpMonitor:     return MaterialIcon::Cast;
+        case MainFrame::tpProject:     return MaterialIcon::FolderOpen;
+        case MainFrame::tpCalibration: return MaterialIcon::Build;
+        default:                       return MaterialIcon::ChevronRight;
+        }
     };
-    for (const Nav &n : navs) {
+    const size_t page_count = m_frame->m_tabpanel != nullptr ? m_frame->m_tabpanel->GetPageCount() : 0;
+    for (const PaletteIndex::WorkspaceTab &t : PaletteIndex::workspace_tabs()) {
+        if (static_cast<size_t>(t.position) >= page_count)
+            continue;
         MainFrame *frame = m_frame;
-        m_entries.push_back({n.glyph, n.title, n.desc,
-                             [frame, tab = n.tab]() { frame->select_tab(tab); }});
+        m_entries.push_back({glyph_for_tab(t.position), _(t.title), _(t.desc),
+                             [frame, tab = static_cast<size_t>(t.position)]() { frame->select_tab(tab); }});
     }
 
     // --- Feature landmarks ---------------------------------------------------
@@ -146,6 +221,31 @@ void CommandPalette::collect_entries()
     m_entries.push_back({MaterialIcon::Search, _L("Search in settings"),
                          _L("Find any print / filament / printer parameter"),
                          [this]() { wxGetApp().sidebar().search(); }});
+
+    // --- Every Preferences setting (teleport rows) --------------------------
+    // Selecting one opens Preferences on the owning page, scrolls the row into
+    // view, focuses its control and flashes it. The developer page only exists
+    // in non-public builds, so its rows are skipped there.
+    for (const PaletteIndex::PreferenceEntry &p : PaletteIndex::preference_entries()) {
+#if BBL_RELEASE_TO_PUBLIC
+        if (p.page == PaletteIndex::PageDeveloper)
+            continue;
+#endif
+        const wxString page  = _(PaletteIndex::preference_page_names()[p.page]);
+        const wxString title = _L("Preferences") + " / " + page + " / " + _(p.title);
+        const wxString desc  = wxString(p.desc).IsEmpty() ? _L("Setting") + " (" + p.key + ")" : _(p.desc);
+        const std::string key = p.key;
+        m_entries.push_back({MaterialIcon::Settings, title, desc,
+                             [key]() { wxGetApp().open_preferences(key); }});
+    }
+
+    // --- Documentation articles (docs/features) -----------------------------
+    for (const PaletteIndex::Article &a : PaletteIndex::documentation_articles()) {
+        const wxString url = PaletteIndex::article_url(a);
+        m_entries.push_back({MaterialIcon::MenuBook, _L("Documentation") + " / " + wxString::FromUTF8(a.title),
+                             wxString::FromUTF8(a.path),
+                             [url]() { wxGetApp().open_browser_with_warning_dialog(url); }});
+    }
 
     // --- Every enabled menubar command ---------------------------------------
     wxMenuBar *bar = m_frame->GetMenuBar();

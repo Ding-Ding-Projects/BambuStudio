@@ -42,6 +42,7 @@
 #include "ProjectHistoryDialog.hpp"
 #include "ConfigProfilesDialog.hpp"
 #include "CommandPalette.hpp"
+#include "CommandPaletteIndex.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
 #include "WebViewDialog.hpp"
@@ -347,29 +348,32 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     else
         init_menubar_as_editor();
 
-    // BBS
-#if 0
-    // This is needed on Windows to fake the CTRL+# of the window menu when using the numpad
-    wxAcceleratorEntry entries[6];
-    entries[0].Set(wxACCEL_CTRL, WXK_NUMPAD1, wxID_HIGHEST + 1);
-    entries[1].Set(wxACCEL_CTRL, WXK_NUMPAD2, wxID_HIGHEST + 2);
-    entries[2].Set(wxACCEL_CTRL, WXK_NUMPAD3, wxID_HIGHEST + 3);
-    entries[3].Set(wxACCEL_CTRL, WXK_NUMPAD4, wxID_HIGHEST + 4);
-    entries[4].Set(wxACCEL_CTRL, WXK_NUMPAD5, wxID_HIGHEST + 5);
-    entries[5].Set(wxACCEL_CTRL, WXK_NUMPAD6, wxID_HIGHEST + 6);
-    wxAcceleratorTable accel(6, entries);
-    SetAcceleratorTable(accel);
-#endif // _WIN32
-
-    // Ctrl+F opens the command palette from anywhere in the frame: one
-    // searchable surface over every menu command, navigation target and the
-    // quick-settings rows (theme / density / accent).
+    // ONE frame-level accelerator table. wxWindow::SetAcceleratorTable()
+    // replaces, it does not merge: the palette chord used to be installed in
+    // its own one-entry table and silently wiped the Ctrl+Numpad tab chords.
+    // Every frame accelerator now comes from PaletteIndex::main_frame_accelerators()
+    // (tests/command_palette asserts the numpad entries and Ctrl+Shift+F
+    // coexist in that list).
     {
-        const int palette_id = wxID_HIGHEST + 90;
-        wxAcceleratorEntry palette_entries[1];
-        palette_entries[0].Set(wxACCEL_CTRL, 'F', palette_id);
-        SetAcceleratorTable(wxAcceleratorTable(1, palette_entries));
-        Bind(wxEVT_MENU, [this](wxCommandEvent &) { CommandPalette::ShowPalette(this); }, palette_id);
+        const std::vector<wxAcceleratorEntry> entries = PaletteIndex::main_frame_accelerators();
+        SetAcceleratorTable(wxAcceleratorTable(static_cast<int>(entries.size()), entries.data()));
+
+        // Ctrl+Numpad1..6 fake the Ctrl+1..6 window-menu chords on Windows:
+        // select workspace tab N-1 when that page exists.
+        for (int n = 1; n <= PaletteIndex::kNumpadTabCount; ++n) {
+            const size_t tab = static_cast<size_t>(n - 1);
+            Bind(wxEVT_MENU, [this, tab](wxCommandEvent &) {
+                if (m_tabpanel != nullptr && tab < m_tabpanel->GetPageCount())
+                    select_tab(tab);
+            }, PaletteIndex::kNumpadTabBaseId + n - 1);
+        }
+
+        // Ctrl+Shift+F opens the command palette from anywhere in the frame:
+        // one searchable surface over every menu command, workspace tab,
+        // Preferences setting, documentation article and the quick-settings
+        // rows (theme / density / accent).
+        Bind(wxEVT_MENU, [this](wxCommandEvent &) { CommandPalette::ShowPalette(this); },
+             PaletteIndex::kPaletteCommandId);
     }
 
     // BBS

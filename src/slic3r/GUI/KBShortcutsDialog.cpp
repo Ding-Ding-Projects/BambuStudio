@@ -174,6 +174,8 @@ void KBShortcutsDialog::fill_shortcuts()
 
     if (wxGetApp().is_editor()) {
         Shortcuts global_shortcuts = {
+            // Command palette: the one global search-everything chord
+            { ctrl + "Shift+F", L("Command palette") },
             // File
             { ctrl + "N", L("New Project") },
             { ctrl + "O", L("Open Project") },
