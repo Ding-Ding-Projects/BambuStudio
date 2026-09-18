@@ -72,6 +72,7 @@ private:
     void cleanup_restore_temp();
 
     void on_refresh(wxCommandEvent &event);
+    void on_export(wxCommandEvent &event);
     void on_retry_failures(wxCommandEvent &event);
     void on_restore(wxCommandEvent &event);
     void on_close_button(wxCommandEvent &event);
@@ -117,6 +118,7 @@ private:
     // View-row -> m_versions index for the current (possibly filtered) list.
     std::vector<std::size_t> m_filtered_rows;
     Button                 *m_refresh_button{nullptr};
+    Button                 *m_export_button{nullptr};
     Button                 *m_load_all_button{nullptr};
     Button                 *m_retry_failures_button{nullptr};
     Button                 *m_restore_button{nullptr};

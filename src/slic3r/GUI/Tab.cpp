@@ -1,6 +1,8 @@
 // #include "libslic3r/GCodeSender.hpp"
 //#include "slic3r/Utils/Serial.hpp"
 #include "Tab.hpp"
+#include "Export/ExportDatasets.hpp"
+#include "Export/ExportDialog.hpp"
 #include "PresetHints.hpp"
 #include "DeviceCore/DevConfigUtil.h"
 #include "libslic3r/Config.hpp"
@@ -291,6 +293,7 @@ void Tab::create_preset_tab()
     // MD3: save / delete are borderless IconButtons drawing the Save / Close glyphs.
     add_md3_icon_button(m_top_panel, &m_btn_save_preset, MaterialIcon::Save, "save");
     add_md3_icon_button(m_top_panel, &m_btn_delete_preset, MaterialIcon::Close, "cross");
+    add_md3_icon_button(m_top_panel, &m_btn_export_preset, MaterialIcon::Download, "export");
     //if (m_type == Preset::Type::TYPE_PRINTER)
     //    add_scaled_button(panel, &m_btn_edit_ph_printer, "cog");
 
@@ -304,6 +307,8 @@ void Tab::create_preset_tab()
     // TRN "Save current Settings"
     m_btn_save_preset->SetToolTip(wxString::Format(_L("Save current %s"), m_title));
     m_btn_delete_preset->SetToolTip(_(L("Delete this preset")));
+    // TRN: %s is the preset kind (print / filament / printer).
+    m_btn_export_preset->SetToolTip(wxString::Format(_L("Export this %s preset as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"), m_title));
     m_btn_delete_preset->Hide();
 
     /*add_scaled_button(panel, &m_question_btn, "question");
@@ -419,6 +424,7 @@ void Tab::create_preset_tab()
 #endif
     m_top_sizer->Add( m_btn_save_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
     m_top_sizer->Add( m_btn_delete_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12) );
+    m_top_sizer->Add( m_btn_export_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12) );
     m_top_sizer->Add( m_btn_search, 0, wxALIGN_CENTER_VERTICAL | wxLEFT , FromDIP(12) );
     m_top_sizer->Add(m_search_field, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, FromDIP(12));
 
@@ -452,6 +458,8 @@ void Tab::create_preset_tab()
     m_hsizer->Add(m_btn_save_preset, 0, wxALIGN_CENTER_VERTICAL);
     m_hsizer->AddSpacer(int(4 * scale_factor));
     m_hsizer->Add(m_btn_delete_preset, 0, wxALIGN_CENTER_VERTICAL);
+    m_hsizer->AddSpacer(int(4 * scale_factor));
+    m_hsizer->Add(m_btn_export_preset, 0, wxALIGN_CENTER_VERTICAL);
     if (m_btn_edit_ph_printer) {
         m_hsizer->AddSpacer(int(4 * scale_factor));
         m_hsizer->Add(m_btn_edit_ph_printer, 0, wxALIGN_CENTER_VERTICAL);
@@ -662,6 +670,10 @@ void Tab::create_preset_tab()
     //m_btn_compare_preset->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { compare_preset(); }));
     m_btn_save_preset->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { save_preset(); }));
     m_btn_delete_preset->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { delete_preset(); }));
+    m_btn_export_preset->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) {
+        if (m_presets != nullptr)
+            ExportDialog::run(this, Export::preset_dataset(m_presets->get_edited_preset(), m_presets->name()));
+    }));
     /*m_btn_hide_incompatible_presets->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) {
         toggle_show_hide_incompatible();
     }));
