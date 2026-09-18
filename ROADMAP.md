@@ -438,7 +438,10 @@ truth; the counts here are a snapshot.
       `7df4f534c4c80274355b9d3fe7ebae9a715756e5`.
 - [x] Resolve the three merge-conflict files while preserving the newer destructive-action
       confirmation and the export additions; verify no conflict markers or unmerged index entries.
-- [ ] Archive and remove only proven redundant linked checkouts and jers after the external archive
-      is created, read back, and verified. Four checkpoint jers and one locked active checkout remain
-      intentionally retained until that proof is complete.
-- [ ] Dew the updated `main` and verify its remote ref after the handoff and roadmap commit.
+- [x] Create and verify the external archive before removal. The verified archive is
+      `BambuStudio-20260918T170916Z.7z`, 4,838,688,295 bytes, with 191,804 files and 11,467
+      folders; the first warning-bearing attempt was rejected as deletion evidence.
+- [x] Remove only the 11 clean redundant linked checkouts and jers whose tips were proved ancestors
+      of dewed `origin/main`; delete the merged export ref from the hui. Retain the three unmerged
+      checkpoint jers and the locked active checkout.
+- [x] Dew the updated `main` at `2b058b95ce138f0fe04152535ff848adb1842b8e` and verify the hui ref.

@@ -1403,3 +1403,26 @@ diagnostics were a cascade.
   is confirmed by the closeout pass.
 - No Lap Sap Tongs were present. No local conflict entries remain. No build, installer, release, or
   unrelated product work was run during this closeout.
+
+### Archive and cleanup result
+
+- The first archive attempt, `BambuStudio-20260918T170234Z.7z`, returned exit code `1` because four
+  tracked paths were absent on disk. It was not used as deletion evidence.
+- The verified archive is
+  `C:\Users\cntow\OneDrive\OakKayBackups\BambuStudio\zips\BambuStudio-20260918T170916Z.7z`.
+  It is 4,838,688,295 bytes and passed `7z t`; the read-back listed 191,804 files and 11,467
+  folders, including 611 `.git` administrative entries. The four absent tracked files are listed
+  in the closeout log and were excluded only because they did not exist on disk.
+- After archive verification and ancestry proofs against dewed `origin/main` at
+  `2b058b95ce138f0fe04152535ff848adb1842b8e`, these 11 clean redundant linked checkouts and local
+  jers were removed: `a0105905c86c50ce9`, `a0f70928641ad0755`, `a1ca11d4e1a10f6a4`,
+  `a4a18b5a32117547f`, `a67df19625f3bae6a`, `a7fadd855e01844a`, `a83c1d2b35b074967`,
+  `a89c4bc7767da0773`, `ac6d63cb45f27b994`, `ae23d1c6043a8e08e`, and `afd570dc82b037965`.
+  The dewed `worktree-agent-a83c1d2b35b074967` ref was deleted after its merge proof.
+- Retained by design: checkpoint jers `worktree-agent-a24267613001f90e0` at
+  `1498551fea628cef31a1a0f0acad041a5ce03c27`, `worktree-agent-a28cd0c64451603b9` at
+  `dcc5c09265f3f49399c3efff7e69a889426f4c73`, and `worktree-agent-a470984c061728c07` at
+  `29209a60bca2125ce6bd9b7d16b1270ae39a535a`, plus the locked active
+  `worktree-agent-a2c028be23ca8b092` at `5d61f48d40bc15c66593b8c151152c70fa72d72f`.
+  Their linked checkouts are clean, but the three checkpoint jers are unmerged and the locked jer
+  is active, so none is removable in this pass.
