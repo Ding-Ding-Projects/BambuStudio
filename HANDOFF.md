@@ -1371,3 +1371,35 @@ diagnostics were a cascade.
   register the copy (Restart Manager proof: zero holders on the payload's fonts while the app
   runs, holders only on the staged copies). Machines already locked need a sign-out or reboot
   (or a Font Cache Service restart) once before the next Setup.exe succeeds.
+
+---
+
+## 2026-09-18 repository closeout handoff
+
+- Inventory and fetch completed in the primary checkout. `main` was fast-forwarded from
+  `69de7d38dc829646eea0b847ca9f7bae0bd96802` to `5014d08562b1de7f2198a2e1134eb4d378cb670f`,
+  incorporating the `AGENTS.md` vocabulary-discipline update from `origin/main`.
+- Completed export work from `worktree-agent-a83c1d2b35b074967` was integrated into `main` in
+  merge commit `7df4f534c4c80274355b9d3fe7ebae9a715756e5`. The merge preserved the export
+  dialog, dataset, format, test, documentation, and build registrations.
+- Conflict decisions: `GUI_Factories.cpp` and `Tab.cpp` retain both the appearance and export
+  includes; `tests/CMakeLists.txt` retains `super_confirm`, `changelog`, and `export_everything`;
+  `Tab.cpp` keeps the newer `SuperConfirmGate` delete flow from `main` and adds the export control
+  beside it. The older modal delete path was not reintroduced because it would weaken the newer
+  destructive-action contract. All unmerged index entries and conflict markers were removed.
+- The primary checkout has no staged or unstaged source changes. The untracked
+  `.claude/worktrees/` directory is generated linked-checkout storage and is intentionally not
+  staged as source. It contains the linked checkouts listed below.
+- Four checkpoint jers remain intentionally preserved and dewed because they are not ancestors of
+  `origin/main`: `worktree-agent-a24267613001f90e0` at `1498551fea628cef31a1a0f0acad041a5ce03c27`,
+  `worktree-agent-a28cd0c64451603b9` at `dcc5c09265f3f49399c3efff7e69a889426f4c73`,
+  `worktree-agent-a470984c061728c07` at `29209a60bca2125ce6bd9b7d16b1270ae39a535a`, and
+  `worktree-agent-a83c1d2b35b074967` at `df60f7d1d2a01bd63e5af2a405d6ad3f9acdad4b`.
+  The export jer is now integrated, but its source ref remains preserved until the archive and
+  ancestry checks authorize removal.
+- `worktree-agent-a2c028be23ca8b092` is locked by an active process and is retained even though its
+  tip is already an ancestor of `origin/main`. The remaining completed, clean, ancestor jers and
+  their linked checkouts are candidates only after the external archive is verified and ownership
+  is confirmed by the closeout pass.
+- No Lap Sap Tongs were present. No local conflict entries remain. No build, installer, release, or
+  unrelated product work was run during this closeout.

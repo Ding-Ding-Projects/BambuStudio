@@ -428,3 +428,17 @@ truth; the counts here are a snapshot.
   rotation policy. GitHub artifact attestations and SHA-256 checksums do not satisfy this item.
 - Complete Cantonese coverage and ongoing linguistic QA. Formal `zh_TW` must remain written
   Traditional Chinese and must not be treated as a Cantonese substitute.
+
+## Repository closeout status, 2026-09-18
+
+- [x] Fetch `origin` and inventory the primary checkout, linked checkouts, local jers, remote refs,
+      conflict entries, and Lap Sap Tongs.
+- [x] Fast-forward `main` to `origin/main` at `5014d08562b1de7f2198a2e1134eb4d378cb670f`.
+- [x] Integrate the completed export lane in merge commit
+      `7df4f534c4c80274355b9d3fe7ebae9a715756e5`.
+- [x] Resolve the three merge-conflict files while preserving the newer destructive-action
+      confirmation and the export additions; verify no conflict markers or unmerged index entries.
+- [ ] Archive and remove only proven redundant linked checkouts and jers after the external archive
+      is created, read back, and verified. Four checkpoint jers and one locked active checkout remain
+      intentionally retained until that proof is complete.
+- [ ] Dew the updated `main` and verify its remote ref after the handoff and roadmap commit.
