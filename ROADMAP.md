@@ -444,4 +444,4 @@ truth; the counts here are a snapshot.
 - [x] Remove only the 11 clean redundant linked checkouts and jers whose tips were proved ancestors
       of dewed `origin/main`; delete the merged export ref from the hui. Retain the three unmerged
       checkpoint jers and the locked active checkout.
-- [x] Dew the updated `main` at `2b058b95ce138f0fe04152535ff848adb1842b8e` and verify the hui ref.
+- [x] Dew the final updated `main` at `7281bd15da7cda27e8fff73bab253521a6027954` and verify the hui ref.

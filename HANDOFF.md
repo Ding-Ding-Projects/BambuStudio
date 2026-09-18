@@ -1426,3 +1426,5 @@ diagnostics were a cascade.
   `worktree-agent-a2c028be23ca8b092` at `5d61f48d40bc15c66593b8c151152c70fa72d72f`.
   Their linked checkouts are clean, but the three checkpoint jers are unmerged and the locked jer
   is active, so none is removable in this pass.
+- The final documentation commit is `7281bd15da7cda27e8fff73bab253521a6027954`; after this
+  handoff refresh, `git ls-remote origin refs/heads/main` was verified at the same SHA.
