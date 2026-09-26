@@ -4981,8 +4981,22 @@ void SelectMachineDialog::refresh_quick_swap_controls()
             ? wxString::Format(_L("Move material %d right"), id + 1)
             : wxString::Format(_L("Move material %d left"), id + 1);
         auto* button = new Button(parent, label);
-        button->SetToolTip(filament.second + ": " + label);
+        auto proposed = m_pending_filaments_map;
+        proposed[id] = nozzle == 1 ? 2 : 1;
+        wxString reason;
+        const bool undo = proposed[id] == m_filaments_map[id];
+        const bool valid = undo || wxGetApp().plater()->validate_print_setup_filament_maps(
+            m_print_plate_idx, m_filaments_map, proposed, reason);
+        button->Enable(valid);
+        button->SetToolTip(valid ? filament.second + ": " + label : reason);
         sizer->Add(button, 0, wxEXPAND|wxBOTTOM, FromDIP(4));
+        if (!valid) {
+            auto* explanation = new Label(parent, reason);
+            explanation->SetFont(::Label::Body_11);
+            explanation->SetForegroundColour(ThemeColor::TextMuted);
+            explanation->Wrap(FromDIP(280));
+            sizer->Add(explanation, 0, wxEXPAND|wxBOTTOM, FromDIP(6));
+        }
         button->Bind(wxEVT_BUTTON, [this, id](wxCommandEvent&) {
             m_pending_filaments_map[id] = m_pending_filaments_map[id] == 1 ? 2 : 1;
             CallAfter([this] { refresh_quick_swap_controls(); });
@@ -5006,6 +5020,11 @@ void SelectMachineDialog::apply_quick_swap(bool reslice)
     const int plate_index = m_print_plate_idx;
     const auto expected = m_filaments_map;
     const auto requested = m_pending_filaments_map;
+    wxString reason;
+    if (!plater->validate_print_setup_filament_maps(plate_index, expected, requested, reason)) {
+        MessageDialog(this, reason, _L("Swap nozzle assignment"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
     EndModal(wxID_CLOSE);
     if (!plater->apply_print_setup_filament_maps(plate_index, expected, requested)) {
         MessageDialog(wxGetApp().mainframe,
