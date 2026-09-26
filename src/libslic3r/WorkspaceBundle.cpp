@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
@@ -103,7 +104,11 @@ bool safe_path(const std::string &value)
     while (start < value.size()) {
         const auto slash = value.find('/', start);
         const auto part = value.substr(start, slash == std::string::npos ? slash : slash - start);
-        if (!safe_component(part)) return false;
+        if (part.empty() || part == "." || part == ".." || part.size() > 240 ||
+            part.back() == '.' || part.back() == ' ') return false;
+        for (unsigned char c : part)
+            if (c < 0x20 || c == 0x7f || c == '<' || c == '>' || c == '"' || c == '|' || c == '?' || c == '*')
+                return false;
         if (slash == std::string::npos) break;
         start = slash + 1;
     }
@@ -127,6 +132,31 @@ Entry make_entry(const std::string &name, const fs::path &source)
     const auto size = fs::file_size(source);
     require(size <= MAX_FILE, "Workspace source file exceeds the per-file limit");
     return {name, source, size, file_digest(source)};
+}
+
+bool valid_member_3mf(const fs::path &source)
+{
+    FILE *file = open_file(source, false);
+    if (!file) return false;
+    mz_zip_archive archive{};
+    bool valid = mz_zip_reader_init_cfile(&archive, file, 0, 0) != 0;
+    if (valid) {
+        valid = mz_zip_reader_locate_file(&archive, "3D/3dmodel.model", nullptr, 0) >= 0 &&
+                mz_zip_reader_locate_file(&archive, "Metadata/workspace.json", nullptr, 0) < 0;
+        int manifest_count = 0;
+        int pack_count = 0;
+        for (mz_uint index = 0; valid && index < mz_zip_reader_get_num_files(&archive); ++index) {
+            mz_zip_archive_file_stat stat{};
+            valid = mz_zip_reader_file_stat(&archive, index, &stat) != 0 && safe_path(stat.m_filename);
+            if (valid && std::string(stat.m_filename) == "Metadata/bambu_project_history.json") ++manifest_count;
+            if (valid && std::string(stat.m_filename) == "Metadata/bambu_project_history.pack") ++pack_count;
+        }
+        valid = valid && manifest_count <= 1 && pack_count <= 1 && manifest_count == pack_count &&
+                mz_zip_validate_archive(&archive, 0) != 0;
+        mz_zip_reader_end(&archive);
+    }
+    std::fclose(file);
+    return valid;
 }
 
 json item_json(const ChecklistItem &item)
@@ -157,20 +187,28 @@ json create_manifest(const Workspace &workspace, std::vector<Entry> &entries)
     json members = json::array();
     std::set<std::string> ids;
     std::set<std::string> names;
+    std::set<std::string> folded_names;
     std::uint64_t total = 0;
     for (const Member &member : workspace.members) {
         require(safe_component(member.id) && ids.insert(member.id).second && valid_text(member.name, 512),
                 "Invalid or duplicate workspace member");
         const std::string project_entry = "Members/" + member.id + "/project.3mf";
         Entry project = make_entry(project_entry, member.project_path);
+        require(valid_member_3mf(member.project_path), "Member project is not a valid self-contained 3MF");
         total += project.size;
         entries.push_back(project);
         names.insert(project_entry);
+        folded_names.insert(project_entry);
         json sources = json::array();
         for (const SourceFile &source : member.editable_sources) {
             require(safe_path(source.relative_path), "Unsafe editable-source path");
             const std::string name = "Sources/" + member.id + "/" + source.relative_path;
             require(names.insert(name).second, "Duplicate editable-source path");
+            std::string folded = name;
+            std::transform(folded.begin(), folded.end(), folded.begin(), [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+            });
+            require(folded_names.insert(folded).second, "Case-colliding editable-source path");
             Entry entry = make_entry(name, source.local_path);
             total += entry.size;
             entries.push_back(entry);
@@ -358,12 +396,18 @@ Result inspect_impl(const fs::path &archive_path, bool extract, const fs::path &
         const mz_uint count = mz_zip_reader_get_num_files(&archive);
         require(count >= 1 && count <= MAX_ENTRIES, "Workspace ZIP entry count exceeds limit");
         std::map<std::string, mz_uint> indices;
+        std::set<std::string> folded_names;
         std::uint64_t total = 0;
         for (mz_uint i = 0; i < count; ++i) {
             mz_zip_archive_file_stat stat{};
             require(mz_zip_reader_file_stat(&archive, i, &stat) != 0, "Could not inspect ZIP entry");
             const std::string name = stat.m_filename;
             require(safe_path(name) && indices.emplace(name, i).second, "Unsafe or duplicate ZIP entry path");
+            std::string folded = name;
+            std::transform(folded.begin(), folded.end(), folded.begin(), [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+            });
+            require(folded_names.insert(folded).second, "Case-colliding ZIP entry path");
             require(!mz_zip_reader_is_file_a_directory(&archive, i) && stat.m_uncomp_size <= MAX_FILE,
                     "Unsupported or oversized ZIP entry");
             total += stat.m_uncomp_size;
@@ -379,7 +423,16 @@ Result inspect_impl(const fs::path &archive_path, bool extract, const fs::path &
         std::vector<char> text(static_cast<std::size_t>(manifest_stat.m_uncomp_size));
         require(mz_zip_reader_extract_to_mem(&archive, manifest_it->second, text.data(), text.size(), 0) != 0,
                 "Could not read workspace manifest");
-        const json manifest = json::parse(text.begin(), text.end());
+        std::vector<std::set<std::string>> object_keys;
+        const json manifest = json::parse(text.begin(), text.end(),
+            [&object_keys](int, json::parse_event_t event, json &parsed) {
+                if (event == json::parse_event_t::object_start) object_keys.emplace_back();
+                else if (event == json::parse_event_t::object_end) object_keys.pop_back();
+                else if (event == json::parse_event_t::key &&
+                         !object_keys.back().insert(parsed.get<std::string>()).second)
+                    throw std::runtime_error("Duplicate workspace manifest key");
+                return true;
+            });
         std::map<std::string, std::pair<std::uint64_t, std::string>> expected;
         result.workspace = parse_manifest(manifest, expected);
         require(indices.size() == expected.size() + 1, "Workspace ZIP contains an unlisted entry");

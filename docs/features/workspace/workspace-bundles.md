@@ -8,6 +8,15 @@ live under `Sources/<id>/<relative-path>`. Each project 3MF is copied once,
 including any history already embedded in that 3MF. The workspace does not
 duplicate a project's history as a separate pack.
 
+The Project screen has a native Workspace subview beside its existing online
+project view. The native subview provides overview, files, checklist, notes,
+and month/agenda tabs. It can open and save a bundle, add an owned project 3MF
+and editable source, edit and reorder checklist items, add planned slots, and
+export checklist or calendar data. Switching views does not replace the
+current model on the print canvas. Opening a member into that canvas and
+writing its dirty state back into the bundle require the application-level
+handoff described below.
+
 ## Behavior
 
 - A bundle save hashes each owned file, stages the ZIP beside the destination,
@@ -40,8 +49,12 @@ performed while each entry is streamed for hashing.
 
 ## Verification
 
-`workspace_tests.exe` currently passes four focused cases and 58 assertions
-for round-trip IDs and files, traversal rejection, previous-file preservation
+The initial backend revision passed four focused cases and 58 assertions for
+round-trip IDs and files, traversal rejection, previous-file preservation
 after a failed save, missing-printer and overlap warnings, reminder catch-up,
-and JSON, CSV, and ICS exports. Native UI and end-to-end project integration
-remain separate verification surfaces.
+and JSON, CSV, and ICS exports. Later source validation and native UI edits
+have not been compiled or run locally because builds moved to CI. The added
+tampered-member and invalid-3MF checks are pending that CI verdict. Opening a
+member in the active canvas, returning dirty member state to the bundle,
+Recent Projects integration, and live reminder dispatch remain application
+handoff work outside this core module.
