@@ -2167,6 +2167,15 @@ public:
             result.error = {ProjectHistoryErrorCode::RepositoryError, "Could not store validated portable-history pack"};
             return result;
         }
+        // A same-document local autosave may have advanced after the last
+        // successful file save. Importing that older file must not roll back
+        // the active local tip. Its ancestry already retains the file head.
+        const int ancestry = has_local_head
+            ? git_graph_descendant_of(repository.get(), git_commit_id(local_head.get()), &imported_head) : 0;
+        if (ancestry < 0) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, "Could not compare local and embedded history ancestry"};
+            return result;
+        }
         for (const std::string &lineage : data.lineages) {
             if (lineage == result.head_id) continue;
             git_oid lineage_oid{};
@@ -2183,6 +2192,7 @@ public:
             }
             git_reference_free(raw_inherited);
         }
+        if (ancestry == 1) return result;
         // Preserve the old path-keyed lineage before switching to the archive's
         // active head. It remains available locally until publication succeeds.
         if (has_local_head) {

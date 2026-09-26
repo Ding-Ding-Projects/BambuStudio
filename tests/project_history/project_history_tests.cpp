@@ -51,7 +51,7 @@ void write_binary(const fs::path &path, const std::vector<unsigned char> &bytes)
     REQUIRE(output.good());
 }
 
-void write_model_archive(const fs::path &path)
+void write_model_archive(const fs::path &path, const std::string &model = "<model unit=\"millimeter\"/>")
 {
     fs::create_directories(path.parent_path());
     mz_zip_archive archive{};
@@ -63,7 +63,6 @@ void write_model_archive(const fs::path &path)
 #endif
     REQUIRE(file != nullptr);
     REQUIRE(mz_zip_writer_init_cfile(&archive, file, 0));
-    const std::string model = "<model unit=\"millimeter\"/>";
     REQUIRE(mz_zip_writer_add_mem(&archive, "3D/3dmodel.model", model.data(), model.size(), MZ_BEST_COMPRESSION));
     REQUIRE(mz_zip_writer_finalize_archive(&archive));
     REQUIRE(mz_zip_writer_end(&archive));
@@ -574,6 +573,30 @@ TEST_CASE("Divergent copies receive separate document identities on save", "[pro
     REQUIRE(saved_copy.ok());
     REQUIRE(saved_copy.document_id != first.document_id);
     REQUIRE(saved_copy.head_id == first.head_id);
+}
+
+TEST_CASE("Reopening a saved archive keeps newer local recovery history active", "[project-history][portable]")
+{
+    TemporaryTree temporary;
+    const fs::path project = temporary.path() / "project.3mf";
+    const fs::path saved_snapshot = temporary.path() / "saved.3mf";
+    const fs::path local_snapshot = temporary.path() / "local.3mf";
+    write_model_archive(saved_snapshot);
+    write_model_archive(local_snapshot, "<model unit=\"inch\"/>");
+    Slic3r::ProjectHistoryManager manager(temporary.path() / "app");
+    const auto initial = manager.commit_snapshot(project, saved_snapshot, commit_options("Saved", 5000)).get();
+    REQUIRE(initial.ok());
+    REQUIRE(manager.publish_portable_history(project, saved_snapshot, project).get().ok());
+    const auto local = manager.commit_snapshot(project, local_snapshot, commit_options("Recovered edit", 5001)).get();
+    REQUIRE(local.ok());
+    REQUIRE(local.version->commit_id != initial.version->commit_id);
+    const auto imported = manager.import_portable_history(project, project).get();
+    INFO(imported.error.message);
+    REQUIRE(imported.ok());
+    const auto versions = manager.list_versions(project).get();
+    INFO(versions.error.message);
+    REQUIRE(versions.ok());
+    REQUIRE(versions.versions.front().commit_id == local.version->commit_id);
 }
 
 } // namespace
