@@ -296,6 +296,32 @@ TEST_CASE("Preferred physical nozzle respects capacity and printability", "[fila
     }
 }
 
+TEST_CASE("Preferred nozzle modes preserve configuration identities", "[filament_group][preference]") {
+    REQUIRE(static_cast<int>(fmmAutoForFlush) == 0);
+    REQUIRE(static_cast<int>(fmmAutoForMatch) == 1);
+    REQUIRE(static_cast<int>(fmmManual) == 2);
+    REQUIRE(static_cast<int>(fmmNozzleManual) == 3);
+    REQUIRE(static_cast<int>(fmmAutoForQuality) == 4);
+    REQUIRE(static_cast<int>(fmmDefault) == 5);
+
+    for (const auto mode : {fmmPreferLeft, fmmPreferRight}) {
+        ConfigOptionEnum<FilamentMapMode> saved(mode);
+        const std::string encoded = saved.serialize();
+        ConfigOptionEnum<FilamentMapMode> restored(fmmAutoForFlush);
+        REQUIRE(restored.deserialize(encoded));
+        REQUIRE(restored.value == mode);
+        REQUIRE(is_auto_filament_map_mode(restored.value));
+    }
+
+    auto tc = build_test_case("legacy_group_context", "A", 91523, 3, 4, false, false,
+                              FGMode::FlushMode, FGStrategy::BestCost, false);
+    json stored = tc.context.group_info;
+    stored.erase("preferred_extruder");
+    FilamentGroupContext::GroupInfo loaded{};
+    from_json(stored, loaded);
+    REQUIRE(loaded.preferred_extruder == -1);
+}
+
 TEST_CASE("Preferred nozzle large-set path respects spillover", "[filament_group][preference]") {
     auto tc = build_test_case("preferred_nozzle_large", "A", 91522, 15, 12, false, false,
                               FGMode::FlushMode, FGStrategy::BestCost, false);
