@@ -14,10 +14,42 @@
 #include <wx/hyperlink.h>
 #include <wx/animate.h>
 #include <wx/dynarray.h>
+#include <wx/timer.h>
 #include "../DeviceCore/DevFan.h"
 
 namespace Slic3r {
 namespace GUI {
+
+class Slider;
+
+// A telemetry-driven preview. The slider remains the accessible control and
+// the existing fan dialog remains the only place that sends a fan command.
+class FanMotionView final : public wxWindow, private wxTimer
+{
+public:
+    FanMotionView(wxWindow* parent, bool auxiliary, Slider* slider);
+    ~FanMotionView() override { Stop(); }
+    void SetTelemetry(int pwm);
+    void SetCommandPending(int percent);
+    void SetSlider(Slider* slider);
+    void RestorePreview();
+    void Reset();
+    void Notify() override;
+
+private:
+    void OnPaint(wxPaintEvent&);
+    void OnShow(wxShowEvent&);
+    void UpdateTimer();
+    Slider* m_slider;
+    bool m_auxiliary;
+    bool m_initialized{false};
+    int m_target{0};
+    int m_pending{-1};
+    double m_display{0.0};
+    double m_angle{0.0};
+    double m_pulse{0.0};
+    double m_press{0.0};
+};
 
 
 /*************************************************

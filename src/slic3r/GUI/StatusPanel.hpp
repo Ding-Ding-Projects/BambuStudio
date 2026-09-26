@@ -547,6 +547,9 @@ protected:
     // ImageSwitchButton (m_switch_fan) is gone. m_fan_ctrl_anchor is the popup anchor.
     Slider *        m_slider_part_fan{nullptr};
     Slider *        m_slider_aux_fan{nullptr};
+    FanMotionView * m_motion_part_fan{nullptr};
+    FanMotionView * m_motion_aux_fan{nullptr};
+    MachineObject * m_fan_motion_machine{nullptr};
     wxWindow *      m_fan_ctrl_anchor{nullptr};
     bool            m_fan_popup_pending{false}; // debounce: one FanControlPopupNew per slider gesture
     int             m_switch_cham_fan_timeout{0};
