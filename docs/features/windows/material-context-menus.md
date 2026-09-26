@@ -17,7 +17,8 @@ fires.
   the top, with the regex builder behind its `.*` toggle exactly as every other search surface.
   Typing filters the rows locally; the actions behind the rows never change. A submenu row stays
   visible when any of its descendants match. Typing while the list has focus redirects into the
-  search field.
+  search field. The filament row menu opts into the same field even with fewer than six rows, so
+  Edit, Delete, Decompose Color and Merge with are searchable on every open.
 - **Shortcuts.** Each row shows the shortcut registered on its `wxMenuItem` (parsed from the
   accelerator, falling back to the `\t` suffix of the label) so the menu documents the faster route
   to every command it lists. Screen readers receive it through `GetKeyboardShortcut`, not as extra
@@ -46,7 +47,8 @@ elevation until a layered-window shadow lands).
 
 Entry points for code: `MD3::PopupMenu(owner, menu, screen_pos)` (blocking, sends events),
 `MD3::PopupMenuSelection(owner, menu, screen_pos)` (blocking, returns the id, sends nothing),
-`MD3::PopupMenuBelow(anchor, menu)` (anchored under a button). `Plater::PopupMenu` routes through the
+`MD3::PopupMenuBelow(anchor, menu, show_search)` (anchored under a button; the optional flag forces
+the shared search field). `Plater::PopupMenu` routes through the
 first, so the object list, preset combo boxes, the 3D scene and the ink rows all share one surface.
 The tray icon's `wxTaskBarIcon::CreatePopupMenu` is the one deliberate exception: the shell owns
 that popup.
