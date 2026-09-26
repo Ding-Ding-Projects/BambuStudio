@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include <wx/panel.h>
+#include <wx/timer.h>
 
 class wxCalendarCtrl;
 class wxCheckListBox;
@@ -73,6 +74,8 @@ private:
     void toggle_selected_slot();
     void export_checklist(bool csv);
     void export_calendar();
+    void reset_reminder_cursor();
+    void check_reminders();
 
     Workspace::Workspace m_workspace;
     std::filesystem::path m_bundle_path;
@@ -81,6 +84,8 @@ private:
     std::vector<std::filesystem::path> m_owned_member_files;
     MemberOpenHandler m_member_open_handler;
     std::filesystem::path m_pending_member_recovery;
+    wxTimer m_reminder_timer;
+    std::int64_t m_last_reminder_check_utc = 0;
     bool m_dirty = false;
     wxNotebook *m_sections = nullptr;
     wxStaticText *m_overview = nullptr;
