@@ -189,6 +189,7 @@ inline void to_json(json& j, const FilamentGroupContext::GroupInfo& gi) {
         {"strategy", (int)gi.strategy},
         {"ignore_ext_filament", gi.ignore_ext_filament},
         {"has_filament_switcher", gi.has_filament_switcher},
+        {"preferred_extruder", gi.preferred_extruder},
         {"filament_volume_map", gi.filament_volume_map}
     };
 }
@@ -200,6 +201,7 @@ inline void from_json(const json& j, FilamentGroupContext::GroupInfo& gi) {
     gi.strategy = (FGStrategy)j.at("strategy").get<int>();
     j.at("ignore_ext_filament").get_to(gi.ignore_ext_filament);
     j.at("has_filament_switcher").get_to(gi.has_filament_switcher);
+    gi.preferred_extruder = j.value("preferred_extruder", -1);
     j.at("filament_volume_map").get_to(gi.filament_volume_map);
 }
 

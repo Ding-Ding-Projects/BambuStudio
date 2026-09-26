@@ -387,7 +387,9 @@ enum FilamentMapMode {
     fmmManual,
     fmmNozzleManual,
     fmmAutoForQuality,
-    fmmDefault
+    fmmDefault,
+    fmmPreferLeft,
+    fmmPreferRight
 };
 
 // BBS: reduce infill retraction mode
@@ -410,7 +412,8 @@ enum FilamentMetalStickiness {
 };
 
 inline bool is_auto_filament_map_mode(FilamentMapMode mode) {
-    return mode == fmmAutoForFlush || mode == fmmAutoForMatch || mode == fmmAutoForQuality;
+    return mode == fmmAutoForFlush || mode == fmmAutoForMatch || mode == fmmAutoForQuality ||
+           mode == fmmPreferLeft || mode == fmmPreferRight;
 }
 
 enum CounterboreHoleBridgingOption {

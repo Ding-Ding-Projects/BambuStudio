@@ -21,6 +21,9 @@ class Plater;
 bool play_dual_extruder_slice_video();
 bool play_dual_extruder_print_tpu_video();
 bool open_filament_group_wiki();
+// Returns the saved choice for the selected printer preset. Use when creating
+// a new project, after checking that no imported project mode is present.
+FilamentMapMode get_preferred_filament_map_mode_for_current_printer();
 
 class FilamentGroupPopup : public PopupWindow
 {
