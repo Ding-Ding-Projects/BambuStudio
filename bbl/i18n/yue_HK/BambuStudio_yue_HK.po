@@ -3926,3 +3926,23 @@ msgstr "到期提醒時間有歧義，或者並不存在。"
 #. reviewed-category: destructive-dirty-error-security
 msgid "The end time must be after the start time."
 msgstr "結束時間必須遲過開始時間。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid local date or time"
+msgstr "本地日期或時間無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Unknown or unavailable IANA time zone"
+msgstr "IANA 時區不明或無法使用"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not resolve time-zone rules"
+msgstr "無法解析時區規則"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "IANA time-zone rules are unavailable on this platform"
+msgstr "呢個平台無法使用 IANA 時區規則"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Time zone rules are unavailable"
+msgstr "時區規則無法使用"
