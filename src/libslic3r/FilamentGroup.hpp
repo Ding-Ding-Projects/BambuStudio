@@ -86,6 +86,8 @@ namespace Slic3r
             FGStrategy strategy;
             bool ignore_ext_filament;
             bool has_filament_switcher = false;
+            // -1 keeps the existing cost-based grouping; 0 and 1 prefer a physical extruder.
+            int preferred_extruder = -1;
             std::vector<int> filament_volume_map;
         } group_info;
 

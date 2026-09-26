@@ -38,17 +38,25 @@ static bool should_pop_up()
     return nozzle_diameters->size() > 1;
 }
 
-static FilamentMapMode get_prefered_map_mode()
+FilamentMapMode get_preferred_filament_map_mode_for_current_printer()
 {
     const static std::map<std::string, int> enum_keys_map = ConfigOptionEnum<FilamentMapMode>::get_enum_values();
     auto                                   &app_config    = wxGetApp().app_config;
-    std::string                             mode_str      = app_config->get("prefered_filament_map_mode");
+    const std::string preset_name = wxGetApp().preset_bundle->printers.get_selected_preset().name;
+    std::string mode_str = app_config->get("filament_map_mode_by_printer", preset_name);
+    if (mode_str.empty())
+        mode_str = app_config->get("prefered_filament_map_mode");
     auto                                    iter          = enum_keys_map.find(mode_str);
     if (iter == enum_keys_map.end()) {
         BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format("Could not get prefered_filament_map_mode from app config, use AutoForFlsuh mode");
         return FilamentMapMode::fmmAutoForFlush;
     }
-    return FilamentMapMode(iter->second);
+    const auto mode = FilamentMapMode(iter->second);
+    const auto* nozzle_diameters = wxGetApp().preset_bundle->full_config().option<ConfigOptionFloatsNullable>("nozzle_diameter");
+    if ((mode == fmmPreferLeft || mode == fmmPreferRight) &&
+        (!nozzle_diameters || nozzle_diameters->size() < 2))
+        return fmmAutoForFlush; // Keep the stored choice for a later dual-nozzle printer.
+    return mode;
 }
 
 static void set_prefered_map_mode(FilamentMapMode mode)
@@ -59,7 +67,8 @@ static void set_prefered_map_mode(FilamentMapMode mode)
     if (mode < enum_values.size()) mode_str = enum_values[mode];
 
     if (mode_str.empty()) BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format("Set empty prefered_filament_map_mode to app config");
-    app_config->set("prefered_filament_map_mode", mode_str);
+    const std::string preset_name = wxGetApp().preset_bundle->printers.get_selected_preset().name;
+    app_config->set("filament_map_mode_by_printer", preset_name, mode_str);
 }
 
 bool play_dual_extruder_slice_video()
@@ -181,6 +190,8 @@ void FilamentGroupPopup::RecreateUIElements()
     const wxString AutoForMatchLabel = _L("Convenience Mode");
     const wxString AutoForQualityLabel = _L("Quality Mode");
     const wxString ManualLabel       = _L("Custom Mode");
+    const wxString PreferLeftLabel   = _L("Prefer left nozzle");
+    const wxString PreferRightLabel  = _L("Prefer right nozzle");
 
     std::string pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
     wxString main_nozzle_lower   = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
@@ -205,7 +216,7 @@ void FilamentGroupPopup::RecreateUIElements()
     SetBackgroundColour(BackGroundColor);
 
     // Create all possible modes
-    m_all_modes = {fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality, fmmManual};
+    m_all_modes = {fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality, fmmPreferLeft, fmmPreferRight, fmmManual};
     m_available_modes = m_all_modes;
 
     // Resize vectors to match the number of all modes
@@ -245,6 +256,14 @@ void FilamentGroupPopup::RecreateUIElements()
                 label = ManualLabel;
                 detail = ManualDetail;
                 desp = ManualDesp;
+                break;
+            case fmmPreferLeft:
+                label = PreferLeftLabel;
+                detail = _L("Place as many printable materials as possible on the left nozzle; use the right nozzle when required.");
+                break;
+            case fmmPreferRight:
+                label = PreferRightLabel;
+                detail = _L("Place as many printable materials as possible on the right nozzle; use the left nozzle when required.");
                 break;
             default:
                 label = wxEmptyString;
@@ -379,6 +398,12 @@ void FilamentGroupPopup::UpdateNozzleLabels()
             case fmmManual:
                 detail = wxString::Format(_L("Manually assign filament to the %s or %s"), deputy_nozzle_lower, main_nozzle_lower);
                 break;
+            case fmmPreferLeft:
+                detail = _L("Prefer the left nozzle for compatible materials, then use the right nozzle as needed.");
+                break;
+            case fmmPreferRight:
+                detail = _L("Prefer the right nozzle for compatible materials, then use the left nozzle as needed.");
+                break;
             default: continue;
         }
         detail_infos[idx]->SetLabel(detail);
@@ -390,7 +415,7 @@ FilamentGroupPopup::FilamentGroupPopup(wxWindow *parent, const std::vector<Filam
 {
     CreateBmps();
     RecreateUIElements();
-    m_mode  = get_prefered_map_mode();
+    m_mode  = get_preferred_filament_map_mode_for_current_printer();
 }
 
 void FilamentGroupPopup::DrawRoundedCorner(int radius)
@@ -482,7 +507,8 @@ void FilamentGroupPopup::Init(const std::vector<FilamentMapMode>& available_mode
         m_mode = fmmAutoForFlush;
     }
     else if (std::find(m_available_modes.begin(), m_available_modes.end(), m_mode) == m_available_modes.end()) {
-        SetFilamentMapMode(fmmAutoForFlush);
+        // An imported plate may carry an explicit choice. Hiding an unavailable
+        // row must not rewrite that saved project configuration.
         m_mode = fmmAutoForFlush;
     }
     else if (m_slice_all) {
@@ -506,9 +532,16 @@ void FilamentGroupPopup::tryPopup(Plater* plater,PartPlate* partplate,bool slice
         this->m_sync_plate = true;
         this->m_slice_all = slice_all;
 
-        std::vector<FilamentMapMode> requested_modes = { fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality };
+        std::vector<FilamentMapMode> requested_modes = { fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality,
+                                                        fmmPreferLeft, fmmPreferRight };
         Print* print_obj = partplate ? partplate->fff_print() : nullptr;
         std::vector<FilamentMapMode> new_available_modes = resolve_available_auto_modes(print_obj, requested_modes, connect_status);
+
+        const auto* nozzle_diameters = wxGetApp().preset_bundle->full_config().option<ConfigOptionFloatsNullable>("nozzle_diameter");
+        if (nozzle_diameters && nozzle_diameters->size() >= 2) {
+            new_available_modes.push_back(fmmPreferLeft);
+            new_available_modes.push_back(fmmPreferRight);
+        }
 
         new_available_modes.push_back(fmmManual);
 
@@ -644,6 +677,7 @@ void FilamentGroupPopup::OnRadioBtn(int idx)
     if (m_mode != mode) {
         m_mode = mode;
         SetFilamentMapMode(m_mode);
+        set_prefered_map_mode(m_mode);
         plater_ref->update();
         UpdateButtonStatus(idx);
     }

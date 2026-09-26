@@ -306,6 +306,7 @@ namespace Slic3r
         std::vector<int> best_full_map(ctx.group_info.total_filament_num, ctx.machine_info.master_extruder_id);
         double best_score = std::numeric_limits<double>::max();
         int best_prefer_level = 0;
+        int best_nonpreferred_count = std::numeric_limits<int>::max();
         int best_flush = 0;
 
         const long long total = (long long)std::pow(k, n);
@@ -353,6 +354,26 @@ namespace Slic3r
             if (size_ok)
                 prefer_level += MAX_SIZE_LIMIT_REWARD;
 
+            int nonpreferred_count = 0;
+            if (ctx.group_info.preferred_extruder >= 0) {
+                // A preference never makes an unprintable or over-capacity plan valid.
+                if (placeable_count != n || !size_ok)
+                    continue;
+                for (const auto& [extruder, nozzles] : ctx.nozzle_info.extruder_nozzle_list) {
+                    int assigned = 0;
+                    for (int nozzle : nozzles)
+                        assigned += groups_count[nozzle];
+                    if (assigned > ctx.machine_info.max_group_size.at(extruder)) {
+                        size_ok = false;
+                        break;
+                    }
+                }
+                if (!size_ok)
+                    continue;
+                for (int label : used_labels)
+                    nonpreferred_count += ctx.nozzle_info.nozzle_list[label].extruder_id != ctx.group_info.preferred_extruder;
+            }
+
             if (ctx.group_info.strategy == FGStrategy::BestFit) {
                 bool all_full = true;
                 for (int g = 0; g < k; g++) {
@@ -384,9 +405,14 @@ namespace Slic3r
             if (master_ex_id < k && groups_count[master_ex_id] < (int)(used_filaments.size() + 1) / 2)
                 score += ABSOLUTE_FLUSH_GAP_TOLERANCE;
 
-            if (prefer_level > best_prefer_level || (prefer_level == best_prefer_level && score < best_score)) {
+            if ((ctx.group_info.preferred_extruder >= 0 &&
+                 (nonpreferred_count < best_nonpreferred_count ||
+                  (nonpreferred_count == best_nonpreferred_count && score < best_score))) ||
+                (ctx.group_info.preferred_extruder < 0 &&
+                 (prefer_level > best_prefer_level || (prefer_level == best_prefer_level && score < best_score)))) {
                 best_score = score;
                 best_prefer_level = prefer_level;
+                best_nonpreferred_count = nonpreferred_count;
                 best_full_map = full_map;
                 best_flush = flush_vol;
             }
@@ -429,6 +455,34 @@ namespace Slic3r
         std::vector<int> full_map(ctx.group_info.total_filament_num, ctx.machine_info.master_extruder_id);
         for (int i = 0; i < (int)labels.size(); ++i)
             full_map[used_filaments[i]] = labels[i];
+
+        if (ctx.group_info.preferred_extruder >= 0 && !used_filaments.empty()) {
+            // The larger-set path uses flow so the material count on the other
+            // physical extruder is minimized before retaining the clustered cost
+            // choice as a deterministic tie-break.
+            std::vector<int> left(used_filaments.size()), right(k);
+            std::iota(left.begin(), left.end(), 0);
+            std::iota(right.begin(), right.end(), 0);
+            std::vector<std::vector<float>> preference_cost(left.size(), std::vector<float>(k));
+            for (size_t i = 0; i < left.size(); ++i)
+                for (int nozzle = 0; nozzle < k; ++nozzle)
+                    preference_cost[i][nozzle] =
+                        (ctx.nozzle_info.nozzle_list[nozzle].extruder_id == ctx.group_info.preferred_extruder ? 0.f : 100000.f) +
+                        (full_map[used_filaments[i]] == nozzle ? 0.f : 10.f) + nozzle;
+
+            std::vector<std::pair<std::set<int>, int>> extruder_caps;
+            for (const auto& [extruder, nozzles] : ctx.nozzle_info.extruder_nozzle_list)
+                extruder_caps.emplace_back(std::set<int>(nozzles.begin(), nozzles.end()), ctx.machine_info.max_group_size.at(extruder));
+            MinFlushFlowSolver flow(preference_cost, left, right, {}, unplaceable_limits,
+                                    std::vector<int>(left.size(), 1),
+                                    std::vector<int>(right.size(), static_cast<int>(left.size())), extruder_caps);
+            auto preferred = flow.solve();
+            if (preferred.size() == left.size() &&
+                std::none_of(preferred.begin(), preferred.end(), [](int id) { return id == MaxFlowGraph::INVALID_ID; })) {
+                for (size_t i = 0; i < preferred.size(); ++i)
+                    full_map[used_filaments[i]] = right[preferred[i]];
+            }
+        }
 
         if (cost) {
             int flush_vol = 0;
@@ -1072,6 +1126,9 @@ namespace Slic3r
         for (auto nozzle : ctx.nozzle_info.nozzle_list)
             if (nozzle.volume_type == NozzleVolumeType::nvtTPUHighFlow)
                 return calc_filament_group_for_tpu(cost);*/
+
+        if (ctx.group_info.preferred_extruder >= 0)
+            return calc_min_flush_group(cost);
 
         try {
             if (FGMode::MatchMode == ctx.group_info.mode)
