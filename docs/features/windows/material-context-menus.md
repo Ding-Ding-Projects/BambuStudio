@@ -29,7 +29,8 @@ fires.
 - **Bounds.** The surface never covers its anchor: placement tries below, above, right and left
   before clamping into the display, and a menu taller than the free height scrolls inside its card.
 - **Keyboard and focus.** Up/Down/Home/End/PageUp/PageDown move over actionable rows, Enter or Space
-  activate, Escape or an outside click dismiss, Tab cycles between search and list, and focus returns
+  activate, Escape or an outside click dismiss, Tab and Shift+Tab cycle through the search input,
+  its visible regex, builder and clear controls, then the menu list; focus returns
   to whatever had it when the menu opened. Mnemonics (`&E`) activate only while the search field is
   empty.
 - **Activation order.** The item's `wxEVT_MENU` handler runs synchronously before the blocking

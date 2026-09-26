@@ -1200,8 +1200,11 @@ void MD3MenuPopup::onCharHook(wxKeyEvent &evt)
         evt.Skip();
         return;
     }
+    wxWindow *focused = wxWindow::FindFocus();
     const bool search_focused = m_search && m_search->GetTextCtrl() &&
-                                wxWindow::FindFocus() == m_search->GetTextCtrl();
+                                focused == m_search->GetTextCtrl();
+    const bool search_control_focused = m_search && focused &&
+                                        (focused == m_search || m_search->IsDescendant(focused));
     const bool search_has_text = m_search && !m_search->GetValue().IsEmpty();
 
     switch (evt.GetKeyCode()) {
@@ -1210,41 +1213,55 @@ void MD3MenuPopup::onCharHook(wxKeyEvent &evt)
     case WXK_UP: m_list->MoveSelection(-1); return;
     case WXK_TAB:
         if (m_search && m_search->GetTextCtrl()) {
-            // The search field and the menu list are separate keyboard stops.
-            // Arrows continue to move the selected row within the list.
-            (search_focused ? static_cast<wxWindow *>(m_list)
-                            : static_cast<wxWindow *>(m_search->GetTextCtrl()))->SetFocus();
+            // Include the search field's visible regex, builder and clear
+            // controls. Skipping them would strand keyboard users at the query.
+            std::vector<wxWindow *> stops{m_search->GetTextCtrl()};
+            for (wxWindow *child : m_search->GetChildren()) {
+                if (child != m_search->GetTextCtrl() && child->AcceptsFocusFromKeyboard())
+                    stops.push_back(child);
+            }
+            stops.push_back(m_list);
+            const auto current = std::find(stops.begin(), stops.end(), focused);
+            const std::size_t index = current == stops.end() ? stops.size() - 1 :
+                                      static_cast<std::size_t>(std::distance(stops.begin(), current));
+            const std::size_t next = evt.ShiftDown() ? (index + stops.size() - 1) % stops.size() :
+                                                         (index + 1) % stops.size();
+            stops[next]->SetFocus();
             return;
         }
         evt.Skip();
         return;
     case WXK_HOME:
+        if (search_control_focused && !search_focused) break;
         if (search_focused && search_has_text) break;
         m_list->SelectFirst();
         return;
     case WXK_END:
+        if (search_control_focused && !search_focused) break;
         if (search_focused && search_has_text) break;
         m_list->SelectLast();
         return;
     case WXK_PAGEDOWN: m_list->PageMove(1); return;
     case WXK_PAGEUP: m_list->PageMove(-1); return;
     case WXK_RETURN:
-    case WXK_NUMPAD_ENTER: m_list->ActivateSelected(); return;
+    case WXK_NUMPAD_ENTER:
+        if (search_control_focused && !search_focused) break;
+        m_list->ActivateSelected(); return;
     case WXK_SPACE:
-        if (search_focused && search_has_text) break; // typing a space into the query
+        if (search_control_focused) break; // text entry or a focused search action
         m_list->ActivateSelected();
         return;
     case WXK_RIGHT:
+        if (search_control_focused) break;
         if (m_list->OpenSelectedSubmenu(true)) return;
-        if (search_focused) break;
         return;
     case WXK_LEFT:
+        if (search_control_focused) break;
         if (m_parent) { ReturnToParent(); return; }
-        if (search_focused) break;
         return;
     default: {
         // Mnemonics only while there is no query to type into.
-        if (!search_has_text && !evt.HasAnyModifiers()) {
+        if (!search_control_focused && !search_has_text && !evt.HasAnyModifiers()) {
             const wxUniChar ch = evt.GetUnicodeKey();
             if (ch.GetValue() >= 32 && m_list->ActivateMnemonic(ch))
                 return;
