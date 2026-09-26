@@ -3870,3 +3870,59 @@ msgstr "打印機傳回無效嘅噴嘴映射。請重新整理後再傳送。"
 #. reviewed-category: connection-offline
 msgid "The printer's nozzle mapping does not cover every used material. Refresh it before sending."
 msgstr "打印機嘅噴嘴映射未涵蓋所有使用中嘅材料。請重新整理後再傳送。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This local time does not exist because the clock jumps forward."
+msgstr "由於時鐘向前調整，呢個本地時間並不存在。"
+
+#. reviewed-category: file-actions
+msgid "Planned print time"
+msgstr "預定打印時間"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "This local time occurs twice. Use the earlier occurrence (UTC offset %d minutes)? Choose No for the later occurrence (UTC offset %d minutes)."
+msgstr "呢個本地時間出現兩次。要用較早嗰次（UTC 偏移 %d 分鐘）？揀「否」就會用較後嗰次（UTC 偏移 %d 分鐘）。"
+
+#. reviewed-category: file-actions
+msgid "Choose daylight-saving occurrence"
+msgstr "揀選夏令時間時段"
+
+#. reviewed-category: file-actions
+msgid " [saved offset differs]"
+msgstr " [已儲存嘅偏移量不符]"
+
+#. reviewed-category: file-actions
+msgid " [time zone unavailable]"
+msgstr " [時區資料無法取得]"
+
+#. reviewed-category: file-actions
+msgid "; time zone unavailable"
+msgstr "；時區資料無法取得"
+
+#. reviewed-category: file-actions
+msgid "; saved offset differs"
+msgstr "；已儲存嘅偏移量不符"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A checklist deadline cannot be resolved in this time zone."
+msgstr "無法按呢個時區確定待辦事項嘅到期時間。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A saved deadline offset differs from its named time zone. The reminder uses the resolved due-date offset; review this item."
+msgstr "已儲存嘅到期日偏移量與所填時區不符。提醒會使用按到期日計算嘅偏移量，請檢查呢個項目。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A saved planned-print offset differs from its named time zone. The saved UTC time remains in use; review this slot."
+msgstr "已儲存嘅預定打印偏移量與所填時區不符。系統仍會使用已儲存嘅 UTC 時間，請檢查呢個時段。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "A calendar time zone could not be resolved. Affected deadline reminders are paused; saved planned-print UTC times remain in use."
+msgstr "無法確定日曆時區。受影響嘅到期提醒已暫停；預定打印仍會使用已儲存嘅 UTC 時間。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The deadline reminder time is ambiguous or nonexistent."
+msgstr "到期提醒時間有歧義，或者並不存在。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The end time must be after the start time."
+msgstr "結束時間必須遲過開始時間。"
