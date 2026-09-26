@@ -23776,6 +23776,55 @@ bool Plater::load_snapshot_from(const std::string& path)
 }
 
 // BBS: save logic
+bool Plater::export_workspace_member_with_history(const stdfs::path& destination)
+{
+    if (destination.empty() || destination.extension() != ".3mf" || m_loading_project)
+        return false;
+    std::error_code path_error;
+    if (stdfs::exists(destination, path_error) || path_error)
+        return false;
+    if (!p->flush_project_history_pending("Project edit before workspace save", true, true))
+        return false;
+
+    if (auto *assemble_canvas = get_assmeble_canvas3D())
+        assemble_canvas->prepare_assembly_steps_for_project_save();
+    auto strategy = SaveStrategy::SplitModel | SaveStrategy::ShareMesh;
+    if (wxGetApp().app_config->get_bool("export_sources_full_pathnames"))
+        strategy = strategy | SaveStrategy::FullPathSources;
+    const stdfs::path snapshot = destination.parent_path() /
+        (destination.filename().u8string() + ".pending-history-" + std::to_string(wxGetProcessId()) + "-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".3mf");
+    if (export_3mf(boost::filesystem::path(snapshot.native()), strategy) < 0) {
+        stdfs::remove(snapshot, path_error);
+        return false;
+    }
+
+    try {
+        auto *history = p->project_history_manager();
+        if (!history) throw std::runtime_error("Project-history storage is unavailable");
+        Slic3r::ProjectHistoryCommitOptions options;
+        options.message = "Saved workspace member";
+        const auto source_identity = p->project_history_identity();
+        const auto source_commit = history->commit_snapshot(source_identity, snapshot, options).get();
+        if (!source_commit.ok()) throw std::runtime_error(source_commit.error.message);
+        const auto committed = history->migrate_then_commit_snapshot(
+            source_identity, destination, snapshot, options).get();
+        if (!committed.ok()) throw std::runtime_error(committed.error.message);
+        const auto published = history->publish_portable_history(destination, snapshot, destination, true).get();
+        if (!published.ok()) throw std::runtime_error(published.error.message);
+        if (published.identity_registration_pending)
+            BOOST_LOG_TRIVIAL(warning) << "Workspace member saved, but local document-owner registration is pending";
+        stdfs::remove(snapshot, path_error);
+        return true;
+    } catch (const std::exception &ex) {
+        // Keep the completed history-free snapshot as a recovery source. The
+        // workspace bundle itself is not touched by this method.
+        BOOST_LOG_TRIVIAL(error) << "Workspace member export retained its recovery snapshot at "
+                                 << snapshot.u8string() << ": " << ex.what();
+        return false;
+    }
+}
+
 int Plater::save_project(bool saveAs)
 {
     //if (up_to_date(false, false)) // should we always save
