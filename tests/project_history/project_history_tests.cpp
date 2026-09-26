@@ -603,6 +603,41 @@ TEST_CASE("Divergent copies receive separate document identities on save", "[pro
     REQUIRE(saved_copy.head_id == first.head_id);
 }
 
+TEST_CASE("Moved workspace member keeps its document identity across repeated saves", "[project-history][portable]")
+{
+    TemporaryTree temporary;
+    const fs::path original = temporary.path() / "original.3mf";
+    const fs::path tab_path = temporary.path() / "workspace-tab.3mf";
+    const fs::path candidate = temporary.path() / "bundle-candidate.3mf";
+    const fs::path snapshot = temporary.path() / "model.3mf";
+    write_model_archive(snapshot);
+    Slic3r::ProjectHistoryManager manager(temporary.path() / "app");
+    REQUIRE(manager.commit_snapshot(original, snapshot).get().ok());
+    const auto original_archive = manager.publish_portable_history(original, snapshot, original).get();
+    REQUIRE(original_archive.ok());
+    fs::copy_file(original, tab_path);
+    fs::remove(original);
+
+    const auto imported = manager.import_portable_history(tab_path, tab_path).get();
+    INFO(imported.error.message);
+    REQUIRE(imported.ok());
+    REQUIRE(manager.commit_snapshot(tab_path, snapshot).get().ok());
+    const auto first_save = manager.publish_portable_history(tab_path, snapshot, tab_path, false).get();
+    INFO(first_save.error.message);
+    REQUIRE(first_save.ok());
+    REQUIRE(first_save.document_id == original_archive.document_id);
+    fs::copy_file(tab_path, candidate);
+    const auto staged = manager.inspect_portable_history(candidate).get();
+    REQUIRE(staged.ok());
+    REQUIRE(staged.document_id == first_save.document_id);
+
+    REQUIRE(manager.commit_snapshot(tab_path, snapshot).get().ok());
+    const auto second_save = manager.publish_portable_history(tab_path, snapshot, tab_path, false).get();
+    INFO(second_save.error.message);
+    REQUIRE(second_save.ok());
+    REQUIRE(second_save.document_id == first_save.document_id);
+}
+
 TEST_CASE("Reopening a saved archive keeps newer local recovery history active", "[project-history][portable]")
 {
     TemporaryTree temporary;

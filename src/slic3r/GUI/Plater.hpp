@@ -406,6 +406,8 @@ public:
     void reset_flags_when_new_or_close_project();
     int new_project(bool skip_confirm = false, bool silent = false, const wxString &project_name = wxString());
     void cancel_pending_print_after_slice();
+    bool apply_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
+                                         const std::vector<int>& maps);
     // BBS: save & backup
     int load_project(wxString const & filename = "", wxString const & originfile = "-",
                      bool *load_succeeded = nullptr, bool skip_close_confirmation = false);

@@ -23805,15 +23805,18 @@ bool Plater::export_workspace_member_with_history(const stdfs::path& destination
         Slic3r::ProjectHistoryCommitOptions options;
         options.message = "Saved workspace member";
         const auto source_identity = p->project_history_identity();
-        const auto source_commit = history->commit_snapshot(source_identity, snapshot, options).get();
-        if (!source_commit.ok()) throw std::runtime_error(source_commit.error.message);
-        const auto committed = history->migrate_then_commit_snapshot(
-            source_identity, destination, snapshot, options).get();
+        const auto committed = history->commit_snapshot(source_identity, snapshot, options).get();
         if (!committed.ok()) throw std::runtime_error(committed.error.message);
-        const auto published = history->publish_portable_history(destination, snapshot, destination, true).get();
+        // The tab owns this private path for its entire lifetime. Publishing
+        // there keeps the embedded document ID and its registered owner stable.
+        const auto published = history->publish_portable_history(source_identity, snapshot, source_identity, false).get();
         if (!published.ok()) throw std::runtime_error(published.error.message);
         if (published.identity_registration_pending)
             BOOST_LOG_TRIVIAL(warning) << "Workspace member saved, but local document-owner registration is pending";
+        if (!stdfs::copy_file(source_identity, destination, stdfs::copy_options::none, path_error) || path_error) {
+            stdfs::remove(destination, path_error);
+            throw std::runtime_error("Could not stage the completed workspace member");
+        }
         stdfs::remove(snapshot, path_error);
         return true;
     } catch (const std::exception &ex) {
@@ -23823,6 +23826,37 @@ bool Plater::export_workspace_member_with_history(const stdfs::path& destination
                                  << snapshot.u8string() << ": " << ex.what();
         return false;
     }
+}
+
+bool Plater::apply_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
+                                             const std::vector<int>& maps)
+{
+    if (!p || !wxGetApp().preset_bundle || expected_plate_index != p->partplate_list.get_curr_plate_index())
+        return false;
+    PartPlate* plate = p->partplate_list.get_curr_plate();
+    if (!plate) return false;
+    const auto& project_config = wxGetApp().preset_bundle->project_config;
+    const auto current = plate->get_real_filament_maps(project_config);
+    if (current != expected_maps || maps.size() != current.size() ||
+        std::any_of(maps.begin(), maps.end(), [](int nozzle) { return nozzle < 0 || nozzle > 2; }))
+        return false;
+    const auto used = plate->get_used_filaments();
+    for (int filament : used) {
+        if (filament < 1 || static_cast<size_t>(filament) > maps.size() || maps[filament - 1] == 0)
+            return false;
+    }
+    if (maps == current) return false;
+
+    const auto volumes = plate->get_real_filament_volume_maps(project_config);
+    cancel_pending_print_after_slice();
+    plate->set_filament_map_mode(fmmManual);
+    plate->set_filament_maps(maps);
+    plate->set_filament_volume_maps(volumes);
+    plate->update_slice_result_valid_state(false);
+    set_plater_dirty(true);
+    update(false, true);
+    wxGetApp().mainframe->select_tab(MainFrame::tp3DEditor);
+    return true;
 }
 
 int Plater::save_project(bool saveAs)

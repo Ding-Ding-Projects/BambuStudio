@@ -363,6 +363,7 @@ public:
     void        select_tab(wxPanel* panel);
     void        select_tab(size_t tab = size_t(-1));
     void        request_select_tab(TabPosition pos);
+    bool        request_slice_and_print();
     int         get_calibration_curr_tab();
     void        select_view(const std::string& direction);
     void        view_zoom_to_fit() const;
