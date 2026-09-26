@@ -6,7 +6,7 @@ Model Creator converts a natural-language description into a bounded version 1 s
 
 The model response must be a single JSON object with `version: 1`, a title of at most 80 bytes, and 1 to 32 parts. Each part is a `box`, `cylinder`, or `sphere`, with millimeter dimensions and a three-number position. Boxes take a three-number size, cylinders take a height and radius, and spheres take a radius. Round primitives may specify bounded facets. Dimensions and positions have fixed bounds. Solids must fit above the build plate. Unexpected keys, executable content, URLs, and other schema versions are rejected. The response is capped at 64 KiB. Provider text never becomes a script: the application emits fixed OpenSCAD or Blender code from accepted numeric values.
 
-The generated STL is capped at 100 MiB. A revision keeps its validated source and mesh; canceled requests never reach the plate. The renderer executable is an explicit local selection. Model Creator launches it with a fixed argument list and a timeout. A renderer failure leaves the revision available for inspection without offering it for import.
+The generated STL is capped at 100 MiB. A completed revision keeps its validated source, mesh, and bounded local metadata for reopening after restart. The dialog reloads up to 100 retained revisions and revalidates each mesh. Canceled requests never reach the plate. The renderer executable is an explicit local selection. Model Creator launches it with a fixed argument list and a timeout. A renderer failure leaves its files for inspection without offering the mesh for import.
 
 ## Provider credentials and privacy
 
