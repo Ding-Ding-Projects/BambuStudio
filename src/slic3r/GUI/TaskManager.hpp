@@ -8,6 +8,7 @@
 #include <boost/log/trivial.hpp>
 #include <atomic>
 #include <memory>
+#include <mutex>
 
 
 namespace Slic3r { 
@@ -45,9 +46,7 @@ public:
     void set_state(TaskState ts) {
         BOOST_LOG_TRIVIAL(trace) << "TaskStateInfo set state = " << get_task_state_enum_str(ts);
         m_state->store(ts);
-        if (m_state_changed_fn) {
-            m_state_changed_fn(ts, m_sending_percent);
-        }
+        update();
     }
     BBL::PrintParams get_params() { return m_params; }
 
@@ -56,7 +55,7 @@ public:
     std::string get_job_id(){return profile_id;}
 
     void update_sending_percent(int percent) {
-        m_sending_percent = percent;
+        m_sending_percent->store(percent);
         update();
     }
     void set_sent_time(std::chrono::system_clock::time_point time) {
@@ -64,7 +63,10 @@ public:
         update();
     }
     void set_state_changed_fn(StateChangedFn fn) {
-        m_state_changed_fn = fn;
+        {
+            std::lock_guard<std::mutex> lock(*m_state_changed_mutex);
+            m_state_changed_fn = std::move(fn);
+        }
         update();
     }
     void set_cancel_fn(WasCancelledFn fn) {
@@ -76,8 +78,13 @@ public:
     void set_job_id(std::string job_id) { m_job_id = job_id; }
 
     void update() {
-        if (m_state_changed_fn) {
-            m_state_changed_fn(state(), m_sending_percent);
+        StateChangedFn callback;
+        {
+            std::lock_guard<std::mutex> lock(*m_state_changed_mutex);
+            callback = m_state_changed_fn;
+        }
+        if (callback) {
+            callback(state(), m_sending_percent->load());
         }
     }
 
@@ -113,8 +120,9 @@ private:
     std::string       m_task_name;
     std::string       m_device_name;
     BBL::PrintParams  m_params;
-    int               m_sending_percent;
+    std::shared_ptr<std::atomic<int>> m_sending_percent{std::make_shared<std::atomic<int>>(0)};
     std::string       m_job_id;
+    std::shared_ptr<std::mutex> m_state_changed_mutex{std::make_shared<std::mutex>()};
     StateChangedFn    m_state_changed_fn;
 };
 

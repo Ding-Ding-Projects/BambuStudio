@@ -50,12 +50,19 @@ inline FarmLanReadiness farm_lan_readiness(bool paired, bool has_code, bool has_
     return FarmLanReadiness::Ready;
 }
 
-// The farm sender does not populate PrintParams::nozzle_mapping or
-// PrintParams::nozzles_info and currently writes nozzleId 0 for every material.
-// A multi-nozzle device needs the validated single-device mapping path.
+// Multi-nozzle devices need an explicit, validated payload before dispatch.
 inline bool farm_requires_nozzle_mapping(int nozzle_count, bool dual_nozzle_model)
 {
     return nozzle_count > 1 || dual_nozzle_model;
+}
+
+inline bool farm_plate_nozzles_valid(const std::vector<int>& maps, const std::vector<int>& used_filaments)
+{
+    if (used_filaments.empty()) return false;
+    for (int filament : used_filaments)
+        if (filament < 1 || static_cast<size_t>(filament) > maps.size() ||
+            (maps[filament - 1] != 1 && maps[filament - 1] != 2)) return false;
+    return true;
 }
 
 inline bool send_completed_before_cancellation(int transport_result, bool was_cancelled)

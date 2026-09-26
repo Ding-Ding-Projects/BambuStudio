@@ -66,7 +66,6 @@ int TaskStateInfo::g_task_info_id = 0;
 
 TaskStateInfo::TaskStateInfo(BBL::PrintParams param)
     : m_params(param)
-    , m_sending_percent(0)
     , m_state_changed_fn(nullptr)
 {
     m_state->store(TaskState::TS_PENDING);
