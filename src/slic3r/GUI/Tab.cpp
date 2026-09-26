@@ -293,7 +293,7 @@ void Tab::create_preset_tab()
     // MD3: save / delete are borderless IconButtons drawing the Save / Close glyphs.
     add_md3_icon_button(m_top_panel, &m_btn_save_preset, MaterialIcon::Save, "save");
     add_md3_icon_button(m_top_panel, &m_btn_delete_preset, MaterialIcon::Close, "cross");
-    add_md3_icon_button(m_top_panel, &m_btn_export_preset, MaterialIcon::Download, "export");
+    add_md3_icon_button(m_top_panel, &m_btn_export_preset, MaterialIcon::Download, "tree_export");
     //if (m_type == Preset::Type::TYPE_PRINTER)
     //    add_scaled_button(panel, &m_btn_edit_ph_printer, "cog");
 
