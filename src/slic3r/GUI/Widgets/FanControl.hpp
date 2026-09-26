@@ -7,6 +7,7 @@
 #include "Button.hpp"
 #include "SwitchButton.hpp"
 #include "PopupWindow.hpp"
+#include "Slider.hpp"
 #include "../SelectMachine.hpp"
 #include "../DeviceManager.hpp"
 #include "slic3r/GUI/Event.hpp"
@@ -20,18 +21,16 @@
 namespace Slic3r {
 namespace GUI {
 
-class Slider;
-
 // A telemetry-driven preview. The slider remains the accessible control and
 // the existing fan dialog remains the only place that sends a fan command.
 class FanMotionView final : public wxWindow, private wxTimer
 {
 public:
-    FanMotionView(wxWindow* parent, bool auxiliary, Slider* slider);
+    FanMotionView(wxWindow* parent, bool auxiliary, ::Slider* slider);
     ~FanMotionView() override { Stop(); }
     void SetTelemetry(int pwm);
     void SetCommandPending(int percent);
-    void SetSlider(Slider* slider);
+    void SetSlider(::Slider* slider);
     void RestorePreview();
     void Reset();
     void Notify() override;
@@ -40,7 +39,7 @@ private:
     void OnPaint(wxPaintEvent&);
     void OnShow(wxShowEvent&);
     void UpdateTimer();
-    Slider* m_slider;
+    ::Slider* m_slider;
     bool m_auxiliary;
     bool m_initialized{false};
     int m_target{0};
