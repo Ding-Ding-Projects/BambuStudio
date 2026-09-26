@@ -1,9 +1,18 @@
 #!/bin/bash
 
 # 检查是否有 `wxColour(0x......)` 格式的代码
-if git diff --cached --name-only | xargs grep -nE 'wxColour\(0x[0-9A-Fa-f]{6}\)'; then
-    echo "❌ 错误：禁止直接使用 wxColour(0x......)，请改用 wxColour(\"#......\") 或 wxColour(r, g, b) 格式。"
-    echo "违规代码位置见上方输出。"
-    exit 1  # 阻止提交
+mapfile -d '' -t staged_paths < <(git diff --cached --name-only -z --diff-filter=ACMRT)
+if ((${#staged_paths[@]})); then
+    grep -nE 'wxColour\(0x[0-9A-Fa-f]{6}\)' -- "${staged_paths[@]}"
+    scan_result=$?
+    if ((scan_result == 0)); then
+        echo "❌ 错误：禁止直接使用 wxColour(0x......)，请改用 wxColour(\"#......\") 或 wxColour(r, g, b) 格式。"
+        echo "违规代码位置见上方输出。"
+        exit 1  # 阻止提交
+    fi
+    if ((scan_result != 1)); then
+        echo "Color scan could not read every staged file."
+        exit 1
+    fi
 fi
 
