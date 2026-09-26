@@ -20,6 +20,7 @@ namespace Slic3r::GUI::ModelCreator {
 namespace {
 using json = nlohmann::json;
 constexpr size_t max_response = 65536;
+constexpr size_t max_retained_revisions = 100;
 
 struct TemporaryFiles {
     std::vector<std::filesystem::path> paths;
@@ -202,6 +203,33 @@ void remove_stale_temporary_files(const std::filesystem::path &directory)
         if (!error && written < cutoff) std::filesystem::remove(path, error);
     }
 }
+
+void prune_completed_revisions(const std::filesystem::path &workspace)
+{
+    if (!std::filesystem::is_directory(workspace)) return;
+    std::vector<std::filesystem::path> completed;
+    for (const auto &entry : std::filesystem::directory_iterator(workspace)) {
+        if (entry.is_symlink() || !entry.is_directory() ||
+            entry.path().filename().string().find("revision-") != 0) continue;
+        const auto directory = entry.path();
+        const auto metadata = json::parse(read_bounded(directory / "revision.json"), nullptr, false);
+        if (!metadata.is_object() || !metadata.contains("version") ||
+            !metadata["version"].is_number_integer() || metadata["version"] != 1 ||
+            !metadata.contains("title") || !metadata["title"].is_string() ||
+            !metadata.contains("prompt") || !metadata["prompt"].is_string() ||
+            !metadata.contains("note") || !metadata["note"].is_string() ||
+            !std::filesystem::is_regular_file(directory / "preview.stl") ||
+            (!std::filesystem::is_regular_file(directory / "scene.scad") &&
+             !std::filesystem::is_regular_file(directory / "scene.py"))) continue;
+        completed.push_back(directory);
+    }
+    std::sort(completed.begin(), completed.end(), [](const auto &a, const auto &b) {
+        return std::filesystem::last_write_time(a) < std::filesystem::last_write_time(b);
+    });
+    if (completed.size() <= max_retained_revisions) return;
+    for (size_t index = 0; index < completed.size() - max_retained_revisions; ++index)
+        std::filesystem::remove_all(completed[index]);
+}
 }
 
 bool save_api_key(Provider provider, const std::string &key)
@@ -375,6 +403,7 @@ Result run(const Settings &settings, const std::string &prompt,
                            {"prompt", prompt}, {"note", revision_note}};
     { std::ofstream stream(directory / "revision.json", std::ios::binary); stream << manifest.dump();
       if (!stream) { result.error = "Could not retain revision metadata"; return result; } }
+    prune_completed_revisions(settings.workspace);
     result.revision = {prompt, revision_note, std::move(spec.scene), mesh, {}};
     return result;
 }
@@ -383,6 +412,7 @@ std::vector<Revision> load_revisions(const std::filesystem::path &workspace)
 {
     std::vector<Revision> revisions;
     if (!std::filesystem::is_directory(workspace)) return revisions;
+    prune_completed_revisions(workspace);
     std::vector<std::filesystem::path> directories;
     for (const auto &entry : std::filesystem::directory_iterator(workspace))
         if (entry.is_directory() && entry.path().filename().string().find("revision-") == 0)
