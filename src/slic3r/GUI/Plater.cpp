@@ -11764,16 +11764,6 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                         //}
                     }
                     else if (load_config && (file_version > app_version)) {
-                        Semver cloud_ver;
-                        if (wxGetApp().app_config->has("app", "cloud_version")) {
-                            std::string cloud_version = wxGetApp().app_config->get("app", "cloud_version");
-                            if (!cloud_version.empty())
-                                cloud_ver                 = *(Semver::parse(cloud_version));
-                            else
-                                cloud_ver = app_version;
-                        } else {
-                            cloud_ver = app_version;
-                        }
                         int file_version_cc = file_version.patch()/100;
                         int app_version_cc = app_version.patch()/100;
 
@@ -11790,13 +11780,13 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                                     }
                                 }
                                 context += "\n\n";
-                                Newer3mfVersionDialog newer_dlg(q, &file_version, &cloud_ver, context);
+                                Newer3mfVersionDialog newer_dlg(q, &file_version, context);
                                 newer_dlg.ShowModal();
                             }
                             else {
                                 //if the minor version is not matched
                                 //if (file_version.min() != app_version.min()) {
-                                Newer3mfVersionDialog newer_dlg(q, &file_version, &cloud_ver, "");
+                                Newer3mfVersionDialog newer_dlg(q, &file_version, "");
                                     auto res = newer_dlg.ShowModal();
                                 //}
                             }

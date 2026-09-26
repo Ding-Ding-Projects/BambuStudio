@@ -7299,14 +7299,23 @@ msgstr "Download Beta Version"
 msgid "The 3mf file version is newer than the current Bambu Studio version."
 msgstr "The 3mf file version is newer than the current Bambu Studio version."
 
+msgid "Some settings in this 3MF file may not load in this version."
+msgstr "Some settings in this 3MF file may not load in this version."
+
 msgid "Update your Bambu Studio could enable all functionality in the 3mf file."
 msgstr "Update your Bambu Studio could enable all functionality in the 3mf file."
 
 msgid "Current Version: "
 msgstr "Current Version: "
 
+msgid "3MF File Version: "
+msgstr "3MF File Version: "
+
 msgid "Latest Version: "
 msgstr "Latest Version: "
+
+msgid "View latest release"
+msgstr "View latest release"
 
 msgid "Not for now"
 msgstr "Not for now"

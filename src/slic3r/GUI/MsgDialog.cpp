@@ -790,10 +790,9 @@ DeleteConfirmDialog::~DeleteConfirmDialog() {}
 void DeleteConfirmDialog::on_dpi_changed(const wxRect &suggested_rect) { UpdateShape(); }
 
 
-Newer3mfVersionDialog::Newer3mfVersionDialog(wxWindow *parent, const Semver *file_version, const Semver *cloud_version, wxString new_keys)
+Newer3mfVersionDialog::Newer3mfVersionDialog(wxWindow *parent, const Semver *file_version, wxString new_keys)
     : MD3Dialog(parent, wxGetApp().app_display_name() + " - " + _L("Newer 3mf version"), wxEmptyString, MaterialIcon::Info)
     , m_file_version(file_version)
-    , m_cloud_version(cloud_version)
     , m_new_keys(new_keys)
 {
     // The former left info bitmap + m_line_top divider are replaced by the
@@ -810,33 +809,22 @@ Newer3mfVersionDialog::Newer3mfVersionDialog(wxWindow *parent, const Semver *fil
 
 wxBoxSizer *Newer3mfVersionDialog::get_msg_sizer()
 {
-    wxBoxSizer *vertical_sizer     = new wxBoxSizer(wxVERTICAL);
-    bool        file_version_newer = (*m_file_version) > (*m_cloud_version);
-    wxStaticText *text1;
-    wxBoxSizer *     horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxString    msg_str;
-    if (file_version_newer) {
-        text1 = new Label(this, _L("The 3mf file version is in Beta and it is newer than the current Bambu Studio version."));
-        wxStaticText *   text2       = new Label(this, _L("If you would like to try Bambu Studio Beta, you may click to"));
-        LinkLabel *github_link = new LinkLabel(this, _L("Download Beta Version"), "https://github.com/bambulab/BambuStudio/releases");
-        horizontal_sizer->Add(text2, 0, wxEXPAND, 0);
-        horizontal_sizer->Add(github_link, 0, wxEXPAND | wxLEFT, 5);
-
-    } else {
-        text1 = new Label(this, _L("The 3mf file version is newer than the current Bambu Studio version."));
-        wxStaticText *text2 = new Label(this, _L("Update your Bambu Studio could enable all functionality in the 3mf file."));
-        horizontal_sizer->Add(text2, 0, wxEXPAND, 0);
-    }
-    Semver        app_version = *(Semver::parse(SLIC3R_VERSION));
-    wxStaticText *cur_version = new Label(this, _L("Current Version: ") + app_version.to_string());
-
-    vertical_sizer->Add(text1, 0, wxEXPAND | wxTOP, FromDIP(5));
-    vertical_sizer->Add(horizontal_sizer, 0, wxEXPAND | wxTOP, FromDIP(5));
-    vertical_sizer->Add(cur_version, 0, wxEXPAND | wxTOP, FromDIP(5));
-    if (!file_version_newer) {
-        wxStaticText *latest_version = new Label(this, _L("Latest Version: ") + m_cloud_version->to_string());
-        vertical_sizer->Add(latest_version, 0, wxEXPAND | wxTOP, FromDIP(5));
-    }
+    wxBoxSizer *vertical_sizer = new wxBoxSizer(wxVERTICAL);
+    auto *warning = new Label(this, _L("The 3mf file version is newer than the current Bambu Studio version."));
+    auto *detail = new Label(this, _L("Some settings in this 3MF file may not load in this version."));
+    warning->Wrap(FromDIP(460));
+    detail->Wrap(FromDIP(460));
+    vertical_sizer->Add(warning, 0, wxEXPAND | wxTOP, FromDIP(5));
+    vertical_sizer->Add(detail, 0, wxEXPAND | wxTOP, FromDIP(5));
+    vertical_sizer->Add(new Label(this, _L("Current Version: ") + wxString::FromUTF8(SLIC3R_VERSION)),
+                        0, wxEXPAND | wxTOP, FromDIP(5));
+    vertical_sizer->Add(new Label(this, _L("3MF File Version: ") + m_file_version->to_string()),
+                        0, wxEXPAND | wxTOP, FromDIP(5));
+    // The fork's md3-v<N> release tag is not an application Semver. A saved
+    // cloud_version may be stale, so do not classify this file as Beta or
+    // present that value as a compatible latest release.
+    vertical_sizer->Add(new Label(this, _L("Latest Version: ") + _L("Unknown")),
+                        0, wxEXPAND | wxTOP, FromDIP(5));
 
     wxStaticText *unrecognized_keys = new Label(this, m_new_keys);
     vertical_sizer->Add(unrecognized_keys, 0, wxEXPAND | wxTOP, FromDIP(10));
@@ -849,35 +837,21 @@ wxBoxSizer *Newer3mfVersionDialog::get_btn_sizer()
     // Right-aligned kit footer row (this sizer is nested into the shell footer).
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
     horizontal_sizer->Add(0, 0, 1, wxEXPAND, 0);
-    bool       file_version_newer = (*m_file_version) > (*m_cloud_version);
-    if (!file_version_newer) {
-        m_update_btn = new Button(this, _CTX(L_CONTEXT("Update", "Software"), "Software"));
-        m_update_btn->SetVariant(Button::Variant::Filled);
-        m_update_btn->SetButtonSize(Button::Size::Medium);
-        horizontal_sizer->Add(m_update_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+    m_update_btn = new Button(this, _L("View latest release"));
+    m_update_btn->SetVariant(Button::Variant::Filled);
+    m_update_btn->SetButtonSize(Button::Size::Medium);
+    horizontal_sizer->Add(m_update_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+    m_update_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        EndModal(wxID_OK);
+        if (!wxLaunchDefaultBrowser("https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest"))
+            BOOST_LOG_TRIVIAL(warning) << "Could not open the Bambu Studio release page";
+    });
 
-        m_update_btn->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-            EndModal(wxID_OK);
-            if (wxGetApp().app_config->has("app", "cloud_software_url")) {
-                std::string download_url = wxGetApp().app_config->get("app", "cloud_software_url");
-                wxLaunchDefaultBrowser(download_url);
-            } else {
-                BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "Bambu Studio conf has no cloud_software_url and file_version: " << m_file_version->to_string()
-                                        << " and cloud_version: " << m_cloud_version->to_string();
-            }
-        });
-    }
-
-    if (!file_version_newer) {
-        m_later_btn = new Button(this, _L("Not for now"));
-        m_later_btn->SetVariant(Button::Variant::Text);
-    } else {
-        m_later_btn = new Button(this, _L("OK"));
-        m_later_btn->SetVariant(Button::Variant::Filled);
-    }
+    m_later_btn = new Button(this, _L("Not for now"));
+    m_later_btn->SetVariant(Button::Variant::Text);
     m_later_btn->SetButtonSize(Button::Size::Medium);
     horizontal_sizer->Add(m_later_btn, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
-    m_later_btn->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
+    m_later_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         EndModal(wxID_OK);
     });
     return horizontal_sizer;

@@ -2922,3 +2922,39 @@ msgstr "風扇控制"
 #. so this stays the neutral "loading" rather than a filament-specific phrase.
 msgid "Loading"
 msgstr "載入中"
+
+#. reviewed-category: file-actions
+msgid "Newer 3mf version"
+msgstr "較新嘅 3MF 版本"
+
+#. reviewed-category: file-actions
+msgid "The 3mf file version is newer than the current Bambu Studio version."
+msgstr "呢個 3MF 檔案嘅版本比目前 Bambu Studio 新。"
+
+#. reviewed-category: file-actions
+msgid "Some settings in this 3MF file may not load in this version."
+msgstr "呢個版本可能無法載入檔案入面部分設定。"
+
+#. reviewed-category: file-actions
+msgid "Current Version: "
+msgstr "目前版本："
+
+#. reviewed-category: file-actions
+msgid "3MF File Version: "
+msgstr "3MF 檔案版本："
+
+#. reviewed-category: file-actions
+msgid "Latest Version: "
+msgstr "最新版本："
+
+#. reviewed-category: file-actions
+msgid "Unknown"
+msgstr "未知"
+
+#. reviewed-category: file-actions
+msgid "View latest release"
+msgstr "查看最新發佈版本"
+
+#. reviewed-category: file-actions
+msgid "Not for now"
+msgstr "暫時唔更新"

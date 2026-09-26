@@ -452,7 +452,7 @@ private:
 class Newer3mfVersionDialog : public MD3Dialog
 {
 public:
-    Newer3mfVersionDialog(wxWindow *parent, const Semver* file_version, const Semver* cloud_version, wxString new_keys);
+    Newer3mfVersionDialog(wxWindow *parent, const Semver* file_version, wxString new_keys);
     ~Newer3mfVersionDialog(){};
     virtual void on_dpi_changed(const wxRect &suggested_rect){};
 
@@ -463,7 +463,6 @@ private:
 
 private:
     const Semver *m_file_version;
-    const Semver *m_cloud_version;
     wxString      m_new_keys;
     Button *      m_update_btn = nullptr;
     Button *      m_later_btn  = nullptr;

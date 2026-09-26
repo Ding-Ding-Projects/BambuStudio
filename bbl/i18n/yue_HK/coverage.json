@@ -4,13 +4,13 @@
   "language": "Hong Kong Cantonese (Traditional Chinese)",
   "source_catalog": "../en/BambuStudio_en.po",
   "compiled_artifact": "../../../resources/i18n/yue_HK/BambuStudio.mo",
-  "translated_messages": 726,
+  "translated_messages": 735,
   "review_status": "curated-in-repository",
   "reviewed_on": "2026-07-28",
   "categories": {
     "connection-offline": 82,
     "destructive-dirty-error-security": 170,
-    "file-actions": 98,
+    "file-actions": 107,
     "navigation": 75,
     "preferences": 203,
     "slicing-printing": 98
