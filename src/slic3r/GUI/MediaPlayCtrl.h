@@ -29,6 +29,7 @@
 #include <memory>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <atomic>
 
@@ -117,6 +118,10 @@ private:
     int m_remote_proto = 0;
     bool m_device_busy = false;
     bool m_disable_lan = false;
+    bool m_view_active = false;
+    bool m_was_eligible = false;
+    bool m_user_paused = false;
+    uint64_t m_callback_generation = 0;
     wxString m_url;
 
     std::deque<wxString> m_tasks;

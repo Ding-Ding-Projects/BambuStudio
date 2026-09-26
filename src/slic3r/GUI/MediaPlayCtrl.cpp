@@ -246,6 +246,7 @@ MediaPlayCtrl::~MediaPlayCtrl()
 void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
 {
     std::string machine = obj ? obj->get_dev_id() : "";
+    const bool was_eligible = m_was_eligible;
     if (obj) {
         m_obj            = obj;
         m_camera_exists  = obj->has_ipcam;
@@ -271,8 +272,24 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
         m_remote_proto = 0;
         m_device_busy = false;
     }
-    Enable(obj && obj->is_info_ready() && obj->m_push_count > 0);
+    const bool eligible = obj && obj->is_info_ready() && obj->m_push_count > 0 && obj->has_ipcam;
+    Enable(eligible);
+    m_was_eligible = eligible;
+    if (IsShownOnScreen() && !m_view_active) {
+        m_view_active = true;
+        m_user_paused = false;
+        if (eligible)
+            m_next_retry = wxDateTime::Now();
+    }
     if (machine == m_machine) {
+        if (was_eligible && !eligible) {
+            ++m_callback_generation;
+            m_next_retry = wxDateTime();
+            Stop();
+        } else if (!was_eligible && eligible && !m_user_paused) {
+            // A reconnect starts a new playback attempt; ordinary telemetry does not.
+            m_next_retry = wxDateTime::Now();
+        }
         if (m_last_state == MEDIASTATE_IDLE && IsEnabled())
             Play();
         if (m_last_state == MEDIASTATE_LOADING || m_last_state == MEDIASTATE_INITIALIZING) {
@@ -312,6 +329,9 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
         return;
     }
     m_machine = machine;
+    ++m_callback_generation;
+    m_image_token = std::make_shared<int>(0);
+    m_user_paused = false;
     BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl switch machine: " << BBLCrossTalk::Crosstalk_DevId(m_machine);
     m_disable_lan = false;
     m_failed_retry = 0;
@@ -326,10 +346,12 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
     }
     if (m_last_state != MEDIASTATE_IDLE)
         Stop(" ");
-    if (m_next_retry.IsValid()) // Try open 2 seconds later, to avoid state conflict
+    if (eligible) // Try open 2 seconds later, to avoid state conflict
         m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
-    else
+    else {
+        m_next_retry = wxDateTime();
         SetStatus("", false);
+    }
 
     start_device_image_flow();
 }
@@ -430,6 +452,8 @@ void refresh_agora_url(char const* device, char const* dev_ver, char const* chan
 
 void MediaPlayCtrl::Play()
 {
+    if (m_user_paused)
+        return;
     if (!m_next_retry.IsValid() || wxDateTime::Now() < m_next_retry)
         return;
     if (!IsShownOnScreen())
@@ -519,7 +543,8 @@ void MediaPlayCtrl::Play()
     if (agent) {
         std::string protocols[] = {"", "\"tutk\"", "\"agora\"", "\"tutk\",\"agora\""};
         agent->get_camera_url(m_machine + "|" + m_dev_ver + "|" + protocols[m_remote_proto],
-                [this, m = m_machine, v = agent_version, dv = m_dev_ver, token = std::weak_ptr(m_token)](std::string url) {
+                [this, m = m_machine, generation = m_callback_generation, v = agent_version, dv = m_dev_ver,
+                 token = std::weak_ptr(m_token)](std::string url) {
             if (token.expired()) {
                 BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": token has been expired";
                 return;
@@ -538,8 +563,10 @@ void MediaPlayCtrl::Play()
             BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl: " << hide_passwd(url, {"?uid=", "channel=", "authkey=", "passwd=", "license=", "token="});
 #endif
 
-            CallAfter([this, m, url] {
-                if (m != m_machine) {
+            CallAfter([this, m, generation, url, token] {
+                if (token.expired())
+                    return;
+                if (m != m_machine || generation != m_callback_generation) {
                     BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl drop late ttcode for machine: " << BBLCrossTalk::Crosstalk_DevId(m);
                     return;
                 }
@@ -690,9 +717,12 @@ void MediaPlayCtrl::TogglePlay()
 {
     BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl::TogglePlay";
     if (m_last_state != MEDIASTATE_IDLE) {
+        m_user_paused = true;
         m_next_retry = wxDateTime();
         Stop();
+        m_next_retry = wxDateTime();
     } else {
+        m_user_paused = false;
         m_failed_retry = 0;
         m_user_triggered = true;
         if (m_last_user_play + wxTimeSpan::Minutes(5) < wxDateTime::Now()) {
@@ -937,7 +967,9 @@ void MediaPlayCtrl::start_device_image_flow()
     };
 
     // Helper: Process downloaded image data
-    auto process_image_data = [this, request_machine, mode_to_string](const std::vector<std::byte> &data, DownloadMode mode) -> bool {
+    auto process_image_data = [this, image_token, request_machine, mode_to_string](const std::vector<std::byte> &data, DownloadMode mode) -> bool {
+        if (image_token.expired())
+            return false;
         if (data.empty()) {
             BOOST_LOG_TRIVIAL(warning) << "DeviceImageFlow: received empty data (" << mode_to_string(mode) << ")";
             return false;
@@ -958,7 +990,9 @@ void MediaPlayCtrl::start_device_image_flow()
         char time_buf[32];
         strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_tm);
         wxString watermark = _L("Printer Preview") + wxString::Format("  %s", time_buf);
-        CallAfter([this, img = std::move(image), request_machine, mode_str, watermark]() {
+        CallAfter([this, image_token, img = std::move(image), request_machine, mode_str, watermark]() {
+            if (image_token.expired())
+                return;
             if (request_machine != m_machine) {
                 BOOST_LOG_TRIVIAL(info) << "DeviceImageFlow: machine changed, skip display";
                 return;
@@ -1223,14 +1257,24 @@ void MediaPlayCtrl::on_show_hide(wxShowEvent &evt)
 {
     evt.Skip();
     if (m_isBeingDeleted) return;
-    m_failed_retry = 0;
-    if (m_next_retry.IsValid()) // Try open 2 seconds later, to avoid quick play/stop
-        m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
     if (IsShownOnScreen()) {
+        if (!m_view_active) {
+            m_view_active = true;
+            m_user_paused = false;
+            m_failed_retry = 0;
+            if (m_was_eligible)
+                m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
+        }
         Play();
         start_device_image_flow();
     } else {
+        if (!m_view_active)
+            return;
+        m_view_active = false;
+        ++m_callback_generation;
+        m_next_retry = wxDateTime();
         Stop();
+        m_next_retry = wxDateTime();
     }
 }
 
