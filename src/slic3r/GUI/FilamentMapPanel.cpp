@@ -9,6 +9,7 @@
 #include <wx/dcbuffer.h>
 #include <wx/choice.h>
 #include <wx/button.h>
+#include <wx/msgdlg.h>
 #include "wx/graphics.h"
 #include "Widgets/Label.hpp"
 #include <map>
@@ -343,7 +344,7 @@ FilamentMapManualPanel::FilamentMapManualPanel(wxWindow                       *p
     });
     swap_groups->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { SwapGroups(); });
     swap_reslice->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
-        SwapGroups();
+        if (!SwapGroups()) return;
         ValidateNow();
         wxCommandEvent request(wxEVT_SWAP_AND_RESLICE);
         wxPostEvent(GetParent(), request);
@@ -452,13 +453,39 @@ void FilamentMapManualPanel::OnSwitchFilament(wxCommandEvent &)
     SwapGroups();
 }
 
-void FilamentMapManualPanel::SwapGroups()
+bool FilamentMapManualPanel::SwapGroups()
 {
     auto left_blocks  = m_left_panel->get_filament_blocks();
     auto right_blocks = m_right_panel->get_filament_blocks();
+    const auto current_volumes = GetFilamentVolumeMaps();
+    auto *bundle = wxGetApp().preset_bundle;
+    const auto *nozzle_modes = bundle->project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
+    auto can_move = [this, bundle, nozzle_modes, &current_volumes](const ColorPanel *block, int destination) {
+        const int id = block->GetFilamentId();
+        if (!nozzle_modes || nozzle_modes->values.size() < 2 || id < 1 ||
+            static_cast<size_t>(id) > current_volumes.size()) return false;
+        const auto flow = static_cast<NozzleVolumeType>(current_volumes[id - 1]);
+        const auto configured = static_cast<NozzleVolumeType>(nozzle_modes->values[destination]);
+        if (destination == 1 && m_right_panel->IsUseSeparation()) {
+            if (flow != nvtStandard && flow != nvtHighFlow) return false;
+        } else if (flow != configured) {
+            return false;
+        }
+        return bundle->extruder_nozzle_stat.get_extruder_nozzle_count(destination, flow) > 0;
+    };
+    const bool compatible = std::all_of(left_blocks.begin(), left_blocks.end(),
+                                        [&](const ColorPanel *block) { return can_move(block, 1); }) &&
+                            std::all_of(right_blocks.begin(), right_blocks.end(),
+                                        [&](const ColorPanel *block) { return can_move(block, 0); });
+    if (!compatible) {
+        wxMessageBox(_L("The destination nozzle cannot preserve every material's flow type or has no available nozzle. Adjust the nozzle setup before swapping."),
+                     _L("Cannot swap groups"), wxOK | wxICON_WARNING, this);
+        return false;
+    }
 
     for (auto &block : left_blocks) {
-        m_right_panel->AddColorBlock(block->GetType(), block->GetFilamentId(), false, false);
+        const bool high_flow = current_volumes[block->GetFilamentId() - 1] == static_cast<int>(nvtHighFlow);
+        m_right_panel->AddColorBlock(block->GetType(), block->GetFilamentId(), high_flow, false);
         m_left_panel->RemoveColorBlock(block, false);
     }
 
@@ -477,6 +504,7 @@ void FilamentMapManualPanel::SwapGroups()
         SyncPanelHeights();
     }
     ValidateNow();
+    return true;
 }
 
 void FilamentMapManualPanel::MoveSelectedFilament(int id, bool to_left)
