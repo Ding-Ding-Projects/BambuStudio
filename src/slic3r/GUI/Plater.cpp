@@ -23454,9 +23454,6 @@ int Plater::load_project(wxString const &filename2,
         return wxID_CANCEL;
     }
 
-    model().calib_pa_pattern.reset(nullptr);
-    model().plates_custom_gcodes.clear();
-
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "filename is: " << PathSanitizer::sanitize(filename2.ToUTF8().data())
                             << "and originfile is: " << PathSanitizer::sanitize(originfile.ToUTF8().data());
     auto filename = filename2;
