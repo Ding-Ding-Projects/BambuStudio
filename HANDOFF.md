@@ -1,20 +1,34 @@
 # HANDOFF — read this first
 
 > [!IMPORTANT]
-> **Current task state, 2026-09-26 (America/Toronto):** The feature-source
-> candidate `9c731262944f5d86c0262ef008b85aab6ab0edb2` was verified on
-> remote `main` and remains an ancestor of later documentation updates.
-> This source includes the reconciled upstream `v02.08.04.57` changes, the
-> requested print, LAN, camera, fan, Model Creator, portable-history, workspace,
-> calendar, and Cantonese work, plus a hosted packaging step that compiles the
-> reviewed Cantonese catalog. It is a source candidate, not a verified release.
-> [Hosted Windows build 36271034644](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36271034644)
-> was in progress at this update. The earlier
-> [run 36270245037](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36270245037)
-> predates the catalog packaging correction. The exact final binary, unsigned
-> Squirrel package, installed version, UI captures, hardware, and live-provider
-> flows remain unverified. No local build was run for this final candidate.
-> `ROADMAP.md` lists the remaining checks.
+> **Current task state, 2026-09-26 23:02 UTC:** Feature source and three hosted
+> build repairs reached remote `main` at
+> `31174bce57e5b55311688bed74966cb12e4edde0` (verified with `git ls-remote`).
+> The candidate includes upstream `v02.08.04.57`, the requested print, LAN,
+> camera, fan, Model Creator, portable-history, workspace, calendar, and
+> Cantonese changes. [Hosted run 36276791022](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36276791022)
+> was still compiling this exact commit at this update. It is a source
+> candidate, not a verified release. Earlier hosted runs failed at CMake
+> `configure_file`, `WorkspaceBundle.cpp` string conversion, and a filesystem
+> namespace collision in `WorkspacePanel.cpp`; commits `d0c172f`, `d1d7a75`,
+> and `31174bc` contain those respective repairs. The exact final binary,
+> unsigned Squirrel package, installed version, UI captures, hardware, and
+> live-provider flows remain unverified. No local native build was run for
+> this candidate. `ROADMAP.md` lists the remaining checks.
+>
+> At this preservation checkpoint, the primary worktree has no tracked
+> changes. Pre-existing `.claude/worktrees/` and `fonts/` files have uncertain
+> ownership and were left untouched. The `upstream-build-web`, `upstream-gui`,
+> and `upstream-preferences` worktrees have unresolved merges with 38, 40, and
+> 55 conflicted paths respectively; their owners must resolve and preserve
+> those changes before any integration or cleanup. No cleanup archive was
+> created and no worktree was removed.
+>
+> A dedicated public screenshot gallery was not published. The existing Pages
+> screenshot manifest contains 18 files with matching hashes, but its capture
+> date, timezone, and exact source commit are unavailable. The larger native
+> inventory has 167 entries marked done and 127 pending without per-image
+> hashes. No image from this inventory was promoted as new release evidence.
 > Earlier sections below are historical records and must not be read as the
 > current release or current repository state.
 

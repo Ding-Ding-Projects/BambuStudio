@@ -11,7 +11,7 @@
 - [ ] Verify all four Model Creator providers, both bundled renderers, local credential handling, preview retention, and explicit plate import. Live provider and hardware evidence must be labeled separately from simulated checks.
 - [ ] Verify `.bambu-workspace` opening, member save/recovery, checklist and calendar reminders, daylight-saving behavior, and portable 3MF history on a fresh profile.
 - [ ] Measure the affected native UI at normal and minimum sizes in English, Cantonese, and bilingual modes, light and dark themes, and 100/125/150/200% scale. Keep genuine captures tied to the built source and binary.
-- [ ] Finish delivery from the source already integrated into `main` at `9c731262944f5d86c0262ef008b85aab6ab0edb2`: confirm the hosted build and release, update the handoff with runtime evidence, and complete preservation-first cleanup.
+- [ ] Finish delivery from the source and build repairs integrated into `main` at `31174bce57e5b55311688bed74966cb12e4edde0`: confirm hosted run `36276791022`, verify the release and installed version, add runtime evidence, and complete preservation-first cleanup when the existing worktrees can be handled safely.
 
 ### Requested follow-up after this release
 
