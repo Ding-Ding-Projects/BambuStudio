@@ -137,6 +137,8 @@ UI stays fully interactive.
 | :---: | :---: |
 | ![General tab](docs/screenshots/preferences/general-tab.png) | ![Other tab](docs/screenshots/preferences/other-tab.png) |
 
+The [latest Preferences startup and tab-navigation captures](docs/screenshots/preferences/tabstrip-fix/) show the repaired build opening Appearance and switching to General after a missing export image blocked startup.
+
 | File menu (Version history · Open in External Editor) | Setup Wizard · Ink Selection |
 | :---: | :---: |
 | ![File menu](docs/screenshots/main-window/menu-file.png) | ![Wizard ink page](docs/screenshots/wizard/wizard-step-22.png) |
