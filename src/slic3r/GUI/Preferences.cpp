@@ -1219,6 +1219,9 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
         if (param == I18N::DIALOG_EMOJIS_KEY)
             I18N::language_mode_service().set_dialog_emojis(checkbox->GetValue());
 
+        if (param == "show_bed_heat_soak_area" && wxGetApp().plater())
+            wxGetApp().plater()->on_show_bed_heat_soak_area_changed();
+
         if (param == "staff_pick_switch") {
             bool pbool = app_config->get("staff_pick_switch") == "true";
             wxGetApp().switch_staff_pick(pbool);
@@ -2908,14 +2911,14 @@ wxWindow *PreferencesDialog::create_user_tab()
     sizer->AddSpacer(FromDIP(8));
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
-    sizer->Add(wrap_option_row(scrolled, item_time_format), flags);
-    sizer->Add(wrap_option_row(scrolled, item_bed_type_follow_preset), flags);
-    sizer->Add(wrap_option_row(scrolled, item_auto_stop_liveview), flags);
-    sizer->Add(wrap_option_row(scrolled, item_auto_transfer), flags);
-    sizer->Add(wrap_option_row(scrolled, item_mix_print_high_low_temp), flags);
-    sizer->Add(wrap_option_row(scrolled, item_auto_arrange_wipe_tower_on_switch_printer), flags);
-    sizer->Add(wrap_option_row(scrolled, item_user_sync), flags);
-    sizer->Add(wrap_option_row(scrolled, item_system_sync), flags);
+    sizer->Add(item_time_format, flags);
+    sizer->Add(item_bed_type_follow_preset, flags);
+    sizer->Add(item_auto_stop_liveview, flags);
+    sizer->Add(item_auto_transfer, flags);
+    sizer->Add(item_mix_print_high_low_temp, flags);
+    sizer->Add(item_auto_arrange_wipe_tower_on_switch_printer, flags);
+    sizer->Add(item_user_sync, flags);
+    sizer->Add(item_system_sync, flags);
 #ifdef _WIN32
     sizer->Add(item_webview_auto_fill, flags);
 #endif
@@ -2979,6 +2982,11 @@ wxWindow *PreferencesDialog::create_3d_tab()
                                                  _L("Always show shells or not in preview view tab. If you change this value, you should reslice."), 50,
                                                  "show_shells_in_preview");
 
+    auto item_show_heat_soak_area = create_item_checkbox(
+        _L("Show bed heat soak area"), scrolled,
+        _L("Show the heated-bed preconditioning boundaries in the 3D view and preview."), 50,
+        "show_bed_heat_soak_area");
+
     auto item_step_mesh_setting = create_item_checkbox(_L("Show the step mesh parameter setting dialog."), scrolled,
                                                        _L("If enabled,a parameter settings dialog will appear during STEP file import."), 50, "enable_step_mesh_setting");
 
@@ -3003,20 +3011,20 @@ wxWindow *PreferencesDialog::create_3d_tab()
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
     // ---- 3D Settings ----
-    sizer->Add(wrap_option_row(scrolled, enable_assemble_view_preview), flags);
-    sizer->Add(wrap_option_row(scrolled, item_grabber_size), flags);
-    sizer->Add(wrap_option_row(scrolled, item_tooltip_offset), flags);
-    sizer->Add(wrap_option_row(scrolled, item_toolbar_style), flags);
-    sizer->Add(wrap_option_row(scrolled, item_show_shells), flags);
-    sizer->Add(wrap_option_row(scrolled, item_show_heat_soak_area), flags);
+    sizer->Add(enable_assemble_view_preview, flags);
+    sizer->Add(item_grabber_size, flags);
+    sizer->Add(item_tooltip_offset, flags);
+    sizer->Add(item_toolbar_style, flags);
+    sizer->Add(item_show_shells, flags);
+    sizer->Add(item_show_heat_soak_area, flags);
 #if !BBL_RELEASE_TO_PUBLIC
     auto item_show_bvh_bounds = create_item_checkbox(_L("Show assembly BVH primary bounds"), scrolled, _L("Display the BVH primary bounding box wireframe in assembly view."), 50,
                                                      "show_assembly_bvh_bounds");
     sizer->Add(item_show_bvh_bounds, flags);
 #endif
-    sizer->Add(wrap_option_row(scrolled, item_enable_record_gcodeviewer), flags);
-    sizer->Add(wrap_option_row(scrolled, item_enable_lod), flags);
-    sizer->Add(wrap_option_row(scrolled, item_advanced_gcode), flags);
+    sizer->Add(item_enable_record_gcodeviewer, flags);
+    sizer->Add(item_enable_lod, flags);
+    sizer->Add(item_advanced_gcode, flags);
 
     // [refactor-review] Not in Figma v2 3D tab; camera-fullscreen kept here (a 3D/
     // viewport-adjacent toggle). Reviewer: confirm placement.
@@ -3028,16 +3036,16 @@ wxWindow *PreferencesDialog::create_3d_tab()
     // ---- Mouse Settings ----
     sizer->Add(title_mouse, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    sizer->Add(wrap_option_row(scrolled, item_zoom_to_mouse), flags);
-    sizer->Add(wrap_option_row(scrolled, item_reverse_mouse_wheel_zoom), flags);
-    sizer->Add(wrap_option_row(scrolled, item_drag_to_move), flags);
+    sizer->Add(item_zoom_to_mouse, flags);
+    sizer->Add(item_reverse_mouse_wheel_zoom, flags);
+    sizer->Add(item_drag_to_move, flags);
 
     // ---- Import Settings ----
     sizer->Add(title_import, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    sizer->Add(wrap_option_row(scrolled, item_step_mesh_setting), flags);
-    sizer->Add(wrap_option_row(scrolled, item_import_svg), flags);
-    sizer->Add(wrap_option_row(scrolled, item_gamma_obj), flags);
+    sizer->Add(item_step_mesh_setting, flags);
+    sizer->Add(item_import_svg, flags);
+    sizer->Add(item_gamma_obj, flags);
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);
