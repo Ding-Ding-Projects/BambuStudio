@@ -134,7 +134,7 @@ Entry make_entry(const std::string &name, const fs::path &source)
     return {name, source, size, file_digest(source)};
 }
 
-bool valid_member_3mf(const fs::path &source)
+bool member_3mf_is_valid(const fs::path &source)
 {
     FILE *file = open_file(source, false);
     if (!file) return false;
@@ -194,7 +194,7 @@ json create_manifest(const Workspace &workspace, std::vector<Entry> &entries)
                 "Invalid or duplicate workspace member");
         const std::string project_entry = "Members/" + member.id + "/project.3mf";
         Entry project = make_entry(project_entry, member.project_path);
-        require(valid_member_3mf(member.project_path), "Member project is not a valid self-contained 3MF");
+        require(member_3mf_is_valid(member.project_path), "Member project is not a valid self-contained 3MF");
         total += project.size;
         entries.push_back(project);
         names.insert(project_entry);
@@ -491,6 +491,11 @@ std::string new_id()
     const std::string value = hex_digest(bytes.data(), bytes.size());
     return value.substr(0, 8) + "-" + value.substr(8, 4) + "-" + value.substr(12, 4) + "-" +
            value.substr(16, 4) + "-" + value.substr(20);
+}
+
+bool validate_member_3mf(const fs::path &path)
+{
+    return member_3mf_is_valid(path);
 }
 
 Result inspect_bundle(const fs::path &archive)

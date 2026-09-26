@@ -83,6 +83,10 @@ WorkspacePanel::~WorkspacePanel()
         std::error_code ignored;
         fs::remove_all(m_loaded_staging, ignored);
     }
+    for (const auto &file : m_owned_member_files) {
+        std::error_code ignored;
+        fs::remove(file, ignored);
+    }
 }
 
 void WorkspacePanel::create_ui()
@@ -128,10 +132,21 @@ void WorkspacePanel::create_ui()
     auto *file_actions = new wxBoxSizer(wxHORIZONTAL);
     auto *add_project = new wxButton(files_page, wxID_ANY, _L("Add project 3MF"));
     auto *add_editable = new wxButton(files_page, wxID_ANY, _L("Add editable source"));
+    auto *open_project = new wxButton(files_page, wxID_ANY, _L("Open selected project"));
     file_actions->Add(add_project, 0, wxALL, FromDIP(4));
     file_actions->Add(add_editable, 0, wxALL, FromDIP(4));
+    file_actions->Add(open_project, 0, wxALL, FromDIP(4));
     add_project->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { add_member(); });
     add_editable->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { add_source(); });
+    open_project->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { open_selected_member(); });
+    m_files->Bind(wxEVT_LIST_ITEM_ACTIVATED, [this](wxListEvent &event) {
+        for (long selected = m_files->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+             selected >= 0;
+             selected = m_files->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED))
+            m_files->SetItemState(selected, 0, wxLIST_STATE_SELECTED);
+        m_files->SetItemState(event.GetIndex(), wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+        open_selected_member();
+    });
     files_sizer->Add(file_actions, 0, wxALL, FromDIP(4));
     files_page->SetSizer(files_sizer);
     m_sections->AddPage(files_page, _L("Files"));
@@ -272,6 +287,10 @@ void WorkspacePanel::create_new()
     m_workspace.id = Workspace::new_id();
     m_workspace.title = "New workspace";
     m_bundle_path.clear();
+    if (!m_loaded_staging.empty()) { std::error_code ignored; fs::remove_all(m_loaded_staging, ignored); }
+    m_loaded_staging.clear();
+    for (const auto &file : m_owned_member_files) { std::error_code ignored; fs::remove(file, ignored); }
+    m_owned_member_files.clear();
     m_dirty = false;
     refresh_all();
 }
@@ -311,6 +330,8 @@ bool WorkspacePanel::open_bundle(const fs::path &path)
         return false;
     }
     if (!m_loaded_staging.empty()) { std::error_code ignored; fs::remove_all(m_loaded_staging, ignored); }
+    for (const auto &file : m_owned_member_files) { std::error_code ignored; fs::remove(file, ignored); }
+    m_owned_member_files.clear();
     m_workspace = loaded.workspace;
     m_bundle_path = path;
     m_loaded_staging = loaded.staging_directory;
@@ -342,6 +363,61 @@ bool WorkspacePanel::save_bundle()
     return true;
 }
 
+std::optional<fs::path> WorkspacePanel::stage_member_file(const fs::path &source)
+{
+    if (!Workspace::validate_member_3mf(source)) return std::nullopt;
+    const fs::path staged = m_staging_root / ("member-" + Workspace::new_id() + ".3mf");
+    std::error_code error;
+    if (!fs::copy_file(source, staged, fs::copy_options::none, error) || error) {
+        fs::remove(staged, error);
+        return std::nullopt;
+    }
+    if (!Workspace::validate_member_3mf(staged)) {
+        fs::remove(staged, error);
+        return std::nullopt;
+    }
+    return staged;
+}
+
+std::optional<WorkspaceMemberSelection> WorkspacePanel::selected_member() const
+{
+    const long index = m_files->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (index < 0 || static_cast<std::size_t>(index) >= m_workspace.members.size()) return std::nullopt;
+    const auto &member = m_workspace.members[static_cast<std::size_t>(index)];
+    if (!fs::is_regular_file(member.project_path)) return std::nullopt;
+    return WorkspaceMemberSelection{m_workspace.id, member.id, m_bundle_path, member.project_path};
+}
+
+void WorkspacePanel::open_selected_member()
+{
+    const auto selected = selected_member();
+    if (!selected) return;
+    if (m_member_open_handler) m_member_open_handler(*selected);
+    else wxMessageBox(_L("Opening this member in the print canvas is not connected yet."),
+                      _L("Open selected project"), wxOK | wxICON_INFORMATION, this);
+}
+
+bool WorkspacePanel::save_member(const std::string &bundle_id, const std::string &member_id,
+                                 const fs::path &history_bearing_3mf)
+{
+    if (m_bundle_path.empty() || bundle_id != m_workspace.id || member_id.empty()) return false;
+    const auto member = std::find_if(m_workspace.members.begin(), m_workspace.members.end(),
+        [&](const Workspace::Member &item) { return item.id == member_id; });
+    if (member == m_workspace.members.end()) return false;
+    const auto staged = stage_member_file(history_bearing_3mf);
+    if (!staged) return false;
+    const fs::path previous = member->project_path;
+    member->project_path = *staged;
+    if (!save_bundle()) {
+        member->project_path = previous;
+        m_pending_member_recovery = *staged;
+        return false;
+    }
+    m_owned_member_files.push_back(*staged);
+    refresh_files();
+    return true;
+}
+
 void WorkspacePanel::add_member()
 {
     wxFileDialog dialog(this, _L("Add project 3MF"), wxEmptyString, wxEmptyString,
@@ -349,8 +425,16 @@ void WorkspacePanel::add_member()
     if (dialog.ShowModal() != wxID_OK) return;
     Workspace::Member member;
     member.id = Workspace::new_id();
-    member.project_path = fs::u8path(utf8(dialog.GetPath()));
-    member.name = member.project_path.stem().u8string();
+    const fs::path chosen = fs::u8path(utf8(dialog.GetPath()));
+    const auto staged = stage_member_file(chosen);
+    if (!staged) {
+        wxMessageBox(_L("The selected file is not a readable project 3MF."), _L("Add project 3MF"),
+                     wxOK | wxICON_WARNING, this);
+        return;
+    }
+    member.project_path = *staged;
+    member.name = chosen.stem().u8string();
+    m_owned_member_files.push_back(*staged);
     m_workspace.members.push_back(std::move(member));
     m_dirty = true;
     refresh_overview(); refresh_files();
