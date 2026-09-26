@@ -807,9 +807,14 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
     event.Skip();
     BOOST_LOG_TRIVIAL(info) << "SendMultiMachinePage: on_send";
 
+    // Keep the original selection even if a device refresh changes its checkbox while
+    // the common print file is being prepared. Every selected device needs an outcome.
+    std::vector<std::string> selected_device_ids;
     for (const auto& entry : m_device_items) {
         auto* obj = entry.second->get_obj();
-        if (!obj || entry.second->get_state_selected() != 1) continue;
+        if (entry.second->get_state_selected() != 1) continue;
+        selected_device_ids.push_back(entry.first);
+        if (!obj) continue;
         wxString reason;
         FarmNozzlePayload nozzle_payload;
         build_farm_nozzle_payload(obj, m_plater, m_print_plate_idx, nozzle_payload, reason);
@@ -867,27 +872,59 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
 
     std::vector<BBL::PrintParams> print_params;
 
-    for (auto it = m_device_items.begin(); it != m_device_items.end(); ++it) {
-        auto obj = it->second->get_obj();
-
-        if (obj && obj->is_online() && !obj->can_abort() && !obj->is_in_upgrading() &&
-            it->second->get_state_selected() == 1 && it->second->state_printable <= 2) {
-
-            if (!it->second->is_blocking_printing(obj)) {
-                FarmNozzlePayload nozzle_payload;
-                wxString reason;
-                if (!build_farm_nozzle_payload(obj, m_plater, m_print_plate_idx, nozzle_payload, reason)) {
-                    MessageDialog dialog(nullptr, wxString::FromUTF8(obj->get_dev_name()) + ": " + reason,
-                                         "", wxICON_WARNING | wxOK);
-                    dialog.ShowModal();
-                    return;
-                }
-                BBL::PrintParams params = request_params(obj);
-                params.nozzle_mapping = nozzle_payload.mapping;
-                params.nozzles_info = nozzle_payload.info;
-                print_params.push_back(params);
-            }
+    auto* device_manager = wxGetApp().getDeviceManager();
+    const auto current_devices = device_manager ? device_manager->get_farm_machine_list()
+                                                : std::map<std::string, MachineObject*>();
+    for (const auto& device_id : selected_device_ids) {
+        auto item = m_device_items.find(device_id);
+        auto device = current_devices.find(device_id);
+        auto* obj = device != current_devices.end() ? device->second : nullptr;
+        wxString name = item != m_device_items.end()
+            ? wxString::FromUTF8(item->second->get_state_dev_name())
+            : wxString::FromUTF8(device_id);
+        wxString reason;
+        if (!obj || item == m_device_items.end())
+            reason = _L("This selected printer is no longer available. Refresh the device list before sending.");
+        else if (!obj->is_online())
+            reason = _L("This selected printer went offline while preparing the print file.");
+        else if (obj->can_abort() || obj->is_in_printing())
+            reason = _L("This selected printer became busy while preparing the print file.");
+        else if (obj->is_in_upgrading())
+            reason = _L("This selected printer started upgrading while preparing the print file.");
+        else if (item->second->is_blocking_printing(obj))
+            reason = _L("This selected printer is incompatible with the current printer preset.");
+        else {
+            item->second->sync_state();
+            if (item->second->state_printable > 2)
+                reason = _L("This selected printer is no longer ready to print. Refresh its status before sending.");
         }
+        if (reason.IsEmpty() && obj->is_lan_mode_printer()) {
+            auto* agent = device_manager ? device_manager->get_agent() : nullptr;
+            const auto readiness = farm_lan_readiness(obj->has_access_right(), !obj->get_access_code().empty(),
+                !obj->get_dev_ip().empty(), agent && agent->can_start_local_print());
+            if (readiness == FarmLanReadiness::PairingRequired)
+                reason = _L("Pair this LAN printer with its access code before sending.");
+            else if (readiness == FarmLanReadiness::AddressMissing)
+                reason = _L("This LAN printer has no local address. Reconnect it before sending.");
+            else if (readiness == FarmLanReadiness::TransportUnavailable)
+                reason = _L("Direct LAN printing is unavailable in the installed networking module.");
+        }
+        if (!reason.IsEmpty()) {
+            MessageDialog dialog(nullptr, name + ": " + reason, "", wxICON_WARNING | wxOK);
+            dialog.ShowModal();
+            return;
+        }
+
+        FarmNozzlePayload nozzle_payload;
+        if (!build_farm_nozzle_payload(obj, m_plater, m_print_plate_idx, nozzle_payload, reason)) {
+            MessageDialog dialog(nullptr, name + ": " + reason, "", wxICON_WARNING | wxOK);
+            dialog.ShowModal();
+            return;
+        }
+        BBL::PrintParams params = request_params(obj);
+        params.nozzle_mapping = nozzle_payload.mapping;
+        params.nozzles_info = nozzle_payload.info;
+        print_params.push_back(params);
     }
 
 
