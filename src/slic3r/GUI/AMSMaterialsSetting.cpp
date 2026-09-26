@@ -237,18 +237,6 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
 
     m_sizer_filament->Add(m_filament_box, 0, wxEXPAND, 0);
 
-    // make the style the same with disable m_input_k_val, FIXME
-    m_readonly_filament = new TextInput(parent, wxEmptyString, "", "", wxDefaultPosition, AMS_MATERIALS_SETTING_COMBOX_WIDTH, wxTE_CENTRE | wxTE_PROCESS_ENTER);
-    m_readonly_filament->SetBorderColor(StateColor(std::make_pair(ThemeColor::Grey400, (int)StateColor::Focused), std::make_pair(ThemeColor::BrandGreen, (int)StateColor::Hovered),
-        std::make_pair(ThemeColor::Grey400, (int)StateColor::Normal)));
-    m_readonly_filament->SetFont(::Label::Body_14);
-    m_readonly_filament->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
-    m_readonly_filament->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [](auto& e) {});
-    m_readonly_filament->GetTextCtrl()->Hide();
-    m_readonly_filament->Disable();
-    m_sizer_filament->Add(m_readonly_filament, 1, wxALIGN_CENTER, 0);
-    m_readonly_filament->Hide();
-
     wxBoxSizer* m_sizer_colour = new wxBoxSizer(wxHORIZONTAL);
 
     m_title_colour = new Label(parent, _L("Colour"), 0, wxSize(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1));
@@ -425,15 +413,6 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     sizer->Add(cali_col_sizer, 0, wxLEFT | wxRIGHT | wxEXPAND, FromDIP(20));
     sizer->Add(0, 0, 0, wxTOP, FromDIP(10));
     parent->SetSizer(sizer);
-}
-
-void AMSMaterialsSetting::paintEvent(wxPaintEvent &evt)
-{
-    auto      size = GetSize();
-    wxPaintDC dc(this);
-    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OnSurface), 1, wxPENSTYLE_SOLID));
-    dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
-    dc.DrawRectangle(0, 0, size.x, size.y);
 }
 
 AMSMaterialsSetting::~AMSMaterialsSetting() {}
@@ -3160,25 +3139,6 @@ void ColorPickerPopup::set_def_colour(wxColour col, std::vector<wxColour> cols, 
             break;
         }
     }
-}
-
-void ColorPickerPopup::paintEvent(wxPaintEvent& evt)
-{
-    wxPaintDC dc(this);
-    dc.SetPen(StateColor::semantic(MD3::Role::Outline));
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
-}
-
-void ColorPickerPopup::OnDismiss() {}
-
-void ColorPickerPopup::Popup()
-{
-    PopupWindow::Popup();
-}
-
-bool ColorPickerPopup::ProcessLeftDown(wxMouseEvent& event) {
-    return PopupWindow::ProcessLeftDown(event);
 }
 
 // ---- AMSNewOfficialFilamentDlg ------------------------------------------
