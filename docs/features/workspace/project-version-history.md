@@ -1,9 +1,9 @@
 # Project version history
 
-Local, Git-backed version history for every project: complete `.3mf` snapshots
-committed into isolated bare repositories, browsable and restorable from the
-app. Nothing is synced or pushed anywhere; no `.git` ever appears in the
-user's own folders.
+Local, Git-backed version history for every project. A normal saved `.3mf`
+contains its model plus a versioned manifest and a libgit2 object pack. The
+app also keeps an isolated bare repository as a working cache. Nothing is
+synced or pushed anywhere; no `.git` appears in the user's own folders.
 
 ## Behavior
 
@@ -11,12 +11,32 @@ user's own folders.
   (`Plater::priv::schedule_project_history_capture`); manual saves capture the
   just-saved archive. Automatic captures export deterministically
   (`SaveStrategy::Deterministic`) so unchanged projects dedupe to the same
-  blob.
+  blob. Manual saves first export a history-free model snapshot, commit that
+  snapshot, and then attach the reachable history objects to the saved archive.
 - **Storage** (`src/libslic3r/ProjectHistoryManager.{hpp,cpp}`): libgit2
   v1.9.3 bare repositories under
   `<data_dir>/project_history/v1/<sha256(project identity)>`, one full `.3mf`
   blob per commit, written by a single serialized worker thread. Untitled
   sessions get a per-session identity that migrates on Save As.
+- **Portable archive**: `Metadata/bambu_project_history.json` identifies the
+  format version, stable document ID, active head, retained lineages, pack
+  path, byte length, and SHA-256. `Metadata/bambu_project_history.pack` holds
+  the reachable libgit2 objects. On open, the app verifies the bounded entries,
+  pack digest, commit graph, object types, and snapshot tree before importing
+  history into the local cache. A corrupt history payload is rejected while
+  valid current model geometry still loads. Save As assigns a new document ID
+  and inherits the validated graph. A second path holding the same document ID
+  receives a new ID on save while the original still exists, so copied projects
+  can diverge independently. If the original path has gone away, the ID follows
+  the moved file. The local owner marker is stored under
+  `<data_dir>/project_history/document-identities`.
+- **Save publication**: the completed model and history are assembled beside
+  the destination and reopened for validation before an atomic replacement.
+  A failed write retains the preceding archive and the history-free pending
+  snapshot for recovery. Model snapshots contain no embedded history, avoiding
+  recursive growth. Portable packs are bounded at 512 MiB and manifests at
+  16 KiB; an oversized history blocks portable publication until it is reduced
+  through a deliberate retention operation.
 - **Browse/restore**: **File ▸ Version history…** and the topbar `main •`
   history chip open the MD3 `ProjectHistoryDialog` (commit list with message,
   time, size). A `SearchField` above the list filters versions by commit id,
@@ -66,6 +86,15 @@ the app's own data directory (see above), never inside user project folders.
   directory names free of user path content.
 
 ## Verification
+
+- **Portable archive tests (2026-09-26)**: `project_history_tests.exe`
+  passed 12 test cases and 290 assertions. The Unicode-path and divergent-copy
+  regressions were first run against the incomplete implementation and failed
+  at the intended assertions, then passed after the corresponding fixes. The
+  suite also checks a tampered pack, traversal manifest, archive preservation
+  after a rejected publication, moved history import, and inherited lineages.
+  `Plater.cpp` compiled as a selected Release source file. A complete GUI link
+  and live save/load interaction remain unverified for this change.
 
 - **Crash-backup preservation, verified live end-to-end** (2026-07-27) on the real built binary
   through `.claude/skills/run-bambustudio/`:

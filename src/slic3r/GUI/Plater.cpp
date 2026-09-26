@@ -23527,6 +23527,18 @@ int Plater::load_project(wxString const &filename2,
     std::vector<size_t> res = load_files(input_paths, strategy, false, &explicit_3mf_loaded);
     const bool loaded_project = explicit_3mf_loaded || !res.empty();
 
+    if (loaded_project && explicit_3mf_loaded && p->project_history_manager()) {
+        try {
+            const stdfs::path archive_path = stdfs::u8path(into_u8(filename));
+            const auto imported = p->project_history_manager()->import_portable_history(archive_path, archive_path).get();
+            if (!imported.ok())
+                BOOST_LOG_TRIVIAL(warning) << "Embedded project history was rejected; model geometry remains available: "
+                                           << imported.error.message;
+        } catch (const std::exception &ex) {
+            BOOST_LOG_TRIVIAL(warning) << "Could not import embedded project history; model geometry remains available: " << ex.what();
+        }
+    }
+
     reset_project_dirty_initial_presets();
     update_project_dirty_from_presets();
     wxGetApp().preset_bundle->export_selections(*wxGetApp().app_config);
@@ -23708,9 +23720,41 @@ int Plater::save_project(bool saveAs)
     if (full_pathnames) {
         save_strategy = save_strategy | SaveStrategy::FullPathSources;
     }
-    if (export_3mf(into_path(filename), save_strategy) < 0) {
+    const stdfs::path destination = stdfs::u8path(into_u8(filename));
+    const stdfs::path history_free_snapshot = destination.parent_path() /
+        (destination.filename().u8string() + ".pending-history-" + std::to_string(wxGetProcessId()) + "-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".3mf");
+    if (export_3mf(boost::filesystem::path(history_free_snapshot.native()), save_strategy) < 0) {
+        std::error_code cleanup_error;
+        stdfs::remove(history_free_snapshot, cleanup_error);
         MessageDialog(this, _L("Failed to save the project.\nPlease check whether the folder exists online or if other programs open the project file or if there is enough disk space."),
             _L("Save project"), wxOK | wxICON_WARNING).ShowModal();
+        return wxID_CANCEL;
+    }
+
+    // The ordinary model export above deliberately has no history entries.
+    // Commit that immutable snapshot, then publish the complete archive only
+    // after its embedded pack and manifest have been reopened and verified.
+    try {
+        auto *history = p->project_history_manager();
+        if (!history) throw std::runtime_error("Project-history storage is unavailable");
+        Slic3r::ProjectHistoryCommitOptions options;
+        options.message = "Saved project";
+        const auto committed = previous_history_identity == destination
+            ? history->commit_snapshot(destination, history_free_snapshot, options).get()
+            : history->migrate_then_commit_snapshot(previous_history_identity, destination, history_free_snapshot, options).get();
+        if (!committed.ok()) throw std::runtime_error(committed.error.message);
+        const auto published = history->publish_portable_history(destination, history_free_snapshot, destination,
+                                                                 saveAs || previous_history_identity != destination).get();
+        if (!published.ok()) throw std::runtime_error(published.error.message);
+        if (published.identity_registration_pending)
+            BOOST_LOG_TRIVIAL(warning) << "Portable project saved, but its local document-owner marker could not be updated";
+        std::error_code cleanup_error;
+        stdfs::remove(history_free_snapshot, cleanup_error);
+    } catch (const std::exception &ex) {
+        BOOST_LOG_TRIVIAL(error) << "Project save retained its previous archive and pending recovery snapshot: " << ex.what();
+        MessageDialog(this, _L("Failed to save the project and its version history. The previous project file was preserved."),
+                      _L("Save project"), wxOK | wxICON_WARNING).ShowModal();
         return wxID_CANCEL;
     }
 
@@ -23734,11 +23778,6 @@ int Plater::save_project(bool saveAs)
         if (agent) agent->track_event("save_project", j.dump());
     }
     catch (...) {}
-
-    // The normal save above is already a complete, successfully closed .3mf.
-    // Copy that immutable result into app-local staging on the UI thread and
-    // let ProjectHistoryManager import it on its serialized worker.
-    p->capture_saved_project_history(filename, previous_history_identity);
 
     return wxID_YES;
 }

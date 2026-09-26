@@ -2,6 +2,9 @@
 
 #include <git2.h>
 #include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <miniz.h>
+#include <nlohmann/json.hpp>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -24,12 +27,17 @@
 #include <atomic>
 #include <cctype>
 #include <condition_variable>
+#include <cstdio>
+#include <cstring>
 #include <deque>
 #include <exception>
+#include <fstream>
 #include <functional>
 #include <iomanip>
 #include <mutex>
+#include <set>
 #include <sstream>
+#include <string_view>
 #include <system_error>
 #include <thread>
 #include <utility>
@@ -43,6 +51,10 @@ constexpr const char *HISTORY_DIRECTORY       = "project_history";
 constexpr const char *HISTORY_LAYOUT_VERSION  = "v1";
 constexpr const char *LOCK_DIRECTORY          = "locks";
 constexpr const char *SNAPSHOT_TREE_PATH      = "project.3mf";
+constexpr const char *PORTABLE_MANIFEST_PATH  = "Metadata/bambu_project_history.json";
+constexpr const char *PORTABLE_PACK_PATH      = "Metadata/bambu_project_history.pack";
+constexpr std::uint64_t MAX_PORTABLE_PACK     = 512ull * 1024ull * 1024ull;
+constexpr std::uint64_t MAX_PORTABLE_MANIFEST = 16ull * 1024ull;
 constexpr const char *CONFIG_LAYOUT_VERSION   = "bambu.projecthistoryversion";
 constexpr const char *CONFIG_PROJECT_IDENTITY = "bambu.projectidentitysha256";
 constexpr auto        LOCK_WAIT_TIMEOUT        = std::chrono::seconds(30);
@@ -940,6 +952,262 @@ struct SnapshotPreflight
     std::uintmax_t       size{0};
 };
 
+std::string portable_sha256(const void *bytes, std::size_t size)
+{
+    std::array<unsigned char, 32> digest{};
+    unsigned int length = 0;
+    if (EVP_Digest(bytes, size, digest.data(), &length, EVP_sha256(), nullptr) != 1 || length != digest.size())
+        return {};
+    std::ostringstream out;
+    out << std::hex << std::setfill('0');
+    for (unsigned char byte : digest) out << std::setw(2) << static_cast<unsigned int>(byte);
+    return out.str();
+}
+
+std::string new_portable_document_id()
+{
+    std::array<unsigned char, 16> random{};
+    if (RAND_bytes(random.data(), static_cast<int>(random.size())) != 1) return {};
+    random[6] = static_cast<unsigned char>((random[6] & 0x0f) | 0x40);
+    random[8] = static_cast<unsigned char>((random[8] & 0x3f) | 0x80);
+    std::ostringstream out;
+    out << std::hex << std::setfill('0');
+    for (std::size_t index = 0; index < random.size(); ++index) {
+        if (index == 4 || index == 6 || index == 8 || index == 10) out << '-';
+        out << std::setw(2) << static_cast<unsigned int>(random[index]);
+    }
+    return out.str();
+}
+
+bool valid_portable_document_id(const std::string &id)
+{
+    if (id.size() != 36) return false;
+    for (std::size_t index = 0; index < id.size(); ++index) {
+        if (index == 8 || index == 13 || index == 18 || index == 23) {
+            if (id[index] != '-') return false;
+        } else if (!((id[index] >= '0' && id[index] <= '9') || (id[index] >= 'a' && id[index] <= 'f'))) return false;
+    }
+    return true;
+}
+
+bool valid_git_sha1(const std::string &id)
+{
+    return id.size() == 40 && std::all_of(id.begin(), id.end(), [](char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+    });
+}
+
+bool portable_reserved_path(const char *name)
+{
+    return std::string(name) == PORTABLE_MANIFEST_PATH || std::string(name) == PORTABLE_PACK_PATH;
+}
+
+bool portable_safe_zip_path(const char *name)
+{
+    const std::string path(name);
+    if (path.empty() || path.size() > 512 || path.front() == '/' || path.front() == '\\' ||
+        path.find('\\') != std::string::npos || path.find(':') != std::string::npos ||
+        path.find('\0') != std::string::npos) return false;
+    std::size_t start = 0;
+    while (start < path.size()) {
+        const std::size_t end = path.find('/', start);
+        const std::string_view part(path.data() + start, (end == std::string::npos ? path.size() : end) - start);
+        if (part == "." || part == ".." || part.empty()) return false;
+        if (end == std::string::npos) break;
+        start = end + 1;
+    }
+    return true;
+}
+
+struct PortableArchiveData
+{
+    ProjectHistoryPortableResult result;
+    std::vector<unsigned char> pack;
+    std::vector<std::string> lineages;
+};
+
+FILE *open_portable_file(const fs::path &path, bool writing)
+{
+#ifdef _WIN32
+    FILE *file = nullptr;
+    if (_wfopen_s(&file, path.c_str(), writing ? L"wb" : L"rb") != 0) return nullptr;
+    return file;
+#else
+    return std::fopen(path.c_str(), writing ? "wb" : "rb");
+#endif
+}
+
+bool open_portable_zip_reader(mz_zip_archive &archive, const fs::path &path, FILE *&file)
+{
+    file = open_portable_file(path, false);
+    if (file == nullptr) return false;
+    if (mz_zip_reader_init_cfile(&archive, file, 0, 0)) return true;
+    std::fclose(file);
+    file = nullptr;
+    return false;
+}
+
+bool open_portable_zip_writer(mz_zip_archive &archive, const fs::path &path, FILE *&file)
+{
+    file = open_portable_file(path, true);
+    if (file == nullptr) return false;
+    if (mz_zip_writer_init_cfile(&archive, file, 0)) return true;
+    std::fclose(file);
+    file = nullptr;
+    return false;
+}
+
+std::optional<fs::path> read_document_owner(const fs::path &history_base, const std::string &document_id)
+{
+    if (!valid_portable_document_id(document_id)) return std::nullopt;
+    std::ifstream input(history_base / "document-identities" / document_id, std::ios::binary);
+    if (!input.good()) return std::nullopt;
+    std::string text;
+    std::getline(input, text);
+    if (text.empty() || text.size() > 8192 || input.peek() != std::char_traits<char>::eof()) return std::nullopt;
+    return fs::u8path(text).lexically_normal();
+}
+
+bool write_document_owner(const fs::path &history_base, const std::string &document_id, const fs::path &project_path)
+{
+    if (!valid_portable_document_id(document_id)) return false;
+    const fs::path directory = history_base / "document-identities";
+    std::error_code ec;
+    fs::create_directories(directory, ec);
+    if (ec) return false;
+    const fs::path marker = directory / document_id;
+    const fs::path staged = directory / (document_id + "." + new_portable_document_id() + ".tmp");
+    {
+        std::ofstream output(staged, std::ios::binary | std::ios::trunc);
+        if (!output.good()) return false;
+        output << fs::absolute(project_path).lexically_normal().generic_u8string() << '\n';
+        output.close();
+        if (!output.good()) {
+            fs::remove(staged, ec);
+            return false;
+        }
+    }
+#ifdef _WIN32
+    const BOOL published = fs::exists(marker)
+        ? ::ReplaceFileW(marker.c_str(), staged.c_str(), nullptr, REPLACEFILE_IGNORE_MERGE_ERRORS, nullptr, nullptr)
+        : ::MoveFileExW(staged.c_str(), marker.c_str(), MOVEFILE_WRITE_THROUGH);
+    if (!published) {
+        fs::remove(staged, ec);
+        return false;
+    }
+#else
+    fs::rename(staged, marker, ec);
+    if (ec) {
+        fs::remove(staged, ec);
+        return false;
+    }
+#endif
+    return true;
+}
+
+PortableArchiveData read_portable_archive(const fs::path &archive_path, bool read_pack)
+{
+    PortableArchiveData data;
+    data.result.archive_path = archive_path;
+    mz_zip_archive archive{};
+    FILE *archive_file = nullptr;
+    if (!open_portable_zip_reader(archive, archive_path, archive_file)) {
+        data.result.error = {ProjectHistoryErrorCode::IoError, "Could not open project archive for portable-history inspection"};
+        return data;
+    }
+    const auto close = [&archive, archive_file] {
+        mz_zip_reader_end(&archive);
+        std::fclose(archive_file);
+    };
+    int manifest_index = -1;
+    int pack_index = -1;
+    for (mz_uint index = 0; index < mz_zip_reader_get_num_files(&archive); ++index) {
+        mz_zip_archive_file_stat stat{};
+        if (!mz_zip_reader_file_stat(&archive, index, &stat)) {
+            data.result.error = {ProjectHistoryErrorCode::IoError, "Could not inspect a project archive entry"};
+            close();
+            return data;
+        }
+        if (!portable_safe_zip_path(stat.m_filename)) {
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Unsafe project archive entry path"};
+            close();
+            return data;
+        }
+        if (std::string(stat.m_filename) == PORTABLE_MANIFEST_PATH) {
+            if (manifest_index >= 0 || stat.m_uncomp_size > MAX_PORTABLE_MANIFEST) {
+                data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Duplicate or oversized portable-history manifest"};
+                close();
+                return data;
+            }
+            manifest_index = static_cast<int>(index);
+        } else if (std::string(stat.m_filename) == PORTABLE_PACK_PATH) {
+            if (pack_index >= 0 || stat.m_uncomp_size > MAX_PORTABLE_PACK) {
+                data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Duplicate or oversized portable-history pack"};
+                close();
+                return data;
+            }
+            pack_index = static_cast<int>(index);
+        }
+    }
+    if (manifest_index < 0 && pack_index < 0) {
+        close();
+        return data;
+    }
+    data.result.present = true;
+    if (manifest_index < 0 || pack_index < 0) {
+        data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history manifest and pack must occur together"};
+        close();
+        return data;
+    }
+    mz_zip_archive_file_stat manifest_stat{}, pack_stat{};
+    if (!mz_zip_reader_file_stat(&archive, static_cast<mz_uint>(manifest_index), &manifest_stat) ||
+        !mz_zip_reader_file_stat(&archive, static_cast<mz_uint>(pack_index), &pack_stat)) {
+        data.result.error = {ProjectHistoryErrorCode::IoError, "Could not inspect portable-history entries"};
+        close();
+        return data;
+    }
+    std::string manifest(static_cast<std::size_t>(manifest_stat.m_uncomp_size), '\0');
+    if (!mz_zip_reader_extract_to_mem(&archive, static_cast<mz_uint>(manifest_index), manifest.data(), manifest.size(), 0)) {
+        data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history manifest checksum failed"};
+        close();
+        return data;
+    }
+    try {
+        auto json = nlohmann::json::parse(manifest);
+        if (!json.is_object() || json.size() != 7 || json.at("version") != 1 ||
+            json.at("pack_path") != PORTABLE_PACK_PATH || !json.at("document_id").is_string() ||
+            !json.at("head").is_string() || !json.at("pack_sha256").is_string() ||
+            !json.at("pack_size").is_number_unsigned() || !json.at("lineages").is_array() ||
+            json.at("lineages").empty() || json.at("lineages").size() > 64)
+            throw std::runtime_error("invalid manifest schema");
+        data.result.document_id = json.at("document_id").get<std::string>();
+        data.result.head_id = json.at("head").get<std::string>();
+        std::set<std::string> unique_lineages;
+        for (const auto &entry : json.at("lineages")) {
+            if (!entry.is_string() || !valid_git_sha1(entry.get<std::string>()) ||
+                !unique_lineages.insert(entry.get<std::string>()).second)
+                throw std::runtime_error("invalid lineage");
+            data.lineages.push_back(entry.get<std::string>());
+        }
+        if (unique_lineages.count(data.result.head_id) != 1) throw std::runtime_error("active head is not retained");
+        const auto expected_size = json.at("pack_size").get<std::uint64_t>();
+        if (!valid_portable_document_id(data.result.document_id) || !valid_git_sha1(data.result.head_id) ||
+            expected_size != pack_stat.m_uncomp_size || expected_size > MAX_PORTABLE_PACK ||
+            json.at("pack_sha256").get<std::string>().size() != 64) throw std::runtime_error("invalid manifest values");
+        if (read_pack) {
+            data.pack.resize(static_cast<std::size_t>(expected_size));
+            if (!mz_zip_reader_extract_to_mem(&archive, static_cast<mz_uint>(pack_index), data.pack.data(), data.pack.size(), 0) ||
+                data.pack.size() < 12 || std::memcmp(data.pack.data(), "PACK", 4) != 0 ||
+                portable_sha256(data.pack.data(), data.pack.size()) != json.at("pack_sha256").get<std::string>())
+                throw std::runtime_error("portable-history pack checksum failed");
+        }
+    } catch (const std::exception &ex) {
+        data.result.error = {ProjectHistoryErrorCode::RepositoryError, std::string("Invalid portable-history manifest: ") + ex.what()};
+    }
+    close();
+    return data;
+}
+
 SnapshotPreflight validate_snapshot_commit(const fs::path &snapshot_path, const ProjectHistoryCommitOptions &options)
 {
     SnapshotPreflight result;
@@ -1588,6 +1856,374 @@ public:
         return result;
     }
 
+    ProjectHistoryPortableResult inspect_portable(const fs::path &archive_path)
+    {
+        PortableArchiveData data = read_portable_archive(archive_path, true);
+        if (!data.result.ok() || !data.result.present) return data.result;
+
+        ProjectHistoryError storage_error;
+        if (!prepare_private_storage(storage_error)) {
+            data.result.error = storage_error;
+            return data.result;
+        }
+        fs::path staging_path;
+        if (!create_private_staging_directory(m_history_root, ".inspect-", staging_path, storage_error)) {
+            data.result.error = storage_error;
+            return data.result;
+        }
+        ScopedTreeRemoval remove_staging(staging_path);
+        git_repository *raw_repository = nullptr;
+        if (git_repository_init(&raw_repository, path_utf8(staging_path).c_str(), 1) != 0) {
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not initialize portable-history validation repository")};
+            return data.result;
+        }
+        RepositoryPtr repository(raw_repository);
+        git_odb *raw_odb = nullptr;
+        if (git_repository_odb(&raw_odb, repository.get()) != 0) {
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not open portable-history validation object store")};
+            return data.result;
+        }
+        OdbPtr odb(raw_odb);
+        git_odb_writepack *writepack = nullptr;
+        if (git_odb_write_pack(&writepack, odb.get(), nullptr, nullptr) != 0 || writepack == nullptr) {
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not validate portable-history pack")};
+            return data.result;
+        }
+        git_indexer_progress progress{};
+        const int append_rc = writepack->append(writepack, data.pack.data(), data.pack.size(), &progress);
+        const int commit_rc = append_rc == 0 ? writepack->commit(writepack, &progress) : -1;
+        writepack->free(writepack);
+        if (append_rc != 0 || commit_rc != 0) {
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history pack failed object validation"};
+            return data.result;
+        }
+        git_oid head_oid{};
+        if (git_oid_fromstr(&head_oid, data.result.head_id.c_str()) != 0) {
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Invalid portable-history head"};
+            return data.result;
+        }
+        git_revwalk *raw_walk = nullptr;
+        if (git_revwalk_new(&raw_walk, repository.get()) != 0) {
+            if (raw_walk) git_revwalk_free(raw_walk);
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history head is missing from its pack"};
+            return data.result;
+        }
+        RevwalkPtr walk(raw_walk);
+        for (const std::string &lineage : data.lineages) {
+            git_oid root{};
+            if (git_oid_fromstr(&root, lineage.c_str()) != 0 || git_revwalk_push(walk.get(), &root) != 0) {
+                data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history lineage is missing from its pack"};
+                return data.result;
+            }
+        }
+        git_oid commit_oid{};
+        std::size_t count = 0;
+        int walk_rc = 0;
+        while ((walk_rc = git_revwalk_next(&commit_oid, walk.get())) == 0) {
+            if (++count > 100000) {
+                data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history revision count exceeds the supported bound"};
+                return data.result;
+            }
+            git_commit *raw_commit = nullptr;
+            if (git_commit_lookup(&raw_commit, repository.get(), &commit_oid) != 0) {
+                data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history commit has an invalid type"};
+                return data.result;
+            }
+            CommitPtr commit(raw_commit);
+            ProjectHistoryVersion version;
+            ProjectHistoryError version_error;
+            if (!version_from_commit(repository.get(), commit.get(), version, version_error)) {
+                data.result.error = version_error;
+                return data.result;
+            }
+        }
+        if (walk_rc != GIT_ITEROVER || count == 0)
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history graph is incomplete"};
+        return data.result;
+    }
+
+    ProjectHistoryPortableResult publish_portable(const fs::path &project_path, const fs::path &snapshot_path,
+                                                   const fs::path &destination_path, bool new_document_id)
+    {
+        ProjectHistoryPortableResult result;
+        result.archive_path = destination_path;
+        const ResolvedProject project = resolve_project(m_history_root, project_path);
+        if (!project.error.ok()) {
+            result.error = project.error;
+            return result;
+        }
+        if (snapshot_path.empty() || destination_path.empty() || !has_3mf_extension(snapshot_path) ||
+            !has_3mf_extension(destination_path) || snapshot_path == destination_path) {
+            result.error = {ProjectHistoryErrorCode::InvalidArgument, "Portable-history paths must be distinct .3mf files"};
+            return result;
+        }
+        std::vector<std::unique_ptr<InterprocessFileLock>> locks;
+        if (!acquire_identity_locks({project.identity_hash}, locks, result.error)) return result;
+        RepositoryPtr repository;
+        if (!open_repository(project.repository_path, project.identity_hash, false, repository, result.error)) return result;
+        CommitPtr head;
+        bool has_head = false;
+        if (!load_head_commit(repository.get(), head, has_head, result.error) || !has_head) {
+            if (result.error.ok()) result.error = {ProjectHistoryErrorCode::NotFound, "No committed project history exists for portable publication"};
+            return result;
+        }
+        result.head_id = git_oid_tostr_s(git_commit_id(head.get()));
+        auto existing = read_portable_archive(destination_path, false);
+        // A damaged embedded payload does not prevent recovery by saving valid
+        // current geometry. Give that repaired archive a new document ID.
+        result.document_id = !new_document_id && existing.result.ok() && existing.result.present
+            ? existing.result.document_id : new_portable_document_id();
+        if (!new_document_id && existing.result.ok() && existing.result.present) {
+            const auto owner = read_document_owner(m_history_base, result.document_id);
+            std::error_code owner_error;
+            const bool owner_marker_exists = fs::exists(m_history_base / "document-identities" / result.document_id, owner_error);
+            const bool other_live_owner = owner && *owner != fs::absolute(destination_path).lexically_normal() &&
+                (fs::exists(*owner, owner_error) || owner_error);
+            if (other_live_owner || (owner_marker_exists && !owner))
+                result.document_id = new_portable_document_id();
+        }
+        if (result.document_id.empty()) {
+            result.error = {ProjectHistoryErrorCode::InternalError, "Could not create a portable document ID"};
+            return result;
+        }
+        std::set<std::string> lineage_set{result.head_id};
+        git_reference_iterator *refs = nullptr;
+        if (git_reference_iterator_new(&refs, repository.get()) != 0) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, "Could not enumerate retained history lineages"};
+            return result;
+        }
+        git_reference *raw_lineage = nullptr;
+        int ref_rc = 0;
+        while ((ref_rc = git_reference_next(&raw_lineage, refs)) == 0) {
+            ReferencePtr lineage(raw_lineage);
+            raw_lineage = nullptr;
+            if (std::string(git_reference_name(lineage.get())).rfind("refs/heads/", 0) != 0) continue;
+            const git_oid *oid = git_reference_target(lineage.get());
+            if (oid != nullptr) lineage_set.emplace(git_oid_tostr_s(oid));
+        }
+        git_reference_iterator_free(refs);
+        if (ref_rc != GIT_ITEROVER || lineage_set.size() > 64) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, "Could not enumerate bounded history lineages"};
+            return result;
+        }
+        std::vector<std::string> lineages(lineage_set.begin(), lineage_set.end());
+        git_revwalk *raw_walk = nullptr;
+        git_packbuilder *raw_builder = nullptr;
+        bool walk_ok = git_revwalk_new(&raw_walk, repository.get()) == 0;
+        for (const std::string &lineage : lineages) {
+            git_oid root{};
+            walk_ok = walk_ok && git_oid_fromstr(&root, lineage.c_str()) == 0 && git_revwalk_push(raw_walk, &root) == 0;
+        }
+        if (!walk_ok || git_packbuilder_new(&raw_builder, repository.get()) != 0 ||
+            git_packbuilder_insert_walk(raw_builder, raw_walk) != 0) {
+            if (raw_walk) git_revwalk_free(raw_walk);
+            if (raw_builder) git_packbuilder_free(raw_builder);
+            result.error = {ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not build portable-history pack")};
+            return result;
+        }
+        git_revwalk_free(raw_walk);
+        git_buf pack_buffer = GIT_BUF_INIT;
+        const int pack_rc = git_packbuilder_write_buf(&pack_buffer, raw_builder);
+        git_packbuilder_free(raw_builder);
+        if (pack_rc != 0 || pack_buffer.size > MAX_PORTABLE_PACK) {
+            git_buf_dispose(&pack_buffer);
+            result.error = {ProjectHistoryErrorCode::RepositoryError, "Could not build bounded portable-history pack"};
+            return result;
+        }
+        nlohmann::json manifest = {{"version", 1}, {"document_id", result.document_id}, {"head", result.head_id},
+                                   {"lineages", lineages},
+                                   {"pack_path", PORTABLE_PACK_PATH}, {"pack_size", static_cast<std::uint64_t>(pack_buffer.size)},
+                                   {"pack_sha256", portable_sha256(pack_buffer.ptr, pack_buffer.size)}};
+        const std::string manifest_text = manifest.dump();
+        if (manifest_text.size() > MAX_PORTABLE_MANIFEST) {
+            git_buf_dispose(&pack_buffer);
+            result.error = {ProjectHistoryErrorCode::InternalError, "Portable-history manifest exceeds its bound"};
+            return result;
+        }
+
+        mz_zip_archive source{};
+        FILE *source_file = nullptr;
+        if (!open_portable_zip_reader(source, snapshot_path, source_file)) {
+            git_buf_dispose(&pack_buffer);
+            result.error = {ProjectHistoryErrorCode::IoError, "Could not read history-free model snapshot"};
+            return result;
+        }
+        const fs::path staged = destination_path.parent_path() /
+            (destination_path.filename().u8string() + ".history-" + new_portable_document_id() + ".3mf");
+        mz_zip_archive output{};
+        FILE *output_file = nullptr;
+        bool ok = open_portable_zip_writer(output, staged, output_file);
+        for (mz_uint index = 0; ok && index < mz_zip_reader_get_num_files(&source); ++index) {
+            mz_zip_archive_file_stat stat{};
+            ok = mz_zip_reader_file_stat(&source, index, &stat) != 0;
+            if (ok) {
+                if (!portable_safe_zip_path(stat.m_filename)) ok = false;
+                // A snapshot fed back from a previously published archive
+                // would make every generation carry an older history inside
+                // its model blob. Require the caller's history-free export.
+                if (ok && portable_reserved_path(stat.m_filename)) ok = false;
+                else if (ok) ok = mz_zip_writer_add_from_zip_reader(&output, &source, index) != 0;
+            }
+        }
+        if (ok) ok = mz_zip_writer_add_mem(&output, PORTABLE_MANIFEST_PATH, manifest_text.data(), manifest_text.size(), MZ_BEST_COMPRESSION) != 0;
+        if (ok) ok = mz_zip_writer_add_mem(&output, PORTABLE_PACK_PATH, pack_buffer.ptr, pack_buffer.size, MZ_NO_COMPRESSION) != 0;
+        if (ok) ok = mz_zip_writer_finalize_archive(&output) != 0;
+        if (output_file != nullptr) {
+            mz_zip_writer_end(&output);
+            std::fclose(output_file);
+        }
+        mz_zip_reader_end(&source);
+        std::fclose(source_file);
+        git_buf_dispose(&pack_buffer);
+        if (!ok) {
+            std::error_code ignored;
+            fs::remove(staged, ignored);
+            result.error = {ProjectHistoryErrorCode::IoError, "Could not stage portable project archive"};
+            return result;
+        }
+        const auto verified = inspect_portable(staged);
+        if (!verified.ok() || verified.document_id != result.document_id || verified.head_id != result.head_id) {
+            std::error_code ignored;
+            fs::remove(staged, ignored);
+            result.error = verified.ok() ? ProjectHistoryError{ProjectHistoryErrorCode::RepositoryError, "Staged portable-history identity changed"} : verified.error;
+            return result;
+        }
+#ifdef _WIN32
+        const bool destination_exists = fs::exists(destination_path);
+        const fs::path previous_backup = destination_path.parent_path() /
+            (destination_path.filename().u8string() + ".previous-" + new_portable_document_id() + ".3mf");
+        const BOOL published = destination_exists
+            ? ::ReplaceFileW(destination_path.c_str(), staged.c_str(), previous_backup.c_str(),
+                             REPLACEFILE_IGNORE_MERGE_ERRORS, nullptr, nullptr)
+            : ::MoveFileExW(staged.c_str(), destination_path.c_str(), MOVEFILE_WRITE_THROUGH);
+        if (!published) result.error = {ProjectHistoryErrorCode::IoError, "Could not atomically publish the verified project archive; previous archive retained at its original or backup path"};
+        else if (destination_exists) {
+            std::error_code ignored;
+            fs::remove(previous_backup, ignored);
+        }
+#else
+        std::error_code publish_error;
+        fs::rename(staged, destination_path, publish_error);
+        if (publish_error) result.error = {ProjectHistoryErrorCode::IoError, "Could not atomically publish the verified project archive: " + publish_error.message()};
+#endif
+        if (!result.ok()) {
+            std::error_code ignored;
+            fs::remove(staged, ignored);
+        } else {
+            result.present = true;
+            if (!write_document_owner(m_history_base, result.document_id, destination_path))
+                result.identity_registration_pending = true;
+        }
+        return result;
+    }
+
+    ProjectHistoryPortableResult import_portable(const fs::path &project_path, const fs::path &archive_path)
+    {
+        ProjectHistoryPortableResult result = inspect_portable(archive_path);
+        if (!result.ok() || !result.present) return result;
+        PortableArchiveData data = read_portable_archive(archive_path, true);
+        if (!data.result.ok()) return data.result;
+        const ResolvedProject project = resolve_project(m_history_root, project_path);
+        if (!project.error.ok()) {
+            result.error = project.error;
+            return result;
+        }
+        std::vector<std::unique_ptr<InterprocessFileLock>> locks;
+        if (!acquire_identity_locks({project.identity_hash}, locks, result.error)) return result;
+        const auto document_owner = read_document_owner(m_history_base, result.document_id);
+        std::error_code owner_error;
+        if (!document_owner || !fs::exists(*document_owner, owner_error)) {
+            if (!write_document_owner(m_history_base, result.document_id, project_path))
+                result.identity_registration_pending = true;
+        }
+        RepositoryPtr repository;
+        if (!open_repository(project.repository_path, project.identity_hash, true, repository, result.error)) return result;
+        git_oid imported_head{};
+        if (git_oid_fromstr(&imported_head, result.head_id.c_str()) != 0) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history head is invalid"};
+            return result;
+        }
+        CommitPtr local_head;
+        bool has_local_head = false;
+        if (!load_head_commit(repository.get(), local_head, has_local_head, result.error)) return result;
+        if (has_local_head && git_oid_equal(git_commit_id(local_head.get()), &imported_head)) return result;
+
+        git_odb *raw_odb = nullptr;
+        if (git_repository_odb(&raw_odb, repository.get()) != 0) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not open local history object store")};
+            return result;
+        }
+        OdbPtr odb(raw_odb);
+        git_odb_writepack *writepack = nullptr;
+        if (git_odb_write_pack(&writepack, odb.get(), nullptr, nullptr) != 0 || writepack == nullptr) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not import portable-history pack")};
+            return result;
+        }
+        git_indexer_progress progress{};
+        const int append_rc = writepack->append(writepack, data.pack.data(), data.pack.size(), &progress);
+        const int commit_rc = append_rc == 0 ? writepack->commit(writepack, &progress) : -1;
+        writepack->free(writepack);
+        if (append_rc != 0 || commit_rc != 0) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, "Could not store validated portable-history pack"};
+            return result;
+        }
+        for (const std::string &lineage : data.lineages) {
+            if (lineage == result.head_id) continue;
+            git_oid lineage_oid{};
+            if (git_oid_fromstr(&lineage_oid, lineage.c_str()) != 0) {
+                result.error = {ProjectHistoryErrorCode::RepositoryError, "Invalid inherited history lineage"};
+                return result;
+            }
+            const std::string inherited_ref = "refs/heads/inherited-" + lineage.substr(0, 12);
+            git_reference *raw_inherited = nullptr;
+            if (git_reference_create(&raw_inherited, repository.get(), inherited_ref.c_str(), &lineage_oid, 1,
+                                     "Retain inherited portable history") != 0) {
+                result.error = {ProjectHistoryErrorCode::RepositoryError, "Could not retain inherited history lineage"};
+                return result;
+            }
+            git_reference_free(raw_inherited);
+        }
+        // Preserve the old path-keyed lineage before switching to the archive's
+        // active head. It remains available locally until publication succeeds.
+        if (has_local_head) {
+            const std::string old_id = git_oid_tostr_s(git_commit_id(local_head.get()));
+            const std::string legacy_ref = "refs/heads/legacy-" + old_id.substr(0, 12);
+            git_reference *raw_legacy = nullptr;
+            const int preserve_rc = git_reference_create(&raw_legacy, repository.get(), legacy_ref.c_str(),
+                git_commit_id(local_head.get()), 0, "Preserve path-keyed history during portable import");
+            if (preserve_rc != 0) {
+                git_reference *raw_existing = nullptr;
+                if (git_reference_lookup(&raw_existing, repository.get(), legacy_ref.c_str()) != 0 ||
+                    git_oid_equal(git_reference_target(raw_existing), git_commit_id(local_head.get())) != 1) {
+                    if (raw_existing) git_reference_free(raw_existing);
+                    result.error = {ProjectHistoryErrorCode::RepositoryError, "Could not retain legacy project history"};
+                    return result;
+                }
+                git_reference_free(raw_existing);
+            }
+            if (raw_legacy) git_reference_free(raw_legacy);
+        }
+        git_reference *raw_symbolic_head = nullptr;
+        if (git_reference_lookup(&raw_symbolic_head, repository.get(), "HEAD") != 0) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, "Local project-history HEAD is unavailable"};
+            return result;
+        }
+        ReferencePtr symbolic_head(raw_symbolic_head);
+        const char *head_target = git_reference_symbolic_target(symbolic_head.get());
+        if (head_target == nullptr || std::string(head_target).rfind("refs/heads/", 0) != 0) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, "Local project-history HEAD is invalid"};
+            return result;
+        }
+        git_reference *raw_ref = nullptr;
+        if (git_reference_create(&raw_ref, repository.get(), head_target, &imported_head, 1,
+                                 "Import portable project history") != 0) {
+            result.error = {ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not activate portable project history")};
+            return result;
+        }
+        git_reference_free(raw_ref);
+        return result;
+    }
+
     const fs::path &history_root() const noexcept { return m_history_root; }
 
 private:
@@ -1665,6 +2301,30 @@ std::future<ProjectHistoryRestoreResult> ProjectHistoryManager::restore_version(
 {
     return m_impl->enqueue<ProjectHistoryRestoreResult>([impl = m_impl.get(), project_path = std::move(project_path), commit_id = std::move(commit_id),
                                                          destination_path = std::move(destination_path)] { return impl->restore(project_path, commit_id, destination_path); });
+}
+
+std::future<ProjectHistoryPortableResult> ProjectHistoryManager::publish_portable_history(fs::path project_path, fs::path history_free_snapshot,
+                                                                                           fs::path destination_path, bool new_document_id)
+{
+    return m_impl->enqueue<ProjectHistoryPortableResult>([impl = m_impl.get(), project_path = std::move(project_path),
+        snapshot_path = std::move(history_free_snapshot), destination_path = std::move(destination_path), new_document_id] {
+        return impl->publish_portable(project_path, snapshot_path, destination_path, new_document_id);
+    });
+}
+
+std::future<ProjectHistoryPortableResult> ProjectHistoryManager::inspect_portable_history(fs::path archive_path)
+{
+    return m_impl->enqueue<ProjectHistoryPortableResult>([impl = m_impl.get(), archive_path = std::move(archive_path)] {
+        return impl->inspect_portable(archive_path);
+    });
+}
+
+std::future<ProjectHistoryPortableResult> ProjectHistoryManager::import_portable_history(fs::path project_path, fs::path archive_path)
+{
+    return m_impl->enqueue<ProjectHistoryPortableResult>([impl = m_impl.get(), project_path = std::move(project_path),
+                                                           archive_path = std::move(archive_path)] {
+        return impl->import_portable(project_path, archive_path);
+    });
 }
 
 const fs::path &ProjectHistoryManager::history_root() const noexcept { return m_impl->history_root(); }
