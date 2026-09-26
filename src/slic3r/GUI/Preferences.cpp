@@ -1744,7 +1744,8 @@ void PreferencesDialog::select_page(int page)
     if (m_book == nullptr || page < 0 || page >= int(m_book->GetPageCount())) return;
     if (m_book->GetSelection() != page) {
         m_book->SetSelection(page);
-        if (m_tabbar) m_tabbar->SetSelection(page);
+        if (m_tabbar && page < int(m_page_ids.size()))
+            m_tabbar->Activate(m_page_ids[page], /*emit*/ false);
     }
 }
 

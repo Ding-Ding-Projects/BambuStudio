@@ -175,6 +175,8 @@ The Preferences **Appearance** section is a page of the Preferences strip, so
 it is covered by the same tabs. Preferences' existing settings search (row
 filtering, highlight, teleport) is unchanged: a match on another page switches
 the book *and* reveals that page's tab in the strip (`Activate(id, emit=false)`).
+Programmatic section selection, including a settings jump from the command
+palette, uses the same stable tab ID so reordered or hidden tabs stay in sync.
 
 ### Surfaces that are deliberately not tabbed
 
