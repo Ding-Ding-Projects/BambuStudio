@@ -205,6 +205,16 @@ jobs:
           }
           Write-Host "Staged Mesa $mesaVersion llvmpipe fallback DLLs into install-dir\mesa."
 
+      - name: Stage verified Model Creator renderers
+        if: inputs.os == 'windows-latest'
+        working-directory: ${{ github.workspace }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & .\scripts\windows\Stage-ModelCreatorRenderers.ps1 `
+            -PayloadDirectory '${{ github.workspace }}\install-dir' `
+            -CacheDirectory '${{ runner.temp }}\bambu-model-renderers'
+
       # Every release ships one-of-a-kind dim sum splash art: the payload copy
       # of splash_logo.svg is regenerated deterministically from the run
       # number, so identical run numbers reproduce identical art while every

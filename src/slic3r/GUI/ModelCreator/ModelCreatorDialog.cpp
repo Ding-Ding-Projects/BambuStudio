@@ -1,7 +1,9 @@
 #include "ModelCreatorDialog.hpp"
 
 #include "../I18N.hpp"
+#include "../GUI_App.hpp"
 #include "../Widgets/MaterialIcon.hpp"
+#include "libslic3r/AppConfig.hpp"
 
 #ifndef _L
 #define _L(s) Slic3r::GUI::I18N::translate((s))
@@ -15,6 +17,10 @@
 #include <wx/stdpaths.h>
 #include <wx/textctrl.h>
 #include <wx/utils.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace Slic3r::GUI::ModelCreator {
 namespace {
@@ -32,6 +38,31 @@ wxTextCtrl *field(wxWindow *parent, wxSizer *sizer, const wxString &label,
 std::filesystem::path local_workspace()
 {
     return std::filesystem::path(wxStandardPaths::Get().GetUserLocalDataDir().ToStdWstring()) / "model-creator";
+}
+
+std::filesystem::path bundled_renderer(Renderer renderer)
+{
+    const auto executable = std::filesystem::path(wxStandardPaths::Get().GetExecutablePath().ToStdWstring());
+    const auto base = executable.parent_path() / "renderers";
+    return renderer == Renderer::OpenSCAD ?
+        base / "openscad-2021.01" / "openscad.com" :
+        base / "blender-5.2.2-windows-x64" / "blender.exe";
+}
+
+std::filesystem::path tool_on_path(Provider provider)
+{
+#ifdef _WIN32
+    const wchar_t *name = provider == Provider::ClaudeCli ? L"claude.exe" : L"codex.exe";
+    const DWORD size = SearchPathW(nullptr, name, nullptr, 0, nullptr, nullptr);
+    if (!size || size > 32768) return {};
+    std::wstring buffer(size, L'\0');
+    const DWORD written = SearchPathW(nullptr, name, nullptr, size, buffer.data(), nullptr);
+    if (!written || written >= size) return {};
+    buffer.resize(written);
+    return std::filesystem::path(buffer);
+#else
+    return {};
+#endif
 }
 }
 
@@ -52,11 +83,15 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     body->Add(m_provider, 0, wxEXPAND | wxBOTTOM, 8);
     m_model = field(this, body, _L("Provider model"), 0, _L("Enter an exact model ID"));
     m_provider_path = field(this, body, _L("Provider executable path"), 0, _L("Required for a CLI provider"));
+    m_connection = new wxStaticText(this, wxID_ANY, {});
+    body->Add(m_connection, 0, wxBOTTOM, 8);
     m_key = field(this, body, _L("API key"), wxTE_PASSWORD, _L("Stored in Windows Credential Manager"));
     auto *credentials = new wxBoxSizer(wxHORIZONTAL);
-    auto *save = new wxButton(this, wxID_ANY, _L("Save key"));
+    auto *save = new wxButton(this, wxID_ANY, _L("Add or replace key"));
+    m_test_key = new wxButton(this, wxID_ANY, _L("Test key"));
     auto *clear = new wxButton(this, wxID_ANY, _L("Clear key"));
     credentials->Add(save, 0, wxRIGHT, 8);
+    credentials->Add(m_test_key, 0, wxRIGHT, 8);
     credentials->Add(clear);
     body->Add(credentials, 0, wxBOTTOM, 8);
     body->Add(new wxStaticText(this, wxID_ANY, _L("Trusted renderer")), 0, wxBOTTOM, 4);
@@ -66,6 +101,8 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     m_renderer->SetSelection(0);
     body->Add(m_renderer, 0, wxEXPAND | wxBOTTOM, 8);
     m_renderer_path = field(this, body, _L("Renderer executable path"));
+    m_renderer_status = new wxStaticText(this, wxID_ANY, {});
+    body->Add(m_renderer_status, 0, wxBOTTOM, 8);
     m_prompt = field(this, body, _L("Describe the model"), wxTE_MULTILINE, _L("Dimensions are in millimeters"));
     m_prompt->SetMinSize(wxSize(-1, 90));
     m_note = field(this, body, _L("Refinement note"), wxTE_MULTILINE,
@@ -87,9 +124,9 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     footer->Add(m_cancel_button, 0, wxRIGHT, 6);
     footer->Add(m_preview, 0, wxRIGHT, 6);
     footer->Add(m_add);
-    m_provider->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { update_controls(); });
     m_history->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { select_revision(); });
     save->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { save_key(); });
+    m_test_key->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { test_key(); });
     clear->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { clear_key(); });
     m_generate->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { generate(); });
     m_cancel_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { cancel_generation(); });
@@ -103,6 +140,37 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
         if (index != wxNOT_FOUND && index < static_cast<int>(m_revisions.size()) && m_add_to_plate)
             m_add_to_plate(m_revisions[index].mesh);
     });
+    if (auto *config = wxGetApp().app_config) {
+        const auto provider = config->get("model_creator", "provider");
+        const auto renderer = config->get("model_creator", "renderer");
+        if (provider.size() == 1 && provider[0] >= '0' && provider[0] <= '3')
+            m_provider->SetSelection(provider[0] - '0');
+        if (renderer.size() == 1 && renderer[0] >= '0' && renderer[0] <= '1')
+            m_renderer->SetSelection(renderer[0] - '0');
+        m_model->SetValue(wxString::FromUTF8(config->get("model_creator", "model")));
+        m_provider_path->SetValue(wxString::FromUTF8(config->get("model_creator", "provider_path")));
+        m_renderer_path->SetValue(wxString::FromUTF8(config->get("model_creator", "renderer_path")));
+    }
+    if (m_provider_path->IsEmpty() && m_provider->GetSelection() < 2) {
+        const auto path = tool_on_path(static_cast<Provider>(m_provider->GetSelection()));
+        if (!path.empty()) m_provider_path->SetValue(wxString(path.wstring()));
+    }
+    update_renderer_path();
+    m_renderer->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
+        update_renderer_path();
+        save_preferences();
+        update_controls();
+    });
+    m_provider->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
+        if (m_provider->GetSelection() < 2) {
+            const auto path = tool_on_path(static_cast<Provider>(m_provider->GetSelection()));
+            if (!path.empty()) m_provider_path->SetValue(wxString(path.wstring()));
+        }
+        save_preferences();
+        update_controls();
+    });
+    for (wxTextCtrl *control : {m_model, m_provider_path, m_renderer_path})
+        control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_controls(); });
     SetMinSize(wxSize(650, 720));
     SetSize(wxSize(720, 780));
     try {
@@ -122,6 +190,7 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
 
 ModelCreatorDialog::~ModelCreatorDialog()
 {
+    save_preferences();
     m_alive->store(false);
     cancel_generation();
     if (m_worker.joinable()) m_worker.join();
@@ -130,9 +199,24 @@ ModelCreatorDialog::~ModelCreatorDialog()
 void ModelCreatorDialog::update_controls()
 {
     const bool api = m_provider->GetSelection() >= 2;
+    const auto provider = static_cast<Provider>(m_provider->GetSelection());
+    std::error_code path_error;
+    const bool provider_ready = api ? has_api_key(provider) :
+        std::filesystem::is_regular_file(
+            std::filesystem::path(m_provider_path->GetValue().ToStdWstring()), path_error);
+    m_connection->SetLabel(api ?
+        (provider_ready ? _L("API key saved in the local vault") : _L("No API key saved")) :
+        (provider_ready ? _L("CLI executable available") : _L("CLI executable not found")));
+    path_error.clear();
+    const auto renderer_path = std::filesystem::path(m_renderer_path->GetValue().ToStdWstring());
+    const bool renderer_ready = std::filesystem::is_regular_file(renderer_path, path_error);
+    const bool bundled = renderer_path == bundled_renderer(static_cast<Renderer>(m_renderer->GetSelection()));
+    m_renderer_status->SetLabel(!renderer_ready ? _L("Renderer executable not found") :
+        bundled ? _L("Bundled renderer ready") : _L("Custom renderer ready"));
     m_provider_path->Enable(!api && !m_busy);
     m_key->Enable(api && !m_busy);
-    m_generate->Enable(!m_busy);
+    m_test_key->Enable(api && !m_busy && provider_ready);
+    m_generate->Enable(!m_busy && provider_ready && renderer_ready && !m_model->IsEmpty());
     m_cancel_button->Enable(m_busy);
     const bool selected = m_history->GetSelection() != wxNOT_FOUND;
     m_preview->Enable(selected && !m_busy);
@@ -146,6 +230,28 @@ void ModelCreatorDialog::save_key()
     m_key->Clear();
     m_status->SetValue(saved ? _L("Key saved in the local credential vault") :
                                _L("Choose an API provider and enter a key"));
+    update_controls();
+}
+
+void ModelCreatorDialog::test_key()
+{
+    if (m_busy || m_provider->GetSelection() < 2) return;
+    if (m_worker.joinable()) m_worker.join();
+    const auto provider = static_cast<Provider>(m_provider->GetSelection());
+    m_busy = true;
+    m_status->SetValue(_L("Testing provider connection..."));
+    update_controls();
+    m_worker = std::thread([this, provider, alive = m_alive] {
+        std::string error;
+        const bool connected = test_api_key(provider, error);
+        if (!alive->load()) return;
+        wxTheApp->CallAfter([this, alive, connected, error = std::move(error)] {
+            if (!alive->load()) return;
+            m_busy = false;
+            m_status->SetValue(connected ? _L("Provider connection ready") : wxString::FromUTF8(error));
+            update_controls();
+        });
+    });
 }
 
 void ModelCreatorDialog::clear_key()
@@ -153,6 +259,7 @@ void ModelCreatorDialog::clear_key()
     const bool cleared = clear_api_key(static_cast<Provider>(m_provider->GetSelection()));
     m_key->Clear();
     m_status->SetValue(cleared ? _L("Saved key removed") : _L("No saved key was removed"));
+    update_controls();
 }
 
 void ModelCreatorDialog::generate()
@@ -166,6 +273,7 @@ void ModelCreatorDialog::generate()
     settings.provider_executable = m_provider_path->GetValue().ToStdWstring();
     settings.renderer_executable = m_renderer_path->GetValue().ToStdWstring();
     settings.workspace = local_workspace();
+    save_preferences();
     const std::string prompt = m_prompt->GetValue().ToStdString();
     const std::string note = m_note->GetValue().ToStdString();
     m_cancel = std::make_shared<std::atomic_bool>(false);
@@ -190,6 +298,29 @@ void ModelCreatorDialog::generate()
             update_controls();
         });
     });
+}
+
+void ModelCreatorDialog::update_renderer_path()
+{
+    const auto selected = static_cast<Renderer>(m_renderer->GetSelection());
+    const auto current = m_renderer_path->GetValue().ToStdWstring();
+    const auto other = bundled_renderer(selected == Renderer::OpenSCAD ? Renderer::Blender : Renderer::OpenSCAD);
+    if (current.empty() || current == other.wstring())
+        m_renderer_path->SetValue(wxString(bundled_renderer(selected).wstring()));
+}
+
+void ModelCreatorDialog::save_preferences()
+{
+    auto *config = wxGetApp().app_config;
+    if (!config) return;
+    config->set("model_creator", "provider", std::to_string(m_provider->GetSelection()));
+    config->set("model_creator", "renderer", std::to_string(m_renderer->GetSelection()));
+    config->set("model_creator", "model", m_model->GetValue().ToStdString());
+    config->set("model_creator", "provider_path", m_provider_path->GetValue().ToStdString());
+    const auto renderer = static_cast<Renderer>(m_renderer->GetSelection());
+    const auto path = m_renderer_path->GetValue().ToStdWstring();
+    config->set("model_creator", "renderer_path",
+                path == bundled_renderer(renderer).wstring() ? std::string() : m_renderer_path->GetValue().ToStdString());
 }
 
 void ModelCreatorDialog::cancel_generation()

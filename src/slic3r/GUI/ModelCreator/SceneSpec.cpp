@@ -142,6 +142,7 @@ std::string emit_blender(const SceneSpec &scene)
         out << "bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)\n";
     }
     out << "bpy.ops.object.select_all(action='SELECT')\n"
+        << "bpy.ops.wm.save_as_mainfile(filepath=__import__('sys').argv[-2])\n"
         << "bpy.ops.wm.stl_export(filepath=__import__('sys').argv[-1], export_selected_objects=True)\n";
     return out.str();
 }
