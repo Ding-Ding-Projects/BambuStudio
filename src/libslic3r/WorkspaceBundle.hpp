@@ -67,6 +67,10 @@ struct Result {
 
 std::string new_id();
 
+// Checks that a member is a readable 3MF archive with one model and at most
+// one matching portable-history manifest and pack. It does not modify files.
+bool validate_member_3mf(const std::filesystem::path &path);
+
 // Save never changes the source files. A failed save retains the old archive
 // and the staging archive in the destination directory for recovery.
 Result save_bundle(const Workspace &workspace, const std::filesystem::path &destination);
