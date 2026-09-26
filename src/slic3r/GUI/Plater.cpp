@@ -200,6 +200,8 @@
 #include "ObjColorDialog.hpp"
 
 #include "libslic3r/CustomGCode.hpp"
+#include "FilamentGroupPopup.hpp"
+#include "PrintWorkflowState.hpp"
 #include "libslic3r/Platform.hpp"
 #include "nlohmann/json.hpp"
 
@@ -4574,7 +4576,7 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
         auto menu = p->plater->filament_action_menu(filament_idx);
         p->m_menu_filament_id = filament_idx;
         // Anchored below the button so the surface never covers its opener.
-        MD3::PopupMenuBelow(edit_btn, menu);
+        MD3::PopupMenuBelow(edit_btn, menu, true);
     });
     combobox->edit_btn = edit_btn;
 
@@ -8366,7 +8368,14 @@ public:
     //BBS: add a flag to ignore cancel event
     bool m_ignore_event{false};
     bool m_slice_all{false};
+    // True only for a project created here, never for imported 3MF settings.
+    bool m_fresh_project_mapping_preference_owned{false};
     bool m_is_slicing {false};
+    // A one-shot request belongs to one explicit slice and one unchanged plate.
+    uint64_t m_slice_request_generation{0};
+    uint64_t m_print_after_slice_generation{0};
+    PartPlate *m_print_after_slice_plate{nullptr};
+    int m_print_after_slice_index{-1};
     bool m_is_publishing {false};
     int m_is_RightClickInLeftUI{-1};
     int m_cur_slice_plate;
@@ -9683,6 +9692,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         //BBS: set on_slice to false
         q->Bind(EVT_GLVIEWTOOLBAR_PREVIEW, [q](SimpleEvent&) { q->select_view_3D("Preview", false); });
         q->Bind(EVT_GLTOOLBAR_SLICE_PLATE, &priv::on_action_slice_plate, this);
+        q->Bind(EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE, &priv::on_action_slice_plate, this);
         q->Bind(EVT_GLTOOLBAR_SLICE_ALL, &priv::on_action_slice_all, this);
         q->Bind(EVT_GLTOOLBAR_PRINT_PLATE, &priv::on_action_print_plate, this);
         q->Bind(EVT_PRINT_FROM_SDCARD_VIEW, &priv::on_action_print_plate_from_sdcard, this);
@@ -12976,6 +12986,8 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
     // early return leaves the caller's explicit success signal false.
     if (successful_3mf_loaded != nullptr)
         *successful_3mf_loaded = successful_3mf_applied;
+    if (successful_3mf_applied)
+        m_fresh_project_mapping_preference_owned = false;
     return obj_idxs;
 }
 
@@ -15852,6 +15864,17 @@ void Plater::priv::on_select_preset(wxCommandEvent &evt)
                 q->on_config_change(wxGetApp().preset_bundle->full_config());
             });
 
+            // A fresh project's inherited plate modes may follow the selected
+            // printer. Imported 3MF settings and explicit plate choices may not.
+            const auto preferred = get_preferred_filament_map_mode_for_current_printer();
+            if (PrintWorkflowState::may_apply_saved_mapping(
+                    m_fresh_project_mapping_preference_owned,
+                    std::all_of(partplate_list.get_plate_list().begin(), partplate_list.get_plate_list().end(),
+                                [](const PartPlate *plate) { return plate && plate->get_filament_map_mode() == fmmDefault; }),
+                    is_auto_filament_map_mode(preferred))) {
+                    q->set_global_filament_map_mode(preferred);
+            }
+
 
             if (old_preset_name != preset_name && wxGetApp().app_config->get("auto_calculate_flush") == "all") {
                 wxGetApp().plater()->sidebar().auto_calc_flushing_volumes(-1);
@@ -16156,6 +16179,9 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
     //BBS:ignore cancel event for some special case
     if (m_ignore_event)
     {
+        m_print_after_slice_plate = nullptr;
+        m_print_after_slice_index = -1;
+        m_print_after_slice_generation = 0;
         m_ignore_event = false;
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": ignore this event %1%") % evt.status();
         return;
@@ -16377,6 +16403,23 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
             }
         }
         q->SetDropTarget(new PlaterDropTarget(q));
+        const bool same_plate = m_print_after_slice_plate != nullptr &&
+            partplate_list.get_curr_plate_index() == m_print_after_slice_index &&
+            partplate_list.get_curr_plate() == m_print_after_slice_plate &&
+            background_process.get_current_plate() == m_print_after_slice_plate;
+        const bool continue_to_setup = PrintWorkflowState::may_open_print_setup(
+            m_print_after_slice_generation, m_slice_request_generation, same_plate,
+            !has_error && !evt.cancelled() && evt.success(),
+            same_plate && m_print_after_slice_plate->has_printable_instances() &&
+            m_print_after_slice_plate->is_slice_result_ready_for_print());
+        // Clear before the modal setup. A stale request must never survive it.
+        m_print_after_slice_plate = nullptr;
+        m_print_after_slice_index = -1;
+        m_print_after_slice_generation = 0;
+        if (continue_to_setup) {
+            SimpleEvent print_event(EVT_GLTOOLBAR_PRINT_PLATE);
+            on_action_print_plate(print_event);
+        }
     }
     else
     {
@@ -16447,9 +16490,18 @@ void Plater::priv::on_action_open_project(SimpleEvent&)
 }
 
 //BBS: GUI refactor: slice plate
-void Plater::priv::on_action_slice_plate(SimpleEvent&)
+void Plater::priv::on_action_slice_plate(SimpleEvent& event)
 {
     if (q != nullptr) {
+        ++m_slice_request_generation;
+        m_print_after_slice_plate = nullptr;
+        m_print_after_slice_index = -1;
+        m_print_after_slice_generation = 0;
+        if (event.GetEventType() == EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE) {
+            m_print_after_slice_plate = partplate_list.get_curr_plate();
+            m_print_after_slice_index = partplate_list.get_curr_plate_index();
+            m_print_after_slice_generation = m_slice_request_generation;
+        }
         BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << ":received slice plate event\n";
         //BBS update extruder params and speed table before slicing
         const Slic3r::DynamicPrintConfig& config = wxGetApp().preset_bundle->full_config();
@@ -16478,6 +16530,11 @@ void Plater::priv::on_action_slice_plate(SimpleEvent&)
         }
 
         q->reslice();
+        if (!m_is_slicing) {
+            m_print_after_slice_plate = nullptr;
+            m_print_after_slice_index = -1;
+            m_print_after_slice_generation = 0;
+        }
         q->select_view_3D("Preview");
     }
 }
@@ -18919,6 +18976,10 @@ void Plater::priv::on_helio_input_dlg(SimpleEvent &a)
 void Plater::priv::on_action_slice_all(SimpleEvent&)
 {
     if (q != nullptr) {
+        ++m_slice_request_generation;
+        m_print_after_slice_plate = nullptr;
+        m_print_after_slice_index = -1;
+        m_print_after_slice_generation = 0;
         BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << ":received slice project event\n";
         //BBS update extruder params and speed table before slicing
         const Slic3r::DynamicPrintConfig& config = wxGetApp().preset_bundle->full_config();
@@ -23291,6 +23352,11 @@ int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_
     // outgoing revision. On failure the current document remains untouched.
     if (!p->reset(transfer_preset_changes))
         return wxID_CANCEL;
+    cancel_pending_print_after_slice();
+    p->m_fresh_project_mapping_preference_owned = true;
+    const auto preferred_map_mode = get_preferred_filament_map_mode_for_current_printer();
+    if (is_auto_filament_map_mode(preferred_map_mode))
+        set_global_filament_map_mode(preferred_map_mode);
 
     model().calib_pa_pattern.reset(nullptr);
     model().plates_custom_gcodes.clear();
@@ -23345,6 +23411,14 @@ int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_
     up_to_date(true, false);
     up_to_date(true, true);
     return wxID_YES;
+}
+
+void Plater::cancel_pending_print_after_slice()
+{
+    if (!p) return;
+    p->m_print_after_slice_plate = nullptr;
+    p->m_print_after_slice_index = -1;
+    p->m_print_after_slice_generation = 0;
 }
 
 bool Plater::try_sync_preset_with_connected_printer(int& nozzle_diameter)
@@ -28515,6 +28589,8 @@ void Plater::on_config_change(const DynamicPrintConfig &config)
     bool bed_shape_changed = false;
     //bool print_sequence_changed = false;
     t_config_option_keys diff_keys = p->config->diff(config);
+    if (!diff_keys.empty())
+        cancel_pending_print_after_slice();
 
     size_t old_nozzle_size = 1, new_nozzle_size = 1;
     auto * opt_old = p->config->option<ConfigOptionFloatsNullable>("nozzle_diameter");
@@ -28599,7 +28675,15 @@ void Plater::on_config_change(const DynamicPrintConfig &config)
             if (old_nozzle_size != new_nozzle_size) {
                 update_flush_volume_matrix(old_nozzle_size, new_nozzle_size);
             }
-            set_global_filament_map_mode(fmmAutoForFlush);
+            // Printer changes may update the inherited mode of a fresh project.
+            // An imported project's own mapping remains authoritative.
+            const auto preferred = get_preferred_filament_map_mode_for_current_printer();
+            if (PrintWorkflowState::may_apply_saved_mapping(
+                    p->m_fresh_project_mapping_preference_owned,
+                    std::all_of(p->partplate_list.get_plate_list().begin(), p->partplate_list.get_plate_list().end(),
+                                [](const PartPlate *plate) { return plate && plate->get_filament_map_mode() == fmmDefault; }),
+                    is_auto_filament_map_mode(preferred)))
+                set_global_filament_map_mode(preferred);
 
             // update to force bed selection(for texturing)
             bed_shape_changed = true;
@@ -29981,6 +30065,8 @@ void Plater::apply_background_progress()
 int Plater::select_plate(int plate_index, bool need_slice)
 {
     int ret;
+    if (plate_index != p->partplate_list.get_curr_plate_index())
+        cancel_pending_print_after_slice();
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(" %1%: plate %2%, need_slice %3% ")%__LINE__ %plate_index  %need_slice;
     take_snapshot("select partplate!");
     ret = p->partplate_list.select_plate(plate_index);
@@ -30350,9 +30436,9 @@ void Plater::open_platesettings_dialog(wxCommandEvent& evt) {
 
 void Plater::open_filament_map_setting_dialog(wxCommandEvent &evt)
 {
+    cancel_pending_print_after_slice();
     PartPlate* curr_plate = p->partplate_list.get_curr_plate();
-    int value = evt.GetInt(); //1 means from gcode view
-    bool need_slice = value ==1;  // If from gcode view, should slice
+    (void)evt;
 
     auto preset_bundle = wxGetApp().preset_bundle;
     const auto& project_config = wxGetApp().preset_bundle->project_config;
@@ -30387,7 +30473,8 @@ void Plater::open_filament_map_setting_dialog(wxCommandEvent &evt)
         available_modes
     );
 
-    if (filament_dlg.ShowModal() == wxID_OK) {
+    const int map_action = filament_dlg.ShowModal();
+    if (map_action == wxID_OK || map_action == wxID_APPLY) {
         std::vector<int> new_filament_maps = filament_dlg.get_filament_maps();
         std::vector<int> old_filament_maps = curr_plate->get_real_filament_maps(project_config);
 
@@ -30410,15 +30497,17 @@ void Plater::open_filament_map_setting_dialog(wxCommandEvent &evt)
                                 old_filament_maps != new_filament_maps ||
                                 old_filament_volume_maps != new_filament_volume_maps);
 
-        if (need_invalidate) {
+        if (need_invalidate || map_action == wxID_APPLY) {
+            curr_plate->update_slice_result_valid_state(false);
+            set_plater_dirty(true);
             wxString filament_printable_error_msg;
-            if (need_slice && curr_plate->check_filament_printable(wxGetApp().preset_bundle->full_config(), filament_printable_error_msg)) {
+            if (map_action == wxID_APPLY &&
+                curr_plate->check_filament_printable(wxGetApp().preset_bundle->full_config(), filament_printable_error_msg)) {
                 update(false, true);
                 wxPostEvent(this, SimpleEvent(EVT_GLTOOLBAR_SLICE_PLATE));
             } else {
-                curr_plate->update_slice_result_valid_state(false);
-                set_plater_dirty(true);
                 update(false, true);
+                wxGetApp().mainframe->select_tab(MainFrame::tp3DEditor);
             }
         }
     }
@@ -30443,6 +30532,8 @@ int Plater::select_plate_by_hover_id(int hover_id, bool right_click, bool isModi
     if (action == 0)
     {
         //select plate
+        if (plate_index != p->partplate_list.get_curr_plate_index())
+            cancel_pending_print_after_slice();
         ret = p->partplate_list.select_plate(plate_index);
         if (!ret) {
             SimpleEvent event(EVT_GLCANVAS_PLATE_SELECT);

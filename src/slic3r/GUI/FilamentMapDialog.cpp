@@ -216,7 +216,7 @@ bool try_pop_up_before_slice(bool is_slice_all, Plater* plater_ref, PartPlate* p
     );
     auto ret = map_dlg.ShowModal();
 
-    if (ret == wxID_OK) {
+    if (ret == wxID_OK || ret == wxID_APPLY) {
         FilamentMapMode new_mode = map_dlg.get_mode();
         std::vector<int> new_maps = map_dlg.get_filament_maps();
         std::vector<int> new_volume_maps = map_dlg.get_filament_volume_maps();
@@ -357,6 +357,13 @@ void FilamentMapDialog::make_body(
         default_auto_mode = modes_to_use.front();
 
     m_manual_panel = new FilamentMapManualPanel(this, m_filament_type, filaments, m_filament_map, m_filament_volume_map);
+    Bind(wxEVT_SWAP_AND_RESLICE, [this](wxCommandEvent &) {
+        if (m_page_type != PageType::ptManual || !m_ok_btn->IsEnabled()) return;
+        auto *manual = static_cast<FilamentMapManualPanel *>(m_manual_panel);
+        m_filament_map = manual->GetFilamentMaps();
+        m_filament_volume_map = manual->GetFilamentVolumeMaps();
+        EndModal(wxID_APPLY);
+    });
     m_manual_panel->Bind(wxEVT_INVALID_MANUAL_MAP, [this](wxCommandEvent &event) {
         if (m_page_type != PageType::ptManual) {
             if (!m_ok_btn->IsEnabled()) { m_ok_btn->Enable(); }

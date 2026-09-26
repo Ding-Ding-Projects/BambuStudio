@@ -7,6 +7,8 @@
 #include <boost/log/trivial.hpp>
 #include <cassert>
 #include <wx/dcbuffer.h>
+#include <wx/choice.h>
+#include <wx/button.h>
 #include "wx/graphics.h"
 #include "Widgets/Label.hpp"
 #include <map>
@@ -30,8 +32,11 @@ static const wxColour TextDisableColor = ThemeColor::TextDisabled;
 static const wxColour TextErrorColor = ThemeColor::Danger;           // Error
 
 wxDEFINE_EVENT(wxEVT_INVALID_MANUAL_MAP, wxCommandEvent);
+wxDEFINE_EVENT(wxEVT_SWAP_AND_RESLICE, wxCommandEvent);
 
-void FilamentMapManualPanel::OnTimer(wxTimerEvent &)
+void FilamentMapManualPanel::OnTimer(wxTimerEvent &) { ValidateNow(); }
+
+void FilamentMapManualPanel::ValidateNow()
 {
     bool valid = true;
     int  invalid_eid = -1;
@@ -304,6 +309,46 @@ FilamentMapManualPanel::FilamentMapManualPanel(wxWindow                       *p
 
     top_sizer->Add(drag_sizer, 0, wxALIGN_CENTER | wxEXPAND);
 
+    // Keyboard-accessible counterparts to dragging individual material cards.
+    auto *move_row = new wxBoxSizer(wxHORIZONTAL);
+    auto *material = new wxChoice(this, wxID_ANY);
+    std::vector<int> visible_ids;
+    for (const int id : m_filament_list) {
+        if (id > 0 && static_cast<size_t>(id) <= m_filament_type.size()) {
+            material->Append(wxString::Format(_L("Material %d"), id) + ": " +
+                             wxString::FromUTF8(m_filament_type[id - 1].c_str()));
+            visible_ids.push_back(id);
+        }
+    }
+    if (material->GetCount() > 0) material->SetSelection(0);
+    auto *move_left = new wxButton(this, wxID_ANY, _L("Move to left nozzle"));
+    auto *move_right = new wxButton(this, wxID_ANY, _L("Move to right nozzle"));
+    auto *swap_groups = new wxButton(this, wxID_ANY, _L("Swap groups"));
+    auto *swap_reslice = new wxButton(this, wxID_ANY, _L("Swap and reslice"));
+    move_row->Add(material, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    move_row->Add(move_left, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
+    move_row->Add(move_right, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
+    top_sizer->Add(move_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    auto *swap_row = new wxBoxSizer(wxHORIZONTAL);
+    swap_row->Add(swap_groups, 0, wxRIGHT, FromDIP(8));
+    swap_row->Add(swap_reslice);
+    top_sizer->Add(swap_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    move_left->Bind(wxEVT_BUTTON, [this, material, visible_ids](wxCommandEvent &) {
+        if (material->GetSelection() != wxNOT_FOUND)
+            MoveSelectedFilament(visible_ids.at(material->GetSelection()), true);
+    });
+    move_right->Bind(wxEVT_BUTTON, [this, material, visible_ids](wxCommandEvent &) {
+        if (material->GetSelection() != wxNOT_FOUND)
+            MoveSelectedFilament(visible_ids.at(material->GetSelection()), false);
+    });
+    swap_groups->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { SwapGroups(); });
+    swap_reslice->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        SwapGroups();
+        ValidateNow();
+        wxCommandEvent request(wxEVT_SWAP_AND_RESLICE);
+        wxPostEvent(GetParent(), request);
+    });
+
     m_tips = new Label(this, _L("Tips: You can drag the filaments to reassign them to different nozzles."));
     m_tips->SetFont(Label::Body_13);
     m_tips->SetForegroundColour(TextNormalGreyColor);
@@ -404,6 +449,11 @@ FilamentMapManualPanel::~FilamentMapManualPanel()
 
 void FilamentMapManualPanel::OnSwitchFilament(wxCommandEvent &)
 {
+    SwapGroups();
+}
+
+void FilamentMapManualPanel::SwapGroups()
+{
     auto left_blocks  = m_left_panel->get_filament_blocks();
     auto right_blocks = m_right_panel->get_filament_blocks();
 
@@ -425,6 +475,32 @@ void FilamentMapManualPanel::OnSwitchFilament(wxCommandEvent &)
         m_right_panel->Layout();
         m_right_panel->Fit();
         SyncPanelHeights();
+    }
+    ValidateNow();
+}
+
+void FilamentMapManualPanel::MoveSelectedFilament(int id, bool to_left)
+{
+    if (to_left) {
+        for (auto *block : m_right_panel->get_filament_blocks()) {
+            if (block->GetFilamentId() != id) continue;
+            m_left_panel->AddColorBlock(block->GetType(), id, false);
+            m_right_panel->RemoveColorBlock(block, false);
+            SyncPanelHeights();
+            ValidateNow();
+            return;
+        }
+    } else {
+        for (auto *block : m_left_panel->get_filament_blocks()) {
+            if (block->GetFilamentId() != id) continue;
+            const bool high_flow = static_cast<size_t>(id) <= m_filament_volume_map.size() &&
+                                   m_filament_volume_map[id - 1] == 1;
+            m_right_panel->AddColorBlock(block->GetType(), id, high_flow, false);
+            m_left_panel->RemoveColorBlock(block, false);
+            SyncPanelHeights();
+            ValidateNow();
+            return;
+        }
     }
 }
 

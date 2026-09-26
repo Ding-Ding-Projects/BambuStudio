@@ -1,0 +1,5 @@
+add_executable(print_workflow_tests print_workflow_tests.cpp)
+target_include_directories(print_workflow_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(print_workflow_tests test_common)
+set_property(TARGET print_workflow_tests PROPERTY FOLDER "tests")
+add_test(print_workflow_tests print_workflow_tests "${CATCH_EXTRA_ARGS}")

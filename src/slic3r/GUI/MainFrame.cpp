@@ -47,6 +47,7 @@
 #include "ConfigProfilesDialog.hpp"
 #include "CommandPalette.hpp"
 #include "CommandPaletteIndex.hpp"
+#include "ModelCreator/ModelCreatorDialog.hpp"
 #include "Appearance/AppearanceEditorPopover.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
@@ -2955,6 +2956,7 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     auto print_panel = new wxPanel(parent,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxTRANSPARENT_WINDOW);
 
     m_slice_btn = new SideButton(slice_panel, _L("Slice plate"), "");
+    m_slice_print_btn = new SideButton(slice_panel, _L("Slice and print"), "");
     // The kit has no dropdown carets, so the legacy raster 'sidebutton_dropdown'
     // glyph is dropped; the options segment survives as a functional pill (its
     // Material Symbol 'arrow_drop_down' is deferred to the icon wave). Since that
@@ -2974,6 +2976,7 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
     auto slice_sizer = new wxBoxSizer(wxHORIZONTAL);
     slice_sizer->Add(m_slice_option_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
     slice_sizer->Add(m_slice_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
+    slice_sizer->Add(m_slice_print_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(8));
     slice_panel->SetSizer(slice_sizer);
 
     auto print_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -3068,14 +3071,15 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
         });
 #endif
 
-    m_slice_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event) {
+    auto start_slice = [this](bool print_after_slice) {
+            m_plater->cancel_pending_print_after_slice();
             if (!wxGetApp().check_slice_version_policy()) return;
 
             if (m_plater->is_background_process_update_scheduled())
                 m_plater->update(false, true);
 
             m_plater->reset_check_status();
-            if (!m_plater->check_ams_status(m_slice_select == eSliceAll))
+            if (!m_plater->check_ams_status(!print_after_slice && m_slice_select == eSliceAll))
                 return;
             m_plater->set_slice_from_slice_btn(true);
 
@@ -3087,9 +3091,9 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
             auto curr_plate = m_plater->get_partplate_list().get_curr_plate();
             #ifdef __linux__
-                slice = try_pop_up_before_slice(m_slice_select == eSliceAll, m_plater, curr_plate, true);
+                slice = try_pop_up_before_slice(!print_after_slice && m_slice_select == eSliceAll, m_plater, curr_plate, true);
             #else
-                slice = try_pop_up_before_slice(m_slice_select == eSliceAll, m_plater, curr_plate, false);
+                slice = try_pop_up_before_slice(!print_after_slice && m_slice_select == eSliceAll, m_plater, curr_plate, false);
             #endif
 
             bool model_fits     = false;
@@ -3150,14 +3154,18 @@ wxBoxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
 
                 if (slice) {
-                    if (m_slice_select == eSliceAll)
+                    if (print_after_slice)
+                        wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_SLICE_AND_PRINT_PLATE));
+                    else if (m_slice_select == eSliceAll)
                         wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_SLICE_ALL));
                     else if (m_slice_select == eSlicePlate)
                         wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_SLICE_PLATE));
                     this->m_tabpanel->SetSelection(tpPreview);
                 }
             }
-        });
+        };
+    m_slice_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(false); });
+    m_slice_print_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(true); });
 
     m_print_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event)
         {
@@ -3691,8 +3699,10 @@ void MainFrame::update_side_button_style()
     };
 
     style_outlined(m_slice_btn);
+    style_outlined(m_slice_print_btn);
     style_outlined(m_slice_option_btn);
     layout_main(m_slice_btn);
+    layout_main(m_slice_print_btn);
     layout_option(m_slice_option_btn);
 
     style_filled(m_print_btn);
@@ -3703,6 +3713,9 @@ void MainFrame::update_side_button_style()
 
 void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_slice, bool can_print)
 {
+    if (m_plater && !m_plater->is_background_process_slicing() &&
+        (event == eEventObjectUpdate || event == eEventPlateUpdate))
+        m_plater->cancel_pending_print_after_slice();
     bool enable_print = true, enable_slice = true;
 
     if (!can_slice)
@@ -3735,6 +3748,7 @@ void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_sl
     // tooltip; the tooltip is cleared as soon as printing becomes possible.
     m_print_btn->SetToolTip(enable_print ? wxString() : print_disabled_reason);
     m_slice_btn->Enable(enable_slice);
+    m_slice_print_btn->Enable(enable_slice);
     m_slice_enable = enable_slice;
     m_print_enable = enable_print;
 
@@ -3790,6 +3804,7 @@ void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
 
     update_side_button_style();
     m_slice_btn->Rescale();
+    m_slice_print_btn->Rescale();
     m_print_btn->Rescale();
     m_slice_option_btn->Rescale();
     m_print_option_btn->Rescale();
@@ -4216,6 +4231,15 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(import_menu, wxID_ANY, _L("Import Configs") + dots /*+ "\tCtrl+I"*/, _L("Load configs"),
             [this](wxCommandEvent&) { load_config_file(); }, "menu_import", nullptr,
             [this](){return true; }, this);
+        append_menu_item(import_menu, wxID_ANY, _L("Model Creator") + dots,
+            _L("Describe, preview, and explicitly add a model to the plate"),
+            [this](wxCommandEvent&) {
+                if (!m_plater) return;
+                ModelCreator::ModelCreatorDialog dialog(this, [this](const std::filesystem::path &mesh) {
+                    if (m_plater) m_plater->load_files(std::vector<std::string>{mesh.u8string()}, LoadStrategy::LoadModel);
+                });
+                dialog.ShowModal();
+            }, "menu_import", nullptr, [this](){return can_add_models(); }, this);
 
         append_submenu(fileMenu, import_menu, wxID_ANY, _L("Import"), "");
 
