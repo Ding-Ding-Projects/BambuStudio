@@ -54,6 +54,16 @@ int main(int argc, char *argv[])
         std::cout << std::filesystem::path(home).string() << "\n" << inherited << "\n";
         return 0;
     }
+    if (argc >= 2 && std::string(argv[1]) == "--flood") {
+        std::cout << std::string(2 * 1024 * 1024, 'x') << std::flush;
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        return 0;
+    }
+    if (argc >= 3 && std::string(argv[1]) == "--direct-flood") {
+        std::ofstream(argv[2], std::ios::binary) << std::string(2 * 1024 * 1024, 'x');
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        return 0;
+    }
     return Catch::Session().run(argc, argv);
 }
 
@@ -113,4 +123,35 @@ TEST_CASE("Cancellation kills the entire process tree")
     REQUIRE(error == "Canceled");
     std::this_thread::sleep_for(std::chrono::seconds(4));
     REQUIRE_FALSE(std::filesystem::exists(marker));
+}
+
+TEST_CASE("Worker output is capped before a flooding process finishes")
+{
+    const auto directory = fixture_dir();
+    const auto input = directory / "empty.txt";
+    { std::ofstream stream(input); }
+    for (const auto role : {ProcessRole::ClaudeCli, ProcessRole::Renderer}) {
+        const auto output = directory / (role == ProcessRole::Renderer ? "flood-render.log" : "flood-cli.txt");
+        std::atomic_bool cancel{false};
+        std::string error;
+        REQUIRE_FALSE(run_isolated_process(self_path(), {"--flood"}, input, output,
+                                           directory, 10, cancel, role, error));
+        REQUIRE(error == "Process output exceeded its limit");
+        REQUIRE(std::filesystem::file_size(output) <=
+                (role == ProcessRole::Renderer ? 1024 * 1024 : 256 * 1024));
+    }
+}
+
+TEST_CASE("Codex structured output overflow terminates the process")
+{
+    const auto directory = fixture_dir();
+    const auto input = directory / "empty.txt", trace = directory / "direct-flood-trace.txt";
+    const auto response = directory / "response.txt";
+    std::filesystem::remove(response);
+    { std::ofstream stream(input); }
+    std::atomic_bool cancel{false};
+    std::string error;
+    REQUIRE_FALSE(run_isolated_process(self_path(), {"--direct-flood", response.string()}, input, trace,
+                                       directory, 10, cancel, ProcessRole::CodexCli, error));
+    REQUIRE(error == "Process output exceeded its limit");
 }

@@ -1,6 +1,7 @@
 #include "ProcessRunner.hpp"
 
 #include <chrono>
+#include <atomic>
 #include <fstream>
 #include <thread>
 
@@ -123,6 +124,14 @@ bool job_empty(HANDLE job)
                                      sizeof(info), nullptr) && info.ActiveProcesses == 0;
 }
 
+constexpr size_t max_cli_output = 256 * 1024;
+constexpr size_t max_renderer_log = 1024 * 1024;
+
+size_t output_limit(ProcessRole role)
+{
+    return role == ProcessRole::Renderer ? max_renderer_log : max_cli_output;
+}
+
 } // namespace
 
 bool run_isolated_process(const std::filesystem::path &program,
@@ -139,8 +148,16 @@ bool run_isolated_process(const std::filesystem::path &program,
     SECURITY_ATTRIBUTES security{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
     Handle in(CreateFileW(input.c_str(), GENERIC_READ, FILE_SHARE_READ, &security, OPEN_EXISTING,
                           FILE_ATTRIBUTE_NORMAL, nullptr));
-    Handle out(CreateFileW(output.c_str(), GENERIC_WRITE, FILE_SHARE_READ, &security, CREATE_ALWAYS,
+    Handle out(CreateFileW(output.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS,
                            FILE_ATTRIBUTE_NORMAL, nullptr));
+    HANDLE pipe_read = nullptr, pipe_write = nullptr;
+    if (!CreatePipe(&pipe_read, &pipe_write, &security, 0)) {
+        error = "Could not prepare bounded process output"; return false;
+    }
+    Handle read(pipe_read), write(pipe_write);
+    if (!SetHandleInformation(read.value, HANDLE_FLAG_INHERIT, 0)) {
+        error = "Could not isolate process output"; return false;
+    }
     Handle err(CreateFileW(L"NUL", GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &security,
                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
     if (in.value == INVALID_HANDLE_VALUE || out.value == INVALID_HANDLE_VALUE || err.value == INVALID_HANDLE_VALUE) {
@@ -153,7 +170,7 @@ bool run_isolated_process(const std::filesystem::path &program,
     if (!InitializeProcThreadAttributeList(attributes, 1, 0, &attribute_size)) {
         error = "Could not isolate inherited handles"; return false;
     }
-    HANDLE inherited[] = {in.value, out.value, err.value};
+    HANDLE inherited[] = {in.value, write.value, err.value};
     const bool handles_ready = UpdateProcThreadAttribute(attributes, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
                                                          inherited, sizeof(inherited), nullptr, nullptr);
     if (!handles_ready) { DeleteProcThreadAttributeList(attributes); error = "Could not limit inherited handles"; return false; }
@@ -161,7 +178,7 @@ bool run_isolated_process(const std::filesystem::path &program,
     startup.StartupInfo.cb = sizeof(startup);
     startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
     startup.StartupInfo.hStdInput = in.value;
-    startup.StartupInfo.hStdOutput = out.value;
+    startup.StartupInfo.hStdOutput = write.value;
     startup.StartupInfo.hStdError = err.value;
     startup.lpAttributeList = attributes;
     PROCESS_INFORMATION process{};
@@ -195,16 +212,56 @@ bool run_isolated_process(const std::filesystem::path &program,
         WaitForSingleObject(child.value, 5000);
         error = "Could not resume contained process"; return false;
     }
+    CloseHandle(write.value);
+    write.value = nullptr;
+    std::atomic_bool output_overflow{false};
+    std::atomic_bool output_io_error{false};
+    std::thread collector([&] {
+        char buffer[8192];
+        size_t written = 0;
+        DWORD received = 0;
+        while (ReadFile(read.value, buffer, sizeof(buffer), &received, nullptr) && received > 0) {
+            const size_t allowed = std::min<size_t>(received, output_limit(role) - written);
+            DWORD saved = 0;
+            if (allowed && (!WriteFile(out.value, buffer, static_cast<DWORD>(allowed), &saved, nullptr) || saved != allowed)) {
+                output_io_error.store(true);
+                return;
+            }
+            written += allowed;
+            if (allowed != received) {
+                output_overflow.store(true);
+                return;
+            }
+        }
+    });
+    const auto direct_output_overflow = [&] {
+        if (role != ProcessRole::CodexCli) return false;
+        std::error_code file_error;
+        const auto size = std::filesystem::file_size(directory / "response.txt", file_error);
+        return !file_error && size > 65536;
+    };
+    bool direct_overflow = false;
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(timeout_seconds);
-    while (!job_empty(job.value) && !cancel && std::chrono::steady_clock::now() < deadline)
+    while (!job_empty(job.value) && !cancel && !output_overflow && !output_io_error &&
+           !(direct_overflow = direct_output_overflow()) && std::chrono::steady_clock::now() < deadline)
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    if (cancel || std::chrono::steady_clock::now() >= deadline) {
+    direct_overflow |= direct_output_overflow();
+    if (cancel || output_overflow || output_io_error || direct_overflow ||
+        std::chrono::steady_clock::now() >= deadline) {
         TerminateJobObject(job.value, 1);
         const auto stop_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
         while (!job_empty(job.value) && std::chrono::steady_clock::now() < stop_deadline)
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        if (!job_empty(job.value)) CancelSynchronousIo(collector.native_handle());
+        collector.join();
         error = !job_empty(job.value) ? "Process tree did not stop" :
-                cancel ? "Canceled" : "Process timed out";
+                cancel ? "Canceled" : (output_overflow || direct_overflow) ? "Process output exceeded its limit" :
+                output_io_error ? "Could not retain process output" : "Process timed out";
+        return false;
+    }
+    collector.join();
+    if (output_overflow || output_io_error) {
+        error = output_overflow ? "Process output exceeded its limit" : "Could not retain process output";
         return false;
     }
     DWORD exit_code = 1;
