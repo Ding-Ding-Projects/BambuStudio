@@ -12,9 +12,102 @@
 #include "DeviceCore/FarmDevicePolicy.hpp"
 #include "DeviceCore/DevStorage.h"
 #include "Widgets/Label.hpp"
+#include <algorithm>
+#include <cmath>
 
 namespace Slic3r {
 namespace GUI {
+
+struct FarmNozzlePayload {
+    std::string mapping;
+    std::string info;
+};
+
+static bool build_farm_nozzle_payload(MachineObject *device, Plater *plater, int plate_index,
+                                      FarmNozzlePayload &payload, wxString &reason)
+{
+    payload = {};
+    if (!farm_requires_nozzle_mapping(device->GetExtderSystem()->GetTotalExtderCount(),
+                                      device->printer_type == "O1D")) return true;
+
+    if (plate_index == PLATE_ALL_IDX) {
+        reason = _L("Multi-plate sending cannot prove one nozzle mapping for every plate. Send plates separately.");
+        return false;
+    }
+    auto *bundle = wxGetApp().preset_bundle;
+    auto *plate = plater ? (plate_index >= 0 ? plater->get_partplate_list().get_plate(plate_index) :
+                                               plater->get_partplate_list().get_curr_plate()) : nullptr;
+    if (!bundle || !plate) {
+        reason = _L("The plate's nozzle mapping is unavailable. Use the single-printer send flow.");
+        return false;
+    }
+    if (plate != plater->get_partplate_list().get_curr_plate()) {
+        reason = _L("Select this plate before sending so its nozzle and material mappings can be checked.");
+        return false;
+    }
+
+    const auto maps = plate->get_real_filament_maps(bundle->project_config);
+    const auto used_filaments = plate->get_used_filaments();
+    if (!farm_plate_nozzles_valid(maps, used_filaments)) {
+        reason = _L("The plate has an incomplete left/right nozzle assignment. Review it before sending.");
+        return false;
+    }
+
+    const auto *diameters = bundle->printers.get_edited_preset().config.option<ConfigOptionFloatsNullable>("nozzle_diameter");
+    const auto *flows = bundle->project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
+    if (!diameters || !flows || diameters->size() != 2 || flows->size() != 2) {
+        reason = _L("Two matching nozzle presets are required for this printer. Use the single-printer send flow.");
+        return false;
+    }
+
+    json info = json::array();
+    for (size_t index = 0; index < 2; ++index) {
+        const double diameter = diameters->get_at(index);
+        const auto flow = static_cast<NozzleVolumeType>(flows->get_at(index));
+        if (!std::isfinite(diameter) || diameter <= 0 ||
+            (flow != nvtStandard && flow != nvtHighFlow && flow != nvtTPUHighFlow &&
+             flow != nvtE3DHighFlow && flow != nvtHybrid)) {
+            reason = _L("A nozzle diameter or flow type is invalid. Review the printer preset before sending.");
+            return false;
+        }
+        info.push_back({{"id", index == 0 ? CloudTaskNozzleId::NOZZLE_LEFT : CloudTaskNozzleId::NOZZLE_RIGHT},
+                        {"type", nullptr}, {"flowSize", get_nozzle_volume_type_cloud_string(flow)},
+                        {"diameter", diameter}});
+    }
+    payload.info = info.dump();
+
+    auto rack = device->GetNozzleRack();
+    if (rack && rack->IsSupported()) {
+        const auto &controller = device->get_nozzle_mapping_result();
+        if (!controller || !controller->HasResult() || controller->GetResultStr() == "fail" ||
+            controller->GetResultStr() == "failed") {
+            reason = _L("The printer has no current nozzle mapping result. Refresh it in the single-printer send flow.");
+            return false;
+        }
+        const auto mapping = controller->GetNozzleMappingJson();
+        if (!mapping.is_array() || mapping.empty() || mapping.size() > 128 ||
+            !std::all_of(mapping.begin(), mapping.end(), [](const json &entry) {
+                return entry.is_number_integer() && entry.get<int>() >= -1 && entry.get<int>() < 0x20;
+            })) {
+            reason = _L("The printer returned an invalid nozzle mapping. Refresh it before sending.");
+            return false;
+        }
+        controller->SetPlater(plater);
+        for (int filament : used_filaments) {
+            const auto mapped_nozzles = controller->GetMappedNozzlePosVecByFilaId(filament - 1);
+            if (mapped_nozzles.empty() ||
+                !std::all_of(mapped_nozzles.begin(), mapped_nozzles.end(), [device](int position) {
+                    return position >= 0 && position < 0x20 &&
+                           device->GetNozzleSystem()->GetNozzleByPosId(position).IsNormal();
+                })) {
+                reason = _L("The printer's nozzle mapping does not cover every used material. Refresh it before sending.");
+                return false;
+            }
+        }
+        payload.mapping = mapping.dump();
+    }
+    return true;
+}
 
 #define MATERIAL_ITEM_SIZE wxSize(FromDIP(64), FromDIP(34))
 #define MATERIAL_ITEM_REAL_SIZE wxSize(FromDIP(62), FromDIP(32))
@@ -405,17 +498,9 @@ void SendMultiMachinePage::refresh_user_device()
 
     for (auto it = user_machine.begin(); it != user_machine.end(); ++it) {
         SendDeviceItem* di = new SendDeviceItem(scroll_macine_list, it->second);
-        const bool unsupported_nozzle = farm_requires_nozzle_mapping(
-            it->second->GetExtderSystem()->GetTotalExtderCount(), it->second->printer_type == "O1D");
-        if (unsupported_nozzle) {
-            di->state_selected = 2;
-            di->SetToolTip(_L("Multi-device sending cannot carry this printer's nozzle mapping. Use the single-printer send flow."));
-            di->SetName(wxString::FromUTF8(it->second->get_dev_name()) + ", " +
-                        _L("multi-device sending cannot carry this printer's nozzle mapping"));
-        }
         if (m_device_items.find(it->first) != m_device_items.end()) {
             auto item = m_device_items[it->first];
-            if (!unsupported_nozzle && item->state_selected == 1 && di->state_printable <= 2)
+            if (item->state_selected == 1 && di->state_printable <= 2)
                 di->state_selected = item->state_selected;
             item->Destroy();
         }
@@ -651,7 +736,7 @@ bool SendMultiMachinePage::get_ams_mapping_result(std::string &mapping_array_str
         if (plater) {
             PartPlate *curr_plate = plater->get_partplate_list().get_curr_plate();
             if (curr_plate) {
-                filament_maps = curr_plate->get_filament_maps();
+                filament_maps = curr_plate->get_real_filament_maps(wxGetApp().preset_bundle->project_config);
             } else {
                 BOOST_LOG_TRIVIAL(error) << "get_ams_mapping_result, curr_plate is nullptr";
             }
@@ -679,7 +764,13 @@ bool SendMultiMachinePage::get_ams_mapping_result(std::string &mapping_array_str
                         if (it != nullptr) { mapping_item["filamentId"] = it->filament_id; }
                     }
                     /* nozzle id */
-                    mapping_item["nozzleId"] = 0;
+                    if (i < filament_maps.size()) {
+                        if (filament_maps[i] == 1) mapping_item["nozzleId"] = CloudTaskNozzleId::NOZZLE_LEFT;
+                        else if (filament_maps[i] == 2) mapping_item["nozzleId"] = CloudTaskNozzleId::NOZZLE_RIGHT;
+                        else mapping_item["nozzleId"] = CloudTaskNozzleId::NOZZLE_RIGHT;
+                    } else {
+                        mapping_item["nozzleId"] = CloudTaskNozzleId::NOZZLE_RIGHT;
+                    }
 
                     // convert #RRGGBB to RRGGBBAA
                     mapping_item["sourceColor"] = m_filaments[k].color;
@@ -720,9 +811,9 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
         auto* obj = entry.second->get_obj();
         if (!obj || entry.second->get_state_selected() != 1) continue;
         wxString reason;
-        if (farm_requires_nozzle_mapping(obj->GetExtderSystem()->GetTotalExtderCount(), obj->printer_type == "O1D")) {
-            reason = _L("Multi-device sending cannot carry this printer's nozzle mapping. Use the single-printer send flow.");
-        } else if (obj->is_lan_mode_printer()) {
+        FarmNozzlePayload nozzle_payload;
+        build_farm_nozzle_payload(obj, m_plater, m_print_plate_idx, nozzle_payload, reason);
+        if (reason.IsEmpty() && obj->is_lan_mode_printer()) {
             auto* agent = wxGetApp().getDeviceManager() ? wxGetApp().getDeviceManager()->get_agent() : nullptr;
             const auto readiness = farm_lan_readiness(obj->has_access_right(), !obj->get_access_code().empty(),
                 !obj->get_dev_ip().empty(), agent && agent->can_start_local_print());
@@ -780,11 +871,20 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
         auto obj = it->second->get_obj();
 
         if (obj && obj->is_online() && !obj->can_abort() && !obj->is_in_upgrading() &&
-            it->second->get_state_selected() == 1 && it->second->state_printable <= 2 &&
-            !farm_requires_nozzle_mapping(obj->GetExtderSystem()->GetTotalExtderCount(), obj->printer_type == "O1D")) {
+            it->second->get_state_selected() == 1 && it->second->state_printable <= 2) {
 
             if (!it->second->is_blocking_printing(obj)) {
+                FarmNozzlePayload nozzle_payload;
+                wxString reason;
+                if (!build_farm_nozzle_payload(obj, m_plater, m_print_plate_idx, nozzle_payload, reason)) {
+                    MessageDialog dialog(nullptr, wxString::FromUTF8(obj->get_dev_name()) + ": " + reason,
+                                         "", wxICON_WARNING | wxOK);
+                    dialog.ShowModal();
+                    return;
+                }
                 BBL::PrintParams params = request_params(obj);
+                params.nozzle_mapping = nozzle_payload.mapping;
+                params.nozzles_info = nozzle_payload.info;
                 print_params.push_back(params);
             }
         }

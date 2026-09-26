@@ -13,6 +13,8 @@
 #include "Widgets/ScrolledWindow.hpp"
 #include "Widgets/PopupWindow.hpp"
 #include "Widgets/TextInput.hpp"
+#include <atomic>
+#include <memory>
 
 namespace Slic3r { 
 namespace GUI {
@@ -79,7 +81,7 @@ class LocalTaskManagerPage : public wxPanel
 {
 public:
     LocalTaskManagerPage(wxWindow* parent);
-    ~LocalTaskManagerPage() {};
+    ~LocalTaskManagerPage() override { m_callback_alive->store(false); }
 
     void update_page();
     void refresh_user_device(bool clear = false);
@@ -90,6 +92,7 @@ public:
 private:
     SortItem                    m_sort;
     std::map<int, MultiTaskItem*> m_task_items;
+    std::shared_ptr<std::atomic_bool> m_callback_alive{std::make_shared<std::atomic_bool>(true)};
     bool                        device_name_big{ true };
     bool                        device_state_big{ true };
     bool                        device_send_time{ true };

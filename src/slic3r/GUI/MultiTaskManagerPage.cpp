@@ -785,16 +785,24 @@ void LocalTaskManagerPage::refresh_user_device(bool clear)
             mtitem->m_send_time = task_state_info->get_sent_time();
             mtitem->state_local_task = task_state_info->state();
 
-            task_state_info->set_state_changed_fn([this, mtitem](TaskState state, int percent) {
-                mtitem->state_local_task = state;
-                if (state == TaskState::TS_SEND_COMPLETED) {
-
-                    mtitem->m_send_time = mtitem->task_obj->get_sent_time();
-                    wxCommandEvent event(EVT_MULTI_REFRESH);
-                    event.SetEventObject(mtitem);
-                    wxPostEvent(mtitem, event);
-                }
-                mtitem->m_sending_percent = percent;
+            const int task_id = it->first;
+            auto callback_alive = m_callback_alive;
+            task_state_info->set_state_changed_fn([this, callback_alive, task_id](TaskState state, int percent) {
+                wxGetApp().CallAfter([this, callback_alive, task_id, state, percent] {
+                    if (!callback_alive->load()) return;
+                    auto current = m_task_items.find(task_id);
+                    if (current == m_task_items.end()) return;
+                    MultiTaskItem* item = current->second;
+                    item->state_local_task = state;
+                    item->m_sending_percent = percent;
+                    if (state == TaskState::TS_SEND_COMPLETED) {
+                        item->m_send_time = item->task_obj->get_sent_time();
+                        wxCommandEvent event(EVT_MULTI_REFRESH);
+                        event.SetEventObject(item);
+                        wxPostEvent(item, event);
+                    }
+                    item->Refresh();
+                });
             });
 
             if (m_task_items.find(it->first) != m_task_items.end()) {
