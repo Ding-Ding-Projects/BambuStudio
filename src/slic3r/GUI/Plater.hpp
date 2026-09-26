@@ -688,7 +688,7 @@ public:
     std::vector<std::string> get_colors_for_color_print(const GCodeProcessorResult* const result = nullptr) const;
     bool is_color_size_equal() const;
 
-    void set_global_filament_map_mode(FilamentMapMode mode);
+    void set_global_filament_map_mode(FilamentMapMode mode, bool inherited_printer_preference = false);
     void set_global_filament_map(const std::vector<int>& filament_map);
     void set_global_filament_volume_map(const std::vector<int>& volume_map);
     std::vector<int> get_global_filament_map() const;

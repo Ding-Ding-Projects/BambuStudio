@@ -8376,6 +8376,7 @@ public:
     uint64_t m_print_after_slice_generation{0};
     PartPlate *m_print_after_slice_plate{nullptr};
     int m_print_after_slice_index{-1};
+    bool m_reused_finished_slice_result{false};
     bool m_is_publishing {false};
     int m_is_RightClickInLeftUI{-1};
     int m_cur_slice_plate;
@@ -15872,7 +15873,7 @@ void Plater::priv::on_select_preset(wxCommandEvent &evt)
                     std::all_of(partplate_list.get_plate_list().begin(), partplate_list.get_plate_list().end(),
                                 [](const PartPlate *plate) { return plate && plate->get_filament_map_mode() == fmmDefault; }),
                     is_auto_filament_map_mode(preferred))) {
-                    q->set_global_filament_map_mode(preferred);
+                    q->set_global_filament_map_mode(preferred, true);
             }
 
 
@@ -16531,9 +16532,21 @@ void Plater::priv::on_action_slice_plate(SimpleEvent& event)
 
         q->reslice();
         if (!m_is_slicing) {
+            const bool reuse_for_print = m_print_after_slice_generation == m_slice_request_generation &&
+                m_print_after_slice_plate != nullptr &&
+                m_print_after_slice_plate == partplate_list.get_curr_plate() &&
+                m_print_after_slice_plate == background_process.get_current_plate() &&
+                m_print_after_slice_index == partplate_list.get_curr_plate_index() &&
+                m_reused_finished_slice_result &&
+                m_print_after_slice_plate->has_printable_instances() &&
+                m_print_after_slice_plate->is_slice_result_ready_for_print();
             m_print_after_slice_plate = nullptr;
             m_print_after_slice_index = -1;
             m_print_after_slice_generation = 0;
+            if (reuse_for_print) {
+                SimpleEvent print_event(EVT_GLTOOLBAR_PRINT_PLATE);
+                on_action_print_plate(print_event);
+            }
         }
         q->select_view_3D("Preview");
     }
@@ -23356,7 +23369,7 @@ int Plater::new_project(bool skip_confirm, bool silent, const wxString &project_
     p->m_fresh_project_mapping_preference_owned = true;
     const auto preferred_map_mode = get_preferred_filament_map_mode_for_current_printer();
     if (is_auto_filament_map_mode(preferred_map_mode))
-        set_global_filament_map_mode(preferred_map_mode);
+        set_global_filament_map_mode(preferred_map_mode, true);
 
     model().calib_pa_pattern.reset(nullptr);
     model().plates_custom_gcodes.clear();
@@ -27632,6 +27645,7 @@ void plater_save_post_process_script_choice(bool skip)
 //BBS: add multiple plate reslice logic
 void Plater::reslice()
 {
+    p->m_reused_finished_slice_result = false;
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(", Line %1%: enter, process_completed_with_error=%2%")%__LINE__ %p->process_completed_with_error;
     // Nested wx event dispatch during PostProcessScriptDialog::ShowModal() can re-enter reslice(); ignore the inner call.
     if (p->m_inside_post_process_script_modal)
@@ -27790,6 +27804,12 @@ void Plater::reslice()
     // Only restarts if the state is valid.
     //BBS: jusdge the result
     bool result = this->p->restart_background_process(state | priv::UPDATE_BACKGROUND_PROCESS_FORCE_RESTART);
+    // A finished, unchanged slice has no completion event. The caller may use
+    // its still-valid result after the security prompt and validation above.
+    if (!result && (state & priv::UPDATE_BACKGROUND_PROCESS_INVALID) == 0 &&
+        !p->m_ui_jobs.is_any_running() && p->background_process.finished() &&
+        !p->background_process.running())
+        p->m_reused_finished_slice_result = true;
 
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(", Line %1%: restart background,state=%2%, result=%3%")%__LINE__%state %result;
     if ((state & priv::UPDATE_BACKGROUND_PROCESS_INVALID) != 0)
@@ -28683,7 +28703,7 @@ void Plater::on_config_change(const DynamicPrintConfig &config)
                     std::all_of(p->partplate_list.get_plate_list().begin(), p->partplate_list.get_plate_list().end(),
                                 [](const PartPlate *plate) { return plate && plate->get_filament_map_mode() == fmmDefault; }),
                     is_auto_filament_map_mode(preferred)))
-                set_global_filament_map_mode(preferred);
+                set_global_filament_map_mode(preferred, true);
 
             // update to force bed selection(for texturing)
             bed_shape_changed = true;
@@ -29065,8 +29085,10 @@ std::vector<std::string> Plater::get_colors_for_color_print(const GCodeProcessor
     return colors;
 }
 
-void Plater::set_global_filament_map_mode(FilamentMapMode mode)
+void Plater::set_global_filament_map_mode(FilamentMapMode mode, bool inherited_printer_preference)
 {
+    if (!inherited_printer_preference)
+        p->m_fresh_project_mapping_preference_owned = false;
     auto& project_config = wxGetApp().preset_bundle->project_config;
     auto mode_ptr = project_config.option<ConfigOptionEnum<FilamentMapMode>>("filament_map_mode");
     FilamentMapMode old_mode = mode_ptr->value;
