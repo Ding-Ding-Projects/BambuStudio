@@ -109,6 +109,7 @@ void SendDeviceItem::OnLeaveWindow(wxMouseEvent& evt)
 
 void SendDeviceItem::OnSelectedDevice(wxCommandEvent& evt)
 {
+    if (state_selected == 2) return;
     auto dev_id = evt.GetString();
     auto state = evt.GetInt();
     if (state == 0) {
@@ -131,7 +132,7 @@ void SendDeviceItem::OnLeftDown(wxMouseEvent& evt)
         mouse_pos.y > item.y &&
         mouse_pos.y < (item.y + DEVICE_ITEM_MAX_HEIGHT)) {
 
-        if (state_printable <= 2 && state_local_task > 1) {
+        if (state_selected != 2 && state_printable <= 2 && state_local_task > 1) {
              post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
         }
     }
@@ -190,7 +191,7 @@ void SendDeviceItem::doRender(wxDC& dc)
 
 
     //checkbox
-    if (state_printable > 2) {
+    if (state_printable > 2 || state_selected == 2) {
         dc.DrawBitmap(m_bitmap_check_disable.bmp(), wxPoint(left, (size.y - m_bitmap_check_disable.GetBmpSize().y) / 2 ));
     }
     else {
@@ -404,9 +405,17 @@ void SendMultiMachinePage::refresh_user_device()
 
     for (auto it = user_machine.begin(); it != user_machine.end(); ++it) {
         SendDeviceItem* di = new SendDeviceItem(scroll_macine_list, it->second);
+        const bool unsupported_nozzle = farm_requires_nozzle_mapping(
+            it->second->GetExtderSystem()->GetTotalExtderCount(), it->second->printer_type == "O1D");
+        if (unsupported_nozzle) {
+            di->state_selected = 2;
+            di->SetToolTip(_L("Multi-device sending cannot carry this printer's nozzle mapping. Use the single-printer send flow."));
+            di->SetName(wxString::FromUTF8(it->second->get_dev_name()) + ", " +
+                        _L("multi-device sending cannot carry this printer's nozzle mapping"));
+        }
         if (m_device_items.find(it->first) != m_device_items.end()) {
             auto item = m_device_items[it->first];
-            if (item->state_selected == 1 && di->state_printable <= 2)
+            if (!unsupported_nozzle && item->state_selected == 1 && di->state_printable <= 2)
                 di->state_selected = item->state_selected;
             item->Destroy();
         }
@@ -711,7 +720,9 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
         auto* obj = entry.second->get_obj();
         if (!obj || entry.second->get_state_selected() != 1) continue;
         wxString reason;
-        if (obj->is_lan_mode_printer()) {
+        if (farm_requires_nozzle_mapping(obj->GetExtderSystem()->GetTotalExtderCount(), obj->printer_type == "O1D")) {
+            reason = _L("Multi-device sending cannot carry this printer's nozzle mapping. Use the single-printer send flow.");
+        } else if (obj->is_lan_mode_printer()) {
             auto* agent = wxGetApp().getDeviceManager() ? wxGetApp().getDeviceManager()->get_agent() : nullptr;
             const auto readiness = farm_lan_readiness(obj->has_access_right(), !obj->get_access_code().empty(),
                 !obj->get_dev_ip().empty(), agent && agent->can_start_local_print());
@@ -768,7 +779,9 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
     for (auto it = m_device_items.begin(); it != m_device_items.end(); ++it) {
         auto obj = it->second->get_obj();
 
-        if (obj && obj->is_online() && !obj->can_abort() && !obj->is_in_upgrading() && it->second->get_state_selected() == 1 && it->second->state_printable <= 2) {
+        if (obj && obj->is_online() && !obj->can_abort() && !obj->is_in_upgrading() &&
+            it->second->get_state_selected() == 1 && it->second->state_printable <= 2 &&
+            !farm_requires_nozzle_mapping(obj->GetExtderSystem()->GetTotalExtderCount(), obj->printer_type == "O1D")) {
 
             if (!it->second->is_blocking_printing(obj)) {
                 BBL::PrintParams params = request_params(obj);
@@ -1245,7 +1258,7 @@ wxPanel* SendMultiMachinePage::create_page()
         if (m_select_checkbox->GetValue()) {
             for (auto it = m_device_items.begin(); it != m_device_items.end(); it++) {
 
-                if (it->second->state_printable <= 2) {
+                if (it->second->state_printable <= 2 && it->second->state_selected != 2) {
                     it->second->selected();
                 }
             }

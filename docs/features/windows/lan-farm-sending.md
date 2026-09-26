@@ -1,0 +1,9 @@
+# LAN farm sending and device eligibility
+
+The farm list combines account and locally discovered printers by device ID. A paired local instance takes precedence when both sources report the same ID. Saved local credentials and addresses allow a previously paired printer to remain listed while offline. Selection persists up to six distinct device IDs.
+
+The multi-device sender currently does not construct the `nozzle_mapping` or `nozzles_info` fields that the single-printer sender uses. Its material mapping also writes `nozzleId` as zero. A printer requiring multiple nozzle mappings is therefore disabled in the farm picker and send page with the reason: **Multi-device sending cannot carry this printer's nozzle mapping. Use the single-printer send flow.** This is a limitation of this farm payload, not a claim that the networking module cannot send to such printers. The farm selection and final queue apply the same capability rule.
+
+An eligible paired LAN printer uses its local address and access code through the authenticated local-send function. Missing pairing, address, or local transport receives a specific reason before export. LAN transfers are serialized because the local networking module permits one transfer session at a time. A waiting task checks cancellation before entering that session; a task canceled while a transfer finishes is recorded as canceled rather than completed. Individual task outcomes remain visible in the task list.
+
+The focused policy regression covers duplicate inventory, the six-device limit, LAN readiness, nozzle-mapping eligibility, cancellation-aware completion, and serialized local dispatch. A native build, UI drive, real LAN printer, and transfer cancellation remain unverified until they run through the project's release verification route.
