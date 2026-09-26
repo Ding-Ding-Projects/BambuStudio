@@ -6,6 +6,8 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/log/trivial.hpp>
+#include <atomic>
+#include <memory>
 
 
 namespace Slic3r { 
@@ -39,12 +41,12 @@ public:
         task_info_id = ++TaskStateInfo::g_task_info_id;
     }
 
-    TaskState state() { return m_state; }
+    TaskState state() const { return m_state->load(); }
     void set_state(TaskState ts) {
         BOOST_LOG_TRIVIAL(trace) << "TaskStateInfo set state = " << get_task_state_enum_str(ts);
-        m_state = ts;
+        m_state->store(ts);
         if (m_state_changed_fn) {
-            m_state_changed_fn(m_state, m_sending_percent);
+            m_state_changed_fn(ts, m_sending_percent);
         }
     }
     BBL::PrintParams get_params() { return m_params; }
@@ -75,12 +77,12 @@ public:
 
     void update() {
         if (m_state_changed_fn) {
-            m_state_changed_fn(m_state, m_sending_percent);
+            m_state_changed_fn(state(), m_sending_percent);
         }
     }
 
     void cancel();
-    bool is_canceled() { return m_cancel; }
+    bool is_canceled() const { return m_cancel->load(); }
 
     std::string get_device_name() {return m_device_name;};
     std::string get_task_name() {return m_task_name;};
@@ -105,8 +107,9 @@ public:
     std::string       profile_id;
     int               task_info_id;
 private:
-    bool              m_cancel;
-    TaskState         m_state;
+    // TaskStateInfo is copied for list views, so copies share this signal.
+    std::shared_ptr<std::atomic_bool> m_cancel{std::make_shared<std::atomic_bool>(false)};
+    std::shared_ptr<std::atomic<TaskState>> m_state{std::make_shared<std::atomic<TaskState>>(TaskState::TS_IDLE)};
     std::string       m_task_name;
     std::string       m_device_name;
     BBL::PrintParams  m_params;

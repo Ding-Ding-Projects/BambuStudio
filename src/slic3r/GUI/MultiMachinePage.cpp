@@ -444,11 +444,12 @@ void MultiMachinePickPage::refresh_user_device()
 
     for (auto it = user_machine.begin(); it != user_machine.end(); ++it) {
         DevicePickItem* di = new DevicePickItem(scroll_macine_list, it->second);
-        const bool unsupported_nozzle = it->second->GetExtderSystem()->GetTotalExtderCount() > 1 || it->second->printer_type == "O1D";
+        const bool unsupported_nozzle = farm_requires_nozzle_mapping(
+            it->second->GetExtderSystem()->GetTotalExtderCount(), it->second->printer_type == "O1D");
         if (unsupported_nozzle) {
             di->state_selected = 2;
-            di->SetToolTip(_L("Multi-device sending does not support dual-nozzle printers."));
-            di->SetName(wxString::FromUTF8(it->second->get_dev_name()) + ", " + _L("multi-device sending does not support dual-nozzle printers"));
+            di->SetToolTip(_L("Multi-device sending cannot carry this printer's nozzle mapping. Use the single-printer send flow."));
+            di->SetName(wxString::FromUTF8(it->second->get_dev_name()) + ", " + _L("multi-device sending cannot carry this printer's nozzle mapping"));
         } else if (it->second->is_lan_mode_printer() && !it->second->has_access_right()) {
             di->SetToolTip(_L("Pair this LAN printer with its access code before sending."));
         } else if (!it->second->is_online()) {

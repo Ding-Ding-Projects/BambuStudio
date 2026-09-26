@@ -21,6 +21,7 @@
 - [Destructive-action super confirmation (two keys + full slide)](super-confirmation.md)
 - [Print simulation playback (feedrate-true)](print-simulation.md)
 - [Plate print actions and material mapping](print-actions.md)
+- [LAN farm sending and device eligibility](lan-farm-sending.md)
 - [AI printer watch (local models)](ai-printer-watch.md)
 - [AI filament scanner (QR phone upload → AMS slot)](ai-filament-scanner.md)
 - [Smart home: printer handover, TTS narrator, and alert lights](smart-home.md)

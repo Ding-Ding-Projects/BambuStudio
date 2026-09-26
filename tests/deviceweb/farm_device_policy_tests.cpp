@@ -31,6 +31,13 @@ int main()
     assert(Slic3r::farm_lan_readiness(true, true, true, false) == FarmLanReadiness::TransportUnavailable);
     assert(Slic3r::farm_lan_readiness(true, true, true, true) == FarmLanReadiness::Ready);
 
+    assert(!Slic3r::farm_requires_nozzle_mapping(1, false));
+    assert(Slic3r::farm_requires_nozzle_mapping(2, false));
+    assert(Slic3r::farm_requires_nozzle_mapping(1, true));
+    assert(Slic3r::send_completed_before_cancellation(0, false));
+    assert(!Slic3r::send_completed_before_cancellation(0, true));
+    assert(!Slic3r::send_completed_before_cancellation(-7, false));
+
     std::mutex mutex;
     int calls = 0;
     const int cancelled = Slic3r::dispatch_farm_lan(mutex, [] { return true; }, [&] { ++calls; return 0; }, -18);
