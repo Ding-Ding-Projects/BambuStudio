@@ -60,6 +60,7 @@ struct Workspace {
 
 struct Result {
     std::string error;
+    std::vector<std::string> warnings;
     Workspace workspace;
     std::filesystem::path staging_directory;
     bool ok() const { return error.empty(); }
@@ -69,7 +70,7 @@ std::string new_id();
 
 // Checks that a member is a readable 3MF archive with one model and at most
 // one matching portable-history manifest and pack. It does not modify files.
-bool validate_member_3mf(const std::filesystem::path &path);
+bool validate_member_3mf(const std::filesystem::path &path, std::string *error = nullptr);
 
 // Save never changes the source files. A failed save retains the old archive
 // and the staging archive in the destination directory for recovery.

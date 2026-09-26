@@ -1,4 +1,5 @@
 #include "WorkspaceBundle.hpp"
+#include "ProjectHistoryManager.hpp"
 
 #include <miniz.h>
 #include <nlohmann/json.hpp>
@@ -134,17 +135,20 @@ Entry make_entry(const std::string &name, const fs::path &source)
     return {name, source, size, file_digest(source)};
 }
 
-bool member_3mf_is_valid(const fs::path &source)
+bool member_3mf_is_valid(const fs::path &source, std::string *error = nullptr)
 {
     FILE *file = open_file(source, false);
-    if (!file) return false;
+    if (!file) {
+        if (error) *error = "Member project cannot be opened";
+        return false;
+    }
     mz_zip_archive archive{};
     bool valid = mz_zip_reader_init_cfile(&archive, file, 0, 0) != 0;
+    int manifest_count = 0;
+    int pack_count = 0;
     if (valid) {
         valid = mz_zip_reader_locate_file(&archive, "3D/3dmodel.model", nullptr, 0) >= 0 &&
                 mz_zip_reader_locate_file(&archive, "Metadata/workspace.json", nullptr, 0) < 0;
-        int manifest_count = 0;
-        int pack_count = 0;
         for (mz_uint index = 0; valid && index < mz_zip_reader_get_num_files(&archive); ++index) {
             mz_zip_archive_file_stat stat{};
             valid = mz_zip_reader_file_stat(&archive, index, &stat) != 0 && safe_path(stat.m_filename);
@@ -156,6 +160,37 @@ bool member_3mf_is_valid(const fs::path &source)
         mz_zip_reader_end(&archive);
     }
     std::fclose(file);
+    if (!valid) {
+        if (error) *error = "Member project is not a readable 3MF archive";
+        return false;
+    }
+    if (manifest_count == 0) return true;
+    // Inspect the optional history in an isolated, disposable private store.
+    // Never import its identity into the application's live history state.
+    fs::path scratch;
+    bool created = false;
+    try {
+        scratch = fs::temp_directory_path() / ("bambu-member-history-" + new_id());
+        created = fs::create_directory(scratch);
+        if (!created) throw std::runtime_error("Could not create history validation directory");
+        fs::permissions(scratch, fs::perms::owner_all, fs::perm_options::replace);
+        Slic3r::ProjectHistoryPortableResult inspected;
+        {
+            Slic3r::ProjectHistoryManager validator(scratch);
+            inspected = validator.inspect_portable_history(source).get();
+        }
+        std::error_code ignored;
+        if (created) fs::remove_all(scratch, ignored);
+        if (!inspected.ok() || !inspected.present) {
+            if (error) *error = "Embedded project history is corrupt: " + inspected.error.message;
+            return false;
+        }
+    } catch (const std::exception &ex) {
+        std::error_code ignored;
+        if (created) fs::remove_all(scratch, ignored);
+        if (error) *error = std::string("Could not validate embedded project history: ") + ex.what();
+        return false;
+    }
     return valid;
 }
 
@@ -194,7 +229,8 @@ json create_manifest(const Workspace &workspace, std::vector<Entry> &entries)
                 "Invalid or duplicate workspace member");
         const std::string project_entry = "Members/" + member.id + "/project.3mf";
         Entry project = make_entry(project_entry, member.project_path);
-        require(member_3mf_is_valid(member.project_path), "Member project is not a valid self-contained 3MF");
+        std::string member_error;
+        require(member_3mf_is_valid(member.project_path, &member_error), member_error);
         total += project.size;
         entries.push_back(project);
         names.insert(project_entry);
@@ -464,6 +500,9 @@ Result inspect_impl(const fs::path &archive_path, bool extract, const fs::path &
                 member.project_path = result.staging_directory / fs::u8path("Members/" + member.id + "/project.3mf");
                 for (auto &source : member.editable_sources)
                     source.local_path = result.staging_directory / fs::u8path("Sources/" + member.id + "/" + source.relative_path);
+                std::string member_error;
+                if (!member_3mf_is_valid(member.project_path, &member_error))
+                    result.warnings.push_back("Member '" + member.name + "' has unreadable project history or geometry: " + member_error);
             }
         }
     } catch (const std::exception &error) {
@@ -493,9 +532,9 @@ std::string new_id()
            value.substr(16, 4) + "-" + value.substr(20);
 }
 
-bool validate_member_3mf(const fs::path &path)
+bool validate_member_3mf(const fs::path &path, std::string *error)
 {
-    return member_3mf_is_valid(path);
+    return member_3mf_is_valid(path, error);
 }
 
 Result inspect_bundle(const fs::path &archive)

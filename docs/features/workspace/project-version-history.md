@@ -32,8 +32,9 @@ synced or pushed anywhere; no `.git` appears in the user's own folders.
   `<data_dir>/project_history/document-identities`.
 - **Save publication**: the completed model and history are assembled beside
   the destination and reopened for validation before an atomic replacement.
-  A failed write retains the preceding archive and the history-free pending
-  snapshot for recovery. Model snapshots contain no embedded history, avoiding
+  A failed atomic replacement retains the preceding archive, the verified
+  history-bearing staged archive, and the history-free pending snapshot for
+  recovery. Model snapshots contain no embedded history, avoiding
   recursive growth. Portable packs are bounded at 512 MiB and manifests at
   16 KiB. Before libgit2 ingests a pack, a streaming preflight permits at most
   100,000 objects, 2 GiB per expanded object or delta result (and therefore per

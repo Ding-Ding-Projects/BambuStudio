@@ -86,6 +86,7 @@ private:
     std::filesystem::path m_pending_member_recovery;
     wxTimer m_reminder_timer;
     std::int64_t m_last_reminder_check_utc = 0;
+    bool m_timezone_warning_shown = false;
     bool m_dirty = false;
     wxNotebook *m_sections = nullptr;
     wxStaticText *m_overview = nullptr;

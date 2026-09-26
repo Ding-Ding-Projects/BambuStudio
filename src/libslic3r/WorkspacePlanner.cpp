@@ -80,6 +80,12 @@ template<class T> T *by_id(std::vector<T> &items, const std::string &id)
 
 } // namespace
 
+bool deadline_offset_verifiable(const Workspace &workspace, const ChecklistItem &item)
+{
+    return (workspace.time_zone == "UTC" || workspace.time_zone == "Etc/UTC") &&
+           item.due_utc_offset_minutes == 0;
+}
+
 std::vector<PlanningWarning> validate_plan(const Workspace &workspace,
                                            const std::vector<std::string> &available_printer_ids)
 {
@@ -100,6 +106,8 @@ std::vector<PlanningWarning> validate_plan(const Workspace &workspace,
         }
         if (item.due_utc_offset_minutes < -840 || item.due_utc_offset_minutes > 840)
             warnings.push_back({"invalid_offset", item.id, {}});
+        if (!item.due_date.empty() && !deadline_offset_verifiable(workspace, item))
+            warnings.push_back({"unverified_deadline_timezone", item.id, workspace.time_zone});
     }
     for (std::size_t index = 0; index < workspace.slots.size(); ++index) {
         const auto &slot = workspace.slots[index];
@@ -133,7 +141,7 @@ std::vector<Reminder> due_reminders(const Workspace &workspace, std::int64_t las
         if (last_checked_utc < due && due <= now_utc) reminders.push_back({slot.id, "planned_print", due});
     }
     for (const auto &item : workspace.checklist) {
-        if (item.completed || item.due_date.empty()) continue;
+        if (item.completed || item.due_date.empty() || !deadline_offset_verifiable(workspace, item)) continue;
         int year, month, day;
         if (!parse_date(item.due_date, year, month, day)) continue;
         const std::int64_t due = days_from_civil(year, static_cast<unsigned>(month), static_cast<unsigned>(day)) * 86400 +

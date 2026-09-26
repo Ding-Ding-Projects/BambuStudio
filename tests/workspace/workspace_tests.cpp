@@ -3,6 +3,7 @@
 #include "libslic3r/WorkspacePlanner.hpp"
 #include "miniz/miniz.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <cstdio>
 #include <fstream>
@@ -40,6 +41,26 @@ void write_3mf(const fs::path &path)
     REQUIRE(mz_zip_writer_init_cfile(&archive, file, 0));
     const std::string model = "<model unit=\"millimeter\"/>";
     REQUIRE(mz_zip_writer_add_mem(&archive, "3D/3dmodel.model", model.data(), model.size(), MZ_BEST_COMPRESSION));
+    REQUIRE(mz_zip_writer_finalize_archive(&archive));
+    REQUIRE(mz_zip_writer_end(&archive));
+    REQUIRE(std::fclose(file) == 0);
+}
+
+void write_3mf_with_corrupt_history(const fs::path &path)
+{
+    FILE *file = nullptr;
+#ifdef _WIN32
+    REQUIRE(_wfopen_s(&file, path.c_str(), L"wb") == 0);
+#else
+    file = std::fopen(path.c_str(), "wb");
+#endif
+    REQUIRE(file != nullptr);
+    mz_zip_archive archive{};
+    REQUIRE(mz_zip_writer_init_cfile(&archive, file, 0));
+    const std::string model = "<model unit=\"millimeter\"/>";
+    REQUIRE(mz_zip_writer_add_mem(&archive, "3D/3dmodel.model", model.data(), model.size(), MZ_BEST_COMPRESSION));
+    REQUIRE(mz_zip_writer_add_mem(&archive, "Metadata/bambu_project_history.json", "{}", 2, MZ_BEST_COMPRESSION));
+    REQUIRE(mz_zip_writer_add_mem(&archive, "Metadata/bambu_project_history.pack", "bad", 3, MZ_NO_COMPRESSION));
     REQUIRE(mz_zip_writer_finalize_archive(&archive));
     REQUIRE(mz_zip_writer_end(&archive));
     REQUIRE(std::fclose(file) == 0);
@@ -165,6 +186,49 @@ TEST_CASE("Workspace bundle retains owned files and stable identities", "[worksp
     REQUIRE(fs::exists(loaded.workspace.members.front().project_path));
     REQUIRE(fs::exists(loaded.workspace.members.front().editable_sources.front().local_path));
     REQUIRE(loaded.staging_directory.string().find(staging.string()) == 0);
+}
+
+TEST_CASE("Corrupt optional member history cannot be published over a valid bundle", "[workspace]")
+{
+    TemporaryTree temporary;
+    Workspace workspace = example(temporary.root);
+    const fs::path target = temporary.root / "project.bambu-workspace";
+    REQUIRE(save_bundle(workspace, target).ok());
+    const fs::path corrupt = temporary.root / "corrupt-history.3mf";
+    write_3mf_with_corrupt_history(corrupt);
+    std::string validation_error;
+    REQUIRE_FALSE(validate_member_3mf(corrupt, &validation_error));
+    REQUIRE(validation_error.find("history") != std::string::npos);
+    workspace.members.front().project_path = corrupt;
+    REQUIRE_FALSE(save_bundle(workspace, target).ok());
+    REQUIRE(inspect_bundle(target).ok());
+    mz_zip_archive geometry{};
+    REQUIRE(mz_zip_reader_init_file(&geometry, corrupt.u8string().c_str(), 0));
+    REQUIRE(mz_zip_reader_locate_file(&geometry, "3D/3dmodel.model", nullptr, 0) >= 0);
+    REQUIRE(mz_zip_reader_end(&geometry));
+}
+
+TEST_CASE("Named-zone deadlines wait for verified timezone rules", "[workspace]")
+{
+    TemporaryTree temporary;
+    Workspace workspace = example(temporary.root);
+    const auto &deadline = workspace.checklist.front();
+    REQUIRE_FALSE(deadline_offset_verifiable(workspace, deadline));
+    const auto warnings = validate_plan(workspace, {});
+    REQUIRE(std::any_of(warnings.begin(), warnings.end(), [](const auto &warning) {
+        return warning.code == "unverified_deadline_timezone";
+    }));
+    const auto reminders = due_reminders(workspace, 0, 2000000000);
+    REQUIRE(std::none_of(reminders.begin(), reminders.end(), [](const auto &reminder) {
+        return reminder.kind == "deadline";
+    }));
+    workspace.time_zone = "UTC";
+    workspace.checklist.front().due_utc_offset_minutes = 0;
+    REQUIRE(deadline_offset_verifiable(workspace, workspace.checklist.front()));
+    const auto utc_reminders = due_reminders(workspace, 0, 2000000000);
+    REQUIRE(std::any_of(utc_reminders.begin(), utc_reminders.end(), [](const auto &reminder) {
+        return reminder.kind == "deadline";
+    }));
 }
 
 TEST_CASE("Workspace ZIP rejects traversal and retains previous archive after rejected save", "[workspace]")

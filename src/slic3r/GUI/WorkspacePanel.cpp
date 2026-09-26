@@ -304,6 +304,7 @@ void WorkspacePanel::create_new()
     m_owned_member_files.clear();
     m_dirty = false;
     m_last_reminder_check_utc = 0;
+    m_timezone_warning_shown = false;
     refresh_all();
 }
 
@@ -321,6 +322,7 @@ void WorkspacePanel::edit_preferences()
     m_workspace.time_zone = utf8(zone);
     m_workspace.deadline_reminder_hour = static_cast<int>(parsed);
     m_workspace.reminders_enabled = enabled.Lower() == "yes";
+    m_timezone_warning_shown = false;
     m_dirty = true;
     refresh_overview();
     if (!m_bundle_path.empty()) save_bundle();
@@ -349,7 +351,18 @@ bool WorkspacePanel::open_bundle(const fs::path &path)
     m_bundle_path = path;
     m_loaded_staging = loaded.staging_directory;
     m_dirty = false;
+    m_timezone_warning_shown = false;
     refresh_all();
+    if (!loaded.warnings.empty()) {
+        wxString warning = display(loaded.warnings.front());
+        if (loaded.warnings.size() > 1)
+            warning += wxString::Format(_L(" (%zu additional affected members)"), loaded.warnings.size() - 1);
+        if (auto *notifications = wxGetApp().notification_manager())
+            notifications->push_notification(NotificationType::CustomNotification,
+                NotificationManager::NotificationLevel::WarningNotificationLevel, utf8(warning));
+        else
+            wxMessageBox(warning, _L("Workspace member warning"), wxOK | wxICON_WARNING, this);
+    }
     reset_reminder_cursor();
     check_reminders();
     return true;
@@ -376,9 +389,22 @@ void WorkspacePanel::check_reminders()
     if (m_bundle_path.empty()) return;
     const auto now = static_cast<std::int64_t>(std::time(nullptr));
     if (m_last_reminder_check_utc <= 0 || m_last_reminder_check_utc > now) reset_reminder_cursor();
+    auto *notifications = wxGetApp().notification_manager();
+    if (!m_timezone_warning_shown && notifications && m_workspace.reminders_enabled) {
+        const bool unverified = std::any_of(m_workspace.checklist.begin(), m_workspace.checklist.end(),
+            [this](const Workspace::ChecklistItem &item) {
+                return !item.completed && !item.due_date.empty() &&
+                       !Workspace::deadline_offset_verifiable(m_workspace, item);
+            });
+        if (unverified) {
+            notifications->push_notification(NotificationType::CustomNotification,
+                NotificationManager::NotificationLevel::WarningNotificationLevel,
+                utf8(_L("Deadline reminders for this named time zone are paused because its daylight-saving offset cannot be verified. Dates remain in the workspace.")));
+            m_timezone_warning_shown = true;
+        }
+    }
     const auto due = Workspace::due_reminders(m_workspace, m_last_reminder_check_utc, now);
     if (due.empty()) { m_last_reminder_check_utc = now; return; }
-    auto *notifications = wxGetApp().notification_manager();
     if (!notifications) return;
     const bool catch_up = now - m_last_reminder_check_utc > 120;
     wxString text;
@@ -431,15 +457,20 @@ bool WorkspacePanel::save_bundle()
 
 std::optional<fs::path> WorkspacePanel::stage_member_file(const fs::path &source)
 {
-    if (!Workspace::validate_member_3mf(source)) return std::nullopt;
+    std::string validation_error;
+    if (!Workspace::validate_member_3mf(source, &validation_error)) {
+        wxMessageBox(display(validation_error), _L("Invalid project 3MF"), wxOK | wxICON_WARNING, this);
+        return std::nullopt;
+    }
     const fs::path staged = m_staging_root / ("member-" + Workspace::new_id() + ".3mf");
     std::error_code error;
     if (!fs::copy_file(source, staged, fs::copy_options::none, error) || error) {
         fs::remove(staged, error);
         return std::nullopt;
     }
-    if (!Workspace::validate_member_3mf(staged)) {
+    if (!Workspace::validate_member_3mf(staged, &validation_error)) {
         fs::remove(staged, error);
+        wxMessageBox(display(validation_error), _L("Invalid staged project 3MF"), wxOK | wxICON_WARNING, this);
         return std::nullopt;
     }
     return staged;
@@ -494,8 +525,6 @@ void WorkspacePanel::add_member()
     const fs::path chosen = fs::u8path(utf8(dialog.GetPath()));
     const auto staged = stage_member_file(chosen);
     if (!staged) {
-        wxMessageBox(_L("The selected file is not a readable project 3MF."), _L("Add project 3MF"),
-                     wxOK | wxICON_WARNING, this);
         return;
     }
     member.project_path = *staged;
@@ -555,7 +584,9 @@ void WorkspacePanel::edit_checklist()
     item.text = utf8(text); item.due_date = utf8(due); item.linked_member_id = utf8(member);
     item.linked_slot_id = utf8(slot); item.due_utc_offset_minutes = static_cast<int>(parsed_offset);
     if (!Workspace::edit_checklist_item(m_workspace, item)) return;
+    m_timezone_warning_shown = false;
     m_dirty = true; refresh_checklist(); m_checklist->SetSelection(index);
+    check_reminders();
 }
 
 void WorkspacePanel::move_checklist(int direction)

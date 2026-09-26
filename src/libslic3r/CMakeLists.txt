@@ -40,6 +40,9 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
 )
 encoding_check(libslic3r_project_history)
 
+# Bundle validation uses the history manager's bounded portable-pack inspector.
+target_link_libraries(libslic3r_workspace PRIVATE libslic3r_project_history)
+
 add_library(libslic3r_changelog STATIC
     Changelog.cpp
     Changelog.hpp
