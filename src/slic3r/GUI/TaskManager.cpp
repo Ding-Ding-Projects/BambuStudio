@@ -5,6 +5,7 @@
 #include "MainFrame.hpp"
 #include "GUI_App.hpp"
 #include "BBLUtil.hpp"
+#include "DeviceCore/FarmDevicePolicy.hpp"
 
 using namespace nlohmann;
 
@@ -224,7 +225,16 @@ int TaskManager::schedule(TaskStateInfo* task)
 #if 0
             int result = start_print_test(task->get_params(), task->update_status_fn, task->cancel_fn, task->wait_fn);
 #else
-            int result = m_agent->start_print(task->get_params(), task->update_status_fn, task->cancel_fn, task->wait_fn);
+            int result;
+            if (task->get_params().connection_type == "lan") {
+                // The local SDK uses one transfer session at a time. Waiting tasks
+                // remain cancellable and never fall back to the cloud route.
+                result = dispatch_farm_lan(m_lan_transfer_mutex, [task] { return task->is_canceled(); },
+                    [this, task] { return m_agent->start_local_print(task->get_params(), task->update_status_fn, task->cancel_fn); },
+                    BAMBU_NETWORK_ERR_CANCELED);
+            } else {
+                result = m_agent->start_print(task->get_params(), task->update_status_fn, task->cancel_fn, task->wait_fn);
+            }
 #endif
             if (result == 0) {
                 last_sent_timestamp = std::chrono::system_clock::now();

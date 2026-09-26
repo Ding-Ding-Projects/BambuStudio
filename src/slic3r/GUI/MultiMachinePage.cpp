@@ -4,6 +4,7 @@
 #include "Widgets/CheckBox.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "DeviceCore/FarmDevicePolicy.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -210,6 +211,7 @@ void DevicePickItem::OnSelectedDevice(wxCommandEvent& evt)
 
 void DevicePickItem::OnLeftDown(wxMouseEvent& evt)
 {
+    if (state_selected == 2) return;
     // a11y-hittarget: the whole row toggles selection (its only action), instead
     // of only the ~18px checkbox glyph, so the pointer target spans the full row.
     if (!HasFocus())
@@ -227,6 +229,7 @@ void DevicePickItem::OnKeyDown(wxKeyEvent& evt)
 {
     const int key = evt.GetKeyCode();
     if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        if (state_selected == 2) return;
         post_event(wxCommandEvent(EVT_MULTI_DEVICE_SELECTED));
     } else {
         evt.Skip();
@@ -384,7 +387,8 @@ void MultiMachinePickPage::update_selected_count()
         }
     }
 
-    m_selected_count = count;
+    selected_multi_devices = selected_farm_ids(selected_multi_devices, PICK_DEVICE_MAX);
+    m_selected_count = static_cast<int>(selected_multi_devices.size());
     m_label->SetLabel(wxString::Format(_L("Select Connected Printers (%d/6)"), m_selected_count));
 
     if (m_selected_count > PICK_DEVICE_MAX) {
@@ -433,16 +437,23 @@ void MultiMachinePickPage::refresh_user_device()
         return;
     }
 
-    auto user_machine = dev->get_my_cloud_machine_list();
+    auto user_machine = dev->get_farm_machine_list();
     auto task_manager = wxGetApp().getTaskManager();
 
     std::vector<std::string> subscribe_list;
 
     for (auto it = user_machine.begin(); it != user_machine.end(); ++it) {
-        if (it->second->GetExtderSystem()->GetTotalExtderCount() > 1) { continue; }
-        if (it->second->printer_type == "O1D") { continue;} /*maybe total_extder_count is not valid, hard codes here. to be moved to printers json*/
-
         DevicePickItem* di = new DevicePickItem(scroll_macine_list, it->second);
+        const bool unsupported_nozzle = it->second->GetExtderSystem()->GetTotalExtderCount() > 1 || it->second->printer_type == "O1D";
+        if (unsupported_nozzle) {
+            di->state_selected = 2;
+            di->SetToolTip(_L("Multi-device sending does not support dual-nozzle printers."));
+            di->SetName(wxString::FromUTF8(it->second->get_dev_name()) + ", " + _L("multi-device sending does not support dual-nozzle printers"));
+        } else if (it->second->is_lan_mode_printer() && !it->second->has_access_right()) {
+            di->SetToolTip(_L("Pair this LAN printer with its access code before sending."));
+        } else if (!it->second->is_online()) {
+            di->SetToolTip(_L("This printer is offline. It remains in the farm list."));
+        }
 
         di->Bind(EVT_MULTI_DEVICE_SELECTED_FINHSH, [this, di](auto& e) {
             int count = get_selected_count();
@@ -468,7 +479,7 @@ void MultiMachinePickPage::refresh_user_device()
 
         //update selected
         auto dev_it = std::find(selected_multi_devices.begin(), selected_multi_devices.end(), it->second->get_dev_id() );
-        if (dev_it != selected_multi_devices.end()) {
+        if (dev_it != selected_multi_devices.end() && !unsupported_nozzle) {
             di->state_selected = 1;
         }
 

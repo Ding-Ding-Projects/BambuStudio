@@ -59,6 +59,10 @@ void DeviceItem::sync_state()
             state_printable = 4;
         }
 
+        if (!obj_->is_online()) {
+            state_printable = 6;
+        }
+
         state_enable_ams = obj_->ams_exist_bits;
 
 
@@ -139,6 +143,7 @@ void DeviceItem::update_item(const DeviceItem* item)
 
 wxString DeviceItem::get_state_printable()
 {
+    if (obj_ && !obj_->is_online()) return _L("Offline");
     //0-idle 1-finish 2-printing 3-upgrading 4-preset incompatible  5-unknown
     std::vector<wxString> str_state_printable;
     str_state_printable.push_back(_L("Idle"));

@@ -1,6 +1,7 @@
 #include <nlohmann/json.hpp>
 #include "DevInfo.h"
 #include "DevManager.h"
+#include "FarmDevicePolicy.hpp"
 #include "DevUtil.h"
 
 /* mac need the macro while including <boost/stacktrace.hpp>*/
@@ -425,7 +426,8 @@ namespace Slic3r
                     detectData.model_id     = DevPrinterConfigUtil::get_model_id_by_dev_id(local_access_info.dev_id);
                 }
 
-                GUI::wxGetApp().CallAfter([detectData, local_access_info]() {
+                const bool detected_online = result >= 0 && !reject_reason;
+                GUI::wxGetApp().CallAfter([detectData, local_access_info, detected_online]() {
                     if (GUI::wxGetApp().is_closing()) return;
                     if (DeviceManager* dev = GUI::wxGetApp().getDeviceManager()) {
                         if (dev->get_local_machine(local_access_info.dev_id)) return;
@@ -435,6 +437,8 @@ namespace Slic3r
                                                             local_access_info.access_code, detectData.model_id);
                         if (obj) {
                             obj->set_user_access_code(local_access_info.access_code);
+                            // Restoring credentials is not proof that a sleeping printer is online.
+                            obj->m_is_online = detected_online;
                         }
                     }
                 });
@@ -760,6 +764,15 @@ namespace Slic3r
             if (it->second && !it->second->is_lan_mode_printer()) { result.emplace(*it); }
         }
         return result;
+    }
+
+    std::map<std::string, MachineObject*> DeviceManager::get_farm_machine_list()
+    {
+        // Keep remembered offline devices and prefer a paired local instance
+        // when the same device also appears in the account inventory.
+        return merge_farm_devices(userMachineList, localMachineList, [](MachineObject* device) {
+            return device->is_lan_mode_printer() && device->has_access_right();
+        });
     }
 
     std::string DeviceManager::get_first_online_user_machine() const

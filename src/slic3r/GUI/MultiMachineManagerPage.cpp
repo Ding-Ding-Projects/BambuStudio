@@ -618,7 +618,7 @@ void MultiMachineManagerPage::refresh_user_device(bool clear)
     Slic3r::DeviceManager* dev = Slic3r::GUI::wxGetApp().getDeviceManager();
     if (!dev) return;
 
-    auto all_machine = dev->get_my_cloud_machine_list();
+    auto all_machine = dev->get_farm_machine_list();
     auto user_machine = std::map<std::string, MachineObject*>();
 
     //selected machine
