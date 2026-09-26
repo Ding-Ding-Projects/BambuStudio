@@ -230,7 +230,7 @@ json create_manifest(const Workspace &workspace, std::vector<Entry> &entries)
         const std::string project_entry = "Members/" + member.id + "/project.3mf";
         Entry project = make_entry(project_entry, member.project_path);
         std::string member_error;
-        require(member_3mf_is_valid(member.project_path, &member_error), member_error);
+        require(member_3mf_is_valid(member.project_path, &member_error), member_error.c_str());
         total += project.size;
         entries.push_back(project);
         names.insert(project_entry);
