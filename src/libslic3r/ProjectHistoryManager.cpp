@@ -55,10 +55,116 @@ constexpr const char *PORTABLE_MANIFEST_PATH  = "Metadata/bambu_project_history.
 constexpr const char *PORTABLE_PACK_PATH      = "Metadata/bambu_project_history.pack";
 constexpr std::uint64_t MAX_PORTABLE_PACK     = 512ull * 1024ull * 1024ull;
 constexpr std::uint64_t MAX_PORTABLE_MANIFEST = 16ull * 1024ull;
+// Pack bytes are compressed. These bounds apply to the object bodies that
+// libgit2 would materialize, including delta results, before it sees the pack.
+constexpr std::uint64_t MAX_PORTABLE_OBJECT   = 2ull * 1024ull * 1024ull * 1024ull;
+constexpr std::uint64_t MAX_PORTABLE_EXPANDED = 8ull * 1024ull * 1024ull * 1024ull;
+constexpr std::uint32_t MAX_PORTABLE_OBJECTS  = 100000;
 constexpr const char *CONFIG_LAYOUT_VERSION   = "bambu.projecthistoryversion";
 constexpr const char *CONFIG_PROJECT_IDENTITY = "bambu.projectidentitysha256";
 constexpr auto        LOCK_WAIT_TIMEOUT        = std::chrono::seconds(30);
 constexpr auto        LOCK_RETRY_INTERVAL      = std::chrono::milliseconds(20);
+
+bool portable_pack_within_budget(const std::vector<unsigned char> &pack, std::uint64_t max_object,
+                                 std::uint64_t max_expanded, std::uint32_t max_objects)
+{
+    if (pack.size() < 32 || std::memcmp(pack.data(), "PACK", 4) != 0) return false;
+    const auto read_u32 = [&pack](std::size_t offset) {
+        return (std::uint32_t(pack[offset]) << 24) | (std::uint32_t(pack[offset + 1]) << 16) |
+               (std::uint32_t(pack[offset + 2]) << 8) | std::uint32_t(pack[offset + 3]);
+    };
+    if (read_u32(4) != 2 && read_u32(4) != 3) return false;
+    const std::uint32_t count = read_u32(8);
+    if (count == 0 || count > max_objects) return false;
+
+    const std::size_t end = pack.size() - 20; // Git SHA-1 trailer.
+    std::size_t position = 12;
+    std::uint64_t total = 0;
+    for (std::uint32_t object = 0; object < count; ++object) {
+        if (position >= end) return false;
+        unsigned char header = pack[position++];
+        const unsigned type = (header >> 4) & 7;
+        if (type != 1 && type != 2 && type != 3 && type != 4 && type != 6 && type != 7) return false;
+        std::uint64_t body_size = header & 15;
+        unsigned shift = 4;
+        while (header & 0x80) {
+            if (position >= end || shift > 60) return false;
+            header = pack[position++];
+            if (shift == 60 && (header & 0x7f) > 15) return false;
+            body_size |= std::uint64_t(header & 0x7f) << shift;
+            shift += 7;
+        }
+        if (body_size > max_object) return false;
+        if (type == 6) {
+            unsigned offset_bytes = 0;
+            do {
+                if (position >= end || ++offset_bytes > 10) return false;
+                header = pack[position++];
+            } while (header & 0x80);
+        } else if (type == 7) {
+            if (end - position < 20) return false;
+            position += 20;
+        }
+
+        mz_stream stream{};
+        stream.next_in = pack.data() + position;
+        stream.avail_in = static_cast<unsigned int>(end - position);
+        if (mz_inflateInit(&stream) != MZ_OK) return false;
+        std::array<unsigned char, 64 * 1024> output{};
+        std::uint64_t produced_total = 0;
+        std::uint64_t delta_number = 0;
+        unsigned delta_shift = 0;
+        unsigned delta_numbers = 0;
+        std::uint64_t result_size = 0;
+        bool valid = true;
+        int inflate_rc = MZ_OK;
+        do {
+            stream.next_out = output.data();
+            stream.avail_out = static_cast<unsigned int>(output.size());
+            const auto previous_in = stream.total_in;
+            inflate_rc = mz_inflate(&stream, MZ_NO_FLUSH);
+            const std::size_t produced = output.size() - stream.avail_out;
+            if ((inflate_rc != MZ_OK && inflate_rc != MZ_STREAM_END) ||
+                (produced == 0 && stream.total_in == previous_in) ||
+                produced_total > body_size || produced > body_size - produced_total) {
+                valid = false;
+                break;
+            }
+            produced_total += produced;
+            if (type == 6 || type == 7) {
+                for (std::size_t i = 0; i < produced && delta_numbers < 2; ++i) {
+                    const unsigned char byte = output[i];
+                    if (delta_shift > 63 || (delta_shift == 63 && (byte & 0x7f) > 1)) {
+                        valid = false;
+                        break;
+                    }
+                    delta_number |= std::uint64_t(byte & 0x7f) << delta_shift;
+                    if (byte & 0x80) {
+                        delta_shift += 7;
+                    } else {
+                        ++delta_numbers;
+                        if (delta_numbers == 2) result_size = delta_number;
+                        delta_number = 0;
+                        delta_shift = 0;
+                    }
+                }
+                if (!valid || (delta_numbers == 2 && result_size > max_object)) {
+                    valid = false;
+                    break;
+                }
+            }
+        } while (inflate_rc != MZ_STREAM_END);
+        const std::size_t consumed = static_cast<std::size_t>(stream.total_in);
+        mz_inflateEnd(&stream);
+        if (!valid || produced_total != body_size || ((type == 6 || type == 7) && delta_numbers != 2) ||
+            consumed == 0 || consumed > end - position) return false;
+        position += consumed;
+        const std::uint64_t expanded = (type == 6 || type == 7) ? result_size : body_size;
+        if (total > max_expanded || expanded > max_expanded - total) return false;
+        total += expanded;
+    }
+    return position == end;
+}
 
 template<class Result> Result failure(ProjectHistoryErrorCode code, std::string message)
 {
@@ -566,6 +672,10 @@ bool version_from_commit(git_repository *repository, git_commit *commit, Project
         return false;
     }
     version.snapshot_size = static_cast<std::uint64_t>(object_size);
+    if (version.snapshot_size > MAX_PORTABLE_OBJECT) {
+        error = {ProjectHistoryErrorCode::RepositoryError, "Project-history snapshot exceeds the supported 2 GiB limit"};
+        return false;
+    }
     return true;
 }
 
@@ -1233,6 +1343,14 @@ SnapshotPreflight validate_snapshot_commit(const fs::path &snapshot_path, const 
 
 } // namespace
 
+bool project_history_pack_within_budget(const std::vector<unsigned char> &pack,
+                                        std::uint64_t max_object_bytes,
+                                        std::uint64_t max_expanded_bytes,
+                                        std::uint32_t max_objects)
+{
+    return portable_pack_within_budget(pack, max_object_bytes, max_expanded_bytes, max_objects);
+}
+
 class ProjectHistoryManager::Impl
 {
 public:
@@ -1884,6 +2002,10 @@ public:
             return data.result;
         }
         OdbPtr odb(raw_odb);
+        if (!project_history_pack_within_budget(data.pack, MAX_PORTABLE_OBJECT, MAX_PORTABLE_EXPANDED, MAX_PORTABLE_OBJECTS)) {
+            data.result.error = {ProjectHistoryErrorCode::RepositoryError, "Portable-history pack exceeds expanded-object, snapshot, or object-count limits"};
+            return data.result;
+        }
         git_odb_writepack *writepack = nullptr;
         if (git_odb_write_pack(&writepack, odb.get(), nullptr, nullptr) != 0 || writepack == nullptr) {
             data.result.error = {ProjectHistoryErrorCode::RepositoryError, git_error_message("Could not validate portable-history pack")};
@@ -2123,6 +2245,11 @@ public:
         if (!result.ok() || !result.present) return result;
         PortableArchiveData data = read_portable_archive(archive_path, true);
         if (!data.result.ok()) return data.result;
+        // The archive can change between inspection and import. Recheck the
+        // exact pack bytes about to enter the persistent object store.
+        if (!project_history_pack_within_budget(data.pack, MAX_PORTABLE_OBJECT, MAX_PORTABLE_EXPANDED, MAX_PORTABLE_OBJECTS))
+            return failure<ProjectHistoryPortableResult>(ProjectHistoryErrorCode::RepositoryError,
+                "Portable-history pack exceeds expanded-object, snapshot, or object-count limits");
         const ResolvedProject project = resolve_project(m_history_root, project_path);
         if (!project.error.ok()) {
             result.error = project.error;

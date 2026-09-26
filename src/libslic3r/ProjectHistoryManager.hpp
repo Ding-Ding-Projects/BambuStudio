@@ -18,6 +18,13 @@ namespace Slic3r {
 // snapshot before enqueueing it; no model or GUI state is accessed here.
 enum class ProjectHistoryErrorCode { None, InvalidArgument, NotFound, DestinationExists, IoError, RepositoryError, ShuttingDown, InternalError };
 
+// Inspect a Git pack with bounded streaming inflation before giving it to
+// libgit2. The explicit limits also allow small, real compressed test packs.
+bool project_history_pack_within_budget(const std::vector<unsigned char> &pack,
+                                        std::uint64_t max_object_bytes,
+                                        std::uint64_t max_expanded_bytes,
+                                        std::uint32_t max_objects);
+
 struct ProjectHistoryError
 {
     ProjectHistoryErrorCode code{ProjectHistoryErrorCode::None};
