@@ -37,6 +37,13 @@ synced or pushed anywhere; no `.git` appears in the user's own folders.
   recursive growth. Portable packs are bounded at 512 MiB and manifests at
   16 KiB; an oversized history blocks portable publication until it is reduced
   through a deliberate retention operation.
+- **Current-version export**: File > Export > Export current version only as 3MF
+  writes the current model and settings without either portable-history entry.
+  It flushes pending captures first, validates the staged ZIP, and atomically
+  publishes it. On failure, the previous destination and pending export remain
+  available. Reopening a saved archive in the same app profile retains a newer
+  local autosave as the active version when it descends from the embedded head;
+  a fresh profile activates the embedded head.
 - **Browse/restore**: **File ▸ Version history…** and the topbar `main •`
   history chip open the MD3 `ProjectHistoryDialog` (commit list with message,
   time, size). A `SearchField` above the list filters versions by commit id,
@@ -88,7 +95,8 @@ the app's own data directory (see above), never inside user project folders.
 ## Verification
 
 - **Portable archive tests (2026-09-26)**: `project_history_tests.exe`
-  passed 12 test cases and 290 assertions. The Unicode-path and divergent-copy
+  passed 13 test cases and 311 assertions. The Unicode-path, divergent-copy,
+  and newer-local-tip
   regressions were first run against the incomplete implementation and failed
   at the intended assertions, then passed after the corresponding fixes. The
   suite also checks a tampered pack, traversal manifest, archive preservation

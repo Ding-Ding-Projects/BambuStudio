@@ -220,6 +220,7 @@
 #include "DeviceCore/DevDefs.h"
 #include "DeviceCore/DevConfigUtil.h"
 #include "ImageMessageDialog.hpp"
+#include "miniz/miniz.h"
 
 #include "HelioReleaseNote.hpp"
 
@@ -26641,8 +26642,62 @@ void Plater::export_core_3mf()
 {
     wxString path = p->get_export_file(FT_3MF);
     if (path.empty()) { return; }
-    const std::string path_u8 = into_u8(path);
-    export_3mf(path_u8, SaveStrategy::Silence);
+    if (!p->flush_project_history_pending("Project edit before current-version export", true, true)) {
+        MessageDialog(this, _L("Could not preserve pending project history. The current version was not exported."),
+                      _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    const stdfs::path destination = stdfs::u8path(into_u8(path));
+    const stdfs::path staged = destination.parent_path() /
+        (destination.filename().u8string() + ".pending-current-export-" + std::to_string(wxGetProcessId()) + "-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".3mf");
+    auto strategy = SaveStrategy::SplitModel | SaveStrategy::ShareMesh;
+    if (wxGetApp().app_config->get_bool("export_sources_full_pathnames"))
+        strategy = strategy | SaveStrategy::FullPathSources;
+    if (export_3mf(boost::filesystem::path(staged.native()), strategy) < 0) {
+        MessageDialog(this, _L("Could not export the current version. The previous file was preserved."),
+                      _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    FILE *archive_file = nullptr;
+#ifdef _WIN32
+    _wfopen_s(&archive_file, staged.c_str(), L"rb");
+#else
+    archive_file = std::fopen(staged.c_str(), "rb");
+#endif
+    mz_zip_archive archive{};
+    bool valid = archive_file != nullptr && mz_zip_reader_init_cfile(&archive, archive_file, 0, 0) != 0;
+    if (valid) {
+        valid = mz_zip_reader_locate_file(&archive, "3D/3dmodel.model", nullptr, 0) >= 0 &&
+                mz_zip_reader_locate_file(&archive, "Metadata/bambu_project_history.json", nullptr, 0) < 0 &&
+                mz_zip_reader_locate_file(&archive, "Metadata/bambu_project_history.pack", nullptr, 0) < 0 &&
+                mz_zip_validate_archive(&archive, 0) != 0;
+        mz_zip_reader_end(&archive);
+    }
+    if (archive_file) std::fclose(archive_file);
+    if (!valid) {
+        MessageDialog(this, _L("Could not verify the exported 3MF. The previous file was preserved."),
+                      _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+#ifdef _WIN32
+    const bool destination_exists = stdfs::exists(destination);
+    const stdfs::path backup = stdfs::path(staged.native() + stdfs::path::string_type(L".previous.3mf"));
+    const BOOL published = destination_exists
+        ? ::ReplaceFileW(destination.c_str(), staged.c_str(), backup.c_str(), REPLACEFILE_IGNORE_MERGE_ERRORS, nullptr, nullptr)
+        : ::MoveFileExW(staged.c_str(), destination.c_str(), MOVEFILE_WRITE_THROUGH);
+    if (published && destination_exists) {
+        std::error_code ignored;
+        stdfs::remove(backup, ignored);
+    }
+    if (!published)
+#else
+    std::error_code publish_error;
+    stdfs::rename(staged, destination, publish_error);
+    if (publish_error)
+#endif
+        MessageDialog(this, _L("Could not publish the current-version export. The previous file and pending export were preserved."),
+                      _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
 }
 
 Preset *get_printer_preset(const MachineObject *obj)
