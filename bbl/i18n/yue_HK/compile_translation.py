@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import ast
 from collections import Counter
+import gettext
+import io
 import json
 from pathlib import Path
 import re
@@ -222,6 +224,10 @@ def main() -> int:
         if args.check:
             if not args.output.is_file() or args.output.read_bytes() != compiled:
                 raise CatalogError(f"compiled catalog is missing or stale: {args.output}")
+            parsed = gettext.GNUTranslations(io.BytesIO(args.output.read_bytes()))
+            for msgid, msgstr in catalog.items():
+                if parsed._catalog.get(msgid) != msgstr:
+                    raise CatalogError(f"compiled catalog does not contain translation: {msgid!r}")
         else:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_bytes(compiled)
