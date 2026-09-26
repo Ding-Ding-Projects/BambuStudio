@@ -122,7 +122,7 @@ double precision the residuals are ~5e-5 for XYZ/Lab/LCH (the published
 - Layout budget: two columns (picker left, fifteen translation rows right)
   keep the dialog inside 1000×600 DIP; the status and contrast lines reserve
   their wrapped height up front so the column never re-flows.
-- Headless HuiShot of the built dialog is not part of this change (no full
+- Headless screenshot of the built dialog is not part of this change (no full
   build was run); the visual smoke recipe in
   [Native visual smoke test](native-visual-smoke.md) covers it on the next
   build.

@@ -1,5 +1,25 @@
 # HANDOFF — read this first
 
+> [!IMPORTANT]
+> **Current build repair, 2026-09-25 (America/Toronto):** `main` was verified on the
+> remote at `1601ab8c0d5fbc1029342009953258f12233ac0a`. Preferences now uses
+> stable tab IDs instead of the removed `TabStrip::SetSelection` API
+> (`2db0346091d1c24aa7ff739e1cbc118c713a08f5`), Command Palette's article
+> loop is closed (`a02c52bbfbe4d5ede2daf4b8d59410b8c4dc3089`), and preset
+> export uses an existing fallback bitmap (`b53fad13cdbea61fceb7896f2b926bf9f023908d`).
+> The local Release build exited 0. Its `BambuStudio.dll` SHA-256 is
+> `E942B5D328E6E8DD4BDC9B4E08AA3534830A3C5362248FD3D50482C3F8403CEA`.
+> A hidden-desktop launch opened Preferences and switched from Appearance to
+> General. Genuine captures and privacy review are in
+> [`docs/screenshots/preferences/tabstrip-fix/`](docs/screenshots/preferences/tabstrip-fix/).
+> [Issue #38](https://github.com/Ding-Ding-Projects/BambuStudio/issues/38) carries
+> the before/after images. The hosted
+> [Windows build and release run](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36210592947)
+> was still in progress when this note was written. Its terminal build, package,
+> release, and downloadable-asset verdicts must be read from the run and release
+> pages. The older sections below describe historical baselines and may predate
+> this repair.
+
 You are taking over work on **this fork of BambuStudio** (`Ding-Ding-Projects/BambuStudio`),
 a Windows desktop 3D-printing slicer written in C++ with wxWidgets. This file is written
 to be self-contained: it assumes you know nothing about previous sessions. Everything
@@ -44,7 +64,7 @@ These cost previous sessions hours. Do not re-derive them.
 
 | Thing | Value |
 | --- | --- |
-| Repo path | Resolve from the active checkout (`git rev-parse --show-toplevel`); on the current host it is `C:\Users\cntow\Documents\GitHub\BambuStudio`. |
+| Repo path | Resolve from the active checkout with `git rev-parse --show-toplevel`. |
 | Visual Studio | VS 2022 Build Tools 17.14 at `%LOCALAPPDATA%\material-virtualbox-toolchain\BuildTools`, installed by `build.bat` (2026-09-05). The earlier VS 18 Enterprise path no longer exists on this host. |
 | MSBuild | `%LOCALAPPDATA%\material-virtualbox-toolchain\BuildTools\MSBuild\Current\Bin\MSBuild.exe`. A bare MSBuild run cannot regenerate the projects (CMake needs pkg-config on PATH); regenerate through `build.bat /s`. |
 | Windows SDK | The generated tree selects **10.0.26100.0** (installed by `build.bat`). |
@@ -59,7 +79,7 @@ These cost previous sessions hours. Do not re-derive them.
 
 - `cmd` does **not** resolve executables from the current directory. Always call `.exe`/`.cmd`
   files by absolute path, and use `cmd /c "cd /d <dir> && call C:\full\path\to\thing.bat"`.
-- Git-bash `printf` eats backslashes in the **format** string: `printf 'C:\Users\...'` fails with
+- Git-bash `printf` eats backslashes in the **format** string: `printf 'C:\Unescaped\...'` fails with
   "missing unicode digit for \U". Write `.cmd` files with a **quoted heredoc** (`<<'EOF'`) instead.
 - Git-bash mangles `git show origin/master:path/to/file` (the colon). Use PowerShell for that,
   or `git show 'origin/master:path' -- ` quoted carefully.
@@ -1398,18 +1418,17 @@ diagnostics were a cascade.
   The export jer is now integrated, but its source ref remains preserved until the archive and
   ancestry checks authorize removal.
 - `worktree-agent-a2c028be23ca8b092` is locked by an active process and is retained even though its
-  tip is already an ancestor of `origin/main`. The remaining completed, clean, ancestor jers and
+  tip is already an ancestor of `origin/main`. The remaining completed, clean, ancestor branches and
   their linked checkouts are candidates only after the external archive is verified and ownership
   is confirmed by the closeout pass.
-- No Lap Sap Tongs were present. No local conflict entries remain. No build, installer, release, or
+- No Git stashes were present. No local conflict entries remain. No build, installer, release, or
   unrelated product work was run during this closeout.
 
 ### Archive and cleanup result
 
 - The first archive attempt, `BambuStudio-20260918T170234Z.7z`, returned exit code `1` because four
   tracked paths were absent on disk. It was not used as deletion evidence.
-- The verified archive is
-  `C:\Users\cntow\OneDrive\OakKayBackups\BambuStudio\zips\BambuStudio-20260918T170916Z.7z`.
+- The verified archive was stored in an owner-managed backup folder outside this checkout.
   It is 4,838,688,295 bytes and passed `7z t`; the read-back listed 191,804 files and 11,467
   folders, including 611 `.git` administrative entries. The four absent tracked files are listed
   in the closeout log and were excluded only because they did not exist on disk.

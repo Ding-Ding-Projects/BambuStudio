@@ -2,6 +2,14 @@
 
 ## In progress
 
+### Preferences build repair (issue #38, 2026-09-25)
+
+- [x] Replace the removed `TabStrip::SetSelection` call with stable-ID activation in Preferences.
+- [x] Close the Command Palette documentation loop that caused nested-function compiler errors.
+- [x] Replace the absent preset `export` bitmap fallback; build Release locally and verify Preferences opens and switches to General on a hidden desktop.
+- [x] Retain visually reviewed before/after captures and source/build hashes under `docs/screenshots/preferences/tabstrip-fix/`.
+- [ ] Verify the final hosted Windows build, Squirrel package, release assets, and issue resolution. [Run 36210592947](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36210592947) was in progress when this checklist was updated.
+
 ### Every element Material Design 3, every clipping defect fixed (issue #32, 2026-09-05)
 
 Tracked on issue #32 and Discussion #33. Ticks mean implemented, guarded and compiled; runtime
@@ -431,8 +439,8 @@ truth; the counts here are a snapshot.
 
 ## Repository closeout status, 2026-09-18
 
-- [x] Fetch `origin` and inventory the primary checkout, linked checkouts, local jers, remote refs,
-      conflict entries, and Lap Sap Tongs.
+- [x] Fetch `origin` and inventory the primary checkout, linked checkouts, local branches, remote refs,
+      conflict entries, and Git stashes.
 - [x] Fast-forward `main` to `origin/main` at `5014d08562b1de7f2198a2e1134eb4d378cb670f`.
 - [x] Integrate the completed export lane in merge commit
       `7df4f534c4c80274355b9d3fe7ebae9a715756e5`.
