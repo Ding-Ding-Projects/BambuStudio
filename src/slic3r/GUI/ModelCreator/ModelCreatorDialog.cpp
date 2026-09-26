@@ -105,6 +105,18 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     });
     SetMinSize(wxSize(650, 720));
     SetSize(wxSize(720, 780));
+    try {
+        m_revisions = load_revisions(local_workspace());
+        for (size_t i = 0; i < m_revisions.size(); ++i)
+            m_history->Append(wxString::Format(_L("Revision %zu: "), i + 1) +
+                              wxString::FromUTF8(m_revisions[i].scene.title));
+        if (!m_revisions.empty()) {
+            m_history->SetSelection(static_cast<int>(m_revisions.size() - 1));
+            m_status->SetValue(_L("A retained revision is ready for preview."));
+        }
+    } catch (const std::exception &) {
+        m_status->SetValue(_L("Saved revisions could not be read."));
+    }
     update_controls();
 }
 

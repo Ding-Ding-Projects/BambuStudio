@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include <chrono>
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <fstream>
@@ -272,8 +273,48 @@ Result run(const Settings &settings, const std::string &prompt,
     if (!rendered) return result;
     if (!printable_stl(mesh, result.error)) return result;
     if (cancel) { result.error = "Canceled"; return result; }
+    const json manifest = {{"version", 1}, {"title", spec.scene.title},
+                           {"prompt", prompt}, {"note", revision_note}};
+    { std::ofstream stream(directory / "revision.json", std::ios::binary); stream << manifest.dump();
+      if (!stream) { result.error = "Could not retain revision metadata"; return result; } }
     result.revision = {prompt, revision_note, std::move(spec.scene), mesh, {}};
     return result;
+}
+
+std::vector<Revision> load_revisions(const std::filesystem::path &workspace)
+{
+    std::vector<Revision> revisions;
+    if (!std::filesystem::is_directory(workspace)) return revisions;
+    std::vector<std::filesystem::path> directories;
+    for (const auto &entry : std::filesystem::directory_iterator(workspace))
+        if (entry.is_directory() && entry.path().filename().string().find("revision-") == 0)
+            directories.push_back(entry.path());
+    std::sort(directories.begin(), directories.end(), [](const auto &a, const auto &b) {
+        return std::filesystem::last_write_time(a) < std::filesystem::last_write_time(b);
+    });
+    if (directories.size() > 100) directories.erase(directories.begin(), directories.end() - 100);
+    for (const auto &directory : directories) {
+        const auto metadata = json::parse(read_bounded(directory / "revision.json"), nullptr, false);
+        if (!metadata.is_object() || !metadata.contains("version") ||
+            !metadata["version"].is_number_integer() || metadata["version"] != 1 ||
+            !metadata.contains("title") || !metadata["title"].is_string() ||
+            !metadata.contains("prompt") || !metadata["prompt"].is_string() ||
+            !metadata.contains("note") || !metadata["note"].is_string()) continue;
+        const auto title = metadata["title"].get<std::string>();
+        const auto prompt = metadata["prompt"].get<std::string>();
+        const auto note = metadata["note"].get<std::string>();
+        if (title.empty() || title.size() > 80 || prompt.size() > 4000 || note.size() > 2000) continue;
+        std::string error;
+        const auto mesh = directory / "preview.stl";
+        if (!printable_stl(mesh, error)) continue;
+        Revision revision;
+        revision.scene.title = title;
+        revision.prompt = prompt;
+        revision.note = note;
+        revision.mesh = mesh;
+        revisions.push_back(std::move(revision));
+    }
+    return revisions;
 }
 
 } // namespace Slic3r::GUI::ModelCreator

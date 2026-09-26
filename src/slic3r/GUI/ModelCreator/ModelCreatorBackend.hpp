@@ -46,5 +46,6 @@ bool has_api_key(Provider provider);
 // It creates a new isolated revision directory and retains prior revisions.
 Result run(const Settings &settings, const std::string &prompt,
            const std::string &revision_note, std::atomic_bool &cancel);
+std::vector<Revision> load_revisions(const std::filesystem::path &workspace);
 
 } // namespace Slic3r::GUI::ModelCreator
