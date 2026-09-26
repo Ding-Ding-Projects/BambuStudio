@@ -98,8 +98,8 @@ FanMotionView::FanMotionView(wxWindow* parent, bool auxiliary, Slider* slider)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetMinSize(wxSize(FromDIP(24), FromDIP(24)));
-    Bind(wxEVT_PAINT, &FanMotionView::OnPaint, this);
-    Bind(wxEVT_SHOW, &FanMotionView::OnShow, this);
+    wxWindow::Bind(wxEVT_PAINT, &FanMotionView::OnPaint, this);
+    wxWindow::Bind(wxEVT_SHOW, &FanMotionView::OnShow, this);
 }
 
 void FanMotionView::SetSlider(Slider* slider)
