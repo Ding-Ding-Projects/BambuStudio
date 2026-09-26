@@ -14,6 +14,9 @@ work is in progress.
 - [Project version history](project-version-history.md) — local, libgit2-backed
   snapshots of every project, browsable/restorable from File ▸ Version history
   and the topbar history chip.
+- [Workspace bundles and planning](workspace-bundles.md) — portable grouped
+  projects, owned editable sources, checklist, planned slots, reminders, and
+  calendar exports.
 - [Browser-like project tabs](project-tabs.md) — one tab per project with
   snapshot-based switching, plus the new-tab and close affordances.
 - [Tabbed settings and the shared tab strip](tabbed-settings.md) — the one
