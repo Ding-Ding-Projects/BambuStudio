@@ -405,6 +405,7 @@ public:
     void reset_post_process_script_choice();
     void reset_flags_when_new_or_close_project();
     int new_project(bool skip_confirm = false, bool silent = false, const wxString &project_name = wxString());
+    void cancel_pending_print_after_slice();
     // BBS: save & backup
     int load_project(wxString const & filename = "", wxString const & originfile = "-",
                      bool *load_succeeded = nullptr, bool skip_close_confirmation = false);
