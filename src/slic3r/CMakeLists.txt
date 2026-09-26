@@ -163,6 +163,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/EncodedFilament.cpp
     GUI/Project.cpp
     GUI/Project.hpp
+    GUI/WorkspacePanel.cpp
+    GUI/WorkspacePanel.hpp
     GUI/BackgroundSlicingProcess.cpp
     GUI/BackgroundSlicingProcess.hpp
     GUI/BitmapCache.cpp
@@ -896,6 +898,7 @@ target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW
 #target_link_libraries(libslic3r_gui libslic3r cereal imgui imguizmo minilzo GLEW::GLEW OpenGL::GL hidapi libcurl OpenSSL::SSL OpenSSL::Crypto ${wxWidgets_LIBRARIES} glfw)
 
 target_link_libraries(libslic3r_gui Setupapi.lib dwmapi.lib)
+target_link_libraries(libslic3r_gui libslic3r_workspace)
 
 if (SLIC3R_STATIC)
     # FIXME: This was previously exported by wx-config but the wxWidgets

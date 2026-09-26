@@ -36,6 +36,8 @@ struct ProjectTab
 {
     std::string file_path;
     std::string snapshot_path;
+    std::string workspace_bundle_id;
+    std::string workspace_member_id;
     wxString    title;
     bool        dirty    = false;
     int         group_id = -1;
@@ -63,6 +65,8 @@ public:
 
     // Model + UI mutation ---------------------------------------------------
     int  AddTab(const std::string &file_path, const wxString &title, bool activate = true); // returns index
+    int  AddWorkspaceMemberTab(const std::string &bundle_id, const std::string &member_id,
+                               const std::string &file_path, const wxString &title, bool activate = true);
     void CloseTab(int i);           // removes from model + re-layouts (no save/load)
     void SetActive(int i);          // visual + model active index (no event)
     int  GetActive() const;

@@ -150,7 +150,7 @@ std::vector<CalendarSlot> agenda(const Workspace &workspace, std::int64_t from_u
 {
     std::vector<CalendarSlot> result;
     for (const auto &slot : workspace.slots)
-        if (slot.enabled && slot.start_utc < until_utc && slot.end_utc > from_utc) result.push_back(slot);
+        if (slot.start_utc < until_utc && slot.end_utc > from_utc) result.push_back(slot);
     std::sort(result.begin(), result.end(), [](const CalendarSlot &a, const CalendarSlot &b) {
         return a.start_utc < b.start_utc || (a.start_utc == b.start_utc && a.id < b.id);
     });
@@ -250,6 +250,15 @@ std::string calendar_ics(const Workspace &workspace)
         result += "BEGIN:VEVENT\r\nUID:" + ics_escape(slot.id) + "@bambu-workspace\r\nDTSTART:" + utc_stamp(slot.start_utc) +
                   "\r\nDTEND:" + utc_stamp(slot.end_utc) + "\r\nSUMMARY:" + ics_escape(slot.title) +
                   "\r\nDESCRIPTION:" + ics_escape("Planned print; printer " + slot.printer_id) + "\r\nEND:VEVENT\r\n";
+    }
+    for (const auto &item : workspace.checklist) {
+        int year, month, day;
+        if (item.due_date.empty() || !parse_date(item.due_date, year, month, day)) continue;
+        const auto day_start = days_from_civil(year, static_cast<unsigned>(month), static_cast<unsigned>(day)) * 86400;
+        result += "BEGIN:VEVENT\r\nUID:" + ics_escape(item.id) + "@bambu-workspace\r\nDTSTART;VALUE=DATE:" +
+                  utc_stamp(day_start).substr(0, 8) + "\r\nDTEND;VALUE=DATE:" +
+                  utc_stamp(day_start + 86400).substr(0, 8) + "\r\nSUMMARY:" + ics_escape(item.text) +
+                  "\r\nEND:VEVENT\r\n";
     }
     return result + "END:VCALENDAR\r\n";
 }

@@ -117,6 +117,27 @@ int ProjectTabBar::AddTab(const std::string &file_path, const wxString &title, b
     return index;
 }
 
+int ProjectTabBar::AddWorkspaceMemberTab(const std::string &bundle_id, const std::string &member_id,
+                                         const std::string &file_path, const wxString &title, bool activate)
+{
+    if (bundle_id.empty() || member_id.empty() || file_path.empty()) return -1;
+    const std::string id = "workspace:" + bundle_id + ":" + member_id;
+    if (GetModel().find(id)) {
+        const int index = GetModel().index_of(id);
+        if (activate) Activate(id, /*emit*/ false);
+        return index;
+    }
+    ProjectTab tab;
+    tab.file_path = file_path;
+    tab.workspace_bundle_id = bundle_id;
+    tab.workspace_member_id = member_id;
+    tab.title = title;
+    m_projects[id] = tab;
+    const int index = TabStrip::AddTab(id, title, file_path, /*activate*/ false);
+    if (activate) Activate(id, /*emit*/ false);
+    return index;
+}
+
 void ProjectTabBar::CloseTab(int i)
 {
     const std::string id = IdAt(i);
@@ -202,6 +223,13 @@ void ProjectTabBar::LoadFromConfig()
             ProjectTab tab;
             tab.file_path = t.payload;
             tab.title     = t.title.IsEmpty() ? TitleFromPath(t.payload) : t.title;
+            if (t.id.rfind("workspace:", 0) == 0) {
+                const std::size_t separator = t.id.find(':', 10);
+                if (separator != std::string::npos) {
+                    tab.workspace_bundle_id = t.id.substr(10, separator - 10);
+                    tab.workspace_member_id = t.id.substr(separator + 1);
+                }
+            }
             m_projects[t.id] = tab;
             if (t.id.rfind("untitled-", 0) == 0) {
                 try {

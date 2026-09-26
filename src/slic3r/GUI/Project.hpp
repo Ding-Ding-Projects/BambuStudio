@@ -30,6 +30,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <filesystem>
 #include "Event.hpp"
 #include "libslic3r/ProjectTask.hpp"
 #include "wxExtensions.hpp"
@@ -51,6 +52,8 @@
 
 namespace Slic3r { namespace GUI {
 
+class WorkspacePanel;
+
 struct project_file{
     std::string filepath;
     std::string filename;
@@ -64,6 +67,7 @@ private:
     bool       m_reload_already = {false};
 
     wxWebView* m_browser = {nullptr};
+    WorkspacePanel* m_workspace_panel = {nullptr};
     wxString   m_project_home_url;
     wxString   m_root_dir;
     std::map<std::string, std::string> m_model_id_map;
@@ -94,6 +98,8 @@ public:
     void OnScriptMessage(wxWebViewEvent& evt);
     void RunScript(std::string content);
     bool is_editing_page() const;
+    bool open_workspace(const std::filesystem::path &path);
+    WorkspacePanel *workspace_panel() const { return m_workspace_panel; }
 
     std::map<std::string, std::vector<json>> Reload(wxString aux_path);
     std::string formatBytes(unsigned long bytes);

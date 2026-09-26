@@ -4,6 +4,7 @@
 #include "miniz/miniz.h"
 
 #include <filesystem>
+#include <cstdio>
 #include <fstream>
 
 namespace fs = std::filesystem;
@@ -26,6 +27,24 @@ void write_file(const fs::path &path, const std::string &content)
     REQUIRE(output.good());
 }
 
+void write_3mf(const fs::path &path)
+{
+    FILE *file = nullptr;
+#ifdef _WIN32
+    REQUIRE(_wfopen_s(&file, path.c_str(), L"wb") == 0);
+#else
+    file = std::fopen(path.c_str(), "wb");
+#endif
+    REQUIRE(file != nullptr);
+    mz_zip_archive archive{};
+    REQUIRE(mz_zip_writer_init_cfile(&archive, file, 0));
+    const std::string model = "<model unit=\"millimeter\"/>";
+    REQUIRE(mz_zip_writer_add_mem(&archive, "3D/3dmodel.model", model.data(), model.size(), MZ_BEST_COMPRESSION));
+    REQUIRE(mz_zip_writer_finalize_archive(&archive));
+    REQUIRE(mz_zip_writer_end(&archive));
+    REQUIRE(std::fclose(file) == 0);
+}
+
 Workspace example(const fs::path &root)
 {
     Workspace workspace;
@@ -37,7 +56,7 @@ Workspace example(const fs::path &root)
     member.id = new_id();
     member.name = "Bracket";
     member.project_path = root / "bracket.3mf";
-    write_file(member.project_path, "self-contained 3MF bytes");
+    write_3mf(member.project_path);
     SourceFile source{"cad/bracket.step", root / "bracket.step"};
     write_file(source.local_path, "editable source bytes");
     member.editable_sources.push_back(source);
@@ -81,6 +100,40 @@ void rewrite_archive(const fs::path &source, const fs::path &target, const std::
     for (mz_uint i = 0; i < mz_zip_reader_get_num_files(&reader); ++i)
         REQUIRE(mz_zip_writer_add_from_zip_reader(&writer, &reader, i));
     REQUIRE(mz_zip_writer_add_mem(&writer, bad_entry.c_str(), "bad", 3, MZ_BEST_COMPRESSION));
+    REQUIRE(mz_zip_writer_finalize_archive(&writer));
+    REQUIRE(mz_zip_writer_end(&writer));
+    REQUIRE(mz_zip_reader_end(&reader));
+    REQUIRE(std::fclose(input) == 0);
+    REQUIRE(std::fclose(output) == 0);
+}
+
+void corrupt_member(const fs::path &source, const fs::path &target)
+{
+    FILE *input = nullptr;
+    FILE *output = nullptr;
+#ifdef _WIN32
+    REQUIRE(_wfopen_s(&input, source.c_str(), L"rb") == 0);
+    REQUIRE(_wfopen_s(&output, target.c_str(), L"wb") == 0);
+#else
+    input = std::fopen(source.c_str(), "rb");
+    output = std::fopen(target.c_str(), "wb");
+#endif
+    REQUIRE(input != nullptr);
+    REQUIRE(output != nullptr);
+    mz_zip_archive reader{}, writer{};
+    REQUIRE(mz_zip_reader_init_cfile(&reader, input, 0, 0));
+    REQUIRE(mz_zip_writer_init_cfile(&writer, output, 0));
+    bool replaced = false;
+    for (mz_uint i = 0; i < mz_zip_reader_get_num_files(&reader); ++i) {
+        mz_zip_archive_file_stat stat{};
+        REQUIRE(mz_zip_reader_file_stat(&reader, i, &stat));
+        const std::string name = stat.m_filename;
+        if (name.rfind("Members/", 0) == 0 && name.size() >= 4 && name.substr(name.size() - 4) == ".3mf") {
+            REQUIRE(mz_zip_writer_add_mem(&writer, name.c_str(), "changed", 7, MZ_BEST_COMPRESSION));
+            replaced = true;
+        } else REQUIRE(mz_zip_writer_add_from_zip_reader(&writer, &reader, i));
+    }
+    REQUIRE(replaced);
     REQUIRE(mz_zip_writer_finalize_archive(&writer));
     REQUIRE(mz_zip_writer_end(&writer));
     REQUIRE(mz_zip_reader_end(&reader));
@@ -132,6 +185,12 @@ TEST_CASE("Workspace ZIP rejects traversal and retains previous archive after re
     REQUIRE_FALSE(save_bundle(workspace, target).ok());
     REQUIRE(fs::file_size(target) == original_size);
     REQUIRE(inspect_bundle(target).ok());
+    const fs::path changed = temporary.root / "changed.bambu-workspace";
+    corrupt_member(target, changed);
+    REQUIRE_FALSE(inspect_bundle(changed).ok());
+    write_file(workspace.members.front().project_path, "not a 3MF");
+    REQUIRE_FALSE(save_bundle(workspace, target).ok());
+    REQUIRE(inspect_bundle(target).ok());
 }
 
 TEST_CASE("Planner warns about overlaps and missing printers without submitting prints", "[workspace]")
@@ -163,6 +222,7 @@ TEST_CASE("Reminders catch up across DST and exports preserve UTC instants", "[w
     REQUIRE(dismiss_slot_reminder(workspace, workspace.slots.front().id));
     REQUIRE(due_reminders(workspace, due + 7100, due + 7300).empty());
     REQUIRE(calendar_ics(workspace).find("DTSTART:20260308T") != std::string::npos);
+    REQUIRE(calendar_ics(workspace).find("DTSTART;VALUE=DATE:20260308") != std::string::npos);
     REQUIRE(checklist_csv(workspace).find("due_date") != std::string::npos);
     REQUIRE(checklist_json(workspace).find("2026-03-08") != std::string::npos);
 }
