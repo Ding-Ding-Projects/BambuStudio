@@ -1,6 +1,6 @@
 #include "ModelCreatorBackend.hpp"
+#include "ProcessRunner.hpp"
 
-#include <boost/process.hpp>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -10,7 +10,6 @@
 #include <cstring>
 #include <fstream>
 #include <random>
-#include <thread>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -19,9 +18,19 @@
 
 namespace Slic3r::GUI::ModelCreator {
 namespace {
-namespace bp = boost::process;
 using json = nlohmann::json;
 constexpr size_t max_response = 65536;
+
+struct TemporaryFiles {
+    std::vector<std::filesystem::path> paths;
+    ~TemporaryFiles()
+    {
+        for (const auto &path : paths) {
+            std::error_code ignored;
+            std::filesystem::remove(path, ignored);
+        }
+    }
+};
 
 std::string target(Provider provider)
 {
@@ -59,10 +68,14 @@ std::string api_request(const Settings &settings, const std::string &prompt, std
     const std::string key = load_api_key(settings.provider);
     if (key.empty()) { error = "No key is saved for this provider"; return {}; }
     const bool anthropic = settings.provider == Provider::AnthropicApi;
+    const json schema = json::parse(scene_json_schema());
     json body = anthropic ?
         json{{"model", settings.model}, {"max_tokens", 4096},
-             {"messages", json::array({{{"role", "user"}, {"content", prompt}}})}} :
-        json{{"model", settings.model}, {"input", prompt}, {"max_output_tokens", 4096}};
+             {"messages", json::array({{{"role", "user"}, {"content", prompt}}})},
+             {"output_config", {{"format", {{"type", "json_schema"}, {"schema", schema}}}}}} :
+        json{{"model", settings.model}, {"input", prompt}, {"max_output_tokens", 4096},
+             {"text", {{"format", {{"type", "json_schema"}, {"name", "model_creator_scene_v1"},
+                                    {"strict", true}, {"schema", schema}}}}}};
     std::string response;
     CURL *curl = curl_easy_init();
     if (!curl) { error = "HTTP client unavailable"; return {}; }
@@ -117,23 +130,9 @@ std::string api_request(const Settings &settings, const std::string &prompt, std
 bool execute(const std::filesystem::path &program, const std::vector<std::string> &args,
              const std::filesystem::path &in, const std::filesystem::path &out,
              const std::filesystem::path &cwd, int seconds, std::atomic_bool &cancel,
-             std::string &error)
+             ProcessRole role, std::string &error)
 {
-    if (!std::filesystem::is_regular_file(program)) { error = "Executable not found"; return false; }
-    try {
-        bp::child child(program.string(), bp::args(args), bp::std_in < in.string(),
-                        bp::std_out > out.string(), bp::std_err > bp::null,
-                        bp::start_dir(cwd.string()));
-        const auto end = std::chrono::steady_clock::now() + std::chrono::seconds(seconds);
-        while (child.running() && !cancel && std::chrono::steady_clock::now() < end)
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        if (child.running()) child.terminate();
-        child.wait();
-        if (cancel) { error = "Canceled"; return false; }
-        if (std::chrono::steady_clock::now() >= end) { error = "Process timed out"; return false; }
-        if (child.exit_code() != 0) { error = "Process exited without a model"; return false; }
-        return true;
-    } catch (const std::exception &) { error = "Could not start process"; return false; }
+    return run_isolated_process(program, args, in, out, cwd, seconds, cancel, role, error);
 }
 
 std::string read_bounded(const std::filesystem::path &path)
@@ -189,6 +188,20 @@ std::filesystem::path new_revision(const std::filesystem::path &workspace)
     }
     return {};
 }
+
+void remove_stale_temporary_files(const std::filesystem::path &directory)
+{
+    // An abrupt application exit skips RAII cleanup. Reap only old scratch files
+    // so another open dialog's active generation is not disturbed.
+    const auto cutoff = std::filesystem::file_time_type::clock::now() - std::chrono::hours(24);
+    for (const char *name : {"request.txt", "response.txt", "schema.json", "process-output.txt",
+                             "empty.txt", "render.log"}) {
+        const auto path = directory / name;
+        std::error_code error;
+        const auto written = std::filesystem::last_write_time(path, error);
+        if (!error && written < cutoff) std::filesystem::remove(path, error);
+    }
+}
 }
 
 bool save_api_key(Provider provider, const std::string &key)
@@ -242,17 +255,37 @@ Result run(const Settings &settings, const std::string &prompt,
     } else {
         const auto input = directory / "request.txt";
         const auto output = directory / "response.txt";
+        const auto schema_file = directory / "schema.json";
+        const auto trace = directory / "process-output.txt";
+        TemporaryFiles temporary{{input, output, schema_file, trace}};
         { std::ofstream stream(input, std::ios::binary); stream << request; }
+        { std::ofstream stream(schema_file, std::ios::binary); stream << scene_json_schema(); }
         const std::vector<std::string> args = settings.provider == Provider::ClaudeCli ?
-            std::vector<std::string>{"-p", "--output-format", "text", "--tools", "", "--model", settings.model} :
-            std::vector<std::string>{"exec", "--sandbox", "read-only", "--skip-git-repo-check",
+            std::vector<std::string>{"-p", "--safe-mode", "--strict-mcp-config", "--mcp-config", "{}",
+                                     "--no-session-persistence", "--output-format", "json",
+                                     "--json-schema", scene_json_schema(), "--tools", "",
+                                     "--model", settings.model} :
+            std::vector<std::string>{"exec", "--ignore-user-config", "--ignore-rules", "--ephemeral",
+                                     "--sandbox", "read-only", "--skip-git-repo-check",
+                                     "--disable", "apps", "--disable", "browser_use",
+                                     "--disable", "computer_use", "--disable", "hooks",
+                                     "--disable", "plugins", "--disable", "multi_agent",
+                                     "--output-schema", schema_file.string(), "-o", output.string(),
                                      "--model", settings.model, "-"};
-        const bool ok = execute(settings.provider_executable, args, input, output, directory,
-                                settings.timeout_seconds, cancel, result.error);
-        std::filesystem::remove(input);
+        const auto role = settings.provider == Provider::ClaudeCli ? ProcessRole::ClaudeCli : ProcessRole::CodexCli;
+        const bool ok = execute(settings.provider_executable, args, input,
+                                settings.provider == Provider::ClaudeCli ? output : trace, directory,
+                                settings.timeout_seconds, cancel, role, result.error);
         if (!ok) return result;
         response = read_bounded(output);
-        std::filesystem::remove(output);
+        if (settings.provider == Provider::ClaudeCli) {
+            const auto envelope = json::parse(response, nullptr, false);
+            if (!envelope.is_object() || !envelope.contains("structured_output") ||
+                !envelope["structured_output"].is_object()) {
+                result.error = "Claude CLI returned no structured scene"; return result;
+            }
+            response = envelope["structured_output"].dump();
+        }
     }
     if (!result.error.empty()) return result;
     auto spec = parse_scene(response);
@@ -262,14 +295,13 @@ Result run(const Settings &settings, const std::string &prompt,
     { std::ofstream stream(source, std::ios::binary);
       stream << (settings.renderer == Renderer::OpenSCAD ? emit_openscad(spec.scene) : emit_blender(spec.scene)); }
     const auto null_input = directory / "empty.txt";
+    TemporaryFiles temporary{{null_input, directory / "render.log"}};
     { std::ofstream stream(null_input); }
     const std::vector<std::string> args = settings.renderer == Renderer::OpenSCAD ?
         std::vector<std::string>{"--export-format", "binstl", "-o", mesh.string(), source.string()} :
         std::vector<std::string>{"--background", "--factory-startup", "--python", source.string(), "--", mesh.string()};
     const bool rendered = execute(settings.renderer_executable, args, null_input, directory / "render.log",
-                                  directory, settings.timeout_seconds, cancel, result.error);
-    std::filesystem::remove(null_input);
-    std::filesystem::remove(directory / "render.log");
+                                  directory, settings.timeout_seconds, cancel, ProcessRole::Renderer, result.error);
     if (!rendered) return result;
     if (!printable_stl(mesh, result.error)) return result;
     if (cancel) { result.error = "Canceled"; return result; }
@@ -289,6 +321,7 @@ std::vector<Revision> load_revisions(const std::filesystem::path &workspace)
     for (const auto &entry : std::filesystem::directory_iterator(workspace))
         if (entry.is_directory() && entry.path().filename().string().find("revision-") == 0)
             directories.push_back(entry.path());
+    for (const auto &directory : directories) remove_stale_temporary_files(directory);
     std::sort(directories.begin(), directories.end(), [](const auto &a, const auto &b) {
         return std::filesystem::last_write_time(a) < std::filesystem::last_write_time(b);
     });

@@ -288,6 +288,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/ModelCreator/SceneSpec.hpp
     GUI/ModelCreator/ModelCreatorBackend.cpp
     GUI/ModelCreator/ModelCreatorBackend.hpp
+    GUI/ModelCreator/ProcessRunner.cpp
+    GUI/ModelCreator/ProcessRunner.hpp
     GUI/ModelCreator/ModelCreatorDialog.cpp
     GUI/ModelCreator/ModelCreatorDialog.hpp
     GUI/GUI.hpp

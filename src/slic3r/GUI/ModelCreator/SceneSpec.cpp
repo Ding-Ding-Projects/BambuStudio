@@ -160,4 +160,9 @@ std::string scene_prompt(const std::string &request, const std::string &revision
            "Request: " + safe_request + "\nRevision: " + safe_revision;
 }
 
+std::string scene_json_schema()
+{
+    return R"({"type":"object","properties":{"version":{"type":"integer","enum":[1]},"title":{"type":"string"},"parts":{"type":"array","items":{"anyOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["box"]},"size":{"type":"array","items":{"type":"number"}},"position":{"type":"array","items":{"type":"number"}}},"required":["kind","size","position"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","enum":["cylinder"]},"height":{"type":"number"},"radius":{"type":"number"},"position":{"type":"array","items":{"type":"number"}},"facets":{"type":"integer"}},"required":["kind","height","radius","position","facets"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","enum":["sphere"]},"radius":{"type":"number"},"position":{"type":"array","items":{"type":"number"}},"facets":{"type":"integer"}},"required":["kind","radius","position","facets"],"additionalProperties":false}]} }},"required":["version","title","parts"],"additionalProperties":false})";
+}
+
 } // namespace Slic3r::GUI::ModelCreator
