@@ -9924,9 +9924,12 @@ void GLCanvas3D::_render_overlays()
                         dl->AddRectFilled(ImVec2(bx, by), ImVec2(bx + btn, by + btn), md3_imu32(MD3::Role::SurfaceContainerHigh), 10.0f * sc);
                     draw_mark(dl, bx + btn * 0.5f, by + btn * 0.5f, 22.0f * sc, marks[i], md3_imu32(MD3::Role::OnSurfaceVariant));
                     if (clicked) {
-                        if (i == 0)      _update_camera_zoom(1.0);
-                        else if (i == 1) _update_camera_zoom(-1.0);
-                        else             zoom_to_fit();
+                        if (i == 2) {
+                            zoom_to_fit();
+                        } else {
+                            const Point anchor(cnv_size.get_width() / 2, cnv_size.get_height() / 2);
+                            _update_camera_zoom(get_active_camera().calc_zoom_from_delta(i == 0 ? 1.0 : -1.0), anchor);
+                        }
                     }
                 }
                 imgui.end();

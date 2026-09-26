@@ -1,6 +1,7 @@
 #include "IMSlider.hpp"
 #include "libslic3r/GCode.hpp"
 #include "GUI_App.hpp"
+#include "GLCanvas3D.hpp"
 #include "ImGuiWrapper.hpp"
 #include "Plater.hpp"
 #include "NotificationManager.hpp"
