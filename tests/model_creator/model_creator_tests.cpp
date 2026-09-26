@@ -25,6 +25,7 @@ TEST_CASE("Emitters use only validated values and fixed operators")
     const auto blend = emit_blender(parsed.scene);
     REQUIRE(scad.find("sphere(r=12.000, $fn=24)") != std::string::npos);
     REQUIRE(blend.find("primitive_uv_sphere_add") != std::string::npos);
+    REQUIRE(blend.find("save_as_mainfile") != std::string::npos);
     REQUIRE(scad.find("Solid") == std::string::npos);
     REQUIRE(blend.find("Solid") == std::string::npos);
 }

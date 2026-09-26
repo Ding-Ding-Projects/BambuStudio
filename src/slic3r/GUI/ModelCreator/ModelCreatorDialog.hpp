@@ -9,6 +9,7 @@
 
 class wxButton;
 class wxChoice;
+class wxStaticText;
 class wxTextCtrl;
 
 namespace Slic3r::GUI::ModelCreator {
@@ -26,8 +27,11 @@ private:
     void cancel_generation();
     void update_controls();
     void save_key();
+    void test_key();
     void clear_key();
     void select_revision();
+    void update_renderer_path();
+    void save_preferences();
 
     AddToPlate m_add_to_plate;
     std::shared_ptr<std::atomic_bool> m_cancel;
@@ -45,7 +49,10 @@ private:
     wxTextCtrl *m_renderer_path = nullptr;
     wxTextCtrl *m_key = nullptr;
     wxTextCtrl *m_status = nullptr;
+    wxStaticText *m_connection = nullptr;
+    wxStaticText *m_renderer_status = nullptr;
     wxButton *m_generate = nullptr;
+    wxButton *m_test_key = nullptr;
     wxButton *m_cancel_button = nullptr;
     wxButton *m_preview = nullptr;
     wxButton *m_add = nullptr;

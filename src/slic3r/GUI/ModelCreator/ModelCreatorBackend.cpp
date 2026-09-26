@@ -234,7 +234,61 @@ bool clear_api_key(Provider provider)
 #endif
 }
 
-bool has_api_key(Provider provider) { return !load_api_key(provider).empty(); }
+bool has_api_key(Provider provider)
+{
+#ifdef _WIN32
+    const std::string id = target(provider);
+    if (id.empty()) return false;
+    const std::wstring name(id.begin(), id.end());
+    PCREDENTIALW credential = nullptr;
+    if (!CredReadW(name.c_str(), CRED_TYPE_GENERIC, 0, &credential)) return false;
+    const bool available = credential->CredentialBlobSize > 0;
+    CredFree(credential);
+    return available;
+#else
+    return false;
+#endif
+}
+
+bool test_api_key(Provider provider, std::string &error)
+{
+    if (provider != Provider::AnthropicApi && provider != Provider::OpenAiApi) {
+        error = "Choose an API provider";
+        return false;
+    }
+    std::string key = load_api_key(provider);
+    if (key.empty()) { error = "No key is saved for this provider"; return false; }
+    CURL *curl = curl_easy_init();
+    if (!curl) { error = "HTTP client unavailable"; return false; }
+    curl_slist *headers = nullptr;
+    const bool anthropic = provider == Provider::AnthropicApi;
+    const std::string authorization = anthropic ? "x-api-key: " + key : "Authorization: Bearer " + key;
+    headers = curl_slist_append(headers, authorization.c_str());
+    if (anthropic) headers = curl_slist_append(headers, "anthropic-version: 2023-06-01");
+    curl_easy_setopt(curl, CURLOPT_URL, anthropic ? "https://api.anthropic.com/v1/models?limit=1" :
+                                                  "https://api.openai.com/v1/models?limit=1");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 12L);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+                     +[](char *, size_t size, size_t count, void *) -> size_t { return size * count; });
+    const CURLcode result = curl_easy_perform(curl);
+    long status = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+    std::fill(key.begin(), key.end(), '\0');
+    if (result != CURLE_OK) {
+        error = "Provider connection could not be completed";
+        return false;
+    }
+    if (status < 200 || status >= 300) {
+        error = "Provider key test returned HTTP " + std::to_string(status);
+        return false;
+    }
+    return true;
+}
 
 Result run(const Settings &settings, const std::string &prompt,
            const std::string &revision_note, std::atomic_bool &cancel)
@@ -248,11 +302,9 @@ Result run(const Settings &settings, const std::string &prompt,
     std::filesystem::create_directories(settings.workspace);
     const auto directory = new_revision(settings.workspace);
     if (directory.empty()) { result.error = "Cannot create revision directory"; return result; }
-    const std::string request = scene_prompt(prompt, revision_note);
-    std::string response;
-    if (settings.provider == Provider::AnthropicApi || settings.provider == Provider::OpenAiApi) {
-        response = api_request(settings, request, cancel, result.error);
-    } else {
+    const auto generate_once = [&](const std::string &request) -> std::string {
+        if (settings.provider == Provider::AnthropicApi || settings.provider == Provider::OpenAiApi)
+            return api_request(settings, request, cancel, result.error);
         const auto input = directory / "request.txt";
         const auto output = directory / "response.txt";
         const auto schema_file = directory / "schema.json";
@@ -273,25 +325,35 @@ Result run(const Settings &settings, const std::string &prompt,
                                      "--output-schema", schema_file.string(), "-o", output.string(),
                                      "--model", settings.model, "-"};
         const auto role = settings.provider == Provider::ClaudeCli ? ProcessRole::ClaudeCli : ProcessRole::CodexCli;
-        const bool ok = execute(settings.provider_executable, args, input,
-                                settings.provider == Provider::ClaudeCli ? output : trace, directory,
-                                settings.timeout_seconds, cancel, role, result.error);
-        if (!ok) return result;
-        response = read_bounded(output);
-        if (settings.provider == Provider::ClaudeCli) {
-            const auto envelope = json::parse(response, nullptr, false);
-            if (!envelope.is_object() || !envelope.contains("structured_output") ||
-                !envelope["structured_output"].is_object()) {
-                result.error = "Claude CLI returned no structured scene"; return result;
-            }
-            response = envelope["structured_output"].dump();
+        if (!execute(settings.provider_executable, args, input,
+                     settings.provider == Provider::ClaudeCli ? output : trace, directory,
+                     settings.timeout_seconds, cancel, role, result.error)) return {};
+        std::string response = read_bounded(output);
+        if (settings.provider != Provider::ClaudeCli) return response;
+        const auto envelope = json::parse(response, nullptr, false);
+        if (!envelope.is_object() || !envelope.contains("structured_output") ||
+            !envelope["structured_output"].is_object()) {
+            result.error = "Claude CLI returned no structured scene";
+            return {};
         }
+        return envelope["structured_output"].dump();
+    };
+    ParseResult spec;
+    std::string request = scene_prompt(prompt, revision_note);
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        if (cancel) { result.error = "Canceled"; return result; }
+        const std::string response = generate_once(request);
+        if (!result.error.empty()) return result;
+        spec = parse_scene(response);
+        if (spec) break;
+        if (attempt == 2) { result.error = spec.error; return result; }
+        request = scene_prompt(prompt, revision_note) +
+                  " The previous scene did not pass validation: " + spec.error.substr(0, 160) +
+                  ". Return a complete corrected JSON object matching the schema.";
     }
-    if (!result.error.empty()) return result;
-    auto spec = parse_scene(response);
-    if (!spec) { result.error = spec.error; return result; }
     const auto source = directory / (settings.renderer == Renderer::OpenSCAD ? "scene.scad" : "scene.py");
     const auto mesh = directory / "preview.stl";
+    const auto editable_blend = directory / "scene.blend";
     { std::ofstream stream(source, std::ios::binary);
       stream << (settings.renderer == Renderer::OpenSCAD ? emit_openscad(spec.scene) : emit_blender(spec.scene)); }
     const auto null_input = directory / "empty.txt";
@@ -299,10 +361,14 @@ Result run(const Settings &settings, const std::string &prompt,
     { std::ofstream stream(null_input); }
     const std::vector<std::string> args = settings.renderer == Renderer::OpenSCAD ?
         std::vector<std::string>{"--export-format", "binstl", "-o", mesh.string(), source.string()} :
-        std::vector<std::string>{"--background", "--factory-startup", "--python", source.string(), "--", mesh.string()};
+        std::vector<std::string>{"--background", "--factory-startup", "--python", source.string(), "--",
+                                 editable_blend.string(), mesh.string()};
     const bool rendered = execute(settings.renderer_executable, args, null_input, directory / "render.log",
                                   directory, settings.timeout_seconds, cancel, ProcessRole::Renderer, result.error);
     if (!rendered) return result;
+    if (settings.renderer == Renderer::Blender && !std::filesystem::is_regular_file(editable_blend)) {
+        result.error = "Renderer produced no editable Blender project"; return result;
+    }
     if (!printable_stl(mesh, result.error)) return result;
     if (cancel) { result.error = "Canceled"; return result; }
     const json manifest = {{"version", 1}, {"title", spec.scene.title},

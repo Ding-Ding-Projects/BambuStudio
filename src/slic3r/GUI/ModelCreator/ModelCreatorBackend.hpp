@@ -19,7 +19,7 @@ struct Settings {
     std::filesystem::path provider_executable;
     std::filesystem::path renderer_executable;
     std::filesystem::path workspace;
-    int timeout_seconds = 90;
+    int timeout_seconds = 300;
 };
 
 struct Revision {
@@ -41,6 +41,7 @@ struct Result {
 bool save_api_key(Provider provider, const std::string &key);
 bool clear_api_key(Provider provider);
 bool has_api_key(Provider provider);
+bool test_api_key(Provider provider, std::string &error);
 
 // run() does not add to the plate. Caller must explicitly confirm that action.
 // It creates a new isolated revision directory and retains prior revisions.

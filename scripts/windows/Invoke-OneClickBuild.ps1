@@ -628,6 +628,11 @@ function Invoke-OneClickBuild {
         # so build.bat hands over something that starts.
         $sevenZip = Get-SevenZipPath
         Add-MesaFallback -PayloadDirectory $payloadDirectory -SevenZip $sevenZip
+        Invoke-RepositoryCommand 'Staging verified Model Creator renderers...' {
+            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass `
+                -File (Join-Path $script:RepositoryRoot 'scripts\windows\Stage-ModelCreatorRenderers.ps1') `
+                -PayloadDirectory $payloadDirectory
+        }
 
         if ($BuildOnly) {
             Write-BuildLog "Build-only workflow completed; runnable payload: $application"
