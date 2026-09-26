@@ -108,11 +108,21 @@ def placeholder_signature(value: str) -> Counter[str]:
     return Counter(PLACEHOLDER_RE.findall(value))
 
 
-def validate_catalog(po_path: Path, source_path: Path, coverage_path: Path) -> Dict[str, str]:
+def validate_catalog(
+    po_path: Path,
+    source_path: Path,
+    coverage_path: Path,
+    *,
+    require_source_membership: bool = True,
+) -> Dict[str, str]:
     target = entry_map(parse_po(po_path), po_path)
     # The upstream English extraction currently contains repeated msgids. They
     # represent the same lookup key, so collapse them only for source membership.
-    source = entry_map(parse_po(source_path), source_path, allow_duplicates=True)
+    source = (
+        entry_map(parse_po(source_path), source_path, allow_duplicates=True)
+        if require_source_membership
+        else {}
+    )
 
     header = target.get("")
     if not header or "Language: yue_HK\n" not in str(header.get("msgstr", "")):
@@ -126,7 +136,7 @@ def validate_catalog(po_path: Path, source_path: Path, coverage_path: Path) -> D
         msgstr = entry.get("msgstr")
         if not isinstance(msgstr, str) or not msgstr.strip():
             raise CatalogError(f"empty translation: {msgid!r}")
-        if msgid not in source:
+        if require_source_membership and msgid not in source:
             raise CatalogError(f"msgid is absent from English source catalog: {msgid!r}")
         if placeholder_signature(msgid) != placeholder_signature(msgstr):
             raise CatalogError(
@@ -194,10 +204,20 @@ def main() -> int:
     parser.add_argument("--coverage", type=Path, default=DEFAULT_COVERAGE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--check", action="store_true", help="fail unless the checked-in MO is current")
+    parser.add_argument(
+        "--allow-unreferenced",
+        action="store_true",
+        help="allow reviewed keys not yet present in the upstream English extraction",
+    )
     args = parser.parse_args()
 
     try:
-        catalog = validate_catalog(args.po, args.source, args.coverage)
+        catalog = validate_catalog(
+            args.po,
+            args.source,
+            args.coverage,
+            require_source_membership=not args.allow_unreferenced,
+        )
         compiled = compile_mo(catalog)
         if args.check:
             if not args.output.is_file() or args.output.read_bytes() != compiled:

@@ -86,6 +86,13 @@ accepted when the Squirrel package has no such contract.
 ## Fallback and safety rules
 
 - A missing native Cantonese catalog or untranslated message falls back to its English source.
+- The hosted Windows build compiles the reviewed Cantonese PO directly into
+  `install-dir/resources/i18n/yue_HK/BambuStudio.mo` after CMake installation.
+  The compiler checks placeholders and the coverage manifest. The hosted run
+  permits reviewed keys absent from the currently lagging English extraction;
+  the workflow checks the staged output again before both portable and Squirrel
+  packaging. A stale checked-in MO therefore cannot silently ship in a hosted
+  Windows package.
 - An unknown Pages/browser mode falls back to English without overwriting a saved valid preference.
 - DeviceWeb and legacy local web resources require exact English/Cantonese key parity and matching
   interpolation placeholders.
