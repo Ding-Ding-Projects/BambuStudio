@@ -17,6 +17,16 @@ TEST_CASE("Scene specification validates dimensions and rejects executable field
     REQUIRE_FALSE(parse_scene(R"({"version":1,"title":"Below bed","parts":[{"kind":"box","size":[20,30,4],"position":[0,0,0]}]})"));
 }
 
+TEST_CASE("Every primitive's full horizontal footprint stays within the workspace")
+{
+    REQUIRE(parse_scene(R"({"version":1,"title":"Box at edge","parts":[{"kind":"box","size":[500,1,1],"position":[250,0,0.5]}]})"));
+    REQUIRE_FALSE(parse_scene(R"({"version":1,"title":"Box beyond X","parts":[{"kind":"box","size":[500,1,1],"position":[500,0,0.5]}]})"));
+    REQUIRE_FALSE(parse_scene(R"({"version":1,"title":"Box beyond Y","parts":[{"kind":"box","size":[1,4,1],"position":[0,-499,0.5]}]})"));
+    REQUIRE(parse_scene(R"({"version":1,"title":"Cylinder at edge","parts":[{"kind":"cylinder","radius":25,"height":1,"position":[475,0,0.5]}]})"));
+    REQUIRE_FALSE(parse_scene(R"({"version":1,"title":"Cylinder beyond X","parts":[{"kind":"cylinder","radius":25,"height":1,"position":[476,0,0.5]}]})"));
+    REQUIRE_FALSE(parse_scene(R"({"version":1,"title":"Sphere beyond Y","parts":[{"kind":"sphere","radius":25,"position":[0,476,25]}]})"));
+}
+
 TEST_CASE("Emitters use only validated values and fixed operators")
 {
     const auto parsed = parse_scene(R"({"version":1,"title":"Solid","parts":[{"kind":"sphere","radius":12,"facets":24,"position":[0,0,12]}]})");

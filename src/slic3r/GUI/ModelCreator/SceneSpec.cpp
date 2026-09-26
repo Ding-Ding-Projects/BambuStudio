@@ -98,6 +98,13 @@ ParseResult parse_scene(const std::string &text)
                 item.facets = part["facets"].get<int>();
             }
         } else { result.error = "Unsupported primitive kind"; return result; }
+        for (size_t axis = 0; axis < 2; ++axis) {
+            const double half_extent = item.kind == Primitive::Kind::Box ? item.size[axis] / 2 : item.radius;
+            if (item.position[axis] - half_extent < -500 || item.position[axis] + half_extent > 500) {
+                result.error = "Every solid must fit inside the 500 mm horizontal workspace";
+                return result;
+            }
+        }
         const double half_height = item.kind == Primitive::Kind::Sphere ? item.radius :
                                    item.kind == Primitive::Kind::Cylinder ? item.height / 2 : item.size[2] / 2;
         if (item.position[2] - half_height < -0.001 || item.position[2] + half_height > 500) {
