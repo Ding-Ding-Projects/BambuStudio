@@ -668,7 +668,9 @@ FilamentMapAutoPanel::FilamentMapAutoPanel(wxWindow *parent, FilamentMapMode mod
     std::map<FilamentMapMode, std::pair<wxString, wxString>> mode_info = {
         {fmmAutoForFlush, {_L("Filament-Saving Mode"), AutoForFlushDetail}},
         {fmmAutoForMatch, {_L("Convenience Mode"), AutoForMatchDetail}},
-        {fmmAutoForQuality, {_L("Quality Mode"), AutoForQualityDetail}}
+        {fmmAutoForQuality, {_L("Quality Mode"), AutoForQualityDetail}},
+        {fmmPreferLeft, {_L("Prefer left nozzle"), _L("Use the left nozzle for compatible materials when capacity allows; otherwise use the right nozzle.")}},
+        {fmmPreferRight, {_L("Prefer right nozzle"), _L("Use the right nozzle for compatible materials when capacity allows; otherwise use the left nozzle.")}}
     };
 
     // Create panels for available modes
@@ -698,12 +700,12 @@ FilamentMapAutoPanel::FilamentMapAutoPanel(wxWindow *parent, FilamentMapMode mod
     }
 
     int spacer_width = FromDIP(20);
+    auto *mode_grid = new wxGridSizer(2, FromDIP(20), spacer_width);
     sizer->AddSpacer(spacer_width);
     for (size_t i = 0; i < m_mode_panels.size(); ++i) {
-        if (i > 0)
-            sizer->AddSpacer(spacer_width);
-        sizer->Add(m_mode_panels[i], 1, wxEXPAND);
+        mode_grid->Add(m_mode_panels[i], 1, wxEXPAND);
     }
+    sizer->Add(mode_grid, 1, wxEXPAND);
     sizer->AddSpacer(spacer_width);
 
     UpdateStatus();
@@ -739,6 +741,8 @@ std::string FilamentMapAutoPanel::GetIconForMode(FilamentMapMode mode)
     case fmmAutoForMatch: return "match_mode_panel_icon";
     case fmmAutoForFlush: return "flush_mode_panel_icon";
     case fmmAutoForQuality: return "quality_mode_panel_icon";
+    case fmmPreferLeft:
+    case fmmPreferRight: return "flush_mode_panel_icon";
     default:
         BOOST_LOG_TRIVIAL(warning) << "invalid mode: " << mode;
         return {};

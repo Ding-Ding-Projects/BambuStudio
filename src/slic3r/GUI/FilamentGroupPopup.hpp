@@ -24,6 +24,7 @@ bool open_filament_group_wiki();
 // Returns the saved choice for the selected printer preset. Use when creating
 // a new project, after checking that no imported project mode is present.
 FilamentMapMode get_preferred_filament_map_mode_for_current_printer();
+void set_preferred_filament_map_mode_for_current_printer(FilamentMapMode mode);
 
 class FilamentGroupPopup : public PopupWindow
 {
