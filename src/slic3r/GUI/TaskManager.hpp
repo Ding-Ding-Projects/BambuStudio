@@ -172,6 +172,7 @@ private:
     std::vector<TaskStateInfo*>   m_scedule_list;
     std::vector<boost::thread*>   m_sending_thread_list;
     std::mutex                    m_scedule_mutex;
+    std::mutex                    m_lan_transfer_mutex;
     bool                        m_started { false };
     NetworkAgent*               m_agent { nullptr };
 

@@ -9,6 +9,7 @@
 #include <wx/listimpl.cpp>
 
 #include "DeviceCore/DevManager.h"
+#include "DeviceCore/FarmDevicePolicy.hpp"
 #include "DeviceCore/DevStorage.h"
 #include "Widgets/Label.hpp"
 
@@ -383,7 +384,7 @@ void SendMultiMachinePage::refresh_user_device()
         return;
     }
 
-    auto all_machine = dev->get_my_cloud_machine_list();
+    auto all_machine = dev->get_farm_machine_list();
     auto user_machine = std::map<std::string, MachineObject*>();
 
     //selected machine
@@ -505,6 +506,17 @@ BBL::PrintParams SendMultiMachinePage::request_params(MachineObject* obj)
     params.dev_name = obj->get_dev_name();
     params.ftp_folder = obj->get_ftp_folder();
     params.connection_type = obj->connection_type();
+    if (params.connection_type == "lan") {
+        params.username = "bblp";
+        params.password = obj->get_access_code();
+#if !BBL_RELEASE_TO_PUBLIC
+        params.use_ssl_for_ftp = app_config->get("enable_ssl_for_ftp") == "true";
+        params.use_ssl_for_mqtt = app_config->get("enable_ssl_for_mqtt") == "true";
+#else
+        params.use_ssl_for_ftp = obj->local_use_ssl_for_ftp;
+        params.use_ssl_for_mqtt = obj->local_use_ssl_for_mqtt;
+#endif
+    }
     params.print_type = "from_normal";
     params.filename =  job_data._3mf_path.string();
     params.config_filename = job_data._3mf_config_path.string();
@@ -590,25 +602,7 @@ BBL::PrintParams SendMultiMachinePage::request_params(MachineObject* obj)
 
 
 
-    // check access code and ip address
-    if (obj->connection_type() == "lan") {
-        /*params.dev_id = m_dev_id;
-        params.project_name = "verify_job";
-        params.filename = job_data._temp_path.string();
-        params.connection_type = this->connection_type;
-
-        result = m_agent->start_send_gcode_to_sdcard(params, nullptr, nullptr, nullptr);
-        if (result != 0) {
-            BOOST_LOG_TRIVIAL(error) << "access code is invalid";
-            m_enter_ip_address_fun_fail();
-            m_job_finished = true;
-            return;
-        }
-
-        params.project_name = "";
-        params.filename = "";*/
-    }
-    else {
+    if (obj->connection_type() != "lan") {
         if (params.dev_ip.empty())
             params.comments = "no_ip";
         else if (obj->is_support_cloud_print_only)
@@ -712,6 +706,28 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
 {
     event.Skip();
     BOOST_LOG_TRIVIAL(info) << "SendMultiMachinePage: on_send";
+
+    for (const auto& entry : m_device_items) {
+        auto* obj = entry.second->get_obj();
+        if (!obj || entry.second->get_state_selected() != 1) continue;
+        wxString reason;
+        if (obj->is_lan_mode_printer()) {
+            auto* agent = wxGetApp().getDeviceManager() ? wxGetApp().getDeviceManager()->get_agent() : nullptr;
+            const auto readiness = farm_lan_readiness(obj->has_access_right(), !obj->get_access_code().empty(),
+                !obj->get_dev_ip().empty(), agent && agent->can_start_local_print());
+            if (readiness == FarmLanReadiness::PairingRequired)
+                reason = _L("Pair this LAN printer with its access code before sending.");
+            else if (readiness == FarmLanReadiness::AddressMissing)
+                reason = _L("This LAN printer has no local address. Reconnect it before sending.");
+            else if (readiness == FarmLanReadiness::TransportUnavailable)
+                reason = _L("Direct LAN printing is unavailable in the installed networking module.");
+        }
+        if (!reason.IsEmpty()) {
+            MessageDialog dialog(nullptr, wxString::FromUTF8(obj->get_dev_name()) + ": " + reason, "", wxICON_WARNING | wxOK);
+            dialog.ShowModal();
+            return;
+        }
+    }
 
     int result = m_plater->send_gcode(m_print_plate_idx, [this](int export_stage, int current, int total, bool& cancel) {
         if (m_is_canceled) return;
