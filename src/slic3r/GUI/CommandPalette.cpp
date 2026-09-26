@@ -248,6 +248,7 @@ void CommandPalette::collect_entries()
         m_entries.push_back({MaterialIcon::MenuBook, _L("Documentation") + " / " + wxString::FromUTF8(a.title),
                              wxString::FromUTF8(a.path),
                              [url]() { wxGetApp().open_browser_with_warning_dialog(url); }});
+    }
 
     // --- Per-element appearance editor + its presets --------------------------
     m_entries.push_back({MaterialIcon::Brush, _L("Edit appearance of the focused element"),
