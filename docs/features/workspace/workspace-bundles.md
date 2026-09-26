@@ -45,13 +45,17 @@ handoff described below.
   dismissal update the bundle immediately when it has a save path, while an
   unsaved new workspace still needs an explicit save. The defaults are 15
   minutes before a planned slot and 09:00 local time for a date-only deadline.
-- Date-only deadlines remain dates in the bundle and iCalendar export. UTC
-  deadlines with zero offset can notify at 09:00. Named non-UTC zones retain
-  their date and offset data, but their deadline notifications are paused with
-  an explicit warning until an IANA time-zone rule resolver is available.
-  This is an incomplete reminder capability, not a verified DST conversion.
-  Timed slots keep UTC instants and a named time zone. The editor asks
-  separately for start and end offsets and confirms manual non-UTC offsets.
+- Date-only deadlines remain dates in the bundle and iCalendar export. On
+  Windows 10 version 1903 and newer, the planner resolves 09:00 in the saved
+  IANA zone using the operating system's ICU time-zone data for that due date.
+  It validates a saved offset and flags disagreement visibly while deriving the
+  reminder instant from current zone rules. Unknown, custom, or unavailable
+  zones leave the date intact and pause affected reminders with a warning.
+  Timed slots retain UTC instants and a named zone. Their editor resolves the
+  start and end separately, rejects a nonexistent clock time, and asks which
+  occurrence to use when a clock time repeats during a daylight-saving change.
+  On other platforms, named-zone resolution remains unavailable and is reported;
+  UTC and Etc/UTC continue to work.
 - Checklist JSON and CSV exports and UTC iCalendar exports contain planning
   data only. They do not include project files, credentials, or print commands.
 - Opening a member copies it to a private tab-owned 3MF path. Saving commits

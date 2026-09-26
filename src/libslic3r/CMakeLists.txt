@@ -12,7 +12,7 @@ add_library(libslic3r_workspace STATIC
 target_include_directories(libslic3r_workspace PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(libslic3r_workspace PRIVATE miniz OpenSSL::Crypto)
 if (WIN32)
-    target_link_libraries(libslic3r_workspace PRIVATE crypt32 ws2_32)
+    target_link_libraries(libslic3r_workspace PRIVATE crypt32 ws2_32 icu.lib)
 endif ()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
     WorkspaceBundle.cpp WorkspaceBundle.hpp WorkspacePlanner.cpp WorkspacePlanner.hpp)
