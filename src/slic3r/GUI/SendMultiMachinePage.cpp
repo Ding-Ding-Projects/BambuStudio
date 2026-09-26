@@ -893,11 +893,9 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
             reason = _L("This selected printer started upgrading while preparing the print file.");
         else if (item->second->is_blocking_printing(obj))
             reason = _L("This selected printer is incompatible with the current printer preset.");
-        else {
-            item->second->sync_state();
-            if (item->second->state_printable > 2)
-                reason = _L("This selected printer is no longer ready to print. Refresh its status before sending.");
-        }
+        else if (obj->print_status != "IDLE" && obj->print_status != "FINISH" &&
+                 obj->print_status != "FAILED")
+            reason = _L("This selected printer is no longer ready to print. Refresh its status before sending.");
         if (reason.IsEmpty() && obj->is_lan_mode_printer()) {
             auto* agent = device_manager ? device_manager->get_agent() : nullptr;
             const auto readiness = farm_lan_readiness(obj->has_access_right(), !obj->get_access_code().empty(),
