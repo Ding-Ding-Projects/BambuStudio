@@ -9,6 +9,7 @@
 #include "CapsuleButton.hpp"
 #include "MsgDialog.hpp"
 #include "PartPlate.hpp"
+#include "FilamentGroupPopup.hpp"
 #include "libslic3r/Config.hpp"
 
 #include <algorithm>
@@ -94,7 +95,7 @@ static std::vector<FilamentMapMode> normalize_auto_modes(const std::vector<Filam
 
 static std::vector<FilamentMapMode> get_default_auto_modes()
 {
-    return { fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality };
+    return { fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality, fmmPreferLeft, fmmPreferRight };
 }
 
 std::vector<FilamentMapMode> resolve_available_auto_modes(Print* print_obj, const std::vector<FilamentMapMode>& requested_modes, bool machine_synced)
@@ -107,6 +108,17 @@ std::vector<FilamentMapMode> resolve_available_auto_modes(Print* print_obj, cons
         supported_modes.push_back(fmmAutoForMatch);
         if (PartPlate::has_different_extruder_types())
             supported_modes.push_back(fmmAutoForQuality);
+    }
+
+    // Side preferences are meaningful only when two physical extruders exist.
+    // Keep their stored value elsewhere so returning to a dual-nozzle printer restores it.
+    auto full_config = wxGetApp().preset_bundle->full_config();
+    const auto* diameters = full_config.option<ConfigOptionFloatsNullable>("nozzle_diameter");
+    if (diameters && diameters->size() >= 2) {
+        if (std::find(supported_modes.begin(), supported_modes.end(), fmmPreferLeft) == supported_modes.end())
+            supported_modes.push_back(fmmPreferLeft);
+        if (std::find(supported_modes.begin(), supported_modes.end(), fmmPreferRight) == supported_modes.end())
+            supported_modes.push_back(fmmPreferRight);
     }
 
     // remove match mode when filament swither is ready
@@ -234,6 +246,7 @@ bool try_pop_up_before_slice(bool is_slice_all, Plater* plater_ref, PartPlate* p
                 plater_ref->set_global_filament_volume_map(new_volume_maps);
             }
         }
+        set_preferred_filament_map_mode_for_current_printer(new_mode);
         plater_ref->update(false, true);
         // check whether able to slice, if not, return false
         if (!get_left_extruder_unprintable_text().empty() || !get_right_extruder_unprintable_text().empty()){
@@ -289,7 +302,7 @@ FilamentMapDialog::FilamentMapDialog(wxWindow                           *parent,
     if (modes_to_use.empty()) modes_to_use = get_default_auto_modes();
 
     m_fila_switch_ready = wxGetApp().sidebar().is_fila_switch_ready();
-    bool only_saving_mode = m_fila_switch_ready && (std::find(modes_to_use.cbegin(), modes_to_use.cend(), FilamentMapMode::fmmAutoForQuality) == modes_to_use.cend());
+    bool only_saving_mode = m_fila_switch_ready && modes_to_use.size() == 1 && modes_to_use.front() == fmmAutoForFlush;
 
     if (is_auto_filament_map_mode(mode))
         m_page_type = PageType::ptAuto;

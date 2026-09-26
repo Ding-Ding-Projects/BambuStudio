@@ -59,7 +59,7 @@ FilamentMapMode get_preferred_filament_map_mode_for_current_printer()
     return mode;
 }
 
-static void set_prefered_map_mode(FilamentMapMode mode)
+void set_preferred_filament_map_mode_for_current_printer(FilamentMapMode mode)
 {
     const static std::vector<std::string> enum_values = ConfigOptionEnum<FilamentMapMode>::get_enum_names();
     auto                                 &app_config  = wxGetApp().app_config;
@@ -503,17 +503,14 @@ void FilamentGroupPopup::Init(const std::vector<FilamentMapMode>& available_mode
 
     m_mode = GetFilamentMapMode();
     if (m_mode == fmmAutoForMatch && !m_connected) {
-        SetFilamentMapMode(fmmAutoForFlush);
+        // A disconnected printer changes what is selectable in this popup,
+        // not the explicit choice stored by an imported project or plate.
         m_mode = fmmAutoForFlush;
     }
     else if (std::find(m_available_modes.begin(), m_available_modes.end(), m_mode) == m_available_modes.end()) {
         // An imported plate may carry an explicit choice. Hiding an unavailable
         // row must not rewrite that saved project configuration.
         m_mode = fmmAutoForFlush;
-    }
-    else if (m_slice_all) {
-        // reset the filament map mode in slice all mode
-        SetFilamentMapMode(m_mode);
     }
 
     UpdateButtonStatus();
@@ -536,12 +533,6 @@ void FilamentGroupPopup::tryPopup(Plater* plater,PartPlate* partplate,bool slice
                                                         fmmPreferLeft, fmmPreferRight };
         Print* print_obj = partplate ? partplate->fff_print() : nullptr;
         std::vector<FilamentMapMode> new_available_modes = resolve_available_auto_modes(print_obj, requested_modes, connect_status);
-
-        const auto* nozzle_diameters = wxGetApp().preset_bundle->full_config().option<ConfigOptionFloatsNullable>("nozzle_diameter");
-        if (nozzle_diameters && nozzle_diameters->size() >= 2) {
-            new_available_modes.push_back(fmmPreferLeft);
-            new_available_modes.push_back(fmmPreferRight);
-        }
 
         new_available_modes.push_back(fmmManual);
 
@@ -677,7 +668,7 @@ void FilamentGroupPopup::OnRadioBtn(int idx)
     if (m_mode != mode) {
         m_mode = mode;
         SetFilamentMapMode(m_mode);
-        set_prefered_map_mode(m_mode);
+        set_preferred_filament_map_mode_for_current_printer(m_mode);
         plater_ref->update();
         UpdateButtonStatus(idx);
     }
