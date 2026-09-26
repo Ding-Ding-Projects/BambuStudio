@@ -32,10 +32,21 @@ handoff described below.
   transitions. Planned slots store UTC start and end instants, an IANA zone
   label, and the offset selected for their wall time.
 - The planner warns when a printer ID is unavailable or two enabled slots for
-  one printer overlap. It never submits a print. Reminder polling catches up
-  across sleep or restart, and planned-slot reminders can be disabled,
-  snoozed, or dismissed. The defaults are 15 minutes before a planned slot
-  and 09:00 local time for a date-only deadline.
+  one printer overlap. It never submits a print. While the application is
+  running, the workspace panel checks reminders once per minute and when it
+  opens or reappears. It uses the existing nonblocking notification surface.
+  A resumed or reopened workspace groups missed reminders into one catch-up
+  notice. Its last delivered check is stored locally by bundle ID. Snooze and
+  dismissal update the bundle immediately when it has a save path, while an
+  unsaved new workspace still needs an explicit save. The defaults are 15
+  minutes before a planned slot and 09:00 local time for a date-only deadline.
+- Date-only deadlines remain dates in the bundle and iCalendar export. A
+  reminder converts 09:00 on that date using the stored UTC offset. Timed
+  slots keep UTC instants and a named time zone. The editor asks separately
+  for start and end offsets, and explicitly asks the user to confirm offsets
+  for non-UTC zones, especially when a slot crosses a daylight-saving change.
+  The current editor does not resolve IANA time-zone rules automatically, so
+  it cannot detect an incorrect manually entered offset.
 - Checklist JSON and CSV exports and UTC iCalendar exports contain planning
   data only. They do not include project files, credentials, or print commands.
 
@@ -56,5 +67,6 @@ and JSON, CSV, and ICS exports. Later source validation and native UI edits
 have not been compiled or run locally because builds moved to CI. The added
 tampered-member and invalid-3MF checks are pending that CI verdict. Opening a
 member in the active canvas, returning dirty member state to the bundle,
-Recent Projects integration, and live reminder dispatch remain application
-handoff work outside this core module.
+Recent Projects integration remains application handoff work outside this core
+module. Live reminder dispatch has source integration but is awaiting a native
+build and runtime verification.

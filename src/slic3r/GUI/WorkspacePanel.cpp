@@ -1,6 +1,9 @@
 #include "WorkspacePanel.hpp"
 
 #include "I18N.hpp"
+#include "GUI_App.hpp"
+#include "NotificationManager.hpp"
+#include "libslic3r/AppConfig.hpp"
 #include "libslic3r/WorkspacePlanner.hpp"
 
 #include <algorithm>
@@ -75,10 +78,18 @@ WorkspacePanel::WorkspacePanel(wxWindow *parent) : wxPanel(parent)
     m_workspace.title = "New workspace";
     create_ui();
     refresh_all();
+    m_reminder_timer.SetOwner(this);
+    Bind(wxEVT_TIMER, [this](wxTimerEvent &) { check_reminders(); }, m_reminder_timer.GetId());
+    Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+        if (event.IsShown()) check_reminders();
+        event.Skip();
+    });
+    m_reminder_timer.Start(60000);
 }
 
 WorkspacePanel::~WorkspacePanel()
 {
+    m_reminder_timer.Stop();
     if (!m_loaded_staging.empty()) {
         std::error_code ignored;
         fs::remove_all(m_loaded_staging, ignored);
@@ -292,6 +303,7 @@ void WorkspacePanel::create_new()
     for (const auto &file : m_owned_member_files) { std::error_code ignored; fs::remove(file, ignored); }
     m_owned_member_files.clear();
     m_dirty = false;
+    m_last_reminder_check_utc = 0;
     refresh_all();
 }
 
@@ -311,6 +323,7 @@ void WorkspacePanel::edit_preferences()
     m_workspace.reminders_enabled = enabled.Lower() == "yes";
     m_dirty = true;
     refresh_overview();
+    if (!m_bundle_path.empty()) save_bundle();
 }
 
 void WorkspacePanel::choose_open()
@@ -337,7 +350,60 @@ bool WorkspacePanel::open_bundle(const fs::path &path)
     m_loaded_staging = loaded.staging_directory;
     m_dirty = false;
     refresh_all();
+    reset_reminder_cursor();
+    check_reminders();
     return true;
+}
+
+void WorkspacePanel::reset_reminder_cursor()
+{
+    const auto now = static_cast<std::int64_t>(std::time(nullptr));
+    m_last_reminder_check_utc = now - 86400;
+    if (m_bundle_path.empty() || !wxGetApp().app_config) return;
+    const std::string saved = wxGetApp().app_config->get("workspace_reminders", m_workspace.id);
+    try {
+        if (!saved.empty()) {
+            const auto parsed = std::stoll(saved);
+            if (parsed > 0 && parsed <= now) m_last_reminder_check_utc = parsed;
+        }
+    } catch (const std::exception &) {
+        // An invalid local cursor falls back to the bounded first-open window.
+    }
+}
+
+void WorkspacePanel::check_reminders()
+{
+    if (m_bundle_path.empty()) return;
+    const auto now = static_cast<std::int64_t>(std::time(nullptr));
+    if (m_last_reminder_check_utc <= 0 || m_last_reminder_check_utc > now) reset_reminder_cursor();
+    const auto due = Workspace::due_reminders(m_workspace, m_last_reminder_check_utc, now);
+    if (due.empty()) { m_last_reminder_check_utc = now; return; }
+    auto *notifications = wxGetApp().notification_manager();
+    if (!notifications) return;
+    const bool catch_up = now - m_last_reminder_check_utc > 120;
+    wxString text;
+    if (catch_up || due.size() > 3) {
+        text = wxString::Format(_L("%zu workspace reminders became due while you were away."), due.size());
+    } else {
+        const auto &reminder = due.front();
+        const auto slot = std::find_if(m_workspace.slots.begin(), m_workspace.slots.end(),
+            [&](const Workspace::CalendarSlot &item) { return item.id == reminder.item_id; });
+        const auto item = std::find_if(m_workspace.checklist.begin(), m_workspace.checklist.end(),
+            [&](const Workspace::ChecklistItem &entry) { return entry.id == reminder.item_id; });
+        text = reminder.kind == "planned_print" && slot != m_workspace.slots.end()
+            ? _L("Planned print reminder: ") + display(slot->title)
+            : _L("Checklist deadline reminder: ") +
+                (item == m_workspace.checklist.end() ? _L("Workspace item") : display(item->text));
+        if (due.size() > 1)
+            text += wxString::Format(_L(" (%zu more due)"), due.size() - 1);
+    }
+    notifications->push_notification(NotificationType::CustomNotification,
+        NotificationManager::NotificationLevel::RegularNotificationLevel, utf8(text));
+    m_last_reminder_check_utc = now;
+    if (wxGetApp().app_config) {
+        wxGetApp().app_config->set("workspace_reminders", m_workspace.id, std::to_string(now));
+        wxGetApp().app_config->save();
+    }
 }
 
 void WorkspacePanel::choose_save()
@@ -482,6 +548,10 @@ void WorkspacePanel::edit_checklist()
     if (!ask_text(this, _L("Deadline UTC offset"), _L("Offset in minutes for 09:00 on that date, including daylight saving"), offset)) return;
     long parsed_offset = 0;
     if (!offset.ToLong(&parsed_offset) || parsed_offset < -840 || parsed_offset > 840) return;
+    if ((m_workspace.time_zone == "UTC" && parsed_offset != 0) ||
+        (!due.IsEmpty() && m_workspace.time_zone != "UTC" &&
+         wxMessageBox(_L("The offset is not checked against this time zone. Confirm it is the offset at 09:00 on the due date, including daylight saving."),
+                      _L("Confirm deadline offset"), wxYES_NO | wxICON_WARNING, this) != wxYES)) return;
     item.text = utf8(text); item.due_date = utf8(due); item.linked_member_id = utf8(member);
     item.linked_slot_id = utf8(slot); item.due_utc_offset_minutes = static_cast<int>(parsed_offset);
     if (!Workspace::edit_checklist_item(m_workspace, item)) return;
@@ -500,17 +570,24 @@ void WorkspacePanel::move_checklist(int direction)
 
 void WorkspacePanel::add_slot()
 {
-    wxString title, printer, member, start, end, offset = "0";
+    wxString title, printer, member, start, end, offset = "0", end_offset;
     if (!ask_text(this, _L("Planned print"), _L("Title"), title) || title.IsEmpty()) return;
     if (!ask_text(this, _L("Printer"), _L("Printer ID"), printer)) return;
     if (!ask_text(this, _L("Linked project"), _L("Member ID (optional)"), member)) return;
     if (!ask_text(this, _L("Start time"), _L("Local time, YYYY-MM-DD HH:MM"), start)) return;
     if (!ask_text(this, _L("End time"), _L("Local time, YYYY-MM-DD HH:MM"), end)) return;
-    if (!ask_text(this, _L("UTC offset"), _L("UTC offset in minutes for this date, including daylight saving"), offset)) return;
-    long minutes = 0;
-    if (!offset.ToLong(&minutes)) return;
+    if (!ask_text(this, _L("Start UTC offset"), _L("Offset in minutes at the start time, including daylight saving"), offset)) return;
+    end_offset = offset;
+    if (!ask_text(this, _L("End UTC offset"), _L("Offset in minutes at the end time, including daylight saving"), end_offset)) return;
+    long minutes = 0, end_minutes = 0;
+    if (!offset.ToLong(&minutes) || !end_offset.ToLong(&end_minutes) ||
+        minutes < -840 || minutes > 840 || end_minutes < -840 || end_minutes > 840) return;
+    if ((m_workspace.time_zone == "UTC" && (minutes != 0 || end_minutes != 0)) ||
+        (m_workspace.time_zone != "UTC" &&
+         wxMessageBox(_L("Offsets are not checked against the named time zone. Confirm both offsets for these dates, especially across daylight-saving changes."),
+                      _L("Confirm planned-print offsets"), wxYES_NO | wxICON_WARNING, this) != wxYES)) return;
     const auto begin = parse_wall_utc(utf8(start), static_cast<int>(minutes));
-    const auto finish = parse_wall_utc(utf8(end), static_cast<int>(minutes));
+    const auto finish = parse_wall_utc(utf8(end), static_cast<int>(end_minutes));
     if (begin < 0 || finish <= begin) {
         wxMessageBox(_L("Enter valid start and end times, with the offset for the chosen date."),
                      _L("Planned print"), wxOK | wxICON_WARNING, this);
@@ -534,7 +611,10 @@ void WorkspacePanel::snooze_selected_slot()
     wxString when;
     if (!ask_text(this, _L("Snooze reminder"), _L("New reminder time, UTC YYYY-MM-DD HH:MM"), when)) return;
     const auto instant = parse_wall_utc(utf8(when), 0);
-    if (instant > 0 && Workspace::snooze_slot(m_workspace, m_workspace.slots[index].id, instant)) m_dirty = true;
+    if (instant > 0 && Workspace::snooze_slot(m_workspace, m_workspace.slots[index].id, instant)) {
+        m_dirty = true;
+        if (!m_bundle_path.empty()) save_bundle();
+    }
 }
 
 void WorkspacePanel::dismiss_selected_slot()
@@ -543,7 +623,10 @@ void WorkspacePanel::dismiss_selected_slot()
     if (row < 0) return;
     const long index = m_agenda->GetItemData(row);
     if (index >= 0 && static_cast<std::size_t>(index) < m_workspace.slots.size() &&
-        Workspace::dismiss_slot_reminder(m_workspace, m_workspace.slots[index].id)) m_dirty = true;
+        Workspace::dismiss_slot_reminder(m_workspace, m_workspace.slots[index].id)) {
+        m_dirty = true;
+        if (!m_bundle_path.empty()) save_bundle();
+    }
 }
 
 void WorkspacePanel::toggle_selected_slot()
@@ -556,6 +639,7 @@ void WorkspacePanel::toggle_selected_slot()
     slot.enabled = !slot.enabled;
     m_dirty = true;
     refresh_calendar();
+    if (!m_bundle_path.empty()) save_bundle();
 }
 
 void WorkspacePanel::export_checklist(bool csv)
