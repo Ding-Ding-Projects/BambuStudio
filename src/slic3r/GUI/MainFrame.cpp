@@ -17,6 +17,7 @@
 #include <wx/glcanvas.h>
 #include <wx/filename.h>
 #include <wx/debug.h>
+#include <wx/filedlg.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/log/trivial.hpp>
@@ -78,6 +79,7 @@
 #include "Notebook.hpp"
 // BBS: session file-tabs
 #include "ProjectTabBar.hpp"
+#include "WorkspacePanel.hpp"
 #include "libslic3r/Utils.hpp"
 #include <boost/filesystem.hpp>
 #include <atomic>
@@ -831,7 +833,7 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
         if (evt.CmdDown() && evt.GetKeyCode() == 'N') { new_project_tab(); return;}
         if (evt.CmdDown() && evt.GetKeyCode() == 'O') { open_project_tab(); return;}
         if (evt.CmdDown() && evt.ShiftDown() && evt.GetKeyCode() == 'S') { if (can_save_as()) m_plater->save_project(true); return;}
-        else if (evt.CmdDown() && evt.GetKeyCode() == 'S') { if (can_save()) m_plater->save_project(); return;}
+        else if (evt.CmdDown() && evt.GetKeyCode() == 'S') { if (can_save()) save_project(); return;}
         if (evt.CmdDown() && evt.GetKeyCode() == 'F') {
             if (m_plater && (m_tabpanel->GetSelection() == TabPosition::tp3DEditor || m_tabpanel->GetSelection() == TabPosition::tpPreview)) {
                 m_plater->sidebar().can_search();
@@ -1641,11 +1643,61 @@ void MainFrame::open_project_tab()
     // Ask for the file first (app-modal dialog blocks the tab bar), then load it into
     // a new tab. Delegating to open_project_in_tab keeps the re-entrancy guard scoped
     // to the load rather than the dialog.
-    wxString input_file;
-    wxGetApp().load_project(this, input_file);
-    if (input_file.IsEmpty())
+    wxFileDialog dialog(this, _L("Open project or workspace"),
+                        from_u8(wxGetApp().app_config->get_last_dir()), wxEmptyString,
+                        _L("Bambu workspace (*.bambu-workspace)|*.bambu-workspace") + "|" + file_wildcards(FT_PROJECT),
+                        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    if (dialog.ShowModal() != wxID_OK)
         return;
-    open_project_in_tab(input_file);
+    open_project_in_tab(dialog.GetPath());
+}
+
+bool MainFrame::open_workspace_file(const wxString& filename)
+{
+    if (!m_project || !m_project->open_workspace(std::filesystem::u8path(into_u8(filename))))
+        return false;
+    select_tab(tpProject);
+    add_to_recent_projects(filename);
+    return true;
+}
+
+void MainFrame::open_workspace_member(const WorkspaceMemberSelection& selection)
+{
+    if (!m_plater || !m_project_tabbar || m_project_tab_switching || !can_open_project()) return;
+    for (int index = 0; index < m_project_tabbar->Count(); ++index) {
+        const auto &tab = m_project_tabbar->TabAt(index);
+        if (tab.workspace_bundle_id == selection.bundle_id && tab.workspace_member_id == selection.member_id) {
+            switch_project_tab(index);
+            select_tab(tp3DEditor);
+            return;
+        }
+    }
+    TabOpGuard guard(m_project_tab_switching);
+    if (!save_active_tab_snapshot_if_dirty()) return;
+    // WorkspacePanel owns its extracted file only until another bundle opens.
+    // A tab needs an independent, private copy for later tab switches.
+    const std::string copied_path = make_project_tab_snapshot_path();
+    std::error_code error;
+    if (!std::filesystem::copy_file(selection.staged_project_path,
+                                    std::filesystem::u8path(copied_path),
+                                    std::filesystem::copy_options::none, error) || error) {
+        MessageDialog(this, _L("Could not stage the workspace project for editing."),
+                      _L("Open workspace project"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    bool loaded = false;
+    m_plater->load_project(from_u8(copied_path), "-", &loaded, /*skip_close_confirmation=*/true);
+    if (!loaded) {
+        std::filesystem::remove(std::filesystem::u8path(copied_path), error);
+        return;
+    }
+    wxString title = m_plater->get_project_name();
+    if (title.IsEmpty()) title = _L("Untitled");
+    m_project_tabbar->AddWorkspaceMemberTab(selection.bundle_id, selection.member_id,
+                                            copied_path, title, /*activate=*/true);
+    update_title();
+    m_project_tabbar->SaveToConfig();
+    select_tab(tp3DEditor);
 }
 
 void MainFrame::open_project_in_tab(const wxString& filename)
@@ -1656,6 +1708,10 @@ void MainFrame::open_project_in_tab(const wxString& filename)
         return;
     if (filename.IsEmpty())
         return;
+    if (std::filesystem::u8path(into_u8(filename)).extension() == ".bambu-workspace") {
+        open_workspace_file(filename);
+        return;
+    }
 
     TabOpGuard guard(m_project_tab_switching);
 
@@ -2270,6 +2326,8 @@ void MainFrame::init_tabpanel()
     }
 
     m_project = new ProjectPanel(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    m_project->workspace_panel()->set_member_open_handler(
+        [this](const WorkspaceMemberSelection& selection) { open_workspace_member(selection); });
     m_project->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));
     m_tabpanel->AddPage(m_project, _L("Project"), std::string("tab_auxiliary_avtice"), std::string("tab_auxiliary_avtice"), false);
 
@@ -2550,7 +2608,54 @@ bool MainFrame::can_save_as() const
 
 void MainFrame::save_project()
 {
+    if (m_project_tabbar && m_project_tabbar->GetActive() >= 0) {
+        const auto &tab = m_project_tabbar->TabAt(m_project_tabbar->GetActive());
+        if (!tab.workspace_bundle_id.empty() && !tab.workspace_member_id.empty()) {
+            save_active_workspace_member();
+            return;
+        }
+    }
     save_project_as(m_plater->get_project_filename(".3mf"));
+}
+
+bool MainFrame::save_active_workspace_member()
+{
+    if (!m_plater || !m_project || !m_project_tabbar || m_project_tabbar->GetActive() < 0)
+        return false;
+    auto &tab = m_project_tabbar->TabAt(m_project_tabbar->GetActive());
+    auto *workspace = m_project->workspace_panel();
+    if (!workspace || tab.workspace_bundle_id.empty() || tab.workspace_member_id.empty() ||
+        workspace->workspace().id != tab.workspace_bundle_id) {
+        MessageDialog(this, _L("Open the matching workspace before saving this member."),
+                      _L("Save workspace project"), wxOK | wxICON_WARNING).ShowModal();
+        return false;
+    }
+    const std::filesystem::path candidate = std::filesystem::u8path(make_project_tab_snapshot_path());
+    if (!m_plater->export_workspace_member_with_history(candidate)) {
+        MessageDialog(this, _L("Could not prepare the project and its version history. The workspace was not changed."),
+                      _L("Save workspace project"), wxOK | wxICON_WARNING).ShowModal();
+        return false;
+    }
+    if (!workspace->save_member(tab.workspace_bundle_id, tab.workspace_member_id, candidate)) {
+        MessageDialog(this, _L("The workspace could not be saved. The previous bundle was preserved and the completed project remains in private recovery staging."),
+                      _L("Save workspace project"), wxOK | wxICON_WARNING).ShowModal();
+        return false;
+    }
+    // The tab now loads the same completed archive that was published into
+    // the bundle. An older dirty-tab snapshot must not shadow it on return.
+    const std::string previous_snapshot = tab.snapshot_path;
+    tab.snapshot_path.clear();
+    tab.file_path = candidate.u8string();
+    m_plater->set_project_filename(from_u8(tab.file_path));
+    if (!previous_snapshot.empty()) {
+        std::error_code ignored;
+        std::filesystem::remove(std::filesystem::u8path(previous_snapshot), ignored);
+    }
+    m_plater->reset_project_dirty_after_save();
+    m_project_tabbar->SetActiveDirty(false);
+    m_project_tabbar->SaveToConfig();
+    update_title();
+    return true;
 }
 
 bool MainFrame::save_project_as(const wxString& filename)
@@ -4130,11 +4235,11 @@ void MainFrame::init_menubar_as_editor()
         // BBS: close save project
 #ifndef __APPLE__
         append_menu_item(fileMenu, wxID_ANY, _L("Save Project") + "\t" + ctrl + "S", _L("Save current project to file"),
-            [this](wxCommandEvent&) { if (m_plater) m_plater->save_project(); }, "menu_save", nullptr,
+            [this](wxCommandEvent&) { if (m_plater) save_project(); }, "menu_save", nullptr,
             [this](){return m_plater != nullptr && can_save(); }, this);
 #else
         append_menu_item(fileMenu, wxID_ANY, _L("Save Project") + "\t" + ctrl + "S", _L("Save current project to file"),
-            [this](wxCommandEvent&) { if (m_plater) m_plater->save_project(); }, "", nullptr,
+            [this](wxCommandEvent&) { if (m_plater) save_project(); }, "", nullptr,
             [this](){return m_plater != nullptr && can_save(); }, this);
 #endif
 

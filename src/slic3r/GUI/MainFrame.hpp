@@ -58,6 +58,7 @@ class DeviceWebPage;
 // BBS: session file-tabs (see ProjectTabBar.hpp). One project bar sits between the
 // title bar and the workspace tabs; MainFrame orchestrates the switch/close/new flow.
 class ProjectTabBar;
+struct WorkspaceMemberSelection;
 
 enum QuickSlice
 {
@@ -164,6 +165,9 @@ class MainFrame : public DPIFrame
     void        new_project_tab();                              // EVT_PROJECT_TAB_NEW / File>New
     void        open_project_tab();                             // File>Open (file dialog)
     void        open_project_in_tab(const wxString& filename);  // load a file into a fresh tab
+    bool        open_workspace_file(const wxString& filename);
+    void        open_workspace_member(const WorkspaceMemberSelection& selection);
+    bool        save_active_workspace_member();
     bool        save_active_tab_snapshot_if_dirty();            // preserve outgoing tab
     void        reconcile_initial_project_tab();                // one-shot post-startup activation
 

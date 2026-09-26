@@ -416,6 +416,9 @@ public:
     // existing serialization only and never prompt. Return true on success.
     bool save_snapshot_to(const std::string& path);
     bool load_snapshot_from(const std::string& path);
+    // Writes a history-bearing 3MF for workspace publication without changing
+    // the active document's file name or saved/dirty state.
+    bool export_workspace_member_with_history(const std::filesystem::path& destination);
     int save_project(bool saveAs = false);
     //BBS download project by project id
     void import_model_id(wxString download_info);
