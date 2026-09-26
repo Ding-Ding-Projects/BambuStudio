@@ -561,8 +561,10 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     left_recommend_title_sizer->Add(m_filament_left_title, 0, wxALIGN_CENTER, 0);
 
     m_sizer_ams_mapping_left = new wxGridSizer(0, 5, FromDIP(7), FromDIP(7));
+    m_quick_move_left = new wxBoxSizer(wxVERTICAL);
     m_filament_panel_left_sizer->Add(left_recommend_title_sizer, 0, wxLEFT|wxRIGHT|wxTOP, FromDIP(10));
     m_filament_panel_left_sizer->Add(m_sizer_ams_mapping_left, 0, wxEXPAND|wxALL, FromDIP(10));
+    m_filament_panel_left_sizer->Add(m_quick_move_left, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, FromDIP(10));
     m_filament_left_panel->SetSizer(m_filament_panel_left_sizer);
     m_filament_left_panel->Layout();
 
@@ -580,8 +582,10 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     right_recommend_title_sizer->Add(m_filament_right_title, 0, wxALIGN_CENTER, 0);
 
     m_sizer_ams_mapping_right = new wxGridSizer(0, 5, FromDIP(7), FromDIP(7));
+    m_quick_move_right = new wxBoxSizer(wxVERTICAL);
     m_filament_panel_right_sizer->Add(right_recommend_title_sizer, 0, wxLEFT|wxRIGHT|wxTOP, FromDIP(10));
     m_filament_panel_right_sizer->Add(m_sizer_ams_mapping_right, 0, wxEXPAND|wxALL, FromDIP(10));
+    m_filament_panel_right_sizer->Add(m_quick_move_right, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, FromDIP(10));
     m_filament_right_panel->SetSizer(m_filament_panel_right_sizer);
     m_filament_right_panel->Layout();
 
@@ -589,6 +593,19 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_sizer_filament_2extruder->Add( 0, 0, 1, wxEXPAND, 0);
     m_sizer_filament_2extruder->Add(m_filament_right_panel, 0, wxEXPAND, 0);
     m_sizer_filament_2extruder->Layout();
+
+    m_quick_swap_panel = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    auto* quick_swap_sizer = new wxBoxSizer(wxHORIZONTAL);
+    m_quick_swap = new Button(m_quick_swap_panel, _L("Swap"));
+    m_quick_swap_reslice = new Button(m_quick_swap_panel, _L("Swap and reslice"));
+    m_quick_swap->SetToolTip(_L("Apply the selected nozzle moves and return to Prepare."));
+    m_quick_swap_reslice->SetToolTip(_L("Apply the selected nozzle moves, reslice, then reopen print setup."));
+    quick_swap_sizer->Add(m_quick_swap, 0, wxRIGHT, FromDIP(8));
+    quick_swap_sizer->Add(m_quick_swap_reslice, 0);
+    m_quick_swap_panel->SetSizer(quick_swap_sizer);
+    m_quick_swap->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { apply_quick_swap(false); });
+    m_quick_swap_reslice->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { apply_quick_swap(true); });
+    m_quick_swap_panel->Hide();
 
     m_filament_panel->Hide();
 
@@ -1014,6 +1031,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_scroll_sizer->Add(sizer_split_filament, 1, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(m_filament_panel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(m_sizer_filament_2extruder, 0, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(15));
+    m_scroll_sizer->Add(m_quick_swap_panel, 0, wxLEFT|wxRIGHT|wxTOP, FromDIP(15));
     m_scroll_sizer->Add(0, 0, 0, wxTOP, FromDIP(6));
     m_scroll_sizer->Add(m_statictext_ams_msg, 0, wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(0, 0, 0, wxTOP, FromDIP(10));
@@ -1848,6 +1866,11 @@ bool SelectMachineDialog::has_bowden_extuder(MachineObject* obj)
 void SelectMachineDialog::prepare(int print_plate_idx)
 {
     m_print_plate_idx = print_plate_idx;
+    m_pending_filaments_map.clear();
+    if (m_quick_move_left) m_quick_move_left->Clear(true);
+    if (m_quick_move_right) m_quick_move_right->Clear(true);
+    m_quick_move_filaments.clear();
+    if (m_quick_swap_panel) m_quick_swap_panel->Hide();
 }
 
 void SelectMachineDialog::update_print_status_msg()
@@ -2273,6 +2296,9 @@ void SelectMachineDialog::on_reselect_dialog_btn_clicked(wxMouseEvent&)
 
 void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
 {
+    if (m_print_type == FROM_NORMAL && !m_pending_filaments_map.empty() &&
+        m_pending_filaments_map != m_filaments_map)
+        return;
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": on_ok_btn";
 
     bool has_slice_warnings = false;
@@ -4501,6 +4527,9 @@ void SelectMachineDialog::Enable_Refresh_Button(bool en)
 
 void SelectMachineDialog::Enable_Send_Button(bool en)
 {
+    if (en && m_print_type == FROM_NORMAL && !m_pending_filaments_map.empty() &&
+        m_pending_filaments_map != m_filaments_map)
+        en = false;
     if (!en) {
         if (m_button_ensure->IsEnabled()) {
             m_button_ensure->Disable();
@@ -4717,6 +4746,10 @@ std::vector<pPresetFilaInfo> sCollectPresetFilamentInfo()
 
 void SelectMachineDialog::clear_material_infos()
 {
+    if (m_quick_move_left) m_quick_move_left->Clear(true);
+    if (m_quick_move_right) m_quick_move_right->Clear(true);
+    m_quick_move_filaments.clear();
+    m_pending_filaments_map.clear();
     MaterialHash::iterator iter = m_materialList.begin();
     while (iter != m_materialList.end()) {
         int       id = iter->first;
@@ -4794,6 +4827,7 @@ void SelectMachineDialog::reset_and_sync_ams_list()
     // filament map & used filaments
     const auto& project_config = wxGetApp().preset_bundle->project_config;
     m_filaments_map = wxGetApp().plater()->get_partplate_list().get_curr_plate()->get_real_filament_maps(project_config);
+    m_pending_filaments_map = m_filaments_map;
     const auto& used_filaments = wxGetApp().plater()->get_partplate_list().get_curr_plate()->get_used_filaments();
 
     bool          selected_any      = false;
@@ -4846,6 +4880,9 @@ void SelectMachineDialog::reset_and_sync_ams_list()
         }
 
         if (!item) { continue; }
+        if (extruder_nums == 2 && !has_switcher)
+            m_quick_move_filaments.emplace_back(used_filament,
+                from_u8(preset_filament.filament_display_type) + wxString::Format(" %d", used_filament + 1));
 
         if (used_filament < filament_color_render_info.size() && used_filament < filament_color_type_info.size()) {
             auto color_strs = Slic3r::split_string(filament_color_render_info[used_filament], ' ');
@@ -4917,8 +4954,69 @@ void SelectMachineDialog::reset_and_sync_ams_list()
     m_filament_panel->Show(sizer_count > 0);
     m_filament_left_panel->Show(left_sizer_count > 0 || right_sizer_count > 0);
     m_filament_right_panel->Show(left_sizer_count > 0 || right_sizer_count > 0);
+    refresh_quick_swap_controls();
 
     // reset_ams_material();//show "-"
+}
+
+void SelectMachineDialog::refresh_quick_swap_controls()
+{
+    if (!m_quick_swap_panel) return;
+    m_quick_move_left->Clear(true);
+    m_quick_move_right->Clear(true);
+    const bool available = m_print_type == FROM_NORMAL && !m_is_in_sending_mode &&
+        m_print_plate_idx == wxGetApp().plater()->get_partplate_list().get_curr_plate_index() &&
+        !m_quick_move_filaments.empty();
+    m_quick_swap_panel->Show(available);
+    if (!available) return;
+
+    for (const auto& filament : m_quick_move_filaments) {
+        const int id = filament.first;
+        if (id < 0 || static_cast<size_t>(id) >= m_pending_filaments_map.size()) continue;
+        const int nozzle = m_pending_filaments_map[id];
+        if (nozzle != 1 && nozzle != 2) continue;
+        auto* parent = nozzle == 1 ? m_filament_left_panel : m_filament_right_panel;
+        auto* sizer = nozzle == 1 ? m_quick_move_left : m_quick_move_right;
+        const wxString label = nozzle == 1
+            ? wxString::Format(_L("Move material %d right"), id + 1)
+            : wxString::Format(_L("Move material %d left"), id + 1);
+        auto* button = new Button(parent, label);
+        button->SetToolTip(filament.second + ": " + label);
+        sizer->Add(button, 0, wxEXPAND|wxBOTTOM, FromDIP(4));
+        button->Bind(wxEVT_BUTTON, [this, id](wxCommandEvent&) {
+            m_pending_filaments_map[id] = m_pending_filaments_map[id] == 1 ? 2 : 1;
+            CallAfter([this] { refresh_quick_swap_controls(); });
+        });
+    }
+    const bool changed = m_pending_filaments_map != m_filaments_map;
+    m_quick_swap->Enable(changed);
+    m_quick_swap_reslice->Enable(changed);
+    if (changed) Enable_Send_Button(false);
+    m_filament_left_panel->Layout();
+    m_filament_right_panel->Layout();
+    m_scroll_area->FitInside();
+    Layout();
+}
+
+void SelectMachineDialog::apply_quick_swap(bool reslice)
+{
+    if (m_print_type != FROM_NORMAL || m_is_in_sending_mode ||
+        m_pending_filaments_map == m_filaments_map) return;
+    Plater* plater = wxGetApp().plater();
+    const int plate_index = m_print_plate_idx;
+    const auto expected = m_filaments_map;
+    const auto requested = m_pending_filaments_map;
+    EndModal(wxID_CLOSE);
+    if (!plater->apply_print_setup_filament_maps(plate_index, expected, requested)) {
+        MessageDialog(wxGetApp().mainframe,
+            _L("The plate or filament assignment changed. Reopen print setup and try again."),
+            _L("Swap nozzle assignment"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    if (reslice && !wxGetApp().mainframe->request_slice_and_print())
+        MessageDialog(wxGetApp().mainframe,
+            _L("The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."),
+            _L("Swap nozzle assignment"), wxOK | wxICON_INFORMATION).ShowModal();
 }
 
 void SelectMachineDialog::clone_thumbnail_data() {

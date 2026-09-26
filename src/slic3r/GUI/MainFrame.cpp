@@ -2600,6 +2600,15 @@ bool MainFrame::can_save() const
         m_plater->is_project_dirty() && !m_plater->using_exported_file() && !m_plater->only_gcode_mode();
 }
 
+bool MainFrame::request_slice_and_print()
+{
+    if (!m_slice_print_btn || !m_slice_print_btn->IsEnabled()) return false;
+    wxCommandEvent event(wxEVT_BUTTON, m_slice_print_btn->GetId());
+    event.SetEventObject(m_slice_print_btn);
+    wxPostEvent(m_slice_print_btn, event);
+    return true;
+}
+
 bool MainFrame::can_save_as() const
 {
     return (m_plater != nullptr) &&
@@ -2641,12 +2650,10 @@ bool MainFrame::save_active_workspace_member()
                       _L("Save workspace project"), wxOK | wxICON_WARNING).ShowModal();
         return false;
     }
-    // The tab now loads the same completed archive that was published into
-    // the bundle. An older dirty-tab snapshot must not shadow it on return.
+    // The tab keeps its private history-owner path across saves. The candidate
+    // is only the immutable input to atomic workspace bundle publication.
     const std::string previous_snapshot = tab.snapshot_path;
     tab.snapshot_path.clear();
-    tab.file_path = candidate.u8string();
-    m_plater->set_project_filename(from_u8(tab.file_path));
     if (!previous_snapshot.empty()) {
         std::error_code ignored;
         std::filesystem::remove(std::filesystem::u8path(previous_snapshot), ignored);

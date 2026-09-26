@@ -38,6 +38,13 @@ handoff described below.
   and 09:00 local time for a date-only deadline.
 - Checklist JSON and CSV exports and UTC iCalendar exports contain planning
   data only. They do not include project files, credentials, or print commands.
+- Opening a member copies it to a private tab-owned 3MF path. Saving commits
+  its snapshot once under that stable path, publishes the complete portable
+  history there, then copies the verified archive to an immutable candidate
+  for atomic bundle publication. A failed bundle save leaves the old bundle
+  intact and retains the completed private archive and candidate for recovery.
+  Repeated saves keep the embedded document ID when no other live document
+  owns it; a genuinely divergent live copy receives a separate ID.
 
 ## Limits and validation
 
@@ -54,7 +61,7 @@ round-trip IDs and files, traversal rejection, previous-file preservation
 after a failed save, missing-printer and overlap warnings, reminder catch-up,
 and JSON, CSV, and ICS exports. Later source validation and native UI edits
 have not been compiled or run locally because builds moved to CI. The added
-tampered-member and invalid-3MF checks are pending that CI verdict. Opening a
-member in the active canvas, returning dirty member state to the bundle,
-Recent Projects integration, and live reminder dispatch remain application
-handoff work outside this core module.
+tampered-member, invalid-3MF, and stable workspace-member identity checks are
+pending that CI verdict. Opening a member in the active canvas, returning its
+saved state to the bundle, and Recent Projects integration now have application
+wiring. Live reminder dispatch still needs built-application verification.
