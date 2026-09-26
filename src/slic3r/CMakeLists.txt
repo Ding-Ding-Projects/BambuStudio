@@ -284,6 +284,12 @@ set(SLIC3R_GUI_SOURCES
     GUI/PresetHints.cpp
     GUI/PresetHints.hpp
     GUI/GUI.cpp
+    GUI/ModelCreator/SceneSpec.cpp
+    GUI/ModelCreator/SceneSpec.hpp
+    GUI/ModelCreator/ModelCreatorBackend.cpp
+    GUI/ModelCreator/ModelCreatorBackend.hpp
+    GUI/ModelCreator/ModelCreatorDialog.cpp
+    GUI/ModelCreator/ModelCreatorDialog.hpp
     GUI/GUI.hpp
     GUI/GUI_Init.cpp
     GUI/GUI_Init.hpp
@@ -843,6 +849,9 @@ list(APPEND SLIC3R_GUI_SOURCES
     )
 
 add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
+if (WIN32)
+    target_link_libraries(libslic3r_gui Advapi32)
+endif()
 
 if (TARGET device_page_build)
     add_dependencies(libslic3r_gui device_page_build)
