@@ -2841,23 +2841,24 @@ wxBoxSizer *StatusBasePanel::create_misc_control(wxWindow *parent)
     m_fan_panel->SetCornerRadius(0);
     auto *fan_sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto add_fan_row = [&](uint32_t glyph, const wxString &label, Slider *&slider, int def_val) {
+    auto add_fan_row = [&](const wxString &label, Slider *&slider, FanMotionView *&motion, bool auxiliary) {
         auto *row = new wxBoxSizer(wxHORIZONTAL);
-        if (auto *g = make_option_glyph(m_fan_panel, glyph, icon_col))
-            row->Add(g, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+        motion = new FanMotionView(m_fan_panel, auxiliary, nullptr);
+        row->Add(motion, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
         auto *lbl = new Label(m_fan_panel, label);
         lbl->SetFont(::Label::Body_13);
         lbl->SetForegroundColour(device_text_color());
         lbl->SetMinSize(wxSize(label_w, -1));
         row->Add(lbl, 0, wxALIGN_CENTER_VERTICAL);
-        slider = new Slider(m_fan_panel, def_val, 0, 100);
+        slider = new Slider(m_fan_panel, 0, 0, 100);
         slider->SetColorScheme(MD3::ColorScheme::Device);
         slider->SetMinSize(wxSize(FromDIP(90), FromDIP(24)));
         row->Add(slider, 1, wxALIGN_CENTER_VERTICAL);
+        motion->SetSlider(slider);
         fan_sizer->Add(row, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(4));
     };
-    add_fan_row(MaterialIcon::ModeFan, _L("Part cooling"), m_slider_part_fan, 0);
-    add_fan_row(MaterialIcon::Air, _L("Aux fan"), m_slider_aux_fan, 0);
+    add_fan_row(_L("Part cooling"), m_slider_part_fan, m_motion_part_fan, false);
+    add_fan_row(_L("Aux fan"), m_slider_aux_fan, m_motion_aux_fan, true);
 
     // The sliders preview the live PWM and act as the entry point to the full fan
     // control: any interaction snaps the thumb back to the device value and opens
@@ -2866,6 +2867,8 @@ wxBoxSizer *StatusBasePanel::create_misc_control(wxWindow *parent)
     // note in the report: direct per-fan drag-to-commit is intentionally not wired
     // because that command path lives in FanControl.cpp / DevFan (off-limits here).
     auto open_fan_popup = [this](int) {
+        if (m_motion_part_fan) m_motion_part_fan->RestorePreview();
+        if (m_motion_aux_fan) m_motion_aux_fan->RestorePreview();
         if (m_fan_popup_pending) return; // one popup per drag gesture; motion events coalesce
         m_fan_popup_pending = true;
         this->CallAfter([this]() {
@@ -2931,6 +2934,9 @@ void StatusBasePanel::reset_temp_misc_control()
     m_speed_sync_guard = false;
     if (m_slider_part_fan) m_slider_part_fan->SetValue(0);
     if (m_slider_aux_fan) m_slider_aux_fan->SetValue(0);
+    if (m_motion_part_fan) m_motion_part_fan->Reset();
+    if (m_motion_aux_fan) m_motion_aux_fan->Reset();
+    m_fan_motion_machine = nullptr;
     m_switch_lamp->SetValue(false);
     /*m_switch_nozzle_fan->SetValue(false);
     m_switch_printing_fan->SetValue(false);
@@ -3979,6 +3985,9 @@ bool StatusPanel::is_task_changed(MachineObject *obj)
 void StatusPanel::update(MachineObject *obj)
 {
     if (!obj || !obj->is_info_ready()) {
+        if (m_motion_part_fan) m_motion_part_fan->Reset();
+        if (m_motion_aux_fan) m_motion_aux_fan->Reset();
+        m_fan_motion_machine = nullptr;
         m_nozzle_btn_panel->Disable();
         return;
     }
@@ -4370,6 +4379,11 @@ void StatusPanel::update_misc_ctrl(MachineObject *obj)
     };
 
     if (!obj) return;
+    if (m_fan_motion_machine != obj) {
+        if (m_motion_part_fan) m_motion_part_fan->Reset();
+        if (m_motion_aux_fan) m_motion_aux_fan->Reset();
+        m_fan_motion_machine = obj;
+    }
 
     /*extder*/
     auto extder_system = obj->GetExtderSystem();
@@ -4450,10 +4464,12 @@ void StatusPanel::update_misc_ctrl(MachineObject *obj)
         // visible per the kit; the authoritative FanControlPopupNew still governs
         // which fans are actually controllable for this printer.
         (void) is_suppt_aux_fun;
-        if (m_slider_part_fan) m_slider_part_fan->SetValue((obj->GetFan()->GetCoolingFanSpeed() * 100 + 127) / 255);
-        if (m_slider_aux_fan) m_slider_aux_fan->SetValue((obj->GetFan()->GetBigFan1Speed() * 100 + 127) / 255);
+        if (m_motion_part_fan) m_motion_part_fan->SetTelemetry(obj->GetFan()->GetCoolingFanSpeed());
+        if (m_motion_aux_fan) m_motion_aux_fan->SetTelemetry(obj->GetFan()->GetBigFan1Speed());
     } else {
         if (m_fan_panel->IsShown()) { m_fan_panel->Hide(); }
+        if (m_motion_part_fan) m_motion_part_fan->Reset();
+        if (m_motion_aux_fan) m_motion_aux_fan->Reset();
         if (m_fan_control_popup && m_fan_control_popup->IsShown()) m_fan_control_popup->Hide();
     }
 
@@ -6282,6 +6298,10 @@ void StatusPanel::on_fan_changed(wxCommandEvent &event)
 {
     auto type  = event.GetInt();
     auto speed = atoi(event.GetString().c_str());
+    if (type == AIR_FUN::FAN_COOLING_0_AIRDOOR && m_motion_part_fan)
+        m_motion_part_fan->SetCommandPending(speed * 10);
+    else if (type == AIR_FUN::FAN_REMOTE_COOLING_0_IDX && m_motion_aux_fan)
+        m_motion_aux_fan->SetCommandPending(speed * 10);
     set_hold_count(this->m_switch_cham_fan_timeout);
 }
 

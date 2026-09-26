@@ -1,4 +1,12 @@
 #include "FanControl.hpp"
+#include "Slider.hpp"
+#include "MD3Motion.hpp"
+#include "FanMotionMath.hpp"
+#include <wx/dcbuffer.h>
+#include <wx/graphics.h>
+#include <algorithm>
+#include <cmath>
+#include <memory>
 #include "Label.hpp"
 #include "MD3DialogChrome.hpp"
 #include "StateColor.hpp"
@@ -83,6 +91,163 @@ wxDEFINE_EVENT(EVT_FAN_SWITCH_OFF, wxCommandEvent);
 wxDEFINE_EVENT(EVT_FAN_ADD, wxCommandEvent);
 wxDEFINE_EVENT(EVT_FAN_DEC, wxCommandEvent);
 wxDEFINE_EVENT(EVT_FAN_CHANGED, wxCommandEvent);
+
+FanMotionView::FanMotionView(wxWindow* parent, bool auxiliary, Slider* slider)
+    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(parent->FromDIP(24), parent->FromDIP(24))),
+      m_slider(slider), m_auxiliary(auxiliary)
+{
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
+    SetMinSize(wxSize(FromDIP(24), FromDIP(24)));
+    Bind(wxEVT_PAINT, &FanMotionView::OnPaint, this);
+    Bind(wxEVT_SHOW, &FanMotionView::OnShow, this);
+}
+
+void FanMotionView::SetSlider(Slider* slider)
+{
+    m_slider = slider;
+    if (!slider) return;
+    slider->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& event) {
+        m_press = 1.0;
+        UpdateTimer();
+        event.Skip();
+    });
+    slider->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& event) {
+        m_press = 1.0;
+        UpdateTimer();
+        event.Skip();
+    });
+}
+
+void FanMotionView::RestorePreview()
+{
+    if (m_slider) m_slider->SetValue(static_cast<int>(std::lround(m_display)));
+}
+
+void FanMotionView::Reset()
+{
+    Stop();
+    m_initialized = false;
+    m_target = 0;
+    m_pending = -1;
+    m_display = m_angle = m_pulse = m_press = 0.0;
+    if (m_slider) m_slider->SetValue(0);
+    Refresh(false);
+}
+
+void FanMotionView::SetTelemetry(int pwm)
+{
+    const int percent = FanMotionMath::percent_from_pwm(pwm);
+    if (!m_initialized) {
+        m_initialized = true;
+        m_target = percent;
+        m_display = percent;
+        if (m_slider) m_slider->SetValue(percent);
+        Refresh(false);
+    } else if (m_target != percent) {
+        m_target = percent;
+        if (MD3::Motion::reduced()) {
+            m_display = percent;
+            if (m_slider) m_slider->SetValue(percent);
+        }
+        Refresh(false);
+    }
+    // Commands and telemetry are independent. A command changes the pulse,
+    // while only the corresponding telemetry can settle it.
+    if (FanMotionMath::telemetry_matches_command(percent, m_pending)) {
+        m_pending = -1;
+        m_pulse = 0.0;
+    }
+    UpdateTimer();
+}
+
+void FanMotionView::SetCommandPending(int percent)
+{
+    m_pending = std::clamp(percent, 0, 100);
+    m_pulse = 0.0;
+    Refresh(false);
+    UpdateTimer();
+}
+
+void FanMotionView::UpdateTimer()
+{
+    if (!IsShownOnScreen() || MD3::Motion::reduced()) {
+        Stop();
+        m_display = m_target;
+        if (m_slider) m_slider->SetValue(m_target);
+        Refresh(false);
+        return;
+    }
+    if (m_target > 0 || m_pending >= 0 || m_press > 0.01 || std::abs(m_display - m_target) >= 0.5) {
+        if (!IsRunning()) Start(16);
+    } else Stop();
+}
+
+void FanMotionView::Notify()
+{
+    if (!IsShownOnScreen() || MD3::Motion::reduced()) { UpdateTimer(); return; }
+    m_display = FanMotionMath::ease_track(m_display, m_target);
+    if (m_slider) m_slider->SetValue(static_cast<int>(std::lround(m_display)));
+    // Telemetry controls speed. Zero halts the blades even while the track
+    // eases its last few pixels back to the origin.
+    if (m_target > 0)
+        m_angle = std::fmod(m_angle + FanMotionMath::angle_step(m_target, m_auxiliary), 6.283185307179586);
+    if (m_pending >= 0) m_pulse = std::fmod(m_pulse + 0.05, 1.0);
+    m_press = std::max(0.0, m_press - 0.07);
+    Refresh(false);
+    if (m_target == 0 && m_pending < 0 && m_press <= 0.01 && m_display == 0) Stop();
+}
+
+void FanMotionView::OnShow(wxShowEvent& event)
+{
+    if (event.IsShown()) UpdateTimer();
+    else Stop();
+    event.Skip();
+}
+
+void FanMotionView::OnPaint(wxPaintEvent&)
+{
+    wxAutoBufferedPaintDC dc(this);
+    dc.SetBackground(wxBrush(GetParent()->GetBackgroundColour()));
+    dc.Clear();
+    auto gc = std::unique_ptr<wxGraphicsContext>(wxGraphicsContext::Create(dc));
+    if (!gc) return;
+    const auto size = GetClientSize();
+    const double side = std::min(size.x, size.y);
+    const double radius = side * 0.36;
+    gc->PushState();
+    gc->Translate(size.x / 2.0, size.y / 2.0);
+    if (m_press > 0.01 && !MD3::Motion::reduced()) {
+        const double ring = radius * (1.3 - m_press * 0.5);
+        gc->SetPen(wxPen(wxColour(65, 87, 83), 1));
+        gc->SetBrush(*wxTRANSPARENT_BRUSH);
+        gc->DrawEllipse(-ring, -ring, ring * 2, ring * 2);
+    }
+    if (m_pending >= 0 && !MD3::Motion::reduced()) {
+        const double ripple = radius * (0.65 + m_pulse * 0.65);
+        gc->SetPen(wxPen(wxColour(0, 137, 123), std::max(1.0, 2.0 * (1.0 - m_pulse))));
+        gc->SetBrush(*wxTRANSPARENT_BRUSH);
+        gc->DrawEllipse(-ripple, -ripple, ripple * 2, ripple * 2);
+    }
+    gc->Rotate(m_angle);
+    gc->SetPen(*wxTRANSPARENT_PEN);
+    gc->SetBrush(wxBrush(wxColour(0, 137, 123)));
+    const int blades = m_auxiliary ? 5 : 3;
+    for (int i = 0; i < blades; ++i) {
+        gc->PushState();
+        gc->Rotate(i * 6.283185307179586 / blades);
+        auto path = gc->CreatePath();
+        path.MoveToPoint(0, -radius * 0.15);
+        path.AddCurveToPoint(radius * 0.13, -radius * 0.82,
+                             radius * 0.9, -radius * 0.96, radius * 0.78, -radius * 0.38);
+        path.AddCurveToPoint(radius * 0.62, -radius * 0.04,
+                             radius * 0.19, radius * 0.18, 0, -radius * 0.15);
+        gc->FillPath(path);
+        gc->PopState();
+    }
+    gc->SetBrush(wxBrush(GetParent()->GetBackgroundColour()));
+    gc->DrawEllipse(-radius * 0.18, -radius * 0.18, radius * 0.36, radius * 0.36);
+    gc->PopState();
+}
 
 constexpr int time_out = 6;
 static bool not_show_fan_speed_warning_dlg = false;
@@ -773,6 +938,7 @@ void FanControlNew::set_fan_switch(bool s)
 void FanControlNew::post_event()
 {
     auto event = wxCommandEvent(EVT_FAN_CHANGED);
+    event.SetInt(m_part_id);
     event.SetString(wxString::Format("%d", m_current_speed));
     event.SetEventObject(GetParent());
     wxPostEvent(GetParent(), event);
@@ -1153,6 +1319,10 @@ void FanControlPopupNew::on_mode_changed(const wxMouseEvent &event)
 void FanControlPopupNew::on_fan_changed(const wxCommandEvent &event)
 {
     m_fan_set_time_out = time_out;
+    // Forward the actual command with its fan identity. The Device preview
+    // starts a pending pulse only after this command event, never on a slider
+    // press or a telemetry refresh.
+    post_event(event.GetInt(), event.GetString());
 }
 
 void FanControlPopupNew::init_names(MachineObject* obj) {
