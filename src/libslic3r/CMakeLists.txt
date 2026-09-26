@@ -10,6 +10,7 @@ add_library(libslic3r_project_history STATIC
 target_include_directories(libslic3r_project_history PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(libslic3r_project_history PRIVATE
     libgit2::libgit2package
+    miniz
     OpenSSL::Crypto
     Threads::Threads
 )

@@ -1,9 +1,12 @@
 #include <catch_main.hpp>
 
 #include "libslic3r/ProjectHistoryManager.hpp"
+#include "miniz/miniz.h"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -46,6 +49,25 @@ void write_binary(const fs::path &path, const std::vector<unsigned char> &bytes)
     REQUIRE(output.good());
     output.write(reinterpret_cast<const char *>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
     REQUIRE(output.good());
+}
+
+void write_model_archive(const fs::path &path)
+{
+    fs::create_directories(path.parent_path());
+    mz_zip_archive archive{};
+    FILE *file = nullptr;
+#ifdef _WIN32
+    REQUIRE(_wfopen_s(&file, path.c_str(), L"wb") == 0);
+#else
+    file = std::fopen(path.c_str(), "wb");
+#endif
+    REQUIRE(file != nullptr);
+    REQUIRE(mz_zip_writer_init_cfile(&archive, file, 0));
+    const std::string model = "<model unit=\"millimeter\"/>";
+    REQUIRE(mz_zip_writer_add_mem(&archive, "3D/3dmodel.model", model.data(), model.size(), MZ_BEST_COMPRESSION));
+    REQUIRE(mz_zip_writer_finalize_archive(&archive));
+    REQUIRE(mz_zip_writer_end(&archive));
+    REQUIRE(std::fclose(file) == 0);
 }
 
 std::vector<unsigned char> read_binary(const fs::path &path)
@@ -423,6 +445,135 @@ TEST_CASE("Project history serializes independent managers for one project ident
     REQUIRE((fs::status(repository_path).permissions() & non_owner_permissions) == fs::perms::none);
     REQUIRE((fs::status(lock_path).permissions() & non_owner_permissions) == fs::perms::none);
 #endif
+}
+
+TEST_CASE("Portable history survives a copied project and keeps its stable document identity", "[project-history][portable]")
+{
+    TemporaryTree temporary;
+    const fs::path source = temporary.path() / "source.3mf";
+    const fs::path snapshot = temporary.path() / "model.3mf";
+    const fs::path copy = temporary.path() / "moved.3mf";
+    write_model_archive(snapshot);
+    Slic3r::ProjectHistoryManager first(temporary.path() / "first-app");
+    const auto committed = first.commit_snapshot(source, snapshot, commit_options("Portable version", 5000)).get();
+    INFO(committed.error.message);
+    REQUIRE(committed.ok());
+    const auto published = first.publish_portable_history(source, snapshot, source).get();
+    INFO(published.error.message);
+    REQUIRE(published.ok());
+    REQUIRE(published.present);
+    REQUIRE(published.document_id.size() == 36);
+    fs::copy_file(source, copy);
+
+    Slic3r::ProjectHistoryManager second(temporary.path() / "second-app");
+    const auto legacy = second.commit_snapshot(copy, snapshot, commit_options("Local path lineage", 5001)).get();
+    REQUIRE(legacy.ok());
+    const auto inspected = second.inspect_portable_history(copy).get();
+    INFO(inspected.error.message);
+    REQUIRE(inspected.ok());
+    REQUIRE(inspected.document_id == published.document_id);
+    REQUIRE(inspected.head_id == committed.version->commit_id);
+    const auto imported = second.import_portable_history(copy, copy).get();
+    INFO(imported.error.message);
+    REQUIRE(imported.ok());
+    const auto versions = second.list_versions(copy).get();
+    INFO(versions.error.message);
+    REQUIRE(versions.ok());
+    REQUIRE(versions.versions.size() == 1);
+    REQUIRE(versions.versions.front().commit_id == committed.version->commit_id);
+
+    const auto fork = second.publish_portable_history(copy, snapshot, copy, true).get();
+    INFO(fork.error.message);
+    REQUIRE(fork.ok());
+    REQUIRE(fork.document_id != published.document_id);
+    REQUIRE(fork.head_id == published.head_id);
+    mz_zip_archive fork_archive{};
+    REQUIRE(mz_zip_reader_init_file(&fork_archive, copy.u8string().c_str(), 0));
+    const int manifest_index = mz_zip_reader_locate_file(&fork_archive, "Metadata/bambu_project_history.json", nullptr, 0);
+    REQUIRE(manifest_index >= 0);
+    mz_zip_archive_file_stat manifest_stat{};
+    REQUIRE(mz_zip_reader_file_stat(&fork_archive, static_cast<mz_uint>(manifest_index), &manifest_stat));
+    std::string manifest(static_cast<std::size_t>(manifest_stat.m_uncomp_size), '\0');
+    REQUIRE(mz_zip_reader_extract_to_mem(&fork_archive, static_cast<mz_uint>(manifest_index), manifest.data(), manifest.size(), 0));
+    REQUIRE(mz_zip_reader_end(&fork_archive));
+    REQUIRE(manifest.find(legacy.version->commit_id) != std::string::npos);
+    REQUIRE(manifest.find(committed.version->commit_id) != std::string::npos);
+}
+
+TEST_CASE("Portable history rejects corrupt and traversal manifests without replacing a valid archive", "[project-history][portable]")
+{
+    TemporaryTree temporary;
+    const fs::path source = temporary.path() / "source.3mf";
+    const fs::path snapshot = temporary.path() / "model.3mf";
+    const fs::path invalid = temporary.path() / "invalid.3mf";
+    write_model_archive(snapshot);
+    Slic3r::ProjectHistoryManager manager(temporary.path() / "app");
+    REQUIRE(manager.commit_snapshot(source, snapshot).get().ok());
+    REQUIRE(manager.publish_portable_history(source, snapshot, source).get().ok());
+    const auto original = read_binary(source);
+    const fs::path tampered = temporary.path() / "tampered.3mf";
+    auto tampered_bytes = original;
+    const auto pack_marker = std::search(tampered_bytes.begin(), tampered_bytes.end(),
+                                         std::begin("PACK") , std::begin("PACK") + 4);
+    REQUIRE(pack_marker != tampered_bytes.end());
+    *(pack_marker + 1) ^= 0x01;
+    write_binary(tampered, tampered_bytes);
+    REQUIRE_FALSE(manager.inspect_portable_history(tampered).get().ok());
+    mz_zip_archive geometry_archive{};
+    REQUIRE(mz_zip_reader_init_file(&geometry_archive, tampered.u8string().c_str(), 0));
+    REQUIRE(mz_zip_reader_locate_file(&geometry_archive, "3D/3dmodel.model", nullptr, 0) >= 0);
+    REQUIRE(mz_zip_reader_end(&geometry_archive));
+
+    mz_zip_archive archive{};
+    REQUIRE(mz_zip_writer_init_file(&archive, invalid.u8string().c_str(), 0));
+    const std::string traversal = R"({"version":1,"document_id":"00000000-0000-4000-8000-000000000000","head":"0000000000000000000000000000000000000000","lineages":["0000000000000000000000000000000000000000"],"pack_path":"../escape.pack","pack_size":4,"pack_sha256":"0000000000000000000000000000000000000000000000000000000000000000"})";
+    const std::string bogus_pack = "PACK";
+    REQUIRE(mz_zip_writer_add_mem(&archive, "Metadata/bambu_project_history.json", traversal.data(), traversal.size(), MZ_NO_COMPRESSION));
+    REQUIRE(mz_zip_writer_add_mem(&archive, "Metadata/bambu_project_history.pack", bogus_pack.data(), bogus_pack.size(), MZ_NO_COMPRESSION));
+    REQUIRE(mz_zip_writer_finalize_archive(&archive));
+    REQUIRE(mz_zip_writer_end(&archive));
+    const auto rejected = manager.inspect_portable_history(invalid).get();
+    REQUIRE_FALSE(rejected.ok());
+    const auto no_overwrite = manager.publish_portable_history(source, invalid, source).get();
+    REQUIRE_FALSE(no_overwrite.ok());
+    REQUIRE(read_binary(source) == original);
+}
+
+TEST_CASE("Portable history supports Unicode project paths", "[project-history][portable]")
+{
+    TemporaryTree temporary;
+    const fs::path project = temporary.path() / fs::u8path(u8"模型.3mf");
+    const fs::path snapshot = temporary.path() / fs::u8path(u8"快照.3mf");
+    write_model_archive(snapshot);
+    Slic3r::ProjectHistoryManager manager(temporary.path() / "app");
+    REQUIRE(manager.commit_snapshot(project, snapshot).get().ok());
+    const auto published = manager.publish_portable_history(project, snapshot, project).get();
+    INFO(published.error.message);
+    REQUIRE(published.ok());
+    const auto inspected = manager.inspect_portable_history(project).get();
+    INFO(inspected.error.message);
+    REQUIRE(inspected.ok());
+    REQUIRE(inspected.document_id == published.document_id);
+}
+
+TEST_CASE("Divergent copies receive separate document identities on save", "[project-history][portable]")
+{
+    TemporaryTree temporary;
+    const fs::path original = temporary.path() / "original.3mf";
+    const fs::path copy = temporary.path() / "copy.3mf";
+    const fs::path snapshot = temporary.path() / "model.3mf";
+    write_model_archive(snapshot);
+    Slic3r::ProjectHistoryManager manager(temporary.path() / "app");
+    REQUIRE(manager.commit_snapshot(original, snapshot).get().ok());
+    const auto first = manager.publish_portable_history(original, snapshot, original).get();
+    REQUIRE(first.ok());
+    fs::copy_file(original, copy);
+    REQUIRE(manager.import_portable_history(copy, copy).get().ok());
+    const auto saved_copy = manager.publish_portable_history(copy, snapshot, copy).get();
+    INFO(saved_copy.error.message);
+    REQUIRE(saved_copy.ok());
+    REQUIRE(saved_copy.document_id != first.document_id);
+    REQUIRE(saved_copy.head_id == first.head_id);
 }
 
 } // namespace

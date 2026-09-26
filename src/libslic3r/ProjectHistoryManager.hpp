@@ -86,6 +86,20 @@ struct ProjectHistoryRestoreResult
     bool ok() const noexcept { return error.ok(); }
 };
 
+// The optional history payload is stored inside an otherwise ordinary 3MF.
+// A corrupt payload never makes the model archive itself unreadable.
+struct ProjectHistoryPortableResult
+{
+    ProjectHistoryError error;
+    bool               present{false};
+    bool               identity_registration_pending{false};
+    std::string        document_id;
+    std::string        head_id;
+    std::filesystem::path archive_path;
+
+    bool ok() const noexcept { return error.ok(); }
+};
+
 class ProjectHistoryManager
 {
 public:
@@ -128,6 +142,24 @@ public:
     // inside the managed history root are rejected; the original project is
     // never overwritten by this primitive.
     std::future<ProjectHistoryRestoreResult> restore_version(std::filesystem::path project_path, std::string commit_id, std::filesystem::path destination_path);
+
+    // Writes a history-free 3MF snapshot and the local repository's reachable
+    // objects into a new archive. The destination is replaced only after the
+    // completed archive has been reopened and verified. Save As receives a new
+    // document ID while retaining the complete inherited commit graph.
+    std::future<ProjectHistoryPortableResult> publish_portable_history(std::filesystem::path project_path,
+                                                                       std::filesystem::path history_free_snapshot,
+                                                                       std::filesystem::path destination_path,
+                                                                       bool new_document_id = false);
+
+    // Validates the embedded manifest and pack without extracting arbitrary
+    // paths. A missing payload is a successful legacy result.
+    std::future<ProjectHistoryPortableResult> inspect_portable_history(std::filesystem::path archive_path);
+
+    // On open, rehydrate a validated portable history into app-local storage.
+    // Invalid history leaves the project geometry available to the caller.
+    std::future<ProjectHistoryPortableResult> import_portable_history(std::filesystem::path project_path,
+                                                                      std::filesystem::path archive_path);
 
     const std::filesystem::path &history_root() const noexcept;
 
