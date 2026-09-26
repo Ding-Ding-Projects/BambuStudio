@@ -34,5 +34,6 @@ ParseResult parse_scene(const std::string &text);
 std::string emit_openscad(const SceneSpec &scene);
 std::string emit_blender(const SceneSpec &scene);
 std::string scene_prompt(const std::string &request, const std::string &revision_note = {});
+std::string scene_json_schema();
 
 } // namespace Slic3r::GUI::ModelCreator

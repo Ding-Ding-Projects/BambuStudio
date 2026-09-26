@@ -1,6 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch2/catch.hpp"
 #include "slic3r/GUI/ModelCreator/SceneSpec.hpp"
+#include <nlohmann/json.hpp>
 
 using namespace Slic3r::GUI::ModelCreator;
 
@@ -26,4 +27,15 @@ TEST_CASE("Emitters use only validated values and fixed operators")
     REQUIRE(blend.find("primitive_uv_sphere_add") != std::string::npos);
     REQUIRE(scad.find("Solid") == std::string::npos);
     REQUIRE(blend.find("Solid") == std::string::npos);
+}
+
+TEST_CASE("Shared provider schema is a versioned closed contract")
+{
+    const auto schema = scene_json_schema();
+    REQUIRE(schema.find("\"version\"") != std::string::npos);
+    REQUIRE(schema.find("\"additionalProperties\":false") != std::string::npos);
+    REQUIRE(schema.find("\"anyOf\"") != std::string::npos);
+    const auto parsed = nlohmann::json::parse(schema, nullptr, false);
+    REQUIRE_FALSE(parsed.is_discarded());
+    REQUIRE(parsed.at("properties").at("version").at("enum").at(0) == 1);
 }
