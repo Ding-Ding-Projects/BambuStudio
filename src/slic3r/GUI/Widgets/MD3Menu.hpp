@@ -45,7 +45,8 @@ public:
     // owner: the window the menu belongs to (focus is restored to whatever had
     // it when the menu opened; owner is used for DPI and display lookup).
     // parent_popup: non-null for a submenu surface.
-    MD3MenuPopup(wxWindow *owner, wxMenu *menu, MD3MenuPopup *parent_popup = nullptr);
+    MD3MenuPopup(wxWindow *owner, wxMenu *menu, MD3MenuPopup *parent_popup = nullptr,
+                 bool show_search = false);
     ~MD3MenuPopup() override;
 
     // Open as a root menu next to an anchor rectangle in screen coordinates
@@ -116,6 +117,7 @@ private:
 
     SearchField *m_search { nullptr };
     MD3MenuList *m_list { nullptr };
+    bool m_show_search { false };
 
     std::vector<MD3::Menu::Item> m_rows;
     MD3::Menu::SecondaryLookup   m_secondary;
@@ -158,7 +160,8 @@ bool PopupMenu(wxWindow *owner, wxMenu *menu, wxPoint screen_pos = wxDefaultPosi
 int PopupMenuSelection(wxWindow *owner, wxMenu &menu, wxPoint screen_pos = wxDefaultPosition);
 
 // Blocking, anchored to the full screen rectangle of `anchor` (opens below it).
-bool PopupMenuBelow(wxWindow *anchor, wxMenu *menu);
+// show_search exposes the shared search and regex builder even for a short menu.
+bool PopupMenuBelow(wxWindow *anchor, wxMenu *menu, bool show_search = false);
 
 } // namespace MD3
 

@@ -843,12 +843,13 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
 // MD3MenuPopup
 // ---------------------------------------------------------------------------
 
-MD3MenuPopup::MD3MenuPopup(wxWindow *owner, wxMenu *menu, MD3MenuPopup *parent_popup)
+MD3MenuPopup::MD3MenuPopup(wxWindow *owner, wxMenu *menu, MD3MenuPopup *parent_popup, bool show_search)
     : PopupWindow(parent_popup ? static_cast<wxWindow *>(parent_popup) : owner,
                   wxBORDER_NONE | wxPU_CONTAINS_CONTROLS)
     , m_owner(owner)
     , m_menu(menu)
     , m_parent(parent_popup)
+    , m_show_search(show_search)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
@@ -909,7 +910,7 @@ void MD3MenuPopup::build()
         if (it.actionable())
             ++actionable;
 
-    if (actionable >= kSearchThreshold) {
+    if (m_show_search || actionable >= kSearchThreshold) {
         m_search = new SearchField(this, _L("Search menu"));
         m_search->SetOnQuery([this](const wxString &) { ApplyFilter(); });
         m_search->SetOnRegexToggle([this](bool) { ApplyFilter(); });
@@ -1279,7 +1280,8 @@ namespace MD3 {
 
 namespace {
 
-int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_events)
+int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_events,
+                 bool show_search = false)
 {
     if (!owner || !menu)
         return wxID_NONE;
@@ -1299,7 +1301,7 @@ int run_blocking(wxWindow *owner, wxMenu *menu, const wxRect &anchor, bool send_
         }
     }
 
-    auto *popup = new Slic3r::GUI::MD3MenuPopup(owner, menu);
+    auto *popup = new Slic3r::GUI::MD3MenuPopup(owner, menu, nullptr, show_search);
     popup->SetSendEvents(send_events);
     wxWeakRef<Slic3r::GUI::MD3MenuPopup> popup_ref(popup);
 
@@ -1369,11 +1371,11 @@ int PopupMenuSelection(wxWindow *owner, wxMenu &menu, wxPoint screen_pos)
     return run_blocking(owner, &menu, point_anchor(screen_pos), false);
 }
 
-bool PopupMenuBelow(wxWindow *anchor, wxMenu *menu)
+bool PopupMenuBelow(wxWindow *anchor, wxMenu *menu, bool show_search)
 {
     if (!anchor || !menu)
         return false;
-    run_blocking(anchor, menu, anchor->GetScreenRect(), true);
+    run_blocking(anchor, menu, anchor->GetScreenRect(), true, show_search);
     return true;
 }
 

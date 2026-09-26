@@ -1539,7 +1539,7 @@ void MenuFactory::create_filament_action_menu(wxMenu* menu, int active_filament_
     };
 
     append_menu_item(
-        menu, wxID_ANY, _L("Edit"), "", [](wxCommandEvent&) {
+        menu, wxID_ANY, _L("Edit"), _L("Edit this filament preset"), [](wxCommandEvent&) {
             if (plater())
                 plater()->sidebar().edit_filament();
         }, "", nullptr, []() { return true; }, nullptr);
@@ -1553,31 +1553,37 @@ void MenuFactory::create_filament_action_menu(wxMenu* menu, int active_filament_
 
     const auto reason = decompose_color_block_reason(active_filament_menu_id);
     auto* decompose_item = append_menu_item(
-        menu, wxID_ANY, decompose_color_menu_label(reason), "", [](wxCommandEvent&) {
+        menu, wxID_ANY, decompose_color_menu_label(reason),
+        _L("Separate this filament into its component colors"), [](wxCommandEvent&) {
             if (plater())
                 plater()->sidebar().decompose_filament_color(kSidebarContextMenuFilamentId);
         }, "", nullptr, []() { return true; }, nullptr);
     decompose_item->Enable(can_decompose());
 
     wxMenu* sub_menu = new wxMenu();
-    std::vector<wxBitmap*> icons = get_extruder_color_icons(true);
-    int filaments_cnt = static_cast<int>(icons.size());
+    const std::vector<wxBitmap*> icons = get_extruder_color_icons(true);
+    const auto& presets = wxGetApp().preset_bundle->filament_presets;
+    const int filaments_cnt = static_cast<int>(presets.size());
     for (int i = 0; i < filaments_cnt; i++) {
         if (i == active_filament_menu_id)
             continue;
 
-        auto preset = wxGetApp().preset_bundle->filaments.find_preset(wxGetApp().preset_bundle->filament_presets[i]);
+        auto preset = wxGetApp().preset_bundle->filaments.find_preset(presets[i]);
         wxString item_name = preset ? from_u8(preset->label(false)) : wxString::Format(_L("Filament %d"), i + 1);
 
-        append_menu_item(sub_menu, wxID_ANY, item_name, "",
+        append_menu_item(sub_menu, wxID_ANY, item_name,
+            _L("Merge this filament into the selected filament"),
             [i](wxCommandEvent&) {
                 if (plater())
                     plater()->sidebar().change_filament(kSidebarContextMenuFilamentId, i);
-            }, *icons[i], menu, []() { return true; }, nullptr);
+            }, i < static_cast<int>(icons.size()) && icons[i] ? *icons[i] : wxNullBitmap,
+            menu, []() { return true; }, nullptr);
     }
-    auto* merge_item = append_submenu(menu, sub_menu, wxID_ANY, _L("Merge with"), "", "",
+    auto* merge_item = append_submenu(menu, sub_menu, wxID_ANY, _L("Merge with"),
+        _L("Choose the filament that will replace this one"), "",
         []() { return true; }, nullptr);
-    merge_item->Enable(filaments_cnt > 1);
+    merge_item->Enable(active_filament_menu_id >= 0 &&
+                       active_filament_menu_id < filaments_cnt && filaments_cnt > 1);
 }
 
 //BBS: add part plate related logic
