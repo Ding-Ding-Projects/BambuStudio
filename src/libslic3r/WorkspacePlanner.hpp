@@ -20,8 +20,20 @@ struct Reminder {
     std::int64_t due_utc = 0;
 };
 
-// Named IANA zones need a timezone-rule resolver before their 09:00 UTC
-// instant can be trusted. The current planner verifies only UTC deadlines.
+struct LocalInstant {
+    std::int64_t utc = 0;
+    int offset_minutes = 0;
+};
+
+struct LocalTimeResolution {
+    std::vector<LocalInstant> candidates;
+    std::string error;
+};
+
+// An empty candidate list with no error denotes a nonexistent local wall time.
+// Two candidates denote a daylight-saving fold and require an explicit choice.
+LocalTimeResolution resolve_local_time(const std::string &zone, const std::string &wall_time);
+bool zone_offset_at_utc(const std::string &zone, std::int64_t utc, int &offset_minutes);
 bool deadline_offset_verifiable(const Workspace &workspace, const ChecklistItem &item);
 
 // Calendar instants are stored as UTC seconds. The selected IANA zone and

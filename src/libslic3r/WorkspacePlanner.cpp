@@ -6,8 +6,12 @@
 #include <cstdio>
 #include <ctime>
 #include <iomanip>
+#include <memory>
 #include <set>
 #include <sstream>
+#ifdef _WIN32
+#include <icu.h>
+#endif
 
 namespace Slic3r::Workspace {
 namespace {
@@ -36,6 +40,53 @@ bool parse_date(const std::string &date, int &year, int &month, int &day)
     const bool leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
     return day <= lengths[month] + (month == 2 && leap ? 1 : 0);
 }
+
+bool parse_wall(const std::string &wall, int &year, int &month, int &day, int &hour, int &minute)
+{
+    if (wall.size() != 16 || wall[10] != ' ' || wall[13] != ':' ||
+        !parse_date(wall.substr(0, 10), year, month, day) ||
+        wall[11] < '0' || wall[11] > '9' || wall[12] < '0' || wall[12] > '9' ||
+        wall[14] < '0' || wall[14] > '9' || wall[15] < '0' || wall[15] > '9') return false;
+    hour = (wall[11] - '0') * 10 + wall[12] - '0';
+    minute = (wall[14] - '0') * 10 + wall[15] - '0';
+    return hour < 24 && minute < 60;
+}
+
+#ifdef _WIN32
+using CalendarPtr = std::unique_ptr<UCalendar, decltype(&ucal_close)>;
+
+CalendarPtr open_zone(const std::string &zone)
+{
+    if (zone.empty() || zone.size() > 128 ||
+        (zone != "UTC" && zone != "Etc/UTC" && zone.find('/') == std::string::npos) ||
+        !std::all_of(zone.begin(), zone.end(), [](unsigned char c) {
+            return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                   (c >= '0' && c <= '9') || c == '/' || c == '_' || c == '-' || c == '+';
+        })) return {nullptr, &ucal_close};
+    std::u16string id(zone.begin(), zone.end());
+    UChar canonical[160]{};
+    UBool system_id = false;
+    UErrorCode status = U_ZERO_ERROR;
+    const auto length = ucal_getCanonicalTimeZoneID(id.data(), static_cast<int32_t>(id.size()),
+        canonical, 160, &system_id, &status);
+    if (U_FAILURE(status) || !system_id || length <= 0 || length >= 160) return {nullptr, &ucal_close};
+    status = U_ZERO_ERROR;
+    UCalendar *opened = ucal_open(canonical, length, "en_US", UCAL_GREGORIAN, &status);
+    if (U_FAILURE(status)) { if (opened) ucal_close(opened); return {nullptr, &ucal_close}; }
+    return {opened, &ucal_close};
+}
+
+bool calendar_offset(UCalendar *calendar, std::int64_t utc, int &minutes)
+{
+    UErrorCode status = U_ZERO_ERROR;
+    ucal_setMillis(calendar, static_cast<UDate>(utc) * 1000.0, &status);
+    const int raw = ucal_get(calendar, UCAL_ZONE_OFFSET, &status);
+    const int dst = ucal_get(calendar, UCAL_DST_OFFSET, &status);
+    if (U_FAILURE(status) || (raw + dst) % 60000 != 0) return false;
+    minutes = (raw + dst) / 60000;
+    return minutes >= -840 && minutes <= 840;
+}
+#endif
 
 std::string csv_field(const std::string &value)
 {
@@ -80,10 +131,74 @@ template<class T> T *by_id(std::vector<T> &items, const std::string &id)
 
 } // namespace
 
+LocalTimeResolution resolve_local_time(const std::string &zone, const std::string &wall_time)
+{
+    LocalTimeResolution result;
+    int year, month, day, hour, minute;
+    if (!parse_wall(wall_time, year, month, day, hour, minute)) {
+        result.error = "Invalid local date or time";
+        return result;
+    }
+    const std::int64_t nominal = days_from_civil(year, static_cast<unsigned>(month),
+        static_cast<unsigned>(day)) * 86400 + hour * 3600 + minute * 60;
+    if (zone == "UTC" || zone == "Etc/UTC") {
+        result.candidates.push_back({nominal, 0});
+        return result;
+    }
+#ifdef _WIN32
+    auto calendar = open_zone(zone);
+    if (!calendar) {
+        result.error = "Unknown or unavailable IANA time zone";
+        return result;
+    }
+    std::set<int> offsets;
+    for (const auto sample : {nominal - 86400, nominal, nominal + 86400}) {
+        int offset = 0;
+        if (!calendar_offset(calendar.get(), sample, offset)) {
+            result.error = "Could not resolve time-zone rules";
+            return result;
+        }
+        offsets.insert(offset);
+    }
+    for (const int offset : offsets) {
+        const auto candidate = nominal - static_cast<std::int64_t>(offset) * 60;
+        int actual_offset = 0;
+        if (calendar_offset(calendar.get(), candidate, actual_offset) && actual_offset == offset) {
+            UErrorCode status = U_ZERO_ERROR;
+            if (ucal_get(calendar.get(), UCAL_YEAR, &status) == year &&
+                ucal_get(calendar.get(), UCAL_MONTH, &status) == month - 1 &&
+                ucal_get(calendar.get(), UCAL_DATE, &status) == day &&
+                ucal_get(calendar.get(), UCAL_HOUR_OF_DAY, &status) == hour &&
+                ucal_get(calendar.get(), UCAL_MINUTE, &status) == minute && U_SUCCESS(status))
+                result.candidates.push_back({candidate, offset});
+        }
+    }
+    std::sort(result.candidates.begin(), result.candidates.end(), [](const auto &a, const auto &b) { return a.utc < b.utc; });
+#else
+    result.error = "IANA time-zone rules are unavailable on this platform";
+#endif
+    return result;
+}
+
+bool zone_offset_at_utc(const std::string &zone, std::int64_t utc, int &offset_minutes)
+{
+    if (zone == "UTC" || zone == "Etc/UTC") { offset_minutes = 0; return true; }
+#ifdef _WIN32
+    auto calendar = open_zone(zone);
+    return calendar && calendar_offset(calendar.get(), utc, offset_minutes);
+#else
+    (void)utc;
+    (void)offset_minutes;
+    return false;
+#endif
+}
+
 bool deadline_offset_verifiable(const Workspace &workspace, const ChecklistItem &item)
 {
-    return (workspace.time_zone == "UTC" || workspace.time_zone == "Etc/UTC") &&
-           item.due_utc_offset_minutes == 0;
+    const auto resolved = resolve_local_time(workspace.time_zone,
+        item.due_date + " " + (workspace.deadline_reminder_hour < 10 ? "0" : "") +
+        std::to_string(workspace.deadline_reminder_hour) + ":00");
+    return resolved.error.empty() && resolved.candidates.size() == 1;
 }
 
 std::vector<PlanningWarning> validate_plan(const Workspace &workspace,
@@ -106,8 +221,15 @@ std::vector<PlanningWarning> validate_plan(const Workspace &workspace,
         }
         if (item.due_utc_offset_minutes < -840 || item.due_utc_offset_minutes > 840)
             warnings.push_back({"invalid_offset", item.id, {}});
-        if (!item.due_date.empty() && !deadline_offset_verifiable(workspace, item))
-            warnings.push_back({"unverified_deadline_timezone", item.id, workspace.time_zone});
+        if (!item.due_date.empty()) {
+            const auto resolved = resolve_local_time(workspace.time_zone,
+                item.due_date + " " + (workspace.deadline_reminder_hour < 10 ? "0" : "") +
+                std::to_string(workspace.deadline_reminder_hour) + ":00");
+            if (!resolved.error.empty() || resolved.candidates.size() != 1)
+                warnings.push_back({"unverified_deadline_timezone", item.id, workspace.time_zone});
+            else if (resolved.candidates.front().offset_minutes != item.due_utc_offset_minutes)
+                warnings.push_back({"deadline_offset_mismatch", item.id, workspace.time_zone});
+        }
     }
     for (std::size_t index = 0; index < workspace.slots.size(); ++index) {
         const auto &slot = workspace.slots[index];
@@ -118,6 +240,11 @@ std::vector<PlanningWarning> validate_plan(const Workspace &workspace,
         if (slot.end_utc <= slot.start_utc) warnings.push_back({"invalid_interval", slot.id, {}});
         if (slot.utc_offset_minutes < -840 || slot.utc_offset_minutes > 840)
             warnings.push_back({"invalid_offset", slot.id, {}});
+        int actual_offset = 0;
+        if (!zone_offset_at_utc(slot.time_zone, slot.start_utc, actual_offset))
+            warnings.push_back({"unverified_slot_timezone", slot.id, slot.time_zone});
+        else if (actual_offset != slot.utc_offset_minutes)
+            warnings.push_back({"slot_offset_mismatch", slot.id, slot.time_zone});
         if (!slot.enabled || slot.printer_id.empty()) continue;
         for (std::size_t other = index + 1; other < workspace.slots.size(); ++other) {
             const auto &next = workspace.slots[other];
@@ -144,8 +271,11 @@ std::vector<Reminder> due_reminders(const Workspace &workspace, std::int64_t las
         if (item.completed || item.due_date.empty() || !deadline_offset_verifiable(workspace, item)) continue;
         int year, month, day;
         if (!parse_date(item.due_date, year, month, day)) continue;
-        const std::int64_t due = days_from_civil(year, static_cast<unsigned>(month), static_cast<unsigned>(day)) * 86400 +
-            workspace.deadline_reminder_hour * 3600 - static_cast<std::int64_t>(item.due_utc_offset_minutes) * 60;
+        const auto resolved = resolve_local_time(workspace.time_zone,
+            item.due_date + " " + (workspace.deadline_reminder_hour < 10 ? "0" : "") +
+            std::to_string(workspace.deadline_reminder_hour) + ":00");
+        if (!resolved.error.empty() || resolved.candidates.size() != 1) continue;
+        const std::int64_t due = resolved.candidates.front().utc;
         if (last_checked_utc < due && due <= now_utc) reminders.push_back({item.id, "deadline", due});
     }
     std::sort(reminders.begin(), reminders.end(), [](const Reminder &a, const Reminder &b) {

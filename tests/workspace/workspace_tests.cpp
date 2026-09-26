@@ -208,20 +208,39 @@ TEST_CASE("Corrupt optional member history cannot be published over a valid bund
     REQUIRE(mz_zip_reader_end(&geometry));
 }
 
-TEST_CASE("Named-zone deadlines wait for verified timezone rules", "[workspace]")
+TEST_CASE("Named-zone deadlines resolve against date-specific timezone rules", "[workspace]")
 {
     TemporaryTree temporary;
     Workspace workspace = example(temporary.root);
+#ifdef _WIN32
+    workspace.checklist.front().due_utc_offset_minutes = -300;
     const auto &deadline = workspace.checklist.front();
-    REQUIRE_FALSE(deadline_offset_verifiable(workspace, deadline));
+    REQUIRE(deadline_offset_verifiable(workspace, deadline));
     const auto warnings = validate_plan(workspace, {});
     REQUIRE(std::any_of(warnings.begin(), warnings.end(), [](const auto &warning) {
-        return warning.code == "unverified_deadline_timezone";
+        return warning.code == "deadline_offset_mismatch";
     }));
     const auto reminders = due_reminders(workspace, 0, 2000000000);
-    REQUIRE(std::none_of(reminders.begin(), reminders.end(), [](const auto &reminder) {
+    REQUIRE(std::any_of(reminders.begin(), reminders.end(), [](const auto &reminder) {
         return reminder.kind == "deadline";
     }));
+    const auto winter = resolve_local_time("America/Toronto", "2026-01-15 09:00");
+    const auto summer = resolve_local_time("America/Toronto", "2026-07-15 09:00");
+    REQUIRE(winter.error.empty());
+    REQUIRE(summer.error.empty());
+    REQUIRE(winter.candidates.size() == 1);
+    REQUIRE(summer.candidates.size() == 1);
+    REQUIRE(winter.candidates.front().offset_minutes == -300);
+    REQUIRE(summer.candidates.front().offset_minutes == -240);
+    const auto before_transition = resolve_local_time("America/Toronto", "2026-03-07 09:00");
+    const auto after_transition = resolve_local_time("America/Toronto", "2026-03-08 09:00");
+    REQUIRE(after_transition.candidates.front().utc - before_transition.candidates.front().utc == 23 * 3600);
+    REQUIRE(resolve_local_time("America/Toronto", "2026-03-08 02:30").candidates.empty());
+    const auto folded = resolve_local_time("America/Toronto", "2026-11-01 01:30");
+    REQUIRE(folded.candidates.size() == 2);
+    REQUIRE(folded.candidates.front().utc < folded.candidates.back().utc);
+    REQUIRE_FALSE(resolve_local_time("Invalid/Not_A_Zone", "2026-01-15 09:00").error.empty());
+#endif
     workspace.time_zone = "UTC";
     workspace.checklist.front().due_utc_offset_minutes = 0;
     REQUIRE(deadline_offset_verifiable(workspace, workspace.checklist.front()));

@@ -10,6 +10,7 @@
 #include <ctime>
 #include <fstream>
 #include <iomanip>
+#include <optional>
 #include <sstream>
 
 #include <wx/button.h>
@@ -46,6 +47,25 @@ std::int64_t parse_wall_utc(const std::string &text, int offset_minutes)
     const std::time_t instant = timegm(&value);
 #endif
     return instant < 0 ? -1 : static_cast<std::int64_t>(instant) - offset_minutes * 60;
+}
+
+std::optional<Workspace::LocalInstant> choose_local_time(wxWindow *parent, const std::string &zone,
+                                                         const wxString &wall)
+{
+    const auto resolved = Workspace::resolve_local_time(zone, utf8(wall));
+    if (!resolved.error.empty() || resolved.candidates.empty()) {
+        wxMessageBox(resolved.error.empty() ? _L("This local time does not exist because the clock jumps forward.") :
+                     display(resolved.error), _L("Planned print time"), wxOK | wxICON_WARNING, parent);
+        return std::nullopt;
+    }
+    if (resolved.candidates.size() == 1) return resolved.candidates.front();
+    const auto choice = wxMessageBox(
+        wxString::Format(_L("This local time occurs twice. Use the earlier occurrence (UTC offset %d minutes)? Choose No for the later occurrence (UTC offset %d minutes)."),
+            resolved.candidates.front().offset_minutes, resolved.candidates.back().offset_minutes),
+        _L("Choose daylight-saving occurrence"), wxYES_NO | wxCANCEL | wxICON_QUESTION, parent);
+    if (choice == wxYES) return resolved.candidates.front();
+    if (choice == wxNO) return resolved.candidates.back();
+    return std::nullopt;
 }
 
 bool ask_text(wxWindow *parent, const wxString &caption, const wxString &prompt, wxString &value)
@@ -261,6 +281,16 @@ void WorkspacePanel::refresh_checklist()
     for (const auto &item : m_workspace.checklist) {
         wxString label = display(item.text);
         if (!item.due_date.empty()) label += "  [" + display(item.due_date) + "]";
+        if (!item.due_date.empty()) {
+            const auto resolved = Workspace::resolve_local_time(m_workspace.time_zone, item.due_date + " " +
+                (m_workspace.deadline_reminder_hour < 10 ? "0" : "") +
+                std::to_string(m_workspace.deadline_reminder_hour) + ":00");
+            if (resolved.error.empty() && resolved.candidates.size() == 1 &&
+                resolved.candidates.front().offset_minutes != item.due_utc_offset_minutes)
+                label += _L(" [saved offset differs]");
+            else if (!resolved.error.empty() || resolved.candidates.size() != 1)
+                label += _L(" [time zone unavailable]");
+        }
         m_checklist->Append(label);
         m_checklist->Check(m_checklist->GetCount() - 1, item.completed);
     }
@@ -276,8 +306,13 @@ void WorkspacePanel::refresh_calendar()
         const long row = m_agenda->InsertItem(static_cast<long>(index), display(slot.title));
         m_agenda->SetItem(row, 1, display(slot.printer_id));
         m_agenda->SetItem(row, 2, wxDateTime(static_cast<time_t>(slot.start_utc)).ToUTC().FormatISOCombined(' '));
-        m_agenda->SetItem(row, 3, !slot.enabled ? _L("Disabled") :
-                          slot.completed ? _L("Completed") : _L("Planned"));
+        wxString state = !slot.enabled ? _L("Disabled") : slot.completed ? _L("Completed") : _L("Planned");
+        int actual_offset = 0;
+        if (!Workspace::zone_offset_at_utc(slot.time_zone, slot.start_utc, actual_offset))
+            state += _L("; time zone unavailable");
+        else if (actual_offset != slot.utc_offset_minutes)
+            state += _L("; saved offset differs");
+        m_agenda->SetItem(row, 3, state);
         m_agenda->SetItemData(row, static_cast<long>(std::find_if(m_workspace.slots.begin(), m_workspace.slots.end(),
             [&](const auto &candidate) { return candidate.id == slot.id; }) - m_workspace.slots.begin()));
     }
@@ -319,8 +354,30 @@ void WorkspacePanel::edit_preferences()
     long parsed = 0;
     if (!hour.ToLong(&parsed) || parsed < 0 || parsed > 23 ||
         (enabled.Lower() != "yes" && enabled.Lower() != "no")) return;
+    const auto probe = Workspace::resolve_local_time(utf8(zone), "2026-01-15 12:00");
+    if (!probe.error.empty() || probe.candidates.size() != 1) {
+        wxMessageBox(display(probe.error.empty() ? "Time zone rules are unavailable" : probe.error),
+                     _L("Workspace time zone"), wxOK | wxICON_WARNING, this);
+        return;
+    }
+    for (auto &item : m_workspace.checklist) {
+        if (item.due_date.empty()) continue;
+        const auto resolved = Workspace::resolve_local_time(utf8(zone), item.due_date + " " +
+            (parsed < 10 ? "0" : "") + std::to_string(parsed) + ":00");
+        if (!resolved.error.empty() || resolved.candidates.size() != 1) {
+            wxMessageBox(_L("A checklist deadline cannot be resolved in this time zone."),
+                         _L("Workspace time zone"), wxOK | wxICON_WARNING, this);
+            return;
+        }
+    }
     m_workspace.time_zone = utf8(zone);
     m_workspace.deadline_reminder_hour = static_cast<int>(parsed);
+    for (auto &item : m_workspace.checklist) {
+        if (item.due_date.empty()) continue;
+        const auto resolved = Workspace::resolve_local_time(m_workspace.time_zone, item.due_date + " " +
+            (parsed < 10 ? "0" : "") + std::to_string(parsed) + ":00");
+        item.due_utc_offset_minutes = resolved.candidates.front().offset_minutes;
+    }
     m_workspace.reminders_enabled = enabled.Lower() == "yes";
     m_timezone_warning_shown = false;
     m_dirty = true;
@@ -391,15 +448,19 @@ void WorkspacePanel::check_reminders()
     if (m_last_reminder_check_utc <= 0 || m_last_reminder_check_utc > now) reset_reminder_cursor();
     auto *notifications = wxGetApp().notification_manager();
     if (!m_timezone_warning_shown && notifications && m_workspace.reminders_enabled) {
-        const bool unverified = std::any_of(m_workspace.checklist.begin(), m_workspace.checklist.end(),
-            [this](const Workspace::ChecklistItem &item) {
-                return !item.completed && !item.due_date.empty() &&
-                       !Workspace::deadline_offset_verifiable(m_workspace, item);
-            });
-        if (unverified) {
+        const auto warnings = Workspace::validate_plan(m_workspace, {});
+        const auto timezone_warning = std::find_if(warnings.begin(), warnings.end(), [](const auto &warning) {
+            return warning.code == "unverified_deadline_timezone" || warning.code == "deadline_offset_mismatch" ||
+                   warning.code == "unverified_slot_timezone" || warning.code == "slot_offset_mismatch";
+        });
+        if (timezone_warning != warnings.end()) {
             notifications->push_notification(NotificationType::CustomNotification,
                 NotificationManager::NotificationLevel::WarningNotificationLevel,
-                utf8(_L("Deadline reminders for this named time zone are paused because its daylight-saving offset cannot be verified. Dates remain in the workspace.")));
+                utf8(timezone_warning->code == "deadline_offset_mismatch"
+                    ? _L("A saved deadline offset differs from its named time zone. The reminder uses the resolved due-date offset; review this item.")
+                    : timezone_warning->code == "slot_offset_mismatch"
+                    ? _L("A saved planned-print offset differs from its named time zone. The saved UTC time remains in use; review this slot.")
+                    : _L("A calendar time zone could not be resolved. Affected deadline reminders are paused; saved planned-print UTC times remain in use.")));
             m_timezone_warning_shown = true;
         }
     }
@@ -569,20 +630,24 @@ void WorkspacePanel::edit_checklist()
     auto item = m_workspace.checklist[static_cast<std::size_t>(index)];
     wxString text = display(item.text), due = display(item.due_date), member = display(item.linked_member_id);
     wxString slot = display(item.linked_slot_id);
-    wxString offset = wxString::Format("%d", item.due_utc_offset_minutes);
     if (!ask_text(this, _L("Edit checklist item"), _L("Task"), text)) return;
     if (!ask_text(this, _L("Due date"), _L("Date only, YYYY-MM-DD (optional)"), due)) return;
     if (!ask_text(this, _L("Linked project"), _L("Member ID (optional)"), member)) return;
     if (!ask_text(this, _L("Linked planned print"), _L("Planned-print ID (optional)"), slot)) return;
-    if (!ask_text(this, _L("Deadline UTC offset"), _L("Offset in minutes for 09:00 on that date, including daylight saving"), offset)) return;
-    long parsed_offset = 0;
-    if (!offset.ToLong(&parsed_offset) || parsed_offset < -840 || parsed_offset > 840) return;
-    if ((m_workspace.time_zone == "UTC" && parsed_offset != 0) ||
-        (!due.IsEmpty() && m_workspace.time_zone != "UTC" &&
-         wxMessageBox(_L("The offset is not checked against this time zone. Confirm it is the offset at 09:00 on the due date, including daylight saving."),
-                      _L("Confirm deadline offset"), wxYES_NO | wxICON_WARNING, this) != wxYES)) return;
+    int resolved_offset = 0;
+    if (!due.IsEmpty()) {
+        const auto resolved = Workspace::resolve_local_time(m_workspace.time_zone,
+            utf8(due) + " " + (m_workspace.deadline_reminder_hour < 10 ? "0" : "") +
+            std::to_string(m_workspace.deadline_reminder_hour) + ":00");
+        if (!resolved.error.empty() || resolved.candidates.size() != 1) {
+            wxMessageBox(resolved.error.empty() ? _L("The deadline reminder time is ambiguous or nonexistent.") :
+                         display(resolved.error), _L("Due date"), wxOK | wxICON_WARNING, this);
+            return;
+        }
+        resolved_offset = resolved.candidates.front().offset_minutes;
+    }
     item.text = utf8(text); item.due_date = utf8(due); item.linked_member_id = utf8(member);
-    item.linked_slot_id = utf8(slot); item.due_utc_offset_minutes = static_cast<int>(parsed_offset);
+    item.linked_slot_id = utf8(slot); item.due_utc_offset_minutes = resolved_offset;
     if (!Workspace::edit_checklist_item(m_workspace, item)) return;
     m_timezone_warning_shown = false;
     m_dirty = true; refresh_checklist(); m_checklist->SetSelection(index);
@@ -601,33 +666,25 @@ void WorkspacePanel::move_checklist(int direction)
 
 void WorkspacePanel::add_slot()
 {
-    wxString title, printer, member, start, end, offset = "0", end_offset;
+    wxString title, printer, member, start, end;
     if (!ask_text(this, _L("Planned print"), _L("Title"), title) || title.IsEmpty()) return;
     if (!ask_text(this, _L("Printer"), _L("Printer ID"), printer)) return;
     if (!ask_text(this, _L("Linked project"), _L("Member ID (optional)"), member)) return;
     if (!ask_text(this, _L("Start time"), _L("Local time, YYYY-MM-DD HH:MM"), start)) return;
     if (!ask_text(this, _L("End time"), _L("Local time, YYYY-MM-DD HH:MM"), end)) return;
-    if (!ask_text(this, _L("Start UTC offset"), _L("Offset in minutes at the start time, including daylight saving"), offset)) return;
-    end_offset = offset;
-    if (!ask_text(this, _L("End UTC offset"), _L("Offset in minutes at the end time, including daylight saving"), end_offset)) return;
-    long minutes = 0, end_minutes = 0;
-    if (!offset.ToLong(&minutes) || !end_offset.ToLong(&end_minutes) ||
-        minutes < -840 || minutes > 840 || end_minutes < -840 || end_minutes > 840) return;
-    if ((m_workspace.time_zone == "UTC" && (minutes != 0 || end_minutes != 0)) ||
-        (m_workspace.time_zone != "UTC" &&
-         wxMessageBox(_L("Offsets are not checked against the named time zone. Confirm both offsets for these dates, especially across daylight-saving changes."),
-                      _L("Confirm planned-print offsets"), wxYES_NO | wxICON_WARNING, this) != wxYES)) return;
-    const auto begin = parse_wall_utc(utf8(start), static_cast<int>(minutes));
-    const auto finish = parse_wall_utc(utf8(end), static_cast<int>(end_minutes));
-    if (begin < 0 || finish <= begin) {
-        wxMessageBox(_L("Enter valid start and end times, with the offset for the chosen date."),
+    const auto begin = choose_local_time(this, m_workspace.time_zone, start);
+    if (!begin) return;
+    const auto finish = choose_local_time(this, m_workspace.time_zone, end);
+    if (!finish) return;
+    if (finish->utc <= begin->utc) {
+        wxMessageBox(_L("The end time must be after the start time."),
                      _L("Planned print"), wxOK | wxICON_WARNING, this);
         return;
     }
     Workspace::CalendarSlot slot;
     slot.id = Workspace::new_id(); slot.title = utf8(title); slot.printer_id = utf8(printer);
     slot.member_id = utf8(member);
-    slot.start_utc = begin; slot.end_utc = finish; slot.utc_offset_minutes = static_cast<int>(minutes);
+    slot.start_utc = begin->utc; slot.end_utc = finish->utc; slot.utc_offset_minutes = begin->offset_minutes;
     slot.time_zone = m_workspace.time_zone;
     m_workspace.slots.push_back(std::move(slot));
     m_dirty = true; refresh_overview(); refresh_calendar();
