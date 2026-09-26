@@ -1208,7 +1208,16 @@ void MD3MenuPopup::onCharHook(wxKeyEvent &evt)
     case WXK_ESCAPE: RequestEscape(); return;
     case WXK_DOWN: m_list->MoveSelection(1); return;
     case WXK_UP: m_list->MoveSelection(-1); return;
-    case WXK_TAB: m_list->MoveSelection(evt.ShiftDown() ? -1 : 1); return;
+    case WXK_TAB:
+        if (m_search && m_search->GetTextCtrl()) {
+            // The search field and the menu list are separate keyboard stops.
+            // Arrows continue to move the selected row within the list.
+            (search_focused ? static_cast<wxWindow *>(m_list)
+                            : static_cast<wxWindow *>(m_search->GetTextCtrl()))->SetFocus();
+            return;
+        }
+        evt.Skip();
+        return;
     case WXK_HOME:
         if (search_focused && search_has_text) break;
         m_list->SelectFirst();

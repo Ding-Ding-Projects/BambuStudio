@@ -2,6 +2,7 @@
 
 #include "libslic3r/ProjectHistoryManager.hpp"
 #include "miniz/miniz.h"
+#include <git2.h>
 
 #include <algorithm>
 #include <atomic>
@@ -84,6 +85,33 @@ Slic3r::ProjectHistoryCommitOptions commit_options(const std::string &message, s
     options.author_email = "project-history-test@localhost";
     options.committed_at = std::chrono::system_clock::time_point(std::chrono::seconds(unix_seconds));
     return options;
+}
+
+TEST_CASE("Portable pack preflight bounds highly compressible expanded objects", "[project-history][portable]")
+{
+    TemporaryTree temporary;
+    REQUIRE(git_libgit2_init() > 0);
+    git_repository *repository = nullptr;
+    REQUIRE(git_repository_init(&repository, temporary.path().string().c_str(), 1) == 0);
+    const std::string zeros(2 * 1024 * 1024, '\0');
+    git_oid blob_id{};
+    REQUIRE(git_blob_create_frombuffer(&blob_id, repository, zeros.data(), zeros.size()) == 0);
+    git_packbuilder *builder = nullptr;
+    REQUIRE(git_packbuilder_new(&builder, repository) == 0);
+    REQUIRE(git_packbuilder_insert(builder, &blob_id, nullptr) == 0);
+    git_buf buffer = GIT_BUF_INIT;
+    REQUIRE(git_packbuilder_write_buf(&buffer, builder) == 0);
+    const std::vector<unsigned char> pack(buffer.ptr, buffer.ptr + buffer.size);
+    git_buf_dispose(&buffer);
+    git_packbuilder_free(builder);
+    git_repository_free(repository);
+    git_libgit2_shutdown();
+
+    REQUIRE(pack.size() < 64 * 1024); // The compressed size is not a safe quota.
+    REQUIRE(Slic3r::project_history_pack_within_budget(pack, 3 * 1024 * 1024, 3 * 1024 * 1024, 1));
+    REQUIRE_FALSE(Slic3r::project_history_pack_within_budget(pack, 1024 * 1024, 3 * 1024 * 1024, 1));
+    REQUIRE_FALSE(Slic3r::project_history_pack_within_budget(pack, 3 * 1024 * 1024, 1024 * 1024, 1));
+    REQUIRE_FALSE(Slic3r::project_history_pack_within_budget(pack, 3 * 1024 * 1024, 3 * 1024 * 1024, 0));
 }
 
 TEST_CASE("Project history stores complete snapshots in an isolated repository", "[project-history]")

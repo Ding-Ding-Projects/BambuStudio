@@ -22,7 +22,7 @@ synced or pushed anywhere; no `.git` appears in the user's own folders.
   format version, stable document ID, active head, retained lineages, pack
   path, byte length, and SHA-256. `Metadata/bambu_project_history.pack` holds
   the reachable libgit2 objects. On open, the app verifies the bounded entries,
-  pack digest, commit graph, object types, and snapshot tree before importing
+  pack digest, bounded expanded object sizes, commit graph, object types, and snapshot tree before importing
   history into the local cache. A corrupt history payload is rejected while
   valid current model geometry still loads. Save As assigns a new document ID
   and inherits the validated graph. A second path holding the same document ID
@@ -35,8 +35,12 @@ synced or pushed anywhere; no `.git` appears in the user's own folders.
   A failed write retains the preceding archive and the history-free pending
   snapshot for recovery. Model snapshots contain no embedded history, avoiding
   recursive growth. Portable packs are bounded at 512 MiB and manifests at
-  16 KiB; an oversized history blocks portable publication until it is reduced
-  through a deliberate retention operation.
+  16 KiB. Before libgit2 ingests a pack, a streaming preflight permits at most
+  100,000 objects, 2 GiB per expanded object or delta result (and therefore per
+  snapshot), and 8 GiB total expanded object bytes. It uses a fixed 64 KiB
+  inflation buffer. A history exceeding a limit blocks portable publication
+  until it is reduced through a deliberate retention operation; the preceding
+  archive remains intact.
 - **Current-version export**: File > Export > Export current version only as 3MF
   writes the current model and settings without either portable-history entry.
   It flushes pending captures first, validates the staged ZIP, and atomically
@@ -91,6 +95,10 @@ the app's own data directory (see above), never inside user project folders.
   network I/O exists in the backend.
 - Project identity hashing (SHA-256 of the normalized path) keeps repository
   directory names free of user path content.
+- Embedded packs are checked against expanded-byte quotas before either the
+  temporary validation store or the persistent cache imports them. Import
+  repeats this check on the bytes reread after inspection so an archive changed
+  between those steps cannot bypass the quotas.
 
 ## Verification
 
