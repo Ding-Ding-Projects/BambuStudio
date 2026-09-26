@@ -34,6 +34,19 @@ namespace {
 wxString display(const std::string &text) { return wxString::FromUTF8(text); }
 std::string utf8(const wxString &text) { return std::string(text.ToUTF8()); }
 
+wxString local_time_error(const std::string &error)
+{
+    if (error == "Invalid local date or time")
+        return _L("Invalid local date or time");
+    if (error == "Unknown or unavailable IANA time zone")
+        return _L("Unknown or unavailable IANA time zone");
+    if (error == "Could not resolve time-zone rules")
+        return _L("Could not resolve time-zone rules");
+    if (error == "IANA time-zone rules are unavailable on this platform")
+        return _L("IANA time-zone rules are unavailable on this platform");
+    return _L("Time zone rules are unavailable");
+}
+
 std::int64_t parse_wall_utc(const std::string &text, int offset_minutes)
 {
     std::tm value{};
@@ -55,7 +68,7 @@ std::optional<Workspace::LocalInstant> choose_local_time(wxWindow *parent, const
     const auto resolved = Workspace::resolve_local_time(zone, utf8(wall));
     if (!resolved.error.empty() || resolved.candidates.empty()) {
         wxMessageBox(resolved.error.empty() ? _L("This local time does not exist because the clock jumps forward.") :
-                     display(resolved.error), _L("Planned print time"), wxOK | wxICON_WARNING, parent);
+                     local_time_error(resolved.error), _L("Planned print time"), wxOK | wxICON_WARNING, parent);
         return std::nullopt;
     }
     if (resolved.candidates.size() == 1) return resolved.candidates.front();
@@ -356,7 +369,7 @@ void WorkspacePanel::edit_preferences()
         (enabled.Lower() != "yes" && enabled.Lower() != "no")) return;
     const auto probe = Workspace::resolve_local_time(utf8(zone), "2026-01-15 12:00");
     if (!probe.error.empty() || probe.candidates.size() != 1) {
-        wxMessageBox(display(probe.error.empty() ? "Time zone rules are unavailable" : probe.error),
+        wxMessageBox(local_time_error(probe.error),
                      _L("Workspace time zone"), wxOK | wxICON_WARNING, this);
         return;
     }
@@ -641,7 +654,7 @@ void WorkspacePanel::edit_checklist()
             std::to_string(m_workspace.deadline_reminder_hour) + ":00");
         if (!resolved.error.empty() || resolved.candidates.size() != 1) {
             wxMessageBox(resolved.error.empty() ? _L("The deadline reminder time is ambiguous or nonexistent.") :
-                         display(resolved.error), _L("Due date"), wxOK | wxICON_WARNING, this);
+                         local_time_error(resolved.error), _L("Due date"), wxOK | wxICON_WARNING, this);
             return;
         }
         resolved_offset = resolved.candidates.front().offset_minutes;
