@@ -1,6 +1,24 @@
 # HANDOFF — read this first
 
 > [!IMPORTANT]
+> **Current task candidate, 2026-09-26 (America/Toronto):** The primary `main`
+> checkout and remote still point to `6733303f5debe32cda0eaf90b192a92899dd5984`.
+> The isolated integration branch `codex/upstream-28457` currently contains the
+> reconciled upstream `v02.08.04.57` source and the native print, LAN, camera,
+> fan, Model Creator, portable-history, workspace, calendar, and Cantonese
+> changes through `763948122`. This is a source candidate, not a shipped
+> release. Farm selection now rechecks every selected printer after shared file
+> preparation. Model Creator caps child output during execution and retains at
+> most 100 completed revisions. The final source must be integrated
+> into `main`, then built and packaged by GitHub Actions,
+> then tested and captured against that exact binary. The locally compiled
+> intermediate baseline predates several of these changes and proves neither
+> the current candidate nor the requested installed upgrade. Hardware and live
+> provider flows remain unverified. `ROADMAP.md` lists the remaining checks.
+> Earlier sections below are historical records and must not be read as the
+> current release or current repository state.
+
+> [!IMPORTANT]
 > **Current build repair, 2026-09-25 (America/Toronto):** `main` was verified on the
 > remote at `1601ab8c0d5fbc1029342009953258f12233ac0a`. Preferences now uses
 > stable tab IDs instead of the removed `TabStrip::SetSelection` API
@@ -1410,12 +1428,12 @@ diagnostics were a cascade.
 - The primary checkout has no staged or unstaged source changes. The untracked
   `.claude/worktrees/` directory is generated linked-checkout storage and is intentionally not
   staged as source. It contains the linked checkouts listed below.
-- Four checkpoint jers remain intentionally preserved and dewed because they are not ancestors of
+- Four checkpoint branches remain intentionally preserved and pushed because they are not ancestors of
   `origin/main`: `worktree-agent-a24267613001f90e0` at `1498551fea628cef31a1a0f0acad041a5ce03c27`,
   `worktree-agent-a28cd0c64451603b9` at `dcc5c09265f3f49399c3efff7e69a889426f4c73`,
   `worktree-agent-a470984c061728c07` at `29209a60bca2125ce6bd9b7d16b1270ae39a535a`, and
   `worktree-agent-a83c1d2b35b074967` at `df60f7d1d2a01bd63e5af2a405d6ad3f9acdad4b`.
-  The export jer is now integrated, but its source ref remains preserved until the archive and
+  The export branch is now integrated, but its source ref remains preserved until the archive and
   ancestry checks authorize removal.
 - `worktree-agent-a2c028be23ca8b092` is locked by an active process and is retained even though its
   tip is already an ancestor of `origin/main`. The remaining completed, clean, ancestor branches and
@@ -1432,18 +1450,18 @@ diagnostics were a cascade.
   It is 4,838,688,295 bytes and passed `7z t`; the read-back listed 191,804 files and 11,467
   folders, including 611 `.git` administrative entries. The four absent tracked files are listed
   in the closeout log and were excluded only because they did not exist on disk.
-- After archive verification and ancestry proofs against dewed `origin/main` at
+- After archive verification and ancestry proofs against pushed `origin/main` at
   `2b058b95ce138f0fe04152535ff848adb1842b8e`, these 11 clean redundant linked checkouts and local
-  jers were removed: `a0105905c86c50ce9`, `a0f70928641ad0755`, `a1ca11d4e1a10f6a4`,
+  branches were removed: `a0105905c86c50ce9`, `a0f70928641ad0755`, `a1ca11d4e1a10f6a4`,
   `a4a18b5a32117547f`, `a67df19625f3bae6a`, `a7fadd855e01844a`, `a83c1d2b35b074967`,
   `a89c4bc7767da0773`, `ac6d63cb45f27b994`, `ae23d1c6043a8e08e`, and `afd570dc82b037965`.
-  The dewed `worktree-agent-a83c1d2b35b074967` ref was deleted after its merge proof.
-- Retained by design: checkpoint jers `worktree-agent-a24267613001f90e0` at
+  The pushed `worktree-agent-a83c1d2b35b074967` ref was deleted after its merge proof.
+- Retained by design: checkpoint branches `worktree-agent-a24267613001f90e0` at
   `1498551fea628cef31a1a0f0acad041a5ce03c27`, `worktree-agent-a28cd0c64451603b9` at
   `dcc5c09265f3f49399c3efff7e69a889426f4c73`, and `worktree-agent-a470984c061728c07` at
   `29209a60bca2125ce6bd9b7d16b1270ae39a535a`, plus the locked active
   `worktree-agent-a2c028be23ca8b092` at `5d61f48d40bc15c66593b8c151152c70fa72d72f`.
-  Their linked checkouts are clean, but the three checkpoint jers are unmerged and the locked jer
+  Their linked checkouts are clean, but the three checkpoint branches are unmerged and the locked branch
   is active, so none is removable in this pass.
 - The final documentation commit is `7281bd15da7cda27e8fff73bab253521a6027954`; after this
   handoff refresh, `git ls-remote origin refs/heads/main` was verified at the same SHA.

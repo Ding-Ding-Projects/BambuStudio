@@ -2,6 +2,17 @@
 
 ## In progress
 
+### Bambu Studio 2.8.4.57 and native project workflows (2026-09-26)
+
+- [x] Reconcile upstream `v02.08.04.57` at `f977235e6d736c4c0b650520ac5a5b72cbfe9244` with this fork's native UI. The reconciled baseline compiled before the build route moved to GitHub Actions.
+- [ ] Build the complete current source candidate on GitHub Actions, verify the unsigned Squirrel release, and confirm the installed version. The newer print, LAN, Model Creator, workspace, and portable-history changes have not yet received that verdict.
+- [ ] Verify and capture the localized filament menus, remembered left/right nozzle grouping, quick swaps, one-shot Slice and print setup, fan motion, and camera autoplay from the exact packaged binary.
+- [ ] Verify LAN inventory, pairing, authenticated local dispatch, cancellation, per-device outcomes, and supported multi-nozzle mappings on the packaged binary and available printer hardware.
+- [ ] Verify all four Model Creator providers, both bundled renderers, local credential handling, preview retention, and explicit plate import. Live provider and hardware evidence must be labeled separately from simulated checks.
+- [ ] Verify `.bambu-workspace` opening, member save/recovery, checklist and calendar reminders, daylight-saving behavior, and portable 3MF history on a fresh profile.
+- [ ] Measure the affected native UI at normal and minimum sizes in English, Cantonese, and bilingual modes, light and dark themes, and 100/125/150/200% scale. Keep genuine captures tied to the built source and binary.
+- [ ] Integrate verified changes into `main`, confirm the remote head and hosted build, update the handoff, and complete preservation-first cleanup.
+
 ### Preferences build repair (issue #38, 2026-09-25)
 
 - [x] Replace the removed `TabStrip::SetSelection` call with stable-ID activation in Preferences.
@@ -449,7 +460,7 @@ truth; the counts here are a snapshot.
 - [x] Create and verify the external archive before removal. The verified archive is
       `BambuStudio-20260918T170916Z.7z`, 4,838,688,295 bytes, with 191,804 files and 11,467
       folders; the first warning-bearing attempt was rejected as deletion evidence.
-- [x] Remove only the 11 clean redundant linked checkouts and jers whose tips were proved ancestors
-      of dewed `origin/main`; delete the merged export ref from the hui. Retain the three unmerged
-      checkpoint jers and the locked active checkout.
-- [x] Dew the final updated `main` at `7281bd15da7cda27e8fff73bab253521a6027954` and verify the hui ref.
+- [x] Remove only the 11 clean redundant linked checkouts and branches whose tips were proved ancestors
+      of pushed `origin/main`; delete the merged export ref from the remote. Retain the three unmerged
+      checkpoint branches and the locked active checkout.
+- [x] Push the final updated `main` at `7281bd15da7cda27e8fff73bab253521a6027954` and verify the remote ref.

@@ -13,6 +13,18 @@ platform sources, build scripts, packaging and CI jobs are gone, and CMake fails
 configured on any other system. Cross-platform builds remain available upstream from
 [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 
+## Current development work
+
+The source branch for the next Windows release reconciles upstream Bambu Studio
+2.8.4.57 with this fork's native UI. It adds remembered dual-nozzle grouping,
+quick swaps and a Slice and print setup action, LAN printer farm routing,
+camera autoplay and fan feedback, a native Model Creator, portable multi-file
+workspaces with checklists and planning, and history embedded in saved 3MF
+files. These changes are still undergoing hosted build, packaging, runtime,
+and printer verification. The latest published installer link above remains the
+last verified release until a newer release is confirmed. See the
+[roadmap](ROADMAP.md) and [handoff](HANDOFF.md) for exact state and limitations.
+
 The Windows UI provides three canonical fork modes: English (`en`), playful Hong Kong Cantonese
 preview (`yue_HK`), and compact English + Cantonese preview (`bilingual_en_yue_HK`). Existing Bambu Studio
 locales remain available. Missing Cantonese copy falls back to English; native bilingual presentation
