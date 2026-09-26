@@ -189,7 +189,7 @@ msgstr "相機設定"
 
 #. reviewed-category: navigation
 msgid "Enter Camera Full Screen"
-msgstr "相機進入全螢幕"
+msgstr "進入鏡頭全螢幕模式"
 
 #. reviewed-category: preferences
 msgid "General Settings"
@@ -949,7 +949,7 @@ msgstr "移除所選列印板"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete this filament"
-msgstr "刪除此墨水"
+msgstr "刪除呢種耗材"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete selected files from printer."
@@ -2958,3 +2958,915 @@ msgstr "查看最新發佈版本"
 #. reviewed-category: file-actions
 msgid "Not for now"
 msgstr "暫時唔更新"
+
+#. reviewed-category: file-actions
+msgid "Edit this filament preset"
+msgstr "編輯呢個耗材預設"
+
+#. reviewed-category: file-actions
+msgid "Separate this filament into its component colors"
+msgstr "將呢種耗材分解成各種組成顏色"
+
+#. reviewed-category: file-actions
+msgid "Merge this filament into the selected filament"
+msgstr "將呢種耗材合併到所選耗材"
+
+#. reviewed-category: file-actions
+msgid "Merge with"
+msgstr "合併到"
+
+#. reviewed-category: file-actions
+msgid "Choose the filament that will replace this one"
+msgstr "揀選用嚟取代呢種耗材嘅耗材"
+
+#. reviewed-category: file-actions
+msgid "Filament %d"
+msgstr "耗材 %d"
+
+#. reviewed-category: navigation
+msgid "Search menu"
+msgstr "搜尋選單"
+
+#. reviewed-category: slicing-printing
+msgid "Slice and print"
+msgstr "切片並打印"
+
+#. reviewed-category: slicing-printing
+msgid "Swap"
+msgstr "交換"
+
+#. reviewed-category: slicing-printing
+msgid "Swap and reslice"
+msgstr "交換並重新切片"
+
+#. reviewed-category: slicing-printing
+msgid "Swap nozzle assignment"
+msgstr "交換噴嘴分配"
+
+#. reviewed-category: slicing-printing
+msgid "Apply the selected nozzle moves and return to Prepare."
+msgstr "套用所選噴嘴調整，然後返回準備頁面。"
+
+#. reviewed-category: slicing-printing
+msgid "Apply the selected nozzle moves, reslice, then reopen print setup."
+msgstr "套用所選噴嘴調整、重新切片，然後重新開啟打印設定。"
+
+#. reviewed-category: slicing-printing
+msgid "Move material %d left"
+msgstr "將材料 %d 移去左邊"
+
+#. reviewed-category: slicing-printing
+msgid "Move material %d right"
+msgstr "將材料 %d 移去右邊"
+
+#. reviewed-category: slicing-printing
+msgid "Move to left nozzle"
+msgstr "移去左噴嘴"
+
+#. reviewed-category: slicing-printing
+msgid "Move to right nozzle"
+msgstr "移去右噴嘴"
+
+#. reviewed-category: slicing-printing
+msgid "Prefer left nozzle"
+msgstr "優先使用左噴嘴"
+
+#. reviewed-category: slicing-printing
+msgid "Prefer right nozzle"
+msgstr "優先使用右噴嘴"
+
+#. reviewed-category: slicing-printing
+msgid "Filament-Saving Mode"
+msgstr "節省耗材模式"
+
+#. reviewed-category: slicing-printing
+msgid "Convenience Mode"
+msgstr "方便模式"
+
+#. reviewed-category: slicing-printing
+msgid "Quality Mode"
+msgstr "品質模式"
+
+#. reviewed-category: slicing-printing
+msgid "Use the left nozzle for compatible materials when capacity allows; otherwise use the right nozzle."
+msgstr "容量容許時，兼容材料會用左噴嘴；否則使用右噴嘴。"
+
+#. reviewed-category: slicing-printing
+msgid "Use the right nozzle for compatible materials when capacity allows; otherwise use the left nozzle."
+msgstr "容量容許時，兼容材料會用右噴嘴；否則使用左噴嘴。"
+
+#. reviewed-category: slicing-printing
+msgid "The plate or filament assignment changed. Reopen print setup and try again."
+msgstr "打印板或耗材分配已變更。請重新開啟打印設定再試。"
+
+#. reviewed-category: slicing-printing
+msgid "The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."
+msgstr "噴嘴分配已儲存。切片功能可用時，請喺準備頁面開始切片。"
+
+#. reviewed-category: slicing-printing
+msgid "Material %d"
+msgstr "材料 %d"
+
+#. reviewed-category: slicing-printing
+msgid "Swap groups"
+msgstr "交換群組"
+
+#. reviewed-category: slicing-printing
+msgid "Preparing print job"
+msgstr "準備緊打印工作"
+
+#. reviewed-category: slicing-printing
+msgid "Send print job"
+msgstr "傳送打印工作"
+
+#. reviewed-category: preferences
+msgid "Model Creator"
+msgstr "模型建立工具"
+
+#. reviewed-category: preferences
+msgid "Describe, review, then add a printable model"
+msgstr "描述及檢查模型，然後加入可打印模型"
+
+#. reviewed-category: preferences
+msgid "Describe the model"
+msgstr "描述模型"
+
+#. reviewed-category: preferences
+msgid "Provider"
+msgstr "供應商"
+
+#. reviewed-category: preferences
+msgid "Provider model"
+msgstr "供應商模型"
+
+#. reviewed-category: preferences
+msgid "Provider executable path"
+msgstr "供應商程式路徑"
+
+#. reviewed-category: preferences
+msgid "Provider connection ready"
+msgstr "供應商連線已準備好"
+
+#. reviewed-category: preferences
+msgid "Choose an API provider and enter a key"
+msgstr "揀選 API 供應商並輸入金鑰"
+
+#. reviewed-category: preferences
+msgid "API key"
+msgstr "API 金鑰"
+
+#. reviewed-category: preferences
+msgid "Add or replace key"
+msgstr "新增或取代金鑰"
+
+#. reviewed-category: preferences
+msgid "Clear key"
+msgstr "清除金鑰"
+
+#. reviewed-category: preferences
+msgid "Test key"
+msgstr "測試金鑰"
+
+#. reviewed-category: preferences
+msgid "No API key saved"
+msgstr "未儲存 API 金鑰"
+
+#. reviewed-category: preferences
+msgid "API key saved in the local vault"
+msgstr "API 金鑰已儲存喺本機保管庫"
+
+#. reviewed-category: preferences
+msgid "Key saved in the local credential vault"
+msgstr "金鑰已儲存喺本機憑證保管庫"
+
+#. reviewed-category: preferences
+msgid "Saved key removed"
+msgstr "已移除儲存嘅金鑰"
+
+#. reviewed-category: preferences
+msgid "No saved key was removed"
+msgstr "冇已儲存嘅金鑰被移除"
+
+#. reviewed-category: preferences
+msgid "Stored in Windows Credential Manager"
+msgstr "儲存喺 Windows 認證管理員"
+
+#. reviewed-category: preferences
+msgid "Testing provider connection..."
+msgstr "測試緊供應商連線..."
+
+#. reviewed-category: preferences
+msgid "CLI executable available"
+msgstr "命令列程式可用"
+
+#. reviewed-category: preferences
+msgid "CLI executable not found"
+msgstr "搵唔到命令列程式"
+
+#. reviewed-category: preferences
+msgid "Required for a CLI provider"
+msgstr "命令列供應商需要呢項設定"
+
+#. reviewed-category: preferences
+msgid "Generate"
+msgstr "產生"
+
+#. reviewed-category: preferences
+msgid "Cancel generation"
+msgstr "取消產生"
+
+#. reviewed-category: preferences
+msgid "Preview mesh"
+msgstr "預覽網格模型"
+
+#. reviewed-category: preferences
+msgid "Add to plate"
+msgstr "加入打印板"
+
+#. reviewed-category: preferences
+msgid "No model generated"
+msgstr "尚未產生模型"
+
+#. reviewed-category: preferences
+msgid "Generating in an isolated revision. Nothing is on the plate yet."
+msgstr "正喺獨立版本中產生模型，打印板上暫時冇新增內容。"
+
+#. reviewed-category: preferences
+msgid "Mesh ready for preview. Add to plate when satisfied."
+msgstr "網格模型可以預覽。確認滿意後先加入打印板。"
+
+#. reviewed-category: preferences
+msgid "Selected retained revision. Add to plate when satisfied."
+msgstr "已揀選保留嘅版本。確認滿意後先加入打印板。"
+
+#. reviewed-category: preferences
+msgid "Revisions"
+msgstr "版本"
+
+#. reviewed-category: preferences
+msgid "Revision %zu: "
+msgstr "版本 %zu："
+
+#. reviewed-category: preferences
+msgid "Refinement note"
+msgstr "修改備註"
+
+#. reviewed-category: preferences
+msgid "Optional change for the next revision"
+msgstr "下個版本嘅可選修改"
+
+#. reviewed-category: preferences
+msgid "Saved revisions could not be read."
+msgstr "無法讀取已儲存嘅版本。"
+
+#. reviewed-category: preferences
+msgid "Enter an exact model ID"
+msgstr "輸入準確嘅模型 ID"
+
+#. reviewed-category: preferences
+msgid "Dimensions are in millimeters"
+msgstr "尺寸以毫米為單位"
+
+#. reviewed-category: preferences
+msgid "Renderer executable not found"
+msgstr "搵唔到渲染程式"
+
+#. reviewed-category: preferences
+msgid "Renderer executable path"
+msgstr "渲染程式路徑"
+
+#. reviewed-category: preferences
+msgid "Trusted renderer"
+msgstr "可信任嘅渲染程式"
+
+#. reviewed-category: preferences
+msgid "Bundled renderer ready"
+msgstr "內置渲染程式已準備好"
+
+#. reviewed-category: preferences
+msgid "Custom renderer ready"
+msgstr "自訂渲染程式已準備好"
+
+#. reviewed-category: file-actions
+msgid "New workspace"
+msgstr "新增工作空間"
+
+#. reviewed-category: file-actions
+msgid "Open workspace"
+msgstr "開啟工作空間"
+
+#. reviewed-category: file-actions
+msgid "Save workspace"
+msgstr "儲存工作空間"
+
+#. reviewed-category: file-actions
+msgid "Rename workspace"
+msgstr "重新命名工作空間"
+
+#. reviewed-category: file-actions
+msgid "Workspace title"
+msgstr "工作空間標題"
+
+#. reviewed-category: file-actions
+msgid "Name this workspace"
+msgstr "為呢個工作空間命名"
+
+#. reviewed-category: file-actions
+msgid "Time zone and reminders"
+msgstr "時區及提醒"
+
+#. reviewed-category: navigation
+msgid "Overview"
+msgstr "總覽"
+
+#. reviewed-category: navigation
+msgid "Checklist"
+msgstr "待辦清單"
+
+#. reviewed-category: navigation
+msgid "Calendar"
+msgstr "日曆"
+
+#. reviewed-category: file-actions
+msgid "Editable sources"
+msgstr "可編輯來源檔案"
+
+#. reviewed-category: file-actions
+msgid "Add project 3MF"
+msgstr "加入項目 3MF"
+
+#. reviewed-category: file-actions
+msgid "Add editable source"
+msgstr "加入可編輯來源檔案"
+
+#. reviewed-category: file-actions
+msgid "Open selected project"
+msgstr "開啟所選項目"
+
+#. reviewed-category: file-actions
+msgid "Project 3MF"
+msgstr "項目 3MF"
+
+#. reviewed-category: file-actions
+msgid "Project 3MF (*.3mf)|*.3mf"
+msgstr "項目 3MF (*.3mf)|*.3mf"
+
+#. reviewed-category: file-actions
+msgid "Bambu workspace (*.bambu-workspace)|*.bambu-workspace"
+msgstr "Bambu 工作空間 (*.bambu-workspace)|*.bambu-workspace"
+
+#. reviewed-category: file-actions
+msgid "Member"
+msgstr "成員"
+
+#. reviewed-category: file-actions
+msgid "Workspace item"
+msgstr "工作空間項目"
+
+#. reviewed-category: file-actions
+msgid "Add checklist item"
+msgstr "新增待辦事項"
+
+#. reviewed-category: file-actions
+msgid "Edit checklist item"
+msgstr "編輯待辦事項"
+
+#. reviewed-category: file-actions
+msgid "Edit / due date / link"
+msgstr "編輯／到期日／連結"
+
+#. reviewed-category: file-actions
+msgid "Due date"
+msgstr "到期日"
+
+#. reviewed-category: file-actions
+msgid "Date only, YYYY-MM-DD (optional)"
+msgstr "只填日期，YYYY-MM-DD（可選）"
+
+#. reviewed-category: file-actions
+msgid "Linked project"
+msgstr "已連結項目"
+
+#. reviewed-category: file-actions
+msgid "Linked planned print"
+msgstr "已連結預定打印"
+
+#. reviewed-category: file-actions
+msgid "Member ID (optional)"
+msgstr "成員 ID（可選）"
+
+#. reviewed-category: file-actions
+msgid "Planned-print ID (optional)"
+msgstr "預定打印 ID（可選）"
+
+#. reviewed-category: file-actions
+msgid "Move up"
+msgstr "上移"
+
+#. reviewed-category: file-actions
+msgid "Move down"
+msgstr "下移"
+
+#. reviewed-category: file-actions
+msgid "Export checklist"
+msgstr "匯出待辦清單"
+
+#. reviewed-category: file-actions
+msgid "Export calendar"
+msgstr "匯出日曆"
+
+#. reviewed-category: file-actions
+msgid "Export CSV"
+msgstr "匯出 CSV"
+
+#. reviewed-category: file-actions
+msgid "Export JSON"
+msgstr "匯出 JSON"
+
+#. reviewed-category: file-actions
+msgid "Export ICS"
+msgstr "匯出 ICS"
+
+#. reviewed-category: file-actions
+msgid "CSV (*.csv)|*.csv"
+msgstr "CSV (*.csv)|*.csv"
+
+#. reviewed-category: file-actions
+msgid "JSON (*.json)|*.json"
+msgstr "JSON (*.json)|*.json"
+
+#. reviewed-category: file-actions
+msgid "iCalendar (*.ics)|*.ics"
+msgstr "iCalendar (*.ics)|*.ics"
+
+#. reviewed-category: file-actions
+msgid "Add planned print"
+msgstr "新增預定打印"
+
+#. reviewed-category: file-actions
+msgid "Planned print"
+msgstr "預定打印"
+
+#. reviewed-category: file-actions
+msgid "Planned print reminder: "
+msgstr "預定打印提醒："
+
+#. reviewed-category: file-actions
+msgid "Checklist deadline reminder: "
+msgstr "待辦事項到期提醒："
+
+#. reviewed-category: file-actions
+msgid "Snooze reminder"
+msgstr "稍後再提醒"
+
+#. reviewed-category: file-actions
+msgid "Dismiss reminder"
+msgstr "略過提醒"
+
+#. reviewed-category: file-actions
+msgid "Enable / disable"
+msgstr "啟用／停用"
+
+#. reviewed-category: file-actions
+msgid "New reminder time, UTC YYYY-MM-DD HH:MM"
+msgstr "新提醒時間，UTC YYYY-MM-DD HH:MM"
+
+#. reviewed-category: file-actions
+msgid "Workspace time zone"
+msgstr "工作空間時區"
+
+#. reviewed-category: file-actions
+msgid "IANA time zone name"
+msgstr "IANA 時區名稱"
+
+#. reviewed-category: file-actions
+msgid "Deadline reminder"
+msgstr "到期提醒"
+
+#. reviewed-category: file-actions
+msgid "Local hour, 0 to 23"
+msgstr "本地時間小時，0 至 23"
+
+#. reviewed-category: file-actions
+msgid "Enable reminders? yes or no"
+msgstr "啟用提醒？輸入 yes 或 no"
+
+#. reviewed-category: file-actions
+msgid "Reminders"
+msgstr "提醒"
+
+#. reviewed-category: file-actions
+msgid "Start (UTC)"
+msgstr "開始時間（UTC）"
+
+#. reviewed-category: file-actions
+msgid "Start time"
+msgstr "開始時間"
+
+#. reviewed-category: file-actions
+msgid "End time"
+msgstr "結束時間"
+
+#. reviewed-category: file-actions
+msgid "Local time, YYYY-MM-DD HH:MM"
+msgstr "本地時間，YYYY-MM-DD HH:MM"
+
+#. reviewed-category: file-actions
+msgid "Start UTC offset"
+msgstr "開始時間 UTC 偏移量"
+
+#. reviewed-category: file-actions
+msgid "End UTC offset"
+msgstr "結束時間 UTC 偏移量"
+
+#. reviewed-category: file-actions
+msgid "Deadline UTC offset"
+msgstr "到期日 UTC 偏移量"
+
+#. reviewed-category: file-actions
+msgid "Printer ID"
+msgstr "打印機 ID"
+
+#. reviewed-category: file-actions
+msgid "Title"
+msgstr "標題"
+
+#. reviewed-category: file-actions
+msgid "Task"
+msgstr "事項"
+
+#. reviewed-category: file-actions
+msgid "Planned"
+msgstr "已計劃"
+
+#. reviewed-category: file-actions
+msgid "Completed"
+msgstr "已完成"
+
+#. reviewed-category: file-actions
+msgid "Disabled"
+msgstr "已停用"
+
+#. reviewed-category: file-actions
+msgid "%zu projects, %zu checklist items, %zu planned prints"
+msgstr "%zu 個項目、%zu 個待辦事項、%zu 個預定打印"
+
+#. reviewed-category: file-actions
+msgid "%zu workspace reminders became due while you were away."
+msgstr "你離開期間有 %zu 個工作空間提醒到期。"
+
+#. reviewed-category: file-actions
+msgid " (%zu more due)"
+msgstr "（另有 %zu 個到期）"
+
+#. reviewed-category: file-actions
+msgid " (%zu additional affected members)"
+msgstr "（另有 %zu 個受影響成員）"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Discard unsaved workspace changes?"
+msgstr "要捨棄工作空間尚未儲存嘅變更？"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not open workspace"
+msgstr "無法開啟工作空間"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not save workspace"
+msgstr "無法儲存工作空間"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Could not write the selected export file."
+msgstr "無法寫入所選匯出檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid project 3MF"
+msgstr "項目 3MF 無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Invalid staged project 3MF"
+msgstr "暫存嘅項目 3MF 無效"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Workspace member warning"
+msgstr "工作空間成員警告"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Deadline reminders for this named time zone are paused because its daylight-saving offset cannot be verified. Dates remain in the workspace."
+msgstr "無法核實呢個時區嘅夏令時間偏移量，因此已暫停到期提醒。日期仍保留喺工作空間。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "The offset is not checked against this time zone. Confirm it is the offset at 09:00 on the due date, including daylight saving."
+msgstr "偏移量未有對照呢個時區核實。請確認佢係到期日 09:00 嘅偏移量，包括夏令時間。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Offsets are not checked against the named time zone. Confirm both offsets for these dates, especially across daylight-saving changes."
+msgstr "偏移量未有對照所填時區核實。請確認兩個日期嘅偏移量，尤其係跨越夏令時間轉換嗰陣。"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Enter valid start and end times, with the offset for the chosen date."
+msgstr "請輸入有效嘅開始同結束時間，以及所選日期嘅偏移量。"
+
+#. reviewed-category: file-actions
+msgid "Export..."
+msgstr "匯出..."
+
+#. reviewed-category: file-actions
+msgid "Export every listed version as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"
+msgstr "將列出嘅所有版本匯出為 JSON、CSV、YAML、TOML、XML、Markdown、HTML 或封存檔"
+
+#. reviewed-category: preferences
+msgid "Auto-record Monitoring"
+msgstr "自動錄製監控影片"
+
+#. reviewed-category: preferences
+msgid "Go Live"
+msgstr "開始直播"
+
+#. reviewed-category: preferences
+msgid "Liveview Retry"
+msgstr "重試即時畫面"
+
+#. reviewed-category: preferences
+msgid "Resolution"
+msgstr "解像度"
+
+#. reviewed-category: preferences
+msgid "Show \"Live Video\" guide page."
+msgstr "顯示「即時影片」指引頁面。"
+
+#. reviewed-category: preferences
+msgid "Fan speed"
+msgstr "風扇轉速"
+
+#. reviewed-category: preferences
+msgid "%s fan speed"
+msgstr "%s 風扇轉速"
+
+#. reviewed-category: preferences
+msgid "Filter"
+msgstr "過濾"
+
+#. reviewed-category: preferences
+msgid "Cooling"
+msgstr "冷卻"
+
+#. reviewed-category: preferences
+msgid "Heating"
+msgstr "加熱"
+
+#. reviewed-category: preferences
+msgid "Exhaust"
+msgstr "排氣"
+
+#. reviewed-category: preferences
+msgid "Full Cooling"
+msgstr "全面冷卻"
+
+#. reviewed-category: preferences
+msgid "Chamber"
+msgstr "機艙"
+
+#. reviewed-category: preferences
+msgid "Innerloop"
+msgstr "內循環"
+
+#. reviewed-category: preferences
+msgid "Fan"
+msgstr "風扇"
+
+#. reviewed-category: preferences
+msgid "Hotend"
+msgstr "熱端"
+
+#. reviewed-category: preferences
+msgid "Parts"
+msgstr "模型冷卻"
+
+#. reviewed-category: preferences
+msgid "Aux"
+msgstr "輔助"
+
+#. reviewed-category: preferences
+msgid "Nozzle1"
+msgstr "噴嘴 1"
+
+#. reviewed-category: preferences
+msgid "MC Board"
+msgstr "主控板"
+
+#. reviewed-category: preferences
+msgid "Heat"
+msgstr "加熱"
+
+#. reviewed-category: preferences
+msgid "Init"
+msgstr "初始化"
+
+#. reviewed-category: preferences
+msgid "Changing fan speed during printing may affect print quality, please choose carefully."
+msgstr "打印期間調整風扇轉速可能影響打印品質，請謹慎選擇。"
+
+#. reviewed-category: preferences
+msgid "Change Anyway"
+msgstr "仍然變更"
+
+#. reviewed-category: preferences
+msgid "Enabling filtration redirects the right fan to filter gas, which may reduce cooling performance."
+msgstr "啟用過濾會改用右側風扇過濾氣體，可能降低冷卻效能。"
+
+#. reviewed-category: preferences
+msgid "Enabling filtration during printing may reduce cooling and affect print qulity. Please choose carefully"
+msgstr "打印期間啟用過濾可能降低冷卻效能並影響打印品質，請謹慎選擇。"
+
+#. reviewed-category: preferences
+msgid "The selected material only supports the current fan mode, and it can't be changed during printing."
+msgstr "所選材料只支援目前風扇模式，打印期間無法更改。"
+
+#. reviewed-category: preferences
+msgid "Cooling mode is suitable for printing PLA/PETG/TPU materials and filters the chamber air."
+msgstr "冷卻模式適合打印 PLA／PETG／TPU 材料，亦會過濾機艙空氣。"
+
+#. reviewed-category: preferences
+msgid "Heating mode is suitable for printing ABS/ASA/PC/PA materials and circulates filters the chamber air."
+msgstr "加熱模式適合打印 ABS／ASA／PC／PA 材料，並循環過濾機艙空氣。"
+
+#. reviewed-category: preferences
+msgid "Strong cooling mode is suitable for printing PLA/TPU materials. In this mode, the printouts will be fully cooled."
+msgstr "強力冷卻模式適合打印 PLA／TPU 材料，打印物會得到充分冷卻。"
+
+#. reviewed-category: preferences
+msgid "Send to Bambu Farm Manager Client"
+msgstr "傳送到 Bambu Farm Manager Client"
+
+#. reviewed-category: preferences
+msgid "Exit Camera Full Screen"
+msgstr "離開鏡頭全螢幕模式"
+
+#. reviewed-category: preferences
+msgid "Show the Device camera in full screen"
+msgstr "以全螢幕顯示裝置鏡頭"
+
+#. reviewed-category: preferences
+msgid "A retained revision is ready for preview."
+msgstr "保留嘅版本可以預覽。"
+
+#. reviewed-category: preferences
+msgid "Anthropic API"
+msgstr "Anthropic API"
+
+#. reviewed-category: preferences
+msgid "OpenAI API"
+msgstr "OpenAI API"
+
+#. reviewed-category: preferences
+msgid "Claude Code CLI"
+msgstr "Claude Code CLI"
+
+#. reviewed-category: preferences
+msgid "Codex CLI"
+msgstr "Codex CLI"
+
+#. reviewed-category: preferences
+msgid "Blender"
+msgstr "Blender"
+
+#. reviewed-category: preferences
+msgid "OpenSCAD"
+msgstr "OpenSCAD"
+
+#. reviewed-category: file-actions
+msgid "All files (*.*)|*.*"
+msgstr "所有檔案 (*.*)|*.*"
+
+#. reviewed-category: file-actions
+msgid "Files"
+msgstr "檔案"
+
+#. reviewed-category: file-actions
+msgid "Notes"
+msgstr "備註"
+
+#. reviewed-category: file-actions
+msgid "Status"
+msgstr "狀態"
+
+#. reviewed-category: file-actions
+msgid "Confirm deadline offset"
+msgstr "確認到期日偏移量"
+
+#. reviewed-category: file-actions
+msgid "Confirm planned-print offsets"
+msgstr "確認預定打印偏移量"
+
+#. reviewed-category: file-actions
+msgid "Offset in minutes at the end time, including daylight saving"
+msgstr "結束時間嘅偏移分鐘數，包括夏令時間"
+
+#. reviewed-category: file-actions
+msgid "Offset in minutes at the start time, including daylight saving"
+msgstr "開始時間嘅偏移分鐘數，包括夏令時間"
+
+#. reviewed-category: file-actions
+msgid "Offset in minutes for 09:00 on that date, including daylight saving"
+msgstr "該日期 09:00 嘅偏移分鐘數，包括夏令時間"
+
+#. reviewed-category: destructive-dirty-error-security
+msgid "Opening this member in the print canvas is not connected yet."
+msgstr "暫時未能喺打印畫布開啟呢個成員。"
+
+#. reviewed-category: slicing-printing
+msgid " to set nozzle count"
+msgstr "以設定噴嘴數量"
+
+#. reviewed-category: slicing-printing
+msgid "(Sync with printer)"
+msgstr "（與打印機同步）"
+
+#. reviewed-category: slicing-printing
+msgid "Error: %s extruder has no available %s nozzle, current group result is invalid."
+msgstr "錯誤：%s 擠出機冇可用嘅 %s 噴嘴，目前群組結果無效。"
+
+#. reviewed-category: slicing-printing
+msgid "Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"
+msgstr "按最節省耗材嘅原則，為 %s 同 %s 建立耗材群組，減少浪費"
+
+#. reviewed-category: slicing-printing
+msgid "Generates filament grouping for the %s and %s based on the printer's actual filament status, reducing the need for manual filament adjustment"
+msgstr "按打印機實際耗材狀態，為 %s 同 %s 建立群組，減少手動調整耗材"
+
+#. reviewed-category: slicing-printing
+msgid "Generates filament grouping for the %s and %s based on the quality of prints, prioritizing print quality over filament saving"
+msgstr "按打印品質為 %s 同 %s 建立耗材群組，優先確保品質而非節省耗材"
+
+#. reviewed-category: slicing-printing
+msgid "High Flow"
+msgstr "高流量"
+
+#. reviewed-category: slicing-printing
+msgid "Standard"
+msgstr "標準"
+
+#. reviewed-category: slicing-printing
+msgid "Please adjust your grouping or click "
+msgstr "請調整群組，或者點擊 "
+
+#. reviewed-category: slicing-printing
+msgid "Tips: You can drag the filaments to reassign them to different nozzles."
+msgstr "提示：可以拖動耗材，重新分配到唔同噴嘴。"
+
+#. reviewed-category: slicing-printing
+msgid "We will slice according to this grouping method:"
+msgstr "將會按以下群組方式切片："
+
+#. reviewed-category: connection-offline
+msgid "This printer is offline. It remains in the farm list."
+msgstr "呢部打印機已離線，但仍保留喺裝置群組清單。"
+
+#. reviewed-category: connection-offline
+msgid "Pair this LAN printer with its access code before sending."
+msgstr "傳送之前，請用存取碼配對呢部區域網絡打印機。"
+
+#. reviewed-category: connection-offline
+msgid "This LAN printer has no local address. Reconnect it before sending."
+msgstr "呢部區域網絡打印機冇本地位址。請重新連接後再傳送。"
+
+#. reviewed-category: connection-offline
+msgid "Direct LAN printing is unavailable in the installed networking module."
+msgstr "已安裝嘅網絡模組唔支援透過區域網絡直接打印。"
+
+#. reviewed-category: connection-offline
+msgid "Multi-plate sending cannot prove one nozzle mapping for every plate. Send plates separately."
+msgstr "多打印板傳送無法確認每塊板嘅噴嘴映射。請逐塊板傳送。"
+
+#. reviewed-category: connection-offline
+msgid "The plate's nozzle mapping is unavailable. Use the single-printer send flow."
+msgstr "無法取得呢塊板嘅噴嘴映射。請改用單部打印機傳送流程。"
+
+#. reviewed-category: connection-offline
+msgid "Select this plate before sending so its nozzle and material mappings can be checked."
+msgstr "傳送前請揀選呢塊板，以便檢查噴嘴同材料映射。"
+
+#. reviewed-category: connection-offline
+msgid "The plate has an incomplete left/right nozzle assignment. Review it before sending."
+msgstr "呢塊板嘅左右噴嘴分配未完成。請檢查後再傳送。"
+
+#. reviewed-category: connection-offline
+msgid "Two matching nozzle presets are required for this printer. Use the single-printer send flow."
+msgstr "呢部打印機需要兩個相符嘅噴嘴預設。請改用單部打印機傳送流程。"
+
+#. reviewed-category: connection-offline
+msgid "A nozzle diameter or flow type is invalid. Review the printer preset before sending."
+msgstr "噴嘴直徑或流量類型無效。傳送前請檢查打印機預設。"
+
+#. reviewed-category: connection-offline
+msgid "The printer has no current nozzle mapping result. Refresh it in the single-printer send flow."
+msgstr "打印機目前冇噴嘴映射結果。請喺單部打印機傳送流程重新整理。"
+
+#. reviewed-category: connection-offline
+msgid "The printer returned an invalid nozzle mapping. Refresh it before sending."
+msgstr "打印機傳回無效嘅噴嘴映射。請重新整理後再傳送。"
+
+#. reviewed-category: connection-offline
+msgid "The printer's nozzle mapping does not cover every used material. Refresh it before sending."
+msgstr "打印機嘅噴嘴映射未涵蓋所有使用中嘅材料。請重新整理後再傳送。"
