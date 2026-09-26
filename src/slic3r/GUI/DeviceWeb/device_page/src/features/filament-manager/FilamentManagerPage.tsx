@@ -380,7 +380,7 @@ export function FilamentManagerPage() {
 
                 {/* Filters */}
                 <div className={`fm-filters flex flex-wrap gap-2 ${!isLoggedIn ? 'opacity-40' : ''}`} aria-label={t('Filament List')}>
-                  {(['brand', 'material_type', 'series'] as const).map((fk) => (
+                  {(['brand', 'series'] as const).map((fk) => (
                     <div key={fk} className="relative min-w-0">
                       <button
                         ref={(node) => { filterTriggerRefs.current[fk] = node; }}
