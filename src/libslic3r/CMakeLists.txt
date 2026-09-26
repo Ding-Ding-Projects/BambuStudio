@@ -3,6 +3,21 @@ project(libslic3r)
 
 include(PrecompiledHeader)
 
+add_library(libslic3r_workspace STATIC
+    WorkspaceBundle.cpp
+    WorkspaceBundle.hpp
+    WorkspacePlanner.cpp
+    WorkspacePlanner.hpp
+)
+target_include_directories(libslic3r_workspace PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(libslic3r_workspace PRIVATE miniz OpenSSL::Crypto)
+if (WIN32)
+    target_link_libraries(libslic3r_workspace PRIVATE crypt32 ws2_32)
+endif ()
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
+    WorkspaceBundle.cpp WorkspaceBundle.hpp WorkspacePlanner.cpp WorkspacePlanner.hpp)
+encoding_check(libslic3r_workspace)
+
 add_library(libslic3r_project_history STATIC
     ProjectHistoryManager.cpp
     ProjectHistoryManager.hpp
