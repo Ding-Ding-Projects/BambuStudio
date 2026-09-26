@@ -23828,24 +23828,111 @@ bool Plater::export_workspace_member_with_history(const stdfs::path& destination
     }
 }
 
-bool Plater::apply_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
-                                             const std::vector<int>& maps)
+bool Plater::validate_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
+                                                const std::vector<int>& maps, wxString& reason)
 {
-    if (!p || !wxGetApp().preset_bundle || expected_plate_index != p->partplate_list.get_curr_plate_index())
+    reason.clear();
+    if (!p || !wxGetApp().preset_bundle || expected_plate_index != p->partplate_list.get_curr_plate_index()) {
+        reason = _L("The active plate changed. Reopen print setup.");
         return false;
+    }
     PartPlate* plate = p->partplate_list.get_curr_plate();
-    if (!plate) return false;
+    if (!plate || p->partplate_list.get_selected_plate() != plate) {
+        reason = _L("Select the plate before changing its nozzle assignment.");
+        return false;
+    }
     const auto& project_config = wxGetApp().preset_bundle->project_config;
     const auto current = plate->get_real_filament_maps(project_config);
     if (current != expected_maps || maps.size() != current.size() ||
-        std::any_of(maps.begin(), maps.end(), [](int nozzle) { return nozzle < 0 || nozzle > 2; }))
+        std::any_of(maps.begin(), maps.end(), [](int nozzle) { return nozzle < 0 || nozzle > 2; })) {
+        reason = _L("The filament assignment changed. Reopen print setup.");
         return false;
-    const auto used = plate->get_used_filaments();
-    for (int filament : used) {
-        if (filament < 1 || static_cast<size_t>(filament) > maps.size() || maps[filament - 1] == 0)
-            return false;
     }
-    if (maps == current) return false;
+    const auto used = plate->get_extruders(true);
+    for (int filament : used) {
+        if (filament < 1 || static_cast<size_t>(filament) > maps.size() || maps[filament - 1] == 0) {
+            reason = _L("Every used material needs a left or right nozzle.");
+            return false;
+        }
+    }
+
+    // Match the manual mapping editor's installed-nozzle capacity check.
+    const auto* volume_option = project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
+    if (!volume_option || volume_option->values.size() < 2) {
+        reason = _L("The printer nozzle configuration is unavailable.");
+        return false;
+    }
+    const auto volumes = plate->get_real_filament_volume_maps(project_config);
+    for (int extruder = 0; extruder < 2; ++extruder) {
+        const auto volume_type = static_cast<NozzleVolumeType>(volume_option->values[extruder]);
+        for (int filament : used) {
+            if (maps[filament - 1] != extruder + 1) continue;
+            const auto required_type = volume_type == nvtHybrid
+                ? static_cast<NozzleVolumeType>(static_cast<size_t>(filament) <= volumes.size()
+                    ? volumes[filament - 1] : static_cast<int>(nvtStandard))
+                : volume_type;
+            if (wxGetApp().preset_bundle->extruder_nozzle_stat.get_extruder_nozzle_count(extruder, required_type) == 0) {
+                reason = wxString::Format(_L("The %s extruder has no available nozzle of the required type."),
+                    extruder == 0 ? _L("left") : _L("right"));
+                return false;
+            }
+        }
+    }
+
+    auto* canvas = p->view3D ? p->view3D->get_canvas3d() : nullptr;
+    if (!canvas || !canvas->is_initialized()) {
+        reason = _L("Wait for the Prepare view before changing nozzle assignments.");
+        return false;
+    }
+
+    const auto original_mode = plate->get_filament_map_mode();
+    const auto original_maps = plate->get_filament_maps();
+    auto restore = [&] {
+        if (original_maps.empty()) plate->clear_filament_map();
+        else plate->set_filament_maps(original_maps);
+        if (original_mode == fmmDefault) plate->clear_filament_map_mode();
+        else plate->set_filament_map_mode(original_mode);
+    };
+    wxString filament_error;
+    bool filament_ok = false;
+    ObjectFilamentResults object_results;
+    auto state = ModelInstancePVS_Inside;
+    try {
+        plate->set_filament_map_mode(fmmManual);
+        plate->set_filament_maps(maps);
+        filament_ok = plate->check_filament_printable(wxGetApp().preset_bundle->full_config(), filament_error);
+        state = canvas->check_volumes_outside_state(&object_results);
+    } catch (...) {
+        restore();
+        reason = _L("The proposed nozzle assignment could not be checked.");
+        return false;
+    }
+    restore();
+    ObjectFilamentResults restored_results;
+    try { canvas->check_volumes_outside_state(&restored_results); }
+    catch (...) {
+        reason = _L("The previous nozzle assignment could not be restored in Prepare.");
+        return false;
+    }
+    if (!filament_ok) {
+        reason = filament_error.empty() ? _L("This nozzle cannot print the selected material.") : filament_error;
+        return false;
+    }
+    if (state == ModelInstancePVS_Partly_Outside || !object_results.filaments.empty()) {
+        reason = _L("A model using this material is outside the target nozzle's printable area.");
+        return false;
+    }
+    return true;
+}
+
+bool Plater::apply_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
+                                             const std::vector<int>& maps)
+{
+    wxString reason;
+    if (maps == expected_maps || !validate_print_setup_filament_maps(expected_plate_index, expected_maps, maps, reason))
+        return false;
+    PartPlate* plate = p->partplate_list.get_curr_plate();
+    const auto& project_config = wxGetApp().preset_bundle->project_config;
 
     const auto volumes = plate->get_real_filament_volume_maps(project_config);
     cancel_pending_print_after_slice();
