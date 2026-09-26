@@ -26,7 +26,7 @@
 #include <wx/textctrl.h>
 #include <wx/textdlg.h>
 
-namespace fs = std::filesystem;
+namespace workspace_fs = std::filesystem;
 
 namespace Slic3r::GUI {
 namespace {
@@ -93,7 +93,7 @@ bool write_export(wxWindow *parent, const wxString &name, const wxString &filter
 {
     wxFileDialog dialog(parent, name, wxEmptyString, wxEmptyString, filter, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
     if (dialog.ShowModal() != wxID_OK) return false;
-    std::ofstream output(fs::u8path(utf8(dialog.GetPath())), std::ios::binary | std::ios::trunc);
+    std::ofstream output(workspace_fs::u8path(utf8(dialog.GetPath())), std::ios::binary | std::ios::trunc);
     output.write(content.data(), static_cast<std::streamsize>(content.size()));
     if (output.good()) return true;
     wxMessageBox(_L("Could not write the selected export file."), name, wxOK | wxICON_WARNING, parent);
@@ -104,9 +104,9 @@ bool write_export(wxWindow *parent, const wxString &name, const wxString &filter
 
 WorkspacePanel::WorkspacePanel(wxWindow *parent) : wxPanel(parent)
 {
-    m_staging_root = fs::u8path(utf8(wxStandardPaths::Get().GetUserLocalDataDir())) / "workspace-staging";
+    m_staging_root = workspace_fs::u8path(utf8(wxStandardPaths::Get().GetUserLocalDataDir())) / "workspace-staging";
     std::error_code ignored;
-    fs::create_directories(m_staging_root, ignored);
+    workspace_fs::create_directories(m_staging_root, ignored);
     m_workspace.id = Workspace::new_id();
     m_workspace.title = "New workspace";
     create_ui();
@@ -125,11 +125,11 @@ WorkspacePanel::~WorkspacePanel()
     m_reminder_timer.Stop();
     if (!m_loaded_staging.empty()) {
         std::error_code ignored;
-        fs::remove_all(m_loaded_staging, ignored);
+        workspace_fs::remove_all(m_loaded_staging, ignored);
     }
     for (const auto &file : m_owned_member_files) {
         std::error_code ignored;
-        fs::remove(file, ignored);
+        workspace_fs::remove(file, ignored);
     }
 }
 
@@ -346,9 +346,9 @@ void WorkspacePanel::create_new()
     m_workspace.id = Workspace::new_id();
     m_workspace.title = "New workspace";
     m_bundle_path.clear();
-    if (!m_loaded_staging.empty()) { std::error_code ignored; fs::remove_all(m_loaded_staging, ignored); }
+    if (!m_loaded_staging.empty()) { std::error_code ignored; workspace_fs::remove_all(m_loaded_staging, ignored); }
     m_loaded_staging.clear();
-    for (const auto &file : m_owned_member_files) { std::error_code ignored; fs::remove(file, ignored); }
+    for (const auto &file : m_owned_member_files) { std::error_code ignored; workspace_fs::remove(file, ignored); }
     m_owned_member_files.clear();
     m_dirty = false;
     m_last_reminder_check_utc = 0;
@@ -402,10 +402,10 @@ void WorkspacePanel::choose_open()
 {
     wxFileDialog dialog(this, _L("Open workspace"), wxEmptyString, wxEmptyString,
                         _L("Bambu workspace (*.bambu-workspace)|*.bambu-workspace"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-    if (dialog.ShowModal() == wxID_OK) open_bundle(fs::u8path(utf8(dialog.GetPath())));
+    if (dialog.ShowModal() == wxID_OK) open_bundle(workspace_fs::u8path(utf8(dialog.GetPath())));
 }
 
-bool WorkspacePanel::open_bundle(const fs::path &path)
+bool WorkspacePanel::open_bundle(const workspace_fs::path &path)
 {
     if (m_dirty && wxMessageBox(_L("Discard unsaved workspace changes?"), _L("Open workspace"),
                                 wxYES_NO | wxICON_QUESTION, this) != wxYES) return false;
@@ -414,8 +414,8 @@ bool WorkspacePanel::open_bundle(const fs::path &path)
         wxMessageBox(display(loaded.error), _L("Could not open workspace"), wxOK | wxICON_WARNING, this);
         return false;
     }
-    if (!m_loaded_staging.empty()) { std::error_code ignored; fs::remove_all(m_loaded_staging, ignored); }
-    for (const auto &file : m_owned_member_files) { std::error_code ignored; fs::remove(file, ignored); }
+    if (!m_loaded_staging.empty()) { std::error_code ignored; workspace_fs::remove_all(m_loaded_staging, ignored); }
+    for (const auto &file : m_owned_member_files) { std::error_code ignored; workspace_fs::remove(file, ignored); }
     m_owned_member_files.clear();
     m_workspace = loaded.workspace;
     m_bundle_path = path;
@@ -512,7 +512,7 @@ void WorkspacePanel::choose_save()
         wxFileDialog dialog(this, _L("Save workspace"), wxEmptyString, wxEmptyString,
                             _L("Bambu workspace (*.bambu-workspace)|*.bambu-workspace"), wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
         if (dialog.ShowModal() != wxID_OK) return;
-        m_bundle_path = fs::u8path(utf8(dialog.GetPath()));
+        m_bundle_path = workspace_fs::u8path(utf8(dialog.GetPath()));
     }
     save_bundle();
 }
@@ -529,21 +529,21 @@ bool WorkspacePanel::save_bundle()
     return true;
 }
 
-std::optional<fs::path> WorkspacePanel::stage_member_file(const fs::path &source)
+std::optional<workspace_fs::path> WorkspacePanel::stage_member_file(const workspace_fs::path &source)
 {
     std::string validation_error;
     if (!Workspace::validate_member_3mf(source, &validation_error)) {
         wxMessageBox(display(validation_error), _L("Invalid project 3MF"), wxOK | wxICON_WARNING, this);
         return std::nullopt;
     }
-    const fs::path staged = m_staging_root / ("member-" + Workspace::new_id() + ".3mf");
+    const workspace_fs::path staged = m_staging_root / ("member-" + Workspace::new_id() + ".3mf");
     std::error_code error;
-    if (!fs::copy_file(source, staged, fs::copy_options::none, error) || error) {
-        fs::remove(staged, error);
+    if (!workspace_fs::copy_file(source, staged, workspace_fs::copy_options::none, error) || error) {
+        workspace_fs::remove(staged, error);
         return std::nullopt;
     }
     if (!Workspace::validate_member_3mf(staged, &validation_error)) {
-        fs::remove(staged, error);
+        workspace_fs::remove(staged, error);
         wxMessageBox(display(validation_error), _L("Invalid staged project 3MF"), wxOK | wxICON_WARNING, this);
         return std::nullopt;
     }
@@ -555,7 +555,7 @@ std::optional<WorkspaceMemberSelection> WorkspacePanel::selected_member() const
     const long index = m_files->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
     if (index < 0 || static_cast<std::size_t>(index) >= m_workspace.members.size()) return std::nullopt;
     const auto &member = m_workspace.members[static_cast<std::size_t>(index)];
-    if (!fs::is_regular_file(member.project_path)) return std::nullopt;
+    if (!workspace_fs::is_regular_file(member.project_path)) return std::nullopt;
     return WorkspaceMemberSelection{m_workspace.id, member.id, m_bundle_path, member.project_path};
 }
 
@@ -569,7 +569,7 @@ void WorkspacePanel::open_selected_member()
 }
 
 bool WorkspacePanel::save_member(const std::string &bundle_id, const std::string &member_id,
-                                 const fs::path &history_bearing_3mf)
+                                 const workspace_fs::path &history_bearing_3mf)
 {
     if (m_bundle_path.empty() || bundle_id != m_workspace.id || member_id.empty()) return false;
     const auto member = std::find_if(m_workspace.members.begin(), m_workspace.members.end(),
@@ -577,7 +577,7 @@ bool WorkspacePanel::save_member(const std::string &bundle_id, const std::string
     if (member == m_workspace.members.end()) return false;
     const auto staged = stage_member_file(history_bearing_3mf);
     if (!staged) return false;
-    const fs::path previous = member->project_path;
+    const workspace_fs::path previous = member->project_path;
     member->project_path = *staged;
     if (!save_bundle()) {
         member->project_path = previous;
@@ -596,7 +596,7 @@ void WorkspacePanel::add_member()
     if (dialog.ShowModal() != wxID_OK) return;
     Workspace::Member member;
     member.id = Workspace::new_id();
-    const fs::path chosen = fs::u8path(utf8(dialog.GetPath()));
+    const workspace_fs::path chosen = workspace_fs::u8path(utf8(dialog.GetPath()));
     const auto staged = stage_member_file(chosen);
     if (!staged) {
         return;
@@ -617,7 +617,7 @@ void WorkspacePanel::add_source()
                         _L("All files (*.*)|*.*"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     if (dialog.ShowModal() != wxID_OK) return;
     Workspace::SourceFile source;
-    source.local_path = fs::u8path(utf8(dialog.GetPath()));
+    source.local_path = workspace_fs::u8path(utf8(dialog.GetPath()));
     source.relative_path = source.local_path.filename().u8string();
     m_workspace.members[static_cast<std::size_t>(index)].editable_sources.push_back(std::move(source));
     m_dirty = true;
