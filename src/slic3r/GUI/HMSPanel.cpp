@@ -1,5 +1,6 @@
 #include "HMS.hpp"
 #include "HMSPanel.hpp"
+#include "DeviceCore/DevHMSQuery.h"
 #include <slic3r/GUI/Widgets/SideTools.hpp>
 #include <slic3r/GUI/Widgets/Label.hpp>
 #include <slic3r/GUI/Widgets/StateColor.hpp>
@@ -22,6 +23,21 @@ namespace GUI {
 #define HMS_NOTIFY_TEXT_MIN_W 120
 
 wxDEFINE_EVENT(EVT_ALREADY_READ_HMS, wxCommandEvent);
+
+static wxString hms_row_text(const std::string& dev_id, DevHMSItem& item)
+{
+    const std::string long_code = item.get_long_error_code();
+    HMSResult r = wxGetApp().get_hms_query_mgr()->query_hms(dev_id, long_code);
+    if (r.status == HMSStatus::Ready && !r.text.IsEmpty())
+        return r.text;
+
+    const wxString code = wxString::FromUTF8(long_code);
+    if (r.status == HMSStatus::Failed)
+        return wxString::Format("[%s] %s", code, _L("Network error"));
+    if (r.status == HMSStatus::Loading)
+        return wxString::Format("[%s] %s", code, _L("Loading ..."));
+    return wxString::Format("[%s] %s", code, _L("Unknown error"));
+}
 
 HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMSItem& item)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL)
@@ -48,7 +64,7 @@ HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMS
     m_bitmap_notify = new wxStaticBitmap(m_panel_hms, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0);
     m_bitmap_notify->SetBitmap(get_notify_bitmap());
 
-    m_content_text = wxGetApp().get_hms_query()->query_hms_msg(dev_id, m_hms_item.get_long_error_code());
+    m_content_text = hms_row_text(dev_id, m_hms_item);
     m_hms_content = new Label(m_panel_hms, "", wxST_ELLIPSIZE_END);
     m_hms_content->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     // A small floor so the card can shrink with the container; HMSPanel corrects
@@ -255,17 +271,11 @@ void HMSPanel::OnSize(wxSizeEvent &evt)
 }
 
 void HMSPanel::append_hms_panel(const std::string& dev_id, DevHMSItem& item) {
-    wxString msg = wxGetApp().get_hms_query()->query_hms_msg(dev_id, item.get_long_error_code());
-    if (!msg.empty()) {
-        HMSNotifyItem *notify_item = new HMSNotifyItem(dev_id, m_scrolledWindow, item);
-        // Expand so the card tracks the scrolled-window width; set_content_width()
-        // re-flows the message text to whatever width the container provides.
-        m_top_sizer->Add(notify_item, 0, wxEXPAND);
-    } else {
-        // debug for hms display error info
-        // m_top_sizer->Add(m_notify_item, 0, wxALIGN_CENTER_HORIZONTAL);
-        BOOST_LOG_TRIVIAL(info) << "hms: do not display empty_item";
-    }
+    HMSResult r = wxGetApp().get_hms_query_mgr()->query_hms(dev_id, item.get_long_error_code());
+    if (r.status == HMSStatus::Ready && r.text.IsEmpty()) { return; }
+
+    HMSNotifyItem* notify_item = new HMSNotifyItem(dev_id, m_scrolledWindow, item);
+    m_top_sizer->Add(notify_item, 0, wxEXPAND);
 }
 
 void HMSPanel::delete_hms_panels() {
@@ -280,11 +290,12 @@ void HMSPanel::clear_hms_tag()
 void HMSPanel::update(MachineObject *obj)
 {
     if (obj) {
+        this->obj = obj;
         this->Freeze();
         delete_hms_panels();
         wxString hms_text;
         for (auto item : obj->GetHMS()->GetHMSItems()) {
-            if (wxGetApp().get_hms_query()) {
+            if (wxGetApp().get_hms_query_mgr()) {
 
                 auto key = item.get_long_error_code();
                 auto iter = temp_hms_list.find(key);

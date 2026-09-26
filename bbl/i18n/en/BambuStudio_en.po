@@ -3251,6 +3251,8 @@ msgid "Assembly Structure"
 msgstr ""
 
 msgid "Start your assembly journey from Add Step"
+msgstr ""
+
 msgctxt "AssemblyStructure"
 msgid "Default"
 msgstr ""
@@ -18657,9 +18659,6 @@ msgstr ""
 #~ msgid "What data would be collected?"
 #~ msgstr "What data would be collected?"
 
-#~ msgid "CF/GF filaments are hard and brittle, It's easy to break or get stuck in AMS, please use with caution."
-#~ msgstr "CF/GF filaments are hard and brittle, so they can easily break or get stuck in an AMS; please use with caution."
-
 #~ msgid "Micro lidar calibration"
 #~ msgstr "Micro lidar calibration"
 
@@ -19260,9 +19259,6 @@ msgstr ""
 
 #~ msgid "Cancel calibration"
 #~ msgstr "Cancel calibration"
-
-#~ msgid "Feed Filament"
-#~ msgstr "Feed Filament"
 
 #~ msgid "SD Card"
 #~ msgstr "MicroSD Card"
@@ -22254,10 +22250,6 @@ msgctxt "air_duct"
 msgid "Chamber"
 msgstr ""
 
-msgctxt "AssemblyStructure"
-msgid "Default"
-msgstr ""
-
 msgctxt "Filament Manager"
 msgid "Note"
 msgstr ""
@@ -22661,3 +22653,1087 @@ msgstr "Your unsaved project could not be copied into version history. It is bei
 
 msgid "Fan Control"
 msgstr "Fan Control"
+
+msgid "CF/GF filaments are hard and brittle, It's easy to break or get stuck in AMS, please use with caution."
+msgstr "CF/GF inks are hard and brittle, so they can easily break or get stuck in an Ink Dispenser; please use with caution."
+
+msgid "Right-click a part to assign it to the other side"
+msgstr ""
+
+msgid "Pick face"
+msgstr ""
+
+msgid "Click a face of the model to set the cut plane. The plane lands flush with that face; use Movement to offset it."
+msgstr ""
+
+msgid "Click a face of the model."
+msgstr ""
+
+msgid "Line Gap"
+msgstr ""
+
+msgid "Align center horizontally"
+msgstr ""
+
+msgid "Add New Plate"
+msgstr ""
+
+msgid "Add a new plate"
+msgstr ""
+
+msgid "Error: reversed faces detected, which may affect rendering"
+msgstr ""
+
+msgid "Unprintable object"
+msgstr ""
+
+msgid "Transition Smoothness (between color blocks): the higher, the smoother"
+msgstr ""
+
+msgid "Auto Merge Small Fragments: the higher, the more merging"
+msgstr ""
+
+msgid "Add Filament"
+msgstr ""
+
+msgid "Filament matching color difference threshold"
+msgstr ""
+
+msgid "Color difference range allowed for automatic filament matching. A larger value tolerates more color difference and matches more easily."
+msgstr ""
+
+msgid "+ Add Filament"
+msgstr ""
+
+#, boost-format
+msgid "The project supports up to %1% filaments. Extra filaments must be merged before importing."
+msgstr ""
+
+msgid "Simplify Colors"
+msgstr ""
+
+msgid "Filament Matching"
+msgstr ""
+
+msgid "Import Model: Simplify Colors"
+msgstr ""
+
+msgid "Simplified"
+msgstr ""
+
+msgid "Boundary Smoothness"
+msgstr ""
+
+msgid "Gap Area"
+msgstr ""
+
+msgid "Automatically determine the optimal color count"
+msgstr ""
+
+msgid "Color mixing"
+msgstr ""
+
+msgid "Use official mixing kits →"
+msgstr ""
+
+msgid "Some colors have no matching filament. Please match them before importing."
+msgstr ""
+
+msgid "Auto-Add All Filaments"
+msgstr ""
+
+msgid "Fix now"
+msgstr ""
+
+msgid "Automatically merge filaments of the same color and type"
+msgstr ""
+
+msgctxt "TextureImport"
+msgid "Previous"
+msgstr ""
+
+msgid "Discard newly added filaments and re-run automatic matching"
+msgstr ""
+
+msgid "Before matching"
+msgstr ""
+
+msgid "After matching"
+msgstr ""
+
+#, c-format, boost-format
+msgid "Before simplification: %d colors"
+msgstr ""
+
+#, c-format, boost-format
+msgid "After simplification: %d colors"
+msgstr ""
+
+msgid "Import Model: Filament Matching"
+msgstr ""
+
+#, c-format, boost-format
+msgid "The color count cannot exceed the original color count (%d)."
+msgstr ""
+
+#, c-format, boost-format
+msgid "The color count cannot exceed the project's filament limit (%d)."
+msgstr ""
+
+msgid "The current printer has no compatible PLA Basic filament."
+msgstr ""
+
+msgid "Click to select a matching filament"
+msgstr ""
+
+#, boost-format
+msgid "The project supports up to %1% filaments. Current count is %2%, which exceeds the limit."
+msgstr ""
+
+msgid "Error Prompt"
+msgstr ""
+
+msgid "This plan cannot merge any filaments. Remaining filaments use different materials."
+msgstr ""
+
+#, boost-format
+msgid "This plan reduces to %1% filaments (limit %2%). Remaining filaments cannot be merged because they use different materials."
+msgstr ""
+
+msgid "Kept filaments"
+msgstr ""
+
+msgid "Deleted filaments"
+msgstr ""
+
+msgid "After merging"
+msgstr ""
+
+#, boost-format
+msgid "The project supports up to %1% filaments. Current count is %2%, which exceeds the limit. Please choose how to proceed."
+msgstr ""
+
+msgid "Prioritize merging similar-color filaments"
+msgstr ""
+
+msgid "Prioritize merging small-area filaments"
+msgstr ""
+
+msgid "How to use standard mixing kits"
+msgstr ""
+
+msgid "What is the CMYW mixing kit?"
+msgstr ""
+
+msgid "After official print testing, you only need a standard CMYW mixing kit to mix hundreds of color effects."
+msgstr ""
+
+msgid "4-color CMYW"
+msgstr ""
+
+msgid "Cyan · Magenta · Yellow · White"
+msgstr ""
+
+msgid "Therefore, when importing a model, you can match colors using these kit filaments and their mixes."
+msgstr ""
+
+msgid "Add to project filament list"
+msgstr ""
+
+msgid "View Wiki for details"
+msgstr ""
+
+msgid "Tip: Setting AMS slot information while printing is not supported"
+msgstr ""
+
+msgid "Tip: Setting Virtual slot information while printing is not supported"
+msgstr ""
+
+msgid "Add to Filament Library?"
+msgstr ""
+
+msgid "Modifying the filament type or color will remove the binding to the Filament Library. Do you want to add this filament as a new spool?"
+msgstr ""
+
+msgid "Add to Filament Library"
+msgstr ""
+
+msgid "Save Only"
+msgstr ""
+
+msgid "Please select a color"
+msgstr ""
+
+msgid "Matched filament"
+msgstr ""
+
+msgid "AMS detected a new filament. Add it to Filament Manager?"
+msgstr ""
+
+msgid "A similar filament was found in Filament Manager and matched automatically."
+msgstr ""
+
+msgid "Multiple similar filaments were found in Filament Manager. Please confirm the match."
+msgstr ""
+
+msgid "New Filament"
+msgstr ""
+
+msgid "New filament information has been recorded."
+msgstr ""
+
+msgid "View wiki for details"
+msgstr ""
+
+msgid "Nozzle Temperature"
+msgstr ""
+
+#, boost-format
+msgid "%1% cannot exceed the shell layers (%2%), otherwise the painted color would reach the sparse infill."
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid ""
+"lock depth should smaller than skin depth.\n"
+"Reset to 50% of skin depth"
+msgstr ""
+
+msgid "Periodic modifier is incompatible with spiral vase mode. To enable periodic modifier, the following adjustments are recommended:"
+msgstr ""
+
+msgid ""
+"Change these settings automatically?\n"
+"Yes - Apply and keep periodic modifier enabled\n"
+"No  - Don't use periodic modifier"
+msgstr ""
+
+msgid "Spiral mode only works when wall loops is 1, support is disabled, clumping detection by probing is disabled, top shell layers is 0, sparse infill density is 0, timelapse type is instant, smoothing wall speed in z direction is false, alternate extra wall is disabled and periodic modifier is disabled."
+msgstr ""
+
+msgid "Loading error details ..."
+msgstr ""
+
+msgid "Unable to load error details."
+msgstr ""
+
+msgid "All objects on the plate are unprintable, please check the printable settings in the object list."
+msgstr ""
+
+msgid "Network error"
+msgstr ""
+
+msgid "Unknown error"
+msgstr ""
+
+msgid "Lock horizon"
+msgstr ""
+
+msgid "Almost complete"
+msgstr ""
+
+msgid "Jump to: Support on build plate only"
+msgstr ""
+
+msgid "Jump to: Support"
+msgstr ""
+
+msgid "Note: "
+msgstr ""
+
+msgid "Controls the printed height of each layer."
+msgstr ""
+
+msgid ""
+"A larger layer height prints faster but shows more obvious layer lines.\n"
+"A smaller layer height gives finer curved surfaces but takes longer to print.\n"
+"If the layer height is too small while the speed is too high, extrusion can't keep up and the surface is left starved and fuzzy."
+msgstr ""
+
+msgid "Recommended layer height is 20%-70% of the nozzle diameter."
+msgstr ""
+
+msgid "Controls the thickness of the model's first layer extruded onto the heat bed, affecting how well the first layer bonds to the plate."
+msgstr ""
+
+msgid ""
+"Too small, and the first layer is sensitive to bed flatness and prone to print defects.\n"
+"Too large, and the first layer's width-to-height ratio becomes too small, which hurts material adhesion."
+msgstr ""
+
+msgid "Usually set to half the nozzle diameter."
+msgstr ""
+
+msgid "For the mixed-color filament feature. When enabled, layers that use mixed-color filament are split proportionally into thinner sub-layers for a more even color blend."
+msgstr ""
+
+msgid ""
+"When off, colors change per full layer, so the blend is coarser and less even.\n"
+"When on, the sub-layers interleave more densely for a more even blend, but printing takes longer."
+msgstr ""
+
+msgid "Recommended only when using mixed-color filament, to get a better layered-color effect."
+msgstr ""
+
+msgid "Controls where each layer's outer wall starts and ends."
+msgstr ""
+
+msgid "That point can leave a small blob or seam line, so choosing a suitable position reduces the seam's impact on the model's appearance."
+msgstr ""
+
+msgid "Prints only a single wall loop on top surfaces so the top is filled as much as possible by the infill pattern, for a more consistent look."
+msgstr ""
+
+msgid "On sloped or domed surfaces this option worsens the stair-stepping, so it is not recommended there."
+msgstr ""
+
+msgid "Recommended only for flat top surfaces."
+msgstr ""
+
+msgid "Uses only a single wall on the model's first layer (the one touching the bed) so the largest possible area is filled by the first-layer infill pattern, for a more consistent look."
+msgstr ""
+
+msgid ""
+"When off, the first layer uses multiple wall loops.\n"
+"When on, the infill is more continuous and the bottom is flatter, but the first-layer edge outline is slightly weaker."
+msgstr ""
+
+msgid "Controls the number of wall loops in each layer's shell, a key factor in a model's strength."
+msgstr ""
+
+msgid ""
+"More walls give higher strength but use more material and time;\n"
+"fewer walls print faster and save material but reduce strength and may let the infill pattern show through the surface."
+msgstr ""
+
+msgid "2-3 loops is recommended for typical models; increase it for functional parts."
+msgstr ""
+
+msgid "At the boundary between walled and wall-less areas, this embeds the wall into the infill region that has no outer wall on alternating layers, so the wall and infill connect more firmly."
+msgstr ""
+
+msgid ""
+"It only handles boundaries where one side has a wall and the other has zero walls; ordinary wall-to-infill boundaries inside a part are left alone.\n"
+"Embedding every other layer creates a staggered interlock that is stronger than a flush joint."
+msgstr ""
+
+msgid "Use it when a modifier turns a region into wall-less infill that still needs to bond firmly to the surrounding shell. Not needed when both sides print normal walls."
+msgstr ""
+
+msgid "Adds an extra wall loop on odd layers while leaving even layers unchanged."
+msgstr ""
+
+msgid "Adding a wall every other layer strengthens the bond between layers without adding one throughout, improving layer bonding and part strength while avoiding the material and time cost of a full extra wall."
+msgstr ""
+
+msgid "Requires sparse infill; not applicable in vase mode."
+msgstr ""
+
+msgid "The toolpath pattern for the topmost solid infill; it mainly affects the flatness and look of the top surface."
+msgstr ""
+
+msgid "Controls the infill toolpath of the model's bottom surface, affecting bottom texture and flatness."
+msgstr ""
+
+msgid "Bridging areas are not affected by this parameter."
+msgstr ""
+
+msgid "Controls the number of solid top shell layers, including the top surface."
+msgstr ""
+
+msgid ""
+"More layers make the top shell thicker and less likely to reveal the infill beneath.\n"
+"If layers x layer height is less than the top shell thickness, the slicer adds layers automatically."
+msgstr ""
+
+msgid "Sets a minimum thickness for the solid top shell, preventing it from becoming too thin at small layer heights."
+msgstr ""
+
+msgid ""
+"Set to 0 to disable this and let the layer count alone decide.\n"
+"If the thickness from layers x layer height is not enough, the slicer adds top shell layers automatically."
+msgstr ""
+
+msgid "Controls the number of solid bottom shell layers, including the bottom surface."
+msgstr ""
+
+msgid ""
+"More layers make the bottom more solid but take longer.\n"
+"If layer height x layers is less than the bottom shell thickness, the slicer adds layers automatically."
+msgstr ""
+
+msgid "Sets a minimum thickness for the solid bottom shell, preventing it from becoming too thin at small layer heights."
+msgstr ""
+
+msgid ""
+"Set to 0 to disable this and let the layer count alone decide.\n"
+"If the thickness from the layer count is not enough, the slicer adds bottom shell layers automatically."
+msgstr ""
+
+msgid "Controls how many layers the top-surface color penetrates downward, keeping other filament colors inside from showing through."
+msgstr ""
+
+msgid ""
+"Fewer layers make color bleed-through more likely.\n"
+"More layers reduce bleed-through but increase the number of filament changes.\n"
+"To keep the downward penetration from affecting the model's side colors, the penetrated area shrinks layer by layer."
+msgstr ""
+
+msgid "Controls how many layers the bottom-surface color penetrates upward, keeping other filament colors inside from showing through."
+msgstr ""
+
+msgid ""
+"Fewer layers make color bleed-through more likely.\n"
+"More layers reduce bleed-through but increase the number of filament changes.\n"
+"To keep the upward penetration from affecting the model's side colors, the penetrated area shrinks layer by layer."
+msgstr ""
+
+msgid "Controls the toolpath pattern of internal solid infill, applied to the solid layers between the top and bottom shells and to internal solid regions."
+msgstr ""
+
+msgid "If detection of narrow internal solid infill is enabled, small regions use the concentric pattern automatically."
+msgstr ""
+
+msgid "Controls how dense the model's internal sparse infill is."
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid ""
+"10-15% is recommended for typical models; raise it for functional parts.\n"
+"100% means fully solid, where only the Concentric, Rectilinear, Monotonic, Monotonic Line, Aligned Rectilinear, Hilbert Curve, Archimedean Chords, and Octagram Spiral patterns are available."
+msgstr ""
+
+msgid "Enables multi-line infill, printing each infill path as several parallel lines side by side."
+msgstr ""
+
+msgid ""
+"Higher values make the infill beams thicker and stronger but use more material and time;\n"
+"1 is ordinary single-line infill."
+msgstr ""
+
+msgid "Supported by patterns such as Line, Grid, Gyroid, Honeycomb, Cubic, and Lightning."
+msgstr ""
+
+msgid "Controls the toolpath structure of the internal sparse infill."
+msgstr ""
+
+msgid "Supports are removable structures printed under overhangs and steep angles to hold up later layers and prevent sagging."
+msgstr ""
+
+msgid ""
+"When enabled, supports are generated for overhangs and steep angles, giving more stable prints, but they must be removed and may leave marks.\n"
+"Recommended when the model has obvious overhangs."
+msgstr ""
+
+msgid "Selects the support shape and how it is generated; Normal (auto) and Tree (auto) are generated automatically based on overhangs."
+msgstr ""
+
+msgid ""
+"Normal supports are more regular and stable; tree supports touch the model less and are easier to remove.\n"
+"Choose a manual mode when you need precise control."
+msgstr ""
+
+msgid "Manual mode is used together with the support-painting tool in the gizmo toolbar."
+msgstr ""
+
+msgid "Generates support for surfaces whose overhang angle is below the threshold; it is customizable in the automatic modes."
+msgstr ""
+
+msgid ""
+"A smaller threshold supports only near-horizontal large overhangs, giving less support but possibly leaving gentle slopes unsupported.\n"
+"A larger threshold also supports more slopes, giving more support."
+msgstr ""
+
+msgid "A common default of 30 degrees balances print stability against the amount of support used."
+msgstr ""
+
+msgid "Generates support only from the build plate, not on the model's surfaces."
+msgstr ""
+
+msgid ""
+"When off, support may grow on model surfaces for more complete coverage but is more likely to leave marks.\n"
+"When on, all support starts from the plate, keeping model surfaces cleaner, but some overhangs may go unsupported."
+msgstr ""
+
+msgid "Recommended when appearance matters."
+msgstr ""
+
+msgid "The support interface is a denser contact layer where support meets the model; it holds the model steady, eases removal, and reduces surface marks. This sets the filament used for that contact surface."
+msgstr ""
+
+msgid ""
+"By default the interface uses the same filament as the model, which can make removal harder.\n"
+"Assigning an easy-release filament makes the contact surface easier to remove and cleaner, but adds filament changes."
+msgstr ""
+
+msgid "The filament used to print the support body and the raft."
+msgstr ""
+
+msgid ""
+"By default the support uses the same filament as the model, matching the model filament of each layer in multi-filament prints.\n"
+"Assigning a different filament can make removal easier or lower cost, but adds filament-change time."
+msgstr ""
+
+msgid "Prints detached outline loops (a skirt) around the model to purge the nozzle and stabilize extrusion before printing starts."
+msgstr ""
+
+msgid "More loops purge more thoroughly but use more material; set to 0 to disable the skirt."
+msgstr ""
+
+msgid "Controls how many layers the skirt is printed."
+msgstr ""
+
+msgid ""
+"During the first few layers, a taller skirt can partly block cold air around the model, keeping a warm microclimate at the base of the model and reducing the early warping risk caused by shrinkage.\n"
+"The default is 1 layer."
+msgstr ""
+
+msgid "Requires the skirt loop count to be greater than 0."
+msgstr ""
+
+msgid "A brim is a single-layer band of material added around the base of the model and joined to its first layer, a reinforcing border that fights warping and keeps adhesion."
+msgstr ""
+
+msgid ""
+"This controls the type of brim (a band joined to the model's first layer) used to improve bed adhesion and reduce warping.\n"
+"The default is Auto."
+msgstr ""
+
+msgid "The distance from the model to the outermost brim line."
+msgstr ""
+
+msgid "A larger width improves bed adhesion and resists warping but uses more material and is harder to clean up."
+msgstr ""
+
+msgid "After a color or filament change, the printer purges residual filament and stabilizes nozzle pressure on a separate prime tower before resuming the model, reducing color mixing, starvation, and surface defects."
+msgstr ""
+
+msgid ""
+"Off: saves material and takes less bed space, but residual filament during a color change may land on the model and cause color mixing, stringing, or local starvation.\n"
+"On: cleaner color transitions and more consistent multi-color prints, but it uses extra material and time and takes up bed space."
+msgstr ""
+
+msgid "Mutually exclusive with by-object printing and independent support layer height."
+msgstr ""
+
+msgid "Controls the horizontal size of the prime tower."
+msgstr ""
+
+msgid "A larger width gives more purge margin and a more stable tower, but uses more material and bed space."
+msgstr ""
+
+msgid "The width cannot be customized when the rib outer wall is enabled."
+msgstr ""
+
+msgid "Adds four corner ribs to the prime tower's outer wall to improve its stability."
+msgstr ""
+
+msgid "Recommended for tall prime towers, stickier materials such as PETG, or frequent color changes; turn it off when bed space is tight and the tower is short so the width can be narrowed."
+msgstr ""
+
+msgid "Uses part of the transition filament after a change to print the object's internal infill, reducing waste and print time."
+msgstr ""
+
+msgid "Enable it on opaque parts to save material; turn it off for transparent or thin-walled parts, or when the internal color matters."
+msgstr ""
+
+msgid "Uses the transition filament after a change to print the model's supports, reducing waste and time."
+msgstr ""
+
+msgid "Enabling it saves material, but the supports may show mixed colors."
+msgstr ""
+
+msgid "Takes effect when printing multiple filaments through the same nozzle."
+msgstr ""
+
+msgid "Chooses whether to print the whole plate layer by layer, or to finish one object before starting the next."
+msgstr ""
+
+msgid "Use By Layer for typical multi-part or multi-color prints; consider By Object for many small parts or to limit the impact of a mid-print failure, and check the clearances and prime-tower restrictions."
+msgstr ""
+
+msgid "Prints in a continuous spiral along the outer contour, building the whole model in one line, usually with no seam on the sides."
+msgstr ""
+
+msgid ""
+"When on, the model has no top shell, no infill, and usually only a single wall, so it is weak and conflicts with support, top shell layers, and several other settings.\n"
+"It is best for single, thin-walled, open-top models."
+msgstr ""
+
+msgid "Requires top shell layers to be 0 and is not compatible with support."
+msgstr ""
+
+msgid "Takes one photo per layer during printing and compiles a timelapse video when the print finishes."
+msgstr ""
+
+msgid "Selects the timelapse mode here; whether the feature actually runs is toggled on the send-to-print page."
+msgstr ""
+
+msgid "Randomly jitters the wall toolpaths so the outer surface takes on a rough, matte, fuzzy texture."
+msgstr ""
+
+msgid ""
+"It affects only walls; the top and bottom surfaces are unchanged.\n"
+"Useful for decorative parts and figure shells; turn it off when dimensions are critical or a smooth surface is needed."
+msgstr ""
+
+msgid "Selects how the fuzzy texture is generated."
+msgstr ""
+
+msgid "There are three generator modes; pick the one that suits your needs."
+msgstr ""
+
+msgid "Determines the randomness of the fuzzy texture, which affects the style of the surface texture."
+msgstr ""
+
+msgid "Several noise types are available; pick the one that suits your needs."
+msgstr ""
+
+msgid "Controls the average distance between the random points inserted along the wall path when generating fuzzy skin."
+msgstr ""
+
+msgid ""
+"A larger value spaces the random points farther apart for a coarser grain, but uses fewer path points, so slicing and printing stay faster and the G-code file stays smaller.\n"
+"A smaller value packs the points closer together for a finer, more even grain, but adds path points, so slicing and printing slow down and the G-code file grows."
+msgstr ""
+
+msgid "If it is too small, the software disables fuzzy skin because the point spacing is too small (to avoid abnormal paths)."
+msgstr ""
+
+msgid "Controls the width of the wall-path jitter when generating fuzzy skin, that is, the depth of the texture."
+msgstr ""
+
+msgid ""
+"A larger value makes the texture deeper and more pronounced with a stronger grain, but the outline expands, dimensional accuracy drops, and the wall may develop gaps and lose strength.\n"
+"The default is about 0.3 mm; keep it below the outer wall's line width."
+msgstr ""
+
+msgid "When it exceeds the line width, the generator's Extrusion and Combined modes stop working and only Displacement is used."
+msgstr ""
+
+msgid "Determines whether the fuzzy effect is also applied to the first layer."
+msgstr ""
+
+msgid ""
+"When on, the first-layer side walls also get the fuzzy texture.\n"
+"Usually keep it off; enable it only when the bottom edge needs a consistent texture and bed adhesion is good."
+msgstr ""
+
+msgid "Places the seam preferentially at concave or convex corners and shortens travel moves; suited to models with distinct edges."
+msgstr ""
+
+msgid "Stacks each layer's seam into one vertical line, keeping the marks concentrated and easy to hide."
+msgstr ""
+
+msgid "Puts the seam on the model's back, suited to display models with a fixed orientation."
+msgstr ""
+
+msgid "Scatters the seam across layers to avoid a vertical line, though small stray bumps may appear on the surface."
+msgstr ""
+
+msgid "All top surfaces print with the normal number of wall loops."
+msgstr ""
+
+msgid "Applies to every flat upward-facing top surface, for the widest coverage."
+msgstr ""
+
+msgid "Applies only to the model's uppermost surface; middle-layer top surfaces are still handled normally."
+msgstr ""
+
+msgid "Analyzes the model and computes the needed brim width and placement; recommended for most models."
+msgstr ""
+
+msgid "Generates a brim only on the outer contour to strengthen outer adhesion."
+msgstr ""
+
+msgid "Generates a brim in inner holes only."
+msgstr ""
+
+msgid "Generates a brim on both the outer contour and inner holes."
+msgstr ""
+
+msgid "Generates the brim by painting or local reinforcement, suited to sharp corners prone to warping."
+msgstr ""
+
+msgid "No brim is generated; the bottom stays cleaner but bed adhesion is weaker."
+msgstr ""
+
+msgid "All objects rise together, layer by layer."
+msgstr ""
+
+msgid "Finishes one object before starting the next; has placement clearance requirements."
+msgstr ""
+
+msgid "A snapshot is taken directly after each layer."
+msgstr ""
+
+msgid "After each layer the toolhead moves to the excess chute before the snapshot for a cleaner shot; filament may leak during the shot, so a prime tower is required to wipe the nozzle and is generated even for single-color jobs."
+msgstr ""
+
+msgid "No fuzzy skin is added automatically, but you can still paint it on locally."
+msgstr ""
+
+msgid "Adds fuzzy skin only to the outermost contour; inner holes stay smooth."
+msgstr ""
+
+msgid "Adds fuzzy skin to both the outer contour and inner holes."
+msgstr ""
+
+msgid "Every wall line jitters, for the strongest effect but possibly larger dimensional deviation."
+msgstr ""
+
+msgid "Turns fuzzy skin fully off; even painting has no effect."
+msgstr ""
+
+msgid "The nozzle shifts sideways to form the texture, giving a strong 3D feel but possible gaps between loops."
+msgstr ""
+
+msgid "The path stays straight and only the extruded amount varies, keeping walls denser."
+msgstr ""
+
+msgid "Displacement plus extrusion; looks close to displacement while filling the gaps between loops."
+msgstr ""
+
+msgid "Uniform random noise with a fine, grainy texture and no clear direction."
+msgstr ""
+
+msgid "Smooth transitions between layers for a more even, continuous texture with soft, regular undulation."
+msgstr ""
+
+msgid "Similar to Perlin but clumpier, with clustered bumps and flat areas, like clouds."
+msgstr ""
+
+msgid "Sharp jagged ridges with peaks and fine grooves, giving a marble-like texture."
+msgstr ""
+
+msgid "Divides the surface into cells and offsets each as a whole, forming a patchwork stepped texture."
+msgstr ""
+
+msgid "View details on Wiki"
+msgstr ""
+
+#, c-format, boost-format
+msgid ", and %d more"
+msgstr ""
+
+#, c-format, boost-format
+msgid "model \"%s\""
+msgstr ""
+
+#, c-format, boost-format
+msgid "The filament you are trying to delete is currently used by %s. After deletion, the model's filament will be reset to the first filament in the list."
+msgstr ""
+
+msgid "Tips: If you wish to replace it with another filament, please use the \"Merge to\" function on the right side of the filament list."
+msgstr ""
+
+msgid "Enabling instant timelapse photography may cause surface imperfections. It is recommended to change to smooth mode."
+msgstr ""
+
+#, c-format, boost-format
+msgid "Computing model colors: %s"
+msgstr ""
+
+msgid "Send G-code file"
+msgstr ""
+
+msgid "Bambu Studio does not support sending .gcode files to print directly. You can send it to the printer and then start printing from the printer."
+msgstr ""
+
+msgid "Note: Printing directly with G-code may cause printing errors. It is recommended to print with 3mf files."
+msgstr ""
+
+msgid "Send now"
+msgstr ""
+
+msgid "Reason: the meshes have face issues."
+msgstr ""
+
+msgid "All related changes"
+msgstr ""
+
+msgid "When color changes"
+msgstr ""
+
+msgid "Turn off auto calculate"
+msgstr ""
+
+msgid "Auto calculate when color changes, type or configuration changes"
+msgstr ""
+
+msgid "Auto calculate when sync or modify filament colors"
+msgstr ""
+
+msgid "Keep current flush volumes, trigger manually when needed"
+msgstr ""
+
+msgid "Auto Calculate Flush Volume"
+msgstr ""
+
+msgid "Automatically optimize wipe tower placement"
+msgstr ""
+
+msgid "With this option enabled, the wipe tower will be placed at its optimal position."
+msgstr ""
+
+msgid "Mouse Settings"
+msgstr ""
+
+msgid "Import Settings"
+msgstr ""
+
+msgid "Reverse direction of zoom with mouse wheel"
+msgstr ""
+
+msgid "If enabled, reverses the direction of zoom with mouse wheel."
+msgstr ""
+
+msgid "Drag with left mouse button to move"
+msgstr ""
+
+msgid "If enabled, the left mouse button can move models by dragging; if disabled, the left button only selects or clicks."
+msgstr ""
+
+msgid "The current printer does not support timelapse in Instant Mode when printing By-Object."
+msgstr ""
+
+msgid "After enabling Timelapse, regardless of whether Instant or Smooth mode is selected, the printer will move the build plate and toolhead before each shot, which may increase the overall print time."
+msgstr ""
+
+#, c-format, boost-format
+msgid "The filament in %s may be insufficient for this print. Please refill or replace it."
+msgstr ""
+
+#, c-format, boost-format
+msgid "The filament in auto refill group %s may be insufficient for this print. Please refill or replace it."
+msgstr ""
+
+#, c-format, boost-format
+msgid "The filament in auto refill groups %s may be insufficient for this print. Please refill or replace it."
+msgstr ""
+
+msgid "Modifier cycle"
+msgstr ""
+
+msgid "Preset A"
+msgstr ""
+
+msgid "Preset B"
+msgstr ""
+
+msgid "Parameters"
+msgstr ""
+
+msgid "Process Preset"
+msgstr ""
+
+msgid "Material Preset"
+msgstr ""
+
+msgid "Machine Preset"
+msgstr ""
+
+msgid "These two presets have no visible differences"
+msgstr ""
+
+msgid "Please select two different presets A and B to compare"
+msgstr ""
+
+msgid "Copy Device Info"
+msgstr ""
+
+msgid "Precise Z height gives the objects different layer heights, which may greatly increase the size of the prime tower."
+msgstr ""
+
+msgid "Jump to: Precise Z height"
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid "Speed of 100% overhang wall which has 0 overlap with the lower layer."
+msgstr ""
+
+msgid "Global monotonic line"
+msgstr ""
+
+msgid "Sub-top surface pattern"
+msgstr ""
+
+msgid "Line pattern of the solid layer that supports a visible top surface. Its lines can print through and mark the top, so a monotonic pattern gives the smoothest result. The whole solid area that a top surface reaches uses this pattern, not only the part directly beneath it."
+msgstr ""
+
+msgid "Line width of the infill of initial layer, including sparse infill, solid infill and top surface. Walls, support and everything else of the initial layer are not affected and keep using the line width of initial layer. Zero means to use the line width of initial layer."
+msgstr ""
+
+msgid "Conformal infill"
+msgstr ""
+
+msgid "Make sparse infill follow each layer's outline instead of using one set of parallel lines. On elongated or curved shapes, lines radiate from a center. Applies to Zig Zag, Cross Zag, Rectilinear, Aligned Rectilinear, and Locked Zag skin."
+msgstr ""
+
+msgid "Layer stagger"
+msgstr ""
+
+msgid "How neighboring layers are offset. Off stacks the same layout. Alternate keeps the same line directions but connects each line to the neighboring one on the opposite side, which improves interlayer bonding."
+msgstr ""
+
+msgid "Alternate"
+msgstr ""
+
+msgid "Forward layers"
+msgstr ""
+
+msgid "Conformal forward layers"
+msgstr ""
+
+msgid "Number of consecutive layers that keep the forward zigzag. Together with Reverse layers this repeats: N forward, then M reversed. 0 means reverse from the first layer."
+msgstr ""
+
+msgid "Reverse layers"
+msgstr ""
+
+msgid "Conformal reverse layers"
+msgstr ""
+
+msgid "Number of consecutive layers that reverse the zigzag (start from the opposite rim). 0 disables reversing. Forward 1 and Reverse 1 reverses every other layer."
+msgstr ""
+
+msgid "Radial center"
+msgstr ""
+
+msgid "Where the radial center comes from. Each layer picks a center on that slice. Axis fits one 3D line through those centers. Smooth curve fits a curve so the center does not jump between layers."
+msgstr ""
+
+msgid "Each layer"
+msgstr ""
+
+msgid "Axis"
+msgstr ""
+
+msgid "Smooth curve"
+msgstr ""
+
+msgid "Radial line count"
+msgstr ""
+
+msgid "How many radial lines around the center. 0 uses the count from sparse infill density. A positive value is the radial line count, rounded up to an even number of at least 4."
+msgstr ""
+
+msgid "Center region radius"
+msgstr ""
+
+msgid "Radius of the center region that uses ordinary rectilinear infill; outside this circle the infill stays radial. 0 chooses the radius automatically. A positive value is in millimeters."
+msgstr ""
+
+msgid "Periodic modifier"
+msgstr ""
+
+msgid "Apply this modifier on a repeating layer cycle. On skipped layers it is ignored, as if this modifier were not there."
+msgstr ""
+
+msgid "Skip for"
+msgstr ""
+
+msgid "Periodic modifier skip layers"
+msgstr ""
+
+msgid "Number of consecutive layers on which this modifier is not applied. 0 means the modifier is applied on every layer."
+msgstr ""
+
+msgid "Apply for"
+msgstr ""
+
+msgid "Periodic modifier apply layers"
+msgstr ""
+
+msgid "Number of consecutive layers in each cycle on which this modifier is fully applied. The cycle starts at layer 0: first Apply for, then Skip for."
+msgstr ""
+
+msgid "Ignore infill settings"
+msgstr ""
+
+msgid "Modifier ignore infill settings"
+msgstr ""
+
+msgid "Do not apply this modifier's infill settings (pattern, density, conformal infill, and related options). Walls and other overrides still apply. Infill is taken from the parent region."
+msgstr ""
+
+msgid "If smooth or instant mode is selected, a timelapse video will be generated for each print. After each layer is printed, a snapshot is taken with the chamber camera. All of these snapshots are composed into a timelapse video when printing completes. If smooth mode is selected, the toolhead will move to the excess chute after each layer is printed and then take a snapshot. Since the melt filament may leak from the nozzle during the process of taking a snapshot, prime tower is required for smooth mode to wipe nozzle."
+msgstr ""
+
+msgid "Instant"
+msgstr ""
+
+msgid "When enabled, the timelapse snapshot is taken at the farthest point from camera instead of traveling to the wipe tower or excess chute. Only effective in instant timelapse mode on non-I3 printers."
+msgstr ""
+
+#, no-c-format, no-boost-format
+msgid " doesn't work at 100% density "
+msgstr ""
+
+#, boost-format
+msgid ""
+"Unsupported overhangs were detected.\n"
+"Model \"%1%\" has %2% overhang region(s). Because \"Support on build plate only\" is enabled, supports cannot grow down to the build plate. Try turning this option off."
+msgstr ""
+
+msgid "Shrinkage compensation does not take effect on color-painted models."
+msgstr ""
+
+msgid "The file contains invalid texture coordinate index."
+msgstr ""
+
+#, c-format, boost-format
+msgid ""
+"The Filament name %s you created already exists. \n"
+"If you continue, the new preset will be saved alongside the existing custom filaments and shown with its full name to distinguish it. Do you want to continue?"
+msgstr ""
+"The Filament name %s you created already exists. \n"
+"If you continue, the new preset will be saved alongside the existing custom filaments and shown with its full name to distinguish it. Do you want to continue?"
+
+msgid "Search filament"
+msgstr ""
+
+msgid "slot"
+msgstr ""
+
+msgid "Gradient effect requires 'Mixed color sublayer' to be enabled. Enable it now?"
+msgstr ""
+
+msgid "Mixed Color Sublayer"
+msgstr ""
+
+#, c-format, boost-format
+msgid "RGB(%d, %d, %d)"
+msgstr ""
+
+msgid "Decomposition result for this combination"
+msgstr ""
+
+msgid "Filament Color"
+msgstr ""
+
+msgid "Decomposed Colors"
+msgstr ""
+
+msgid "Project Filament"
+msgstr ""
+
+msgid "Standard Palette"
+msgstr ""
+
+msgid "A closer mix is calculated from four base colors: cyan, magenta, yellow, and white. Currently only PLA Basic is supported. If matching filaments are not in the project, they will be added automatically."
+msgstr ""
+
+msgid "A closer mix is calculated from four base colors: red, yellow, blue, and white. Currently only PLA Basic is supported. If matching filaments are not in the project, they will be added automatically."
+msgstr ""
+
+msgid "Decompose Color (gradient not supported)"
+msgstr ""
+
+msgid "Decompose Color (transparent not supported)"
+msgstr ""
+
+msgid "Decompose Color (multi-color not supported)"
+msgstr ""
+
+msgid "Create Custom Filament"
+msgstr ""

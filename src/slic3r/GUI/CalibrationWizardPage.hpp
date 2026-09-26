@@ -8,6 +8,7 @@
 #include "Widgets/TextInput.hpp"
 #include "Widgets/AMSControl.hpp"
 #include "Widgets/ProgressBar.hpp"
+#include "Widgets/RadioBox.hpp"
 #include "wxExtensions.hpp"
 #include "PresetComboBoxes.hpp"
 

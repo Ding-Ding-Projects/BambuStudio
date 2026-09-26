@@ -1,25 +1,28 @@
 
 var m_ProfileItem;
+var searchTags = [];
+var searchTimer = null;
+var customFilaments = [];
 
 var FilamentPriority=new Array( "pla","abs","pet","tpu","pc");
 var VendorPriority=new Array("bambu lab","bambulab","bbl","kexcelled","polymaker","esun","generic");
 
 function OnInit()
 {
-	$("#printerBtn").on("click", function(){
-    $("#MachineList").slideToggle(300);
-    $(this).find(".CArrow").toggleClass("active");
-  });
-
-  $("#filatypeBtn").on("click", function(){
-    $("#FilatypeList").slideToggle(300);
-    $(this).find(".CArrow").toggleClass("active");
-  });
-
-  $("#vendorBtn").on("click", function(){
-    $("#VendorList").slideToggle(300);
-    $(this).find(".CArrow").toggleClass("active");
-  });
+	[['#printerBtn', '#MachineList'], ['#filatypeBtn', '#FilatypeList'],
+		['#vendorBtn', '#VendorList']].forEach(function(pair) {
+		$(pair[0]).on('click', function() {
+			const expanded = $(this).attr('aria-expanded') === 'true';
+			$(this).attr('aria-expanded', String(!expanded));
+			$(this).find('.CArrow').toggleClass('active', expanded);
+			$(pair[1]).slideToggle(300);
+		}).on('keydown', function(event) {
+			if (event.key === 'Enter' || event.key === ' ') {
+				event.preventDefault();
+				$(this).trigger('click');
+			}
+		});
+	});
 
   $('#SelectAllCheckbox').change(function() {
     if ($(this).is(':checked')) {
@@ -28,8 +31,23 @@ function OnInit()
       SelectAllFilament(0);
     }
   });
+	let composing = false;
+	$('#filamentSearch').on('compositionstart', function() { composing = true; })
+		.on('compositionend', function() { composing = false; SortFilament(); })
+		.on('input', function() {
+			if (composing) return;
+			clearTimeout(searchTimer);
+			searchTimer = setTimeout(SortFilament, 150);
+		}).on('keydown', function(event) {
+			if (event.key === 'Enter' && !composing) {
+				event.preventDefault();
+				addSearchTag();
+			}
+		});
+	$('#addSearchTag').on('click', addSearchTag);
+	$('#CFilament_Sort').on('change', renderCustomFilaments);
 	TranslatePage();
-  OnSelectMenu(1);
+  OnSelectMenu(GetQueryString('custom') === '1' ? 2 : 1);
 	
 	RequestProfile();
 	
@@ -79,177 +97,101 @@ function GetFilamentShortname( sName )
 	return sShort;
 }
 
+function addSearchTag()
+{
+	const term = String($('#filamentSearch').val() || '').trim().toLowerCase();
+	if (term && !searchTags.includes(term)) searchTags.push(term);
+	$('#filamentSearch').val('').trigger('focus');
+	renderSearchTags();
+	SortFilament();
+}
+
+function renderSearchTags()
+{
+	const list = $('#searchTags').empty();
+	searchTags.forEach(function(term) {
+		$('<button type="button">').addClass('searchTag')
+			.attr('aria-label', GetCurrentPlainTextByKey('t88') + ' ' + term)
+			.text(term + ' ×').on('click', function() {
+				searchTags = searchTags.filter(item => item !== term);
+				renderSearchTags();
+				SortFilament();
+			}).appendTo(list);
+	});
+}
+
 
 function SortUI()
 {
-	var ModelList=new Array();
-	
-	let nMode=m_ProfileItem["model"].length;
-	for(let n=0;n<nMode;n++)
-	{
-		let OneMode=m_ProfileItem["model"][n];
-		
-		if( OneMode["nozzle_selected"]!="" )
-			ModelList.push(OneMode);
-	}
-
-	//model
-	let HtmlMode='';
-	nMode=ModelList.length;
-	for(let n=0;n<nMode;n++)
-	{
-		let sModel=ModelList[n];	
-
-		HtmlMode+='<div class="checkboxText"><input class="inputIndent" type="checkbox" mode="'+sModel['model']+'"  nozzle="'+sModel['nozzle_selected']+'"   onChange="MachineClick()" />'+sModel['model']+'</div>';
-	}
-	
-	$('#MachineList').append(HtmlMode);	
-	$('#MachineList input').prop("checked",true);
-	if(nMode<=1)
-	{
-		$('#MachineList').hide();
-	}
-	
-	//Filament
-	let HtmlFilament='';
-	let SelectNumber=0;
-
-	var TypeHtmlArray={};
-    var VendorHtmlArray={};
-	for( let key in m_ProfileItem['filament'] )
-	{
-		let OneFila=m_ProfileItem['filament'][key];
-		
-		//alert(JSON.stringify(OneFila));
-		
-		let fWholeName=OneFila['name'].trim();
-		let fShortName=GetFilamentShortname( OneFila['name'] );
-		let fVendor=OneFila['vendor'];
-		let fType=OneFila['type'];
-		let fSelect=OneFila['selected'];
-		let fModel=OneFila['models']
-		
-    let bFind=false;		
-		//let bCheck=$("#MachineList input:first").prop("checked");
-		if( fModel=='')
-		{
-			bFind=true;
-		}
-		else
-		{
-			//check in modellist		    
-		    let nModelAll=ModelList.length;
-		    for(let m=0;m<nModelAll;m++)
-		    {
-	    		let sOne=ModelList[m];
-			
-				let OneName=sOne['model'];
-				let NozzleArray=sOne["nozzle_selected"].split(';');
-				
-				let nNozzle=NozzleArray.length;
-				
-				for( let b=0;b<nNozzle;b++ )
-				{
-					let nowModel= OneName+"++"+NozzleArray[b];
-					if(fModel.indexOf(nowModel)>=0)
-					{
-						bFind=true;
-						break;
-					}
-				}
-			}
-		}
-		
-		if(bFind)
-		{
-			//Type
-			let LowType=fType.toLowerCase();
-		    if(!TypeHtmlArray.hasOwnProperty(LowType))
-		    {
-			    let HtmlType='<div class="checkboxText"><input class="inputIndent" type="checkbox" filatype="'+fType+'" onChange="FilaClick()"   />'+fType+'</div>';
-			
-				TypeHtmlArray[LowType]=HtmlType;
-		    }
-			
-			//Vendor
-			let lowVendor=fVendor.toLowerCase();
-			if(!VendorHtmlArray.hasOwnProperty(lowVendor))
-		    {
-			    let HtmlVendor='<div class="checkboxText"><input class="inputIndent" type="checkbox" vendor="'+fVendor+'"  onChange="VendorClick()" />'+fVendor+'</div>';
-				
-				VendorHtmlArray[lowVendor]=HtmlVendor;
-		    }
-			
-			//Filament
-			let pFila=$("#ItemBlockArea input[vendor='"+fVendor+"'][filatype='"+fType+"'][name='"+fShortName+"']");
-	        if(pFila.length==0)
-		    {
-			    let HtmlFila='<div><input type="checkbox" vendor="'+fVendor+'"  filatype="'+fType+'" filalist="'+fWholeName+';'+'"  model="'+fModel+'" name="'+fShortName+'" />'+fShortName+'</div>';
-			
-			    $("#ItemBlockArea").append(HtmlFila);
-		    } 
-			else
-			{
-				let strModel=pFila.attr("model");
-				let strFilalist=pFila.attr("filalist");
-				
-				pFila.attr("model", strModel+fModel);
-				pFila.attr("filalist", strFilalist+fWholeName+';');
-			}
-			
-		    if(fSelect*1==1)
-			{
-				//alert( fWholeName+' - '+fShortName+' - '+fVendor+' - '+fType+' - '+fSelect+' - '+fModel );
-					
-				$("#ItemBlockArea input[vendor='"+fVendor+"'][filatype='"+fType+"'][name='"+fShortName+"']").prop("checked",true);
-				SelectNumber++;
-			}
-//			else
-//				$("#ItemBlockArea input[vendor='"+fVendor+"'][model='"+fModel+"'][filatype='"+fType+"'][name='"+key+"']").prop("checked",false);			
-		}
-	} 
-
-	//Sort TypeArray
-	let TypeAdvNum=FilamentPriority.length;
-	for( let n=0;n<TypeAdvNum;n++ )
-	{
-		let strType=FilamentPriority[n];
-		
-		if( TypeHtmlArray.hasOwnProperty( strType ) )
-		{
-			$("#FilatypeList").append( TypeHtmlArray[strType] );
-			delete( TypeHtmlArray[strType] );
-		}
-	}
-    for(let key in TypeHtmlArray )
-	{
-		$("#FilatypeList").append( TypeHtmlArray[key] );
-	}
-	$("#FilatypeList input").prop("checked",true);
-	
-	//Sort VendorArray
-	let VendorAdvNum=VendorPriority.length;
-	for( let n=0;n<VendorAdvNum;n++ )
-	{
-		let strVendor=VendorPriority[n];
-		
-		if( VendorHtmlArray.hasOwnProperty( strVendor ) )
-		{
-			$("#VendorList").append( VendorHtmlArray[strVendor] );
-			delete( VendorHtmlArray[strVendor] );
-		}
-	}
-    for(let key in VendorHtmlArray )
-	{
-		$("#VendorList").append( VendorHtmlArray[key] );
-	}	
-	$("#VendorList input").prop("checked",true);
-	
-	//------
-	if(SelectNumber==0)
-		ChooseDefaultFilament();
+  const models = (m_ProfileItem.model || []).filter(model => model.nozzle_selected);
+  const filaments = Object.entries(m_ProfileItem.filament || {});
+  const types = new Map();
+  const vendors = new Map();
+  const rows = new Map();
+  $('#MachineList .filter-option, #FilatypeList .filter-option, #VendorList .filter-option').remove();
+  $('#ItemBlockArea').empty();
+  for (const model of models) {
+    appendFilterOption('#MachineList', String(model.model || ''), 'mode', String(model.nozzle_selected || ''), MachineClick);
+  }
+  $('#MachineList input').prop('checked', true);
+  if (models.length <= 1) {
+    $('#MachineList').hide();
+    $('#printerBtn').attr('aria-expanded', 'false');
+  } else {
+    $('#MachineList').show();
+    $('#printerBtn').attr('aria-expanded', 'true');
+  }
+  for (const [profileKey, filament] of filaments) {
+    const wholeName = String(filament.name || profileKey).trim();
+    const shortName = GetFilamentShortname(wholeName);
+    const vendor = String(filament.vendor || '');
+    const type = String(filament.type || '');
+    const compatibility = String(filament.models || '');
+    const compatible = !compatibility || models.some(model =>
+      String(model.nozzle_selected).split(';').some(nozzle =>
+        compatibility.includes('[' + model.model + '++' + nozzle + ']')));
+    if (!compatible) continue;
+    types.set(type.toLowerCase(), type);
+    vendors.set(vendor.toLowerCase(), vendor);
+    const key = JSON.stringify([vendor, type, shortName]);
+    if (!rows.has(key)) {
+      const input = $('<input type="checkbox">').attr({
+        vendor: vendor, filatype: type, name: shortName
+      }).on('change', updateSelectAllCheckbox);
+      const row = $('<label>').addClass('filament-row').append(input, $('<span>').text(shortName));
+      row.data('models', []).data('filamentKeys', []);
+      rows.set(key, row);
+      $('#ItemBlockArea').append(row);
+    }
+    const row = rows.get(key);
+    row.data('models').push(compatibility);
+    row.data('filamentKeys').push(profileKey);
+    if (Number(filament.selected) === 1) row.find('input').prop('checked', true);
+  }
+  function ordered(map, priority) {
+    return [...map].sort((a, b) => {
+      const ap = priority.indexOf(a[0]), bp = priority.indexOf(b[0]);
+      if (ap !== bp) return (ap < 0 ? 999 : ap) - (bp < 0 ? 999 : bp);
+      return a[1].localeCompare(b[1]);
+    }).map(entry => entry[1]);
+  }
+  ordered(types, FilamentPriority).forEach(type =>
+    appendFilterOption('#FilatypeList', type, 'filatype', '', FilaClick));
+  ordered(vendors, VendorPriority).forEach(vendor =>
+    appendFilterOption('#VendorList', vendor, 'vendor', '', VendorClick));
+  $('#FilatypeList input, #VendorList input').prop('checked', true);
+  if ($('#ItemBlockArea input:checked').length === 0) ChooseDefaultFilament();
+  SortFilament();
 }
 
+function appendFilterOption(parent, value, attribute, extra, handler)
+{
+  const input = $('<input type="checkbox">').addClass('inputIndent').attr(attribute, value)
+    .on('change', handler);
+  if (attribute === 'mode') input.attr('nozzle', extra);
+  $('<label>').addClass('checkboxText filter-option').append(input, $('<span>').text(value))
+    .appendTo(parent);
+}
 
 function ChooseAllMachine()
 {
@@ -331,207 +273,82 @@ function VendorClick()
 
 function SortFilament()
 {
-	let FilaNodes=$("#ItemBlockArea div");
-	let nFilament=FilaNodes.length;
-	//$("#ItemBlockArea .MItem").hide();
-	
-	//ModelList
-	let pModel=$("#MachineList input:checked");
-	let nModel=pModel.length;
-	let ModelList=new Array();
-	for(let n=0;n<nModel;n++)
-	{
-		let OneModel=pModel[n];
-		
-		let mName=OneModel.getAttribute("mode");
-		if( mName=='all' )
-		{
-			continue;
-		}
-		else
-		{
-			let mNozzle=OneModel.getAttribute("nozzle");
-			let NozzleArray=mNozzle.split(';');
-			
-			for( let bb=0;bb<NozzleArray.length;bb++ )
-			{
-				let NewModel='['+mName+'++'+NozzleArray[bb]+']';
-			
-				ModelList.push( NewModel );
-			}
-		}
-	}
-	
-	//TypeList
-	let pType=$("#FilatypeList input:gt(0):checked");
-	let nType=pType.length;
-	let TypeList=new Array();
-	for(let n=0;n<nType;n++)
-	{
-		let OneType=pType[n];
-		TypeList.push(  OneType.getAttribute("filatype") );
-	}	
-	
-	//VendorList
-	let pVendor=$("#VendorList input:gt(0):checked");
-	let nVendor=pVendor.length;
-	let VendorList=new Array();
-	for(let n=0;n<nVendor;n++)
-	{
-		let OneVendor=pVendor[n];
-		VendorList.push(  OneVendor.getAttribute("vendor") );
-	}		
-	
-	
-	//Update Filament UI
-	for(let m=0;m<nFilament;m++)
-	{
-		let OneNode=FilaNodes[m];
-		let OneFF=OneNode.getElementsByTagName("input")[0];
-		
-	    let fModel=OneFF.getAttribute("model");
-		let fVendor=OneFF.getAttribute("vendor");
-		let fType=OneFF.getAttribute("filatype");
-		let fName=OneFF.getAttribute("name");
-		
-		if(TypeList.in_array(fType) && VendorList.in_array(fVendor))
-		{
-			let HasModel=false;
-			for(let m=0;m<ModelList.length;m++)
-			{
-				let ModelSrc=ModelList[m];
-				
-				if( fModel.indexOf(ModelSrc)>=0)
-				{
-					HasModel=true;
-					break;
-				}
-			}
-			
-			if(HasModel || fModel=='')
-			    $(OneNode).show();
-			else
-				$(OneNode).hide();
-		}
-		else
-			$(OneNode).hide();
-	}
+  const selectedModels = [];
+  $('#MachineList input:gt(0):checked').each(function() {
+    const model = $(this).attr('mode');
+    for (const nozzle of String($(this).attr('nozzle') || '').split(';')) {
+      if (nozzle) selectedModels.push('[' + model + '++' + nozzle + ']');
+    }
+  });
+  const types = new Set($('#FilatypeList input:gt(0):checked').map(function() {
+    return $(this).attr('filatype');
+  }).get());
+  const vendors = new Set($('#VendorList input:gt(0):checked').map(function() {
+    return $(this).attr('vendor');
+  }).get());
+  const terms = searchTags.concat(String($('#filamentSearch').val() || '').trim().toLowerCase() || [])
+    .filter(Boolean);
+  let visible = 0;
+  $('#ItemBlockArea .filament-row').each(function() {
+    const row = $(this), input = row.find('input');
+    const compatibility = row.data('models') || [];
+    const modelMatch = selectedModels.length === 0 || compatibility.some(value =>
+      !value || selectedModels.some(model => value.includes(model)));
+    const typeMatch = types.size === 0 || types.has(input.attr('filatype'));
+    const vendorMatch = vendors.size === 0 || vendors.has(input.attr('vendor'));
+    const haystack = [input.attr('name'), input.attr('vendor'), input.attr('filatype')]
+      .join(' ').toLowerCase();
+    const textMatch = terms.length === 0 || terms.some(term => haystack.includes(term));
+    const show = (selectedModels.length + types.size + vendors.size > 0) &&
+      modelMatch && typeMatch && vendorMatch && textMatch;
+    row.toggle(show);
+    if (show) visible++;
+  });
+  const format = GetCurrentPlainTextByKey('t254') || 'Filter results: {n} matches';
+  $('#filterResultText').text(format.split('{n}').join(String(visible)));
+  $('#filamentEmpty').prop('hidden', visible !== 0);
+  updateFilterCount('MachineList', 'printerCount');
+  updateFilterCount('FilatypeList', 'filatypeCount');
+  updateFilterCount('VendorList', 'vendorCount');
+  updateSelectAllCheckbox();
+}
+
+function updateFilterCount(list, count)
+{
+  $('#' + count).text('(' + $('#' + list + ' input:gt(0):checked').length +
+    '/' + $('#' + list + ' input:gt(0)').length + ')');
+}
+
+function updateSelectAllCheckbox()
+{
+  const visible = $('#ItemBlockArea .filament-row:visible input');
+  const selected = visible.filter(':checked').length;
+  $('#SelectAllCheckbox').prop('checked', visible.length > 0 && selected === visible.length)
+    .prop('indeterminate', selected > 0 && selected < visible.length);
+}
+
+function SelectAllFilament(select)
+{
+  $('#ItemBlockArea .filament-row:visible input').prop('checked', Boolean(select));
+  updateSelectAllCheckbox();
 }
 
 function ChooseDefaultFilament()
 {
-	//ModelList
-	let pModel=$("#MachineList input:gt(0):checked");
-	let nModel=pModel.length;
-	let ModelList=new Array();
-	for(let n=0;n<nModel;n++)
-	{
-		let OneModel=pModel[n];
-		ModelList.push(  OneModel.getAttribute("mode") );
-	}	
-	
-	//Filament
-	let FilaNodes=$("#ItemBlockArea .MItem");
-    let nFilament=FilaNodes.length;
-    for(let m=0;m<nFilament;m++)
-	{
-		let OneNode=FilaNodes[m];
-		let OneFF=OneNode.getElementsByTagName("input")[0];
-		$(OneFF).prop("checked",false);
-		
-	    let fModel=OneFF.getAttribute("model");
-		
-		let HasModel=false;
-		for(let m=0;m<nModel;m++)
-		{
-			let ModelSrc=ModelList[m];
-		
-			if( fModel.indexOf(ModelSrc)>=0)
-			{
-				HasModel=true;
-				break;
-			}
-		}
-			
-		if(HasModel)
-		    $(OneFF).prop("checked",true);
-	}
-	
-	ShowNotice(0);
-}
-
-function SelectAllFilament( nShow )
-{
-	if( nShow==0 )
-	{
-		$('#ItemBlockArea input').prop("checked",false);
-	}
-	else
-	{
-		$('#ItemBlockArea input').prop("checked",true);
-	}
-}
-
-function ChooseDefaultFilament()
-{
-	//ModelList
-	let pModel=$("#MachineList input:gt(0)");
-	let nModel=pModel.length;
-	let ModelList=new Array();
-	for(let n=0;n<nModel;n++)
-	{
-		let OneModel=pModel[n];
-		ModelList.push(  OneModel.getAttribute("mode") );
-	}	
-	
-	//DefaultMaterialList
-	let DefaultMaterialString=new Array();
-	let nMode=m_ProfileItem["model"].length;
-	for(let n=0;n<nMode;n++)
-	{
-		let OneMode=m_ProfileItem["model"][n];
-		let ModeName=OneMode['model'];
-        let DefaultM=OneMode['materials'];
-		
-		if( ModelList.indexOf(ModeName)>-1 )	
-		{
-			DefaultMaterialString+=OneMode['materials']+';';
-		}
-	}	
-	
-	let DefaultMaterialArray=DefaultMaterialString.split(';');
-	//alert(DefaultMaterialString);
-	
-	//Filament
-	let FilaNodes=$("#ItemBlockArea input");
-    let nFilament=FilaNodes.length;
-    for(let m=0;m<nFilament;m++)
-	{
-		let OneFF=FilaNodes[m];
-		$(OneFF).prop("checked",false);
-		
-	  let filamentList=OneFF.getAttribute("filalist"); 
-		//alert(filamentList);
-		let filamentArray=filamentList.split(';')
-		
-		let HasModel=false;
-		let NowFilaLength=filamentArray.length;
-		for(let p=0;p<NowFilaLength;p++)
-		{
-			let NowFila=filamentArray[p];
-		
-			if( NowFila!='' && DefaultMaterialArray.indexOf(NowFila)>-1)
-			{
-				HasModel=true;
-				break;
-			}
-		}
-			
-		if(HasModel)
-		    $(OneFF).prop("checked",true);
-	}
-	
-	ShowNotice(0);
+  const models = new Set($('#MachineList input:gt(0)').map(function() {
+    return $(this).attr('mode');
+  }).get());
+  const defaults = new Set();
+  for (const model of (m_ProfileItem.model || [])) {
+    if (models.has(model.model)) {
+      String(model.materials || '').split(';').filter(Boolean).forEach(name => defaults.add(name));
+    }
+  }
+  $('#ItemBlockArea .filament-row').each(function() {
+    const names = $(this).data('filamentKeys') || [];
+    $(this).find('input').prop('checked', names.some(name => defaults.has(name)));
+  });
+  ShowNotice(0);
 }
 
 function ShowNotice( nShow )
@@ -561,16 +378,15 @@ function ResponseFilamentResult()
 	}
 	
 	let FilaArray=new Array();
+	let seen = new Set();
 	for(let n=0;n<nAll;n++)
 	{
-		let sName=FilaSelectedList[n].getAttribute("name");
-		
-	    for( let key in m_ProfileItem['filament'] )
-	    {
-			let FName=GetFilamentShortname(key);
-			
-			if(FName==sName)
-				FilaArray.push(key);
+		let names = $(FilaSelectedList[n]).closest('.filament-row').data('filamentKeys') || [];
+		for (const name of names) {
+			if (!seen.has(name)) {
+				seen.add(name);
+				FilaArray.push(name);
+			}
 		}
 	}
 	
@@ -623,6 +439,7 @@ function OnSelectMenu( nIndex )
 			$('#CustomFilamentBtn').addClass('TitleUnselected').removeClass('TitleSelected').attr('aria-pressed', 'false');
 			$('#SystemFilamentsArea').css('display','flex');
 			$('#CustomFilamentsArea').css('display','none');
+			updateSelectAllCheckbox();
 			break;
 		case 2:
 			$('#CustomFilamentBtn').addClass('TitleSelected').removeClass('TitleUnselected').attr('aria-pressed', 'true');
@@ -650,28 +467,95 @@ function TestCustomFilaments()
 	HandleStudio(tItem);
 }
 
-function UpdateCustomFilaments( CFList )
+function UpdateCustomFilaments(CFList)
 {
-	let strHtml='';
-	let nTotal=CFList.length;
-	
-	for(let n=0;n<nTotal;n++)
-	{
-		let pItem=CFList[n];
-		
-		let F_id=pItem['id'];
-		let F_name=pItem['name'];
-		
-		let strAdd='<div class="CFilament_Item">'+
-			       '<span class="CFilament_Name" title="'+F_name+'">'+F_name+'</span><button type="button" onClick="CFEdit(\''+F_id+'\')" class="CFilament_EditBtn" aria-label="Edit '+F_name+'"><img src="../../image/edit.svg" alt="" /></button>'+
-		           '</div>';
-		
-		strHtml+=strAdd;
-	}
-	
-	$('#CFilament_List').html(strHtml);
+  customFilaments = Array.isArray(CFList) ? CFList.slice() : [];
+  renderCustomFilaments();
 }
 
+function renderCustomFilaments()
+{
+  const list = customFilaments.slice();
+  const order = $('#CFilament_Sort').val() || 'newest';
+  const countText = GetCurrentPlainTextByKey('t242') || 'Custom inks: 0';
+  $('#CFilament_Count').text(countText.replace(/0/g, String(list.length)));
+  $('#CFilament_Empty').prop('hidden', list.length !== 0);
+  $('#CFilament_Btn_Area').toggle(list.length !== 0);
+  $('#CFilament_Sort').prop('disabled', list.length === 0);
+  const host = $('#CFilament_List').empty();
+  if (!list.length) return;
+  const name = item => String(item.name || '');
+  const type = item => String(item.type || '');
+  const date = item => String(item.create_time || item.date || '');
+  if (order === 'type') {
+    list.sort((a, b) => type(a).localeCompare(type(b)) || name(a).localeCompare(name(b)));
+  } else {
+    list.sort((a, b) => {
+      const compare = date(a).localeCompare(date(b));
+      return (order === 'oldest' ? compare : -compare) || name(a).localeCompare(name(b));
+    });
+  }
+  function addGroup(title, items) {
+    if (!items.length) return;
+    const group = $('<section>').addClass('customGroup');
+    const heading = $('<button type="button">').addClass('customGroupHeading')
+      .attr('aria-expanded', 'true').text(title + ' (' + items.length + ')');
+    const body = $('<div>').addClass('customGroupBody');
+    heading.on('click', function() {
+      const expanded = heading.attr('aria-expanded') === 'true';
+      heading.attr('aria-expanded', String(!expanded));
+      body.prop('hidden', expanded);
+    });
+    items.forEach(item => appendCustomRow(body, item));
+    group.append(heading, body).appendTo(host);
+  }
+  if (order === 'newest') {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const week = today - 7 * 86400000;
+    const todayItems = [], weekItems = [], earlierItems = [];
+    list.forEach(item => {
+      const timestamp = Date.parse(date(item).replace(/-/g, '/'));
+      if (Number.isFinite(timestamp) && timestamp >= today) todayItems.push(item);
+      else if (Number.isFinite(timestamp) && timestamp >= week) weekItems.push(item);
+      else earlierItems.push(item);
+    });
+    addGroup(GetCurrentPlainTextByKey('t255') || 'Today', todayItems);
+    addGroup(GetCurrentPlainTextByKey('t256') || 'This week', weekItems);
+    addGroup(GetCurrentPlainTextByKey('t257') || 'Earlier', earlierItems);
+  } else if (order === 'type') {
+    const groups = new Map();
+    list.forEach(item => {
+      const key = type(item) || GetCurrentPlainTextByKey('t245') || 'Ink type';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    });
+    groups.forEach((items, title) => addGroup(title, items));
+  } else {
+    list.forEach(item => appendCustomRow(host, item));
+  }
+}
+
+function appendCustomRow(host, item)
+{
+  const id = String(item.id || '');
+  const name = String(item.name || '');
+  const row = $('<div>').addClass('CFilament_Item');
+  $('<span>').addClass('CFilament_Name').attr('title', name).text(name).appendTo(row);
+  $('<span>').addClass('CFilament_Type').text(String(item.type || '')).appendTo(row);
+  $('<span>').addClass('CFilament_Date').text(String(item.create_time || item.date || '').slice(0, 10)).appendTo(row);
+  const edit = $('<button type="button">').addClass('CFilament_EditBtn')
+    .attr('aria-label', GetCurrentPlainTextByKey('t128') + ' ' + name)
+    .on('click', function() { CFEdit(id); });
+  $('<img>').attr({src: '../../image/edit.svg', alt: ''}).appendTo(edit);
+  row.append(edit);
+  const remove = $('<button type="button">').addClass('CFilament_DeleteBtn')
+    .attr('aria-label', GetCurrentPlainTextByKey('t88') + ' ' + name)
+    .on('click', function() { CFDelete(id, name); });
+  $('<img>').attr({src: '../../image/delete.svg', alt: ''}).appendTo(remove);
+  row.append(remove);
+  host.append(row);
+}
 
 function OnClickCustomFilamentAdd()
 {
@@ -695,6 +579,16 @@ function CFEdit( fid )
 	tSend['id']=fid;
 		
 	SendWXMessage( JSON.stringify(tSend) );	
+}
+
+function CFDelete(fid, name)
+{
+	var tSend = {};
+	tSend['sequence_id'] = Math.round(new Date() / 1000);
+	tSend['command'] = 'delete_custom_filament';
+	tSend['id'] = fid;
+	tSend['name'] = name;
+	SendWXMessage(JSON.stringify(tSend));
 }
 
 

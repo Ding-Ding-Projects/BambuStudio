@@ -2,6 +2,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/MultiNozzleSync.hpp"
 #include "GUI_App.hpp"
+#include "Plater.hpp"
 #include "DeviceCore/DevConfigUtil.h"
 #include <boost/log/trivial.hpp>
 #include <cassert>

@@ -81,6 +81,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/StateHandler.hpp
     GUI/Widgets/TabCtrl.cpp
     GUI/Widgets/TabCtrl.hpp
+    GUI/Widgets/TextTabbar.cpp
+    GUI/Widgets/TextTabbar.hpp
     GUI/Widgets/TextInput.cpp
     GUI/Widgets/TextInput.hpp
     GUI/Widgets/BoundedRegex.cpp
@@ -127,6 +129,12 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/SideTools.hpp
     GUI/Widgets/WebView.cpp
     GUI/Widgets/WebView.hpp
+    GUI/Widgets/WebViewTraceLogger.cpp
+    GUI/Widgets/WebViewTraceLogger.hpp
+    GUI/Widgets/WebViewWatcher.cpp
+    GUI/Widgets/WebViewWatcher.hpp
+    GUI/DeviceWeb/DeviceWebHealth.cpp
+    GUI/DeviceWeb/DeviceWebHealth.hpp
     GUI/Widgets/ErrorMsgStaticText.cpp
     GUI/Widgets/ErrorMsgStaticText.hpp
     GUI/Widgets/MultiNozzleSync.hpp
@@ -189,6 +197,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Gizmos/GLIconGlyphBridge.hpp
     GUI/Gizmos/GLGizmosCommon.cpp
     GUI/Gizmos/GLGizmosCommon.hpp
+    GUI/Gizmos/FacetPicker.cpp
+    GUI/Gizmos/FacetPicker.hpp
     GUI/Gizmos/GLGizmoBase.cpp
     GUI/Gizmos/GLGizmoBase.hpp
     GUI/Gizmos/GLGizmoMove.cpp
@@ -235,6 +245,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/UIHelpers/MeshBooleanUI.hpp
     GUI/UIHelpers/TextEllipsis.cpp
     GUI/UIHelpers/TextEllipsis.hpp
+    GUI/UIHelpers/ImGuiFilamentWidgets.cpp
+    GUI/UIHelpers/ImGuiFilamentWidgets.hpp
     GUI/GLSelectionRectangle.cpp
     GUI/GLSelectionRectangle.hpp
     GUI/Gizmos/GizmoObjectManipulation.cpp
@@ -263,6 +275,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/AMSDryControl.hpp
     GUI/AMSMaterialsSetting.cpp
     GUI/AMSMaterialsSetting.hpp
+    GUI/AMSRFIDMaterialView.cpp
+    GUI/AMSRFIDMaterialView.hpp
+    GUI/FilamentSelectDialog.cpp
+    GUI/FilamentSelectDialog.hpp
     GUI/ExtrusionCalibration.cpp
     GUI/ExtrusionCalibration.hpp
     GUI/PresetHints.cpp
@@ -340,6 +356,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Plater.hpp
     GUI/PartPlate.cpp
     GUI/PartPlate.hpp
+    GUI/WipeTowerPlacement.cpp
+    GUI/WipeTowerPlacement.hpp
     GUI/UserNotification.cpp
     GUI/UserNotification.hpp
     GUI/PresetComboBoxes.hpp
@@ -434,6 +452,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/OG_CustomCtrl.hpp
     GUI/MarkdownTip.cpp
     GUI/MarkdownTip.hpp
+    GUI/ParamTooltip.cpp
+    GUI/ParamTooltip.hpp
+    GUI/WindowShadow.cpp
+    GUI/WindowShadow.hpp
     GUI/2DBed.cpp
     GUI/2DBed.hpp
     GUI/3DBed.cpp
@@ -462,6 +484,14 @@ set(SLIC3R_GUI_SOURCES
     GUI/TextureImportDialog.cpp
     GUI/ModelPreviewDialog.hpp
     GUI/ModelPreviewDialog.cpp
+    GUI/MixingKitsHelpDialog.hpp
+    GUI/MixingKitsHelpDialog.cpp
+    GUI/TextureImportUi.hpp
+    GUI/TextureImportUi.cpp
+    GUI/TextureImportOverLimitDialog.hpp
+    GUI/TextureImportOverLimitDialog.cpp
+    GUI/TextureImportPopupDismiss.hpp
+    GUI/TextureImportPopupDismiss.cpp
     GUI/FilamentPickerDialog.cpp
     GUI/FilamentPickerDialog.hpp
     GUI/FilamentBitmapUtils.cpp
@@ -676,6 +706,10 @@ set(SLIC3R_GUI_SOURCES
     GUI/SafetyOptionsDialog.cpp
     GUI/CreatePresetsDialog.hpp
     GUI/CreatePresetsDialog.cpp
+    GUI/CreateFilamentWebDialog.hpp
+    GUI/CreateFilamentWebDialog.cpp
+    GUI/EditFilamentWebDialog.hpp
+    GUI/EditFilamentWebDialog.cpp
     Utils/json_diff.hpp
     Utils/json_diff.cpp
     GUI/KBShortcutsDialog.hpp

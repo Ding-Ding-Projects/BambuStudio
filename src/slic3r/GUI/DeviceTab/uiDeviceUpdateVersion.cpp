@@ -66,11 +66,23 @@ void uiDeviceUpdateVersion::SetVersion(const wxString& cur_version, const wxStri
     }
 }
 
+wxString uiDeviceUpdateVersion::GetInfoText() const
+{
+    return wxString::Format("%s %s\n%s %s\n%s %s",
+                            _L(MODEL_STR), m_dev_name->GetLabel(),
+                            _L(SERIAL_STR), m_dev_snl->GetLabel(),
+                            _L(VERSION_STR), m_dev_version->GetLabel());
+}
+
 void uiDeviceUpdateVersion::CreateWidgets()
 {
     m_dev_name = new Label(this, "-");
     m_dev_snl = new Label(this, "-");
     m_dev_version = new Label(this, "-");
+
+    enable_static_text_copy_menu(m_dev_name);
+    enable_static_text_copy_menu(m_dev_snl);
+    enable_static_text_copy_menu(m_dev_version);
 
     wxStaticText* serial_text = new Label(this, _L(SERIAL_STR));
     wxStaticText* version_text = new Label(this, _L(VERSION_STR));

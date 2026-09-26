@@ -24,9 +24,9 @@
 <div id="SystemFilamentsArea">
 	<div id="leftBlock" class="ChooseBlock">
     <div id="printerShow">
-      <div id="printerBtn" class="CNameBlock">
+      <div id="printerBtn" class="CNameBlock" role="button" tabindex="0" aria-expanded="true" aria-controls="MachineList">
         <img class="inlineAlign CNameIcon" src="../img/printer.svg" />
-        <span class="trans inlineAlign" tid="t15">printer</span>
+        <span class="trans inlineAlign" tid="t15">printer</span><span id="printerCount" class="filterCount"></span>
         <div class="CArrow inlineAlign"></div>
       </div>
       <div id="MachineList" class="CValues">
@@ -38,9 +38,9 @@
       </div>
     </div>
     <div id="vendorShow">
-      <div id="vendorBtn" class="CNameBlock">
+      <div id="vendorBtn" class="CNameBlock" role="button" tabindex="0" aria-expanded="true" aria-controls="VendorList">
         <img class="inlineAlign CNameIcon" src="../img/vendor.svg" />
-        <span class="trans inlineAlign" tid="t17">vendor</span>
+        <span class="trans inlineAlign" tid="t17">vendor</span><span id="vendorCount" class="filterCount"></span>
         <div class="CArrow inlineAlign"></div>
       </div>
       <div id="VendorList" class="CValues">
@@ -52,9 +52,9 @@
       </div>
     </div>
     <div id="filatypeShow">
-      <div id="filatypeBtn" class="CNameBlock">
+      <div id="filatypeBtn" class="CNameBlock" role="button" tabindex="0" aria-expanded="true" aria-controls="FilatypeList">
         <img class="inlineAlign CNameIcon" src="../img/filament.svg" />
-        <span class="trans inlineAlign" tid="t16">filament type</span>
+        <span class="trans inlineAlign" tid="t16">filament type</span><span id="filatypeCount" class="filterCount"></span>
         <div class="CArrow inlineAlign"></div>
       </div>
       <div id="FilatypeList" class="CValues">
@@ -67,7 +67,10 @@
     </div>
   </div>
   <div id="rightBlock" class="ChooseBlock">
-    <div class="SelectAll"><input id="SelectAllCheckbox" type="checkbox" /><span class="trans" tid="t150">Select All</span></div>
+    <div class="filterSearch"><label class="trans" tid="t253" for="filamentSearch">Search ink name and type</label><input id="filamentSearch" type="search" class="trans" data-ph-tid="t253" placeholder="Search ink name and type" autocomplete="off" /><button id="addSearchTag" type="button" class="trans" tid="t237">Filter</button></div>
+    <div id="searchTags" class="searchTags"></div>
+    <div class="filterSummary"><label class="SelectAll"><input id="SelectAllCheckbox" type="checkbox" /><span class="trans" tid="t150">Select All</span></label><span id="filterResultText" aria-live="polite"></span></div>
+    <div id="filamentEmpty" class="listEmpty trans" tid="t241" hidden>Filter results: 0 matches</div>
     <div id="ItemBlockArea" class="ZScrol">
       <!-- <div><input type="checkbox" />BBL PA-CF</div>	
       <div><input type="checkbox" />Geneic ABS</div>
@@ -127,7 +130,11 @@
 <div id="CustomFilamentsArea">
 	<div id="CFilament_Btn_Area">
 		<button type="button" class="SmallBtn_Green trans" tid="t111" onClick="OnClickCustomFilamentAdd()">Create New</button>
+		<span id="CFilament_Count" aria-live="polite"></span>
+		<label class="trans" tid="t245" for="CFilament_Sort">Ink type</label>
+		<select id="CFilament_Sort"><option class="trans" tid="t243" value="newest">Time: Newest first</option><option class="trans" tid="t244" value="oldest">Time: Oldest first</option><option class="trans" tid="t245" value="type">Ink type</option></select>
 	</div>
+    <div id="CFilament_Empty" class="listEmpty" hidden><span class="trans" tid="t246">No custom inks</span><button type="button" class="trans" tid="t247" onClick="OnClickCustomFilamentAdd()">New custom ink</button></div>
     <div id="CFilament_List" class="ZScrol">
 <!--		<div class="CFilament_Item">
 			<a  class="CFilament_Name" title="New Custom XXXXXXXXXXXXXXXXXXXXXXXXXX">New Custom XXXXXXXXXXXXXXXXXXXXXXXXXX</a><img class="CFilament_EditBtn" src="../../image/edit.svg" />

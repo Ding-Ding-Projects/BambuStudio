@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 #include <filesystem>
 #include <boost/filesystem/path.hpp>
@@ -114,7 +115,7 @@ wxDECLARE_EVENT(EVT_REPAIR_MODEL,        wxCommandEvent);
 wxDECLARE_EVENT(EVT_FILAMENT_COLOR_CHANGED,        wxCommandEvent);
 wxDECLARE_EVENT(EVT_INSTALL_PLUGIN_NETWORKING,        wxCommandEvent);
 wxDECLARE_EVENT(EVT_INSTALL_PLUGIN_HINT,        wxCommandEvent);
-wxDECLARE_EVENT(EVT_UPDATE_PLUGINS_WHEN_LAUNCH,        wxCommandEvent);
+// EVT_UPDATE_PLUGINS_WHEN_LAUNCH: declared in NotificationManager.hpp (used by basic_notifications).
 wxDECLARE_EVENT(EVT_PREVIEW_ONLY_MODE_HINT,        wxCommandEvent);
 wxDECLARE_EVENT(EVT_GLCANVAS_COLOR_MODE_CHANGED,   SimpleEvent);
 wxDECLARE_EVENT(EVT_ENABLE_GCODE_OPTION_ITEM_CHANGED, SimpleEvent);
@@ -213,6 +214,9 @@ public:
     // Bulk filament actions dialog: set preset / set colour / delete across the
     // checked physical slots, plus append N filaments, applied in one batch.
     void bulk_filament_actions();
+    // Batch-add physical filaments (physical-first). Returns the starting physical
+    // index, or size_t(-1) if nothing was added. Truncates to ExtruderMax.
+    size_t add_custom_filaments(const std::vector<std::pair<wxColour, std::string>>& items);
     void scroll_filament_area_to_bottom();
     bool is_new_project_in_gcode3mf();
     // BBS
@@ -323,6 +327,7 @@ private:
                                          std::vector<std::string>& types,
                                          std::vector<size_t>* config_indices = nullptr);
     void  auto_calc_flushing_volumes_internal(const int filament_id, const int extruder_id);
+    void  finalize_auto_calc_flushing_volumes();
     void  update_bed_thumbnail(std::string path);
 
 private:
@@ -555,7 +560,7 @@ public:
     bool reset(bool apply_presets_change = false);
     void reset_with_confirm();
     //BBS: return int for various result
-    int close_with_confirm(std::function<bool(bool yes_or_no)> second_check = nullptr); // BBS close project
+    int close_with_confirm(std::function<bool(bool yes_or_no)> second_check = nullptr, bool allow_cancel = true); // BBS close project
     //BBS: trigger a restore project event
     void trigger_restore_project(int skip_confirm = 0);
     bool delete_object_from_model(size_t obj_idx, bool refresh_immediately = true); // BBS support refresh immediately
@@ -759,6 +764,15 @@ public:
     int get_publish_finished_event();
 
     void set_current_canvas_as_dirty();
+    // Thin canvas facades — prefer these over including GLCanvas3D.hpp in leaf .cpp files.
+    void schedule_extra_frame(int miliseconds = 0);
+    void highlight_toolbar_item(const std::string &item_name);
+    void highlight_gizmo(const std::string &gizmo_name);
+    // Same semantics as canvas3D()->deselect_all() (current canvas), unlike deselect_all() which always hits View3D.
+    void deselect_current_canvas();
+    wxWindow *get_assemble_wxglcanvas();
+    bool is_allow_x_ray_in_assembly();
+    bool get_orient_min_area();
     void unbind_canvas_event_handlers();
     void reset_canvas_volumes();
 
@@ -1106,7 +1120,12 @@ public:
     void    SetPlateIndexByRightMenuInLeftUI(int);
     static bool has_illegal_filename_characters(const wxString& name);
     static bool has_illegal_filename_characters(const std::string& name);
+    // For paths that get rendered into the home page HTML: checks the whole path, not just the
+    // file name, and only for characters that break out of HTML rather than the file name rules.
+    static bool has_html_unsafe_path_characters(const wxString& path);
+    static bool has_html_unsafe_path_characters(const std::string& path);
     static void show_illegal_characters_warning(wxWindow* parent);
+    static void show_unsafe_path_warning(wxWindow* parent);
 
 
     std::string get_preview_only_filename() { return m_preview_only_filename; };

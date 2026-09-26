@@ -160,6 +160,12 @@ function Set-StrawberryPerlFirst {
     if ($null -eq $perl -or $perl.Source -notlike "$perlBin*") {
         throw "Strawberry Perl is not first on PATH after reordering (resolved '$($perl.Source)')."
     }
+    # Strawberry Perl does not provide the C.UTF-8 locale inherited from some
+    # build shells. Select a portable locale for this build process before
+    # probing Perl or invoking dependency configure scripts.
+    $env:LANG = 'C'
+    $env:LC_ALL = 'C'
+    $env:LC_CTYPE = 'C'
     & $perl.Source -MLocale::Maketext::Simple -e 1 2>$null
     if ($LASTEXITCODE -ne 0) {
         throw "The perl at $($perl.Source) cannot load Locale::Maketext::Simple, which OpenSSL's Configure requires."

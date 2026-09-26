@@ -754,7 +754,7 @@ void Button::render(wxDC& dc)
     // IconButton stays exactly centered; legacy raster call sites keep their gap.
     const bool tightCenter = drawGlyph || (m_md3_variant && m_variant == Variant::IconButton);
 
-    auto szContent = textSize;
+    auto szContent = text.IsEmpty() ? wxSize(0, 0) : textSize;
     if (hasIcon) {
         if (szContent.y > 0 && !(tightCenter && text.IsEmpty())) {
             //BBS norrow size between text and icon

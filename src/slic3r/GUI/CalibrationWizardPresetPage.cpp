@@ -1117,7 +1117,7 @@ wxSizer* CalibrationPresetPage::create_slot_items_sizer(wxPanel* slot_items_pane
 
         fcb->Bind(EVT_CALI_TRAY_CHANGED, &CalibrationPresetPage::on_select_tray, this);
 
-        radio_btn->Bind(wxEVT_RADIOBUTTON, [this, fcb](wxCommandEvent &evt) {
+        radio_btn->Bind(wxEVT_TOGGLEBUTTON, [this, fcb](wxCommandEvent &evt) {
             /* Ensure manual calibration uses exactly one selected filament across all nozzle panels. */
             manage_filament_radio_btn(fcb);
 
@@ -1511,6 +1511,9 @@ void CalibrationPresetPage::check_nozzle_diameter_for_auto_cali()
             m_nozzle_diameter_tips->Show();
         }
     }
+
+    Layout();
+    Fit();
 }
 
 void CalibrationPresetPage::check_filament_compatible()
@@ -2682,7 +2685,7 @@ void CalibrationPresetPage::select_default_compatible_filament()
                 if (is_filaments_compatiable(selected_filament)) {
                     manage_filament_radio_btn(fcb);
 
-                    wxCommandEvent event(wxEVT_RADIOBUTTON);
+                    wxCommandEvent event(wxEVT_TOGGLEBUTTON);
                     event.SetEventObject(this);
                     wxPostEvent(fcb->GetRadioBox(), event);
                     Layout();
@@ -2739,7 +2742,7 @@ void CalibrationPresetPage::select_default_compatible_filament()
                 selected_filament.emplace_back(info);
                 if (preset && is_filaments_compatiable(selected_filament)) {
                     fcb->GetRadioBox()->SetValue(true);
-                    wxCommandEvent event(wxEVT_RADIOBUTTON);
+                    wxCommandEvent event(wxEVT_TOGGLEBUTTON);
                     event.SetEventObject(this);
                     wxPostEvent(fcb->GetRadioBox(), event);
                     Layout();
@@ -2785,7 +2788,7 @@ void CalibrationPresetPage::select_default_compatible_filament()
             m_filament_comboBox_list[0]->GetRadioBox()->SetValue(false);
         }
 
-        wxCommandEvent event(wxEVT_RADIOBUTTON);
+        wxCommandEvent event(wxEVT_TOGGLEBUTTON);
         event.SetEventObject(this);
         wxPostEvent(m_filament_comboBox_list[0]->GetRadioBox(), event);
         Layout();

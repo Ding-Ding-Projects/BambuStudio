@@ -6,6 +6,7 @@
 #include "libslic3r/Thread.hpp"
 #include "GUI.hpp"
 #include "GUI_App.hpp"
+#include "DeviceCore/DevHMSQuery.h"
 #include "GUI_Preview.hpp"
 #include "MainFrame.hpp"
 #include "format.hpp"
@@ -924,7 +925,7 @@ void PrintErrorDialog::update_text_image(const wxString& text, const wxString& e
     m_vebview_release_note->SetSizer(sizer_text_release_note);
 
     if (!image_url.empty()) {
-        const wxImage& img = wxGetApp().get_hms_query()->query_image_from_local(image_url);
+        const wxImage& img = wxGetApp().get_hms_query_mgr()->query_image_from_local(image_url);
         if (!img.IsOk() && image_url.Contains("http"))
         {
             web_request = wxWebSession::GetDefault().CreateRequest(this, image_url);
@@ -1680,6 +1681,8 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     Fit();
     UpdateShape();
 
+    // for some reason Fit() failed its job here so we do this again
+    SetSize(GetBestSize());
     CentreOnParent(wxBOTH);
     Move(wxPoint(GetScreenPosition().x, GetScreenPosition().y - FromDIP(50)));
     wxGetApp().UpdateDlgDarkUI(this);
@@ -1694,11 +1697,10 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
         m_status_bar->reset();
         EndModal(wxID_YES);
     });
-    Bind(wxEVT_CLOSE_WINDOW, [this](auto& e) {
+    Bind(wxEVT_CLOSE_WINDOW, [this](auto &e) {
         on_cancel();
         closeTimer->Stop();
     });
-
 }
 
 void InputIpAddressDialog::switch_input_panel(int index)

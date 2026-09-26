@@ -17,12 +17,11 @@ import './filament-manager.css';
 type TabMode = 'all' | 'ams';
 // 列表筛选项（label ↔ 本地字段 ↔ 云端字段）：
 //   Brand         brand          filamentVendor
-//   Filament Type material_type  filamentType   （类型大类，PLA / PETG / PA ...）
 //   Material Type series         filamentName   （完整名，PLA Basic / Support For PA/PET）
-type FilterKey = 'brand' | 'material_type' | 'series';
+type FilterKey = 'brand' | 'series';
 
 const FILTER_LABEL_KEYS: Record<FilterKey, string> = {
-  brand: 'Brand', material_type: 'Filament Type', series: 'Material Type',
+  brand: 'Brand', series: 'Material Type',
 };
 const FILAMENT_TABS: readonly TabMode[] = ['all', 'ams'];
 
