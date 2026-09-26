@@ -11,7 +11,11 @@
 - [ ] Verify all four Model Creator providers, both bundled renderers, local credential handling, preview retention, and explicit plate import. Live provider and hardware evidence must be labeled separately from simulated checks.
 - [ ] Verify `.bambu-workspace` opening, member save/recovery, checklist and calendar reminders, daylight-saving behavior, and portable 3MF history on a fresh profile.
 - [ ] Measure the affected native UI at normal and minimum sizes in English, Cantonese, and bilingual modes, light and dark themes, and 100/125/150/200% scale. Keep genuine captures tied to the built source and binary.
-- [ ] Integrate verified changes into `main`, confirm the remote head and hosted build, update the handoff, and complete preservation-first cleanup.
+- [ ] Finish delivery from the source already integrated into `main` at `9c731262944f5d86c0262ef008b85aab6ab0edb2`: confirm the hosted build and release, update the handoff with runtime evidence, and complete preservation-first cleanup.
+
+### Requested follow-up after this release
+
+- [ ] Add a detachable desktop widget for the full live camera stream. First prototype it in the existing wxWidgets application using the supported camera playback and authentication path. Confirm printer switching, manual stop, reconnection, privacy, keyboard access, and window-state persistence. Record a concrete limitation before considering a companion runtime. This follow-up is not implemented or verified in the current candidate.
 
 ### Preferences build repair (issue #38, 2026-09-25)
 

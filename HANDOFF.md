@@ -1,22 +1,34 @@
 # HANDOFF — read this first
 
 > [!IMPORTANT]
-> **Current task candidate, 2026-09-26 (America/Toronto):** The primary `main`
-> checkout and remote still point to `6733303f5debe32cda0eaf90b192a92899dd5984`.
-> The isolated integration branch `codex/upstream-28457` currently contains the
-> reconciled upstream `v02.08.04.57` source and the native print, LAN, camera,
-> fan, Model Creator, portable-history, workspace, calendar, and Cantonese
-> changes through `763948122`. This is a source candidate, not a shipped
-> release. Farm selection now rechecks every selected printer after shared file
-> preparation. Model Creator caps child output during execution and retains at
-> most 100 completed revisions. The final source must be integrated
-> into `main`, then built and packaged by GitHub Actions,
-> then tested and captured against that exact binary. The locally compiled
-> intermediate baseline predates several of these changes and proves neither
-> the current candidate nor the requested installed upgrade. Hardware and live
-> provider flows remain unverified. `ROADMAP.md` lists the remaining checks.
+> **Current task state, 2026-09-26 (America/Toronto):** The feature-source
+> candidate `9c731262944f5d86c0262ef008b85aab6ab0edb2` was verified on
+> remote `main` and remains an ancestor of later documentation updates.
+> This source includes the reconciled upstream `v02.08.04.57` changes, the
+> requested print, LAN, camera, fan, Model Creator, portable-history, workspace,
+> calendar, and Cantonese work, plus a hosted packaging step that compiles the
+> reviewed Cantonese catalog. It is a source candidate, not a verified release.
+> [Hosted Windows build 36271034644](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36271034644)
+> was in progress at this update. The earlier
+> [run 36270245037](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36270245037)
+> predates the catalog packaging correction. The exact final binary, unsigned
+> Squirrel package, installed version, UI captures, hardware, and live-provider
+> flows remain unverified. No local build was run for this final candidate.
+> `ROADMAP.md` lists the remaining checks.
 > Earlier sections below are historical records and must not be read as the
 > current release or current repository state.
+
+> [!NOTE]
+> **Requested next task, not implemented here:** Add a desktop widget for the
+> full live camera stream. Prefer a detachable, resizable view in the existing
+> wxWidgets application, with an optional always-on-top mode. Reuse the current
+> camera playback and authentication path instead of creating a second camera
+> session. The next owner should verify that the existing player can move into
+> a separate top-level window, and record a concrete limitation before choosing
+> a companion runtime. Keep printer switching, manual stop, reconnection,
+> connection cleanup, privacy, keyboard access, and window-state persistence
+> explicit. This is a handoff item only. There is no widget code, build, or
+> runtime verification in the current release candidate.
 
 > [!IMPORTANT]
 > **Current build repair, 2026-09-25 (America/Toronto):** `main` was verified on the
