@@ -26,6 +26,11 @@ handoff described below.
 - Loading validates the entire ZIP before extracting any entry. Extraction
   goes only into a newly created child of the caller's private staging root.
   Callers own cleanup of a successfully loaded staging directory.
+- A member with embedded portable history is checked with the bounded history
+  inspector in a disposable private store before bundle publication. Corrupt
+  history blocks replacing a valid bundle. On loading an externally changed
+  bundle, member bytes remain staged so valid geometry can still be recovered,
+  and the panel reports any corrupt member history explicitly.
 - Checklist items have stable IDs, order, completion, optional date-only
   deadlines, and links to a member or planned slot. Deadlines carry their
   chosen UTC offset for 09:00 local reminders, including daylight-saving
@@ -40,13 +45,13 @@ handoff described below.
   dismissal update the bundle immediately when it has a save path, while an
   unsaved new workspace still needs an explicit save. The defaults are 15
   minutes before a planned slot and 09:00 local time for a date-only deadline.
-- Date-only deadlines remain dates in the bundle and iCalendar export. A
-  reminder converts 09:00 on that date using the stored UTC offset. Timed
-  slots keep UTC instants and a named time zone. The editor asks separately
-  for start and end offsets, and explicitly asks the user to confirm offsets
-  for non-UTC zones, especially when a slot crosses a daylight-saving change.
-  The current editor does not resolve IANA time-zone rules automatically, so
-  it cannot detect an incorrect manually entered offset.
+- Date-only deadlines remain dates in the bundle and iCalendar export. UTC
+  deadlines with zero offset can notify at 09:00. Named non-UTC zones retain
+  their date and offset data, but their deadline notifications are paused with
+  an explicit warning until an IANA time-zone rule resolver is available.
+  This is an incomplete reminder capability, not a verified DST conversion.
+  Timed slots keep UTC instants and a named time zone. The editor asks
+  separately for start and end offsets and confirms manual non-UTC offsets.
 - Checklist JSON and CSV exports and UTC iCalendar exports contain planning
   data only. They do not include project files, credentials, or print commands.
 - Opening a member copies it to a private tab-owned 3MF path. Saving commits

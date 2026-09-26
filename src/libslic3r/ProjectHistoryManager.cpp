@@ -2229,8 +2229,10 @@ public:
         if (publish_error) result.error = {ProjectHistoryErrorCode::IoError, "Could not atomically publish the verified project archive: " + publish_error.message()};
 #endif
         if (!result.ok()) {
-            std::error_code ignored;
-            fs::remove(staged, ignored);
+            // The verified archive is the only portable recovery copy of the
+            // completed history. Keep it when atomic replacement is refused.
+            result.archive_path = staged;
+            result.error.message += "; verified pending archive retained at " + path_utf8(staged);
         } else {
             result.present = true;
             if (!write_document_owner(m_history_base, result.document_id, destination_path))

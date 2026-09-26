@@ -15,6 +15,9 @@
 #include <set>
 #include <string>
 #include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace {
 
@@ -526,6 +529,33 @@ TEST_CASE("Portable history survives a copied project and keeps its stable docum
     REQUIRE(manifest.find(legacy.version->commit_id) != std::string::npos);
     REQUIRE(manifest.find(committed.version->commit_id) != std::string::npos);
 }
+
+#ifdef _WIN32
+TEST_CASE("Failed atomic publication retains the verified history-bearing archive", "[project-history][portable]")
+{
+    TemporaryTree temporary;
+    const fs::path source = temporary.path() / "source.3mf";
+    const fs::path snapshot = temporary.path() / "model.3mf";
+    write_model_archive(snapshot);
+    Slic3r::ProjectHistoryManager manager(temporary.path() / "app");
+    REQUIRE(manager.commit_snapshot(source, snapshot).get().ok());
+    REQUIRE(manager.publish_portable_history(source, snapshot, source).get().ok());
+    const auto original = read_binary(source);
+    HANDLE hold = CreateFileW(source.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                              nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    REQUIRE(hold != INVALID_HANDLE_VALUE);
+    const auto rejected = manager.publish_portable_history(source, snapshot, source).get();
+    CloseHandle(hold);
+    REQUIRE_FALSE(rejected.ok());
+    REQUIRE(rejected.archive_path != source);
+    REQUIRE(fs::is_regular_file(rejected.archive_path));
+    REQUIRE(read_binary(source) == original);
+    const auto pending = manager.inspect_portable_history(rejected.archive_path).get();
+    INFO(pending.error.message);
+    REQUIRE(pending.ok());
+    REQUIRE(pending.present);
+}
+#endif
 
 TEST_CASE("Portable history rejects corrupt and traversal manifests without replacing a valid archive", "[project-history][portable]")
 {
