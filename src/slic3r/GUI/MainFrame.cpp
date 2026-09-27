@@ -1446,12 +1446,20 @@ std::string make_project_tab_snapshot_path()
 
 // A rejected incoming load may already have reset the single live Plater.
 // Restore the outgoing tab before returning control to the tab strip.
-bool restore_project_tab_document(Plater* plater, const ProjectTab& tab)
+bool restore_project_tab_document(Plater* plater, ProjectTabBar* tabbar, const ProjectTab& tab)
 {
     const std::string path = tab.snapshot_path.empty() ? tab.file_path : tab.snapshot_path;
-    if (!path.empty())
-        return plater->load_snapshot_from(path);
-    return plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+    const bool restored = !path.empty()
+        ? plater->load_snapshot_from(path)
+        : plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+    if (!restored)
+        return false;
+    // Restore the on-disk identity after loading a private snapshot. An empty
+    // file_path must stay empty so Save opens Save As for an Untitled tab.
+    plater->set_project_filename(wxString::FromUTF8(tab.file_path));
+    tabbar->SetActiveTitle(tab.title.IsEmpty() ? _L("Untitled") : tab.title);
+    tabbar->SetActiveDirty(tab.dirty);
+    return true;
 }
 } // namespace
 
@@ -1521,7 +1529,7 @@ void MainFrame::switch_project_tab(int target)
         ? m_plater->load_snapshot_from(load_path)
         : m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
     if (!loaded) {
-        const bool restored = restore_project_tab_document(m_plater, outgoing);
+        const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": incoming tab load failed; outgoing restored=" << restored;
         MessageDialog(this, restored ? _L("Could not open the selected project tab. The current project was restored.")
                                      : _L("Could not open the selected project tab or restore the current project."),
@@ -1605,7 +1613,7 @@ void MainFrame::close_project_tab(int index)
                 m_plater->set_project_filename(wxString::FromUTF8(next.file_path));
         }
         if (!loaded) {
-            const bool restored = restore_project_tab_document(m_plater, outgoing);
+            const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": replacement tab load failed; outgoing restored=" << restored;
             MessageDialog(this, restored ? _L("Could not close this project tab. The project was restored.")
                                          : _L("Could not close this project tab or restore its project."),
@@ -1743,7 +1751,7 @@ void MainFrame::open_workspace_member(const WorkspaceMemberSelection& selection)
     }
     if (!loaded) {
         std::filesystem::remove(std::filesystem::u8path(copied_path), error);
-        const bool restored = restore_project_tab_document(m_plater, outgoing);
+        const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": workspace member load failed; outgoing restored=" << restored;
         return;
     }
@@ -1785,7 +1793,7 @@ void MainFrame::open_project_in_tab(const wxString& filename)
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": project load threw";
     }
     if (!loaded) {
-        const bool restored = restore_project_tab_document(m_plater, outgoing);
+        const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": project load failed; outgoing restored=" << restored;
         MessageDialog(this, restored ? _L("Could not open the selected project. The current project was restored.")
                                      : _L("Could not open the selected project or restore the current project."),
