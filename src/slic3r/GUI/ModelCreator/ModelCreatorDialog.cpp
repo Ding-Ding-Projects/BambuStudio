@@ -152,8 +152,17 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
         m_renderer_path->SetValue(wxString::FromUTF8(config->get("model_creator", "renderer_path")));
     }
     if (m_provider_path->IsEmpty() && m_provider->GetSelection() < 2) {
-        const auto path = tool_on_path(static_cast<Provider>(m_provider->GetSelection()));
-        if (!path.empty()) m_provider_path->SetValue(wxString(path.wstring()));
+        const auto provider = static_cast<Provider>(m_provider->GetSelection());
+        m_provider_lookup_worker = std::thread([this, alive = m_alive, provider] {
+            const auto path = tool_on_path(provider);
+            if (!alive->load()) return;
+            wxTheApp->CallAfter([this, alive, provider, path] {
+                if (!alive->load() || path.empty() ||
+                    m_provider->GetSelection() != static_cast<int>(provider) ||
+                    !m_provider_path->IsEmpty()) return;
+                m_provider_path->SetValue(wxString(path.wstring()));
+            });
+        });
     }
     update_renderer_path();
     m_renderer->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
@@ -211,6 +220,7 @@ ModelCreatorDialog::~ModelCreatorDialog()
     m_alive->store(false);
     cancel_generation();
     if (m_history_worker.joinable()) m_history_worker.join();
+    if (m_provider_lookup_worker.joinable()) m_provider_lookup_worker.join();
     if (m_worker.joinable()) m_worker.join();
 }
 

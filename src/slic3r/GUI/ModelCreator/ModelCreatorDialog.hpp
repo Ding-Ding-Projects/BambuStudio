@@ -38,6 +38,7 @@ private:
     std::shared_ptr<std::atomic_bool> m_alive;
     std::thread m_worker;
     std::thread m_history_worker;
+    std::thread m_provider_lookup_worker;
     std::vector<Revision> m_revisions;
     bool m_busy = false;
     bool m_loading_history = false;
