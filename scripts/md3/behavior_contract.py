@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Mapping, Sequence
 
 
-CONTRACT_VERSION = 1
+CONTRACT_VERSION = 2
 LANGUAGES = frozenset({"en", "yue_HK", "bilingual_en_yue_HK"})
 STATUSES = frozenset({"probe_confirmed", "unavailable", "unverified", "blocked", "capture_only"})
 
@@ -37,10 +37,20 @@ BEHAVIOR_FLOWS = LAYOUT_FLOWS + (
     Flow("prepare-objects-search", "filtered-list-transition", ("query", "visible_result_ids")),
     Flow("prepare-keyboard-navigation", "focus-and-selection-transition", ("focused_control_id", "active_tab_id")),
     Flow("project-file-open", "owned-fixture-model-transition", ("project_path", "object_ids")),
-    Flow("project-open-responsive", "bounded-input-to-ready-transition", ("ready_state", "elapsed_ms")),
+    Flow("project-recent-open", "recent-entry-owned-fixture-model-transition",
+         ("recent_entry_id", "project_path", "object_ids")),
+    Flow("project-open-responsive", "responsive-opening-transition",
+         ("opening_state", "input_at_monotonic_ms", "ready_at_monotonic_ms", "elapsed_ms",
+          "focus_target_id", "keyboard_ack_id")),
+    Flow("model-creator-open-responsive", "responsive-opening-transition",
+         ("opening_state", "input_at_monotonic_ms", "ready_at_monotonic_ms", "elapsed_ms",
+          "focus_target_id", "keyboard_ack_id")),
     Flow("model-creator-render", "validated-mesh-render-transition", ("validated_mesh_sha256",)),
     Flow("model-creator-preview", "preview-geometry-transition", ("preview_mesh_sha256",)),
     Flow("model-creator-explicit-import", "explicit-plate-object-transition", ("plate_object_ids",)),
+    Flow("workspace-open-responsive", "responsive-opening-transition",
+         ("opening_state", "input_at_monotonic_ms", "ready_at_monotonic_ms", "elapsed_ms",
+          "focus_target_id", "keyboard_ack_id")),
     Flow("workspace-save-reopen", "archive-and-reopened-state-transition", ("workspace_id", "manifest_sha256")),
     Flow("workspace-checklist-edit", "checklist-item-roundtrip-transition", ("item_id", "item_state")),
     Flow("workspace-calendar-edit", "calendar-item-roundtrip-transition", ("event_id", "event_state")),
@@ -83,13 +93,36 @@ def _semantic_proof(row: Mapping[str, object], flow: Flow) -> bool:
     before = proof.get("before_state")
     after = proof.get("after_state")
     captures = proof.get("capture_ids")
-    return (isinstance(action, str) and bool(action.strip())
-            and isinstance(before, Mapping) and bool(before)
-            and isinstance(after, Mapping) and bool(after) and before != after
-            and all(field in before and field in after for field in flow.state_fields)
-            and isinstance(captures, list) and len(captures) >= 2
-            and all(isinstance(item, str) and bool(item.strip()) for item in captures)
-            and len(set(captures)) == len(captures))
+    valid = (isinstance(action, str) and bool(action.strip())
+             and isinstance(before, Mapping) and bool(before)
+             and isinstance(after, Mapping) and bool(after) and before != after
+             and all(field in before and field in after for field in flow.state_fields)
+             and isinstance(captures, list) and len(captures) >= 2
+             and all(isinstance(item, str) and bool(item.strip()) for item in captures)
+             and len(set(captures)) == len(captures))
+    if not valid:
+        return False
+    if flow.id == "project-recent-open":
+        return (proof.get("action_route") == "recently-opened-card"
+                and isinstance(after["recent_entry_id"], str) and bool(after["recent_entry_id"].strip())
+                and isinstance(after["project_path"], str) and after["project_path"].lower().endswith(".3mf")
+                and isinstance(after["object_ids"], list) and bool(after["object_ids"])
+                and before["object_ids"] != after["object_ids"])
+    if flow.predicate_id == "responsive-opening-transition":
+        routes = {"project-open-responsive": "file-menu",
+                  "model-creator-open-responsive": "model-creator-entry",
+                  "workspace-open-responsive": "workspace-navigation"}
+        start = after["input_at_monotonic_ms"]
+        ready = after["ready_at_monotonic_ms"]
+        elapsed = after["elapsed_ms"]
+        return (proof.get("action_route") == routes[flow.id]
+                and before["opening_state"] != "ready" and after["opening_state"] == "ready"
+                and all(type(value) in (int, float) for value in (start, ready, elapsed))
+                and start >= 0 and ready >= start and elapsed >= 0
+                and abs((ready - start) - elapsed) <= 2
+                and isinstance(after["focus_target_id"], str) and bool(after["focus_target_id"].strip())
+                and isinstance(after["keyboard_ack_id"], str) and bool(after["keyboard_ack_id"].strip()))
+    return True
 
 
 def validate_behavior_rows(scope: str, language: str,

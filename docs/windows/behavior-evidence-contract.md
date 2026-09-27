@@ -1,6 +1,6 @@
 # Hosted behavior evidence contract
 
-`scripts/md3/behavior_contract.py` defines version 1 of the required behavior
+`scripts/md3/behavior_contract.py` defines version 2 of the required behavior
 ledger for the issue #41 software flows. It is a pure validator. The hosted
 driver and collector do not call it yet, so this source change does not make a
 release or an existing capture complete.
@@ -21,12 +21,28 @@ and verifying the claimed native observations. Pixel review is still required.
 | --- | --- |
 | Prepare layout | `prepare-ink-selected`, `prepare-process-selected`, `prepare-objects-selected`, `prepare-narrow-layout` |
 | Prepare interaction | `prepare-ink-search`, `prepare-process-search`, `prepare-objects-search`, `prepare-keyboard-navigation` |
-| Project opening | `project-file-open`, `project-open-responsive` |
-| Model Creator | `model-creator-render`, `model-creator-preview`, `model-creator-explicit-import` |
-| Workspace | `workspace-save-reopen`, `workspace-checklist-edit`, `workspace-calendar-edit`, `workspace-member-reopen`, `project-portable-history` |
+| Project opening | `project-file-open`, `project-recent-open`, `project-open-responsive` |
+| Model Creator | `model-creator-open-responsive`, `model-creator-render`, `model-creator-preview`, `model-creator-explicit-import` |
+| Workspace | `workspace-open-responsive`, `workspace-save-reopen`, `workspace-checklist-edit`, `workspace-calendar-edit`, `workspace-member-reopen`, `project-portable-history` |
 | Print and device | `print-preview`, `print-nozzle-selection`, `device-unpaired-state` |
 
 The exact predicate ID for each row lives beside its ID in `BEHAVIOR_FLOWS`.
+`project-file-open` verifies loading a saved 3MF through File > Open;
+`project-recent-open` verifies a distinct recent-entry action leading to the
+owned saved model and requires `action_route: recently-opened-card`. The Model
+Creator and Workspace opening rows verify that
+their surfaces become ready for focus and keyboard input. They do not stand in
+for rendering a model or reopening saved workspace content.
+
+Each opening responsiveness row records the native input time, ready time,
+elapsed milliseconds, a focus target, and a keyboard acknowledgment. The
+validator checks that the recorded duration matches the two timestamps and
+that the target became ready. The required routes are `file-menu`,
+`model-creator-entry`, and `workspace-navigation`, respectively. It makes no
+numeric latency promise. A separate
+product requirement must set any performance threshold before an opening-speed
+claim can pass.
+
 `layout` requires only the four Prepare layout IDs. `diagnostic` requires one
 `installed-shell-diagnostic` row with `capture_only` and a capture ID. Neither
 scope can return a complete behavior verdict.
@@ -50,6 +66,7 @@ using it as a release condition. The integration must map real actions to
 these stable IDs and retain the complete validation result in the report.
 
 The negative fixtures in `scripts/md3/test-behavior-contract.py` cover missing
-and duplicate IDs, a falsely unavailable software flow, an unknown status,
-label-only evidence, and honest hardware limitations. They have not been run
+and duplicate IDs, each distinct opening row, a missing keyboard acknowledgment,
+a falsely unavailable software flow, an unknown status, label-only evidence,
+and honest hardware limitations. They have not been run
 in this source-only change.
