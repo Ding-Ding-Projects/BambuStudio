@@ -126,3 +126,33 @@ Squirrel output, inspect the README capture matrix from the built artifact, and 
 commit, Actions run, release tag, installer SHA-256, Squirrel package names, SBOM component count,
 attestation verification, immutable state, and reviewed screenshot set. A pending, cancelled, or absent
 remote result is not release proof.
+
+## Verification-only hosted workflow
+
+`.github/workflows/verify-release-evidence.yml` is an independently dispatched verification
+workflow. It never compiles the application, creates a release, changes a tag, or gates the
+publication workflow. Supply the existing immutable `release_tag`, its exact
+`expected_source_commit`, and a `verification_scope`. Start with `diagnostic` to inspect one
+English, light, 100%, 1200x800 tuple. Use `behavior` for the six language/theme hosted jobs,
+each of which records four requested scales at two viewport sizes. The verification checkout's
+commit is recorded separately from the immutable release source commit.
+
+Each job installs and validates the published Squirrel package in a fresh hosted Windows runner
+using `Verify-HostedSquirrelInstall.ps1`. It then installs the pinned headless tool and Pillow in
+job-local Python, invokes `drive-packaged-behavior.py` against the installed executable, and
+attempts the fixed eleven-surface capture. Only one behavior tuple includes the complete workflow
+drive; other tuples inspect localized layout. A diagnostic result never claims the matrix passed.
+The workflow uses a bounded timeout, two concurrent matrix jobs, no cancellation of existing runs,
+and a safe failure upload. Raw screenshots, private profiles, and unreviewed behavior reports are
+never attached in plaintext.
+
+The version 2 encrypted envelope binds the hosted run, release tag, release source commit,
+verification commit, installed executable hash, and the exact manifest of capture images,
+behavior reports, and behavior images. The manifest names each tuple and records every byte length
+and SHA-256. `Open-HostedReleaseGuiEvidence.ps1` retains schema 1 read support and requires an
+explicit expected verification commit for schema 2. It rejects duplicate names, traversal, extra
+or missing entries, invalid counts, and hash mismatches before releasing files to a new local
+directory. A partial capture can carry encrypted diagnostics, but its receipt remains explicitly
+partial and cannot be accepted as verified GUI evidence. Missing printer, camera, or provider
+access is reported separately from a failed probe, launch, or teardown. Operators must inspect
+decrypted pixels and reports for privacy before retaining or publishing them.

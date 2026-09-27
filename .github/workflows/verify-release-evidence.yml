@@ -1,0 +1,121 @@
+name: Verify published Windows release evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing immutable release tag
+        required: true
+        type: string
+      expected_source_commit:
+        description: Exact 40-character source commit of that release
+        required: true
+        type: string
+      verification_scope:
+        description: Diagnostic first, then complete behavior and layout matrix
+        required: true
+        default: behavior
+        type: choice
+        options:
+          - diagnostic
+          - behavior
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-evidence-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: ${{ inputs.verification_scope == 'diagnostic' }}
+    runs-on: windows-2025
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out verifier source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - name: Install isolated Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Verify published package and collect restricted behavior evidence
+        shell: pwsh
+        run: |
+          & scripts/ci/Invoke-HostedReleaseVerification.ps1 `
+            -Tag '${{ inputs.release_tag }}' `
+            -ExpectedSourceCommit '${{ inputs.expected_source_commit }}' `
+            -VerificationCommit $env:GITHUB_SHA `
+            -Repository $env:GITHUB_REPOSITORY `
+            -VerificationScope '${{ inputs.verification_scope }}' `
+            -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-verification')
+      - name: Upload safe verification diagnostics and encrypted evidence
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: BambuStudio_verify_${{ github.run_id }}_diagnostic
+          path: |
+            hosted-verification/install-receipt.json
+            hosted-verification/verification-receipt.json
+            hosted-verification/evidence/receipt.json
+            hosted-verification/evidence/envelope.json
+            hosted-verification/evidence/images.zip.aesgcm
+          if-no-files-found: warn
+          retention-days: 30
+  verify-matrix:
+    if: ${{ inputs.verification_scope == 'behavior' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - { language: en, theme: light }
+          - { language: en, theme: dark }
+          - { language: yue_HK, theme: light }
+          - { language: yue_HK, theme: dark }
+          - { language: bilingual_en_yue_HK, theme: light }
+          - { language: bilingual_en_yue_HK, theme: dark }
+    runs-on: windows-2025
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out verifier source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - name: Install isolated Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Verify installed release and behavior tuple matrix
+        shell: pwsh
+        run: |
+          & scripts/ci/Invoke-HostedReleaseVerification.ps1 `
+            -Tag '${{ inputs.release_tag }}' `
+            -ExpectedSourceCommit '${{ inputs.expected_source_commit }}' `
+            -VerificationCommit $env:GITHUB_SHA `
+            -Repository $env:GITHUB_REPOSITORY `
+            -VerificationScope behavior `
+            -Language '${{ matrix.language }}' `
+            -Theme '${{ matrix.theme }}' `
+            -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-verification')
+      - name: Upload safe tuple diagnostics and encrypted evidence
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: BambuStudio_verify_${{ github.run_id }}_${{ matrix.language }}_${{ matrix.theme }}
+          path: |
+            hosted-verification/install-receipt.json
+            hosted-verification/verification-receipt.json
+            hosted-verification/evidence/receipt.json
+            hosted-verification/evidence/envelope.json
+            hosted-verification/evidence/images.zip.aesgcm
+          if-no-files-found: warn
+          retention-days: 30
