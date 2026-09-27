@@ -1,113 +1,66 @@
 #!/usr/bin/env python3
-"""Validate the reviewed yue_HK catalog and compile a deterministic GNU MO."""
+"""Validate the yue_HK catalog and compile a deterministic GNU MO.
+
+Checks, in order:
+
+* the header declares ``Language: yue_HK`` (and ``Plural-Forms`` when the
+  catalog has plural entries);
+* every entry is translated, keeps its placeholders, and carries exactly one
+  ``#. reviewed-category:`` comment (plus an optional
+  ``#. review-status: agent-drafted`` marker);
+* every entry exists in the English source catalog, unless
+  ``--allow-unreferenced`` is given or the entry carries
+  ``#. source-pending: <where the source lives>`` (a translation written ahead
+  of code that has not reached this branch yet);
+* ``coverage.json`` counts match the catalog;
+* with ``--require-complete``, every English source message has a Cantonese
+  entry (``--report-missing`` writes the gap list as JSON).
+
+Context (``msgctxt``) and plural entries are compiled with the keys wxWidgets
+looks up; see ``bbl/i18n/po_catalog.py``.
+"""
 
 from __future__ import annotations
 
 import argparse
-import ast
 from collections import Counter
-import gettext
-import io
 import json
 from pathlib import Path
-import re
-import struct
 import sys
-from typing import Dict, List, Tuple
-
+from typing import Dict, List, Optional, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR.parent))
+
+from po_catalog import (  # noqa: E402  (path set up above)
+    REVIEW_STATUS_VALUES,
+    CatalogError,
+    Entry,
+    compile_mo,
+    entry_map,
+    mo_original,
+    mo_translation,
+    parse_po,
+    placeholder_signature,
+    read_mo,
+)
+
 REPO_ROOT = SCRIPT_DIR.parents[2]
 DEFAULT_PO = SCRIPT_DIR / "BambuStudio_yue_HK.po"
 DEFAULT_SOURCE = SCRIPT_DIR.parent / "en" / "BambuStudio_en.po"
 DEFAULT_COVERAGE = SCRIPT_DIR / "coverage.json"
 DEFAULT_OUTPUT = REPO_ROOT / "resources" / "i18n" / "yue_HK" / "BambuStudio.mo"
+MINIMUM_TRANSLATIONS = 150
 
-PLACEHOLDER_RE = re.compile(
-    r"%\d+%"
-    r"|%%"
-    r"|%(?:\d+\$)?[-+#0 'I]*(?:\d+|\*)?(?:\.(?:\d+|\*))?"
-    r"(?:hh|h|ll|l|j|z|t|L)?[diuoxXfFeEgGaAcspn]"
-    r"|\{\{\s*[^{}]+\s*\}\}"
-    r"|\{[A-Za-z_][^{}]*\}"
-)
+Key = Tuple[Optional[str], str]
 
 
-class CatalogError(ValueError):
-    pass
-
-
-def _quoted(value: str, path: Path, line_number: int) -> str:
-    try:
-        parsed = ast.literal_eval(value)
-    except (SyntaxError, ValueError) as exc:
-        raise CatalogError(f"{path}:{line_number}: invalid PO string: {exc}") from exc
-    if not isinstance(parsed, str):
-        raise CatalogError(f"{path}:{line_number}: PO value is not a string")
-    return parsed
-
-
-def parse_po(path: Path) -> List[Dict[str, object]]:
-    entries: List[Dict[str, object]] = []
-    current: Dict[str, object] = {"categories": []}
-    active: str | None = None
-
-    def finish() -> None:
-        nonlocal current, active
-        if "msgid" in current:
-            entries.append(current)
-        current = {"categories": []}
-        active = None
-
-    lines = path.read_text(encoding="utf-8").splitlines()
-    for line_number, line in enumerate([*lines, ""], 1):
-        if not line.strip():
-            finish()
-            continue
-        if line.startswith("#. reviewed-category: "):
-            categories = current["categories"]
-            assert isinstance(categories, list)
-            categories.append(line.removeprefix("#. reviewed-category: ").strip())
-            continue
-        if line.startswith("#"):
-            continue
-
-        match = re.match(r"(msgctxt|msgid|msgid_plural|msgstr(?:\[\d+\])?)\s+(\".*\")$", line)
-        if match:
-            active = match.group(1)
-            current[active] = _quoted(match.group(2), path, line_number)
-            continue
-        if line.startswith('"') and active:
-            previous = current.get(active, "")
-            assert isinstance(previous, str)
-            current[active] = previous + _quoted(line, path, line_number)
-            continue
-        raise CatalogError(f"{path}:{line_number}: unsupported PO syntax: {line}")
-
-    return entries
-
-
-def entry_map(
-    entries: List[Dict[str, object]],
-    path: Path,
-    *,
-    allow_duplicates: bool = False,
-) -> Dict[str, Dict[str, object]]:
-    result: Dict[str, Dict[str, object]] = {}
-    for entry in entries:
-        msgid = entry.get("msgid")
-        if not isinstance(msgid, str):
-            raise CatalogError(f"{path}: catalog entry has no msgid")
-        if msgid in result:
-            if allow_duplicates:
-                continue
-            raise CatalogError(f"{path}: duplicate msgid: {msgid!r}")
-        result[msgid] = entry
-    return result
-
-
-def placeholder_signature(value: str) -> Counter[str]:
-    return Counter(PLACEHOLDER_RE.findall(value))
+def english_display(entry: Entry) -> str:
+    """The English the UI shows for a source entry: its override, else the msgid."""
+    if entry.is_plural:
+        forms = entry.forms()
+        return forms[-1] if forms and forms[-1].strip() else (entry.msgid_plural or entry.msgid)
+    return entry.msgstr if entry.msgstr.strip() else entry.msgid
 
 
 def validate_catalog(
@@ -116,118 +69,137 @@ def validate_catalog(
     coverage_path: Path,
     *,
     require_source_membership: bool = True,
-) -> Dict[str, str]:
-    target = entry_map(parse_po(po_path), po_path)
-    # The upstream English extraction currently contains repeated msgids. They
-    # represent the same lookup key, so collapse them only for source membership.
-    source = (
-        entry_map(parse_po(source_path), source_path, allow_duplicates=True)
-        if require_source_membership
-        else {}
-    )
+    require_complete: bool = False,
+    report_missing: Optional[Path] = None,
+) -> List[Tuple[str, str]]:
+    target_entries = parse_po(po_path)
+    target = entry_map(target_entries, po_path)
+    source: Dict[Key, Entry] = {}
+    if require_source_membership or require_complete or report_missing:
+        # The upstream English extraction can repeat a msgid; the repeats are
+        # the same lookup key, so collapse them for membership checks.
+        source = entry_map(parse_po(source_path), source_path, allow_duplicates=True)
 
-    header = target.get("")
-    if not header or "Language: yue_HK\n" not in str(header.get("msgstr", "")):
+    header = target.get((None, ""))
+    if header is None or "Language: yue_HK\n" not in header.msgstr:
         raise CatalogError("catalog header must declare Language: yue_HK")
+    has_plural = any(entry.is_plural for entry in target.values())
+    if has_plural and "Plural-Forms: nplurals=1; plural=0;" not in header.msgstr:
+        raise CatalogError("catalog header must declare 'Plural-Forms: nplurals=1; plural=0;' for plural entries")
 
-    translated: Dict[str, str] = {}
-    category_counts: Counter[str] = Counter()
-    for msgid, entry in target.items():
-        if msgid == "":
+    pairs: List[Tuple[str, str]] = [("", header.msgstr)]
+    category_counts: Counter = Counter()
+    drafted = 0
+    for key, entry in target.items():
+        if entry.is_header:
             continue
-        msgstr = entry.get("msgstr")
-        if not isinstance(msgstr, str) or not msgstr.strip():
-            raise CatalogError(f"empty translation: {msgid!r}")
-        if require_source_membership and msgid not in source:
-            raise CatalogError(f"msgid is absent from English source catalog: {msgid!r}")
-        if placeholder_signature(msgid) != placeholder_signature(msgstr):
-            raise CatalogError(
-                f"placeholder mismatch for {msgid!r}: "
-                f"{placeholder_signature(msgid)} != {placeholder_signature(msgstr)}"
-            )
-        categories = entry.get("categories", [])
-        if not isinstance(categories, list) or len(categories) != 1:
-            raise CatalogError(f"exactly one reviewed-category is required: {msgid!r}")
-        category_counts[str(categories[0])] += 1
-        translated[msgid] = msgstr
+        if entry.fuzzy:
+            raise CatalogError(f"fuzzy entries are not allowed: {entry.describe()}")
+        if not entry.translated():
+            raise CatalogError(f"empty translation: {entry.describe()}")
+        if entry.is_plural and len(entry.forms()) != 1:
+            raise CatalogError(f"Cantonese has one plural form; found {len(entry.forms())}: {entry.describe()}")
+        if require_source_membership and key not in source and not entry.source_pending:
+            raise CatalogError(f"msgid is absent from English source catalog: {entry.describe()}")
+        reference = entry.msgid_plural if entry.is_plural else entry.msgid
+        for form in entry.forms():
+            if placeholder_signature(reference or "") != placeholder_signature(form):
+                raise CatalogError(
+                    f"placeholder mismatch for {entry.describe()}: "
+                    f"{placeholder_signature(reference or '')} != {placeholder_signature(form)}"
+                )
+        if len(entry.categories) != 1:
+            raise CatalogError(f"exactly one reviewed-category is required: {entry.describe()}")
+        if entry.review_status is not None and entry.review_status not in REVIEW_STATUS_VALUES:
+            raise CatalogError(f"unknown review-status {entry.review_status!r}: {entry.describe()}")
+        if entry.review_status == "agent-drafted":
+            drafted += 1
+        category_counts[entry.categories[0]] += 1
+        pairs.append((mo_original(entry), mo_translation(entry)))
 
+    translated = len(pairs) - 1
     coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
-    if coverage.get("translated_messages") != len(translated):
-        raise CatalogError("coverage.json translated_messages does not match the PO catalog")
+    if coverage.get("translated_messages") != translated:
+        raise CatalogError(
+            f"coverage.json translated_messages is {coverage.get('translated_messages')}, catalog has {translated}"
+        )
     if coverage.get("categories") != dict(sorted(category_counts.items())):
         raise CatalogError("coverage.json category counts do not match reviewed-category comments")
-    if len(translated) < 150:
-        raise CatalogError("at least 150 reviewed native translations are required")
+    if coverage.get("agent_drafted_messages", 0) != drafted:
+        raise CatalogError(
+            f"coverage.json agent_drafted_messages is {coverage.get('agent_drafted_messages', 0)}, catalog has {drafted}"
+        )
+    if translated < MINIMUM_TRANSLATIONS:
+        raise CatalogError(f"at least {MINIMUM_TRANSLATIONS} reviewed native translations are required")
 
-    return {"": str(header["msgstr"]), **translated}
+    if require_complete or report_missing:
+        missing = [entry for key, entry in source.items() if not entry.is_header and key not in target]
+        if report_missing:
+            report_missing.parent.mkdir(parents=True, exist_ok=True)
+            report_missing.write_text(
+                json.dumps(
+                    [
+                        {
+                            "msgctxt": entry.msgctxt,
+                            "msgid": entry.msgid,
+                            "msgid_plural": entry.msgid_plural,
+                            "english": english_display(entry),
+                        }
+                        for entry in missing
+                    ],
+                    ensure_ascii=False,
+                    indent=1,
+                ),
+                encoding="utf-8",
+            )
+        if require_complete and missing:
+            sample = ", ".join(entry.describe() for entry in missing[:5])
+            raise CatalogError(f"{len(missing)} English source messages have no Cantonese entry (first: {sample})")
 
-
-def compile_mo(catalog: Dict[str, str]) -> bytes:
-    ordered: List[Tuple[bytes, bytes]] = sorted(
-        ((msgid.encode("utf-8"), msgstr.encode("utf-8")) for msgid, msgstr in catalog.items()),
-        key=lambda item: item[0],
-    )
-    count = len(ordered)
-    originals_offset = 7 * 4
-    translations_offset = originals_offset + count * 8
-    strings_offset = translations_offset + count * 8
-
-    original_blob = b"".join(msgid + b"\0" for msgid, _ in ordered)
-    translation_blob = b"".join(msgstr + b"\0" for _, msgstr in ordered)
-
-    original_table = bytearray()
-    translation_table = bytearray()
-    cursor = strings_offset
-    for msgid, _ in ordered:
-        original_table.extend(struct.pack("<II", len(msgid), cursor))
-        cursor += len(msgid) + 1
-    cursor = strings_offset + len(original_blob)
-    for _, msgstr in ordered:
-        translation_table.extend(struct.pack("<II", len(msgstr), cursor))
-        cursor += len(msgstr) + 1
-
-    header = struct.pack(
-        "<7I",
-        0x950412DE,
-        0,
-        count,
-        originals_offset,
-        translations_offset,
-        0,
-        0,
-    )
-    return header + bytes(original_table) + bytes(translation_table) + original_blob + translation_blob
+    return pairs
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--po", type=Path, default=DEFAULT_PO)
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--coverage", type=Path, default=DEFAULT_COVERAGE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--check", action="store_true", help="fail unless the checked-in MO is current")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="write nothing; verify the compiled catalog round-trips and, when --output exists, is byte-identical",
+    )
     parser.add_argument(
         "--allow-unreferenced",
         action="store_true",
-        help="allow reviewed keys not yet present in the upstream English extraction",
+        help="allow Cantonese keys not yet present in the English extraction",
     )
+    parser.add_argument(
+        "--require-complete",
+        action="store_true",
+        help="fail unless every English source message has a Cantonese entry",
+    )
+    parser.add_argument("--report-missing", type=Path, help="write the untranslated English source messages as JSON")
     args = parser.parse_args()
 
     try:
-        catalog = validate_catalog(
+        pairs = validate_catalog(
             args.po,
             args.source,
             args.coverage,
             require_source_membership=not args.allow_unreferenced,
+            require_complete=args.require_complete,
+            report_missing=args.report_missing,
         )
-        compiled = compile_mo(catalog)
+        compiled = compile_mo(pairs)
+        decoded = read_mo(compiled)
+        for original, translation in pairs:
+            if decoded.get(original) != translation:
+                raise CatalogError(f"compiled catalog does not round-trip: {original!r}")
         if args.check:
-            if not args.output.is_file() or args.output.read_bytes() != compiled:
-                raise CatalogError(f"compiled catalog is missing or stale: {args.output}")
-            parsed = gettext.GNUTranslations(io.BytesIO(args.output.read_bytes()))
-            for msgid, msgstr in catalog.items():
-                if parsed._catalog.get(msgid) != msgstr:
-                    raise CatalogError(f"compiled catalog does not contain translation: {msgid!r}")
+            if args.output.is_file() and args.output.read_bytes() != compiled:
+                raise CatalogError(f"compiled catalog is stale: {args.output}")
         else:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_bytes(compiled)
@@ -235,10 +207,8 @@ def main() -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    print(
-        f"Validated {len(catalog) - 1} translations; "
-        f"{'checked' if args.check else 'wrote'} {args.output} ({len(compiled)} bytes)."
-    )
+    action = "checked" if args.check else "wrote"
+    print(f"Validated {len(pairs) - 1} translations; {action} {args.output} ({len(compiled)} bytes).")
     return 0
 
 

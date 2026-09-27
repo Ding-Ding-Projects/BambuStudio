@@ -1,5 +1,9 @@
 [CmdletBinding()]
-param()
+param(
+    # Fail when any English source message lacks a Cantonese entry. Also on when
+    # LANGUAGE_REQUIRE_COMPLETE=1; otherwise the gap is reported, not enforced.
+    [switch] $RequireComplete
+)
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -9,7 +13,15 @@ $nativeHeader = Join-Path $repoRoot 'src\slic3r\GUI\LanguageMode.hpp'
 $nativePo = Join-Path $repoRoot 'bbl\i18n\yue_HK\BambuStudio_yue_HK.po'
 $nativeCoverage = Join-Path $repoRoot 'bbl\i18n\yue_HK\coverage.json'
 $nativeCompiler = Join-Path $repoRoot 'bbl\i18n\yue_HK\compile_translation.py'
-$nativeMo = Join-Path $repoRoot 'resources\i18n\yue_HK\BambuStudio.mo'
+$englishCompiler = Join-Path $repoRoot 'bbl\i18n\compile_catalog.py'
+$englishPo = Join-Path $repoRoot 'bbl\i18n\en\BambuStudio_en.po'
+# Neither fork catalog is tracked as an MO any more; the build compiles both.
+# This check compiles them into a scratch folder that is removed afterwards.
+$scratch = Join-Path ([System.IO.Path]::GetTempPath()) ("language-modes-" + [guid]::NewGuid().ToString('N'))
+$nativeMo = Join-Path $scratch 'yue_HK\BambuStudio.mo'
+$englishMo = Join-Path $scratch 'en\BambuStudio.mo'
+$missingReport = Join-Path $scratch 'missing.json'
+$requireComplete = $RequireComplete.IsPresent -or $env:LANGUAGE_REQUIRE_COMPLETE -eq '1'
 $nativeApp = Join-Path $repoRoot 'src\slic3r\GUI\GUI_App.cpp'
 $webLogin = Join-Path $repoRoot 'src\slic3r\GUI\WebUserLoginDialog.cpp'
 $webPanel = Join-Path $repoRoot 'src\slic3r\GUI\WebViewDialog.cpp'
@@ -105,8 +117,8 @@ $requiredUiModeIds = @('en', 'yue_HK', 'bilingual_en_yue_HK')
 Assert-True (($uiModeIds -join "`n") -ceq ($requiredUiModeIds -join "`n")) `
     "ui-md3 must expose exactly the canonical mode IDs: $($requiredUiModeIds -join ', ')."
 
-Write-Host 'Checking native PO/MO catalog presence and reproducibility...'
-foreach ($requiredPath in @($nativePo, $nativeCoverage, $nativeCompiler, $nativeMo)) {
+Write-Host 'Checking native PO catalogs, strict source membership and compiled MO output...'
+foreach ($requiredPath in @($nativePo, $nativeCoverage, $nativeCompiler, $englishCompiler, $englishPo)) {
     Assert-True (Test-Path -LiteralPath $requiredPath -PathType Leaf) "Missing language resource '$requiredPath'."
 }
 $coverage = Get-Content -LiteralPath $nativeCoverage -Raw | ConvertFrom-Json
@@ -115,22 +127,47 @@ Assert-True ([int] $coverage.translated_messages -ge 150) 'Native Cantonese cove
 Assert-True ((@($coverage.categories.PSObject.Properties.Value | Measure-Object -Sum).Sum) -eq [int] $coverage.translated_messages) `
     'Native category counts do not add up to translated_messages.'
 
-$moBytes = [System.IO.File]::ReadAllBytes($nativeMo)
-Assert-True ($moBytes.Length -gt 28) 'Native Cantonese MO is too small to be a valid catalog.'
-$gnuMoMagic = [Convert]::ToUInt32('950412DE', 16)
-Assert-True ([BitConverter]::ToUInt32($moBytes, 0) -eq $gnuMoMagic) `
-    'Native Cantonese MO does not have the GNU MO little-endian magic value.'
-
+$pythonCommand = $null
+$pythonPrefix = @()
 $pythonLauncher = Get-Command py -ErrorAction SilentlyContinue
 if ($null -ne $pythonLauncher) {
-    Invoke-Checked -Command $pythonLauncher.Source -Arguments @('-3', $nativeCompiler, '--allow-unreferenced', '--check') `
-        -FailureMessage 'Native Cantonese PO/MO validation failed'
+    $pythonCommand = $pythonLauncher.Source
+    $pythonPrefix = @('-3')
 }
 else {
     $pythonLauncher = Get-Command python -ErrorAction SilentlyContinue
-    Assert-True ($null -ne $pythonLauncher) 'Python 3 is required to validate the native PO/MO catalog.'
-    Invoke-Checked -Command $pythonLauncher.Source -Arguments @($nativeCompiler, '--allow-unreferenced', '--check') `
-        -FailureMessage 'Native Cantonese PO/MO validation failed'
+    Assert-True ($null -ne $pythonLauncher) 'Python 3 is required to validate the native PO catalogs.'
+    $pythonCommand = $pythonLauncher.Source
+}
+
+try {
+    # Strict: every Cantonese key must exist in the English extraction, except
+    # entries marked '#. source-pending:' with the place their source lives.
+    Invoke-Checked -Command $pythonCommand `
+        -Arguments ($pythonPrefix + @($nativeCompiler, '--output', $nativeMo, '--report-missing', $missingReport)) `
+        -FailureMessage 'Native Cantonese PO validation failed'
+    Invoke-Checked -Command $pythonCommand -Arguments ($pythonPrefix + @($englishCompiler, '--po', $englishPo, '--output', $englishMo)) `
+        -FailureMessage 'English override catalog compilation failed'
+
+    $gnuMoMagic = [Convert]::ToUInt32('950412DE', 16)
+    foreach ($mo in @($nativeMo, $englishMo)) {
+        $moBytes = [System.IO.File]::ReadAllBytes($mo)
+        Assert-True ($moBytes.Length -gt 28) "Compiled catalog '$mo' is too small to be valid."
+        Assert-True ([BitConverter]::ToUInt32($moBytes, 0) -eq $gnuMoMagic) `
+            "Compiled catalog '$mo' does not have the GNU MO little-endian magic value."
+    }
+
+    $missing = @(Get-Content -LiteralPath $missingReport -Raw -Encoding utf8 | ConvertFrom-Json)
+    if ($missing.Count -gt 0) {
+        $message = "$($missing.Count) English source messages have no Cantonese entry (first: '$($missing[0].msgid)')."
+        Assert-True (-not $requireComplete) $message
+        Write-Warning "$message Pass -RequireComplete to enforce."
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $scratch) {
+        Remove-Item -LiteralPath $scratch -Recurse -Force
+    }
 }
 
 Write-Host 'Checking DeviceWeb resource counts, parity and placeholders...'

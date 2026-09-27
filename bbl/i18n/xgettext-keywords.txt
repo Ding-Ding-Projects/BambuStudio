@@ -1,0 +1,17 @@
+# One xgettext --keyword specification per line. Read by the CMake gettext_make_pot
+# target and by scripts/i18n/Update-Catalogs.ps1 so both extract the same strings.
+L
+_L
+_u8L
+_
+_utf8
+L_CONTEXT:1,2c
+_CTX:1,2c
+_CTX_utf8:1,2c
+_L_PLURAL:1,2
+localized_stacked
+localized_stacked_count
+localized_stacked_counts
+localized_stacked_text
+funny_row_label
+funny_row_label_int

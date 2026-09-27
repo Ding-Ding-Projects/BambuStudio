@@ -55,3 +55,6 @@ build-ninja/
 _site/
 install-dir/
 install-dir-mesa/
+
+# Compiled by the build (fork_catalogs in CMakeLists.txt) or by compile_translation.py; never tracked.
+resources/i18n/yue_HK/

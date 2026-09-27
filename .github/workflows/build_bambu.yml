@@ -112,6 +112,15 @@ jobs:
 
           Install-ChocoPackage -Name 'pkgconfiglite' -Version '0.28.0'
 
+      # CMake compiles the English override and Hong Kong Cantonese catalogs
+      # with Python while building (CMakeLists.txt, fork_catalogs), so the
+      # interpreter must exist before configure.
+      - name: Set up Python for the fork catalog compilation
+        if: inputs.os == 'windows-latest'
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+
       - name: Build slicer Win
         id: build_win
         if: inputs.os == 'windows-latest'
@@ -151,34 +160,27 @@ jobs:
           # spawns a fresh server whose zeroed counters say nothing.
           sccache --show-stats
 
-      - name: Set up Python for hosted Cantonese catalog compilation
-        if: inputs.os == 'windows-latest'
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: '3.13'
-
-      # The checked-in MO may lag behind its reviewed PO. Compile directly into
-      # the installed payload so the portable archive and Squirrel package both
-      # ship the catalog validated from this exact checkout.
-      - name: Compile and verify hosted Cantonese catalog
+      # The build compiled and installed both fork catalogs (fork_catalogs in
+      # CMakeLists.txt). Verify the installed Cantonese MO is byte-identical to
+      # a fresh compile of this exact checkout before anything is packaged.
+      - name: Verify installed Cantonese catalog
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $catalog = Join-Path '${{ github.workspace }}\install-dir' 'resources\i18n\yue_HK\BambuStudio.mo'
-          if (-not (Test-Path -LiteralPath (Split-Path -Parent $catalog) -PathType Container)) {
-              throw 'The installed Cantonese resource directory is missing.'
-          }
-          # The extracted English PO trails current native strings. The
-          # reviewed PO still must pass coverage and placeholder validation.
-          python .\bbl\i18n\yue_HK\compile_translation.py --allow-unreferenced --output $catalog
-          if ($LASTEXITCODE -ne 0) {
-              throw "Compiling the hosted Cantonese catalog failed with exit code $LASTEXITCODE."
+          if (-not (Test-Path -LiteralPath $catalog -PathType Leaf)) {
+              throw 'The build did not install the Cantonese catalog.'
           }
           python .\bbl\i18n\yue_HK\compile_translation.py --allow-unreferenced --output $catalog --check
           if ($LASTEXITCODE -ne 0) {
-              throw "Verifying the staged Cantonese catalog failed with exit code $LASTEXITCODE."
+              throw "Verifying the installed Cantonese catalog failed with exit code $LASTEXITCODE."
+          }
+          $english = Join-Path '${{ github.workspace }}\install-dir' 'resources\i18n\en\BambuStudio.mo'
+          python .\bbl\i18n\compile_catalog.py --po .\bbl\i18n\en\BambuStudio_en.po --output $english --check
+          if ($LASTEXITCODE -ne 0) {
+              throw "Verifying the installed English override catalog failed with exit code $LASTEXITCODE."
           }
 
       # Stage the Mesa llvmpipe software-OpenGL fallback into the payload's

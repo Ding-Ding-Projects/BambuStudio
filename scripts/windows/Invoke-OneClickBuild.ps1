@@ -139,6 +139,26 @@ function Install-WingetPackageIfMissing {
     }
 }
 
+# CMake compiles the English and Hong Kong Cantonese catalogs with Python while
+# building (fork_catalogs in CMakeLists.txt). The Microsoft Store alias under
+# WindowsApps is a launcher stub, not an interpreter, so it never counts.
+function Get-PythonInterpreterPath {
+    foreach ($candidate in @(
+            @{ Name = 'py.exe'; Arguments = @('-3', '-c', 'import sys; print(sys.executable)') },
+            @{ Name = 'python.exe'; Arguments = @('-c', 'import sys; print(sys.executable)') })) {
+        $command = Get-Command $candidate.Name -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -eq $command -or $command.Source -like '*\WindowsApps\*') { continue }
+        $output = & $command.Source @($candidate.Arguments) 2>$null
+        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace("$output")) {
+            $path = "$output".Trim()
+            if ((Test-Path -LiteralPath $path -PathType Leaf) -and $path -notlike '*\WindowsApps\*') {
+                return $path
+            }
+        }
+    }
+    return $null
+}
+
 function Set-StrawberryPerlFirst {
     param([Parameter(Mandatory)][string] $PkgConfigPath)
     # The dependency build runs a bare `perl Configure` for OpenSSL. Git for
@@ -260,6 +280,12 @@ function Initialize-LocalToolchain {
 
     Install-WingetPackageIfMissing -DisplayName '7-Zip' -PackageId '7zip.7zip' `
         -Probe { $null -ne (Get-SevenZipPath) }
+
+    Install-WingetPackageIfMissing -DisplayName 'Python 3' -PackageId 'Python.Python.3.13' `
+        -Probe { $null -ne (Get-PythonInterpreterPath) }
+    if (-not $Plan) {
+        Write-BuildLog "Using Python at $(Get-PythonInterpreterPath) for the catalog compilation."
+    }
 
     if (-not $Plan) {
         $vsProduct = Get-VisualStudio2022Product
@@ -545,6 +571,10 @@ function Invoke-ApplicationBuild {
             -Pattern "CMAKE_INSTALL_PREFIX:PATH=$expectedPrefix" -Quiet))
     $forceConfigure = $env:BAMBU_RECONFIGURE -eq '1'
     if ($Clean -or $forceConfigure -or -not $cacheMatches) {
+        $python = Get-PythonInterpreterPath
+        if ([string]::IsNullOrWhiteSpace($python)) {
+            throw 'Python 3 is required to compile the English and Cantonese catalogs, and none was found.'
+        }
         Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
             & $Toolchain.CMake -S $script:RepositoryRoot -B $buildDirectory `
                 -G $Toolchain.Generator -A x64 `
@@ -552,7 +582,8 @@ function Invoke-ApplicationBuild {
                 -DSLIC3R_BUILD_TESTS=OFF `
                 "-DCMAKE_PREFIX_PATH=$prefixPath" "-DCMAKE_INSTALL_PREFIX=$InstallPrefix" `
                 -DCMAKE_CONFIGURATION_TYPES=Release -DCMAKE_BUILD_TYPE=Release `
-                "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)"
+                "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)" `
+                "-DPython3_EXECUTABLE=$python"
         }
     } else {
         Write-BuildLog "Reusing the configured build tree at $buildDirectory (set BAMBU_RECONFIGURE=1 to force a configure; note it recompiles everything)."

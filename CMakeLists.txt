@@ -648,8 +648,15 @@ find_package(cereal REQUIRED)
 # l10n
 set(L10N_DIR "${SLIC3R_RESOURCES_DIR}/i18n")
 set(BBL_L18N_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bbl/i18n")
+# One keyword list feeds this target and scripts/i18n/update_catalogs.py.
+file(STRINGS "${BBL_L18N_DIR}/xgettext-keywords.txt" BBL_XGETTEXT_KEYWORD_LINES REGEX "^[^#]")
+set(BBL_XGETTEXT_KEYWORDS "")
+foreach(keyword ${BBL_XGETTEXT_KEYWORD_LINES})
+    string(STRIP "${keyword}" keyword)
+    list(APPEND BBL_XGETTEXT_KEYWORDS "--keyword=${keyword}")
+endforeach()
 add_custom_target(gettext_make_pot
-    COMMAND xgettext --keyword=L --no-wrap --keyword=_L --keyword=_u8L --keyword=L_CONTEXT:1,2c --keyword=_L_PLURAL:1,2 --add-comments=TRN --from-code=UTF-8 --no-location --debug --boost
+    COMMAND xgettext --no-wrap ${BBL_XGETTEXT_KEYWORDS} --add-comments=TRN --from-code=UTF-8 --no-location --debug --boost
         -f "${BBL_L18N_DIR}/list.txt"
         -o "${BBL_L18N_DIR}/BambuStudio.pot"
 	COMMAND hintsToPot ${SLIC3R_RESOURCES_DIR} ${BBL_L18N_DIR}
@@ -661,6 +668,10 @@ add_custom_target(gettext_merge_po_with_pot
     COMMENT "Merge localization po with new generated pot file"
 )
 file(GLOB BBL_L10N_PO_FILES "${BBL_L18N_DIR}/*/BambuStudio*.po")
+# The curated Hong Kong Cantonese catalog is validated and compiled by
+# bbl/i18n/yue_HK/compile_translation.py. msgmerge would mark its keys written
+# ahead of extraction as obsolete, and msgfmt would bypass that validation.
+list(FILTER BBL_L10N_PO_FILES EXCLUDE REGEX "/yue_HK/")
 foreach(po_file ${BBL_L10N_PO_FILES})
     GET_FILENAME_COMPONENT(po_dir "${po_file}" DIRECTORY)
     SET(po_new_file "${po_dir}/BambuStudio_.po")
@@ -947,3 +958,44 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT FLATPAK)
 endif ()
 
 configure_file(${LIBDIR}/platform/unix/fhs.hpp.in ${LIBDIR_BIN}/platform/unix/fhs.hpp)
+
+# Fork-owned catalogs are compiled at build time from their reviewed PO sources,
+# so a local build and a hosted build ship the same bytes and no generated MO is
+# tracked. The English override catalog (ink terminology and copy edits) replaces
+# the upstream resources/i18n/en/BambuStudio.mo in the installed payload; the Hong
+# Kong Cantonese catalog has no tracked copy at all. These install rules come
+# after the resources install above so they overwrite it.
+if (WIN32)
+    find_package(Python3 COMPONENTS Interpreter)
+    if (NOT Python3_Interpreter_FOUND)
+        message(FATAL_ERROR "Python 3 is required to compile the English and Hong Kong Cantonese catalogs "
+                            "(bbl/i18n). scripts/windows/Invoke-OneClickBuild.ps1 installs it when missing.")
+    endif ()
+    set(BBL_FORK_I18N_OUT "${CMAKE_BINARY_DIR}/fork-i18n")
+    add_custom_command(
+        OUTPUT "${BBL_FORK_I18N_OUT}/en/BambuStudio.mo"
+        COMMAND ${Python3_EXECUTABLE} "${BBL_L18N_DIR}/compile_catalog.py"
+                --po "${BBL_L18N_DIR}/en/BambuStudio_en.po"
+                --output "${BBL_FORK_I18N_OUT}/en/BambuStudio.mo"
+        DEPENDS "${BBL_L18N_DIR}/en/BambuStudio_en.po" "${BBL_L18N_DIR}/compile_catalog.py" "${BBL_L18N_DIR}/po_catalog.py"
+        COMMENT "Compiling the English override catalog"
+        VERBATIM
+    )
+    # --allow-unreferenced keeps a build working while the English extraction
+    # lags; scripts/i18n/Test-LanguageModes.ps1 validates the catalogue strictly.
+    add_custom_command(
+        OUTPUT "${BBL_FORK_I18N_OUT}/yue_HK/BambuStudio.mo"
+        COMMAND ${Python3_EXECUTABLE} "${BBL_L18N_DIR}/yue_HK/compile_translation.py"
+                --allow-unreferenced
+                --output "${BBL_FORK_I18N_OUT}/yue_HK/BambuStudio.mo"
+        DEPENDS "${BBL_L18N_DIR}/yue_HK/BambuStudio_yue_HK.po" "${BBL_L18N_DIR}/yue_HK/coverage.json"
+                "${BBL_L18N_DIR}/yue_HK/compile_translation.py" "${BBL_L18N_DIR}/po_catalog.py"
+                "${BBL_L18N_DIR}/en/BambuStudio_en.po"
+        COMMENT "Compiling the Hong Kong Cantonese catalog"
+        VERBATIM
+    )
+    add_custom_target(fork_catalogs ALL
+        DEPENDS "${BBL_FORK_I18N_OUT}/en/BambuStudio.mo" "${BBL_FORK_I18N_OUT}/yue_HK/BambuStudio.mo")
+    install(FILES "${BBL_FORK_I18N_OUT}/en/BambuStudio.mo" DESTINATION "${CMAKE_INSTALL_PREFIX}/resources/i18n/en")
+    install(FILES "${BBL_FORK_I18N_OUT}/yue_HK/BambuStudio.mo" DESTINATION "${CMAKE_INSTALL_PREFIX}/resources/i18n/yue_HK")
+endif ()
