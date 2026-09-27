@@ -88,16 +88,18 @@ hidden-desktop GUI capture. `scripts/md3/Capture-HostedReleaseGui.ps1` reads the
 installation receipt, checks the release tag and source commit, and rehashes the installed
 executable against both the installed-file and full-package hashes. It bootstraps a pinned
 revision of the headless capture tool into a runner-local Python environment, creates a new
-application data directory, and captures eleven workspace and Preferences surfaces. The
-workflow uploads images and `receipt.json` as a 30-day run artifact even when capture fails.
+application data directory, and attempts eleven workspace and Preferences surfaces. The
+workflow uploads only `receipt.json` as a 30-day run artifact, including when capture fails.
+Raw images remain only on the disposable runner and are not uploaded or published.
 This step uses `continue-on-error`, so capture availability is not a release gate.
 
 The receipt records the source commit, release tag, installer and executable hashes, capture
-method, file hashes, and status. Its successful state is
-`captured_pending_pixel_review`: a release operator must inspect the actual images for visual
-quality and private content before embedding or publishing them elsewhere. The disposable
-runner and fresh profile keep the user's local installation and personal data out of the
-capture path. A missing or failed capture must not be described as verified GUI behavior.
+method, rendered-frame hashes, pixel metrics, and status. Its successful state is
+`capture_metrics_recorded_images_ephemeral`. It is provenance and automated pixel evidence,
+not reviewed GUI behavior. A restricted image-review route is still needed to inspect the
+actual frames for visual quality and private content before any image can be retained,
+embedded, or published. The fresh disposable profile does not import the user's local
+installation or data. A missing or failed capture must not be described as verified GUI behavior.
 
 Before a candidate is accepted, run the local release contract and one-click checks, build the real
 Squirrel output, inspect the README capture matrix from the built artifact, and record the exact

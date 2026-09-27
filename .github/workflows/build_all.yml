@@ -915,12 +915,12 @@ jobs:
             -Tag $env:release_tag `
             -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-gui-evidence')
 
-      - name: Upload hosted GUI evidence for pixel and privacy review
+      - name: Upload hosted GUI capture receipt without raw images
         if: ${{ always() }}
         continue-on-error: true
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: BambuStudio_Windows_${{ github.run_id }}_hosted_gui_evidence
-          path: hosted-gui-evidence/
+          path: hosted-gui-evidence/receipt.json
           if-no-files-found: warn
           retention-days: 30

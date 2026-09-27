@@ -9,42 +9,43 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not $env:RUNNER_TEMP) {
-    throw 'Hosted GUI capture requires a disposable GitHub-hosted Windows runner.'
-}
-
-$receipt = Get-Content -LiteralPath $InstallReceipt -Raw | ConvertFrom-Json
-if ($receipt.status -cne 'verified' -or $receipt.source_commit -cne $ExpectedCommit.ToLowerInvariant() -or
-    $receipt.release_tag -cne $Tag) {
-    throw 'The isolated installation receipt does not match this published source and release.'
-}
-
-$installRoot = Join-Path $env:LOCALAPPDATA 'BambuStudioMD3'
-$exe = Join-Path (Join-Path $installRoot "app-$($receipt.package_version)") 'bambu-studio.exe'
-if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw 'The verified installed executable is missing.' }
-$exeHash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($exeHash -cne $receipt.installed_exe_sha256 -or $exeHash -cne $receipt.package_exe_sha256) {
-    throw 'The installed executable changed after Squirrel verification.'
-}
-
-if (Test-Path -LiteralPath $OutputDirectory) { throw 'Capture output directory already exists.' }
-[void](New-Item -ItemType Directory -Path $OutputDirectory)
+[void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
 $evidence = [ordered]@{
     schema = 1
     status = 'failed'
     source_commit = $ExpectedCommit.ToLowerInvariant()
     release_tag = $Tag
-    package_version = $receipt.package_version
-    installed_exe_sha256 = $exeHash
-    installer_sha256 = $receipt.asset_sha256.'Setup.exe'
+    package_version = $null
+    installed_exe_sha256 = $null
+    installer_sha256 = $null
     runner = 'github-hosted-windows'
     capture_method = 'lowlevel-computer-use-cheap hidden desktop PrintWindow'
     capture_tool_commit = 'e6e42f2066d539256d6480401d7cef867f2b8dfe'
-    privacy = 'isolated disposable runner and fresh application data directory; no user profile imported; pixel review required before publication'
+    privacy = 'fresh disposable runner profile; raw images withheld from public workflow artifacts; no pixel privacy review'
+    image_availability = 'ephemeral_runner_only_not_uploaded'
     captures = @()
 }
 
 try {
+    if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not $env:RUNNER_TEMP) {
+        throw 'Hosted GUI capture requires a disposable GitHub-hosted Windows runner.'
+    }
+    $receipt = Get-Content -LiteralPath $InstallReceipt -Raw | ConvertFrom-Json
+    if ($receipt.status -cne 'verified' -or $receipt.source_commit -cne $ExpectedCommit.ToLowerInvariant() -or
+        $receipt.release_tag -cne $Tag) {
+        throw 'The isolated installation receipt does not match this published source and release.'
+    }
+    $installRoot = Join-Path $env:LOCALAPPDATA 'BambuStudioMD3'
+    $exe = Join-Path (Join-Path $installRoot "app-$($receipt.package_version)") 'bambu-studio.exe'
+    if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw 'The verified installed executable is missing.' }
+    $exeHash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($exeHash -cne $receipt.installed_exe_sha256 -or $exeHash -cne $receipt.package_exe_sha256) {
+        throw 'The installed executable changed after Squirrel verification.'
+    }
+    $evidence.package_version = $receipt.package_version
+    $evidence.installed_exe_sha256 = $exeHash
+    $evidence.installer_sha256 = $receipt.asset_sha256.'Setup.exe'
+
     $toolRoot = Join-Path $env:RUNNER_TEMP ('lowlevel-capture-' + $env:GITHUB_RUN_ID)
     $toolCommit = 'e6e42f2066d539256d6480401d7cef867f2b8dfe'
     & git clone --quiet --no-checkout https://github.com/Ding-Ding-Projects/lowlevel-computer-use-mcp.git $toolRoot
@@ -68,7 +69,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Could not prepare a fresh capture profile.' }
     $tuple = 'en-light-comfortable'
     $dataDir = Join-Path $dataRoot $tuple
-    $images = Join-Path $OutputDirectory 'images'
+    $images = Join-Path $env:RUNNER_TEMP ('bambu-capture-images-' + $env:GITHUB_RUN_ID)
     [void](New-Item -ItemType Directory -Path $images)
     & $python (Join-Path $PSScriptRoot 'capture-tuple.py') `
         --exe $exe --datadir $dataDir --tuple $tuple --out $images `
@@ -87,7 +88,7 @@ try {
             throw "Capture '$($file.Name)' is blank, uniform, or below the expected viewport."
         }
         $evidence.captures += [ordered]@{
-            file = 'images/' + $file.Name
+            surface = $file.BaseName
             bytes = $file.Length
             sha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
             width = $image.width
@@ -95,7 +96,7 @@ try {
             distinct_colors = $image.distinct_colors
         }
     }
-    $evidence.status = 'captured_pending_pixel_review'
+    $evidence.status = 'capture_metrics_recorded_images_ephemeral'
 }
 catch {
     $evidence.failure = $_.Exception.Message
