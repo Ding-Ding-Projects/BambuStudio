@@ -6,8 +6,10 @@ import argparse
 import ctypes
 import hashlib
 import json
+import msvcrt
 import os
 import sys
+import threading
 import time
 from ctypes import wintypes
 from datetime import datetime, timezone
@@ -18,6 +20,9 @@ CREATE_NO_WINDOW = 0x08000000
 WAIT_OBJECT_0 = 0
 WAIT_TIMEOUT = 258
 GENERIC_ALL = 0x10000000
+HANDLE_FLAG_INHERIT = 1
+STARTF_USESTDHANDLES = 0x00000100
+STREAM_LIMIT = 1_048_576
 
 
 class STARTUPINFO(ctypes.Structure):
@@ -35,6 +40,43 @@ class STARTUPINFO(ctypes.Structure):
 class PROCESS_INFORMATION(ctypes.Structure):
     _fields_ = [("hProcess", wintypes.HANDLE), ("hThread", wintypes.HANDLE),
                 ("dwProcessId", wintypes.DWORD), ("dwThreadId", wintypes.DWORD)]
+
+
+class SECURITY_ATTRIBUTES(ctypes.Structure):
+    _fields_ = [("nLength", wintypes.DWORD),
+                ("lpSecurityDescriptor", ctypes.c_void_p),
+                ("bInheritHandle", wintypes.BOOL)]
+
+
+def drain_pipe(handle: int, path: Path, result: dict) -> None:
+    """Drain all bytes while retaining at most one MiB of original output."""
+    sink = None
+    try:
+        total = 0
+        saved = 0
+        fd = msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY)
+        with os.fdopen(fd, "rb", buffering=0) as stream:
+            while True:
+                block = stream.read(65536)
+                if not block:
+                    break
+                total += len(block)
+                prefix = block[:max(0, STREAM_LIMIT - saved)]
+                if prefix:
+                    if sink is None:
+                        sink = path.open("wb")
+                    sink.write(prefix)
+                    sink.flush()
+                    saved += len(prefix)
+                result.update({"bytes_total": total, "bytes_saved": saved,
+                               "truncated": total > saved})
+        result.update({"bytes_total": total, "bytes_saved": saved,
+                       "truncated": total > saved})
+    except Exception as exc:
+        result["capture_error"] = type(exc).__name__
+    finally:
+        if sink is not None:
+            sink.close()
 
 
 def utc_now() -> str:
@@ -56,7 +98,8 @@ def file_sha256(path: Path) -> str:
 
 
 def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
-         stop_path: Path, timeout: int) -> int:
+         stop_path: Path, stdout_path: Path, stderr_path: Path,
+         timeout: int) -> int:
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
     user32.OpenDesktopW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD,
@@ -77,6 +120,11 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
     kernel32.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
     kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
     kernel32.CloseHandle.restype = wintypes.BOOL
+    kernel32.CreatePipe.argtypes = [ctypes.POINTER(wintypes.HANDLE), ctypes.POINTER(wintypes.HANDLE),
+                                    ctypes.POINTER(SECURITY_ATTRIBUTES), wintypes.DWORD]
+    kernel32.CreatePipe.restype = wintypes.BOOL
+    kernel32.SetHandleInformation.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.DWORD]
+    kernel32.SetHandleInformation.restype = wintypes.BOOL
 
     data = {"schema": 1, "helper_pid": os.getpid(), "desktop": desktop,
             "helper_executable_sha256": file_sha256(Path(sys.executable)),
@@ -87,6 +135,8 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
             "app_terminated_by_holder": False,
             "holder_deadline_seconds": timeout, "deadline_fired": False,
             "holder_finished_at_utc": None, "status": "starting"}
+    stream_stats = {"stdout": {}, "stderr": {}}
+    data["streams"] = stream_stats
     handle = user32.OpenDesktopW(desktop, 0, False, GENERIC_ALL)
     if not handle:
         data["status"] = "desktop_open_failed"
@@ -94,13 +144,37 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
         atomic_receipt(receipt_path, data)
         return 2
     process = PROCESS_INFORMATION()
+    pipe_handles = []
+    readers = []
     try:
+        security = SECURITY_ATTRIBUTES(ctypes.sizeof(SECURITY_ATTRIBUTES), None, True)
+        pipes = []
+        for path, key in ((stdout_path, "stdout"), (stderr_path, "stderr")):
+            read_handle, write_handle = wintypes.HANDLE(), wintypes.HANDLE()
+            if not kernel32.CreatePipe(ctypes.byref(read_handle), ctypes.byref(write_handle),
+                                       ctypes.byref(security), 0):
+                raise OSError(ctypes.get_last_error(), "CreatePipe failed")
+            if not kernel32.SetHandleInformation(read_handle, HANDLE_FLAG_INHERIT, 0):
+                raise OSError(ctypes.get_last_error(), "SetHandleInformation failed")
+            pipe_handles.extend([read_handle, write_handle])
+            pipes.append((read_handle, write_handle, path, key))
+        stdin_read, stdin_write = wintypes.HANDLE(), wintypes.HANDLE()
+        if not kernel32.CreatePipe(ctypes.byref(stdin_read), ctypes.byref(stdin_write),
+                                   ctypes.byref(security), 0):
+            raise OSError(ctypes.get_last_error(), "CreatePipe for stdin failed")
+        if not kernel32.SetHandleInformation(stdin_write, HANDLE_FLAG_INHERIT, 0):
+            raise OSError(ctypes.get_last_error(), "SetHandleInformation for stdin failed")
+        pipe_handles.extend([stdin_read, stdin_write])
         startup = STARTUPINFO()
         startup.cb = ctypes.sizeof(startup)
         startup.lpDesktop = f"WinSta0\\{desktop}"
+        startup.dwFlags = STARTF_USESTDHANDLES
+        startup.hStdInput = stdin_read
+        startup.hStdOutput = pipes[0][1]
+        startup.hStdError = pipes[1][1]
         command = ctypes.create_unicode_buffer(f'"{exe}" --datadir "{datadir}"')
         data["launch_started_at_utc"] = utc_now()
-        ok = kernel32.CreateProcessW(str(exe), command, None, None, False,
+        ok = kernel32.CreateProcessW(str(exe), command, None, None, True,
                                      CREATE_NO_WINDOW, None, str(exe.parent),
                                      ctypes.byref(startup), ctypes.byref(process))
         if not ok:
@@ -108,6 +182,18 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
             data["win32_error"] = ctypes.get_last_error()
             atomic_receipt(receipt_path, data)
             return 3
+        for handle_to_close in (stdin_read, stdin_write):
+            kernel32.CloseHandle(handle_to_close)
+            pipe_handles.remove(handle_to_close)
+        for read_handle, write_handle, path, key in pipes:
+            kernel32.CloseHandle(write_handle)
+            pipe_handles.remove(write_handle)
+            pipe_handles.remove(read_handle)
+            reader = threading.Thread(target=drain_pipe,
+                                      args=(int(read_handle.value), path, stream_stats[key]),
+                                      daemon=True)
+            reader.start()
+            readers.append(reader)
         data["app_pid"] = int(process.dwProcessId)
         data["status"] = "app_launched"
         atomic_receipt(receipt_path, data)
@@ -143,14 +229,23 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
             if data["app_exit_confirmed"]:
                 data["app_exited_at_utc"] = utc_now()
         data["holder_finished_at_utc"] = utc_now()
+        for reader in readers:
+            reader.join(timeout=5)
+        data["stream_capture_complete"] = (all(not reader.is_alive() for reader in readers)
+                                           and all("bytes_total" in stream_stats[key]
+                                                   for key in ("stdout", "stderr")))
         data["deadline_fired"] = not stop_path.exists()
         if not data["app_exit_confirmed"]:
             data["status"] = "app_termination_unverified"
+        elif not data["stream_capture_complete"]:
+            data["status"] = "stream_capture_incomplete"
         else:
             data["status"] = "holder_timeout" if data["deadline_fired"] else "holder_stopped"
         atomic_receipt(receipt_path, data)
-        return 0 if data["app_exit_confirmed"] else 4
+        return 0 if data["app_exit_confirmed"] and data["stream_capture_complete"] else 4
     finally:
+        for remaining in pipe_handles:
+            kernel32.CloseHandle(remaining)
         if process.hProcess:
             kernel32.CloseHandle(process.hProcess)
         user32.CloseDesktop(handle)
@@ -163,15 +258,21 @@ def main() -> int:
     parser.add_argument("--desktop", required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--stop", type=Path, required=True)
+    parser.add_argument("--stdout", type=Path, required=True)
+    parser.add_argument("--stderr", type=Path, required=True)
     parser.add_argument("--timeout", type=int, default=300)
     args = parser.parse_args()
     if (os.environ.get("GITHUB_ACTIONS") != "true"
             or os.environ.get("RUNNER_ENVIRONMENT") != "github-hosted"):
         parser.error("The launch holder requires a disposable GitHub-hosted runner")
     if (args.timeout < 30 or args.timeout > 2400 or args.receipt.exists()
-            or args.stop.exists() or not args.exe.is_file() or not args.datadir.is_dir()):
+            or args.stop.exists() or args.stdout.exists() or args.stderr.exists()
+            or args.stdout.parent.resolve() != args.receipt.parent.resolve()
+            or args.stderr.parent.resolve() != args.receipt.parent.resolve()
+            or not args.exe.is_file() or not args.datadir.is_dir()):
         parser.error("Invalid or reused hosted launch inputs")
-    return hold(args.exe, args.datadir, args.desktop, args.receipt, args.stop, args.timeout)
+    return hold(args.exe, args.datadir, args.desktop, args.receipt, args.stop,
+                args.stdout, args.stderr, args.timeout)
 
 
 if __name__ == "__main__":
