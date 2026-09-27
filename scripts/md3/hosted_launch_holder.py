@@ -75,6 +75,7 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
     kernel32.GetExitCodeProcess.restype = wintypes.BOOL
     kernel32.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
     kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
 
     data = {"schema": 1, "helper_pid": os.getpid(), "desktop": desktop,
             "exe_sha256": file_sha256(exe), "profile": str(datadir),
