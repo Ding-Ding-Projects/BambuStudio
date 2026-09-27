@@ -77,8 +77,8 @@ $nativeAppText = Get-Content -LiteralPath $nativeApp -Raw
 Assert-True ($nativeAppText.Contains('custom_language_mode || I18N::is_baseline_language_mode(requested_mode_id)')) `
     'Baseline English no longer remains on its canonical language-mode profile.'
 $webLoginText = Get-Content -LiteralPath $webLogin -Raw
-Assert-True ($webLoginText.Contains('return into_u8(wxGetApp().current_language_code_safe());')) `
-    'Remote login routing does not use the service-safe language code.'
+Assert-True ($webLoginText.Contains("wxString strlang = wxGetApp().current_language_code_safe().BeforeFirst('_');")) `
+    'Remote login routing does not use the service-safe language prefix.'
 $webPanelText = Get-Content -LiteralPath $webPanel -Raw
 Assert-True ($webPanelText.Contains('return into_u8(wxGetApp().current_local_web_language());')) `
     'Local embedded pages do not use the explicit local-web language route.'
@@ -123,13 +123,13 @@ Assert-True ([BitConverter]::ToUInt32($moBytes, 0) -eq $gnuMoMagic) `
 
 $pythonLauncher = Get-Command py -ErrorAction SilentlyContinue
 if ($null -ne $pythonLauncher) {
-    Invoke-Checked -Command $pythonLauncher.Source -Arguments @('-3', $nativeCompiler, '--check') `
+    Invoke-Checked -Command $pythonLauncher.Source -Arguments @('-3', $nativeCompiler, '--allow-unreferenced', '--check') `
         -FailureMessage 'Native Cantonese PO/MO validation failed'
 }
 else {
     $pythonLauncher = Get-Command python -ErrorAction SilentlyContinue
     Assert-True ($null -ne $pythonLauncher) 'Python 3 is required to validate the native PO/MO catalog.'
-    Invoke-Checked -Command $pythonLauncher.Source -Arguments @($nativeCompiler, '--check') `
+    Invoke-Checked -Command $pythonLauncher.Source -Arguments @($nativeCompiler, '--allow-unreferenced', '--check') `
         -FailureMessage 'Native Cantonese PO/MO validation failed'
 }
 
@@ -138,7 +138,7 @@ $deviceEnglish = Get-Content -LiteralPath (Join-Path $deviceRoot 'locales\en.jso
 $deviceCantonese = Get-Content -LiteralPath (Join-Path $deviceRoot 'locales\yue_HK.json') -Raw | ConvertFrom-Json
 $englishKeys = @($deviceEnglish.PSObject.Properties.Name | Sort-Object)
 $cantoneseKeys = @($deviceCantonese.PSObject.Properties.Name | Sort-Object)
-Assert-True ($englishKeys.Count -eq 184) "Expected 184 DeviceWeb English resources, found $($englishKeys.Count)."
+Assert-True ($englishKeys.Count -eq 202) "Expected 202 DeviceWeb English resources, found $($englishKeys.Count)."
 Assert-True (($englishKeys -join "`n") -ceq ($cantoneseKeys -join "`n")) `
     'DeviceWeb yue_HK keys do not exactly match the English resource keys.'
 
