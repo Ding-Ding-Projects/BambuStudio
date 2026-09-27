@@ -305,6 +305,9 @@ class Drive:
                             require_enabled=require_enabled)
 
     def unavailable(self, name: str, reason: str) -> None:
+        self.rows.append({"name": name, "status": "unavailable", "reason": reason})
+
+    def unverified(self, name: str, reason: str) -> None:
         self.rows.append({"name": name, "status": "unverified", "reason": reason})
 
     def optional_nav(self, label: str) -> None:
@@ -409,6 +412,58 @@ class Drive:
             lambda records: {"title": title, "file_sha256": sha256(output_file)}
             if visible(records, title, self.app.main) else None)
 
+    def open_project_file(self, path: Path) -> bool:
+        """Exercise File > Open Project using a checked-in, non-private 3MF."""
+        row = {"name": "file-menu-open-project", "status": "unverified",
+               "fixture_sha256": sha256(path) if path.is_file() else None,
+               "action": "File > Open Project"}
+        self.rows.append(row)
+        if not path.is_file():
+            row["status"] = "blocked"
+            row["reason"] = "The checked-in 3MF fixture is absent"
+            return False
+        try:
+            before = self.app.probe()
+            row["before_header"] = self.checked_header(before)
+            row["before_visible"] = visible_labels(before)
+            row["before_image"] = self.capture("file-open-before", self.app.main)
+            old_dialogs = {w["handle"] for w in self.app.windows() if w["class"] == "#32770"}
+            start = time.monotonic()
+            self.app.command("invoke Open Project")
+            dialog = self.app.wait(lambda w: w["class"] == "#32770"
+                                   and w["handle"] not in old_dialogs
+                                   and w["width"] >= 400, 20, "Open Project dialog")
+            row["dialog_image"] = self.capture("file-open-dialog", dialog["handle"])
+            children = cheap("list_child_windows", hwnd=dialog["handle"])["children"]
+            edits = [c for c in children if c["class"].lower() == "edit" and c.get("visible")]
+            if not edits:
+                raise RuntimeError("Open Project dialog has no visible native file edit")
+            edit = max(edits, key=lambda c: c.get("top", 0))
+            cheap("win_set_control_text", hwnd=edit["handle"], text=str(path))
+            cheap("win_send_keys", hwnd=dialog["handle"], keys=["enter"])
+            deadline = time.monotonic() + 45
+            while time.monotonic() < deadline:
+                if all(w["handle"] != dialog["handle"] for w in self.app.windows()):
+                    break
+                time.sleep(0.5)
+            else:
+                raise RuntimeError("Open Project dialog did not close after file submission")
+            after = self.app.probe()
+            row["after_header"] = self.checked_header(after)
+            row["after_visible"] = visible_labels(after)
+            row["after_image"] = self.capture("file-open-after", self.app.main)
+            row["input_to_ready_ms"] = round((time.monotonic() - start) * 1000)
+            marker = path.stem
+            row["status"] = "probe_confirmed" if any(marker.lower() in label.lower()
+                                                         for label in row["after_visible"]) else "unverified"
+            if row["status"] == "unverified":
+                row["reason"] = "The frame survived File > Open, but the probe exposed no fixture-specific loaded marker"
+            return row["status"] == "probe_confirmed"
+        except Exception as exc:
+            row["status"] = "blocked"
+            row["reason"] = f"{type(exc).__name__}: {exc}"
+            return False
+
     @staticmethod
     def workspace_file_evidence(path: Path) -> dict | None:
         if not path.is_file() or path.stat().st_size < 100:
@@ -473,6 +528,11 @@ class Drive:
         self.observe("installed-shell", lambda: None, ("Home",), self.app.main)
         self.rows[-1]["status"] = "capture_only"
         self.rows[-1]["reason"] = "A generic shell label does not prove a feature"
+        project_fixture = Path(__file__).resolve().parents[2] / "resources" / "calib" / "filament_flow" / "flowrate-test-pass1.3mf"
+        if not self.open_project_file(project_fixture):
+            self.unverified("recent-project-tile", "A fixture-specific File > Open result was not established, so the recent tile was not clicked")
+            return
+        self.unverified("recent-project-tile", "The recent tile is inside a webview and has no verified cheap-route target yet")
         self.prepare_tabs()
         self.narrow_prepare()
         self.app.command(f"resize {self.app.main} 1200 800")
@@ -495,7 +555,7 @@ class Drive:
         device_controls = [label for label in visible_labels(device_records)
                            if any(part in label.lower() for part in ("camera", "liveview", "live view", "lan", "nozzle"))]
         device_image = self.capture("device-unpaired-state", self.app.main)
-        self.rows.append({"name": "device-no-hardware-control-inventory", "status": "unverified",
+        self.rows.append({"name": "device-no-hardware-control-inventory", "status": "unavailable",
                           "candidate_controls": device_controls, "image": device_image,
                           "source_control": "Play or stop the camera live view",
                           "camera_control_visible": any("play or stop the camera live view" in label.lower()

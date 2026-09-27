@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 _QUERY = r'''Get-CimInstance Win32_Process -Filter "Name = 'bambu-studio.exe'" |
-    Select-Object ProcessId,ParentProcessId,ExecutablePath,CommandLine,CreationDate |
+    Select-Object ProcessId,ParentProcessId,ExecutablePath,CommandLine,@{Name='CreationDate';Expression={$_.CreationDate.ToUniversalTime().ToString('o')}} |
     ConvertTo-Json -Compress -Depth 3'''
 
 
