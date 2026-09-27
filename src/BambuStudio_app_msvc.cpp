@@ -17,6 +17,27 @@ extern "C"
 #endif /* SLIC3R_GUI */
 #include <stdlib.h>
 #include <stdio.h>
+
+// The launcher's printf diagnostics are invisible in CI (GUI subsystem, lost
+// pipes). Mirror every decision to %TEMP%\bbs-launcher-trace.log so a dead
+// early exit can be diagnosed from the runner. Best effort, silent on error.
+static void launcher_trace(const wchar_t *fmt, ...)
+{
+    wchar_t path[MAX_PATH + 1] = {0};
+    const DWORD n = ::GetEnvironmentVariableW(L"TEMP", path, MAX_PATH - 40);
+    if (n == 0 || n >= MAX_PATH - 40)
+        return;
+    wcscat(path, L"\\bbs-launcher-trace.log");
+    FILE *f = _wfopen(path, L"a, ccs=UTF-8");
+    if (f == nullptr)
+        return;
+    va_list args;
+    va_start(args, fmt);
+    vfwprintf(f, fmt, args);
+    va_end(args);
+    fputwc(L'\n', f);
+    fclose(f);
+}
 #ifdef SLIC3R_GUI
 #include <GL/GL.h>
 #endif /* SLIC3R_GUI */
@@ -248,9 +269,13 @@ extern "C" {
 #ifdef SLIC3R_GUI
         // https://wiki.qt.io/Cross_compiling_Mesa_for_Windows
         // http://download.qt.io/development_releases/prebuilt/llvmpipe/windows/
+        launcher_trace(L"gl check: success=%d version=%hs load_mesa=%d",
+                       (int) opengl_version_check.success, opengl_version_check.version.c_str(), (int) load_mesa);
         if (load_mesa) {
             bool res = opengl_version_check.unload_opengl_dll();
+            launcher_trace(L"unload_opengl_dll -> %d", (int) res);
             if (!res) {
+                launcher_trace(L"EXIT -1: could not unload system opengl32");
                 MessageBox(nullptr, L"Error:BambuStudio was unable to automatically switch to MESA OpenGL library.",
                     L"BambuStudio Error", MB_OK);
                 return -1;
@@ -260,11 +285,19 @@ extern "C" {
             wcscpy(path_to_mesa, path_to_exe);
             wcscat(path_to_mesa, L"mesa\\opengl32.dll");
             printf("Loading MESA OpenGL library: %S\n", path_to_mesa);
-            HINSTANCE hInstance_OpenGL = LoadLibraryExW(path_to_mesa, nullptr, 0);
-                if (hInstance_OpenGL == nullptr)
+            // LOAD_WITH_ALTERED_SEARCH_PATH: Mesa's opengl32 pulls
+            // libgallium_wgl.dll, which lives in mesa\ too — the default
+            // search resolves dependencies from the application directory and
+            // fails with ERROR_MOD_NOT_FOUND (126), so the staged folder never
+            // actually loaded.
+            HINSTANCE hInstance_OpenGL = LoadLibraryExW(path_to_mesa, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+                if (hInstance_OpenGL == nullptr) {
                 printf("MESA OpenGL library was not loaded\n");
-                else
+                    launcher_trace(L"mesa load FAILED: %ls error=%lu", path_to_mesa, ::GetLastError());
+                } else {
                     printf("MESA OpenGL library was loaded sucessfully\n");
+                    launcher_trace(L"mesa loaded: %ls", path_to_mesa);
+                }
             }
         }
 #endif /* SLIC3R_GUI */
@@ -274,9 +307,12 @@ extern "C" {
         //	printf("Loading Slic3r library: %S\n", path_to_slic3r);
         HINSTANCE hInstance_Slic3r = LoadLibraryExW(path_to_slic3r, nullptr, 0);
         if (hInstance_Slic3r == nullptr) {
-            printf("BambuStudio.dll was not loaded, error=%d\n", GetLastError());
+            const DWORD load_error = GetLastError();
+            printf("BambuStudio.dll was not loaded, error=%d\n", (int) load_error);
+            launcher_trace(L"EXIT -1: BambuStudio.dll load failed, error=%lu", load_error);
             return -1;
         }
+        launcher_trace(L"BambuStudio.dll loaded; resolving bambustu_main");
         // resolve function address here
         bambustu_main = (Slic3rMainFunc)GetProcAddress(hInstance_Slic3r,
 #ifdef _WIN64
