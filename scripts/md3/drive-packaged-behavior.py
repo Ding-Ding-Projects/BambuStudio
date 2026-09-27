@@ -573,6 +573,8 @@ def run_startup_case(name: str, route: str, seeded: bool, args, scratch: Path,
     probe.mkdir()
     if seeded:
         seed_profile(profile, args.language, args.theme)
+    seed_config = profile / "BambuStudio.conf"
+    initial_seed_config_sha256 = sha256(seed_config) if seeded else None
     desktop = f"bsdiag-{os.getpid()}-{name}"
     app = HostedApp(str(args.exe), str(profile), desktop, str(probe))
     app.holder_lifetime = 120
@@ -704,7 +706,9 @@ def run_startup_case(name: str, route: str, seeded: bool, args, scratch: Path,
                                  else "incomplete_or_unavailable")
     case["cleanup_verified"] = (cleanup_error is None and app.owned_teardown_verified
                                 and app.desktop_closed_verified)
-    case["seed_config_sha256"] = (sha256(profile / "BambuStudio.conf") if seeded else None)
+    case["seed_config_sha256"] = initial_seed_config_sha256
+    case["post_run_config_sha256"] = (sha256(seed_config) if seed_config.is_file()
+                                      and not seed_config.is_symlink() else None)
     return case, restricted
 
 
