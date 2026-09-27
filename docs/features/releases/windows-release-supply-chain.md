@@ -28,7 +28,7 @@ Squirrel.Windows 2.0.1 is downloaded from the official NuGet flat-container URL 
 already cached, and its package SHA-256 is checked before extraction.
 
 The current workflow deliberately keeps correctness and UI evidence checks as local release-operator
-Chuts rather than Actions test jobs. The committed local checks remain available and are run before a
+checks rather than Actions test jobs. The committed local checks remain available and are run before a
 manual release or before accepting a candidate build. A workflow build still fails on compiler,
 dependency, SBOM, or Squirrel packaging failures.
 
@@ -82,6 +82,22 @@ same-commit leftover draft and validates/reuses a same-commit immutable publicat
 a published immutable release.
 
 ## Verification status
+
+After publication and isolated Squirrel installation, the workflow attempts an optional
+hidden-desktop GUI capture. `scripts/md3/Capture-HostedReleaseGui.ps1` reads the successful
+installation receipt, checks the release tag and source commit, and rehashes the installed
+executable against both the installed-file and full-package hashes. It bootstraps a pinned
+revision of the headless capture tool into a runner-local Python environment, creates a new
+application data directory, and captures eleven workspace and Preferences surfaces. The
+workflow uploads images and `receipt.json` as a 30-day run artifact even when capture fails.
+This step uses `continue-on-error`, so capture availability is not a release gate.
+
+The receipt records the source commit, release tag, installer and executable hashes, capture
+method, file hashes, and status. Its successful state is
+`captured_pending_pixel_review`: a release operator must inspect the actual images for visual
+quality and private content before embedding or publishing them elsewhere. The disposable
+runner and fresh profile keep the user's local installation and personal data out of the
+capture path. A missing or failed capture must not be described as verified GUI behavior.
 
 Before a candidate is accepted, run the local release contract and one-click checks, build the real
 Squirrel output, inspect the README capture matrix from the built artifact, and record the exact
