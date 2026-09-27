@@ -9,6 +9,7 @@
 #include <wx/listimpl.cpp>
 
 #include "DeviceCore/DevManager.h"
+#include "DeviceCore/DevMappingNozzle.h"
 #include "DeviceCore/FarmDevicePolicy.hpp"
 #include "DeviceCore/DevStorage.h"
 #include "Widgets/Label.hpp"
