@@ -32,13 +32,28 @@ class CdbAttachmentContract(unittest.TestCase):
             {"error": "OpenDesktopW('startup-trace-2') GetLastError=2"}, "startup-trace-1"))
         self.assertFalse(driver.named_desktop_absent(
             {"error": "OpenDesktopW('startup-trace-1') GetLastError=5"}, "startup-trace-1"))
+        for code in (20, 299):
+            self.assertFalse(driver.named_desktop_absent(
+                {"error": f"OpenDesktopW('startup-trace-1') GetLastError={code}"},
+                "startup-trace-1"))
+
+    def test_breakpoint_marker_needs_emitted_line_and_stack_frame(self):
+        marker = "TRACE_RTL_EXIT"
+        stack = " # Child-SP          RetAddr               Call Site\n00 00000000`001ff000 00007fff`12345678 ntdll!RtlExitUserProcess"
+        self.assertTrue(driver.emitted_breakpoint_with_stack(f"{marker}\n{stack}\n", marker))
+        self.assertFalse(driver.emitted_breakpoint_with_stack(
+            f'0:000> bu ntdll!RtlExitUserProcess ".echo {marker}; k 24; gc"\n{stack}\n', marker))
+        self.assertFalse(driver.emitted_breakpoint_with_stack(f"{marker}\nno stack\n", marker))
+        self.assertFalse(driver.emitted_breakpoint_with_stack(f"{marker}\n # Child-SP\n", marker))
 
     def test_teardown_requires_fresh_absence_and_holder_receipt(self):
         state = {"owned_absent": True, "desktop_absent": True,
-                 "holder_verified": True, "cleanup_errors": []}
+                 "holder_verified": True, "debugger_stopped": True,
+                 "cleanup_errors": []}
         self.assertTrue(driver.teardown_verified(**state))
         for changed in ({"owned_absent": False}, {"desktop_absent": False},
-                        {"holder_verified": False}, {"cleanup_errors": ["holder_unverified"]}):
+                        {"holder_verified": False}, {"debugger_stopped": False},
+                        {"cleanup_errors": ["holder_unverified"]}):
             self.assertFalse(driver.teardown_verified(**(state | changed)))
 
 

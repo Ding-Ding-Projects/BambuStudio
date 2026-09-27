@@ -7,6 +7,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -55,12 +56,32 @@ class NamedDesktopAbsent(RuntimeError):
 
 def named_desktop_absent(payload: dict, desktop: str) -> bool:
     detail = json.dumps(payload, ensure_ascii=False)
-    return f"OpenDesktopW('{desktop}')" in detail and "GetLastError=2" in detail
+    return (f"OpenDesktopW('{desktop}')" in detail
+            and re.search(r"GetLastError=2(?!\d)", detail) is not None)
+
+
+def emitted_breakpoint_with_stack(raw: str, marker: str) -> bool:
+    """Require an emitted marker followed by a real CDB stack header and frame."""
+    lines = raw.splitlines()
+    for index, line in enumerate(lines):
+        if line.strip() != marker:
+            continue
+        following = lines[index + 1:index + 81]
+        for offset, candidate in enumerate(following):
+            if "Child-SP" not in candidate:
+                continue
+            frames = following[offset + 1:offset + 31]
+            if any(re.match(r"^\s*[0-9a-fA-F]{2,3}\s+[0-9a-fA-F`]+\s+[0-9a-fA-F`]+\s+", frame)
+                   for frame in frames):
+                return True
+    return False
 
 
 def teardown_verified(*, owned_absent: bool, desktop_absent: bool,
-                      holder_verified: bool, cleanup_errors: list[str]) -> bool:
-    return owned_absent and desktop_absent and holder_verified and not cleanup_errors
+                      holder_verified: bool, debugger_stopped: bool,
+                      cleanup_errors: list[str]) -> bool:
+    return (owned_absent and desktop_absent and holder_verified
+            and debugger_stopped and not cleanup_errors)
 
 
 def cdb_arguments(cdb: str, pid: int, script: str, log: str, symbols: str) -> list[str]:
@@ -195,7 +216,7 @@ def main() -> int:
         if debugger and debugger.poll() is None:
             try:
                 debugger.communicate(input="qd\n", timeout=8)
-            except subprocess.TimeoutExpired:
+            except (OSError, subprocess.TimeoutExpired):
                 report["debugger_detach_status"] = "quit_command_timed_out"
                 try:
                     debugger.kill()
@@ -203,8 +224,11 @@ def main() -> int:
                     report["debugger_detach_status"] = "debugger_stopped_with_pd_protection"
                 except (OSError, subprocess.TimeoutExpired):
                     report["debugger_detach_status"] = "debugger_stop_unverified"
+        report["debugger_stop_verified"] = debugger is None or debugger.poll() is not None
         if created:
             cleanup_errors = []
+            if not report["debugger_stop_verified"]:
+                cleanup_errors.append("debugger_stop_unverified")
             try:
                 if launch_pid is not None and launched_at is not None:
                     owned = owned_process_inventory(process_snapshot(), exe=str(exe), datadir=str(profile),
@@ -261,6 +285,7 @@ def main() -> int:
             report["owned_process_cleanup"] = ("verified" if teardown_verified(
                 owned_absent=owned_absent, desktop_absent=desktop_absent,
                 holder_verified=report.get("holder_teardown_verified") is True,
+                debugger_stopped=report["debugger_stop_verified"],
                 cleanup_errors=cleanup_errors) else "failed")
             if cleanup_errors:
                 report["cleanup_failure_type"] = cleanup_errors
@@ -271,10 +296,13 @@ def main() -> int:
                 report["restricted_logs"] = [{"file": raw_log.name, "bytes": raw_log.stat().st_size,
                     "sha256": sha256(raw_log)}]
                 raw = raw_log.read_text(encoding="utf-8", errors="replace")
-                report["debugger_attach_marker"] = "TRACE_ATTACH" in raw
+                report["debugger_attach_marker"] = any(
+                    line.strip() == "TRACE_ATTACH" for line in raw.splitlines())
                 report["exit_breakpoint_marker"] = (
-                    "TRACE_RTL_EXIT" in raw or "TRACE_EXIT_PROCESS" in raw)
-                report["exception_marker"] = "TRACE_EXCEPTION_80070057" in raw
+                    emitted_breakpoint_with_stack(raw, "TRACE_RTL_EXIT")
+                    or emitted_breakpoint_with_stack(raw, "TRACE_EXIT_PROCESS"))
+                report["exception_marker"] = emitted_breakpoint_with_stack(
+                    raw, "TRACE_EXCEPTION_80070057")
             else:
                 raw_log.unlink()
                 report["raw_debugger_output_limit"] = "empty_or_over_10_mb_excluded"
