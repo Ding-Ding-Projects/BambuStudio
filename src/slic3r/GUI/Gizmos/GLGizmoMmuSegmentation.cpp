@@ -14,10 +14,28 @@
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/Model.hpp"
 #include "slic3r/Utils/UndoRedo.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 
 #include <GL/glew.h>
 
 namespace Slic3r::GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+// Blend a base MD3 colour toward its "on" colour to approximate a Material
+// state layer (hover ~8%, pressed ~12%); alpha follows the base colour.
+inline ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
+{
+    return ImVec4(base.x + (over.x - base.x) * t, base.y + (over.y - base.y) * t,
+                  base.z + (over.z - base.z) * t, base.w);
+}
+} // namespace
 
 static inline void show_notification_extruders_limit_exceeded()
 {
@@ -611,10 +629,10 @@ void GLGizmoMmuSegmentation::on_render_input_window(float x, float y, float bott
         std::wstring add_btn_name = (m_is_dark_mode ? ImGui::AddFilamentDarkIcon : ImGui::AddFilamentIcon) + boost::nowide::widen("");
 
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0);
-        ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 0.00f) : ImVec4(0.86f, 0.99f, 0.91f, 0.00f)); // r, g, b, a
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_is_dark_mode ? ImVec4(150 / 255.0f, 150 / 255.0f, 150 / 255.0f, 1.00f) : ImVec4(0.86f, 0.99f, 0.91f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, m_is_dark_mode ? ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f) : ImVec4(0.86f, 0.99f, 0.91f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode, 0.00f)); // r, g, b, a
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_is_dark_mode ? md3_imvec4(MD3::Role::Outline, m_is_dark_mode) : md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+        ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
 
         if (ImGui::Button(into_u8(add_btn_name).c_str())) {
             wxQueueEvent(wxGetApp().plater(), new SimpleEvent(EVT_ADD_FILAMENT));
@@ -640,9 +658,32 @@ void GLGizmoMmuSegmentation::on_render_input_window(float x, float y, float bott
             ImGui::SameLine(button_offset);
         }
 
-        if (ImGuiFilament::filament_icon_button(extruder_idx, filament_icon_size, m_selected_extruder_idx == extruder_idx))
+        ImGuiFilament::FilamentIconButtonOpts icon_opts;
+        icon_opts.size = filament_icon_size;
+        icon_opts.hover_ring = false;
+        if (ImGuiFilament::filament_icon_button(extruder_idx, icon_opts))
             m_selected_extruder_idx = extruder_idx;
 
+        const ImVec2 icon_min = ImGui::GetItemRectMin();
+        const ImVec2 icon_max = ImGui::GetItemRectMax();
+        // Keep the live gradient preview when the project color cache lags the plater.
+        if (extruder_idx < (int)m_gradient_info.size() && m_gradient_info[extruder_idx].is_gradient) {
+            auto to_imu32 = [](const std::array<float, 4> &c) -> ImU32 {
+                return IM_COL32(uint8_t(c[0]*255.f), uint8_t(c[1]*255.f), uint8_t(c[2]*255.f), uint8_t(c[3]*255.f));
+            };
+            ImU32 col_from = to_imu32(m_gradient_info[extruder_idx].color_from);
+            ImU32 col_to   = to_imu32(m_gradient_info[extruder_idx].color_to);
+            ImGui::GetWindowDrawList()->AddRectFilledMultiColor(icon_min, icon_max, col_from, col_to, col_to, col_from);
+            const std::string label = std::to_string(extruder_idx + 1);
+            ImGuiFilament::draw_index_label(ImGui::GetWindowDrawList(), icon_min, icon_max,
+                                           label.c_str(), wxColour(), true);
+        }
+        const bool selected = m_selected_extruder_idx == extruder_idx;
+        if (selected || ImGui::IsItemHovered()) {
+            const ImU32 ring = ImGui::GetColorU32(md3_imvec4(MD3::Role::Primary, m_is_dark_mode,
+                                                              selected ? 1.0f : 0.65f));
+            ImGui::GetWindowDrawList()->AddRect(icon_min, icon_max, ring, 2.0f, 0, selected ? 2.0f : 1.0f);
+        }
         color_button_high = ImGui::GetCursorPos().y - color_button - 2.0;
         if (extruder_idx < 16 && ImGui::IsItemHovered())
             m_imgui->tooltip(_L("Shortcut Key ") + std::to_string(extruder_idx + 1), max_tooltip_width);
@@ -667,10 +708,10 @@ void GLGizmoMmuSegmentation::on_render_input_window(float x, float y, float bott
         if (i != 0) ImGui::SameLine((empty_button_width + m_imgui->scaled(1.75f)) * i + m_imgui->scaled(1.5f));
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0);
         if (m_current_tool == tool_ids[i]) {
-            ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f) : ImVec4(0.86f, 0.99f, 0.91f, 1.00f)); // r, g, b, a
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_is_dark_mode ? ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f) : ImVec4(0.86f, 0.99f, 0.91f, 1.00f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, m_is_dark_mode ? ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f) : ImVec4(0.86f, 0.99f, 0.91f, 1.00f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+            ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode)); // selected tool -> MD3 primary container
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::PrimaryContainer, m_is_dark_mode));
+            ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(MD3::Role::Primary, m_is_dark_mode));
             ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
             ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0);
         }
@@ -933,12 +974,12 @@ void GLGizmoMmuSegmentation::on_render_input_window(float x, float y, float bott
 
     if (m_current_tool == ImGui::GapFillIcon) {
         m_imgui->disabled_begin(!(TriangleSelectorPatch::exist_gap_area));
-        ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(0 / 255.0, 174 / 255.0, 66 / 255.0, 1.0) : ImVec4(0 / 255.0, 174 / 255.0, 66 / 255.0, 1.0));
+        ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::Primary, m_is_dark_mode)); // filled primary CTA
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-                              m_is_dark_mode ? ImVec4(50 / 255.0f, 238 / 255.0f, 61 / 255.0f, 1.00f) : ImVec4(50 / 255.0f, 238 / 255.0f, 61 / 255.0f, 1.00f));
+                              md3_state_layer(md3_imvec4(MD3::Role::Primary, m_is_dark_mode), md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode), 0.08f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,
-                              m_is_dark_mode ? ImVec4(206 / 255.0f, 206 / 255.0f, 206 / 255.0f, 1.00f) : ImVec4(206 / 255.0f, 206 / 255.0f, 206 / 255.0f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_Text, m_is_dark_mode ? ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.00f) : ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.00f));
+                              md3_state_layer(md3_imvec4(MD3::Role::Primary, m_is_dark_mode), md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode), 0.12f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode));
         if (m_imgui->button(m_desc.at("perform"))) {
             Plater::TakeSnapshot snapshot(wxGetApp().plater(), "Gap fill", UndoRedo::SnapshotType::GizmoAction);
 

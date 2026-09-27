@@ -159,7 +159,8 @@ void GLGizmoCut::on_render_input_window(float x, float y, float bottom_limit)
 
     //BBS: GUI refactor: move gizmo to the right
 #if BBS_TOOLBAR_ON_TOP
-    m_imgui->set_next_window_pos(x, y, ImGuiCond_Always, 0.5f, 0.0f);
+    const float pivot_x = m_input_window_anchor == EInputWindowAnchor::LeftEdge ? 0.0f : 0.5f;
+    m_imgui->set_next_window_pos(x, y, ImGuiCond_Always, pivot_x, 0.0f);
 #else
     m_imgui->set_next_window_pos(x, y, ImGuiCond_Always, 1.0f, 0.0f);
 #endif

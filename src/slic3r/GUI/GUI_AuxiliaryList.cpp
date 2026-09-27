@@ -1,5 +1,7 @@
 #include <wx/button.h>
 #include "GUI_AuxiliaryList.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include "I18N.hpp"
 #include "wxExtensions.hpp"
 
@@ -28,20 +30,17 @@ AuxiliaryList::AuxiliaryList(wxWindow* parent)
 	wxPanel* panel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(21)));
 	//panel->SetBackgroundColour(*wxLIGHT_GREY);
 
-#if 0
-	wxBitmap if_bitmap = create_scaled_bitmap("import_file.png", nullptr, FromDIP(21));
-	wxBitmap nf_bitmap = create_scaled_bitmap("new_folder.png", nullptr, FromDIP(21));
-	wxBitmap del_bitmap = create_scaled_bitmap("delete.png", nullptr, FromDIP(21));
-
-	wxBitmapButton* m_if_btn = new wxBitmapButton(panel, wxID_OPEN, if_bitmap);
-	wxBitmapButton* m_nf_btn = new wxBitmapButton(panel, wxID_NEW, nf_bitmap);
-	wxBitmapButton* m_del_btn = new wxBitmapButton(panel, wxID_DELETE, del_bitmap);
-#endif
+// The three bitmap buttons that used to sit here were dead code behind #if 0;
+// the kit Buttons below are the live controls.
 
 	//m_nf_btn = new wxButton(panel, wxID_NEW, _L("New Folder"));
-	m_if_btn = new wxButton(panel, wxID_ADD, _L("Import File"));
-	m_of_btn = new wxButton(panel, wxID_OPEN, _("Open File"));
-	m_del_btn = new wxButton(panel, wxID_DELETE, _L("Delete"));
+	// Kit Button variants: filled primary action, outlined secondary, outlined-error delete.
+	m_if_btn = new Button(panel, _L("Import File"), "", 0, 0, wxID_ADD);
+	m_if_btn->SetVariant(Button::Variant::Filled);
+	m_of_btn = new Button(panel, _("Open File"), "", 0, 0, wxID_OPEN);
+	m_of_btn->SetVariant(Button::Variant::Outlined);
+	m_del_btn = new Button(panel, _L("Delete"), "", 0, 0, wxID_DELETE);
+	m_del_btn->SetVariant(Button::Variant::Danger);
 
 	wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
 	//hsizer->Add(m_nf_btn, 0, wxRIGHT, 5);
@@ -237,7 +236,7 @@ void AuxiliaryList::on_context_menu(wxDataViewEvent& evt)
 			});
 	}
 
-	PopupMenu(menu);
+	MD3::PopupMenu(this, menu, wxGetMousePosition());
 }
 
 void AuxiliaryList::on_begin_drag(wxDataViewEvent& evt)

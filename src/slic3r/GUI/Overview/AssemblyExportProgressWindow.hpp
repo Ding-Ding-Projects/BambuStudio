@@ -3,9 +3,9 @@
 
 #include <functional>
 #include <wx/frame.h>
+#include "slic3r/GUI/Widgets/ProgressBar.hpp"
 #include <wx/string.h>
 
-class wxGauge;
 class wxStaticText;
 class wxWindow;
 class Button;
@@ -27,7 +27,7 @@ private:
     void on_cancel();
 
     wxStaticText *m_message{nullptr};
-    wxGauge      *m_gauge{nullptr};
+    ProgressBar   *m_gauge{nullptr};
     wxStaticText *m_percent{nullptr};
     Button       *m_cancel{nullptr};
     std::function<void()> m_cancel_cb;

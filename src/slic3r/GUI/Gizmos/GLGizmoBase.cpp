@@ -733,13 +733,14 @@ Transform3d GLGizmoBase::get_corss_mask_model_matrix(ECrossMaskType type, const 
     return model_matrix;
 }
 
-void GLGizmoBase::render_input_window(float x, float y, float bottom_limit)
+void GLGizmoBase::render_input_window(float x, float y, float bottom_limit, EInputWindowAnchor anchor)
 {
     auto canvas_w = float(m_parent.get_canvas_size().get_width());
     auto canvas_h = float(m_parent.get_canvas_size().get_height());
     float zoom = (float)m_parent.get_active_camera().get_zoom();
     const float final_x = 0.5 * canvas_w + x * zoom;
 
+    m_input_window_anchor = anchor;
     on_render_input_window(final_x, y, bottom_limit);
     if (m_first_input_window_render) {
         // for some reason, the imgui dialogs are not shown on screen in the 1st frame where they are rendered, but show up only with the 2nd rendered frame

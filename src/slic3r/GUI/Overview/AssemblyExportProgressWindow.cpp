@@ -27,12 +27,12 @@ AssemblyExportProgressWindow::AssemblyExportProgressWindow(wxWindow *parent)
     wxPanel *panel = new wxPanel(this, wxID_ANY);
     panel->SetBackgroundColour(wxColour(255, 255, 255));
 
-    m_message = new wxStaticText(panel, wxID_ANY, wxEmptyString);
+    m_message = new Label(panel, wxEmptyString);
     m_message->SetForegroundColour(wxColour(107, 107, 107));
     m_message->SetFont(::Label::Body_13);
 
-    m_gauge = new wxGauge(panel, wxID_ANY, 100, wxDefaultPosition, wxSize(FromDIP(360), FromDIP(6)), wxGA_HORIZONTAL | wxGA_SMOOTH);
-    m_gauge->SetMinSize(wxSize(FromDIP(300), FromDIP(6)));
+    m_gauge = new ProgressBar(panel, wxID_ANY, 100, wxDefaultPosition, wxSize(FromDIP(360), FromDIP(8)));
+    m_gauge->SetMinSize(wxSize(FromDIP(300), FromDIP(8)));
 
     m_percent = new wxStaticText(panel, wxID_ANY, "0%", wxDefaultPosition, wxDefaultSize, 0);
     m_percent->SetForegroundColour(wxColour(107, 107, 107));

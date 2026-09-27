@@ -22,6 +22,12 @@
 #include "NotificationManager.hpp"
 #include "MsgDialog.hpp"
 #include "Widgets/ProgressDialog.hpp"
+#include "Widgets/StateColor.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/MD3Dialog.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/Label.hpp"
+#include "Widgets/TextInput.hpp"
 #include "SingleChoiceDialog.hpp"
 
 #include <boost/algorithm/string.hpp>
@@ -87,11 +93,31 @@ class wxRenderer : public wxDelegateRendererNative
 {
 public:
     wxRenderer() : wxDelegateRendererNative(wxRendererNative::Get()) {}
+    // MD3 Objects card row anatomy (register objects-legacy-searchctrl-dataviewctrl):
+    // the selected row reads as a SecondaryContainer chip (kit selection role)
+    // instead of the OS highlight blue. Drawn as a rounded fill inset a hair from
+    // the row edges so the whole row (all columns) picks up the kit selection
+    // colour while the cell renderers (name glyph/text, filament, toggles) keep
+    // painting their content on top — selection, editing, DnD and context menus
+    // are untouched (this is purely the row's selection background). A row that is
+    // current/hovered but not selected still falls through to the generic path.
     virtual void DrawItemSelectionRect(wxWindow *win,
                                        wxDC& dc,
                                        const wxRect& rect,
                                        int flags = 0) wxOVERRIDE
-        { GetGeneric().DrawItemSelectionRect(win, dc, rect, flags); }
+    {
+        if (flags & wxCONTROL_SELECTED) {
+            const wxColour fill = StateColor::semantic(MD3::Role::SecondaryContainer);
+            wxRect r = rect;
+            r.Deflate(win ? win->FromDIP(2) : 2, win ? win->FromDIP(1) : 1);
+            const int radius = win ? win->FromDIP(8) : 8;
+            dc.SetPen(*wxTRANSPARENT_PEN);
+            dc.SetBrush(wxBrush(fill));
+            dc.DrawRoundedRectangle(r, radius);
+            return;
+        }
+        GetGeneric().DrawItemSelectionRect(win, dc, rect, flags);
+    }
 };
 
 ObjectList::ObjectList(wxWindow* parent) :
@@ -3141,7 +3167,8 @@ void ObjectList::split(bool ignore_warning)
     const auto filament_cnt = (filament_colors == nullptr) ? size_t(1) : filament_colors->size();
     if (!volume->is_splittable()) {
         if (!ignore_warning) {
-            wxMessageBox(_(L("The target object contains only one part and can not be split.")));
+            MessageDialog dlg(this, _(L("The target object contains only one part and can not be split.")));
+            dlg.ShowModal();
         }
         return;
     }
@@ -4455,6 +4482,17 @@ void ObjectList::update_info_items(size_t obj_idx, wxDataViewItemArray *selectio
 }
 
 
+// The sidebar sizes this list to its visible rows (Sidebar::fit_object_list_
+// height); every row add/remove path schedules a refit once the mutation has
+// finished, so the scroll body's extent follows the list.
+void ObjectList::refit_sidebar_body()
+{
+    CallAfter([]() {
+        if (wxGetApp().plater())
+            wxGetApp().sidebar().update_scroll_body();
+    });
+}
+
 void ObjectList::add_objects_to_list(std::vector<size_t> obj_idxs, bool call_selection_changed, bool notify_partplate, bool do_info_update)
 {
 #ifdef __WXOSX__
@@ -4470,6 +4508,7 @@ void ObjectList::add_objects_to_list(std::vector<size_t> obj_idxs, bool call_sel
 
 void ObjectList::add_object_to_list(size_t obj_idx, bool call_selection_changed, bool notify_partplate, bool do_info_update)
 {
+    refit_sidebar_body();
     auto model_object = (*m_objects)[obj_idx];
     //BBS start add obj_idx for debug
     PartPlateList& list = wxGetApp().plater()->get_partplate_list();
@@ -4611,6 +4650,7 @@ void ObjectList::delete_object_from_list()
 
 void ObjectList::delete_object_from_list(const size_t obj_idx)
 {
+    refit_sidebar_body();
     select_item([this, obj_idx]() { return m_objects_model->Delete(m_objects_model->GetItemById(obj_idx)); });
 }
 
@@ -4626,6 +4666,7 @@ void ObjectList::delete_instance_from_list(const size_t obj_idx, const size_t in
 
 void ObjectList::delete_from_model_and_list(const ItemType type, const int obj_idx, const int sub_obj_idx)
 {
+    refit_sidebar_body();
     if (!(type&(itObject|itVolume|itInstance)))
         return;
 
@@ -4659,6 +4700,7 @@ void ObjectList::delete_from_model_and_list(const ItemType type, const int obj_i
 
 void ObjectList::delete_from_model_and_list(const std::vector<ItemForDelete>& items_for_delete)
 {
+    refit_sidebar_body();
     if (items_for_delete.empty())
         return;
 
@@ -4752,6 +4794,7 @@ void ObjectList::update_lock_icons_for_model()
 
 void ObjectList::delete_all_objects_from_list()
 {
+    refit_sidebar_body();
     m_prevent_list_events = true;
     reload_all_plates();
     m_prevent_list_events = false;
@@ -6475,14 +6518,104 @@ void ObjectList::split_instances()
     instances_to_separated_object(obj_idx, inst_idxs);
 }
 
+namespace {
+
+// MD3 rename dialog for the object list.
+//
+// The rename prompt used to be a stock wxTextEntryDialog with
+// MD3DialogCaption::Adopt() bolted on: the caption strip was ours, but the body
+// wx built itself -- a sunken Win32 edit box and OS push buttons -- so the
+// most-used context-menu action in Prepare was the one visibly half-migrated
+// dialog in that workflow. This rides the shared MD3Dialog shell instead, with
+// the kit TextInput (r10 filled field, SurfaceContainerHighest) and kit pill
+// footer buttons. Behaviour is unchanged: seeded with the current name, Enter
+// commits, Escape cancels, ShowModal() still answers wxID_OK / wxID_CANCEL and
+// the caller still runs the illegal-filename validation on GetValue().
+class ObjectRenameDialog : public MD3Dialog
+{
+public:
+    ObjectRenameDialog(wxWindow *parent, const wxString &value)
+        : MD3Dialog(parent, _(L("Renaming")), wxEmptyString, MaterialIcon::Edit)
+    {
+        const wxString prompt_text = _(L("Enter new name")) + ":";
+
+        auto *prompt = new ::Label(this, ::Label::Body_14, prompt_text);
+        prompt->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        GetContentSizer()->Add(prompt, 0, wxEXPAND);
+
+        // Field height follows the active Appearance > Density row height so it
+        // matches every other kit field rather than a pinned literal.
+        const int field_h = FromDIP(MD3::Metrics::active().row_height);
+        // No style flags: TextInput::Create already ORs wxTE_PROCESS_ENTER onto
+        // its inner ctrl, and the style it is handed also reaches StaticBox.
+        m_input = new ::TextInput(this, value, wxEmptyString, wxEmptyString, wxDefaultPosition,
+                                  wxSize(FromDIP(320), field_h));
+        m_input->SetMinSize(wxSize(FromDIP(320), field_h));
+        // The prompt is a sibling Label, not the field's own wx label, so name
+        // the field explicitly for screen readers.
+        m_input->SetName(prompt_text);
+        if (auto *tc = m_input->GetTextCtrl())
+            tc->SetName(prompt_text);
+        GetContentSizer()->Add(m_input, 0, wxEXPAND | wxTOP, FromDIP(10));
+        // TextInput forwards its inner ctrl's wxEVT_TEXT_ENTER to itself, so
+        // Enter still accepts the dialog as it did with wxTextEntryDialog.
+        m_input->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { EndModal(wxID_OK); });
+
+        auto *cancel = new Button(this, _L("Cancel"));
+        cancel->SetVariant(Button::Variant::Text);
+        cancel->SetButtonSize(Button::Size::Medium);
+        cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
+        AddFooterButton(cancel);
+
+        auto *ok = new Button(this, _L("OK"));
+        ok->SetVariant(Button::Variant::Filled);
+        ok->SetButtonSize(Button::Size::Medium);
+        ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_OK); });
+        AddFooterButton(ok);
+
+        // The shell is borderless and its footer buttons carry no wxID_CANCEL,
+        // so wxDialog's usual Escape routing has nothing to fire; keep the
+        // native dialog's Esc-cancels explicitly.
+        Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
+            if (e.GetKeyCode() == WXK_ESCAPE)
+                EndModal(wxID_CANCEL);
+            else
+                e.Skip();
+        });
+
+        SetMinSize(wxSize(FromDIP(420), -1));
+        Layout();
+        Fit();
+        CenterOnParent();
+        UpdateShape();
+        wxGetApp().UpdateDlgDarkUI(this);
+
+        // wxTextEntryDialog opened with the seeded name focused and selected so
+        // typing replaces it; preserve that.
+        if (auto *tc = m_input->GetTextCtrl()) {
+            tc->SetFocus();
+            tc->SetSelection(-1, -1);
+        }
+    }
+
+    wxString GetValue() const { return m_input->GetTextCtrl()->GetValue(); }
+
+private:
+    ::TextInput *m_input {nullptr};
+};
+
+} // namespace
+
 void ObjectList::rename_item()
 {
     const wxDataViewItem item = GetSelection();
     if (!item || !(m_objects_model->GetItemType(item) & (itVolume | itObject)))
         return ;
 
-    const wxString new_name = wxGetTextFromUser(_(L("Enter new name"))+":", _(L("Renaming")),
-                                                m_objects_model->GetName(item), this);
+    ObjectRenameDialog dlg(this, m_objects_model->GetName(item));
+    if (dlg.ShowModal() != wxID_OK)
+        return;
+    const wxString new_name = dlg.GetValue();
 
     if (new_name.IsEmpty())
         return;
@@ -7079,6 +7212,7 @@ void ObjectList::on_plate_deleted(int plate_idx)
 
 void ObjectList::reload_all_plates(bool notify_partplate)
 {
+    refit_sidebar_body();
     m_prevent_canvas_selection_update = true;
 #ifdef __WXOSX__
     AssociateModel(nullptr);
@@ -7148,6 +7282,7 @@ void ObjectList::notify_instance_updated(int obj_idx)
 
 void ObjectList::update_after_undo_redo()
 {
+    refit_sidebar_body();
     Plater::SuppressSnapshots suppress(wxGetApp().plater());
     //BBS: undo/redo will rebuild all the plates before
     //no need to notify instance to partplate

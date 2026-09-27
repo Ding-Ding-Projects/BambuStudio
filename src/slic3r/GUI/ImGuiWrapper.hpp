@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <memory>
 
 #include <imgui/imgui.h>
 
@@ -25,6 +26,13 @@ struct ImRect;
 
 namespace Slic3r {
 namespace GUI {
+
+class RegexBuilderBridgeState;
+
+// Opens the full wx regex builder for an ImGui-owned search field. The shared
+// bridge state keeps callbacks lifetime-safe and carries edits back on the next
+// ImGui frame.
+void open_imgui_regex_builder(const std::shared_ptr<RegexBuilderBridgeState> &state);
 
 
 bool get_data_from_svg(const std::string &filename, unsigned int max_size_px, ThumbnailData &thumbnail_data);
@@ -60,6 +68,17 @@ class ImGuiWrapper
     unsigned m_mouse_buttons{ 0 };
     bool m_disabled{ false };
     bool m_new_frame_open{ false };
+    // In-canvas search_list() state. The string is owned here (rather than by
+    // the legacy 40-byte compatibility buffer) so the full 512-code-unit regex
+    // builder limit round-trips without truncating its live evaluation.
+    bool m_search_regex_enabled{ false };
+    bool m_search_case_sensitive{ false };
+    bool m_search_whole_word{ false };
+    bool m_search_multiline{ false };
+    bool m_search_state_initialized{ false };
+    std::string m_search_pattern;
+    std::string m_search_exported_pattern;
+    std::shared_ptr<RegexBuilderBridgeState> m_search_builder_state;
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
     bool m_requires_extra_frame{ false };
 #endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
@@ -212,6 +231,23 @@ public:
     const std::vector<std::string> get_fonts_names() const { return m_fonts_names; }
     bool push_bold_font();
     bool pop_bold_font();
+    // MD3 monospace face (RobotoMono) for numeric/technical text. Mirrors the
+    // bold-font helpers. All pointers are fetched fresh every frame; NEVER cache.
+    bool push_mono_font();
+    bool pop_mono_font();
+    ImFont* get_mono_font() const { return mono_font; }
+    ImFont* get_mono_bold_font() const { return mono_bold_font; }
+    // Material Symbols overlay glyphs. material_icon() returns the UTF-8 for a
+    // Material Symbols PUA codepoint (pass a MaterialIcon::Glyph value) for INLINE
+    // emission in imgui.text via the merged default/bold face. icon_text() renders
+    // one glyph inline in a colour at base size. get_icon_font()/push_icon_font()
+    // expose the standalone large face for independently-sized rendering.
+    static std::string material_icon(unsigned int codepoint);
+    void icon_text(unsigned int codepoint, const ImVec4 &color);
+    ImFont* get_icon_font() const { return m_icon_font; }
+    bool push_icon_font();
+    bool pop_icon_font();
+    bool material_icons_available() const { return m_icon_font != nullptr; }
     bool push_font_by_name(std::string font_name);
     bool pop_font_by_name(std::string font_name);
     void load_fonts_texture();
@@ -369,8 +405,12 @@ public:
     static void on_change_color_mode(bool is_dark);
     static void push_toolbar_style(const float scale);
     static void pop_toolbar_style();
+    static void push_preview_toolbar_style(const float scale);
+    static void pop_preview_toolbar_style();
     static void push_menu_style(const float scale);
     static void pop_menu_style();
+    static void push_preview_menu_style(const float scale);
+    static void pop_preview_menu_style();
     static void push_common_window_style(const float scale);
     static void pop_common_window_style();
     static void push_confirm_button_style();
@@ -401,6 +441,12 @@ private:
     LastSliderStatus m_last_slider_status;
     ImFont* default_font = nullptr;
     ImFont* bold_font = nullptr;
+    // (Re)assigned on every init_font() call, so they survive DPI/scale/language
+    // rebuilds automatically (destroy_font clears the GL texture; init_font
+    // rebuilds all faces). Never cache these across frames in consumers.
+    ImFont* mono_font = nullptr;
+    ImFont* mono_bold_font = nullptr;
+    ImFont* m_icon_font = nullptr;
     std::map<std::string, ImFont*> im_fonts_map;
     std::vector<std::string> m_fonts_names;
 };

@@ -5,6 +5,8 @@
 #include "Overview/OverviewUtils.hpp"
 
 #include <chrono>
+#include <type_traits>
+#include <utility>
 #include <igl/unproject.h>
 #include <wx/string.h>
 
@@ -39,6 +41,9 @@
 #include "WipeTowerDialog.hpp"
 #include "GLToolbar.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
+#include "slic3r/GUI/Gizmos/GLIconGlyphBridge.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_Colors.hpp"
 #include "Mouse3DController.hpp"
@@ -113,10 +118,16 @@ static constexpr const float TRACKBALLSIZE = 0.8f;
 static const float SLIDER_DEFAULT_RIGHT_MARGIN  = 10.0f;
 static const float SLIDER_DEFAULT_BOTTOM_MARGIN = 10.0f;
 static const float SLIDER_RIGHT_MARGIN          = 124.0f;
-static const float SLIDER_BOTTOM_MARGIN         = 64.0f;
+static const float SLIDER_BOTTOM_MARGIN         = 58.0f;
+// Bottom base for the corner notification stack on the 3D (Prepare) canvas:
+// the native plate/slice action bar overlaps the canvas's bottom ~66px, so a
+// 10px base parks settled toasts underneath it. 80 = bar overlap (66) + a
+// 14px breathing gap above the bar (headlessly measured: at 64 the card's
+// bottom edge sat flush against the bar's top edge).
+static const float NOTIFICATION_DEFAULT_BOTTOM_MARGIN = 80.0f;
 
-float GLCanvas3D::DEFAULT_BG_LIGHT_COLOR[3] = { 0.906f, 0.906f, 0.906f };
-float GLCanvas3D::DEFAULT_BG_LIGHT_COLOR_DARK[3] = { 0.329f, 0.329f, 0.353f };
+float GLCanvas3D::DEFAULT_BG_LIGHT_COLOR[3] = { 0.957f, 0.949f, 0.976f };
+float GLCanvas3D::DEFAULT_BG_LIGHT_COLOR_DARK[3] = { 0.106f, 0.110f, 0.129f };
 float GLCanvas3D::ERROR_BG_LIGHT_COLOR[3] = { 0.753f, 0.192f, 0.039f };
 float GLCanvas3D::ERROR_BG_LIGHT_COLOR_DARK[3] = { 0.753f, 0.192f, 0.039f };
 
@@ -146,6 +157,32 @@ static constexpr const size_t VERTEX_BUFFER_RESERVE_SIZE = 131072 * 2; // 1.05MB
 
 namespace Slic3r {
 namespace GUI {
+
+// MD3 -> ImGui colour bridge for the 3D viewport overlays. Resolves shared
+// design-system roles for the current theme instead of legacy brand-green /
+// grey literals (see Widgets/MD3Tokens.hpp). The 3D editor uses the Brand
+// scheme (default); dark state follows wxGetApp().dark_mode().
+static inline ImVec4 md3_imvec4(MD3::Role role, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, wxGetApp().dark_mode());
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+static inline ImU32 md3_imu32(MD3::Role role, unsigned char alpha = 255)
+{
+    const wxColour &c = MD3::resolve(role, wxGetApp().dark_mode());
+    return IM_COL32(c.Red(), c.Green(), c.Blue(), alpha);
+}
+// Dimming wash for viewport thumbnails. The MD3 scrim token already carries the
+// theme-correct dim strength (see MD3Tokens.hpp), so plate tiles stop baking a
+// fixed black alpha; `strength` scales it down for the far lighter wash used on
+// plates that are merely progressing rather than blocked.
+static inline ImU32 md3_scrim_imu32(float strength = 1.0f)
+{
+    const wxColour &s = MD3::scrim(wxGetApp().dark_mode());
+    int             a = static_cast<int>(static_cast<float>(s.Alpha()) * strength + 0.5f);
+    a                 = std::max(0, std::min(255, a));
+    return IM_COL32(s.Red(), s.Green(), s.Blue(), a);
+}
 
 bool                                        GLCanvas3D::s_enable_bvh = true;
 std::vector<GLCanvas3D::IsolatedVolumeInfo> GLCanvas3D::s_isolated_volumes;
@@ -427,8 +464,8 @@ void GLCanvas3D::LayersEditing::render_variable_layer_height_dialog(const GLCanv
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.81f, 0.81f, 0.81f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrab, md3_imvec4(MD3::Role::OutlineVariant));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, md3_imvec4(MD3::Role::Primary));
     if(ImGui::BBLSliderScalar("##radius_slider", ImGuiDataType_S32, &radius, &v_min, &v_max)){
         radius = std::clamp(radius, 1, 10);
         m_smooth_params.radius = (unsigned int)radius;
@@ -439,9 +476,9 @@ void GLCanvas3D::LayersEditing::render_variable_layer_height_dialog(const GLCanv
     input_align = std::max(input_align, ImGui::GetCursorPosX());
     ImGui::SetCursorPosX(input_align);
     ImGui::PushItemWidth(input_box_width);
-    ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.00f));
-    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.68f, 0.26f, 0.00f));
+    ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imvec4(MD3::Role::Primary));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imvec4(MD3::Role::Primary, 0.00f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imvec4(MD3::Role::Primary, 0.00f));
     if (ImGui::BBLDragScalar("##radius_input", ImGuiDataType_S32, &radius, 1, &v_min, &v_max)) {
         radius = std::clamp(radius, 1, 10);
         m_smooth_params.radius = (unsigned int)radius;
@@ -1094,10 +1131,16 @@ void GLCanvas3D::Labels::render(const std::vector<const ModelInstance*>& sorted_
         if (x < 0.0f || viewport[2] < x || y < 0.0f || viewport[3] < y)
             continue;
 
+        // MD3 floating label: same inverse-surface container the canvas tooltip
+        // uses (see Tooltip::render below), with a token corner radius in place of
+        // the hard-cornered 40%-black rectangle. Border weights are left at their
+        // original values - GLCanvas3D::get_scale() returns 1.0f on every non-mac
+        // build, so multiplying by it would only look like DPI awareness.
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, owner.selected ? 3.0f : 1.5f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleColor(ImGuiCol_Border, owner.selected ? ImVec4(1/255.f, 174/255.f, 66/255.f, 1.0f) : ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.4f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, static_cast<float>(MD3::Metrics::radius_tiny));
+        ImGui::PushStyleColor(ImGuiCol_Border, owner.selected ? md3_imvec4(MD3::Role::Primary) : ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imvec4(MD3::Role::InverseSurface, 0.94f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::InverseOn));
         imgui.set_next_window_pos(x, y, ImGuiCond_Always, 0.5f, 0.5f);
         imgui.begin(owner.title, ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
         ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
@@ -1108,7 +1151,7 @@ void GLCanvas3D::Labels::render(const std::vector<const ModelInstance*>& sorted_
         imgui.text(owner.label);
 
         if (show_object_label) {
-            ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(1.0f, 1.0f, 1.0f, 0.3f));
+            ImGui::PushStyleColor(ImGuiCol_Separator, md3_imvec4(MD3::Role::OutlineVariant));
             ImGui::Separator();
             ImGui::PopStyleColor();
             ImGui::AlignTextToFramePadding();
@@ -1120,7 +1163,7 @@ void GLCanvas3D::Labels::render(const std::vector<const ModelInstance*>& sorted_
             imgui.set_requires_extra_frame();
 
         imgui.end();
-        ImGui::PopStyleColor(2);
+        ImGui::PopStyleColor(3);
         ImGui::PopStyleVar(2);
     }
 }
@@ -1158,12 +1201,13 @@ void GLCanvas3D::Tooltip::render(const Vec2d& mouse_position, GLCanvas3D& canvas
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.13f, 0.13f, 0.94f));
+    // MD3 tooltip: inverse-surface container with inverse on-surface text (theme-aware).
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imvec4(MD3::Role::InverseSurface, 0.94f));
     imgui.set_next_window_pos(position.x(), position.y(), ImGuiCond_Always, 0.0f, 0.0f);
 
     imgui.begin(wxString("canvas_tooltip"), ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoFocusOnAppearing);
     ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::InverseOn));
     ImGui::TextUnformatted(m_text.c_str());
     ImGui::PopStyleColor();
 
@@ -1549,6 +1593,10 @@ GLCanvas3D::~GLCanvas3D()
 {
     reset_volumes(false);
 
+    // Release the cached MD3 overlay glyph textures while the GL context is current
+    // (as with the other GL resources torn down here).
+    _release_md3_overlay_glyphs();
+
     m_sel_plate_toolbar.del_all_item();
     m_sel_plate_toolbar.del_stats_item();
 
@@ -1737,6 +1785,9 @@ void GLCanvas3D::on_change_color_mode(bool is_dark, bool reinit) {
             if (p_main_toolbar) {
                 p_main_toolbar->set_icon_dirty();
             }
+            if (m_gizmo_toolbar) {
+                m_gizmo_toolbar->set_icon_dirty();
+            }
             wxGetApp().plater()->get_collapse_toolbar().set_icon_dirty();
         }
     }
@@ -1747,6 +1798,9 @@ void GLCanvas3D::on_change_color_mode(bool is_dark, bool reinit) {
             const auto& p_main_toolbar = get_main_toolbar();
             if (p_main_toolbar) {
                 p_main_toolbar->set_icon_dirty();
+            }
+            if (m_gizmo_toolbar) {
+                m_gizmo_toolbar->set_icon_dirty();
             }
         }
         // The dark-mode switch relayouts/resizes the canvas, leaving the assembly
@@ -2485,6 +2539,9 @@ void GLCanvas3D::enable_main_toolbar(bool enable)
         return;
     }
     p_main_toolbar->set_enabled(enable);
+    if (m_canvas_type == ECanvasType::CanvasView3D) {
+        get_gizmo_toolbar()->set_enabled(enable);
+    }
 }
 
 void GLCanvas3D::reset_select_plate_toolbar_selection() {
@@ -2710,6 +2767,65 @@ float GLCanvas3D::get_collapse_toolbar_height() const
     return state != Sidebar::None ? collapse_toolbar.get_height() : 0;
 }
 
+void GLCanvas3D::_calc_return_toolbar_position(float window_width, float& position_x, float& position_y) const
+{
+    const float canvas_width = static_cast<float>(get_canvas_size().get_width());
+
+    position_x = 30.0f + (is_collapse_toolbar_on_left() ? get_collapse_toolbar_width() + 5.0f : 0.0f);
+    position_y = 14.0f;
+
+    // In assemble view the Assembly Structure panel owns the top-left corner.
+    if (m_canvas_type == ECanvasType::CanvasAssembleView && m_assembly_steps) {
+        const float anchor_x = m_assembly_steps->get_assembly_structure_right_x();
+        if (anchor_x > 0.0f) {
+            position_x = anchor_x + 8.0f * get_scale();
+            position_y = 20.0f;
+        }
+    }
+
+    if (m_canvas_type != ECanvasType::CanvasView3D)
+        return;
+
+    float left_position = 0.0f;
+    const auto& main_toolbar = get_main_toolbar();
+    if (main_toolbar) {
+        const auto add_item = main_toolbar->get_item("add");
+        if (add_item)
+            left_position = add_item->render_rect[0];
+    }
+
+    const float toolbar_x = 0.5f * canvas_width +
+                            left_position * static_cast<float>(get_active_camera().get_zoom());
+    constexpr float margin = 5.0f;
+    if (toolbar_x < window_width + margin * 3.0f) {
+        position_x = margin;
+        position_y = 2.0f + (main_toolbar ? main_toolbar->get_height() : 0.0f);
+    }
+}
+
+float GLCanvas3D::get_gizmo_toolbar_top_inset() const
+{
+    const float margin = 8.0f * get_scale();
+    float       inset  = margin + get_collapse_toolbar_height();
+
+    // An active gizmo exposes the return affordance in the same top-left
+    // region. Reserve its actual ImGui height plus the rail margin so the two
+    // controls never cover one another.
+    if (m_canvas_type == ECanvasType::CanvasView3D && m_return_toolbar.is_enabled()) {
+        const float font_size = ImGui::GetFontSize();
+        const float padding = wxGetApp().imgui()->scaled(2.0f);
+        const float return_toolbar_width = font_size * 4.0f + font_size * 1.3f + padding;
+        const float return_toolbar_height = font_size * 1.3f + padding;
+        [[maybe_unused]] float return_toolbar_x = 0.0f;
+        float return_toolbar_y = 0.0f;
+        _calc_return_toolbar_position(return_toolbar_width, return_toolbar_x, return_toolbar_y);
+        const float return_toolbar_bottom = return_toolbar_y + return_toolbar_height;
+        inset = std::max(inset, return_toolbar_bottom + margin);
+    }
+
+    return inset;
+}
+
 bool GLCanvas3D::make_current_for_postinit() {
     return _set_current(true);
 }
@@ -2823,6 +2939,11 @@ void GLCanvas3D::render(bool only_init)
             const auto toolbar_style = p_ogl_manager->get_toolbar_rendering_style();
             m_main_toolbar->set_rendering_mode(static_cast<GLToolbar::EToolbarRenderingMode>(toolbar_style));
         }
+    }
+    // The left rail is intrinsically vertical. The KeepSize renderer wraps
+    // horizontal toolbars and therefore must never be selected for this rail.
+    if (m_gizmo_toolbar) {
+        m_gizmo_toolbar->set_rendering_mode(GLToolbar::EToolbarRenderingMode::Auto);
     }
 
     auto& ogl_manager = *p_ogl_manager;
@@ -2990,8 +3111,8 @@ void GLCanvas3D::render(bool only_init)
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.13f, 0.13f, 0.13f, 0.94f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, md3_imvec4(MD3::Role::InverseSurface, 0.94f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::InverseOn));
 
         ImGui::ShowMetricsWindow();
 
@@ -3047,6 +3168,10 @@ void GLCanvas3D::render(bool only_init)
             }
         }
 
+        if (tooltip.empty() && m_gizmo_toolbar) {
+            tooltip = m_gizmo_toolbar->get_tooltip();
+        }
+
 	    if (tooltip.empty())
             tooltip = wxGetApp().plater()->get_collapse_toolbar().get_tooltip();
 
@@ -3078,8 +3203,11 @@ void GLCanvas3D::render(bool only_init)
 
     wxGetApp().plater()->get_mouse3d_controller().render_settings_dialog(*this);
 
+    // These margins feed only render_notifications below (not the sliders):
+    // the 3D canvas needs the taller notification base so settled toasts clear
+    // the native bottom action bar; Preview keeps the slider-clearing values.
     float right_margin = SLIDER_DEFAULT_RIGHT_MARGIN;
-    float bottom_margin = SLIDER_DEFAULT_BOTTOM_MARGIN;
+    float bottom_margin = NOTIFICATION_DEFAULT_BOTTOM_MARGIN;
     if (m_canvas_type == ECanvasType::CanvasPreview) {
         right_margin = SLIDER_RIGHT_MARGIN;
         bottom_margin = SLIDER_BOTTOM_MARGIN;
@@ -4374,6 +4502,9 @@ bool GLCanvas3D::_do_idle_work()
     if (p_main_toolbar) {
         m_dirty |= p_main_toolbar->update_items_state();
     }
+    if (m_gizmo_toolbar) {
+        m_dirty |= m_gizmo_toolbar->update_items_state();
+    }
     // BBS
     //m_dirty |= wxGetApp().plater()->get_view_toolbar().update_items_state();
     m_dirty |= wxGetApp().plater()->sidebar().get_update_3d_state();
@@ -5365,25 +5496,77 @@ void GLCanvas3D::schedule_extra_frame(int miliseconds)
 
 int GLCanvas3D::get_main_toolbar_item_id(const std::string& name) const
 {
-    if (!m_main_toolbar) {
-        return -1;
+    if (m_main_toolbar) {
+        const int item_id = m_main_toolbar->get_item_id(name);
+        if (item_id >= 0) {
+            return item_id;
+        }
     }
-    return m_main_toolbar->get_item_id(name);
+
+    if (m_gizmo_toolbar) {
+        const int item_id = m_gizmo_toolbar->get_item_id(name);
+        if (item_id >= 0) {
+            // Keep the long-standing public API intact while making the owning
+            // toolbar unambiguous. -1 remains the not-found sentinel.
+            return -item_id - 2;
+        }
+    }
+
+    return -1;
 }
 
 void GLCanvas3D::force_main_toolbar_left_action(int item_id)
 {
-    if (!m_main_toolbar) {
+    if (item_id <= -2) {
+        if (!m_gizmo_toolbar) {
+            return;
+        }
+        const int gizmo_item_id = -item_id - 2;
+        m_dirty |= m_gizmo_toolbar->update_items_state();
+        const auto& items = m_gizmo_toolbar->get_items();
+        if (gizmo_item_id < 0 || gizmo_item_id >= static_cast<int>(items.size()) ||
+            !items[gizmo_item_id] || items[gizmo_item_id]->is_disabled() || items[gizmo_item_id]->is_separator()) {
+            return;
+        }
+
+        _deactivate_arrange_menu();
+        _deactivate_orient_menu();
+        _deactivate_layersediting_menu();
+        m_gizmo_toolbar->force_left_action(gizmo_item_id, *this);
+        return;
+    }
+
+    if (!m_main_toolbar || item_id < 0) {
         return;
     }
 
     m_dirty |= m_main_toolbar->update_items_state();
+    const auto& items = m_main_toolbar->get_items();
+    if (item_id >= static_cast<int>(items.size()) || !items[item_id] ||
+        items[item_id]->is_disabled() || items[item_id]->is_separator()) {
+        return;
+    }
+
+    if (m_gizmos.get_current_type() != GLGizmosManager::EType::Undefined) {
+        m_gizmos.reset_all_states();
+        m_gizmos.update_data();
+        if (m_gizmo_toolbar) {
+            m_dirty |= m_gizmo_toolbar->update_items_state();
+        }
+    }
     m_main_toolbar->force_left_action(item_id, *this);
 }
 
 void GLCanvas3D::force_main_toolbar_right_action(int item_id)
 {
-    m_main_toolbar->force_right_action(item_id, *this);
+    if (item_id <= -2) {
+        if (m_gizmo_toolbar) {
+            m_gizmo_toolbar->force_right_action(-item_id - 2, *this);
+        }
+    }
+    else if (m_main_toolbar && item_id >= 0) {
+        m_main_toolbar->force_right_action(item_id, *this);
+    }
 }
 
 #ifndef NDEBUG
@@ -5541,9 +5724,46 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
 #endif /* SLIC3R_DEBUG_MOUSE_EVENTS */
 	}
 
+    const auto has_hovered_enabled_item = [](const std::shared_ptr<GLToolbar>& toolbar) {
+        if (!toolbar || !toolbar->is_enabled()) {
+            return false;
+        }
+        for (const auto& item : toolbar->get_items()) {
+            if (item && item->is_visible() && item->is_hovered() && !item->is_disabled() && !item->is_separator()) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    const bool is_left_action = evt.LeftDown() || evt.LeftDClick();
     const auto& p_main_toolbar = get_main_toolbar();
+    if (is_left_action && has_hovered_enabled_item(p_main_toolbar) &&
+        m_gizmos.get_current_type() != GLGizmosManager::EType::Undefined) {
+        // These items used to share one toolbar. Preserve its cross-toggle
+        // behavior when a scene command is activated while a gizmo is open.
+        m_gizmos.reset_all_states();
+        m_gizmos.update_data();
+        if (m_gizmo_toolbar) {
+            m_dirty |= m_gizmo_toolbar->update_items_state();
+        }
+    }
     if (p_main_toolbar) {
         if (p_main_toolbar->on_mouse(evt, *this)) {
+            if (evt.LeftUp() || evt.MiddleUp() || evt.RightUp())
+                mouse_up_cleanup();
+            m_mouse.set_start_position_3D_as_invalid();
+            return;
+        }
+    }
+
+    if (m_gizmo_toolbar) {
+        if (is_left_action && has_hovered_enabled_item(m_gizmo_toolbar)) {
+            _deactivate_arrange_menu();
+            _deactivate_orient_menu();
+            _deactivate_layersediting_menu();
+        }
+        if (m_gizmo_toolbar->on_mouse(evt, *this)) {
             if (evt.LeftUp() || evt.MiddleUp() || evt.RightUp())
                 mouse_up_cleanup();
             m_mouse.set_start_position_3D_as_invalid();
@@ -5598,6 +5818,9 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
             const auto& p_main_toolbar = get_main_toolbar();
             if (p_main_toolbar) {
                 p_main_toolbar->on_mouse(evt2, *this);
+            }
+            if (m_gizmo_toolbar) {
+                m_gizmo_toolbar->on_mouse(evt2, *this);
             }
         }
 
@@ -6291,6 +6514,31 @@ void GLCanvas3D::on_set_focus(wxFocusEvent& evt)
 void GLCanvas3D::on_back_slice_begin() {
     auto& t_gcode_viewer = get_gcode_viewer();
     t_gcode_viewer.reset_curr_plate_thermal_options();
+}
+
+std::vector<GLCanvas3D::ToolbarItemRect> GLCanvas3D::get_toolbar_item_rects() const
+{
+    std::vector<ToolbarItemRect> out;
+    const Size   cnv    = get_canvas_size();
+    const double zoom   = wxGetApp().plater() ? wxGetApp().plater()->get_camera().get_zoom() : 1.0;
+    const double half_w = 0.5 * cnv.get_width();
+    const double half_h = 0.5 * cnv.get_height();
+    auto add = [&](const char *toolbar, const std::shared_ptr<GLToolbar> &t) {
+        if (!t) return;
+        for (const auto &item : t->get_items()) {
+            if (!item || !item->is_visible() || item->is_collapsed()) continue;
+            // render_rect is left, right, bottom, top in world units with y up;
+            // one canvas pixel is one world unit times the zoom.
+            const float *r = item->render_rect;
+            if (r[1] <= r[0] || r[3] <= r[2]) continue;
+            out.push_back({toolbar, item->get_name(),
+                           (int) std::lround(r[0] * zoom + half_w), (int) std::lround(half_h - r[3] * zoom),
+                           (int) std::lround((r[1] - r[0]) * zoom), (int) std::lround((r[3] - r[2]) * zoom)});
+        }
+    };
+    add("main", m_main_toolbar);
+    add("gizmo", m_gizmo_toolbar);
+    return out;
 }
 
 Size GLCanvas3D::get_canvas_size() const
@@ -7571,6 +7819,16 @@ bool GLCanvas3D::_render_arrange_menu(float left, float toolbar_height)
 
 static float       identityMatrix[16]   = {1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
 static const float cameraProjection[16] = {1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f};
+static float get_3d_navigator_scale(const GLCanvas3D& canvas)
+{
+    float scale = canvas.get_scale();
+#ifdef WIN32
+    const int dpi = get_dpi_for_window(wxGetApp().GetTopWindow());
+    scale *= static_cast<float>(dpi) / static_cast<float>(DPI_DEFAULT);
+#endif // WIN32
+    return scale;
+}
+
 void GLCanvas3D::_render_3d_navigator()
 {
     const bool is_assembly_nav = (m_canvas_type == ECanvasType::CanvasAssembleView) && m_assembly_steps;
@@ -7595,8 +7853,8 @@ void GLCanvas3D::_render_3d_navigator()
     style.Colors[ImGuizmo::COLOR::DIRECTION_X] = ImGuiWrapper::to_ImVec4(ColorRGBA::Y());
     style.Colors[ImGuizmo::COLOR::DIRECTION_Y] = ImGuiWrapper::to_ImVec4(ColorRGBA::Z());
     style.Colors[ImGuizmo::COLOR::DIRECTION_Z] = ImGuiWrapper::to_ImVec4(ColorRGBA::X());
-    style.Colors[ImGuizmo::COLOR::TEXT]        = m_is_dark ? ImVec4(224 / 255.f, 224 / 255.f, 224 / 255.f, 1.f) : ImVec4(.2f, .2f, .2f, 1.0f);
-    style.Colors[ImGuizmo::COLOR::FACE]        = m_is_dark ? ImVec4(0.23f, 0.23f, 0.23f, 1.f) : ImVec4(0.77f, 0.77f, 0.77f, 1);
+    style.Colors[ImGuizmo::COLOR::TEXT]        = md3_imvec4(MD3::Role::OnSurface);
+    style.Colors[ImGuizmo::COLOR::FACE]        = md3_imvec4(MD3::Role::SurfaceContainerHighest);
     strcpy(style.AxisLabels[ImGuizmo::Axis::Axis_X], "y");
     strcpy(style.AxisLabels[ImGuizmo::Axis::Axis_Y], "z");
     strcpy(style.AxisLabels[ImGuizmo::Axis::Axis_Z], "x");
@@ -7607,11 +7865,7 @@ void GLCanvas3D::_render_3d_navigator()
     strcpy(style.FaceLabels[ImGuizmo::FACES::FACE_LEFT], _CTX_utf8(L_CONTEXT("Left", "Camera"), "Camera").c_str());
     strcpy(style.FaceLabels[ImGuizmo::FACES::FACE_RIGHT], _CTX_utf8(L_CONTEXT("Right", "Camera"), "Camera").c_str());
 
-    float sc = get_scale();
-#ifdef WIN32
-    const int dpi = get_dpi_for_window(wxGetApp().GetTopWindow());
-    sc *= (float) dpi / (float) DPI_DEFAULT;
-#endif // WIN32
+    const float sc = get_3d_navigator_scale(*this);
 
     const ImGuiIO &io                 = ImGui::GetIO();
     const float    viewManipulateLeft = 0;
@@ -7812,6 +8066,11 @@ void GLCanvas3D::_switch_toolbars_icon_filename()
         p_main_toolbar->set_dark_mode_enabled(m_is_dark);
     }
 
+    if (m_gizmo_toolbar) {
+        m_gizmo_toolbar->init(background_data);
+        m_gizmo_toolbar->set_dark_mode_enabled(m_is_dark);
+    }
+
     wxGetApp().plater()->get_collapse_toolbar().init(background_data);
 
 }
@@ -7839,6 +8098,47 @@ bool GLCanvas3D::_init_toolbars()
 
     return true;
 }
+
+namespace {
+// item 3: defensive consumption of the GLGizmosManager rail-grouping accessor.
+//
+// The gizmo rail's 28px group dividers were placed with the Scale / "Color
+// Painting" name anchors. GLGizmosManager now owns the grouping as the single
+// source of truth and exposes get_gizmo_rail_group_dividers(), returning the
+// EType that ends each non-final rail group (presently { Scale, MmuSegmentation };
+// the latter is "Color Painting"). This detection idiom consumes that accessor
+// when it is present at compile time and otherwise falls back to the exact
+// name-anchored placement, so GLCanvas3D compiles unchanged either way and never
+// hard-depends on the manager's grouping API.
+template <class, class = void>
+struct has_rail_group_accessor : std::false_type {};
+template <class T>
+struct has_rail_group_accessor<
+    T, std::void_t<decltype(std::declval<const T&>().get_gizmo_rail_group_dividers())>>
+    : std::true_type {};
+
+template <class Mgr>
+void md3_insert_rail_group_dividers(const std::shared_ptr<GLToolbar>& rail, const Mgr& gizmos)
+{
+    if (!rail)
+        return;
+    if constexpr (has_rail_group_accessor<Mgr>::value) {
+        // Preferred path: one divider after the last tool of each grouped set,
+        // driven by tool identity. insert_separator_after skips anchors filtered
+        // out of the current rail, so a reduced gizmo set never mis-places one.
+        for (const auto& t : gizmos.get_gizmo_rail_group_dividers())
+            rail->insert_separator_after(Mgr::convert_gizmo_type_to_string(t));
+    }
+    else {
+        // Fallback (accessor absent): the equivalent name-anchored dividers after
+        // the transform tools (…/Scale) and the paint/edit tools (…/"Color
+        // Painting"). Absent anchors are skipped, same as above.
+        (void) gizmos;
+        rail->insert_separator_after("Color Painting");
+        rail->insert_separator_after("Scale");
+    }
+}
+} // namespace
 
 //BBS: GUI refactor: GLToolbar
 bool GLCanvas3D::_init_main_toolbar()
@@ -7892,9 +8192,37 @@ bool GLCanvas3D::_init_main_toolbar()
     p_main_toolbar->set_vertical_orientation(ToolbarLayout::VO_Top);
     p_main_toolbar->set_border(5.0f);
     p_main_toolbar->set_separator_size(5);
-    p_main_toolbar->set_gap_size(4);
+    // MD3 kit pill: 3px gap between the 40px tiles (pad 5 = the 5px border).
+    p_main_toolbar->set_gap_size(3);
 
     p_main_toolbar->del_all_item();
+
+    std::shared_ptr<GLToolbar> p_gizmo_toolbar;
+    bool use_vertical_gizmo_toolbar = false;
+    if (m_canvas_type == ECanvasType::CanvasView3D) {
+        p_gizmo_toolbar = get_gizmo_toolbar();
+        p_gizmo_toolbar->set_enabled(p_main_toolbar->is_enabled());
+        if (p_gizmo_toolbar->init(background_data)) {
+            p_gizmo_toolbar->set_dark_mode_enabled(m_is_dark);
+            p_gizmo_toolbar->set_rendering_mode(GLToolbar::EToolbarRenderingMode::Auto);
+            p_gizmo_toolbar->set_position_mode(ToolbarLayout::EPositionMode::Custom);
+            p_gizmo_toolbar->set_layout_type(ToolbarLayout::EType::Vertical);
+            p_gizmo_toolbar->set_horizontal_orientation(ToolbarLayout::HO_Center);
+            p_gizmo_toolbar->set_vertical_orientation(ToolbarLayout::VO_Center);
+            // MD3 kit rail: 8px pad (border) so 44px tiles form a 60px rail, 3px
+            // gap, and a wider separator band to seat the 28px group dividers.
+            p_gizmo_toolbar->set_border(8.0f);
+            p_gizmo_toolbar->set_separator_size(9.0f);
+            p_gizmo_toolbar->set_gap_size(3.0f);
+            p_gizmo_toolbar->del_all_item();
+            use_vertical_gizmo_toolbar = true;
+        }
+        else {
+            // Retain the legacy combined toolbar as a functional fallback if
+            // the rail background cannot be created in the current GL context.
+            p_gizmo_toolbar->set_enabled(false);
+        }
+    }
 
     uint8_t sprite_id = 0;
     GLToolbarItem::Data item;
@@ -8067,7 +8395,26 @@ bool GLCanvas3D::_init_main_toolbar()
         }
     };
 
-    if (m_gizmos.is_enabled()) {
+    if (m_canvas_type == ECanvasType::CanvasView3D && use_vertical_gizmo_toolbar) {
+        // Scene-level operations remain in the compact top-center toolbar.
+        do_add_other_items(sprite_id);
+
+        if (m_gizmos.is_enabled()) {
+            // Sprite rows are local to each toolbar texture, so the rail owns
+            // an independent zero-based sequence.
+            uint8_t gizmo_sprite_id = 0;
+            m_gizmos.add_toolbar_items(p_gizmo_toolbar, gizmo_sprite_id, [](uint8_t&) {});
+            // MD3 kit rail: group the tools with 28px OutlineVariant dividers.
+            // GLGizmosManager populates a dynamic, filtered gizmo set with no
+            // separators of its own; md3_insert_rail_group_dividers consumes a
+            // grouping accessor if the manager grows one and otherwise falls back to
+            // the transform (…/Scale) and paint/edit (…/"Color Painting") anchors.
+            md3_insert_rail_group_dividers(p_gizmo_toolbar, m_gizmos);
+        }
+    }
+    else if (m_gizmos.is_enabled()) {
+        // Assembly view, and the GL-resource fallback above, deliberately keep
+        // the established combined-toolbar behavior.
         m_gizmos.add_toolbar_items(p_main_toolbar, sprite_id, do_add_other_items);
     }
     else if (m_canvas_type == ECanvasType::CanvasView3D) {
@@ -8149,6 +8496,9 @@ bool GLCanvas3D::_init_main_toolbar()
     }
 
     p_main_toolbar->update_items_state();
+    if (use_vertical_gizmo_toolbar) {
+        p_gizmo_toolbar->update_items_state();
+    }
     return true;
 }
 
@@ -9238,6 +9588,7 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
     float scale = 1.0f;
 
     const auto& p_main_toolbar = get_main_toolbar();
+    const auto p_gizmo_toolbar = m_gizmo_toolbar;
     if (p_main_toolbar) {
         const bool auto_scale = p_main_toolbar->get_rendering_mode() == GLToolbar::EToolbarRenderingMode::Auto;
         scale = wxGetApp().toolbar_icon_scale(auto_scale);
@@ -9247,6 +9598,10 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
     //BBS: GUI refactor: GLToolbar
     float size = GLToolbar::Default_Icons_Size * scale;
     //float main_size = GLGizmosManager::Default_Icons_Size * scale;
+    // MD3: the gizmo rail uses larger 44px tiles than the 40px main-toolbar tiles.
+    // The multiplier is applied to the rail's icon size and mirrored in the rail
+    // height fit below so picking, centring and DPI scaling stay coherent.
+    const float rail_tile_mul = 44.0f / GLToolbar::Default_Icons_Size;
 
     // Set current size for all top toolbars. It will be used for next calculations
     GLToolbar& collapse_toolbar = wxGetApp().plater()->get_collapse_toolbar();
@@ -9255,6 +9610,11 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
     //BBS: GUI refactor: GLToolbar
     if (p_main_toolbar) {
         p_main_toolbar->set_scale(sc);
+    }
+    if (p_gizmo_toolbar) {
+        p_gizmo_toolbar->set_scale(sc);
+        // MD3: 44px rail base tile (retina scale carried separately via set_scale).
+        p_gizmo_toolbar->set_icons_size(GLToolbar::Default_Icons_Size * rail_tile_mul);
     }
 
     collapse_toolbar.set_scale(sc);
@@ -9266,6 +9626,10 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
     //BBS: GUI refactor: GLToolbar
     if (p_main_toolbar) {
         p_main_toolbar->set_icons_size(size);
+    }
+    if (p_gizmo_toolbar) {
+        // MD3: 44px rail tiles vs the 40px main-toolbar tiles.
+        p_gizmo_toolbar->set_icons_size(size * rail_tile_mul);
     }
     collapse_toolbar.set_icons_size(wxGetApp().plater()->get_collapse_toolbar_size());
 #endif // ENABLE_RETINA_GL
@@ -9296,10 +9660,29 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
         new_h_scale = 1;
     }
 
-    //use the same value as horizon
     float new_v_scale = new_h_scale;
+    if (p_gizmo_toolbar && p_gizmo_toolbar->is_enabled()) {
+        const int rail_items = p_gizmo_toolbar->get_visible_items_cnt();
+        if (rail_items > 0) {
+            // MD3: the rail's per-item height is the 44px tile (size * rail_tile_mul),
+            // so both the non-item remainder and the fit denominator use it.
+            const float rail_item_px = size * rail_tile_mul;
+            const float rail_non_item_height = std::max(0.0f,
+                p_gizmo_toolbar->get_height() - rail_item_px * static_cast<float>(rail_items));
+            const float rail_gap = 8.0f * get_scale();
+            float bottom_inset = rail_gap;
+            if (wxGetApp().show_3d_navigator() && can_show_3d_navigator()) {
+                bottom_inset += 128.0f * get_3d_navigator_scale(*this);
+            }
+            const float available_height = std::max(0.0f,
+                static_cast<float>(cnv_size.get_height()) - get_gizmo_toolbar_top_inset() - bottom_inset);
+            const float rail_scale = std::max(0.0f, available_height - rail_non_item_height) /
+                (static_cast<float>(rail_items) * GLToolbar::Default_Icons_Size * rail_tile_mul);
+            new_v_scale = std::min(new_v_scale, rail_scale);
+        }
+    }
 #else
-    float top_tb_width = = collapse_toolbar.get_width();
+    float top_tb_width = collapse_toolbar.get_width();
     int   items_cnt = collapse_toolbar.get_visible_items_cnt();
     float noitems_width = top_tb_width - size * items_cnt; // width of separators and borders in top toolbars
 
@@ -9322,6 +9705,48 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
 #endif
     if (fabs(new_scale - scale) > 0.01) // scale is changed by 1% and more
         wxGetApp().set_auto_toolbar_icon_scale(new_scale);
+}
+
+unsigned int GLCanvas3D::_md3_overlay_glyph_texture(uint32_t codepoint, int px, int& out_w, int& out_h)
+{
+    out_w = 0;
+    out_h = 0;
+    if (codepoint == 0 || px <= 0 || !GLIconGlyphBridge::available())
+        return 0;
+
+    for (const MD3OverlayGlyph& g : m_md3_overlay_glyphs) {
+        if (g.cp == codepoint && g.px == px) {
+            if (g.failed)
+                return 0;
+            out_w = g.w;
+            out_h = g.h;
+            return g.tex;
+        }
+    }
+
+    // Bake the glyph white; the draw path tints it to the current theme role, so a
+    // light/dark swap reuses the same texture.
+    int w = 0, h = 0;
+    const unsigned int tex = GLIconGlyphBridge::make_glyph_texture(codepoint, px, wxColour(255, 255, 255), &w, &h);
+    MD3OverlayGlyph entry{ codepoint, px, tex, w, h, tex == 0 };
+    m_md3_overlay_glyphs.push_back(entry);
+    if (tex == 0)
+        return 0;
+    out_w = w;
+    out_h = h;
+    return tex;
+}
+
+void GLCanvas3D::_release_md3_overlay_glyphs()
+{
+    for (MD3OverlayGlyph& g : m_md3_overlay_glyphs) {
+        if (g.tex != 0) {
+            GLuint id = static_cast<GLuint>(g.tex);
+            glsafe(::glDeleteTextures(1, &id));
+            g.tex = 0;
+        }
+    }
+    m_md3_overlay_glyphs.clear();
 }
 
 void GLCanvas3D::_render_overlays()
@@ -9359,6 +9784,222 @@ void GLCanvas3D::_render_overlays()
     }
     m_labels.render(sorted_instances);
     _render_3d_navigator();
+
+    // MD3 viewport chrome (Prepare 3D editor only): a bottom-right zoom cluster
+    // wired to the existing camera zoom commands and a bottom-centre object stat
+    // pill. Additive overlays, drawn above the scene and the GL toolbars; they
+    // never remove or reroute existing viewport interaction. Icons resolve to
+    // pixel-exact Material Symbols when the icon font is present (cached per
+    // codepoint/size, see _md3_overlay_glyph_texture) and fall back to vector
+    // primitives otherwise, so the chrome carries no hard glyph-font dependency.
+    if (m_canvas_type == ECanvasType::CanvasView3D) {
+        const Size  cnv_size = get_canvas_size();
+        const float cnv_w    = static_cast<float>(cnv_size.get_width());
+        const float cnv_h    = static_cast<float>(cnv_size.get_height());
+        const float sc       = std::max(0.5f, get_scale());
+        if (cnv_w > 1.0f && cnv_h > 1.0f) {
+            // A rare DPI change re-keys the overlay glyph entries (px shifts); drop the
+            // whole cache once it grows past the handful of marks so stale-size textures
+            // cannot accumulate. Swept here, before any draw_mark/AddImage this frame, so
+            // a size-driven flush can never free a texture id already recorded into this
+            // frame's ImGui draw list (which renders only at frame end).
+            if (m_md3_overlay_glyphs.size() >= 16)
+                _release_md3_overlay_glyphs();
+
+            ImGuiWrapper&   imgui = *wxGetApp().imgui();
+            const wxColour& sh    = MD3::shadowTint(wxGetApp().dark_mode());
+
+            auto draw_soft_shadow = [&](ImDrawList* dl, const ImVec2& a, const ImVec2& b, float rounding, float dy) {
+                for (int i = 3; i >= 1; --i) {
+                    const float g   = static_cast<float>(i) * sc;
+                    const ImU32 col = IM_COL32(sh.Red(), sh.Green(), sh.Blue(), static_cast<int>((sh.Alpha() * 0.5f) / static_cast<float>(i)));
+                    dl->AddRectFilled(ImVec2(a.x - g, a.y - g + dy), ImVec2(b.x + g, b.y + g + dy), col, rounding + g);
+                }
+            };
+
+            // Vector icon marks: 0 add, 1 remove, 2 filter_center_focus, 3 deployed_code.
+            auto draw_icon = [&](ImDrawList* dl, float cx, float cy, float s, int type, ImU32 col) {
+                const float h  = s * 0.5f;
+                const float th = std::max(1.5f, 2.0f * sc);
+                switch (type) {
+                case 0:
+                    dl->AddLine(ImVec2(cx - h, cy), ImVec2(cx + h, cy), col, th);
+                    dl->AddLine(ImVec2(cx, cy - h), ImVec2(cx, cy + h), col, th);
+                    break;
+                case 1:
+                    dl->AddLine(ImVec2(cx - h, cy), ImVec2(cx + h, cy), col, th);
+                    break;
+                case 2: {
+                    dl->AddCircleFilled(ImVec2(cx, cy), std::max(1.5f, 2.0f * sc), col, 12);
+                    const float b = h;
+                    const float l = h * 0.5f;
+                    const ImVec2 corner[4] = { ImVec2(cx - b, cy - b), ImVec2(cx + b, cy - b), ImVec2(cx + b, cy + b), ImVec2(cx - b, cy + b) };
+                    const ImVec2 ax[4]     = { ImVec2(1, 0), ImVec2(-1, 0), ImVec2(-1, 0), ImVec2(1, 0) };
+                    const ImVec2 ay[4]     = { ImVec2(0, 1), ImVec2(0, 1), ImVec2(0, -1), ImVec2(0, -1) };
+                    for (int k = 0; k < 4; ++k) {
+                        dl->AddLine(corner[k], ImVec2(corner[k].x + ax[k].x * l, corner[k].y + ax[k].y * l), col, th);
+                        dl->AddLine(corner[k], ImVec2(corner[k].x + ay[k].x * l, corner[k].y + ay[k].y * l), col, th);
+                    }
+                    break;
+                }
+                case 3: {
+                    ImVec2      p[6];
+                    const float ct = std::max(1.0f, 1.4f * sc);
+                    for (int k = 0; k < 6; ++k) {
+                        const float a = (static_cast<float>(k) * 60.0f - 90.0f) * static_cast<float>(PI) / 180.0f;
+                        p[k] = ImVec2(cx + h * std::cos(a), cy + h * std::sin(a));
+                    }
+                    dl->AddPolyline(p, 6, col, ImDrawFlags_Closed, ct);
+                    dl->AddLine(p[1], ImVec2(cx, cy), col, ct);
+                    dl->AddLine(p[3], ImVec2(cx, cy), col, ct);
+                    dl->AddLine(p[5], ImVec2(cx, cy), col, ct);
+                    break;
+                }
+                default: break;
+                }
+            };
+
+            // MD3: the vector marks map to Material Symbols (0 add, 1 remove,
+            // 2 filter_center_focus, 3 deployed_code).
+            auto glyph_for_mark = [](int type) -> uint32_t {
+                switch (type) {
+                case 0:  return MaterialIcon::Add;
+                case 1:  return MaterialIcon::Remove;
+                case 2:  return MaterialIcon::FilterCenterFocus;
+                case 3:  return MaterialIcon::DeployedCode;
+                default: return 0;
+                }
+            };
+            // Draw a mark as a pixel-exact Material Symbol when the icon font is
+            // available (baked white, tinted to col), else the vector primitive.
+            auto draw_mark = [&](ImDrawList* dl, float cx, float cy, float s, int type, ImU32 col) {
+                int              gw  = 0, gh = 0;
+                const int        px  = std::max(1, static_cast<int>(std::lround(s)));
+                const unsigned int tex = _md3_overlay_glyph_texture(glyph_for_mark(type), px, gw, gh);
+                if (tex != 0 && gw > 0 && gh > 0) {
+                    const float hw = 0.5f * static_cast<float>(gw);
+                    const float hh = 0.5f * static_cast<float>(gh);
+                    dl->AddImage((ImTextureID)(intptr_t) tex, ImVec2(cx - hw, cy - hh), ImVec2(cx + hw, cy + hh),
+                                 ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), col);
+                    return;
+                }
+                draw_icon(dl, cx, cy, s, type, col);
+            };
+
+            const int overlay_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
+                | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings
+                | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
+
+            // Bottom-right zoom cluster (r26 SurfaceContainer card, elev-3).
+            {
+                const float pad    = 6.0f * sc;
+                const float btn    = 40.0f * sc;
+                const float gap    = 6.0f * sc;
+                const float margin = 16.0f * sc;
+                const float card_w = pad * 2.0f + btn;
+                const float card_h = pad * 2.0f + btn * 3.0f + gap * 2.0f;
+                imgui.set_next_window_pos(cnv_w - card_w - margin, cnv_h - card_h - margin, ImGuiCond_Always, 0.0f, 0.0f);
+                imgui.set_next_window_size(card_w, card_h, ImGuiCond_Always);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+                imgui.begin(std::string("md3_zoom_cluster"), overlay_flags);
+                ImDrawList*  dl       = ImGui::GetWindowDrawList();
+                const ImVec2 wp       = ImGui::GetWindowPos();
+                const ImVec2 we       = ImVec2(wp.x + card_w, wp.y + card_h);
+                const float  rounding = 26.0f * sc;
+                draw_soft_shadow(dl, wp, we, rounding, static_cast<float>(MD3::Metrics::elev3.dy) * sc);
+                dl->AddRectFilled(wp, we, md3_imu32(MD3::Role::SurfaceContainer), rounding);
+                dl->AddRect(wp, we, md3_imu32(MD3::Role::OutlineVariant), rounding, 0, std::max(1.0f, sc));
+                const int marks[3] = { 0, 1, 2 };
+                for (int i = 0; i < 3; ++i) {
+                    const float bx = wp.x + pad;
+                    const float by = wp.y + pad + static_cast<float>(i) * (btn + gap);
+                    ImGui::SetCursorScreenPos(ImVec2(bx, by));
+                    ImGui::PushID(i);
+                    const bool clicked = ImGui::InvisibleButton("zoombtn", ImVec2(btn, btn));
+                    const bool hovered = ImGui::IsItemHovered();
+                    ImGui::PopID();
+                    if (hovered)
+                        dl->AddRectFilled(ImVec2(bx, by), ImVec2(bx + btn, by + btn), md3_imu32(MD3::Role::SurfaceContainerHigh), 10.0f * sc);
+                    draw_mark(dl, bx + btn * 0.5f, by + btn * 0.5f, 22.0f * sc, marks[i], md3_imu32(MD3::Role::OnSurfaceVariant));
+                    if (clicked) {
+                        if (i == 2) {
+                            zoom_to_fit();
+                        } else {
+                            const Point anchor(cnv_size.get_width() / 2, cnv_size.get_height() / 2);
+                            _update_camera_zoom(get_active_camera().calc_zoom_from_delta(i == 0 ? 1.0 : -1.0), anchor);
+                        }
+                    }
+                }
+                imgui.end();
+                ImGui::PopStyleColor(1);
+                ImGui::PopStyleVar(2);
+            }
+
+            // Bottom-centre object stat pill (r20 SurfaceContainer, deployed_code + counts).
+            const size_t obj_count = (m_model != nullptr) ? m_model->objects.size() : 0;
+            if (obj_count > 0) {
+                size_t face_count = 0;
+                for (const ModelObject* o : m_model->objects)
+                    if (o != nullptr)
+                        face_count += o->facets_count();
+
+                std::string digits = std::to_string(face_count);
+                std::string faces_grouped;
+                int         grp = 0;
+                for (auto it = digits.rbegin(); it != digits.rend(); ++it) {
+                    if (grp != 0 && grp % 3 == 0)
+                        faces_grouped.push_back(',');
+                    faces_grouped.push_back(*it);
+                    ++grp;
+                }
+                std::reverse(faces_grouped.begin(), faces_grouped.end());
+
+                const std::string obj_word = (obj_count == 1) ? _u8L("object") : _u8L("objects");
+                const std::string seg1     = std::to_string(obj_count) + " " + obj_word;
+                const std::string seg2     = faces_grouped + " " + _u8L("faces");
+
+                const float  icon_sz = 16.0f * sc;
+                const float  pad_x   = 14.0f * sc;
+                const float  pad_y   = 7.0f * sc;
+                const float  gap     = 8.0f * sc;
+                const float  dot_r   = std::max(1.5f, 2.0f * sc);
+                const ImVec2 s1      = ImGui::CalcTextSize(seg1.c_str());
+                const ImVec2 s2      = ImGui::CalcTextSize(seg2.c_str());
+                const float  text_h  = std::max(s1.y, s2.y);
+                const float  content_w = icon_sz + gap + s1.x + gap + dot_r * 2.0f + gap + s2.x;
+                const float  pill_w  = pad_x * 2.0f + content_w;
+                const float  pill_h  = pad_y * 2.0f + std::max(icon_sz, text_h);
+                const float  margin  = 16.0f * sc;
+                imgui.set_next_window_pos(cnv_w * 0.5f, cnv_h - margin, ImGuiCond_Always, 0.5f, 1.0f);
+                imgui.set_next_window_size(pill_w, pill_h, ImGuiCond_Always);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+                ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+                imgui.begin(std::string("md3_object_stat_pill"), overlay_flags | ImGuiWindowFlags_NoInputs);
+                ImDrawList*  dl       = ImGui::GetWindowDrawList();
+                const ImVec2 wp       = ImGui::GetWindowPos();
+                const ImVec2 we       = ImVec2(wp.x + pill_w, wp.y + pill_h);
+                const float  rounding = 20.0f * sc;
+                draw_soft_shadow(dl, wp, we, rounding, static_cast<float>(MD3::Metrics::elev2.dy) * sc);
+                dl->AddRectFilled(wp, we, md3_imu32(MD3::Role::SurfaceContainer), rounding);
+                dl->AddRect(wp, we, md3_imu32(MD3::Role::OutlineVariant), rounding, 0, std::max(1.0f, sc));
+                const ImU32 fg  = md3_imu32(MD3::Role::OnSurfaceVariant);
+                const float cy  = wp.y + pill_h * 0.5f;
+                draw_mark(dl, wp.x + pad_x + icon_sz * 0.5f, cy, icon_sz, 3, fg);
+                float tx = wp.x + pad_x + icon_sz + gap;
+                dl->AddText(ImVec2(tx, wp.y + (pill_h - s1.y) * 0.5f), fg, seg1.c_str());
+                tx += s1.x + gap;
+                dl->AddCircleFilled(ImVec2(tx + dot_r, cy), dot_r, fg, 8);
+                tx += dot_r * 2.0f + gap;
+                dl->AddText(ImVec2(tx, wp.y + (pill_h - s2.y) * 0.5f), fg, seg2.c_str());
+                imgui.end();
+                ImGui::PopStyleColor(1);
+                ImGui::PopStyleVar(2);
+            }
+        }
+    }
 }
 
 void GLCanvas3D::_render_style_editor()
@@ -9548,9 +10189,30 @@ void GLCanvas3D::_render_main_toolbar()
         }
     }
     p_main_toolbar->render(t_camera);
-    if (m_toolbar_highlighter.m_render_arrow){
-        p_main_toolbar->render_arrow(m_toolbar_highlighter.m_toolbar_item);
+    if (m_toolbar_highlighter.m_render_arrow) {
+        const auto highlighted_item = m_toolbar_highlighter.m_toolbar_item.lock();
+        const auto& main_items = p_main_toolbar->get_items();
+        if (highlighted_item && std::find(main_items.begin(), main_items.end(), highlighted_item) != main_items.end()) {
+            p_main_toolbar->render_arrow(m_toolbar_highlighter.m_toolbar_item);
+        }
     }
+}
+
+void GLCanvas3D::_render_gizmo_toolbar()
+{
+    if (m_canvas_type != ECanvasType::CanvasView3D || !m_gizmo_toolbar || !m_gizmo_toolbar->is_enabled()) {
+        return;
+    }
+
+    const auto& camera = get_active_camera();
+    const auto& viewport = camera.get_viewport();
+    const float inv_zoom = static_cast<float>(camera.get_inv_zoom());
+    const float margin = 8.0f * get_scale();
+
+    const float top = (0.5f * static_cast<float>(viewport[3]) - get_gizmo_toolbar_top_inset()) * inv_zoom;
+    const float left = (-0.5f * static_cast<float>(viewport[2]) + margin) * inv_zoom;
+    m_gizmo_toolbar->set_position(top, left);
+    m_gizmo_toolbar->render(camera);
 }
 
 //BBS: GUI refactor: GLToolbar adjust
@@ -9680,25 +10342,41 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
     float window_height = std::min(item_count * (button_height + (frame_padding + margin_size) * 2.0f + button_margin) - button_margin + 28.0f * f_scale, window_height_max);
     float window_width = m_sel_plate_toolbar.icon_width + margin_size * 2 + (show_scroll ? 28.0f * f_scale : 20.0f * f_scale);
 
-    ImVec4 window_bg = ImVec4(0.82f, 0.82f, 0.82f, 0.5f);
-    ImVec4 button_active = ImVec4(0.12f, 0.56f, 0.92, 1.0f);
-    ImVec4 button_hover = ImVec4(0.67f, 0.67f, 0.67, 1.0f);
-    ImVec4 scroll_col = ImVec4(0.77f, 0.77f, 0.77f, 1.0f);
-    //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.f, 0.f, 0.f, 1.0f));
-    //use white text as the background switch to black
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    // MD3 floating-toolbar chrome. The strip is a real container plate that
+    // follows the theme, not the old 50%-alpha grey slab; the window/hover
+    // mapping mirrors ImGuiWrapper::push_toolbar_style without disturbing this
+    // window's hand-computed geometry above.
+    ImVec4 window_bg = m_is_dark ? md3_imvec4(MD3::Role::SurfaceContainer) : md3_imvec4(MD3::Role::SurfaceContainerLowest);
+    ImVec4 button_active = md3_imvec4(MD3::Role::Primary);
+    // Every ImGuiCol_Button* in this window ends up as a BORDER STROKE, never a
+    // fill: ImageButtonEx2 (src/imgui/imgui_widgets.cpp) passes the button colour
+    // to AddRect only, and the per-plate tiles below stroke ImGuiCol_Border by
+    // hand. A container tone would sit at ~1.05:1 against the window plate and
+    // disappear, so hover and press both use the outline role, which reads.
+    ImVec4 hover_border = md3_imvec4(MD3::Role::Outline);
+    ImVec4 scroll_col = md3_imvec4(MD3::Role::OutlineVariant);
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, window_bg);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, window_bg);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, scroll_col);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, scroll_col);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, scroll_col);
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, button_active);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, button_hover);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover_border);
+
+    // Shape tokens follow the active density, replacing the 4/3 px literals.
+    // They are deliberately NOT multiplied by f_scale: this window's geometry
+    // (tile size, paddings, font) is unscaled on Windows, so a scaled radius
+    // would be the only scaled quantity here. frame_rounding is applied to the
+    // button frames only - see the slice-state washes below for why the
+    // overlays that sit on the thumbnails stay square.
+    const float window_rounding = static_cast<float>(MD3::Metrics::active().radius);
+    const float frame_rounding  = static_cast<float>(MD3::Metrics::active().small_radius);
 
     ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 10.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, window_rounding);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, frame_rounding);
 
     imgui.set_next_window_pos(canvas_w * 0, canvas_h * 0 + y_offset, ImGuiCond_Always, 0, 0);
     imgui.set_next_window_size(window_width, window_height, ImGuiCond_Always);
@@ -9733,8 +10411,8 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_Button));
             }
             else {
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, button_hover);
-                ImGui::PushStyleColor(ImGuiCol_ButtonActive, button_hover);
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover_border);
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, hover_border);
             }
         }
 
@@ -9742,12 +10420,12 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         ImTextureID btn_texture_id;
         if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::UNSLICED || all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICING || all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED)
         {
-            text_clr = ImVec4(0, 174.0f / 255.0f, 66.0f / 255.0f, 0.2f);
+            text_clr = md3_imvec4(MD3::Role::Primary, 0.2f);
             btn_texture_id = (ImTextureID)(intptr_t)(all_plates_stats_item->image_texture_transparent.get_id());
         }
         else
         {
-            text_clr = ImVec4(0, 174.0f / 255.0f, 66.0f / 255.0f, 1);
+            text_clr = md3_imvec4(MD3::Role::Primary, 1.0f);
             btn_texture_id = (ImTextureID)(intptr_t)(all_plates_stats_item->image_texture.get_id());
         }
         imgui.disabled_begin(wxGetApp().plater()->get_helio_process_status() == Slic3r::HelioBackgroundProcess::State::STATE_RUNNING);
@@ -9770,29 +10448,33 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         }
         ImGui::PopStyleColor(3);
 
+        // The slice-state washes are drawn on the thumbnail's own rect. The
+        // thumbnail itself is a straight AddImage (ImageButtonEx2), so these must
+        // stay SQUARE: a rounded wash over a square image leaves an undimmed
+        // crescent in every corner. Rounding lives on the button frame instead.
         ImVec2 start_pos = ImVec2(button_start_pos.x + frame_padding + margin.x, button_start_pos.y + frame_padding + margin.y);
         if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::UNSLICED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(0, 0, 0, 80));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32());
         }
         else if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICING) {
             ImVec2 size = ImVec2(button_width, button_height * all_plates_stats_item->percent / 100.0f);
             ImVec2 rect_start_pos = ImVec2(start_pos.x, start_pos.y + size.y);
             ImVec2 rect_end_pos = ImVec2(start_pos.x + button_width, start_pos.y + button_height);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, rect_end_pos, IM_COL32(0, 0, 0, 10));
-            ImGui::GetWindowDrawList()->AddRectFilled(rect_start_pos, rect_end_pos, IM_COL32(0, 0, 0, 80));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, rect_end_pos, md3_scrim_imu32(0.125f));
+            ImGui::GetWindowDrawList()->AddRectFilled(rect_start_pos, rect_end_pos, md3_scrim_imu32());
         }
         else if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(40, 1, 1, 64));
-            ImGui::GetWindowDrawList()->AddRect(start_pos, end_pos, IM_COL32(208, 27, 27, 255), 0.0f, 0, 1.0f);
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_imu32(MD3::Role::Error, 64));
+            ImGui::GetWindowDrawList()->AddRect(start_pos, end_pos, md3_imu32(MD3::Role::Error), 0.0f, 0, 1.0f);
         }
         else if (all_plates_stats_item->slice_state == IMToolbarItem::SliceState::SLICED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(0, 0, 0, 10));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32(0.125f));
         }
 
         // draw text
@@ -9808,7 +10490,7 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         ImGui::SetWindowFontScale(1.2f);
     }
 
-    ImVec4 error_text_clr = ImVec4(1, 0, 0, 1);
+    ImVec4 error_text_clr = md3_imvec4(MD3::Role::Error);
     for (int i = 0; i < m_sel_plate_toolbar.m_items.size(); i++) {
         IMToolbarItem* item = m_sel_plate_toolbar.m_items[i];
 
@@ -9836,7 +10518,7 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         }
         else {
             if (ImGui::IsMouseHoveringRect(button_start_pos, button_start_pos + button_size)) {
-                ImGui::PushStyleColor(ImGuiCol_Border, button_hover);
+                ImGui::PushStyleColor(ImGuiCol_Border, hover_border);
             }
             else {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(.0f, .0f, .0f, .0f));
@@ -9859,37 +10541,39 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
         ImGui::PopStyleColor(4);
         ImGui::PopStyleVar();
 
+        // Square washes for the same reason as the all-plates tile above: the
+        // thumbnail under them is a straight ImGui::Image, so a rounded overlay
+        // would leave a bright, undimmed crescent in each corner.
         ImVec2 start_pos = ImVec2(button_start_pos.x + frame_padding + margin.x, button_start_pos.y + frame_padding + margin.y);
         if (item->slice_state == IMToolbarItem::SliceState::UNSLICED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(0, 0, 0, 80));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32());
         } else if (item->slice_state == IMToolbarItem::SliceState::SLICING) {
             ImVec2 size = ImVec2(button_width, button_height * item->percent / 100.0f);
             ImVec2 rect_start_pos = ImVec2(start_pos.x, start_pos.y + size.y);
             ImVec2 rect_end_pos = ImVec2(start_pos.x + button_width, start_pos.y + button_height);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, rect_end_pos, IM_COL32(0, 0, 0, 10));
-            ImGui::GetWindowDrawList()->AddRectFilled(rect_start_pos, rect_end_pos, IM_COL32(0, 0, 0, 80));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, rect_end_pos, md3_scrim_imu32(0.125f));
+            ImGui::GetWindowDrawList()->AddRectFilled(rect_start_pos, rect_end_pos, md3_scrim_imu32());
         } else if (item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED) {
             ImVec2 size    = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(250, 0, 0, 64));
-            ImGui::GetWindowDrawList()->AddRect(start_pos, end_pos, IM_COL32(208, 27, 27, 255), 0.0f, 0, 1.0f);
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_imu32(MD3::Role::Error, 64));
+            ImGui::GetWindowDrawList()->AddRect(start_pos, end_pos, md3_imu32(MD3::Role::Error), 0.0f, 0, 1.0f);
         } else if (item->slice_state == IMToolbarItem::SliceState::SLICED) {
             ImVec2 size = ImVec2(button_width, button_height);
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
-            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, IM_COL32(0, 0, 0, 10));
+            ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32(0.125f));
         }
         // draw text
+        const ImVec2 badge_pos = ImVec2(start_pos.x + 10.0f, start_pos.y + 8.0f);
         if (item->slice_state == IMToolbarItem::SliceState::SLICE_FAILED) {
             ImGui::PushStyleColor(ImGuiCol_Text, error_text_clr);
-            ImVec2 text_start_pos = ImVec2(start_pos.x + 10.0f, start_pos.y + 8.0f);
-            ImGui::RenderText(text_start_pos, std::to_string(i + 1).c_str());
+            ImGui::RenderText(badge_pos, std::to_string(i + 1).c_str());
             ImGui::PopStyleColor();
 
         } else {
-            ImVec2 text_start_pos = ImVec2(start_pos.x + 10.0f, start_pos.y + 8.0f);
-            ImGui::RenderText(text_start_pos, std::to_string(i + 1).c_str());
+            ImGui::RenderText(badge_pos, std::to_string(i + 1).c_str());
         }
         ImGui::PopID();
     }
@@ -10001,8 +10685,8 @@ void GLCanvas3D::_render_assembly_view_thumbnail_toolbar()
     imgui.set_next_window_pos((int)window_pos_x, (int)window_pos_y, ImGuiCond_Always, 0, 0);
     imgui.set_next_window_size(window_width, window_height, ImGuiCond_Always);
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? ImVec4(57 / 255.0f, 60 / 255.0f, 60 / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 77.0f / 255.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? md3_imvec4(MD3::Role::SurfaceContainerHigh) : md3_imvec4(MD3::Role::SurfaceContainerLowest));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(MD3::Role::OutlineVariant));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * sc);
 
@@ -10019,7 +10703,7 @@ void GLCanvas3D::_render_assembly_view_thumbnail_toolbar()
         ImVec2 uv0      = ImVec2(0.0f, 1.0f);
         ImVec2 uv1      = ImVec2(1.0f, 0.0f);
         ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-        ImU32  bg_col   = m_is_dark ? IM_COL32(68, 68, 70, 255) : IM_COL32(212, 212, 212, 212);
+        ImU32  bg_col   = md3_imu32(MD3::Role::SurfaceContainerHighest);
 
         // Center the image in the window
         ImGui::SetCursorPos(ImVec2((float)thumb_pos_x, (float)thumb_pos_y));
@@ -10168,9 +10852,9 @@ void GLCanvas3D::_render_assembly_view_preview_menu(float anchor_x, float anchor
     imgui.set_next_window_pos(menu_pos_x, menu_pos_y, ImGuiCond_Always, 0, 0);
     imgui.set_next_window_size(menu_width, menu_height, ImGuiCond_Always);
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? ImVec4(45 / 255.0f, 45 / 255.0f, 49 / 255.0f, 1.0f) : ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 77.0f / 255.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, m_is_dark ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f) : ImVec4(38.0f / 255.0f, 46.0f / 255.0f, 48.0f / 255.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, m_is_dark ? md3_imvec4(MD3::Role::SurfaceContainerHigh) : md3_imvec4(MD3::Role::SurfaceContainerLowest));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_imvec4(MD3::Role::OutlineVariant));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * sc);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(win_padding, win_padding));
@@ -10195,8 +10879,7 @@ void GLCanvas3D::_render_assembly_view_preview_menu(float anchor_x, float anchor
         }
         bool hovered = ImGui::IsItemHovered();
         if (hovered || selected) {
-            ImU32 bg = m_is_dark ? (hovered ? IM_COL32(55, 55, 59, 255) : IM_COL32(10, 10, 10, 255))
-                                  : (hovered ? IM_COL32(240, 240, 240, 255) : IM_COL32(248, 248, 248, 255));
+            ImU32 bg = hovered ? md3_imu32(MD3::Role::SurfaceContainerHigh) : md3_imu32(MD3::Role::SurfaceContainerLow);
             ImGui::GetWindowDrawList()->AddRectFilled(row_pos, ImVec2(row_pos.x + row_content_w, row_pos.y + row_height), bg, 4.0f * sc);
         }
         ImGui::SetCursorScreenPos(ImVec2(row_pos.x + row_pad_x, row_pos.y + (row_height - icon_size.y) * 0.5f));
@@ -10325,51 +11008,28 @@ void GLCanvas3D::_render_return_toolbar()
     ImVec2 button_icon_size = ImVec2(font_size * 1.3, font_size * 1.3);
 
     ImGuiWrapper& imgui = *wxGetApp().imgui();
-    Size cnv_size = get_canvas_size();
-    auto canvas_w = float(cnv_size.get_width());
-    auto canvas_h = float(cnv_size.get_height());
     float window_width = real_size.x + button_icon_size.x + imgui.scaled(2.0f);
     float window_height = button_icon_size.y + imgui.scaled(2.0f);
-    float window_pos_x  = 30.0f + (is_collapse_toolbar_on_left() ? (get_collapse_toolbar_width() + 5.f) : 0);
-    float window_pos_y = 14.0f;
-    // In assemble view the new "Assembly Structure" panel occupies the top-left corner; dock the return toolbar to its right edge with a small gap so the two never overlap.
-    if (m_canvas_type == ECanvasType::CanvasAssembleView) {
-        const float anchor_x = m_assembly_steps->get_assembly_structure_right_x();
-        if (anchor_x > 0.f) {
-            window_pos_x = anchor_x + 8.0f * get_scale();
-            window_pos_y = 20.f;
-        }
-    }
-    {//solve ui overlap issue
-        if (m_canvas_type == ECanvasType::CanvasView3D) {
-            float       zoom      = (float) get_active_camera().get_zoom();
-            float       left_pos = 0.0f;
-            const auto& p_main_toolbar = get_main_toolbar();
-            if (p_main_toolbar) {
-                left_pos = p_main_toolbar->get_item("add")->render_rect[0];
-            }
-            const float toolbar_x = 0.5 * canvas_w + left_pos * zoom;
-            const float margin    = 5;
-            if (toolbar_x < window_width + margin * 3) {
-                window_pos_x = 5.0f;
-                window_pos_y = 2.0f;
-                if (p_main_toolbar) {
-                    window_pos_y += p_main_toolbar->get_height();
-                }
-            }
-        }
-    }
+    float window_pos_x = 0.0f;
+    float window_pos_y = 0.0f;
+    _calc_return_toolbar_position(window_width, window_pos_x, window_pos_y);
     imgui.set_next_window_pos(window_pos_x, window_pos_y, ImGuiCond_Always, 0, 0);
 #ifdef __WINDOWS__
     imgui.set_next_window_size(window_width, window_height, ImGuiCond_Always);
 #endif
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 18.0f);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.149f, 0.180f, 0.188f, 0.3f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.149f, 0.180f, 0.188f, 0.15f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.149f, 0.180f, 0.188f, 0.5f));
+    // MD3 pill: stadium radius is exactly half the button's own height (the
+    // ImageTextButton bb is real_size.y tall - see imgui_widgets.cpp), which is
+    // derived from the live ImGui font size, so it tracks the font scale instead
+    // of sitting at the 18px literal. The container tones now RISE with
+    // interaction - the old triple faded out on hover, because its alpha dropped
+    // from .3 at rest to .15 hovered.
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.5f * real_size.y);
+    ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::SurfaceContainer));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(MD3::Role::SurfaceContainerHigh));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::SurfaceContainerHighest));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imvec4(MD3::Role::OnSurface));
 
     imgui.begin(_L("Assembly Return"), ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground
         | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
@@ -10387,7 +11047,10 @@ void GLCanvas3D::_render_return_toolbar()
     ImVec2 uv1 = ImVec2(1.0f, 1.0f);
 
     ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-    ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    // assemble_return.svg is authored in flat white, so the ImageTextButton tint
+    // multiplies straight to the requested role - the arrow now matches the pill's
+    // OnSurface label instead of staying hard white on a light container.
+    ImVec4 tint_col = md3_imvec4(MD3::Role::OnSurface);
     ImVec2 margin = ImVec2(10.0f, 5.0f);
 
     if (ImGui::ImageTextButton(real_size,_utf8(L("return")).c_str(), m_return_toolbar.get_return_texture_id(), button_icon_size, uv0, uv1, -1, bg_col, tint_col, margin)) {
@@ -10575,7 +11238,7 @@ void GLCanvas3D::_render_paint_toolbar() const
 
     const float scrollbar_size = 0.375f * button_size.x;
     const ImVec4 window_bg = m_is_dark ? ImGuiWrapper::COL_WINDOW_BG_DARK : ImGuiWrapper::COL_WINDOW_BG;
-    const ImU32 border_col = m_is_dark ? IM_COL32(207, 207, 207, 255) : IM_COL32(130, 130, 128, 255);
+    const ImU32 border_col = md3_imu32(MD3::Role::Outline);
 
     constexpr float kPaintSwatchBorderDeltaE = 12.f;
     constexpr float kPaintSwatchBorderWidth  = 1.f;
@@ -10586,7 +11249,7 @@ void GLCanvas3D::_render_paint_toolbar() const
     ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, scrollbar_size);
     ImGui::PushStyleColor(ImGuiCol_WindowBg, window_bg);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, window_bg);
-    const ImVec4 scrollbar_grab = ImVec4(0.42f, 0.42f, 0.42f, 1.00f);
+    const ImVec4 scrollbar_grab = md3_imvec4(MD3::Role::Outline);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, scrollbar_grab);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, scrollbar_grab);
     ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, scrollbar_grab);
@@ -12381,6 +13044,7 @@ void GLCanvas3D::_append_to_frame_callback(const FrameCallback& cb)
 void GLCanvas3D::_render_toolbar()
 {
     _render_main_toolbar();
+    _render_gizmo_toolbar();
     _render_collapse_toolbar();
 
     //BBS: GUI refactor: GLToolbar
@@ -12399,6 +13063,16 @@ const std::shared_ptr<GLToolbar>& GLCanvas3D::get_main_toolbar() const
         m_main_toolbar = std::make_shared<GLToolbar>(GLToolbar::EType::Normal, "Main");
     }
     return m_main_toolbar;
+}
+
+const std::shared_ptr<GLToolbar>& GLCanvas3D::get_gizmo_toolbar() const
+{
+    if (!m_gizmo_toolbar) {
+        // Radio rendering keeps inactive glyphs neutral while preserving the
+        // source accent color for the active Material rail destination.
+        m_gizmo_toolbar = std::make_shared<GLToolbar>(GLToolbar::EType::Radio, "Gizmos");
+    }
+    return m_gizmo_toolbar;
 }
 
 void GLCanvas3D::_render_thumbnail_internal(ThumbnailData& thumbnail_data, const ThumbnailsParams& thumbnail_params,
@@ -14325,10 +14999,13 @@ bool GLCanvas3D::_deactivate_collapse_toolbar_items()
 void GLCanvas3D::highlight_toolbar_item(const std::string& item_name)
 {
     const auto& p_main_toolbar = get_main_toolbar();
-    if (!p_main_toolbar) {
-        return;
+    std::shared_ptr<GLToolbarItem> item;
+    if (p_main_toolbar) {
+        item = p_main_toolbar->get_item(item_name);
     }
-    std::shared_ptr<GLToolbarItem> item = p_main_toolbar->get_item(item_name);
+    if (!item && m_gizmo_toolbar) {
+        item = m_gizmo_toolbar->get_item(item_name);
+    }
     if (!item || !item->is_visible())
         return;
     m_toolbar_highlighter.init(item, this);
@@ -14339,6 +15016,20 @@ void GLCanvas3D::highlight_gizmo(const std::string& gizmo_name)
     GLGizmosManager::EType gizmo = m_gizmos.get_gizmo_from_name(gizmo_name);
     if(gizmo == GLGizmosManager::EType::Undefined)
         return;
+
+    const std::string item_name = GLGizmosManager::convert_gizmo_type_to_string(gizmo);
+    std::shared_ptr<GLToolbarItem> item;
+    if (m_gizmo_toolbar) {
+        item = m_gizmo_toolbar->get_item(item_name);
+    }
+    if (!item && m_main_toolbar) {
+        item = m_main_toolbar->get_item(item_name);
+    }
+    if (item && item->is_visible()) {
+        m_gizmo_highlighter.invalidate();
+        m_toolbar_highlighter.init(item, this);
+        return;
+    }
     m_gizmo_highlighter.init(&m_gizmos, gizmo, this);
 }
 
@@ -14457,7 +15148,7 @@ void GLCanvas3D::GizmoHighlighter::init(GLGizmosManager* manager, GLGizmosManage
 {
     if (m_timer.IsRunning())
         invalidate();
-    if (!gizmo || !canvas)
+    if (!manager || gizmo == GLGizmosManager::EType::Undefined || !canvas)
         return;
 
     m_timer.Start(300, false);

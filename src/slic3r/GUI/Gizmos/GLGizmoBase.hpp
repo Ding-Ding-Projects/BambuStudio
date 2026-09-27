@@ -105,6 +105,15 @@ public:
         Num_States
     };
 
+    // Input windows rendered from the legacy horizontal toolbar keep their
+    // established per-gizmo anchoring. The Material vertical rail supplies a
+    // screen-space left edge so every pane can stay clear of the rail.
+    enum class EInputWindowAnchor
+    {
+        Toolbar,
+        LeftEdge
+    };
+
     struct UpdateData
     {
         const Linef3& mouse_ray;
@@ -145,6 +154,7 @@ protected:
     mutable std::vector<Grabber> m_grabbers;
     ImGuiWrapper* m_imgui;
     bool m_first_input_window_render;
+    EInputWindowAnchor m_input_window_anchor{EInputWindowAnchor::Toolbar};
     mutable std::string m_tooltip;
     CommonGizmosDataPool* m_c{nullptr};
     GLModel m_cone;
@@ -240,7 +250,8 @@ public:
 
     void render() { m_tooltip.clear(); on_render(); }
     void render_for_picking() { on_render_for_picking(); }
-    void render_input_window(float x, float y, float bottom_limit);
+    void render_input_window(float x, float y, float bottom_limit,
+                             EInputWindowAnchor anchor = EInputWindowAnchor::Toolbar);
     virtual void on_change_color_mode(bool is_dark) {  m_is_dark_mode = is_dark; }
 
     virtual std::string get_tooltip() const { return ""; }

@@ -1,4 +1,5 @@
 #include "wx/clipbrd.h"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "wx/display.h"
 
 #include "SelectMachine.hpp"
@@ -9,6 +10,8 @@
 //#include "libslic3r/Model.hpp"
 //#include "Plater.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include "GUI.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
@@ -705,39 +708,50 @@ void GridCellSupportRenderer::Draw(wxGrid& grid,
     wxGridCellRenderer::Draw(grid, attr, dc, rect, row, col, isSelected);
     wxString value = table->GetValue(row, col);
     if (grid_row->row_type != table->GridRowType::row_volume || col != table->GridColType::col_printable) {
+        // Wave 3 (object-outliner-tree-icons): draw the boolean cell as an MD3
+        // check_box (checked, Primary) / check_box_outline_blank (unchecked,
+        // OnSurfaceVariant) glyph. Fall back to the legacy check_on /
+        // check_off_focused rasters when the icon face is unavailable.
         if (cur_option.value) {
+            if (MaterialIcon::available()) {
+                MaterialIcon::drawCentered(dc, MaterialIcon::CheckBox, 18, StateColor::semantic(MD3::Role::Primary), rect);
+            } else {
+                auto check_on = create_scaled_bitmap("check_on", nullptr, 18);
+                dc.SetPen(*wxTRANSPARENT_PEN);
 
-            auto check_on = create_scaled_bitmap("check_on", nullptr, 18);
-            dc.SetPen(*wxTRANSPARENT_PEN);
+                auto offsetx = 0;
+                auto offsety = 0;
 
-            auto offsetx = 0;
-            auto offsety = 0;
+                #ifdef  __WXOSX_MAC__
+                offsetx = (width - 18) / 2;
+                offsety = (height - 18) / 2;
+                #else
+                offsetx = (width - check_on.GetSize().x) / 2;
+                offsety = (height - check_on.GetSize().y) / 2;
+                #endif //  __WXOSX_MAC__
 
-            #ifdef  __WXOSX_MAC__
-            offsetx = (width - 18) / 2;
-            offsety = (height - 18) / 2;
-            #else
-            offsetx = (width - check_on.GetSize().x) / 2;
-            offsety = (height - check_on.GetSize().y) / 2;
-            #endif //  __WXOSX_MAC__
-
-            dc.DrawBitmap(check_on, rect.x + offsetx, rect.y + offsety);
+                dc.DrawBitmap(check_on, rect.x + offsetx, rect.y + offsety);
+            }
     } else {
-            auto check_off = create_scaled_bitmap("check_off_focused", nullptr, 18);
-            dc.SetPen(*wxTRANSPARENT_PEN);
+            if (MaterialIcon::available()) {
+                MaterialIcon::drawCentered(dc, MaterialIcon::CheckBoxOutlineBlank, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant), rect);
+            } else {
+                auto check_off = create_scaled_bitmap("check_off_focused", nullptr, 18);
+                dc.SetPen(*wxTRANSPARENT_PEN);
 
-            auto offsetx = 0;
-            auto offsety = 0;
+                auto offsetx = 0;
+                auto offsety = 0;
 
-            #ifdef __WXOSX_MAC__
-            offsetx = (width - 18) / 2;
-            offsety = (height - 18) / 2;
-            #else
-            offsetx = (width - check_off.GetSize().x) / 2;
-            offsety = (height - check_off.GetSize().y) / 2;
-            #endif //  __WXOSX_MAC__
+                #ifdef __WXOSX_MAC__
+                offsetx = (width - 18) / 2;
+                offsety = (height - 18) / 2;
+                #else
+                offsetx = (width - check_off.GetSize().x) / 2;
+                offsety = (height - check_off.GetSize().y) / 2;
+                #endif //  __WXOSX_MAC__
 
-            dc.DrawBitmap(check_off, rect.x + offsetx, rect.y + offsety);
+                dc.DrawBitmap(check_off, rect.x + offsetx, rect.y + offsety);
+            }
         }
     }
 
@@ -2739,7 +2753,7 @@ ObjectTablePanel::ObjectTablePanel( wxWindow* parent, wxWindowID id, const wxPoi
 {
     //m_bg_colour = wxColour(0xfa, 0xfa, 0xfa);
     m_float_validator.SetRange(0, 100);
-    m_bg_colour = wxColour("#FFFFFF");
+    m_bg_colour = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     //m_hover_colour = wxColour(61, 70, 72);
     SetBackgroundColour(m_bg_colour);
 
@@ -2768,7 +2782,7 @@ ObjectTablePanel::ObjectTablePanel( wxWindow* parent, wxWindowID id, const wxPoi
     m_side_window->SetScrollRate( 0, 5 );
     m_page_sizer = new wxBoxSizer(wxVERTICAL);
     //m_page_top_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_side_window->SetBackgroundColour(wxColour(0xff, 0xff, 0xff));
+    m_side_window->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_side_window->SetSizer(m_page_sizer);
     m_side_window->SetScrollbars(1, 20, 1, 2);
     //m_side_window->ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
@@ -2777,7 +2791,7 @@ ObjectTablePanel::ObjectTablePanel( wxWindow* parent, wxWindowID id, const wxPoi
     //m_side_window->SetSize(wxSize(128, 512));
 
     /* m_page_text = new wxStaticText(m_side_window, wxID_ANY, wxString(L("Per Object Setting")), wxDefaultPosition, wxSize(-1, 32), wxALIGN_CENTRE_HORIZONTAL|wxST_ELLIPSIZE_END);
-     m_page_text->SetMaxSize(wxSize(256, 32));
+     m_page_text->SetMaxSize(FromDIP(wxSize(256, 32)));
      m_page_text->SetFont(Label::Head_18);
      m_page_top_sizer->Add(m_page_text, 0, wxEXPAND, 5);*/
 
@@ -2814,7 +2828,7 @@ ObjectTablePanel::ObjectTablePanel( wxWindow* parent, wxWindowID id, const wxPoi
         });
 
     auto m_line_left = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(2, -1), wxTAB_TRAVERSAL);
-    m_line_left->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_left->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
 
     m_top_sizer->Add(m_object_grid, 1, wxEXPAND,0);
@@ -2830,7 +2844,13 @@ ObjectTablePanel::ObjectTablePanel( wxWindow* parent, wxWindowID id, const wxPoi
 
 int ObjectTablePanel::init_bitmap()
 {
-    m_undo_bitmap = create_scaled_bitmap("lock_normal", nullptr, 18);
+    // Wave 3 (object-outliner-tree-icons): the per-cell "value changed" marker is
+    // an MD3 lock glyph (OnSurfaceVariant), rendered to a bitmap because the grid
+    // renderer consumes a wxBitmap. Fall back to the legacy lock raster when the
+    // icon face is unavailable.
+    m_undo_bitmap = MaterialIcon::available()
+                        ? MaterialIcon::bitmap(this, MaterialIcon::Lock, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+                        : create_scaled_bitmap("lock_normal", nullptr, 18);
     m_color_bitmaps = get_extruder_color_icons();
 
     return 0;
@@ -2923,8 +2943,8 @@ void ObjectTablePanel::load_data()
     m_object_grid->SetColLabelValue(ObjectGridTable::col_speed_perimeter, _L("Outer wall speed"));
     m_object_grid->SetColLabelValue(ObjectGridTable::col_speed_perimeter_reset, "");
     m_object_grid->SetLabelFont(Label::Head_13);
-    m_object_grid->SetLabelTextColour(StateColor::darkModeColorFor(wxColour("#303A3C")));
-    m_object_grid->SetLabelBackgroundColour( wxColour("#FFFFFF"));
+    m_object_grid->SetLabelTextColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_object_grid->SetLabelBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 #else
     m_object_grid->HideColLabels();
 #endif
@@ -2940,8 +2960,8 @@ void ObjectTablePanel::load_data()
     wxGridCellAttr *attr;
     attr = new wxGridCellAttr;
     //attr->SetBackgroundColour(wxColour(191, 191, 255));
-    attr->SetBackgroundColour(*wxWHITE);
-    attr->SetTextColour(*wxBLACK);
+    attr->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    attr->SetTextColour(StateColor::semantic(MD3::Role::OnSurface));
     attr->SetAlignment(wxALIGN_LEFT, wxALIGN_CENTRE);
     attr->SetReadOnly(true);
     m_object_grid->SetRowAttr (0, attr);
@@ -2962,7 +2982,7 @@ void ObjectTablePanel::load_data()
 
     //m_object_grid->SetSelectionForeground(wxColour(0xDB,0xFD,0xE7));
     //m_object_grid->SetSelectionBackground(*wxWHITE);
-    m_object_grid->SetDefaultCellBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    m_object_grid->SetDefaultCellBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     for (int col = 0; col < cols; col++)
     {
         ObjectGridTable::ObjectGridCol* grid_col = m_object_grid_table->get_grid_col(col);
@@ -2975,8 +2995,8 @@ void ObjectTablePanel::load_data()
             m_object_grid->SetCellAlignment(row, col, grid_col->horizontal_align, wxALIGN_CENTRE );
             m_object_grid->SetCellOverflow(row, col, false);
             //m_object_grid->SetCellBackgroundColour (row, col, *wxLIGHT_GREY);
-            m_object_grid->SetCellBackgroundColour (row, col, StateColor::darkModeColorFor(*wxWHITE));
-            m_object_grid->SetCellTextColour(row, col,StateColor::darkModeColorFor(wxColour(*wxBLACK)));
+            m_object_grid->SetCellBackgroundColour (row, col, StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+            m_object_grid->SetCellTextColour(row, col,StateColor::semantic(MD3::Role::OnSurface));
             //set the render and editor
             if (grid_col->b_icon) {
                 m_object_grid->SetCellRenderer(row, col, new GridCellIconRenderer());
@@ -3327,7 +3347,7 @@ ObjectTableDialog::ObjectTableDialog(wxWindow* parent, Plater* platerObj, Model 
     //m_top_sizer = new wxBoxSizer( wxVERTICAL );
 
     //m_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize(wxSize(-1, FromDIP(480)));
 
     //m_static_title = new wxStaticText( m_panel, wxID_ANY, wxT("Totally Objects, Parts"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -3351,11 +3371,11 @@ ObjectTableDialog::ObjectTableDialog(wxWindow* parent, Plater* platerObj, Model 
 
     //top line
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 2), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
 
     m_obj_panel = new ObjectTablePanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE, wxEmptyString, m_plater, m_model);
-    m_obj_panel->SetBackgroundColour(*wxWHITE);
+    m_obj_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     //m_top_sizer->Add(m_obj_panel, 1, wxALL | wxEXPAND, 5);
 
     wxSize panel_size = m_obj_panel->get_init_size();
@@ -3393,6 +3413,8 @@ ObjectTableDialog::ObjectTableDialog(wxWindow* parent, Plater* platerObj, Model 
     Fit();
     Layout();
     wxGetApp().UpdateDlgDarkUI(this);
+    // Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+    MD3DialogCaption::Adopt(this);
 }
 
 ObjectTableDialog::~ObjectTableDialog()

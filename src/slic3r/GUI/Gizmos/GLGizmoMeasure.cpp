@@ -5,6 +5,7 @@
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/Gizmos/GizmoObjectManipulation.hpp"
 #include "slic3r/GUI/OpenGLManager.hpp"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/Utils/UndoRedo.hpp"
 
 #include "libslic3r/PresetBundle.hpp"
@@ -22,6 +23,31 @@
 
 namespace Slic3r {
 namespace GUI {
+
+namespace {
+// Resolve an MD3 role to an ImGui colour for the gizmo overlay, honouring the
+// active dark-mode flag. Mirrors the MD3 -> ImVec4 bridge used in ImGuiWrapper.
+inline ImVec4 md3_imvec4(MD3::Role role, bool dark, float alpha = 1.0f)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return ImVec4(c.Red() / 255.0f, c.Green() / 255.0f, c.Blue() / 255.0f, alpha);
+}
+// Same bridge for the ImDrawList primitives, which take a packed ImU32 rather
+// than an ImVec4. Used by the hand-drawn measurement value chips, whose plate is
+// chrome even though the number printed on it is data.
+inline ImU32 md3_imu32(MD3::Role role, bool dark, unsigned char alpha = 255)
+{
+    const wxColour &c = MD3::resolve(role, dark);
+    return IM_COL32(c.Red(), c.Green(), c.Blue(), alpha);
+}
+// Blend a base MD3 colour toward its "on" colour to approximate a Material
+// state layer (hover ~8%, pressed ~12%); alpha follows the base colour.
+inline ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
+{
+    return ImVec4(base.x + (over.x - base.x) * t, base.y + (over.y - base.y) * t,
+                  base.z + (over.z - base.z) * t, base.w);
+}
+} // namespace
 std::string GLGizmoMeasure::format_double(double value)
 {
     char buf[1024];
@@ -1611,9 +1637,20 @@ void GLGizmoMeasure::render_dimensioning()
             const std::string txt = curr_value_str + " " + units;
             ImVec2 txt_size = ImGui::CalcTextSize(txt.c_str());
             const ImGuiStyle& style = ImGui::GetStyle();
-            draw_list->AddRectFilled({pos.x - style.FramePadding.x, pos.y + style.FramePadding.y},
-                                     {pos.x + txt_size.x + 2.0f * style.FramePadding.x, pos.y + txt_size.y + 2.0f * style.FramePadding.y},
-                                     ImGuiWrapper::to_ImU32({1.0f, 1.0f, 1.0f, 0.5f}));
+            // The measured value is data; the plate behind it is chrome. It used to
+            // be a 50%-alpha pure-white rectangle with square corners, drawn the
+            // same in both themes — which put the OnSurface text pushed by
+            // push_common_window_style (near-white in dark mode) onto a near-white
+            // plate. Resolve the plate from the MD3 container roles instead so the
+            // pair stays legible either way, and give it the kit's tiny-control
+            // radius plus a hairline OutlineVariant edge so it reads as a chip
+            // rather than a smear over the scene.
+            const float  chip_scale    = std::max<float>(1.0f, m_parent.get_scale());
+            const float  chip_rounding = float(MD3::Metrics::radius_tiny) * chip_scale;
+            const ImVec2 chip_min{ pos.x - style.FramePadding.x, pos.y + style.FramePadding.y };
+            const ImVec2 chip_max{ pos.x + txt_size.x + 2.0f * style.FramePadding.x, pos.y + txt_size.y + 2.0f * style.FramePadding.y };
+            draw_list->AddRectFilled(chip_min, chip_max, md3_imu32(MD3::Role::SurfaceContainer, m_is_dark_mode), chip_rounding);
+            draw_list->AddRect(chip_min, chip_max, md3_imu32(MD3::Role::OutlineVariant, m_is_dark_mode), chip_rounding, 0, chip_scale);
             ImGui::SetCursorScreenPos({ pos.x + style.FramePadding.x, pos.y });
             m_imgui->text(txt);
             if (m_hit_different_volumes.size() < 2 && wxGetApp().plater()->canvas3D()->get_canvas_type() == GLCanvas3D::ECanvasType::CanvasView3D) {
@@ -1894,9 +1931,15 @@ void GLGizmoMeasure::render_dimensioning()
         const std::string txt = format_double(Geometry::rad2deg(angle)) + "°";
         ImVec2 txt_size = ImGui::CalcTextSize(txt.c_str());
         const ImGuiStyle& style = ImGui::GetStyle();
-        ColorRGBA         color{1.0f, 1.0f, 1.0f, 0.5f};
-        draw_list->AddRectFilled({ pos.x - style.FramePadding.x, pos.y + style.FramePadding.y }, { pos.x + txt_size.x + 2.0f * style.FramePadding.x,
-            pos.y + txt_size.y + 2.0f * style.FramePadding.y}, ImGuiWrapper::to_ImU32(color));
+        // Same chip anatomy as the distance readout above: the angle itself is
+        // data, the plate under it is chrome, so it comes from the MD3 container
+        // roles rather than the old fixed 50%-white fill.
+        const float  chip_scale    = std::max<float>(1.0f, m_parent.get_scale());
+        const float  chip_rounding = float(MD3::Metrics::radius_tiny) * chip_scale;
+        const ImVec2 chip_min{ pos.x - style.FramePadding.x, pos.y + style.FramePadding.y };
+        const ImVec2 chip_max{ pos.x + txt_size.x + 2.0f * style.FramePadding.x, pos.y + txt_size.y + 2.0f * style.FramePadding.y };
+        draw_list->AddRectFilled(chip_min, chip_max, md3_imu32(MD3::Role::SurfaceContainer, m_is_dark_mode), chip_rounding);
+        draw_list->AddRect(chip_min, chip_max, md3_imu32(MD3::Role::OutlineVariant, m_is_dark_mode), chip_rounding, 0, chip_scale);
         ImGui::SetCursorScreenPos({ pos.x + style.FramePadding.x, pos.y });
         m_imgui->text(txt);
         m_imgui->end();
@@ -2420,13 +2463,13 @@ void GLGizmoMeasure::show_face_face_assembly_common() {
         m_imgui->disabled_begin(!(action.can_set_to_center_coincidence));
         {
             ImGui::PushItemWidth(set_to_center_coincidence_size);
-            ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(0 / 255.0, 174 / 255.0, 66 / 255.0, 1.0) : ImVec4(0 / 255.0, 174 / 255.0, 66 / 255.0, 1.0));
+            ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::Primary, m_is_dark_mode)); // filled primary CTA
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-                                  m_is_dark_mode ? ImVec4(50 / 255.0f, 238 / 255.0f, 61 / 255.0f, 1.00f) : ImVec4(50 / 255.0f, 238 / 255.0f, 61 / 255.0f, 1.00f));
+                                  md3_state_layer(md3_imvec4(MD3::Role::Primary, m_is_dark_mode), md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode), 0.08f));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive,
-                                  m_is_dark_mode ? ImVec4(206 / 255.0f, 206 / 255.0f, 206 / 255.0f, 1.00f) : ImVec4(206 / 255.0f, 206 / 255.0f, 206 / 255.0f, 1.00f));
+                                  md3_state_layer(md3_imvec4(MD3::Role::Primary, m_is_dark_mode), md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode), 0.12f));
             ImGui::PushStyleColor(ImGuiCol_Text,
-                                  m_is_dark_mode ? ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.00f) : ImVec4(255 / 255.0f, 255 / 255.0f, 255 / 255.0f, 1.00f));
+                                  md3_imvec4(MD3::Role::OnPrimary, m_is_dark_mode));
             if (m_imgui->button(_L("Center coincidence"))) {
                 set_to_center_coincidence(m_same_model_object);
                 update_measurement_result();

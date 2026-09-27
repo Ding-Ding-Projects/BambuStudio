@@ -1,6 +1,7 @@
 #include "ImGuiWrapper.hpp"
 
 #include <cstdio>
+#include <cstring>
 #include <vector>
 #include <cmath>
 #include <stdexcept>
@@ -17,6 +18,8 @@
 #include <wx/event.h>
 #include <wx/clipbrd.h>
 #include <wx/debug.h>
+#include <wx/weakref.h>
+#include <wx/utils.h>
 
 #include <GL/glew.h>
 
@@ -24,6 +27,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 #include <imgui/imgui_internal.h>
+#include "imgui/imgui_stdlib.h"
 
 #include "libslic3r/libslic3r.h"
 #include <libslic3r/ClipperUtils.hpp>
@@ -35,6 +39,11 @@
 #include "Search.hpp"
 #include "BitmapCache.hpp"
 #include "FilamentBitmapUtils.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/BoundedRegex.hpp"
+#include "Widgets/RegexBuilderBridgeState.hpp"
+#include "Widgets/RegexBuilderPopup.hpp"
 #include "slic3r/GUI/UIHelpers/ImGuiFilamentWidgets.hpp"
 
 #include "../Utils/MacDarkMode.hpp"
@@ -48,6 +57,40 @@
 
 namespace Slic3r {
 namespace GUI {
+
+void open_imgui_regex_builder(const std::shared_ptr<RegexBuilderBridgeState> &state)
+{
+    if (!state || !wxTheApp)
+        return;
+    wxWindow *parent = wxTheApp->GetTopWindow();
+    if (!parent)
+        return;
+
+    // Only one transient builder is useful at a time. wxWeakRef follows parent
+    // teardown and avoids retaining a dangling popup during application exit.
+    static wxWeakRef<RegexBuilderPopup> active_popup;
+    if (active_popup)
+        active_popup->Destroy();
+
+    const RegexBuilderValues initial = state->values();
+    auto *popup = new RegexBuilderPopup(parent);
+    active_popup = popup;
+
+    RegexBuilderPopup::Callbacks callbacks;
+    callbacks.onPattern = [state](const wxString &pattern) {
+        state->set_pattern_from_builder(into_u8(pattern));
+    };
+    callbacks.onRegexMode = [state](bool on) { state->set_regex_from_builder(on); };
+    callbacks.onCase      = [state](bool on) { state->set_case_from_builder(on); };
+    callbacks.onMultiline = [state](bool on) { state->set_multiline_from_builder(on); };
+    callbacks.onWord      = [state](bool on) { state->set_word_from_builder(on); };
+    popup->Configure(MD3::ColorScheme::Brand, from_u8(initial.pattern),
+                     initial.regex_enabled, initial.case_sensitive,
+                     initial.multiline, initial.whole_word, std::move(callbacks));
+
+    popup->Position(wxGetMousePosition() + wxPoint(0, parent->FromDIP(8)), wxSize(0, 0));
+    popup->PopupAndFocusPattern();
+}
 
 static const std::map<const wchar_t, std::string> font_icons = {
     {ImGui::PrintIconMarker       , "cog"                           },
@@ -148,10 +191,27 @@ static const std::map<const wchar_t, std::string> font_icons_extra_large = {
     //{ImGui::ClippyMarker            , "notification_clippy"             },
 };
 
+// Curated Material Symbols coverage for the ImGui overlay atlas. Single source of
+// truth = the MaterialIcon::Glyph enum (Widgets/MaterialIcon.hpp); every value is
+// cmap-verified against the vendored resources/fonts/MaterialSymbolsOutlined.ttf.
+// The range is restricted to this set (NOT the whole PUA) for atlas-memory realism.
+static const unsigned int s_overlay_glyphs[] = {
+    MaterialIcon::SkipPrevious, MaterialIcon::SkipNext, MaterialIcon::LineStartCircle,
+    MaterialIcon::Settings,   MaterialIcon::Print,       MaterialIcon::Close,
+    MaterialIcon::Search,     MaterialIcon::Palette,     MaterialIcon::Insights,
+    MaterialIcon::Tune,       MaterialIcon::Layers,      MaterialIcon::Route,
+    MaterialIcon::Timeline,   MaterialIcon::UTurnLeft,   MaterialIcon::WaterDrop,
+    MaterialIcon::PlayArrow,  MaterialIcon::Pause,       MaterialIcon::Stop,
+    MaterialIcon::Speed,
+    MaterialIcon::ChevronLeft, MaterialIcon::ChevronRight, MaterialIcon::ExpandMore,
+    MaterialIcon::Home,
+};
+
 const ImVec4 ImGuiWrapper::COL_GREY_DARK         = { 0.333f, 0.333f, 0.333f, 1.0f };
 const ImVec4 ImGuiWrapper::COL_GREY_LIGHT        = { 0.4f, 0.4f, 0.4f, 1.0f };
-const ImVec4 ImGuiWrapper::COL_ORANGE_DARK       = { 0.757f, 0.404f, 0.216f, 1.0f };
-const ImVec4 ImGuiWrapper::COL_ORANGE_LIGHT      = { 1.0f, 0.49f, 0.216f, 1.0f };
+// Legacy Orca/Prusa button orange retired -> MD3 Role::Primary (Brand light #146c2e).
+const ImVec4 ImGuiWrapper::COL_ORANGE_DARK       = { 20 / 255.f, 108 / 255.f, 46 / 255.f, 1.0f };
+const ImVec4 ImGuiWrapper::COL_ORANGE_LIGHT      = { 20 / 255.f, 108 / 255.f, 46 / 255.f, 1.0f };
 const ImVec4 ImGuiWrapper::COL_WINDOW_BACKGROUND = { 0.1f, 0.1f, 0.1f, 0.8f };
 const ImVec4 ImGuiWrapper::COL_BUTTON_BACKGROUND = COL_ORANGE_DARK;
 const ImVec4 ImGuiWrapper::COL_BUTTON_HOVERED    = COL_ORANGE_LIGHT;
@@ -170,14 +230,41 @@ const ImVec4 ImGuiWrapper::COL_SEPARATOR         = { 0.93f, 0.93f, 0.93f, 1.0f }
 const ImVec4 ImGuiWrapper::COL_SEPARATOR_DARK    = { 0.24f, 0.24f, 0.27f, 1.0f };
 const ImVec4 ImGuiWrapper::COL_TITLE_BG          = { 0.745f, 0.745f, 0.745f, 1.0f };
 const ImVec4 ImGuiWrapper::COL_WINDOW_BG         = { 1.000f, 1.000f, 1.000f, 1.0f };
-const ImVec4 ImGuiWrapper::COL_WINDOW_BG_DARK    = { 45 / 255.f, 45 / 255.f, 49 / 255.f, 1.f };
-const ImVec4 ImGuiWrapper::COL_BAMBU             = {0.0f, 174.0 / 255.0f, 66.0f / 255, 1.0f};
+const ImVec4 ImGuiWrapper::COL_WINDOW_BG_DARK    = { 47 / 255.f, 48 / 255.f, 54 / 255.f, 1.f }; // MD3 dark SurfaceContainerHigh (#2f3036)
+const ImVec4 ImGuiWrapper::COL_BAMBU             = {20 / 255.f, 108 / 255.f, 46 / 255.f, 1.0f}; // Bambu green #00AE42 -> MD3 Role::Primary (#146c2e)
 const ImVec4 ImGuiWrapper::COL_BAMBU_CHANGE      = {1.0f, 111.0 / 255.0f, 0.0f / 255, 1.0f};
 int ImGuiWrapper::TOOLBAR_WINDOW_FLAGS = ImGuiWindowFlags_AlwaysAutoResize
                                  | ImGuiWindowFlags_NoMove
                                  | ImGuiWindowFlags_NoResize
                                  | ImGuiWindowFlags_NoCollapse
                                  | ImGuiWindowFlags_NoTitleBar;
+
+//BBS dark-mode flag and the MD3 -> ImVec4 bridge. Defined here (ahead of the
+// widget helpers) so every ImGui surface resolves its theme colours from the
+// shared MD3 tokens instead of legacy brand-green / orange literals.
+static bool m_is_dark_mode = false;
+
+static ImVec4 md3_imgui_color(MD3::Role role, MD3::ColorScheme scheme, float alpha = 1.0f)
+{
+    const wxColour &color = MD3::resolve(role, m_is_dark_mode, scheme);
+    return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, alpha);
+}
+
+static ImVec4 md3_imgui_color(MD3::Role role, float alpha = 1.0f)
+{
+    const wxColour &color = MD3::resolve(role, m_is_dark_mode);
+    return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, alpha);
+}
+
+// Blend an MD3 role colour toward its "on" colour to approximate a Material
+// state layer (hover ~8%, pressed ~12%); alpha follows the base colour.
+static ImVec4 md3_state_layer(const ImVec4 &base, const ImVec4 &over, float t)
+{
+    return ImVec4(base.x + (over.x - base.x) * t,
+                  base.y + (over.y - base.y) * t,
+                  base.z + (over.z - base.z) * t,
+                  base.w);
+}
 
 
 bool get_data_from_svg(const std::string &filename, unsigned int max_size_px, ThumbnailData &thumbnail_data)
@@ -681,12 +768,26 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
     if (window->SkipItems)
         return false;
 
-    static char pattern_buffer[256] = { 0 };
-    auto   simple_match    = [](const char *pattern, const char *str) {
-        wxString sub_str  = wxString::FromUTF8(pattern).Lower();
-        wxString main_str = wxString::FromUTF8(str).Lower();
-        return main_str.Find(sub_str);
-    };
+    static std::string pattern;
+    // ".*" regex mode for the popup filter (persists across opens, like the
+    // in-canvas search_list toggle). Matching is guarded: an invalid or
+    // half-typed pattern filters nothing out (match-all), and matching is
+    // case-insensitive by default — mirroring search_list's regex support.
+    static bool regex_mode = false;
+    static bool case_sensitive = false;
+    static bool whole_word = false;
+    static bool multiline = false;
+    static auto builder_state = std::make_shared<RegexBuilderBridgeState>();
+
+    RegexBuilderValues builder_values{pattern, regex_mode, case_sensitive, whole_word, multiline};
+    if (builder_state->apply_pending_to_host(builder_values)) {
+        pattern        = std::move(builder_values.pattern);
+        regex_mode     = builder_values.regex_enabled;
+        case_sensitive = builder_values.case_sensitive;
+        whole_word     = builder_values.whole_word;
+        multiline      = builder_values.multiline;
+    }
+    builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
 
     bool is_filtering = false;
     bool is_new_open = false;
@@ -710,9 +811,6 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
     ImGui::PopStyleColor();
     ImGui::BBLRenderArrow(window->DrawList, arrow_bb.Min + ImVec2(ImMax(0.0f, (arrow_size.x - g.FontSize) * 0.5f), ImMax(0.0f, (arrow_size.y - g.FontSize) * 0.5f)), ImGui::GetColorU32(ImGuiCol_Text), ImGuiDir_Down);
 
-    if (is_new_open)
-        memset(pattern_buffer, 0, IM_ARRAYSIZE(pattern_buffer));
-
     float item_rect_width = ImGui::GetItemRectSize().x;
     float item_rect_height = item_height ? item_height : ImGui::GetItemRectSize().y;
     ImGui::SetNextWindowPos({ CursorPos.x, ImGui::GetItemRectMax().y + 4 * m_style_scaling });
@@ -724,9 +822,20 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f * m_style_scaling, item_rect_height - g.FontSize) * 0.5f);
-        wchar_t ICON_SEARCH = *pattern_buffer != '\0' ? ImGui::TextSearchCloseIcon : ImGui::TextSearchIcon;
+        // Reserve room at the right of the search row for the ".*" regex toggle
+        // (same affordance as the in-canvas search_list toggle); the input and
+        // its search/clear icon shift left by that amount.
+        const ImVec2 regex_label_size = ImGui::CalcTextSize(".*");
+        const float  regex_btn_w      = regex_label_size.x + g.Style.FramePadding.x * 2.0f;
+        const std::string builder_label = into_u8(static_cast<wchar_t>(MaterialIcon::Tune)) +
+                                          "##bbl_combo_with_filter_builder";
+        const float builder_btn_w = ImGui::GetFrameHeight();
+        const float  regex_gap        = 4.0f * m_style_scaling;
+        const float action_width = regex_btn_w + builder_btn_w + regex_gap * 2.0f;
+        wchar_t ICON_SEARCH = !pattern.empty() ? ImGui::TextSearchCloseIcon : ImGui::TextSearchIcon;
         const ImVec2 label_size = ImGui::CalcTextSize(into_u8(ICON_SEARCH).c_str(), nullptr, true);
-        const ImVec2 search_icon_pos(ImGui::GetItemRectMax().x - label_size.x, popup_window->DC.CursorPos.y + style.FramePadding.y);
+        const ImVec2 search_icon_pos(ImGui::GetItemRectMax().x - label_size.x - action_width,
+                                     popup_window->DC.CursorPos.y + style.FramePadding.y);
         ImGui::RenderText(search_icon_pos, into_u8(ICON_SEARCH).c_str());
 
         auto temp = popup_window->DC.CursorPos;
@@ -738,29 +847,96 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
         ImGui::PushStyleColor(ImGuiCol_Border, { 0, 0, 0, 0 });
         if (button("##invisible_clear_button", label_size.x, label_size.y))
         {
-            if (*pattern_buffer != '\0')
-                memset(pattern_buffer, 0, IM_ARRAYSIZE(pattern_buffer));
+            if (!pattern.empty()) {
+                pattern.clear();
+                builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
+            }
         }
         ImGui::PopStyleColor(5);
         popup_window->DC.CursorPos = temp;
 
 
-        ImGui::PushItemWidth(item_rect_width);
+        ImGui::PushItemWidth(std::max(1.0f, item_rect_width - action_width));
         if (is_new_open)
             ImGui::SetKeyboardFocusHere();
-        ImGui::InputText("##bbl_combo_with_filter_inputText", pattern_buffer, sizeof(pattern_buffer));
+        if (ImGui::InputText("##bbl_combo_with_filter_inputText", &pattern)) {
+            pattern = into_u8(from_u8(pattern).Left(BoundedRegex::kMaxPatternCodeUnits));
+            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
+        }
         ImGui::PopItemWidth();
+
+        // ".*" regex toggle, tinted while active so it reads as stateful
+        // (mirrors the in-canvas search_list toggle). Flipping it re-filters on
+        // the next frame; no other state is touched.
+        ImGui::SameLine(0.0f, regex_gap);
+        if (regex_mode) {
+            const ImVec4 on = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+            ImGui::PushStyleColor(ImGuiCol_Button, on);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
+        }
+        if (ImGui::Button(".*##bbl_combo_with_filter_regex", ImVec2(regex_btn_w, 0.0f))) {
+            regex_mode = !regex_mode;
+            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
+        }
+        if (regex_mode)
+            ImGui::PopStyleColor(2);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", into_u8(_L("Regular expression")).c_str());
+
+        ImGui::SameLine(0.0f, regex_gap);
+        if (ImGui::Button(builder_label.c_str(), ImVec2(builder_btn_w, 0.0f))) {
+            builder_state->synchronize_from_host({pattern, regex_mode, case_sensitive, whole_word, multiline});
+            open_imgui_regex_builder(builder_state);
+        }
+        if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
+            ImGui::SetTooltip("%s", into_u8(_L("Regex builder")).c_str());
+
         ImGui::PopStyleVar();
 
-        if (*pattern_buffer != '\0')
+        if (!pattern.empty())
             is_filtering = true;
+
+        // Regex mode: validate once in the bounded worker. An invalid / half-typed pattern
+        // disables filtering entirely (match-all) rather than hiding every row.
+        bool       use_regex   = false;
+        std::wstring regex_pattern;
+        std::unique_ptr<BoundedRegex::SearchPass> regex_pass;
+        if (is_filtering && regex_mode) {
+            regex_pattern = from_u8(pattern).ToStdWstring();
+            BoundedRegex::Options options;
+            options.case_sensitive = case_sensitive;
+            options.multiline = multiline;
+            regex_pass = std::make_unique<BoundedRegex::SearchPass>(regex_pattern, options);
+            use_regex = !regex_pass->circuit_open();
+            if (!use_regex)
+                is_filtering = false;
+        }
 
         if (is_filtering) {
             std::vector<std::pair<int, int>> filtered_items_with_priority; // std::pair<index, priority>
             for (int i = 0; i < all_items.size(); i++) {
-                int priority = simple_match(pattern_buffer, all_items[i].c_str());
-                if (priority != wxNOT_FOUND)
-                    filtered_items_with_priority.push_back({i, priority});
+                if (use_regex) {
+                    const auto result = regex_pass->evaluate(from_u8(all_items[i]).ToStdWstring());
+                    if (!result.definitive()) {
+                        filtered_items_with_priority.push_back({i, 0});
+                    } else if (result.matched() && !result.matches.empty() &&
+                               !result.matches.front().groups.empty())
+                        filtered_items_with_priority.push_back(
+                            {i, static_cast<int>(result.matches.front().groups.front().begin)});
+                } else {
+                    const std::wstring needle = from_u8(pattern).ToStdWstring();
+                    const std::wstring subject = from_u8(all_items[i]).ToStdWstring();
+                    if (BoundedRegex::plain_search(needle, subject, case_sensitive, whole_word)) {
+                        wxString subject_wx = from_u8(all_items[i]);
+                        wxString needle_wx  = from_u8(pattern);
+                        if (!case_sensitive) {
+                            subject_wx.MakeLower();
+                            needle_wx.MakeLower();
+                        }
+                        const int priority = subject_wx.Find(needle_wx);
+                        filtered_items_with_priority.push_back({i, std::max(0, priority)});
+                    }
+                }
             }
             std::sort(filtered_items_with_priority.begin(), filtered_items_with_priority.end(),
                       [](const std::pair<int, int> &a, const std::pair<int, int> &b) { return (b.second > a.second); });
@@ -799,8 +975,8 @@ bool ImGuiWrapper::bbl_slider_float_style(const std::string &label, float *v, fl
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.81f, 0.81f, 0.81f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrab, md3_imgui_color(MD3::Role::OutlineVariant));
+    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, md3_imgui_color(MD3::Role::Primary));
 
     bool ret = bbl_slider_float(label, v, v_min,v_max, format, power, clamp,tooltip);
 
@@ -1093,20 +1269,16 @@ bool ImGuiWrapper::bbl_checkbox(const wxString &label, bool &value, bool enabled
     bool result;
     bool b_value = value;
     if (b_value) {
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imgui_color(MD3::Role::Primary));
     }
     if (!enabled) {
         float factor = b_value ? 0.8f : 1.0f;
-        if (b_dark_mode) {
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(factor * 39.0f / 255.0f, factor * 39.0f / 255.0f, factor * 39.0f / 255.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(factor * 108.0f / 255.0f, factor * 108.0f / 255.0f, factor * 108.0f / 255.0f, 1.0f));
-        }
-        else {
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(factor * 230.0f / 255.0f, factor * 230.0f / 255.0f, factor * 230.0f / 255.0f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(factor * 163.0f / 255.0f, factor * 163.0f / 255.0f, factor * 163.0f / 255.0f, 1.0f));
-        }
+        // Disabled: MD3 disabled container / disabled label, theme-resolved by role.
+        (void) b_dark_mode;
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imgui_color(MD3::Role::SurfaceContainerHigh, factor));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::Outline, factor));
     }
     auto label_utf8 = into_u8(label);
     result          = ImGui::BBLCheckbox(label_utf8.c_str(), &value);
@@ -1124,9 +1296,9 @@ bool ImGuiWrapper::bbl_radio_button(const char *label, bool active)
     bool result;
     bool b_value = active;
     if (b_value) {
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imgui_color(MD3::Role::Primary));
     }
     result = ImGui::BBLRadioButton(label,active);
     if (b_value) { ImGui::PopStyleColor(3); }
@@ -1227,7 +1399,7 @@ void ImGuiWrapper::tooltip(const char *label, float wrap_width)
 {
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(wrap_width);
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface
     ImGui::TextUnformatted(label);
     ImGui::PopStyleColor(1);
     ImGui::PopTextWrapPos();
@@ -1242,7 +1414,7 @@ void ImGuiWrapper::tooltip(const wxString &label, float wrap_width)
 {
     ImGui::BeginTooltip();
     ImGui::PushTextWrapPos(wrap_width);
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::InverseOn)); // tooltip plate is InverseSurface
     ImGui::TextUnformatted(label.ToUTF8().data());
     ImGui::PopStyleColor(1);
     ImGui::PopTextWrapPos();
@@ -1575,7 +1747,7 @@ static bool selectable(const char* label, bool selected, ImGuiSelectableFlags fl
     char marked_label[512]; //255 symbols is not enough for translated string (e.t. to Russian)
     if (hovered || selected) {
         sprintf(marked_label, "%c%s", ImGui::ColorMarkerHovered, label);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnPrimary)); // row fill is Primary
     }
     else
         strcpy(marked_label, label);
@@ -1863,6 +2035,54 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
                                Search::OptionViewParameters& view_params, int& selected, bool& edited, int& mouse_wheel, bool is_localized)
 {
     int& hovered_id = view_params.hovered_id;
+    if (!m_search_builder_state)
+        m_search_builder_state = std::make_shared<RegexBuilderBridgeState>();
+
+    const std::string external_pattern = search_str ? std::string(search_str) : std::string();
+    if (!m_search_state_initialized) {
+        m_search_pattern = external_pattern;
+        m_search_exported_pattern = external_pattern;
+        m_search_state_initialized = true;
+    } else if (!m_search_builder_state->has_pending_changes() &&
+               external_pattern != m_search_exported_pattern) {
+        // Preserve intentional changes made by the legacy caller while keeping
+        // a builder-authored pattern longer than its 40-byte compatibility
+        // buffer authoritative.
+        m_search_pattern = external_pattern;
+    }
+
+    RegexBuilderValues bridge_values{m_search_pattern, m_search_regex_enabled,
+                                     m_search_case_sensitive, m_search_whole_word,
+                                     m_search_multiline};
+    const bool builder_edited = m_search_builder_state->apply_pending_to_host(bridge_values);
+    m_search_pattern          = std::move(bridge_values.pattern);
+    m_search_regex_enabled    = bridge_values.regex_enabled;
+    m_search_case_sensitive   = bridge_values.case_sensitive;
+    m_search_whole_word       = bridge_values.whole_word;
+    m_search_multiline        = bridge_values.multiline;
+    m_search_builder_state->synchronize_from_host(
+        {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+         m_search_whole_word, m_search_multiline});
+
+    auto export_legacy_pattern = [&]() {
+        if (!search_str)
+            return;
+        // search_list's historical ABI guarantees a 40-byte buffer. Keep that
+        // output valid UTF-8, while live builder/evaluator state remains full
+        // length in m_search_pattern.
+        wxString decoded = from_u8(m_search_pattern);
+        std::string value = into_u8(decoded);
+        while (value.size() > 39 && !decoded.empty()) {
+            decoded.RemoveLast();
+            value = into_u8(decoded);
+        }
+        std::memset(search_str, 0, 40);
+        std::memcpy(search_str, value.data(), value.size());
+        m_search_exported_pattern = value;
+    };
+    if (builder_edited)
+        export_legacy_pattern();
+
     // ImGui::ListBoxHeader("", size);
     {
         // rewrote part of function to add a TextInput instead of label Text
@@ -1893,22 +2113,78 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
         const ImGuiID id = ImGui::GetID(search_str);
         ImVec2 search_size = ImVec2(size.x, ImGui::GetTextLineHeightWithSpacing() + style.ItemSpacing.y);
 
+        // Reserve room for the quick ".*" toggle and the full builder button.
+        const ImVec2 regex_label_size = ImGui::CalcTextSize(".*");
+        const float  regex_btn_w      = regex_label_size.x + style.FramePadding.x * 2.0f;
+        const float  builder_btn_w    = search_size.y;
+        const std::string builder_label = into_u8(static_cast<wchar_t>(MaterialIcon::Tune)) +
+                                          "##search_list_builder";
+        const ImVec2 input_size(
+            std::max(1.0f, search_size.x - regex_btn_w - builder_btn_w - style.ItemSpacing.x * 2.0f),
+            search_size.y);
+
         if (!ImGui::IsAnyItemFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
             ImGui::SetKeyboardFocusHere(0);
 
         // The press on Esc key invokes editing of InputText (removes last changes)
         // So we should save previous value...
-        std::string str = search_str;
-        ImGui::InputTextEx("", NULL, search_str, 40, search_size, ImGuiInputTextFlags_AutoSelectAll, NULL, NULL);
-        edited = ImGui::IsItemEdited();
+        std::string str = m_search_pattern;
+        ImGui::PushItemWidth(input_size.x);
+        ImGui::InputText("##search_list_input", &m_search_pattern, ImGuiInputTextFlags_AutoSelectAll);
+        ImGui::PopItemWidth();
+        const bool input_edited = ImGui::IsItemEdited();
+        if (input_edited) {
+            m_search_pattern = into_u8(from_u8(m_search_pattern).Left(BoundedRegex::kMaxPatternCodeUnits));
+            m_search_builder_state->synchronize_from_host(
+                {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+                 m_search_whole_word, m_search_multiline});
+            export_legacy_pattern();
+        }
+        edited = builder_edited || input_edited;
         if (edited)
             hovered_id = 0;
 
-        process_key_down(ImGuiKey_Escape, [&selected, search_str, str]() {
+        // ".*" regex toggle: keeping ImGui conventions, tint the button when the
+        // mode is active so the affordance reads as a stateful toggle. Toggling
+        // only flips the flag; the row loop below applies/removes the bounded regex
+        // post-filter live on the next frame (no re-search needed).
+        ImGui::SameLine(0.0f, style.ItemSpacing.x);
+        if (m_search_regex_enabled) {
+            const ImVec4 on = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+            ImGui::PushStyleColor(ImGuiCol_Button, on);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
+        }
+        if (ImGui::Button(".*##search_list_regex", ImVec2(regex_btn_w, search_size.y))) {
+            m_search_regex_enabled = !m_search_regex_enabled;
+            edited = true;
+            m_search_builder_state->synchronize_from_host(
+                {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+                 m_search_whole_word, m_search_multiline});
+        }
+        if (m_search_regex_enabled)
+            ImGui::PopStyleColor(2);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", into_u8(_L("Regular expression")).c_str());
+
+        ImGui::SameLine(0.0f, style.ItemSpacing.x);
+        if (ImGui::Button(builder_label.c_str(), ImVec2(builder_btn_w, search_size.y))) {
+            m_search_builder_state->synchronize_from_host(
+                {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+                 m_search_whole_word, m_search_multiline});
+            open_imgui_regex_builder(m_search_builder_state);
+        }
+        if (ImGui::IsItemHovered() || ImGui::IsItemFocused())
+            ImGui::SetTooltip("%s", into_u8(_L("Regex builder")).c_str());
+
+        process_key_down(ImGuiKey_Escape, [this, &selected, &export_legacy_pattern, str]() {
             // use 9999 to mark selection as a Esc key
             selected = 9999;
             // ... and when Esc key was pressed, than revert search_str value
-            strcpy(search_str, str.c_str());
+            m_search_pattern = str;
+            m_search_builder_state->synchronize_from_host(
+                {m_search_pattern, m_search_regex_enabled, m_search_case_sensitive,
+                 m_search_whole_word, m_search_multiline});
+            export_legacy_pattern();
         });
 
         ImGui::BeginChildFrame(id, frame_bb.GetSize());
@@ -1919,18 +2195,61 @@ void ImGuiWrapper::search_list(const ImVec2& size_, bool (*items_getter)(int, co
     const char* tooltip;
     int mouse_hovered = -1;
 
+    // ".*" regex post-filter over the getter's already-searched rows. Only active
+    // when the toggle is on and a pattern is present; an invalid/half-typed
+    // pattern leaves regex_valid=false so nothing is hidden (never filter all).
+    const bool use_regex = m_search_regex_enabled && !m_search_pattern.empty();
+    const bool use_plain_flag_filter = !m_search_regex_enabled && !m_search_pattern.empty() &&
+                                       (m_search_case_sensitive || m_search_whole_word);
+    bool       regex_valid = false;
+    std::wstring regex_pattern;
+    std::unique_ptr<BoundedRegex::SearchPass> regex_pass;
+    if (use_regex) {
+        regex_pattern = from_u8(m_search_pattern).ToStdWstring();
+        BoundedRegex::Options options;
+        options.case_sensitive = m_search_case_sensitive;
+        options.multiline = m_search_multiline;
+        regex_pass = std::make_unique<BoundedRegex::SearchPass>(regex_pattern, options);
+        regex_valid = !regex_pass->circuit_open();
+    }
+
     while (items_getter(i, &item_text, &tooltip))
     {
-        selectable(item_text, i == hovered_id);
-
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", /*item_text*/tooltip);
-                hovered_id = -1;
-            mouse_hovered = i;
+        bool show = true;
+        if (use_regex && regex_valid) {
+            // Strip highlight/icon markup (all bytes < 0x20) before matching so
+            // patterns test the plain label, not the ImGui marker control chars.
+            std::string plain;
+            plain.reserve(std::strlen(item_text));
+            for (const char* p = item_text; *p; ++p)
+                if ((unsigned char)*p >= 0x20)
+                    plain.push_back(*p);
+            show = regex_pass->allows_candidate(from_u8(plain).ToStdWstring());
+        } else if (use_plain_flag_filter) {
+            std::string plain;
+            plain.reserve(std::strlen(item_text));
+            for (const char* p = item_text; *p; ++p)
+                if ((unsigned char)*p >= 0x20)
+                    plain.push_back(*p);
+            show = BoundedRegex::plain_search(from_u8(m_search_pattern).ToStdWstring(),
+                                              from_u8(plain).ToStdWstring(),
+                                              m_search_case_sensitive, m_search_whole_word);
         }
 
-        if (ImGui::IsItemClicked())
-            selected = i;
+        // Keep the getter index i stable across hidden rows so a clicked row still
+        // maps back to the correct option; only advance the render for shown rows.
+        if (show) {
+            selectable(item_text, i == hovered_id);
+
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s", /*item_text*/tooltip);
+                    hovered_id = -1;
+                mouse_hovered = i;
+            }
+
+            if (ImGui::IsItemClicked())
+                selected = i;
+        }
         i++;
     }
 
@@ -2007,6 +2326,55 @@ bool ImGuiWrapper::push_bold_font() {
 }
 bool ImGuiWrapper::pop_bold_font() {
     if (bold_font) {
+        ImGui::PopFont();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+bool ImGuiWrapper::push_mono_font() {
+    if (mono_font) {
+        ImGui::PushFont(mono_font);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+bool ImGuiWrapper::pop_mono_font() {
+    if (mono_font) {
+        ImGui::PopFont();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+std::string ImGuiWrapper::material_icon(unsigned int codepoint)
+{
+    // Encode the PUA scalar as UTF-8 (mirrors the existing marker-render idiom
+    // into_u8(ICON_SEARCH)); the glyph resolves through the merged Material
+    // Symbols face in the default/bold atlas.
+    return into_u8(wxString(wxUniChar(codepoint)));
+}
+void ImGuiWrapper::icon_text(unsigned int codepoint, const ImVec4 &color)
+{
+    ImGui::PushStyleColor(ImGuiCol_Text, color);
+    ImGui::TextUnformatted(material_icon(codepoint).c_str());
+    ImGui::PopStyleColor();
+}
+bool ImGuiWrapper::push_icon_font() {
+    if (m_icon_font) {
+        ImGui::PushFont(m_icon_font);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+bool ImGuiWrapper::pop_icon_font() {
+    if (m_icon_font) {
         ImGui::PopFont();
         return true;
     }
@@ -2429,8 +2797,6 @@ std::vector<unsigned char> ImGuiWrapper::load_svg(const std::string& bitmap_name
 }
 
 //BBS
-static bool m_is_dark_mode = false;
-
 void ImGuiWrapper::on_change_color_mode(bool is_dark)
 {
     m_is_dark_mode = is_dark;
@@ -2438,85 +2804,90 @@ void ImGuiWrapper::on_change_color_mode(bool is_dark)
 
 void ImGuiWrapper::push_toolbar_style(const float scale)
 {
-    if (m_is_dark_mode) {
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 10.0f) * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 3.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 10.0f) * scale);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.88f));                                        // 1
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGuiWrapper::COL_WINDOW_BG_DARK);                                   // 2
-        ImGui::PushStyleColor(ImGuiCol_TitleBg, ImGuiWrapper::COL_TITLE_BG);                                          // 3
-        ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImGuiWrapper::COL_TITLE_BG);                                    // 4
-        ImGui::PushStyleColor(ImGuiCol_Separator, ImGuiWrapper::COL_SEPARATOR_DARK);                                  // 5
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(62 / 255.0f, 62 / 255.0f, 69 / 255.0f, 1.00f));                 // 6
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(73 / 255.0f, 73 / 255.0f, 78 / 255.0f, 1.00f));          // 7
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(73 / 255.0f, 73 / 255.0f, 78 / 255.0f, 1.00f));           // 8
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(84 / 255.0f, 84 / 255.0f, 90 / 255.0f, 1.00f));         // 9
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(62 / 255.0f, 62 / 255.0f, 69 / 255.0f, 1.00f));          // 10
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));             // 11
-        ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f));         // 12
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));                                // 13
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(0.42f, 0.42f, 0.42f, 1.00f));                            // 14
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, ImVec4(0.93f, 0.93f, 0.93f, 1.00f));                     // 15
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, ImVec4(0.93f, 0.93f, 0.93f, 1.00f));                      // 16
-    }
-    else {
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 10.0f) * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 3.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 10.0f) * scale);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(50 / 255.0f, 58 / 255.0f, 61 / 255.0f, 1.00f));       // 1
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGuiWrapper::COL_WINDOW_BG);          // 2
-        ImGui::PushStyleColor(ImGuiCol_TitleBg, ImGuiWrapper::COL_TITLE_BG);            // 3
-        ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImGuiWrapper::COL_TITLE_BG);      // 4
-        ImGui::PushStyleColor(ImGuiCol_Separator, ImGuiWrapper::COL_SEPARATOR);         // 5
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));     // 6
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGuiWrapper::COL_HOVER);         // 7
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 1.00f)); // 8
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(172 / 255.0f, 172 / 255.0f, 172 / 255.0f, 1.00f));                        // 9
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 1.00f));  // 10
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));        // 11
-        ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, COL_GREEN_LIGHT);                                     // 12
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));//13
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(0.42f, 0.42f, 0.42f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, ImVec4(0.93f, 0.93f, 0.93f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, ImVec4(0.93f, 0.93f, 0.93f, 1.00f));
-    }
+    // Neutrals/accents resolved from the shared MD3 tokens (Brand scheme). Roles
+    // are chosen so the resulting colours match the previous hand-copied values.
+    const ImVec4 text     = md3_imgui_color(MD3::Role::OnSurface);
+    const ImVec4 window   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainer)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLowest);
+    const ImVec4 title    = md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 outline  = md3_imgui_color(MD3::Role::OutlineVariant);
+    const ImVec4 button   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHighest)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 hover    = m_is_dark_mode ? md3_imgui_color(MD3::Role::OutlineVariant)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerHigh);
+    const ImVec4 active   = m_is_dark_mode ? md3_imgui_color(MD3::Role::PrimaryContainer)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerHighest);
+    const ImVec4 primary  = md3_imgui_color(MD3::Role::Primary);
+    const ImVec4 selected = md3_imgui_color(MD3::Role::PrimaryContainer);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 12.0f) * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 16.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(12.0f, 12.0f) * scale);
+    ImGui::PushStyleColor(ImGuiCol_Text, text);                 // 1
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, window);           // 2
+    ImGui::PushStyleColor(ImGuiCol_TitleBg, title);             // 3
+    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, title);       // 4
+    ImGui::PushStyleColor(ImGuiCol_Separator, outline);         // 5
+    ImGui::PushStyleColor(ImGuiCol_Border, outline);            // 6
+    ImGui::PushStyleColor(ImGuiCol_Button, button);             // 7
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);       // 8
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);       // 9
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, hover);      // 10
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, active);      // 11
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, button);            // 12
+    ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, selected);   // 13
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, primary);         // 14
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, outline);     // 15
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, primary); // 16
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, primary);  // 17
 }
 
 void ImGuiWrapper::pop_toolbar_style()
 {
     // size in push toolbar style
-    ImGui::PopStyleColor(16);
+    ImGui::PopStyleColor(17);
     ImGui::PopStyleVar(6);
 }
 
 void ImGuiWrapper::push_menu_style(const float scale)
 {
-    if (m_is_dark_mode) {
-        ImGuiWrapper::push_toolbar_style(scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f) * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 4.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 0.0f);
-        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BG_DARK);
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-    }
-    else {
-        ImGuiWrapper::push_toolbar_style(scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f) * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 4.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 0.0f);
-        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BG);
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-    }
+    const ImVec4 popup  = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainer)
+                                         : md3_imgui_color(MD3::Role::SurfaceContainerLowest);
+    const ImVec4 header = md3_imgui_color(MD3::Role::PrimaryContainer);
+    ImGuiWrapper::push_toolbar_style(scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f) * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f * scale);
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, popup);
+    ImGui::PushStyleColor(ImGuiCol_Header, header);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, header);
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, header);
+}
+
+void ImGuiWrapper::push_preview_toolbar_style(const float scale)
+{
+    push_toolbar_style(scale);
+    const ImVec4 primary = md3_imgui_color(MD3::Role::Primary, MD3::ColorScheme::Preview);
+    const ImVec4 container = md3_imgui_color(MD3::Role::PrimaryContainer, MD3::ColorScheme::Preview);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, container);       // 1
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, container);      // 2
+    ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, container);     // 3
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, primary);            // 4
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, primary); // 5
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, primary);  // 6
+    ImGui::PushStyleColor(ImGuiCol_SliderGrab, primary);           // 7
+    ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, primary);     // 8
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, container);      // 9
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, container);       // 10
+}
+
+void ImGuiWrapper::pop_preview_toolbar_style()
+{
+    ImGui::PopStyleColor(10);
+    pop_toolbar_style();
 }
 void ImGuiWrapper::pop_menu_style()
 {
@@ -2526,71 +2897,92 @@ void ImGuiWrapper::pop_menu_style()
 }
 
 void ImGuiWrapper::push_common_window_style(const float scale) {
-    if (m_is_dark_mode) {
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 10.0f) * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, ImVec2(0.05f, 0.50f) * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 3.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 0.88f));                                   // 1
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGuiWrapper::COL_WINDOW_BG_DARK);                              // 2
-        ImGui::PushStyleColor(ImGuiCol_TitleBg, ImVec4(54 / 255.0f, 54 / 255.0f, 60 / 255.0f, 1.00f));           // 3
-        ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImVec4(54 / 255.0f, 54 / 255.0f, 60 / 255.0f, 1.00f));     // 4
-        ImGui::PushStyleColor(ImGuiCol_Separator, ImGuiWrapper::COL_SEPARATOR_DARK);                             // 5
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));                              // 6
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));                       // 7
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));                        // 8
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(84 / 255.0f, 84 / 255.0f, 90 / 255.0f, 1.00f));    // 9
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(62 / 255.0f, 62 / 255.0f, 69 / 255.0f, 1.00f));     // 10
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));        // 11
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));                           // 12
-        ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, ImVec4(43 / 255.0f, 64 / 255.0f, 54 / 255.0f, 1.00f));    // 13
-        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));                       // 14
-    }
-    else {
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 10.0f) * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, ImVec2(0.05f, 0.50f) * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 3.0f * scale);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(38 / 255.0f, 46 / 255.0f, 48 / 255.0f, 1.00f));              // 1
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));                            // 2
-        ImGui::PushStyleColor(ImGuiCol_TitleBg, ImVec4(245 / 255.0f, 245 / 255.0f, 245 / 255.0f, 1.00f));        // 3
-        ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImVec4(245 / 255.0f, 245 / 255.0f, 245 / 255.0f, 1.00f));  // 4
-        ImGui::PushStyleColor(ImGuiCol_Separator, ImGuiWrapper::COL_SEPARATOR);                                  // 5
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));                              // 6
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));                       // 7
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));                        // 8
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 1.00f)); // 9
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 1.00f));  // 10
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(238 / 255.0f, 238 / 255.0f, 238 / 255.0f, 0.00f));        // 11
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));                           // 12
-        ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, ImGuiWrapper::COL_GREEN_LIGHT);                           // 13
-        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));                       // 14
-    }
+    // Neutrals/accents resolved from the shared MD3 tokens (Brand scheme). Roles
+    // are chosen so the resulting colours match the previous hand-copied values.
+    const ImVec4 text     = md3_imgui_color(MD3::Role::OnSurface);
+    const ImVec4 window   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainer)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLowest);
+    const ImVec4 title    = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHigh)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 outline  = md3_imgui_color(MD3::Role::OutlineVariant);
+    const ImVec4 button   = m_is_dark_mode ? md3_imgui_color(MD3::Role::SurfaceContainerHighest)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerLow);
+    const ImVec4 hover    = m_is_dark_mode ? md3_imgui_color(MD3::Role::OutlineVariant)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerHigh);
+    const ImVec4 active   = m_is_dark_mode ? md3_imgui_color(MD3::Role::PrimaryContainer)
+                                           : md3_imgui_color(MD3::Role::SurfaceContainerHighest);
+    const ImVec4 primary  = md3_imgui_color(MD3::Role::Primary);
+    const ImVec4 selected = md3_imgui_color(MD3::Role::PrimaryContainer);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.0f, 12.0f) * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, ImVec2(0.05f, 0.50f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 16.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f * scale);
+    ImGui::PushStyleColor(ImGuiCol_Text, text);               // 1
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, window);         // 2
+    ImGui::PushStyleColor(ImGuiCol_TitleBg, title);           // 3
+    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, title);     // 4
+    ImGui::PushStyleColor(ImGuiCol_Separator, outline);       // 5
+    ImGui::PushStyleColor(ImGuiCol_Border, outline);          // 6
+    ImGui::PushStyleColor(ImGuiCol_Button, button);           // 7
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);     // 8
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);     // 9
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, hover);    // 10
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, active);    // 11
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, button);          // 12
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, primary);       // 13
+    ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, selected); // 14
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, primary);   // 15
+}
+
+void ImGuiWrapper::push_preview_menu_style(const float scale)
+{
+    const ImVec4 popup = md3_imgui_color(MD3::Role::SurfaceContainerLow, MD3::ColorScheme::Preview);
+    const ImVec4 header = md3_imgui_color(MD3::Role::PrimaryContainer, MD3::ColorScheme::Preview);
+    push_preview_toolbar_style(scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f) * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f * scale);
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, popup);
+    ImGui::PushStyleColor(ImGuiCol_Header, header);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, header);
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, header);
+}
+
+void ImGuiWrapper::pop_preview_menu_style()
+{
+    ImGui::PopStyleColor(4);
+    ImGui::PopStyleVar(3);
+    pop_preview_toolbar_style();
 }
 
 void ImGuiWrapper::pop_common_window_style() {
-    ImGui::PopStyleColor(14);
+    ImGui::PopStyleColor(15);
     ImGui::PopStyleVar(5);
 }
 
 void ImGuiWrapper::push_confirm_button_style() {
+    // Filled Primary CTA (legacy Bambu green retired).
+    const ImVec4 primary   = md3_imgui_color(MD3::Role::Primary);
+    const ImVec4 on_primary = md3_imgui_color(MD3::Role::OnPrimary);
+    const ImVec4 hover     = md3_state_layer(primary, on_primary, 0.08f);
+    const ImVec4 active    = md3_state_layer(primary, on_primary, 0.12f);
     if (m_is_dark_mode) {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f / 255.f, 174.f / 255.f, 66.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f / 255.f, 174.f / 255.f, 66.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(61.f / 255.f, 203.f / 255.f, 115.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(27.f / 255.f, 136.f / 255.f, 68.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.f, 1.f, 1.f, 0.88f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.88f));
+        ImGui::PushStyleColor(ImGuiCol_Button, primary);
+        ImGui::PushStyleColor(ImGuiCol_Border, primary);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);
+        ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imgui_color(MD3::Role::OnPrimary, 0.88f));
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnPrimary, 0.88f));
     }
     else {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f / 255.f, 174.f / 255.f, 66.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f / 255.f, 174.f / 255.f, 66.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(61.f / 255.f, 203.f / 255.f, 115.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(27.f / 255.f, 136.f / 255.f, 68.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.f, 1.f, 1.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f));
+        ImGui::PushStyleColor(ImGuiCol_Button, primary);
+        ImGui::PushStyleColor(ImGuiCol_Border, primary);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, active);
+        ImGui::PushStyleColor(ImGuiCol_CheckMark, on_primary);
+        ImGui::PushStyleColor(ImGuiCol_Text, on_primary);
     }
 }
 
@@ -2599,22 +2991,15 @@ void ImGuiWrapper::pop_confirm_button_style() {
 }
 
 void ImGuiWrapper::push_cancel_button_style() {
-    if (m_is_dark_mode) {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.f, 1.f, 1.f, 0.64f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(73 / 255.f, 73 / 255.f, 78 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(129 / 255.f, 129 / 255.f, 131 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(1.f, 1.f, 1.f, 0.64f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.64f));
-    }
-    else {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.f, 1.f, 1.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(38 / 255.f, 46 / 255.f, 48 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(238.f / 255.f, 238.f / 255.f, 238.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(206.f / 255.f, 206.f / 255.f, 206.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.f, 0.f, 0.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(38.f / 255.0f, 46.f / 255.0f, 48.f / 255.0f, 1.00f));
-    }
+    // Outlined / neutral cancel button. Dark keeps a transparent fill; light
+    // seats it on the lowest surface. Border/label follow Outline / OnSurface.
+    ImGui::PushStyleColor(ImGuiCol_Button, m_is_dark_mode ? ImVec4(0.f, 0.f, 0.f, 0.f)
+                                                          : md3_imgui_color(MD3::Role::SurfaceContainerLowest));
+    ImGui::PushStyleColor(ImGuiCol_Border, md3_imgui_color(MD3::Role::Outline));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imgui_color(MD3::Role::SurfaceContainerHigh));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imgui_color(MD3::Role::SurfaceContainerHighest));
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imgui_color(MD3::Role::OnSurface));
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface));
 }
 
 void ImGuiWrapper::pop_cancel_button_style() {
@@ -2622,16 +3007,11 @@ void ImGuiWrapper::pop_cancel_button_style() {
 }
 
 void ImGuiWrapper::push_button_disable_style() {
-    if (m_is_dark_mode) {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(54 / 255.f, 54 / 255.f, 60 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(54 / 255.f, 54 / 255.f, 60 / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.4f));
-    }
-    else {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(206.f / 255.f, 206.f / 255.f, 206.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(206.f / 255.f, 206.f / 255.f, 206.f / 255.f, 1.f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f));
-    }
+    // MD3 disabled surface + muted OnSurface label (38% opacity).
+    const ImVec4 disabled_bg = md3_imgui_color(MD3::Role::SurfaceContainerHighest);
+    ImGui::PushStyleColor(ImGuiCol_Button, disabled_bg);
+    ImGui::PushStyleColor(ImGuiCol_Border, disabled_bg);
+    ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface, 0.38f));
 }
 
 void ImGuiWrapper::pop_button_disable_style() {
@@ -2644,20 +3024,20 @@ void ImGuiWrapper::push_combo_style(const float scale)
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0f * scale);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
         ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BG_DARK);
-        ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_imgui_color(MD3::Role::Primary, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_Header, md3_imgui_color(MD3::Role::Primary));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImGuiWrapper::COL_WINDOW_BG_DARK);
         ImGui::PushStyleColor(ImGuiCol_Button, {1.00f, 1.00f, 1.00f, 0.0f});
     } else {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 1.0f * scale);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f * scale);
         ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGuiWrapper::COL_WINDOW_BG);
-        ImGui::PushStyleColor(ImGuiCol_BorderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.68f, 0.26f, 0.5f));
-        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.00f, 0.68f, 0.26f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_BorderActive, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, md3_imgui_color(MD3::Role::Primary, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, md3_imgui_color(MD3::Role::Primary));
+        ImGui::PushStyleColor(ImGuiCol_Header, md3_imgui_color(MD3::Role::Primary));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImGuiWrapper::COL_WINDOW_BG);
         ImGui::PushStyleColor(ImGuiCol_Button, {1.00f, 1.00f, 1.00f, 0.0f});
     }
@@ -2672,9 +3052,9 @@ void ImGuiWrapper::pop_combo_style()
 void ImGuiWrapper::push_radio_style()
 {
     if (m_is_dark_mode) {
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, to_ImVec4(decode_color_to_float_array("#00675b"))); // ORCA use orca color for radio buttons
+        ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imgui_color(MD3::Role::Primary)); // legacy Orca teal -> MD3 Primary
     } else {
-        ImGui::PushStyleColor(ImGuiCol_CheckMark, to_ImVec4(decode_color_to_float_array("#009688"))); // ORCA use orca color for radio buttons
+        ImGui::PushStyleColor(ImGuiCol_CheckMark, md3_imgui_color(MD3::Role::Primary)); // legacy Orca teal -> MD3 Primary
     }
 }
 
@@ -2727,44 +3107,110 @@ void ImGuiWrapper::init_font(bool compress)
 
     //FIXME replace with io.Fonts->AddFontFromMemoryTTF(buf_decompressed_data, (int)buf_decompressed_size, m_font_size, nullptr, ranges.Data);
     //https://github.com/ocornut/imgui/issues/220
-    if (m_is_korean)
-        default_font = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/" + "NanumGothic-Regular.ttf").c_str(), m_font_size, &cfg, ranges.Data);
-    else
-        default_font = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/" + "HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &cfg, ranges.Data);
+    const std::string fdir = Slic3r::resources_dir() + "/fonts/";
+
+    // Build the curated Material Symbols coverage range once (shared source of
+    // truth = s_overlay_glyphs[]; each entry is a MaterialIcon::Glyph value).
+    ImVector<ImWchar> icon_ranges;
+    {
+        ImFontGlyphRangesBuilder gb;
+        for (unsigned int cp : s_overlay_glyphs)
+            gb.AddChar((ImWchar)cp);
+        gb.BuildRanges(&icon_ranges);
+    }
+
+    // CJK fallback merge config: MergeMode skips codepoints the base face already
+    // claimed (imgui_draw.cpp "Don't overwrite existing glyphs"), so Latin stays
+    // Roboto and only CJK glyphs are filled from Harmony/Nanum.
+    ImFontConfig cfg_cjk = ImFontConfig();
+    cfg_cjk.OversampleH = cfg_cjk.OversampleV = 1;
+    cfg_cjk.MergeMode   = true;
+    // Material Symbols inline merge config: baseline-align the 24px-em wide-advance
+    // glyphs with Roboto (GlyphOffset.y / GlyphMinAdvanceX are heuristics).
+    ImFontConfig cfg_icon = ImFontConfig();
+    cfg_icon.OversampleH = cfg_icon.OversampleV = 1;
+    cfg_icon.MergeMode        = true;
+    cfg_icon.PixelSnapH       = true;
+    cfg_icon.GlyphMinAdvanceX = m_font_size;
+    cfg_icon.GlyphOffset      = ImVec2(0.0f, IM_ROUND(0.10f * m_font_size));
+
+    // CRITICAL ORDERING: ImGui MergeMode merges into the LAST-added base font
+    // (io.Fonts->Fonts.back()). Every merge below is therefore emitted IMMEDIATELY
+    // after the base face it must extend. Do NOT reorder into "all bases first,
+    // then merges" - the CJK/Material-Symbols glyphs would land on mono/icon faces
+    // and inline icons + CJK fallback would silently break.
+
+    // (A) Prose default face = Roboto-Regular (MD3 body), legacy default fallback.
+    default_font = io.Fonts->AddFontFromFileTTF((fdir + "Roboto-Regular.ttf").c_str(), m_font_size, &cfg, ranges.Data);
     if (default_font == nullptr) {
         default_font = io.Fonts->AddFontDefault();
         if (default_font == nullptr) {
             throw Slic3r::RuntimeError("ImGui: Could not load deafult font");
         }
     }
+    // (B) Thai and CJK fallbacks merged into default_font.
     merge_thai_font("NotoSansThai-Regular.ttf");
 
     if (m_is_korean)
-        bold_font = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/" + "NanumGothic-Bold.ttf").c_str(), m_font_size, &cfg, ranges.Data);
-    else
-        bold_font = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/" + "HarmonyOS_Sans_SC_Bold.ttf").c_str(), m_font_size, &cfg, ranges.Data);
+        io.Fonts->AddFontFromFileTTF((fdir + "NanumGothic-Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+    else if (m_font_cjk)
+        io.Fonts->AddFontFromFileTTF((fdir + "HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+    // (C) Material Symbols merged inline into default_font (imgui.text glyph flow).
+    io.Fonts->AddFontFromFileTTF((fdir + "MaterialSymbolsOutlined.ttf").c_str(), m_font_size, &cfg_icon, icon_ranges.Data);
+    // (D) Apple keyboard-shortcut glyphs: also merged into default_font. MUST run
+    //     here (before bold_font is added) so it targets default_font.
+#ifdef __APPLE__
+    if (! m_font_cjk) {
+        // Apple keyboard shortcuts are only contained in the CJK fonts.
+        [[maybe_unused]] ImFont *font_cjk = io.Fonts->AddFontFromFileTTF((fdir + "HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &cfg_cjk, ranges_keyboard_shortcuts);
+        assert(font_cjk != nullptr);
+    }
+#endif
+
+    // (E) Bold face = Roboto-Medium (MD3 emphasis 500; Roboto-Bold.ttf is the
+    //     documented heavier fallback), legacy default fallback.
+    bold_font = io.Fonts->AddFontFromFileTTF((fdir + "Roboto-Medium.ttf").c_str(), m_font_size, &cfg, ranges.Data);
     if (bold_font == nullptr) {
         bold_font = io.Fonts->AddFontDefault();
         if (bold_font == nullptr) { throw Slic3r::RuntimeError("ImGui: Could not load deafult font"); }
     }
     merge_thai_font("NotoSansThai-Bold.ttf");
+    // (F) CJK fallback merged into bold_font (bold CJK faces).
+    if (m_is_korean)
+        io.Fonts->AddFontFromFileTTF((fdir + "NanumGothic-Bold.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+    else if (m_font_cjk)
+        io.Fonts->AddFontFromFileTTF((fdir + "HarmonyOS_Sans_SC_Bold.ttf").c_str(), m_font_size, &cfg_cjk, ranges.Data);
+    // (G) Material Symbols merged inline into bold_font.
+    io.Fonts->AddFontFromFileTTF((fdir + "MaterialSymbolsOutlined.ttf").c_str(), m_font_size, &cfg_icon, icon_ranges.Data);
+
+    // (H) Standalone monospace faces (RobotoMono) for numeric/technical text.
+    //     Ranges restricted to ASCII+Latin-1 for atlas realism; null on failure
+    //     (push_mono_font/get_mono_font degrade gracefully).
+    mono_font      = io.Fonts->AddFontFromFileTTF((fdir + "RobotoMono-Medium.ttf").c_str(), m_font_size, &cfg, io.Fonts->GetGlyphRangesDefault());
+    mono_bold_font = io.Fonts->AddFontFromFileTTF((fdir + "RobotoMono-Bold.ttf").c_str(),   m_font_size, &cfg, io.Fonts->GetGlyphRangesDefault());
+
+    // (I) Standalone large Material Symbols face for independently-sized glyphs
+    //     (timeline transport, one-layer button). Fetched fresh each frame via
+    //     get_icon_font()/push_icon_font(); null on failure (material_icons_available()).
+    {
+        ImFontConfig cfg_icon_large = ImFontConfig();
+        cfg_icon_large.OversampleH = cfg_icon_large.OversampleV = 1;
+        const float icon_native = std::max(32.0f, IM_ROUND(2.5f * m_font_size));
+        m_icon_font = io.Fonts->AddFontFromFileTTF((fdir + "MaterialSymbolsOutlined.ttf").c_str(), icon_native, &cfg_icon_large, icon_ranges.Data);
+    }
 
 #ifdef _WIN32
     // Render the text a bit larger (see GLCanvas3D::_resize() and issue #3401), but only if the scale factor
-    // for the Display is greater than 300%.
+    // for the Display is greater than 300%. Runs once all faces exist so the new
+    // mono/icon faces stay proportional to prose at high DPI. (get_icon_font()
+    // consumers that AddText with an explicit px pass their own DPI-aware size;
+    // ->Scale is not applied on that path.)
     if (wxGetApp().em_unit() > 30) {
         default_font->Scale = 1.5f;
         bold_font->Scale    = 1.5f;
-    }
-#endif
-
-#ifdef __APPLE__
-    ImFontConfig config;
-    config.MergeMode = true;
-    if (! m_font_cjk) {
-        // Apple keyboard shortcuts are only contained in the CJK fonts.
-        [[maybe_unused]]ImFont *font_cjk = io.Fonts->AddFontFromFileTTF((Slic3r::resources_dir() + "/fonts/HarmonyOS_Sans_SC_Regular.ttf").c_str(), m_font_size, &config, ranges_keyboard_shortcuts);
-        assert(font_cjk != nullptr);
+        if (mono_font)      mono_font->Scale      = 1.5f;
+        if (mono_bold_font) mono_bold_font->Scale = 1.5f;
+        if (m_icon_font)    m_icon_font->Scale    = 1.5f;
     }
 #endif
 
@@ -3279,11 +3725,11 @@ void ImGuiWrapper::filament_group(const std::string& filament_type, const char* 
 void ImGuiWrapper::sub_title(const std::string &label)
 {
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
-    text_colored(ImVec4(1.0f, 1.0f, 1.0f, 0.5f), label);
+    text_colored(md3_imgui_color(MD3::Role::OnSurfaceVariant), label);
     ImGui::SameLine();
     ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
     float available_width = ImGui::GetContentRegionAvail().x;
-    draw_list->AddLine(ImVec2(cursor_pos.x, cursor_pos.y + 8.0f), ImVec2(cursor_pos.x + available_width, cursor_pos.y + 8.0f), IM_COL32(255, 255, 255, 100));
+    draw_list->AddLine(ImVec2(cursor_pos.x, cursor_pos.y + 8.0f), ImVec2(cursor_pos.x + available_width, cursor_pos.y + 8.0f), ImGui::GetColorU32(md3_imgui_color(MD3::Role::OutlineVariant)));
     ImGui::NewLine();
 }
 

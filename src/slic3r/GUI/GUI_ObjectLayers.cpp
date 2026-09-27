@@ -11,6 +11,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "I18N.hpp"
+#include "Widgets/Label.hpp"
 
 #include <wx/wupdlock.h>
 
@@ -72,7 +73,7 @@ wxSizer* ObjectLayers::create_layer(const t_layer_height_range& range, PlusMinus
     };
 
     // Add text
-    auto head_text = new wxStaticText(m_parent, wxID_ANY, _L("Height Range"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto head_text = new Label(m_parent, _L("Height Range"), wxST_ELLIPSIZE_END);
     head_text->SetMaxSize({ 12 * wxGetApp().em_unit(), -1 });
     head_text->SetBackgroundStyle(wxBG_STYLE_PAINT);
     head_text->SetFont(wxGetApp().normal_font());
@@ -104,7 +105,7 @@ wxSizer* ObjectLayers::create_layer(const t_layer_height_range& range, PlusMinus
 
     auto sizer1 = new wxBoxSizer(wxHORIZONTAL);
     sizer1->Add(editor, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 0.5 * wxGetApp().em_unit());
-    auto middle_text = new wxStaticText(m_parent, wxID_ANY, _L("to"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto middle_text = new Label(m_parent, _L("to"), wxST_ELLIPSIZE_END);
     middle_text->SetMaxSize({ 4 * wxGetApp().em_unit(), -1 });
     middle_text->SetBackgroundStyle(wxBG_STYLE_PAINT);
     middle_text->SetFont(wxGetApp().normal_font());
@@ -137,7 +138,7 @@ wxSizer* ObjectLayers::create_layer(const t_layer_height_range& range, PlusMinus
 
     auto sizer2 = new wxBoxSizer(wxHORIZONTAL);
     sizer2->Add(editor);
-    auto unit_text = new wxStaticText(m_parent, wxID_ANY, _L("mm"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto unit_text = new Label(m_parent, _L("mm"), wxST_ELLIPSIZE_END);
     unit_text->SetBackgroundStyle(wxBG_STYLE_PAINT);
     unit_text->SetFont(wxGetApp().normal_font());
     sizer2->Add(unit_text, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 0.5 * wxGetApp().em_unit());
