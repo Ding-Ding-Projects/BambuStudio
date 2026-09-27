@@ -25,6 +25,16 @@ holder_spec.loader.exec_module(holder)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_holder_uses_existing_base_python_not_venv_redirector(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp) / "python.exe"
+            base.write_bytes(b"base interpreter fixture")
+            with patch.object(drive.sys, "_base_executable", str(base), create=True):
+                self.assertEqual(drive.helper_python_executable(), base)
+            with patch.object(drive.sys, "_base_executable", str(Path(temp) / "missing.exe"), create=True):
+                with self.assertRaisesRegex(RuntimeError, "base python.exe"):
+                    drive.helper_python_executable()
+
     def test_holder_refuses_non_hosted_execution_before_launch(self):
         argv = ["holder", "--exe", "unused.exe", "--datadir", "unused-profile",
                 "--desktop", "hidden", "--receipt", "receipt.json", "--stop", "stop.file"]
@@ -38,18 +48,21 @@ class BehaviorDriveChecks(unittest.TestCase):
             profile = str(Path(temp) / "isolated profile")
             started = datetime.now(timezone.utc).isoformat()
             receipt = {"helper_pid": 10, "app_pid": 20, "exe_sha256": "a" * 64,
+                       "helper_executable_sha256": "c" * 64,
                        "profile": profile, "desktop": "owned-desktop",
                        "launch_started_at_utc": started, "status": "app_exited_holder_alive"}
             self.assertEqual(drive.validate_holder_receipt(
-                receipt, helper_pid=10, exe_hash="a" * 64,
+                receipt, helper_pid=10, exe_hash="a" * 64, helper_exe_hash="c" * 64,
                 datadir=profile, desktop="owned-desktop")[0], 20)
             for change in ({"helper_pid": 11}, {"app_pid": 10},
-                           {"exe_sha256": "b" * 64}, {"profile": profile + "-other"},
+                           {"exe_sha256": "b" * 64}, {"helper_executable_sha256": "d" * 64},
+                           {"profile": profile + "-other"},
                            {"desktop": "visible"}, {"status": "desktop_open_failed"},
                            {"launch_started_at_utc": "not a time"}):
                 with self.subTest(change=change), self.assertRaises(RuntimeError):
                     drive.validate_holder_receipt(
                         {**receipt, **change}, helper_pid=10, exe_hash="a" * 64,
+                        helper_exe_hash="c" * 64,
                         datadir=profile, desktop="owned-desktop")
 
     def test_missing_desktop_preserves_process_snapshot_and_rejects_stranger(self):

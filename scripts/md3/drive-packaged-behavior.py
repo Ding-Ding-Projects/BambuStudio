@@ -33,9 +33,21 @@ HEX256 = re.compile(r"^[0-9a-f]{64}$")
 MODES = ("en", "yue_HK", "bilingual_en_yue_HK")
 
 
+def helper_python_executable() -> Path:
+    base = getattr(sys, "_base_executable", None)
+    if not base:
+        raise RuntimeError("The base CPython executable is unavailable for the hosted holder")
+    path = Path(base)
+    if path.name.lower() != "python.exe" or not path.is_file():
+        raise RuntimeError("The hosted holder requires an existing base python.exe")
+    return path
+
+
 def validate_holder_receipt(receipt: dict, *, helper_pid: int, exe_hash: str,
+                            helper_exe_hash: str,
                             datadir: str, desktop: str) -> tuple[int, datetime]:
     if (receipt.get("helper_pid") != helper_pid or receipt.get("exe_sha256") != exe_hash
+            or receipt.get("helper_executable_sha256") != helper_exe_hash
             or receipt.get("desktop") != desktop
             or ntpath.normcase(ntpath.abspath(str(receipt.get("profile") or "")))
                != ntpath.normcase(ntpath.abspath(datadir))
@@ -68,6 +80,7 @@ class HostedApp(App):
         self.startup_state = "not_started"
         self.launch_exit_code = None
         self.helper_pid = None
+        self.helper_exe_hash = None
         self.holder_receipt_path = Path(probe_dir) / "hosted-launch.json"
         self.holder_stop_path = Path(probe_dir) / "hosted-launch.stop"
         self.holder_receipt = None
@@ -109,7 +122,9 @@ class HostedApp(App):
         os.environ["BAMBU_LAYOUT_PROBE"] = "1"
         os.environ["BAMBU_LAYOUT_PROBE_TAG"] = os.path.basename(self.datadir)
         holder = Path(__file__).with_name("hosted_launch_holder.py")
-        command = (f'"{sys.executable}" "{holder}" --exe "{self.exe}" '
+        helper_python = helper_python_executable()
+        self.helper_exe_hash = sha256(helper_python)
+        command = (f'"{helper_python}" "{holder}" --exe "{self.exe}" '
                    f'--datadir "{self.datadir}" --desktop "{self.desktop}" '
                    f'--receipt "{self.holder_receipt_path}" --stop "{self.holder_stop_path}" '
                    f'--timeout {int(self.holder_lifetime)}')
@@ -125,7 +140,8 @@ class HostedApp(App):
                     continue
                 self.launch_pid, self.launch_started = validate_holder_receipt(
                     self.holder_receipt, helper_pid=self.helper_pid,
-                    exe_hash=sha256(Path(self.exe)), datadir=self.datadir,
+                    exe_hash=sha256(Path(self.exe)), helper_exe_hash=self.helper_exe_hash,
+                    datadir=self.datadir,
                     desktop=self.desktop)
                 self.startup_state = "launch_pid_reported"
                 break
@@ -916,6 +932,7 @@ def main() -> int:
             cleanup_error = f"{type(exc).__name__}: {exc}"
     drive.identity["process"] = {
         "helper_pid": app.helper_pid,
+        "helper_executable_sha256": app.helper_exe_hash,
         "initial_pid": app.launch_pid,
         "selected_pid": app.pid,
         "relaunched": bool(app.launch_pid and app.pid and app.pid != app.launch_pid),

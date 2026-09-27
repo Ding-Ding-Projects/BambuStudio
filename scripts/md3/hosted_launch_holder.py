@@ -7,6 +7,7 @@ import ctypes
 import hashlib
 import json
 import os
+import sys
 import time
 from ctypes import wintypes
 from datetime import datetime, timezone
@@ -78,6 +79,7 @@ def hold(exe: Path, datadir: Path, desktop: str, receipt_path: Path,
     kernel32.CloseHandle.restype = wintypes.BOOL
 
     data = {"schema": 1, "helper_pid": os.getpid(), "desktop": desktop,
+            "helper_executable_sha256": file_sha256(Path(sys.executable)),
             "exe_sha256": file_sha256(exe), "profile": str(datadir),
             "app_pid": None, "launch_started_at_utc": None,
             "app_exit_code": None, "app_exited_at_utc": None,
