@@ -7,6 +7,7 @@ import os
 import tempfile
 import unittest
 import zipfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -18,6 +19,36 @@ spec.loader.exec_module(drive)
 
 
 class BehaviorDriveChecks(unittest.TestCase):
+    def test_relaunch_requires_profile_lineage_desktop_and_creation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            exe = str(Path(temp) / "bambu-studio.exe")
+            profile = str(Path(temp) / "profile")
+            started = datetime.now(timezone.utc)
+            def record(pid, parent, *, command=None, created=None, image=None):
+                return {"ProcessId": pid, "ParentProcessId": parent,
+                        "ExecutablePath": image or exe,
+                        "CommandLine": command or f'"{exe}" --datadir "{profile}"',
+                        "CreationDate": (created or started).isoformat()}
+            processes = [record(10, 1), record(20, 10), record(21, 11),
+                         record(22, 10, command=f'"{exe}" --datadir "{profile}-other"'),
+                         record(23, 10, created=started - timedelta(minutes=1)),
+                         record(24, 10, image=str(Path(temp) / "other.exe"))]
+            self.assertEqual(drive.owned_processes(
+                processes, exe=exe, datadir=profile, launched_at=started,
+                launch_pid=10, desktop_pids={20, 21, 22, 23, 24}), [10, 20])
+
+    def test_exited_launch_pid_does_not_mask_teardown(self):
+        app = drive.HostedApp("exe", "profile", "desktop", "probe")
+        app.pid = 6968
+        app.launch_pid = 6968
+        app.adopted_pids = []
+        calls = []
+        with patch.object(app, "windows", return_value=[]), patch.object(
+            drive, "cheap", side_effect=lambda tool, **kwargs: calls.append(tool) or {"ok": True}
+        ):
+            app.stop()
+        self.assertEqual(calls, ["close_headless_desktop"])
+
     def test_installation_must_match_host_source_package_and_executable(self):
         source = "a" * 40
         with tempfile.TemporaryDirectory() as temp:

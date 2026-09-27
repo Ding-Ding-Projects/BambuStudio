@@ -14,16 +14,83 @@ import json
 import os
 import re
 import sys
+import tempfile
 import time
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
+from PIL import Image
 
 from recapture import App, Runner, cheap, find_control
+from hosted_process import owned_processes, process_snapshot
 
 SHA = re.compile(r"^[0-9a-f]{40}$")
 HEX256 = re.compile(r"^[0-9a-f]{64}$")
 MODES = ("en", "yue_HK", "bilingual_en_yue_HK")
+
+
+class HostedApp(App):
+    """Bind a window only to this launch, installation, profile and desktop."""
+
+    def __init__(self, exe, datadir, desktop, probe_dir):
+        super().__init__(exe, datadir, desktop, probe_dir)
+        self.launch_started = None
+        self.launch_pid = None
+        self.adopted_pids = []
+
+    def _desktop_windows(self):
+        return cheap("list_headless_windows", name=self.desktop)["windows"]
+
+    def windows(self):
+        windows = self._desktop_windows()
+        candidates = owned_processes(
+            process_snapshot(), exe=self.exe, datadir=self.datadir,
+            launched_at=self.launch_started, launch_pid=self.launch_pid,
+            desktop_pids={int(w["process_id"]) for w in windows},
+        )
+        self.adopted_pids = candidates
+        if self.pid not in candidates:
+            self.pid = candidates[0] if candidates else None
+        return [w for w in windows if int(w["process_id"]) in candidates]
+
+    def start(self, timeout=240):
+        os.environ["BAMBU_LAYOUT_PROBE"] = "1"
+        os.environ["BAMBU_LAYOUT_PROBE_TAG"] = os.path.basename(self.datadir)
+        cheap("create_headless_desktop", name=self.desktop)
+        self.launch_started = datetime.now(timezone.utc)
+        self.launch_pid = cheap("launch_on_headless_desktop", name=self.desktop,
+                                command=f'"{self.exe}" --datadir "{self.datadir}"')["pid"]
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            frame = self.find(lambda w: w["class"] == "wxWindowNR"
+                              and w["width"] >= 1000 and w["height"] >= 600)
+            if frame:
+                self.main = frame["handle"]
+                self.pid = int(frame["process_id"])
+                time.sleep(8)
+                return
+            time.sleep(1)
+        raise RuntimeError("No owned main frame appeared on the named hidden desktop")
+
+    def stop(self):
+        # Re-check live identity before terminating anything. An exited launch PID
+        # is normal in a relaunch and must never obscure the drive's first error.
+        errors = []
+        try:
+            self.windows()
+            for pid in self.adopted_pids:
+                try:
+                    cheap("kill_process", pid=pid, force=True)
+                except Exception as exc:
+                    errors.append(f"owned PID {pid}: {type(exc).__name__}: {exc}")
+        except Exception as exc:
+            errors.append(f"ownership recheck: {type(exc).__name__}: {exc}")
+        try:
+            cheap("close_headless_desktop", name=self.desktop)
+        except Exception as exc:
+            errors.append(f"desktop closure: {type(exc).__name__}: {exc}")
+        if errors:
+            raise RuntimeError("; ".join(errors))
 MODE_LABELS = {
     "en": {"prepare": "Prepare", "ink": "Ink", "process": "Process", "objects": "Objects",
            "ink_search": "Search filaments", "settings": "Search settings", "preview": "Preview", "project": "Project"},
@@ -71,37 +138,54 @@ def visible(records: list[dict], label: str, owner: int | None = None) -> dict |
     return find_control(records, label, owner)
 
 
-def seed_profile(datadir: Path, mode: str) -> None:
+def seed_profile(datadir: Path, mode: str, theme: str = "light") -> None:
     """Create only a disposable config, using AppConfig's JSON and checksum format."""
-    if mode not in MODES or any(datadir.iterdir()):
+    if mode not in MODES or theme not in ("light", "dark") or any(datadir.iterdir()):
         raise ValueError("Language profile is not new or the mode is unsupported")
-    body = json.dumps({"app": {"language": mode}}, ensure_ascii=False, indent=4)
+    body = json.dumps({"app": {"language": mode, "dark_color_mode": "1" if theme == "dark" else "0"}},
+                      ensure_ascii=False, indent=4)
     digest = hashlib.md5(body.encode("utf-8")).hexdigest().upper()
     (datadir / "BambuStudio.conf").write_bytes(
         (body + "\n# MD5 checksum " + digest + "\n").encode("utf-8"))
 
 
-def probe_header(records: list[dict], mode: str) -> dict:
+def probe_header(records: list[dict], mode: str, theme: str | None = None,
+                 scale: float | None = None) -> dict:
     header = next((r for r in records if r.get("kind") == "header"), None)
     if header is None or header.get("language") != mode:
         raise RuntimeError(f"Layout probe did not confirm requested language {mode}")
     if not isinstance(header.get("dpi_scale"), (int, float)) or header["dpi_scale"] <= 0:
         raise RuntimeError("Layout probe did not report a valid display scale")
+    if theme is not None and (not isinstance(header.get("dark"), bool)
+                              or header["dark"] != (theme == "dark")):
+        raise RuntimeError("Layout probe theme differs from requested theme")
+    if scale is not None and abs(float(header["dpi_scale"]) - scale) > 0.02:
+        raise RuntimeError("Measured native display scale differs from requested scale")
     return {key: header.get(key) for key in ("language", "dpi_scale", "dark", "density")}
 
 
 class Drive:
     def __init__(self, app: App, output: Path, source: str, tag: str, exe_hash: str, run_id: str,
-                 mode: str):
+                 mode: str, verification_commit: str = "", theme: str = "light",
+                 scale: float = 1.0, viewport: tuple[int, int] = (1200, 800)):
         self.app = app
         self.runner = Runner(app, "en")
         self.output = output
         self.rows: list[dict] = []
         self.images: list[dict] = []
         self.mode = mode
+        self.theme = theme
+        self.scale = scale
+        self.viewport = viewport
         self.labels = MODE_LABELS[mode]
         self.identity = {"source_commit": source, "release_tag": tag, "hosted_run_id": run_id,
-                         "installed_exe_sha256": exe_hash, "requested_language": mode}
+                         "verification_commit": verification_commit,
+                         "installed_exe_sha256": exe_hash,
+                         "requested_tuple": {"language": mode, "theme": theme,
+                                             "scale": scale, "viewport": list(viewport)}}
+
+    def checked_header(self, records: list[dict]) -> dict:
+        return probe_header(records, self.mode, self.theme, self.scale)
 
     def capture(self, label: str, hwnd: int) -> dict:
         name = f"{len(self.images):03d}-{re.sub('[^a-z0-9-]+', '-', label.lower()).strip('-')}.png"
@@ -111,6 +195,15 @@ class Drive:
             raise RuntimeError(f"PrintWindow did not confirm a rendered image for {label}")
         if not path.is_file() or path.stat().st_size < 2000:
             raise RuntimeError(f"No substantial screenshot file was written for {label}")
+        with Image.open(path) as captured:
+            captured.verify()
+        with Image.open(path) as captured:
+            rgb = captured.convert("RGB")
+            if rgb.width < 200 or rgb.height < 150:
+                raise RuntimeError(f"Captured frame dimensions are too small for {label}")
+            extrema = rgb.getextrema()
+            if all(low == high for low, high in extrema):
+                raise RuntimeError(f"Captured frame is uniform for {label}")
         record = {"file": name, "sha256": sha256(path), "bytes": path.stat().st_size,
                   "captured_at_utc": datetime.now(timezone.utc).isoformat(),
                   "privacy": "restricted; visual review required before publication"}
@@ -125,7 +218,7 @@ class Drive:
         self.rows.append(row)
         try:
             before = self.app.probe()
-            row["before_header"] = probe_header(before, self.mode)
+            row["before_header"] = self.checked_header(before)
             row["before_visible"] = visible_labels(before)
             marker_was_visible = any(visible(before, name, owner) for name in expected)
             row["before_image"] = self.capture(label + "-before", owner or self.app.main)
@@ -138,7 +231,7 @@ class Drive:
             after = []
             while time.monotonic() < deadline:
                 after = self.app.probe()
-                probe_header(after, self.mode)
+                self.checked_header(after)
                 if all(visible(after, name, owner) for name in expected) and (
                     not require_enabled or all(visible(after, name, owner).get("enabled") for name in expected)
                 ):
@@ -231,7 +324,7 @@ class Drive:
         self.rows.append(row)
         try:
             before = self.app.probe()
-            probe_header(before, self.mode)
+            self.checked_header(before)
             row["before_visible"] = visible_labels(before)
             row["before_image"] = self.capture(name + "-before", self.app.main)
             target = visible(before, button, self.app.main)
@@ -345,7 +438,7 @@ class Drive:
             self.app.command(f"resize {self.app.main} 1000 600")
             time.sleep(1)
             records = self.app.probe()
-            row["header"] = probe_header(records, self.mode)
+            row["header"] = self.checked_header(records)
             frame = next((w for w in self.app.windows() if w["handle"] == self.app.main), None)
             if not frame or frame["width"] > 1020 or frame["height"] > 620:
                 raise RuntimeError("Main frame did not resize to the narrow client area")
@@ -440,13 +533,22 @@ def main() -> int:
     ap.add_argument("--exe", type=Path, required=True)
     ap.add_argument("--install-receipt", type=Path, required=True)
     ap.add_argument("--source-commit", required=True)
+    ap.add_argument("--verification-commit", required=True)
     ap.add_argument("--release-tag", required=True)
     ap.add_argument("--hosted-run-id", required=True)
     ap.add_argument("--output", type=Path, required=True)
+    ap.add_argument("--language", choices=MODES, default="en")
+    ap.add_argument("--theme", choices=("light", "dark"), default="light")
+    ap.add_argument("--scale", type=float, default=1.0)
+    ap.add_argument("--viewport", choices=("1200x800", "1000x600"), default="1200x800")
+    ap.add_argument("--scope", choices=("diagnostic", "behavior", "layout"), default="behavior")
     args = ap.parse_args()
     source = args.source_commit.lower()
-    if not SHA.fullmatch(source) or not re.fullmatch(r"md3-v\d+", args.release_tag):
-        ap.error("source commit or release tag is malformed")
+    verifier = args.verification_commit.lower()
+    if not SHA.fullmatch(source) or not SHA.fullmatch(verifier) or not re.fullmatch(r"md3-v\d+", args.release_tag):
+        ap.error("source commit, verification commit or release tag is malformed")
+    if args.scale not in (1.0, 1.25, 1.5, 2.0):
+        ap.error("scale must be one of 1.0, 1.25, 1.5, 2.0")
     if not re.fullmatch(r"[0-9]{1,20}", args.hosted_run_id) or args.hosted_run_id != os.environ.get("GITHUB_RUN_ID"):
         ap.error("hosted run ID must match the current runner")
     if args.output.exists():
@@ -457,55 +559,64 @@ def main() -> int:
     if not runner_temp or not args.output.resolve().is_relative_to(Path(runner_temp).resolve()):
         ap.error("output must be a new child of the disposable runner's temporary directory")
     args.output.mkdir(parents=True)
-    mode_reports = []
-    for mode in MODES:
-        mode_output = args.output / mode
-        mode_output.mkdir()
-        datadir = mode_output / "profile"
-        probe_dir = mode_output / "probe"
-        datadir.mkdir()
-        probe_dir.mkdir()
-        seed_profile(datadir, mode)
-        desktop = "bsbehavior-" + str(os.getpid()) + "-" + mode.replace("_", "-")
-        app = App(str(args.exe), str(datadir), desktop, str(probe_dir))
-        drive = Drive(app, mode_output, source, args.release_tag,
-                      receipt["installed_exe_sha256"], args.hosted_run_id, mode)
-        cleanup_error = None
+    scratch = Path(tempfile.mkdtemp(prefix="bsbehavior-private-", dir=runner_temp))
+    datadir = scratch / "profile"
+    probe_dir = scratch / "probe"
+    datadir.mkdir()
+    probe_dir.mkdir()
+    seed_profile(datadir, args.language, args.theme)
+    desktop = "bsbehavior-" + str(os.getpid())
+    app = HostedApp(str(args.exe), str(datadir), desktop, str(probe_dir))
+    requested_size = tuple(int(part) for part in args.viewport.split("x"))
+    drive = Drive(app, args.output, source, args.release_tag,
+                  receipt["installed_exe_sha256"], args.hosted_run_id, args.language,
+                  verifier, args.theme, args.scale, requested_size)
+    cleanup_error = None
+    try:
+        app.start()
+        frame = next((w for w in app.windows() if w["handle"] == app.main), {})
+        drive.identity["window"] = {key: frame.get(key) for key in ("title", "class", "width", "height")}
+        drive.identity["process"] = {"initial_pid": app.launch_pid,
+                                     "selected_pid": app.pid,
+                                     "relaunched": app.pid != app.launch_pid}
+        if requested_size != (1200, 800):
+            app.command(f"resize {app.main} {requested_size[0]} {requested_size[1]}")
+            time.sleep(1)
+        frame = next((w for w in app.windows() if w["handle"] == app.main), {})
+        if abs(frame.get("width", 0) - requested_size[0]) > 20 or abs(frame.get("height", 0) - requested_size[1]) > 20:
+            raise RuntimeError("Measured frame differs from requested viewport")
+        expected_dpi = round(96 * args.scale)
+        if frame.get("dpi") != expected_dpi:
+            raise RuntimeError("Native window DPI differs from requested scale")
+        drive.identity["measured_tuple"] = {**drive.checked_header(app.probe()),
+                                             "viewport": [frame["width"], frame["height"]],
+                                             "native_dpi": frame["dpi"]}
+        if args.scope == "diagnostic":
+            image = drive.capture("installed-shell-diagnostic", app.main)
+            drive.rows.append({"name": "installed-shell-diagnostic", "status": "capture_only",
+                               "image": image, "reason": "Launch and a rendered frame do not prove behavior"})
+        elif args.scope == "layout":
+            drive.run_localized()
+        else:
+            drive.run()
+    except Exception as exc:
+        drive.rows.append({"name": "launch-or-drive", "status": "blocked",
+                           "reason": f"{type(exc).__name__}: {exc}"})
+    finally:
         try:
-            app.start()
-            frame = next((w for w in app.windows() if w["handle"] == app.main), {})
-            drive.identity["window"] = {key: frame.get(key) for key in ("title", "class", "width", "height")}
-            drive.identity["probe_tuple"] = probe_header(app.probe(), mode)
-            if mode == "en":
-                drive.run()
-            else:
-                drive.run_localized()
+            app.stop()
         except Exception as exc:
-            drive.rows.append({"name": "launch-or-drive", "status": "blocked",
-                               "reason": f"{type(exc).__name__}: {exc}"})
-        finally:
-            try:
-                if app.pid is not None:
-                    app.stop()
-                else:
-                    cheap("close_headless_desktop", name=desktop)
-            except Exception as exc:
-                cleanup_error = f"{type(exc).__name__}: {exc}"
-            report = {"schema": 1, **drive.identity, "package_version": receipt["package_version"],
-                      "runner": "github-hosted-windows", "desktop": desktop, "rows": drive.rows,
-                      "images": drive.images, "privacy": "restricted; inspect pixels and metadata before publication",
-                      "cleanup": "verified" if cleanup_error is None else "failed: " + cleanup_error}
-            (mode_output / "behavior-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-            mode_reports.append({"mode": mode, "report": f"{mode}/behavior-report.json",
-                                 "blocked": bool(cleanup_error or any(r["status"] == "blocked" for r in drive.rows)),
-                                 "unverified": sum(r["status"] == "unverified" for r in drive.rows)})
-    overall = {"schema": 1, "source_commit": source, "release_tag": args.release_tag,
-               "hosted_run_id": args.hosted_run_id, "installed_exe_sha256": receipt["installed_exe_sha256"],
-               "mode_reports": mode_reports,
-               "verdict": "blocked" if any(r["blocked"] for r in mode_reports) else "partial_pending_review",
-               "privacy": "restricted; never upload raw captures without separate review and encryption"}
-    (args.output / "behavior-report.json").write_text(json.dumps(overall, indent=2) + "\n", encoding="utf-8")
-    return 2 if overall["verdict"] == "blocked" else 0
+            cleanup_error = f"{type(exc).__name__}: {exc}"
+    failed_rows = [r["name"] for r in drive.rows if r["status"] in ("blocked", "unverified")]
+    verdict = "blocked" if cleanup_error or failed_rows else ("diagnostic_only" if args.scope == "diagnostic" else "pending_visual_review")
+    report = {"schema": 2, **drive.identity, "scope": args.scope,
+              "package_version": receipt["package_version"], "runner": "github-hosted-windows",
+              "rows": drive.rows, "images": drive.images, "failed_rows": failed_rows,
+              "privacy": "restricted; inspect pixels and metadata before publication",
+              "cleanup": "verified" if cleanup_error is None else "failed: " + cleanup_error,
+              "verdict": verdict}
+    (args.output / "behavior-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    return 2 if verdict == "blocked" else 0
 
 
 if __name__ == "__main__":
