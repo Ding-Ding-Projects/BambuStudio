@@ -17,12 +17,18 @@
 #include <wx/stdpaths.h>
 #include <wx/textctrl.h>
 #include <wx/utils.h>
+#include <mutex>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
 namespace Slic3r::GUI::ModelCreator {
+struct ProviderLookupState {
+    std::mutex mutex;
+    std::filesystem::path paths[2];
+    bool finished[2] = {false, false};
+};
 namespace {
 wxTextCtrl *field(wxWindow *parent, wxSizer *sizer, const wxString &label,
                   long style = 0, const wxString &hint = {})
@@ -71,6 +77,8 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
                 MaterialIcon::Glyph::AutoAwesomeMosaic, MD3Dialog::Options{true, false})
     , m_add_to_plate(std::move(add_to_plate))
     , m_alive(std::make_shared<std::atomic_bool>(true))
+    , m_provider_lookup_state(std::make_shared<ProviderLookupState>())
+    , m_provider_lookup_timer(this)
 {
     auto *body = GetContentSizer();
     body->Add(new wxStaticText(this, wxID_ANY, _L("Provider")), 0, wxBOTTOM, 4);
@@ -151,10 +159,9 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
         m_provider_path->SetValue(wxString::FromUTF8(config->get("model_creator", "provider_path")));
         m_renderer_path->SetValue(wxString::FromUTF8(config->get("model_creator", "renderer_path")));
     }
-    if (m_provider_path->IsEmpty() && m_provider->GetSelection() < 2) {
-        const auto path = tool_on_path(static_cast<Provider>(m_provider->GetSelection()));
-        if (!path.empty()) m_provider_path->SetValue(wxString(path.wstring()));
-    }
+    Bind(wxEVT_TIMER, [this](wxTimerEvent &) { collect_provider_paths(); },
+         m_provider_lookup_timer.GetId());
+    if (m_provider_path->IsEmpty()) lookup_provider_path();
     update_renderer_path();
     m_renderer->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
         update_renderer_path();
@@ -163,13 +170,17 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     });
     m_provider->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
         if (m_provider->GetSelection() < 2) {
-            const auto path = tool_on_path(static_cast<Provider>(m_provider->GetSelection()));
-            if (!path.empty()) m_provider_path->SetValue(wxString(path.wstring()));
+            lookup_provider_path();
         }
         save_preferences();
         update_controls();
     });
-    for (wxTextCtrl *control : {m_model, m_provider_path, m_renderer_path})
+    m_provider_path->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
+        m_provider_path_autofilled = false;
+        m_provider_path_user_edited = true;
+        update_controls();
+    });
+    for (wxTextCtrl *control : {m_model, m_renderer_path})
         control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_controls(); });
     SetMinSize(wxSize(650, 720));
     SetSize(wxSize(720, 780));
@@ -209,9 +220,71 @@ ModelCreatorDialog::~ModelCreatorDialog()
 {
     save_preferences();
     m_alive->store(false);
+    m_provider_lookup_timer.Stop();
     cancel_generation();
     if (m_history_worker.joinable()) m_history_worker.join();
     if (m_worker.joinable()) m_worker.join();
+}
+
+void ModelCreatorDialog::lookup_provider_path()
+{
+    const int index = m_provider->GetSelection();
+    if (index < 0 || index >= 2 || m_provider_path_user_edited) return;
+    const auto current = m_provider_path->GetValue().ToStdWstring();
+    if (!current.empty()) {
+        if (!m_provider_path_autofilled) return;
+        m_provider_path_autofilled = false;
+        m_provider_path->ChangeValue(wxString{});
+    }
+    m_provider_lookup_expected_paths[index] = m_provider_path->GetValue().ToStdWstring();
+    const auto &cached = m_discovered_provider_paths[index];
+    if (m_provider_lookup_collected[index]) {
+        if (cached.empty()) return;
+        m_provider_path_autofilled = true;
+        m_provider_path->ChangeValue(wxString(cached.wstring()));
+        update_controls();
+        return;
+    }
+    if (m_provider_lookup_started[index]) return;
+    m_provider_lookup_started[index] = true;
+    const auto state = m_provider_lookup_state;
+    std::thread([state, index] {
+        std::filesystem::path path;
+        try { path = tool_on_path(static_cast<Provider>(index)); }
+        catch (const std::exception &) {}
+        std::lock_guard<std::mutex> lock(state->mutex);
+        state->paths[index] = path;
+        state->finished[index] = true;
+    }).detach();
+    if (!m_provider_lookup_timer.IsRunning()) m_provider_lookup_timer.Start(50);
+}
+
+void ModelCreatorDialog::collect_provider_paths()
+{
+    bool pending = false;
+    for (int index = 0; index < 2; ++index) {
+        if (!m_provider_lookup_started[index] || m_provider_lookup_collected[index]) continue;
+        std::filesystem::path path;
+        {
+            std::lock_guard<std::mutex> lock(m_provider_lookup_state->mutex);
+            if (m_provider_lookup_state->finished[index])
+                path = m_provider_lookup_state->paths[index];
+            else {
+                pending = true;
+                continue;
+            }
+        }
+        m_provider_lookup_collected[index] = true;
+        m_discovered_provider_paths[index] = path;
+        if (!m_provider_path_user_edited && m_provider->GetSelection() == index &&
+            m_provider_path->GetValue().ToStdWstring() == m_provider_lookup_expected_paths[index] &&
+            !path.empty()) {
+            m_provider_path_autofilled = true;
+            m_provider_path->ChangeValue(wxString(path.wstring()));
+            update_controls();
+        }
+    }
+    if (!pending) m_provider_lookup_timer.Stop();
 }
 
 void ModelCreatorDialog::update_controls()
