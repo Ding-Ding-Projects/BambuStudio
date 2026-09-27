@@ -1448,10 +1448,24 @@ std::string make_project_tab_snapshot_path()
 // Restore the outgoing tab before returning control to the tab strip.
 bool restore_project_tab_document(Plater* plater, ProjectTabBar* tabbar, const ProjectTab& tab)
 {
-    const std::string path = tab.snapshot_path.empty() ? tab.file_path : tab.snapshot_path;
-    const bool restored = !path.empty()
-        ? plater->load_snapshot_from(path)
-        : plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+    bool restored = false;
+    if (!tab.snapshot_path.empty()) {
+        // A dirty tab needs the private document bytes and Restore semantics.
+        restored = plater->load_snapshot_from(tab.snapshot_path);
+    } else if (!tab.file_path.empty()) {
+        // A known-clean real file must use the ordinary load path. Restore
+        // semantics would mark the Plater dirty while the tab model is clean.
+        try {
+            plater->load_project(wxString::FromUTF8(tab.file_path), "-", &restored,
+                                 /*skip_close_confirmation=*/true);
+        } catch (const std::exception& ex) {
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": clean tab rollback threw: " << ex.what();
+        } catch (...) {
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": clean tab rollback threw";
+        }
+    } else {
+        restored = plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+    }
     if (!restored)
         return false;
     // Restore the on-disk identity after loading a private snapshot. An empty
