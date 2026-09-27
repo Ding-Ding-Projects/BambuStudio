@@ -13,11 +13,13 @@
 - [x] Review the project-tab opening adapter for rejected loads, snapshot failures, rollback save targets, and internal Recent Projects entries.
 - [x] Complete the scoped independent source review of the project-loading adapter at `e5fe62a1ed4f6516b79d5f755f89f62dd1e94977`; runtime verification remains open below.
 - [ ] Build the exact official-source candidate and fix verified build failures without dropping requested controls or menus.
-- [ ] Obtain the terminal verdict for production run `36350056149` at `73d50e270`; verify the hook-copying repair against the `CMakeLists.txt:224` configuration failure in run `36349494073`, then obtain a native compile and exact-source package verdict.
+- [x] Verify the hook-copying repair against the `CMakeLists.txt:224` configuration failure: run `36350056149` at `73d50e270` passed configuration and reached native compilation.
+- [ ] Resolve the repeated MSVC `C1041` PDB access failure in runs `36350056149` and `36350518177`; `/FS` was already present. Obtain native compile and exact-source package proof for the final main revision after a relevant repair.
 - [ ] Obtain the terminal verdict for production `main` run `36346636917` at `e2c7d6ab6d55354b48504618c1486285c043d63a`; run `36345306787` was also running at the earlier observation. Run `36345894046` subsequently failed at `Build slicer Win`, and its release publication was skipped.
 - [ ] Package and install the exact built candidate through the supported unsigned Squirrel.Windows route.
-- [ ] Repair the A/B diagnostic route, compare saved-3MF opening on the official baseline and candidate under isolated profiles, and investigate installed startup exit `0x80070057` using a genuine stack or matching trace.
-- [ ] Complete exact-PID debugger review and prove the saved-file opening result from native model state, not from process lifetime or a filename.
+- [x] Complete source review and five hosted checks for the exact-PID debugger route at `548ab63d8`; run `36350457096` preserved two validated restricted entries and verified owned teardown, without claiming a working GUI.
+- [ ] Obtain a usable startup stack: run `36350457096` could not attach because the process was exiting (`0xC000010A`), with no attach marker, stack, or image. Investigate natural exit `0x80070057` without inferring its source cause.
+- [ ] Compare saved-3MF opening on the official baseline and candidate under isolated profiles, and prove both opening routes from native model state rather than process lifetime or a filename.
 - [ ] Exercise the focused project-tab rollback cases in `docs/reapplication/loader-adapters.md`, including named, Untitled, clean, and discarded dirty documents.
 - [ ] Verify the requested native controls, print and device flows, Model Creator, workspace/history, localization, and website behavior in their built surfaces.
 - [ ] Capture fresh, privacy-reviewed evidence tied to the candidate source and installed package.

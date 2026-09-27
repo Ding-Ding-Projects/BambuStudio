@@ -2,13 +2,14 @@
 
 ## Current state
 
-At the earlier diagnostic checkpoint, `main` and remote `main` were
-`acd4c0489fc2952e62b27315cd93502484fe6ca2`, verified with
-`git ls-remote`. The current `main` and remote `main` are
-`73d50e270fa10da2015f17240c652e7cf872cd4b`, also verified, after a CMake
-hook-copying repair. [Production run 36350056149](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36350056149)
-is running for the new source; no terminal package verdict is claimed. The
-integrated source includes the fresh
+At 2026-09-27 21:07 UTC, source revision
+`d62a9f19bc2da75af09830079ae14b8c1b38b0b8` was integrated into `main`
+and confirmed with `git ls-remote`. It includes the hook-copying repair
+`73d50e270`, documentation updates, and the isolated startup trace
+`548ab63d8`. [Production run 36350518177](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36350518177)
+had failed by the 21:12 UTC observation, repeating `C1041` while opening
+`mcut.pdb`. No green production or current-source package verdict is
+claimed. The integrated source includes the fresh
 reapplication on official Bambu Studio `v02.08.04.57` source
 `f977235e6d736c4c0b650520ac5a5b72cbfe9244`, plus bounded native model
 observation (`257c700e3`) and exact 3MF model-state verification
@@ -32,13 +33,32 @@ hosted diagnostic route's stated contracts, not native application behavior.
 The separate [production run 36349494073](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36349494073)
 failed during CMake configuration at `CMakeLists.txt:224`, before C++
 compilation. A hook-copying repair subsequently reached `main` at `73d50e270`;
-no production package verdict follows from the failed run or that source edit.
+no production package verdict follows from that source edit. The follow-up
+[production run 36350056149](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36350056149)
+passed configuration, then failed at native compilation with MSVC `C1041`
+while opening the shared `mcut.pdb`. The command already included `/FS`;
+the cause of the PDB access failure is not established.
 
 [Four-case diagnostic run 36348272737](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36348272737)
 recorded natural startup exit `0x80070057` in all four cases, with teardown
 verified and zero screenshots. It did not establish the native crash cause or
-prove that a saved 3MF loaded. The exact-PID debugger route remains under
-review. No private project path or filename is part of this public record.
+prove that a saved 3MF loaded. No private project path or filename is part
+of this public record.
+
+[Startup trace run 36350457096](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36350457096)
+at verifier `548ab63d86f88db31e348316c9520d037e250180` passed its five
+focused Python checks and PowerShell parsing, but the trace failed. It used
+the verified `md3-v125` package `2.8.4124` and the same installed executable
+hash recorded below. CDB could not attach because the selected process was
+already exiting (`NTSTATUS 0xC000010A`). No attach or breakpoint marker was
+observed. Natural process exit remained `0x80070057`; owned process, holder,
+debugger stop, and named-desktop teardown were verified. The owner decryptor
+validated two restricted entries, a behavior report and debugger log. There
+are zero images and no usable stack. Raw diagnostics remain restricted.
+The encrypted bundle SHA-256 is
+`a7cc5390cc3b3a5814b8f7d53eeef632a1daa81af45809a359cb20ebc971288f`.
+The workflow's failed verdict is preserved; successful encryption is only
+partial diagnostic transport, not application verification.
 
 [`md3-v129`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v129)
 is a non-draft release targeting earlier source `c7cb11752a65810e4b02f4124b4c4b22c8438218`
@@ -51,7 +71,7 @@ package, fresh GUI captures, and localized Features page remain unverified.
 
 The earlier production [run 36346636917](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36346636917)
 started for then-current `main` commit `e2c7d6ab6d55354b48504618c1486285c043d63a`
-and was in progress at that earlier handoff. Earlier runs
+and was in progress at that earlier handoff. Run
 [36345894046](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345894046)
 was in progress at that earlier observation. It later completed with a failure
 in the `Build slicer Win` step; its release publication job was skipped. Run
@@ -63,8 +83,8 @@ at `0ff1ffdbd` used the installed `md3-v125` executable identified by SHA-256
 It recorded natural startup exit `0x80070057` after 20 seconds at
 2026-09-27 19:54:58 UTC. Holder identity, desktop identity, and teardown were
 validated; it produced no image, matching log, or matching Windows Error
-Reporting record. The cause remains undetermined and the A/B diagnostic route
-is still being repaired.
+Reporting record. The later four-case diagnostic supersedes that narrow
+observation. The startup cause remains undetermined.
 
 `md3-v127` targets `6a45418f` and its production run `36338478333` succeeded,
 but it predates the fresh official-source candidate and was not marked latest
@@ -83,10 +103,12 @@ preserved.
 
 ## Next actions
 
-1. Obtain the terminal configuration, build, and package verdict from
-   production run `36350056149` for exact current `main` source.
-2. Complete the exact-PID debugger and A/B diagnostic routes, then compare
-   official and candidate 3MF
+1. Investigate the repeated `C1041` in production runs `36350056149` and
+   `36350518177`, and inspect the workflow associated with the eventual
+   documentation-only successor. Investigate the MSVC/sccache debug-information path;
+   do not assume adding `/FS` fixes a command that already contains it.
+2. Move debugger attachment earlier while preserving exact process identity
+   and hidden-desktop isolation, then compare official and candidate 3MF
    opening under isolated profiles, including `loader-adapters.md` rollback cases.
 3. Establish the cause of the installed startup exit from a genuine trace or
    matching report; the exit code alone does not identify the source defect.
@@ -94,6 +116,16 @@ preserved.
    and capture and review fresh pixels before claiming GUI verification.
 5. Publish the localized feature guide and release links only for verified
    behavior, then update distribution records with the exact release source.
+
+## Preservation boundary
+
+All completed changes above reached remote `main`. Task-owned checkouts were
+clean at the preservation inventory. The three older conflicted checkouts,
+ownership-uncertain entries, and untracked fonts remain preserved. No local
+build, test, installation, rendering, GUI drive, power action, job cancellation,
+or destructive cleanup was performed. No new behavior claims or feature
+guide were published. Existing workflow handles must be retained and allowed
+to finish. This is an incomplete handoff, not a release-completion claim.
 
 
 ## Historical pre-reconstruction handoff
