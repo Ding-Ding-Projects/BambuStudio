@@ -1630,8 +1630,9 @@ void TabStrip::Relayout()
 {
     const bool vertical = IsVertical();
     if (vertical) {
-        SetMinSize(wxSize(FromDIP(kRailWidth), -1));
-        SetMaxSize(wxSize(FromDIP(kRailWidth), -1));
+        const int rail_width = m_options.vertical_width_dip > 0 ? m_options.vertical_width_dip : kRailWidth;
+        SetMinSize(wxSize(FromDIP(rail_width), -1));
+        SetMaxSize(wxSize(FromDIP(rail_width), -1));
     } else {
         SetMinSize(wxSize(-1, FromDIP(kBarHeight)));
         SetMaxSize(wxSize(-1, FromDIP(kBarHeight)));

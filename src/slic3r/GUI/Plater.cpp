@@ -4370,6 +4370,7 @@ Sidebar::Sidebar(Plater *parent)
     prepare_tabs_options.surface_name = _L("Prepare");
     prepare_tabs_options.strip_name = _L("Prepare sections");
     prepare_tabs_options.default_edge = MD3::Tabs::DockEdge::Left;
+    prepare_tabs_options.vertical_width_dip = 128;
     p->m_prepare_tabs = new TabStrip(this, prepare_tabs_options);
     // Load before adding defaults: AddTab persists, so the opposite order
     // would overwrite the user's saved dock and tab arrangement.

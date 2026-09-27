@@ -80,6 +80,7 @@ public:
         CloseMode           close_mode   = CloseMode::Hide;
         bool                show_new_button = false;
         bool                allow_close     = true;
+        int                 vertical_width_dip = 0; // 0 keeps the standard settings rail width.
         // When true, a press / Enter / search hit / overflow pick does NOT
         // change the active tab itself: the strip only raises
         // EVT_TABSTRIP_ACTIVATE and the host calls Activate(id, false) once

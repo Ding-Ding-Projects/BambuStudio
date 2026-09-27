@@ -16,7 +16,7 @@ Material Designer is not available as a callable design tool in this session. Th
 | Process | Settings search and full print settings tree | Existing settings search and its regex builder, preset selection, option jumps |
 | Objects | Object search, plate/object list and manipulation card when selection is valid | Existing object search and its regex builder, expanded rows, selection and manipulation values |
 
-The tab strip docks to any edge, defaults to the left edge and saves its layout through `TabStrip`. Each tab uses the same scroll area, starting at the top on activation. Accessible tab names and orientation-aware keyboard navigation come from `TabStrip`. At narrow widths, the strip's overflow control must expose every tab that does not fit.
+The tab strip docks to any edge, defaults to the left edge and saves its layout through `TabStrip`. Its vertical rail is 128 DIP in Prepare, rather than the 230 DIP settings rail, so the content keeps usable width. Each tab uses the same scroll area, starting at the top on activation. Accessible tab names and orientation-aware keyboard navigation come from `TabStrip`. At narrow widths, the strip's overflow control must expose every tab that does not fit.
 
 ## Verification still required
 
