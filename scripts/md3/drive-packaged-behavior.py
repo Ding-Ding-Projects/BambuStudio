@@ -9,6 +9,7 @@ owned directory. Do not upload that directory without separate privacy review.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 import ntpath
@@ -20,6 +21,7 @@ import sys
 import tempfile
 import time
 import zipfile
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 from PIL import Image
@@ -240,6 +242,122 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def expected_3mf_objects(path: Path) -> list[str]:
+    """Read only the bounded build object names of the checked-in 3MF fixture."""
+    if not path.is_file() or path.stat().st_size > 20_000_000:
+        raise ValueError("The public 3MF fixture is absent or exceeds its size bound")
+    with zipfile.ZipFile(path) as bundle:
+        if len(bundle.infolist()) > 128:
+            raise ValueError("The public 3MF fixture has too many ZIP members")
+        member = bundle.getinfo("3D/3dmodel.model")
+        if member.file_size > 2_000_000:
+            raise ValueError("The public 3MF model XML exceeds its size bound")
+        xml = bundle.read(member)
+    root = ET.fromstring(xml)
+    resources = root.findall(".//{*}resources/{*}object")
+    objects = {item.get("id"): item.get("name") for item in resources}
+    if len(objects) != len(resources):
+        raise ValueError("The public 3MF model has duplicate object IDs")
+    items = root.findall(".//{*}build/{*}item")
+    ids = [item.get("objectid") for item in items]
+    if not ids or len(ids) > 64 or len(set(ids)) != len(ids):
+        raise ValueError("The public 3MF build object inventory is empty or ambiguous")
+    names = [objects.get(identifier) for identifier in ids]
+    if any(not isinstance(name, str) or not name or len(name.encode("utf-8")) > 160
+           for name in names):
+        raise ValueError("The public 3MF build object names are unavailable or too long")
+    return names
+
+
+def model_snapshot(records: list[dict], *, pid: int, profile_tag: str,
+                   main_hwnd: int) -> dict | None:
+    """Accept only a complete probe owned by the selected packaged process."""
+    if (not records or records[-1].get("kind") != "end"
+            or sum(r.get("kind") == "end" for r in records) != 1):
+        return None
+    headers = [r for r in records if r.get("kind") == "header"]
+    states = [r for r in records if r.get("kind") == "model_state"]
+    if (len(headers) != 1 or len(states) != 1 or headers[0].get("pid") != pid
+            or headers[0].get("tag") != profile_tag):
+        return None
+    state = states[0]
+    plater = state.get("plater_hwnd")
+    if (state.get("model_available") is not True
+            or state.get("mainframe_hwnd") != main_hwnd
+            or not isinstance(plater, int) or plater <= 0
+            or not any(r.get("hwnd") == main_hwnd and r.get("kind") == "toplevel" for r in records)
+            or not any(r.get("hwnd") == plater for r in records)):
+        return None
+    count = state.get("object_count")
+    emitted = state.get("object_records")
+    objects = [r for r in records if r.get("kind") == "model_object"]
+    if (type(count) is not int or count < 0 or count > 64
+            or type(emitted) is not int or emitted != count
+            or state.get("objects_truncated") is not False
+            or len(objects) != count):
+        return None
+    indices = [r.get("index") for r in objects]
+    if any(type(value) is not int for value in indices) or sorted(indices) != list(range(count)):
+        return None
+    if any(r.get("object_available") is not True
+           or r.get("name_available") is not True
+           or r.get("name_valid_utf8") is not True
+           or r.get("name_truncated") is not False
+           or not isinstance(r.get("name"), str) or not r["name"]
+           or type(r.get("instance_count")) is not int or r["instance_count"] < 1
+           for r in objects):
+        return None
+    try:
+        if any(len(r["name"].encode("utf-8")) > 160 for r in objects):
+            return None
+    except UnicodeEncodeError:
+        return None
+    return {"object_count": count,
+            "names": [r["name"] for r in sorted(objects, key=lambda item: item["index"])],
+            "path": state.get("project_path"),
+            "path_available": state.get("project_path_available"),
+            "path_truncated": state.get("project_path_truncated"),
+            "active_plate_available": state.get("active_plate_available"),
+            "active_plate_index": state.get("active_plate_index"),
+            "active_plate_id": state.get("active_plate_id"),
+            "active_plate_instance_count": state.get("active_plate_instance_count"),
+            "active_plate_printable_instance_count": state.get("active_plate_printable_instance_count"),
+            "plater_hwnd": plater, "mainframe_hwnd": main_hwnd,
+            "probe_pid": pid, "profile_tag": profile_tag}
+
+
+def fixture_model_transition(before: dict | None, after: dict | None,
+                             expected_names: list[str], path: Path) -> dict | None:
+    if before is None or after is None:
+        return None
+    expected = Counter(expected_names)
+    if (before["object_count"] == len(expected_names)
+            and Counter(before["names"]) == expected):
+        return None
+    if (after["object_count"] != len(expected_names)
+            or Counter(after["names"]) != expected
+            or after["path_available"] is not True or after["path_truncated"] is not False
+            or not isinstance(after["path"], str)
+            or not after["path"].lower().endswith(".3mf")
+            or ntpath.normcase(ntpath.abspath(after["path"]))
+               != ntpath.normcase(ntpath.abspath(str(path)))
+            or after["active_plate_available"] is not True
+            or not isinstance(after["active_plate_index"], int)
+            or after["active_plate_index"] < 0
+            or not isinstance(after["active_plate_id"], int)
+            or after["active_plate_id"] < 0
+            or not isinstance(after["active_plate_instance_count"], int)
+            or after["active_plate_instance_count"] < 1
+            or not isinstance(after["active_plate_printable_instance_count"], int)
+            or after["active_plate_printable_instance_count"] < 1
+            or after["active_plate_printable_instance_count"]
+               > after["active_plate_instance_count"]):
+        return None
+    return {"before": before, "after": after,
+            "fixture_sha256": sha256(path), "expected_object_count": len(expected_names),
+            "expected_names": expected_names}
 
 
 def preserve_logs(datadir: Path, output: Path) -> list[dict]:
@@ -658,9 +776,16 @@ class Drive:
             row["reason"] = "The checked-in 3MF fixture is absent"
             return False
         try:
+            expected_names = expected_3mf_objects(path)
+            row["expected_object_count"] = len(expected_names)
+            row["expected_names"] = expected_names
             before = self.app.probe()
             row["before_header"] = self.checked_header(before)
             row["before_visible"] = visible_labels(before)
+            before_model = model_snapshot(before, pid=self.app.pid,
+                                          profile_tag=Path(self.app.datadir).name,
+                                          main_hwnd=self.app.main)
+            row["before_model_evidence"] = before_model
             row["before_image"] = self.capture("file-open-before", self.app.main)
             old_dialogs = {w["handle"] for w in self.app.windows() if w["class"] == "#32770"}
             start = time.monotonic()
@@ -683,7 +808,7 @@ class Drive:
                 time.sleep(0.5)
             else:
                 raise RuntimeError("Open Project dialog did not close after file submission")
-            after, result = self.wait_fixture_loaded(path.stem)
+            after, result = self.wait_fixture_loaded(path, expected_names, before_model)
             row["after_header"] = self.checked_header(after)
             row["after_visible"] = visible_labels(after)
             row["after_image"] = self.capture("file-open-after", self.app.main)
@@ -691,31 +816,16 @@ class Drive:
             row["result"] = result
             row["status"] = "probe_confirmed" if result else "unverified"
             if row["status"] == "unverified":
-                row["reason"] = "The frame survived File > Open, but no fixture-specific object and enabled slicing state appeared"
+                row["reason"] = "The frame survived File > Open, but no complete owned fixture model transition appeared"
             return row["status"] == "probe_confirmed"
         except Exception as exc:
             row["status"] = "blocked"
             row["reason"] = f"{type(exc).__name__}: {exc}"
             return False
 
-    @staticmethod
-    def fixture_loaded_state(records: list[dict], stem: str) -> dict | None:
-        objects = [r for r in records if r.get("kind") in ("window", "tool")
-                   and r.get("shown") and r.get("on_screen")
-                   and any(stem.lower() in str(r.get(key) or "").lower()
-                           for key in ("name", "label"))
-                   and r.get("parent") and r.get("top")]
-        slice_controls = [r for r in records if r.get("kind") in ("window", "tool")
-                          and r.get("shown") and r.get("on_screen") and r.get("enabled")
-                          and any("slice plate" in str(r.get(key) or "").lower()
-                                  for key in ("name", "label"))]
-        if not objects or not slice_controls:
-            return None
-        return {"object_label": objects[0].get("name") or objects[0].get("label"),
-                "object_parent": objects[0]["parent"],
-                "slicing_control": slice_controls[0].get("name") or slice_controls[0].get("label")}
-
-    def wait_fixture_loaded(self, stem: str, timeout: float = 60) -> tuple[list[dict], dict | None]:
+    def wait_fixture_loaded(self, path: Path, expected_names: list[str],
+                            before_model: dict | None,
+                            timeout: float = 60) -> tuple[list[dict], dict | None]:
         deadline = time.monotonic() + timeout
         after = []
         while time.monotonic() < deadline:
@@ -723,8 +833,16 @@ class Drive:
                 raise RuntimeError("The main frame exited during 3MF loading")
             after = self.app.probe()
             self.checked_header(after)
-            result = self.fixture_loaded_state(after, stem)
+            after_model = model_snapshot(after, pid=self.app.pid,
+                                         profile_tag=Path(self.app.datadir).name,
+                                         main_hwnd=self.app.main)
+            result = fixture_model_transition(before_model, after_model, expected_names, path)
             if result:
+                result["slice_control_enabled"] = any(
+                    r.get("kind") in ("window", "tool") and r.get("shown")
+                    and r.get("on_screen") and r.get("enabled")
+                    and any("slice plate" in str(r.get(key) or "").lower()
+                            for key in ("name", "label")) for r in after)
                 return after, result
             time.sleep(0.5)
         return after, None

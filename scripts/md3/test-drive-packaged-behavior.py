@@ -189,20 +189,64 @@ class BehaviorDriveChecks(unittest.TestCase):
             with patch.object(Path, "resolve", side_effect=AssertionError("must stay lexical")):
                 self.assertEqual(selected(f'"{exe}" --datadir "{profile}"'), [20])
 
-    def test_file_open_requires_object_and_enabled_slice_state(self):
-        tab_title = {"kind": "toplevel", "name": "flowrate-test-pass1", "shown": True,
-                     "on_screen": True}
-        object_row = {"kind": "window", "name": "flowrate-test-pass1", "shown": True,
-                      "on_screen": True, "parent": 9, "top": 1}
-        slice_disabled = {"kind": "tool", "name": "Slice plate", "shown": True,
-                          "on_screen": True, "enabled": False}
-        self.assertIsNone(drive.Drive.fixture_loaded_state([tab_title, slice_disabled],
-                                                            "flowrate-test-pass1"))
-        self.assertIsNone(drive.Drive.fixture_loaded_state([object_row, slice_disabled],
-                                                            "flowrate-test-pass1"))
-        result = drive.Drive.fixture_loaded_state(
-            [object_row, {**slice_disabled, "enabled": True}], "flowrate-test-pass1")
-        self.assertEqual(result["object_parent"], 9)
+    def test_file_open_requires_complete_owned_model_transition(self):
+        fixture = HERE.parents[1] / "resources" / "calib" / "filament_flow" / "flowrate-test-pass1.3mf"
+        expected = drive.expected_3mf_objects(fixture)
+        self.assertEqual(expected, ["flowrate_0", "flowrate_10", "flowrate_15",
+                                    "flowrate_20", "flowrate_5", "flowrate_m10",
+                                    "flowrate_m15", "flowrate_m20", "flowrate_m5"])
+        def rows(names, *, path=None, pid=42, count=None, printable=1):
+            count = len(names) if count is None else count
+            return ([{"kind": "header", "pid": pid, "tag": "profile"},
+                     {"kind": "toplevel", "hwnd": 7}, {"kind": "window", "hwnd": 8},
+                     {"kind": "model_state", "model_available": True,
+                      "mainframe_hwnd": 7, "plater_hwnd": 8,
+                      "object_count": count, "object_records": len(names),
+                      "objects_truncated": False, "project_path": path,
+                      "project_path_available": bool(path), "project_path_truncated": False,
+                      "active_plate_available": True, "active_plate_index": 0,
+                      "active_plate_id": 0, "active_plate_instance_count": max(1, len(names)),
+                      "active_plate_printable_instance_count": printable}]
+                    + [{"kind": "model_object", "index": i, "name": name,
+                        "object_available": True, "name_available": True,
+                        "name_valid_utf8": True, "name_truncated": False,
+                        "instance_count": 1} for i, name in enumerate(names)]
+                    + [{"kind": "end"}])
+        before_records = rows([])
+        after_records = rows(expected, path=str(fixture))
+        before = drive.model_snapshot(before_records, pid=42, profile_tag="profile", main_hwnd=7)
+        after = drive.model_snapshot(after_records, pid=42, profile_tag="profile", main_hwnd=7)
+        result = drive.fixture_model_transition(before, after, expected, fixture)
+        self.assertEqual(result["expected_object_count"], len(expected))
+        self.assertEqual(result["after"]["names"], expected)
+        self.assertIsNone(drive.model_snapshot(after_records[:-1], pid=42,
+                                                profile_tag="profile", main_hwnd=7))
+        self.assertIsNone(drive.model_snapshot(
+            [item for item in after_records if item.get("kind") != "model_state"],
+            pid=42, profile_tag="profile", main_hwnd=7))
+        self.assertIsNone(drive.model_snapshot(after_records, pid=43,
+                                                profile_tag="profile", main_hwnd=7))
+        self.assertIsNone(drive.model_snapshot(after_records, pid=42,
+                                                profile_tag="other", main_hwnd=7))
+        duplicate = [dict(item) for item in after_records]
+        duplicate[5]["index"] = 0
+        self.assertIsNone(drive.model_snapshot(duplicate, pid=42, profile_tag="profile", main_hwnd=7))
+        incomplete = rows(expected[:-1], path=str(fixture), count=len(expected))
+        self.assertIsNone(drive.model_snapshot(incomplete, pid=42, profile_tag="profile", main_hwnd=7))
+        truncated = [dict(item) for item in after_records]
+        truncated[4]["name_truncated"] = True
+        self.assertIsNone(drive.model_snapshot(truncated, pid=42, profile_tag="profile", main_hwnd=7))
+        invalid_utf8 = [dict(item) for item in after_records]
+        invalid_utf8[4]["name_valid_utf8"] = False
+        self.assertIsNone(drive.model_snapshot(invalid_utf8, pid=42,
+                                                profile_tag="profile", main_hwnd=7))
+        self.assertIsNone(drive.fixture_model_transition(
+            before, drive.model_snapshot(rows(expected, path=str(fixture) + "-other"),
+                                         pid=42, profile_tag="profile", main_hwnd=7), expected, fixture))
+        self.assertIsNone(drive.fixture_model_transition(
+            before, drive.model_snapshot(rows(expected, path=str(fixture), printable=0),
+                                         pid=42, profile_tag="profile", main_hwnd=7), expected, fixture))
+        self.assertIsNone(drive.fixture_model_transition(after, after, expected, fixture))
         class ExitedApp:
             main = 7
             def windows(self):
@@ -211,7 +255,7 @@ class BehaviorDriveChecks(unittest.TestCase):
             instance = drive.Drive(ExitedApp(), Path(temp), "a" * 40, "md3-v122",
                                    "b" * 64, "123", "en")
             with self.assertRaisesRegex(RuntimeError, "exited"):
-                instance.wait_fixture_loaded("flowrate-test-pass1", timeout=1)
+                instance.wait_fixture_loaded(fixture, expected, before, timeout=1)
 
     def test_client_resize_compensates_borders_and_refuses_minimum_clamp(self):
         class FakeApp:
