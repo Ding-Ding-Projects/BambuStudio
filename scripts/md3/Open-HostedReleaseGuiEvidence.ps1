@@ -39,7 +39,11 @@ if ($receipt.schema -eq 2) {
         $envelope.verification_commit -ceq $expectedVerifier) 'The verifier commit does not match.'
 }
 Assert-True ($receipt.status -ceq 'encrypted_capture_pending_restricted_review' -or
-    ($receipt.schema -eq 2 -and $receipt.status -ceq 'encrypted_partial_capture_pending_restricted_review')) 'The evidence receipt is not encrypted and reviewable.'
+    ($receipt.schema -eq 2 -and $receipt.status -in @(
+        'encrypted_partial_capture_pending_restricted_review',
+        'encrypted_partial_behavior_pending_restricted_review',
+        'encrypted_diagnostic_pending_restricted_review',
+        'encrypted_behavior_pending_restricted_review'))) 'The evidence receipt is not encrypted and reviewable.'
 Assert-True ($receipt.image_availability -ceq 'encrypted_bundle_only') 'The receipt does not describe an encrypted image bundle.'
 foreach ($row in @($receipt, $envelope)) {
     Assert-True ($row.run_id -ceq $ExpectedRunId) 'The run ID does not match.'
@@ -117,6 +121,14 @@ else {
         $bindingLines += "$($row.path)|$($row.kind)|$($row.tuple)|$($row.bytes)|$($row.sha256)"
     }
     Assert-True ($captureCount -eq $captures.Count -and $reportCount -ge 1 -and $reportCount -le 8) 'Schema v2 capture or report count is inconsistent.'
+    if ($receipt.status -ceq 'encrypted_diagnostic_pending_restricted_review') {
+        Assert-True ($receipt.capture_scope -ceq 'diagnostic' -and $captureCount -eq 0 -and
+            $reportCount -eq 1) 'Diagnostic evidence does not contain exactly one behavior report.'
+    }
+    elseif ($receipt.status -ceq 'encrypted_behavior_pending_restricted_review') {
+        Assert-True ($receipt.capture_scope -ceq 'behavior' -and $captureCount -eq 0 -and
+            $reportCount -eq 8) 'Behavior evidence does not contain the full tuple report set.'
+    }
     foreach ($capture in $captures) {
         $entryPath = 'captures/' + [string]$capture.surface + '.png'
         Assert-True ($inventory.ContainsKey($entryPath) -and

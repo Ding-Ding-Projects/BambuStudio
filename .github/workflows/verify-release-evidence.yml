@@ -46,20 +46,29 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
+      - name: Parse verifier PowerShell sources
+        shell: pwsh
+        run: |
+          foreach ($path in @(
+            'scripts/ci/Invoke-HostedReleaseVerification.ps1',
+            'scripts/md3/Capture-HostedReleaseGui.ps1',
+            'scripts/md3/Open-HostedReleaseGuiEvidence.ps1',
+            'scripts/md3/Test-HostedEvidenceManifestV2.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) { throw "PowerShell parser rejected $path." }
+          }
+      - name: Reject malformed encrypted manifest fixtures
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          & scripts/md3/Test-HostedEvidenceManifestV2.ps1
       - name: Install isolated Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.12'
-      - name: Verify published package and collect restricted behavior evidence
-        shell: pwsh
-        run: |
-          & scripts/ci/Invoke-HostedReleaseVerification.ps1 `
-            -Tag $env:VERIFY_RELEASE_TAG `
-            -ExpectedSourceCommit $env:VERIFY_SOURCE_COMMIT `
-            -VerificationCommit $env:GITHUB_SHA `
-            -Repository $env:GITHUB_REPOSITORY `
-            -VerificationScope diagnostic `
-            -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-verification')
       - name: Run focused hosted driver checks
         if: ${{ always() }}
         shell: pwsh
@@ -82,18 +91,16 @@ jobs:
           }
           & $checkPython scripts/md3/test-drive-packaged-behavior.py
           if ($LASTEXITCODE -ne 0) { throw 'Focused hosted Python driver checks failed.' }
-          & scripts/md3/Test-HostedEvidenceManifestV2.ps1
-          foreach ($path in @(
-            'scripts/ci/Invoke-HostedReleaseVerification.ps1',
-            'scripts/md3/Capture-HostedReleaseGui.ps1',
-            'scripts/md3/Open-HostedReleaseGuiEvidence.ps1',
-            'scripts/md3/Test-HostedEvidenceManifestV2.ps1')) {
-            $tokens = $null
-            $parseErrors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile(
-              (Resolve-Path $path), [ref]$tokens, [ref]$parseErrors)
-            if ($parseErrors.Count -gt 0) { throw "PowerShell parser rejected $path." }
-          }
+      - name: Verify published package and collect restricted behavior evidence
+        shell: pwsh
+        run: |
+          & scripts/ci/Invoke-HostedReleaseVerification.ps1 `
+            -Tag $env:VERIFY_RELEASE_TAG `
+            -ExpectedSourceCommit $env:VERIFY_SOURCE_COMMIT `
+            -VerificationCommit $env:GITHUB_SHA `
+            -Repository $env:GITHUB_REPOSITORY `
+            -VerificationScope diagnostic `
+            -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-verification')
       - name: Upload safe verification diagnostics and encrypted evidence
         if: ${{ always() }}
         continue-on-error: true
@@ -130,6 +137,25 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
+      - name: Parse verifier PowerShell sources
+        shell: pwsh
+        run: |
+          foreach ($path in @(
+            'scripts/ci/Invoke-HostedReleaseVerification.ps1',
+            'scripts/md3/Capture-HostedReleaseGui.ps1',
+            'scripts/md3/Open-HostedReleaseGuiEvidence.ps1',
+            'scripts/md3/Test-HostedEvidenceManifestV2.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) { throw "PowerShell parser rejected $path." }
+          }
+      - name: Reject malformed encrypted manifest fixtures
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          & scripts/md3/Test-HostedEvidenceManifestV2.ps1
       - name: Install isolated Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:

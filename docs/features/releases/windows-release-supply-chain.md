@@ -144,8 +144,12 @@ dispatch.
 Each job installs and validates the published Squirrel package in a fresh hosted Windows runner
 using `Verify-HostedSquirrelInstall.ps1`. It then installs the pinned headless tool and Pillow in
 job-local Python, invokes `drive-packaged-behavior.py` against the installed executable, and
-attempts the fixed eleven-surface capture. Only one behavior tuple includes the complete workflow
-drive; other tuples inspect localized layout. A diagnostic result never claims the matrix passed.
+encrypts the driver's own report, images, and attributable restricted logs. The separate
+publication workflow retains its fixed eleven-surface schema 1 capture. The schema 2 diagnostic
+does not launch that older capture route after the behavior driver, so a failed application launch
+still preserves its report and restricted logs when present. Only one behavior tuple includes the
+complete workflow drive; other tuples inspect localized layout. A diagnostic result never claims
+the matrix passed.
 The workflow uses a bounded timeout, two concurrent matrix jobs, no cancellation of existing runs,
 and a safe failure upload. Raw screenshots, private profiles, and unreviewed behavior reports are
 never attached in plaintext.
@@ -164,5 +168,7 @@ Windows Error Reporting dumps are omitted with an explicit receipt reason becaus
 application-name match does not prove the PID, process creation interval, and installed executable
 identity of a particular hosted run. A failed fixed-surface capture still encrypts attributable
 behavior reports and restricted logs when those files were produced; it keeps a partial verdict.
+Schema 2 uses distinct diagnostic, behavior-pending-review, and partial statuses. Eight tuple
+reports are required for a complete behavior job; one report is required for a diagnostic job.
 The hosted manifest fixture Chut deliberately supplies traversal and duplicate paths and requires
 both to be rejected before private-key access or extraction.

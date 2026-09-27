@@ -42,8 +42,9 @@ try {
         -OutputPath $installReceipt -CiExecutionApproved
     $receipt.install_status = 'verified'
     $install = Get-Content -LiteralPath $installReceipt -Raw | ConvertFrom-Json
-    $exe = Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA 'BambuStudioMD3')
-        "app-$($install.package_version)") 'bambu-studio.exe'
+    $installRoot = Join-Path $env:LOCALAPPDATA 'BambuStudioMD3'
+    $versionRoot = Join-Path $installRoot "app-$($install.package_version)"
+    $exe = Join-Path $versionRoot 'bambu-studio.exe'
 
     $toolCommit = 'e6e42f2066d539256d6480401d7cef867f2b8dfe'
     $toolRoot = Join-Path $env:RUNNER_TEMP ('lowlevel-verify-' + $env:GITHUB_RUN_ID)
@@ -107,10 +108,14 @@ try {
     & (Join-Path $PSScriptRoot '..\md3\Capture-HostedReleaseGui.ps1') `
         -InstallReceipt $installReceipt -ExpectedCommit $ExpectedSourceCommit `
         -VerificationCommit $VerificationCommit -Tag $Tag -BehaviorDirectory $behaviorOutput `
+        -CaptureScope $VerificationScope `
         -OutputDirectory $captureOutput
     $receipt.capture_status = 'encrypted_pending_restricted_review'
     $captureReceipt = Get-Content -LiteralPath (Join-Path $captureOutput 'receipt.json') -Raw | ConvertFrom-Json
-    if ($captureReceipt.status -cne 'encrypted_capture_pending_restricted_review') {
+    $expectedEvidenceStatus = if ($VerificationScope -eq 'diagnostic') {
+        'encrypted_diagnostic_pending_restricted_review'
+    } else { 'encrypted_behavior_pending_restricted_review' }
+    if ($captureReceipt.status -cne $expectedEvidenceStatus) {
         $receipt.capture_status = 'encrypted_partial_pending_restricted_review'
         throw 'Capture is partial; encrypted diagnostic evidence was retained, but GUI verification remains blocked.'
     }

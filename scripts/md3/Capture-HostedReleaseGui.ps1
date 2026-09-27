@@ -5,6 +5,7 @@ param(
     [ValidatePattern('^[0-9a-fA-F]{40}$')][string] $VerificationCommit,
     [Parameter(Mandatory)][ValidatePattern('^md3-v\d+$')][string] $Tag,
     [string] $BehaviorDirectory,
+    [ValidateSet('diagnostic', 'behavior')][string] $CaptureScope = 'behavior',
     [Parameter(Mandatory)][string] $OutputDirectory
 )
 
@@ -39,6 +40,7 @@ $evidence = [ordered]@{
     manifest = @()
     capture_failure = $null
     behavior_failure = $null
+    capture_scope = if ($legacyMode) { 'legacy' } else { $CaptureScope }
     diagnostics_excluded = $null
 }
 $zipPath = $null
@@ -64,6 +66,7 @@ try {
     $images = Join-Path $env:RUNNER_TEMP ('bambu-capture-images-' + $env:GITHUB_RUN_ID)
     [void](New-Item -ItemType Directory -Path $images)
     $files = @()
+    if ($legacyMode) {
     try {
     if (-not $env:LLCU_CHEAP -or -not (Test-Path -LiteralPath $env:LLCU_CHEAP -PathType Leaf)) {
         if (-not $legacyMode) { throw 'The pinned job-local headless capture tool is missing.' }
@@ -96,7 +99,7 @@ try {
         --exe $exe --datadir $dataDir --tuple $tuple --out $images `
         --suffix hosted --desktop ('bambu-' + $env:GITHUB_RUN_ID)
     $captureExit = $LASTEXITCODE
-    if ($captureExit -ne 0) { $evidence.capture_failure = "Hidden-desktop capture exited with code $captureExit." }
+    if ($captureExit -ne 0) { throw "Hidden-desktop capture exited with code $captureExit." }
 
     $files = @(Get-ChildItem -LiteralPath $images -File -Filter '*.png' | Sort-Object Name)
     if ($files.Count -ne 11) { $evidence.capture_failure = "Expected 11 captured surfaces, found $($files.Count)." }
@@ -129,10 +132,8 @@ try {
     }
     }
     catch {
-        if ($legacyMode) { throw }
-        $evidence.capture_failure = 'Capture preflight or pixel validation failed; restricted behavior diagnostics remain eligible for encryption.'
-        $evidence.captures = @()
-        $files = @()
+        throw
+    }
     }
     if (-not $legacyMode) {
     $behaviorRoot = [System.IO.Path]::GetFullPath($BehaviorDirectory)
@@ -143,6 +144,10 @@ try {
     }
     $tupleDirs = @(Get-ChildItem -LiteralPath $behaviorRoot -Directory | Sort-Object Name)
     if ($tupleDirs.Count -lt 1 -or $tupleDirs.Count -gt 8) { throw 'Expected one to eight behavior tuple directories.' }
+    $expectedTupleCount = if ($CaptureScope -eq 'diagnostic') { 1 } else { 8 }
+    if ($tupleDirs.Count -ne $expectedTupleCount) {
+        $evidence.behavior_failure = 'The behavior tuple set is incomplete for the selected verification scope.'
+    }
     $stageRoot = Join-Path $env:RUNNER_TEMP ('bambu-encrypt-stage-' + $env:GITHUB_RUN_ID)
     if (Test-Path -LiteralPath $stageRoot) { throw 'Encrypted evidence staging directory already exists.' }
     [void](New-Item -ItemType Directory -Path $stageRoot)
@@ -183,6 +188,12 @@ try {
             [string]::Join('x', @($report.requested_tuple.viewport)) -cne $parts[3]) {
             throw "Behavior tuple '$($dir.Name)' report does not match its requested controls."
         }
+        $expectedDriverScope = if ($CaptureScope -eq 'diagnostic') { 'diagnostic' } elseif (
+            $dir.Name -ceq 'en-light-1-1200x800') { 'behavior' } else { 'layout' }
+        $expectedVerdict = if ($CaptureScope -eq 'diagnostic') { 'diagnostic_only' } else { 'pending_visual_review' }
+        if ($report.scope -cne $expectedDriverScope -or $report.verdict -cne $expectedVerdict) {
+            $evidence.behavior_failure = 'At least one behavior tuple did not reach the expected driver scope and pending-review verdict.'
+        }
         if ($null -eq $report.PSObject.Properties['measured_tuple'] -or $null -eq $report.measured_tuple) {
             if ($report.verdict -cne 'blocked') { throw 'An unblocked behavior report omitted measured tuple metadata.' }
             $evidence.behavior_failure = 'At least one behavior tuple lacked measured geometry after a blocked launch or probe.'
@@ -192,6 +203,9 @@ try {
         }
         $tupleFiles = @(Get-ChildItem -LiteralPath $dir.FullName -File | Sort-Object Name)
         $expectedImages = @($report.images | ForEach-Object { [string]$_.file } | Sort-Object)
+        if ($expectedImages.Count -eq 0) {
+            $evidence.behavior_failure = 'At least one behavior tuple produced no rendered image.'
+        }
         $actualImages = @($tupleFiles | Where-Object Extension -CEQ '.png' | ForEach-Object Name | Sort-Object)
         if ($expectedImages.Count -ne $actualImages.Count -or
             @(Compare-Object -ReferenceObject $expectedImages -DifferenceObject $actualImages).Count -ne 0) {
@@ -345,9 +359,10 @@ try {
         $envelope | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'envelope.json') -Encoding utf8
         $evidence.encrypted_bundle_sha256 = $cipherHash
         $evidence.image_availability = 'encrypted_bundle_only'
-        $evidence.status = if ($evidence.capture_failure -or $evidence.behavior_failure) {
-            'encrypted_partial_capture_pending_restricted_review'
-        } else { 'encrypted_capture_pending_restricted_review' }
+        if ($legacyMode) { $evidence.status = 'encrypted_capture_pending_restricted_review' }
+        elseif ($evidence.behavior_failure) { $evidence.status = 'encrypted_partial_behavior_pending_restricted_review' }
+        elseif ($CaptureScope -eq 'diagnostic') { $evidence.status = 'encrypted_diagnostic_pending_restricted_review' }
+        else { $evidence.status = 'encrypted_behavior_pending_restricted_review' }
     }
     finally {
         $rsa.Dispose()
