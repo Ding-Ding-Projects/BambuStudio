@@ -2,7 +2,7 @@
 
 ## Scope and source
 
-The Prepare sidebar groups its existing controls into three top tabs: Ink, Process, and Objects. This responds to the reported narrow, vertically crowded sidebar. The supplied image shows an earlier running build and has no executable hash, so it is a problem reference, not after-change evidence.
+The Prepare sidebar groups its existing controls into three tabs: Ink, Process, and Objects. This responds to the reported narrow, vertically crowded sidebar. The supplied image shows an earlier running build and has no executable hash, so it is a problem reference, not after-change evidence.
 
 The current source always uses the full process settings tree. The earlier compact Process card seen in the supplied image is not a claim about the current candidate. This change keeps the existing tree and its search, along with the existing filament and object searches.
 
@@ -16,7 +16,7 @@ Material Designer is not available as a callable design tool in this session. Th
 | Process | Settings search and full print settings tree | Existing settings search and its regex builder, preset selection, option jumps |
 | Objects | Object search, plate/object list and manipulation card when selection is valid | Existing object search and its regex builder, expanded rows, selection and manipulation values |
 
-The tab strip stays above the scroll body. Each tab uses the same scroll area, starting at the top on activation. Its accessible tab names and keyboard navigation come from `TabStrip`. At narrow widths, the strip's overflow control must expose every tab that does not fit. The sidebar keeps the strip on its top edge.
+The tab strip docks to any edge, defaults to the left edge and saves its layout through `TabStrip`. Each tab uses the same scroll area, starting at the top on activation. Accessible tab names and orientation-aware keyboard navigation come from `TabStrip`. At narrow widths, the strip's overflow control must expose every tab that does not fit.
 
 ## Verification still required
 

@@ -334,8 +334,10 @@ private:
     struct priv;
     std::unique_ptr<priv> p;
     void apply_prepare_section(const std::string &section) const;
+    void place_prepare_strip();
 
     wxBoxSizer* m_scrolled_sizer = nullptr;
+    wxBoxSizer* m_prepare_layout = nullptr;
     bool            m_soft_first_start {true };
     bool            m_is_gcode_file{ false };
     bool            m_update_3d_state{false};

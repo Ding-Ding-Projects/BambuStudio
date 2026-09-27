@@ -1,12 +1,12 @@
 # Prepare sidebar tabs
 
-The Prepare sidebar has three top tabs to make printer materials, print settings and the plate object list easier to find in a narrow sidebar.
+The Prepare sidebar has three tabs to make printer materials, print settings and the plate object list easier to find in a narrow sidebar.
 
 - **Ink:** printer, bed, filament and AMS controls. The filament search filters material rows and retains its regex builder.
 - **Process:** settings search and the full print settings tree. Search results can jump to a setting without rebuilding the tree.
 - **Objects:** object search, plate/object list and a manipulation card when a valid selection exists.
 
-Select a tab with the pointer or keyboard. If the sidebar is too narrow for every tab, use the tab strip's overflow control. The selected section starts at the top of the existing scroll area. Switching sections keeps the current presets, filament rows, object model and selection in memory.
+Select a tab with the pointer or keyboard. The strip starts on the left, can dock to any edge through its context menu and saves its arrangement. If the sidebar is too narrow for every tab, use the tab strip's overflow control. The selected section starts at the top of the existing scroll area. Switching sections keeps the current presets, filament rows, object model and selection in memory.
 
 ## Limits and failure handling
 

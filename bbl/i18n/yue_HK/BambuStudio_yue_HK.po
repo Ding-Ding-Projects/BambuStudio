@@ -1406,6 +1406,18 @@ msgid "Objects"
 msgstr "物件"
 
 #. reviewed-category: slicing-printing
+msgid "Ink"
+msgstr "耗材"
+
+#. reviewed-category: slicing-printing
+msgid "Process"
+msgstr "打印設定"
+
+#. reviewed-category: navigation
+msgid "Prepare sections"
+msgstr "準備分頁"
+
+#. reviewed-category: slicing-printing
 msgid "Bed type"
 msgstr "打印板類型"
 

@@ -4366,22 +4366,35 @@ Sidebar::Sidebar(Plater *parent)
     // the divider sits on the canvas-facing (right) side where the separation is
     // actually needed.
     TabStrip::Options prepare_tabs_options;
+    prepare_tabs_options.surface_key = "prepare_sidebar";
     prepare_tabs_options.surface_name = _L("Prepare");
     prepare_tabs_options.strip_name = _L("Prepare sections");
-    prepare_tabs_options.default_edge = MD3::Tabs::DockEdge::Top;
-    prepare_tabs_options.allow_close = false;
+    prepare_tabs_options.default_edge = MD3::Tabs::DockEdge::Left;
     p->m_prepare_tabs = new TabStrip(this, prepare_tabs_options);
-    p->m_prepare_tabs->AddTab("ink", _L("Ink"));
-    p->m_prepare_tabs->AddTab("process", _L("Process"));
-    p->m_prepare_tabs->AddTab("objects", _L("Objects"));
-    p->m_prepare_tabs->Activate("ink", false);
+    // Load before adding defaults: AddTab persists, so the opposite order
+    // would overwrite the user's saved dock and tab arrangement.
+    p->m_prepare_tabs->LoadTabsFromLayout();
+    std::vector<std::string> stale_tabs;
+    for (int i = 0; i < p->m_prepare_tabs->Count(); ++i) {
+        const std::string &id = p->m_prepare_tabs->GetModel().at(i).id;
+        if (id != "ink" && id != "process" && id != "objects")
+            stale_tabs.push_back(id);
+    }
+    for (const std::string &id : stale_tabs)
+        p->m_prepare_tabs->RemoveTab(id);
+    for (const auto &tab : {std::pair<const char *, wxString>{"ink", _L("Ink")},
+                            {"process", _L("Process")}, {"objects", _L("Objects")}}) {
+        if (!p->m_prepare_tabs->GetModel().find(tab.first))
+            p->m_prepare_tabs->AddTab(tab.first, tab.second);
+        else
+            p->m_prepare_tabs->SetTitle(tab.first, tab.second);
+    }
     p->m_prepare_tabs->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &e) {
         apply_prepare_section(std::string(e.GetString().ToUTF8()));
     });
-    // The narrow sidebar always keeps these navigation tabs on its top edge.
     p->m_prepare_tabs->Bind(EVT_TABSTRIP_DOCK_CHANGED, [this](wxCommandEvent &) {
-        if (p->m_prepare_tabs->GetDockEdge() != MD3::Tabs::DockEdge::Top)
-            p->m_prepare_tabs->SetDockEdge(MD3::Tabs::DockEdge::Top);
+        place_prepare_strip();
+        Layout();
     });
 
     auto *sidebar_border = new ::StaticLine(this, true);
@@ -4389,11 +4402,12 @@ Sidebar::Sidebar(Plater *parent)
     auto *content_row = new wxBoxSizer(wxHORIZONTAL);
     content_row->Add(p->scrolled, 1, wxEXPAND);
     content_row->Add(sidebar_border, 0, wxEXPAND);
-    auto *sidebar_sizer = new wxBoxSizer(wxVERTICAL);
-    sidebar_sizer->Add(p->m_prepare_tabs, 0, wxEXPAND);
-    sidebar_sizer->Add(content_row, 1, wxEXPAND);
-    SetSizer(sidebar_sizer);
-    apply_prepare_section("ink");
+    m_prepare_layout = new wxBoxSizer(wxHORIZONTAL);
+    m_prepare_layout->Add(content_row, 1, wxEXPAND);
+    SetSizer(m_prepare_layout);
+    place_prepare_strip();
+    const std::string saved_section = p->m_prepare_tabs->ActiveId();
+    apply_prepare_section(saved_section.empty() ? "ink" : saved_section);
 
     //wxGetApp().CallAfter([this]() {
     //    p->update_right_extruder_group_color();
@@ -4406,6 +4420,21 @@ Sidebar::~Sidebar() {
         m_extruder_warning_dialog->Destroy();
         m_extruder_warning_dialog = nullptr;
     }
+}
+
+void Sidebar::place_prepare_strip()
+{
+    if (!m_prepare_layout || !p->m_prepare_tabs)
+        return;
+    m_prepare_layout->Detach(p->m_prepare_tabs);
+    using MD3::Tabs::DockEdge;
+    const DockEdge edge = p->m_prepare_tabs->GetDockEdge();
+    m_prepare_layout->SetOrientation(MD3::Tabs::is_vertical(edge) ? wxHORIZONTAL : wxVERTICAL);
+    if (edge == DockEdge::Left || edge == DockEdge::Top)
+        m_prepare_layout->Insert(0, p->m_prepare_tabs, 0, wxEXPAND);
+    else
+        m_prepare_layout->Add(p->m_prepare_tabs, 0, wxEXPAND);
+    m_prepare_layout->Layout();
 }
 
 void Sidebar::apply_prepare_section(const std::string &section) const
