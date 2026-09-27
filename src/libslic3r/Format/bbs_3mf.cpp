@@ -18,9 +18,12 @@
 #include <limits>
 #include <stdexcept>
 #include <iomanip>
+#include <ctime>
+#include <memory>
 
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
+#include <boost/chrono/duration.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -4410,7 +4413,8 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
     }
 
     // Definition of read/write method for EmbossShape
-    static void                       to_xml(std::stringstream &stream, const EmbossShape &es, const ModelVolume &volume, mz_zip_archive &archive,bool export_full_path);
+    static void                       to_xml(std::stringstream &stream, const EmbossShape &es, const ModelVolume &volume, mz_zip_archive &archive,
+                                             bool export_full_path, bool deterministic);
     static std::optional<EmbossShape> read_emboss_shape(const char **attributes, unsigned int num_attributes);
 
     bool _BBS_3MF_Importer::_handle_start_shape_configuration(const char **attributes, unsigned int num_attributes)
@@ -6368,6 +6372,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         bool m_skip_auxiliary { false };    // skip normal axuiliary files
         bool m_use_loaded_id { false };        // whether to use loaded id for identify_id
         bool m_share_mesh { false };        // whether to share mesh between objects
+        bool m_deterministic { false };      // stable bytes for automatic project-history snapshots
         std::string m_thumbnail_middle = PRINTER_THUMBNAIL_MIDDLE_FILE;
         std::string m_thumbnail_small  = PRINTER_THUMBNAIL_SMALL_FILE;
         std::map<void const *, std::pair<ObjectData*, ModelVolume const *>> m_shared_meshes;
@@ -6399,6 +6404,8 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             int export_plate_idx = -1);
 
         bool _add_file_to_archive(mz_zip_archive& archive, const std::string & path_in_zip, const std::string & file_path);
+        mz_bool _add_mem_to_archive(mz_zip_archive *archive, const char *path_in_zip, const void *data,
+                                    size_t size, mz_uint level_and_flags) const;
 
         bool _add_content_types_file_to_archive(mz_zip_archive& archive);
 
@@ -6469,6 +6476,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         m_from_backup_save = store_params.strategy & SaveStrategy::Backup;
 
         m_use_loaded_id = store_params.strategy & SaveStrategy::UseLoadedId;
+        m_deterministic = store_params.strategy & SaveStrategy::Deterministic;
 
         if (auto info = store_params.model->model_info) {
             if (auto iter = info->metadata_items.find("Thumbnail_Small"); iter != info->metadata_items.end())
@@ -6925,7 +6933,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                     for (int j = 0; j < 16; j++) { sprintf(&md5_str[j * 2], "%02X", (unsigned int) digest[j]); }
                     plate_data->gcode_file_md5 = std::string(md5_str);
                     std::string target_file    = (boost::format("Metadata/plate_%1%.gcode.md5") % (plate_data->plate_index + 1)).str();
-                    if (!mz_zip_writer_add_mem(&archive, target_file.c_str(), (const void *) plate_data->gcode_file_md5.c_str(), plate_data->gcode_file_md5.length(),
+                    if (!_add_mem_to_archive(&archive, target_file.c_str(), (const void *) plate_data->gcode_file_md5.c_str(), plate_data->gcode_file_md5.length(),
                                                MZ_DEFAULT_COMPRESSION)) {
                         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__
                                                  << boost::format(", store  gcode md5 to 3mf's %1%,  length %2%, failed\n") %target_file %plate_data->gcode_file_md5.length();
@@ -7037,18 +7045,93 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         return true;
     }
 
+#ifndef MINIZ_NO_TIME
+    static MZ_TIME_T deterministic_zip_timestamp()
+    {
+        // ZIP timestamps are local calendar fields. Construct the same local
+        // noon in every process so the encoded DOS fields are timezone-stable.
+        std::tm value{};
+        value.tm_year  = 100; // 2000
+        value.tm_mon   = 0;
+        value.tm_mday  = 1;
+        value.tm_hour  = 12;
+        value.tm_isdst = -1;
+        return std::mktime(&value);
+    }
+#endif
+
+    struct MzBufferDeleter
+    {
+        void operator()(void *data) const noexcept
+        {
+            if (data != nullptr)
+                mz_free(data);
+        }
+    };
+
+    struct BufferedZipArchive
+    {
+        std::unique_ptr<void, MzBufferDeleter> data;
+        size_t                                  size{0};
+        bool                                    ready{false};
+    };
+
+    static mz_bool add_mem_to_archive(mz_zip_archive *archive, const char *path_in_zip, const void *data,
+                                      size_t size, mz_uint level_and_flags, bool deterministic)
+    {
+#ifndef MINIZ_NO_TIME
+        if (deterministic) {
+            MZ_TIME_T fixed_time = deterministic_zip_timestamp();
+            return mz_zip_writer_add_mem_ex_v2(archive, path_in_zip, data, size, nullptr, 0, level_and_flags,
+                                                0, 0, &fixed_time, nullptr, 0, nullptr, 0);
+        }
+#endif
+        return mz_zip_writer_add_mem(archive, path_in_zip, data, size, level_and_flags);
+    }
+
+    mz_bool _BBS_3MF_Exporter::_add_mem_to_archive(mz_zip_archive *archive, const char *path_in_zip, const void *data,
+                                                    size_t size, mz_uint level_and_flags) const
+    {
+        return add_mem_to_archive(archive, path_in_zip, data, size, level_and_flags, m_deterministic);
+    }
+
     bool _BBS_3MF_Exporter::_add_file_to_archive(mz_zip_archive& archive, const std::string& path_in_zip, const std::string& src_file_path)
     {
         static std::string const nocomp_exts[] = {".png", ".jpg", ".mp4", ".jpeg", ".zip", ".3mf"};
         auto end = nocomp_exts + sizeof(nocomp_exts) / sizeof(nocomp_exts[0]);
         bool nocomp = std::find_if(nocomp_exts, end, [&path_in_zip](auto & ext) { return boost::algorithm::ends_with(path_in_zip, ext); }) != end;
 #if WRITE_ZIP_LANGUAGE_ENCODING
-        bool result = mz_zip_writer_add_file(&archive, path_in_zip.c_str(), encode_path(src_file_path.c_str()).c_str(), NULL, 0, nocomp ? MZ_NO_COMPRESSION : MZ_DEFAULT_LEVEL);
+        bool result;
+#ifndef MINIZ_NO_TIME
+        if (m_deterministic) {
+            MZ_TIME_T fixed_time = deterministic_zip_timestamp();
+            result = mz_zip_writer_add_file_ex_v2(&archive, path_in_zip.c_str(), encode_path(src_file_path.c_str()).c_str(), NULL, 0,
+                nocomp ? MZ_NO_COMPRESSION : MZ_DEFAULT_LEVEL, &fixed_time, NULL, 0, NULL, 0);
+        } else {
+#endif
+            result = mz_zip_writer_add_file(&archive, path_in_zip.c_str(), encode_path(src_file_path.c_str()).c_str(), NULL, 0,
+                nocomp ? MZ_NO_COMPRESSION : MZ_DEFAULT_LEVEL);
+#ifndef MINIZ_NO_TIME
+        }
+#endif
 #else
         std::string native_path = encode_path(path_in_zip.c_str());
         std::string extra = ZipUnicodePathExtraField::encode(path_in_zip, native_path);
-        bool result = mz_zip_writer_add_file_ex(&archive, native_path.c_str(), encode_path(src_file_path.c_str()).c_str(), NULL, 0, nocomp ? MZ_ZIP_FLAG_ASCII_FILENAME : MZ_DEFAULT_COMPRESSION,
+        bool result;
+#ifndef MINIZ_NO_TIME
+        if (m_deterministic) {
+            MZ_TIME_T fixed_time = deterministic_zip_timestamp();
+            result = mz_zip_writer_add_file_ex_v2(&archive, native_path.c_str(), encode_path(src_file_path.c_str()).c_str(), NULL, 0,
+                nocomp ? MZ_ZIP_FLAG_ASCII_FILENAME : MZ_DEFAULT_COMPRESSION, &fixed_time,
                 extra.c_str(), extra.length(), extra.c_str(), extra.length());
+        } else {
+#endif
+            result = mz_zip_writer_add_file_ex(&archive, native_path.c_str(), encode_path(src_file_path.c_str()).c_str(), NULL, 0,
+                nocomp ? MZ_ZIP_FLAG_ASCII_FILENAME : MZ_DEFAULT_COMPRESSION,
+                extra.c_str(), extra.length(), extra.c_str(), extra.length());
+#ifndef MINIZ_NO_TIME
+        }
+#endif
 #endif
         if (!result) {
             add_error("Unable to add file " + src_file_path + " to archive");
@@ -7072,7 +7155,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
 
         std::string out = stream.str();
 
-        if (!mz_zip_writer_add_mem(&archive, CONTENT_TYPES_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+        if (!_add_mem_to_archive(&archive, CONTENT_TYPES_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
             add_error("Unable to add content types file to archive");
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", Unable to add content types file to archive\n");
             return false;
@@ -7089,7 +7172,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         void* png_data = tdefl_write_image_to_png_file_in_memory_ex((const void*)thumbnail_data.pixels.data(), thumbnail_data.width, thumbnail_data.height, 4, &png_size, MZ_DEFAULT_COMPRESSION, 1);
         if (png_data != nullptr) {
             std::string thumbnail_name = (boost::format("%1%_%2%.png")%local_path % (index + 1)).str();
-            res = mz_zip_writer_add_mem(&archive, thumbnail_name.c_str(), (const void*)png_data, png_size, MZ_NO_COMPRESSION);
+            res = _add_mem_to_archive(&archive, thumbnail_name.c_str(), (const void*)png_data, png_size, MZ_NO_COMPRESSION);
             mz_free(png_data);
         }
 
@@ -7134,7 +7217,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             void* small_png_data = tdefl_write_image_to_png_file_in_memory_ex((const void*)small_pixels.data(), PLATE_THUMBNAIL_SMALL_WIDTH, PLATE_THUMBNAIL_SMALL_HEIGHT, 4, &small_png_size, MZ_DEFAULT_COMPRESSION, 1);
             if (png_data != nullptr) {
                 std::string thumbnail_name = (boost::format("%1%_%2%_small.png") % local_path % (index + 1)).str();
-                res = mz_zip_writer_add_mem(&archive, thumbnail_name.c_str(), (const void*)small_png_data, small_png_size, MZ_NO_COMPRESSION);
+                res = _add_mem_to_archive(&archive, thumbnail_name.c_str(), (const void*)small_png_data, small_png_size, MZ_NO_COMPRESSION);
                 mz_free(small_png_data);
             }
 
@@ -7155,7 +7238,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         void* png_data = tdefl_write_image_to_png_file_in_memory_ex((const void*)thumbnail_data.pixels.data(), thumbnail_data.width, thumbnail_data.height, 4, &png_size, MZ_DEFAULT_COMPRESSION, 1);
         if (png_data != nullptr) {
             std::string thumbnail_name = (boost::format(PATTERN_FILE_FORMAT) % (index + 1)).str();
-            res = mz_zip_writer_add_mem(&archive, thumbnail_name.c_str(), (const void*)png_data, png_size, MZ_NO_COMPRESSION);
+            res = _add_mem_to_archive(&archive, thumbnail_name.c_str(), (const void*)png_data, png_size, MZ_NO_COMPRESSION);
             mz_free(png_data);
         }
 
@@ -7175,7 +7258,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         std::string out = j.dump();
 
         std::string json_file_name = (boost::format(PATTERN_CONFIG_FILE_FORMAT) % (index + 1)).str();
-        if (!mz_zip_writer_add_mem(&archive, json_file_name.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+        if (!_add_mem_to_archive(&archive, json_file_name.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
             add_error("Unable to add json file to archive");
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", Unable to add json file to archive\n");
             return false;
@@ -7248,7 +7331,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
 
         std::string out = stream.str();
 
-        if (!mz_zip_writer_add_mem(&archive, from.empty() ? RELATIONSHIPS_FILE.c_str() : from.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+        if (!_add_mem_to_archive(&archive, from.empty() ? RELATIONSHIPS_FILE.c_str() : from.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
             add_error("Unable to add relationships file to archive");
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", Unable to add relationships file to archive\n");
             return false;
@@ -7288,6 +7371,12 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         std::string extra = sub_model ? ZipUnicodePathExtraField::encode(filename, zip_filename) : "";
 #endif
         mz_zip_writer_staged_context context;
+        const MZ_TIME_T *archive_time = nullptr;
+#ifndef MINIZ_NO_TIME
+        MZ_TIME_T fixed_time = deterministic_zip_timestamp();
+        if (m_deterministic)
+            archive_time = &fixed_time;
+#endif
         if (!mz_zip_writer_add_staged_open(&archive, &context, sub_model ? zip_filename.c_str() : MODEL_FILE.c_str(),
             m_zip64 ?
                 // Maximum expected and allowed 3MF file size is 16GiB.
@@ -7297,9 +7386,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 // GH issue #6193.
                 (uint64_t(1) << 32) - 1,
 #if WRITE_ZIP_LANGUAGE_ENCODING
-            nullptr, nullptr, 0, MZ_DEFAULT_LEVEL, nullptr, 0, nullptr, 0)) {
+            archive_time, nullptr, 0, MZ_DEFAULT_LEVEL, nullptr, 0, nullptr, 0)) {
 #else
-            nullptr, nullptr, 0, MZ_DEFAULT_COMPRESSION, extra.c_str(), extra.length(), extra.c_str(), extra.length())) {
+            archive_time, nullptr, 0, MZ_DEFAULT_COMPRESSION, extra.c_str(), extra.length(), extra.c_str(), extra.length())) {
 #endif
             add_error("Unable to add model file to archive");
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", Unable to add model file to archive\n");
@@ -7383,11 +7472,20 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                     metadata_item_map[BBL_REGION_TAG]   = region_code;
                 }
 
-                std::string date = Slic3r::Utils::utc_timestamp(Slic3r::Utils::get_current_time_utc());
-                // keep only the date part of the string
-                date = date.substr(0, 10);
-                metadata_item_map[BBL_CREATION_DATE_TAG] = date;
-                metadata_item_map[BBL_MODIFICATION_TAG]  = date;
+                if (m_deterministic) {
+                    // History exports must not manufacture a new byte stream
+                    // merely because the calendar day changed. Preserve dates
+                    // already owned by the model, and use a stable value only
+                    // when an unsaved model has never had either field.
+                    metadata_item_map.try_emplace(BBL_CREATION_DATE_TAG, "2000-01-01");
+                    metadata_item_map.try_emplace(BBL_MODIFICATION_TAG, "2000-01-01");
+                } else {
+                    std::string date = Slic3r::Utils::utc_timestamp(Slic3r::Utils::get_current_time_utc());
+                    // keep only the date part of the string
+                    date = date.substr(0, 10);
+                    metadata_item_map[BBL_CREATION_DATE_TAG] = date;
+                    metadata_item_map[BBL_MODIFICATION_TAG]  = date;
+                }
                 metadata_item_map[BBL_APPLICATION_TAG]   = (boost::format("%1%-%2%") % SLIC3R_APP_KEY % SLIC3R_VERSION).str();
             }
             metadata_item_map[BBS_3MF_VERSION] = std::to_string(VERSION_BBS_3MF);
@@ -7574,31 +7672,82 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         _add_relationships_file_to_archive(archive, MODEL_RELS_FILE, object_paths, {"http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"});
 
         if (!m_from_backup_save) {
-            boost::mutex mutex;
-            tbb::parallel_for(tbb::blocked_range<size_t>(0, objects_data.size(), 1), [this, &mutex, &model, objects = model.objects, &objects_data, &object_paths, main = &archive, project](const tbb::blocked_range<size_t>& range) {
-                for (size_t i = range.begin(); i < range.end(); ++i) {
-                    auto iter = objects_data.find(objects[i]);
-                    ObjectToObjectDataMap objects_data2;
-                    objects_data2.insert(*iter);
-                    auto & object = *iter->second.object;
-                    mz_zip_archive archive;
-                    mz_zip_zero_struct(&archive);
-                    mz_zip_writer_init_heap(&archive, 0, 1024 * 1024);
-                    CNumericLocalesSetter locales_setter;
-                    _add_model_file_to_archive(object_paths[i], archive, model, objects_data2, nullptr, project);
-                    iter->second = objects_data2.begin()->second;
-                    void *ppBuf; size_t pSize;
-                    mz_zip_writer_finalize_heap_archive(&archive, &ppBuf, &pSize);
-                    mz_zip_writer_end(&archive);
-                    mz_zip_zero_struct(&archive);
-                    mz_zip_reader_init_mem(&archive, ppBuf, pSize, 0);
-                    {
-                        boost::unique_lock l(mutex);
-                        mz_zip_writer_add_from_zip_reader(main, &archive, 0);
+            const std::vector<ModelObject *> objects = model.objects;
+            if (m_deterministic) {
+                std::vector<BufferedZipArchive> submodels(objects.size());
+                tbb::parallel_for(tbb::blocked_range<size_t>(0, objects.size(), 1),
+                    [this, &model, &objects, &objects_data, &object_paths, &submodels, project](const tbb::blocked_range<size_t>& range) {
+                        for (size_t i = range.begin(); i < range.end(); ++i) {
+                            auto iter = objects_data.find(objects[i]);
+                            if (iter == objects_data.end())
+                                continue;
+                            ObjectToObjectDataMap objects_data2;
+                            objects_data2.insert(*iter);
+                            mz_zip_archive subarchive;
+                            mz_zip_zero_struct(&subarchive);
+                            if (!mz_zip_writer_init_heap(&subarchive, 0, 1024 * 1024))
+                                continue;
+                            CNumericLocalesSetter locales_setter;
+                            const bool serialized = _add_model_file_to_archive(
+                                object_paths[i], subarchive, model, objects_data2, nullptr, project);
+                            iter->second = objects_data2.begin()->second;
+                            void *buffer = nullptr;
+                            if (serialized && mz_zip_writer_finalize_heap_archive(
+                                    &subarchive, &buffer, &submodels[i].size)) {
+                                submodels[i].data.reset(buffer);
+                                submodels[i].ready = true;
+                            }
+                            mz_zip_writer_end(&subarchive);
+                        }
+                    });
+
+                bool appended = true;
+                for (BufferedZipArchive &submodel : submodels) {
+                    if (!submodel.ready) {
+                        appended = false;
+                        continue;
                     }
-                    mz_zip_reader_end(&archive);
+                    mz_zip_archive reader;
+                    mz_zip_zero_struct(&reader);
+                    if (!mz_zip_reader_init_mem(&reader, submodel.data.get(), submodel.size, 0)) {
+                        appended = false;
+                    } else {
+                        appended = mz_zip_writer_add_from_zip_reader(&archive, &reader, 0) && appended;
+                        mz_zip_reader_end(&reader);
+                    }
+                    submodel.data.reset();
                 }
-            });
+                if (!appended) {
+                    add_error("Unable to add deterministic object archive");
+                    return false;
+                }
+            } else {
+                boost::mutex mutex;
+                tbb::parallel_for(tbb::blocked_range<size_t>(0, objects.size(), 1), [this, &mutex, &model, &objects, &objects_data, &object_paths, main = &archive, project](const tbb::blocked_range<size_t>& range) {
+                    for (size_t i = range.begin(); i < range.end(); ++i) {
+                        auto iter = objects_data.find(objects[i]);
+                        ObjectToObjectDataMap objects_data2;
+                        objects_data2.insert(*iter);
+                        mz_zip_archive subarchive;
+                        mz_zip_zero_struct(&subarchive);
+                        mz_zip_writer_init_heap(&subarchive, 0, 1024 * 1024);
+                        CNumericLocalesSetter locales_setter;
+                        _add_model_file_to_archive(object_paths[i], subarchive, model, objects_data2, nullptr, project);
+                        iter->second = objects_data2.begin()->second;
+                        void *ppBuf; size_t pSize;
+                        mz_zip_writer_finalize_heap_archive(&subarchive, &ppBuf, &pSize);
+                        mz_zip_writer_end(&subarchive);
+                        mz_zip_zero_struct(&subarchive);
+                        mz_zip_reader_init_mem(&subarchive, ppBuf, pSize, 0);
+                        {
+                            boost::unique_lock l(mutex);
+                            mz_zip_writer_add_from_zip_reader(main, &subarchive, 0);
+                        }
+                        mz_zip_reader_end(&subarchive);
+                        mz_free(ppBuf);
+                    }
+                });
+            }
         }
 
         return true;
@@ -7993,7 +8142,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         }
 
         if (!out.empty()) {
-            if (!mz_zip_writer_add_mem(&archive, BBS_LAYER_HEIGHTS_PROFILE_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+            if (!_add_mem_to_archive(&archive, BBS_LAYER_HEIGHTS_PROFILE_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
                 add_error("Unable to add layer heights profile file to archive");
                 BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format("Unable to add layer heights profile file to archive\n");
                 return false;
@@ -8052,7 +8201,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         }
 
         if (!out.empty()) {
-            if (!mz_zip_writer_add_mem(&archive, LAYER_CONFIG_RANGES_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+            if (!_add_mem_to_archive(&archive, LAYER_CONFIG_RANGES_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
                 add_error("Unable to add layer heights profile file to archive");
                 BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format("Unable to add layer heights profile file to archive\n");
                 return false;
@@ -8088,7 +8237,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             // Adds version header at the beginning:
             out = std::string("brim_points_format_version=") + std::to_string(brim_points_format_version) + std::string("\n") + out;
 
-            if (!mz_zip_writer_add_mem(&archive, BRIM_EAR_POINTS_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+            if (!_add_mem_to_archive(&archive, BRIM_EAR_POINTS_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
                 add_error("Unable to add brim ear points file to archive");
                 return false;
             }
@@ -8124,7 +8273,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             // Adds version header at the beginning:
             //out = std::string("support_points_format_version=") + std::to_string(support_points_format_version) + std::string("\n") + out;
 
-            if (!mz_zip_writer_add_mem(&archive, SLA_SUPPORT_POINTS_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+            if (!_add_mem_to_archive(&archive, SLA_SUPPORT_POINTS_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
                 add_error("Unable to add sla support points file to archive");
                 BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format("Unable to add sla support points file to archive\n");
                 return false;
@@ -8176,7 +8325,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             // Adds version header at the beginning:
             //out = std::string("drain_holes_format_version=") + std::to_string(drain_holes_format_version) + std::string("\n") + out;
 
-            if (!mz_zip_writer_add_mem(&archive, SLA_DRAIN_HOLES_FILE.c_str(), static_cast<const void*>(out.data()), out.length(), mz_uint(MZ_DEFAULT_COMPRESSION))) {
+            if (!_add_mem_to_archive(&archive, SLA_DRAIN_HOLES_FILE.c_str(), static_cast<const void*>(out.data()), out.length(), mz_uint(MZ_DEFAULT_COMPRESSION))) {
                 add_error("Unable to add sla support points file to archive");
                 BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format("Unable to add sla support points file to archive\n");
                 return false;
@@ -8197,7 +8346,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 out += "; " + key + " = " + config.opt_serialize(key) + "\n";
 
         if (!out.empty()) {
-            if (!mz_zip_writer_add_mem(&archive, BBS_PRINT_CONFIG_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+            if (!_add_mem_to_archive(&archive, BBS_PRINT_CONFIG_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
                 add_error("Unable to add print config file to archive");
                 BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format("Unable to add print config file to archive\n");
                 return false;
@@ -8341,7 +8490,11 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         stream << "<" << CONFIG_TAG << ">\n";
 
         if (!m_skip_model)
-        for (const ObjectToObjectDataMap::value_type& obj_metadata : objects_data) {
+        for (const ModelObject *model_object : model.objects) {
+            const auto object_it = objects_data.find(model_object);
+            if (object_it == objects_data.end())
+                continue;
+            const ObjectToObjectDataMap::value_type &obj_metadata = *object_it;
             auto object_data = obj_metadata.second;
             const ModelObject *obj = object_data.object;
             if (obj != nullptr) {
@@ -8440,7 +8593,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                             }
 
                             if (const std::optional<EmbossShape> &es = volume->emboss_shape; es.has_value()) {
-                                to_xml(stream, *es, *volume, archive, m_fullpath_sources);
+                                to_xml(stream, *es, *volume, archive, m_fullpath_sources, m_deterministic);
                             }
 
                             const TextInfo &text_info = volume->get_text_info();
@@ -8641,7 +8794,11 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         if (!m_skip_model) {
         //BBS: store assemble related info
         stream << "  <" << ASSEMBLE_TAG << ">\n";
-        for (const ObjectToObjectDataMap::value_type& obj_metadata : objects_data) {
+        for (const ModelObject *model_object : model.objects) {
+            const auto object_it = objects_data.find(model_object);
+            if (object_it == objects_data.end())
+                continue;
+            const ObjectToObjectDataMap::value_type &obj_metadata = *object_it;
             auto object_data = obj_metadata.second;
             const ModelObject* obj = object_data.object;
             if (obj != nullptr) {
@@ -8691,7 +8848,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         stream << "</" << CONFIG_TAG << ">\n";
 
         std::string out = stream.str();
-        if (!mz_zip_writer_add_mem(&archive, BBS_MODEL_CONFIG_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+        if (!_add_mem_to_archive(&archive, BBS_MODEL_CONFIG_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format("Unable to add model config file to archive\n");
             add_error("Unable to add model config file to archive");
             return false;
@@ -8754,7 +8911,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         }
 
         if (!out.empty()) {
-            if (!mz_zip_writer_add_mem(&archive, CUT_INFORMATION_FILE.c_str(), (const void *) out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+            if (!_add_mem_to_archive(&archive, CUT_INFORMATION_FILE.c_str(), (const void *) out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
                 add_error("Unable to add cut information file to archive");
                 return false;
             }
@@ -9015,7 +9172,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
 
         std::string out = stream.str();
 
-        if (!mz_zip_writer_add_mem(&archive, SLICE_INFO_CONFIG_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+        if (!_add_mem_to_archive(&archive, SLICE_INFO_CONFIG_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
             add_error("Unable to add model config file to archive");
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store  slice-info to 3mf,  length %1%, failed\n") % out.length();
             return false;
@@ -9043,47 +9200,106 @@ bool _BBS_3MF_Exporter::_add_gcode_file_to_archive(mz_zip_archive& archive, cons
         }
     }
 
-    boost::mutex mutex;
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, plate_data_list2.size(), 1), [this, &plate_data_list2, &root_archive = archive, &mutex, &result](const tbb::blocked_range<size_t>& range) {
-        for (int i = range.begin(); i < range.end(); ++i) {
-            PlateData* plate_data = plate_data_list2[i];
-            auto src_gcode_file = plate_data->gcode_file;
-            std::string gcode_in_3mf = (boost::format(GCODE_FILE_FORMAT) % (plate_data->plate_index + 1)).str();
-
-            plate_data->gcode_file = gcode_in_3mf;
-            mz_zip_archive archive;
-            mz_zip_writer_staged_context context;
-            mz_zip_zero_struct(&archive);
-            mz_zip_writer_init_heap(&archive, 0, 1024 * 1024);
-            {
-                mz_zip_writer_add_staged_open(&archive, &context, gcode_in_3mf.c_str(), m_zip64 ? (uint64_t(1) << 30) * 16 : (uint64_t(1) << 32) - 1, nullptr, nullptr, 0,
-                    MZ_DEFAULT_COMPRESSION, nullptr, 0, nullptr, 0);
-                boost::filesystem::path src_gcode_path(src_gcode_file);
-                if (!boost::filesystem::exists(src_gcode_path)) {
-                    BOOST_LOG_TRIVIAL(error) << "Gcode is missing, filename = " << PathSanitizer::sanitize(src_gcode_file);
-                    result = false;
-                }
-                boost::filesystem::ifstream ifs(src_gcode_file, std::ios::binary);
-                std::string buf(64 * 1024, 0);
-                while (ifs) {
-                    ifs.read(buf.data(), buf.size());
-                    mz_zip_writer_add_staged_data(&context, buf.data(), ifs.gcount());
-                }
-                mz_zip_writer_add_staged_finish(&context);
-            }
-            void *ppBuf; size_t pSize;
-            mz_zip_writer_finalize_heap_archive(&archive, &ppBuf, &pSize);
-            mz_zip_writer_end(&archive);
-            mz_zip_zero_struct(&archive);
-            mz_zip_reader_init_mem(&archive, ppBuf, pSize, 0);
-            {
-                boost::unique_lock l(mutex);
-                mz_zip_writer_add_from_zip_reader(&root_archive, &archive, 0);
-            }
-            mz_zip_reader_end(&archive);
-            BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store  %1% to 3mf %2%\n") % PathSanitizer::sanitize(src_gcode_file) % PathSanitizer::sanitize(gcode_in_3mf);
+    auto serialize_gcode = [this](PlateData *plate_data, BufferedZipArchive &buffer) {
+        const std::string src_gcode_file = plate_data->gcode_file;
+        const std::string gcode_in_3mf = (boost::format(GCODE_FILE_FORMAT) % (plate_data->plate_index + 1)).str();
+        if (!boost::filesystem::exists(boost::filesystem::path(src_gcode_file))) {
+            BOOST_LOG_TRIVIAL(error) << "Gcode is missing, filename = " << PathSanitizer::sanitize(src_gcode_file);
+            return false;
         }
-    });
+        boost::filesystem::ifstream input(src_gcode_file, std::ios::binary);
+        if (!input)
+            return false;
+
+        plate_data->gcode_file = gcode_in_3mf;
+        mz_zip_archive subarchive;
+        mz_zip_zero_struct(&subarchive);
+        if (!mz_zip_writer_init_heap(&subarchive, 0, 1024 * 1024))
+            return false;
+
+        bool serialized = false;
+        do {
+            mz_zip_writer_staged_context context;
+            const MZ_TIME_T *archive_time = nullptr;
+#ifndef MINIZ_NO_TIME
+            MZ_TIME_T fixed_time = deterministic_zip_timestamp();
+            if (m_deterministic)
+                archive_time = &fixed_time;
+#endif
+            if (!mz_zip_writer_add_staged_open(&subarchive, &context, gcode_in_3mf.c_str(),
+                    m_zip64 ? (uint64_t(1) << 30) * 16 : (uint64_t(1) << 32) - 1,
+                    archive_time, nullptr, 0, MZ_DEFAULT_COMPRESSION, nullptr, 0, nullptr, 0))
+                break;
+
+            std::string bytes(64 * 1024, 0);
+            bool write_ok = true;
+            while (input) {
+                input.read(bytes.data(), bytes.size());
+                const std::streamsize count = input.gcount();
+                if (count > 0 && !mz_zip_writer_add_staged_data(&context, bytes.data(), static_cast<size_t>(count))) {
+                    write_ok = false;
+                    break;
+                }
+            }
+            if (!write_ok || (!input.eof() && input.fail()) || !mz_zip_writer_add_staged_finish(&context))
+                break;
+
+            void *data = nullptr;
+            if (!mz_zip_writer_finalize_heap_archive(&subarchive, &data, &buffer.size))
+                break;
+            buffer.data.reset(data);
+            buffer.ready = true;
+            serialized = true;
+        } while (false);
+
+        mz_zip_writer_end(&subarchive);
+        if (serialized)
+            BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ":" << __LINE__
+                                    << boost::format(", store %1% to 3mf %2%\n")
+                                           % PathSanitizer::sanitize(src_gcode_file) % PathSanitizer::sanitize(gcode_in_3mf);
+        return serialized;
+    };
+
+    auto append_gcode = [&archive](BufferedZipArchive &buffer) {
+        if (!buffer.ready || buffer.data == nullptr)
+            return false;
+        mz_zip_archive reader;
+        mz_zip_zero_struct(&reader);
+        bool appended = false;
+        if (mz_zip_reader_init_mem(&reader, buffer.data.get(), buffer.size, 0)) {
+            appended = mz_zip_writer_add_from_zip_reader(&archive, &reader, 0);
+            mz_zip_reader_end(&reader);
+        }
+        buffer.data.reset();
+        buffer.ready = false;
+        return appended;
+    };
+
+    if (m_deterministic) {
+        std::vector<BufferedZipArchive> gcode_archives(plate_data_list2.size());
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, plate_data_list2.size(), 1),
+            [&plate_data_list2, &gcode_archives, &serialize_gcode](const tbb::blocked_range<size_t>& range) {
+                for (size_t i = range.begin(); i < range.end(); ++i)
+                    serialize_gcode(plate_data_list2[i], gcode_archives[i]);
+            });
+        for (BufferedZipArchive &gcode_archive : gcode_archives)
+            result = append_gcode(gcode_archive) && result;
+    } else {
+        boost::mutex mutex;
+        std::vector<unsigned char> completed(plate_data_list2.size(), 0);
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, plate_data_list2.size(), 1),
+            [&plate_data_list2, &completed, &serialize_gcode, &append_gcode, &mutex](const tbb::blocked_range<size_t>& range) {
+                for (size_t i = range.begin(); i < range.end(); ++i) {
+                    BufferedZipArchive gcode_archive;
+                    if (!serialize_gcode(plate_data_list2[i], gcode_archive))
+                        continue;
+                    boost::unique_lock lock(mutex);
+                    completed[i] = append_gcode(gcode_archive) ? 1 : 0;
+                }
+            });
+        for (unsigned char item_completed : completed)
+            result = item_completed != 0 && result;
+    }
     return result;
 }
 
@@ -9134,7 +9350,7 @@ bool _BBS_3MF_Exporter::_add_custom_gcode_per_print_z_file_to_archive(mz_zip_arc
     }
 
     if (!out.empty()) {
-        if (!mz_zip_writer_add_mem(&archive, CUSTOM_GCODE_PER_PRINT_Z_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
+        if (!_add_mem_to_archive(&archive, CUSTOM_GCODE_PER_PRINT_Z_FILE.c_str(), (const void*)out.data(), out.length(), MZ_DEFAULT_COMPRESSION)) {
             add_error("Unable to add custom Gcodes per print_z file to archive");
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", Unable to add custom Gcodes per print_z file to archive\n");
             return false;
@@ -9160,10 +9376,11 @@ bool _BBS_3MF_Exporter::_add_auxiliary_dir_to_archive(mz_zip_archive &archive, c
         return result;
     }
 
-    static std::string const nocomp_exts[] = {".png", ".jpg", ".mp4", ".jpeg"};
     std::deque<boost::filesystem::path> directories({dir});
+    std::vector<std::pair<std::string, std::string>> files;
     int root_dir_len = dir.string().length() + 1;
-    //boost file access
+    // Collect before writing so filesystem enumeration order cannot alter the
+    // archive byte stream (or Git duplicate suppression).
     while (!directories.empty()) {
         boost::system::error_code ec;
         boost::filesystem::directory_iterator iterator(directories.front(), ec);
@@ -9173,8 +9390,6 @@ bool _BBS_3MF_Exporter::_add_auxiliary_dir_to_archive(mz_zip_archive &archive, c
         {
             if (ec) break;
             auto dir_entry = *iterator;
-            std::string src_file;
-            std::string dst_in_3mf;
             if (boost::filesystem::is_directory(dir_entry.path(), ec))
             {
                 directories.push_back(dir_entry.path());
@@ -9182,21 +9397,27 @@ bool _BBS_3MF_Exporter::_add_auxiliary_dir_to_archive(mz_zip_archive &archive, c
             }
             if (boost::filesystem::is_regular_file(dir_entry.path(), ec) && !m_skip_auxiliary)
             {
-                src_file = dir_entry.path().string();
-                dst_in_3mf = dir_entry.path().string();
+                std::string src_file   = dir_entry.path().string();
+                std::string dst_in_3mf = src_file;
                 dst_in_3mf.replace(0, root_dir_len, AUXILIARY_DIR);
                 std::replace(dst_in_3mf.begin(), dst_in_3mf.end(), '\\', '/');
-                if (_3MF_COVER_FILE.compare(1, _3MF_COVER_FILE.length() - 1, dst_in_3mf) == 0) {
-                    data._3mf_thumbnail = dst_in_3mf;
-                } else if (!m_thumbnail_small.empty() && m_thumbnail_small.compare(1, m_thumbnail_small.length() - 1, dst_in_3mf) == 0) {
-                    data._3mf_printer_thumbnail_small = dst_in_3mf;
-                    if (m_thumbnail_middle == m_thumbnail_small) data._3mf_printer_thumbnail_middle = dst_in_3mf;
-                } else if (!m_thumbnail_middle.empty() && m_thumbnail_middle.compare(1, m_thumbnail_middle.length() - 1, dst_in_3mf) == 0) {
-                    data._3mf_printer_thumbnail_middle = dst_in_3mf;
-                }
-                result &= _add_file_to_archive(archive, dst_in_3mf, src_file);
+                files.emplace_back(std::move(dst_in_3mf), std::move(src_file));
             }
         }
+    }
+
+    std::sort(files.begin(), files.end(), [](const auto &left, const auto &right) { return left.first < right.first; });
+    for (const auto &[dst_in_3mf, src_file] : files) {
+        if (_3MF_COVER_FILE.compare(1, _3MF_COVER_FILE.length() - 1, dst_in_3mf) == 0) {
+            data._3mf_thumbnail = dst_in_3mf;
+        } else if (!m_thumbnail_small.empty() && m_thumbnail_small.compare(1, m_thumbnail_small.length() - 1, dst_in_3mf) == 0) {
+            data._3mf_printer_thumbnail_small = dst_in_3mf;
+            if (m_thumbnail_middle == m_thumbnail_small)
+                data._3mf_printer_thumbnail_middle = dst_in_3mf;
+        } else if (!m_thumbnail_middle.empty() && m_thumbnail_middle.compare(1, m_thumbnail_middle.length() - 1, dst_in_3mf) == 0) {
+            data._3mf_printer_thumbnail_middle = dst_in_3mf;
+        }
+        result &= _add_file_to_archive(archive, dst_in_3mf, src_file);
     }
 
     return result;
@@ -9235,7 +9456,7 @@ bool _BBS_3MF_Exporter::_add_filament_sequence_file_to_archive(mz_zip_archive& a
 
     sequence_str = j.dump();
 
-    if(!mz_zip_writer_add_mem(&archive, FILAMENT_SEQUENCE_FILE.c_str(), sequence_str.c_str(), sequence_str.size(), MZ_DEFAULT_COMPRESSION)){
+    if(!_add_mem_to_archive(&archive, FILAMENT_SEQUENCE_FILE.c_str(), sequence_str.c_str(), sequence_str.size(), MZ_DEFAULT_COMPRESSION)){
         add_error("Unable to add model config file to archive");
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store  slice-info to 3mf,  length %1%, failed\n") % sequence_str.length();
         return false;
@@ -9251,7 +9472,7 @@ bool _BBS_3MF_Exporter::_add_assembly_tree_file_to_archive(mz_zip_archive& archi
         return true;
 
     const std::string tree_str = tree.to_json_string();
-    if (!mz_zip_writer_add_mem(&archive, ASSEMBLY_TREE_FILE.c_str(), tree_str.c_str(), tree_str.size(), MZ_DEFAULT_COMPRESSION)) {
+    if (!_add_mem_to_archive(&archive, ASSEMBLY_TREE_FILE.c_str(), tree_str.c_str(), tree_str.size(), MZ_DEFAULT_COMPRESSION)) {
         add_error("Unable to add assembly tree file to archive");
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store assembly tree to 3mf, length %1%, failed\n") % tree_str.length();
         return false;
@@ -9264,7 +9485,7 @@ bool _BBS_3MF_Exporter::_add_assembly_stpes_json_file_to_archive(mz_zip_archive 
     const std::string& steps_json_str = model.get_assembly_steps_json_str();
     if (steps_json_str.empty())
         return true;
-    if (!mz_zip_writer_add_mem(&archive, ASSEMBLY_STEP_JSON_FILE.c_str(), steps_json_str.c_str(), steps_json_str.size(),
+    if (!_add_mem_to_archive(&archive, ASSEMBLY_STEP_JSON_FILE.c_str(), steps_json_str.c_str(), steps_json_str.size(),
                                MZ_DEFAULT_COMPRESSION)) {
         add_error("Unable to add assembly.json to archive");
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store assembly.json to 3mf, length %1%, failed\n") % steps_json_str.size();
@@ -9280,7 +9501,7 @@ bool _BBS_3MF_Exporter::_add_assembly_model_file_to_archive(mz_zip_archive &arch
     const std::string &assembly_model_json_str = model.get_assembly_model_json_str();
     if (assembly_model_json_str.empty())
         return true;
-    if (!mz_zip_writer_add_mem(&archive, ASSEMBLY_MODEL_FILE.c_str(), assembly_model_json_str.c_str(), assembly_model_json_str.size(),
+    if (!_add_mem_to_archive(&archive, ASSEMBLY_MODEL_FILE.c_str(), assembly_model_json_str.c_str(), assembly_model_json_str.size(),
                                MZ_DEFAULT_COMPRESSION)) {
         add_error("Unable to add assembly_model.json to archive");
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ":" << __LINE__ << boost::format(", store assembly_model.json to 3mf, length %1%, failed\n") % assembly_model_json_str.size();
@@ -9506,7 +9727,13 @@ private:
 
     ~_BBS_Backup_Manager() {
         push_task({Exit});
-        m_thread.join();
+        // Joining at static-destruction time can deadlock on Windows when the
+        // worker never re-acquires the CRT/loader machinery it needs to exit
+        // (observed as a ctest hang after all assertions passed). Bound the
+        // wait and detach as a last resort: the process is exiting anyway and
+        // every pending task beyond Exit is best-effort backup work.
+        if (!m_thread.try_join_for(boost::chrono::seconds(10)))
+            m_thread.detach();
     }
 
     void push_task(Task const & t) {
@@ -9822,16 +10049,47 @@ bool has_restore_data(std::string & path, std::string& origin)
         return false;
     }
     if (boost::filesystem::exists(path + "/lock.txt")) {
-        std::string pid;
-        load_string_file(path + "/lock.txt", pid);
+        // load_string_file() throws if the lock file cannot be read - including when it
+        // is deleted between the exists() check above and the read below. It used to sit
+        // outside the try, so that exception escaped has_restore_data() into the
+        // EVT_RESTORE_PROJECT handler, where an unhandled throw takes the whole app down
+        // at startup instead of merely skipping recovery.
         try {
-            if (get_process_name(boost::lexical_cast<int>(pid)) ==
-                get_process_name(0)) {
+            std::string pid;
+            load_string_file(path + "/lock.txt", pid);
+            const int         lock_pid = boost::lexical_cast<int>(pid);
+            const std::string owner    = get_process_name(lock_pid);
+            const std::string self     = get_process_name(0);
+            // Two guards, both of which used to be missing:
+            //  - An empty name means "could not be determined". It must never compare
+            //    equal to anything, or two failed lookups would read as a live owner and
+            //    silently suppress recovery.
+            //  - Windows reuses freed pids, and relaunching right after a crash can hand
+            //    this instance the crashed one's pid. The process asking the question is
+            //    definitionally not the instance that wrote the lock, so a matching name
+            //    on our own pid is reuse, not a live owner.
+            if (!owner.empty() && lock_pid != static_cast<int>(get_current_pid()) &&
+                owner == self) {
                 origin = "<lock>";
                 return false;
             }
         }
+        // Declining is the safe answer - an unreadable lock cannot prove the owning
+        // instance is gone, and racing a live one over the same backup is worse than not
+        // offering recovery. But it must not be silent: this is exactly the "the restore
+        // prompt never appeared" report that is impossible to diagnose after the fact.
+        catch (const std::exception &ex) {
+            BOOST_LOG_TRIVIAL(warning)
+                << "has_restore_data: cannot evaluate lock.txt in "
+                << PathSanitizer::sanitize(path) << ", declining restore: " << ex.what();
+            origin = "<lock>";
+            return false;
+        }
         catch (...) {
+            BOOST_LOG_TRIVIAL(warning)
+                << "has_restore_data: cannot evaluate lock.txt in "
+                << PathSanitizer::sanitize(path) << ", declining restore";
+            origin = "<lock>";
             return false;
         }
     }
@@ -9939,7 +10197,8 @@ Transform3d create_fix(const std::optional<Transform3d> &prev, const ModelVolume
     return *prev * fix_trmat;
 }
 
-bool to_xml(std::stringstream &stream, const EmbossShape::SvgFile &svg, const ModelVolume &volume, mz_zip_archive &archive, bool export_full_path)
+bool to_xml(std::stringstream &stream, const EmbossShape::SvgFile &svg, const ModelVolume &volume, mz_zip_archive &archive,
+            bool export_full_path, bool deterministic)
 {
     if (svg.path_in_3mf.empty())
         return true; // EmbossedText OR unwanted store .svg file into .3mf (protection of copyRight)
@@ -9960,16 +10219,18 @@ bool to_xml(std::stringstream &stream, const EmbossShape::SvgFile &svg, const Mo
     }
     const std::string &file_data_str = *file_data;
 
-    return mz_zip_writer_add_mem(&archive, svg.path_in_3mf.c_str(), (const void *) file_data_str.c_str(), file_data_str.size(), MZ_DEFAULT_COMPRESSION);
+    return add_mem_to_archive(&archive, svg.path_in_3mf.c_str(), (const void *) file_data_str.c_str(), file_data_str.size(),
+                              MZ_DEFAULT_COMPRESSION, deterministic);
 }
 
 } // namespace
 
-void to_xml(std::stringstream &stream, const EmbossShape &es, const ModelVolume &volume, mz_zip_archive &archive, bool export_full_path)
+void to_xml(std::stringstream &stream, const EmbossShape &es, const ModelVolume &volume, mz_zip_archive &archive,
+            bool export_full_path, bool deterministic)
 {
     stream << "      <" << SHAPE_TAG << " ";
     if (es.svg_file.has_value())
-        if (!to_xml(stream, *es.svg_file, volume, archive, export_full_path)) {
+        if (!to_xml(stream, *es.svg_file, volume, archive, export_full_path, deterministic)) {
             BOOST_LOG_TRIVIAL(warning) << "Can't write svg file defiden embossed shape into 3mf";
         }
 

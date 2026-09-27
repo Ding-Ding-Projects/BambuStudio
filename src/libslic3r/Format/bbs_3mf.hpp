@@ -173,6 +173,16 @@ enum class SaveStrategy
     SkipAuxiliary       = 1 << 9,
     UseLoadedId         = 1 << 10,
     ShareMesh           = 1 << 11,
+    // Normalize archive entry times and generated project dates so two
+    // unchanged automatic snapshots serialize to the same byte stream.
+    // Bit 12 is the legacy marker embedded in SplitModel; keep this flag on
+    // an independent bit so normal SplitModel/Backup exports are unchanged.
+    Deterministic       = 1 << 14,
+    // Project-history snapshots are complete project archives, but do not
+    // need presentation thumbnails. Skipping their GL-backed generation
+    // keeps automatic history capture deterministic and inexpensive while
+    // retaining the model, presets, plate data, and project metadata.
+    SkipThumbnails      = 1 << 13,
 
     SplitModel = 0x1000 | ProductionExt,
     Encrypted  = SecureContentExt | SplitModel,

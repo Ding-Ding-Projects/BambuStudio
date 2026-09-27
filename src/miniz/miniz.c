@@ -7040,18 +7040,28 @@ mz_bool mz_zip_writer_add_file(mz_zip_archive *pZip, const char *pArchive_name, 
 mz_bool mz_zip_writer_add_file_ex(mz_zip_archive *pZip, const char *pArchive_name, const char *pSrc_filename, const void *pComment, mz_uint16 comment_size, mz_uint level_and_flags, 
     const char *user_extra_data, mz_uint user_extra_data_len, const char *user_extra_data_central, mz_uint user_extra_data_central_len)
 {
+    return mz_zip_writer_add_file_ex_v2(pZip, pArchive_name, pSrc_filename, pComment, comment_size, level_and_flags,
+        NULL, user_extra_data, user_extra_data_len, user_extra_data_central, user_extra_data_central_len);
+}
+
+mz_bool mz_zip_writer_add_file_ex_v2(mz_zip_archive *pZip, const char *pArchive_name, const char *pSrc_filename, const void *pComment, mz_uint16 comment_size, mz_uint level_and_flags,
+    const MZ_TIME_T *pFile_time_override, const char *user_extra_data, mz_uint user_extra_data_len, const char *user_extra_data_central, mz_uint user_extra_data_central_len)
+{
     MZ_FILE *pSrc_file = NULL;
     mz_uint64 uncomp_size = 0;
     MZ_TIME_T file_modified_time;
-    MZ_TIME_T *pFile_time = NULL;
+    const MZ_TIME_T *pFile_time = pFile_time_override;
     mz_bool status;
 
     memset(&file_modified_time, 0, sizeof(file_modified_time));
 
 #if !defined(MINIZ_NO_TIME) && !defined(MINIZ_NO_STDIO)
-    pFile_time = &file_modified_time;
-    if (!mz_zip_get_file_modified_time(pSrc_filename, &file_modified_time))
-        return mz_zip_set_error(pZip, MZ_ZIP_FILE_STAT_FAILED);
+    if (pFile_time == NULL)
+    {
+        pFile_time = &file_modified_time;
+        if (!mz_zip_get_file_modified_time(pSrc_filename, &file_modified_time))
+            return mz_zip_set_error(pZip, MZ_ZIP_FILE_STAT_FAILED);
+    }
 #endif
 
     pSrc_file = MZ_FOPEN(pSrc_filename, "rb");
