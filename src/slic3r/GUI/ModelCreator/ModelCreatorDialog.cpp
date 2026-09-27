@@ -174,7 +174,7 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
     SetMinSize(wxSize(650, 720));
     SetSize(wxSize(720, 780));
     m_loading_history = true;
-    m_status->SetValue(_L("Loading ..."));
+    m_status->SetValue(_L("Loading versions..."));
     update_controls();
     m_history_worker = std::thread([this, alive = m_alive, workspace = local_workspace()] {
         std::vector<Revision> revisions;
