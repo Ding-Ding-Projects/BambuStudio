@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import json
-import os
+import ntpath
+import re
 import subprocess
 from datetime import datetime, timezone
-from pathlib import Path
 
 
 _QUERY = r'''Get-CimInstance Win32_Process -Filter "Name = 'bambu-studio.exe'" |
@@ -39,13 +39,16 @@ def owned_process_inventory(processes: list[dict], *, exe: str, datadir: str,
     """Identify live original and direct-child processes independently of HWNDs."""
     if launched_at is None or launch_pid is None:
         return []
-    exe_path = os.path.normcase(os.path.normpath(str(Path(exe).resolve())))
-    profile_path = os.path.normcase(os.path.normpath(str(Path(datadir).resolve())))
+    # The launch command contains the spelling supplied by the caller. A
+    # hosted temp directory may be a junction, so Path.resolve() can change
+    # that spelling even when the command still addresses the same profile.
+    exe_path = ntpath.normcase(ntpath.abspath(exe))
+    profile_path = ntpath.normcase(ntpath.abspath(datadir))
     owned = []
     for process in processes:
         try:
             pid = int(process["ProcessId"])
-            image = os.path.normcase(os.path.normpath(str(Path(process["ExecutablePath"]).resolve())))
+            image = ntpath.normcase(ntpath.abspath(str(process["ExecutablePath"])))
             command = str(process["CommandLine"] or "")
             created = _created_at(process.get("CreationDate"))
         except (KeyError, TypeError, ValueError, OSError):
@@ -55,8 +58,14 @@ def owned_process_inventory(processes: list[dict], *, exe: str, datadir: str,
         if created < launched_at:
             continue
         # Even the original PID must retain the isolated profile in its command line.
-        normalized_command = os.path.normcase(command.replace("/", "\\"))
-        if f'--datadir "{profile_path}"' not in normalized_command:
+        # Count every switch occurrence first. A valid quoted value followed
+        # by an unquoted or malformed second switch is still ambiguous.
+        switches = re.findall(r'(?:^|\s)--datadir(?=\s|=|$)',
+                              command, flags=re.IGNORECASE)
+        profile_args = re.findall(r'(?:^|\s)--datadir\s+"([^"]+)"(?=\s|$)',
+                                  command, flags=re.IGNORECASE)
+        if (len(switches) != 1 or len(profile_args) != 1
+                or ntpath.normcase(ntpath.abspath(profile_args[0])) != profile_path):
             continue
         try:
             parent = int(process.get("ParentProcessId") or 0)
