@@ -1,0 +1,116 @@
+# English, Hong Kong Cantonese, and bilingual modes
+
+## Behavior
+
+The Windows fork defines three canonical UI-mode identifiers:
+
+| Mode | Identifier | Presentation |
+|---|---|---|
+| English | `en` | English source copy |
+| 廣東話（香港，預覽版） | `yue_HK` | Curated Hong Kong Cantonese where available, then English fallback |
+| English + 廣東話（香港，預覽版） | `bilingual_en_yue_HK` | English primary with compact, stacked, or progressively disclosed Cantonese on migrated surfaces |
+
+These are the fork's baseline modes, not replacements for Bambu Studio's existing locales. In
+particular, formal written `zh_TW` remains a separate locale and is never relabeled as Cantonese.
+Hyphenated compatibility aliases are normalized to the canonical underscore identifiers before they
+are persisted.
+
+Native mode resolution is centralized in `src/slic3r/GUI/LanguageMode.*`. It keeps formatting,
+catalog, embedded-web, remote-service, and font routes separate. The two custom modes use their local
+Cantonese resources but route unsupported cloud and service language headers through documented
+English fallbacks instead of leaking `yue` or `bilingual` identifiers to external services.
+
+The native Cantonese catalog currently contains 242 curated messages covering navigation,
+preferences, file actions, slicing and printing, connection recovery, destructive actions, and
+security/error copy. The rest of the large native gettext surface falls back to English. Bilingual
+native rendering is deliberately opt-in: migrated controls retain the English and Cantonese format
+templates separately, format each variant once, and only then choose compact, stacked, or progressive
+presentation. The Preferences restart confirmation is the first native bilingual surface; legacy
+controls remain safe and English-first until they are migrated. The bilingual native mode is therefore
+also labeled preview rather than implying complete dual-language coverage.
+
+Embedded surfaces have dedicated resources:
+
+- DeviceWeb has key parity for all 178 English entries and builds a bilingual English-first variant.
+- The legacy local web bundle validates Cantonese and bilingual behavior for all 168 English keys.
+- The Pages/browser MD3 prototype persists exactly the three modes, supports a non-persisting `lang`
+  query override, and progressively discloses longer Cantonese copy to protect narrow layouts.
+
+### Home webview bilingual layout
+
+The Home webview (`resources/web/homepage3` plus the shared `resources/web/data/text.js` catalog)
+renders bilingual mode with two rules that protect both sentence integrity and layout:
+
+- **Whole-string annotation only.** `GetLocalizedTextByKey` annotates a `.trans` element once, at the
+  element level. Sentences that the legacy markup composes from several `.trans` fragments (for
+  example the network-plugin banner: "Please " + "install" + " the network plugin before logging in")
+  are wrapped in a `.bi-group` container: in bilingual mode the fragments render English-only and
+  `AnnotateBilingualGroups` appends a single composed Cantonese line for the whole sentence. If any
+  fragment of the composed whole lacks a real Cantonese translation — or the Cantonese equals the
+  English — the surface shows English only (fallback rule) instead of interleaving fragment-wise
+  Cantonese.
+- **Compact, non-overlapping secondary line.** The Cantonese annotation is a single smaller block
+  span (`0.85em`, ellipsized when its container is single-line, full text preserved in a `title`
+  tooltip). Sidebar rows (`.BtnItem`) and the login area use `min-height` with a flex-column
+  `#LeftBoard`, so two-line items and the network-plugin banner grow downward and push the menu
+  instead of overlaying it. Inside the error banner the secondary line keeps full
+  `--md-on-error-container` contrast and may wrap.
+
+Attribute and `innerText` contexts (icon `title` tooltips, the model search placeholder, confirm
+dialogs) use `GetCurrentPlainTextByKey`, which yields `English ／ 粵語：Cantonese` plain text so no
+markup leaks into tooltips or dialogs. Pure English and pure Cantonese modes are byte-identical to
+the catalog strings; `node resources/web/data/validate-text-locales.mjs` asserts the bilingual
+markup shape, the English-only fallback for untranslated strings, and the plain-text variant.
+
+For Traditional CJK modes, native Windows labels prefer Microsoft JhengHei UI because the bundled
+Roboto files do not contain Cantonese glyphs. ImGui receives the Traditional Chinese glyph range.
+English and other Latin-script modes continue to use the privately registered Roboto resources.
+
+## Configuration and installer hand-off
+
+The application persists its selected mode in the normal `language` application setting. The first
+three entries in Preferences are English, Cantonese preview, and bilingual; every pre-existing locale
+that has an installed catalog remains listed after them. A mode change uses the existing restart/
+recreate flow and preserves the normal modified-preset confirmation.
+
+The supported installer is the unsigned Squirrel.Windows `Setup.exe` package. It does not expose a
+language command-line switch or write a separate installer registry preference: the first launch
+uses the application's persisted `language` setting, while a new profile starts in English and can
+choose Cantonese or bilingual mode from Preferences. Squirrel updates keep the application-data
+setting in place, so an update does not reset the user's language choice.
+
+Installer and update failures are reported in the app's current language mode after launch. The
+installer itself remains language-neutral and never pretends that a command-line language value was
+accepted when the Squirrel package has no such contract.
+
+## Fallback and safety rules
+
+- A missing native Cantonese catalog or untranslated message falls back to its English source.
+- The hosted Windows build compiles the reviewed Cantonese PO directly into
+  `install-dir/resources/i18n/yue_HK/BambuStudio.mo` after CMake installation.
+  The compiler checks placeholders and the coverage manifest. The hosted run
+  permits reviewed keys absent from the currently lagging English extraction;
+  the workflow checks the staged output again before both portable and Squirrel
+  packaging. A stale checked-in MO therefore cannot silently ship in a hosted
+  Windows package.
+- An unknown Pages/browser mode falls back to English without overwriting a saved valid preference.
+- DeviceWeb and legacy local web resources require exact English/Cantonese key parity and matching
+  interpolation placeholders.
+- Bilingual format placeholders are expanded in each language before the two presentations are
+  combined, preventing duplicated or malformed runtime arguments.
+- Friendly copy may be playful and compact. Destructive actions, privacy, certificates, unsigned
+  software, fatal errors, and recovery instructions use restrained, literal Cantonese.
+
+## Verification status
+
+`scripts/i18n/Test-LanguageModes.ps1` checks canonical IDs, catalog presence and reproducibility,
+native coverage metadata, DeviceWeb and legacy-web key parity, placeholders, and the Pages language
+tests. `language_mode_tests` covers native normalization, route separation, and
+format-before-presentation behavior. The one-click build and the Windows workflow configure with
+`SLIC3R_BUILD_TESTS=OFF`, so that target is compiled and run by hand (a standalone `cl` link against
+the dependency prefix) rather than by CI.
+
+The resources and test gates exist in the candidate code, but this documentation does not claim that
+the pending candidate Windows workflow or release has passed. The 242-message native catalog is a
+preview, not complete native localization, and still needs broader independent human review—most
+importantly for safety-critical print, account, networking, and destructive flows.

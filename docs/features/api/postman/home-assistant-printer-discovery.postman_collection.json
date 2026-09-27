@@ -1,0 +1,98 @@
+{
+  "info": {
+    "_postman_id": "a5e47f20-c0ce-4f39-916c-b124095cd861",
+    "name": "Bambu Studio - Home Assistant Printer Discovery",
+    "description": "Focused contract checks for Bambu Studio's five-minute Home Assistant printer-discovery endpoint. The defaults are non-routable TEST-NET placeholders. Use a disposable local environment while sharing is explicitly enabled. Never save or export a real pairing token or response body: the token authorizes access and the body carries printer LAN access codes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authorized printer offer",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{pairing_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://{{share_host}}:{{share_port}}/bambustudio/printers",
+          "protocol": "http",
+          "host": [
+            "{{share_host}}"
+          ],
+          "port": "{{share_port}}",
+          "path": [
+            "bambustudio",
+            "printers"
+          ]
+        },
+        "description": "Fetches the active sharing window exactly once. Authentication material comes from the active _bambu-slicer._tcp.local. TXT record. The endpoint is clear-text LAN HTTP; use it only on a trusted broadcast domain and turn sharing off immediately afterward."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response cannot be cached or MIME-sniffed', function () {",
+              "  pm.expect(pm.response.headers.get('Cache-Control')).to.eql('no-store');",
+              "  pm.expect(pm.response.headers.get('X-Content-Type-Options')).to.eql('nosniff');",
+              "});",
+              "pm.test('Offer follows the bounded printer schema', function () {",
+              "  const body = pm.response.json();",
+              "  pm.expect(body).to.be.an('object');",
+              "  pm.expect(body.printers).to.be.an('array').with.length.at.most(32);",
+              "  body.printers.forEach(function (printer) {",
+              "    ['serial', 'host', 'access_code'].forEach(function (field) {",
+              "      pm.expect(printer[field], field).to.be.a('string').and.not.empty;",
+              "      pm.expect(printer[field].length, field + ' length').to.be.at.most(256);",
+              "    });",
+              "    if (Object.prototype.hasOwnProperty.call(printer, 'name')) {",
+              "      pm.expect(printer.name).to.be.a('string');",
+              "      pm.expect(printer.name.length, 'name length').to.be.at.most(256);",
+              "    }",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "share_host",
+      "value": "192.0.2.1",
+      "type": "string",
+      "description": "Replace only in a disposable local environment with the A/SRV address advertised by the active sharing window."
+    },
+    {
+      "key": "share_port",
+      "value": "1",
+      "type": "string",
+      "description": "Replace only in a disposable local environment with the active SRV port."
+    },
+    {
+      "key": "pairing_token",
+      "value": "replace-in-a-disposable-local-environment",
+      "type": "string",
+      "description": "Use the active mDNS pairing TXT value. Never save or export the real value."
+    }
+  ]
+}
