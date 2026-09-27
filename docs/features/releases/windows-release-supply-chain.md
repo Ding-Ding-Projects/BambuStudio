@@ -89,7 +89,9 @@ installation receipt, checks the release tag and source commit, and rehashes the
 executable against both the installed-file and full-package hashes. It bootstraps a pinned
 revision of the headless capture tool into a runner-local Python environment, creates a new
 application data directory, and attempts eleven workspace and Preferences surfaces. The
-workflow uploads only `receipt.json` as a 30-day run artifact, including when capture fails.
+workflow uploads only `receipt.json` as a 30-day run artifact. Once a supported hosted capture
+starts with a new output directory, its receipt records later preflight and capture failures.
+Unsupported hosts and existing output directories are rejected before any files are changed.
 Raw images remain only on the disposable runner and are not uploaded or published.
 This step uses `continue-on-error`, so capture availability is not a release gate.
 

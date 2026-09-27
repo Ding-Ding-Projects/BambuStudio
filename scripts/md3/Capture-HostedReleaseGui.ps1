@@ -9,7 +9,11 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-[void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
+if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not $env:RUNNER_TEMP) {
+    throw 'Hosted GUI capture requires a disposable GitHub-hosted Windows runner.'
+}
+if (Test-Path -LiteralPath $OutputDirectory) { throw 'Capture output directory already exists.' }
+[void](New-Item -ItemType Directory -Path $OutputDirectory)
 $evidence = [ordered]@{
     schema = 1
     status = 'failed'
@@ -27,9 +31,6 @@ $evidence = [ordered]@{
 }
 
 try {
-    if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not $env:RUNNER_TEMP) {
-        throw 'Hosted GUI capture requires a disposable GitHub-hosted Windows runner.'
-    }
     $receipt = Get-Content -LiteralPath $InstallReceipt -Raw | ConvertFrom-Json
     if ($receipt.status -cne 'verified' -or $receipt.source_commit -cne $ExpectedCommit.ToLowerInvariant() -or
         $receipt.release_tag -cne $Tag) {
