@@ -6,7 +6,7 @@
 - [x] Record selected fork source paths, source blob IDs, official blob IDs, and review states in `docs/reapplication/source-manifest.csv`.
 - [x] Reapply native controls, workspace and history, print and device flows, Model Creator, localization, website source, and supported Windows packaging source in separate commits.
 - [x] Review the project-tab opening adapter for rejected loads, snapshot failures, rollback save targets, and internal Recent Projects entries.
-- [ ] Complete independent source review of the project-loading adapter and resolve any further findings.
+- [x] Complete the scoped independent source review of the project-loading adapter at `e5fe62a1ed4f6516b79d5f755f89f62dd1e94977`; runtime verification remains open below.
 - [ ] Build the exact official-source candidate and fix verified build failures without dropping requested controls or menus.
 - [ ] Package and install the exact built candidate through the supported unsigned Squirrel.Windows route.
 - [ ] Compare saved-3MF opening on the official baseline and candidate under isolated profiles, then investigate the installed-release crash using a genuine stack or trace.

@@ -17,6 +17,14 @@ captures, legacy NSIS source-repair files, and old build output were excluded.
 
 ## Verification
 
+Current exact run and source identities, the restricted diagnostic result, and
+its limits are recorded in
+[`docs/reapplication/verification-status.md`](docs/reapplication/verification-status.md).
+The candidate submitted for hosted compilation and diagnostic Squirrel packaging
+is `87e005deda7ce118612df67ea1f0a9ab8d3849be`, run `36344196934`.
+The final scoped loader source review was dry at
+`e5fe62a1ed4f6516b79d5f755f89f62dd1e94977`; its runtime cases remain pending.
+
 The feature reapplication lane did not run a local build, test suite, installer,
 application launch, or screen capture. Source checks identified inherited
 trailing whitespace in some old embedded web and test files. A new build and
