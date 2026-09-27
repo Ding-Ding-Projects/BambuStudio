@@ -1,4 +1,5 @@
 name: Verify published Windows release evidence
+run-name: "Release evidence (${{ inputs.verification_scope || 'diagnostic' }}) at ${{ github.sha }}"
 
 on:
   push:
@@ -20,6 +21,7 @@ on:
         default: behavior
         type: choice
         options:
+          - checks
           - diagnostic
           - behavior
 
@@ -36,7 +38,7 @@ concurrency:
 
 jobs:
   verify:
-    if: ${{ github.event_name == 'push' || inputs.verification_scope == 'diagnostic' }}
+    if: ${{ github.event_name == 'push' || inputs.verification_scope == 'diagnostic' || inputs.verification_scope == 'checks' }}
     runs-on: windows-2025
     timeout-minutes: 55
     env:
@@ -94,6 +96,7 @@ jobs:
           & $checkPython scripts/md3/test-drive-packaged-behavior.py
           if ($LASTEXITCODE -ne 0) { throw 'Focused hosted Python driver checks failed.' }
       - name: Verify published package and collect restricted behavior evidence
+        if: ${{ github.event_name == 'push' || inputs.verification_scope == 'diagnostic' }}
         shell: pwsh
         run: |
           & scripts/ci/Invoke-HostedReleaseVerification.ps1 `
@@ -104,7 +107,7 @@ jobs:
             -VerificationScope diagnostic `
             -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'hosted-verification')
       - name: Upload safe verification diagnostics and encrypted evidence
-        if: ${{ always() }}
+        if: ${{ always() && (github.event_name == 'push' || inputs.verification_scope == 'diagnostic') }}
         continue-on-error: true
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:

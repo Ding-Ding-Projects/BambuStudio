@@ -85,3 +85,7 @@ and duplicate IDs, each distinct opening row, a missing keyboard acknowledgment,
 a falsely unavailable software flow, an unknown status, label-only evidence,
 and honest hardware limitations. The driver and collector integration requires
 hosted verification; no local test or GUI drive was run for this source change.
+
+## Hosted checks-only route
+
+The `checks` scope of `verify-release-evidence.yml` runs the PowerShell parser, encrypted-inventory negative fixtures and focused Python contracts on the hosted runner. It provides a source-contract verdict without repeating an unchanged installed-package diagnostic. Installation, GUI behavior and capture evidence require their own diagnostic or behavior scope and remain separate verdicts. The run title includes the selected scope and exact verifier commit.
