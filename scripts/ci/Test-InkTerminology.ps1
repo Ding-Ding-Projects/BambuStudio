@@ -42,8 +42,8 @@ $failures = [System.Collections.Generic.List[string]]::new()
 # fire on ordinary words that merely contain those letters.
 $englishTerm = [regex] '(?i)\bfilaments?\b'
 $amsTerm     = [regex] '\bAMS\b'
-# 線材 is the Chinese term the Cantonese catalogue replaced with 墨水.
-$cantoTerm   = [regex] '線材'
+# 線材 and 耗材 are the Chinese terms the Cantonese catalogue replaced with 墨水.
+$cantoTerm   = [regex] '線材|耗材'
 
 function Add-Failure {
     param([string] $Surface, [string] $Location, [string] $Text)

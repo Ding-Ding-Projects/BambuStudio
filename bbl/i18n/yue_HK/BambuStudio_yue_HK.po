@@ -149,7 +149,7 @@ msgstr "裝置頁面"
 
 #. reviewed-category: navigation
 msgid "Plate Settings"
-msgstr "列印板設定"
+msgstr "打印板設定"
 
 #. reviewed-category: navigation
 msgid "My Device"
@@ -369,7 +369,7 @@ msgstr "匯出 G-code"
 
 #. reviewed-category: file-actions
 msgid "Export current plate as G-code"
-msgstr "將目前列印板匯出為 G-code"
+msgstr "將目前打印板匯出為 G-code"
 
 #. reviewed-category: file-actions
 msgid "Export Generic 3MF"
@@ -389,7 +389,7 @@ msgstr "匯出目前切片檔案"
 
 #. reviewed-category: file-actions
 msgid "Export all plate sliced file"
-msgstr "匯出所有列印板切片檔案"
+msgstr "匯出所有打印板切片檔案"
 
 #. reviewed-category: file-actions
 msgid "All files"
@@ -445,7 +445,7 @@ msgstr "加入"
 
 #. reviewed-category: file-actions
 msgid "Add plate"
-msgstr "加入列印板"
+msgstr "加入打印板"
 
 #. reviewed-category: file-actions
 msgid "Rename"
@@ -565,7 +565,7 @@ msgstr "打印選項"
 
 #. reviewed-category: slicing-printing
 msgid "Slice plate"
-msgstr "切片目前列印板"
+msgstr "切片目前打印板"
 
 #. reviewed-category: slicing-printing
 msgid "Slice all"
@@ -573,7 +573,7 @@ msgstr "全部切片"
 
 #. reviewed-category: slicing-printing
 msgid "Print plate"
-msgstr "打印目前列印板"
+msgstr "打印目前打印板"
 
 #. reviewed-category: slicing-printing
 msgid "Print all"
@@ -589,7 +589,7 @@ msgstr "全部傳送"
 
 #. reviewed-category: slicing-printing
 msgid "Export plate sliced file"
-msgstr "匯出列印板切片檔案"
+msgstr "匯出打印板切片檔案"
 
 #. reviewed-category: slicing-printing
 msgid "Export all sliced file"
@@ -941,15 +941,15 @@ msgstr "全部刪除"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete Plate"
-msgstr "刪除列印板"
+msgstr "刪除打印板"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Remove the selected plate"
-msgstr "移除所選列印板"
+msgstr "移除所選打印板"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete this filament"
-msgstr "刪除呢種耗材"
+msgstr "刪除呢種墨水"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Delete selected files from printer."
@@ -1191,7 +1191,7 @@ msgstr "切好片喇 · 共 %1% 層"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Project history could not save some recent edits. Their recovery snapshots were kept on this device."
-msgstr "專案歷史未能儲存部分最近嘅修改。復原快照已經保留咗喺呢部裝置。"
+msgstr "項目歷史未能儲存部分最近嘅修改。復原快照已經保留咗喺呢部裝置。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Some versions could not be saved"
@@ -1407,7 +1407,7 @@ msgstr "物件"
 
 #. reviewed-category: slicing-printing
 msgid "Ink"
-msgstr "耗材"
+msgstr "墨水"
 
 #. reviewed-category: slicing-printing
 msgid "Process"
@@ -1499,7 +1499,7 @@ msgstr "敏捷嘅棕色狐狸"
 
 #. reviewed-category: file-actions
 msgid "Close project tab"
-msgstr "關閉專案分頁"
+msgstr "關閉項目分頁"
 
 #. reviewed-category: file-actions
 msgid "Close tab"
@@ -1507,15 +1507,15 @@ msgstr "關閉分頁"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Closing a project tab while some presets are modified."
-msgstr "關閉專案分頁時，有部分預設仍未儲存。"
+msgstr "關閉項目分頁時，有部分預設仍未儲存。"
 
 #. reviewed-category: file-actions
 msgid "New project tab"
-msgstr "新增專案分頁"
+msgstr "新增項目分頁"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "This project tab has unsaved changes that will be lost. Close it anyway?"
-msgstr "呢個專案分頁有未儲存嘅修改，關閉就會失去。確定要關閉？"
+msgstr "呢個項目分頁有未儲存嘅修改，關閉就會失去。確定要關閉？"
 
 #. reviewed-category: preferences
 msgid "Custom"
@@ -1551,7 +1551,7 @@ msgstr "用外部編輯器開啟"
 
 #. reviewed-category: file-actions
 msgid "Open the current project's folder in the configured external editor"
-msgstr "用設定咗嘅外部編輯器開啟目前專案嘅資料夾"
+msgstr "用設定咗嘅外部編輯器開啟目前項目嘅資料夾"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "No external editor is configured. Choose one in Preferences > General > External editor."
@@ -2467,15 +2467,15 @@ msgstr "設定噴嘴數目"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Please slice the plate first."
-msgstr "請先切片目前列印板。"
+msgstr "請先切片目前打印板。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Please slice all plates first."
-msgstr "請先切片所有列印板。"
+msgstr "請先切片所有打印板。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Please select a single plate."
-msgstr "請選擇單一列印板。"
+msgstr "請選擇單一打印板。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Please configure the printer host first."
@@ -2535,23 +2535,23 @@ msgstr "搵墨水"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Bambu Studio could not complete the project shutdown boundary, so the application remains open."
-msgstr "Bambu Studio 無法完成專案關閉前嘅安全保存，所以應用程式會保持開啟。"
+msgstr "Bambu Studio 無法完成項目關閉前嘅安全保存，所以應用程式會保持開啟。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The active project tab could not be identified, so Bambu Studio remains open to protect its unsaved changes."
-msgstr "無法識別使用中嘅專案分頁，所以 Bambu Studio 會保持開啟，以保護未儲存嘅變更。"
+msgstr "無法識別使用中嘅項目分頁，所以 Bambu Studio 會保持開啟，以保護未儲存嘅變更。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The open project-tab session could not be saved. The requested tab operation was cancelled."
-msgstr "無法儲存已開啟專案分頁嘅工作階段。要求嘅分頁操作已取消。"
+msgstr "無法儲存已開啟項目分頁嘅工作階段。要求嘅分頁操作已取消。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The project was saved, but its project-tab identity could not be recorded. Keep the app open and retry before switching tabs."
-msgstr "專案已儲存，但無法記錄專案分頁嘅檔案位置。請保持應用程式開啟，並喺切換分頁前重試。"
+msgstr "項目已儲存，但無法記錄項目分頁嘅檔案位置。請保持應用程式開啟，並喺切換分頁前重試。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The project was saved, but its active project tab could not be identified. Keep the app open and retry before switching tabs."
-msgstr "專案已儲存，但無法識別使用中嘅專案分頁。切換分頁前請保持應用程式開啟並重試。"
+msgstr "項目已儲存，但無法識別使用中嘅項目分頁。切換分頁前請保持應用程式開啟並重試。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Unsaved Changes"
@@ -2559,11 +2559,11 @@ msgstr "未儲存嘅變更"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Bambu Studio could not preserve every open project tab. Retry saving the session? Choose No to keep the application open."
-msgstr "Bambu Studio 無法安全保存所有已開啟嘅專案分頁。要重試儲存工作階段嗎？選擇「否」會保持應用程式開啟。"
+msgstr "Bambu Studio 無法安全保存所有已開啟嘅項目分頁。要重試儲存工作階段嗎？選擇「否」會保持應用程式開啟。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Open projects were not saved"
-msgstr "已開啟專案未能儲存"
+msgstr "已開啟項目未能儲存"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The discard decision could not be recorded, so the previous recovery data was retained while Bambu Studio closes."
@@ -2571,39 +2571,39 @@ msgstr "無法記錄捨棄決定，所以 Bambu Studio 關閉時保留咗之前�
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "This project could not be preserved for tab switching. The current project remains open."
-msgstr "無法安全保存呢個專案供分頁切換。現時專案會保持開啟。"
+msgstr "無法安全保存呢個項目供分頁切換。現時項目會保持開啟。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "This project was snapshotted, but its tab session could not be saved. The current project remains open."
-msgstr "呢個專案已建立快照，但無法儲存分頁工作階段。現時專案會保持開啟。"
+msgstr "呢個項目已建立快照，但無法儲存分頁工作階段。現時項目會保持開啟。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "A project-tab load failed, and the previous project could not be restored automatically. Its recovery data was retained; the live workspace may be incomplete."
-msgstr "專案分頁載入失敗，而且無法自動還原上一個專案。復原資料已保留；現時工作區可能唔完整。"
+msgstr "項目分頁載入失敗，而且無法自動還原上一個項目。復原資料已保留；現時工作區可能唔完整。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The selected project tab could not be loaded. The previous project remains open."
-msgstr "無法載入所選專案分頁。上一個專案會保持開啟。"
+msgstr "無法載入所選項目分頁。上一個項目會保持開啟。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The project tab could not be closed because a new workspace could not be created."
-msgstr "無法建立新工作區，所以未能關閉專案分頁。"
+msgstr "無法建立新工作區，所以未能關閉項目分頁。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The neighbouring project tab could not be loaded, so the current tab was not closed."
-msgstr "無法載入相鄰嘅專案分頁，所以現時分頁未有關閉。"
+msgstr "無法載入相鄰嘅項目分頁，所以現時分頁未有關閉。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "A new project tab could not be created. The previous project remains open."
-msgstr "無法建立新專案分頁。上一個專案會保持開啟。"
+msgstr "無法建立新項目分頁。上一個項目會保持開啟。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The selected project could not be opened in a new tab. The previous project remains open."
-msgstr "無法喺新分頁開啟所選專案。上一個專案會保持開啟。"
+msgstr "無法喺新分頁開啟所選項目。上一個項目會保持開啟。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "The previously active project tab could not be recovered. Its session entry was retained."
-msgstr "無法復原上次使用嘅專案分頁。佢嘅工作階段記錄已保留。"
+msgstr "無法復原上次使用嘅項目分頁。佢嘅工作階段記錄已保留。"
 
 #. reviewed-category: preferences
 msgid "Case sensitive refines plain-text and regex search. Multiline makes ^ and $ match line boundaries; Whole word is plain-text only, so use \\b in regex mode."
@@ -2631,7 +2631,7 @@ msgstr "撳"
 
 #. reviewed-category: navigation
 msgid "Project tabs"
-msgstr "專案分頁"
+msgstr "項目分頁"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Regex evaluation is temporarily unavailable"
@@ -2919,11 +2919,11 @@ msgstr "Home Assistant 傳回咗超出 %d 個實體安全上限嘅其他喇叭�
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Your unsaved project was saved to version history before this prompt. It stays restorable from Version history even if you decline to restore it now."
-msgstr "喺彈呢個窗之前，你未儲存嘅專案已經幫你擺咗入版本紀錄。就算你而家撳「取消」唔還原，都仲可以喺「版本紀錄」度攞返。"
+msgstr "喺彈呢個窗之前，你未儲存嘅項目已經幫你擺咗入版本紀錄。就算你而家撳「取消」唔還原，都仲可以喺「版本紀錄」度攞返。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Your unsaved project could not be copied into version history. It is being kept on disk and offered again next time, so declining now will not delete it."
-msgstr "你未儲存嘅專案複製唔入版本紀錄。個備份仍然會留喺硬碟，下次開機會再問你一次，所以而家撳「取消」唔會刪咗佢。"
+msgstr "你未儲存嘅項目複製唔入版本紀錄。個備份仍然會留喺硬碟，下次開機會再問你一次，所以而家撳「取消」唔會刪咗佢。"
 
 #. reviewed-category: preferences
 msgid "Fan Control"
@@ -2973,15 +2973,15 @@ msgstr "暫時唔更新"
 
 #. reviewed-category: file-actions
 msgid "Edit this filament preset"
-msgstr "編輯呢個耗材預設"
+msgstr "編輯呢個墨水預設"
 
 #. reviewed-category: file-actions
 msgid "Separate this filament into its component colors"
-msgstr "將呢種耗材分解成各種組成顏色"
+msgstr "將呢種墨水分解成各種組成顏色"
 
 #. reviewed-category: file-actions
 msgid "Merge this filament into the selected filament"
-msgstr "將呢種耗材合併到所選耗材"
+msgstr "將呢種墨水合併到所選墨水"
 
 #. reviewed-category: file-actions
 msgid "Merge with"
@@ -2989,11 +2989,11 @@ msgstr "合併到"
 
 #. reviewed-category: file-actions
 msgid "Choose the filament that will replace this one"
-msgstr "揀選用嚟取代呢種耗材嘅耗材"
+msgstr "揀選用嚟取代呢種墨水嘅墨水"
 
 #. reviewed-category: file-actions
 msgid "Filament %d"
-msgstr "耗材 %d"
+msgstr "墨水 %d"
 
 #. reviewed-category: navigation
 msgid "Search menu"
@@ -3049,7 +3049,7 @@ msgstr "優先使用右噴嘴"
 
 #. reviewed-category: slicing-printing
 msgid "Filament-Saving Mode"
-msgstr "節省耗材模式"
+msgstr "節省墨水模式"
 
 #. reviewed-category: slicing-printing
 msgid "Convenience Mode"
@@ -3069,7 +3069,7 @@ msgstr "容量容許時，兼容材料會用右噴嘴；否則使用左噴嘴。
 
 #. reviewed-category: slicing-printing
 msgid "The plate or filament assignment changed. Reopen print setup and try again."
-msgstr "打印板或耗材分配已變更。請重新開啟打印設定再試。"
+msgstr "打印板或墨水分配已變更。請重新開啟打印設定再試。"
 
 #. reviewed-category: slicing-printing
 msgid "The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."
@@ -3484,14 +3484,17 @@ msgid "Local time, YYYY-MM-DD HH:MM"
 msgstr "本地時間，YYYY-MM-DD HH:MM"
 
 #. reviewed-category: file-actions
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Start UTC offset"
 msgstr "開始時間 UTC 偏移量"
 
 #. reviewed-category: file-actions
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "End UTC offset"
 msgstr "結束時間 UTC 偏移量"
 
 #. reviewed-category: file-actions
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Deadline UTC offset"
 msgstr "到期日 UTC 偏移量"
 
@@ -3564,18 +3567,22 @@ msgid "Workspace member warning"
 msgstr "工作空間成員警告"
 
 #. reviewed-category: destructive-dirty-error-security
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Deadline reminders for this named time zone are paused because its daylight-saving offset cannot be verified. Dates remain in the workspace."
 msgstr "無法核實呢個時區嘅夏令時間偏移量，因此已暫停到期提醒。日期仍保留喺工作空間。"
 
 #. reviewed-category: destructive-dirty-error-security
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "The offset is not checked against this time zone. Confirm it is the offset at 09:00 on the due date, including daylight saving."
 msgstr "偏移量未有對照呢個時區核實。請確認佢係到期日 09:00 嘅偏移量，包括夏令時間。"
 
 #. reviewed-category: destructive-dirty-error-security
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Offsets are not checked against the named time zone. Confirm both offsets for these dates, especially across daylight-saving changes."
 msgstr "偏移量未有對照所填時區核實。請確認兩個日期嘅偏移量，尤其係跨越夏令時間轉換嗰陣。"
 
 #. reviewed-category: destructive-dirty-error-security
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Enter valid start and end times, with the offset for the chosen date."
 msgstr "請輸入有效嘅開始同結束時間，以及所選日期嘅偏移量。"
 
@@ -3764,22 +3771,27 @@ msgid "Status"
 msgstr "狀態"
 
 #. reviewed-category: file-actions
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Confirm deadline offset"
 msgstr "確認到期日偏移量"
 
 #. reviewed-category: file-actions
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Confirm planned-print offsets"
 msgstr "確認預定打印偏移量"
 
 #. reviewed-category: file-actions
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Offset in minutes at the end time, including daylight saving"
 msgstr "結束時間嘅偏移分鐘數，包括夏令時間"
 
 #. reviewed-category: file-actions
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Offset in minutes at the start time, including daylight saving"
 msgstr "開始時間嘅偏移分鐘數，包括夏令時間"
 
 #. reviewed-category: file-actions
+#. source-pending: workspace reminder and calendar sources on codex/workspace-reminders
 msgid "Offset in minutes for 09:00 on that date, including daylight saving"
 msgstr "該日期 09:00 嘅偏移分鐘數，包括夏令時間"
 
@@ -3801,15 +3813,15 @@ msgstr "錯誤：%s 擠出機冇可用嘅 %s 噴嘴，目前群組結果無效�
 
 #. reviewed-category: slicing-printing
 msgid "Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"
-msgstr "按最節省耗材嘅原則，為 %s 同 %s 建立耗材群組，減少浪費"
+msgstr "按最節省墨水嘅原則，為 %s 同 %s 建立墨水群組，減少浪費"
 
 #. reviewed-category: slicing-printing
 msgid "Generates filament grouping for the %s and %s based on the printer's actual filament status, reducing the need for manual filament adjustment"
-msgstr "按打印機實際耗材狀態，為 %s 同 %s 建立群組，減少手動調整耗材"
+msgstr "按打印機實際墨水狀態，為 %s 同 %s 建立群組，減少手動調整墨水"
 
 #. reviewed-category: slicing-printing
 msgid "Generates filament grouping for the %s and %s based on the quality of prints, prioritizing print quality over filament saving"
-msgstr "按打印品質為 %s 同 %s 建立耗材群組，優先確保品質而非節省耗材"
+msgstr "按打印品質為 %s 同 %s 建立墨水群組，優先確保品質而非節省墨水"
 
 #. reviewed-category: slicing-printing
 msgid "High Flow"
@@ -3825,7 +3837,7 @@ msgstr "請調整群組，或者點擊 "
 
 #. reviewed-category: slicing-printing
 msgid "Tips: You can drag the filaments to reassign them to different nozzles."
-msgstr "提示：可以拖動耗材，重新分配到唔同噴嘴。"
+msgstr "提示：可以拖動墨水，重新分配到唔同噴嘴。"
 
 #. reviewed-category: slicing-printing
 msgid "We will slice according to this grouping method:"
@@ -3961,30 +3973,32 @@ msgstr "時區規則無法使用"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Could not open the selected project tab. The current project was restored."
-msgstr "無法開啟所選專案分頁。原本嘅專案已還原。"
+msgstr "無法開啟所選項目分頁。原本嘅項目已還原。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Could not open the selected project tab or restore the current project."
-msgstr "無法開啟所選專案分頁，亦無法還原原本嘅專案。"
+msgstr "無法開啟所選項目分頁，亦無法還原原本嘅項目。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Could not close this project tab. The project was restored."
-msgstr "無法關閉呢個專案分頁。專案已還原。"
+msgstr "無法關閉呢個項目分頁。項目已還原。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Could not close this project tab or restore its project."
-msgstr "無法關閉呢個專案分頁，亦無法還原當中嘅專案。"
+msgstr "無法關閉呢個項目分頁，亦無法還原當中嘅項目。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Could not open the selected project. The current project was restored."
-msgstr "無法開啟所選專案。原本嘅專案已還原。"
+msgstr "無法開啟所選項目。原本嘅項目已還原。"
 
 #. reviewed-category: destructive-dirty-error-security
 msgid "Could not open the selected project or restore the current project."
-msgstr "無法開啟所選專案，亦無法還原原本嘅專案。"
+msgstr "無法開啟所選項目，亦無法還原原本嘅項目。"
 
+#. reviewed-category: file-actions
 msgid "Open project tab"
-msgstr "開啟專案分頁"
+msgstr "開啟項目分頁"
 
+#. reviewed-category: file-actions
 msgid "Open project"
-msgstr "開啟專案"
+msgstr "開啟項目"
