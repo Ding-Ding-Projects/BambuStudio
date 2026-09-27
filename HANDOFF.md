@@ -2,8 +2,13 @@
 
 ## Current state
 
-At the 2026-09-27 20:03:59 UTC production-run start, `main` was
-`e2c7d6ab6d55354b48504618c1486285c043d63a`. It integrates the fresh
+At the earlier diagnostic checkpoint, `main` and remote `main` were
+`acd4c0489fc2952e62b27315cd93502484fe6ca2`, verified with
+`git ls-remote`. The current `main` and remote `main` are
+`73d50e270fa10da2015f17240c652e7cf872cd4b`, also verified, after a CMake
+hook-copying repair. [Production run 36350056149](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36350056149)
+is running for the new source; no terminal package verdict is claimed. The
+integrated source includes the fresh
 reapplication on official Bambu Studio `v02.08.04.57` source
 `f977235e6d736c4c0b650520ac5a5b72cbfe9244`, plus bounded native model
 observation (`257c700e3`) and exact 3MF model-state verification
@@ -20,9 +25,32 @@ captures, legacy NSIS source-repair files, and old build output were excluded.
 
 ## Verification
 
+At `acd4c0489`, [run 36349497764](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36349497764)
+completed successfully. It passed 10 contract checks and 36 driver checks,
+including parsing and manifest negative cases. These checks establish the
+hosted diagnostic route's stated contracts, not native application behavior.
+The separate [production run 36349494073](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36349494073)
+failed during CMake configuration at `CMakeLists.txt:224`, before C++
+compilation. A hook-copying repair subsequently reached `main` at `73d50e270`;
+no production package verdict follows from the failed run or that source edit.
+
+[Four-case diagnostic run 36348272737](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36348272737)
+recorded natural startup exit `0x80070057` in all four cases, with teardown
+verified and zero screenshots. It did not establish the native crash cause or
+prove that a saved 3MF loaded. The exact-PID debugger route remains under
+review. No private project path or filename is part of this public record.
+
+[`md3-v129`](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v129)
+is a non-draft release targeting earlier source `c7cb11752a65810e4b02f4124b4c4b22c8438218`
+and contains package version `2.8.4128`. It does not package the current
+`acd4c0489` source. The native behavior, file-opening fix, installed current
+package, fresh GUI captures, and localized Features page remain unverified.
+
+### Earlier candidate record
+
 The current production [run 36346636917](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36346636917)
-started for exact `main` commit `e2c7d6ab6d55354b48504618c1486285c043d63a`
-and was in progress at this handoff. Earlier runs
+started for then-current `main` commit `e2c7d6ab6d55354b48504618c1486285c043d63a`
+and was in progress at that earlier handoff. Earlier runs
 [36345894046](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345894046)
 and [36345306787](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36345306787)
 also remained in progress at the last supplied observation. The independent
@@ -52,8 +80,10 @@ preserved.
 
 ## Next actions
 
-1. Obtain the terminal verdict and exact package identity for run `36346636917`.
-2. Repair the A/B diagnostic route and compare official and candidate 3MF
+1. Obtain the terminal configuration, build, and package verdict from
+   production run `36350056149` for exact current `main` source.
+2. Complete the exact-PID debugger and A/B diagnostic routes, then compare
+   official and candidate 3MF
    opening under isolated profiles, including `loader-adapters.md` rollback cases.
 3. Establish the cause of the installed startup exit from a genuine trace or
    matching report; the exit code alone does not identify the source defect.
