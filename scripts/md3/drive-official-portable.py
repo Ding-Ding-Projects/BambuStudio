@@ -93,19 +93,24 @@ def main() -> int:
     launched_at = None
     launch_pid = None
     handle = None
+    stage = "create_desktop"
     try:
         cheap("create_headless_desktop", name=desktop)
         created = True
         launched_at = datetime.now(timezone.utc)
         command = f'"{exe}" --datadir "{datadir}" "{fixture}"'
+        stage = "launch_application"
         launch_pid = int(cheap("launch_on_headless_desktop", name=desktop, command=command)["pid"])
         report["file_open_attempted"] = True
+        stage = "open_process_handle"
         handle = _kernel32.OpenProcess(0x101000, False, launch_pid)
         deadline = time.monotonic() + 120
         first_frame_at = None
         while time.monotonic() < deadline:
+            stage = "observe_owned_process"
             processes = owned_process_inventory(process_snapshot(), exe=str(exe),
                 datadir=str(datadir), launched_at=launched_at, launch_pid=launch_pid)
+            stage = "list_owned_windows"
             windows = cheap("list_headless_windows", name=desktop)["windows"]
             owned_pids = {item["pid"] for item in processes}
             frames = [w for w in windows if int(w["process_id"]) in owned_pids
@@ -117,15 +122,20 @@ def main() -> int:
                 "launch_exit_code": exit_code(handle),
                 "fixture_name_in_window_title": any(fixture.stem.lower() in str(w.get("title", "")).lower() for w in frames),
             }
+            stage = "classify_liveness"
+            if not processes:
+                first_frame_at = None
+                report["observations"].append(observation)
+                report["status"] = "exited_after_file_open_attempt"
+                break
             if frames:
                 observation["main_window_geometry"] = [int(frames[0]["width"]), int(frames[0]["height"])]
                 first_frame_at = first_frame_at or time.monotonic()
+            else:
+                first_frame_at = None
             report["observations"].append(observation)
-            if first_frame_at and time.monotonic() - first_frame_at >= 20:
+            if frames and first_frame_at is not None and time.monotonic() - first_frame_at >= 20:
                 report["status"] = "owned_window_survived_file_open_attempt"
-                break
-            if not processes and observation["launch_exit_code"] is not None:
-                report["status"] = "exited_after_file_open_attempt"
                 break
             time.sleep(5)
         else:
@@ -133,6 +143,7 @@ def main() -> int:
         report["model_load_limit"] = "No instrumented model-state probe exists in the vendor binary; process and window survival cannot prove 3MF load."
     except Exception as exc:
         report["status"] = "diagnostic_failed"
+        report["failure_stage"] = stage
         report["failure_type"] = type(exc).__name__
     finally:
         if created:
