@@ -70,7 +70,9 @@ def wait_window(desktop, pid, pred, timeout, what):
 
 
 def shot(hwnd, path):
-    cheap('screenshot', hwnd=hwnd, output_path=path)
+    result = cheap('screenshot', hwnd=hwnd, output_path=path)
+    if result.get('rendered_ok') is not True:
+        raise SystemExit(f'{path}: PrintWindow did not confirm rendered content')
     size = os.path.getsize(path)
     if size < 2000:
         raise SystemExit(f'{path}: {size} bytes, not a rendered frame')
