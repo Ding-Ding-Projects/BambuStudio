@@ -2,6 +2,9 @@
 
 ## Official-source reapplication
 
+- [x] Prove the diagnostic candidate reached remote `main` at `acd4c0489fc2952e62b27315cd93502484fe6ca2` and the hook-copying repair reached remote `main` at `73d50e270fa10da2015f17240c652e7cf872cd4b`.
+- [x] Pass 10 hosted diagnostic contracts and 36 driver checks, including parsing and manifest negative cases, in run `36349497764` at `acd4c0489`.
+- [x] Record four natural startup exits `0x80070057` with verified teardown and zero screenshots in run `36348272737`; this observes the failure but does not establish its cause or a file-opening fix.
 - [x] Integrate the fresh official-source candidate, bounded model observation, and exact 3MF model-state probe on `main` at `e2c7d6ab6d55354b48504618c1486285c043d63a`.
 - [x] Diagnose the installed `md3-v125` startup attempt at `0ff1ffdbd`: run `36345897684` recorded natural exit `0x80070057` after 20 seconds with validated holder and desktop identity and teardown. No image or matching diagnostic record was produced; cause remains open below.
 - [x] Start from official `v02.08.04.57` (`f977235e6d736c4c0b650520ac5a5b72cbfe9244`) and preserve the separate baseline diagnostic change.
@@ -10,14 +13,17 @@
 - [x] Review the project-tab opening adapter for rejected loads, snapshot failures, rollback save targets, and internal Recent Projects entries.
 - [x] Complete the scoped independent source review of the project-loading adapter at `e5fe62a1ed4f6516b79d5f755f89f62dd1e94977`; runtime verification remains open below.
 - [ ] Build the exact official-source candidate and fix verified build failures without dropping requested controls or menus.
-- [ ] Obtain the terminal verdict for production `main` run `36346636917` at `e2c7d6ab6d55354b48504618c1486285c043d63a`; earlier runs `36345894046` and `36345306787` were also running at the last supplied observation.
+- [ ] Obtain the terminal verdict for production run `36350056149` at `73d50e270`; verify the hook-copying repair against the `CMakeLists.txt:224` configuration failure in run `36349494073`, then obtain a native compile and exact-source package verdict.
+- [ ] Obtain the terminal verdict for production `main` run `36346636917` at `e2c7d6ab6d55354b48504618c1486285c043d63a`; run `36345306787` was also running at the earlier observation. Run `36345894046` subsequently failed at `Build slicer Win`, and its release publication was skipped.
 - [ ] Package and install the exact built candidate through the supported unsigned Squirrel.Windows route.
 - [ ] Repair the A/B diagnostic route, compare saved-3MF opening on the official baseline and candidate under isolated profiles, and investigate installed startup exit `0x80070057` using a genuine stack or matching trace.
+- [ ] Complete exact-PID debugger review and prove the saved-file opening result from native model state, not from process lifetime or a filename.
 - [ ] Exercise the focused project-tab rollback cases in `docs/reapplication/loader-adapters.md`, including named, Untitled, clean, and discarded dirty documents.
 - [ ] Verify the requested native controls, print and device flows, Model Creator, workspace/history, localization, and website behavior in their built surfaces.
 - [ ] Capture fresh, privacy-reviewed evidence tied to the candidate source and installed package.
 - [ ] Measure actual native 100%, 125%, 150%, and 200% DPI tuples rather than treating requested scale or browser zoom as native DPI proof.
 - [ ] Publish the English, Cantonese, and bilingual feature guide in the existing tabbed Pages site only after applicable packaged behavior is verified; link the exact verified release and leave the detachable camera widget as future work.
+- [x] Document that `md3-v129` targets earlier `c7cb11752a65810e4b02f4124b4c4b22c8438218` and contains package version `2.8.4128`; it does not verify the fresh official-source candidate.
 - [ ] Update release documentation and publish only after the build, runtime, and distribution checks reach verified outcomes.
 
 ## Deliberate exclusions
