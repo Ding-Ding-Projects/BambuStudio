@@ -27,6 +27,7 @@ $summary = [ordered]@{
     cdb_sha256 = $null
     debugger_source = $null
     execution_class = 'instrumented_startup; separate from uninstrumented baseline'
+    evidence_meaning = 'partial diagnostic transport only; no measured GUI geometry or behavior verdict'
     project_symbols = 'unavailable_for_md3_v125; no newer PDB substitution'
     evidence_status = 'not_started'
     failure_type = $null
@@ -92,6 +93,10 @@ try {
     $python = Join-Path $venv 'Scripts\python.exe'
     & $python -m pip install --disable-pip-version-check --quiet $toolRoot
     if ($LASTEXITCODE -ne 0) { throw 'Pinned hidden-desktop tool bootstrap failed.' }
+    & $python -m pip install --disable-pip-version-check --quiet 'Pillow==11.3.0'
+    if ($LASTEXITCODE -ne 0) { throw 'Pinned image support for existing hosted identity checks is unavailable.' }
+    & $python (Join-Path $root 'scripts\md3\test-trace-packaged-startup.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Focused hosted startup trace checks failed.' }
     $env:LLCU_CHEAP = Join-Path $venv 'Scripts\lowlevel-computer-use-cheap.exe'
     if (-not (Test-Path -LiteralPath $env:LLCU_CHEAP -PathType Leaf)) { throw 'Hidden-desktop executable is missing.' }
 
@@ -111,11 +116,13 @@ try {
         -CaptureScope diagnostic -OutputDirectory $encrypted
     $capture = Get-Content -LiteralPath (Join-Path $encrypted 'receipt.json') -Raw | ConvertFrom-Json
     if (-not (Test-Path -LiteralPath (Join-Path $encrypted 'images.zip.aesgcm') -PathType Leaf) -or
-        $capture.image_availability -cne 'encrypted_bundle_only') {
-        throw 'Restricted debugger evidence was not encrypted completely.'
+        $capture.image_availability -cne 'encrypted_bundle_only' -or
+        $capture.status -cne 'encrypted_partial_behavior_pending_restricted_review') {
+        throw 'Restricted partial diagnostic transport was not encrypted with the expected verdict.'
     }
     $summary.evidence_status = $capture.status
-    $summary.status = if ($driverExit -eq 0) { 'instrumented_trace_encrypted_pending_review' } else { 'instrumented_trace_partial_encrypted_pending_review' }
+    $summary.trace_driver_exit_code = $driverExit
+    $summary.status = 'instrumented_trace_partial_encrypted_pending_review'
 }
 catch {
     $summary.status = 'failed'

@@ -41,6 +41,19 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
+      - name: Parse hosted diagnostic PowerShell
+        run: |
+          $paths = @('scripts/ci/Trace-HostedReleaseStartup.ps1',
+                     'scripts/ci/Verify-HostedSquirrelInstall.ps1',
+                     'scripts/md3/Capture-HostedReleaseGui.ps1')
+          foreach ($path in $paths) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path -LiteralPath $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -ne 0) { throw "PowerShell parse failed: $path" }
+          }
+
       - name: Trace exact installed release process
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -25,6 +25,22 @@ class CdbAttachmentContract(unittest.TestCase):
         with self.assertRaises(ValueError):
             driver.cdb_arguments("cdb.exe", 0, "commands.txt", "restricted.log", "empty-symbols")
 
+    def test_desktop_absence_requires_exact_missing_desktop_result(self):
+        self.assertTrue(driver.named_desktop_absent(
+            {"error": "OpenDesktopW('startup-trace-1') GetLastError=2"}, "startup-trace-1"))
+        self.assertFalse(driver.named_desktop_absent(
+            {"error": "OpenDesktopW('startup-trace-2') GetLastError=2"}, "startup-trace-1"))
+        self.assertFalse(driver.named_desktop_absent(
+            {"error": "OpenDesktopW('startup-trace-1') GetLastError=5"}, "startup-trace-1"))
+
+    def test_teardown_requires_fresh_absence_and_holder_receipt(self):
+        state = {"owned_absent": True, "desktop_absent": True,
+                 "holder_verified": True, "cleanup_errors": []}
+        self.assertTrue(driver.teardown_verified(**state))
+        for changed in ({"owned_absent": False}, {"desktop_absent": False},
+                        {"holder_verified": False}, {"cleanup_errors": ["holder_unverified"]}):
+            self.assertFalse(driver.teardown_verified(**(state | changed)))
+
 
 if __name__ == "__main__":
     unittest.main()
