@@ -175,7 +175,11 @@ ModelCreatorDialog::ModelCreatorDialog(wxWindow *parent, AddToPlate add_to_plate
         save_preferences();
         update_controls();
     });
-    for (wxTextCtrl *control : {m_model, m_provider_path, m_renderer_path})
+    m_provider_path->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
+        m_provider_path_autofilled = false;
+        update_controls();
+    });
+    for (wxTextCtrl *control : {m_model, m_renderer_path})
         control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { update_controls(); });
     SetMinSize(wxSize(650, 720));
     SetSize(wxSize(720, 780));
@@ -225,11 +229,19 @@ void ModelCreatorDialog::lookup_provider_path()
 {
     const int index = m_provider->GetSelection();
     if (index < 0 || index >= 2) return;
+    const auto current = m_provider_path->GetValue().ToStdWstring();
+    if (!current.empty()) {
+        if (!m_provider_path_autofilled) return;
+        m_provider_path_autofilled = false;
+        m_provider_path->ChangeValue(wxString{});
+    }
     m_provider_lookup_expected_paths[index] = m_provider_path->GetValue().ToStdWstring();
     const auto &cached = m_discovered_provider_paths[index];
     if (m_provider_lookup_collected[index]) {
         if (cached.empty()) return;
-        m_provider_path->SetValue(wxString(cached.wstring()));
+        m_provider_path_autofilled = true;
+        m_provider_path->ChangeValue(wxString(cached.wstring()));
+        update_controls();
         return;
     }
     if (m_provider_lookup_started[index]) return;
@@ -266,7 +278,9 @@ void ModelCreatorDialog::collect_provider_paths()
         if (m_provider->GetSelection() == index &&
             m_provider_path->GetValue().ToStdWstring() == m_provider_lookup_expected_paths[index] &&
             !path.empty()) {
-            m_provider_path->SetValue(wxString(path.wstring()));
+            m_provider_path_autofilled = true;
+            m_provider_path->ChangeValue(wxString(path.wstring()));
+            update_controls();
         }
     }
     if (!pending) m_provider_lookup_timer.Stop();

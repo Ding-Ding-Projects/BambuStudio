@@ -48,6 +48,7 @@ private:
     bool m_provider_lookup_started[2] = {false, false};
     bool m_provider_lookup_collected[2] = {false, false};
     std::filesystem::path m_discovered_provider_paths[2];
+    bool m_provider_path_autofilled = false;
     std::wstring m_provider_lookup_expected_paths[2];
     std::vector<Revision> m_revisions;
     bool m_busy = false;
