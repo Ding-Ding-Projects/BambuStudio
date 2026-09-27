@@ -24,7 +24,7 @@ from pathlib import Path
 from PIL import Image
 
 from recapture import App, Runner, cheap, find_control
-from hosted_process import owned_processes, process_snapshot
+from hosted_process import owned_process_inventory, owned_processes, process_snapshot
 
 SHA = re.compile(r"^[0-9a-f]{40}$")
 HEX256 = re.compile(r"^[0-9a-f]{64}$")
@@ -39,17 +39,24 @@ class HostedApp(App):
         self.launch_started = None
         self.launch_pid = None
         self.adopted_pids = []
+        self.live_owned = []
+        self.seen_owned = {}
+        self.finished_at = None
 
     def _desktop_windows(self):
         return cheap("list_headless_windows", name=self.desktop)["windows"]
 
     def windows(self):
         windows = self._desktop_windows()
-        candidates = owned_processes(
-            process_snapshot(), exe=self.exe, datadir=self.datadir,
+        processes = process_snapshot()
+        self.live_owned = owned_process_inventory(
+            processes, exe=self.exe, datadir=self.datadir,
             launched_at=self.launch_started, launch_pid=self.launch_pid,
-            desktop_pids={int(w["process_id"]) for w in windows},
         )
+        for item in self.live_owned:
+            self.seen_owned[item["pid"]] = item
+        candidates = [item["pid"] for item in self.live_owned
+                      if item["pid"] in {int(w["process_id"]) for w in windows}]
         self.adopted_pids = candidates
         if self.pid not in candidates:
             self.pid = candidates[0] if candidates else None
@@ -79,8 +86,12 @@ class HostedApp(App):
         # is normal in a relaunch and must never obscure the drive's first error.
         errors = []
         try:
-            self.windows()
-            for pid in self.adopted_pids:
+            self.live_owned = owned_process_inventory(
+                process_snapshot(), exe=self.exe, datadir=self.datadir,
+                launched_at=self.launch_started, launch_pid=self.launch_pid)
+            for item in self.live_owned:
+                self.seen_owned[item["pid"]] = item
+            for pid in [item["pid"] for item in self.live_owned]:
                 try:
                     cheap("kill_process", pid=pid, force=True)
                 except Exception as exc:
@@ -91,6 +102,7 @@ class HostedApp(App):
             cheap("close_headless_desktop", name=self.desktop)
         except Exception as exc:
             errors.append(f"desktop closure: {type(exc).__name__}: {exc}")
+        self.finished_at = datetime.now(timezone.utc)
         if errors:
             raise RuntimeError("; ".join(errors))
 MODE_LABELS = {
@@ -153,10 +165,20 @@ def validate_installation(receipt: dict, exe: Path, source: str, tag: str) -> No
 
 def validate_verifier(commit: str) -> None:
     checkout = Path(__file__).resolve().parents[2]
+    inputs = ["scripts/md3/drive-packaged-behavior.py", "scripts/md3/hosted_process.py",
+              "scripts/md3/recapture.py", "scripts/md3/send-layout-probe.py"]
     result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=checkout,
                             capture_output=True, text=True, timeout=15, check=False)
     if result.returncode or result.stdout.strip().lower() != commit:
         raise ValueError("Verification commit differs from the checked-out driver source")
+    tracked = subprocess.run(["git", "ls-files", "--error-unmatch", "--", *inputs],
+                             cwd=checkout, capture_output=True, text=True,
+                             timeout=15, check=False)
+    status = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", *inputs],
+                            cwd=checkout, capture_output=True, text=True,
+                            timeout=15, check=False)
+    if tracked.returncode or status.returncode or status.stdout.strip():
+        raise ValueError("Tracked driver inputs differ from the verification commit")
 
 
 def visible_labels(records: list[dict]) -> list[str]:
@@ -217,6 +239,29 @@ class Drive:
 
     def checked_header(self, records: list[dict]) -> dict:
         return probe_header(records, self.mode, self.theme, self.scale)
+
+    def resize_client_exact(self, requested: tuple[int, int]) -> tuple[dict, dict]:
+        """Use probe client size to compensate for frame borders, with a bound."""
+        for _attempt in range(4):
+            windows = self.app.windows()
+            frame = next((w for w in windows if w["handle"] == self.app.main), None)
+            records = self.app.probe()
+            self.checked_header(records)
+            top = next((r for r in records if r.get("kind") == "toplevel"
+                        and r.get("hwnd") == self.app.main), None)
+            client = (top or {}).get("client") or {}
+            actual = (client.get("w"), client.get("h"))
+            if not frame or not all(isinstance(value, int) and value > 0 for value in actual):
+                raise RuntimeError("The owned main frame has no measured client area")
+            if actual == requested:
+                return frame, client
+            target_outer = (frame["width"] + requested[0] - actual[0],
+                            frame["height"] + requested[1] - actual[1])
+            if min(target_outer) < 400 or max(target_outer) > 4000:
+                raise RuntimeError("Calculated outer frame size is outside the safe resize range")
+            self.app.command(f"resize {self.app.main} {target_outer[0]} {target_outer[1]}")
+            time.sleep(0.5)
+        raise RuntimeError(f"Main client area did not reach exact {requested[0]}x{requested[1]}")
 
     def capture(self, label: str, hwnd: int) -> dict:
         name = f"{len(self.images):03d}-{re.sub('[^a-z0-9-]+', '-', label.lower()).strip('-')}.png"
@@ -479,21 +524,51 @@ class Drive:
                 time.sleep(0.5)
             else:
                 raise RuntimeError("Open Project dialog did not close after file submission")
-            after = self.app.probe()
+            after, result = self.wait_fixture_loaded(path.stem)
             row["after_header"] = self.checked_header(after)
             row["after_visible"] = visible_labels(after)
             row["after_image"] = self.capture("file-open-after", self.app.main)
             row["input_to_ready_ms"] = round((time.monotonic() - start) * 1000)
-            marker = path.stem
-            row["status"] = "probe_confirmed" if any(marker.lower() in label.lower()
-                                                         for label in row["after_visible"]) else "unverified"
+            row["result"] = result
+            row["status"] = "probe_confirmed" if result else "unverified"
             if row["status"] == "unverified":
-                row["reason"] = "The frame survived File > Open, but the probe exposed no fixture-specific loaded marker"
+                row["reason"] = "The frame survived File > Open, but no fixture-specific object and enabled slicing state appeared"
             return row["status"] == "probe_confirmed"
         except Exception as exc:
             row["status"] = "blocked"
             row["reason"] = f"{type(exc).__name__}: {exc}"
             return False
+
+    @staticmethod
+    def fixture_loaded_state(records: list[dict], stem: str) -> dict | None:
+        objects = [r for r in records if r.get("kind") in ("window", "tool")
+                   and r.get("shown") and r.get("on_screen")
+                   and any(stem.lower() in str(r.get(key) or "").lower()
+                           for key in ("name", "label"))
+                   and r.get("parent") and r.get("top")]
+        slice_controls = [r for r in records if r.get("kind") in ("window", "tool")
+                          and r.get("shown") and r.get("on_screen") and r.get("enabled")
+                          and any("slice plate" in str(r.get(key) or "").lower()
+                                  for key in ("name", "label"))]
+        if not objects or not slice_controls:
+            return None
+        return {"object_label": objects[0].get("name") or objects[0].get("label"),
+                "object_parent": objects[0]["parent"],
+                "slicing_control": slice_controls[0].get("name") or slice_controls[0].get("label")}
+
+    def wait_fixture_loaded(self, stem: str, timeout: float = 60) -> tuple[list[dict], dict | None]:
+        deadline = time.monotonic() + timeout
+        after = []
+        while time.monotonic() < deadline:
+            if not any(w["handle"] == self.app.main for w in self.app.windows()):
+                raise RuntimeError("The main frame exited during 3MF loading")
+            after = self.app.probe()
+            self.checked_header(after)
+            result = self.fixture_loaded_state(after, stem)
+            if result:
+                return after, result
+            time.sleep(0.5)
+        return after, None
 
     @staticmethod
     def workspace_file_evidence(path: Path) -> dict | None:
@@ -521,14 +596,11 @@ class Drive:
                "requested_size": [1000, 600]}
         self.rows.append(row)
         try:
-            self.app.command(f"resize {self.app.main} 1000 600")
-            time.sleep(1)
+            frame, client = self.resize_client_exact((1000, 600))
             records = self.app.probe()
             row["header"] = self.checked_header(records)
-            frame = next((w for w in self.app.windows() if w["handle"] == self.app.main), None)
-            if not frame or frame["width"] > 1020 or frame["height"] > 620:
-                raise RuntimeError("Main frame did not resize to the narrow client area")
-            row["actual_size"] = [frame["width"], frame["height"]]
+            row["actual_client_size"] = [client["w"], client["h"]]
+            row["outer_frame_size"] = [frame["width"], frame["height"]]
             sidebar = next((r for r in records if r.get("kind") == "window"
                             and r.get("name") == "Sidebar" and r.get("on_screen")), None)
             if not sidebar:
@@ -566,7 +638,7 @@ class Drive:
         self.unverified("recent-project-tile", "The recent tile is inside a webview and has no verified cheap-route target yet")
         self.prepare_tabs()
         self.narrow_prepare()
-        self.app.command(f"resize {self.app.main} 1200 800")
+        self.resize_client_exact((1200, 800))
         fixture = Path(__file__).resolve().parents[2] / ".claude" / "skills" / "run-bambustudio" / "cube.stl"
         if fixture.is_file():
             loaded = self.observe("load-print-fixture", lambda: self.command_at(f"load {fixture}"),
@@ -674,17 +746,13 @@ def main() -> int:
         drive.identity["process"] = {"initial_pid": app.launch_pid,
                                      "selected_pid": app.pid,
                                      "relaunched": app.pid != app.launch_pid}
-        if requested_size != (1200, 800):
-            app.command(f"resize {app.main} {requested_size[0]} {requested_size[1]}")
-            time.sleep(1)
-        frame = next((w for w in app.windows() if w["handle"] == app.main), {})
-        if abs(frame.get("width", 0) - requested_size[0]) > 20 or abs(frame.get("height", 0) - requested_size[1]) > 20:
-            raise RuntimeError("Measured frame differs from requested viewport")
+        frame, client = drive.resize_client_exact(requested_size)
         expected_dpi = round(96 * args.scale)
         if frame.get("dpi") != expected_dpi:
             raise RuntimeError("Native window DPI differs from requested scale")
         drive.identity["measured_tuple"] = {**drive.checked_header(app.probe()),
-                                             "viewport": [frame["width"], frame["height"]],
+                                             "viewport": [client["w"], client["h"]],
+                                             "outer_frame": [frame["width"], frame["height"]],
                                              "native_dpi": frame["dpi"]}
         if args.scope == "diagnostic":
             image = drive.capture("installed-shell-diagnostic", app.main)
@@ -702,6 +770,14 @@ def main() -> int:
             app.stop()
         except Exception as exc:
             cleanup_error = f"{type(exc).__name__}: {exc}"
+    drive.identity["process"] = {
+        "initial_pid": app.launch_pid,
+        "selected_pid": app.pid,
+        "relaunched": bool(app.launch_pid and app.pid and app.pid != app.launch_pid),
+        "launch_started_at_utc": app.launch_started.isoformat() if app.launch_started else None,
+        "run_ended_at_utc": app.finished_at.isoformat() if app.finished_at else None,
+        "owned_processes": sorted(app.seen_owned.values(), key=lambda item: item["pid"]),
+    }
     try:
         logs = preserve_logs(datadir, args.output)
     except Exception as exc:

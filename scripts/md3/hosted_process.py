@@ -34,10 +34,11 @@ def _created_at(value: str) -> datetime | None:
         return None
 
 
-def owned_processes(processes: list[dict], *, exe: str, datadir: str,
-                    launched_at: datetime, launch_pid: int,
-                    desktop_pids: set[int]) -> list[int]:
-    """Require path, profile, launch time, and a window on our named desktop."""
+def owned_process_inventory(processes: list[dict], *, exe: str, datadir: str,
+                            launched_at: datetime, launch_pid: int) -> list[dict]:
+    """Identify live original and direct-child processes independently of HWNDs."""
+    if launched_at is None or launch_pid is None:
+        return []
     exe_path = os.path.normcase(os.path.normpath(str(Path(exe).resolve())))
     profile_path = os.path.normcase(os.path.normpath(str(Path(datadir).resolve())))
     owned = []
@@ -57,7 +58,21 @@ def owned_processes(processes: list[dict], *, exe: str, datadir: str,
         normalized_command = os.path.normcase(command.replace("/", "\\"))
         if f'--datadir "{profile_path}"' not in normalized_command:
             continue
-        if pid != launch_pid and (pid not in desktop_pids or int(process.get("ParentProcessId") or 0) != launch_pid):
+        try:
+            parent = int(process.get("ParentProcessId") or 0)
+        except (TypeError, ValueError):
             continue
-        owned.append(pid)
-    return sorted(set(owned), key=lambda pid: (pid != launch_pid, pid))
+        if pid != launch_pid and parent != launch_pid:
+            continue
+        owned.append({"pid": pid, "parent_pid": parent,
+                      "created_at_utc": created.isoformat(), "launch_pid": pid == launch_pid})
+    return sorted(owned, key=lambda item: (not item["launch_pid"], item["pid"]))
+
+
+def owned_processes(processes: list[dict], *, exe: str, datadir: str,
+                    launched_at: datetime, launch_pid: int,
+                    desktop_pids: set[int]) -> list[int]:
+    """Return only owned processes that also have HWNDs on the named desktop."""
+    inventory = owned_process_inventory(processes, exe=exe, datadir=datadir,
+                                        launched_at=launched_at, launch_pid=launch_pid)
+    return [item["pid"] for item in inventory if item["pid"] in desktop_pids]
