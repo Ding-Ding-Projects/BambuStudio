@@ -37,7 +37,14 @@ foreach ($row in @($receipt, $envelope)) {
     Assert-True ($row.installed_exe_sha256 -ceq $expectedExe) 'The installed executable hash does not match.'
 }
 Assert-True ($receipt.encrypted_bundle_sha256 -ceq $envelope.ciphertext_sha256) 'The receipt and envelope name different bundles.'
-Assert-True ($envelope.public_key_sha256 -ceq (Get-FileHash -LiteralPath $publicPath -Algorithm SHA256).Hash.ToLowerInvariant()) 'The public key identity does not match.'
+$publicRsa = [System.Security.Cryptography.RSA]::Create()
+try {
+    $publicRsa.ImportFromPem([System.IO.File]::ReadAllText($publicPath))
+    $publicKeyHash = ([Convert]::ToHexString(
+        [System.Security.Cryptography.SHA256]::HashData($publicRsa.ExportSubjectPublicKeyInfo()))).ToLowerInvariant()
+}
+finally { $publicRsa.Dispose() }
+Assert-True ($envelope.public_key_sha256 -ceq $publicKeyHash) 'The public key identity does not match.'
 $bundle = Get-Item -LiteralPath $BundlePath
 Assert-True ($bundle.Length -gt 0 -and $bundle.Length -le 268435456) 'The encrypted bundle exceeds the 256 MiB limit.'
 Assert-True ((Get-FileHash -LiteralPath $BundlePath -Algorithm SHA256).Hash.ToLowerInvariant() -ceq $envelope.ciphertext_sha256) 'The encrypted bundle hash does not match.'

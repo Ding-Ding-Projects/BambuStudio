@@ -46,6 +46,8 @@ try {
     $aad = [System.Text.Encoding]::UTF8.GetBytes(($bindingLines -join "`n") + "`n")
     $publicPath = Join-Path $PSScriptRoot 'hosted-gui-public.pem'
     $rsa.ImportFromPem([System.IO.File]::ReadAllText($publicPath))
+    $publicKeyHash = ([Convert]::ToHexString(
+        [System.Security.Cryptography.SHA256]::HashData($rsa.ExportSubjectPublicKeyInfo()))).ToLowerInvariant()
     $wrappedKey = $rsa.Encrypt($key, [System.Security.Cryptography.RSAEncryptionPadding]::OaepSHA256)
     $aes = [System.Security.Cryptography.AesGcm]::new($key, 16)
     try { $aes.Encrypt($nonce, $plain, $cipher, $tagBytes, $aad) }
@@ -70,7 +72,7 @@ try {
         source_commit = $source
         release_tag = $tag
         installed_exe_sha256 = $exeHash
-        public_key_sha256 = (Get-FileHash -LiteralPath $publicPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        public_key_sha256 = $publicKeyHash
         ciphertext_sha256 = $bundleHash
         aad_sha256 = ([Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($aad))).ToLowerInvariant()
         wrapped_key = [Convert]::ToBase64String($wrappedKey)

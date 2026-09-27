@@ -139,6 +139,8 @@ try {
         $plaintext = [System.IO.File]::ReadAllBytes($zipPath)
         $ciphertext = [byte[]]::new($plaintext.Length)
         $rsa.ImportFromPem($publicPem)
+        $publicKeyHash = ([Convert]::ToHexString(
+            [System.Security.Cryptography.SHA256]::HashData($rsa.ExportSubjectPublicKeyInfo()))).ToLowerInvariant()
         $wrappedKey = $rsa.Encrypt($key, [System.Security.Cryptography.RSAEncryptionPadding]::OaepSHA256)
         $aes = [System.Security.Cryptography.AesGcm]::new($key, 16)
         try { $aes.Encrypt($nonce, $plaintext, $ciphertext, $tagBytes, $aad) }
@@ -152,7 +154,7 @@ try {
             source_commit = $evidence.source_commit
             release_tag = $Tag
             installed_exe_sha256 = $exeHash
-            public_key_sha256 = (Get-FileHash -LiteralPath $publicPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            public_key_sha256 = $publicKeyHash
             ciphertext_sha256 = $cipherHash
             aad_sha256 = ([Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($aad))).ToLowerInvariant()
             wrapped_key = [Convert]::ToBase64String($wrappedKey)
