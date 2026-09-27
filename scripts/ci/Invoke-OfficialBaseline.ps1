@@ -49,6 +49,8 @@ function Install-ChocolateyIfMissing {
 try {
     Set-Location $root
     foreach ($tool in @('git', 'cmake', 'msbuild')) { Assert-Command $tool }
+    $cmakeExecutable = (Get-Command cmake.exe -ErrorAction Stop).Source
+    $cmakeDirectory = Split-Path -Parent $cmakeExecutable
     $source = (git rev-parse HEAD).Trim()
     if ($LASTEXITCODE -ne 0) { throw 'Cannot identify the source commit.' }
     $depsTree = (git rev-parse 'HEAD:deps').Trim()
@@ -71,7 +73,7 @@ try {
     if ($LASTEXITCODE -ne 0 -or -not $vsVersionText.Trim()) { throw 'Visual Studio installation version is unavailable.' }
     $vsVersionText = $vsVersionText.Trim()
     $generator = 'Visual Studio 18 2026'
-    $cmakeVersionText = (& cmake --version | Select-Object -First 1)
+    $cmakeVersionText = (& $cmakeExecutable --version | Select-Object -First 1)
     if ($cmakeVersionText -notmatch '^cmake version (\d+\.\d+\.\d+)') {
         throw "Cannot identify CMake version: $cmakeVersionText"
     }
@@ -88,6 +90,8 @@ try {
         resources_tree = $resourcesTree
         generator = $generator
         cmake_version = $cmakeVersion.ToString()
+        cmake_executable = $cmakeExecutable
+        cmake_sha256 = (Get-FileHash -LiteralPath $cmakeExecutable -Algorithm SHA256).Hash.ToLowerInvariant()
         configuration = 'Release'
         sdk_include = $sdk.FullName
         visual_studio = $vs
@@ -111,6 +115,13 @@ try {
     }
     if (-not (Test-Path $strawberryPerl)) { throw 'Strawberry Perl is unavailable after bootstrap.' }
     $env:Path = "C:\Strawberry\c\bin;C:\Strawberry\perl\site\bin;C:\Strawberry\perl\bin;$env:Path"
+    # Chocolatey may prepend an older CMake to PATH. Preserve the verified
+    # executable for both direct calls and child tools that invoke `cmake`.
+    $env:Path = "$cmakeDirectory;$env:Path"
+    $resolvedCmake = (Get-Command cmake.exe -ErrorAction Stop).Source
+    if ($resolvedCmake -ne $cmakeExecutable) {
+        throw "CMake changed after bootstrap: expected $cmakeExecutable, found $resolvedCmake"
+    }
     $env:LANG = 'C'; $env:LC_ALL = 'C'; $env:LC_CTYPE = 'C'
     Invoke-Native 'Verify Strawberry Perl module' { & $strawberryPerl -MLocale::Maketext::Simple -e 1 }
 
@@ -118,10 +129,10 @@ try {
     $prefix = Join-Path $destination 'usr\local'
     if (-not (Test-Path (Join-Path $prefix 'include'))) {
         Invoke-Native 'Configure official dependencies' {
-            cmake -S deps -B deps/build -G $generator -A x64 "-DDESTDIR=$destination" -DDEP_DEBUG=OFF
+            & $cmakeExecutable -S deps -B deps/build -G $generator -A x64 "-DDESTDIR=$destination" -DDEP_DEBUG=OFF
         }
         Invoke-Native 'Build official dependencies' {
-            cmake --build deps/build --target ALL_BUILD --config Release --parallel 4
+            & $cmakeExecutable --build deps/build --target ALL_BUILD --config Release --parallel 4
         }
     }
     if (-not (Test-Path (Join-Path $prefix 'include'))) {
@@ -129,14 +140,14 @@ try {
     }
 
     Invoke-Native 'Configure official native application' {
-        cmake -S . -B build -G $generator -A x64 `
+        & $cmakeExecutable -S . -B build -G $generator -A x64 `
             -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 `
             -DSLIC3R_MSVC_PDB=ON -DSLIC3R_BUILD_TESTS=OFF `
             "-DCMAKE_PREFIX_PATH=$prefix" "-DCMAKE_INSTALL_PREFIX=$root\install-dir" `
             "-DWIN10SDK_PATH=$($sdk.FullName)"
     }
     Invoke-Native 'Build and install official native application' {
-        cmake --build build --target install --config Release --parallel 4
+        & $cmakeExecutable --build build --target install --config Release --parallel 4
     }
     $exe = Get-ChildItem -Path (Join-Path $root 'install-dir') -Filter 'bambu-studio.exe' -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $exe) { throw 'The installed native payload does not contain bambu-studio.exe.' }

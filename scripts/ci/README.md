@@ -13,7 +13,7 @@ supported installer. The workflow does not launch the GUI or open a project.
 | --- | --- |
 | Windows and SDK | `windows-2025`; choose an installed Windows 10 SDK include tree containing `winrt/windows.graphics.printing3d.h` |
 | Visual Studio C++ | Hosted Visual Studio 2026 C++ toolset, discovered with `vswhere`; `microsoft/setup-msbuild` adds MSBuild to `PATH` |
-| CMake and Git | Hosted tools, checked before configuration; Visual Studio 2026 requires CMake 4.2 or newer |
+| CMake and Git | Hosted tools, checked before configuration; Visual Studio 2026 requires CMake 4.2 or newer. The verified absolute CMake path and SHA-256 are recorded, then kept first on `PATH` for child tools after package bootstrap. |
 | Chocolatey | Hosted package manager, checked before a missing package is installed |
 | `pkgconfiglite` | Chocolatey version `0.28.0`, installed only when `pkg-config.exe` is missing |
 | Strawberry Perl | Chocolatey package if missing; its Perl is put first on `PATH` and checked for `Locale::Maketext::Simple` |
