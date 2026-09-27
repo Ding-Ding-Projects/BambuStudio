@@ -2,9 +2,16 @@
 
 #include "libslic3r/Model.hpp"
 #include "libslic3r/Format/3mf.hpp"
+#include "libslic3r/Format/bbs_3mf.hpp"
 #include "libslic3r/Format/STL.hpp"
+#include "libslic3r/TriangleMesh.hpp"
 
 #include <boost/filesystem/operations.hpp>
+
+#include <fstream>
+#include <iterator>
+#include <type_traits>
+#include <vector>
 
 using namespace Slic3r;
 
@@ -94,7 +101,9 @@ SCENARIO("2D convex hull of sinking object", "[3mf]") {
 
             // set instance's attitude so that it is rotated, scaled and sinking
             ModelInstance* instance = object->instances.front();
-            instance->set_rotation(X, -M_PI / 4.0);
+            // BambuStudio dropped the per-axis set_rotation(Axis, double) overload;
+            // the instance starts at zero rotation, so setting the full vector is equivalent.
+            instance->set_rotation(Vec3d(-M_PI / 4.0, 0.0, 0.0));
             instance->set_offset(Vec3d::Zero());
             instance->set_scaling_factor({ 2.0, 2.0, 2.0 });
 

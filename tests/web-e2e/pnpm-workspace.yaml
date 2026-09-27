@@ -1,2 +1,15 @@
+packages:
+  - .
+
+overrides:
+  js-yaml: 4.3.0
+  brace-expansion: 5.0.8
+  esbuild: 0.28.1
+
+patchedDependencies:
+  minimatch@3.1.5: patches/minimatch@3.1.5.patch
+
+onlyBuiltDependencies:
+  - esbuild
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true

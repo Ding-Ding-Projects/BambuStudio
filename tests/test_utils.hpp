@@ -14,7 +14,11 @@ inline Slic3r::TriangleMesh load_model(const std::string &obj_filename)
 {
     Slic3r::TriangleMesh mesh;
     auto fpath = TEST_DATA_DIR PATH_SEPARATOR + obj_filename;
-    Slic3r::load_obj(fpath.c_str(), &mesh);
+    // BambuStudio's load_obj gained ObjInfo / message out-params; the extra
+    // color and diagnostic data is irrelevant for the mesh fixtures here.
+    Slic3r::ObjInfo obj_info;
+    std::string message;
+    Slic3r::load_obj(fpath.c_str(), &mesh, obj_info, message);
     return mesh;
 }
 

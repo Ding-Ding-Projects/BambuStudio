@@ -274,6 +274,66 @@ TEST_CASE("FilamentGroup property checks", "[filament_group][property]") {
 
 // ============ Golden Update Utility ============
 
+TEST_CASE("Preferred physical nozzle respects capacity and printability", "[filament_group][preference]") {
+    auto tc = build_test_case("preferred_nozzle", "A", 91521, 4, 12, false, false,
+                              FGMode::FlushMode, FGStrategy::BestCost, false);
+    auto& ctx = tc.context;
+    ctx.model_info.layer_filaments = {{0, 1, 2, 3}};
+    ctx.machine_info.max_group_size = {2, 3};
+    ctx.model_info.unprintable_filaments[0].insert(3);
+
+    SECTION("left preference spills exactly two materials") {
+        ctx.group_info.preferred_extruder = 0;
+        auto map = FilamentGroup(ctx).calc_filament_group();
+        REQUIRE(std::count(map.begin(), map.end(), 1) == 2);
+        REQUIRE(map[3] == 1);
+    }
+    SECTION("right preference fills its capacity first") {
+        ctx.group_info.preferred_extruder = 1;
+        auto map = FilamentGroup(ctx).calc_filament_group();
+        REQUIRE(std::count(map.begin(), map.end(), 0) == 1);
+        REQUIRE(map[3] == 1);
+    }
+}
+
+TEST_CASE("Preferred nozzle modes preserve configuration identities", "[filament_group][preference]") {
+    REQUIRE(static_cast<int>(fmmAutoForFlush) == 0);
+    REQUIRE(static_cast<int>(fmmAutoForMatch) == 1);
+    REQUIRE(static_cast<int>(fmmManual) == 2);
+    REQUIRE(static_cast<int>(fmmNozzleManual) == 3);
+    REQUIRE(static_cast<int>(fmmAutoForQuality) == 4);
+    REQUIRE(static_cast<int>(fmmDefault) == 5);
+
+    for (const auto mode : {fmmPreferLeft, fmmPreferRight}) {
+        ConfigOptionEnum<FilamentMapMode> saved(mode);
+        const std::string encoded = saved.serialize();
+        ConfigOptionEnum<FilamentMapMode> restored(fmmAutoForFlush);
+        REQUIRE(restored.deserialize(encoded));
+        REQUIRE(restored.value == mode);
+        REQUIRE(is_auto_filament_map_mode(restored.value));
+    }
+
+    auto tc = build_test_case("legacy_group_context", "A", 91523, 3, 4, false, false,
+                              FGMode::FlushMode, FGStrategy::BestCost, false);
+    json stored = tc.context.group_info;
+    stored.erase("preferred_extruder");
+    FilamentGroupContext::GroupInfo loaded{};
+    from_json(stored, loaded);
+    REQUIRE(loaded.preferred_extruder == -1);
+}
+
+TEST_CASE("Preferred nozzle large-set path respects spillover", "[filament_group][preference]") {
+    auto tc = build_test_case("preferred_nozzle_large", "A", 91522, 15, 12, false, false,
+                              FGMode::FlushMode, FGStrategy::BestCost, false);
+    auto& ctx = tc.context;
+    ctx.model_info.layer_filaments = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}};
+    ctx.machine_info.max_group_size = {5, 15};
+    ctx.group_info.preferred_extruder = 0;
+    auto map = FilamentGroup(ctx).calc_filament_group();
+    REQUIRE(std::count(map.begin(), map.end(), 0) == 5);
+}
+
+
 TEST_CASE("FilamentGroup update golden", "[filament_group][update-golden][.]") {
     auto files = get_golden_files();
     REQUIRE(!files.empty());

@@ -16,19 +16,22 @@ by Playwright over the Chrome DevTools Protocol exposed by WebView2.
 ```powershell
 # from the repo root
 cd tests\web-e2e
-pnpm install
-pnpm exec playwright install chromium    # one-off
+corepack pnpm install --frozen-lockfile
+corepack pnpm exec playwright install chromium    # one-off
 copy .env.example .env.local              # then edit if needed
 
 # interactive launcher (recommended)
-pnpm e2e
+corepack pnpm e2e
 ```
+
+`package.json` pins the same reviewed pnpm 10.12.1 toolchain used by DeviceWeb;
+the workspace explicitly allows only esbuild's required install script.
 
 Power users can skip the launcher and call Playwright directly:
 
 ```powershell
 # 1. start BambuStudio yourself with CDP enabled
-$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=9222 --remote-allow-origins=*"
+$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-address=127.0.0.1 --remote-debugging-port=9222"
 & "..\..\build_release\src\Release\bambu-studio.exe"
 
 # 2. log in + open Device → Filament Manager
@@ -41,7 +44,8 @@ pnpm e2e:run --grep @smoke
 
 ## P0 — verify the WebView2 CDP path before anything else
 
-The whole framework hinges on BambuStudio honouring the
+The whole framework hinges on BambuStudio honouring the opt-in,
+loopback-only
 `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` environment variable.  The
 `scripts/check-cdp.ps1` helper proves this end-to-end:
 
