@@ -76,15 +76,20 @@ void CaliPresetCaliStagePanel::create_panel(wxWindow* parent)
     m_top_sizer->Add(title);
     m_top_sizer->AddSpacer(FromDIP(15));
 
-    m_complete_radioBox = new wxRadioButton(parent, wxID_ANY, _L("Complete Calibration"));
-    m_complete_radioBox->SetForegroundColour(*wxBLACK);
+    // Kit radios: LabeledRadioButton carries the radio role, checked state, the
+    // accessible name from its label and arrow-key navigation through RadioGroup,
+    // which is what the earlier native exception was protecting.
+    m_complete_radioBox = new LabeledRadioButton(parent, _L("Complete Calibration"));
+    m_complete_radioBox->SetFont(Label::Body_14);
+    m_stage_radio_group.Add(m_complete_radioBox);
 
     m_complete_radioBox->SetValue(true);
     m_stage = CALI_MANUAL_STAGE_1;
     m_top_sizer->Add(m_complete_radioBox);
     m_top_sizer->AddSpacer(FromDIP(10));
-    m_fine_radioBox = new wxRadioButton(parent, wxID_ANY, _L("Fine Calibration based on flow ratio"));
-    m_fine_radioBox->SetForegroundColour(*wxBLACK);
+    m_fine_radioBox = new LabeledRadioButton(parent, _L("Fine Calibration based on flow ratio"));
+    m_fine_radioBox->SetFont(Label::Body_14);
+    m_stage_radio_group.Add(m_fine_radioBox);
     m_top_sizer->Add(m_fine_radioBox);
 
     input_panel = new wxPanel(parent);
@@ -416,7 +421,7 @@ CaliPresetTipsPanel::CaliPresetTipsPanel(
     long style)
     : wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(wxColour(238, 238, 238));
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     this->SetMinSize(wxSize(MIN_CALIBRATION_PAGE_WIDTH, -1));
 
     m_top_sizer = new wxBoxSizer(wxVERTICAL);
@@ -579,14 +584,13 @@ void CalibrationPresetPage::create_selection_panel(wxWindow* parent)
     m_btn_sync = new Button(parent, "", "ams_nozzle_sync");
     m_btn_sync->SetToolTip(_L("Synchronize nozzle and AMS information"));
     m_btn_sync->SetCornerRadius(8);
-    StateColor btn_sync_bg_col(std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour("#F8F8F8"), StateColor::Normal));
-    StateColor btn_sync_bd_col(std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Pressed),
-                               std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Hovered),
-                               std::pair<wxColour, int>(wxColour("#EEEEEE"), StateColor::Normal));
-    m_btn_sync->SetBackgroundColor(btn_sync_bg_col);
-    m_btn_sync->SetBorderColor(btn_sync_bd_col);
+    StateColor btn_sync_bg_col(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                               std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Normal));
+    StateColor btn_sync_bd_col(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed),
+                               std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
+                               std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal));
+    m_btn_sync->SetVariant(Button::Variant::Outlined);
     m_btn_sync->SetCanFocus(false);
     m_btn_sync->SetPaddingSize({FromDIP(6), FromDIP(12)});
     m_btn_sync->SetMinSize(SYNC_BUTTON_SIZE);
@@ -965,7 +969,7 @@ void CalibrationPresetPage::create_filament_list_panel(wxWindow* parent)
     m_filament_list_tips = new Label(parent, get_filament_tips());
     m_filament_list_tips->Hide();
     m_filament_list_tips->SetFont(Label::Body_13);
-    m_filament_list_tips->SetForegroundColour(wxColour(145, 145, 145));
+    m_filament_list_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_filament_list_tips->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     panel_sizer->Add(m_filament_list_tips, 0, wxBOTTOM, FromDIP(10));
 
@@ -1074,9 +1078,30 @@ wxSizer* CalibrationPresetPage::create_slot_items_sizer(wxPanel* slot_items_pane
     for (int i = 0; i < MAX_SLOT_NUM; i++) { // 4 slots
         auto           filament_comboBox_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-        RadioBox *     radio_btn               = new RadioBox(slot_items_panel);
+        // Kit slot selector (no label: the combo box beside it names the slot); one
+        // RadioGroup across every slot keeps the selection single.
+        LabeledRadioButton *radio_btn          = new LabeledRadioButton(slot_items_panel);
+        radio_btn->SetBackgroundColour(ThemeColor::White);
+        m_slot_radio_group.Add(radio_btn);
         CheckBox *     check_box               = new CheckBox(slot_items_panel);
-        check_box->SetBackgroundColour(*wxWHITE);
+        /* The plate has to be set explicitly; the CheckBox cannot inherit it. The glyph is
+           transparent outside its rounded square and the button is wxBORDER_NONE + owner
+           drawn, so wxAnyButton::MSWOnDraw FillRect()s the whole 20px window with
+           GetBackgroundColour(). CheckBox's ctor seeds that from the parent, but
+           slot_items_panel is a bare wxPanel that never sets a background: wx's
+           background inheritance is compiled out (wxWindowBase::InheritAttributes has the
+           bg branch under #if 0), so GetBackgroundColour() falls through to
+           wxSYS_COLOUR_BTNFACE #F0F0F0 -- a grey square per slot, and #F0F0F0 is not a key
+           in gDarkColors, so it stays bright grey in dark mode. White is not a stray
+           literal here, it is the row: the enclosing m_filament_list_panel /
+           m_multi_exutrder_filament_list_panel are set to the same #ffffff below, and both
+           they and this plate are remapped together to #202127 by GUI_App::UpdateDarkUI
+           (ThemeColor::White is that exact gDarkColors key).
+           MD3::Role::SurfaceContainerLowest is deliberately NOT used: it agrees in light
+           (#ffffff) but resolves to #131317 in dark, which neither matches the #202127 row
+           nor reverse-maps, so a page built in dark mode would strand a near-black square
+           on a white row after switching to light. */
+        check_box->SetBackgroundColour(ThemeColor::White);
 
         int index = extuder_role == ExtruderRole::MAIN_EXTRUDER ? (i + 4) : i;
         FilamentComboBox *fcb = new FilamentComboBox(slot_items_panel, index);
@@ -1143,7 +1168,7 @@ void CalibrationPresetPage::create_multi_extruder_filament_list_panel(wxWindow *
         _L("Tips for calibration material: \n- Materials that can share same hot bed temperature\n- Different filament brand and family(Brand = Bambu, Family = Basic, Matte)"));
     m_filament_list_tips->Hide();
     m_filament_list_tips->SetFont(Label::Body_13);
-    m_filament_list_tips->SetForegroundColour(wxColour(145, 145, 145));
+    m_filament_list_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_filament_list_tips->Wrap(CALIBRATION_TEXT_MAX_LENGTH);
     m_multi_extruder_ams_panel_sizer->Add(m_filament_list_tips, 0, wxBOTTOM, FromDIP(10));
 
@@ -1254,7 +1279,7 @@ void CalibrationPresetPage::create_page(wxWindow* parent)
     m_warning_panel->Hide();
 
     m_error_panel = new CaliPresetWarningPanel(parent);
-    m_error_panel->set_color(wxColour(230, 92, 92));
+    m_error_panel->set_color(StateColor::semantic(MD3::Role::Error));
 
     m_tips_panel = new CaliPresetTipsPanel(parent);
 
@@ -1336,7 +1361,7 @@ void CalibrationPresetPage::stripWhiteSpace(std::string& str)
 
 void CalibrationPresetPage::update_priner_status_msg(wxString msg, bool is_warning)
 {
-    auto colour = is_warning ? wxColour(0xFF, 0x6F, 0x00) : wxColour(0x6B, 0x6B, 0x6B);
+    auto colour = is_warning ? ThemeColor::Warning : StateColor::semantic(MD3::Role::OnSurfaceVariant);
     m_statictext_printer_msg->SetForegroundColour(colour);
 
     if (msg.empty()) {
@@ -1775,14 +1800,13 @@ bool CalibrationPresetPage::is_blocking_printing()
 void CalibrationPresetPage::update_sync_button_status()
 {
     auto set_status = [this](bool synced) {
-        StateColor synced_colour(std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Normal));
-        StateColor not_synced_colour(std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Normal));
+        StateColor synced_colour(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
+        StateColor not_synced_colour(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         if (synced) {
-            m_btn_sync->SetBorderColor(synced_colour);
+            m_btn_sync->SetVariant(Button::Variant::Outlined);
             m_btn_sync->SetIcon("ams_nozzle_sync");
             m_sync_button_text->SetLabel(_L("AMS and nozzle information are synced"));
         } else {
-            m_btn_sync->SetBorderColor(not_synced_colour);
             m_btn_sync->SetIcon("printer_sync");
             m_sync_button_text->SetLabel(_L("Sync AMS and nozzle information"));
         }

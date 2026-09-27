@@ -2,6 +2,7 @@
 #include "HMS.hpp"
 
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 
@@ -44,8 +45,7 @@ ImageMessageDialog::ImageMessageDialog(wxWindow *parent, wxWindowID id, const wx
     m_scroll_area->SetSizer(text_sizer);
 
     Button *msg_button = new Button(this, _L("Click for more details"));
-    msg_button->SetBackgroundColor(btn_bg_white);
-    msg_button->SetBorderColor(wxColour(38, 46, 48));
+    msg_button->SetVariant(Button::Variant::Outlined);
     msg_button->SetFont(Label::Body_14);
     msg_button->SetSize(wxSize(FromDIP(300), FromDIP(30)));
     msg_button->SetMinSize(wxSize(FromDIP(300), FromDIP(30)));
@@ -83,8 +83,9 @@ ImageMessageDialog::ImageMessageDialog(wxWindow *parent, wxWindowID id, const wx
     m_sizer_main->Fit(this);
     m_sizer_main->SetSizeHints(this);
 
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 ImageMessageDialog::~ImageMessageDialog()

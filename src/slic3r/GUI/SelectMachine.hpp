@@ -27,6 +27,7 @@
 #include <unordered_map>
 
 #include "GUI_ObjectLayers.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include "boost/bimap/bimap.hpp"
 #include "AmsMappingPopup.hpp"
 #include "ReleaseNote.hpp"
@@ -341,6 +342,13 @@ private:
     std::vector<FilamentInfo>           m_ams_mapping_result;
     std::unordered_map<int, int>        m_nozzle_mapping_result;
     std::vector<int>                    m_filaments_map;
+    std::vector<int>                    m_pending_filaments_map;
+    std::vector<std::pair<int, wxString>> m_quick_move_filaments;
+    wxPanel*                            m_quick_swap_panel{ nullptr };
+    wxBoxSizer*                         m_quick_move_left{ nullptr };
+    wxBoxSizer*                         m_quick_move_right{ nullptr };
+    Button*                             m_quick_swap{ nullptr };
+    Button*                             m_quick_swap_reslice{ nullptr };
     std::shared_ptr<BBLStatusBarPrint>  m_status_bar;
 
     Slic3r::DynamicPrintConfig          m_required_data_config;
@@ -381,10 +389,10 @@ protected:
     wxBoxSizer*                         m_change_filament_times_sizer{ nullptr };
     wxBoxSizer*                         m_warn_when_drying_sizer{ nullptr };
     Button*                             m_button_ensure{ nullptr };
-    wxStaticBitmap *                    m_rename_button{nullptr};
+    Button *                            m_rename_button{nullptr};
     wxStaticBitmap*                     m_staticbitmap{ nullptr };
-    wxStaticBitmap*                     m_bitmap_last_plate{ nullptr };
-    wxStaticBitmap*                     m_bitmap_next_plate{ nullptr };
+    Button*                             m_bitmap_last_plate{ nullptr };
+    Button*                             m_bitmap_next_plate{ nullptr };
     wxStaticBitmap*                     img_amsmapping_tip{nullptr};
     ThumbnailPanel*                     m_thumbnailPanel{ nullptr };
     wxPanel*                            m_panel_status{ nullptr };
@@ -402,7 +410,7 @@ protected:
     Label*                              m_st_txt_error_desc{nullptr};
     Label*                              m_st_txt_extra_info{nullptr};
     Label*                              m_ams_backup_tip{nullptr};
-    wxHyperlinkCtrl*                    m_link_network_state{ nullptr };
+    LinkLabel*                    m_link_network_state{ nullptr };
     wxSimplebook*                       m_rename_switch_panel{nullptr};
     wxSimplebook*                       m_simplebook{nullptr};
     wxStaticText*                       m_rename_text{nullptr};
@@ -434,7 +442,7 @@ protected:
     wxStaticBitmap *                    weightimg{nullptr};
     ScalableBitmap *                    print_weight{nullptr};
     ScalableBitmap *                    ams_mapping_help_icon{nullptr};
-    wxStaticBitmap *                    img_ams_backup{nullptr};
+    Button* img_ams_backup{nullptr};
     ThumbnailData                       m_cur_input_thumbnail_data;
     ThumbnailData                       m_cur_no_light_thumbnail_data;
     ThumbnailData                       m_preview_thumbnail_data;//when ams map change
@@ -515,7 +523,7 @@ public:
     void update_best_pos_dialog(wxCommandEvent &evt);
     void update_ams_check(MachineObject* obj);
     void update_filament_change_count();
-    void on_rename_click(wxMouseEvent &event);
+    void on_rename_click(wxCommandEvent &event);
     void on_rename_enter();
     void update_printer_combobox(wxCommandEvent& event);
     void on_cancel(wxCloseEvent& event);
@@ -613,6 +621,8 @@ private:
 
     /* update material items position*/
     void update_material_item_pos(MachineObject* obj_);
+    void refresh_quick_swap_controls();
+    void apply_quick_swap(bool reslice);
 
     /* update scroll area size*/
     void update_scroll_area_size();

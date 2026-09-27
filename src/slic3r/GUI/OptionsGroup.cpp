@@ -7,6 +7,7 @@
 #include "MsgDialog.hpp"
 #include "format.hpp"
 #include "Widgets/StaticLine.hpp"
+#include "Widgets/StateColor.hpp"
 
 #include <utility>
 #include <wx/bookctrl.h>
@@ -17,6 +18,7 @@
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "I18N.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -363,8 +365,7 @@ void OptionsGroup::activate_line(Line& line)
                 // Text is properly aligned only when Ellipsize is checked.
                 label_style |= staticbox ? 0 : wxST_ELLIPSIZE_END;
 #endif /* __WXGTK__ */
-                label = new wxStaticText(this->ctrl_parent(), wxID_ANY, line.label + (line.label.IsEmpty() ? "" : ": "),
-                    wxDefaultPosition, wxSize(label_width * wxGetApp().em_unit(), -1), label_style);
+                label = new Label(this->ctrl_parent(), line.label + (line.label.IsEmpty() ? "" : ": "), label_style, wxSize(label_width * wxGetApp().em_unit(), -1));
                 label->SetBackgroundStyle(wxBG_STYLE_PAINT);
                 label->SetFont(wxGetApp().normal_font());
                 label->Wrap(label_width * wxGetApp().em_unit()); // avoid a Linux/GTK bug
@@ -424,8 +425,8 @@ void OptionsGroup::activate_line(Line& line)
 			wxString str_label = (option.label == L_CONTEXT("Top", "Layers") || option.label == L_CONTEXT("Bottom", "Layers")) ?
 				_CTX(option.label, "Layers") :
 				_(option.label);
-			label = new wxStaticText(this->ctrl_parent(), wxID_ANY, str_label + ": ", wxDefaultPosition, //wxDefaultSize);
-				wxSize(sublabel_width != -1 ? sublabel_width * wxGetApp().em_unit() : -1, -1), wxALIGN_RIGHT);
+			label = new Label(this->ctrl_parent(), str_label + ": ", wxALIGN_RIGHT,
+				wxSize(sublabel_width != -1 ? sublabel_width * wxGetApp().em_unit() : -1, -1));
 			label->SetBackgroundStyle(wxBG_STYLE_PAINT);
             label->SetFont(wxGetApp().normal_font());
 			sizer_tmp->Add(label, 0, wxALIGN_CENTER_VERTICAL, 0);
@@ -451,8 +452,7 @@ void OptionsGroup::activate_line(Line& line)
 
             // add sidetext if any
             if (!field->combine_side_text() && (!option.sidetext.empty() || sidetext_width > 0)) {
-                auto sidetext = new wxStaticText(this->ctrl_parent(), wxID_ANY, _(option.sidetext), wxDefaultPosition,
-                    wxSize(sidetext_width != -1 ? sidetext_width * wxGetApp().em_unit() : -1, -1), wxALIGN_LEFT);
+                auto sidetext = new Label(this->ctrl_parent(), _(option.sidetext), wxALIGN_LEFT, wxSize(sidetext_width != -1 ? sidetext_width * wxGetApp().em_unit() : -1, -1));
                 sidetext->SetBackgroundStyle(wxBG_STYLE_PAINT);
                 sidetext->SetFont(wxGetApp().normal_font());
                 sizer_tmp->Add(sidetext, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 4);
@@ -507,7 +507,7 @@ bool OptionsGroup::activate(std::function<void()> throw_if_canceled/* = [](){}*/
 			// BBS: new layout
 			::StaticLine* stl = new ::StaticLine(m_parent, false, _(title), icon);
             stl->SetFont(Label::Head_14);
-            stl->SetForegroundColour("#262E30");
+            stl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
             sizer = new wxBoxSizer(wxVERTICAL);
             if (title.IsEmpty()) {
                 stl->Hide();

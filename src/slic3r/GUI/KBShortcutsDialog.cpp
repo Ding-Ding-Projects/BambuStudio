@@ -9,6 +9,8 @@
 #include "GUI_App.hpp"
 #include "wxExtensions.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 #include <wx/notebook.h>
 
 namespace Slic3r {
@@ -29,18 +31,18 @@ KBShortcutsDialog::KBShortcutsDialog()
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     this->SetSizeHints(wxDefaultSize, wxDefaultSize);
-    this->SetBackgroundColour(wxColour(255, 255, 255));
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer *m_sizer_top = new wxBoxSizer(wxVERTICAL);
 
     auto m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_top_line->SetBackgroundColour(wxColour(166, 169, 170));
+    m_top_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_top->Add(m_top_line, 0, wxEXPAND, 0);
     m_sizer_body = new wxBoxSizer(wxHORIZONTAL);
 
     m_panel_selects = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_panel_selects->SetBackgroundColour(wxColour(248, 248, 248));
+    m_panel_selects->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     wxBoxSizer *m_sizer_left = new wxBoxSizer(wxVERTICAL);
 
     m_sizer_left->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(20));
@@ -78,6 +80,7 @@ KBShortcutsDialog::KBShortcutsDialog()
     SetSizer(m_sizer_top);
     Layout();
     Fit();
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
 
     // select first
@@ -95,16 +98,16 @@ void KBShortcutsDialog::OnSelectTabel(wxCommandEvent &event)
     while (i != m_hash_selector.end()) {
         Select *sel = i->second;
         if (id == sel->m_index) {
-            sel->m_tab_button->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#FFFFFF")));
-            sel->m_tab_text->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#FFFFFF")));
+            sel->m_tab_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+            sel->m_tab_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
             sel->m_tab_text->SetFont(::Label::Head_13);
             sel->m_tab_button->Refresh();
             sel->m_tab_text->Refresh();
 
             m_simplebook->SetSelection(id);
         } else {
-            sel->m_tab_button->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#F8F8F8")));
-            sel->m_tab_text->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#F8F8F8")));
+            sel->m_tab_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+            sel->m_tab_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
             sel->m_tab_text->SetFont(::Label::Body_13);
             sel->m_tab_button->Refresh();
             sel->m_tab_text->Refresh();
@@ -122,9 +125,9 @@ wxWindow *KBShortcutsDialog::create_button(int id, wxString text)
 
     sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(22));
 
-    auto stext = new wxStaticText(tab_button, wxID_ANY, text, wxDefaultPosition, wxDefaultSize, 0);
+    auto stext = new Label(tab_button, text);
     stext->SetFont(::Label::Body_13);
-    stext->SetForegroundColour(wxColour(38, 46, 48));
+    stext->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     stext->Wrap(-1);
     sizer->Add(stext, 1, wxALIGN_CENTER, 0);
 
@@ -171,6 +174,8 @@ void KBShortcutsDialog::fill_shortcuts()
 
     if (wxGetApp().is_editor()) {
         Shortcuts global_shortcuts = {
+            // Command palette: the one global search-everything chord
+            { ctrl + "Shift+F", L("Command palette") },
             // File
             { ctrl + "N", L("New Project") },
             { ctrl + "O", L("Open Project") },
@@ -205,6 +210,8 @@ void KBShortcutsDialog::fill_shortcuts()
             #ifndef __APPLE__
                 { ctrl + "Tab", L("Switch tab page")},
             #endif
+            // Per-element appearance editor
+            { ctrl + "Shift+E", L("Edit appearance of the focused element") },
             //DEL
             #ifdef __APPLE__
                 {"BackSpace", L("Delete selected")},
@@ -325,7 +332,7 @@ wxPanel* KBShortcutsDialog::create_page(wxWindow* parent, const ShortcutsItem& s
         main_sizer->AddSpacer(FromDIP(10));
         wxBoxSizer* info_sizer = new wxBoxSizer(wxHORIZONTAL);
         info_sizer->AddStretchSpacer();
-        info_sizer->Add(new wxStaticText(main_page, wxID_ANY, shortcuts.first.second), 0);
+        info_sizer->Add(new Label(main_page, shortcuts.first.second), 0);
         info_sizer->AddStretchSpacer();
         main_sizer->Add(info_sizer, 0, wxEXPAND);
         main_sizer->AddSpacer(FromDIP(10));
@@ -344,18 +351,18 @@ wxPanel* KBShortcutsDialog::create_page(wxWindow* parent, const ShortcutsItem& s
         const auto &[shortcut, description] = shortcuts.second[i];
         wxStaticText* key                    = nullptr;
         if (shortcut == "Delete" || shortcut == "BackSpace") {
-            key = new wxStaticText(scrollable_panel, wxID_ANY, shortcut);
+            key = new Label(scrollable_panel, shortcut);
         }
         else {
-            key = new wxStaticText(scrollable_panel, wxID_ANY, _(shortcut));
+            key = new Label(scrollable_panel, _(shortcut));
         }
-        key->SetForegroundColour(wxColour(50, 58, 61));
+        key->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         key->SetFont(bold_font);
         grid_sizer->Add(key, 0, wxALIGN_CENTRE_VERTICAL);
 
-        auto desc = new wxStaticText(scrollable_panel, wxID_ANY, _(description));
+        auto desc = new Label(scrollable_panel, _(description));
         desc->SetFont(font);
-        desc->SetForegroundColour(wxColour(50, 58, 61));
+        desc->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         desc->Wrap(FromDIP(600));
         grid_sizer->Add(desc, 0, wxALIGN_CENTRE_VERTICAL);
     }

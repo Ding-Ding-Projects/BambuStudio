@@ -3,6 +3,7 @@
 
 
 #include "wx/artprov.h"
+class Button;
 #include "wx/cmdline.h"
 #include "wx/notifmsg.h"
 #include "wx/settings.h"
@@ -25,6 +26,10 @@
 #include <wx/tbarbase.h>
 #include "wx/textctrl.h"
 #include <wx/timer.h>
+
+#include <functional>
+
+#include "HomeWebViewFailurePolicy.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -112,11 +117,8 @@ public:
     void OpenMakerworldSearchPage(std::string KeyWord);
     void SetPrintHistoryTaskID(int TaskID);
     
-    //DisconnectPage
-    wxString MakeDisconnectUrl(std::string MenuName);
-
     //LeftMenu
-    std::string m_contentname; // CurrentMenu
+    std::string m_contentname {"home"}; // CurrentMenu
     bool        m_leftfirst;   // Left First Loaded
     void CheckMenuNewTag();
     void ShowMenuNewTag(std::string menuname, std::string show);
@@ -139,7 +141,7 @@ public:
     void get_user_mw_4u_config(std::function<void(std::string)> callback);
     void get_4u_staffpick(int seed, int limit, std::function<void(std::string)> callback);
     void OpenModelDetail(std::string id, NetworkAgent *agent);
-    void UpdateMakerworldLoginStatus();
+    bool UpdateMakerworldLoginStatus();
     void SetMakerworldPageLoginStatus(bool login, wxString ticket = "");
     void get_wiki_search_result(std::string keyword);
     void get_academy_list();
@@ -154,7 +156,7 @@ public:
     void     OpenMakerlab3mf(std::string Base64Buf, std::string FileName);
     bool     SaveBase64ToLocal(std::string Base64Buf, std::string FileName,std::string FileTail, wxString &download_path, wxString &download_file);
     void     SaveMakerlabStl(int SequenceID,std::string Base64Buf, std::string FileName);
-    void     UpdateMakerlabStatus();
+    bool     UpdateMakerlabStatus();
     // macOS WKWebView cannot download blob: URLs; convert via JS to existing save bridge.
     void     HandleBlobDownload(wxWebView *browser, const wxString &blob_url);
 
@@ -179,6 +181,18 @@ public:
 
     void update_mode();
 private:
+    enum class CloudPage {
+        MakerWorld,
+        MakerLab,
+        PrintHistory,
+    };
+
+    bool LoadPrintHistory();
+    void ShowCloudPageFailure(CloudPage page, HomeWebFailureKind kind,
+                              wxWebView *browser, std::function<void()> retry);
+    void ClearCloudPageFailure(const wxWebViewEvent& evt);
+    void OnCloudPageRetry(wxCommandEvent& evt);
+
     std::string m_Region;
 
     wxBoxSizer *topsizer { nullptr };
@@ -211,9 +225,9 @@ private:
     // Online page toolbar
     wxPanel *       m_online_toolbar_panel { nullptr };
     wxBoxSizer *    m_online_toolbar_sizer { nullptr };
-    wxBitmapButton *m_online_back_btn { nullptr };
-    wxBitmapButton *m_online_refresh_btn { nullptr };
-    wxBitmapButton *m_online_open_browser_btn { nullptr };
+    Button *m_online_back_btn { nullptr };
+    Button *m_online_refresh_btn { nullptr };
+    Button *m_online_open_browser_btn { nullptr };
     wxPanel *       m_online_container { nullptr };
     wxBoxSizer *    m_online_container_sizer { nullptr };
     int             m_online_toolbar_icon_px { 16 };
@@ -250,6 +264,9 @@ private:
 
     wxInfoBar *m_info;
     wxStaticText* m_info_text;
+    int m_cloud_retry_button_id {wxID_NONE};
+    wxWebView *m_cloud_failure_browser {nullptr};
+    std::function<void()> m_cloud_failure_retry;
 
     long m_zoomFactor;
 

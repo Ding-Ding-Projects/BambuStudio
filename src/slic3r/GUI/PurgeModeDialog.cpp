@@ -10,27 +10,32 @@
 #include "GUI_App.hpp"
 #include "wxExtensions.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include "wx/graphics.h"
 
 namespace Slic3r { namespace GUI {
 
-static const wxColour BgNormalColor  = wxColour("#FFFFFF");
-static const wxColour BgSelectColor  = wxColour("#EBF9F0");
-static const wxColour BgDisableColor = wxColour("#CECECE");
+// MD3 role tokens (ThemeColor::* / MD3::Light::* are gDarkColors keys), so the
+// custom OnPaint path adapts them to dark mode via StateColor::darkModeColorFor.
+static const wxColour BgNormalColor  = ThemeColor::White;
+static const wxColour BgSelectColor  = MD3::Light::secondaryContainer;
+static const wxColour BgDisableColor = ThemeColor::Grey400;
 
-static const wxColour BorderNormalColor   = wxColour("#CECECE");
-static const wxColour BorderSelectedColor = wxColour("#00AE42");
-static const wxColour BorderDisableColor  = wxColour("#EEEEEE");
+static const wxColour BorderNormalColor   = ThemeColor::Grey400;
+static const wxColour BorderSelectedColor = ThemeColor::BrandGreen;
+static const wxColour BorderDisableColor  = ThemeColor::Grey400;
 
-static const wxColour TextNormalBlackColor = wxColour("#262E30");
-static const wxColour TextNormalGreyColor  = wxColour("#6B6B6B");
-static const wxColour TextDisableColor     = wxColour("#CECECE");
-static const wxColour TextErrorColor       = wxColour("#E14747");
+static const wxColour TextNormalBlackColor = ThemeColor::TextPrimary;
+static const wxColour TextNormalGreyColor  = ThemeColor::TextSecondary;
+static const wxColour TextDisableColor     = ThemeColor::Grey400;
+static const wxColour TextErrorColor       = ThemeColor::Danger;
 
 PurgeModeDialog::PurgeModeDialog(wxWindow *parent, PurgeModeDialogType dialog_type)
     : DPIDialog(parent, wxID_ANY, _L("Purge Mode Settings"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE), m_dialog_type(dialog_type)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetMinSize(wxSize(FromDIP(520), FromDIP(320)));
     SetMaxSize(wxSize(FromDIP(520), FromDIP(320)));
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % Slic3r::resources_dir()).str();
@@ -80,9 +85,9 @@ PurgeModeDialog::PurgeModeDialog(wxWindow *parent, PurgeModeDialogType dialog_ty
     options_sizer->Add(panels_sizer, 0, wxEXPAND | wxALL, FromDIP(20));
 
     auto wiki_sizer      = new wxBoxSizer(wxHORIZONTAL);
-    auto learn_more_text = new wxStaticText(options_panel, wxID_ANY, _L("Learn more about prime mode"));
+    auto learn_more_text = new Label(options_panel, _L("Learn more about prime mode"));
     learn_more_text->SetFont(Label::Body_12);
-    learn_more_text->SetForegroundColour(wxColour("#6B6B6A"));
+    learn_more_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     wiki_sizer->Add(learn_more_text, 0, wxALIGN_CENTER_VERTICAL);
     auto wiki = new WikiPanel(options_panel);
     if (is_fast_mode)
@@ -99,41 +104,37 @@ PurgeModeDialog::PurgeModeDialog(wxWindow *parent, PurgeModeDialogType dialog_ty
     btn_sizer->AddStretchSpacer();
 
     StateColor ok_btn_bg(
-        std::pair<wxColour, int>(wxColour("#1B8844"), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour("#3DCB73"), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour("#00AE42"), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     StateColor ok_btn_text(
-        std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
     StateColor cancel_btn_bg(
-        std::pair<wxColour, int>(wxColour("#CECECE"), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour("#EEEEEE"), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour("#FFFFFF"), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
     StateColor cancel_btn_bd(
-        std::pair<wxColour, int>(wxColour("#262E30"), StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal)
     );
     StateColor cancel_btn_text(
-        std::pair<wxColour, int>(wxColour("#262E30"), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal)
     );
 
     auto ok_btn = new Button(this, _L("Confirm"));
     ok_btn->SetMinSize(wxSize(FromDIP(62), FromDIP(24)));
     ok_btn->SetCornerRadius(FromDIP(12));
-    ok_btn->SetBackgroundColor(ok_btn_bg);
+    ok_btn->SetVariant(Button::Variant::Filled);
     ok_btn->SetFont(Label::Body_12);
-    ok_btn->SetBorderColor(wxColour("#00AE42"));
-    ok_btn->SetTextColor(ok_btn_text);
     ok_btn->SetId(wxID_OK);
 
     auto cancel_btn = new Button(this, _L("Cancel"));
     cancel_btn->SetMinSize(wxSize(FromDIP(62), FromDIP(24)));
     cancel_btn->SetCornerRadius(FromDIP(12));
-    cancel_btn->SetBackgroundColor(cancel_btn_bg);
+    cancel_btn->SetVariant(Button::Variant::Outlined);
     cancel_btn->SetFont(Label::Body_12);
-    cancel_btn->SetBorderColor(cancel_btn_bd);
-    cancel_btn->SetTextColor(cancel_btn_text);
     cancel_btn->SetId(wxID_CANCEL);
 
     btn_sizer->Add(ok_btn, 0, wxRIGHT, FromDIP(12));
@@ -143,9 +144,10 @@ PurgeModeDialog::PurgeModeDialog(wxWindow *parent, PurgeModeDialogType dialog_ty
 
     SetSizer(main_sizer);
     Fit();
-    CenterOnParent();
-
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
+    CenterOnParent();
 }
 
 void PurgeModeDialog::select_option(PrimeVolumeMode mode)
@@ -180,7 +182,7 @@ void PurgeModeDialog::on_dpi_changed(const wxRect &suggested_rect)
 
 GUI::PurgeModeBtnPanel::PurgeModeBtnPanel(wxWindow *parent, const wxString &label, const wxString &detail, const std::string &icon_path) : wxPanel(parent)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     m_hover = false;
 
@@ -191,7 +193,7 @@ GUI::PurgeModeBtnPanel::PurgeModeBtnPanel(wxWindow *parent, const wxString &labe
     icon = create_scaled_bitmap(icon_path, nullptr, 20);
     m_btn = new wxStaticBitmap(this, wxID_ANY, icon, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
 
-    check_icon = create_scaled_bitmap("completed_2", nullptr, 20);
+    check_icon = MaterialIcon::bitmap(this, MaterialIcon::CheckCircle, 20, StateColor::semantic(MD3::Role::Primary));
     m_check_btn = new wxStaticBitmap(this, wxID_ANY, check_icon, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
     m_check_btn->Hide();
 
@@ -202,7 +204,7 @@ GUI::PurgeModeBtnPanel::PurgeModeBtnPanel(wxWindow *parent, const wxString &labe
     icon_sizer->Add(m_check_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, horizontal_margin);
 
     // label
-    m_label = new wxStaticText(this, wxID_ANY, label);
+    m_label = new Label(this, label);
     m_label->SetFont(Label::Head_14);
     m_label->SetForegroundColour(TextNormalBlackColor);
 

@@ -1,5 +1,7 @@
 #include "Tab.hpp"
 #include "Auxiliary.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/Model.hpp"
 #include "libslic3r/Format/bbs_3mf.hpp"
@@ -108,19 +110,22 @@ AuFile::AuFile(wxWindow *parent, fs::path file_path, wxString file_name, Auxilia
     
 
     wxBoxSizer *m_text_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_text_name              = new wxStaticText(m_text_panel, wxID_ANY, m_file_name, wxDefaultPosition, wxSize(panel_size.x, -1), wxST_ELLIPSIZE_END);
+    m_text_name              = new Label(m_text_panel, m_file_name, wxST_ELLIPSIZE_END, wxSize(panel_size.x, -1));
     m_text_name->Wrap(panel_size.x - FromDIP(10));
     m_text_name->SetFont(::Label::Body_14);
-    m_text_name->SetForegroundColour(StateColor::darkModeColorFor(*wxBLACK));
+    m_text_name->SetForegroundColour(ThemeColor::TextPrimary);
 
     m_input_name = new ::TextInput(m_text_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(panel_size.x - FromDIP(28), FromDIP(32)), wxTE_PROCESS_ENTER);
     m_input_name->GetTextCtrl()->SetFont(::Label::Body_13);
     m_input_name->SetFont(::Label::Body_14);
     m_input_name->Hide();
 
-    m_file_exit_rename = new wxStaticBitmap(m_text_panel, wxID_ANY, create_scaled_bitmap("auxiliary_delete", this, 20), wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)), 0);
+    m_file_exit_rename = new Button(m_text_panel, "", "", 0, 0);
+    m_file_exit_rename->SetIconButton(Button::IconShape::Square, FromDIP(24));
+    m_file_exit_rename->SetGlyph(MaterialIcon::Close, FromDIP(18));
+    m_file_exit_rename->SetToolTip(_L("Cancel"));
 
-    m_file_exit_rename->Bind(wxEVT_LEFT_UP, [this](auto& e) {
+    m_file_exit_rename->Bind(wxEVT_BUTTON, [this](auto& e) {
         exit_rename_mode();
     });
 
@@ -606,8 +611,7 @@ AuFolderPanel::AuFolderPanel(wxWindow *parent, AuxiliaryFolderType type, wxWindo
     m_big_button_add = new AuFile(m_scrolledWindow, fs::path(), "", AddFileButton, -1);
 
     /*m_button_del = new Button(m_scrolledWindow, _L("Delete"), "auxiliary_delete_file", 12, 12);
-    m_button_del->SetBackgroundColor(btn_bg_white);
-    m_button_del->SetBorderColor(btn_bd_white);
+    m_button_del->SetVariant(Button::Variant::Outlined);
     m_button_del->SetMinSize(wxSize(FromDIP(80), FromDIP(24)));
     m_button_del->SetCornerRadius(12);
     m_button_del->SetFont(Label::Body_14);*/
@@ -1110,9 +1114,9 @@ void AuxiliaryPanel::update_all_cover()
      wxBoxSizer *m_sizer_body = new wxBoxSizer(wxVERTICAL);
      wxBoxSizer *m_sizer_designer = new wxBoxSizer(wxHORIZONTAL);
 
-     auto m_text_designer = new wxStaticText(this, wxID_ANY, _L("Author"), wxDefaultPosition, wxSize(180, -1), 0);
+     auto m_text_designer = new Label(this, _L("Author"), 0, wxSize(180, -1));
      m_text_designer->Wrap(-1);
-     m_text_designer->SetForegroundColour(*wxBLACK);
+     m_text_designer->SetForegroundColour(ThemeColor::TextPrimary);
      m_sizer_designer->Add(m_text_designer, 0, wxALIGN_CENTER, 0);
 
      m_input_designer =  new ::TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(450), FromDIP(30)), wxTE_PROCESS_ENTER);
@@ -1122,8 +1126,8 @@ void AuxiliaryPanel::update_all_cover()
 
      wxBoxSizer *m_sizer_model_name = new wxBoxSizer(wxHORIZONTAL);
 
-     auto m_text_model_name = new wxStaticText(this, wxID_ANY, _L("Model Name"), wxDefaultPosition, wxSize(180, -1), 0);
-     m_text_model_name->SetForegroundColour(*wxBLACK);
+     auto m_text_model_name = new Label(this, _L("Model Name"), 0, wxSize(180, -1));
+     m_text_model_name->SetForegroundColour(ThemeColor::TextPrimary);
      m_text_model_name->Wrap(-1);
      m_sizer_model_name->Add(m_text_model_name, 0, wxALIGN_CENTER, 0);
 

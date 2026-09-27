@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 
 #include "TextureImportDialog.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "TextureImportOverLimitDialog.hpp"
 #include "TextureImportPopupDismiss.hpp"
 #include "TextureImportUi.hpp"
@@ -29,6 +30,7 @@
 #include "libslic3r/TriangleMesh.hpp"
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/Win10ModelRepair.hpp"
+#include "Widgets/Label.hpp"
 
 #include <wx/button.h>
 #include <wx/bmpbuttn.h>
@@ -114,37 +116,37 @@ static wxColour dark_or(const wxColour& light, const wxColour& dark)
 
 static wxColour texture_import_dialog_bg()
 {
-    return dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
+    return StateColor::semantic(MD3::Role::SurfaceContainerLowest);
 }
 
 static wxColour texture_import_dialog_fg()
 {
-    return dark_or(wxColour(50, 58, 61), wxColour(0xEF, 0xEF, 0xF0));
+    return StateColor::semantic(MD3::Role::OnSurface);
 }
 
 static wxColour texture_import_preview_bg()
 {
-    return dark_or(wxColour(238, 238, 238), wxColour(0x3E, 0x3E, 0x45));
+    return StateColor::semantic(MD3::Role::SurfaceContainer);
 }
 
 static wxColour texture_import_preview_bd()
 {
-    return dark_or(wxColour(206, 206, 206), wxColour(0x54, 0x54, 0x5B));
+    return StateColor::semantic(MD3::Role::OutlineVariant);
 }
 
 static wxColour texture_import_tag_bg()
 {
-    return dark_or(wxColour(255, 255, 255), wxColour(0x54, 0x54, 0x5B));
+    return StateColor::semantic(MD3::Role::SurfaceContainerLowest);
 }
 
 static wxColour texture_import_tag_fg()
 {
-    return dark_or(wxColour(0x6B, 0x6B, 0x6B), wxColour(0xD0, 0xD0, 0xD2));
+    return StateColor::semantic(MD3::Role::OnSurfaceVariant);
 }
 
 static wxColour texture_import_caption_fg()
 {
-    return dark_or(wxColour(107, 107, 107), wxColour(0x81, 0x81, 0x83));
+    return StateColor::semantic(MD3::Role::OnSurfaceVariant);
 }
 
 static wxColour texture_import_title_line_colour()
@@ -159,7 +161,7 @@ static wxColour param_value_input_border()
 
 static wxColour texture_import_gray9000()
 {
-    return wxColour(38, 46, 48);
+    return ThemeColor::TextPrimary;
 }
 
 static wxColour texture_import_text_colour()
@@ -304,7 +306,7 @@ static void set_text_input_double(TextInput* input, double value)
 
 static wxColour texture_import_separator_colour()
 {
-    return StateColor::darkModeColorFor(wxColour("#CECECE"));
+    return StateColor::semantic(MD3::Role::OutlineVariant);
 }
 
 // Outer frame of the import dialog (native window chrome): darker than inner
@@ -424,7 +426,7 @@ static bool needs_filament_swatch_border(const wxColour& colour)
 
 static wxColour filament_swatch_border_colour()
 {
-    return is_dark() ? wxColour(207, 207, 207) : wxColour(130, 130, 128);
+    return StateColor::semantic(MD3::Role::Outline);
 }
 
 static void draw_filament_swatch_border(wxDC& dc, const wxColour& colour,
@@ -717,10 +719,10 @@ void GreenSliderT<T>::OnPaint(wxPaintEvent&)
         int ts = FromDIP(8);
         int pen_w = FromDIP(2);
 
-        wxColour greenClr = IsEnabled() ? wxColour(0, 174, 66)
-                                        : dark_or(wxColour(180, 180, 180), wxColour(90, 90, 96));
-        wxColour grayClr  = IsEnabled() ? dark_or(wxColour(200, 200, 200), wxColour(90, 90, 96))
-                                        : dark_or(wxColour(220, 220, 220), wxColour(70, 70, 76));
+    wxColour greenClr = IsEnabled() ? StateColor::semantic(MD3::Role::Primary)
+                                    : StateColor::semantic(MD3::Role::OutlineVariant);
+    wxColour grayClr  = IsEnabled() ? StateColor::semantic(MD3::Role::Outline)
+                                    : StateColor::semantic(MD3::Role::OutlineVariant);
 
         int tx = xFromValue();
 
@@ -2761,7 +2763,7 @@ public:
         wxWindow* bmp_host = GetParent() ? GetParent() : static_cast<wxWindow*>(this);
         m_bmp_delete = ScalableBitmap(bmp_host, "tree_delete", 16);
         m_bmp_brand = ScalableBitmap(bmp_host, "BambuStudioBlack", 16);
-        wxColour pop_bg = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
+        wxColour pop_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
         SetBackgroundColour(pop_bg);
 #ifdef __WXOSX__
         // Preview-card recipe: unpainted corners must be clear, not NSWindow gray.
@@ -3345,8 +3347,8 @@ private:
 
     wxPanel* create_item_row(size_t idx, int row_h)
     {
-        wxColour row_bg    = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
-        wxColour hover_bg  = dark_or(wxColour(245, 245, 245), wxColour(0x3C, 0x3C, 0x42));
+        wxColour row_bg    = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+        wxColour hover_bg  = StateColor::semantic(MD3::Role::SurfaceContainerLow);
         wxColour name_fg   = texture_import_text_colour();
 
         wxPanel* row = new wxPanel(m_content, wxID_ANY, wxDefaultPosition, wxSize(-1, row_h),
@@ -3425,10 +3427,10 @@ private:
 
     wxPanel* create_mixed_item_row(const TextureFilamentEntry& entry, int row_h)
     {
-        wxColour row_bg    = dark_or(*wxWHITE, wxColour(0x2D, 0x2D, 0x31));
-        wxColour hover_bg  = dark_or(wxColour(245, 245, 245), wxColour(0x3C, 0x3C, 0x42));
+        wxColour row_bg    = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+        wxColour hover_bg  = StateColor::semantic(MD3::Role::SurfaceContainerLow);
         wxColour name_fg   = texture_import_text_colour();
-        wxColour plus_fg   = dark_or(wxColour(38, 46, 48), wxColour(0xE6, 0xE6, 0xE8));
+        wxColour plus_fg   = StateColor::semantic(MD3::Role::OnSurface);
         const int idx = entry.dialog_index;
 
         wxPanel* row = new wxPanel(m_content, wxID_ANY, wxDefaultPosition, wxSize(-1, row_h),
@@ -4708,7 +4710,7 @@ void TexturePreviewCanvas::render_mesh()
 // TextureImportDialog
 // ============================================================
 
-wxBEGIN_EVENT_TABLE(TextureImportDialog, DPIDialog)
+wxBEGIN_EVENT_TABLE(TextureImportDialog, MD3Dialog)
     EVT_BUTTON(TextureImportDialog::ID_COLOR_4,    TextureImportDialog::on_color_preset_clicked)
     EVT_BUTTON(TextureImportDialog::ID_COLOR_8,    TextureImportDialog::on_color_preset_clicked)
     EVT_BUTTON(TextureImportDialog::ID_COLOR_16,   TextureImportDialog::on_color_preset_clicked)
@@ -4727,9 +4729,8 @@ TextureImportDialog::TextureImportDialog(
     std::function<bool()>            initial_cancel_callback,
     std::function<bool(int)>         initial_progress_callback,
     std::function<void(bool)>        initial_progress_visibility_callback)
-    : DPIDialog(parent, wxID_ANY, _L("Import Model: Simplify Colors"),
-                wxDefaultPosition, wxDefaultSize,
-                (wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) & ~(wxMINIMIZE_BOX | wxMAXIMIZE_BOX))
+    : MD3Dialog(parent, _L("Import Model"), wxEmptyString, MaterialIcon::Palette,
+                MD3Dialog::Options{/*resizable*/ true, /*forced_dark*/ false})
     , m_textured_mesh(textured_mesh)
     , m_filament_entries(filament_entries)
     , m_initial_cancel_callback(std::move(initial_cancel_callback))
@@ -4740,6 +4741,9 @@ TextureImportDialog::TextureImportDialog(
     m_bmp_unmatched = ScalableBitmap(this, "error", 16);
     m_bmp_brand = ScalableBitmap(this, "BambuStudioBlack", 16);
     m_mesh_repair_cache = Slic3r::make_mesh_repair_cache();
+    // Height includes headroom for the MD3 header + footer chrome so the GL
+    // preview / mapping working area matches the pre-shell layout.
+    SetSize(wxSize(FromDIP(960), FromDIP(724)));
 
     m_filament_colors_rgba.reserve(m_filament_entries.size());
     m_filament_color_strs.reserve(m_filament_entries.size());
@@ -4880,15 +4884,9 @@ int TextureImportDialog::ShowModal()
 
 void TextureImportDialog::build_ui()
 {
-    const wxColour dialog_bg = texture_import_dialog_bg();
+    const wxColour dialog_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     SetBackgroundColour(dialog_bg);
-    SetForegroundColour(texture_import_dialog_fg());
-
-    wxBoxSizer* root_sizer = new wxBoxSizer(wxVERTICAL);
-
-    m_title_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_title_line->SetBackgroundColour(texture_import_title_line_colour());
-    root_sizer->Add(m_title_line, 0, wxEXPAND);
+    SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     wxBoxSizer* content_sizer = new wxBoxSizer(wxVERTICAL);
     build_stepper(this, content_sizer);
@@ -4896,9 +4894,8 @@ void TextureImportDialog::build_ui()
     build_preview_panel(this, content_sizer);
     build_mapping_panel(this, content_sizer);
     build_bottom_buttons(content_sizer);
-    root_sizer->Add(content_sizer, 1, wxEXPAND | wxALL, FromDIP(12));
+    GetContentSizer()->Add(content_sizer, 1, wxEXPAND | wxALL, FromDIP(12));
 
-    SetSizer(root_sizer);
     Layout();
     Bind(wxEVT_MOUSEWHEEL, &TextureImportDialog::dismiss_filament_popup_on_wheel, this);
 
@@ -4933,8 +4930,8 @@ void TextureImportDialog::build_stepper(wxWindow* parent, wxSizer* sizer)
 
 void TextureImportDialog::build_preview_panel(wxWindow* parent, wxSizer* sizer)
 {
-    wxColour preview_bg = texture_import_preview_bg();
-    wxColour preview_bd = texture_import_preview_bd();
+    wxColour preview_bg = StateColor::semantic(MD3::Role::SurfaceContainer);
+    wxColour preview_bd = StateColor::semantic(MD3::Role::OutlineVariant);
     wxColour tag_bg = texture_import_tag_bg();
     wxColour tag_fg = texture_import_tag_fg();
     wxColour caption_fg = texture_import_caption_fg();
@@ -5294,7 +5291,7 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
     header_sizer->AddStretchSpacer();
 
     m_lbl_mix_help = new wxStaticText(m_mapping_panel, wxID_ANY, _L("Use official mixing kits →"));
-    m_lbl_mix_help->SetForegroundColour(wxColour(0, 174, 66));
+    m_lbl_mix_help->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_lbl_mix_help->SetFont(Label::Body_12);
     m_lbl_mix_help->SetCursor(wxCursor(wxCURSOR_HAND));
     m_lbl_mix_help->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent&) {
@@ -5307,7 +5304,7 @@ void TextureImportDialog::build_mapping_panel(wxWindow* parent, wxSizer* sizer)
     m_mapping_scroll = new wxScrolledWindow(m_mapping_panel, wxID_ANY, wxDefaultPosition,
                                              wxSize(-1, FromDIP(252)));
     m_mapping_scroll->SetScrollRate(0, FromDIP(10));
-    m_mapping_scroll->SetBackgroundColour(dark_or(wxColour(255, 255, 255), wxColour(0x2D, 0x2D, 0x31)));
+    m_mapping_scroll->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_mapping_scroll->Bind(wxEVT_MOUSEWHEEL, &TextureImportDialog::dismiss_filament_popup_on_wheel, this);
 
     m_mapping_sizer = new wxBoxSizer(wxVERTICAL);
@@ -5381,7 +5378,6 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     m_overlimit_warning->Hide();
     sizer->Add(m_overlimit_warning, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
 
-    wxBoxSizer* footer = new wxBoxSizer(wxHORIZONTAL);
     wxColour secondary_fg = dark_or(wxColour(107, 107, 107), wxColour(0x81, 0x81, 0x83));
 
     auto* merge_row = new wxPanel(this, wxID_ANY);
@@ -5406,8 +5402,7 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     merge_row->SetSizer(merge_sizer);
     merge_row->Hide();
     m_auto_merge_row = merge_row;
-    footer->Add(merge_row, 0, wxALIGN_CENTER_VERTICAL);
-    footer->AddStretchSpacer();
+    GetFooterSizer()->Add(merge_row, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
     m_footer_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -5451,19 +5446,35 @@ void TextureImportDialog::build_bottom_buttons(wxSizer* sizer)
     m_btn_prev->Hide();
     m_btn_reset->Hide();
     m_btn_ok->Hide();
-    footer->Add(m_footer_btn_sizer, 0, wxALIGN_CENTER_VERTICAL);
-
-    sizer->Add(footer, 0, wxEXPAND | wxTOP, FromDIP(8));
+    GetFooterSizer()->Add(m_footer_btn_sizer, 0, wxALIGN_CENTER_VERTICAL);
 }
 
 void TextureImportDialog::style_primary_button(Button* btn)
 {
-    texture_import_style_primary_button(btn);
+    if (!btn)
+        return;
+    btn->SetVariant(Button::Variant::Filled);
+    btn->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Disabled),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
+    btn->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal)));
+    btn->SetTextColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal)));
 }
 
 void TextureImportDialog::style_secondary_button(Button* btn)
 {
-    texture_import_style_secondary_button(btn);
+    if (!btn)
+        return;
+    btn->SetVariant(Button::Variant::Outlined);
+    btn->SetBackgroundColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLow), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)));
+    btn->SetBorderColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OutlineVariant), StateColor::Normal)));
+    btn->SetTextColor(StateColor(
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurfaceVariant), StateColor::Normal)));
 }
 
 void TextureImportDialog::style_color_count_preset_button(Button* btn)
@@ -5962,7 +5973,9 @@ void TextureImportDialog::keep_dialog_within_display()
 void TextureImportDialog::update_wizard_ui()
 {
     const bool step1 = (m_wizard_step == TextureImportWizardStep::SimplifyColors);
-    SetTitle(step1 ? _L("Import Model: Simplify Colors") : _L("Import Model: Filament Matching"));
+    const wxString title = step1 ? _L("Import Model: Simplify Colors") : _L("Import Model: Filament Matching");
+    SetTitle(title);
+    SetHeaderTitle(title);
     update_stepper();
     update_preview_modes();
 
@@ -8101,11 +8114,12 @@ void TextureImportDialog::rebuild_mapping_rows()
         return texture_filament_label_wx(m_filament_entries, m_filament_names, idx, display_number(idx));
     };
 
-    const wxColour dash_clr   = dark_or(wxColour(179, 179, 179), wxColour(100, 100, 106));
-    const wxColour card_bg    = dark_or(wxColour(235, 235, 235), wxColour(0x3C, 0x3C, 0x42));
-    const wxColour card_bd    = dark_or(wxColour(224, 224, 224), wxColour(0x46, 0x46, 0x4C));
+    const wxColour dash_clr   = StateColor::semantic(MD3::Role::Outline);
+    const wxColour hex_fg     = texture_import_text_colour();
+    const wxColour card_bg    = StateColor::semantic(MD3::Role::SurfaceContainer);
+    const wxColour card_bd    = StateColor::semantic(MD3::Role::OutlineVariant);
     const wxColour name_fg    = texture_import_text_colour();
-    const wxColour chev_clr   = dark_or(wxColour(107, 107, 107), wxColour(0xB3, 0xB3, 0xB5));
+    const wxColour chev_clr   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
     const wxColour unmatched_bd = wxColour(225, 71, 71);
     const wxColour unmatched_bg = dark_or(wxColour(248, 248, 248), wxColour(0x2D, 0x2D, 0x31));
     const wxColour unmatched_fg = dark_or(wxColour(0x5C, 0x5C, 0x5C), wxColour(0xB3, 0xB3, 0xB5));

@@ -13,6 +13,8 @@
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/progdlg.h>
 #include <wx/clipbrd.h>
@@ -33,6 +35,7 @@
 
 #include "DeviceTab/wgtDeviceNozzleSelect.h"
 #include "DeviceTab/wgtMsgPanel.h"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 #define MATERIAL_ITEM_SIZE wxSize(FromDIP(65), FromDIP(50))
@@ -66,7 +69,7 @@ const int LEFT_OFFSET = 2;
 #endif //__WINDOWS__
 
     messure_size();
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     Bind(wxEVT_PAINT, &MaterialItem::paintEvent, this);
     wxGetApp().UpdateDarkUI(this);
@@ -391,7 +394,7 @@ void MaterialItem::doRender(wxDC& dc)
     auto material_txt_size = dc.GetTextExtent(m_material_name);
     dc.DrawText(m_material_name, wxPoint((size.x - material_txt_size.x) / 2, (FromDIP(20) - material_txt_size.y) / 2));
 
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.DrawLine(FromDIP(1), FromDIP(20), FromDIP(size.x), FromDIP(20));
     up += FromDIP(20);
     up += FromDIP(2); // spacing
@@ -448,9 +451,25 @@ void MaterialItem::doRender(wxDC& dc)
         }
     }
 
+    if (m_match)
+    {
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), FromDIP(1)));
+    }
+    else
+    {
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Error), FromDIP(1)));
+    }
+
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.DrawRoundedRectangle(FromDIP(0), FromDIP(0), size.x - FromDIP(0), size.y, 5);
+
     if (m_selected)
     {
-        dc.SetPen(wxPen(wxColour(0x00, 0xAE, 0x42), FromDIP(2)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(1), size.y - FromDIP(1), 5);
+    } else if (m_warning) {
+        dc.SetPen(wxPen(StateColor::darkModeColorFor(ThemeColor::Warning), FromDIP(2)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(1), size.y - FromDIP(1), 5);
     }
@@ -495,7 +514,7 @@ void MaterialItem::doRender(wxDC& dc)
     }
 
     // text and arrow
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour(0x26, 0x2E, 0x30)));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
 
     int text_pos_x = 0;
     int text_pos_y = 0;
@@ -662,13 +681,13 @@ void MaterialSyncItem::render(wxDC &dc)
     dc.DrawText(full_text, wxPoint((GetSize().x - material_txt_size.x) / 2, ((float) GetSize().y * 2 / 5 - material_txt_size.y) / 2));
     int real_left_offset = get_real_offset();
     if (m_match) {
-        dc.SetTextForeground(StateColor::darkModeColorFor(wxColour(0x26, 0x2E, 0x30)));
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
         dc.SetFont(::Label::Head_12);
         dc.DrawText(mapping_txt, wxPoint(GetSize().x / 2 + (GetSize().x / 2 - mapping_txt_size.x) / 2 - FromDIP(8) - FromDIP(real_left_offset), m_text_pos_y));
     }
     else {
         if (mcolor.Alpha() == 0) {//Because there is no unknown background color
-            material_name_colour = StateColor::darkModeColorFor(wxColour(0x26, 0x2E, 0x30));
+            material_name_colour = StateColor::semantic(MD3::Role::OnSurface);
         }
         dc.SetTextForeground(material_name_colour);
         if (mapping_txt_size.x > GetSize().x - 10) {
@@ -708,7 +727,7 @@ void MaterialSyncItem::doRender(wxDC &dc)
         dc.DrawRectangle(0, FromDIP(10), size.x, FromDIP(10));
     }
 
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.DrawLine(FromDIP(1), FromDIP(20), FromDIP(size.x), FromDIP(20));
     // bottom rectangle in wheel bitmap, size is MATERIAL_REC_WHEEL_SIZE(22)
     auto left  = (size.x / 2 - MATERIAL_REC_WHEEL_SIZE.x) / 2 + FromDIP(3);
@@ -767,23 +786,23 @@ void MaterialSyncItem::doRender(wxDC &dc)
 
     ////border
 #if __APPLE__
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(1, 1, size.x - 1, size.y - 1, 5);
 
     if (m_selected) {
-        dc.SetPen(wxColour(0x00, 0xAE, 0x42));
+        dc.SetPen(StateColor::semantic(MD3::Role::Primary));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRoundedRectangle(1, 1, size.x - 1, size.y - 1, 5);
     }
 #else
 
-    dc.SetPen(wxPen(wxGetApp().dark_mode() ? wxColour(107, 107, 107) : wxColour(0xAC, 0xAC, 0xAC), FromDIP(1)));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), FromDIP(1)));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, size.x, size.y, 5);
 
     if (m_selected) {
-        dc.SetPen(wxPen(wxColour(0x00, 0xAE, 0x42), FromDIP(2)));
+        dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Primary), FromDIP(2)));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRoundedRectangle(FromDIP(1), FromDIP(1), size.x - FromDIP(1), size.y - FromDIP(1), 5);
     }
@@ -823,7 +842,7 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
      Bind(wxEVT_MOTION, &AmsMapingPopup::on_mouse_move, this);
 #endif
 
-     SetBackgroundColour(*wxWHITE);
+     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
      m_sizer_main = new wxBoxSizer(wxVERTICAL);
      m_sizer_main_h = new wxBoxSizer(wxHORIZONTAL);
@@ -836,19 +855,19 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
      m_sizer_ams_basket_right = new wxBoxSizer(wxVERTICAL);
 
      auto title_panel = new wxPanel(this, wxID_ANY);
-     title_panel->SetBackgroundColour(StateColor::darkModeColorFor("#F1F1F1"));
+     title_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
      title_panel->SetSize(wxSize(-1, FromDIP(30)));
      title_panel->SetMinSize(wxSize(-1, FromDIP(30)));
 
      m_scrolled_window = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxHSCROLL);
-     m_scrolled_window->SetBackgroundColour(*wxWHITE);
+     m_scrolled_window->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_scrolled_window->SetScrollRate(0, FromDIP(10));
 
      wxBoxSizer *title_sizer_h= new wxBoxSizer(wxHORIZONTAL);
      wxBoxSizer *title_sizer_v = new wxBoxSizer(wxVERTICAL);
 
-     m_title_text = new wxStaticText(title_panel, wxID_ANY, _L("AMS Slots"));
-     m_title_text->SetForegroundColour(wxColour("#262E30"));
+     m_title_text = new Label(title_panel, _L("AMS Slots"));
+     m_title_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
      m_title_text->SetFont(::Label::Body_16);
      title_sizer_v->Add(m_title_text, 0, wxALIGN_LEFT | wxLEFT,  FromDIP(15));
      title_sizer_h->Add(title_sizer_v, 1, wxALIGN_CENTER, 5);
@@ -895,8 +914,8 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
          _L(DevPrinterConfigUtil::get_toolhead_display_name(amp_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase)));
 
      m_left_tips = new Label(m_left_first_text_panel);
-     m_left_tips->SetForegroundColour(StateColor::darkModeColorFor("0x262E30"));
-     m_left_tips->SetBackgroundColour(StateColor::darkModeColorFor("0xFFFFFF"));
+     m_left_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+     m_left_tips->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_left_tips->SetFont(::Label::Body_13);
      m_left_tips->SetLabel(m_left_tip_text);
      m_left_first_text_panel->SetSizer(m_sizer_ams_left_horizonal);
@@ -910,8 +929,8 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
      m_sizer_ams_left->Add(sizer_temp, 0, wxEXPAND | wxTOP, FromDIP(8));
 
      m_right_tips = new Label(m_right_first_text_panel);
-     m_right_tips->SetForegroundColour(StateColor::darkModeColorFor("0x262E30"));
-     m_right_tips->SetBackgroundColour(StateColor::darkModeColorFor("0xFFFFFF"));
+     m_right_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+     m_right_tips->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_right_tips->SetFont(::Label::Body_13);
      m_right_tips->SetLabel(m_right_tip_text);
 
@@ -921,7 +940,7 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
                                       wxBU_EXACTFIT | wxNO_BORDER, true, 14);
      m_reset_btn->SetName(wxGetApp().dark_mode() ? "erase_dark" : "erase");
      m_reset_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) { reset_ams_info(); });
-     m_reset_btn->SetBackgroundColour(*wxWHITE);
+     m_reset_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_reset_btn->SetToolTip(_L("Reset current filament mapping"));
 
      m_sizer_ams_right_horizonal->AddStretchSpacer();
@@ -966,10 +985,10 @@ AmsMapingPopup::AmsMapingPopup(wxWindow *parent, bool use_in_sync_dialog) :
      m_sizer_ams_v = new wxBoxSizer(wxVERTICAL);
 
      m_split_line_panel = new wxPanel(m_scrolled_window, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(1), -1));
-     m_split_line_panel->SetBackgroundColour(*wxWHITE);
+     m_split_line_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      m_split_line_panel->Bind(wxEVT_PAINT, [this](wxPaintEvent& evt) {
          wxPaintDC dc(m_split_line_panel);
-         dc.SetPen(wxPen(wxColour(0xAC, 0xAC, 0xAC), 1, wxPENSTYLE_SHORT_DASH));
+         dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1, wxPENSTYLE_SHORT_DASH));
          dc.DrawLine(0, FromDIP(20), 0, m_sizer_ams->GetSize().GetHeight());
      });
 
@@ -1115,10 +1134,10 @@ void AmsMapingPopup::msw_rescale()
     wxBoxSizer* sizer_split_ams = new wxBoxSizer(wxHORIZONTAL);
     auto ams_title_text = new Label(parent, text);
     ams_title_text->SetFont(::Label::Body_13);
-    ams_title_text->SetBackgroundColour(*wxWHITE);
-    ams_title_text->SetForegroundColour(0x909090);
+    ams_title_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    ams_title_text->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
     auto m_split_left_line = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_split_left_line->SetBackgroundColour(0xeeeeee);
+    m_split_left_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_split_left_line->SetMinSize(wxSize(-1, 1));
     m_split_left_line->SetMaxSize(wxSize(-1, 1));
     sizer_split_ams->Add(0, 0, 0, wxEXPAND, 0);
@@ -1212,14 +1231,14 @@ void AmsMapingPopup::on_mouse_move(wxMouseEvent &evt)
         if (!m_tip_popup)
         {
             m_tip_popup = new wxPopupWindow(this);
-            m_tip_popup->SetBackgroundColour(wxColour(255, 255, 255));
+            m_tip_popup->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
             auto *sizer = new wxBoxSizer(wxVERTICAL);
             // Use the project Label with pixel-width, CJK-aware wrapping instead
             // of a bare wxStaticText, whose Wrap() only breaks at spaces and so
             // leaves space-less Chinese text on a single overflowing line.
             m_tip_label = new Label(m_tip_popup, wxEmptyString, LB_AUTO_WRAP);
             m_tip_label->SetMaxSize(wxSize(FromDIP(400), -1));
-            m_tip_label->SetForegroundColour(*wxBLACK);
+            m_tip_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
             sizer->Add(m_tip_label, 0, wxALL, 4);
             m_tip_popup->SetSizer(sizer);
             m_tip_popup->Bind(wxEVT_IDLE, [this](wxIdleEvent &) {
@@ -1263,7 +1282,7 @@ bool AmsMapingPopup::ProcessLeftDown(wxMouseEvent &event)
 void AmsMapingPopup::paintEvent(wxPaintEvent &evt)
 {
     wxPaintDC dc(this);
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
@@ -1307,7 +1326,7 @@ void AmsMapingPopup::update_flush_waste(MachineObject* obj)
 
     m_transparent_mapping_item = ScalableBitmap(this, "transparent_mapping_item", FromDIP(60));
     mapping_item_checked = ScalableBitmap(this, "mapping_item_checked", FromDIP(20));
-    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     Bind(wxEVT_PAINT, &MappingItem::paintEvent, this);
 }
 
@@ -1361,8 +1380,8 @@ static void _DrawRemainArea(const MappingItem *item, const TrayData &dd, bool su
     int full_range_width = size.x;
 
     /*range background*/
-    dc.SetPen(wxColour("#E4E4E4"));
-    dc.SetBrush(wxColour("#E4E4E4"));
+    dc.SetPen(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    dc.SetBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     int bg_height = item->FromDIP(6);
     int bg_width  = full_range_width - (2 * x_margin);
     dc.DrawRoundedRectangle(x_margin, y_margin, bg_width, bg_height, item->FromDIP(2));
@@ -1545,7 +1564,7 @@ void MappingItem::doRender(wxDC &dc)
         dc.DrawRectangle(0, (size.y - MAPPING_ITEM_REAL_SIZE.y) / 2 + get_remain_area_height(), MAPPING_ITEM_REAL_SIZE.x, MAPPING_ITEM_REAL_SIZE.y);
     }
 
-    wxColour side_colour = wxColour("#E4E4E4");
+    wxColour side_colour = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
 
     dc.SetPen(side_colour);
     dc.SetBrush(wxBrush(side_colour));
@@ -1563,7 +1582,7 @@ int MappingItem::get_remain_area_height() const
 AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     :PopupWindow(parent, wxBORDER_NONE)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
     m_sizer_main->Add(0, 0, 1, wxTOP, FromDIP(28));
@@ -1573,20 +1592,20 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     m_sizer_body->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(20));
 
     m_panel_enable_ams = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(220), -1), wxTAB_TRAVERSAL);
-    m_panel_enable_ams->SetBackgroundColour(*wxWHITE);
+    m_panel_enable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *sizer_enable_ams = new wxBoxSizer(wxVERTICAL);
 
-    m_title_enable_ams = new wxStaticText(m_panel_enable_ams, wxID_ANY, _L("Enable AMS"), wxDefaultPosition, wxDefaultSize, 0);
-    m_title_enable_ams->SetForegroundColour(*wxBLACK);
-    m_title_enable_ams->SetBackgroundColour(*wxWHITE);
+    m_title_enable_ams = new Label(m_panel_enable_ams, _L("Enable AMS"));
+    m_title_enable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_title_enable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_title_enable_ams->Wrap(-1);
     sizer_enable_ams->Add(m_title_enable_ams, 0, 0, 0);
 
-    m_tip_enable_ams = new wxStaticText(m_panel_enable_ams, wxID_ANY, _L("Print with filaments in the AMS"), wxDefaultPosition, wxDefaultSize, 0);
+    m_tip_enable_ams = new Label(m_panel_enable_ams, _L("Print with filaments in the AMS"));
     m_tip_enable_ams->SetMinSize(wxSize(FromDIP(200), FromDIP(50)));
     m_tip_enable_ams->Wrap(FromDIP(200));
-    m_tip_enable_ams->SetForegroundColour(*wxBLACK);
-    m_tip_enable_ams->SetBackgroundColour(*wxWHITE);
+    m_tip_enable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_tip_enable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     sizer_enable_ams->Add(m_tip_enable_ams, 0, wxTOP, 8);
 
     wxBoxSizer *sizer_enable_ams_img;
@@ -1603,26 +1622,26 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
     m_sizer_body->Add(m_panel_enable_ams, 0, 0, 0);
 
     m_split_lines = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(1, FromDIP(150)), wxTAB_TRAVERSAL);
-    m_split_lines->SetBackgroundColour(wxColour(238, 238, 238));
+    m_split_lines->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_body->Add(m_split_lines, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(10));
 
     m_panel_disable_ams = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(220), -1), wxTAB_TRAVERSAL);
-    m_panel_disable_ams->SetBackgroundColour(*wxWHITE);
+    m_panel_disable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *sizer_disable_ams;
     sizer_disable_ams = new wxBoxSizer(wxVERTICAL);
 
-    m_title_disable_ams = new wxStaticText(m_panel_disable_ams, wxID_ANY, _L("Disable AMS"), wxDefaultPosition, wxDefaultSize, 0);
-    m_title_disable_ams->SetBackgroundColour(*wxWHITE);
-    m_title_disable_ams->SetForegroundColour(*wxBLACK);
+    m_title_disable_ams = new Label(m_panel_disable_ams, _L("Disable AMS"));
+    m_title_disable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_title_disable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_disable_ams->Wrap(-1);
     sizer_disable_ams->Add(m_title_disable_ams, 0, 0, 0);
 
-    m_tip_disable_ams = new wxStaticText(m_panel_disable_ams, wxID_ANY, _L("Print with the filament mounted on the back of chassis"), wxDefaultPosition, wxDefaultSize, 0);
+    m_tip_disable_ams = new Label(m_panel_disable_ams, _L("Print with the filament mounted on the back of chassis"));
     m_tip_disable_ams->SetMinSize(wxSize(FromDIP(200), FromDIP(50)));
     m_tip_disable_ams->Wrap(FromDIP(200));
-    m_tip_disable_ams->SetForegroundColour(*wxBLACK);
-    m_tip_disable_ams->SetBackgroundColour(*wxWHITE);
+    m_tip_disable_ams->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_tip_disable_ams->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     sizer_disable_ams->Add(m_tip_disable_ams, 0, wxTOP, FromDIP(8));
 
     wxBoxSizer *sizer_disable_ams_img;
@@ -1653,7 +1672,7 @@ AmsMapingTipPopup::AmsMapingTipPopup(wxWindow *parent)
 void AmsMapingTipPopup::paintEvent(wxPaintEvent &evt)
 {
     wxPaintDC dc(this);
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
@@ -1667,7 +1686,7 @@ bool AmsMapingTipPopup::ProcessLeftDown(wxMouseEvent &event) {
 AmsHumidityTipPopup::AmsHumidityTipPopup(wxWindow* parent)
     :PopupWindow(parent, wxBORDER_NONE)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -1784,11 +1803,20 @@ void AmsHumidityTipPopup::render(wxDC& dc)
 
 void AmsHumidityTipPopup::doRender(wxDC& dc)
 {
-    //close
-    dc.DrawBitmap(close_img.bmp(), GetSize().x - close_img.GetBmpWidth() - FromDIP(38), FromDIP(24));
+    //close -> Material Symbols 'close' glyph when available, else legacy raster.
+    {
+        const int cx = GetSize().x - close_img.GetBmpWidth() - FromDIP(38);
+        const int cy = FromDIP(24);
+        if (MaterialIcon::available()) {
+            MaterialIcon::drawCentered(dc, MaterialIcon::Close, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant),
+                                       wxRect(cx, cy, close_img.GetBmpWidth(), close_img.GetBmpHeight()));
+        } else {
+            dc.DrawBitmap(close_img.bmp(), cx, cy);
+        }
+    }
 
     //background
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
@@ -1799,7 +1827,7 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
 :PopupWindow(parent, wxBORDER_NONE)
 {
     Bind(wxEVT_PAINT, &AmsTutorialPopup::paintEvent, this);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     wxBoxSizer* sizer_main;
     sizer_main = new wxBoxSizer(wxVERTICAL);
@@ -1824,11 +1852,16 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
     wxBoxSizer* sizer_top_tips = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer* sizer_tip_top = new wxBoxSizer(wxHORIZONTAL);
 
-    arrows_top = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("ams_arrow", this, 8), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
+    // Callout arrow pointing back to the example item -> Material Symbols
+    // 'chevron_left' glyph when available, else the legacy ams_arrow raster.
+    wxBitmap arrow_top_bmp = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::ChevronLeft, 8, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+        : create_scaled_bitmap("ams_arrow", this, 8);
+    arrows_top = new wxStaticBitmap(this, wxID_ANY, arrow_top_bmp, wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
     sizer_tip_top->Add(arrows_top, 0, wxALIGN_CENTER, 0);
 
-    tip_top = new wxStaticText(this, wxID_ANY, _L("Filament used in this print job"), wxDefaultPosition, wxDefaultSize, 0);
-    tip_top->SetForegroundColour(wxColour("#686868"));
+    tip_top = new Label(this, _L("Filament used in this print job"));
+    tip_top->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     sizer_tip_top->Add(tip_top, 0, wxALL, 0);
 
@@ -1840,9 +1873,12 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
 
     wxBoxSizer* sizer_tip_bottom = new wxBoxSizer(wxHORIZONTAL);
 
-    arrows_bottom = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("ams_arrow", this, 8), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
-    tip_bottom = new wxStaticText(this, wxID_ANY, _L("AMS slot used for this filament"), wxDefaultPosition, wxDefaultSize, 0);
-    tip_bottom->SetForegroundColour(wxColour("#686868"));
+    wxBitmap arrow_bottom_bmp = MaterialIcon::available()
+        ? MaterialIcon::bitmap(this, MaterialIcon::ChevronLeft, 8, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+        : create_scaled_bitmap("ams_arrow", this, 8);
+    arrows_bottom = new wxStaticBitmap(this, wxID_ANY, arrow_bottom_bmp, wxDefaultPosition, wxSize(FromDIP(24), FromDIP(8)), 0);
+    tip_bottom = new Label(this, _L("AMS slot used for this filament"));
+    tip_bottom->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
 
     sizer_tip_bottom->Add(arrows_bottom, 0, wxALIGN_CENTER, 0);
@@ -1862,8 +1898,8 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
     img_middle= new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("ams_item_examples", this, 30), wxDefaultPosition, wxSize(FromDIP(50), FromDIP(30)), 0);
     sizer_middle->Add(img_middle, 0, wxALIGN_CENTER, 0);
 
-    tip_middle = new wxStaticText(this, wxID_ANY, _L("Click to select AMS slot manually"), wxDefaultPosition, wxDefaultSize, 0);
-    tip_middle->SetForegroundColour(wxColour("#686868"));
+    tip_middle = new Label(this, _L("Click to select AMS slot manually"));
+    tip_middle->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     sizer_middle->Add(0, 0, 0,wxLEFT, 15);
     sizer_middle->Add(tip_middle, 0, wxALIGN_CENTER, 0);
 
@@ -1886,7 +1922,7 @@ AmsTutorialPopup::AmsTutorialPopup(wxWindow* parent)
 void AmsTutorialPopup::paintEvent(wxPaintEvent& evt)
 {
     wxPaintDC dc(this);
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
@@ -1902,7 +1938,7 @@ AmsIntroducePopup::AmsIntroducePopup(wxWindow* parent)
 :PopupWindow(parent, wxBORDER_NONE)
 {
     Bind(wxEVT_PAINT, &AmsIntroducePopup::paintEvent, this);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     SetMinSize(wxSize(FromDIP(200), FromDIP(200)));
     SetMaxSize(wxSize(FromDIP(200), FromDIP(200)));
@@ -1918,7 +1954,7 @@ AmsIntroducePopup::AmsIntroducePopup(wxWindow* parent)
     m_staticText_bottom =  new Label(this, _L("Print using materials mounted on the back of the case"));
     m_staticText_bottom->Wrap(-1);
     m_staticText_bottom->SetFont(::Label::Body_13);
-    m_staticText_bottom->SetForegroundColour(wxColour("#6B6B6B"));
+    m_staticText_bottom->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     bSizer4->Add(m_staticText_bottom, 0, wxALL, 5);
 
     wxBoxSizer* bSizer5;
@@ -1970,7 +2006,7 @@ void AmsIntroducePopup::set_mode(bool enable_ams)
 void AmsIntroducePopup::paintEvent(wxPaintEvent& evt)
 {
     wxPaintDC dc(this);
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
@@ -1989,7 +2025,7 @@ MappingContainer::MappingContainer(wxWindow *parent, const wxString &ams_type, i
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
-    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     Bind(wxEVT_PAINT, &MappingContainer::paintEvent, this);
 
     m_ams_type  = ams_type;
@@ -2069,16 +2105,17 @@ AmsReplaceMaterialDialog::AmsReplaceMaterialDialog(wxWindow* parent)
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void AmsReplaceMaterialDialog::create()
 {
     SetSize(wxSize(FromDIP(445), -1));
     SetMinSize(wxSize(FromDIP(445), -1));
-    SetMaxSize(wxSize(FromDIP(445), -1));
 
     // set icon for dialog
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
@@ -2086,7 +2123,7 @@ void AmsReplaceMaterialDialog::create()
 
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
     auto m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_top_line->SetBackgroundColour(wxColour(166, 169, 170));
+    m_top_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(m_top_line, 0, wxEXPAND, 0);
 
     m_nozzle_btn_panel = new SwitchBoard(this, _L("Left"), _L("Right"), wxSize(FromDIP(126), FromDIP(26)));
@@ -2095,14 +2132,14 @@ void AmsReplaceMaterialDialog::create()
 
     label_txt = new Label(this, _L("When the current material run out, the printer will continue to print in the following order."));
     label_txt->SetFont(Label::Body_13);
-    label_txt->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#323A3C")));
+    label_txt->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     label_txt->SetMinSize(wxSize(FromDIP(380), -1));
     label_txt->SetMaxSize(wxSize(FromDIP(380), -1));
     label_txt->Wrap(FromDIP(380));
 
     identical_filament = new Label(this, _L("Identical filament: same brand, type and color"));
     identical_filament->SetFont(Label::Body_13);
-    identical_filament->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#00AE42")));
+    identical_filament->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
 
     m_scrollview_groups = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
     m_scrollview_groups->SetScrollRate(5, 5);
@@ -2124,14 +2161,14 @@ void AmsReplaceMaterialDialog::create()
         std::pair<wxColour, int>(AMS_CONTROL_DEF_BLOCK_BK_COLOUR, StateColor::Hovered),
         std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Normal));
 
-    StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor btn_bd_white(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
-    StateColor btn_text_white(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
+    StateColor btn_text_white(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Enabled));
 
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_sizer->Add( 0, 0, 1, wxEXPAND, 0 );
 
     m_main_sizer->Add(0,0,0, wxTOP, FromDIP(12));
@@ -2147,7 +2184,6 @@ void AmsReplaceMaterialDialog::create()
     m_main_sizer->Add(0,0,0, wxTOP, FromDIP(20));
 
 
-    CenterOnParent();
     SetSizer(m_main_sizer);
     Layout();
     Fit();
@@ -2184,7 +2220,7 @@ AmsRMGroup* AmsReplaceMaterialDialog::create_backup_group(wxString gname, std::m
 void AmsReplaceMaterialDialog::paintEvent(wxPaintEvent& evt)
 {
     wxPaintDC dc(this);
-    dc.SetPen(wxColour(0xAC, 0xAC, 0xAC));
+    dc.SetPen(StateColor::semantic(MD3::Role::OutlineVariant));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRoundedRectangle(0, 0, GetSize().x, GetSize().y, 0);
 }
@@ -2347,7 +2383,7 @@ AmsRMGroup::AmsRMGroup(wxWindow* parent, std::map<std::string, wxColour> group_i
     SetSize(wxSize(FromDIP(166), FromDIP(166)));
     SetMinSize(wxSize(FromDIP(166), FromDIP(166)));
     SetMaxSize(wxSize(FromDIP(166), FromDIP(166)));
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     backup_current_use_white    =  ScalableBitmap(this, "backup_current_use1",8);
     backup_current_use_black    =  ScalableBitmap(this, "backup_current_use2", 8);
@@ -2571,7 +2607,7 @@ AmsHumidityLevelList::AmsHumidityLevelList(wxWindow* parent)
     SetSize(wxSize(FromDIP(680), FromDIP(104)));
     SetMinSize(wxSize(FromDIP(680), FromDIP(104)));
     SetMaxSize(wxSize(FromDIP(680), FromDIP(104)));
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     background_img = ScalableBitmap(this, "humidity_list_background", 104);
 
@@ -2672,11 +2708,11 @@ void DevIconLabel::CreateGui()
 {
     wxSizer* sizer_main = new wxBoxSizer(wxHORIZONTAL);
     m_icon = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap);
-    m_icon->SetBackgroundColour(*wxWHITE);
+    m_icon->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_label = new Label(this);
     m_label->SetFont(::Label::Body_13);
-    m_label->SetBackgroundColour(*wxWHITE);
+    m_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     sizer_main->Add(m_icon, 0, wxALIGN_CENTER_VERTICAL, 0);
     sizer_main->Add(m_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));

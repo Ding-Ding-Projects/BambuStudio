@@ -6,6 +6,7 @@
 #include "GUI_App.hpp"
 #include "format.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "slic3r/Utils/CalibUtils.hpp"
 #include "DeviceCore/DevConfigUtil.h"
 
@@ -124,12 +125,10 @@ HistoryWindow::HistoryWindow(wxWindow* parent, const std::vector<PACalibResult>&
     scroll_window->SetSizer(scroll_sizer);
 
     Button *   mew_btn = new Button(scroll_window, _L("New"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     mew_btn->SetBackgroundColour(*wxWHITE);
-    mew_btn->SetBackgroundColor(btn_bg_green);
-    mew_btn->SetBorderColor(wxColour(0, 174, 66));
-    mew_btn->SetTextColor(wxColour("#FFFFFE"));
+    mew_btn->SetVariant(Button::Variant::Filled);
     mew_btn->SetMinSize(wxSize(FromDIP(100), FromDIP(24)));
     mew_btn->SetMaxSize(wxSize(FromDIP(100), FromDIP(24)));
     mew_btn->SetCornerRadius(FromDIP(12));
@@ -139,7 +138,7 @@ HistoryWindow::HistoryWindow(wxWindow* parent, const std::vector<PACalibResult>&
     scroll_sizer->AddSpacer(FromDIP(15));
 
     m_extruder_switch_btn = new SwitchButton(scroll_window);
-    m_extruder_switch_btn->SetBackgroundColour(wxColour(0, 174, 66));
+    m_extruder_switch_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::Primary));
     m_extruder_switch_btn->SetMinSize(wxSize(FromDIP(200), FromDIP(24)));
     m_extruder_switch_btn->SetMaxSize(wxSize(FromDIP(200), FromDIP(24)));
     std::string chd_pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
@@ -152,7 +151,7 @@ HistoryWindow::HistoryWindow(wxWindow* parent, const std::vector<PACalibResult>&
     scroll_sizer->AddSpacer(10);
 
     wxPanel* comboBox_panel = new wxPanel(scroll_window);
-    comboBox_panel->SetBackgroundColour(wxColour(238, 238, 238));
+    comboBox_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     auto comboBox_sizer = new wxBoxSizer(wxVERTICAL);
     comboBox_panel->SetSizer(comboBox_sizer);
     comboBox_sizer->AddSpacer(10);
@@ -175,7 +174,7 @@ HistoryWindow::HistoryWindow(wxWindow* parent, const std::vector<PACalibResult>&
     auto tips_sizer = new wxBoxSizer(wxVERTICAL);
     tips_panel->SetSizer(tips_sizer);
     m_tips = new Label(tips_panel, "");
-    m_tips->SetForegroundColour({ 145, 145, 145 });
+    m_tips->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     tips_sizer->Add(m_tips, 0, wxEXPAND);
 
     scroll_sizer->Add(tips_panel, 0, wxEXPAND);
@@ -192,9 +191,10 @@ HistoryWindow::HistoryWindow(wxWindow* parent, const std::vector<PACalibResult>&
     SetSizer(main_sizer);
     Layout();
     main_sizer->Fit(this);
-    CenterOnParent();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 
     m_comboBox_nozzle_dia->Bind(wxEVT_COMBOBOX, &HistoryWindow::on_select_nozzle, this);
 
@@ -460,13 +460,11 @@ void HistoryWindow::sync_history_data() {
             });
 
         auto edit_button = new Button(m_history_data_panel, _L("Edit"));
-        StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
         edit_button->SetBackgroundColour(*wxWHITE);
-        edit_button->SetBackgroundColor(btn_bg_green);
-        edit_button->SetBorderColor(wxColour(0, 174, 66));
-        edit_button->SetTextColor(wxColour("#FFFFFE"));
+        edit_button->SetVariant(Button::Variant::Filled);
         edit_button->SetMinSize(wxSize(-1, FromDIP(24)));
         edit_button->SetCornerRadius(FromDIP(12));
         edit_button->Bind(wxEVT_BUTTON, [this, result, k_value, name_value](auto& e) {
@@ -660,13 +658,11 @@ EditCalibrationHistoryDialog::EditCalibrationHistoryDialog(wxWindow             
 
     auto btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     Button* save_btn = new Button(top_panel, _L("Save"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     save_btn->SetBackgroundColour(*wxWHITE);
-    save_btn->SetBackgroundColor(btn_bg_green);
-    save_btn->SetBorderColor(wxColour(0, 174, 66));
-    save_btn->SetTextColor(wxColour("#FFFFFE"));
+    save_btn->SetVariant(Button::Variant::Filled);
     save_btn->SetMinSize(wxSize(-1, FromDIP(24)));
     save_btn->SetCornerRadius(FromDIP(12));
     Button* cancel_btn = new Button(top_panel, _L("Cancel"));
@@ -687,9 +683,10 @@ EditCalibrationHistoryDialog::EditCalibrationHistoryDialog(wxWindow             
     SetSizer(main_sizer);
     Layout();
     Fit();
-    CenterOnParent();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 EditCalibrationHistoryDialog::~EditCalibrationHistoryDialog() {
@@ -955,12 +952,10 @@ NewCalibrationHistoryDialog::NewCalibrationHistoryDialog(wxWindow *parent, const
 
     auto       btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     Button *   ok_btn  = new Button(top_panel, _L("Ok"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     ok_btn->SetBackgroundColour(*wxWHITE);
-    ok_btn->SetBackgroundColor(btn_bg_green);
-    ok_btn->SetBorderColor(wxColour(0, 174, 66));
-    ok_btn->SetTextColor(wxColour("#FFFFFE"));
+    ok_btn->SetVariant(Button::Variant::Filled);
     ok_btn->SetMinSize(wxSize(-1, FromDIP(24)));
     ok_btn->SetCornerRadius(FromDIP(12));
     Button *cancel_btn = new Button(top_panel, _L("Cancel"));
@@ -980,9 +975,10 @@ NewCalibrationHistoryDialog::NewCalibrationHistoryDialog(wxWindow *parent, const
     SetSizer(main_sizer);
     Layout();
     Fit();
-    CenterOnParent();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 int NewCalibrationHistoryDialog::get_nozzle_combo_id_code() const{

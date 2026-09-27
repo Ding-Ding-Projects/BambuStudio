@@ -4,20 +4,22 @@
 #include "wxExtensions.hpp"
 #include "GUI_Utils.hpp"
 #include "Widgets/RadioBox.hpp"
+#include "Widgets/SwitchButton.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/TextInput.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include "GUI_App.hpp"
 #include "wx/hyperlink.h"
-#include <wx/radiobox.h>
 #include "libslic3r/Calib.hpp"
+#include <vector>
 
 namespace Slic3r { namespace GUI {
 
-class PA_Calibration_Dlg : public DPIDialog
+class PA_Calibration_Dlg : public MD3Dialog
 {
 public:
     PA_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* plater);
@@ -35,8 +37,8 @@ protected:
 	int  m_bowdenExtruderId{-1};
 	Calib_Params m_params;
 
-	wxRadioBox* m_rbExtruderType{nullptr};
-	wxRadioBox* m_rbMethod;
+	MultiSwitchButton* m_rbExtruderType{nullptr};
+	MultiSwitchButton* m_rbMethod;
 	TextInput* m_tiStartPA;
 	TextInput* m_tiEndPA;
 	TextInput* m_tiPAStep;
@@ -46,7 +48,7 @@ protected:
 	Plater* m_plater;
 };
 
-class Temp_Calibration_Dlg : public DPIDialog
+class Temp_Calibration_Dlg : public MD3Dialog
 {
 public:
     Temp_Calibration_Dlg(wxWindow* parent, wxWindowID id, Plater* plater);
@@ -56,10 +58,13 @@ public:
 protected:
     
     virtual void on_start(wxCommandEvent& event);
-    virtual void on_filament_type_changed(wxCommandEvent& event);
+    // Rewired off wxRadioBox: the kit RadioBox chip group reports its selected
+    // index directly, so the handler takes the index instead of a wxCommandEvent.
+    void on_filament_type_changed(int selection);
     Calib_Params m_params;
 
-    wxRadioBox* m_rbFilamentType;
+    std::vector<RadioBox*> m_filamentRadios;
+    int m_filamentSel{0};
     TextInput* m_tiStart;
     TextInput* m_tiEnd;
     TextInput* m_tiStep;
@@ -67,7 +72,7 @@ protected:
     Plater* m_plater;
 };
 
-class MaxVolumetricSpeed_Test_Dlg : public DPIDialog
+class MaxVolumetricSpeed_Test_Dlg : public MD3Dialog
 {
 public:
     MaxVolumetricSpeed_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater);
@@ -86,7 +91,7 @@ protected:
     Plater* m_plater;
 };
 
-class VFA_Test_Dlg : public DPIDialog {
+class VFA_Test_Dlg : public MD3Dialog {
 public:
     VFA_Test_Dlg(wxWindow* parent, wxWindowID id, Plater* plater);
     ~VFA_Test_Dlg();
@@ -104,7 +109,7 @@ protected:
 };
 
 
-class Retraction_Test_Dlg : public DPIDialog
+class Retraction_Test_Dlg : public MD3Dialog
 {
 public:
     Retraction_Test_Dlg (wxWindow* parent, wxWindowID id, Plater* plater);

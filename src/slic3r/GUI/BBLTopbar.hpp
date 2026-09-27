@@ -21,8 +21,7 @@ public:
     void OnIconize(wxAuiToolBarEvent& event);
     void OnFullScreen(wxAuiToolBarEvent& event);
     void OnCloseFrame(wxAuiToolBarEvent& event);
-    void OnFileToolItem(wxAuiToolBarEvent& evt);
-    void OnDropdownToolItem(wxAuiToolBarEvent& evt);
+    void OnTopMenuToolItem(wxAuiToolBarEvent& evt);
     void OnCalibToolItem(wxAuiToolBarEvent &evt);
     void OnMouseLeftDClock(wxMouseEvent& mouse);
     void OnMouseLeftDown(wxMouseEvent& event);
@@ -37,15 +36,34 @@ public:
     void OnRedo(wxAuiToolBarEvent& event);
     void OnModelStoreClicked(wxAuiToolBarEvent& event);
     void OnPublishClicked(wxAuiToolBarEvent &event);
+    // §3.5 / §3.7 kit title-bar chips added this wave.
+    void OnHistoryChip(wxAuiToolBarEvent& event);
+    void OnAppearanceButton(wxAuiToolBarEvent& event);
+    // Notification centre bell: toggles the NotificationCenterPanel popover
+    // anchored under the bell (docs/features/workspace/notification-center.md).
+    void OnNotificationBell(wxAuiToolBarEvent& event);
 
     wxAuiToolBarItem* FindToolByCurrentPosition();
 
-    void SetFileMenu(wxMenu* file_menu);
-    void AddDropDownSubMenu(wxMenu* sub_menu, const wxString& title);
-    void AddDropDownMenuItem(wxMenuItem* menu_item);
-    wxMenu *GetTopMenu();
+    void SetTopMenus(wxMenu* file_menu, wxMenu* edit_menu, wxMenu* view_menu,
+                     wxMenu* objects_menu, wxMenu* help_menu);
     wxMenu *GetCalibMenu();
+    // Headless-driver hooks (only reached through the layout probe's command
+    // channel): pop a top menu by its title, or fire the first menu item whose
+    // label contains `label`. Both defer through CallAfter so the sender's
+    // WM_COPYDATA returns before a popup loop or a modal dialog blocks.
+    bool PopupMenuByTitle(const wxString &title);
+    bool InvokeMenuItem(const wxString &label);
     void SetTitle(wxString title);
+    // Live update of the wordmark beside the brand tile (user-renamable display
+    // name); re-fits the project chip against the new fixed-content width.
+    void SetBrandLabel(const wxString& label);
+    // §3.5 history chip label content (branch + short head). Decorative; the
+    // click always opens the real version-history backend.
+    void SetHistoryInfo(const wxString& branch, const wxString& head);
+    // Unread badge on the notification bell (0 hides the badge). Driven by
+    // NotificationManager whenever its history changes.
+    void SetNotificationUnread(int count);
     void SetMaximizedSize();
     void SetWindowSize();
 
@@ -60,17 +78,42 @@ public:
     void ShowCalibrationButton(bool show = true);
 
 private:
+    wxMenu* top_menu_for_tool(int tool_id) const;
+    int measure_fixed_content_width() const;
+    void update_responsive_title(int width = -1);
+    // Rebuild the baked history-chip bitmaps (idle + hover) from the current
+    // branch/head + theme; safe to call before the item exists.
+    void rebuild_history_chip();
+
     wxFrame* m_frame;
+    wxAuiToolBarItem* m_brand_item;
     wxAuiToolBarItem* m_file_menu_item;
-    wxAuiToolBarItem* m_dropdown_menu_item;
+    wxAuiToolBarItem* m_edit_menu_item;
+    wxAuiToolBarItem* m_view_menu_item;
+    wxAuiToolBarItem* m_objects_menu_item;
+    wxAuiToolBarItem* m_help_menu_item;
     wxRect m_normalRect;
     wxPoint m_delta;
-    wxMenu m_top_menu;
     wxMenu* m_file_menu;
+    wxMenu* m_edit_menu;
+    wxMenu* m_view_menu;
+    wxMenu* m_objects_menu;
+    wxMenu* m_help_menu;
     wxMenu m_calib_menu;
     wxAuiToolBarItem* m_title_item;
     wxAuiToolBarItem* m_account_item;
     wxAuiToolBarItem* m_model_store_item;
+    wxAuiToolBarItem* m_history_item{nullptr};
+    wxAuiToolBarItem* m_appearance_item{nullptr};
+    wxAuiToolBarItem* m_notification_item{nullptr};
+    int               m_notification_unread{0};
+    // The popover, created on first click and reused (hidden, never destroyed
+    // while the frame lives). Held as wxWindow* to keep the panel type out of
+    // this header.
+    wxWindow*         m_notification_center{nullptr};
+    void rebuild_notification_bell();
+    wxString          m_history_branch;
+    wxString          m_history_head;
 
     wxAuiToolBarItem *m_publish_item;
     wxAuiToolBarItem *m_save_item;
@@ -86,7 +129,7 @@ private:
     wxBitmap window_bitmap;
 
     int m_toolbar_h;
-    bool m_skip_popup_file_menu;
-    bool m_skip_popup_dropdown_menu;
+    int m_skip_popup_menu_id;
     bool m_skip_popup_calib_menu;
+    wxString m_full_title;
 };

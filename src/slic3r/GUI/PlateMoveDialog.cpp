@@ -1,24 +1,26 @@
 #include "PlateMoveDialog.hpp"
 #include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
-const StateColor btn_bg_green_in_plate_swap(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-const StateColor btn_bg_disable_bg_in_plate_swap(std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Pressed),
-                                   std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Hovered),
-                                   std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Normal));
+const StateColor btn_bg_green_in_plate_swap(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+const StateColor btn_bg_disable_bg_in_plate_swap(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                                   std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Hovered),
+                                   std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
     : DPIDialog(parent, id, title, pos, size, style)
 {
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(305), -1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
     m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(5));
 
@@ -30,7 +32,7 @@ PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString
     auto text_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto combox_sizer = new wxBoxSizer(wxHORIZONTAL);
     {
-        wxStaticText *temp_title = new wxStaticText(this, wxID_ANY, _L("Move the current plate to"));
+        wxStaticText *temp_title = new Label(this, _L("Move the current plate to"));
         text_sizer->Add(temp_title, 0, wxEXPAND | wxALL, FromDIP(5));
     }
     {//                                                           icon_name
@@ -127,13 +129,12 @@ PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString
 
     auto  sizer_button = new wxBoxSizer(wxHORIZONTAL);
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_ok = new Button(this, _L("OK"));
     //m_button_ok->SetBackgroundColor(btn_bg_green_in_plate_swap);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour("#FFFFFE"));
+    m_button_ok->SetVariant(Button::Variant::Filled);
     m_button_ok->SetFont(Label::Body_12);
     m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -146,8 +147,7 @@ PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString
     });
 
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -182,9 +182,10 @@ PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString
     Fit();
     //m_sizer_main->Fit(this);
 
-    CenterOnParent();
-
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
+    CenterOnParent();
 }
 
 PlateMoveDialog::~PlateMoveDialog() {
@@ -192,8 +193,8 @@ PlateMoveDialog::~PlateMoveDialog() {
 
 void PlateMoveDialog::update_ok_button_enable() {
     auto disable = m_specify_plate_idx == GUI::wxGetApp().plater()->get_partplate_list().get_curr_plate_index();
+    // The Filled variant paints its own disabled state; no palette swap needed.
     m_button_ok->Enable(!disable);
-    m_button_ok->SetBackgroundColor(disable ? btn_bg_disable_bg_in_plate_swap :btn_bg_green_in_plate_swap);
 }
 
 void PlateMoveDialog::on_dpi_changed(const wxRect &suggested_rect)

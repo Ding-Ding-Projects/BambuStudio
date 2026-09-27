@@ -25,6 +25,7 @@
 #include <wx/srchctrl.h>
 
 #include "ReleaseNote.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include "GUI_Utils.hpp"
 #include "wxExtensions.hpp"
 #include "DeviceManager.hpp"
@@ -37,6 +38,7 @@
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/ScrolledWindow.hpp"
 #include "Widgets/PopupWindow.hpp"
+#include "Widgets/SearchField.hpp"
 #include <wx/simplebook.h>
 #include <wx/hashmap.h>
 
@@ -82,6 +84,7 @@ private:
     bool        m_show_edit{false};
     bool        m_show_bind{false};
     bool        m_hover {false};
+    bool        m_focused {false};
     bool        m_is_macos_special_version{false};
 
 
@@ -119,6 +122,13 @@ public:
     void show_printer_bind(bool show, PrinterBindState state);
     void show_edit_printer_name(bool show);
     void update_machine_info(MachineObject *info, bool is_my_devices = false);
+
+    // a11y: printer-list rows are custom-painted panels; make them keyboard
+    // reachable (tab stop) and Enter/Space-activatable. No child controls, so the
+    // focus predicates alone put the row in the tab order; a focus ring is drawn
+    // in doRender() when m_focused.
+    virtual bool AcceptsFocus() const wxOVERRIDE { return true; }
+    virtual bool AcceptsFocusFromKeyboard() const wxOVERRIDE { return true; }
 protected:
     void OnPaint(wxPaintEvent &event);
     void render(wxDC &dc);
@@ -126,6 +136,13 @@ protected:
     void on_mouse_enter(wxMouseEvent &evt);
     void on_mouse_leave(wxMouseEvent &evt);
     void on_mouse_left_up(wxMouseEvent &evt);
+    void on_set_focus(wxFocusEvent &evt);
+    void on_kill_focus(wxFocusEvent &evt);
+    void on_key_down(wxKeyEvent &evt);
+    // Replay the row's primary select action (a synthetic left-up at the row
+    // origin lands outside the edit/unbind glyph hit rects, so it selects the
+    // printer) for keyboard activation.
+    void trigger_primary_action();
 };
 
 class MachinePanel
@@ -180,14 +197,16 @@ private:
     PinCodePanel*                     m_panel_ping_code{nullptr};
     PinCodePanel*                     m_panel_direct_connection{nullptr};
     wxWindow*                         m_placeholder_panel{nullptr};
-    wxHyperlinkCtrl*                  m_hyperlink{nullptr};
+    LinkLabel*                  m_hyperlink{nullptr};
     Label*                            m_ping_code_text{nullptr};
     wxStaticBitmap*                   m_img_ping_code{nullptr};
     wxBoxSizer *                      m_sizer_body{nullptr};
     wxBoxSizer *                      m_sizer_my_devices{nullptr};
     wxBoxSizer *                      m_sizer_other_devices{nullptr};
     wxBoxSizer *                      m_sizer_search_bar{nullptr};
-    wxSearchCtrl*                     m_search_bar{nullptr};
+    // Shared MD3 SearchField pill: its ".*" toggle + tune builder popover drive
+    // SearchField::textMatches in search_for_printer.
+    SearchField*                      m_search_bar{nullptr};
     wxScrolledWindow *                m_scrolledWindow{nullptr};
     wxWindow *                        m_panel_body{nullptr};
     wxTimer *                         m_refresh_timer{nullptr};
@@ -207,7 +226,7 @@ private:
 
 	void      update_other_devices();
     void      update_user_devices();
-    bool      search_for_printer(MachineObject* obj);
+    bool      search_for_printer(MachineObject* obj, SearchField::MatchPass *match_pass);
     void      on_dissmiss_win(wxCommandEvent &event);
     wxWindow *create_title_panel(wxString text);
 };

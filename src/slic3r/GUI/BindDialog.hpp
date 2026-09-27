@@ -2,6 +2,7 @@
 #define slic3r_BindDialog_hpp_
 
 #include "I18N.hpp"
+#include "Widgets/LinkLabel.hpp"
 
 #include <wx/font.h>
 #include <wx/colour.h>
@@ -29,9 +30,11 @@
 #include "BBLStatusBar.hpp"
 #include "BBLStatusBarBind.hpp"
 
-#define BIND_DIALOG_GREY200 wxColour(248, 248, 248)
-#define BIND_DIALOG_GREY800 wxColour(50, 58, 61)
-#define BIND_DIALOG_GREY900 wxColour(38, 46, 48)
+// MD3 role tokens. GREY900 (OnSurface) stays a ThemeColor dark-map key so the
+// custom Button colorForStates path adapts it to dark mode at paint time.
+#define BIND_DIALOG_GREY200 StateColor::semantic(MD3::Role::SurfaceContainerLow)
+#define BIND_DIALOG_GREY800 StateColor::semantic(MD3::Role::OnSurface)
+#define BIND_DIALOG_GREY900 ThemeColor::TextPrimary
 #define BIND_DIALOG_BUTTON_SIZE wxSize(FromDIP(68), FromDIP(24))
 #define BIND_DIALOG_BUTTON_PANEL_SIZE wxSize(FromDIP(450), FromDIP(30))
 #define PING_CODE_LENGTH 6
@@ -65,7 +68,7 @@ private:
     Label* m_st_txt_error_code{ nullptr };
     Label* m_st_txt_error_desc{ nullptr };
     Label* m_st_txt_extra_info{ nullptr };
-    wxHyperlinkCtrl* m_link_network_state{ nullptr };
+    LinkLabel* m_link_network_state{ nullptr };
     wxString        m_result_info;
     wxString        m_result_extra;
     wxString        m_ping_code_wiki;
@@ -101,7 +104,7 @@ private:
     wxSimplebook *m_simplebook;
     wxStaticBitmap *m_avatar;
     wxStaticBitmap *m_printer_img;
-    wxStaticBitmap *m_static_bitmap_show_error;
+    Button*        m_static_bitmap_show_error;
     wxBitmap      m_bitmap_show_error_close;
     wxBitmap      m_bitmap_show_error_open;
     wxScrolledWindow* m_sw_bind_failed_info;
@@ -109,7 +112,7 @@ private:
     Label*          m_st_txt_error_code{ nullptr };
     Label*          m_st_txt_error_desc{ nullptr };
     Label*          m_st_txt_extra_info{ nullptr };
-    wxHyperlinkCtrl* m_link_network_state{ nullptr };
+    LinkLabel* m_link_network_state{ nullptr };
     wxString        m_result_info;
     wxString        m_result_extra;
     bool            m_show_error_info_state = true;

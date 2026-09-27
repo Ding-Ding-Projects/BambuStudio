@@ -17,12 +17,12 @@
 #include "GUI_App.hpp"
 #include "wx/hyperlink.h"
 
-#define EXTRUSION_CALIBRATION_DEF_COLOUR    wxColour(255, 255, 255)
-#define EXTRUSION_CALIBRATION_GREY900       wxColour(38, 46, 48)
-#define EXTRUSION_CALIBRATION_GREY800       wxColour(50, 58, 61)
-#define EXTRUSION_CALIBRATION_GREY700       wxColour(107, 107, 107)
-#define EXTRUSION_CALIBRATION_GREY300       wxColour(238, 238, 238)
-#define EXTRUSION_CALIBRATION_GREY200       wxColour(248, 248, 248)
+#define EXTRUSION_CALIBRATION_DEF_COLOUR    ThemeColor::White         // §2f White               #ffffff -> dark #202127
+#define EXTRUSION_CALIBRATION_GREY900       ThemeColor::TextPrimary   // §2f OnSurface           #1a1b1f -> dark #e8e7ee (was #262E30)
+#define EXTRUSION_CALIBRATION_GREY800       ThemeColor::TextPrimary   // §2f OnSurface           #1a1b1f -> dark #e8e7ee (was #323A3D)
+#define EXTRUSION_CALIBRATION_GREY700       ThemeColor::TextMuted     // §2f OnSurfaceVariant    #5c5f66 -> dark #a8a9b3 (was #6B6B6B)
+#define EXTRUSION_CALIBRATION_GREY300       ThemeColor::Grey400       // §2f OutlineVariant      #c5c6d0 -> dark #4a4c54 (was #EEEEEE separators)
+#define EXTRUSION_CALIBRATION_GREY200       ThemeColor::White         // §2f White               #ffffff -> dark #202127 (button text, was #F8F8F8)
 #define EXTRUSION_CALIBRATION_BODY_WIDTH    FromDIP(380)
 #define EXTRUSION_CALIBRATION_LABEL_WIDTH   FromDIP(80)
 #define EXTRUSION_CALIBRATION_WIDGET_GAP    FromDIP(18)

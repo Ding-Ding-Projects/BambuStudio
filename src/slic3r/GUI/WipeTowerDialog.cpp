@@ -10,6 +10,7 @@
 #include "libslic3r/PrintConfig.hpp"
 #include "MainFrame.hpp"
 #include "DeviceCore/DevConfigUtil.h"
+#include "Widgets/MD3DialogChrome.hpp"
 
 
 using namespace Slic3r;
@@ -289,8 +290,9 @@ WipingDialog::WipingDialog(wxWindow* parent, const int max_flush_volume) :
 
     main_sizer->SetSizeHints(this);
     main_sizer->Fit(this);
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 
     //m_webview->Bind(wxEVT_WEBVIEW_NAVIGATED, [this](auto& evt) {
     //    auto table_obj_str = BuildTableObjStr();

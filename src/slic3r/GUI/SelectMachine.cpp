@@ -1,4 +1,6 @@
 #include "SelectMachine.hpp"
+#include "Widgets/LinkLabel.hpp"
+#include "Widgets/Button.hpp"
 #include "I18N.hpp"
 
 #include "libslic3r/Utils.hpp"
@@ -17,6 +19,8 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "BackgroundSlicingProcess.hpp"
 #include "ConnectPrinter.hpp"
 
@@ -54,6 +58,7 @@
 #include "Notebook.hpp"
 #include "BitmapCache.hpp"
 #include "BindDialog.hpp"
+#include "Widgets/StateColor.hpp"
 
 // definitions
 #define S_RACK_NOZZLE_OFFSET_CALI_WARNING _L(\
@@ -73,6 +78,18 @@
 #define S_RACK_NOZZLE_SUGEEST_RESLICE_FILA _L("Please re-slice to avoid filament waste.")
 
 namespace Slic3r { namespace GUI {
+
+// Wave 3 (shared-dialog-action-icons): swap a legacy monochrome dialog action/
+// status raster for its Material Symbols glyph, coloured from a semantic role so it
+// follows the active light/dark theme. Falls back to the raster when the icon face
+// is unavailable so a missing TTF degrades to the old look instead of tofu.
+static wxBitmap dialog_action_glyph(wxWindow *win, uint32_t glyph, MD3::Role role,
+                                    const std::string &raster, int px)
+{
+    if (MaterialIcon::available())
+        return MaterialIcon::bitmap(win, glyph, px, StateColor::semantic(role));
+    return create_scaled_bitmap(raster, win, px);
+}
 
 wxDEFINE_EVENT(EVT_SWITCH_PRINT_OPTION, wxCommandEvent);
 wxDEFINE_EVENT(EVT_UPDATE_USER_MACHINE_LIST, wxCommandEvent);
@@ -232,7 +249,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_scroll_area->SetMaxSize(wxSize(FromDIP(700), FromDIP(600)));
 
     m_line_top = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(ThemeColor::Grey500);
 
     /*mode switch*/
      /*auto m_sizer_mode_switch = new wxBoxSizer(wxHORIZONTAL);
@@ -255,7 +272,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     });*/
 
     m_basic_panel = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_basic_panel->SetBackgroundColour(*wxWHITE);
+    m_basic_panel->SetBackgroundColour(ThemeColor::White);
     m_basicl_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     /*basic info*/
@@ -269,7 +286,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_thumbnailPanel->SetSize(wxSize(FromDIP(198), FromDIP(198)));
     m_thumbnailPanel->SetMinSize(wxSize(FromDIP(198), FromDIP(198)));
     m_thumbnailPanel->SetMaxSize(wxSize(FromDIP(198), FromDIP(198)));
-    m_thumbnailPanel->SetBackgroundColour(*wxWHITE);
+    m_thumbnailPanel->SetBackgroundColour(ThemeColor::White);
     m_sizer_thumbnail->Add(m_thumbnailPanel, 0, wxALIGN_CENTER, 0);
     m_panel_image->SetSizer(m_sizer_thumbnail);
     m_panel_image->Layout();
@@ -284,23 +301,28 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     auto sizer_rename = new wxBoxSizer(wxHORIZONTAL);
 
     m_rename_switch_panel = new wxSimplebook(m_basic_panel);
-    m_rename_switch_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_switch_panel->SetBackgroundColour(ThemeColor::White);
     m_rename_switch_panel->SetSize(wxSize(FromDIP(360), FromDIP(25)));
     m_rename_switch_panel->SetMinSize(wxSize(FromDIP(360), FromDIP(25)));
     m_rename_switch_panel->SetMaxSize(wxSize(FromDIP(360), FromDIP(25)));
 
     m_rename_normal_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_normal_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_normal_panel->SetBackgroundColour(ThemeColor::White);
     rename_sizer_v = new wxBoxSizer(wxVERTICAL);
     rename_sizer_h = new wxBoxSizer(wxHORIZONTAL);
 
-    m_rename_text = new wxStaticText(m_rename_normal_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_rename_text = new Label(m_rename_normal_panel, wxEmptyString, wxST_ELLIPSIZE_END);
     m_rename_text->SetFont(::Label::Head_14);
-    m_rename_text->SetBackgroundColour(*wxWHITE);
+    m_rename_text->SetBackgroundColour(ThemeColor::White);
     m_rename_text->SetMaxSize(wxSize(FromDIP(340), -1));
     rename_editable = new ScalableBitmap(m_scroll_area, "rename_edit", 20);
     rename_editable_light = new ScalableBitmap(m_scroll_area, "rename_edit", 20);
-    m_rename_button = new wxStaticBitmap(m_rename_normal_panel, wxID_ANY, rename_editable->bmp(), wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)), 0);
+    // Wave 3 (shared-dialog-action-icons): rename affordance -> edit glyph.
+    // Kit icon Button: focusable, exposes a role, and tints its own states.
+    m_rename_button = new Button(m_rename_normal_panel, "", "", 0, 0);
+    m_rename_button->SetIconButton(Button::IconShape::Square, FromDIP(24));
+    m_rename_button->SetGlyph(MaterialIcon::Edit, FromDIP(20));
+    m_rename_button->SetToolTip(_L("Rename"));
     m_rename_button->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_HAND); });
     m_rename_button->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
 
@@ -313,7 +335,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     rename_sizer_v->Fit(m_rename_normal_panel);
 
     auto m_rename_edit_panel = new wxPanel(m_rename_switch_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_rename_edit_panel->SetBackgroundColour(*wxWHITE);
+    m_rename_edit_panel->SetBackgroundColour(ThemeColor::White);
     auto rename_edit_sizer_v = new wxBoxSizer(wxVERTICAL);
 
     m_rename_input = new ::TextInput(m_rename_edit_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
@@ -334,7 +356,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_rename_edit_panel->Layout();
     rename_edit_sizer_v->Fit(m_rename_edit_panel);
 
-    m_rename_button->Bind(wxEVT_LEFT_DOWN, &SelectMachineDialog::on_rename_click, this);
+    m_rename_button->Bind(wxEVT_BUTTON, &SelectMachineDialog::on_rename_click, this);
     m_rename_switch_panel->AddPage(m_rename_normal_panel, wxEmptyString, true);
     m_rename_switch_panel->AddPage(m_rename_edit_panel, wxEmptyString, false);
 
@@ -359,9 +381,12 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     wxBoxSizer *m_sizer_basic_weight_time = new wxBoxSizer(wxHORIZONTAL);
 
     print_time   = new ScalableBitmap(m_scroll_area, "print-time", 18);
-    timeimg = new wxStaticBitmap(m_basic_panel, wxID_ANY, print_time->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
+    // Wave 3 (shared-dialog-action-icons): print-time -> schedule glyph, print-weight -> scale glyph.
+    timeimg = new wxStaticBitmap(m_basic_panel, wxID_ANY,
+        dialog_action_glyph(m_basic_panel, MaterialIcon::Schedule, MD3::Role::OnSurfaceVariant, "print-time", 18),
+        wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_stext_time = new Label(m_basic_panel, wxEmptyString);
-    m_stext_time->SetFont(Label::Body_13);
+    m_stext_time->SetFont(Label::Mono_13);
     m_time_estimate_tip = new Label(m_basic_panel, wxString::FromUTF8("●"));
     m_time_estimate_tip->SetFont(Label::Body_8);
     m_time_estimate_tip->SetForegroundColour(wxColour("#FF6F00"));
@@ -369,13 +394,15 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_time_estimate_tip->Hide();
 
     print_weight   = new ScalableBitmap(m_scroll_area, "print-weight", 18);
-    weightimg = new wxStaticBitmap(m_basic_panel, wxID_ANY, print_weight->bmp(), wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
+    weightimg = new wxStaticBitmap(m_basic_panel, wxID_ANY,
+        dialog_action_glyph(m_basic_panel, MaterialIcon::Scale, MD3::Role::OnSurfaceVariant, "print-weight", 18),
+        wxDefaultPosition, wxSize(FromDIP(18), FromDIP(18)), 0);
     m_stext_weight = new Label(m_basic_panel, wxEmptyString);
-    m_stext_weight->SetFont(Label::Body_13);
+    m_stext_weight->SetFont(Label::Mono_13);
 
     /* save time info */
     m_saveTimeText = new Label(m_basic_panel, wxEmptyString);
-    m_saveTimeText->SetForegroundColour(wxColour("#FF6F00"));
+    m_saveTimeText->SetForegroundColour(ThemeColor::Warning);
     m_saveTimeText->SetFont(Label::Body_13);
     m_saveTimeText->Hide();
 
@@ -396,12 +423,19 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     /*last & next page*/
     auto last_plate_sizer = new wxBoxSizer(wxVERTICAL);
-    m_bitmap_last_plate = new wxStaticBitmap(m_basic_panel, wxID_ANY, create_scaled_bitmap("go_last_plate", m_scroll_area, 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
+    // Wave 3 (shared-dialog-action-icons): plate navigation arrows -> chevron glyphs.
+    m_bitmap_last_plate = new Button(m_basic_panel, "", "", 0, 0);
+    m_bitmap_last_plate->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    m_bitmap_last_plate->SetGlyph(MaterialIcon::ChevronLeft, FromDIP(24));
+    m_bitmap_last_plate->SetToolTip(_L("Previous plate"));
     m_bitmap_last_plate->Hide();
     last_plate_sizer->Add(m_bitmap_last_plate, 0, wxALIGN_CENTER, 0);
 
     auto next_plate_sizer = new wxBoxSizer(wxVERTICAL);
-    m_bitmap_next_plate = new wxStaticBitmap(m_basic_panel, wxID_ANY, create_scaled_bitmap("go_next_plate", m_scroll_area, 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
+    m_bitmap_next_plate = new Button(m_basic_panel, "", "", 0, 0);
+    m_bitmap_next_plate->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    m_bitmap_next_plate->SetGlyph(MaterialIcon::ChevronRight, FromDIP(24));
+    m_bitmap_next_plate->SetToolTip(_L("Next plate"));
     m_bitmap_next_plate->Hide();
     next_plate_sizer->Add(m_bitmap_next_plate, 0, wxALIGN_CENTER, 0);
 
@@ -424,7 +458,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_text_printer_msg_tips->SetMinSize(wxSize(FromDIP(420), FromDIP(24)));
     m_text_printer_msg_tips->SetMaxSize(wxSize(FromDIP(420), FromDIP(24)));
     m_text_printer_msg_tips->SetFont(::Label::Body_13);
-    m_text_printer_msg_tips->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+    m_text_printer_msg_tips->SetForegroundColour(ThemeColor::TextMuted);
     m_text_printer_msg_tips->Hide();
     m_text_printer_msg_tips->GetAlignment();
 
@@ -454,20 +488,24 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     auto m_stext_filament_title = new Label(m_scroll_area, _L("Filament"));
     m_stext_filament_title->SetFont(::Label::Head_13);
-    m_stext_filament_title->SetForegroundColour(0x909090);
+    m_stext_filament_title->SetForegroundColour(ThemeColor::TextSecondary);
 
     auto m_split_line_filament = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_split_line_filament->SetBackgroundColour(0xeeeeee);
+    m_split_line_filament->SetBackgroundColour(ThemeColor::Grey250);
     m_split_line_filament->SetMinSize(wxSize(-1, 1));
     m_split_line_filament->SetMaxSize(wxSize(-1, 1));
 
     m_sizer_autorefill = new wxBoxSizer(wxHORIZONTAL);
     m_ams_backup_tip = new Label(m_scroll_area, _L("Auto Refill"));
     m_ams_backup_tip->SetFont(::Label::Head_13);
-    m_ams_backup_tip->SetForegroundColour(wxColour("#00AE42"));
-    m_ams_backup_tip->SetBackgroundColour(*wxWHITE);
-    img_ams_backup = new wxStaticBitmap(m_scroll_area, wxID_ANY, create_scaled_bitmap("automatic_material_renewal", this, 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)), 0);
-    img_ams_backup->SetBackgroundColour(*wxWHITE);
+    m_ams_backup_tip->SetForegroundColour(ThemeColor::BrandGreen);
+    m_ams_backup_tip->SetBackgroundColour(ThemeColor::White);
+    // Wave 3 (shared-dialog-action-icons): auto-refill renewal -> sync glyph (Primary accent).
+    img_ams_backup = new Button(m_scroll_area, "", "", 0, 0);
+    img_ams_backup->SetIconButton(Button::IconShape::Square, FromDIP(22));
+    img_ams_backup->SetGlyph(MaterialIcon::Sync, FromDIP(16));
+    img_ams_backup->SetGlyphColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::Primary), (int) StateColor::Normal)));
+    img_ams_backup->SetBackgroundColour(ThemeColor::White);
 
     m_sizer_autorefill->Add(0, 0, 1, wxEXPAND, 0);
     m_sizer_autorefill->Add(img_ams_backup, 0, wxALL, FromDIP(3));
@@ -483,7 +521,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     img_ams_backup->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {SetCursor(wxCURSOR_ARROW); });
 
     m_ams_backup_tip->Bind(wxEVT_LEFT_DOWN, [this](auto& e) { if (!m_is_in_sending_mode) { popup_filament_backup(); on_rename_enter(); }  });
-    img_ams_backup->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {if (!m_is_in_sending_mode) popup_filament_backup(); on_rename_enter(); });
+    img_ams_backup->Bind(wxEVT_BUTTON, [this](auto& e) {if (!m_is_in_sending_mode) popup_filament_backup(); on_rename_enter(); });
 
     sizer_split_filament->Add(0, 0, 0, wxEXPAND, 0);
     sizer_split_filament->Add(m_stext_filament_title, 0, wxALIGN_CENTER, 0);
@@ -493,7 +531,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     /*filament area*/
     /*1 extruder*/
     m_filament_panel = new StaticBox(m_scroll_area);
-    m_filament_panel->SetBackgroundColour(wxColour("#F8F8F8"));
+    m_filament_panel->SetBackgroundColour(ThemeColor::Grey200);
     m_filament_panel->SetBorderWidth(0);
     m_filament_panel->SetMinSize(wxSize(FromDIP(637), -1));
     m_filament_panel->SetMaxSize(wxSize(FromDIP(637), -1));
@@ -509,7 +547,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_sizer_filament_2extruder = new wxBoxSizer(wxHORIZONTAL);
 
     m_filament_left_panel = new StaticBox(m_scroll_area);
-    m_filament_left_panel->SetBackgroundColour(wxColour("#F8F8F8"));
+    m_filament_left_panel->SetBackgroundColour(ThemeColor::Grey200);
     m_filament_left_panel->SetBorderWidth(0);
     m_filament_left_panel->SetMinSize(wxSize(FromDIP(315), -1));
     m_filament_left_panel->SetMaxSize(wxSize(FromDIP(315), -1));
@@ -519,18 +557,20 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     std::string sm_pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
     m_filament_left_title = new Label(m_filament_left_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(sm_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase)));
     m_filament_left_title->SetFont(::Label::Head_13);
-    m_filament_left_title->SetBackgroundColour(wxColour("#F8F8F8"));
+    m_filament_left_title->SetBackgroundColour(ThemeColor::Grey200);
     left_recommend_title_sizer->Add(m_filament_left_title, 0, wxALIGN_CENTER, 0);
 
     m_sizer_ams_mapping_left = new wxGridSizer(0, 5, FromDIP(7), FromDIP(7));
+    m_quick_move_left = new wxBoxSizer(wxVERTICAL);
     m_filament_panel_left_sizer->Add(left_recommend_title_sizer, 0, wxLEFT|wxRIGHT|wxTOP, FromDIP(10));
     m_filament_panel_left_sizer->Add(m_sizer_ams_mapping_left, 0, wxEXPAND|wxALL, FromDIP(10));
+    m_filament_panel_left_sizer->Add(m_quick_move_left, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, FromDIP(10));
     m_filament_left_panel->SetSizer(m_filament_panel_left_sizer);
     m_filament_left_panel->Layout();
 
     m_filament_right_panel = new StaticBox(m_scroll_area);
     m_filament_right_panel->SetBorderWidth(0);
-    m_filament_right_panel->SetBackgroundColour(wxColour("#F8F8F8"));
+    m_filament_right_panel->SetBackgroundColour(ThemeColor::Grey200);
     m_filament_right_panel->SetMinSize(wxSize(FromDIP(315), -1));
     m_filament_right_panel->SetMaxSize(wxSize(FromDIP(315), -1));
 
@@ -538,12 +578,14 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     auto right_recommend_title_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_filament_right_title = new Label(m_filament_right_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(sm_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase)));
     m_filament_right_title->SetFont(::Label::Head_13);
-    m_filament_right_title->SetBackgroundColour(wxColour("#F8F8F8"));
+    m_filament_right_title->SetBackgroundColour(ThemeColor::Grey200);
     right_recommend_title_sizer->Add(m_filament_right_title, 0, wxALIGN_CENTER, 0);
 
     m_sizer_ams_mapping_right = new wxGridSizer(0, 5, FromDIP(7), FromDIP(7));
+    m_quick_move_right = new wxBoxSizer(wxVERTICAL);
     m_filament_panel_right_sizer->Add(right_recommend_title_sizer, 0, wxLEFT|wxRIGHT|wxTOP, FromDIP(10));
     m_filament_panel_right_sizer->Add(m_sizer_ams_mapping_right, 0, wxEXPAND|wxALL, FromDIP(10));
+    m_filament_panel_right_sizer->Add(m_quick_move_right, 0, wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM, FromDIP(10));
     m_filament_right_panel->SetSizer(m_filament_panel_right_sizer);
     m_filament_right_panel->Layout();
 
@@ -551,6 +593,19 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_sizer_filament_2extruder->Add( 0, 0, 1, wxEXPAND, 0);
     m_sizer_filament_2extruder->Add(m_filament_right_panel, 0, wxEXPAND, 0);
     m_sizer_filament_2extruder->Layout();
+
+    m_quick_swap_panel = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    auto* quick_swap_sizer = new wxBoxSizer(wxHORIZONTAL);
+    m_quick_swap = new Button(m_quick_swap_panel, _L("Swap"));
+    m_quick_swap_reslice = new Button(m_quick_swap_panel, _L("Swap and reslice"));
+    m_quick_swap->SetToolTip(_L("Apply the selected nozzle moves and return to Prepare."));
+    m_quick_swap_reslice->SetToolTip(_L("Apply the selected nozzle moves, reslice, then reopen print setup."));
+    quick_swap_sizer->Add(m_quick_swap, 0, wxRIGHT, FromDIP(8));
+    quick_swap_sizer->Add(m_quick_swap_reslice, 0);
+    m_quick_swap_panel->SetSizer(quick_swap_sizer);
+    m_quick_swap->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { apply_quick_swap(false); });
+    m_quick_swap_reslice->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { apply_quick_swap(true); });
+    m_quick_swap_panel->Hide();
 
     m_filament_panel->Hide();
 
@@ -565,8 +620,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     m_link_edit_nozzle = new Label(m_scroll_area, wxEmptyString);
     m_link_edit_nozzle->SetFont(::Label::Body_13);
-    m_link_edit_nozzle->SetForegroundColour(0x00ae42);
-    m_link_edit_nozzle->SetBackgroundColour(*wxWHITE);
+    m_link_edit_nozzle->SetForegroundColour(ThemeColor::BrandGreen);
+    m_link_edit_nozzle->SetBackgroundColour(ThemeColor::White);
     m_link_edit_nozzle->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_HAND); });
     m_link_edit_nozzle->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_ARROW); });
     m_link_edit_nozzle->SetLabel(_L("Not satisfied with the grouping of filaments? Regroup and slice ->"));
@@ -587,7 +642,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     m_check_ext_change_assist = new CheckBox(m_scroll_area, wxID_ANY);
     m_check_ext_change_assist->SetValue(false);
-    m_check_ext_change_assist->SetBackgroundColour(*wxWHITE);
+    m_check_ext_change_assist->SetBackgroundColour(ThemeColor::White);
     m_check_ext_change_assist->SetToolTip(_L("Manually change external spool during printing for multi-color printing"));
     m_check_ext_change_assist->Hide();
     m_label_ext_change_assist = new Label(m_scroll_area, _L("Multi-color with external"));
@@ -595,7 +650,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_label_ext_change_assist->Hide();
     m_label_ext_change_assist->SetMaxSize(wxSize(FromDIP(200), -1));
     m_label_ext_change_assist->SetFont(::Label::Body_13);
-    m_label_ext_change_assist->SetBackgroundColour(*wxWHITE);
+    m_label_ext_change_assist->SetBackgroundColour(ThemeColor::White);
     m_label_ext_change_assist->SetToolTip(_L("Manually change external spool during printing for multi-color printing"));
 
     wxSizer* suggestion_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -605,25 +660,25 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     suggestion_sizer->Add(m_label_ext_change_assist, 0, wxRIGHT, 0);
 
     m_mapping_sugs_sizer = new wxBoxSizer(wxHORIZONTAL);
-    //auto m_img_mapping_sugs = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("warning", this, 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
+    //auto m_img_mapping_sugs = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     auto m_txt_mapping_sugs = new Label(m_scroll_area, wxEmptyString);
     m_txt_mapping_sugs->SetFont(::Label::Body_13);
-    m_txt_mapping_sugs->SetForegroundColour(wxColour(0xFF, 0x6F, 0x00));
+    m_txt_mapping_sugs->SetForegroundColour(ThemeColor::Warning);
     m_txt_mapping_sugs->SetMinSize(wxSize(FromDIP(580), -1));
     m_txt_mapping_sugs->SetMaxSize(wxSize(FromDIP(580), -1));
-    m_txt_mapping_sugs->SetBackgroundColour(*wxWHITE);
+    m_txt_mapping_sugs->SetBackgroundColour(ThemeColor::White);
     m_txt_mapping_sugs->SetLabel(_L("Your filament grouping method in the sliced file is not optimal."));
     //m_mapping_sugs_sizer->Add(m_img_mapping_sugs, 0, wxALIGN_CENTER, 0);
     m_mapping_sugs_sizer->Add(m_txt_mapping_sugs, 0, wxALIGN_CENTER, 0);
 
     m_change_filament_times_sizer = new wxBoxSizer(wxHORIZONTAL);
-    //auto m_img_change_filament_times = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("warning", this, 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
+    //auto m_img_change_filament_times = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     m_txt_change_filament_times = new Label(m_scroll_area, wxEmptyString);
     m_txt_change_filament_times->SetFont(::Label::Body_13);
     m_txt_change_filament_times->SetMinSize(wxSize(FromDIP(580), -1));
     m_txt_change_filament_times->SetMaxSize(wxSize(FromDIP(580), -1));
-    m_txt_change_filament_times->SetForegroundColour(wxColour(0xFF, 0x6F, 0x00));
-    m_txt_change_filament_times->SetBackgroundColour(*wxWHITE);
+    m_txt_change_filament_times->SetForegroundColour(ThemeColor::Warning);
+    m_txt_change_filament_times->SetBackgroundColour(ThemeColor::White);
     m_txt_change_filament_times->SetLabel(wxEmptyString);
     //m_change_filament_times_sizer->Add(m_img_change_filament_times, 0, wxTOP, FromDIP(2));
     m_change_filament_times_sizer->Add(m_txt_change_filament_times, 0, wxTOP, 0);
@@ -631,15 +686,15 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_warn_when_drying_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_txt_warn_when_drying = new Label(m_scroll_area, wxEmptyString);
     m_txt_warn_when_drying->SetFont(::Label::Body_13);
-    m_txt_warn_when_drying->SetForegroundColour(wxColour("#F09A17"));
-    m_txt_warn_when_drying->SetBackgroundColour(*wxWHITE);
+    m_txt_warn_when_drying->SetForegroundColour(ThemeColor::Warning);
+    m_txt_warn_when_drying->SetBackgroundColour(ThemeColor::White);
     m_txt_warn_when_drying->SetLabel(_L("To ensure print quality, the drying temperature will be lowered during printing."));
     m_warn_when_drying_sizer->Add(m_txt_warn_when_drying, 0, wxTOP, FromDIP(2));
 
     /*Advanced Options*/
     wxBoxSizer* sizer_split_options = new wxBoxSizer(wxHORIZONTAL);
     auto m_split_options_line = new wxPanel(m_scroll_area, wxID_ANY);
-    m_split_options_line->SetBackgroundColour(0xEEEEEE);
+    m_split_options_line->SetBackgroundColour(ThemeColor::Grey250);
     m_split_options_line->SetSize(wxSize(-1, FromDIP(1)));
     m_split_options_line->SetMinSize(wxSize(-1, FromDIP(1)));
     m_split_options_line->SetMaxSize(wxSize(-1, FromDIP(1)));
@@ -652,9 +707,15 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     auto option_timelapse = new PrintOption(m_options_other, _L("Timelapse"), wxEmptyString, ops_no_auto, "timelapse");
 
     // timelapse storage location folder button (shown only when is_support_internal_timelapse)
-    m_timelapse_folder_btn = new ScalableButton(m_options_other, wxID_ANY, "folder-closed", wxEmptyString,
+    // Wave 3 (shared-dialog-action-icons): timelapse storage-location -> folder_open
+    // glyph (normal OnSurfaceVariant / hover OnSurface / active Primary). Empty raster
+    // name on the glyph path so ScalableButton::msw_rescale can't clobber the bitmap.
+    const bool folder_btn_use_glyph = MaterialIcon::available();
+    m_timelapse_folder_btn = new ScalableButton(m_options_other, wxID_ANY, folder_btn_use_glyph ? std::string() : std::string("folder-closed"), wxEmptyString,
         wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
-    m_timelapse_folder_btn->SetBackgroundColour(*wxWHITE);
+    if (folder_btn_use_glyph)
+        m_timelapse_folder_btn->SetBitmap(MaterialIcon::bitmap(m_timelapse_folder_btn, MaterialIcon::FolderOpen, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
+    m_timelapse_folder_btn->SetBackgroundColour(ThemeColor::White);
     m_timelapse_folder_btn->SetToolTip(_L("Select timelapse storage location"));
     m_timelapse_folder_btn->Hide();
     m_timelapse_folder_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
@@ -663,7 +724,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_timelapse_folder_btn->Bind(wxEVT_ENTER_WINDOW, [this](wxMouseEvent& e) {
         // hover: only switch if popup is not open (popup open = active state)
         if (!m_timelapse_storage_popup || !m_timelapse_storage_popup->IsShown())
-            m_timelapse_folder_btn->SetBitmap(create_scaled_bitmap("folder-closed-hover", m_timelapse_folder_btn, 16));
+            m_timelapse_folder_btn->SetBitmap(dialog_action_glyph(m_timelapse_folder_btn, MaterialIcon::FolderOpen, MD3::Role::OnSurface, "folder-closed-hover", 16));
         e.Skip();
     });
     m_timelapse_folder_btn->Bind(wxEVT_LEAVE_WINDOW, [this](wxMouseEvent& e) {
@@ -699,16 +760,21 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     m_pa_value_message = new Label(m_pa_value_panel, _L("Nozzles and filaments of the same type share the same PA profile"));
     m_pa_value_message->SetFont(Label::Body_14);
-    m_pa_value_message->SetBackgroundColour(*wxWHITE);
+    m_pa_value_message->SetBackgroundColour(ThemeColor::White);
     m_pa_value_message->Wrap(FromDIP(243));
 
     m_pa_value_switch = new SwitchButton(m_pa_value_panel);
-    m_pa_value_switch->SetBackgroundColour(*wxWHITE);
+    m_pa_value_switch->SetBackgroundColour(ThemeColor::White);
     m_pa_value_switch->SetValue(true);
     m_pa_value_switch->Bind(wxEVT_TOGGLEBUTTON, &SelectMachineDialog::on_pa_value_switch_changed, this);
 
-    m_pa_value_tips = new ScalableButton(m_pa_value_panel, wxID_ANY, "icon_qusetion", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
-    m_pa_value_tips->SetBackgroundColour(*wxWHITE);
+    // Wave 3 (shared-dialog-action-icons): PA help tip -> help glyph. Empty raster
+    // name on the glyph path so ScalableButton::msw_rescale can't clobber the bitmap.
+    const bool pa_tips_use_glyph = MaterialIcon::available();
+    m_pa_value_tips = new ScalableButton(m_pa_value_panel, wxID_ANY, pa_tips_use_glyph ? std::string() : std::string("icon_qusetion"), wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    if (pa_tips_use_glyph)
+        m_pa_value_tips->SetBitmap(MaterialIcon::bitmap(m_pa_value_tips, MaterialIcon::Help, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
+    m_pa_value_tips->SetBackgroundColour(ThemeColor::White);
     m_pa_value_tips->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e){
         std::string language = wxGetApp().app_config->get("language");
         wxString    region   = "en";
@@ -740,20 +806,21 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_sizer_options->Add(option_nozzle_offset_cali_cali, 0, wxEXPAND);
 
     m_options_line_panel = new wxPanel(m_options_other, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_options_line_panel->SetBackgroundColour(*wxWHITE);
+    m_options_line_panel->SetBackgroundColour(ThemeColor::White);
 
     wxSizer* m_options_line_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxSizer* m_options_line_right_sizer = new wxBoxSizer(wxVERTICAL);
-    m_options_line_bmp = new wxStaticBitmap(m_options_line_panel, wxID_ANY, create_scaled_bitmap("warning", m_options_line_panel, 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
+    // Wave 3 (shared-dialog-action-icons): calibration-reuse warning -> warning glyph.
+    m_options_line_bmp = new wxStaticBitmap(m_options_line_panel, wxID_ANY, dialog_action_glyph(m_options_line_panel, MaterialIcon::Warning, MD3::Role::OnSurfaceVariant, "warning", 25), wxDefaultPosition, wxSize(FromDIP(25), FromDIP(25)), 0);
     m_options_line_label = new Label(m_options_line_panel, _L("If the filament/nozzle of the main extruder hasn't changed, the last calibration value will be reused. The auxiliary extruder will use the system default value."));
-    m_options_line_label->SetBackgroundColour(*wxWHITE);
-    m_options_line_label->SetForegroundColour(wxColour(255, 111, 0));
+    m_options_line_label->SetBackgroundColour(ThemeColor::White);
+    m_options_line_label->SetForegroundColour(ThemeColor::Warning);
     m_options_line_label->SetFont(Label::Body_14);
     m_options_line_label->Wrap(FromDIP(630));
 
     m_options_line_close = new Label(m_options_line_panel, _L("Don't show again"));
-    m_options_line_close->SetBackgroundColour(*wxWHITE);
-    m_options_line_close->SetForegroundColour(wxColour(0, 177, 66));
+    m_options_line_close->SetBackgroundColour(ThemeColor::White);
+    m_options_line_close->SetForegroundColour(ThemeColor::BrandGreen);
     m_options_line_close->SetFont(Label::Body_14);
     wxFont font = m_options_line_close->GetFont();
     font.SetUnderlined(true);
@@ -816,12 +883,10 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     wxBoxSizer *m_sizer_prepare = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *m_sizer_pcont   = new wxBoxSizer(wxVERTICAL);
 
-    m_btn_bg_enable = StateColor(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    m_btn_bg_enable = StateColor(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     m_button_ensure = new Button(m_panel_prepare, _L("Send"));
-    m_button_ensure->SetBackgroundColor(m_btn_bg_enable);
-    m_button_ensure->SetBorderColor(m_btn_bg_enable);
-    m_button_ensure->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+    m_button_ensure->SetVariant(Button::Variant::Filled);
     m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE2);
     m_button_ensure->SetMinSize(SELECT_MACHINE_DIALOG_BUTTON_SIZE2);
     m_button_ensure->SetCornerRadius(FromDIP(4));
@@ -853,18 +918,19 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     // finish mode
     m_panel_finish = new wxPanel(m_simplebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_panel_finish->SetBackgroundColour(wxColour(135, 206, 250));
+    m_panel_finish->SetBackgroundColour(ThemeColor::White);
     wxBoxSizer *m_sizer_finish   = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *m_sizer_finish_v = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_finish_h = new wxBoxSizer(wxHORIZONTAL);
 
     auto imgsize      = FromDIP(25);
-    auto completedimg = new wxStaticBitmap(m_panel_finish, wxID_ANY, create_scaled_bitmap("completed", m_panel_finish, 25), wxDefaultPosition, wxSize(imgsize, imgsize), 0);
+    // Wave 3 (shared-dialog-action-icons): send-completed -> task_alt glyph (Primary).
+    auto completedimg = new wxStaticBitmap(m_panel_finish, wxID_ANY, dialog_action_glyph(m_panel_finish, MaterialIcon::TaskAlt, MD3::Role::Primary, "completed", 25), wxDefaultPosition, wxSize(imgsize, imgsize), 0);
     m_sizer_finish_h->Add(completedimg, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
-    m_statictext_finish = new wxStaticText(m_panel_finish, wxID_ANY, L("send completed"), wxDefaultPosition, wxDefaultSize, 0);
+    m_statictext_finish = new Label(m_panel_finish, L("send completed"));
     m_statictext_finish->Wrap(-1);
-    m_statictext_finish->SetForegroundColour(wxColour(0, 174, 66));
+    m_statictext_finish->SetForegroundColour(ThemeColor::BrandGreen);
     m_sizer_finish_h->Add(m_statictext_finish, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
     m_sizer_finish_v->Add(m_sizer_finish_h, 1, wxALIGN_CENTER, 0);
@@ -878,7 +944,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     //show bind failed info
     m_sw_print_failed_info = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x, FromDIP(125)), wxVSCROLL);
-    m_sw_print_failed_info->SetBackgroundColour(*wxWHITE);
+    m_sw_print_failed_info->SetBackgroundColour(ThemeColor::White);
     m_sw_print_failed_info->SetScrollRate(0, 5);
     m_sw_print_failed_info->SetMinSize(wxSize(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x, FromDIP(125)));
     m_sw_print_failed_info->SetMaxSize(wxSize(SELECT_MACHINE_DIALOG_SIMBOOK_SIZE2.x, FromDIP(125)));
@@ -891,15 +957,15 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     wxBoxSizer* sizer_error_desc = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer* sizer_extra_info = new wxBoxSizer(wxHORIZONTAL);
 
-    auto st_title_error_code = new wxStaticText(m_sw_print_failed_info, wxID_ANY, _L("Error code"));
-    auto st_title_error_code_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY,": ");
+    auto st_title_error_code = new Label(m_sw_print_failed_info, _L("Error code"));
+    auto st_title_error_code_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_code = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_error_code->SetForegroundColour(0x909090);
-    st_title_error_code_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_code->SetForegroundColour(0x909090);
+    st_title_error_code->SetForegroundColour(ThemeColor::TextSecondary);
+    st_title_error_code_doc->SetForegroundColour(ThemeColor::TextSecondary);
+    m_st_txt_error_code->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_error_code->SetFont(::Label::Body_13);
     st_title_error_code_doc->SetFont(::Label::Body_13);
-    m_st_txt_error_code->SetFont(::Label::Body_13);
+    m_st_txt_error_code->SetFont(::Label::Mono_13);
     st_title_error_code->SetMinSize(wxSize(FromDIP(74), -1));
     st_title_error_code->SetMaxSize(wxSize(FromDIP(74), -1));
     m_st_txt_error_code->SetMinSize(wxSize(FromDIP(500), -1));
@@ -909,12 +975,12 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_error_code->Add(m_st_txt_error_code, 0, wxALL, 0);
 
 
-    auto st_title_error_desc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, wxT("Error desc"));
-    auto st_title_error_desc_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY,": ");
+    auto st_title_error_desc = new Label(m_sw_print_failed_info, wxT("Error desc"));
+    auto st_title_error_desc_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_error_desc = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_error_desc->SetForegroundColour(0x909090);
-    st_title_error_desc_doc->SetForegroundColour(0x909090);
-    m_st_txt_error_desc->SetForegroundColour(0x909090);
+    st_title_error_desc->SetForegroundColour(ThemeColor::TextSecondary);
+    st_title_error_desc_doc->SetForegroundColour(ThemeColor::TextSecondary);
+    m_st_txt_error_desc->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_error_desc->SetFont(::Label::Body_13);
     st_title_error_desc_doc->SetFont(::Label::Body_13);
     m_st_txt_error_desc->SetFont(::Label::Body_13);
@@ -926,12 +992,12 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_error_desc->Add(st_title_error_desc_doc, 0, wxALL, 0);
     sizer_error_desc->Add(m_st_txt_error_desc, 0, wxALL, 0);
 
-    auto st_title_extra_info = new wxStaticText(m_sw_print_failed_info, wxID_ANY, wxT("Extra info"));
-    auto st_title_extra_info_doc = new wxStaticText(m_sw_print_failed_info, wxID_ANY, ": ");
+    auto st_title_extra_info = new Label(m_sw_print_failed_info, wxT("Extra info"));
+    auto st_title_extra_info_doc = new Label(m_sw_print_failed_info, ": ");
     m_st_txt_extra_info = new Label(m_sw_print_failed_info, wxEmptyString);
-    st_title_extra_info->SetForegroundColour(0x909090);
-    st_title_extra_info_doc->SetForegroundColour(0x909090);
-    m_st_txt_extra_info->SetForegroundColour(0x909090);
+    st_title_extra_info->SetForegroundColour(ThemeColor::TextSecondary);
+    st_title_extra_info_doc->SetForegroundColour(ThemeColor::TextSecondary);
+    m_st_txt_extra_info->SetForegroundColour(ThemeColor::TextSecondary);
     st_title_extra_info->SetFont(::Label::Body_13);
     st_title_extra_info_doc->SetFont(::Label::Body_13);
     m_st_txt_extra_info->SetFont(::Label::Body_13);
@@ -944,11 +1010,9 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     sizer_extra_info->Add(m_st_txt_extra_info, 0, wxALL, 0);
 
 
-    m_link_network_state = new wxHyperlinkCtrl(m_sw_print_failed_info, wxID_ANY,_L("Check the status of current system services"),"");
-    m_link_network_state->SetFont(::Label::Body_12);
-    m_link_network_state->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {wxGetApp().link_to_network_check();});
-    m_link_network_state->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_HAND);});
-    m_link_network_state->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) {m_link_network_state->SetCursor(wxCURSOR_ARROW);});
+    m_link_network_state = new LinkLabel(m_sw_print_failed_info, _L("Check the status of current system services"), "");
+    m_link_network_state->getLabel()->SetFont(::Label::Body_12);
+    m_link_network_state->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](auto& e) { wxGetApp().link_to_network_check(); });
 
     sizer_print_failed_info->Add(m_link_network_state, 0, wxLEFT, 5);
     sizer_print_failed_info->Add(sizer_error_code, 0, wxLEFT, 5);
@@ -967,6 +1031,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_scroll_sizer->Add(sizer_split_filament, 1, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(m_filament_panel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(m_sizer_filament_2extruder, 0, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(15));
+    m_scroll_sizer->Add(m_quick_swap_panel, 0, wxLEFT|wxRIGHT|wxTOP, FromDIP(15));
     m_scroll_sizer->Add(0, 0, 0, wxTOP, FromDIP(6));
     m_scroll_sizer->Add(m_statictext_ams_msg, 0, wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(0, 0, 0, wxTOP, FromDIP(10));
@@ -999,8 +1064,9 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
 
     init_bind();
     init_timer();
-    Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 void SelectMachineDialog::init_bind()
@@ -1034,7 +1100,7 @@ void SelectMachineDialog::init_bind()
         }
     });
 
-    m_bitmap_last_plate->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
+    m_bitmap_last_plate->Bind(wxEVT_BUTTON, [this](auto& e) {
         if (m_print_plate_idx > 0) {
             m_print_plate_idx--;
             update_page_turn_state(true);
@@ -1043,7 +1109,7 @@ void SelectMachineDialog::init_bind()
         }
     });
 
-    m_bitmap_next_plate->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
+    m_bitmap_next_plate->Bind(wxEVT_BUTTON, [this](auto& e) {
         if (m_print_plate_idx < (m_print_plate_total - 1)) {
             m_print_plate_idx++;
             update_page_turn_state(true);
@@ -1800,6 +1866,11 @@ bool SelectMachineDialog::has_bowden_extuder(MachineObject* obj)
 void SelectMachineDialog::prepare(int print_plate_idx)
 {
     m_print_plate_idx = print_plate_idx;
+    m_pending_filaments_map.clear();
+    if (m_quick_move_left) m_quick_move_left->Clear(true);
+    if (m_quick_move_right) m_quick_move_right->Clear(true);
+    m_quick_move_filaments.clear();
+    if (m_quick_swap_panel) m_quick_swap_panel->Hide();
 }
 
 void SelectMachineDialog::update_print_status_msg()
@@ -2225,6 +2296,9 @@ void SelectMachineDialog::on_reselect_dialog_btn_clicked(wxMouseEvent&)
 
 void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
 {
+    if (m_print_type == FROM_NORMAL && !m_pending_filaments_map.empty() &&
+        m_pending_filaments_map != m_filaments_map)
+        return;
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": on_ok_btn";
 
     bool has_slice_warnings = false;
@@ -2656,7 +2730,7 @@ bool SelectMachineDialog::is_enable_external_change_assist(std::vector<FilamentI
 void SelectMachineDialog::timelapse_button_click()
 {
     wxDialog dlg(nullptr, wxID_ANY, _L("Timelapse"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE);
-    dlg.SetBackgroundColour(*wxWHITE);
+    dlg.SetBackgroundColour(ThemeColor::White);
 
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     dlg.SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
@@ -2670,18 +2744,19 @@ void SelectMachineDialog::timelapse_button_click()
 
     auto timelapse_url = wxString::Format(L"https://wiki.bambulab.com/%s/software/bambu-studio/Timelapse",
         wxGetApp().current_language_code_safe() == "zh_CN" ? "zh" : "en");
-    wxHyperlinkCtrl* learn_more = new wxHyperlinkCtrl(&dlg, wxID_ANY, _L("Learn more"),
-        timelapse_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+    LinkLabel* learn_more = new LinkLabel(&dlg, _L("Learn more"), timelapse_url.ToStdString());
     main_sizer->Add(learn_more, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(20));
 
     wxBoxSizer* button_sizer = new wxBoxSizer(wxHORIZONTAL);
     button_sizer->AddStretchSpacer();
-    wxButton* ok_button = new wxButton(&dlg, wxID_OK, _L("OK"), wxDefaultPosition, wxDefaultSize);
+    Button* ok_button = new Button(&dlg, _L("OK"), "", 0, 0, wxID_OK);
+    ok_button->SetVariant(Button::Variant::Filled);
     button_sizer->Add(ok_button, 0, wxALL, FromDIP(5));
     main_sizer->Add(button_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(15));
 
     dlg.SetSizer(main_sizer);
     dlg.Fit();
+    MD3DialogCaption::Adopt(&dlg, _L("Timelapse"));
     dlg.CenterOnParent();
     dlg.ShowModal();
 }
@@ -2690,7 +2765,7 @@ void SelectMachineDialog::update_timelapse_folder_btn_icon()
 {
     if (!m_timelapse_folder_btn) return;
     // always restore to normal (grey) �� active state is managed by popup open/close
-    m_timelapse_folder_btn->SetBitmap(create_scaled_bitmap("folder-closed", m_timelapse_folder_btn, 16));
+    m_timelapse_folder_btn->SetBitmap(dialog_action_glyph(m_timelapse_folder_btn, MaterialIcon::FolderOpen, MD3::Role::OnSurfaceVariant, "folder-closed", 16));
     m_timelapse_folder_btn->Refresh();
 }
 
@@ -2703,17 +2778,17 @@ void SelectMachineDialog::show_timelapse_folder_popup()
 
     // build popup with rounded corners + light border
     m_timelapse_storage_popup = new PopupWindow(this, wxBORDER_NONE);
-    m_timelapse_storage_popup->SetBackgroundColour(wxColour(0xF0, 0xF0, 0xF0));
+    m_timelapse_storage_popup->SetBackgroundColour(ThemeColor::Grey250);
     m_timelapse_storage_popup->Bind(wxEVT_PAINT, [this](wxPaintEvent&) {
         wxPaintDC dc(m_timelapse_storage_popup);
         auto size = m_timelapse_storage_popup->GetSize();
-        dc.SetPen(wxPen(wxColour(0xCE, 0xCE, 0xCE)));
-        dc.SetBrush(wxBrush(wxColour(0xF0, 0xF0, 0xF0)));
+        dc.SetPen(wxPen(ThemeColor::Grey400));
+        dc.SetBrush(wxBrush(ThemeColor::Grey250));
         dc.DrawRoundedRectangle(0, 0, size.x, size.y, FromDIP(8));
     });
 
     auto* panel = new wxPanel(m_timelapse_storage_popup, wxID_ANY);
-    panel->SetBackgroundColour(wxColour(0xF0, 0xF0, 0xF0));
+    panel->SetBackgroundColour(ThemeColor::Grey250);
 
     // horizontal layout: [ Internal]  [External]
     auto* sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -2734,7 +2809,7 @@ void SelectMachineDialog::show_timelapse_folder_popup()
         if (enabled) radio->Enable(); else radio->Disable();
 
         auto* text = new Label(panel, Label::Body_14, label);
-        text->SetForegroundColour(enabled ? wxColour(0x5C, 0x5C, 0x5C) : wxColour(0xAC, 0xAC, 0xAC));
+        text->SetForegroundColour(enabled ? ThemeColor::TextMuted : ThemeColor::TextDisabled);
 
         if (enabled) {
             auto on_select = [this, val](wxMouseEvent&) {
@@ -2776,7 +2851,7 @@ void SelectMachineDialog::show_timelapse_folder_popup()
     m_timelapse_storage_popup->Position(pos, wxSize(0, 0));
 
     // switch to active icon before showing popup
-    m_timelapse_folder_btn->SetBitmap(create_scaled_bitmap("folder-closed-active", m_timelapse_folder_btn, 16));
+    m_timelapse_folder_btn->SetBitmap(dialog_action_glyph(m_timelapse_folder_btn, MaterialIcon::FolderOpen, MD3::Role::Primary, "folder-closed-active", 16));
     m_timelapse_folder_btn->Refresh();
 
     m_timelapse_storage_popup->Popup();
@@ -2898,17 +2973,18 @@ void SelectMachineDialog::show_timelapse_storage_dialog(MachineObject* obj)
 
     wxDialog dlg(this, wxID_ANY, _L("Storage Space Not Enough"),
         wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE);
-    dlg.SetBackgroundColour(*wxWHITE);
+    dlg.SetBackgroundColour(ThemeColor::White);
 
     auto* main_sizer = new wxBoxSizer(wxVERTICAL);
 
     // warning icon + text row
     auto* msg_sizer = new wxBoxSizer(wxHORIZONTAL);
+    // Wave 3 (shared-dialog-action-icons): confirm-dialog warning -> warning glyph.
     auto* warn_bmp  = new wxStaticBitmap(&dlg, wxID_ANY,
-        create_scaled_bitmap("obj_warning", &dlg, 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
+        dialog_action_glyph(&dlg, MaterialIcon::Warning, MD3::Role::OnSurfaceVariant, "obj_warning", 16), wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
     auto* msg_label = new Label(&dlg, body_text);
     msg_label->SetFont(Label::Body_14);
-    msg_label->SetForegroundColour(wxColour(0x33, 0x33, 0x33));
+    msg_label->SetForegroundColour(ThemeColor::TextPrimary);
     msg_label->Wrap(FromDIP(340));
     msg_sizer->Add(warn_bmp, 0, wxALIGN_TOP | wxRIGHT, FromDIP(6));
     msg_sizer->Add(msg_label, 1, wxEXPAND);
@@ -2919,18 +2995,16 @@ void SelectMachineDialog::show_timelapse_storage_dialog(MachineObject* obj)
     // use int id to distinguish choices: wxID_OK=confirm, wxID_NO=cancel_tl, wxID_CANCEL=cleanup
     if (show_confirm_btn) {
         auto* btn_confirm = new Button(&dlg, _L("Confirm & Print"));
-        StateColor confirm_bg(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-        btn_confirm->SetBackgroundColor(confirm_bg);
-        btn_confirm->SetTextColor(StateColor(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal)));
+        StateColor confirm_bg(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+        btn_confirm->SetVariant(Button::Variant::Filled);
         btn_confirm->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) { dlg.EndModal(wxID_OK); });
         btn_sizer->Add(btn_confirm, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
     }
 
     auto* btn_cancel_tl = new Button(&dlg, _L("Cancel Timelapse & Print"));
     if (!show_confirm_btn) {
-        StateColor cancel_bg(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-        btn_cancel_tl->SetBackgroundColor(cancel_bg);
-        btn_cancel_tl->SetTextColor(StateColor(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal)));
+        StateColor cancel_bg(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+        btn_cancel_tl->SetVariant(Button::Variant::Outlined);
     }
     btn_cancel_tl->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) { dlg.EndModal(wxID_NO); });
     btn_sizer->Add(btn_cancel_tl, 0, wxEXPAND | (show_cleanup_btn ? wxBOTTOM : 0), FromDIP(8));
@@ -2946,6 +3020,7 @@ void SelectMachineDialog::show_timelapse_storage_dialog(MachineObject* obj)
     main_sizer->Add(btn_sizer, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, FromDIP(20));
     dlg.SetSizer(main_sizer);
     dlg.Fit();
+    MD3DialogCaption::Adopt(&dlg, _L("Storage Space Not Enough"));
     dlg.CenterOnParent();
 
     // ShowModal returns after dialog closes �� handle action outside modal stack
@@ -3175,10 +3250,10 @@ void SelectMachineDialog::check_tpu_aero_flow_cali(MachineObject* obj)
 void SelectMachineDialog::Enable_Auto_Refill(bool enable)
 {
     if (enable) {
-        m_ams_backup_tip->SetForegroundColour(wxColour("#00AE42"));
+        m_ams_backup_tip->SetForegroundColour(ThemeColor::BrandGreen);
     }
     else {
-        m_ams_backup_tip->SetForegroundColour(wxColour(0x90, 0x90, 0x90));
+        m_ams_backup_tip->SetForegroundColour(ThemeColor::TextSecondary);
     }
     m_ams_backup_tip->Refresh();
 }
@@ -3703,7 +3778,7 @@ void SelectMachineDialog::update_user_printer()
     update_by_obj(get_current_machine());
 }
 
-void SelectMachineDialog::on_rename_click(wxMouseEvent& event)
+void SelectMachineDialog::on_rename_click(wxCommandEvent& event)
 {
     m_is_rename_mode = true;
     m_rename_input->GetTextCtrl()->SetValue(m_current_project_name);
@@ -4452,17 +4527,18 @@ void SelectMachineDialog::Enable_Refresh_Button(bool en)
 
 void SelectMachineDialog::Enable_Send_Button(bool en)
 {
+    if (en && m_print_type == FROM_NORMAL && !m_pending_filaments_map.empty() &&
+        m_pending_filaments_map != m_filaments_map)
+        en = false;
     if (!en) {
         if (m_button_ensure->IsEnabled()) {
             m_button_ensure->Disable();
-            m_button_ensure->SetBackgroundColor(wxColour(200, 200, 200));
-            m_button_ensure->SetBorderColor(wxColour(200, 200, 200));
+            m_button_ensure->SetVariant(Button::Variant::Outlined);
         }
     } else {
         if (!m_button_ensure->IsEnabled()) {
             m_button_ensure->Enable();
-            m_button_ensure->SetBackgroundColor(m_btn_bg_enable);
-            m_button_ensure->SetBorderColor(m_btn_bg_enable);
+            m_button_ensure->SetVariant(Button::Variant::Filled);
         }
     }
 }
@@ -4470,9 +4546,9 @@ void SelectMachineDialog::Enable_Send_Button(bool en)
 void SelectMachineDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     print_time->msw_rescale();
-    timeimg->SetBitmap(print_time->bmp());
+    timeimg->SetBitmap(dialog_action_glyph(m_basic_panel, MaterialIcon::Schedule, MD3::Role::OnSurfaceVariant, "print-time", 18));
     print_weight->msw_rescale();
-    weightimg->SetBitmap(print_weight->bmp());
+    weightimg->SetBitmap(dialog_action_glyph(m_basic_panel, MaterialIcon::Scale, MD3::Role::OnSurfaceVariant, "print-weight", 18));
     rename_editable->msw_rescale();
     rename_editable_light->msw_rescale();
     if (ams_mapping_help_icon != nullptr) {
@@ -4494,7 +4570,7 @@ void SelectMachineDialog::on_dpi_changed(const wxRect &suggested_rect)
 
     m_mapping_popup.msw_rescale();
 
-    m_options_line_bmp->SetBitmap(create_scaled_bitmap("warning", m_options_line_panel, 25));
+    m_options_line_bmp->SetBitmap(dialog_action_glyph(m_options_line_panel, MaterialIcon::Warning, MD3::Role::OnSurfaceVariant, "warning", 25));
 
     m_statictext_ams_msg->Rescale();
     m_text_printer_msg->Rescale();
@@ -4670,6 +4746,10 @@ std::vector<pPresetFilaInfo> sCollectPresetFilamentInfo()
 
 void SelectMachineDialog::clear_material_infos()
 {
+    if (m_quick_move_left) m_quick_move_left->Clear(true);
+    if (m_quick_move_right) m_quick_move_right->Clear(true);
+    m_quick_move_filaments.clear();
+    m_pending_filaments_map.clear();
     MaterialHash::iterator iter = m_materialList.begin();
     while (iter != m_materialList.end()) {
         int       id = iter->first;
@@ -4747,6 +4827,7 @@ void SelectMachineDialog::reset_and_sync_ams_list()
     // filament map & used filaments
     const auto& project_config = wxGetApp().preset_bundle->project_config;
     m_filaments_map = wxGetApp().plater()->get_partplate_list().get_curr_plate()->get_real_filament_maps(project_config);
+    m_pending_filaments_map = m_filaments_map;
     const auto& used_filaments = wxGetApp().plater()->get_partplate_list().get_curr_plate()->get_used_filaments();
 
     bool          selected_any      = false;
@@ -4799,6 +4880,9 @@ void SelectMachineDialog::reset_and_sync_ams_list()
         }
 
         if (!item) { continue; }
+        if (extruder_nums == 2 && !has_switcher)
+            m_quick_move_filaments.emplace_back(used_filament,
+                from_u8(preset_filament.filament_display_type) + wxString::Format(" %d", used_filament + 1));
 
         if (used_filament < filament_color_render_info.size() && used_filament < filament_color_type_info.size()) {
             auto color_strs = Slic3r::split_string(filament_color_render_info[used_filament], ' ');
@@ -4870,8 +4954,88 @@ void SelectMachineDialog::reset_and_sync_ams_list()
     m_filament_panel->Show(sizer_count > 0);
     m_filament_left_panel->Show(left_sizer_count > 0 || right_sizer_count > 0);
     m_filament_right_panel->Show(left_sizer_count > 0 || right_sizer_count > 0);
+    refresh_quick_swap_controls();
 
     // reset_ams_material();//show "-"
+}
+
+void SelectMachineDialog::refresh_quick_swap_controls()
+{
+    if (!m_quick_swap_panel) return;
+    m_quick_move_left->Clear(true);
+    m_quick_move_right->Clear(true);
+    const bool available = m_print_type == FROM_NORMAL && !m_is_in_sending_mode &&
+        m_print_plate_idx == wxGetApp().plater()->get_partplate_list().get_curr_plate_index() &&
+        !m_quick_move_filaments.empty();
+    m_quick_swap_panel->Show(available);
+    if (!available) return;
+
+    for (const auto& filament : m_quick_move_filaments) {
+        const int id = filament.first;
+        if (id < 0 || static_cast<size_t>(id) >= m_pending_filaments_map.size()) continue;
+        const int nozzle = m_pending_filaments_map[id];
+        if (nozzle != 1 && nozzle != 2) continue;
+        auto* parent = nozzle == 1 ? m_filament_left_panel : m_filament_right_panel;
+        auto* sizer = nozzle == 1 ? m_quick_move_left : m_quick_move_right;
+        const wxString label = nozzle == 1
+            ? wxString::Format(_L("Move material %d right"), id + 1)
+            : wxString::Format(_L("Move material %d left"), id + 1);
+        auto* button = new Button(parent, label);
+        auto proposed = m_pending_filaments_map;
+        proposed[id] = nozzle == 1 ? 2 : 1;
+        wxString reason;
+        const bool undo = proposed[id] == m_filaments_map[id];
+        const bool valid = undo || wxGetApp().plater()->validate_print_setup_filament_maps(
+            m_print_plate_idx, m_filaments_map, proposed, reason);
+        button->Enable(valid);
+        button->SetToolTip(valid ? filament.second + ": " + label : reason);
+        sizer->Add(button, 0, wxEXPAND|wxBOTTOM, FromDIP(4));
+        if (!valid) {
+            auto* explanation = new Label(parent, reason);
+            explanation->SetFont(::Label::Body_11);
+            explanation->SetForegroundColour(ThemeColor::TextMuted);
+            explanation->Wrap(FromDIP(280));
+            sizer->Add(explanation, 0, wxEXPAND|wxBOTTOM, FromDIP(6));
+        }
+        button->Bind(wxEVT_BUTTON, [this, id](wxCommandEvent&) {
+            m_pending_filaments_map[id] = m_pending_filaments_map[id] == 1 ? 2 : 1;
+            CallAfter([this] { refresh_quick_swap_controls(); });
+        });
+    }
+    const bool changed = m_pending_filaments_map != m_filaments_map;
+    m_quick_swap->Enable(changed);
+    m_quick_swap_reslice->Enable(changed);
+    if (changed) Enable_Send_Button(false);
+    m_filament_left_panel->Layout();
+    m_filament_right_panel->Layout();
+    m_scroll_area->FitInside();
+    Layout();
+}
+
+void SelectMachineDialog::apply_quick_swap(bool reslice)
+{
+    if (m_print_type != FROM_NORMAL || m_is_in_sending_mode ||
+        m_pending_filaments_map == m_filaments_map) return;
+    Plater* plater = wxGetApp().plater();
+    const int plate_index = m_print_plate_idx;
+    const auto expected = m_filaments_map;
+    const auto requested = m_pending_filaments_map;
+    wxString reason;
+    if (!plater->validate_print_setup_filament_maps(plate_index, expected, requested, reason)) {
+        MessageDialog(this, reason, _L("Swap nozzle assignment"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    EndModal(wxID_CLOSE);
+    if (!plater->apply_print_setup_filament_maps(plate_index, expected, requested)) {
+        MessageDialog(wxGetApp().mainframe,
+            _L("The plate or filament assignment changed. Reopen print setup and try again."),
+            _L("Swap nozzle assignment"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    if (reslice && !wxGetApp().mainframe->request_slice_and_print())
+        MessageDialog(wxGetApp().mainframe,
+            _L("The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."),
+            _L("Swap nozzle assignment"), wxOK | wxICON_INFORMATION).ShowModal();
 }
 
 void SelectMachineDialog::clone_thumbnail_data() {
@@ -5455,14 +5619,11 @@ void SelectMachineDialog::update_page_turn_state(bool show)
 
 void SelectMachineDialog::sys_color_changed()
 {
-    if (wxGetApp(). dark_mode()) {
-        //rename_button->SetIcon("ams_editable_light");
-        m_rename_button->SetBitmap(rename_editable_light->bmp());
-
-    }
-    else {
-        m_rename_button->SetBitmap(rename_editable->bmp());
-    }
+    // Wave 3 (shared-dialog-action-icons): keep the rename affordance on the edit
+    // glyph across theme switches; the glyph recolours via its semantic role, so both
+    // light/dark map to the same helper (the raster fallback also used one asset).
+    // The kit Button resolves its glyph tone for the current theme itself.
+    m_rename_button->SetGlyph(MaterialIcon::Edit, FromDIP(20));
     m_rename_button->Refresh();
 }
 
@@ -7274,7 +7435,7 @@ bool SelectMachineDialog::is_used_filament(int fila_logic_id) const
      m_param = param;
      m_full_title = title;
 
-     SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
      wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
 
      m_printoption_title = new Label(this, title);
@@ -7282,7 +7443,11 @@ bool SelectMachineDialog::is_used_filament(int fila_logic_id) const
 
      update_title_display();
 
-     m_printoption_tips = new ScalableButton(this, wxID_ANY, "icon_qusetion", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+     // Wave 3 (shared-dialog-action-icons): print-option help tip -> help glyph.
+     const bool printoption_tips_use_glyph = MaterialIcon::available();
+     m_printoption_tips = new ScalableButton(this, wxID_ANY, printoption_tips_use_glyph ? std::string() : std::string("icon_qusetion"), wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+     if (printoption_tips_use_glyph)
+         m_printoption_tips->SetBitmap(MaterialIcon::bitmap(m_printoption_tips, MaterialIcon::Help, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
      m_printoption_tips->SetMinSize(wxSize(FromDIP(18), FromDIP(18)));
      m_printoption_tips->SetMaxSize(wxSize(FromDIP(18), FromDIP(18)));
 
@@ -7355,9 +7520,9 @@ void PrintOption::enable(bool en)
         m_printoption_item->enable(en);
 
         if (en) {
-            m_printoption_title->SetForegroundColour(StateColor::darkModeColorFor("#262E30"));
+            m_printoption_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         } else {
-            m_printoption_title->SetForegroundColour(StateColor::darkModeColorFor(wxColour(144, 144, 144)));
+            m_printoption_title->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
         }
     }
 }
@@ -7489,7 +7654,7 @@ PrintOptionItem::PrintOptionItem(wxWindow* parent, std::vector<POItem> ops, std:
 #endif //__WINDOWS__
 
     m_param = param;
-    SetBackgroundColour(PRINT_OPT_ITEM_BG_GRAY);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     Bind(wxEVT_PAINT, &PrintOptionItem::OnPaint, this);
     Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
@@ -7630,7 +7795,7 @@ void PrintOptionItem::doRender(wxDC& dc)
 
         if (text_key == selected_key)
         {
-            const wxColour& clr = m_enable ? StateColor::darkModeColorFor("#00AE42") : StateColor::darkModeColorFor(wxColour(144, 144, 144));
+            const wxColour& clr = m_enable ? StateColor::semantic(MD3::Role::Primary) : StateColor::semantic(MD3::Role::Outline);
             dc.SetPen(wxPen(clr));
             dc.SetTextForeground(clr);
 
@@ -7642,7 +7807,7 @@ void PrintOptionItem::doRender(wxDC& dc)
         }
         else
         {
-            const wxColour& clr = m_enable ? StateColor::darkModeColorFor("#262E30") : StateColor::darkModeColorFor(wxColour(144, 144, 144));
+            const wxColour& clr = m_enable ? StateColor::semantic(MD3::Role::OnSurface) : StateColor::semantic(MD3::Role::Outline);
             dc.SetPen(wxPen(clr));
             dc.SetTextForeground(clr);
 
@@ -7687,7 +7852,7 @@ void PrintOptionItem::msw_rescale()
      Bind(wxEVT_ENTER_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_HAND); });
      Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) { SetCursor(wxCURSOR_ARROW); });
 
-     SetBackgroundColour(*wxWHITE);
+     SetBackgroundColour(ThemeColor::White);
      static Slic3r::GUI::BitmapCache cache;
      m_img_selected       = ScalableBitmap(this, "switch_send_mode_on", 28);
      m_img_unselected     = ScalableBitmap(this, "switch_send_mode_off", 28);
@@ -7742,11 +7907,11 @@ void SendModeSwitchButton::doRender(wxDC &dc)
     if (is_selected) {
         dc.DrawBitmap(m_img_selected.bmp(), wxPoint(0, 0));
         dc.DrawBitmap(m_img_selected_tag.bmp(), wxPoint(left, (size.y - m_img_selected_tag.GetBmpSize().y) / 2));
-        dc.SetTextForeground(0x00AE42);
+        dc.SetTextForeground(ThemeColor::BrandGreen);
     }else {
         dc.DrawBitmap(m_img_unselected.bmp(), wxPoint(0, 0));
         dc.DrawBitmap(m_img_unselected_tag.bmp(), wxPoint(left, (size.y - m_img_selected_tag.GetBmpSize().y) / 2));
-        dc.SetTextForeground(0x5C5C5C);
+        dc.SetTextForeground(ThemeColor::TextMuted);
     }
     dc.DrawText(GetLabel(), left + m_img_selected_tag.GetBmpSize().x + FromDIP(8), (size.y - textSize.y) / 2);
 }
@@ -7919,16 +8084,20 @@ void PrinterInfoBox::Create()
     wxBoxSizer* sizer_split_printer = new wxBoxSizer(wxHORIZONTAL);
     m_stext_printer_title = new Label(this, _L("Printer"), wxALIGN_TOP);
     m_stext_printer_title->SetFont(::Label::Head_13);
-    m_stext_printer_title->SetForegroundColour(0x909090);
+    m_stext_printer_title->SetForegroundColour(ThemeColor::TextSecondary);
 
-    m_button_question = new ScalableButton(this, wxID_ANY, "icon_qusetion", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    // Wave 3 (shared-dialog-action-icons): printer-connect help -> help glyph.
+    const bool question_use_glyph = MaterialIcon::available();
+    m_button_question = new ScalableButton(this, wxID_ANY, question_use_glyph ? std::string() : std::string("icon_qusetion"), wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    if (question_use_glyph)
+        m_button_question->SetBitmap(MaterialIcon::bitmap(m_button_question, MaterialIcon::Help, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_button_question->Bind(wxEVT_BUTTON, &PrinterInfoBox::OnBtnQuestionClicked, this);
     m_button_question->SetToolTip(_L("Click here if you can't connect to the printer"));
     m_button_question->SetMinSize(wxSize(FromDIP(18), FromDIP(18)));
     m_button_question->SetMaxSize(wxSize(FromDIP(18), FromDIP(18)));
 
     auto m_split_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_split_line->SetBackgroundColour(0xeeeeee);
+    m_split_line->SetBackgroundColour(ThemeColor::Grey250);
     m_split_line->SetMinSize(wxSize(-1, 1));
     m_split_line->SetMaxSize(wxSize(-1, 1));
     sizer_split_printer->Add(0, 0, 0, wxEXPAND, 0);
@@ -7945,16 +8114,20 @@ void PrinterInfoBox::Create()
     auto printer_staticbox = new StaticBox(this);
     printer_staticbox->SetMinSize(wxSize(FromDIP(338), FromDIP(68)));
     printer_staticbox->SetMaxSize(wxSize(FromDIP(338), FromDIP(68)));
-    printer_staticbox->SetBorderColor(wxColour("#CECECE"));
+    printer_staticbox->SetBorderColor(ThemeColor::Grey400);
 
     m_comboBox_printer = new ComboBox(printer_staticbox, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     m_comboBox_printer->SetBorderWidth(0);
     m_comboBox_printer->SetMinSize(wxSize(FromDIP(300), FromDIP(60)));
     m_comboBox_printer->SetMaxSize(wxSize(FromDIP(300), FromDIP(60)));
-    m_comboBox_printer->SetBackgroundColor(*wxWHITE);
+    m_comboBox_printer->SetBackgroundColor(ThemeColor::White);
     m_comboBox_printer->Bind(wxEVT_COMBOBOX, &SelectMachineDialog::on_selection_changed, m_select_dialog);
 
-    m_button_refresh = new ScalableButton(printer_staticbox, wxID_ANY, "refresh_printer", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    // Wave 3 (shared-dialog-action-icons): printer-list refresh -> refresh glyph.
+    const bool refresh_use_glyph = MaterialIcon::available();
+    m_button_refresh = new ScalableButton(printer_staticbox, wxID_ANY, refresh_use_glyph ? std::string() : std::string("refresh_printer"), wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+    if (refresh_use_glyph)
+        m_button_refresh->SetBitmap(MaterialIcon::bitmap(m_button_refresh, MaterialIcon::Refresh, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_button_refresh->Bind(wxEVT_BUTTON, &SelectMachineDialog::on_refresh, m_select_dialog);
 
     sizer_printer_staticbox->Add(0, 0, 0, wxLEFT, FromDIP(7));
@@ -7969,15 +8142,15 @@ void PrinterInfoBox::Create()
     auto bed_staticbox = new StaticBox(this);
     bed_staticbox->SetMinSize(wxSize(FromDIP(98), FromDIP(68)));
     bed_staticbox->SetMaxSize(wxSize(FromDIP(98), FromDIP(68)));
-    bed_staticbox->SetBorderColor(wxColour("#EEEEEE"));
+    bed_staticbox->SetBorderColor(ThemeColor::Grey250);
 
     m_bed_image = new wxStaticBitmap(bed_staticbox, wxID_ANY, create_scaled_bitmap("bed_cool", this, 32));
-    m_bed_image->SetBackgroundColour(*wxWHITE);
+    m_bed_image->SetBackgroundColour(ThemeColor::White);
     m_bed_image->SetMinSize(wxSize(FromDIP(32), FromDIP(32)));
     m_bed_image->SetMaxSize(wxSize(FromDIP(32), FromDIP(32)));
 
     m_text_bed_type = new Label(bed_staticbox);
-    m_text_bed_type->SetForegroundColour(wxColour(144, 144, 144));
+    m_text_bed_type->SetForegroundColour(ThemeColor::TextSecondary);
     m_text_bed_type->SetMaxSize(wxSize(FromDIP(80), FromDIP(24)));
     m_text_bed_type->SetFont(Label::Body_13);
 

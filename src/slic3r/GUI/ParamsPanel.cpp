@@ -16,6 +16,8 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/SwitchButton.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "GUI_Factories.hpp"
 
 
@@ -27,24 +29,24 @@ TipsDialog::TipsDialog(wxWindow *parent, const wxString &title, const wxString &
     : DPIDialog(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX),
     m_app_key(app_key)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
     m_top_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_top_line->SetBackgroundColour(wxColour(166, 169, 170));
+    m_top_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_sizer_main->Add(m_top_line, 0, wxEXPAND, 0);
 
     m_sizer_main->Add(0, 0, 0, wxEXPAND | wxTOP, FromDIP(20));
 
-    m_msg = new wxStaticText(this, wxID_ANY, description, wxDefaultPosition, wxDefaultSize, 0);
+    m_msg = new Label(this, description);
     m_msg->Wrap(-1);
     m_msg->SetFont(::Label::Body_13);
-    m_msg->SetForegroundColour(wxColour(107, 107, 107));
-    m_msg->SetBackgroundColour(wxColour(255, 255, 255));
+    m_msg->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_msg->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_sizer_main->Add(m_msg, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(40));
 
@@ -96,9 +98,10 @@ TipsDialog::TipsDialog(wxWindow *parent, const wxString &title, const wxString &
     SetSizer(m_sizer_main);
     Layout();
     Fit();
-    Centre(wxBOTH);
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    Centre(wxBOTH);
 }
 
 wxBoxSizer *TipsDialog::create_item_checkbox(wxString title, wxWindow *parent, wxString tooltip, std::string param)
@@ -111,8 +114,8 @@ wxBoxSizer *TipsDialog::create_item_checkbox(wxString title, wxWindow *parent, w
     m_sizer_checkbox->Add(checkbox, 0, wxALIGN_CENTER, 0);
     m_sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, 8);
 
-    auto checkbox_title = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxSize(-1, -1), 0);
-    checkbox_title->SetForegroundColour(wxColour(144, 144, 144));
+    auto checkbox_title = new Label(parent, title, 0, wxSize(-1, -1));
+    checkbox_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     checkbox_title->SetFont(::Label::Body_13);
     checkbox_title->Wrap(-1);
     m_sizer_checkbox->Add(checkbox_title, 0, wxALIGN_CENTER | wxALL, 3);
@@ -131,28 +134,28 @@ wxBoxSizer *TipsDialog::create_item_checkbox(wxString title, wxWindow *parent, w
 Button *TipsDialog::add_button(wxWindowID btn_id, const wxString &label, bool set_focus /*= false*/)
 {
     Button* btn = new Button(this, label, "", 0, 0, btn_id);
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_primary(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+                              std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+                              std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
 
-    StateColor btn_bd_green(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bd_primary(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
 
-    StateColor btn_text_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+    StateColor btn_text_primary(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnPrimary), StateColor::Normal));
 
     StateColor btn_bg_white(
-        std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal)
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainer), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerLowest), StateColor::Normal)
     );
 
-    StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+    StateColor btn_bd_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Outline), StateColor::Normal));
 
-    StateColor btn_text_white(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+    StateColor btn_text_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::OnSurface), StateColor::Normal));
 
     if (btn_id == wxID_OK || btn_id == wxID_YES) {
-        btn->SetBackgroundColor(btn_bg_green);
-        btn->SetBorderColor(btn_bd_green);
-        btn->SetTextColor(btn_text_green);
+        btn->SetBackgroundColor(btn_bg_primary);
+        btn->SetBorderColor(btn_bd_primary);
+        btn->SetTextColor(btn_text_primary);
     }
 
     if (btn_id == wxID_CANCEL || btn_id == wxID_NO) {
@@ -166,7 +169,7 @@ Button *TipsDialog::add_button(wxWindowID btn_id, const wxString &label, bool se
 
     btn->SetSize(TIPS_DIALOG_BUTTON_SIZE);
     btn->SetMinSize(TIPS_DIALOG_BUTTON_SIZE);
-    btn->SetCornerRadius(FromDIP(12));
+    btn->SetCornerRadius(MD3::Metrics::pill_radius(TIPS_DIALOG_BUTTON_SIZE.GetHeight()));
     btn->Bind(wxEVT_BUTTON, [this, btn_id](wxCommandEvent &) {
         if (m_show_again) {
             if (!m_app_key.empty()) {
@@ -249,7 +252,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
     : wxPanel( parent, id, pos, size, style, name )
 {
     // BBS: new layout
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 #if __WXOSX__
     m_top_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_top_sizer->SetSizeHints(this);
@@ -272,36 +275,65 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
     if (dynamic_cast<Notebook*>(parent)) {
         // BBS: new layout
         m_top_panel = new StaticBox(this, wxID_ANY, wxDefaultPosition);
-        m_top_panel->SetBackgroundColor(0xF8F8F8);
-        m_top_panel->SetBackgroundColor2(0xF1F1F1);
+        m_top_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+        m_top_panel->SetBackgroundColor2(StateColor::semantic(MD3::Role::SurfaceContainer));
 
-        m_process_icon = new ScalableButton(m_top_panel, wxID_ANY, "process");
+        // MD3: leading Process icon as a borderless circular IconButton (hover
+        // SurfaceContainerHigh, OnSurfaceVariant) drawing the Tune glyph; the
+        // "process" raster is kept as a capability-gated fallback.
+        m_process_icon = new Button(m_top_panel, wxEmptyString, "process");
+        m_process_icon->SetIconButton(Button::IconShape::Circle, 32);
+        m_process_icon->SetGlyph(MaterialIcon::Tune);
 
-        m_title_label = new Label(m_top_panel, _L("Process"));
+        // Ellipsizable title: at narrow panel widths the header must shed width
+        // from the title (Proc…) instead of letting the Global/Objects switch
+        // land on top of it. The sizer item carries proportion 1 (see
+        // create_layout) so the deficit is taken here, bounded by this min.
+        m_title_label = new Label(m_top_panel, _L("Process"), wxST_ELLIPSIZE_END);
+        m_title_label->SetMinSize(wxSize(FromDIP(56), -1));
 
         //int width, height;
         // BBS: new layout
         m_mode_region = new SwitchButton(m_top_panel);
         m_mode_region->SetMaxSize({em_unit(this) * 12, -1});
+        // SetLabels -> SwitchButton::Rescale also installs the rendered track as
+        // the control's MIN size, so the header sizer always reserves room for
+        // the longest localized label pair (no more mid-clipped "bal Obj").
         m_mode_region->SetLabels(_L("Global"), _L("Objects"));
         //m_mode_region->GetSize(&width, &height);
         m_tips_arrow = new ScalableButton(m_top_panel, wxID_ANY, "tips_arrow");
         m_tips_arrow->Hide();
 
-        m_title_view = new Label(m_top_panel, _L("Advance"));
-        m_mode_view = new SwitchButton(m_top_panel, wxID_ABOUT);
+        // No "Advance" label and no mode switch: the option filter is gone
+        // (GUI_App::get_mode() is always advanced), so every setting is shown.
+        m_title_view = nullptr;
+        m_mode_view = nullptr;
 
         // BBS: new layout
         //m_search_btn = new ScalableButton(m_top_panel, wxID_ANY, "search", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
         //m_search_btn->SetToolTip(format_wxstr(_L("Search in settings [%1%]"), "Ctrl+F"));
         //m_search_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { wxGetApp().plater()->search(false); });
 
-        m_compare_btn = new ScalableButton(m_top_panel, wxID_ANY, "compare", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+        // MD3: compare presets IconButton. 'compare_arrows' is absent from the
+        // frozen Material Symbols font, so draw the nearest available glyph
+        // (SwapHoriz); the "compare" raster stays as a capability-gated fallback.
+        m_compare_btn = new Button(m_top_panel, wxEmptyString, "compare");
+        m_compare_btn->SetIconButton(Button::IconShape::Circle, 32);
+        m_compare_btn->SetGlyph(MaterialIcon::SwapHoriz);
         m_compare_btn->SetToolTip(_L("Compare presets"));
+        // a11y: icon-only control needs an accessible name for assistive tech.
+        m_compare_btn->SetName(_L("Compare presets"));
         m_compare_btn->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { wxGetApp().mainframe->diff_dialog.show(); }));
 
-        m_setting_btn = new ScalableButton(m_top_panel, wxID_ANY, "table", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
+        // MD3: object-settings table IconButton. 'table' is absent from the frozen
+        // font, so draw the nearest available glyph (GridView); the "table" raster
+        // stays as a capability-gated fallback.
+        m_setting_btn = new Button(m_top_panel, wxEmptyString, "table");
+        m_setting_btn->SetIconButton(Button::IconShape::Circle, 32);
+        m_setting_btn->SetGlyph(MaterialIcon::GridView);
         m_setting_btn->SetToolTip(_L("View all object's settings"));
+        // a11y: icon-only control needs an accessible name for assistive tech.
+        m_setting_btn->SetName(_L("View all object's settings"));
         m_setting_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { wxGetApp().plater()->PopupObjectTable(-1, -1, {0, 0}); });
 
         m_highlighter.set_timer_owner(this, 0);
@@ -391,7 +423,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
     };
 
     m_page_view = new PageScrolledWindow(page_parent);
-    m_page_view->SetBackgroundColour(*wxWHITE);
+    m_page_view->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_page_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_page_view->SetSizer(m_page_sizer);
@@ -424,15 +456,25 @@ void ParamsPanel::create_layout()
         m_mode_sizer->AddSpacer(FromDIP(10));
         m_mode_sizer->Add(m_process_icon, 0, wxALIGN_CENTER);
         m_mode_sizer->AddSpacer(FromDIP(10));
+        // The title is a fixed item and the header carries exactly ONE stretch
+        // spacer. wxBoxSizer::CalcMin scales the largest proportional item's
+        // minimum by the TOTAL proportion, so the former layout (title at
+        // proportion 1 with a FromDIP(56) minimum beside stretch spacers of
+        // 2, 1 and 12) reported a minimum width of 56 x 16 + the fixed items,
+        // 1271 px at 100%. The sidebar scroller honours the content minimum as
+        // its virtual width, so every sidebar row was laid out 1271 px wide and
+        // cut at the sidebar edge behind a horizontal scrollbar (CJ-012).
         m_mode_sizer->Add( m_title_label, 0, wxALIGN_CENTER );
-        m_mode_sizer->AddStretchSpacer(2);
+        m_mode_sizer->AddSpacer(FromDIP(8));
         m_mode_sizer->Add(m_mode_region, 0, wxALIGN_CENTER);
-        m_mode_sizer->AddStretchSpacer(1);
+        m_mode_sizer->AddSpacer(FromDIP(4));
         m_mode_sizer->Add(m_tips_arrow, 0, wxALIGN_CENTER);
-        m_mode_sizer->AddStretchSpacer(12);
-        m_mode_sizer->Add( m_title_view, 0, wxALIGN_CENTER );
-        m_mode_sizer->AddSpacer(FromDIP(2));
-        m_mode_sizer->Add(m_mode_view, 0, wxALIGN_CENTER);
+        m_mode_sizer->AddStretchSpacer(1);
+        if (m_title_view) m_mode_sizer->Add( m_title_view, 0, wxALIGN_CENTER );
+        if (m_mode_view) {
+            m_mode_sizer->AddSpacer(FromDIP(2));
+            m_mode_sizer->Add(m_mode_view, 0, wxALIGN_CENTER);
+        }
         m_mode_sizer->AddSpacer(FromDIP(10));
         m_mode_sizer->Add(m_setting_btn, 0, wxALIGN_CENTER);
         m_mode_sizer->AddSpacer(FromDIP(12));
@@ -611,6 +653,20 @@ void ParamsPanel::OnToggled(wxCommandEvent& event)
 }
 
 // This is special, DO NOT call it from outer except from Tab
+void ParamsPanel::fit_page_to_content()
+{
+    if (!m_page_view || !m_page_sizer)
+        return;
+    const int content = m_page_sizer->GetMinSize().y + FromDIP(12);
+    m_page_view->SetMinSize(wxSize(-1, content));
+    m_page_view->SetVirtualSize(wxSize(-1, content));
+    Layout();
+    if (GetSizer())
+        SetMinSize(wxSize(-1, GetSizer()->GetMinSize().y));
+    if (m_host_height_changed)
+        m_host_height_changed();
+}
+
 void ParamsPanel::set_active_tab(wxPanel* tab)
 {
     Tab* cur_tab = dynamic_cast<Tab *> (tab);
@@ -627,7 +683,7 @@ void ParamsPanel::set_active_tab(wxPanel* tab)
         } else if (m_tab_print_plate && ((TabPrintPlate*)m_tab_print_plate)->has_model_config()) {
             cur_tab = (Tab*)m_tab_print_plate;
         }
-        Show(cur_tab != nullptr);
+        Show(cur_tab != nullptr && m_host_visibility_gate);
         wxGetApp().sidebar().show_object_list(m_mode_region->GetValue());
         if (m_current_tab == cur_tab)
             return;
@@ -656,6 +712,7 @@ void ParamsPanel::set_active_tab(wxPanel* tab)
         //m_left_sizer->GetItem(t)->SetProportion(tab == t ? 1 : 0);
     }
     m_left_sizer->Layout();
+    fit_page_to_content();
     if (auto dialog = dynamic_cast<wxDialog*>(GetParent())) {
         wxString title = cur_tab->type() == Preset::TYPE_FILAMENT ? _L("Filament settings") : _L("Printer settings");
         dialog->SetTitle(title);
@@ -698,10 +755,11 @@ void ParamsPanel::update_mode()
 
 void ParamsPanel::msw_rescale()
 {
-    if (m_process_icon) m_process_icon->msw_rescale();
-    if (m_setting_btn) m_setting_btn->msw_rescale();
+    // MD3 IconButtons rescale via Button::Rescale(); the raster search/tips arrows still use msw_rescale().
+    if (m_process_icon) m_process_icon->Rescale();
+    if (m_setting_btn) m_setting_btn->Rescale();
     if (m_search_btn) m_search_btn->msw_rescale();
-    if (m_compare_btn) m_compare_btn->msw_rescale();
+    if (m_compare_btn) m_compare_btn->Rescale();
     if (m_tips_arrow) m_tips_arrow->msw_rescale();
     if (m_left_sizer) m_left_sizer->SetMinSize(wxSize(40 * em_unit(this), -1));
     if (m_mode_sizer)
@@ -715,6 +773,13 @@ void ParamsPanel::msw_rescale()
     }
     //((Button*)m_export_to_file)->Rescale();
     //((Button*)m_import_from_file)->Rescale();
+}
+
+void ParamsPanel::set_host_visibility_gate(bool allow)
+{
+    m_host_visibility_gate = allow;
+    if (!allow && IsShown())
+        Hide();
 }
 
 void ParamsPanel::switch_to_global()
@@ -759,7 +824,7 @@ void ParamsPanel::notify_object_config_changed()
     if (has_config == m_has_object_config) return;
     m_has_object_config = has_config;
     if (has_config)
-        m_mode_region->SetTextColor2(StateColor(std::pair{0xfffffe, (int) StateColor::Checked}, std::pair{wxGetApp().get_label_clr_modified(), 0}));
+        m_mode_region->SetTextColor2(StateColor(std::pair{StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Checked}, std::pair{wxGetApp().get_label_clr_modified(), 0}));
     else
         m_mode_region->SetTextColor2(StateColor());
     m_mode_region->Rescale();

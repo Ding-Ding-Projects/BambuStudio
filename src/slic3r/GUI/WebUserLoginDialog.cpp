@@ -1,4 +1,5 @@
 #include "WebUserLoginDialog.hpp"
+#include "Widgets/LinkLabel.hpp"
 
 #include <string.h>
 #include "I18N.hpp"
@@ -22,10 +23,13 @@
 
 #include <nlohmann/json.hpp>
 #include "MainFrame.hpp"
+#include "MsgDialog.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 #include <boost/dll.hpp>
 
 #include <sstream>
 #include <slic3r/GUI/Widgets/WebView.hpp>
+#include <slic3r/GUI/Widgets/StateColor.hpp>
 using namespace std;
 
 using namespace nlohmann;
@@ -42,26 +46,28 @@ int ZUserLogin::web_sequence_id = 20000;
 
 ZUserLogin::ZUserLogin() : wxDialog((wxWindow *) (wxGetApp().mainframe), wxID_ANY, "BambuStudio")
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     // Url
     NetworkAgent* agent = wxGetApp().getAgent();
     if (!agent) {
         std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
         SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
         wxBoxSizer* m_sizer_main = new wxBoxSizer(wxVERTICAL);
         auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-        m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+        m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
         m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
 
-        auto* m_message = new wxStaticText(this, wxID_ANY, _L("Bambu Network plug-in not detected."), wxDefaultPosition, wxDefaultSize, 0);
-        m_message->SetForegroundColour(*wxBLACK);
+        auto* m_message = new Label(this, _L("Bambu Network plug-in not detected."));
+        m_message->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         m_message->Wrap(FromDIP(360));
 
-        auto m_download_hyperlink = new wxHyperlinkCtrl(this, wxID_ANY, _L("Click here to download it."), wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
-        m_download_hyperlink->Bind(wxEVT_HYPERLINK, [this](wxCommandEvent& event) {
+        auto m_download_hyperlink = new LinkLabel(this, _L("Click here to download it."), "");
+        // Kit link colour: the semantic Link token, theme-aware through darkModeColorFor().
+        m_download_hyperlink->SeLinkLabelFColour(StateColor::darkModeColorFor(ThemeColor::Link));
+        m_download_hyperlink->Bind(EVT_LINK_LABEL_LEFT_DOWN, [this](wxCommandEvent& event) {
             this->Close();
             wxGetApp().ShowDownNetPluginDlg();
             });
@@ -333,7 +339,8 @@ void ZUserLogin::OnScriptMessage(wxWebViewEvent &evt)
             return;
         }
     } catch (std::exception &e) {
-        wxMessageBox(e.what(), "parse json failed", wxICON_WARNING);
+        MessageDialog dlg(this, e.what(), "parse json failed", wxOK | wxICON_WARNING);
+        dlg.ShowModal();
         Close();
     }
 }
@@ -438,5 +445,6 @@ bool  ZUserLogin::ShowErrorPage()
 
     return true;
 }
+
 
 }} // namespace Slic3r::GUI

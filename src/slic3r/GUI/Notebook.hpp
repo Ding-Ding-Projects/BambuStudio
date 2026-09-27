@@ -6,6 +6,11 @@
 #include <wx/bookctrl.h>
 #include <wx/sizer.h>
 
+#include "Widgets/MD3Tokens.hpp"
+
+#include <functional>
+#include <utility>
+
 class ModeSizer;
 class ScalableButton;
 class Button;
@@ -22,9 +27,11 @@ public:
 
     void OnPaint(wxPaintEvent&);
     void SetSelection(int sel);
+    void SetColorScheme(MD3::ColorScheme scheme);
     void UpdateMode();
     void Rescale();
     bool InsertPage(size_t n, const wxString &text, bool bSelect = false, const std::string &bmp_name = "", const std::string &inactive_bmp_name = "");
+    void AddAction(const wxString &text, const std::string &bmp_name, std::function<void()> action);
     void RemovePage(size_t n);
     bool SetPageImage(size_t n, const std::string& bmp_name) const;
     void SetPageText(size_t n, const wxString& strText);
@@ -32,14 +39,23 @@ public:
     void SetPageToolTip(size_t n, const wxString& strToolTip);
 
 private:
+    void ApplyTheme();
+    void StyleButton(Button* button, bool selected);
+
     // BBS: use a box sizer so tabs can shrink (Chrome-style) when space is tight
     wxBoxSizer*                     m_buttons_sizer;
+    wxBoxSizer*                     m_actions_sizer;
     wxBoxSizer*                     m_sizer;
     // BBS: use Button
     std::vector<Button*>            m_pageButtons;
+    std::vector<Button*>            m_actionButtons;
     int                             m_selection {-1};
     int                             m_btn_margin;
     int                             m_line_margin;
+    // Retained for API symmetry with the workspaces, but the tab bar is chrome
+    // above the data-scheme scope: its active indicator/label accent is pinned to
+    // ColorScheme::Brand in StyleButton/OnPaint and never follows this value.
+    MD3::ColorScheme                m_color_scheme{MD3::ColorScheme::Brand};
     //ModeSizer*                      m_mode_sizer {nullptr};
 };
 
@@ -258,6 +274,11 @@ public:
     }
 
     ButtonsListCtrl* GetBtnsListCtrl() const { return static_cast<ButtonsListCtrl*>(m_bookctrl); }
+
+    void AddNavigationAction(const wxString &text, const std::string &bmp_name, std::function<void()> action)
+    {
+        GetBtnsListCtrl()->AddAction(text, bmp_name, std::move(action));
+    }
 
     void UpdateMode()
     {

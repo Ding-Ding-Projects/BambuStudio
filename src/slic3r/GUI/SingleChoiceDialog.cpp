@@ -2,19 +2,21 @@
 
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 namespace Slic3r { namespace GUI {
 
 SingleChoiceDialog::SingleChoiceDialog(const wxString &message, const wxString &caption, const wxArrayString &choices, int initialSelection, wxWindow *parent)
     : DPIDialog(parent ? parent : static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, caption, wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     const int   dlg_width = 200;
     wxBoxSizer *bSizer    = new wxBoxSizer(wxVERTICAL);
     bSizer->SetMinSize(wxSize(FromDIP(dlg_width), -1));
 
-    wxStaticText *message_text = new wxStaticText(this, wxID_ANY, message, wxDefaultPosition, wxDefaultSize, 0);
+    wxStaticText *message_text = new Label(this, message);
     message_text->Wrap(-1);
     bSizer->Add(message_text, 0, wxALL, 5);
 
@@ -26,13 +28,11 @@ SingleChoiceDialog::SingleChoiceDialog(const wxString &message, const wxString &
 
     wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_button_ok = new Button(this, _L("OK"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour(0xFFFFFE));
+    m_button_ok->SetVariant(Button::Variant::Filled);
     m_button_ok->SetFont(Label::Body_12);
     m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -41,12 +41,11 @@ SingleChoiceDialog::SingleChoiceDialog(const wxString &message, const wxString &
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) { EndModal(wxID_OK); });
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -60,6 +59,7 @@ SingleChoiceDialog::SingleChoiceDialog(const wxString &message, const wxString &
     this->SetSizer(bSizer);
     this->Layout();
     bSizer->Fit(this);
+    MD3DialogCaption::Adopt(this);
     wxGetApp().UpdateDlgDarkUI(this);
 }
 SingleChoiceDialog::~SingleChoiceDialog() {}

@@ -12,16 +12,18 @@
 #include "libslic3r/Config.hpp"
 #include "BitmapComboBox.hpp"
 #include "Widgets/ComboBox.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include <wx/sizer.h>
 
 #include "libslic3r/ObjColorUtils.hpp"
 #include "libslic3r/Model.hpp"
+#include "Widgets/Label.hpp"
 using namespace Slic3r;
 using namespace Slic3r::GUI;
 
 int objcolor_scale(const int val) { return val * Slic3r::GUI::wxGetApp().em_unit() / 10; }
 int OBJCOLOR_ITEM_WIDTH() { return objcolor_scale(30); }
-static const wxColour g_text_color = wxColour(107, 107, 107, 255);
+static const wxColour g_text_color = ThemeColor::TextMuted;
 static const wxColour g_undefined_color_in_obj   = wxColour(0, 255, 0, 255);
 const int HEADER_BORDER  = 5;
 const int CONTENT_BORDER = 3;
@@ -63,25 +65,25 @@ static const RGBA* get_object_level_volume_color(
     return &color_group->second[volume_color.pindex];
 }
 
-const  StateColor ok_btn_bg(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                     std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                     std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-const StateColor  ok_btn_disable_bg(std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Pressed),
-                                   std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Hovered),
-                                   std::pair<wxColour, int>(wxColour(205, 201, 201), StateColor::Normal));
+const  StateColor ok_btn_bg(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                     std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                     std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+const StateColor  ok_btn_disable_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                                   std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Hovered),
+                                   std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 wxBoxSizer* ObjColorDialog::create_btn_sizer(long flags,bool exist_error)
 {
     auto btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     if (!exist_error) {
         btn_sizer->AddSpacer(FromDIP(25));
-        wxStaticText *tips = new wxStaticText(this, wxID_ANY, _L("Open Wiki for more information >"));
+        wxStaticText *tips = new Label(this, _L("Open Wiki for more information >"));
         /* wxFont        font(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
          font.SetUnderlined(true);
          tips->SetFont(font);*/
         auto font = tips->GetFont();
         font.SetUnderlined(true);
         tips->SetFont(font);
-        tips->SetForegroundColour(wxColour(0, 174, 100));
+        tips->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
         tips->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
             bool is_zh = wxGetApp().app_config->get("language") == "zh_CN";
             if (m_panel_ObjColor->get_input_type() == ObjDialogInOut::FormatType::Standard3mf) {
@@ -103,41 +105,39 @@ wxBoxSizer* ObjColorDialog::create_btn_sizer(long flags,bool exist_error)
     btn_sizer->AddStretchSpacer();
 
     StateColor ok_btn_bd(
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     StateColor ok_btn_text(
-        std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
     StateColor cancel_btn_bg(
-        std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
     StateColor cancel_btn_bd_(
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal)
     );
     StateColor cancel_btn_text(
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal)
     );
     StateColor calc_btn_bg(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     StateColor calc_btn_bd(
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     StateColor calc_btn_text(
-        std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
     if (flags & wxOK) {
         Button* ok_btn = new Button(this, _L("OK"));
         ok_btn->SetMinSize(BTN_SIZE);
         ok_btn->SetCornerRadius(FromDIP(12));
         ok_btn->Enable(false);
-        ok_btn->SetBackgroundColor(ok_btn_disable_bg);
-        ok_btn->SetBorderColor(ok_btn_bd);
-        ok_btn->SetTextColor(ok_btn_text);
+        ok_btn->SetVariant(Button::Variant::Outlined);
         ok_btn->SetFocus();
         ok_btn->SetId(wxID_OK);
         btn_sizer->Add(ok_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, BTN_GAP);
@@ -147,9 +147,7 @@ wxBoxSizer* ObjColorDialog::create_btn_sizer(long flags,bool exist_error)
         Button* cancel_btn = new Button(this, _L("Cancel"));
         cancel_btn->SetMinSize(BTN_SIZE);
         cancel_btn->SetCornerRadius(FromDIP(12));
-        cancel_btn->SetBackgroundColor(cancel_btn_bg);
-        cancel_btn->SetBorderColor(cancel_btn_bd_);
-        cancel_btn->SetTextColor(cancel_btn_text);
+        cancel_btn->SetVariant(Button::Variant::Outlined);
         cancel_btn->SetId(wxID_CANCEL);
         btn_sizer->Add(cancel_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, BTN_GAP);
         m_button_list[wxCANCEL] = cancel_btn;
@@ -205,9 +203,9 @@ ObjColorDialog::ObjColorDialog(wxWindow *parent, Slic3r::ObjDialogInOut &in_out,
     SetIcon(wxIcon(Slic3r::encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
     m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
@@ -231,14 +229,14 @@ ObjColorDialog::ObjColorDialog(wxWindow *parent, Slic3r::ObjDialogInOut &in_out,
     else {
         wxBoxSizer *  error_mtl_sizer       = new wxBoxSizer(wxVERTICAL);
 
-        wxStaticText *error_mtl_title       = new wxStaticText(this, wxID_ANY, _L("Some faces don't have color defined."));
+        wxStaticText *error_mtl_title       = new Label(this, _L("Some faces don't have color defined."));
         if (!in_out.lost_material_name.empty()) {
             error_mtl_title->SetLabel(_L("mtl file exist error,could not find the material:") + " " + in_out.lost_material_name + ".");
         }
         error_mtl_title->SetFont(Label::Head_12);
         error_mtl_sizer->Add(error_mtl_title, 0, wxALIGN_LEFT | wxBOTTOM | wxTOP, FromDIP(5));
 
-        wxStaticText *tip_title = new wxStaticText(this, wxID_ANY, _L("Please check obj or mtl file."));
+        wxStaticText *tip_title = new Label(this, _L("Please check obj or mtl file."));
         tip_title->SetFont(Label::Head_12);
         error_mtl_sizer->Add(tip_title, 0, wxALIGN_LEFT | wxBOTTOM | wxTOP, FromDIP(5));
 
@@ -290,6 +288,7 @@ ObjColorDialog::ObjColorDialog(wxWindow *parent, Slic3r::ObjDialogInOut &in_out,
     });
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
 }
 
@@ -332,7 +331,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
     m_sizer_simple          = new wxBoxSizer(wxVERTICAL);
     m_page_simple			= new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_page_simple->SetSizer(m_sizer_simple);
-    m_page_simple->SetBackgroundColour(*wxWHITE);
+    m_page_simple->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     update_ui(m_page_simple);
     // BBS
@@ -341,7 +340,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
     {
         //color cluster results
         wxBoxSizer *  specify_cluster_sizer       = new wxBoxSizer(wxHORIZONTAL);
-        wxStaticText *specify_color_cluster_title = new wxStaticText(m_page_simple, wxID_ANY, _L("Specify number of colors:"));
+        wxStaticText *specify_color_cluster_title = new Label(m_page_simple, _L("Specify number of colors:"));
         specify_color_cluster_title->SetFont(Label::Head_14);
         specify_cluster_sizer->Add(specify_color_cluster_title, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
 
@@ -381,7 +380,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
         specify_cluster_sizer->AddSpacer(FromDIP(2));
         specify_cluster_sizer->Add(m_color_cluster_num_by_user_ebox, 0, wxALIGN_CENTER | wxALL, 0);
         specify_cluster_sizer->AddSpacer(FromDIP(15));
-        wxStaticText *recommend_color_cluster_title = new wxStaticText(m_page_simple, wxID_ANY, "(" + std::to_string(m_color_num_recommend) + " " + _L("Recommended ") + ")");
+        wxStaticText *recommend_color_cluster_title = new Label(m_page_simple, "(" + std::to_string(m_color_num_recommend) + " " + _L("Recommended ") + ")");
         specify_cluster_sizer->Add(recommend_color_cluster_title, 0, wxALIGN_CENTER | wxALL, 0);
 
         m_sizer_simple->Add(specify_cluster_sizer, 0, wxEXPAND | wxLEFT, FromDIP(20));
@@ -429,9 +428,11 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
 
                 m_sizer_simple->Add(m_two_image_panel, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(0));//wxALIGN_LEFT | wxEXPAND | wxTOP, FromDIP(2));
 
-                m_two_image_panel->SetBackgroundColor(wxGetApp().dark_mode() ? wxColour(48, 48, 48, 100) : wxColour(246, 246, 246, 100));
-                m_left_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
-                m_right_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
+                // MD3 tokens instead of the hand-picked grey pair: the semantic
+                // roles resolve per theme, so the dark_mode() branch collapses.
+                m_two_image_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+                m_left_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+                m_right_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
             }
             { // add  ComboBox cur_combox
                 auto combox_title = new Label(m_two_image_panel, _L("view"));
@@ -453,7 +454,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
             generate_origin_thumbnail();
         }
         wxBoxSizer *  current_filaments_title_sizer  = new wxBoxSizer(wxHORIZONTAL);
-        wxStaticText *current_filaments_title = new wxStaticText(m_page_simple, wxID_ANY, _L("Current filament colors"));
+        wxStaticText *current_filaments_title = new Label(m_page_simple, _L("Current filament colors"));
         current_filaments_title->SetFont(Label::Head_14);
         current_filaments_title_sizer->Add(current_filaments_title, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
         m_sizer_simple->Add(current_filaments_title_sizer, 0, wxEXPAND | wxLEFT, FromDIP(20));
@@ -481,13 +482,13 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
         //colors table title
         wxBoxSizer *  matching_title_sizer = new wxBoxSizer(wxHORIZONTAL);
         matching_title_sizer->AddSpacer(FromDIP(25));
-        wxStaticText *matching_title       = new wxStaticText(m_page_simple, wxID_ANY, _L("Matching"));
+        wxStaticText *matching_title       = new Label(m_page_simple, _L("Matching"));
         matching_title->SetFont(Label::Head_14);
         matching_title_sizer->Add(matching_title, 0, wxEXPAND , 0);
         m_sizer_simple->Add(matching_title_sizer, 0, wxEXPAND | wxTOP, FromDIP(15));// wxTop has FromDIP(10) margin
         //new color table
         m_scrolledWindow = new wxScrolledWindow(m_page_simple, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
-        m_scrolledWindow->SetBackgroundColour(*wxWHITE);
+        m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         m_scrolledWindow->SetScrollRate(0, 20);
         m_scrolledWindow->EnableScrolling(false, true);
         m_scrolledWindow->ShowScrollbars(wxScrollbarVisibility::wxSHOW_SB_NEVER, wxScrollbarVisibility::wxSHOW_SB_DEFAULT);
@@ -497,7 +498,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
         //buttons
         wxBoxSizer *quick_set_sizer = new wxBoxSizer(wxHORIZONTAL);
         quick_set_sizer->AddSpacer(FromDIP(25));
-        wxStaticText *quick_set_title = new wxStaticText(m_page_simple, wxID_ANY, _L("Quick set"));
+        wxStaticText *quick_set_title = new Label(m_page_simple, _L("Quick set"));
         quick_set_title->SetFont(Label::Head_12);
         quick_set_sizer->Add(quick_set_title, 0, wxALIGN_CENTER | wxALL, 0);
         quick_set_sizer->AddSpacer(FromDIP(10));
@@ -517,7 +518,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
 
         if (m_obj_in_out.input_type == ObjDialogInOut::FormatType::Standard3mf && (m_obj_in_out.exist_color_error || m_obj_in_out.exist_texture_error)) {
             m_warn_text = new Label(m_page_simple, "", LB_AUTO_WRAP);
-            m_warn_text->SetForegroundColour(wxColour(255, 111, 0, 255));
+            m_warn_text->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
 
             wxString error_str = _L("Warning") + ": ";
             if (m_obj_in_out.exist_color_error) {
@@ -539,7 +540,7 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
         }
         wxString note_str = _L("Note") + ": " + _L("The color has been selected, you can choose OK to continue or manually adjust it.");
         m_note_text       = new Label(m_page_simple, note_str, LB_AUTO_WRAP);
-        m_note_text->SetForegroundColour(wxColour(107, 107, 107, 100));
+        m_note_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_note_text->SetMinSize(wxSize(OBJCOLOR_TEXT_MAX_WIDTH, -1));
         m_note_text->SetMaxSize(wxSize(OBJCOLOR_TEXT_MAX_WIDTH, -1));
         warning_error_sizer->Add(m_note_text, 0, wxALIGN_LEFT  | wxTOP, 0);
@@ -571,13 +572,13 @@ wxBoxSizer *ObjColorPanel::create_sizer_thumbnail(wxButton *image_button, bool l
     if (left) {
         wxBoxSizer *text_sizer = new wxBoxSizer(wxHORIZONTAL);
         auto        original_text  = new Label(image_button->GetParent(), _CTX(L_CONTEXT("Original", "ObjImport"), "ObjImport"));
-        original_text->SetForegroundColour(wxColour(107, 107, 107, 100));
+        original_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         text_sizer->Add(original_text, 0, wxALIGN_CENTER | wxALL, 0);
         sizer_thumbnail->Add(original_text, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(4));
     } else {
         wxBoxSizer *text_sizer = new wxBoxSizer(wxHORIZONTAL);
         auto after_map_text       = new Label(image_button->GetParent(), _L("After mapping"));
-        after_map_text->SetForegroundColour(wxColour(107, 107, 107, 100));
+        after_map_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         text_sizer->Add(after_map_text, 0, wxALIGN_CENTER | wxALL, 0);
         sizer_thumbnail->Add(after_map_text, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(4));
     }
@@ -750,10 +751,10 @@ void ObjColorPanel::do_layout_callback() {
 wxBoxSizer *ObjColorPanel::create_approximate_match_btn_sizer(wxWindow *parent)
 {
     auto       btn_sizer = new wxBoxSizer(wxHORIZONTAL);
-    StateColor calc_btn_bg(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                           std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor calc_btn_bd(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor calc_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+    StateColor calc_btn_bg(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                           std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor calc_btn_bd(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor calc_btn_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     //create btn
     m_quick_approximate_match_btn = new Button(parent, _L("Color match"));
     m_quick_approximate_match_btn->SetToolTip(_L("Approximate color matching."));
@@ -776,10 +777,10 @@ wxBoxSizer *ObjColorPanel::create_approximate_match_btn_sizer(wxWindow *parent)
 wxBoxSizer *ObjColorPanel::create_add_btn_sizer(wxWindow *parent)
 {
     auto       btn_sizer = new wxBoxSizer(wxHORIZONTAL);
-    StateColor calc_btn_bg(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                           std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor calc_btn_bd(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor calc_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+    StateColor calc_btn_bg(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                           std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor calc_btn_bd(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor calc_btn_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     // create btn
     m_quick_add_btn = new Button(parent, _L("Append"));
     m_quick_add_btn->SetToolTip(_L("Append to existing filaments"));
@@ -802,10 +803,10 @@ wxBoxSizer *ObjColorPanel::create_add_btn_sizer(wxWindow *parent)
 wxBoxSizer *ObjColorPanel::create_reset_btn_sizer(wxWindow *parent)
 {
     auto       btn_sizer = new wxBoxSizer(wxHORIZONTAL);
-    StateColor calc_btn_bg(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                           std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor calc_btn_bd(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor calc_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+    StateColor calc_btn_bg(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                           std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor calc_btn_bd(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor calc_btn_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
     // create btn
     m_quick_reset_btn = new Button(parent, _L("Reset"));
     m_quick_reset_btn->SetToolTip(_L("Reset mapped extruders."));
@@ -1386,7 +1387,7 @@ wxBoxSizer *ObjColorPanel::create_color_icon_map_rgba_sizer(wxWindow *parent, in
     icon_sizer->Add(icon, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0); // wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM
     icon_sizer->AddSpacer(FromDIP(10));
 
-    wxStaticText *map_text = new wxStaticText(parent, wxID_ANY, _L("—> "));
+    wxStaticText *map_text = new Label(parent, _L("—> "));
     map_text->SetFont(Label::Head_12);
     icon_sizer->Add(map_text, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
 

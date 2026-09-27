@@ -16,6 +16,11 @@ class TabButton : public StaticBox
     StateColor   border_color;
     bool pressedDown = false;
     bool show_new_tag = false;
+    // Kit selected-tab anatomy: the selected TabButton paints a 3px rounded
+    // Primary indicator on its inner (content-facing) edge. m_scheme resolves
+    // that Primary for the host workspace (Brand / Preview / Device).
+    bool             m_selected = false;
+    MD3::ColorScheme m_scheme   = MD3::ColorScheme::Brand;
 
 public:
     TabButton();
@@ -39,6 +44,13 @@ public:
     void SetBGColor(StateColor const &color);
 
     void SetBitmap(ScalableBitmap &bitmap);
+
+    // Mark this tab selected so render() paints the kit active indicator.
+    void SetSelected(bool selected);
+    bool GetSelected() const { return m_selected; }
+
+    // Set the workspace accent scheme used to resolve the active indicator.
+    void SetColorScheme(MD3::ColorScheme scheme);
 
     bool Enable(bool enable = true);
 

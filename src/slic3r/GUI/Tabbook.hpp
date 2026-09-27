@@ -6,6 +6,7 @@
 #include <wx/bookctrl.h>
 #include <wx/sizer.h>
 #include "wxExtensions.hpp"
+#include "Widgets/MD3Tokens.hpp"
 
 
 class ScalableButton;
@@ -23,6 +24,9 @@ public:
 
     void OnPaint(wxPaintEvent&);
     void SetSelection(int sel);
+    // Recolour the active-tab label + indicator for the current workspace scheme
+    // (Brand / Preview / Device); defaults to Brand.
+    void SetColorScheme(MD3::ColorScheme scheme);
     void showNewTag(int sel, bool show = false);
     void Rescale();
     bool InsertPage(size_t n, const wxString& text, bool bSelect = false, const std::string& bmp_name = "");
@@ -43,6 +47,8 @@ private:
     int                             m_selection {-1};
     int                             m_btn_margin;
     int                             m_line_margin;
+    // Current workspace accent scheme for the selected-tab label + indicator.
+    MD3::ColorScheme                m_color_scheme {MD3::ColorScheme::Brand};
 };
 
 class Tabbook: public wxBookCtrlBase
@@ -259,6 +265,13 @@ public:
     void Rescale()
     {
         GetBtnsListCtrl()->Rescale();
+    }
+
+    // Forward the workspace accent scheme to the tab strip so the selected-tab
+    // label + indicator recolour to the host context (Preview/Device).
+    void SetColorScheme(MD3::ColorScheme scheme)
+    {
+        GetBtnsListCtrl()->SetColorScheme(scheme);
     }
 
     void OnNavigationKey(wxNavigationKeyEvent& event)

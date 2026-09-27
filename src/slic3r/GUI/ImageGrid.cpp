@@ -53,7 +53,7 @@ ImageGrid::ImageGrid(wxWindow * parent)
     m_cell_size.Set(396, 228);
 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(0xEEEEEE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
     SetFont(Label::Head_20);
 
     Rescale();
@@ -237,7 +237,7 @@ void ImageGrid::UpdateLayout()
     if (!m_title_mask.IsOk() || m_title_mask.GetSize() != title_mask_size)
         m_title_mask = createAlphaBitmap(title_mask_size, 0x6f6f6f, 255, 0);
     if (!m_border_mask.IsOk() || m_border_mask.GetSize() != m_border_size)
-        m_border_mask = createShadowBorder(m_border_size, StateColor::darkModeColorFor(0xEEEEEE), em_unit(this), 3);
+        m_border_mask = createShadowBorder(m_border_size, StateColor::semantic(MD3::Role::SurfaceContainer), em_unit(this), 3);
     UpdateFocusRange();
     Refresh();
 }
@@ -576,8 +576,11 @@ static constexpr wchar_t const *TIME_FORMATS[] = {_T("%Y-%m-%d"), _T("%Y-%m"), _
 void ImageGrid::render(wxDC& dc)
 {
     wxSize size = GetClientSize();
-    dc.SetPen(wxPen(GetBackgroundColour()));
-    dc.SetBrush(wxBrush(GetBackgroundColour()));
+    // Grid spacing/background = MD3 SurfaceContainer (re-resolved per paint so it
+    // tracks the theme; matches the card shadow-border base and content fills).
+    const wxColour grid_bg = StateColor::semantic(MD3::Role::SurfaceContainer);
+    dc.SetPen(wxPen(grid_bg));
+    dc.SetBrush(wxBrush(grid_bg));
     if (!m_file_sys || m_file_sys->GetCount() == 0) {
         dc.DrawRectangle({ 0, 0, size.x, size.y });
         if (!m_status_msg.IsEmpty()) {
@@ -585,7 +588,7 @@ void ImageGrid::render(wxDC& dc)
             auto st   = dc.GetMultiLineTextExtent(m_status_msg);
             auto   rect = wxRect{0, 0, max(st.x, si.x), si.y + 26 + st.y}.CenterIn(wxRect({0, 0}, size));
             dc.DrawBitmap(m_status_icon.bmp(), rect.x + (rect.width - si.x) / 2, rect.y);
-            dc.SetTextForeground(wxColor(0x909090));
+            dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
             dc.DrawText(m_status_msg, rect.x + (rect.width - st.x) / 2, rect.GetBottom() - st.y);
         }
         return;
@@ -640,7 +643,7 @@ void ImageGrid::render(wxDC& dc)
         auto date1 = wxDateTime((time_t) file1.time).Format(_L(TIME_FORMATS[m_file_sys->GetGroupMode()]));
         auto date2 = wxDateTime((time_t) file2.time).Format(_L(TIME_FORMATS[m_file_sys->GetGroupMode()]));
         dc.SetFont(Label::Head_16);
-        dc.SetTextForeground(StateColor::darkModeColorFor("#262E30"));
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
         dc.DrawText(date1 + " - " + date2, wxPoint{off.x, 2});
     }
     // Draw bottom background
@@ -649,7 +652,7 @@ void ImageGrid::render(wxDC& dc)
     // Draw scroll bar: always visible whenever the content overflows the
     // visible area; the handle is draggable (see mouse handlers).
     if (wxRect bar = scrollBarRect(size); !bar.IsEmpty()) {
-        dc.SetBrush(wxBrush(m_dragging_scroll ? wxColour("#909090") : *wxLIGHT_GREY));
+        dc.SetBrush(wxBrush(m_dragging_scroll ? StateColor::semantic(MD3::Role::Outline) : StateColor::semantic(MD3::Role::OutlineVariant)));
         dc.DrawRoundedRectangle(bar, 4);
     }
 }
@@ -728,20 +731,22 @@ void Slic3r::GUI::ImageGrid::renderContent2(wxDC &dc, wxPoint const &pt, int ind
     m_content_rect.SetHeight(m_content_rect.GetHeight() - h);
     auto br = dc.GetBrush();
     auto pn = dc.GetPen();
-    dc.SetBrush(StateColor::darkModeColorFor(0xEEEEEE));
-    dc.SetPen(StateColor::darkModeColorFor(0xEEEEEE));
+    const wxColour thumb_bg = StateColor::semantic(MD3::Role::SurfaceContainer);
+    dc.SetBrush(thumb_bg);
+    dc.SetPen(thumb_bg);
     dc.DrawRectangle(pt, m_content_rect.GetSize()); // Fix translucent model thumbnail
     renderContent1(dc, pt, index, hit);
     m_content_rect.SetHeight(m_content_rect.GetHeight() + h);
     // Draw info bar
-    dc.SetBrush(StateColor::darkModeColorFor(*wxWHITE));
-    dc.SetPen(StateColor::darkModeColorFor(*wxWHITE));
+    const wxColour info_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    dc.SetBrush(info_bg);
+    dc.SetPen(info_bg);
     dc.DrawRectangle(pt.x, pt.y + m_content_rect.GetHeight() - h, m_content_rect.GetWidth(), h);
     dc.SetBrush(br);
     dc.SetPen(pn);
     // Draw infos
     dc.SetFont(Label::Head_16);
-    dc.SetTextForeground(StateColor::darkModeColorFor("#323A3D"));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     auto em = em_unit(this);
     wxRect rect{pt.x, pt.y + m_content_rect.GetHeight() - h, m_content_rect.GetWidth(), h / 2};
     rect.Deflate(em, 0);
@@ -749,7 +754,7 @@ void Slic3r::GUI::ImageGrid::renderContent2(wxDC &dc, wxPoint const &pt, int ind
     rect.Offset(0, h / 2);
     rect.SetWidth(rect.GetWidth() / 2 - em);
     dc.SetFont(Label::Body_13);
-    dc.SetTextForeground(StateColor::darkModeColorFor("#6B6B6B"));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     renderIconText(dc, m_model_time_icon, file.Metadata("Time", "0m"), rect);
     rect.Offset(m_content_rect.GetWidth() / 2, 0);
     renderIconText(dc, m_model_weight_icon, file.Metadata("Weight", "0g"), rect);

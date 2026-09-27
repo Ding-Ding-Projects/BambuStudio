@@ -1,6 +1,7 @@
 #include "UxProgramTermsDialog.hpp"
 
 #include "slic3r/GUI/GUI_App.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "slic3r/GUI/Widgets/WebView.hpp"
 #include "slic3r/GUI/I18N.hpp"
 
@@ -74,9 +75,10 @@ UxProgramTermsDialog::UxProgramTermsDialog(wxWindow* parent)
     SetMinSize(FromDIP(wxSize(720, 640)));
     SetSize(FromDIP(wxSize(720, 640)));
 
-    CenterOnParent();
-
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
+    CenterOnParent();
 }
 
 void UxProgramTermsDialog::on_dpi_changed(const wxRect& suggested_rect)

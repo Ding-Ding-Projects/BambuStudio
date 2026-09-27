@@ -247,6 +247,12 @@ public:
     ~OpenGLManager();
 
     bool init_gl(bool popup_error = true);
+#ifdef _WIN32
+    // Apply the llvmpipe environment when the bundled Mesa pair already sits
+    // beside the executable. Must run before the first OpenGL context.
+    // Returns true when a replacement process was started and this one must exit.
+    static bool apply_bundled_softgl_environment();
+#endif // _WIN32
     wxGLContext* init_glcontext(wxGLCanvas& canvas);
 
     const std::shared_ptr<GLShaderProgram>& get_shader(const std::string& shader_name) const { return m_shaders_manager.get_shader(shader_name); }

@@ -1,6 +1,8 @@
 // FIXME: extract absolute units -> em
 
 #include "ConfigWizard_private.hpp"
+#include "Widgets/TextInput.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 
 #include <algorithm>
 #include <numeric>
@@ -49,6 +51,8 @@
 #include "MsgDialog.hpp"
 #include "UnsavedChangesDialog.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 #if defined(__linux__) && defined(__WXGTK3__)
 #define wxLinux_gtk3 true
@@ -252,7 +256,7 @@ PrinterPicker::PrinterPicker(wxWindow *parent, const VendorProfile &vendor, wxSt
                 load_bitmap(Slic3r::var(PRINTER_PLACEHOLDER), bitmap, bitmap_width);
             }
         }
-        auto *title = new wxStaticText(this, wxID_ANY, from_u8(model.name), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+        auto *title = new Label(this, from_u8(model.name), wxALIGN_LEFT);
         title->SetFont(font_name);
         const int wrap_width = std::max((int)MODEL_MIN_WRAP, bitmap_width);
         title->Wrap(wrap_width);
@@ -282,7 +286,7 @@ PrinterPicker::PrinterPicker(wxWindow *parent, const VendorProfile &vendor, wxSt
                 : from_u8(model.name);
 
             if (i == 1) {
-                auto *alt_label = new wxStaticText(variants_panel, wxID_ANY, _L("Alternate nozzles:"));
+                auto *alt_label = new Label(variants_panel, _L("Alternate nozzles:"));
                 alt_label->SetFont(font_alt_nozzle);
                 variants_sizer->Add(alt_label, 0, wxBOTTOM, 3);
                 is_variants = true;
@@ -337,7 +341,7 @@ PrinterPicker::PrinterPicker(wxWindow *parent, const VendorProfile &vendor, wxSt
 
     auto *title_sizer = new wxBoxSizer(wxHORIZONTAL);
     if (! title.IsEmpty()) {
-        auto *title_widget = new wxStaticText(this, wxID_ANY, title);
+        auto *title_widget = new Label(this, title);
         title_widget->SetFont(font_title);
         title_sizer->Add(title_widget);
     }
@@ -458,7 +462,7 @@ ConfigWizardPage::ConfigWizardPage(ConfigWizard *parent, wxString title, wxStrin
 {
     auto *sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto *text = new wxStaticText(this, wxID_ANY, std::move(title), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    auto *text = new Label(this, std::move(title), wxALIGN_LEFT);
     const auto font = GetFont().MakeBold().Scaled(1.5);
     text->SetFont(font);
     text->SetForegroundColour(*wxBLACK);
@@ -487,7 +491,7 @@ ConfigWizardPage::~ConfigWizardPage() {}
 
 wxStaticText* ConfigWizardPage::append_text(wxString text)
 {
-    auto *widget = new wxStaticText(this, wxID_ANY, text, wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    auto *widget = new Label(this, text, wxALIGN_LEFT);
     widget->Wrap(WRAP_WIDTH);
     widget->SetMinSize(wxSize(WRAP_WIDTH, -1));
     append(widget);
@@ -516,10 +520,10 @@ PageWelcome::PageWelcome(ConfigWizard *parent)
         % _utf8(ConfigWizard::name())).str())
     ))
     , cbox_reset(append(
-        new wxCheckBox(this, wxID_ANY, _L("Remove user profiles (a snapshot will be taken beforehand)"))
+        new LabeledCheckBox(this, _L("Remove user profiles (a snapshot will be taken beforehand)"))
     ))
     , cbox_integrate(append(
-        new wxCheckBox(this, wxID_ANY, _L("Perform desktop integration (Sets this binary to be searchable by the system)."))
+        new LabeledCheckBox(this, _L("Perform desktop integration (Sets this binary to be searchable by the system)."))
     ))
 {
     welcome_text->Hide();
@@ -663,10 +667,10 @@ PageMaterials::PageMaterials(ConfigWizard *parent, Materials *materials, wxStrin
     grid->AddGrowableCol(3, 1);
     grid->AddGrowableRow(1, 1);
 
-	grid->Add(new wxStaticText(this, wxID_ANY, _L("Printer:")));
-    grid->Add(new wxStaticText(this, wxID_ANY, list1name));
-    grid->Add(new wxStaticText(this, wxID_ANY, _L("Vendor:")));
-    grid->Add(new wxStaticText(this, wxID_ANY, _L("Profile:")));
+	grid->Add(new Label(this, _L("Printer:")));
+    grid->Add(new Label(this, list1name));
+    grid->Add(new Label(this, _L("Vendor:")));
+    grid->Add(new Label(this, _L("Profile:")));
 
 	grid->Add(list_printer, 0, wxEXPAND);
     grid->Add(list_type, 0, wxEXPAND);
@@ -1205,19 +1209,19 @@ const char *PageCustom::default_profile_name = "My Settings";
 PageCustom::PageCustom(ConfigWizard *parent)
     : ConfigWizardPage(parent, _L("Custom Printer Setup"), _L("Custom Printer"))
 {
-    cb_custom = new wxCheckBox(this, wxID_ANY, _L("Define a custom printer profile"));
-    tc_profile_name = new wxTextCtrl(this, wxID_ANY, default_profile_name);
-    auto *label = new wxStaticText(this, wxID_ANY, _L("Custom profile name:"));
+    cb_custom = new LabeledCheckBox(this, _L("Define a custom printer profile"));
+    tc_profile_name = new TextInput(this, default_profile_name);
+    auto *label = new Label(this, _L("Custom profile name:"));
 
     wxGetApp().UpdateDarkUI(tc_profile_name);
 
     tc_profile_name->Enable(false);
-    tc_profile_name->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &evt) {
-        if (tc_profile_name->GetValue().IsEmpty()) {
-            if (profile_name_prev.IsEmpty()) { tc_profile_name->SetValue(default_profile_name); }
-            else { tc_profile_name->SetValue(profile_name_prev); }
+    tc_profile_name->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &evt) {
+        if (tc_profile_name->GetTextCtrl()->GetValue().IsEmpty()) {
+            if (profile_name_prev.IsEmpty()) { tc_profile_name->GetTextCtrl()->SetValue(default_profile_name); }
+            else { tc_profile_name->GetTextCtrl()->SetValue(profile_name_prev); }
         } else {
-            profile_name_prev = tc_profile_name->GetValue();
+            profile_name_prev = tc_profile_name->GetTextCtrl()->GetValue();
         }
         evt.Skip();
     });
@@ -1248,8 +1252,10 @@ PageFirmware::PageFirmware(ConfigWizard *parent)
         choices.Add(label);
     }
 
-    gcode_picker = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, choices);
-    wxGetApp().UpdateDarkUI(gcode_picker);
+    // Kit SelectField: a read-only ComboBox instead of the stock wxChoice.
+    gcode_picker = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+    for (const auto &choice : choices)
+        gcode_picker->Append(choice);
     const auto &enum_values = gcode_opt.enum_values;
     auto needle = enum_values.cend();
     if (gcode_opt.default_value) {
@@ -1353,8 +1359,8 @@ PageDiameters::PageDiameters(ConfigWizard *parent)
     append_text(_L("Enter the diameter of your printer's hot end nozzle."));
 
     auto *sizer_nozzle = new wxFlexGridSizer(3, 5, 5);
-    auto *text_nozzle = new wxStaticText(this, wxID_ANY, _L("Nozzle Diameter:"));
-    auto *unit_nozzle = new wxStaticText(this, wxID_ANY, _L("mm"));
+    auto *text_nozzle = new Label(this, _L("Nozzle Diameter:"));
+    auto *unit_nozzle = new Label(this, _L("mm"));
     sizer_nozzle->AddGrowableCol(0, 1);
     sizer_nozzle->Add(text_nozzle, 0, wxALIGN_CENTRE_VERTICAL);
     sizer_nozzle->Add(diam_nozzle);
@@ -1367,8 +1373,8 @@ PageDiameters::PageDiameters(ConfigWizard *parent)
     append_text(_L("Good precision is required, so use a caliper and do multiple measurements along the filament, then compute the average."));
 
     auto *sizer_filam = new wxFlexGridSizer(3, 5, 5);
-    auto *text_filam = new wxStaticText(this, wxID_ANY, _L("Filament Diameter:"));
-    auto *unit_filam = new wxStaticText(this, wxID_ANY, _L("mm"));
+    auto *text_filam = new Label(this, _L("Filament Diameter:"));
+    auto *unit_filam = new Label(this, _L("mm"));
     sizer_filam->AddGrowableCol(0, 1);
     sizer_filam->Add(text_filam, 0, wxALIGN_CENTRE_VERTICAL);
     sizer_filam->Add(diam_filam);
@@ -1448,8 +1454,8 @@ PageTemperatures::PageTemperatures(ConfigWizard *parent)
 #endif
 
     auto *sizer_extr = new wxFlexGridSizer(3, 5, 5);
-    auto *text_extr = new wxStaticText(this, wxID_ANY, _L("Extrusion Temperature:"));
-    auto *unit_extr = new wxStaticText(this, wxID_ANY, "°C");
+    auto *text_extr = new Label(this, _L("Extrusion Temperature:"));
+    auto *unit_extr = new Label(this, "°C");
     sizer_extr->AddGrowableCol(0, 1);
     sizer_extr->Add(text_extr, 0, wxALIGN_CENTRE_VERTICAL);
     sizer_extr->Add(spin_extr);
@@ -1462,8 +1468,8 @@ PageTemperatures::PageTemperatures(ConfigWizard *parent)
     append_text(_L("A rule of thumb is 60 °C for PLA and 110 °C for ABS. Leave zero if you have no heated bed."));
 
     auto *sizer_bed = new wxFlexGridSizer(3, 5, 5);
-    auto *text_bed = new wxStaticText(this, wxID_ANY, _L("Bed Temperature:"));
-    auto *unit_bed = new wxStaticText(this, wxID_ANY, "°C");
+    auto *text_bed = new Label(this, _L("Bed Temperature:"));
+    auto *unit_bed = new Label(this, "°C");
     sizer_bed->AddGrowableCol(0, 1);
     sizer_bed->Add(text_bed, 0, wxALIGN_CENTRE_VERTICAL);
     sizer_bed->Add(spin_bed);
@@ -2780,6 +2786,7 @@ ConfigWizard::ConfigWizard(wxWindow *parent)
         });
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 ConfigWizard::~ConfigWizard() {}
@@ -2850,4 +2857,9 @@ void ConfigWizard::on_sys_color_changed()
 }
 
 }
+}
+
+void ConfigWizard::go_to_page(size_t index)
+{
+    if (p && p->index) p->index->go_to(index);
 }

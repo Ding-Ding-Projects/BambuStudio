@@ -22,20 +22,25 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "wxExtensions.hpp"
 #include "slic3r/Utils/WxFontUtils.hpp"
 #include "ColorDecomposeSupport.hpp"
 #include "libslic3r/ColorDecomposeRecipe.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r {
 namespace GUI {
 
-static const wxColour COLOR_BRAND("#00AE42");
-static const wxColour COLOR_BORDER_NORMAL("#EEEEEE");
-static const wxColour COLOR_BG_CARD("#F8F8F8");
-static const wxColour COLOR_LABEL_GREY("#ACACAC");
-static const wxColour COLOR_TEXT_DARK("#262E30");
-static const wxColour COLOR_DIVIDER("#EEEEEE");
+// MD3 role tokens (light values); all consumed via StateColor::darkModeColorFor(),
+// which live-remaps them to the correct dark tone through gDarkColors.
+static const wxColour COLOR_BRAND         = ThemeColor::BrandGreen;   // Primary accent
+static const wxColour COLOR_BORDER_NORMAL = ThemeColor::Grey400;      // OutlineVariant card border
+static const wxColour COLOR_BG_CARD       = ThemeColor::Grey200;      // SurfaceContainerLow card fill
+static const wxColour COLOR_LABEL_GREY    = ThemeColor::TextMuted;    // muted label text
+static const wxColour COLOR_TEXT_DARK     = ThemeColor::TextPrimary;  // OnSurface text
+static const wxColour COLOR_DIVIDER       = ThemeColor::Grey250;      // SurfaceContainer panel
 
 // Standard CMYW base colors
 static const wxColour CMYW_CYAN(0, 255, 255);
@@ -237,7 +242,7 @@ static wxStaticText* create_result_caption(wxWindow* parent, const wxString& tex
 
 static wxStaticText* create_mode_group_label(wxWindow* parent, const wxString& text)
 {
-    auto* label = new wxStaticText(parent, wxID_ANY, text);
+    auto* label = new Label(parent, text);
     label->SetFont(Label::Body_11);
     label->SetForegroundColour(StateColor::darkModeColorFor(COLOR_LABEL_GREY));
     return label;
@@ -312,6 +317,8 @@ ColorDecomposeDialog::ColorDecomposeDialog(wxWindow* parent,
     update_matched_color_display();
     update_ok_button_state();
     Fit();
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void ColorDecomposeDialog::on_dpi_changed(const wxRect& suggested_rect)
@@ -325,7 +332,7 @@ void ColorDecomposeDialog::on_dpi_changed(const wxRect& suggested_rect)
 
 void ColorDecomposeDialog::build_ui()
 {
-    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto* main_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -343,7 +350,6 @@ void ColorDecomposeDialog::build_ui()
     SetSizer(main_sizer);
     SetMinSize(wxSize(FromDIP(477), FromDIP(500)));
     Fit();
-    CenterOnParent();
 }
 
 wxBoxSizer* ColorDecomposeDialog::create_filament_selector()
@@ -672,9 +678,9 @@ wxPanel* ColorDecomposeDialog::create_mode_card(wxWindow* parent, DecomposeMode 
     auto* card_sizer = new wxBoxSizer(wxVERTICAL);
 
     auto* title_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto* title_label = new wxStaticText(card, wxID_ANY, title);
+    auto* title_label = new Label(card, title);
     title_label->SetFont(Label::Body_14);
-    title_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#909090")));
+    title_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     match_parent_bg(title_label, StateColor::darkModeColorFor(COLOR_BG_CARD));
     title_sizer->Add(title_label, 1, wxALIGN_CENTER_VERTICAL);
 
@@ -710,7 +716,7 @@ wxPanel* ColorDecomposeDialog::create_mode_card(wxWindow* parent, DecomposeMode 
     card->Bind(wxEVT_PAINT, [this, card, mode](wxPaintEvent&) {
         wxBufferedPaintDC dc(card);
         wxSize sz = card->GetClientSize();
-        dc.SetBackground(wxBrush(StateColor::darkModeColorFor(*wxWHITE)));
+        dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
         dc.Clear();
 
         bool selected = (m_selected_mode == mode);
@@ -752,7 +758,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
 {
     auto* sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto* section_label = new wxStaticText(this, wxID_ANY, _L("Select Color Decomposition"));
+    auto* section_label = new Label(this, _L("Select Color Decomposition"));
     section_label->SetFont(Label::Head_14);
     section_label->SetForegroundColour(StateColor::darkModeColorFor(COLOR_TEXT_DARK));
     sizer->Add(section_label, 0, wxBOTTOM, FromDIP(4));
@@ -761,7 +767,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
 
     // --- Arbitrary mode column (wrapped in a panel so the whole column hides together) ---
     m_arb_column_panel = new wxPanel(this, wxID_ANY);
-    m_arb_column_panel->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    m_arb_column_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* arb_col = new wxBoxSizer(wxVERTICAL);
     {
         auto* arb_header_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -804,7 +810,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     sizer->Add(modes_sizer, 0, wxEXPAND);
 
     m_no_card_warning_panel = new wxPanel(this, wxID_ANY);
-    m_no_card_warning_panel->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    m_no_card_warning_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* no_card_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto* no_card_bmp = new wxStaticBitmap(m_no_card_warning_panel, wxID_ANY,
         create_scaled_bitmap("obj_warning", m_no_card_warning_panel, 16),
@@ -812,7 +818,7 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     m_no_card_warning_text = new wxStaticText(m_no_card_warning_panel, wxID_ANY,
         _L("At least two filaments of the same material type are required for decomposition"));
     m_no_card_warning_text->SetFont(Label::Body_13);
-    m_no_card_warning_text->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#E6A817")));
+    m_no_card_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_no_card_warning_text->Wrap(FromDIP(400));
     no_card_sizer->Add(no_card_bmp, 0, wxALIGN_TOP | wxRIGHT, FromDIP(6));
     no_card_sizer->Add(m_no_card_warning_text, 1, wxEXPAND);
@@ -821,11 +827,11 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     sizer->Add(m_no_card_warning_panel, 0, wxEXPAND | wxTOP, FromDIP(8));
 
     m_basic_warning_panel = new wxPanel(this, wxID_ANY);
-    m_basic_warning_panel->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    m_basic_warning_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* basic_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_basic_warning_text = new wxStaticText(m_basic_warning_panel, wxID_ANY, wxEmptyString);
     m_basic_warning_text->SetFont(Label::Body_13);
-    m_basic_warning_text->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#6B6B6B")));
+    m_basic_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_basic_warning_text->Wrap(FromDIP(400));
     basic_sizer->Add(m_basic_warning_text, 1, wxEXPAND);
     m_basic_warning_panel->SetSizer(basic_sizer);
@@ -835,14 +841,13 @@ wxBoxSizer* ColorDecomposeDialog::create_mode_selection_section()
     sizer->Add(create_result_section(), 0, wxEXPAND | wxTOP, FromDIP(16));
 
     m_limit_warning_panel = new wxPanel(this, wxID_ANY);
-    m_limit_warning_panel->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    m_limit_warning_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     auto* warning_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto* warn_bmp = new wxStaticBitmap(m_limit_warning_panel, wxID_ANY,
-        create_scaled_bitmap("obj_warning", m_limit_warning_panel, 16),
+    auto* warn_bmp = new wxStaticBitmap(m_limit_warning_panel, wxID_ANY, MaterialIcon::bitmap(m_limit_warning_panel, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
-    m_limit_warning_text = new wxStaticText(m_limit_warning_panel, wxID_ANY, wxEmptyString);
+    m_limit_warning_text = new Label(m_limit_warning_panel, wxEmptyString);
     m_limit_warning_text->SetFont(Label::Body_13);
-    m_limit_warning_text->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#D32F2F")));
+    m_limit_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_limit_warning_text->Wrap(FromDIP(400));
     warning_sizer->Add(warn_bmp, 0, wxALIGN_TOP | wxRIGHT, FromDIP(6));
     warning_sizer->Add(m_limit_warning_text, 1, wxEXPAND);
@@ -859,22 +864,12 @@ wxBoxSizer* ColorDecomposeDialog::create_button_panel()
     sizer->AddStretchSpacer();
 
     m_btn_cancel = new Button(this, _L("Cancel"));
-    m_btn_cancel->SetBackgroundColor(StateColor::darkModeColorFor(*wxWHITE));
-    m_btn_cancel->SetBorderColor(StateColor::darkModeColorFor(wxColour("#CECECE")));
-    m_btn_cancel->SetTextColor(StateColor::darkModeColorFor(wxColour("#262E30")));
+    m_btn_cancel->SetVariant(Button::Variant::Outlined);
     m_btn_cancel->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CANCEL); });
 
     m_btn_ok = new Button(this, _L("OK"));
-    m_btn_ok->SetBackgroundColor(StateColor(
-        std::make_pair(wxColour("#C2C2C2"), (int) StateColor::Disabled),
-        std::make_pair(wxColour("#00AE42"), (int) StateColor::Normal)));
-    m_btn_ok->SetBorderColor(StateColor(
-        std::make_pair(wxColour("#C2C2C2"), (int) StateColor::Disabled),
-        std::make_pair(wxColour("#00AE42"), (int) StateColor::Normal)));
-    m_btn_ok->SetTextColor(StateColor(
-        std::make_pair(*wxWHITE, (int) StateColor::Disabled),
-        std::make_pair(*wxWHITE, (int) StateColor::Normal)));
+    m_btn_ok->SetVariant(Button::Variant::Filled);
     m_btn_ok->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_btn_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
         EndModal(wxID_OK);

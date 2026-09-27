@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GUI_Utils.hpp"
+#include "Widgets/MD3Dialog.hpp"
 
 #include <vector>
 #include <map>
@@ -8,7 +9,7 @@
 
 class TabCtrl;
 class SwitchButton;
-class TextInput;
+class SearchField;
 class CheckBox;
 class Label;
 class Button;
@@ -19,7 +20,7 @@ class Preset;
 
 namespace GUI {
 
-class UserPresetsDialog : public DPIDialog
+class UserPresetsDialog : public MD3Dialog
 {
 public:
     UserPresetsDialog(wxWindow * parent);
@@ -64,7 +65,7 @@ private:
 private:
     TabCtrl * m_tab_ctrl;
     SwitchButton * m_switch_button;
-    TextInput * m_search;
+    SearchField * m_search;
     wxPanel * m_empty_panel;
     wxScrolledWindow * m_scrolled;
     std::map<std::string, wxSizer *> m_preset_sizers;

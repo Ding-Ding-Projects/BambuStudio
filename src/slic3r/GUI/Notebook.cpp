@@ -5,18 +5,68 @@
 #include "GUI_App.hpp"
 #include "wxExtensions.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 //BBS set font size
 #include "Widgets/Label.hpp"
 
+#include <algorithm>
 #include <wx/button.h>
+#include <wx/dcbuffer.h>
 #include <wx/sizer.h>
 
 namespace {
 constexpr int btn_width_icon      = 40;
 constexpr int btn_width_label_min = 48;
 constexpr int btn_width_label_max = 136;
-constexpr int btn_height          = 36;
+constexpr int selection_line_inset  = 12;
+constexpr int tab_bottom_space      = 4;
+// Kit per-tab horizontal padding (TabBar.jsx padding '0 16px'); the compact
+// density padding (10) reads too tight against the kit's 16px cells.
+constexpr int tab_horizontal_padding = 16;
+// Active-indicator thickness comes from the shared chrome metric so the tab bar
+// stays in lock-step with the kit (MD3::Metrics::tab_active_indicator == 3).
+
+// Kit workspace-tab glyph size (navigation/TabBar.jsx: Material Symbols at 20px).
+// This is a logical/design px value; MaterialIcon handles the DPI conversion.
+constexpr int tab_glyph_px = 20;
+
+// Map a legacy workspace-tab raster key to its kit Material Symbols glyph.
+//
+// MainFrame passes the SAME 'tab_*_active' key for both the active and inactive
+// slots, so the icon never toggled its FILL/outline state. The vendored Material
+// Symbols Outlined face is static (no FILL axis), so we keep a single glyph per
+// tab and express active vs inactive purely by colour + label weight in
+// StyleButton (Primary/600 active, OnSurfaceVariant/400 inactive) -- never a
+// FILL 0->1 swap. Settings sub-tabs (Tab.cpp uses 'cog'/'spool') and the trailing
+// 'settings' navigation action are included so the whole chrome tab bar is glyph
+// driven. Returns 0 for any key without a mapping, leaving that button on its
+// raster ScalableBitmap icon (the same fallback used when the font is missing).
+uint32_t tab_glyph_for(const std::string &bmp_name)
+{
+    struct Entry { const char *key; uint32_t glyph; };
+    static const Entry table[] = {
+        {"tab_home_active",         MaterialIcon::Home},
+        {"tab_3d_active",           MaterialIcon::ViewInAr},
+        {"tab_preview_active",      MaterialIcon::Layers},
+        {"tab_monitor_active",      MaterialIcon::Cast},
+        {"tab_multi_active",        MaterialIcon::Devices},
+        {"tab_auxiliary_avtice",    MaterialIcon::FolderOpen}, // legacy key spelling in MainFrame
+        {"tab_auxiliary_active",    MaterialIcon::FolderOpen}, // corrected spelling, forward-compat
+        {"tab_calibration_active",  MaterialIcon::Build},
+        {"tab_filament_active",     MaterialIcon::Palette},
+        // Settings / parameters sub-tabs + the trailing Settings nav action.
+        {"settings",                MaterialIcon::Settings},
+        {"cog",                     MaterialIcon::Settings},
+        {"notebook_presets_active", MaterialIcon::Settings},
+        {"spool",                   MaterialIcon::Palette},    // filament-settings sub-tab
+    };
+    for (const auto &e : table)
+        if (bmp_name == e.key)
+            return e.glyph;
+    return 0;
+}
 }; // namespace
 
 wxDEFINE_EVENT(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, wxCommandEvent);
@@ -28,20 +78,14 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
     SetDoubleBuffered(true);
 #endif //__WINDOWS__
 
-    wxColour default_btn_bg;
-#ifdef __APPLE__
-    default_btn_bg = wxColour("#3B4446"); // Gradient #414B4E
-#else
-    default_btn_bg = wxColour("#2D2D30"); // Gradient #414B4E
-#endif
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-   
-    SetBackgroundColour(default_btn_bg);
-
-    int em = em_unit(this);// Slic3r::GUI::wxGetApp().em_unit();
-    // BBS: no gap
-    m_btn_margin = 0; // std::lround(0.3 * em);
-    m_line_margin = std::lround(0.1 * em);
+    m_btn_margin = 0;
+    m_line_margin = FromDIP(MD3::Metrics::tab_active_indicator);
+    const int navigation_height = FromDIP(MD3::Metrics::navigation_bar_height);
+    SetMinSize({-1, navigation_height});
+    SetMaxSize({-1, navigation_height});
+    SetName(_L("Navigation rail"));
 
     m_sizer = new wxBoxSizer(wxHORIZONTAL);
     this->SetSizer(m_sizer);
@@ -49,7 +93,12 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
     // a horizontal box sizer (instead of a flex grid) so the tab buttons can
     // shrink Chrome-style when the window is too narrow
     m_buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_sizer->Add(m_buttons_sizer, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxBOTTOM, m_btn_margin);
+    m_sizer->Add(m_buttons_sizer, 1, wxALIGN_TOP | wxLEFT, m_btn_margin);
+
+    // Navigation actions stay fixed at the trailing edge instead of consuming
+    // one of the equal-width workspace tab slots.
+    m_actions_sizer = new wxBoxSizer(wxHORIZONTAL);
+    m_sizer->Add(m_actions_sizer, 0, wxALIGN_CENTER_VERTICAL);
 
     if (side_tools != NULL) {
         for (size_t idx = 0; idx < side_tools->GetItemCount(); idx++) {
@@ -62,63 +111,130 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
         m_sizer->Add(side_tools, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxBOTTOM, m_btn_margin);
     }
 
-    // BBS: disable custom paint
-    //this->Bind(wxEVT_PAINT, &ButtonsListCtrl::OnPaint, this);
-    Bind(wxEVT_SYS_COLOUR_CHANGED, [this](auto& e){
+    Bind(wxEVT_PAINT, &ButtonsListCtrl::OnPaint, this);
+    Bind(wxEVT_SYS_COLOUR_CHANGED, [this](wxSysColourChangedEvent& event) {
+        ApplyTheme();
+        event.Skip();
     });
+
+    ApplyTheme();
 }
 
 void ButtonsListCtrl::OnPaint(wxPaintEvent&)
 {
-    //Slic3r::GUI::wxGetApp().UpdateDarkUI(this);
-    const wxSize sz = GetSize();
-    wxPaintDC dc(this);
+    wxAutoBufferedPaintDC dc(this);
+    const wxSize size = GetClientSize();
+    // Kit tab-bar background is the base Surface role (not sc-lowest), so the
+    // strip reads as the workspace shell rather than a raised card.
+    const wxColour surface = StateColor::semantic(MD3::Role::Surface);
 
-    if (m_selection < 0 || m_selection >= (int)m_pageButtons.size())
+    dc.SetBackground(wxBrush(surface));
+    dc.Clear();
+
+    // Keep a quiet boundary between navigation and the active workspace.
+    const int divider_width = std::max(1, FromDIP(1));
+    dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), divider_width));
+    dc.DrawLine(0, size.y - divider_width, size.x, size.y - divider_width);
+
+    if (m_selection < 0 || m_selection >= int(m_pageButtons.size()))
         return;
 
-    wxColour selected_btn_bg("#1F8EEA");
-    wxColour default_btn_bg("#3B4446"); // Gradient #414B4E
-    const wxColour& btn_marker_color = Slic3r::GUI::wxGetApp().get_color_hovered_btn_label();
+    // Selection remains on the surface; only this underline carries emphasis.
+    // The tab bar is chrome rendered ABOVE the per-workspace data-scheme scope,
+    // so its accent is ALWAYS the brand/seed value (MD3 §4/§13) -- it never
+    // adopts the Preview/Device scheme even while those workspaces are active.
+    const wxRect button_rect = m_pageButtons[m_selection]->GetRect();
+    const int inset = FromDIP(selection_line_inset);
+    const int indicator_height = m_line_margin;
+    // §4: a 3px underline with only the TOP corners rounded (radius 3px 3px 0 0),
+    // anchored flush to the bar's bottom edge. wxDC has no per-corner radius, so
+    // the shape is drawn at double height with a full radius and its lower
+    // (rounded) half is clipped away below the client area, leaving crisp square
+    // bottom corners flush to the bottom while the visible top corners stay round.
+    wxRect indicator(button_rect.x + inset,
+                     size.y - indicator_height,
+                     std::max(1, button_rect.width - 2 * inset),
+                     indicator_height * 2);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand)));
+    dc.DrawRoundedRectangle(indicator, indicator_height);
+}
 
-    // highlight selected notebook button
+void ButtonsListCtrl::StyleButton(Button* button, bool selected)
+{
+    // Tabs render transparent over the bar: the Normal fill matches the bar
+    // Surface, hover lifts to SurfaceContainerLow, and there is no distinct
+    // pressed fill (per kit). Selection is carried by the primary text colour
+    // plus the active indicator, not a filled tab.
+    //
+    // This is the intended MD3 secondary-tab spec, not a behaviour-preserving
+    // port, so two legacy interaction states are deliberately absent:
+    //  - No Pressed fill entry. While a tab is pressed it is also hovered, and
+    //    StateColor::colorForStates() matches the Hovered entry as a subset of
+    //    Pressed|Hovered, so the SurfaceContainerLow hover fill persists through
+    //    the press -- the omission is not a loss of feedback, only of a distinct
+    //    stronger pressed tint.
+    //  - Inactive tab labels stay OnSurfaceVariant across all states (no Hovered
+    //    label-darken). Hover on an inactive tab is signalled by the background
+    //    lift above rather than by darkening the label.
+    const wxColour surface = StateColor::semantic(MD3::Role::Surface);
+    const StateColor background(
+        std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Hovered},
+        std::pair{surface, (int) StateColor::Normal});
+    // The selected-tab label, like the active indicator, is chrome and therefore
+    // pinned to the brand accent (ColorScheme::Brand) regardless of the active
+    // workspace scheme -- see the note in OnPaint and MD3 §4/§13.
+    const StateColor text = selected
+        ? StateColor(
+            std::pair{StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled},
+            std::pair{StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand), (int) StateColor::Normal})
+        : StateColor(
+            std::pair{StateColor::semantic(MD3::Role::Outline), (int) StateColor::Disabled},
+            std::pair{StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Normal});
 
-    for (int idx = 0; idx < int(m_pageButtons.size()); idx++) {
-        Button* btn = m_pageButtons[idx];
+    button->SetBackgroundColor(background);
+    button->SetTextColor(text);
+    button->SetSelected(selected);
+    // §4.3: the tab hover/selection fill is a flat, full-cell rectangle that
+    // spans the tab cell edge-to-edge -- NOT a rounded pill inset in the cell.
+    // wxDC draws a radius-0 rounded rect as a plain rectangle, so pinning the
+    // tab Button corner radius to 0 yields the kit's flat hover layer.
+    button->SetCornerRadius(0);
+    // Kit tab metrics (TabBar.jsx): 16px per-side horizontal padding. The
+    // icon-label gap is a separate 8px handled inside Button::messureSize and
+    // is already correct, so only the horizontal padding moves off the compact
+    // density value (10). Vertical padding stays at the compact gap since the
+    // tab height is pinned by SetMinSize.
+    button->SetPaddingSize({FromDIP(tab_horizontal_padding), FromDIP(MD3::Metrics::active().gap)});
 
-        btn->SetBackgroundColor(idx == m_selection ? selected_btn_bg : default_btn_bg);
-
-        wxPoint pos = btn->GetPosition();
-        wxSize size = btn->GetSize();
-        const wxColour& clr = idx == m_selection ? btn_marker_color : default_btn_bg;
-        dc.SetPen(clr);
-        dc.SetBrush(clr);
-        dc.DrawRectangle(pos.x, pos.y + size.y, size.x, sz.y - size.y);
+    // Kit tab label is body-s 13.5px: active SemiBold/600, inactive Normal/400.
+    // Head_13 already carries the 13.5px/600 face (px-pinned), so clone it and
+    // drop to weight 400 for inactive tabs -- this preserves the design px size
+    // in both states, unlike the previous em-driven normal_font().
+    wxFont font = Label::Head_13;
+    if (!selected) {
+        font.SetWeight(wxFONTWEIGHT_NORMAL);
+        font.SetNumericWeight(400);
     }
+    button->SetFont(font);
+}
 
-#if 0
-    // highlight selected mode button
-    if (m_mode_sizer) {
-        const std::vector<ModeButton*>& mode_btns = m_mode_sizer->get_btns();
-        for (int idx = 0; idx < int(mode_btns.size()); idx++) {
-            ModeButton* btn = mode_btns[idx];
-            btn->SetBackgroundColor(btn->is_selected() ? selected_btn_bg : default_btn_bg);
+void ButtonsListCtrl::ApplyTheme()
+{
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    for (size_t idx = 0; idx < m_pageButtons.size(); ++idx)
+        StyleButton(m_pageButtons[idx], int(idx) == m_selection);
+    for (Button *button : m_actionButtons)
+        StyleButton(button, false);
+    Refresh(false);
+}
 
-            //wxPoint pos = btn->GetPosition();
-            //wxSize size = btn->GetSize();
-            //const wxColour& clr = btn->is_selected() ? btn_marker_color : default_btn_bg;
-            //dc.SetPen(clr);
-            //dc.SetBrush(clr);
-            //dc.DrawRectangle(pos.x, pos.y + size.y, size.x, sz.y - size.y);
-        }
-    }
-#endif
-
-    // Draw orange bottom line
-
-    dc.SetPen(btn_marker_color);
-    dc.SetBrush(btn_marker_color);
-    dc.DrawRectangle(1, sz.y - m_line_margin, sz.x, m_line_margin);
+void ButtonsListCtrl::SetColorScheme(MD3::ColorScheme scheme)
+{
+    if (m_color_scheme == scheme)
+        return;
+    m_color_scheme = scheme;
+    ApplyTheme();
 }
 
 void ButtonsListCtrl::UpdateMode()
@@ -130,14 +246,26 @@ void ButtonsListCtrl::Rescale()
 {
     //m_mode_sizer->msw_rescale();
     int em = em_unit(this);
+    Button* selected_button = m_selection >= 0 && m_selection < int(m_pageButtons.size())
+        ? m_pageButtons[m_selection]
+        : nullptr;
     for (Button* btn : m_pageButtons) {
+        const int tab_height = FromDIP(MD3::Metrics::navigation_bar_height - tab_bottom_space);
         // BBS: keep the Chrome-style shrinkable range in sync with the DPI scale.
         if (btn->GetLabel().empty()) {
-            btn->SetMinSize({btn_width_icon * em / 10, btn_height * em / 10});
+            btn->SetMinSize({btn_width_icon * em / 10, tab_height});
         } else {
-            btn->SetMinSize({btn_width_label_min * em / 10, btn_height * em / 10});
-            btn->SetMaxSize({btn_width_label_max * em / 10, btn_height * em / 10});
+            btn->SetMinSize({btn_width_label_min * em / 10, tab_height});
+            btn->SetMaxSize({btn_width_label_max * em / 10, tab_height});
         }
+        StyleButton(btn, btn == selected_button);
+        btn->Rescale();
+    }
+    for (Button *btn : m_actionButtons) {
+        const int tab_height = FromDIP(MD3::Metrics::navigation_bar_height - tab_bottom_space);
+        btn->SetMinSize({btn_width_label_min * em / 10, tab_height});
+        btn->SetMaxSize({btn_width_label_max * em / 10, tab_height});
+        StyleButton(btn, false);
         btn->Rescale();
     }
 
@@ -147,46 +275,34 @@ void ButtonsListCtrl::Rescale()
     //m_buttons_sizer->SetVGap(m_btn_margin);
     //m_buttons_sizer->SetHGap(m_btn_margin);
 
+    const int navigation_height = FromDIP(MD3::Metrics::navigation_bar_height);
+    SetMinSize({-1, navigation_height});
+    SetMaxSize({-1, navigation_height});
+    m_line_margin = FromDIP(MD3::Metrics::tab_active_indicator);
     m_sizer->Layout();
+    Refresh(false);
 }
 
 void ButtonsListCtrl::SetSelection(int sel)
 {
-    if (m_selection == sel)
+    if (sel < 0 || sel >= int(m_pageButtons.size()))
         return;
-    // BBS: change button color
-    wxColour selected_btn_bg("#00AE42");    // Gradient #00AE42
-    if (m_selection >= 0) {
-        StateColor bg_color = StateColor(
-        std::pair{wxColour(107, 107, 107), (int) StateColor::Hovered},
-        std::pair{wxColour(59, 68, 70), (int) StateColor::Normal});
-        m_pageButtons[m_selection]->SetBackgroundColor(bg_color);
-        StateColor text_color = StateColor(
-        std::pair{wxColour(254,254, 254), (int) StateColor::Normal}
-        );
-        m_pageButtons[m_selection]->SetSelected(false);
-        m_pageButtons[m_selection]->SetTextColor(text_color);
+    if (m_selection == sel) {
+        StyleButton(m_pageButtons[sel], true);
+        Refresh(false);
+        return;
     }
+    if (m_selection >= 0 && m_selection < int(m_pageButtons.size()))
+        StyleButton(m_pageButtons[m_selection], false);
+
     m_selection = sel;
-
-    StateColor bg_color = StateColor(
-        std::pair{wxColour(0, 174, 66), (int) StateColor::Hovered},
-        std::pair{wxColour(0,174, 66), (int) StateColor::Normal});
-    m_pageButtons[m_selection]->SetBackgroundColor(bg_color);
-
-    StateColor text_color = StateColor(
-        std::pair{wxColour(254, 254, 254), (int) StateColor::Normal}
-        );
-    m_pageButtons[m_selection]->SetSelected(true);
-    m_pageButtons[m_selection]->SetTextColor(text_color);
-    
-    Refresh();
+    StyleButton(m_pageButtons[m_selection], true);
+    Refresh(false);
 }
 
 bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /* = false*/, const std::string &bmp_name /* = ""*/, const std::string &inactive_bmp_name)
 {
     Button * btn = new Button(this, text.empty() ? text : " " + text, bmp_name, wxNO_BORDER);
-    btn->SetCornerRadius(0);
 
     // always show the tab name as a tooltip so the user can identify a tab
     // by hovering even when it is shrunk and the label is truncated with an ellipsis.
@@ -194,28 +310,30 @@ bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /*
     if (!text.empty()) btn->SetToolTip(text);
 
     int em = em_unit(this);
+    const int tab_height = FromDIP(MD3::Metrics::navigation_bar_height - tab_bottom_space);
     // BBS set size for button
     //  Chrome-style labeled tabs may shrink down to a small floor when crowded and
     //  grow up to the preferred width (136) when there is room, so the side tools
     //  (slice/print) on the right always stay visible. Icon-only tabs keep a fixed size.
     if (text.empty()) {
-        btn->SetMinSize({btn_width_icon * em / 10, btn_height * em / 10});
+        btn->SetMinSize({btn_width_icon * em / 10, tab_height});
     } else {
         btn->SetAllowShrink(true);
-        btn->SetMinSize({btn_width_label_min * em / 10, btn_height * em / 10});
-        btn->SetMaxSize({btn_width_label_max * em / 10, btn_height * em / 10});
+        btn->SetMinSize({btn_width_label_min * em / 10, tab_height});
+        btn->SetMaxSize({btn_width_label_max * em / 10, tab_height});
     }
 
-    StateColor bg_color = StateColor(
-        std::pair{wxColour(107, 107, 107), (int) StateColor::Hovered},
-        std::pair{wxColour(59, 68, 70), (int) StateColor::Normal});
-
-    btn->SetBackgroundColor(bg_color);
-    StateColor text_color = StateColor(
-        std::pair{wxColour(254,254, 254), (int) StateColor::Normal});
-    btn->SetTextColor(text_color);
+    StyleButton(btn, bSelect);
     btn->SetInactiveIcon(inactive_bmp_name);
-    btn->SetSelected(false);
+    // Kit tab bar draws a Material Symbols glyph (20px) instead of the legacy
+    // 'tab_*_active' raster. The Button glyph path recolours the static face via
+    // text_color (Primary when active / OnSurfaceVariant when inactive, set in
+    // StyleButton) rather than a FILL swap. The raster active/inactive icons the
+    // Button was constructed with remain as the capability-gated fallback: when
+    // MaterialIcon::available() is false, render()/messureSize() ignore the glyph
+    // and use those bitmaps instead.
+    if (const uint32_t glyph = tab_glyph_for(bmp_name))
+        btn->SetGlyph(glyph, tab_glyph_px);
     btn->Bind(wxEVT_BUTTON, [this, btn](wxCommandEvent& event) {
         if (auto it = std::find(m_pageButtons.begin(), m_pageButtons.end(), btn); it != m_pageButtons.end()) {
             auto sel = it - m_pageButtons.begin();
@@ -237,9 +355,41 @@ bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /*
     return true;
 }
 
+void ButtonsListCtrl::AddAction(const wxString &text, const std::string &bmp_name, std::function<void()> action)
+{
+    Button *button = new Button(this, text.empty() ? text : " " + text, bmp_name, wxNO_BORDER);
+    button->SetToolTip(text);
+    button->SetAllowShrink(true);
+    const int em = em_unit(this);
+    const int tab_height = FromDIP(MD3::Metrics::navigation_bar_height - tab_bottom_space);
+    button->SetMinSize({btn_width_label_min * em / 10, tab_height});
+    button->SetMaxSize({btn_width_label_max * em / 10, tab_height});
+    StyleButton(button, false);
+    // Trailing nav actions (e.g. the Settings gear) share the tab-bar glyph
+    // treatment; the raster icon stays as the capability-gated fallback.
+    if (const uint32_t glyph = tab_glyph_for(bmp_name))
+        button->SetGlyph(glyph, tab_glyph_px);
+    button->Bind(wxEVT_BUTTON, [action = std::move(action)](wxCommandEvent &) {
+        if (action)
+            action();
+    });
+    Slic3r::GUI::wxGetApp().UpdateDarkUI(button);
+    m_actionButtons.push_back(button);
+    m_actions_sizer->Add(button, wxSizerFlags(0).Align(wxALIGN_CENTER_VERTICAL));
+    m_sizer->Layout();
+}
+
 void ButtonsListCtrl::RemovePage(size_t n)
 {
+    if (n >= m_pageButtons.size())
+        return;
+
     Button* btn = m_pageButtons[n];
+    if (int(n) == m_selection)
+        m_selection = -1;
+    else if (int(n) < m_selection)
+        --m_selection;
+
     m_pageButtons.erase(m_pageButtons.begin() + n);
     m_buttons_sizer->Remove(n);
 #if __WXOSX__

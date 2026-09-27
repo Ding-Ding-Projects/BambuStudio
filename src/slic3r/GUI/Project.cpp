@@ -1,5 +1,6 @@
 #include "Tab.hpp"
 #include "Project.hpp"
+#include "WorkspacePanel.hpp"
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/Model.hpp"
 #include "libslic3r/Format/bbs_3mf.hpp"
@@ -63,18 +64,37 @@ ProjectPanel::ProjectPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, 
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
+    auto *view_actions = new wxBoxSizer(wxHORIZONTAL);
+    auto *online_button = new wxButton(this, wxID_ANY, _L("Online projects"));
+    auto *workspace_button = new wxButton(this, wxID_ANY, _L("Workspace"));
+    view_actions->Add(online_button, 0, wxALL, FromDIP(4));
+    view_actions->Add(workspace_button, 0, wxALL, FromDIP(4));
+    main_sizer->Add(view_actions, 0, wxEXPAND | wxALL, FromDIP(4));
+
     m_browser = WebView::CreateWebView(this, m_project_home_url, "Project");
+    m_workspace_panel = new WorkspacePanel(this);
     if (m_browser == nullptr) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format("load web view of project page failed");
-        return;
+        main_sizer->Add(m_workspace_panel, 1, wxEXPAND);
+    } else {
+        main_sizer->Add(m_browser, 1, wxEXPAND);
+        main_sizer->Add(m_workspace_panel, 1, wxEXPAND);
+        m_workspace_panel->Hide();
+        m_browser->Bind(wxEVT_WEBVIEW_NAVIGATED, &ProjectPanel::on_navigated, this);
+        m_browser->Bind(wxEVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED, &ProjectPanel::OnScriptMessage, this, m_browser->GetId());
+        Bind(wxEVT_WEBVIEW_NAVIGATING, &ProjectPanel::onWebNavigating, this, m_browser->GetId());
+        Bind(wxEVT_WEBVIEW_NEWWINDOW, &ProjectPanel::OnNewWindow, this);
+        Bind(EVT_PROJECT_RELOAD, &ProjectPanel::on_reload, this);
     }
-    //m_browser->Hide();
-    main_sizer->Add(m_browser, wxSizerFlags().Expand().Proportion(1));
-    m_browser->Bind(wxEVT_WEBVIEW_NAVIGATED, &ProjectPanel::on_navigated, this);
-    m_browser->Bind(wxEVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED, &ProjectPanel::OnScriptMessage, this, m_browser->GetId());
-    Bind(wxEVT_WEBVIEW_NAVIGATING, &ProjectPanel::onWebNavigating, this, m_browser->GetId());
-    Bind(wxEVT_WEBVIEW_NEWWINDOW, &ProjectPanel::OnNewWindow, this);
-    Bind(EVT_PROJECT_RELOAD, &ProjectPanel::on_reload, this);
+    online_button->Enable(m_browser != nullptr);
+    online_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        if (!m_browser) return;
+        m_workspace_panel->Hide(); m_browser->Show(); Layout();
+    });
+    workspace_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        if (m_browser) m_browser->Hide();
+        m_workspace_panel->Show(); Layout();
+    });
 
     SetSizer(main_sizer);
     Layout();
@@ -82,6 +102,15 @@ ProjectPanel::ProjectPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, 
 }
 
 ProjectPanel::~ProjectPanel() {}
+
+bool ProjectPanel::open_workspace(const std::filesystem::path &path)
+{
+    if (!m_workspace_panel || !m_workspace_panel->open_bundle(path)) return false;
+    if (m_browser) m_browser->Hide();
+    m_workspace_panel->Show();
+    Layout();
+    return true;
+}
 
 std::string trim(const std::string &str, const std::string &charsToTrim)
 {
@@ -840,12 +869,11 @@ void ProjectPanel::OnScriptMessage(wxWebViewEvent& evt)
 
 void ProjectPanel::update_model_data()
 {
-    Model model = wxGetApp().plater()->model();
     clear_model_info();
 
     //basics info
     //Note: Under the master branch, model_info will never return nullptr, but under the GitHub branch, it might. The reason is unclear.
-    if (model.model_info == nullptr) {
+    if (wxGetApp().plater()->model().model_info == nullptr) {
         json payload = json::object();
         payload["command"] = "show_3mf_info";
         payload["sequence_id"] = std::to_string(ProjectPanel::m_sequence_id++);
@@ -1045,7 +1073,7 @@ bool ProjectPanel::is_editing_page() const
 
 bool ProjectPanel::Show(bool show)
 {
-    if (show) update_model_data();
+    if (show && m_browser && m_browser->IsShown()) update_model_data();
     return wxPanel::Show(show);
 }
 

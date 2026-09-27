@@ -3,8 +3,13 @@
 #include "libslic3r/Model.hpp"
 
 #include "GUI_Factories.hpp"
+#include "Appearance/AppearanceEditorPopover.hpp"
+#include "Export/ExportDatasets.hpp"
+#include "Export/ExportDialog.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 #include "I18N.hpp"
 #include "Plater.hpp"
 #include "ObjectDataViewModel.hpp"
@@ -765,7 +770,12 @@ wxMenuItem* MenuFactory::append_menu_item_settings(wxMenu* menu_)
 
     // Add full settings list
     auto  menu_item = new wxMenuItem(menu, wxID_ANY, menu_name);
-    menu_item->SetBitmap(create_scaled_bitmap("cog"));
+    // Wave 3 (object-outliner-tree-icons): the settings submenu leading icon is
+    // the MD3 settings glyph (OnSurfaceVariant); fall back to the legacy cog
+    // raster when the icon face is unavailable.
+    menu_item->SetBitmap(MaterialIcon::available()
+                             ? MaterialIcon::bitmap(object_list, MaterialIcon::Settings, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+                             : create_scaled_bitmap("cog", object_list));
     menu_item->SetSubMenu(create_settings_popupmenu(menu, is_object_settings, item));
 
     return menu->Append(menu_item);
@@ -889,6 +899,14 @@ wxMenuItem* MenuFactory::append_menu_item_fix_through_netfabb(wxMenu* menu)
         []() {return plater()->can_fix_through_netfabb(); }, plater());
 
     return menu_item;
+}
+
+void MenuFactory::append_menu_item_export_object_list(wxMenu* menu)
+{
+    // TRN: Context-menu item exporting the whole object list table.
+    append_menu_item(menu, wxID_ANY, _L("Export object list") + dots, _L("Export every object's name, parts, instances and size as JSON, CSV, YAML, TOML, XML, Markdown, HTML or an archive"),
+        [](wxCommandEvent&) { ExportDialog::run(plater(), Export::object_list_dataset(plater()->model())); }, "", nullptr,
+        []() { return plater() != nullptr && !plater()->model().objects.empty(); }, m_parent);
 }
 
 void MenuFactory::append_menu_item_export_stl(wxMenu* menu, bool is_mulity_menu)
@@ -1286,6 +1304,7 @@ void MenuFactory::create_common_object_menu(wxMenu* menu)
     // BBS
     append_menu_item_reload_from_disk(menu);
     append_menu_item_export_stl(menu);
+    append_menu_item_export_object_list(menu);
     // "Scale to print volume" makes a sense just for whole object
     append_menu_item_scale_selection_to_fit_print_volume(menu);
 
@@ -1368,6 +1387,7 @@ void MenuFactory::create_bbl_object_menu()
     append_menu_item_reload_from_disk(&m_object_menu);
     append_menu_item_replace_with_stl(&m_object_menu);
     append_menu_item_export_stl(&m_object_menu);
+    append_menu_item_export_object_list(&m_object_menu);
 }
 
 void MenuFactory::create_bbl_assemble_object_menu()
@@ -1519,7 +1539,7 @@ void MenuFactory::create_filament_action_menu(wxMenu* menu, int active_filament_
     };
 
     append_menu_item(
-        menu, wxID_ANY, _L("Edit"), "", [](wxCommandEvent&) {
+        menu, wxID_ANY, _L("Edit"), _L("Edit this filament preset"), [](wxCommandEvent&) {
             if (plater())
                 plater()->sidebar().edit_filament();
         }, "", nullptr, []() { return true; }, nullptr);
@@ -1527,37 +1547,43 @@ void MenuFactory::create_filament_action_menu(wxMenu* menu, int active_filament_
     auto* delete_item = append_menu_item(
         menu, wxID_ANY, _L("Delete"), _L("Delete this filament"), [](wxCommandEvent&) {
             if (plater())
-                plater()->sidebar().delete_filament(kSidebarContextMenuFilamentId);
+                plater()->sidebar().delete_filament_with_confirm(kSidebarContextMenuFilamentId);
         }, "", nullptr, []() { return true; }, nullptr);
     delete_item->Enable(plater() && plater()->sidebar().combos_filament().size() > 1);
 
     const auto reason = decompose_color_block_reason(active_filament_menu_id);
     auto* decompose_item = append_menu_item(
-        menu, wxID_ANY, decompose_color_menu_label(reason), "", [](wxCommandEvent&) {
+        menu, wxID_ANY, decompose_color_menu_label(reason),
+        _L("Separate this filament into its component colors"), [](wxCommandEvent&) {
             if (plater())
                 plater()->sidebar().decompose_filament_color(kSidebarContextMenuFilamentId);
         }, "", nullptr, []() { return true; }, nullptr);
     decompose_item->Enable(can_decompose());
 
     wxMenu* sub_menu = new wxMenu();
-    std::vector<wxBitmap*> icons = get_extruder_color_icons(true);
-    int filaments_cnt = static_cast<int>(icons.size());
+    const std::vector<wxBitmap*> icons = get_extruder_color_icons(true);
+    const auto& presets = wxGetApp().preset_bundle->filament_presets;
+    const int filaments_cnt = static_cast<int>(presets.size());
     for (int i = 0; i < filaments_cnt; i++) {
         if (i == active_filament_menu_id)
             continue;
 
-        auto preset = wxGetApp().preset_bundle->filaments.find_preset(wxGetApp().preset_bundle->filament_presets[i]);
+        auto preset = wxGetApp().preset_bundle->filaments.find_preset(presets[i]);
         wxString item_name = preset ? from_u8(preset->label(false)) : wxString::Format(_L("Filament %d"), i + 1);
 
-        append_menu_item(sub_menu, wxID_ANY, item_name, "",
+        append_menu_item(sub_menu, wxID_ANY, item_name,
+            _L("Merge this filament into the selected filament"),
             [i](wxCommandEvent&) {
                 if (plater())
                     plater()->sidebar().change_filament(kSidebarContextMenuFilamentId, i);
-            }, *icons[i], menu, []() { return true; }, nullptr);
+            }, i < static_cast<int>(icons.size()) && icons[i] ? *icons[i] : wxNullBitmap,
+            menu, []() { return true; }, nullptr);
     }
-    auto* merge_item = append_submenu(menu, sub_menu, wxID_ANY, _L("Merge with"), "", "",
+    auto* merge_item = append_submenu(menu, sub_menu, wxID_ANY, _L("Merge with"),
+        _L("Choose the filament that will replace this one"), "",
         []() { return true; }, nullptr);
-    merge_item->Enable(filaments_cnt > 1);
+    merge_item->Enable(active_filament_menu_id >= 0 &&
+                       active_filament_menu_id < filaments_cnt && filaments_cnt > 1);
 }
 
 //BBS: add part plate related logic
@@ -1726,6 +1752,7 @@ wxMenu* MenuFactory::object_menu()
     append_menu_item_edit_text(&m_object_menu);
     append_menu_item_edit_svg(&m_object_menu);
     append_menu_item_change_filament(&m_object_menu);
+    AppearanceEditor::append_edit_appearance_item(m_object_menu, "object-list.row", nullptr);
     {
         NetworkAgent* agent = GUI::wxGetApp().getAgent();
         if (agent) agent->track_update_property("object_menu", std::to_string(++object_menu_count));
@@ -1748,6 +1775,7 @@ wxMenu* MenuFactory::part_menu()
     append_menu_items_convert_unit(&m_part_menu);
     append_menu_item_change_filament(&m_part_menu);
     append_menu_item_per_object_settings(&m_part_menu);
+    AppearanceEditor::append_edit_appearance_item(m_part_menu, "object-list.row", nullptr);
     {
         NetworkAgent* agent = GUI::wxGetApp().getAgent();
         if (agent) agent->track_update_property("part_menu", std::to_string(++part_menu_count));
@@ -1875,6 +1903,7 @@ wxMenu* MenuFactory::multi_selection_menu()
         append_menu_item_per_object_process(menu);
     }
 
+    AppearanceEditor::append_edit_appearance_item(*menu, "object-list.row", nullptr);
     {
         NetworkAgent* agent = GUI::wxGetApp().getAgent();
         if (agent) agent->track_update_property("multi_selection_menu", std::to_string(++multi_selection_menu_count));
@@ -1912,6 +1941,7 @@ wxMenu *MenuFactory::filament_action_menu(int active_filament_menu_id) {
     // popup so the menu is not destroyed while PopupMenu is running.
     m_filament_popup_menu = std::make_unique<wxMenu>();
     create_filament_action_menu(m_filament_popup_menu.get(), active_filament_menu_id);
+    AppearanceEditor::append_edit_appearance_item(*m_filament_popup_menu, "sidebar.filament-row", nullptr);
     return m_filament_popup_menu.get();
 }
 
@@ -1921,6 +1951,7 @@ wxMenu* MenuFactory::plate_menu()
 {
     append_menu_item_locked(&m_plate_menu);
     append_menu_item_plate_name(&m_plate_menu);
+    AppearanceEditor::append_edit_appearance_item(m_plate_menu, "object-list.plate", nullptr);
     append_menu_item_show_labels(&m_plate_menu);
     {
         NetworkAgent* agent = GUI::wxGetApp().getAgent();

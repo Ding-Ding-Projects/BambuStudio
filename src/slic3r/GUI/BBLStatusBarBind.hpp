@@ -11,11 +11,11 @@
 #include <functional>
 #include <string>
 #include "Jobs/ProgressIndicator.hpp"
+#include "Widgets/ProgressBar.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
 
 class wxTimer;
-class wxGauge;
 class wxButton;
 class wxTimerEvent;
 class wxStatusBar;
@@ -29,7 +29,7 @@ namespace Slic3r {
 class BBLStatusBarBind : public ProgressIndicator
 {
     wxPanel *     m_self; // we cheat! It should be the base class but: perl!
-    wxGauge *     m_prog;
+    ProgressBar *     m_prog;
     Button *      m_cancelbutton;
     wxStaticText *m_status_text;
     wxStaticText *m_stext_percent;

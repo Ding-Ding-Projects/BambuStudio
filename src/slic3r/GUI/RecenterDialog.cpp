@@ -4,6 +4,7 @@
 #include <wx/dcgraph.h>
 #include <wx/dcmemory.h>
 #include <slic3r/GUI/Widgets/Label.hpp>
+#include <slic3r/GUI/Widgets/MD3DialogChrome.hpp>
 
 #define BORDER FromDIP(25)
 #define DRAW_PANEL_SIZE wxSize(FromDIP(475), FromDIP(100))
@@ -36,9 +37,7 @@ RecenterDialog::RecenterDialog(wxWindow* parent, wxWindowID id, const wxString& 
     m_button_confirm->SetCornerRadius(FromDIP(12));
     StateColor confirm_btn_bg(std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
         std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    m_button_confirm->SetBackgroundColor(confirm_btn_bg);
-    m_button_confirm->SetBorderColor(wxColour(0, 174, 66));
-    m_button_confirm->SetTextColor(*wxWHITE);
+    m_button_confirm->SetVariant(Button::Variant::Filled);
 
     m_button_close = new Button(this, _L("Close"));
     m_button_close->SetFont(Label::Body_14);
@@ -46,9 +45,7 @@ RecenterDialog::RecenterDialog(wxWindow* parent, wxWindowID id, const wxString& 
     m_button_close->SetCornerRadius(FromDIP(12));
     StateColor close_btn_bg(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Hovered),
         std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    m_button_close->SetBackgroundColor(close_btn_bg);
-    m_button_close->SetBorderColor(wxColour(38, 46, 48));
-    m_button_close->SetTextColor(wxColour(38, 46, 48));
+    m_button_close->SetVariant(Button::Variant::Outlined);
 
     button_sizer->AddStretchSpacer();
     button_sizer->Add(m_button_confirm);
@@ -61,8 +58,6 @@ RecenterDialog::RecenterDialog(wxWindow* parent, wxWindowID id, const wxString& 
 
     SetSizer(main_sizer);
 
-    CenterOnParent();
-
     this->SetSize(wxSize(DRAW_PANEL_SIZE.x, -1));
     this->SetMinSize(wxSize(DRAW_PANEL_SIZE.x, -1));
     Layout();
@@ -72,6 +67,8 @@ RecenterDialog::RecenterDialog(wxWindow* parent, wxWindowID id, const wxString& 
     m_button_close->Bind(wxEVT_BUTTON, &RecenterDialog::on_button_close, this);
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 RecenterDialog::~RecenterDialog() {}
@@ -90,7 +87,7 @@ void RecenterDialog::render(wxDC& dc) {
 
     dc.SetFont(Label::Body_14);
     dc.SetTextForeground(text_color);
-    wxPoint pos_start = wxPoint(BORDER, BORDER);
+    wxPoint pos_start = wxPoint(BORDER, MD3DialogCaption::Height(this) + BORDER);
 
     wxSize hint1_size = dc.GetTextExtent(hint1);
     wxPoint pos_hint1 = pos_start;

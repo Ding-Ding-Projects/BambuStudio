@@ -10,10 +10,12 @@
 #include "MainFrame.hpp"
 #include "format.hpp"
 #include "BitmapCache.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticLine.hpp"
 #include "Plater.hpp"
 #include "BackgroundSlicingProcess.hpp"
+#include "MsgDialog.hpp"
 
 #include <wx/dcgraph.h>
 #include <wx/sizer.h>
@@ -32,7 +34,15 @@
 
 namespace Slic3r { namespace GUI {
 
-// Helio dark palette theme colors (matching existing Helio dialogs)
+// Helio Additive dark palette — an intentional, forced-dark third-party brand
+// identity that is applied unconditionally (see SetBackgroundColour below),
+// regardless of the app's light/dark theme. These are brand and *data* colors:
+// purple = simulation, blue = optimization; success/warning/error encode run
+// status. They are therefore deliberately EXEMPT from the theme-aware MD3 token
+// migration — routing them through MD3::resolve()/StateColor::semantic() would
+// resolve to light-mode surfaces (e.g. #faf8fd) and destroy the always-dark
+// Helio look. Standard shared controls that appear inside these dialogs (e.g.
+// the green primary CTA and its white text) still use ThemeColor/MD3 tokens.
 namespace {
     // Base background: #07090C
     const wxColour HELIO_BG_BASE(7, 9, 12);
@@ -103,6 +113,8 @@ HelioHistoryDialog::HelioHistoryDialog(wxWindow* parent)
     SetMinSize(wxSize(FromDIP(700), FromDIP(600)));
     SetSize(wxSize(FromDIP(700), FromDIP(600)));
 
+    MD3DialogCaption::Adopt(this);
+
     // Load recent runs after UI is created
     load_recent_runs();
 }
@@ -157,9 +169,7 @@ void HelioHistoryDialog::create_ui()
 
     m_button_close = new Button(this, _L("Close"));
     if (m_button_close) {
-        m_button_close->SetBackgroundColor(close_btn_bg);
-        m_button_close->SetBorderColor(close_btn_border);
-        m_button_close->SetTextColor(close_btn_text);
+        m_button_close->SetVariant(Button::Variant::Outlined);
         m_button_close->SetMinSize(wxSize(FromDIP(100), FromDIP(36)));
         m_button_close->SetCornerRadius(FromDIP(6));
         m_button_close->Bind(wxEVT_LEFT_DOWN, &HelioHistoryDialog::on_close, this);
@@ -211,9 +221,7 @@ void HelioHistoryDialog::create_header(wxBoxSizer* parent_sizer)
         std::pair<wxColour, int>(HELIO_TEXT, StateColor::Normal));
 
     m_button_refresh = new Button(header_panel, _L("Refresh"));
-    m_button_refresh->SetBackgroundColor(refresh_btn_bg);
-    m_button_refresh->SetBorderColor(refresh_btn_border);
-    m_button_refresh->SetTextColor(refresh_btn_text);
+    m_button_refresh->SetVariant(Button::Variant::Outlined);
     m_button_refresh->SetMinSize(wxSize(FromDIP(100), FromDIP(32)));
     m_button_refresh->SetCornerRadius(FromDIP(6));
     m_button_refresh->Bind(wxEVT_LEFT_DOWN, &HelioHistoryDialog::on_refresh, this);
@@ -525,8 +533,7 @@ wxPanel* HelioHistoryDialog::create_run_card(wxWindow* parent, const HelioQuery:
         std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
 
     auto* download_btn = new Button(card, _L("Download GCode"));
-    download_btn->SetBackgroundColor(btn_bg);
-    download_btn->SetTextColor(btn_text);
+    download_btn->SetVariant(Button::Variant::Filled);
     download_btn->SetMinSize(wxSize(FromDIP(140), FromDIP(32)));
     download_btn->SetCornerRadius(FromDIP(4));
     download_btn->Bind(wxEVT_LEFT_DOWN, [this, run](wxMouseEvent&) {
@@ -635,8 +642,7 @@ wxPanel* HelioHistoryDialog::create_run_card(wxWindow* parent, const HelioQuery:
         std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
 
     auto* download_btn = new Button(card, _L("Download GCode"));
-    download_btn->SetBackgroundColor(btn_bg);
-    download_btn->SetTextColor(btn_text);
+    download_btn->SetVariant(Button::Variant::Filled);
     download_btn->SetMinSize(wxSize(FromDIP(140), FromDIP(32)));
     download_btn->SetCornerRadius(FromDIP(4));
     download_btn->Bind(wxEVT_LEFT_DOWN, [this, run](wxMouseEvent&) {
@@ -693,7 +699,8 @@ void HelioHistoryDialog::on_helio_completion(wxEvent& event)
 void HelioHistoryDialog::on_download_gcode(const std::string& gcode_url, const std::string& run_name)
 {
     if (gcode_url.empty()) {
-        wxMessageBox(_L("GCode URL is not available"), _L("Download Error"), wxOK | wxICON_ERROR);
+        MessageDialog dlg(this, _L("GCode URL is not available"), _L("Download Error"), wxOK | wxICON_ERROR);
+        dlg.ShowModal();
         return;
     }
 
@@ -744,32 +751,36 @@ void HelioHistoryDialog::on_download_gcode(const std::string& gcode_url, const s
                 file.Write(downloaded_content.data(), downloaded_content.size());
                 file.Close();
 
-                wxMessageBox(
+                MessageDialog dlg(this,
                     wxString::Format(_L("GCode file downloaded successfully!\n\nSaved to: %s"), wxString(save_path)),
                     _L("Download Complete"),
                     wxOK | wxICON_INFORMATION);
+                dlg.ShowModal();
 
                 BOOST_LOG_TRIVIAL(info) << "GCode file saved successfully: " << save_path;
             } else {
-                wxMessageBox(
+                MessageDialog dlg(this,
                     wxString::Format(_L("Failed to open file for writing:\n%s"), wxString(save_path)),
                     _L("Download Error"),
                     wxOK | wxICON_ERROR);
+                dlg.ShowModal();
                 BOOST_LOG_TRIVIAL(error) << "Failed to open file for writing: " << save_path;
             }
         } catch (const std::exception& e) {
-            wxMessageBox(
+            MessageDialog dlg(this,
                 wxString::Format(_L("Error saving file: %s"), wxString(e.what())),
                 _L("Download Error"),
                 wxOK | wxICON_ERROR);
+            dlg.ShowModal();
             BOOST_LOG_TRIVIAL(error) << "Error saving file: " << e.what();
         }
     } else {
-        wxMessageBox(
+        MessageDialog dlg(this,
             wxString::Format(_L("Failed to download GCode file.\n\nError: %s"),
                 wxString(error_msg.empty() ? "Unknown error" : error_msg)),
             _L("Download Error"),
             wxOK | wxICON_ERROR);
+        dlg.ShowModal();
     }
 }
 
@@ -788,7 +799,8 @@ void HelioHistoryDialog::on_view_details_opt(const HelioQuery::OptimizationRun& 
         run.name, run.status, run.printer_name, run.material_name,
         run.number_of_layers, run.quality_mean_improvement, run.quality_std_improvement);
 
-    wxMessageBox(details, _L("Optimization Details"), wxOK | wxICON_INFORMATION);
+    MessageDialog dlg(this, details, _L("Optimization Details"), wxOK | wxICON_INFORMATION);
+    dlg.ShowModal();
 }
 
 void HelioHistoryDialog::on_view_details_sim(const HelioQuery::SimulationRun& run)
@@ -806,7 +818,8 @@ void HelioHistoryDialog::on_view_details_sim(const HelioQuery::SimulationRun& ru
         run.name, run.status, run.printer_name, run.material_name,
         run.number_of_layers, run.print_outcome);
 
-    wxMessageBox(details, _L("Simulation Details"), wxOK | wxICON_INFORMATION);
+    MessageDialog dlg(this, details, _L("Simulation Details"), wxOK | wxICON_INFORMATION);
+    dlg.ShowModal();
 }
 
 wxString HelioHistoryDialog::format_time_ago(const std::chrono::system_clock::time_point& timestamp)

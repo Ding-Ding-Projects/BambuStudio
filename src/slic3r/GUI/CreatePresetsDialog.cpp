@@ -1,4 +1,6 @@
 #include "CreatePresetsDialog.hpp"
+#include "Widgets/TextInput.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -15,6 +17,10 @@
 #include "FileHelp.hpp"
 #include "Tab.hpp"
 #include "MainFrame.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 #define NAME_OPTION_COMBOBOX_SIZE wxSize(FromDIP(200), FromDIP(24))
 #define FILAMENT_PRESET_COMBOBOX_SIZE wxSize(FromDIP(300), FromDIP(24))
@@ -27,11 +33,11 @@
 #define ORIGIN_TEXT_SIZE wxSize(FromDIP(10), FromDIP(24))
 #define PRINTER_PRESET_VENDOR_SIZE wxSize(FromDIP(150), FromDIP(24))
 #define PRINTER_PRESET_MODEL_SIZE wxSize(FromDIP(280), FromDIP(24))
-#define STATIC_TEXT_COLOUR wxColour("#363636")
-#define PRINTER_LIST_COLOUR wxColour("#EEEEEE")
-#define FILAMENT_OPTION_COLOUR wxColour("#D9D9D9")
-#define SELECT_ALL_OPTION_COLOUR wxColour("#00AE42")
-#define DEFAULT_PROMPT_TEXT_COLOUR wxColour("#ACACAC")
+#define STATIC_TEXT_COLOUR StateColor::semantic(MD3::Role::OnSurface)
+#define PRINTER_LIST_COLOUR StateColor::semantic(MD3::Role::SurfaceContainer)
+#define FILAMENT_OPTION_COLOUR StateColor::semantic(MD3::Role::SurfaceContainerHighest)
+#define SELECT_ALL_OPTION_COLOUR StateColor::semantic(MD3::Role::Primary)
+#define DEFAULT_PROMPT_TEXT_COLOUR StateColor::semantic(MD3::Role::Outline)
 
 namespace Slic3r {
 namespace GUI {
@@ -241,7 +247,7 @@ static wxBoxSizer* create_checkbox(wxWindow* parent, Preset* preset, wxString& p
     ::CheckBox *  checkbox = new ::CheckBox(parent);
     sizer->Add(checkbox, 0, 0, 0);
     preset_checkbox.push_back(std::make_pair(checkbox, preset));
-    wxStaticText *preset_name_str = new wxStaticText(parent, wxID_ANY, preset_name, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    wxStaticText *preset_name_str = new Label(parent, preset_name, wxST_ELLIPSIZE_END);
     wxToolTip *   toolTip         = new wxToolTip(preset_name);
     preset_name_str->SetToolTip(toolTip);
     sizer->Add(preset_name_str, 0, wxLEFT, 5);
@@ -254,7 +260,7 @@ static wxBoxSizer *create_checkbox(wxWindow *parent, std::string &compatible_pri
     ::CheckBox *checkbox = new ::CheckBox(parent);
     sizer->Add(checkbox, 0, 0, 0);
     ptinter_compatible_filament_preset[checkbox] = std::make_pair(compatible_printer, preset);
-    wxStaticText *preset_name_str = new wxStaticText(parent, wxID_ANY, wxString::FromUTF8(compatible_printer));
+    wxStaticText *preset_name_str = new Label(parent, wxString::FromUTF8(compatible_printer));
     sizer->Add(preset_name_str, 0, wxLEFT, 5);
     return sizer;
 }
@@ -265,7 +271,7 @@ static wxBoxSizer *create_checkbox(wxWindow *parent, wxString &preset_name, std:
     ::CheckBox *checkbox = new ::CheckBox(parent);
     sizer->Add(checkbox, 0, 0, 0);
     preset_checkbox.push_back(std::make_pair(checkbox, into_u8(preset_name)));
-    wxStaticText *preset_name_str = new wxStaticText(parent, wxID_ANY, preset_name);
+    wxStaticText *preset_name_str = new Label(parent, preset_name);
     sizer->Add(preset_name_str, 0, wxLEFT, 5);
     return sizer;
 }
@@ -372,13 +378,13 @@ static wxBoxSizer *create_select_filament_preset_checkbox(wxWindow *            
     checkbox_sizer->Add(checkbox, 0, wxEXPAND | wxRIGHT, 5);
 
     wxBoxSizer *combobox_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *machine_name_str = new wxStaticText(parent, wxID_ANY, wxString::FromUTF8(compatible_printer));
+    wxStaticText *machine_name_str = new Label(parent, wxString::FromUTF8(compatible_printer));
     ComboBox *    combobox        = new ComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, 24), 0, nullptr, wxCB_READONLY);
     combobox->SetBackgroundColor(PRINTER_LIST_COLOUR);
-    combobox->SetBorderColor(*wxWHITE);
+    combobox->SetBorderColor(ThemeColor::White);
     combobox->SetLabel(_L("Select filament preset"));
     combobox->Bind(wxEVT_COMBOBOX, [combobox, checkbox, presets, &machine_filament_preset, compatible_printer](wxCommandEvent &e) {
-        combobox->SetLabelColor(*wxBLACK);
+        combobox->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
         wxString preset_name = combobox->GetStringSelection();
         checkbox->SetValue(true);
         for (Preset *preset : presets) {
@@ -603,7 +609,7 @@ CreateFilamentPresetDialog::CreateFilamentPresetDialog(wxWindow *parent)
     m_create_type.base_filament_preset = _L("Copy Current Filament Preset ");
     get_all_filament_presets();
 
-	this->SetBackgroundColour(*wxWHITE);
+	this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     this->SetSize(wxSize(FromDIP(600), FromDIP(480)));
 
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
@@ -612,11 +618,11 @@ CreateFilamentPresetDialog::CreateFilamentPresetDialog(wxWindow *parent)
 	wxBoxSizer *m_main_sizer = new wxBoxSizer(wxVERTICAL);
     // top line
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
 
-    wxStaticText *basic_infomation = new wxStaticText(this, wxID_ANY, _L("Basic Information"));
+    wxStaticText *basic_infomation = new Label(this, _L("Basic Information"));
     basic_infomation->SetFont(Label::Head_16);
     m_main_sizer->Add(basic_infomation, 0, wxLEFT, FromDIP(10));
 
@@ -626,22 +632,22 @@ CreateFilamentPresetDialog::CreateFilamentPresetDialog(wxWindow *parent)
 
     // divider line
     auto line_divider = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line_divider->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    line_divider->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(line_divider, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
 
-    wxStaticText *presets_infomation = new wxStaticText(this, wxID_ANY, _L("Add Filament Preset under this filament"));
+    wxStaticText *presets_infomation = new Label(this, _L("Add Filament Preset under this filament"));
     presets_infomation->SetFont(Label::Head_16);
     m_main_sizer->Add(presets_infomation, 0, wxLEFT | wxRIGHT, FromDIP(15));
 
     m_main_sizer->Add(create_item(FilamentOptionType::FILAMENT_PRESET), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(5));
 
-    m_filament_preset_text = new wxStaticText(this, wxID_ANY, _L("We could create the filament presets for your following printer:"), wxDefaultPosition, wxDefaultSize);
+    m_filament_preset_text = new Label(this, _L("We could create the filament presets for your following printer:"));
     m_main_sizer->Add(m_filament_preset_text, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(15));
 
     m_scrolled_preset_panel = new wxScrolledWindow(this, wxID_ANY);
     m_scrolled_preset_panel->SetMaxSize(wxSize(-1, FromDIP(350)));
-    m_scrolled_preset_panel->SetBackgroundColour(*wxWHITE);
+    m_scrolled_preset_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrolled_preset_panel->SetScrollRate(5, 5);
     m_scrolled_sizer = new wxBoxSizer(wxVERTICAL);
     m_scrolled_sizer->Add(create_item(FilamentOptionType::PRESET_FOR_PRINTER), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(5));
@@ -664,6 +670,7 @@ CreateFilamentPresetDialog::CreateFilamentPresetDialog(wxWindow *parent)
     });
 
 	wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 CreateFilamentPresetDialog::~CreateFilamentPresetDialog()
@@ -720,7 +727,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_vendor_item()
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_vendor_text = new wxStaticText(this, wxID_ANY, _L("Vendor"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_vendor_text = new Label(this, _L("Vendor"));
     optionSizer->Add(static_vendor_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -736,7 +743,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_vendor_item()
     m_filament_vendor_combobox->SetLabelColor(DEFAULT_PROMPT_TEXT_COLOUR);
     m_filament_vendor_combobox->Set(choices);
     m_filament_vendor_combobox->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
-        m_filament_vendor_combobox->SetLabelColor(*wxBLACK);
+        m_filament_vendor_combobox->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
         e.Skip();
     });
     vendor_sizer->Add(m_filament_vendor_combobox, 0, wxEXPAND | wxALL, 0);
@@ -764,7 +771,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_vendor_item()
     checkbox_sizer->Add(m_can_not_find_vendor_checkbox, 0, wxALIGN_CENTER, 0);
     checkbox_sizer->Add(0, 0, 0, wxEXPAND | wxRIGHT, FromDIP(5));
 
-    wxStaticText *m_can_not_find_vendor_text = new wxStaticText(this, wxID_ANY, _L("Can't find vendor I want"), wxDefaultPosition, wxDefaultSize, 0);
+    wxStaticText *m_can_not_find_vendor_text = new Label(this, _L("Can't find vendor I want"));
     m_can_not_find_vendor_text->SetFont(::Label::Body_13);
 
     wxSize size = m_can_not_find_vendor_text->GetTextExtent(_L("Can't find vendor I want"));
@@ -803,7 +810,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_type_item()
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(this, wxID_ANY, _L("Type"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(this, _L("Type"));
     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -822,7 +829,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_type_item()
     horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
 
     m_filament_type_combobox->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
-        m_filament_type_combobox->SetLabelColor(*wxBLACK);
+        m_filament_type_combobox->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
         const wxString &curr_create_type = curr_create_filament_type();
         clear_filament_preset_map();
         if (curr_create_type == m_create_type.base_filament) {
@@ -848,7 +855,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_serial_item()
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_serial_text = new wxStaticText(this, wxID_ANY, _L("Serial"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_serial_text = new Label(this, _L("Serial"));
     optionSizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -866,8 +873,8 @@ wxBoxSizer *CreateFilamentPresetDialog::create_serial_item()
         event.Skip();
         });
 
-    wxStaticText *static_eg_text = new wxStaticText(this, wxID_ANY, _L("e.g. Basic, Matte, Silk, Marble"), wxDefaultPosition, wxDefaultSize);
-    static_eg_text->SetForegroundColour(wxColour("#6B6B6B"));
+    wxStaticText *static_eg_text = new Label(this, _L("e.g. Basic, Matte, Silk, Marble"));
+    static_eg_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     static_eg_text->SetFont(::Label::Body_12);
     comboBoxSizer->Add(static_eg_text, 0, wxEXPAND | wxTOP, FromDIP(5));
     horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
@@ -880,7 +887,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_filament_preset_item()
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_filament_preset_text = new wxStaticText(this, wxID_ANY, _L("Filament Preset"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_filament_preset_text = new Label(this, _L("Filament Preset"));
     optionSizer->Add(static_filament_preset_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -894,7 +901,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_filament_preset_item()
 
 
     m_filament_preset_combobox->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
-        m_filament_preset_combobox->SetLabelColor(*wxBLACK);
+        m_filament_preset_combobox->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
         wxString filament_type = m_filament_preset_combobox->GetStringSelection();
         std::unordered_map<std::string, std::vector<Preset *>>::iterator iter = m_filament_choice_map.find(m_public_name_to_filament_id_map[filament_type]);
 
@@ -970,13 +977,11 @@ wxBoxSizer *CreateFilamentPresetDialog::create_button_item()
     wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
     bSizer_button->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_button_create = new Button(this, _L("Create"));
-    m_button_create->SetBackgroundColor(btn_bg_green);
-    m_button_create->SetBorderColor(*wxWHITE);
-    m_button_create->SetTextColor(wxColour("#FFFFFE"));
+    m_button_create->SetVariant(Button::Variant::Filled);
     m_button_create->SetFont(Label::Body_12);
     m_button_create->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_create->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -990,25 +995,19 @@ wxBoxSizer *CreateFilamentPresetDialog::create_button_item()
 
         if (!m_can_not_find_vendor_checkbox->GetValue()) {
             if (_L("Select Vendor") == vendor_str) {
-                MessageDialog dlg(this, _L("Vendor is not selected, please reselect vendor."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                                  wxYES | wxYES_DEFAULT | wxCENTRE);
-                dlg.ShowModal();
+                show_info(this, _L("Vendor is not selected, please reselect vendor."), _L("Info"));
                 return;
             } else {
                 vendor_name = into_u8(vendor_str);
             }
         } else {
             if (m_filament_custom_vendor_input->GetTextCtrl()->GetValue().empty()) {
-                MessageDialog dlg(this, _L("Custom vendor is not input, please input custom vendor."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                                  wxYES | wxYES_DEFAULT | wxCENTRE);
-                dlg.ShowModal();
+                show_info(this, _L("Custom vendor is not input, please input custom vendor."), _L("Info"));
                 return;
             } else {
                 vendor_name = into_u8(m_filament_custom_vendor_input->GetTextCtrl()->GetValue());
                 if (vendor_name == "Bambu" || vendor_name == "Generic") {
-                    MessageDialog dlg(this, _L("\"Bambu\" or \"Generic\" can not be used as a Vendor for custom filaments."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                                      wxYES | wxYES_DEFAULT | wxCENTRE);
-                    dlg.ShowModal();
+                    show_info(this, _L("\"Bambu\" or \"Generic\" can not be used as a Vendor for custom filaments."), _L("Info"));
                     return;
                 }
             }
@@ -1018,8 +1017,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_button_item()
         wxString type_str = m_filament_type_combobox->GetLabel();
         std::string type_name;
         if (_L("Select Type") == type_str) {
-            MessageDialog dlg(this, _L("Filament type is not selected, please reselect type."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("Filament type is not selected, please reselect type."), _L("Info"));
             return;
         } else {
             type_name = into_u8(type_str);
@@ -1028,9 +1026,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_button_item()
         wxString    serial_str = m_filament_serial_input->GetTextCtrl()->GetValue();
         std::string serial_name;
         if (serial_str.empty()) {
-            MessageDialog dlg(this, _L("Filament serial is not inputed, please input serial."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("Filament serial is not inputed, please input serial."), _L("Info"));
             return;
         } else {
             serial_name = into_u8(serial_str);
@@ -1039,30 +1035,22 @@ wxBoxSizer *CreateFilamentPresetDialog::create_button_item()
         serial_name = remove_special_key(serial_name);
 
         if (vendor_name.empty() || serial_name.empty()) {
-            MessageDialog dlg(this, _L("There may be escape characters in the vendor or serial input of filament. Please delete and re-enter."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("There may be escape characters in the vendor or serial input of filament. Please delete and re-enter."), _L("Info"));
             return;
         }
         boost::algorithm::trim(vendor_name);
         boost::algorithm::trim(serial_name);
         if (vendor_name.empty() || serial_name.empty()) {
-            MessageDialog dlg(this, _L("All inputs in the custom vendor or serial are spaces. Please re-enter."),
-                              wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("All inputs in the custom vendor or serial are spaces. Please re-enter."), _L("Info"));
             return;
         }
         if (m_can_not_find_vendor_checkbox->GetValue() && str_is_all_digit(vendor_name)) {
-            MessageDialog dlg(this, _L("The vendor can not be a number. Please re-enter."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("The vendor can not be a number. Please re-enter."), _L("Info"));
             return;
         }
 
         if (!is_check_box_selected()) {
-            MessageDialog dlg(this, _L("You have not selected a printer or preset yet. Please select at least one."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("You have not selected a printer or preset yet. Please select at least one."), _L("Info"));
             return;
         }
 
@@ -1141,12 +1129,11 @@ wxBoxSizer *CreateFilamentPresetDialog::create_button_item()
         EndModal(wxID_OK);
         });
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -1231,7 +1218,7 @@ wxBoxSizer *CreateFilamentPresetDialog::create_radio_item(wxString title, wxWind
     int btn_idx = radiobox_list.size() - 1;
     radiobox->Bind(wxEVT_LEFT_DOWN, [this, &radiobox_list, btn_idx](wxMouseEvent &e) { select_curr_radiobox(radiobox_list, btn_idx); });
 
-    wxStaticText *text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+    wxStaticText *text = new Label(parent, title);
     text->Bind(wxEVT_LEFT_DOWN, [this, &radiobox_list, btn_idx](wxMouseEvent &e) { select_curr_radiobox(radiobox_list, btn_idx); });
     horizontal_sizer->Add(text, 0, wxEXPAND | wxLEFT, 0);
 
@@ -1492,7 +1479,7 @@ CreatePrinterPresetDialog::CreatePrinterPresetDialog(wxWindow *parent)
     m_create_type.create_nozzle     = _L("Create Nozzle for Existing Printer");
     m_create_type.base_template     = _L("Create from Template");
     m_create_type.base_curr_printer = _L("Create Based on Current Printer");
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
@@ -1501,7 +1488,7 @@ CreatePrinterPresetDialog::CreatePrinterPresetDialog(wxWindow *parent)
     wxBoxSizer *m_main_sizer = new wxBoxSizer(wxVERTICAL);
     // top line
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 2), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
     m_main_sizer->Add(create_step_switch_item(), 0, wxEXPAND | wxALL, FromDIP(5));
@@ -1509,10 +1496,10 @@ CreatePrinterPresetDialog::CreatePrinterPresetDialog(wxWindow *parent)
     wxBoxSizer *page_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_page1 = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_page1->SetBackgroundColour(*wxWHITE);
+    m_page1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_page1->SetScrollRate(5, 5);
     m_page2 = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);\
-    m_page2->SetBackgroundColour(*wxWHITE);
+    m_page2->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     create_printer_page1(m_page1);
     create_printer_page2(m_page2);
@@ -1531,12 +1518,13 @@ CreatePrinterPresetDialog::CreatePrinterPresetDialog(wxWindow *parent)
     Layout();
     Fit();
 
+    wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+
     wxSize screen_size = wxGetDisplaySize();
     int    dialogX     = (screen_size.GetWidth() - GetSize().GetWidth()) / 2;
     int    dialogY     = (screen_size.GetHeight() - GetSize().GetHeight()) / 2;
     SetPosition(wxPoint(dialogX, dialogY));
-
-    wxGetApp().UpdateDlgDarkUI(this);
 }
 
 CreatePrinterPresetDialog::~CreatePrinterPresetDialog()
@@ -1572,23 +1560,23 @@ wxBoxSizer *CreatePrinterPresetDialog::create_step_switch_item()
     wxBoxSizer *step_switch_sizer = new wxBoxSizer(wxVERTICAL);
 
     std::string      wiki_url             = "https://wiki.bambulab.com/en/software/bambu-studio/3rd-party-printer-profile";
-    wxHyperlinkCtrl *m_download_hyperlink = new wxHyperlinkCtrl(this, wxID_ANY, _L("wiki"), wiki_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+    LinkLabel *m_download_hyperlink = new LinkLabel(this, _L("wiki"), wiki_url);
     step_switch_sizer->Add(m_download_hyperlink, 0,  wxRIGHT | wxALIGN_RIGHT, FromDIP(5));
 
     wxBoxSizer *horizontal_sizer  = new wxBoxSizer(wxHORIZONTAL);
     wxPanel *   step_switch_panel = new wxPanel(this);
-    step_switch_panel->SetBackgroundColour(*wxWHITE);
+    step_switch_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     horizontal_sizer->Add(0, 0, 1, wxEXPAND,0);
-    m_step_1 = new wxStaticBitmap(step_switch_panel, wxID_ANY, create_scaled_bitmap("step_1", nullptr, FromDIP(20)), wxDefaultPosition, wxDefaultSize);
+    m_step_1 = new wxStaticBitmap(step_switch_panel, wxID_ANY, MaterialIcon::bitmap(step_switch_panel, MaterialIcon::Counter1, 20, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, wxDefaultSize);
     horizontal_sizer->Add(m_step_1, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
-    wxStaticText *static_create_printer_text = new wxStaticText(step_switch_panel, wxID_ANY, m_create_type.create_printer, wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_create_printer_text = new Label(step_switch_panel, m_create_type.create_printer);
     horizontal_sizer->Add(static_create_printer_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
     auto divider_line = new wxPanel(step_switch_panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(50), 1));
     divider_line->SetBackgroundColour(PRINTER_LIST_COLOUR);
     horizontal_sizer->Add(divider_line, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
-    m_step_2 = new wxStaticBitmap(step_switch_panel, wxID_ANY, create_scaled_bitmap("step_2_ready", nullptr, FromDIP(20)), wxDefaultPosition, wxDefaultSize);
+    m_step_2 = new wxStaticBitmap(step_switch_panel, wxID_ANY, MaterialIcon::bitmap(step_switch_panel, MaterialIcon::Counter2, 20, StateColor::semantic(MD3::Role::Outline)), wxDefaultPosition, wxDefaultSize);
     horizontal_sizer->Add(m_step_2, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
-    wxStaticText *static_import_presets_text = new wxStaticText(step_switch_panel, wxID_ANY, _L("Import Preset"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_import_presets_text = new Label(step_switch_panel, _L("Import Preset"));
     horizontal_sizer->Add(static_import_presets_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
     horizontal_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
@@ -1606,7 +1594,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_step_switch_item()
 
 void CreatePrinterPresetDialog::create_printer_page1(wxWindow *parent)
 {
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_page1_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -1614,7 +1602,7 @@ void CreatePrinterPresetDialog::create_printer_page1(wxWindow *parent)
     m_page1_sizer->Add(create_printer_item(parent), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(5));
     m_page1_sizer->Add(create_nozzle_diameter_item(parent), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(5));
     m_printer_info_panel = new wxPanel(parent);
-    m_printer_info_panel->SetBackgroundColour(*wxWHITE);
+    m_printer_info_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_printer_info_sizer = new wxBoxSizer(wxVERTICAL);
     m_printer_info_sizer->Add(create_bed_shape_item(m_printer_info_panel), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(5));
     m_printer_info_sizer->Add(create_bed_size_item(m_printer_info_panel), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(5));
@@ -1637,7 +1625,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_type_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_serial_text = new wxStaticText(parent, wxID_ANY, _L("Create Type"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_serial_text = new Label(parent, _L("Create Type"));
     optionSizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -1656,7 +1644,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_vendor_text = new wxStaticText(parent, wxID_ANY, _L("Printer"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_vendor_text = new Label(parent, _L("Printer"));
     optionSizer->Add(static_vendor_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -1672,7 +1660,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
     }
     m_select_vendor->Set(printer_vendor);
     m_select_vendor->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent e) {
-        m_select_vendor->SetLabelColor(*wxBLACK);
+        m_select_vendor->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
         std::string curr_selected_vendor = into_u8(m_select_vendor->GetStringSelection());
         std::unordered_map<std::string,std::vector<std::string>>::const_iterator iter  = printer_model_map.find(curr_selected_vendor);
         if (iter != printer_model_map.end())
@@ -1685,11 +1673,10 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
             m_select_model->Set(model_choice);
             if (!model_choice.empty()) {
                 m_select_model->SetSelection(0);
-                m_select_model->SetLabelColor(*wxBLACK);
+                m_select_model->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
             }
         } else {
-            MessageDialog dlg(this, _L("The model is not fond, place reselect vendor."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("The model is not fond, place reselect vendor."), _L("Info"));
         }
 
         m_select_printer->SetSelection(-1);
@@ -1705,7 +1692,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
     m_select_model->SetValue(_L("Select Model"));
     m_select_model->SetLabelColor(DEFAULT_PROMPT_TEXT_COLOUR);
     m_select_model->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent e) {
-        m_select_model->SetLabelColor(*wxBLACK);
+        m_select_model->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
         e.Skip();
     });
 
@@ -1714,15 +1701,15 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
     m_select_printer->SetValue(_L("Select Printer"));
     m_select_printer->SetLabelColor(DEFAULT_PROMPT_TEXT_COLOUR);
     m_select_printer->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent e) {
-        m_select_printer->SetLabelColor(*wxBLACK);
+        m_select_printer->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
 
         e.Skip();
     });
     m_select_printer->Hide();
 
-    m_custom_vendor_text_ctrl                      = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
-    m_custom_vendor_text_ctrl->SetHint(_L("Input Custom Vendor"));
-    m_custom_vendor_text_ctrl->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
+    m_custom_vendor_text_ctrl                      = new TextInput(parent, "", "", "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
+    m_custom_vendor_text_ctrl->GetTextCtrl()->SetHint(_L("Input Custom Vendor"));
+    m_custom_vendor_text_ctrl->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
         int key = event.GetKeyCode();
         if (cannot_input_key.find(key) != cannot_input_key.end()) { // "@" can not be inputed
             event.Skip(false);
@@ -1732,9 +1719,9 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
     });
     comboBoxSizer->Add(m_custom_vendor_text_ctrl, 0, wxEXPAND | wxALL, 0);
     m_custom_vendor_text_ctrl->Hide();
-    m_custom_model_text_ctrl = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
-    m_custom_model_text_ctrl->SetHint(_L("Input Custom Model"));
-    m_custom_model_text_ctrl->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
+    m_custom_model_text_ctrl = new TextInput(parent, "", "", "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
+    m_custom_model_text_ctrl->GetTextCtrl()->SetHint(_L("Input Custom Model"));
+    m_custom_model_text_ctrl->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
         int key = event.GetKeyCode();
         if (cannot_input_key.find(key) != cannot_input_key.end()) { // "@" can not be inputed
             event.Skip(false);
@@ -1753,7 +1740,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_item(wxWindow *parent)
     checkbox_sizer->Add(m_can_not_find_vendor_combox, 0, wxALIGN_CENTER, 0);
     checkbox_sizer->Add(0, 0, 0, wxEXPAND | wxRIGHT, FromDIP(5));
 
-    m_can_not_find_vendor_text = new wxStaticText(parent, wxID_ANY, _L("Can't find my printer model"), wxDefaultPosition, wxDefaultSize, 0);
+    m_can_not_find_vendor_text = new Label(parent, _L("Can't find my printer model"));
     m_can_not_find_vendor_text->SetFont(::Label::Body_13);
 
     wxSize size = m_can_not_find_vendor_text->GetTextExtent(_L("Can't find my printer model"));
@@ -1797,7 +1784,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_nozzle_diameter_item(wxWindow *par
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer      = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Nozzle Diameter"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(parent, _L("Nozzle Diameter"));
     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -1817,9 +1804,9 @@ wxBoxSizer *CreatePrinterPresetDialog::create_nozzle_diameter_item(wxWindow *par
     m_nozzle_diameter->SetSelection(0);
     comboBoxSizer->Add(m_nozzle_diameter, 0, wxEXPAND | wxALL, 0);
 
-    m_custom_nozzle_diameter_ctrl = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
-    m_custom_nozzle_diameter_ctrl->SetHint(_L("Input Custom Nozzle Diameter"));
-    m_custom_nozzle_diameter_ctrl->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
+    m_custom_nozzle_diameter_ctrl = new TextInput(parent, "", "", "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE);
+    m_custom_nozzle_diameter_ctrl->GetTextCtrl()->SetHint(_L("Input Custom Nozzle Diameter"));
+    m_custom_nozzle_diameter_ctrl->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
         int key = event.GetKeyCode();
         if (key != 44 && key != 46 && cannot_input_key.find(key) != cannot_input_key.end()) { // "@" can not be inputed
             event.Skip(false);
@@ -1837,7 +1824,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_nozzle_diameter_item(wxWindow *par
     checkbox_sizer->Add(m_can_not_find_nozzle_checkbox, 0, wxALIGN_CENTER, 0);
     checkbox_sizer->Add(0, 0, 0, wxEXPAND | wxRIGHT, FromDIP(5));
 
-    auto can_not_find_nozzle_diameter = new wxStaticText(parent, wxID_ANY, _L("Can't find my nozzle diameter"), wxDefaultPosition, wxDefaultSize, 0);
+    auto can_not_find_nozzle_diameter = new Label(parent, _L("Can't find my nozzle diameter"));
     can_not_find_nozzle_diameter->SetFont(::Label::Body_13);
 
     wxSize size = can_not_find_nozzle_diameter->GetTextExtent(_L("Can't find my printer model"));
@@ -1876,13 +1863,13 @@ wxBoxSizer *CreatePrinterPresetDialog::create_bed_shape_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer      = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Bed Shape"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(parent, _L("Bed Shape"));
     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     wxBoxSizer *  bed_shape_sizer       = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_bed_shape_text = new wxStaticText(parent, wxID_ANY, _L("Rectangle"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_bed_shape_text = new Label(parent, _L("Rectangle"));
     bed_shape_sizer->Add(static_bed_shape_text, 0, wxEXPAND | wxALL, 0);
     horizontal_sizer->Add(bed_shape_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
@@ -1894,13 +1881,13 @@ wxBoxSizer *CreatePrinterPresetDialog::create_bed_size_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer      = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Printable Space"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(parent, _L("Printable Space"));
     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     wxBoxSizer *  length_sizer          = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_length_text = new wxStaticText(parent, wxID_ANY, "X", wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_length_text = new Label(parent, "X");
     static_length_text->SetMinSize(ORIGIN_TEXT_SIZE);
     static_length_text->SetSize(ORIGIN_TEXT_SIZE);
     length_sizer->Add(static_length_text, 0, wxEXPAND | wxALL, 0);
@@ -1913,7 +1900,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_bed_size_item(wxWindow *parent)
     horizontal_sizer->Add(length_input_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
 
     wxBoxSizer *  width_sizer      = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_width_text = new wxStaticText(parent, wxID_ANY, "Y", wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_width_text = new Label(parent, "Y");
     static_width_text->SetMinSize(ORIGIN_TEXT_SIZE);
     static_width_text->SetSize(ORIGIN_TEXT_SIZE);
     width_sizer->Add(static_width_text, 0, wxEXPAND | wxALL, 0);
@@ -1933,13 +1920,13 @@ wxBoxSizer *CreatePrinterPresetDialog::create_origin_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer      = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Origin"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(parent, _L("Origin"));
     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     wxBoxSizer *  length_sizer       = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_origin_x_text = new wxStaticText(parent, wxID_ANY, "X", wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_origin_x_text = new Label(parent, "X");
     static_origin_x_text->SetMinSize(ORIGIN_TEXT_SIZE);
     static_origin_x_text->SetSize(ORIGIN_TEXT_SIZE);
     length_sizer->Add(static_origin_x_text, 0, wxEXPAND | wxALL, 0);
@@ -1952,7 +1939,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_origin_item(wxWindow *parent)
     horizontal_sizer->Add(length_input_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
 
     wxBoxSizer *  width_sizer       = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_origin_y_text = new wxStaticText(parent, wxID_ANY, "Y", wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_origin_y_text = new Label(parent, "Y");
     static_origin_y_text->SetMinSize(ORIGIN_TEXT_SIZE);
     static_origin_y_text->SetSize(ORIGIN_TEXT_SIZE);
     width_sizer->Add(static_origin_y_text, 0, wxEXPAND | wxALL, 0);
@@ -1971,18 +1958,18 @@ wxBoxSizer *CreatePrinterPresetDialog::create_hot_bed_stl_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer      = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Hot Bed STL"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(parent, _L("Hot Bed STL"));
     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     wxBoxSizer *hot_bed_stl_sizer = new wxBoxSizer(wxVERTICAL);
 
-    StateColor flush_bg_col(std::pair<wxColour, int>(wxColour(219, 253, 231), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal));
+    StateColor flush_bg_col(std::pair<wxColour, int>(MD3::Light::primaryContainer, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal));
 
-    StateColor flush_bd_col(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Pressed), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(172, 172, 172), StateColor::Normal));
+    StateColor flush_bd_col(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 
     m_button_bed_stl = new Button(parent, _L("Load stl"));
     m_button_bed_stl->Bind(wxEVT_BUTTON, ([this](wxCommandEvent &e) { load_model_stl(); }));
@@ -1991,13 +1978,12 @@ wxBoxSizer *CreatePrinterPresetDialog::create_hot_bed_stl_item(wxWindow *parent)
     m_button_bed_stl->SetPaddingSize(wxSize(FromDIP(30), FromDIP(8)));
     m_button_bed_stl->SetFont(Label::Body_13);
     m_button_bed_stl->SetCornerRadius(FromDIP(8));
-    m_button_bed_stl->SetBackgroundColor(flush_bg_col);
-    m_button_bed_stl->SetBorderColor(flush_bd_col);
+    m_button_bed_stl->SetVariant(Button::Variant::Outlined);
     hot_bed_stl_sizer->Add(m_button_bed_stl, 0, wxEXPAND | wxALL, 0);
 
     horizontal_sizer->Add(hot_bed_stl_sizer, 0, wxEXPAND | wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
-    m_upload_stl_tip_text = new wxStaticText(parent, wxID_ANY, "", wxDefaultPosition, wxDefaultSize);
+    m_upload_stl_tip_text = new Label(parent, "");
     m_upload_stl_tip_text->SetLabelText(_L("Empty"));
     horizontal_sizer->Add(m_upload_stl_tip_text, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
     return horizontal_sizer;
@@ -2008,18 +1994,18 @@ wxBoxSizer *CreatePrinterPresetDialog::create_hot_bed_svg_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer      = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Hot Bed SVG"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(parent, _L("Hot Bed SVG"));
     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     wxBoxSizer *hot_bed_stl_sizer = new wxBoxSizer(wxVERTICAL);
 
-    StateColor flush_bg_col(std::pair<wxColour, int>(wxColour(219, 253, 231), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal));
+    StateColor flush_bg_col(std::pair<wxColour, int>(MD3::Light::primaryContainer, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal));
 
-    StateColor flush_bd_col(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Pressed), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(172, 172, 172), StateColor::Normal));
+    StateColor flush_bd_col(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 
     m_button_bed_svg = new Button(parent, _L("Load svg"));
     m_button_bed_svg->Bind(wxEVT_BUTTON, ([this](wxCommandEvent &e) { load_texture(); }));
@@ -2028,13 +2014,12 @@ wxBoxSizer *CreatePrinterPresetDialog::create_hot_bed_svg_item(wxWindow *parent)
     m_button_bed_svg->SetPaddingSize(wxSize(FromDIP(30), FromDIP(8)));
     m_button_bed_svg->SetFont(Label::Body_13);
     m_button_bed_svg->SetCornerRadius(FromDIP(8));
-    m_button_bed_svg->SetBackgroundColor(flush_bg_col);
-    m_button_bed_svg->SetBorderColor(flush_bd_col);
+    m_button_bed_svg->SetVariant(Button::Variant::Outlined);
     hot_bed_stl_sizer->Add(m_button_bed_svg, 0, wxEXPAND | wxALL, 0);
 
     horizontal_sizer->Add(hot_bed_stl_sizer, 0, wxEXPAND | wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
-    m_upload_svg_tip_text = new wxStaticText(parent, wxID_ANY, "", wxDefaultPosition, wxDefaultSize);
+    m_upload_svg_tip_text = new Label(parent, "");
     m_upload_svg_tip_text->SetLabelText(_L("Empty"));
     horizontal_sizer->Add(m_upload_svg_tip_text, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
     return horizontal_sizer;
@@ -2045,7 +2030,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_max_print_height_item(wxWindow *pa
     wxBoxSizer *  horizontal_sizer  = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer      = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Max Print Height"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(parent, _L("Max Print Height"));
     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -2065,13 +2050,11 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page1_btns_item(wxWindow *parent)
     wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
     bSizer_button->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_button_OK = new Button(parent, _L("OK"));
-    m_button_OK->SetBackgroundColor(btn_bg_green);
-    m_button_OK->SetBorderColor(*wxWHITE);
-    m_button_OK->SetTextColor(wxColour("#FFFFFE"));
+    m_button_OK->SetVariant(Button::Variant::Filled);
     m_button_OK->SetFont(Label::Body_12);
     m_button_OK->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_OK->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2084,12 +2067,11 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page1_btns_item(wxWindow *parent)
         show_page2();
         });
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_page1_cancel = new Button(parent, _L("Cancel"));
-    m_button_page1_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_page1_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_page1_cancel->SetVariant(Button::Variant::Outlined);
     m_button_page1_cancel->SetFont(Label::Body_12);
     m_button_page1_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_page1_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2182,8 +2164,7 @@ bool CreatePrinterPresetDialog::load_system_and_user_presets_with_curr_model(Pre
     }
     if (m_printer_preset_vendor_selected.id.empty() || m_printer_preset_model_selected.id.empty()) {
         BOOST_LOG_TRIVIAL(info) << "selected id is not found";
-        MessageDialog dlg(this, _L("Preset path is not found, please reselect vendor."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-        dlg.ShowModal();
+        show_info(this, _L("Preset path is not found, please reselect vendor."), _L("Info"));
         return false;
     }
 
@@ -2203,9 +2184,7 @@ bool CreatePrinterPresetDialog::load_system_and_user_presets_with_curr_model(Pre
 
         if (preset_path.empty()) {
             BOOST_LOG_TRIVIAL(info) << "Preset path is not found";
-            MessageDialog dlg(this, _L("Preset path is not found, please reselect vendor."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("Preset path is not found, please reselect vendor."), _L("Info"));
             return false;
         }
 
@@ -2214,9 +2193,7 @@ bool CreatePrinterPresetDialog::load_system_and_user_presets_with_curr_model(Pre
                                                              ForwardCompatibilitySubstitutionRule::EnableSilent);
         } catch (...) {
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "load vendor fonfigs form json failed";
-            MessageDialog dlg(this, _L("The printer model was not found, please reselect."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("The printer model was not found, please reselect."), _L("Info"));
             return false;
         }
 
@@ -2240,8 +2217,7 @@ bool CreatePrinterPresetDialog::load_system_and_user_presets_with_curr_model(Pre
         varient = model_varient.substr(index_at + 3, index_nozzle - index_at - 4);
     } else {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "get nozzle failed";
-        MessageDialog dlg(this, _L("The nozzle diameter is not fond, place reselect."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-        dlg.ShowModal();
+        show_info(this, _L("The nozzle diameter is not fond, place reselect."), _L("Info"));
         return false;
     }
 
@@ -2251,8 +2227,7 @@ bool CreatePrinterPresetDialog::load_system_and_user_presets_with_curr_model(Pre
     if (temp_printer_preset) {
         m_printer_preset = new Preset(*temp_printer_preset);
     } else {
-        MessageDialog dlg(this, _L("The printer preset is not fond, place reselect."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-        dlg.ShowModal();
+        show_info(this, _L("The printer preset is not fond, place reselect."), _L("Info"));
         return false;
     }
 
@@ -2267,9 +2242,7 @@ bool CreatePrinterPresetDialog::load_system_and_user_presets_with_curr_model(Pre
         }
         if (preset_path.empty()) {
             BOOST_LOG_TRIVIAL(info) << "Preset path is not found";
-            MessageDialog dlg(this, _L("Preset path is not found, please reselect vendor."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("Preset path is not found, please reselect vendor."), _L("Info"));
             return false;
         }
         try {
@@ -2277,9 +2250,7 @@ bool CreatePrinterPresetDialog::load_system_and_user_presets_with_curr_model(Pre
                                                              ForwardCompatibilitySubstitutionRule::EnableSilent);
         } catch (...) {
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "load template vendor configs form json failed";
-            MessageDialog dlg(this, _L("The printer model was not found, please reselect."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("The printer model was not found, please reselect."), _L("Info"));
             return false;
         }
     }
@@ -2397,7 +2368,7 @@ std::string CreatePrinterPresetDialog::get_printer_vendor() const
     assert(curr_create_printer_type() == m_create_type.create_printer);
     std::string custom_vendor;
     if (m_can_not_find_vendor_combox->GetValue()) {
-        custom_vendor = into_u8(m_custom_vendor_text_ctrl->GetValue());
+        custom_vendor = into_u8(m_custom_vendor_text_ctrl->GetTextCtrl()->GetValue());
         custom_vendor             = remove_special_key(custom_vendor);
         boost::algorithm::trim(custom_vendor);
     } else {
@@ -2411,7 +2382,7 @@ std::string CreatePrinterPresetDialog::get_printer_model() const
     assert(curr_create_printer_type() == m_create_type.create_printer);
     std::string custom_model;
     if (m_can_not_find_vendor_combox->GetValue()) {
-        custom_model  = into_u8(m_custom_model_text_ctrl->GetValue());
+        custom_model  = into_u8(m_custom_model_text_ctrl->GetTextCtrl()->GetValue());
         custom_model              = remove_special_key(custom_model);
         boost::algorithm::trim(custom_model);
     } else {
@@ -2424,7 +2395,7 @@ std::string CreatePrinterPresetDialog::get_nozzle_diameter() const
 {
     std::string diameter;
     if (m_can_not_find_nozzle_checkbox->GetValue()) {
-        diameter = into_u8(m_custom_nozzle_diameter_ctrl->GetValue());
+        diameter = into_u8(m_custom_nozzle_diameter_ctrl->GetTextCtrl()->GetValue());
     } else {
         diameter = into_u8(m_nozzle_diameter->GetStringSelection());
         size_t index_mm = diameter.find(" mm");
@@ -2483,7 +2454,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_radio_item(wxString title, wxWindo
         select_curr_radiobox(radiobox_list, btn_idx);
     });
 
-    wxStaticText *text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+    wxStaticText *text = new Label(parent, title);
     text->Bind(wxEVT_LEFT_DOWN, [this, &radiobox_list, btn_idx](wxMouseEvent &e) {
         select_curr_radiobox(radiobox_list, btn_idx);
     });
@@ -2563,7 +2534,7 @@ void CreatePrinterPresetDialog::select_curr_radiobox(std::vector<std::pair<Radio
 
 void CreatePrinterPresetDialog::create_printer_page2(wxWindow *parent)
 {
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_page2_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -2584,13 +2555,13 @@ wxBoxSizer *CreatePrinterPresetDialog::create_printer_preset_item(wxWindow *pare
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_vendor_text = new wxStaticText(parent, wxID_ANY, _L("Printer Preset"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_vendor_text = new Label(parent, _L("Printer Preset"));
     optionSizer->Add(static_vendor_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     wxBoxSizer *  vertical_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *combobox_title = new wxStaticText(parent, wxID_ANY, m_create_type.base_curr_printer, wxDefaultPosition, wxDefaultSize, 0);
+    wxStaticText *combobox_title = new Label(parent, m_create_type.base_curr_printer);
     combobox_title->SetFont(::Label::Body_13);
     auto size = combobox_title->GetTextExtent(m_create_type.base_curr_printer);
     combobox_title->SetMinSize(wxSize(size.x + FromDIP(4), -1));
@@ -2631,7 +2602,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_presets_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_serial_text = new wxStaticText(parent, wxID_ANY, _L("Presets"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_serial_text = new Label(parent, _L("Presets"));
     optionSizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -2651,7 +2622,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_presets_template_item(wxWindow *pa
 
     m_scrolled_preset_window = new wxScrolledWindow(parent);
     m_scrolled_preset_window->SetScrollRate(5, 5);
-    m_scrolled_preset_window->SetBackgroundColour(*wxWHITE);
+    m_scrolled_preset_window->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     //m_scrolled_preset_window->SetMinSize(wxSize(FromDIP(1500), FromDIP(-1)));
     m_scrolled_preset_window->SetMaxSize(wxSize(FromDIP(1500), FromDIP(-1)));
     m_scrolled_preset_window->SetSize(wxSize(FromDIP(1500), FromDIP(-1)));
@@ -2662,7 +2633,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_presets_template_item(wxWindow *pa
     m_preset_template_panel->SetBackgroundColour(PRINTER_LIST_COLOUR);
     m_preset_template_panel->SetMinSize(wxSize(FromDIP(660), -1));
     m_filament_sizer              = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_filament_preset_text = new wxStaticText(m_preset_template_panel, wxID_ANY, _L("Filament Preset Template"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_filament_preset_text = new Label(m_preset_template_panel, _L("Filament Preset Template"));
     m_filament_sizer->Add(static_filament_preset_text, 0, wxEXPAND | wxALL, FromDIP(5));
     m_filament_preset_panel          = new wxPanel(m_preset_template_panel);
     m_filament_preset_template_sizer = new wxGridSizer(3, FromDIP(5), FromDIP(5));
@@ -2673,13 +2644,13 @@ wxBoxSizer *CreatePrinterPresetDialog::create_presets_template_item(wxWindow *pa
     wxBoxSizer *hori_filament_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxPanel *   filament_btn_panel      = new wxPanel(m_preset_template_panel);
     filament_btn_panel->SetBackgroundColour(FILAMENT_OPTION_COLOUR);
-    wxStaticText *filament_sel_all_text = new wxStaticText(filament_btn_panel, wxID_ANY, _L("Select All"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *filament_sel_all_text = new Label(filament_btn_panel, _L("Select All"));
     filament_sel_all_text->SetForegroundColour(SELECT_ALL_OPTION_COLOUR);
     filament_sel_all_text->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         select_all_preset_template(m_filament_preset);
         e.Skip();
         });
-    wxStaticText *filament_desel_all_text = new wxStaticText(filament_btn_panel, wxID_ANY, _L("Deselect All"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *filament_desel_all_text = new Label(filament_btn_panel, _L("Deselect All"));
     filament_desel_all_text->SetForegroundColour(SELECT_ALL_OPTION_COLOUR);
     filament_desel_all_text->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         deselect_all_preset_template(m_filament_preset);
@@ -2691,10 +2662,10 @@ wxBoxSizer *CreatePrinterPresetDialog::create_presets_template_item(wxWindow *pa
     m_filament_sizer->Add(filament_btn_panel, 0, wxEXPAND, 0);
 
     wxPanel *split_panel = new wxPanel(m_preset_template_panel, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(10)));
-    split_panel->SetBackgroundColour(wxColour(*wxWHITE));
+    split_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_filament_sizer->Add(split_panel, 0, wxEXPAND, 0);
 
-    wxStaticText *static_process_preset_text = new wxStaticText(m_preset_template_panel, wxID_ANY, _L("Process Preset Template"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_process_preset_text = new Label(m_preset_template_panel, _L("Process Preset Template"));
     m_filament_sizer->Add(static_process_preset_text, 0, wxEXPAND | wxALL, FromDIP(5));
     m_process_preset_panel = new wxPanel(m_preset_template_panel);
     m_process_preset_panel->SetSize(PRESET_TEMPLATE_SIZE);
@@ -2706,13 +2677,13 @@ wxBoxSizer *CreatePrinterPresetDialog::create_presets_template_item(wxWindow *pa
     wxBoxSizer *hori_process_btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxPanel *   process_btn_panel      = new wxPanel(m_preset_template_panel);
     process_btn_panel->SetBackgroundColour(FILAMENT_OPTION_COLOUR);
-    wxStaticText *process_sel_all_text = new wxStaticText(process_btn_panel, wxID_ANY, _L("Select All"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *process_sel_all_text = new Label(process_btn_panel, _L("Select All"));
     process_sel_all_text->SetForegroundColour(SELECT_ALL_OPTION_COLOUR);
     process_sel_all_text->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         select_all_preset_template(m_process_preset);
         e.Skip();
     });
-    wxStaticText *process_desel_all_text = new wxStaticText(process_btn_panel, wxID_ANY, _L("Deselect All"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *process_desel_all_text = new Label(process_btn_panel, _L("Deselect All"));
     process_desel_all_text->SetForegroundColour(SELECT_ALL_OPTION_COLOUR);
     process_desel_all_text->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         deselect_all_preset_template(m_process_preset);
@@ -2736,15 +2707,14 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page2_btns_item(wxWindow *parent)
     wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
     bSizer_button->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_page2_back = new Button(parent, _L("Back Page 1"));
-    m_button_page2_back->SetBackgroundColor(btn_bg_white);
-    m_button_page2_back->SetBorderColor(wxColour(38, 46, 48));
+    m_button_page2_back->SetVariant(Button::Variant::Outlined);
     m_button_page2_back->SetFont(Label::Body_12);
     m_button_page2_back->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_page2_back->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2754,9 +2724,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page2_btns_item(wxWindow *parent)
     m_button_page2_back->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) { show_page1(); });
 
     m_button_create = new Button(parent, _L("Create"));
-    m_button_create->SetBackgroundColor(btn_bg_green);
-    m_button_create->SetBorderColor(*wxWHITE);
-    m_button_create->SetTextColor(wxColour("#FFFFFE"));
+    m_button_create->SetVariant(Button::Variant::Filled);
     m_button_create->SetFont(Label::Body_12);
     m_button_create->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_create->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2771,16 +2739,12 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page2_btns_item(wxWindow *parent)
 
         // Confirm if the printer preset exists
         if (!m_printer_preset) {
-            MessageDialog dlg(this, _L("You have not yet chosen which printer preset to create based on. Please choose the vendor and model of the printer"),
-                              wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("You have not yet chosen which printer preset to create based on. Please choose the vendor and model of the printer"), _L("Info"));
             return;
         }
 
         if (!save_printable_area_config(m_printer_preset)) {
-            MessageDialog dlg(this, _L("You have entered an illegal input in the printable area section on the first page. Please check before creating it."),
-                              wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("You have entered an illegal input in the printable area section on the first page. Please check before creating it."), _L("Info"));
             show_page1();
             return;
         }
@@ -2821,8 +2785,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page2_btns_item(wxWindow *parent)
             }
         }
         if (selected_filament_presets.empty() && !filament_preset_is_exist) {
-            MessageDialog dlg(this, _L("You need to select at least one filament preset."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("You need to select at least one filament preset."), _L("Info"));
             return;
         }
 
@@ -2836,8 +2799,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page2_btns_item(wxWindow *parent)
             }
         }
         if (selected_process_presets.empty() && !process_preset_is_exist) {
-            MessageDialog dlg(this, _L("You need to select at least one process preset."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("You need to select at least one process preset."), _L("Info"));
             return;
         }
 
@@ -2968,8 +2930,7 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page2_btns_item(wxWindow *parent)
         });
 
     m_button_page2_cancel = new Button(parent, _L("Cancel"));
-    m_button_page2_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_page2_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_page2_cancel->SetVariant(Button::Variant::Outlined);
     m_button_page2_cancel->SetFont(Label::Body_12);
     m_button_page2_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_page2_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2983,8 +2944,8 @@ wxBoxSizer *CreatePrinterPresetDialog::create_page2_btns_item(wxWindow *parent)
 
 void CreatePrinterPresetDialog::show_page1()
 {
-    m_step_1->SetBitmap(create_scaled_bitmap("step_1", nullptr, FromDIP(20)));
-    m_step_2->SetBitmap(create_scaled_bitmap("step_2_ready", nullptr, FromDIP(20)));
+    m_step_1->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Counter1, 20, StateColor::semantic(MD3::Role::Primary)));
+    m_step_2->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Counter2, 20, StateColor::semantic(MD3::Role::Outline)));
     m_page1->Show();
     m_page2->Hide();
     Refresh();
@@ -2994,8 +2955,8 @@ void CreatePrinterPresetDialog::show_page1()
 
 void CreatePrinterPresetDialog::show_page2()
 {
-    m_step_1->SetBitmap(create_scaled_bitmap("step_is_ok", nullptr, FromDIP(20)));
-    m_step_2->SetBitmap(create_scaled_bitmap("step_2", nullptr, FromDIP(20)));
+    m_step_1->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::CheckCircle, 20, StateColor::semantic(MD3::Role::Primary)));
+    m_step_2->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Counter2, 20, StateColor::semantic(MD3::Role::Primary)));
     m_page2->Show();
     m_page1->Hide();
     Refresh();
@@ -3056,7 +3017,7 @@ bool CreatePrinterPresetDialog::data_init()
 void CreatePrinterPresetDialog::on_select_printer_model(wxCommandEvent &e)
 {
     bool is_from_last_page = e.GetExtraLong() == 0; // 0 means form last page,  1 means form cur combobox
-    m_printer_vendor->SetLabelColor(*wxBLACK);
+    m_printer_vendor->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
     VendorMap     vendors;
     wxArrayString exist_vendor_choice  = get_exist_vendor_choices(vendors);
     std::string curr_selected_vendor = into_u8(m_printer_vendor->GetStringSelection());
@@ -3069,8 +3030,7 @@ void CreatePrinterPresetDialog::on_select_printer_model(wxCommandEvent &e)
             return;
         }
 
-        MessageDialog dlg(this, _L("Vendor is not found, please reselect."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-        dlg.ShowModal();
+        show_info(this, _L("Vendor is not found, please reselect."), _L("Info"));
         return;
     }
 
@@ -3082,8 +3042,7 @@ void CreatePrinterPresetDialog::on_select_printer_model(wxCommandEvent &e)
 
     wxArrayString printer_preset_model = printer_preset_sort_with_nozzle_diameter(m_printer_preset_vendor_selected, nozzle);
     if (printer_preset_model.size() == 0) {
-        MessageDialog dlg(this, _L("Current vendor has no models, please reselect."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-        dlg.ShowModal();
+        show_info(this, _L("Current vendor has no models, please reselect."), _L("Info"));
         return;
     }
     m_printer_model->Set(printer_preset_model);
@@ -3344,47 +3303,38 @@ bool CreatePrinterPresetDialog::validate_input_valid()
         std::string vendor_name = get_printer_vendor();
         std::string model_name  = get_printer_model();
         if ((vendor_name.empty() || model_name.empty())) {
-            MessageDialog dlg(this, _L("You have not selected the vendor and model or inputed the custom vendor and model."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("You have not selected the vendor and model or inputed the custom vendor and model."), _L("Info"));
             return false;
         }
 
         vendor_name = remove_special_key(vendor_name);
         model_name  = remove_special_key(model_name);
         if (vendor_name.empty() || model_name.empty()) {
-            MessageDialog dlg(this, _L("There may be escape characters in the custom printer vendor or model. Please delete and re-enter."),
-                              wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("There may be escape characters in the custom printer vendor or model. Please delete and re-enter."), _L("Info"));
             return false;
         }
         boost::algorithm::trim(vendor_name);
         boost::algorithm::trim(model_name);
         if (vendor_name.empty() || model_name.empty()) {
-            MessageDialog dlg(this, _L("All inputs in the custom printer vendor or model are spaces. Please re-enter."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("All inputs in the custom printer vendor or model are spaces. Please re-enter."), _L("Info"));
             return false;
         }
 
         if (check_printable_area() == false) {
-            MessageDialog dlg(this, _L("Please check bed printable shape and origin input."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("Please check bed printable shape and origin input."), _L("Info"));
             return false;
         }
     } else if (curr_selected_printer_type == m_create_type.create_nozzle) {
         wxString printer_name = m_select_printer->GetStringSelection();
         if (printer_name.empty()) {
-            MessageDialog dlg(this, _L("You have not yet selected the printer to replace the nozzle, please choose."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("You have not yet selected the printer to replace the nozzle, please choose."), _L("Info"));
             return false;
         }
     }
 
     std::string nozzle_diameter;
     if (m_can_not_find_nozzle_checkbox->GetValue()) {
-        nozzle_diameter = into_u8(m_custom_nozzle_diameter_ctrl->GetValue());
+        nozzle_diameter = into_u8(m_custom_nozzle_diameter_ctrl->GetTextCtrl()->GetValue());
     } else {
         nozzle_diameter = into_u8(m_nozzle_diameter->GetStringSelection());
         size_t index_mm = nozzle_diameter.find(" mm");
@@ -3395,9 +3345,7 @@ bool CreatePrinterPresetDialog::validate_input_valid()
         nozzle_dia = my_stof(nozzle_diameter);
     } catch (...) { }
     if (nozzle_dia == 0) {
-        MessageDialog dlg(this, _L("The entered nozzle diameter is invalid, please re-enter:\n"), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                          wxOK | wxYES_DEFAULT | wxCENTRE);
-        int           res = dlg.ShowModal();
+        show_info(this, _L("The entered nozzle diameter is invalid, please re-enter:\n"), _L("Info"));
         return false;
     }
 
@@ -3405,9 +3353,7 @@ bool CreatePrinterPresetDialog::validate_input_valid()
 
     if (auto preset = wxGetApp().preset_bundle->printers.find_preset(custom_printer_name)) {
         if (preset->is_system) {
-            MessageDialog dlg(this, _L("The system preset does not allow creation. \nPlease re-enter the printer model or nozzle diameter."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("The system preset does not allow creation. \nPlease re-enter the printer model or nozzle diameter."), _L("Info"));
             return false;
         }
     }
@@ -3417,7 +3363,7 @@ bool CreatePrinterPresetDialog::validate_input_valid()
 
 void CreatePrinterPresetDialog::on_preset_model_value_change(wxCommandEvent &e)
 {
-    m_printer_model->SetLabelColor(*wxBLACK);
+    m_printer_model->SetLabelColor(StateColor::semantic(MD3::Role::OnSurface));
     if (m_printer_preset_vendor_selected.models.empty()) {
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " selected vendor has no models, and the vendor is: " << m_printer_preset_vendor_selected.id;
         return;
@@ -3459,7 +3405,7 @@ wxString CreatePrinterPresetDialog::curr_create_printer_type() const
 CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, const SuccessType &create_success_type)
     : DPIDialog(parent ? parent : nullptr, wxID_ANY, PRINTER == create_success_type ? _L("Create Printer Successful") : _L("Create Filament Successful"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     this->SetSize(wxSize(FromDIP(450), FromDIP(200)));
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
@@ -3467,7 +3413,7 @@ CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, con
     wxBoxSizer *m_main_sizer = new wxBoxSizer(wxVERTICAL);
     // top line
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
 
@@ -3475,7 +3421,7 @@ CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, con
     horizontal_sizer->Add(0, 0, 0, wxLEFT, FromDIP(30));
 
     wxBoxSizer *success_bitmap_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticBitmap *success_bitmap       = new wxStaticBitmap(this,wxID_ANY, create_scaled_bitmap("create_success", nullptr, FromDIP(24)));
+    wxStaticBitmap *success_bitmap       = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::TaskAlt, FromDIP(24), StateColor::semantic(MD3::Role::Primary)));
     success_bitmap_sizer->Add(success_bitmap, 0, wxEXPAND, 0);
     horizontal_sizer->Add(success_bitmap_sizer, 0, wxEXPAND | wxALL, FromDIP(5));
 
@@ -3485,16 +3431,16 @@ CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, con
     bool          sync_user_preset_need_enabled = wxGetApp().getAgent() && wxGetApp().app_config->get("sync_user_preset") == "false";
     switch (create_success_type) {
     case PRINTER:
-        success_text = new wxStaticText(this, wxID_ANY, _L("Printer Created"));
-        next_step_text = new wxStaticText(this, wxID_ANY, _L("Please go to printer settings to edit your presets"));
+        success_text = new Label(this, _L("Printer Created"));
+        next_step_text = new Label(this, _L("Please go to printer settings to edit your presets"));
         break;
     case FILAMENT:
-        success_text = new wxStaticText(this, wxID_ANY, _L("Filament Created"));
+        success_text = new Label(this, _L("Filament Created"));
         wxString prompt_text = _L("Please go to filament setting to edit your presets if you need.\nPlease note that nozzle temperature, hot bed temperature, and maximum "
                                   "volumetric speed has a significant impact on printing quality. Please set them carefully.");
         wxString sync_text = sync_user_preset_need_enabled ? _L("Studio has detected that your user presets synchronization function is not enabled, which may result in unsuccessful Filament settings on "
                    "the Device page. \nClick \"Sync user presets\" to enable the synchronization function.") : "";
-        next_step_text       = new wxStaticText(this, wxID_ANY, prompt_text + "\n\n" + sync_text);
+        next_step_text       = new Label(this, prompt_text + "\n\n" + sync_text);
         break;
     }
     success_text->SetFont(Label::Head_18);
@@ -3514,14 +3460,12 @@ CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, con
     case FILAMENT: m_button_ok = sync_user_preset_need_enabled ? new Button(this, _L("Sync user presets")) : new Button(this, _L("OK"));
         break;
     }
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(wxColour(*wxWHITE));
-    m_button_ok->SetTextColor(wxColour(*wxWHITE));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    m_button_ok->SetVariant(Button::Variant::Filled);
     m_button_ok->SetFont(Label::Body_12);
     m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -3538,9 +3482,7 @@ CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, con
 
     if (PRINTER == create_success_type || sync_user_preset_need_enabled) {
         m_button_cancel = new Button(this, _L("Cancel"));
-        m_button_cancel->SetBackgroundColor(btn_bg_white);
-        m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
-        m_button_cancel->SetTextColor(wxColour(38, 46, 48));
+        m_button_cancel->SetVariant(Button::Variant::Outlined);
         m_button_cancel->SetFont(Label::Body_12);
         m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
         m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -3556,6 +3498,7 @@ CreatePresetSuccessfulDialog::CreatePresetSuccessfulDialog(wxWindow *parent, con
     Layout();
     Fit();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 CreatePresetSuccessfulDialog::~CreatePresetSuccessfulDialog() {}
@@ -3579,7 +3522,7 @@ ExportConfigsDialog::ExportConfigsDialog(wxWindow *parent)
     m_exprot_type.filament_preset = _L("Filament presets(.zip)");
     m_exprot_type.process_preset  = _L("Process presets(.zip)");
 
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     this->SetSize(wxSize(FromDIP(600), FromDIP(600)));
 
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
@@ -3588,7 +3531,7 @@ ExportConfigsDialog::ExportConfigsDialog(wxWindow *parent)
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
     // top line
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
 
@@ -3604,6 +3547,7 @@ ExportConfigsDialog::ExportConfigsDialog(wxWindow *parent)
     this->Fit();
 
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 
 }
 
@@ -3659,32 +3603,25 @@ void ExportConfigsDialog::on_dpi_changed(const wxRect &suggested_rect) {
 
 void ExportConfigsDialog::show_export_result(const ExportCase &export_case)
 {
-    MessageDialog *msg_dlg = nullptr;
     switch (export_case) {
     case ExportCase::INITIALIZE_FAIL:
-        msg_dlg = new MessageDialog(this, _L("initialize fail"), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
+        show_error(this, _L("initialize fail"));
         break;
     case ExportCase::ADD_FILE_FAIL:
-        msg_dlg = new MessageDialog(this, _L("add file fail"), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
+        show_error(this, _L("add file fail"));
         break;
     case ExportCase::ADD_BUNDLE_STRUCTURE_FAIL:
-        msg_dlg = new MessageDialog(this, _L("add bundle structure file fail"), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
+        show_error(this, _L("add bundle structure file fail"));
         break;
     case ExportCase::FINALIZE_FAIL:
-        msg_dlg = new MessageDialog(this, _L("finalize fail"), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
+        show_error(this, _L("finalize fail"));
         break;
     case ExportCase::OPEN_ZIP_WRITTEN_FILE:
-        msg_dlg = new MessageDialog(this, _L("open zip written fail"), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
+        show_error(this, _L("open zip written fail"));
         break;
     case ExportCase::EXPORT_SUCCESS:
-        msg_dlg = new MessageDialog(this, _L("Export successful"), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
+        show_info(this, _L("Export successful"), _L("Info"));
         break;
-    }
-
-    if (msg_dlg) {
-        msg_dlg->ShowModal();
-        delete msg_dlg;
-        msg_dlg = nullptr;
     }
 }
 
@@ -3747,11 +3684,8 @@ std::string ExportConfigsDialog::initial_file_path(const wxString &path, const s
             try {
                 boost::filesystem::remove_all(printer_export_path);
             } catch (...) {
-                MessageDialog dlg(this, _L(wxString::Format("The file: %s \nin the directory may have been opened by another program. \nPlease close it and try again.",
-                                                      encode_path(printer_export_path.string().c_str()))),
-                                  wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                                  wxYES | wxYES_DEFAULT | wxCENTRE);
-                dlg.ShowModal();
+                show_error(this, _L(wxString::Format("The file: %s \nin the directory may have been opened by another program. \nPlease close it and try again.",
+                                                      encode_path(printer_export_path.string().c_str()))));
                 return "initial_failed";
             }
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "delete path";
@@ -3801,11 +3735,8 @@ std::string ExportConfigsDialog::initial_file_name(const wxString &path, const s
                 boost::filesystem::remove_all(printer_export_path);
             }
             catch(...) {
-                MessageDialog dlg(this,
-                                  _L(wxString::Format("The file: %s \nmay have been opened by another program. \nPlease close it and try again.",
-                                                      encode_path(printer_export_path.string().c_str()))),
-                                  wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES | wxYES_DEFAULT | wxCENTRE);
-                dlg.ShowModal();
+                show_error(this, _L(wxString::Format("The file: %s \nmay have been opened by another program. \nPlease close it and try again.",
+                                                      encode_path(printer_export_path.string().c_str()))));
                 return "initial_failed";
             }
             export_path = printer_export_path.string();
@@ -3841,7 +3772,7 @@ wxBoxSizer *ExportConfigsDialog::create_export_config_item(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_serial_text = new wxStaticText(parent, wxID_ANY, _L("Presets"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_serial_text = new Label(parent, _L("Presets"));
     optionSizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -3850,14 +3781,14 @@ wxBoxSizer *ExportConfigsDialog::create_export_config_item(wxWindow *parent)
 
     radioBoxSizer->Add(create_radio_item(m_exprot_type.preset_bundle, parent, wxEmptyString, m_export_type_btns), 0, wxEXPAND | wxALL, 0);
     radioBoxSizer->Add(0, 0, 0, wxTOP, FromDIP(6));
-    wxStaticText *static_export_printer_preset_bundle_text = new wxStaticText(parent, wxID_ANY, _L("Printer and all the filament&process presets that belong to the printer. \nCan be shared with others."), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_export_printer_preset_bundle_text = new Label(parent, _L("Printer and all the filament&process presets that belong to the printer. \nCan be shared with others."));
     static_export_printer_preset_bundle_text->SetFont(Label::Body_12);
-    static_export_printer_preset_bundle_text->SetForegroundColour(wxColour("#6B6B6B"));
+    static_export_printer_preset_bundle_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     radioBoxSizer->Add(static_export_printer_preset_bundle_text, 0, wxEXPAND | wxLEFT, FromDIP(22));
     radioBoxSizer->Add(create_radio_item(m_exprot_type.filament_bundle, parent, wxEmptyString, m_export_type_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
-    wxStaticText *static_export_filament_preset_bundle_text = new wxStaticText(parent, wxID_ANY, _L("User's fillment preset set. \nCan be shared with others."), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_export_filament_preset_bundle_text = new Label(parent, _L("User's fillment preset set. \nCan be shared with others."));
     static_export_filament_preset_bundle_text->SetFont(Label::Body_12);
-    static_export_filament_preset_bundle_text->SetForegroundColour(wxColour("#6B6B6B"));
+    static_export_filament_preset_bundle_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     radioBoxSizer->Add(static_export_filament_preset_bundle_text, 0, wxEXPAND | wxLEFT, FromDIP(22));
     radioBoxSizer->Add(create_radio_item(m_exprot_type.printer_preset, parent, wxEmptyString, m_export_type_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
     radioBoxSizer->Add(create_radio_item(m_exprot_type.filament_preset, parent, wxEmptyString, m_export_type_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
@@ -3879,7 +3810,7 @@ wxBoxSizer *ExportConfigsDialog::create_radio_item(wxString title, wxWindow *par
         select_curr_radiobox(radiobox_list, btn_idx);
         });
 
-    wxStaticText *text = new wxStaticText(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize);
+    wxStaticText *text = new Label(parent, title);
     text->Bind(wxEVT_LEFT_DOWN, [this, &radiobox_list, btn_idx](wxMouseEvent &e) {
         select_curr_radiobox(radiobox_list, btn_idx);
         });
@@ -4383,13 +4314,11 @@ wxBoxSizer *ExportConfigsDialog::create_button_item(wxWindow* parent)
     wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
     bSizer_button->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_button_ok = new Button(this, _L("OK"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour("#FFFFFE"));
+    m_button_ok->SetVariant(Button::Variant::Filled);
     m_button_ok->SetFont(Label::Body_12);
     m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -4398,9 +4327,7 @@ wxBoxSizer *ExportConfigsDialog::create_button_item(wxWindow* parent)
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         if (!has_check_box_selected()) {
-            MessageDialog dlg(this, _L("Please select at least one printer or filament."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("Please select at least one printer or filament."), _L("Info"));
             return;
         }
 
@@ -4433,12 +4360,11 @@ wxBoxSizer *ExportConfigsDialog::create_button_item(wxWindow* parent)
         EndModal(wxID_OK);
         });
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetVariant(Button::Variant::Outlined);
     m_button_cancel->SetFont(Label::Body_12);
     m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -4455,7 +4381,7 @@ wxBoxSizer *ExportConfigsDialog::create_select_printer(wxWindow *parent)
     wxBoxSizer *horizontal_sizer = new wxBoxSizer(wxVERTICAL);
 
     wxBoxSizer *  optionSizer        = new wxBoxSizer(wxVERTICAL);
-    m_serial_text           = new wxStaticText(parent, wxID_ANY, _L("Please select a type you want to export"), wxDefaultPosition, wxDefaultSize);
+    m_serial_text           = new Label(parent, _L("Please select a type you want to export"));
     optionSizer->Add(m_serial_text, 0, wxEXPAND | wxALL, 0);
     optionSizer->SetMinSize(OPTION_SIZE);
     horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -4504,8 +4430,7 @@ void ExportConfigsDialog::data_init()
         }
     }
     if (!temp_folder_exist) {
-        MessageDialog dlg(this, _L("Failed to create temporary folder, please try Export Configs again."), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"), wxYES_NO | wxYES_DEFAULT | wxCENTRE);
-        dlg.ShowModal();
+        show_error(wxGetApp().mainframe, _L("Failed to create temporary folder, please try Export Configs again."));
         EndModal(wxCANCEL);
     }
 
@@ -4565,7 +4490,7 @@ EditFilamentPresetDialog::EditFilamentPresetDialog(wxWindow *parent, FilamentInf
 {
     m_preset_tree_creater = new PresetTree(this);
 
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     this->SetMinSize(wxSize(FromDIP(600), -1));
 
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
@@ -4574,11 +4499,11 @@ EditFilamentPresetDialog::EditFilamentPresetDialog(wxWindow *parent, FilamentInf
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
     // top line
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
 
-    wxStaticText* basic_infomation = new wxStaticText(this, wxID_ANY, _L("Basic Information"));
+    wxStaticText* basic_infomation = new Label(this, _L("Basic Information"));
     basic_infomation->SetFont(Label::Head_16);
 
     m_main_sizer->Add(basic_infomation, 0, wxALL, FromDIP(10));
@@ -4616,17 +4541,17 @@ EditFilamentPresetDialog::EditFilamentPresetDialog(wxWindow *parent, FilamentInf
 
     // divider line
     auto line_divider = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line_divider->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    line_divider->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_main_sizer->Add(line_divider, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));
     m_main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
 
-    wxStaticText *presets_infomation = new wxStaticText(this, wxID_ANY, _L("Filament presets under this filament"));
+    wxStaticText *presets_infomation = new Label(this, _L("Filament presets under this filament"));
     presets_infomation->SetFont(Label::Head_16);
     m_main_sizer->Add(presets_infomation, 0, wxLEFT | wxRIGHT, FromDIP(10));
 
     m_main_sizer->Add(create_add_filament_btn(), 0, wxEXPAND | wxALL, 0);
     m_main_sizer->Add(create_preset_tree_sizer(), 0, wxEXPAND | wxALL, 0);
-    m_note_text = new wxStaticText(this, wxID_ANY, _L("Note: If the only preset under this filament is deleted, the filament will be deleted after exiting the dialog."));
+    m_note_text = new Label(this, _L("Note: If the only preset under this filament is deleted, the filament will be deleted after exiting the dialog."));
     m_main_sizer->Add(m_note_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
     m_note_text->Hide();
     m_main_sizer->Add(create_button_sizer(), 0, wxEXPAND | wxALL, 0);
@@ -4636,8 +4561,9 @@ EditFilamentPresetDialog::EditFilamentPresetDialog(wxWindow *parent, FilamentInf
     this->SetSizer(m_main_sizer);
     this->Layout();
     this->Fit();
-    this->CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    this->CenterOnParent();
 }
 EditFilamentPresetDialog::~EditFilamentPresetDialog() {}
 
@@ -4756,8 +4682,7 @@ void EditFilamentPresetDialog::delete_preset()
                 msg = _L("Presets inherited by other presets can not be deleted");
                 msg += "\n";
                 msg += _L_PLURAL("The following presets inherits this preset.", "The following preset inherits this preset.", count);
-                wxString title = _L("Delete Preset");
-                MessageDialog(this, msg + presets, title, wxOK | wxICON_ERROR).ShowModal();
+                show_error(this, msg + presets);
                 m_selected_printer.clear();
                 m_need_delete_preset_index = -1;
                 return;
@@ -4833,31 +4758,31 @@ wxBoxSizer *EditFilamentPresetDialog::create_filament_basic_info()
 
     //vendor
     wxBoxSizer *  vendor_key_sizer        = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_vendor_text = new wxStaticText(this, wxID_ANY, _L("Vendor"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_vendor_text = new Label(this, _L("Vendor"));
     vendor_key_sizer->Add(static_vendor_text, 0, wxEXPAND | wxALL, 0);
     vendor_key_sizer->SetMinSize(OPTION_SIZE);
     vendor_sizer->Add(vendor_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     wxBoxSizer *vendor_value_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *vendor_text = new wxStaticText(this, wxID_ANY, from_u8(m_vendor_name), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *vendor_text = new Label(this, from_u8(m_vendor_name));
     vendor_value_sizer->Add(vendor_text, 0, wxEXPAND | wxALL, 0);
     vendor_sizer->Add(vendor_value_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     //type
     wxBoxSizer *  type_key_sizer   = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_type_text = new wxStaticText(this, wxID_ANY, _L("Type"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_type_text = new Label(this, _L("Type"));
     type_key_sizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
     type_key_sizer->SetMinSize(OPTION_SIZE);
     type_sizer->Add(type_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     wxBoxSizer *  type_value_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *type_text        = new wxStaticText(this, wxID_ANY, from_u8(m_filament_type), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *type_text        = new Label(this, from_u8(m_filament_type));
     type_value_sizer->Add(type_text, 0, wxEXPAND | wxALL, 0);
     type_sizer->Add(type_value_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     //serial
     wxBoxSizer *  serial_key_sizer   = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *static_serial_text = new wxStaticText(this, wxID_ANY, _L("Serial"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *static_serial_text = new Label(this, _L("Serial"));
     serial_key_sizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
     serial_key_sizer->SetMinSize(OPTION_SIZE);
     serial_sizer->Add(serial_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
@@ -4868,7 +4793,7 @@ wxBoxSizer *EditFilamentPresetDialog::create_filament_basic_info()
     if (m_filament_serial.size() > 40) {
         show_filament_serial = from_u8(m_filament_serial.substr(0, 20)) + "...";
     }
-    wxStaticText *serial_text = new wxStaticText(this, wxID_ANY, show_filament_serial, wxDefaultPosition, wxDefaultSize);
+    wxStaticText *serial_text = new Label(this, show_filament_serial);
     wxToolTip *   toolTip     = new wxToolTip(full_filamnet_serial);
     serial_text->SetToolTip(toolTip);
     serial_value_sizer->Add(serial_text, 0, wxEXPAND | wxALL, 0);
@@ -4889,18 +4814,16 @@ wxBoxSizer *EditFilamentPresetDialog::create_add_filament_btn()
     m_add_filament_btn->SetPaddingSize(wxSize(FromDIP(8), FromDIP(3)));
     m_add_filament_btn->SetCornerRadius(FromDIP(8));
 
-    StateColor flush_bg_col(std::pair<wxColour, int>(wxColour(219, 253, 231), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal));
+    StateColor flush_bg_col(std::pair<wxColour, int>(MD3::Light::primaryContainer, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal));
 
-    StateColor flush_fg_col(std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Pressed), std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Normal));
+    StateColor flush_fg_col(std::pair<wxColour, int>(ThemeColor::TextMuted, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::TextMuted, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::TextMuted, StateColor::Normal));
 
-    StateColor flush_bd_col(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Pressed), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(172, 172, 172), StateColor::Normal));
+    StateColor flush_bd_col(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 
-    m_add_filament_btn->SetBackgroundColor(flush_bg_col);
-    m_add_filament_btn->SetBorderColor(flush_bd_col);
-    m_add_filament_btn->SetTextColor(flush_fg_col);
+    m_add_filament_btn->SetVariant(Button::Variant::Outlined);
     add_filament_btn_sizer->Add(m_add_filament_btn, 0, wxEXPAND | wxALL, FromDIP(10));
 
     m_add_filament_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) {
@@ -4928,7 +4851,7 @@ wxBoxSizer *EditFilamentPresetDialog::create_preset_tree_sizer()
     m_preset_tree_panel = new wxPanel(m_preset_tree_window);
     m_preset_tree_sizer = new wxBoxSizer(wxVERTICAL);
     m_preset_tree_panel->SetSizer(m_preset_tree_sizer);
-    m_preset_tree_panel->SetMinSize(wxSize(580, -1));
+    m_preset_tree_panel->SetMinSize(FromDIP(wxSize(580, -1)));
     m_preset_tree_panel->SetBackgroundColour(PRINTER_LIST_COLOUR);
     wxBoxSizer* m_preset_tree_window_sizer = new wxBoxSizer(wxVERTICAL);
     m_preset_tree_window_sizer->Add(m_preset_tree_panel, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));
@@ -4943,9 +4866,7 @@ wxBoxSizer *EditFilamentPresetDialog::create_button_sizer()
     wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
 
     m_del_filament_btn = new Button(this, _L("Delete Filament"));
-    m_del_filament_btn->SetBackgroundColor(*wxRED);
-    m_del_filament_btn->SetBorderColor(*wxWHITE);
-    m_del_filament_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_del_filament_btn->SetVariant(Button::Variant::Filled);
     m_del_filament_btn->SetFont(Label::Body_12);
     m_del_filament_btn->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_del_filament_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -4954,21 +4875,19 @@ wxBoxSizer *EditFilamentPresetDialog::create_button_sizer()
 
     bSizer_button->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_ok_btn = new Button(this, _L("OK"));
-    m_ok_btn->SetBackgroundColor(btn_bg_green);
-    m_ok_btn->SetBorderColor(*wxWHITE);
-    m_ok_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_ok_btn->SetVariant(Button::Variant::Filled);
     m_ok_btn->SetFont(Label::Body_12);
     m_ok_btn->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_ok_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     m_ok_btn->SetCornerRadius(FromDIP(12));
     bSizer_button->Add(m_ok_btn, 0, wxRIGHT | wxBOTTOM, FromDIP(10));
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_del_filament_btn->Bind(wxEVT_BUTTON, ([this](wxCommandEvent &e) {
         WarningDialog dlg(this, _L("All the filament presets belong to this filament would be deleted. \nIf you are using this filament on your printer, please reset the filament information for that slot."), _L("Delete filament"), wxYES | wxCANCEL | wxCANCEL_DEFAULT | wxCENTRE);
@@ -5024,7 +4943,7 @@ CreatePresetForPrinterDialog::CreatePresetForPrinterDialog(wxWindow *parent, std
     m_preset_bundle = std::make_shared<PresetBundle>(*(wxGetApp().preset_bundle));
     get_visible_printer_and_compatible_filament_presets();
 
-    this->SetBackgroundColour(*wxWHITE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
@@ -5032,11 +4951,11 @@ CreatePresetForPrinterDialog::CreatePresetForPrinterDialog(wxWindow *parent, std
     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
     // top line
     auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(0xA6, 0xa9, 0xAA));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_sizer->Add(m_line_top, 0, wxEXPAND, 0);
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
 
-    wxStaticText *basic_infomation = new wxStaticText(this, wxID_ANY, _L("Add preset for new printer"));
+    wxStaticText *basic_infomation = new Label(this, _L("Add preset for new printer"));
     basic_infomation->SetFont(Label::Head_16);
     main_sizer->Add(basic_infomation, 0, wxALL, FromDIP(10));
 
@@ -5048,6 +4967,7 @@ CreatePresetForPrinterDialog::CreatePresetForPrinterDialog(wxWindow *parent, std
     this->Layout();
     this->Fit();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 CreatePresetForPrinterDialog::~CreatePresetForPrinterDialog() {}
@@ -5097,7 +5017,7 @@ void CreatePresetForPrinterDialog::get_visible_printer_and_compatible_filament_p
 wxBoxSizer *CreatePresetForPrinterDialog::create_selected_printer_preset_sizer()
 {
     wxBoxSizer *select_preseter_preset_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *printer_text = new wxStaticText(this, wxID_ANY, _L("Printer"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *printer_text = new Label(this, _L("Printer"));
     select_preseter_preset_sizer->Add(printer_text, 0, wxEXPAND | wxALL, 0);
     m_selected_printer = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, PRINTER_PRESET_MODEL_SIZE, 0, nullptr, wxCB_READONLY);
     select_preseter_preset_sizer->Add(m_selected_printer, 0, wxEXPAND | wxTOP, FromDIP(5));
@@ -5121,7 +5041,7 @@ wxBoxSizer *CreatePresetForPrinterDialog::create_selected_printer_preset_sizer()
 wxBoxSizer *CreatePresetForPrinterDialog::create_selected_filament_preset_sizer()
 {
     wxBoxSizer *  select_filament_preset_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *printer_text                 = new wxStaticText(this, wxID_ANY, _L("Copy preset from filament"), wxDefaultPosition, wxDefaultSize);
+    wxStaticText *printer_text                 = new Label(this, _L("Copy preset from filament"));
     select_filament_preset_sizer->Add(printer_text, 0, wxEXPAND | wxALL, 0);
     m_selected_filament = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, PRINTER_PRESET_MODEL_SIZE, 0, nullptr, wxCB_READONLY);
     select_filament_preset_sizer->Add(m_selected_filament, 0, wxEXPAND | wxTOP, FromDIP(5));
@@ -5154,25 +5074,22 @@ wxBoxSizer *CreatePresetForPrinterDialog::create_button_sizer()
 
     bSizer_button->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_ok_btn = new Button(this, _L("OK"));
-    m_ok_btn->SetBackgroundColor(btn_bg_green);
-    m_ok_btn->SetBorderColor(*wxWHITE);
-    m_ok_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_ok_btn->SetVariant(Button::Variant::Filled);
     m_ok_btn->SetFont(Label::Body_12);
     m_ok_btn->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_ok_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     m_ok_btn->SetCornerRadius(FromDIP(12));
     bSizer_button->Add(m_ok_btn, 0, wxRIGHT | wxBOTTOM, FromDIP(10));
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
     m_cancel_btn = new Button(this, _L("Cancel"));
-    m_cancel_btn->SetBackgroundColor(btn_bg_white);
-    m_cancel_btn->SetBorderColor(wxColour(38, 46, 48));
+    m_cancel_btn->SetVariant(Button::Variant::Outlined);
     m_cancel_btn->SetFont(Label::Body_12);
     m_cancel_btn->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_cancel_btn->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -5213,9 +5130,7 @@ wxBoxSizer *CreatePresetForPrinterDialog::create_button_sizer()
 
         } else {
             BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << "filament choice not find filament preset and choice is:" << filament_preset_name;
-            MessageDialog dlg(this, _L("The filament choice not find filament preset, please reselect it"), wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Info"),
-                              wxYES | wxYES_DEFAULT | wxCENTRE);
-            dlg.ShowModal();
+            show_info(this, _L("The filament choice not find filament preset, please reselect it"), _L("Info"));
             return;
         }
 
@@ -5257,9 +5172,9 @@ wxPanel *PresetTree::get_root_item(wxPanel *parent, const std::string &printer_n
     wxPanel *   panel           = new wxPanel(parent);
     wxColour    backgroundColor = parent->GetBackgroundColour();
     panel->SetBackgroundColour(backgroundColor);
-    wxStaticText *preset_name = new wxStaticText(panel, wxID_ANY, from_u8(printer_name));
+    wxStaticText *preset_name = new Label(panel, from_u8(printer_name));
     preset_name->SetFont(Label::Body_11);
-    preset_name->SetForegroundColour(*wxBLACK);
+    preset_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     sizer->Add(preset_name, 0, wxEXPAND | wxALL, 5);
     panel->SetSizer(sizer);
 
@@ -5274,46 +5189,44 @@ wxPanel *PresetTree::get_child_item(wxPanel *parent, std::shared_ptr<Preset> pre
     panel->SetBackgroundColour(backgroundColor);
     sizer->Add(0, 0, 0, wxLEFT, 10);
     wxPanel *line_left = new wxPanel(panel, wxID_ANY, wxDefaultPosition, is_last ? wxSize(1, 12) : wxSize(1, -1));
-    line_left->SetBackgroundColour(*wxBLACK);
+    line_left->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(line_left, 0, is_last ? wxALL : wxEXPAND | wxALL, 0);
     wxPanel *line_right = new wxPanel(panel, wxID_ANY, wxDefaultPosition, wxSize(10, 1));
-    line_right->SetBackgroundColour(*wxBLACK);
+    line_right->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     sizer->Add(line_right, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
     sizer->Add(0, 0, 0, wxLEFT, 5);
-    wxStaticText *preset_name = new wxStaticText(panel, wxID_ANY, from_u8(preset->name));
+    wxStaticText *preset_name = new Label(panel, from_u8(preset->name));
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " create child item: " << preset->name;
     preset_name->SetFont(Label::Body_10);
-    preset_name->SetForegroundColour(*wxBLACK);
+    preset_name->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     sizer->Add(preset_name, 0, wxEXPAND | wxALL, 5);
     bool base_id_error = false;
     if (preset->inherits() == "" && preset->base_id != "") base_id_error = true;
     if (base_id_error) {
         std::string      wiki_url             = "https://wiki.bambulab.com/en/software/bambu-studio/custom-filament-issue";
-        wxHyperlinkCtrl *m_download_hyperlink = new wxHyperlinkCtrl(panel, wxID_ANY, _L("[Delete Required]"), wiki_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
-        m_download_hyperlink->SetFont(Label::Body_10);
+        LinkLabel *m_download_hyperlink = new LinkLabel(panel, _L("[Delete Required]"), wiki_url);
+        m_download_hyperlink->getLabel()->SetFont(Label::Body_10);
         sizer->Add(m_download_hyperlink, 0, wxEXPAND | wxALL, 5);
     }
     sizer->Add(0, 0, 1, wxEXPAND, 0);
 
-    StateColor flush_bg_col(std::pair<wxColour, int>(wxColour(219, 253, 231), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal));
+    StateColor flush_bg_col(std::pair<wxColour, int>(MD3::Light::primaryContainer, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Normal));
 
-    StateColor flush_fg_col(std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Pressed), std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(107, 107, 106), StateColor::Normal));
+    StateColor flush_fg_col(std::pair<wxColour, int>(ThemeColor::TextMuted, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::TextMuted, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::TextMuted, StateColor::Normal));
 
-    StateColor flush_bd_col(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Pressed), std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(172, 172, 172), StateColor::Normal));
+    StateColor flush_bd_col(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Normal));
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     Button *edit_preset_btn = new Button(panel, _L("Edit Preset"));
     edit_preset_btn->SetFont(Label::Body_10);
     edit_preset_btn->SetPaddingSize(wxSize(8, 3));
     edit_preset_btn->SetCornerRadius(8);
-    edit_preset_btn->SetBackgroundColor(flush_bg_col);
-    edit_preset_btn->SetBorderColor(flush_bd_col);
-    edit_preset_btn->SetTextColor(flush_fg_col);
+    edit_preset_btn->SetVariant(Button::Variant::Outlined);
     //edit_preset_btn->Hide();
     sizer->Add(edit_preset_btn, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
     sizer->Add(0, 0, 0, wxLEFT, 5);
@@ -5323,13 +5236,8 @@ wxPanel *PresetTree::get_child_item(wxPanel *parent, std::shared_ptr<Preset> pre
     del_preset_btn->SetPaddingSize(wxSize(8, 3));
     del_preset_btn->SetCornerRadius(8);
     if (base_id_error) {
-        del_preset_btn->SetBackgroundColor(btn_bg_green);
-        del_preset_btn->SetBorderColor(btn_bg_green);
-        del_preset_btn->SetTextColor(wxColour("#FFFFFE"));
+        del_preset_btn->SetVariant(Button::Variant::Outlined);
     } else {
-        del_preset_btn->SetBackgroundColor(flush_bg_col);
-        del_preset_btn->SetBorderColor(flush_bd_col);
-        del_preset_btn->SetTextColor(flush_fg_col);
     }
 
     //del_preset_btn->Hide();

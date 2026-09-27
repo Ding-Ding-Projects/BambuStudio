@@ -7,9 +7,10 @@
 #include <string>
 
 #include "Jobs/ProgressIndicator.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/ProgressBar.hpp"
 
 class wxTimer;
-class wxGauge;
 class wxButton;
 class wxTimerEvent;
 class wxStatusBar;
@@ -29,8 +30,8 @@ namespace Slic3r {
 class ProgressStatusBar : public ProgressIndicator
 {
     wxStatusBar *self;      // we cheat! It should be the base class but: perl!
-    wxGauge *m_prog;
-    wxButton *m_cancelbutton;
+    ProgressBar *m_prog;
+    Button *m_cancelbutton;
     std::unique_ptr<wxTimer> m_timer;
 public:
 

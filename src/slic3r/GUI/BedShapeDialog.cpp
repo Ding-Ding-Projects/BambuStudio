@@ -1,6 +1,8 @@
 #include "BedShapeDialog.hpp"
 #include "GUI_App.hpp"
 #include "OptionsGroup.hpp"
+#include "MsgDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/wx.h>
 #include <wx/numformatter.h>
@@ -14,6 +16,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include "FileHelp.hpp"
+#include "Widgets/Label.hpp"
 #include <wx/dcgraph.h>
 #include <algorithm>
 
@@ -148,6 +151,8 @@ void BedShapeDialog::build_dialog(const ConfigOptionPoints &default_pt, const Co
     SetSizer(main_sizer);
     SetMinSize(GetSize());
     main_sizer->SetSizeHints(this);
+
+    MD3DialogCaption::Adopt(this);
 
     this->Bind(wxEVT_CLOSE_WINDOW, ([this](wxCloseEvent& evt) {
         EndModal(wxID_CANCEL);
@@ -292,21 +297,19 @@ wxPanel *BedShapePanel::init_texture_panel()
         StateColor btn_bd_white(std::pair<wxColour, int>(*wxWHITE, StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
 
         Button* load_btn = new Button(parent, _L("Load..."));
-        load_btn->SetBackgroundColor(btn_bg_white);
-        load_btn->SetBorderColor(btn_bd_white);
+        load_btn->SetVariant(Button::Variant::Outlined);
         load_btn->SetBackgroundColour(*wxWHITE);
         load_btn->Enable(true);
         wxSizer * load_sizer = new wxBoxSizer(wxHORIZONTAL);
         load_sizer->Add(load_btn, 1, wxEXPAND);
 
-        wxStaticText *filename_lbl = new wxStaticText(parent, wxID_ANY, _(NONE));
+        wxStaticText *filename_lbl = new Label(parent, _(NONE));
 
         wxSizer *filename_sizer = new wxBoxSizer(wxHORIZONTAL);
         filename_sizer->Add(filename_lbl, 1, wxEXPAND);
 
         Button* remove_btn = new Button(parent, _L("Remove"));
-        remove_btn->SetBackgroundColor(btn_bg_white);
-        remove_btn->SetBorderColor(btn_bd_white);
+        remove_btn->SetVariant(Button::Variant::Outlined);
         remove_btn->SetBackgroundColour(*wxWHITE);
         wxSizer * remove_sizer = new wxBoxSizer(wxHORIZONTAL);
         remove_sizer->Add(remove_btn, 1, wxEXPAND);
@@ -374,20 +377,18 @@ wxPanel *BedShapePanel::init_model_panel()
         StateColor btn_bd_white(std::pair<wxColour, int>(*wxWHITE, StateColor::Disabled), std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Enabled));
 
         Button* load_btn = new Button(parent, _L("Load..."));
-        load_btn->SetBackgroundColor(btn_bg_white);
-        load_btn->SetBorderColor(btn_bd_white);
+        load_btn->SetVariant(Button::Variant::Outlined);
         load_btn->SetBackgroundColour(*wxWHITE);
         load_btn->Enable(m_can_edit);
         wxSizer * load_sizer = new wxBoxSizer(wxHORIZONTAL);
         load_sizer->Add(load_btn, 1, wxEXPAND);
 
-        wxStaticText *filename_lbl   = new wxStaticText(parent, wxID_ANY, _(NONE));
+        wxStaticText *filename_lbl   = new Label(parent, _(NONE));
         wxSizer *     filename_sizer = new wxBoxSizer(wxHORIZONTAL);
         filename_sizer->Add(filename_lbl, 1, wxEXPAND);
 
         Button* remove_btn = new Button(parent, _L("Remove"));
-        remove_btn->SetBackgroundColor(btn_bg_white);
-        remove_btn->SetBorderColor(btn_bd_white);
+        remove_btn->SetVariant(Button::Variant::Outlined);
         remove_btn->SetBackgroundColour(*wxWHITE);
         wxSizer * remove_sizer = new wxBoxSizer(wxHORIZONTAL);
         remove_sizer->Add(remove_btn, 1, wxEXPAND);
@@ -607,9 +608,11 @@ void BedShapePanel::load_texture()
     bool try_ok;
     if (Utils::is_file_too_large(file_name, try_ok)) {
         if (try_ok) {
-            wxMessageBox(wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            MessageDialog dlg(this, wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            dlg.ShowModal();
         } else {
-            wxMessageBox(_L("Exception in obtaining file size, please import again."));
+            MessageDialog dlg(this, _L("Exception in obtaining file size, please import again."));
+            dlg.ShowModal();
         }
         return;
     }
@@ -638,9 +641,11 @@ void BedShapePanel::load_model()
     bool try_ok;
     if (Utils::is_file_too_large(file_name, try_ok)) {
         if (try_ok) {
-            wxMessageBox(wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            MessageDialog dlg(this, wxString::Format(_L("The file exceeds %d MB, please import again."), STL_SVG_MAX_FILE_SIZE_MB), "Error", wxOK | wxICON_ERROR);
+            dlg.ShowModal();
         } else {
-            wxMessageBox(_L("Exception in obtaining file size, please import again."));
+            MessageDialog dlg(this, _L("Exception in obtaining file size, please import again."));
+            dlg.ShowModal();
         }
         return;
     }

@@ -8,13 +8,14 @@
 #include "MonitorBasePanel.h"
 #include "Printer/PrinterFileSystem.h"
 #include "Widgets/Label.hpp"
+#include "Widgets/StateColor.hpp"
 
 ///////////////////////////////////////////////////////////////////////////
 using namespace Slic3r::GUI;
 
 MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name) : wxPanel(parent, id, pos, size, style, name)
 {
-	this->SetMinSize(wxSize(600, 400));
+	this->SetMinSize(FromDIP(wxSize(600, 400)));
 
 	wxBoxSizer* bSizer_top;
 	bSizer_top = new wxBoxSizer(wxVERTICAL);
@@ -33,7 +34,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	wxBoxSizer* bSizerleft;
 	bSizerleft = new wxBoxSizer(wxVERTICAL);
 
-	bSizerleft->SetMinSize(wxSize(182, 833));
+	bSizerleft->SetMinSize(FromDIP(wxSize(182, 833)));
 	m_panel_printer = new wxPanel(m_panel_splitter_left, wxID_ANY, wxDefaultPosition, wxSize(182, 87), wxTAB_TRAVERSAL);
 	m_panel_printer->SetBackgroundColour(wxColour(255, 255, 255));
 
@@ -49,16 +50,12 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_printer->Add(23, 0, 0, wxEXPAND, 0);
 
-	m_bitmap_printer = new wxStaticBitmap(m_panel_printer, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_printer->Add(m_bitmap_printer, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
 
 	bSizer_printer->Add(3, 0, 0, wxEXPAND, 0);
 
-	m_bitmap_arrow1 = new wxStaticBitmap(m_panel_printer, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_printer->Add(m_bitmap_arrow1, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
 
 	bSizer_printer->Add(8, 0, 0, 0, 0);
@@ -70,16 +67,16 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_printer_info->Add(0, 14, 0, wxEXPAND, 0);
 
-	m_staticText_machine_name = new wxStaticText(m_panel_printer, wxID_ANY, wxT("BBL-Printer001"), wxDefaultPosition, wxSize(-1, -1), wxST_ELLIPSIZE_END | wxST_ELLIPSIZE_MIDDLE | wxST_ELLIPSIZE_START);
+	m_staticText_machine_name = new Label(m_panel_printer, wxT("BBL-Printer001"), wxST_ELLIPSIZE_END);
 	m_staticText_machine_name->Wrap(-1);
-	m_staticText_machine_name->SetFont(wxFont(11, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("@HarmonyOS Sans SC")));
-	m_staticText_machine_name->SetMinSize(wxSize(100, -1));
+	m_staticText_machine_name->SetFont(Label::Body_11);
+	m_staticText_machine_name->SetMinSize(FromDIP(wxSize(100, -1)));
 
 	bSizer_printer_info->Add(m_staticText_machine_name, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 
-	m_staticText_capacity_val = new wxStaticText(m_panel_printer, wxID_ANY, wxT("N/A"), wxDefaultPosition, wxSize(-1, -1), 0);
+	m_staticText_capacity_val = new Label(m_panel_printer, wxT("N/A"), 0, wxSize(-1, -1));
 	m_staticText_capacity_val->Wrap(-1);
-	m_staticText_capacity_val->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxEmptyString));
+	m_staticText_capacity_val->SetFont(Label::Body_10);
 
 	bSizer_printer_info->Add(m_staticText_capacity_val, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
@@ -97,7 +94,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_printer, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline1 = new StaticLine(m_panel_splitter_left);
-	m_staticline1->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline1->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 	bSizerleft->Add(m_staticline1, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
 	m_panel_status_tab = new wxPanel(m_panel_splitter_left, wxID_ANY, wxDefaultPosition, wxSize(182, 52), wxTAB_TRAVERSAL);
@@ -108,23 +105,19 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_status_caption->Add(28, 0, 0, 0, 0);
 
-	m_staticText_status = new wxStaticText(m_panel_status_tab, wxID_ANY, wxT("Status"), wxDefaultPosition, wxSize(-1, -1), wxST_ELLIPSIZE_END);
+	m_staticText_status = new Label(m_panel_status_tab, wxT("Status"), wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_status->Wrap(-1);
-	m_staticText_status->SetFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("@HarmonyOS Sans SC")));
-	m_staticText_status->SetMinSize(wxSize(65, -1));
+	m_staticText_status->SetFont(Label::Body_14);
+	m_staticText_status->SetMinSize(FromDIP(wxSize(65, -1)));
 
 	bSizer_status_caption->Add(m_staticText_status, 0, wxALIGN_CENTER_VERTICAL | wxBOTTOM | wxLEFT, 0);
 
-	m_bitmap_signal = new wxStaticBitmap(m_panel_status_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_status_caption->Add(m_bitmap_signal, 0, wxALL | wxALIGN_CENTER_VERTICAL, 0);
 
 
 	bSizer_status_caption->AddStretchSpacer();
 
-	m_bitmap_arrow2 = new wxStaticBitmap(m_panel_status_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_status_caption->Add(m_bitmap_arrow2, 0, wxALIGN_CENTER_VERTICAL, 26);
 
 	bSizer_status_caption->Add(16, 0, 0, wxEXPAND, 0);
 
@@ -134,7 +127,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_status_tab, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline2 = new StaticLine(m_panel_splitter_left);
-	m_staticline2->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline2->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 	bSizerleft->Add(m_staticline2, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
 	m_panel_time_lapse_tab = new wxPanel(m_panel_splitter_left, wxID_ANY, wxDefaultPosition, wxSize(182, 52), wxTAB_TRAVERSAL);
@@ -145,19 +138,17 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_time_lapse_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_time_lapse = new wxStaticText(m_panel_time_lapse_tab, wxID_ANY, wxT("Time Lapse"), wxDefaultPosition, wxSize(-1, -1), wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+	m_staticText_time_lapse = new Label(m_panel_time_lapse_tab, wxT("Time Lapse"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_time_lapse->Wrap(-1);
-	m_staticText_time_lapse->SetFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("@HarmonyOS Sans SC")));
-	m_staticText_time_lapse->SetMinSize(wxSize(122, -1));
+	m_staticText_time_lapse->SetFont(Label::Body_14);
+	m_staticText_time_lapse->SetMinSize(FromDIP(wxSize(122, -1)));
 
 	bSizer_time_lapse_caption->Add(m_staticText_time_lapse, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 
 
 	bSizer_time_lapse_caption->AddStretchSpacer();
 
-	m_bitmap_arrow3 = new wxStaticBitmap(m_panel_time_lapse_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_time_lapse_caption->Add(m_bitmap_arrow3, 0, wxALIGN_CENTER_VERTICAL, 26);
 
 	bSizer_time_lapse_caption->Add(16, 0, 0, wxEXPAND, 0);
 
@@ -167,7 +158,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_time_lapse_tab, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline3 = new StaticLine(m_panel_splitter_left);
-	m_staticline3->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline3->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 	bSizerleft->Add(m_staticline3, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
 	m_panel_video_tab = new wxPanel(m_panel_splitter_left, wxID_ANY, wxDefaultPosition, wxSize(182, 52), wxTAB_TRAVERSAL);
@@ -178,19 +169,17 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_video_monitoring_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_video_monitoring = new wxStaticText(m_panel_video_tab, wxID_ANY, wxT("Video"), wxDefaultPosition, wxSize(-1, -1), wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+	m_staticText_video_monitoring = new Label(m_panel_video_tab, wxT("Video"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_video_monitoring->Wrap(-1);
-	m_staticText_video_monitoring->SetFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("@HarmonyOS Sans SC")));
-	m_staticText_video_monitoring->SetMinSize(wxSize(122, -1));
+	m_staticText_video_monitoring->SetFont(Label::Body_14);
+	m_staticText_video_monitoring->SetMinSize(FromDIP(wxSize(122, -1)));
 
 	bSizer_video_monitoring_caption->Add(m_staticText_video_monitoring, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 
 
 	bSizer_video_monitoring_caption->AddStretchSpacer();
 
-	m_bitmap_arrow4 = new wxStaticBitmap(m_panel_video_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_video_monitoring_caption->Add(m_bitmap_arrow4, 0, wxALIGN_CENTER_VERTICAL, 26);
 
 	bSizer_video_monitoring_caption->Add(16, 0, 0, wxEXPAND, 0);
 
@@ -200,7 +189,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_video_tab, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline4 = new StaticLine(m_panel_splitter_left);
-	m_staticline4->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline4->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
 	bSizerleft->Add(m_staticline4, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
@@ -212,19 +201,17 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 
 	bSizer_tasklist_caption->Add(28, 0, 0, wxALL, 0);
 
-	m_staticText_subtask_list = new wxStaticText(m_panel_task_list_tab, wxID_ANY, wxT("Task List"), wxDefaultPosition, wxSize(-1, -1), wxALIGN_LEFT | wxST_ELLIPSIZE_END);
+	m_staticText_subtask_list = new Label(m_panel_task_list_tab, wxT("Task List"), wxALIGN_LEFT | wxST_ELLIPSIZE_END, wxSize(-1, -1));
 	m_staticText_subtask_list->Wrap(-1);
-	m_staticText_subtask_list->SetFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("@HarmonyOS Sans SC")));
-	m_staticText_subtask_list->SetMinSize(wxSize(122, -1));
+	m_staticText_subtask_list->SetFont(Label::Body_14);
+	m_staticText_subtask_list->SetMinSize(FromDIP(wxSize(122, -1)));
 
 	bSizer_tasklist_caption->Add(m_staticText_subtask_list, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 
 
 	bSizer_tasklist_caption->AddStretchSpacer();
 
-	m_bitmap_arrow5 = new wxStaticBitmap(m_panel_task_list_tab, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(-1, -1), 0);
 
-	bSizer_tasklist_caption->Add(m_bitmap_arrow5, 0, wxALIGN_CENTER_VERTICAL, 26);
 
 	bSizer_tasklist_caption->Add(16, 0, 0, wxEXPAND, 0);
 
@@ -234,7 +221,7 @@ MonitorBasePanel::MonitorBasePanel(wxWindow* parent, wxWindowID id, const wxPoin
 	bSizerleft->Add(m_panel_task_list_tab, 0, wxALL | wxEXPAND, 0);
 
 	m_staticline5 = new StaticLine(m_panel_splitter_left);
-	m_staticline5->SetLineColour(wxColour(0xEEEEEE));
+	m_staticline5->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 	bSizerleft->Add(m_staticline5, 0, wxEXPAND | wxRIGHT | wxLEFT, 14);
 
 
@@ -288,7 +275,7 @@ using namespace Slic3r::GUI;
 TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name) : wxPanel(parent, id, pos, size, style, name)
 {
 	this->SetBackgroundColour(wxColour(238, 238, 238));
-	this->SetMinSize(wxSize(600, 400));
+	this->SetMinSize(FromDIP(wxSize(600, 400)));
 
 	wxFlexGridSizer* fgSizer_tasklist_top;
 	fgSizer_tasklist_top = new wxFlexGridSizer(3, 1, 24, 0);
@@ -301,7 +288,7 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 	wxBoxSizer* bSizer_model_name;
 	bSizer_model_name = new wxBoxSizer(wxVERTICAL);
 
-	bSizer_model_name->SetMinSize(wxSize(496, 245));
+	bSizer_model_name->SetMinSize(FromDIP(wxSize(496, 245)));
 	m_panel_model_name_caption = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(496, 48), wxTAB_TRAVERSAL);
 	m_panel_model_name_caption->SetBackgroundColour(wxColour(248, 248, 248));
 
@@ -310,9 +297,9 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 
 	bSizer_model_name_caption->Add(23, 0, 0, wxEXPAND, 0);
 
-	m_staticText_model_name = new wxStaticText(m_panel_model_name_caption, wxID_ANY, wxT("Model Name"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_model_name = new Label(m_panel_model_name_caption, wxT("Model Name"));
 	m_staticText_model_name->Wrap(-1);
-	m_staticText_model_name->SetFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("HarmonyOS Sans SC")));
+	m_staticText_model_name->SetFont(Label::Head_14);
 
 	bSizer_model_name_caption->Add(m_staticText_model_name, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
@@ -334,25 +321,23 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 	wxBoxSizer* bSizer11;
 	bSizer11 = new wxBoxSizer(wxHORIZONTAL);
 
-	m_bitmap_task = new wxStaticBitmap(m_panel_model_name_content, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0);
 
-	bSizer11->Add(m_bitmap_task, 0, wxALL, 5);
 
 	wxBoxSizer* bSizer12;
 	bSizer12 = new wxBoxSizer(wxVERTICAL);
 
-	m_staticText_task_desc = new wxStaticText(m_panel_model_name_content, wxID_ANY, wxT("Robort expose task dao movie with smart part \ndesigned for new year\n"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_task_desc = new Label(m_panel_model_name_content, wxT("Robort expose task dao movie with smart part \ndesigned for new year\n"));
 	m_staticText_task_desc->Wrap(-1);
 	bSizer12->Add(m_staticText_task_desc, 0, wxALL, 5);
 
 	wxBoxSizer* bSizer13;
 	bSizer13 = new wxBoxSizer(wxHORIZONTAL);
 
-	m_staticText_ceation_time_title = new wxStaticText(m_panel_model_name_content, wxID_ANY, wxT("CreationTime:"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_ceation_time_title = new Label(m_panel_model_name_content, wxT("CreationTime:"));
 	m_staticText_ceation_time_title->Wrap(-1);
 	bSizer13->Add(m_staticText_ceation_time_title, 0, wxALL, 5);
 
-	m_staticText_creation_time = new wxStaticText(m_panel_model_name_content, wxID_ANY, wxT("N/A"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_creation_time = new Label(m_panel_model_name_content, wxT("N/A"));
 	m_staticText_creation_time->Wrap(-1);
 	bSizer13->Add(m_staticText_creation_time, 0, wxALL, 5);
 
@@ -377,7 +362,7 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 	wxBoxSizer* bSizer_plater;
 	bSizer_plater = new wxBoxSizer(wxVERTICAL);
 
-	bSizer_plater->SetMinSize(wxSize(496, -1));
+	bSizer_plater->SetMinSize(FromDIP(wxSize(496, -1)));
 	m_panel_plater_caption = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(496, 48), wxTAB_TRAVERSAL);
 	m_panel_plater_caption->SetBackgroundColour(wxColour(248, 248, 248));
 
@@ -386,9 +371,9 @@ TaskListBasePanel::TaskListBasePanel(wxWindow* parent, wxWindowID id, const wxPo
 
 	bSizer_plater_caption->Add(23, 0, 0, wxEXPAND, 0);
 
-	m_staticText_plater = new wxStaticText(m_panel_plater_caption, wxID_ANY, wxT("Plater"), wxDefaultPosition, wxDefaultSize, 0);
+	m_staticText_plater = new Label(m_panel_plater_caption, wxT("Plater"));
 	m_staticText_plater->Wrap(-1);
-	m_staticText_plater->SetFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("HarmonyOS Sans SC")));
+	m_staticText_plater->SetFont(Label::Head_14);
 
 	bSizer_plater_caption->Add(m_staticText_plater, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 

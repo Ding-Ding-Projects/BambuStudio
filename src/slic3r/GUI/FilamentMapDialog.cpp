@@ -2,12 +2,14 @@
 #include "FilamentMapPanel.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/LinkLabel.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "I18N.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
 #include "CapsuleButton.hpp"
 #include "MsgDialog.hpp"
 #include "PartPlate.hpp"
+#include "FilamentGroupPopup.hpp"
 #include "libslic3r/Config.hpp"
 
 #include <algorithm>
@@ -21,7 +23,7 @@ class SmartFilamentPanel : public wxPanel
 public:
     SmartFilamentPanel(wxWindow *parent) : wxPanel(parent)
     {
-        SetBackgroundColour(*wxWHITE);
+        SetBackgroundColour(ThemeColor::White);
         wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 
         // space
@@ -29,7 +31,7 @@ public:
 
         // separator
         auto *separator = new wxPanel(this);
-        separator->SetBackgroundColour(wxColour("#EEEEEE"));
+        separator->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
         main_sizer->Add(separator, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(15));
 
         // space
@@ -45,8 +47,8 @@ public:
 
         auto *wiki_link = new LinkLabel(this, _L("Learn more"), "https://e.bambulab.com/t?c=rYwNe4U869Qa9kW1");
         wiki_link->getLabel()->SetFont(Label::Body_12);
-        wiki_link->SeLinkLabelFColour(wxColour("#00AE42"));
-        wiki_link->SeLinkLabelBColour(*wxWHITE);
+        wiki_link->SeLinkLabelFColour(StateColor::semantic(MD3::Role::Primary));
+        wiki_link->SeLinkLabelBColour(ThemeColor::White);
 
         auto *smart_sizer = new wxBoxSizer(wxHORIZONTAL);
         smart_sizer->Add(m_smart_filament_checkbox, 0, wxALIGN_CENTER_VERTICAL);
@@ -93,7 +95,7 @@ static std::vector<FilamentMapMode> normalize_auto_modes(const std::vector<Filam
 
 static std::vector<FilamentMapMode> get_default_auto_modes()
 {
-    return { fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality };
+    return { fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality, fmmPreferLeft, fmmPreferRight };
 }
 
 std::vector<FilamentMapMode> resolve_available_auto_modes(Print* print_obj, const std::vector<FilamentMapMode>& requested_modes, bool machine_synced)
@@ -106,6 +108,17 @@ std::vector<FilamentMapMode> resolve_available_auto_modes(Print* print_obj, cons
         supported_modes.push_back(fmmAutoForMatch);
         if (PartPlate::has_different_extruder_types())
             supported_modes.push_back(fmmAutoForQuality);
+    }
+
+    // Side preferences are meaningful only when two physical extruders exist.
+    // Keep their stored value elsewhere so returning to a dual-nozzle printer restores it.
+    auto full_config = wxGetApp().preset_bundle->full_config();
+    const auto* diameters = full_config.option<ConfigOptionFloatsNullable>("nozzle_diameter");
+    if (diameters && diameters->size() >= 2) {
+        if (std::find(supported_modes.begin(), supported_modes.end(), fmmPreferLeft) == supported_modes.end())
+            supported_modes.push_back(fmmPreferLeft);
+        if (std::find(supported_modes.begin(), supported_modes.end(), fmmPreferRight) == supported_modes.end())
+            supported_modes.push_back(fmmPreferRight);
     }
 
     // remove match mode when filament swither is ready
@@ -203,7 +216,7 @@ bool try_pop_up_before_slice(bool is_slice_all, Plater* plater_ref, PartPlate* p
     );
     auto ret = map_dlg.ShowModal();
 
-    if (ret == wxID_OK) {
+    if (ret == wxID_OK || ret == wxID_APPLY) {
         FilamentMapMode new_mode = map_dlg.get_mode();
         std::vector<int> new_maps = map_dlg.get_filament_maps();
         std::vector<int> new_volume_maps = map_dlg.get_filament_volume_maps();
@@ -233,6 +246,7 @@ bool try_pop_up_before_slice(bool is_slice_all, Plater* plater_ref, PartPlate* p
                 plater_ref->set_global_filament_volume_map(new_volume_maps);
             }
         }
+        set_preferred_filament_map_mode_for_current_printer(new_mode);
         plater_ref->update(false, true);
         // check whether able to slice, if not, return false
         if (!get_left_extruder_unprintable_text().empty() || !get_right_extruder_unprintable_text().empty()){
@@ -244,24 +258,28 @@ bool try_pop_up_before_slice(bool is_slice_all, Plater* plater_ref, PartPlate* p
 }
 
 
+// Filled Primary (OK) button. Namespace-scope StateColors store MD3 light-mode
+// role tokens (ThemeColor::* are dark-map keys), so StateColor::colorForStates
+// adapts them to dark mode at paint time.
 StateColor btn_bg_green(
-    std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
-    std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-    std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-    std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+    std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
+    std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+    std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+    std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
 );
 
-static const StateColor btn_bd_green(std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+static const StateColor btn_bd_green(std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-static const StateColor btn_text_green(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+static const StateColor btn_text_green(std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-static const StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                                     std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                                     std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal));
+// Neutral (Cancel) button — surface fill with a state-layer progression.
+static const StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey350, StateColor::Pressed),
+                                     std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
+                                     std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
 
-static const StateColor btn_bd_white(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+static const StateColor btn_bd_white(std::pair<wxColour, int>(ThemeColor::Grey500, StateColor::Normal));
 
-static const StateColor btn_text_white(std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal));
+static const StateColor btn_text_white(std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal));
 
 FilamentMapDialog::FilamentMapDialog(wxWindow                           *parent,
                                      const std::vector<std::string>     &filament_type,
@@ -278,13 +296,13 @@ FilamentMapDialog::FilamentMapDialog(wxWindow                           *parent,
     , m_filament_volume_map(filament_volume_map)
     , m_filament_type(filament_type)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(ThemeColor::White);
 
     std::vector<FilamentMapMode> modes_to_use = normalize_auto_modes(available_modes);
     if (modes_to_use.empty()) modes_to_use = get_default_auto_modes();
 
     m_fila_switch_ready = wxGetApp().sidebar().is_fila_switch_ready();
-    bool only_saving_mode = m_fila_switch_ready && (std::find(modes_to_use.cbegin(), modes_to_use.cend(), FilamentMapMode::fmmAutoForQuality) == modes_to_use.cend());
+    bool only_saving_mode = m_fila_switch_ready && modes_to_use.size() == 1 && modes_to_use.front() == fmmAutoForFlush;
 
     if (is_auto_filament_map_mode(mode))
         m_page_type = PageType::ptAuto;
@@ -303,8 +321,9 @@ FilamentMapDialog::FilamentMapDialog(wxWindow                           *parent,
     SetMinClientSize({width, -1});
 
     Fit();
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void FilamentMapDialog::make_header(wxBoxSizer *main_sizer, bool only_saving_mode)
@@ -338,6 +357,13 @@ void FilamentMapDialog::make_body(
         default_auto_mode = modes_to_use.front();
 
     m_manual_panel = new FilamentMapManualPanel(this, m_filament_type, filaments, m_filament_map, m_filament_volume_map);
+    Bind(wxEVT_SWAP_AND_RESLICE, [this](wxCommandEvent &) {
+        if (m_page_type != PageType::ptManual || !m_ok_btn->IsEnabled()) return;
+        auto *manual = static_cast<FilamentMapManualPanel *>(m_manual_panel);
+        m_filament_map = manual->GetFilamentMaps();
+        m_filament_volume_map = manual->GetFilamentVolumeMaps();
+        EndModal(wxID_APPLY);
+    });
     m_manual_panel->Bind(wxEVT_INVALID_MANUAL_MAP, [this](wxCommandEvent &event) {
         if (m_page_type != PageType::ptManual) {
             if (!m_ok_btn->IsEnabled()) { m_ok_btn->Enable(); }
@@ -369,7 +395,7 @@ void FilamentMapDialog::make_footer(wxBoxSizer *main_sizer, const FilamentMapMod
     }
 
     wxPanel *bottom_panel = new wxPanel(this);
-    bottom_panel->SetBackgroundColour(*wxWHITE);
+    bottom_panel->SetBackgroundColour(ThemeColor::White);
     wxBoxSizer *bottom_sizer = new wxBoxSizer(wxHORIZONTAL);
     bottom_panel->SetSizer(bottom_sizer);
     bottom_sizer->Fit(bottom_panel);
@@ -385,11 +411,8 @@ void FilamentMapDialog::make_footer(wxBoxSizer *main_sizer, const FilamentMapMod
         m_ok_btn->SetFont(Label::Body_12);
         m_cancel_btn->SetFont(Label::Body_12);
 
-        m_ok_btn->SetBackgroundColor(btn_bg_green);
-        m_ok_btn->SetTextColor(btn_text_green);
-        m_cancel_btn->SetBackgroundColor(btn_bg_white);
-        m_cancel_btn->SetBorderColor(btn_bd_white);
-        m_cancel_btn->SetTextColor(btn_text_white);
+        m_ok_btn->SetVariant(Button::Variant::Filled);
+        m_cancel_btn->SetVariant(Button::Variant::Outlined);
 
         button_sizer->Add(m_ok_btn, 1, wxRIGHT, FromDIP(4));
         button_sizer->Add(m_cancel_btn, 1, wxLEFT, FromDIP(4));

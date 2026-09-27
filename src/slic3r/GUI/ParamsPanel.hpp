@@ -2,6 +2,7 @@
 #define slic3r_params_panel_hpp_
 
 
+#include <functional>
 #include <map>
 #include <vector>
 #include <memory>
@@ -81,7 +82,8 @@ class ParamsPanel : public wxPanel
         wxBoxSizer* m_mode_sizer { nullptr };
         // // BBS: new layout
         StaticBox* m_top_panel{ nullptr };
-        ScalableButton* m_process_icon{ nullptr };
+        // MD3: the Process leading icon is a borderless IconButton drawing the Tune glyph.
+        Button* m_process_icon{ nullptr };
         wxStaticText* m_title_label { nullptr };
         SwitchButton* m_mode_region { nullptr };
         ScalableButton *m_tips_arrow{nullptr};
@@ -114,9 +116,11 @@ class ParamsPanel : public wxPanel
         wxScrolledWindow* m_page_view { nullptr };
         wxBoxSizer* m_page_sizer { nullptr };
 
-        ScalableButton*		m_setting_btn { nullptr };
+        // MD3: object-table + compare controls are borderless IconButtons drawing
+        // GridView (table) and SwapHoriz (compare) glyphs; search stays raster.
+        Button*				m_setting_btn { nullptr };
         ScalableButton*		m_search_btn { nullptr };
-        ScalableButton*		m_compare_btn { nullptr };
+        Button*				m_compare_btn { nullptr };
 
         wxBitmap m_toggle_on_icon;
         wxBitmap m_toggle_off_icon;
@@ -124,6 +128,12 @@ class ParamsPanel : public wxPanel
         wxPanel* m_current_tab { nullptr };
 
         bool m_has_object_config { false };
+
+        // MD3 compact Process card: when the sidebar hosts this panel behind a
+        // compact card, the gate suppresses the self-Show() in set_active_tab()
+        // so the full tree only appears in 'Advanced settings' mode. Defaults
+        // to true, so the ParamsDialog instance and legacy hosts are unaffected.
+        bool m_host_visibility_gate { true };
 
         struct Highlighter
         {
@@ -161,11 +171,21 @@ class ParamsPanel : public wxPanel
         void notify_object_config_changed();
         void switch_to_object_if_has_object_configs();
 
+        // MD3 compact Process card visibility gate (see m_host_visibility_gate).
+        void set_host_visibility_gate(bool allow);
+
         StaticBox* get_top_panel() { return m_top_panel; }
 
         wxPanel* filament_panel() { return m_tab_filament; }
 
         wxScrolledWindow* get_paged_view() { return m_page_view;}
+
+        // Size the page view to its content so the host (the Prepare sidebar's
+        // single scroller) shows the whole settings tree without an inner
+        // scroller; then tell the host its height changed.
+        void fit_page_to_content();
+        void set_host_height_changed(std::function<void()> fn) { m_host_height_changed = std::move(fn); }
+        std::function<void()> m_host_height_changed;
         wxPanel*    get_current_tab() { return m_current_tab; }
 
 };

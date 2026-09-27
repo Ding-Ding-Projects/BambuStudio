@@ -18,6 +18,8 @@
 #include "GUI_App.hpp"
 #include "format.hpp"
 #include "Tab.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "Widgets/Label.hpp"
 
 using Slic3r::GUI::format_wxstr;
 
@@ -53,9 +55,9 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
         values.push_back(preset.name);
     }
 
-    wxStaticText *label_top = new wxStaticText(m_parent, wxID_ANY, from_u8((boost::format(_utf8(L("Save %s as"))) % into_u8(tab->title())).str()));
+    wxStaticText *label_top = new Label(m_parent, from_u8((boost::format(_utf8(L("Save %s as"))) % into_u8(tab->title())).str()));
     label_top->SetFont(::Label::Body_13);
-    label_top->SetForegroundColour(wxColour(38,46,48));
+    label_top->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
 
     //    m_valid_bmp = new wxStaticBitmap(m_parent, wxID_ANY, create_scaled_bitmap("blank_16", m_parent));
@@ -83,7 +85,7 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
 
 
     m_input_ctrl = new ::TextInput(parent, from_u8(preset_name), wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-    StateColor input_bg(std::pair<wxColour, int>(wxColour("#F0F0F1"), StateColor::Disabled), std::pair<wxColour, int>(*wxWHITE, StateColor::Enabled));
+    StateColor input_bg(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
     m_input_ctrl->SetBackgroundColor(input_bg);
     m_input_ctrl->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
         update();
@@ -100,8 +102,8 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
     input_sizer_h->Add(input_sizer_v, 1, wxALIGN_CENTER, 0);
     input_sizer_h->Layout();
 
-    m_valid_label = new wxStaticText(m_parent, wxID_ANY, "");
-    m_valid_label->SetForegroundColour(wxColor(255, 111, 0));
+    m_valid_label = new Label(m_parent, "");
+    m_valid_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
 
     sizer->Add(label_top, 0, wxEXPAND | wxLEFT | wxTOP | wxBOTTOM, BORDER_W);
     sizer->Add(input_sizer_h, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, BORDER_W);
@@ -123,10 +125,10 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
 
     m_sizer_left->Add(0, 0, 0, wxLEFT, 10);
 
-    auto m_left_text = new wxStaticText(parent, wxID_ANY, _L("User Preset"), wxDefaultPosition, wxDefaultSize, 0);
+    auto m_left_text = new Label(parent, _L("User Preset"));
     m_left_text->Wrap(-1);
     m_left_text->SetFont(::Label::Body_13);
-    m_left_text->SetForegroundColour(wxColour(107,107,107));
+    m_left_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_sizer_left->Add(m_left_text, 0, wxALIGN_CENTER, 0);
 
     radio_sizer->Add(m_sizer_left, 1, wxALIGN_CENTER, 5);
@@ -142,8 +144,8 @@ SavePresetDialog::Item::Item(Preset::Type type, const std::string &suffix, wxBox
 
     m_sizer_right->Add(0, 0, 0, wxLEFT, 10);
 
-    auto m_right_text = new wxStaticText(parent, wxID_ANY, _L("Preset Inside Project"), wxDefaultPosition, wxDefaultSize, 0);
-    m_right_text->SetForegroundColour(wxColour(107,107,107));
+    auto m_right_text = new Label(parent, _L("Preset Inside Project"));
+    m_right_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_right_text->SetFont(::Label::Body_13);
     m_right_text->Wrap(-1);
     m_sizer_right->Add(m_right_text, 0, wxALIGN_CENTER, 0);
@@ -311,6 +313,8 @@ SavePresetDialog::SavePresetDialog(wxWindow *parent, Preset::Type type, std::str
 {
     build(std::vector<Preset::Type>{type}, suffix);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    this->Centre(wxBOTH);
 }
 
 SavePresetDialog::SavePresetDialog(wxWindow *parent, std::vector<Preset::Type> types, std::string suffix)
@@ -318,6 +322,8 @@ SavePresetDialog::SavePresetDialog(wxWindow *parent, std::vector<Preset::Type> t
 {
     build(types, suffix);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    this->Centre(wxBOTH);
 }
 
 SavePresetDialog::~SavePresetDialog()
@@ -349,15 +355,13 @@ void SavePresetDialog::build(std::vector<Preset::Type> types, std::string suffix
     btns->Add(0, 0, 1, wxEXPAND, 5);
 
     m_confirm = new Button(this, _L("OK"));
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
-                            std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor btn_br_green(std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    m_confirm->SetBackgroundColor(btn_bg_green);
-    m_confirm->SetBorderColor(btn_br_green);
-    m_confirm->SetTextColor(wxColour("#FFFFFE"));
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    StateColor btn_br_green(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
+    m_confirm->SetVariant(Button::Variant::Filled);
     m_confirm->SetMinSize(SAVE_PRESET_DIALOG_BUTTON_SIZE);
     m_confirm->SetCornerRadius(FromDIP(12));
     m_confirm->Bind(wxEVT_BUTTON, &SavePresetDialog::accept, this);
@@ -378,7 +382,7 @@ void SavePresetDialog::build(std::vector<Preset::Type> types, std::string suffix
     btns->Add(block_right, 0, wxRIGHT, 40);
 
     auto m_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_Sizer_main->Add( m_line, 0, wxEXPAND, 0 );
     m_Sizer_main->Add(m_presets_sizer, 0, wxEXPAND | wxALL, BORDER_W);
@@ -386,8 +390,6 @@ void SavePresetDialog::build(std::vector<Preset::Type> types, std::string suffix
 
     SetSizer(m_Sizer_main);
     m_Sizer_main->SetSizeHints(this);
-
-    this->Centre(wxBOTH);
 }
 
 void SavePresetDialog::on_select_cancel(wxCommandEvent &event)
@@ -444,7 +446,7 @@ void SavePresetDialog::add_info_for_edit_ph_printer(wxBoxSizer *sizer)
     wxString msg_text = from_u8((boost::format(_u8L("Printer \"%1%\" is selected with preset \"%2%\"")) %
                                  m_ph_printer_name % m_old_preset_name)
                                     .str());
-    m_label           = new wxStaticText(this, wxID_ANY, msg_text);
+    m_label           = new Label(this, msg_text);
     m_label->SetFont(wxGetApp().bold_font());
 
     m_action      = ChangePreset;
@@ -456,7 +458,8 @@ void SavePresetDialog::add_info_for_edit_ph_printer(wxBoxSizer *sizer)
 
     wxStaticBoxSizer *stb_sizer = new wxStaticBoxSizer(action_stb, wxVERTICAL);
     for (int id = 0; id < 3; id++) {
-        wxRadioButton *btn = new wxRadioButton(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, id == 0 ? wxRB_GROUP : 0);
+        LabeledRadioButton *btn = new LabeledRadioButton(this);
+        m_action_radio_group.Add(btn);
         btn->SetValue(id == int(ChangePreset));
         btn->Bind(wxEVT_RADIOBUTTON, [this, id](wxCommandEvent &) { m_action = (ActionType) id; });
         stb_sizer->Add(btn, 0, wxEXPAND | wxTOP, 5);
@@ -474,7 +477,7 @@ void SavePresetDialog::update_info_for_edit_ph_printer(const std::string &preset
     m_label->Show(show);
     m_radio_sizer->ShowItems(show);
     if (!show) {
-        this->SetMinSize(wxSize(100, 50));
+        this->SetMinSize(FromDIP(wxSize(100, 50)));
         return;
     }
 

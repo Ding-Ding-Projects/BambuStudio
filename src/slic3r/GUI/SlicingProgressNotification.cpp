@@ -2,6 +2,7 @@
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 #include "GCodeViewer.hpp"
+#include "Widgets/StateColor.hpp"
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
@@ -16,6 +17,23 @@ namespace {
 			ImGui::PushStyleColor(idx, ImVec4(col.x, col.y, col.z, col.w * current_fade_opacity));
 		else
 			ImGui::PushStyleColor(idx, col);
+	}
+
+	// MD3 bridge for the ImGui progress toast, resolved against the notification
+	// dark-mode flag.
+	inline ImU32 md3_notif_u32(MD3::Role role, bool dark, int alpha = 255)
+	{
+		const wxColour &c = MD3::resolve(role, dark);
+		return IM_COL32(c.Red(), c.Green(), c.Blue(), alpha);
+	}
+	// Hyperlink blue lives in the ThemeColor bridge (no MD3 surface role).
+	inline wxColour md3_notif_link(bool dark)
+	{
+		return dark ? StateColor::darkModeColorFor(ThemeColor::Link) : ThemeColor::Link;
+	}
+	inline ImVec4 to_imvec4(const wxColour &c, float alpha = 1.0f)
+	{
+		return ImVec4(c.Red() / 255.f, c.Green() / 255.f, c.Blue() / 255.f, alpha);
 	}
 }
 
@@ -292,7 +310,7 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 			// Separator Line
 			ImVec2 separator_min = ImVec2(ImGui::GetCursorScreenPos().x + progress_child_window_padding.x, ImGui::GetCursorScreenPos().y);
 			ImVec2 separator_max = ImVec2(ImGui::GetCursorScreenPos().x + progress_child_window_padding.x + progress_panel_width, ImGui::GetCursorScreenPos().y);
-			ImGui::GetCurrentWindow()->DrawList->AddLine(separator_min, separator_max, ImColor(238, 238, 238, (int)(255 * m_current_fade_opacity)));
+			ImGui::GetCurrentWindow()->DrawList->AddLine(separator_min, separator_max, md3_notif_u32(MD3::Role::OutlineVariant, m_is_dark, (int)(255 * m_current_fade_opacity)));
 
 			child_name = "##DailyTipsPanel" + std::to_string(parent_window->ID);
 			ImVec2 dailytips_pos = ImGui::GetCursorScreenPos() + dailytips_child_window_padding;
@@ -330,7 +348,7 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_text(
 		// complete icon
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.0f, .0f, .0f, .0f));
-		push_style_color(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
+		push_style_color(ImGuiCol_Text, to_imvec4(MD3::resolve(MD3::Role::OnSurface, m_is_dark)), m_state == EState::FadingOut, m_current_fade_opacity);
 		push_style_color(ImGuiCol_TextSelectedBg, ImVec4(0, .75f, .75f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.0f, .0f, .0f, .0f));
 
@@ -368,8 +386,9 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_bar(c
 
 	ImGuiWrapper& imgui = *wxGetApp().imgui();
 
-	ImColor progress_color = ImColor(0, 174, 66, (int)(255 * m_current_fade_opacity));
-	ImColor bg_color = ImColor(217, 217, 217, (int)(255 * m_current_fade_opacity));
+	// MD3 ProgressBar: Primary fill on a SurfaceContainerHighest track.
+	ImColor progress_color = md3_notif_u32(MD3::Role::Primary, m_is_dark, (int)(255 * m_current_fade_opacity));
+	ImColor bg_color = md3_notif_u32(MD3::Role::SurfaceContainerHighest, m_is_dark, (int)(255 * m_current_fade_opacity));
 
 	ImVec2 lineStart = pos;
 	ImVec2 lineEnd = lineStart + size;
@@ -402,7 +421,7 @@ void NotificationManager::SlicingProgressNotification::render_show_dailytips(con
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.0f, .0f, .0f, .0f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.0f, .0f, .0f, .0f));
-	ImGui::PushStyleColor(ImGuiCol_Text, ImColor(31, 142, 234).Value);
+	ImGui::PushStyleColor(ImGuiCol_Text, to_imvec4(md3_notif_link(m_is_dark)));
 
 	ImGui::SetCursorScreenPos(pos);
 	std::wstring button_text;
@@ -417,7 +436,7 @@ void NotificationManager::SlicingProgressNotification::render_show_dailytips(con
 		lineEnd.y -= 2;
 		ImVec2 lineStart = lineEnd;
 		lineStart.x = ImGui::GetItemRectMin().x;
-		ImGui::GetWindowDrawList()->AddLine(lineStart, lineEnd, ImColor(31, 142, 234));
+		ImGui::GetWindowDrawList()->AddLine(lineStart, lineEnd, ImColor(to_imvec4(md3_notif_link(m_is_dark))));
 
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 			on_show_dailytips();
@@ -438,7 +457,7 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_cance
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.0f, .0f, .0f, .0f));
-		push_style_color(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
+		push_style_color(ImGuiCol_Text, to_imvec4(MD3::resolve(MD3::Role::OnSurface, m_is_dark)), m_state == EState::FadingOut, m_current_fade_opacity);
 		push_style_color(ImGuiCol_TextSelectedBg, ImVec4(0, .75f, .75f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.0f, .0f, .0f, .0f));
 
@@ -467,7 +486,7 @@ void NotificationManager::SlicingProgressNotification::render_close_button(const
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.0f, .0f, .0f, .0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(.0f, .0f, .0f, .0f));
-		push_style_color(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
+		push_style_color(ImGuiCol_Text, to_imvec4(MD3::resolve(MD3::Role::OnSurface, m_is_dark)), m_state == EState::FadingOut, m_current_fade_opacity);
 		push_style_color(ImGuiCol_TextSelectedBg, ImVec4(0, .75f, .75f, 1.f), m_state == EState::FadingOut, m_current_fade_opacity);
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(.0f, .0f, .0f, .0f));
 

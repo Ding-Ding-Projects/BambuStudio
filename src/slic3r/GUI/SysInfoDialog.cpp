@@ -1,4 +1,5 @@
 #include "SysInfoDialog.hpp"
+#include "Widgets/Button.hpp"
 #include "I18N.hpp"
 #include "3DScene.hpp"
 #include "GUI.hpp"
@@ -14,8 +15,10 @@
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "wxExtensions.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "../libslic3r/BlacklistedLibraryCheck.hpp"
 #include "format.hpp"
+#include "Widgets/Label.hpp"
 
 #ifdef _WIN32
 	// The standard Windows includes.
@@ -103,7 +106,7 @@ SysInfoDialog::SysInfoDialog()
 
     // title
     {
-        wxStaticText* title = new wxStaticText(this, wxID_ANY, wxGetApp().is_editor() ? SLIC3R_APP_FULL_NAME : GCODEVIEWER_APP_NAME, wxDefaultPosition, wxDefaultSize);
+        wxStaticText* title = new Label(this, wxGetApp().is_editor() ? SLIC3R_APP_FULL_NAME : GCODEVIEWER_APP_NAME);
         wxFont title_font = wxGetApp().bold_font();
         title_font.SetFamily(wxFONTFAMILY_ROMAN);
         title_font.SetPointSize(22);
@@ -166,7 +169,8 @@ SysInfoDialog::SysInfoDialog()
     }
 
     wxStdDialogButtonSizer* buttons = this->CreateStdDialogButtonSizer(wxOK);
-    m_btn_copy_to_clipboard = new wxButton(this, wxID_ANY, _L("Copy to Clipboard"), wxDefaultPosition, wxDefaultSize);
+    m_btn_copy_to_clipboard = new Button(this, _L("Copy to Clipboard"));
+    m_btn_copy_to_clipboard->SetVariant(Button::Variant::Outlined);
 
     buttons->Insert(0, m_btn_copy_to_clipboard, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
     m_btn_copy_to_clipboard->Bind(wxEVT_BUTTON, &SysInfoDialog::onCopyToClipboard, this);
@@ -182,6 +186,7 @@ SysInfoDialog::SysInfoDialog()
 
 	SetSizer(main_sizer);
 	main_sizer->SetSizeHints(this);
+    MD3DialogCaption::Adopt(this);
 }
 
 void SysInfoDialog::on_dpi_changed(const wxRect &suggested_rect)

@@ -1,15 +1,17 @@
 #include "StepMeshDialog.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 
 #include <thread>
 #include <wx/event.h>
 #include <wx/sizer.h>
-#include <wx/slider.h>
 #include <wx/dcmemory.h>
 #include "GUI_App.hpp"
 #include "I18N.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/Slider.hpp"
 #include "Widgets/TextInput.hpp"
+#include "Widgets/Label.hpp"
 #include <chrono>
 
 using namespace Slic3r;
@@ -28,7 +30,7 @@ static int _ITEM_WIDTH() { return _scale(30); }
 #define SLIDER_SCALE_10(val)    ((val) / 0.01)
 #define SLIDER_UNSCALE_10(val)  ((val) * 0.01)
 #define LEFT_RIGHT_PADING       FromDIP(20)
-#define FONT_COLOR              wxColour("#6B6B6B")
+#define FONT_COLOR              StateColor::semantic(MD3::Role::OnSurfaceVariant)
 
 wxDEFINE_EVENT(wxEVT_THREAD_DONE, wxCommandEvent);
 
@@ -50,6 +52,7 @@ public:
 };
 
 void StepMeshDialog::on_dpi_changed(const wxRect& suggested_rect) {
+    MD3Dialog::on_dpi_changed(suggested_rect); // reshape the rounded frame
 };
 
 bool StepMeshDialog:: validate_number_range(const wxString& value, double min, double max) {
@@ -69,24 +72,18 @@ bool StepMeshDialog:: validate_number_range(const wxString& value, double min, d
 }
 
 StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double linear_init, double angle_init)
-    : DPIDialog(parent ? parent : static_cast<wxWindow *>(wxGetApp().mainframe),
-                wxID_ANY,
+    : MD3Dialog(parent ? parent : static_cast<wxWindow *>(wxGetApp().mainframe),
                 _(L("Step file import parameters")),
-                wxDefaultPosition,
-                wxDefaultSize,
-                wxDEFAULT_DIALOG_STYLE /* | wxRESIZE_BORDER*/), m_file(file)
+                wxEmptyString,
+                MaterialIcon::ViewInAr), m_file(file)
 {
     m_linear_last = wxString::Format("%.3f", linear_init);
     m_angle_last = wxString::Format("%.2f", angle_init);
 
     Bind(wxEVT_THREAD_DONE, &StepMeshDialog::on_task_done, this);
 
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico")
-                             % Slic3r::resources_dir()).str();
-    SetIcon(wxIcon(Slic3r::encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(*wxWHITE);
-
+    // Kit body sizer (hosted in GetContentSizer(), pad 0/24). The step_mesh_info
+    // illustration remains explanatory content.
     wxBoxSizer* bSizer = new wxBoxSizer(wxVERTICAL);
     bSizer->SetMinSize(wxSize(MIN_DIALOG_WIDTH, -1));
 
@@ -118,12 +115,12 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     // bSizer->Add(overlay_panel, 0, wxALIGN_CENTER | wxALL, 10);
 
     wxBoxSizer* tips_sizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText* info = new wxStaticText(this, wxID_ANY, _L("Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."));
-    info->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
-    wxStaticText *tips = new wxStaticText(this, wxID_ANY, _L("View Wiki for more information"));
+    wxStaticText* info = new Label(this, _L("Smaller linear and angular deflections result in higher-quality transformations but increase the processing time."));
+    info->SetForegroundColour(FONT_COLOR);
+    wxStaticText *tips = new Label(this, _L("View Wiki for more information"));
     wxFont font(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
     font.SetUnderlined(true);
-    tips->SetForegroundColour(StateColor::darkModeColorFor(wxColour(0, 174, 66)));
+    tips->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     tips->SetFont(font);
     tips->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         wxLaunchDefaultBrowser("https://wiki.bambulab.com/en/software/bambu-studio/step");
@@ -133,18 +130,44 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     tips_sizer->Add(tips, 0, wxALIGN_LEFT);
     bSizer->Add(tips_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, LEFT_RIGHT_PADING);
 
+    // Recounting the facets kicks off a mesh job, so it must wait for a gesture to
+    // END rather than run per value tick: the mouse path hooks the button release,
+    // and this hooks the key release for the arrow/page/home/end steps the kit
+    // Slider handles, so keyboard operation lands on the same count as a drag.
+    auto recount_on_key_up = [this](wxKeyEvent& e) {
+        switch (e.GetKeyCode()) {
+        case WXK_LEFT:
+        case WXK_RIGHT:
+        case WXK_UP:
+        case WXK_DOWN:
+        case WXK_PAGEUP:
+        case WXK_PAGEDOWN:
+        case WXK_HOME:
+        case WXK_END: update_mesh_number_text(); break;
+        default: break;
+        }
+        e.Skip();
+    };
+
     wxBoxSizer* linear_sizer = new wxBoxSizer(wxHORIZONTAL);
     //linear_sizer->SetMinSize(wxSize(MIN_DIALOG_WIDTH, -1));
-    wxStaticText* linear_title = new wxStaticText(this,
-                                                  wxID_ANY, _L("Linear Deflection") + ": ");
-    linear_title->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    wxStaticText* linear_title = new Label(this, _L("Linear Deflection") + ": ");
+    linear_title->SetForegroundColour(FONT_COLOR);
     linear_sizer->Add(linear_title, 0, wxALIGN_LEFT);
     linear_sizer->AddStretchSpacer(1);
-    wxSlider* linear_slider = new wxSlider(this, wxID_ANY,
-                                           SLIDER_SCALE(get_linear_defletion()),
-                                           1, 100, wxDefaultPosition,
-                                           wxSize(SLIDER_WIDTH, SLIDER_HEIGHT),
-                                           wxSL_HORIZONTAL);
+    // Kit Slider (Widgets/Slider): thin Primary track + circular thumb, so the
+    // deflection control matches the ::TextInput it is bound to instead of sitting
+    // beside it as an OS-grey Win32 trackbar that never re-tints in dark mode.
+    // The kit widget takes its best size from DIP metrics, so pin the dialog's
+    // own SLIDER_WIDTH/HEIGHT as the min size or the sizer would shrink it.
+    auto linear_slider = new ::Slider(this, SLIDER_SCALE(get_linear_defletion()),
+                                      1, 100, /*vertical=*/false, wxDefaultPosition,
+                                      wxSize(SLIDER_WIDTH, SLIDER_HEIGHT));
+    linear_slider->SetMinSize(wxSize(SLIDER_WIDTH, SLIDER_HEIGHT));
+    // Owner-drawn, so unlike the native trackbar it has no window text for MSAA to
+    // read back: name it after its own label row so a screen reader still says which
+    // deflection has focus (same existing msgid as the title beside it).
+    linear_slider->SetLabel(_L("Linear Deflection"));
     linear_sizer->Add(linear_slider, 0, wxALIGN_RIGHT | wxLEFT, FromDIP(5));
 
     auto linear_input = new ::TextInput(this, m_linear_last, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(TEXT_CTRL_WIDTH, -1), wxTE_CENTER);
@@ -175,29 +198,31 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
             }
         }
     }));
-    linear_slider->Bind(wxEVT_SLIDER, ([this, linear_slider, linear_input](wxCommandEvent& e) {
-        double slider_value = SLIDER_UNSCALE(linear_slider->GetValue());
+    // The kit Slider reports through SetOnChange rather than wxEVT_SLIDER; SetValue()
+    // above stays silent, so the text field and the thumb still cannot loop.
+    linear_slider->SetOnChange([this, linear_input](int value) {
+        double slider_value = SLIDER_UNSCALE(value);
         linear_input->GetTextCtrl()->SetValue(wxString::Format("%.3f", slider_value));
         m_linear_last = wxString::Format("%.3f", slider_value);
-    }));
+    });
     linear_slider->Bind(wxEVT_LEFT_UP, ([this](wxMouseEvent& e) {
         update_mesh_number_text();
-        e.Skip();
+        e.Skip(); // let the widget end its own drag and release the capture
     }));
+    linear_slider->Bind(wxEVT_KEY_UP, recount_on_key_up);
 
     bSizer->Add(linear_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, LEFT_RIGHT_PADING);
 
     wxBoxSizer* angle_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText* angle_title = new wxStaticText(this,
-                                                  wxID_ANY, _L("Angle Deflection") + ": ");
-    angle_title->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    wxStaticText* angle_title = new Label(this, _L("Angle Deflection") + ": ");
+    angle_title->SetForegroundColour(FONT_COLOR);
     angle_sizer->Add(angle_title, 0, wxALIGN_LEFT);
     angle_sizer->AddStretchSpacer(1);
-    wxSlider* angle_slider = new wxSlider(this, wxID_ANY,
-                                           SLIDER_SCALE_10(get_angle_defletion()),
-                                           1, 100, wxDefaultPosition,
-                                           wxSize(SLIDER_WIDTH, SLIDER_HEIGHT),
-                                           wxSL_HORIZONTAL);
+    auto angle_slider = new ::Slider(this, SLIDER_SCALE_10(get_angle_defletion()),
+                                     1, 100, /*vertical=*/false, wxDefaultPosition,
+                                     wxSize(SLIDER_WIDTH, SLIDER_HEIGHT));
+    angle_slider->SetMinSize(wxSize(SLIDER_WIDTH, SLIDER_HEIGHT));
+    angle_slider->SetLabel(_L("Angle Deflection"));
     angle_sizer->Add(angle_slider, 0, wxALIGN_RIGHT | wxLEFT, FromDIP(5));
 
     auto angle_input = new ::TextInput(this, m_angle_last, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(TEXT_CTRL_WIDTH, -1), wxTE_CENTER);
@@ -229,52 +254,44 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
         }
     }));
 
-    angle_slider->Bind(wxEVT_SLIDER, ([this, angle_slider, angle_input](wxCommandEvent& e) {
-        double slider_value = SLIDER_UNSCALE_10(angle_slider->GetValue());
+    angle_slider->SetOnChange([this, angle_input](int value) {
+        double slider_value = SLIDER_UNSCALE_10(value);
         angle_input->GetTextCtrl()->SetValue(wxString::Format("%.2f", slider_value));
         m_angle_last = wxString::Format("%.2f", slider_value);
-    }));
+    });
     angle_slider->Bind(wxEVT_LEFT_UP, ([this](wxMouseEvent& e) {
         update_mesh_number_text();
-        e.Skip();
+        e.Skip(); // let the widget end its own drag and release the capture
     }));
+    angle_slider->Bind(wxEVT_KEY_UP, recount_on_key_up);
 
     bSizer->Add(angle_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
 
     wxBoxSizer* check_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_split_compound_checkbox = new wxCheckBox(this, wxID_ANY, _L("Split compound and compsolid into multiple objects"), wxDefaultPosition, wxDefaultSize, 0);
-    m_split_compound_checkbox->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    m_split_compound_checkbox = new LabeledCheckBox(this, _L("Split compound and compsolid into multiple objects"));
+    m_split_compound_checkbox->SetForegroundColour(FONT_COLOR);
     m_split_compound_checkbox->SetValue(wxGetApp().app_config->get_bool("is_split_compound"));
     check_sizer->Add(m_split_compound_checkbox, 0, wxALIGN_LEFT);
     bSizer->Add(check_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
 
     wxBoxSizer* mesh_face_number_sizer = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText *mesh_face_number_title = new wxStaticText(this, wxID_ANY, _L("Number of triangular facets") + ": ");
-    mesh_face_number_title->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
-    mesh_face_number_text = new wxStaticText(this, wxID_ANY, _L("0"));
-    mesh_face_number_text->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+    wxStaticText *mesh_face_number_title = new Label(this, _L("Number of triangular facets") + ": ");
+    mesh_face_number_title->SetForegroundColour(FONT_COLOR);
+    mesh_face_number_text = new Label(this, _L("0"));
+    mesh_face_number_text->SetForegroundColour(FONT_COLOR);
     mesh_face_number_text->SetMinSize(wxSize(FromDIP(150), -1));
     mesh_face_number_sizer->Add(mesh_face_number_title, 0, wxALIGN_LEFT);
     mesh_face_number_sizer->Add(mesh_face_number_text, 0, wxALIGN_LEFT);
     bSizer->Add(mesh_face_number_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
 
-    wxBoxSizer* bSizer_button = new wxBoxSizer(wxHORIZONTAL);
-    bSizer_button->SetMinSize(wxSize(FromDIP(100), -1));
-    m_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
-    m_checkbox->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
-    bSizer_button->Add(m_checkbox, 0, wxALIGN_LEFT);
-    bSizer_button->AddStretchSpacer(1);
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+    // "Don't show again" lives at the footer's leading edge; OK/Cancel become
+    // kit pill footer Buttons (filled OK, text Cancel).
+    m_checkbox = new LabeledCheckBox(this, _L("Don't show again"));
+    m_checkbox->SetForegroundColour(FONT_COLOR);
+
     m_button_ok = new Button(this, _L("OK"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour("#FFFFFE"));
-    m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetSize(BUTTON_SIZE);
-    m_button_ok->SetMinSize(BUTTON_SIZE);
-    m_button_ok->SetCornerRadius(FromDIP(12));
-    bSizer_button->Add(m_button_ok, 0, wxALIGN_RIGHT, BUTTON_BORDER);
+    m_button_ok->SetVariant(Button::Variant::Filled);
+    m_button_ok->SetButtonSize(Button::Size::Medium);
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this, angle_input, linear_input](wxMouseEvent& e) {
         stop_task();
@@ -293,32 +310,27 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
         SetFocusIgnoringChildren();
     });
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(BUTTON_SIZE);
-    m_button_cancel->SetMinSize(BUTTON_SIZE);
-    m_button_cancel->SetCornerRadius(FromDIP(12));
-    bSizer_button->Add(m_button_cancel, 0, wxALIGN_RIGHT | wxLEFT, BUTTON_BORDER);
+    m_button_cancel->SetVariant(Button::Variant::Text);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
 
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         stop_task();
         EndModal(wxID_CANCEL);
     });
 
-    bSizer->Add(bSizer_button, 1, wxEXPAND | wxALL, LEFT_RIGHT_PADING);
+    GetContentSizer()->Add(bSizer, 1, wxEXPAND);
 
-    this->SetSizer(bSizer);
+    // Footer: leading "Don't show again", trailing Cancel (text) + OK (filled).
+    GetFooterSizer()->Insert(0, m_checkbox, 0, wxALIGN_CENTER_VERTICAL);
+    AddFooterButton(m_button_cancel);
+    AddFooterButton(m_button_ok);
+
     update_mesh_number_text();
-    this->Layout();
-    bSizer->Fit(this);
 
-    this->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
+    this->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         SetFocusIgnoringChildren();
+        e.Skip(); // keep the shell's borderless drag handler reachable
     });
     mesh_face_number_text->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
         SetFocusIgnoringChildren();
@@ -329,6 +341,10 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
         EndModal(wxID_CANCEL);
     });
 
+    Layout();
+    Fit();
+    CenterOnParent();
+    UpdateShape();
     wxGetApp().UpdateDlgDarkUI(this);
 }
 

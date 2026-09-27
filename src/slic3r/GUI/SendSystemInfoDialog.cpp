@@ -1,4 +1,7 @@
 #include "SendSystemInfoDialog.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/TextArea.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #if __APPLE__
 #import <IOKit/IOKitLib.h>
@@ -28,6 +31,7 @@
 #include <boost/uuid/detail/md5.hpp>
 
 #include "GL/glew.h"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 #include <wx/display.h>
 #include <wx/htmllbox.h>
@@ -76,10 +80,10 @@ public:
 private:
     bool send_info(wxString& message);
     const std::string m_system_info_json;
-    wxButton* m_btn_show_data;
-    wxButton* m_btn_send;
-    wxButton* m_btn_dont_send;
-    wxButton* m_btn_ask_later;
+    Button* m_btn_show_data;
+    Button* m_btn_send;
+    Button* m_btn_dont_send;
+    Button* m_btn_ask_later;
 
     void on_dpi_changed(const wxRect&) override;
 };
@@ -93,9 +97,10 @@ public:
     SendSystemInfoProgressDialog(wxWindow* parent, const wxString& message)
         : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxCAPTION)
     {
-        auto* text = new wxStaticText(this, wxID_ANY, message, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+        auto* text = new Label(this, message, wxALIGN_CENTER_HORIZONTAL);
         //auto* btn = new wxButton(this, wxID_CANCEL, _L("Cancel"));
-        auto* btn = new wxButton(this, wxID_CANCEL, wxEmptyString);
+        auto* btn = new Button(this, wxEmptyString, "", 0, 0, wxID_CANCEL);
+        btn->SetVariant(Button::Variant::Text);
         auto* vsizer = new wxBoxSizer(wxVERTICAL);
         auto *top_sizer = new wxBoxSizer(wxVERTICAL);
         vsizer->Add(text, 1, wxEXPAND);
@@ -106,6 +111,9 @@ public:
         #ifdef _WIN32
             wxGetApp().UpdateDlgDarkUI(this);
         #endif
+        top_sizer->SetSizeHints(this);
+        // Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+        MD3DialogCaption::Adopt(this, _L("Sending system info"));
     }
 };
 
@@ -119,14 +127,13 @@ public:
         //: wxDialog(parent, wxID_ANY, _L("Data to send"), wxDefaultPosition, size, wxCAPTION|wxRESIZE_BORDER)
         : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, size, wxCAPTION|wxRESIZE_BORDER)
     {
-        auto* text = new wxTextCtrl(this, wxID_ANY, json,
-                                    wxDefaultPosition, wxDefaultSize,
-                                    wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
-        text->SetFont(wxGetApp().code_font());
-        text->ShowPosition(0);
+        auto* text = new TextArea(this, json, wxDefaultSize, wxTE_READONLY | wxTE_DONTWRAP);
+        text->SetMonospace(true);
+        text->GetTextCtrl()->ShowPosition(0);
 
         //auto* btn = new wxButton(this, wxID_CANCEL, _L("Close"));
-        auto* btn = new wxButton(this, wxID_CANCEL, wxEmptyString);
+        auto* btn = new Button(this, wxEmptyString, "", 0, 0, wxID_CANCEL);
+        btn->SetVariant(Button::Variant::Text);
         auto* vsizer = new wxBoxSizer(wxVERTICAL);
         auto *top_sizer = new wxBoxSizer(wxVERTICAL);
         vsizer->Add(text, 1, wxEXPAND);
@@ -137,6 +144,8 @@ public:
         #ifdef _WIN32
             wxGetApp().UpdateDlgDarkUI(this);
         #endif
+        // Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+        MD3DialogCaption::Adopt(this, _L("Data to send"));
     }
 };
 
@@ -621,16 +630,20 @@ SendSystemInfoDialog::SendSystemInfoDialog(wxWindow* parent)
     vsizer->Add(html_window, 1, wxEXPAND);
 
     //m_btn_show_data = new wxButton(this, wxID_ANY, _L("Show verbatim data that will be sent"));
-    m_btn_show_data = new wxButton(this, wxID_ANY, wxEmptyString);
+    m_btn_show_data = new Button(this, wxEmptyString);
+    m_btn_show_data->SetVariant(Button::Variant::Text);
 
     //m_btn_ask_later = new wxButton(this, wxID_ANY, _L("Ask me next time"));
-    m_btn_ask_later = new wxButton(this, wxID_ANY, wxEmptyString);
+    m_btn_ask_later = new Button(this, wxEmptyString);
+    m_btn_ask_later->SetVariant(Button::Variant::Text);
 
     //m_btn_dont_send = new wxButton(this, wxID_ANY, _L("Do not send anything"));
-    m_btn_dont_send = new wxButton(this, wxID_ANY, wxEmptyString);
+    m_btn_dont_send = new Button(this, wxEmptyString);
+    m_btn_dont_send->SetVariant(Button::Variant::Outlined);
 
     //m_btn_send = new wxButton(this, wxID_ANY, _L("Send system info"));
-    m_btn_send = new wxButton(this, wxID_ANY, wxEmptyString);
+    m_btn_send = new Button(this, wxEmptyString);
+    m_btn_send->SetVariant(Button::Variant::Filled);
 
     auto* hsizer = new wxBoxSizer(wxHORIZONTAL);
     hsizer->Add(m_btn_ask_later);
@@ -655,6 +668,8 @@ SendSystemInfoDialog::SendSystemInfoDialog(wxWindow* parent)
     SetSize(std::max(size.GetWidth(), MIN_WIDTH * em),
             std::max(size.GetHeight(), MIN_HEIGHT * em));
 
+    // Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+    MD3DialogCaption::Adopt(this, _L("Send system info"));
     CenterOnParent();
 
     m_btn_show_data->Bind(wxEVT_BUTTON, [this](wxEvent&) {

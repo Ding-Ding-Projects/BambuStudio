@@ -1,5 +1,6 @@
 #include "MediaPlayCtrl.h"
 #include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Label.hpp"
 #include "GUI_App.hpp"
@@ -69,7 +70,7 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     , m_media_ctrl(media_ctrl)
 {
     SetLabel("MediaPlayCtrl");
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_media_ctrl->Bind(wxEVT_MEDIA_STATECHANGED, &MediaPlayCtrl::onStateChanged, this);
     m_media_ctrl->Bind(EVT_MEDIA_CTRL_FIRST_FRAME, [this](wxCommandEvent &e) {
         if (!m_pending_start_liveview_json.empty()) {
@@ -132,14 +133,22 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     });
     m_media_ctrl->SetIdleImage(from_u8(resources_dir() + "/images/liveview_bg.png"));
 
-    m_button_play = new Button(this, "", "media_play", wxBORDER_NONE);
-    m_button_play->SetCanFocus(false);
+    m_button_play = new Button(this, "", "", wxBORDER_NONE);
+    // MD3: draw the play/stop affordance as a Material Symbols glyph (coloured by
+    // the button's text role) instead of the legacy media_play/media_stop PNGs.
+    m_button_play->SetGlyph(MaterialIcon::PlayArrow);
+    // a11y: the play/stop toggle is the camera strip's only actionable control.
+    // Keep it in the keyboard tab order (Button already maps Space/Enter to a
+    // synthetic click via keyDownUp) and give the icon-only control an accessible
+    // name so assistive tech announces it instead of an empty label.
+    m_button_play->SetToolTip(_L("Play or stop the camera live view"));
+    m_button_play->SetName(_L("Play or stop the camera live view"));
 
     m_label_status = new Label(this, "");
-    m_label_status->SetForegroundColour(wxColour("#323A3C"));
+    m_label_status->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_label_stat = new Label(this, "");
-    m_label_stat->SetForegroundColour(wxColour("#323A3C"));
+    m_label_stat->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_media_ctrl->Bind(EVT_MEDIA_CTRL_STAT, [this](auto & e) {
 #if !BBL_RELEASE_TO_PUBLIC
         wxSize size = m_media_ctrl->GetVideoSize();
@@ -173,7 +182,7 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     });
 
     m_button_play->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &e) { TogglePlay(); });
-    m_button_play->Bind(wxEVT_RIGHT_UP, [this](auto & e) { m_media_ctrl->Play(); });
+    m_button_play->Bind(wxEVT_RIGHT_UP, [this](auto & e) { Play(); });
     m_label_status->Bind(wxEVT_LEFT_UP, [this](auto &e) {
         auto url = wxString::Format(L"https://wiki.bambulab.com/%s/software/bambu-studio/faq/live-view", wxGetApp().current_language_code_safe() == "zh_CN" ? "zh" : "en");
         wxLaunchDefaultBrowser(url);
@@ -237,6 +246,7 @@ MediaPlayCtrl::~MediaPlayCtrl()
 void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
 {
     std::string machine = obj ? obj->get_dev_id() : "";
+    const bool was_eligible = m_was_eligible;
     if (obj) {
         m_obj            = obj;
         m_camera_exists  = obj->has_ipcam;
@@ -262,8 +272,24 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
         m_remote_proto = 0;
         m_device_busy = false;
     }
-    Enable(obj && obj->is_info_ready() && obj->m_push_count > 0);
+    const bool eligible = obj && obj->is_info_ready() && obj->m_push_count > 0 && obj->has_ipcam;
+    Enable(eligible);
+    m_was_eligible = eligible;
+    if (IsShownOnScreen() && !m_view_active) {
+        m_view_active = true;
+        m_user_paused = false;
+        if (eligible)
+            m_next_retry = wxDateTime::Now();
+    }
     if (machine == m_machine) {
+        if (was_eligible && !eligible) {
+            ++m_callback_generation;
+            m_next_retry = wxDateTime();
+            Stop();
+        } else if (!was_eligible && eligible && !m_user_paused) {
+            // A reconnect starts a new playback attempt; ordinary telemetry does not.
+            m_next_retry = wxDateTime::Now();
+        }
         if (m_last_state == MEDIASTATE_IDLE && IsEnabled())
             Play();
         if (m_last_state == MEDIASTATE_LOADING || m_last_state == MEDIASTATE_INITIALIZING) {
@@ -303,6 +329,9 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
         return;
     }
     m_machine = machine;
+    ++m_callback_generation;
+    m_image_token = std::make_shared<int>(0);
+    m_user_paused = false;
     BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl switch machine: " << BBLCrossTalk::Crosstalk_DevId(m_machine);
     m_disable_lan = false;
     m_failed_retry = 0;
@@ -317,10 +346,12 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
     }
     if (m_last_state != MEDIASTATE_IDLE)
         Stop(" ");
-    if (m_next_retry.IsValid()) // Try open 2 seconds later, to avoid state conflict
+    if (eligible) // Try open 2 seconds later, to avoid state conflict
         m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
-    else
+    else {
+        m_next_retry = wxDateTime();
         SetStatus("", false);
+    }
 
     start_device_image_flow();
 }
@@ -399,13 +430,30 @@ void refresh_agora_url(char const* device, char const* dev_ver, char const* chan
     device2 += dev_ver;
     device2 += "|\"agora\"|";
     device2 += channel;
-    wxGetApp().getAgent()->get_camera_url(device2, [context, callback](std::string url) {
+    // The agent is null for the whole session whenever the network plugin fails
+    // to load (m_agent is only constructed under `if (create_network_agent)`),
+    // and this is reached from live-view playback on a real printer -- a
+    // combination that never occurs on a machine with no printer bound, which is
+    // exactly how it survives testing. Hand the callback an empty URL instead of
+    // dereferencing null: the caller already has to cope with a URL it cannot
+    // open, and it cannot cope with an access violation.
+    NetworkAgent *agent = wxGetApp().getAgent();
+    if (!agent) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                      "cannot resolve the camera URL.";
+        if (callback)
+            callback(context, "");
+        return;
+    }
+    agent->get_camera_url(device2, [context, callback](std::string url) {
         callback(context, url.c_str());
     });
 }
 
 void MediaPlayCtrl::Play()
 {
+    if (m_user_paused)
+        return;
     if (!m_next_retry.IsValid() || wxDateTime::Now() < m_next_retry)
         return;
     if (!IsShownOnScreen())
@@ -458,7 +506,7 @@ void MediaPlayCtrl::Play()
 
         m_url = url;
         load();
-        m_button_play->SetIcon("media_stop");
+        m_button_play->SetGlyph(MaterialIcon::Stop);
         return;
     }
 
@@ -480,7 +528,7 @@ void MediaPlayCtrl::Play()
     m_disable_lan = false;
     m_failed_code = 0;
     m_last_state  = MEDIASTATE_INITIALIZING;
-    m_button_play->SetIcon("media_stop");
+    m_button_play->SetGlyph(MaterialIcon::Stop);
 
     if (!m_remote_proto) { // not support tutk
         m_failed_code = -1;
@@ -495,7 +543,8 @@ void MediaPlayCtrl::Play()
     if (agent) {
         std::string protocols[] = {"", "\"tutk\"", "\"agora\"", "\"tutk\",\"agora\""};
         agent->get_camera_url(m_machine + "|" + m_dev_ver + "|" + protocols[m_remote_proto],
-                [this, m = m_machine, v = agent_version, dv = m_dev_ver, token = std::weak_ptr(m_token)](std::string url) {
+                [this, m = m_machine, generation = m_callback_generation, v = agent_version, dv = m_dev_ver,
+                 token = std::weak_ptr(m_token)](std::string url) {
             if (token.expired()) {
                 BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": token has been expired";
                 return;
@@ -514,8 +563,10 @@ void MediaPlayCtrl::Play()
             BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl: " << hide_passwd(url, {"?uid=", "channel=", "authkey=", "passwd=", "license=", "token="});
 #endif
 
-            CallAfter([this, m, url] {
-                if (m != m_machine) {
+            CallAfter([this, m, generation, url, token] {
+                if (token.expired())
+                    return;
+                if (m != m_machine || generation != m_callback_generation) {
                     BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl drop late ttcode for machine: " << BBLCrossTalk::Crosstalk_DevId(m);
                     return;
                 }
@@ -552,7 +603,7 @@ void MediaPlayCtrl::Stop(wxString const &msg, wxString const &msg2)
     if (m_last_state != MEDIASTATE_IDLE) {
         m_pending_start_liveview_json.clear();
         m_media_ctrl->InvalidateBestSize();
-        m_button_play->SetIcon("media_play");
+        m_button_play->SetGlyph(MaterialIcon::PlayArrow);
         boost::unique_lock lock(m_mutex);
         m_tasks.push_back("<stop>");
         m_cond.notify_all();
@@ -666,9 +717,12 @@ void MediaPlayCtrl::TogglePlay()
 {
     BOOST_LOG_TRIVIAL(info) << "MediaPlayCtrl::TogglePlay";
     if (m_last_state != MEDIASTATE_IDLE) {
+        m_user_paused = true;
         m_next_retry = wxDateTime();
         Stop();
+        m_next_retry = wxDateTime();
     } else {
+        m_user_paused = false;
         m_failed_retry = 0;
         m_user_triggered = true;
         if (m_last_user_play + wxTimeSpan::Minutes(5) < wxDateTime::Now()) {
@@ -913,7 +967,9 @@ void MediaPlayCtrl::start_device_image_flow()
     };
 
     // Helper: Process downloaded image data
-    auto process_image_data = [this, request_machine, mode_to_string](const std::vector<std::byte> &data, DownloadMode mode) -> bool {
+    auto process_image_data = [this, image_token, request_machine, mode_to_string](const std::vector<std::byte> &data, DownloadMode mode) -> bool {
+        if (image_token.expired())
+            return false;
         if (data.empty()) {
             BOOST_LOG_TRIVIAL(warning) << "DeviceImageFlow: received empty data (" << mode_to_string(mode) << ")";
             return false;
@@ -934,7 +990,9 @@ void MediaPlayCtrl::start_device_image_flow()
         char time_buf[32];
         strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", local_tm);
         wxString watermark = _L("Printer Preview") + wxString::Format("  %s", time_buf);
-        CallAfter([this, img = std::move(image), request_machine, mode_str, watermark]() {
+        CallAfter([this, image_token, img = std::move(image), request_machine, mode_str, watermark]() {
+            if (image_token.expired())
+                return;
             if (request_machine != m_machine) {
                 BOOST_LOG_TRIVIAL(info) << "DeviceImageFlow: machine changed, skip display";
                 return;
@@ -1112,7 +1170,12 @@ void MediaPlayCtrl::SetStatus(wxString const &msg2, bool hyperlink)
 
     wxGCDC dc;
     wxSize msg_size = dc.GetTextExtent(msg);
-    int blank_width = FromDIP(GetSize().GetWidth() - 120 - m_label_stat->GetSize().GetWidth() - m_button_play->GetSize().GetWidth());
+    // GetSize() on the strip and its children already returns physical (DPI-scaled)
+    // pixels, so only the bare 120px margin constant is a logical value that needs
+    // FromDIP(). Wrapping the whole expression in FromDIP() double-scaled the
+    // available width on HiDPI displays, letting the status text overrun the strip
+    // instead of ellipsizing. Compared against msg_size.x (also physical px).
+    int blank_width = GetSize().GetWidth() - FromDIP(120) - m_label_stat->GetSize().GetWidth() - m_button_play->GetSize().GetWidth();
     int max_status_width = std::min(blank_width, FromDIP(600));
 
     wxString display_text = msg;
@@ -1194,14 +1257,24 @@ void MediaPlayCtrl::on_show_hide(wxShowEvent &evt)
 {
     evt.Skip();
     if (m_isBeingDeleted) return;
-    m_failed_retry = 0;
-    if (m_next_retry.IsValid()) // Try open 2 seconds later, to avoid quick play/stop
-        m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
     if (IsShownOnScreen()) {
+        if (!m_view_active) {
+            m_view_active = true;
+            m_user_paused = false;
+            m_failed_retry = 0;
+            if (m_was_eligible)
+                m_next_retry = wxDateTime::Now() + wxTimeSpan::Seconds(2);
+        }
         Play();
         start_device_image_flow();
     } else {
+        if (!m_view_active)
+            return;
+        m_view_active = false;
+        ++m_callback_generation;
+        m_next_retry = wxDateTime();
         Stop();
+        m_next_retry = wxDateTime();
     }
 }
 

@@ -23,6 +23,7 @@
 #include "Plater.hpp"
 #include "MainFrame.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "format.hpp"
 #include "MediaPlayCtrl.h"
 #include "MediaFilePanel.h"
@@ -41,7 +42,7 @@ namespace GUI {
 AddMachinePanel::AddMachinePanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name)
     : wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(0xEEEEEE);
+    this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
     wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
 
@@ -59,17 +60,17 @@ AddMachinePanel::AddMachinePanel(wxWindow* parent, wxWindowID id, const wxPoint&
     m_button_add_machine = new Button(this, "", "monitor_add_machine", FromDIP(24));
     m_button_add_machine->SetCornerRadius(FromDIP(12));
     StateColor button_bg(
-        std::pair<wxColour, int>(0xCECECE, StateColor::Pressed),
-        std::pair<wxColour, int>(0xCECECE, StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Pressed),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Hovered),
         std::pair<wxColour, int>(this->GetBackgroundColour(), StateColor::Normal)
     );
     m_button_add_machine->SetBackgroundColor(button_bg);
-    m_button_add_machine->SetBorderColor(0x909090);
-    m_button_add_machine->SetMinSize(wxSize(96, 39));
+    m_button_add_machine->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_add_machine->SetMinSize(FromDIP(wxSize(96, 39)));
     btn_sizer->Add(m_button_add_machine, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
-    m_staticText_add_machine = new wxStaticText(this, wxID_ANY, wxT("click to add machine"), wxDefaultPosition, wxDefaultSize, 0);
+    m_staticText_add_machine = new Label(this, wxT("click to add machine"));
     m_staticText_add_machine->Wrap(-1);
-    m_staticText_add_machine->SetForegroundColour(0x909090);
+    m_staticText_add_machine->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     btn_sizer->Add(m_staticText_add_machine, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
 
     horiz_sizer->Add(btn_sizer);
@@ -149,12 +150,29 @@ MonitorPanel::~MonitorPanel()
 
 void MonitorPanel::init_bitmap()
 {
-    m_signal_strong_img = create_scaled_bitmap("monitor_signal_strong", nullptr, 24);
-    m_signal_middle_img = create_scaled_bitmap("monitor_signal_middle", nullptr, 24);
-    m_signal_weak_img = create_scaled_bitmap("monitor_signal_weak", nullptr, 24);
-    m_signal_no_img   = create_scaled_bitmap("monitor_signal_no", nullptr, 24);
+    // MD3: render the connectivity indicators from the Material Symbols icon
+    // font instead of the legacy monitor_signal_*/monitor_arrow rasters. The
+    // Wi-Fi signal level is carried by the glyph shape (4-bar / 3-bar / 2-bar /
+    // null); state is expressed through colour, never the FILL axis. Fall back
+    // to the bundled bitmaps when the icon face is unavailable so a missing TTF
+    // degrades to the legacy look instead of tofu.
+    if (MaterialIcon::available()) {
+        const wxColour signal_on  = StateColor::semantic(MD3::Role::Primary);
+        const wxColour signal_off = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+        m_signal_strong_img = MaterialIcon::bitmap(this, MaterialIcon::SignalWifi4Bar,          24, signal_on);
+        m_signal_middle_img = MaterialIcon::bitmap(this, MaterialIcon::NetworkWifi3Bar,         24, signal_on);
+        m_signal_weak_img   = MaterialIcon::bitmap(this, MaterialIcon::NetworkWifi2Bar,         24, signal_off);
+        m_signal_no_img     = MaterialIcon::bitmap(this, MaterialIcon::SignalWifiStatusbarNull, 24, signal_off);
+        m_arrow_img         = MaterialIcon::bitmap(this, MaterialIcon::ChevronRight,            14, signal_off);
+    } else {
+        m_signal_strong_img = create_scaled_bitmap("monitor_signal_strong", nullptr, 24);
+        m_signal_middle_img = create_scaled_bitmap("monitor_signal_middle", nullptr, 24);
+        m_signal_weak_img   = create_scaled_bitmap("monitor_signal_weak", nullptr, 24);
+        m_signal_no_img     = create_scaled_bitmap("monitor_signal_no", nullptr, 24);
+        m_arrow_img         = create_scaled_bitmap("monitor_arrow", nullptr, 14);
+    }
+    // The printer graphic is product imagery, not a monochrome UI glyph -> asset.
     m_printer_img = create_scaled_bitmap("monitor_printer", nullptr, 26);
-    m_arrow_img = create_scaled_bitmap("monitor_arrow",nullptr, 14);
 }
 
 void MonitorPanel::init_timer()
@@ -172,7 +190,7 @@ void MonitorPanel::init_tabpanel()
     sizer_side_tools->Add(m_side_tools, 1, wxEXPAND, 0);
     m_tabpanel             = new Tabbook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, sizer_side_tools, wxNB_LEFT | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
     m_side_tools->set_table_panel(m_tabpanel);
-    m_tabpanel->SetBackgroundColour(wxColour("#FEFFFF"));
+    m_tabpanel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_tabpanel->Bind(wxEVT_BOOKCTRL_PAGE_CHANGED, [this](wxBookCtrlEvent& e) {
         auto page = m_tabpanel->GetCurrentPage();
         if (page == m_media_file_panel) {
@@ -241,7 +259,7 @@ wxWindow* MonitorPanel::create_side_tools()
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     auto        panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(0, FromDIP(50)));
-    panel->SetBackgroundColour(wxColour(135,206,250));
+    panel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     panel->SetSizer(sizer);
     sizer->Layout();
     panel->Fit();

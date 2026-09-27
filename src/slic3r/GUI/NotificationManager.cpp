@@ -6,14 +6,19 @@
 #include "SlicingProgressNotification.hpp"
 #include "GUI.hpp"
 #include "ImGuiWrapper.hpp"
+#include "Widgets/StateColor.hpp"
 #include "wxExtensions.hpp"
 #include "ObjectDataViewModel.hpp"
 #include "GUI_ObjectList.hpp"
 #include "ParamsPanel.hpp"
 #include "MainFrame.hpp"
 #include "libslic3r/Config.hpp"
+#include "libslic3r/Utils.hpp"
+#include "BBLTopbar.hpp"
 #include "libslic3r/PrintBase.hpp"
 #include "format.hpp"
+
+#include <algorithm>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/log/trivial.hpp>
@@ -67,6 +72,56 @@ namespace {
 			ImGui::PushStyleColor(idx, ImVec4(col.x, col.y, col.z, col.w * current_fade_opacity));
 		else
 			ImGui::PushStyleColor(idx, col);
+	}
+
+	// MD3 bridge for the ImGui-drawn notifications. Notifications track their own
+	// dark-mode flag, so resolve against it rather than the global StateColor
+	// state to keep surface, text and the close/minimize glyphs in lock-step.
+	inline ImVec4 to_imvec4(const wxColour &c, float alpha = 1.0f)
+	{
+		return ImVec4(c.Red() / 255.f, c.Green() / 255.f, c.Blue() / 255.f, alpha);
+	}
+	inline ImVec4 md3_notif_color(MD3::Role role, bool dark, float alpha = 1.0f)
+	{
+		return to_imvec4(MD3::resolve(role, dark), alpha);
+	}
+	// Warning has no MD3 surface role; it lives in the ThemeColor bridge with a
+	// dark tone in the StateColor map. That tone is spelled out here instead of
+	// fetched through StateColor::darkModeColorFor(), which only maps while the
+	// GLOBAL dark flag is set: the snackbar asks for the warning tone of the theme
+	// opposite the app's (its card is InverseSurface), so the flag passed here is
+	// deliberately out of step with the global one. Keep in sync with
+	// gDarkColors[ThemeColor::Warning] in StateColor.cpp.
+	inline ImVec4 md3_notif_warning(bool dark, float alpha = 1.0f)
+	{
+		static const wxColour warning_dark{"#ffb77c"};
+		return to_imvec4(dark ? warning_dark : ThemeColor::Warning, alpha);
+	}
+
+	// MD3 elevation-4 drop shadow (kit Snackbar: box-shadow 0 8px 24px) for the
+	// ImGui-drawn snackbar. Rendered into the background draw list so it sits
+	// behind the toast window; the opaque surface covers the shadow's core, so
+	// only the offset + blur fringe reads as elevation. Approximated with a few
+	// stacked rounded rects since the ImGui draw list has no gaussian blur.
+	inline void md3_draw_elevation4_shadow(ImDrawList *draw_list, const ImVec2 &win_min, const ImVec2 &win_max,
+	                                       float rounding, float scale, float opacity)
+	{
+		if (draw_list == nullptr || opacity <= 0.0f)
+			return;
+		const float y_offset = 8.0f * scale;   // kit vertical offset
+		const float blur     = 24.0f * scale;  // kit blur radius -> outward spread
+		const int   layers   = 10;
+		for (int i = 0; i < layers; ++i) {
+			const float f      = (float) i / (float) (layers - 1); // 0 (tight) .. 1 (outer)
+			const float expand = blur * f;
+			// Quadratic falloff: tight inner layers dark, outer blur faint.
+			const float a = 0.22f * (1.0f - f) * (1.0f - f) * opacity;
+			if (a <= 0.001f)
+				continue;
+			const ImVec2 mn(win_min.x - expand, win_min.y - expand + y_offset);
+			const ImVec2 mx(win_max.x + expand, win_max.y + expand + y_offset);
+			draw_list->AddRectFilled(mn, mx, IM_COL32(0, 0, 0, (int) (a * 255.0f + 0.5f)), rounding + expand);
+		}
 	}
 
 	bool get_high_shrinkage_filament_names(std::string& filament_names)
@@ -145,15 +200,23 @@ NotificationManager::PopNotification::PopNotification(const NotificationData &n,
     if (!n.second_hypertext.empty()) {
         m_second_hypertext = n.second_hypertext;
     }
-    m_ErrorColor  = ImVec4(0.9, 0.36, 0.36, 1);
-    m_WarnColor   = ImVec4(0.99, 0.69, 0.455, 1);
-    m_NormalColor = ImVec4(0.03, 0.6, 0.18, 1);
+    // MD3 status/accent roles. use_bbl_theme() re-resolves these against the
+    // live dark-mode flag; these light-app defaults cover the pre-render window.
+    // Error/Warning take the flag INVERTED because they are painted on the
+    // InverseSurface card, i.e. the other theme's surface (see use_bbl_theme()).
+    m_ErrorColor  = md3_notif_color(MD3::Role::Error, true);
+    m_WarnColor   = md3_notif_warning(true);
+    // Normal-level status accent uses the inverse-surface companion tone so the
+    // left sign / action read against the dark MD3 snackbar surface.
+    m_NormalColor = md3_notif_color(MD3::Role::InversePrimary, false);
 
 	m_CurrentColor = m_NormalColor;   //Default
 
-	m_WindowBkgColor = ImVec4(1, 1, 1, 1);
-    m_TextColor      = ImVec4(.2f, .2f, .2f, 1.0f);
-    m_HyperTextColor = ImVec4(0.03, 0.6, 0.18, 1);
+	// MD3 snackbar: inverse-surface card, inverse-on body text, inverse-primary
+	// hyperlink/action accent. use_bbl_theme() re-resolves against the live flag.
+	m_WindowBkgColor = md3_notif_color(MD3::Role::InverseSurface, false);
+    m_TextColor      = md3_notif_color(MD3::Role::InverseOn, false);
+    m_HyperTextColor = md3_notif_color(MD3::Role::InversePrimary, false);
 }
 
 // We cannot call plater()->get_current_canvas3D() from constructor, so we do it here
@@ -165,7 +228,7 @@ void NotificationManager::PopNotification::ensure_ui_inited()
     }
 
     if (!m_WindowRadius_inited) {
-        m_WindowRadius        = 4.0f * wxGetApp().plater()->get_current_canvas3D()->get_scale();
+        m_WindowRadius        = 12.0f * wxGetApp().plater()->get_current_canvas3D()->get_scale();
         m_WindowRadius_inited = true;
     }
 }
@@ -202,6 +265,23 @@ void NotificationManager::PopNotification::use_bbl_theme()
     OldStyle.WindowPadding             = ImVec2(0, 0);
     OldStyle.WindowRounding            = m_WindowRadius;
 
+	// Resolve the status/accent tones before choosing the left-sign accent for this
+	// notification level. Error and Warning resolve against the INVERTED dark flag:
+	// the only surface that paints them is this card, which is InverseSurface —
+	// the opposite theme's surface — so the app-side status tones land the wrong
+	// way round. Dark::error #ffb4ab on Dark::inverseSurface #e3e2e9 is ~1.3:1,
+	// which left the warn left sign and the highlighted <Error> substrings in
+	// render_text() effectively invisible. InversePrimary needs no flip; the
+	// inverse roles are defined against this card by construction, which is also
+	// why m_TextColor / m_HyperTextColor below stay on m_is_dark.
+	// Error- and SeriousWarning-level notifications never reach this card at all:
+	// render_notifications() routes them to bbl_render_block_notification(), which
+	// paints a full-bleed ThemeColor::Danger / ThemeColor::Warning banner in both
+	// themes and picks its own tones against that fill.
+	m_ErrorColor  = md3_notif_color(MD3::Role::Error, !m_is_dark);
+	m_WarnColor   = md3_notif_warning(!m_is_dark);
+	m_NormalColor = md3_notif_color(MD3::Role::InversePrimary, m_is_dark);
+
 	if (m_data.level == NotificationLevel::ErrorNotificationLevel)
         m_CurrentColor = m_ErrorColor;
     else if (m_data.level == NotificationLevel::WarningNotificationLevel)
@@ -218,13 +298,18 @@ void NotificationManager::PopNotification::use_bbl_theme()
  //   OldStyle.Colors[ImGuiCol_WindowBg] = m_WindowBkgColor;
  //   OldStyle.Colors[ImGuiCol_Text]     = m_TextColor;
 
-	m_WindowBkgColor = m_is_dark ? ImVec4(45 / 255.f, 45 / 255.f, 49 / 255.f, 1.f) : ImVec4(1, 1, 1, 1);
-	m_TextColor = m_is_dark ? ImVec4(224 / 255.f, 224 / 255.f, 224 / 255.f, 1.f) : ImVec4(.2f, .2f, .2f, 1.0f);
-	m_HyperTextColor = m_is_dark ? ImVec4(0.03, 0.6, 0.18, 1) : ImVec4(0.03, 0.6, 0.18, 1);
-	m_is_dark ? push_style_color(ImGuiCol_Border, {62 / 255.f, 62 / 255.f, 69 / 255.f, 1.f}, true, m_current_fade_opacity) : push_style_color(ImGuiCol_Border, m_CurrentColor, true, m_current_fade_opacity);
+	// MD3 elevated snackbar surface: InverseSurface card, InverseOn body text,
+	// InversePrimary hyperlink/action accent. The elev-4 drop shadow (drawn in
+	// render()) defines the edge, so the surface carries no outline.
+	m_WindowBkgColor = md3_notif_color(MD3::Role::InverseSurface, m_is_dark);
+	m_TextColor      = md3_notif_color(MD3::Role::InverseOn, m_is_dark);
+	m_HyperTextColor = md3_notif_color(MD3::Role::InversePrimary, m_is_dark);
+	// Keep the border color push to balance restore_default_theme()'s PopStyleColor(3),
+	// but the border is not drawn (WindowBorderSize == 0) — the shadow stands in.
+	m_is_dark ? push_style_color(ImGuiCol_Border, md3_notif_color(MD3::Role::OutlineVariant, m_is_dark), true, m_current_fade_opacity) : push_style_color(ImGuiCol_Border, m_CurrentColor, true, m_current_fade_opacity);
     push_style_color(ImGuiCol_WindowBg, m_WindowBkgColor, true, m_current_fade_opacity);
     push_style_color(ImGuiCol_Text, m_TextColor, true, m_current_fade_opacity);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, m_WindowRadius / 4);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 }
 
 
@@ -264,8 +349,8 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	Size          cnv_size = canvas.get_canvas_size();
 	ImGuiWrapper& imgui = *wxGetApp().imgui();
 	ImVec2        mouse_pos = ImGui::GetMousePos();
-    float         right_gap  = right_margin + (move_from_overlay ? overlay_width + m_line_height * 5 : 0);
 	bool          fading_pop = false;
+	(void) move_from_overlay; (void) overlay_width; (void) right_margin; // MD3 snackbar is canvas-centered, ignores the side overlay
 
 	if (m_line_height != ImGui::CalcTextSize("A").y)
 		init();
@@ -275,22 +360,39 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	// top y of window
 	m_top_y = initial_y + m_window_height;
 
-	// position of upper-right corner
-	ImVec2 win_pos(1.0f * (float)cnv_size.get_width() - right_gap, 1.0f * (float)cnv_size.get_height() - m_top_y);
+	// MD3 snackbar geometry: a bottom-right-corner column of cards, each
+	// min(560px, 92vw) wide. Corner (not center) anchoring is a deliberate
+	// deviation from the kit's centered snackbar: non-blocking notifications
+	// are required to stack in a bottom screen corner so they never sit over
+	// the model/plate center-of-attention. Override the content width so the
+	// surface matches the kit; text was wrapped at the (narrower) base width,
+	// which still fits.
+	ensure_ui_inited();
+	const float scale   = canvas.get_scale();
+	const float corner_margin = 16.0f * scale;
+	const float toast_w = std::min(560.0f * scale, 0.92f * (float) cnv_size.get_width());
+	m_window_width = toast_w;
+
+	// Right-corner anchored (top-right pivot), stacked upward from the bottom.
+	ImVec2 win_pos((float) cnv_size.get_width() - corner_margin, 1.0f * (float) cnv_size.get_height() - m_top_y);
 	imgui.set_next_window_pos(win_pos.x, win_pos.y, ImGuiCond_Always, 1.0f, 0.0f);
 	imgui.set_next_window_size(m_window_width, m_window_height, ImGuiCond_Always);
 
-	// Cache the screen-space rect (window is anchored by its top-right corner).
+	// Cache the screen-space rect (window is anchored by its top-right point).
 	m_rendered_win_min   = ImVec2(win_pos.x - m_window_width, win_pos.y);
 	m_rendered_win_max   = ImVec2(win_pos.x, win_pos.y + m_window_height);
 	m_rendered_this_frame = true;
+
+	// MD3 elevation-4 drop shadow (kit: 0 8px 24px), drawn behind the toast.
+	md3_draw_elevation4_shadow(ImGui::GetBackgroundDrawList(), m_rendered_win_min, m_rendered_win_max,
+	                           m_WindowRadius, scale, m_state == EState::FadingOut ? m_current_fade_opacity : 1.0f);
 
 	// find if hovered FIXME:  do it only in update state?
 	if (m_state == EState::Hovered) {
 		init();
 	}
 
-	if (mouse_pos.x < win_pos.x && mouse_pos.x > win_pos.x - m_window_width && mouse_pos.y > win_pos.y && mouse_pos.y < win_pos.y + m_window_height) {
+	if (mouse_pos.x > m_rendered_win_min.x && mouse_pos.x < m_rendered_win_max.x && mouse_pos.y > win_pos.y && mouse_pos.y < win_pos.y + m_window_height) {
 		// Uncomment if imgui window focus is needed on hover. I cant find any case.
 		//ImGui::SetNextWindowFocus();
 		set_hovered();
@@ -316,14 +418,19 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 	int window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 	if (imgui.begin(name, window_flags)) {
 		ImVec2 win_size = ImGui::GetWindowSize();
+		// The render helpers below expect the window's top-right corner (they
+		// derive the left edge and the close-button hit-box from it). The toast
+		// is now center-anchored, so recover the real top-right from ImGui.
+		ImVec2 real_pos = ImGui::GetWindowPos();
+		ImVec2 win_tr(real_pos.x + win_size.x, real_pos.y);
 
-		bbl_render_left_sign(imgui, win_size.x, win_size.y, win_pos.x, win_pos.y);
+		bbl_render_left_sign(imgui, win_size.x, win_size.y, win_tr.x, win_tr.y);
 		render_left_sign(imgui);
-		render_text(imgui, win_size.x, win_size.y, win_pos.x, win_pos.y);
+		render_text(imgui, win_size.x, win_size.y, win_tr.x, win_tr.y);
 		m_minimize_b_visible = (m_multiline && m_lines_count > 3);
-		render_close_button(imgui, win_size.x, win_size.y, win_pos.x, win_pos.y);
+		render_close_button(imgui, win_size.x, win_size.y, win_tr.x, win_tr.y);
 		if (m_minimize_b_visible)
-			render_minimize_button(imgui, win_pos.x, win_pos.y);
+			render_minimize_button(imgui, win_tr.x, win_tr.y);
 	}
 	imgui.end();
 
@@ -394,12 +501,16 @@ void NotificationManager::PopNotification::bbl_render_block_notification(GLCanva
 	use_bbl_theme();
     if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
 	{
-        push_style_color(ImGuiCol_Border, {245.f / 255.f, 155 / 255.f, 22 / 255.f, 1}, true, m_current_fade_opacity);
-        push_style_color(ImGuiCol_WindowBg, {245.f / 255.f, 155 / 255.f, 22 / 255.f, 1}, true, m_current_fade_opacity);
+        // Saturated warning banner (light Warning tone in both themes) reads
+        // white text; a paler dark tone would lose contrast against it.
+        const ImVec4 warn_banner = to_imvec4(ThemeColor::Warning);
+        push_style_color(ImGuiCol_Border, warn_banner, true, m_current_fade_opacity);
+        push_style_color(ImGuiCol_WindowBg, warn_banner, true, m_current_fade_opacity);
 	}
     if (m_data.level == NotificationLevel::ErrorNotificationLevel) {
-        push_style_color(ImGuiCol_Border, {225.f / 255.f, 71 / 255.f, 71 / 255.f, 1}, true, m_current_fade_opacity);
-        push_style_color(ImGuiCol_WindowBg, {225.f / 255.f, 71 / 255.f, 71 / 255.f, 1}, true, m_current_fade_opacity);
+        const ImVec4 error_banner = to_imvec4(ThemeColor::Danger);
+        push_style_color(ImGuiCol_Border, error_banner, true, m_current_fade_opacity);
+        push_style_color(ImGuiCol_WindowBg, error_banner, true, m_current_fade_opacity);
     }
 	push_style_color(ImGuiCol_Text, { 1,1,1,1 }, true, m_current_fade_opacity);
 
@@ -660,14 +771,15 @@ void NotificationManager::PopNotification::bbl_render_block_notif_text(ImGuiWrap
 			if (m_text1.size() > m_endlines[i])
 				last_end += (m_text1[m_endlines[i]] == '\n' || m_text1[m_endlines[i]] == ' ' ? 1 : 0);
 
-			if (pos_start != string::npos && pos_end != string::npos && m_endlines[i] - line.length() >= pos_start && m_endlines[i] <= pos_end) {
-				push_style_color(ImGuiCol_Text, m_ErrorColor, m_state == EState::FadingOut, m_current_fade_opacity);
-				imgui.text(line.c_str());
-				ImGui::PopStyleColor();
-			}
-			else {
-				imgui.text(line.c_str());
-			}
+			// No <Error> highlight on this path. The block banner is a full-bleed
+			// ThemeColor::Danger / ThemeColor::Warning fill with white body text, so
+			// MD3's onError white already IS the content colour here, and m_ErrorColor
+			// (the inverse-surface CARD tone, see use_bbl_theme()) must not be painted
+			// on it. Unreachable in practice as well: the tree's only <Error>-marked
+			// text comes from GUI_ObjectList's sidebar info, which arrives as a
+			// PrintInfoNotificationLevel card notification, so pos_start / pos_end stay
+			// npos for the two levels that render here.
+			imgui.text(line.c_str());
 		}
 	}
 	//hyperlink text
@@ -807,13 +919,24 @@ void NotificationManager::PopNotification::render_hypertext(
     ImVec4 HyperColor = m_HyperTextColor;//ImVec4(150.f / 255.f, 100.f / 255.f, 0.f / 255.f, 1)
     if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
 		HyperColor = ImVec4(0.f, 0.f, 0.f, 0.4f);
+	// Error level renders through bbl_render_block_notification(), whose background
+	// is a fixed ThemeColor::Danger fill in BOTH themes — not the inverse-surface
+	// card. Any theme-resolved error tone collapses onto that fill in one theme or
+	// the other (Light::error IS #ba1a1a, and m_ErrorColor deliberately holds the
+	// opposite theme's tone for the card), so the link takes the banner's MD3
+	// companion role: the same white the banner already pushes for its body text.
 	if (m_data.level == NotificationLevel::ErrorNotificationLevel)
-		HyperColor = ImVec4(135.f / 255.f, 43 / 255.f, 43 / 255.f, 1);
+		HyperColor = md3_notif_color(MD3::Role::OnError, false);
 	if (ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
 	{
-		HyperColor.y += 0.1f;
-		if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel || m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
-			HyperColor.x += 0.2f;
+		// Saturating, and it has to be: the underline below converts these channels by
+		// hand with IM_COL32, which shifts each into its own byte with no clamp. A
+		// channel pushed past 1.0 therefore carries into the NEXT channel - an error
+		// link, whose text is white, brightened to y=1.1 packs as G=24 with the carry
+		// landing in B, and the underline repaints magenta.
+		HyperColor.y = std::min(HyperColor.y + 0.1f, 1.f);
+		if (m_data.level == NotificationLevel::SeriousWarningNotificationLevel)
+			HyperColor.x = std::min(HyperColor.x + 0.2f, 1.f);
 	}
 
 
@@ -1026,6 +1149,8 @@ void NotificationManager::PopNotification::render_minimize_button(ImGuiWrapper& 
 
 bool NotificationManager::PopNotification::on_text_click()
 {
+	if (m_history != nullptr && m_history_id != 0)
+		m_history->record_action(m_history_id, m_data.hypertext.empty() ? std::string("hypertext") : m_data.hypertext);
 	if(m_data.callback != nullptr)
 		return m_data.callback(m_evt_handler);
 	return false;
@@ -1033,6 +1158,8 @@ bool NotificationManager::PopNotification::on_text_click()
 
 bool NotificationManager::PopNotification::on_second_text_click()
 {
+    if (m_history != nullptr && m_history_id != 0)
+        m_history->record_action(m_history_id, m_data.second_hypertext.empty() ? std::string("hypertext 2") : m_data.second_hypertext);
     if (m_data.second_callback != nullptr)
         return m_data.second_callback(m_evt_handler);
     return false;
@@ -1334,8 +1461,9 @@ void NotificationManager::ProgressBarNotification::render_bar(ImGuiWrapper& imgu
 {
 	//ImVec4 orange_color			= ImVec4(.99f, .313f, .0f, 1.0f);
 	//ImVec4 gray_color			= ImVec4(.34f, .34f, .34f, 1.0f);
+    // MD3 ProgressBar: Primary fill on a SurfaceContainerHighest track.
     ImVec4 orange_color         = m_NormalColor;
-    ImVec4 gray_color           = ImVec4(.7f, .7f, .7f, 1.0f);
+    ImVec4 gray_color           = md3_notif_color(MD3::Role::SurfaceContainerHighest, m_is_dark);
 	ImVec2 lineEnd				= ImVec2(win_pos_x - m_window_width_offset, win_pos_y + win_size_y / 2 + (m_multiline ? m_line_height / 2 : 0));
 	ImVec2 lineStart			= ImVec2(win_pos_x - win_size_x + m_left_indentation, win_pos_y + win_size_y / 2 + (m_multiline ? m_line_height / 2 : 0));
 	ImVec2 midPoint				= ImVec2(lineStart.x + (lineEnd.x - lineStart.x) * m_percentage, lineStart.y);
@@ -1665,6 +1793,153 @@ void NotificationManager::ProgressIndicatorNotification::render_close_button(ImG
 NotificationManager::NotificationManager(wxEvtHandler* evt_handler) :
 	m_evt_handler(evt_handler)
 {
+    // NotificationHistory::level_name() mirrors this enum by value; keep them in step.
+    static_assert(static_cast<int>(NotificationLevel::ProgressBarNotificationLevel) == 1, "history level names assume ProgressBar == 1");
+    static_assert(static_cast<int>(NotificationLevel::WarningNotificationLevel) == 7, "history level names assume Warning == 7");
+    static_assert(static_cast<int>(NotificationLevel::ErrorNotificationLevel) == 9, "history level names assume Error == 9");
+
+    // Notification-centre history: persisted beside the other per-user data.
+    // A missing or unreadable file only costs the old records; it never blocks startup.
+    if (!data_dir().empty()) {
+        m_history_path = data_dir() + "/notification_history.json";
+        std::string error;
+        if (!m_history.load(m_history_path, &error))
+            BOOST_LOG_TRIVIAL(warning) << "Notification history not loaded from " << m_history_path << ": " << error;
+    }
+    m_history.set_on_change([this] { on_history_changed(); });
+}
+
+std::string NotificationManager::type_name(NotificationType type)
+{
+    switch (type) {
+    case NotificationType::CustomNotification: return "CustomNotification";
+    case NotificationType::ExportFinished: return "ExportFinished";
+    case NotificationType::Mouse3dDisconnected: return "Mouse3dDisconnected";
+    case NotificationType::NewAppAvailable: return "NewAppAvailable";
+    case NotificationType::NewAlphaAvailable: return "NewAlphaAvailable";
+    case NotificationType::NewBetaAvailable: return "NewBetaAvailable";
+    case NotificationType::PresetUpdateAvailable: return "PresetUpdateAvailable";
+    case NotificationType::PresetUpdateFinished: return "PresetUpdateFinished";
+    case NotificationType::ValidateError: return "ValidateError";
+    case NotificationType::ValidateWarning: return "ValidateWarning";
+    case NotificationType::SlicingError: return "SlicingError";
+    case NotificationType::HelioSlicingError: return "HelioSlicingError";
+    case NotificationType::SlicingSeriousWarning: return "SlicingSeriousWarning";
+    case NotificationType::SlicingWarning: return "SlicingWarning";
+    case NotificationType::BBLGeneralError: return "BBLGeneralError";
+    case NotificationType::PlaterError: return "PlaterError";
+    case NotificationType::LeftExtruderUnprintableError: return "LeftExtruderUnprintableError";
+    case NotificationType::RightExtruderUnprintableError: return "RightExtruderUnprintableError";
+    case NotificationType::PlaterWarning: return "PlaterWarning";
+    case NotificationType::ProgressBar: return "ProgressBar";
+    case NotificationType::PrintHostUpload: return "PrintHostUpload";
+    case NotificationType::SlicingProgress: return "SlicingProgress";
+    case NotificationType::EmptyColorChangeCode: return "EmptyColorChangeCode";
+    case NotificationType::CustomSupportsAndSeamRemovedAfterRepair: return "CustomSupportsAndSeamRemovedAfterRepair";
+    case NotificationType::EmptyAutoColorChange: return "EmptyAutoColorChange";
+    case NotificationType::SignDetected: return "SignDetected";
+    case NotificationType::QuitSLAManualMode: return "QuitSLAManualMode";
+    case NotificationType::DesktopIntegrationSuccess: return "DesktopIntegrationSuccess";
+    case NotificationType::DesktopIntegrationFail: return "DesktopIntegrationFail";
+    case NotificationType::UndoDesktopIntegrationSuccess: return "UndoDesktopIntegrationSuccess";
+    case NotificationType::UndoDesktopIntegrationFail: return "UndoDesktopIntegrationFail";
+    case NotificationType::MmSegmentationExceededExtrudersLimit: return "MmSegmentationExceededExtrudersLimit";
+    case NotificationType::DidYouKnowHint: return "DidYouKnowHint";
+    case NotificationType::UpdatedItemsInfo: return "UpdatedItemsInfo";
+    case NotificationType::ProgressIndicator: return "ProgressIndicator";
+    case NotificationType::SimplifySuggestion: return "SimplifySuggestion";
+    case NotificationType::NetfabbFinished: return "NetfabbFinished";
+    case NotificationType::ExportOngoing: return "ExportOngoing";
+    case NotificationType::ArrangeOngoing: return "ArrangeOngoing";
+    case NotificationType::BBLPlateInfo: return "BBLPlateInfo";
+    case NotificationType::BBL3MFInfo: return "BBL3MFInfo";
+    case NotificationType::BBLObjectInfo: return "BBLObjectInfo";
+    case NotificationType::BBLSliceEmptyLayer: return "BBLSliceEmptyLayer";
+    case NotificationType::BBLNeedSupportON: return "BBLNeedSupportON";
+    case NotificationType::BBLGcodeOverlap: return "BBLGcodeOverlap";
+    case NotificationType::BBLSeqPrintInfo: return "BBLSeqPrintInfo";
+    case NotificationType::BBLPluginInstallHint: return "BBLPluginInstallHint";
+    case NotificationType::BBLFlushingVolumeZero: return "BBLFlushingVolumeZero";
+    case NotificationType::BBLPluginUpdateAvailable: return "BBLPluginUpdateAvailable";
+    case NotificationType::BBLPreviewOnlyMode: return "BBLPreviewOnlyMode";
+    case NotificationType::BBLPrinterConfigUpdateAvailable: return "BBLPrinterConfigUpdateAvailable";
+    case NotificationType::BBLUserPresetExceedLimit: return "BBLUserPresetExceedLimit";
+    case NotificationType::BBLFilamentPrintableError: return "BBLFilamentPrintableError";
+    case NotificationType::BBLSliceLimitError: return "BBLSliceLimitError";
+    case NotificationType::BBLSliceMultiExtruderHeightOutside: return "BBLSliceMultiExtruderHeightOutside";
+    case NotificationType::BBLBedFilamentIncompatible: return "BBLBedFilamentIncompatible";
+    case NotificationType::BBLMixUsePLAAndPETG: return "BBLMixUsePLAAndPETG";
+    case NotificationType::BBLBrittleFilament: return "BBLBrittleFilament";
+    case NotificationType::BBLMixedFilamentBroken: return "BBLMixedFilamentBroken";
+    case NotificationType::BBLMultiFilaNoWipeTower: return "BBLMultiFilaNoWipeTower";
+    case NotificationType::BBLNozzleFilamentIncompatible: return "BBLNozzleFilamentIncompatible";
+    case NotificationType::BBLTpuNozzleHasMultiFilament: return "BBLTpuNozzleHasMultiFilament";
+    case NotificationType::BBLHighTempNeedWrappingDetection: return "BBLHighTempNeedWrappingDetection";
+    case NotificationType::BBLPrintedWeightOverLimitWarn: return "BBLPrintedWeightOverLimitWarn";
+    case NotificationType::BBLBedHeatSoakInfo: return "BBLBedHeatSoakInfo";
+    case NotificationType::BBLSingleExtruderMixedFilamentRisk: return "BBLSingleExtruderMixedFilamentRisk";
+    case NotificationType::AssemblyWarning: return "AssemblyWarning";
+    case NotificationType::AssemblyInfo: return "AssemblyInfo";
+    case NotificationType::BBLIsolatedVolumeInfo: return "BBLIsolatedVolumeInfo";
+    case NotificationType::BBLAssemblyFarFromOrigin: return "BBLAssemblyFarFromOrigin";
+    case NotificationType::BBLIntersectsVolumeInfo: return "BBLIntersectsVolumeInfo";
+    case NotificationType::BBLArcFittingInfo: return "BBLArcFittingInfo";
+    case NotificationType::BBLCalibExtruderMismatch: return "BBLCalibExtruderMismatch";
+    case NotificationType::ProjectHistoryFailure: return "ProjectHistoryFailure";
+    default: return "notification_" + std::to_string(static_cast<int>(type));
+    }
+}
+
+void NotificationManager::on_history_changed()
+{
+    if (!m_history_path.empty()) {
+        std::string error;
+        if (!m_history.save(m_history_path, &error))
+            BOOST_LOG_TRIVIAL(warning) << "Notification history not saved to " << m_history_path << ": " << error;
+    }
+    // Bell badge on the top bar. The main frame may not exist yet while the
+    // history is being loaded from disk, and may already be gone at shutdown.
+    if (wxGetApp().mainframe != nullptr && wxGetApp().mainframe->topbar() != nullptr)
+        wxGetApp().mainframe->topbar()->SetNotificationUnread(static_cast<int>(m_history.unread_count()));
+}
+
+void NotificationManager::record_history_push(PopNotification* notification)
+{
+    if (notification == nullptr || notification->history_id() != 0)
+        return;
+    const NotificationData& data = notification->get_data();
+    // Progress bars re-push on every tick; they are transient status, not events
+    // worth a history row (the centre would drown in them).
+    if (data.level == NotificationLevel::ProgressBarNotificationLevel)
+        return;
+    std::string text = data.text1;
+    if (!data.text2.empty())
+        text += "\n" + data.text2;
+    const std::uint64_t id = m_history.append(static_cast<int>(data.level), type_name(data.type), text);
+    notification->set_history(&m_history, id);
+}
+
+void NotificationManager::record_history_dismissed(PopNotification* notification)
+{
+    if (notification != nullptr && notification->history_id() != 0)
+        m_history.mark_dismissed(notification->history_id());
+}
+
+void NotificationManager::mark_history_seen()
+{
+    m_history.mark_all_seen();
+}
+
+void NotificationManager::dismiss_history_entries(const std::set<std::uint64_t>& ids)
+{
+    if (ids.empty())
+        return;
+    for (std::unique_ptr<PopNotification>& notification : m_pop_notifications) {
+        if (notification->history_id() != 0 && ids.count(notification->history_id()) != 0)
+            notification->close();
+    }
+    for (std::uint64_t id : ids)
+        m_history.mark_dismissed(id);
 }
 
 void NotificationManager::on_change_color_mode(bool is_dark) {
@@ -1696,6 +1971,17 @@ void NotificationManager::push_notification(NotificationType type,
 {
 	int duration = get_standard_duration(level);
     push_notification_data({ type, level, duration, text, hypertext, callback }, timestamp);
+}
+
+void NotificationManager::push_project_history_failure_notification(const std::string& text, std::function<bool(wxEvtHandler*)> retry_callback)
+{
+	// WarningNotificationLevel resolves to a zero fade-out duration, so this
+	// snackbar stays pinned until the user acts. NotificationType::ProjectHistoryFailure
+	// is not registered in m_multiple_types, so activate_existing() collapses
+	// repeated failures onto a single snackbar (refreshing its text/callback)
+	// instead of stacking one per failed commit.
+	push_notification(NotificationType::ProjectHistoryFailure, NotificationLevel::WarningNotificationLevel,
+	                  text, _u8L("Retry"), std::move(retry_callback));
 }
 
 void NotificationManager::push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval)
@@ -2027,6 +2313,7 @@ void NotificationManager::show_assembly_info_notification(const std::string& tex
     for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
         std::unique_ptr<PopNotification>& notification = *it;
         if (notification->get_type() == NotificationType::AssemblyInfo) {
+            record_history_dismissed(notification.get());
             it = m_pop_notifications.erase(it);
             break;
         }
@@ -2175,6 +2462,7 @@ void NotificationManager::close_and_delete_self(PopNotification * self)
     for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
         std::unique_ptr<PopNotification> &notification = *it;
         if (notification.get() == self) {
+            record_history_dismissed(notification.get());
             m_pop_notifications.erase(it);
             break;
         }else
@@ -2186,6 +2474,7 @@ void NotificationManager::remove_notification_of_type(const NotificationType typ
     for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
         std::unique_ptr<PopNotification> &notification = *it;
         if (notification->get_type() == type) {
+            record_history_dismissed(notification.get());
             it = m_pop_notifications.erase(it);
             if (!remove_all)
                 break;
@@ -2608,6 +2897,7 @@ bool NotificationManager::push_notification_data(std::unique_ptr<NotificationMan
                 m_pop_notifications.back()->update(notification->get_data());
 		}
 	} else {
+		record_history_push(notification.get());
 		m_pop_notifications.emplace_back(std::move(notification));
 
 		retval = true;
@@ -2725,9 +3015,10 @@ bool NotificationManager::update_notifications(GLCanvas3D& canvas)
 		std::unique_ptr<PopNotification>& notification = *it;
 		request_render |= notification->update_state(hover, time_since_render);
 		next_render = std::min<int64_t>(next_render, notification->next_render());
-		if (notification->get_state() == PopNotification::EState::Finished)
+		if (notification->get_state() == PopNotification::EState::Finished) {
+			record_history_dismissed(notification.get());
 			it = m_pop_notifications.erase(it);
-		else
+		} else
 			++it;
 	}
 
@@ -2965,6 +3256,7 @@ void NotificationManager::bbl_show_objectsinfo_notification(const std::string &t
     for (auto it = m_pop_notifications.begin(); it != m_pop_notifications.end();) {
         std::unique_ptr<PopNotification>& notification = *it;
         if (notification->get_type() == NotificationType::BBLObjectInfo) {
+            record_history_dismissed(notification.get());
             it = m_pop_notifications.erase(it);
             break;
         }

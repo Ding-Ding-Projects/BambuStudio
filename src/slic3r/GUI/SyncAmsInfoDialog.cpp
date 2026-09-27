@@ -18,6 +18,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/CheckBox.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "CapsuleButton.hpp"
 #include "PrePrintChecker.hpp"
 
@@ -52,9 +53,12 @@ bool SyncAmsInfoDialog::Show(bool show)
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " SyncAmsInfoDialog begin show";
     if (show) {
         if (m_two_image_panel) {
-            m_two_image_panel->SetBackgroundColor(wxGetApp().dark_mode() ? wxColour(48, 48, 48, 100) : wxColour(246, 246, 246, 100));
-            m_left_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
-            m_right_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));
+            m_two_image_panel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainer));
+            // Thumbnail button surfaces track the compare panel (SurfaceContainer)
+            // instead of the former hardcoded greys; the thumbnail itself (data
+            // imagery) is exempt and unchanged.
+            m_left_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+            m_right_image_button->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
             init_bitmaps();
         }
         if (m_options_other) { m_options_other->Hide(); }
@@ -265,14 +269,14 @@ wxBoxSizer *SyncAmsInfoDialog::create_sizer_thumbnail(wxButton *image_button, bo
     if (left) {
         wxBoxSizer *text_sizer = new wxBoxSizer(wxHORIZONTAL);
         auto        sync_text  = new Label(image_button->GetParent(), _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS"));
-        sync_text->SetForegroundColour(wxColour(107, 107, 107, 100));
+        sync_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         text_sizer->Add(sync_text, 0, wxALIGN_CENTER | wxALL, 0);
         sizer_thumbnail->Add(sync_text, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(4));
     }
     else {
         wxBoxSizer *text_sizer = new wxBoxSizer(wxHORIZONTAL);
         m_after_map_text       = new Label(image_button->GetParent(), _L("After mapping"));
-        m_after_map_text->SetForegroundColour(wxColour(107, 107, 107, 100));
+        m_after_map_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         text_sizer->Add(m_after_map_text, 0, wxALIGN_CENTER | wxALL, 0);
         sizer_thumbnail->Add(m_after_map_text, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(4));
     }
@@ -415,13 +419,17 @@ void SyncAmsInfoDialog::show_color_panel(bool flag, bool update_layout)
 void SyncAmsInfoDialog::update_more_setting(bool layout, bool from_more_seting_text)
 {
     if (!m_expand_more_settings) {
-        m_advanced_options_icon->SetBitmap(create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18));
+        m_advanced_options_icon->SetBitmap(MaterialIcon::available()
+            ? MaterialIcon::bitmap(m_scrolledWindow, MaterialIcon::ExpandMore, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+            : create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18));
         if (from_more_seting_text) {
             m_scrolledWindow->SetMinSize(wxSize(-1, SyncAmsInfoDialogHeightMIDDLE));
             m_scrolledWindow->SetMaxSize(wxSize(-1, SyncAmsInfoDialogHeightMIDDLE));
         }
     } else {
-        m_advanced_options_icon->SetBitmap(create_scaled_bitmap("advanced_option4", m_scrolledWindow, 18));
+        m_advanced_options_icon->SetBitmap(MaterialIcon::available()
+            ? MaterialIcon::bitmap(m_scrolledWindow, MaterialIcon::ExpandLess, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+            : create_scaled_bitmap("advanced_option4", m_scrolledWindow, 18));
         if (from_more_seting_text) {
             m_scrolledWindow->SetMinSize(wxSize(-1, SyncAmsInfoDialogHeightMAX));
             m_scrolledWindow->SetMaxSize(wxSize(-1, SyncAmsInfoDialogHeightMAX));
@@ -486,7 +494,6 @@ void SyncAmsInfoDialog::add_two_image_control()
     {
         m_two_image_panel = new StaticBox(m_two_thumbnail_panel);
         m_two_image_panel->SetBorderWidth(0);
-        //m_two_image_panel->SetForegroundColour(wxColour(248, 248, 248, 100));
         m_two_image_panel_sizer = new wxBoxSizer(wxHORIZONTAL);
         m_left_image_button     = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition, wxSize(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH)),
                                            wxBORDER_NONE | wxBU_AUTODRAW);
@@ -529,7 +536,7 @@ void SyncAmsInfoDialog::add_two_image_control()
     m_choose_plate_sizer         = new wxBoxSizer(wxHORIZONTAL);
     m_choose_plate_sizer->AddStretchSpacer();
 
-    wxStaticText *chose_combox_title = new wxStaticText(m_two_thumbnail_panel, wxID_ANY, _CTX(L_CONTEXT("Plate", "Sync_AMS"), "Sync_AMS"));
+    wxStaticText *chose_combox_title = new Label(m_two_thumbnail_panel, _CTX(L_CONTEXT("Plate", "Sync_AMS"), "Sync_AMS"));
     m_choose_plate_sizer->Add(chose_combox_title, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxEXPAND | wxTOP, FromDIP(6));
     m_choose_plate_sizer->AddSpacer(FromDIP(10));
 
@@ -607,7 +614,8 @@ void SyncAmsInfoDialog::updata_ui_when_priner_not_same() {
 }
 
 SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
-    DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Synchronize AMS Filament Information"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), _L("Synchronize AMS Filament Information"),
+              wxEmptyString, MaterialIcon::Sync)
     , m_input_info(info)
     , m_export_3mf_cancel(false)
     , m_mapping_popup(AmsMapingPopup(this,true))
@@ -627,8 +635,11 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     ops_no_auto.push_back(POItem{"on", "On"});
     ops_no_auto.push_back(POItem{"off", "Off"});
 
-    SetMinSize(wxSize(SyncAmsInfoDialogWidth, -1));
-    SetMaxSize(wxSize(SyncAmsInfoDialogWidth, -1));
+    // The fixed-width content (SyncAmsInfoDialogWidth) is nested in the kit body
+    // sizer (24px L/R padding), so the dialog is that much wider to keep the
+    // content area at its designed width and its computed centering spacers exact.
+    SetMinSize(wxSize(SyncAmsInfoDialogWidth + FromDIP(48), -1));
+    SetMaxSize(wxSize(SyncAmsInfoDialogWidth + FromDIP(48), -1));
 
     // bind
     Bind(wxEVT_CLOSE_WINDOW, &SyncAmsInfoDialog::on_cancel, this);
@@ -643,16 +654,16 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     Freeze();
-    SetBackgroundColour(m_colour_def_color);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_pages = new wxSimplebook(this);
-    m_pages->SetBackgroundColour(*wxWHITE);
+    m_pages->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_pages->SetSize(wxSize(SyncAmsInfoDialogWidth, -1));
 
     m_loading_page = new wxPanel(m_pages);
     m_show_page    = new wxPanel(m_pages);
-    m_loading_page->SetBackgroundColour(*wxWHITE);
-    m_show_page->SetBackgroundColour(*wxWHITE);
+    m_loading_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_show_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_pages->AddPage(m_loading_page, wxEmptyString, true);
     m_pages->AddPage(m_show_page, wxEmptyString, false);
     {//generate m_loading_page
@@ -682,7 +693,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
 
     //wxBoxSizer *m_scroll_sizer = new wxBoxSizer(wxVERTICAL);
     m_scrolledWindow = new wxScrolledWindow(m_show_page, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
-    m_scrolledWindow->SetBackgroundColour(*wxWHITE);
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_scrolledWindow->SetScrollRate(0, 20);
     m_scrolledWindow->SetMinSize(wxSize(-1, SyncAmsInfoDialogHeightMAX));
     m_scrolledWindow->SetMaxSize(wxSize(-1, SyncAmsInfoDialogHeightMAX));
@@ -690,7 +701,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     m_sizer_main = new wxBoxSizer(wxVERTICAL);
 
     m_line_top = new wxPanel(m_scrolledWindow, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
     //m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(11));
     auto &bSizer = m_sizer_main;
@@ -708,7 +719,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         m_reset_all_btn = new ScalableButton(m_scrolledWindow, wxID_ANY, "reset_gray", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER,
                                                         true, 14);
         m_reset_all_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &e) { reset_all_ams_info(); });
-        m_reset_all_btn->SetBackgroundColour(*wxWHITE);
+        m_reset_all_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
         m_reset_all_btn->SetToolTip(_L("Reset all filament mapping"));
 
         m_mode_combox_sizer->Add(m_reset_all_btn, 0, wxALIGN_LEFT | wxEXPAND | wxALL, FromDIP(2));
@@ -720,7 +731,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     }
 
     m_basic_panel = new wxPanel(m_scrolledWindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    m_basic_panel->SetBackgroundColour(*wxWHITE);
+    m_basic_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_basicl_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     /*basic info right*/
@@ -769,7 +780,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     m_sizer_filament_2extruder = new wxBoxSizer(wxHORIZONTAL);
 
     m_filament_left_panel = new StaticBox(m_scrolledWindow);
-    m_filament_left_panel->SetBackgroundColour(wxColour("#F8F8F8"));
+    m_filament_left_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_filament_left_panel->SetBorderWidth(0);
     m_filament_left_panel->SetMinSize(wxSize(FromDIP(315), -1));
     m_filament_left_panel->SetMaxSize(wxSize(FromDIP(315), -1));
@@ -779,11 +790,11 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     std::string sai_pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
     auto left_recommend_title1      = new Label(m_filament_left_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(sai_pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::TitleCase)));
     left_recommend_title1->SetFont(::Label::Head_13);
-    left_recommend_title1->SetBackgroundColour(wxColour("#F8F8F8"));
+    left_recommend_title1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     auto left_recommend_title2 = new Label(m_filament_left_panel, _L("(Recommended filament)"));
     left_recommend_title2->SetFont(::Label::Body_13);
-    left_recommend_title2->SetForegroundColour(wxColour("#6B6B6B"));
-    left_recommend_title2->SetBackgroundColour(wxColour("#F8F8F8"));
+    left_recommend_title2->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    left_recommend_title2->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     left_recommend_title_sizer->Add(left_recommend_title1, 0, wxALIGN_CENTER, 0);
     left_recommend_title_sizer->Add(0, 0, 0, wxLEFT, FromDIP(4));
     left_recommend_title_sizer->Add(left_recommend_title2, 0, wxALIGN_CENTER, 0);
@@ -796,7 +807,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
 
     m_filament_right_panel = new StaticBox(m_scrolledWindow);
     m_filament_right_panel->SetBorderWidth(0);
-    m_filament_right_panel->SetBackgroundColour(wxColour("#F8F8F8"));
+    m_filament_right_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_filament_right_panel->SetMinSize(wxSize(FromDIP(315), -1));
     m_filament_right_panel->SetMaxSize(wxSize(FromDIP(315), -1));
 
@@ -804,12 +815,12 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     auto right_recommend_title_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto right_recommend_title1      = new Label(m_filament_right_panel, _L(DevPrinterConfigUtil::get_toolhead_display_name(sai_pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Extruder, ToolHeadNameCase::TitleCase)));
     right_recommend_title1->SetFont(::Label::Head_13);
-    right_recommend_title1->SetBackgroundColour(wxColour("#F8F8F8"));
+    right_recommend_title1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     auto right_recommend_title2 = new Label(m_filament_right_panel, _L("(Recommended filament)"));
     right_recommend_title2->SetFont(::Label::Body_13);
-    right_recommend_title2->SetForegroundColour(wxColour("#6B6B6B"));
-    right_recommend_title2->SetBackgroundColour(wxColour("#F8F8F8"));
+    right_recommend_title2->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    right_recommend_title2->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     right_recommend_title_sizer->Add(right_recommend_title1, 0, wxALIGN_CENTER, 0);
     right_recommend_title_sizer->Add(0, 0, 0, wxLEFT, FromDIP(4));
     right_recommend_title_sizer->Add(right_recommend_title2, 0, wxALIGN_CENTER, 0);
@@ -832,7 +843,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
     sizer_advanced_options_title = new wxBoxSizer(wxHORIZONTAL);
     auto advanced_options_title  = new Label(m_scrolledWindow, _L("Advanced Options"));
     advanced_options_title->SetFont(::Label::Body_13);
-    advanced_options_title->SetForegroundColour(wxColour(38, 46, 48));
+    advanced_options_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     sizer_advanced_options_title->Add(0, 0, 1, wxEXPAND, 0);
     sizer_advanced_options_title->Add(advanced_options_title, 0, wxALIGN_CENTER, 0);
@@ -897,14 +908,14 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
 
     {//new content//tip confirm ok button
         wxBoxSizer *tip_sizer = new wxBoxSizer(wxHORIZONTAL);
-        m_attention_text      = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Tip") + ": ");
+        m_attention_text      = new Label(m_scrolledWindow, _L("Tip") + ": ");
         tip_sizer->Add(m_attention_text, 0, wxALIGN_LEFT | wxTOP, FromDIP(2));
         m_tip_attention_color_map = _L("Only synchronize filament type and color, not including AMS slot information.");
         m_tip_attention_override  = _L("Replace the project filaments list sequentially based on printer filaments. And unused printer filaments will be automatically added to the end of the list.");
         m_tip_text = new Label(m_scrolledWindow, m_tip_attention_color_map, LB_AUTO_WRAP);
         m_tip_text->SetMinSize(wxSize(SyncAttentionTipWidth, -1));
         m_tip_text->SetMaxSize(wxSize(SyncAttentionTipWidth, -1));
-        m_tip_text->SetForegroundColour(wxColour(107, 107, 107, 100));
+        m_tip_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         tip_sizer->Add(m_tip_text, 0, wxALIGN_LEFT | wxTOP, FromDIP(2));
         tip_sizer->AddSpacer(FromDIP(20));
         bSizer->Add(tip_sizer, 0, wxEXPAND | wxLEFT, FromDIP(25));
@@ -914,15 +925,19 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         wxBoxSizer * more_setting_sizer = new wxBoxSizer(wxVERTICAL);
 
         m_advace_setting_sizer         = new wxBoxSizer(wxHORIZONTAL);
-        m_more_setting_tips    = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Advanced settings"));
-        m_more_setting_tips->SetForegroundColour(wxColour(0, 174, 100));
+        m_more_setting_tips    = new Label(m_scrolledWindow, _L("Advanced settings"));
+        m_more_setting_tips->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
         m_more_setting_tips->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
             m_expand_more_settings = !m_expand_more_settings;
             update_more_setting(true,true);
         });
 
         m_advace_setting_sizer->Add(m_more_setting_tips, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
-        m_advanced_options_icon = new wxStaticBitmap(m_scrolledWindow, wxID_ANY, create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18), wxDefaultPosition,
+        m_advanced_options_icon = new wxStaticBitmap(m_scrolledWindow, wxID_ANY,
+                                                     MaterialIcon::available()
+                                                         ? MaterialIcon::bitmap(m_scrolledWindow, MaterialIcon::ExpandMore, 18, StateColor::semantic(MD3::Role::OnSurfaceVariant))
+                                                         : create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18),
+                                                     wxDefaultPosition,
                                                      wxSize(FromDIP(18), FromDIP(18)));
         m_advace_setting_sizer->Add(m_advanced_options_icon, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
         more_setting_sizer->Add(m_advace_setting_sizer, 0, wxALIGN_LEFT, FromDIP(0));
@@ -931,7 +946,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         m_append_color_sizer->AddSpacer(FromDIP(10));
 
         m_append_color_checkbox = new ::CheckBox(m_scrolledWindow, wxID_ANY);
-        //m_append_color_checkbox->SetForegroundColour(wxColour(107, 107, 107, 100));
+        //m_append_color_checkbox->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_append_color_checkbox->SetValue(wxGetApp().app_config->get_bool("enable_append_color_by_sync_ams"));
         m_append_color_checkbox->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &e) {
             auto flag = wxGetApp().app_config->get_bool("enable_append_color_by_sync_ams");
@@ -952,7 +967,7 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         m_merge_color_sizer    = new wxBoxSizer(wxHORIZONTAL);
         m_merge_color_sizer->AddSpacer(FromDIP(10));
         m_merge_color_checkbox = new ::CheckBox(m_scrolledWindow, wxID_ANY);
-        //m_merge_color_checkbox->SetForegroundColour(wxColour(107, 107, 107, 100));
+        //m_merge_color_checkbox->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_merge_color_checkbox->SetValue(wxGetApp().app_config->get_bool("enable_merge_color_by_sync_ams"));
         m_merge_color_checkbox->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &e) {
             auto flag = wxGetApp().app_config->get_bool("enable_merge_color_by_sync_ams");
@@ -981,14 +996,14 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         m_confirm_title->SetMinSize(wxSize(SyncLabelWidth, -1));
         m_confirm_title->SetMaxSize(wxSize(SyncLabelWidth, -1));
         confirm_boxsizer->Add(m_confirm_title, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxTOP | wxRIGHT, FromDIP(10));
-        m_are_you_sure_title = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Are you sure to synchronize the filaments?"));
+        m_are_you_sure_title = new Label(m_scrolledWindow, _L("Are you sure to synchronize the filaments?"));
         //m_are_you_sure_title->SetFont(Label::Head_14);
         confirm_boxsizer->Add(m_are_you_sure_title, 0, wxALIGN_LEFT  | wxTOP, FromDIP(0));
         bSizer->Add(confirm_boxsizer, 0, wxALIGN_LEFT | wxLEFT , FromDIP(25));
 
         wxBoxSizer *warning_sizer = new wxBoxSizer(wxHORIZONTAL);
-        m_warning_text            = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Error") + ":");
-        m_warning_text->SetForegroundColour(wxColour(107, 107, 107, 100));
+        m_warning_text            = new Label(m_scrolledWindow, _L("Error") + ":");
+        m_warning_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_warning_text->Hide();
         warning_sizer->Add(m_warning_text, 0, wxALIGN_CENTER | wxTOP, FromDIP(2));
         bSizer->Add(warning_sizer, 0, wxEXPAND | wxLEFT, FromDIP(25));
@@ -1001,12 +1016,13 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         /* m_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
          bSizer_button->Add(m_checkbox, 0, wxALIGN_LEFT);*/
         bSizer_button->AddStretchSpacer(1);
-        StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        // Filled primary pill: Primary fill + OnPrimary text (theme-correct in
+        // both light/dark); r12 on the 24px height is already a pill.
         m_button_ok = new Button(m_show_page,  _L("Synchronize now"));
-        m_button_ok->SetBackgroundColor(btn_bg_green);
-        m_button_ok->SetBorderColor(*wxWHITE);
-        m_button_ok->SetTextColor(wxColour("#FFFFFE"));
+        m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::Primary));
+        m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
+        m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
+        m_button_ok->SetTextColorNormal(StateColor::semantic(MD3::Role::OnPrimary));
         m_button_ok->SetFont(Label::Body_12);
         m_button_ok->SetSize(OK_BUTTON_SIZE);
         m_button_ok->SetMinSize(OK_BUTTON_SIZE);
@@ -1019,12 +1035,12 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
             SetFocusIgnoringChildren();
         });
 
-        StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                                std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
+        // Secondary outlined pill: transparent-on-surface fill, Outline border,
+        // OnSurface text.
         m_button_cancel = new Button(m_show_page, m_input_info.cancel_text_to_later ? _L("Later") : _L("Cancel"));
-        m_button_cancel->SetBackgroundColor(btn_bg_white);
-        m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+        m_button_cancel->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+        m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+        m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
         m_button_cancel->SetFont(Label::Body_12);
         m_button_cancel->SetSize(CANCEL_BUTTON_SIZE);
         m_button_cancel->SetMinSize(CANCEL_BUTTON_SIZE);
@@ -1039,10 +1055,20 @@ SyncAmsInfoDialog::SyncAmsInfoDialog(wxWindow *parent, SyncInfo &info) :
         m_show_page->SetSizer(m_sizer_show_page);
     }
     show_print_failed_info(false);
+    // The simplebook (loading/show pages) is the kit body; the shell owns the
+    // dialog's top-level sizer. NOTE: the OK/Cancel actions intentionally remain
+    // inside the show page's own row rather than the shared MD3 footer — their
+    // visibility is coordinated by the wxSimplebook page (page-parenting hides
+    // them on the loading page for free) together with show_status()-driven
+    // state handlers (updata_ui_when_priner_not_same / _after_connected_printer)
+    // whose ordering relative to the single silent ChangeSelection() page switch
+    // is nondeterministic under device polling; relocating them to one dialog
+    // footer cannot preserve that coordination. Kept as kit pill Buttons.
     m_sizer_this->Add(m_pages, 0, wxEXPAND, FromDIP(0));
-    SetSizer(m_sizer_this);
+    GetContentSizer()->Add(m_sizer_this, 1, wxEXPAND, 0);
     Layout();
     Fit();
+    UpdateShape();
     Thaw();
 
     init_bind();
@@ -1571,7 +1597,7 @@ void SyncAmsInfoDialog::prepare(int print_plate_idx) { m_print_plate_idx = print
 void SyncAmsInfoDialog::update_ams_status_msg(wxString msg, bool is_warning)
 {
     if (!m_statictext_ams_msg) { return; }
-    auto colour = is_warning ? wxColour(0xFF, 0x6F, 0x00) : wxColour(0x6B, 0x6B, 0x6B);
+    auto colour = is_warning ? StateColor::darkModeColorFor(ThemeColor::Warning) : StateColor::semantic(MD3::Role::OnSurfaceVariant);
     m_statictext_ams_msg->SetForegroundColour(colour);
 
     if (msg.empty()) {
@@ -1642,7 +1668,7 @@ wxString SyncAmsInfoDialog::format_text(wxString &m_msg)
 
 void SyncAmsInfoDialog::update_priner_status_msg(wxString msg, bool is_warning)
 {
-    auto colour = is_warning ? wxColour(0xFF, 0x6F, 0x00) : wxColour(0x6B, 0x6B, 0x6B);
+    auto colour = is_warning ? StateColor::darkModeColorFor(ThemeColor::Warning) : StateColor::semantic(MD3::Role::OnSurfaceVariant);
     m_text_printer_msg->SetForegroundColour(colour);
 
     if (msg.empty()) {
@@ -1845,6 +1871,14 @@ void SyncAmsInfoDialog::on_cancel(wxCloseEvent &event)
     this->EndModal(wxID_CANCEL);
 }
 
+void SyncAmsInfoDialog::OnHeaderClose()
+{
+    // Mirror the native [x] / on_cancel path for the MD3 header close control.
+    if (m_mapping_popup.IsShown())
+        m_mapping_popup.Dismiss();
+    this->EndModal(wxID_CANCEL);
+}
+
 bool SyncAmsInfoDialog::is_blocking_printing(MachineObject *obj_)
 {
     DeviceManager *dev = Slic3r::GUI::wxGetApp().getDeviceManager();
@@ -1990,9 +2024,9 @@ void SyncAmsInfoDialog::Enable_Auto_Refill(bool enable)
 {
     if (!m_ams_backup_tip) { return; }
     if (enable) {
-        m_ams_backup_tip->SetForegroundColour(wxColour("#00AE42"));
+        m_ams_backup_tip->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     } else {
-        m_ams_backup_tip->SetForegroundColour(wxColour(0x90, 0x90, 0x90));
+        m_ams_backup_tip->SetForegroundColour(StateColor::semantic(MD3::Role::Outline));
     }
     m_ams_backup_tip->Refresh();
 }
@@ -2591,15 +2625,15 @@ void SyncAmsInfoDialog::reset_and_sync_ams_list()
             if (is_first_row) {
                 is_first_row              = false;
                 if (!m_original_in_colormap) {
-                    m_original_in_colormap = new wxStaticText(m_filament_panel, wxID_ANY, _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS") + ":");
-                    m_original_in_colormap->SetForegroundColour(wxColour(107, 107, 107, 100));
+                    m_original_in_colormap = new Label(m_filament_panel, _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS") + ":");
+                    m_original_in_colormap->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                     m_original_in_colormap->SetFont(::Label::Head_12);
                 }
                 ams_tip_sizer->Add(m_original_in_colormap, 0, wxALIGN_LEFT | wxTOP, FromDIP(6));
 
                 if (!m_ams_or_ext_text_in_colormap) {
-                    m_ams_or_ext_text_in_colormap = new wxStaticText(m_filament_panel, wxID_ANY, _L("AMS") + ":");
-                    m_ams_or_ext_text_in_colormap->SetForegroundColour(wxColour(107, 107, 107, 100));
+                    m_ams_or_ext_text_in_colormap = new Label(m_filament_panel, _L("AMS") + ":");
+                    m_ams_or_ext_text_in_colormap->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                     m_ams_or_ext_text_in_colormap->SetFont(::Label::Head_12);
                 }
                 ams_tip_sizer->Add(m_ams_or_ext_text_in_colormap, 0, wxALIGN_LEFT | wxTOP, FromDIP(9));
@@ -2816,16 +2850,16 @@ void SyncAmsInfoDialog::generate_override_fix_ams_list()
             if (is_first_row) {
                 is_first_row   = false;
                 if (!m_original_in_override) {
-                    m_original_in_override = new wxStaticText(m_fix_filament_panel, wxID_ANY, _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS") + ":");
-                    m_original_in_override->SetForegroundColour(wxColour(107, 107, 107, 100));
+                    m_original_in_override = new Label(m_fix_filament_panel, _CTX(L_CONTEXT("Original", "Sync_AMS"), "Sync_AMS") + ":");
+                    m_original_in_override->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                     m_original_in_override->SetFont(::Label::Head_12);
                 }
                 ams_tip_sizer->Add(m_original_in_override, 0, wxALIGN_LEFT | wxTOP, FromDIP(6));
 
                 if (!m_ams_or_ext_text_in_override) {
                     auto text = (m_only_exist_ext_spool_flag ? _L("Ext spool") : _L("AMS")) + ":";
-                    m_ams_or_ext_text_in_override = new wxStaticText(m_fix_filament_panel, wxID_ANY, text);
-                    m_ams_or_ext_text_in_override->SetForegroundColour(wxColour(107, 107, 107, 100));
+                    m_ams_or_ext_text_in_override = new Label(m_fix_filament_panel, text);
+                    m_ams_or_ext_text_in_override->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                     m_ams_or_ext_text_in_override->SetFont(::Label::Head_12);
                 }
                 ams_tip_sizer->Add(m_ams_or_ext_text_in_override, 0, wxALIGN_LEFT | wxTOP, FromDIP(9));

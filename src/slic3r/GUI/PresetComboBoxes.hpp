@@ -7,6 +7,7 @@
 #include <wx/clrpicker.h>
 
 #include "libslic3r/Preset.hpp"
+#include "Widgets/Button.hpp"
 #include "wxExtensions.hpp"
 #include "BitmapComboBox.hpp"
 #include "Widgets/ComboBox.hpp"
@@ -192,7 +193,7 @@ public:
     ScalableButton* edit_btn { nullptr };
 
     // BBS
-    wxButton* clr_picker { nullptr };
+    Button* clr_picker { nullptr };
     wxColourData m_clrData;
 
     wxColor get_color() { return m_color; }

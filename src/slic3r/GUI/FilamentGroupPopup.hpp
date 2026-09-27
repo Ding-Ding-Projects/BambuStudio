@@ -6,6 +6,7 @@
 #include <wx/sizer.h>
 #include <wx/timer.h>
 #include "libslic3r/PrintConfig.hpp"
+#include "Widgets/RadioBox.hpp"
 #include "Widgets/PopupWindow.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/SwitchButton.hpp"
@@ -20,6 +21,10 @@ class Plater;
 bool play_dual_extruder_slice_video();
 bool play_dual_extruder_print_tpu_video();
 bool open_filament_group_wiki();
+// Returns the saved choice for the selected printer preset. Use when creating
+// a new project, after checking that no imported project mode is present.
+FilamentMapMode get_preferred_filament_map_mode_for_current_printer();
+void set_preferred_filament_map_mode_for_current_printer(FilamentMapMode mode);
 
 class FilamentGroupPopup : public PopupWindow
 {
@@ -41,6 +46,10 @@ private:
     void Dismiss();
 
     void CreateBmps();
+    // Render an MD3 radio indicator (checked/unchecked/disabled, optional hover
+    // state-layer) from the Material Symbols icon font. Used by CreateBmps() when
+    // MaterialIcon::available(); otherwise the legacy map_mode_* rasters are used.
+    wxBitmap MakeRadioGlyphBitmap(bool checked, bool hover, bool disabled);
     void RecreateUIElements();
     void UpdateNozzleLabels();
     void Init(const std::vector<FilamentMapMode>& available_modes);
@@ -64,7 +73,7 @@ private:
     FilamentMapMode m_mode;
     wxTimer        *m_timer;
 
-    std::vector<wxBitmapButton*> radio_btns;
+    std::vector<Slic3r::GUI::RadioBox*> radio_btns;
     std::vector<Label *>   button_labels;
     std::vector<Label *>   button_desps;
     std::vector<Label *>   detail_infos;

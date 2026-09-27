@@ -1,4 +1,5 @@
 #include "ParamsDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "I18N.hpp"
 #include "ParamsPanel.hpp"
 #include "GUI_App.hpp"
@@ -26,6 +27,8 @@ ParamsDialog::ParamsDialog(wxWindow * parent)
 	SetSize({75 * em_unit(), 60 * em_unit()});
 
 	Layout();
+	// Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+	MD3DialogCaption::Adopt(this, _L("Parameter settings"));
 	Center();
     Bind(wxEVT_SHOW, [this](auto &event) {
         if (IsShown()) {

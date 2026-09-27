@@ -64,7 +64,7 @@ FilamentPickerDialog::FilamentPickerDialog(wxWindow *parent, const wxString& fil
         wxDefaultSize,
         wxBORDER_NONE | wxFRAME_NO_TASKBAR | wxFRAME_SHAPED)
 {
-    SetBackgroundColour(wxColour(255, 255, 255));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_color_query = new FilamentColorCodeQuery();
     m_is_data_loaded = LoadFilamentData(fila_id);
@@ -257,18 +257,13 @@ wxBoxSizer* FilamentPickerDialog::CreateInfoSection()
     // Create the container box
     wxStaticBox *info_box = new wxStaticBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition);
     info_box->SetSize(wxSize(FromDIP(240), FromDIP(24)));
-    info_box->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    info_box->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxStaticBoxSizer *box_sizer = new wxStaticBoxSizer(info_box, wxHORIZONTAL);
 
     // Create labels with ellipsize style for text overflow
-    m_label_preview_color = new wxStaticText(this, wxID_ANY, _L("Custom Color"),
-                                           wxDefaultPosition, wxDefaultSize,
-                                           wxST_ELLIPSIZE_END);
-    m_label_preview_idx = new wxStaticText(this, wxID_ANY, _L(""),
-                                         wxDefaultPosition, wxDefaultSize); // No size limit, no ellipsis
-    m_label_preview_type = new wxStaticText(this, wxID_ANY, _L(""),
-                                          wxDefaultPosition, wxSize(FromDIP(220), FromDIP(16)),
-                                          wxST_ELLIPSIZE_END);
+    m_label_preview_color = new Label(this, _L("Custom Color"), wxST_ELLIPSIZE_END);
+    m_label_preview_idx = new Label(this, _L("")); // No size limit, no ellipsis
+    m_label_preview_type = new Label(this, _L(""), wxST_ELLIPSIZE_END, wxSize(FromDIP(220), FromDIP(16)));
 
     // Set maximum width for color label to enable proper ellipsis behavior
     m_label_preview_color->SetMaxSize(wxSize(FromDIP(160), -1));
@@ -282,7 +277,7 @@ wxBoxSizer* FilamentPickerDialog::CreateInfoSection()
     m_label_preview_color->SetFont(bold_font);
     m_label_preview_idx->SetFont(bold_font);
 
-    m_label_preview_type->SetForegroundColour(wxColour(128, 128, 128));
+    m_label_preview_type->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     // Layout with platform-specific spacing
 #ifdef __WXMSW__
@@ -335,9 +330,9 @@ wxBoxSizer* FilamentPickerDialog::CreateSeparatorLine()
 {
     wxBoxSizer *line_sizer = new wxBoxSizer(wxHORIZONTAL);
     wxPanel* separator_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(1)));
-    separator_line->SetBackgroundColour(wxColour(238,238,238));
-    wxStaticText* line_text = new wxStaticText(this, wxID_ANY, _L("Official Filament"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
-    line_text->SetForegroundColour(wxColour(128, 128, 128));
+    separator_line->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    wxStaticText* line_text = new Label(this, _L("Official Filament"), wxALIGN_CENTER_HORIZONTAL);
+    line_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     line_sizer->Add(line_text, 0, wxEXPAND, 0);
     line_sizer->AddSpacer(FromDIP(8));
     line_sizer->Add(separator_line, 1, wxALIGN_CENTER_VERTICAL, 0);
@@ -385,18 +380,16 @@ wxScrolledWindow* FilamentPickerDialog::CreateColorGrid()
                 continue;
             }
 
-            wxBitmapButton* btn = new wxBitmapButton(
-                scroll_win,
-                wxID_ANY,
-                btn_bmp,
-                wxDefaultPosition,
-                COLOR_BTN_SIZE,
-                wxBU_EXACTFIT | wxNO_BORDER
-            );
+            // Kit icon button carrying the swatch as a data image; the selection
+            // ring is the kit border (Primary, 2 px) rather than a second paint handler.
+            Button* btn = new Button(scroll_win, "", "", 0, 0);
+            btn->SetIconButton(Button::IconShape::Square, COLOR_BTN_SIZE.GetWidth());
+            btn->SetIconBitmap(btn_bmp);
+            btn->SetMinSize(COLOR_BTN_SIZE);
 
             if (btn) {
                 // Remove any default background and borders
-                btn->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+                btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
                 // Set tooltip with filament information
                 wxString tooltip = wxString::Format("%s", color_code->GetFilaColorName());
@@ -411,11 +404,12 @@ wxScrolledWindow* FilamentPickerDialog::CreateColorGrid()
                     m_cur_filament_color = color_code->GetFilaColor();
                     m_cur_selected_btn = btn;
                     UpdatePreview(*color_code);
-                    btn->Bind(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint, this);
+                    btn->SetBorderColorNormal(StateColor::semantic(MD3::Role::Primary));
+                    btn->SetBorderWidth(FromDIP(2));
                 }
 
                 // Bind click
-                btn->Bind(wxEVT_LEFT_DOWN, [this, btn, color_code](wxMouseEvent& evt) {
+                btn->Bind(wxEVT_BUTTON, [this, btn, color_code](wxCommandEvent& evt) {
                     m_cur_filament_color = color_code->GetFilaColor();
                     UpdatePreview(*color_code);
                     UpdateButtonStates(btn);
@@ -508,18 +502,18 @@ void FilamentPickerDialog::UpdateCustomColorPreview(const wxColour& custom_color
     Layout();
 }
 
-void FilamentPickerDialog::UpdateButtonStates(wxBitmapButton* selected_btn)
+void FilamentPickerDialog::UpdateButtonStates(Button* selected_btn)
 {
-    // Reset selected button appearance
+    // Reset selected button appearance: no ring.
     if (m_cur_selected_btn) {
-        m_cur_selected_btn->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
-        m_cur_selected_btn->Unbind(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint, this);
+        m_cur_selected_btn->SetBorderWidth(0);
         m_cur_selected_btn->Refresh();
     }
 
     if (selected_btn) {
-        // Bind paint event to draw custom green border
-        selected_btn->Bind(wxEVT_PAINT, &FilamentPickerDialog::OnButtonPaint, this);
+        // MD3 selection ring: Primary, 2 px, on the kit border.
+        selected_btn->SetBorderColorNormal(StateColor::semantic(MD3::Role::Primary));
+        selected_btn->SetBorderWidth(FromDIP(2));
         selected_btn->Refresh();
     }
 
@@ -532,12 +526,12 @@ void FilamentPickerDialog::CreateMoreInfoButton()
     m_more_btn->SetMinSize(wxSize(-1, FromDIP(36)));
 
     StateColor btn_bg(
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(248, 248, 248), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::Grey200, StateColor::Normal)
     );
 
 
-    m_more_btn->SetBackgroundColor(btn_bg);
+    m_more_btn->SetVariant(Button::Variant::Outlined);
     m_more_btn->SetBorderStyle(wxPENSTYLE_SHORT_DASH);
     m_more_btn->SetCornerRadius(FromDIP(0));
 }
@@ -551,36 +545,34 @@ wxBoxSizer* FilamentPickerDialog::CreateButtonPanel()
 
     // standard button color style
     StateColor btn_bg_green(
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     StateColor btn_bd_green(
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal)
     );
     StateColor btn_text_green(
-        std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
 
     StateColor btn_bg_white(
-        std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(255, 255, 255), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+        std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal)
     );
     StateColor btn_bd_white(
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal)
     );
     StateColor btn_text_white(
-        std::pair<wxColour, int>(wxColour(38, 46, 48), StateColor::Normal)
+        std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal)
     );
 
     // Create Cancel button using project's Button class
     m_cancel_btn = new Button(this, _L("Cancel"), "", 0, 0, wxID_CANCEL);
     m_cancel_btn->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_cancel_btn->SetCornerRadius(FromDIP(12));
-    m_cancel_btn->SetBackgroundColor(btn_bg_white);
-    m_cancel_btn->SetBorderColor(btn_bd_white);
-    m_cancel_btn->SetTextColor(btn_text_white);
+    m_cancel_btn->SetVariant(Button::Variant::Outlined);
     btn_sizer->Add(m_cancel_btn, 0, wxEXPAND, 0);
     btn_sizer->AddSpacer(FromDIP(10));
 
@@ -588,9 +580,7 @@ wxBoxSizer* FilamentPickerDialog::CreateButtonPanel()
     m_ok_btn = new Button(this, _L("OK"), "", 0, 0, wxID_OK);
     m_ok_btn->SetMinSize(wxSize(FromDIP(55), FromDIP(24)));
     m_ok_btn->SetCornerRadius(FromDIP(12));
-    m_ok_btn->SetBackgroundColor(btn_bg_green);
-    m_ok_btn->SetBorderColor(btn_bd_green);
-    m_ok_btn->SetTextColor(btn_text_green);
+    m_ok_btn->SetVariant(Button::Variant::Filled);
     m_ok_btn->SetFocus();
     btn_sizer->Add(m_ok_btn, 0, wxEXPAND, 0);
 
@@ -719,37 +709,6 @@ void FilamentPickerDialog::OnMouseLeftUp(wxMouseEvent& event)
     }
 
     event.Skip();
-}
-
-void FilamentPickerDialog::OnButtonPaint(wxPaintEvent& event)
-{
-    wxWindow* button = dynamic_cast<wxWindow*>(event.GetEventObject());
-    if (!button) {
-        event.Skip();
-        return;
-    }
-
-    // Create paint DC and let default painting happen first
-    wxPaintDC dc(button);
-
-    //Clear the button with white background
-    dc.SetBrush(wxBrush(*wxTRANSPARENT_BRUSH));
-    dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.DrawRectangle(0, 0, COLOR_BTN_SIZE.GetWidth(), COLOR_BTN_SIZE.GetHeight());
-
-    // Draw the bitmap in the center
-    wxBitmapButton* bmpBtn = dynamic_cast<wxBitmapButton*>(button);
-    if (bmpBtn && bmpBtn->GetBitmap().IsOk()) {
-        wxBitmap bmp = bmpBtn->GetBitmap();
-        int x = (COLOR_BTN_SIZE.GetWidth() - COLOR_BTN_BITMAP_SIZE.GetWidth()) / 2;
-        int y = (COLOR_BTN_SIZE.GetHeight() - COLOR_BTN_BITMAP_SIZE.GetHeight()) / 2;
-        dc.DrawBitmap(bmp, x, y, true);
-    }
-
-    // Draw the green border
-    dc.SetPen(wxPen(wxColour("#00AE42"), 2));  // Green pen, 2px thick
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRectangle(1, 1, COLOR_BTN_SIZE.GetWidth() - 1, COLOR_BTN_SIZE.GetHeight() - 1);
 }
 
 bool FilamentPickerDialog::IsClickOnTopMostWindow(const wxPoint& mouse_pos)

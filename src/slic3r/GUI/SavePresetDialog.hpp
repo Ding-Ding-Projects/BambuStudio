@@ -7,6 +7,7 @@
 #include "wxExtensions.hpp"
 #include "GUI_Utils.hpp"
 #include "Widgets/RadioBox.hpp"
+#include "Widgets/LabeledRadioButton.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/Label.hpp"
@@ -17,7 +18,7 @@ class wxStaticText;
 class wxComboBox;
 class wxStaticBitmap;
 
-#define SAVE_PRESET_DIALOG_DEF_COLOUR wxColour(255, 255, 255)
+#define SAVE_PRESET_DIALOG_DEF_COLOUR StateColor::semantic(MD3::Role::SurfaceContainerLowest)
 #define SAVE_PRESET_DIALOG_INPUT_SIZE wxSize(FromDIP(360), FromDIP(24))
 #define SAVE_PRESET_DIALOG_BUTTON_SIZE wxSize(FromDIP(60), FromDIP(24))
 
@@ -84,6 +85,7 @@ class SavePresetDialog : public DPIDialog
     wxStaticText*       m_label             {nullptr};
     wxBoxSizer*         m_radio_sizer       {nullptr};  
     ActionType          m_action            {UndefAction};
+    RadioGroup          m_action_radio_group;
 
     std::string         m_ph_printer_name;
     std::string         m_old_preset_name;

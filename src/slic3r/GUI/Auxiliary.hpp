@@ -97,7 +97,7 @@ public:
     ScalableBitmap m_file_cover;
     ScalableBitmap m_file_edit_mask;
     ScalableBitmap m_file_delete;
-    wxStaticBitmap* m_file_exit_rename;
+    Button* m_file_exit_rename;
 
     ScalableBitmap m_bitmap_excel;
     ScalableBitmap m_bitmap_pdf;

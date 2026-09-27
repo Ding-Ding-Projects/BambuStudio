@@ -7,10 +7,12 @@
 #include <wx/string.h>
 
 #include "GUI_Utils.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "wxExtensions.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/ScrolledWindow.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include "libslic3r/CommonDefs.hpp"
 
 class ScalableButton;
@@ -343,7 +345,7 @@ enum ForceOption {
     fopNone
 };
 
-class UnsavedChangesDialog : public DPIDialog
+class UnsavedChangesDialog : public MD3Dialog
 {
 protected:
     wxPanel *     m_top_line;
@@ -517,24 +519,15 @@ class PresetSelectorPanel;
 class DiffPresetDialog : public DPIDialog
 {
     DiffViewCtrl           *m_tree{nullptr};
-    // Grey400 backing panel; shows through a 1px inset as the tree's outline.
     wxPanel                *m_tree_frame{nullptr};
-    wxCheckBox*             m_show_all_presets  { nullptr };
-    // The content region is a wxSimplebook with two mutually-exclusive pages that share one slot:
-    // the empty-state placeholder (also used to surface error / "presets are equal" messages via
-    // its hint text) and the diff tree. Switch with m_content->SetSelection(kPageEmpty/kPageTree).
+    LabeledCheckBox        *m_show_all_presets{nullptr};
     wxSimplebook        *m_content{nullptr};
     EmptyStatePanel     *m_empty_state{nullptr};
     static constexpr int kPageEmpty = 0;
     static constexpr int kPageTree  = 1;
-    // Process/Filament/Machine tab bar; m_tab_types maps a tab index to its Preset::Type. Both
-    // are rebuilt when the printer technology changes (FFF vs SLA have different tab sets).
     TextTabbar               *m_tabbar{nullptr};
     std::vector<Preset::Type> m_tab_types;
     void                      rebuild_tabs();
-    // True when the dialog was opened without a fixed preset type (from the Compare menu), so the
-    // user can switch types via the tab bar and per-type compatibility filtering should run. This
-    // used to be inferred from m_view_type == TYPE_INVALID, which the tab bar no longer leaves set.
     bool m_opened_generically{true};
 
     Preset::Type            m_view_type         { Preset::TYPE_INVALID };

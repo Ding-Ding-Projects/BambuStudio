@@ -9,6 +9,7 @@
 #include <boost/optional.hpp>
 #include <boost/log/trivial.hpp>
 
+class Button;
 #include <wx/frame.h>
 #include <wx/dialog.h>
 #include <wx/event.h>
@@ -22,6 +23,7 @@
 #include <chrono>
 
 #include "Event.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "../libslic3r/libslic3r_version.h"
 #include "../libslic3r/Utils.hpp"
 #include "wxExtensions.hpp"
@@ -477,7 +479,7 @@ public:
 private:
     struct ExtraPanel : public wxPanel
     {
-        wxCheckBox *cbox;
+        LabeledCheckBox *cbox;
 
         ExtraPanel(wxWindow *parent);
         static wxWindow* ctor(wxWindow *parent);
@@ -547,7 +549,7 @@ public:
     void SetWikiUrl(const std::string &url);
     void SetTooltip(const wxString &tooltip);
 
-    wxStaticBitmap *GetWikiBitmap() const { return m_wiki_bmp; }
+    Button *GetWikiBitmap() const { return m_wiki_bmp; }
     wxStaticText   *GetWikiLabel() const { return m_wiki_label; }
 
     void msw_rescale();
@@ -560,7 +562,7 @@ private:
     void open_wiki_url();
 
 private:
-    wxStaticBitmap *m_wiki_bmp   = nullptr;
+    Button *m_wiki_bmp   = nullptr;
     wxStaticText   *m_wiki_label = nullptr;
     wxBoxSizer     *m_main_sizer = nullptr;
 

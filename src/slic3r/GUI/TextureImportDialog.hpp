@@ -1,7 +1,9 @@
 #pragma once
 
 #include "GUI_Utils.hpp"
+#include "Widgets/LabeledCheckBox.hpp"
 #include "Widgets/ProgressDialog.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include "libslic3r/TexturePainting.hpp"
 #include "libslic3r/Thread.hpp"
 
@@ -212,7 +214,12 @@ private:
 };
 
 
-class TextureImportDialog : public DPIDialog
+// Reparented onto the shared MD3 Dialog shell in its resizable variant: native
+// wxRESIZE_BORDER window chrome (required for the embedded wxGLCanvas preview)
+// wraps the MD3 header (icon tile + title) and footer (OutlineVariant divider +
+// kit pill Skip/Confirm Buttons). The tool body — GL preview, view tabs, params,
+// filament-mapping rows — lives in the kit body sizer.
+class TextureImportDialog : public MD3Dialog
 {
 public:
     TextureImportDialog(wxWindow*                        parent,
@@ -245,6 +252,7 @@ private:
     void build_preview_panel(wxWindow* parent, wxSizer* sizer);
     void build_params_panel(wxWindow* parent, wxSizer* sizer);
     void build_mapping_panel(wxWindow* parent, wxSizer* sizer);
+    // Skip/Confirm go to the MD3 footer; the drop-warning label to the body foot.
     void build_bottom_buttons(wxSizer* sizer);
 
     void set_state(TextureImportState new_state);

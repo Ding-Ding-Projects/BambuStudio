@@ -1,4 +1,5 @@
 #include "FilamentMapPanel.hpp"
+#include "Widgets/Button.hpp"
 #include "Widgets/MultiNozzleSync.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
@@ -6,28 +7,37 @@
 #include <boost/log/trivial.hpp>
 #include <cassert>
 #include <wx/dcbuffer.h>
+#include <wx/choice.h>
+#include <wx/button.h>
+#include <wx/msgdlg.h>
 #include "wx/graphics.h"
+#include "Widgets/Label.hpp"
 #include <map>
 #include <algorithm>
 
 namespace Slic3r::GUI {
 
-static const wxColour BgNormalColor  = wxColour("#FFFFFF");
-static const wxColour BgSelectColor  = wxColour("#EBF9F0");
-static const wxColour BgDisableColor = wxColour("#CECECE");
+// MD3 light-mode role tokens (dark-map keys, so they adapt through
+// StateColor::darkModeColorFor / UpdateDarkUI). The selected-card fill uses
+// SecondaryContainer, resolved via StateColor::semantic() at paint time.
+static const wxColour BgNormalColor  = ThemeColor::White;      // SurfaceContainerLowest
+static const wxColour BgDisableColor = ThemeColor::Grey400;    // OutlineVariant
 
-static const wxColour BorderNormalColor   = wxColour("#CECECE");
-static const wxColour BorderSelectedColor = wxColour("#00AE42");
-static const wxColour BorderDisableColor  = wxColour("#EEEEEE");
+static const wxColour BorderNormalColor   = ThemeColor::Grey400;    // OutlineVariant
+static const wxColour BorderSelectedColor = ThemeColor::BrandGreen; // Primary
+static const wxColour BorderDisableColor  = ThemeColor::Grey250;    // SurfaceContainer
 
-static const wxColour TextNormalBlackColor = wxColour("#262E30");
-static const wxColour TextNormalGreyColor = wxColour("#6B6B6B");
-static const wxColour TextDisableColor = wxColour("#CECECE");
-static const wxColour TextErrorColor = wxColour("#E14747");
+static const wxColour TextNormalBlackColor = ThemeColor::TextPrimary; // OnSurface
+static const wxColour TextNormalGreyColor = ThemeColor::TextMuted;    // OnSurfaceVariant
+static const wxColour TextDisableColor = ThemeColor::TextDisabled;
+static const wxColour TextErrorColor = ThemeColor::Danger;           // Error
 
 wxDEFINE_EVENT(wxEVT_INVALID_MANUAL_MAP, wxCommandEvent);
+wxDEFINE_EVENT(wxEVT_SWAP_AND_RESLICE, wxCommandEvent);
 
-void FilamentMapManualPanel::OnTimer(wxTimerEvent &)
+void FilamentMapManualPanel::OnTimer(wxTimerEvent &) { ValidateNow(); }
+
+void FilamentMapManualPanel::ValidateNow()
 {
     bool valid = true;
     int  invalid_eid = -1;
@@ -300,6 +310,46 @@ FilamentMapManualPanel::FilamentMapManualPanel(wxWindow                       *p
 
     top_sizer->Add(drag_sizer, 0, wxALIGN_CENTER | wxEXPAND);
 
+    // Keyboard-accessible counterparts to dragging individual material cards.
+    auto *move_row = new wxBoxSizer(wxHORIZONTAL);
+    auto *material = new wxChoice(this, wxID_ANY);
+    std::vector<int> visible_ids;
+    for (const int id : m_filament_list) {
+        if (id > 0 && static_cast<size_t>(id) <= m_filament_type.size()) {
+            material->Append(wxString::Format(_L("Material %d"), id) + ": " +
+                             wxString::FromUTF8(m_filament_type[id - 1].c_str()));
+            visible_ids.push_back(id);
+        }
+    }
+    if (material->GetCount() > 0) material->SetSelection(0);
+    auto *move_left = new wxButton(this, wxID_ANY, _L("Move to left nozzle"));
+    auto *move_right = new wxButton(this, wxID_ANY, _L("Move to right nozzle"));
+    auto *swap_groups = new wxButton(this, wxID_ANY, _L("Swap groups"));
+    auto *swap_reslice = new wxButton(this, wxID_ANY, _L("Swap and reslice"));
+    move_row->Add(material, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    move_row->Add(move_left, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
+    move_row->Add(move_right, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(4));
+    top_sizer->Add(move_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    auto *swap_row = new wxBoxSizer(wxHORIZONTAL);
+    swap_row->Add(swap_groups, 0, wxRIGHT, FromDIP(8));
+    swap_row->Add(swap_reslice);
+    top_sizer->Add(swap_row, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    move_left->Bind(wxEVT_BUTTON, [this, material, visible_ids](wxCommandEvent &) {
+        if (material->GetSelection() != wxNOT_FOUND)
+            MoveSelectedFilament(visible_ids.at(material->GetSelection()), true);
+    });
+    move_right->Bind(wxEVT_BUTTON, [this, material, visible_ids](wxCommandEvent &) {
+        if (material->GetSelection() != wxNOT_FOUND)
+            MoveSelectedFilament(visible_ids.at(material->GetSelection()), false);
+    });
+    swap_groups->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { SwapGroups(); });
+    swap_reslice->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        if (!SwapGroups()) return;
+        ValidateNow();
+        wxCommandEvent request(wxEVT_SWAP_AND_RESLICE);
+        wxPostEvent(GetParent(), request);
+    });
+
     m_tips = new Label(this, _L("Tips: You can drag the filaments to reassign them to different nozzles."));
     m_tips->SetFont(Label::Body_13);
     m_tips->SetForegroundColour(TextNormalGreyColor);
@@ -317,18 +367,18 @@ FilamentMapManualPanel::FilamentMapManualPanel(wxWindow                       *p
     m_errors->Hide();
 
     m_suggestion_panel = new wxPanel(this, wxID_ANY);
-    m_suggestion_panel->SetBackgroundColour(*wxWHITE);
+    m_suggestion_panel->SetBackgroundColour(BgNormalColor);
     auto suggestion_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto suggestion_text  = new Label(m_suggestion_panel, _L("Please adjust your grouping or click "));
     suggestion_text->SetFont(Label::Body_13);
     suggestion_text->SetForegroundColour(TextErrorColor);
-    suggestion_text->SetBackgroundColour(*wxWHITE);
+    suggestion_text->SetBackgroundColour(BgNormalColor);
     auto suggestion_btn   = new ScalableButton(m_suggestion_panel, wxID_ANY, "edit", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true, 14);
-    suggestion_btn->SetBackgroundColour(*wxWHITE);
+    suggestion_btn->SetBackgroundColour(BgNormalColor);
     auto suggestion_text2 = new Label(m_suggestion_panel, _L(" to set nozzle count"));
     suggestion_text2->SetFont(Label::Body_13);
     suggestion_text2->SetForegroundColour(TextErrorColor);
-    suggestion_text2->SetBackgroundColour(*wxWHITE);
+    suggestion_text2->SetBackgroundColour(BgNormalColor);
     suggestion_sizer->Add(suggestion_text, 0, wxALIGN_CENTER_VERTICAL);
     suggestion_sizer->Add(suggestion_btn, 0, wxALIGN_CENTER_VERTICAL);
     suggestion_sizer->Add(suggestion_text2, 0, wxALIGN_CENTER_VERTICAL);
@@ -400,11 +450,42 @@ FilamentMapManualPanel::~FilamentMapManualPanel()
 
 void FilamentMapManualPanel::OnSwitchFilament(wxCommandEvent &)
 {
+    SwapGroups();
+}
+
+bool FilamentMapManualPanel::SwapGroups()
+{
     auto left_blocks  = m_left_panel->get_filament_blocks();
     auto right_blocks = m_right_panel->get_filament_blocks();
+    const auto current_volumes = GetFilamentVolumeMaps();
+    auto *bundle = wxGetApp().preset_bundle;
+    const auto *nozzle_modes = bundle->project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
+    auto can_move = [this, bundle, nozzle_modes, &current_volumes](const ColorPanel *block, int destination) {
+        const int id = block->GetFilamentId();
+        if (!nozzle_modes || nozzle_modes->values.size() < 2 || id < 1 ||
+            static_cast<size_t>(id) > current_volumes.size()) return false;
+        const auto flow = static_cast<NozzleVolumeType>(current_volumes[id - 1]);
+        const auto configured = static_cast<NozzleVolumeType>(nozzle_modes->values[destination]);
+        if (destination == 1 && m_right_panel->IsUseSeparation()) {
+            if (flow != nvtStandard && flow != nvtHighFlow) return false;
+        } else if (flow != configured) {
+            return false;
+        }
+        return bundle->extruder_nozzle_stat.get_extruder_nozzle_count(destination, flow) > 0;
+    };
+    const bool compatible = std::all_of(left_blocks.begin(), left_blocks.end(),
+                                        [&](const ColorPanel *block) { return can_move(block, 1); }) &&
+                            std::all_of(right_blocks.begin(), right_blocks.end(),
+                                        [&](const ColorPanel *block) { return can_move(block, 0); });
+    if (!compatible) {
+        wxMessageBox(_L("The destination nozzle cannot preserve every material's flow type or has no available nozzle. Adjust the nozzle setup before swapping."),
+                     _L("Cannot swap groups"), wxOK | wxICON_WARNING, this);
+        return false;
+    }
 
     for (auto &block : left_blocks) {
-        m_right_panel->AddColorBlock(block->GetType(), block->GetFilamentId(), false, false);
+        const bool high_flow = current_volumes[block->GetFilamentId() - 1] == static_cast<int>(nvtHighFlow);
+        m_right_panel->AddColorBlock(block->GetType(), block->GetFilamentId(), high_flow, false);
         m_left_panel->RemoveColorBlock(block, false);
     }
 
@@ -421,6 +502,33 @@ void FilamentMapManualPanel::OnSwitchFilament(wxCommandEvent &)
         m_right_panel->Layout();
         m_right_panel->Fit();
         SyncPanelHeights();
+    }
+    ValidateNow();
+    return true;
+}
+
+void FilamentMapManualPanel::MoveSelectedFilament(int id, bool to_left)
+{
+    if (to_left) {
+        for (auto *block : m_right_panel->get_filament_blocks()) {
+            if (block->GetFilamentId() != id) continue;
+            m_left_panel->AddColorBlock(block->GetType(), id, false);
+            m_right_panel->RemoveColorBlock(block, false);
+            SyncPanelHeights();
+            ValidateNow();
+            return;
+        }
+    } else {
+        for (auto *block : m_left_panel->get_filament_blocks()) {
+            if (block->GetFilamentId() != id) continue;
+            const bool high_flow = static_cast<size_t>(id) <= m_filament_volume_map.size() &&
+                                   m_filament_volume_map[id - 1] == 1;
+            m_right_panel->AddColorBlock(block->GetType(), id, high_flow, false);
+            m_left_panel->RemoveColorBlock(block, false);
+            SyncPanelHeights();
+            ValidateNow();
+            return;
+        }
     }
 }
 
@@ -458,7 +566,7 @@ private:
     wxBitmap icon_enabled;
     wxBitmap icon_disabled;
 
-    wxBitmapButton *m_btn;
+    Button *m_btn;
     wxStaticText   *m_label;
     Label          *m_disable_tip;
     Label          *m_detail;
@@ -470,7 +578,7 @@ private:
 
 GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &label, const wxString &detail, const std::string &icon) : wxPanel(parent)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(BgNormalColor);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     m_hover = false;
 
@@ -479,10 +587,12 @@ GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &
     icon_enabled = create_scaled_bitmap(icon, nullptr, 20);
     icon_disabled = create_scaled_bitmap(icon + "_disabled", nullptr, 20);
 
-    m_btn    = new wxBitmapButton(this, wxID_ANY, icon_enabled, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
-    m_btn->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    m_btn = new Button(this, "", "", 0, 0);
+    m_btn->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    m_btn->SetIconBitmap(icon_enabled);
+    m_btn->SetCanFocus(false); // the card itself is the interactive target
 
-    m_label = new wxStaticText(this, wxID_ANY, label);
+    m_label = new Label(this, label);
     m_label->SetFont(Label::Head_14);
     m_label->SetForegroundColour(TextNormalBlackColor);
 
@@ -523,7 +633,11 @@ GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &
         this->ProcessEvent(click_event);
     };
 
-    m_btn->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
+    m_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        wxCommandEvent click_event(wxEVT_LEFT_DOWN, GetId());
+        click_event.SetEventObject(this);
+        this->ProcessEvent(click_event);
+    });
     m_label->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
     m_detail->Bind(wxEVT_LEFT_DOWN, forward_click_to_parent);
 
@@ -543,7 +657,7 @@ void FilamentMapBtnPanel::OnPaint(wxPaintEvent &event)
         wxRect rect = GetClientRect();
         gc->SetBrush(wxTransparentColour);
         gc->DrawRoundedRectangle(0, 0, rect.width, rect.height, 0);
-        wxColour bg_color = m_selected ? BgSelectColor : BgNormalColor;
+        wxColour bg_color = m_selected ? StateColor::semantic(MD3::Role::SecondaryContainer) : BgNormalColor;
 
         wxColour border_color = m_hover || m_selected ? BorderSelectedColor : BorderNormalColor;
 
@@ -559,10 +673,11 @@ void FilamentMapBtnPanel::OnPaint(wxPaintEvent &event)
 void FilamentMapBtnPanel::UpdateStatus()
 {
     if (m_selected) {
-        m_btn->SetBackgroundColour(BgSelectColor);
-        m_label->SetBackgroundColour(BgSelectColor);
-        m_detail->SetBackgroundColour(BgSelectColor);
-        m_disable_tip->SetBackgroundColour(BgSelectColor);
+        const wxColour select_bg = StateColor::semantic(MD3::Role::SecondaryContainer);
+        m_btn->SetBackgroundColour(select_bg);
+        m_label->SetBackgroundColour(select_bg);
+        m_detail->SetBackgroundColour(select_bg);
+        m_disable_tip->SetBackgroundColour(select_bg);
     }
     else {
         m_btn->SetBackgroundColour(BgNormalColor);
@@ -573,14 +688,14 @@ void FilamentMapBtnPanel::UpdateStatus()
     if (!m_enabled) {
         m_disable_tip->SetLabel(_L("(Sync with printer)"));
         m_disable_tip->SetForegroundColour(TextDisableColor);
-        m_btn->SetBitmap(icon_disabled);
+        m_btn->SetIconBitmap(icon_disabled);
         m_btn->SetForegroundColour(BgDisableColor);
         m_label->SetForegroundColour(TextDisableColor);
         m_detail->SetForegroundColour(TextDisableColor);
     } else {
         m_disable_tip->SetLabel("");
         m_disable_tip->SetForegroundColour(TextNormalBlackColor);
-        m_btn->SetBitmap(icon_enabled);
+        m_btn->SetIconBitmap(icon_enabled);
         m_btn->SetForegroundColour(BgNormalColor);
         m_label->SetForegroundColour(TextNormalBlackColor);
         m_detail->SetForegroundColour(TextNormalGreyColor);
@@ -657,7 +772,9 @@ FilamentMapAutoPanel::FilamentMapAutoPanel(wxWindow *parent, FilamentMapMode mod
     std::map<FilamentMapMode, std::pair<wxString, wxString>> mode_info = {
         {fmmAutoForFlush, {_L("Filament-Saving Mode"), AutoForFlushDetail}},
         {fmmAutoForMatch, {_L("Convenience Mode"), AutoForMatchDetail}},
-        {fmmAutoForQuality, {_L("Quality Mode"), AutoForQualityDetail}}
+        {fmmAutoForQuality, {_L("Quality Mode"), AutoForQualityDetail}},
+        {fmmPreferLeft, {_L("Prefer left nozzle"), _L("Use the left nozzle for compatible materials when capacity allows; otherwise use the right nozzle.")}},
+        {fmmPreferRight, {_L("Prefer right nozzle"), _L("Use the right nozzle for compatible materials when capacity allows; otherwise use the left nozzle.")}}
     };
 
     // Create panels for available modes
@@ -687,12 +804,12 @@ FilamentMapAutoPanel::FilamentMapAutoPanel(wxWindow *parent, FilamentMapMode mod
     }
 
     int spacer_width = FromDIP(20);
+    auto *mode_grid = new wxGridSizer(2, FromDIP(20), spacer_width);
     sizer->AddSpacer(spacer_width);
     for (size_t i = 0; i < m_mode_panels.size(); ++i) {
-        if (i > 0)
-            sizer->AddSpacer(spacer_width);
-        sizer->Add(m_mode_panels[i], 1, wxEXPAND);
+        mode_grid->Add(m_mode_panels[i], 1, wxEXPAND);
     }
+    sizer->Add(mode_grid, 1, wxEXPAND);
     sizer->AddSpacer(spacer_width);
 
     UpdateStatus();
@@ -728,6 +845,8 @@ std::string FilamentMapAutoPanel::GetIconForMode(FilamentMapMode mode)
     case fmmAutoForMatch: return "match_mode_panel_icon";
     case fmmAutoForFlush: return "flush_mode_panel_icon";
     case fmmAutoForQuality: return "quality_mode_panel_icon";
+    case fmmPreferLeft:
+    case fmmPreferRight: return "flush_mode_panel_icon";
     default:
         BOOST_LOG_TRIVIAL(warning) << "invalid mode: " << mode;
         return {};
@@ -736,7 +855,7 @@ std::string FilamentMapAutoPanel::GetIconForMode(FilamentMapMode mode)
 
 FilamentMapSavingPanel::FilamentMapSavingPanel(wxWindow *parent) : FilamentMapPanel(parent)
 {
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(BgNormalColor);
 
     auto saving_sizer = new wxBoxSizer(wxVERTICAL);
     saving_sizer->AddSpacer(FromDIP(32));
@@ -751,7 +870,7 @@ FilamentMapSavingPanel::FilamentMapSavingPanel(wxWindow *parent) : FilamentMapPa
     wxString deputy_nz_saving = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt_saving, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
     auto desc_label = new Label(this, wxString::Format(_L("Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"), deputy_nz_saving, main_nz_saving));
     desc_label->SetFont(Label::Body_12);
-    desc_label->SetForegroundColour(wxColour("#6B6B6B"));
+    desc_label->SetForegroundColour(TextNormalGreyColor);
     saving_sizer->Add(desc_label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(50));
     saving_sizer->AddSpacer(FromDIP(32));
 

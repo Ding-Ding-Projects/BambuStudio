@@ -5,6 +5,7 @@
 #include "MainFrame.hpp"
 #include "GUI_App.hpp"
 #include "BBLUtil.hpp"
+#include "DeviceCore/FarmDevicePolicy.hpp"
 
 using namespace nlohmann;
 
@@ -64,19 +65,17 @@ TaskState parse_task_status(int status)
 int TaskStateInfo::g_task_info_id = 0;
 
 TaskStateInfo::TaskStateInfo(BBL::PrintParams param)
-    : m_state(TaskState::TS_PENDING)
-    , m_params(param)
-    , m_sending_percent(0)
+    : m_params(param)
     , m_state_changed_fn(nullptr)
-    , m_cancel(false)
 {
+    m_state->store(TaskState::TS_PENDING);
     task_info_id = ++TaskStateInfo::g_task_info_id;
 
     this->set_task_name(param.project_name);
     this->set_device_name(param.dev_name);
 
     cancel_fn = [this]() {
-        return m_cancel;
+        return m_cancel->load();
     };
     update_status_fn = [this](int stage, int code, std::string msg) {
 
@@ -125,9 +124,9 @@ TaskStateInfo::TaskStateInfo(BBL::PrintParams param)
 
 void TaskStateInfo::cancel()
 {
-    m_cancel = true;
-    if (m_state == TaskState::TS_PENDING)
-        m_state = TaskState::TS_REMOVED;
+    m_cancel->store(true);
+    TaskState pending = TaskState::TS_PENDING;
+    m_state->compare_exchange_strong(pending, TaskState::TS_REMOVED);
     update();
 }
 
@@ -224,9 +223,18 @@ int TaskManager::schedule(TaskStateInfo* task)
 #if 0
             int result = start_print_test(task->get_params(), task->update_status_fn, task->cancel_fn, task->wait_fn);
 #else
-            int result = m_agent->start_print(task->get_params(), task->update_status_fn, task->cancel_fn, task->wait_fn);
+            int result;
+            if (task->get_params().connection_type == "lan") {
+                // The local SDK uses one transfer session at a time. Waiting tasks
+                // remain cancellable and never fall back to the cloud route.
+                result = dispatch_farm_lan(m_lan_transfer_mutex, [task] { return task->is_canceled(); },
+                    [this, task] { return m_agent->start_local_print(task->get_params(), task->update_status_fn, task->cancel_fn); },
+                    BAMBU_NETWORK_ERR_CANCELED);
+            } else {
+                result = m_agent->start_print(task->get_params(), task->update_status_fn, task->cancel_fn, task->wait_fn);
+            }
 #endif
-            if (result == 0) {
+            if (send_completed_before_cancellation(result, task->is_canceled())) {
                 last_sent_timestamp = std::chrono::system_clock::now();
                 task->set_sent_time(last_sent_timestamp);
                 task->set_state(TaskState::TS_SEND_COMPLETED);

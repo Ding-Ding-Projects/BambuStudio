@@ -10,11 +10,13 @@
 #include "format.hpp"
 #include "Widgets/RoundedRectangle.hpp"
 #include "Widgets/StaticBox.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include "DeviceCore/DevConfig.h"
+#include "Widgets/Label.hpp"
 
-static wxColour FG_COLOR = wxColour(0x32, 0x3A, 0x3D);
-static wxColour BG_COLOR = wxColour(0xF8, 0xF8, 0xF8);
+static wxColour FG_COLOR = ThemeColor::TextPrimary; // §2f OnSurface (was #323A3D)
+static wxColour BG_COLOR = ThemeColor::Grey200;     // §2f SurfaceContainerLow (was #F8F8F8)
 
 #define CALI_FLOW_CONTENT_WIDTH  FromDIP(200)
 
@@ -27,16 +29,23 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
+    // Resolve the neutral fills against the active theme. The raw
+    // SetForegroundColour/SetBackgroundColour paths below do not dark-map on
+    // their own, so snapshot the current MD3 tones here (light values are
+    // unchanged; dark mode now yields the dark surface/on-surface tones).
+    FG_COLOR = StateColor::semantic(MD3::Role::OnSurface);
+    BG_COLOR = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
     m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
 
     wxBoxSizer *sizer_body = new wxBoxSizer(wxHORIZONTAL);
     auto        body_panel = new wxPanel(this, wxID_ANY);
 
-    body_panel->SetBackgroundColour(*wxWHITE);
+    body_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     auto cali_left_panel = new StaticBox(body_panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(303), -1));
     cali_left_panel->SetBackgroundColor(BG_COLOR);
     cali_left_panel->SetBorderColor(BG_COLOR);
@@ -45,7 +54,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     cali_left_sizer->Add(0, 0, 0, wxTOP, FromDIP(25));
 
     // calibration step selection
-    auto cali_step_select_title = new wxStaticText(cali_left_panel, wxID_ANY, _L("Calibration step selection"), wxDefaultPosition, wxDefaultSize, 0);
+    auto cali_step_select_title = new Label(cali_left_panel, _L("Calibration step selection"));
     cali_step_select_title->SetFont(::Label::Head_14);
     cali_step_select_title->Wrap(-1);
     cali_step_select_title->SetForegroundColour(FG_COLOR);
@@ -76,7 +85,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     cali_left_sizer->Add(select_clumppos_cali, 0, wxLEFT, FromDIP(15));
     cali_left_sizer->Add(0, FromDIP(30), 0, wxEXPAND, 0);
 
-    auto cali_left_text_top = new wxStaticText(cali_left_panel, wxID_ANY, _L("Calibration program"), wxDefaultPosition, wxDefaultSize, 0);
+    auto cali_left_text_top = new Label(cali_left_panel, _L("Calibration program"));
     cali_left_text_top->SetFont(::Label::Head_14);
     cali_left_text_top->Wrap(-1);
     cali_left_text_top->SetForegroundColour(FG_COLOR);
@@ -89,27 +98,19 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     auto cali_left_text_body =
         new Label(cali_left_panel, _L("The calibration program detects the status of your device automatically to minimize deviation.\nIt keeps the device performing optimally."));
     cali_left_text_body->Wrap(FromDIP(260));
-    cali_left_text_body->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+    cali_left_text_body->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     cali_left_text_body->SetBackgroundColour(BG_COLOR);
     cali_left_text_body->SetFont(::Label::Body_13);
     cali_left_sizer->Add(cali_left_text_body, 0, wxLEFT, FromDIP(15));
 
     cali_left_sizer->Add(0, 0, 0, wxTOP, FromDIP(20));
 
-   /* auto cali_left_text_top_prepar = new wxStaticText(cali_left_panel, wxID_ANY, _L("Preparation before calibration"), wxDefaultPosition, wxDefaultSize, 0);
-     cali_left_text_top_prepar->SetFont(::Label::Head_14);
-     cali_left_text_top_prepar->SetForegroundColour(wxColour(0x32, 0x3A, 0x3D));
-     cali_left_text_top_prepar->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
-     cali_left_text_top_prepar->Wrap(-1);
-     cali_left_sizer->Add(cali_left_text_top_prepar, 0, wxLEFT, FromDIP(15));
-
-     cali_left_sizer->Add(0, 0, 0, wxTOP, FromDIP(5));
-
-     auto cali_left_text_body_prepar =
-         new wxStaticText(cali_left_panel, wxID_ANY,
-                          _L("Before calibration, please make sure a filament is loaded and its nozzle temperature and bed temperature is set in Feeding lab."),
-     wxDefaultPosition, wxSize(FromDIP(260), -1), 0); cali_left_text_body_prepar->Wrap(FromDIP(260)); cali_left_text_body_prepar->SetFont(::Label::Body_13);
-     cali_left_text_body_prepar->SetForegroundColour(wxColour(0x6B, 0x6B, 0x6B));
+   /* auto cali_left_text_top_prepar = new ::Label(cali_left_panel,
+                    _L("Before calibration, please make sure a filament is loaded and its nozzle temperature and bed temperature is set in Feeding lab."),
+                    0, wxSize(FromDIP(260), -1));
+    cali_left_text_body_prepar->Wrap(FromDIP(260));
+    cali_left_text_body_prepar->SetFont(::Label::Body_13);
+    cali_left_text_body_prepar->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
      cali_left_text_body_prepar->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
      cali_left_sizer->Add(cali_left_text_body_prepar, 0, wxLEFT, FromDIP(15));*/
 
@@ -126,14 +127,14 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     cali_right_panel->SetBackgroundColor(BG_COLOR);
     cali_right_panel->SetBorderColor(BG_COLOR);
 
-    auto cali_text_right_top = new wxStaticText(cali_right_panel, wxID_ANY, _L("Calibration Flow"), wxDefaultPosition, wxDefaultSize, 0);
+    auto cali_text_right_top = new Label(cali_right_panel, _L("Calibration Flow"));
     cali_text_right_top->Wrap(-1);
     cali_text_right_top->SetFont(::Label::Head_14);
-    cali_text_right_top->SetForegroundColour(wxColour(0x00, 0xAE, 0x42));
+    cali_text_right_top->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     cali_text_right_top->SetBackgroundColour(BG_COLOR);
 
     auto staticline = new ::StaticLine(cali_right_panel);
-    staticline->SetLineColour(wxColour(0x00, 0xAE, 0x42));
+    staticline->SetLineColour(StateColor::semantic(MD3::Role::Primary));
     auto calibration_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_calibration_flow = new StepIndicator(cali_right_panel, wxID_ANY);
@@ -143,14 +144,12 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     m_calibration_flow->SetMinSize(wxSize(CALI_FLOW_CONTENT_WIDTH, FromDIP(160)));
     m_calibration_flow->SetSize(wxSize(CALI_FLOW_CONTENT_WIDTH, FromDIP(160)));
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
     StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
 
     m_calibration_btn = new Button(cali_right_panel, _L("Start Calibration"));
-    m_calibration_btn->SetBackgroundColor(btn_bg_green);
-    m_calibration_btn->SetBorderColor(btn_bd_green);
-    m_calibration_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_calibration_btn->SetVariant(Button::Variant::Filled);
     m_calibration_btn->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_calibration_btn->SetMinSize(wxSize(FromDIP(128), FromDIP(26)));
 
@@ -175,6 +174,7 @@ CalibrationDialog::CalibrationDialog(Plater *plater)
     SetSizer(m_sizer_main);
     Layout();
     Fit();
+    MD3DialogCaption::Adopt(this);
 
     m_calibration_btn->Bind(wxEVT_LEFT_DOWN, &CalibrationDialog::on_start_calibration, this);
 }
@@ -198,9 +198,9 @@ wxWindow* CalibrationDialog::create_check_option(wxString title, wxWindow* paren
     sizer_checkbox->Add(sizer_check, 0, wxEXPAND, FromDIP(5));
     sizer_checkbox->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(11));
 
-    auto text = new wxStaticText(checkbox, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    auto text = new Label(checkbox, title, wxST_ELLIPSIZE_END);
     text->SetFont(::Label::Body_13);
-    text->SetForegroundColour(wxColour(107, 107, 107));
+    text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text->Wrap(-1);
     sizer_checkbox->Add(text, 0, wxBOTTOM | wxEXPAND | wxTOP, FromDIP(5));
 

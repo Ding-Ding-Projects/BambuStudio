@@ -1,6 +1,8 @@
 // #include "libslic3r/GCodeSender.hpp"
 //#include "slic3r/Utils/Serial.hpp"
 #include "Tab.hpp"
+#include "Export/ExportDatasets.hpp"
+#include "Export/ExportDialog.hpp"
 #include "PresetHints.hpp"
 #include "DeviceCore/DevConfigUtil.h"
 #include "libslic3r/Config.hpp"
@@ -23,6 +25,7 @@
 
 #include <wx/bmpcbox.h>
 #include <wx/bmpbuttn.h>
+#include <wx/statbmp.h>
 #include <wx/treectrl.h>
 #include <wx/imaglist.h>
 #include <wx/settings.h>
@@ -45,7 +48,11 @@
 #include "Field.hpp"
 
 #include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/SearchField.hpp"
+#include "Widgets/SuperConfirmGate.hpp"
 #include "Widgets/TabCtrl.hpp"
+#include "ParamsPanel.hpp"
 #include "Widgets/TextInput.hpp"
 #include "MarkdownTip.hpp"
 #include "Search.hpp"
@@ -171,7 +178,8 @@ Tab::Tab(ParamsPanel* parent, const wxString& title, Preset::Type type) :
     this->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 
     wxGetApp().UpdateDarkUI(this);
-    SetBackgroundColour(*wxWHITE);
+    // MD3: the preset-editor body is the content-pane Surface role.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 
     m_compatible_printers.type			= Preset::TYPE_PRINTER;
     m_compatible_printers.key_list		= "compatible_printers";
@@ -275,14 +283,17 @@ void Tab::create_preset_tab()
 
     m_top_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     // BBS: open this tab by select first
-    m_top_panel->SetBackgroundColour(*wxWHITE);
+    // MD3: the top toolbar panel sits one container step above the body.
+    m_top_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_top_panel->Bind(wxEVT_LEFT_UP, [this](auto & e) {
         restore_last_select_item();
     });
 
     //add_scaled_button(panel, &m_btn_compare_preset, "compare");
-    add_scaled_button(m_top_panel, &m_btn_save_preset, "save");
-    add_scaled_button(m_top_panel, &m_btn_delete_preset, "cross");
+    // MD3: save / delete are borderless IconButtons drawing the Save / Close glyphs.
+    add_md3_icon_button(m_top_panel, &m_btn_save_preset, MaterialIcon::Save, "save");
+    add_md3_icon_button(m_top_panel, &m_btn_delete_preset, MaterialIcon::Close, "cross");
+    add_md3_icon_button(m_top_panel, &m_btn_export_preset, MaterialIcon::Download, "tree_export");
     //if (m_type == Preset::Type::TYPE_PRINTER)
     //    add_scaled_button(panel, &m_btn_edit_ph_printer, "cog");
 
@@ -296,6 +307,8 @@ void Tab::create_preset_tab()
     // TRN "Save current Settings"
     m_btn_save_preset->SetToolTip(wxString::Format(_L("Save current %s"), m_title));
     m_btn_delete_preset->SetToolTip(_(L("Delete this preset")));
+    // TRN: %s is the preset kind (print / filament / printer).
+    m_btn_export_preset->SetToolTip(wxString::Format(_L("Export this %s preset as JSON, YAML, TOML, XML, CSV, Markdown, HTML or an archive"), m_title));
     m_btn_delete_preset->Hide();
 
     /*add_scaled_button(panel, &m_question_btn, "question");
@@ -315,49 +328,40 @@ void Tab::create_preset_tab()
 
     set_tooltips_text();
 
-    add_scaled_button(m_top_panel, &m_undo_btn,        m_bmp_white_bullet.name());
-    add_scaled_button(m_top_panel, &m_undo_to_sys_btn, m_bmp_white_bullet.name());
-    add_scaled_button(m_top_panel, &m_btn_search,      "search");
+    // MD3: the undo / undo-to-system controls are IconButtons; their glyph (and
+    // capability-gated raster fallback) is swapped per preset state in
+    // update_undo_buttons(). The neutral "no change" state is a dot glyph.
+    add_md3_icon_button(m_top_panel, &m_undo_btn,        MaterialIcon::FiberManualRecord, m_bmp_white_bullet.name());
+    add_md3_icon_button(m_top_panel, &m_undo_to_sys_btn, MaterialIcon::FiberManualRecord, m_bmp_white_bullet.name());
+#ifdef DISABLE_UNDO_SYS
+    // Kept alive for update_undo_buttons(), but with DISABLE_UNDO_SYS it is
+    // never sizer-placed — hidden so it doesn't float at the panel origin
+    // half-over the undo button (the "clipped glyph" in the preset row).
+    m_undo_to_sys_btn->Hide();
+#endif
+    add_md3_icon_button(m_top_panel, &m_btn_search,      MaterialIcon::Search, "search");
     m_btn_search->SetToolTip(_L("Search in preset"));
 
     //search input
-    m_search_item = new StaticBox(m_top_panel);
-    StateColor box_colour(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-    StateColor box_border_colour(std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Normal));
+    // The shared MD3 SearchField pill replaces the legacy hand-built
+    // StaticBox + TextInput combo: same 40px stadium anatomy (sc-highest fill,
+    // Outline border promoted to Primary on focus, leading 'search' glyph) plus
+    // the kit ".*" regex toggle and `tune` builder popover. The SearchDialog
+    // binds to the pill's inner wxTextCtrl and wires the toggle straight into
+    // the shared OptionsSearcher, so regex / case / whole-word reach the global
+    // option search.
+    m_search_field = new SearchField(m_top_panel, _L("Search in preset"));
 
-    m_search_item->SetBackgroundColor(box_colour);
-    m_search_item->SetBorderColor(box_border_colour);
-    m_search_item->SetCornerRadius(5);
-
-
-    //StateColor::darkModeColorFor(wxColour(238, 238, 238)), wxDefaultPosition, wxSize(m_top_panel->GetSize().GetWidth(), 3 * wxGetApp().em_unit()), 8);
-    auto search_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_search_input = new TextInput(m_search_item, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 | wxBORDER_NONE);
-    m_search_input->SetBackgroundColour(wxColour(238, 238, 238));
-    m_search_input->SetForegroundColour(wxColour(43, 52, 54));
-    m_search_input->SetFont(wxGetApp().bold_font());
-
-    search_sizer->Add(new wxWindow(m_search_item, wxID_ANY, wxDefaultPosition, wxSize(0, 0)), 0, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(6));
-    search_sizer->Add(m_search_input, 1, wxEXPAND | wxALL, FromDIP(2));
-    //bbl for linux
-    //search_sizer->Add(new wxWindow(m_search_input, wxID_ANY, wxDefaultPosition, wxSize(0, 0)), 0, wxEXPAND | wxLEFT, 16);
-
-
-     m_search_item->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
-        m_search_input->SetFocus();
-    });
-
-    m_search_input->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
+    m_search_field->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
          Freeze();
         if (m_presets_choice) m_presets_choice->Show();
 
         m_btn_save_preset->Show();
         m_btn_search->Show();
-        m_search_item->Hide();
+        m_search_field->Hide();
 
-        m_search_item->Refresh();
-        m_search_item->Update();
-        m_search_item->Layout();
+        m_search_field->Refresh();
+        m_search_field->Update();
 
         this->GetParent()->Refresh();
         this->GetParent()->Update();
@@ -365,11 +369,7 @@ void Tab::create_preset_tab()
         Thaw();
     });
 
-    m_search_item->SetSizer(search_sizer);
-    m_search_item->Layout();
-    search_sizer->Fit(m_search_item);
-
-    m_search_item->Hide();
+    m_search_field->Hide();
     //m_btn_search->SetId(wxID_FIND_PROCESS);
 
     m_btn_search->Bind(
@@ -381,13 +381,16 @@ void Tab::create_preset_tab()
 
          m_btn_save_preset->Hide();
          m_btn_search->Hide();
-         m_search_item->Show();
+         m_search_field->Show();
 
          this->GetParent()->Refresh();
          this->GetParent()->Update();
          this->GetParent()->Layout();
 
-         wxGetApp().plater()->search(false, m_type, m_top_panel->GetParent(), m_search_input, m_btn_search);
+         // Direct route to the shared OptionsSearcher (what Plater::search's
+         // non-plater branch forwarded to): the SearchField overload wires the
+         // pill's ".*" toggle + tune popover into the searcher's flags.
+         wxGetApp().sidebar().get_searcher().show_dialog(m_type, m_top_panel->GetParent(), m_search_field, m_btn_search);
          Thaw();
 
         });
@@ -421,21 +424,15 @@ void Tab::create_preset_tab()
 #endif
     m_top_sizer->Add( m_btn_save_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12));
     m_top_sizer->Add( m_btn_delete_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12) );
+    m_top_sizer->Add( m_btn_export_preset, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(12) );
     m_top_sizer->Add( m_btn_search, 0, wxALIGN_CENTER_VERTICAL | wxLEFT , FromDIP(12) );
-    m_top_sizer->Add(m_search_item, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, FromDIP(12));
+    m_top_sizer->Add(m_search_field, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxLEFT, FromDIP(12));
 
-    if (dynamic_cast<TabPrint*>(this) == nullptr) {
-        m_static_title = new Label(m_top_panel, Label::Body_12, _L("Advance"));
-        m_static_title->Wrap( -1 );
-        // BBS: open this tab by select first
-        m_static_title->Bind(wxEVT_LEFT_UP, [this](auto& e) {
-            restore_last_select_item();
-        });
-        m_top_sizer->Add( m_static_title, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 8 );
-        m_mode_view = new SwitchButton(m_top_panel, wxID_ABOUT);
-        m_top_sizer->AddSpacer(4);
-        m_top_sizer->Add( m_mode_view, 0, wxALIGN_CENTER_VERTICAL);
-    }
+    // The per-tab "Advance" label and mode switch are gone: the option filter
+    // no longer exists (GUI_App::get_mode() is always advanced), so every
+    // setting on every tab is shown.
+    m_static_title = nullptr;
+    m_mode_view = nullptr;
 
     m_top_sizer->AddSpacer(FromDIP(16));
 
@@ -461,6 +458,8 @@ void Tab::create_preset_tab()
     m_hsizer->Add(m_btn_save_preset, 0, wxALIGN_CENTER_VERTICAL);
     m_hsizer->AddSpacer(int(4 * scale_factor));
     m_hsizer->Add(m_btn_delete_preset, 0, wxALIGN_CENTER_VERTICAL);
+    m_hsizer->AddSpacer(int(4 * scale_factor));
+    m_hsizer->Add(m_btn_export_preset, 0, wxALIGN_CENTER_VERTICAL);
     if (m_btn_edit_ph_printer) {
         m_hsizer->AddSpacer(int(4 * scale_factor));
         m_hsizer->Add(m_btn_edit_ph_printer, 0, wxALIGN_CENTER_VERTICAL);
@@ -500,12 +499,25 @@ void Tab::create_preset_tab()
     m_tabctrl = new TabCtrl(panel, wxID_ANY, wxDefaultPosition, wxSize(20 * m_em_unit, -1),
         wxTR_NO_BUTTONS | wxTR_HIDE_ROOT | wxTR_SINGLE | wxTR_NO_LINES | wxBORDER_NONE | wxWANTS_CHARS | wxTR_FULL_ROW_HIGHLIGHT);
     m_tabctrl->Bind(wxEVT_RIGHT_DOWN, [this](auto &e) {}); // disable right select
-    m_tabctrl->SetFont(Label::Body_14);
+    // Setting-category nav: MD3 NavItem pills (h44 r22, selected
+    // SecondaryContainer/OnSecondaryContainer 600, hover SurfaceContainerHigh,
+    // idle OnSurfaceVariant 400) with a 20px leading Material Symbol per category
+    // (mapped in rebuild_page_tree via category_glyph). SetNavItemStyle turns the
+    // shared TabCtrl from its flat underline-indicator strip into the pill strip;
+    // labels use the kit NavItem body scale (13.5 -> Body_13). Pill/label/glyph
+    // colours resolve from MD3 roles; the container's own background keeps the
+    // app dark-mode pass (UpdateDarkUI) so the strip (which the idle pills match)
+    // stays theme-correct on runtime theme toggles.
+    m_tabctrl->SetFont(Label::Body_13);
+    m_tabctrl->SetNavItemStyle(true);
     //m_left_sizer->Add(m_tabctrl, 1, wxEXPAND);
     const int img_sz = int(32 * scale_factor + 0.5f);
     m_icons = new wxImageList(img_sz, img_sz, false, 1);
     // Index of the last icon inserted into $self->{icons}.
     m_icon_count = -1;
+    // Fallback raster path kept reachable: when the Material Symbols face is
+    // unavailable the item glyphs degrade gracefully and this image list remains
+    // the assigned bitmap surface (unpopulated by design here — glyphs lead).
     m_tabctrl->AssignImageList(m_icons);
     wxGetApp().UpdateDarkUI(m_tabctrl);
 
@@ -598,19 +610,19 @@ void Tab::create_preset_tab()
         });
 
         wxBoxSizer *wiki_sizer = new wxBoxSizer(wxHORIZONTAL);
-        auto wiki_icon = new ScalableBitmap(panel, "wiki", 16);
-        auto wiki_icon_hover = new ScalableBitmap(panel, "wiki_hover", 16);
+        auto wiki_icon = new ScalableBitmap(panel, MaterialIcon::bitmap(panel, MaterialIcon::MenuBook, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
+        auto wiki_icon_hover = new ScalableBitmap(panel, MaterialIcon::bitmap(panel, MaterialIcon::MenuBook, 16, StateColor::semantic(MD3::Role::Primary)));
         m_wiki_bmp = new wxStaticBitmap(panel, wxID_ANY, wiki_icon->bmp());
         wiki_sizer->Add(m_wiki_bmp, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxBOTTOM, 2);
-        m_wiki_label = new wxStaticText(panel, wxID_ANY, _L("Wiki"));
-        m_wiki_label->SetForegroundColour(wxColour("#6B6B6B"));
+        m_wiki_label = new Label(panel, _L("Wiki"));
+        m_wiki_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         m_wiki_label->SetFont(Label::Body_13);
         m_wiki_label->SetToolTip(_L("Click to learn more"));
         m_wiki_label->Hide();
         m_wiki_bmp->Hide();
         wiki_sizer->Add(m_wiki_label, 0, wxALIGN_CENTER_VERTICAL);
         auto set_hover = [this, wiki_icon, wiki_icon_hover](bool hover) {
-            wxColour color = hover ? wxColour("#00AE42") : wxColour("#6B6B6B");
+            wxColour color = hover ? StateColor::semantic(MD3::Role::Primary) : StateColor::semantic(MD3::Role::OnSurfaceVariant);
             m_wiki_bmp->SetBitmap(hover ? wiki_icon_hover->bmp() : wiki_icon->bmp());
             m_wiki_label->SetForegroundColour(color);
             m_wiki_label->SetFont(hover ? Label::Body_13.Underlined() : Label::Body_13);
@@ -658,6 +670,10 @@ void Tab::create_preset_tab()
     //m_btn_compare_preset->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { compare_preset(); }));
     m_btn_save_preset->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { save_preset(); }));
     m_btn_delete_preset->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { delete_preset(); }));
+    m_btn_export_preset->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) {
+        if (m_presets != nullptr)
+            ExportDialog::run(this, Export::preset_dataset(m_presets->get_edited_preset(), m_presets->name()));
+    }));
     /*m_btn_hide_incompatible_presets->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) {
         toggle_show_hide_incompatible();
     }));
@@ -762,6 +778,22 @@ void Tab::add_scaled_button(wxWindow* parent,
     *btn = new ScalableButton(parent, wxID_ANY, icon_name, label, wxDefaultSize, wxDefaultPosition, style, true);
     (*btn)->SetBackgroundColour(parent->GetBackgroundColour());
     m_scaled_buttons.push_back(*btn);
+}
+
+void Tab::add_md3_icon_button(wxWindow* parent,
+                              Button** btn,
+                              uint32_t glyph,
+                              const std::string& fallback_icon)
+{
+    // The raster icon (loaded by name) is passed to the ctor so the borderless
+    // IconButton has a graceful fallback when the Material Symbols face is
+    // unavailable; Button::render() draws the glyph when MaterialIcon::available().
+    *btn = new Button(parent, wxEmptyString, wxString::FromUTF8(fallback_icon.c_str()));
+    // Circular ghost target: 32px edge (fits the 30px toolbar row), rest
+    // transparent + OnSurfaceVariant, hover SurfaceContainerHigh (per the kit).
+    (*btn)->SetIconButton(Button::IconShape::Circle, 32);
+    (*btn)->SetGlyph(glyph);
+    m_md3_icon_buttons.push_back(*btn);
 }
 
 void Tab::add_scaled_bitmap(wxWindow* parent,
@@ -951,12 +983,16 @@ void Tab::update_label_colours()
             if (translate_category(page->title(), m_type) != title)
                 continue;
 
+            // Unmodified pages must not fall back to the modified (warning)
+            // colour on model/plate tabs — it painted every category glyph
+            // orange in dark mode.
             const wxColor *clr = !page->m_is_nonsys_values ? &m_sys_label_clr :
                 page->m_is_modified_values ? &m_modified_label_clr :
-                (m_type < Preset::TYPE_COUNT ? &m_default_text_clr : &m_modified_label_clr);
+                &m_default_text_clr;
 
             m_tabctrl->SetItemTextColour(cur_item, clr == &m_modified_label_clr ? *clr : StateColor(
-                        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSecondaryContainer), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(*clr, (int) StateColor::Normal)));
             break;
         }
@@ -1245,13 +1281,13 @@ void Tab::update_extruder_switch_colors()
         }
         check_extruder_options_status(switch_index, sys_extruder, modified_extruder, pages_to_check);
 
-        StateColor default_color(std::make_pair(0x6B6B6B, (int) StateColor::NotChecked), std::make_pair(0xFFFFFE, (int) StateColor::Normal));
+        StateColor default_color(std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked), std::make_pair(StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Normal));
         StateColor color = modified_extruder ? StateColor(m_modified_label_clr) : default_color;
 
         if (m_extruder_switch)
             m_extruder_switch->SetButtonTextColor(switch_index, color);
         if (m_variant_combo) {
-            StateColor default_color_grayed(std::make_pair(0x999999, (int) StateColor::NotChecked), std::make_pair(0x99DFB2, (int) StateColor::Normal));
+            StateColor default_color_grayed(std::make_pair(StateColor::semantic(MD3::Role::Outline), (int) StateColor::NotChecked), std::make_pair(StateColor::semantic(MD3::Role::OnPrimaryContainer), (int) StateColor::Normal));
             Button *btn = m_variant_combo->GetButton(switch_index);
             if (btn) {
                 m_variant_combo->SetButtonTextColor(switch_index, btn->IsGrayed() ? default_color_grayed : color);
@@ -1471,7 +1507,8 @@ void Tab::update_changed_tree_ui()
 
             if (page->set_item_colour(clr))
                 m_tabctrl->SetItemTextColour(cur_item, clr == &m_modified_label_clr ? *clr : StateColor(
-                        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSecondaryContainer), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(*clr, (int) StateColor::Normal)));
 
             page->m_is_nonsys_values = !sys_page;
@@ -1491,10 +1528,17 @@ void Tab::update_changed_tree_ui()
 void Tab::update_undo_buttons()
 {
     // BBS: restore all pages in preset
-    m_undo_btn->        SetBitmap_(m_presets->get_edited_preset().is_dirty ? m_bmp_value_revert: m_bmp_white_bullet);
-    m_undo_to_sys_btn-> SetBitmap_(m_is_nonsys_values   ? *m_bmp_non_system : m_bmp_value_lock);
+    // MD3: swap the Material Symbol (Undo when there are edits to revert, a neutral
+    // dot otherwise; SettingsBackupRestore when the value differs from system, a
+    // Lock when it matches) together with its capability-gated raster fallback so
+    // the correct icon still shows when the Material Symbols face is unavailable.
+    const bool is_dirty = m_presets->get_edited_preset().is_dirty;
+    m_undo_btn->SetIcon(wxString::FromUTF8((is_dirty ? m_bmp_value_revert.name() : m_bmp_white_bullet.name()).c_str()));
+    m_undo_btn->SetGlyph(is_dirty ? MaterialIcon::Undo : MaterialIcon::FiberManualRecord);
+    m_undo_to_sys_btn->SetIcon(wxString::FromUTF8((m_is_nonsys_values ? m_bmp_non_system->name() : m_bmp_value_lock.name()).c_str()));
+    m_undo_to_sys_btn->SetGlyph(m_is_nonsys_values ? MaterialIcon::SettingsBackupRestore : MaterialIcon::Lock);
 
-    m_undo_btn->SetToolTip(m_presets->get_edited_preset().is_dirty ? _L("Click to reset all settings to the last saved preset.") : m_ttg_white_bullet);
+    m_undo_btn->SetToolTip(is_dirty ? _L("Click to reset all settings to the last saved preset.") : m_ttg_white_bullet);
     m_undo_to_sys_btn->SetToolTip(m_is_nonsys_values ? *m_ttg_non_system : m_ttg_value_lock);
 }
 
@@ -1686,6 +1730,8 @@ void Tab::msw_rescale()
     // rescale buttons and cached bitmaps
     for (const auto btn : m_scaled_buttons)
         btn->msw_rescale();
+    for (const auto btn : m_md3_icon_buttons)
+        btn->Rescale();
     for (const auto bmp : m_scaled_bitmaps)
         bmp->msw_rescale();
 
@@ -1715,6 +1761,12 @@ void Tab::msw_rescale()
 
     m_tabctrl->Rescale();
 
+    // MD3: the SearchField pill re-derives all of its geometry and glyphs live
+    // from MD3 tokens; a single Rescale() refreshes fonts/layout after a
+    // DPI/density change (nothing is cached in stale device pixels).
+    if (m_search_field)
+        m_search_field->Rescale();
+
     //BBS: GUI refactor
     //Layout();
     m_parent->Layout();
@@ -1728,6 +1780,8 @@ void Tab::sys_color_changed()
     // update buttons and cached bitmaps
     for (const auto btn : m_scaled_buttons)
         btn->msw_rescale();
+    for (const auto btn : m_md3_icon_buttons)
+        btn->Rescale();
     for (const auto bmp : m_scaled_bitmaps)
         bmp->msw_rescale();
     if (m_detach_preset_btn)
@@ -1755,6 +1809,9 @@ void Tab::sys_color_changed()
     wxGetApp().UpdateDarkUI(this);
     wxGetApp().UpdateDarkUI(m_tabctrl);
 #endif
+    // Re-bake the NavItem-pill fills for the new theme (the item buttons are not
+    // recreated here); item text colours are refreshed by update_changed_tree_ui.
+    m_tabctrl->RefreshItemStyles();
     update_changed_tree_ui();
 
     // update options_groups
@@ -2765,6 +2822,7 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
     if (m_active_page)
         m_active_page->update_visibility(m_mode, true);
     m_page_view->GetParent()->Layout();
+    if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
 }
 
 void Tab::show_timelapse_warning_dialog() {
@@ -4543,9 +4601,9 @@ void TabFilament::add_filament_overrides_page()
         line = optgroup->create_single_option_line(optgroup->get_option(opt_key, opt_index));
 
         line.near_label_widget = [this, optgroup, opt_key, opt_index](wxWindow* parent) {
-            wxCheckBox* check_box = new wxCheckBox(parent, wxID_ANY, "");
+            ::CheckBox* check_box = new ::CheckBox(parent);
 
-            check_box->Bind(wxEVT_CHECKBOX, [this, optgroup, opt_key, opt_index](wxCommandEvent& evt) {
+            check_box->Bind(wxEVT_TOGGLEBUTTON, [this, optgroup, opt_key, opt_index](wxCommandEvent& evt) {
                 const bool is_checked = evt.IsChecked();
                 Field* field = optgroup->get_fieldc(opt_key, opt_index);
                 if (field != nullptr) {
@@ -5181,7 +5239,7 @@ void TabFilament::toggle_options()
             const auto& edited_config = m_presets->get_edited_preset().config;
             bool std_dirty = saved_config.opt_serialize("filament_flush_temp") != edited_config.opt_serialize("filament_flush_temp");
             bool fast_dirty = saved_config.opt_serialize("filament_flush_temp_fast") != edited_config.opt_serialize("filament_flush_temp_fast");
-            StateColor default_color(std::make_pair(0x6B6B6B, (int) StateColor::NotChecked), std::make_pair(0xFFFFFE, (int) StateColor::Normal));
+            StateColor default_color(std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked), std::make_pair(StateColor::semantic(MD3::Role::OnPrimary), (int) StateColor::Normal));
             StateColor modified_color(m_modified_label_clr);
             m_flush_mode_switch->SetButtonTextColor(0, show_fast ? (std_dirty ? modified_color : default_color) : default_color);
             m_flush_mode_switch->SetButtonTextColor(1, !show_fast ? (fast_dirty ? modified_color : default_color) : default_color);
@@ -5277,6 +5335,7 @@ void Tab::update_pages_with_multi_variant()
             }
         }
         m_page_view->GetParent()->Layout();
+        if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
         m_parent->Layout();
     }
     update_changed_ui();
@@ -5660,8 +5719,8 @@ void TabPrinter::extruders_count_changed(size_t extruders_count)
         m_preset_bundle->on_extruders_count_changed(extruders_count, reset_volume_type);
         is_count_changed = true;
 
-        // Only clear per-plate filament_volume_map on a genuine printer switch, not while loading a project. 
-        // During load, single-extruder plates carry their own filament_volume_map from the 3mf; 
+        // Only clear per-plate filament_volume_map on a genuine printer switch, not while loading a project.
+        // During load, single-extruder plates carry their own filament_volume_map from the 3mf;
         // clearing it forces a nozzle_volume_type default that differs from the loaded value, which puts filament_volume_map into
         // full_config_diff and invalidates psGCodeExport, discarding the imported G-code.
         if (reset_volume_type) wxGetApp().plater()->get_partplate_list().on_extruder_count_changed((int)m_extruders_count);
@@ -6664,6 +6723,34 @@ void Tab::load_current_preset()
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__<<boost::format(": exit");
 }
 
+// Map a setting-category (canonical English page title, as passed to
+// add_options_page) to a Material Symbols glyph for the NavItem-pill leading
+// icon. The glyph is drawn ~20px leading the translated label and inherits the
+// item's state colour. Every codepoint is a value already present in the
+// MaterialIcon enum; unmapped categories fall back to the generic 'tune' glyph.
+static uint32_t category_glyph(const wxString &title)
+{
+    if (title == "Quality")                  return MaterialIcon::Tune;
+    if (title == "Strength")                 return MaterialIcon::Grain;
+    if (title == "Speed")                    return MaterialIcon::Speed;
+    if (title == "Support")                  return MaterialIcon::Foundation;
+    if (title == "Others")                   return MaterialIcon::MoreHoriz;
+    if (title == "Frequent")                 return MaterialIcon::Star;
+    if (title == "Plate Settings")           return MaterialIcon::GridView;
+    if (title == "Setting Overrides")        return MaterialIcon::Edit;
+    if (title == "Filament")                 return MaterialIcon::Palette;
+    if (title == "Cooling")                  return MaterialIcon::ModeFan;
+    if (title == "Advanced")                 return MaterialIcon::Settings;
+    if (title == "Notes")                    return MaterialIcon::TextFields;
+    if (title == "Multi Filament")           return MaterialIcon::Layers;
+    if (title == "Basic information")        return MaterialIcon::Info;
+    if (title == "Machine gcode")            return MaterialIcon::Build;
+    if (title == "Motion ability")           return MaterialIcon::Speed;
+    if (title == "Single extruder MM setup") return MaterialIcon::Print;
+    if (title.StartsWith("Extruder"))        return MaterialIcon::Print;
+    return MaterialIcon::Tune;
+}
+
 //Regerenerate content of the page tree.
 void Tab::rebuild_page_tree()
 {
@@ -6687,8 +6774,10 @@ void Tab::rebuild_page_tree()
         if (!p->get_show())
             continue;
         auto itemId = m_tabctrl->AppendItem(translate_category(p->title(), m_type), p->iconID());
+        m_tabctrl->SetItemGlyph(itemId, category_glyph(p->title()));
         m_tabctrl->SetItemTextColour(itemId, p->get_item_colour() == m_modified_label_clr ? p->get_item_colour() : StateColor(
-                        std::make_pair(0x6B6B6C, (int) StateColor::NotChecked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSecondaryContainer), (int) StateColor::Checked),
+                        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::NotChecked),
                         std::make_pair(p->get_item_colour(), (int) StateColor::Normal)));
         if (translate_category(p->title(), m_type) == selected)
             item = itemId;
@@ -7745,10 +7834,19 @@ void Tab::delete_preset()
     //action = current_preset.is_external ? _utf8(L("Remove")) : _utf8(L("Delete"));
     // TRN  Remove/Delete
     wxString title = from_u8((boost::format(_utf8(L("%1% Preset"))) % action).str());  //action + _(L(" Preset"));
-    if (current_preset.is_default || !(confirm_delete_third_party_printer ||
-        //wxID_YES != wxMessageDialog(parent(), msg, title, wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION).ShowModal())
-        wxID_YES == MessageDialog(parent(), msg, title, wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION).ShowModal()))
+    if (current_preset.is_default)
         return;
+    if (!confirm_delete_third_party_printer) {
+        // Destructive-action super confirmation (two keys + full slide),
+        // anchored to the preset combo that offered the delete. Deleting a
+        // user preset removes its file for good.
+        SuperConfirmGate::Spec spec;
+        spec.action      = title;
+        spec.consequence = msg;
+        spec.affected.push_back(from_u8(current_preset.name));
+        if (!SuperConfirmGate::Run(static_cast<wxWindow *>(m_presets_choice), spec))
+            return;
+    }
     auto delete_cur_bed_type_to_config = [this]() {
         PresetBundle &preset_bundle   = *wxGetApp().preset_bundle;
         auto          cur_preset_name = preset_bundle.printers.get_edited_preset().name;
@@ -7842,7 +7940,7 @@ void Tab::create_line_with_widget(ConfigOptionsGroup* optgroup, const std::strin
 // Return a callback to create a Tab widget to mark the preferences as compatible / incompatible to the current printer.
 wxSizer* Tab::compatible_widget_create(wxWindow* parent, PresetDependencies &deps)
 {
-    deps.checkbox = new wxCheckBox(parent, wxID_ANY, _(L("All")));
+    deps.checkbox = new LabeledCheckBox(parent, _(L("All")));
     deps.checkbox->SetFont(Slic3r::GUI::wxGetApp().normal_font());
     wxGetApp().UpdateDarkUI(deps.checkbox, false, true);
     deps.btn = new ScalableButton(parent, wxID_ANY, "printer", from_u8((boost::format(" %s %s") % _utf8(L("Set")) % std::string(dots.ToUTF8())).str()),
@@ -8391,6 +8489,7 @@ void Tab::switch_excluder(int extruder_id, bool reload)
         if (m_active_page)
             m_active_page->update_visibility(m_mode, true);
         m_page_view->GetParent()->Layout();
+        if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
     }
 }
 
@@ -8467,6 +8566,7 @@ void Tab::sync_excluder()
         if (m_active_page)
             m_active_page->update_visibility(m_mode, true);
         m_page_view->GetParent()->Layout();
+        if (auto *host = dynamic_cast<ParamsPanel*>(m_page_view->GetParent())) host->fit_page_to_content();
     }
 }
 
@@ -8527,10 +8627,9 @@ void Tab::update_nozzle_status_display()
         return;
     }
     if (r_nozzles.empty() && l_nozzles.empty()) {
-        auto bmp = ScalableBitmap(this, "warning", 16);
-        auto warning_icon = new wxStaticBitmap(this, wxID_ANY, bmp.bmp(), wxDefaultPosition, wxDefaultSize, 0);
+        auto warning_icon = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)), wxDefaultPosition, wxDefaultSize, 0);
         m_nozzle_status_sizer->Add(warning_icon, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
-        wxStaticText *reminder_text = new wxStaticText(this, wxID_ANY, _L("No available nozzles for current preset"));
+        wxStaticText *reminder_text = new Label(this, _L("No available nozzles for current preset"));
         reminder_text->SetFont(Label::Body_13);
         reminder_text->SetForegroundColour(m_modified_label_clr);
         m_nozzle_status_sizer->Add(reminder_text, 1, wxALIGN_CENTER_VERTICAL);
@@ -8538,19 +8637,19 @@ void Tab::update_nozzle_status_display()
         return;
     }
 
-    wxStaticText *reminder_text = new wxStaticText(this, wxID_ANY, _L("Available nozzles for current preset: "));
+    wxStaticText *reminder_text = new Label(this, _L("Available nozzles for current preset: "));
     reminder_text->SetFont(Label::Body_13);
-    reminder_text->SetForegroundColour(wxColour("#00AE42"));
+    reminder_text->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_nozzle_status_sizer->Add(reminder_text, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 10);
 
     auto create_nozzle_button = [this](const wxString &name) {
         Button *btn = new Button();
         btn->Create(this, name, "", wxBORDER_NONE);
-        btn->SetMinSize(wxSize(24, 24));
+        btn->SetMinSize(FromDIP(wxSize(24, 24)));
         btn->SetFont(wxGetApp().bold_font());
-        StateColor bg_color(wxColour("#E6F7ED"));
+        StateColor bg_color(StateColor::semantic(MD3::Role::SecondaryContainer));
         btn->SetBackgroundColor(bg_color);
-        StateColor fg_color(wxColour("#00AE42"));
+        StateColor fg_color(StateColor::semantic(MD3::Role::Primary));
         btn->SetTextColor(fg_color);
         btn->SetCornerRadius(6);
         btn->Enable(false);
@@ -8566,7 +8665,7 @@ void Tab::update_nozzle_status_display()
         line->SetBackgroundStyle(wxBG_STYLE_PAINT);
         line->Bind(wxEVT_PAINT, [line](wxPaintEvent &) {
             wxPaintDC dc(line);
-            wxColour color = wxGetApp().dark_mode() ? wxColour("#6B6B6B") : wxColour("#C8C8C8");
+            wxColour color = StateColor::semantic(MD3::Role::OutlineVariant);
             dc.SetPen(wxPen(color, 1));
             int x = line->GetSize().GetWidth() / 2;
             dc.DrawLine(x, 0, x, line->GetSize().GetHeight());

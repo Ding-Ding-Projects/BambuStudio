@@ -1,4 +1,5 @@
 #include "DownloadProgressDialog.hpp"
+#include "Widgets/LinkLabel.hpp"
 
 #include <wx/settings.h>
 #include <wx/sizer.h>
@@ -19,6 +20,8 @@
 #include "wxExtensions.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "GUI_App.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 #define DESIGN_INPUT_SIZE wxSize(FromDIP(100), -1)
 
@@ -64,14 +67,14 @@ DownloadProgressDialog::DownloadProgressDialog(wxString title, bool post_login)
 
     wxBoxSizer* sizer_download_failed = new wxBoxSizer(wxVERTICAL);
 
-    auto m_statictext_download_failed = new wxStaticText(m_panel_download_failed, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    auto m_statictext_download_failed = new Label(m_panel_download_failed, wxEmptyString);
     m_statictext_download_failed->SetForegroundColour(*wxBLACK);
     m_statictext_download_failed->SetLabel(format_text(m_statictext_download_failed, download_failed_msg, FromDIP(360)));
     m_statictext_download_failed->Wrap(FromDIP(360));
 
     sizer_download_failed->Add(m_statictext_download_failed, 0, wxALIGN_CENTER | wxALL, 5);
 
-    auto m_download_hyperlink = new wxHyperlinkCtrl(m_panel_download_failed, wxID_ANY, _L("click here to see more info"), download_failed_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+    auto m_download_hyperlink = new LinkLabel(m_panel_download_failed, _L("click here to see more info"), std::string(wxString(download_failed_url).ToUTF8()));
     sizer_download_failed->Add(m_download_hyperlink, 0, wxALIGN_CENTER | wxALL, 5);
 
 
@@ -85,14 +88,14 @@ DownloadProgressDialog::DownloadProgressDialog(wxString title, bool post_login)
 
     wxBoxSizer* sizer_install_failed = new wxBoxSizer(wxVERTICAL);
 
-    auto m_statictext_install_failed = new wxStaticText(m_panel_install_failed, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    auto m_statictext_install_failed = new Label(m_panel_install_failed, wxEmptyString);
     m_statictext_install_failed->SetForegroundColour(*wxBLACK);
     m_statictext_install_failed->SetLabel(format_text(m_statictext_install_failed, install_failed_msg,FromDIP(360)));
     m_statictext_install_failed->Wrap(FromDIP(360));
 
     sizer_install_failed->Add(m_statictext_install_failed, 0, wxALIGN_CENTER | wxALL, 5);
 
-    auto m_install_hyperlink = new wxHyperlinkCtrl(m_panel_install_failed, wxID_ANY, _L("click here to see more info"), install_failed_url, wxDefaultPosition, wxDefaultSize, wxHL_DEFAULT_STYLE);
+    auto m_install_hyperlink = new LinkLabel(m_panel_install_failed, _L("click here to see more info"), std::string(wxString(install_failed_url).ToUTF8()));
     sizer_install_failed->Add(m_install_hyperlink, 0, wxALIGN_CENTER | wxALL, 5);
 
 
@@ -111,10 +114,11 @@ DownloadProgressDialog::DownloadProgressDialog(wxString title, bool post_login)
     SetSizer(m_sizer_main);
     Layout();
     Fit();
-    CentreOnParent();
 
     Bind(wxEVT_CLOSE_WINDOW, &DownloadProgressDialog::on_close, this);
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 wxString DownloadProgressDialog::format_text(wxStaticText* st, wxString str, int warp)

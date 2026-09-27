@@ -1,4 +1,7 @@
 #include "AMSDryControl.hpp"
+#include "Widgets/TextInput.hpp"
+#include "Widgets/CheckBox.hpp"
+#include "Widgets/StaticLine.hpp"
 #include "DeviceCore/DevFilaSystem.h"
 #include "GUI_App.hpp"
 #include "I18N.hpp"
@@ -13,6 +16,7 @@
 #include "slic3r/GUI/Widgets/AnimaController.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "slic3r/GUI/Widgets/ComboBox.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "slic3r/GUI/Widgets/ProgressBar.hpp"
 #include "DeviceCore/DevUtilBackend.h"
 
@@ -82,7 +86,7 @@ FilamentItemPanel::FilamentItemPanel(wxWindow* parent, const wxString& text, con
     : wxPanel(parent, id)
     , m_icon_name(icon_name)
 {
-    SetBackgroundColour(wxColour("#F7F7F7")); // Light gray background
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow)); // Light gray background
     SetMinSize(wxSize(FromDIP(64), FromDIP(106))); // Width: 64, Height: 106
     SetSize(wxSize(FromDIP(64), FromDIP(106)));    // Fixed size
 
@@ -94,10 +98,10 @@ FilamentItemPanel::FilamentItemPanel(wxWindow* parent, const wxString& text, con
     top_sizer->AddStretchSpacer(5);
 
     m_text_label = new Label(this, text);
-    m_text_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour(*wxBLACK)));
-    m_text_label->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#F7F7F7")));
+    m_text_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_text_label->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_text_label->SetFont(Label::Body_12);
-    m_text_label->Wrap(FromDIP(40));
+    m_text_label->Wrap(FromDIP(52));
     top_sizer->Add(m_text_label, 0, wxALIGN_CENTER_HORIZONTAL);
 
     top_sizer->AddStretchSpacer(1); // Increased bottom spacer to push text down
@@ -108,7 +112,7 @@ FilamentItemPanel::FilamentItemPanel(wxWindow* parent, const wxString& text, con
     bottom_sizer->AddStretchSpacer(1);
 
     m_icon_bitmap = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap);
-    m_icon_bitmap->SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#F7F7F7")));
+    m_icon_bitmap->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_icon_bitmap->SetMinSize(wxSize(FromDIP(24), FromDIP(24)));
     m_icon_bitmap->SetMaxSize(wxSize(FromDIP(24), FromDIP(24)));
     bottom_sizer->Add(m_icon_bitmap, 0, wxALIGN_CENTER_HORIZONTAL);
@@ -166,8 +170,8 @@ void FilamentItemPanel::OnPaint(wxPaintEvent& event)
     wxSize size = GetSize();
 
     // bool is_dark_mode = wxGetApp().dark_mode();
-    wxColour backgroundColor = StateColor::darkModeColorFor(wxColour("#F7F7F7"));
-    wxColour borderColor = StateColor::darkModeColorFor(wxColour("#DBDBDB"));
+    wxColour backgroundColor = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    wxColour borderColor = StateColor::semantic(MD3::Role::OutlineVariant);
 
     // Draw white background rectangle with rounded corners inside the thick vertical lines
     dc.SetBrush(wxBrush(backgroundColor));
@@ -198,21 +202,21 @@ void FilamentItemPanel::OnSize(wxSizeEvent& event)
 AMSFilamentPanel::AMSFilamentPanel(wxWindow* parent, const wxString& ams_name, wxWindowID id)
     : wxPanel(parent, id)
 {
-    SetBackgroundColour(wxColour("#DBDBDB"));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
 
     // Filament items section
     m_filament_container = new wxPanel(this);
-    m_filament_container->SetBackgroundColour(wxColour("#F7F7F7"));
+    m_filament_container->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_filament_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_filament_container->SetSizer(m_filament_sizer);
 
     // AMS name section
     m_ams_name_label = new Label(this, ams_name);
-    m_ams_name_label->SetForegroundColour(wxColour("#858585"));
+    m_ams_name_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_ams_name_label->SetFont(Label::Body_14);
-    m_ams_name_label->SetBackgroundColour(wxColour("#DBDBDB"));
+    m_ams_name_label->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     main_sizer->Add(m_filament_container, 1, wxEXPAND | wxALL, 0);
     main_sizer->Add(m_ams_name_label, 0, wxALIGN_LEFT | wxALL, FromDIP(5));
@@ -264,6 +268,7 @@ AMSDryCtrWin::AMSDryCtrWin(wxWindow *parent)
     :DPIDialog(parent, wxID_ANY, _L("AMS Dryness Control"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
     create();
+    MD3DialogCaption::Adopt(this);
 }
 
 AMSDryCtrWin::~AMSDryCtrWin()
@@ -278,7 +283,6 @@ wxScrolledWindow* AMSDryCtrWin::create_preview_scrolled_window(wxWindow* parent)
 {
     wxScrolledWindow* panel = new wxScrolledWindow(parent, wxID_ANY);
     panel->SetScrollRate(10, 0);
-    panel->SetSize(AMS_ITEMS_PANEL_SIZE);
     panel->SetMinSize(AMS_ITEMS_PANEL_SIZE);
     panel->SetBackgroundColour(AMS_CONTROL_DEF_BLOCK_BK_COLOUR);
 
@@ -298,7 +302,7 @@ wxBoxSizer* AMSDryCtrWin::create_humidity_status_section(wxPanel* parent)
     wxBoxSizer* desc_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_image_description_icon = new wxStaticBitmap(parent, wxID_ANY, wxNullBitmap);
-    m_image_description_icon->SetBackgroundColour(*wxWHITE);
+    m_image_description_icon->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_image_description_icon->SetMinSize(wxSize(FromDIP(20), FromDIP(20)));
     m_image_description_icon->SetMaxSize(wxSize(FromDIP(20), FromDIP(20)));
     m_image_description_icon->Show(false);
@@ -306,8 +310,8 @@ wxBoxSizer* AMSDryCtrWin::create_humidity_status_section(wxPanel* parent)
 
     m_image_description = new Label(parent, _L("Idle"));
     m_image_description->SetFont(Label::Head_14);
-    m_image_description->SetForegroundColour(*wxBLACK);
-    m_image_description->SetBackgroundColour(*wxWHITE);
+    m_image_description->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_image_description->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     desc_sizer->Add(m_image_description, 0, wxALIGN_CENTER_VERTICAL);
 
     image_sizer->Add(desc_sizer, 0, wxALIGN_CENTER | wxALL, FromDIP(5));
@@ -320,12 +324,12 @@ wxBoxSizer* AMSDryCtrWin::create_description_item(wxPanel* parent, const wxStrin
     wxBoxSizer* item_sizer = new wxBoxSizer(wxVERTICAL);
 
     Label* titleLabel = new Label(parent, title);
-    titleLabel->SetForegroundColour(*wxBLACK);
+    titleLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     titleLabel->SetFont(Label::Body_16);
 
     dataLabel = new Label(parent, wxT("--"));
-    dataLabel->SetForegroundColour(*wxBLACK);
-    dataLabel->SetFont(Label::Body_14);
+    dataLabel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    dataLabel->SetFont(Label::Mono_14);
 
     item_sizer->AddStretchSpacer();
     item_sizer->Add(titleLabel, 0, wxALIGN_CENTER | wxALL, FromDIP(2));
@@ -342,14 +346,14 @@ wxBoxSizer* AMSDryCtrWin::create_status_descriptions_section(wxPanel* parent)
     wxBoxSizer* hum_desc_sizer = create_description_item(parent, _L("Humidity"), m_humidity_data_label);
     desc_sizer->Add(hum_desc_sizer, 1, wxEXPAND, FromDIP(1));
 
-    wxStaticLine* vert_separator = new wxStaticLine(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL);
+    StaticLine* vert_separator = new StaticLine(parent, true);
     desc_sizer->Add(vert_separator, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(5));
 
     wxBoxSizer* temp_desc_sizer = create_description_item(parent, _L("Temperature"), m_temperature_data_label);
     desc_sizer->Add(temp_desc_sizer, 1, wxEXPAND, FromDIP(1));
 
     m_time_descrition_container = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticLine* vert_separator2 = new wxStaticLine(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL);
+    StaticLine* vert_separator2 = new StaticLine(parent, true);
     m_time_descrition_container->Add(vert_separator2, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(5));
 
     wxBoxSizer* time_desc_sizer = create_description_item(parent, _L("Left Time"), m_time_data_label);
@@ -413,7 +417,7 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
     wxBoxSizer* normal_state_sizer = new wxBoxSizer(wxVERTICAL);
 
     Label* description_label = new Label(parent, _L("Filament Drying Settings"));
-    description_label->SetForegroundColour(*wxBLACK);
+    description_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     description_label->SetFont(Label::Head_14);
     normal_state_sizer->Add(description_label, 0, wxALL, FromDIP(5));
 
@@ -430,10 +434,10 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
     // part 3 time and temperature
     // Temperature part
     wxBoxSizer* temp_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_temperature_input = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxSize(FromDIP(80), -1));
-    m_temperature_input->SetMaxLength(3); // Limit to 3 digits
+    m_temperature_input = new TextInput(parent, "", "", "", wxDefaultPosition, wxSize(FromDIP(80), -1));
+    m_temperature_input->GetTextCtrl()->SetMaxLength(3); // Limit to 3 digits
 
-    m_temperature_input->Bind(wxEVT_CHAR, [this](wxKeyEvent& event) {
+    m_temperature_input->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent& event) {
         int keycode = event.GetKeyCode();
         if (keycode >= '0' && keycode <= '9') {
             event.Skip();
@@ -442,25 +446,23 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
         }
     });
 
-    m_temperature_input->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
+    m_temperature_input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
         m_next_button->Disable();
         m_start_button->Disable();
     });
 
-    m_temperature_input->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
-    m_temperature_input->SetForegroundColour(StateColor::darkModeColorFor(*wxBLACK));
 
     Label* temp_unit_label = new Label(parent, wxString::FromUTF8("℃"));
-    temp_unit_label->SetForegroundColour(*wxBLACK);
+    temp_unit_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     temp_sizer->Add(m_temperature_input, 1, wxRIGHT, FromDIP(1));
     temp_sizer->Add(temp_unit_label, 0, wxALIGN_CENTER_VERTICAL);
 
     // Time part
     wxBoxSizer* time_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_time_input = new wxTextCtrl(parent, wxID_ANY, "", wxDefaultPosition, wxSize(FromDIP(100), -1));
-    m_time_input->SetMaxLength(3); // Limit to 3 digits
+    m_time_input = new TextInput(parent, "", "", "", wxDefaultPosition, wxSize(FromDIP(100), -1));
+    m_time_input->GetTextCtrl()->SetMaxLength(3); // Limit to 3 digits
 
-    m_time_input->Bind(wxEVT_CHAR, [this](wxKeyEvent& event) {
+    m_time_input->GetTextCtrl()->Bind(wxEVT_CHAR, [this](wxKeyEvent& event) {
         int keycode = event.GetKeyCode();
         if (keycode >= '0' && keycode <= '9') {
             event.Skip();
@@ -469,16 +471,14 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
         }
     });
 
-    m_time_input->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
+    m_time_input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent&) {
         m_next_button->Disable();
         m_start_button->Disable();
     });
 
-    m_time_input->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
-    m_time_input->SetForegroundColour(StateColor::darkModeColorFor(*wxBLACK));
 
     Label* time_unit_label = new Label(parent, "H");
-    time_unit_label->SetForegroundColour(*wxBLACK);
+    time_unit_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     time_sizer->Add(m_time_input, 1, wxRIGHT, FromDIP(1));
     time_sizer->Add(time_unit_label, 0, wxALIGN_CENTER_VERTICAL);
 
@@ -489,7 +489,7 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
 
     // Part 4: Abnormal description/message area
     m_normal_description = new Label(parent, "");
-    m_normal_description->SetForegroundColour(wxColour("#F09A17"));
+    m_normal_description->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Warning));
     m_normal_description->SetFont(Label::Body_12);
     normal_state_sizer->Add(m_normal_description, 0, wxALL, FromDIP(5));
 
@@ -499,7 +499,7 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
         _L("Start"),
         AMS_CONTROL_BRAND_COLOUR,  // Background color - green
         AMS_CONTROL_BRAND_COLOUR,  // Border color - green
-        wxColour("#FFFFFE")        // Text color - white
+        ThemeColor::White          // Text color - white
     );
 
     m_next_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& event) {
@@ -512,9 +512,9 @@ wxBoxSizer* AMSDryCtrWin::create_normal_state_panel(wxPanel* parent)
     m_stop_button = create_button(
         parent,
         _L("Stop"),
-        wxColour(255, 0, 0),       // Background color - red
-        wxColour(255, 0, 0),       // Border color - red
-        wxColour("#FFFFFE")        // Text color - white
+        ThemeColor::Danger,        // Background color - red
+        ThemeColor::Danger,        // Border color - red
+        ThemeColor::White          // Text color - white
     );
 
     m_stop_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& event) {
@@ -550,14 +550,14 @@ wxBoxSizer* AMSDryCtrWin::create_cannot_dry_panel(wxPanel* parent)
     wxBoxSizer* abnormal_sizer = new wxBoxSizer(wxVERTICAL);
 
     Label* description_label = new Label(parent, _L("Unable to dry temporarily due to ..."));
-    description_label->SetForegroundColour(*wxBLACK);
+    description_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     description_label->SetFont(Label::Head_16);
     description_label->Wrap(FromDIP(300));
     abnormal_sizer->Add(description_label, 0, wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     // Add a description label for the abnormal state
     m_cannot_dry_description_label = new Label(parent, (""));
-    m_cannot_dry_description_label->SetForegroundColour(*wxBLACK);
+    m_cannot_dry_description_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_cannot_dry_description_label->SetFont(Label::Body_14);
     m_cannot_dry_description_label->Wrap(FromDIP(250)); // Wrap text to fit within panel
 
@@ -569,7 +569,7 @@ wxBoxSizer* AMSDryCtrWin::create_cannot_dry_panel(wxPanel* parent)
         _L("Unload"),
         AMS_CONTROL_BRAND_COLOUR,       // Background color - light gray
         AMS_CONTROL_BRAND_COLOUR,       // Border color - gray
-        *wxWHITE                   // Text color - white
+        ThemeColor::White          // Text color - white
     );
 
     m_unload_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& event) {
@@ -602,12 +602,12 @@ wxBoxSizer* AMSDryCtrWin::create_drying_error_panel(wxPanel* parent)
 {
     wxBoxSizer* err_sizer = new wxBoxSizer(wxVERTICAL);
     Label* description_label = new Label(parent, _L("Drying Error"));
-    description_label->SetForegroundColour(*wxRED);
+    description_label->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     description_label->SetFont(Label::Body_14); // Wrap text to fit within panel
     err_sizer->Add(description_label, 0, wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
     Label* additional_description_label = new Label(parent, _L("Please check the Assistant for troubleshooting"));
-    additional_description_label->SetForegroundColour(*wxBLACK);
+    additional_description_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     additional_description_label->SetFont(Label::Body_14); // Wrap text to fit within panel
     err_sizer->Add(additional_description_label, 0, wxALIGN_CENTER_VERTICAL, FromDIP(10));
 
@@ -673,13 +673,13 @@ wxBoxSizer* AMSDryCtrWin::create_guide_info_section(wxPanel* parent)
 
     // Part 1: Title
     m_guide_title_label = new Label(parent, _L("Please remove and store the filament (as shown)."));
-    m_guide_title_label->SetForegroundColour(*wxBLACK);
+    m_guide_title_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_guide_title_label->SetFont(Label::Head_18);
     info_section->Add(m_guide_title_label, 0, wxEXPAND | wxALL, FromDIP(5));
 
     // Part 2: Description
     m_guide_description_label = new Label(parent, _L("The AMS can rotate the filament which is properly stored, providing better drying results."));
-    m_guide_description_label->SetForegroundColour(*wxBLACK);
+    m_guide_description_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_guide_description_label->SetFont(Label::Body_14);
     m_guide_description_label->Wrap(FromDIP(300)); // Wrap text to fit within panel
     info_section->Add(m_guide_description_label, 0, wxEXPAND | wxALL, FromDIP(5));
@@ -691,10 +691,10 @@ wxBoxSizer* AMSDryCtrWin::create_guide_info_section(wxPanel* parent)
     // Part 4: Circular toggle with description
     wxBoxSizer* toggle_section = new wxBoxSizer(wxHORIZONTAL);
 
-    m_rotate_spool_toggle = new wxCheckBox(parent, wxID_ANY, "");
+    m_rotate_spool_toggle = new ::CheckBox(parent);
     m_rotate_spool_toggle->SetValue(false);
 
-    m_rotate_spool_toggle->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& event) {
+    m_rotate_spool_toggle->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent& event) {
         bool is_checked = event.IsChecked();
         // Add toggle behavior logic here
     });
@@ -703,7 +703,7 @@ wxBoxSizer* AMSDryCtrWin::create_guide_info_section(wxPanel* parent)
 
     // Toggle description
     Label* toggle_description = new Label(parent, _L("Rotate spool when drying"), LB_AUTO_WRAP);
-    toggle_description->SetForegroundColour(*wxBLACK);
+    toggle_description->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     toggle_description->SetFont(Label::Body_12);
     toggle_section->Add(toggle_description, 1, wxALIGN_CENTER_VERTICAL | wxEXPAND, 0);
 
@@ -733,9 +733,9 @@ wxBoxSizer* AMSDryCtrWin::create_guide_right_section(wxPanel* parent)
     m_back_button = create_button(
         parent,
         wxString::FromUTF8(_CTX_utf8(L_CONTEXT("Back", "amsdrying"), "amsdrying")),
-        wxColour("#F8F8F8"),       // Background color - light gray
-        wxColour("#D0D0D0"),       // Border color - gray
-        *wxBLACK                   // Text color - black
+        ThemeColor::Grey200,       // Background color - light gray
+        ThemeColor::Grey400,       // Border color - gray
+        ThemeColor::TextPrimary    // Text color - black
     );
 
     m_back_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& event) {
@@ -749,7 +749,7 @@ wxBoxSizer* AMSDryCtrWin::create_guide_right_section(wxPanel* parent)
         _L("Start"),
         AMS_CONTROL_BRAND_COLOUR,  // Background color - green
         AMS_CONTROL_BRAND_COLOUR,  // Border color - green
-        wxColour("#FFFFFE")        // Text color - white
+        ThemeColor::White          // Text color - white
     );
 
     m_start_button->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& event) {
@@ -789,15 +789,15 @@ void AMSDryCtrWin::start_sending_drying_command()
         return;
     }
 
-    if (m_temperature_input->GetValue().IsEmpty() || m_time_input->GetValue().IsEmpty()) {
+    if (m_temperature_input->GetTextCtrl()->GetValue().IsEmpty() || m_time_input->GetTextCtrl()->GetValue().IsEmpty()) {
         // Show error message to user
         BOOST_LOG_TRIVIAL(info) << "AMSDryCtrWin::start_sending_drying_command: Time or temperature is empty";
         return;
     }
 
     long temperature, time;
-    if (!m_temperature_input->GetValue().ToLong(&temperature) ||
-        !m_time_input->GetValue().ToLong(&time)) {
+    if (!m_temperature_input->GetTextCtrl()->GetValue().ToLong(&temperature) ||
+        !m_time_input->GetTextCtrl()->GetValue().ToLong(&time)) {
         BOOST_LOG_TRIVIAL(info) << "AMSDryCtrWin::start_sending_drying_command: Failed to convert temperature or time";
         return;
     }
@@ -952,7 +952,7 @@ wxBoxSizer* AMSDryCtrWin::create_progress_page_sizer(wxPanel* parent)
     wxBoxSizer* progress_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_progress_title = new Label(parent, m_progress_text[0]);
-    m_progress_title->SetForegroundColour(*wxBLACK);
+    m_progress_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_progress_title->SetFont(Label::Body_16);
 
     progress_sizer->Add(0, 0, 1, wxEXPAND, 0); // Spacer
@@ -971,34 +971,33 @@ wxBoxSizer* AMSDryCtrWin::create_progress_page_sizer(wxPanel* parent)
 void AMSDryCtrWin::create()
 {
     // set title icon
-    SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     this->SetDoubleBuffered(true);
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
     SetSize(wxSize(FromDIP(700), FromDIP(500)));
-    SetMinSize(wxSize(FromDIP(700), FromDIP(500)));
-    SetMaxSize(wxSize(FromDIP(700), FromDIP(500)));
+    SetMinSize(wxSize(FromDIP(600), FromDIP(440)));
 
     m_main_simplebook = new wxSimplebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
 
     // Create main page
     m_original_page = new wxPanel(m_main_simplebook, wxID_ANY);
-    m_original_page->SetBackgroundColour(*wxWHITE);
+    m_original_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* main_sizer = create_main_page_sizer(m_original_page);
     m_original_page->SetSizer(main_sizer);
 
     m_main_simplebook->AddPage(m_original_page, "Main Page");
 
     m_guide_page = new wxPanel(m_main_simplebook, wxID_ANY);
-    m_guide_page->SetBackgroundColour(*wxWHITE);
+    m_guide_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* guide_sizer = create_guide_page_sizer(m_guide_page);
     m_guide_page->SetSizer(guide_sizer);
     m_main_simplebook->AddPage(m_guide_page, "Guide Page");
 
     // Create progress page
     m_progress_page = new wxPanel(m_main_simplebook, wxID_ANY);
-    m_progress_page->SetBackgroundColour(*wxWHITE);
+    m_progress_page->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* progress_sizer = create_progress_page_sizer(m_progress_page);
     m_progress_page->SetSizer(progress_sizer);
     m_main_simplebook->AddPage(m_progress_page, "Progress Page");
@@ -1178,8 +1177,8 @@ void AMSDryCtrWin::update_normal_description(DevAms* dev_ams)
     wxString warning_text;
     bool can_enable_button = true;
     long temp_val = 0, time_val = 0;
-    m_temperature_input->GetValue().ToLong(&temp_val);
-    m_time_input->GetValue().ToLong(&time_val);
+    m_temperature_input->GetTextCtrl()->GetValue().ToLong(&temp_val);
+    m_time_input->GetTextCtrl()->GetValue().ToLong(&time_val);
     std::optional<Slic3r::DevFilamentDryingPreset> preset = DevUtilBackend::GetFilamentDryingPreset(info.filament_id);
     auto total_dry = preset.has_value() ? preset.value().ams_limitations : std::unordered_set<DevAmsType>();
 
@@ -1250,8 +1249,8 @@ void AMSDryCtrWin::update_normal_state(DevAms* dev_ams)
         m_next_button->Show(true);
         m_normal_description->Show(true);
         m_trays_combo->Enable();
-        m_temperature_input->SetEditable(true);
-        m_time_input->SetEditable(true);
+        m_temperature_input->GetTextCtrl()->SetEditable(true);
+        m_time_input->GetTextCtrl()->SetEditable(true);
 
         m_stop_button->Hide();
         m_dry_error_sizer->Show(false);
@@ -1269,13 +1268,13 @@ void AMSDryCtrWin::update_normal_state(DevAms* dev_ams)
         m_normal_description->Hide();
 
         m_trays_combo->Disable();
-        m_temperature_input->SetEditable(false);
-        m_time_input->SetEditable(false);
+        m_temperature_input->GetTextCtrl()->SetEditable(false);
+        m_time_input->GetTextCtrl()->SetEditable(false);
         m_stop_button->Show(true);
         m_dry_error_sizer->Show(false);
     }
 
-    if (m_temperature_input->GetValue().IsEmpty() || m_time_input->GetValue().IsEmpty()) {
+    if (m_temperature_input->GetTextCtrl()->GetValue().IsEmpty() || m_time_input->GetTextCtrl()->GetValue().IsEmpty()) {
         m_next_button->Disable();
         m_start_button->Disable();
     } else {
@@ -1306,11 +1305,11 @@ void AMSDryCtrWin::OnFilamentSelectionChanged(wxCommandEvent& event)
     if (preset.has_value()) {
         DevFilamentDryingPreset info = preset.value();
         if (m_printer_status.m_is_printing) {
-            m_temperature_input->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_temperature_on_print[dev_ams->GetAmsType()])));
-            m_time_input->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_time_on_print[dev_ams->GetAmsType()])));
+            m_temperature_input->GetTextCtrl()->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_temperature_on_print[dev_ams->GetAmsType()])));
+            m_time_input->GetTextCtrl()->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_time_on_print[dev_ams->GetAmsType()])));
         } else {
-            m_temperature_input->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_temperature_on_idle[dev_ams->GetAmsType()])));
-            m_time_input->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_time_on_idle[dev_ams->GetAmsType()])));
+            m_temperature_input->GetTextCtrl()->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_temperature_on_idle[dev_ams->GetAmsType()])));
+            m_time_input->GetTextCtrl()->SetValue(std::to_string(static_cast<int>(info.filament_dev_ams_drying_time_on_idle[dev_ams->GetAmsType()])));
         }
     }
 
@@ -1440,12 +1439,12 @@ int AMSDryCtrWin::update_ams_change(DevAms* dev_ams)
 
     m_ams_info.m_ams_id = dev_ams->GetAmsId();
     if (dev_ams->GetAmsType() == DevAmsType::N3F) {
-        m_temperature_input->SetHint("45-65" + wxString::FromUTF8("°C"));
+        m_temperature_input->GetTextCtrl()->SetHint("45-65" + wxString::FromUTF8("°C"));
     } else if (dev_ams->GetAmsType() == DevAmsType::N3S) {
-        m_temperature_input->SetHint("45-85" + wxString::FromUTF8("°C"));
+        m_temperature_input->GetTextCtrl()->SetHint("45-85" + wxString::FromUTF8("°C"));
     }
 
-    m_time_input->SetHint("1-24 h");
+    m_time_input->GetTextCtrl()->SetHint("1-24 h");
 
     return 0;
 }
@@ -1503,8 +1502,8 @@ void AMSDryCtrWin::update_filament_guide_info(DevAms* dev_ams)
 
     // Get the temperature input value
     long input_temp = 0;
-    bool valid_temp = !m_temperature_input->GetValue().IsEmpty() &&
-                      m_temperature_input->GetValue().ToLong(&input_temp);
+    bool valid_temp = !m_temperature_input->GetTextCtrl()->GetValue().IsEmpty() &&
+                      m_temperature_input->GetTextCtrl()->GetValue().ToLong(&input_temp);
     bool can_start = true;
 
     int slot_count = 0, empty_count = 0;
@@ -1671,15 +1670,15 @@ int AMSDryCtrWin::update_filament_list(DevAms* dev_ams, MachineObject* obj)
 
         if (settings_opt.has_value()) {
             const auto& settings = settings_opt.value();
-            m_temperature_input->SetValue(std::to_string(settings.dry_temp));
-            m_time_input->SetValue(std::to_string(settings.dry_hour));
+            m_temperature_input->GetTextCtrl()->SetValue(std::to_string(settings.dry_temp));
+            m_time_input->GetTextCtrl()->SetValue(std::to_string(settings.dry_hour));
             set_filament_label_by_type(settings.dry_filament);
         } else {
             auto it_name = m_dry_setting.m_filament_names.find(ams_id);
             if (it_name != m_dry_setting.m_filament_names.end()) {
                 m_trays_combo->SetLabel(wxString::FromUTF8(it_name->second));
-                m_temperature_input->SetValue(std::to_string(m_dry_setting.m_dry_temp[ams_id]));
-                m_time_input->SetValue(std::to_string(m_dry_setting.m_dry_time[ams_id]));
+                m_temperature_input->GetTextCtrl()->SetValue(std::to_string(m_dry_setting.m_dry_temp[ams_id]));
+                m_time_input->GetTextCtrl()->SetValue(std::to_string(m_dry_setting.m_dry_time[ams_id]));
             }
         }
 

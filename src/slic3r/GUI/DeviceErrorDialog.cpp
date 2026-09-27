@@ -4,6 +4,7 @@
 #include "DeviceManager.hpp"
 #include "DeviceCore/DevManager.h"
 #include "Widgets/Button.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "ReleaseNote.hpp"
@@ -62,7 +63,7 @@ DeviceErrorDialog::DeviceErrorDialog(MachineObject* obj, wxWindow* parent, wxWin
     SetTitle(_L("Error"));
 
     auto        m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(350), 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+    m_line_top->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_scroll_area = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_scroll_area->SetScrollRate(0, 5);
@@ -110,8 +111,9 @@ DeviceErrorDialog::DeviceErrorDialog(MachineObject* obj, wxWindow* parent, wxWin
 
     init_button_list();
 
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 
     Bind(wxEVT_WEBREQUEST_STATE, &DeviceErrorDialog::on_webrequest_state, this);
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &e){
@@ -217,14 +219,13 @@ void DeviceErrorDialog::init_button(ActionButton style, wxString buton_text)
 {
     if (btn_bg_white.count() == 0)
     {
-        btn_bg_white = StateColor(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                                  std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
+        btn_bg_white = StateColor(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
+                                  std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
                                   std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
     }
 
     Button* print_error_button = new Button(this, buton_text);
-    print_error_button->SetBackgroundColor(btn_bg_white);
-    print_error_button->SetBorderColor(wxColour(38, 46, 48));
+    print_error_button->SetVariant(Button::Variant::Outlined);
     print_error_button->SetFont(Label::Body_14);
     print_error_button->SetSize(wxSize(FromDIP(300), FromDIP(30)));
     print_error_button->SetMinSize(wxSize(FromDIP(300), FromDIP(30)));
@@ -466,7 +467,7 @@ wxBitmap DeviceErrorDialog::get_default_loading_image()
 
     wxBitmap bmp(wxSize(w, h));
     wxMemoryDC dc(bmp);
-    dc.SetBackground(wxBrush(wxColour(238, 238, 238))); // gray300
+    dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainer))); // surface-container
     dc.Clear();
 
     ScalableBitmap icon = ScalableBitmap(this, "dev_hms_diag_loading", 80);
@@ -477,7 +478,7 @@ wxBitmap DeviceErrorDialog::get_default_loading_image()
         dc.DrawBitmap(icon_bmp, ix, iy, true);
     }
 
-    dc.SetTextForeground(wxColour(158, 158, 158)); // gray500
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant)); // on-surface-variant
     dc.SetFont(::Label::Body_14);
     const wxString txt = _L("Loading ...");
     wxSize txtSize = dc.GetTextExtent(txt);
@@ -496,7 +497,7 @@ wxBitmap DeviceErrorDialog::get_default_error_image()
 
     wxBitmap bmp(wxSize(w, h));
     wxMemoryDC dc(bmp);
-    dc.SetBackground(wxBrush(wxColour(238, 238, 238))); // gray300
+    dc.SetBackground(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainer))); // surface-container
     dc.Clear();
 
     ScalableBitmap icon = ScalableBitmap(this, "dev_hms_diag_loading", 80);
@@ -507,7 +508,7 @@ wxBitmap DeviceErrorDialog::get_default_error_image()
         dc.DrawBitmap(icon_bmp, ix, iy, true);
     }
 
-    dc.SetTextForeground(wxColour(158, 158, 158)); // gray500
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurfaceVariant)); // on-surface-variant
     dc.SetFont(::Label::Body_14);
     const wxString txt = _L("Network unavailable");
     wxSize txtSize = dc.GetTextExtent(txt);

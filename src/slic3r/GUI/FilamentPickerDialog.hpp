@@ -39,7 +39,6 @@ protected:
     void OnMouseLeftDown(wxMouseEvent& event);
     void OnMouseMove(wxMouseEvent& event);
     void OnMouseLeftUp(wxMouseEvent& event);
-    void OnButtonPaint(wxPaintEvent& event);
     void OnTimerCheck(wxTimerEvent& event);
     void OnFlashTimer(wxTimerEvent& event);
 
@@ -66,7 +65,7 @@ private:
     // UI update methods
     void UpdatePreview(const FilamentColorCode& filament);
     void UpdateCustomColorPreview(const wxColour& custom_color);
-    void UpdateButtonStates(wxBitmapButton* selected_btn);
+    void UpdateButtonStates(Button* selected_btn);
 
     // Shaped window methods
     void SetWindowShape();
@@ -93,7 +92,7 @@ private:
     wxString *m_cur_color_name{nullptr};
     FilamentColorCodeQuery* m_color_query{nullptr};
     FilamentColorCodes* m_cur_color_codes{nullptr};
-    wxBitmapButton* m_cur_selected_btn{nullptr};
+    Button* m_cur_selected_btn{nullptr};
     FilamentColor m_cur_filament_color;
 
     // Shaped window members

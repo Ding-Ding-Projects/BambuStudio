@@ -1,4 +1,6 @@
 #include "HelioReleaseNote.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "HelioHistoryDialog.hpp"
 #include "I18N.hpp"
 
@@ -10,6 +12,7 @@
 #include "GUI_Preview.hpp"
 #include "MainFrame.hpp"
 #include "format.hpp"
+#include "MsgDialog.hpp"
 
 // Forward declaration - function is defined in Plater.cpp
 namespace Slic3r {
@@ -41,10 +44,18 @@ namespace GUI {
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/DevStorage.h"
+#include "slic3r/GUI/Widgets/StateColor.hpp"
 
 namespace Slic3r { namespace GUI {
 
-// Helio dark palette theme helper - defined early so it can be used throughout
+// Helio Additive dark palette — an intentional, forced-dark third-party brand
+// identity applied unconditionally, regardless of the app's light/dark theme.
+// These are brand and *data* colors (purple = simulation, blue = optimization),
+// so they are deliberately EXEMPT from the theme-aware MD3 token migration:
+// routing them through MD3::resolve()/StateColor::semantic() would resolve to
+// light-mode surfaces and break the always-dark Helio look. Standard shared
+// controls inside these dialogs (the green primary CTA + white text, warning
+// labels) still use ThemeColor/MD3 tokens.
 namespace {
     // Base background: #07090C
     const wxColour HELIO_BG_BASE(7, 9, 12);
@@ -64,8 +75,19 @@ namespace {
     const wxColour HELIO_BLUE(79, 134, 255);
 }
 
+ // Forced-dark MD3 shell (borderless, dark-pinned chrome) so the header/footer
+ // read correctly over the always-dark HELIO_* brand surface below.
+ static MD3Dialog::Options helio_shell_opts()
+ {
+     MD3Dialog::Options o;
+     o.resizable   = false;
+     o.forced_dark = true;
+     return o;
+ }
+
  HelioStatementDialog::HelioStatementDialog(wxWindow *parent /*= nullptr*/)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Legal & Activation Terms"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), _L("Legal & Activation Terms"), wxEmptyString,
+                MaterialIcon::Info, helio_shell_opts())
 {
      shared_ptr = std::make_shared<int>(0);
 
@@ -80,10 +102,10 @@ namespace {
      icon.CopyFromBitmap(bmp);
      SetIcon(icon);
 
-     // Use Helio dark palette (not neutral charcoal)
+     // Use Helio dark palette (not neutral charcoal). This intentionally
+     // overrides the shell's dark SurfaceContainer with the exact HELIO_*
+     // brand surface (EXEMPT); the forced-dark chrome roles stay readable on it.
      SetBackgroundColour(HELIO_BG_BASE); // #07090C
-
-     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 
      // Create Legal Terms Page and PAT Page
      create_legal_page();
@@ -91,31 +113,23 @@ namespace {
 
      // Button colors for cancel button
      StateColor btn_bg_green = StateColor(
-         std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-         std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+         std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+         std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
      m_button_cancel = new Button(this, _L("Got it"));
-     m_button_cancel->SetBackgroundColor(btn_bg_green);
-     m_button_cancel->SetBorderColor(wxColour(0, 174, 66));
+     m_button_cancel->SetVariant(Button::Variant::Outlined);
      // White text for all states
-     StateColor white_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                           std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
-                           std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
-                           std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
-                           std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-     m_button_cancel->SetTextColor(white_text);
-     m_button_cancel->SetTextColorNormal(wxColour(255, 255, 254));
+     StateColor white_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+                           std::pair<wxColour, int>(ThemeColor::White, StateColor::Hovered),
+                           std::pair<wxColour, int>(ThemeColor::White, StateColor::Pressed),
+                           std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                           std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+     m_button_cancel->SetVariant(Button::Variant::Outlined);
      m_button_cancel->SetFont(Label::Body_14);
      m_button_cancel->SetSize(wxSize(FromDIP(100), FromDIP(36)));
      m_button_cancel->SetMinSize(wxSize(FromDIP(100), FromDIP(36)));
-     m_button_cancel->SetCornerRadius(FromDIP(4));
+     m_button_cancel->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
      m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) { EndModal(wxID_NO); });
-
-     // Button sizer for PAT page (centered)
-     wxBoxSizer* pat_button_sizer = new wxBoxSizer(wxHORIZONTAL);
-     pat_button_sizer->Add(0, 0, 1, wxEXPAND, 0);
-     pat_button_sizer->Add(m_button_cancel, 0, wxALIGN_CENTER, 0);
-     pat_button_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
      // Bind checkbox event (checkbox is created in create_legal_page)
      // Note: The CheckBox class already has an internal handler that calls update()
@@ -128,9 +142,13 @@ namespace {
          e.Skip(); // Ensure event propagates
      });
 
-     main_sizer->Add(page_legal_panel, 1, wxEXPAND, 0);
-     main_sizer->Add(page_pat_panel, 0, wxEXPAND, 0);
-     main_sizer->Add(pat_button_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(30));
+     // Both content pages live in the kit body; each page owns its own action
+     // buttons ('Agree and Proceed' inside the legal page, the PAT actions
+     // inside the PAT page). The 'Got it' acknowledgement is the kit footer
+     // Button (hidden by both pages, matching the legacy behaviour).
+     GetContentSizer()->Add(page_legal_panel, 1, wxEXPAND, 0);
+     GetContentSizer()->Add(page_pat_panel, 0, wxEXPAND, 0);
+     AddFooterButton(m_button_cancel);
 
     //
     // Page show/hide based on helio_enable state
@@ -144,12 +162,10 @@ namespace {
         m_button_cancel->Hide();
     }
 
-
-     SetSizer(main_sizer);
      Layout();
      Fit();
-
      CentreOnParent();
+     UpdateShape();
  }
 
  void HelioStatementDialog::OnLoaded(wxWebViewEvent& event)
@@ -263,6 +279,8 @@ HelioStatementDialog::~HelioStatementDialog()
 
 void HelioStatementDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
+    // Shell chrome (header tile, shape) re-derives its FromDIP metrics.
+    MD3Dialog::on_dpi_changed(suggested_rect);
 }
 
 void HelioStatementDialog::show_err_info(std::string type)
@@ -346,8 +364,11 @@ void HelioStatementDialog::create_legal_page()
     terms_section_panel->SetBackgroundColour(wxColour(55, 55, 59));
     wxBoxSizer* terms_section_sizer = new wxBoxSizer(wxVERTICAL);
     
-    // Create header panel FIRST so labels have correct parent
-    wxPanel* terms_header_panel = new wxPanel(terms_section_panel);
+    // Create header panel FIRST so labels have correct parent. A plain wxWindow
+    // (with wxWANTS_CHARS) rather than a wxPanel so the accordion header is itself
+    // keyboard-focusable and a tab stop (a tab-traversal wxPanel would delegate
+    // focus to children instead of taking it).
+    wxWindow* terms_header_panel = new wxWindow(terms_section_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
     terms_header_panel->SetBackgroundColour(wxColour(55, 55, 59));
     wxBoxSizer* terms_header_sizer = new wxBoxSizer(wxHORIZONTAL);
     
@@ -369,6 +390,29 @@ void HelioStatementDialog::create_legal_page()
     terms_header_panel->SetCursor(wxCURSOR_HAND);
     terms_title->SetCursor(wxCURSOR_HAND);
     terms_arrow->SetCursor(wxCURSOR_HAND);
+    // Keyboard a11y: the header row is a focusable accordion toggle. Space/Enter
+    // expands/collapses it; focus is made visible by lightening the row and
+    // tinting the arrow with the Helio accent.
+    terms_header_panel->SetName(terms_title->GetLabelText());
+    terms_header_panel->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& e) {
+        const int k = e.GetKeyCode();
+        if (k == WXK_SPACE || k == WXK_RETURN || k == WXK_NUMPAD_ENTER)
+            toggle_terms_section();
+        else
+            e.Skip();
+    });
+    terms_header_panel->Bind(wxEVT_SET_FOCUS, [terms_header_panel, terms_arrow](wxFocusEvent& e) {
+        terms_header_panel->SetBackgroundColour(wxColour(72, 72, 78));
+        terms_arrow->SetForegroundColour(wxColour("#00AE42"));
+        terms_header_panel->Refresh();
+        e.Skip();
+    });
+    terms_header_panel->Bind(wxEVT_KILL_FOCUS, [terms_header_panel, terms_arrow](wxFocusEvent& e) {
+        terms_header_panel->SetBackgroundColour(wxColour(55, 55, 59));
+        terms_arrow->SetForegroundColour(wxColour("#FFFFFF"));
+        terms_header_panel->Refresh();
+        e.Skip();
+    });
     
     // Terms content - use HTML for proper text flow with embedded links
     terms_content_panel = new wxPanel(terms_section_panel);
@@ -479,8 +523,10 @@ void HelioStatementDialog::create_legal_page()
     privacy_section_panel->SetBackgroundColour(wxColour(55, 55, 59));
     wxBoxSizer* privacy_section_sizer = new wxBoxSizer(wxVERTICAL);
     
-    // Create header panel FIRST so labels have correct parent
-    wxPanel* privacy_header_panel = new wxPanel(privacy_section_panel);
+    // Create header panel FIRST so labels have correct parent. Plain wxWindow
+    // (wxWANTS_CHARS) so this accordion header is itself keyboard-focusable, like
+    // the Terms header above.
+    wxWindow* privacy_header_panel = new wxWindow(privacy_section_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
     privacy_header_panel->SetBackgroundColour(wxColour(55, 55, 59));
     wxBoxSizer* privacy_header_sizer = new wxBoxSizer(wxHORIZONTAL);
     
@@ -500,6 +546,28 @@ void HelioStatementDialog::create_legal_page()
     privacy_header_panel->SetCursor(wxCURSOR_HAND);
     privacy_title->SetCursor(wxCURSOR_HAND);
     privacy_arrow->SetCursor(wxCURSOR_HAND);
+    // Keyboard a11y: focusable accordion toggle (Space/Enter), with a visible
+    // focus highlight, mirroring the Terms header.
+    privacy_header_panel->SetName(privacy_title->GetLabelText());
+    privacy_header_panel->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& e) {
+        const int k = e.GetKeyCode();
+        if (k == WXK_SPACE || k == WXK_RETURN || k == WXK_NUMPAD_ENTER)
+            toggle_privacy_section();
+        else
+            e.Skip();
+    });
+    privacy_header_panel->Bind(wxEVT_SET_FOCUS, [privacy_header_panel, privacy_arrow](wxFocusEvent& e) {
+        privacy_header_panel->SetBackgroundColour(wxColour(72, 72, 78));
+        privacy_arrow->SetForegroundColour(wxColour("#00AE42"));
+        privacy_header_panel->Refresh();
+        e.Skip();
+    });
+    privacy_header_panel->Bind(wxEVT_KILL_FOCUS, [privacy_header_panel, privacy_arrow](wxFocusEvent& e) {
+        privacy_header_panel->SetBackgroundColour(wxColour(55, 55, 59));
+        privacy_arrow->SetForegroundColour(wxColour("#FFFFFF"));
+        privacy_header_panel->Refresh();
+        e.Skip();
+    });
     
     // Privacy content - FULL original text
     privacy_content_panel = new wxPanel(privacy_section_panel);
@@ -547,28 +615,26 @@ void HelioStatementDialog::create_legal_page()
     
     // Confirm button (disabled until checkbox is checked)
     StateColor btn_bg_green = StateColor(
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     StateColor btn_bg_disabled = StateColor(
         std::pair<wxColour, int>(wxColour(100, 100, 100), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
     m_button_confirm = new Button(page_legal_panel, _L("Agree and Proceed"));
-    m_button_confirm->SetBackgroundColor(btn_bg_disabled);
-    m_button_confirm->SetBorderColor(wxColour(0, 174, 66));
+    m_button_confirm->SetVariant(Button::Variant::Filled);
     // White text for all states including Disabled
-    StateColor white_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    m_button_confirm->SetTextColor(white_text);
-    m_button_confirm->SetTextColorNormal(wxColour(255, 255, 254));
+    StateColor white_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Hovered),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Pressed),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    m_button_confirm->SetVariant(Button::Variant::Filled);
     m_button_confirm->SetFont(Label::Body_14);
     m_button_confirm->SetSize(wxSize(FromDIP(160), FromDIP(36)));
     m_button_confirm->SetMinSize(wxSize(FromDIP(160), FromDIP(36)));
-    m_button_confirm->SetCornerRadius(FromDIP(4));
+    m_button_confirm->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
     m_button_confirm->Bind(wxEVT_LEFT_DOWN, &HelioStatementDialog::on_confirm, this);
     m_button_confirm->Disable(); // Disabled until checkbox is checked
     
@@ -600,7 +666,7 @@ void HelioStatementDialog::create_pat_page()
     wxBoxSizer* pat_sizer = new wxBoxSizer(wxVERTICAL);
     
     // Success icon - using create_success or helio_feature_check
-    wxStaticBitmap* success_icon = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("create_success", page_pat_panel, 80), wxDefaultPosition, wxSize(FromDIP(80), FromDIP(80)), 0);
+    wxStaticBitmap* success_icon = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::TaskAlt, 80, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, wxSize(FromDIP(80), FromDIP(80)), 0);
     
     // "Activation Successful!" heading
     auto success_title = new Label(page_pat_panel, Label::Head_18, _L("Activation Successful!"));
@@ -616,24 +682,22 @@ void HelioStatementDialog::create_pat_page()
     
     // "Run Your First Optimization" button - use green primary style for visibility
     StateColor btn_bg_green = StateColor(
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     
     Button* run_optimization_button = new Button(page_pat_panel, _L("Run Your First Optimization"));
-    run_optimization_button->SetBackgroundColor(btn_bg_green);
-    run_optimization_button->SetBorderColor(wxColour(0, 174, 66));
+    run_optimization_button->SetVariant(Button::Variant::Filled);
     // Bright white text for maximum contrast on green background
-    StateColor run_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                            std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
-                            std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    run_optimization_button->SetTextColor(run_btn_text);
-    run_optimization_button->SetTextColorNormal(wxColour(255, 255, 254));  // Bright white text
+    StateColor run_btn_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Hovered),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    run_optimization_button->SetVariant(Button::Variant::Filled);
     run_optimization_button->SetFont(Label::Body_14);
     run_optimization_button->SetSize(wxSize(FromDIP(220), FromDIP(36)));
     run_optimization_button->SetMinSize(wxSize(FromDIP(220), FromDIP(36)));
-    run_optimization_button->SetCornerRadius(FromDIP(4));
+    run_optimization_button->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
     run_optimization_button->SetToolTip(_L("You're nearly there! Now that Helio is activated, your first optimization run for faster, more reliable printing takes only minutes! (Now referred to as 'Enhance' or 'Enhancement')"));
     run_optimization_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         // Set tutorial flag for first-time users
@@ -670,21 +734,19 @@ void HelioStatementDialog::create_pat_page()
                            std::pair<wxColour, int>(wxColour(100, 105, 115), StateColor::Normal));
     
     copy_pat_button = new Button(page_pat_panel, _L("Copy PAT"));
-    copy_pat_button->SetBackgroundColor(btn_bg_copy);
-    copy_pat_button->SetBorderColor(wxColour(150, 155, 165));  // Lighter border for visibility
+    copy_pat_button->SetVariant(Button::Variant::Filled);
     // Bright white text for maximum contrast - ensure all states use white
     StateColor copy_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
                              std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
                              std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
                              std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
                              std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    copy_pat_button->SetTextColor(copy_btn_text);
+    copy_pat_button->SetVariant(Button::Variant::Filled);
     // Also set normal text color directly as fallback
-    copy_pat_button->SetTextColorNormal(wxColour(255, 255, 254));
     copy_pat_button->SetFont(Label::Body_13);
     copy_pat_button->SetSize(wxSize(FromDIP(120), FromDIP(32)));
     copy_pat_button->SetMinSize(wxSize(FromDIP(120), FromDIP(32)));
-    copy_pat_button->SetCornerRadius(FromDIP(4));
+    copy_pat_button->SetCornerRadius(FromDIP(16)); // kit pill (height/2); Helio dark palette preserved
     copy_pat_button->SetToolTip(_L("Personal Access Token (PAT)\n\nA secure credential that verifies your identity with Helio services. "
         "It's automatically used by BambuStudio for optimizations and simulations.\n\n"
         "You may need to copy this to:\n"
@@ -713,19 +775,17 @@ void HelioStatementDialog::create_pat_page()
                               std::pair<wxColour, int>(wxColour(100, 105, 115), StateColor::Normal));
 
     Button* history_button = new Button(page_pat_panel, _L("History"));
-    history_button->SetBackgroundColor(btn_bg_history);
-    history_button->SetBorderColor(wxColour(150, 155, 165));
+    history_button->SetVariant(Button::Variant::Filled);
     StateColor history_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    history_button->SetTextColor(history_btn_text);
-    history_button->SetTextColorNormal(wxColour(255, 255, 254));
+    history_button->SetVariant(Button::Variant::Filled);
     history_button->SetFont(Label::Body_13);
     history_button->SetSize(wxSize(FromDIP(120), FromDIP(32)));
     history_button->SetMinSize(wxSize(FromDIP(120), FromDIP(32)));
-    history_button->SetCornerRadius(FromDIP(4));
+    history_button->SetCornerRadius(FromDIP(16)); // kit pill (height/2); Helio dark palette preserved
     history_button->SetToolTip(_L("View and download recent optimizations and simulations"));
     history_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         // Use CallAfter to defer modal dialog creation until after mouse event processing
@@ -740,10 +800,12 @@ void HelioStatementDialog::create_pat_page()
                 BOOST_LOG_TRIVIAL(info) << "Dialog closed";
             } catch (const std::exception& ex) {
                 BOOST_LOG_TRIVIAL(error) << "Error opening History dialog: " << ex.what();
-                wxMessageBox(wxString::Format("Error opening History dialog: %s", ex.what()), "Error", wxOK | wxICON_ERROR);
+                MessageDialog dlg(nullptr, wxString::Format("Error opening History dialog: %s", ex.what()), "Error", wxOK | wxICON_ERROR);
+                dlg.ShowModal();
             } catch (...) {
                 BOOST_LOG_TRIVIAL(error) << "Unknown error opening History dialog";
-                wxMessageBox("Unknown error opening History dialog", "Error", wxOK | wxICON_ERROR);
+                MessageDialog dlg(nullptr, "Unknown error opening History dialog", "Error", wxOK | wxICON_ERROR);
+                dlg.ShowModal();
             }
         });
     });
@@ -753,7 +815,7 @@ void HelioStatementDialog::create_pat_page()
     // Legacy controls kept for backward compatibility with show_pat_option() method
     // These are always hidden in the new design but still referenced in show_pat_option()
     // Create them with zero size and hidden to prevent any visual artifacts
-    helio_pat_copy = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("helio_copy", page_pat_panel, 20), wxDefaultPosition, wxSize(0, 0), 0);
+    helio_pat_copy = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::ContentCopy, 20, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(0, 0), 0);
     helio_pat_copy->Hide();
     helio_pat_copy->SetSize(0, 0);
     
@@ -763,15 +825,15 @@ void HelioStatementDialog::create_pat_page()
     helio_input_pat->SetMinSize(wxSize(0, 0));
     helio_input_pat->SetMaxSize(wxSize(0, 0));
     
-    helio_pat_refresh = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("helio_refesh", page_pat_panel, 24), wxDefaultPosition, wxSize(0, 0), 0);
+    helio_pat_refresh = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::Refresh, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(0, 0), 0);
     helio_pat_refresh->Hide();
     helio_pat_refresh->SetSize(0, 0);
     
-    helio_pat_eview = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("helio_eview", page_pat_panel, 24), wxDefaultPosition, wxSize(0, 0), 0);
+    helio_pat_eview = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::Visibility, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(0, 0), 0);
     helio_pat_eview->Hide();
     helio_pat_eview->SetSize(0, 0);
     
-    helio_pat_dview = new wxStaticBitmap(page_pat_panel, wxID_ANY, create_scaled_bitmap("helio_dview", page_pat_panel, 24), wxDefaultPosition, wxSize(0, 0), 0);
+    helio_pat_dview = new wxStaticBitmap(page_pat_panel, wxID_ANY, MaterialIcon::bitmap(page_pat_panel, MaterialIcon::VisibilityOff, 24, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(0, 0), 0);
     helio_pat_dview->Hide();
     helio_pat_dview->SetSize(0, 0);
     
@@ -779,7 +841,7 @@ void HelioStatementDialog::create_pat_page()
     pat_err_label->SetMinSize(wxSize(FromDIP(500), -1));
     pat_err_label->SetMaxSize(wxSize(FromDIP(500), -1));
     pat_err_label->Wrap(FromDIP(500));
-    pat_err_label->SetForegroundColour(wxColour("#FC8800"));
+    pat_err_label->SetForegroundColour(ThemeColor::Warning);
     pat_err_label->Hide(); // Hide error label by default
     
     // Links at the bottom
@@ -985,6 +1047,7 @@ void HelioStatementDialog::show_legal_page()
     current_page = 0;
     SetBackgroundColour(HELIO_BG_BASE);
     SetTitle(_L("Legal & Activation Terms"));
+    SetHeaderTitle(_L("Legal & Activation Terms"));
     page_legal_panel->Show();
     page_pat_panel->Hide();
     // m_button_confirm is now part of page_legal_panel, so it's shown/hidden with the panel
@@ -998,6 +1061,7 @@ void HelioStatementDialog::show_pat_page()
     current_page = 1;
     SetBackgroundColour(HELIO_BG_BASE);
     SetTitle(_L("Activation Successful"));
+    SetHeaderTitle(_L("Activation Successful"));
     page_legal_panel->Hide();
     page_pat_panel->Show();
     // m_button_confirm is part of page_legal_panel, hidden with the panel
@@ -1146,32 +1210,27 @@ static constexpr int LIMITS_DROPDOWN_WIDTH = 350;
 // Width chosen to accommodate "Preserve Surface Finish" text in dropdown
 static constexpr int PRINT_PRIORITY_DROPDOWN_WIDTH = 200;
 
+// Intentionally NOT routed through MD3 tokens. This is the Helio Additive brand
+// component's theme-decision point: the dark branch is the fixed Helio brand
+// identity (see palette note at top of file), while the light branch integrates
+// with the host OS via wxSystemSettings rather than the BambuStudio MD3 palette.
+// The purple/blue accents are brand/data colors (simulation/optimization) and
+// are carried across both modes. Migrating only the two light-mode greys to MD3
+// would clash with the surrounding system colours, so they are left as-is.
 HelioInputDialogTheme HelioInputDialog::get_theme() const
 {
+    // Pinned to the Helio dark palette: the dialog rides the forced-dark MD3
+    // shell, so the body keeps the always-dark HELIO_* brand surface (EXEMPT)
+    // regardless of the app's light/dark theme, matching HelioStatementDialog.
     HelioInputDialogTheme theme;
-    bool is_dark = wxGetApp().dark_mode();
-    
-    if (is_dark) {
-        // Helio dark palette
-        theme.bg = HELIO_BG_BASE;              // #07090C
-        theme.card = HELIO_CARD_BG;           // #0E1320
-        theme.card2 = HELIO_CARD_BG;           // #0E1320
-        theme.border = HELIO_BORDER;           // rgba(255,255,255,0.10)
-        theme.text = HELIO_TEXT;               // #EEF2FF
-        theme.muted = HELIO_MUTED;              // #A8B0C0
-        theme.purple = HELIO_PURPLE;           // #AF7CFF
-        theme.blue = HELIO_BLUE;                // #4F86FF
-    } else {
-        // Light mode palette
-        theme.bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-        theme.card = wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
-        theme.card2 = *wxWHITE;  // White for input fields to ensure clear contrast
-        theme.border = wxColour(0, 0, 0, 25);   // Subtle dark border
-        theme.text = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
-        theme.muted = wxColour(100, 100, 100);  // Gray for muted text
-        theme.purple = HELIO_PURPLE;           // Keep accent colors
-        theme.blue = HELIO_BLUE;
-    }
+    theme.bg = HELIO_BG_BASE;              // #07090C
+    theme.card = HELIO_CARD_BG;           // #0E1320
+    theme.card2 = HELIO_CARD_BG;           // #0E1320
+    theme.border = HELIO_BORDER;           // rgba(255,255,255,0.10)
+    theme.text = HELIO_TEXT;               // #EEF2FF
+    theme.muted = HELIO_MUTED;              // #A8B0C0
+    theme.purple = HELIO_PURPLE;           // #AF7CFF
+    theme.blue = HELIO_BLUE;                // #4F86FF
     return theme;
 }
 
@@ -1432,7 +1491,11 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
 }
 
  HelioInputDialog::HelioInputDialog(wxWindow *parent /*= nullptr*/, const std::string& material_id /*= ""*/)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, wxString("Helio Additive"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX),
+    // Forced-dark MD3 shell; the shell header (icon tile + title + circular
+    // close) replaces both the native caption and the old in-content
+    // "HELIO ADDITIVE" header row. The brand name is not localized.
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), "HELIO ADDITIVE", wxEmptyString,
+                MaterialIcon::Tune, helio_shell_opts()),
       m_material_id(material_id)
 {
     shared_ptr = std::make_shared<int>(0);
@@ -1449,64 +1512,19 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     icon.CopyFromBitmap(bmp);
     SetIcon(icon);
 
+    // The shell paints its own dark SurfaceContainer; override with the exact
+    // HELIO_* brand surface (EXEMPT), like HelioStatementDialog.
     SetBackgroundColour(theme.bg);
-    SetMinSize(wxSize(FromDIP(520), -1));
-    SetMaxSize(wxSize(FromDIP(520), -1));
+    // Widened by the shell's 24px body padding per side (520 + 2*24) so the
+    // interior content keeps its original 520px working width.
+    SetMinSize(wxSize(FromDIP(568), -1));
+    SetMaxSize(wxSize(FromDIP(568), -1));
 
     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
-    
-    // Custom in-content header with Helio logo and white title text
-    // (macOS title bar text color cannot be changed programmatically)
-    wxPanel* header_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(44)));
-    header_panel->SetBackgroundColour(theme.bg);
-    wxBoxSizer* header_sizer = new wxBoxSizer(wxHORIZONTAL);
-    
-    // Create header icon - invert colors for light mode so it's visible
-    wxBitmap header_icon_bmp = create_scaled_bitmap("helio_icon", header_panel, 24);
-    if (!wxGetApp().dark_mode()) {
-        // In light mode, convert to greyscale and invert to make it dark
-        wxImage icon_img = header_icon_bmp.ConvertToImage();
-        if (icon_img.IsOk()) {
-            int target_size = FromDIP(24);
-            // Ensure image stays at the correct size
-            if (icon_img.GetWidth() != target_size || icon_img.GetHeight() != target_size) {
-                icon_img.Rescale(target_size, target_size, wxIMAGE_QUALITY_HIGH);
-            }
-            unsigned char* data = icon_img.GetData();
-            if (data) {
-                const size_t len = static_cast<size_t>(icon_img.GetWidth()) * static_cast<size_t>(icon_img.GetHeight()) * 3;
-                for (size_t i = 0; i < len; i += 3) {
-                    // Convert to greyscale, then invert
-                    unsigned char grey = static_cast<unsigned char>((data[i] + data[i+1] + data[i+2]) / 3);
-                    unsigned char inverted = 255 - grey;
-                    data[i] = inverted;     // R
-                    data[i+1] = inverted;   // G
-                    data[i+2] = inverted;    // B
-                }
-                header_icon_bmp = wxBitmap(icon_img);
-            }
-        }
-    }
-    wxStaticBitmap* header_icon = new wxStaticBitmap(header_panel, wxID_ANY, 
-        header_icon_bmp, 
-        wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    
-    wxStaticText* header_title = new wxStaticText(header_panel, wxID_ANY, "HELIO ADDITIVE");
-    // Ensure text is visible in both light and dark modes
-    wxColour header_text_color = wxGetApp().dark_mode() ? theme.text : wxColour(0, 0, 0);  // Black in light mode, theme text in dark mode
-    header_title->SetForegroundColour(header_text_color);
-    wxFont header_font = header_title->GetFont();
-    header_font.SetPointSize(12);
-    header_font.SetWeight(wxFONTWEIGHT_SEMIBOLD);
-    header_title->SetFont(header_font);
-    
-    header_sizer->Add(header_icon, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(20));
-    header_sizer->Add(header_title, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
-    header_sizer->AddStretchSpacer();
-    header_panel->SetSizer(header_sizer);
-    
-    main_sizer->Add(header_panel, 0, wxEXPAND, 0);
-    
+
+    // The old in-content "HELIO ADDITIVE" header row (helio icon + label) is
+    // replaced by the MD3 shell header built in the base ctor.
+
     wxPanel *line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
     line->SetBackgroundColour(theme.border);
 
@@ -1843,33 +1861,22 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     StateColor btn_buy_border;
     StateColor btn_buy_text;
     
-    if (wxGetApp().dark_mode()) {
-        // Dark mode: purple fill on hover, white icon always visible
-        btn_buy_bg_outlined = StateColor(std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Hovered), 
-                                         std::pair<wxColour, int>(theme.card2, StateColor::Normal),
-                                         std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Pressed));
-        btn_buy_text = StateColor(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
-                                  std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Normal));
-    } else {
-        // Light mode: light purple tint on hover so purple icon stays visible
-        btn_buy_bg_outlined = StateColor(std::pair<wxColour, int>(wxColour(235, 220, 255), StateColor::Hovered), 
-                                         std::pair<wxColour, int>(theme.card2, StateColor::Normal),
-                                         std::pair<wxColour, int>(wxColour(220, 200, 255), StateColor::Pressed));
-        btn_buy_text = StateColor(std::pair<wxColour, int>(wxColour(130, 80, 200), StateColor::Hovered),
-                                  std::pair<wxColour, int>(wxColour(130, 80, 200), StateColor::Pressed),
-                                  std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Normal));
-    }
+    // Always-dark Helio surface: purple fill on hover, white icon always visible.
+    btn_buy_bg_outlined = StateColor(std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Hovered),
+                                     std::pair<wxColour, int>(theme.card2, StateColor::Normal),
+                                     std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Pressed));
+    btn_buy_text = StateColor(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
+                              std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
+                              std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Normal));
     btn_buy_border = StateColor(std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Normal));
-    
-    buy_now_button = new Button(card_account_status, _L("Plans / Upgrades"), wxGetApp().dark_mode() ? "topbar_store" : "topbar_store_dark", 0, 16);
-    buy_now_button->SetBackgroundColor(btn_buy_bg_outlined);
-    buy_now_button->SetBorderColor(btn_buy_border);
-    buy_now_button->SetTextColor(btn_buy_text);
+
+    buy_now_button = new Button(card_account_status, _L("Plans / Upgrades"), "topbar_store", 0, 16);
+    buy_now_button->SetVariant(Button::Variant::Outlined);
     buy_now_button->SetFont(Label::Body_13);
     buy_now_button->SetSize(wxSize(-1, FromDIP(28)));
     buy_now_button->SetMinSize(wxSize(-1, FromDIP(28)));
-    buy_now_button->SetCornerRadius(FromDIP(12));
+    // Kit pill geometry (actions/Button.jsx): radius = height / 2.
+    buy_now_button->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(28)));
     buy_now_button->SetToolTip(_L("Loading..."));
     buy_now_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         std::string helio_api_key = Slic3r::HelioQuery::get_helio_pat();
@@ -2087,11 +2094,14 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     last_tid_label = new Label(last_tid_panel, wxEmptyString);
     last_tid_label->SetBackgroundColour(theme.bg);
     last_tid_label->SetForegroundColour(theme.muted);
-    wxStaticBitmap* helio_tid_copy = new wxStaticBitmap(last_tid_panel, wxID_ANY, create_scaled_bitmap("helio_copy", last_tid_panel, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    Button* helio_tid_copy = new Button(last_tid_panel, "", "", 0, 0);
+    helio_tid_copy->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    helio_tid_copy->SetGlyph(MaterialIcon::ContentCopy, FromDIP(20));
+    helio_tid_copy->SetToolTip(_L("Copy"));
     helio_tid_copy->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     helio_tid_copy->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
 
-    helio_tid_copy->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
+    helio_tid_copy->Bind(wxEVT_BUTTON, [this](auto& e) {
         if (wxTheClipboard->Open()) {
             wxTheClipboard->Clear();
             wxTextDataObject* dataObj = new wxTextDataObject(last_tid_label->GetLabel());
@@ -2143,11 +2153,12 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
                           std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Focused),
                           std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
                           std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    m_button_confirm->SetTextColor(white_text);
+    m_button_confirm->SetVariant(Button::Variant::Filled);
     m_button_confirm->SetFont(Label::Head_14);
     m_button_confirm->SetSize(wxSize(-1, FromDIP(56))); // Large CTA button
     m_button_confirm->SetMinSize(wxSize(-1, FromDIP(56)));
-    m_button_confirm->SetCornerRadius(FromDIP(16));
+    // Kit pill geometry (actions/Button.jsx): radius = height / 2.
+    m_button_confirm->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(56)));
     m_button_confirm->SetToolTip(_L("Enhancement will only take a few minutes to complete, depending on the size of your object. (A lot of compute is happening in the background) (Formerly referred to as 'Optimize' or 'Optimization')"));
     m_button_confirm->Bind(wxEVT_LEFT_DOWN, &HelioInputDialog::on_confirm, this);
     m_button_confirm->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
@@ -2172,7 +2183,8 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
 
     update_action(1); // Default to Optimizations tab
 
-    SetSizer(main_sizer);
+    // Body lives in the kit content sizer (the shell owns header/footer).
+    GetContentSizer()->Add(main_sizer, 1, wxEXPAND, 0);
     Layout();
     Fit();
 
@@ -2188,6 +2200,7 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
         }
     }
     wxGetApp().UpdateDlgDarkUI(this);
+    UpdateShape();
 
     /*set buy url - this is safe after main setup since it just updates an existing link*/
     std::string helio_api_key = Slic3r::HelioQuery::get_helio_pat();
@@ -2233,7 +2246,7 @@ void HelioInputDialog::update_action(int action)
                               std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Focused),
                               std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
                               std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-        m_button_confirm->SetTextColor(white_text);
+        m_button_confirm->SetVariant(Button::Variant::Filled);
         m_button_confirm->SetLabel(_L("Assess"));
         m_button_confirm->SetToolTip(_L("Assessment will only take a few minutes to complete, depending on the size of your object. (A lot of compute is happening in the background) (Formerly referred to as 'Simulate' or 'Simulation')"));
         m_button_confirm->Layout();
@@ -2275,7 +2288,7 @@ void HelioInputDialog::update_action(int action)
                               std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Focused),
                               std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
                               std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-        m_button_confirm->SetTextColor(white_text);
+        m_button_confirm->SetVariant(Button::Variant::Filled);
         m_button_confirm->SetLabel(_L("Enhance"));
         m_button_confirm->SetToolTip(_L("Enhancement will only take a few minutes to complete, depending on the size of your object. (A lot of compute is happening in the background) (Formerly referred to as 'Optimize' or 'Optimization')"));
         m_button_confirm->Layout();
@@ -3044,10 +3057,15 @@ HelioInputDialog::~HelioInputDialog()
 
 void HelioInputDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
+    // Shell chrome (header tile, shape) re-derives its FromDIP metrics.
+    MD3Dialog::on_dpi_changed(suggested_rect);
 }
 
 HelioPatNotEnoughDialog::HelioPatNotEnoughDialog(wxWindow* parent /*= nullptr*/)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, wxString("Helio Additive"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    // Forced-dark MD3 shell replaces the native caption; the brand name is not
+    // localized.
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), "Helio Additive", wxEmptyString,
+                MaterialIcon::Warning, helio_shell_opts())
 {
     // Set Helio icon (not BambuStudio icon)
     wxBitmap bmp = create_scaled_bitmap("helio_icon", this, 32);
@@ -3079,25 +3097,20 @@ HelioPatNotEnoughDialog::HelioPatNotEnoughDialog(wxWindow* parent /*= nullptr*/)
     helio_wiki_link->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     helio_wiki_link->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
+    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
         std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
 
 
-    auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
     auto m_button_ok = new Button(this, _L("Confirm"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
     // White text for all states
-    StateColor white_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    m_button_ok->SetTextColor(white_text);
+    StateColor white_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    m_button_ok->SetVariant(Button::Variant::Filled);
     m_button_ok->SetFont(Label::Body_12);
     m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetCornerRadius(FromDIP(12));
-
-    sizer_button->AddStretchSpacer();
-    sizer_button->Add(m_button_ok, 0, wxALL, FromDIP(5));
+    // Kit pill geometry (actions/Button.jsx): radius = height / 2.
+    m_button_ok->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(24)));
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_OK);
@@ -3109,9 +3122,10 @@ HelioPatNotEnoughDialog::HelioPatNotEnoughDialog(wxWindow* parent /*= nullptr*/)
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
     main_sizer->Add(helio_wiki_link, 0, wxLEFT|wxRIGHT, FromDIP(30));
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(15));
-    main_sizer->Add(sizer_button, 0, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(30));
 
-    SetSizer(main_sizer);
+    // Body in the kit content sizer; the Confirm action is a kit footer Button.
+    GetContentSizer()->Add(main_sizer, 1, wxEXPAND, 0);
+    AddFooterButton(m_button_ok);
     Layout();
     Fit();
     {
@@ -3125,17 +3139,23 @@ HelioPatNotEnoughDialog::HelioPatNotEnoughDialog(wxWindow* parent /*= nullptr*/)
             SetPosition(wxPoint(x, y));
         }
     }
+    UpdateShape();
 }
 
 HelioPatNotEnoughDialog::~HelioPatNotEnoughDialog() {}
 
 void HelioPatNotEnoughDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
-
+    // Shell chrome (header tile, shape) re-derives its FromDIP metrics.
+    MD3Dialog::on_dpi_changed(suggested_rect);
 }
 
 HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimized, std::string mean_impro, std::string std_impro)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, wxString("Helio Additive"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    // Forced-dark MD3 shell; the shell header replaces both the native caption
+    // and the old always-dark "HELIO ADDITIVE" brand banner. The brand name is
+    // not localized.
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), "HELIO ADDITIVE", wxEmptyString,
+                MaterialIcon::Star, helio_shell_opts())
 {
     original_time = original;       
     optimized_time = optimized; 
@@ -3150,45 +3170,19 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     icon.CopyFromBitmap(bmp);
     SetIcon(icon);
 
-    // Theme colors based on light/dark mode
-    bool is_dark = wxGetApp().dark_mode();
-    wxColour bg_color = is_dark ? HELIO_BG_BASE : wxColour(255, 255, 254);
-    // Header banner always stays dark for Helio branding
-    wxColour header_bg = wxColour(16, 16, 16);
-    wxColour header_text = wxColour("#FEFEFF");
-    wxColour label_color = is_dark ? wxColour(144, 144, 144) : wxColour(107, 107, 107);
-    wxColour value_color = wxColour(106, 174, 89);  // Green accent works in both modes
-    wxColour line_color = is_dark ? wxColour(166, 169, 170) : wxColour(220, 220, 220);
-    
+    // Pinned to the Helio always-dark brand palette (EXEMPT): the dialog rides
+    // the forced-dark MD3 shell, and the shell header replaces the old brand
+    // banner, so the body no longer follows the app light/dark theme.
+    wxColour bg_color = HELIO_BG_BASE;
+    wxColour label_color = wxColour(144, 144, 144);
+    wxColour value_color = wxColour(106, 174, 89);  // Green accent (data)
+    wxColour line_color = wxColour(166, 169, 170);
+
     SetBackgroundColour(bg_color);
 
     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 
 
-    wxBoxSizer *helio_top_hsizer        = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer *helio_top_vsizer        = new wxBoxSizer(wxVERTICAL);
-    wxBoxSizer *helio_top_content_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-    auto helio_top_background = new wxPanel(this);
-    helio_top_background->SetBackgroundColour(header_bg);
-    helio_top_background->SetMinSize(wxSize(-1, FromDIP(70)));
-    helio_top_background->SetMaxSize(wxSize(-1, FromDIP(70)));
-    auto   helio_top_icon  = new wxStaticBitmap(helio_top_background, wxID_ANY, create_scaled_bitmap("helio_icon", helio_top_background, 32), wxDefaultPosition,
-                                             wxSize(FromDIP(32), FromDIP(32)), 0);
-    auto   helio_top_label = new Label(helio_top_background, Label::Body_16, L("HELIO ADDITIVE"));
-    wxFont bold_font       = helio_top_label->GetFont();
-    bold_font.SetWeight(wxFONTWEIGHT_BOLD);
-    helio_top_label->SetFont(bold_font);
-    helio_top_label->SetForegroundColour(header_text);
-    // helio_top_hsizer->Add(0, 0, wxLEFT, FromDIP(40));
-    helio_top_content_sizer->Add(helio_top_icon, 0, wxLEFT | wxALIGN_CENTER, FromDIP(45));
-    helio_top_content_sizer->Add(helio_top_label, 0, wxLEFT | wxALIGN_CENTER, FromDIP(8));
-    helio_top_vsizer->Add(helio_top_content_sizer, 0, wxALIGN_CENTER, 0);
-    helio_top_hsizer->Add(helio_top_vsizer, 0, wxALIGN_CENTER, 0);
-    helio_top_background->SetSizer(helio_top_hsizer);
-    helio_top_background->Layout();
-
-    
     wxBoxSizer *time_impro = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *average_impro = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *consistency_impro = new wxBoxSizer(wxHORIZONTAL);
@@ -3290,11 +3284,11 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     wxBoxSizer *sizer_rating = new wxBoxSizer(wxHORIZONTAL);
     std::vector<wxStaticBitmap *> stars;
     // score_star_dark = grey/unselected, score_star_light = yellow/selected
-    auto rating_star1 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    auto rating_star2 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    auto rating_star3 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    auto rating_star4 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
-    auto rating_star5 = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("score_star_dark", this, 24), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star1 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star2 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star3 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star4 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
+    auto rating_star5 = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Star, 24, StateColor::semantic(MD3::Role::OutlineVariant)), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)), 0);
 
     stars.push_back(rating_star1);
     stars.push_back(rating_star2);
@@ -3324,34 +3318,34 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     sizer_rating->Add(rating_star4, 0, wxLEFT, FromDIP(10));
     sizer_rating->Add(rating_star5, 0, wxLEFT, FromDIP(10));
 
-    wxStaticBitmap* save_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("save", this, 24), wxDefaultPosition,
-        wxSize(FromDIP(24), FromDIP(24)));
+    Button* save_icon = new Button(this, "", "", 0, 0);
+    save_icon->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    save_icon->SetGlyph(MaterialIcon::Save, FromDIP(20));
     save_icon->SetToolTip(_L("Save the enhanced gcode locally"));
 
     save_icon->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     save_icon->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
-    save_icon->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
+    save_icon->Bind(wxEVT_BUTTON, [this](wxCommandEvent& e) {
         wxPostEvent(wxGetApp().plater(), SimpleEvent(EVT_GLTOOLBAR_EXPORT_SLICED_FILE));
     });
 
     // Print Plate button - primary action with green styling
     StateColor btn_bg_green = StateColor(
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
     auto m_button_print_plate = new Button(this, _L("Print Plate"));
-    m_button_print_plate->SetBackgroundColor(btn_bg_green);
-    m_button_print_plate->SetBorderColor(wxColour(0, 174, 66));
-    StateColor white_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
-                          std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    m_button_print_plate->SetTextColor(white_text);
-    m_button_print_plate->SetTextColorNormal(wxColour(255, 255, 254));
+    m_button_print_plate->SetVariant(Button::Variant::Filled);
+    StateColor white_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Hovered),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Pressed),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                          std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    m_button_print_plate->SetVariant(Button::Variant::Filled);
     m_button_print_plate->SetFont(Label::Body_12);
     m_button_print_plate->SetSize(wxSize(FromDIP(100), FromDIP(24)));
     m_button_print_plate->SetMinSize(wxSize(FromDIP(100), FromDIP(24)));
-    m_button_print_plate->SetCornerRadius(FromDIP(12));
+    // Kit pill geometry (actions/Button.jsx): radius = height / 2.
+    m_button_print_plate->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(24)));
     m_button_print_plate->SetToolTip(_L("Print the enhanced part immediately"));
     m_button_print_plate->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_OK);
@@ -3363,20 +3357,16 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     m_button_print_plate->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
 
     auto m_button_view_details = new Button(this, _L("View Details"));
-    // Use theme-aware colors for secondary button (matches simulation dialog)
-    if (is_dark) {
-        m_button_view_details->SetBackgroundColor(StateColor(std::pair<wxColour, int>(HELIO_CARD_BG, StateColor::Normal)));
-        m_button_view_details->SetBorderColor(HELIO_TEXT);
-        m_button_view_details->SetTextColor(HELIO_TEXT);
-    } else {
-        m_button_view_details->SetBackgroundColor(StateColor(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal)));
-        m_button_view_details->SetBorderColor(wxColour(208, 208, 208));
-        m_button_view_details->SetTextColor(wxColour(50, 50, 50));
-    }
+    // Always-dark Helio surface: dark secondary-button colours pinned
+    // (matches simulation dialog).
+    m_button_view_details->SetBackgroundColor(StateColor(std::pair<wxColour, int>(HELIO_CARD_BG, StateColor::Normal)));
+    m_button_view_details->SetBorderColor(HELIO_TEXT);
+    m_button_view_details->SetTextColor(HELIO_TEXT);
     m_button_view_details->SetFont(Label::Body_12);
     m_button_view_details->SetSize(wxSize(FromDIP(100), FromDIP(24)));
     m_button_view_details->SetMinSize(wxSize(FromDIP(100), FromDIP(24)));
-    m_button_view_details->SetCornerRadius(FromDIP(12));
+    // Kit pill geometry (actions/Button.jsx): radius = height / 2.
+    m_button_view_details->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(24)));
     m_button_view_details->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
         EndModal(wxID_CLOSE);
         // Switch to the Preview panel to show details
@@ -3387,15 +3377,12 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     m_button_view_details->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     m_button_view_details->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
 
+    // Rating stars + save icon stay in the body row; the Print Plate /
+    // View Details actions become kit footer Buttons (added below).
     sizer_bottom->Add(sizer_rating, 0, wxLEFT|wxALIGN_CENTER, 0);
     sizer_bottom->Add( 0, 0, 1, wxEXPAND, 0 );
     sizer_bottom->Add(save_icon, 0, wxLEFT|wxALIGN_CENTER, 0);
-    sizer_bottom->Add(0, 0, 0, wxLEFT, FromDIP(14));
-    sizer_bottom->Add(m_button_print_plate, 0, wxLEFT|wxALIGN_CENTER, 0);
-    sizer_bottom->Add(0, 0, 0, wxLEFT, FromDIP(10));
-    sizer_bottom->Add(m_button_view_details, 0, wxLEFT|wxALIGN_CENTER, 0);
-    
-    main_sizer->Add(helio_top_background, 0, wxEXPAND, 0);
+
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(26));
     main_sizer->Add(time_impro, 0, wxLEFT | wxRIGHT, FromDIP(40));
     main_sizer->Add(0, 0, 0,wxTOP, FromDIP(14));
@@ -3412,7 +3399,11 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     main_sizer->Add(sizer_bottom, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(40));
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(23));
 
-    SetSizer(main_sizer);
+    // Body in the kit content sizer; dialog actions in the kit footer
+    // (secondary first is not needed here — original left-to-right order kept).
+    GetContentSizer()->Add(main_sizer, 1, wxEXPAND, 0);
+    AddFooterButton(m_button_print_plate);
+    AddFooterButton(m_button_view_details);
     Layout();
     Fit();
     {
@@ -3426,6 +3417,7 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
             SetPosition(wxPoint(x, y));
         }
     }
+    UpdateShape();
 }
 
 void HelioRatingDialog::show_rating(std::vector<wxStaticBitmap *> stars, int rating)
@@ -3450,36 +3442,26 @@ wxString HelioRatingDialog::format_improvement(wxString imp)
     return _L("Medium");
 } 
 
-void HelioRatingDialog::on_dpi_changed(const wxRect &suggested_rect) 
+void HelioRatingDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
+    // Shell chrome (header tile, shape) re-derives its FromDIP metrics.
+    MD3Dialog::on_dpi_changed(suggested_rect);
 }
 
 HelioInputDialogTheme HelioSimulationResultsDialog::get_theme() const
 {
+    // Pinned to the Helio dark palette: the dialog rides the forced-dark MD3
+    // shell, so the body keeps the always-dark HELIO_* brand surface (EXEMPT)
+    // regardless of the app's light/dark theme, matching HelioStatementDialog.
     HelioInputDialogTheme theme;
-    bool is_dark = wxGetApp().dark_mode();
-    
-    if (is_dark) {
-        // Helio dark palette
-        theme.bg = HELIO_BG_BASE;
-        theme.card = HELIO_CARD_BG;
-        theme.card2 = HELIO_CARD_BG;
-        theme.border = HELIO_BORDER;
-        theme.text = HELIO_TEXT;
-        theme.muted = HELIO_MUTED;
-        theme.purple = HELIO_PURPLE;
-        theme.blue = HELIO_BLUE;
-    } else {
-        // Light mode palette
-        theme.bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-        theme.card = wxSystemSettings::GetColour(wxSYS_COLOUR_3DLIGHT);
-        theme.card2 = *wxWHITE;  // White for input fields to ensure clear contrast
-        theme.border = wxColour(0, 0, 0, 25);
-        theme.text = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
-        theme.muted = wxColour(100, 100, 100);
-        theme.purple = HELIO_PURPLE;
-        theme.blue = HELIO_BLUE;
-    }
+    theme.bg = HELIO_BG_BASE;
+    theme.card = HELIO_CARD_BG;
+    theme.card2 = HELIO_CARD_BG;
+    theme.border = HELIO_BORDER;
+    theme.text = HELIO_TEXT;
+    theme.muted = HELIO_MUTED;
+    theme.purple = HELIO_PURPLE;
+    theme.blue = HELIO_BLUE;
     return theme;
 }
 
@@ -3487,7 +3469,11 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
                                                              HelioQuery::SimulationResult simulation,
                                                              int original_print_time_seconds,
                                                              const std::vector<std::pair<ExtrusionRole, float>>& roles_times)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, wxString("Helio Additive"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    // Forced-dark MD3 shell; the shell header replaces both the native caption
+    // and the old always-dark "HELIO ADDITIVE" brand banner. The brand name is
+    // not localized.
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), "HELIO ADDITIVE", wxEmptyString,
+                MaterialIcon::Insights, helio_shell_opts())
 {
     m_simulation = simulation;
     m_original_print_time_seconds = original_print_time_seconds;
@@ -3507,28 +3493,8 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
 
     wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
 
-    // Header with Helio logo (always dark for branding)
-    wxBoxSizer *helio_top_hsizer = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer *helio_top_vsizer = new wxBoxSizer(wxVERTICAL);
-    wxBoxSizer *helio_top_content_sizer = new wxBoxSizer(wxHORIZONTAL);
-
-    auto helio_top_background = new wxPanel(this);
-    helio_top_background->SetBackgroundColour(wxColour(16, 16, 16));
-    helio_top_background->SetMinSize(wxSize(-1, FromDIP(70)));
-    helio_top_background->SetMaxSize(wxSize(-1, FromDIP(70)));
-    auto helio_top_icon = new wxStaticBitmap(helio_top_background, wxID_ANY, create_scaled_bitmap("helio_icon", helio_top_background, 32), wxDefaultPosition,
-                                             wxSize(FromDIP(32), FromDIP(32)), 0);
-    auto helio_top_label = new Label(helio_top_background, Label::Body_16, L("HELIO ADDITIVE"));
-    wxFont bold_font = helio_top_label->GetFont();
-    bold_font.SetWeight(wxFONTWEIGHT_BOLD);
-    helio_top_label->SetFont(bold_font);
-    helio_top_label->SetForegroundColour(wxColour("#FEFEFF"));
-    helio_top_content_sizer->Add(helio_top_icon, 0, wxLEFT | wxALIGN_CENTER, FromDIP(45));
-    helio_top_content_sizer->Add(helio_top_label, 0, wxLEFT | wxALIGN_CENTER, FromDIP(8));
-    helio_top_vsizer->Add(helio_top_content_sizer, 0, wxALIGN_CENTER, 0);
-    helio_top_hsizer->Add(helio_top_vsizer, 0, wxALIGN_CENTER, 0);
-    helio_top_background->SetSizer(helio_top_hsizer);
-    helio_top_background->Layout();
+    // The old always-dark "HELIO ADDITIVE" brand banner is replaced by the MD3
+    // shell header built in the base ctor.
 
     // Title section
     auto title = new Label(this, Label::Head_20, _L("Verify Print Success Results"));
@@ -3723,20 +3689,15 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
 
     // View Details button (in summary section)
     m_button_view_details = new Button(this, _L("View Details"));
-    // Use theme-aware colors for secondary button
-    if (wxGetApp().dark_mode()) {
-        m_button_view_details->SetBackgroundColor(StateColor(std::pair<wxColour, int>(theme.card, StateColor::Normal)));
-        m_button_view_details->SetBorderColor(theme.text);
-        m_button_view_details->SetTextColor(theme.text);
-    } else {
-        m_button_view_details->SetBackgroundColor(StateColor(std::pair<wxColour, int>(*wxWHITE, StateColor::Normal)));
-        m_button_view_details->SetBorderColor(wxColour(208, 208, 208));
-        m_button_view_details->SetTextColor(theme.text);
-    }
+    // Always-dark Helio surface: dark secondary-button colours pinned.
+    m_button_view_details->SetBackgroundColor(StateColor(std::pair<wxColour, int>(theme.card, StateColor::Normal)));
+    m_button_view_details->SetBorderColor(theme.text);
+    m_button_view_details->SetTextColor(theme.text);
     m_button_view_details->SetFont(Label::Body_12);
     m_button_view_details->SetSize(wxSize(FromDIP(100), FromDIP(28)));
     m_button_view_details->SetMinSize(wxSize(FromDIP(100), FromDIP(28)));
-    m_button_view_details->SetCornerRadius(FromDIP(6));
+    // Kit pill geometry (actions/Button.jsx): radius = height / 2.
+    m_button_view_details->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(28)));
     m_button_view_details->Bind(wxEVT_LEFT_DOWN, &HelioSimulationResultsDialog::on_view_details, this);
     m_button_view_details->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     m_button_view_details->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
@@ -3769,10 +3730,8 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
         optimization_block_sizer->Add(optimization_value, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(8));
     }
 
-    // Enhance Speed & Quality button (right-aligned)
-    wxBoxSizer *sizer_actions = new wxBoxSizer(wxHORIZONTAL);
-
-    StateColor btn_bg_purple(std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Enabled), 
+    // Enhance Speed & Quality button (kit footer Button, right-aligned there)
+    StateColor btn_bg_purple(std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Enabled),
                              std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Disabled), 
                              std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Pressed), 
                              std::pair<wxColour, int>(wxColour(175, 124, 255), StateColor::Hovered),
@@ -3780,41 +3739,38 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
 
     m_button_enhance = new Button(this, wxEmptyString);
     m_button_enhance->SetLabel(_L("Enhance Speed & Quality"));
-    m_button_enhance->SetBackgroundColor(btn_bg_purple);
-    m_button_enhance->SetBorderColor(*wxWHITE);
+    m_button_enhance->SetVariant(Button::Variant::Filled);
     // White text for all states (use 254 to avoid dark mode remapping)
     StateColor enhance_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
                                 std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    m_button_enhance->SetTextColor(enhance_btn_text);
+    m_button_enhance->SetVariant(Button::Variant::Filled);
     m_button_enhance->SetFont(Label::Body_12);
     m_button_enhance->SetSize(wxSize(FromDIP(200), FromDIP(40)));
     m_button_enhance->SetMinSize(wxSize(FromDIP(200), FromDIP(40)));
-    m_button_enhance->SetCornerRadius(FromDIP(12));
+    // Kit pill geometry (actions/Button.jsx): radius = height / 2.
+    m_button_enhance->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(40)));
     m_button_enhance->SetToolTip(_L("Applies Helio's optimized speed/flow/fan strategy."));
     m_button_enhance->Bind(wxEVT_LEFT_DOWN, &HelioSimulationResultsDialog::on_enhance_speed_quality, this);
     m_button_enhance->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     m_button_enhance->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
-    wxStaticBitmap* save_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("save", this, 24), wxDefaultPosition,
-        wxSize(FromDIP(24), FromDIP(24)));
+    // Kit icon Button (Save glyph) instead of a click-bound static bitmap: focusable,
+    // named for assistive technology, drawn from the Material Symbols face.
+    Button* save_icon = new Button(this, "", "", 0, 0);
+    save_icon->SetIconButton(Button::IconShape::Square, FromDIP(28));
+    save_icon->SetGlyph(MaterialIcon::Save, FromDIP(20));
     save_icon->SetToolTip(_L("Save the simulated sliced 3MF locally"));
+    save_icon->SetName(_L("Save the simulated sliced 3MF locally"));
     save_icon->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     save_icon->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
-    save_icon->Bind(wxEVT_LEFT_DOWN, [](wxMouseEvent& e) {
+    save_icon->Bind(wxEVT_BUTTON, [](wxCommandEvent& e) {
         wxPostEvent(wxGetApp().plater(), SimpleEvent(EVT_GLTOOLBAR_EXPORT_SLICED_FILE));
     });
 
 
-    // Right-align the enhance button
-    sizer_actions->Add(0, 0, 1, wxEXPAND, 0);
-    sizer_actions->Add(save_icon, 0, wxALIGN_CENTER, 0);
-    sizer_actions->Add(0, 0, 0, wxRIGHT, FromDIP(14));
-    sizer_actions->Add(m_button_enhance, 0, wxALIGN_CENTER, 0);
-
     // Layout
-    main_sizer->Add(helio_top_background, 0, wxEXPAND, 0);
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(26));
     main_sizer->Add(title, 0, wxLEFT | wxRIGHT, FromDIP(40));
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(8));
@@ -3842,10 +3798,10 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
         main_sizer->Add(optimization_block_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(40));
         main_sizer->Add(0, 0, 0, wxTOP, FromDIP(12));
     }
-    main_sizer->Add(sizer_actions, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(40));
-    main_sizer->Add(0, 0, 0, wxTOP, FromDIP(23));
 
-    SetSizer(main_sizer);
+    // Body in the kit content sizer; the Enhance CTA is a kit footer Button.
+    GetContentSizer()->Add(main_sizer, 1, wxEXPAND, 0);
+    AddFooterButton(m_button_enhance);
     Layout();
     Fit();
     {
@@ -3859,6 +3815,7 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
             SetPosition(wxPoint(x, y));
         }
     }
+    UpdateShape();
 }
 
 wxString HelioSimulationResultsDialog::get_outcome_text(const HelioQuery::PrintInfo& print_info)
@@ -4243,6 +4200,8 @@ void HelioSimulationResultsDialog::on_view_details(wxMouseEvent& event)
 
 void HelioSimulationResultsDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
+    // Shell chrome (header tile, shape) re-derives its FromDIP metrics.
+    MD3Dialog::on_dpi_changed(suggested_rect);
 }
 
 }} // namespace Slic3r::GUI

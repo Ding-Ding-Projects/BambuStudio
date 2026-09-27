@@ -5,6 +5,7 @@
 #include <wx/html/htmlwin.h>
 
 #include "GUI_Utils.hpp"
+#include "Widgets/Button.hpp"
 #include "wxExtensions.hpp"
 
 namespace Slic3r { 
@@ -17,7 +18,7 @@ class SysInfoDialog : public DPIDialog
     wxHtmlWindow*   m_opengl_info_html;
     wxHtmlWindow*   m_html;
 
-    wxButton*       m_btn_copy_to_clipboard;
+    Button*         m_btn_copy_to_clipboard;
 
 public:
     SysInfoDialog();

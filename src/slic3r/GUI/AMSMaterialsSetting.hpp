@@ -2,6 +2,7 @@
 #define slic3r_AMSMaterialsSetting_hpp_
 
 #include "libslic3r/Preset.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include <optional>
 #include <set>
 #include "wxExtensions.hpp"
@@ -84,7 +85,7 @@ public:
     };
 
     wxWindow* m_evt_target{nullptr};
-    wxStaticBitmap* m_custom_plus;
+    Button* m_custom_plus{nullptr};
     StaticBox* m_custom_cp;
     wxColourData* m_clrData;
     StaticBox* m_def_color_box;
@@ -102,7 +103,7 @@ public:
 public:
     ColorPickerPopup(wxWindow* parent, wxWindow* evt_target);
     ~ColorPickerPopup() {};
-    void on_custom_clr_picker(wxMouseEvent& event);
+    void on_custom_clr_picker(wxCommandEvent& event);
     void relayout_colours();
     void set_ams_colours(const std::vector<ColorItem>& ams);
     void set_preset_colours(const std::vector<ColorItem>& preset_colors);
@@ -271,7 +272,7 @@ protected:
 
     wxPanel *           m_panel_kn;
     wxStaticText*       m_ratio_text;
-    Label*              m_wiki_ctrl;
+    LinkLabel *   m_wiki_ctrl;
     wxStaticText*       m_k_param;
     wxStaticText*       m_n_param;
     bool m_has_initial_filament_weight{ false };

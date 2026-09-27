@@ -1,5 +1,6 @@
 #include "AMSSetting.hpp"
 #include "GUI_App.hpp"
+#include "GUI.hpp"
 #include "I18N.hpp"
 
 #include "slic3r/GUI/DeviceCore/DevExtruderSystem.h"
@@ -11,6 +12,7 @@
 #include "slic3r/GUI/MsgDialog.hpp"
 
 #include "slic3r/GUI/Widgets/AMSItem.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "slic3r/GUI/Widgets/AnimaController.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "slic3r/GUI/Widgets/ComboBox.hpp"
@@ -22,6 +24,8 @@ AMSSetting::AMSSetting(wxWindow *parent, wxWindowID id, const wxPoint &pos, cons
 {
     create();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this, _L("AMS Settings"));
+    Centre(wxBOTH);
 }
 AMSSetting::~AMSSetting() {}
 
@@ -29,25 +33,25 @@ void AMSSetting::create()
 {
     wxBoxSizer *m_sizer_main;
     m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
-    m_static_ams_settings = new wxStaticText(this, wxID_ANY, _L("AMS Settings"), wxDefaultPosition, wxDefaultSize, 0);
+    m_static_ams_settings = new Label(this, _L("AMS Settings"));
     m_static_ams_settings->SetFont(::Label::Head_14);
-    m_static_ams_settings->SetForegroundColour(AMS_SETTING_GREY800);
+    m_static_ams_settings->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
 
     m_panel_body = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), wxTAB_TRAVERSAL);
-    m_panel_body->SetBackgroundColour(*wxWHITE);
+    m_panel_body->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer *m_sizerl_body = new wxBoxSizer(wxVERTICAL);
 
-    m_ams_type = new AMSSettingTypePanel(m_panel_body, this);
+    m_ams_type = new AMSSettingTypePanel(m_panel_body);
     m_ams_type->Show(false);
 
     m_ams_arrange_order = new AMSSettingArrangeAMSOrder(m_panel_body);
     m_ams_arrange_order->Show(false);
 
     m_panel_Insert_material = new wxPanel(m_panel_body, wxID_ANY, wxDefaultPosition, wxSize(-1, -1), wxTAB_TRAVERSAL);
-    m_panel_Insert_material->SetBackgroundColour(*wxWHITE);
+    m_panel_Insert_material->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     wxBoxSizer* m_sizer_main_Insert_material = new wxBoxSizer(wxVERTICAL);
 
     // checkbox area 1
@@ -58,11 +62,10 @@ void AMSSetting::create()
 
     m_sizer_Insert_material->Add(0, 0, 0, wxLEFT, FromDIP(12));
 
-    m_title_Insert_material_auto_read = new wxStaticText(m_panel_Insert_material, wxID_ANY, _L("Insertion update"),
-                                                         wxDefaultPosition, wxDefaultSize, 0);
+    m_title_Insert_material_auto_read = new Label(m_panel_Insert_material, _L("Insertion update"));
 
     m_title_Insert_material_auto_read->SetFont(::Label::Head_13);
-    m_title_Insert_material_auto_read->SetForegroundColour(AMS_SETTING_GREY800);
+    m_title_Insert_material_auto_read->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_Insert_material_auto_read->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_Insert_material->Add(m_title_Insert_material_auto_read, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
 
@@ -75,7 +78,7 @@ void AMSSetting::create()
         _L("The AMS will automatically read the filament information when inserting a new Bambu Lab filament. This takes about 20 seconds.")
     );
     m_tip_Insert_material_line1->SetFont(::Label::Body_13);
-    m_tip_Insert_material_line1->SetForegroundColour(AMS_SETTING_GREY700);
+    m_tip_Insert_material_line1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_Insert_material_line1->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     m_tip_Insert_material_line1->Wrap(AMS_SETTING_BODY_WIDTH);
     m_tip_Insert_material_line1->Hide();
@@ -86,7 +89,7 @@ void AMSSetting::create()
         _L("Note: if a new filament is inserted during  printing, the AMS will not automatically read any information until printing is completed.")
     );
     m_tip_Insert_material_line2->SetFont(::Label::Body_13);
-    m_tip_Insert_material_line2->SetForegroundColour(AMS_SETTING_GREY700);
+    m_tip_Insert_material_line2->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_Insert_material_line2->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     m_tip_Insert_material_line2->Wrap(AMS_SETTING_BODY_WIDTH);
     m_tip_Insert_material_line2->Hide();
@@ -97,7 +100,7 @@ void AMSSetting::create()
         _L("When inserting a new filament, the AMS will not automatically read its information, leaving it blank for you to enter manually.")
     );
     m_tip_Insert_material_line3->SetFont(::Label::Body_13);
-    m_tip_Insert_material_line3->SetForegroundColour(AMS_SETTING_GREY700);
+    m_tip_Insert_material_line3->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_Insert_material_line3->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     m_tip_Insert_material_line3->Wrap(AMS_SETTING_BODY_WIDTH);
     m_tip_Insert_material_line3->Hide();
@@ -115,9 +118,9 @@ void AMSSetting::create()
     m_checkbox_starting_auto_read->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_starting_read, this);
     m_sizer_starting->Add(m_checkbox_starting_auto_read, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_starting->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_starting_auto_read = new wxStaticText(m_panel_body, wxID_ANY, _L("Power on update"), wxDefaultPosition,wxDefaultSize, 0);
+    m_title_starting_auto_read = new Label(m_panel_body, _L("Power on update"));
     m_title_starting_auto_read->SetFont(::Label::Head_13);
-    m_title_starting_auto_read->SetForegroundColour(AMS_SETTING_GREY800);
+    m_title_starting_auto_read->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_starting_auto_read->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_starting->Add(m_title_starting_auto_read, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
 
@@ -131,7 +134,7 @@ void AMSSetting::create()
         _L("The AMS will automatically read the information of inserted filament on start-up. It will take about 1 minute. The reading process will roll filament spools.")
     );
     m_tip_starting_line1->SetFont(::Label::Body_13);
-    m_tip_starting_line1->SetForegroundColour(AMS_SETTING_GREY700);
+    m_tip_starting_line1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_starting_line1->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     m_tip_starting_line1->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_starting_tip_inline->Add(m_tip_starting_line1, 0, wxEXPAND, 0);
@@ -140,7 +143,7 @@ void AMSSetting::create()
         _L("The AMS will not automatically read information from inserted filament during startup and will continue to use the information recorded before the last shutdown.")
     );
     m_tip_starting_line2->SetFont(::Label::Body_13);
-    m_tip_starting_line2->SetForegroundColour(AMS_SETTING_GREY700);
+    m_tip_starting_line2->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_starting_line2->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     m_tip_starting_line2->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_starting_tip_inline->Add(m_tip_starting_line2, 0, wxEXPAND,0);
@@ -152,9 +155,9 @@ void AMSSetting::create()
     m_checkbox_remain->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_remain, this);
     m_sizer_remain->Add(m_checkbox_remain, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_remain->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_remain = new wxStaticText(m_panel_body, wxID_ANY, _L("Update remaining capacity"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_remain = new Label(m_panel_body, _L("Update remaining capacity"));
     m_title_remain->SetFont(::Label::Head_13);
-    m_title_remain->SetForegroundColour(AMS_SETTING_GREY800);
+    m_title_remain->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_remain->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_remain->Add(m_title_remain, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
 
@@ -168,7 +171,7 @@ void AMSSetting::create()
 
     m_tip_remain_line1 = new Label(m_panel_body, _L("AMS will attempt to estimate the remaining capacity of the Bambu Lab filaments."));
     m_tip_remain_line1->SetFont(::Label::Body_13);
-    m_tip_remain_line1->SetForegroundColour(AMS_SETTING_GREY700);
+    m_tip_remain_line1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_remain_line1->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     m_tip_remain_line1->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_remain_inline->Add(m_tip_remain_line1, 0, wxEXPAND, 0);
@@ -180,9 +183,9 @@ void AMSSetting::create()
     m_checkbox_switch_filament->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_switch_filament, this);
     m_sizer_switch_filament->Add(m_checkbox_switch_filament, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_switch_filament->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_switch_filament = new wxStaticText(m_panel_body, wxID_ANY, _L("AMS filament backup"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_switch_filament = new Label(m_panel_body, _L("AMS filament backup"));
     m_title_switch_filament->SetFont(::Label::Head_13);
-    m_title_switch_filament->SetForegroundColour(AMS_SETTING_GREY800);
+    m_title_switch_filament->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_switch_filament->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_switch_filament->Add(m_title_switch_filament, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
 
@@ -198,7 +201,7 @@ void AMSSetting::create()
         _L("AMS will continue to another spool with the same properties of filament automatically when current filament runs out")
     );
     m_tip_switch_filament_line1->SetFont(::Label::Body_13);
-    m_tip_switch_filament_line1->SetForegroundColour(AMS_SETTING_GREY700);
+    m_tip_switch_filament_line1->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_switch_filament_line1->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     m_tip_switch_filament_line1->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_switch_filament_inline->Add(m_tip_switch_filament_line1, 0, wxEXPAND, 0);
@@ -212,9 +215,9 @@ void AMSSetting::create()
     m_checkbox_air_print->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_air_print_detect, this);
     m_sizer_air_print->Add(m_checkbox_air_print, 0, wxTOP, 1);
     m_sizer_air_print->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_air_print = new wxStaticText(m_panel_body, wxID_ANY, _L("Air Printing Detection"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_air_print = new Label(m_panel_body, _L("Air Printing Detection"));
     m_title_air_print->SetFont(::Label::Head_13);
-    m_title_air_print->SetForegroundColour(AMS_SETTING_GREY800);
+    m_title_air_print->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_air_print->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_air_print->Add(m_title_air_print, 1, wxEXPAND, 0);
 
@@ -228,7 +231,7 @@ void AMSSetting::create()
         _L("Detects clogging and filament grinding, halting printing immediately to conserve time and filament.")
     );
     m_tip_air_print_line->SetFont(::Label::Body_13);
-    m_tip_air_print_line->SetForegroundColour(AMS_SETTING_GREY700);
+    m_tip_air_print_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tip_air_print_line->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     m_tip_air_print_line->Wrap(AMS_SETTING_BODY_WIDTH);
     m_sizer_air_print_inline->Add(m_tip_air_print_line, 0, wxEXPAND, 0);
@@ -241,7 +244,7 @@ void AMSSetting::create()
 
     // panel img
     m_panel_img = new wxPanel(m_panel_body, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_panel_img->SetBackgroundColour(AMS_SETTING_GREY200);
+    m_panel_img->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     wxBoxSizer *m_sizer_img = new wxBoxSizer(wxVERTICAL);
     m_am_img = new wxStaticBitmap(m_panel_img, wxID_ANY, create_scaled_bitmap("ams_icon", nullptr, 126), wxDefaultPosition, wxDefaultSize);
     m_sizer_img->Add(m_am_img, 0, wxALIGN_CENTER | wxTOP, 26);
@@ -282,7 +285,6 @@ void AMSSetting::create()
     this->Layout();
     m_sizer_main->Fit(this);
 
-    this->Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
 }
 
@@ -601,8 +603,8 @@ void AMSSetting::on_dpi_changed(const wxRect &suggested_rect)
     }
 }
 
-AMSSettingTypePanel::AMSSettingTypePanel(wxWindow* parent, AMSSetting* setting_dlg)
-    : wxPanel(parent), m_setting_dlg(setting_dlg)
+AMSSettingTypePanel::AMSSettingTypePanel(wxWindow* parent)
+    : wxPanel(parent)
 {
     CreateGui();
 }
@@ -619,14 +621,14 @@ void AMSSettingTypePanel::CreateGui()
     wxBoxSizer* h_sizer = new wxBoxSizer(wxHORIZONTAL);
 
     Label* title = new Label(this, ::Label::Head_13, _L("AMS Type"));
-    title->SetBackgroundColour(*wxWHITE);
+    title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     m_type_combobox = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(240, -1), 0, nullptr, wxCB_READONLY);
-    m_type_combobox->SetMinSize(wxSize(240, -1));
+    m_type_combobox->SetMinSize(FromDIP(wxSize(240, -1)));
     m_type_combobox->Bind(wxEVT_COMBOBOX, &AMSSettingTypePanel::OnAmsTypeChanged, this);
 
     m_switching_tips = new Label(this, ::Label::Body_14);
-    m_switching_tips->SetBackgroundColour(*wxWHITE);
+    m_switching_tips->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_switching_tips->Show(false);
 
     std::vector<std::string> list{ "ams_rfid_1", "ams_rfid_2", "ams_rfid_3", "ams_rfid_4" };
@@ -717,22 +719,15 @@ void AMSSettingTypePanel::OnAmsTypeChanged(wxCommandEvent& event)
     auto obj_ = part->GetFilaSystem()->GetOwner();
     if (obj_) {
         if (obj_->is_in_printing() || obj_->is_in_upgrading())  {
-            MessageDialog dlg(this, _L("The printer is busy and cannot switch AMS type."), SLIC3R_APP_NAME + _L("Info"), wxOK | wxICON_INFORMATION);
-            dlg.ShowModal();
             m_type_combobox->SetSelection(part->GetCurrentFirmwareIdxSel());
+            show_info(this, _L("The printer is busy and cannot switch AMS type."), SLIC3R_APP_NAME + _L("Info"));
             return;
         }
 
         auto ext = obj_->GetExtderSystem()->GetCurrentExtder();
         if (ext && ext->HasFilamentInExt()) {
-            MessageDialog dlg(this, _L("Please unload all filament before switching."), SLIC3R_APP_NAME + _L("Info"), wxOK | wxICON_INFORMATION);
-            dlg.SetButtonLabel(wxID_OK, _L("Confirm"));
-            dlg.ShowModal();
             m_type_combobox->SetSelection(part->GetCurrentFirmwareIdxSel());
-            if (m_setting_dlg) {
-                m_setting_dlg->EndModal(wxID_OK);
-            }
-
+            warning_catcher(this, _L("Please unload all filament before switching."));
             return;
         }
 
@@ -762,24 +757,22 @@ void AMSSettingArrangeAMSOrder::CreateGui()
 
     wxBoxSizer* v_sizer = new wxBoxSizer(wxVERTICAL);
     Label* title = new Label(this, ::Label::Head_13, _L("Arrange AMS Order"));
-    title->SetBackgroundColour(*wxWHITE);
+    title->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     Label* note = new Label(this, ::Label::Head_13, _L("After clicking 'Reconnect', all AMS units will be automatically disconnected.\n"
                                                        "Please reconnect them in the desired order to set a specific AMS ID sequence."));
     note->SetFont(::Label::Body_13);
-    note->SetForegroundColour(AMS_SETTING_GREY700);
-    note->SetBackgroundColour(*wxWHITE);
+    note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     note->SetSize(wxSize(AMS_SETTING_BODY_WIDTH, -1));
     note->Wrap(AMS_SETTING_BODY_WIDTH);
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(AMS_CONTROL_DISABLE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
+                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
     StateColor btn_bd_green(std::pair<wxColour, int>(AMS_CONTROL_WHITE_COLOUR, StateColor::Disabled), std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Enabled));
 
     m_btn_rearrange = new Button(this, _L("Reset"));
-    m_btn_rearrange->SetBackgroundColor(btn_bg_green);
-    m_btn_rearrange->SetBorderColor(btn_bd_green);
-    m_btn_rearrange->SetTextColor(wxColour("#FFFFFE"));
+    m_btn_rearrange->SetVariant(Button::Variant::Filled);
     m_btn_rearrange->SetSize(wxSize(FromDIP(128), FromDIP(26)));
     m_btn_rearrange->SetMinSize(wxSize(-1, FromDIP(26)));
     m_btn_rearrange->SetMaxSize(wxSize(-1, FromDIP(26)));

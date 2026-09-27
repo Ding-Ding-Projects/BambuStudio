@@ -1,4 +1,6 @@
 #include "SLAImportJob.hpp"
+#include "slic3r/GUI/Widgets/ComboBox.hpp"
+#include "slic3r/GUI/Widgets/Button.hpp"
 
 #include "libslic3r/Format/SL1.hpp"
 
@@ -10,6 +12,7 @@
 
 #include "libslic3r/Model.hpp"
 #include "libslic3r/PresetBundle.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
 
 #include <wx/dialog.h>
 #include <wx/stattext.h>
@@ -23,7 +26,7 @@ enum class Sel { modelAndProfile, profileOnly, modelOnly};
 
 class ImportDlg: public wxDialog {
     wxFilePickerCtrl *m_filepicker;
-    wxComboBox *m_import_dropdown, *m_quality_dropdown;
+    ComboBox *m_import_dropdown, *m_quality_dropdown;
 
 public:
     ImportDlg(Plater *plater)
@@ -37,7 +40,7 @@ public:
                                             "SL1 / SL1S archive files (*.sl1, *.sl1s, *.zip)|*.sl1;*.SL1;*.sl1s;*.SL1S;*.zip;*.ZIP",
                                             wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE | wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
-        szfilepck->Add(new wxStaticText(this, wxID_ANY, _L("Import file") + ": "), 0, wxALIGN_CENTER);
+        szfilepck->Add(new Label(this, _L("Import file") + ": "), 0, wxALIGN_CENTER);
         szfilepck->Add(m_filepicker, 1);
         szvert->Add(szfilepck, 0, wxALL | wxEXPAND, 5);
 
@@ -49,12 +52,12 @@ public:
             _(L("Import model only"))
         };
 
-        m_import_dropdown = new wxComboBox(
+        m_import_dropdown = new ComboBox(
             this, wxID_ANY, inp_choices[0], wxDefaultPosition, wxDefaultSize,
             inp_choices.size(), inp_choices.data(), wxCB_READONLY | wxCB_DROPDOWN);
 
         szchoices->Add(m_import_dropdown);
-        szchoices->Add(new wxStaticText(this, wxID_ANY, _L("Quality") + ": "), 0, wxALIGN_CENTER | wxALL, 5);
+        szchoices->Add(new Label(this, _L("Quality") + ": "), 0, wxALIGN_CENTER | wxALL, 5);
 
         static const std::vector<wxString> qual_choices = {
             _(L("Accurate")),
@@ -62,7 +65,7 @@ public:
             _(L("Quick"))
         };
 
-        m_quality_dropdown = new wxComboBox(
+        m_quality_dropdown = new ComboBox(
             this, wxID_ANY, qual_choices[0], wxDefaultPosition, wxDefaultSize,
             qual_choices.size(), qual_choices.data(), wxCB_READONLY | wxCB_DROPDOWN);
         szchoices->Add(m_quality_dropdown);
@@ -76,8 +79,12 @@ public:
         szvert->Add(szchoices, 0, wxALL, 5);
         szvert->AddStretchSpacer(1);
         auto szbtn = new wxBoxSizer(wxHORIZONTAL);
-        szbtn->Add(new wxButton{this, wxID_CANCEL});
-        szbtn->Add(new wxButton{this, wxID_OK});
+        auto *cancel_btn = new Button(this, _L("Cancel"), "", 0, 0, wxID_CANCEL);
+        cancel_btn->SetVariant(Button::Variant::Text);
+        auto *ok_btn = new Button(this, _L("OK"), "", 0, 0, wxID_OK);
+        ok_btn->SetVariant(Button::Variant::Filled);
+        szbtn->Add(cancel_btn);
+        szbtn->Add(ok_btn);
         szvert->Add(szbtn, 0, wxALIGN_RIGHT | wxALL, 5);
 
         SetSizerAndFit(szvert);

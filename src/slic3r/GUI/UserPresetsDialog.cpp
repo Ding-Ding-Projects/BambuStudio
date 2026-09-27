@@ -6,14 +6,14 @@
 
 #include <slic3r/GUI/Widgets/CheckBox.hpp>
 #include <slic3r/GUI/Widgets/TabCtrl.hpp>
+#include <slic3r/GUI/Widgets/SearchField.hpp>
 
 namespace Slic3r {
 namespace GUI {
 
 UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
-    : DPIDialog(parent, wxID_ANY, _L("Management user presets"))
+    : MD3Dialog(parent, _L("Management user presets"), wxEmptyString, MaterialIcon::Tune)
 {
-    SetBackgroundColour(*wxWHITE);
     SetMinSize({FromDIP(788), -1});
 
     m_tab_ctrl = new TabCtrl(this, wxID_ANY);
@@ -30,15 +30,18 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     m_switch_button->SetLabels(" " + _L("Custom") + " ", _L("Others"));
     m_switch_button->Bind(wxEVT_TOGGLEBUTTON, [this](auto &evt) { evt.Skip(); on_collection_changed(m_collection); });
 
-    m_search = new TextInput(this, "", "", "im_text_search");
-    m_search->SetSize({FromDIP(568), FromDIP(24)});
-    m_search->SetCornerRadius(FromDIP(12));
-    m_search->Bind(wxEVT_TEXT, [this](auto &evt) { on_search(evt.GetString()); });
+    // Kit SearchField (r22 pill, sc-highest, leading search glyph) replaces the
+    // legacy r12 TextInput + im_text_search raster icon.
+    m_search = new SearchField(this, _L("Search"));
+    m_search->SetMinSize({FromDIP(568), FromDIP(40)});
+    m_search->SetOnQuery([this](const wxString &kw) { on_search(kw); });
+    // Re-run the active filter when the regex / case / whole-word chrome toggles.
+    m_search->SetOnRegexToggle([this](bool) { on_search(m_search->GetValue()); });
 
     m_empty_panel = new wxPanel(this);
     m_empty_panel->SetMinSize({-1, FromDIP(360)});
     m_empty_panel->SetMaxSize({-1, FromDIP(360)});
-    m_empty_panel->SetForegroundColour(wxColor("#A0A0A0"));
+    m_empty_panel->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     {
         wxSizer *sizer = new wxBoxSizer(wxVERTICAL);
         wxStaticBitmap *bitmap = new wxStaticBitmap(m_empty_panel, wxID_ANY, create_scaled_bitmap(wxGetApp().dark_mode() ? "preset_empty_dark" : "preset_empty", this, 150));
@@ -52,7 +55,7 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     }
 
     m_scrolled = new wxScrolledWindow(this);
-    m_scrolled->SetBackgroundColour("#F8F8F8");
+    m_scrolled->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_scrolled->SetScrollbars(0, 100, 1, 2);
     m_scrolled->SetScrollRate(0, 5);
     m_scrolled->SetMinSize({-1, FromDIP(360)});
@@ -71,10 +74,10 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     m_check_all = new CheckBox(this);
     auto label = new Label(this, _L("Select All"));
     m_label_check_count = new Label(this);
-    m_label_check_count->SetForegroundColour("#6B6B6B");
+    m_label_check_count->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_button_delete     = new Button(this, _L("Delete"));
-    m_button_delete->SetBorderColorNormal(wxColor("#D01B1B"));
-    m_button_delete->SetTextColorNormal(wxColor("#D01B1B"));
+    m_button_delete->SetBorderColorNormal(StateColor::semantic(MD3::Role::Error));
+    m_button_delete->SetTextColorNormal(StateColor::semantic(MD3::Role::Error));
     m_check_all->Bind(wxEVT_TOGGLEBUTTON, [this](auto &evt) { evt.Skip(); on_all_checked(evt.IsChecked(), true); });
     label->Bind(wxEVT_LEFT_UP, [this](auto &evt) {
         bool checked = !m_check_all->GetValue();
@@ -82,20 +85,22 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
         on_all_checked(checked, true);
     });
     m_button_delete->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &evt) { delete_checked(); });
-    wxSizer *sizer_bottom = new wxBoxSizer(wxHORIZONTAL);
-    sizer_bottom->Add(m_check_all, 0, wxALIGN_CENTER | wxLEFT, FromDIP(20));
-    sizer_bottom->Add(label, 0, wxALIGN_CENTER | wxLEFT, FromDIP(8));
-    sizer_bottom->Add(m_label_check_count, 1, wxALIGN_CENTER | wxLEFT, FromDIP(8));
-    sizer_bottom->Add(m_button_delete, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(20));
 
-    wxSizer *sizer = new wxBoxSizer(wxVERTICAL);
-    SetSizer(sizer);
-    sizer->Add(m_tab_ctrl, 0, wxALIGN_CENTER | wxALL, FromDIP(20));
-    sizer->Add(m_switch_button, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(10));
-    sizer->Add(m_search, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(10));
-    sizer->Add(m_scrolled, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
-    sizer->Add(m_empty_panel, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
-    sizer->Add(sizer_bottom, 0, wxEXPAND | wxALL, FromDIP(20));
+    // Body: tab bar + Custom/Others toggle + kit SearchField + list/empty state
+    // (the shell already pads the body 24px on each side).
+    auto *content = GetContentSizer();
+    content->Add(m_tab_ctrl, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(16));
+    content->Add(m_switch_button, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(10));
+    content->Add(m_search, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(10));
+    content->Add(m_scrolled, 1, wxEXPAND);
+    content->Add(m_empty_panel, 1, wxEXPAND);
+
+    // Footer action bar: leading select-all + selection count, trailing Delete.
+    auto *footer = GetFooterSizer();
+    footer->Insert(0, m_check_all, 0, wxALIGN_CENTER_VERTICAL);
+    footer->Insert(1, label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    footer->Insert(2, m_label_check_count, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    AddFooterButton(m_button_delete);
 
     wxGetApp().UpdateDlgDarkUI(this);
     m_switch_button->Rescale();
@@ -107,6 +112,7 @@ UserPresetsDialog::UserPresetsDialog(wxWindow *parent)
     Layout();
     Fit();
     CenterOnParent();
+    UpdateShape();
 }
 
 void UserPresetsDialog::init_preset_list()
@@ -250,12 +256,13 @@ void UserPresetsDialog::layout_preset_list(bool delete_old)
 
 void UserPresetsDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
+    MD3Dialog::on_dpi_changed(suggested_rect); // reshape the rounded frame
     SetMinSize({FromDIP(788), -1});
     m_tab_ctrl->Rescale();
     m_switch_button->SetMaxSize({FromDIP(182), -1});
     m_switch_button->Rescale();
-    m_search->SetSize({FromDIP(568), FromDIP(24)});
-    m_search->SetCornerRadius(FromDIP(12));
+    m_search->SetMinSize({FromDIP(568), FromDIP(40)});
+    m_search->Rescale();
     m_scrolled->SetMinSize({-1, FromDIP(320)});
     m_scrolled->SetMaxSize({-1, FromDIP(320)});
     for (auto sizer : m_preset_sizers) {
@@ -277,9 +284,11 @@ void UserPresetsDialog::on_collection_changed(int collection)
     m_filament_sizers.clear();
     m_hiden_sizers.clear();
     m_tab_ctrl->SetItemBold(collection, false);
+    m_tab_ctrl->SetItemTextColour(collection, StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_tab_ctrl->SetItemBold(m_collection, true);
-    m_search->GetTextCtrl()->ChangeValue("");
-    GetSizer()->Show(m_switch_button, m_collection == 1);
+    m_tab_ctrl->SetItemTextColour(m_collection, StateColor::semantic(MD3::Role::Primary));
+    m_search->SetValue("");
+    m_switch_button->Show(m_collection == 1);
     Freeze();
     create_preset_list(m_scrolled);
     layout_preset_list(true);
@@ -317,10 +326,17 @@ void UserPresetsDialog::on_search(wxString const &keyword)
         }
     };
     m_scrolled->Freeze();
-    std::string key = into_u8(keyword);
-    auto match = [&key](std::string & preset) {
-        return std::search(preset.begin(), preset.end(), key.begin(), key.end(),
-            [](char a, char b) { return std::tolower(a) == std::tolower(b); }) != preset.end();
+    // Route the preset filter through the shared MD3 matcher so the field's
+    // regex / case / whole-word chrome drives it (was a hard-coded
+    // case-insensitive substring search). Invalid half-typed regex matches
+    // everything, so a partial pattern never blanks the list.
+    const bool regex         = m_search->IsRegexEnabled();
+    const bool caseSensitive = m_search->IsCaseSensitive();
+    const bool wholeWord     = m_search->IsWholeWord();
+    const bool multiline     = m_search->IsMultiline();
+    SearchField::MatchPass match_pass(keyword, regex, caseSensitive, wholeWord, multiline);
+    auto match = [&](std::string & preset) {
+        return match_pass.matches(from_u8(preset));
     };
     if (is_filament_list()) {
         for (auto &filament : m_filament_presets) {
@@ -422,7 +438,7 @@ void UserPresetsDialog::update_preset_counts()
         size_t n = i == 1 ? std::accumulate(m_filament_presets.begin(), m_filament_presets.end(), size_t(0),
             [](size_t t, auto &filament) { return t + filament.second.size(); }) : 0;
         if (m_preset_sizers.empty()) {
-            m_tab_ctrl->SetItemTextColour(i, wxColour("#262E30"));
+            m_tab_ctrl->SetItemTextColour(i, StateColor::semantic(MD3::Role::OnSurfaceVariant));
             m_tab_ctrl->SetItemPaddingSize(i, {FromDIP(20), FromDIP(4)});
         }
         m_tab_ctrl->SetItemText(i, wxString::Format(labels[i], int(m_presets[i].size() + n)));

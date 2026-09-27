@@ -3,7 +3,9 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "GUI_Utils.hpp"
+#include "Widgets/LinkLabel.hpp"
 #include <wx/dialog.h>
 #include <wx/font.h>
 #include <wx/bitmap.h>
@@ -12,15 +14,19 @@
 #include <wx/textctrl.h>
 #include <wx/statline.h>
 #include "Widgets/Button.hpp"
+#include "Widgets/TextArea.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include "BBLStatusBar.hpp"
 #include "BBLStatusBarSend.hpp"
 #include "libslic3r/Semver.hpp"
 
 class wxBoxSizer;
 class wxCheckBox;
+class wxFlexGridSizer;
 class wxStaticBitmap;
+class wxStaticText;
 
 enum ButtonSizeType{
 	ButtonSizeNormal = 0,
@@ -51,9 +57,12 @@ public:
 
 WX_DECLARE_HASH_MAP(wxString, MsgButton *, wxStringHash, wxStringEqual, MsgButtonsHash);
 
-// A message / query dialog with a bitmap on the left and any content on the right
-// with buttons underneath.
-struct MsgDialog : DPIDialog
+// A message / query dialog built on the shared MD3 Dialog shell (Slic3r::GUI::
+// MD3Dialog): a borderless 28px rounded frame with a header icon tile +
+// title/subtitle + circular close, a scrollable body and a bordered footer.
+// The former left-hand raster logo is replaced by the header icon tile; the
+// status glyph (error/warning/info/...) is derived from the message style.
+struct MsgDialog : MD3Dialog
 {
 	MsgDialog(MsgDialog &&) = delete;
 	MsgDialog(const MsgDialog &) = delete;
@@ -65,7 +74,7 @@ struct MsgDialog : DPIDialog
 	bool get_checkbox_state();
 	virtual void on_dpi_changed(const wxRect& suggested_rect);
 
-	void AddButton(wxWindowID btn_id, const wxString& label, bool set_focus = false) { add_button(btn_id, set_focus, label); };
+	void AddButton(wxWindowID btn_id, const wxString& label, bool set_focus = false);
 	void SetButtonLabel(wxWindowID btn_id, const wxString& label, bool set_focus = false);
 
 protected:
@@ -86,15 +95,24 @@ protected:
 	Button* get_button(wxWindowID btn_id);
 	void apply_style(long style);
 	void finalize();
+	void refit_to_work_area(bool recenter);
+	void reflow_footer_for_width(int available_width);
 
 	wxFont boldfont;
-	wxBoxSizer *content_sizer;
-	wxBoxSizer *btn_sizer;
+	wxBoxSizer *content_sizer; // == GetContentSizer() (shell body)
+	wxBoxSizer *btn_sizer;     // == GetFooterSizer()  (shell footer)
 	wxBoxSizer *m_dsa_sizer;
-	wxStaticBitmap *logo;
+	wxBoxSizer *m_footer_content_sizer { nullptr };
+	wxBoxSizer *m_dsa_row_sizer { nullptr };
+	wxBoxSizer *m_action_row_sizer { nullptr };
+	wxFlexGridSizer *m_action_sizer { nullptr };
+	std::vector<Button *> m_button_order;
     MsgButtonsHash  m_buttons;
 	CheckBox* m_checkbox_dsa{nullptr};
+	wxStaticText* m_text_dsa{nullptr};
+	wxString m_dsa_text;
     wxString  m_forward_str;
+	bool      m_finalized { false };
 };
 
 
@@ -148,7 +166,7 @@ private:
 // Post-processing script confirmation before slicing (3MF with post_process scripts)
 class PostProcessScriptDialog : public MsgDialog
 {
-	::wxTextCtrl* m_script_text{ nullptr };
+	TextArea* m_script_text{ nullptr };
 	Button*     m_toggle_details{ nullptr };
 	bool        m_details_expanded{ false };
 
@@ -417,7 +435,7 @@ private:
     wxString msg;
 };
 
-class DeleteConfirmDialog : public DPIDialog
+class DeleteConfirmDialog : public MD3Dialog
 {
 public:
     DeleteConfirmDialog(wxWindow *parent, const wxString &title, const wxString &msg);
@@ -431,10 +449,10 @@ private:
     wxStaticText *m_msg_text   = nullptr;
 };
 
-class Newer3mfVersionDialog : public DPIDialog
+class Newer3mfVersionDialog : public MD3Dialog
 {
 public:
-    Newer3mfVersionDialog(wxWindow *parent, const Semver* file_version, const Semver* cloud_version, wxString new_keys);
+    Newer3mfVersionDialog(wxWindow *parent, const Semver* file_version, wxString new_keys);
     ~Newer3mfVersionDialog(){};
     virtual void on_dpi_changed(const wxRect &suggested_rect){};
 
@@ -445,7 +463,6 @@ private:
 
 private:
     const Semver *m_file_version;
-    const Semver *m_cloud_version;
     wxString      m_new_keys;
     Button *      m_update_btn = nullptr;
     Button *      m_later_btn  = nullptr;
@@ -453,7 +470,7 @@ private:
 };
 
 
-class NetworkErrorDialog : public DPIDialog
+class NetworkErrorDialog : public MD3Dialog
 {
 public:
     NetworkErrorDialog(wxWindow* parent);
@@ -462,9 +479,9 @@ public:
 
 private:
     Label* m_text_basic;
-    wxHyperlinkCtrl* m_link_server_state;
+    LinkLabel* m_link_server_state;
     Label* m_text_proposal;
-    wxHyperlinkCtrl* m_text_wiki;
+    LinkLabel* m_text_wiki;
     Button *         m_button_confirm;
 
 public:

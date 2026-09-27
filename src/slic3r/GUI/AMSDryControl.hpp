@@ -1,5 +1,7 @@
 #pragma once
 #include "GUI_ObjectLayers.hpp"
+#include "Widgets/TextInput.hpp"
+#include "Widgets/CheckBox.hpp"
 #include "slic3r/GUI/Widgets/AMSItem.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "slic3r/GUI/Widgets/PopupWindow.hpp"
@@ -126,8 +128,8 @@ private:
     // right panel normal state
     ComboBox* m_trays_combo;
     std::vector<FilamentBaseInfo> m_tray_ids;
-    wxTextCtrl* m_temperature_input;
-    wxTextCtrl* m_time_input;
+    TextInput* m_temperature_input;
+    TextInput* m_time_input;
     Label* m_normal_description;
     Button* m_start_button{nullptr};
     Button* m_next_button{nullptr};
@@ -139,7 +141,7 @@ private:
     Label* m_guide_title_label{nullptr};
     Label* m_guide_description_label{nullptr};
 
-    wxCheckBox* m_rotate_spool_toggle{nullptr};
+    ::CheckBox* m_rotate_spool_toggle{nullptr};
 
     wxPanel* m_progress_page;
     ProgressBar* m_progress_gauge;

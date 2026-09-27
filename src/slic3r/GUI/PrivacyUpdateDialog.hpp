@@ -5,6 +5,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/WebView.hpp"
+#include "Widgets/MD3Dialog.hpp"
 #include <wx/webview.h>
 #include <wx/progdlg.h>
 #include <wx/simplebook.h>
@@ -14,7 +15,10 @@ namespace Slic3r { namespace GUI {
 wxDECLARE_EVENT(EVT_PRIVACY_UPDATE_CONFIRM, wxCommandEvent);
 wxDECLARE_EVENT(EVT_PRIVACY_UPDATE_CANCEL, wxCommandEvent);
 
-class PrivacyUpdateDialog : public DPIDialog
+// Reparented onto the shared MD3 Dialog shell (borderless 28px surface, header
+// icon tile + title, footer with OutlineVariant divider). The webview release
+// note lives in the kit body; Accept/Log-Out are kit pill footer Buttons.
+class PrivacyUpdateDialog : public MD3Dialog
 {
 public:
     enum ButtonStyle {
@@ -42,6 +46,14 @@ public:
     void rescale();
     ~PrivacyUpdateDialog();
     void on_dpi_changed(const wxRect& suggested_rect);
+
+protected:
+    // Header [x] mirrors the "Log Out"/decline path when a cancel affordance is
+    // shown; for confirm-only styling it is inert so the original forced-choice
+    // (window close was vetoed) is preserved.
+    void OnHeaderClose() override;
+
+public:
 
     wxBoxSizer* m_sizer_main;
     wxWebView* m_vebview_release_note{ nullptr };

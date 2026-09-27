@@ -3,6 +3,7 @@
 #include "libslic3r/Utils.hpp"
 #include <wx/log.h>
 #include <wx/msgdlg.h>
+#include "MsgDialog.hpp"
 #ifdef __WIN32__
 #include <versionhelpers.h>
 #include <wx/msw/registry.h>
@@ -61,8 +62,9 @@ void wxMediaCtrl2::Load(wxURI url)
     if (m_imp == nullptr) {
         static bool notified = false;
         if (!notified) CallAfter([] {
-            auto res = wxMessageBox(_L("Windows Media Player is required for this task! Do you want to enable 'Windows Media Player' for your operation system?"), _L("Error"), wxOK | wxCANCEL);
-            if (res == wxOK) {
+            Slic3r::GUI::MessageDialog dlg(nullptr, _L("Windows Media Player is required for this task! Do you want to enable 'Windows Media Player' for your operation system?"), _L("Error"), wxOK | wxCANCEL);
+            auto res = dlg.ShowModal();
+            if (res == wxID_OK) {
                 wxString url = IsWindows10OrGreater()
                         ? "ms-settings:optionalfeatures?activationSource=SMC-Article-14209"
                         : "https://support.microsoft.com/en-au/windows/get-windows-media-player-81718e0d-cfce-25b1-aee3-94596b658287";
@@ -95,8 +97,9 @@ void wxMediaCtrl2::Load(wxURI url)
             if (boost::filesystem::exists(dll_path)) {
                 CallAfter(
                     [dll_path] {
-                    int res = wxMessageBox(_L("BambuSource has not correctly been registered for media playing! Press Yes to re-register it."), _L("Error"), wxYES_NO | wxICON_ERROR);
-                    if (res == wxYES) {
+                    Slic3r::GUI::MessageDialog dlg(nullptr, _L("BambuSource has not correctly been registered for media playing! Press Yes to re-register it."), _L("Error"), wxYES_NO | wxICON_ERROR);
+                    int res = dlg.ShowModal();
+                    if (res == wxID_YES) {
                         auto path = dll_path.wstring();
                         if (path.find(L' ') != std::wstring::npos)
                             path = L"\"" + path + L"\"";
@@ -106,7 +109,8 @@ void wxMediaCtrl2::Load(wxURI url)
                 });
             } else {
                 CallAfter([] {
-                    wxMessageBox(_L("Missing BambuSource component registered for media playing! Please re-install BambuStutio or seek after-sales help."), _L("Error"), wxOK | wxICON_ERROR);
+                    Slic3r::GUI::MessageDialog dlg(nullptr, _L("Missing BambuSource component registered for media playing! Please re-install BambuStutio or seek after-sales help."), _L("Error"), wxOK | wxICON_ERROR);
+                    dlg.ShowModal();
                 });
             }
             m_error = clsid != CLSID_BAMBU_SOURCE ? 101 : path.empty() ? 102 : 103;
@@ -119,8 +123,9 @@ void wxMediaCtrl2::Load(wxURI url)
         if (path != dll_path) {
             static bool notified = false;
             if (!notified) CallAfter([dll_path] {
-                int res = wxMessageBox(_L("Using a BambuSource from a different install, video play may not work correctly! Press Yes to fix it."), _L("Warning"), wxYES_NO | wxICON_WARNING);
-                if (res == wxYES) {
+                Slic3r::GUI::MessageDialog dlg(nullptr, _L("Using a BambuSource from a different install, video play may not work correctly! Press Yes to fix it."), _L("Warning"), wxYES_NO | wxICON_WARNING);
+                int res = dlg.ShowModal();
+                if (res == wxID_YES) {
                     auto path = dll_path.wstring();
                     if (path.find(L' ') != std::wstring::npos)
                         path = L"\"" + path + L"\"";
@@ -169,7 +174,8 @@ void wxMediaCtrl2::Load(wxURI url)
 
     if (!hasplugins) {
         CallAfter([] {
-            wxMessageBox(_L("Your system is missing H.264 codecs for GStreamer, which are required to play video.  (Try installing the gstreamer1.0-plugins-bad or gstreamer1.0-libav packages, then restart Bambu Studio?)"), _L("Error"), wxOK);
+            Slic3r::GUI::MessageDialog dlg(nullptr, _L("Your system is missing H.264 codecs for GStreamer, which are required to play video.  (Try installing the gstreamer1.0-plugins-bad or gstreamer1.0-libav packages, then restart Bambu Studio?)"), _L("Error"), wxOK);
+            dlg.ShowModal();
         });
         m_error = 101;
         wxMediaEvent event(wxEVT_MEDIA_STATECHANGED);

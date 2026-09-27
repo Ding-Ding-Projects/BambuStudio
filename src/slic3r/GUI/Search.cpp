@@ -3,13 +3,20 @@
 #include <vector>
 #include <cstddef>
 #include <string>
+#include <limits>
+#include <memory>
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
 #include <boost/nowide/convert.hpp>
 
 #include "wx/dataview.h"
 #include "wx/numformatter.h"
+#include "wx/stattext.h"
+#include "I18N.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/CheckBox.hpp"
+#include "Widgets/BoundedRegex.hpp"
+#include "Widgets/SearchField.hpp"
 
 #include "libslic3r/PrintConfig.hpp"
 #include "libslic3r/PresetBundle.hpp"
@@ -182,6 +189,41 @@ static std::wstring mark_string(const std::wstring &str, const std::vector<uint1
 
 bool OptionsSearcher::search() { return search(search_line, true); }
 
+// Flat score handed to every regex hit: comfortably above the >90 acceptance
+// gate used for fuzzy matches, so regex results are always kept and then ranked
+// alphabetically by sort_found().
+static const int REGEX_MATCH_SCORE = 1000;
+
+// Regex counterpart of fuzzy_match(): returns true when `re` hits `label`, and
+// (like fuzzy_match) fills out_matches with the matched character indices so the
+// existing mark_string() highlighter underlines the same span. `regex_valid`
+// false means the user is mid-typing an invalid pattern: keep the row (return
+// true) with no highlight rather than hiding everything.
+static bool regex_match_label(GUI::BoundedRegex::SearchPass *pass, bool regex_valid,
+                              const std::wstring &label,
+                              int &out_score, std::vector<uint16_t> &out_matches)
+{
+    out_matches.clear();
+    if (!regex_valid) {
+        out_score = REGEX_MATCH_SCORE;
+        return true;
+    }
+    const auto result = pass->evaluate(label);
+    if (!result.definitive()) {
+        out_score = REGEX_MATCH_SCORE;
+        return true;
+    }
+    if (result.status == GUI::BoundedRegex::Status::Match && !result.matches.empty() &&
+        !result.matches.front().groups.empty()) {
+        const auto &whole = result.matches.front().groups.front();
+        for (std::size_t offset = 0; offset < whole.length; ++offset)
+            out_matches.push_back(static_cast<uint16_t>(whole.begin + offset));
+        out_score = REGEX_MATCH_SCORE;
+        return true;
+    }
+    return false;
+}
+
 static bool fuzzy_match(const std::wstring &search_pattern, const std::wstring &label, int &out_score, std::vector<uint16_t> &out_matches)
 {
     uint16_t matches[fts::max_matches + 1]; // +1 for the stopper
@@ -236,6 +278,31 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
         return marker_by_type(opt.type, printer_technology) + opt.category_local + sep + opt.group_local + sep + opt.label_local;
     };
 
+    // Regex mode: validate the term once. On failure keep regex_valid=false so a
+    // half-typed pattern shows the full list instead of filtering it all away.
+    // The case-sensitive flag (SearchField tune popover) drops the icase flag;
+    // whole-word is ignored in regex mode (author your own \b — the shared
+    // SearchField::textMatches convention). Actual matching runs in the shared
+    // deadline-enforced worker process.
+    const bool use_regex = regex_enabled && !full_list;
+    std::wstring regex_pattern;
+    bool         regex_valid = false;
+    std::unique_ptr<GUI::BoundedRegex::SearchPass> regex_pass;
+    if (use_regex) {
+        regex_pattern = boost::nowide::widen(search);
+        boost::trim_left(regex_pattern);
+        GUI::BoundedRegex::Options options;
+        options.case_sensitive = case_sensitive;
+        options.multiline = multiline;
+        regex_pass = std::make_unique<GUI::BoundedRegex::SearchPass>(regex_pattern, options);
+        regex_valid = !regex_pass->circuit_open();
+    }
+
+    // Fuzzy path with case-sensitive / whole-word engaged: constrain the fuzzy
+    // hits to labels that also pass the shared substring matcher under those
+    // flags. Both flags default off, leaving the historical behaviour intact.
+    const bool constrain_fuzzy = !use_regex && !full_list && (case_sensitive || whole_word);
+
     std::vector<uint16_t> matches, matches2;
     for (size_t i = 0; i < options.size(); i++) {
         const Option &opt = options[i];
@@ -259,18 +326,41 @@ bool OptionsSearcher::search(const std::string &search, bool force /* = false*/,
         int          score         = std::numeric_limits<int>::min();
         int          score2;
         matches.clear();
-        fuzzy_match(wsearch, label, score, matches);
-        // bbs hide the contents in parentheses
-        /* if (fuzzy_match(wsearch, opt.key, score2, matches2) && score2 > score) {
-             for (fts::pos_type &pos : matches2) pos += label.size() + 1;
-             label += L"(" + opt.key + L")";
-             append(matches, matches2);
-             score = score2;
-         }*/
-        if (view_params.english && fuzzy_match(wsearch, label_english, score2, matches2) && score2 > score) {
-            label   = std::move(label_english);
-            matches = std::move(matches2);
-            score   = score2;
+        if (constrain_fuzzy) {
+            const wxString wquery(wsearch);
+            bool ok = SearchField::textMatches(wquery, wxString(label), false, case_sensitive, whole_word);
+            if (!ok && view_params.english)
+                ok = SearchField::textMatches(wquery, wxString(label_english), false, case_sensitive, whole_word);
+            if (!ok)
+                continue;
+        }
+        if (use_regex) {
+            // Regex path: same downstream shape as fuzzy_match (score + matched
+            // indices), so scoring/marking/threshold below are untouched.
+            regex_match_label(regex_pass.get(), regex_valid, label, score, matches);
+            if (view_params.english) {
+                matches2.clear();
+                if (regex_match_label(regex_pass.get(), regex_valid,
+                                      label_english, score2, matches2) && score2 > score) {
+                    label   = std::move(label_english);
+                    matches = std::move(matches2);
+                    score   = score2;
+                }
+            }
+        } else {
+            fuzzy_match(wsearch, label, score, matches);
+            // bbs hide the contents in parentheses
+            /* if (fuzzy_match(wsearch, opt.key, score2, matches2) && score2 > score) {
+                 for (fts::pos_type &pos : matches2) pos += label.size() + 1;
+                 label += L"(" + opt.key + L")";
+                 append(matches, matches2);
+                 score = score2;
+             }*/
+            if (view_params.english && fuzzy_match(wsearch, label_english, score2, matches2) && score2 > score) {
+                label   = std::move(label_english);
+                matches = std::move(matches2);
+                score   = score2;
+            }
         }
         if (score > 90 /*std::numeric_limits<int>::min()*/) {
             label = mark_string(label, matches, opt.type, printer_technology);
@@ -415,10 +505,26 @@ Option OptionsSearcher::get_option(const std::string &opt_key, const wxString &l
     return create_option(opt_key, label, type, gc);
 }
 
+void OptionsSearcher::show_dialog(Preset::Type type, wxWindow *parent, SearchField *input, wxWindow* ssearch_btn)
+{
+    if (parent == nullptr || input == nullptr) return;
+    auto    search_dialog = new SearchDialog(this, type, parent, input, input->GetTextCtrl(), ssearch_btn, input);
+    // The SearchField IS the pill, so anchor the results directly under it —
+    // the same geometry the legacy path derived from the TextInput's pill parent.
+    wxPoint pos = input->ClientToScreen(wxPoint(0, 0));
+#ifndef __WXGTK__
+    pos.y += input->GetRect().height;
+#else
+    input->Hide();
+#endif
+    search_dialog->SetPosition(pos);
+    search_dialog->Popup();
+}
+
 void OptionsSearcher::show_dialog(Preset::Type type, wxWindow *parent, TextInput *input, wxWindow* ssearch_btn)
 {
     if (parent == nullptr || input == nullptr) return;
-    auto    search_dialog = new SearchDialog(this, type, parent, input, ssearch_btn);
+    auto    search_dialog = new SearchDialog(this, type, parent, input, input->GetTextCtrl(), ssearch_btn, nullptr);
     wxPoint pos = input->GetParent()->ClientToScreen(wxPoint(0, 0));
 #ifndef __WXGTK__
     pos.y += input->GetParent()->GetRect().height;
@@ -449,7 +555,9 @@ void OptionsSearcher::add_key(const std::string &opt_key, Preset::Type type, con
 //------------------------------------------
 
 SearchItem::SearchItem(wxWindow *parent, wxString text, int index, SearchDialog* sdialog, SearchObjectDialog* search_dialog, wxString tooltip)
-    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(parent->GetSize().GetWidth(), 3 * GUI::wxGetApp().em_unit()))
+    // wxWANTS_CHARS so this custom row is keyboard-focusable and receives arrow/
+    // Enter keys itself (rather than them being eaten for tab traversal).
+    : wxWindow(parent, wxID_ANY, wxDefaultPosition, wxSize(parent->GetSize().GetWidth(), 3 * GUI::wxGetApp().em_unit()), wxWANTS_CHARS)
 {
     m_sdialog = sdialog;
     m_search_object_dialog = search_dialog;
@@ -458,12 +566,32 @@ SearchItem::SearchItem(wxWindow *parent, wxString text, int index, SearchDialog*
 
     this->SetToolTip(tooltip);
 
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour("#FFFFFF")));
+    // Accessible name: the row is custom-painted (no child text control), so
+    // expose the option text (minus the bold markup) for assistive tech.
+    wxString accessible_name = text;
+    accessible_name.Replace("<b>", "");
+    accessible_name.Replace("</b>", "");
+    if (!accessible_name.empty())
+        SetName(accessible_name);
+
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     Bind(wxEVT_ENTER_WINDOW, &SearchItem::on_mouse_enter, this);
     Bind(wxEVT_LEAVE_WINDOW, &SearchItem::on_mouse_leave, this);
     Bind(wxEVT_LEFT_DOWN, &SearchItem::on_mouse_left_down, this);
     Bind(wxEVT_LEFT_UP, &SearchItem::on_mouse_left_up, this);
+    Bind(wxEVT_KEY_DOWN, &SearchItem::on_key_down, this);
     Bind(wxEVT_PAINT, &SearchItem::OnPaint, this);
+    // Keyboard focus highlight, mirroring the hover visual.
+    Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+        Refresh();
+        e.Skip();
+    });
+    Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &e) {
+        SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+        Refresh();
+        e.Skip();
+    });
 }
 
 wxSize SearchItem::DrawTextString(wxDC &dc, const wxString &text, const wxPoint &pt, bool bold)
@@ -475,7 +603,7 @@ wxSize SearchItem::DrawTextString(wxDC &dc, const wxString &text, const wxPoint 
     }
 
     dc.SetBackgroundMode(wxTRANSPARENT);
-    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour("#323A3C")));
+    dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
     dc.DrawText(text, pt);
     return dc.GetTextExtent(text);
 }
@@ -547,27 +675,31 @@ void SearchItem::OnPaint(wxPaintEvent &event)
 
 void SearchItem::on_mouse_enter(wxMouseEvent &evt)
 {
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour(238, 238, 238)));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
     Refresh();
 }
 
 void SearchItem::on_mouse_leave(wxMouseEvent &evt)
 {
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour(255, 255, 255)));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     Refresh();
 }
 
 void SearchItem::on_mouse_left_down(wxMouseEvent &evt)
 {
-    SetBackgroundColour(StateColor::darkModeColorFor(wxColour(228, 228, 228)));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     Refresh();
 }
 
 void SearchItem::on_mouse_left_up(wxMouseEvent &evt)
 {
-
     //if (m_sdialog->prevent_list_events) return;
     // if (wxGetMouseState().LeftIsDown())
+    activate();
+}
+
+void SearchItem::activate()
+{
     if (m_sdialog) {
         m_sdialog->Die();
         wxCommandEvent event(wxCUSTOMEVT_JUMP_TO_OPTION);
@@ -583,6 +715,42 @@ void SearchItem::on_mouse_left_up(wxMouseEvent &evt)
     }
 }
 
+void SearchItem::on_key_down(wxKeyEvent &evt)
+{
+    const int key = evt.GetKeyCode();
+
+    if (key == WXK_RETURN || key == WXK_NUMPAD_ENTER || key == WXK_SPACE) {
+        activate();
+        return;
+    }
+
+    if (key == WXK_DOWN || key == WXK_UP) {
+        wxWindow *parent = GetParent();
+        if (!parent) { evt.Skip(); return; }
+
+        // Sibling rows are the SearchItem children of the shared list panel, in
+        // creation (display) order.
+        std::vector<SearchItem *> items;
+        for (wxWindow *child : parent->GetChildren())
+            if (auto *it = dynamic_cast<SearchItem *>(child)) items.push_back(it);
+
+        int self = -1;
+        for (int i = 0; i < (int) items.size(); ++i)
+            if (items[i] == this) { self = i; break; }
+        if (self < 0) { evt.Skip(); return; }
+
+        const int next = self + (key == WXK_DOWN ? 1 : -1);
+        if (next >= 0 && next < (int) items.size())
+            items[next]->SetFocus();
+        else if (next < 0 && m_sdialog && m_sdialog->search_line2)
+            // Up from the first row returns focus to the search field.
+            m_sdialog->search_line2->SetFocus();
+        return;
+    }
+
+    evt.Skip();
+}
+
 //------------------------------------------
 //          SearchDialog
 //------------------------------------------
@@ -591,25 +759,26 @@ static const std::map<const char, int> icon_idxs = {
     {ImGui::PrintIconMarker, 0}, {ImGui::PrinterIconMarker, 1}, {ImGui::PrinterSlaIconMarker, 2}, {ImGui::FilamentIconMarker, 3}, {ImGui::MaterialIconMarker, 4},
 };
 
-SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindow *parent, TextInput *input, wxWindow *search_btn)
+SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindow *parent, wxWindow *input_host, wxTextCtrl *entry, wxWindow *search_btn, SearchField *field)
     : PopupWindow(parent, wxBORDER_NONE | wxPU_CONTAINS_CONTROLS), searcher(searcher)
 {
     m_event_tag       = parent;
-    search_line       = input;
+    search_line       = input_host;
+    search_field      = field;
     search_type       = type;
 
     m_search_item_tag = search_btn;
 
     // set border color
     Freeze();
-    SetBackgroundColour(wxColour(238, 238, 238));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     em = GUI::wxGetApp().em_unit();
 
-    m_text_color   = wxColour(38, 46, 48);
-    m_bg_colour    = wxColour(255, 255, 255);
-    m_hover_colour = wxColour(248, 248, 248);
-    m_thumb_color  = wxColour(196, 196, 196);
+    m_text_color   = StateColor::semantic(MD3::Role::OnSurface);
+    m_bg_colour    = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    m_hover_colour = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    m_thumb_color  = StateColor::semantic(MD3::Role::Outline);
 
     SetFont(GUI::wxGetApp().normal_font());
     SetSizeHints(wxDefaultSize, wxDefaultSize);
@@ -630,17 +799,37 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     // search line
     //search_line = new wxTextCtrl(m_client_panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 #ifdef __WXGTK__
-    search_line = new TextInput(m_client_panel, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-    search_line->SetBackgroundColour(wxColour(238, 238, 238));
-    search_line->SetForegroundColour(wxColour(43, 52, 54));
-    search_line->SetFont(GUI::wxGetApp().bold_font());
+    // GTK hides the external host while this popup is active. Embed the same
+    // complete SearchField here (query, ".*" mode, and tune builder) instead
+    // of reducing the surface to a text box plus regex checkbox.
+    SearchField *gtk_field = new SearchField(m_client_panel, _L("Search settings"));
+    gtk_field->SetValue(entry ? entry->GetValue() : wxString());
+    entry = gtk_field->GetTextCtrl();
+    search_field = gtk_field;
 #endif
 
     // default_string = _L("Enter a search term");
-    search_line->Bind(wxEVT_TEXT, &SearchDialog::OnInputText, this);
-    search_line->Bind(wxEVT_LEFT_UP, &SearchDialog::OnLeftUpInTextCtrl, this);
-    search_line->Bind(wxEVT_KEY_DOWN, &SearchDialog::OnKeyDown, this);
-    search_line2 = search_line->GetTextCtrl();
+    // Bind straight to the inner wxTextCtrl: wxEVT_TEXT is caught at the source
+    // for either host type (the SearchField's own handler Skip()s, so both run),
+    // and key events never bubble up to the host wrapper anyway.
+    search_line2 = entry;
+    if (search_line2) {
+#ifndef __WXGTK__
+        search_line2->Bind(wxEVT_TEXT, &SearchDialog::OnInputText, this);
+#else
+        // SearchField::SetOnQuery also receives builder-authored ChangeValue
+        // updates, which do not synthesize wxEVT_TEXT.
+        search_field->SetOnQuery([this](const wxString &query) {
+            wxString input_string = query;
+            if (input_string == this->default_string) input_string.Clear();
+            if (this->searcher)
+                this->searcher->search(into_u8(input_string), true, this->search_type);
+            this->update_list();
+        });
+#endif
+        search_line2->Bind(wxEVT_LEFT_UP, &SearchDialog::OnLeftUpInTextCtrl, this);
+        search_line2->Bind(wxEVT_KEY_DOWN, &SearchDialog::OnKeyDown, this);
+    }
 
     // scroll window
     m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em), wxVSCROLL, 6, 6);
@@ -658,9 +847,56 @@ SearchDialog::SearchDialog(OptionsSearcher *searcher, Preset::Type type, wxWindo
     m_scrolledWindow->SetScrollbars(1, 1, 0, m_listPanel->GetSize().GetHeight());
 
 #ifdef __WXGTK__
-    m_sizer_body->Add(search_line, 0, wxEXPAND | wxALL, em / 2);
-    search_line = input;
+    m_sizer_body->Add(search_field, 0, wxEXPAND | wxALL, em / 2);
 #endif
+
+    if (search_field) {
+        // The SearchField pill carries its own ".*" toggle and tune builder
+        // popover, so no separate CheckBox row is built. Seed the pill from the
+        // persisted searcher flags — clearing any stale callback from an earlier
+        // dialog first, so seeding cannot re-enter a dead dialog — then let every
+        // toggle push the flags back and re-run the current query live.
+        search_field->SetOnRegexToggle(nullptr);
+        search_field->SetRegexEnabled(searcher && searcher->is_regex_enabled());
+        search_field->SetCaseSensitive(searcher && searcher->is_case_sensitive());
+        search_field->SetWholeWord(searcher && searcher->is_whole_word());
+        search_field->SetMultiline(searcher && searcher->is_multiline());
+        search_field->SetOnRegexToggle([this](bool on) {
+            if (this->searcher && this->search_field) {
+                this->searcher->set_regex_enabled(on);
+                this->searcher->set_case_sensitive(this->search_field->IsCaseSensitive());
+                this->searcher->set_whole_word(this->search_field->IsWholeWord());
+                this->searcher->set_multiline(this->search_field->IsMultiline());
+            }
+            wxString input_string = this->search_line2 ? this->search_line2->GetValue() : wxString();
+            if (input_string == this->default_string) input_string.Clear();
+            if (this->searcher)
+                this->searcher->search(into_u8(input_string), true, this->search_type);
+            this->update_list();
+        });
+    }
+
+    // A legacy non-GTK TextInput host has no trailing action area, so retain a
+    // compact regex toggle there. SearchField hosts — including GTK's embedded
+    // field — expose both the quick toggle and the complete tune builder.
+    bool need_checkbox_row = search_field == nullptr;
+    if (need_checkbox_row) {
+        auto *regex_row = new wxBoxSizer(wxHORIZONTAL);
+        m_regex_toggle  = new CheckBox(m_client_panel);
+        m_regex_toggle->SetValue(searcher && searcher->is_regex_enabled());
+        m_regex_toggle->SetToolTip(_L("Match the search term as a regular expression"));
+        m_regex_toggle->SetName(_L("Regular expression"));
+        m_regex_toggle->Bind(wxEVT_TOGGLEBUTTON, &SearchDialog::OnRegexToggle, this);
+
+        auto *regex_label = new Label(m_client_panel, _L("Regex"));
+        regex_label->SetForegroundColour(m_text_color);
+        regex_label->SetBackgroundColour(m_bg_colour);
+
+        regex_row->Add(m_regex_toggle, 0, wxALIGN_CENTER_VERTICAL);
+        regex_row->Add(regex_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, em / 2);
+        m_sizer_body->Add(regex_row, 0, wxLEFT | wxRIGHT | wxTOP, em);
+    }
+
     m_sizer_body->Add(m_scrolledWindow, 0, wxEXPAND | wxALL, em);
 
     m_client_panel->SetSizer(m_sizer_body);
@@ -750,13 +986,17 @@ void SearchDialog::ProcessSelection(wxDataViewItem selection)
     wxPostEvent(GUI::wxGetApp().plater(), event);
 }
 
-void SearchDialog::OnInputText(wxCommandEvent &)
+void SearchDialog::OnInputText(wxCommandEvent &event)
 {
     search_line2->SetInsertionPointEnd();
     wxString input_string = search_line2->GetValue();
     if (input_string == default_string) input_string.Clear();
     searcher->search(into_u8(input_string), true, search_type);
     update_list();
+    // Now bound directly on the inner wxTextCtrl: let the event continue so the
+    // host wrapper's own wxEVT_TEXT handling (SearchField / TextInput internal
+    // state, clear-button reflow, ...) still runs.
+    event.Skip();
 }
 
 void SearchDialog::OnLeftUpInTextCtrl(wxEvent &event)
@@ -767,33 +1007,28 @@ void SearchDialog::OnLeftUpInTextCtrl(wxEvent &event)
 
 void SearchDialog::OnKeyDown(wxKeyEvent &event)
 {
+    const int key = event.GetKeyCode();
+
+    // Adapted from the legacy wxDataViewCtrl navigation to the current
+    // SearchItem-row list: move keyboard focus from the search field into the
+    // results (Down = first row, Up = last row); Enter activates the top result.
+    std::vector<SearchItem *> items;
+    if (m_listPanel) {
+        for (wxWindow *child : m_listPanel->GetChildren())
+            if (auto *it = dynamic_cast<SearchItem *>(child)) items.push_back(it);
+    }
+
+    if ((key == WXK_DOWN || key == WXK_UP) && !items.empty()) {
+        (key == WXK_DOWN ? items.front() : items.back())->SetFocus();
+        return; // consumed
+    }
+
+    if ((key == WXK_NUMPAD_ENTER || key == WXK_RETURN) && !items.empty()) {
+        items.front()->activate();
+        return;
+    }
+
     event.Skip();
-    /* int key = event.GetKeyCode();
-
-     if (key == WXK_UP || key == WXK_DOWN)
-     {
-         search_list->SetFocus();
-
-         auto item = search_list->GetSelection();
-
-         if (item.IsOk()) {
-             unsigned selection = search_list_model->GetRow(item);
-
-             if (key == WXK_UP && selection > 0)
-                 selection--;
-             if (key == WXK_DOWN && selection < unsigned(search_list_model->GetCount() - 1))
-                 selection++;
-
-             prevent_list_events = true;
-             search_list->Select(search_list_model->GetItem(selection));
-             prevent_list_events = false;
-         }
-     }
-
-     else if (key == WXK_NUMPAD_ENTER || key == WXK_RETURN)
-         ProcessSelection(search_list->GetSelection());
-     else
-         event.Skip();*/
 }
 
 void SearchDialog::OnActivate(wxDataViewEvent &event) { ProcessSelection(event.GetItem()); }
@@ -813,13 +1048,15 @@ void SearchDialog::update_list()
     m_scrolledWindow->Destroy();
 
     m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(m_pop_width - (em + em / 2), POPUP_HEIGHT * em - em), wxVSCROLL, 6, 6);
-    m_scrolledWindow->SetMarginColor(StateColor::darkModeColorFor(m_bg_colour));
-    m_scrolledWindow->SetScrollbarColor(StateColor::darkModeColorFor(m_thumb_color));
-    m_scrolledWindow->SetBackgroundColour(StateColor::darkModeColorFor(m_bg_colour));
+    m_scrolledWindow->SetMarginColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_scrolledWindow->SetScrollbarColor(StateColor::semantic(MD3::Role::Outline));
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
-    auto m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
-    m_listPanel->SetBackgroundColour(StateColor::darkModeColorFor(m_bg_colour));
+    // Assign the member (not a shadowing local) so keyboard nav in OnKeyDown can
+    // reach the freshly-built SearchItem rows.
+    m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
+    m_listPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
 
     const std::vector<FoundOption> &filters = searcher->found_options();
@@ -865,6 +1102,20 @@ void SearchDialog::OnCheck(wxCommandEvent &event)
 
     searcher->search();
     update_list();
+}
+
+void SearchDialog::OnRegexToggle(wxCommandEvent &event)
+{
+    if (searcher && m_regex_toggle)
+        searcher->set_regex_enabled(m_regex_toggle->GetValue());
+
+    // Re-run the current query under the new matching mode.
+    wxString input_string = search_line2 ? search_line2->GetValue() : wxString();
+    if (input_string == default_string) input_string.Clear();
+    if (searcher)
+        searcher->search(into_u8(input_string), true, search_type);
+    update_list();
+    event.Skip();
 }
 
 void SearchDialog::OnMotion(wxMouseEvent &event)
@@ -965,13 +1216,13 @@ SearchObjectDialog::SearchObjectDialog(GUI::ObjectList* object_list, wxWindow* p
     : PopupWindow(parent, wxBORDER_NONE), m_object_list(object_list)
 {
     Freeze();
-    SetBackgroundColour(wxColour(238, 238, 238));
+    SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     em = GUI::wxGetApp().em_unit();
 
-    m_text_color = wxColour(38, 46, 48);
-    m_bg_color = wxColour(255, 255, 255);
-    m_thumb_color = wxColour(196, 196, 196);
+    m_text_color = StateColor::semantic(MD3::Role::OnSurface);
+    m_bg_color = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    m_thumb_color = StateColor::semantic(MD3::Role::Outline);
 
     SetFont(GUI::wxGetApp().normal_font());
     SetSizeHints(wxDefaultSize, wxDefaultSize);
@@ -1046,13 +1297,13 @@ void SearchObjectDialog::update_list()
     m_scrolledWindow->Destroy();
 
     m_scrolledWindow = new ScrolledWindow(m_client_panel, wxID_ANY, wxDefaultPosition, wxSize(POPUP_WIDTH * em - (em + em / 2), POPUP_HEIGHT * em - em), wxVSCROLL, 6, 6);
-    m_scrolledWindow->SetMarginColor(StateColor::darkModeColorFor(m_bg_color));
-    m_scrolledWindow->SetScrollbarColor(StateColor::darkModeColorFor(m_thumb_color));
-    m_scrolledWindow->SetBackgroundColour(StateColor::darkModeColorFor(m_bg_color));
+    m_scrolledWindow->SetMarginColor(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    m_scrolledWindow->SetScrollbarColor(StateColor::semantic(MD3::Role::Outline));
+    m_scrolledWindow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     auto m_listsizer = new wxBoxSizer(wxVERTICAL);
     auto m_listPanel = new wxWindow(m_scrolledWindow->GetPanel(), -1);
-    m_listPanel->SetBackgroundColour(StateColor::darkModeColorFor(m_bg_color));
+    m_listPanel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_listPanel->SetSize(wxSize(m_scrolledWindow->GetSize().GetWidth(), -1));
 
     const std::vector<std::tuple<GUI::ObjectDataViewModelNode*, wxString, wxString>>& found = m_object_list->GetModel()->get_found_list();

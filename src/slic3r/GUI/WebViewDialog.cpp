@@ -1,4 +1,7 @@
 #include "WebViewDialog.hpp"
+#include "Widgets/TextArea.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/MD3Menu.hpp"
 
 #include "I18N.hpp"
 #include "slic3r/GUI/wxExtensions.hpp"
@@ -26,6 +29,8 @@
 
 #include <slic3r/GUI/Widgets/WebView.hpp>
 #include "slic3r/GUI/Widgets/StateColor.hpp"
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 namespace pt = boost::property_tree;
 
@@ -73,6 +78,35 @@ namespace GUI {
             return true;
         wxString lower = url.Lower();
         return lower.StartsWith("about:blank");
+    }
+
+    bool IsUsableCloudWebUrl(const wxWebView *browser)
+    {
+        if (browser == nullptr)
+            return false;
+        const wxString url = browser->GetCurrentURL().Lower();
+        return !IsBlankWebUrl(url) && !url.Contains("/web/homepage3/disconnect.html");
+    }
+
+    HomeWebFailureKind ToHomeWebFailureKind(int error)
+    {
+        switch (error) {
+        case wxWEBVIEW_NAV_ERR_CONNECTION:
+            return HomeWebFailureKind::Network;
+        case wxWEBVIEW_NAV_ERR_AUTH:
+            return HomeWebFailureKind::CloudAuthentication;
+        case wxWEBVIEW_NAV_ERR_NOT_FOUND:
+            return HomeWebFailureKind::RouteNotFound;
+        case wxWEBVIEW_NAV_ERR_CERTIFICATE:
+        case wxWEBVIEW_NAV_ERR_SECURITY:
+            return HomeWebFailureKind::SecureConnection;
+        case wxWEBVIEW_NAV_ERR_USER_CANCELLED:
+            return HomeWebFailureKind::UserCancelled;
+        case wxWEBVIEW_NAV_ERR_REQUEST:
+        case wxWEBVIEW_NAV_ERR_OTHER:
+        default:
+            return HomeWebFailureKind::ServiceUnavailable;
+        }
     }
 
     std::string GetSafeWebUrlForLog(const wxString &url)
@@ -179,6 +213,13 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
 #endif //BBL_RELEASE_TO_PUBLIC
     // Create the info panel
     m_info = new wxInfoBar(this);
+    m_cloud_retry_button_id = wxWindow::NewControlId();
+    m_info->AddButton(m_cloud_retry_button_id, _L("Retry"));
+    if (wxWindow *retry_button = m_info->FindWindow(m_cloud_retry_button_id)) {
+        retry_button->SetMinSize(wxSize(FromDIP(44), FromDIP(44)));
+        retry_button->SetName(_L("Retry"));
+    }
+    Bind(wxEVT_BUTTON, &WebViewPanel::OnCloudPageRetry, this, m_cloud_retry_button_id);
     topsizer->Add(m_info, wxSizerFlags().Expand());
 
     // Online container (toolbar + MakerWorld/MakerLab webviews)
@@ -188,32 +229,42 @@ WebViewPanel::WebViewPanel(wxWindow *parent)
     m_online_container->Hide();
 
     m_online_toolbar_panel = new wxPanel(m_online_container);
-    wxColour toolbar_bg = StateColor::darkModeColorFor(*wxWHITE);
+    // Toolbar surface: MD3 SurfaceContainerLowest (the legacy darkModeColorFor(white)
+    // dark-mapped to sc-low, one step too light for a webview toolbar chrome).
+    wxColour toolbar_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
     m_online_toolbar_panel->SetBackgroundColour(toolbar_bg);
     m_online_container->SetBackgroundColour(m_online_toolbar_panel->GetBackgroundColour());
     m_online_toolbar_sizer = new wxBoxSizer(wxHORIZONTAL);
     m_online_toolbar_panel->SetSizer(m_online_toolbar_sizer);
 
-    // Icon color: map dark icons based on the StateColor mapping
-    std::string icon_color = StateColor::darkModeColorFor(wxColour("#262E30")).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
-    auto make_online_toolbar_button = [this, &toolbar_bg, &icon_color](const std::string &icon, const wxString &tooltip) {
-        wxBitmap bitmap = create_scaled_bitmap(icon, this, m_online_toolbar_icon_px, false, icon_color);
-        auto *btn       = new wxBitmapButton(m_online_toolbar_panel, wxID_ANY, bitmap, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE);
+    // Icon tints: MD3 OnSurface for enabled, OutlineVariant for the disabled state.
+    wxColour icon_enabled  = StateColor::semantic(MD3::Role::OnSurface);
+    wxColour icon_disabled = StateColor::semantic(MD3::Role::OutlineVariant);
+    // Prefer Material Symbols glyphs; fall back to the legacy raster SVGs when the
+    // icon font is unavailable so a missing TTF degrades to the old look, not tofu.
+    const bool use_glyphs = MaterialIcon::available();
+    // Kit icon buttons: the glyph and its enabled/disabled tint come from the
+    // Button's own MD3 state machine, so no tinted bitmaps are baked here.
+    auto make_online_toolbar_button = [this, use_glyphs]
+        (uint32_t glyph, const std::string &raster_icon, const wxString &tooltip) {
+        auto *btn = new Button(m_online_toolbar_panel, "", "", 0, 0);
+        btn->SetIconButton(Button::IconShape::Square, FromDIP(28));
+        if (use_glyphs)
+            btn->SetGlyph(glyph, FromDIP(m_online_toolbar_icon_px));
+        else
+            btn->SetIcon(raster_icon);
         btn->SetToolTip(tooltip);
-        btn->SetBackgroundColour(toolbar_bg);
-        btn->SetBitmapDisabled(create_scaled_bitmap(icon, this, m_online_toolbar_icon_px, false, StateColor::darkModeColorFor(wxColour("#c0babaff")).GetAsString(wxC2S_HTML_SYNTAX).ToStdString()));
-        btn->SetMinSize(wxSize(FromDIP(28), FromDIP(28)));
         return btn;
     };
 
     wxBoxSizer *left_group  = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *right_group = new wxBoxSizer(wxHORIZONTAL);
-    m_online_back_btn    = make_online_toolbar_button("mall_control_back", _CTX(L_CONTEXT("Back", "WebView"), "WebView"));
-    m_online_refresh_btn = make_online_toolbar_button("mall_control_refresh", _L("Refresh"));
+    m_online_back_btn    = make_online_toolbar_button(MaterialIcon::ArrowBack, "mall_control_back", _CTX(L_CONTEXT("Back", "WebView"), "WebView"));
+    m_online_refresh_btn = make_online_toolbar_button(MaterialIcon::Refresh, "mall_control_refresh", _L("Refresh"));
     left_group->Add(m_online_back_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
     left_group->Add(m_online_refresh_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
-    m_online_open_browser_btn = make_online_toolbar_button("open_in_browser", _L("Open in browser"));
+    m_online_open_browser_btn = make_online_toolbar_button(MaterialIcon::OpenInNew, "open_in_browser", _L("Open in browser"));
     right_group->Add(m_online_open_browser_btn, 0, wxALIGN_CENTER_VERTICAL);
 
     m_online_toolbar_sizer->Add(left_group, 0, wxALIGN_CENTER_VERTICAL);
@@ -472,13 +523,101 @@ void WebViewPanel::ResetWholePage()
     m_Wiki_LastUrl.Clear();
 }
 
-wxString WebViewPanel::MakeDisconnectUrl(std::string MenuName)
+void WebViewPanel::ShowCloudPageFailure(CloudPage page, HomeWebFailureKind kind,
+                                       wxWebView *browser, std::function<void()> retry)
 {
-    wxString UrlDisconnect = wxString::Format("file://%s/web/homepage3/disconnect.html?menu=%s", from_u8(resources_dir()), MenuName);
-    wxString strlang       = GetStudioLanguage();
-    if (strlang != "") { UrlDisconnect = wxString::Format("file://%s/web/homepage3/disconnect.html?menu=%s&lang=%s", from_u8(resources_dir()), MenuName, strlang); }
+    const HomeWebFailureDecision decision = home_web_failure_decision(kind);
+    if (!decision.show_notification || m_info == nullptr)
+        return;
 
-    return UrlDisconnect;
+    const bool is_current_page =
+        (page == CloudPage::MakerWorld && m_contentname == "online")
+        || (page == CloudPage::MakerLab && m_contentname == "makerlab")
+        || (page == CloudPage::PrintHistory && m_contentname == "printhistory");
+    if (!is_current_page)
+        return;
+
+    wxString message;
+    switch (kind) {
+    case HomeWebFailureKind::Network:
+        message = _L("Network unavailable. The current page remains open.");
+        break;
+    case HomeWebFailureKind::CloudAuthentication:
+        message = _L("Cloud sign-in could not be completed. The current page remains open.");
+        break;
+    case HomeWebFailureKind::RouteNotFound:
+        message = _L("The requested cloud page was not found. The current page remains open.");
+        break;
+    case HomeWebFailureKind::SecureConnection:
+        message = _L("The cloud page could not be opened securely. The current page remains open.");
+        break;
+    case HomeWebFailureKind::ServiceUnavailable:
+        message = _L("The cloud page is temporarily unavailable. The current page remains open.");
+        break;
+    case HomeWebFailureKind::UserCancelled:
+        return;
+    }
+
+    // wxInfoBar is non-modal, keyboard reachable, and remains visible until
+    // the user dismisses it or a matching navigation succeeds.  Never replace
+    // the browser document merely to report a transient cloud failure.
+    m_cloud_failure_browser = browser;
+    m_cloud_failure_retry = decision.offer_retry ? std::move(retry) : std::function<void()>{};
+    m_info->SetName(message);
+    m_info->ShowMessage(message, wxICON_WARNING);
+    Layout();
+}
+
+void WebViewPanel::ClearCloudPageFailure(const wxWebViewEvent& evt)
+{
+    if (m_cloud_failure_browser == nullptr
+        || evt.GetId() != m_cloud_failure_browser->GetId()
+        || IsBlankWebUrl(m_cloud_failure_browser->GetCurrentURL()))
+        return;
+
+    m_cloud_failure_browser = nullptr;
+    m_cloud_failure_retry = {};
+    if (m_info != nullptr && m_info->IsShown())
+        m_info->Dismiss();
+}
+
+void WebViewPanel::OnCloudPageRetry(wxCommandEvent&)
+{
+    if (!m_cloud_failure_retry)
+        return;
+
+    // Copy first: a synchronous ticket failure may replace the stored retry
+    // while the callback is running.
+    const std::function<void()> retry = m_cloud_failure_retry;
+    m_info->ShowMessage(_L("Loading..."), wxICON_INFORMATION);
+    retry();
+}
+
+bool WebViewPanel::LoadPrintHistory()
+{
+    if (m_browserPH == nullptr)
+        return false;
+
+    NetworkAgent *agent = GUI::wxGetApp().getAgent();
+    if (agent == nullptr) {
+        ShowCloudPageFailure(CloudPage::PrintHistory, HomeWebFailureKind::ServiceUnavailable,
+                             m_browserPH, [this] { LoadPrintHistory(); });
+        return false;
+    }
+
+    wxString final_url = m_print_history_LastUrl;
+    std::string newticket;
+    if (agent->request_bind_ticket(&newticket) != 0) {
+        ShowCloudPageFailure(CloudPage::PrintHistory, HomeWebFailureKind::CloudAuthentication,
+                             m_browserPH, [this] { LoadPrintHistory(); });
+        return false;
+    }
+
+    GetJumpUrl(true, newticket, final_url, final_url);
+    m_browserPH->LoadURL(final_url);
+    m_print_history_LastUrl = "";
+    m_printhistoryfirst = true;
+    return true;
 }
 
 void WebViewPanel::load_url(wxString& url)
@@ -1217,9 +1356,9 @@ void WebViewPanel::SaveMakerlabStl(int SequenceID, std::string Base64Buf, std::s
     });
 }
 
-void WebViewPanel::UpdateMakerlabStatus(  )
+bool WebViewPanel::UpdateMakerlabStatus()
 {
-    if (m_browserML == nullptr) return;
+    if (m_browserML == nullptr) return false;
 
     wxString ml_currenturl;
     if (m_MakerLab_LastUrl != "") {
@@ -1236,9 +1375,9 @@ void WebViewPanel::UpdateMakerlabStatus(  )
     {
         NetworkAgent *agent = GUI::wxGetApp().getAgent();
         if (agent == nullptr) {
-            wxString UrlDisconnect = MakeDisconnectUrl("makerlab");
-            m_browserML->LoadURL(UrlDisconnect);
-            return;
+            ShowCloudPageFailure(CloudPage::MakerLab, HomeWebFailureKind::ServiceUnavailable,
+                                 m_browserML, [this] { UpdateMakerlabStatus(); });
+            return false;
         }
 
         std::string newticket;
@@ -1248,10 +1387,12 @@ void WebViewPanel::UpdateMakerlabStatus(  )
             GetJumpUrl(login, newticket, ml_currenturl, ml_currenturl);
             m_browserML->LoadURL(ml_currenturl);
             m_MakerLab_LastUrl = "";
+            return true;
         }
         else {
-            wxString UrlDisconnect = MakeDisconnectUrl("makerlab");
-            m_browserML->LoadURL(UrlDisconnect);
+            ShowCloudPageFailure(CloudPage::MakerLab, HomeWebFailureKind::CloudAuthentication,
+                                 m_browserML, [this] { UpdateMakerlabStatus(); });
+            return false;
         }
     }
     else
@@ -1259,6 +1400,7 @@ void WebViewPanel::UpdateMakerlabStatus(  )
         GetJumpUrl(false, "", ml_currenturl, ml_currenturl);
         m_browserML->LoadURL(ml_currenturl);
         m_MakerLab_LastUrl = "";
+        return true;
     }
 }
 
@@ -1326,7 +1468,7 @@ bool WebViewPanel::GetJumpUrl(bool login, wxString ticket, wxString targeturl, w
     return true;
 }
 
-void WebViewPanel::UpdateMakerworldLoginStatus()
+bool WebViewPanel::UpdateMakerworldLoginStatus()
 {
     const std::uint64_t flow_id = ++m_makerworld_sso_flow_id;
     NetworkAgent *agent = GUI::wxGetApp().getAgent();
@@ -1335,7 +1477,9 @@ void WebViewPanel::UpdateMakerworldLoginStatus()
                                  << " cannot request bind ticket because NetworkAgent is unavailable";
         m_makerworld_sso_navigation_pending = false;
         m_makerworld_sso_redirect_completed = false;
-        return;
+        ShowCloudPageFailure(CloudPage::MakerWorld, HomeWebFailureKind::ServiceUnavailable,
+                             m_browserMW, [this] { UpdateMakerworldLoginStatus(); });
+        return false;
     }
 
     BOOST_LOG_TRIVIAL(info) << "MakerWorld SSO: flow=" << flow_id << " requesting bind ticket";
@@ -1346,14 +1490,18 @@ void WebViewPanel::UpdateMakerworldLoginStatus()
         BOOST_LOG_TRIVIAL(info) << "MakerWorld SSO: flow=" << flow_id
                                 << " bind ticket acquired; starting sign-in navigation";
         SetMakerworldPageLoginStatus(true, newticket);
+        return true;
     } else {
         BOOST_LOG_TRIVIAL(error) << "MakerWorld SSO: flow=" << flow_id
                                  << " failed to acquire bind ticket, ret=" << ret;
         m_makerworld_sso_navigation_pending = false;
         m_makerworld_sso_redirect_completed = false;
-        wxString UrlDisconnect = MakeDisconnectUrl("online");
-        m_browserMW->LoadURL(UrlDisconnect);
+        // This fork shows the MD3 cloud-failure surface (ShowCloudPageFailure
+        // below) instead of upstream's disconnect page.
     }
+    ShowCloudPageFailure(CloudPage::MakerWorld, HomeWebFailureKind::CloudAuthentication,
+                         m_browserMW, [this] { UpdateMakerworldLoginStatus(); });
+    return false;
 }
 
 
@@ -1676,6 +1824,8 @@ void WebViewPanel::OnNavigationRequest(wxWebViewEvent& evt)
     */
 void WebViewPanel::OnNavigationComplete(wxWebViewEvent& evt)
 {
+    ClearCloudPageFailure(evt);
+
     if (m_browserMW!=nullptr && evt.GetId() == m_browserMW->GetId())
     {
         wxString current_url = m_browserMW->GetCurrentURL();
@@ -1687,7 +1837,7 @@ void WebViewPanel::OnNavigationComplete(wxWebViewEvent& evt)
         std::string mwHost    = wxGetApp().get_model_http_url(wxGetApp().app_config->get_country_code());
         if (TmpNowUrl.find(mwHost) != std::string::npos) m_onlinefirst = true;
 
-        if (m_contentname == "online") { // conf save
+        if (m_contentname == "online" && IsUsableCloudWebUrl(m_browserMW)) { // conf save
             SetWebviewShow("right", false);
             SetWebviewShow("online", true);
         }
@@ -1719,11 +1869,20 @@ void WebViewPanel::OnNavigationComplete(wxWebViewEvent& evt)
             m_browserML->ClearHistory();
             m_makerlab_history_cleared = true;
         }
-        if (m_contentname == "makerlab") {
+        if (m_contentname == "makerlab" && IsUsableCloudWebUrl(m_browserML)) {
             SetWebviewShow("right", false);
             SetWebviewShow("makerlab", true);
             UpdateOnlineToolbarState();
         }
+    }
+
+    if (m_browserPH != nullptr && evt.GetId() == m_browserPH->GetId()
+        && m_contentname == "printhistory" && IsUsableCloudWebUrl(m_browserPH)) {
+        SetWebviewShow("online", false);
+        SetWebviewShow("right", false);
+        SetWebviewShow("printhistory", true);
+        SetWebviewShow("makerlab", false);
+        SetWebviewShow("wiki", false);
     }
 
     if (m_browser != nullptr && evt.GetId() == m_browser->GetId())
@@ -1916,18 +2075,18 @@ void WebViewPanel::OnViewSourceRequest(wxCommandEvent& WXUNUSED(evt))
 void WebViewPanel::OnViewTextRequest(wxCommandEvent& WXUNUSED(evt))
 {
     wxDialog textViewDialog(this, wxID_ANY, "Page Text",
-        wxDefaultPosition, wxSize(700, 500),
+        wxDefaultPosition, FromDIP(wxSize(700, 500)),
         wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
 
-    wxTextCtrl* text = new wxTextCtrl(this, wxID_ANY, m_browser->GetPageText(),
-        wxDefaultPosition, wxDefaultSize,
-        wxTE_MULTILINE |
-        wxTE_RICH |
-        wxTE_READONLY);
+    // The viewer used to be parented to the panel and its sizer set on the
+    // panel, so the modal dialog opened empty; both now belong to the dialog.
+    TextArea* text = new TextArea(&textViewDialog, m_browser->GetPageText(), wxDefaultSize,
+        wxTE_RICH | wxTE_READONLY);
+    text->SetMonospace(true);
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(text, 1, wxEXPAND);
-    SetSizer(sizer);
+    textViewDialog.SetSizer(sizer);
     textViewDialog.ShowModal();
 }
 
@@ -1952,8 +2111,7 @@ void WebViewPanel::OnToolsClicked(wxCommandEvent& WXUNUSED(evt))
     m_context_menu->Check(m_browser->IsContextMenuEnabled());
     m_dev_tools->Check(m_browser->IsAccessToDevToolsEnabled());
 
-    wxPoint position = ScreenToClient(wxGetMousePosition());
-    PopupMenu(m_tools_menu, position.x, position.y);
+    MD3::PopupMenu(this, m_tools_menu, wxGetMousePosition());
 }
 
 void WebViewPanel::RunScript(const wxString& javascript)
@@ -2047,6 +2205,7 @@ void WebViewPanel::OnRunScriptCustom(wxCommandEvent& WXUNUSED(evt))
         m_javascript,
         wxOK | wxCANCEL | wxCENTRE | wxTE_MULTILINE
     );
+    MD3DialogCaption::Adopt(&dialog);
     if (dialog.ShowModal() != wxID_OK)
         return;
 
@@ -2064,6 +2223,7 @@ void WebViewPanel::OnAddUserScript(wxCommandEvent& WXUNUSED(evt))
         userScript,
         wxOK | wxCANCEL | wxCENTRE | wxTE_MULTILINE
     );
+    MD3DialogCaption::Adopt(&dialog);
     if (dialog.ShowModal() != wxID_OK)
         return;
 
@@ -2082,6 +2242,7 @@ void WebViewPanel::OnSetCustomUserAgent(wxCommandEvent& WXUNUSED(evt))
         customUserAgent,
         wxOK | wxCANCEL | wxCENTRE
     );
+    MD3DialogCaption::Adopt(&dialog);
     if (dialog.ShowModal() != wxID_OK)
         return;
 
@@ -2149,54 +2310,50 @@ void WebViewPanel::OnError(wxWebViewEvent& evt)
     }
     //m_info->ShowMessage(_L("An error occurred loading ") + evt.GetURL() + "\n" + "'" + category + "'", wxICON_ERROR);
 
-    if (evt.GetInt() == wxWEBVIEW_NAV_ERR_CONNECTION && evt.GetId() == m_browserMW->GetId())
-    {
-        m_online_LastUrl = m_browserMW->GetCurrentURL();
-
-        if (m_contentname == "online")
-        {
-            wxString errurl = evt.GetURL();
-
-            wxString UrlDisconnect = MakeDisconnectUrl("online");
-            m_browserMW->LoadURL(UrlDisconnect);
-
-            SetWebviewShow("makerlab", false);
-            SetWebviewShow("online", true);
-            SetWebviewShow("right", false);
-            SetWebviewShow("printhistory", false);
-        }
+    const HomeWebFailureKind kind = ToHomeWebFailureKind(evt.GetInt());
+    if (!home_web_failure_decision(kind).show_notification) {
+        UpdateState();
+        return;
     }
-
-    if (evt.GetInt() == wxWEBVIEW_NAV_ERR_CONNECTION && evt.GetId() == m_browserPH->GetId()) {
-        m_print_history_LastUrl = m_browserPH->GetCurrentURL();
-
-        if (m_contentname == "printhistory") {
-            wxString errurl = evt.GetURL();
-
-            wxString UrlDisconnect = MakeDisconnectUrl("printhistory");
-            m_browserPH->LoadURL(UrlDisconnect);
-
-            SetWebviewShow("makerlab", false);
-            SetWebviewShow("printhistory", true);
-            SetWebviewShow("online", false);
-            SetWebviewShow("right", false);
-        }
-    }
-
-    if (evt.GetInt() == wxWEBVIEW_NAV_ERR_CONNECTION && evt.GetId() == m_browserML->GetId()) {
-        m_MakerLab_LastUrl = m_browserML->GetCurrentURL();
-
-        if (m_contentname == "makerlab") {
-            wxString errurl = evt.GetURL();
-
-            wxString UrlDisconnect = MakeDisconnectUrl("makerlab");
-            m_browserML->LoadURL(UrlDisconnect);
-
-            SetWebviewShow("makerlab", true);
-            SetWebviewShow("printhistory", false);
-            SetWebviewShow("online", false);
-            SetWebviewShow("right", false);
-        }
+    const wxString failed_url = evt.GetURL();
+    if (m_browserMW != nullptr && evt.GetId() == m_browserMW->GetId()) {
+        if (!failed_url.IsEmpty() && !IsBlankWebUrl(failed_url))
+            m_online_LastUrl = failed_url;
+        std::function<void()> retry = kind == HomeWebFailureKind::CloudAuthentication
+            ? std::function<void()>([this] { UpdateMakerworldLoginStatus(); })
+            : std::function<void()>([this, failed_url] {
+                  if (!failed_url.IsEmpty() && m_browserMW != nullptr)
+                      m_browserMW->LoadURL(failed_url);
+                  else if (wxGetApp().is_user_login())
+                      UpdateMakerworldLoginStatus();
+                  else
+                      SetMakerworldPageLoginStatus(false);
+              });
+        ShowCloudPageFailure(CloudPage::MakerWorld, kind, m_browserMW, std::move(retry));
+    } else if (m_browserPH != nullptr && evt.GetId() == m_browserPH->GetId()) {
+        if (!failed_url.IsEmpty() && !IsBlankWebUrl(failed_url))
+            m_print_history_LastUrl = failed_url;
+        std::function<void()> retry = kind == HomeWebFailureKind::CloudAuthentication
+            ? std::function<void()>([this] { LoadPrintHistory(); })
+            : std::function<void()>([this, failed_url] {
+                  if (!failed_url.IsEmpty() && m_browserPH != nullptr)
+                      m_browserPH->LoadURL(failed_url);
+                  else
+                      LoadPrintHistory();
+              });
+        ShowCloudPageFailure(CloudPage::PrintHistory, kind, m_browserPH, std::move(retry));
+    } else if (m_browserML != nullptr && evt.GetId() == m_browserML->GetId()) {
+        if (!failed_url.IsEmpty() && !IsBlankWebUrl(failed_url))
+            m_MakerLab_LastUrl = failed_url;
+        std::function<void()> retry = kind == HomeWebFailureKind::CloudAuthentication
+            ? std::function<void()>([this] { UpdateMakerlabStatus(); })
+            : std::function<void()>([this, failed_url] {
+                  if (!failed_url.IsEmpty() && m_browserML != nullptr)
+                      m_browserML->LoadURL(failed_url);
+                  else
+                      UpdateMakerlabStatus();
+              });
+        ShowCloudPageFailure(CloudPage::MakerLab, kind, m_browserML, std::move(retry));
     }
 
     UpdateState();
@@ -2262,21 +2419,22 @@ void WebViewPanel::SwitchWebContent(std::string modelname, int refresh)
     else if (modelname.compare("makerlab") == 0)
     {
         wxString FinalUrl;
+        bool navigation_started = true;
 
         if (!m_MakerLabFirst)
         {
-            UpdateMakerlabStatus();
+            navigation_started = UpdateMakerlabStatus();
         }
         else {
             if (m_MakerLab_LastUrl != "") m_browserML->LoadURL(m_MakerLab_LastUrl);
         }
 
-        m_MakerLabFirst = true;
-        m_MakerLab_LastUrl = "";
+        m_MakerLabFirst = m_MakerLabFirst || navigation_started;
+        const bool show_cloud_page = navigation_started || IsUsableCloudWebUrl(m_browserML);
 
-        SetWebviewShow("makerlab", true);
+        SetWebviewShow("makerlab", show_cloud_page);
         SetWebviewShow("online", false);
-        SetWebviewShow("right", false);
+        SetWebviewShow("right", !show_cloud_page);
         SetWebviewShow("printhistory", false);
         SetWebviewShow("wiki", false);
 
@@ -2285,12 +2443,12 @@ void WebViewPanel::SwitchWebContent(std::string modelname, int refresh)
         wxGetApp().app_config->save();
         wxGetApp().CallAfter([this] { ShowMenuNewTag("makerlab", "0"); });
 
-        show_online_toolbar = true;
+        show_online_toolbar = show_cloud_page;
     } else if (modelname.compare("online") == 0) {
-
+        bool navigation_started = true;
         if (!m_onlinefirst) {
             if (m_loginstatus == 1) {
-                UpdateMakerworldLoginStatus();
+                navigation_started = UpdateMakerworldLoginStatus();
             } else {
                 SetMakerworldPageLoginStatus(false);
             }
@@ -2316,9 +2474,11 @@ void WebViewPanel::SwitchWebContent(std::string modelname, int refresh)
             }
         }
 
-        SetWebviewShow("online", true);
+        const bool show_cloud_page = navigation_started || IsUsableCloudWebUrl(m_browserMW);
+
+        SetWebviewShow("online", show_cloud_page);
         SetWebviewShow("makerlab", false);
-        SetWebviewShow("right", false);
+        SetWebviewShow("right", !show_cloud_page);
         SetWebviewShow("printhistory", false);
         SetWebviewShow("wiki", false);
         // conf save
@@ -2326,28 +2486,12 @@ void WebViewPanel::SwitchWebContent(std::string modelname, int refresh)
         wxGetApp().app_config->save();
         wxGetApp().CallAfter([this] { ShowMenuNewTag("online", "0"); });
 
-        show_online_toolbar = true;
+        show_online_toolbar = show_cloud_page;
     } else if (modelname.compare("printhistory") == 0) {
-
+        bool navigation_started = true;
         if (!m_printhistoryfirst)
         {
-            NetworkAgent *agent = GUI::wxGetApp().getAgent();
-            if (agent == nullptr) return;
-
-            std::string BambuHost = agent->get_bambulab_host();
-            wxString    FinalUrl = m_print_history_LastUrl;
-            std::string newticket;
-            int         ret = agent->request_bind_ticket(&newticket);
-            if (ret == 0) {
-                GetJumpUrl(true, newticket, FinalUrl, FinalUrl);
-                m_browserPH->LoadURL(FinalUrl);
-
-                m_print_history_LastUrl = "";
-                m_printhistoryfirst     = true;
-            } else {
-                wxString UrlDisconnect = MakeDisconnectUrl("printhistory");
-                m_browserPH->LoadURL(UrlDisconnect);
-            }
+            navigation_started = LoadPrintHistory();
         } else {
             if (m_print_history_LastUrl != "") {
                 m_browserPH->LoadURL(m_print_history_LastUrl);
@@ -2358,9 +2502,11 @@ void WebViewPanel::SwitchWebContent(std::string modelname, int refresh)
             }
         }
 
+        const bool show_cloud_page = navigation_started || IsUsableCloudWebUrl(m_browserPH);
+
         SetWebviewShow("online", false);
-        SetWebviewShow("right", false);
-        SetWebviewShow("printhistory", true);
+        SetWebviewShow("right", !show_cloud_page);
+        SetWebviewShow("printhistory", show_cloud_page);
         SetWebviewShow("makerlab", false);
         SetWebviewShow("wiki", false);
 
@@ -2555,22 +2701,24 @@ void WebViewPanel::UpdateOnlineToolbarState()
     const bool can_show_open_button = (on_online_tab || on_makerlab_tab) && has_webview;
 
 
-    std::string enabled_color = StateColor::darkModeColorFor(wxColour("#262E30")).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
-    std::string disabled_color = StateColor::darkModeColorFor(wxColour("#c0babaff")).GetAsString(wxC2S_HTML_SYNTAX).ToStdString();
-    auto update_btn_state = [this, &enabled_color, &disabled_color](wxBitmapButton *btn, bool enable, const std::string &icon) {
+    // Icon tints: MD3 OnSurface enabled / OutlineVariant disabled. Prefer Material
+    // Symbols glyphs; fall back to the legacy raster SVGs when the icon font is
+    // unavailable so a missing TTF degrades to the old look, not tofu.
+    wxColour   enabled_color  = StateColor::semantic(MD3::Role::OnSurface);
+    wxColour   disabled_color = StateColor::semantic(MD3::Role::OutlineVariant);
+    const bool use_glyphs     = MaterialIcon::available();
+    auto update_btn_state = [](Button *btn, bool enable, uint32_t /*glyph*/, const std::string & /*icon*/) {
         if (!btn) return;
+        // The kit Button tints its glyph for the disabled state itself.
         btn->Enable(enable);
-        const int px = m_online_toolbar_icon_px;
-        btn->SetBitmap(enable ? create_scaled_bitmap(icon, this, px, false, enabled_color)
-                              : create_scaled_bitmap(icon, this, px, false, disabled_color));
     };
 
     bool can_go_back = false;
     if (can_show_open_button)
         can_go_back = active_webview->CanGoBack();
 
-    update_btn_state(m_online_back_btn, can_go_back, "mall_control_back");
-    update_btn_state(m_online_refresh_btn, can_show_open_button, "mall_control_refresh");
+    update_btn_state(m_online_back_btn, can_go_back, MaterialIcon::ArrowBack, "mall_control_back");
+    update_btn_state(m_online_refresh_btn, can_show_open_button, MaterialIcon::Refresh, "mall_control_refresh");
     if (m_online_open_browser_btn) {
         bool has_url = false;
         if (can_show_open_button) {
@@ -2583,11 +2731,10 @@ void WebViewPanel::UpdateOnlineToolbarState()
 
 std::string WebViewPanel::GetStudioLanguage()
 {
-    std::string strLanguage = wxGetApp().app_config->get("language");
-    boost::trim(strLanguage);
-    if (strLanguage.empty()) strLanguage = "en";
-
-    return strLanguage;
+    // Local embedded pages understand the fork's custom mode IDs and perform
+    // their own fallback for standard locales. Remote MakerWorld routes use
+    // current_language_code_safe() at their call sites instead.
+    return into_u8(wxGetApp().current_local_web_language());
 }
 
 SourceViewDialog::SourceViewDialog(wxWindow* parent, wxString source) :
@@ -2595,15 +2742,14 @@ SourceViewDialog::SourceViewDialog(wxWindow* parent, wxString source) :
                            wxDefaultPosition, wxSize(700,500),
                            wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
-    wxTextCtrl* text = new wxTextCtrl(this, wxID_ANY, source,
-                                      wxDefaultPosition, wxDefaultSize,
-                                      wxTE_MULTILINE |
-                                      wxTE_RICH |
-                                      wxTE_READONLY);
+    SetSize(FromDIP(wxSize(700, 500)));
+    TextArea* text = new TextArea(this, source, wxDefaultSize, wxTE_RICH | wxTE_READONLY);
+    text->SetMonospace(true);
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(text, 1, wxEXPAND);
     SetSizer(sizer);
+    MD3DialogCaption::Adopt(this);
 }
 
 

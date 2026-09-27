@@ -17,6 +17,7 @@
 #include "Widgets/WebView.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/SwitchButton.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/regex.h>
 #include <wx/progdlg.h>
@@ -30,13 +31,24 @@
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceCore/DevStorage.h"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/StateColor.hpp"
 
 namespace Slic3r { namespace GUI {
 
-// Helio dark palette constants (for ExpandCenterDialog - Welcome to Helio Additive)
+// Helio Additive dark palette (for ExpandCenterDialog - Welcome to Helio
+// Additive). An intentional, forced-dark third-party brand identity applied
+// unconditionally, regardless of the app's light/dark theme, so these named
+// brand colors are deliberately EXEMPT from the theme-aware MD3 token
+// migration — routing them through MD3::resolve()/StateColor::semantic() would
+// resolve to light-mode surfaces and break the always-dark Helio look. Standard
+// shared controls in the dialog (the green primary CTA + white text) still use
+// ThemeColor/MD3 tokens; every other surface/text control expresses the brand
+// through these named constants rather than one-off raw literals.
 namespace {
     const wxColour HELIO_BG_BASE(7, 9, 12);       // #07090C
     const wxColour HELIO_CARD_BG(14, 19, 32);     // #0E1320
+    const wxColour HELIO_CARD_HIGHLIGHT(18, 26, 43); // #121A2B (subtle hover)
     const wxColour HELIO_BORDER(255, 255, 255, 25); // rgba(255,255,255,0.10)
     const wxColour HELIO_TEXT(238, 242, 255);     // #EEF2FF
     const wxColour HELIO_MUTED(168, 176, 192);    // #A8B0C0
@@ -55,49 +67,29 @@ wxDEFINE_EVENT(EVT_UPDATE_NOZZLE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_ERROR_DIALOG_BTN_CLICKED, wxCommandEvent);
 
 ReleaseNoteDialog::ReleaseNoteDialog(Plater *plater /*= nullptr*/)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Release Note"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe), _L("Release Note"), wxEmptyString, MaterialIcon::History)
 {
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(*wxWHITE);
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(30));
-
-    wxBoxSizer *m_sizer_body = new wxBoxSizer(wxHORIZONTAL);
-
-    m_sizer_body->Add(0, 0, 0, wxLEFT, FromDIP(38));
-
-    auto sm = create_scaled_bitmap("BambuStudio", nullptr,  70);
-    auto brand = new wxStaticBitmap(this, wxID_ANY, sm, wxDefaultPosition, wxSize(FromDIP(70), FromDIP(70)));
-
-    m_sizer_body->Add(brand, 0, wxALL, 0);
-
-    m_sizer_body->Add(0, 0, 0, wxRIGHT, FromDIP(25));
-
-    wxBoxSizer *m_sizer_right = new wxBoxSizer(wxVERTICAL);
+    // Migrated onto the MD3Dialog shell: header icon tile replaces the left
+    // BambuStudio logo; the surface + roles replace the *wxWHITE / grey literals.
+    wxBoxSizer *m_sizer_right = GetContentSizer();
 
     m_text_up_info = new Label(this, Label::Head_14, wxEmptyString, LB_AUTO_WRAP);
-    m_text_up_info->SetForegroundColour(wxColour(0x26, 0x2E, 0x30));
+    m_text_up_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_sizer_right->Add(m_text_up_info, 0, wxEXPAND, 0);
 
-    m_sizer_right->Add(0, 0, 1, wxTOP, FromDIP(15));
+    m_sizer_right->AddSpacer(FromDIP(15));
 
     m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)), wxVSCROLL);
     m_vebview_release_note->SetScrollRate(5, 5);
-    m_vebview_release_note->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
 
-    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND | wxRIGHT, FromDIP(20));
-    m_sizer_body->Add(m_sizer_right, 1, wxBOTTOM | wxEXPAND, FromDIP(30));
-    m_sizer_main->Add(m_sizer_body, 0, wxEXPAND, 0);
+    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND, 0);
 
-    SetSizer(m_sizer_main);
     Layout();
-    m_sizer_main->Fit(this);
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
 
     Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
@@ -108,6 +100,7 @@ ReleaseNoteDialog::~ReleaseNoteDialog() {}
 
 void ReleaseNoteDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
+    UpdateShape();
 }
 
 void ReleaseNoteDialog::update_release_note(wxString release_note, std::string version)
@@ -125,30 +118,15 @@ void ReleaseNoteDialog::update_release_note(wxString release_note, std::string v
 }
 
 UpdatePluginDialog::UpdatePluginDialog(wxWindow* parent /*= nullptr*/)
-    : DPIDialog(static_cast<wxWindow*>(wxGetApp().mainframe), wxID_ANY, _L("Network plug-in update"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
+    : MD3Dialog(static_cast<wxWindow*>(wxGetApp().mainframe), _L("Network plug-in update"), wxEmptyString, MaterialIcon::Download)
 {
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(*wxWHITE);
-    wxBoxSizer* m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(30));
-
-    wxBoxSizer* m_sizer_body = new wxBoxSizer(wxHORIZONTAL);
-
-
-
-    auto sm = create_scaled_bitmap("BambuStudio", nullptr, 55);
-    auto brand = new wxStaticBitmap(this, wxID_ANY, sm, wxDefaultPosition, wxSize(FromDIP(55), FromDIP(55)));
-
-    wxBoxSizer* m_sizer_right = new wxBoxSizer(wxVERTICAL);
+    // Migrated onto the MD3Dialog shell; header icon tile replaces the left logo,
+    // Surface roles replace the *wxWHITE / grey literals, OK/Cancel move to footer.
+    wxBoxSizer* m_sizer_right = GetContentSizer();
 
     m_text_up_info = new Label(this, Label::Head_13, wxEmptyString, LB_AUTO_WRAP);
     m_text_up_info->SetMaxSize(wxSize(FromDIP(260), -1));
-    m_text_up_info->SetForegroundColour(wxColour(0x26, 0x2E, 0x30));
+    m_text_up_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
 
     operation_tips = new ::Label(this, Label::Body_12, _L("Click OK to update the Network plug-in when Bambu Studio launches next time."), LB_AUTO_WRAP);
@@ -157,64 +135,39 @@ UpdatePluginDialog::UpdatePluginDialog(wxWindow* parent /*= nullptr*/)
 
     m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(5, 5);
-    m_vebview_release_note->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(260), FromDIP(150)));
     m_vebview_release_note->SetMaxSize(wxSize(FromDIP(260), FromDIP(150)));
 
-    auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
-
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
+    // Footer: kit filled OK pill + text Cancel pill. Preserve the exact
+    // wxEVT_LEFT_DOWN bindings and wxID_OK / wxID_NO return codes.
     auto m_button_ok = new Button(this, _L("OK"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour("#FFFFFE"));
-    m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetCornerRadius(FromDIP(12));
-
+    m_button_ok->SetVariant(Button::Variant::Filled);
+    m_button_ok->SetButtonSize(Button::Size::Medium);
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_OK);
         });
 
     auto m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetCornerRadius(FromDIP(12));
-
+    m_button_cancel->SetVariant(Button::Variant::Text);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_NO);
         });
 
-    sizer_button->AddStretchSpacer();
-    sizer_button->Add(m_button_ok, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_cancel, 0, wxALL, FromDIP(5));
-
     m_sizer_right->Add(m_text_up_info, 0, wxEXPAND, 0);
     m_sizer_right->Add(0, 0, 0, wxTOP, FromDIP(5));
-    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND | wxRIGHT, FromDIP(20));
+    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND, 0);
     m_sizer_right->Add(0, 0, 0, wxTOP, FromDIP(5));
-    m_sizer_right->Add(operation_tips, 1, wxEXPAND | wxRIGHT, FromDIP(20));
-    m_sizer_right->Add(0, 0, 0, wxTOP, FromDIP(5));
-    m_sizer_right->Add(sizer_button, 0, wxEXPAND | wxRIGHT, FromDIP(20));
+    m_sizer_right->Add(operation_tips, 0, wxEXPAND, 0);
 
-    m_sizer_body->Add(0, 0, 0, wxLEFT, FromDIP(24));
-    m_sizer_body->Add(brand, 0, wxALL, 0);
-    m_sizer_body->Add(0, 0, 0, wxRIGHT, FromDIP(20));
-    m_sizer_body->Add(m_sizer_right, 1, wxBOTTOM | wxEXPAND, FromDIP(18));
-    m_sizer_main->Add(m_sizer_body, 0, wxEXPAND, 0);
+    AddFooterButton(m_button_cancel);
+    AddFooterButton(m_button_ok);
 
-    SetSizer(m_sizer_main);
     Layout();
-    m_sizer_main->Fit(this);
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
 
     Centre(wxBOTH);
     wxGetApp().UpdateDlgDarkUI(this);
@@ -225,6 +178,7 @@ UpdatePluginDialog::~UpdatePluginDialog() {}
 
 void UpdatePluginDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
+    UpdateShape();
 }
 
 void UpdatePluginDialog::update_info(std::string json_path)
@@ -267,44 +221,33 @@ void UpdatePluginDialog::update_info(std::string json_path)
 }
 
 UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
-    : DPIDialog(parent, wxID_ANY, _L("New version of Bambu Studio"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER)
+    : MD3Dialog(parent, _L("New version of Bambu Studio"), wxEmptyString, MaterialIcon::Download)
 {
-    std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
-    SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-
-    SetBackgroundColour(*wxWHITE);
-
-    wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top   = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
-
-
-    wxBoxSizer *m_sizer_body = new wxBoxSizer(wxHORIZONTAL);
-
-
-
+    // Migrated onto the MD3Dialog shell; header icon tile replaces the left logo,
+    // Surface roles replace *wxWHITE / grey literals, actions move to the footer.
+    // m_brand is kept (hidden, no longer placed in a sizer) because the web-link
+    // path in update_version_info() still calls m_brand->Hide().
     auto sm    = create_scaled_bitmap("BambuStudio", nullptr, 70);
     m_brand = new wxStaticBitmap(this, wxID_ANY, sm, wxDefaultPosition, wxSize(FromDIP(70), FromDIP(70)));
+    m_brand->Hide();
 
-
-
-    wxBoxSizer *m_sizer_right = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer *m_sizer_right = GetContentSizer();
 
     m_text_up_info = new Label(this, Label::Head_14, wxEmptyString, LB_AUTO_WRAP);
-    m_text_up_info->SetForegroundColour(wxColour(0x26, 0x2E, 0x30));
+    m_text_up_info->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
     m_simplebook_release_note = new wxSimplebook(this);
     m_simplebook_release_note->SetSize(wxSize(FromDIP(560), FromDIP(430)));
     m_simplebook_release_note->SetMinSize(wxSize(FromDIP(560), FromDIP(430)));
-    m_simplebook_release_note->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
+    m_simplebook_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     m_scrollwindows_release_note = new wxScrolledWindow(m_simplebook_release_note, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(430)), wxVSCROLL);
     m_scrollwindows_release_note->SetScrollRate(5, 5);
-    m_scrollwindows_release_note->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
+    m_scrollwindows_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
 
     //webview
     m_vebview_release_note = CreateTipView(m_simplebook_release_note);
-    m_vebview_release_note->SetBackgroundColour(wxColour(0xF8, 0xF8, 0xF8));
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetSize(wxSize(FromDIP(560), FromDIP(430)));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(560), FromDIP(430)));
     //m_vebview_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
@@ -325,41 +268,24 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
 
 
 
-    m_bitmap_open_in_browser = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("open_in_browser", this, 12), wxDefaultPosition, wxDefaultSize, 0 );
-    m_link_open_in_browser   = new wxHyperlinkCtrl(this, wxID_ANY, "Open in browser", "");
-    m_link_open_in_browser->SetFont(Label::Body_12);
+    m_bitmap_open_in_browser = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::OpenInNew, 12, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxDefaultSize, 0 );
+    m_link_open_in_browser   = new LinkLabel(this, "Open in browser", "");
+    m_link_open_in_browser->getLabel()->SetFont(Label::Body_12);
 
 
-    auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
-
-
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
+    // Footer: kit Download (filled) / Skip (text) / Cancel (text) pills; the
+    // "open in browser" link sits at the footer's left edge. Preserve the exact
+    // wxEVT_LEFT_DOWN bindings and return codes (wxID_YES / wxID_NO).
     m_button_download = new Button(this, _L("Download"));
-    m_button_download->SetBackgroundColor(btn_bg_green);
-    m_button_download->SetBorderColor(*wxWHITE);
-    m_button_download->SetTextColor(wxColour("#FFFFFE"));
-    m_button_download->SetFont(Label::Body_12);
-    m_button_download->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_download->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_download->SetCornerRadius(FromDIP(12));
-
+    m_button_download->SetVariant(Button::Variant::Filled);
+    m_button_download->SetButtonSize(Button::Size::Medium);
     m_button_download->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         EndModal(wxID_YES);
     });
 
     m_button_skip_version = new Button(this, _L("Skip this Version"));
-    m_button_skip_version->SetBackgroundColor(btn_bg_white);
-    m_button_skip_version->SetBorderColor(wxColour(38, 46, 48));
-    m_button_skip_version->SetFont(Label::Body_12);
-    m_button_skip_version->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_skip_version->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_skip_version->SetCornerRadius(FromDIP(12));
-
+    m_button_skip_version->SetVariant(Button::Variant::Text);
+    m_button_skip_version->SetButtonSize(Button::Size::Medium);
     m_button_skip_version->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         wxGetApp().set_skip_version(true);
         EndModal(wxID_NO);
@@ -367,40 +293,28 @@ UpdateVersionDialog::UpdateVersionDialog(wxWindow *parent)
 
 
     m_button_cancel = new Button(this, _L("Cancel"));
-    m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
-    m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetCornerRadius(FromDIP(12));
-
+    m_button_cancel->SetVariant(Button::Variant::Text);
+    m_button_cancel->SetButtonSize(Button::Size::Medium);
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) {
         EndModal(wxID_NO);
     });
 
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND | wxBOTTOM, 0);
-
-    sizer_button->Add(m_bitmap_open_in_browser, 0, wxALIGN_CENTER | wxLEFT, FromDIP(7));
-    sizer_button->Add(m_link_open_in_browser, 0, wxALIGN_CENTER| wxLEFT, FromDIP(3));
-    //sizer_button->Add(m_remind_choice, 0, wxALL | wxEXPAND, FromDIP(5));
-    sizer_button->AddStretchSpacer();
-    sizer_button->Add(m_button_download, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_skip_version, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_cancel, 0, wxALL, FromDIP(5));
-
     m_sizer_right->Add(m_text_up_info, 0, wxEXPAND | wxBOTTOM | wxTOP, FromDIP(15));
-    m_sizer_right->Add(m_simplebook_release_note, 1, wxEXPAND | wxRIGHT, 0);
-    m_sizer_right->Add(sizer_button, 0, wxEXPAND | wxRIGHT, FromDIP(20));
+    m_sizer_right->Add(m_simplebook_release_note, 1, wxEXPAND, 0);
 
-    m_sizer_body->Add(m_brand, 0, wxTOP|wxRIGHT|wxLEFT, FromDIP(15));
-    m_sizer_body->Add(0, 0, 0, wxRIGHT, 0);
-    m_sizer_body->Add(m_sizer_right, 1, wxBOTTOM | wxEXPAND, FromDIP(8));
-    m_sizer_main->Add(m_sizer_body, 1, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxBOTTOM, 10);
+    auto browser_link_sizer = new wxBoxSizer(wxHORIZONTAL);
+    browser_link_sizer->Add(m_bitmap_open_in_browser, 0, wxALIGN_CENTER | wxLEFT, FromDIP(7));
+    browser_link_sizer->Add(m_link_open_in_browser, 0, wxALIGN_CENTER | wxLEFT, FromDIP(3));
+    GetFooterSizer()->Insert(0, browser_link_sizer, 0, wxALIGN_CENTER_VERTICAL);
 
-    SetSizer(m_sizer_main);
+    AddFooterButton(m_button_download);
+    AddFooterButton(m_button_skip_version);
+    AddFooterButton(m_button_cancel);
+
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
 
     SetMinSize(GetSize());
 
@@ -473,6 +387,7 @@ void UpdateVersionDialog::on_dpi_changed(const wxRect &suggested_rect) {
     m_button_download->Rescale();
     m_button_skip_version->Rescale();
     m_button_cancel->Rescale();
+    UpdateShape();
 }
 
 std::vector<std::string> UpdateVersionDialog::splitWithStl(std::string str,std::string pattern)
@@ -518,7 +433,7 @@ void UpdateVersionDialog::update_version_info(wxString release_note, wxString ve
         m_text_up_info->Hide();
         m_simplebook_release_note->SetSelection(1);
         m_vebview_release_note->LoadURL(from_u8(url_line));
-        m_link_open_in_browser->SetURL(url_line);
+        m_link_open_in_browser->setLinkUrl(url_line);
     }
     else {
         m_simplebook_release_note->SetMaxSize(wxSize(FromDIP(560), FromDIP(430)));
@@ -542,59 +457,72 @@ void UpdateVersionDialog::update_version_info(wxString release_note, wxString ve
 }
 
 SecondaryCheckDialog::SecondaryCheckDialog(wxWindow* parent, wxWindowID id, const wxString& title, enum ButtonStyle btn_style, const wxPoint& pos, const wxSize& size, long style, bool not_show_again_check)
-    :DPIFrame(parent, id, title, pos, size, style)
+    :MD3Dialog(parent, title, wxEmptyString, MaterialIcon::Info)
 {
+    // Migrated onto the MD3Dialog shell: borderless rounded SurfaceContainer
+    // frame + header icon tile/title/close replace the stock caption + grey
+    // top-line; the scroll body uses a Surface role and the action buttons move
+    // to the kit footer. The pinned ctor signature (id/pos/size/style) is kept
+    // for every existing call site; the shell owns the window chrome now.
     m_button_style = btn_style;
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
-    m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(400), 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(5));
-
-    wxBoxSizer* m_sizer_right = new wxBoxSizer(wxVERTICAL);
-
-    m_sizer_right->Add(0, 0, 1, wxTOP, FromDIP(15));
+    wxBoxSizer* m_sizer_right = GetContentSizer();
 
     m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(0, 5);
-    m_vebview_release_note->SetBackgroundColour(*wxWHITE);
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(400), FromDIP(380)));
-    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND | wxRIGHT | wxLEFT, FromDIP(15));
+    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND, 0);
 
+    // btn_bg_green (primary/filled) and btn_bg_white (neutral) are public members
+    // callers still poke (StatusPanel swaps them to invert emphasis); sourced from
+    // MD3 roles so no BrandGreen / *wxWHITE literals remain.
+    btn_bg_green = StateColor(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
 
-    auto bottom_sizer = new wxBoxSizer(wxVERTICAL);
-    auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
-    btn_bg_green = StateColor(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-    btn_bg_white = StateColor(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    btn_bg_white = StateColor(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Normal));
 
 
     if (not_show_again_check) {
-        auto checkbox_sizer = new wxBoxSizer(wxHORIZONTAL);
-        m_show_again_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
-        m_show_again_checkbox->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, [this](wxCommandEvent& e) {
-            not_show_again = !not_show_again;
+        // The footer sat a stock Win32 checkbox (13px system square, system-blue
+        // focus rect, light-mode chrome in dark mode) next to MD3 pill buttons.
+        // ::CheckBox draws the 20px MD3 glyph instead; it carries no text of its
+        // own, so the caption is a sibling Label and clicking it toggles the box
+        // — the stock label was clickable and stays that way.
+        auto* show_again_row   = new wxBoxSizer(wxHORIZONTAL);
+        m_show_again_checkbox  = new ::CheckBox(this);
+        // The glyph has no label of its own; name it so MSAA still announces it.
+        m_show_again_checkbox->SetName(_L("Don't show again"));
+        show_again_row->Add(m_show_again_checkbox, 0, wxALIGN_CENTER_VERTICAL);
+        auto* show_again_label = new ::Label(this, ::Label::Body_13, _L("Don't show again"));
+        show_again_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        show_again_label->SetCursor(wxCursor(wxCURSOR_HAND));
+        show_again_row->Add(show_again_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        // ::CheckBox is a wxBitmapToggleButton, so the change event is
+        // wxEVT_TOGGLEBUTTON, not wxEVT_COMMAND_CHECKBOX_CLICKED. Skip so the
+        // widget's own handler still clears half-checked and repaints the glyph.
+        m_show_again_checkbox->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent& e) {
+            not_show_again = m_show_again_checkbox->GetValue();
+            e.Skip();
+        });
+        show_again_label->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent&) {
+            not_show_again = !m_show_again_checkbox->GetValue();
             m_show_again_checkbox->SetValue(not_show_again);
         });
-        checkbox_sizer->Add(FromDIP(15), 0, 0, 0);
-        checkbox_sizer->Add(m_show_again_checkbox, 0, wxALL, FromDIP(5));
-        bottom_sizer->Add(checkbox_sizer, 0, wxBOTTOM | wxEXPAND, 0);
+        // Sits at the footer's left edge, buttons cluster right.
+        GetFooterSizer()->Insert(0, show_again_row, 0, wxALIGN_CENTER_VERTICAL);
     }
     m_button_ok = new Button(this, _L("Confirm"));
     m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour("#FFFFFE"));
+    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
+    m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetMinSize(wxSize(-1, FromDIP(24)));
-    m_button_ok->SetMaxSize(wxSize(-1, FromDIP(24)));
-    m_button_ok->SetCornerRadius(FromDIP(12));
+    m_button_ok->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
+    m_button_ok->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_ok->SetCornerRadius(FromDIP(15));
 
     m_button_ok->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& e) {
         wxCommandEvent evt(EVT_SECONDARY_CHECK_CONFIRM, GetId());
@@ -605,13 +533,12 @@ SecondaryCheckDialog::SecondaryCheckDialog(wxWindow* parent, wxWindowID id, cons
 
     m_button_retry = new Button(this, _L("Retry"));
     m_button_retry->SetBackgroundColor(btn_bg_green);
-    m_button_retry->SetBorderColor(*wxWHITE);
-    m_button_retry->SetTextColor(wxColour("#FFFFFE"));
+    m_button_retry->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
+    m_button_retry->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_retry->SetFont(Label::Body_12);
-    m_button_retry->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_retry->SetMinSize(wxSize(-1, FromDIP(24)));
-    m_button_retry->SetMaxSize(wxSize(-1, FromDIP(24)));
-    m_button_retry->SetCornerRadius(FromDIP(12));
+    m_button_retry->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
+    m_button_retry->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_retry->SetCornerRadius(FromDIP(15));
 
     m_button_retry->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& e) {
         wxCommandEvent evt(EVT_SECONDARY_CHECK_RETRY, GetId());
@@ -622,12 +549,12 @@ SecondaryCheckDialog::SecondaryCheckDialog(wxWindow* parent, wxWindowID id, cons
 
     m_button_cancel = new Button(this, _L("Cancel"));
     m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetMinSize(wxSize(-1, FromDIP(24)));
-    m_button_cancel->SetMaxSize(wxSize(-1, FromDIP(24)));
-    m_button_cancel->SetCornerRadius(FromDIP(12));
+    m_button_cancel->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
+    m_button_cancel->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_cancel->SetCornerRadius(FromDIP(15));
 
     m_button_cancel->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& e) {
             wxCommandEvent evt(EVT_SECONDARY_CHECK_CANCEL);
@@ -638,12 +565,12 @@ SecondaryCheckDialog::SecondaryCheckDialog(wxWindow* parent, wxWindowID id, cons
 
     m_button_fn = new Button(this, _L("Done"));
     m_button_fn->SetBackgroundColor(btn_bg_white);
-    m_button_fn->SetBorderColor(wxColour(38, 46, 48));
+    m_button_fn->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_fn->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     m_button_fn->SetFont(Label::Body_12);
-    m_button_fn->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_fn->SetMinSize(wxSize(-1, FromDIP(24)));
-    m_button_fn->SetMaxSize(wxSize(-1, FromDIP(24)));
-    m_button_fn->SetCornerRadius(FromDIP(12));
+    m_button_fn->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
+    m_button_fn->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_fn->SetCornerRadius(FromDIP(15));
 
     m_button_fn->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& e) {
             post_event(wxCommandEvent(EVT_SECONDARY_CHECK_DONE));
@@ -652,12 +579,12 @@ SecondaryCheckDialog::SecondaryCheckDialog(wxWindow* parent, wxWindowID id, cons
 
     m_button_resume = new Button(this, _L("resume"));
     m_button_resume->SetBackgroundColor(btn_bg_white);
-    m_button_resume->SetBorderColor(wxColour(38, 46, 48));
+    m_button_resume->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_resume->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     m_button_resume->SetFont(Label::Body_12);
-    m_button_resume->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_resume->SetMinSize(wxSize(-1, FromDIP(24)));
-    m_button_resume->SetMaxSize(wxSize(-1, FromDIP(24)));
-    m_button_resume->SetCornerRadius(FromDIP(12));
+    m_button_resume->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
+    m_button_resume->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_resume->SetCornerRadius(FromDIP(15));
 
     m_button_resume->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent& e) {
         post_event(wxCommandEvent(EVT_SECONDARY_CHECK_RESUME));
@@ -688,30 +615,30 @@ SecondaryCheckDialog::SecondaryCheckDialog(wxWindow* parent, wxWindowID id, cons
         m_button_fn->Hide();
     }
 
-    sizer_button->AddStretchSpacer();
-    sizer_button->Add(m_button_resume, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_retry, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_fn, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_ok, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_cancel, 0, wxALL, FromDIP(5));
-    sizer_button->Add(FromDIP(5),0, 0, 0);
-    bottom_sizer->Add(sizer_button, 0, wxEXPAND | wxRIGHT | wxLEFT, 0);
-
-
-    m_sizer_right->Add(bottom_sizer, 0, wxEXPAND | wxRIGHT | wxLEFT, FromDIP(15));
-    m_sizer_right->Add(0, 0, 0, wxTOP,FromDIP(10));
-
-    m_sizer_main->Add(m_sizer_right, 0, wxBOTTOM | wxEXPAND, FromDIP(5));
+    // Footer clusters the buttons right, in the original left->right order.
+    AddFooterButton(m_button_resume);
+    AddFooterButton(m_button_retry);
+    AddFooterButton(m_button_fn);
+    AddFooterButton(m_button_ok);
+    AddFooterButton(m_button_cancel);
 
     Bind(wxEVT_CLOSE_WINDOW, [this](auto& e) {this->on_hide();});
     Bind(wxEVT_ACTIVATE, [this](auto& e) { if (!e.GetActive()) this->RequestUserAttention(wxUSER_ATTENTION_ERROR); });
 
-    SetSizer(m_sizer_main);
     Layout();
-    m_sizer_main->Fit(this);
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
 
     CenterOnParent();
-    wxGetApp().UpdateFrameDarkUI(this);
+    wxGetApp().UpdateDlgDarkUI(this);
+}
+
+void SecondaryCheckDialog::OnHeaderClose()
+{
+    // Modeless dialog: mirror the native [x] (Hide + restore mainframe), never
+    // EndModal (asserts for a non-modal dialog).
+    this->on_hide();
 }
 
 void SecondaryCheckDialog::post_event(wxCommandEvent&& event)
@@ -763,7 +690,7 @@ void SecondaryCheckDialog::on_show()
         SetWindowStyleFlag(GetWindowStyleFlag() | wxSTAY_ON_TOP);
     }
 #endif
-    wxGetApp().UpdateFrameDarkUI(this);
+    wxGetApp().UpdateDlgDarkUI(this);
     // recover button color
     wxMouseEvent evt_ok(wxEVT_LEFT_UP);
     m_button_ok->GetEventHandler()->ProcessEvent(evt_ok);
@@ -791,6 +718,7 @@ void SecondaryCheckDialog::update_title_style(wxString title, SecondaryCheckDial
     if (m_button_style == style && title == GetTitle() == title) return;
 
     SetTitle(title);
+    SetHeaderTitle(title); // keep the visible MD3 header title in sync
 
     event_parent = parent;
 
@@ -852,10 +780,11 @@ SecondaryCheckDialog::~SecondaryCheckDialog()
 void SecondaryCheckDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
     rescale();
+    UpdateShape();
 }
 
 void SecondaryCheckDialog::msw_rescale() {
-    wxGetApp().UpdateFrameDarkUI(this);
+    wxGetApp().UpdateDlgDarkUI(this);
     Refresh();
 }
 
@@ -863,59 +792,62 @@ void SecondaryCheckDialog::rescale()
 {
     m_button_ok->Rescale();
     m_button_cancel->Rescale();
+    // The MD3 glyph is rasterised at the DPI current when it was built, unlike
+    // the native checkbox it replaced, so it has to be re-rendered here.
+    if (m_show_again_checkbox != nullptr)
+        m_show_again_checkbox->Rescale();
 }
 
 PrintErrorDialog::PrintErrorDialog(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
-    :DPIFrame(parent, id, title, pos, size, style)
+    :MD3Dialog(parent, title, wxEmptyString, MaterialIcon::Error)
 {
+    // Migrated onto the MD3Dialog shell (borderless rounded SurfaceContainer +
+    // header icon tile/title/close). The action buttons keep their original
+    // vertical, full-width stack (an action-sheet layout that update_title_style
+    // rebuilds dynamically), so they stay in the body rather than the kit footer.
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-    SetBackgroundColour(*wxWHITE);
 
-    btn_bg_white = StateColor(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    btn_bg_white = StateColor(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Normal));
 
-    m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(350), 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(5));
-
-    wxBoxSizer* m_sizer_right = new wxBoxSizer(wxVERTICAL);
-
-    m_sizer_right->Add(0, 0, 1, wxTOP, FromDIP(5));
+    wxBoxSizer* m_sizer_right = GetContentSizer();
 
     m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(0, 5);
-    m_vebview_release_note->SetBackgroundColour(*wxWHITE);
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(320), FromDIP(250)));
-    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND | wxRIGHT | wxLEFT, FromDIP(15));
+    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND, 0);
 
     m_error_prompt_pic_static = new wxStaticBitmap(m_vebview_release_note, wxID_ANY, wxBitmap(), wxDefaultPosition, wxSize(FromDIP(300), FromDIP(180)));
 
     auto bottom_sizer = new wxBoxSizer(wxVERTICAL);
     m_sizer_button = new wxBoxSizer(wxVERTICAL);
 
-    bottom_sizer->Add(m_sizer_button, 0, wxEXPAND | wxRIGHT | wxLEFT, 0);
+    bottom_sizer->Add(m_sizer_button, 0, wxEXPAND, 0);
 
-    m_sizer_right->Add(bottom_sizer, 0, wxEXPAND | wxRIGHT | wxLEFT, FromDIP(20));
-    m_sizer_right->Add(0, 0, 0, wxTOP, FromDIP(10));
-
-    m_sizer_main->Add(m_sizer_right, 0, wxBOTTOM | wxEXPAND, FromDIP(5));
+    m_sizer_right->AddSpacer(FromDIP(10));
+    m_sizer_right->Add(bottom_sizer, 0, wxEXPAND, 0);
 
     Bind(wxEVT_CLOSE_WINDOW, [this](auto& e) {this->on_hide(); });
     Bind(wxEVT_ACTIVATE, [this](auto& e) { if (!e.GetActive()) this->RequestUserAttention(wxUSER_ATTENTION_ERROR); });
     Bind(wxEVT_WEBREQUEST_STATE, &PrintErrorDialog::on_webrequest_state, this);
 
-
-    SetSizer(m_sizer_main);
-    Layout();
-    m_sizer_main->Fit(this);
-
     init_button_list();
 
+    Layout();
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
+
     CenterOnParent();
-    wxGetApp().UpdateFrameDarkUI(this);
+    wxGetApp().UpdateDlgDarkUI(this);
+}
+
+void PrintErrorDialog::OnHeaderClose()
+{
+    // Modeless dialog: mirror the native [x] (Hide + restore mainframe).
+    this->on_hide();
 }
 
 void PrintErrorDialog::post_event(wxCommandEvent& event)
@@ -1043,7 +975,7 @@ void PrintErrorDialog::update_text_image(const wxString& text, const wxString& e
 
 void PrintErrorDialog::on_show()
 {
-    wxGetApp().UpdateFrameDarkUI(this);
+    wxGetApp().UpdateDlgDarkUI(this);
 
     this->Show();
     this->Raise();
@@ -1070,6 +1002,7 @@ void PrintErrorDialog::on_hide()
 void PrintErrorDialog::update_title_style(wxString title, std::vector<int> button_style, wxWindow* parent)
 {
     SetTitle(title);
+    SetHeaderTitle(title); // keep the visible MD3 header title in sync
     event_parent = parent;
     for (int used_button_id : m_used_button) {
         if (m_button_list.find(used_button_id) != m_button_list.end()) {
@@ -1089,30 +1022,26 @@ void PrintErrorDialog::update_title_style(wxString title, std::vector<int> butto
         need_remove_close_btn |= (button_id == REMOVE_CLOSE_BTN); // special case, do not show close button
     }
 
-    // Special case, do not show close button
-    if (need_remove_close_btn)
-    {
-        SetWindowStyle(GetWindowStyle() & ~wxCLOSE_BOX);
-    }
-    else
-    {
-        SetWindowStyle(GetWindowStyle() | wxCLOSE_BOX);
-    }
+    // Special case, do not show close button. The borderless MD3 shell has no
+    // native wxCLOSE_BOX; hide/show the shell's header close IconButton instead.
+    ShowHeaderClose(!need_remove_close_btn);
 
     Layout();
     Fit();
+    UpdateShape();
 }
 
 void PrintErrorDialog::init_button(PrintErrorButton style,wxString buton_text)
 {
     Button* print_error_button = new Button(this, buton_text);
     print_error_button->SetBackgroundColor(btn_bg_white);
-    print_error_button->SetBorderColor(wxColour(38, 46, 48));
+    print_error_button->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    print_error_button->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     print_error_button->SetFont(Label::Body_14);
-    print_error_button->SetSize(wxSize(FromDIP(300), FromDIP(30)));
-    print_error_button->SetMinSize(wxSize(FromDIP(300), FromDIP(30)));
-    print_error_button->SetMaxSize(wxSize(-1, FromDIP(30)));
-    print_error_button->SetCornerRadius(FromDIP(5));
+    print_error_button->SetSize(wxSize(FromDIP(300), FromDIP(36)));
+    print_error_button->SetMinSize(wxSize(FromDIP(300), FromDIP(36)));
+    print_error_button->SetMaxSize(wxSize(-1, FromDIP(36)));
+    print_error_button->SetCornerRadius(FromDIP(18));
     print_error_button->Hide();
     m_button_list[style] = print_error_button;
     m_button_list[style]->Bind(wxEVT_LEFT_DOWN, [this, style](wxMouseEvent& e)
@@ -1155,10 +1084,11 @@ PrintErrorDialog::~PrintErrorDialog()
 void PrintErrorDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
     rescale();
+    UpdateShape();
 }
 
 void PrintErrorDialog::msw_rescale() {
-    wxGetApp().UpdateFrameDarkUI(this);
+    wxGetApp().UpdateDlgDarkUI(this);
     Refresh();
 }
 
@@ -1172,57 +1102,61 @@ void PrintErrorDialog::rescale()
 }
 
 ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id, const wxString& title, enum ButtonStyle btn_style, const wxPoint& pos, const wxSize& size, long style, bool not_show_again_check)
-    :DPIDialog(parent, id, title, pos, size, style)
+    :MD3Dialog(parent, title, wxEmptyString, MaterialIcon::Info)
 {
+    // Migrated onto the MD3Dialog shell: borderless rounded SurfaceContainer +
+    // header icon tile/title/close replace the stock caption + grey top-line;
+    // the scroll body uses a Surface role and the buttons move to the kit footer.
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
-    m_sizer_main = new wxBoxSizer(wxVERTICAL);
-    auto        m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(400), 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
-    m_sizer_main->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_main->Add(0, 0, 0, wxTOP, FromDIP(5));
-
-    wxBoxSizer* m_sizer_right = new wxBoxSizer(wxVERTICAL);
-
-    m_sizer_right->Add(0, 0, 1, wxTOP, FromDIP(15));
+    wxBoxSizer* m_sizer_right = GetContentSizer();
 
     m_vebview_release_note = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_vebview_release_note->SetScrollRate(0, 5);
-    m_vebview_release_note->SetBackgroundColour(*wxWHITE);
+    m_vebview_release_note->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     m_vebview_release_note->SetMinSize(wxSize(FromDIP(400), FromDIP(380)));
-    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND | wxRIGHT | wxLEFT, FromDIP(15));
+    m_sizer_right->Add(m_vebview_release_note, 0, wxEXPAND, 0);
 
+    // Primary (filled) / neutral button fills sourced from MD3 roles.
+    StateColor btn_bg_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
 
-    auto bottom_sizer = new wxBoxSizer(wxVERTICAL);
-    auto sizer_button = new wxBoxSizer(wxHORIZONTAL);
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-        std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
+    StateColor btn_bg_white(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Normal));
 
 
     if (not_show_again_check) {
-        auto checkbox_sizer = new wxBoxSizer(wxHORIZONTAL);
-        m_show_again_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
-        m_show_again_checkbox->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, [this](wxCommandEvent& e) {
-            not_show_again = !not_show_again;
+        // Same swap as SecondaryCheckDialog: the MD3 20px glyph plus a sibling
+        // Label caption, in place of the stock Win32 checkbox that sat beside the
+        // kit's pill buttons. The caption stays clickable.
+        auto* show_again_row   = new wxBoxSizer(wxHORIZONTAL);
+        m_show_again_checkbox  = new ::CheckBox(this);
+        m_show_again_checkbox->SetName(_L("Don't show again"));
+        show_again_row->Add(m_show_again_checkbox, 0, wxALIGN_CENTER_VERTICAL);
+        auto* show_again_label = new ::Label(this, ::Label::Body_13, _L("Don't show again"));
+        show_again_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        show_again_label->SetCursor(wxCursor(wxCURSOR_HAND));
+        show_again_row->Add(show_again_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        m_show_again_checkbox->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent& e) {
+            not_show_again = m_show_again_checkbox->GetValue();
+            e.Skip();
+        });
+        show_again_label->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent&) {
+            not_show_again = !m_show_again_checkbox->GetValue();
             m_show_again_checkbox->SetValue(not_show_again);
         });
-        checkbox_sizer->Add(FromDIP(15), 0, 0, 0);
-        checkbox_sizer->Add(m_show_again_checkbox, 0, wxALL, FromDIP(5));
-        bottom_sizer->Add(checkbox_sizer, 0, wxBOTTOM | wxEXPAND, 0);
+        // Footer left edge; buttons cluster right.
+        GetFooterSizer()->Insert(0, show_again_row, 0, wxALIGN_CENTER_VERTICAL);
     }
     m_button_ok = new Button(this, _L("Confirm"));
     m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour("#FFFFFE"));
+    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
+    m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetSize(wxSize(-1, FromDIP(24)));
-    m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetCornerRadius(FromDIP(12));
+    m_button_ok->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
+    m_button_ok->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_ok->SetCornerRadius(FromDIP(15));
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         wxCommandEvent evt(EVT_SECONDARY_CHECK_CONFIRM, GetId());
@@ -1233,11 +1167,12 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
 
     m_button_cancel = new Button(this, _L("Cancel"));
     m_button_cancel->SetBackgroundColor(btn_bg_white);
-    m_button_cancel->SetBorderColor(wxColour(38, 46, 48));
+    m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     m_button_cancel->SetFont(Label::Body_12);
-    m_button_cancel->SetSize(wxSize(-1, FromDIP(24)));
-    m_button_cancel->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_cancel->SetCornerRadius(FromDIP(12));
+    m_button_cancel->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
+    m_button_cancel->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_cancel->SetCornerRadius(FromDIP(15));
 
     m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         wxCommandEvent evt(EVT_SECONDARY_CHECK_CANCEL);
@@ -1253,11 +1188,12 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
 
     m_button_update_nozzle = new Button(this, _L("Confirm and Update Nozzle"));
     m_button_update_nozzle->SetBackgroundColor(btn_bg_white);
-    m_button_update_nozzle->SetBorderColor(wxColour(38, 46, 48));
+    m_button_update_nozzle->SetBorderColor(StateColor::semantic(MD3::Role::Outline));
+    m_button_update_nozzle->SetTextColor(StateColor::semantic(MD3::Role::OnSurface));
     m_button_update_nozzle->SetFont(Label::Body_12);
-    m_button_update_nozzle->SetSize(wxSize(-1, FromDIP(24)));
-    m_button_update_nozzle->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_update_nozzle->SetCornerRadius(FromDIP(12));
+    m_button_update_nozzle->SetMinSize(wxSize(FromDIP(60), FromDIP(30)));
+    m_button_update_nozzle->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_update_nozzle->SetCornerRadius(FromDIP(15));
 
     m_button_update_nozzle->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         wxCommandEvent evt(EVT_UPDATE_NOZZLE);
@@ -1268,24 +1204,17 @@ ConfirmBeforeSendDialog::ConfirmBeforeSendDialog(wxWindow* parent, wxWindowID id
 
     m_button_update_nozzle->Hide();
 
-    sizer_button->AddStretchSpacer();
-    sizer_button->Add(m_button_ok, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_update_nozzle, 0, wxALL, FromDIP(5));
-    sizer_button->Add(m_button_cancel, 0, wxALL, FromDIP(5));
-    sizer_button->Add(FromDIP(5),0, 0, 0);
-    bottom_sizer->Add(sizer_button, 0, wxEXPAND | wxRIGHT | wxLEFT, 0);
-
-
-    m_sizer_right->Add(bottom_sizer, 0, wxEXPAND | wxRIGHT | wxLEFT, FromDIP(20));
-    m_sizer_right->Add(0, 0, 0, wxTOP, FromDIP(10));
-
-    m_sizer_main->Add(m_sizer_right, 0, wxBOTTOM | wxEXPAND, FromDIP(5));
+    // Footer clusters right, in the original left->right order (ok, nozzle, cancel).
+    AddFooterButton(m_button_ok);
+    AddFooterButton(m_button_update_nozzle);
+    AddFooterButton(m_button_cancel);
 
     Bind(wxEVT_CLOSE_WINDOW, [this](auto& e) {this->on_hide(); });
 
-    SetSizer(m_sizer_main);
     Layout();
-    m_sizer_main->Fit(this);
+    GetSizer()->SetSizeHints(this);
+    Fit();
+    UpdateShape();
 
     CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
@@ -1346,7 +1275,7 @@ void ConfirmBeforeSendDialog::update_text(std::vector<ConfirmBeforeSendInfo> tex
 
         if (enable_warning_clr && text.level == ConfirmBeforeSendInfo::InfoLevel::Warning)
         {
-            label_item->SetForegroundColour(wxColour(0xFF, 0x6F, 0x00));
+            label_item->SetForegroundColour(ThemeColor::Warning);
         }
 
         label_item->SetMaxSize(wxSize(FromDIP(494), -1));
@@ -1388,6 +1317,12 @@ void ConfirmBeforeSendDialog::on_hide()
     EndModal(wxID_OK);
 }
 
+void ConfirmBeforeSendDialog::OnHeaderClose()
+{
+    // Mirror the native [x]: same as the legacy wxEVT_CLOSE_WINDOW binding.
+    this->on_hide();
+}
+
 void ConfirmBeforeSendDialog::update_btn_label(wxString ok_btn_text, wxString cancel_btn_text)
 {
     m_button_ok->SetLabel(ok_btn_text);
@@ -1422,6 +1357,7 @@ ConfirmBeforeSendDialog::~ConfirmBeforeSendDialog()
 void ConfirmBeforeSendDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
     rescale();
+    UpdateShape();
 }
 
 void ConfirmBeforeSendDialog::show_update_nozzle_button(bool show)
@@ -1441,27 +1377,27 @@ void ConfirmBeforeSendDialog::edit_cancel_button_txt(const wxString& txt, bool s
 
     if (switch_green)
     {
-        StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+        StateColor btn_bg_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed),
+                                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+                                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
         m_button_cancel->SetBackgroundColor(btn_bg_green);
-        m_button_cancel->SetBorderColor(*wxWHITE);
-        m_button_cancel->SetTextColor(wxColour("#FFFFFE"));
+        m_button_cancel->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
+        m_button_cancel->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     }
 }
 
 void ConfirmBeforeSendDialog::disable_button_ok()
 {
     m_button_ok->Disable();
-    m_button_ok->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-    m_button_ok->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+    m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 }
 
 void ConfirmBeforeSendDialog::enable_button_ok()
 {
     m_button_ok->Enable();
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+    StateColor btn_bg_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
     m_button_ok->SetBackgroundColor(btn_bg_green);
     m_button_ok->SetBorderColor(btn_bg_green);
 }
@@ -1470,29 +1406,30 @@ void ConfirmBeforeSendDialog::rescale()
 {
     m_button_ok->Rescale();
     m_button_cancel->Rescale();
+    // Same as SecondaryCheckDialog: the drawn glyph does not follow DPI on its own.
+    if (m_show_again_checkbox != nullptr)
+        m_show_again_checkbox->Rescale();
 }
 
 static void nop_deleter(InputIpAddressDialog*) {}
 
 InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
-    : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe),
-                wxID_ANY,
+    : MD3Dialog(static_cast<wxWindow *>(wxGetApp().mainframe),
                 _L("Connect the printer using IP and access code"),
-                wxDefaultPosition,
-                wxDefaultSize,
-                wxCAPTION | wxCLOSE_BOX)
+                wxEmptyString,
+                MaterialIcon::Lan)
 {
+    // Migrated onto the MD3Dialog shell: borderless rounded SurfaceContainer +
+    // header icon tile/title/close replace the stock caption + grey top-line. The
+    // multi-panel IP/SN wizard flow (switch_input_panel, worker thread, close
+    // timer, EndModal contract) is preserved verbatim; the Connect button moves
+    // to the kit footer and the panel greys become Surface roles.
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
 
-    SetBackgroundColour(*wxWHITE);
     m_result                       = -1;
-    wxBoxSizer *m_sizer_border       = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer *m_sizer_body       = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_main = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *m_sizer_msg        = new wxBoxSizer(wxHORIZONTAL);
-    auto        m_line_top         = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
 
     comfirm_before_check_text = _L("Try the following methods to update the connection parameters and reconnect to the printer.");
     comfirm_before_enter_text = _L("1. Please confirm Bambu Studio and your printer are in the same LAN.");
@@ -1500,7 +1437,7 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     comfirm_last_enter_text   = _L("3. Please obtain the device SN from the printer side; it is usually found in the device information on the printer screen.");
 
     Label *wiki = new Label(this, ::Label::Body_13, _L("View wiki"), LB_AUTO_WRAP);
-    wiki->SetForegroundColour(wxColour(0, 174, 66));
+    wiki->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     wiki->Bind(wxEVT_ENTER_WINDOW, [this](auto &e) {SetCursor(wxCURSOR_HAND);});
     wiki->Bind(wxEVT_LEAVE_WINDOW, [this](auto &e) {SetCursor(wxCURSOR_ARROW);});
     wiki->Bind(wxEVT_LEFT_DOWN, [this](auto &e) {
@@ -1535,8 +1472,8 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     ip_input_top_panel = new wxPanel(this);
     ip_input_bot_panel = new wxPanel(this);
 
-    ip_input_top_panel->SetBackgroundColour(*wxWHITE);
-    ip_input_bot_panel->SetBackgroundColour(*wxWHITE);
+    ip_input_top_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    ip_input_bot_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
     auto m_input_top_sizer = new wxBoxSizer(wxVERTICAL);
     auto m_input_bot_sizer = new wxBoxSizer(wxVERTICAL);
@@ -1625,46 +1562,34 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
 
     /*other*/
     m_test_right_msg = new Label(this, Label::Body_13, wxEmptyString, LB_AUTO_WRAP);
-    m_test_right_msg->SetForegroundColour(wxColour(61, 203, 115));
+    m_test_right_msg->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
     m_test_right_msg->Hide();
 
     m_test_wrong_msg = new Label(this, Label::Body_13, wxEmptyString, LB_AUTO_WRAP);
-    m_test_wrong_msg->SetForegroundColour(wxColour(208, 27, 27));
+    m_test_wrong_msg->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
     m_test_wrong_msg->Hide();
 
     m_tip4 = new Label(this, Label::Body_12, _L("Where to find your printer's IP and Access Code?"), LB_AUTO_WRAP);
     m_tip4->SetMinSize(wxSize(FromDIP(355), -1));
     m_tip4->SetMaxSize(wxSize(FromDIP(355), -1));
 
-    m_trouble_shoot = new wxHyperlinkCtrl(this, wxID_ANY, "How to trouble shooting", "");
+    m_trouble_shoot = new LinkLabel(this, "How to trouble shooting", "");
 
     m_img_help = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("input_access_code_x1_en", this, 198), wxDefaultPosition, wxSize(FromDIP(355), -1), 0);
 
-    auto m_sizer_button = new wxBoxSizer(wxHORIZONTAL);
-
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-
+    // Connect CTA: filled Primary pill, moved to the kit footer below.
     m_button_ok = new Button(this, _L("Connect"));
-    m_button_ok->SetBackgroundColor(btn_bg_green);
-    m_button_ok->SetBorderColor(*wxWHITE);
-    m_button_ok->SetTextColor(wxColour("#FFFFFE"));
+    m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::Primary));
+    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::Primary));
+    m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_ok->SetFont(Label::Body_12);
-    m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
-    m_button_ok->SetCornerRadius(FromDIP(12));
+    m_button_ok->SetMinSize(wxSize(FromDIP(80), FromDIP(30)));
+    m_button_ok->SetMaxSize(wxSize(-1, FromDIP(30)));
+    m_button_ok->SetCornerRadius(FromDIP(15));
     m_button_ok->Bind(wxEVT_LEFT_DOWN, &InputIpAddressDialog::on_ok, this);
     m_button_ok->Enable(false);
-    m_button_ok->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-    m_button_ok->SetBorderColor(wxColour(0x90, 0x90, 0x90));
-
-    m_sizer_button->AddStretchSpacer();
-    m_sizer_button->Add(m_button_ok, 0, wxALL, FromDIP(5));
-    // m_sizer_button->Add(m_button_cancel, 0, wxALL, FromDIP(5));
-    m_sizer_button->Layout();
+    m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     m_status_bar = std::make_shared<BBLStatusBarSend>(this);
     m_status_bar->get_panel()->Hide();
@@ -1673,17 +1598,17 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     auto m_step_icon_panel2 = new wxWindow(this, wxID_ANY);
     m_step_icon_panel3      = new wxWindow(this, wxID_ANY);
 
-    m_step_icon_panel1->SetBackgroundColour(*wxWHITE);
-    m_step_icon_panel2->SetBackgroundColour(*wxWHITE);
-    m_step_icon_panel3->SetBackgroundColour(*wxWHITE);
+    m_step_icon_panel1->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_step_icon_panel2->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_step_icon_panel3->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
     auto m_sizer_step_icon_panel1 = new wxBoxSizer(wxVERTICAL);
     auto m_sizer_step_icon_panel2 = new wxBoxSizer(wxVERTICAL);
     auto m_sizer_step_icon_panel3 = new wxBoxSizer(wxVERTICAL);
 
-    m_img_step1 = new wxStaticBitmap(m_step_icon_panel1, wxID_ANY, create_scaled_bitmap("ip_address_step", this, 6), wxDefaultPosition, wxSize(FromDIP(6), FromDIP(6)), 0);
-    m_img_step2 = new wxStaticBitmap(m_step_icon_panel2, wxID_ANY, create_scaled_bitmap("ip_address_step", this, 6), wxDefaultPosition, wxSize(FromDIP(6), FromDIP(6)), 0);
-    m_img_step3 = new wxStaticBitmap(m_step_icon_panel3, wxID_ANY, create_scaled_bitmap("ip_address_step", this, 6), wxDefaultPosition, wxSize(FromDIP(6), FromDIP(6)), 0);
+    m_img_step1 = new wxStaticBitmap(m_step_icon_panel1, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)), 0);
+    m_img_step2 = new wxStaticBitmap(m_step_icon_panel2, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)), 0);
+    m_img_step3 = new wxStaticBitmap(m_step_icon_panel3, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::FiberManualRecord, 10, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(10), FromDIP(10)), 0);
 
     m_step_icon_panel1->SetSizer(m_sizer_step_icon_panel1);
     m_step_icon_panel1->Layout();
@@ -1738,26 +1663,23 @@ InputIpAddressDialog::InputIpAddressDialog(wxWindow *parent)
     m_sizer_main->Add(m_status_bar->get_panel(), 0, wxEXPAND, 0);
     m_sizer_main->Layout();
 
-    m_sizer_body->Add(m_line_top, 0, wxEXPAND, 0);
-    m_sizer_body->Add(0, 0, 0, wxTOP, FromDIP(10));
-    m_sizer_body->Add(m_sizer_main, 0, wxLEFT|wxRIGHT|wxEXPAND, FromDIP(20));
-    m_sizer_body->Add(0, 0, 0, wxTOP, FromDIP(4));
-    m_sizer_body->Add(m_sizer_msg, 0, wxLEFT|wxRIGHT|wxEXPAND, FromDIP(20));
-    m_sizer_body->Add(0, 0, 0, wxTOP, FromDIP(4));
-    m_sizer_body->Add(m_trouble_shoot, 0, wxLEFT|wxRIGHT|wxEXPAND, FromDIP(20));
-    m_sizer_body->Add(0, 0, 0, wxTOP, FromDIP(8));
-    m_sizer_body->Add(m_sizer_button, 0, wxLEFT|wxRIGHT|wxEXPAND, FromDIP(20));
-    m_sizer_body->Add(0, 0, 0, wxTOP, FromDIP(10));
-    m_sizer_body->Layout();
+    // Body into the kit content sizer (already padded 24px per side); the
+    // Connect button clusters at the kit footer's right edge.
+    wxBoxSizer *content = GetContentSizer();
+    content->Add(m_sizer_main, 0, wxEXPAND, 0);
+    content->Add(0, 0, 0, wxTOP, FromDIP(4));
+    content->Add(m_sizer_msg, 0, wxEXPAND, 0);
+    content->Add(0, 0, 0, wxTOP, FromDIP(4));
+    content->Add(m_trouble_shoot, 0, wxEXPAND, 0);
 
-    m_sizer_border->Add(0,0,0,wxLEFT, FromDIP(20));
-    m_sizer_border->Add(m_sizer_body, wxEXPAND, 0);
+    AddFooterButton(m_button_ok);
 
     switch_input_panel(0);
 
-    SetSizer(m_sizer_border);
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
 
     // for some reason Fit() failed its job here so we do this again
     SetSize(GetBestSize());
@@ -1795,8 +1717,8 @@ void InputIpAddressDialog::switch_input_panel(int index)
         m_tip3->Show();
 
         m_button_ok->Enable(false);
-        m_button_ok->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-        m_button_ok->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+        m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+        m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     }
     current_input_index = index;
 }
@@ -1818,6 +1740,7 @@ void InputIpAddressDialog::on_cancel()
 void InputIpAddressDialog::update_title(wxString title)
 {
     SetTitle(title);
+    SetHeaderTitle(title); // keep the visible MD3 header title in sync
 }
 
 void InputIpAddressDialog::set_machine_obj(MachineObject* obj)
@@ -1840,15 +1763,15 @@ void InputIpAddressDialog::set_machine_obj(MachineObject* obj)
     auto str_access_code = m_input_access_code->GetTextCtrl()->GetValue();
     if (isIp(str_ip.ToStdString()) && str_access_code.Length() == 8) {
         m_button_ok->Enable(true);
-        StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-            std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-        m_button_ok->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+        StateColor btn_bg_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+            std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
+        m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
         m_button_ok->SetBackgroundColor(btn_bg_green);
     }
     else {
         m_button_ok->Enable(false);
-        m_button_ok->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-        m_button_ok->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+        m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+        m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     }
 
     Layout();
@@ -1917,8 +1840,8 @@ void InputIpAddressDialog::on_ok(wxMouseEvent& evt)
     }
 
     m_button_ok->Enable(false);
-    m_button_ok->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-    m_button_ok->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+    m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     Refresh();
     Layout();
@@ -1958,8 +1881,8 @@ void InputIpAddressDialog::on_send_retry()
     }
 
     m_button_ok->Enable(false);
-    m_button_ok->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-    m_button_ok->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+    m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     if (m_send_job) { m_send_job->join(); }
 
@@ -2022,7 +1945,16 @@ void InputIpAddressDialog::workerThreadFunc(std::weak_ptr<InputIpAddressDialog> 
 #ifdef __APPLE__
         result = -3;
 #else
-        result = wxGetApp().getAgent()->bind_detect(str_ip, "secure", detectData);
+        // Null whenever the network plugin failed to load. Report the failure as
+        // a negative result (which every caller of this already handles) rather
+        // than dereferencing it.
+        if (NetworkAgent *agent = wxGetApp().getAgent()) {
+            result = agent->bind_detect(str_ip, "secure", detectData);
+        } else {
+            BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no network agent (plugin not loaded); "
+                                                          "cannot run LAN bind detect.";
+            result = -1;
+        }
 #endif
 
     } else {
@@ -2148,9 +2080,9 @@ void InputIpAddressDialog::on_check_ip_address_failed(wxCommandEvent& evt)
     }
 
     m_button_ok->Enable(true);
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-    m_button_ok->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+    StateColor btn_bg_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+        std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
+    m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
     m_button_ok->SetBackgroundColor(btn_bg_green);
 }
 
@@ -2170,27 +2102,27 @@ void InputIpAddressDialog::on_text(wxCommandEvent &evt)
 
     if (isIp(str_ip.ToStdString()) && str_access_code.Length() == 8 && invalid_access_code) {
         m_button_ok->Enable(true);
-        StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-        m_button_ok->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+        StateColor btn_bg_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+                                std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
+        m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
         m_button_ok->SetBackgroundColor(btn_bg_green);
     } else {
         m_button_ok->Enable(false);
-        m_button_ok->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-        m_button_ok->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+        m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+        m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
     }
 
     if (current_input_index == 1){
         if (str_sn.length() == 15 || str_sn.length() == 18) {
             m_button_ok->Enable(true);
-            StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                                    std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
-            m_button_ok->SetTextColor(StateColor::darkModeColorFor("#FFFFFE"));
+            StateColor btn_bg_green(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Pressed), std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+                                    std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Normal));
+            m_button_ok->SetTextColor(StateColor::semantic(MD3::Role::OnPrimary));
             m_button_ok->SetBackgroundColor(btn_bg_green);
         } else {
             m_button_ok->Enable(false);
-            m_button_ok->SetBackgroundColor(wxColour(0x90, 0x90, 0x90));
-            m_button_ok->SetBorderColor(wxColour(0x90, 0x90, 0x90));
+            m_button_ok->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+            m_button_ok->SetBorderColor(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
         }
     }
 }
@@ -2201,7 +2133,16 @@ InputIpAddressDialog::~InputIpAddressDialog()
 
 void InputIpAddressDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
+    UpdateShape();
+}
 
+void InputIpAddressDialog::OnHeaderClose()
+{
+    // Mirror the native [x] / wxEVT_CLOSE_WINDOW teardown: interrupt the worker
+    // thread + EndModal(wxID_CANCEL) via on_cancel(), then stop the close timer.
+    on_cancel();
+    if (closeTimer)
+        closeTimer->Stop();
 }
 
 
@@ -2222,7 +2163,7 @@ void InputIpAddressDialog::on_dpi_changed(const wxRect& suggested_rect)
      SetBackgroundColour(*wxWHITE);
      auto m_sizer_main    = new wxBoxSizer(wxVERTICAL);
      auto m_line_top = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(400), 1));
-     m_line_top->SetBackgroundColour(wxColour(166, 169, 170));
+     m_line_top->SetBackgroundColour(ThemeColor::Grey400);
 
 
      auto tip = new Label(this, _L("Failed to send. Click Retry to attempt sending again. If retrying does not work, please check the reason."));
@@ -2232,17 +2173,15 @@ void InputIpAddressDialog::on_dpi_changed(const wxRect& suggested_rect)
 
      wxBoxSizer *button_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-     StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed), std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
+     StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
                              std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
 
-     StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed), std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
+     StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Hovered),
                              std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
 
 
      auto m_button_retry = new Button(this, _L("Retry"));
-     m_button_retry->SetBackgroundColor(btn_bg_green);
-     m_button_retry->SetBorderColor(*wxWHITE);
-     m_button_retry->SetTextColor(wxColour("#FFFFFE"));
+     m_button_retry->SetVariant(Button::Variant::Outlined);
      m_button_retry->SetFont(Label::Body_12);
      m_button_retry->SetSize(wxSize(-1, FromDIP(24)));
      m_button_retry->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2253,8 +2192,7 @@ void InputIpAddressDialog::on_dpi_changed(const wxRect& suggested_rect)
      });
 
      auto m_button_input = new Button(this, _L("reconnect"));
-     m_button_input->SetBackgroundColor(btn_bg_white);
-     m_button_input->SetBorderColor(wxColour(38, 46, 48));
+     m_button_input->SetVariant(Button::Variant::Outlined);
      m_button_input->SetFont(Label::Body_12);
      m_button_input->SetSize(wxSize(-1, FromDIP(24)));
      m_button_input->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
@@ -2279,19 +2217,19 @@ void InputIpAddressDialog::on_dpi_changed(const wxRect& suggested_rect)
      Layout();
      Fit();
 
-     CentreOnParent();
      wxGetApp().UpdateDlgDarkUI(this);
+     MD3DialogCaption::Adopt(this);
+     CentreOnParent();
  }
 
 void SendFailedConfirm::on_dpi_changed(const wxRect &suggested_rect) {}
 
 ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
-    DPIDialog(static_cast<wxWindow*>(wxGetApp().mainframe),
-        wxID_ANY,
+    MD3Dialog(static_cast<wxWindow*>(wxGetApp().mainframe),
         _L("Welcome to Helio Additive"),
-        wxDefaultPosition,
-        wxDefaultSize,
-        wxCAPTION | wxCLOSE_BOX)
+        wxEmptyString,
+        MaterialIcon::Insights,
+        MD3Dialog::Options{false, true} /* forced-dark shell for the always-dark Helio brand */)
 {
     // Set Helio icon (not BambuStudio icon)
     wxBitmap bmp = create_scaled_bitmap("helio_icon", this, 32);
@@ -2299,13 +2237,12 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     icon.CopyFromBitmap(bmp);
     SetIcon(icon);
 
-    // Use Helio dark palette
+    // Use Helio dark palette. Intentionally overrides the shell's dark
+    // SurfaceContainer with the exact HELIO_* brand surface (EXEMPT); the
+    // forced-dark chrome roles stay readable on it (matches HelioStatementDialog).
     SetBackgroundColour(HELIO_BG_BASE);
 
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
-
-    wxPanel* line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1), wxTAB_TRAVERSAL);
-    line->SetBackgroundColour(HELIO_BORDER);
 
     // Banner image (restored from original)
     auto sm = create_scaled_bitmap("expand_helio", nullptr, 144);
@@ -2341,7 +2278,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     card1->SetMinSize(wxSize(FromDIP(220), FromDIP(190)));
     card1->SetToolTip(tooltip_text);
     wxBoxSizer* card1_sizer = new wxBoxSizer(wxVERTICAL);
-    auto check_icon = new wxStaticBitmap(card1, wxID_ANY, create_scaled_bitmap("helio_feature_shield_check", card1, 48), wxDefaultPosition, wxSize(FromDIP(48), FromDIP(48)), 0);
+    auto check_icon = new wxStaticBitmap(card1, wxID_ANY, MaterialIcon::bitmap(card1, MaterialIcon::VerifiedUser, 48, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, wxSize(FromDIP(48), FromDIP(48)), 0);
     check_icon->SetToolTip(tooltip_text);
     auto card1_title = new Label(card1, Label::Body_16, _L("Fewer Failed Prints"));
     card1_title->SetForegroundColour(HELIO_TEXT);
@@ -2364,7 +2301,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     card2->SetMinSize(wxSize(FromDIP(220), FromDIP(190)));
     card2->SetToolTip(tooltip_text);
     wxBoxSizer* card2_sizer = new wxBoxSizer(wxVERTICAL);
-    auto speed_icon = new wxStaticBitmap(card2, wxID_ANY, create_scaled_bitmap("helio_feature_speed", card2, 48), wxDefaultPosition, wxSize(FromDIP(48), FromDIP(48)), 0);
+    auto speed_icon = new wxStaticBitmap(card2, wxID_ANY, MaterialIcon::bitmap(card2, MaterialIcon::Speed, 48, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, wxSize(FromDIP(48), FromDIP(48)), 0);
     speed_icon->SetToolTip(tooltip_text);
     auto card2_title = new Label(card2, Label::Body_16, _L("Faster Prints, Better Quality"));
     card2_title->SetForegroundColour(HELIO_TEXT);
@@ -2390,55 +2327,47 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
 
     // Enable Helio Additive button (green)
     StateColor btn_bg_green = StateColor(
-        std::pair<wxColour, int>(wxColour(0, 150, 50), StateColor::Hovered), 
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
+        std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
+        std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
 
-    wxBoxSizer* button_sizer = new wxBoxSizer(wxHORIZONTAL);
     Button* m_button_activate = new Button(this, _L("Enable Helio Additive"));
-    m_button_activate->SetBackgroundColor(btn_bg_green);
-    m_button_activate->SetBorderColor(wxColour(0, 174, 66));
+    m_button_activate->SetVariant(Button::Variant::Filled);
     // White text for all states
-    StateColor activate_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
-    m_button_activate->SetTextColor(activate_btn_text);
-    m_button_activate->SetTextColorNormal(wxColour(255, 255, 254));
+    StateColor activate_btn_text(std::pair<wxColour, int>(ThemeColor::White, StateColor::Disabled),
+                                  std::pair<wxColour, int>(ThemeColor::White, StateColor::Hovered),
+                                  std::pair<wxColour, int>(ThemeColor::White, StateColor::Pressed),
+                                  std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled),
+                                  std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
+    m_button_activate->SetVariant(Button::Variant::Filled);
     m_button_activate->SetFont(Label::Body_14);
     m_button_activate->SetSize(wxSize(FromDIP(300), FromDIP(36)));
     m_button_activate->SetMinSize(wxSize(FromDIP(300), FromDIP(36)));
-    m_button_activate->SetCornerRadius(FromDIP(4));
+    m_button_activate->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio brand palette preserved
     m_button_activate->SetToolTip(tooltip_text);
     m_button_activate->Bind(wxEVT_LEFT_DOWN, &ExpandCenterDialog::on_open_expand, this);
-    button_sizer->Add(0, 0, 1, wxEXPAND, 0);
-    button_sizer->Add(m_button_activate, 0, wxALIGN_CENTER, 0);
-    button_sizer->Add(0, 0, 1, wxEXPAND, 0);
-    
-    // Uninstall button - only shown when Helio is already enabled
-    wxBoxSizer* uninstall_sizer = new wxBoxSizer(wxHORIZONTAL);
-    StateColor btn_bg_uninstall(std::pair<wxColour, int>(wxColour(100, 100, 105), StateColor::Hovered),
-                                std::pair<wxColour, int>(wxColour(80, 80, 85), StateColor::Normal));
+
+    // Uninstall button - only shown when Helio is already enabled. Styled as a
+    // de-emphasized Helio-brand secondary button (matching the outlined
+    // secondary buttons in HelioHistoryDialog) using the named Helio palette.
+    StateColor btn_bg_uninstall(std::pair<wxColour, int>(HELIO_CARD_HIGHLIGHT, StateColor::Hovered),
+                                std::pair<wxColour, int>(HELIO_CARD_BG, StateColor::Normal));
     Button* m_button_uninstall = new Button(this, _L("Uninstall"));
     m_button_uninstall->SetBackgroundColor(btn_bg_uninstall);
-    m_button_uninstall->SetBorderColor(wxColour(130, 130, 135));
-    // Use StateColor for text with bright white for all states
-    StateColor uninstall_btn_text(std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Disabled),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Hovered),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Pressed),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Enabled),
-                                  std::pair<wxColour, int>(wxColour(255, 255, 254), StateColor::Normal));
+    m_button_uninstall->SetBorderColor(HELIO_BORDER);
+    // Helio primary text for all states
+    StateColor uninstall_btn_text(std::pair<wxColour, int>(HELIO_TEXT, StateColor::Disabled),
+                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Hovered),
+                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Pressed),
+                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Enabled),
+                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Normal));
     m_button_uninstall->SetTextColor(uninstall_btn_text);
-    m_button_uninstall->SetTextColorNormal(wxColour(255, 255, 254));
+    m_button_uninstall->SetTextColorNormal(HELIO_TEXT);
     m_button_uninstall->SetFont(Label::Body_13);
     m_button_uninstall->SetSize(wxSize(FromDIP(120), FromDIP(28)));
     m_button_uninstall->SetMinSize(wxSize(FromDIP(120), FromDIP(28)));
-    m_button_uninstall->SetCornerRadius(FromDIP(4));
+    m_button_uninstall->SetCornerRadius(FromDIP(14)); // kit pill (height/2); Helio brand palette preserved
     m_button_uninstall->Bind(wxEVT_LEFT_DOWN, &ExpandCenterDialog::on_uninstall, this);
-    uninstall_sizer->Add(0, 0, 1, wxEXPAND, 0);
-    uninstall_sizer->Add(m_button_uninstall, 0, wxALIGN_CENTER, 0);
-    uninstall_sizer->Add(0, 0, 1, wxEXPAND, 0);
-    
+
     // Only show uninstall button if Helio is already enabled
     bool helio_enabled = wxGetApp().app_config->get("helio_enable") == "true";
     if (!helio_enabled) {
@@ -2448,10 +2377,10 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     // Microcopy under button with info tooltip
     wxBoxSizer* microcopy_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto microcopy_text = new Label(this, Label::Body_12, _L("After slicing, click the Helio button to analyze your print."));
-    microcopy_text->SetForegroundColour(wxColour(160, 160, 160));
+    microcopy_text->SetForegroundColour(HELIO_MUTED);
     
     // Info icon with tooltip
-    auto info_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("more_info", this, 14), wxDefaultPosition, wxSize(FromDIP(14), FromDIP(14)), 0);
+    auto info_icon = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Info, 14, StateColor::semantic(MD3::Role::OnSurfaceVariant)), wxDefaultPosition, wxSize(FromDIP(14), FromDIP(14)), 0);
     info_icon->SetToolTip(_L("Helio Additive does not change your printer's firmware."));
     microcopy_text->SetToolTip(_L("Helio Additive does not change your printer's firmware."));
     
@@ -2462,30 +2391,31 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     
     // Footer text
     auto footer_text = new Label(this, Label::Body_12, _L("Designed to help prints succeed — even if you're new to 3D printing."));
-    footer_text->SetForegroundColour(wxColour(180, 180, 180));
+    footer_text->SetForegroundColour(HELIO_MUTED);
     wxBoxSizer* footer_sizer = new wxBoxSizer(wxHORIZONTAL);
     footer_sizer->Add(0, 0, 1, wxEXPAND, 0);
     footer_sizer->Add(footer_text, 0, wxALIGN_CENTER, 0);
     footer_sizer->Add(0, 0, 1, wxEXPAND, 0);
 
-    main_sizer->Add(line, 0, wxEXPAND, 0);
+    // Marketing body into the kit content sizer; the CTA + uninstall move to the
+    // kit footer (mirrors HelioStatementDialog). The grey top-line is dropped.
     main_sizer->Add(expand_image, 0, wxALIGN_CENTER | wxTOP, FromDIP(10));
-    main_sizer->Add(content_panel, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
-    main_sizer->Add(0, 0, 0, wxTOP, FromDIP(24));
-    main_sizer->Add(button_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
-    if (helio_enabled) {
-        main_sizer->Add(0, 0, 0, wxTOP, FromDIP(10));
-        main_sizer->Add(uninstall_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
-    }
-    main_sizer->Add(0, 0, 0, wxTOP, FromDIP(8));
-    main_sizer->Add(microcopy_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
+    main_sizer->Add(content_panel, 0, wxEXPAND, 0);
     main_sizer->Add(0, 0, 0, wxTOP, FromDIP(12));
-    main_sizer->Add(footer_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(20));
-    main_sizer->Add(0, 0, 0, wxTOP, FromDIP(20));
+    main_sizer->Add(microcopy_sizer, 0, wxEXPAND, 0);
+    main_sizer->Add(0, 0, 0, wxTOP, FromDIP(12));
+    main_sizer->Add(footer_sizer, 0, wxEXPAND, 0);
 
-    SetSizer(main_sizer);
+    GetContentSizer()->Add(main_sizer, 1, wxEXPAND, 0);
+
+    if (helio_enabled)
+        AddFooterButton(m_button_uninstall);
+    AddFooterButton(m_button_activate);
+
     Layout();
+    GetSizer()->SetSizeHints(this);
     Fit();
+    UpdateShape();
     CentreOnParent();
 }
 
@@ -2524,7 +2454,7 @@ void ExpandCenterDialog::report_consent_unstall()
 
 void ExpandCenterDialog::on_dpi_changed(const wxRect& suggested_rect)
 {
-
+    UpdateShape();
 }
 
 void ExpandCenterDialog::on_open_expand(const wxMouseEvent& evt)

@@ -1,4 +1,5 @@
 #include "AuxiliaryDialog.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include "I18N.hpp"
 #include "GUI_AuxiliaryList.hpp"
 
@@ -23,6 +24,8 @@ AuxiliaryDialog::AuxiliaryDialog(wxWindow * parent)
 	SetSize({80 * em_unit(), 50 * em_unit()});
 
 	Layout();
+	// Kit Dialog shell: borderless 44px MD3 caption instead of the OS title bar.
+	MD3DialogCaption::Adopt(this);
 	Center();
 }
 

@@ -5,6 +5,7 @@
 #include <boost/thread.hpp>
 
 #include "GUI_Utils.hpp"
+#include "Widgets/TextArea.hpp"
 #include "wxExtensions.hpp"
 #include <slic3r/GUI/Widgets/Button.hpp>
 #include <wx/artprov.h>
@@ -86,7 +87,7 @@ protected:
 	wxStaticText* text_ping_title;
 	wxStaticText* text_ping_value;
 	wxStaticText* text_result;
-	wxTextCtrl* txt_log;
+	TextArea* txt_log;
 
 	wxBoxSizer* create_top_sizer(wxWindow* parent);
 	wxBoxSizer* create_info_sizer(wxWindow* parent);

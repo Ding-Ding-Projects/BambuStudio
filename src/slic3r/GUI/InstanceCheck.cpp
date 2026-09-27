@@ -127,9 +127,14 @@ namespace instance_check_internal
 		}
 		return true;
 	}
+	// Returns true only when the command line was actually handed off to a live
+	// instance. A false return means "the lock says someone else is here, but
+	// nobody answered" -- see instance_check(), which must then start normally
+	// rather than exit into thin air.
 	static bool send_message(const std::string& message, const std::string &version)
 	{
-		if (!EnumWindows(EnumWindowsProc, 0)) {
+		l_bambu_studio_hwnd = NULL; // never hand off to a handle from a previous scan
+		if (!EnumWindows(EnumWindowsProc, 0) && l_bambu_studio_hwnd != NULL) {
 			std::wstring wstr = boost::nowide::widen(message);
 			std::unique_ptr<LPWSTR> command_line_args = std::make_unique<LPWSTR>(const_cast<LPWSTR>(wstr.c_str()));
 			/*LPWSTR command_line_args = new wchar_t[wstr.size() + 1];
@@ -144,7 +149,22 @@ namespace instance_check_internal
 			data_to_send.dwData = 1;
 			data_to_send.cbData = sizeof(TCHAR) * (wcslen(*command_line_args.get()) + 1);
 			data_to_send.lpData = *command_line_args.get();
-			SendMessage(l_bambu_studio_hwnd, WM_COPYDATA, 0, (LPARAM)&data_to_send);
+			// SendMessageTimeout, never a bare SendMessage: the target is another
+			// application's window, and a bare SendMessage blocks forever if that
+			// instance is hung or wedged mid-crash. That block happens before the
+			// log is even open, so the symptom is "the app does nothing when I
+			// launch it" with no evidence whatsoever. 5s is far longer than a
+			// healthy instance needs to answer WM_COPYDATA.
+			DWORD_PTR   msg_result = 0;
+			const LRESULT ok = SendMessageTimeout(l_bambu_studio_hwnd, WM_COPYDATA, 0,
+			                                      (LPARAM)&data_to_send,
+			                                      SMTO_ABORTIFHUNG | SMTO_NORMAL, 5000,
+			                                      &msg_result);
+			if (ok == 0) {
+				BOOST_LOG_TRIVIAL(warning) << "Instance check: the existing instance did not answer "
+				                              "WM_COPYDATA (hung or exiting); starting normally.";
+				return false;
+			}
 			return true;
 		}
 	    return false;
@@ -351,7 +371,21 @@ bool instance_check(int argc, char** argv, bool app_config_single_instance)
 	// get_lock() creates the lockfile therefore *cla.should_send is checked after
 	if (instance_check_internal::get_lock(lock_name + ".lock", data_dir() + "/cache/") && *cla.should_send) {
 #endif
-		instance_check_internal::send_message(cla.cl_string, lock_name);
+		// Only stand down if the running instance actually TOOK the hand-off.
+		// The single-instance lock can outlive a usable instance -- a process
+		// wedged mid-crash, one still starting up, or one already tearing its
+		// windows down still holds the mutex while answering nothing. Exiting on
+		// the strength of the lock alone is what makes the app "refuse to open
+		// until you try it a few times": every launch silently terminates until
+		// the stale holder finally releases. Starting normally in that case is
+		// the safe direction to be wrong in -- worst case the user gets a second
+		// window, instead of an application that will not start and says nothing
+		// about why (this runs before the log exists, so it leaves no trace).
+		if (!instance_check_internal::send_message(cla.cl_string, lock_name)) {
+			BOOST_LOG_TRIVIAL(warning) << "Instance check: the single-instance lock is held, but no live "
+			                              "instance answered. Starting this instance normally.";
+			return false;
+		}
 		BOOST_LOG_TRIVIAL(error) << "Instance check: Another instance found. This instance will terminate. Lock file of current running instance is located at " << PathSanitizer::sanitize(data_dir()) <<
 #ifdef _WIN32
 			"\\cache\\"

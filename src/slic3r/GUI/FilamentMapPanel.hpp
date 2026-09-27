@@ -7,6 +7,7 @@
 namespace Slic3r::GUI {
 
 wxDECLARE_EVENT(wxEVT_INVALID_MANUAL_MAP, wxCommandEvent);
+wxDECLARE_EVENT(wxEVT_SWAP_AND_RESLICE, wxCommandEvent);
 class FilamentMapBtnPanel;
 
 class FilamentMapPanel : public wxPanel
@@ -35,6 +36,8 @@ public:
     std::vector<int> GetRightTPUHighFlowFilaments() const { return m_right_panel->GetTPUHighFlowFilaments(); }
     void UpdateNozzleVolumeType();
     void UpdateNozzleCountDisplay();
+    bool SwapGroups();
+    void ValidateNow();
 
     bool Show(bool show = true) override;
 
@@ -43,6 +46,7 @@ public:
 private:
     void OnTimer(wxTimerEvent &evt);
     void OnSwitchFilament(wxCommandEvent &);
+    void MoveSelectedFilament(int id, bool to_left);
     void SyncPanelHeights();
     void OnDragDropCompleted(wxCommandEvent &evt);
     void OnSuggestionClicked(wxCommandEvent& event);
