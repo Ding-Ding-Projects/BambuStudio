@@ -1,0 +1,500 @@
+#include "CommandPalette.hpp"
+
+#include "Appearance/AppearanceEditorPopover.hpp"
+#include "Appearance/ElementStyle.hpp"
+
+#include "GUI_App.hpp"
+#include "I18N.hpp"
+#include "MainFrame.hpp"
+#include "Notebook.hpp"
+#include "Plater.hpp"
+#include "Widgets/Button.hpp"
+#include "Widgets/Label.hpp"
+#include "Widgets/MaterialIcon.hpp"
+#include "Widgets/MD3Motion.hpp"
+#include "Widgets/MD3Tokens.hpp"
+#include "Widgets/SearchField.hpp"
+#include "Widgets/SwitchButton.hpp"
+#include "Widgets/StateColor.hpp"
+
+#include <wx/dcbuffer.h>
+#include <wx/menu.h>
+#include <wx/scrolwin.h>
+#include <wx/sizer.h>
+
+#include "libslic3r/AppConfig.hpp"
+
+namespace Slic3r::GUI {
+
+namespace {
+
+constexpr int kWidth      = 640;
+constexpr int kListHeight = 420;
+constexpr int kRowHeight  = 52;
+// The hairline between two rows belongs to the row's pitch. It is a raw pixel
+// on purpose (a scaled hairline blurs), so the pitch is FromDIP(kRowHeight) +
+// kDividerHeight — never FromDIP(kRowHeight + kDividerHeight).
+constexpr int kDividerHeight = 1;
+
+std::uint32_t glyph_for_menu(const wxString &top)
+{
+    if (top.Contains(_L("File")))        return MaterialIcon::FolderOpen;
+    if (top.Contains(_L("Edit")))        return MaterialIcon::Edit;
+    if (top.Contains(_L("View")))        return MaterialIcon::Visibility;
+    if (top.Contains(_L("Objects")))     return MaterialIcon::DeployedCode;
+    if (top.Contains(_L("Calibration"))) return MaterialIcon::Build;
+    if (top.Contains(_L("Help")))        return MaterialIcon::Help;
+    return MaterialIcon::ChevronRight;
+}
+
+} // namespace
+
+CommandPalette::CommandPalette(MainFrame *frame)
+    : wxDialog(frame, wxID_ANY, _L("Command palette"), wxDefaultPosition, wxDefaultSize,
+               wxBORDER_SIMPLE)
+    , m_frame(frame)
+{
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    auto *root = new wxBoxSizer(wxVERTICAL);
+
+    // Header: the search pill plus the size toggle (bounded card <-> full
+    // window). The toggle is a real IconButton with an accessible name, so it
+    // is reachable by Tab from the search field and read by AT.
+    auto *header = new wxBoxSizer(wxHORIZONTAL);
+    // TRN: Placeholder of the command palette's search field.
+    m_search = new SearchField(this, _L("Search commands, settings and pages"));
+    header->Add(m_search, 1, wxALIGN_CENTER_VERTICAL);
+    m_size_button = new Button(this, wxEmptyString);
+    m_size_button->SetIconButton(Button::IconShape::Circle, FromDIP(36));
+    m_size_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        apply_size(m_size == PaletteIndex::PaletteSize::Card ? PaletteIndex::PaletteSize::FullWindow
+                                                             : PaletteIndex::PaletteSize::Card,
+                   /*persist=*/true);
+        m_search->GetTextCtrl()->SetFocus();
+    });
+    header->Add(m_size_button, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    root->Add(header, 0, wxEXPAND | wxALL, FromDIP(12));
+
+    m_list = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition,
+                                  wxSize(FromDIP(kWidth), FromDIP(kListHeight)),
+                                  wxVSCROLL | wxBORDER_NONE);
+    m_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    m_list->SetScrollRate(0, FromDIP(kRowHeight) + kDividerHeight);
+    m_list->SetSizer(new wxBoxSizer(wxVERTICAL));
+    root->Add(m_list, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
+
+    SetSizerAndFit(root);
+
+    // Restore the persisted size choice (bounded card is the default).
+    AppConfig *cfg = wxGetApp().app_config;
+    apply_size(PaletteIndex::load_palette_size(
+                   [cfg](const std::string &key) { return cfg ? cfg->get(key) : std::string(); }),
+               /*persist=*/false);
+
+    collect_entries();
+    rebuild_rows();
+
+    m_search->SetOnQuery([this](const wxString &) { rebuild_rows(); });
+    m_search->SetOnRegexToggle([this](bool) { rebuild_rows(); });
+
+    // Keyboard driving: the search entry keeps focus; arrows/Enter/Esc are
+    // intercepted before they reach the text control.
+    auto on_key = [this](wxKeyEvent &e) {
+        switch (e.GetKeyCode()) {
+        case WXK_DOWN:   select_row(m_selected + 1); return;
+        case WXK_UP:     select_row(m_selected - 1); return;
+        case WXK_RETURN: run_selected(); return;
+        case WXK_ESCAPE: dismiss(); return;
+        default: e.Skip();
+        }
+    };
+    m_search->GetTextCtrl()->Bind(wxEVT_KEY_DOWN, on_key);
+    Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
+        if (e.GetKeyCode() == WXK_ESCAPE) { dismiss(); return; }
+        e.Skip();
+    });
+}
+
+void CommandPalette::ShowPalette(MainFrame *frame)
+{
+    // Ctrl+Shift+F while the palette is already open used to stack a second modal
+    // dialog on top of the first: every Esc dismissed only the topmost one,
+    // so the palette read as impossible to close. One at a time.
+    static bool s_open = false;
+    if (s_open)
+        return;
+    s_open = true;
+    {
+        CommandPalette palette(frame);
+        // apply_size() already placed a full-window palette over the frame.
+        if (palette.size_choice() == PaletteIndex::PaletteSize::Card)
+            palette.CenterOnParent();
+        MD3::Motion::FadeIn(&palette, MD3::Motion::short2);
+        palette.ShowModal();
+    }
+    s_open = false;
+}
+
+void CommandPalette::apply_size(PaletteIndex::PaletteSize size, bool persist)
+{
+    m_size = size;
+    if (persist) {
+        AppConfig *cfg = wxGetApp().app_config;
+        PaletteIndex::store_palette_size(size, [cfg](const std::string &key, const std::string &value) {
+            if (cfg == nullptr) return;
+            cfg->set(key, value);
+            cfg->save();
+        });
+    }
+
+    // Toggle glyph + accessible name describe the STATE the button switches
+    // to, the way a maximize control does.
+    const bool full = size == PaletteIndex::PaletteSize::FullWindow;
+    if (m_size_button != nullptr) {
+        if (MaterialIcon::available())
+            m_size_button->SetGlyph(full ? MaterialIcon::FullscreenExit : MaterialIcon::Fullscreen, FromDIP(20));
+        else
+            m_size_button->SetLabel(full ? wxString(wxUniChar(0x2B0D)) : wxString(wxUniChar(0x26F6)));
+        const wxString name = full ? _L("Shrink the palette to a card") : _L("Expand the palette to the full window");
+        m_size_button->SetName(name);
+        m_size_button->SetToolTip(name);
+    }
+
+    Freeze();
+    if (full && m_frame != nullptr) {
+        // Cover the frame's client area (inside its own chrome), not the screen.
+        const wxRect area = m_frame->GetClientRect();
+        const wxPoint origin = m_frame->ClientToScreen(area.GetTopLeft());
+        SetSize(wxRect(origin, area.GetSize()));
+    } else {
+        const int header_h = m_search != nullptr ? m_search->GetSize().GetHeight() : FromDIP(40);
+        SetClientSize(FromDIP(kWidth), FromDIP(kListHeight) + header_h + FromDIP(36));
+        if (IsShown())
+            CenterOnParent();
+    }
+    Layout();
+    if (m_list != nullptr)
+        m_list->FitInside();
+    Thaw();
+}
+
+void CommandPalette::collect_entries()
+{
+    m_entries.clear();
+
+    // --- Rich quick-settings rows (always near the top) ---------------------
+    m_entries.push_back({MaterialIcon::Palette, _L("Theme"),
+                         _L("Switch between the light and dark appearance"),
+                         nullptr, Rich::Theme});
+    m_entries.push_back({MaterialIcon::Tune, _L("Density"),
+                         _L("Comfortable or compact control spacing"),
+                         nullptr, Rich::Density});
+    m_entries.push_back({MaterialIcon::Palette, _L("Accent color"),
+                         _L("Pick the accent seed the interface is tinted with"),
+                         nullptr, Rich::Accent});
+
+    // --- Workspace tabs -----------------------------------------------------
+    // Positions come from the shared index (MainFrame::TabPosition values);
+    // only tabs the frame actually built get a row, so a gated page
+    // (Multi-device, Filament) never yields a dead "Go to".
+    auto glyph_for_tab = [](int position) -> std::uint32_t {
+        switch (position) {
+        case MainFrame::tpHome:        return MaterialIcon::Home;
+        case MainFrame::tp3DEditor:    return MaterialIcon::ViewInAr;
+        case MainFrame::tpPreview:     return MaterialIcon::Layers;
+        case MainFrame::tpMonitor:     return MaterialIcon::Cast;
+        case MainFrame::tpProject:     return MaterialIcon::FolderOpen;
+        case MainFrame::tpCalibration: return MaterialIcon::Build;
+        default:                       return MaterialIcon::ChevronRight;
+        }
+    };
+    const size_t page_count = m_frame->m_tabpanel != nullptr ? m_frame->m_tabpanel->GetPageCount() : 0;
+    for (const PaletteIndex::WorkspaceTab &t : PaletteIndex::workspace_tabs()) {
+        if (static_cast<size_t>(t.position) >= page_count)
+            continue;
+        MainFrame *frame = m_frame;
+        m_entries.push_back({glyph_for_tab(t.position), _(t.title), _(t.desc),
+                             [frame, tab = static_cast<size_t>(t.position)]() { frame->select_tab(tab); }});
+    }
+
+    // --- Feature landmarks ---------------------------------------------------
+    m_entries.push_back({MaterialIcon::Settings, _L("Open Preferences"),
+                         _L("General, appearance, 3D and developer settings — with live search"),
+                         [this]() { wxGetApp().open_preferences(); }});
+    m_entries.push_back({MaterialIcon::Search, _L("Search in settings"),
+                         _L("Find any print / filament / printer parameter"),
+                         [this]() { wxGetApp().sidebar().search(); }});
+
+    // --- Every Preferences setting (teleport rows) --------------------------
+    // Selecting one opens Preferences on the owning page, scrolls the row into
+    // view, focuses its control and flashes it. The developer page only exists
+    // in non-public builds, so its rows are skipped there.
+    for (const PaletteIndex::PreferenceEntry &p : PaletteIndex::preference_entries()) {
+#if BBL_RELEASE_TO_PUBLIC
+        if (p.page == PaletteIndex::PageDeveloper)
+            continue;
+#endif
+        const wxString page  = _(PaletteIndex::preference_page_names()[p.page]);
+        const wxString title = _L("Preferences") + " / " + page + " / " + _(p.title);
+        const wxString desc  = wxString(p.desc).IsEmpty() ? _L("Setting") + " (" + p.key + ")" : _(p.desc);
+        const std::string key = p.key;
+        m_entries.push_back({MaterialIcon::Settings, title, desc,
+                             [key]() { wxGetApp().open_preferences(key); }});
+    }
+
+    // --- Documentation articles (docs/features) -----------------------------
+    for (const PaletteIndex::Article &a : PaletteIndex::documentation_articles()) {
+        const wxString url = PaletteIndex::article_url(a);
+        m_entries.push_back({MaterialIcon::MenuBook, _L("Documentation") + " / " + wxString::FromUTF8(a.title),
+                             wxString::FromUTF8(a.path),
+                             [url]() { wxGetApp().open_browser_with_warning_dialog(url); }});
+    }
+
+    // --- Per-element appearance editor + its presets --------------------------
+    m_entries.push_back({MaterialIcon::Brush, _L("Edit appearance of the focused element"),
+                         wxString::Format(_L("Open the anchored appearance editor (%s) for whatever has focus"),
+                                          AppearanceEditor::shortcut_text()),
+                         [this]() {
+                             MainFrame *frame = m_frame;
+                             // The palette is modal: reopen the editor once it has closed
+                             // and focus has returned to the frame.
+                             frame->CallAfter([]() { AppearanceEditor::open_for_focused(); });
+                         }});
+    {
+        StyleRegistry &reg = ElementStyle::registry();
+        for (const std::string &name : reg.preset_names()) {
+            const wxString title = wxString::Format(_L("Apply appearance preset: %s"), wxString::FromUTF8(name));
+            const wxString desc  = reg.is_shipped_preset(name) ? _L("Shipped Material preset") : _L("Your saved appearance preset");
+            m_entries.push_back({MaterialIcon::Palette, title, desc, [name]() {
+                                     ElementStyle::registry().set_active_preset(name);
+                                     ElementStyle::save();
+                                 }});
+        }
+    }
+
+    // --- Every enabled menubar command ---------------------------------------
+    wxMenuBar *bar = m_frame->GetMenuBar();
+    if (bar != nullptr) {
+        for (size_t m = 0; m < bar->GetMenuCount(); ++m) {
+            const wxString top = wxMenuItem::GetLabelText(bar->GetMenuLabel(m));
+            std::function<void(wxMenu *, const wxString &)> walk =
+                [&](wxMenu *menu, const wxString &path) {
+                    for (wxMenuItem *item : menu->GetMenuItems()) {
+                        if (item->IsSeparator())
+                            continue;
+                        const wxString label = wxMenuItem::GetLabelText(item->GetItemLabel());
+                        if (item->GetSubMenu() != nullptr) {
+                            walk(item->GetSubMenu(), path + " / " + label);
+                            continue;
+                        }
+                        if (!item->IsEnabled())
+                            continue;
+                        MainFrame *frame = m_frame;
+                        const int  id    = item->GetId();
+                        m_entries.push_back({glyph_for_menu(top), path + " / " + label,
+                                             item->GetHelp(),
+                                             [frame, id]() {
+                                                 wxCommandEvent evt(wxEVT_MENU, id);
+                                                 frame->GetEventHandler()->AddPendingEvent(evt);
+                                             }});
+                    }
+                };
+            walk(bar->GetMenu(m), top);
+        }
+    }
+}
+
+wxPanel *CommandPalette::make_row(const Entry &entry, int index)
+{
+    const wxColour on     = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour on_var = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    const wxColour base   = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+
+    auto *row = new wxPanel(m_list, wxID_ANY);
+    row->SetBackgroundColour(base);
+    row->SetMinSize(wxSize(-1, FromDIP(kRowHeight)));
+    auto *sizer = new wxBoxSizer(wxHORIZONTAL);
+
+    auto *icon = new wxPanel(row, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(36), FromDIP(36)));
+    icon->SetBackgroundColour(base);
+    const std::uint32_t glyph = entry.glyph;
+    icon->Bind(wxEVT_PAINT, [icon, glyph](wxPaintEvent &) {
+        wxPaintDC dc(icon);
+        if (MaterialIcon::available()) {
+            const int px = icon->FromDIP(22);
+            const wxSize gs = MaterialIcon::measure(dc, glyph, px);
+            MaterialIcon::draw(dc, glyph, px, StateColor::semantic(MD3::Role::OnSurfaceVariant),
+                               wxPoint((icon->GetSize().x - gs.x) / 2, (icon->GetSize().y - gs.y) / 2));
+        }
+    });
+    sizer->Add(icon, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+
+    auto *text_col = new wxBoxSizer(wxVERTICAL);
+    auto *title = new Label(row, Label::Body_14, entry.title);
+    title->SetBackgroundColour(base);
+    title->SetForegroundColour(on);
+    text_col->Add(title, 0);
+    if (!entry.desc.IsEmpty()) {
+        auto *desc = new Label(row, Label::Body_12, entry.desc);
+        desc->SetBackgroundColour(base);
+        desc->SetForegroundColour(on_var);
+        text_col->Add(desc, 0, wxTOP, FromDIP(1));
+    }
+    sizer->Add(text_col, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(10));
+
+    if (entry.rich != Rich::None)
+        add_rich_controls(row, sizer, entry.rich);
+
+    row->SetSizer(sizer);
+
+    auto activate = [this, index]() { select_row(index); run_selected(); };
+    for (wxWindow *w : {static_cast<wxWindow *>(row), static_cast<wxWindow *>(icon),
+                        static_cast<wxWindow *>(title)})
+        w->Bind(wxEVT_LEFT_DOWN, [activate, entry](wxMouseEvent &e) {
+            if (entry.rich == Rich::None)
+                activate();
+            e.Skip();
+        });
+    return row;
+}
+
+void CommandPalette::add_rich_controls(wxPanel *row, wxBoxSizer *sizer, Rich rich)
+{
+    AppConfig *cfg = wxGetApp().app_config;
+    if (rich == Rich::Theme || rich == Rich::Density) {
+        auto *seg = new MultiSwitchButton(row);
+        if (rich == Rich::Theme) {
+            seg->SetOptions({_L("Light"), _L("Dark")});
+            seg->SetSelection(cfg->get("dark_color_mode") == "1" ? 1 : 0);
+            seg->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [cfg](wxCommandEvent &e) {
+                cfg->set("dark_color_mode", e.GetInt() == 1 ? "1" : "0");
+                cfg->save();
+                wxGetApp().Update_dark_mode_flag();
+#ifdef _MSW_DARK_MODE
+                wxGetApp().force_colors_update();
+                wxGetApp().update_ui_from_settings();
+#endif
+                e.Skip();
+            });
+        } else {
+            seg->SetOptions({_L("Comfortable"), _L("Compact")});
+            seg->SetSelection(cfg->get("ui_density") == "compact" ? 1 : 0);
+            seg->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [cfg](wxCommandEvent &e) {
+                const bool compact = e.GetInt() == 1;
+                cfg->set("ui_density", compact ? "compact" : "comfortable");
+                cfg->save();
+                MD3::Metrics::setDensity(compact ? MD3::Metrics::Density::Compact
+                                                 : MD3::Metrics::Density::Comfortable);
+                e.Skip();
+            });
+        }
+        seg->SetMinSize(wxSize(FromDIP(190), FromDIP(28)));
+        sizer->Add(seg, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+        return;
+    }
+    // Accent: six mini seed swatches, same seeds as Preferences ▸ Appearance.
+    const std::vector<wxString> seeds = {"#146c2e", "#7c5cff", "#14b8a6",
+                                         "#2563eb", "#d81b60", "#ea580c"};
+    for (const wxString &hex : seeds) {
+        auto *sw = new wxPanel(row, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(22), FromDIP(22)));
+        sw->SetBackgroundColour(wxColour(hex));
+        sw->Bind(wxEVT_LEFT_DOWN, [hex](wxMouseEvent &) {
+            AppConfig *c = wxGetApp().app_config;
+            c->set("ui_accent_seed", hex.ToStdString());
+            c->save();
+            MD3::setAccentSeed(wxColour(hex));
+            wxGetApp().update_ui_from_settings();
+        });
+        sizer->Add(sw, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    }
+    sizer->AddSpacer(FromDIP(4));
+}
+
+void CommandPalette::rebuild_rows()
+{
+    const wxString query = m_search->GetValue();
+    const bool regex      = m_search->IsRegexEnabled();
+    const bool case_sense = m_search->IsCaseSensitive();
+    const bool whole_word = m_search->IsWholeWord();
+    const bool multiline  = m_search->IsMultiline();
+
+    m_list->Freeze();
+    m_list->GetSizer()->Clear(true);
+    m_rows.clear();
+    m_visible.clear();
+    m_selected = -1;
+
+    const wxColour outline = StateColor::semantic(MD3::Role::OutlineVariant);
+    SearchField::MatchPass match_pass(query, regex, case_sense, whole_word, multiline);
+    for (int i = 0; i < static_cast<int>(m_entries.size()); ++i) {
+        const Entry &entry = m_entries[i];
+        if (!query.IsEmpty() &&
+            !match_pass.matches(entry.title + " " + entry.desc))
+            continue;
+        wxPanel *row = make_row(entry, static_cast<int>(m_visible.size()));
+        m_visible.push_back(i);
+        m_rows.push_back(row);
+        m_list->GetSizer()->Add(row, 0, wxEXPAND);
+        auto *divider = new wxPanel(m_list, wxID_ANY, wxDefaultPosition, wxSize(-1, kDividerHeight));
+        divider->SetBackgroundColour(outline);
+        m_list->GetSizer()->Add(divider, 0, wxEXPAND | wxLEFT, FromDIP(56));
+        if (m_rows.size() >= 120)
+            break; // keep the palette instant; refine the query for more
+    }
+    m_list->FitInside();
+    m_list->Thaw();
+    if (!m_rows.empty())
+        select_row(0);
+}
+
+void CommandPalette::select_row(int index)
+{
+    if (m_rows.empty())
+        return;
+    index = std::max(0, std::min(index, static_cast<int>(m_rows.size()) - 1));
+    const wxColour base = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const wxColour sel  = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
+    if (m_selected >= 0 && m_selected < static_cast<int>(m_rows.size()))
+        m_rows[m_selected]->SetBackgroundColour(base), m_rows[m_selected]->Refresh();
+    m_selected = index;
+    m_rows[m_selected]->SetBackgroundColour(sel);
+    m_rows[m_selected]->Refresh();
+    // Keep the selection visible. A row index is NOT a scroll unit: every row
+    // carries its divider, so multiplying the index by the row height loses a
+    // hairline per row until the highlight sits below the viewport entirely and
+    // Enter runs a command that was never on screen. Ask the panel where it
+    // actually landed instead — that stays right after a query rebuild and if a
+    // row ever grows past kRowHeight.
+    int unit_x = 0, unit_y = 0;
+    m_list->GetScrollPixelsPerUnit(&unit_x, &unit_y);
+    if (unit_y <= 0)
+        return;
+    wxPanel *row       = m_rows[m_selected];
+    int      virtual_x = 0, virtual_y = 0;
+    m_list->CalcUnscrolledPosition(0, row->GetPosition().y, &virtual_x, &virtual_y);
+    const int row_bottom  = virtual_y + row->GetSize().GetHeight();
+    const int view_height = m_list->GetClientSize().GetHeight();
+    int sy = 0;
+    m_list->GetViewStart(nullptr, &sy);
+    const int view_top = sy * unit_y;
+    if (virtual_y < view_top)
+        m_list->Scroll(-1, virtual_y / unit_y);
+    else if (row_bottom > view_top + view_height)
+        // Round up: the unit that first brings the row's bottom edge into view.
+        m_list->Scroll(-1, (row_bottom - view_height + unit_y - 1) / unit_y);
+}
+
+void CommandPalette::run_selected()
+{
+    if (m_selected < 0 || m_selected >= static_cast<int>(m_visible.size()))
+        return;
+    const Entry &entry = m_entries[m_visible[m_selected]];
+    if (entry.rich != Rich::None)
+        return; // rich rows act through their inline controls
+    if (entry.run) {
+        EndModal(wxID_OK);
+        entry.run();
+    }
+}
+
+} // namespace Slic3r::GUI
